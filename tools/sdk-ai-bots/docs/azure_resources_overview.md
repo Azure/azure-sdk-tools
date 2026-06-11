@@ -133,6 +133,9 @@ Chat agent (hosted agent) deployed to a Foundry project.
 | `sites_azuresdkqabot_server_name_agent_scm` | `Web/sites/slots/basicPublishingCredentialsPolicies` | `basicPublishingCredentialsPolicy8` | Auto-created |
 | `sites_azuresdkqabot_server_name_agent_web` | `Web/sites/slots/config` | `config4` | Auto-created |
 | `sites_azuresdkqabot_server_name_agent_*azurewebsites_net` | `Web/sites/slots/hostNameBindings` | `hostNameBinding4` | Auto-created |
+| `userAssignedIdentities_azuresdkqabot_identity_name_resource` | `ManagedIdentity/userAssignedIdentities` | `userAssignedIdentity2` | **Deploy** |
+| `workspaces_azuresdkqabot_log_name_resource` | `OperationalInsights/workspaces` | `workspace2` | **Deploy** |
+| `actionGroups_azuresdkqabot_alert_name_resource` | `Insights/actionGroups` | `actionGroup2` | **Deploy** |
 
 ### 3.3 Function App (`azuresdkqabot-function`)
 
@@ -189,9 +192,6 @@ Chat agent (hosted agent) deployed to a Foundry project.
 
 | Original resource name | ARM type | CDK name | Status |
 |---|---|---|---|
-| `userAssignedIdentities_azuresdkqabot_identity_name_resource` | `ManagedIdentity/userAssignedIdentities` | `userAssignedIdentity2` | **Deploy** |
-| `workspaces_azuresdkqabot_log_name_resource` | `OperationalInsights/workspaces` | `workspace2` | **Deploy** |
-| `actionGroups_azuresdkqabot_alert_name_resource` | `Insights/actionGroups` | `actionGroup2` | **Deploy** |
 | `vaults_azuresdkqabot_keyvalut_name_resource` | `KeyVault/vaults` | `vault` | **Deploy** |
 | `configurationStores_azuresdkqabot_config_name_resource` | `AppConfiguration/configurationStores` | `configurationStore` | **Deploy** |
 | `searchServices_azuresdkqabot_search_name_resource` | `Search/searchServices` | `searchService` | **Deploy** |

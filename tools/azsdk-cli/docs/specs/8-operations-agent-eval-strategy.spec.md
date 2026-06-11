@@ -320,222 +320,150 @@ generated eval and a hand-written one.
 
 ### CI
 
-**The problem.** Agent evals are slow (each agent run takes ~20 s),
-they cost money, and they flake for reasons that have nothing to do with
-the code under review. We will have hundreds of them, spread across many
-repos. Running them all, every time, on one machine is a non-starter.
+**The problem.** Agent evals are slow (each agent run takes tens of
+seconds to minutes), they cost money, and they flake for reasons that
+have nothing to do with the code under review. We will have hundreds of
+them, across many skills owned by many teams. Two facts shape the whole
+CI design:
 
-**The idea.** Split the work in two:
+- **Non-determinism.** The same prompt can pass one run and fail the
+  next. "Did it pass?" becomes "what % of the time does it pass?" — so a
+  single red/green light over everyone's skills is meaningless.
+- **Ownership.** Service partner teams already contribute skills. If many
+  skills share one pipeline, one team's flaky or abandoned skill turns the
+  whole pipeline red and nobody can tell whose failure it is — the classic
+  noisy-neighbor problem. `main` never goes green and the signal dies. The
+  fix is isolating each skill so a red pipeline maps to exactly one owner.
+
+**The model: one pipeline per skill, all sharing one template.**
 
 ```
-Repos own:        WHAT to test  → eval files, fixtures, prompts, scenarios
-Shared platform:  HOW to run it → discover, shard, run, aggregate, report
+Each skill:       a ci.yml that calls the shared template with the skill's path
+run-eval.yaml:    the one shared template — build MCP, run Vally, aggregate, report
+DevOps:           one pipeline per ci.yml
 ```
 
-- **Repos own the eval content** — the eval files, fixtures, prompts, and
-  scenarios. That's all an author writes.
-- **One shared platform owns everything about running them** — finding the
-  evals, working out what a change affects, splitting them into parallel
-  batches, setting up the environment, running native Vally, and merging
-  the results.
+- **Granularity = the skill.** Each skill ships a tiny `ci.yml` next to it
+  that does nothing but call the shared `run-eval.yaml` template and pass
+  the path to the skill. DevOps registers **one pipeline per `ci.yml`** —
+  exactly how SDK `ci.yml` pipelines already work today.
+- **One template for the whole operation.** `run-eval.yaml` (in
+  `eng/common/`) owns all the logic — build the MCP server, run native
+  Vally on the given skill path, aggregate, report. The per-skill `ci.yml`
+  carries no logic, only the path parameter.
+- **Why per-skill, not per-repo or per-team:**
+  - **Per-repo** has the exact noisy-neighbor problem Ben raised — every
+    skill in the repo shares one red/green light, so one flaky or
+    abandoned skill blocks the signal for all the others.
+  - **Per-team/org** avoids that but forces a grouping decision (which
+    code-owner boundary?) and still lands at ~50–100 pipelines.
+  - **Per-skill** needs *no* grouping decision (the skill *is* the unit),
+    gives perfect isolation (a red pipeline = exactly one skill = one
+    owner via that skill's `ci.yml` ownership), and routes failure
+    notifications automatically.
 
-Build that machinery once and every repo (and every schedule) reuses it.
-The platform does not invent a new eval format — it runs the native Vally
-`*.eval.yaml` files as they are.
+**On pipeline count and reporting.** Per-skill means many pipelines
+(potentially hundreds). That only hurts *if the DevOps pipeline list is
+your report* — and it shouldn't be. Pipeline status is for **attribution
+and enforcement** ("whose skill is red, can I act on it?"), where finer
+granularity is strictly better. Human-readable **reporting** ("how is
+release-planner trending over 30 days?") lives in **Kusto + dashboards**
+(see [Results](#results)): every pipeline pushes its results there, and
+the dashboard rolls them up by skill / team / repo. Decoupled this way,
+the pipeline count is irrelevant to reporting.
 
-#### Architecture
+#### What phase 1 does and doesn't do
 
-The slow, finicky parts live in one shared place so each repo stays
-simple. From top to bottom:
+The theme is fast rollout, so phase 1 is intentionally small:
 
-```text
-+--------------------------------------------------------------+
-|             Shared eval orchestration framework              |
-|                  (azure-sdk-tools/eng/common)                |
-|--------------------------------------------------------------|
-| Discovery | Sharding | Validation | Reporting | Aggregation  |
-| Shared stimuli | Matrix execution | Retry logic             |
-+--------------------------------------------------------------+
-                              |
-                              v
-+--------------------------------------------------------------+
-|                Azure DevOps pipeline execution               |
-|--------------------------------------------------------------|
-|   Discover -> Shard planning -> Matrix fan-out -> Aggregate  |
-+--------------------------------------------------------------+
-                              |
-                              v
-+--------------------------------------------------------------+
-|                     Native Vally runtime                     |
-+--------------------------------------------------------------+
-                              ^
-                              |
-+--------------------------------------------------------------+
-|                    Repository eval content                   |
-|--------------------------------------------------------------|
-|     eval.yaml | fixtures | prompts | workflow scenarios      |
-+--------------------------------------------------------------+
-```
+| Decision | Phase 1 | Why |
+|---|---|---|
+| **Dynamic discovery + sharding** | **No** — each `ci.yml` points at a known skill path | One pipeline per skill needs no cross-repo discovery yet |
+| **PR gating** | **No** | Check Enforcer was removed (new pipelines can't gate PRs), and Vally needs a Copilot token that can't run on public PR pipelines |
+| **Cadence** | Internal pipeline, **nightly** (or CI on skill change) | Collect data first; decide gating later |
+| **Live runs** | **On demand only** | Same posture as live tests — expensive, non-deterministic |
+| **Backend** | **Mock** workflow scenarios + skill evals | Live deferred to phase 2 |
 
-- **Repos own the *intent*** — what to test. **The shared framework owns
-  the *mechanics*** — how to run it at scale. An author adds an eval; the
-  platform picks it up. They never touch the orchestration layer.
-- The framework lives in `eng/common/` and is reused by every
-  pipeline and every repo (see
-  [Cross-repo rollout](#cross-repo-rollout-and-the-shared-platform)).
+PR gating is revisited only once org-wide Copilot billing removes the
+token requirement. Until then, CI is an **internal pipeline that produces
+a report**, not a merge gate.
 
-#### Pipelines
+#### Pipelines and triggers
 
-The suite does not run as one job on every push. It runs as **several
-pipelines on different schedules**, all driven by the *same* platform —
-they differ only in which evals they pick and which backend they use.
+Azure Pipelines decides *when* to run from path-based triggers in each
+`ci.yml`, so:
 
-| Pipeline | Trigger | Selects | Backend |
+- A **skill** pipeline triggers on changes under that skill's path.
+- A **cross-skill workflow** pipeline lists **every skill path it
+  touches** as a trigger (a workflow invoking four skills lists all four).
+- **Everything also runs nightly regardless** — a change to the MCP
+  server (not to any skill) wouldn't fire a skill-path trigger, so the
+  nightly full run is the backstop.
+
+| Pipeline kind | Triggers on | Runs | Backend |
 |---|---|---|---|
-| **PR gate** | PR touching agent / skills / MCP tools | `changed-only` + a curated essential subset | mock (+ a few real-MCP benchmarks) |
-| **Nightly** | schedule | every scenario + the hermetic tool layer | mock |
-| **Weekly live** | schedule | scenarios tagged `live-safe` | live (safe-mode on writes) |
-| **On demand** | manual | any selection | author's choice |
+| Per-skill | that skill's path | that skill's evals | mock |
+| Workflow scenario | all skill paths the workflow touches | that cross-skill scenario | mock |
+| Nightly (all) | schedule | everything | mock |
+| Live | manual / on demand | live-safe scenarios | live |
 
-A pipeline is just *"selection + backend + schedule."* Adding a new
-cadence later is a new schedule pointing at the same templates, not new
-infrastructure.
+#### Authoring stays self-service — generated pipelines, not hand-written YAML
 
-#### What's hard about this
+Partner teams should write **only skills**, never pipeline YAML. Two
+pieces of automation keep it that way:
 
-The value — and the risk — is all in the shared platform. Designing for
-the full cross-repo case up front is cheaper than retrofitting it:
+- **Pipeline generation.** When a skill is checked in, the existing
+  pipeline-generator tooling creates its `ci.yml` (and registers the
+  DevOps pipeline) automatically — same shared `run-eval.yaml`, different
+  path parameter — mirroring how an SDK `ci.yml` auto-creates a pipeline
+  today.
+- **Eval validator.** A check flags a new skill that has no eval (like a
+  test-coverage gate) and can trigger pipeline generation for it.
 
-| Goal the layer must hit | Where the difficulty is |
-|---|---|
-| **Discovery** — find every eval across repos without a manifest per repo | Conventions drift between repos; a missed file is silent lost coverage. |
-| **Change detection** — map a PR diff to just the affected evals | A skill or tool can fan out to many scenarios; under-mapping skips regressions, over-mapping reruns the world. |
-| **Sharding** — split the suite so wall-clock time stays low | Even file-count sharding is naive — one slow agent eval can dominate a shard; runtime-aware balancing is harder and is deliberately deferred. |
-| **Environment setup** — every shard needs the MCP server built and, for live, the right repos on disk | This is the issue we already hit: tools operate on real repos, so a shard fails for the wrong reason if a repo is missing or stale. Caching and pre-clone are first-class, not an afterthought (see [Environment setup and caching](#environment-setup-and-caching)). |
-| **Distributed execution** — fan out shards as ADO matrix jobs | Per-shard env setup and Copilot-SDK session limits cap useful parallelism; too many shards costs more than it saves. |
-| **Aggregation & reporting** — merge shard outputs into one verdict | Partial-shard failures and infra `status=error` rows must not be miscounted as graded failures. |
+Open dependency: routing a failing pipeline to the right owner relies on
+the skill's `ci.yml` ownership in CODEOWNERS — a **code-owners
+configuration for skills** that doesn't fully exist yet.
 
-**Out of scope for early rollout:** runtime-aware balancing, runtime
-prediction, multi-engine support, and any custom schema layer. These are
-enhancements, not blockers.
+#### How a pipeline runs
 
-#### How a run flows
-
-Every pipeline runs the same steps; only the *selection* and the
-*backend* differ:
+Each pipeline runs the same skeleton, supplied by the shared template;
+only the path parameter and the backend differ:
 
 ```mermaid
 flowchart LR
-    CO[Checkout] --> DI[Discover<br/>eval files]
-    DI --> CD[Detect<br/>changed files]
-    CD --> SEL[Select<br/>by run mode]
-    SEL --> ENV[Provision env:<br/>build MCP, restore cache,<br/>pre-clone repos]
-    ENV --> SP[Plan shards]
-    SP --> MX{Matrix<br/>fan-out}
-    MX --> S1[Shard 1<br/>Vally]
-    MX --> S2[Shard 2<br/>Vally]
-    MX --> S3[Shard N<br/>Vally]
-    S1 --> AG[Aggregate]
-    S2 --> AG
-    S3 --> AG
-    AG --> RP[Report<br/>md / junit / csv + PR annotation]
+    CO[Checkout] --> ENV[Provision env:<br/>build MCP server,<br/>restore caches]
+    ENV --> RUN[Run Vally on the<br/>skill / workflow path]
+    RUN --> AG[Aggregate + report:<br/>md / junit / csv]
+    AG --> KU[(Push metrics<br/>to Kusto)]
 ```
 
-#### Discovery and change detection
+No cross-repo discovery and no shard planning in phase 1 — each pipeline
+already knows which skill or workflow it runs from its parameters.
 
-Discovery scans the repo for eval files (`evals/**/*.eval.yaml` and
-`.github/skills/**/evals/*.eval.yaml`) and records each one's kind,
-area, fixtures, and the tools/skills it exercises.
+#### Discovery and change detection (future)
 
-Change detection maps a PR's changed files to the evals they affect —
-changed skill markdown → that skill's evals; changed MCP tool or mock
-handler → the scenarios that call it. This drives `changed-only` runs
-so a PR pays for the evals it actually touches, not the whole suite.
+Once a single pipeline owns *many* skills, it becomes worth discovering
+eval files automatically (`evals/**/*.eval.yaml`,
+`.github/skills/**/evals/*.eval.yaml`) and mapping a PR diff to only the
+affected evals, so a change pays for just what it touches. Phase 1 skips
+this — each pipeline targets a known path. Captured here as the
+direction, not a phase-1 deliverable.
 
-```mermaid
-flowchart LR
-    CF[Changed file<br/>in the PR] --> SK[Affected<br/>skills]
-    SK --> SC[Affected<br/>scenarios]
-    SC --> EV[Evals to run]
-    CF -. tool / mock handler .-> SC
-```
+#### Sharding (deferred)
 
-Run modes the layer supports:
-
-| Mode | Runs |
-|---|---|
-| `changed-only` | Only evals impacted by the diff (PR gate default) |
-| `skills-only` | Skill-routing evals |
-| `scenarios-only` | Workflow scenarios |
-| `smoke` | A minimal curated subset |
-| `nightly-full` | Everything |
-
-#### Sharding and matrix fan-out
-
-A full suite run sequentially is too slow for anyone to wait on. The
-layer splits the selected evals into **shards** — independent subsets
-that run in parallel as Azure DevOps matrix jobs — and merges their
-results at the end. The win is wall-clock time:
-
-```
-no sharding:   140 evals × ~20 s            ≈ 2800 s  (~46 min)
-7 shards:      20 evals × ~20 s per shard   ≈  400 s  (~7 min)
-```
-
-```mermaid
-flowchart LR
-    SEL[140 selected<br/>evals] --> PL{Shard plan<br/>~20 each}
-    PL --> S1[Shard 1]
-    PL --> S2[Shard 2]
-    PL --> S3[…]
-    PL --> S7[Shard 7]
-    S1 --> AG[Aggregate]
-    S2 --> AG
-    S3 --> AG
-    S7 --> AG
-```
-
-Each shard is a slice of the eval-file list; the layer emits a shard
-manifest and a matrix entry per shard. Shards run independently, so a
-failure isolates to one shard and reruns are cheap.
-
-```json
-// shard manifest (one per matrix job)
-{ "shardId": 3, "evalFiles": [
-  ".github/skills/release/evals/create.eval.yaml",
-  "evals/workflow-scenarios/mock/release-planner.eval.yaml"
-] }
-```
-
-```yaml
-# matrix fan-out — generated dynamically from the shard plan
-strategy:
-  matrix:
-    shard1: { shardId: 1 }
-    shard2: { shardId: 2 }
-    # …one entry per shard
-```
-
-*Initial strategy: even file-count sharding* — e.g. 120 files / 6
-shards = 20 files each. Simple and predictable. Runtime-aware sharding
-(weight by historical wall time, token usage, or workflow depth) is a
-later enhancement and must not block rollout.
-
-Picking the shard count is a trade-off: more shards cut wall-clock time
-but consume more agents and add per-shard setup overhead; taken to the
-extreme of one eval per shard, scheduling and environment setup waste
-more than they save. Start moderate, tune from real timings.
-
-**Concurrency cap.** To avoid exhausting the agent pool (and the
-Copilot-SDK session limit), the layer caps concurrent shards — **10 to
-start**. The shard plan still produces however many shards it needs; the
-matrix just runs at most 10 at a time. The cap is a knob we revisit once
-we have real throughput numbers.
+Sharding is **not** in phase 1. It becomes relevant only when one
+pipeline owns many skills and a sequential run gets too slow — e.g. 140
+evals × ~20 s ≈ 46 min versus ~7 min across 7 parallel shards. When we
+get there, the shared template splits the selected evals into independent
+shards (Azure DevOps matrix jobs) and merges results, starting with even
+file-count sharding and a modest concurrency cap (~10) to avoid
+exhausting the agent pool and the Copilot-SDK session limit.
+Runtime-aware sharding is a later enhancement still.
 
 #### Environment setup and caching
 
 This is the part we already got burned on, so it's called out explicitly:
-**before any eval runs, the shard's environment has to be real.** Two
+**before any eval runs, the pipeline's environment has to be real.** Two
 things have to be in place, and both are cached so we don't pay full cost
 on every run.
 
@@ -543,7 +471,7 @@ on every run.
 `dotnet run`, to avoid an MSBuild boot race under parallel workers. The
 pipeline builds `Azure.Sdk.Tools.Cli` and `Azure.Sdk.Tools.Mock` once,
 to a stable output path (`-o artifacts/mcp/...`, no TFM in the path), and
-every shard reuses that build artifact.
+every run reuses that build artifact.
 
 **2. The repos a scenario needs, pre-cloned.** A real workflow crosses
 repos — the release planner reads a TypeSpec project from
@@ -554,7 +482,7 @@ fail for the wrong reason and we learn nothing.
 - Each live scenario **declares** the repos (and optionally a pinned
   commit) it needs.
 - One setup step reads all selected live scenarios, takes the **union**,
-  and ensures each repo is present before fan-out — a shallow + blobless +
+  and ensures each repo is present before the run — a shallow + blobless +
   cone-sparse clone (only the spec paths the scenarios touch) into a
   repo-relative cache dir, never a hard-coded user path.
 - **Locally and in CI it's the same script.** Locally it clones into a
@@ -565,8 +493,29 @@ fail for the wrong reason and we learn nothing.
   setup takes the default branch and records the commit it used in the run
   output.
 
-The nightly **mock** job needs only step 1 — mock evals touch no external
-repos. The weekly **live** job needs both.
+The **mock** job needs only step 1 — mock evals touch no external repos.
+The **live** job needs both.
+
+#### External tool dependencies (the limit of mocking)
+
+The mock only covers tools exposed through the Azure SDK CLI MCP server
+(and, in future, the Azure MCP server). A skill that shells out to
+**other** tools — Azure CLI, GitHub CLI, `uv`, `python` — has nothing to
+mock against:
+
+- A team that wants those calls mocked is responsible for exposing them
+  through a **custom MCP server**; the framework then mocks that server
+  the same way it mocks ours.
+- A skill whose external dependencies can't be mocked is flagged
+  **live-only** — it runs in the on-demand live pipeline, not the mock
+  nightly.
+- **Protocol-agnostic by design.** Vally talks to a backend through a
+  setup step, so a skill can be driven over MCP today and swapped to a
+  raw CLI tomorrow without rewriting the eval. The approach is not
+  hard-coupled to MCP.
+- *Future direction (not phase 1):* a test-proxy / busybox-style
+  "mega-mocker" that intercepts arbitrary external calls would widen what
+  can be mocked — noted as a direction, not a commitment.
 
 #### Validation gates (before we spend agent time)
 
@@ -586,70 +535,62 @@ It is deliberately a later phase: we want the generation workflow and the
 core orchestration proven first, so the gate doesn't block contributors
 before the easy path to *add* an eval exists.
 
-#### PR gate for essential workflows (open)
+#### PR gating (future, currently blocked)
 
-A case for *narrow* PR gating: a small curated set of mock scenarios
-covering the workflows we have already promised to partner teams
-(release-planner today; more as they ship) could run on PRs that touch
-the agent, skills, or MCP tools — so we catch a regression in the
-workflows users actually rely on before merge, instead of the morning
-after.
+PR gating is out of scope for phase 1 for two concrete reasons: Check
+Enforcer (which let non-default pipelines gate PRs) was removed, and
+Vally needs a Copilot token that can't run on public PR pipelines. Until
+those change, CI is internal-nightly only.
 
-The gate need not be mock-only. For a workflow like TypeSpec authoring,
-the essential PR check is a mix: a few **typical benchmark cases run
-against the real MCP server** (the only way to catch real codegen /
-validation drift) plus **skill-invocation checks against the mock MCP
-server** (fast, deterministic routing coverage). The curated set per
-workflow decides which of its cases are real-MCP benchmarks and which
-are mock skill-invocation checks.
+If gating returns, the natural shape for a workflow like TypeSpec
+authoring is a mix — a few typical benchmark cases against the **real**
+MCP server (the only way to catch codegen / validation drift) plus
+skill-invocation checks against the **mock** MCP server (fast,
+deterministic routing coverage).
 
-Unresolved trade-offs: which scenarios count as "essential"; how to
-keep the gate from flaking on LLM non-determinism (retries? loose
-thresholds? quorum across N runs?); whether the cost of the gated
-subset is acceptable for every PR; and which paths actually trigger it
-(agent-only? skills? MCP server? all of the above?).
-
-See [Open Questions](#open-questions).
+Open trade-offs if we revisit gating: which scenarios count as
+"essential"; how to tame LLM non-determinism (retries? quorum across N
+runs? loose thresholds?); and per-PR cost. See
+[Open Questions](#open-questions).
 
 #### Skill publish gated by eval
 
 Skills are published from `main`; the eval suite is what makes that
-safe. The lifecycle:
+safe. Because phase 1 has no PR gating, the **nightly** run is the gate —
+a skill only publishes once its full benchmark suite is green:
 
 ```mermaid
 flowchart LR
-    PR["Skill change<br/>on a PR"] --> V["PR validation:<br/>few benchmarks +<br/>skill-invocation (mock)"]
-    V -- pass --> M[Merge to main]
-    M --> N["Nightly:<br/>full benchmark suite"]
+    M[Merge to main] --> N["Nightly:<br/>full benchmark suite"]
     N --> G{Green?}
     G -- yes --> P[Publish skill]
-    G -- no --> H["Hold publish<br/>+ alert"]
+    G -- no --> H["Hold publish<br/>+ alert owner"]
     classDef stop fill:#fce8e6,stroke:#ea4335;
     class H stop;
 ```
 
-This keeps the per-PR cost low (a curated subset, mostly mock) while the
-full benchmark set still gates the actual publish, so a skill never ships
-on the strength of a partial PR run.
+A skill never ships on a single run — the nightly suite gates the actual
+publish. (If PR gating is added later, a curated mostly-mock subset could
+run per-PR as an early signal, but the nightly remains the publish gate.)
 
 #### Aggregation and reporting
 
-After the matrix completes, the layer merges every shard's
-`results.jsonl` into the single run output described under
-[Results](#results) — one `eval-results.md`, one `junit.xml`, one
-`history.csv` row — annotates the PR, and emits a coverage summary, e.g.:
+Each pipeline merges its run output into the single set of files
+described under [Results](#results) — one `eval-results.md`, one
+`junit.xml`, one `history.csv` row — and emits a coverage summary, e.g.:
 
 ```
-Repository: azure-rest-api-specs
+Pipeline: core-skills
   Skills:    Passed 420  Failed 2
   Scenarios: Passed  74  Failed 3
   Coverage warnings:
     - tool create-release-plan has no green scenario
 ```
 
-Partial-shard failures and infra `status=error` rows are reported as
-infrastructure errors, **not** counted as graded failures, so a flaky
-agent session can't masquerade as a real regression.
+Infra `status=error` rows are reported as infrastructure errors, **not**
+counted as graded failures, so a flaky agent session can't masquerade as
+a real regression. (When sharding lands, the same merge runs across
+shards.)
 
 
 
@@ -695,23 +636,35 @@ In CI: trajectories + JSONL are uploaded as build artifacts you can
 download from the run page; the CSV gets appended to a long-lived
 history branch.
 
-**Reporting rollout.** Phase 1 keeps reporting simple — results are just
-pipeline **artifacts** (the files above) plus the PR annotation. Pushing
-results to an external store (Kusto) and building shared **dashboards**
-for broader visibility is a later phase, once the data shape has settled.
+**Reporting rollout.** Because agent evals are non-deterministic, the
+single most useful signal is **pass rate over time**, not one run's
+red/green — "release-planner passed 70% of the last 30 nightlies" tells
+you far more than a single result. So reporting pushes results to **Kusto**
+and drives shared **dashboards**:
+
+- **Pass-rate trends** per skill / scenario over time, to catch slow
+  degradation a single run hides.
+- **Per-test cost and token metrics**, so we can see which tests are
+  expensive and spot waste (a scenario burning tokens for little signal).
+
+Pipeline artifacts (the files above) remain the per-run detail; Kusto +
+dashboards are the cross-run view.
 
 ### Performance and cost controls
 
-Why this section exists: agent evals are *slow* and *expensive*. Every
-run talks to a real LLM — every tool call is a round trip, every turn
-is tokens billed against our subscription. Without limits, a single
-badly-written scenario can sit in a loop for an hour and burn through
-the budget while still reporting *"passed"*.
+Why this section exists: agent evals are *slow* and talk to a real LLM,
+so a badly-written scenario can sit in a loop burning tokens for an hour
+while still reporting *"passed"*. The goal here is **visibility, not
+hard enforcement** — total cost is not the concern (well under $100k/yr
+is acceptable next to the ~$400k already spent on live testing). What we
+want is the *data* to spot waste: which tests cost what, and which ones
+burn tokens for little signal. Limits exist mainly as guardrails against
+runaways, not as a budget ceiling.
 
 Concrete example: one real release-planner end-to-end run took **17
 minutes wall time, 1.78M tokens, 41 turns**.
 
-The framework therefore enforces three things:
+The framework applies three things:
 
 **1. Per-scenario budgets.** Every scenario file declares an upper
 bound on:
@@ -725,13 +678,13 @@ The runner warns at 50% of any limit, fails the scenario at 100%, and
 kills the whole run at 200% so a runaway can't bleed indefinitely.
 
 **2. Tiered defaults.** Mock runs nightly against an in-memory fake —
-cheap and fast, so the limits are tight. Live runs weekly against real
+cheap and fast, so the limits are tight. Live runs on demand against real
 backends — slower by nature, so the limits are looser.
 
 | Tier | Turns | Wall (s) | Billable tokens |
 |---|---|---|---|
-| Nightly mock | 30 | 300 | 200k |
-| Weekly live | 60 | 600 | 500k |
+| Mock (nightly) | 30 | 300 | 200k |
+| Live (on demand) | 60 | 600 | 500k |
 
 A scenario that needs more must opt in with a justification comment in
 the scenario file. If reviewers reject the opt-in, the scenario has to
@@ -747,25 +700,27 @@ to think about, baked into the framework:
 
 ### Cross-repo rollout and the shared platform
 
-This eval strategy starts in `azure-sdk-tools` but the orchestration
-layer is meant to be reused, not forked. The split is the same
-everywhere: **a repository owns its evaluation content** (eval files,
-fixtures, prompts, scenario definitions) and **the shared framework
-owns execution mechanics** (discovery, sharding, matrix orchestration,
-validation, aggregation, reporting). Only the eval content differs per
-repo; the runner does not.
+This eval strategy starts in `azure-sdk-tools` but the runner mechanics
+are meant to be reused, not forked. The split is the same everywhere: **a
+repository owns its evaluation content** (eval files, fixtures, prompts,
+scenario definitions) and **a shared `run-eval.yaml` template owns
+execution mechanics** (build the MCP server, run native Vally, aggregate,
+report). Each skill's `ci.yml` is a thin skeleton that calls the template
+with its skill path; only the eval content differs per repo and per
+skill. (Discovery and sharding are future additions to that template, not
+part of the phase-1 split — see [Sharding](#sharding-deferred).)
 
-The shared framework lives under `azure-sdk-tools/eng/common/` — the
-folder that is **mirrored into every Azure SDK repo**. Putting the
-platform here is what makes "build once, reuse everywhere" literal: a
-language repo gets the orchestration scripts and pipeline templates by
-sync, and only adds its own eval content. It slots into the existing
-`eng/common` layout rather than a new top-level folder:
+The shared template lives under `azure-sdk-tools/eng/common/` — the
+folder that is **mirrored into every Azure SDK repo**. Putting it here is
+what makes "build once, reuse everywhere" literal: a language repo gets
+the `run-eval.yaml` template and scripts by sync, and each skill just
+adds a `ci.yml` that calls it plus its own eval content. It slots into
+the existing `eng/common` layout rather than a new top-level folder:
 
 ```
 eng/common/
-├── pipelines/        eval orchestration templates: discover → shard → matrix → aggregate
-└── scripts/          discovery, change-detection, shard planning, result merge, validators
+├── pipelines/        run-eval.yaml: build MCP → run Vally → aggregate → report
+└── scripts/          env setup, result merge, validators (discovery + sharding added later)
 ```
 
 Folders for shared stimuli/fixtures, reporting sinks, and the like are
@@ -774,11 +729,11 @@ deliberately minimal.
 
 ```mermaid
 flowchart TD
-    subgraph SHARED["Shared platform — eng/common/ (azure-sdk-tools)"]
-        ORCH["Orchestration:<br/>discover · shard · matrix · aggregate · report · validate"]
+    subgraph SHARED["Shared template — eng/common/ (azure-sdk-tools)"]
+        ORCH["Pipeline template:<br/>build MCP · run Vally · aggregate · report"]
     end
-    subgraph CONTENT["Repository-owned eval content"]
-        T["azure-sdk-tools<br/>common skills + tools"]
+    subgraph CONTENT["Per-skill ci.yml pipelines + repo eval content"]
+        T["azure-sdk-tools<br/>core skills + tools"]
         SPECS["azure-rest-api-specs"]
         NET["azure-sdk-for-net"]
         PY["azure-sdk-for-python"]
@@ -789,23 +744,29 @@ flowchart TD
     NET --> ORCH
     PY --> ORCH
     ETC --> ORCH
-    ORCH --> OUT["One run output:<br/>eval-results.md · junit.xml · history.csv"]
+    ORCH --> OUT["Per-run output:<br/>eval-results.md · junit.xml · history.csv"]
+    ORCH --> KU[(Kusto + dashboards:<br/>pass-rate · cost trends)]
 ```
 
 **Rollout.**
 
-- **Phase 1 — orchestration for `azure-rest-api-specs`, bare minimum.**
-  Stand up the orchestration path end-to-end on one repo, with pipeline
-  definitions and scripts in `eng/common`, handling **one skill as a
-  proof of concept**. Validate the orchestration architecture, the
-  sharding approach, distributed execution, the contributor workflow,
-  and the reporting pipeline on native Vally evals. Deliberately *out of
-  scope* early: runtime-aware balancing, runtime prediction, multi-engine
-  support, any custom schema layer, the new-skill-without-eval validator,
-  and the Kusto/dashboard reporting sink.
-- **Phase 2 — language SDK repos.** Reuse the same framework across
-  `azure-sdk-for-net`, `-python`, `-java`, `-js`, and `-go`. Each repo
-  brings its own eval content; the orchestration layer is unchanged.
+- **Phase 1 — one internal pipeline on `azure-rest-api-specs`, bare
+  minimum.** Stand up the run path end-to-end on one repo, with the
+  shared template and scripts in `eng/common`, covering the
+  **create-release-plan + generate-SDK** workflow as a proof of concept
+  — **mock workflow scenario + skill eval only**. Validate the template,
+  the contributor workflow, environment setup, and reporting (including
+  the Kusto push + a basic dashboard) on native Vally evals. Deliberately
+  *out of scope* early: dynamic discovery, sharding, distributed
+  execution, PR gating, runtime-aware balancing, multi-engine support,
+  any custom schema layer, and the auto-pipeline-generator / validator.
+- **Phase 2 — generalize.** Add live runs, auto-generated `ci.yml`
+  pipelines + the new-skill-without-eval validator, sharding within
+  multi-skill pipelines, and rollout across language SDK repos
+  (`azure-sdk-for-net`, `-python`, `-java`, `-js`, `-go`). Each repo /
+  team brings its own eval content and its own per-skill `ci.yml`
+  pipelines; the shared template is unchanged. Shanghai team adds their
+  tests here; CLI / knowledge-based tests migrate in too.
 
 **Validation the shared layer runs on every repo's content**, beyond
 pass/fail:
@@ -885,78 +846,93 @@ prompt-grader that checks the real DevOps response.
 
 ## Open Questions
 
+### Pipeline granularity and routing
+
+- **Granularity (decided).** One pipeline per skill — each skill ships a
+  `ci.yml` that calls the shared `run-eval.yaml`. Per-repo was rejected
+  (noisy neighbor) and per-team/org was rejected (forces a grouping
+  decision and still lands at ~50–100 pipelines). Open follow-on: how do
+  we keep hundreds of pipelines manageable operationally (naming,
+  folders, bulk disable)?
+- **Reporting at scale.** Many pipelines is fine *because* reporting is
+  in Kusto + dashboards, not the DevOps pipeline list. Open: what's the
+  minimum dashboard for phase 1, and what slices (per skill / team / repo)
+  do consumers actually want?
+- **Code-owners for skills.** Routing a red pipeline to the right owner
+  relies on the skill's `ci.yml` CODEOWNERS entry — a code-owners story
+  for skills that **doesn't fully exist yet**. Who defines it and where
+  does it live?
+- **Auto-generation.** When a skill is checked in, the pipeline-generator
+  should stamp out its `ci.yml` and register the DevOps pipeline. Open:
+  do we generate discrete `ci.yml` files per skill, or keep one root YAML
+  parameterized per skill path?
+
 ### CI cadence and PR gating
 
-**Cadence.** Current proposal: nightly mock + weekly live + on-demand.
-Open: is nightly the right frequency for mock, or do we want it on
-every push to `main`? Is weekly enough for live, given live is the
-only thing that catches real-backend drift?
+- **Cadence.** Phase 1 is internal nightly mock + on-demand live. Open:
+  is nightly right, or do we want CI on every skill change too? Live is
+  the only thing that catches real-backend drift — how often is enough?
+- **PR gating (blocked).** Out of scope until two blockers clear: Check
+  Enforcer was removed, and Vally's Copilot token can't run on public PR
+  pipelines (waiting on org-wide Copilot billing). If those clear: which
+  scenarios are "essential", how do we tame LLM flake (retries / quorum /
+  loose thresholds), and what's the per-PR cost ceiling?
 
-**PR gate for essential workflows.** Should a curated subset of mock
-scenarios block merge on PRs that touch the agent, skills, or MCP
-tools? Specifically to answer:
+### Mocking external dependencies
 
-- *Which workflows are "essential"* — just release-planner today, or
-  a broader set? Who decides when a new workflow joins or leaves the
-  gated set?
-- *Which paths trigger the gate* — agent code, skill markdown, MCP
-  tool code, mock handlers, all of the above? Anything else?
-- *How do we tame flake* — retries on failure, quorum across N runs,
-  loose thresholds, or just accept some red and require a human
-  override? Hard requirement: a green PR must mean *the gated
-  scenarios passed*, not *we got lucky this run*.
-- *What's the cost ceiling* — the gated subset runs on every PR push
-  to a touched path; what's the per-PR token / wall-time budget we're
-  willing to spend before we move it back off the PR?
+- **Unmockable skills.** The mock only covers the Azure SDK CLI MCP
+  server (and later Azure MCP). Skills calling Azure CLI / GitHub CLI /
+  `uv` / `python` can't be mocked unless the owning team exposes them via
+  a custom MCP server; otherwise the skill is flagged live-only. Open:
+  how aggressively do we push teams toward custom MCP servers vs. a
+  future test-proxy/busybox-style mega-mocker?
+- **Mock fidelity.** Mocks currently return the same response regardless
+  of input parameters — fine for routing/shape coverage now, extensible
+  later. When does parameter-aware mocking become necessary?
 
-We need owners' input on all four before turning the gate on.
+### Sharding and shared template
 
-### Orchestration and cross-repo rollout
-
-**Shard count.** Even file-count sharding is the starting point. Open:
-what initial shard count balances wall-clock time against agent
-consumption and per-shard setup overhead for our actual suite size?
-When do we graduate to runtime-aware sharding, and what signal drives
-it (historical wall time, tokens, workflow depth)?
-
-**Shared-platform ownership.** The orchestration layer in
-`eng/common/` is shared across repos. Open: who owns it, who
-reviews changes to the matrix/sharding templates, and how do consuming
-repos pin or roll forward a version?
-
-**Phase-2 onboarding.** What's the minimum a language SDK repo must
-provide to plug into the shared framework — just `evals/**` plus a
-discovery entry point, or more? Do shared stimuli/fixtures live in
-`azure-sdk-tools` or get mirrored per repo?
+- **When to shard.** Sharding is deferred until a single pipeline runs
+  enough skills that a sequential run is too slow. Open: what suite size
+  / wall-clock threshold triggers introducing it, and what initial shard
+  count + concurrency cap?
+- **Template ownership.** The shared template in `eng/common/` is used by
+  every repo. Open: who owns it, who reviews changes, and how do
+  consuming repos pin or roll forward a version?
 
 ---
 
 ## Implementation Plan
 
-The first deliverable is intentionally small — prove the orchestration
-shape on one repo before generalizing.
+The first deliverable is intentionally small — prove the shape on one
+internal pipeline before generalizing.
 
-**Phase 1 — minimal orchestration on `azure-rest-api-specs`.**
+**Phase 1 — one internal pipeline on `azure-rest-api-specs`.**
 
-- Pipeline definitions and orchestration scripts land in `eng/common`
-  (so they sync to every repo for free), aligned to the existing
-  `eng/common` layout — no speculative folders.
-- Handle **one skill end-to-end** as a proof of concept: discover its
-  eval → plan shards → matrix fan-out → run native Vally → aggregate →
-  report as pipeline artifacts.
-- Defer until the design is validated: eval-generation tooling, the
-  new-skill-without-eval validator, Kusto/dashboard reporting, and
-  runtime-aware sharding.
+- The shared `run-eval.yaml` template + scripts land in `eng/common` (so
+  they sync to every repo for free), aligned to the existing `eng/common`
+  layout — no speculative folders.
+- Cover the **create-release-plan + generate-SDK** workflow end-to-end as
+  a proof of concept — **mock workflow scenario + skill eval only**: one
+  skill `ci.yml` calls `run-eval.yaml` → build the MCP server → run native
+  Vally on the skill path → aggregate → report as artifacts **and push
+  pass-rate / cost metrics to Kusto with a basic dashboard**.
+- Internal, **nightly** (or CI on skill change). No PR gating, no dynamic
+  discovery, no sharding, no live runs.
+- Defer until validated: live runs, auto-pipeline-generation + the
+  new-skill-without-eval validator, dynamic discovery, sharding, and
+  eval-generation tooling.
 
 **Process.**
 
-- Consolidate this design with the orchestration feedback into one
-  document (done here).
+- Consolidate this design with the review feedback into one document
+  (done here).
 - Review the CI parts with Ben before circulating more broadly
   (e.g. to Laurent).
 - Hold recirculation until that review is complete.
 
-**Phase 2 — generalize.** Once Phase 1 is validated, extend to the
-language SDK repos and the more complex multi-skill scenarios, reusing
-the same `eng/common` orchestration so future repos need only their own
-eval content.
+**Phase 2 — generalize.** Add live runs, auto-generated per-skill `ci.yml`
+pipelines + the validator, sharding within multi-skill pipelines, and
+rollout across the language SDK repos — each team bringing its own eval
+content and `ci.yml` pipelines over the same shared template. Shanghai
+team adds their tests; CLI / knowledge-based tests migrate in.

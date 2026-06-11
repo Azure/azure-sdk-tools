@@ -314,12 +314,20 @@ router.get("/api/release-plans", async (req, res) => {
       }
       // Match by Custom.ReleasePlanID or by work item ID (numeric fallback)
       const isNumeric = /^\d+$/.test(filterPlanId);
+      const environment = (
+        process.env.ENVIRONMENT || "production"
+      ).toLowerCase();
+      const tagCondition =
+        environment === "test"
+          ? "AND [System.Tags] CONTAINS 'Release Planner App Test'"
+          : "AND [System.Tags] NOT CONTAINS 'Release Planner App Test'";
       const condition = isNumeric
         ? `AND ([Custom.ReleasePlanID] = '${filterPlanId}' OR [System.Id] = ${filterPlanId})`
         : `AND [Custom.ReleasePlanID] = '${filterPlanId}'`;
       const wiqlQuery = `SELECT [System.Id] FROM WorkItems
         WHERE [System.TeamProject] = 'Release'
           AND [System.WorkItemType] = 'Release Plan'
+          ${tagCondition}
           ${condition}`;
       const ids = await runWiql(wiqlQuery);
       if (!ids.length)

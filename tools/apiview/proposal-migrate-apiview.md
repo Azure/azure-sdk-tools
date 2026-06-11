@@ -127,7 +127,25 @@ Key advantages:
 
 ---
 
-### 4. Architect Review Model
+### 4. Documentation Reference
+- GitHub does not support APIView-style expandable/collapsible documentation views inside PR diffs.
+- Review branches can include a generated HTML documentation file alongside `API.md` for architects to consult when API docs are relevant to the review.
+- The HTML file is supplemental, not authoritative:
+  - `API.md` remains the canonical diff and approval artifact.
+  - The documentation HTML is a convenience view for reading doc comments, summaries, method documentation, and related API context.
+- The HTML can be easily constructed from the tokenfile.
+- The doc file would ONLY be committed to the review branch--i.e. you would not see a doc "diff" but would be able to see all docs for that API.
+- Example mock-up: [appconfiguration-doccomments-mockup.html](appconfiguration-doccomments-mockup.html)
+
+**Outcome:** Architects have an optional documentation reference view while the review workflow remains GitHub PR-centric.
+
+**Wins:** Recovers some documentation readability lost by moving away from APIView.
+
+**Losses:** The documentation is not integrated into the diff as it is in APIView, so it does require jumping to another file to consult.
+
+---
+
+### 5. Architect Review Model
 - Architects are assigned as reviewers on API review PRs by the script that creates the PR.
 - Routine working PRs that update `API.md` to satisfy consistency checks should not automatically request architect review.
 - Architect feedback is expressed via:
@@ -145,7 +163,7 @@ Key advantages:
 
 ---
 
-### 5. Approval and Gating
+### 6. Approval and Gating
 
 Approval shifts from APIView to GitHub but CI enforcement remains largely the same.
 

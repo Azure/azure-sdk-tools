@@ -3,10 +3,7 @@
 These tests exercise the chat-agent side of route-A (HTTP delegation to
 the backend server) by mocking ``httpx.AsyncClient`` — they do **not**
 need a running backend, a warm GraphRAG service, or any blob/AI Search
-access. A slower end-to-end test that exercises the real
-``/internal/graph/query`` endpoint against a real
-:class:`KnowledgeGraphService` lives in
-``internal_graph_query_integration_test.py``.
+access.
 """
 
 from __future__ import annotations
@@ -27,8 +24,9 @@ from models.knowledge import GraphSearchResult  # noqa: E402
 from tools.graph_knowledge_tools import GraphKnowledgeTools  # noqa: E402
 
 
-_ENDPOINT = "https://backend.example.com/internal/graph/query"
-_TOKEN = "secret-token"
+_ENDPOINT = "https://backend.example.com/graph/query"
+_AUDIENCE = "830f1656-8b36-4e8e-9781-87ccdd038644"
+_BEARER = "stub-bearer-token"
 
 
 @pytest.fixture
@@ -39,8 +37,18 @@ def configured(monkeypatch):
         "_settings",
         {
             "GRAPH_QUERY_URL": _ENDPOINT,
-            "GRAPHRAG_ADMIN_TOKEN": _TOKEN,
+            "GRAPH_QUERY_AUDIENCE": _AUDIENCE,
         },
+    )
+    # Stub the Managed Identity → AAD token call so tests don't reach
+    # azure-identity (which would fail outside Azure).
+    fake_token = MagicMock()
+    fake_token.token = _BEARER
+    fake_cred = MagicMock()
+    fake_cred.get_token = AsyncMock(return_value=fake_token)
+    monkeypatch.setattr(
+        "tools.graph_knowledge_tools.get_credential",
+        lambda: fake_cred,
     )
 
 
@@ -101,10 +109,11 @@ async def test_http_success_returns_parsed_payload(configured) -> None:
         tools = GraphKnowledgeTools()
         result = await tools.search_knowledge_graph(query=" trim me ")
 
-    # Endpoint + auth + body shape are part of the contract.
+    # Endpoint + auth header (EasyAuth bearer only — admin token was
+    # dropped now that EasyAuth gates everything) + body shape.
     client.post.assert_awaited_once_with(
         _ENDPOINT,
-        headers={"X-Admin-Token": _TOKEN},
+        headers={"Authorization": f"Bearer {_BEARER}"},
         json={"query": "trim me"},
     )
     assert isinstance(result, GraphSearchResult)
@@ -172,7 +181,7 @@ async def test_custom_timeout_honoured(configured, monkeypatch) -> None:
         "_settings",
         {
             "GRAPH_QUERY_URL": _ENDPOINT,
-            "GRAPHRAG_ADMIN_TOKEN": _TOKEN,
+            "GRAPH_QUERY_AUDIENCE": _AUDIENCE,
             "GRAPH_QUERY_TIMEOUT_SECONDS": "5.0",
         },
     )
@@ -185,4 +194,29 @@ async def test_custom_timeout_honoured(configured, monkeypatch) -> None:
 
     _args, kwargs = client_cls.call_args
     assert kwargs.get("timeout") == 5.0
+
+
+@pytest.mark.asyncio
+async def test_token_acquisition_failure_returns_empty(monkeypatch) -> None:
+    """A failure to acquire the AAD bearer token must degrade gracefully."""
+    monkeypatch.setattr(
+        app_config,
+        "_settings",
+        {
+            "GRAPH_QUERY_URL": _ENDPOINT,
+            "GRAPH_QUERY_AUDIENCE": _AUDIENCE,
+        },
+    )
+    failing_cred = MagicMock()
+    failing_cred.get_token = AsyncMock(side_effect=RuntimeError("MI not available"))
+    monkeypatch.setattr(
+        "tools.graph_knowledge_tools.get_credential",
+        lambda: failing_cred,
+    )
+    with patch("tools.graph_knowledge_tools.httpx.AsyncClient") as client_cls:
+        tools = GraphKnowledgeTools()
+        result = await tools.search_knowledge_graph(query="hi")
+
+    assert result == GraphSearchResult(references=[], query="hi")
+    client_cls.assert_not_called(), "must not attempt HTTP when AAD token fails"
 

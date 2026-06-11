@@ -118,8 +118,8 @@ at startup (see `src/services/app_config.py` and `src/services/app_secret.py`).
 | `AZURE_SDK_GITHUB_PAT` | env (CI) | GitHub App token for private repo access. |
 | `AZURE_SDK_DOCS_PATH` | env (CI) | Local path to the `azure-sdk-docs-eng.ms` clone (used when `authType: local`). |
 | `AZURE_SDK_WIKI_PATH` | env (CI) | Local path to the `internal.wiki` clone (used when `authType: local`). |
-| `BOT_AGENT_RELOAD_URL` | env (CI) | Bot agent reload endpoint (e.g. `https://<bot>/admin/graphrag/reload`). When unset, the publish step skips notification with a warning. |
-| `BOT_AGENT_ADMIN_TOKEN` | env (CI) | Shared secret sent as `X-Admin-Token` to the bot reload endpoint. |
+| `BOT_AGENT_RELOAD_URL` | env (CI) | Bot agent reload endpoint (e.g. `https://<bot>/graph/admin/reload`). When unset, the publish step skips notification with a warning. |
+| `BOT_AGENT_AUDIENCE` | env (CI) | Entra ID app/client ID fronting the bot via App Service EasyAuth. Used as the scope (`<audience>/.default`) for the Managed Identity bearer token. Required when `BOT_AGENT_RELOAD_URL` is set. |
 
 ## Testing
 
@@ -170,7 +170,7 @@ tests/
 | File | Purpose |
 |------|---------|
 | `ci.yml` | Build + tests on every PR and on `main` (path-scoped to this project). |
-| `sync_knowledge_graph.yml` | Daily scheduled run (03:00 UTC) on an internal 1ES agent — checks out the internal docs/wiki repos, installs the project, runs `sync-knowledge-graph`, publishes the new parquet snapshot to blob storage, and POSTs the bot agent's `/admin/graphrag/reload` endpoint. Mirrors `azure-sdk-qa-bot-knowledge-sync/sync_knowledge.yml`. |
+| `sync_knowledge_graph.yml` | Daily scheduled run (03:00 UTC) on an internal 1ES agent — checks out the internal docs/wiki repos, installs the project, runs `sync-knowledge-graph`, publishes the new parquet snapshot to blob storage, and POSTs the bot agent's `/graph/admin/reload` endpoint with an Entra ID bearer token. Mirrors `azure-sdk-qa-bot-knowledge-sync/sync_knowledge.yml`. |
 
 ## Relationship to Other Projects
 

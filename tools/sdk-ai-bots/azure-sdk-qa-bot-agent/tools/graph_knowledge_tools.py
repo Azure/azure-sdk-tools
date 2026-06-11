@@ -11,10 +11,19 @@ Why HTTP instead of running GraphRAG in-process
 The chat agent runs in a fresh Foundry sandbox per session — every cold
 sandbox would otherwise pay ~40s to download parquets + preload
 community embeddings before serving the first graph query. Instead this
-tool POSTs to the backend server's ``/internal/graph/query`` endpoint;
+tool POSTs to the backend server's ``/graph/query`` endpoint;
 the backend pre-warms the :class:`KnowledgeGraphService` once at
 startup and keeps it for the pod's lifetime, so each call resolves in
 ~1-2s (one embedding + one AI Search ANN + DataFrame joins).
+
+Authentication
+--------------
+The backend is fronted by App Service EasyAuth (Entra ID), so the
+Foundry sandbox must present an Entra ID bearer token. The tool uses
+the sandbox's Managed Identity to request a token for the audience
+configured by ``GRAPH_QUERY_AUDIENCE`` (the backend's EasyAuth client
+ID) — the same audience the Logic App uses. The MI must be added to
+the backend app registration's allowed identities.
 
 Conceptual contract — this is still a **retrieval tool**, not an
 answering tool:
@@ -43,6 +52,7 @@ import httpx
 from config.app_config import get as cfg
 from models.knowledge import GraphSearchResult
 from tools import tool
+from utils.azure_credential import get_credential
 
 logger = logging.getLogger(__name__)
 
@@ -85,11 +95,12 @@ class GraphKnowledgeTools:
             return GraphSearchResult(references=[], query="")
 
         endpoint = cfg("GRAPH_QUERY_URL", "").strip()
-        token = cfg("GRAPHRAG_ADMIN_TOKEN", "").strip()
-        if not endpoint or not token:
+        audience = cfg("GRAPH_QUERY_AUDIENCE", "").strip()
+        if not endpoint or not audience:
             logger.warning(
                 "search_knowledge_graph: GRAPH_QUERY_URL / "
-                "GRAPHRAG_ADMIN_TOKEN not configured — returning empty result"
+                "GRAPH_QUERY_AUDIENCE not configured — returning "
+                "empty result"
             )
             return GraphSearchResult(references=[], query=normalised_query)
 
@@ -97,6 +108,21 @@ class GraphKnowledgeTools:
             timeout = float(cfg("GRAPH_QUERY_TIMEOUT_SECONDS", str(_DEFAULT_TIMEOUT_SECONDS)))
         except (TypeError, ValueError):
             timeout = _DEFAULT_TIMEOUT_SECONDS
+
+        # Acquire an Entra ID access token for the backend's EasyAuth
+        # audience using the chat-agent's Managed Identity. The
+        # underlying credential caches the token until expiry so
+        # subsequent calls within the lifetime of the sandbox don't
+        # hit AAD again.
+        scope = f"{audience}/.default"
+        try:
+            access_token = await get_credential().get_token(scope)
+        except Exception:
+            logger.exception(
+                "search_knowledge_graph: failed to acquire AAD token for scope=%s",
+                scope,
+            )
+            return GraphSearchResult(references=[], query=normalised_query)
 
         logger.info(
             "Posting graph query to %s (timeout=%.1fs)", endpoint, timeout
@@ -106,7 +132,7 @@ class GraphKnowledgeTools:
             async with httpx.AsyncClient(timeout=timeout) as client:
                 response = await client.post(
                     endpoint,
-                    headers={"X-Admin-Token": token},
+                    headers={"Authorization": f"Bearer {access_token.token}"},
                     json={"query": normalised_query},
                 )
                 response.raise_for_status()

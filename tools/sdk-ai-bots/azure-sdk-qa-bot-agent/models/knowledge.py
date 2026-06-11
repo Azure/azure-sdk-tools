@@ -168,7 +168,7 @@ class GraphSearchResult(BaseModel):
 
 
 class GraphQueryRequest(BaseModel):
-    """Request body for the ``POST /internal/graph/query`` endpoint.
+    """Request body for the ``POST /graph/query`` endpoint.
 
     The chat agent posts here to delegate graph retrieval to the
     long-running backend server, which keeps a warm

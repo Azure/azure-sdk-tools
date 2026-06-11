@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 
 load_dotenv(override=False)
 
-from fastapi import FastAPI, Header, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request
 from models.chat import ChatRequest, ChatResponse
 from models.conversation import ConversationMessage, SaveConversationMessageResponse
 from models.feedback import FeedbackRequest, FeedbackResponse
@@ -284,45 +284,25 @@ async def _update_thread_memory(message: ConversationMessage) -> None:
 
 
 # --------------------------------------------------------------------------- #
-# GraphRAG admin endpoints
+# GraphRAG endpoints (all under /graph)
 # --------------------------------------------------------------------------- #
-# These let the knowledge-graph-sync project tell the bot "I've just
-# published a fresh build — please reload from blob" without restarting
-# the pod. See utils/knowledge_graph.py for the atomic swap mechanics.
-#
-# Auth: a shared secret header (``X-Admin-Token``) is checked against the
-# ``GRAPHRAG_ADMIN_TOKEN`` value loaded from App Configuration.
-# The sync job reads the same secret and includes it in the POST.
+# Authentication is delegated entirely to App Service EasyAuth (Entra ID)
+# at the ingress. Callers must present a bearer token for the backend's
+# audience; the expected callers are:
+#   * the chat-agent's Foundry-assigned Managed Identity (queries)
+#   * the knowledge-graph-sync pipeline's workload identity (reload)
+# Both are listed in the App Registration's allowed identities.
 
 
-def _verify_admin_token(token: str | None) -> None:
-    """Raise 401/503 if the supplied admin token doesn't match the
-    configured ``GRAPHRAG_ADMIN_TOKEN``.
-
-    Treats an empty configured secret as "endpoint disabled" (returns
-    503) — never authorise unauthenticated reloads even by accident.
-    """
-    expected = app_config.get("GRAPHRAG_ADMIN_TOKEN", "")
-    if not expected:
-        raise HTTPException(
-            status_code=503,
-            detail="GraphRAG admin endpoint disabled (GRAPHRAG_ADMIN_TOKEN not configured)",
-        )
-    if not token or token != expected:
-        raise HTTPException(status_code=401, detail="invalid admin token")
-
-
-@app.post("/admin/graphrag/reload")
-async def admin_graphrag_reload(
-    x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
-):
+@app.post("/graph/admin/reload")
+async def graph_admin_reload():
     """Atomically reload the GraphRAG parquets from the configured blob source.
 
-    In-flight Local Search queries keep their captured DataFrame snapshot and
-    finish against the old data; subsequent queries see the new data.
-    On failure the prior build remains active.
+    Called by the knowledge-graph-sync pipeline after publishing a new
+    snapshot. In-flight Local Search queries keep their captured
+    DataFrame snapshot and finish against the old data; subsequent
+    queries see the new data. On failure the prior build remains active.
     """
-    _verify_admin_token(x_admin_token)
     from utils.knowledge_graph import get_knowledge_graph_service
 
     service = get_knowledge_graph_service()
@@ -339,19 +319,16 @@ async def admin_graphrag_reload(
     return status
 
 
-@app.get("/admin/graphrag/status")
-async def admin_graphrag_status(
-    x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
-):
+@app.get("/graph/admin/status")
+async def graph_admin_status():
     """Return the currently-loaded GraphRAG build metadata."""
-    _verify_admin_token(x_admin_token)
     from utils.knowledge_graph import get_knowledge_graph_service
 
     return get_knowledge_graph_service().get_status()
 
 
 # --------------------------------------------------------------------------- #
-# Internal graph-query endpoint (called by chat_agent's search_knowledge_graph)
+# Graph-query endpoint (called by chat_agent's search_knowledge_graph)
 # --------------------------------------------------------------------------- #
 # The chat agent runs in a fresh Foundry sandbox per session — every cold
 # sandbox would otherwise pay ~40s to download parquets + preload community
@@ -360,17 +337,10 @@ async def admin_graphrag_status(
 # KnowledgeGraphService once at startup and re-uses it for the lifetime of
 # the pod, so each call resolves in ~1-2s (one embedding + one AI Search
 # ANN + DataFrame joins).
-#
-# Auth reuses the same ``GRAPHRAG_ADMIN_TOKEN`` already shared with the
-# knowledge-graph-sync project for reload notifications; the chat agent
-# reads it from App Configuration just like server.py does.
 
 
-@app.post("/internal/graph/query", response_model=GraphSearchResult)
-async def internal_graph_query(
-    req: GraphQueryRequest,
-    x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
-) -> GraphSearchResult:
+@app.post("/graph/query", response_model=GraphSearchResult)
+async def graph_query(req: GraphQueryRequest) -> GraphSearchResult:
     """Run a GraphRAG Local-Search retrieval and return references.
 
     The body's ``query`` is run through the warm
@@ -379,7 +349,6 @@ async def internal_graph_query(
     are found — never raises 5xx for query-side failures so the chat
     agent can degrade gracefully.
     """
-    _verify_admin_token(x_admin_token)
     from utils.knowledge_graph import GraphSourceRef, get_knowledge_graph_service
 
     normalised_query = (req.query or "").strip()

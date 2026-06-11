@@ -8,17 +8,20 @@ This module therefore only needs to:
    snapshot prefix. The manifest is written *last* (and is the bot's
    sole source of truth), so partially-built snapshots are never picked
    up.
-2. POST ``BOT_AGENT_RELOAD_URL`` with the shared-secret
-   (``X-Admin-Token: BOT_AGENT_ADMIN_TOKEN``) so the live bot swaps in
-   the new build without a restart. Best-effort — bot will pick the new
-   snapshot up on its next cold start otherwise.
+2. POST ``BOT_AGENT_RELOAD_URL`` with an Entra ID bearer token so the
+   live bot swaps in the new build without a restart. Best-effort —
+   bot will pick the new snapshot up on its next cold start otherwise.
 
 Required env vars:
 
 * ``STORAGE_GRAPHRAG_OUTPUT_CONTAINER``  — destination container (same
   one the build wrote into).
-* ``BOT_AGENT_RELOAD_URL``  *(optional)* — POST endpoint on the bot.
-* ``BOT_AGENT_ADMIN_TOKEN`` *(optional)* — shared secret for the reload.
+* ``BOT_AGENT_RELOAD_URL``      *(optional)* — POST endpoint on the bot
+  (e.g. ``https://<bot>/graph/admin/reload``).
+* ``BOT_AGENT_AUDIENCE``        *(optional)* — Entra ID app/client ID
+  fronting the bot via App Service EasyAuth. Used as the token scope
+  (``<audience>/.default``). Required when ``BOT_AGENT_RELOAD_URL``
+  is set.
 """
 
 from __future__ import annotations
@@ -85,7 +88,7 @@ async def publish_and_notify(snapshot_id: str) -> dict[str, Any] | None:
 
     reload_url = os.environ.get("BOT_AGENT_RELOAD_URL", "").strip()
     if reload_url:
-        await _notify_bot(reload_url, os.environ.get("BOT_AGENT_ADMIN_TOKEN", ""))
+        await _notify_bot(reload_url, os.environ.get("BOT_AGENT_AUDIENCE", "").strip())
     else:
         logger.info(
             "BOT_AGENT_RELOAD_URL not set — bot will pick up snapshot %s on "
@@ -107,25 +110,56 @@ def _write_manifest(container: str, manifest: dict[str, Any]) -> None:
     storage.put_blob(_MANIFEST_BLOB_NAME, json.dumps(manifest, indent=2))
 
 
-async def _notify_bot(reload_url: str, admin_token: str) -> None:
-    """POST the reload endpoint; never raise — log on failure."""
-    if not admin_token:
+async def _acquire_bearer_token(audience: str) -> str | None:
+    """Get an Entra ID access token for the bot's EasyAuth audience.
+
+    Returns ``None`` (with a logged warning) if no credential is
+    available so the caller can skip the notify step gracefully.
+    """
+    try:
+        from azure.identity import DefaultAzureCredential
+    except ImportError:
+        logger.warning("azure-identity not available — cannot acquire AAD token")
+        return None
+
+    def _get() -> str:
+        credential = DefaultAzureCredential()
+        try:
+            return credential.get_token(f"{audience}/.default").token
+        finally:
+            credential.close()
+
+    try:
+        return await asyncio.to_thread(_get)
+    except Exception as exc:
+        logger.warning("Failed to acquire AAD token for audience=%s: %s", audience, exc)
+        return None
+
+
+async def _notify_bot(reload_url: str, audience: str) -> None:
+    """POST the reload endpoint with an Entra ID bearer; never raise — log on failure."""
+    if not audience:
         logger.warning(
-            "BOT_AGENT_ADMIN_TOKEN not set — skipping reload POST to %s",
+            "BOT_AGENT_AUDIENCE not set — skipping reload POST to %s "
+            "(cannot acquire AAD token without an audience)",
             reload_url,
         )
+        return
+
+    token = await _acquire_bearer_token(audience)
+    if not token:
         return
 
     try:
         import httpx  # type: ignore[import-not-found]
     except ImportError:
-        await asyncio.to_thread(_notify_bot_urllib, reload_url, admin_token)
+        await asyncio.to_thread(_notify_bot_urllib, reload_url, token)
         return
 
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             resp = await client.post(
-                reload_url, headers={"X-Admin-Token": admin_token}
+                reload_url, headers={"Authorization": f"Bearer {token}"}
             )
         if resp.status_code >= 400:
             logger.warning(
@@ -139,12 +173,12 @@ async def _notify_bot(reload_url: str, admin_token: str) -> None:
         logger.warning("Bot reload POST failed: %s", exc)
 
 
-def _notify_bot_urllib(reload_url: str, admin_token: str) -> None:
+def _notify_bot_urllib(reload_url: str, token: str) -> None:
     import urllib.error
     import urllib.request
 
     req = urllib.request.Request(
-        reload_url, method="POST", headers={"X-Admin-Token": admin_token}
+        reload_url, method="POST", headers={"Authorization": f"Bearer {token}"}
     )
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:

@@ -1,13 +1,26 @@
-"""Unit tests for the GraphRAG admin endpoints (reload / status).
+"""Unit tests for the GraphRAG endpoints (all under ``/graph``).
 
 These tests avoid touching real blob storage or running Local Search by
 monkeypatching ``KnowledgeGraphService`` on the singleton instance with
-``unittest.mock``. The goal is to lock down the HTTP contract:
-- 503 when ``GRAPHRAG_ADMIN_TOKEN`` is not configured
-- 401 when the supplied token is missing or wrong
+``unittest.mock``. Authentication is delegated to App Service EasyAuth
+at the ingress, which the ``TestClient`` bypasses — so these tests
+cover only application-level behaviour.
+
+Covered contract:
+
+``POST /graph/admin/reload``
 - 409 when the underlying service is not enabled
-- 200 + status dict on success
 - 500 when ``reload`` raises
+- 200 + status dict on success
+
+``GET /graph/admin/status``
+- 200 + status dict
+
+``POST /graph/query``
+- 200 + empty references on blank query, disabled service, ``search_graph``
+  exception, or ``None`` result (never 5xx — chat agent must degrade
+  gracefully)
+- 200 + happy-path response with dedup-by-title and snippet truncation
 """
 
 from __future__ import annotations
@@ -24,12 +37,10 @@ if _PROJECT_ROOT not in sys.path:
 
 from fastapi.testclient import TestClient  # noqa: E402
 
-import config.app_config as app_config  # noqa: E402
 import server  # noqa: E402
 from utils import knowledge_graph as kg  # noqa: E402
 
 
-_TOKEN = "test-admin-token-12345"
 _STATUS_PAYLOAD = {
     "enabled": True,
     "loaded": True,
@@ -48,13 +59,7 @@ _STATUS_PAYLOAD = {
 
 
 @pytest.fixture
-def client(monkeypatch):
-    """Yield a FastAPI test client with the admin token loaded into App Config."""
-    # ``config.app_config.get`` reads from the module-level ``_settings``
-    # dict that's populated by ``init()`` against Azure App Configuration.
-    # We bypass init() here by injecting the dict directly so the admin
-    # token check finds it via ``app_config.get('GRAPHRAG_ADMIN_TOKEN', '')``.
-    monkeypatch.setattr(app_config, "_settings", {"GRAPHRAG_ADMIN_TOKEN": _TOKEN})
+def client():
     with TestClient(server.app) as c:
         yield c
 
@@ -66,44 +71,25 @@ def fake_service():
     service.enabled = True
     service.get_status = lambda: _STATUS_PAYLOAD
     service.reload = AsyncMock(return_value=_STATUS_PAYLOAD)
-    # The endpoint imports the helper lazily; patch the source module so
-    # both server.py's import and any other consumer see the same fake.
     with patch.object(kg, "get_knowledge_graph_service", return_value=service):
         yield service
 
 
-def test_reload_requires_configured_token(monkeypatch):
-    """Without GRAPHRAG_ADMIN_TOKEN the endpoint is hard-disabled (503)."""
-    monkeypatch.setattr(app_config, "_settings", {})
-    with TestClient(server.app) as client:
-        resp = client.post("/admin/graphrag/reload", headers={"X-Admin-Token": "x"})
-    assert resp.status_code == 503
-
-
-def test_reload_rejects_wrong_token(client):
-    resp = client.post("/admin/graphrag/reload", headers={"X-Admin-Token": "wrong"})
-    assert resp.status_code == 401
-
-
-def test_reload_rejects_missing_header(client):
-    resp = client.post("/admin/graphrag/reload")
-    assert resp.status_code == 401
+# ---------------------------------------------------------------------------
+# /graph/admin/reload
+# ---------------------------------------------------------------------------
 
 
 def test_reload_returns_409_when_disabled(client):
     service = AsyncMock()
     service.enabled = False
     with patch.object(kg, "get_knowledge_graph_service", return_value=service):
-        resp = client.post(
-            "/admin/graphrag/reload", headers={"X-Admin-Token": _TOKEN}
-        )
+        resp = client.post("/graph/admin/reload")
     assert resp.status_code == 409
 
 
 def test_reload_success(client, fake_service):
-    resp = client.post(
-        "/admin/graphrag/reload", headers={"X-Admin-Token": _TOKEN}
-    )
+    resp = client.post("/graph/admin/reload")
     assert resp.status_code == 200
     assert resp.json() == _STATUS_PAYLOAD
     fake_service.reload.assert_awaited_once()
@@ -114,26 +100,24 @@ def test_reload_propagates_failure_as_500(client):
     service.enabled = True
     service.reload = AsyncMock(side_effect=RuntimeError("blob unavailable"))
     with patch.object(kg, "get_knowledge_graph_service", return_value=service):
-        resp = client.post(
-            "/admin/graphrag/reload", headers={"X-Admin-Token": _TOKEN}
-        )
+        resp = client.post("/graph/admin/reload")
     assert resp.status_code == 500
     assert "blob unavailable" in resp.json()["detail"]
 
 
-def test_status_requires_token(client):
-    resp = client.get("/admin/graphrag/status", headers={"X-Admin-Token": "wrong"})
-    assert resp.status_code == 401
+# ---------------------------------------------------------------------------
+# /graph/admin/status
+# ---------------------------------------------------------------------------
 
 
 def test_status_returns_payload(client, fake_service):
-    resp = client.get("/admin/graphrag/status", headers={"X-Admin-Token": _TOKEN})
+    resp = client.get("/graph/admin/status")
     assert resp.status_code == 200
     assert resp.json() == _STATUS_PAYLOAD
 
 
 # ---------------------------------------------------------------------------
-# /internal/graph/query — route-A backend endpoint exercised by the chat agent
+# /graph/query
 # ---------------------------------------------------------------------------
 
 
@@ -144,76 +128,39 @@ def _make_source_ref(title: str, link: str, content: str, source: str):
     return GraphSourceRef(title=title, link=link, content=content, source=source)
 
 
-def test_internal_graph_query_requires_configured_token(monkeypatch):
-    monkeypatch.setattr(app_config, "_settings", {})
-    with TestClient(server.app) as c:
-        resp = c.post(
-            "/internal/graph/query",
-            headers={"X-Admin-Token": "x"},
-            json={"query": "hello"},
-        )
-    assert resp.status_code == 503
-
-
-def test_internal_graph_query_rejects_wrong_token(client):
-    resp = client.post(
-        "/internal/graph/query",
-        headers={"X-Admin-Token": "wrong"},
-        json={"query": "hello"},
-    )
-    assert resp.status_code == 401
-
-
-def test_internal_graph_query_rejects_missing_header(client):
-    resp = client.post("/internal/graph/query", json={"query": "hello"})
-    assert resp.status_code == 401
-
-
-def test_internal_graph_query_blank_query_returns_empty(client):
+def test_graph_query_blank_query_returns_empty(client):
     """Whitespace-only query short-circuits to an empty result (no service call)."""
     service = AsyncMock()
     service.enabled = True
     service.search_graph = AsyncMock()
     with patch.object(kg, "get_knowledge_graph_service", return_value=service):
-        resp = client.post(
-            "/internal/graph/query",
-            headers={"X-Admin-Token": _TOKEN},
-            json={"query": "   "},
-        )
+        resp = client.post("/graph/query", json={"query": "   "})
     assert resp.status_code == 200
     assert resp.json() == {"references": [], "query": ""}
     service.search_graph.assert_not_called()
 
 
-def test_internal_graph_query_disabled_service_returns_empty(client):
+def test_graph_query_disabled_service_returns_empty(client):
     service = AsyncMock()
     service.enabled = False
     with patch.object(kg, "get_knowledge_graph_service", return_value=service):
-        resp = client.post(
-            "/internal/graph/query",
-            headers={"X-Admin-Token": _TOKEN},
-            json={"query": "hello"},
-        )
+        resp = client.post("/graph/query", json={"query": "hello"})
     assert resp.status_code == 200
     assert resp.json() == {"references": [], "query": "hello"}
 
 
-def test_internal_graph_query_service_exception_returns_empty(client):
+def test_graph_query_service_exception_returns_empty(client):
     service = AsyncMock()
     service.enabled = True
     service.search_graph = AsyncMock(side_effect=RuntimeError("graph oom"))
     with patch.object(kg, "get_knowledge_graph_service", return_value=service):
-        resp = client.post(
-            "/internal/graph/query",
-            headers={"X-Admin-Token": _TOKEN},
-            json={"query": "hello"},
-        )
+        resp = client.post("/graph/query", json={"query": "hello"})
     # Never 5xx for query-side failures — chat agent must degrade gracefully.
     assert resp.status_code == 200
     assert resp.json() == {"references": [], "query": "hello"}
 
 
-def test_internal_graph_query_happy_path_with_dedup_and_truncation(client):
+def test_graph_query_happy_path_with_dedup_and_truncation(client):
     long_body = "x" * 1500  # > _GRAPH_SNIPPET_MAX_CHARS (1200)
     refs = [
         _make_source_ref(
@@ -240,11 +187,7 @@ def test_internal_graph_query_happy_path_with_dedup_and_truncation(client):
     service.enabled = True
     service.search_graph = AsyncMock(return_value=refs)
     with patch.object(kg, "get_knowledge_graph_service", return_value=service):
-        resp = client.post(
-            "/internal/graph/query",
-            headers={"X-Admin-Token": _TOKEN},
-            json={"query": "what is X?"},
-        )
+        resp = client.post("/graph/query", json={"query": "what is X?"})
 
     assert resp.status_code == 200
     body = resp.json()
@@ -262,16 +205,13 @@ def test_internal_graph_query_happy_path_with_dedup_and_truncation(client):
     assert doc2["snippet"].startswith("x" * 1200)
 
 
-def test_internal_graph_query_search_returns_none(client):
+def test_graph_query_search_returns_none(client):
     """``service.search_graph`` may return None when the engine is half-loaded."""
     service = AsyncMock()
     service.enabled = True
     service.search_graph = AsyncMock(return_value=None)
     with patch.object(kg, "get_knowledge_graph_service", return_value=service):
-        resp = client.post(
-            "/internal/graph/query",
-            headers={"X-Admin-Token": _TOKEN},
-            json={"query": "hello"},
-        )
+        resp = client.post("/graph/query", json={"query": "hello"})
     assert resp.status_code == 200
     assert resp.json() == {"references": [], "query": "hello"}
+

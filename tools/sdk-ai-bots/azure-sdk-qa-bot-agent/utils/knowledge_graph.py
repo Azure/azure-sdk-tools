@@ -45,7 +45,7 @@ GraphRAG splits its query-time inputs into two stores:
 The parquet artefacts are loaded once (lazily, on first query) from
 the Azure Blob container named by ``STORAGE_GRAPHRAG_OUTPUT_CONTAINER``;
 the bot atomically swaps in a new build whenever the sync project calls
-``POST /admin/graphrag/reload``.
+``POST /graph/admin/reload``.
 """
 
 from __future__ import annotations
@@ -169,7 +169,7 @@ class KnowledgeGraphService:
         self._context_params: dict[str, Any] = {}
         # Metadata for the currently-loaded build (manifest contents +
         # row counts). Populated on every successful load / reload so
-        # ``GET /admin/graphrag/status`` can report what's serving traffic.
+        # ``GET /graph/admin/status`` can report what's serving traffic.
         self._loaded_version: dict[str, Any] | None = None
         self._load_lock = asyncio.Lock()
 
@@ -196,7 +196,7 @@ class KnowledgeGraphService:
         engine_ready = self._context_builder is not None
         # "loaded" means fully usable — both parquets and the context
         # builder are ready. A partially-loaded state (parquets only) is
-        # exposed via the granular fields so /admin/graphrag/status can
+        # exposed via the granular fields so /graph/admin/status can
         # surface the half-loaded condition.
         status: dict[str, Any] = {
             "enabled": self._enabled,

@@ -43,7 +43,7 @@ steps:
     continueOnError: true
     condition: always()
     env:
-      GITHUB_TOKEN: $(GH_TOKEN)
+      GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
       FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
 
   - script: |

@@ -124,6 +124,7 @@ Chat agent (hosted agent) deployed to a Foundry project.
 | `sites_azuresdkqabot_server_name_resource` | `Web/sites` | `site3` | **Deploy** |
 | `sites_azuresdkqabot_server_name_main` | `Web/sites/sitecontainers` | `sitecontainer` | **Deploy** |
 | `sites_azuresdkqabot_server_name_agent` | `Web/sites/slots` | `slot` | **Deploy** |
+| App Service Authentication (Entra ID) | `Web/sites/config` (`authsettingsV2`) | — | **Deploy** |
 | `components_azuresdkqabot_server_name_resource` | `Insights/components` | `component4` | **Deploy** |
 | `metricAlerts_azuresdkqabot_alert_name_resource` | `Insights/metricAlerts` | `metricAlert2` | **Deploy** |
 | `sites_azuresdkqabot_server_name_ftp` | `Web/sites/basicPublishingCredentialsPolicies` | `basicPublishingCredentialsPolicy5` | Auto-created |

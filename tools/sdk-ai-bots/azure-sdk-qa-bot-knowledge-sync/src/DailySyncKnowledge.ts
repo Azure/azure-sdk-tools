@@ -185,7 +185,7 @@ function getAuthenticatedUrl(repo: RepositoryConfig): string {
             throw new Error(`Authentication token missing for ${repo.name}`);
         }
         console.log(`Using token authentication for ${repo.name}`);
-        return repo.url.replace('https://', `https://${repo.token}@`);
+        return repo.url.replace('https://', `https://x-access-token:${repo.token}@`);
     }
     
     if (repo.authType === 'ssh') {

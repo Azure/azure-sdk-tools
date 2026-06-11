@@ -3,6 +3,7 @@
 using System.CommandLine;
 using System.ComponentModel;
 using System.Text;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
@@ -32,6 +33,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
     private const string CustomizedCodeUpdateToolName = "azsdk_customized_code_update";
     private const int CommandTimeoutInMinutes = 30;
+    private const string MissingTypeSpecProjectPathMessage = "TypeSpec project path is missing; cannot run regeneration.";
 
     // Classification categories returned by the classifier
     private const string ClassificationTspApplicable = "TSP_APPLICABLE";
@@ -133,7 +135,14 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A <see cref="CustomizedCodeUpdateResponse"/> indicating the outcome.</returns>
     [McpServerTool(Name = CustomizedCodeUpdateToolName), Description("Applies patches to customization files based on build errors, regenerates code if needed (Java), builds, and returns success/failure with build result.")]
-    public Task<CustomizedCodeUpdateResponse> UpdateAsync(string packagePath, string tspProjectPath, string customizationRequest, CancellationToken ct = default)
+    public Task<CustomizedCodeUpdateResponse> UpdateAsync(
+        [Description("Absolute path to the SDK package directory. REQUIRED. Example: 'path/to/azure-sdk-for-java/sdk/healthdataaiservices/azure-health-deidentification'.")]
+        string packagePath,
+        [Description("Absolute path to the local TypeSpec project directory (containing main.tsp/client.tsp) where customizations will be applied. REQUIRED. Example: 'path/to/azure-rest-api-specs/specification/healthdataaiservices/HealthDataAIServices.DeidServices'.")]
+        string tspProjectPath,
+        [Description("Description of the requested customization to apply to the TypeSpec or SDK code. Can also be an APIView URL for feedback-driven customizations. REQUIRED.")]
+        string customizationRequest,
+        CancellationToken ct = default)
         => RunUpdateAsync(packagePath, tspProjectPath, customizationRequest, ct);
 
     /// <summary>
@@ -201,16 +210,40 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 language: languageService.Language.ToString(),
                 ct: ct);
         }
-        catch (Exception ex)
+        catch (CopilotCliUnavailableException ex)
         {
-            logger.LogError(ex, "No feedback items to process.");
+            logger.LogError(ex, "GitHub Copilot CLI is not available.");
             return new CustomizedCodeUpdateResponse
             {
                 Success = false,
-                ResponseError = "No feedback items provided. Please supply a customization request or API review URL.",
-                Message = "No feedback items provided. Please supply a customization request or API review URL.",
+                ResponseError = ex.Message,
+                Message = ex.Message,
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError,
+                BuildResult = ex.Message
+            };
+        }
+        catch (ArgumentException ex)
+        {
+            logger.LogError(ex, "Invalid input for feedback classification.");
+            return new CustomizedCodeUpdateResponse
+            {
+                Success = false,
+                ResponseError = ex.Message,
+                Message = ex.Message,
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
-                BuildResult = "No feedback items to process."
+                BuildResult = ex.Message
+            };
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Feedback classification failed unexpectedly.");
+            return new CustomizedCodeUpdateResponse
+            {
+                Success = false,
+                ResponseError = $"Feedback classification failed: {ex.Message}",
+                Message = $"Feedback classification failed: {ex.Message}",
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError,
+                BuildResult = $"Feedback classification failed: {ex.Message}"
             };
         }
         var feedbackDictionary = feedbackItems.ToDictionary(i => i.Id, i => i);
@@ -323,7 +356,17 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         if (tspFixSucceeded > 0)
         {
             logger.LogDebug("Regenerating {packagePath}", packagePath);
-            var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: tspProjectPath, isCli: false, ct: ct);
+
+            if (!TryResolveLocalSpecProjectPath(tspProjectPath, MissingTypeSpecProjectPathMessage, out var localSpecProjectPath, out var errorResponse))
+            {
+                return errorResponse!;
+            }
+
+            logger.LogDebug("Using local spec project for regeneration: {localSpecProjectPath}", localSpecProjectPath);
+
+            var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
+            await languageService.PreGenerateAsync(repoRoot, ct);
+            var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: localSpecProjectPath, isCli: false, ct: ct);
             if (!regenResult.IsSuccessful)
             {
                 logger.LogWarning("Regeneration failed: {Error}", regenResult.ResponseError);
@@ -489,7 +532,15 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         if (languageService.Language == SdkLanguage.Java)
         {
             logger.LogInformation("Regenerating code after patches (Java)...");
-            var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: tspProjectPath, isCli: false, ct: ct);
+
+            if (!TryResolveLocalSpecProjectPath(tspProjectPath, MissingTypeSpecProjectPathMessage, out var localSpecProjectPath, out var errorResponse))
+            {
+                return errorResponse!;
+            }
+
+            logger.LogDebug("Using local spec project for Java regeneration: {localSpecProjectPath}", localSpecProjectPath);
+
+            var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: localSpecProjectPath, isCli: false, ct: ct);
             if (!regenResult.IsSuccessful)
             {
                 logger.LogWarning("Regeneration failed: {Error}", regenResult.ResponseError);
@@ -570,6 +621,35 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         logger.LogInformation("Detecting language from package path: {PackagePath}", packagePath);
         return await GetLanguageServiceAsync(packagePath, ct);
     }
+
+    private bool TryResolveLocalSpecProjectPath(
+        string? tspProjectPath,
+        string missingPathMessage,
+        out string? localSpecProjectPath,
+        out CustomizedCodeUpdateResponse? errorResponse)
+    {
+        localSpecProjectPath = null;
+        errorResponse = null;
+
+        if (string.IsNullOrWhiteSpace(tspProjectPath))
+        {
+            logger.LogError("{ErrorMessage}", missingPathMessage);
+            errorResponse = CreateInvalidInputResponse(missingPathMessage);
+            return false;
+        }
+
+        localSpecProjectPath = Path.GetFullPath(tspProjectPath);
+        return true;
+    }
+
+    private static CustomizedCodeUpdateResponse CreateInvalidInputResponse(string message) => new()
+    {
+        Success = false,
+        ResponseError = message,
+        Message = message,
+        ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+        BuildResult = message
+    };
 
     /// <summary>
     /// Builds a formatted context string for the patch agent, combining the original request,

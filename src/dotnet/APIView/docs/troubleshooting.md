@@ -114,4 +114,6 @@ This is the fastest and least error-prone way to diagnose release issues.
 
 ## Get Help
 
+For additional troubleshooting guidance, see the [APIView Troubleshooting Guide](https://eng.ms/docs/products/azure-developer-experience/support/troubleshoot/apiview-troubleshoot).
+
 For questions and support, use the **Azure SDK Engineering System Teams channel**.

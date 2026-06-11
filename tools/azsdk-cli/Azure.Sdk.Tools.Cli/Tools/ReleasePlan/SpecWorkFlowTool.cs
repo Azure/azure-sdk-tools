@@ -66,7 +66,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private readonly Option<int> workItemIdOpt = new("--workitem-id")
         {
             Description = "SDK release plan work item id",
-            Required = false,
+            Required = true,
         };
 
         private readonly Option<int> pipelineRunIdOpt = new("--pipeline-run")
@@ -108,9 +108,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 generateSdkCommandName => await RunGenerateSdkAsync(commandParser.GetValue(typeSpecProjectPathOpt),
                                         commandParser.GetValue(sdkReleaseTypeOpt),
-                                        commandParser.GetValue(languageOpt),
+                                        commandParser.GetValue(languageOpt),                                        
                                         commandParser.GetValue(pullRequestNumberOpt),
-                                        commandParser.GetValue(workItemIdOpt),
+                                        commandParser.GetValue(workItemIdOpt),                                     
                                         commandParser.GetValue(apiVersionOpt),
                                         ct),
                 getSdkPullRequestCommandName => await GetSDKPullRequestDetails(commandParser.GetValue(languageOpt), workItemId: commandParser.GetValue(workItemIdOpt), buildId: commandParser.GetValue(pipelineRunIdOpt), ct: ct),
@@ -178,7 +178,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        [McpServerTool(Name = RunGenerateSdkToolName), Description("Generate SDK from a TypeSpec project using pipeline.")]
+        [McpServerTool(Name = RunGenerateSdkToolName), Description("Generate SDK from a TypeSpec project using pipeline. Release plan work item ID is required to run SDK generation.")]
         public async Task<ReleaseWorkflowResponse> RunGenerateSdkAsync(string typespecProjectRoot, string sdkReleaseType, string language, int pullRequestNumber = 0, int workItemId = 0, string apiVersion = "", CancellationToken ct = default)
         {
             try
@@ -188,6 +188,29 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     Status = "Success",
                     ResponseErrors = []
                 };
+
+                if (workItemId == 0)
+                {
+                    response.ResponseErrors.Add("Release plan work item ID is required to run SDK generation.");
+                    response.Status = "Failed";
+                    response.NextSteps = ["Create a release plan if you don't have one or get existing release plan and re-run SDK generation."];
+                    return response;
+                }
+                var releasePlan = await devopsService.GetReleasePlanForWorkItemAsync(workItemId, ct);
+                if (releasePlan == null)
+                {
+                    response.ResponseErrors.Add($"No release plan found for work item ID {workItemId}. Please check the work item ID and try again.");
+                    response.Status = "Failed";
+                    return response;
+                }
+
+                if (releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview)
+                {
+                    response.Details.Add($"Release plan with work item ID {workItemId} is in Private Preview stage. Important: SDK cannot be generated and released for private preview release plans and private preview release plan only requires to merge API spec PR. If required for validation purposes, you can generate the SDK locally only and only for SDK validation.");
+                    response.Status = "Success";
+                    return response;
+                }
+
                 language = inputSanitizer.SanitizeLanguage(language);
                 logger.LogInformation(
                     "Generating SDK for TypeSpec project: {TypespecProjectRoot}, API Version: {ApiVersion}, SDK Release Type: {SdkReleaseType}, Language: {Language}, Pull Request Number: {PullRequestNumber}, Work Item ID: {WorkItemId}",
@@ -253,8 +276,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     apiSpecBranchRef = (pullRequest?.Merged ?? false) ? pullRequest.Base.Ref : $"refs/pull/{pullRequestNumber}/merge";
                 }
 
-                string sdkRepoBranch = "";
-                var releasePlan = workItemId != 0 ? await devopsService.GetReleasePlanForWorkItemAsync(workItemId, ct) : null;
+                string sdkRepoBranch = "";                
                 var sdkPullRequestUrl = releasePlan?.SDKInfo.FirstOrDefault(s => s.Language == language)?.SdkPullRequestUrl;
                 if (!string.IsNullOrEmpty(sdkPullRequestUrl))
                 {

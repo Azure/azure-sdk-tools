@@ -46,7 +46,7 @@
         "eslint-plugin-simple-import-sort": "^13.0.0",
         "globals": "^17.4.0",
         "jest": "^30.0.0",
-        "jest-junit": "^16.0.0",
+        "jest-junit": "^17.0.0",
         "jsonpath-plus": "^10.0.0",
         "lodash": "^4.17.21",
         "prettier": "^3.4.1",

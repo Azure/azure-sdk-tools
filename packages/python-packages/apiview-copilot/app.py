@@ -28,6 +28,7 @@ from src._auth import AppRole, require_roles
 from src._database_manager import DatabaseManager
 from src._diff import create_diff_with_line_numbers
 from src._mention import handle_mention_request
+from src._report_issue import handle_report_issue_request
 from src._settings import SettingsManager
 from src._thread_resolution import handle_thread_resolution_request
 from src._prompt_runner import run_prompt
@@ -414,6 +415,55 @@ async def resolve_package_info(
         raise
     except Exception as e:
         logger.error("Error in /api-review/resolve-package: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error") from e
+
+
+class ReportIssueRequest(BaseModel):
+    """Request model for reporting an issue from APIView."""
+
+    description: str = Field(..., min_length=1)
+    review_link: Optional[str] = Field(None, alias="reviewLink")
+    language: Optional[str] = None
+    comment_id: Optional[str] = Field(None, alias="commentId")
+
+    class Config:
+        """Configuration for Pydantic model."""
+
+        populate_by_name = True
+
+
+class ReportIssueResponse(BaseModel):
+    """Response model for a reported issue."""
+
+    issue_url: str = Field(..., alias="issueUrl")
+    issue_number: int = Field(..., alias="issueNumber")
+
+    class Config:
+        """Configuration for Pydantic model."""
+
+        populate_by_name = True
+
+
+@app.post("/report-issue", response_model=ReportIssueResponse)
+async def report_issue(
+    request: ReportIssueRequest,
+    _claims=Depends(require_roles(AppRole.WRITER, AppRole.APP_WRITER)),
+):
+    """Report an issue from APIView. Creates a GitHub issue with context."""
+    logger.info("Received /report-issue request")
+    try:
+        result = await asyncio.to_thread(
+            handle_report_issue_request,
+            description=request.description,
+            review_link=request.review_link,
+            language=request.language,
+            comment_id=request.comment_id,
+        )
+        return ReportIssueResponse(issue_url=result["issue_url"], issue_number=result["issue_number"])
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        logger.error("Error in /report-issue: %s", e, exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error") from e
 
 

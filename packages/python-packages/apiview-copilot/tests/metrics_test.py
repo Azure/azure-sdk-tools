@@ -556,6 +556,7 @@ class TestMetrics:
                 "id": "c1",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev1a",  # Comment on first revision
+                "ElementId": "e1",
                 "CommentText": "AI comment 1",
                 "CreatedBy": "azure-sdk",
                 "CreatedOn": created_on,
@@ -567,6 +568,7 @@ class TestMetrics:
                 "id": "c2",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev1b",  # Comment on second revision
+                "ElementId": "e2",
                 "CommentText": "AI comment 2",
                 "CreatedBy": "azure-sdk",
                 "CreatedOn": created_on,
@@ -578,6 +580,7 @@ class TestMetrics:
                 "id": "c3",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev1a",  # Another comment on first revision
+                "ElementId": "e3",
                 "CommentText": "Human comment",
                 "CreatedBy": "user1",
                 "CreatedOn": created_on,
@@ -639,6 +642,7 @@ class TestMetrics:
                 "id": "c1",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev1a",
+                "ElementId": "elem1",
                 "CommentText": "AI comment",
                 "CreatedBy": "azure-sdk",
                 "CreatedOn": created_on,
@@ -650,6 +654,7 @@ class TestMetrics:
                 "id": "c2",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev1b",
+                "ElementId": "elem2",
                 "CommentText": "Human comment",
                 "CreatedBy": "user1",
                 "CreatedOn": created_on,
@@ -662,6 +667,7 @@ class TestMetrics:
                 "id": "c3",
                 "ReviewId": "review2",
                 "APIRevisionId": "rev2a",
+                "ElementId": "elem3",
                 "CommentText": "Human comment 1",
                 "CreatedBy": "user2",
                 "CreatedOn": created_on,
@@ -673,6 +679,7 @@ class TestMetrics:
                 "id": "c4",
                 "ReviewId": "review2",
                 "APIRevisionId": "rev2b",
+                "ElementId": "elem4",
                 "CommentText": "Human comment 2",
                 "CreatedBy": "user3",
                 "CreatedOn": created_on,
@@ -722,6 +729,7 @@ class TestMetrics:
                 "id": "c1",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev1",
+                "ElementId": "e1",
                 "CommentText": "AI comment",
                 "CreatedBy": "azure-sdk",
                 "CreatedOn": created_on,
@@ -733,6 +741,7 @@ class TestMetrics:
                 "id": "c2",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev1",
+                "ElementId": "e2",
                 "CommentText": "Diagnostic comment",
                 "CreatedBy": "system",
                 "CreatedOn": created_on,
@@ -744,6 +753,7 @@ class TestMetrics:
                 "id": "c3",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev1",
+                "ElementId": "e3",
                 "CommentText": "Human comment",
                 "CreatedBy": "user1",
                 "CreatedOn": created_on,
@@ -787,6 +797,7 @@ class TestMetrics:
                 "id": "c1",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev1",
+                "ElementId": "e1",
                 "CommentText": "Deleted AI comment with upvotes",
                 "CreatedBy": "azure-sdk",
                 "CreatedOn": created_on,
@@ -799,6 +810,7 @@ class TestMetrics:
                 "id": "c2",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev1",
+                "ElementId": "e2",
                 "CommentText": "Deleted AI comment",
                 "CreatedBy": "azure-sdk",
                 "CreatedOn": created_on,
@@ -811,6 +823,7 @@ class TestMetrics:
                 "id": "c3",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev1",
+                "ElementId": "e3",
                 "CommentText": "Non-deleted AI comment with upvotes",
                 "CreatedBy": "azure-sdk",
                 "CreatedOn": created_on,
@@ -859,6 +872,7 @@ class TestMetrics:
                 "id": "c1",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev1",
+                "ElementId": "e1",
                 "CommentText": "Resolved AI comment",
                 "CreatedBy": "azure-sdk",
                 "CreatedOn": created_on,
@@ -871,6 +885,7 @@ class TestMetrics:
                 "id": "c2",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev1",
+                "ElementId": "e2",
                 "CommentText": "Unresolved AI comment",
                 "CreatedBy": "azure-sdk",
                 "CreatedOn": created_on,
@@ -1008,6 +1023,7 @@ class TestMetrics:
                 "id": "c1",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev1",
+                "ElementId": "e1",
                 "CommentText": "AI comment with both up and downvotes",
                 "CreatedBy": "azure-sdk",
                 "CreatedOn": created_on,
@@ -1019,6 +1035,7 @@ class TestMetrics:
                 "id": "c2",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev1",
+                "ElementId": "e2",
                 "CommentText": "AI comment with only upvotes",
                 "CreatedBy": "azure-sdk",
                 "CreatedOn": created_on,
@@ -1146,6 +1163,7 @@ class TestMetrics:
                 "id": "c1",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev1",
+                "ElementId": "e1",
                 "CommentText": "Deleted",
                 "CreatedBy": "azure-sdk",
                 "CreatedOn": created_on,
@@ -1157,6 +1175,7 @@ class TestMetrics:
                 "id": "c2",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev1",
+                "ElementId": "e2",
                 "CommentText": "Bad",
                 "CreatedBy": "azure-sdk",
                 "CreatedOn": created_on,
@@ -1168,6 +1187,7 @@ class TestMetrics:
                 "id": "c3",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev1",
+                "ElementId": "e3",
                 "CommentText": "Good",
                 "CreatedBy": "azure-sdk",
                 "CreatedOn": created_on,
@@ -1179,6 +1199,7 @@ class TestMetrics:
                 "id": "c4",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev1",
+                "ElementId": "e4",
                 "CommentText": "Implicit good",
                 "CreatedBy": "azure-sdk",
                 "CreatedOn": created_on,
@@ -1190,6 +1211,7 @@ class TestMetrics:
                 "id": "c5",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev1",
+                "ElementId": "e5",
                 "CommentText": "Implicit bad",
                 "CreatedBy": "azure-sdk",
                 "CreatedOn": created_on,
@@ -1200,6 +1222,7 @@ class TestMetrics:
                 "id": "c6",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev2",
+                "ElementId": "e6",
                 "CommentText": "Neutral",
                 "CreatedBy": "azure-sdk",
                 "CreatedOn": created_on,
@@ -1263,6 +1286,7 @@ class TestMetrics:
                 "id": "c1",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev1",
+                "ElementId": "e1",
                 "CommentSource": "AIGenerated",
                 "Upvotes": ["user1"],
                 "Downvotes": [],
@@ -1272,6 +1296,7 @@ class TestMetrics:
                 "id": "c2",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev1",
+                "ElementId": "e2",
                 "CommentSource": "AIGenerated",
                 "Upvotes": ["user2"],
                 "Downvotes": [],
@@ -1282,6 +1307,7 @@ class TestMetrics:
                 "id": "c3",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev1",
+                "ElementId": "e3",
                 "CommentSource": "AIGenerated",
                 "Upvotes": [],
                 "Downvotes": ["user1"],
@@ -1292,6 +1318,7 @@ class TestMetrics:
                 "id": "c4",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev1",
+                "ElementId": "e4",
                 "CommentSource": "AIGenerated",
                 "IsDeleted": True,
                 "ConfidenceScore": 0.5,
@@ -1301,6 +1328,7 @@ class TestMetrics:
                 "id": "c5",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev1",
+                "ElementId": "e5",
                 "CommentSource": "AIGenerated",
                 "IsResolved": True,
                 "ConfidenceScore": 0.7,
@@ -1310,6 +1338,7 @@ class TestMetrics:
                 "id": "c6",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev1",
+                "ElementId": "e6",
                 "CommentSource": "AIGenerated",
                 "ConfidenceScore": 0.4,
             },
@@ -1318,6 +1347,7 @@ class TestMetrics:
                 "id": "c7",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev2",
+                "ElementId": "e7",
                 "CommentSource": "AIGenerated",
                 "ConfidenceScore": 0.9,
             },
@@ -1370,6 +1400,7 @@ class TestMetrics:
                 "id": "c1",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev1",
+                "ElementId": "e1",
                 "CommentSource": "AIGenerated",
                 "Upvotes": ["user1"],
                 "Downvotes": [],
@@ -1380,6 +1411,7 @@ class TestMetrics:
                 "id": "c2",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev1",
+                "ElementId": "e2",
                 "CommentSource": "AIGenerated",
                 "Upvotes": ["user2"],
                 "Downvotes": [],
@@ -1390,6 +1422,7 @@ class TestMetrics:
                 "id": "c3",
                 "ReviewId": "review1",
                 "APIRevisionId": "rev1",
+                "ElementId": "e3",
                 "CommentSource": "AIGenerated",
                 "Upvotes": [],
                 "Downvotes": ["user1"],
@@ -1409,3 +1442,276 @@ class TestMetrics:
         assert cq["avg_confidence_good"] == 0.8
         # Avg bad should be None (no scores available)
         assert cq["avg_confidence_bad"] is None
+
+    @patch("src._metrics.get_active_reviews")
+    def test_thread_replies_not_counted_separately(self, mock_get_reviews):
+        """Test that replies in a thread are not counted — only the thread root counts."""
+        review1 = ActiveReviewMetadata(
+            review_id="review1",
+            name="azure-storage-blob",
+            language="Python",
+            revisions=[
+                ActiveRevisionMetadata(
+                    revision_ids=["rev1"],
+                    package_version="1.0.0",
+                    approval="2026-01-06T00:00:00Z",
+                    has_copilot_review=True,
+                    version_type="GA",
+                )
+            ],
+        )
+
+        comments = [
+            # AI comment starts the thread (root)
+            {
+                "id": "c1",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "ElementId": "e1",
+                "ThreadId": "thread1",
+                "CreatedOn": "2026-01-07T10:00:00Z",
+                "CommentSource": "AIGenerated",
+                "Upvotes": ["user1"],
+                "Downvotes": [],
+            },
+            # Human reply in the same thread
+            {
+                "id": "c2",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "ElementId": "e1",
+                "ThreadId": "thread1",
+                "CreatedOn": "2026-01-07T11:00:00Z",
+                "CommentSource": "UserGenerated",
+                "Upvotes": [],
+                "Downvotes": [],
+            },
+            # Another human reply in the same thread
+            {
+                "id": "c3",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "ElementId": "e1",
+                "ThreadId": "thread1",
+                "CreatedOn": "2026-01-07T12:00:00Z",
+                "CommentSource": "UserGenerated",
+                "Upvotes": [],
+                "Downvotes": [],
+            },
+        ]
+
+        mock_get_reviews.return_value = ([review1], comments)
+
+        report = metrics.get_metrics_report("2026-01-01", "2026-01-31", environment="test")
+        py_metrics = report["metrics"]["Python"]
+
+        # Only the root comment (c1, AI) should be counted — replies ignored
+        assert py_metrics["comment_quality"]["ai_comment_count"] == 1
+        assert py_metrics["comment_quality"]["good_count"] == 1  # c1 has upvotes
+        assert py_metrics["comment_makeup"]["human_comment_count_with_ai"] == 0  # replies not counted
+
+    @patch("src._metrics.get_active_reviews")
+    def test_human_thread_root_counted_as_human(self, mock_get_reviews):
+        """Test that a thread started by a human counts as 1 human comment, replies excluded."""
+        review1 = ActiveReviewMetadata(
+            review_id="review1",
+            name="azure-storage-blob",
+            language="Python",
+            revisions=[
+                ActiveRevisionMetadata(
+                    revision_ids=["rev1"],
+                    package_version="1.0.0",
+                    approval="2026-01-06T00:00:00Z",
+                    has_copilot_review=True,
+                    version_type="GA",
+                )
+            ],
+        )
+
+        comments = [
+            # Human starts the thread
+            {
+                "id": "c1",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "ElementId": "e1",
+                "ThreadId": "thread1",
+                "CreatedOn": "2026-01-07T10:00:00Z",
+                "CommentSource": "UserGenerated",
+                "Upvotes": [],
+                "Downvotes": [],
+            },
+            # Another human replies
+            {
+                "id": "c2",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "ElementId": "e1",
+                "ThreadId": "thread1",
+                "CreatedOn": "2026-01-07T11:00:00Z",
+                "CommentSource": "UserGenerated",
+                "Upvotes": [],
+                "Downvotes": [],
+            },
+        ]
+
+        mock_get_reviews.return_value = ([review1], comments)
+
+        report = metrics.get_metrics_report("2026-01-01", "2026-01-31", environment="test")
+        py_metrics = report["metrics"]["Python"]
+
+        # Thread root is human → 1 human comment, not 2
+        assert py_metrics["comment_makeup"]["human_comment_count_with_ai"] == 1
+        assert py_metrics["comment_quality"]["ai_comment_count"] == 0
+
+    @patch("src._metrics.get_active_reviews")
+    def test_no_thread_id_earliest_per_line_wins(self, mock_get_reviews):
+        """Without ThreadId, the earliest comment per (APIRevisionId, ElementId) is the root."""
+        review1 = ActiveReviewMetadata(
+            review_id="review1",
+            name="azure-storage-blob",
+            language="Python",
+            revisions=[
+                ActiveRevisionMetadata(
+                    revision_ids=["rev1"],
+                    package_version="1.0.0",
+                    approval="2026-01-06T00:00:00Z",
+                    has_copilot_review=True,
+                    version_type="GA",
+                )
+            ],
+        )
+
+        comments = [
+            # AI comment on line e1 (earlier)
+            {
+                "id": "c1",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "ElementId": "e1",
+                "CreatedOn": "2026-01-07T10:00:00Z",
+                "CommentSource": "AIGenerated",
+                "Upvotes": [],
+                "Downvotes": [],
+            },
+            # Human comment on same line e1 (later) — should be filtered as a reply
+            {
+                "id": "c2",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "ElementId": "e1",
+                "CreatedOn": "2026-01-07T11:00:00Z",
+                "CommentSource": "UserGenerated",
+                "Upvotes": [],
+                "Downvotes": [],
+            },
+            # Human comment on a different line e2 — separate root
+            {
+                "id": "c3",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "ElementId": "e2",
+                "CreatedOn": "2026-01-07T10:00:00Z",
+                "CommentSource": "UserGenerated",
+                "Upvotes": [],
+                "Downvotes": [],
+            },
+        ]
+
+        mock_get_reviews.return_value = ([review1], comments)
+
+        report = metrics.get_metrics_report("2026-01-01", "2026-01-31", environment="test")
+        py_metrics = report["metrics"]["Python"]
+
+        # c1 (AI on e1) is root, c2 (human reply on e1) filtered out, c3 (human on e2) is root
+        assert py_metrics["comment_quality"]["ai_comment_count"] == 1
+        assert py_metrics["comment_makeup"]["human_comment_count_with_ai"] == 1
+
+    @patch("src._metrics.get_active_reviews")
+    def test_mixed_threaded_and_unthreaded_comments(self, mock_get_reviews):
+        """Test that threaded and unthreaded comments are both handled correctly together."""
+        review1 = ActiveReviewMetadata(
+            review_id="review1",
+            name="azure-storage-blob",
+            language="Python",
+            revisions=[
+                ActiveRevisionMetadata(
+                    revision_ids=["rev1"],
+                    package_version="1.0.0",
+                    approval="2026-01-06T00:00:00Z",
+                    has_copilot_review=True,
+                    version_type="GA",
+                )
+            ],
+        )
+
+        comments = [
+            # Thread 1: AI root + human reply
+            {
+                "id": "c1",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "ElementId": "e1",
+                "ThreadId": "thread1",
+                "CreatedOn": "2026-01-07T10:00:00Z",
+                "CommentSource": "AIGenerated",
+                "Upvotes": ["user1"],
+                "Downvotes": [],
+            },
+            {
+                "id": "c2",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "ElementId": "e1",
+                "ThreadId": "thread1",
+                "CreatedOn": "2026-01-07T11:00:00Z",
+                "CommentSource": "UserGenerated",
+                "Upvotes": [],
+                "Downvotes": [],
+            },
+            # Unthreaded human comment on different line
+            {
+                "id": "c3",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "ElementId": "e2",
+                "CreatedOn": "2026-01-07T09:00:00Z",
+                "CommentSource": "UserGenerated",
+                "Upvotes": [],
+                "Downvotes": [],
+            },
+            # Thread 2: human root + human reply
+            {
+                "id": "c4",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "ElementId": "e3",
+                "ThreadId": "thread2",
+                "CreatedOn": "2026-01-07T08:00:00Z",
+                "CommentSource": "UserGenerated",
+                "Upvotes": [],
+                "Downvotes": [],
+            },
+            {
+                "id": "c5",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "ElementId": "e3",
+                "ThreadId": "thread2",
+                "CreatedOn": "2026-01-07T09:00:00Z",
+                "CommentSource": "UserGenerated",
+                "Upvotes": [],
+                "Downvotes": [],
+            },
+        ]
+
+        mock_get_reviews.return_value = ([review1], comments)
+
+        report = metrics.get_metrics_report("2026-01-01", "2026-01-31", environment="test")
+        py_metrics = report["metrics"]["Python"]
+
+        # Root comments: c1 (AI, thread1), c3 (human, unthreaded), c4 (human, thread2)
+        # Filtered out: c2 (reply in thread1), c5 (reply in thread2)
+        assert py_metrics["comment_quality"]["ai_comment_count"] == 1
+        assert py_metrics["comment_quality"]["good_count"] == 1  # c1 upvoted
+        assert py_metrics["comment_makeup"]["human_comment_count_with_ai"] == 2  # c3 + c4

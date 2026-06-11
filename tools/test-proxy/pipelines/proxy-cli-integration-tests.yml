@@ -1,6 +1,8 @@
 steps:
   - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
+  - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+
   - template: /eng/pipelines/templates/steps/test-proxy-local-tool.yml
     parameters:
       runProxy: false
@@ -11,6 +13,6 @@ steps:
       TargetTags: "Integration"
       TargetDirectory: tools/test-proxy/scripts/test-scripts/
       EnvVars:
-        GIT_TOKEN: $(azuresdk-github-pat)
+        GIT_TOKEN: $(GH_TOKEN)
         GIT_COMMIT_OWNER: azure-sdk
         GIT_COMMIT_EMAIL: azuresdk@microsoft.com

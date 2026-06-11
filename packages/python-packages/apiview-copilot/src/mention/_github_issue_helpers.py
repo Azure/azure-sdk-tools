@@ -112,7 +112,6 @@ def create_and_submit_issue(
     source_tag: str = "APIView Copilot",
     base_labels: list[str] | None = None,
     language: str | None = None,
-    language_labels: dict[str, str] | None = None,
 ) -> dict:
     """Create a GitHub issue from a plan (assumes dedup already passed).
 
@@ -124,17 +123,13 @@ def create_and_submit_issue(
         workflow_tag: Tag identifying workflow type
         source_tag: Tag identifying the source (default: "APIView Copilot")
         base_labels: Optional base labels to apply
-        language: Optional language for language-specific labeling
-        language_labels: Optional mapping of language names to GitHub labels
+        language: Optional language; resolved against
+            ``GithubManager.LANGUAGE_LABELS`` and appended when known.
 
     Returns:
         Dict with action/url/title/body/created_at for the created issue.
     """
-    labels = _build_labels_with_language(
-        base_labels or [],
-        language,
-        language_labels or {},
-    )
+    labels = GithubManager.build_issue_labels(base_labels or [], language)
 
     issue = create_issue(
         client,
@@ -167,7 +162,6 @@ def execute_workflow(
     dedup_inputs: dict,
     base_labels: list[str] | None = None,
     language: str | None = None,
-    language_labels: dict[str, str] | None = None,
 ) -> dict:
     """
     Execute complete GitHub issue workflow: fetch, deduplicate, and create if needed.
@@ -182,8 +176,8 @@ def execute_workflow(
         dedup_prompt_file: Filename of deduplication prompty file (in mention folder)
         dedup_inputs: Dict of inputs for the deduplication prompt (without issue_context)
         base_labels: Optional base labels to apply
-        language: Optional language for language-specific labeling
-        language_labels: Optional mapping of language names to GitHub labels
+        language: Optional language; resolved against
+            ``GithubManager.LANGUAGE_LABELS`` and appended when known.
 
     Returns:
         Dict with keys:
@@ -201,11 +195,7 @@ def execute_workflow(
     }
 
     # Build labels with language support if provided
-    labels = _build_labels_with_language(
-        base_labels or [],
-        language,
-        language_labels or {},
-    )
+    labels = GithubManager.build_issue_labels(base_labels or [], language)
 
     # Fetch recent issues
     recent_issues = _fetch_recent_issues(client, owner, repo, workflow_tag, source_tag)
@@ -304,26 +294,3 @@ def _format_issues_for_dedup(issues: list[dict], max_body_length: int = 500) -> 
 def _inject_metadata(body: str, workflow_tag: str, source_tag: str) -> str:
     """Inject workflow metadata into issue body."""
     return f"""<!-- workflow: {workflow_tag} source: {source_tag} -->\n\n{body}"""
-
-
-def _build_labels_with_language(
-    base_labels: list[str], language: str | None, language_labels: dict[str, str]
-) -> list[str]:
-    """
-    Build labels including language-specific label when available.
-
-    Args:
-        base_labels: Base labels to include
-        language: Programming language name (optional)
-        language_labels: Mapping of normalized language names to GitHub labels
-
-    Returns:
-        List of labels including language label if found
-    """
-    labels = base_labels.copy()
-    if language:
-        normalized_language = language.strip().lower()
-        language_label = language_labels.get(normalized_language)
-        if language_label:
-            labels.append(language_label)
-    return labels

@@ -47,6 +47,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private const string getServiceDetailsCommandName = "get-service-details";
         private const string abandonReleasePlanCommandName = "abandon";
         private const string getKpiAttestationStatusCommandName = "get-kpi-attestation";
+        private const string updateReleasePlanTargetCommandName = "update-release-target";
 
         // MCP Tool Names
         private const string GetReleasePlanForSpecPrToolName = "azsdk_get_release_plan_for_spec_pr";
@@ -62,6 +63,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private const string GetServiceDetailsToolName = "azsdk_get_service_details_by_typespec_path";
         private const string AbandonReleasePlanToolName = "azsdk_abandon_release_plan";
         private const string GetKPIAttestationStatusToolName = "azsdk_get_kpi_attestation_status";
+        private const string UpdateReleasePlanTargetToolName = "azsdk_update_release_plan_target";
 
         // Options
         private readonly Option<int> releasePlanNumberOpt = new("--release-plan-id", "--release-plan")
@@ -117,6 +119,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private readonly Option<string> sdkReleaseTypeOpt = new("--sdk-type")
         {
             Description = "SDK release type: beta or stable",
+            Required = false,
+        };
+
+        private readonly Option<string> apiReleaseTypeOpt = new("--api-release-type")
+        {
+            Description = "API release type: Private Preview, Public Preview, or GA",
             Required = true,
         };
 
@@ -125,12 +133,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             Description = "Create release plan in test environment",
             Required = false,
             DefaultValueFactory = _ => false,
-        };
-
-        private readonly Option<string> userEmailOpt = new("--user-email")
-        {
-            Description = "User email for release plan creation",
-            Required = false,
         };
 
         private readonly Option<string> namespaceApprovalIssueOpt = new("--namespace-approval-issue")
@@ -231,7 +233,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             DefaultValueFactory = _ => false,
         };
 
-        private const string sdkBotEmail = "azuresdk@microsoft.com";
         private const string sdkApexEmail = "azsdkapex@microsoft.com";
         private static readonly string DEFAULT_BRANCH = "main";
         private static readonly string PUBLIC_SPECS_REPO = "azure-rest-api-specs";
@@ -248,18 +249,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             "go"
         };
 
-        private readonly HashSet<string> languagesforDataplane = [
-            ".NET","Java","Python","JavaScript"
-        ];
+        internal static readonly HashSet<string> languagesforDataplane = new(System.StringComparer.OrdinalIgnoreCase)
+        {
+            ".NET", "Java", "Python", "JavaScript"
+        };
 
-        private readonly HashSet<string> languagesforMgmtplane = [
-           ".NET","Java","Python","JavaScript","Go"
-       ];
+        internal static readonly HashSet<string> languagesforMgmtplane = new(System.StringComparer.OrdinalIgnoreCase)
+        {
+            ".NET", "Java", "Python", "JavaScript", "Go"
+        };
 
         [GeneratedRegex("https:\\/\\/github.com\\/Azure\\/azure-sdk\\/issues\\/([0-9]+)")]
         private static partial Regex NameSpaceIssueUrlRegex();
 
-        [GeneratedRegex("https:\\/\\/github.com\\/Azure\\/azure-rest-api-specs\\/pull\\/[0-9]+\\/?")]
+        [GeneratedRegex("https:\\/\\/github.com\\/Azure\\/azure-rest-api-specs(-pr)?\\/pull\\/[0-9]+\\/?", RegexOptions.IgnoreCase)]
         private static partial Regex PullRequestUrlRegex();
 
         [GeneratedRegex(@"^\d{4}-\d{2}-\d{2}(-preview)?$")]
@@ -267,16 +270,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         protected override List<Command> GetCommands() =>
         [
-            new McpCommand(getReleasePlanDetailsCommandName, "Get release plan details", GetReleasePlanToolName) { workItemIdOpt, releasePlanNumberOpt, optionalPullRequestOpt, optionalTypeSpecProjectPathOpt },
+            new McpCommand(getReleasePlanDetailsCommandName, "Get release plan details", GetReleasePlanToolName) { releasePlanNumberOpt, workItemIdOpt, optionalPullRequestOpt, optionalTypeSpecProjectPathOpt },
             new McpCommand(createReleasePlanCommandName, "Create a release plan", CreateReleasePlanToolName)
             {
                 typeSpecProjectPathOpt,
                 targetReleaseOpt,
+                apiReleaseTypeOpt,
                 serviceTreeIdOpt,
                 productTreeIdOpt,
                 optionalPullRequestOpt,
                 sdkReleaseTypeOpt,
-                userEmailOpt,
                 isTestReleasePlanOpt,
                 forceCreateReleasePlanOpt,
             },
@@ -297,6 +300,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 optionalServiceTreeIdOpt,
                 optionalProductTreeIdOpt,
             },
+            new McpCommand(updateReleasePlanTargetCommandName, "Update the SDK release target month on an existing release plan", UpdateReleasePlanTargetToolName) { workItemIdOpt, targetReleaseOpt, },
         ];
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
@@ -310,7 +314,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var releasePlanNumber = commandParser.GetValue(releasePlanNumberOpt);
                     var getPullRequest = commandParser.GetValue(optionalPullRequestOpt);
                     var getTypeSpecPath = commandParser.GetValue(optionalTypeSpecProjectPathOpt);
-                    return await GetReleasePlan(workItem: workItemId, releasePlanId: releasePlanNumber, specPullRequestUrl: getPullRequest, typeSpecProjectPath: getTypeSpecPath, ct: ct);
+                    return await GetReleasePlan(releasePlanNumber, workItemId, specPullRequestUrl: getPullRequest, typeSpecProjectPath: getTypeSpecPath, ct: ct);
 
                 case createReleasePlanCommandName:
                     var typeSpecProjectPath = commandParser.GetValue(typeSpecProjectPathOpt);
@@ -319,17 +323,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var productTreeId = commandParser.GetValue(productTreeIdOpt);
                     var specPullRequestUrl = commandParser.GetValue(optionalPullRequestOpt);
                     var sdkReleaseType = commandParser.GetValue(sdkReleaseTypeOpt);
+                    var apiReleaseType = commandParser.GetValue(apiReleaseTypeOpt);
                     var isTestReleasePlan = commandParser.GetValue(isTestReleasePlanOpt);
-                    var userEmail = commandParser.GetValue(userEmailOpt);
                     var forceCreateReleasePlan = commandParser.GetValue(forceCreateReleasePlanOpt);
                     return await CreateReleasePlan(
                         typeSpecProjectPath,
                         targetReleaseMonthYear,
-                        sdkReleaseType,
+                        apiReleaseType,
+                        sdkReleaseType: sdkReleaseType,
                         specPullRequestUrl: specPullRequestUrl,
                         serviceTreeId: serviceTreeId,
                         productTreeId: productTreeId,
-                        userEmail: userEmail,
                         isTestReleasePlan: isTestReleasePlan,
                         forceCreateReleasePlan: forceCreateReleasePlan,
                         ct: ct
@@ -369,6 +373,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         ct: ct
                     );
 
+                case updateReleasePlanTargetCommandName:
+                    return await UpdateReleasePlanTarget(
+                        workItemId: commandParser.GetValue(workItemIdOpt),
+                        targetReleaseMonthYear: commandParser.GetValue(targetReleaseOpt),
+                        ct: ct
+                    );
+
                 default:
                     logger.LogError("Unknown command: {command}", command);
                     return new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" };
@@ -401,16 +412,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        [McpServerTool(Name = GetReleasePlanToolName), Description("Get Release Plan: Get release plan work item details for a given work item id or release plan Id. If work item ID is not provided, finds the active release plan by TypeSpec project path or spec PR URL.")]
-        public async Task<ReleasePlanResponse> GetReleasePlan(int workItem = 0, int releasePlanId = 0, string? specPullRequestUrl = null, string? typeSpecProjectPath = null, CancellationToken ct = default)
+        [McpServerTool(Name = GetReleasePlanToolName), Description("Get Release Plan: Get release plan work item details for a given release plan number/Id or work item id. If neither is provided, finds the active release plan by TypeSpec project path or spec PR URL.")]
+        public async Task<ReleasePlanResponse> GetReleasePlan(int releasePlanId = 0, int workItemId = 0, string? specPullRequestUrl = null, string? typeSpecProjectPath = null, CancellationToken ct = default)
         {
             try
             {
                 ReleasePlanWorkItem? releasePlan = null;
 
-                if (workItem != 0)
+                // Resolve absolute TypeSpec project path to repo-relative path before any lookup
+                if (!string.IsNullOrWhiteSpace(typeSpecProjectPath) && typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectPath))
                 {
-                    releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(workItem, ct);
+                    typeSpecProjectPath = typeSpecHelper.GetTypeSpecProjectRelativePath(typeSpecProjectPath);
+                }
+
+                if (workItemId != 0)
+                {
+                    releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(workItemId, ct);
                 }
                 else if (releasePlanId != 0)
                 {
@@ -618,6 +635,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 logger.LogInformation("Found release plan work item {WorkItemId} to update", releasePlan.WorkItemId);
 
+                // Validate spec PR against release type if both are available
+                if (!string.IsNullOrEmpty(specPullRequestUrl) && releasePlan.ApiReleaseType != ApiReleaseType.Unknown)
+                {
+                    ValidateSpecPullRequestForReleaseType(specPullRequestUrl, releasePlan.ApiReleaseType);
+                }
+
                 // Update release plan fields
                 var fieldsToUpdate = new Dictionary<string, string>
                 {
@@ -703,11 +726,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
             if (!match.Success)
             {
-                throw new Exception($"Invalid spec pull request URL '{specPullRequestUrl}'. It should be a valid GitHub pull request to azure-rest-api-specs repo.");
+                throw new Exception($"Invalid spec pull request URL '{specPullRequestUrl}'. It should be a valid GitHub pull request to azure-rest-api-specs or azure-rest-api-specs-pr repo.");
             }
         }
 
-        private async Task ValidateCreateReleasePlanInputAsync(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, string sdkReleaseType, CancellationToken ct)
+        private static void ValidateSpecPullRequestForReleaseType(string specPullRequestUrl, ApiReleaseType apiReleaseType)
+        {
+            var error = apiReleaseType.ValidateSpecPullRequest(specPullRequestUrl);
+            if (error != null)
+            {
+                throw new Exception(error);
+            }
+        }
+
+        private async Task ValidateCreateReleasePlanInputAsync(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, string sdkReleaseType, ApiReleaseType apiReleaseType, CancellationToken ct)
         {
             if (!string.IsNullOrEmpty(specPullRequestUrl))
             {
@@ -726,7 +758,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
 
             // Skip filesystem validation for URLs since GetSpecRepoRootPath expects local paths
-            if (!typeSpecHelper.IsUrl(typeSpecProjectPath))
+            // For Private Preview, allow private spec repos
+            if (!typeSpecHelper.IsUrl(typeSpecProjectPath) && apiReleaseType != ApiReleaseType.PrivatePreview)
             {
                 var repoRoot = typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectPath);
 
@@ -737,6 +770,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         SDK generation and release require the API specs pull request to be in the public azure-rest-api-specs repository.
                         Please create a pull request in the public Azure/azure-rest-api-specs repository to move your specs changes to public.
                         A release plan cannot be created for SDK generation using a pull request in a private repository.
+                        Use Private Preview API release type if you are working with a private spec repository.
                         """);
                 }
             }
@@ -752,23 +786,40 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        [McpServerTool(Name = CreateReleasePlanToolName), Description("Create Release Plan for a TypeSpec project, service, product. Service ID and product Id are required if a previous release plan is not found for the TypeSpec project.")]
-        public async Task<ReleasePlanResponse> CreateReleasePlan(string typeSpecProjectPath, string targetReleaseMonthYear, string sdkReleaseType, string specPullRequestUrl = "", string serviceTreeId = "", string productTreeId = "", string userEmail = "", bool isTestReleasePlan = false, bool forceCreateReleasePlan = false, CancellationToken ct = default)
+        [McpServerTool(Name = CreateReleasePlanToolName), Description("Create Release Plan for a TypeSpec project and API release type. API release types support Private Preview, Public Preview, and GA. Service ID and product Id are required if a previous release plan is not found for the TypeSpec project.")]
+        public async Task<ReleasePlanResponse> CreateReleasePlan(string typeSpecProjectPath, string targetReleaseMonthYear, string apiReleaseType, string sdkReleaseType = "", string specPullRequestUrl = "", string serviceTreeId = "", string productTreeId = "", bool isTestReleasePlan = false, bool forceCreateReleasePlan = false, CancellationToken ct = default)
         {
             try
             {
-                sdkReleaseType = sdkReleaseType?.ToLower() ?? "";
-                var sdkReleaseTypeMappings = new Dictionary<string, string>
+                // Validate and map API release type
+                if (!ApiReleaseTypeExtensions.TryParseFromUserInput(apiReleaseType, out var parsedApiReleaseType))
                 {
-                    { "ga", "stable" },
-                    { "preview", "beta" }
-                };
-                if (sdkReleaseTypeMappings.TryGetValue(sdkReleaseType, out var mappedType))
-                {
-                    sdkReleaseType = mappedType;
+                    return new ReleasePlanResponse { ResponseError = $"Invalid API release type '{apiReleaseType}'. Supported values are: Private Preview, Public Preview, GA" };
                 }
 
-                await ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType, ct);
+                // Default SDK release type based on API release type if not provided
+                if (string.IsNullOrEmpty(sdkReleaseType))
+                {
+                    sdkReleaseType = parsedApiReleaseType.GetDefaultSdkReleaseType();
+                }
+                else
+                {
+                    sdkReleaseType = sdkReleaseType.ToLower();
+                    var sdkReleaseTypeMappings = new Dictionary<string, string>
+                    {
+                        { "ga", "stable" },
+                        { "preview", "beta" }
+                    };
+                    if (sdkReleaseTypeMappings.TryGetValue(sdkReleaseType, out var mappedType))
+                    {
+                        sdkReleaseType = mappedType;
+                    }
+                }
+
+                await ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType, parsedApiReleaseType, ct);
+
+                // Validate spec PR against release type
+                ValidateSpecPullRequestForReleaseType(specPullRequestUrl, parsedApiReleaseType);
 
                 // Handle both URLs and local paths for TypeSpec projects
                 bool isValidTypeSpec;
@@ -842,8 +893,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         }
                     }
 
-                    logger.LogInformation("Checking for existing release plans for product: {productTreeId}", productTreeId);
-                    var existingReleasePlans = await devOpsService.GetReleasePlansForProductAsync(productTreeId, sdkReleaseType, isTestReleasePlan, ct);
+                    logger.LogInformation("Checking for existing release plans for product: {productTreeId} with API release type: {apiReleaseType}", productTreeId, parsedApiReleaseType.ToDisplayLabel());
+                    var existingReleasePlans = await devOpsService.GetReleasePlansForProductAsync(productTreeId, sdkReleaseType, isTestReleasePlan, parsedApiReleaseType.ToAdoFieldValue(), ct);
                     if (existingReleasePlans.Any())
                     {
                         return new ReleasePlanResponse
@@ -859,19 +910,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 var specType = isValidTypeSpec ? "TypeSpec" : "OpenAPI";
                 logger.LogInformation("Attempting to retrieve current user email.");
 
-                var email = await userHelper.GetUserEmail(ct);
-                if (email != sdkBotEmail)
-                {
-                    userEmail = email;
-                    logger.LogInformation("Using current user email to submit release plan: {userEmail}", userEmail);
-                }
-                else if (string.IsNullOrEmpty(userEmail))
-                {
-                    throw new InvalidOperationException("Cannot create release plan using SDK bot email. Please provide a valid user email address.");
-                }
-
+                var userEmail = await userHelper.GetUserEmail(ct);
                 logger.LogInformation("User email for release plan submission: {userEmail}", userEmail);
 
+                var productDisplayName = Path.GetFileName(specProject);
                 var releasePlan = new ReleasePlanWorkItem
                 {
                     SDKReleaseMonth = targetReleaseMonthYear,
@@ -886,7 +928,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     IsCreatedByAgent = true,
                     ReleasePlanSubmittedByEmail = userEmail,
                     APISpecProjectPath = specProject,
-                    ProductName = Path.GetFileName(specProject)
+                    ProductName = productDisplayName,
+                    ApiReleaseType = parsedApiReleaseType
                 };
                 var workItem = await devOpsService.CreateReleasePlanWorkItemAsync(releasePlan, ct);
                 if (workItem == null)
@@ -910,16 +953,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         releasePlan.ReleasePlanId = releasePlanId;
                     }
 
-                    if (workItem.Fields.TryGetValue("Custom.ReleasePlanLink", out value) && value is string releasePlanLink)
-                    {
-                        releasePlan.ReleasePlanLink = releasePlanLink;
-                    }
-
                     return new ReleasePlanResponse
                     {
                         Message = "Release plan is being created",
                         ReleasePlanDetails = releasePlan,
-                        NextSteps = [$"Get release plan from `workItem`, work item value: {releasePlan.WorkItemId}"],
+                        NextSteps = [$"Get release plan from `workItemId`, work item value: {releasePlan.WorkItemId}"],
                         TypeSpecProject = specProject,
                         PackageType = isMgmt ? SdkType.Management : SdkType.Dataplane
                     };
@@ -979,11 +1017,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return new DefaultCommandResponse { ResponseError = $"No release plan found with work item ID {releasePlanWorkItemId}" };
                 }
 
-                var supportedLanguages = releasePlan.IsManagementPlane ? languagesforMgmtplane : languagesforDataplane;
+                var requiredLanguages = releasePlan.IsManagementPlane ? languagesforMgmtplane : languagesforDataplane;
+
                 // Validate SDK language name
-                if (SdkInfos.Any(sdk => !supportedLanguages.Contains(sdk.Language, StringComparer.OrdinalIgnoreCase)))
+                if (SdkInfos.Any(sdk => !requiredLanguages.Contains(sdk.Language, StringComparer.OrdinalIgnoreCase)))
                 {
-                    return $"Unsupported SDK language found. Supported languages are: {string.Join(", ", supportedLanguages)}";
+                    return new DefaultCommandResponse { ResponseError = $"Unsupported SDK language found. Supported languages are: {string.Join(", ", requiredLanguages)}" };
                 }
 
                 // Validate SDK Package names
@@ -1023,11 +1062,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
 
                 // Check if any language is excluded
-                var excludedLanguages = supportedLanguages.Except(SdkInfos.Select(sdk => sdk.Language), StringComparer.OrdinalIgnoreCase);
+                var excludedLanguages = requiredLanguages.Except(SdkInfos.Select(sdk => sdk.Language), StringComparer.OrdinalIgnoreCase);
                 if (excludedLanguages.Any())
                 {
                     logger.LogDebug("Languages excluded in release plan. Work Item: {releasePlanWorkItemId}, languages: {excludedLanguages}", releasePlanWorkItemId, string.Join(", ", excludedLanguages));
-                    sb.AppendLine($"Important: The following languages were excluded in the release plan. SDK must be released for all languages. [{string.Join(", ", supportedLanguages)}]");
+                    sb.AppendLine($"Important: The following languages were excluded in the release plan. SDK must be released for all languages. [{string.Join(", ", requiredLanguages)}]");
                     sb.AppendLine("Explanation is required for any language exclusion. Please provide a justification for each excluded language.");
 
                     // Mark excluded language as 'Requested' in the release plan work item.
@@ -1565,10 +1604,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
                 ValidatePullRequestUrl(specPullRequestUrl);
 
-                // Get work item ID from release plan ID if needed
-                if (workItemId == 0)
+                // Get the release plan to check its type
+                ReleasePlanWorkItem? releasePlan = null;
+                if (releasePlanId > 0)
                 {
-                    var releasePlan = await devOpsService.GetReleasePlanAsync(releasePlanId, ct);
+                    releasePlan = await devOpsService.GetReleasePlanAsync(releasePlanId, ct);
                     if (releasePlan == null)
                     {
                         return new ReleaseWorkflowResponse
@@ -1577,6 +1617,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         };
                     }
                     workItemId = releasePlan.WorkItemId;
+                }
+                else
+                {
+                    releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(workItemId, ct);
+                }
+
+                // Validate spec PR against release type
+                if (releasePlan != null && releasePlan.ApiReleaseType != ApiReleaseType.Unknown)
+                {
+                    ValidateSpecPullRequestForReleaseType(specPullRequestUrl, releasePlan.ApiReleaseType);
                 }
 
                 // Update the spec pull request in the release plan
@@ -1614,6 +1664,49 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
+        [McpServerTool(Name = UpdateReleasePlanTargetToolName), Description("Update the SDK release target month on an existing release plan.")]
+        public async Task<ReleasePlanResponse> UpdateReleasePlanTarget(int workItemId, string targetReleaseMonthYear, CancellationToken ct = default)
+        {
+            try
+            {
+                if (workItemId <= 0)
+                {
+                    return new ReleasePlanResponse { ResponseError = "A valid work item ID must be provided." };
+                }
+
+                if (string.IsNullOrWhiteSpace(targetReleaseMonthYear))
+                {
+                    return new ReleasePlanResponse { ResponseError = "SDK release target month is required." };
+                }
+
+                var releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(workItemId, ct);
+                if (releasePlan == null)
+                {
+                    return new ReleasePlanResponse { ResponseError = $"No release plan found for work item {workItemId}." };
+                }
+
+                var fieldsToUpdate = new Dictionary<string, string>
+                {
+                    { "Custom.SDKReleasemonth", targetReleaseMonthYear },
+                };
+
+                await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, fieldsToUpdate, ct);
+                logger.LogInformation("Updated SDK release target month to {targetReleaseMonthYear} for work item {WorkItemId}", targetReleaseMonthYear, releasePlan.WorkItemId);
+
+                releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(releasePlan.WorkItemId, ct);
+                return new ReleasePlanResponse
+                {
+                    ReleasePlanDetails = releasePlan,
+                    Message = $"Successfully updated SDK release target month to {targetReleaseMonthYear} for release plan {releasePlan?.WorkItemId}."
+                };
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to update SDK release target month for work item {WorkItemId}", workItemId);
+                return new ReleasePlanResponse { ResponseError = $"Failed to update SDK release target month: {ex.Message}" };
+            }
+        }
+
         [McpServerTool(Name = GetServiceDetailsToolName), Description("Get service and service tree product details for a product using TypeSpec project path: Get service tree product details (service tree ID, service ID, package display name, product service tree link).")]
         public async Task<ProductInfoResponse> GetProductByTypeSpecPath(string typeSpecProjectPath, CancellationToken ct = default)
         {
@@ -1631,15 +1724,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     };
                 }
 
+                var isValidTypeSpec = typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectPath);
+                if (!isValidTypeSpec)
+                {
+                    return new ProductInfoResponse
+                    {
+                        ResponseError = $"Invalid TypeSpec project path. tspconfig.yaml is not found in the path {typeSpecProjectPath}.",
+                        TypeSpecProject = typeSpecProjectPath
+                    };
+                }
+                var specRelativePath = typeSpecHelper.GetTypeSpecProjectRelativePath(typeSpecProjectPath);
                 // Get product info from DevOps service
-                var productInfo = await devOpsService.GetProductInfoByTypeSpecProjectPathAsync(typeSpecProjectPath, ct);
+                var productInfo = await devOpsService.GetProductInfoByTypeSpecProjectPathAsync(specRelativePath, ct);
 
                 if (productInfo == null)
                 {
                     return new ProductInfoResponse
                     {
-                        Message = $"No release plan found for TypeSpec project path: {typeSpecProjectPath}",
-                        TypeSpecProject = typeSpecProjectPath
+                        Message = $"No release plan found for TypeSpec project path: {specRelativePath}",
+                        TypeSpecProject = specRelativePath
                     };
                 }
 
@@ -1647,7 +1750,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     ProductInfo = productInfo,
                     Message = "Successfully retrieved product information.",
-                    TypeSpecProject = typeSpecProjectPath
+                    TypeSpecProject = specRelativePath
                 };
             }
             catch (Exception ex)

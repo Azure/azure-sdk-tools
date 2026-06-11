@@ -18,7 +18,6 @@ parameters:
     default: ''
 
 variables:
-  PythonIndexUrl: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/'
   PythonVersion: '3.10'
   ApiStubVersion: '0.3.28'
 
@@ -34,9 +33,16 @@ jobs:
     parameters:
       versionSpec: '$(PythonVersion)'
 
+  # globally sets PIP_INDEX_URL which `pip` will use by default going forward after this task completes
+  - task: PipAuthenticate@1
+    displayName: 'Pip Authenticate to feed'
+    inputs:
+      artifactFeeds: 'public/azure-sdk-for-python'
+      onlyAddExtraIndex: false
+
   - script: |
       python -m pip install virtualenv aiohttp chardet trio
-      python -m pip install apiview-stub-generator==$(ApiStubVersion) --index-url $(PythonIndexUrl)
+      python -m pip install apiview-stub-generator==$(ApiStubVersion)
     displayName: 'Install apiview-stub-generator'
 
   - template: /eng/pipelines/templates/steps/apiview-review-gen.yml

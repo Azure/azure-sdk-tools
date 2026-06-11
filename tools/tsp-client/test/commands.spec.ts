@@ -5,7 +5,9 @@ import {
   syncCommand,
   updateCommand,
   generateLockFileCommand,
+  generateLockFileCommandCore,
   generateConfigFilesCommand,
+  parseNpmArgs,
 } from "../src/commands.js";
 import { afterAll, afterEach, beforeAll, describe, it, expect } from "vitest";
 import { assert } from "chai";
@@ -850,5 +852,134 @@ describe.sequential("Verify commands", () => {
     } finally {
       await removeDirectory(joinPaths(repoRoot, "sdk/keyvault"));
     }
+  });
+
+  it("Generate lock file with npm args passed through", async () => {
+    try {
+      // --prefer-offline is a valid npm flag that shouldn't break install
+      await generateLockFileCommand({ "npm-args": "--prefer-offline" });
+
+      assert.isTrue((await stat(joinPaths(repoRoot, "eng", "emitter-package-lock.json"))).isFile());
+    } catch (error) {
+      assert.fail(`Failed to generate lock file with npm args. Error: ${error}`);
+    } finally {
+      await rm(joinPaths(repoRoot, "eng", "emitter-package-lock.json"), { force: true });
+    }
+  });
+
+  it("Generate lock file core with additional npm args", async () => {
+    const tmpDir = joinPaths(cwd(), ".tmp-test-lock-file-npm-args");
+    try {
+      await mkdir(tmpDir, { recursive: true });
+      const tmpPackageJsonPath = joinPaths(tmpDir, "alternate-emitter-package.json");
+      await cp(
+        joinPaths(repoRoot, "tools/tsp-client/test/utils/alternate-emitter-package.json"),
+        tmpPackageJsonPath,
+      );
+
+      // --prefer-offline is a valid npm flag that shouldn't break install
+      await generateLockFileCommandCore(cwd(), tmpPackageJsonPath, ["--prefer-offline"]);
+
+      const lockFilePath = joinPaths(tmpDir, "alternate-emitter-package-lock.json");
+      assert.isTrue((await stat(lockFilePath)).isFile());
+    } catch (error) {
+      assert.fail(`Failed to generate lock file with npm args. Error: ${error}`);
+    } finally {
+      if (await doesFileExist(tmpDir)) {
+        await rm(tmpDir, { recursive: true });
+      }
+    }
+  });
+
+  it("Generate lock file core with empty npm args works normally", async () => {
+    try {
+      await generateLockFileCommandCore(
+        cwd(),
+        joinPaths(repoRoot, "eng", "emitter-package.json"),
+        [],
+      );
+
+      assert.isTrue((await stat(joinPaths(repoRoot, "eng", "emitter-package-lock.json"))).isFile());
+    } catch (error) {
+      assert.fail(`Failed to generate lock file with empty npm args. Error: ${error}`);
+    } finally {
+      await rm(joinPaths(repoRoot, "eng", "emitter-package-lock.json"), { force: true });
+    }
+  });
+
+  it("Generate config files with npm args passed through", async () => {
+    try {
+      const args = {
+        "package-json": joinPaths(cwd(), "test", "examples", "package.json"),
+        "npm-args": "--prefer-offline",
+      };
+      await generateConfigFilesCommand(args);
+      assert.isTrue(await doesFileExist(joinPaths(repoRoot, "eng", "emitter-package.json")));
+      assert.isTrue(await doesFileExist(joinPaths(repoRoot, "eng", "emitter-package-lock.json")));
+    } catch (error: any) {
+      assert.fail("Failed to generate config files with npm args. Error: " + error);
+    } finally {
+      await rm(joinPaths(repoRoot, "eng", "emitter-package.json"), { force: true });
+      await rm(joinPaths(repoRoot, "eng", "emitter-package-lock.json"), { force: true });
+    }
+  });
+
+  it("parseNpmArgs splits a space-separated string into an array", () => {
+    assert.deepEqual(parseNpmArgs("--force --legacy-peer-deps"), ["--force", "--legacy-peer-deps"]);
+    assert.deepEqual(parseNpmArgs("--registry=https://my-registry"), [
+      "--registry=https://my-registry",
+    ]);
+    assert.deepEqual(parseNpmArgs(undefined), []);
+    assert.deepEqual(parseNpmArgs(""), []);
+    assert.deepEqual(parseNpmArgs("  --force  "), ["--force"]);
+  });
+
+  it("parseNpmArgs handles quoted strings and shell-like patterns", () => {
+    // Double quoted strings with spaces
+    assert.deepEqual(parseNpmArgs('--tag "foo bar"'), ["--tag", "foo bar"]);
+    assert.deepEqual(parseNpmArgs('--message "hello world"'), ["--message", "hello world"]);
+
+    // Single quoted strings with spaces
+    assert.deepEqual(parseNpmArgs("--name 'my package'"), ["--name", "my package"]);
+    assert.deepEqual(parseNpmArgs("--title 'my awesome app'"), ["--title", "my awesome app"]);
+
+    // Escaped quotes within strings
+    assert.deepEqual(parseNpmArgs('--message "He said \\"hello\\""'), [
+      "--message",
+      'He said "hello"',
+    ]);
+
+    // Mixed quoting styles
+    assert.deepEqual(parseNpmArgs("--tag \"foo bar\" --name 'baz qux'"), [
+      "--tag",
+      "foo bar",
+      "--name",
+      "baz qux",
+    ]);
+
+    // Escaped whitespace outside quotes
+    assert.deepEqual(parseNpmArgs("--path /usr/local\\ bin"), ["--path", "/usr/local bin"]);
+
+    // Complex real-world examples
+    assert.deepEqual(parseNpmArgs('--registry "https://my-registry.com" --tag "beta release"'), [
+      "--registry",
+      "https://my-registry.com",
+      "--tag",
+      "beta release",
+    ]);
+
+    // Empty quotes should produce empty strings
+    assert.deepEqual(parseNpmArgs('--empty ""'), ["--empty", ""]);
+    assert.deepEqual(parseNpmArgs("--empty ''"), ["--empty", ""]);
+
+    // Multiple spaces between arguments
+    assert.deepEqual(parseNpmArgs('--force    --tag "foo bar"'), ["--force", "--tag", "foo bar"]);
+
+    // Arguments with special characters in quotes
+    assert.deepEqual(parseNpmArgs('--pattern "*.{js,ts}"'), ["--pattern", "*.{js,ts}"]);
+    assert.deepEqual(parseNpmArgs('--url "https://example.com?q=test&r=1"'), [
+      "--url",
+      "https://example.com?q=test&r=1",
+    ]);
   });
 });

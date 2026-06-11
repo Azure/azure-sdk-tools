@@ -1,6 +1,6 @@
 # APIView — Contributor Guide
 
-This guide helps contributors get up and running with APIView development. For architecture and internals, see [overview.md](overview.md).
+This guide helps contributors get up and running with APIView development. For architecture and internals, see [overview.md](docs/overview.md).
 
 ---
 
@@ -119,8 +119,6 @@ Start the backend by opening `APIViewWeb` in Visual Studio and pressing **F5**.
 |---------|--------|-------|
 | `ApiViewUnitTests` | Active | Backend logic and functionality |
 | Angular .spec.ts files | Active | Run with `ng test` |
-| `APIViewIntegrationTests` | Obsolete | Required Cosmos/Storage emulators |
-| `APIViewUITests` | Obsolete | Selenium-based; replaced by Angular test suite |
 
 <br>
 

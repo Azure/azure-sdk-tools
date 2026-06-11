@@ -8,22 +8,22 @@ parameters:
 
 steps:
   - task: UseDotNet@2
+    displayName: "Install .NET 10"
+    retryCountOnTaskFailure: 3
+    inputs:
+      version: "10.x"
+
+  - task: UseDotNet@2
+    displayName: "Install .NET 9"
+    retryCountOnTaskFailure: 3
+    inputs:
+      version: "9.x"
+
+  - task: UseDotNet@2
     displayName: "Install .NET 8"
     retryCountOnTaskFailure: 3
     inputs:
       version: "8.x"
-
-  - task: UseDotNet@2
-    displayName: "Install .NET 7"
-    retryCountOnTaskFailure: 3
-    inputs:
-      version: "7.x"
-
-  - task: UseDotNet@2
-    displayName: "Install .NET 6"
-    retryCountOnTaskFailure: 3
-    inputs:
-      version: "6.x"
 
   - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
@@ -35,6 +35,14 @@ steps:
     parameters:
       runProxy: true
       rootFolder: ${{ parameters.CLONE_LOCATION }}
+
+  - pwsh: |
+      dotnet test --framework net10.0
+    displayName: 'Invoke Tests .NET 10'
+    workingDirectory: ${{ parameters.CLONE_LOCATION }}/sdk/core/Azure.Core.TestFramework
+    env:
+      PROXY_MANUAL_START: "true"
+      PROXY_DEBUG_MODE: "true"
 
   - pwsh: |
       dotnet test --framework net9.0

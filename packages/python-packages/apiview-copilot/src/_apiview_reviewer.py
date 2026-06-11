@@ -331,6 +331,7 @@ class ApiViewReview:
         guideline_tag = "guideline"
         generic_tag = "generic"
         context_tag = "context"
+        skip_generic = True  # Generic review is disabled for all languages
 
         sectioned_doc = self._create_sectioned_document()
 
@@ -352,7 +353,8 @@ class ApiViewReview:
         # Set up progress tracking
         self._print_message("Processing sections: ", overwrite=True)
 
-        total_prompts = len(sections_to_process) * 3  # 3 prompts per section
+        prompts_per_section = 2 if skip_generic else 3
+        total_prompts = len(sections_to_process) * prompts_per_section
         prompt_status = [False] * total_prompts
 
         # Set up keyboard interrupt handler for more responsive cancellation (only in main thread)
@@ -394,31 +396,32 @@ class ApiViewReview:
                     "content": section.numbered(),
                 },
                 task_name=guideline_key,
-                status_idx=idx * 3,
+                status_idx=idx * prompts_per_section,
                 status_array=prompt_status,
             )
 
-            # Generic prompt
-            generic_metadata = self._load_generic_metadata()
-            generic_key = f"{generic_tag}_{section_idx}"
-            all_futures[generic_key] = self.executor.submit(
-                self._execute_prompt_task,
-                folder="api_review",
-                filename=generic_prompt_file,
-                inputs={
-                    "language": get_language_pretty_name(self.language),
-                    "custom_rules": generic_metadata["custom_rules"],
-                    "content": section.numbered(),
-                },
-                task_name=generic_key,
-                status_idx=(idx * 3) + 1,
-                status_array=prompt_status,
-            )
+            if not skip_generic:
+                generic_metadata = self._load_generic_metadata()
+                generic_key = f"{generic_tag}_{section_idx}"
+                all_futures[generic_key] = self.executor.submit(
+                    self._execute_prompt_task,
+                    folder="api_review",
+                    filename=generic_prompt_file,
+                    inputs={
+                        "language": get_language_pretty_name(self.language),
+                        "custom_rules": generic_metadata["custom_rules"],
+                        "content": section.numbered(),
+                    },
+                    task_name=generic_key,
+                    status_idx=(idx * prompts_per_section) + 1,
+                    status_array=prompt_status,
+                )
 
             # Context prompt
             context_key = f"{context_tag}_{section_idx}"
             context = self._retrieve_context(str(section))
             context_string = context.to_markdown() if context else ""
+            context_status_offset = 2 if not skip_generic else 1
             all_futures[context_key] = self.executor.submit(
                 self._execute_prompt_task,
                 folder="api_review",
@@ -429,7 +432,7 @@ class ApiViewReview:
                     "content": section.numbered(),
                 },
                 task_name=context_key,
-                status_idx=(idx * 3) + 2,
+                status_idx=(idx * prompts_per_section) + context_status_offset,
                 status_array=prompt_status,
             )
 
@@ -896,12 +899,13 @@ class ApiViewReview:
             )
             self._print_comment_counts()
 
-            # Run generic comments through a filter
-            start_time = time()
-            self._filter_generic_comments()
-            end_time = time()
-            self._print_message(f"  Generic comments filtered in {end_time - start_time:.2f} seconds.")
-            self._print_comment_counts()
+            # Run generic comments through a filter (skip if none exist)
+            if any(c.is_generic for c in self.results.comments):
+                start_time = time()
+                self._filter_generic_comments()
+                end_time = time()
+                self._print_message(f"  Generic comments filtered in {end_time - start_time:.2f} seconds.")
+                self._print_comment_counts()
 
             # Track time for _deduplicate_comments
             deduplicate_start_time = time()

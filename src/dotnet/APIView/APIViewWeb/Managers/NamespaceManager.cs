@@ -16,6 +16,7 @@ public static class NamespaceManagerConstants
 {
     public const string AutoApprovalNotes = "Auto-approved: review was already approved at namespace proposal creation";
     public const string AutoWithdrawalLanguageRemoved = "Automatically withdrawn as language was removed from expected packages";
+    public const string AutoWithdrawalPackageRemoved = "Automatically withdrawn as package was removed from expected packages";
     public const string AutoWithdrawalNewNameSuggested = "Automatically withdrawn as new name was suggested";
 }
 
@@ -57,8 +58,8 @@ public class NamespaceManager : INamespaceManager
         }
 
         language = LanguageServiceHelpers.MapLanguageAlias(language);
-        return info.CurrentNamespaceStatus.TryGetValue(language, out var entry)
-            && entry.Status == NamespaceDecisionStatus.Approved;
+        return info.CurrentNamespaceStatus.TryGetValue(language, out var entries)
+            && entries.Any(e => e.Status == NamespaceDecisionStatus.Approved);
     }
 
     // Allowed transitions: maps (currentStatus) → set of valid target statuses.
@@ -70,7 +71,7 @@ public class NamespaceManager : INamespaceManager
     };
 
     public async Task<NamespaceOperationResult> UpdateNamespaceStatusAsync(
-        string projectId, string language, NamespaceDecisionStatus newStatus, string notes, ClaimsPrincipal user)
+        string projectId, string language, string namespaceVal, NamespaceDecisionStatus newStatus, string notes, ClaimsPrincipal user)
     {
         language = LanguageServiceHelpers.MapLanguageAlias(language);
         string userName = user.GetGitHubLogin();
@@ -85,9 +86,19 @@ public class NamespaceManager : INamespaceManager
             return NamespaceOperationResult.Failure(NamespaceOperationError.ProjectNotFound);
         }
 
-        if (!project.NamespaceInfo.CurrentNamespaceStatus.TryGetValue(language, out var entry))
+        if (!project.NamespaceInfo.CurrentNamespaceStatus.TryGetValue(language, out var entries) || entries.Count == 0)
         {
             return NamespaceOperationResult.Failure(NamespaceOperationError.LanguageNotFound);
+        }
+
+        // Match by namespace (the stable identifier); fall back to the single entry when namespace is omitted.
+        NamespaceDecisionEntry entry = string.IsNullOrEmpty(namespaceVal)
+            ? entries.Count == 1 ? entries[0] : null
+            : entries.FirstOrDefault(e => string.Equals(e.Namespace, namespaceVal, StringComparison.OrdinalIgnoreCase));
+
+        if (entry == null)
+        {
+            return NamespaceOperationResult.Failure(NamespaceOperationError.NamespaceEntryNotFound);
         }
 
         if (!allowedManualTransitions.TryGetValue(entry.Status, out var allowed) || !allowed.Contains(newStatus))
@@ -109,16 +120,14 @@ public class NamespaceManager : INamespaceManager
         });
 
         entry.Status = newStatus;
-        if (newStatus != NamespaceDecisionStatus.Proposed)        {
+        if (newStatus != NamespaceDecisionStatus.Proposed)
+        {
             entry.DecidedBy = userName;
             entry.DecidedOn = DateTime.UtcNow;
         }
         entry.Notes = notes;
 
-        project.NamespaceInfo.ApprovedNamespaces = project.NamespaceInfo.CurrentNamespaceStatus
-            .Where(kvp => kvp.Value.Status == NamespaceDecisionStatus.Approved)
-            .Select(kvp => kvp.Value)
-            .ToList();
+        RebuildApprovedNamespaces(project.NamespaceInfo);
 
         project.ChangeHistory ??= [];
         project.ChangeHistory.Add(new ProjectChangeHistory
@@ -147,7 +156,7 @@ public class NamespaceManager : INamespaceManager
                 ProposedBy = userName,
                 ProposedOn = DateTime.UtcNow
             };
-            result.CurrentNamespaceStatus[entry.Language] = entry;
+            result.CurrentNamespaceStatus[ApiViewConstants.TypeSpecLanguage] = [entry];
         }
 
         if (metadata.Languages == null)
@@ -155,34 +164,55 @@ public class NamespaceManager : INamespaceManager
             return result;
         }
 
-        foreach ((string rawLanguage, LanguageConfig config) in metadata.Languages.Where(kv => !string.IsNullOrEmpty(kv.Value.Namespace)))
+        // Build a review lookup keyed by (language, packageName) for efficient matching.
+        var reviewsByLangAndPackage = reviews
+            .Where(r => !string.IsNullOrEmpty(r.Language) && !string.IsNullOrEmpty(r.PackageName))
+            .GroupBy(r => LanguageServiceHelpers.MapLanguageAlias(r.Language), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                g => g.Key,
+                g => g.ToDictionary(r => r.PackageName, r => r, StringComparer.OrdinalIgnoreCase),
+                StringComparer.OrdinalIgnoreCase);
+
+        foreach ((string rawLanguage, List<LanguageConfig> configs) in metadata.Languages)
         {
             string language = LanguageServiceHelpers.MapLanguageAlias(rawLanguage);
-            var entry = new NamespaceDecisionEntry
-            {
-                Language = language,
-                PackageName = config.PackageName,
-                Namespace = config.Namespace,
-                Status = NamespaceDecisionStatus.Proposed,
-                ProposedBy = userName,
-                ProposedOn = DateTime.UtcNow
-            };
+            var entries = new List<NamespaceDecisionEntry>();
 
-            ReviewListItemModel languageReview = reviews.FirstOrDefault(r => string.Equals(r.Language, language, StringComparison.OrdinalIgnoreCase));
-            if (languageReview is { IsApproved: true })
+            foreach (LanguageConfig config in configs.Where(c => !string.IsNullOrEmpty(c.Namespace)))
             {
-                ReviewChangeHistoryModel approvedAction = languageReview.ChangeHistory.FirstOrDefault(ch => ch.ChangeAction == ReviewChangeAction.Approved);
-                entry.Status = NamespaceDecisionStatus.Approved;
-                entry.DecidedBy = approvedAction?.ChangedBy ?? ApiViewConstants.AzureSdkBotName;
-                entry.Notes = $"Auto-approved: review was already approved at project creation as it was approved in review {languageReview.Id}";
-                entry.DecidedOn = approvedAction?.ChangedOn ?? DateTime.UtcNow;
+                var entry = new NamespaceDecisionEntry
+                {
+                    Language = language,
+                    PackageName = config.PackageName,
+                    Namespace = config.Namespace,
+                    Status = NamespaceDecisionStatus.Proposed,
+                    ProposedBy = userName,
+                    ProposedOn = DateTime.UtcNow
+                };
+
+                if (reviewsByLangAndPackage.TryGetValue(language, out var pkgMap) &&
+                    !string.IsNullOrEmpty(config.PackageName) &&
+                    pkgMap.TryGetValue(config.PackageName, out var linkedReview) &&
+                    linkedReview.IsApproved)
+                {
+                    ReviewChangeHistoryModel approvedAction = linkedReview.ChangeHistory
+                        .FirstOrDefault(ch => ch.ChangeAction == ReviewChangeAction.Approved);
+                    entry.Status = NamespaceDecisionStatus.Approved;
+                    entry.DecidedBy = approvedAction?.ChangedBy ?? ApiViewConstants.AzureSdkBotName;
+                    entry.Notes = $"{NamespaceManagerConstants.AutoApprovalNotes} (review {linkedReview.Id})";
+                    entry.DecidedOn = approvedAction?.ChangedOn ?? DateTime.UtcNow;
+                }
+
+                entries.Add(entry);
             }
 
-            result.CurrentNamespaceStatus[entry.Language] = entry;
+            if (entries.Count > 0)
+            {
+                result.CurrentNamespaceStatus[language] = entries;
+            }
         }
 
-        result.ApprovedNamespaces = result.CurrentNamespaceStatus
-            .Where(ns => ns.Value.Status == NamespaceDecisionStatus.Approved).Select(n => n.Value).ToList();
+        RebuildApprovedNamespaces(result);
         return result;
     }
 
@@ -193,16 +223,18 @@ public class NamespaceManager : INamespaceManager
             return currentInfo;
         }
 
-        if (currentInfo.CurrentNamespaceStatus.TryGetValue(ApiViewConstants.TypeSpecLanguage, out var oldEntry))
+        // TypeSpec always has exactly one namespace entry.
+        if (currentInfo.CurrentNamespaceStatus.TryGetValue(ApiViewConstants.TypeSpecLanguage, out var oldEntries) && oldEntries.Count > 0)
         {
+            var oldEntry = oldEntries[0];
             oldEntry.Status = NamespaceDecisionStatus.Withdrawn;
-            oldEntry.Notes += "Automatically withdrawn as new name was suggested";
+            oldEntry.Notes += NamespaceManagerConstants.AutoWithdrawalNewNameSuggested;
             oldEntry.DecidedOn = DateTime.UtcNow;
             EnsureHistoryList(currentInfo, ApiViewConstants.TypeSpecLanguage).Add(oldEntry);
         }
 
         NamespaceDecisionEntry proposed = CreateProposedEntry(userName, ApiViewConstants.TypeSpecLanguage, null, newNamespace);
-        currentInfo.CurrentNamespaceStatus[ApiViewConstants.TypeSpecLanguage] = proposed;
+        currentInfo.CurrentNamespaceStatus[ApiViewConstants.TypeSpecLanguage] = [proposed];
         EnsureHistoryList(currentInfo, ApiViewConstants.TypeSpecLanguage).Add(proposed);
 
         return currentInfo;
@@ -211,8 +243,8 @@ public class NamespaceManager : INamespaceManager
     public ProjectNamespaceInfo ResolvePackageNamespaceChanges(
         string userName,
         ProjectNamespaceInfo currentInfo,
-        Dictionary<string, PackageInfo> oldPackages,
-        Dictionary<string, PackageInfo> newPackages,
+        Dictionary<string, List<PackageInfo>> oldPackages,
+        Dictionary<string, List<PackageInfo>> newPackages,
         IReadOnlyList<ReviewListItemModel> newReviews)
     {
         if (currentInfo == null || newPackages == null || oldPackages == null)
@@ -227,73 +259,127 @@ public class NamespaceManager : INamespaceManager
             .ToDictionary(r => r.PackageName, r => r, StringComparer.OrdinalIgnoreCase);
 
 
-        // Removed language → withdraw & remove language
-        foreach (string lang in oldLanguages.Except(newLanguages))
+        // Removed language → withdraw all entries for that language and remove the key.
+        foreach (string lang in oldLanguages.Except(newLanguages).ToList())
         {
-            if (!currentInfo.CurrentNamespaceStatus.TryGetValue(lang, out var entry))
+            if (!currentInfo.CurrentNamespaceStatus.TryGetValue(lang, out var entries))
             {
                 continue;
             }
 
-            entry.Status = NamespaceDecisionStatus.Withdrawn;
-            entry.Notes += NamespaceManagerConstants.AutoWithdrawalLanguageRemoved;
-            entry.DecidedBy = userName;
-            entry.DecidedOn = DateTime.UtcNow;
-            EnsureHistoryList(currentInfo, lang).Add(entry);
+            foreach (var entry in entries)
+            {
+                entry.Status = NamespaceDecisionStatus.Withdrawn;
+                entry.Notes += NamespaceManagerConstants.AutoWithdrawalLanguageRemoved;
+                entry.DecidedBy = userName;
+                entry.DecidedOn = DateTime.UtcNow;
+                EnsureHistoryList(currentInfo, lang).Add(entry);
+            }
             currentInfo.CurrentNamespaceStatus.Remove(lang);
         }
 
-        // Added → propose & add language
-        foreach (string lang in newLanguages.Except(oldLanguages))
+        // Added language → propose one entry per package that has a namespace.
+        foreach (string lang in newLanguages.Except(oldLanguages).ToList())
         {
-            PackageInfo languagePackageInfo = newPackages[lang];
-            if (!string.IsNullOrEmpty(languagePackageInfo?.Namespace))
+            var proposedEntries = new List<NamespaceDecisionEntry>();
+            foreach (PackageInfo pkg in (newPackages[lang] ?? []).Where(p => !string.IsNullOrEmpty(p.Namespace)))
             {
-                NamespaceDecisionEntry proposed = CreateProposedEntry(userName, lang, languagePackageInfo.PackageName, languagePackageInfo.Namespace);
-                if (approvedReviewsByPackage.TryGetValue(proposed.PackageName, out var approvedReview))
+                NamespaceDecisionEntry proposed = CreateProposedEntry(userName, lang, pkg.PackageName, pkg.Namespace);
+                if (!string.IsNullOrEmpty(proposed.PackageName) &&
+                    approvedReviewsByPackage.TryGetValue(proposed.PackageName, out var approvedReview))
                 {
                     ApplyAutoApproval(proposed, approvedReview);
                 }
-
-                currentInfo.CurrentNamespaceStatus[lang] = proposed;
+                proposedEntries.Add(proposed);
                 EnsureHistoryList(currentInfo, lang).Add(proposed);
             }
-        }
-
-        // Changed namespace → withdraw + propose
-        foreach (string lang in oldLanguages.Intersect(newLanguages))
-        {
-            string oldNamespace = oldPackages[lang]?.Namespace;
-            PackageInfo newPkg = newPackages[lang];
-            string newNamespace = newPkg?.Namespace;
-
-            if (!string.IsNullOrEmpty(newNamespace) && !string.Equals(oldNamespace, newNamespace))
+            if (proposedEntries.Count > 0)
             {
-                if (currentInfo.CurrentNamespaceStatus.TryGetValue(lang, out var entry))
-                {
-                    entry.Status = NamespaceDecisionStatus.Withdrawn;
-                    entry.DecidedBy = userName;
-                    entry.DecidedOn = DateTime.UtcNow;
-                    entry.Notes += NamespaceManagerConstants.AutoWithdrawalNewNameSuggested;
-
-                    EnsureHistoryList(currentInfo, lang).Add(entry);
-                }
-
-                NamespaceDecisionEntry proposed = CreateProposedEntry(userName, lang, newPkg.PackageName, newNamespace);
-                if (approvedReviewsByPackage.TryGetValue(proposed.PackageName, out var approvedReview))
-                {
-                    ApplyAutoApproval(proposed, approvedReview);
-                }
-
-                currentInfo.CurrentNamespaceStatus[lang] = proposed;
-                EnsureHistoryList(currentInfo, lang).Add(proposed);
+                currentInfo.CurrentNamespaceStatus[lang] = proposedEntries;
             }
         }
 
-        currentInfo.ApprovedNamespaces = currentInfo.CurrentNamespaceStatus
-            .Where(kvp => kvp.Value.Status == NamespaceDecisionStatus.Approved)
-            .Select(kvp => kvp.Value)
-            .ToList();
+        // Same language in both → diff per package: removed, added, namespace-changed.
+        foreach (string lang in oldLanguages.Intersect(newLanguages).ToList())
+        {
+            var oldByName = (oldPackages[lang] ?? [])
+                .Where(p => !string.IsNullOrEmpty(p.PackageName))
+                .ToDictionary(p => p.PackageName, StringComparer.OrdinalIgnoreCase);
+            var newByName = (newPackages[lang] ?? [])
+                .Where(p => !string.IsNullOrEmpty(p.PackageName))
+                .ToDictionary(p => p.PackageName, StringComparer.OrdinalIgnoreCase);
+
+            var currentEntries = EnsureCurrentList(currentInfo, lang);
+
+            // Packages removed from this language → withdraw.
+            foreach (string removedPkg in oldByName.Keys.Except(newByName.Keys, StringComparer.OrdinalIgnoreCase).ToList())
+            {
+                NamespaceDecisionEntry existing = currentEntries.FirstOrDefault(e =>
+                    string.Equals(e.PackageName, removedPkg, StringComparison.OrdinalIgnoreCase));
+                if (existing != null)
+                {
+                    existing.Status = NamespaceDecisionStatus.Withdrawn;
+                    existing.DecidedBy = userName;
+                    existing.DecidedOn = DateTime.UtcNow;
+                    existing.Notes += NamespaceManagerConstants.AutoWithdrawalPackageRemoved;
+                    EnsureHistoryList(currentInfo, lang).Add(existing);
+                    currentEntries.Remove(existing);
+                }
+            }
+
+            // Packages added to this language → propose.
+            foreach (string addedPkg in newByName.Keys.Except(oldByName.Keys, StringComparer.OrdinalIgnoreCase).ToList())
+            {
+                PackageInfo newPkgInfo = newByName[addedPkg];
+                if (!string.IsNullOrEmpty(newPkgInfo.Namespace))
+                {
+                    NamespaceDecisionEntry proposed = CreateProposedEntry(userName, lang, newPkgInfo.PackageName, newPkgInfo.Namespace);
+                    if (approvedReviewsByPackage.TryGetValue(proposed.PackageName, out var autoApproveReview))
+                    {
+                        ApplyAutoApproval(proposed, autoApproveReview);
+                    }
+                    currentEntries.Add(proposed);
+                    EnsureHistoryList(currentInfo, lang).Add(proposed);
+                }
+            }
+
+            // Packages in both but namespace changed → withdraw + propose.
+            foreach (string sharedPkg in oldByName.Keys.Intersect(newByName.Keys, StringComparer.OrdinalIgnoreCase).ToList())
+            {
+                string oldNs = oldByName[sharedPkg].Namespace;
+                PackageInfo newPkgInfo = newByName[sharedPkg];
+                if (!string.IsNullOrEmpty(newPkgInfo.Namespace) &&
+                    !string.Equals(oldNs, newPkgInfo.Namespace, StringComparison.OrdinalIgnoreCase))
+                {
+                    var existing = currentEntries.FirstOrDefault(e =>
+                        string.Equals(e.PackageName, sharedPkg, StringComparison.OrdinalIgnoreCase));
+                    if (existing != null)
+                    {
+                        existing.Status = NamespaceDecisionStatus.Withdrawn;
+                        existing.DecidedBy = userName;
+                        existing.DecidedOn = DateTime.UtcNow;
+                        existing.Notes += NamespaceManagerConstants.AutoWithdrawalNewNameSuggested;
+                        EnsureHistoryList(currentInfo, lang).Add(existing);
+                        currentEntries.Remove(existing);
+                    }
+
+                    NamespaceDecisionEntry proposed = CreateProposedEntry(userName, lang, newPkgInfo.PackageName, newPkgInfo.Namespace);
+                    if (approvedReviewsByPackage.TryGetValue(proposed.PackageName, out var autoApproveReview))
+                    {
+                        ApplyAutoApproval(proposed, autoApproveReview);
+                    }
+                    currentEntries.Add(proposed);
+                    EnsureHistoryList(currentInfo, lang).Add(proposed);
+                }
+            }
+
+            if (currentEntries.Count == 0)
+            {
+                currentInfo.CurrentNamespaceStatus.Remove(lang);
+            }
+        }
+
+        RebuildApprovedNamespaces(currentInfo);
 
         return currentInfo;
     }
@@ -328,5 +414,26 @@ public class NamespaceManager : INamespaceManager
         list = [];
         info.NamespaceHistory[language] = list;
         return list;
+    }
+
+    private static List<NamespaceDecisionEntry> EnsureCurrentList(ProjectNamespaceInfo info, string language)
+    {
+        if (info.CurrentNamespaceStatus.TryGetValue(language, out var list))
+        {
+            return list;
+        }
+
+        list = [];
+        info.CurrentNamespaceStatus[language] = list;
+        return list;
+    }
+
+    private static void RebuildApprovedNamespaces(ProjectNamespaceInfo info)
+    {
+        info.ApprovedNamespaces = info.CurrentNamespaceStatus
+            .Values
+            .SelectMany(entries => entries)
+            .Where(e => e.Status == NamespaceDecisionStatus.Approved)
+            .ToList();
     }
 }

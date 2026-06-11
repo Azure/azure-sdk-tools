@@ -29,8 +29,8 @@ export class ProjectsService {
     return this.http.get<ProjectNamespaceInfo>(url, { withCredentials: true });
   }
 
-  updateNamespaceStatus(projectId: string, language: string, status: NamespaceDecisionStatus, notes?: string): Observable<Project> {
-    const body: { status: NamespaceDecisionStatus; notes?: string } = { status };
+  updateNamespaceStatus(projectId: string, language: string, namespace: string, status: NamespaceDecisionStatus, notes?: string): Observable<Project> {
+    const body: { namespace: string; status: NamespaceDecisionStatus; notes?: string } = { namespace, status };
     if (notes != null) {
       body.notes = notes;
     }

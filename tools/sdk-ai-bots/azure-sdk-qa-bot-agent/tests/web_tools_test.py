@@ -142,3 +142,42 @@ async def test_web_fetch_returns_error_on_http_forbidden() -> None:
     assert result.success is False
     assert result.status_code == 403
     assert result.error is not None
+
+
+@pytest.mark.asyncio
+async def test_web_fetch_blocks_redirects() -> None:
+    """A 3xx response must be returned as an error without following it.
+
+    This closes the SSRF vector where an attacker hosts a public URL that
+    redirects to an internal address (e.g. 169.254.169.254 / IMDS).
+    """
+    initial_url = "https://attacker.example.com/redirect"
+    redirect_resp = httpx.Response(
+        status_code=302,
+        headers={"location": "http://169.254.169.254/metadata/instance"},
+        content=b"",
+        request=httpx.Request("GET", initial_url),
+    )
+
+    with patch("tools.web_tools.httpx.AsyncClient") as MockClient, patch(
+        "tools.web_tools.socket.getaddrinfo",
+        return_value=[
+            (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("93.184.216.34", 0)),
+        ],
+    ):
+        instance = AsyncMock()
+        instance.get.return_value = redirect_resp
+        instance.__aenter__ = AsyncMock(return_value=instance)
+        instance.__aexit__ = AsyncMock(return_value=False)
+        MockClient.return_value = instance
+
+        result = await WebTools().web_fetch(url=initial_url)
+
+    # The httpx client must be constructed with follow_redirects=False.
+    assert MockClient.call_args.kwargs.get("follow_redirects") is False
+    # Only the initial request is issued; the redirect target is never fetched.
+    assert instance.get.call_count == 1
+    assert result.success is False
+    assert result.status_code == 302
+    assert result.content_excerpt == ""
+    assert result.error is not None

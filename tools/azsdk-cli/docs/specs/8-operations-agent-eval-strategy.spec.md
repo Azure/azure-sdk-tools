@@ -78,6 +78,11 @@ and distributed-execution scalability — *not* for a new eval abstraction.
 - [ ] **Mock covers every tool the scenarios call**, with realistic responses.
 - [ ] **Anyone can clone and run** — env vars, no hard-coded paths; live
       scenarios declare what repos they need.
+- [ ] **Contributors don't hand-write eval files** — a partner or service
+      team should be able to name their skill and the scenarios they care
+      about and have the framework (an agent / Copilot) generate the eval
+      template for them. Lowering this barrier is how the suite scales to
+      ARM and service teams who don't know the eval internals.
 - [ ] **The run produces a status table** of pass/fail per prompt plus a
       trajectory per prompt — readable by non-engineers.
 - [ ] **Reports come out in the formats people actually use** — markdown
@@ -300,6 +305,24 @@ stimuli:
     constraints: { max_turns: 30, max_tokens: 200000 }
 ```
 
+#### Authoring evals — generated, not hand-written
+
+Most contributors — ARM, service partner teams — own a skill but have
+never seen the eval format. We do not want them learning YAML grader
+config to add coverage. The target workflow:
+
+1. A contributor names their **skill** and the **scenarios** they want
+   covered (in plain language).
+2. An agent / Copilot generates the matching `*.eval.yaml` — the right
+   graders, the right tool-call assertions, a fixtures stub — from the
+   skill's `SKILL.md` and the named scenarios.
+3. The contributor reviews and tweaks the generated file; the framework
+   validates it (structural + reference checks) before it lands.
+
+This keeps the authoring barrier low while the generated files stay
+native Vally — the orchestration layer sees no difference between a
+generated eval and a hand-written one.
+
 ### CI
 
 **The problem.** Agent evals are slow (each agent run takes ~20 s),
@@ -324,7 +347,7 @@ simple. From top to bottom:
 ```text
 +--------------------------------------------------------------+
 |             Shared eval orchestration framework              |
-|             (azure-sdk-tools/eng/eval-platform)              |
+|                  (azure-sdk-tools/eng/common)                |
 |--------------------------------------------------------------|
 | Discovery | Sharding | Validation | Reporting | Aggregation  |
 | Shared stimuli | Matrix execution | Retry logic             |
@@ -353,7 +376,7 @@ simple. From top to bottom:
 - **Repos own the *intent*** — what to test. **The shared framework owns
   the *mechanics*** — how to run it at scale. An author adds an eval; the
   platform picks it up. They never touch the orchestration layer.
-- The framework lives in `eng/eval-platform/` and is reused by every
+- The framework lives in `eng/common/` and is reused by every
   pipeline and every repo (see
   [Cross-repo rollout](#cross-repo-rollout-and-the-shared-platform)).
 
@@ -499,6 +522,12 @@ but consume more agents and add per-shard setup overhead; taken to the
 extreme of one eval per shard, scheduling and environment setup waste
 more than they save. Start moderate, tune from real timings.
 
+**Concurrency cap.** To avoid exhausting the agent pool (and the
+Copilot-SDK session limit), the layer caps concurrent shards — **10 to
+start**. The shard plan still produces however many shards it needs; the
+matrix just runs at most 10 at a time. The cap is a knob we revisit once
+we have real throughput numbers.
+
 #### Environment setup and caching
 
 This is the part we already got burned on, so it's called out explicitly:
@@ -545,6 +574,13 @@ seconds instead of after a 17-minute run:
   orphaned scenarios (reported, not necessarily blocking).
 - **Reference** — fixtures, skills, and prompts a stimulus names actually
   exist.
+
+**New-skill-without-eval check (later phase).** A dedicated validator —
+run as a PR pipeline or GitHub Action, the same way test-coverage gating
+works — fails the PR when a new skill is added without a matching eval.
+It is deliberately a later phase: we want the generation workflow and the
+core orchestration proven first, so the gate doesn't block contributors
+before the easy path to *add* an eval exists.
 
 #### PR gate for essential workflows (open)
 
@@ -655,6 +691,11 @@ In CI: trajectories + JSONL are uploaded as build artifacts you can
 download from the run page; the CSV gets appended to a long-lived
 history branch.
 
+**Reporting rollout.** Phase 1 keeps reporting simple — results are just
+pipeline **artifacts** (the files above) plus the PR annotation. Pushing
+results to an external store (Kusto) and building shared **dashboards**
+for broader visibility is a later phase, once the data shape has settled.
+
 ### Performance and cost controls
 
 Why this section exists: agent evals are *slow* and *expensive*. Every
@@ -710,19 +751,26 @@ owns execution mechanics** (discovery, sharding, matrix orchestration,
 validation, aggregation, reporting). Only the eval content differs per
 repo; the runner does not.
 
-The shared framework lives in `azure-sdk-tools/eng/eval-platform/`:
+The shared framework lives under `azure-sdk-tools/eng/common/` — the
+folder that is **mirrored into every Azure SDK repo**. Putting the
+platform here is what makes "build once, reuse everywhere" literal: a
+language repo gets the orchestration scripts and pipeline templates by
+sync, and only adds its own eval content. It slots into the existing
+`eng/common` layout rather than a new top-level folder:
 
 ```
-eng/eval-platform/
-├── pipelines/        ADO templates: discovery → shard → matrix → aggregate
-├── scripts/          discovery, change-detection, shard planning
-├── validators/       structural / coverage / reference checks
-└── reporting/        shard-result merge + summary generation
+eng/common/
+├── pipelines/        eval orchestration templates: discover → shard → matrix → aggregate
+└── scripts/          discovery, change-detection, shard planning, result merge, validators
 ```
+
+Folders for shared stimuli/fixtures, reporting sinks, and the like are
+added only when a phase needs them — the Phase 1 footprint is
+deliberately minimal.
 
 ```mermaid
 flowchart TD
-    subgraph SHARED["Shared platform — eng/eval-platform/ (azure-sdk-tools)"]
+    subgraph SHARED["Shared platform — eng/common/ (azure-sdk-tools)"]
         ORCH["Orchestration:<br/>discover · shard · matrix · aggregate · report · validate"]
     end
     subgraph CONTENT["Repository-owned eval content"]
@@ -742,12 +790,15 @@ flowchart TD
 
 **Rollout.**
 
-- **Phase 1 — prove it here and in `azure-rest-api-specs`.** Validate
-  the orchestration architecture, the sharding approach, distributed
-  execution, the contributor workflow, and the reporting pipeline on
-  native Vally evals. Deliberately *out of scope* early: runtime-aware
-  balancing, runtime prediction, multi-engine support, and any custom
-  schema layer.
+- **Phase 1 — orchestration for `azure-rest-api-specs`, bare minimum.**
+  Stand up the orchestration path end-to-end on one repo, with pipeline
+  definitions and scripts in `eng/common`, handling **one skill as a
+  proof of concept**. Validate the orchestration architecture, the
+  sharding approach, distributed execution, the contributor workflow,
+  and the reporting pipeline on native Vally evals. Deliberately *out of
+  scope* early: runtime-aware balancing, runtime prediction, multi-engine
+  support, any custom schema layer, the new-skill-without-eval validator,
+  and the Kusto/dashboard reporting sink.
 - **Phase 2 — language SDK repos.** Reuse the same framework across
   `azure-sdk-for-net`, `-python`, `-java`, `-js`, and `-go`. Each repo
   brings its own eval content; the orchestration layer is unchanged.
@@ -761,10 +812,10 @@ pass/fail:
 
 **Reusable stimuli and fixtures.** To avoid prompt duplication and
 fixture drift across repos, the framework can host shared prompts,
-contexts, fixtures, and mock responses under
-`eng/eval-platform/shared-stimuli/`. A repo references a shared
-stimulus instead of copying it. This is optional and additive — a repo
-can keep everything local.
+contexts, fixtures, and mock responses under `eng/common/` alongside the
+orchestration scripts. A repo references a shared stimulus instead of
+copying it. This is optional and additive — a repo can keep everything
+local.
 
 
 ---
@@ -865,7 +916,7 @@ When do we graduate to runtime-aware sharding, and what signal drives
 it (historical wall time, tokens, workflow depth)?
 
 **Shared-platform ownership.** The orchestration layer in
-`eng/eval-platform/` is shared across repos. Open: who owns it, who
+`eng/common/` is shared across repos. Open: who owns it, who
 reviews changes to the matrix/sharding templates, and how do consuming
 repos pin or roll forward a version?
 
@@ -873,3 +924,35 @@ repos pin or roll forward a version?
 provide to plug into the shared framework — just `evals/**` plus a
 discovery entry point, or more? Do shared stimuli/fixtures live in
 `azure-sdk-tools` or get mirrored per repo?
+
+---
+
+## Implementation Plan
+
+The first deliverable is intentionally small — prove the orchestration
+shape on one repo before generalizing.
+
+**Phase 1 — minimal orchestration on `azure-rest-api-specs`.**
+
+- Pipeline definitions and orchestration scripts land in `eng/common`
+  (so they sync to every repo for free), aligned to the existing
+  `eng/common` layout — no speculative folders.
+- Handle **one skill end-to-end** as a proof of concept: discover its
+  eval → plan shards → matrix fan-out → run native Vally → aggregate →
+  report as pipeline artifacts.
+- Defer until the design is validated: eval-generation tooling, the
+  new-skill-without-eval validator, Kusto/dashboard reporting, and
+  runtime-aware sharding.
+
+**Process.**
+
+- Consolidate this design with the orchestration feedback into one
+  document (done here).
+- Review the CI parts with Ben before circulating more broadly
+  (e.g. to Laurent).
+- Hold recirculation until that review is complete.
+
+**Phase 2 — generalize.** Once Phase 1 is validated, extend to the
+language SDK repos and the more complex multi-skill scenarios, reusing
+the same `eng/common` orchestration so future repos need only their own
+eval content.

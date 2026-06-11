@@ -167,6 +167,18 @@ class GraphSearchResult(BaseModel):
     query: str = ""
 
 
+class GraphQueryRequest(BaseModel):
+    """Request body for the ``POST /internal/graph/query`` endpoint.
+
+    The chat agent posts here to delegate graph retrieval to the
+    long-running backend server, which keeps a warm
+    :class:`KnowledgeGraphService` singleton. Avoids paying the ~40s
+    GraphRAG cold-start cost on every fresh chat-agent sandbox.
+    """
+
+    query: str = Field(..., description="Natural-language query to retrieve graph-grounded references for.")
+
+
 class DocumentContext(BaseModel):
     """A knowledge document in the eval-pipeline format (document_* keys)."""
 

@@ -1,4 +1,4 @@
-"""Graph-based retrieval tool (Microsoft GraphRAG / Local Search context).
+"""Graph-based retrieval tool (HTTP client → backend server).
 
 Exposes a single tool,
 :meth:`GraphKnowledgeTools.search_knowledge_graph`, that retrieves
@@ -6,8 +6,18 @@ graph-grounded source snippets for a natural-language query. Mirrors
 ``search_knowledge_base`` (the Azure AI Search vector retriever) in
 output shape so the chat agent can consume both the same way.
 
-Conceptual contract — this is a **retrieval tool**, not an answering
-tool:
+Why HTTP instead of running GraphRAG in-process
+-----------------------------------------------
+The chat agent runs in a fresh Foundry sandbox per session — every cold
+sandbox would otherwise pay ~40s to download parquets + preload
+community embeddings before serving the first graph query. Instead this
+tool POSTs to the backend server's ``/internal/graph/query`` endpoint;
+the backend pre-warms the :class:`KnowledgeGraphService` once at
+startup and keeps it for the pod's lifetime, so each call resolves in
+~1-2s (one embedding + one AI Search ANN + DataFrame joins).
+
+Conceptual contract — this is still a **retrieval tool**, not an
+answering tool:
 
 * Output type ``GraphSearchResult { references[] }`` carries verbatim
   source snippets, deduplicated by document. No synthesised narrative,
@@ -21,10 +31,6 @@ tool:
   embeddings. The two candidate sets are complementary — graph wins
   on entity-centric / "how does X relate to Y" questions; KB wins on
   exact-phrase / verbatim-fact questions.
-
-No completion LLM call per query — the bot just runs the GraphRAG
-context builder (one embedding + one ANN + DataFrame joins), so this
-tool's per-call latency is comparable to the KB tool's.
 """
 
 from __future__ import annotations
@@ -32,21 +38,23 @@ from __future__ import annotations
 import logging
 from typing import Annotated
 
-from models.knowledge import GraphReference, GraphSearchResult
+import httpx
+
+from config.app_config import get as cfg
+from models.knowledge import GraphSearchResult
 from tools import tool
-from utils.knowledge_graph import (
-    GraphSourceRef,
-    get_knowledge_graph_service,
-)
 
 logger = logging.getLogger(__name__)
 
-# Truncate each reference snippet to keep prompt context bounded.
-_MAX_SNIPPET_CHARS = 1200
+# Generous default: a warm backend serves graph queries in ~1-2s, but
+# we leave headroom for the once-per-pod cold-load case (~45s) so the
+# chat agent doesn't time out before the backend warms up. Override
+# via the GRAPH_QUERY_TIMEOUT_SECONDS config key if needed.
+_DEFAULT_TIMEOUT_SECONDS = 60.0
 
 
 class GraphKnowledgeTools:
-    """Knowledge graph retrieval tools backed by GraphRAG Local Search context."""
+    """Knowledge graph retrieval tools backed by the backend server."""
 
     @tool
     async def search_knowledge_graph(
@@ -65,46 +73,71 @@ class GraphKnowledgeTools:
             "two recall paths are complementary.",
         ],
     ) -> GraphSearchResult:
-        """Retrieve graph-grounded references for ``query``.
+        """Retrieve graph-grounded references for ``query`` via the backend.
 
         Returns an empty ``references`` list when the query is blank,
-        the graph service is disabled, or retrieval failed. The chat
-        agent is responsible for falling back to other tools in that
-        case.
+        the backend endpoint is not configured, the HTTP call fails, or
+        retrieval returned nothing. The chat agent is responsible for
+        falling back to other tools in that case.
         """
         normalised_query = (query or "").strip()
         if not normalised_query:
             return GraphSearchResult(references=[], query="")
 
-        service = get_knowledge_graph_service()
+        endpoint = cfg("GRAPH_QUERY_URL", "").strip()
+        token = cfg("GRAPHRAG_ADMIN_TOKEN", "").strip()
+        if not endpoint or not token:
+            logger.warning(
+                "search_knowledge_graph: GRAPH_QUERY_URL / "
+                "GRAPHRAG_ADMIN_TOKEN not configured — returning empty result"
+            )
+            return GraphSearchResult(references=[], query=normalised_query)
+
+        try:
+            timeout = float(cfg("GRAPH_QUERY_TIMEOUT_SECONDS", str(_DEFAULT_TIMEOUT_SECONDS)))
+        except (TypeError, ValueError):
+            timeout = _DEFAULT_TIMEOUT_SECONDS
 
         logger.info(
-            "Running GraphRAG context retrieval for query=%r", normalised_query
+            "Posting graph query to %s (timeout=%.1fs)", endpoint, timeout
         )
 
         try:
-            sources = await service.search_graph(normalised_query)
-        except Exception as exc:
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                response = await client.post(
+                    endpoint,
+                    headers={"X-Admin-Token": token},
+                    json={"query": normalised_query},
+                )
+                response.raise_for_status()
+                payload = response.json()
+        except httpx.HTTPError as exc:
             logger.warning(
-                "GraphRAG search_graph failed for query=%r: %s",
+                "search_knowledge_graph HTTP call failed for query=%r: %s",
                 normalised_query,
                 exc,
             )
             return GraphSearchResult(references=[], query=normalised_query)
-
-        if sources is None:
+        except Exception:
+            logger.exception(
+                "search_knowledge_graph: unexpected error for query=%r",
+                normalised_query,
+            )
             return GraphSearchResult(references=[], query=normalised_query)
 
-        merged_refs: dict[str, GraphReference] = {}
-        for src in sources:
-            ref = _graph_source_to_reference(src)
-            # Dedupe by (title|link); keep first occurrence (highest-ranked).
-            merged_refs.setdefault(ref.title or ref.link, ref)
+        try:
+            result = GraphSearchResult.model_validate(payload)
+        except Exception:
+            logger.exception(
+                "search_knowledge_graph: backend payload failed validation: %r",
+                payload,
+            )
+            return GraphSearchResult(references=[], query=normalised_query)
 
-        result = GraphSearchResult(
-            references=list(merged_refs.values()),
-            query=normalised_query,
-        )
+        # Ensure the echoed query reflects what we asked for, even if
+        # the backend omitted it.
+        if not result.query:
+            result.query = normalised_query
 
         logger.info(
             "=========GraphRAG Result========= references=%d",
@@ -120,22 +153,3 @@ class GraphKnowledgeTools:
         logger.info("===================================== query=%r", normalised_query)
 
         return result
-
-
-def _graph_source_to_reference(src: GraphSourceRef) -> GraphReference:
-    """Convert a :class:`GraphSourceRef` to the tool's :class:`GraphReference`."""
-    return GraphReference(
-        title=src.title,
-        link=src.link,
-        snippet=_truncate_snippet(src.content),
-        source=src.source or "graphrag",
-    )
-
-
-def _truncate_snippet(content: str | None) -> str:
-    """Truncate snippet to bound the prompt context size."""
-    if not content:
-        return ""
-    if len(content) <= _MAX_SNIPPET_CHARS:
-        return content
-    return content[:_MAX_SNIPPET_CHARS] + "\n... [truncated]"

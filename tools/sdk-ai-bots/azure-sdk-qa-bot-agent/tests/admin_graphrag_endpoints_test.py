@@ -130,3 +130,148 @@ def test_status_returns_payload(client, fake_service):
     resp = client.get("/admin/graphrag/status", headers={"X-Admin-Token": _TOKEN})
     assert resp.status_code == 200
     assert resp.json() == _STATUS_PAYLOAD
+
+
+# ---------------------------------------------------------------------------
+# /internal/graph/query — route-A backend endpoint exercised by the chat agent
+# ---------------------------------------------------------------------------
+
+
+def _make_source_ref(title: str, link: str, content: str, source: str):
+    """Build a ``GraphSourceRef`` without importing the heavy graphrag stack."""
+    from utils.knowledge_graph import GraphSourceRef
+
+    return GraphSourceRef(title=title, link=link, content=content, source=source)
+
+
+def test_internal_graph_query_requires_configured_token(monkeypatch):
+    monkeypatch.setattr(app_config, "_settings", {})
+    with TestClient(server.app) as c:
+        resp = c.post(
+            "/internal/graph/query",
+            headers={"X-Admin-Token": "x"},
+            json={"query": "hello"},
+        )
+    assert resp.status_code == 503
+
+
+def test_internal_graph_query_rejects_wrong_token(client):
+    resp = client.post(
+        "/internal/graph/query",
+        headers={"X-Admin-Token": "wrong"},
+        json={"query": "hello"},
+    )
+    assert resp.status_code == 401
+
+
+def test_internal_graph_query_rejects_missing_header(client):
+    resp = client.post("/internal/graph/query", json={"query": "hello"})
+    assert resp.status_code == 401
+
+
+def test_internal_graph_query_blank_query_returns_empty(client):
+    """Whitespace-only query short-circuits to an empty result (no service call)."""
+    service = AsyncMock()
+    service.enabled = True
+    service.search_graph = AsyncMock()
+    with patch.object(kg, "get_knowledge_graph_service", return_value=service):
+        resp = client.post(
+            "/internal/graph/query",
+            headers={"X-Admin-Token": _TOKEN},
+            json={"query": "   "},
+        )
+    assert resp.status_code == 200
+    assert resp.json() == {"references": [], "query": ""}
+    service.search_graph.assert_not_called()
+
+
+def test_internal_graph_query_disabled_service_returns_empty(client):
+    service = AsyncMock()
+    service.enabled = False
+    with patch.object(kg, "get_knowledge_graph_service", return_value=service):
+        resp = client.post(
+            "/internal/graph/query",
+            headers={"X-Admin-Token": _TOKEN},
+            json={"query": "hello"},
+        )
+    assert resp.status_code == 200
+    assert resp.json() == {"references": [], "query": "hello"}
+
+
+def test_internal_graph_query_service_exception_returns_empty(client):
+    service = AsyncMock()
+    service.enabled = True
+    service.search_graph = AsyncMock(side_effect=RuntimeError("graph oom"))
+    with patch.object(kg, "get_knowledge_graph_service", return_value=service):
+        resp = client.post(
+            "/internal/graph/query",
+            headers={"X-Admin-Token": _TOKEN},
+            json={"query": "hello"},
+        )
+    # Never 5xx for query-side failures — chat agent must degrade gracefully.
+    assert resp.status_code == 200
+    assert resp.json() == {"references": [], "query": "hello"}
+
+
+def test_internal_graph_query_happy_path_with_dedup_and_truncation(client):
+    long_body = "x" * 1500  # > _GRAPH_SNIPPET_MAX_CHARS (1200)
+    refs = [
+        _make_source_ref(
+            title="doc1",
+            link="https://example.com/doc1",
+            content="short content",
+            source="typespec_docs",
+        ),
+        # Same title → must be deduped (first occurrence wins).
+        _make_source_ref(
+            title="doc1",
+            link="https://example.com/doc1-alt",
+            content="other content",
+            source="azure_sdk_docs",
+        ),
+        _make_source_ref(
+            title="doc2",
+            link="https://example.com/doc2",
+            content=long_body,
+            source="azure_sdk_docs",
+        ),
+    ]
+    service = AsyncMock()
+    service.enabled = True
+    service.search_graph = AsyncMock(return_value=refs)
+    with patch.object(kg, "get_knowledge_graph_service", return_value=service):
+        resp = client.post(
+            "/internal/graph/query",
+            headers={"X-Admin-Token": _TOKEN},
+            json={"query": "what is X?"},
+        )
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["query"] == "what is X?"
+    titles = [r["title"] for r in body["references"]]
+    assert titles == ["doc1", "doc2"], "dedup by title should keep first occurrence"
+
+    doc1 = body["references"][0]
+    assert doc1["source"] == "typespec_docs"
+    assert doc1["snippet"] == "short content"
+
+    doc2 = body["references"][1]
+    assert doc2["snippet"].endswith("\n... [truncated]")
+    # 1200 chars of body + truncation marker
+    assert doc2["snippet"].startswith("x" * 1200)
+
+
+def test_internal_graph_query_search_returns_none(client):
+    """``service.search_graph`` may return None when the engine is half-loaded."""
+    service = AsyncMock()
+    service.enabled = True
+    service.search_graph = AsyncMock(return_value=None)
+    with patch.object(kg, "get_knowledge_graph_service", return_value=service):
+        resp = client.post(
+            "/internal/graph/query",
+            headers={"X-Admin-Token": _TOKEN},
+            json={"query": "hello"},
+        )
+    assert resp.status_code == 200
+    assert resp.json() == {"references": [], "query": "hello"}

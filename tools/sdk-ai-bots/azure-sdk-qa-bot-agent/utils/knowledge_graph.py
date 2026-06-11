@@ -60,7 +60,7 @@ from typing import TYPE_CHECKING, Any
 
 from config.app_config import get as cfg
 from config.tenant_config import get_knowledge_source
-from utils.azure_storage import _get_blob_service_client, download_blob
+from utils.azure_storage import download_blob
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -95,10 +95,12 @@ class GraphSourceRef:
                  ground the LLM answer (typically one text_unit chunk).
         source:  Short identifier for the originating KnowledgeSource
                  (e.g. ``"typespec_docs"``, matching what the KB tool
-                 attaches to a chunk from the same document). Falls
-                 back to ``"graphrag"`` only when the document's
-                 source folder cannot be recovered from the blob
-                 listing — see ``_preload_title_source_map``.
+                 attaches to a chunk from the same document). Recovered
+                 from the ``raw_data.source_folder`` column that the
+                 sync project's ``SourceAwareMarkItDownFileReader``
+                 writes into ``documents.parquet`` per row. Falls back
+                 to ``"graphrag"`` only when a snapshot row is missing
+                 that attribution.
     """
 
     title: str
@@ -139,14 +141,6 @@ class KnowledgeGraphService:
         # ``<container>/snapshots/<snapshot>/<name>.parquet`` and the
         # ``latest.json`` manifest pointer at the container root.
         self._blob_container = cfg("STORAGE_GRAPHRAG_OUTPUT_CONTAINER", "")
-        # Blob container holding the *source* markdown files the graph
-        # was built from. Used to recover each document's KB source
-        # attribution (see ``_preload_title_source_map``). The sync
-        # project lays out files as ``{source_folder}/{filename}``;
-        # graphrag's ``documents.parquet`` only keeps the filename, so
-        # we re-derive the parent folder by listing this container at
-        # (re)load time.
-        self._knowledge_container = cfg("STORAGE_KNOWLEDGE_CONTAINER", "")
 
         self._config = None  # graphrag GraphRagConfig
         self._dfs: "dict[str, pd.DataFrame] | None" = None
@@ -157,15 +151,6 @@ class KnowledgeGraphService:
         # avoids thousands of serial ``search_by_id`` round-trips to
         # AI Search.
         self._report_embeddings_cache: dict[str, list[float]] = {}
-        # Map of {graphrag-document-title → set of source folder names}.
-        # Populated by ``_preload_title_source_map`` after every
-        # (re)load by listing the knowledge blob container. Lets
-        # ``_extract_sources_from_context`` set ``GraphSourceRef.source``
-        # to the same identifier (e.g. ``typespec_docs``) that the KB
-        # tool would attach to a chunk from the same document, and lets
-        # us derive a proper documentation URL via
-        # ``KnowledgeSource.get_link``.
-        self._title_to_source: dict[str, set[str]] = {}
         # Pre-built, immutable LocalSearch context builder + the params
         # we want to drive each ``build_context`` call with (text_unit_
         # prop, top_k_*, max_context_tokens, ...). Constructed once per
@@ -264,7 +249,6 @@ class KnowledgeGraphService:
                 self._dfs,
                 self._loaded_version,
                 self._report_embeddings_cache,
-                self._title_to_source,
                 self._context_builder,
                 self._context_params,
             )
@@ -275,7 +259,6 @@ class KnowledgeGraphService:
                 self._dfs = new_dfs
                 self._loaded_version = new_version
                 await self._preload_report_embeddings()
-                await self._preload_title_source_map()
                 await asyncio.to_thread(self._build_context_builder)
                 if self._context_builder is None:
                     # Defensive: _build_context_builder returns silently
@@ -295,7 +278,6 @@ class KnowledgeGraphService:
                     self._dfs,
                     self._loaded_version,
                     self._report_embeddings_cache,
-                    self._title_to_source,
                     self._context_builder,
                     self._context_params,
                 ) = prev_state
@@ -359,7 +341,6 @@ class KnowledgeGraphService:
                 self._config = None
                 self._loaded_version = None
                 self._report_embeddings_cache = {}
-                self._title_to_source = {}
                 self._context_builder = None
                 self._context_params = {}
             return None
@@ -427,8 +408,23 @@ class KnowledgeGraphService:
 
         doc_index = (
             documents_df.drop_duplicates(subset=["id"])
-            .set_index("id")[["title"]]
+            .set_index("id")
         )
+        # ``raw_data`` is the column GraphRAG persists from
+        # ``TextDocument.raw_data``. The sync project's
+        # ``SourceAwareMarkItDownFileReader`` writes
+        # ``{"source_folder": "<kb-folder>"}`` into every row so the
+        # bot can attribute each graph reference to a concrete
+        # KnowledgeSource. Fallback paths are intentionally omitted —
+        # a snapshot without ``raw_data`` is treated as incompatible
+        # rather than silently regressing to lossy basename matching.
+        if "raw_data" not in doc_index.columns:
+            logger.error(
+                "documents.parquet is missing the 'raw_data' column — "
+                "this snapshot is incompatible. Republish from the "
+                "sync project to fix."
+            )
+            return []
 
         # Group text units by document so each citation carries a single
         # representative chunk excerpt (largest chunk wins).
@@ -438,32 +434,43 @@ class KnowledgeGraphService:
 
         sources: list[GraphSourceRef] = []
         seen_docs: set[str] = set()
+        unattributed = 0
         for _, row in sorted_units.iterrows():
             doc_id = row.get("document_id")
             if not doc_id or doc_id in seen_docs:
                 continue
             seen_docs.add(doc_id)
 
+            raw_title = ""
+            source_name = ""
             if doc_id in doc_index.index:
-                title_val = doc_index.loc[doc_id, "title"]
-                # ``.loc`` returns a Series when the index has duplicates;
-                # dedup above guards against that but be defensive in case
-                # any sneak through.
-                if hasattr(title_val, "iloc"):
-                    title_val = title_val.iloc[0] if len(title_val) else ""
-                raw_title = str(title_val or "")
-            else:
-                raw_title = ""
+                doc_row = doc_index.loc[doc_id]
+                # ``.loc`` returns a DataFrame for duplicate ids; dedup
+                # above guards against that but be defensive.
+                if getattr(doc_row, "ndim", 1) > 1:
+                    doc_row = doc_row.iloc[0]
+                raw_title = str(doc_row.get("title") or "")
+                rd = doc_row.get("raw_data")
+                # Parquet round-trips dict-valued cells as plain dicts;
+                # tolerate the (unexpected) None case for individual
+                # rows by recording them under the generic source name.
+                if isinstance(rd, dict):
+                    source_name = str(rd.get("source_folder") or "")
 
-            source_name, knowledge_source = self._resolve_source_for_title(
-                raw_title
-            )
+            if not source_name:
+                unattributed += 1
+                source_name = "graphrag"
+                knowledge_source = None
+            else:
+                knowledge_source = get_knowledge_source(source_name)
+
             display_title, fallback_link = _doc_title_to_display(raw_title)
             # Prefer the KnowledgeSource's URL resolver so the link is
             # consistent with the KB tool's references — it knows about
             # per-source quirks (trim_format, suffix, custom link_fn).
-            # Fall back to the raw path when the title's source is
-            # unknown or unregistered.
+            # Fall back to the raw path when the title's source folder
+            # is registered but the KnowledgeSource lookup fails (e.g.
+            # a folder that was removed from tenant_config).
             if knowledge_source is not None and raw_title:
                 link = knowledge_source.get_link(raw_title)
             else:
@@ -476,6 +483,14 @@ class KnowledgeGraphService:
                     content=str(row.get("text") or ""),
                     source=source_name,
                 )
+            )
+
+        if unattributed:
+            logger.warning(
+                "GraphRAG context referenced %d document(s) with no "
+                "raw_data.source_folder — they were attributed to "
+                "source='graphrag'. Rebuild the snapshot to fix.",
+                unattributed,
             )
 
         return sources
@@ -499,7 +514,6 @@ class KnowledgeGraphService:
                     await self._load_parquets_with_manifest()
                 )
                 await self._preload_report_embeddings()
-                await self._preload_title_source_map()
                 await asyncio.to_thread(self._build_context_builder)
             except Exception:
                 logger.exception("Failed to initialise KnowledgeGraphService")
@@ -507,7 +521,6 @@ class KnowledgeGraphService:
                 self._dfs = None
                 self._loaded_version = None
                 self._report_embeddings_cache = {}
-                self._title_to_source = {}
                 self._context_builder = None
                 self._context_params = {}
                 return False
@@ -645,110 +658,6 @@ class KnowledgeGraphService:
                 )
             dfs[name] = pd.read_parquet(file_path)
         return dfs
-
-    # ------------------------------------------------------------------ #
-    # Title → source folder preload
-    # ------------------------------------------------------------------ #
-
-    async def _preload_title_source_map(self) -> None:
-        """Build the ``{document title → set of source folders}`` map.
-
-        GraphRAG's ``documents.parquet`` only stores the *basename* of
-        each indexed file as ``title`` — the parent folder is dropped
-        when ``MarkItDownFileReader.read_file`` writes the row. The
-        knowledge-sync project, however, uploads every source markdown
-        at ``{source_folder}/{filename}`` in the blob container named by
-        ``STORAGE_KNOWLEDGE_CONTAINER`` — and ``source_folder`` matches
-        exactly the ``KnowledgeSource.name`` constants the KB tool uses
-        (``typespec_docs``, ``azure_sdk_for_python_docs``, ...).
-
-        Listing every blob and recording the first path segment for
-        each basename therefore gives us a reverse lookup from a graph
-        document title to the KB ``source`` that produced it — so a
-        graph reference can be attributed the same way a KB chunk
-        reference would, and its link can be derived via
-        ``KnowledgeSource.get_link``.
-
-        The map is rebuilt on every (re)load (cheap — typically a few
-        thousand blobs, completes in <2s) so a newly-added KB source
-        starts attributing correctly on the next reload without an
-        agent restart.
-        """
-        if not self._knowledge_container:
-            logger.info(
-                "STORAGE_KNOWLEDGE_CONTAINER not configured — "
-                "graph references will fall back to source='graphrag'."
-            )
-            self._title_to_source = {}
-            return
-
-        start = time.monotonic()
-        title_to_sources: dict[str, set[str]] = {}
-
-        def _normalise(path: str) -> tuple[str, str] | None:
-            # Blob paths always use '/' as separator; defensive against
-            # accidental backslashes from a Windows-side uploader.
-            normalized = path.replace("\\", "/")
-            sep = normalized.find("/")
-            if sep <= 0 or sep == len(normalized) - 1:
-                return None
-            return normalized[:sep], normalized[sep + 1 :]
-
-        try:
-            client = _get_blob_service_client()
-            container = client.get_container_client(self._knowledge_container)
-            async for blob in container.list_blobs():
-                parsed = _normalise(blob.name)
-                if not parsed:
-                    continue
-                folder, basename = parsed
-                title_to_sources.setdefault(basename, set()).add(folder)
-        except Exception:
-            logger.exception(
-                "Failed to list blobs in %s; graph references will "
-                "fall back to source='graphrag'.",
-                self._knowledge_container,
-            )
-            self._title_to_source = {}
-            return
-
-        collisions = {k: v for k, v in title_to_sources.items() if len(v) > 1}
-        if collisions:
-            sample = [(k, sorted(v)) for k, v in list(collisions.items())[:5]]
-            logger.warning(
-                "Title→source collisions detected: %d titles map to >1 folder, "
-                "e.g. %s. Picking the first folder (alphabetical) for each.",
-                len(collisions),
-                sample,
-            )
-
-        self._title_to_source = title_to_sources
-        logger.info(
-            "Preloaded title→source map from %s in %.2fs "
-            "(%d unique titles, %d collisions)",
-            self._knowledge_container,
-            time.monotonic() - start,
-            len(title_to_sources),
-            len(collisions),
-        )
-
-    def _resolve_source_for_title(
-        self, raw_title: str
-    ) -> "tuple[str, Any]":
-        """Look up the KB source folder + KnowledgeSource for a title.
-
-        Returns ``(source_name, knowledge_source_or_None)``. When the
-        title is unknown or maps to a folder not registered as a
-        ``KnowledgeSource``, returns ``("graphrag", None)`` and the
-        caller falls back to the raw path display.
-        """
-        folders = self._title_to_source.get(raw_title)
-        if not folders:
-            return "graphrag", None
-        # Deterministic pick when a basename exists under multiple
-        # folders. Matches the warning in _preload_title_source_map.
-        source_name = sorted(folders)[0]
-        return source_name, get_knowledge_source(source_name)
 
     # ------------------------------------------------------------------ #
     # Community-report embedding preload + monkey-patch

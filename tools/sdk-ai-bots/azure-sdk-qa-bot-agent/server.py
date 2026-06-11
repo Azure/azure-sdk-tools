@@ -22,6 +22,7 @@ from models.chat import ChatRequest, ChatResponse
 from models.conversation import ConversationMessage, SaveConversationMessageResponse
 from models.feedback import FeedbackRequest, FeedbackResponse
 from models.intention import IntentionRequest, IntentionResponse
+from models.knowledge import GraphQueryRequest, GraphReference, GraphSearchResult
 from services.chat_service import ChatService
 from services.conversation_service import ConversationService
 from services.feedback_service import FeedbackService
@@ -43,6 +44,11 @@ from config.tenant_config import TenantID
 import uvicorn
 
 _request_id_ctx_var: ContextVar[str] = ContextVar("request_id", default="system")
+
+# Snippet length cap mirrored from the chat-agent tool that used to do
+# this dedupe locally. Keeps the over-the-wire shape identical to the
+# pre-A-route implementation so the agent's prompt stays bounded.
+_GRAPH_SNIPPET_MAX_CHARS = 1200
 
 
 class _RequestIdFilter(logging.Filter):
@@ -342,6 +348,79 @@ async def admin_graphrag_status(
     from utils.knowledge_graph import get_knowledge_graph_service
 
     return get_knowledge_graph_service().get_status()
+
+
+# --------------------------------------------------------------------------- #
+# Internal graph-query endpoint (called by chat_agent's search_knowledge_graph)
+# --------------------------------------------------------------------------- #
+# The chat agent runs in a fresh Foundry sandbox per session — every cold
+# sandbox would otherwise pay ~40s to download parquets + preload community
+# embeddings before serving the first graph query. Instead the chat agent
+# POSTs here; the backend server's lifespan pre-warms the
+# KnowledgeGraphService once at startup and re-uses it for the lifetime of
+# the pod, so each call resolves in ~1-2s (one embedding + one AI Search
+# ANN + DataFrame joins).
+#
+# Auth reuses the same ``GRAPHRAG_ADMIN_TOKEN`` already shared with the
+# knowledge-graph-sync project for reload notifications; the chat agent
+# reads it from App Configuration just like server.py does.
+
+
+@app.post("/internal/graph/query", response_model=GraphSearchResult)
+async def internal_graph_query(
+    req: GraphQueryRequest,
+    x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
+) -> GraphSearchResult:
+    """Run a GraphRAG Local-Search retrieval and return references.
+
+    The body's ``query`` is run through the warm
+    :class:`KnowledgeGraphService`. Returns an empty ``references``
+    list when the service is disabled, retrieval fails, or no matches
+    are found — never raises 5xx for query-side failures so the chat
+    agent can degrade gracefully.
+    """
+    _verify_admin_token(x_admin_token)
+    from utils.knowledge_graph import GraphSourceRef, get_knowledge_graph_service
+
+    normalised_query = (req.query or "").strip()
+    if not normalised_query:
+        return GraphSearchResult(references=[], query="")
+
+    service = get_knowledge_graph_service()
+    if not service.enabled:
+        return GraphSearchResult(references=[], query=normalised_query)
+
+    try:
+        sources: list[GraphSourceRef] | None = await service.search_graph(
+            normalised_query
+        )
+    except Exception:
+        logger.exception("Graph query failed for %r", normalised_query)
+        return GraphSearchResult(references=[], query=normalised_query)
+
+    if sources is None:
+        return GraphSearchResult(references=[], query=normalised_query)
+
+    # Dedupe by (title|link); keep first occurrence (highest-ranked).
+    # Matches the dedup logic the chat-agent tool used to do locally so
+    # the over-the-wire shape stays identical.
+    merged_refs: dict[str, GraphReference] = {}
+    for src in sources:
+        snippet = (src.content or "")[:_GRAPH_SNIPPET_MAX_CHARS]
+        if src.content and len(src.content) > _GRAPH_SNIPPET_MAX_CHARS:
+            snippet = snippet + "\n... [truncated]"
+        ref = GraphReference(
+            title=src.title,
+            link=src.link,
+            snippet=snippet,
+            source=src.source or "graphrag",
+        )
+        merged_refs.setdefault(ref.title or ref.link, ref)
+
+    return GraphSearchResult(
+        references=list(merged_refs.values()),
+        query=normalised_query,
+    )
 
 
 if __name__ == "__main__":

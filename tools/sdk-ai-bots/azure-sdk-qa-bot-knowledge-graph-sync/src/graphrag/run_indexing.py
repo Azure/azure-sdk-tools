@@ -28,6 +28,8 @@ from graphrag.api.index import build_index
 from graphrag.config.enums import IndexingMethod
 from graphrag.config.load_config import load_config
 
+from .source_aware_reader import register_source_aware_input_reader
+
 logger = logging.getLogger(__name__)
 
 # The graphrag config (settings.yaml) lives in graphrag_config/ at project root.
@@ -61,6 +63,13 @@ async def run_graphrag_pipeline() -> str:
     snapshot_id = _new_snapshot_id()
     output_base_dir = _snapshot_base_dir(snapshot_id)
     update_base_dir = f"{output_base_dir}/update"
+
+    # Override GraphRAG's default markitdown reader with our source-aware
+    # variant before building the index, so every documents.parquet row
+    # carries raw_data['source_folder']. The agent reads that column
+    # directly to attribute graph references back to the originating
+    # KnowledgeSource — see utils/knowledge_graph.py in the bot agent.
+    register_source_aware_input_reader()
 
     logger.info(
         "Starting GraphRAG full build → snapshot %s (output_base_dir=%s)",

@@ -8,7 +8,6 @@ import {
   extractChildIds,
   getField,
   mapReleasePlan,
-  isKnownPackage,
   isGAVersion,
   stripEmail,
   extractSpecPrUrls,
@@ -303,6 +302,29 @@ describe("devops-api module", () => {
       expect(result.submittedBy).toBe("submitted-user");
     });
 
+    test("handles submittedBy object with no displayName or uniqueName", () => {
+      const wi = {
+        id: 710,
+        fields: {
+          "System.Title": "Empty Object SubmittedBy",
+          "Custom.ReleasePlanSubmittedby": { id: "some-guid" },
+        },
+        relations: [],
+      };
+      const result = mapReleasePlan(wi, {});
+      expect(result.submittedBy).toBe("");
+    });
+
+    test("handles work item with no title field", () => {
+      const wi = {
+        id: 711,
+        fields: { "System.State": "New" },
+        relations: [],
+      };
+      const result = mapReleasePlan(wi, {});
+      expect(result.title).toBe("");
+    });
+
     test("extracts specPrUrl from RESTAPIReviews when ActiveSpecPullRequestUrl is empty", () => {
       const wi = {
         id: 704,
@@ -327,30 +349,6 @@ describe("devops-api module", () => {
       expect(result.apiSpec.specPrUrl).toBe(
         "https://github.com/Azure/azure-rest-api-specs/pull/77",
       );
-    });
-  });
-
-  describe("isKnownPackage", () => {
-    test("returns true when package name is found in page content", () => {
-      const page = "azure-storage-blob\nazure-identity\nazure-core";
-      expect(isKnownPackage("azure-identity", page)).toBe(true);
-    });
-
-    test("returns false when package name is not found", () => {
-      const page = "azure-storage-blob\nazure-identity";
-      expect(isKnownPackage("azure-cosmos", page)).toBe(false);
-    });
-
-    test("is case-insensitive", () => {
-      const page = "Azure.Storage.Blob";
-      expect(isKnownPackage("azure.storage.blob", page)).toBe(true);
-    });
-
-    test("returns false for empty name or page", () => {
-      expect(isKnownPackage("", "some page")).toBeFalsy();
-      expect(isKnownPackage("pkg", "")).toBeFalsy();
-      expect(isKnownPackage(null, "page")).toBeFalsy();
-      expect(isKnownPackage("pkg", null)).toBeFalsy();
     });
   });
 

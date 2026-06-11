@@ -1,5 +1,5 @@
 # Evaluate configuration for Azure SDK Typespec Author MCP tool evaluations
-# See: https://literate-engine-r3wnl4v.pages.github.io/reference/eval-spec/
+# See: https://microsoft.github.io/vally/reference/eval-spec/
 # Keep this combined file synchronized with evals/*.eval.yaml single-case specs.
 # Preserve ordering for readability: stimulus uses name first; grader uses type before config.
 name: azure-typespec-author-eval

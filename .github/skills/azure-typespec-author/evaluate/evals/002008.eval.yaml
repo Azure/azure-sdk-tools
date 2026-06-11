@@ -21,7 +21,6 @@ stimuli:
     mode: 'main'
   prompt: |
     add top and skip query parameters to the ListBySubscription operation in interface Employees. Ensure the definition meets TypeSpec Azure guidelines.
-    
   environment: &shared_environment
     files:
       - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -63,15 +62,14 @@ stimuli:
       pattern: '@query\("\$top"\)|@query\("\$skip"\)'
       path: '*.tsp'
   constraints:
-    max_turns: 6
-    max_tokens: 100000
+    max_turns: 5
+    max_tokens: 1000000
 - name: 002008-ARM-add-parameters-trigger
   tags:
     suite: 'armtemplate'
     mode: 'trigger'
   prompt: |
     add top and skip query parameters to the ListBySubscription operation in interface Employees. Ensure the definition meets TypeSpec Azure guidelines.
-    
   environment: *shared_environment
   graders:
   - type: 'tool-calls'
@@ -85,14 +83,13 @@ stimuli:
         - 'azure-typespec-author'
   constraints:
     max_turns: 5
-    max_tokens: 50000
+    max_tokens: 1000000
 - name: 002008-ARM-add-parameters-forced
   tags:
     suite: 'armtemplate'
     mode: 'forced'
   prompt: |
     @azure-typespec-author add top and skip query parameters to the ListBySubscription operation in interface Employees. Ensure the definition meets TypeSpec Azure guidelines.
-    
   environment: *shared_environment
   graders:
   - type: 'tool-calls'
@@ -106,7 +103,7 @@ stimuli:
         - 'azure-typespec-author'
   constraints:
     max_turns: 5
-    max_tokens: 50000
+    max_tokens: 1000000
 scoring:
   weights:
     tool-calls: 1

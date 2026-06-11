@@ -21,7 +21,6 @@ stimuli:
     mode: 'main'
   prompt: |
     I have a property `assets: string[]` in EmployeeProperties. Add @minLength(3) @maxLength(10) constraints for any item of the assets array. Ensure the definition meets TypeSpec Azure guidelines.
-    
   environment: &shared_environment
     files:
       - src: ../fixtures/004002-decorate-length-constrains-on-array-item/employee.tsp
@@ -74,15 +73,14 @@ stimuli:
       scoring: 'scale_1_5'
       prompt: 'Verify asset use the custom scalar type with minLength and maxLength constraints instead of plain string.'
   constraints:
-    max_turns: 10
-    max_tokens: 100000
+    max_turns: 5
+    max_tokens: 1000000
 - name: 004002-decorate-length-constrains-on-array-item-trigger
   tags:
     suite: 'decorators'
     mode: 'trigger'
   prompt: |
     I have a property `assets: string[]` in EmployeeProperties. Add @minLength(3) @maxLength(10) constraints for any item of the assets array. Ensure the definition meets TypeSpec Azure guidelines.
-    
   environment: *shared_environment
   graders:
   - type: 'tool-calls'
@@ -96,14 +94,13 @@ stimuli:
         - 'azure-typespec-author'
   constraints:
     max_turns: 5
-    max_tokens: 50000
+    max_tokens: 1000000
 - name: 004002-decorate-length-constrains-on-array-item-forced
   tags:
     suite: 'decorators'
     mode: 'forced'
   prompt: |
     @azure-typespec-author I have a property `assets: string[]` in EmployeeProperties. Add @minLength(3) @maxLength(10) constraints for any item of the assets array. Ensure the definition meets TypeSpec Azure guidelines.
-    
   environment: *shared_environment
   graders:
   - type: 'tool-calls'
@@ -117,7 +114,7 @@ stimuli:
         - 'azure-typespec-author'
   constraints:
     max_turns: 5
-    max_tokens: 50000
+    max_tokens: 1000000
 scoring:
   weights:
     prompt: 1

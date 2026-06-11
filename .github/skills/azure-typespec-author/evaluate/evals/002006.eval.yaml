@@ -21,7 +21,6 @@ stimuli:
     mode: 'main'
   prompt: |
     Create a new "AddressResource" child resource under the parent resource "Employee". Address properties: street 1(optional), street 2(optional), city(optional), state(optional), postal code(optional), country(optional), and a read-only provisioningState(optional). Ensure the definition meets TypeSpec Azure design guidelines.
-    
   environment: &shared_environment
     files:
       - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -126,15 +125,14 @@ stimuli:
       scoring: 'scale_1_5'
       prompt: 'The Addresses interface should include standard CRUD operations (get, create, update, delete) and a list-by-parent operation.'
   constraints:
-    max_turns: 6
-    max_tokens: 100000
+    max_turns: 5
+    max_tokens: 1000000
 - name: 002006-ARM-define-child-resource-trigger
   tags:
     suite: 'armtemplate'
     mode: 'trigger'
   prompt: |
     Create a new "AddressResource" child resource under the parent resource "Employee". Address properties: street 1(optional), street 2(optional), city(optional), state(optional), postal code(optional), country(optional), and a read-only provisioningState(optional). Ensure the definition meets TypeSpec Azure design guidelines.
-    
   environment: *shared_environment
   graders:
   - type: 'tool-calls'
@@ -148,14 +146,13 @@ stimuli:
         - 'azure-typespec-author'
   constraints:
     max_turns: 5
-    max_tokens: 50000
+    max_tokens: 1000000
 - name: 002006-ARM-define-child-resource-forced
   tags:
     suite: 'armtemplate'
     mode: 'forced'
   prompt: |
     @azure-typespec-author Create a new "AddressResource" child resource under the parent resource "Employee". Address properties: street 1(optional), street 2(optional), city(optional), state(optional), postal code(optional), country(optional), and a read-only provisioningState(optional). Ensure the definition meets TypeSpec Azure design guidelines.
-    
   environment: *shared_environment
   graders:
   - type: 'tool-calls'
@@ -169,7 +166,7 @@ stimuli:
         - 'azure-typespec-author'
   constraints:
     max_turns: 5
-    max_tokens: 50000
+    max_tokens: 1000000
 scoring:
   weights:
     prompt: 1

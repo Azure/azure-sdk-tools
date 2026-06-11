@@ -21,7 +21,6 @@ stimuli:
     mode: 'main'
   prompt: |
     change the property age of EmployeeProperties from required to optional only for api version 2025-05-04-preview
-    
   environment: &shared_environment
     files:
       - src: ../fixtures/001-share-version-new-feature/employee.tsp
@@ -70,14 +69,13 @@ stimuli:
       prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
   constraints:
     max_turns: 6
-    max_tokens: 100000
+    max_tokens: 1000000
 - name: 001003-version-required-to-optional-trigger
   tags:
     suite: 'versioning'
     mode: 'trigger'
   prompt: |
     change the property age of EmployeeProperties from required to optional only for api version 2025-05-04-preview
-    
   environment: *shared_environment
   graders:
   - type: 'tool-calls'
@@ -91,14 +89,13 @@ stimuli:
         - 'azure-typespec-author'
   constraints:
     max_turns: 5
-    max_tokens: 50000
+    max_tokens: 1000000
 - name: 001003-version-required-to-optional-forced
   tags:
     suite: 'versioning'
     mode: 'forced'
   prompt: |
     @azure-typespec-author change the property age of EmployeeProperties from required to optional only for api version 2025-05-04-preview
-    
   environment: *shared_environment
   graders:
   - type: 'tool-calls'
@@ -112,7 +109,7 @@ stimuli:
         - 'azure-typespec-author'
   constraints:
     max_turns: 5
-    max_tokens: 50000
+    max_tokens: 1000000
 scoring:
   weights:
     prompt: 1

@@ -21,7 +21,6 @@ stimuli:
     mode: 'main'
   prompt: |
     Modify the LRO createOrUpdate PUT operation in interface Employees so that it returns Azure-AsyncOperation header but NOT Retry-After header in the 201 response. The operation currently uses ArmResourceCreateOrReplaceAsync<Employee> template.
-    
   environment: &shared_environment
     files:
       - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -78,15 +77,14 @@ stimuli:
       scoring: 'scale_1_5'
       prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
   constraints:
-    max_turns: 10
-    max_tokens: 100000
+    max_turns: 5
+    max_tokens: 1000000
 - name: 003002-arm-modify-response-trigger
   tags:
     suite: 'lro'
     mode: 'trigger'
   prompt: |
     Modify the LRO createOrUpdate PUT operation in interface Employees so that it returns Azure-AsyncOperation header but NOT Retry-After header in the 201 response. The operation currently uses ArmResourceCreateOrReplaceAsync<Employee> template.
-    
   environment: *shared_environment
   graders:
   - type: 'tool-calls'
@@ -100,14 +98,13 @@ stimuli:
         - 'azure-typespec-author'
   constraints:
     max_turns: 5
-    max_tokens: 50000
+    max_tokens: 1000000
 - name: 003002-arm-modify-response-forced
   tags:
     suite: 'lro'
     mode: 'forced'
   prompt: |
     @azure-typespec-author Modify the LRO createOrUpdate PUT operation in interface Employees so that it returns Azure-AsyncOperation header but NOT Retry-After header in the 201 response. The operation currently uses ArmResourceCreateOrReplaceAsync<Employee> template.
-    
   environment: *shared_environment
   graders:
   - type: 'tool-calls'
@@ -121,7 +118,7 @@ stimuli:
         - 'azure-typespec-author'
   constraints:
     max_turns: 5
-    max_tokens: 50000
+    max_tokens: 1000000
 scoring:
   weights:
     prompt: 1

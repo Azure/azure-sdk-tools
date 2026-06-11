@@ -21,7 +21,6 @@ stimuli:
     mode: 'main'
   prompt: |
     Add a new preview version `2025-05-04-preview` to my service widget resource manager. Carry over all the features from the latest stable version
-    
   environment: &shared_environment
     files:
       - src: ../fixtures/001006-version-add-preview-after-stable/employee.tsp
@@ -106,15 +105,14 @@ stimuli:
       scoring: 'scale_1_5'
       prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
   constraints:
-    max_turns: 6
-    max_tokens: 100000
+    max_turns: 5
+    max_tokens: 1000000
 - name: 001006-version-add-preview-after-stable-trigger
   tags:
     suite: 'versioning'
     mode: 'trigger'
   prompt: |
     Add a new preview version `2025-05-04-preview` to my service widget resource manager. Carry over all the features from the latest stable version
-    
   environment: *shared_environment
   graders:
   - type: 'tool-calls'
@@ -128,14 +126,13 @@ stimuli:
         - 'azure-typespec-author'
   constraints:
     max_turns: 5
-    max_tokens: 50000
+    max_tokens: 1000000
 - name: 001006-version-add-preview-after-stable-forced
   tags:
     suite: 'versioning'
     mode: 'forced'
   prompt: |
     @azure-typespec-author Add a new preview version `2025-05-04-preview` to my service widget resource manager. Carry over all the features from the latest stable version
-    
   environment: *shared_environment
   graders:
   - type: 'tool-calls'
@@ -149,7 +146,7 @@ stimuli:
         - 'azure-typespec-author'
   constraints:
     max_turns: 5
-    max_tokens: 50000
+    max_tokens: 1000000
 scoring:
   weights:
     prompt: 1

@@ -21,7 +21,6 @@ stimuli:
     mode: 'main'
   prompt: |
     Add a new preview version `2025-05-04-preview` to my service widget resource manager. Exclude Feature: the default value from the 'age' property. Carry other features.
-    
   environment: &shared_environment
     files:
       - src: ../fixtures/001005-version-add-preview-after-preview/employee.tsp
@@ -120,15 +119,14 @@ stimuli:
       pattern: '@typeChangedFrom\(Versions\.v2025_05_04_preview, string\[\]\)'
       path: 'employee.tsp'
   constraints:
-    max_turns: 6
-    max_tokens: 100000
+    max_turns: 5
+    max_tokens: 1000000
 - name: 001005-version-add-preview-after-preview-trigger
   tags:
     suite: 'versioning'
     mode: 'trigger'
   prompt: |
     Add a new preview version `2025-05-04-preview` to my service widget resource manager. Exclude Feature: the default value from the 'age' property. Carry other features.
-    
   environment: *shared_environment
   graders:
   - type: 'tool-calls'
@@ -142,14 +140,13 @@ stimuli:
         - 'azure-typespec-author'
   constraints:
     max_turns: 5
-    max_tokens: 50000
+    max_tokens: 1000000
 - name: 001005-version-add-preview-after-preview-forced
   tags:
     suite: 'versioning'
     mode: 'forced'
   prompt: |
     @azure-typespec-author Add a new preview version `2025-05-04-preview` to my service widget resource manager. Exclude Feature: the default value from the 'age' property. Carry other features.
-    
   environment: *shared_environment
   graders:
   - type: 'tool-calls'
@@ -163,7 +160,7 @@ stimuli:
         - 'azure-typespec-author'
   constraints:
     max_turns: 5
-    max_tokens: 50000
+    max_tokens: 1000000
 scoring:
   weights:
     file-not-matches: 3

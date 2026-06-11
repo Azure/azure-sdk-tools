@@ -21,7 +21,6 @@ from src._guideline_ingestor import (
     ParsedGuideline,
 )
 
-
 # ============================================================================
 # Markdown Parsing Tests
 # ============================================================================
@@ -170,8 +169,8 @@ class TestParseMarkdownFile:
     def test_list_item_guideline_extracted(self):
         ingestor = self._make_ingestor()
         md = (
-            "- {% include requirement/MUST id=\"list-item-1\" %} First rule.\n"
-            "- {% include requirement/SHOULD id=\"list-item-2\" %} Second rule.\n"
+            '- {% include requirement/MUST id="list-item-1" %} First rule.\n'
+            '- {% include requirement/SHOULD id="list-item-2" %} Second rule.\n'
         )
         results = ingestor.parse_markdown_file("docs/java/design.md", md)
         assert len(results) == 2

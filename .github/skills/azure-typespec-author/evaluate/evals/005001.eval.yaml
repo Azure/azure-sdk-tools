@@ -21,7 +21,6 @@ stimuli:
     mode: 'main'
   prompt: |
     Add suppressions for the warnings produced by "tsp compile .", and set the justification to "FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details".
-    
   environment: &shared_environment
     files:
       - src: ../fixtures/005001-warning-suppress-warning/main.tsp
@@ -56,7 +55,7 @@ stimuli:
       pattern: 'FIXME: Update justification, follow aka\.ms/tsp/conversion-fix for details'
       path: 'models.tsp'
   constraints:
-    max_turns: 6
+    max_turns: 5
     max_tokens: 1000000
 - name: 005001-warning-suppress-warning-trigger
   tags:
@@ -64,7 +63,6 @@ stimuli:
     mode: 'trigger'
   prompt: |
     Add suppressions for the warnings produced by "tsp compile .", and set the justification to "FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details".
-    
   environment: *shared_environment
   graders:
   - type: 'tool-calls'
@@ -78,14 +76,13 @@ stimuli:
         - 'azure-typespec-author'
   constraints:
     max_turns: 5
-    max_tokens: 50000
+    max_tokens: 1000000
 - name: 005001-warning-suppress-warning-forced
   tags:
     suite: 'warning'
     mode: 'forced'
   prompt: |
     @azure-typespec-author Add suppressions for the warnings produced by "tsp compile .", and set the justification to "FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details".
-    
   environment: *shared_environment
   graders:
   - type: 'tool-calls'
@@ -93,13 +90,17 @@ stimuli:
       required:
         - 'edit'
         - 'azure-sdk-mcp-azsdk_run_typespec_validation'
-  - type: 'skill-invocation'
+  - type: 'file-matches'
     config:
-      required:
-        - 'azure-typespec-author'
+      pattern: '#suppress'
+      path: 'models.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'FIXME: Update justification, follow aka\.ms/tsp/conversion-fix for details'
+      path: 'models.tsp'
   constraints:
     max_turns: 5
-    max_tokens: 50000
+    max_tokens: 1000000
 scoring:
   weights:
     tool-calls: 1

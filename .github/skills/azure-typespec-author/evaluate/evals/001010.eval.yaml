@@ -97,10 +97,18 @@ stimuli:
       required:
         - 'edit'
         - 'azure-sdk-mcp-azsdk_run_typespec_validation'
-  - type: 'skill-invocation'
+  - type: 'file-matches'
     config:
-      required:
-        - 'azure-typespec-author'
+      pattern: 'v2025_05_04_preview'
+      path: 'Microsoft.Widget/Widget/main.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: '@removed\(Versions\.v2025_05_04_preview\)'
+      path: 'Microsoft.Widget/Widget/employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'department\?: string;'
+      path: 'Microsoft.Widget/Widget/employee.tsp'
   constraints:
     max_turns: 5
     max_tokens: 1000000

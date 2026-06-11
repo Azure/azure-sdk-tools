@@ -108,10 +108,24 @@ stimuli:
       required:
         - 'edit'
         - 'azure-sdk-mcp-azsdk_run_typespec_validation'
-  - type: 'skill-invocation'
+  - type: 'file-matches'
     config:
-      required:
-        - 'azure-typespec-author'
+      pattern: 'ExtensionResource<'
+      path: '*.tsp'
+  - type: 'file-not-matches'
+    config:
+      pattern: 'TrackedResource<'
+      path: '*.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'Extension\.Read<|Extension\.CreateOrReplaceAsync<|Extension\.CustomPatch(Sync|Async)<|Extension\.DeleteWithoutOkAsync<|Extension\.ListByTarget<'
+      path: '*.tsp'
+  - type: 'prompt'
+    config:
+      threshold: 1
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      prompt: 'The original separate list-by-resource-group and list-by-subscription operations should be consolidated into a single list operation using the extension list template. A scope-parameterized interface should be defined to allow the extension resource to be scoped to any parent resource.'
   constraints:
     max_turns: 5
     max_tokens: 1000000

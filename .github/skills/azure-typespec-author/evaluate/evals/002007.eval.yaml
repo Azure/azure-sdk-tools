@@ -140,10 +140,56 @@ stimuli:
       required:
         - 'edit'
         - 'azure-sdk-mcp-azsdk_run_typespec_validation'
-  - type: 'skill-invocation'
+  - type: 'file-matches'
     config:
-      required:
-        - 'azure-typespec-author'
+      pattern: 'union.*Priority|enum.*Priority'
+      path: 'employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'Low|"Low"'
+      path: 'employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'Medium|"Medium"'
+      path: 'employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'High|"High"'
+      path: 'employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'model.*Notify.*Request|model.*Notification.*Request'
+      path: 'employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'message.*:\s*string|content.*:\s*string'
+      path: 'employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'priority.*:\s*.*Priority'
+      path: 'employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'model.*Notify.*Response|model.*Notification.*Response'
+      path: 'employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'notificationId.*:\s*string|identifier.*:\s*string'
+      path: 'employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'status.*:\s*string'
+      path: 'employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'notify is ArmResourceActionSync<|notify is ArmResourceActionAsync<|notify is ArmResourceAction<'
+      path: 'employee.tsp'
+  - type: 'prompt'
+    config:
+      threshold: 1
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
   constraints:
     max_turns: 5
     max_tokens: 1000000

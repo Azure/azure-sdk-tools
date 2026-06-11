@@ -20,7 +20,7 @@ stimuli:
     suite: 'versioning'
     mode: 'main'
   prompt: |
-    Add a new stable version `2025-01-01` to my service. Carry over changes.
+    Add a new stable version `2025-01-01` to my service. Carry over all the features from previous stable version.
   environment: &shared_environment
     files:
       - src: ../fixtures/001008-version-add-stable-after-stable/employee.tsp
@@ -122,13 +122,14 @@ stimuli:
     suite: 'versioning'
     mode: 'trigger'
   prompt: |
-    Add a new stable version `2025-01-01` to my service. Carry over changes.
+    Add a new stable version `2025-01-01` to my service. Carry over all the features from previous stable version.
   environment: *shared_environment
   graders:
   - type: 'tool-calls'
     config:
       required:
         - 'edit'
+        - 'web_fetch'
         - 'azure-sdk-mcp-azsdk_run_typespec_validation'
   - type: 'skill-invocation'
     config:
@@ -142,18 +143,39 @@ stimuli:
     suite: 'versioning'
     mode: 'forced'
   prompt: |
-    @azure-typespec-author Add a new stable version `2025-01-01` to my service. Carry over changes.
+    @azure-typespec-author Add a new stable version `2025-01-01` to my service. Carry over all the features from previous stable version.
   environment: *shared_environment
   graders:
   - type: 'tool-calls'
     config:
       required:
         - 'edit'
+        - 'web_fetch'
         - 'azure-sdk-mcp-azsdk_run_typespec_validation'
-  - type: 'skill-invocation'
+  - type: 'file-exists'
     config:
-      required:
-        - 'azure-typespec-author'
+      path: 'examples/2024-10-01/Employees_Get_MaximumSet_Gen.json'
+  - type: 'file-exists'
+    config:
+      path: 'examples/2025-01-01/Employees_Get_MaximumSet_Gen.json'
+  - type: 'file-matches'
+    config:
+      pattern: '2021-10-01'
+      path: 'main.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: '2024-10-01'
+      path: 'main.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: '2025-01-01'
+      path: 'main.tsp'
+  - type: 'prompt'
+    config:
+      threshold: 1
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
   constraints:
     max_turns: 5
     max_tokens: 1000000

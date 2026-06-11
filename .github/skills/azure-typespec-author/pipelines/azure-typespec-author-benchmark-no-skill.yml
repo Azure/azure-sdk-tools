@@ -87,7 +87,6 @@ extends:
           # Trigger mode: keep suite-level isolation for quick failure localization.
           - job: RunEvalsTrigger
             displayName: Evaluate trigger suites
-            dependsOn: RunEvalsForced
             timeoutInMinutes: 170
             steps:
               - checkout: self
@@ -148,7 +147,6 @@ extends:
 
           # No-skill baseline: same suite split for apples-to-apples error investigation.
           - job: RunEvalsNoSkill
-            dependsOn: RunEvalsTrigger
             displayName: Evaluate on pure agent without skill
             timeoutInMinutes: 170
             steps:

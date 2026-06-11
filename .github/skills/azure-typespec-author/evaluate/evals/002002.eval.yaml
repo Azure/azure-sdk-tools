@@ -98,10 +98,18 @@ stimuli:
       required:
         - 'edit'
         - 'azure-sdk-mcp-azsdk_run_typespec_validation'
-  - type: 'skill-invocation'
+  - type: 'file-matches'
     config:
-      required:
-        - 'azure-typespec-author'
+      pattern: 'model Asset is ExtensionResource<AssetProperties>'
+      path: '*.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'interface Assets|interface AssetOps'
+      path: '*.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'provisioningState'
+      path: '*.tsp'
   constraints:
     max_turns: 5
     max_tokens: 1000000

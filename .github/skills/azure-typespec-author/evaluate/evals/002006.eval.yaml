@@ -160,10 +160,76 @@ stimuli:
       required:
         - 'edit'
         - 'azure-sdk-mcp-azsdk_run_typespec_validation'
-  - type: 'skill-invocation'
+  - type: 'file-matches'
     config:
-      required:
-        - 'azure-typespec-author'
+      pattern: '@parentResource\(Employee\)'
+      path: '*.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'model AddressResource is ProxyResource<AddressProperties>|model AddressResource is ProxyResource<AddressResourceProperties>'
+      path: '*.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'interface Addresses|interface AddressResource'
+      path: '*.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'model AddressProperties|model AddressResourceProperties'
+      path: '*.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'street1\?: string;'
+      path: '*.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'street2\?: string;'
+      path: '*.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'city\?: string;'
+      path: '*.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'state\?: string;'
+      path: '*.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'postalCode\?: string;'
+      path: '*.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'country\?: string;'
+      path: '*.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: '@visibility\(Lifecycle\.Read\)'
+      path: '*.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'provisioningState\?: ProvisioningState;'
+      path: '*.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'ArmResourceRead<AddressResource>'
+      path: '*.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'ArmResourceCreateOrReplaceAsync<AddressResource>|ArmResourceCreateOrReplaceSync<AddressResource>'
+      path: '*.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'ArmResourceDeleteWithoutOkAsync<AddressResource>|ArmResourceDeleteSync<AddressResource>'
+      path: '*.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'ArmResourceListByParent<AddressResource>'
+      path: '*.tsp'
+  - type: 'prompt'
+    config:
+      threshold: 1
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      prompt: 'The Addresses interface should include standard CRUD operations (get, create, update, delete) and a list-by-parent operation.'
   constraints:
     max_turns: 5
     max_tokens: 1000000

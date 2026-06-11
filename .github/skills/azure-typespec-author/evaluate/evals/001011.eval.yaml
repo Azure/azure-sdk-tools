@@ -23,23 +23,19 @@ stimuli:
     In the TypeSpec project at `./Microsoft.Widget/Widget/`, rename the `age` property to `employeeAge` in EmployeeProperties only for version `2025-05-04-preview`.
   environment: &shared_environment
     files:
-      - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+       - src: ../fixtures/001-share-version-new-feature/employee.tsp
         dest: Microsoft.Widget/Widget/employee.tsp
-      - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+      - src: ../fixtures/001-share-version-new-feature/main.tsp
         dest: Microsoft.Widget/Widget/main.tsp
       - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
         dest: Microsoft.Widget/Widget/package-lock.json
       - src: ../fixtures/Microsoft.Widget/Widget/package.json
         dest: Microsoft.Widget/Widget/package.json
-      - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
-        dest: Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
-      - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+      - src: ../fixtures/001-share-version-new-feature/readme.md
         dest: Microsoft.Widget/Widget/readme.md
-      - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+      - src: ../fixtures/001-share-version-new-feature/shared.tsp
         dest: Microsoft.Widget/Widget/shared.tsp
-      - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
-        dest: Microsoft.Widget/Widget/stable/2021-11-01/widget.json
-      - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+      - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
         dest: Microsoft.Widget/Widget/tspconfig.yaml
     commands:
       - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
@@ -94,7 +90,6 @@ stimuli:
     mode: 'forced'
   prompt: |
     @azure-typespec-author In the TypeSpec project at `./Microsoft.Widget/Widget/`, rename the `age` property to `employeeAge` in EmployeeProperties only for version `2025-05-04-preview`.
-    
   environment: *shared_environment
   graders:
   - type: 'tool-calls'
@@ -102,10 +97,18 @@ stimuli:
       required:
         - 'edit'
         - 'azure-sdk-mcp-azsdk_run_typespec_validation'
-  - type: 'skill-invocation'
+  - type: 'file-matches'
     config:
-      required:
-        - 'azure-typespec-author'
+      pattern: 'v2025_05_04_preview'
+      path: 'Microsoft.Widget/Widget/main.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: '@renamedFrom\(Versions\.v2025_05_04_preview, "age"\)'
+      path: 'Microsoft.Widget/Widget/employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'employeeAge\?: int32;'
+      path: 'Microsoft.Widget/Widget/employee.tsp'
   constraints:
     max_turns: 5
     max_tokens: 1000000

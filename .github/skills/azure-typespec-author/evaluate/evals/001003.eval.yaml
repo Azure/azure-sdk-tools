@@ -68,7 +68,7 @@ stimuli:
       scoring: 'scale_1_5'
       prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
   constraints:
-    max_turns: 6
+    max_turns: 5
     max_tokens: 1000000
 - name: 001003-version-required-to-optional-trigger
   tags:
@@ -103,10 +103,24 @@ stimuli:
       required:
         - 'edit'
         - 'azure-sdk-mcp-azsdk_run_typespec_validation'
-  - type: 'skill-invocation'
+  - type: 'file-matches'
     config:
-      required:
-        - 'azure-typespec-author'
+      pattern: '2025-05-04-preview'
+      path: 'main.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: '@madeOptional'
+      path: 'employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: '2025-05-04-preview|v2025_05_04_preview'
+      path: 'employee.tsp'
+  - type: 'prompt'
+    config:
+      threshold: 1
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
   constraints:
     max_turns: 5
     max_tokens: 1000000

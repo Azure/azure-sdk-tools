@@ -56,7 +56,7 @@ stimuli:
         - 'azure-typespec-author'
   - type: 'file-matches'
     config:
-      pattern: 'ArmAsyncOperationHeader<FinalResult\s*=\s*Employee>'
+      pattern: 'ArmAsyncOperationHeader\s*<\s*(FinalResult\s*=\s*Employee|ArmOperationStatus\s*,\s*string\s*,\s*Employee)\s*>'
       path: 'employee.tsp'
   - type: 'file-matches'
     config:
@@ -112,10 +112,28 @@ stimuli:
       required:
         - 'edit'
         - 'azure-sdk-mcp-azsdk_run_typespec_validation'
-  - type: 'skill-invocation'
+  - type: 'file-matches'
     config:
-      required:
-        - 'azure-typespec-author'
+      pattern: 'ArmAsyncOperationHeader\s*<\s*(FinalResult\s*=\s*Employee|ArmOperationStatus\s*,\s*string\s*,\s*Employee)\s*>'
+      path: 'employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'createOrUpdate is ArmResourceCreateOrReplaceAsync<'
+      path: 'employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'update is ArmResourcePatchSync<Employee'
+      path: 'employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'delete is ArmResourceDeleteWithoutOkAsync<Employee>'
+      path: 'employee.tsp'
+  - type: 'prompt'
+    config:
+      threshold: 1
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
   constraints:
     max_turns: 5
     max_tokens: 1000000

@@ -56,7 +56,7 @@ stimuli:
       path: 'employee.tsp'
   - type: 'file-matches'
     config:
-      pattern: 'ArmCombinedLroHeaders\s*<\s*FinalResult\s*=\s*MoveResponse\s*>'
+      pattern: 'ArmCombinedLroHeaders\s*<\s*(FinalResult\s*=\s*MoveResponse|ArmOperationStatus\s*,\s*MoveResponse|(Azure\.ResourceManager\.)?ArmOperationStatus\s*,\s*MoveResponse)\s*>'
       path: 'employee.tsp'
   - type: 'prompt'
     config:
@@ -100,10 +100,20 @@ stimuli:
       required:
         - 'edit'
         - 'azure-sdk-mcp-azsdk_run_typespec_validation'
-  - type: 'skill-invocation'
+  - type: 'file-matches'
     config:
-      required:
-        - 'azure-typespec-author'
+      pattern: 'move\s+is\s+ArmResourceActionAsync\s*<\s*Employee\s*,\s*MoveRequest\s*,\s*MoveResponse\s*,\s*LroHeaders\s*='
+      path: 'employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'ArmCombinedLroHeaders\s*<\s*(FinalResult\s*=\s*MoveResponse|ArmOperationStatus\s*,\s*MoveResponse|(Azure\.ResourceManager\.)?ArmOperationStatus\s*,\s*MoveResponse)\s*>'
+      path: 'employee.tsp'
+  - type: 'prompt'
+    config:
+      threshold: 1
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
   constraints:
     max_turns: 5
     max_tokens: 1000000

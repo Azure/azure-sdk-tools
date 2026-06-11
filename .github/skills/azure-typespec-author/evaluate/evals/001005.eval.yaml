@@ -133,6 +133,7 @@ stimuli:
     config:
       required:
         - 'edit'
+        - 'web_fetch'
         - 'azure-sdk-mcp-azsdk_run_typespec_validation'
   - type: 'skill-invocation'
     config:
@@ -153,11 +154,42 @@ stimuli:
     config:
       required:
         - 'edit'
+        - 'web_fetch'
         - 'azure-sdk-mcp-azsdk_run_typespec_validation'
-  - type: 'skill-invocation'
+  - type: 'file-exists'
     config:
-      required:
-        - 'azure-typespec-author'
+      path: 'examples/2025-05-04-preview/Employees_Get_MaximumSet_Gen.json'
+  - type: 'file-not-exists'
+    config:
+      path: 'examples/2024-10-01-preview/Employees_Get_MaximumSet_Gen.json'
+  - type: 'file-matches'
+    config:
+      pattern: '2025-05-04-preview'
+      path: 'main.tsp'
+  - type: 'file-not-matches'
+    config:
+      pattern: '2024-10-01-preview'
+      path: 'main.tsp'
+  - type: 'file-not-matches'
+    config:
+      pattern: 'oldAge'
+      path: 'employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: '@added\(Versions\.v2025_05_04_preview\)\s+workLocation\?: WorkLocation;'
+      path: 'employee.tsp'
+  - type: 'file-not-matches'
+    config:
+      pattern: 'v2024_10_01_preview'
+      path: 'employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'age\?: int32;'
+      path: 'employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: '@typeChangedFrom\(Versions\.v2025_05_04_preview, string\[\]\)'
+      path: 'employee.tsp'
   constraints:
     max_turns: 5
     max_tokens: 1000000

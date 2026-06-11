@@ -103,10 +103,24 @@ stimuli:
       required:
         - 'edit'
         - 'azure-sdk-mcp-azsdk_run_typespec_validation'
-  - type: 'skill-invocation'
+  - type: 'file-matches'
     config:
-      required:
-        - 'azure-typespec-author'
+      pattern: 'v2025_05_04_preview'
+      path: 'Microsoft.Widget/Widget/main.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: '@madeRequired\(Versions\.v2025_05_04_preview\)'
+      path: 'Microsoft.Widget/Widget/employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'email: string;'
+      path: 'Microsoft.Widget/Widget/employee.tsp'
+  - type: 'prompt'
+    config:
+      threshold: 1
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      prompt: 'Verify email property made required only in new version, only scoped edits made. Verify compile the project and fix any compilation errors if present.'
   constraints:
     max_turns: 5
     max_tokens: 1000000

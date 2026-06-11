@@ -227,18 +227,6 @@ Chat agent (hosted agent) deployed to a Foundry project.
 | `databaseAccounts_*_experience-episodes` | `sqlDatabases/containers` | `container10` | **Deploy** |
 | `databaseAccounts_*_thread-mappings` | `sqlDatabases/containers` | `container11` | **Deploy** |
 
-## Summary
-
-| Category | Deploy | Auto-created | Orphaned | Total |
-|---|---|---|---|---|
-| Frontend (Teams Bot) | 12 | 6 | 0 | 18 |
-| Backend (Python Agent Server) | 6 | 8 | 1 | 15 |
-| Function App | 8 | 4 | 0 | 12 |
-| Agent (Foundry) | 23 | 10 | 0 | 33 |
-| Logic Apps | 7 | 6 | 0 | 13 |
-| Shared Infrastructure | 26 | 9 | 0 | 35 |
-| **Total** | **82** | **43** | **1** | **126** |
-
 ## Notes
 
 - **Auto-created** resources should be **excluded** from the CDK translation — Azure provisions them automatically when the parent resource is created.

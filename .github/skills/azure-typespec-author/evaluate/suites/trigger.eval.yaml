@@ -390,7 +390,7 @@ stimuli:
   tags:
     suite: versioning
   prompt: |
-    Add a new stable version `2025-01-01` to my service. Carry over changes.
+    Add a new stable version `2025-01-01` to my service. Carry over all the features from previous stable version.
   constraints:
     max_turns: 6
     max_tokens: 100000
@@ -548,20 +548,20 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
-      - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
-        dest: Microsoft.Widget/Widget/employee.tsp
-      - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
-        dest: Microsoft.Widget/Widget/main.tsp
-      - src: ../fixtures/Microsoft.Widget/Widget/package.json
-        dest: Microsoft.Widget/Widget/package.json
-      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-        dest: Microsoft.Widget/Widget/package-lock.json
-      - src: ../fixtures/Microsoft.Widget/Widget/readme.md
-        dest: Microsoft.Widget/Widget/readme.md
-      - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
-        dest: Microsoft.Widget/Widget/shared.tsp
-      - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
-        dest: Microsoft.Widget/Widget/tspconfig.yaml
+    - src: ../fixtures/001-share-version-new-feature/employee.tsp
+      dest: Microsoft.Widget/Widget/employee.tsp
+    - src: ../fixtures/001-share-version-new-feature/main.tsp
+      dest: Microsoft.Widget/Widget/main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: Microsoft.Widget/Widget/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: Microsoft.Widget/Widget/package-lock.json
+    - src: ../fixtures/001-share-version-new-feature/readme.md
+      dest: Microsoft.Widget/Widget/readme.md
+    - src: ../fixtures/001-share-version-new-feature/shared.tsp
+      dest: Microsoft.Widget/Widget/shared.tsp
+    - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
+      dest: Microsoft.Widget/Widget/tspconfig.yaml
     commands:
       - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
@@ -584,20 +584,20 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
-      - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
-        dest: Microsoft.Widget/Widget/employee.tsp
-      - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
-        dest: Microsoft.Widget/Widget/main.tsp
-      - src: ../fixtures/Microsoft.Widget/Widget/package.json
-        dest: Microsoft.Widget/Widget/package.json
-      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-        dest: Microsoft.Widget/Widget/package-lock.json
-      - src: ../fixtures/Microsoft.Widget/Widget/readme.md
-        dest: Microsoft.Widget/Widget/readme.md
-      - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
-        dest: Microsoft.Widget/Widget/shared.tsp
-      - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
-        dest: Microsoft.Widget/Widget/tspconfig.yaml
+    - src: ../fixtures/001-share-version-new-feature/employee.tsp
+      dest: Microsoft.Widget/Widget/employee.tsp
+    - src: ../fixtures/001-share-version-new-feature/main.tsp
+      dest: Microsoft.Widget/Widget/main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: Microsoft.Widget/Widget/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: Microsoft.Widget/Widget/package-lock.json
+    - src: ../fixtures/001-share-version-new-feature/readme.md
+      dest: Microsoft.Widget/Widget/readme.md
+    - src: ../fixtures/001-share-version-new-feature/shared.tsp
+      dest: Microsoft.Widget/Widget/shared.tsp
+    - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
+      dest: Microsoft.Widget/Widget/tspconfig.yaml
     commands:
       - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
@@ -622,20 +622,20 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
-      - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
-        dest: Microsoft.Widget/Widget/employee.tsp
-      - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
-        dest: Microsoft.Widget/Widget/main.tsp
-      - src: ../fixtures/Microsoft.Widget/Widget/package.json
-        dest: Microsoft.Widget/Widget/package.json
-      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-        dest: Microsoft.Widget/Widget/package-lock.json
-      - src: ../fixtures/Microsoft.Widget/Widget/readme.md
-        dest: Microsoft.Widget/Widget/readme.md
-      - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
-        dest: Microsoft.Widget/Widget/shared.tsp
-      - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
-        dest: Microsoft.Widget/Widget/tspconfig.yaml
+    - src: ../fixtures/001-share-version-new-feature/employee.tsp
+      dest: Microsoft.Widget/Widget/employee.tsp
+    - src: ../fixtures/001-share-version-new-feature/main.tsp
+      dest: Microsoft.Widget/Widget/main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: Microsoft.Widget/Widget/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: Microsoft.Widget/Widget/package-lock.json
+    - src: ../fixtures/001-share-version-new-feature/readme.md
+      dest: Microsoft.Widget/Widget/readme.md
+    - src: ../fixtures/001-share-version-new-feature/shared.tsp
+      dest: Microsoft.Widget/Widget/shared.tsp
+    - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
+      dest: Microsoft.Widget/Widget/tspconfig.yaml
     commands:
       - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:

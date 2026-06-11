@@ -302,68 +302,82 @@ stimuli:
 
 ### CI
 
-Agent runs talk to an LLM — they cost money and they flake in ways that
-have nothing to do with the code under review. So the suite does not run
-as one job on every push. Instead it runs as **several pipelines, each on
-its own cadence**, all driven by the *same* shared orchestration layer —
-they differ only in which evals they select and which backend they use.
+**The problem.** Agent evals are slow (each agent run takes ~20 s),
+they cost money, and they flake for reasons that have nothing to do with
+the code under review. We will have hundreds of them, spread across many
+repos. Running them all, every time, on one machine is a non-starter.
 
-| Pipeline | Trigger | Selects | Backend | Why separate |
-|---|---|---|---|---|
-| **PR gate** | PR touching agent / skills / MCP tools | `changed-only` + a curated essential subset | mock (+ a few real-MCP benchmarks) | Fast, cheap, must not flake — blocks merge. |
-| **Nightly** | schedule | `nightly-full` — every scenario + the hermetic tool layer | mock | Full coverage without paying live cost. |
-| **Weekly live** | schedule | scenarios tagged `live-safe` | live (safe-mode on writes) | Catches real-backend drift the mock can't see. |
-| **On demand** | manual / dispatch | any selection | author's choice | Debugging, one-off reruns, new-workflow bring-up. |
+**The idea.** Split the work in two. **Each repo owns only its eval
+content** — the eval files, fixtures, prompts, and scenarios. **One shared
+platform owns everything about running them** — finding the evals, working
+out what a change affects, splitting them into parallel batches, setting
+up the environment, running native Vally, and merging the results. Build
+that machinery once and every repo (and every schedule) reuses it. The
+platform does not invent a new eval format — it runs the native Vally
+`*.eval.yaml` files as they are.
 
-Cadence is a knob, not a fixed contract — a pipeline is *"selection +
-backend + schedule."* Adding a new cadence (e.g. an on-`main`-push smoke
-run) is a new schedule pointing at the same templates, not new
-infrastructure.
+#### Architecture
 
-#### Architecture — three layers
+The slow, finicky parts live in one shared place so each repo stays
+simple. From top to bottom:
 
-The platform is deliberately layered so the expensive, fiddly mechanics
-live in one shared place and the repos stay simple:
-
-```mermaid
-flowchart TD
-    subgraph L1["Shared orchestration framework — eng/eval-platform/"]
-        direction LR
-        D[Discovery] --- SH[Sharding] --- VAL[Validation] --- REP[Reporting] --- AGG[Aggregation]
-        SS[Shared stimuli] --- MX[Matrix execution] --- RT[Retry / cancel]
-    end
-    subgraph L2["Azure DevOps pipeline execution"]
-        direction LR
-        P1[Discover] --> P2[Shard plan] --> P3[Matrix fan-out] --> P4[Aggregate]
-    end
-    subgraph L3["Native Vally runtime"]
-        V[runs *.eval.yaml as-is]
-    end
-    subgraph L4["Repository-owned eval content"]
-        direction LR
-        E[eval.yaml] --- FX[fixtures] --- PR2[prompts] --- WS[workflow scenarios]
-    end
-    L1 --> L2 --> L3
-    L4 --> L3
+```text
++--------------------------------------------------------------+
+|             Shared eval orchestration framework              |
+|             (azure-sdk-tools/eng/eval-platform)              |
+|--------------------------------------------------------------|
+| Discovery | Sharding | Validation | Reporting | Aggregation  |
+| Shared stimuli | Matrix execution | Retry logic             |
++--------------------------------------------------------------+
+                              |
+                              v
++--------------------------------------------------------------+
+|                Azure DevOps pipeline execution               |
+|--------------------------------------------------------------|
+|   Discover -> Shard planning -> Matrix fan-out -> Aggregate  |
++--------------------------------------------------------------+
+                              |
+                              v
++--------------------------------------------------------------+
+|                     Native Vally runtime                     |
++--------------------------------------------------------------+
+                              ^
+                              |
++--------------------------------------------------------------+
+|                    Repository eval content                   |
+|--------------------------------------------------------------|
+|     eval.yaml | fixtures | prompts | workflow scenarios      |
++--------------------------------------------------------------+
 ```
 
-- **Shared framework** owns execution mechanics — discovery,
-  change-detection, sharding, matrix fan-out, validation, aggregation,
-  reporting, and (optionally) shared stimuli/fixtures. It lives in
-  `eng/eval-platform/` and is reused by every pipeline and every repo
-  (see [Cross-repo rollout](#cross-repo-rollout-and-the-shared-platform)).
-- **ADO pipeline execution** is the thin glue: discover → shard-plan →
-  matrix → aggregate.
-- **Native Vally runtime** runs the eval files *as-is* — the framework is
-  an orchestration/scaling layer, **not** an eval abstraction; it does not
-  wrap evals in a new schema.
-- **Repositories own evaluation intent** — eval files, fixtures, prompts,
-  scenarios. Authors add a stimulus; the layer picks it up. They never
-  touch the orchestration layer.
+- **Repos own the *intent*** — what to test. **The shared framework owns
+  the *mechanics*** — how to run it at scale. An author adds an eval; the
+  platform picks it up. They never touch the orchestration layer.
+- The framework lives in `eng/eval-platform/` and is reused by every
+  pipeline and every repo (see
+  [Cross-repo rollout](#cross-repo-rollout-and-the-shared-platform)).
 
-**What this layer must prove (and where the difficulty is).** This is the
-hard part of the project; designing for the complicated cross-repo case up
-front is cheaper than retrofitting it:
+#### Pipelines
+
+The suite does not run as one job on every push. It runs as **several
+pipelines on different schedules**, all driven by the *same* platform —
+they differ only in which evals they pick and which backend they use.
+
+| Pipeline | Trigger | Selects | Backend |
+|---|---|---|---|
+| **PR gate** | PR touching agent / skills / MCP tools | `changed-only` + a curated essential subset | mock (+ a few real-MCP benchmarks) |
+| **Nightly** | schedule | every scenario + the hermetic tool layer | mock |
+| **Weekly live** | schedule | scenarios tagged `live-safe` | live (safe-mode on writes) |
+| **On demand** | manual | any selection | author's choice |
+
+A pipeline is just *"selection + backend + schedule."* Adding a new
+cadence later is a new schedule pointing at the same templates, not new
+infrastructure.
+
+#### What's hard about this
+
+The value — and the risk — is all in the shared platform. Designing for
+the full cross-repo case up front is cheaper than retrofitting it:
 
 | Goal the layer must hit | Where the difficulty is |
 |---|---|
@@ -374,14 +388,14 @@ front is cheaper than retrofitting it:
 | **Distributed execution** — fan out shards as ADO matrix jobs | Per-shard env setup and Copilot-SDK session limits cap useful parallelism; too many shards costs more than it saves. |
 | **Aggregation & reporting** — merge shard outputs into one verdict | Partial-shard failures and infra `status=error` rows must not be miscounted as graded failures. |
 
-Deliberately **out of scope for early rollout**: runtime-aware
-balancing, runtime prediction, multi-engine support, and any custom
-schema layer. These are enhancements, not blockers.
+**Out of scope for early rollout:** runtime-aware balancing, runtime
+prediction, multi-engine support, and any custom schema layer. These are
+enhancements, not blockers.
 
-#### How the suite executes — orchestration
+#### How a run flows
 
-End to end, every pipeline above runs the same flow; only the *selection*
-step and the *backend* differ:
+Every pipeline runs the same steps; only the *selection* and the
+*backend* differ:
 
 ```mermaid
 flowchart LR
@@ -411,6 +425,14 @@ changed skill markdown → that skill's evals; changed MCP tool or mock
 handler → the scenarios that call it. This drives `changed-only` runs
 so a PR pays for the evals it actually touches, not the whole suite.
 
+```mermaid
+flowchart LR
+    CF[Changed file<br/>in the PR] --> SK[Affected<br/>skills]
+    SK --> SC[Affected<br/>scenarios]
+    SC --> EV[Evals to run]
+    CF -. tool / mock handler .-> SC
+```
+
 Run modes the layer supports:
 
 | Mode | Runs |
@@ -431,6 +453,19 @@ results at the end. The win is wall-clock time:
 ```
 no sharding:   140 evals × ~20 s            ≈ 2800 s  (~46 min)
 7 shards:      20 evals × ~20 s per shard   ≈  400 s  (~7 min)
+```
+
+```mermaid
+flowchart LR
+    SEL[140 selected<br/>evals] --> PL{Shard plan<br/>~20 each}
+    PL --> S1[Shard 1]
+    PL --> S2[Shard 2]
+    PL --> S3[…]
+    PL --> S7[Shard 7]
+    S1 --> AG[Aggregate]
+    S2 --> AG
+    S3 --> AG
+    S7 --> AG
 ```
 
 Each shard is a slice of the eval-file list; the layer emits a shard

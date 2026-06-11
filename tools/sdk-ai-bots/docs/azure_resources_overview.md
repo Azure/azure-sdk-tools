@@ -124,7 +124,7 @@ Chat agent (hosted agent) deployed to a Foundry project.
 | `sites_azuresdkqabot_server_name_resource` | `Web/sites` | `site3` | **Deploy** |
 | `sites_azuresdkqabot_server_name_main` | `Web/sites/sitecontainers` | `sitecontainer` | **Deploy** |
 | `sites_azuresdkqabot_server_name_agent` | `Web/sites/slots` | `slot` | **Deploy** |
-| App Service Authentication (Entra ID) | `Web/sites/config` (`authsettingsV2`) | — | **Deploy** |
+| `App Service Authentication (Entra ID)` | `Web/sites/config` (`authsettingsV2`) | — | **Deploy** |
 | `components_azuresdkqabot_server_name_resource` | `Insights/components` | `component4` | **Deploy** |
 | `metricAlerts_azuresdkqabot_alert_name_resource` | `Insights/metricAlerts` | `metricAlert2` | **Deploy** |
 | `sites_azuresdkqabot_server_name_ftp` | `Web/sites/basicPublishingCredentialsPolicies` | `basicPublishingCredentialsPolicy5` | Auto-created |
@@ -135,9 +135,21 @@ Chat agent (hosted agent) deployed to a Foundry project.
 | `sites_azuresdkqabot_server_name_agent_scm` | `Web/sites/slots/basicPublishingCredentialsPolicies` | `basicPublishingCredentialsPolicy8` | Auto-created |
 | `sites_azuresdkqabot_server_name_agent_web` | `Web/sites/slots/config` | `config4` | Auto-created |
 | `sites_azuresdkqabot_server_name_agent_*azurewebsites_net` | `Web/sites/slots/hostNameBindings` | `hostNameBinding4` | Auto-created |
+| `AcrPull (identity → ACR)` | `Microsoft.Authorization/roleAssignments` | — | **Deploy** |
+| `Storage Blob Data Contributor (identity → storage)` | `Microsoft.Authorization/roleAssignments` | — | **Deploy** |
+| `Storage Table Data Contributor (identity → storage)` | `Microsoft.Authorization/roleAssignments` | — | **Deploy** |
+| `Key Vault Secrets User (identity → Key Vault)` | `Microsoft.Authorization/roleAssignments` | — | **Deploy** |
+| `App Configuration Data Reader (identity → config)` | `Microsoft.Authorization/roleAssignments` | — | **Deploy** |
+| `Cognitive Services OpenAI User (identity → Foundry)` | `Microsoft.Authorization/roleAssignments` | — | **Deploy** |
+| `Search Index Data Reader (identity → search)` | `Microsoft.Authorization/roleAssignments` | — | **Deploy** |
+| `Cosmos DB SQL role assignments` | `sqlRoleAssignments` | `sqlRoleAssignment` | **Deploy** |
 | `userAssignedIdentities_azuresdkqabot_identity_name_resource` | `ManagedIdentity/userAssignedIdentities` | `userAssignedIdentity2` | **Deploy** |
 | `workspaces_azuresdkqabot_log_name_resource` | `OperationalInsights/workspaces` | `workspace2` | **Deploy** |
 | `actionGroups_azuresdkqabot_alert_name_resource` | `Insights/actionGroups` | `actionGroup2` | **Deploy** |
+| `vaults_azuresdkqabot_keyvalut_name_resource` | `KeyVault/vaults` | `vault` | **Deploy** |
+| `configurationStores_azuresdkqabot_config_name_resource` | `AppConfiguration/configurationStores` | `configurationStore` | **Deploy** |
+| `searchServices_azuresdkqabot_search_name_resource` | `Search/searchServices` | `searchService` | **Deploy** |
+| `registries_azuresdkqabotcontainer_name_resource` | `ContainerRegistry/registries` | `registry2` | **Deploy** |
 
 ### 3.3 Function App (`azuresdkqabot-function`)
 

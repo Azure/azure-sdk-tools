@@ -91,7 +91,6 @@ Chat agent (hosted agent) deployed to a Foundry project.
 
 ![alt text](images/resources_architecture.png)
 
-
 ## 3 Deploy resources
 
 ### 3.1 Frontend — Teams Bot (`azsdkqabot`)
@@ -227,10 +226,6 @@ Chat agent (hosted agent) deployed to a Foundry project.
 | `databaseAccounts_*_conversation-messages` | `sqlDatabases/containers` | `container9` | **Deploy** |
 | `databaseAccounts_*_experience-episodes` | `sqlDatabases/containers` | `container10` | **Deploy** |
 | `databaseAccounts_*_thread-mappings` | `sqlDatabases/containers` | `container11` | **Deploy** |
-| SQL role assignments (x3) | `sqlRoleAssignments` | `sqlRoleAssignment`–`3` | **Deploy** |
-| Table role assignments (x3) | `tableRoleAssignments` | `tableRoleAssignment`–`3` | **Deploy** |
-| SQL role definitions (x2) | `sqlRoleDefinitions` | `sqlRoleDefinition`–`2` | Auto-created (built-in) |
-| Table role definitions (x2) | `tableRoleDefinitions` | `tableRoleDefinition`–`2` | Auto-created (built-in) |
 
 ## Summary
 

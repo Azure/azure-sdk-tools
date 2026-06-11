@@ -3,7 +3,7 @@
 ## Table of Contents
 
 - [Definitions](#definitions)
-- [Background / Problem Statement](#background--problem-statement)
+- [Background](#background)
 - [Goals and Exceptions/Limitations](#goals-and-exceptionslimitations)
 - [Design Proposal](#design-proposal)
 - [Agent Prompts](#agent-prompts)
@@ -26,16 +26,14 @@
   picked), `tool-calls` (right tools / order / args), and `prompt` (right
   final answer). Graders are composable, not a fixed set of three — a
   stimulus that edits files adds `file-matches`, and a stimulus can weight
-  graders and set a pass threshold. The `azure-typespec-author` suite does
-  both (tool-calls + skill-invocation + several file-matches + a weighted
-  LLM-judge). The three named here are the baseline, not a ceiling.
+  graders and set a pass threshold.
 - **Mock MCP**: an in-memory fake of the Azure SDK MCP server — no network,
   no side effects. **Live MCP**: the real server hitting real DevOps / GitHub.
 
 
 ---
 
-## Background / Problem Statement
+## Background
 
 We're shipping agent-driven replacements for manual SDK workflows — starting
 with the release planner. When someone
@@ -53,11 +51,11 @@ of re-demoing.
 ## Goals and Exceptions/Limitations
 
 **Primary objective.** Build a scalable evaluation orchestration platform
-for GitHub skills and scenario-based evals using the native Vally eval
-format. Contributors author native `*.eval.yaml`; a centralized framework
+for skills and scenario-based evals using the Vally eval
+toolset. Contributors author native `*.eval.yaml` to evaluate our AI systems; a centralized framework
 owns execution mechanics. The design optimizes for fast rollout, low
 operational complexity, contributor simplicity, centralized orchestration,
-and distributed-execution scalability — *not* for a new eval abstraction.
+and distributed-execution scalability.
 
 ### Goals
 
@@ -68,27 +66,24 @@ and distributed-execution scalability — *not* for a new eval abstraction.
 - [ ] **One file per workflow, graders per prompt** — skill picked, tools
       called, final answer, plus structural checks (`file-matches`) where a
       scenario edits files.
+- [ ] **Multi-step chains work** (e.g. *validate TypeSpec → create release
+      plan → generate SDK → link the SDK PR*).
 - [ ] **Simple enough to reuse across repos** — the same runner, grader
       catalog, and orchestration cover common skills/tools *and* repo-specific
       skills and scenarios in the language SDK repos, not just
       `azure-sdk-tools`. A language repo plugs in its own eval content; the
       framework does not change.
-- [ ] **Mock MCP by default, live MCP only on opt-in** — no accidental writes
-      to DevOps / GitHub; release / publish tools stay mock-only.
 - [ ] **Mock covers every tool the scenarios call**, with realistic responses.
 - [ ] **Anyone can clone and run** — env vars, no hard-coded paths; live
       scenarios declare what repos they need.
 - [ ] **Contributors don't hand-write eval files** — a partner or service
       team should be able to name their skill and the scenarios they care
       about and have the framework (an agent / Copilot) generate the eval
-      template for them. Lowering this barrier is how the suite scales to
-      ARM and service teams who don't know the eval internals.
+      template for them.
 - [ ] **The run produces a status table** of pass/fail per prompt plus a
       trajectory per prompt — readable by non-engineers.
 - [ ] **Reports come out in the formats people actually use** — markdown
       for humans, JUnit for CI, CSV for spreadsheets and dashboards.
-- [ ] **Multi-step chains work** (e.g. *validate TypeSpec → create release
-      plan → generate SDK → link the SDK PR*).
 
 ### Exceptions and Limitations
 

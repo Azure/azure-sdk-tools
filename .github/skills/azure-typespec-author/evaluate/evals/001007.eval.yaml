@@ -16,7 +16,7 @@ config:
 # Test cases
 stimuli:
 - prompt: |
-    I want to add a new stable version `2025-01-01`. Exclude `workLocation` property and `WorkLocation` model. Carry other features.
+    @azure-typespec-author I want to add a new stable version `2025-01-01`. Exclude `workLocation` property and `WorkLocation` model. Carry other features.
   name: 001007-version-add-stable-after-preview
   constraints:
     max_turns: 5

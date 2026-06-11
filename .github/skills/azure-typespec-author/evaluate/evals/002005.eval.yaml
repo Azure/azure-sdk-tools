@@ -16,7 +16,7 @@ config:
 # Test cases
 stimuli:
 - prompt: |
-    Define a Azure resource "Employee" under the namespace "Microsoft.Widget" using TypeSpec. Properties: age (int32, optional), city (string, optional), profile (bytes, optional), provisioningState (enum incorporating ResourceProvisioningState, optional, read-only). Ensure the definition meets TypeSpec Azure design guidelines.
+    @azure-typespec-author Define a Azure resource "Employee" under the namespace "Microsoft.Widget" using TypeSpec. Properties: age (int32, optional), city (string, optional), profile (bytes, optional), provisioningState (enum incorporating ResourceProvisioningState, optional, read-only). Ensure the definition meets TypeSpec Azure design guidelines.
   name: 002005-ARM-define-the-resource
   constraints:
     max_turns: 5
@@ -40,7 +40,7 @@ stimuli:
     config:
       required:
         - edit
-        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+        - web_fetch
         - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: skill-invocation
     config:

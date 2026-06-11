@@ -16,7 +16,7 @@ config:
 # Test cases
 stimuli:
 - prompt: |
-    add an extension resource named asset
+    @azure-typespec-author add an extension resource named asset
   name: 002002-ARM-define-extension-resource
   constraints:
     max_turns: 5
@@ -42,7 +42,7 @@ stimuli:
     config:
       required:
         - edit
-        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+        - web_fetch
         - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: skill-invocation
     config:

@@ -16,7 +16,7 @@ config:
 # Test cases
 stimuli:
 - prompt: |
-    Remove @operationId and its associated #suppress for no-openapi from all operations. Then restore those operationIds that do not contain underscores or begin with a lowercase letter.
+    @azure-typespec-author Remove @operationId and its associated #suppress for no-openapi from all operations. Then restore those operationIds that do not contain underscores or begin with a lowercase letter.
   name: 004003-delete-and-restore-operationId-decorator
   constraints:
     max_turns: 5

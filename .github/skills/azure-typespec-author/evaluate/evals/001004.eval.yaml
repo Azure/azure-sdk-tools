@@ -16,7 +16,7 @@ config:
 # Test cases
 stimuli:
 - prompt: |
-    change the visibility of property 'provisioningState' from Lifecycle.Read to Lifecycle.Read and Lifecycle.Create in version 2025-05-04-preview only
+    @azure-typespec-author change the visibility of property 'provisioningState' from Lifecycle.Read to Lifecycle.Read and Lifecycle.Create in version 2025-05-04-preview only
   name: 001004-version-property-decorator
   constraints:
     max_turns: 5
@@ -42,7 +42,7 @@ stimuli:
     config:
       required:
         - edit
-        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+        - web_fetch
         - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: skill-invocation
     config:

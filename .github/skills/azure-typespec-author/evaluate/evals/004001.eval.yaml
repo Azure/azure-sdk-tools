@@ -16,7 +16,7 @@ config:
 # Test cases
 stimuli:
 - prompt: |
-    use authoring plan to add minLength decorator to set the minLength 1 for resource name parameter of Employee resource
+    @azure-typespec-author use authoring plan to add minLength decorator to set the minLength 1 for resource name parameter of Employee resource
   name: 004001-decorate-mgmt-resource-name-parameter
   constraints:
     max_turns: 5
@@ -46,7 +46,7 @@ stimuli:
     config:
       required:
         - edit
-        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+        - web_fetch
         - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: skill-invocation
     config:

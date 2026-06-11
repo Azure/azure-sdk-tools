@@ -19,7 +19,7 @@ config:
 # Cases are intentionally sorted by case id.
 stimuli:
 - name: 001001-version-spread-property
-  prompt: I added `...Azure.ResourceManager.ManagedServiceIdentityProperty;` which updates all my existing API versions and introduces a breaking change. I want to introduce the properties of the spread model '...ManagedServiceIdentityProperty' in API version 2025-05-04-preview only.
+  prompt: @azure-typespec-author I added `...Azure.ResourceManager.ManagedServiceIdentityProperty;` which updates all my existing API versions and introduces a breaking change. I want to introduce the properties of the spread model '...ManagedServiceIdentityProperty' in API version 2025-05-04-preview only.
   constraints:
     max_turns: 5
     max_tokens: 50000
@@ -44,7 +44,7 @@ stimuli:
     config:
       required:
       - edit
-      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+      - web_fetch
       - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -66,7 +66,7 @@ stimuli:
       threshold: 1
 - name: 001002-version-default-value
   prompt: |
-    add a default value `21` for property age in model EmployeeProperties only for a new api version 2025-11-01
+    @azure-typespec-author add a default value `21` for property age in model EmployeeProperties only for a new api version 2025-11-01
   constraints:
     max_turns: 5
     max_tokens: 1000000
@@ -91,7 +91,7 @@ stimuli:
     config:
       required:
       - edit
-      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+      - web_fetch
       - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -117,7 +117,7 @@ stimuli:
       model: claude-opus-4.6
 - name: 001003-version-required-to-optional
   prompt: |
-    change the property age of EmployeeProperties from required to optional for api version 2025-05-04-preview
+    @azure-typespec-author change the property age of EmployeeProperties from required to optional for api version 2025-05-04-preview
   constraints:
     max_turns: 5
     max_tokens: 1000000
@@ -142,7 +142,7 @@ stimuli:
     config:
       required:
       - edit
-      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+      - web_fetch
       - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -164,7 +164,7 @@ stimuli:
       model: claude-opus-4.6
 - name: 001004-version-property-decorator
   prompt: |
-    change the visibility of property 'provisioningState' from Lifecycle.Read to Lifecycle.Read and Lifecycle.Create in version 2025-05-04-preview only
+    @azure-typespec-author change the visibility of property 'provisioningState' from Lifecycle.Read to Lifecycle.Read and Lifecycle.Create in version 2025-05-04-preview only
   constraints:
     max_turns: 5
     max_tokens: 1000000
@@ -189,7 +189,7 @@ stimuli:
     config:
       required:
       - edit
-      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+      - web_fetch
       - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -207,7 +207,7 @@ stimuli:
       model: claude-opus-4.6
 - name: 001005-version-add-preview-after-preview
   prompt: |
-    Add a new preview version `2025-05-04-preview` to my service widget resource manager. Exclude Feature: `age` property with default value 21. Carry other features.
+    @azure-typespec-author Add a new preview version `2025-05-04-preview` to my service widget resource manager. Exclude Feature: `age` property with default value 21. Carry other features.
   constraints:
     max_turns: 5
     max_tokens: 1000000
@@ -303,7 +303,7 @@ stimuli:
       pattern: '@typeChangedFrom\(Versions\.v2025_05_04_preview, string\[\]\)'
 - name: 001006-version-add-preview-after-stable
   prompt: |
-    Add a new preview version `2025-05-04-preview` to my service widget resource manager. Carry over all the features from the latest stable version
+    @azure-typespec-author Add a new preview version `2025-05-04-preview` to my service widget resource manager. Carry over all the features from the latest stable version
   constraints:
     max_turns: 5
     max_tokens: 1000000
@@ -385,7 +385,7 @@ stimuli:
       model: claude-opus-4.6
 - name: 001007-version-add-stable-after-preview
   prompt: |
-    I want to add a new stable version `2025-01-01`. Exclude `workLocation` property and `WorkLocation` model. Carry other features.
+    @azure-typespec-author I want to add a new stable version `2025-01-01`. Exclude `workLocation` property and `WorkLocation` model. Carry other features.
   constraints:
     max_turns: 5
     max_tokens: 1000000
@@ -483,7 +483,7 @@ stimuli:
       pattern: v2024_10_01_preview
 - name: 001008-version-add-stable-after-stable
   prompt: |
-    Add a new stable version `2025-01-01` to my service. Carry over changes.
+    @azure-typespec-author Add a new stable version `2025-01-01` to my service. Carry over changes.
   constraints:
     max_turns: 5
     max_tokens: 1000000
@@ -575,7 +575,7 @@ stimuli:
       model: claude-opus-4.6
 - name: 001009-version-model-property-required
   prompt: |
-    In the Widget project, make the `email` property required in EmployeeProperties only for version `2025-05-04-preview`.
+    @azure-typespec-author In the Widget project, make the `email` property required in EmployeeProperties only for version `2025-05-04-preview`.
   constraints:
     max_turns: 5
     max_tokens: 1000000
@@ -621,7 +621,7 @@ stimuli:
       model: claude-opus-4.6
 - name: 001010-version-model-property-removed
   prompt: |
-    In the Widget project, remove the `department` property from EmployeeProperties only for version `2025-05-04-preview`.
+    @azure-typespec-author In the Widget project, remove the `department` property from EmployeeProperties only for version `2025-05-04-preview`.
   constraints:
     max_turns: 5
     max_tokens: 1000000
@@ -661,7 +661,7 @@ stimuli:
       pattern: 'department\?: string;'
 - name: 001011-version-model-property-renamed
   prompt: |
-    In the Widget project, rename the `age` property to `employeeAge` in EmployeeProperties only for version `2025-05-04-preview`.
+    @azure-typespec-author In the Widget project, rename the `age` property to `employeeAge` in EmployeeProperties only for version `2025-05-04-preview`.
   constraints:
     max_turns: 5
     max_tokens: 1000000
@@ -690,7 +690,7 @@ stimuli:
     config:
       required:
       - edit
-      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+      - web_fetch
       - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -706,7 +706,7 @@ stimuli:
       pattern: 'employeeAge\?: int32;'
 - name: 001012-version-operation-return-type-changed
   prompt: |
-    In the Widget project, change the return type of the `exportData` operation from `ExportResult` to `DetailedExportResult` with additional optional properties `format` (string) and `exportedAt` (utcDateTime) only for version `2025-05-04-preview`.
+    @azure-typespec-author In the Widget project, change the return type of the `exportData` operation from `ExportResult` to `DetailedExportResult` with additional optional properties `format` (string) and `exportedAt` (utcDateTime) only for version `2025-05-04-preview`.
   constraints:
     max_turns: 5
     max_tokens: 1000000
@@ -735,7 +735,7 @@ stimuli:
     config:
       required:
       - edit
-      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+      - web_fetch
       - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -763,7 +763,7 @@ stimuli:
       pattern: exportData is ArmResourceActionSync<Employee, void, DetailedExportResult>;
 - name: 001013-version-model-property-type-changed
   prompt: |
-    In the Widget project, change the type of the `statusCode` property from `string` to `int32` in EmployeeProperties only for version `2025-05-04-preview`.
+    @azure-typespec-author In the Widget project, change the type of the `statusCode` property from `string` to `int32` in EmployeeProperties only for version `2025-05-04-preview`.
   constraints:
     max_turns: 5
     max_tokens: 1000000
@@ -792,7 +792,7 @@ stimuli:
     config:
       required:
       - edit
-      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+      - web_fetch
       - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -814,7 +814,7 @@ stimuli:
       model: claude-opus-4.6
 - name: 002001-ARM-change-resource-type
   prompt: |
-    change resource Employee to be an extension resource
+    @azure-typespec-author change resource Employee to be an extension resource
   constraints:
     max_turns: 5
     max_tokens: 1000000
@@ -843,7 +843,7 @@ stimuli:
     config:
       required:
       - edit
-      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+      - web_fetch
       - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -865,7 +865,7 @@ stimuli:
       model: claude-opus-4.6
 - name: 002002-ARM-define-extension-resource
   prompt: |
-    add an extension resource named asset
+    @azure-typespec-author add an extension resource named asset
   constraints:
     max_turns: 5
     max_tokens: 1000000
@@ -890,7 +890,7 @@ stimuli:
     config:
       required:
       - edit
-      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+      - web_fetch
       - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -906,7 +906,7 @@ stimuli:
       pattern: provisioningState
 - name: 002003-ARM-define-full-update-operation
   prompt: |
-    Define a PATCH operation for Employees. It is to update properties of an employee. Ensure the definition meets TypeSpec Azure guidelines.
+    @azure-typespec-author Define a PATCH operation for Employees. It is to update properties of an employee. Ensure the definition meets TypeSpec Azure guidelines.
   constraints:
     max_turns: 5
     max_tokens: 1000000
@@ -931,7 +931,7 @@ stimuli:
     config:
       required:
       - edit
-      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+      - web_fetch
       - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -939,7 +939,7 @@ stimuli:
       pattern: update\s+is\s+ArmCustomPatchSync\s*<\s*Employee\s*,\s*Azure\.ResourceManager\.Foundations\.ResourceUpdateModel\s*<\s*Employee\s*,\s*EmployeeProperties\s*>\s*>\s*;
 - name: 002004-ARM-define-extension-resource
   prompt: |
-    Define a "badge assignment" extension resource. It should be an extension resource that can be attached to an employee. Ensure the definition meets TypeSpec Azure guidelines.
+    @azure-typespec-author Define a "badge assignment" extension resource. It should be an extension resource that can be attached to an employee. Ensure the definition meets TypeSpec Azure guidelines.
   constraints:
     max_turns: 5
     max_tokens: 1000000
@@ -966,7 +966,7 @@ stimuli:
     config:
       required:
       - edit
-      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+      - web_fetch
       - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -992,7 +992,7 @@ stimuli:
       model: claude-opus-4.6
 - name: 002005-ARM-define-the-resource
   prompt: |
-    Define a Azure resource "Employee" under the namespace "Microsoft.Widget" using TypeSpec. Properties: age (int32, optional), city (string, optional), profile (bytes, optional), provisioningState (enum incorporating ResourceProvisioningState, optional, read-only). Ensure the definition meets TypeSpec Azure design guidelines.
+    @azure-typespec-author Define a Azure resource "Employee" under the namespace "Microsoft.Widget" using TypeSpec. Properties: age (int32, optional), city (string, optional), profile (bytes, optional), provisioningState (enum incorporating ResourceProvisioningState, optional, read-only). Ensure the definition meets TypeSpec Azure design guidelines.
   constraints:
     max_turns: 5
     max_tokens: 1000000
@@ -1015,7 +1015,7 @@ stimuli:
     config:
       required:
       - edit
-      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+      - web_fetch
       - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -1053,7 +1053,7 @@ stimuli:
       model: claude-opus-4.6
 - name: 002006-ARM-define-child-resource
   prompt: |
-    Create a new "AddressResource" child resource under the parent resource "Employee". Address properties: street 1(optional), street 2(optional), city(optional), state(optional), postal code(optional), country(optional), and a read-only provisioningState(optional). Ensure the definition meets TypeSpec Azure design guidelines.
+    @azure-typespec-author Create a new "AddressResource" child resource under the parent resource "Employee". Address properties: street 1(optional), street 2(optional), city(optional), state(optional), postal code(optional), country(optional), and a read-only provisioningState(optional). Ensure the definition meets TypeSpec Azure design guidelines.
   constraints:
     max_turns: 5
     max_tokens: 1000000
@@ -1082,7 +1082,7 @@ stimuli:
     config:
       required:
       - edit
-      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+      - web_fetch
       - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -1156,7 +1156,7 @@ stimuli:
       model: claude-opus-4.6
 - name: 002007-ARM-define-custom-action
   prompt: |
-    Add an additional POST action called "/notify" to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). Ensure the definition meets TypeSpec Azure design guidelines.
+    @azure-typespec-author Add an additional POST action called "/notify" to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). Ensure the definition meets TypeSpec Azure design guidelines.
   constraints:
     max_turns: 5
     max_tokens: 1000000
@@ -1185,7 +1185,7 @@ stimuli:
     config:
       required:
       - edit
-      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+      - web_fetch
       - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -1239,7 +1239,7 @@ stimuli:
       model: claude-opus-4.6
 - name: 002008-ARM-add-parameters
   prompt: |
-    add top and skip query parameters to the ListBySubscription operation in interface Employees
+    @azure-typespec-author add top and skip query parameters to the ListBySubscription operation in interface Employees
   constraints:
     max_turns: 5
     max_tokens: 1000000
@@ -1275,7 +1275,7 @@ stimuli:
       pattern: listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*\{\s*\.\.\.TopQueryParameter;\s*\.\.\.SkipQueryParameter;\s*\}\s*>|listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*Parameters\s*=\s*ArmTopParameter\s*&\s*ArmSkipParameter\s*>|model\s+EmployeeListBySubscriptionParameters\s+is\s+Azure\.Core\.StandardListQueryParameters\s*;[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*EmployeeListBySubscriptionParameters\s*>
 - name: 002009-arm-add-patch-operation-to-resource
   prompt: |
-    In the Widget project, add a patch operation to an existing ARM resource named 'Employee'
+    @azure-typespec-author In the Widget project, add a patch operation to an existing ARM resource named 'Employee'
   constraints:
     max_turns: 5
     max_tokens: 1000000
@@ -1300,7 +1300,7 @@ stimuli:
     config:
       required:
       - edit
-      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+      - web_fetch
       - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -1314,7 +1314,7 @@ stimuli:
       model: claude-opus-4.6
 - name: 002010-arm-action-sync-operation
   prompt: |
-    In the Widget project, add a sync operation exportData for employee resource.
+    @azure-typespec-author In the Widget project, add a sync operation exportData for employee resource.
   constraints:
     max_turns: 5
     max_tokens: 1000000
@@ -1339,7 +1339,7 @@ stimuli:
     config:
       required:
       - edit
-      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+      - web_fetch
       - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -1357,7 +1357,7 @@ stimuli:
       model: claude-opus-4.6
 - name: 003001-arm-action-lro
   prompt: |
-    Add a move async operation to move employee, operation's request is MoveRequest, response is MoveResponse
+    @azure-typespec-author Add a move async operation to move employee, operation's request is MoveRequest, response is MoveResponse
   constraints:
     max_turns: 5
     max_tokens: 1000000
@@ -1382,7 +1382,7 @@ stimuli:
     config:
       required:
       - edit
-      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+      - web_fetch
       - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -1400,7 +1400,7 @@ stimuli:
       model: claude-opus-4.6
 - name: 003002-arm-modify-response
   prompt: |
-    Modify the LRO createOrUpdate PUT operation in interface Employees so that it returns Azure-AsyncOperation header but NOT Retry-After header in the 201 response. The operation currently uses ArmResourceCreateOrReplaceAsync<Employee> template.
+    @azure-typespec-author Modify the LRO createOrUpdate PUT operation in interface Employees so that it returns Azure-AsyncOperation header but NOT Retry-After header in the 201 response. The operation currently uses ArmResourceCreateOrReplaceAsync<Employee> template.
   constraints:
     max_turns: 5
     max_tokens: 1000000
@@ -1429,7 +1429,7 @@ stimuli:
     config:
       required:
       - edit
-      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+      - web_fetch
       - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -1459,7 +1459,7 @@ stimuli:
       model: claude-opus-4.6
 - name: 004001-decorate-mgmt-resource-name-parameter
   prompt: |
-    use authoring plan to add minLength decorator to set the minLength 1 for resource name parameter of Employee resource
+    @azure-typespec-author use authoring plan to add minLength decorator to set the minLength 1 for resource name parameter of Employee resource
   constraints:
     max_turns: 5
     max_tokens: 1000000
@@ -1488,7 +1488,7 @@ stimuli:
     config:
       required:
       - edit
-      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+      - web_fetch
       - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -1506,7 +1506,7 @@ stimuli:
       model: claude-opus-4.6
 - name: 004002-decorate-length-constrains-on-array-item
   prompt: |
-    I have a property `assets: string[]` in EmployeeProperties. Add @minLength(3) @maxLength(10) constraints for any item of the assets array.
+    @azure-typespec-author I have a property `assets: string[]` in EmployeeProperties. Add @minLength(3) @maxLength(10) constraints for any item of the assets array.
   constraints:
     max_turns: 5
     max_tokens: 1000000
@@ -1531,7 +1531,7 @@ stimuli:
     config:
       required:
       - edit
-      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+      - web_fetch
       - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -1557,7 +1557,7 @@ stimuli:
       model: claude-opus-4.6
 - name: 004003-delete-and-restore-operationId-decorator
   prompt: |
-    Remove @operationId and its associated #suppress for no-openapi from all operations. Then restore those operationIds that do not contain underscores or begin with a lowercase letter.
+    @azure-typespec-author Remove @operationId and its associated #suppress for no-openapi from all operations. Then restore those operationIds that do not contain underscores or begin with a lowercase letter.
   constraints:
     max_turns: 5
     max_tokens: 1000000
@@ -1623,7 +1623,7 @@ stimuli:
       pattern: '@operationId\("ExpressRouteProviderPortsLocation_List"\)'
 - name: 005001-warning-suppress-warning
   prompt: |
-    Add suppressions for the warnings produced by "tsp compile .", and set the justification to "FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details".
+    @azure-typespec-author Add suppressions for the warnings produced by "tsp compile .", and set the justification to "FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details".
   constraints:
     max_turns: 5
     max_tokens: 1000000

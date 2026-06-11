@@ -16,7 +16,7 @@ config:
 # Test cases
 stimuli:
 - prompt: |
-    Add a new preview version `2025-05-04-preview` to my service widget resource manager. Carry over all the features from the latest stable version
+    @azure-typespec-author Add a new preview version `2025-05-04-preview` to my service widget resource manager. Carry over all the features from the latest stable version
   name: 001006-version-add-preview-after-stable
   constraints:
     max_turns: 5

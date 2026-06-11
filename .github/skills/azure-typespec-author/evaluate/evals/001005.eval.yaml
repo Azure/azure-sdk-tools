@@ -16,7 +16,7 @@ config:
 # Test cases
 stimuli:
 - prompt: |
-    Add a new preview version `2025-05-04-preview` to my service widget resource manager. Exclude Feature: `age` property with default value 21. Carry other features.
+    @azure-typespec-author Add a new preview version `2025-05-04-preview` to my service widget resource manager. Exclude Feature: `age` property with default value 21. Carry other features.
   name: 001005-version-add-preview-after-preview
   constraints:
     max_turns: 5

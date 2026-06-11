@@ -17,7 +17,7 @@ config:
 stimuli:
 - name: 001002-version-default-value
   prompt: |
-    add a default value `21` for property age in model EmployeeProperties only for the new api version 2025-11-01
+    @azure-typespec-author add a default value `21` for property age in model EmployeeProperties only for the new api version 2025-11-01
   constraints:
     max_turns: 5
     max_tokens: 5000
@@ -42,7 +42,7 @@ stimuli:
     config:
       required:
         - edit
-        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+        - web_fetch
         - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: skill-invocation
     config:

@@ -16,7 +16,7 @@ config:
 # Test cases
 stimuli:
 - prompt: |
-    In the Widget project, rename the `age` property to `employeeAge` in EmployeeProperties only for version `2025-05-04-preview`.
+    @azure-typespec-author In the Widget project, rename the `age` property to `employeeAge` in EmployeeProperties only for version `2025-05-04-preview`.
   name: 001011-version-model-property-renamed
   constraints:
     max_turns: 5
@@ -46,7 +46,7 @@ stimuli:
     config:
       required:
         - edit
-        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+        - web_fetch
         - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: skill-invocation
     config:

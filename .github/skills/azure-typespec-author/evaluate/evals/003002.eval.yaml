@@ -16,7 +16,7 @@ config:
 # Test cases
 stimuli:
 - prompt: |
-    Modify the LRO createOrUpdate PUT operation in interface Employees so that it returns Azure-AsyncOperation header but NOT Retry-After header in the 201 response. The operation currently uses ArmResourceCreateOrReplaceAsync<Employee> template.
+    @azure-typespec-author Modify the LRO createOrUpdate PUT operation in interface Employees so that it returns Azure-AsyncOperation header but NOT Retry-After header in the 201 response. The operation currently uses ArmResourceCreateOrReplaceAsync<Employee> template.
   name: 003002-arm-modify-response
   constraints:
     max_turns: 5
@@ -46,7 +46,7 @@ stimuli:
     config:
       required:
         - edit
-        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+        - web_fetch
         - azure-sdk-mcp-azsdk_run_typespec_validation
   # VP1: ArmAsyncOperationHeader with FinalResult = Employee (alias or inline)
   - type: skill-invocation

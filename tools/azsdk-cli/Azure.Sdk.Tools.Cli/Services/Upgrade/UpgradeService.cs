@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.IO.Compression;
+using System.Net.Http.Headers;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -43,7 +44,31 @@ public class UpgradeService(
         var client = httpClientFactory.CreateClient(nameof(UpgradeService));
         client.DefaultRequestHeaders.Add("User-Agent", SharedCommandNames.BaseExecutableName);
         client.DefaultRequestHeaders.Add("Accept", "application/vnd.github+json");
+
+        // Authenticate requests when a GitHub token is available so the unauthenticated
+        // rate limit (60 requests/hour per IP) doesn't cause upgrade checks to fail with 403.
+        var token = GetGitHubToken();
+        if (!string.IsNullOrEmpty(token))
+        {
+            client.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+        }
+
         return client;
+    }
+
+    private static string? GetGitHubToken()
+    {
+        foreach (var variable in new[] { "GITHUB_TOKEN", "GH_TOKEN" })
+        {
+            var value = Environment.GetEnvironmentVariable(variable);
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                return value.Trim();
+            }
+        }
+
+        return null;
     }
 
     private static readonly JsonSerializerOptions jsonOptions = new()

@@ -52,8 +52,19 @@ of re-demoing.
 
 ## Goals and Exceptions/Limitations
 
+**Primary objective.** Build a scalable evaluation orchestration platform
+for GitHub skills and scenario-based evals using the native Vally eval
+format. Contributors author native `*.eval.yaml`; a centralized framework
+owns execution mechanics. The design optimizes for fast rollout, low
+operational complexity, contributor simplicity, centralized orchestration,
+and distributed-execution scalability — *not* for a new eval abstraction.
+
 ### Goals
 
+- [ ] **A reusable CI orchestration platform, not a one-repo runner** built once and reused by *every* pipeline that runs
+      evals. The scaling story is not limited to this repo:
+      any repo points its pipeline at the shared layer and gets the same
+      distributed execution and reporting.
 - [ ] **One file per workflow, graders per prompt** — skill picked, tools
       called, final answer, plus structural checks (`file-matches`) where a
       scenario edits files.
@@ -71,8 +82,6 @@ of re-demoing.
       trajectory per prompt — readable by non-engineers.
 - [ ] **Reports come out in the formats people actually use** — markdown
       for humans, JUnit for CI, CSV for spreadsheets and dashboards.
-- [ ] **Adding a partner-reported prompt is one new stimulus**, no runner
-      or CI changes.
 - [ ] **Multi-step chains work** (e.g. *validate TypeSpec → create release
       plan → generate SDK → link the SDK PR*).
 
@@ -116,9 +125,10 @@ prove); the last two say where each lives and what backend it needs.
 
 | Kind | What it proves | Agent | MCP | Lives in |
 |---|---|---|---|---|
-| **Skills** | A user prompt routes to the right skill. | live | none | `.github/skills/<skill>/evals/` |
+| **Skills** | A user prompt routes to the right skill (and, for capability evals, that the skill then calls the right tools). | live | none for pure routing; **mock** when the eval asserts tool calls | `.github/skills/<skill>/evals/` |
 | **Workflows — Mock** | Agent picks the right skills, calls the right tools in the right order with the right args, returns the right answer. | live | **mock** | `evals/workflow-scenarios/mock/` |
 | **Workflows — Live** | Same as above, but against the real backend — catches drift the mock can't see (TypeSpec ordering, real codegen output, real DevOps state). | live | **live** | `evals/workflow-scenarios/live/` |
+
 
 Plus a hermetic tool-shape layer that isn't agent-driven:
 
@@ -177,23 +187,6 @@ Skill evals stay next to `SKILL.md` — that's the convention skill
 authors expect, and it keeps everything about a skill in one folder.
 Existing skill eval files do not move.
 
-**This layout is not specific to `azure-sdk-tools`.** It splits along two
-axes that every repo has:
-
-- **Common skills and tools** — the shared `.github/skills/` and the MCP
-  tools in `azsdk-cli`. Their evals live here, in `azure-sdk-tools`.
-- **Repo-specific skills and scenarios** — a language SDK repo's own
-  skills and workflows. Their evals live in *that* repo, under the same
-  `.github/skills/<skill>/evals/` and `evals/` conventions, and are
-  discovered and run by the same shared orchestration
-  ([How the suite executes](#how-the-suite-executes--orchestration)).
-
-The pipeline is configured once in the shared platform
-(`eng/eval-platform/pipelines/`, see
-[Cross-repo rollout](#cross-repo-rollout-and-the-shared-platform)) and
-referenced by each repo; a consuming repo does not author its own
-orchestration.
-
 #### Skill eval suite — current state and direction
 
 The skill suite predates this project. Today roughly a dozen skills
@@ -233,18 +226,6 @@ Is it a multi-step / multi-tool agent flow?
             variant. Reserve for cases where the real backend's behavior
             matters (TypeSpec ordering, real codegen output, real DevOps
             state).
-```
-
-```mermaid
-flowchart TD
-    Q1{"Only care the right<br/>skill is picked?"}
-    Q1 -- yes --> R1[".github/skills/&lt;skill&gt;/evals/"]
-    Q1 -- no --> Q2{"Check one MCP tool's<br/>shape, no agent?"}
-    Q2 -- yes --> R2["evals/tools/"]
-    Q2 -- no --> Q3{"Multi-step /<br/>multi-tool flow?"}
-    Q3 -- yes --> Q4{"Real-backend behavior<br/>matters?"}
-    Q4 -- "no (default)" --> R3["evals/workflow-scenarios/mock/"]
-    Q4 -- yes --> R4["add evals/workflow-scenarios/live/ variant"]
 ```
 
 ### Eval file format — examples
@@ -319,64 +300,96 @@ stimuli:
     constraints: { max_turns: 30, max_tokens: 200000 }
 ```
 
-**Configure and invoke.** A run needs a skill dir and (for workflows)
-an MCP environment. Locally:
-
-```bash
-# skill eval — uses the environment declared in the file
-vally eval -e .github/skills/azure-typespec-author/evaluate/evals/001001.eval.yaml \
-  --skill-dir .github/skills --runs 1
-
-# workflow eval against the mock MCP
-vally eval -e evals/workflow-scenarios/mock/release-planner.eval.yaml \
-  --skill-dir .github/skills --runs 3 --workers 2
-```
-
-In CI the shared orchestration discovers the files, picks the backend by
-folder (`mock/` vs `live/`), and passes the same flags per shard — the
-author writes only the YAML.
-
 ### CI
 
-The suite runs on a schedule, not on every pull request. Agent runs
-talk to an LLM — they cost money and they flake in ways that have
-nothing to do with the code under review.
+Agent runs talk to an LLM — they cost money and they flake in ways that
+have nothing to do with the code under review. So the suite does not run
+as one job on every push. Instead it runs as **several pipelines, each on
+its own cadence**, all driven by the *same* shared orchestration layer —
+they differ only in which evals they select and which backend they use.
 
-| When | What runs | Backend |
-|---|---|---|
-| Nightly | All workflow scenarios + the hermetic tool layer | mock |
-| Weekly | Workflow scenarios marked safe to run live | live (with safe-mode flag on writes) |
-| On demand | Any suite, any backend | author's choice |
+| Pipeline | Trigger | Selects | Backend | Why separate |
+|---|---|---|---|---|
+| **PR gate** | PR touching agent / skills / MCP tools | `changed-only` + a curated essential subset | mock (+ a few real-MCP benchmarks) | Fast, cheap, must not flake — blocks merge. |
+| **Nightly** | schedule | `nightly-full` — every scenario + the hermetic tool layer | mock | Full coverage without paying live cost. |
+| **Weekly live** | schedule | scenarios tagged `live-safe` | live (safe-mode on writes) | Catches real-backend drift the mock can't see. |
+| **On demand** | manual / dispatch | any selection | author's choice | Debugging, one-off reruns, new-workflow bring-up. |
+
+Cadence is a knob, not a fixed contract — a pipeline is *"selection +
+backend + schedule."* Adding a new cadence (e.g. an on-`main`-push smoke
+run) is a new schedule pointing at the same templates, not new
+infrastructure.
+
+#### Architecture — three layers
+
+The platform is deliberately layered so the expensive, fiddly mechanics
+live in one shared place and the repos stay simple:
+
+```mermaid
+flowchart TD
+    subgraph L1["Shared orchestration framework — eng/eval-platform/"]
+        direction LR
+        D[Discovery] --- SH[Sharding] --- VAL[Validation] --- REP[Reporting] --- AGG[Aggregation]
+        SS[Shared stimuli] --- MX[Matrix execution] --- RT[Retry / cancel]
+    end
+    subgraph L2["Azure DevOps pipeline execution"]
+        direction LR
+        P1[Discover] --> P2[Shard plan] --> P3[Matrix fan-out] --> P4[Aggregate]
+    end
+    subgraph L3["Native Vally runtime"]
+        V[runs *.eval.yaml as-is]
+    end
+    subgraph L4["Repository-owned eval content"]
+        direction LR
+        E[eval.yaml] --- FX[fixtures] --- PR2[prompts] --- WS[workflow scenarios]
+    end
+    L1 --> L2 --> L3
+    L4 --> L3
+```
+
+- **Shared framework** owns execution mechanics — discovery,
+  change-detection, sharding, matrix fan-out, validation, aggregation,
+  reporting, and (optionally) shared stimuli/fixtures. It lives in
+  `eng/eval-platform/` and is reused by every pipeline and every repo
+  (see [Cross-repo rollout](#cross-repo-rollout-and-the-shared-platform)).
+- **ADO pipeline execution** is the thin glue: discover → shard-plan →
+  matrix → aggregate.
+- **Native Vally runtime** runs the eval files *as-is* — the framework is
+  an orchestration/scaling layer, **not** an eval abstraction; it does not
+  wrap evals in a new schema.
+- **Repositories own evaluation intent** — eval files, fixtures, prompts,
+  scenarios. Authors add a stimulus; the layer picks it up. They never
+  touch the orchestration layer.
+
+**What this layer must prove (and where the difficulty is).** This is the
+hard part of the project; designing for the complicated cross-repo case up
+front is cheaper than retrofitting it:
+
+| Goal the layer must hit | Where the difficulty is |
+|---|---|
+| **Discovery** — find every eval across repos without a manifest per repo | Conventions drift between repos; a missed file is silent lost coverage. |
+| **Change detection** — map a PR diff to just the affected evals | A skill or tool can fan out to many scenarios; under-mapping skips regressions, over-mapping reruns the world. |
+| **Sharding** — split the suite so wall-clock time stays low | Even file-count sharding is naive — one slow agent eval can dominate a shard; runtime-aware balancing is harder and is deliberately deferred. |
+| **Environment setup** — every shard needs the MCP server built and, for live, the right repos on disk | This is the issue we already hit: tools operate on real repos, so a shard fails for the wrong reason if a repo is missing or stale. Caching and pre-clone are first-class, not an afterthought (see [Environment setup and caching](#environment-setup-and-caching)). |
+| **Distributed execution** — fan out shards as ADO matrix jobs | Per-shard env setup and Copilot-SDK session limits cap useful parallelism; too many shards costs more than it saves. |
+| **Aggregation & reporting** — merge shard outputs into one verdict | Partial-shard failures and infra `status=error` rows must not be miscounted as graded failures. |
+
+Deliberately **out of scope for early rollout**: runtime-aware
+balancing, runtime prediction, multi-engine support, and any custom
+schema layer. These are enhancements, not blockers.
 
 #### How the suite executes — orchestration
 
-The runner is two layers. **Repositories own evaluation intent** — the
-eval files, fixtures, prompts, and scenarios. A **shared orchestration
-layer** owns execution mechanics — discovery, change-detection,
-sharding, matrix fan-out, and result aggregation. Eval authors never
-touch the orchestration layer; they add a stimulus and the layer picks
-it up.
-
-The shared layer lives in `eng/eval-platform/` and is reused across
-repos (see [Cross-repo rollout](#cross-repo-rollout-and-the-shared-platform)).
-It is an orchestration and scaling layer, **not** an eval abstraction:
-it runs native Vally eval files as-is and does not wrap them in a new
-schema.
-
-End to end:
-
-```
-checkout → discover eval files → detect changed files → map to
-affected evals → plan shards → fan out matrix jobs → run Vally per
-shard → aggregate shard results → report
-```
+End to end, every pipeline above runs the same flow; only the *selection*
+step and the *backend* differ:
 
 ```mermaid
 flowchart LR
     CO[Checkout] --> DI[Discover<br/>eval files]
     DI --> CD[Detect<br/>changed files]
-    CD --> MAP[Map to<br/>affected evals]
-    MAP --> SP[Plan shards]
+    CD --> SEL[Select<br/>by run mode]
+    SEL --> ENV[Provision env:<br/>build MCP, restore cache,<br/>pre-clone repos]
+    ENV --> SP[Plan shards]
     SP --> MX{Matrix<br/>fan-out}
     MX --> S1[Shard 1<br/>Vally]
     MX --> S2[Shard 2<br/>Vally]
@@ -384,14 +397,14 @@ flowchart LR
     S1 --> AG[Aggregate]
     S2 --> AG
     S3 --> AG
-    AG --> RP[Report<br/>md / junit / csv]
+    AG --> RP[Report<br/>md / junit / csv + PR annotation]
 ```
 
 #### Discovery and change detection
 
 Discovery scans the repo for eval files (`evals/**/*.eval.yaml` and
 `.github/skills/**/evals/*.eval.yaml`) and records each one's kind,
-area, and the tools/skills it exercises.
+area, fixtures, and the tools/skills it exercises.
 
 Change detection maps a PR's changed files to the evals they affect —
 changed skill markdown → that skill's evals; changed MCP tool or mock
@@ -402,7 +415,7 @@ Run modes the layer supports:
 
 | Mode | Runs |
 |---|---|
-| `changed-only` | Only evals impacted by the diff (PR default once gating lands) |
+| `changed-only` | Only evals impacted by the diff (PR gate default) |
 | `skills-only` | Skill-routing evals |
 | `scenarios-only` | Workflow scenarios |
 | `smoke` | A minimal curated subset |
@@ -410,16 +423,36 @@ Run modes the layer supports:
 
 #### Sharding and matrix fan-out
 
-A full suite run sequentially is too slow for anyone to wait on — a
-hundred-plus agent evals at ~20 s each is the better part of an hour.
-The layer splits the selected evals into **shards** — independent
-subsets that run in parallel as Azure DevOps matrix jobs — and merges
-their results at the end.
+A full suite run sequentially is too slow for anyone to wait on. The
+layer splits the selected evals into **shards** — independent subsets
+that run in parallel as Azure DevOps matrix jobs — and merges their
+results at the end. The win is wall-clock time:
+
+```
+no sharding:   140 evals × ~20 s            ≈ 2800 s  (~46 min)
+7 shards:      20 evals × ~20 s per shard   ≈  400 s  (~7 min)
+```
 
 Each shard is a slice of the eval-file list; the layer emits a shard
-manifest (`{ shardId, evalFiles[] }`) and a matrix entry per shard.
-Shards run independently, so a failure isolates to one shard and reruns
-are cheap.
+manifest and a matrix entry per shard. Shards run independently, so a
+failure isolates to one shard and reruns are cheap.
+
+```json
+// shard manifest (one per matrix job)
+{ "shardId": 3, "evalFiles": [
+  ".github/skills/release/evals/create.eval.yaml",
+  "evals/workflow-scenarios/mock/release-planner.eval.yaml"
+] }
+```
+
+```yaml
+# matrix fan-out — generated dynamically from the shard plan
+strategy:
+  matrix:
+    shard1: { shardId: 1 }
+    shard2: { shardId: 2 }
+    # …one entry per shard
+```
 
 *Initial strategy: even file-count sharding* — e.g. 120 files / 6
 shards = 20 files each. Simple and predictable. Runtime-aware sharding
@@ -431,13 +464,52 @@ but consume more agents and add per-shard setup overhead; taken to the
 extreme of one eval per shard, scheduling and environment setup waste
 more than they save. Start moderate, tune from real timings.
 
-#### Shard result aggregation
+#### Environment setup and caching
 
-After the matrix completes, the layer merges every shard's
-`results.jsonl` into the single run output described under
-[Results](#results) — one `eval-results.md`, one `junit.xml`, one
-`history.csv` row — plus a coverage summary that flags skills with no
-eval and tools no green scenario exercises.
+This is the part we already got burned on, so it's called out explicitly:
+**before any eval runs, the shard's environment has to be real.** Two
+things have to be in place, and both are cached so we don't pay full cost
+on every run.
+
+**1. The MCP server, pre-built.** Vally launches `dotnet <dll>`, not
+`dotnet run`, to avoid an MSBuild boot race under parallel workers. The
+pipeline builds `Azure.Sdk.Tools.Cli` and `Azure.Sdk.Tools.Mock` once,
+to a stable output path (`-o artifacts/mcp/...`, no TFM in the path), and
+every shard reuses that build artifact.
+
+**2. The repos a scenario needs, pre-cloned.** A real workflow crosses
+repos — the release planner reads a TypeSpec project from
+`azure-rest-api-specs`, generates into a language SDK repo, and links a PR
+back. The tools expect those files on disk; a missing repo makes the agent
+fail for the wrong reason and we learn nothing.
+
+- Each live scenario **declares** the repos (and optionally a pinned
+  commit) it needs.
+- One setup step reads all selected live scenarios, takes the **union**,
+  and ensures each repo is present before fan-out — a shallow + blobless +
+  cone-sparse clone (only the spec paths the scenarios touch) into a
+  repo-relative cache dir, never a hard-coded user path.
+- **Locally and in CI it's the same script.** Locally it clones into a
+  cache folder and reuses it on later runs. In CI the cache is a
+  build-cache artifact **keyed on the set of repos the scenarios declare**,
+  invalidated only when that set changes.
+- **Pinning:** a scenario can pin a commit for reproducibility; otherwise
+  setup takes the default branch and records the commit it used in the run
+  output.
+
+The nightly **mock** job needs only step 1 — mock evals touch no external
+repos. The weekly **live** job needs both.
+
+#### Validation gates (before we spend agent time)
+
+Cheap structural checks run before any agent executes, so a typo fails in
+seconds instead of after a 17-minute run:
+
+- **Structural** — YAML validity, duplicate stimulus IDs, malformed config.
+- **Coverage** — skills with no eval, tools no green scenario exercises,
+  orphaned scenarios (reported, not necessarily blocking).
+- **Reference** — fixtures, skills, and prompts a stimulus names actually
+  exist.
 
 #### PR gate for essential workflows (open)
 
@@ -469,15 +541,6 @@ See [Open Questions](#open-questions).
 Skills are published from `main`; the eval suite is what makes that
 safe. The lifecycle:
 
-```
-skill change on a PR
-  → PR-level validation: a few benchmark cases for the touched skill,
-    skill-invocation against the mock MCP server
-  → merge to main
-  → nightly: run the full benchmark suite for that skill
-  → publish the skill only if the nightly run is green
-```
-
 ```mermaid
 flowchart LR
     PR["Skill change<br/>on a PR"] --> V["PR validation:<br/>few benchmarks +<br/>skill-invocation (mock)"]
@@ -494,31 +557,25 @@ This keeps the per-PR cost low (a curated subset, mostly mock) while the
 full benchmark set still gates the actual publish, so a skill never ships
 on the strength of a partial PR run.
 
-#### Pre-run setup for live scenarios
+#### Aggregation and reporting
 
-**The problem.** A real workflow crosses repos. The release planner
-reads a TypeSpec project from `azure-rest-api-specs`, generates code
-into a language SDK repo, and links a PR back. The tools the agent
-calls expect those files on disk. If a repo is missing, the agent
-fails for the wrong reason and we learn nothing.
+After the matrix completes, the layer merges every shard's
+`results.jsonl` into the single run output described under
+[Results](#results) — one `eval-results.md`, one `junit.xml`, one
+`history.csv` row — annotates the PR, and emits a coverage summary, e.g.:
 
-**The setup step.** Each live scenario declares the repos (and
-optionally the commit) it needs. One setup step reads all live
-scenarios, takes the union, and makes sure each repo is present before any eval runs.
+```
+Repository: azure-rest-api-specs
+  Skills:    Passed 420  Failed 2
+  Scenarios: Passed  74  Failed 3
+  Coverage warnings:
+    - tool create-release-plan has no green scenario
+```
 
-**Locally.** A single script. Run it once; it clones into a cache
-folder under your home directory and reuses the clone on subsequent
-runs. Same script CI uses.
+Partial-shard failures and infra `status=error` rows are reported as
+infrastructure errors, **not** counted as graded failures, so a flaky
+agent session can't masquerade as a real regression.
 
-**In CI.** The weekly live job runs the same script. The cache folder
-is a build-cache artifact keyed on the set of repos the scenarios
-declare; it's invalidated only when that set changes.
-
-**Pinning.** A scenario can pin a commit when reproducibility matters.
-Otherwise the setup step takes the default branch and records the
-commit it used in the run output.
-
-The nightly mock job runs no setup — mock evals touch no external repos.
 
 
 ### Mock MCP server status

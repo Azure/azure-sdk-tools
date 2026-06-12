@@ -510,11 +510,11 @@ flowchart TD
 
 ```
 
-1. The SDK validation pipeline runs the SDK generation tool command 'azsdk package generate'.
-2. The SDK validation pipeline runs the SDK build tool command 'azsdk package build'.
+1. The SDK validation pipeline check out SDK branch 'Auto-XXXX-<PRNumber>' (create a new branch if it does not exist), runs the SDK generation tool command 'azsdk package generate'.
+2. The SDK validation pipeline runs the SDK build tool command 'azsdk package build'. If build failed, SDK validation pipeline will run `azsdk_customized_code_update` command to resolve build failure.
 3. The SDK validation pipeline runs the SDK Breaking Change Detector tool command 'azsdk package detect-breaking-change' (defined in this document) to detect and classify breaking changes.
-4. GitHub Actions adds the 'BreakingChange-XXX-Sdk' label to indicate which language SDK has breaking changes and displays the detected breaking changes.
-5. The PR owner reviews the detected breaking changes and selects which ones to resolve.
+4. GitHub Actions adds the 'BreakingChange-XXX-Sdk' label to indicate which language SDK has breaking changes and displays the detected breaking changes in the PR comment.
+5. The PR owner reviews the detected breaking changes in the PR comment and selects which ones to resolve.
     Use prompt: @copilot resolve breaking changes: XXXXXXX
 6. Copilot invokes 'azsdk_customized_code_update' to mitigate the selected breaking changes.
 
@@ -528,11 +528,24 @@ flowchart TD
 
     **known limitation**
 
-    The `azsdk_customized_code_update` tool only support local scenario. More broadly, azsdk-cli MCP tools (for example, `azsdk_package_generate_code` and `azsdk_customized_code_update`) currently support only local scenarios and do not support remote scenarios. Because of this limitation, Copilot cannot invoke these MCP tools directly in remote workflows.
+    The `azsdk_customized_code_update` tool currently supports only local scenarios. More broadly, azsdk-cli MCP tools such as `azsdk_package_generate_code` and `azsdk_customized_code_update` do not support remote workflows. Because of this limitation, Copilot cannot invoke these MCP tools directly in a remote context.
 
-    **Solution**: We will support remote experiences at the workflow/skill layer, not within MCP tools. MCP tools should validate prerequisites and return clear next steps. Skills can explicitly orchestrate repository cloning with user awareness, then invoke MCP tools using local paths.
+    **Solution**: Remote experiences will be supported at the workflow or skill layer, not inside the MCP tools themselves. MCP tools should validate prerequisites and return clear next steps. Skills can orchestrate repository cloning with user awareness, then invoke the MCP tools against local paths.
 
-The PR owner merge the `client.tsp` changes made in step 6. After the spec PR is updated, the SDK validation pipeline is triggered again. This flow is repeated until no SDK breaking changes are reported, either because the breaking changes have been resolved or explicitly suppressed. The PR owner then adds the `BreakingChange-XXX-sdk-approved` label, and the spec PR is ready to merge.
+The PR owner merges the `client.tsp` changes from step 6. After the spec PR is updated, the SDK validation pipeline is triggered again. This loop repeats until no SDK breaking changes remain, either because they have been resolved or explicitly suppressed. The PR owner then adds the `BreakingChange-XXX-sdk-approved` label, and the spec PR is ready to merge.
+
+**🔔 NOTE:**
+
+1. If step 1 (generation) or step 2 (build) fails, the SDK validation pipeline exits early and follow-up detection does not run. During step 2 (build), invoke `azsdk_customized_code_update` to resolve build failures. If the failure cannot be fixed, the SDK validation pipeline fails at step 2.
+2. Each language uses a dedicated SDK branch named `Auto-XXXX-<PRNumber>` for the PR, and all iterative SDK validation pipeline runs use that branch for the PR. When resolving a breaking change requires SDK code customization, `azsdk_customized_code_update` falls back to code customization to address the change or any build failure that appears after TypeSpec customization. The updated code is carried into the next iteration because the same SDK branch is reused.
+3. In the Spec PR, the goal is to resolve all SDK breaking changes and apply all TypeSpec customizations. If a breaking change requires code customization, the SDK branch is updated and a PR is filed to track that change.
+4. SDK breaking changes can be handled in three ways:
+    1. Accepted SDK breaking changes: add a suppression entry in `suppression.yaml`.
+    2. SDK Breaking Changes that can only be handled through code customization: apply the code customization on the SDK branch, and the next SDK validation run will consume the fix and stop reporting it.
+    3. SDK breaking changes mitigated through TypeSpec: apply the TypeSpec customization after the changes from step 6 are merged.
+    4. SDK breaking changes cannot be resolved by neither TypeSpec customization nor Code customization: suppress the SDK breaking changes
+   
+    After several rounds of SDK validation, all SDK breaking changes should be handled. When step 3 reports no remaining SDK breaking changes, the PR owner adds the `BreakingChange-XXX-sdk-approved` label and the spec PR is ready to merge.
 
 #### Scenario 3: When release SDK, Resolve SDK breaking changes in SDK repo PR
 

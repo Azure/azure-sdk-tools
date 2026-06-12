@@ -110,7 +110,7 @@ stimuli:
       required:
         - 'edit'
         - 'azure-sdk-mcp-azsdk_run_typespec_validation'
- - type: 'file-matches'
+  - type: 'file-matches'
     config:
       pattern: 'model BadgeAssignment is ExtensionResource<BadgeAssignmentProperties>'
       path: 'badgeAssignment.tsp'
@@ -135,6 +135,43 @@ stimuli:
   constraints:
     max_turns: 5
     max_tokens: 1000000
+- name: 002004-ARM-define-extension-resource-fromProxyResource-no-skill
+  tags:
+    suite: 'armtemplate'
+    mode: 'no-skill'
+  prompt: 'Define a "badge assignment" extension resource. It should be an extension resource that can be attached to an employee. Ensure the definition meets TypeSpec Azure guidelines.'
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+  - type: 'file-matches'
+    config:
+      path: 'badgeAssignment.tsp'
+      pattern: 'model BadgeAssignment is ExtensionResource<BadgeAssignmentProperties>'
+  - type: 'file-matches'
+    config:
+      path: 'badgeAssignment.tsp'
+      pattern: '@visibility\(Lifecycle\.Read\)'
+  - type: 'file-matches'
+    config:
+      path: 'badgeAssignment.tsp'
+      pattern: 'Extension\.Read<|Extension\.CreateOrReplaceAsync<|Extension\.CustomPatch(Sync|Async)<|Extension\.DeleteWithoutOkAsync<'
+  - type: 'file-matches'
+    config:
+      path: 'badgeAssignment.tsp'
+      pattern: 'Extension\.ListByTarget<'
+  - type: 'prompt'
+    config:
+      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      threshold: 1.0
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+
 scoring:
   weights:
     prompt: 1

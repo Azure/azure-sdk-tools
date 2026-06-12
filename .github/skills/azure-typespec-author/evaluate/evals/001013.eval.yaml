@@ -124,6 +124,39 @@ stimuli:
   constraints:
     max_turns: 5
     max_tokens: 1000000
+- name: 001013-version-model-property-type-changed-no-skill
+  tags:
+    suite: 'versioning'
+    mode: 'no-skill'
+  prompt: 'In the TypeSpec project at `./Microsoft.Widget/Widget/`, change the type of the `statusCode` property from `string` to `int32` in EmployeeProperties only for version `2025-05-04-preview`.'
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+  - type: 'file-matches'
+    config:
+      path: 'Microsoft.Widget/Widget/main.tsp'
+      pattern: 'v2025_05_04_preview'
+  - type: 'file-matches'
+    config:
+      path: 'Microsoft.Widget/Widget/employee.tsp'
+      pattern: '@typeChangedFrom\(Versions\.v2025_05_04_preview, string\)'
+  - type: 'file-matches'
+    config:
+      path: 'Microsoft.Widget/Widget/employee.tsp'
+      pattern: 'statusCode\?: int32;'
+  - type: 'prompt'
+    config:
+      prompt: 'Verify change scope and quality. Preview-after-preview convention requires renaming the old preview to the new one. Only penalize truly unrelated edits.'
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      threshold: 1.0
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+
 scoring:
   weights:
     prompt: 1

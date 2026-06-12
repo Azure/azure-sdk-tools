@@ -124,6 +124,39 @@ stimuli:
   constraints:
     max_turns: 5
     max_tokens: 1000000
+- name: 001003-version-required-to-optional-no-skill
+  tags:
+    suite: 'versioning'
+    mode: 'no-skill'
+  prompt: 'change the property age of EmployeeProperties from required to optional only for api version 2025-05-04-preview'
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+  - type: 'file-matches'
+    config:
+      path: 'main.tsp'
+      pattern: '2025-05-04-preview'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: '@madeOptional'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: '2025-05-04-preview|v2025_05_04_preview'
+  - type: 'prompt'
+    config:
+      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      threshold: 1.0
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+
 scoring:
   weights:
     prompt: 1

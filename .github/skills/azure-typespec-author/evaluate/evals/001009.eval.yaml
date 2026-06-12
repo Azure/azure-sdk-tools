@@ -124,6 +124,39 @@ stimuli:
   constraints:
     max_turns: 5
     max_tokens: 1000000
+- name: 001009-version-model-property-required-no-skill
+  tags:
+    suite: 'versioning'
+    mode: 'no-skill'
+  prompt: 'In the TypeSpec project at `./Microsoft.Widget/Widget/`, make the `email` property required in EmployeeProperties only for version `2025-05-04-preview`.'
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+  - type: 'file-matches'
+    config:
+      path: 'Microsoft.Widget/Widget/main.tsp'
+      pattern: 'v2025_05_04_preview'
+  - type: 'file-matches'
+    config:
+      path: 'Microsoft.Widget/Widget/employee.tsp'
+      pattern: '@madeRequired\(Versions\.v2025_05_04_preview\)'
+  - type: 'file-matches'
+    config:
+      path: 'Microsoft.Widget/Widget/employee.tsp'
+      pattern: 'email: string;'
+  - type: 'prompt'
+    config:
+      prompt: 'Verify email property made required only in new version, only scoped edits made. Verify compile the project and fix any compilation errors if present.'
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      threshold: 1.0
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+
 scoring:
   weights:
     prompt: 1

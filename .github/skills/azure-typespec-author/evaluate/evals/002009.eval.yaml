@@ -109,6 +109,31 @@ stimuli:
   constraints:
     max_turns: 5
     max_tokens: 1000000
+- name: 002009-arm-add-patch-operation-to-resource-no-skill
+  tags:
+    suite: 'armtemplate'
+    mode: 'no-skill'
+  prompt: 'In the Widget project, add a patch operation to an existing ARM resource named ''Employee'''
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: 'update\s+is\s+ArmCustomPatchSync\s*<'
+  - type: 'prompt'
+    config:
+      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      threshold: 1.0
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+
 scoring:
   weights:
     prompt: 1

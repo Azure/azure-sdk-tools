@@ -112,6 +112,33 @@ stimuli:
   constraints:
     max_turns: 5
     max_tokens: 1000000
+- name: 001010-version-model-property-removed-no-skill
+  tags:
+    suite: 'versioning'
+    mode: 'no-skill'
+  prompt: 'In the TypeSpec project at `./Microsoft.Widget/Widget/`, remove the `department` property from EmployeeProperties only for version `2025-05-04-preview`.'
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+  - type: 'file-matches'
+    config:
+      path: 'Microsoft.Widget/Widget/main.tsp'
+      pattern: 'v2025_05_04_preview'
+  - type: 'file-matches'
+    config:
+      path: 'Microsoft.Widget/Widget/employee.tsp'
+      pattern: '@removed\(Versions\.v2025_05_04_preview\)'
+  - type: 'file-matches'
+    config:
+      path: 'Microsoft.Widget/Widget/employee.tsp'
+      pattern: 'department\?: string;'
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+
 scoring:
   weights:
     tool-calls: 1

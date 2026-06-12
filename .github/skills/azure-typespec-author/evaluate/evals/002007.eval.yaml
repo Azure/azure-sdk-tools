@@ -193,6 +193,71 @@ stimuli:
   constraints:
     max_turns: 5
     max_tokens: 1000000
+- name: 002007-ARM-define-custom-action-no-skill
+  tags:
+    suite: 'armtemplate'
+    mode: 'no-skill'
+  prompt: 'Add an additional POST action called "/notify" to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). Ensure the definition meets TypeSpec Azure design guidelines.'
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: 'union.*Priority|enum.*Priority'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: 'Low|"Low"'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: 'Medium|"Medium"'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: 'High|"High"'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: 'model.*Notify.*Request|model.*Notification.*Request'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: 'message.*:\s*string|content.*:\s*string'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: 'priority.*:\s*.*Priority'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: 'model.*Notify.*Response|model.*Notification.*Response'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: 'notificationId.*:\s*string|identifier.*:\s*string'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: 'status.*:\s*string'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: 'notify is ArmResourceActionSync<|notify is ArmResourceActionAsync<|notify is ArmResourceAction<'
+  - type: 'prompt'
+    config:
+      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      threshold: 1.0
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+
 scoring:
   weights:
     prompt: 1

@@ -117,6 +117,35 @@ stimuli:
   constraints:
     max_turns: 5
     max_tokens: 1000000
+- name: 003001-arm-action-lro-no-skill
+  tags:
+    suite: 'lro'
+    mode: 'no-skill'
+  prompt: 'Add a post async operation to move employee, operation''s request is MoveRequest, response is MoveResponse.'
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: 'move\s+is\s+ArmResourceActionAsync\s*<\s*Employee\s*,\s*MoveRequest\s*,\s*MoveResponse\s*,\s*LroHeaders\s*='
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: 'ArmCombinedLroHeaders\s*<\s*FinalResult\s*=\s*MoveResponse\s*>'
+  - type: 'prompt'
+    config:
+      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent. Do not penalize for pre-existing project configuration issues such as swagger generation failures unrelated to the agent changes.'
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      threshold: 1.0
+  constraints:
+    max_turns: 10
+    max_tokens: 100000
+
 scoring:
   weights:
     prompt: 1

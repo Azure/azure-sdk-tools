@@ -102,6 +102,21 @@ suites:
   warning-trigger:
     evals: ["evals/*.eval.yaml"]
     filter: { suite: warning, mode: trigger }
+  versioning-no-skill:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: versioning, mode: no-skill }
+  armtemplate-no-skill:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: armtemplate, mode: no-skill }
+  longrunningoperation-no-skill:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: lro, mode: no-skill }
+  decorators-no-skill:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: decorators, mode: no-skill }
+  warning-no-skill:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: warning, mode: no-skill }
   forced:
     evals: ["evals/*.eval.yaml"]
     filter: { mode: forced }

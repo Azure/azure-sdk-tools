@@ -101,6 +101,29 @@ stimuli:
   constraints:
     max_turns: 5
     max_tokens: 1000000
+- name: 005001-warning-suppress-warning-no-skill
+  tags:
+    suite: 'warning'
+    mode: 'no-skill'
+  prompt: 'Add suppressions for the warnings produced by "tsp compile .", and set the justification to "FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details".'
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+  - type: 'file-matches'
+    config:
+      path: 'models.tsp'
+      pattern: '#suppress'
+  - type: 'file-matches'
+    config:
+      path: 'models.tsp'
+      pattern: 'FIXME: Update justification, follow aka\.ms/tsp/conversion-fix for details'
+  constraints:
+    max_turns: 6
+    max_tokens: 1000000
+
 scoring:
   weights:
     tool-calls: 1

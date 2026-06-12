@@ -193,6 +193,55 @@ stimuli:
   constraints:
     max_turns: 5
     max_tokens: 1000000
+- name: 001005-version-add-preview-after-preview-no-skill
+  tags:
+    suite: 'versioning'
+    mode: 'no-skill'
+  prompt: 'Add a new preview version `2025-05-04-preview` to my service widget resource manager. Exclude Feature: the default value from the ''age'' property. Carry other features.'
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+  - type: 'file-exists'
+    config:
+      path: 'examples/2025-05-04-preview/Employees_Get_MaximumSet_Gen.json'
+  - type: 'file-not-exists'
+    config:
+      path: 'examples/2024-10-01-preview/Employees_Get_MaximumSet_Gen.json'
+  - type: 'file-matches'
+    config:
+      path: 'main.tsp'
+      pattern: '2025-05-04-preview'
+  - type: 'file-not-matches'
+    config:
+      path: 'main.tsp'
+      pattern: '2024-10-01-preview'
+  - type: 'file-not-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: 'oldAge'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: '@added\(Versions\.v2025_05_04_preview\)\s+workLocation\?: WorkLocation;'
+  - type: 'file-not-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: 'v2024_10_01_preview'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: 'age\?: int32;'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: '@typeChangedFrom\(Versions\.v2025_05_04_preview, string\[\]\)'
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+
 scoring:
   weights:
     file-not-matches: 3

@@ -113,6 +113,31 @@ stimuli:
   constraints:
     max_turns: 5
     max_tokens: 1000000
+- name: 004001-decorate-mgmt-resource-name-parameter-no-skill
+  tags:
+    suite: 'decorators'
+    mode: 'no-skill'
+  prompt: 'use authoring plan to add minLength decorator to set the minLength 1 for resource name parameter of Employee resource'
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+  - type: 'file-matches'
+    config:
+      path: '*.tsp'
+      pattern: '@@minLength\(Employee\.name,\s*1\)'
+  - type: 'prompt'
+    config:
+      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      threshold: 1.0
+  constraints:
+    max_turns: 10
+    max_tokens: 100000
+
 scoring:
   weights:
     prompt: 1

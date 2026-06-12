@@ -117,6 +117,35 @@ stimuli:
   constraints:
     max_turns: 5
     max_tokens: 1000000
+- name: 001004-version-property-decorator-no-skill
+  tags:
+    suite: 'versioning'
+    mode: 'no-skill'
+  prompt: 'change the visibility of property ''provisioningState'' from Lifecycle.Read to Lifecycle.Read and Lifecycle.Create in version 2025-05-04-preview only'
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: 'Lifecycle\.Read, Lifecycle\.Create'
+  - type: 'file-matches'
+    config:
+      path: 'main.tsp'
+      pattern: '2025-05-04-preview'
+  - type: 'prompt'
+    config:
+      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      threshold: 1.0
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+
 scoring:
   weights:
     prompt: 1

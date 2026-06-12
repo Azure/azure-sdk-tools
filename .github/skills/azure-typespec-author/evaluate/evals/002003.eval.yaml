@@ -97,6 +97,25 @@ stimuli:
   constraints:
     max_turns: 5
     max_tokens: 1000000
+- name: 002003-ARM-define-full-update-operation-no-skill
+  tags:
+    suite: 'armtemplate'
+    mode: 'no-skill'
+  prompt: 'Define a PATCH operation for Employees. It is to update properties of an employee. Ensure the definition meets TypeSpec Azure guidelines.'
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+  - type: 'file-matches'
+    config:
+      path: '*.tsp'
+      pattern: 'update\s+is\s+ArmCustomPatchSync\s*<'
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+
 scoring:
   weights:
     tool-calls: 1

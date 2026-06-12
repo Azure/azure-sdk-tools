@@ -133,6 +133,43 @@ stimuli:
   constraints:
     max_turns: 5
     max_tokens: 1000000
+- name: 004002-decorate-length-constrains-on-array-item-no-skill
+  tags:
+    suite: 'decorators'
+    mode: 'no-skill'
+  prompt: 'I have a property `assets: string[]` in EmployeeProperties. Add @minLength(3) @maxLength(10) constraints for any item of the assets array. Ensure the definition meets TypeSpec Azure guidelines.'
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: 'scalar.*extends string'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: '@minLength\(3\)'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: '@maxLength\(10\)'
+  - type: 'file-not-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: 'assets:\s*string\[\]'
+  - type: 'prompt'
+    config:
+      prompt: 'Verify asset use the custom scalar type with minLength and maxLength constraints instead of plain string.'
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      threshold: 1.0
+  constraints:
+    max_turns: 10
+    max_tokens: 100000
+
 scoring:
   weights:
     prompt: 1

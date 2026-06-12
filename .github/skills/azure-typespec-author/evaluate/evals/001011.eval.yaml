@@ -23,7 +23,7 @@ stimuli:
     In the TypeSpec project at `./Microsoft.Widget/Widget/`, rename the `age` property to `employeeAge` in EmployeeProperties only for version `2025-05-04-preview`.
   environment: &shared_environment
     files:
-       - src: ../fixtures/001-share-version-new-feature/employee.tsp
+      - src: ../fixtures/001-share-version-new-feature/employee.tsp
         dest: Microsoft.Widget/Widget/employee.tsp
       - src: ../fixtures/001-share-version-new-feature/main.tsp
         dest: Microsoft.Widget/Widget/main.tsp
@@ -112,6 +112,33 @@ stimuli:
   constraints:
     max_turns: 5
     max_tokens: 1000000
+- name: 001011-version-model-property-renamed-no-skill
+  tags:
+    suite: 'versioning'
+    mode: 'no-skill'
+  prompt: 'In the TypeSpec project at `./Microsoft.Widget/Widget/`, rename the `age` property to `employeeAge` in EmployeeProperties only for version `2025-05-04-preview`.'
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+  - type: 'file-matches'
+    config:
+      path: 'Microsoft.Widget/Widget/main.tsp'
+      pattern: 'v2025_05_04_preview'
+  - type: 'file-matches'
+    config:
+      path: 'Microsoft.Widget/Widget/employee.tsp'
+      pattern: '@renamedFrom\(Versions\.v2025_05_04_preview, "age"\)'
+  - type: 'file-matches'
+    config:
+      path: 'Microsoft.Widget/Widget/employee.tsp'
+      pattern: 'employeeAge\?: int32;'
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+
 scoring:
   weights:
     tool-calls: 1

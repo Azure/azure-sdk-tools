@@ -203,6 +203,69 @@ stimuli:
   constraints:
     max_turns: 5
     max_tokens: 1000000
+- name: 004003-delete-and-restore-operationId-decorator-no-skill
+  tags:
+    suite: 'decorators'
+    mode: 'no-skill'
+  prompt: 'Remove @operationId and its associated #suppress for no-openapi from all operations. Then restore those operationIds that do not contain underscores or begin with a lowercase letter.'
+  environment: *shared_environment
+  graders:
+  - type: 'file-not-matches'
+    config:
+      path: 'BgpConnection.tsp'
+      pattern: '@operationId\('
+  - type: 'file-not-matches'
+    config:
+      path: 'NetworkInterface.tsp'
+      pattern: '@operationId\('
+  - type: 'file-not-matches'
+    config:
+      path: 'ExpressRouteGateway.tsp'
+      pattern: '@operationId\('
+  - type: 'file-not-matches'
+    config:
+      path: 'ExpressRoutePort.tsp'
+      pattern: '@operationId\('
+  - type: 'file-not-matches'
+    config:
+      path: 'NetworkInterface.tsp'
+      pattern: '@operationId\('
+  - type: 'file-not-matches'
+    config:
+      path: 'P2SVpnGateway.tsp'
+      pattern: '@operationId\('
+  - type: 'file-not-matches'
+    config:
+      path: 'VpnServerConfigurationPolicyGroup.tsp'
+      pattern: '@operationId\('
+  - type: 'file-not-matches'
+    config:
+      path: 'VpnSiteLinkConnection.tsp'
+      pattern: '@operationId\('
+  - type: 'file-matches'
+    config:
+      path: 'BastionHost.tsp'
+      pattern: '@operationId\("PutBastionShareableLink"\)'
+  - type: 'file-matches'
+    config:
+      path: 'BastionHost.tsp'
+      pattern: '@operationId\("GetActiveSessions"\)'
+  - type: 'file-matches'
+    config:
+      path: 'ExpressRouteProviderPort.tsp'
+      pattern: '@operationId\("ExpressRouteProviderPort"\)'
+  - type: 'file-matches'
+    config:
+      path: 'BastionHost.tsp'
+      pattern: '#suppress.*no-openapi|#suppress.*operationId'
+  - type: 'file-not-matches'
+    config:
+      path: 'ExpressRouteProviderPort.tsp'
+      pattern: '@operationId\("ExpressRouteProviderPortsLocation_List"\)'
+  constraints:
+    max_turns: 10
+    max_tokens: 100000
+
 scoring:
   weights:
     file-not-matches: 3

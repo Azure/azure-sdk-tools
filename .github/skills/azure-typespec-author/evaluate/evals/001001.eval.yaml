@@ -122,6 +122,39 @@ stimuli:
   constraints:
     max_turns: 5
     max_tokens: 1000000
+- name: 001001-version-spread-property-no-skill
+  tags:
+    suite: 'versioning'
+    mode: 'no-skill'
+  prompt: 'I added `...Azure.ResourceManager.ManagedServiceIdentityProperty;` which updates all my existing API versions and introduces a breaking change. I want to introduce the properties of the spread model ''...ManagedServiceIdentityProperty'' in API version 2025-05-04-preview only.'
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+  - type: 'file-matches'
+    config:
+      path: 'main.tsp'
+      pattern: '2025-05-04-preview'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: '\.\.\.ManagedServiceIdentityProperty;'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: '@@added\(Employee\.identity, (Microsoft\.Widget\.)?Versions\.(v2025_05_04_preview|`2025-05-04-preview`)\);'
+  - type: 'prompt'
+    config:
+      prompt: 'Verify changes are scoped to this task only, with no unrelated edits beyond introducing preview-only identity via versioning.'
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      threshold: 1.0
+  constraints:
+    max_turns: 5
+    max_tokens: 100000
+
 scoring:
   weights:
     prompt: 1

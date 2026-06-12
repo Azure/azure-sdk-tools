@@ -109,6 +109,31 @@ stimuli:
   constraints:
     max_turns: 5
     max_tokens: 1000000
+- name: 002010-arm-action-sync-operation-no-skill
+  tags:
+    suite: 'armtemplate'
+    mode: 'no-skill'
+  prompt: 'In the Widget project, add a sync operation exportData for employee resource.'
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: 'exportData\s+is\s+ArmResourceActionSync'
+  - type: 'prompt'
+    config:
+      prompt: 'Verify the exportData operation is correctly defined: (1) uses ArmResourceActionSync template, (2) has a response model that represents exported data with appropriate properties, (3) operation name is exportData. Do not penalize for specific model naming choices. Verify change scope and quality: no unrelated edits, and the result is semantically consistent with the task intent.'
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      threshold: 1
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+
 scoring:
   weights:
     prompt: 1

@@ -165,6 +165,41 @@ stimuli:
   constraints:
     max_turns: 5
     max_tokens: 1000000
+- name: 001006-version-add-preview-after-stable-no-skill
+  tags:
+    suite: 'versioning'
+    mode: 'no-skill'
+  prompt: 'Add a new preview version `2025-05-04-preview` to my service widget resource manager. Carry over all the features from the latest stable version'
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+  - type: 'file-exists'
+    config:
+      path: 'examples/2025-05-04-preview/Employees_Get_MaximumSet_Gen.json'
+  - type: 'file-exists'
+    config:
+      path: 'examples/2024-10-01/Employees_Get_MaximumSet_Gen.json'
+  - type: 'file-matches'
+    config:
+      path: 'main.tsp'
+      pattern: '2025-05-04-preview'
+  - type: 'file-matches'
+    config:
+      path: 'main.tsp'
+      pattern: '2024-10-01'
+  - type: 'prompt'
+    config:
+      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      threshold: 1.0
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+
 scoring:
   weights:
     prompt: 1

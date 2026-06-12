@@ -113,6 +113,33 @@ stimuli:
   constraints:
     max_turns: 5
     max_tokens: 1000000
+- name: 002002-ARM-define-extension-resource-add-no-skill
+  tags:
+    suite: 'armtemplate'
+    mode: 'no-skill'
+  prompt: 'add an extension resource named asset'
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+  - type: 'file-matches'
+    config:
+      path: '*.tsp'
+      pattern: 'model Asset is ExtensionResource<AssetProperties>'
+  - type: 'file-matches'
+    config:
+      path: '*.tsp'
+      pattern: 'interface Assets|interface AssetOps'
+  - type: 'file-matches'
+    config:
+      path: '*.tsp'
+      pattern: 'provisioningState'
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+
 scoring:
   weights:
     tool-calls: 1

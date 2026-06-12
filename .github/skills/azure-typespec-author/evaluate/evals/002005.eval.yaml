@@ -155,6 +155,55 @@ stimuli:
   constraints:
     max_turns: 5
     max_tokens: 1000000
+- name: 002005-ARM-define-the-resource-no-skill
+  tags:
+    suite: 'armtemplate'
+    mode: 'no-skill'
+  prompt: 'Define a Azure resource "Employee" under the namespace "Microsoft.Widget" using TypeSpec. Properties: age (int32, optional), city (string, optional), profile (bytes, optional), provisioningState (enum incorporating ResourceProvisioningState, optional, read-only). Ensure the definition meets TypeSpec Azure design guidelines.'
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+  - type: 'file-matches'
+    config:
+      path: '*.tsp'
+      pattern: 'model Employee is TrackedResource<EmployeeProperties>'
+  - type: 'file-matches'
+    config:
+      path: '*.tsp'
+      pattern: 'age\?: int32'
+  - type: 'file-matches'
+    config:
+      path: '*.tsp'
+      pattern: '@visibility\(Lifecycle\.Read\)'
+  - type: 'file-matches'
+    config:
+      path: '*.tsp'
+      pattern: 'ResourceProvisioningState'
+  - type: 'file-matches'
+    config:
+      path: '*.tsp'
+      pattern: 'ArmResourceCreateOrReplaceAsync<Employee>|ArmResourceCreateOrUpdateAsync<Employee>'
+  - type: 'file-matches'
+    config:
+      path: '*.tsp'
+      pattern: 'ArmResourceListByParent<Employee>'
+  - type: 'file-matches'
+    config:
+      path: '*.tsp'
+      pattern: 'ArmListBySubscription<Employee>'
+  - type: 'prompt'
+    config:
+      prompt: 'Verify all five aspects: (1) Employee resource definition is written into a TSP file; (2) Employee model uses TrackedResource<EmployeeProperties> under Microsoft.Widget namespace; (3) EmployeeProperties includes age, city, profile, and a read-only provisioningState; (4) ProvisioningState is a union type incorporating standard ARM ResourceProvisioningState; (5) Employees interface includes full CRUD operations (get, create, update, delete) plus listByResourceGroup and listBySubscription.'
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      threshold: 1.0
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+
 scoring:
   weights:
     prompt: 1

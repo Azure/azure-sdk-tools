@@ -134,7 +134,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return response;
                 }
 
-                var releasePlan = await devopsService.GetReleasePlanForWorkItemAsync(workItemId, ct);
+                var releasePlan = await devopsService.ResolveReleasePlanByIdAsync(workItemId, ct);
 
                 var sdkInfoList = releasePlan?.SDKInfo;
 
@@ -196,13 +196,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     response.NextSteps = ["Create a release plan if you don't have one or get existing release plan and re-run SDK generation."];
                     return response;
                 }
-                var releasePlan = await devopsService.GetReleasePlanForWorkItemAsync(workItemId, ct);
+                // Accept either the work item ID or the Release Plan ID (users frequently confuse them).
+                var releasePlan = await devopsService.ResolveReleasePlanByIdAsync(workItemId, ct);
                 if (releasePlan == null)
                 {
-                    response.ResponseErrors.Add($"No release plan found for work item ID {workItemId}. Please check the work item ID and try again.");
+                    response.ResponseErrors.Add($"No release plan found for ID {workItemId} (checked as both a Release Plan ID and a work item ID). Please verify the Release Plan ID and try again.");
                     response.Status = "Failed";
                     return response;
                 }
+
+                // Use the resolved work item ID for all subsequent calls, in case a Release Plan ID was provided.
+                workItemId = releasePlan.WorkItemId;
 
                 if (releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview)
                 {
@@ -338,7 +342,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 if (buildId == 0)
                 {
                     response.Details.Add("Build Id is not available. Checking for SDK pull request details in release plan work item.");
-                    var releasePlan = await devopsService.GetReleasePlanForWorkItemAsync(workItemId, ct);
+                    var releasePlan = await devopsService.ResolveReleasePlanByIdAsync(workItemId, ct);
                     var sdkInfo = releasePlan?.SDKInfo.FirstOrDefault(s => string.Equals(s.Language, language, StringComparison.OrdinalIgnoreCase));
                     if (sdkInfo != null && !string.IsNullOrEmpty(sdkInfo.SdkPullRequestUrl))
                     {

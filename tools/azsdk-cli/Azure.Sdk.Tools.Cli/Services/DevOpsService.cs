@@ -92,6 +92,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<ReleasePlanWorkItem> GetReleasePlanAsync(int releasePlanId, CancellationToken ct);
         public Task<ReleasePlanWorkItem> GetReleasePlanForWorkItemAsync(int workItemId, CancellationToken ct);
         public Task<ReleasePlanWorkItem> GetReleasePlanAsync(string pullRequestUrl, CancellationToken ct);
+        public Task<ReleasePlanWorkItem?> ResolveReleasePlanByIdAsync(int id, CancellationToken ct);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansForProductAsync(string productTreeId, string sdkReleaseType, bool isTestReleasePlan = false, string apiReleaseType = "", CancellationToken ct = default);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansByProductAndLifecycleAsync(string productTreeId, string productLifecycle, bool isTestReleasePlan = false, CancellationToken ct = default);
@@ -181,6 +182,18 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 throw new InvalidOperationException($"Work item {workItemId} not found.");
             }
+
+            // Ensure the work item is actually a Release Plan before mapping. Other work item types
+            // (e.g. an API spec work item) share the same numeric ID space, so without this guard a
+            // non-Release-Plan work item would be silently mapped to a release plan with empty fields.
+            var workItemType = workItem.Fields != null && workItem.Fields.TryGetValue("System.WorkItemType", out var typeValue)
+                ? typeValue?.ToString()
+                : null;
+            if (!string.Equals(workItemType, "Release Plan", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException($"Work item {workItemId} is not a Release Plan (type '{workItemType ?? "unknown"}').");
+            }
+
             var releasePlan = await MapWorkItemToReleasePlanAsync(workItem, ct);
             releasePlan.WorkItemUrl = workItem.Url;
             releasePlan.WorkItemId = workItem?.Id ?? 0;
@@ -197,6 +210,64 @@ namespace Azure.Sdk.Tools.Cli.Services
                 throw new Exception($"Failed to find release plan work item with release plan Id {releasePlanId}");
             }
             return await MapWorkItemToReleasePlanAsync(releasePlanWorkItems[0], ct);
+        }
+
+        /// <summary>
+        /// Resolves a release plan from an ID that may be EITHER the user-facing Release Plan ID
+        /// (e.g. 50001) OR the Azure DevOps work item ID (e.g. 35000). The two are different numbers
+        /// and are frequently confused by users and agents alike.
+        /// The Release Plan ID is tried FIRST because that is the number users actually have in hand
+        /// (the work item ID is an internal identifier they rarely see). Only if no release plan
+        /// exists for that Release Plan ID do we fall back to treating the number as a work item ID,
+        /// and even then we only accept the work item when it is actually a "Release Plan".
+        /// Returns null if neither lookup resolves.
+        /// </summary>
+        public async Task<ReleasePlanWorkItem?> ResolveReleasePlanByIdAsync(int id, CancellationToken ct)
+        {
+            if (id <= 0)
+            {
+                return null;
+            }
+
+            // Try the number as a Release Plan ID first (the user-facing number).
+            // That query is already filtered to Release Plan work items.
+            try
+            {
+                var releasePlan = await GetReleasePlanAsync(id, ct);
+                if (releasePlan != null)
+                {
+                    return releasePlan;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogInformation(ex, "Could not resolve {id} as a Release Plan ID; trying it as a work item ID instead.", id);
+            }
+
+            // Fall back to treating the number as a work item ID, but only trust it when the work
+            // item is actually a Release Plan. This is the rare edge case; users seldom have the
+            // internal work item ID.
+            try
+            {
+                var workItem = await connection.GetWorkItemClient(ct).GetWorkItemAsync(id, expand: WorkItemExpand.All, cancellationToken: ct);
+                var workItemType = workItem?.Fields != null && workItem.Fields.TryGetValue("System.WorkItemType", out var typeValue)
+                    ? typeValue?.ToString()
+                    : null;
+                if (workItem?.Id != null && string.Equals(workItemType, "Release Plan", StringComparison.OrdinalIgnoreCase))
+                {
+                    var releasePlan = await MapWorkItemToReleasePlanAsync(workItem, ct);
+                    releasePlan.WorkItemUrl = workItem.Url;
+                    releasePlan.WorkItemId = workItem.Id ?? 0;
+                    return releasePlan;
+                }
+                logger.LogInformation("Work item {id} is not a Release Plan (type '{workItemType}'); could not resolve it.", id, workItemType ?? "unknown");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                logger.LogInformation(ex, "Could not resolve {id} as a work item ID.", id);
+                return null;
+            }
         }
 
         public async Task<List<ReleasePlanWorkItem>> GetReleasePlansForProductAsync(string productTreeId, string sdkReleaseType, bool isTestReleasePlan = false, string apiReleaseType = "", CancellationToken ct = default)

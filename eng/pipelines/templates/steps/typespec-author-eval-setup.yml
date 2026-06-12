@@ -117,11 +117,11 @@ steps:
 
   - script: |
       npm ci --userconfig $(Build.SourcesDirectory)/.npmrc
-      echo "##vso[task.prependpath]$(Build.SourcesDirectory)/.github/skills/azure-typespec-author/pipelines/node_modules/.bin"
+      echo "##vso[task.prependpath]$(Build.SourcesDirectory)/eng/pipelines/azure-typespec-author-eval/node_modules/.bin"
       echo "tsp version:"
       tsp --version || true
     displayName: Install Vally CLI, Copilot SDK, TypeSpec compiler (pinned via lockfile)
-    workingDirectory: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/pipelines
+    workingDirectory: $(Build.SourcesDirectory)/eng/pipelines/azure-typespec-author-eval
 
   # Download spec repo packages and install node_modules
   - script: |

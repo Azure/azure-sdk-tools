@@ -56,41 +56,41 @@ extends:
 
               - template: /eng/common/pipelines/templates/steps/login-to-github.yml
 
-              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-setup.yml
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-setup.yml
                 parameters:
                   SkillBranch: ${{ parameters.SkillBranch }}
 
               # Run evaluations — each suite gets its own step with timeout
               # and continueOnError so failures don't block subsequent suites.
-              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
                   EvalFile: forced.eval.yaml
                   SuiteName: versioning-forced
                   DisplayName: Run force invokation suite - versioning
                   TimeoutMinutes: 50
                   Tag: suite=versioning
-              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
                   EvalFile: forced.eval.yaml
                   SuiteName: armtemplate-forced
                   DisplayName: Run force invokation suite - armtemplate
                   TimeoutMinutes: 40
                   Tag: suite=armtemplate
-              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
                   EvalFile: forced.eval.yaml
                   SuiteName: longrunningoperation-forced
                   DisplayName: Run force invokation suite - longrunningoperation
                   TimeoutMinutes: 25
                   Tag: suite=lro
-              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
                   EvalFile: forced.eval.yaml
                   SuiteName: decorators-forced
                   DisplayName: Run force invokation suite - decorators
                   TimeoutMinutes: 15
                   Tag: suite=decorators
-              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
                   EvalFile: forced.eval.yaml
                   SuiteName: warning-forced
@@ -123,42 +123,42 @@ extends:
 
               - template: /eng/common/pipelines/templates/steps/login-to-github.yml
 
-              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-setup.yml
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-setup.yml
                 parameters:
                   SkillBranch: ${{ parameters.SkillBranch }}
                   StartQaBotBackend: false
 
               # Run evaluations — each suite gets its own step with timeout
               # and continueOnError so failures don't block subsequent suites.
-              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
                   EvalFile: trigger.eval.yaml
                   SuiteName: versioning
                   DisplayName: Run suite - versioning
                   TimeoutMinutes: 50
                   Tag: suite=versioning
-              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
                   EvalFile: trigger.eval.yaml
                   SuiteName: armtemplate
                   DisplayName: Run suite - armtemplate
                   TimeoutMinutes: 40
                   Tag: suite=armtemplate
-              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
                   EvalFile: trigger.eval.yaml
                   SuiteName: longrunningoperation
                   DisplayName: Run suite - longrunningoperation
                   TimeoutMinutes: 25
                   Tag: suite=lro
-              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
                   EvalFile: trigger.eval.yaml
                   SuiteName: decorators
                   DisplayName: Run suite - decorators
                   TimeoutMinutes: 15
                   Tag: suite=decorators
-              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
                   EvalFile: trigger.eval.yaml
                   SuiteName: warning

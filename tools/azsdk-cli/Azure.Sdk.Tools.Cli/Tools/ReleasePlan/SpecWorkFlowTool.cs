@@ -196,16 +196,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     response.NextSteps = ["Create a release plan if you don't have one or get existing release plan and re-run SDK generation."];
                     return response;
                 }
-                // Accept either the work item ID or the Release Plan ID (users frequently confuse them).
+                // The resolver accepts either a Release Plan ID or a work item ID.
                 var releasePlan = await devopsService.ResolveReleasePlanByIdAsync(workItemId, ct);
                 if (releasePlan == null)
                 {
-                    response.ResponseErrors.Add($"No release plan found for ID {workItemId} (checked as both a Release Plan ID and a work item ID). Please verify the Release Plan ID and try again.");
+                    response.ResponseErrors.Add($"No release plan found for work item ID {workItemId}. Please check the work item ID and try again.");
                     response.Status = "Failed";
                     return response;
                 }
 
-                // Use the resolved work item ID for all subsequent calls, in case a Release Plan ID was provided.
+                // The input may have been a Release Plan ID; use the resolved work item ID for subsequent calls.
                 workItemId = releasePlan.WorkItemId;
 
                 if (releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview)

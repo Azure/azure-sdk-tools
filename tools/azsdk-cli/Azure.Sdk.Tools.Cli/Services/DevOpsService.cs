@@ -183,9 +183,8 @@ namespace Azure.Sdk.Tools.Cli.Services
                 throw new InvalidOperationException($"Work item {workItemId} not found.");
             }
 
-            // Ensure the work item is actually a Release Plan before mapping. Other work item types
-            // (e.g. an API spec work item) share the same numeric ID space, so without this guard a
-            // non-Release-Plan work item would be silently mapped to a release plan with empty fields.
+            // Other work item types share the same numeric ID space, so guard against mapping a
+            // non-Release-Plan work item to a release plan with empty fields.
             var workItemType = workItem.Fields != null && workItem.Fields.TryGetValue("System.WorkItemType", out var typeValue)
                 ? typeValue?.ToString()
                 : null;
@@ -213,13 +212,9 @@ namespace Azure.Sdk.Tools.Cli.Services
         }
 
         /// <summary>
-        /// Resolves a release plan from an ID that may be EITHER the user-facing Release Plan ID
-        /// (e.g. 50001) OR the Azure DevOps work item ID (e.g. 35000). The two are different numbers
-        /// and are frequently confused by users and agents alike.
-        /// The Release Plan ID is tried FIRST because that is the number users actually have in hand
-        /// (the work item ID is an internal identifier they rarely see). Only if no release plan
-        /// exists for that Release Plan ID do we fall back to treating the number as a work item ID,
-        /// and even then we only accept the work item when it is actually a "Release Plan".
+        /// Resolves a release plan from an ID that may be either the user-facing Release Plan ID or the
+        /// Azure DevOps work item ID. The Release Plan ID is tried first (that is the number users have);
+        /// if that fails, the number is treated as a work item ID, accepted only when it is a Release Plan.
         /// Returns null if neither lookup resolves.
         /// </summary>
         public async Task<ReleasePlanWorkItem?> ResolveReleasePlanByIdAsync(int id, CancellationToken ct)
@@ -229,8 +224,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 return null;
             }
 
-            // Try the number as a Release Plan ID first (the user-facing number).
-            // That query is already filtered to Release Plan work items.
+            // Try the number as a Release Plan ID first (already filtered to Release Plan work items).
             try
             {
                 var releasePlan = await GetReleasePlanAsync(id, ct);
@@ -244,9 +238,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 logger.LogInformation(ex, "Could not resolve {id} as a Release Plan ID; trying it as a work item ID instead.", id);
             }
 
-            // Fall back to treating the number as a work item ID, but only trust it when the work
-            // item is actually a Release Plan. This is the rare edge case; users seldom have the
-            // internal work item ID.
+            // Fall back to treating the number as a work item ID, accepted only when it is a Release Plan.
             try
             {
                 var workItem = await connection.GetWorkItemClient(ct).GetWorkItemAsync(id, expand: WorkItemExpand.All, cancellationToken: ct);

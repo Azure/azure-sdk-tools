@@ -26,31 +26,6 @@
             "description": "Template properties for rendering {{ variable }} placeholders in config values. Also used as fallback for identityName, subscriptionId, and resourceGroup.",
             "additionalProperties": true
         },
-        "githubRepositorySecrets": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "required": [
-                    "repositories",
-                    "secrets"
-                ],
-                "additionalProperties": false,
-                "properties": {
-                    "repositories": {
-                        "type": "array",
-                        "items": [
-                            {
-                                "type": "string"
-                            }
-                        ]
-                    },
-                    "secrets": {
-                        "type": "object",
-                        "additionalProperties": true
-                    }
-                }
-            }
-        },
         "roleBasedAccessControls": {
             "type": "array",
             "items": {

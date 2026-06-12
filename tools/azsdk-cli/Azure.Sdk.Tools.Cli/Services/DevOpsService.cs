@@ -92,6 +92,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<ReleasePlanWorkItem> GetReleasePlanAsync(int releasePlanId, CancellationToken ct);
         public Task<ReleasePlanWorkItem> GetReleasePlanForWorkItemAsync(int workItemId, CancellationToken ct);
         public Task<ReleasePlanWorkItem> GetReleasePlanAsync(string pullRequestUrl, CancellationToken ct);
+        public Task<ReleasePlanWorkItem?> ResolveReleasePlanByIdAsync(int id, CancellationToken ct);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansForProductAsync(string productTreeId, string sdkReleaseType, bool isTestReleasePlan = false, string apiReleaseType = "", CancellationToken ct = default);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansByProductAndLifecycleAsync(string productTreeId, string productLifecycle, bool isTestReleasePlan = false, CancellationToken ct = default);
@@ -181,6 +182,17 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 throw new InvalidOperationException($"Work item {workItemId} not found.");
             }
+
+            // Other work item types share the same numeric ID space, so guard against mapping a
+            // non-Release-Plan work item to a release plan with empty fields.
+            var workItemType = workItem.Fields != null && workItem.Fields.TryGetValue("System.WorkItemType", out var typeValue)
+                ? typeValue?.ToString()
+                : null;
+            if (!string.Equals(workItemType, "Release Plan", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException($"Work item {workItemId} is not a Release Plan (type '{workItemType ?? "unknown"}').");
+            }
+
             var releasePlan = await MapWorkItemToReleasePlanAsync(workItem, ct);
             releasePlan.WorkItemUrl = workItem.Url;
             releasePlan.WorkItemId = workItem?.Id ?? 0;
@@ -197,6 +209,45 @@ namespace Azure.Sdk.Tools.Cli.Services
                 throw new Exception($"Failed to find release plan work item with release plan Id {releasePlanId}");
             }
             return await MapWorkItemToReleasePlanAsync(releasePlanWorkItems[0], ct);
+        }
+
+        /// <summary>
+        /// Resolves a release plan from an ID that may be either the user-facing Release Plan ID or the
+        /// Azure DevOps work item ID. The Release Plan ID is tried first (that is the number users have);
+        /// if that fails, the number is treated as a work item ID, accepted only when it is a Release Plan.
+        /// Returns null if neither lookup resolves.
+        /// </summary>
+        public async Task<ReleasePlanWorkItem?> ResolveReleasePlanByIdAsync(int id, CancellationToken ct)
+        {
+            if (id <= 0)
+            {
+                return null;
+            }
+
+            // Try the number as a Release Plan ID first (already filtered to Release Plan work items).
+            try
+            {
+                var releasePlan = await GetReleasePlanAsync(id, ct);
+                if (releasePlan != null)
+                {
+                    return releasePlan;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogInformation(ex, "Could not resolve {id} as a Release Plan ID; trying it as a work item ID instead.", id);
+            }
+
+            // Fall back to treating the number as a work item ID, accepted only when it is a Release Plan.
+            try
+            {
+                return await GetReleasePlanForWorkItemAsync(id, ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogInformation(ex, "Could not resolve {id} as a work item ID.", id);
+                return null;
+            }
         }
 
         public async Task<List<ReleasePlanWorkItem>> GetReleasePlansForProductAsync(string productTreeId, string sdkReleaseType, bool isTestReleasePlan = false, string apiReleaseType = "", CancellationToken ct = default)

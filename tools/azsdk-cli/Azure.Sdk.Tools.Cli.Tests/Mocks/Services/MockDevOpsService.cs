@@ -174,6 +174,31 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(releasePlan);
         }
 
+        Task<ReleasePlanWorkItem?> IDevOpsService.ResolveReleasePlanByIdAsync(int id, CancellationToken ct)
+        {
+            if (ConfiguredReleasePlanForWorkItem != null)
+            {
+                // A resolved release plan always carries its work item ID; default it to the
+                // requested id when the test did not set one explicitly.
+                if (ConfiguredReleasePlanForWorkItem.WorkItemId == 0)
+                {
+                    ConfiguredReleasePlanForWorkItem.WorkItemId = id;
+                }
+                return Task.FromResult<ReleasePlanWorkItem?>(ConfiguredReleasePlanForWorkItem);
+            }
+
+            var releasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = id,
+                ReleasePlanId = 1,
+                Title = "Mock Release Plan",
+                Description = "This is a mock release plan for testing purposes."
+            };
+            releasePlan.IsDataPlane = id > 1000;
+            releasePlan.IsManagementPlane = !releasePlan.IsDataPlane;
+            return Task.FromResult<ReleasePlanWorkItem?>(releasePlan);
+        }
+
         Task<string> IDevOpsService.GetSDKPullRequestFromPipelineRunAsync(int buildId, string language, int workItemId, CancellationToken ct)
         {
             if (ConfiguredSDKPullRequest != null)

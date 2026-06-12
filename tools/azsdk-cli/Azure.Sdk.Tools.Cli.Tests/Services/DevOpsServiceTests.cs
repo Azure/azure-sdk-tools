@@ -164,7 +164,117 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
         #endregion
 
+        #region ResolveReleasePlanByIdAsync Tests
+
+        [Test]
+        public async Task ResolveReleasePlanByIdAsync_WithWorkItemId_FallsBackAndResolves()
+        {
+            // Arrange: a Release Plan whose work item ID (35000) differs from its Release Plan ID (50001).
+            // It is only registered as a work item (not discoverable via the Release Plan ID query),
+            // so resolution must fall back to the work item ID lookup.
+            var plan = CreateReleasePlanWorkItemWithReleasePlanId(workItemId: 35000, releasePlanId: 50001, state: "In Progress");
+            _connection.AddWorkItem(plan);
+
+            // Act: caller passes the work item ID (the rare edge case).
+            var result = await _devOpsService.ResolveReleasePlanByIdAsync(35000, CancellationToken.None);
+
+            // Assert: the Release Plan ID lookup fails, then the work item ID fallback resolves it.
+            Assert.IsNotNull(result, "Should fall back and resolve when given the work item ID.");
+            Assert.That(result!.WorkItemId, Is.EqualTo(35000));
+            Assert.That(result.ReleasePlanId, Is.EqualTo(50001));
+        }
+
+        [Test]
+        public async Task ResolveReleasePlanByIdAsync_WithReleasePlanId_ResolvesViaPrimaryLookup()
+        {
+            // Arrange: the plan is discoverable via the Release Plan ID query (50001), which is the
+            // primary lookup. This is the common case: users have the Release Plan ID in hand.
+            var plan = CreateReleasePlanWorkItemWithReleasePlanId(workItemId: 35000, releasePlanId: 50001, state: "In Progress");
+            _connection.AddWorkItemToQuery(plan);
+
+            // Act: caller passes the user-facing Release Plan ID.
+            var result = await _devOpsService.ResolveReleasePlanByIdAsync(50001, CancellationToken.None);
+
+            // Assert: the Release Plan ID lookup resolves to the right plan.
+            Assert.IsNotNull(result, "Should resolve via the Release Plan ID lookup.");
+            Assert.That(result!.WorkItemId, Is.EqualTo(35000));
+            Assert.That(result.ReleasePlanId, Is.EqualTo(50001));
+        }
+
+        [Test]
+        public async Task ResolveReleasePlanByIdAsync_WhenWorkItemIsNotReleasePlan_DoesNotMisresolve()
+        {
+            // Arrange: a work item with the given id exists but is NOT a Release Plan, and there is no
+            // Release Plan with that Release Plan ID either.
+            var apiSpecWorkItem = CreateApiSpecWorkItem(35000, "https://github.com/Azure/azure-rest-api-specs/pull/1", "Active");
+            _connection.AddWorkItem(apiSpecWorkItem);
+
+            // Act
+            var result = await _devOpsService.ResolveReleasePlanByIdAsync(35000, CancellationToken.None);
+
+            // Assert: it must not map a non-Release-Plan work item, and falls back to null.
+            Assert.IsNull(result, "Should not resolve a non-Release-Plan work item.");
+        }
+
+        [Test]
+        public async Task ResolveReleasePlanByIdAsync_WithInvalidId_ReturnsNull()
+        {
+            Assert.IsNull(await _devOpsService.ResolveReleasePlanByIdAsync(0, CancellationToken.None));
+            Assert.IsNull(await _devOpsService.ResolveReleasePlanByIdAsync(-5, CancellationToken.None));
+        }
+
+        #endregion
+
+        #region GetReleasePlanForWorkItemAsync Tests
+
+        [Test]
+        public async Task GetReleasePlanForWorkItemAsync_WhenWorkItemIsReleasePlan_Maps()
+        {
+            // Arrange
+            var plan = CreateReleasePlanWorkItem(35000, "In Progress");
+            _connection.AddWorkItem(plan);
+
+            // Act
+            var result = await _devOpsService.GetReleasePlanForWorkItemAsync(35000, CancellationToken.None);
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.That(result.WorkItemId, Is.EqualTo(35000));
+        }
+
+        [Test]
+        public void GetReleasePlanForWorkItemAsync_WhenWorkItemIsNotReleasePlan_Throws()
+        {
+            // Arrange: the work item exists but is an API Spec, not a Release Plan.
+            var apiSpecWorkItem = CreateApiSpecWorkItem(35000, "https://github.com/Azure/azure-rest-api-specs/pull/1", "Active");
+            _connection.AddWorkItem(apiSpecWorkItem);
+
+            // Act + Assert: must not map a non-Release-Plan work item to a release plan.
+            var ex = Assert.ThrowsAsync<InvalidOperationException>(
+                async () => await _devOpsService.GetReleasePlanForWorkItemAsync(35000, CancellationToken.None));
+            Assert.That(ex!.Message, Does.Contain("is not a Release Plan"));
+        }
+
+        #endregion
+
         #region Helper Methods
+
+        private WorkItem CreateReleasePlanWorkItemWithReleasePlanId(int workItemId, int releasePlanId, string state)
+        {
+            return new WorkItem
+            {
+                Id = workItemId,
+                Fields = new Dictionary<string, object>
+                {
+                    { "System.WorkItemType", "Release Plan" },
+                    { "System.State", state },
+                    { "System.Title", $"Release Plan {releasePlanId}" },
+                    { "System.TeamProject", "internal" },
+                    { "Custom.ReleasePlanID", releasePlanId.ToString() }
+                },
+                Relations = new List<WorkItemRelation>()
+            };
+        }
 
         private WorkItem CreateApiSpecWorkItem(int id, string pullRequestUrl, string state, int parentId = 100)
         {

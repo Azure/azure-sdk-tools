@@ -586,7 +586,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 ReleasePlanWorkItem? releasePlan = null;
                 if (workItemId != 0)
                 {
-                    releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(workItemId, ct);
+                    // The resolver accepts either a Release Plan ID or a work item ID.
+                    releasePlan = await devOpsService.ResolveReleasePlanByIdAsync(workItemId, ct);
                 }
 
                 // Resolve TypeSpec project relative path
@@ -1062,12 +1063,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return new DefaultCommandResponse { ResponseError = "No valid SDK packages found in the TypeSpec project metadata." };
                 }
 
-                // Get release plan
-                var releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(releasePlanWorkItemId, ct);
+                // Get release plan. The resolver accepts either a Release Plan ID or a work item ID.
+                var releasePlan = await devOpsService.ResolveReleasePlanByIdAsync(releasePlanWorkItemId, ct);
                 if (releasePlan == null)
                 {
                     return new DefaultCommandResponse { ResponseError = $"No release plan found with work item ID {releasePlanWorkItemId}" };
                 }
+
+                // The input may have been a Release Plan ID; use the resolved work item ID for writes.
+                releasePlanWorkItemId = releasePlan.WorkItemId;
 
                 var requiredLanguages = releasePlan.IsManagementPlane ? languagesforMgmtplane : languagesforDataplane;
 
@@ -1154,12 +1158,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return "Release plan ID and namespace approval issue are required to verify namespace approval status";
                 }
 
-                // Get release plan and verify if it is a management plane release plan before linking namespace approval issue
-                var releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(releasePlanWorkItemId, ct);
+                // Get release plan and verify if it is a management plane release plan before linking namespace approval issue.
+                // The resolver accepts either a Release Plan ID or a work item ID.
+                var releasePlan = await devOpsService.ResolveReleasePlanByIdAsync(releasePlanWorkItemId, ct);
                 if (releasePlan == null)
                 {
                     return $"Release plan with ID {releasePlanWorkItemId} not found.";
                 }
+
+                // The input may have been a Release Plan ID; use the resolved work item ID for writes.
+                releasePlanWorkItemId = releasePlan.WorkItemId;
 
                 if (!releasePlan.IsManagementPlane)
                 {
@@ -1241,12 +1249,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return "No justification provided to update the release plan.";
                 }
 
-                // Get release plan
-                var releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(releasePlanWorkItem, ct);
+                // Get release plan. The resolver accepts either a Release Plan ID or a work item ID.
+                var releasePlan = await devOpsService.ResolveReleasePlanByIdAsync(releasePlanWorkItem, ct);
                 if (releasePlan == null)
                 {
                     return new DefaultCommandResponse { ResponseError = $"No release plan found with work item ID {releasePlanWorkItem}" };
                 }
+
+                // The input may have been a Release Plan ID; use the resolved work item ID for writes.
+                releasePlanWorkItem = releasePlan.WorkItemId;
 
                 // Update language exclusion justification in work item
                 Dictionary<string, string> fieldsToUpdate = new()
@@ -1288,7 +1299,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 var response = await IsSpecReadyToGenerateSDKAsync(typeSpecProjectRoot, pullRequestNumber, ct);
                 if (workItemId != 0 && response.Status == "Success")
                 {
-                    await devOpsService.UpdateApiSpecStatusAsync(workItemId, "Approved", ct);
+                    // The resolver accepts either a Release Plan ID or a work item ID.
+                    var releasePlan = await devOpsService.ResolveReleasePlanByIdAsync(workItemId, ct);
+                    if (releasePlan != null)
+                    {
+                        await devOpsService.UpdateApiSpecStatusAsync(releasePlan.WorkItemId, "Approved", ct);
+                    }
+                    else
+                    {
+                        logger.LogWarning("Could not find a release plan for ID {workItemId}; skipping API spec status update.", workItemId);
+                        response.Details.Add($"Could not find a release plan for ID {workItemId}; the API spec status was not updated in the release plan.");
+                        response.NextSteps = ["Verify the release plan ID or work item ID and re-run to update the API spec status."];
+                    }
                 }
                 return response;
             }
@@ -1731,7 +1753,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return new ReleasePlanResponse { ResponseError = "SDK release target month is required." };
                 }
 
-                var releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(workItemId, ct);
+                // The resolver accepts either a Release Plan ID or a work item ID.
+                var releasePlan = await devOpsService.ResolveReleasePlanByIdAsync(workItemId, ct);
                 if (releasePlan == null)
                 {
                     return new ReleasePlanResponse { ResponseError = $"No release plan found for work item {workItemId}." };

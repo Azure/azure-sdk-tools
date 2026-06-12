@@ -10,17 +10,17 @@ logger = logging.getLogger(__name__)
 
 
 class KnowledgeService:
-    """Service for retrieving knowledge base results via the search_knowledge_base tool."""
+    """Service for retrieving knowledge via the search_knowledge_base tool."""
 
     def __init__(self) -> None:
         """Initialize the knowledge service with the KnowledgeTools instance."""
         self._knowledge_tools = KnowledgeTools()
 
     async def retrieve(self, req: KnowledgeRetrieveRequest) -> KnowledgeRetrieveResponse:
-        """Retrieve knowledge base results for a chat request.
+        """Retrieve knowledge for a chat request.
         
         Calls search_knowledge_base with queries derived from the user message
-        and returns structured knowledge results with references.
+        and returns structured knowledge.
         
         Args:
             req: KnowledgeRetrieveRequest containing the user message and tenant context
@@ -55,7 +55,7 @@ class KnowledgeService:
                 tenant_id=req.tenant_id.value,
                 sources=None,  # Use default tenant-configured sources
                 service_type=req.service_type,  # No explicit service type filtering
-                search_mode="quick",  # Default to quick search
+                search_mode=req.search_mode or "quick",  # Default to quick search
             )
             
             logger.info(

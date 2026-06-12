@@ -145,4 +145,3 @@ class DocumentContext(BaseModel):
             document_content=ref.content,
             score=ref.score,
         )
-

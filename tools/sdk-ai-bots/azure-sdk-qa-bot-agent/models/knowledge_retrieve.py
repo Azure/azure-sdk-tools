@@ -9,10 +9,9 @@ class KnowledgeRetrieveRequest(BaseModel):
 
     tenant_id: TenantID
     conversation_id: str | None = None
-    conversation_type: ConversationType | None = None
     message: Message
-    with_full_context: bool | None = False
     service_type: str | None = None
+    search_mode: str | None = None
 
 class KnowledgeRetrieveResponse(BaseModel):
     """Response from knowledge retrieve."""

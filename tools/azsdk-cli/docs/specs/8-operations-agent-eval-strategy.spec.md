@@ -748,11 +748,15 @@ flowchart TD
     ORCH --> KU[(Kusto + dashboards:<br/>pass-rate · cost trends)]
 ```
 
-**Rollout.**
+**Rollout — incremental, smallest first.** The plan is deliberately
+incremental: **build something small in the tools repo first, extend it
+to specs, then extend it to the language repos.** Each step reuses the
+same shared template and only adds the next repo's eval content.
 
-- **Phase 1 — one internal pipeline on `azure-rest-api-specs`, bare
-  minimum.** Stand up the run path end-to-end on one repo, with the
-  shared template and scripts in `eng/common`, covering the
+- **Phase 1 — `azure-sdk-tools`, bare minimum.** Build the run path
+  end-to-end *here*, where the framework, the MCP server, and the skills
+  already live — the smallest possible footprint to prove the shape. The
+  shared template and scripts land in `eng/common`, covering the
   **create-release-plan + generate-SDK** workflow as a proof of concept
   — **mock workflow scenario + skill eval only**. Validate the template,
   the contributor workflow, environment setup, and reporting (including
@@ -760,13 +764,18 @@ flowchart TD
   *out of scope* early: dynamic discovery, sharding, distributed
   execution, PR gating, runtime-aware balancing, multi-engine support,
   any custom schema layer, and the auto-pipeline-generator / validator.
-- **Phase 2 — generalize.** Add live runs, auto-generated `ci.yml`
-  pipelines + the new-skill-without-eval validator, sharding within
-  multi-skill pipelines, and rollout across language SDK repos
-  (`azure-sdk-for-net`, `-python`, `-java`, `-js`, `-go`). Each repo /
-  team brings its own eval content and its own per-skill `ci.yml`
-  pipelines; the shared template is unchanged. Shanghai team adds their
-  tests here; CLI / knowledge-based tests migrate in too.
+- **Phase 2 — extend to `azure-rest-api-specs`.** The first cross-repo
+  hop. Because the template syncs through `eng/common`, the specs repo
+  adds only its own `ci.yml` + eval content; the runner is unchanged.
+  This is where the create-release-plan → generate-SDK workflow runs
+  against real spec layouts.
+- **Phase 3 — extend to the language SDK repos.** Generalize across
+  `azure-sdk-for-net`, `-python`, `-java`, `-js`, and `-go`. Add live
+  runs, auto-generated `ci.yml` pipelines + the new-skill-without-eval
+  validator, and sharding within multi-skill pipelines. Each repo / team
+  brings its own eval content and per-skill `ci.yml` pipelines; the
+  shared template is unchanged. Shanghai team adds their tests here;
+  CLI / knowledge-based tests migrate in too.
 
 **Validation the shared layer runs on every repo's content**, beyond
 pass/fail:
@@ -904,26 +913,58 @@ prompt-grader that checks the real DevOps response.
 
 ## Implementation Plan
 
-The first deliverable is intentionally small — prove the shape on one
-internal pipeline before generalizing.
+The approach is **incremental: build something small in the tools repo
+first, extend it to specs, then extend it to the language repos.** Prove
+the shape on the smallest footprint before generalizing.
 
-**Phase 1 — one internal pipeline on `azure-rest-api-specs`.**
+The deliverables below are ordered by dependency — each is sized to
+become a single work item. Phase 1 builds **bottom-up**: the shared
+template and its building blocks come first, then a single skill wires
+itself to that template as the end-to-end proof.
 
-- The shared `run-eval.yaml` template + scripts land in `eng/common` (so
-  they sync to every repo for free), aligned to the existing `eng/common`
-  layout — no speculative folders.
-- Cover the **create-release-plan + generate-SDK** workflow end-to-end as
-  a proof of concept — **mock workflow scenario + skill eval only**: one
-  skill `ci.yml` calls `run-eval.yaml` → build the MCP server → run native
-  Vally on the skill path → aggregate → report as artifacts **and push
-  pass-rate / cost metrics to Kusto with a basic dashboard**.
-- Internal, **nightly** (or CI on skill change). No PR gating, no dynamic
-  discovery, no sharding, no live runs.
-- Defer until validated: live runs, auto-pipeline-generation + the
-  new-skill-without-eval validator, dynamic discovery, sharding, and
-  eval-generation tooling.
+### Phase 1 — one internal pipeline in `azure-sdk-tools`
 
-**Process.**
+Goal: the **create-release-plan + generate-SDK** workflow runs green,
+nightly, against the mock backend, with results in artifacts and Kusto —
+proving the per-skill `ci.yml` → shared template model end to end.
+
+Deliverables, in build order:
+
+1. **MCP-server build + cache step.** A reusable step that builds
+   `Azure.Sdk.Tools.Cli` and `Azure.Sdk.Tools.Mock` once to a stable,
+   TFM-free output path (`-o artifacts/mcp/...`) and caches it. Same
+   script locally and in CI. *(Prereq for everything that runs Vally.)*
+2. **Vally run step.** A step that launches the pre-built MCP server
+   (`dotnet <dll>`, not `dotnet run`), runs native Vally against a given
+   skill / scenario path, and writes the raw run output. Takes the path
+   as a parameter.
+3. **Aggregation + reporting step.** Merge run output into
+   `eval-results.md`, `results.jsonl`, `junit.xml`, and a `history.csv`
+   row; publish them as build artifacts.
+4. **The shared `run-eval.yaml` template** (in `eng/common/pipelines/`).
+   Composes steps 1–3, parameterized by skill / scenario path and
+   backend (mock). **This is the common template every pipeline reuses —
+   it must exist before any `ci.yml` can call it.**
+5. **Kusto push + basic dashboard.** Emit per-run pass/fail and
+   cost/token metrics to Kusto; stand up a minimal dashboard showing
+   pass-rate-over-time and per-test cost. *(Depends on step 3's output
+   shape.)*
+6. **First skill `ci.yml`.** A thin `ci.yml` for the release-plan skill
+   that calls `run-eval.yaml` with the skill path; register one DevOps
+   pipeline from it, scheduled nightly.
+7. **The eval content** for the POC — the **mock workflow scenario** for
+   create-release-plan → generate-SDK plus the **skill eval** — authored
+   as native Vally `*.eval.yaml`. *(Can be written in parallel with
+   steps 1–6.)*
+
+Scope guardrails for Phase 1: internal, **nightly** (or CI on skill
+change); **no** PR gating, dynamic discovery, sharding, or live runs.
+
+Explicitly deferred (Phase 2+): live runs, auto-pipeline-generation,
+the new-skill-without-eval validator, dynamic discovery, sharding, and
+eval-generation tooling.
+
+### Process
 
 - Consolidate this design with the review feedback into one document
   (done here).
@@ -931,8 +972,32 @@ internal pipeline before generalizing.
   (e.g. to Laurent).
 - Hold recirculation until that review is complete.
 
-**Phase 2 — generalize.** Add live runs, auto-generated per-skill `ci.yml`
-pipelines + the validator, sharding within multi-skill pipelines, and
-rollout across the language SDK repos — each team bringing its own eval
-content and `ci.yml` pipelines over the same shared template. Shanghai
-team adds their tests; CLI / knowledge-based tests migrate in.
+### Phase 2 — extend to `azure-rest-api-specs`
+
+The first cross-repo hop. The template syncs through `eng/common`, so
+the specs repo adds only its own `ci.yml` + eval content; the runner is
+unchanged. New deliverables:
+
+1. **Cross-repo environment setup** — the pre-clone / cache step for the
+   spec (and SDK) repos a scenario declares, so a real spec layout is on
+   disk before the run.
+2. **Specs-repo skill `ci.yml` + eval content** wired to the same shared
+   template.
+3. **Live-run support** (on demand) for scenarios the mock can't prove.
+
+### Phase 3 — extend to the language SDK repos
+
+Generalize across `azure-sdk-for-net`, `-python`, `-java`, `-js`, and
+`-go`. Each team brings its own eval content and per-skill `ci.yml`
+pipelines over the same shared template. New deliverables:
+
+1. **Code-owners configuration for skills** — the routing story that
+   sends a red pipeline to the owning team.
+2. **Auto-pipeline-generation** — the pipeline-generator stamps out a
+   skill's `ci.yml` and registers its DevOps pipeline on check-in.
+3. **New-skill-without-eval validator** — flags a skill added with no
+   eval and triggers generation.
+4. **Sharding within multi-skill pipelines** — once a pipeline owns
+   enough skills that a sequential run is too slow.
+5. **Migration** — Shanghai team adds their tests; CLI / knowledge-based
+   tests migrate in.

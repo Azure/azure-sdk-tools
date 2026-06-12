@@ -33,7 +33,13 @@ from utils.text_util import preprocess_message
 from utils.azure_memory_store import sanitize_scope
 from azure.ai.projects.aio import AIProjectClient
 from azure.ai.projects.models import AgentVersionDetails
-from openai import AsyncOpenAI, NotFoundError
+from openai import (
+    APIConnectionError,
+    APIStatusError,
+    APITimeoutError,
+    AsyncOpenAI,
+    NotFoundError,
+)
 from openai.types.responses import Response as OpenAIResponse
 from openai.types.responses import (
     ResponseFunctionToolCall,
@@ -223,7 +229,12 @@ class ChatService:
         max_retries: int = STREAM_CREATE_MAX_RETRIES,
         retry_delay: float = STREAM_CREATE_RETRY_DELAY_SECS,
     ):
-        """Create a responses stream with bounded retries for transient failures."""
+        """Create a responses stream with bounded retries for transient failures.
+
+        Retries on ``APIStatusError`` (4xx/5xx), ``APIConnectionError``, and
+        ``APITimeoutError``.  The detailed status code and error message are
+        logged so they flow into telemetry.
+        """
         last_error: Exception | None = None
 
         for attempt in range(1, max_retries + 1):
@@ -237,18 +248,21 @@ class ChatService:
                         "agent_reference": agent_ref,
                     },
                 )
-            except Exception as ex:
+            except (APIConnectionError, APITimeoutError, APIStatusError) as ex:
                 last_error = ex
                 logger.warning(
-                    "Failed to create agent stream (attempt %d/%d): conversation=%s",
+                    "Failed to create agent stream (attempt %d/%d): "
+                    "conversation=%s, error=%s",
                     attempt,
                     max_retries,
                     agent_conversation_id,
+                    ex,
                     exc_info=True,
                 )
-                if attempt >= max_retries:
-                    break
-                await asyncio.sleep(retry_delay * attempt)
+
+            if attempt >= max_retries:
+                break
+            await asyncio.sleep(retry_delay * attempt)
 
         raise RuntimeError(
             f"Failed to create agent stream after {max_retries} attempts"

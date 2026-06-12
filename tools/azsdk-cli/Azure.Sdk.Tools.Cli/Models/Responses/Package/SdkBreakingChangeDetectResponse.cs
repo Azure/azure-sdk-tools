@@ -10,6 +10,8 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
         public SdkBreakingChange[] BreakingChanges { get; set; }
         [JsonPropertyName("hasBreakingChanges")]
         public bool HasBreakingChanges { get; set; }
+        [JsonPropertyName("SdkChangesMd")]
+        public string? SdkChangesMd { get; set; } = null;
 
         protected override string Format()
         {

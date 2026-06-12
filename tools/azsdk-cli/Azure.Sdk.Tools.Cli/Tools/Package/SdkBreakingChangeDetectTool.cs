@@ -28,23 +28,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private const string DetectSdkBreakingChangToolName = "azsdk_package_detect_breaking_change";
 
         private const string SdkChangeJsonFileName = "SDKCHANGE.json";
+        
         // detect command options
-
-        private readonly Option<string> languageOpt = new("--language", "-l")
-        {
-            Description = "Language of the SDK, e.g. 'dotnetnet' for .NET, 'java' for Java, 'js or javascript' for JavaScript/TypeScript, 'python' for Python, 'go' for Go",
-            Required = false,
-        };
-
         private readonly Option<string> tspConfigPathOpt = new("--tsp-config-path", "-t")
         {
             Description = "Path to the 'tspconfig.yaml' configuration file, it can be a local path or remote HTTPS URL",
             Required = false,
         };
 
-        private readonly Option<bool> generateSDKOpt = new("--generate-sdk", "-g")
+        private readonly Option<bool> changesOnlyOpt = new("--changes-only")
         {
-            Description = "Regenerate SDK code before detecting breaking changes. If omitted, analyzes existing SDK artifacts in the package path.",
+            Description = "Detect SDK changes only, without analyzing or classifying them.",
             Required = false,
             DefaultValueFactory = _ => false,
         };
@@ -64,17 +58,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         protected override Command GetCommand() =>
             new McpCommand(DetectSdkBreakingChangeCommandName, "Detects breaking changes in the SDK.", DetectSdkBreakingChangToolName)
             {
-                SharedOptions.PackagePath, languageOpt, tspConfigPathOpt, generateSDKOpt,
+                SharedOptions.PackagePath, tspConfigPathOpt, changesOnlyOpt,
             };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
             var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
-            var language = parseResult.GetValue(languageOpt);
             var tspConfigPath = parseResult.GetValue(tspConfigPathOpt);
-            var generateSDK = parseResult.GetValue(generateSDKOpt);
+            var changesOnly = parseResult.GetValue(changesOnlyOpt);
 
-            return await DetectSDKBreakingChangesAsync(packagePath, language, tspConfigPath, generateSDK, ct);
+            return await DetectSDKBreakingChangesAsync(packagePath, tspConfigPath, changesOnly, ct);
 
         }
 
@@ -82,18 +75,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         public async Task<SdkBreakingChangeDetectResponse> DetectSDKBreakingChangesAsync(
             [Description("The absolute path to the package directory. REQUIRED. Example: 'path/to/azure-sdk-for-go/sdk/resourcemanager/webpubsub/armwebpubsub'")]
             string packagePath,
-            [Description("Language of the SDK, e.g. 'dotnet' for .NET, 'java' for Java, 'js or javascript' for JavaScript/TypeScript, 'python' for Python, 'go' for Go. Optional if running inside a local cloned azure-sdk-for-{language} repository.")]
-            string? language = null,
             [Description("Path to the 'tspconfig.yaml' file. It is a local file path. Optional.")]
             string? tspConfigPath = null,
-            [Description("Regenerate SDK code before detecting breaking changes. If omitted, analyzes existing SDK artifacts in the package path.")]
-            bool generateSDK = false,
+            [Description("Detect SDK changes only, without analyzing or classifying them.")]
+            bool changesOnly = false,
             CancellationToken ct = default)
         {
             try
             {
-                logger.LogInformation("Parameters: packagePath={PackagePath}, language={Language}, tspConfigPath={TspConfigPath}, generateSDK={GenerateSDK}",
-                    packagePath, language ?? "null", tspConfigPath ?? "null", generateSDK);
+                logger.LogInformation("Parameters: packagePath={PackagePath}, tspConfigPath={TspConfigPath}, changesOnly={ChangesOnly}",
+                    packagePath, tspConfigPath ?? "null", changesOnly);
 
                 if (string.IsNullOrEmpty(packagePath) || !Directory.Exists(packagePath))
                 {
@@ -103,28 +94,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     };
                 }
 
-                if (generateSDK && !string.IsNullOrEmpty(tspConfigPath))
-                {
-                    logger.LogInformation("SDK code generation is enabled. Executing SDK generation before breaking change detection...");
-                    var regenResult = await _tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: tspConfigPath, isCli: false, ct: ct);
-                    if (!regenResult.IsSuccessful)
-                    {
-                        logger.LogWarning("Regeneration failed: {Error}", regenResult.ResponseError);
-                        return new SdkBreakingChangeDetectResponse
-                        {
-                            ResponseError = $"SDK regeneration failed: {regenResult.ResponseError}. Cannot proceed to detect breaking changes without successful SDK generation."
-                        };
-                    }
-                }
-                LanguageService languageService;
-                if (!string.IsNullOrEmpty(language))
-                {
-                    languageService = GetLanguageService(SdkLanguageHelpers.GetSdkLanguage(language));
-                }
-                else
-                {
-                    languageService = await GetLanguageServiceAsync(packagePath, ct);
-                }
+                
+                LanguageService languageService = await GetLanguageServiceAsync(packagePath, ct);
+
                 if (languageService == null)
                 {
                     return new SdkBreakingChangeDetectResponse
@@ -188,7 +160,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
                                 if (sdkchanges != null)
                                 {
-                                    if (sdkchanges.HasBreakingChange)
+                                    if (sdkchanges.HasBreakingChange && !changesOnly)
                                     {
                                         var tspProjectPath = tspConfigPath != null ? await gitHelper.DiscoverRepoRootAsync(tspConfigPath, ct) : null;
                                         return new SdkBreakingChangeDetectResponse
@@ -202,8 +174,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                                     {
                                         return new SdkBreakingChangeDetectResponse
                                         {
-                                            HasBreakingChanges = false,
+                                            HasBreakingChanges = sdkchanges.HasBreakingChange,
                                             BreakingChanges = [],
+                                            SdkChangesMd = sdkchanges.ChangelogMD,
                                             Language = languageService.Language,
                                         };
                                     }

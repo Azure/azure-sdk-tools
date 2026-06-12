@@ -17,4 +17,4 @@ class KnowledgeRetrieveResponse(BaseModel):
     """Response from knowledge retrieve."""
 
     has_result: bool
-    knowledgeList: list[Reference] | None = None
+    knowledge_list: list[Reference] | None = None

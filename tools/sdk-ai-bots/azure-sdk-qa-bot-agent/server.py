@@ -236,7 +236,7 @@ async def retrieve_knowledge(req: KnowledgeRetrieveRequest):
         logger.info(
             "Knowledge retrieval completed: tenant=%s, knowledge=%d",
             req.tenant_id,
-            len(resp.knowledgeList) if resp.knowledgeList else 0,
+            len(resp.knowledge_list) if resp.knowledge_list else 0,
         )
         return resp
     except Exception:

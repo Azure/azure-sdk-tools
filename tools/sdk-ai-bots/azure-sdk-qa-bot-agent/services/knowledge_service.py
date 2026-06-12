@@ -57,7 +57,7 @@ class KnowledgeService:
             )
 
             has_result = True if len(search_result.results) else False
-            return KnowledgeRetrieveResponse(has_result=has_result, knowledgeList=search_result.results)
+            return KnowledgeRetrieveResponse(has_result=has_result, knowledge_list=search_result.results)
             
         except Exception as e:
             logger.error("search_knowledge_base failed: %s", str(e), exc_info=True)

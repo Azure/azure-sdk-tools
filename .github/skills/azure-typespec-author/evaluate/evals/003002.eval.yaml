@@ -41,6 +41,8 @@ stimuli:
       dest: stable/2021-11-01/widget.json
     - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
       dest: preview/2024-10-01-preview/widget.json
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -56,7 +58,7 @@ stimuli:
   - type: file-matches
     config:
       path: employee.tsp
-      pattern: 'ArmAsyncOperationHeader<FinalResult\s*=\s*Employee>'
+      pattern: 'ArmAsyncOperationHeader\s*<\s*(FinalResult\s*=\s*Employee|ArmOperationStatus\s*,\s*string\s*,\s*Employee)\s*>'
   # VP2: createOrUpdate uses ArmResourceCreateOrReplaceAsync with custom LroHeaders
   - type: file-matches
     config:

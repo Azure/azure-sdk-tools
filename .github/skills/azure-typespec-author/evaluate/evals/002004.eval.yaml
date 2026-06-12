@@ -39,6 +39,8 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:

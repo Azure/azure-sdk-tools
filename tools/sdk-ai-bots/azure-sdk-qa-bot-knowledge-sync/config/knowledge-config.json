@@ -646,6 +646,25 @@
           }
         }
       ]
+    },
+    {
+      "repository": {
+        "url": "https://github.com/Azure/typespec-azure-pr.git",
+        "branch": "providerhub",
+        "authType": "token",
+        "tokenEnvVar": "AZURE_SDK_GITHUB_PAT"
+      },
+      "paths": [
+        {
+          "description": "Documentation for Azure TypeSpec ProviderHub",
+          "path": "/docs",
+          "folder": "typespec_azure_providerhub_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        }
+      ]
     }
   ]
 }

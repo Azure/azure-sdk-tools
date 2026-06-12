@@ -49,6 +49,7 @@ SRC_STATIC_TYPESPEC_QA = "static_typespec_qa"
 SRC_STATIC_TYPESPEC_MIGRATION_DOCS = "static_typespec_migration_docs"
 SRC_STATIC_TYPESPEC_TO_SWAGGER_MAPPING = "static_typespec_to_swagger_mapping"
 SRC_TYPESPEC_AZURE_RESOURCE_MANAGER_LIB = "typespec-azure-resource-manager-lib"
+SRC_TYPESPEC_AZURE_PROVIDERHUB_DOCS = "typespec_azure_providerhub_docs"
 
 # -- Azure Guidelines & Standards --
 SRC_AZURE_API_GUIDELINES = "azure_api_guidelines"
@@ -138,6 +139,11 @@ _register(
         base_url="https://github.com/Azure/typespec-azure/blob/main/packages/typespec-azure-resource-manager/lib/",
         trim_format=True,
         suffix=".tsp",
+    ),
+    KnowledgeSource(
+        name=SRC_TYPESPEC_AZURE_PROVIDERHUB_DOCS,
+        description="Documentation for Azure TypeSpec ProviderHub.",
+        base_url="https://github.com/Azure/typespec-azure-pr/blob/providerhub/",
     ),
     # -- Azure Guidelines & Standards --
     KnowledgeSource(
@@ -317,6 +323,7 @@ _TYPESPEC_SOURCES = _sources(
     SRC_TYPESPEC_HTTP_SPECS,
     SRC_STATIC_AZURE_DOCS,
     SRC_STATIC_TYPESPEC_TO_SWAGGER_MAPPING,
+    SRC_TYPESPEC_AZURE_PROVIDERHUB_DOCS,
 )
 
 _AZURE_TYPESPEC_AUTHORING_SOURCES = _sources(

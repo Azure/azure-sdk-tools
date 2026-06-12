@@ -71,6 +71,8 @@ stimuli:
       dest: examples/2021-10-01/Operations_List_MaximumSet_Gen.json
     - src: ../fixtures/001005-version-add-preview-after-preview\examples\2021-10-01\Operations_List_MinimumSet_Gen.json
       dest: examples/2021-10-01/Operations_List_MinimumSet_Gen.json
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:

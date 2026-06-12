@@ -524,9 +524,9 @@ The PR owner merges the `client.tsp` changes from step 6. After the spec PR is u
 **🔔 NOTE:**
 
 1. If step 1 (generation) or step 2 (build) fails, the SDK validation pipeline exits early and follow-up detection does not run. During step 2 (build), invoke `azsdk_customized_code_update` to resolve build failures. If the failure cannot be fixed, the SDK validation pipeline fails at step 2.
-2. Each language uses a dedicated SDK branch named `Auto-XXXX-<PRNumber>` for the PR, and all iterative SDK validation pipeline runs use that branch for the PR. When resolving a breaking change requires SDK code customization, `azsdk_customized_code_update` falls back to code customization to address the change or any build failure that appears after TypeSpec customization. The updated code is carried into the next iteration because the same SDK branch is reused.
+2. Each language uses a dedicated SDK branch named `Auto-XXXX-<PRNumber>` for the PR, and all iterative SDK validation pipeline runs use that branch for the PR. When resolving a breaking change requires SDK code customization, `azsdk_customized_code_update` falls back to code customization to address the change or any build failure that appears after TypeSpec customization. The updated code is carried into the next iteration because the same SDK branch is reused. As a result, the CI SDK validation pipeline will not fail at the build step because of SDK breaking change mitigation.
 3. In the Spec PR, the goal is to resolve all SDK breaking changes and apply all TypeSpec customizations. If a breaking change requires code customization, the SDK branch is updated and a PR is filed to track that change.
-4. SDK breaking changes can be handled in three ways:
+4. SDK breaking changes can be handled in four ways:
     1. Accepted SDK breaking changes: add a suppression entry in `suppression.yaml`.
     2. SDK Breaking Changes that can only be handled through code customization: apply the code customization on the SDK branch, and the next SDK validation run will consume the fix and stop reporting it.
     3. SDK breaking changes mitigated through TypeSpec: apply the TypeSpec customization after the changes from step 6 are merged.
@@ -595,7 +595,7 @@ detect the breaking changes for Go SDK of Webpubsub service
 **Command:**
 
 ```bash
-azsdk package detect-breaking-change --package-path <sdk-package-path> --tsp-config-path <path-to-tsp-config-file>
+azsdk package detect-breaking-change --package-path <sdk-package-path> --tsp-config-path <path-to-tsp-config-file> --changes-only <True/False>
 
 ```
 
@@ -620,7 +620,7 @@ azsdk package detect-breaking-change --package-path <sdk-package-path> --tsp-con
 
 ✗ Error: Missing required option --package-path
   
-Usage: azsdk package detect-breaking-change --package-path <sdk-package-path> --language <language> --tsp-config-path <path-to-tsp-config-file>
+Usage: azsdk package detect-breaking-change --package-path <sdk-package-path> --tsp-config-path <path-to-tsp-config-file> --changes-only <True/False>
 ```
 
 ---

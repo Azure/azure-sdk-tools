@@ -934,11 +934,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     {
                         logger.LogInformation("Checking for existing release plan for pull request URL: {specPullRequestUrl}", specPullRequestUrl);
                         var existingReleasePlan = await devOpsService.GetReleasePlanAsync(specPullRequestUrl, ct);
-                        if (existingReleasePlan != null && existingReleasePlan.WorkItemId > 0)
+                        if (existingReleasePlan != null && existingReleasePlan.WorkItemId > 0 && existingReleasePlan.ApiReleaseType == parsedApiReleaseType)
                         {
                             return new ReleasePlanResponse
                             {
-                                Message = $"Release plan already exists for the pull request: {specPullRequestUrl}. Release plan link: {existingReleasePlan.ReleasePlanLink}",
+                                Message = $"A {parsedApiReleaseType.ToDisplayLabel()} release plan already exists for the pull request: {specPullRequestUrl}. Release plan link: {existingReleasePlan.ReleasePlanLink}",
                                 ReleasePlanDetails = existingReleasePlan,
                                 NextSteps = ["Prompt user to confirm whether to use existing release plan or force create a new release plan."]
                             };

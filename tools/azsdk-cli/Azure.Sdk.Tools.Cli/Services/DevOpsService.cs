@@ -241,19 +241,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             // Fall back to treating the number as a work item ID, accepted only when it is a Release Plan.
             try
             {
-                var workItem = await connection.GetWorkItemClient(ct).GetWorkItemAsync(id, expand: WorkItemExpand.All, cancellationToken: ct);
-                var workItemType = workItem?.Fields != null && workItem.Fields.TryGetValue("System.WorkItemType", out var typeValue)
-                    ? typeValue?.ToString()
-                    : null;
-                if (workItem?.Id != null && string.Equals(workItemType, "Release Plan", StringComparison.OrdinalIgnoreCase))
-                {
-                    var releasePlan = await MapWorkItemToReleasePlanAsync(workItem, ct);
-                    releasePlan.WorkItemUrl = workItem.Url;
-                    releasePlan.WorkItemId = workItem.Id ?? 0;
-                    return releasePlan;
-                }
-                logger.LogInformation("Work item {id} is not a Release Plan (type '{workItemType}'); could not resolve it.", id, workItemType ?? "unknown");
-                return null;
+                return await GetReleasePlanForWorkItemAsync(id, ct);
             }
             catch (Exception ex)
             {

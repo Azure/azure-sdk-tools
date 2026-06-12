@@ -14,7 +14,6 @@
     - [Why This Matters](#why-this-matters)
   - [Goals and Exceptions/Limitations](#goals-and-exceptionslimitations)
     - [Goals](#goals)
-      - [Language-Specific Limitations](#language-specific-limitations)
   - [Design Proposal](#design-proposal)
     - [Overview](#overview)
     - [Detailed Design](#detailed-design)
@@ -117,18 +116,6 @@ What are we trying to achieve with this design?
 - [ ] Enable early mitigation by shifting SDK breaking change detection and resolution into the Spec authoring and PR review process instead of deferring to SDK release.
 - [ ] Integrate SDK breaking change detection, analysis, and mitigation guidance into both Spec PR and SDK PR workflows to reduce manual effort and avoid late-stage rework.
 
-#### Language-Specific Limitations
-
-This tool will support Java, JavaScript, Python, Go and .NET SDK.
-
-| Language   | supported |
-|------------|------------|
-| .NET       | Yes   |
-| Java       | Yes   |
-| JavaScript | Yes   |
-| Python     | Yes   |
-| Go         | Yes   |
-
 ---
 
 ## Design Proposal
@@ -145,7 +132,7 @@ This design covers the complete SDK breaking change detection workflow for an SD
 **Prerequisite**:
 The SDK has been generated and built successfully.
 
-A sdkChange-breakingchange pattern guide (e.g. https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/mgmt/sdk-breaking-changes-guide.md) will service as the foundation for teach copilot agent to detect and classify SDK breaking changes for a SDK. The existing TypeSpec code and the configuration will help agent to classify the SDK breaking changes.
+A sdkChange-breakingchange pattern guide (e.g. https://github.com/Azure/azure-sdk-for-go/blob/main/documentation/development/breaking-changes/sdk-breaking-changes-guide.md) will service as the foundation to teach copilot agent to detect and classify SDK breaking changes for a SDK. The existing TypeSpec code and the configuration will help agent to classify the SDK breaking changes.
 
 **Output Format:**
 

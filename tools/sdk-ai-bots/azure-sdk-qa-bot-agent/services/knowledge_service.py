@@ -35,13 +35,6 @@ class KnowledgeService:
         # First query: use the full message as problem-phrased query
         queries = [user_message]
         
-        # Optionally add more specific searches if the message is long
-        # Extract first sentence as a secondary query
-        if len(user_message) > 100:
-            first_sentence = user_message.split('.')[0].strip()
-            if first_sentence and first_sentence != user_message:
-                queries.append(first_sentence)
-        
         logger.info(
             "Calling search_knowledge_base: tenant=%s, queries=%s",
             req.tenant_id.value,

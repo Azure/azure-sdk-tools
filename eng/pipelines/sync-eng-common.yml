@@ -19,7 +19,6 @@ parameters:
     - azure-sdk-for-net
     - azure-sdk-for-python
     - azure-sdk-for-rust
-    - azure-sdk-for-android
     - azure-rest-api-specs
     - autorest.csharp
     - autorest.go

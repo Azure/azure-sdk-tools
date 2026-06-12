@@ -603,6 +603,7 @@ azsdk package detect-breaking-change --package-path <sdk-package-path> --tsp-con
 
 - `--package-path <value>`: (Required) The SDK package path
 - `--tsp-config-path`: (Optional) Path to the 'tspconfig.yaml' configuration file, it can be a local path or remote HTTPS URL
+- `--changes-only`: (Optional) Detect SDK changes only, without analyzing or classifying them. Default is `false`.
 
 **Expected Output:**
 

@@ -13,15 +13,14 @@ compatibility:
 
 > **CRITICAL**: Do not display Azure DevOps work item URLs. Only provide Release Plan Link and Release Plan ID to the user.
 
-> **CRITICAL — Release Plan ID is NOT the work item ID.** A release plan has two
-> distinct numbers: a **Release Plan ID** (the value users usually mention) and a
-> **work item ID** (used internally by the MCP tools). They are different values
-> and are not interchangeable. Never pass the Release Plan ID into a `workItemId`
-> or `releasePlanWorkItemId` parameter. Whenever a tool needs the work item ID,
-> first run `azure-sdk-mcp:azsdk_get_release_plan` (look up by Release Plan ID,
-> TypeSpec project path, or spec PR), then read the `workItemId` field from the
-> returned plan and pass that value. This applies to update release plan, update
-> SDK details, run SDK generation, and link SDK PR scenarios.
+> **Release Plan ID and work item ID are both accepted.** A release plan has two
+> distinct numbers: a **Release Plan ID** (the value users usually mention, shown
+> in the Release Planner) and an Azure DevOps **work item ID** (internal). The
+> release plan tools accept **either** — pass whichever the user gives you. The
+> tools resolve the value automatically (trying it as a Release Plan ID first,
+> then as a work item ID), so you do **not** need to call
+> `azure-sdk-mcp:azsdk_get_release_plan` first just to translate one ID into the
+> other.
 
 ## MCP Tools
 
@@ -115,10 +114,10 @@ compatibility:
 
 **Steps**:
 
-1. **Resolve Work Item ID** — If the user gives a Release Plan ID (or TypeSpec path / spec PR), run `azure-sdk-mcp:azsdk_get_release_plan` first and read the `workItemId` from the result. Do NOT pass the Release Plan ID as `releasePlanWorkItemId`.
+1. **Identify Plan** — Get the Release Plan ID or work item ID from the user (either is accepted), or the TypeSpec project path.
 2. **Identify TypeSpec Project** — Get or confirm the TypeSpec project path.
 3. **Update** — Run `azure-sdk-mcp:azsdk_update_sdk_details_in_release_plan` with:
-   - `releasePlanWorkItemId` (required — the `workItemId` resolved above, NOT the Release Plan ID)
+   - `workItemId` (required — accepts either the Release Plan ID or the work item ID)
    - `typeSpecProjectPath` (required)
 
 **Tool**: `azure-sdk-mcp:azsdk_update_sdk_details_in_release_plan`
@@ -146,12 +145,12 @@ compatibility:
 
 **Steps**:
 
-1. **Identify Plan** — Get the Release Plan ID or work item ID from the user. If you only have a Release Plan ID, pass it as `releasePlanId` (do NOT pass it as `workItemId`); if you have neither cleanly, run `azure-sdk-mcp:azsdk_get_release_plan` and use the `workItemId` from the result.
+1. **Identify Plan** — Get the Release Plan ID or work item ID from the user (either is accepted).
 2. **Collect PR Info** — Get the SDK pull request URL and language from the user.
 3. **Link** — Run `azure-sdk-mcp:azsdk_link_sdk_pull_request_to_release_plan` with:
    - `pullRequestUrl` (required)
    - `language` (required — e.g., ".NET", "Java", "JavaScript", "Python", "Go")
-   - `workItemId` (the resolved work item ID) OR `releasePlanId` (the Release Plan ID) — never put the Release Plan ID in `workItemId`
+   - `workItemId` or `releasePlanId` (either accepts the Release Plan ID or the work item ID)
 4. **Repeat** — If multiple SDK PRs exist for different languages, repeat for each.
 
 **Tool**: `azure-sdk-mcp:azsdk_link_sdk_pull_request_to_release_plan`
@@ -173,6 +172,5 @@ compatibility:
 
 - Requires `azure-sdk-mcp` server; no CLI fallback — prompt user to configure MCP if unavailable.
 - If creation fails, verify spec PR URL and Service Tree IDs.
-- If update fails, ensure the work item ID or release plan ID is correct and the plan is not already abandoned.
+- If update fails, ensure the Release Plan ID or work item ID is correct and the plan is not already abandoned.
 - If linking fails, verify the SDK PR URL is valid and the language matches a supported value.
-- If update release plan, update SDK details, run SDK generation, or link SDK PR returns an invalid/not-found response, you likely passed the Release Plan ID where the work item ID was expected. Run `azure-sdk-mcp:azsdk_get_release_plan` and retry using the `workItemId` from the result.

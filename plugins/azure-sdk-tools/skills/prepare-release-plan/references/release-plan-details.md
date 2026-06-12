@@ -4,18 +4,16 @@
 
 ## Release Plan ID vs Work Item ID
 
-A release plan has two distinct identifiers and they are **not** interchangeable:
+A release plan has two distinct identifiers:
 
-- **Release Plan ID**: the value users typically refer to (e.g. in a prompt).
-- **Work Item ID**: the Azure DevOps work item backing the release plan, used by the MCP tools.
+- **Release Plan ID**: the value users typically refer to (e.g. in a prompt), shown in the Release Planner.
+- **Work Item ID**: the Azure DevOps work item backing the release plan.
 
-The tools that update a release plan, update SDK details, run SDK generation, and
-link an SDK PR need the **work item ID** (parameter `workItemId` or
-`releasePlanWorkItemId`). Never pass the Release Plan ID into these parameters.
-
-When you only have a Release Plan ID (or a TypeSpec project path / spec PR),
-always run `azsdk_get_release_plan` first and read the `workItemId` field from
-the returned plan, then pass that value to the subsequent tool calls.
+The release plan tools (update release plan, update SDK details, run SDK
+generation, link SDK PR) accept **either** value — pass whichever the user gives
+you. Each tool resolves the supplied number automatically, trying it as a
+Release Plan ID first and then as a work item ID, so you do **not** need to run
+`azsdk_get_release_plan` first just to translate one ID into the other.
 
 ## Required Information
 
@@ -30,8 +28,7 @@ Collect these details (do not use temporary values):
 
 To update SDK details in the release plan:
 
-- First resolve the work item ID via `azsdk_get_release_plan` if you only have a Release Plan ID.
-- Run `azsdk_update_sdk_details_in_release_plan` with the release plan **work item ID** (`releasePlanWorkItemId`, not the Release Plan ID) and TypeSpec project path.
+- Run `azsdk_update_sdk_details_in_release_plan` with the `workItemId` (either the Release Plan ID or the work item ID is accepted) and TypeSpec project path.
 
 ## Namespace Approval (Management Plane Only)
 
@@ -46,5 +43,4 @@ For first release of management plane SDK:
 If SDK PRs exist:
 
 1. Ensure GitHub CLI authentication (`gh auth login`)
-2. Resolve the work item ID via `azsdk_get_release_plan` if you only have a Release Plan ID.
-3. Run `azsdk_link_sdk_pull_request_to_release_plan` for each PR, passing the work item ID as `workItemId` (or the Release Plan ID as `releasePlanId`) — never the Release Plan ID as `workItemId`.
+2. Run `azsdk_link_sdk_pull_request_to_release_plan` for each PR, passing the Release Plan ID or work item ID as `workItemId` (or as `releasePlanId`) — either value is accepted.

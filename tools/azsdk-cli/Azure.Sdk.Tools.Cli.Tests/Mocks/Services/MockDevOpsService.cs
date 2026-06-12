@@ -12,6 +12,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         // Configurable properties for testing
         public Build? ConfiguredPipelineRun { get; set; }
         public ReleasePlanWorkItem? ConfiguredReleasePlanForWorkItem { get; set; }
+        public ReleasePlanWorkItem? ConfiguredReleasePlanForSpecPrUrl { get; set; }
         public string? ConfiguredSDKPullRequest { get; set; }
         public Build? ConfiguredRunSDKGenerationPipeline { get; set; }
         public string ConfiguredAPIViewStatus { get; set; } = "Approved";
@@ -121,6 +122,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 
         Task<ReleasePlanWorkItem> IDevOpsService.GetReleasePlanAsync(string pullRequestUrl, CancellationToken ct)
         {
+            if (ConfiguredReleasePlanForSpecPrUrl != null)
+            {
+                return Task.FromResult(ConfiguredReleasePlanForSpecPrUrl);
+            }
+
             var releasePlan = new ReleasePlanWorkItem
             {
                 WorkItemId = 0, // Release plan does not exists

@@ -34,6 +34,7 @@ from utils.azure_memory_store import sanitize_scope
 from azure.ai.projects.aio import AIProjectClient
 from azure.ai.projects.models import AgentVersionDetails
 from openai import AsyncOpenAI, NotFoundError
+from openai.types.conversations import Message as ConversationsMessage
 from openai.types.responses import Response as OpenAIResponse
 from openai.types.responses import (
     ResponseFunctionToolCall,
@@ -134,27 +135,45 @@ class ChatService:
         # Streaming is broken for hosted agents — text is lost entirely.
         # See https://github.com/Azure/azure-sdk-for-python/issues/45282
         # and https://github.com/Azure/azure-sdk-for-python/issues/46015
-        raw_response = await openai_client.responses.with_raw_response.create(
-            input=conversation_items,
-            conversation=agent_conversation_id,
-            store=True,
-            stream=False,
-            extra_body={
-                "agent_reference": agent_ref,
-            },
+        response, trace_id = await self._invoke_agent(
+            openai_client,
+            conversation_items=conversation_items,
+            agent_conversation_id=agent_conversation_id,
+            agent_ref=agent_ref,
         )
-        response: OpenAIResponse = raw_response.parse()
 
-        # Extract AI Foundry trace ID from x-request-id header.
-        # The header may contain duplicated values separated by comma.
-        x_request_id = raw_response.headers.get("x-request-id", "")
-        trace_id = x_request_id.split(",")[0].strip() if x_request_id else None
-        logger.info(
-            "Agent trace: trace_id=%s, response_id=%s, conversation=%s",
-            trace_id,
-            response.id,
-            agent_conversation_id,
-        )
+        # Known upstream issue — Foundry server-managed conversation can end
+        # up in a broken state (e.g. orphan function_call item with no paired
+        # function_call_output) that surfaces as response.status == "failed"
+        # on a later turn. Any failed status is treated as conversation
+        # corruption: discard the broken conversation, reseed a fresh one from
+        # Cosmos plain-text history, and retry once.
+        # Tracking:
+        #   - https://github.com/Azure/azure-sdk-for-python/issues/46092
+        #   - https://github.com/microsoft/agent-framework/issues/5041
+        #   - https://github.com/microsoft/agent-framework/issues/5023
+        if response.status == "failed":
+            logger.warning(
+                "Foundry conversation %s returned status=failed; rebuilding "
+                "from Cosmos plain-text history. response_id=%s error=%s",
+                agent_conversation_id,
+                response.id,
+                response.error,
+            )
+            agent_conversation_id, conversation_items = (
+                await self._rebuild_conversation_after_failure(
+                    openai_client,
+                    req,
+                    broken_conversation_id=agent_conversation_id,
+                    current_turn_items=conversation_items,
+                )
+            )
+            response, trace_id = await self._invoke_agent(
+                openai_client,
+                conversation_items=conversation_items,
+                agent_conversation_id=agent_conversation_id,
+                agent_ref=agent_ref,
+            )
 
         # Poll if response completed with empty text (Foundry persistence delay).
         if response.status == "completed" and not response.output_text:
@@ -324,6 +343,148 @@ class ChatService:
 
         logger.info("Created new AI Foundry conversation: %s", new_id)
         return new_id, True
+
+    async def _invoke_agent(
+        self,
+        openai_client: AsyncOpenAI,
+        *,
+        conversation_items: list[ResponseInputItemParam],
+        agent_conversation_id: str,
+        agent_ref: dict,
+    ) -> tuple[OpenAIResponse, str | None]:
+        """Call the hosted agent and return (parsed response, trace id)."""
+        raw_response = await openai_client.responses.with_raw_response.create(
+            input=conversation_items,
+            conversation=agent_conversation_id,
+            store=True,
+            stream=False,
+            extra_body={
+                "agent_reference": agent_ref,
+            },
+        )
+        response: OpenAIResponse = raw_response.parse()
+
+        # Extract AI Foundry trace ID from x-request-id header.
+        # The header may contain duplicated values separated by comma.
+        x_request_id = raw_response.headers.get("x-request-id", "")
+        trace_id = x_request_id.split(",")[0].strip() if x_request_id else None
+        logger.info(
+            "Agent trace: trace_id=%s, response_id=%s, conversation=%s, status=%s",
+            trace_id,
+            response.id,
+            agent_conversation_id,
+            response.status,
+        )
+        return response, trace_id
+
+    async def _rebuild_conversation_after_failure(
+        self,
+        openai_client: AsyncOpenAI,
+        req: ChatRequest,
+        *,
+        broken_conversation_id: str,
+        current_turn_items: list[ResponseInputItemParam],
+    ) -> tuple[str, list[ResponseInputItemParam]]:
+        """Abandon the corrupted Foundry conversation and reseed a fresh one
+        from its own item history, dropping tool-call items so the new
+        conversation starts in a consistent state.
+
+        The broken conversation is intentionally NOT deleted — it is kept on
+        the server for tracing/debugging. We just stop pointing at it: the
+        Cosmos mapping is overwritten so future turns use the new id, and the
+        orphaned conversation can be cleaned up out-of-band later.
+
+        Strategy:
+        1. List items from the broken Foundry conversation and keep only
+           ``message`` items (user/assistant text and any multimodal content).
+           Tool-related items (``function_call``, ``function_call_output``,
+           ``mcp_call``, ``code_interpreter_call``, etc.) are dropped — they
+           are what caused the corruption and are safe to omit because the
+           assistant's final text already summarizes their effect.
+        2. Create a fresh Foundry conversation and update the Cosmos mapping
+           so future turns use the new id.
+        3. Compose the next-turn input as: system anchors from the current
+           turn + the filtered Foundry history + the current turn's live
+           inputs.
+        """
+        # 1. Pull surviving message items from the broken conversation.
+        replay_items = await self._list_message_items(
+            openai_client, broken_conversation_id
+        )
+
+        # 2. Create a new conversation and update the Cosmos mapping (upsert
+        #    replaces the prior mapping). The broken conversation is left in
+        #    place for tracing.
+        new_conversation = await openai_client.conversations.create()
+        new_conversation_id = new_conversation.id
+        await self._conversation_service.save_agent_conversation_mapping(
+            req.conversation_id,
+            req.conversation_type,
+            agent_conversation_id=new_conversation_id,
+        )
+        logger.info(
+            "Created replacement Foundry conversation: %s (replaces %s, "
+            "broken conversation preserved for tracing)",
+            new_conversation_id,
+            broken_conversation_id,
+        )
+
+        # 3. Split current_turn_items into system anchors vs. live user
+        #    inputs. System messages (tenant context, memory scope) were
+        #    rebuilt this turn and are not part of the historical replay.
+        system_anchors: list[ResponseInputItemParam] = []
+        live_inputs: list[ResponseInputItemParam] = []
+        for item in current_turn_items:
+            if isinstance(item, dict) and item.get("role") == "system":
+                system_anchors.append(item)
+            else:
+                live_inputs.append(item)
+
+        rebuilt = [*system_anchors, *replay_items, *live_inputs]
+        logger.info(
+            "Reseeded conversation %s: %d system anchors, %d replay messages, "
+            "%d live inputs",
+            new_conversation_id,
+            len(system_anchors),
+            len(replay_items),
+            len(live_inputs),
+        )
+        return new_conversation_id, rebuilt
+
+    @staticmethod
+    async def _list_message_items(
+        openai_client: AsyncOpenAI,
+        conversation_id: str,
+    ) -> list[ResponseInputItemParam]:
+        """List items from a Foundry conversation, keeping only ``message``
+        entries. Returns an empty list if the API call fails — the new
+        conversation will simply start with no replayed history.
+        """
+        replay: list[ResponseInputItemParam] = []
+        try:
+            # AsyncCursorPage is async-iterable and transparently pages.
+            async for item in openai_client.conversations.items.list(conversation_id):
+                # Keep only user/assistant messages; drop every tool-related
+                # variant of ConversationItem (ResponseFunctionToolCallItem,
+                # ResponseFunctionToolCallOutputItem, McpCall, LocalShellCall,
+                # ResponseCodeInterpreterToolCall, etc.).
+                if not isinstance(item, ConversationsMessage):
+                    continue
+                payload = item.model_dump(mode="json", exclude_none=True)
+                # The Responses input schema doesn't accept server-assigned
+                # fields like ``id`` / ``status`` on replayed items.
+                payload.pop("id", None)
+                payload.pop("status", None)
+                replay.append(cast(ResponseInputItemParam, payload))
+        except Exception:
+            logger.warning(
+                "Failed to list items from broken Foundry conversation %s; "
+                "reseeding with no replayed history.",
+                conversation_id,
+                exc_info=True,
+            )
+            return []
+        return replay
 
     @staticmethod
     async def _build_image_items(

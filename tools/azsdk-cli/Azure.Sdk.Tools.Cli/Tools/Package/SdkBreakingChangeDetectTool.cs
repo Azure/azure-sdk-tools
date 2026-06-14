@@ -28,8 +28,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private const string DetectSdkBreakingChangToolName = "azsdk_package_detect_breaking_change";
 
         private const string SdkChangeJsonFileName = "SDKCHANGE.json";
-        
+
         // detect command options
+        public static Option<string> PackagePathOpt = new("--package-path", "-p")
+        {
+            Description = "Path to the package directory to check.",
+            Required = true,
+        };
         private readonly Option<string> tspConfigPathOpt = new("--tsp-config-path", "-t")
         {
             Description = "Path to the 'tspconfig.yaml' configuration file, it can be a local path or remote HTTPS URL",
@@ -58,12 +63,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         protected override Command GetCommand() =>
             new McpCommand(DetectSdkBreakingChangeCommandName, "Detects breaking changes in the SDK.", DetectSdkBreakingChangToolName)
             {
-                SharedOptions.PackagePath, tspConfigPathOpt, changesOnlyOpt,
+                PackagePathOpt, tspConfigPathOpt, changesOnlyOpt,
             };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
-            var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
+            var packagePath = parseResult.GetValue(PackagePathOpt);
             var tspConfigPath = parseResult.GetValue(tspConfigPathOpt);
             var changesOnly = parseResult.GetValue(changesOnlyOpt);
 

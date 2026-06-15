@@ -47,10 +47,5 @@ Content-type: application/json; charset=utf-8
 
 {
     "tenant_id": "typespec_channel_qa_bot",
-    "message": {
-            "role": "user",
-            "content": "hi",
-            "user_id": "test_user_id",
-            "user_name": "test_user_name"
-    }
+    "query": "hi"
 }

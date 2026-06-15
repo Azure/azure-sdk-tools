@@ -479,16 +479,28 @@ repos — the release planner reads a TypeSpec project from
 back. The tools expect those files on disk; a missing repo makes the agent
 fail for the wrong reason and we learn nothing.
 
-- Each live scenario **declares** the repos (and optionally a pinned
-  commit) it needs.
-- One setup step reads all selected live scenarios, takes the **union**,
-  and ensures each repo is present before the run — a shallow + blobless +
-  cone-sparse clone (only the spec paths the scenarios touch) into a
-  repo-relative cache dir, never a hard-coded user path.
-- **Locally and in CI it's the same script.** Locally it clones into a
-  cache folder and reuses it on later runs. In CI the cache is a
-  build-cache artifact **keyed on the set of repos the scenarios declare**,
-  invalidated only when that set changes.
+- Each live scenario **declares** the repos it needs in its eval YAML —
+  a `metadata.repos` block (repo name and optionally a pinned commit) —
+  so the requirement travels with the scenario, not with a per-machine
+  setup script. The eval points `environment.git.source` at the
+  repo-relative cache path the runner provisions.
+- One setup step reads all selected live scenarios, takes the **union**
+  of their declared repos, and ensures each is present before the run — a
+  shallow + blobless + cone-sparse clone (only the spec paths the
+  scenarios touch) into a repo-relative cache dir, never a hard-coded
+  user path.
+- **Locally and in CI it's the same provisioning step.** Locally it
+  clones into a cache folder and reuses it on later runs; in CI the same
+  repos are checked out into the same path (the cache is a build-cache
+  artifact **keyed on the set of repos the scenarios declare**,
+  invalidated only when that set changes). The eval YAML never changes
+  between the two — only the backend that satisfies the declaration does.
+- **One shared, cross-platform clone helper.** The sparse-clone logic is
+  a single helper shared with the existing TypeSpec-authoring benchmark
+  (which sparse-clones the same `azure-rest-api-specs`), written in
+  Node.js so it runs identically on Windows and the Linux CI agents (per
+  the JS-over-PowerShell guidance in #15694). Scenarios differ only in
+  *which* sparse paths they keep, not in the cloning machinery.
 - **Pinning:** a scenario can pin a commit for reproducibility; otherwise
   setup takes the default branch and records the commit it used in the run
   output.

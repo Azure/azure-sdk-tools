@@ -248,6 +248,35 @@ model IntentionResponse {
   reason: string;
 }
 
+// ── Knowledge Models ─────────────────────────────────────────
+
+@doc("Request for knowledge retrieval")
+model KnowledgeRetrieveRequest {
+  @doc("The tenant ID")
+  tenant_id: string;
+
+  @doc("The user query")
+  query: string;
+
+  @doc("The service type, it can be management-plane or data-plane")
+  serviceType?: string;
+
+  @doc("The search mode, it can be quick or deep.")
+  searchModel?: string;
+
+  @doc("Optional user id")
+  userId?: string;
+}
+
+@doc("Response from knowledge retrieval.")
+model KnowledgeRetrieveResponse {
+  @doc("Whether the agent response with knowledge")
+  has_result: boolean;
+
+  @doc("The knowledge list retrieved.")
+  knowledge_list?: Reference[];
+}
+
 // ── Health Check ─────────────────────────────────────────────
 
 @doc("Health check response")

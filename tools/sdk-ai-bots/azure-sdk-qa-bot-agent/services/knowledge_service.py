@@ -29,7 +29,7 @@ class KnowledgeService:
             KnowledgeRetrieveResponse with search results and references
         """
         # Extract search query from the user message
-        user_message = req.message.content.strip()
+        user_message = req.query.strip()
         
         # Build primary queries for search
         # First query: use the full message as problem-phrased query

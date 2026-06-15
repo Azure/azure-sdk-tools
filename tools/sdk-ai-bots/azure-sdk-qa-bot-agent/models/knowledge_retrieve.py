@@ -1,13 +1,13 @@
 from pydantic import BaseModel
 from config.tenant_config import TenantID
-from models.chat import Message
 from models.knowledge import Reference
 
 class KnowledgeRetrieveRequest(BaseModel):
     """Request for knowledge retrieval."""
 
     tenant_id: TenantID
-    message: Message
+    query: str
+    user_id: str | None = None
     service_type: str | None = None
     search_mode: str | None = None
 

@@ -77,9 +77,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             //Verify service ID and product ID in response. It should have values from previous release plans.
             Assert.That(releaseplan.ReleasePlanDetails?.ServiceTreeId, Is.EqualTo("87654321-4321-8765-1234-210987654321"));
             Assert.That(releaseplan.ReleasePlanDetails?.ProductTreeId, Is.EqualTo("12345678-1234-5678-9012-123456789012"));
-
-            // Verify ReleasePlanId is included in the response
-            Assert.That(releaseplan.ReleasePlanId, Is.EqualTo(1));
         }
 
         [Test]

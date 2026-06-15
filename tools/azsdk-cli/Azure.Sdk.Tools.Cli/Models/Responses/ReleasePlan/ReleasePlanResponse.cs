@@ -12,8 +12,6 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
         [JsonPropertyName("release_plan_details")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public ReleasePlanWorkItem? ReleasePlanDetails { get; set; }
-        [JsonPropertyName("release_plan_id")]
-        public int ReleasePlanId => ReleasePlanDetails?.ReleasePlanId ?? 0;
         [JsonPropertyName("message")]
         public string Message { get; set; } = string.Empty;
         [JsonPropertyName("release_plan_link")]
@@ -23,7 +21,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
             var result = new StringBuilder();
             if (ReleasePlanDetails != null)
             {
-                result.AppendLine($"Release Plan ID: {ReleasePlanId}");
+                result.AppendLine($"Release Plan ID: {ReleasePlanDetails.ReleasePlanId}");
                 result.AppendLine($"Title: {ReleasePlanDetails.Title}");
                 result.AppendLine($"Status: {ReleasePlanDetails.Status}");
                 result.AppendLine($"Owner: {ReleasePlanDetails.Owner}");

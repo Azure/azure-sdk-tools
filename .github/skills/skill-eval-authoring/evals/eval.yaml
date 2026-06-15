@@ -1,0 +1,60 @@
+name: skill-eval-authoring-eval
+description: |
+  Capability tests for the skill-eval-authoring skill (the meta-skill that
+  teaches the agent to write evals). Verifies that when given a skill with no
+  eval coverage, the agent produces a four-layer-pattern eval.yaml plus a
+  trigger.eval.yaml in the right shape.
+type: capability
+
+environment: azsdk-mcp-mock
+
+tags:
+  area: skill-eval-authoring
+  type: ci-gate
+  tier: unit
+
+config:
+  runs: 1
+  timeout: "120s"
+  model: claude-opus-4.6
+  executor: copilot-sdk
+
+scoring:
+  threshold: 0.8
+
+stimuli:
+  - name: produces-four-layer-eval-when-asked
+    prompt: |
+      I have a new skill called `azsdk-example-foo` whose SKILL.md says it
+      invokes the MCP tools `azsdk_example_foo_create` and
+      `azsdk_example_foo_list`. The evals folder is empty. Write me a
+      capability eval that follows the four-layer pattern.
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["skill-eval-authoring"]
+      - type: output-matches
+        config:
+          pattern: "skill-invocation[\\s\\S]+tool-calls"
+      - type: output-contains
+        config:
+          substring: "azsdk_example_foo_create"
+
+  - name: catches-vacuous-output-contains
+    prompt: |
+      Review this eval and tell me what's wrong:
+
+      ```yaml
+      - name: foo-001
+        prompt: "create a foo"
+        graders:
+          - type: output-contains
+            config: { substring: "foo" }
+      ```
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["skill-eval-authoring"]
+      - type: output-matches
+        config:
+          pattern: "(vacuous|tautolog|parrot|too generic|same word|tool-calls|skill-invocation)"

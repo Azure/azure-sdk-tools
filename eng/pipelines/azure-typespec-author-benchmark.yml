@@ -114,8 +114,8 @@ extends:
 
           # Trigger mode: same suite split strategy for comparable diagnostics
           # and easier cross-mode failure analysis.
-          - job: RunEvalsForSkillInvokation
-            displayName: Run Vally Evaluations for Skill Invokation
+          - job: RunEvalsForSkillInvocation
+            displayName: Run Vally Evaluations for Skill Invocation
             timeoutInMinutes: 170
             steps:
               - checkout: self

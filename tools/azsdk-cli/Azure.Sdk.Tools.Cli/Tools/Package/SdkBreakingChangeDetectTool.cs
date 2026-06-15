@@ -249,7 +249,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 // Updated regex to capture the full breaking change line (everything until newline)
                 // Changed from \S+ to [^\n]+ to capture the entire line including spaces
                 Regex ResultBlockRex = new(
-                    @"\[(?<id>[^\]]+)\]\s*\n\s*breaking:\s*(?<breaking>[^\n]+)\s*\n\s*category:\s*(?<category>[^\n]+)\s*\n\s*resolution:\s*(?<resolution>[^\n]*)",
+                    @"\[(?<id>[^\]]+)\]\s*\n\s*breaking:\s*(?<breaking>[^\n]+)\s*\n\s*category:\s*(?<category>[^\n]+)\s*\n\s*resolution:\s*(?<resolution>[^\n]*)\s*\n\s*originBreaks:\s*(?<originBreaks>[^\n]*)",
                     RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.Singleline);
                 var sdkBreakingChanges = new List<SdkBreakingChange>();
                 foreach (Match match in ResultBlockRex.Matches(result))
@@ -258,12 +258,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     var breaking = match.Groups["breaking"].Value.Trim();
                     var category = match.Groups["category"].Value.Trim();
                     var resolution = match.Groups["resolution"].Value.Trim();
+                    var originBreaks = match.Groups["originBreaks"].Value.Trim();
 
                     SdkBreakingChange breakingChange = new SdkBreakingChange
                     {
                         BreakingChange = breaking,
                         Category = category,
-                        Resolution = resolution
+                        Resolution = resolution,
+                        OriginBreaks = !string.IsNullOrEmpty(originBreaks) ? originBreaks.Split('\n').Select(s => s.Trim()).ToList() : new List<string>()
                     };
                     sdkBreakingChanges.Add(breakingChange);
                 }
@@ -297,5 +299,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         public string Category { get; set; }
         [JsonPropertyName("resolution")]
         public string? Resolution { get; set; }
+        [JsonPropertyName("originBreaks")]
+        public List<string>? OriginBreaks { get; set; }
     }
 }

@@ -34,6 +34,14 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
                     {
                         sb.AppendLine($"  Resolution: {change.Resolution}");
                     }
+                    if (change.OriginBreaks != null && change.OriginBreaks.Count > 0)
+                    {
+                        sb.AppendLine($"  Origin Breaks:");
+                        foreach (var origin in change.OriginBreaks)
+                        {
+                            sb.AppendLine($"    - {origin}");
+                        }
+                    }
                     sb.AppendLine();
                 }
             }

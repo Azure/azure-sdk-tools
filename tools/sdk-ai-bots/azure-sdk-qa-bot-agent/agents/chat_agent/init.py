@@ -32,7 +32,6 @@ from opentelemetry import trace as otel_trace
 
 import config.app_config as app_config
 from config.app_config import get as cfg
-from tools.knowledge_tools import KnowledgeTools
 from tools.graph_knowledge_tools import GraphKnowledgeTools
 from tools.web_tools import WebTools
 from tools.ado_mcp_tools import create_ado_mcp_tool
@@ -90,7 +89,6 @@ async def main() -> None:
     project_client = get_project_client()
 
     # Init Tools (synchronous / instant)
-    knowledge_tools = KnowledgeTools()
     graph_knowledge_tools = GraphKnowledgeTools()
     web_tools = WebTools()
     pipeline_tools = PipelineTools()
@@ -99,16 +97,16 @@ async def main() -> None:
     )
 
     # Tool registration:
-    #   * `search_knowledge_base` — Azure AI Search vector retrieval; returns
-    #     verbatim text-chunk references.
     #   * `search_knowledge_graph` — GraphRAG retrieval via Local Search
     #     context builder; returns deduplicated source references grounded
     #     by entity-description ANN + 1-hop graph expansion. No completion
-    #     LLM call. Output shape mirrors `search_knowledge_base` so the
-    #     agent's "Answer synthesis" rules in instruction.md describe how
-    #     to merge them.
+    #     LLM call.
+    #
+    # NOTE (experiment): the previous `search_knowledge_base` (Azure AI
+    # Search vector retrieval) tool is intentionally disabled so we can
+    # measure GraphRAG-only retrieval quality against the existing
+    # KB-only baseline. Revert this block to re-enable the hybrid.
     tools = [
-        knowledge_tools.search_knowledge_base,
         graph_knowledge_tools.search_knowledge_graph,
         web_tools.web_fetch,
         pipeline_tools.azsdk_analyze_pipeline,

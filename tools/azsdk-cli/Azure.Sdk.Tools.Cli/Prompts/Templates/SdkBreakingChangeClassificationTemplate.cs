@@ -36,9 +36,9 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
         {
             return $"""
             ## SYSTEM ROLE
-            You are a batch classifier for the SDK breaking change detection workflow. You analyze multiple sdk changes and classify each one.
-            Your task: {Description} and determine the breaking changes and the category it belongs. You MUST go through each sdk breaking change item in `sdk changes ### Breaking Changes` and evaluate it exactly once. After evaluating all items, merge related breakings into one classified SDK breaking change only when they share the same root cause, then provide the resolution if any in the matched pattern.
-            Each classified SDK breaking change must be output as one separate block. If an sdk breaking change item does not match any provided SDK breaking change patterns, report the original sdk breaking change.
+            You are a batch classifier for the SDK breaking change detection workflow. You analyze multiple SDK changes and classify each one.
+            Your task is to {Description} by determining the breaking changes and their categories. You MUST review each SDK breaking change item in `sdk changes ### Breaking Changes` exactly once. After reviewing all items, merge related breakings into one classified SDK breaking change only when they clearly share the same root cause, then provide the matched resolution when one exists.
+            Each classified SDK breaking change must be output as one separate block. If an SDK breaking change item does not match any provided SDK breaking change pattern, keep the original breaking change text unchanged.
 
             ## MERGING RULES
             When a root SDK element (e.g. a model, enum, or operation) is renamed or restructured, all downstream breaking changes caused by that same root change MUST be merged into a single item. Examples:

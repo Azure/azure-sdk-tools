@@ -92,6 +92,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<ReleasePlanWorkItem> GetReleasePlanAsync(int releasePlanId, CancellationToken ct);
         public Task<ReleasePlanWorkItem> GetReleasePlanForWorkItemAsync(int workItemId, CancellationToken ct);
         public Task<ReleasePlanWorkItem> GetReleasePlanAsync(string pullRequestUrl, CancellationToken ct);
+        public Task<ReleasePlanWorkItem?> ResolveReleasePlanByIdAsync(int id, CancellationToken ct);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansForProductAsync(string productTreeId, string sdkReleaseType, bool isTestReleasePlan = false, string apiReleaseType = "", CancellationToken ct = default);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansByProductAndLifecycleAsync(string productTreeId, string productLifecycle, bool isTestReleasePlan = false, CancellationToken ct = default);
@@ -106,6 +107,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<bool> UpdateApiSpecVersionAsync(int releasePlanWorkItemId, string apiVersion, CancellationToken ct);
         public Task<bool> LinkNamespaceApprovalIssueAsync(int releasePlanWorkItemId, string url, CancellationToken ct);
         public Task<PackageWorkitemResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "", CancellationToken ct = default);
+        public Task<List<int>> FindPackageWorkItemIdsAsync(string packageName, string language, string packageVersionMajorMinor, CancellationToken ct = default);
         public Task<List<PackageWorkitemResponse>> ListPartialPackageWorkItemAsync(string packageName, string language, CancellationToken ct);
         public Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string apiSpecBranchRef = "main", CancellationToken ct = default);
         public Task<Dictionary<string, List<string>>> GetPipelineLlmArtifacts(string project, int buildId, CancellationToken ct);
@@ -180,6 +182,17 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 throw new InvalidOperationException($"Work item {workItemId} not found.");
             }
+
+            // Other work item types share the same numeric ID space, so guard against mapping a
+            // non-Release-Plan work item to a release plan with empty fields.
+            var workItemType = workItem.Fields != null && workItem.Fields.TryGetValue("System.WorkItemType", out var typeValue)
+                ? typeValue?.ToString()
+                : null;
+            if (!string.Equals(workItemType, "Release Plan", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException($"Work item {workItemId} is not a Release Plan (type '{workItemType ?? "unknown"}').");
+            }
+
             var releasePlan = await MapWorkItemToReleasePlanAsync(workItem, ct);
             releasePlan.WorkItemUrl = workItem.Url;
             releasePlan.WorkItemId = workItem?.Id ?? 0;
@@ -196,6 +209,45 @@ namespace Azure.Sdk.Tools.Cli.Services
                 throw new Exception($"Failed to find release plan work item with release plan Id {releasePlanId}");
             }
             return await MapWorkItemToReleasePlanAsync(releasePlanWorkItems[0], ct);
+        }
+
+        /// <summary>
+        /// Resolves a release plan from an ID that may be either the user-facing Release Plan ID or the
+        /// Azure DevOps work item ID. The Release Plan ID is tried first (that is the number users have);
+        /// if that fails, the number is treated as a work item ID, accepted only when it is a Release Plan.
+        /// Returns null if neither lookup resolves.
+        /// </summary>
+        public async Task<ReleasePlanWorkItem?> ResolveReleasePlanByIdAsync(int id, CancellationToken ct)
+        {
+            if (id <= 0)
+            {
+                return null;
+            }
+
+            // Try the number as a Release Plan ID first (already filtered to Release Plan work items).
+            try
+            {
+                var releasePlan = await GetReleasePlanAsync(id, ct);
+                if (releasePlan != null)
+                {
+                    return releasePlan;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogInformation(ex, "Could not resolve {id} as a Release Plan ID; trying it as a work item ID instead.", id);
+            }
+
+            // Fall back to treating the number as a work item ID, accepted only when it is a Release Plan.
+            try
+            {
+                return await GetReleasePlanForWorkItemAsync(id, ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogInformation(ex, "Could not resolve {id} as a work item ID.", id);
+                return null;
+            }
         }
 
         public async Task<List<ReleasePlanWorkItem>> GetReleasePlansForProductAsync(string productTreeId, string sdkReleaseType, bool isTestReleasePlan = false, string apiReleaseType = "", CancellationToken ct = default)
@@ -279,6 +331,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
                 query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
                 query += $" AND [Custom.{languageId}PackageName] = '{escapedPackageName}'";
+                query += $" AND [Custom.ReleaseStatusFor{languageId}] <> 'Released'";
                 query += " AND [System.WorkItemType] = 'Release Plan'";
                 query += " AND [System.State] = 'In Progress'";
                 var releasePlanWorkItems = await FetchWorkItemsAsync(query, ct);
@@ -804,6 +857,20 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
+        private async Task<List<int>> FetchWorkItemIdsAsync(string query, CancellationToken ct)
+        {
+            try
+            {
+                var workItemClient = connection.GetWorkItemClient(ct);
+                var result = await workItemClient.QueryByWiqlAsync(new Wiql { Query = query }, cancellationToken: ct);
+                return result?.WorkItems?.Select(workItem => workItem.Id).ToList() ?? [];
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to get work item IDs. Error: {ex.Message}", ex);
+            }
+        }
+
         public async Task<List<WorkItem>> FetchWorkItemsPagedAsync(string query, int top = 100000, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All, CancellationToken ct = default)
         {
             try
@@ -1310,6 +1377,20 @@ namespace Azure.Sdk.Tools.Cli.Services
                 return null;
             }
             return MapPackageWorkItemToModel(packageWorkItems[0]); // Return the first package work item
+        }
+
+        public async Task<List<int>> FindPackageWorkItemIdsAsync(string packageName, string language, string packageVersionMajorMinor, CancellationToken ct = default)
+        {
+            language = MapLanguageIdToName(language);
+            if (packageName.Contains(' ') || packageName.Contains('\'') || packageName.Contains('"') || language.Contains(' ') || language.Contains('\'') || language.Contains('"') || packageVersionMajorMinor.Contains(' ') || packageVersionMajorMinor.Contains('\'') || packageVersionMajorMinor.Contains('"'))
+            {
+                throw new ArgumentException("Invalid data in one of the parameters.");
+            }
+
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [System.WorkItemType] = 'Package' AND [Custom.Package] = '{packageName}' AND [Custom.PackageVersionMajorMinor] = '{packageVersionMajorMinor}' AND [Custom.Language] = '{language}' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned') AND [System.Tags] NOT CONTAINS '{RELEASE_PLANNER_APP_TEST}'";
+            logger.LogDebug("Executing package work item ID lookup query: {query}", query);
+
+            return await FetchWorkItemIdsAsync(query, ct);
         }
 
         // /// <summary>

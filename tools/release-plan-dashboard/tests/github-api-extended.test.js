@@ -45,6 +45,14 @@ describe("github-api additional tests", () => {
       expect(result).toBeInstanceOf(Map);
       expect(result.size).toBe(0);
     });
+
+    test("batchFetchSpecPrLabels returns empty map when no token", async () => {
+      const result = await githubApi.batchFetchSpecPrLabels([
+        "https://github.com/org/repo/pull/1",
+      ]);
+      expect(result).toBeInstanceOf(Map);
+      expect(result.size).toBe(0);
+    });
   });
 
   describe("batchFetchPrStatuses input validation", () => {

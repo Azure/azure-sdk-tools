@@ -29,7 +29,7 @@ const mockDevopsRequest = vi
     return Promise.resolve({ workItems: [], value: [] });
   });
 const mockFetchPackageWorkItems = vi.fn().mockResolvedValue(new Map());
-const mockFetchAzureSdkPackageList = vi.fn().mockResolvedValue("");
+const mockFetchReleasedPackageCsvs = vi.fn().mockResolvedValue(new Map());
 const mockBatchFetchPrStatuses = vi.fn().mockResolvedValue(new Map());
 const mockBatchFetchPrDetails = vi.fn().mockResolvedValue(new Map());
 const mockBatchFetchSpecProjectPaths = vi.fn().mockResolvedValue(new Map());
@@ -44,8 +44,8 @@ vi.mock("../lib/devops-api.js", async () => {
     runWiql: (...args) => mockRunWiql(...args),
     fetchWorkItemsBatch: (...args) => mockFetchWorkItemsBatch(...args),
     fetchPackageWorkItems: (...args) => mockFetchPackageWorkItems(...args),
-    fetchAzureSdkPackageList: (...args) =>
-      mockFetchAzureSdkPackageList(...args),
+    fetchReleasedPackageCsvs: (...args) =>
+      mockFetchReleasedPackageCsvs(...args),
   };
 });
 
@@ -109,7 +109,6 @@ beforeEach(() => {
       return Promise.resolve({ workItems: [], value: [] });
     });
   mockFetchPackageWorkItems.mockReset().mockResolvedValue(new Map());
-  mockFetchAzureSdkPackageList.mockReset().mockResolvedValue("");
   mockBatchFetchPrStatuses.mockReset().mockResolvedValue(new Map());
   mockBatchFetchPrDetails.mockReset().mockResolvedValue(new Map());
   mockBatchFetchSpecProjectPaths.mockReset().mockResolvedValue(new Map());
@@ -365,7 +364,6 @@ describe("API routes", () => {
       mockDevopsRequest.mockResolvedValueOnce({ value: [wi] });
       mockFetchWorkItemsBatch.mockResolvedValueOnce([]);
       mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("");
       mockBatchFetchPrStatuses.mockResolvedValue(new Map());
       mockBatchFetchSpecProjectPaths.mockResolvedValueOnce(new Map());
       mockBatchFetchSpecPrLabels.mockResolvedValueOnce(new Map());
@@ -383,7 +381,6 @@ describe("API routes", () => {
       mockDevopsRequest.mockResolvedValueOnce({ value: [wi] });
       mockFetchWorkItemsBatch.mockResolvedValueOnce([]);
       mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("");
       mockBatchFetchSpecProjectPaths.mockResolvedValueOnce(new Map());
       mockBatchFetchSpecPrLabels.mockResolvedValueOnce(new Map());
       const res = await httpRequest("POST", "/api/refresh-plan/202");
@@ -585,6 +582,14 @@ describe("API routes", () => {
       expect(res.body.details).toEqual({});
     });
 
+    test("returns empty details when all urls are invalid", async () => {
+      const res = await httpRequest("POST", "/api/pr-details", {
+        urls: ["not-a-url", "http://example.com", 123],
+      });
+      expect(res.status).toBe(200);
+      expect(res.body.details).toEqual({});
+    });
+
     test("returns cached details when available", async () => {
       const url = "https://github.com/Azure/sdk/pull/10";
       const detailEntry = {
@@ -635,6 +640,70 @@ describe("API routes", () => {
       });
       expect(res.status).toBe(200);
       expect(res.body.details[url].prDetails).toBeNull();
+    });
+
+    test("handles missing status in statusMap", async () => {
+      const url = "https://github.com/Azure/sdk/pull/13";
+      mockBatchFetchPrStatuses.mockResolvedValueOnce(new Map()); // status not in map
+      mockBatchFetchPrDetails.mockResolvedValueOnce(new Map([[url, null]]));
+      const res = await httpRequest("POST", "/api/pr-details", {
+        urls: [url],
+      });
+      expect(res.status).toBe(200);
+      expect(res.body.details[url].gitHubStatus).toBeNull();
+      expect(res.body.details[url].prDetails).toBeNull();
+      // status not cached when null
+      expect(cache.prStatuses.has(url)).toBe(false);
+    });
+
+    test("handles details with missing optional fields", async () => {
+      const url = "https://github.com/Azure/sdk/pull/14";
+      const mockDetails = {
+        mergeable: false,
+        mergeableState: "blocked",
+        isApproved: false,
+        approvedBy: [],
+        failedChecks: ["check1"],
+        // apiViewUrl, title, requestedReviewers, latestComment, updatedAt all missing
+      };
+      mockBatchFetchPrStatuses.mockResolvedValueOnce(new Map([[url, "draft"]]));
+      mockBatchFetchPrDetails.mockResolvedValueOnce(
+        new Map([[url, mockDetails]]),
+      );
+      const res = await httpRequest("POST", "/api/pr-details", {
+        urls: [url],
+      });
+      expect(res.status).toBe(200);
+      const entry = res.body.details[url];
+      expect(entry.gitHubStatus).toBe("draft");
+      expect(entry.prDetails.apiViewUrl).toBe("");
+      expect(entry.prDetails.title).toBe("");
+      expect(entry.prDetails.requestedReviewers).toEqual([]);
+      expect(entry.prDetails.latestComment).toBeNull();
+      expect(entry.prDetails.updatedAt).toBe("");
+    });
+
+    test("caches status separately when status is present", async () => {
+      const url = "https://github.com/Azure/sdk/pull/15";
+      cache.prDetails.delete(url);
+      cache.prStatuses.delete(url);
+      const mockDetails = {
+        mergeable: true,
+        mergeableState: "clean",
+        isApproved: false,
+        approvedBy: [],
+        failedChecks: [],
+      };
+      mockBatchFetchPrStatuses.mockResolvedValueOnce(new Map([[url, "open"]]));
+      mockBatchFetchPrDetails.mockResolvedValueOnce(
+        new Map([[url, mockDetails]]),
+      );
+      const res = await httpRequest("POST", "/api/pr-details", {
+        urls: [url],
+      });
+      expect(res.status).toBe(200);
+      expect(cache.prStatuses.has(url)).toBe(true);
+      expect(cache.prStatuses.get(url).data).toBe("open");
     });
 
     test("handles errors gracefully", async () => {
@@ -962,7 +1031,6 @@ describe("API routes", () => {
         new Map([[specUrl, [{ name: "BreakingChange", color: "ff0000" }]]]),
       );
       mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("");
 
       const res = await httpRequest("POST", "/api/refresh-plan/500");
       expect(res.status).toBe(200);
@@ -1000,7 +1068,6 @@ describe("API routes", () => {
       mockBatchFetchSpecProjectPaths.mockResolvedValueOnce(new Map());
       mockBatchFetchSpecPrLabels.mockResolvedValueOnce(new Map());
       mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("");
 
       const res = await httpRequest("POST", "/api/refresh-plan/510");
       expect(res.status).toBe(200);
@@ -1027,7 +1094,6 @@ describe("API routes", () => {
         ],
       ]);
       mockFetchPackageWorkItems.mockResolvedValueOnce(pkgMap);
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("Azure.Storage.Blobs");
       mockBatchFetchPrStatuses.mockResolvedValue(new Map());
       mockBatchFetchSpecProjectPaths.mockResolvedValueOnce(new Map());
       mockBatchFetchSpecPrLabels.mockResolvedValueOnce(new Map());
@@ -1038,7 +1104,6 @@ describe("API routes", () => {
       expect(dotnet.pkgVersion).toBe("13.0.0");
       expect(dotnet.namespaceApproval).toBe("Approved");
       expect(dotnet.apiReviewStatus).toBe("Approved");
-      expect(dotnet.isNewPackage).toBe(false);
     });
 
     test("enrichSdkPrStatuses sets statuses on SDK PRs", async () => {
@@ -1047,7 +1112,6 @@ describe("API routes", () => {
       mockDevopsRequest.mockResolvedValueOnce({ value: [wi] });
       mockFetchWorkItemsBatch.mockResolvedValueOnce([]);
       mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("");
       mockBatchFetchSpecProjectPaths.mockResolvedValueOnce(new Map());
       mockBatchFetchSpecPrLabels.mockResolvedValueOnce(new Map());
       // First call for spec PRs (enrichSpecPrData), second for SDK PRs (enrichSdkPrStatuses)
@@ -1073,7 +1137,6 @@ describe("API routes", () => {
       mockDevopsRequest.mockResolvedValueOnce({ value: [wi] });
       mockFetchWorkItemsBatch.mockResolvedValueOnce([]);
       mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("");
 
       const res = await httpRequest("POST", "/api/refresh-plan/550");
       expect(res.status).toBe(200);
@@ -1091,7 +1154,6 @@ describe("API routes", () => {
       mockFetchPackageWorkItems.mockRejectedValueOnce(
         new Error("Package API error"),
       );
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("");
       mockBatchFetchPrStatuses.mockResolvedValue(new Map());
       mockBatchFetchSpecProjectPaths.mockResolvedValueOnce(new Map());
       mockBatchFetchSpecPrLabels.mockResolvedValueOnce(new Map());
@@ -1155,7 +1217,6 @@ describe("API routes", () => {
       mockBatchFetchSpecProjectPaths.mockResolvedValueOnce(new Map());
       mockBatchFetchSpecPrLabels.mockResolvedValueOnce(new Map());
       mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("");
 
       const res = await httpRequest("GET", "/api/release-plans");
       expect(res.status).toBe(200);
@@ -1163,6 +1224,55 @@ describe("API routes", () => {
       expect(res.body.plans[0].id).toBe(900);
       expect(res.body.plans[0].apiSpec).not.toBeNull();
       expect(res.body.plans[0].apiSpec.specPrUrl).toContain("pull/88");
+    });
+
+    test("enrichPackageData sets isFirstGA when CSV has no VersionGA and release type is stable", async () => {
+      const wi = buildWorkItem(541, {
+        dotnetPkg: "Azure.Storage.Blobs",
+        fields: {
+          "Custom.ReleaseStatusForDotnet": "In Progress",
+          "Custom.SDKtypetobereleased": "GA",
+        },
+      });
+      mockDevopsRequest.mockResolvedValueOnce({ value: [wi] });
+      mockFetchWorkItemsBatch.mockResolvedValueOnce([]);
+      mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
+      // CSV map has the package but no GA version
+      mockFetchReleasedPackageCsvs.mockResolvedValueOnce(
+        new Map([[".net|azure.storage.blobs", { versionGA: "" }]]),
+      );
+      mockBatchFetchPrStatuses.mockResolvedValue(new Map());
+      mockBatchFetchSpecProjectPaths.mockResolvedValueOnce(new Map());
+      mockBatchFetchSpecPrLabels.mockResolvedValueOnce(new Map());
+
+      const res = await httpRequest("POST", "/api/refresh-plan/541");
+      expect(res.status).toBe(200);
+      const dotnet = res.body.plan.languages[".NET"];
+      expect(dotnet.isFirstGA).toBe(true);
+      expect(dotnet.isFirstPreview).toBeUndefined();
+    });
+
+    test("enrichPackageData sets isFirstPreview when package not in CSV", async () => {
+      const wi = buildWorkItem(542, {
+        dotnetPkg: "Azure.Brand.New",
+        fields: {
+          "Custom.ReleaseStatusForDotnet": "In Progress",
+        },
+      });
+      mockDevopsRequest.mockResolvedValueOnce({ value: [wi] });
+      mockFetchWorkItemsBatch.mockResolvedValueOnce([]);
+      mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
+      // Empty CSV map — package not found
+      mockFetchReleasedPackageCsvs.mockResolvedValueOnce(new Map());
+      mockBatchFetchPrStatuses.mockResolvedValue(new Map());
+      mockBatchFetchSpecProjectPaths.mockResolvedValueOnce(new Map());
+      mockBatchFetchSpecPrLabels.mockResolvedValueOnce(new Map());
+
+      const res = await httpRequest("POST", "/api/refresh-plan/542");
+      expect(res.status).toBe(200);
+      const dotnet = res.body.plan.languages[".NET"];
+      expect(dotnet.isFirstPreview).toBe(true);
+      expect(dotnet.isFirstGA).toBeUndefined();
     });
 
     test("fetchAllReleasePlans filters out OpenAPI definition types", async () => {
@@ -1194,7 +1304,6 @@ describe("API routes", () => {
       mockBatchFetchSpecProjectPaths.mockResolvedValueOnce(new Map());
       mockBatchFetchSpecPrLabels.mockResolvedValueOnce(new Map());
       mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("");
 
       const res = await httpRequest("GET", "/api/release-plans");
       expect(res.status).toBe(200);

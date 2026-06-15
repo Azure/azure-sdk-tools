@@ -27,6 +27,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
                 result.AppendLine($"Owner: {ReleasePlanDetails.Owner}");
                 result.AppendLine($"SDK Release Month: {ReleasePlanDetails.SDKReleaseMonth}");
                 result.AppendLine($"Release Plan Link: {ReleasePlanLink}");
+                result.AppendLine($"Is API spec approved: {ReleasePlanDetails.IsSpecApproved}");
             }
             else
             {

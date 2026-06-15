@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 
-from agent_framework import Skill
+from agent_framework import InlineSkill, Skill, SkillFrontmatter
 
 from config.tenant_config import (
     TenantID,
@@ -105,10 +105,12 @@ def create_tenant_skills() -> list[Skill]:
             logger.warning("Skipping skill %s: no content", skill_name)
             continue
         skills.append(
-            Skill(
-                name=skill_name,
-                description=description,
-                content=content,
+            InlineSkill(
+                frontmatter=SkillFrontmatter(
+                    name=skill_name,
+                    description=description,
+                ),
+                instructions=content,
             )
         )
         logger.info("Created skill: %s (tenant=%s)", skill_name, tenant_id.value)

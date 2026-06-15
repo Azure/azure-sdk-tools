@@ -1,17 +1,16 @@
 # Release History
 
-## 0.6.19 (Unreleased)
+## 0.6.19 (2026-06-12)
 
 ### Features Added
 
 - Release plan is automatically marked as "Finished" when all required language SDKs are either Released or have an Approved exclusion. Management plane checks all 5 languages; data plane checks .NET, Java, Python, and JavaScript only.
 - Added the `package find-work-item` CLI command to find Azure DevOps package work item IDs by package name, package version, and language.
 
-### Breaking Changes
-
 ### Bugs Fixed
 
-### Other Changes
+- Release plan tools now accept either the user-facing Release Plan ID or the Azure DevOps work item ID. Tools resolve the supplied number by trying it as a Release Plan ID first, then falling back to a work item ID lookup.
+- `GetReleasePlanForWorkItemAsync` now verifies the work item's `System.WorkItemType` is `Release Plan` before mapping, preventing a non-release-plan work item from being mapped to an empty release plan.
 
 ## 0.6.18 (2026-06-08)
 

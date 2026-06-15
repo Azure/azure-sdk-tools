@@ -356,6 +356,96 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(releasePlanDetails.SpecPullRequests, Is.Empty);
         }
 
+        [Test]
+        public async Task Test_Create_releasePlan_allows_different_release_type_for_same_spec_pr()
+        {
+            // Arrange: configure the mock to return an existing GA release plan for the spec PR
+            var mockDevOpsService = new MockDevOpsService
+            {
+                ConfiguredReleasePlanForSpecPrUrl = new ReleasePlanWorkItem
+                {
+                    WorkItemId = 42,
+                    ReleasePlanId = 10,
+                    Title = "Existing GA Release Plan",
+                    ReleasePlanType = "GA" // ApiReleaseType.GA
+                }
+            };
+
+            var tool = new ReleasePlanTool(
+                mockDevOpsService,
+                gitHelper,
+                typeSpecHelper,
+                logger,
+                userHelper,
+                gitHubService,
+                environmentHelper,
+                inputSanitizer,
+                httpClient,
+                Mock.Of<INpxHelper>());
+
+            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            var specPrUrl = "https://github.com/Azure/azure-rest-api-specs/pull/35446";
+
+            // Act: create a Public Preview plan using the same spec PR (should succeed because release type differs)
+            var releaseplan = await tool.CreateReleasePlan(
+                testCodeFilePath,
+                "July 2025",
+                "Public Preview",
+                specPullRequestUrl: specPrUrl,
+                isTestReleasePlan: true);
+
+            // Assert: creation succeeds
+            Assert.IsNotNull(releaseplan);
+            Assert.IsNull(releaseplan.ResponseError, $"Unexpected error: {releaseplan.ResponseError}");
+            Assert.IsNotNull(releaseplan.ReleasePlanDetails);
+            Assert.Greater(releaseplan.ReleasePlanDetails.WorkItemId, 0);
+        }
+
+        [Test]
+        public async Task Test_Create_releasePlan_blocks_same_release_type_for_same_spec_pr()
+        {
+            // Arrange: configure the mock to return an existing GA release plan for the spec PR
+            var mockDevOpsService = new MockDevOpsService
+            {
+                ConfiguredReleasePlanForSpecPrUrl = new ReleasePlanWorkItem
+                {
+                    WorkItemId = 42,
+                    ReleasePlanId = 10,
+                    Title = "Existing GA Release Plan",
+                    ReleasePlanType = "GA" // ApiReleaseType.GA
+                }
+            };
+
+            var tool = new ReleasePlanTool(
+                mockDevOpsService,
+                gitHelper,
+                typeSpecHelper,
+                logger,
+                userHelper,
+                gitHubService,
+                environmentHelper,
+                inputSanitizer,
+                httpClient,
+                Mock.Of<INpxHelper>());
+
+            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            var specPrUrl = "https://github.com/Azure/azure-rest-api-specs/pull/35446";
+
+            // Act: attempt to create another GA plan for the same spec PR (should be blocked)
+            var releaseplan = await tool.CreateReleasePlan(
+                testCodeFilePath,
+                "July 2025",
+                "GA",
+                specPullRequestUrl: specPrUrl,
+                isTestReleasePlan: true);
+
+            // Assert: returns existing plan with a message instead of creating a new one
+            Assert.IsNotNull(releaseplan);
+            Assert.IsNull(releaseplan.ResponseError);
+            Assert.That(releaseplan.Message, Does.Contain("release plan already exists"));
+            Assert.That(releaseplan.ReleasePlanDetails?.WorkItemId, Is.EqualTo(42));
+        }
+
         
         [Test]
         public async Task Test_Get_Release_Plan_by_spec_pull_request_url()
@@ -1100,6 +1190,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 IsDataPlane = false
             };
             mockDevOps.Setup(x => x.GetReleasePlanForWorkItemAsync(200, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
+            mockDevOps.Setup(x => x.ResolveReleasePlanByIdAsync(200, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
             mockDevOps.Setup(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
                 .Callback<int, Dictionary<string, string>, CancellationToken>((id, fields, _) =>
                 {
@@ -1143,6 +1234,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 IsDataPlane = true
             };
             mockDevOps.Setup(x => x.GetReleasePlanForWorkItemAsync(300, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
+            mockDevOps.Setup(x => x.ResolveReleasePlanByIdAsync(300, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
             mockDevOps.Setup(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
                 .Callback<int, Dictionary<string, string>, CancellationToken>((id, fields, _) =>
                 {
@@ -1282,6 +1374,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 IsManagementPlane = true
             };
             mockDevOps.Setup(x => x.GetReleasePlanForWorkItemAsync(400, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
+            mockDevOps.Setup(x => x.ResolveReleasePlanByIdAsync(400, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
             mockDevOps.Setup(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 400 });
             mockDevOps.Setup(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
@@ -1316,6 +1409,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 IsDataPlane = true
             };
             mockDevOps.Setup(x => x.GetReleasePlanForWorkItemAsync(600, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
+            mockDevOps.Setup(x => x.ResolveReleasePlanByIdAsync(600, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
             mockDevOps.Setup(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 600 });
             mockDevOps.Setup(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);

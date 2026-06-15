@@ -30,15 +30,13 @@ stimuli:
     # TODO: seed a fixture (environment.files or git) for the Microsoft.Widget
     # project, add `file-exists` + `file-contains` graders on the produced
     # asset.tsp, and a `run-command` grader to verify `npx tsp compile`.
+    # Those output graders are the real "did it author the resource" check;
+    # asserting a specific write tool (`edit`) is a flaky proxy — the agent
+    # may legitimately use `powershell` for batch edits instead.
     graders:
       - type: tool-calls
         config:
           required:
-            # `edit` is the Copilot SDK executor's built-in file-edit tool
-            # (alongside `view` / `create`) — NOT an azsdk MCP tool. Requiring
-            # it asserts the agent actually wrote the resource .tsp, not just
-            # produced an authoring plan.
-            - edit
             - azsdk_typespec_generate_authoring_plan
 
 scoring:

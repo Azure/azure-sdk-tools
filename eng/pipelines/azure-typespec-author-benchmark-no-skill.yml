@@ -86,9 +86,3 @@ extends:
                   artifact: eval-results-no-skill-$(Build.BuildId)
                   displayName: Upload eval results
                   condition: always()
-
-                - output: pipelineArtifact
-                  path: $(Build.StagingDirectory)/qa-bot-log
-                  artifact: qa-bot-service-log-no-skill
-                  displayName: Upload QA bot backend log
-                  condition: always()

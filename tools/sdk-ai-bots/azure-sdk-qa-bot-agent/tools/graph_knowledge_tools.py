@@ -45,7 +45,7 @@ answering tool:
 from __future__ import annotations
 
 import logging
-from typing import Annotated
+from typing import Annotated, Any
 
 import httpx
 
@@ -82,6 +82,16 @@ class GraphKnowledgeTools:
             "list). Use in parallel with search_knowledge_base; the "
             "two recall paths are complementary.",
         ],
+        tenant_id: Annotated[
+            str,
+            "Optional tenant identifier (e.g. 'typespec_channel_qa_bot', "
+            "'python_channel_qa_bot'). Read it from the active skill's "
+            "[skill_tenant_id] line. When set to a known tenant the "
+            "backend restricts graph retrieval to entities sourced from "
+            "that tenant's KnowledgeSource set — same scoping as "
+            "search_knowledge_base. Pass an empty string for unscoped "
+            "retrieval (cross-domain questions).",
+        ] = "",
     ) -> GraphSearchResult:
         """Retrieve graph-grounded references for ``query`` via the backend.
 
@@ -124,16 +134,24 @@ class GraphKnowledgeTools:
             )
             return GraphSearchResult(references=[], query=normalised_query)
 
+        normalised_tenant = (tenant_id or "").strip()
         logger.info(
-            "Posting graph query to %s (timeout=%.1fs)", endpoint, timeout
+            "Posting graph query to %s (timeout=%.1fs, tenant_id=%r)",
+            endpoint,
+            timeout,
+            normalised_tenant,
         )
+
+        payload: dict[str, Any] = {"query": normalised_query}
+        if normalised_tenant:
+            payload["tenant_id"] = normalised_tenant
 
         try:
             async with httpx.AsyncClient(timeout=timeout) as client:
                 response = await client.post(
                     endpoint,
                     headers={"Authorization": f"Bearer {access_token.token}"},
-                    json={"query": normalised_query},
+                    json=payload,
                 )
                 response.raise_for_status()
                 payload = response.json()

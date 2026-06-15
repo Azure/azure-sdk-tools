@@ -344,11 +344,18 @@ async def graph_query(req: GraphQueryRequest) -> GraphSearchResult:
     """Run a GraphRAG Local-Search retrieval and return references.
 
     The body's ``query`` is run through the warm
-    :class:`KnowledgeGraphService`. Returns an empty ``references``
-    list when the service is disabled, retrieval fails, or no matches
-    are found — never raises 5xx for query-side failures so the chat
-    agent can degrade gracefully.
+    :class:`KnowledgeGraphService`. When ``tenant_id`` is present and
+    maps to a known :class:`TenantConfig` with at least one
+    :class:`KnowledgeSource`, retrieval is restricted to entities whose
+    source documents belong to that tenant's ``KnowledgeSource`` set —
+    mirroring how ``search_knowledge_base`` scopes its AI Search query.
+    An unknown / empty ``tenant_id`` falls back to unscoped retrieval
+    so legacy callers (and tenants without a source list) keep working.
+    Returns an empty ``references`` list when the service is disabled,
+    retrieval fails, or no matches are found — never raises 5xx for
+    query-side failures so the chat agent can degrade gracefully.
     """
+    from config.tenant_config import TenantID, get_tenant_config
     from utils.knowledge_graph import GraphSourceRef, get_knowledge_graph_service
 
     normalised_query = (req.query or "").strip()
@@ -359,9 +366,33 @@ async def graph_query(req: GraphQueryRequest) -> GraphSearchResult:
     if not service.enabled:
         return GraphSearchResult(references=[], query=normalised_query)
 
+    # Resolve the tenant's KnowledgeSource list to a set of source
+    # folder names. ``KnowledgeSource.name`` matches the
+    # ``raw_data.source_folder`` value the sync project writes for
+    # every document — same identifier the KB tool uses for its
+    # AI Search ``source_folder eq '...'`` filter.
+    allowed_source_folders: set[str] | None = None
+    tenant_id_raw = (req.tenant_id or "").strip()
+    if tenant_id_raw:
+        try:
+            tenant_enum = TenantID(tenant_id_raw)
+        except ValueError:
+            logger.warning(
+                "Graph query: unknown tenant_id %r — running unscoped retrieval",
+                tenant_id_raw,
+            )
+            tenant_enum = None
+        if tenant_enum is not None:
+            tenant_config = get_tenant_config(tenant_enum)
+            if tenant_config and tenant_config.sources:
+                allowed_source_folders = {
+                    src.name for src in tenant_config.sources if src.name
+                }
+
     try:
         sources: list[GraphSourceRef] | None = await service.search_graph(
-            normalised_query
+            normalised_query,
+            allowed_source_folders=allowed_source_folders,
         )
     except Exception:
         logger.exception("Graph query failed for %r", normalised_query)

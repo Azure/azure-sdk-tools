@@ -51,6 +51,7 @@ the bot atomically swaps in a new build whenever the sync project calls
 from __future__ import annotations
 
 import asyncio
+import contextvars
 import logging
 import tempfile
 import time
@@ -68,6 +69,26 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 _DEFAULT_COMMUNITY_LEVEL = 2
+
+# Oversample factor applied when a tenant filter is active: we ask the
+# entity vectorstore for ``k * factor`` ANN hits and keep the first ``k``
+# that belong to the allowed source folders. 8x comfortably covers
+# tenants that own ~12% of the entity universe (typical: ``typespec``
+# is ~30%, ``python``/``api_spec_review`` ~5-10%) without paying
+# noticeable extra latency — the underlying ANN call is the same cost
+# regardless of ``k`` once ``k`` exceeds the index's segment cache.
+_FILTER_OVERSAMPLE = 8
+
+# Per-asyncio-task context variable carrying the set of entity ids the
+# current ``build_context`` call is allowed to surface. Used by
+# :class:`_SourceFilteredVectorStore` to scope ANN hits without
+# threading a new parameter through every layer of GraphRAG's context
+# builder. ``None`` (default) disables filtering — used both for
+# legacy callers that pass no tenant_id and for tenants whose
+# ``KnowledgeSource`` list is empty.
+_ALLOWED_ENTITY_IDS: contextvars.ContextVar[frozenset[str] | None] = (
+    contextvars.ContextVar("graphrag_allowed_entity_ids", default=None)
+)
 
 # Parquet artefacts produced by the GraphRAG indexing pipeline that we
 # need to drive query operations. ``documents`` is required so we can
@@ -113,6 +134,84 @@ class GraphSourceRef:
 _GRAPHRAG_CONFIG_ROOT = (
     Path(__file__).resolve().parent.parent / "config" / "graphrag"
 )
+
+
+class _SourceFilteredVectorStore:
+    """Wraps a GraphRAG ``VectorStore`` so per-call entity-ANN hits are
+    restricted to the ids currently allowed by ``_ALLOWED_ENTITY_IDS``.
+
+    GraphRAG's ``map_query_to_entities`` calls
+    ``entity_text_embeddings.similarity_search_by_text(text, embedder,
+    k=top_k * 2)`` — no pre-filter param is plumbed through. Rather
+    than fork ``LocalSearchMixedContext.build_context``, we wrap the
+    vectorstore once at builder-construction time:
+
+    * When the context variable is empty (legacy callers / tenants
+      with no ``KnowledgeSource`` list) the wrapper is a transparent
+      pass-through.
+    * Otherwise it asks the inner store for ``k * oversample`` hits,
+      drops results whose ``document.id`` is not in the allowed set,
+      and returns the first ``k`` survivors. Score order is preserved
+      because the inner store returns results sorted by similarity.
+
+    Attribute access for everything except ``similarity_search_by_text``
+    falls through to the inner store via ``__getattr__``, so the
+    factory keeps full access to ``connect``, ``search_by_id``, etc.
+    """
+
+    def __init__(self, inner: Any, oversample: int = _FILTER_OVERSAMPLE) -> None:
+        self._inner = inner
+        self._oversample = max(1, int(oversample))
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._inner, name)
+
+    def similarity_search_by_text(
+        self,
+        text: str,
+        text_embedder: Any,
+        k: int = 10,
+        **kwargs: Any,
+    ) -> list[Any]:
+        allowed = _ALLOWED_ENTITY_IDS.get()
+        if not allowed:
+            return self._inner.similarity_search_by_text(
+                text=text, text_embedder=text_embedder, k=k, **kwargs
+            )
+
+        oversampled = self._inner.similarity_search_by_text(
+            text=text,
+            text_embedder=text_embedder,
+            k=k * self._oversample,
+            **kwargs,
+        )
+        kept: list[Any] = []
+        for result in oversampled:
+            doc_id = getattr(getattr(result, "document", None), "id", None)
+            if doc_id is None:
+                continue
+            if str(doc_id) in allowed:
+                kept.append(result)
+                if len(kept) >= k:
+                    break
+
+        if not kept:
+            logger.info(
+                "GraphRAG source filter: 0/%d entity hits matched the "
+                "allowed source folders — query likely targets a topic "
+                "outside this tenant's KnowledgeSource set.",
+                len(oversampled),
+            )
+        elif len(kept) < k:
+            logger.debug(
+                "GraphRAG source filter: kept %d/%d hits (requested %d, "
+                "oversample=%dx) — consider raising _FILTER_OVERSAMPLE.",
+                len(kept),
+                len(oversampled),
+                k,
+                self._oversample,
+            )
+        return kept
 
 
 class KnowledgeGraphService:
@@ -167,6 +266,15 @@ class KnowledgeGraphService:
         # concurrent queries without locking.
         self._context_builder: Any = None
         self._context_params: dict[str, Any] = {}
+        # Reverse index used to scope graph retrieval per tenant. Each
+        # entry maps ``KnowledgeSource.name`` (= ``raw_data.source_folder``
+        # written by the sync project) to the set of ``entities.id``
+        # values whose ``text_unit_ids`` touch any document tagged with
+        # that folder. Built once per (re)load in
+        # ``_build_entity_ids_by_source_folder`` so per-query lookups
+        # are pure dict ops. Empty when filtering would be a no-op (no
+        # documents carry ``source_folder``).
+        self._entity_ids_by_source_folder: dict[str, frozenset[str]] = {}
         # Metadata for the currently-loaded build (manifest contents +
         # row counts). Populated on every successful load / reload so
         # ``GET /graph/admin/status`` can report what's serving traffic.
@@ -251,6 +359,7 @@ class KnowledgeGraphService:
                 self._report_embeddings_cache,
                 self._context_builder,
                 self._context_params,
+                self._entity_ids_by_source_folder,
             )
             try:
                 new_config = await asyncio.to_thread(self._load_config)
@@ -269,6 +378,9 @@ class KnowledgeGraphService:
                         "GraphRAG context builder produced no instance — "
                         "refusing to swap to a half-built state"
                     )
+                self._entity_ids_by_source_folder = (
+                    self._build_entity_ids_by_source_folder()
+                )
             except Exception:
                 logger.exception(
                     "GraphRAG reload failed; restoring previous service state"
@@ -280,6 +392,7 @@ class KnowledgeGraphService:
                     self._report_embeddings_cache,
                     self._context_builder,
                     self._context_params,
+                    self._entity_ids_by_source_folder,
                 ) = prev_state
                 raise
 
@@ -294,7 +407,11 @@ class KnowledgeGraphService:
     # Public search API
     # ------------------------------------------------------------------ #
 
-    async def search_graph(self, query: str) -> list[GraphSourceRef] | None:
+    async def search_graph(
+        self,
+        query: str,
+        allowed_source_folders: set[str] | None = None,
+    ) -> list[GraphSourceRef] | None:
         """Retrieve graph-grounded source snippets for a query.
 
         Performs the **context-building** half of GraphRAG's Local
@@ -308,6 +425,17 @@ class KnowledgeGraphService:
 
         Args:
             query: The user's question.
+            allowed_source_folders: Optional set of
+                ``KnowledgeSource.name`` values (equivalent to the
+                ``raw_data.source_folder`` written by the sync project
+                into ``documents.parquet``). When provided **and**
+                non-empty **and** at least one folder is known to the
+                pre-built reverse index, entity-ANN hits are scoped to
+                entities whose source documents belong to those
+                folders — mirroring how ``search_knowledge_base``
+                restricts its AI Search query per tenant. ``None`` or
+                an empty set (legacy callers, tenants with no source
+                list, unknown folders) keeps the unscoped behaviour.
 
         Returns:
             A list of :class:`GraphSourceRef` objects (one per unique
@@ -343,6 +471,7 @@ class KnowledgeGraphService:
                 self._report_embeddings_cache = {}
                 self._context_builder = None
                 self._context_params = {}
+                self._entity_ids_by_source_folder = {}
             return None
 
         # ``build_context`` is stateless across calls, so the same
@@ -350,6 +479,10 @@ class KnowledgeGraphService:
         # locking. The builder makes one embedding call + one AI
         # Search ANN request + several DataFrame joins — no completion
         # LLM call.
+        allowed_entity_ids = self._resolve_allowed_entity_ids(
+            allowed_source_folders
+        )
+        token = _ALLOWED_ENTITY_IDS.set(allowed_entity_ids)
         try:
             result = await asyncio.to_thread(
                 self._context_builder.build_context,
@@ -359,8 +492,52 @@ class KnowledgeGraphService:
         except Exception:
             logger.warning("GraphRAG search_graph failed", exc_info=True)
             return None
+        finally:
+            _ALLOWED_ENTITY_IDS.reset(token)
 
         return self._extract_sources_from_context(result.context_records)
+
+    def _resolve_allowed_entity_ids(
+        self, allowed_source_folders: set[str] | None
+    ) -> frozenset[str] | None:
+        """Translate a set of source-folder names to a flat entity-id set.
+
+        Returns ``None`` (= no filtering) when:
+
+        * the caller passed ``None`` or an empty set,
+        * the reverse index is empty (no documents carry
+          ``raw_data.source_folder``), or
+        * none of the requested folders intersect the reverse index.
+
+        Returns a non-empty frozenset otherwise; the wrapper
+        :class:`_SourceFilteredVectorStore` consults it on each
+        per-query ANN call.
+        """
+        if not allowed_source_folders:
+            return None
+        if not self._entity_ids_by_source_folder:
+            return None
+        ids: set[str] = set()
+        matched: list[str] = []
+        for folder in allowed_source_folders:
+            bucket = self._entity_ids_by_source_folder.get(folder)
+            if bucket:
+                ids.update(bucket)
+                matched.append(folder)
+        if not ids:
+            logger.info(
+                "GraphRAG source filter: tenant requested folders %s but "
+                "none are present in the current snapshot's reverse "
+                "index — falling back to unscoped retrieval.",
+                sorted(allowed_source_folders),
+            )
+            return None
+        logger.debug(
+            "GraphRAG source filter active: %d allowed entity ids across folders %s",
+            len(ids),
+            sorted(matched),
+        )
+        return frozenset(ids)
 
     # ------------------------------------------------------------------ #
     # Source-document extraction
@@ -515,6 +692,9 @@ class KnowledgeGraphService:
                 )
                 await self._preload_report_embeddings()
                 await asyncio.to_thread(self._build_context_builder)
+                self._entity_ids_by_source_folder = (
+                    self._build_entity_ids_by_source_folder()
+                )
             except Exception:
                 logger.exception("Failed to initialise KnowledgeGraphService")
                 self._config = None
@@ -523,6 +703,7 @@ class KnowledgeGraphService:
                 self._report_embeddings_cache = {}
                 self._context_builder = None
                 self._context_params = {}
+                self._entity_ids_by_source_folder = {}
                 return False
 
         logger.info(
@@ -861,6 +1042,20 @@ class KnowledgeGraphService:
         self._context_builder = engine.context_builder
         self._context_params = dict(engine.context_builder_params or {})
 
+        # Drop the source-filtering wrapper around the entity vector
+        # store after the engine is constructed (the factory binds the
+        # raw store in __init__). When no tenant filter is active on a
+        # given query (legacy callers / tenants without a source list)
+        # the wrapper is a pass-through, so unscoped behaviour is
+        # preserved bit-for-bit.
+        inner_store = getattr(self._context_builder, "entity_text_embeddings", None)
+        if inner_store is not None and not isinstance(
+            inner_store, _SourceFilteredVectorStore
+        ):
+            self._context_builder.entity_text_embeddings = (
+                _SourceFilteredVectorStore(inner_store)
+            )
+
         elapsed = time.monotonic() - start
         logger.info(
             "Built LocalSearch context builder in %.2fs "
@@ -871,6 +1066,97 @@ class KnowledgeGraphService:
             len(text_units_),
             len(relationships_),
         )
+
+    def _build_entity_ids_by_source_folder(self) -> dict[str, frozenset[str]]:
+        """Compute the per-source-folder entity-id reverse index.
+
+        Joins ``documents`` → ``text_units`` → ``entities`` parquets:
+
+        * ``documents.raw_data['source_folder']`` is the tag the sync
+          project writes for every input file
+          (``SourceAwareMarkItDownFileReader``).
+        * ``text_units.document_id`` points back at ``documents.id``.
+        * ``entities.text_unit_ids`` is the list of text-unit ids each
+          extracted entity appears in.
+
+        Returns an empty dict (= filtering disabled) when the
+        snapshot pre-dates the source_folder annotation or the
+        required dataframes are missing — the caller treats an empty
+        index as "no filtering" and falls back to unscoped retrieval.
+        """
+        if self._dfs is None:
+            return {}
+
+        documents_df = self._dfs.get("documents")
+        text_units_df = self._dfs.get("text_units")
+        entities_df = self._dfs.get("entities")
+        if documents_df is None or text_units_df is None or entities_df is None:
+            return {}
+
+        if "raw_data" not in documents_df.columns:
+            logger.warning(
+                "GraphRAG source filter disabled: documents.parquet has no "
+                "'raw_data' column — tenant-scoped graph retrieval requires "
+                "a snapshot built with SourceAwareMarkItDownFileReader."
+            )
+            return {}
+
+        start = time.monotonic()
+
+        folder_by_doc: dict[str, str] = {}
+        for doc_id, raw_data in zip(
+            documents_df["id"].tolist(),
+            documents_df["raw_data"].tolist(),
+        ):
+            if not isinstance(raw_data, dict):
+                continue
+            folder = raw_data.get("source_folder")
+            if folder:
+                folder_by_doc[str(doc_id)] = str(folder)
+
+        if not folder_by_doc:
+            logger.warning(
+                "GraphRAG source filter disabled: no document carries "
+                "raw_data.source_folder — rebuild the snapshot to enable "
+                "tenant scoping."
+            )
+            return {}
+
+        folder_by_text_unit: dict[str, str] = {}
+        for tu_id, doc_id in zip(
+            text_units_df["id"].tolist(),
+            text_units_df["document_id"].tolist(),
+        ):
+            folder = folder_by_doc.get(str(doc_id))
+            if folder:
+                folder_by_text_unit[str(tu_id)] = folder
+
+        if not folder_by_text_unit:
+            return {}
+
+        accumulator: dict[str, set[str]] = {}
+        for ent_id, tu_ids in zip(
+            entities_df["id"].tolist(),
+            entities_df["text_unit_ids"].tolist(),
+        ):
+            if tu_ids is None:
+                continue
+            ent_id_str = str(ent_id)
+            for tu in tu_ids:
+                folder = folder_by_text_unit.get(str(tu))
+                if folder:
+                    accumulator.setdefault(folder, set()).add(ent_id_str)
+
+        result = {folder: frozenset(ids) for folder, ids in accumulator.items()}
+        elapsed = time.monotonic() - start
+        logger.info(
+            "Built source-folder→entity-id reverse index in %.2fs "
+            "(%d folders, total %d entity attributions)",
+            elapsed,
+            len(result),
+            sum(len(v) for v in result.values()),
+        )
+        return result
 
 
 def _collect_text_unit_short_ids(context_records: Any) -> set[str]:

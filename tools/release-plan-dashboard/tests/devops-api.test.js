@@ -170,6 +170,41 @@ describe("devops-api module", () => {
       expect(result.languages["Go"].generationStatus).toBe("Succeeded");
     });
 
+    test("hides Go language for data plane plans when Go package name is empty", () => {
+      const wi = {
+        id: 201,
+        fields: {
+          "System.Title": "Data plane without Go package",
+          "System.State": "New",
+          "Custom.DataScope": "Yes",
+          "Custom.MgmtScope": "No",
+          "Custom.DotnetPackageName": "Azure.Sample",
+        },
+        relations: [],
+      };
+      const result = mapReleasePlan(wi, {});
+      expect(result.languages[".NET"].packageName).toBe("Azure.Sample");
+      expect(result.languages).not.toHaveProperty("Go");
+    });
+
+    test("keeps Go language for data plane plans when Go package name is present", () => {
+      const wi = {
+        id: 202,
+        fields: {
+          "System.Title": "Data plane with Go package",
+          "System.State": "New",
+          "Custom.DataScope": "Yes",
+          "Custom.MgmtScope": "No",
+          "Custom.GoPackageName": "sdk/resourcemanager/sample/armsample",
+        },
+        relations: [],
+      };
+      const result = mapReleasePlan(wi, {});
+      expect(result.languages["Go"].packageName).toBe(
+        "sdk/resourcemanager/sample/armsample",
+      );
+    });
+
     test("strips trailing slashes from PR URLs", () => {
       const wi = {
         id: 300,

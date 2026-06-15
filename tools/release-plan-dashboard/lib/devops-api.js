@@ -210,10 +210,15 @@ function extractSpecPrUrls(reviewsHtml) {
 function mapReleasePlan(workItem, apiSpecMap) {
   const fields = workItem.fields || {};
   const id = workItem.id || fields["System.Id"];
+  const isDataPlaneOnly =
+    fields["Custom.DataScope"] === "Yes" &&
+    fields["Custom.MgmtScope"] !== "Yes";
   const languages = {};
   for (const lang of LANGUAGES) {
+    const packageName = fields[`Custom.${lang}PackageName`] || "";
+    if (lang === "Go" && isDataPlaneOnly && !packageName.trim()) continue;
     languages[LANGUAGE_DISPLAY[lang]] = {
-      packageName: fields[`Custom.${lang}PackageName`] || "",
+      packageName,
       sdkPrUrl: (fields[`Custom.SDKPullRequestFor${lang}`] || "")
         .trim()
         .replace(/\/+$/, ""),

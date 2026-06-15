@@ -73,6 +73,9 @@ SRC_AZURE_SDK_GUIDELINES = "azure-sdk-guidelines"
 SRC_AZURE_SDK_DOCS_ENG = "azure-sdk-docs-eng"
 SRC_AZURE_SDK_INTERNAL_WIKI = "azure-sdk-internal-wiki"
 
+# -- SDK tools --
+SRC_AZURE_SDK_TOOLS_DOCS = "azure_sdk_tools_docs"
+
 # -- General Azure & review resources --
 SRC_STATIC_AZURE_DOCS = "static_azure_docs"
 SRC_STATIC_API_SPEC_VIEW_QA = "static_api_spec_view_qa"
@@ -253,6 +256,12 @@ _register(
     KnowledgeSource(
         name=SRC_STATIC_API_SPEC_VIEW_QA,
         description="Historical Q&A for API specification review covering common validation errors and fixes.",
+    ),
+    # -- SDK tools --
+    KnowledgeSource(
+        name=SRC_AZURE_SDK_TOOLS_DOCS,
+        description="Azure SDK tools documentation covering js-sdk-release-tools and related JavaScript SDK tooling.",
+        base_url="https://github.com/Azure/azure-sdk-tools/blob/main/",
     ),
 )
 
@@ -456,6 +465,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_AZURE_SDK_DOCS_ENG,
             SRC_TYPESPEC_AZURE_DOCS,
             SRC_AZURE_REST_API_SPECS_WIKI,
+            SRC_AZURE_SDK_TOOLS_DOCS,
         ),
         source_filter={
             SRC_AZURE_SDK_GUIDELINES: "search.ismatch('typescript', 'title')",

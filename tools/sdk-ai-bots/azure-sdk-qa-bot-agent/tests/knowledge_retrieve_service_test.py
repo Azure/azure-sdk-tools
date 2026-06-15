@@ -3,7 +3,10 @@
 from services.knowledge_service import KnowledgeService
 from models.chat import Message
 from models.knowledge_retrieve import KnowledgeRetrieveRequest
+import pytest
+import pytest_asyncio
 
+@pytest_asyncio.fixture(scope="module")
 async def test_knowledge_retrieve_service() -> None:
     service = KnowledgeService()
 

@@ -8,7 +8,6 @@ import {
   extractChildIds,
   getField,
   mapReleasePlan,
-  isKnownPackage,
   isGAVersion,
   stripEmail,
   extractSpecPrUrls,
@@ -171,6 +170,41 @@ describe("devops-api module", () => {
       expect(result.languages["Go"].generationStatus).toBe("Succeeded");
     });
 
+    test("hides Go language for data plane plans when Go package name is empty", () => {
+      const wi = {
+        id: 201,
+        fields: {
+          "System.Title": "Data plane without Go package",
+          "System.State": "New",
+          "Custom.DataScope": "Yes",
+          "Custom.MgmtScope": "No",
+          "Custom.DotnetPackageName": "Azure.Sample",
+        },
+        relations: [],
+      };
+      const result = mapReleasePlan(wi, {});
+      expect(result.languages[".NET"].packageName).toBe("Azure.Sample");
+      expect(result.languages).not.toHaveProperty("Go");
+    });
+
+    test("keeps Go language for data plane plans when Go package name is present", () => {
+      const wi = {
+        id: 202,
+        fields: {
+          "System.Title": "Data plane with Go package",
+          "System.State": "New",
+          "Custom.DataScope": "Yes",
+          "Custom.MgmtScope": "No",
+          "Custom.GoPackageName": "sdk/resourcemanager/sample/armsample",
+        },
+        relations: [],
+      };
+      const result = mapReleasePlan(wi, {});
+      expect(result.languages["Go"].packageName).toBe(
+        "sdk/resourcemanager/sample/armsample",
+      );
+    });
+
     test("strips trailing slashes from PR URLs", () => {
       const wi = {
         id: 300,
@@ -303,6 +337,29 @@ describe("devops-api module", () => {
       expect(result.submittedBy).toBe("submitted-user");
     });
 
+    test("handles submittedBy object with no displayName or uniqueName", () => {
+      const wi = {
+        id: 710,
+        fields: {
+          "System.Title": "Empty Object SubmittedBy",
+          "Custom.ReleasePlanSubmittedby": { id: "some-guid" },
+        },
+        relations: [],
+      };
+      const result = mapReleasePlan(wi, {});
+      expect(result.submittedBy).toBe("");
+    });
+
+    test("handles work item with no title field", () => {
+      const wi = {
+        id: 711,
+        fields: { "System.State": "New" },
+        relations: [],
+      };
+      const result = mapReleasePlan(wi, {});
+      expect(result.title).toBe("");
+    });
+
     test("extracts specPrUrl from RESTAPIReviews when ActiveSpecPullRequestUrl is empty", () => {
       const wi = {
         id: 704,
@@ -327,30 +384,6 @@ describe("devops-api module", () => {
       expect(result.apiSpec.specPrUrl).toBe(
         "https://github.com/Azure/azure-rest-api-specs/pull/77",
       );
-    });
-  });
-
-  describe("isKnownPackage", () => {
-    test("returns true when package name is found in page content", () => {
-      const page = "azure-storage-blob\nazure-identity\nazure-core";
-      expect(isKnownPackage("azure-identity", page)).toBe(true);
-    });
-
-    test("returns false when package name is not found", () => {
-      const page = "azure-storage-blob\nazure-identity";
-      expect(isKnownPackage("azure-cosmos", page)).toBe(false);
-    });
-
-    test("is case-insensitive", () => {
-      const page = "Azure.Storage.Blob";
-      expect(isKnownPackage("azure.storage.blob", page)).toBe(true);
-    });
-
-    test("returns false for empty name or page", () => {
-      expect(isKnownPackage("", "some page")).toBeFalsy();
-      expect(isKnownPackage("pkg", "")).toBeFalsy();
-      expect(isKnownPackage(null, "page")).toBeFalsy();
-      expect(isKnownPackage("pkg", null)).toBeFalsy();
     });
   });
 

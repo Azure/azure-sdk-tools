@@ -26,6 +26,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(TelemetryIngestionTool),
             typeof(PackageInfoTool),
             typeof(PackageCheckTool),
+            typeof(PackageWorkItemLookupTool),
             typeof(PipelineTestsTool),
             typeof(QuokkaTool),
             typeof(ReadMeGeneratorTool),

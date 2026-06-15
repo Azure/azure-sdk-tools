@@ -50,28 +50,6 @@ environments:
         timeout: "60s"
 
 suites:
-  versioning:
-    evals: ["evals/*.eval.yaml"]
-    filter: { suite: versioning, mode: main }
-  version-evolution:
-    evals:
-      - "evals/001005.eval.yaml"
-      - "evals/001006.eval.yaml"
-      - "evals/001007.eval.yaml"
-      - "evals/001008.eval.yaml"
-    filter: { mode: main }
-  armtemplate:
-    evals: ["evals/*.eval.yaml"]
-    filter: { suite: armtemplate, mode: main }
-  longrunningoperation:
-    evals: ["evals/*.eval.yaml"]
-    filter: { suite: lro, mode: main }
-  decorators:
-    evals: ["evals/*.eval.yaml"]
-    filter: { suite: decorators, mode: main }
-  warning:
-    evals: ["evals/*.eval.yaml"]
-    filter: { suite: warning, mode: main }
   versioning-forced:
     evals: ["evals/*.eval.yaml"]
     filter: { suite: versioning, mode: forced }
@@ -123,8 +101,6 @@ suites:
   trigger:
     evals: ["evals/*.eval.yaml"]
     filter: { mode: trigger }
-  main:
+  no-skill:
     evals: ["evals/*.eval.yaml"]
-    filter: { mode: main }
-  all:
-    evals: ["evals/*.eval.yaml"]
+    filter: { mode: no-skill }

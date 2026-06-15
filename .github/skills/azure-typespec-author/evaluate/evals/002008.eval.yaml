@@ -15,10 +15,10 @@ config:
 
 # Test cases
 stimuli:
-- name: 002008-ARM-add-parameters
+- name: 002008-ARM-add-parameters-trigger
   tags:
     suite: 'armtemplate'
-    mode: 'main'
+    mode: 'trigger'
   prompt: |
     add top and skip query parameters to the ListBySubscription operation in interface Employees. Ensure the definition meets TypeSpec Azure guidelines.
   environment: &shared_environment
@@ -43,34 +43,6 @@ stimuli:
         dest: stable/2021-11-01/widget.json
     commands:
       - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
-  graders:
-  - type: 'tool-calls'
-    config:
-      required:
-        - 'edit'
-        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
-  - type: 'skill-invocation'
-    config:
-      required:
-        - 'azure-typespec-author'
-  - type: 'file-matches'
-    config:
-      pattern: 'listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*\{\s*\.\.\.(Azure\.Core\.)?TopQueryParameter;\s*\.\.\.(Azure\.Core\.)?SkipQueryParameter;\s*\}\s*>|model\s+\w+\s+(is|extends)\s+(Azure\.Core\.)?StandardListQueryParameters\s*;[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*\w+\s*>'
-      path: '*.tsp'
-  - type: 'file-not-matches'
-    config:
-      pattern: '@query\("\$top"\)|@query\("\$skip"\)'
-      path: '*.tsp'
-  constraints:
-    max_turns: 5
-    max_tokens: 1000000
-- name: 002008-ARM-add-parameters-trigger
-  tags:
-    suite: 'armtemplate'
-    mode: 'trigger'
-  prompt: |
-    add top and skip query parameters to the ListBySubscription operation in interface Employees. Ensure the definition meets TypeSpec Azure guidelines.
-  environment: *shared_environment
   graders:
   - type: 'tool-calls'
     config:

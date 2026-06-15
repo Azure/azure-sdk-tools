@@ -15,10 +15,10 @@ config:
 
 # Test cases
 stimuli:
-- name: 001003-version-required-to-optional
+- name: 001003-version-required-to-optional-trigger
   tags:
     suite: 'versioning'
-    mode: 'main'
+    mode: 'trigger'
   prompt: |
     change the property age of EmployeeProperties from required to optional only for api version 2025-05-04-preview
   environment: &shared_environment
@@ -39,44 +39,6 @@ stimuli:
         dest: tspconfig.yaml
     commands:
       - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
-  graders:
-  - type: 'tool-calls'
-    config:
-      required:
-        - 'edit'
-        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
-  - type: 'skill-invocation'
-    config:
-      required:
-        - 'azure-typespec-author'
-  - type: 'file-matches'
-    config:
-      pattern: '2025-05-04-preview'
-      path: 'main.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: '@madeOptional'
-      path: 'employee.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: '2025-05-04-preview|v2025_05_04_preview'
-      path: 'employee.tsp'
-  - type: 'prompt'
-    config:
-      threshold: 1
-      model: 'claude-opus-4.6'
-      scoring: 'scale_1_5'
-      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
-  constraints:
-    max_turns: 5
-    max_tokens: 1000000
-- name: 001003-version-required-to-optional-trigger
-  tags:
-    suite: 'versioning'
-    mode: 'trigger'
-  prompt: |
-    change the property age of EmployeeProperties from required to optional only for api version 2025-05-04-preview
-  environment: *shared_environment
   graders:
   - type: 'tool-calls'
     config:

@@ -15,10 +15,10 @@ config:
 
 # Test cases
 stimuli:
-- name: 002002-ARM-define-extension-resource-add
+- name: 002002-ARM-define-extension-resource-add-trigger
   tags:
     suite: 'armtemplate'
-    mode: 'main'
+    mode: 'trigger'
   prompt: |
     add an extension resource named asset
   environment: &shared_environment
@@ -39,39 +39,6 @@ stimuli:
         dest: tspconfig.yaml
     commands:
       - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
-  graders:
-  - type: 'tool-calls'
-    config:
-      required:
-        - 'edit'
-        - 'azure-sdk-mcp-azsdk_typespec_generate_authoring_plan'
-        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
-  - type: 'skill-invocation'
-    config:
-      required:
-        - 'azure-typespec-author'
-  - type: 'file-matches'
-    config:
-      pattern: 'model Asset is ExtensionResource<AssetProperties>'
-      path: '*.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: 'interface Assets|interface AssetOps'
-      path: '*.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: 'provisioningState'
-      path: '*.tsp'
-  constraints:
-    max_turns: 5
-    max_tokens: 1000000
-- name: 002002-ARM-define-extension-resource-add-trigger
-  tags:
-    suite: 'armtemplate'
-    mode: 'trigger'
-  prompt: |
-    add an extension resource named asset
-  environment: *shared_environment
   graders:
   - type: 'tool-calls'
     config:

@@ -15,10 +15,10 @@ config:
 
 # Test cases
 stimuli:
-- name: 001006-version-add-preview-after-stable
+- name: 001006-version-add-preview-after-stable-trigger
   tags:
     suite: 'versioning'
-    mode: 'main'
+    mode: 'trigger'
   prompt: |
     Add a new preview version `2025-05-04-preview` to my service widget resource manager. Carry over all the features from the latest stable version
   environment: &shared_environment
@@ -73,47 +73,6 @@ stimuli:
         dest: examples/2024-10-01/Operations_List_MinimumSet_Gen.json
     commands:
       - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
-  graders:
-  - type: 'tool-calls'
-    config:
-      required:
-        - 'edit'
-        - 'web_fetch'
-        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
-  - type: 'skill-invocation'
-    config:
-      required:
-        - 'azure-typespec-author'
-  - type: 'file-exists'
-    config:
-      path: 'examples/2025-05-04-preview/Employees_Get_MaximumSet_Gen.json'
-  - type: 'file-exists'
-    config:
-      path: 'examples/2024-10-01/Employees_Get_MaximumSet_Gen.json'
-  - type: 'file-matches'
-    config:
-      pattern: '2025-05-04-preview'
-      path: 'main.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: '2024-10-01'
-      path: 'main.tsp'
-  - type: 'prompt'
-    config:
-      threshold: 1
-      model: 'claude-opus-4.6'
-      scoring: 'scale_1_5'
-      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
-  constraints:
-    max_turns: 5
-    max_tokens: 1000000
-- name: 001006-version-add-preview-after-stable-trigger
-  tags:
-    suite: 'versioning'
-    mode: 'trigger'
-  prompt: |
-    Add a new preview version `2025-05-04-preview` to my service widget resource manager. Carry over all the features from the latest stable version
-  environment: *shared_environment
   graders:
   - type: 'tool-calls'
     config:

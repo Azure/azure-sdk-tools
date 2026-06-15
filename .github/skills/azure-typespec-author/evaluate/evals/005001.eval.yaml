@@ -15,10 +15,10 @@ config:
 
 # Test cases
 stimuli:
-- name: 005001-warning-suppress-warning
+- name: 005001-warning-suppress-warning-trigger
   tags:
     suite: 'warning'
-    mode: 'main'
+    mode: 'trigger'
   prompt: |
     Add suppressions for the warnings produced by "tsp compile .", and set the justification to "FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details".
   environment: &shared_environment
@@ -37,33 +37,6 @@ stimuli:
         dest: tspconfig.yaml
     commands:
       - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
-  graders:
-  - type: 'tool-calls'
-    config:
-      required:
-        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
-  - type: 'skill-invocation'
-    config:
-      required:
-        - 'azure-typespec-author'
-  - type: 'file-matches'
-    config:
-      pattern: '#suppress'
-      path: 'models.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: 'FIXME: Update justification, follow aka\.ms/tsp/conversion-fix for details'
-      path: 'models.tsp'
-  constraints:
-    max_turns: 5
-    max_tokens: 1000000
-- name: 005001-warning-suppress-warning-trigger
-  tags:
-    suite: 'warning'
-    mode: 'trigger'
-  prompt: |
-    Add suppressions for the warnings produced by "tsp compile .", and set the justification to "FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details".
-  environment: *shared_environment
   graders:
   - type: 'tool-calls'
     config:

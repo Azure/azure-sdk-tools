@@ -15,10 +15,10 @@ config:
 
 # Test cases
 stimuli:
-- name: 004003-delete-and-restore-operationId-decorator
+- name: 004003-delete-and-restore-operationId-decorator-trigger
   tags:
     suite: 'decorators'
-    mode: 'main'
+    mode: 'trigger'
   prompt: |
     Remove @operationId and its associated #suppress for no-openapi from all operations. Then restore those operationIds that do not contain underscores or begin with a lowercase letter.
   environment: &shared_environment
@@ -51,73 +51,6 @@ stimuli:
         dest: tspconfig.yaml
     commands:
       - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
-  graders:
-  - type: 'skill-invocation'
-    config:
-      required:
-        - 'azure-typespec-author'
-  - type: 'file-not-matches'
-    config:
-      pattern: '@operationId\('
-      path: 'BgpConnection.tsp'
-  - type: 'file-not-matches'
-    config:
-      pattern: '@operationId\('
-      path: 'NetworkInterface.tsp'
-  - type: 'file-not-matches'
-    config:
-      pattern: '@operationId\('
-      path: 'ExpressRouteGateway.tsp'
-  - type: 'file-not-matches'
-    config:
-      pattern: '@operationId\('
-      path: 'ExpressRoutePort.tsp'
-  - type: 'file-not-matches'
-    config:
-      pattern: '@operationId\('
-      path: 'NetworkInterface.tsp'
-  - type: 'file-not-matches'
-    config:
-      pattern: '@operationId\('
-      path: 'P2SVpnGateway.tsp'
-  - type: 'file-not-matches'
-    config:
-      pattern: '@operationId\('
-      path: 'VpnServerConfigurationPolicyGroup.tsp'
-  - type: 'file-not-matches'
-    config:
-      pattern: '@operationId\('
-      path: 'VpnSiteLinkConnection.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: '@operationId\("PutBastionShareableLink"\)'
-      path: 'BastionHost.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: '@operationId\("GetActiveSessions"\)'
-      path: 'BastionHost.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: '@operationId\("ExpressRouteProviderPort"\)'
-      path: 'ExpressRouteProviderPort.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: '#suppress.*no-openapi|#suppress.*operationId'
-      path: 'BastionHost.tsp'
-  - type: 'file-not-matches'
-    config:
-      pattern: '@operationId\("ExpressRouteProviderPortsLocation_List"\)'
-      path: 'ExpressRouteProviderPort.tsp'
-  constraints:
-    max_turns: 5
-    max_tokens: 1000000
-- name: 004003-delete-and-restore-operationId-decorator-trigger
-  tags:
-    suite: 'decorators'
-    mode: 'trigger'
-  prompt: |
-    Remove @operationId and its associated #suppress for no-openapi from all operations. Then restore those operationIds that do not contain underscores or begin with a lowercase letter.
-  environment: *shared_environment
   graders:
   - type: 'tool-calls'
     config:

@@ -15,10 +15,10 @@ config:
 
 # Test cases
 stimuli:
-- name: 002004-ARM-define-extension-resource-fromProxyResource
+- name: 002004-ARM-define-extension-resource-fromProxyResource-trigger
   tags:
     suite: 'armtemplate'
-    mode: 'main'
+    mode: 'trigger'
   prompt: |
     Define a "badge assignment" extension resource. It should be an extension resource that can be attached to an employee. Ensure the definition meets TypeSpec Azure guidelines.
   environment: &shared_environment
@@ -41,49 +41,6 @@ stimuli:
         dest: tspconfig.yaml
     commands:
       - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
-  graders:
-  - type: 'tool-calls'
-    config:
-      required:
-        - 'edit'
-        - 'azure-sdk-mcp-azsdk_typespec_generate_authoring_plan'
-        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
-  - type: 'skill-invocation'
-    config:
-      required:
-        - 'azure-typespec-author'
-  - type: 'file-matches'
-    config:
-      pattern: 'model BadgeAssignment is ExtensionResource<BadgeAssignmentProperties>'
-      path: 'badgeAssignment.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: '@visibility\(Lifecycle\.Read\)'
-      path: 'badgeAssignment.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: 'Extension\.Read<|Extension\.CreateOrReplaceAsync<|Extension\.CustomPatch(Sync|Async)<|Extension\.DeleteWithoutOkAsync<'
-      path: 'badgeAssignment.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: 'Extension\.ListByTarget<'
-      path: 'badgeAssignment.tsp'
-  - type: 'prompt'
-    config:
-      threshold: 1
-      model: 'claude-opus-4.6'
-      scoring: 'scale_1_5'
-      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
-  constraints:
-    max_turns: 5
-    max_tokens: 1000000
-- name: 002004-ARM-define-extension-resource-fromProxyResource-trigger
-  tags:
-    suite: 'armtemplate'
-    mode: 'trigger'
-  prompt: |
-    Define a "badge assignment" extension resource. It should be an extension resource that can be attached to an employee. Ensure the definition meets TypeSpec Azure guidelines.
-  environment: *shared_environment
   graders:
   - type: 'tool-calls'
     config:

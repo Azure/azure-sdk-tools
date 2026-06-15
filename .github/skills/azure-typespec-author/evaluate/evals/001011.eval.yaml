@@ -15,10 +15,10 @@ config:
 
 # Test cases
 stimuli:
-- name: 001011-version-model-property-renamed
+- name: 001011-version-model-property-renamed-trigger
   tags:
     suite: 'versioning'
-    mode: 'main'
+    mode: 'trigger'
   prompt: |
     In the TypeSpec project at `./Microsoft.Widget/Widget/`, rename the `age` property to `employeeAge` in EmployeeProperties only for version `2025-05-04-preview`.
   environment: &shared_environment
@@ -39,38 +39,6 @@ stimuli:
         dest: Microsoft.Widget/Widget/tspconfig.yaml
     commands:
       - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
-  graders:
-  - type: 'tool-calls'
-    config:
-      required:
-        - 'edit'
-        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
-  - type: 'skill-invocation'
-    config:
-      required:
-        - 'azure-typespec-author'
-  - type: 'file-matches'
-    config:
-      pattern: 'v2025_05_04_preview'
-      path: 'Microsoft.Widget/Widget/main.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: '@renamedFrom\(Versions\.v2025_05_04_preview, "age"\)'
-      path: 'Microsoft.Widget/Widget/employee.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: 'employeeAge\?: int32;'
-      path: 'Microsoft.Widget/Widget/employee.tsp'
-  constraints:
-    max_turns: 5
-    max_tokens: 1000000
-- name: 001011-version-model-property-renamed-trigger
-  tags:
-    suite: 'versioning'
-    mode: 'trigger'
-  prompt: |
-    In the TypeSpec project at `./Microsoft.Widget/Widget/`, rename the `age` property to `employeeAge` in EmployeeProperties only for version `2025-05-04-preview`.
-  environment: *shared_environment
   graders:
   - type: 'tool-calls'
     config:

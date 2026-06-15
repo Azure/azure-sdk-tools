@@ -15,10 +15,10 @@ config:
 
 # Test cases
 stimuli:
-- name: 002006-ARM-define-child-resource
+- name: 002006-ARM-define-child-resource-trigger
   tags:
     suite: 'armtemplate'
-    mode: 'main'
+    mode: 'trigger'
   prompt: |
     Create a new "AddressResource" child resource under the parent resource "Employee". Address properties: street 1(optional), street 2(optional), city(optional), state(optional), postal code(optional), country(optional), and a read-only provisioningState(optional). Ensure the definition meets TypeSpec Azure design guidelines.
   environment: &shared_environment
@@ -43,97 +43,6 @@ stimuli:
         dest: stable/2021-11-01/widget.json
     commands:
       - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
-  graders:
-  - type: 'tool-calls'
-    config:
-      required:
-        - 'edit'
-        - 'azure-sdk-mcp-azsdk_typespec_generate_authoring_plan'
-        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
-  - type: 'skill-invocation'
-    config:
-      required:
-        - 'azure-typespec-author'
-  - type: 'file-matches'
-    config:
-      pattern: '@parentResource\(Employee\)'
-      path: '*.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: 'model AddressResource is ProxyResource<AddressProperties>|model AddressResource is ProxyResource<AddressResourceProperties>'
-      path: '*.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: 'interface Addresses|interface AddressResource'
-      path: '*.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: 'model AddressProperties|model AddressResourceProperties'
-      path: '*.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: 'street1\?: string;'
-      path: '*.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: 'street2\?: string;'
-      path: '*.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: 'city\?: string;'
-      path: '*.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: 'state\?: string;'
-      path: '*.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: 'postalCode\?: string;'
-      path: '*.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: 'country\?: string;'
-      path: '*.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: '@visibility\(Lifecycle\.Read\)'
-      path: '*.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: 'provisioningState\?: ProvisioningState;'
-      path: '*.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: 'ArmResourceRead<AddressResource>'
-      path: '*.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: 'ArmResourceCreateOrReplaceAsync<AddressResource>|ArmResourceCreateOrReplaceSync<AddressResource>'
-      path: '*.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: 'ArmResourceDeleteWithoutOkAsync<AddressResource>|ArmResourceDeleteSync<AddressResource>'
-      path: '*.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: 'ArmResourceListByParent<AddressResource>'
-      path: '*.tsp'
-  - type: 'prompt'
-    config:
-      threshold: 1
-      model: 'claude-opus-4.6'
-      scoring: 'scale_1_5'
-      prompt: 'The Addresses interface should include standard CRUD operations (get, create, update, delete) and a list-by-parent operation.'
-  constraints:
-    max_turns: 5
-    max_tokens: 1000000
-- name: 002006-ARM-define-child-resource-trigger
-  tags:
-    suite: 'armtemplate'
-    mode: 'trigger'
-  prompt: |
-    Create a new "AddressResource" child resource under the parent resource "Employee". Address properties: street 1(optional), street 2(optional), city(optional), state(optional), postal code(optional), country(optional), and a read-only provisioningState(optional). Ensure the definition meets TypeSpec Azure design guidelines.
-  environment: *shared_environment
   graders:
   - type: 'tool-calls'
     config:

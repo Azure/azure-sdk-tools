@@ -33,24 +33,27 @@ Without `FIXTURE_NODE_MODULES`, the agent will run `npm install` each time (slow
 
 All commands below should be run from this directory (`evaluate/`).
 
-### Run all evaluations (local dev)
+### Run all evaluations by mode
 
 ```bash
-vally eval --suite all --output-dir ./result --workspace ./debug --verbose
+vally eval --suite forced --output-dir ./result --workspace ./debug --verbose
+vally eval --suite trigger --output-dir ./result --workspace ./debug --verbose
+vally eval --suite no-skill --output-dir ./result --workspace ./debug --verbose
 ```
 
-Or using the combined eval file:
+### Run a single evaluation file with a specific mode
+
+Combine `--eval-spec` with `--tag` to run a specific mode for a single test case:
 
 ```bash
-vally eval --eval-spec evals/eval.yaml --output-dir ./result --workspace ./debug
-```
+# Run only the forced mode for a single file
+vally eval --eval-spec evals/001001.eval.yaml --tag mode=forced --output-dir ./result --workspace ./debug --verbose
 
-### Run a single evaluation
+# Run only the trigger mode for a single file
+vally eval --eval-spec evals/001001.eval.yaml --tag mode=trigger --output-dir ./result --workspace ./debug --verbose
 
-Pass the path to a specific eval file:
-
-```bash
-vally eval --eval-spec evals/001001.eval.yaml --output-dir ./result-001001 --workspace ./debug-001001
+# Run only the no-skill mode for a single file
+vally eval --eval-spec evals/001001.eval.yaml --tag mode=no-skill --output-dir ./result --workspace ./debug --verbose
 ```
 
 ### Which file to use
@@ -59,66 +62,71 @@ Use different entry files depending on your goal:
 
 | File | When to use | Example command |
 | --- | --- | --- |
-| `.vally.yaml` | Default local entry; run by suite name | `vally eval --suite versioning --output-dir ./result --workspace ./debug --verbose` |
-| `evals/eval.yaml` | Combined spec; run all main-mode stimuli from one file | `vally eval --eval-spec evals/eval.yaml --output-dir ./result --workspace ./debug --verbose` |
+| `.vally.yaml` | Default local entry; run by suite name | `vally eval --suite versioning-forced --output-dir ./result --workspace ./debug --verbose` |
 | `evals/00xxxx.eval.yaml` | Debug one specific case file | `vally eval --eval-spec evals/003001.eval.yaml --output-dir ./result-003001 --workspace ./debug-003001 --verbose` |
 
 Notes:
 
-- `evals/*.eval.yaml` and `evals/eval.yaml` are separate entry paths; they are not automatically run together.
 - Prefer `--suite` for day-to-day runs because it keeps filtering and mode selection centralized in `.vally.yaml`.
+- Use `--eval-spec` + `--tag` for single-file targeted mode runs.
 
 ### Run a named test suite
 
 Test suites are defined in `.vally.yaml` under the `suites` key. Available suites:
 
-| Suite                  | Description                           |
-| ---------------------- | ------------------------------------- |
-| `versioning`           | All versioning cases (001xxx)         |
-| `version-evolution`    | Version evolution subset              |
-| `armtemplate`          | ARM template cases (002xxx)           |
-| `longrunningoperation` | Long-running operation cases (003xxx) |
-| `decorators`           | Decorator cases (004xxx)              |
-| `warning`              | Warning cases (005xxx)                |
-| `all`                  | Every eval case                       |
+| Suite                           | Description                                      |
+| ------------------------------- | ------------------------------------------------ |
+| `versioning-forced`             | Versioning cases (001xxx) — forced mode          |
+| `armtemplate-forced`            | ARM template cases (002xxx) — forced mode        |
+| `longrunningoperation-forced`   | Long-running operation cases (003xxx) — forced   |
+| `decorators-forced`             | Decorator cases (004xxx) — forced mode           |
+| `warning-forced`                | Warning cases (005xxx) — forced mode             |
+| `versioning-trigger`            | Versioning cases — trigger mode                  |
+| `armtemplate-trigger`           | ARM template cases — trigger mode                |
+| `longrunningoperation-trigger`  | LRO cases — trigger mode                         |
+| `decorators-trigger`            | Decorator cases — trigger mode                   |
+| `warning-trigger`               | Warning cases — trigger mode                     |
+| `versioning-no-skill`           | Versioning cases — no-skill baseline             |
+| `armtemplate-no-skill`          | ARM template cases — no-skill baseline           |
+| `longrunningoperation-no-skill` | LRO cases — no-skill baseline                    |
+| `decorators-no-skill`           | Decorator cases — no-skill baseline              |
+| `warning-no-skill`              | Warning cases — no-skill baseline                |
+| `forced`                        | All cases — forced mode                          |
+| `trigger`                       | All cases — trigger mode                         |
+| `no-skill`                      | All cases — no-skill baseline                    |
 
 Run a suite by name:
 
 ```bash
-vally eval --suite versioning --output-dir ./result --workspace ./debug --verbose
+vally eval --suite forced --output-dir ./result --workspace ./debug --verbose
 ```
 
-### Suite modes (main / forced / trigger)
+### Suite modes (forced / trigger / no-skill)
 
-Suites now support mode-specific names so pipelines can run each mode without using `--tag`:
+Each test case has three modes:
 
-| Suite Name Example | Meaning |
+| Mode | Description |
 | --- | --- |
-| `versioning` | `suite=versioning, mode=main` |
-| `versioning-forced` | `suite=versioning, mode=forced` |
-| `versioning-trigger` | `suite=versioning, mode=trigger` |
+| `forced` | Skill explicitly invoked via `@azure-typespec-author` prefix + full code quality graders |
+| `trigger` | Tests whether the skill is automatically triggered (skill invocation detection) |
+| `no-skill` | Baseline run without loading the skill (`--skill-dir /tmp/no-skills`) |
 
-Examples:
+Suite names follow the pattern `<domain>-<mode>`:
 
 ```bash
-# Main mode
-vally eval --suite longrunningoperation --output-dir ./result --workspace ./debug --verbose
-
-# Forced mode
+# Forced mode for LRO cases
 vally eval --suite longrunningoperation-forced --output-dir ./result --workspace ./debug --verbose
 
-# Trigger mode
-vally eval --suite longrunningoperation-trigger --output-dir ./result --workspace ./debug --verbose
+# Trigger mode for versioning cases
+vally eval --suite versioning-trigger --output-dir ./result --workspace ./debug --verbose
 ```
-
-`--suite` and `--tag` cannot be used together. Use one or the other.
 
 ### Run with tag filtering (optional)
 
-Tag filtering is still useful for ad-hoc local runs:
+Tag filtering is useful for ad-hoc local runs on individual files:
 
 ```bash
-# Run forced mode (with MCP + skill) for versioning cases only
+# Run forced mode for versioning cases only
 vally eval --eval-spec suites/forced.eval.yaml --tag suite=versioning
 
 # Run no-skill baseline for armtemplate cases
@@ -165,7 +173,7 @@ evaluate/
 ├── evals/               # Individual eval specs (one per test case, for local dev)
 │   ├── 001001.eval.yaml
 │   ├── ...
-│   └── eval.yaml        # Combined file with all 29 cases (environment: azsdk-mcp)
+│   └── forced.eval.yaml # Consolidated forced-mode file with all cases
 ├── suites/              # Consolidated eval files used by pipelines
 │   ├── forced.eval.yaml    # Forced skill invocation + code quality graders
 │   ├── trigger.eval.yaml   # Skill trigger detection (mock MCP)

@@ -15,10 +15,10 @@ config:
 
 # Test cases
 stimuli:
-- name: 004002-decorate-length-constrains-on-array-item
+- name: 004002-decorate-length-constrains-on-array-item-trigger
   tags:
     suite: 'decorators'
-    mode: 'main'
+    mode: 'trigger'
   prompt: |
     I have a property `assets: string[]` in EmployeeProperties. Add @minLength(3) @maxLength(10) constraints for any item of the assets array. Ensure the definition meets TypeSpec Azure guidelines.
   environment: &shared_environment
@@ -39,49 +39,6 @@ stimuli:
         dest: tspconfig.yaml
     commands:
       - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
-  graders:
-  - type: 'tool-calls'
-    config:
-      required:
-        - 'edit'
-        - 'azure-sdk-mcp-azsdk_typespec_generate_authoring_plan'
-        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
-  - type: 'skill-invocation'
-    config:
-      required:
-        - 'azure-typespec-author'
-  - type: 'file-matches'
-    config:
-      pattern: 'scalar.*extends string'
-      path: 'employee.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: '@minLength\(3\)'
-      path: 'employee.tsp'
-  - type: 'file-matches'
-    config:
-      pattern: '@maxLength\(10\)'
-      path: 'employee.tsp'
-  - type: 'file-not-matches'
-    config:
-      pattern: 'assets:\s*string\[\]'
-      path: 'employee.tsp'
-  - type: 'prompt'
-    config:
-      threshold: 1
-      model: 'claude-opus-4.6'
-      scoring: 'scale_1_5'
-      prompt: 'Verify asset use the custom scalar type with minLength and maxLength constraints instead of plain string.'
-  constraints:
-    max_turns: 5
-    max_tokens: 1000000
-- name: 004002-decorate-length-constrains-on-array-item-trigger
-  tags:
-    suite: 'decorators'
-    mode: 'trigger'
-  prompt: |
-    I have a property `assets: string[]` in EmployeeProperties. Add @minLength(3) @maxLength(10) constraints for any item of the assets array. Ensure the definition meets TypeSpec Azure guidelines.
-  environment: *shared_environment
   graders:
   - type: 'tool-calls'
     config:

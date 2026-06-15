@@ -1503,7 +1503,7 @@ stimuli:
   tags:
     suite: decorators
   prompt: |
-    use authoring plan to add minLength decorator to set the minLength 1 for resource name parameter of Employee resource
+    add minLength decorator to set the minLength 1 for resource name parameter of Employee resource
   constraints:
     max_turns: 10
     max_tokens: 100000

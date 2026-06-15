@@ -20,7 +20,7 @@ stimuli:
     suite: 'decorators'
     mode: 'trigger'
   prompt: |
-    use authoring plan to add minLength decorator to set the minLength 1 for resource name parameter of Employee resource
+    add minLength decorator to set the minLength 1 for resource name parameter of Employee resource
   environment: &shared_environment
     files:
       - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -61,7 +61,7 @@ stimuli:
     suite: 'decorators'
     mode: 'forced'
   prompt: |
-    @azure-typespec-author use authoring plan to add minLength decorator to set the minLength 1 for resource name parameter of Employee resource
+    @azure-typespec-author add minLength decorator to set the minLength 1 for resource name parameter of Employee resource
   environment: *shared_environment
   graders:
   - type: 'tool-calls'
@@ -86,7 +86,7 @@ stimuli:
   tags:
     suite: 'decorators'
     mode: 'no-skill'
-  prompt: 'use authoring plan to add minLength decorator to set the minLength 1 for resource name parameter of Employee resource'
+  prompt: 'add minLength decorator to set the minLength 1 for resource name parameter of Employee resource'
   environment: *shared_environment
   graders:
   - type: 'tool-calls'

@@ -77,10 +77,6 @@ stimuli:
       required:
         - 'edit'
         - 'azure-sdk-mcp-azsdk_run_typespec_validation'
-  - type: 'skill-invocation'
-    config:
-      required:
-        - 'azure-typespec-author'
   - type: 'file-not-matches'
     config:
       pattern: '@operationId\('

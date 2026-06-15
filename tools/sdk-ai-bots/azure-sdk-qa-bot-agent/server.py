@@ -228,7 +228,7 @@ async def retrieve_knowledge(req: KnowledgeRetrieveRequest):
     logger.info(
         "Retrieve knowledge request: tenant=%s, message=%s",
         req.tenant_id,
-        req.message.content[:200],
+        req.query[:200],
     )
     try:
         resp = await _knowledge_service.retrieve(req)

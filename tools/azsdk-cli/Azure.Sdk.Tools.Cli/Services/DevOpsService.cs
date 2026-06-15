@@ -544,10 +544,11 @@ namespace Azure.Sdk.Tools.Cli.Services
                     throw new Exception("Failed to create API spec work item");
                 }
 
-                // Update release plan status to in progress
+                // Update release plan status to in progress and set ReleasePlanId to the work item's own ID
                 releasePlanWorkItem = await UpdateWorkItemAsync(releasePlanWorkItemId, new Dictionary<string, string>
                 {
-                    { "System.State", "In Progress" }
+                    { "System.State", "In Progress" },
+                    { "Custom.ReleasePlanID", releasePlanWorkItemId.ToString() }
                 }, ct);
 
                 if (releasePlanWorkItem != null)

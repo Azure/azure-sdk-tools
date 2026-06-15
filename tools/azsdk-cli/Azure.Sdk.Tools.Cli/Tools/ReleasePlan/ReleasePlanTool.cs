@@ -1001,16 +1001,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         releasePlan.WorkItemId = workItemId;
                     }
 
-                    if (workItem.Fields.TryGetValue("Custom.ReleasePlanId", out var value) && value is int releasePlanId)
+                    if (workItem.Fields.TryGetValue("Custom.ReleasePlanID", out var value) && value is int releasePlanId)
                     {
                         releasePlan.ReleasePlanId = releasePlanId;
                     }
 
                     return new ReleasePlanResponse
                     {
-                        Message = "Release plan is being created",
+                        Message = "Created release plan.",
                         ReleasePlanDetails = releasePlan,
-                        NextSteps = [$"Get release plan from `workItemId`, work item value: {releasePlan.WorkItemId}"],
+                        NextSteps = [$"Update SDK details in the release plan."],
                         TypeSpecProject = specProject,
                         PackageType = isMgmt ? SdkType.Management : SdkType.Dataplane
                     };

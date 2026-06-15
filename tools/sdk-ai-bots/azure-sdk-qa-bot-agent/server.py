@@ -226,9 +226,8 @@ async def save_conversation(req: ConversationMessage):
 async def retrieve_knowledge(req: KnowledgeRetrieveRequest):
     """Retrieve knowledge for a request using search_knowledge_base tool."""
     logger.info(
-        "Retrieve knowledge request: tenant=%s, conversation=%s, message=%s",
+        "Retrieve knowledge request: tenant=%s, message=%s",
         req.tenant_id,
-        req.conversation_id,
         req.message.content[:200],
     )
     try:
@@ -241,9 +240,8 @@ async def retrieve_knowledge(req: KnowledgeRetrieveRequest):
         return resp
     except Exception:
         logger.error(
-            "Knowledge retrieval failed: tenant=%s, conversation=%s",
+            "Knowledge retrieval failed: tenant=%s",
             req.tenant_id,
-            req.conversation_id,
             exc_info=True,
         )
         raise

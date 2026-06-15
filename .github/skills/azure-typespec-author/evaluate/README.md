@@ -185,13 +185,13 @@ The CI runs in three mode groups (forced, trigger, no-skill), and each group is 
 five suite steps. Splitting by suite makes error logs easier to query and helps isolate failures
 to a small case set.
 
-The benchmark-no-skill pipeline uses `--suite` directly (no `--tag` in suite mode):
+The pipelines use `--eval-spec` with the consolidated suite files under `suites/`, and use `--tag suite=...` to split runs by domain:
 
-| Pipeline | Eval file | Mode |
-| -------- | --------- | ---- |
-| benchmark-no-skill | `.vally.yaml` suites (`*-forced`) | Forced skill + MCP + code quality |
-| benchmark-no-skill | `.vally.yaml` suites (`*-trigger`) | Skill invocation detection |
-| benchmark-no-skill | `.vally.yaml` suites (`main`) | Pure agent baseline |
+| Pipeline | Eval file | Purpose |
+| -------- | --------- | ------- |
+| benchmark | `suites/forced.eval.yaml` | Forced skill invocation + code-quality graders (real MCP environment) |
+| benchmark | `suites/trigger.eval.yaml` | Skill trigger detection (mock MCP environment) |
+| benchmark-no-skill | `suites/no-skill.eval.yaml` | Baseline run without loading the skill (`--skill-dir /tmp/no-skills`) |
 
 Each stimulus has dual tags: `suite` and `mode`, for example
 `{ suite: versioning, mode: forced }`.

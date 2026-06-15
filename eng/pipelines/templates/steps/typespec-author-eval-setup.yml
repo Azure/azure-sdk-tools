@@ -37,7 +37,7 @@ steps:
   - ${{ if eq(parameters.StartQaBotBackend, true) }}:
     - script: |
         echo "Downloading Go 1.24.0..."
-        curl -LO https://go.dev/dl/go1.24.0.linux-amd64.tar.gz
+        curl --fail --location --show-error -o go1.24.0.linux-amd64.tar.gz https://go.dev/dl/go1.24.0.linux-amd64.tar.gz
         sudo rm -rf /usr/local/go
         sudo tar -C /usr/local -xzf go1.24.0.linux-amd64.tar.gz
         echo "##vso[task.setvariable variable=GOROOT]/usr/local/go"

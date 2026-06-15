@@ -59,8 +59,6 @@ One prompt → one expected MCP tool. No `environment.git`, no fixtures. Fast; s
 | [`prompt-to-tool-typespec`](evals/tools/prompt-to-tool-typespec.eval.yaml) | typespec | `azsdk_typespec_*`, `azsdk_convert_swagger_to_typespec`, `azsdk_customized_code_update`, `azsdk_run_typespec_validation` |
 | [`prompt-to-tool-verify`](evals/tools/prompt-to-tool-verify.eval.yaml) | engsys | `azsdk_verify_setup` |
 
-The companion [`scripts/Validate-EvalTools.ps1`](scripts/Validate-EvalTools.ps1) cross-checks that every tool referenced in `evals/tools/prompt-to-tool-*.eval.yaml` exists on the running MCP server, and every server tool has at least one prompt-to-tool check.
-
 #### `evals/workflow-scenarios/` — multi-tool scenarios (4)
 
 Multi-step prompts that exercise 2+ MCP tools end-to-end. Split into
@@ -75,8 +73,9 @@ pipelines, runs nightly).
 | [`release-planner`](evals/workflow-scenarios/live/release-planner.eval.yaml) | release-plan | **live** | Create + re-fetch a release plan, kick off SDK gen, link PR back — real DevOps test-area writes |
 
 Live scenarios need a primed `azure-rest-api-specs` clone — run
-[`evals/setup/ensure-specs-clone.ps1`](evals/setup/ensure-specs-clone.ps1)
-(auto-refreshes every 24h) before invoking the `scenarios-live` / `nightly` suite.
+[`scripts/ensure-specs-clone.ps1`](scripts/ensure-specs-clone.ps1)
+(local-only helper, auto-refreshes every 24h) before invoking the
+`scenarios-live` / `nightly` suite.
 
 **Skill evals (already in repo, *not* part of this PR)** — for reference:
 
@@ -108,11 +107,10 @@ Azure.Sdk.Tools.Vally/
 │   ├── workflow-scenarios/
 │   │   ├── mock/              # multi-tool scenarios, hermetic (PR gate)
 │   │   └── live/              # multi-tool scenarios, live MCP (nightly)
-│   ├── setup/                 # helper scripts (e.g. ensure-specs-clone.ps1)
 │   └── fixtures/              # (future) pinned SHAs + per-eval mocks
 ├── fixtures/                  # Per-scenario static input files (env.files)
 │   └── <scenario-name>/...
-├── scripts/                   # Repo-side helpers (Validate-EvalTools.ps1, …)
+├── scripts/                   # Local helper scripts (ensure-specs-clone.ps1)
 └── Graders/                   # (future) Custom .NET graders
     └── Azure.Sdk.Tools.Vally.csproj  # added when first custom grader lands
 ```
@@ -172,7 +170,7 @@ $skills = '../../../.github/skills'
 test area; prime the spec clone once):
 
 ```powershell
-./evals/setup/ensure-specs-clone.ps1
+./scripts/ensure-specs-clone.ps1
 & $vally eval -e evals/workflow-scenarios/live/release-planner.eval.yaml --skill-dir $skills --workers 1
 ```
 
@@ -246,7 +244,7 @@ Run the live scenarios tier (first, prime a per-user clone of
 `azure-rest-api-specs`; the helper refreshes it every 24h):
 
 ```powershell
-./evals/setup/ensure-specs-clone.ps1
+./scripts/ensure-specs-clone.ps1
 & $vally eval --suite scenarios-live --skill-dir $skills --workers 1
 ```
 

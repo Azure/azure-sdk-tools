@@ -35,7 +35,7 @@ stimuli:
   # --- Scenario 1: Create release plan ---------------------------------
   - name: create-public-preview-release-plan
     environment:
-      # Repo-relative cache populated by evals/setup/ensure-specs-clone.ps1
+      # Repo-relative cache populated by scripts/ensure-specs-clone.ps1
       # (idempotent shallow+sparse clone, auto-refresh every 24h). Same
       # source the live e2e uses — keeps the relative TypeSpec path
       # resolvable on disk even though the MCP responses are mocked.

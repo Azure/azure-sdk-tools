@@ -44,7 +44,7 @@ jobs:
 
       # Pre-build the MCP servers so vally launches `dotnet <dll>` instead of
       # `dotnet run` — avoids the MSBuild boot race under parallel workers.
-      # See issue #15948. `-o` pins the output path so .vally.yaml doesn't
+      # See issue #15947. `-o` pins the output path so .vally.yaml doesn't
       # have to hardcode the target framework (Debug/net8.0/...).
       - script: |
           dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli  -c Release -o artifacts/mcp/cli  --nologo

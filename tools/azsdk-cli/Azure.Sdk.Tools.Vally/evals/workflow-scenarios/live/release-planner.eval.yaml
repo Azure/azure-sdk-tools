@@ -25,7 +25,7 @@ description: |
 
   Prerequisite: a clone of Azure/azure-rest-api-specs at the path referenced
   by environment.git.source below. Locally, run
-  evals/setup/ensure-specs-clone.ps1 to prime the cache (auto-refresh every
+  scripts/ensure-specs-clone.ps1 to prime the cache (auto-refresh every
   24h) at the repo-relative path this source points at. CI should run the
   same script (or clone into the same artifacts/specs-cache path) before the
   scenarios-live suite.

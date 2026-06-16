@@ -178,10 +178,7 @@
                       }
                     },
                     "method": "post",
-                    "path": "/beta/teams/messages/@{encodeURIComponent(item()?['messageId'])}/messageType/@{encodeURIComponent('channel')}",
-                    "queries": {
-                      "$expand": "hostedContents($select=contentBytes,contentType)"
-                    }
+                    "path": "/beta/teams/messages/@{encodeURIComponent(item()?['messageId'])}/messageType/@{encodeURIComponent('channel')}"
                   }
                 },
                 "Filter_messages_mentioned_bot": {

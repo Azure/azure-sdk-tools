@@ -400,9 +400,7 @@ def build_compliance_reports(
         month_end_iso = to_iso8601(end.isoformat(), end_of_day=True)
 
         # Filter revisions to this month's window
-        month_revisions = [
-            rev for rev in all_revisions if month_start_iso <= rev.get("CreatedOn", "") <= month_end_iso
-        ]
+        month_revisions = [rev for rev in all_revisions if month_start_iso <= rev.get("CreatedOn", "") <= month_end_iso]
 
         # Group by ReviewId and keep only the latest revision per review
         latest_by_review: dict[str, dict] = {}
@@ -460,7 +458,9 @@ def build_compliance_reports(
                     "non_compliant": 0,
                     "total": 0,
                     "pct": 0.0,
-                    "buckets": {t: {"compliant": 0, "non_compliant": 0, "total": 0, "pct": 0.0} for t in _KNOWN_REVISION_TYPES},
+                    "buckets": {
+                        t: {"compliant": 0, "non_compliant": 0, "total": 0, "pct": 0.0} for t in _KNOWN_REVISION_TYPES
+                    },
                 },
             )
             buckets = entry["buckets"]

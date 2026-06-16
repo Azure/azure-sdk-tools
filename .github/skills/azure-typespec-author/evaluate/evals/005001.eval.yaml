@@ -20,7 +20,7 @@ stimuli:
   name: 005001-warning-suppress-warning
   constraints:
     max_turns: 5
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/005001-warning-suppress-warning/models.tsp
@@ -35,6 +35,8 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/005001-warning-suppress-warning/stubs.tsp
       dest: stubs.tsp
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:

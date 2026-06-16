@@ -1,0 +1,79 @@
+{
+  "pr": {
+    "number": 42,
+    "title": "Add retry to client",
+    "author": { "login": "alice", "type": "User" },
+    "url": "https://github.com/owner/repo/pull/42",
+    "state": "closed",
+    "mergedAt": "2026-01-15T12:00:00Z"
+  },
+  "reviews": [
+    {
+      "id": 1001,
+      "state": "APPROVED",
+      "body": "LGTM thanks!",
+      "submitted_at": "2026-01-15T11:00:00Z",
+      "user": { "login": "bob", "type": "User" }
+    },
+    {
+      "id": 1002,
+      "state": "CHANGES_REQUESTED",
+      "body": "We need to check ctx.Err() after the loop here; otherwise we silently swallow cancellation.",
+      "submitted_at": "2026-01-15T10:00:00Z",
+      "user": { "login": "carol", "type": "User" }
+    },
+    {
+      "id": 1003,
+      "state": "COMMENTED",
+      "body": "",
+      "submitted_at": "2026-01-15T09:00:00Z",
+      "user": { "login": "dave", "type": "User" }
+    }
+  ],
+  "inline": [
+    {
+      "id": 2001,
+      "path": "client.go",
+      "line": 42,
+      "body": "Wrap this error with fmt.Errorf using %w so callers can errors.Is it.",
+      "diff_hunk": "@@ ...",
+      "user": { "login": "carol", "type": "User" }
+    },
+    {
+      "id": 2002,
+      "path": "client.go",
+      "line": 50,
+      "body": "+1",
+      "user": { "login": "bob", "type": "User" }
+    },
+    {
+      "id": 2003,
+      "path": "client.go",
+      "line": 51,
+      "body": "> Wrap this error with fmt.Errorf using %w\n> so callers can errors.Is it.",
+      "user": { "login": "alice", "type": "User" }
+    },
+    {
+      "id": 2004,
+      "path": "client.go",
+      "line": 60,
+      "body": "auto-formatted by linter, please re-run",
+      "user": { "login": "github-actions[bot]", "type": "Bot" }
+    },
+    {
+      "id": 2005,
+      "path": "client.go",
+      "line": 70,
+      "body": "Will rebase and address all of carol's feedback in the next push.",
+      "user": { "login": "alice", "type": "User" }
+    }
+  ],
+  "issue": [
+    {
+      "id": 3001,
+      "body": "Heads up: this changes the public API surface for downstream consumers.",
+      "created_at": "2026-01-15T08:00:00Z",
+      "user": { "login": "eve", "type": "User" }
+    }
+  ]
+}

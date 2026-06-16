@@ -3,18 +3,9 @@ name: Sync Knowledge Graph
 trigger: none
 pr: none
 
-parameters:
-  # Manual full rebuild — leave default for the scheduled daily run.
-  # Toggle to `true` in the "Run pipeline" dialog to wipe and re-index
-  # everything from scratch (expensive — 1–3 hours, large embedding cost).
-  - name: fullGraphrag
-    displayName: 'Full GraphRAG rebuild (skip incremental)'
-    type: boolean
-    default: false
-
 schedules:
-- cron: "0 3 * * *"  # Daily at 3 AM UTC (1h after the doc sync at 02:00)
-  displayName: Daily knowledge graph sync
+- cron: "0 3 * * *"  # Daily at 3 AM UTC (after the doc sync that maintains the knowledge container)
+  displayName: Daily knowledge graph build
   branches:
     include:
     - main
@@ -25,14 +16,6 @@ resources:
       type: git
       name: 1ESPipelineTemplates/1ESPipelineTemplates
       ref: refs/tags/release
-    - repository: azure-sdk-docs-eng.ms
-      type: git
-      name: internal/azure-sdk-docs-eng.ms
-      ref: main
-    - repository: internal-wiki
-      type: git
-      name: internal/internal.wiki
-      ref: wikiMaster
 
 extends:
   template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
@@ -61,22 +44,17 @@ extends:
         compiled: true
         break: true
       policy: M365
-      sourceRepositoriesToScan:
-        exclude:
-          - repository: azure-sdk-docs-eng.ms
-          - repository: internal-wiki
     stages:
       - stage: SyncKnowledgeGraph
         displayName: 'Sync Knowledge Graph'
         jobs:
           - job: BuildAndSync
-            displayName: 'Build and Execute Knowledge Graph Sync'
+            displayName: 'Build and Execute Knowledge Graph Build'
             # GraphRAG indexing can take significantly longer than a plain
             # doc sync — bump the per-job timeout well above the default 60m.
             timeoutInMinutes: 240
 
             variables:
-              - group: Release Secrets for GitHub
               - template: /eng/pipelines/templates/variables/image.yml@self
               - template: /eng/pipelines/templates/variables/globals.yml@self
               - name: workingDirectory
@@ -90,16 +68,6 @@ extends:
             steps:
               - checkout: self
                 displayName: 'Checkout current repository'
-
-              - checkout: azure-sdk-docs-eng.ms
-                displayName: 'Checkout azure-sdk-docs-eng.ms repository'
-
-              - checkout: internal-wiki
-                displayName: 'Checkout internal wiki repository'
-
-              - template: /eng/common/pipelines/templates/steps/login-to-github.yml@self
-                parameters:
-                  ScriptDirectory: $(Agent.BuildDirectory)/s/azure-sdk-tools/eng/common/scripts
 
               - task: AzureCLI@2
                 displayName: 'Resolve federated credentials'
@@ -140,29 +108,13 @@ extends:
                 workingDirectory: $(workingDirectory)
 
               - script: |
-                  ARGS=""
-                  if [ "$FULL_GRAPHRAG" = "True" ] || [ "$FULL_GRAPHRAG" = "true" ]; then
-                    ARGS="--full-graphrag"
-                  fi
-                  echo "Running: sync-knowledge-graph $ARGS"
-                  sync-knowledge-graph $ARGS
-                displayName: 'Execute knowledge graph sync'
+                  echo "Running: sync-knowledge-graph"
+                  sync-knowledge-graph
+                displayName: 'Execute knowledge graph build'
                 workingDirectory: $(workingDirectory)
                 env:
-                  # Pipeline parameter surfaced as env var for the bash wrapper.
-                  FULL_GRAPHRAG: ${{ parameters.fullGraphrag }}
-
                   # Azure App Configuration — everything else is sourced from here.
                   AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
-
-                  # Local clones of the internal repos (checked out above).
-                  # The sync project's knowledge-config.json references these
-                  # via `localPathEnv`.
-                  AZURE_SDK_DOCS_PATH: "$(Agent.BuildDirectory)/s/azure-sdk-docs-eng.ms"
-                  AZURE_SDK_WIKI_PATH: "$(Agent.BuildDirectory)/s/internal.wiki"
-
-                  # GitHub App token for private repo access.
-                  AZURE_SDK_GITHUB_PAT: $(GH_TOKEN)
 
                   # Bot reload notification (best-effort; if either is empty
                   # the post-publish notify step is skipped with a warning

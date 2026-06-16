@@ -52,7 +52,23 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
         public const string UnexpectedError = "UnexpectedError";
         public const string TypeSpecCustomizationFailed = "TypeSpecCustomizationFailed";
         public const string ManualInterventionRequired = "ManualInterventionRequired";
+
+        /// <summary>
+        /// Repair mode only: the failure can only be fixed by editing the spec inputs
+        /// (client.tsp / tspconfig.yaml) or moving the pinned spec commit, which is out of
+        /// scope for a custom-code-only repair and belongs in a separate spec-repo PR.
+        /// </summary>
+        public const string SpecChangeRequired = "SpecChangeRequired";
     }
+
+    /// <summary>
+    /// Repair mode only: items that cannot be fixed by editing custom code and instead
+    /// require a spec-repo change (e.g. a <c>@@clientName</c>/<c>@@access</c> decorator in
+    /// <c>client.tsp</c>). These are reported, not applied — the repair never edits spec inputs.
+    /// </summary>
+    [JsonPropertyName("specChangeRequired")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<string>? SpecChangeRequired { get; set; }
 
     [JsonPropertyName("message")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -96,6 +112,14 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
             foreach (var patch in AppliedPatches)
             {
                 sb.AppendLine($"  - {patch.FilePath}: {patch.Description} ({patch.ReplacementCount} replacement(s))");
+            }
+        }
+        if (SpecChangeRequired is { Count: > 0 })
+        {
+            sb.AppendLine("Requires a separate spec-repo PR (out of scope for custom-code repair):");
+            foreach (var item in SpecChangeRequired)
+            {
+                sb.AppendLine($"  - {item}");
             }
         }
         return sb.ToString();

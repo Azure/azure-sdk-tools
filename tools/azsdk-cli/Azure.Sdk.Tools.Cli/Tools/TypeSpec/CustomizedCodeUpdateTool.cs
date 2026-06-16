@@ -87,12 +87,22 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         Required = true
     };
 
+    private readonly Option<CustomizedCodeUpdateMode> modeOption = new("--mode")
+    {
+        Description = "Update (default): may apply spec-input (client.tsp) customizations, regenerate, and patch custom code. " +
+                      "Repair: headless, custom-code-only repair — never edits spec inputs or moves the pinned spec commit; " +
+                      "failures requiring a spec change are reported as out of scope instead of applied.",
+        Required = false,
+        DefaultValueFactory = _ => CustomizedCodeUpdateMode.Update
+    };
+
     protected override Command GetCommand() =>
         new McpCommand("customized-update", "Apply TypeSpec and SDK code customizations with AI-assisted analysis.", CustomizedCodeUpdateToolName)
         {
             SharedOptions.PackagePath,
             typespecProjectPath,
             customizationRequestOption,
+            modeOption,
         };
 
     /// <inheritdoc />
@@ -106,10 +116,12 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
         var customizationRequest = parseResult.GetValue(customizationRequestOption);
         ArgumentException.ThrowIfNullOrWhiteSpace(customizationRequest, nameof(customizationRequest));
+
+        var mode = parseResult.GetValue(modeOption);
         try
         {
-            logger.LogInformation("Starting customized code update for {PackagePath}", packagePath);
-            return await RunUpdateAsync(packagePath, tspProjectPath, customizationRequest, ct);
+            logger.LogInformation("Starting customized code update for {PackagePath} (mode: {Mode})", packagePath, mode);
+            return await RunUpdateAsync(packagePath, tspProjectPath, customizationRequest, mode, ct);
         }
         catch (Exception ex)
         {
@@ -142,8 +154,10 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         string tspProjectPath,
         [Description("Description of the requested customization to apply to the TypeSpec or SDK code. Can also be an APIView URL for feedback-driven customizations. REQUIRED.")]
         string customizationRequest,
+        [Description("Update (default): may apply spec-input (client.tsp) customizations, regenerate, and patch custom code. Repair: headless, custom-code-only repair of an already-generated SDK PR — never edits spec inputs (client.tsp/tspconfig.yaml) or moves the pinned spec commit; failures that would require a spec change are reported as out of scope (errorCode 'SpecChangeRequired') instead of applied.")]
+        CustomizedCodeUpdateMode mode = CustomizedCodeUpdateMode.Update,
         CancellationToken ct = default)
-        => RunUpdateAsync(packagePath, tspProjectPath, customizationRequest, ct);
+        => RunUpdateAsync(packagePath, tspProjectPath, customizationRequest, mode, ct);
 
     /// <summary>
     /// Executes the update pipeline: classify → patch customizations → regen → build.
@@ -151,10 +165,12 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// <param name="packagePath">Absolute path to the SDK package directory.</param>
     /// <param name="tspProjectPath">Absolute path to the local TypeSpec project directory.</param>
     /// <param name="customizationRequest">Description of the requested customization to apply to the TypeSpec, used for guiding the update process.</param>
+    /// <param name="mode">Whether to run the default update flow or the custom-code-only repair flow.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A <see cref="CustomizedCodeUpdateResponse"/> with the pipeline result.</returns>
-    private async Task<CustomizedCodeUpdateResponse> RunUpdateAsync(string packagePath, string tspProjectPath, string customizationRequest, CancellationToken ct)
+    private async Task<CustomizedCodeUpdateResponse> RunUpdateAsync(string packagePath, string tspProjectPath, string customizationRequest, CustomizedCodeUpdateMode mode, CancellationToken ct)
     {
+        var repairMode = mode == CustomizedCodeUpdateMode.Repair;
         // Validate input
         if (!Directory.Exists(packagePath))
         {
@@ -211,12 +227,20 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             logger.LogWarning(ex, "Failed to resolve package info for {PackagePath}", packagePath);
         }
 
+        // Repair mode only: items that can only be fixed by a spec change (client.tsp/tspconfig.yaml).
+        // Declared before CreateResponse so every response can surface them.
+        List<string> specChangeRequired = new();
+
         CustomizedCodeUpdateResponse CreateResponse(CustomizedCodeUpdateResponse response)
         {
             response.PackageName ??= packageInfo?.PackageName;
             response.Language = packageInfo?.Language ?? languageService.Language;
             response.PackageType = packageInfo?.SdkType ?? SdkType.Unknown;
             response.TypeSpecProject ??= packageInfo?.SpecProjectPath ?? tspProjectPath;
+            if (specChangeRequired.Count > 0)
+            {
+                response.SpecChangeRequired ??= specChangeRequired;
+            }
             return response;
         }
 
@@ -312,6 +336,18 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             if (itemDetails.Classification == ClassificationTspApplicable)
             {
                 tspApplicable++;
+
+                // Repair mode is custom-code-only: a TSP_APPLICABLE item can only be fixed by editing
+                // spec inputs (client.tsp/tspconfig.yaml), which belongs in a separate spec-repo PR.
+                // Never apply it here — record it as out of scope and continue with custom-code fixes.
+                if (repairMode)
+                {
+                    logger.LogInformation("Repair mode: item '{ItemId}' requires a spec change and is out of scope; reporting instead of applying.", itemDetails.ItemId);
+                    specChangeRequired.Add($"'{itemDetails.Text}' (Reason: {itemDetails.Reason})");
+                    feedbackDictionary.Remove(itemDetails.ItemId);
+                    continue;
+                }
+
                 logger.LogDebug("Applying tsp customization for: {feedback}", itemDetails.Text);
                 var languageTaggedRequest = $"For {languageService.Language}: {itemDetails.Text}";
                 var tspCustomizationResult = await typeSpecCustomizationService.ApplyCustomizationAsync(tspProjectPath, languageTaggedRequest, ct: ct);
@@ -354,6 +390,21 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         }
 
         // ── Early exit cases based on first classification ──
+
+        // Repair mode: if every actionable item requires a spec change and there is no custom code
+        // to patch, stop and report — the repair never edits spec inputs. A human routes these to a
+        // separate spec-repo PR.
+        if (repairMode && specChangeRequired.Count > 0 && codeCustomizations == 0)
+        {
+            return CreateResponse(new CustomizedCodeUpdateResponse
+            {
+                Success = false,
+                Message = "Repair is out of scope: the failure can only be fixed by a spec change (client.tsp/tspconfig.yaml), which belongs in a separate spec-repo PR.",
+                SpecChangeRequired = specChangeRequired,
+                NextSteps = manualInterventions.Count > 0 ? manualInterventions : null,
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.SpecChangeRequired
+            });
+        }
 
         // Nothing was classified as tsp applicable and at least some feedback requires manual intervention
         if (tspApplicable == 0 && codeCustomizations == 0 && manualChanges > 0)
@@ -462,6 +513,13 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     }
                     else if (itemDetails.Classification == ClassificationSuccess)
                     {
+                        feedbackDictionary.Remove(itemDetails.ItemId);
+                    }
+                    else if (repairMode && itemDetails.Classification == ClassificationTspApplicable)
+                    {
+                        // Repair mode never edits spec inputs — surface as out of scope instead of applying.
+                        logger.LogInformation("Repair mode: item '{ItemId}' reclassified as TSP_APPLICABLE on second pass; out of scope.", itemDetails.ItemId);
+                        specChangeRequired.Add($"'{itemDetails.Text}' (Reason: {itemDetails.Reason})");
                         feedbackDictionary.Remove(itemDetails.ItemId);
                     }
                 }

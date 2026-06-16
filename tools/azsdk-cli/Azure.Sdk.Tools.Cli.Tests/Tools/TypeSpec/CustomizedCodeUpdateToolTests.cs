@@ -1369,6 +1369,231 @@ public class CustomizedCodeUpdateToolAutoTests
     }
 
     // ========================================================================
+    // Repair mode (custom-code-only; never edits spec inputs)
+    // ========================================================================
+
+    [Test]
+    public async Task RepairMode_TspApplicableOnly_ReturnsSpecChangeRequired_DoesNotApplyTsp()
+    {
+        // The default classifier returns a single TSP_APPLICABLE item with no code customizations.
+        // In repair mode this must NOT be applied (no spec-input edits); instead it is reported
+        // as out of scope with errorCode 'SpecChangeRequired'.
+        var (tool, mocks) = CreateTool();
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            tspProjectPath: tspDir,
+            customizationRequest: "Rename FooClient to BarClient",
+            mode: CustomizedCodeUpdateMode.Repair,
+            ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.SpecChangeRequired));
+        Assert.That(result.SpecChangeRequired, Is.Not.Null.And.Count.EqualTo(1));
+
+        // Critically, repair mode must never apply spec-input (client.tsp) customizations.
+        mocks.TypeSpecCustomization.Verify(t => t.ApplyCustomizationAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string?>(),
+            It.IsAny<int>(),
+            It.IsAny<CancellationToken>()), Times.Never,
+            "Repair mode must not apply TypeSpec (spec-input) customizations.");
+    }
+
+    [Test]
+    public async Task RepairMode_CodeCustomization_PatchesApplied_BuildSucceeds()
+    {
+        // Repair mode still performs custom-code patching: a CODE_CUSTOMIZATION item flows through
+        // the patch pipeline exactly like update mode, and no spec-input edits are made.
+        var buildCalls = 0;
+        var svc = new ConfigurableLanguageService(
+            buildFunc: () =>
+            {
+                buildCalls++;
+                return buildCalls <= 1
+                    ? (false, "error: cannot find symbol maxSpeakers", null)
+                    : (true, null, null);
+            },
+            hasCustomizations: true,
+            patchesFunc: () =>
+            [
+                new AppliedPatch("SpeechTranscriptionCustomization.java", "Renamed maxSpeakers to maxSpeakerCount", 2)
+            ],
+            language: SdkLanguage.Java);
+
+        var (tool, mocks) = CreateTool(
+            languageService: svc,
+            configureClassifier: c =>
+                c.Setup(x => x.ClassifyItemsAsync(
+                        It.IsAny<List<FeedbackItem>>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<int?>(),
+                        It.IsAny<CancellationToken>()))
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _) =>
+                        {
+                            if (items.Count == 0)
+                            {
+                                var item = new FeedbackItem { Text = "Rename maxSpeakers to maxSpeakerCount in customization code" };
+                                items.Add(item);
+                                return Task.FromResult(new FeedbackClassificationResponse
+                                {
+                                    Classifications =
+                                    [
+                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        {
+                                            ItemId = item.Id,
+                                            Classification = "CODE_CUSTOMIZATION",
+                                            Reason = "Fix is in the customization file",
+                                            Text = "Rename maxSpeakers to maxSpeakerCount in customization code"
+                                        }
+                                    ]
+                                });
+                            }
+                            return Task.FromResult(new FeedbackClassificationResponse { Classifications = [] });
+                        }));
+
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            tspProjectPath: tspDir,
+            customizationRequest: "Rename maxSpeakers to maxSpeakerCount",
+            mode: CustomizedCodeUpdateMode.Repair,
+            ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.Message, Does.Contain("Build passed after code customization patches."));
+        Assert.That(result.AppliedPatches, Is.Not.Null.And.Count.EqualTo(1));
+        Assert.That(result.ErrorCode, Is.Null);
+
+        mocks.TypeSpecCustomization.Verify(t => t.ApplyCustomizationAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string?>(),
+            It.IsAny<int>(),
+            It.IsAny<CancellationToken>()), Times.Never,
+            "Repair mode must not apply TypeSpec (spec-input) customizations even when patching code.");
+    }
+
+    [Test]
+    public async Task RepairMode_MixedSpecAndCode_PatchesCode_SurfacesSpecChangeRequired()
+    {
+        // Mixed feedback: one TSP_APPLICABLE (out of scope) + one CODE_CUSTOMIZATION (in scope).
+        // Repair mode patches the code, reports the spec item as out of scope, and never edits client.tsp.
+        var buildCalls = 0;
+        var svc = new ConfigurableLanguageService(
+            buildFunc: () =>
+            {
+                buildCalls++;
+                return buildCalls <= 1
+                    ? (false, "error: cannot find symbol foo", null)
+                    : (true, null, null);
+            },
+            hasCustomizations: true,
+            patchesFunc: () => [new AppliedPatch("Customization.java", "Fixed reference", 1)],
+            language: SdkLanguage.Java);
+
+        var (tool, mocks) = CreateTool(
+            languageService: svc,
+            configureClassifier: c =>
+                c.Setup(x => x.ClassifyItemsAsync(
+                        It.IsAny<List<FeedbackItem>>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<int?>(),
+                        It.IsAny<CancellationToken>()))
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _) =>
+                        {
+                            if (items.Count == 0)
+                            {
+                                var specItem = new FeedbackItem { Text = "Rename client (spec change)" };
+                                var codeItem = new FeedbackItem { Text = "Fix customization reference" };
+                                items.Add(specItem);
+                                items.Add(codeItem);
+                                return Task.FromResult(new FeedbackClassificationResponse
+                                {
+                                    Classifications =
+                                    [
+                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        {
+                                            ItemId = specItem.Id, Classification = "TSP_APPLICABLE",
+                                            Reason = "Needs spec edit", Text = "Rename client (spec change)"
+                                        },
+                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        {
+                                            ItemId = codeItem.Id, Classification = "CODE_CUSTOMIZATION",
+                                            Reason = "Fix in customization file", Text = "Fix customization reference"
+                                        }
+                                    ]
+                                });
+                            }
+                            return Task.FromResult(new FeedbackClassificationResponse { Classifications = [] });
+                        }));
+
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            tspProjectPath: tspDir,
+            customizationRequest: "mixed feedback",
+            mode: CustomizedCodeUpdateMode.Repair,
+            ct: CancellationToken.None);
+
+        // Code path succeeds; the spec item is surfaced as out of scope rather than applied.
+        Assert.That(result.SpecChangeRequired, Is.Not.Null.And.Count.EqualTo(1));
+        Assert.That(result.AppliedPatches, Is.Not.Null.And.Count.EqualTo(1));
+
+        mocks.TypeSpecCustomization.Verify(t => t.ApplyCustomizationAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string?>(),
+            It.IsAny<int>(),
+            It.IsAny<CancellationToken>()), Times.Never,
+            "Repair mode must not apply spec-input customizations even in mixed feedback.");
+    }
+
+    [Test]
+    public async Task UpdateMode_TspApplicable_AppliesCustomization_BackwardCompatible()
+    {
+        // Default (Update) mode is unchanged: TSP_APPLICABLE items are applied via the
+        // TypeSpec customization service. Guards backward compatibility of the new mode param.
+        var (tool, mocks) = CreateTool();
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            tspProjectPath: tspDir,
+            customizationRequest: "Rename FooClient to BarClient",
+            ct: CancellationToken.None);
+
+        Assert.That(result.SpecChangeRequired, Is.Null);
+        mocks.TypeSpecCustomization.Verify(t => t.ApplyCustomizationAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string?>(),
+            It.IsAny<int>(),
+            It.IsAny<CancellationToken>()), Times.AtLeastOnce,
+            "Update mode must still apply TypeSpec customizations for TSP_APPLICABLE items.");
+    }
+
+    // ========================================================================
     // Mock helpers
     // ========================================================================
 

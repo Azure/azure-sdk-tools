@@ -268,6 +268,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 apiViewUrl: apiViewUrl,
                 plainTextFeedback: customizationRequest,
                 language: languageService.Language.ToString(),
+                editScope: editScope,
                 ct: ct);
         }
         catch (CopilotCliUnavailableException ex)
@@ -515,7 +516,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         // The classifier can now reclassify them as CODE_CUSTOMIZATION or REQUIRES_MANUAL_INTERVENTION.
         if (feedbackDictionary.Count > 0)
         {
-            var secondResponse = await _classifierService.ClassifyItemsAsync([.. feedbackDictionary.Values], globalContext: string.Join(";", changesMade), tspProjectPath: tspProjectPath, language: languageService.Language.ToString(), ct: ct);
+            var secondResponse = await _classifierService.ClassifyItemsAsync([.. feedbackDictionary.Values], globalContext: string.Join(";", changesMade), tspProjectPath: tspProjectPath, language: languageService.Language.ToString(), editScope: editScope, ct: ct);
 
             if (secondResponse.Classifications != null)
             {

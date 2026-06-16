@@ -59,9 +59,10 @@ public class CustomizedCodeUpdateToolAutoTests
                 It.IsAny<string?>(),
                 It.IsAny<string?>(),
                 It.IsAny<int?>(),
+                It.IsAny<EditScope>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                (items, _, _, _, plainText, _, _, _, _) =>
+            .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                (items, _, _, _, plainText, _, _, _, _, _) =>
                 {
                     if (items.Count == 0)
                     {
@@ -241,6 +242,7 @@ public class CustomizedCodeUpdateToolAutoTests
                     It.IsAny<string?>(),
                     It.IsAny<string?>(),
                     It.IsAny<int?>(),
+                    It.IsAny<EditScope>(),
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new FeedbackClassificationResponse { Classifications = [] }));
 
@@ -267,6 +269,7 @@ public class CustomizedCodeUpdateToolAutoTests
                     It.IsAny<string?>(),
                     It.IsAny<string?>(),
                     It.IsAny<int?>(),
+                    It.IsAny<EditScope>(),
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new FeedbackClassificationResponse { Classifications = null }));
 
@@ -297,6 +300,7 @@ public class CustomizedCodeUpdateToolAutoTests
                     It.IsAny<string?>(),
                     It.IsAny<string?>(),
                     It.IsAny<int?>(),
+                    It.IsAny<EditScope>(),
                     It.IsAny<CancellationToken>()))
                 .ThrowsAsync(copilotEx));
 
@@ -325,6 +329,7 @@ public class CustomizedCodeUpdateToolAutoTests
                     It.IsAny<string?>(),
                     It.IsAny<string?>(),
                     It.IsAny<int?>(),
+                    It.IsAny<EditScope>(),
                     It.IsAny<CancellationToken>()))
                 .ThrowsAsync(unexpectedEx));
 
@@ -353,9 +358,10 @@ public class CustomizedCodeUpdateToolAutoTests
                     It.IsAny<string?>(),
                     It.IsAny<string?>(),
                     It.IsAny<int?>(),
+                    It.IsAny<EditScope>(),
                     It.IsAny<CancellationToken>()))
-                .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                    (items, _, _, _, _, _, _, _, _) =>
+                .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                    (items, _, _, _, _, _, _, _, _, _) =>
                     {
                         var item1 = new FeedbackItem { Text = "Restructure hierarchy" };
                         var item2 = new FeedbackItem { Text = "Looks good" };
@@ -412,9 +418,10 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
                         {
                             classifyCalls++;
                             if (items.Count == 0)
@@ -480,9 +487,10 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
                         {
                             classifyCalls++;
                             if (items.Count == 0)
@@ -543,9 +551,10 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
                         {
                             if (items.Count == 0)
                             {
@@ -618,9 +627,10 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
                         {
                             classifyCalls++;
                             if (items.Count == 0)
@@ -695,9 +705,10 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
                         {
                             classifyCalls++;
                             if (items.Count == 0)
@@ -904,9 +915,10 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
                         {
                             classifyCalls++;
                             if (items.Count == 0)
@@ -991,9 +1003,10 @@ public class CustomizedCodeUpdateToolAutoTests
                     It.IsAny<string?>(),
                     It.IsAny<string?>(),
                     It.IsAny<int?>(),
+                    It.IsAny<EditScope>(),
                     It.IsAny<CancellationToken>()))
-                .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                    (items, _, _, _, plainText, _, _, _, _) =>
+                .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                    (items, _, _, _, plainText, _, _, _, _, _) =>
                     {
                         capturedFeedbackText = plainText;
                         var item = new FeedbackItem { Text = plainText ?? "" };
@@ -1041,9 +1054,10 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
                         {
                             classifyCalls++;
                             if (items.Count == 0)
@@ -1119,9 +1133,10 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
                         {
                             classifyCalls++;
                             if (items.Count == 0)
@@ -1436,9 +1451,10 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
                         {
                             if (items.Count == 0)
                             {
@@ -1515,9 +1531,10 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
                         {
                             if (items.Count == 0)
                             {
@@ -1628,9 +1645,10 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
                         {
                             if (items.Count == 0)
                             {
@@ -1715,9 +1733,10 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
                         {
                             if (items.Count == 0)
                             {

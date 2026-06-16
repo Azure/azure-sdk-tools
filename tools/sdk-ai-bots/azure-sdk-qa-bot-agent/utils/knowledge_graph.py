@@ -53,6 +53,7 @@ from __future__ import annotations
 import asyncio
 import contextvars
 import logging
+import re
 import tempfile
 import time
 from dataclasses import dataclass
@@ -109,7 +110,11 @@ class GraphSourceRef:
     """A source-document reference cited by a GraphRAG local search.
 
     Attributes:
-        title:   Human-readable document title (path with ``/`` separators).
+        title:   Human-readable reference title. Prefers a section-level
+                 ``h1 | h2 | h3`` heading path parsed from the cited chunk
+                 (matching the KB tool's header-based titles); falls back
+                 to the document path (``/`` separators) when the chunk
+                 carries no heading.
         link:    Best-effort link to the original document. Empty string
                  when no URL can be derived without tenant context.
         content: A representative excerpt of the source text used to
@@ -653,9 +658,18 @@ class KnowledgeGraphService:
             else:
                 link = fallback_link
 
+            # Title resolution mirrors the KB tool's _build_reference_title:
+            # prefer a section-level ``h1 | h2 | h3`` path parsed from the
+            # cited chunk so graph references read like the KB's
+            # header-based titles instead of a bare file path. Fall back to
+            # the document path (display_title) when the chunk has no
+            # heading, then to a synthetic id as a last resort.
+            chunk_title = _extract_chunk_header_path(str(row.get("text") or ""))
+            ref_title = chunk_title or display_title or f"Document {doc_id[:12]}"
+
             sources.append(
                 GraphSourceRef(
-                    title=display_title or f"Document {doc_id[:12]}",
+                    title=ref_title,
                     link=link,
                     content=str(row.get("text") or ""),
                     source=source_name,
@@ -1208,6 +1222,68 @@ def _doc_title_to_display(raw_title: str) -> tuple[str, str]:
         return "", ""
     pretty = title.replace("#", "/")
     return pretty, pretty
+
+
+# Matches an ATX markdown header line (``#`` .. ``######`` followed by a
+# space and the heading text). We deliberately ignore the leading-``#``
+# heading levels' count beyond classifying depth — only the text matters
+# for display. Trailing ``#`` characters (closed ATX headers) are
+# stripped by the caller.
+_HEADER_RE = re.compile(r"^(#{1,6})\s+(.*?)\s*#*\s*$")
+# Fenced code-block delimiters (``` or ~~~, with optional leading
+# whitespace and an optional info string). ``#`` lines inside a fence are
+# comments/shell prompts, never markdown headers, so we must skip them.
+_FENCE_RE = re.compile(r"^\s*(`{3,}|~{3,})")
+# How many headers deep we keep, mirroring the KB tool's
+# ``header1 | header2 | header3`` (3 levels).
+_MAX_HEADER_DEPTH = 3
+
+
+def _extract_chunk_header_path(text: str) -> str:
+    """Derive a ``h1 | h2 | h3`` heading path from a text-unit chunk.
+
+    GraphRAG splits documents into fixed-size token windows that — unlike
+    the KB tool's header-aware chunks — carry no header metadata. We
+    recover a section-level title by scanning the chunk's own markdown:
+    we track the most recent heading at each level (1-3) in document
+    order and join them with `` | `` (same shape as the KB tool's
+    ``_build_reference_title``).
+
+    Lines inside fenced code blocks are skipped so shell prompts and
+    comments (``# do this``) are not mistaken for headers. Returns an
+    empty string when the chunk contains no usable heading (e.g. it
+    starts mid-section); the caller then falls back to the document
+    title.
+    """
+    if not text:
+        return ""
+
+    # Most recent heading text seen at each depth (1-indexed).
+    headings: list[str | None] = [None, None, None]
+    in_fence = False
+    for line in text.splitlines():
+        if _FENCE_RE.match(line):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+        m = _HEADER_RE.match(line)
+        if not m:
+            continue
+        depth = len(m.group(1))
+        heading_text = m.group(2).strip()
+        if not heading_text or depth > _MAX_HEADER_DEPTH:
+            continue
+        # Record this heading at its depth and clear any deeper levels so
+        # a later shallow heading doesn't keep a stale deeper sibling.
+        idx = depth - 1
+        headings[idx] = heading_text
+        for deeper in range(idx + 1, _MAX_HEADER_DEPTH):
+            headings[deeper] = None
+
+    parts = [h for h in headings if h]
+    return " | ".join(parts)
+
 
 
 # --------------------------------------------------------------------------- #

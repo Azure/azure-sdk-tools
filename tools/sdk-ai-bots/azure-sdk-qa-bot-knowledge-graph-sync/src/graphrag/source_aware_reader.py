@@ -60,6 +60,31 @@ class SourceAwareMarkItDownFileReader(MarkItDownFileReader):
       when the input was uploaded at the container root with no folder.
     * ``source_path`` — full input path as provided by graphrag's
       storage layer, kept for debuggability.
+
+    Document ``title`` is set to the **full input path encoded with**
+    ``#`` (``typespec_docs/sub#file.md`` → ``typespec_docs#sub#file.md``)
+    so that it is:
+
+    * **Globally unique & stable** across runs — GraphRAG's incremental
+      update keys its document delta on ``documents.title``
+      (``graphrag.index.update.incremental_index.get_delta_docs``), so a
+      title that is unique per source document (and identical for the
+      same document across runs) is required for correct add/delete
+      detection. The previous behaviour stored ``result.title`` (the
+      MarkItDown-extracted heading, ``None`` for plain markdown today) or
+      fell back to the bare ``posix_path.name`` — which collides across
+      source folders (every folder's ``README.md`` shares one title) and
+      would silently break delta detection.
+    * **Round-trippable to the original path** — the bot agent reverses
+      the ``#`` encoding (and strips the ``source_folder`` prefix it
+      reads from ``raw_data``) to resolve the document link, mirroring
+      the KB tool's ``title.replace("#", "/")`` contract.
+
+    We deliberately ignore ``result.title``: the knowledge container only
+    holds ``.md`` (for which MarkItDown returns no title), and relying on
+    it is fragile — a MarkItDown upgrade that started extracting an H1
+    would replace the path key with arbitrary heading text and break both
+    delta detection and link resolution.
     """
 
     async def read_file(self, path: str) -> list[TextDocument]:
@@ -79,9 +104,14 @@ class SourceAwareMarkItDownFileReader(MarkItDownFileReader):
 
         source_folder = posix_path.parts[0] if len(posix_path.parts) > 1 else ""
 
+        # Encode the full input path as the document title (globally
+        # unique, stable, round-trippable). See the class docstring for
+        # why we do not use ``result.title`` / the bare filename.
+        encoded_title = str(posix_path).replace("/", "#")
+
         document = TextDocument(
             id=gen_sha512_hash({"text": text}, ["text"]),
-            title=result.title if result.title else str(posix_path.name),
+            title=encoded_title,
             text=text,
             creation_date=await self._storage.get_creation_date(path),
             raw_data={

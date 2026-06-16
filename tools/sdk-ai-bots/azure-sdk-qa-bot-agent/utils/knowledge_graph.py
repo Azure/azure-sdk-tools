@@ -646,15 +646,24 @@ class KnowledgeGraphService:
             else:
                 knowledge_source = get_knowledge_source(source_name)
 
-            display_title, fallback_link = _doc_title_to_display(raw_title)
+            # The document title is the full ``#``-encoded input path
+            # (``typespec_docs#sub#file.md``). The KB-style link/display
+            # contract expects a *source-folder-relative* encoded path
+            # (``sub#file.md``) — the per-source ``base_url`` already
+            # covers the folder — so strip the ``{source_folder}#`` prefix
+            # we know from ``raw_data``. No-op for root-level blobs and for
+            # unattributed rows (source_name == "graphrag").
+            rel_title = _strip_source_prefix(raw_title, source_name)
+
+            display_title, fallback_link = _doc_title_to_display(rel_title)
             # Prefer the KnowledgeSource's URL resolver so the link is
             # consistent with the KB tool's references — it knows about
             # per-source quirks (trim_format, suffix, custom link_fn).
             # Fall back to the raw path when the title's source folder
             # is registered but the KnowledgeSource lookup fails (e.g.
             # a folder that was removed from tenant_config).
-            if knowledge_source is not None and raw_title:
-                link = knowledge_source.get_link(raw_title)
+            if knowledge_source is not None and rel_title:
+                link = knowledge_source.get_link(rel_title)
             else:
                 link = fallback_link
 
@@ -1222,6 +1231,30 @@ def _doc_title_to_display(raw_title: str) -> tuple[str, str]:
         return "", ""
     pretty = title.replace("#", "/")
     return pretty, pretty
+
+
+def _strip_source_prefix(raw_title: str, source_folder: str) -> str:
+    """Drop the leading ``{source_folder}#`` segment from a doc title.
+
+    The sync project's ``SourceAwareMarkItDownFileReader`` stores the
+    *full* ``#``-encoded input path as ``documents.title``
+    (``typespec_docs#sub#file.md``) so the title is globally unique for
+    GraphRAG's incremental delta. The KB-style link/display contract,
+    however, works on the **source-folder-relative** encoded path
+    (``sub#file.md``) because each ``KnowledgeSource``'s ``base_url``
+    already encodes the folder. We strip the known ``source_folder``
+    prefix to bridge the two.
+
+    No-op when ``source_folder`` is empty (root-level blob), when it is
+    the synthetic ``"graphrag"`` fallback used for unattributed rows, or
+    when the title does not actually start with that prefix.
+    """
+    if not source_folder or not raw_title:
+        return raw_title
+    prefix = f"{source_folder}#"
+    if raw_title.startswith(prefix):
+        return raw_title[len(prefix):]
+    return raw_title
 
 
 # Matches an ATX markdown header line (``#`` .. ``######`` followed by a

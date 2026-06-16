@@ -1,5 +1,11 @@
 # Release History
 
+## Unreleased
+
+### Features Added
+
+- Added a custom-code-only `repair` mode to the `customized-update` command / `azsdk_customized_code_update` MCP tool. Repair mode never edits spec inputs (client.tsp/tspconfig.yaml) or moves the pinned spec commit; feedback requiring a spec change is reported as out of scope via the new `SpecChangeRequired` error code instead of being applied.
+
 ## 0.6.20 (2026-06-16)
 
 ### Features Added

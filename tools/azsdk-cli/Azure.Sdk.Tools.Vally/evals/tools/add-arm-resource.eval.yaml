@@ -1,0 +1,46 @@
+name: azsdk-mcp-tool-scenarios
+description: |
+  Add-arm-resource: end-to-end scenario for authoring a new ARM resource
+  via TypeSpec. This is a complex, file-producing scenario (not a single
+  tool-call check) that needs a real fixture + tsp compile verification.
+version: "1.0"
+type: capability
+
+
+tags:
+  tier: unit
+  area: typespec
+
+environment: azsdk-mcp-mock
+
+config:
+  runs: 1
+  timeout: 30m
+  model: gpt-5.4
+  executor: copilot-sdk
+
+stimuli:
+  - name: add-arm-resource
+    prompt: |
+      In the specification/widget/resource-manager/Microsoft.Widget/Widget project,
+      add an ARM resource named 'Asset' with CRUD operations.
+    constraints:
+      max_turns: 20
+      max_tokens: 50000
+    # TODO: seed a fixture (environment.files or git) for the Microsoft.Widget
+    # project, add `file-exists` + `file-contains` graders on the produced
+    # asset.tsp, and a `run-command` grader to verify `npx tsp compile`.
+    # Those output graders are the real "did it author the resource" check;
+    # asserting a specific write tool (`edit`) is a flaky proxy — the agent
+    # may legitimately use `powershell` for batch edits instead.
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_typespec_generate_authoring_plan
+
+scoring:
+  weights:
+    tool-calls: 1
+  threshold: 1.0
+

@@ -28,6 +28,7 @@ How to handle `@-mentions`:
 - Treat `@-mentions` as routing hints, not as a hard block. Decide based on the substance of the message.
 - If the message contains a domain question that anyone (including the bot) could answer, classify as should_respond=true even when other people are @-mentioned.
 - Only classify as should_respond=false when the message is plainly a private/personal ask to the named person and providing a bot answer would not add value.
+- **Exception (takes priority):** if the message asks a human to approve, confirm, verify, or review the bot's own prior answer — even if it also restates or re-asks the underlying technical question — classify as should_respond=false. The user is escalating to a human, so the bot should defer.
 
 When prior conversation history is provided:
 

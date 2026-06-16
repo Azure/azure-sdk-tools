@@ -20,9 +20,6 @@ public class ApplicationAccessConfig
     [JsonPropertyName("properties"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull), JsonPropertyOrder(4)]
     public SortedDictionary<string, string> Properties { get; set; } = new SortedDictionary<string, string>();
 
-    [JsonPropertyName("githubRepositorySecrets"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull), JsonPropertyOrder(5)]
-    public List<GithubRepositorySecretsConfig> GithubRepositorySecrets { get; set; } = new List<GithubRepositorySecretsConfig>();
-
     [JsonPropertyName("roleBasedAccessControls"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull), JsonPropertyOrder(6)]
     public List<RoleBasedAccessControlsConfig> RoleBasedAccessControls { get; set; } = new List<RoleBasedAccessControlsConfig>();
 
@@ -85,12 +82,6 @@ public class ApplicationAccessConfig
         foreach (var fic in FederatedIdentityCredentials)
         {
             var unrendered = fic.Render(Properties);
-            allUnrendered.UnionWith(unrendered);
-        }
-
-        foreach (var gh in GithubRepositorySecrets)
-        {
-            var unrendered = gh.Render(Properties);
             allUnrendered.UnionWith(unrendered);
         }
 

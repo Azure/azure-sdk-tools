@@ -1,5 +1,17 @@
 # Release History
 
+## 0.6.20 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
+- Set ADO work item Id as release plan ID for new release plans.
+
 ## 0.6.19 (2026-06-12)
 
 ### Features Added

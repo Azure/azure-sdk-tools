@@ -1,6 +1,6 @@
 # Tools available in Azure SDK MCP server
 
-This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.18.
+This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.19.
 
 <style>
 table td:nth-child(2),
@@ -47,7 +47,6 @@ table th:nth-child(2) {
 | azsdk_get_pull_request |  | This tool gets pull request details, status, comments, checks, next action details, links to APIView reviews. |
 | azsdk_get_pull_request_link_for_current_branch |  | Get pull request link for current branch in the repo. Provide absolute path to repository root as param. This tool call GetPullRequest to get pull request details. |
 | azsdk_get_release_plan | `azsdk release-plan get` | Get Release Plan: Get release plan work item details for a given release plan number/Id or work item id. If neither is provided, finds the active release plan by TypeSpec project path or spec PR URL. |
-| azsdk_get_release_plan_for_spec_pr |  | Get release plan for API spec pull request. This tool should be used only if work item Id is unknown. |
 | azsdk_get_sdk_pull_request_link | `azsdk spec-workflow get-sdk-pr` | Get SDK pull request link from SDK generation pipeline run or from work item. Build ID of pipeline run is required to query pull request link from SDK generation pipeline. This tool can get SDK pull request details if present in a work item. |
 | azsdk_get_service_details_by_typespec_path | `azsdk release-plan get-service-details` | Get service and service tree product details for a product using TypeSpec project path: Get service tree product details (service tree ID, service ID, package display name, product service tree link). |
 | azsdk_link_namespace_approval_issue | `azsdk release-plan link-namespace-approval` | Link package namespace approval issue to release plan(required only for management plan). This requires GitHub issue URL for the namespace approval request and release plan work item id. |
@@ -99,24 +98,25 @@ Returns an answer with supporting references and documentation links
 |  | `azsdk pkg samples translate` | Translates sample files from source language to target package language |
 |  | `azsdk pkg samples generate` | Generates sample files |
 |  | `azsdk pkg readme generate` | Generate README content for a package |
+|  | `azsdk pkg find-work-item` | Find the Azure DevOps package work item ID |
 |  | `azsdk eng package-info` | Generate PackageInfo JSON files for CI pipelines |
 |  | `azsdk ingest-telemetry` |  |
 |  | `azsdk config github-label sync-ado` | Synchronize service labels from the GitHub CSV to Azure DevOps Work Items |
-|  | `azsdk config github-label create` | Creates a PR for a new label given a proposed label and brand documentation |
-|  | `azsdk config codeowners add-label-owner` | Add owner(s) to a label and optional path |
+|  | `azsdk config codeowners remove-package-owner` | Remove source owner(s) from a package |
+|  | `azsdk config github-label check` | Check if a service label exists in the common labels CSV |
 |  | `azsdk config codeowners audit` | Audit CODEOWNERS work items for violations and optionally fix them. You MUST update the CODEOWNERS cache before running this command. |
 |  | `azsdk config codeowners check-package` | Check that a package has sufficient owners, PR labels, and service owners from a CODEOWNERS cache file |
 |  | `azsdk config codeowners export-section` | Export one or more named sections from a CODEOWNERS file |
 |  | `azsdk config codeowners remove-label-owner` | Remove owner(s) from a label and optional path |
 |  | `azsdk config codeowners remove-package-label` | Remove PR label(s) from a package |
-|  | `azsdk config codeowners remove-package-owner` | Remove source owner(s) from a package |
 |  | `azsdk verify setup install` | Install missing environment requirements. Exit codes: 0 = all requirements met, 1 = blocking (manual intervention needed).  |
+|  | `azsdk config codeowners add-label-owner` | Add owner(s) to a label and optional path |
 |  | `azsdk config codeowners add-package-label` | Add PR label(s) to a package |
 |  | `azsdk config codeowners add-package-owner` | Add source owner(s) to a package |
 |  | `azsdk config codeowners view` | View CODEOWNERS associations for a user, label, package, or path |
 |  | `azsdk config codeowners generate` | Generate CODEOWNERS file from Azure DevOps work items |
 |  | `azsdk start` | Starts the MCP server (stdio mode) |
 |  | `azsdk mcp` | Starts the MCP server (stdio mode) |
-|  | `azsdk config github-label check` | Check if a service label exists in the common labels CSV |
+|  | `azsdk config github-label create` | Creates a PR for a new label given a proposed label and brand documentation |
 |  | `azsdk list` |  |
 

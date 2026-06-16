@@ -96,8 +96,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
                 {
                     { "System.Title", releasePlan.Title },
                     { "System.Description", releasePlan.Description },
-                    { "System.State", "New" },
-                    { "Custom.ReleasePlanId", 100 }
+                    { "System.State", "In Progress" },
+                    { "Custom.ReleasePlanID", "100" }
                 }
             };
             return Task.FromResult(workItem);

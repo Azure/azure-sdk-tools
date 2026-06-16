@@ -4,6 +4,7 @@
 
 ### Features Added
 
+- Replaced the `package find-work-item` CLI command with `package get-work-item`, which returns the full Azure DevOps package work item, and added `package update-work-item` for patching package work item fields.
 - Set ADO work item ID as release plan ID for new release plans.
 
 ### Bugs Fixed
@@ -20,7 +21,6 @@
 ### Features Added
 
 - Release plan is automatically marked as "Finished" when all required language SDKs are either Released or have an Approved exclusion. Management plane checks all 5 languages; data plane checks .NET, Java, Python, and JavaScript only.
-- Added the `package find-work-item` CLI command to find Azure DevOps package work item IDs by package name, package version, and language.
 
 ### Bugs Fixed
 

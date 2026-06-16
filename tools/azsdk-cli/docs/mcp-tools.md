@@ -78,7 +78,8 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 |  | `azsdk pkg samples translate` | Translates sample files from source language to target package language |
 |  | `azsdk pkg samples generate` | Generates sample files |
 |  | `azsdk pkg readme generate` | Generate README content for a package |
-|  | `azsdk pkg find-work-item` | Find the Azure DevOps package work item ID |
+|  | `azsdk pkg get-work-item` | Get the Azure DevOps package work item |
+|  | `azsdk pkg update-work-item` | Update the Azure DevOps package work item |
 |  | `azsdk eng package-info` | Generate PackageInfo JSON files for CI pipelines |
 |  | `azsdk ingest-telemetry` |  |
 |  | `azsdk config github-label sync-ado` | Synchronize service labels from the GitHub CSV to Azure DevOps Work Items |

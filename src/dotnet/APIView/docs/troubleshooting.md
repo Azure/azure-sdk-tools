@@ -14,6 +14,10 @@ The most common reason is that your GitHub organization membership is set to **p
 
 To reduce the surface area for potential attacks, APIView is **only accessible from CorpNet**.
 
+If you are a Microsoft employee outside the office, connect to the **Microsoft corporate VPN** and then retry the link. Once connected to VPN you will be prompted to sign in with your GitHub account.
+
+If you are an external contributor without CorpNet/VPN access, contact the package owner or the Azure SDK engineering team for assistance.
+
 ### APIView is not accessible (engineering team)
 
 Possible causes: deployment in progress, Cosmos DB or Azure Storage Blob not accessible, or bad deployment.

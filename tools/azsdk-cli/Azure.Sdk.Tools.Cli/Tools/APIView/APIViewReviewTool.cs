@@ -48,13 +48,13 @@ public class APIViewReviewTool : MCPMultiCommandTool
 
     private readonly Option<string> apiViewUrlRequiredOption = new("--url")
     {
-        Description = "The URL to the API review in APIView (e.g., https://apiview.dev/review/{reviewId}?activeApiRevisionId={revisionId})",
+        Description = "The URL to the API review in APIView (e.g., https://spa.apiview.dev/review/{reviewId}?activeApiRevisionId={revisionId})",
         Required = true
     };
 
     private readonly Option<string> apiViewUrlOption = new("--url")
     {
-        Description = "The URL to the API review in APIView (e.g., https://apiview.dev/review/{reviewId}?activeApiRevisionId={revisionId}). Use --api-text instead to provide the text directly."
+        Description = "The URL to the API review in APIView (e.g., https://spa.apiview.dev/review/{reviewId}?activeApiRevisionId={revisionId}). Use --api-text instead to provide the text directly."
     };
 
     private readonly Option<string> buildIdOption = new("--build-id")
@@ -583,7 +583,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
 
         if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) || (uri.Scheme != "http" && uri.Scheme != "https"))
         {
-            throw new ArgumentException("Input needs to be a valid APIView URL (e.g., https://apiview.dev/review/{reviewId}?activeApiRevisionId={revisionId})", nameof(url));
+            throw new ArgumentException("Input needs to be a valid APIView URL (e.g., https://spa.apiview.dev/review/{reviewId}?activeApiRevisionId={revisionId})", nameof(url));
         }
 
         try

@@ -330,7 +330,7 @@ Respond in JSON format:
 
         if (!string.IsNullOrEmpty(metadata.ReviewId) && metadata.Revision != null)
         {
-            string apiViewUrl = $"https://apiview.dev/review/{metadata.ReviewId}?activeApiRevisionId={revisionId}";
+            string apiViewUrl = $"https://spa.apiview.dev/review/{metadata.ReviewId}?activeApiRevisionId={revisionId}";
             _logger.LogInformation("Calling Resolve endpoint for URL: {Url}", apiViewUrl);
             var resolveJson = await _apiViewService.Resolve(apiViewUrl, ct);
             if (!string.IsNullOrWhiteSpace(resolveJson))

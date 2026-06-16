@@ -46,7 +46,7 @@ class KnowledgeService:
             search_result = await self._knowledge_tools.search_knowledge_base(
                 queries=queries,
                 tenant_id=req.tenant_id.value,
-                sources=None,  # Use default tenant-configured sources
+                sources=req.sources,  # Use default tenant-configured sources
                 service_type=req.service_type,  # No explicit service type filtering
                 search_mode=req.search_mode or "quick",  # Default to quick search
             )

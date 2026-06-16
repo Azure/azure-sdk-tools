@@ -10,6 +10,8 @@ class KnowledgeRetrieveRequest(BaseModel):
     user_id: str | None = None
     service_type: str | None = None
     search_mode: str | None = None
+    sources: list[str] | None = None
+    top_k: int | None = None
 
 class KnowledgeRetrieveResponse(BaseModel):
     """Response from knowledge retrieval."""

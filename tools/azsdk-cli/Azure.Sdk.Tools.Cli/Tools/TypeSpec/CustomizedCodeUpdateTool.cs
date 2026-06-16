@@ -89,8 +89,8 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
     private readonly Option<CustomizedCodeUpdateMode> modeOption = new("--mode")
     {
-        Description = "Update (default): may apply spec-input (client.tsp) customizations, regenerate, and patch custom code. " +
-                      "Repair: headless, custom-code-only repair — never edits spec inputs or moves the pinned spec commit; " +
+        Description = "Edit scope. Update (default): unrestricted — may apply spec-input (client.tsp) customizations, regenerate, and patch custom code. " +
+                      "Repair: custom-code-only — never edits spec inputs (client.tsp/tspconfig.yaml) or moves the pinned spec commit; " +
                       "failures requiring a spec change are reported as out of scope instead of applied.",
         Required = false,
         DefaultValueFactory = _ => CustomizedCodeUpdateMode.Update
@@ -154,7 +154,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         string tspProjectPath,
         [Description("Description of the requested customization to apply to the TypeSpec or SDK code. Can also be an APIView URL for feedback-driven customizations. REQUIRED.")]
         string customizationRequest,
-        [Description("Update (default): may apply spec-input (client.tsp) customizations, regenerate, and patch custom code. Repair: headless, custom-code-only repair of an already-generated SDK PR — never edits spec inputs (client.tsp/tspconfig.yaml) or moves the pinned spec commit; failures that would require a spec change are reported as out of scope (errorCode 'SpecChangeRequired') instead of applied.")]
+        [Description("Edit scope. Update (default): unrestricted — may apply spec-input (client.tsp) customizations, regenerate, and patch custom code. Repair: custom-code-only — never edits spec inputs (client.tsp/tspconfig.yaml) or moves the pinned spec commit; failures that would require a spec change are reported as out of scope (errorCode 'SpecChangeRequired') instead of applied. Regenerating Generated/ from the unchanged pinned commit is allowed in both modes.")]
         CustomizedCodeUpdateMode mode = CustomizedCodeUpdateMode.Update,
         CancellationToken ct = default)
         => RunUpdateAsync(packagePath, tspProjectPath, customizationRequest, mode, ct);

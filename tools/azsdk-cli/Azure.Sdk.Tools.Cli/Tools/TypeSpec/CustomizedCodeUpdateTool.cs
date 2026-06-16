@@ -172,6 +172,22 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// <returns>A <see cref="CustomizedCodeUpdateResponse"/> with the pipeline result.</returns>
     private async Task<CustomizedCodeUpdateResponse> RunUpdateAsync(string packagePath, string tspProjectPath, string customizationRequest, EditScope editScope, CancellationToken ct)
     {
+        // editScope is a non-nullable [Flags] enum bound from a named option (default All), so the
+        // empty/whitespace validation used for the string inputs does not apply. Guard only against an
+        // undefined value (a stray flag bit outside the All mask, or an empty 0 combination) so every
+        // downstream HasFlag check operates on a valid CustomCode/SpecInputs combination.
+        if (editScope == 0 || (editScope & ~EditScope.All) != 0)
+        {
+            return new CustomizedCodeUpdateResponse
+            {
+                Success = false,
+                ResponseError = $"Invalid editScope value: {(int)editScope}. Must be a combination of CustomCode, SpecInputs, or All.",
+                Message = $"Invalid editScope value: {(int)editScope}. Must be a combination of CustomCode, SpecInputs, or All.",
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+                BuildResult = $"Invalid editScope value: {(int)editScope}."
+            };
+        }
+
         var specInputsInScope = editScope.HasFlag(EditScope.SpecInputs);
         var customCodeInScope = editScope.HasFlag(EditScope.CustomCode);
         // Validate input

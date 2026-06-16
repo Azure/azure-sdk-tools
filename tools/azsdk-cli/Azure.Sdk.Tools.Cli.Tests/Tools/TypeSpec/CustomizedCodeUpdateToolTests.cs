@@ -1791,6 +1791,26 @@ public class CustomizedCodeUpdateToolAutoTests
             "SpecInputs scope must apply TypeSpec (spec-input) customizations for TSP_APPLICABLE items.");
     }
 
+    [Test]
+    public async Task InvalidEditScope_ReturnsInvalidInput()
+    {
+        // editScope is a non-nullable flags enum; an undefined value (e.g. a stray bit outside the All
+        // mask) is rejected up front with InvalidInput rather than silently treated as no-scope.
+        var (tool, _) = CreateTool();
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            tspProjectPath: tspDir,
+            customizationRequest: "Rename FooClient to BarClient",
+            editScope: (EditScope)99,
+            ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput));
+    }
+
     // ========================================================================
     // Mock helpers
     // ========================================================================

@@ -96,9 +96,8 @@ input:
   # blobs. For small-batch POC, set base_dir to a specific prefix like
   # ``typespec_docs``.
   base_dir: ""
-  # Match both .md and .mdx — daily_sync._process_source_directory
-  # already harvests both extensions, so GraphRAG must index both too.
-  # ``markitdown`` parses each file with Microsoft's MarkItDown library
+  # Match both .md and .mdx. ``markitdown`` parses each file with
+  # Microsoft's MarkItDown library
   # (https://github.com/microsoft/markitdown), so document titles come
   # from the markdown's first H1 (falling back to the basename), and
   # markdown structure (headings, code blocks, front-matter) is

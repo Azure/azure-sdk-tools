@@ -26,6 +26,7 @@ import asyncio
 import contextvars
 import logging
 import re
+import shutil
 import tempfile
 import time
 from dataclasses import dataclass
@@ -836,23 +837,30 @@ class KnowledgeGraphService:
     async def _load_parquets_from_blob(
         self, snapshot_prefix: str
     ) -> "dict[str, pd.DataFrame]":
-        """Download the parquet files from blob storage into a temp dir."""
+        """Download the parquet files from blob storage into a temp dir.
+
+        The temp dir is removed once the parquets are read into
+        DataFrames (held in memory), so repeated reloads don't leak disk.
+        """
         temp_dir = Path(tempfile.mkdtemp(prefix="graphrag-output-"))
-        logger.info(
-            "Downloading GraphRAG parquets from blob container '%s' (prefix='%s') to %s",
-            self._blob_container,
-            snapshot_prefix,
-            temp_dir,
-        )
-
-        await asyncio.gather(
-            *(
-                self._download_one_parquet(name, snapshot_prefix, temp_dir)
-                for name in _REQUIRED_PARQUETS
+        try:
+            logger.info(
+                "Downloading GraphRAG parquets from blob container '%s' (prefix='%s') to %s",
+                self._blob_container,
+                snapshot_prefix,
+                temp_dir,
             )
-        )
 
-        return await asyncio.to_thread(self._load_parquets_from_path, temp_dir)
+            await asyncio.gather(
+                *(
+                    self._download_one_parquet(name, snapshot_prefix, temp_dir)
+                    for name in _REQUIRED_PARQUETS
+                )
+            )
+
+            return await asyncio.to_thread(self._load_parquets_from_path, temp_dir)
+        finally:
+            await asyncio.to_thread(shutil.rmtree, temp_dir, True)
 
     async def _download_one_parquet(
         self, name: str, snapshot_prefix: str, dest_dir: Path
@@ -903,9 +911,12 @@ class KnowledgeGraphService:
         ``CommunityReport`` list before constructing the builder, and
         per-query calls never touch AI Search for embeddings.
 
-        Pagination uses Azure AI Search's ``search('*', top=N)`` which
-        the SDK transparently iterates across all pages. With ~6k
-        documents this completes in ~5-10 seconds.
+        Pagination uses Azure AI Search's ``search('*')`` with
+        ``results_per_page`` set to the max page size; the SDK
+        transparently iterates the continuation tokens across all pages
+        (Azure AI Search caps ``$top`` at 1000, so we page instead of
+        requesting everything at once). With ~6k documents this completes
+        in ~5-10 seconds.
         """
         if self._config is None:
             return
@@ -932,7 +943,7 @@ class KnowledgeGraphService:
             results = store.db_connection.search(
                 search_text="*",
                 select=[id_field, vector_field],
-                top=100000,
+                results_per_page=1000,
             )
             cache: dict[str, list[float]] = {}
             for result in results:

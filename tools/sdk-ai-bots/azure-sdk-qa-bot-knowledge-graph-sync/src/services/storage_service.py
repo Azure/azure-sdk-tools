@@ -11,7 +11,6 @@ from __future__ import annotations
 import hashlib
 import logging
 import os
-from base64 import b64encode
 
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient, ContainerClient, ContentSettings
@@ -22,17 +21,22 @@ logger = logging.getLogger(__name__)
 class BlobService:
     """Minimal Azure Blob Storage writer."""
 
-    def __init__(self, container_name: str | None = None) -> None:
+    def __init__(self, container_name: str) -> None:
         account_name = os.environ.get("STORAGE_ACCOUNT_NAME")
+        if not account_name:
+            raise ValueError(
+                "STORAGE_ACCOUNT_NAME is not set; cannot connect to blob storage."
+            )
+        if not container_name:
+            raise ValueError("container_name is required.")
         account_url = f"https://{account_name}.blob.core.windows.net"
         self._credential = DefaultAzureCredential()
         self._service = BlobServiceClient(
             account_url=account_url, credential=self._credential
         )
-        default_container = os.environ.get("STORAGE_KNOWLEDGE_CONTAINER")
-        self._container_name = container_name or default_container
+        self._container_name = container_name
         self._container: ContainerClient = self._service.get_container_client(
-            self._container_name
+            container_name
         )
 
     @property
@@ -46,8 +50,9 @@ class BlobService:
         metadata: dict[str, str] | None = None,
     ) -> None:
         data = content.encode("utf-8") if isinstance(content, str) else content
+        # ContentSettings.content_md5 expects the raw 16-byte MD5 digest.
         content_settings = ContentSettings(
-            content_md5=bytearray(b64encode(hashlib.md5(data).digest())),
+            content_md5=bytearray(hashlib.md5(data).digest()),
         )
         self._container.upload_blob(
             name=blob_path,

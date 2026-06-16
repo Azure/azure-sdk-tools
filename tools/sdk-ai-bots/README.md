@@ -50,12 +50,12 @@ A standalone TypeScript application that processes documentation from various re
 
 ### 7. Knowledge Graph Sync (`azure-sdk-qa-bot-knowledge-graph-sync/`)
 
-A Python application that extends the knowledge sync pipeline with a knowledge graph layer built using [Microsoft GraphRAG](https://github.com/microsoft/graphrag). It performs the same documentation sync as the TypeScript service (ported to Python), then additionally:
+A Python application that builds a knowledge graph layer using [Microsoft GraphRAG](https://github.com/microsoft/graphrag) over the markdown corpus the [Knowledge Sync Service](#6-knowledge-sync-service-azure-sdk-qa-bot-knowledge-sync) maintains in blob storage. On each run it:
 
 - Extracts entities (decorators, patterns, APIs, services, etc.) and relationships from documentation
 - Detects communities of related concepts via hierarchical clustering
-- Uploads the graph to Azure Cosmos DB for entity-aware retrieval at query time
-- Supports **incremental indexing** — only re-processes documents that changed in the current sync run
+- Writes the resulting vectors to Azure AI Search and publishes the parquet graph artifacts to Blob Storage as an immutable snapshot
+- Runs a **full GraphRAG build** each run; the bot picks up the new snapshot by polling its `latest.json` manifest
 
 ## Knowledge Sources
 
@@ -142,7 +142,7 @@ To run evaluations, see: [azure-sdk-qa-bot-evaluation/README.md](./azure-sdk-qa-
 
 ### Documentation Sources
 
-Add new documentation sources by updating the knowledge configuration. Both the Knowledge Sync Service and Knowledge Graph Sync use `config/knowledge-config.json` in their respective directories. See [Self-Serve Knowledge Sources Guide](docs/SELF_SERVE_ADD_KNOWLEDGE_SOURCES.md) for detailed instructions.
+Add new documentation sources by updating the Knowledge Sync Service's `config/knowledge-config.json`; the Knowledge Graph Sync then indexes whatever that service publishes to blob storage. See [Self-Serve Knowledge Sources Guide](docs/SELF_SERVE_ADD_KNOWLEDGE_SOURCES.md) for detailed instructions.
 
 ### Environment Variables
 

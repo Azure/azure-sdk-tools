@@ -103,6 +103,11 @@ public abstract class CommandResponse
             }
         }
 
+        if (SupportChannel != null)
+        {
+            messages.Add(SupportChannel);
+        }
+
         if (messages.Count > 0)
         {
             value = string.Join(Environment.NewLine, messages);

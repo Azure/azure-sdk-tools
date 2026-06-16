@@ -283,3 +283,224 @@ async def test_bot_broken_complaint_should_not_respond(
     )
     resp = await service.classify(req)
     assert resp.should_respond is False
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_troubleshooting_help_should_respond(service: IntentionService) -> None:
+    """A troubleshooting/help request in the bot's domain should be answered."""
+    req = IntentionRequest(
+        message=Message(
+            role="user",
+            content=(
+                "My TypeSpec compile fails with `error: cannot find emitter "
+                "@azure-tools/typespec-autorest`. How do I fix this?"
+            ),
+        ),
+    )
+    resp = await service.classify(req)
+    assert resp.should_respond is True
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_status_update_should_not_respond(service: IntentionService) -> None:
+    """A status/FYI announcement that does not seek help should not be answered."""
+    req = IntentionRequest(
+        message=Message(
+            role="user",
+            content=(
+                "FYI everyone: the release pipeline has been upgraded to the new "
+                "build agents. No action needed on your side, just a heads up."
+            ),
+        ),
+    )
+    resp = await service.classify(req)
+    assert resp.should_respond is False
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_rhetorical_comment_should_not_respond(service: IntentionService) -> None:
+    """A rhetorical/thinking-aloud remark that does not seek an answer should not be answered."""
+    req = IntentionRequest(
+        message=Message(
+            role="user",
+            content="Ugh, why is naming things always the hardest part of API design... anyway.",
+        ),
+    )
+    resp = await service.classify(req)
+    assert resp.should_respond is False
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_followup_to_bot_reply_should_respond(
+    service: IntentionService, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A non-question follow-up that continues the bot's technical thread should be answered."""
+    user_id = "user-789"
+    conversation_id = "conv-follow"
+    conversation_type = ConversationType.teams_channel
+
+    prior_user_msg = ConversationMessageItem(
+        id="msg-1",
+        sender_role=Role.User,
+        sender_id=user_id,
+        sender_name="Dave",
+        content="How do I enable the Python SDK emitter in my tspconfig.yaml?",
+        created_at=datetime.now(timezone.utc),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+        conversation_partition=f"channel:{conversation_id}",
+    )
+    prior_bot_reply = ConversationMessageItem(
+        id="msg-2",
+        sender_role=Role.Assistant,
+        sender_id="bot",
+        sender_name="Azure SDK QA Bot",
+        content=(
+            "Add `@azure-tools/typespec-python` under the `emit` section of your "
+            "tspconfig.yaml and configure its options under `options`."
+        ),
+        created_at=datetime.now(timezone.utc),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+        conversation_partition=f"channel:{conversation_id}",
+    )
+
+    async def fake_has_expert_reply(*_args, **_kwargs):
+        return False
+
+    async def fake_get_messages_by_conversation(*_args, **_kwargs):
+        return [prior_user_msg, prior_bot_reply]
+
+    monkeypatch.setattr(
+        service._conversation_service, "has_expert_reply", fake_has_expert_reply
+    )
+    monkeypatch.setattr(
+        service._conversation_service,
+        "get_messages_by_conversation",
+        fake_get_messages_by_conversation,
+    )
+
+    req = IntentionRequest(
+        message=Message(
+            role=Role.User,
+            user_id=user_id,
+            content="Still seeing no Python output after adding that emitter.",
+        ),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+    )
+    resp = await service.classify(req)
+    assert resp.should_respond is True
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_pushback_on_bot_answer_should_respond(
+    service: IntentionService, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A user pushing back on / correcting the bot's earlier answer should be answered."""
+    user_id = "user-987"
+    conversation_id = "conv-push"
+    conversation_type = ConversationType.teams_channel
+
+    prior_user_msg = ConversationMessageItem(
+        id="msg-1",
+        sender_role=Role.User,
+        sender_id=user_id,
+        sender_name="Eve",
+        content="Which branch should I target for a breaking change suppression PR?",
+        created_at=datetime.now(timezone.utc),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+        conversation_partition=f"channel:{conversation_id}",
+    )
+    prior_bot_reply = ConversationMessageItem(
+        id="msg-2",
+        sender_role=Role.Assistant,
+        sender_id="bot",
+        sender_name="Azure SDK QA Bot",
+        content="You should target the `main` branch of the public specs repo.",
+        created_at=datetime.now(timezone.utc),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+        conversation_partition=f"channel:{conversation_id}",
+    )
+
+    async def fake_has_expert_reply(*_args, **_kwargs):
+        return False
+
+    async def fake_get_messages_by_conversation(*_args, **_kwargs):
+        return [prior_user_msg, prior_bot_reply]
+
+    monkeypatch.setattr(
+        service._conversation_service, "has_expert_reply", fake_has_expert_reply
+    )
+    monkeypatch.setattr(
+        service._conversation_service,
+        "get_messages_by_conversation",
+        fake_get_messages_by_conversation,
+    )
+
+    req = IntentionRequest(
+        message=Message(
+            role=Role.User,
+            user_id=user_id,
+            content=(
+                "That doesn't sound right — my PR is against the RPSaaSMaster branch, "
+                "not main. Does the same guidance still apply?"
+            ),
+        ),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+    )
+    resp = await service.classify(req)
+    assert resp.should_respond is True
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_thank_you_closure_after_bot_reply_should_not_respond(
+    service: IntentionService, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A thank-you that closes out the bot's thread should not trigger another reply."""
+    user_id = "user-111"
+    conversation_id = "conv-close"
+    conversation_type = ConversationType.teams_channel
+
+    prior_bot_reply = ConversationMessageItem(
+        id="msg-1",
+        sender_role=Role.Assistant,
+        sender_id="bot",
+        sender_name="Azure SDK QA Bot",
+        content="Run `tsp compile .` from the spec folder to regenerate the SDK.",
+        created_at=datetime.now(timezone.utc),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+        conversation_partition=f"channel:{conversation_id}",
+    )
+
+    async def fake_has_expert_reply(*_args, **_kwargs):
+        return False
+
+    async def fake_get_messages_by_conversation(*_args, **_kwargs):
+        return [prior_bot_reply]
+
+    monkeypatch.setattr(
+        service._conversation_service, "has_expert_reply", fake_has_expert_reply
+    )
+    monkeypatch.setattr(
+        service._conversation_service,
+        "get_messages_by_conversation",
+        fake_get_messages_by_conversation,
+    )
+
+    req = IntentionRequest(
+        message=Message(
+            role=Role.User,
+            user_id=user_id,
+            content="That worked, thanks a lot!",
+        ),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+    )
+    resp = await service.classify(req)
+    assert resp.should_respond is False
+

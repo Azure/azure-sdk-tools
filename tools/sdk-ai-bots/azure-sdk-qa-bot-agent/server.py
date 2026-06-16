@@ -8,6 +8,7 @@ and handles feedback through a local workflow.
 import asyncio
 import contextlib
 import logging
+import os
 import sys
 import time
 from contextvars import ContextVar
@@ -143,12 +144,42 @@ async def lifespan(application: FastAPI):
 
     warm_task = asyncio.create_task(_warm_graph())
 
+    # Daily poll: check ``latest.json`` for a new GraphRAG snapshot and
+    # hot-swap it in when the build_id changes. Replaces the previous
+    # push-based reload (the sync pipeline POSTing /graph/admin/reload).
+    # Interval is configurable via GRAPH_RELOAD_POLL_SECONDS (default 24h);
+    # set to <= 0 to disable polling.
+    async def _poll_graph_manifest():
+        try:
+            interval = float(os.environ.get("GRAPH_RELOAD_POLL_SECONDS", "86400"))
+        except (TypeError, ValueError):
+            interval = 86400.0
+        if interval <= 0:
+            logger.info("GraphRAG manifest polling disabled (interval <= 0)")
+            return
+        from utils.knowledge_graph import get_knowledge_graph_service
+
+        service = get_knowledge_graph_service()
+        if not service.enabled:
+            return
+        while True:
+            try:
+                await asyncio.sleep(interval)
+                await service.reload_if_changed()
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                logger.exception("GraphRAG scheduled manifest poll failed")
+
+    poll_task = asyncio.create_task(_poll_graph_manifest())
+
     try:
         yield
     finally:
-        warm_task.cancel()
-        with contextlib.suppress(asyncio.CancelledError, Exception):
-            await warm_task
+        for task in (warm_task, poll_task):
+            task.cancel()
+            with contextlib.suppress(asyncio.CancelledError, Exception):
+                await task
         # Cleanup SDK clients on shutdown
         logger.info("Backend server shutting down")
         await BackgroundTaskTracker.instance().shutdown()

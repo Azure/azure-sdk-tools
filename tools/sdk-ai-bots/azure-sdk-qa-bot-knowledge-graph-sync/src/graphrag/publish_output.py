@@ -1,27 +1,22 @@
-"""Publish a freshly-built GraphRAG snapshot to the bot.
+"""Publish a freshly-built GraphRAG snapshot.
 
 In the blob-direct architecture, ``build_index`` writes parquets to
 ``STORAGE_GRAPHRAG_OUTPUT_CONTAINER/snapshots/<snapshot_id>/`` directly.
-This module therefore only needs to:
+This module therefore only needs to write ``latest.json`` to the
+container root pointing at the new snapshot prefix. The manifest is
+written *last* (and is the bot's sole source of truth), so partially-built
+snapshots are never picked up.
 
-1. Write ``latest.json`` to the container root pointing at the new
-   snapshot prefix. The manifest is written *last* (and is the bot's
-   sole source of truth), so partially-built snapshots are never picked
-   up.
-2. POST ``BOT_AGENT_RELOAD_URL`` with an Entra ID bearer token so the
-   live bot swaps in the new build without a restart. Best-effort —
-   bot will pick the new snapshot up on its next cold start otherwise.
+The bot picks up the new snapshot on its own: it polls ``latest.json``
+on a daily schedule and hot-swaps the index when the ``build_id``
+changes (see ``azure-sdk-qa-bot-agent`` server lifespan +
+``KnowledgeGraphService.reload_if_changed``). There is no push-based
+reload call from this pipeline.
 
-Required env vars:
+Required env var:
 
 * ``STORAGE_GRAPHRAG_OUTPUT_CONTAINER``  — destination container (same
   one the build wrote into).
-* ``BOT_AGENT_RELOAD_URL``      *(optional)* — POST endpoint on the bot
-  (e.g. ``https://<bot>/graph/admin/reload``).
-* ``BOT_AGENT_AUDIENCE``        *(optional)* — Entra ID app/client ID
-  fronting the bot via App Service EasyAuth. Used as the token scope
-  (``<audience>/.default``). Required when ``BOT_AGENT_RELOAD_URL``
-  is set.
 """
 
 from __future__ import annotations
@@ -53,8 +48,8 @@ _PARQUET_FILES: tuple[str, ...] = (
 _MANIFEST_BLOB_NAME = "latest.json"
 
 
-async def publish_and_notify(snapshot_id: str) -> dict[str, Any] | None:
-    """Write ``latest.json`` for ``snapshot_id`` and notify the bot.
+async def publish_manifest(snapshot_id: str) -> dict[str, Any] | None:
+    """Write ``latest.json`` pointing at ``snapshot_id``.
 
     Args:
         snapshot_id: Snapshot identifier returned by
@@ -64,7 +59,7 @@ async def publish_and_notify(snapshot_id: str) -> dict[str, Any] | None:
 
     Returns:
         The manifest dict on success, or ``None`` if no destination
-        container is configured (degrades to a logged no-op so the sync
+        container is configured (degrades to a logged no-op so the build
         job doesn't fail in dev/local environments).
     """
     container = os.environ.get("STORAGE_GRAPHRAG_OUTPUT_CONTAINER")
@@ -85,17 +80,11 @@ async def publish_and_notify(snapshot_id: str) -> dict[str, Any] | None:
     }
 
     await asyncio.to_thread(_write_manifest, container, manifest)
-
-    reload_url = os.environ.get("BOT_AGENT_RELOAD_URL", "").strip()
-    if reload_url:
-        await _notify_bot(reload_url, os.environ.get("BOT_AGENT_AUDIENCE", "").strip())
-    else:
-        logger.info(
-            "BOT_AGENT_RELOAD_URL not set — bot will pick up snapshot %s on "
-            "its next reload / restart",
-            snapshot_id,
-        )
-
+    logger.info(
+        "Published manifest for snapshot %s — the bot will pick it up on "
+        "its next daily manifest poll",
+        snapshot_id,
+    )
     return manifest
 
 
@@ -108,82 +97,3 @@ def _write_manifest(container: str, manifest: dict[str, Any]) -> None:
         manifest["prefix"],
     )
     storage.put_blob(_MANIFEST_BLOB_NAME, json.dumps(manifest, indent=2))
-
-
-async def _acquire_bearer_token(audience: str) -> str | None:
-    """Get an Entra ID access token for the bot's EasyAuth audience.
-
-    Returns ``None`` (with a logged warning) if no credential is
-    available so the caller can skip the notify step gracefully.
-    """
-    try:
-        from azure.identity import DefaultAzureCredential
-    except ImportError:
-        logger.warning("azure-identity not available — cannot acquire AAD token")
-        return None
-
-    def _get() -> str:
-        credential = DefaultAzureCredential()
-        try:
-            return credential.get_token(f"{audience}/.default").token
-        finally:
-            credential.close()
-
-    try:
-        return await asyncio.to_thread(_get)
-    except Exception as exc:
-        logger.warning("Failed to acquire AAD token for audience=%s: %s", audience, exc)
-        return None
-
-
-async def _notify_bot(reload_url: str, audience: str) -> None:
-    """POST the reload endpoint with an Entra ID bearer; never raise — log on failure."""
-    if not audience:
-        logger.warning(
-            "BOT_AGENT_AUDIENCE not set — skipping reload POST to %s "
-            "(cannot acquire AAD token without an audience)",
-            reload_url,
-        )
-        return
-
-    token = await _acquire_bearer_token(audience)
-    if not token:
-        return
-
-    try:
-        import httpx  # type: ignore[import-not-found]
-    except ImportError:
-        await asyncio.to_thread(_notify_bot_urllib, reload_url, token)
-        return
-
-    try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            resp = await client.post(
-                reload_url, headers={"Authorization": f"Bearer {token}"}
-            )
-        if resp.status_code >= 400:
-            logger.warning(
-                "Bot reload returned HTTP %s: %s",
-                resp.status_code,
-                resp.text[:500],
-            )
-        else:
-            logger.info("Bot reload accepted: HTTP %s", resp.status_code)
-    except Exception as exc:
-        logger.warning("Bot reload POST failed: %s", exc)
-
-
-def _notify_bot_urllib(reload_url: str, token: str) -> None:
-    import urllib.error
-    import urllib.request
-
-    req = urllib.request.Request(
-        reload_url, method="POST", headers={"Authorization": f"Bearer {token}"}
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            logger.info("Bot reload accepted: HTTP %s", resp.status)
-    except urllib.error.HTTPError as exc:
-        logger.warning("Bot reload returned HTTP %s: %s", exc.code, exc.reason)
-    except Exception as exc:
-        logger.warning("Bot reload POST failed: %s", exc)

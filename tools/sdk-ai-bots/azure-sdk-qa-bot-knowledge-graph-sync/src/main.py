@@ -15,8 +15,8 @@ The build:
 1. ``graphrag.run_indexing.run_graphrag_pipeline`` — full GraphRAG build
    that reads input docs directly from the knowledge container and writes
    parquets to a timestamped sub-prefix of the graphrag output container.
-2. ``graphrag.publish_output.publish_and_notify`` — flips ``latest.json``
-   to the new snapshot and pings the bot to reload.
+2. ``graphrag.publish_output.publish_manifest`` — flips ``latest.json``
+   to the new snapshot. The bot picks it up on its next daily poll.
 
 Usage:
     python -m src.main
@@ -45,7 +45,7 @@ async def run() -> None:
     logger.info("Initializing app secrets...")
     await init_secrets()
 
-    from src.graphrag.publish_output import publish_and_notify
+    from src.graphrag.publish_output import publish_manifest
     from src.graphrag.run_indexing import run_graphrag_pipeline
 
     logger.info("Starting GraphRAG indexing (full build, blob-direct)...")
@@ -53,10 +53,10 @@ async def run() -> None:
     logger.info("GraphRAG indexing completed, snapshot=%s", snapshot_id)
 
     # Publishing failures must not fail the build — the bot will pick up
-    # the new snapshot on next cold start as long as the manifest
-    # eventually lands.
+    # the new snapshot on its next daily manifest poll as long as the
+    # manifest eventually lands.
     try:
-        manifest = await publish_and_notify(snapshot_id)
+        manifest = await publish_manifest(snapshot_id)
         if manifest:
             logger.info("Published GraphRAG snapshot %s", manifest.get("build_id"))
     except Exception:

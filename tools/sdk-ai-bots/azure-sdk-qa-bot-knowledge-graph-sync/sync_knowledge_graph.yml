@@ -116,15 +116,6 @@ extends:
                   # Azure App Configuration — everything else is sourced from here.
                   AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
 
-                  # Bot reload notification (best-effort; if either is empty
-                  # the post-publish notify step is skipped with a warning
-                  # and the bot picks up the new snapshot on its next reload).
-                  # BOT_AGENT_AUDIENCE is the Entra ID app/client ID fronting
-                  # the bot via App Service EasyAuth; the workload identity
-                  # acquires a bearer token for ``<audience>/.default``.
-                  BOT_AGENT_RELOAD_URL: $(BOT_AGENT_RELOAD_URL)
-                  BOT_AGENT_AUDIENCE: $(BOT_AGENT_AUDIENCE)
-
                   # Set working directory for temporary files.
                   TMPDIR: $(Agent.TempDirectory)
                   HOME: $(Agent.HomeDirectory)

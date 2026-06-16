@@ -34,7 +34,7 @@ This project does **one** thing: a **full GraphRAG build**. It reads the markdow
 Each run writes parquets to a fresh timestamped sub-prefix
 (`snapshots/<ts>/`) so old snapshots stay intact until `latest.json` is
 flipped — the bot keeps serving the previous snapshot until the new
-manifest is published, then reloads.
+manifest is published, then hot-swaps it in on its next daily poll.
 
 > **Full build only.** GraphRAG's incremental `update` is intentionally
 > not wired up here: it is purely additive (new documents only — it does
@@ -92,8 +92,8 @@ at startup (see `src/services/app_config.py` and `src/services/app_secret.py`).
 | `AI_SEARCH_INDEX_COMMUNITIES` | App Config | AI Search index for community embeddings. |
 | `AI_SEARCH_API_KEY` | Key Vault (`AI-SEARCH-APIKEY`) | AI Search admin key. |
 | `AOAI_CHAT_COMPLETIONS_ENDPOINT` | App Config | Azure OpenAI endpoint (used by GraphRAG). |
-| `BOT_AGENT_RELOAD_URL` | env (CI) | Bot agent reload endpoint (e.g. `https://<bot>/graph/admin/reload`). When unset, the publish step skips notification with a warning. |
-| `BOT_AGENT_AUDIENCE` | env (CI) | Entra ID app/client ID fronting the bot via App Service EasyAuth. Used as the scope (`<audience>/.default`) for the Managed Identity bearer token. Required when `BOT_AGENT_RELOAD_URL` is set. |
+
+The bot discovers new snapshots on its own by polling `latest.json` daily (configurable via `GRAPH_RELOAD_POLL_SECONDS` on the bot) — this pipeline does not call the bot.
 
 ## Testing
 
@@ -112,7 +112,7 @@ src/
 │   └── storage_service.py        # Minimal Blob writer (latest.json manifest)
 └── graphrag/
     ├── run_indexing.py           # GraphRAG full-build orchestration
-    ├── publish_output.py         # latest.json publish + bot reload notify
+    ├── publish_output.py         # latest.json manifest publish
     └── source_aware_reader.py    # input reader preserving source folder + path title
 
 graphrag_config/
@@ -128,6 +128,7 @@ tests/
 - **GraphRAG as single indexing engine**: GraphRAG handles entity extraction, embedding generation, and vector store writes natively via its `azure_ai_search` vector store backend.
 - **Blob-direct input**: GraphRAG reads markdown straight from the knowledge container via its native `azure_blob` input storage — no local download step.
 - **Immutable snapshots**: Each build lands in its own timestamped prefix; `latest.json` is flipped last so the bot never reads a half-built snapshot and old snapshots remain for rollback.
+- **Pull-based reload**: This pipeline only writes `latest.json`. The bot polls it on a daily schedule and hot-swaps the index when the `build_id` changes — there is no push-based reload call from this pipeline.
 - **Managed Identity auth**: Uses Azure Managed Identity for Azure OpenAI and AI Search.
 
 ## Pipelines
@@ -135,7 +136,7 @@ tests/
 | File | Purpose |
 |------|---------|
 | `ci.yml` | Build + tests on every PR and on `main` (path-scoped to this project). |
-| `sync_knowledge_graph.yml` | Daily scheduled run (03:00 UTC) on an internal 1ES agent — installs the project, runs `sync-knowledge-graph`, publishes the new parquet snapshot to blob storage, and POSTs the bot agent's `/graph/admin/reload` endpoint with an Entra ID bearer token. |
+| `sync_knowledge_graph.yml` | Daily scheduled run (03:00 UTC) on an internal 1ES agent — installs the project, runs `sync-knowledge-graph`, and publishes the new parquet snapshot + `latest.json` to blob storage. The bot picks up the new snapshot on its own daily `latest.json` poll. |
 
 ## Relationship to Other Projects
 

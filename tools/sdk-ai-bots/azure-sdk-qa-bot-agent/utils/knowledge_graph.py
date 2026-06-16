@@ -408,6 +408,52 @@ class KnowledgeGraphService:
         )
         return self.get_status()
 
+    async def reload_if_changed(self) -> dict[str, Any] | None:
+        """Reload only when ``latest.json`` points to a new build.
+
+        Cheap poll used by the bot's daily scheduler: read the manifest,
+        compare its ``build_id`` against the currently-loaded build, and
+        only pay the full parquet reload when they differ. Returns the
+        new status dict when a reload happened, or ``None`` when the
+        snapshot was already current (or the service is disabled).
+
+        Never raises — a transient blob/manifest read failure is logged
+        and treated as "no change" so the scheduler keeps serving the
+        existing snapshot and retries on the next tick.
+        """
+        if not self._enabled:
+            return None
+        try:
+            manifest = await self._load_manifest()
+        except Exception:
+            logger.exception(
+                "GraphRAG manifest poll failed; keeping current snapshot"
+            )
+            return None
+
+        new_build = manifest.get("build_id") if manifest else None
+        current_manifest = (self._loaded_version or {}).get("manifest") or {}
+        current_build = current_manifest.get("build_id")
+        already_loaded = self._loaded_version is not None
+
+        if (
+            already_loaded
+            and new_build is not None
+            and new_build == current_build
+        ):
+            logger.info(
+                "GraphRAG manifest unchanged (build_id=%s); skipping reload",
+                new_build,
+            )
+            return None
+
+        logger.info(
+            "GraphRAG manifest changed (build_id %s -> %s); reloading",
+            current_build,
+            new_build,
+        )
+        return await self.reload()
+
     # ------------------------------------------------------------------ #
     # Public search API
     # ------------------------------------------------------------------ #

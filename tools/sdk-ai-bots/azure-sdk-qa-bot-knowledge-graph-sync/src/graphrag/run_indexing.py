@@ -58,7 +58,7 @@ async def run_graphrag_pipeline() -> str:
 
     Returns:
         The snapshot id (``"<UTC ts>-<short>"``) that callers should pass
-        to ``publish_output.publish_and_notify`` to update ``latest.json``.
+        to ``publish_output.publish_manifest`` to update ``latest.json``.
     """
     snapshot_id = _new_snapshot_id()
     output_base_dir = _snapshot_base_dir(snapshot_id)

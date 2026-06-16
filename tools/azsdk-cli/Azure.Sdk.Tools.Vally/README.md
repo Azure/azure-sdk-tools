@@ -248,6 +248,69 @@ Run the live scenarios tier (first, prime a per-user clone of
 & $vally eval --suite scenarios-live --skill-dir $skills --workers 1
 ```
 
+## Command cookbook
+
+All recipes assume the two path variables are set first:
+
+```powershell
+$vally  = (Resolve-Path '../../../eng/skill-eval/node_modules/.bin/vally.cmd').Path
+$skills = '../../../.github/skills'
+```
+
+Run several eval files at once (repeat `-e`):
+
+```powershell
+& $vally eval `
+  -e evals/tools/prompt-to-tool-apiview.eval.yaml `
+  -e evals/tools/prompt-to-tool-package.eval.yaml `
+  --skill-dir $skills
+```
+
+Hunt for flaky stimuli by repeating each one (`--runs`) and writing
+machine-readable output:
+
+```powershell
+& $vally eval -e evals/tools/prompt-to-tool-typespec.eval.yaml `
+  --runs 5 --workers 2 --model gpt-5.4 `
+  --output jsonl --output-dir vally-results
+```
+
+> `--workers 2` is the safe ceiling when `--runs` is high: the Copilot
+> CLI subprocesses share an auth/session pool, and pushing more parallel
+> agents tends to surface `status: error` infra noise (auth/session
+> exhaustion) rather than real grade failures. Bump workers only for the
+> pre-built `scenarios-mock` suite, which has no MSBuild boot race.
+
+Run by tag or suite instead of listing files:
+
+```powershell
+& $vally eval --suite pr-gate     --skill-dir $skills   # tools/* + workflow-scenarios/mock/*
+& $vally eval --suite scenarios-mock --skill-dir $skills --workers 6
+```
+
+Summarize a `results.jsonl` into a PASS / FLAKY / HARD-FAIL table
+(filtering out `status: error` infra noise):
+
+```powershell
+$rows = Get-Content vally-results/results.jsonl | ForEach-Object { $_ | ConvertFrom-Json } |
+    Where-Object { $_.status -ne 'error' }
+$rows | Group-Object { $_.gradeResult.stimulusName } | ForEach-Object {
+    $passed = ($_.Group | Where-Object { $_.gradeResult.passed }).Count
+    $total  = $_.Count
+    [pscustomobject]@{
+        Stimulus = $_.Name
+        Passed   = "$passed/$total"
+        Verdict  = if ($passed -eq $total) { 'PASS' }
+                   elseif ($passed -eq 0)  { 'HARD-FAIL' }
+                   else                    { 'FLAKY' }
+    }
+} | Sort-Object Verdict, Stimulus | Format-Table -AutoSize
+```
+
+> Exit code `1` is expected whenever any stimulus fails — it does not
+> mean the run itself errored. While iterating on prompts, read the
+> per-stimulus verdicts (or the JSONL) rather than the process exit code.
+
 ## Adding a new scenario
 
 1. **Pick a tier** — the folder you drop the YAML into:

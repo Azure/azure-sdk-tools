@@ -45,21 +45,21 @@ stimuli:
 
   # ==== azsdk_apiview_get_copilot_review triggers ====
   - name: invoke-azsdk-apiview-get-copilot-review-1
-    prompt: "Check if my Copilot review is done. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Check whether Copilot review job mock-copilot-job-00000001 is done for the Azure.Template.Contoso .NET package. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_apiview_get_copilot_review"
   - name: invoke-azsdk-apiview-get-copilot-review-2
-    prompt: "Get the results of my automated API review job. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Get the results of automated API review job mock-copilot-job-00000001 for the Azure.Template.Contoso .NET package. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_apiview_get_copilot_review"
   - name: invoke-azsdk-apiview-get-copilot-review-3
-    prompt: "What comments did the Copilot generate for my API review? Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "What comments did Copilot generate in review job mock-copilot-job-00000001 for the Azure.Template.Contoso .NET package? Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:

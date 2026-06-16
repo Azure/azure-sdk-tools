@@ -141,7 +141,7 @@ stimuli:
   - name: invoke-azsdk-typespec-delegate-apiview-feedback-6
     prompt: >
       Create an issue and assign to copilot to fix this: https://spa.apiview.dev/review/adfaset5391d5ab9419f83e3bds9asdfadf2e?activeApiRevisionId=adf34adfasadastasdagae3w3hhtd
-    graders:
+      Use the available Azure SDK MCP tools instead of shell commands or the GitHub CLI.
       - type: tool-calls
         config:
           required:
@@ -166,7 +166,7 @@ stimuli:
   - name: invoke-azsdk-typespec-generate-authoring-plan-3
     prompt: >
       Generate a solution to set a default value `21` for property `age` in model EmployeeProperties from a api version say 2025-11-01 with TypeSpec.
-    graders:
+      Use the available Azure SDK MCP tools instead of shell commands or a CLI.
       - type: tool-calls
         config:
           required:
@@ -208,7 +208,7 @@ stimuli:
     prompt: |
       Validate my typespec project. It is already confirmed we are in a public repository.
       The path to my typespec is specification/contosowidgetmanager/Contoso.WidgetManager/main.tsp.
-    constraints:
+      Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself.
       max_turns: 8
       max_tokens: 8000
     graders:
@@ -221,7 +221,7 @@ stimuli:
       List the TypeSpec projects modified in my current branch compared to main.
       My setup has already been verified, do not run azsdk_verify_setup.
       The repository root is the relative path ./azure-rest-api-specs.
-    constraints:
+      Invoke the appropriate Azure SDK MCP tool directly to do this — do not run git commands or inspect the workspace files yourself.
       max_turns: 5
       max_tokens: 5000
     # TODO: seed a git worktree fixture (environment.git) with a modified

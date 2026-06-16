@@ -38,7 +38,7 @@ stimuli:
 
   # ==== azsdk_package_generate_code triggers ====
   - name: invoke-azsdk-package-generate-code-1
-    prompt: "Generate SDK code from my TypeSpec. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Generate the client library code locally (not via pipeline) for the package at ./sdk/contosowidgetmanager/Azure.Template.Contoso from the TypeSpec project at specification/contosowidgetmanager/Contoso.WidgetManager. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
@@ -162,14 +162,14 @@ stimuli:
 
   # ==== azsdk_package_update_changelog_content triggers ====
   - name: invoke-azsdk-package-update-changelog-content-1
-    prompt: "Update the changelog for my package. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Update the changelog for the package at ./sdk/contosowidgetmanager/Azure.Template.Contoso with the release notes for version 1.2.0. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_package_update_changelog_content"
   - name: invoke-azsdk-package-update-changelog-content-2
-    prompt: "Update the changelog content for my package with new release notes. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Update the changelog content for the package at ./sdk/contosowidgetmanager/Azure.Template.Contoso with the new release notes for version 1.2.0. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:

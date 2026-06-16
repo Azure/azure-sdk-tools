@@ -153,7 +153,7 @@ stimuli:
           required:
             - name: "azsdk_get_service_details_by_typespec_path"
   - name: invoke-azsdk-get-service-details-by-typespec-path-3
-    prompt: "What service tree ID and product info is associated with this TypeSpec path? Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "What service tree ID and product info is associated with the TypeSpec path specification/contosowidgetmanager/Contoso.WidgetManager? Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -271,7 +271,7 @@ stimuli:
           required:
             - name: "azsdk_update_release_plan"
   - name: invoke-azsdk-update-release-plan-2
-    prompt: "Update the spec PR URL and SDK release type in my release plan. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Update release plan 12345 (TypeSpec project specification/contosowidgetmanager/Contoso.WidgetManager) with spec PR URL https://github.com/Azure/azure-rest-api-specs/pull/38387 and SDK release type 'beta'. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -285,7 +285,7 @@ stimuli:
           required:
             - name: "azsdk_update_release_plan"
   - name: invoke-azsdk-update-release-plan-4
-    prompt: "Update my release plan. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Update release plan 12345 for TypeSpec project specification/contosowidgetmanager/Contoso.WidgetManager, setting the SDK release type to 'beta'. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:

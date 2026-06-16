@@ -59,7 +59,7 @@ One prompt → one expected MCP tool. No `environment.git`, no fixtures. Fast; s
 | [`prompt-to-tool-typespec`](evals/tools/prompt-to-tool-typespec.eval.yaml) | typespec | `azsdk_typespec_*`, `azsdk_convert_swagger_to_typespec`, `azsdk_customized_code_update`, `azsdk_run_typespec_validation` |
 | [`prompt-to-tool-verify`](evals/tools/prompt-to-tool-verify.eval.yaml) | engsys | `azsdk_verify_setup` |
 
-#### `evals/workflow-scenarios/` — multi-tool scenarios (4)
+#### `evals/workflow-scenarios/` — multi-tool scenarios (5)
 
 Multi-step prompts that exercise 2+ MCP tools end-to-end. Split into
 `mock/` (hermetic, runs on PR gate) and `live/` (real DevOps / GitHub /
@@ -70,6 +70,7 @@ pipelines, runs nightly).
 | [`check-public-repo-then-validate`](evals/workflow-scenarios/mock/check-public-repo-then-validate.eval.yaml) | typespec | mock | Validate, then check public-repo presence |
 | [`typespec-generation-step02`](evals/workflow-scenarios/mock/typespec-generation-step02.eval.yaml) | typespec | mock | Step in the spec-PR generation flow |
 | [`rename-client-property`](evals/workflow-scenarios/mock/rename-client-property.eval.yaml) | typespec | mock | Stub — needs `expected-diff` grader + sparse clone |
+| [`release-planner-workflows`](evals/workflow-scenarios/mock/release-planner-workflows.eval.yaml) | release-plan | mock | Create / re-fetch / link / update release-plan flows (5 stimuli) |
 | [`release-planner`](evals/workflow-scenarios/live/release-planner.eval.yaml) | release-plan | **live** | Create + re-fetch a release plan, kick off SDK gen, link PR back — real DevOps test-area writes |
 
 Live scenarios need a primed `azure-rest-api-specs` clone — run
@@ -154,10 +155,10 @@ $skills = '../../../.github/skills'
 
 ### 3. Run a scenario
 
-**One trigger eval** (~30 s, hermetic):
+**One namespace's trigger evals** (hermetic; a handful of prompt→tool checks):
 
 ```powershell
-& $vally eval -e evals/tools/create-release-plan.eval.yaml --skill-dir $skills
+& $vally eval -e evals/tools/prompt-to-tool-releaseplan.eval.yaml --skill-dir $skills
 ```
 
 **The release-planner mock workflow** (~4 min, 5 stimuli, hermetic):
@@ -185,7 +186,7 @@ Common swaps:
 
 | What you want | Replace `-e` value with |
 |---|---|
-| A different release-plan trigger | `evals/tools/link-namespace-approval-issue.eval.yaml` |
+| A different tool namespace | `evals/tools/prompt-to-tool-apiview.eval.yaml` |
 | A TypeSpec workflow | `evals/workflow-scenarios/mock/check-public-repo-then-validate.eval.yaml` |
 | All triggers for one feature | drop `-e` and use `--suite typespec` (or `release-plan`, `github`, …) |
 | Everything hermetic | drop `-e` and use `--suite pr-gate` |
@@ -193,11 +194,13 @@ Common swaps:
 ### 5. Read the results
 
 - Live PASS/FAIL table prints to the terminal.
-- Full trajectories land in `results/<timestamp>/`. The most useful file
-  is `results.jsonl` — one line per stimulus run, with the prompt, every
+- Each run writes a timestamped folder under the output dir (default
+  `./vally-results/<timestamp>/`) containing `eval-results.md`, a
+  human-readable summary. Add `--output jsonl` to also emit
+  `results.jsonl` — one line per stimulus run, with the prompt, every
   tool call, and the final agent message.
-- Add `--output-dir vally-results/<your-tag>` if you want a stable path
-  to re-open later.
+- Add `--output-dir vally-results/<your-tag>` to nest runs under a stable
+  parent you can re-open later.
 
 ## Running locally (advanced)
 
@@ -237,7 +240,7 @@ $skills = '../../../.github/skills'
 Run a single eval:
 
 ```powershell
-& $vally eval --eval-spec evals/tools/check-public-repo.eval.yaml --skill-dir $skills
+& $vally eval --eval-spec evals/workflow-scenarios/mock/check-public-repo-then-validate.eval.yaml --skill-dir $skills
 ```
 
 Run the live scenarios tier (first, prime a per-user clone of
@@ -292,7 +295,9 @@ Summarize a `results.jsonl` into a PASS / FLAKY / HARD-FAIL table
 (filtering out `status: error` infra noise):
 
 ```powershell
-$rows = Get-Content vally-results/results.jsonl | ForEach-Object { $_ | ConvertFrom-Json } |
+$run  = Get-ChildItem vally-results -Recurse -Filter results.jsonl |
+    Sort-Object LastWriteTime | Select-Object -Last 1   # newest run
+$rows = Get-Content $run.FullName | ForEach-Object { $_ | ConvertFrom-Json } |
     Where-Object { $_.status -ne 'error' }
 $rows | Group-Object { $_.gradeResult.stimulusName } | ForEach-Object {
     $passed = ($_.Group | Where-Object { $_.gradeResult.passed }).Count

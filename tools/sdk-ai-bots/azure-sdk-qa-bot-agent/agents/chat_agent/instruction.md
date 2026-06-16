@@ -52,8 +52,7 @@ after reading the PR and its check runs:
 3. **If not ready to merge:** explain the blocking checks or comments and the
    concrete fix steps. Do **not** name approvers in this case.
 
-Stay within the tool-call budget: reading the PR and (only when needed) the
-`CODEOWNERS` file reuses the GitHub MCP calls you already make for PR diagnosis.
+Stay within the tool-call budget: diagnosing a PR already requires reading the PR and its check runs; only if needed, add a single `get_file_contents` call to read `CODEOWNERS`.
 GitHub MCP is read-only — never request reviewers or merge on the user's behalf.
 
 ## Tools

@@ -6,8 +6,7 @@ Reuses the shared async credential from ``utils.azure_credential``.
 Every other module reads config through the ``settings`` dict exposed here
 instead of calling ``os.getenv`` directly.
 
-Loading order (mirrors ``azure-sdk-qa-bot-knowledge-graph-sync``'s
-``init_configuration``):
+Loading order:
 
 1. ``.env`` (if present) is read into ``os.environ`` so developers can
    override anything locally.
@@ -16,12 +15,7 @@ Loading order (mirrors ``azure-sdk-qa-bot-knowledge-graph-sync``'s
    ``.env`` values win.
 
 The env-var mirror exists so third-party libraries that resolve their
-own placeholders against ``os.environ`` (notably GraphRAG's
-``graphrag_common.config._parse_env_variables``, which substitutes
-``${VAR}`` tokens in ``config/graphrag/settings.yaml``) see the same
-values as ``cfg()``. Without the mirror, ``load_config`` raised
-``ConfigParsingError: Environment variable not found: '…'`` and left
-``KnowledgeGraphService`` in a half-loaded state.
+own placeholders against ``os.environ`` see the same values as ``cfg()``.
 
 Call ``await init()`` once during application startup (inside the async
 event loop) before any calls to ``get()``.
@@ -45,10 +39,6 @@ _settings: dict[str, str] | None = None
 
 def _load_env_file() -> None:
     """Load ``.env`` from the project root, if present.
-
-    Mirrors the behaviour of
-    ``azure-sdk-qa-bot-knowledge-graph-sync/src/services/app_config.py``
-    so developers can override App Configuration values locally.
     """
     from dotenv import load_dotenv
 
@@ -65,12 +55,6 @@ async def init() -> None:
     """Load all settings from Azure App Configuration.
 
     Must be awaited once at startup before calling ``get()``.
-
-    Side effect: every App Configuration key is also mirrored into
-    ``os.environ`` (only when not already set), so libraries that
-    resolve their own ``${VAR}`` placeholders against the process
-    environment — most notably GraphRAG's ``load_config`` — pick up the
-    same values as ``cfg()``.
     """
     global _settings
     if _settings is not None:

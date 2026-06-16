@@ -2,44 +2,7 @@
 
 Exposes a single tool,
 :meth:`GraphKnowledgeTools.search_knowledge_graph`, that retrieves
-graph-grounded source snippets for a natural-language query. Mirrors
-``search_knowledge_base`` (the Azure AI Search vector retriever) in
-output shape so the chat agent can consume both the same way.
-
-Why HTTP instead of running GraphRAG in-process
------------------------------------------------
-The chat agent runs in a fresh Foundry sandbox per session — every cold
-sandbox would otherwise pay ~40s to download parquets + preload
-community embeddings before serving the first graph query. Instead this
-tool POSTs to the backend server's ``/graph/query`` endpoint;
-the backend pre-warms the :class:`KnowledgeGraphService` once at
-startup and keeps it for the pod's lifetime, so each call resolves in
-~1-2s (one embedding + one AI Search ANN + DataFrame joins).
-
-Authentication
---------------
-The backend is fronted by App Service EasyAuth (Entra ID), so the
-Foundry sandbox must present an Entra ID bearer token. The tool uses
-the sandbox's Managed Identity to request a token for the audience
-configured by ``GRAPH_QUERY_AUDIENCE`` (the backend's EasyAuth client
-ID) — the same audience the Logic App uses. The MI must be added to
-the backend app registration's allowed identities.
-
-Conceptual contract — this is still a **retrieval tool**, not an
-answering tool:
-
-* Output type ``GraphSearchResult { references[] }`` carries verbatim
-  source snippets, deduplicated by document. No synthesised narrative,
-  no LLM rewrite — the chat agent's own LLM does final synthesis over
-  the union of all retrieved references.
-* Recall path differs from ``search_knowledge_base``: graph retrieval
-  matches the query against entity descriptions, expands one hop
-  through relationships, pulls in community-membership context, and
-  resolves back to the text units those entities appear in. KB
-  retrieval matches the query embedding directly against text-chunk
-  embeddings. The two candidate sets are complementary — graph wins
-  on entity-centric / "how does X relate to Y" questions; KB wins on
-  exact-phrase / verbatim-fact questions.
+graph-grounded source snippets for a natural-language query.
 """
 
 from __future__ import annotations
@@ -56,10 +19,6 @@ from utils.azure_credential import get_credential
 
 logger = logging.getLogger(__name__)
 
-# Generous default: a warm backend serves graph queries in ~1-2s, but
-# we leave headroom for the once-per-pod cold-load case (~45s) so the
-# chat agent doesn't time out before the backend warms up. Override
-# via the GRAPH_QUERY_TIMEOUT_SECONDS config key if needed.
 _DEFAULT_TIMEOUT_SECONDS = 60.0
 
 

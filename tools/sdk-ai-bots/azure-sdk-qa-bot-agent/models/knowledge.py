@@ -139,14 +139,13 @@ class GraphReference(BaseModel):
     ``source`` mirrors :class:`KnowledgeChunk.source` and carries the
     originating ``KnowledgeSource.name`` (e.g. ``"typespec_docs"``) so
     the merged reference list looks consistent between KB and graph
-    hits; falls back to ``"graphrag"`` only when the document's source
-    folder cannot be recovered.
+    hits.
     """
 
     title: str
     link: str = ""
     snippet: str = ""
-    source: str = "graphrag"
+    source: str = ""
 
     @field_validator("title", mode="after")
     @classmethod
@@ -178,9 +177,8 @@ class GraphQueryRequest(BaseModel):
     When ``tenant_id`` is provided and resolves to a known
     :class:`TenantConfig`, the backend restricts graph retrieval to
     entities whose source documents belong to that tenant's
-    ``KnowledgeSource`` set (mirrors how ``search_knowledge_base``
-    scopes its AI Search query). Unknown / empty ``tenant_id`` falls
-    back to unscoped retrieval (current behaviour) so legacy callers
+    ``KnowledgeSource`` set. Unknown / empty ``tenant_id`` falls
+    back to unscoped retrieval (current behavior) so legacy callers
     keep working.
     """
 

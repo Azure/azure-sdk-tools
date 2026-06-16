@@ -1,33 +1,10 @@
 """Knowledge graph retrieval service using Microsoft GraphRAG.
 
 Wraps GraphRAG's Local Search **context builder** against the indexes
-and graph artefacts produced by the
+and graph artifacts produced by the
 ``azure-sdk-qa-bot-knowledge-graph-sync`` project. Exposes a single
 public method, :meth:`KnowledgeGraphService.search_graph`, that returns
-the graph-grounded source documents most relevant to a query —
-**without any completion LLM call**.
-
-Why retrieval-only (no LLM synthesis)
--------------------------------------
-The chat agent already has a fast vector-KB tool
-(``search_knowledge_base``) returning verbatim chunks. We want the
-graph tool to be a complementary *retriever*, not an answerer:
-
-* Same output shape: a flat list of ``{title, link, snippet}``
-  references, deduplicated by document.
-* No second LLM in the loop → no paraphrasing drift, no extra latency,
-  no token budget pressure on the agent's own LLM.
-* Different recall path: ``search_knowledge_base`` matches the query
-  embedding against text-chunk embeddings, while ``search_graph``
-  matches against entity-description embeddings and then traverses
-  1-hop relationships + community membership to surface the text units
-  the matched entities appear in. Two complementary candidate sets feed
-  the chat agent's own LLM, which does the final synthesis.
-
-This service used to call GraphRAG's ``LocalSearch.search()`` (one LLM
-completion, ~20s per query). We dropped that step and now invoke only
-``context_builder.build_context()`` (≈ one embedding + one AI Search
-ANN + a few DataFrame joins, ~1-2s per query).
+the graph-grounded source documents most relevant to a query.
 
 Data sources at query time
 --------------------------
@@ -35,17 +12,12 @@ GraphRAG splits its query-time inputs into two stores:
 
 * **Azure AI Search** — *all vector data.* The mixed context builder
   embeds the query and runs an ANN search against the entity index.
-* **Parquet artefacts** — *graph structure only.* ``entities`` /
+* **Parquet artifacts** — *graph structure only.* ``entities`` /
   ``communities`` / ``community_reports`` / ``text_units`` /
   ``relationships`` / ``documents`` parquets carry IDs, descriptions,
   edges, community hierarchy, and source text — but no vectors. The
   builder needs them to resolve entity hits back through the graph and
   pull the text units (and their parent documents) we ultimately cite.
-
-The parquet artefacts are loaded once (lazily, on first query) from
-the Azure Blob container named by ``STORAGE_GRAPHRAG_OUTPUT_CONTAINER``;
-the bot atomically swaps in a new build whenever the sync project calls
-``POST /graph/admin/reload``.
 """
 
 from __future__ import annotations

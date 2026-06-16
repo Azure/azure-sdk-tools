@@ -49,6 +49,8 @@ after reading the PR and its check runs:
    - Only name people you actually found in the PR or `CODEOWNERS` — never
      invent handles. If you cannot determine any approver, point the author to
      the PR's **Reviewers** panel / `CODEOWNERS` instead.
+   - If there are too many reviewers, just select 3 from the list to mention
+     rather than naming all of them.
 3. **If not ready to merge:** explain the blocking checks or comments and the
    concrete fix steps. Do **not** name approvers in this case.
 

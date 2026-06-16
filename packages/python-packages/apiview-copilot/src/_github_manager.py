@@ -87,7 +87,7 @@ class GithubManager:
         Production traffic targets ``production_owner`` (default
         ``Azure``); every other environment (local, staging, preview)
         targets the staging owner so test runs do not pollute the real
-        repo. 
+        repo.
         """
         if os.getenv("ENVIRONMENT_NAME") == "production":
             return production_owner

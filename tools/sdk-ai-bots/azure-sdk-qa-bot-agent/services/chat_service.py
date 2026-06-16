@@ -39,7 +39,13 @@ from utils.text_util import preprocess_message
 from utils.azure_memory_store import sanitize_scope
 from azure.ai.projects.aio import AIProjectClient
 from azure.ai.projects.models import AgentVersionDetails
-from openai import AsyncOpenAI, NotFoundError
+from openai import (
+    APIConnectionError,
+    APIStatusError,
+    APITimeoutError,
+    AsyncOpenAI,
+    NotFoundError,
+)
 from openai.types.responses import Response as OpenAIResponse
 from openai.types.responses import (
     ResponseFunctionToolCall,
@@ -56,9 +62,24 @@ logger = logging.getLogger(__name__)
 # -- Polling constants for empty-response retry loop ----------------------
 POLL_MAX_RETRIES = 5
 POLL_RETRY_DELAY_SECS = 3.0
+STREAM_CREATE_MAX_RETRIES = 3
+STREAM_CREATE_RETRY_DELAY_SECS = 1.5
 
 COMPACT_THRESHOLD = 100000
 """Token count at which conversation history is compacted."""
+
+# -- Bot identity constants -----------------------------------------------
+BOT_SENDER_ID = "azure-sdk-qa-bot"
+BOT_SENDER_NAME = "Azure SDK Q&A Bot"
+
+# -- Fallback error message when agent returns empty text -----------------
+EMPTY_RESPONSE_MESSAGE = (
+    "Sorry, something went wrong and I couldn't generate a response. "
+    "Please send your message again to retry."
+)
+
+# -- Stream event types ---------------------------------------------------
+STREAM_EVENT_RESPONSE_COMPLETED = "response.completed"
 
 _CITATION_RE = re.compile(r"[^\w\s]*cite[^\w\s]*turn\d+\S*")
 
@@ -174,8 +195,10 @@ class ChatService:
         )
 
         # Process additional info (images, links, text) from the frontend.
-        image_items = await self._build_image_items(req.additional_infos or [])
-        conversation_items.extend(image_items)
+        additional_items = await self._build_additional_info_items(
+            req.additional_infos or []
+        )
+        conversation_items.extend(additional_items)
 
         agent_ref: dict = {
             "name": agent.name,
@@ -183,23 +206,28 @@ class ChatService:
             "type": AgentReferenceType.agent_reference.value,
         }
 
-        # Streaming is broken for hosted agents — text is lost entirely.
-        # See https://github.com/Azure/azure-sdk-for-python/issues/45282
-        # and https://github.com/Azure/azure-sdk-for-python/issues/46015
-        raw_response = await openai_client.responses.with_raw_response.create(
-            input=conversation_items,
-            conversation=agent_conversation_id,
-            store=True,
-            stream=False,
-            extra_body={
-                "agent_reference": agent_ref,
-            },
+        stream = await self._invoke_agent_with_retry(
+            openai_client=openai_client,
+            conversation_items=conversation_items,
+            agent_conversation_id=agent_conversation_id,
+            agent_ref=agent_ref,
         )
-        response: OpenAIResponse = raw_response.parse()
+
+        response: OpenAIResponse | None = None
+        async for event in stream:
+            logger.debug("Stream event: type=%s, content=%s", event.type, event)
+            if event.type == STREAM_EVENT_RESPONSE_COMPLETED:
+                response = event.response
+                break
+
+        if response is None:
+            raise RuntimeError("Agent stream ended without a response.completed event")
 
         # Extract AI Foundry trace ID from x-request-id header.
         # The header may contain duplicated values separated by comma.
-        x_request_id = raw_response.headers.get("x-request-id", "")
+        x_request_id = ""
+        if hasattr(stream, "response") and stream.response:
+            x_request_id = stream.response.headers.get("x-request-id", "")
         trace_id = x_request_id.split(",")[0].strip() if x_request_id else None
         logger.info(
             "Agent trace: trace_id=%s, response_id=%s, conversation=%s",
@@ -243,6 +271,54 @@ class ChatService:
             )
         )
         return chat_response
+
+    @staticmethod
+    async def _invoke_agent_with_retry(
+        openai_client: AsyncOpenAI,
+        conversation_items: list[ResponseInputItemParam],
+        agent_conversation_id: str,
+        agent_ref: dict[str, str],
+        max_retries: int = STREAM_CREATE_MAX_RETRIES,
+        retry_delay: float = STREAM_CREATE_RETRY_DELAY_SECS,
+    ):
+        """Create a responses stream with bounded retries for transient failures.
+
+        Retries on ``APIStatusError`` (4xx/5xx), ``APIConnectionError``, and
+        ``APITimeoutError``.  The detailed status code and error message are
+        logged so they flow into telemetry.
+        """
+        last_error: Exception | None = None
+
+        for attempt in range(1, max_retries + 1):
+            try:
+                return await openai_client.responses.create(
+                    input=conversation_items,
+                    conversation=agent_conversation_id,
+                    store=True,
+                    stream=True,
+                    extra_body={
+                        "agent_reference": agent_ref,
+                    },
+                )
+            except (APIConnectionError, APITimeoutError, APIStatusError) as ex:
+                last_error = ex
+                logger.warning(
+                    "Failed to create agent stream (attempt %d/%d): "
+                    "conversation=%s, error=%s",
+                    attempt,
+                    max_retries,
+                    agent_conversation_id,
+                    ex,
+                    exc_info=True,
+                )
+
+            if attempt >= max_retries:
+                break
+            await asyncio.sleep(retry_delay * attempt)
+
+        raise RuntimeError(
+            f"Failed to create agent stream after {max_retries} attempts"
+        ) from last_error
 
     @staticmethod
     async def _poll_response_text(
@@ -305,8 +381,8 @@ class ChatService:
             id=f"bot-{response_id}",
             tenant_id=req.tenant_id.value,
             sender_role=Role.System,
-            sender_id="azure-sdk-qa-bot",
-            sender_name="Azure SDK Q&A Bot",
+            sender_id=BOT_SENDER_ID,
+            sender_name=BOT_SENDER_NAME,
             content=content,
             created_at=datetime.now(timezone.utc),
             conversation_id=req.conversation_id,
@@ -378,34 +454,59 @@ class ChatService:
         return new_id, True
 
     @staticmethod
-    async def _build_image_items(
+    async def _build_additional_info_items(
         infos: list[AdditionalInfo],
     ) -> list[ResponseInputItemParam]:
-        """Convert image additional_infos into Responses API input items."""
+        """Convert additional_infos into Responses API input items.
+
+        Handles both text and image types:
+        - **Text**: injected as a user message so the LLM sees project context
+          (e.g. TypeSpec project state, intake analysis, .tsp code snippets).
+        - **Image**: fetched and converted to data-URI input_image items.
+        """
         items: list[ResponseInputItemParam] = []
         for info in infos:
-            if info.type != AdditionalInfoType.Image or not info.link:
-                continue
-            try:
-                data_uri = await get_image_data_uri(info.link)
-            except Exception:
-                logger.warning(
-                    "Failed to fetch Teams image: %s", info.link, exc_info=True
+            if info.type == AdditionalInfoType.Text and info.content:
+                content = info.content
+                max_chars = int(cfg("AOAI_CHAT_MAX_TOKENS", "100000"))
+                if len(content) > max_chars:
+                    logger.warning(
+                        "Text additional_info is large (%d chars, limit %d)",
+                        len(content),
+                        max_chars,
+                    )
+                items.append(
+                    cast(
+                        ResponseInputItemParam,
+                        ConversationItem(
+                            role=Role.User,
+                            content=info.content,
+                        ).model_dump(mode="json", exclude_none=True),
+                    )
                 )
-                continue
-            items.append(
-                {
-                    "type": "message",
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "input_image",
-                            "image_url": data_uri,
-                            "detail": "auto",
-                        },
-                    ],
-                }
-            )
+            elif info.type == AdditionalInfoType.Image and info.link:
+                try:
+                    data_uri = await get_image_data_uri(info.link)
+                except Exception:
+                    logger.warning(
+                        "Failed to fetch Teams image: %s",
+                        info.link,
+                        exc_info=True,
+                    )
+                    continue
+                items.append(
+                    {
+                        "type": "message",
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "input_image",
+                                "image_url": data_uri,
+                                "detail": "auto",
+                            },
+                        ],
+                    }
+                )
         return items
 
     def _build_tenant_system_message(self, tenant_id: TenantID) -> str:
@@ -467,10 +568,7 @@ class ChatService:
 
         output_text = response.output_text or ""
         if not output_text:
-            output_text = (
-                "Sorry, something went wrong and I couldn't generate a response. "
-                "Please send your message again to retry."
-            )
+            output_text = EMPTY_RESPONSE_MESSAGE
             logger.error(
                 "Empty output_text for response %s (status=%s), returning error message",
                 response.id,

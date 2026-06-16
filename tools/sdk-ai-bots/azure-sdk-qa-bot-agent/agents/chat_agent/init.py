@@ -28,7 +28,6 @@ from agent_framework import CompactionProvider
 from agent_framework import SkillsProvider
 from agent_framework import ToolResultCompactionStrategy
 from agent_framework_foundry_hosting import ResponsesHostServer
-from opentelemetry import trace as otel_trace
 
 import config.app_config as app_config
 from config.app_config import get as cfg
@@ -40,8 +39,6 @@ from tools.github_mcp_tools import create_github_mcp_tool
 from tools.pipeline_tools import PipelineTools
 from skills.tenant_skills import create_tenant_skills
 from utils.azure_ai_foundry import (
-    FoundryAgentSpanEnricher,
-    SpanAttributeTruncator,
     get_agent_client,
     get_project_client,
 )
@@ -141,7 +138,7 @@ async def main() -> None:
 
     # Init Skills
     skills = create_tenant_skills()
-    skills_provider = SkillsProvider(skills=skills)
+    skills_provider = SkillsProvider(skills)
 
     reasoning_effort = cfg("AI_FOUNDRY_AGENT_REASONING_EFFORT")
     agent = Agent(
@@ -159,19 +156,6 @@ async def main() -> None:
     )
 
     server = ResponsesHostServer(agent)
-
-    # Init TracerProvider (auto-configured by ResponsesHostServer)
-    foundry_project_id = os.environ.get("AI_FOUNDRY_PROJECT_RESOURCE_ID", "")
-    provider = otel_trace.get_tracer_provider()
-    if hasattr(provider, "add_span_processor"):
-        # Truncate oversized span attributes so App Insights doesn't
-        # silently drop spans that exceed the 65 KB item limit.
-        provider.add_span_processor(SpanAttributeTruncator())
-        if foundry_project_id:
-            provider.add_span_processor(
-                FoundryAgentSpanEnricher(foundry_project_id, agent_name, agent_id)
-            )
-
     await server.run_async()
 
 

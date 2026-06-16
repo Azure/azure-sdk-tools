@@ -90,6 +90,19 @@ describe("rate-limit module", () => {
     expect(next).toHaveBeenCalledTimes(4); // allowed
   });
 
+  test("falls back to user login when objectId is missing", () => {
+    const limiter = createRateLimiter({ windowMs: 60000, maxRequests: 2 });
+    const next = vi.fn();
+
+    const req = { user: { login: "noobj-user", objectId: "" }, ip: "10.0.0.5" };
+    limiter(req, mockRes(), next);
+    limiter(req, mockRes(), next);
+    expect(next).toHaveBeenCalledTimes(2);
+    // Third should be blocked (keyed on login)
+    limiter(req, mockRes(), next);
+    expect(next).toHaveBeenCalledTimes(2);
+  });
+
   test("falls back to IP when no session user", () => {
     const limiter = createRateLimiter({ windowMs: 60000, maxRequests: 2 });
     const next = vi.fn();
@@ -105,6 +118,19 @@ describe("rate-limit module", () => {
     // Same IP at limit
     limiter(req1, mockRes(), next);
     expect(next).toHaveBeenCalledTimes(3);
+  });
+
+  test("falls back to anon when no user and no IP", () => {
+    const limiter = createRateLimiter({ windowMs: 60000, maxRequests: 2 });
+    const next = vi.fn();
+
+    const req = { user: null, ip: undefined };
+    limiter(req, mockRes(), next);
+    limiter(req, mockRes(), next);
+    expect(next).toHaveBeenCalledTimes(2);
+    // Third blocked — all keyed on "anon"
+    limiter(req, mockRes(), next);
+    expect(next).toHaveBeenCalledTimes(2);
   });
 
   test("sliding window expires old requests", () => {

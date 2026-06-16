@@ -21,11 +21,13 @@ The bot should NOT respond when the message is:
 - A message clearly directed at specific people instead of the bot or the ongoing bot exchange
 - A greeting or thank-you that doesn't need a bot answer
 - A request asking a human to approve, confirm, verify, or review the bot's own prior answer (e.g., "can some human approve the above AI-generated response"). This does not apply to ordinary PR or spec review requests.
+  - This still applies when the message also restates, rephrases, or repeats the underlying question. If the user @-mentions people/teams and asks a human to approve, confirm, or verify the bot's prior answer, the restated question is directed at that human — not a fresh ask to the bot — so classify it as should_respond=false.
 
 When prior conversation history is provided:
 
 - Treat prior bot messages as the bot's own replies, not as other human participants
 - If the current message is replying to, clarifying, or pushing back on the bot's earlier answer, classify it as should_respond=true unless it is only a thank-you or clear closure
+- But if the current message is escalating the bot's prior answer to a human for approval/confirmation/verification (even while repeating the question), classify it as should_respond=false
 
 Reply with a JSON object containing exactly two fields:
 

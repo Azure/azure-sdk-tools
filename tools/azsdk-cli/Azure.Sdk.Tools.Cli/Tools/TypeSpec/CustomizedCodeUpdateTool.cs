@@ -87,13 +87,15 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         Required = true
     };
 
-    private readonly Option<CustomizedCodeUpdateMode> modeOption = new("--mode")
+    private readonly Option<EditScope> editScopeOption = new("--edit-scope")
     {
-        Description = "Edit scope. Update (default): unrestricted — may apply spec-input (client.tsp) customizations, regenerate, and patch custom code. " +
-                      "Repair: custom-code-only — never edits spec inputs (client.tsp/tspconfig.yaml) or moves the pinned spec commit; " +
-                      "failures requiring a spec change are reported as out of scope instead of applied.",
+        Description = "Which source categories the tool may edit (flags). All (default): both custom code and spec inputs " +
+                      "(client.tsp) may be edited. CustomCode: custom (non-generated) code only — never edits spec inputs " +
+                      "(client.tsp/tspconfig.yaml) or moves the pinned spec commit; failures requiring a spec change are " +
+                      "reported as out of scope (errorCode 'SpecChangeRequired') instead of applied. Regenerating Generated/ " +
+                      "from the unchanged pinned commit is always allowed.",
         Required = false,
-        DefaultValueFactory = _ => CustomizedCodeUpdateMode.Update
+        DefaultValueFactory = _ => EditScope.All
     };
 
     protected override Command GetCommand() =>
@@ -102,7 +104,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             SharedOptions.PackagePath,
             typespecProjectPath,
             customizationRequestOption,
-            modeOption,
+            editScopeOption,
         };
 
     /// <inheritdoc />
@@ -117,11 +119,11 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         var customizationRequest = parseResult.GetValue(customizationRequestOption);
         ArgumentException.ThrowIfNullOrWhiteSpace(customizationRequest, nameof(customizationRequest));
 
-        var mode = parseResult.GetValue(modeOption);
+        var editScope = parseResult.GetValue(editScopeOption);
         try
         {
-            logger.LogInformation("Starting customized code update for {PackagePath} (mode: {Mode})", packagePath, mode);
-            return await RunUpdateAsync(packagePath, tspProjectPath, customizationRequest, mode, ct);
+            logger.LogInformation("Starting customized code update for {PackagePath} (editScope: {EditScope})", packagePath, editScope);
+            return await RunUpdateAsync(packagePath, tspProjectPath, customizationRequest, editScope, ct);
         }
         catch (Exception ex)
         {
@@ -154,10 +156,10 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         string tspProjectPath,
         [Description("Description of the requested customization to apply to the TypeSpec or SDK code. Can also be an APIView URL for feedback-driven customizations. REQUIRED.")]
         string customizationRequest,
-        [Description("Edit scope. Update (default): unrestricted — may apply spec-input (client.tsp) customizations, regenerate, and patch custom code. Repair: custom-code-only — never edits spec inputs (client.tsp/tspconfig.yaml) or moves the pinned spec commit; failures that would require a spec change are reported as out of scope (errorCode 'SpecChangeRequired') instead of applied. Regenerating Generated/ from the unchanged pinned commit is allowed in both modes.")]
-        CustomizedCodeUpdateMode mode = CustomizedCodeUpdateMode.Update,
+        [Description("Which source categories the tool may edit (flags: CustomCode, SpecInputs, or All). All (default): both custom code and spec inputs may be edited, regenerate, and patch custom code. CustomCode: custom-code-only — never edits spec inputs (client.tsp/tspconfig.yaml) or moves the pinned spec commit; failures that would require a spec change are reported as out of scope (errorCode 'SpecChangeRequired') instead of applied. Regenerating Generated/ from the unchanged pinned commit is always allowed.")]
+        EditScope editScope = EditScope.All,
         CancellationToken ct = default)
-        => RunUpdateAsync(packagePath, tspProjectPath, customizationRequest, mode, ct);
+        => RunUpdateAsync(packagePath, tspProjectPath, customizationRequest, editScope, ct);
 
     /// <summary>
     /// Executes the update pipeline: classify → patch customizations → regen → build.
@@ -165,12 +167,12 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// <param name="packagePath">Absolute path to the SDK package directory.</param>
     /// <param name="tspProjectPath">Absolute path to the local TypeSpec project directory.</param>
     /// <param name="customizationRequest">Description of the requested customization to apply to the TypeSpec, used for guiding the update process.</param>
-    /// <param name="mode">Whether to run the default update flow or the custom-code-only repair flow.</param>
+    /// <param name="editScope">Which source categories the tool may edit (custom code, spec inputs, or both).</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A <see cref="CustomizedCodeUpdateResponse"/> with the pipeline result.</returns>
-    private async Task<CustomizedCodeUpdateResponse> RunUpdateAsync(string packagePath, string tspProjectPath, string customizationRequest, CustomizedCodeUpdateMode mode, CancellationToken ct)
+    private async Task<CustomizedCodeUpdateResponse> RunUpdateAsync(string packagePath, string tspProjectPath, string customizationRequest, EditScope editScope, CancellationToken ct)
     {
-        var repairMode = mode == CustomizedCodeUpdateMode.Repair;
+        var specInputsInScope = editScope.HasFlag(EditScope.SpecInputs);
         // Validate input
         if (!Directory.Exists(packagePath))
         {
@@ -227,8 +229,8 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             logger.LogWarning(ex, "Failed to resolve package info for {PackagePath}", packagePath);
         }
 
-        // Repair mode only: items that can only be fixed by a spec change (client.tsp/tspconfig.yaml).
-        // Declared before CreateResponse so every response can surface them.
+        // When spec inputs are out of scope: items that can only be fixed by a spec change
+        // (client.tsp/tspconfig.yaml). Declared before CreateResponse so every response can surface them.
         List<string> specChangeRequired = new();
 
         CustomizedCodeUpdateResponse CreateResponse(CustomizedCodeUpdateResponse response)
@@ -337,12 +339,12 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             {
                 tspApplicable++;
 
-                // Repair mode is custom-code-only: a TSP_APPLICABLE item can only be fixed by editing
+                // When spec inputs are out of scope: a TSP_APPLICABLE item can only be fixed by editing
                 // spec inputs (client.tsp/tspconfig.yaml), which belongs in a separate spec-repo PR.
                 // Never apply it here — record it as out of scope and continue with custom-code fixes.
-                if (repairMode)
+                if (!specInputsInScope)
                 {
-                    logger.LogInformation("Repair mode: item '{ItemId}' requires a spec change and is out of scope; reporting instead of applying.", itemDetails.ItemId);
+                    logger.LogInformation("Spec inputs out of scope: item '{ItemId}' requires a spec change; reporting instead of applying.", itemDetails.ItemId);
                     specChangeRequired.Add($"'{itemDetails.Text}' (Reason: {itemDetails.Reason})");
                     feedbackDictionary.Remove(itemDetails.ItemId);
                     continue;
@@ -391,15 +393,15 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
         // ── Early exit cases based on first classification ──
 
-        // Repair mode: if every actionable item requires a spec change and there is no custom code
-        // to patch, stop and report — the repair never edits spec inputs. A human routes these to a
-        // separate spec-repo PR.
-        if (repairMode && specChangeRequired.Count > 0 && codeCustomizations == 0)
+        // Spec inputs out of scope: if every actionable item requires a spec change and there is no
+        // custom code to patch, stop and report — this scope never edits spec inputs. A human routes
+        // these to a separate spec-repo PR.
+        if (!specInputsInScope && specChangeRequired.Count > 0 && codeCustomizations == 0)
         {
             return CreateResponse(new CustomizedCodeUpdateResponse
             {
                 Success = false,
-                Message = "Repair is out of scope: the failure can only be fixed by a spec change (client.tsp/tspconfig.yaml), which belongs in a separate spec-repo PR.",
+                Message = "Out of scope: the failure can only be fixed by a spec change (client.tsp/tspconfig.yaml), which belongs in a separate spec-repo PR.",
                 SpecChangeRequired = specChangeRequired,
                 NextSteps = manualInterventions.Count > 0 ? manualInterventions : null,
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.SpecChangeRequired
@@ -515,10 +517,10 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     {
                         feedbackDictionary.Remove(itemDetails.ItemId);
                     }
-                    else if (repairMode && itemDetails.Classification == ClassificationTspApplicable)
+                    else if (!specInputsInScope && itemDetails.Classification == ClassificationTspApplicable)
                     {
-                        // Repair mode never edits spec inputs — surface as out of scope instead of applying.
-                        logger.LogInformation("Repair mode: item '{ItemId}' reclassified as TSP_APPLICABLE on second pass; out of scope.", itemDetails.ItemId);
+                        // Spec inputs out of scope — surface as out of scope instead of applying.
+                        logger.LogInformation("Spec inputs out of scope: item '{ItemId}' reclassified as TSP_APPLICABLE on second pass; reporting.", itemDetails.ItemId);
                         specChangeRequired.Add($"'{itemDetails.Text}' (Reason: {itemDetails.Reason})");
                         feedbackDictionary.Remove(itemDetails.ItemId);
                     }

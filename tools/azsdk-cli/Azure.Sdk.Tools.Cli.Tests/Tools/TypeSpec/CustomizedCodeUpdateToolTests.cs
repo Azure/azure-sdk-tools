@@ -1369,14 +1369,14 @@ public class CustomizedCodeUpdateToolAutoTests
     }
 
     // ========================================================================
-    // Repair mode (custom-code-only; never edits spec inputs)
+    // EditScope.CustomCode (custom-code-only; never edits spec inputs)
     // ========================================================================
 
     [Test]
-    public async Task RepairMode_TspApplicableOnly_ReturnsSpecChangeRequired_DoesNotApplyTsp()
+    public async Task CustomCodeScope_TspApplicableOnly_ReturnsSpecChangeRequired_DoesNotApplyTsp()
     {
         // The default classifier returns a single TSP_APPLICABLE item with no code customizations.
-        // In repair mode this must NOT be applied (no spec-input edits); instead it is reported
+        // With CustomCode scope this must NOT be applied (no spec-input edits); instead it is reported
         // as out of scope with errorCode 'SpecChangeRequired'.
         var (tool, mocks) = CreateTool();
         var pkg = CreateTempDir();
@@ -1386,27 +1386,27 @@ public class CustomizedCodeUpdateToolAutoTests
             packagePath: pkg,
             tspProjectPath: tspDir,
             customizationRequest: "Rename FooClient to BarClient",
-            mode: CustomizedCodeUpdateMode.Repair,
+            editScope: EditScope.CustomCode,
             ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.SpecChangeRequired));
         Assert.That(result.SpecChangeRequired, Is.Not.Null.And.Count.EqualTo(1));
 
-        // Critically, repair mode must never apply spec-input (client.tsp) customizations.
+        // Critically, CustomCode scope must never apply spec-input (client.tsp) customizations.
         mocks.TypeSpecCustomization.Verify(t => t.ApplyCustomizationAsync(
             It.IsAny<string>(),
             It.IsAny<string>(),
             It.IsAny<string?>(),
             It.IsAny<int>(),
             It.IsAny<CancellationToken>()), Times.Never,
-            "Repair mode must not apply TypeSpec (spec-input) customizations.");
+            "CustomCode scope must not apply TypeSpec (spec-input) customizations.");
     }
 
     [Test]
-    public async Task RepairMode_CodeCustomization_PatchesApplied_BuildSucceeds()
+    public async Task CustomCodeScope_CodeCustomization_PatchesApplied_BuildSucceeds()
     {
-        // Repair mode still performs custom-code patching: a CODE_CUSTOMIZATION item flows through
+        // CustomCode scope still performs custom-code patching: a CODE_CUSTOMIZATION item flows through
         // the patch pipeline exactly like update mode, and no spec-input edits are made.
         var buildCalls = 0;
         var svc = new ConfigurableLanguageService(
@@ -1468,7 +1468,7 @@ public class CustomizedCodeUpdateToolAutoTests
             packagePath: pkg,
             tspProjectPath: tspDir,
             customizationRequest: "Rename maxSpeakers to maxSpeakerCount",
-            mode: CustomizedCodeUpdateMode.Repair,
+            editScope: EditScope.CustomCode,
             ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.True);
@@ -1482,14 +1482,14 @@ public class CustomizedCodeUpdateToolAutoTests
             It.IsAny<string?>(),
             It.IsAny<int>(),
             It.IsAny<CancellationToken>()), Times.Never,
-            "Repair mode must not apply TypeSpec (spec-input) customizations even when patching code.");
+            "CustomCode scope must not apply TypeSpec (spec-input) customizations even when patching code.");
     }
 
     [Test]
-    public async Task RepairMode_MixedSpecAndCode_PatchesCode_SurfacesSpecChangeRequired()
+    public async Task CustomCodeScope_MixedSpecAndCode_PatchesCode_SurfacesSpecChangeRequired()
     {
         // Mixed feedback: one TSP_APPLICABLE (out of scope) + one CODE_CUSTOMIZATION (in scope).
-        // Repair mode patches the code, reports the spec item as out of scope, and never edits client.tsp.
+        // CustomCode scope patches the code, reports the spec item as out of scope, and never edits client.tsp.
         var buildCalls = 0;
         var svc = new ConfigurableLanguageService(
             buildFunc: () =>
@@ -1552,7 +1552,7 @@ public class CustomizedCodeUpdateToolAutoTests
             packagePath: pkg,
             tspProjectPath: tspDir,
             customizationRequest: "mixed feedback",
-            mode: CustomizedCodeUpdateMode.Repair,
+            editScope: EditScope.CustomCode,
             ct: CancellationToken.None);
 
         // Code path succeeds; the spec item is surfaced as out of scope rather than applied.
@@ -1565,11 +1565,11 @@ public class CustomizedCodeUpdateToolAutoTests
             It.IsAny<string?>(),
             It.IsAny<int>(),
             It.IsAny<CancellationToken>()), Times.Never,
-            "Repair mode must not apply spec-input customizations even in mixed feedback.");
+            "CustomCode scope must not apply spec-input customizations even in mixed feedback.");
     }
 
     [Test]
-    public async Task UpdateMode_TspApplicable_AppliesCustomization_BackwardCompatible()
+    public async Task DefaultScope_TspApplicable_AppliesCustomization_BackwardCompatible()
     {
         // Default (Update) mode is unchanged: TSP_APPLICABLE items are applied via the
         // TypeSpec customization service. Guards backward compatibility of the new mode param.
@@ -1706,3 +1706,5 @@ internal class CallCountMockTspHelper : ITspClientHelper
     public Task<TspToolResponse> InitializeGenerationAsync(string workingDirectory, string tspConfigPath, string[]? additionalArgs = null, CancellationToken ct = default)
         => Task.FromResult(new TspToolResponse { IsSuccessful = true, TypeSpecProject = workingDirectory });
 }
+
+

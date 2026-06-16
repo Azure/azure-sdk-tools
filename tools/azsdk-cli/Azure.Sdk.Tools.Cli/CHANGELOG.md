@@ -4,7 +4,7 @@
 
 ### Features Added
 
-- Added a custom-code-only `repair` mode to the `customized-update` command / `azsdk_customized_code_update` MCP tool. Repair mode never edits spec inputs (client.tsp/tspconfig.yaml) or moves the pinned spec commit; feedback requiring a spec change is reported as out of scope via the new `SpecChangeRequired` error code instead of being applied.
+- Added an `editScope` parameter (`--edit-scope`) to the `customized-update` command / `azsdk_customized_code_update` MCP tool. It is a flags enum (`CustomCode`, `SpecInputs`, `All`; default `All`). `CustomCode` restricts the tool to custom (non-generated) code: it never edits spec inputs (client.tsp/tspconfig.yaml) or moves the pinned spec commit, and feedback requiring a spec change is reported as out of scope via the new `SpecChangeRequired` error code instead of being applied. Regenerating `Generated/` from the unchanged pinned commit is always allowed.
 
 ## 0.6.20 (2026-06-16)
 

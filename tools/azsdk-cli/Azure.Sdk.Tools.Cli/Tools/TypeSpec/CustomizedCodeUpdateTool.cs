@@ -393,15 +393,16 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
         // ── Early exit cases based on first classification ──
 
-        // Spec inputs out of scope: if every actionable item requires a spec change and there is no
-        // custom code to patch, stop and report — this scope never edits spec inputs. A human routes
-        // these to a separate spec-repo PR.
+        // Spec inputs out of scope: there is no custom code to patch and one or more items require a
+        // spec change, so there is nothing this scope can apply. Stop and report — a human routes the
+        // spec-change items to a separate spec-repo PR (manual-intervention items, if any, are surfaced
+        // via NextSteps). This scope never edits spec inputs.
         if (!specInputsInScope && specChangeRequired.Count > 0 && codeCustomizations == 0)
         {
             return CreateResponse(new CustomizedCodeUpdateResponse
             {
                 Success = false,
-                Message = "Out of scope: the failure can only be fixed by a spec change (client.tsp/tspconfig.yaml), which belongs in a separate spec-repo PR.",
+                Message = "Out of scope: one or more items require a spec change (client.tsp/tspconfig.yaml), which belongs in a separate spec-repo PR, and there is no custom code to patch.",
                 SpecChangeRequired = specChangeRequired,
                 NextSteps = manualInterventions.Count > 0 ? manualInterventions : null,
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.SpecChangeRequired

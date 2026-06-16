@@ -1,11 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace Azure.Sdk.Tools.Cli.Models;
 
 /// <summary>
 /// Identifies which categories of source <c>azsdk_customized_code_update</c> is permitted to edit.
-/// This is a flags enum, so categories can be combined.
+/// This is a flags enum, so categories can be combined; callers default to <see cref="All"/>.
 /// </summary>
 /// <remarks>
 /// Regenerating <c>Generated/</c> from the unchanged pinned spec commit is always permitted and is
@@ -13,11 +15,10 @@ namespace Azure.Sdk.Tools.Cli.Models;
 /// the deterministic result of a custom-code or spec-input change.
 /// </remarks>
 [Flags]
+[SuppressMessage("Design", "CA1008:Enums should have zero value",
+    Justification = "Editing nothing is not a meaningful operation; callers always specify a non-empty scope and default to All.")]
 public enum EditScope
 {
-    /// <summary>No edits permitted.</summary>
-    None = 0,
-
     /// <summary>
     /// Custom (non-generated) code: .NET partial classes / <c>[CodeGen*]</c> attributes,
     /// Python <c>_patch.py</c>, Java <c>*Customization.java</c>.

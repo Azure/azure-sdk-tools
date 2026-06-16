@@ -14,7 +14,7 @@ Drives a complete GraphRAG build directly against Azure Blob Storage:
 
 The single public entry point is :func:`run_graphrag_pipeline`, which
 returns the snapshot id (the timestamped sub-prefix) so callers can pass
-it to :mod:`src.graphrag.publish_output` to flip ``latest.json``.
+it to :mod:`azure_sdk_qa_bot_knowledge_graph_sync.graphrag.publish_output` to flip ``latest.json``.
 """
 
 from __future__ import annotations

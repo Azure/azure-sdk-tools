@@ -19,7 +19,7 @@ The build:
    to the new snapshot. The bot picks it up on its next daily poll.
 
 Usage:
-    python -m src.main
+    python -m azure_sdk_qa_bot_knowledge_graph_sync.main
 """
 
 from __future__ import annotations
@@ -37,16 +37,16 @@ logger = logging.getLogger(__name__)
 
 async def run() -> None:
     """Run a full GraphRAG build and publish the resulting snapshot."""
-    from src.services.app_config import init_configuration
-    from src.services.app_secret import init_secrets
+    from azure_sdk_qa_bot_knowledge_graph_sync.services.app_config import init_configuration
+    from azure_sdk_qa_bot_knowledge_graph_sync.services.app_secret import init_secrets
 
     logger.info("Initializing app configuration...")
     await init_configuration()
     logger.info("Initializing app secrets...")
     await init_secrets()
 
-    from src.graphrag.publish_output import publish_manifest
-    from src.graphrag.run_indexing import run_graphrag_pipeline
+    from azure_sdk_qa_bot_knowledge_graph_sync.graphrag.publish_output import publish_manifest
+    from azure_sdk_qa_bot_knowledge_graph_sync.graphrag.run_indexing import run_graphrag_pipeline
 
     logger.info("Starting GraphRAG indexing (full build, blob-direct)...")
     snapshot_id = await run_graphrag_pipeline()

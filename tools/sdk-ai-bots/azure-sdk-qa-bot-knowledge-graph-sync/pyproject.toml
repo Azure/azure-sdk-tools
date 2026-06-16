@@ -24,10 +24,10 @@ dev = [
 ]
 
 [project.scripts]
-sync-knowledge-graph = "src.main:main"
+sync-knowledge-graph = "azure_sdk_qa_bot_knowledge_graph_sync.main:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src"]
+packages = ["azure_sdk_qa_bot_knowledge_graph_sync"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

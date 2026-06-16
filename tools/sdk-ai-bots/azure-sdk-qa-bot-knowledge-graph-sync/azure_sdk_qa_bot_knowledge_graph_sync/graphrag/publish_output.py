@@ -27,7 +27,7 @@ import logging
 import os
 from typing import Any
 
-from src.services.storage_service import BlobService
+from azure_sdk_qa_bot_knowledge_graph_sync.services.storage_service import BlobService
 
 logger = logging.getLogger(__name__)
 

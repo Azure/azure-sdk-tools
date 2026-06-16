@@ -11,7 +11,7 @@ import datetime as _dt
 
 import pytest
 
-from src.graphrag.source_aware_reader import SourceAwareMarkItDownFileReader
+from azure_sdk_qa_bot_knowledge_graph_sync.graphrag.source_aware_reader import SourceAwareMarkItDownFileReader
 
 
 class _FakeStorage:

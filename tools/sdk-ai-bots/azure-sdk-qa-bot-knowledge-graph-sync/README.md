@@ -76,7 +76,7 @@ sync-knowledge-graph
 
 The pipeline reads its bootstrap endpoint from an environment variable;
 everything else is pulled from Azure App Configuration and Azure Key Vault
-at startup (see `src/services/app_config.py` and `src/services/app_secret.py`).
+at startup (see `azure_sdk_qa_bot_knowledge_graph_sync/services/app_config.py` and `azure_sdk_qa_bot_knowledge_graph_sync/services/app_secret.py`).
 
 | Variable | Source | Description |
 |----------|--------|-------------|
@@ -103,7 +103,7 @@ python -m pytest tests/ -v
 ## Project Structure
 
 ```
-src/
+azure_sdk_qa_bot_knowledge_graph_sync/
 ├── main.py                       # CLI entry point (full GraphRAG build + publish)
 ├── services/
 │   ├── app_config.py             # Azure App Configuration

@@ -12,7 +12,7 @@ async def test_knowledge_retrieve_service() -> None:
 
     req = KnowledgeRetrieveRequest(
         tenant_id="azure_sdk_qa_bot",
-        query: "hello"
+        query="hello"
     )
 
     resp = await service.retrieve(req)

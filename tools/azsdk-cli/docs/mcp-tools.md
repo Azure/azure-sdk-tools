@@ -2,13 +2,6 @@
 
 This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.19.
 
-<style>
-table td:nth-child(2),
-table th:nth-child(2) {
-  white-space: nowrap;
-}
-</style>
-
 ## Tools list
 
 | Name | Command | Description |
@@ -66,20 +59,7 @@ table th:nth-child(2) {
 | azsdk_run_typespec_validation | `azsdk tsp validate` | Run TypeSpec validation. Provide absolute path to TypeSpec project root as param. This tool runs TypeSpec validation and TypeSpec configuration validation. |
 | azsdk_typespec_check_project_in_public_repo | `azsdk tsp check-public-repo` | Check if TypeSpec project is in public spec repo. Provide absolute path to TypeSpec project root as param. |
 | azsdk_typespec_delegate_apiview_feedback | `azsdk tsp delegate-apiview-feedback` | Address, fix, resolve, or delegate APIView feedback/comments from an APIView URL. Use this tool instead of making code changes directly: it reads the reviewer comments, creates a GitHub issue with the feedback, and assigns GitHub Copilot to determine and implement the required TypeSpec client customizations. |
-| azsdk_typespec_generate_authoring_plan |  | Generate solutions or execution plans for TypeSpec‑related tasks, such as defining and updating TypeSpec‑based API specifications for an Azure service.
-This tool applies to all tasks involving **TypeSpec**:
-- Writing new TypeSpec definitions: service, api version, resource, models, operations
-- Editing or refactoring existing TypeSpec files, editing api version, service, resource, models, operations, or properties.
-- Versioning evolution:
-  - Make a **preview** API **stable (GA)**.
-  - Replace an existing **preview** with a **new preview**.
-  - Replace a **preview** with a **stable**
-  - Replacing a preview API with a stable API and a new preview API.
-  - **Add** a preview or **add** a stable API version.
-- Resolving TypeSpec-related issues
-Pass in a `request` to get an AI-generated response with references.
-Returns an answer with supporting references and documentation links
- |
+| azsdk_typespec_generate_authoring_plan |  | Generate solutions or execution plans for TypeSpec‑related tasks, such as defining and updating TypeSpec‑based API specifications for an Azure service.<br>This tool applies to all tasks involving **TypeSpec**:<br>- Writing new TypeSpec definitions: service, api version, resource, models, operations<br>- Editing or refactoring existing TypeSpec files, editing api version, service, resource, models, operations, or properties.<br>- Versioning evolution:<br>  - Make a **preview** API **stable (GA)**.<br>  - Replace an existing **preview** with a **new preview**.<br>  - Replace a **preview** with a **stable**<br>  - Replacing a preview API with a stable API and a new preview API.<br>  - **Add** a preview or **add** a stable API version.<br>- Resolving TypeSpec-related issues<br>Pass in a `request` to get an AI-generated response with references.<br>Returns an answer with supporting references and documentation links<br> |
 | azsdk_typespec_init_project | `azsdk tsp init` | Use this tool to initialize a new TypeSpec project. Returns the path to the created project. |
 | azsdk_update_api_spec_pull_request_in_release_plan | `azsdk release-plan update-spec-pr` | Update TypeSpec pull request URL in a release plan using work item id or release plan id. |
 | azsdk_update_language_exclusion_justification |  | Update language exclusion justification in release plan work item. This tool is called to update justification for excluded languages in the release plan. Optionally pass a language name to explicitly request exclusion for a specific language. |

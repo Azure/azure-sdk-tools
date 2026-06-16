@@ -17,7 +17,7 @@ different folders. A full end-to-end gate runs *both*.
 | **Loaded subject** | Production MCP server (`Azure.Sdk.Tools.Cli`) over stdio — real tools, real network calls | Skill's `SKILL.md` + frontmatter; the agent picks tools itself |
 | **Primary grader** | `tool-calls` — checks the recorded trajectory for required tool names | Trigger / routing graders + per-skill rubric |
 | **Run command** | `vally eval --eval-spec evals/tools/<name>.eval.yaml` *from this directory* | `vally eval --skill-dir .github/skills/<skill-name>` *from repo root* |
-| **CI status** | Not wired yet (see follow-ups) | `vally lint` runs in [.github/workflows/skill-eval.yml](../../../.github/workflows/skill-eval.yml); full `eval` job pending |
+| **CI status** | Phase 1 mock vertical in [`eng/pipelines/vally-eval.yml`](../../../eng/pipelines/vally-eval.yml) (hermetic `unit` + mock tiers, detect→shard→summarize); live tier deferred | `vally lint` runs in [.github/workflows/skill-eval.yml](../../../.github/workflows/skill-eval.yml); full `eval` job pending |
 | **Cost profile** | Higher — each run spins up the MCP server, real LLM turns (~5–15), real tool calls | Variable — trigger evals are cheap; capability evals (e.g. `azure-typespec-author`) are expensive |
 
 ### Why both?

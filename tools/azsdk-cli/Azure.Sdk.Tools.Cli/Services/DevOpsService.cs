@@ -11,15 +11,12 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Microsoft.TeamFoundation.Build.WebApi;
-using Microsoft.TeamFoundation.Common;
 using Microsoft.TeamFoundation.Core.WebApi;
-using Microsoft.TeamFoundation.TestManagement.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Microsoft.VisualStudio.Services.OAuth;
 using Microsoft.VisualStudio.Services.WebApi;
 using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
-using YamlDotNet.Core.Tokens;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {

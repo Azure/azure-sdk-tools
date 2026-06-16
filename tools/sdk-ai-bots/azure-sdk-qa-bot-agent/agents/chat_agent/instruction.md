@@ -39,9 +39,9 @@ after reading the PR and its check runs:
 1. **Assess merge readiness.** Treat the PR as **ready to merge** only when its
    required checks are passing/green **and** there are no unresolved blocking
    review comments or requested changes. Otherwise treat it as **not ready**.
-2. **If ready to merge:** identify the reviewers who have write access and can
-   approve it, then list them inline as `@github-handle` mentions and tell the
-   author to ping them for the approval needed to merge.
+2. **If ready to merge:** identify the requested reviewers / code owners for the PR,
+   then list them inline as `@github-handle` mentions and tell the author to ping
+   them for the approval needed to merge.
    - Prefer the requested reviewers / code owners returned by
      `pull_request_read`.
    - If those are unavailable, read the `CODEOWNERS` file entries that match the

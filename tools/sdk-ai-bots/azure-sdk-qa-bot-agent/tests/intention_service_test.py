@@ -169,3 +169,45 @@ async def test_pr_help_review_should_respond(service: IntentionService) -> None:
     )
     resp = await service.classify(req)
     assert resp.should_respond is True
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_domain_question_with_user_mention_should_respond(
+    service: IntentionService,
+) -> None:
+    """A domain question that @-mentions a teammate should still be answered.
+
+    Covers the bad case from issue Azure/azure-sdk-pr#2643: previously the
+    Logic App skipped messages that mentioned anyone, so technical questions
+    addressed to "@SomeoneElse" never reached the bot.
+    """
+    req = IntentionRequest(
+        message=Message(
+            role="user",
+            content=(
+                "<at>John Doe</at> any idea why my TypeSpec build keeps failing with "
+                "`unable to resolve module @azure-tools/typespec-azure-core` after I "
+                "bumped the emitter version? Anything obvious I should check first?"
+            ),
+        ),
+    )
+    resp = await service.classify(req)
+    assert resp.should_respond is True
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_personal_ask_with_user_mention_should_not_respond(
+    service: IntentionService,
+) -> None:
+    """A message that is a private/personal ask to a specific person should not be answered."""
+    req = IntentionRequest(
+        message=Message(
+            role="user",
+            content=(
+                "<at>Alice</at> can you take a look at my PR when you have a moment? "
+                "No rush, just whenever you're free this week. Thanks!"
+            ),
+        ),
+    )
+    resp = await service.classify(req)
+    assert resp.should_respond is False

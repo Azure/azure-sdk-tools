@@ -103,7 +103,7 @@ input:
   # from the markdown's first H1 (falling back to the basename), and
   # markdown structure (headings, code blocks, front-matter) is
   # preserved going into chunking.
-  file_pattern: ".*\\.mdx?$$"
+  file_pattern: ".*\\.mdx?$"
 
 input_storage:
   type: blob

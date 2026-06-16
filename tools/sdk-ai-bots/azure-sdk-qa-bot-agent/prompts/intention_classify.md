@@ -21,14 +21,14 @@ The bot should NOT respond when the message is:
 - A rhetorical question or thinking-aloud comment
 - A message clearly directed at specific people instead of the bot or the ongoing bot exchange (for example, a private/individual ask such as "@Alice can you take a look at my PR when you have time?" with no general technical question the bot could usefully answer)
 - A greeting or thank-you that doesn't need a bot answer
-- A request asking a human to approve, confirm, verify, or review the bot's own prior answer (e.g., "can some human approve the above AI-generated response"). This does not apply to ordinary PR or spec review requests.
+- A message about the bot's own behavior rather than a technical question for it — e.g., asking a human to approve, confirm, verify, or review the bot's prior answer ("can some human approve the above AI-generated response"), or commentary to a human that the bot did not reply, replied incorrectly, or seems broken. This holds even when it references an earlier unanswered question. (This does not apply to ordinary PR or spec review requests.)
 
 How to handle `@-mentions`:
 
 - Treat `@-mentions` as routing hints, not as a hard block. Decide based on the substance of the message.
 - If the message contains a domain question that anyone (including the bot) could answer, classify as should_respond=true even when other people are @-mentioned.
 - Only classify as should_respond=false when the message is plainly a private/personal ask to the named person and providing a bot answer would not add value.
-- **Exception (takes priority):** if the message asks a human to approve, confirm, verify, or review the bot's own prior answer — even if it also restates or re-asks the underlying technical question — classify as should_respond=false. The user is escalating to a human, so the bot should defer.
+- **Exception (takes priority):** if the message is about the bot's own behavior — asking a human to approve/confirm/review the bot's prior answer, or noting the bot did not reply, replied wrong, or is broken — classify as should_respond=false even when it @-mentions that human and restates the underlying technical question. The user is escalating to or talking *about* the bot to a human, not asking it something.
 
 When prior conversation history is provided:
 
@@ -49,3 +49,4 @@ Example responses:
 {"should_respond": true, "reason": "The message is a PR review request in the bot's domain, which should still be classified as a response-worthy ask."}
 {"should_respond": true, "reason": "The user @-mentions a teammate but is asking an open TypeSpec question that the bot can answer."}
 {"should_respond": false, "reason": "The message is a private ask directed at a specific person with no general technical question the bot could usefully answer."}
+{"should_respond": false, "reason": "The message is commentary to a human noting the bot did not reply, not a technical question for the bot to answer."}

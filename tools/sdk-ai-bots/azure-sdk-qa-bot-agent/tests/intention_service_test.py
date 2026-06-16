@@ -211,3 +211,75 @@ async def test_personal_ask_with_user_mention_should_not_respond(
     )
     resp = await service.classify(req)
     assert resp.should_respond is False
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_bot_no_reply_nudge_should_not_respond(
+    service: IntentionService, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A nudge to a human that the bot did not reply should not trigger a bot response.
+
+    Real case: the bot should have answered the prior technical question but failed
+    due to a system error. A teammate then @-mentions a maintainer pointing out the
+    bot did not reply. That message is commentary about the bot's behavior, not a
+    technical question, so the bot must not answer it.
+    """
+    user_id = "user-456"
+    conversation_id = "conv-xyz"
+    conversation_type = ConversationType.teams_channel
+
+    prior_user_msg = ConversationMessageItem(
+        id="msg-1",
+        sender_role=Role.User,
+        sender_id=user_id,
+        sender_name="Bob",
+        content="Then who will review the suppression and add the label?",
+        created_at=datetime.now(timezone.utc),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+        conversation_partition=f"channel:{conversation_id}",
+    )
+
+    async def fake_has_expert_reply(*_args, **_kwargs):
+        return False
+
+    async def fake_get_messages_by_conversation(*_args, **_kwargs):
+        return [prior_user_msg]
+
+    monkeypatch.setattr(
+        service._conversation_service,
+        "has_expert_reply",
+        fake_has_expert_reply,
+    )
+    monkeypatch.setattr(
+        service._conversation_service,
+        "get_messages_by_conversation",
+        fake_get_messages_by_conversation,
+    )
+
+    req = IntentionRequest(
+        message=Message(
+            role=Role.User,
+            user_id=user_id,
+            content="<at>Carol</at>, no reply for the above question....",
+        ),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+    )
+    resp = await service.classify(req)
+    assert resp.should_respond is False
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_bot_broken_complaint_should_not_respond(
+    service: IntentionService,
+) -> None:
+    """Commentary that the bot seems broken is about the bot, not a technical ask."""
+    req = IntentionRequest(
+        message=Message(
+            role="user",
+            content="<at>Carol</at> why didn't the bot answer this one? Is it down?",
+        ),
+    )
+    resp = await service.classify(req)
+    assert resp.should_respond is False

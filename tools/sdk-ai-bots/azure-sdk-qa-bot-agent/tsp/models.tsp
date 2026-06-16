@@ -266,6 +266,12 @@ model KnowledgeRetrieveRequest {
 
   @doc("Optional user id")
   userId?: string;
+
+  @doc("List of knowledge source to search.")
+  sources?: string[];
+
+  @doc("The top K number of knowledge items to retrieve")
+  top_k?: int32;
 }
 
 @doc("Response from knowledge retrieval.")

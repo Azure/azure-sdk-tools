@@ -36,10 +36,9 @@ Each run writes parquets to a fresh timestamped sub-prefix
 flipped — the bot keeps serving the previous snapshot until the new
 manifest is published, then hot-swaps it in on its next daily poll.
 
-> **Full build only.** GraphRAG's incremental `update` is intentionally
-> not wired up here: it is purely additive (new documents only — it does
-> not handle modified or deleted docs) and freezes existing community
-> structure, so a daily full rebuild keeps the graph globally consistent.
+> **Full rebuild each run.** Every scheduled run rebuilds the whole
+> graph from the current knowledge container, keeping entities and
+> communities globally consistent.
 
 ## Query modes (used by the bot at runtime)
 
@@ -128,7 +127,7 @@ tests/
 - **GraphRAG as single indexing engine**: GraphRAG handles entity extraction, embedding generation, and vector store writes natively via its `azure_ai_search` vector store backend.
 - **Blob-direct input**: GraphRAG reads markdown straight from the knowledge container via its native `azure_blob` input storage — no local download step.
 - **Immutable snapshots**: Each build lands in its own timestamped prefix; `latest.json` is flipped last so the bot never reads a half-built snapshot and old snapshots remain for rollback.
-- **Pull-based reload**: This pipeline only writes `latest.json`. The bot polls it on a daily schedule and hot-swaps the index when the `build_id` changes — there is no push-based reload call from this pipeline.
+- **Pull-based reload**: This pipeline only writes `latest.json`. The bot polls it on a daily schedule and hot-swaps the index when the `build_id` changes.
 - **Managed Identity auth**: Uses Azure Managed Identity for Azure OpenAI and AI Search.
 
 ## Pipelines

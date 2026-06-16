@@ -145,10 +145,9 @@ async def lifespan(application: FastAPI):
     warm_task = asyncio.create_task(_warm_graph())
 
     # Daily poll: check ``latest.json`` for a new GraphRAG snapshot and
-    # hot-swap it in when the build_id changes. Replaces the previous
-    # push-based reload (the sync pipeline POSTing /graph/admin/reload).
-    # Interval is configurable via GRAPH_RELOAD_POLL_SECONDS (default 24h);
-    # set to <= 0 to disable polling.
+    # hot-swap it in when the build_id changes. Interval is configurable
+    # via GRAPH_RELOAD_POLL_SECONDS (default 24h); set to <= 0 to disable
+    # polling.
     async def _poll_graph_manifest():
         try:
             interval = float(os.environ.get("GRAPH_RELOAD_POLL_SECONDS", "86400"))

@@ -1284,9 +1284,9 @@ def _strip_source_prefix(raw_title: str, source_folder: str) -> str:
 
     The sync project's ``SourceAwareMarkItDownFileReader`` stores the
     *full* ``#``-encoded input path as ``documents.title``
-    (``typespec_docs#sub#file.md``) so the title is globally unique for
-    GraphRAG's incremental delta. The KB-style link/display contract,
-    however, works on the **source-folder-relative** encoded path
+    (``typespec_docs#sub#file.md``) so the title is globally unique
+    across source folders. The KB-style link/display contract, however,
+    works on the **source-folder-relative** encoded path
     (``sub#file.md``) because each ``KnowledgeSource``'s ``base_url``
     already encodes the folder. We strip the known ``source_folder``
     prefix to bridge the two.

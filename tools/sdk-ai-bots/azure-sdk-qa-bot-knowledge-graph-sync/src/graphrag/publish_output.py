@@ -10,8 +10,7 @@ snapshots are never picked up.
 The bot picks up the new snapshot on its own: it polls ``latest.json``
 on a daily schedule and hot-swaps the index when the ``build_id``
 changes (see ``azure-sdk-qa-bot-agent`` server lifespan +
-``KnowledgeGraphService.reload_if_changed``). There is no push-based
-reload call from this pipeline.
+``KnowledgeGraphService.reload_if_changed``).
 
 Required env var:
 

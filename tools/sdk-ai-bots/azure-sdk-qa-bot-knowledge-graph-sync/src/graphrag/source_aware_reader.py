@@ -1,32 +1,20 @@
 """Source-aware MarkItDown input reader for GraphRAG.
 
-The default ``MarkItDownFileReader`` from ``graphrag_input`` writes
-``TextDocument.raw_data = None`` and stores only ``Path(path).name`` as
-the document title — both the parent folder and the full input path
-are dropped before the row hits ``documents.parquet``.
+A thin ``MarkItDownFileReader`` subclass that preserves source provenance
+when GraphRAG ingests markdown from the knowledge container:
 
-The knowledge-sync project uploads every markdown under
-``{source_folder}/{filename}`` where ``source_folder`` matches the
-``KnowledgeSource.name`` used by the bot's KB tool (e.g.
-``typespec_docs``, ``azure_sdk_for_python_docs``). Losing that prefix
-forces every downstream consumer (bot agent, debugging tooling) to
-re-derive the source folder by listing the original input container —
-which is both expensive at startup and **wrong** when multiple
-folders contain the same basename (``README.md`` appears under at
-least four SDK folders today).
+* Stores the originating ``source_folder`` (and full ``source_path``) in
+  ``TextDocument.raw_data``, which GraphRAG propagates into the
+  ``raw_data`` column of ``documents.parquet`` (see
+  ``graphrag.data_model.schemas.DOCUMENTS_FINAL_COLUMNS``). The bot reads
+  ``raw_data["source_folder"]`` to attribute each graph reference back to
+  its ``KnowledgeSource``.
+* Sets ``documents.title`` to the full ``#``-encoded input path so titles
+  are globally unique across source folders and round-trip back to the
+  document link.
 
-This module solves the problem at the source: a thin subclass of
-``MarkItDownFileReader`` parses the leading path segment and stores it
-in ``TextDocument.raw_data``, which GraphRAG's
-``load_input_documents`` workflow writes through as the ``raw_data``
-column of ``documents.parquet`` (see
-``graphrag.data_model.schemas.DOCUMENTS_FINAL_COLUMNS``). The bot
-agent then reads ``raw_data["source_folder"]`` directly per document
-— no blob listing, no basename collisions.
-
-Use :func:`register_source_aware_input_reader` to wire the override
-into GraphRAG's factory before calling ``build_index`` (see
-``run_indexing.py``).
+Register it with :func:`register_source_aware_input_reader` before
+calling ``build_index`` (see ``run_indexing.py``).
 """
 
 from __future__ import annotations
@@ -46,45 +34,33 @@ logger = logging.getLogger(__name__)
 
 
 class SourceAwareMarkItDownFileReader(MarkItDownFileReader):
-    """``MarkItDownFileReader`` variant that preserves the source folder.
+    """``MarkItDownFileReader`` variant that preserves source provenance.
 
-    Behaviour mirrors the upstream reader exactly except that
-    ``TextDocument.raw_data`` is populated with the parent path
-    segments parsed out of the input path. GraphRAG's input pipeline
-    propagates ``raw_data`` verbatim into ``documents.parquet``.
+    Populates ``TextDocument.raw_data`` and sets a path-based ``title``;
+    otherwise mirrors the upstream reader.
 
     Output ``raw_data`` schema:
 
     * ``source_folder`` — first path segment of the input file
       (``"typespec_docs"`` for ``typespec_docs/foo.md``). Empty string
-      when the input was uploaded at the container root with no folder.
+      for a container-root blob.
     * ``source_path`` — full input path as provided by graphrag's
       storage layer, kept for debuggability.
 
-    Document ``title`` is set to the **full input path encoded with**
-    ``#`` (``typespec_docs/sub#file.md`` → ``typespec_docs#sub#file.md``)
-    so that it is:
+    Document ``title`` is the full input path encoded with ``#``
+    (``typespec_docs/sub#file.md`` → ``typespec_docs#sub#file.md``) so it
+    is:
 
-    * **Globally unique & stable** across runs — GraphRAG's incremental
-      update keys its document delta on ``documents.title``
-      (``graphrag.index.update.incremental_index.get_delta_docs``), so a
-      title that is unique per source document (and identical for the
-      same document across runs) is required for correct add/delete
-      detection. The previous behaviour stored ``result.title`` (the
-      MarkItDown-extracted heading, ``None`` for plain markdown today) or
-      fell back to the bare ``posix_path.name`` — which collides across
-      source folders (every folder's ``README.md`` shares one title) and
-      would silently break delta detection.
-    * **Round-trippable to the original path** — the bot agent reverses
-      the ``#`` encoding (and strips the ``source_folder`` prefix it
-      reads from ``raw_data``) to resolve the document link, mirroring
-      the KB tool's ``title.replace("#", "/")`` contract.
+    * **Globally unique across source folders** — a bare basename
+      collides (every folder's ``README.md`` would share one title); the
+      folder prefix keeps each source document distinct.
+    * **Round-trippable to the original path** — the bot reverses the
+      ``#`` encoding (and strips the ``source_folder`` prefix from
+      ``raw_data``) to resolve the document link, matching the KB tool's
+      ``title.replace("#", "/")`` contract.
 
-    We deliberately ignore ``result.title``: the knowledge container only
-    holds ``.md`` (for which MarkItDown returns no title), and relying on
-    it is fragile — a MarkItDown upgrade that started extracting an H1
-    would replace the path key with arbitrary heading text and break both
-    delta detection and link resolution.
+    The title is the encoded path, not the document heading, so it stays
+    deterministic regardless of MarkItDown's title extraction.
     """
 
     async def read_file(self, path: str) -> list[TextDocument]:
@@ -104,9 +80,8 @@ class SourceAwareMarkItDownFileReader(MarkItDownFileReader):
 
         source_folder = posix_path.parts[0] if len(posix_path.parts) > 1 else ""
 
-        # Encode the full input path as the document title (globally
-        # unique, stable, round-trippable). See the class docstring for
-        # why we do not use ``result.title`` / the bare filename.
+        # Title is the full input path encoded with ``#`` — globally
+        # unique across source folders and round-trippable to the link.
         encoded_title = str(posix_path).replace("/", "#")
 
         document = TextDocument(

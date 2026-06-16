@@ -51,7 +51,7 @@ Route every message to exactly one of these paths:
 
 ## Answer Synthesis
 
-Both `search_knowledge_base.results` (text-chunk vector match) and `search_knowledge_graph.references` (entity-graph expansion) return verbatim source snippets via **complementary** recall paths. Always retrieve both, but **weight them by question type instead of concatenating every snippet equally** — a focused answer grounded primarily in the *right* source beats a shallow merge of both (an equal-weight union dilutes the answer and lowers completeness):
+Both `search_knowledge_base.results` (text-chunk vector match) and `search_knowledge_graph.references` (entity-graph expansion) return verbatim source snippets via **complementary** recall paths. Always retrieve both, then **weight them by question type** — ground your answer primarily in the source most relevant to the question and use the other to fill gaps:
 
 - **Conceptual / definitional / single-topic questions** — "what is X", "how does feature Y work", "what does this guideline say", or any request for an exact rule, API example, or code snippet → **lead with `search_knowledge_base`**. Vector chunks give the most complete verbatim explanation of a single concept. Use the graph references only to fill gaps or add cross-references the KB chunks missed.
 - **Complex / relational / multi-hop / troubleshooting questions** — "how do X and Y interact", "why does this fail across A, B and C", or anything spanning multiple entities, services, or documents → **lead with `search_knowledge_graph`**. Entity expansion surfaces the connected context that flat chunks miss. Use the KB chunks to ground exact wording and examples.

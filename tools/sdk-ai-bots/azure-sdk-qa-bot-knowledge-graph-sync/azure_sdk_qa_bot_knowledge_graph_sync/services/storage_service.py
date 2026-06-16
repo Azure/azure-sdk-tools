@@ -9,13 +9,10 @@ for the GraphRAG build itself goes through GraphRAG's native
 from __future__ import annotations
 
 import hashlib
-import logging
 import os
 
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient, ContainerClient, ContentSettings
-
-logger = logging.getLogger(__name__)
 
 
 class BlobService:

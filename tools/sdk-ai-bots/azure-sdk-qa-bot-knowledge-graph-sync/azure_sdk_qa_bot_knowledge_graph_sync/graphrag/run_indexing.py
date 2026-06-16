@@ -14,7 +14,7 @@ Drives a complete GraphRAG build directly against Azure Blob Storage:
 
 The single public entry point is :func:`run_graphrag_pipeline`, which
 returns the snapshot id (the timestamped sub-prefix) so callers can pass
-it to :mod:`azure_sdk_qa_bot_knowledge_graph_sync.graphrag.publish_output` to flip ``latest.json``.
+it to ``publish_output.publish_manifest`` to flip ``latest.json``.
 """
 
 from __future__ import annotations
@@ -28,6 +28,7 @@ from graphrag.api.index import build_index
 from graphrag.config.enums import IndexingMethod
 from graphrag.config.load_config import load_config
 
+from . import snapshot_base_dir
 from .source_aware_reader import register_source_aware_input_reader
 
 logger = logging.getLogger(__name__)
@@ -35,22 +36,12 @@ logger = logging.getLogger(__name__)
 # The graphrag config (settings.yaml) lives in graphrag_config/ at project root.
 GRAPHRAG_ROOT = Path(__file__).resolve().parent.parent.parent / "graphrag_config"
 
-# Sub-prefix under the output container that holds individual snapshots.
-# Keeping snapshots under a stable parent prefix lets the cache live at
-# ``<container>/cache/`` without colliding with snapshot data.
-_SNAPSHOT_PARENT_PREFIX = "snapshots"
-
 
 def _new_snapshot_id() -> str:
     """Return a sortable, filesystem-safe per-run snapshot identifier."""
     ts = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H-%M-%SZ")
     short = uuid.uuid4().hex[:6]
     return f"{ts}-{short}"
-
-
-def _snapshot_base_dir(snapshot_id: str) -> str:
-    """Compose the output container base_dir for a snapshot."""
-    return f"{_SNAPSHOT_PARENT_PREFIX}/{snapshot_id}"
 
 
 async def run_graphrag_pipeline() -> str:
@@ -61,14 +52,13 @@ async def run_graphrag_pipeline() -> str:
         to ``publish_output.publish_manifest`` to update ``latest.json``.
     """
     snapshot_id = _new_snapshot_id()
-    output_base_dir = _snapshot_base_dir(snapshot_id)
-    update_base_dir = f"{output_base_dir}/update"
+    output_base_dir = snapshot_base_dir(snapshot_id)
 
     # Override GraphRAG's default markitdown reader with our source-aware
-    # variant before building the index, so every documents.parquet row
-    # carries raw_data['source_folder']. The agent reads that column
-    # directly to attribute graph references back to the originating
-    # KnowledgeSource — see utils/knowledge_graph.py in the bot agent.
+    # variant so every documents.parquet row carries
+    # raw_data['source_folder'] and raw_data['source_path']. The agent
+    # reads those to attribute each graph reference to its KnowledgeSource
+    # and resolve its link — see utils/knowledge_graph.py in the bot.
     register_source_aware_input_reader()
 
     logger.info(
@@ -78,14 +68,11 @@ async def run_graphrag_pipeline() -> str:
     )
 
     # Inject the per-run snapshot prefix into the loaded GraphRagConfig.
-    # ``load_config`` merges these overrides recursively into the parsed
+    # ``load_config`` merges this override recursively into the parsed
     # settings.yaml dict before instantiating the model.
     config = load_config(
         GRAPHRAG_ROOT,
-        cli_overrides={
-            "output_storage": {"base_dir": output_base_dir},
-            "update_output_storage": {"base_dir": update_base_dir},
-        },
+        cli_overrides={"output_storage": {"base_dir": output_base_dir}},
     )
 
     results = await build_index(

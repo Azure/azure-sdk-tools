@@ -675,27 +675,26 @@ class KnowledgeGraphService:
             # because each KnowledgeSource's base_url already covers the
             # folder.
             rel_title = _source_path_to_rel_title(source_path, source_name)
-
-            display_title, fallback_link = _doc_title_to_display(rel_title)
+            # Pretty path (``/`` separators) for display and link fallback.
+            display_path = rel_title.replace("#", "/")
             # Prefer the KnowledgeSource's URL resolver so the link is
             # consistent with the KB tool's references — it knows about
             # per-source quirks (trim_format, suffix, custom link_fn).
-            # Fall back to the raw path when the source folder is
-            # registered but the KnowledgeSource lookup fails (e.g. a
-            # folder that was removed from tenant_config).
+            # Fall back to the plain path when the source folder is
+            # unregistered (e.g. removed from tenant_config).
             if knowledge_source is not None and rel_title:
                 link = knowledge_source.get_link(rel_title)
             else:
-                link = fallback_link
+                link = display_path
 
             # Title resolution mirrors the KB tool's _build_reference_title:
             # prefer a section-level ``h1 | h2 | h3`` path parsed from the
             # cited chunk so graph references read like the KB's
             # header-based titles instead of a bare file path. Fall back to
-            # the document path (display_title) when the chunk has no
-            # heading, then to a synthetic id as a last resort.
+            # the document path when the chunk has no heading, then to a
+            # synthetic id as a last resort.
             chunk_title = _extract_chunk_header_path(str(row.get("text") or ""))
-            ref_title = chunk_title or display_title or f"Document {doc_id[:12]}"
+            ref_title = chunk_title or display_path or f"Document {doc_id[:12]}"
 
             sources.append(
                 GraphSourceRef(
@@ -1248,20 +1247,6 @@ def _collect_text_unit_short_ids(context_records: Any) -> set[str]:
 
     visit(context_records)
     return found
-
-
-def _doc_title_to_display(raw_title: str) -> tuple[str, str]:
-    """Convert a stored ``documents.title`` into ``(display_title, link)``.
-
-    The sync project encodes original file paths by replacing ``/`` and
-    ``os.sep`` with ``#``. We reverse that here so titles look like
-    ordinary paths in the agent's reference list.
-    """
-    title = (raw_title or "").strip()
-    if not title:
-        return "", ""
-    pretty = title.replace("#", "/")
-    return pretty, pretty
 
 
 def _source_path_to_rel_title(source_path: str, source_folder: str) -> str:

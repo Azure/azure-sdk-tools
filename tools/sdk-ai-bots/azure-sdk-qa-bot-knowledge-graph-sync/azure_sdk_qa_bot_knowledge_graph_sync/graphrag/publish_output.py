@@ -27,6 +27,7 @@ import logging
 import os
 from typing import Any
 
+from azure_sdk_qa_bot_knowledge_graph_sync.graphrag import snapshot_base_dir
 from azure_sdk_qa_bot_knowledge_graph_sync.services.storage_service import BlobService
 
 logger = logging.getLogger(__name__)
@@ -68,9 +69,9 @@ async def publish_manifest(snapshot_id: str) -> dict[str, Any] | None:
         )
         return None
 
-    # ``prefix`` must match the per-run base_dir used by run_indexing's
-    # output_storage override; keep them in sync.
-    snapshot_prefix = f"snapshots/{snapshot_id}"
+    # Shared with run_indexing so the manifest prefix and the build's
+    # output prefix can never drift apart.
+    snapshot_prefix = snapshot_base_dir(snapshot_id)
     manifest: dict[str, Any] = {
         "prefix": snapshot_prefix,
         "built_at": _dt.datetime.now(_dt.timezone.utc).isoformat(),

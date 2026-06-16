@@ -129,7 +129,9 @@ stimuli:
       - type: prompt
         config:
           model: gpt-5.4
-          rubric: |
+          scoring: binary
+          threshold: 1.0
+          prompt: |
             Did the final assistant message clearly state BOTH of the
             following, consistent with the tools that were actually called?
 

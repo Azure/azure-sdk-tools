@@ -1,8 +1,9 @@
 """Critical-path tests for SourceAwareMarkItDownFileReader.
 
-The reader stores the full ``#``-encoded input path as ``documents.title``
-(globally unique across source folders) and the source folder in
-``raw_data``.
+The reader records the source folder and full input path in
+``raw_data`` (the bot resolves graph-reference links from these). The
+``title`` is left as the upstream reader produces it and is not consumed
+by the bot.
 """
 
 from __future__ import annotations
@@ -11,7 +12,9 @@ import datetime as _dt
 
 import pytest
 
-from azure_sdk_qa_bot_knowledge_graph_sync.graphrag.source_aware_reader import SourceAwareMarkItDownFileReader
+from azure_sdk_qa_bot_knowledge_graph_sync.graphrag.source_aware_reader import (
+    SourceAwareMarkItDownFileReader,
+)
 
 
 class _FakeStorage:
@@ -34,22 +37,11 @@ def _make_reader(content: bytes) -> SourceAwareMarkItDownFileReader:
 
 
 @pytest.mark.asyncio
-async def test_title_is_full_encoded_path_with_source_folder():
+async def test_raw_data_carries_source_folder_and_path():
     reader = _make_reader(b"# Some Heading\n\nbody text\n")
     docs = await reader.read_file("typespec_docs/sub#file.md")
     assert len(docs) == 1
-    doc = docs[0]
-    assert doc.title == "typespec_docs#sub#file.md"
-    assert doc.raw_data == {
+    assert docs[0].raw_data == {
         "source_folder": "typespec_docs",
         "source_path": "typespec_docs/sub#file.md",
     }
-
-
-@pytest.mark.asyncio
-async def test_cross_folder_same_relative_path_titles_are_distinct():
-    reader = _make_reader(b"# Readme\n")
-    a = (await reader.read_file("typespec_docs/README.md"))[0]
-    b = (await reader.read_file("python_docs/README.md"))[0]
-    assert a.title == "typespec_docs#README.md"
-    assert b.title == "python_docs#README.md"

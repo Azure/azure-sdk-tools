@@ -11,7 +11,7 @@ if _PROJECT_ROOT not in sys.path:
 
 from utils.knowledge_graph import (  # noqa: E402
     _extract_chunk_header_path,
-    _strip_source_prefix,
+    _source_path_to_rel_title,
 )
 
 
@@ -30,8 +30,8 @@ def test_nested_header_path():
     )
 
 
-def test_strip_source_prefix_removes_folder():
+def test_source_path_to_rel_title_strips_folder():
     assert (
-        _strip_source_prefix("typespec_docs#sub#file.md", "typespec_docs")
+        _source_path_to_rel_title("typespec_docs/sub#file.md", "typespec_docs")
         == "sub#file.md"
     )

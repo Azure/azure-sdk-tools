@@ -86,8 +86,8 @@ class GraphSourceRef:
         title:   Human-readable reference title. Prefers a section-level
                  ``h1 | h2 | h3`` heading path parsed from the cited chunk
                  (matching the KB tool's header-based titles); falls back
-                 to the document path (``/`` separators) when the chunk
-                 carries no heading.
+                 to the document path derived from ``raw_data.source_path``
+                 when the chunk carries no heading.
         link:    Best-effort link to the original document. Empty string
                  when no URL can be derived without tenant context.
         content: A representative excerpt of the source text used to
@@ -614,9 +614,10 @@ class KnowledgeGraphService:
         # ``raw_data`` is the column GraphRAG persists from
         # ``TextDocument.raw_data``. The sync project's
         # ``SourceAwareMarkItDownFileReader`` writes
-        # ``{"source_folder": "<kb-folder>"}`` into every row so the
-        # bot can attribute each graph reference to a concrete
-        # KnowledgeSource. Fallback paths are intentionally omitted —
+        # ``{"source_folder": "<kb-folder>", "source_path": "<full-path>"}``
+        # into every row so the bot can attribute each graph reference to
+        # a concrete KnowledgeSource and resolve its link — independent of
+        # ``documents.title``. Fallback paths are intentionally omitted —
         # a snapshot without ``raw_data`` is treated as incompatible
         # rather than silently regressing to lossy basename matching.
         if "raw_data" not in doc_index.columns:
@@ -642,21 +643,21 @@ class KnowledgeGraphService:
                 continue
             seen_docs.add(doc_id)
 
-            raw_title = ""
             source_name = ""
+            source_path = ""
             if doc_id in doc_index.index:
                 doc_row = doc_index.loc[doc_id]
                 # ``.loc`` returns a DataFrame for duplicate ids; dedup
                 # above guards against that but be defensive.
                 if getattr(doc_row, "ndim", 1) > 1:
                     doc_row = doc_row.iloc[0]
-                raw_title = str(doc_row.get("title") or "")
                 rd = doc_row.get("raw_data")
                 # Parquet round-trips dict-valued cells as plain dicts;
                 # tolerate the (unexpected) None case for individual
                 # rows by recording them under the generic source name.
                 if isinstance(rd, dict):
                     source_name = str(rd.get("source_folder") or "")
+                    source_path = str(rd.get("source_path") or "")
 
             if not source_name:
                 unattributed += 1
@@ -665,22 +666,23 @@ class KnowledgeGraphService:
             else:
                 knowledge_source = get_knowledge_source(source_name)
 
-            # The document title is the full ``#``-encoded input path
-            # (``typespec_docs#sub#file.md``). The KB-style link/display
-            # contract expects a *source-folder-relative* encoded path
-            # (``sub#file.md``) — the per-source ``base_url`` already
-            # covers the folder — so strip the ``{source_folder}#`` prefix
-            # we know from ``raw_data``. No-op for root-level blobs and for
-            # unattributed rows (source_name == "graphrag").
-            rel_title = _strip_source_prefix(raw_title, source_name)
+            # Derive the source-folder-relative, ``#``-encoded path
+            # straight from ``raw_data.source_path`` (the full input path
+            # the sync reader stored), independent of ``documents.title``.
+            # e.g. ``typespec_docs/sub#file.md`` with source_folder
+            # ``typespec_docs`` -> ``sub#file.md``. The KB-style
+            # ``get_link`` contract works on this relative encoded path
+            # because each KnowledgeSource's base_url already covers the
+            # folder.
+            rel_title = _source_path_to_rel_title(source_path, source_name)
 
             display_title, fallback_link = _doc_title_to_display(rel_title)
             # Prefer the KnowledgeSource's URL resolver so the link is
             # consistent with the KB tool's references — it knows about
             # per-source quirks (trim_format, suffix, custom link_fn).
-            # Fall back to the raw path when the title's source folder
-            # is registered but the KnowledgeSource lookup fails (e.g.
-            # a folder that was removed from tenant_config).
+            # Fall back to the raw path when the source folder is
+            # registered but the KnowledgeSource lookup fails (e.g. a
+            # folder that was removed from tenant_config).
             if knowledge_source is not None and rel_title:
                 link = knowledge_source.get_link(rel_title)
             else:
@@ -1262,28 +1264,29 @@ def _doc_title_to_display(raw_title: str) -> tuple[str, str]:
     return pretty, pretty
 
 
-def _strip_source_prefix(raw_title: str, source_folder: str) -> str:
-    """Drop the leading ``{source_folder}#`` segment from a doc title.
+def _source_path_to_rel_title(source_path: str, source_folder: str) -> str:
+    """Return the source-folder-relative, ``#``-encoded document path.
 
-    The sync project's ``SourceAwareMarkItDownFileReader`` stores the
-    *full* ``#``-encoded input path as ``documents.title``
-    (``typespec_docs#sub#file.md``) so the title is globally unique
-    across source folders. The KB-style link/display contract, however,
-    works on the **source-folder-relative** encoded path
-    (``sub#file.md``) because each ``KnowledgeSource``'s ``base_url``
-    already encodes the folder. We strip the known ``source_folder``
-    prefix to bridge the two.
+    The sync reader stores ``raw_data.source_path`` as the full input
+    path (``typespec_docs/sub#file.md``). The KB-style link/display
+    contract works on the folder-relative encoded path (``sub#file.md``)
+    because each ``KnowledgeSource``'s ``base_url`` already covers the
+    folder, so we drop the leading ``{source_folder}/`` segment. Any
+    remaining path separators are ``#``-encoded to match the KB tool's
+    ``title.replace("#", "/")`` link contract.
 
-    No-op when ``source_folder`` is empty (root-level blob), when it is
-    the synthetic ``"graphrag"`` fallback used for unattributed rows, or
-    when the title does not actually start with that prefix.
+    Returns an empty string when ``source_path`` is missing (the caller
+    then has no link to resolve). The synthetic ``"graphrag"`` fallback
+    source name is never a real prefix, so it is left untouched.
     """
-    if not source_folder or not raw_title:
-        return raw_title
-    prefix = f"{source_folder}#"
-    if raw_title.startswith(prefix):
-        return raw_title[len(prefix):]
-    return raw_title
+    path = (source_path or "").strip()
+    if not path:
+        return ""
+    if source_folder and source_folder != "graphrag":
+        prefix = f"{source_folder}/"
+        if path.startswith(prefix):
+            path = path[len(prefix):]
+    return path.replace("/", "#")
 
 
 # Matches an ATX markdown header line (``#`` .. ``######`` followed by a

@@ -36,31 +36,23 @@ logger = logging.getLogger(__name__)
 class SourceAwareMarkItDownFileReader(MarkItDownFileReader):
     """``MarkItDownFileReader`` variant that preserves source provenance.
 
-    Populates ``TextDocument.raw_data`` and sets a path-based ``title``;
-    otherwise mirrors the upstream reader.
+    Populates ``TextDocument.raw_data`` with the source folder and full
+    input path; otherwise mirrors the upstream reader (including its
+    title behaviour).
 
     Output ``raw_data`` schema:
 
     * ``source_folder`` — first path segment of the input file
       (``"typespec_docs"`` for ``typespec_docs/foo.md``). Empty string
       for a container-root blob.
-    * ``source_path`` — full input path as provided by graphrag's
-      storage layer, kept for debuggability.
+    * ``source_path`` — full input path (``typespec_docs/sub#file.md``).
+      The bot resolves each graph reference's link directly from this
+      (drop the ``source_folder`` prefix, ``#``-encode the rest) so link
+      resolution does not depend on ``documents.title``.
 
-    Document ``title`` is the full input path encoded with ``#``
-    (``typespec_docs/sub#file.md`` → ``typespec_docs#sub#file.md``) so it
-    is:
-
-    * **Globally unique across source folders** — a bare basename
-      collides (every folder's ``README.md`` would share one title); the
-      folder prefix keeps each source document distinct.
-    * **Round-trippable to the original path** — the bot reverses the
-      ``#`` encoding (and strips the ``source_folder`` prefix from
-      ``raw_data``) to resolve the document link, matching the KB tool's
-      ``title.replace("#", "/")`` contract.
-
-    The title is the encoded path, not the document heading, so it stays
-    deterministic regardless of MarkItDown's title extraction.
+    ``documents.title`` is left as the upstream reader produces it
+    (MarkItDown-extracted heading, falling back to the basename); it is
+    not consumed by the bot.
     """
 
     async def read_file(self, path: str) -> list[TextDocument]:
@@ -80,13 +72,9 @@ class SourceAwareMarkItDownFileReader(MarkItDownFileReader):
 
         source_folder = posix_path.parts[0] if len(posix_path.parts) > 1 else ""
 
-        # Title is the full input path encoded with ``#`` — globally
-        # unique across source folders and round-trippable to the link.
-        encoded_title = str(posix_path).replace("/", "#")
-
         document = TextDocument(
             id=gen_sha512_hash({"text": text}, ["text"]),
-            title=encoded_title,
+            title=result.title if result.title else str(posix_path.name),
             text=text,
             creation_date=await self._storage.get_creation_date(path),
             raw_data={

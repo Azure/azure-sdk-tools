@@ -1594,6 +1594,185 @@ public class CustomizedCodeUpdateToolAutoTests
     }
 
     // ========================================================================
+    // EditScope.All (default: both spec inputs and custom code in scope)
+    // ========================================================================
+
+    [Test]
+    public async Task AllScope_MixedSpecAndCode_AppliesSpec_AndPatchesCode()
+    {
+        // Explicit EditScope.All: both axes are in scope. A mixed feedback set (one TSP_APPLICABLE +
+        // one CODE_CUSTOMIZATION) must apply the spec-input customization AND patch the custom code,
+        // and surface neither out-of-scope list.
+        var buildCalls = 0;
+        var svc = new ConfigurableLanguageService(
+            buildFunc: () =>
+            {
+                buildCalls++;
+                return buildCalls <= 1
+                    ? (false, "error: cannot find symbol foo", null)
+                    : (true, null, null);
+            },
+            hasCustomizations: true,
+            patchesFunc: () => [new AppliedPatch("Customization.java", "Fixed reference", 1)],
+            language: SdkLanguage.Java);
+
+        var (tool, mocks) = CreateTool(
+            languageService: svc,
+            configureClassifier: c =>
+                c.Setup(x => x.ClassifyItemsAsync(
+                        It.IsAny<List<FeedbackItem>>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<int?>(),
+                        It.IsAny<CancellationToken>()))
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _) =>
+                        {
+                            if (items.Count == 0)
+                            {
+                                var specItem = new FeedbackItem { Text = "Rename client (spec change)" };
+                                var codeItem = new FeedbackItem { Text = "Fix customization reference" };
+                                items.Add(specItem);
+                                items.Add(codeItem);
+                                return Task.FromResult(new FeedbackClassificationResponse
+                                {
+                                    Classifications =
+                                    [
+                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        {
+                                            ItemId = specItem.Id, Classification = "TSP_APPLICABLE",
+                                            Reason = "Needs spec edit", Text = "Rename client (spec change)"
+                                        },
+                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        {
+                                            ItemId = codeItem.Id, Classification = "CODE_CUSTOMIZATION",
+                                            Reason = "Fix in customization file", Text = "Fix customization reference"
+                                        }
+                                    ]
+                                });
+                            }
+                            return Task.FromResult(new FeedbackClassificationResponse { Classifications = [] });
+                        }));
+
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            tspProjectPath: tspDir,
+            customizationRequest: "mixed feedback",
+            editScope: EditScope.All,
+            ct: CancellationToken.None);
+
+        // Both axes applied: spec via the TypeSpec customization service, code via patches.
+        Assert.That(result.AppliedPatches, Is.Not.Null.And.Count.EqualTo(1));
+        Assert.That(result.SpecChangeRequired, Is.Null, "All scope edits spec inputs, so nothing is out of scope.");
+        Assert.That(result.CustomCodeChangeRequired, Is.Null, "All scope patches custom code, so nothing is out of scope.");
+
+        mocks.TypeSpecCustomization.Verify(t => t.ApplyCustomizationAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string?>(),
+            It.IsAny<int>(),
+            It.IsAny<CancellationToken>()), Times.AtLeastOnce,
+            "All scope must apply TypeSpec (spec-input) customizations for TSP_APPLICABLE items.");
+    }
+
+    // ========================================================================
+    // EditScope.SpecInputs (spec-inputs-only; never patches custom code)
+    // ========================================================================
+
+    [Test]
+    public async Task SpecInputsScope_MixedSpecAndCode_AppliesSpec_DoesNotPatchCode()
+    {
+        // EditScope.SpecInputs: spec inputs are in scope but custom code is NOT. A mixed feedback set must
+        // apply the spec-input customization, report the CODE_CUSTOMIZATION item as out of scope, and never
+        // invoke custom-code patching.
+        var patchCalls = 0;
+        var svc = new ConfigurableLanguageService(
+            buildFunc: () => (false, "error: cannot find symbol foo", null),
+            hasCustomizations: true,
+            patchesFunc: () =>
+            {
+                patchCalls++;
+                return [new AppliedPatch("Customization.java", "Fixed reference", 1)];
+            },
+            language: SdkLanguage.Java);
+
+        var (tool, mocks) = CreateTool(
+            languageService: svc,
+            configureClassifier: c =>
+                c.Setup(x => x.ClassifyItemsAsync(
+                        It.IsAny<List<FeedbackItem>>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<int?>(),
+                        It.IsAny<CancellationToken>()))
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _) =>
+                        {
+                            if (items.Count == 0)
+                            {
+                                var specItem = new FeedbackItem { Text = "Rename client (spec change)" };
+                                var codeItem = new FeedbackItem { Text = "Fix customization reference" };
+                                items.Add(specItem);
+                                items.Add(codeItem);
+                                return Task.FromResult(new FeedbackClassificationResponse
+                                {
+                                    Classifications =
+                                    [
+                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        {
+                                            ItemId = specItem.Id, Classification = "TSP_APPLICABLE",
+                                            Reason = "Needs spec edit", Text = "Rename client (spec change)"
+                                        },
+                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        {
+                                            ItemId = codeItem.Id, Classification = "CODE_CUSTOMIZATION",
+                                            Reason = "Fix in customization file", Text = "Fix customization reference"
+                                        }
+                                    ]
+                                });
+                            }
+                            return Task.FromResult(new FeedbackClassificationResponse { Classifications = [] });
+                        }));
+
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            tspProjectPath: tspDir,
+            customizationRequest: "mixed feedback",
+            editScope: EditScope.SpecInputs,
+            ct: CancellationToken.None);
+
+        // Spec was applied; the code item is reported as out of scope and never patched.
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.CustomCodeChangeRequired));
+        Assert.That(result.CustomCodeChangeRequired, Is.Not.Null.And.Count.EqualTo(1));
+        Assert.That(result.SpecChangeRequired, Is.Null, "SpecInputs scope edits spec inputs, so spec items are not out of scope.");
+        Assert.That(result.AppliedPatches, Is.Null.Or.Empty, "SpecInputs scope must not patch custom code.");
+        Assert.That(patchCalls, Is.EqualTo(0), "SpecInputs scope must never invoke ApplyPatchesAsync.");
+
+        mocks.TypeSpecCustomization.Verify(t => t.ApplyCustomizationAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string?>(),
+            It.IsAny<int>(),
+            It.IsAny<CancellationToken>()), Times.AtLeastOnce,
+            "SpecInputs scope must apply TypeSpec (spec-input) customizations for TSP_APPLICABLE items.");
+    }
+
+    // ========================================================================
     // Mock helpers
     // ========================================================================
 

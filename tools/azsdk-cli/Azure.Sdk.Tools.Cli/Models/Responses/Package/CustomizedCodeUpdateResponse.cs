@@ -59,6 +59,13 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
         /// the pinned spec commit, which belongs in a separate spec-repo PR.
         /// </summary>
         public const string SpecChangeRequired = "SpecChangeRequired";
+
+        /// <summary>
+        /// Returned when custom code is out of scope (<see cref="Models.EditScope.CustomCode"/> not set):
+        /// the remaining failures can only be fixed by editing customization code, but the current edit
+        /// scope only permits spec-input changes.
+        /// </summary>
+        public const string CustomCodeChangeRequired = "CustomCodeChangeRequired";
     }
 
     /// <summary>
@@ -69,6 +76,15 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
     [JsonPropertyName("specChangeRequired")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<string>? SpecChangeRequired { get; set; }
+
+    /// <summary>
+    /// Populated when custom code is out of scope: items that can only be fixed by editing customization
+    /// code, but the current edit scope (<see cref="Models.EditScope.SpecInputs"/> only) does not permit
+    /// custom-code changes. These are reported, not applied — custom code is never edited in this scope.
+    /// </summary>
+    [JsonPropertyName("customCodeChangeRequired")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<string>? CustomCodeChangeRequired { get; set; }
 
     [JsonPropertyName("message")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -118,6 +134,14 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
         {
             sb.AppendLine("Requires a separate spec-repo PR (out of scope for custom-code repair):");
             foreach (var item in SpecChangeRequired)
+            {
+                sb.AppendLine($"  - {item}");
+            }
+        }
+        if (CustomCodeChangeRequired is { Count: > 0 })
+        {
+            sb.AppendLine("Requires custom-code changes (out of scope for the current edit scope):");
+            foreach (var item in CustomCodeChangeRequired)
             {
                 sb.AppendLine($"  - {item}");
             }

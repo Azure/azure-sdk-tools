@@ -173,6 +173,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     private async Task<CustomizedCodeUpdateResponse> RunUpdateAsync(string packagePath, string tspProjectPath, string customizationRequest, EditScope editScope, CancellationToken ct)
     {
         var specInputsInScope = editScope.HasFlag(EditScope.SpecInputs);
+        var customCodeInScope = editScope.HasFlag(EditScope.CustomCode);
         // Validate input
         if (!Directory.Exists(packagePath))
         {
@@ -233,6 +234,10 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         // (client.tsp/tspconfig.yaml). Declared before CreateResponse so every response can surface them.
         List<string> specChangeRequired = new();
 
+        // When custom code is out of scope: items that can only be fixed by editing customization code.
+        // Reported, not applied, when EditScope.CustomCode is not set.
+        List<string> customCodeChangeRequired = new();
+
         CustomizedCodeUpdateResponse CreateResponse(CustomizedCodeUpdateResponse response)
         {
             response.PackageName ??= packageInfo?.PackageName;
@@ -242,6 +247,10 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             if (specChangeRequired.Count > 0)
             {
                 response.SpecChangeRequired ??= specChangeRequired;
+            }
+            if (customCodeChangeRequired.Count > 0)
+            {
+                response.CustomCodeChangeRequired ??= customCodeChangeRequired;
             }
             return response;
         }
@@ -373,6 +382,16 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             }
             else if (itemDetails.Classification == ClassificationCodeCustomization)
             {
+                // When custom code is out of scope: a CODE_CUSTOMIZATION item can only be fixed by editing
+                // customization code, which the current edit scope does not permit. Record and skip patching.
+                if (!customCodeInScope)
+                {
+                    logger.LogInformation("Custom code out of scope: item '{ItemId}' requires a custom-code change; reporting instead of patching.", itemDetails.ItemId);
+                    customCodeChangeRequired.Add($"'{itemDetails.Text}' (Reason: {itemDetails.Reason})");
+                    feedbackDictionary.Remove(itemDetails.ItemId);
+                    continue;
+                }
+
                 codeCustomizations++;
                 logger.LogInformation("Item '{ItemId}' classified as CODE_CUSTOMIZATION — will be handled via code patching.", itemDetails.ItemId);
                 codeCustomizationLog.AppendLine($"[{itemDetails.ItemId}] Classification: {itemDetails.Classification}, Reason: {itemDetails.Reason}");
@@ -504,6 +523,14 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 {
                     if (itemDetails.Classification == ClassificationCodeCustomization)
                     {
+                        if (!customCodeInScope)
+                        {
+                            logger.LogInformation("Custom code out of scope: item '{ItemId}' reclassified as CODE_CUSTOMIZATION on second pass; reporting instead of patching.", itemDetails.ItemId);
+                            customCodeChangeRequired.Add($"'{itemDetails.Text}' (Reason: {itemDetails.Reason})");
+                            feedbackDictionary.Remove(itemDetails.ItemId);
+                            continue;
+                        }
+
                         codeCustomizations++;
                         logger.LogInformation("Item '{ItemId}' reclassified as CODE_CUSTOMIZATION on second pass.", itemDetails.ItemId);
                         codeCustomizationLog.AppendLine($"[{itemDetails.ItemId}] Classification: {itemDetails.Classification}, Reason: {itemDetails.Reason}");
@@ -554,6 +581,24 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         }
 
         // Step 2: If the build failed or CODE_CUSTOMIZATION items still need patching, start customized code update process
+
+        // Custom code out of scope: never patch custom code in this edit scope. The build still failed
+        // (or items remain), but those can only be fixed by editing customization code, which the current
+        // scope does not permit. Stop and report so a human can address the custom-code changes separately.
+        if (!customCodeInScope)
+        {
+            logger.LogInformation("Custom code out of scope: skipping customized code patching.");
+            return CreateResponse(new CustomizedCodeUpdateResponse
+            {
+                Success = false,
+                Message = "Out of scope: remaining build failures require custom-code changes, which are not permitted by the current edit scope.",
+                TypeSpecChangesSummary = changesMade.Count > 0 ? changesMade : null,
+                CustomCodeChangeRequired = customCodeChangeRequired.Count > 0 ? customCodeChangeRequired : null,
+                NextSteps = manualInterventions.Count > 0 ? manualInterventions : null,
+                BuildResult = buildError,
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.CustomCodeChangeRequired
+            });
+        }
 
         if (!languageService.IsCustomizedCodeUpdateSupported)
         {

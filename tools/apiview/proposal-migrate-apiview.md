@@ -88,6 +88,7 @@ Key advantages:
   - Copilot and automation should treat comments on the review PR as instructions to update the working PR branch, not the review branch.
   - The end-user flow remains PR-centric: a user can open the review PR and ask "address these comments"; tooling resolves the linked working PR and applies code changes there, then sync automation regenerates and updates `API.md` on the review branch.
   - If a working PR has multiple review PRs (for example GA baseline and beta baseline), each review PR must identify both the working PR and its baseline intent so automation can route and report updates deterministically.
+  - The script that creates the review PR assigns architects as reviewers based on an `ARCHITECTS` file located in the language repo's `.github` folder alongside `CODEOWNERS`. The `ARCHITECTS` file follows the same path-pattern parsing conventions as `CODEOWNERS`, enabling per-service architect assignments and ensuring architects are only tagged on review PRs, not on routine working PRs.
 - The creation process will likely be initiated by a pipeline where you specify your working branch and baseline release tag, then open a specially tagged PR between the synthetic review and base branches. A second pipeline would likely be needed to sync changes from the working branch to the review branch and regenerate `API.md` with the same parser/toolchain version used for the base branch.
 
 **Outcome:** PR becomes the canonical API review artifact.
@@ -146,7 +147,7 @@ Key advantages:
 ---
 
 ### 5. Architect Review Model
-- Architects are assigned as reviewers on API review PRs by the script that creates the PR.
+- Architects are assigned as reviewers on API review PRs by the script that creates the PR, using the `ARCHITECTS` file in the language repo's `.github` folder (alongside `CODEOWNERS`). This file follows the same path-pattern parsing conventions as `CODEOWNERS`, allowing different architects to be assigned to different services and making it easy to answer "who is the architect for language X".
 - Routine working PRs that update `API.md` to satisfy consistency checks should not automatically request architect review.
 - Architect feedback is expressed via:
   - Comments
@@ -178,7 +179,7 @@ Approval shifts from APIView to GitHub but CI enforcement remains largely the sa
 - It would be incredibly slow and inefficient for release pipelines to search review PRs for a matching API hash and approval. This would also likely run into GitHub query quota limits.
 - Instead of introducing a new external Azure resource, approval state will be persisted on the existing ADO Package Work Item used by SDK pipelines.
 - This aligns with current engineering-system ownership: the schema is flexible, already managed by existing pipelines, and operationally maintained today.
-- A GitHub trigger will update the Package Work Item when PR approvals are granted, revoked, or become stale.
+- A GitHub trigger will update the Package Work Item when PR approvals are granted, revoked, or become stale. Before recording an approval, the trigger must verify that the approving user is listed as an architect for the relevant service path in the `ARCHITECTS` file. Approvals from non-architects are ignored for the purposes of updating the Package Work Item.
 - There is a potential problem here. If you open two reviews, one comparing your change to the last GA and one comparing your change to the last beta, an approval on either could approve the API hash for both. This can be mitigated by marking the beta-baseline PR as Draft and ensuring Draft approvals do not update the Package Work Item approval fields.
 
 **CI Enforcement:**

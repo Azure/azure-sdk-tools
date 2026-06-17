@@ -44,14 +44,6 @@ logger = logging.getLogger(__name__)
 
 _DEFAULT_COMMUNITY_LEVEL = 2
 
-# Max number of community-report summaries surfaced as references per
-# query. Community reports are GraphRAG's LLM-synthesized summaries of a
-# cluster of related entities — they give the agent holistic, cross-
-# document context that flat text-unit chunks miss (graph's strength on
-# complex/relational questions). Capped so they supplement, not flood,
-# the verbatim text-unit references.
-_GRAPH_MAX_COMMUNITY_REPORTS = 3
-
 # Oversample factor applied when a tenant filter is active: we ask the
 # entity vectorstore for ``k * factor`` ANN hits and keep the first ``k``
 # that belong to the allowed source folders. 8x comfortably covers
@@ -107,8 +99,7 @@ class GraphSourceRef:
                  sync project's ``SourceAwareMarkItDownFileReader``
                  writes into ``documents.parquet`` per row. Falls back
                  to ``"graphrag"`` only when a snapshot row is missing
-                 that attribution. Community-report summaries use the
-                 literal ``"community"``.
+                 that attribution.
     """
 
     title: str
@@ -221,17 +212,6 @@ class KnowledgeGraphService:
     def __init__(self) -> None:
         self._community_level = int(
             cfg("GRAPH_COMMUNITY_LEVEL", str(_DEFAULT_COMMUNITY_LEVEL))
-        )
-        # Whether to surface community-report summaries as references
-        # alongside the verbatim text-unit snippets. Toggleable so the
-        # behaviour can be A/B-evaluated; defaults on.
-        self._include_community_reports = (
-            cfg("GRAPH_INCLUDE_COMMUNITY_REPORTS", "true").strip().lower()
-            not in ("false", "0", "no", "off")
-        )
-        # Tenant-filter ANN oversample factor (config-tunable for A/B).
-        self._filter_oversample = int(
-            cfg("GRAPH_FILTER_OVERSAMPLE", str(_FILTER_OVERSAMPLE))
         )
         # Blob container holding the parquet outputs. The sync project
         # writes versioned snapshots at
@@ -588,37 +568,6 @@ class KnowledgeGraphService:
     # ------------------------------------------------------------------ #
 
     def _extract_sources_from_context(
-        self, context_records: Any
-    ) -> list[GraphSourceRef]:
-        """Resolve a ``context_records`` payload into graph references.
-
-        Combines two kinds of evidence the LocalSearch context builder
-        surfaces: verbatim **text-unit** snippets (resolved back to their
-        source documents) and, when enabled, GraphRAG's **community-report
-        summaries** — the LLM-synthesized holistic context that flat
-        chunks miss. Text-unit (citable) references come first; community
-        summaries supplement them.
-        """
-        sources = self._extract_text_unit_sources(context_records)
-
-        if self._include_community_reports:
-            for title, content in _collect_community_reports(
-                context_records, _GRAPH_MAX_COMMUNITY_REPORTS
-            ):
-                sources.append(
-                    GraphSourceRef(
-                        title=title,
-                        # Community reports are synthesized summaries
-                        # spanning many entities — no single source URL.
-                        link="",
-                        content=content,
-                        source="community",
-                    )
-                )
-
-        return sources
-
-    def _extract_text_unit_sources(
         self, context_records: Any
     ) -> list[GraphSourceRef]:
         """Walk a ``context_records`` payload and resolve cited
@@ -1157,7 +1106,7 @@ class KnowledgeGraphService:
             inner_store, _SourceFilteredVectorStore
         ):
             self._context_builder.entity_text_embeddings = (
-                _SourceFilteredVectorStore(inner_store, self._filter_oversample)
+                _SourceFilteredVectorStore(inner_store)
             )
 
         elapsed = time.monotonic() - start
@@ -1298,54 +1247,6 @@ def _collect_text_unit_short_ids(context_records: Any) -> set[str]:
 
     visit(context_records)
     return found
-
-
-def _collect_community_reports(
-    context_records: Any, limit: int
-) -> list[tuple[str, str]]:
-    """Collect ``(title, content)`` for community-report summaries.
-
-    The LocalSearch mixed context builder ranks community reports against
-    the query and includes the top ones in ``context_records`` as a
-    DataFrame with ``id`` + ``content`` + ``title`` columns (and, unlike
-    the text-unit "sources" table, **no** ``text`` column). We surface
-    those summaries as references so the agent gets graph-level holistic
-    context, not just verbatim chunks.
-
-    Returns at most ``limit`` unique reports, preserving the context
-    builder's rank order.
-    """
-    import pandas as pd
-
-    out: list[tuple[str, str]] = []
-    seen: set[str] = set()
-
-    def visit(node: Any) -> None:
-        if len(out) >= limit:
-            return
-        if isinstance(node, pd.DataFrame):
-            cols = set(node.columns)
-            if {"id", "content", "title"}.issubset(cols) and "text" not in cols:
-                for _, row in node.iterrows():
-                    if len(out) >= limit:
-                        return
-                    title = str(row.get("title") or "").strip()
-                    content = str(row.get("content") or "").strip()
-                    if title and content and title not in seen:
-                        seen.add(title)
-                        out.append((title, content))
-            return
-        if isinstance(node, dict):
-            for v in node.values():
-                visit(v)
-            return
-        if isinstance(node, (list, tuple, set)):
-            for v in node:
-                visit(v)
-            return
-
-    visit(context_records)
-    return out
 
 
 def _source_path_to_rel_title(source_path: str, source_folder: str) -> str:

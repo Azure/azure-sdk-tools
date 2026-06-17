@@ -74,15 +74,23 @@ public class PackageWorkItemTool(
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
-        var packageName = parseResult.GetValue(packageNameOpt);
-        var packageVersionMajorMinor = parseResult.GetValue(packageVersionMajorMinorOpt);
-        var language = parseResult.GetValue(languageOpt);
-        return parseResult.CommandResult.Command.Name switch
+        try
         {
-            GetWorkItemCommandName => await GetPackageWorkItem(packageName, packageVersionMajorMinor, language, ct),
-            UpdateWorkItemCommandName => await UpdatePackageWorkItem(packageName, packageVersionMajorMinor, language, ParseFields(parseResult.GetValue(fieldsOpt)), ct),
-            _ => new DefaultCommandResponse { ResponseError = $"Unsupported package work item command '{parseResult.CommandResult.Command.Name}'." },
-        };
+            var packageName = parseResult.GetValue(packageNameOpt);
+            var packageVersionMajorMinor = parseResult.GetValue(packageVersionMajorMinorOpt);
+            var language = parseResult.GetValue(languageOpt);
+            return parseResult.CommandResult.Command.Name switch
+            {
+                GetWorkItemCommandName => await GetPackageWorkItem(packageName, packageVersionMajorMinor, language, ct),
+                UpdateWorkItemCommandName => await UpdatePackageWorkItem(packageName, packageVersionMajorMinor, language, ParseFields(parseResult.GetValue(fieldsOpt)), ct),
+                _ => new DefaultCommandResponse { ResponseError = $"Unsupported package work item command '{parseResult.CommandResult.Command.Name}'." },
+            };
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to handle package work item command '{CommandName}'.", parseResult.CommandResult.Command.Name);
+            return new DefaultCommandResponse { ResponseError = $"Failed to handle package work item command: {ex.Message}" };
+        }
     }
 
     public async Task<PackageWorkitemResponse> GetPackageWorkItem(string packageName, string packageVersionMajorMinor, string language, CancellationToken ct = default)
@@ -162,15 +170,15 @@ public class PackageWorkItemTool(
             return response;
         }
 
-        var workItemIds = await FindPackageWorkItemIds(packageName, packageVersionMajorMinor, language, ct);
-        if (workItemIds.ResponseError != null)
-        {
-            response.ResponseError = workItemIds.ResponseError;
-            return response;
-        }
-
         try
         {
+            var workItemIds = await FindPackageWorkItemIds(packageName, packageVersionMajorMinor, language, ct);
+            if (workItemIds.ResponseError != null)
+            {
+                response.ResponseError = workItemIds.ResponseError;
+                return response;
+            }
+
             var updatedWorkItem = await devOpsService.UpdateWorkItemAsync(workItemIds.WorkItemId, fields, ct);
             return DevOpsService.MapPackageWorkItemToModel(updatedWorkItem);
         }
@@ -209,7 +217,16 @@ public class PackageWorkItemTool(
             return response;
         }
 
-        packageVersionMajorMinor = NormalizePackageVersion(packageVersionMajorMinor);
+        try
+        {
+            packageVersionMajorMinor = NormalizePackageVersion(packageVersionMajorMinor);
+        }
+        catch (ArgumentException ex)
+        {
+            response.ResponseError = ex.Message;
+            return response;
+        }
+
         response.PackageVersionMajorMinor = packageVersionMajorMinor;
 
         logger.LogDebug("Finding package work item for package {packageName}, package version major/minor {packageVersionMajorMinor}, language {language}.", packageName, packageVersionMajorMinor, language);

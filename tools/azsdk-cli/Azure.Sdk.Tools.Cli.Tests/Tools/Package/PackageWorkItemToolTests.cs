@@ -129,6 +129,21 @@ public class PackageWorkItemToolTests
     }
 
     [Test]
+    public async Task UpdatePackageWorkItemReturnsErrorForInvalidPackageVersion()
+    {
+        var result = await tool.UpdatePackageWorkItem("azure-storage-blob", "12.x", "Python", new Dictionary<string, string>
+        {
+            ["System.State"] = "Resolved"
+        }, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(1));
+            Assert.That(result.ResponseError, Does.Contain("Package version must be a major version"));
+        });
+    }
+
+    [Test]
     public void CommandParsesPackageWorkItemLookupOptions()
     {
         var commands = tool.GetCommandInstances();
@@ -151,6 +166,27 @@ public class PackageWorkItemToolTests
         };
         parseResult = updateCommand.Parse("--package-name azure-storage-blob --package-version 12.30 --language Python --field System.State=Resolved --field Custom.APIReviewStatus=Approved", parseConfig);
         Assert.That(parseResult.Errors, Is.Empty);
+    }
+
+    [Test]
+    public async Task HandleCommandReturnsStructuredErrorForInvalidFieldPatch()
+    {
+        var updateCommand = tool.GetCommandInstances().Single(command => command.Name == "update-work-item");
+        var parseConfig = new CommandLineConfiguration(updateCommand)
+        {
+            ResponseFileTokenReplacer = null
+        };
+
+        var parseResult = updateCommand.Parse("--package-name azure-storage-blob --package-version 12.30 --language Python --field System.State", parseConfig);
+        Assert.That(parseResult.Errors, Is.Empty);
+
+        var result = await tool.HandleCommand(parseResult, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(1));
+            Assert.That(result.ResponseError, Does.Contain("Invalid field patch"));
+        });
     }
 
     private static WorkItem CreatePackageWorkItem(int id, string packageName, string packageVersionMajorMinor, string language, string state = "Active")

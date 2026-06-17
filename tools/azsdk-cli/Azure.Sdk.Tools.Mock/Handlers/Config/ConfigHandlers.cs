@@ -7,15 +7,31 @@ using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 
 namespace Azure.Sdk.Tools.Mock.Handlers.Config;
 
-/// <summary>Mock handler for azsdk_check_service_label.</summary>
+/// <summary>
+/// Mock handler for azsdk_check_service_label. Convention-driven: the returned status is
+/// derived from the requested label name so a single mock can exercise every branch of the
+/// real tool. The real MCP parameter is "serviceLabel".
+/// </summary>
 public class CheckServiceLabelHandler : IMockToolHandler
 {
     public string ToolName => "azsdk_check_service_label";
-    public CommandResponse Handle(Dictionary<string, object?>? arguments) => new ServiceLabelResponse
+    public CommandResponse Handle(Dictionary<string, object?>? arguments)
     {
-        Label = arguments?.GetValueOrDefault("label")?.ToString() ?? "Contoso.WidgetManager",
-        Status = "Exists"
-    };
+        var label = arguments?.GetValueOrDefault("serviceLabel")?.ToString() ?? "Contoso.WidgetManager";
+        var normalized = label.Replace(" ", "").Replace("-", "").Replace("_", "").ToLowerInvariant();
+        var status = normalized switch
+        {
+            _ when normalized.Contains("existing") => "Exists",
+            _ when normalized.Contains("inreview") => "InReview",
+            _ when normalized.Contains("notalabel") => "NotAServiceLabel",
+            _ => "DoesNotExist"
+        };
+        return new ServiceLabelResponse
+        {
+            Label = label,
+            Status = status
+        };
+    }
 }
 
 /// <summary>Mock handler for azsdk_create_service_label.</summary>

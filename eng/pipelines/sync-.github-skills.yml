@@ -19,9 +19,6 @@ parameters:
   type: object
   default:
     - azure-sdk
-    - azure-sdk-for-c
-    - azure-sdk-for-cpp
-    - azure-sdk-for-ios
     - azure-sdk-for-java
     - azure-sdk-for-js
     - azure-sdk-for-net

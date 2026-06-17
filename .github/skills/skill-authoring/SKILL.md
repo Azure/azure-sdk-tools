@@ -10,7 +10,15 @@ compatibility: "copilot-chat"
 
 # Skill Authoring Guide
 
-## Constraints
+This skill helps write Agent Skills that comply with the agentskills.io specification by defining valid frontmatter, structure, and routing patterns, while guiding authors toward compliant `SKILL.md` files, supporting references, and local validation with the waza CLI.
+
+## Triggers
+
+USE FOR: write Agent Skills that comply with the agentskills.io specification; skill template; skill structure; review skill; skill PR; skill compliance; SKILL.md format; skill frontmatter; skill best practices
+WHEN: "create a skill", "new skill", "write a skill", "skill template", "skill structure", "review skill", "skill PR", "skill compliance", "SKILL.md format", "skill frontmatter", "skill best practices"
+DO NOT USE FOR: improving existing skills (use sensei), general documentation
+
+## Rules
 
 - `name`: 1-64 chars, lowercase + hyphens, match directory
 - `description`: inline double-quoted, ≤60 words, ≤1024 chars
@@ -36,7 +44,7 @@ Metadata loads at startup. SKILL.md on activation. References load when linked v
 
 **CLI fallback:** Primary mode is CLI-based. No MCP servers required.
 
-## Quick Start
+## Steps
 
 1. Create skill directory with `SKILL.md`
 2. Add frontmatter: `name`, `description`, `license`

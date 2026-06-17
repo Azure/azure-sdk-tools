@@ -9,16 +9,13 @@ compatibility: "azure-sdk-mcp server with azsdk_typespec_generate_authoring_plan
 
 # Azure TypeSpec Author
 
-## MCP Tools
+This skill authors and modifies Azure TypeSpec (`.tsp`) API specifications for ARM resource-manager and data-plane services, covering versioning, resources, operations, models, decorators, constraints, and other schema changes that must follow the repository's TypeSpec authoring workflow.
 
-| Tool                                                   | Purpose                                                   |
-| ------------------------------------------------------ | --------------------------------------------------------- |
-| `azure-sdk-mcp:azsdk_typespec_generate_authoring_plan` | Generate grounded authoring plan (General Authoring only) |
-| `azure-sdk-mcp:azsdk_run_typespec_validation`          | Validate TypeSpec                                         |
+## Triggers
 
-**Prerequisite:** `azure-sdk-mcp` server must be running.
-
-# When to invoke the azure-typespec-author skill
+USE FOR: any TypeSpec/tsp change — api versions (add, bump, preview, stable, promote), resources, operations, models, properties, decorators, visibility, constraints, breaking changes, LRO, suppressions, operationId, spread model
+WHEN: "add TypeSpec API version", "modify .tsp file", "change TypeSpec decorators", "update TypeSpec models or operations", "author Azure TypeSpec"
+DO NOT USE FOR: SDK generation, releasing SDK packages, or single MCP tool calls
 
 The `azure-typespec-author` skill **must** be invoked immediately in all modes (including plan mode) for any task that involves creating and modifying TypeSpec (`.tsp`) files except for `client.tsp` under the specification directory in this repository. This includes but is not limited to:
 
@@ -28,7 +25,16 @@ The `azure-typespec-author` skill **must** be invoked immediately in all modes (
 - Defining or updating operationId, spread models, or extension resources
 - Converting Swagger to TypeSpec (post-conversion edits)
 
-## Constraints
+## MCP Tools
+
+| Tool                                                   | Purpose                                                   |
+| ------------------------------------------------------ | --------------------------------------------------------- |
+| `azure-sdk-mcp:azsdk_typespec_generate_authoring_plan` | Generate grounded authoring plan (General Authoring only) |
+| `azure-sdk-mcp:azsdk_run_typespec_validation`          | Validate TypeSpec                                         |
+
+**Prerequisite:** `azure-sdk-mcp` server must be running.
+
+## Rules
 
 - **Always follow the full workflow** — even seemingly simple changes (e.g. adding a default value) can require complex versioning decorator changes. Never skip steps.
 - **Mandatory for ALL `.tsp` edits** — even a single `?` change can be breaking.
@@ -37,7 +43,7 @@ The `azure-typespec-author` skill **must** be invoked immediately in all modes (
 - **Always cite references** — provide links that justify the approach.
 - **Follow the authoring plan exactly** — code changes in Step 4 MUST follow the authoring plan generated in Step 3. Do not deviate by referring to existing code patterns in the TypeSpec project; the authoring plan is the single source of truth for what to change.
 
-## Workflow
+## Steps
 
 > Analyze → Intake → Plan → Apply → Validate → Output reference links
 

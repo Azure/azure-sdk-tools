@@ -48,4 +48,3 @@ skills/update-instructions/tests/ export-ignore
 ```
 
 Plain `git clone` will still include the folder — but it costs zero tokens, since nothing in `SKILL.md` links to it.
-

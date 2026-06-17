@@ -1,18 +1,11 @@
 {
-    "name": "update-instructions-from-pr-reviews",
-    "description": "Skill plugin that mines merged PR review feedback and proposes instruction updates with source citations.",
-    "version": "0.0.1",
-    "author": {
-        "name": "ripark"
-    },
-    "license": "MIT",
-    "keywords": [
-        "copilot",
-        "skill",
-        "pr-review",
-        "instructions"
-    ],
-    "skills": [
-        "."
-    ]
+  "name": "update-instructions-from-pr-reviews",
+  "description": "Skill plugin that mines merged PR review feedback and proposes instruction updates with source citations.",
+  "version": "0.0.1",
+  "author": {
+    "name": "ripark"
+  },
+  "license": "MIT",
+  "keywords": ["copilot", "skill", "pr-review", "instructions"],
+  "skills": ["."]
 }

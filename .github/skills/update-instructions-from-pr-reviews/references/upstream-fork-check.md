@@ -8,12 +8,13 @@ themes built from synthetic or bot-only feedback. **Before** running
 ## Checks
 
 1. **GitHub fork metadata** (authoritative for true forks):
+
    ```bash
    gh repo view --json isFork,parent,source,nameWithOwner
    ```
    - If `isFork: true`, surface `parent.nameWithOwner` (the immediate upstream)
      and `source.nameWithOwner` (the root of the fork network) and ask:
-     *"This repo is a fork of `<parent>`. Mine the upstream `<parent>` instead, this fork, or both?"*
+     _"This repo is a fork of `<parent>`. Mine the upstream `<parent>` instead, this fork, or both?"_
 
 2. **Conventional upstream remote** (catches manually-cloned forks that
    GitHub doesn't link):

@@ -63,6 +63,6 @@ When validation is requested, include all of the following in your summary:
 
 Use a concise table format where possible:
 
-| PR | Baseline behavior | Updated behavior | Quality delta |
-| -- | ----------------- | ---------------- | ------------- |
+| PR    | Baseline behavior         | Updated behavior                                  | Quality delta                            |
+| ----- | ------------------------- | ------------------------------------------------- | ---------------------------------------- |
 | #1234 | Missed cancellation check | Flagged cancellation check with file+line context | Higher precision, fewer generic comments |

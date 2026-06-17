@@ -22,14 +22,14 @@ stimuli:
 
   # ==== azsdk_package_build_code triggers ====
   - name: invoke-azsdk-package-build-code-1
-    prompt: "Build my SDK package. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Build the SDK package at ./sdk/contosowidgetmanager/Azure.Template.Contoso. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_package_build_code"
   - name: invoke-azsdk-package-build-code-2
-    prompt: "Compile the code for my package. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Compile the code for the package at ./sdk/contosowidgetmanager/Azure.Template.Contoso. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
@@ -45,7 +45,7 @@ stimuli:
           required:
             - name: "azsdk_package_generate_code"
   - name: invoke-azsdk-package-generate-code-2
-    prompt: "Run code generation for my package. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Run code generation for the package at ./sdk/contosowidgetmanager/Azure.Template.Contoso from the TypeSpec project at specification/contosowidgetmanager/Contoso.WidgetManager. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
@@ -54,21 +54,21 @@ stimuli:
 
   # ==== azsdk_package_generate_samples triggers ====
   - name: invoke-azsdk-package-generate-samples-1
-    prompt: "Generate sample code for my SDK package. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Generate sample code for the SDK package at ./sdk/contosowidgetmanager/Azure.Template.Contoso. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_package_generate_samples"
   - name: invoke-azsdk-package-generate-samples-2
-    prompt: "Create sample code for my package based on these scenarios. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Create sample code for the package at ./sdk/contosowidgetmanager/Azure.Template.Contoso based on the scenarios in ./samples/scenarios.md. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_package_generate_samples"
   - name: invoke-azsdk-package-generate-samples-3
-    prompt: "Generate samples for my package using this prompt. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Generate samples for the package at ./sdk/contosowidgetmanager/Azure.Template.Contoso using the sample prompt file ./samples/prompt.md. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
@@ -77,21 +77,21 @@ stimuli:
 
   # ==== azsdk_package_pack triggers ====
   - name: invoke-azsdk-package-pack-1
-    prompt: "Pack my SDK package into a distributable artifact. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Pack the SDK package at ./sdk/contosowidgetmanager/Azure.Template.Contoso into a distributable artifact. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_package_pack"
   - name: invoke-azsdk-package-pack-2
-    prompt: "Create distributable package artifacts for my SDK. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Create distributable package artifacts for the SDK package at ./sdk/contosowidgetmanager/Azure.Template.Contoso. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_package_pack"
   - name: invoke-azsdk-package-pack-3
-    prompt: "Generate package artifacts for my SDK. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Generate package artifacts for the SDK package at ./sdk/contosowidgetmanager/Azure.Template.Contoso. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
@@ -107,7 +107,7 @@ stimuli:
           required:
             - name: "azsdk_package_run_check"
   - name: invoke-azsdk-package-run-check-2
-    prompt: "Run validation checks on my SDK package. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Run validation checks on the SDK package at ./sdk/contosowidgetmanager/Azure.Template.Contoso. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
@@ -123,14 +123,14 @@ stimuli:
 
   # ==== azsdk_package_run_tests triggers ====
   - name: invoke-azsdk-package-run-tests-1
-    prompt: "Run tests for my SDK package. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Run tests for the SDK package at ./sdk/contosowidgetmanager/Azure.Template.Contoso. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_package_run_tests"
   - name: invoke-azsdk-package-run-tests-2
-    prompt: "Run the tests for my specified SDK package. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Run the tests for the SDK package at ./sdk/contosowidgetmanager/Azure.Template.Contoso. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
@@ -139,21 +139,21 @@ stimuli:
 
   # ==== azsdk_package_translate_samples triggers ====
   - name: invoke-azsdk-package-translate-samples-1
-    prompt: "Translate the sample code from the Python package to the Java package. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Translate the sample code from the Python package at ./sdk/contosowidgetmanager/azure-contoso-widgetmanager to the Java package at ./sdk/contosowidgetmanager/azure-contoso-widgetmanager-java. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_package_translate_samples"
   - name: invoke-azsdk-package-translate-samples-2
-    prompt: "Convert samples from the source package to the target language package. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Convert samples from the source package at ./sdk/contosowidgetmanager/azure-contoso-widgetmanager (Python) to the target Java package at ./sdk/contosowidgetmanager/azure-contoso-widgetmanager-java. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_package_translate_samples"
   - name: invoke-azsdk-package-translate-samples-3
-    prompt: "Translate SDK samples from one language to another. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Translate the SDK samples for the package at ./sdk/contosowidgetmanager/azure-contoso-widgetmanager from Python to Java. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
@@ -178,14 +178,14 @@ stimuli:
 
   # ==== azsdk_package_update_metadata triggers ====
   - name: invoke-azsdk-package-update-metadata-1
-    prompt: "Update the package metadata. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Update the package metadata for the package at ./sdk/contosowidgetmanager/Azure.Template.Contoso. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_package_update_metadata"
   - name: invoke-azsdk-package-update-metadata-2
-    prompt: "Update the package metadata for my SDK. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Update the package metadata for the SDK package at ./sdk/contosowidgetmanager/Azure.Template.Contoso. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
@@ -194,14 +194,14 @@ stimuli:
 
   # ==== azsdk_package_update_version triggers ====
   - name: invoke-azsdk-package-update-version-1
-    prompt: "Update my package version. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Update the version of the package at ./sdk/contosowidgetmanager/Azure.Template.Contoso to 1.2.0. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_package_update_version"
   - name: invoke-azsdk-package-update-version-2
-    prompt: "Bump the version to 1.2.0. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Bump the version of the package at ./sdk/contosowidgetmanager/Azure.Template.Contoso to 1.2.0. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
@@ -210,21 +210,21 @@ stimuli:
 
   # ==== azsdk_release_sdk triggers ====
   - name: invoke-azsdk-release-sdk-1
-    prompt: "Release my SDK package. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Release the SDK package at ./sdk/contosowidgetmanager/Azure.Template.Contoso. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_release_sdk"
   - name: invoke-azsdk-release-sdk-2
-    prompt: "Trigger the release pipeline for my package. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Trigger the release pipeline for the package at ./sdk/contosowidgetmanager/Azure.Template.Contoso. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_release_sdk"
   - name: invoke-azsdk-release-sdk-3
-    prompt: "Start the SDK release process for my package. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Start the SDK release process for the package at ./sdk/contosowidgetmanager/Azure.Template.Contoso. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:

@@ -34,11 +34,9 @@ config:
 stimuli:
   # --- Scenario 1: Create release plan ---------------------------------
   - name: create-public-preview-release-plan
-    environment:
-      # Repo-relative cache populated by scripts/ensure-specs-clone.ps1
-      # (idempotent shallow+sparse clone, auto-refresh every 24h). Same
-      # source the live e2e uses — keeps the relative TypeSpec path
-      # resolvable on disk even though the MCP responses are mocked.
+    # Spec-repo worktree fixture: defined once here and aliased by the stimuli
+    # below. CI clones it via scripts/Prime-EvalGitFixtures.ps1 before this suite.
+    environment: &specsWorktree
       git:
         type: worktree
         source: ../../../../../../artifacts/specs-cache/azure-rest-api-specs
@@ -73,13 +71,7 @@ stimuli:
 
   # --- End-to-end demo prompt: create + generate -----------------------
   - name: create-release-plan-and-generate-sdk
-    environment:
-      # Same repo-relative azure-rest-api-specs worktree as the create stimulus
-      # above so the agent sees a real on-disk spec repo.
-      git:
-        type: worktree
-        source: ../../../../../../artifacts/specs-cache/azure-rest-api-specs
-        ref: main
+    environment: *specsWorktree
     prompt: |
       Walk me through creating
       a release plan and then generating SDK for the Contoso Widget Manager:
@@ -122,11 +114,7 @@ stimuli:
 
   # --- Scenario 2: Generate SDK for an existing release plan -----------
   - name: generate-sdk-for-existing-release-plan
-    environment:
-      git:
-        type: worktree
-        source: ../../../../../../artifacts/specs-cache/azure-rest-api-specs
-        ref: main
+    environment: *specsWorktree
     prompt: |
       Using the release-planner
       flow, generate SDK for all languages for the Contoso Widget Manager
@@ -159,11 +147,7 @@ stimuli:
 
   # --- Scenario 3: Link a different spec PR to an existing release plan
   - name: link-different-spec-pr-to-release-plan
-    environment:
-      git:
-        type: worktree
-        source: ../../../../../../artifacts/specs-cache/azure-rest-api-specs
-        ref: main
+    environment: *specsWorktree
     prompt: |
       Using the release-planner
       flow, update the API spec pull request on an existing Contoso Widget
@@ -190,11 +174,7 @@ stimuli:
 
   # --- Scenario 4: Update SDK details (package names) ------------------
   - name: update-sdk-details-in-release-plan
-    environment:
-      git:
-        type: worktree
-        source: ../../../../../../artifacts/specs-cache/azure-rest-api-specs
-        ref: main
+    environment: *specsWorktree
     prompt: |
       Using the release-planner
       flow, refresh the SDK package-name details on an existing Contoso

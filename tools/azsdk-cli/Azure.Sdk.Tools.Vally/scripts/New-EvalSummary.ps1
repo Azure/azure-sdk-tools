@@ -59,6 +59,20 @@ function Get-ShardName {
     return 'unknown'
 }
 
+function Get-StimulusName {
+    # Strips Vally's ' (trial N)' suffix so every trial of a stimulus collapses to
+    # one stimulus. With --runs N, JUnit emits one <testcase> PER TRIAL named
+    # '<stimulus> (trial 1)', '(trial 2)', ... — grouping on the bare name turns
+    # those trials back into a single stimulus so counts are not inflated by N.
+    [CmdletBinding()]
+    param(
+        [string]$Name
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Name)) { return '(unnamed scenario)' }
+    return ($Name -replace '\s*\(trial\s+\d+\)\s*$', '').Trim()
+}
+
 function Get-EvalSummary {
     [CmdletBinding()]
     param(
@@ -79,31 +93,75 @@ function Get-EvalSummary {
                 skipped   = 0
                 durationS = 0.0
                 failures  = [System.Collections.Generic.List[string]]::new()
+                # stimulus name -> @{ trials; passed; skipped }
+                stimuli   = [ordered]@{}
+            }
+        }
+        $shard = $shards[$shardName]
+
+        [xml]$doc = Get-Content -LiteralPath $xmlFile.FullName -Raw
+
+        # The pass/fail gate is per-stimulus at the suite threshold (e.g. 0.8), not
+        # per-trial — so read the threshold from each <testsuite> and aggregate its
+        # trials back up to the stimulus, mirroring exactly what `vally eval` gates on.
+        foreach ($suite in $doc.SelectNodes('//testsuite')) {
+            $threshold = 0.8
+            $thresholdNode = $suite.SelectSingleNode("properties/property[@name='threshold']")
+            if ($null -ne $thresholdNode) {
+                [double]::TryParse($thresholdNode.GetAttribute('value'),
+                    [System.Globalization.NumberStyles]::Float,
+                    [System.Globalization.CultureInfo]::InvariantCulture, [ref]$threshold) | Out-Null
+            }
+
+            foreach ($case in $suite.SelectNodes('testcase')) {
+                $stimulus = Get-StimulusName -Name $case.GetAttribute('name')
+                if (-not $shard.stimuli.Contains($stimulus)) {
+                    $shard.stimuli[$stimulus] = [ordered]@{
+                        trials    = 0
+                        passed    = 0
+                        skipped   = 0
+                        threshold = $threshold
+                    }
+                }
+                $entry = $shard.stimuli[$stimulus]
+                $entry.threshold = $threshold
+
+                $time = 0.0
+                if ($case.HasAttribute('time')) {
+                    [double]::TryParse($case.GetAttribute('time'),
+                        [System.Globalization.NumberStyles]::Float,
+                        [System.Globalization.CultureInfo]::InvariantCulture, [ref]$time) | Out-Null
+                }
+                $shard.durationS += $time
+
+                $isFailure = $null -ne $case.SelectSingleNode('failure') -or $null -ne $case.SelectSingleNode('error')
+                $isSkipped = $null -ne $case.SelectSingleNode('skipped')
+                if ($isSkipped) {
+                    $entry.skipped++
+                }
+                else {
+                    $entry.trials++
+                    if (-not $isFailure) { $entry.passed++ }
+                }
             }
         }
 
-        [xml]$doc = Get-Content -LiteralPath $xmlFile.FullName -Raw
-        foreach ($case in $doc.SelectNodes('//testcase')) {
-            $shards[$shardName].total++
+        # Collapse each stimulus's trials into a single pass/fail using the suite
+        # threshold (pass rate >= threshold). 1e-9 epsilon guards float rounding so
+        # e.g. 4/5 = 0.8 is not spuriously dropped below an 0.8 gate.
+        foreach ($stimulus in $shard.stimuli.Keys) {
+            $entry = $shard.stimuli[$stimulus]
+            $shard.total++
 
-            $time = 0.0
-            if ($case.HasAttribute('time')) {
-                [double]::TryParse($case.GetAttribute('time'),
-                    [System.Globalization.NumberStyles]::Float,
-                    [System.Globalization.CultureInfo]::InvariantCulture, [ref]$time) | Out-Null
+            if ($entry.trials -eq 0) {
+                $shard.skipped++
+                continue
             }
-            $shards[$shardName].durationS += $time
 
-            $isFailure = $null -ne $case.SelectSingleNode('failure') -or $null -ne $case.SelectSingleNode('error')
-            $isSkipped = $null -ne $case.SelectSingleNode('skipped')
-            if ($isFailure) {
-                $shards[$shardName].failed++
-                $name = $case.GetAttribute('name')
-                if ([string]::IsNullOrWhiteSpace($name)) { $name = '(unnamed scenario)' }
-                $shards[$shardName].failures.Add($name)
-            }
-            elseif ($isSkipped) {
-                $shards[$shardName].skipped++
+            $passRate = $entry.passed / $entry.trials
+            if ($passRate + 1e-9 -lt $entry.threshold) {
+                $shard.failed++
+                $shard.failures.Add("$stimulus ($($entry.passed)/$($entry.trials) runs passed)")
             }
         }
     }

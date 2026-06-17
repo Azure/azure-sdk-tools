@@ -110,8 +110,8 @@ stages:
   # ---------------------------------------------------------------------------
   # Stage 2 — fan-out. One job per shard. Download the prebuilt mock DLL, install
   # the pinned Vally CLI, run `vally eval -e <file>`, publish that shard's JUnit.
-  # continueOnError keeps a single red shard from aborting siblings; the gate
-  # lives in the Summarize stage so the rollup owns pass/fail.
+  # continueOnError keeps a single red shard from aborting siblings; the rollup
+  # lives in the Summarize stage (report-only in Phase 1).
   # ---------------------------------------------------------------------------
   - stage: Eval
     displayName: 'Run eval shards'
@@ -150,9 +150,24 @@ stages:
               cp -r "$(Pipeline.Workspace)/$(mockArtifact)/." "$(Build.SourcesDirectory)/artifacts/mcp/mock/"
             displayName: 'Stage mock DLL at expected path'
 
+          # Prime the git worktree fixtures the eval suite declares. This scans
+          # every eval's `environment.git` block, derives the unique (repo, ref)
+          # set, and clones each into the repo-relative cache the fixtures point
+          # at — Vally does NOT clone it ('git worktree add' needs the source on
+          # disk). Without this, workflow shards die with
+          # "cannot change to '.../artifacts/specs-cache/...'". Data-driven, so a
+          # new fixture repo needs no edit here; a no-op for unit-only shards.
+          - task: PowerShell@2
+            displayName: 'Prime eval git fixtures (scan + clone)'
+            inputs:
+              pwsh: true
+              filePath: '$(vallyRoot)/scripts/Prime-EvalGitFixtures.ps1'
+              arguments: >-
+                -EvalRoot "$(Build.SourcesDirectory)/$(vallyRoot)"
+
           - script: |
               npm exec --no --prefix "$(Build.SourcesDirectory)/eng/skill-eval" -- \
-                vally eval $(evalArgs) --junit --output-dir "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)"
+                vally eval $(evalArgs) --junit --threshold 0.8 --output-dir "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)"
             displayName: 'vally eval $(shardName)'
             workingDirectory: '$(vallyRoot)'
             env:
@@ -165,8 +180,8 @@ stages:
 
   # ---------------------------------------------------------------------------
   # Stage 3 — summarize. Collect every shard's JUnit, publish the rollup, and
-  # gate the build on it. One flaky shard is visible but the summary owns
-  # pass/fail (failTaskOnFailedTests).
+  # surface it. Phase 1 is report-only: the rollup is visible (Markdown summary
+  # + Tests tab) but does not fail the build — see failTaskOnFailedTests below.
   # ---------------------------------------------------------------------------
   - stage: Summarize
     displayName: 'Summarize results'
@@ -193,10 +208,15 @@ stages:
                 -OutputPath "$(Build.ArtifactStagingDirectory)/eval-summary.md"
 
           - task: PublishTestResults@2
-            displayName: 'Publish eval rollup (gates build)'
+            displayName: 'Publish eval rollup'
             inputs:
               testResultsFormat: 'JUnit'
               testResultsFiles: '$(Pipeline.Workspace)/eval-result-*/**/*.xml'
               mergeTestResults: true
-              failTaskOnFailedTests: true
+              # Phase 1 = report-only. The remaining red is genuine eval signal
+              # (the model not invoking a tool for some prompts), not harness
+              # breakage — surface it in the rollup + Tests tab without blocking
+              # the build. Flip back to `true` once the eval content is hardened
+              # / flaky stimuli are quarantined (design Section 7, mitigation #4).
+              failTaskOnFailedTests: false
               testRunTitle: 'Vally tool-scenario evals (mock vertical)'

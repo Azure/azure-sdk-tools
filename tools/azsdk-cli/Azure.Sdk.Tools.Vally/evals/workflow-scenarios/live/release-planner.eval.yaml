@@ -53,11 +53,13 @@ config:
 stimuli:
   - name: release-planner-e2e
     environment:
-      # Source is the repo-relative cache populated by
-      # evals/setup/ensure-specs-clone.ps1 (idempotent shallow+sparse clone,
-      # auto-refresh every 24h). Vally resolves a non-absolute source relative
-      # to this eval file, so the path works for every contributor + CI with
-      # no per-machine edits. Run ensure-specs-clone.ps1 once to populate it.
+      # Repo-relative azure-rest-api-specs worktree. Vally resolves a
+      # non-absolute source relative to THIS eval file's directory (no
+      # repo-root/env token yet — microsoft/vally#562), so the ../ depth is
+      # fixed by the file's location and must match the mock suite's depth.
+      # Prime it before the scenarios-live suite: CI runs
+      # scripts/Prime-EvalGitFixtures.ps1 (scans this path + clones it);
+      # locally run scripts/ensure-specs-clone.ps1 once (auto-refresh 24h).
       git:
         type: worktree
         source: ../../../../../../artifacts/specs-cache/azure-rest-api-specs

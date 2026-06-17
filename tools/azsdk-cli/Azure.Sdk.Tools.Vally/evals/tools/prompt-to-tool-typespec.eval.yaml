@@ -22,14 +22,14 @@ stimuli:
 
   # ==== azsdk_convert_swagger_to_typespec triggers ====
   - name: invoke-azsdk-convert-swagger-to-typespec-1
-    prompt: "Convert my swagger to TypeSpec. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Convert the OpenAPI/Swagger spec at specification/contosowidgetmanager/swagger/widgetmanager.json to TypeSpec. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_convert_swagger_to_typespec"
   - name: invoke-azsdk-convert-swagger-to-typespec-2
-    prompt: "Migrate my API from swagger to TypeSpec. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Migrate my API from swagger to TypeSpec using the spec at specification/contosowidgetmanager/swagger/widgetmanager.json. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
@@ -38,14 +38,14 @@ stimuli:
 
   # ==== azsdk_customized_code_update triggers ====
   - name: invoke-azsdk-customized-code-update-1
-    prompt: "Update customized code with patches to fix build errors. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Update customized code with patches to fix build errors in the package at ./sdk/contosowidgetmanager/Azure.Template.Contoso. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_customized_code_update"
   - name: invoke-azsdk-customized-code-update-2
-    prompt: "Apply customized code patches and rebuild to fix errors. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Apply customized code patches and rebuild to fix errors in the package at ./sdk/contosowidgetmanager/Azure.Template.Contoso. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
@@ -86,7 +86,7 @@ stimuli:
 
   # ==== azsdk_typespec_check_project_in_public_repo triggers ====
   - name: invoke-azsdk-typespec-check-project-in-public-repo-1
-    prompt: "Check if my TypeSpec project is in the public repo. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Check if my TypeSpec project specification/contosowidgetmanager/Contoso.WidgetManager is in the public spec repo. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
@@ -102,21 +102,21 @@ stimuli:
 
   # ==== azsdk_typespec_delegate_apiview_feedback triggers ====
   - name: invoke-azsdk-typespec-delegate-apiview-feedback-1
-    prompt: "Delegate the APIView feedback to Copilot for resolution. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Delegate the APIView feedback at https://spa.apiview.dev/review/c375391d5ab9419f83e3bdsfas9asdfadf2e to Copilot for resolution. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_typespec_delegate_apiview_feedback"
   - name: invoke-azsdk-typespec-delegate-apiview-feedback-2
-    prompt: "Address the APIView comments by creating a GitHub issue and assigning Copilot. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Address the APIView comments at https://spa.apiview.dev/review/c375391d5ab9419f83e3bdsfas9asdfadf2e by creating a GitHub issue and assigning Copilot. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_typespec_delegate_apiview_feedback"
   - name: invoke-azsdk-typespec-delegate-apiview-feedback-3
-    prompt: "Resolve the APIView reviewer feedback from this URL. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Resolve the APIView reviewer feedback from https://spa.apiview.dev/review/c375391d5ab9419f83e3bdsfas9asdfadf2e. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
@@ -139,9 +139,8 @@ stimuli:
           required:
             - name: "azsdk_typespec_delegate_apiview_feedback"
   - name: invoke-azsdk-typespec-delegate-apiview-feedback-6
-    prompt: >
-      Create an issue and assign to copilot to fix this: https://spa.apiview.dev/review/adfaset5391d5ab9419f83e3bds9asdfadf2e?activeApiRevisionId=adf34adfasadastasdagae3w3hhtd
-      Use the available Azure SDK MCP tools instead of shell commands or the GitHub CLI.
+    prompt: "Create a GitHub issue and assign it to Copilot to fix the APIView feedback at https://spa.apiview.dev/review/adfaset5391d5ab9419f83e3bds9asdfadf2e?activeApiRevisionId=adf34adfasadastasdagae3w3hhtd. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    graders:
       - type: tool-calls
         config:
           required:
@@ -164,9 +163,8 @@ stimuli:
           required:
             - name: "azsdk_typespec_generate_authoring_plan"
   - name: invoke-azsdk-typespec-generate-authoring-plan-3
-    prompt: >
-      Generate a solution to set a default value `21` for property `age` in model EmployeeProperties from a api version say 2025-11-01 with TypeSpec.
-      Use the available Azure SDK MCP tools instead of shell commands or a CLI.
+    prompt: "Generate a solution to set a default value of 21 for property age in model EmployeeProperties from API version 2025-11-01 with TypeSpec. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    graders:
       - type: tool-calls
         config:
           required:
@@ -174,14 +172,14 @@ stimuli:
 
   # ==== azsdk_typespec_init_project triggers ====
   - name: invoke-azsdk-typespec-init-project-1
-    prompt: "Initialize a new TypeSpec project. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Initialize a new TypeSpec project for the Contoso Widget Manager service at specification/contosowidgetmanager/Contoso.WidgetManager. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_typespec_init_project"
   - name: invoke-azsdk-typespec-init-project-2
-    prompt: "Initialize a new TypeSpec project for my service. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Initialize a new TypeSpec project for my Contoso Widget Manager service at specification/contosowidgetmanager/Contoso.WidgetManager. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:

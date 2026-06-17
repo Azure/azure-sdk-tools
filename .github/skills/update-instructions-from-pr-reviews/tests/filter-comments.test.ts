@@ -7,7 +7,8 @@ import { fileURLToPath } from "node:url";
 import {
   AUTOMATION_MARKERS,
   AUTHOR_REPLY_PATTERNS,
-  classify,
+  ALLOWED_ASSOCIATIONS,
+  classifyComment,
   DEFAULT_BOT_LOGINS,
   filterPullRequestData,
   inferKind,
@@ -18,7 +19,7 @@ import {
   parseArgs,
   shouldSkipPr,
 } from "../scripts/filter-comments.ts";
-import type { FilterOpts, PullRequestData } from "../scripts/types.ts";
+import type { AuthorAssociation, FilterOpts, PullRequestData } from "../scripts/types.ts";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -73,7 +74,16 @@ describe("classify", () => {
         body: "this is a long enough comment to pass minLength",
         user: { login: "x", type: "Bot" as const },
       };
-      assert.equal(classify(c, "alice", 20, false), "bot");
+      assert.equal(
+        classifyComment({
+          comment: c,
+          prAuthor: "alice",
+          minLength: 20,
+          includeSelf: false,
+          defaultBots: true,
+        }),
+        "bot",
+      );
     });
 
     it("drops self comments when includeSelf is false", () => {
@@ -81,7 +91,16 @@ describe("classify", () => {
         body: "Will rebase and address feedback in the next push.",
         user: { login: "alice", type: "User" as const },
       };
-      assert.equal(classify(c, "alice", 20, false), "self");
+      assert.equal(
+        classifyComment({
+          comment: c,
+          prAuthor: "alice",
+          minLength: 20,
+          includeSelf: false,
+          defaultBots: true,
+        }),
+        "self",
+      );
     });
 
     it("keeps self comments when includeSelf is true", () => {
@@ -89,7 +108,16 @@ describe("classify", () => {
         body: "Will rebase and address feedback in the next push.",
         user: { login: "alice", type: "User" as const },
       };
-      assert.equal(classify(c, "alice", 20, true), "keep");
+      assert.equal(
+        classifyComment({
+          comment: c,
+          prAuthor: "alice",
+          minLength: 20,
+          includeSelf: true,
+          defaultBots: true,
+        }),
+        "keep",
+      );
     });
 
     it("drops short LGTM-only bodies", () => {
@@ -97,7 +125,16 @@ describe("classify", () => {
         body: "LGTM!",
         user: { login: "bob", type: "User" as const },
       };
-      assert.equal(classify(c, "alice", 20, false), "short");
+      assert.equal(
+        classifyComment({
+          comment: c,
+          prAuthor: "alice",
+          minLength: 20,
+          includeSelf: false,
+          defaultBots: true,
+        }),
+        "short",
+      );
     });
 
     it("keeps longer comments that merely start with 'Thanks'", () => {
@@ -105,7 +142,16 @@ describe("classify", () => {
         body: "Thanks for the patch! Now could you also handle the cancellation case in the loop above?",
         user: { login: "bob", type: "User" as const },
       };
-      assert.equal(classify(c, "alice", 20, false), "keep");
+      assert.equal(
+        classifyComment({
+          comment: c,
+          prAuthor: "alice",
+          minLength: 20,
+          includeSelf: false,
+          defaultBots: true,
+        }),
+        "keep",
+      );
     });
 
     it("drops short bodies", () => {
@@ -113,7 +159,16 @@ describe("classify", () => {
         body: "+1",
         user: { login: "bob", type: "User" as const },
       };
-      assert.equal(classify(c, "alice", 20, false), "short");
+      assert.equal(
+        classifyComment({
+          comment: c,
+          prAuthor: "alice",
+          minLength: 20,
+          includeSelf: false,
+          defaultBots: true,
+        }),
+        "short",
+      );
     });
 
     it("drops quoted-only bodies", () => {
@@ -121,7 +176,16 @@ describe("classify", () => {
         body: "> something said earlier in the thread",
         user: { login: "bob", type: "User" as const },
       };
-      assert.equal(classify(c, "alice", 20, false), "quoted");
+      assert.equal(
+        classifyComment({
+          comment: c,
+          prAuthor: "alice",
+          minLength: 20,
+          includeSelf: false,
+          defaultBots: true,
+        }),
+        "quoted",
+      );
     });
 
     it("keeps substantive review comments", () => {
@@ -129,7 +193,16 @@ describe("classify", () => {
         body: "Wrap this error with fmt.Errorf using %w so callers can errors.Is it.",
         user: { login: "carol", type: "User" as const },
       };
-      assert.equal(classify(c, "alice", 20, false), "keep");
+      assert.equal(
+        classifyComment({
+          comment: c,
+          prAuthor: "alice",
+          minLength: 20,
+          includeSelf: false,
+          defaultBots: true,
+        }),
+        "keep",
+      );
     });
   });
 });
@@ -161,7 +234,16 @@ describe("LOW_SIGNAL", () => {
       body: substantive,
       user: { login: "bob", type: "User" as const },
     };
-    assert.equal(classify(c, "alice", 20, false), "keep");
+    assert.equal(
+      classifyComment({
+        comment: c,
+        prAuthor: "alice",
+        minLength: 20,
+        includeSelf: false,
+        defaultBots: true,
+      }),
+      "keep",
+    );
   });
 
   it("classify still drops exact low-signal tokens even when minLength is permissive", () => {
@@ -169,7 +251,16 @@ describe("LOW_SIGNAL", () => {
       body: "LGTM!",
       user: { login: "bob", type: "User" as const },
     };
-    assert.equal(classify(c, "alice", 1, false), "short");
+    assert.equal(
+      classifyComment({
+        comment: c,
+        prAuthor: "alice",
+        minLength: 1,
+        includeSelf: false,
+        defaultBots: true,
+      }),
+      "short",
+    );
   });
 });
 
@@ -247,6 +338,95 @@ describe("DEFAULT_BOT_LOGINS", () => {
   });
 });
 
+describe("classify author association", () => {
+  const substantive =
+    "Please wrap this error with fmt.Errorf using %w so callers can errors.Is it.";
+
+  it("keeps allowed associations (case-insensitive)", () => {
+    for (const assoc of ["OWNER", "member", "Collaborator"]) {
+      const c = {
+        body: substantive,
+        user: { login: "carol", type: "User" as const },
+        authorAssociation: assoc as AuthorAssociation,
+      };
+      assert.equal(
+        classifyComment({
+          comment: c,
+          prAuthor: "alice",
+          minLength: 20,
+          includeSelf: true,
+          defaultBots: true,
+        }),
+        "keep",
+        assoc,
+      );
+    }
+  });
+
+  it("drops non-collaborator associations", () => {
+    for (const assoc of ["CONTRIBUTOR", "NONE", "FIRST_TIME_CONTRIBUTOR"]) {
+      const c = {
+        body: substantive,
+        user: { login: "drive-by", type: "User" as const },
+        authorAssociation: assoc as AuthorAssociation,
+      };
+      assert.equal(
+        classifyComment({
+          comment: c,
+          prAuthor: "alice",
+          minLength: 20,
+          includeSelf: true,
+          defaultBots: true,
+        }),
+        "association",
+        assoc,
+      );
+    }
+  });
+
+  it("never filters bots on association, even when not allowed", () => {
+    const c = {
+      body: substantive,
+      user: { login: "x", type: "Bot" as const },
+      authorAssociation: "NONE" as AuthorAssociation,
+    };
+    assert.equal(
+      classifyComment({
+        comment: c,
+        prAuthor: "alice",
+        minLength: 20,
+        includeSelf: true,
+        defaultBots: true,
+      }),
+      "bot",
+    );
+  });
+
+  it("skips the check when the comment has no association field", () => {
+    const c = {
+      body: substantive,
+      user: { login: "carol", type: "User" as const },
+    };
+    assert.equal(
+      classifyComment({
+        comment: c,
+        prAuthor: "alice",
+        minLength: 20,
+        includeSelf: true,
+        defaultBots: true,
+      }),
+      "keep",
+    );
+  });
+
+  it("covers only people formally joined to the repo", () => {
+    assert.deepEqual(
+      [...ALLOWED_ASSOCIATIONS].sort(),
+      ["COLLABORATOR", "MEMBER", "OWNER"],
+    );
+  });
+});
+
 describe("classify with automation markers", () => {
   it("drops bodies containing the Copilot CLI marker as bot", () => {
     const c = {
@@ -254,7 +434,16 @@ describe("classify with automation markers", () => {
         "Auto-generated PR description with detail <!-- #comment-cli-pr -->",
       user: { login: "alice", type: "User" as const },
     };
-    assert.equal(classify(c, "alice", 20, true), "bot");
+    assert.equal(
+      classifyComment({
+        comment: c,
+        prAuthor: "alice",
+        minLength: 20,
+        includeSelf: true,
+        defaultBots: true,
+      }),
+      "bot",
+    );
   });
 });
 
@@ -530,6 +719,43 @@ describe("filterPullRequestData with new filters", () => {
     assert.ok(review?.comment_url?.endsWith("#pullrequestreview-1002"));
     const issue = kept.find((c) => c.source === "issue");
     assert.ok(issue?.comment_url?.includes("/issues/42#issuecomment-3001"));
+  });
+
+  it("drops external feedback and counts association by default", () => {
+    const pullRequestData: PullRequestData = {
+      pr: {
+        number: 999,
+        title: "x",
+        author: { login: "alice", type: "User" },
+        url: "https://github.com/o/r/pull/999",
+        state: "closed",
+        mergedAt: "2026-06-01T00:00:00Z",
+      },
+      reviews: [],
+      inline: [
+        {
+          id: 6001,
+          path: "main.go",
+          line: 1,
+          body: "Please guard against a nil pointer dereference here before deref.",
+          user: { login: "member-dev", type: "User" },
+          authorAssociation: "MEMBER",
+        },
+        {
+          id: 6002,
+          path: "main.go",
+          line: 2,
+          body: "This whole approach is wrong, you should rewrite it from scratch.",
+          user: { login: "drive-by", type: "User" },
+          authorAssociation: "NONE",
+        },
+      ],
+      issue: [],
+    };
+    const { kept, dropped } = filterPullRequestData(pullRequestData, DEFAULTS);
+    assert.equal(kept.length, 1);
+    assert.equal(kept[0]!.user, "member-dev");
+    assert.equal(dropped.association, 1);
   });
 });
 

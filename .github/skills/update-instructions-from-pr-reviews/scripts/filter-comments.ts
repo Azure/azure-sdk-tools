@@ -9,15 +9,15 @@ import { fileURLToPath } from "node:url";
 import { parseArgs as nodeParseArgs } from "node:util";
 
 import type {
-  Classifiable,
+  ClassifiableComment,
   FilterOpts,
   FilterResult,
-  Kind,
+  CommentKind,
   KeptComment,
   PullRequestData,
   CommentSource,
   User,
-  Verdict,
+  CommentType,
 } from "./types.ts";
 import { makeLogger } from "./utils.ts";
 
@@ -132,6 +132,7 @@ interface FullStats {
     short: number;
     quoted: number;
     self: number;
+    association: number;
     kindFiltered: number;
     sourceFiltered: number;
     total: number;
@@ -152,18 +153,37 @@ function parseSourceList(raw: string): Set<CommentSource> {
   return set;
 }
 
-function parseKindList(raw: string): Set<Kind> {
-  const valid: Kind[] = ["ask", "reply", "summary"];
-  const set = new Set<Kind>();
+function parseKindList(raw: string): Set<CommentKind> {
+  const valid: CommentKind[] = ["ask", "reply", "summary"];
+  const set = new Set<CommentKind>();
   for (const tok of raw.split(",").map((s) => s.trim()).filter(Boolean)) {
-    if (!valid.includes(tok as Kind)) {
+    if (!valid.includes(tok as CommentKind)) {
       throw new Error(`invalid --kind "${tok}"; expected ${valid.join("|")}`);
     }
-    set.add(tok as Kind);
+    set.add(tok as CommentKind);
   }
   if (set.size === 0) throw new Error(`--kind requires at least one value`);
   return set;
 }
+
+/**
+ * Author associations we keep: people formally joined to the repository.
+ * GitHub reports each comment's relationship via CommentAuthorAssociation; we
+ * retain only OWNER/MEMBER/COLLABORATOR and drop external drive-by feedback
+ * (CONTRIBUTOR / NONE / FIRST_TIME_CONTRIBUTOR / ...) before clustering.
+ *
+ * This is intentionally not configurable: the skill mines a repo's own review
+ * conventions, so only people that we trust (ie, don't leave malicious comments, etc..)
+ * should be included.
+ */
+export const ALLOWED_ASSOCIATIONS: ReadonlySet<string> = new Set([
+  "OWNER",
+  "MEMBER",
+  "COLLABORATOR",
+
+  // NOTE: I've explicitly excluded 'contributor' from here because _anyone_ can become a 
+  // contributor by getting a PR merged, and that still seems too broad to me.
+]);
 
 // Low-signal patterns. Match the *entire* trimmed body so longer comments that
 // merely *start* with a polite acknowledgement ("Thanks for the patch! Now
@@ -234,29 +254,26 @@ export const AUTHOR_REPLY_PATTERNS: RegExp[] = [
 /**
  * Infer the coarse intent of a kept comment. See `Kind` for definitions.
  *
- * Design note: this is intentionally **author-agnostic** — we don't compare
- * `comment.user.login` to `pr.author.login` before tagging as "reply". The
- * patterns are tight enough that false positives are rare, and dropping the
- * author check buys us two things:
+ * We classify purely from the comment text, never by comparing the comment's
+ * author to the PR author. That deliberate choice matters in two cases:
  *
- *   1. **It correctly handles Copilot-authored PRs.** When `pr.author` is
- *      `Copilot` (the coding-agent identity), the *human* driving the PR
- *      posts the actual reply-to-reviewer comments. An author-equality
- *      check would tag those as `ask` and pollute clustering. Without the
- *      check, they get tagged `reply` based on their text.
+ *   1. Copilot-authored PRs. When the PR author is `Copilot` (the coding
+ *      agent), it's the human driving the PR who writes the replies to
+ *      reviewers. Matching author-to-PR-author would mislabel those replies
+ *      as reviewer "asks" and pollute clustering; text-matching tags them
+ *      "reply" correctly.
  *
- *   2. **It catches reviewer-to-reviewer agreement chatter.** Phrases like
- *      "Good catch, let's remove it" from a *different* reviewer agreeing
- *      with a colleague are also conversational noise, not productive
- *      reviewer-asks. Tagging them `reply` is correct.
+ *   2. Reviewer-to-reviewer chatter. Agreement like "Good catch, let's
+ *      remove it" from one reviewer endorsing another is conversational
+ *      noise, not a reviewer ask. Text-matching tags it "reply" correctly.
  *
- * Measured against the Azure/azure-dev PR cache (199 PRs, last 30 days):
- * 183 reply-tagged inline comments; 178 (97%) are from the PR author; the
- * remaining 5 are the two cases above. One borderline false-positive
- * ("Thanks for the suggestion. This seems a bit overkill — will defer…")
- * is the only substantive comment lost. Acceptable trade.
+ * Validation (Azure/azure-dev cache, 199 PRs over 30 days): of 183 inline
+ * comments tagged "reply", 178 (97%) came from the PR author and 5 are the
+ * cases above. Exactly one substantive comment was misclassified ("Thanks
+ * for the suggestion. This seems a bit overkill — will defer…") — an
+ * acceptable trade.
  */
-export function inferKind(source: CommentSource, body: string): Kind {
+export function inferKind(source: CommentSource, body: string): CommentKind {
   if (source === "review") return "summary";
   const trimmed = body.trim();
   if (AUTHOR_REPLY_PATTERNS.some((re) => re.test(trimmed))) return "reply";
@@ -278,13 +295,19 @@ export function isQuotedOnly(body: string): boolean {
   return lines.every((l) => l.startsWith(">"));
 }
 
-export function classify(
-  comment: Classifiable,
-  prAuthor: string | undefined,
-  minLength: number,
-  includeSelf: boolean,
-  defaultBots = true,
-): Verdict {
+export function classifyComment({
+  comment,
+  prAuthor,
+  minLength,
+  includeSelf,
+  defaultBots,
+}: {
+  comment: ClassifiableComment;
+  prAuthor: string | undefined;
+  minLength: number;
+  includeSelf: boolean;
+  defaultBots: boolean;
+}): CommentType {
   const body = (comment.body ?? "").trim();
   const login = comment.user?.login;
   if (
@@ -293,7 +316,19 @@ export function classify(
   ) {
     return "bot";
   }
+
   if (defaultBots && isAutomationBoilerplate(body)) return "bot";
+  
+  // Author-association gate: keep only people formally joined to the repo
+  // (OWNER/MEMBER/COLLABORATOR). Bots are already handled above; comments that
+  // lack an association field (older caches) are not subject to this filter.
+  if (
+    comment.authorAssociation !== undefined &&
+    !ALLOWED_ASSOCIATIONS.has(comment.authorAssociation.toUpperCase())
+  ) {
+    return "association";
+  }
+  
   if (
     !includeSelf &&
     prAuthor &&
@@ -301,9 +336,11 @@ export function classify(
   ) {
     return "self";
   }
+  
   if (body.length < minLength) return "short";
   if (LOW_SIGNAL.some((re) => re.test(body))) return "short";
   if (isQuotedOnly(body)) return "quoted";
+
   return "keep";
 }
 
@@ -343,6 +380,7 @@ export function filterPullRequestData(
         short: 0,
         quoted: 0,
         self: 0,
+        association: 0,
         kindFiltered: 0,
         sourceFiltered: 0,
       },
@@ -367,6 +405,7 @@ export function filterPullRequestData(
     short: 0,
     quoted: 0,
     self: 0,
+    association: 0,
     kindFiltered: 0,
     sourceFiltered: 0,
   };
@@ -391,13 +430,13 @@ export function filterPullRequestData(
 
   const kept: KeptComment[] = [];
   for (const c of comments) {
-    const verdict = classify(
-      c,
+    const verdict = classifyComment({
+      comment: c,
       prAuthor,
-      opts.minLength,
-      opts.includeSelf,
-      opts.defaultBots !== false,
-    );
+      minLength: opts.minLength,
+      includeSelf: opts.includeSelf,
+      defaultBots: opts.defaultBots !== false,
+    });
     if (verdict !== "keep") {
       dropped[verdict]++;
       continue;
@@ -479,6 +518,7 @@ function main(): void {
       short: 0,
       quoted: 0,
       self: 0,
+      association: 0,
       kindFiltered: 0,
       sourceFiltered: 0,
       total: 0,
@@ -503,6 +543,7 @@ function main(): void {
       "short",
       "quoted",
       "self",
+      "association",
       "kindFiltered",
       "sourceFiltered",
     ] as const) {

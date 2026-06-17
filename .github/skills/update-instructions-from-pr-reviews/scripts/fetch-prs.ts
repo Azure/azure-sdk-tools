@@ -177,6 +177,7 @@ interface RawReview {
   body: string;
   submitted_at: string;
   user: RawUser | null;
+  author_association?: string;
 }
 
 interface RawInline {
@@ -190,6 +191,7 @@ interface RawInline {
   pull_request_review_id?: number;
   created_at?: string;
   user: RawUser | null;
+  author_association?: string;
 }
 
 interface RawIssue {
@@ -197,6 +199,7 @@ interface RawIssue {
   body: string;
   created_at: string;
   user: RawUser | null;
+  author_association?: string;
 }
 
 interface RepoView {
@@ -299,6 +302,7 @@ async function fetchPrToCache(
         body: r.body,
         submitted_at: r.submitted_at,
         user: slimUser(r.user),
+        authorAssociation: r.author_association,
       }),
     ),
     inline: inlineRaw.map(
@@ -314,6 +318,7 @@ async function fetchPrToCache(
         pull_request_review_id: c.pull_request_review_id,
         created_at: c.created_at,
         user: slimUser(c.user),
+        authorAssociation: c.author_association,
       }),
     ),
     issue: issueRaw.map(
@@ -323,6 +328,7 @@ async function fetchPrToCache(
         body: c.body,
         created_at: c.created_at,
         user: slimUser(c.user),
+        authorAssociation: c.author_association,
       }),
     ),
   };

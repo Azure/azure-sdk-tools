@@ -12,6 +12,17 @@ export interface User {
 }
 
 /**
+ * GitHub's CommentAuthorAssociation — the comment author's relationship to the
+ * repository. The filter keeps OWNER/MEMBER/COLLABORATOR (people formally joined
+ * to the repo) and drops the rest as external feedback.
+ */
+export type AuthorAssociation =
+  | "OWNER"
+  | "MEMBER"
+  | "COLLABORATOR"
+  | (string & {});
+
+/**
  * Source for comments fetched from GitHub:
  * - "review": PR review-summary bodies from /pulls/{n}/reviews
  * - "inline": line-level review comments from /pulls/{n}/comments
@@ -20,27 +31,32 @@ export interface User {
 export type CommentSource = "review" | "inline" | "issue";
 
 /**
- * Classification outcome for a comment during filtering:
+ * Classification for a comment, used during filtering:
  * - "keep": comment is retained for downstream processing
  * - "bot": authored by automation, known bot identity, or automation marker
  * - "short": too short or matches low-signal shorthand (for example, LGTM/+1)
  * - "quoted": contains only quoted content and no new feedback
  * - "self": authored by the PR author when self-comments are excluded
+ * - "association": author's repo association is outside the allow-list
  */
-export type Verdict = "keep" | "bot" | "short" | "quoted" | "self";
+export type CommentType = "keep" | "bot" | "short" | "quoted" | "self" | "association";
 
 /**
  * Coarse intent classification for kept comments:
- * - "summary": top-level review summary body (source === "review")
- * - "reply": acknowledgement or closure phrasing (for example, "Fixed", "Addressed")
- * - "ask": substantive reviewer feedback request (everything else)
+ * - "ask": a reviewer actually requesting something (for example, "rename this",
+ *   "add a null check") — the substantive, actionable feedback.
+ * - "summary": the top-level review body written on approve/request-changes
+ *   (for example, "Looks good overall, a few nits"). source === "review".
+ * - "reply": acknowledgement or closure phrasing (for example, "Fixed", "Addressed").
  *
- * Useful for clustering: when mining "what do reviewers ask for", you usually
- * keep "ask" and treat "summary" + "reply" as conversational noise.
+ * Useful for clustering: when the goal is to mine "what do reviewers ask for",
+ * the "ask" comments are the signal. "summary" and "reply" are conversational
+ * noise — part of the review chatter but not a concrete request — so you usually
+ * keep "ask" and drop the other two (see FilterOpts.kinds / the --kind flag).
  */
-export type Kind = "ask" | "reply" | "summary";
+export type CommentKind = "ask" | "reply" | "summary";
 
-/** Top-level pull request metadata shared across all fetched comment sources. */
+/** Top-level pull request metadata. */
 export interface PullRequestMetadata {
   number: number;
   title: string;
@@ -57,7 +73,9 @@ export interface ReviewSummary {
   body: string;
   submitted_at: string;
   user: User | null;
-  /** Internal origin tag added after fetch so combined comment sources stay identifiable. */
+  /** The comment author's relationship to the repo. */
+  authorAssociation?: AuthorAssociation;
+  /** Which source this comment came from; set after fetch when sources are merged. */
   _source?: CommentSource;
 }
 
@@ -73,7 +91,9 @@ export interface InlineComment {
   pull_request_review_id?: number;
   created_at?: string;
   user: User | null;
-  /** Internal origin tag added after fetch so combined comment sources stay identifiable. */
+  /** The comment author's relationship to the repo. */
+  authorAssociation?: AuthorAssociation;
+  /** Which source this comment came from; set after fetch when sources are merged. */
   _source?: CommentSource;
 }
 
@@ -83,7 +103,9 @@ export interface IssueComment {
   body: string;
   created_at: string;
   user: User | null;
-  /** Internal origin tag added after fetch so combined comment sources stay identifiable. */
+  /** The comment author's relationship to the repo. */
+  authorAssociation?: AuthorAssociation;
+  /** Which source this comment came from; set after fetch when sources are merged. */
   _source?: CommentSource;
 }
 
@@ -106,7 +128,7 @@ export interface FilterOpts {
   /** Sources to keep (default: all three). */
   sources?: Set<CommentSource>;
   /** Coarse-intent kinds to keep (default: all). */
-  kinds?: Set<Kind>;
+  kinds?: Set<CommentKind>;
   /** Truncate body text in kept comments to at most N chars. */
   maxBodyLength?: number;
   /**
@@ -132,8 +154,8 @@ export interface KeptComment {
    */
   comment_url: string | undefined;
   source: CommentSource;
-  /** Coarse intent — see Kind. Useful for clustering. */
-  kind: Kind;
+  /** Coarse intent — see CommentKind. Useful for clustering. */
+  kind: CommentKind;
   user: string | undefined;
   path: string | undefined;
   line: number | undefined;
@@ -147,6 +169,8 @@ export interface DroppedCounts {
   short: number;
   quoted: number;
   self: number;
+  /** Dropped because the author is not formally joined to the repo (OWNER/MEMBER/COLLABORATOR). */
+  association: number;
   /** Dropped by post-classification kind filter (e.g. --kind ask). */
   kindFiltered: number;
   /** Dropped by source filter (e.g. --source inline,issue). */
@@ -168,7 +192,9 @@ export interface FilterResult {
 }
 
 /** Anything classify() needs from a comment. */
-export interface Classifiable {
+export interface ClassifiableComment {
   body?: string;
   user: User | null;
+  /** The comment author's relationship to the repo. */
+  authorAssociation?: AuthorAssociation;
 }

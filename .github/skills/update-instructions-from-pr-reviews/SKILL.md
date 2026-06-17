@@ -29,8 +29,7 @@ Resolve the repo, paths, and PR set from the current workspace and the user's an
 
 ### Upstream / fork check (run before fetching)
 
-PR review history almost always lives on the **upstream** repo, not on forks or
-downstream sandbox/mirror repos, so mining the wrong repo wastes time. 
+PR review history almost always lives on the **upstream** repo, not on forks or downstream sandbox/mirror repos, so mining the wrong repo wastes time. 
 
 **Before** running `fetch-prs.ts`, confirm the resolved target isn't a fork or mirror by following
 [upstream-fork-check.md](./references/upstream-fork-check.md). 

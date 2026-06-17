@@ -1,6 +1,6 @@
 # Release History
 
-## 0.6.20 (Unreleased)
+## 0.6.21 (Unreleased)
 
 ### Features Added
 
@@ -10,7 +10,20 @@
 
 ### Other Changes
 
-- Set ADO work item Id as release plan ID for new release plans.
+## 0.6.20 (2026-06-16)
+
+### Features Added
+
+- Set ADO work item ID as release plan ID for new release plans.
+
+### Bugs Fixed
+
+- Fixed MCP server infinite respawn loop when upgrade or install fails due to rate limiting or network errors.
+
+### Other Changes
+
+- Improved GEPA skill quality scores for all shared skills.
+- Updated prepare-release-plan skill with canonical convergence and Release Plan ID documentation.
 
 ## 0.6.19 (2026-06-12)
 

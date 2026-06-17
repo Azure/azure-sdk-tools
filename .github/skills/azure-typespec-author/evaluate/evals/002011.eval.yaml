@@ -15,13 +15,13 @@ config:
 
 # Test cases
 stimuli:
-- prompt: |
+- name: 002011-arm-add-check-existence-operation-trigger
+  tags:
+    suite: 'armtemplate'
+    mode: 'trigger'
+  prompt: |
     In the Widget project, add a checkExistence (HEAD) operation to the existing Employee resource.
-  name: 002011-arm-add-check-existence-operation
-  constraints:
-    max_turns: 5
-    max_tokens: 100000
-  environment:
+  environment: &shared_environment
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
       dest: employee.tsp
@@ -40,26 +40,69 @@ stimuli:
     commands:
       - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
-  - type: tool-calls
+  - type: 'tool-calls'
     config:
       required:
-        - edit
-        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
-        - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
+        - 'edit'
+        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
+  - type: 'skill-invocation'
     config:
       required:
-        - azure-typespec-author
-  - type: file-matches
+        - 'azure-typespec-author'
+  constraints:
+    max_turns: 5
+    max_tokens: 1000000
+- name: 002011-arm-add-check-existence-operation-forced
+  tags:
+    suite: 'armtemplate'
+    mode: 'forced'
+  prompt: |
+    @azure-typespec-author In the Widget project, add a checkExistence (HEAD) operation to the existing Employee resource.
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
     config:
-      path: employee.tsp
+      required:
+        - 'edit'
+        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
       pattern: 'checkExistence\s+is\s+ArmResourceCheckExistence\s*<\s*Employee\s*>'
-  - type: prompt
+  - type: 'prompt'
     config:
-      scoring: scale_1_5
+      scoring: 'scale_1_5'
       threshold: 1.0
       prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
-      model: claude-opus-4.6
+      model: 'claude-opus-4.6'
+  constraints:
+    max_turns: 5
+    max_tokens: 1000000
+- name: 002011-arm-add-check-existence-operation-no-skill
+  tags:
+    suite: 'armtemplate'
+    mode: 'no-skill'
+  prompt: 'In the Widget project, add a checkExistence (HEAD) operation to the existing Employee resource.'
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: 'checkExistence\s+is\s+ArmResourceCheckExistence\s*<\s*Employee\s*>'
+  - type: 'prompt'
+    config:
+      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      threshold: 1.0
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+
 scoring:
   weights:
     tool-calls: 1

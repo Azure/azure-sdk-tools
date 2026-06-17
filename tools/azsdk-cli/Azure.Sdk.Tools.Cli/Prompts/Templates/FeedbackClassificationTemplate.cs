@@ -184,6 +184,44 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         references a renamed or removed symbol. In your Reason, identify the failing symbol and
         what changed, but do NOT instruct editing the generated file. The automated patch agent
         will locate and fix the correct customization file.
+
+        **.NET Azure SDK Analyzer Errors (AZC/SA codes):**
+        These analyzer rules apply ONLY to .NET packages. When a feedback item contains an AZC or SA
+        analyzer error code from a .NET build, first determine WHERE the error originates:
+
+        **CRITICAL: Errors in custom/handwritten code (NOT generated code) should be classified as
+        REQUIRES_MANUAL_INTERVENTION.** If an AZC or SA error originates from a customization file
+        (e.g., .NET partial classes in non-Generated folders), this means the developer wrote code that
+        does not align with Azure SDK guidelines. Do NOT attempt to fix it automatically — but DO flag it.
+        Classify as **REQUIRES_MANUAL_INTERVENTION** with a Reason like: "Analyzer error [CODE] in custom
+        code — custom code should be updated to align with Azure SDK design guidelines. Review the guidelines
+        at https://azure.github.io/azure-sdk/dotnet_introduction.html and obtain architect approval if
+        deviating from conventions for a unique scenario."
+
+        For analyzer errors in GENERATED code, use the following routing table:
+
+        | Code    | Description                  | Classification          | Action                                                       |
+        |---------|------------------------------|-------------------------|--------------------------------------------------------------|
+        | AZC0012 | Generic type name violation  | TSP_APPLICABLE          | Add `@@clientName(Type, "SpecificName", "csharp")` decorator |
+        | AZC0030 | Model naming suffix          | TSP_APPLICABLE          | Add `@@clientName(Model, "NameWithSuffix", "csharp")`        |
+        | AZC0034 | Type name conflict           | TSP_APPLICABLE          | Add `@@clientName(Type, "UniqueNonConflictingName", "csharp")`|
+        | AZC0035 | Missing model factory method | TSP_APPLICABLE          | Add `@@usage(Model, Usage.output)` decorator                 |
+
+        For any OTHER AZC code not in the table above (e.g., AZC0002-AZC0021, AZC0100+, AZC0150), classify as
+        **REQUIRES_MANUAL_INTERVENTION**. In the Reason, include:
+        1. The specific AZC code and what it means
+        2. A brief explanation of what fix is needed (e.g., "Add a protected parameterless constructor for mocking")
+
+        Do NOT classify unknown AZC codes as CODE_CUSTOMIZATION — they represent SDK design guidelines
+        that require intentional human decisions about API shape.
+
+        **Style Analyzer Errors (SA codes) — .NET only:**
+        When a feedback item contains an `SA*` code (e.g., SA1517, SA1000):
+        - If the error is in **custom code**: classify as **REQUIRES_MANUAL_INTERVENTION** with guidance
+          to update custom code to align with Azure SDK style guidelines.
+        - If the error is in **generated code**: classify as **REQUIRES_MANUAL_INTERVENTION**. This indicates
+          a bug in the code generator. In the Reason, note that this is a generator bug and recommend filing
+          an issue against the emitter/generator that produced the code.
         """;
     }
 

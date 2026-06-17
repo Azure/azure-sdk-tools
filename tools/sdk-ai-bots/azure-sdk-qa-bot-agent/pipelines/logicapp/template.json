@@ -178,10 +178,7 @@
                       }
                     },
                     "method": "post",
-                    "path": "/beta/teams/messages/@{encodeURIComponent(item()?['messageId'])}/messageType/@{encodeURIComponent('channel')}",
-                    "queries": {
-                      "$expand": "hostedContents($select=contentBytes,contentType)"
-                    }
+                    "path": "/beta/teams/messages/@{encodeURIComponent(item()?['messageId'])}/messageType/@{encodeURIComponent('channel')}"
                   }
                 },
                 "Filter_messages_mentioned_bot": {
@@ -351,18 +348,6 @@
                         }
                       }
                     },
-                    "Filter_messages_mentioned_someone": {
-                      "type": "Query",
-                      "inputs": {
-                        "from": "@body('Get_message_details')['mentions']",
-                        "where": "@not(equals(item()?['mentioned']?['user'], null))"
-                      },
-                      "runAfter": {
-                        "Save_Conversation_Message": [
-                          "Succeeded"
-                        ]
-                      }
-                    },
                     "Need_Reply": {
                       "type": "If",
                       "expression": {
@@ -378,23 +363,11 @@
                               "@length(body('Filter_messages_mentioned_bot'))",
                               0
                             ]
-                          },
-                          {
-                            "equals": [
-                              "@body('Get_message_details')?['body']?['mentions']",
-                              "@null"
-                            ]
-                          },
-                          {
-                            "equals": [
-                              "@length(body('Filter_messages_mentioned_someone'))",
-                              0
-                            ]
                           }
                         ]
                       },
                       "runAfter": {
-                        "Filter_messages_mentioned_someone": [
+                        "Save_Conversation_Message": [
                           "Succeeded"
                         ]
                       },

@@ -15,60 +15,106 @@ config:
 
 # Test cases
 stimuli:
-- prompt: |
-    Add a move async operation to move employee, operation's request is MoveRequest, response is MoveResponse
-  name: 003001-arm-action-lro
+- name: 003001-arm-action-lro-trigger
+  tags:
+    suite: 'lro'
+    mode: 'trigger'
+  prompt: |
+    Add a post async operation to move employee, operation's request is MoveRequest, response is MoveResponse.
+  environment: &shared_environment
+    files:
+      - src: ../fixtures/003-long-running-operation-share/employee.tsp
+        dest: employee.tsp
+      - src: ../fixtures/003-long-running-operation-share/main.tsp
+        dest: main.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: package-lock.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: package.json
+      - src: ../fixtures/003-long-running-operation-share/readme.md
+        dest: readme.md
+      - src: ../fixtures/003-long-running-operation-share/shared.tsp
+        dest: shared.tsp
+      - src: ../fixtures/003-long-running-operation-share/tspconfig.yaml
+        dest: tspconfig.yaml
+    commands:
+      - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
+  - type: 'skill-invocation'
+    config:
+      required:
+        - 'azure-typespec-author'
   constraints:
     max_turns: 5
     max_tokens: 1000000
-  environment:
-    files:
-    - src: ../fixtures/003-long-running-operation-share/employee.tsp
-      dest: employee.tsp
-    - src: ../fixtures/003-long-running-operation-share/main.tsp
-      dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
-    - src: ../fixtures/003-long-running-operation-share/readme.md
-      dest: readme.md
-    - src: ../fixtures/003-long-running-operation-share/shared.tsp
-      dest: shared.tsp
-    - src: ../fixtures/003-long-running-operation-share/tspconfig.yaml
-      dest: tspconfig.yaml
-    commands:
-      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
+- name: 003001-arm-action-lro-forced
+  tags:
+    suite: 'lro'
+    mode: 'forced'
+  prompt: |
+    @azure-typespec-author Add a post async operation to move employee, operation's request is MoveRequest, response is MoveResponse.
+  environment: *shared_environment
   graders:
-  - type: tool-calls
+  - type: 'tool-calls'
     config:
       required:
-        - edit
-        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
-        - azure-sdk-mcp-azsdk_run_typespec_validation
-  # VP1: Accept either inline ArmCombinedLroHeaders or alias-based EmployeeMoveLroHeaders usage.
-  - type: skill-invocation
+        - 'edit'
+        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
+  - type: 'file-matches'
     config:
-      required:
-        - azure-typespec-author
-  - type: file-matches
-    config:
-      path: employee.tsp
       pattern: 'move\s+is\s+ArmResourceActionAsync\s*<\s*Employee\s*,\s*MoveRequest\s*,\s*MoveResponse\s*,\s*LroHeaders\s*='
-  - type: file-matches
+      path: 'employee.tsp'
+  - type: 'file-matches'
     config:
-      path: employee.tsp
       pattern: 'ArmCombinedLroHeaders\s*<\s*(FinalResult\s*=\s*MoveResponse|ArmOperationStatus\s*,\s*MoveResponse|(Azure\.ResourceManager\.)?ArmOperationStatus\s*,\s*MoveResponse)\s*>'
-  - type: prompt
+      path: 'employee.tsp'
+  - type: 'prompt'
     config:
-      scoring: scale_1_5
-      threshold: 1.0
+      threshold: 1
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
       prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
-      model: claude-opus-4.6
+  constraints:
+    max_turns: 5
+    max_tokens: 1000000
+- name: 003001-arm-action-lro-no-skill
+  tags:
+    suite: 'lro'
+    mode: 'no-skill'
+  prompt: 'Add a post async operation to move employee, operation''s request is MoveRequest, response is MoveResponse.'
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: 'move\s+is\s+ArmResourceActionAsync\s*<\s*Employee\s*,\s*MoveRequest\s*,\s*MoveResponse\s*,\s*LroHeaders\s*='
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: 'ArmCombinedLroHeaders\s*<\s*FinalResult\s*=\s*MoveResponse\s*>'
+  - type: 'prompt'
+    config:
+      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent. Do not penalize for pre-existing project configuration issues such as swagger generation failures unrelated to the agent changes.'
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      threshold: 1.0
+  constraints:
+    max_turns: 10
+    max_tokens: 100000
+
 scoring:
   weights:
+    prompt: 1
     tool-calls: 1
     skill-invocation: 1
-    prompt: 1
     file-matches: 2
-  threshold: 1.0
+  threshold: 1

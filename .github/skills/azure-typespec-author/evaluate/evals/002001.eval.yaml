@@ -15,68 +15,119 @@ config:
 
 # Test cases
 stimuli:
-- prompt: |
-    change resource Employee to be an extension resource
-  name: 002001-ARM-change-resource-type
+- name: 002001-ARM-change-resource-type-trigger
+  tags:
+    suite: 'armtemplate'
+    mode: 'trigger'
+  prompt: |
+    change resource Employee to be an extension resource. Ensure the definition meets TypeSpec Azure guidelines.
+  environment: &shared_environment
+    files:
+      - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+        dest: employee.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+        dest: main.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: package-lock.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: package.json
+      - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+        dest: readme.md
+      - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+        dest: shared.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+        dest: tspconfig.yaml
+      - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+        dest: preview/2024-10-01-preview/widget.json
+      - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+        dest: stable/2021-11-01/widget.json
+    commands:
+      - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
+  - type: 'skill-invocation'
+    config:
+      required:
+        - 'azure-typespec-author'
   constraints:
     max_turns: 5
     max_tokens: 1000000
-  environment:
-    files:
-    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
-      dest: employee.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
-      dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
-    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
-      dest: readme.md
-    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
-      dest: shared.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
-      dest: tspconfig.yaml
-    - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
-      dest: stable/2021-11-01/widget.json
-    - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
-      dest: preview/2024-10-01-preview/widget.json
-    commands:
-      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
+- name: 002001-ARM-change-resource-type-forced
+  tags:
+    suite: 'armtemplate'
+    mode: 'forced'
+  prompt: |
+    @azure-typespec-author change resource Employee to be an extension resource. Ensure the definition meets TypeSpec Azure guidelines.
+  environment: *shared_environment
   graders:
-  - type: tool-calls
+  - type: 'tool-calls'
     config:
       required:
-        - edit
-        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
-        - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
+        - 'edit'
+        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
+  - type: 'file-matches'
     config:
-      required:
-        - azure-typespec-author
-  - type: file-matches
-    config:
+      pattern: 'ExtensionResource<'
       path: '*.tsp'
-      pattern: ExtensionResource<
-  - type: file-not-matches
+  - type: 'file-not-matches'
     config:
+      pattern: 'TrackedResource<'
       path: '*.tsp'
-      pattern: TrackedResource<
-  - type: file-matches
+  - type: 'file-matches'
     config:
+      pattern: 'Extension\.Read<|Extension\.CreateOrReplaceAsync<|Extension\.CustomPatch(Sync|Async)<|Extension\.DeleteWithoutOkAsync<|Extension\.ListByTarget<'
       path: '*.tsp'
-      pattern: Extension\.Read<|Extension\.CreateOrReplaceAsync<|Extension\.CustomPatch(Sync|Async)<|Extension\.DeleteWithoutOkAsync<|Extension\.ListByTarget<
-  - type: prompt
+  - type: 'prompt'
     config:
-      scoring: scale_1_5
-      threshold: 1.0
+      threshold: 1
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
       prompt: 'The original separate list-by-resource-group and list-by-subscription operations should be consolidated into a single list operation using the extension list template. A scope-parameterized interface should be defined to allow the extension resource to be scoped to any parent resource.'
-      model: claude-opus-4.6
+  constraints:
+    max_turns: 5
+    max_tokens: 1000000
+- name: 002001-ARM-change-resource-type-no-skill
+  tags:
+    suite: 'armtemplate'
+    mode: 'no-skill'
+  prompt: 'change resource Employee to be an extension resource. Ensure the definition meets TypeSpec Azure guidelines.'
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+  - type: 'file-matches'
+    config:
+      path: '*.tsp'
+      pattern: 'ExtensionResource<'
+  - type: 'file-not-matches'
+    config:
+      path: '*.tsp'
+      pattern: 'TrackedResource<'
+  - type: 'file-matches'
+    config:
+      path: '*.tsp'
+      pattern: 'Extension\.Read<|Extension\.CreateOrReplaceAsync<|Extension\.CustomPatch(Sync|Async)<|Extension\.DeleteWithoutOkAsync<|Extension\.ListByTarget<'
+  - type: 'prompt'
+    config:
+      prompt: 'The original separate list-by-resource-group and list-by-subscription operations should be consolidated into a single list operation using the extension list template. A scope-parameterized interface should be defined to allow the extension resource to be scoped to any parent resource.'
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      threshold: 1.0
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+
 scoring:
   weights:
-    tool-calls: 1
-    skill-invocation: 1
     prompt: 1
     file-not-matches: 1
+    tool-calls: 1
+    skill-invocation: 1
     file-matches: 2
-  threshold: 1.0
+  threshold: 1

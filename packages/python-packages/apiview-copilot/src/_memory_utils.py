@@ -87,11 +87,13 @@ def check_for_duplicate_memory(
 
     # Build the cluster: existing memories + the new candidate.
     memories_for_prompt = list(existing_memories.values())
-    memories_for_prompt.append({
-        "id": _NEW_MEMORY_SENTINEL,
-        "title": title,
-        "content": content,
-    })
+    memories_for_prompt.append(
+        {
+            "id": _NEW_MEMORY_SENTINEL,
+            "title": title,
+            "content": content,
+        }
+    )
 
     try:
         raw_result = run_prompt(
@@ -542,9 +544,7 @@ def apply_consolidation(actions: List[dict]) -> dict:
                     errors.append(f"Failed to delete redundant memory {rid}: {e}")
 
             # Remove references to deleted memories from the survivor
-            survivor.related_memories = [
-                mid for mid in survivor.related_memories if mid not in already_deleted
-            ]
+            survivor.related_memories = [mid for mid in survivor.related_memories if mid not in already_deleted]
 
             # Save the survivor
             try:

@@ -15,6 +15,10 @@ vi.hoisted(() => {
     "pmuser@microsoft.com,pmuser2@microsoft.com";
   // Use port 0 so the side-effect start() server binds to a random port
   process.env.PORT = "0";
+  // Clear dev auth override so tests can control auth via headers
+  delete process.env.DEV_AUTH_USER;
+  delete process.env.DEV_AUTH_NAME;
+  delete process.env.DEV_AUTH_OBJECT_ID;
 });
 
 // Mock only mintGitHubAppToken (network call); keep real parseEasyAuthPrincipal

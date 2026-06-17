@@ -1,0 +1,48 @@
+name: azsdk-mcp-tool-scenarios
+description: |
+  Validate-then-check-public-repo: the agent should run TypeSpec validation,
+  then check if the project is in the public repo.
+version: "1.0"
+type: capability
+
+
+tags:
+  area: typespec
+
+environment: azsdk-mcp-mock
+
+config:
+  runs: 1
+  timeout: 30m
+  model: gpt-5.4
+  executor: copilot-sdk
+
+stimuli:
+  - name: validate-then-check-public-repo
+    prompt: |
+      Run TypeSpec validation, then check if the project is in the public repo.
+      Project path: specification/contosowidgetmanager/Contoso.WidgetManager.
+      My setup has already been verified, do not run azsdk_verify_setup.
+    constraints:
+      max_turns: 8
+      max_tokens: 8000
+    # TODO: assert ordering (validate before check) — blocked on https://github.com/Azure/azure-sdk-tools/issues/15832 (Vally tool-calls grader needs sequence:).
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_run_typespec_validation
+            - azsdk_typespec_check_project_in_public_repo
+          disallowed:
+            - azsdk_verify_setup
+      - type: skill-invocation
+        config:
+          required:
+            - azure-typespec-author
+
+scoring:
+  weights:
+    tool-calls: 1
+    skill-invocation: 1
+  threshold: 1.0
+

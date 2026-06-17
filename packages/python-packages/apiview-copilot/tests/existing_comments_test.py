@@ -23,7 +23,6 @@ sys.modules["azure.ai.inference.models"] = MagicMock()
 
 from src._apiview_reviewer import ApiViewReview
 
-
 VALID_COMMENT = {
     "lineNo": 10,
     "createdBy": "azure-sdk",

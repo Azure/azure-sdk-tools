@@ -36,8 +36,8 @@
 /tools/azure-rest-api-specs-examples-automation/ @weidongxu-microsoft
 /tools/codeowners-utils/                @weshaggard @danieljurek
 /tools/fxlister/                        @KrzysztofCwalina
-/tools/github/                          @jsquire @ronniegeraghty
-/tools/github-event-processor/          @benbp @jsquire @ronniegeraghty
+/tools/github/                          @jsquire @lmazuel
+/tools/github-event-processor/          @benbp @jsquire
 /tools/github-team-user-store/          @weshaggard
 /tools/issue-labeler/                   @jsquire @jeo02 @radhgupta
 /tools/js-sdk-release-tools/            @qiaozha @MaryGao @JialinHuang803 @jeremymeng
@@ -71,6 +71,7 @@
 /tools/azsdk-cli/                       @azure/azsdk-cli
 # PRLabel: %azsdk-cli %design-discussion
 /tools/azsdk-cli/docs/specs/            @azure/azsdk-cli
+/.github/skills/                        @azure/azsdk-cli
 
 
 ###########

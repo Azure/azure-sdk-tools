@@ -15,46 +15,85 @@ config:
 
 # Test cases
 stimuli:
-- prompt: |
+- name: 002003-ARM-define-full-update-operation-trigger
+  tags:
+    suite: 'armtemplate'
+    mode: 'trigger'
+  prompt: |
     Define a PATCH operation for Employees. It is to update properties of an employee. Ensure the definition meets TypeSpec Azure guidelines.
-  name: 002003-ARM-define-full-update-operation
+  environment: &shared_environment
+    files:
+      - src: ../fixtures/002003-ARM-define-full-update-operation/employee.tsp
+        dest: employee.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+        dest: main.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: package-lock.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: package.json
+      - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+        dest: readme.md
+      - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+        dest: shared.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+        dest: tspconfig.yaml
+    commands:
+      - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
+  - type: 'skill-invocation'
+    config:
+      required:
+        - 'azure-typespec-author'
   constraints:
     max_turns: 5
-    max_tokens: 5000
-  environment:
-    files:
-    - src: ../fixtures/002003-ARM-define-full-update-operation/employee.tsp
-      dest: employee.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
-      dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
-    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
-      dest: readme.md
-    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
-      dest: shared.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
-      dest: tspconfig.yaml
+    max_tokens: 1000000
+- name: 002003-ARM-define-full-update-operation-forced
+  tags:
+    suite: 'armtemplate'
+    mode: 'forced'
+  prompt: |
+    @azure-typespec-author Define a PATCH operation for Employees. It is to update properties of an employee. Ensure the definition meets TypeSpec Azure guidelines.
+  environment: *shared_environment
   graders:
-  - type: tool-calls
+  - type: 'tool-calls'
     config:
       required:
-        - edit
-        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
-        - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
+        - 'edit'
+        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
+  - type: 'file-matches'
+    config:
+      pattern: 'update\s+is\s+ArmCustomPatchSync\s*<'
+      path: '*.tsp'
+  constraints:
+    max_turns: 5
+    max_tokens: 1000000
+- name: 002003-ARM-define-full-update-operation-no-skill
+  tags:
+    suite: 'armtemplate'
+    mode: 'no-skill'
+  prompt: 'Define a PATCH operation for Employees. It is to update properties of an employee. Ensure the definition meets TypeSpec Azure guidelines.'
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
     config:
       required:
-        - azure-typespec-author
-  - type: file-matches
+        - 'edit'
+  - type: 'file-matches'
     config:
       path: '*.tsp'
       pattern: 'update\s+is\s+ArmCustomPatchSync\s*<'
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+
 scoring:
   weights:
     tool-calls: 1
     skill-invocation: 1
     file-matches: 1
-  threshold: 1.0
+  threshold: 1

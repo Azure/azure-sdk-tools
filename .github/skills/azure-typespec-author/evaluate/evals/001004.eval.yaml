@@ -15,57 +15,106 @@ config:
 
 # Test cases
 stimuli:
-- prompt: |
+- name: 001004-version-property-decorator-trigger
+  tags:
+    suite: 'versioning'
+    mode: 'trigger'
+  prompt: |
     change the visibility of property 'provisioningState' from Lifecycle.Read to Lifecycle.Read and Lifecycle.Create in version 2025-05-04-preview only
-  name: 001004-version-property-decorator
+  environment: &shared_environment
+    files:
+      - src: ../fixtures/001-share-version-new-feature/employee.tsp
+        dest: employee.tsp
+      - src: ../fixtures/001-share-version-new-feature/main.tsp
+        dest: main.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: package-lock.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: package.json
+      - src: ../fixtures/001-share-version-new-feature/readme.md
+        dest: readme.md
+      - src: ../fixtures/001-share-version-new-feature/shared.tsp
+        dest: shared.tsp
+      - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
+        dest: tspconfig.yaml
+    commands:
+      - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
+  - type: 'skill-invocation'
+    config:
+      required:
+        - 'azure-typespec-author'
   constraints:
     max_turns: 5
-    max_tokens: 5000
-  environment:
-    files:
-    - src: ../fixtures/001-share-version-new-feature/employee.tsp
-      dest: employee.tsp
-    - src: ../fixtures/001-share-version-new-feature/main.tsp
-      dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
-    - src: ../fixtures/001-share-version-new-feature/readme.md
-      dest: readme.md
-    - src: ../fixtures/001-share-version-new-feature/shared.tsp
-      dest: shared.tsp
-    - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
-      dest: tspconfig.yaml
+    max_tokens: 1000000
+- name: 001004-version-property-decorator-forced
+  tags:
+    suite: 'versioning'
+    mode: 'forced'
+  prompt: |
+    @azure-typespec-author change the visibility of property 'provisioningState' from Lifecycle.Read to Lifecycle.Read and Lifecycle.Create in version 2025-05-04-preview only
+  environment: *shared_environment
   graders:
-  - type: tool-calls
+  - type: 'tool-calls'
     config:
       required:
-        - edit
-        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
-        - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
+        - 'edit'
+        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
+  - type: 'file-matches'
     config:
-      required:
-        - azure-typespec-author
-  - type: file-matches
+      pattern: 'Lifecycle\.Read, Lifecycle\.Create'
+      path: 'employee.tsp'
+  - type: 'file-matches'
     config:
-      path: employee.tsp
-      pattern: Lifecycle\.Read, Lifecycle\.Create
-  - type: file-matches
+      pattern: '2025-05-04-preview'
+      path: 'main.tsp'
+  - type: 'prompt'
     config:
-      path: main.tsp
-      pattern: 2025-05-04-preview
-  - type: prompt
-    config:
-      scoring: scale_1_5
-      threshold: 1.0
+      threshold: 1
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
       prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
-      model: claude-opus-4.6
+  constraints:
+    max_turns: 5
+    max_tokens: 1000000
+- name: 001004-version-property-decorator-no-skill
+  tags:
+    suite: 'versioning'
+    mode: 'no-skill'
+  prompt: 'change the visibility of property ''provisioningState'' from Lifecycle.Read to Lifecycle.Read and Lifecycle.Create in version 2025-05-04-preview only'
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: 'Lifecycle\.Read, Lifecycle\.Create'
+  - type: 'file-matches'
+    config:
+      path: 'main.tsp'
+      pattern: '2025-05-04-preview'
+  - type: 'prompt'
+    config:
+      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      threshold: 1.0
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+
 scoring:
   weights:
     prompt: 1
-    file-matches: 2
     tool-calls: 1
     skill-invocation: 1
-  threshold: 1.0
+    file-matches: 2
+  threshold: 1

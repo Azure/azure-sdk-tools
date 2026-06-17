@@ -1,0 +1,228 @@
+name: azsdk-mcp-tool-scenarios
+description: |
+  Mock-environment workflow scenarios derived from the release-planner
+  replacement test plan (#15835). Each stimulus mirrors one of the four
+  high-level scenarios that release-planner-dashboard must hand off to the
+  agent:
+
+    1. Create a release plan (private preview / public preview / GA)
+    2. Generate SDK for all languages in an existing release plan
+    3. Link a different spec PR to an existing release plan
+    4. Update SDK details (package names) in a release plan
+
+  Plus an end-to-end "create + generate" flow used as the headline demo
+  prompt.
+
+  Bound to the mock MCP — these graders only inspect skill routing and tool
+  selection, not real DevOps writes. The full live e2e flow lives in
+  evals/workflow-scenarios/live/release-planner.eval.yaml.
+
+version: "1.0"
+type: capability
+
+tags:
+  area: release-plan
+
+environment: azsdk-mcp-mock
+
+config:
+  runs: 1
+  timeout: 30m
+  model: gpt-5.4
+  executor: copilot-sdk
+
+stimuli:
+  # --- Scenario 1: Create release plan ---------------------------------
+  - name: create-public-preview-release-plan
+    environment:
+      # Repo-relative cache populated by scripts/ensure-specs-clone.ps1
+      # (idempotent shallow+sparse clone, auto-refresh every 24h). Same
+      # source the live e2e uses — keeps the relative TypeSpec path
+      # resolvable on disk even though the MCP responses are mocked.
+      git:
+        type: worktree
+        source: ../../../../../../artifacts/specs-cache/azure-rest-api-specs
+        ref: main
+    prompt: |
+      Create a public preview
+      release plan for the Contoso Widget Manager. Here is all the context
+      you need:
+        - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
+        - service tree ID: "a7f2b8e4-9c1d-4a3e-b6f9-2d8e5a7c3b1f"
+        - product tree ID: "f1a8c5d2-6e4b-4f7a-9c2d-8b5e1f3a6c9e"
+        - target release timeline: "June 2026"
+        - API version: "2022-11-01-preview"
+        - SDK release type: "beta"
+        - spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38387"
+      My setup has already been verified, do not run azsdk_verify_setup.
+    constraints:
+      max_turns: 6
+      max_tokens: 8000
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-prepare-release-plan
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_get_release_plan
+            - azsdk_create_release_plan
+          disallowed:
+            - azsdk_verify_setup
+
+  # --- End-to-end demo prompt: create + generate -----------------------
+  - name: create-release-plan-and-generate-sdk
+    environment:
+      # Same repo-relative azure-rest-api-specs worktree as the create stimulus
+      # above so the agent sees a real on-disk spec repo.
+      git:
+        type: worktree
+        source: ../../../../../../artifacts/specs-cache/azure-rest-api-specs
+        ref: main
+    prompt: |
+      Walk me through creating
+      a release plan and then generating SDK for the Contoso Widget Manager:
+        - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
+        - API release type: "Public Preview"
+        - service tree ID: "a7f2b8e4-9c1d-4a3e-b6f9-2d8e5a7c3b1f"
+        - product tree ID: "f1a8c5d2-6e4b-4f7a-9c2d-8b5e1f3a6c9e"
+        - target release timeline: "June 2026"
+        - API version: "2022-11-01-preview"
+        - SDK release type: "beta"
+        - spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38387"
+      After the release plan is created, generate SDK for all languages
+      using the work-item ID from the created release plan.
+      My setup has already been verified, do not run azsdk_verify_setup.
+    constraints:
+      max_turns: 12
+      max_tokens: 16000
+    # TODO: assert ordering create -> get -> generate
+    #   — blocked on Vally tool-calls grader sequence: support.
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-prepare-release-plan
+          # The generate half of this flow uses azsdk_run_generate_sdk, which is
+          # a pipeline-driven release-planner tool, NOT a local TypeSpec build.
+          # azsdk-common-generate-sdk-locally over-matches on the word "generate"
+          # and pulls in the wrong (local clone -> emit -> build -> test) flow.
+          # See https://github.com/Azure/azure-sdk-tools/issues/15950.
+          disallowed:
+            - azsdk-common-generate-sdk-locally
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_get_release_plan
+            - azsdk_create_release_plan
+            - azsdk_run_generate_sdk
+          disallowed:
+            - azsdk_verify_setup
+
+  # --- Scenario 2: Generate SDK for an existing release plan -----------
+  - name: generate-sdk-for-existing-release-plan
+    environment:
+      git:
+        type: worktree
+        source: ../../../../../../artifacts/specs-cache/azure-rest-api-specs
+        ref: main
+    prompt: |
+      Using the release-planner
+      flow, generate SDK for all languages for the Contoso Widget Manager
+      release plan. Here is the context you need:
+        - release plan work item ID: "29262"
+        - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
+      My setup has already been verified, do not run azsdk_verify_setup.
+    constraints:
+      max_turns: 8
+      max_tokens: 10000
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-prepare-release-plan
+          # azsdk_run_generate_sdk is a release-planner pipeline tool, not a
+          # local TypeSpec build. azsdk-common-generate-sdk-locally over-matches
+          # on the word "generate" and pulls in the wrong workflow. See
+          # https://github.com/Azure/azure-sdk-tools/issues/15950.
+          disallowed:
+            - azsdk-common-generate-sdk-locally
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_get_release_plan
+            - azsdk_run_generate_sdk
+          disallowed:
+            - azsdk_verify_setup
+            - azsdk_create_release_plan
+
+  # --- Scenario 3: Link a different spec PR to an existing release plan
+  - name: link-different-spec-pr-to-release-plan
+    environment:
+      git:
+        type: worktree
+        source: ../../../../../../artifacts/specs-cache/azure-rest-api-specs
+        ref: main
+    prompt: |
+      Using the release-planner
+      flow, update the API spec pull request on an existing Contoso Widget
+      Manager release plan. Here is the context you need:
+        - release plan work item ID: "29262"
+        - new spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38500"
+      My setup has already been verified, do not run azsdk_verify_setup.
+    constraints:
+      max_turns: 6
+      max_tokens: 8000
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-prepare-release-plan
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_get_release_plan
+            - azsdk_update_api_spec_pull_request_in_release_plan
+          disallowed:
+            - azsdk_verify_setup
+            - azsdk_create_release_plan
+
+  # --- Scenario 4: Update SDK details (package names) ------------------
+  - name: update-sdk-details-in-release-plan
+    environment:
+      git:
+        type: worktree
+        source: ../../../../../../artifacts/specs-cache/azure-rest-api-specs
+        ref: main
+    prompt: |
+      Using the release-planner
+      flow, refresh the SDK package-name details on an existing Contoso
+      Widget Manager release plan from the on-disk TypeSpec emitter
+      configuration. Here is the context you need:
+        - release plan work item ID: "29262"
+        - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
+        - tspconfig path: "specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml"
+      My setup has already been verified, do not run azsdk_verify_setup.
+    constraints:
+      max_turns: 8
+      max_tokens: 10000
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-prepare-release-plan
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_get_release_plan
+            - azsdk_update_sdk_details_in_release_plan
+          disallowed:
+            - azsdk_verify_setup
+            - azsdk_create_release_plan
+
+scoring:
+  weights:
+    skill-invocation: 1
+    tool-calls: 1
+  threshold: 1.0

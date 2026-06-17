@@ -15,65 +15,122 @@ config:
 
 # Test cases
 stimuli:
-- name: 001002-version-default-value
+- name: 001002-version-default-value-trigger
+  tags:
+    suite: 'versioning'
+    mode: 'trigger'
   prompt: |
     add a default value `21` for property age in model EmployeeProperties only for the new api version 2025-11-01
+  environment: &shared_environment
+    files:
+      - src: ../fixtures/001002-version-default-value/employee.tsp
+        dest: employee.tsp
+      - src: ../fixtures/001002-version-default-value/main.tsp
+        dest: main.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: package-lock.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: package.json
+      - src: ../fixtures/001002-version-default-value/readme.md
+        dest: readme.md
+      - src: ../fixtures/001002-version-default-value/shared.tsp
+        dest: shared.tsp
+      - src: ../fixtures/001002-version-default-value/tspconfig.yaml
+        dest: tspconfig.yaml
+    commands:
+      - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
+  - type: 'skill-invocation'
+    config:
+      required:
+        - 'azure-typespec-author'
   constraints:
     max_turns: 5
-    max_tokens: 5000
-  environment:
-    files:
-    - src: ../fixtures/001002-version-default-value/employee.tsp
-      dest: employee.tsp
-    - src: ../fixtures/001002-version-default-value/main.tsp
-      dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
-    - src: ../fixtures/001002-version-default-value/readme.md
-      dest: readme.md
-    - src: ../fixtures/001002-version-default-value/shared.tsp
-      dest: shared.tsp
-    - src: ../fixtures/001002-version-default-value/tspconfig.yaml
-      dest: tspconfig.yaml
+    max_tokens: 1000000
+- name: 001002-version-default-value-forced
+  tags:
+    suite: 'versioning'
+    mode: 'forced'
+  prompt: |
+    @azure-typespec-author add a default value `21` for property age in model EmployeeProperties only for the new api version 2025-11-01
+  environment: *shared_environment
   graders:
-  - type: tool-calls
+  - type: 'tool-calls'
     config:
       required:
-        - edit
-        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
-        - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
+        - 'edit'
+        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
+  - type: 'file-matches'
     config:
-      required:
-        - azure-typespec-author
-  - type: file-matches
-    config:
-      path: employee.tsp
       pattern: '@removed\(Versions\.v2025_11_01\)'
-  - type: file-matches
+      path: 'employee.tsp'
+  - type: 'file-matches'
     config:
-      path: employee.tsp
       pattern: '@renamedFrom\(Versions\.v2025_11_01, "age"\)'
-  - type: file-matches
+      path: 'employee.tsp'
+  - type: 'file-matches'
     config:
-      path: employee.tsp
       pattern: '@added\(Versions\.v2025_11_01\)'
-  - type: file-matches
+      path: 'employee.tsp'
+  - type: 'file-matches'
     config:
-      path: employee.tsp
       pattern: 'age\?: int32 = 21;'
-  - type: prompt
+      path: 'employee.tsp'
+  - type: 'prompt'
     config:
-      scoring: scale_1_5
-      threshold: 1.0
+      threshold: 1
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
       prompt: 'Verify change scope and quality only: add a default value of 21 for the `age` property in `EmployeeProperties` that only applies to the 2025-11-01 API version. The old age renamed and removed for the new version.'
-      model: claude-opus-4.6
+  constraints:
+    max_turns: 5
+    max_tokens: 1000000
+- name: 001002-version-default-value-no-skill
+  tags:
+    suite: 'versioning'
+    mode: 'no-skill'
+  prompt: 'add a default value `21` for property age in model EmployeeProperties only for the new api version 2025-11-01'
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: '@removed\(Versions\.v2025_11_01\)'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: '@renamedFrom\(Versions\.v2025_11_01, "age"\)'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: '@added\(Versions\.v2025_11_01\)'
+  - type: 'file-matches'
+    config:
+      path: 'employee.tsp'
+      pattern: 'age\?: int32 = 21;'
+  - type: 'prompt'
+    config:
+      prompt: 'Verify change scope and quality only: add a default value of 21 for the `age` property in `EmployeeProperties` that only applies to the 2025-11-01 API version. The old age renamed and removed for the new version.'
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      threshold: 1.0
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+
 scoring:
   weights:
+    prompt: 1
     tool-calls: 1
     skill-invocation: 1
-    prompt: 1
     file-matches: 4
-  threshold: 1.0
+  threshold: 1

@@ -15,107 +15,169 @@ config:
 
 # Test cases
 stimuli:
-- prompt: |
-    Add a new stable version `2025-01-01` to my service. Carry over changes.
-  name: 001008-version-add-stable-after-stable
+- name: 001008-version-add-stable-after-stable-trigger
+  tags:
+    suite: 'versioning'
+    mode: 'trigger'
+  prompt: |
+    Add a new stable version `2025-01-01` to my service. Carry over all the features from previous stable version.
+  environment: &shared_environment
+    files:
+      - src: ../fixtures/001008-version-add-stable-after-stable/employee.tsp
+        dest: employee.tsp
+      - src: ../fixtures/001008-version-add-stable-after-stable/main.tsp
+        dest: main.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: package-lock.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: package.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/readme.md
+        dest: readme.md
+      - src: ../fixtures/001008-version-add-stable-after-stable/shared.tsp
+        dest: shared.tsp
+      - src: ../fixtures/001008-version-add-stable-after-stable/tspconfig.yaml
+        dest: tspconfig.yaml
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2021-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2021-10-01/Employees_Delete_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_Delete_MaximumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2021-10-01/Employees_Get_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_Get_MaximumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2021-10-01/Employees_ListByResourceGroup_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_ListByResourceGroup_MaximumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2021-10-01/Employees_ListByResourceGroup_MinimumSet_Gen.json
+        dest: examples/2021-10-01/Employees_ListByResourceGroup_MinimumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2021-10-01/Employees_ListBySubscription_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_ListBySubscription_MaximumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2021-10-01/Employees_ListBySubscription_MinimumSet_Gen.json
+        dest: examples/2021-10-01/Employees_ListBySubscription_MinimumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2021-10-01/Employees_Update_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_Update_MaximumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2021-10-01/Operations_List_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Operations_List_MaximumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2021-10-01/Operations_List_MinimumSet_Gen.json
+        dest: examples/2021-10-01/Operations_List_MinimumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2024-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
+        dest: examples/2024-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2024-10-01/Employees_Delete_MaximumSet_Gen.json
+        dest: examples/2024-10-01/Employees_Delete_MaximumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2024-10-01/Employees_Get_MaximumSet_Gen.json
+        dest: examples/2024-10-01/Employees_Get_MaximumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2024-10-01/Employees_ListByResourceGroup_MaximumSet_Gen.json
+        dest: examples/2024-10-01/Employees_ListByResourceGroup_MaximumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2024-10-01/Employees_ListByResourceGroup_MinimumSet_Gen.json
+        dest: examples/2024-10-01/Employees_ListByResourceGroup_MinimumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2024-10-01/Employees_ListBySubscription_MaximumSet_Gen.json
+        dest: examples/2024-10-01/Employees_ListBySubscription_MaximumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2024-10-01/Employees_ListBySubscription_MinimumSet_Gen.json
+        dest: examples/2024-10-01/Employees_ListBySubscription_MinimumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2024-10-01/Employees_Update_MaximumSet_Gen.json
+        dest: examples/2024-10-01/Employees_Update_MaximumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2024-10-01/Operations_List_MaximumSet_Gen.json
+        dest: examples/2024-10-01/Operations_List_MaximumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2024-10-01/Operations_List_MinimumSet_Gen.json
+        dest: examples/2024-10-01/Operations_List_MinimumSet_Gen.json
+    commands:
+      - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+        - 'web_fetch'
+        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
+  - type: 'skill-invocation'
+    config:
+      required:
+        - 'azure-typespec-author'
   constraints:
     max_turns: 5
-    max_tokens: 5000
-  environment:
-    files:
-    - src: ../fixtures/001008-version-add-stable-after-stable\employee.tsp
-      dest: employee.tsp
-    - src: ../fixtures/001008-version-add-stable-after-stable\main.tsp
-      dest: main.tsp
-    - src: ../fixtures/001008-version-add-stable-after-stable\shared.tsp
-      dest: shared.tsp
-    - src: ../fixtures/001008-version-add-stable-after-stable\tspconfig.yaml
-      dest: tspconfig.yaml
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
-    - src: ../fixtures/001008-version-add-stable-after-stable\readme.md
-      dest: readme.md
-    - src: ../fixtures/001008-version-add-stable-after-stable\examples\2021-10-01\Employees_CreateOrUpdate_MaximumSet_Gen.json
-      dest: examples/2021-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
-    - src: ../fixtures/001008-version-add-stable-after-stable\examples\2021-10-01\Employees_Delete_MaximumSet_Gen.json
-      dest: examples/2021-10-01/Employees_Delete_MaximumSet_Gen.json
-    - src: ../fixtures/001008-version-add-stable-after-stable\examples\2021-10-01\Employees_Get_MaximumSet_Gen.json
-      dest: examples/2021-10-01/Employees_Get_MaximumSet_Gen.json
-    - src: ../fixtures/001008-version-add-stable-after-stable\examples\2021-10-01\Employees_ListByResourceGroup_MaximumSet_Gen.json
-      dest: examples/2021-10-01/Employees_ListByResourceGroup_MaximumSet_Gen.json
-    - src: ../fixtures/001008-version-add-stable-after-stable\examples\2021-10-01\Employees_ListByResourceGroup_MinimumSet_Gen.json
-      dest: examples/2021-10-01/Employees_ListByResourceGroup_MinimumSet_Gen.json
-    - src: ../fixtures/001008-version-add-stable-after-stable\examples\2021-10-01\Employees_ListBySubscription_MaximumSet_Gen.json
-      dest: examples/2021-10-01/Employees_ListBySubscription_MaximumSet_Gen.json
-    - src: ../fixtures/001008-version-add-stable-after-stable\examples\2021-10-01\Employees_ListBySubscription_MinimumSet_Gen.json
-      dest: examples/2021-10-01/Employees_ListBySubscription_MinimumSet_Gen.json
-    - src: ../fixtures/001008-version-add-stable-after-stable\examples\2021-10-01\Employees_Update_MaximumSet_Gen.json
-      dest: examples/2021-10-01/Employees_Update_MaximumSet_Gen.json
-    - src: ../fixtures/001008-version-add-stable-after-stable\examples\2021-10-01\Operations_List_MaximumSet_Gen.json
-      dest: examples/2021-10-01/Operations_List_MaximumSet_Gen.json
-    - src: ../fixtures/001008-version-add-stable-after-stable\examples\2021-10-01\Operations_List_MinimumSet_Gen.json
-      dest: examples/2021-10-01/Operations_List_MinimumSet_Gen.json
-    - src: ../fixtures/001008-version-add-stable-after-stable\examples\2024-10-01\Employees_CreateOrUpdate_MaximumSet_Gen.json
-      dest: examples/2024-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
-    - src: ../fixtures/001008-version-add-stable-after-stable\examples\2024-10-01\Employees_Delete_MaximumSet_Gen.json
-      dest: examples/2024-10-01/Employees_Delete_MaximumSet_Gen.json
-    - src: ../fixtures/001008-version-add-stable-after-stable\examples\2024-10-01\Employees_Get_MaximumSet_Gen.json
-      dest: examples/2024-10-01/Employees_Get_MaximumSet_Gen.json
-    - src: ../fixtures/001008-version-add-stable-after-stable\examples\2024-10-01\Employees_ListByResourceGroup_MaximumSet_Gen.json
-      dest: examples/2024-10-01/Employees_ListByResourceGroup_MaximumSet_Gen.json
-    - src: ../fixtures/001008-version-add-stable-after-stable\examples\2024-10-01\Employees_ListByResourceGroup_MinimumSet_Gen.json
-      dest: examples/2024-10-01/Employees_ListByResourceGroup_MinimumSet_Gen.json
-    - src: ../fixtures/001008-version-add-stable-after-stable\examples\2024-10-01\Employees_ListBySubscription_MaximumSet_Gen.json
-      dest: examples/2024-10-01/Employees_ListBySubscription_MaximumSet_Gen.json
-    - src: ../fixtures/001008-version-add-stable-after-stable\examples\2024-10-01\Employees_ListBySubscription_MinimumSet_Gen.json
-      dest: examples/2024-10-01/Employees_ListBySubscription_MinimumSet_Gen.json
-    - src: ../fixtures/001008-version-add-stable-after-stable\examples\2024-10-01\Employees_Update_MaximumSet_Gen.json
-      dest: examples/2024-10-01/Employees_Update_MaximumSet_Gen.json
-    - src: ../fixtures/001008-version-add-stable-after-stable\examples\2024-10-01\Operations_List_MaximumSet_Gen.json
-      dest: examples/2024-10-01/Operations_List_MaximumSet_Gen.json
-    - src: ../fixtures/001008-version-add-stable-after-stable\examples\2024-10-01\Operations_List_MinimumSet_Gen.json
-      dest: examples/2024-10-01/Operations_List_MinimumSet_Gen.json
+    max_tokens: 1000000
+- name: 001008-version-add-stable-after-stable-forced
+  tags:
+    suite: 'versioning'
+    mode: 'forced'
+  prompt: |
+    @azure-typespec-author Add a new stable version `2025-01-01` to my service. Carry over all the features from previous stable version.
+  environment: *shared_environment
   graders:
-  - type: tool-calls
+  - type: 'tool-calls'
     config:
       required:
-        - edit
-        - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
+        - 'edit'
+        - 'web_fetch'
+        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
+  - type: 'file-exists'
     config:
-      required:
-        - azure-typespec-author
-  - type: file-exists
+      path: 'examples/2024-10-01/Employees_Get_MaximumSet_Gen.json'
+  - type: 'file-exists'
     config:
-      path: examples/2024-10-01/Employees_Get_MaximumSet_Gen.json
-  - type: file-exists
+      path: 'examples/2025-01-01/Employees_Get_MaximumSet_Gen.json'
+  - type: 'file-matches'
     config:
-      path: examples/2025-01-01/Employees_Get_MaximumSet_Gen.json
-  - type: file-matches
+      pattern: '2021-10-01'
+      path: 'main.tsp'
+  - type: 'file-matches'
     config:
-      path: main.tsp
-      pattern: 2021-10-01
-  - type: file-matches
+      pattern: '2024-10-01'
+      path: 'main.tsp'
+  - type: 'file-matches'
     config:
-      path: main.tsp
-      pattern: 2024-10-01
-  - type: file-matches
+      pattern: '2025-01-01'
+      path: 'main.tsp'
+  - type: 'prompt'
     config:
-      path: main.tsp
-      pattern: 2025-01-01
-  - type: prompt
-    config:
-      scoring: scale_1_5
-      threshold: 1.0
+      threshold: 1
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
       prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
-      model: claude-opus-4.6
+  constraints:
+    max_turns: 5
+    max_tokens: 1000000
+- name: 001008-version-add-stable-after-stable-no-skill
+  tags:
+    suite: 'versioning'
+    mode: 'no-skill'
+  prompt: 'Add a new stable version `2025-01-01` to my service. Carry over all the features from previous stable version.'
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+  - type: 'file-exists'
+    config:
+      path: 'examples/2024-10-01/Employees_Get_MaximumSet_Gen.json'
+  - type: 'file-exists'
+    config:
+      path: 'examples/2025-01-01/Employees_Get_MaximumSet_Gen.json'
+  - type: 'file-matches'
+    config:
+      path: 'main.tsp'
+      pattern: '2021-10-01'
+  - type: 'file-matches'
+    config:
+      path: 'main.tsp'
+      pattern: '2024-10-01'
+  - type: 'file-matches'
+    config:
+      path: 'main.tsp'
+      pattern: '2025-01-01'
+  - type: 'prompt'
+    config:
+      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      threshold: 1.0
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+
 scoring:
   weights:
-    file-exists: 2
     prompt: 1
-    file-matches: 3
+    file-exists: 2
     tool-calls: 1
     skill-invocation: 1
-  threshold: 1.0
+    file-matches: 3
+  threshold: 1

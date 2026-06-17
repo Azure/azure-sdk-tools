@@ -22,7 +22,7 @@ stimuli:
 
   # ==== azsdk_create_pull_request triggers ====
   - name: invoke-azsdk-create-pull-request-1
-    prompt: "Create a pull request in the Azure/azure-rest-api-specs repo for my already-committed changes. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Create a new pull request in the Azure/azure-rest-api-specs repo from branch feature/contoso-widget into main, titled 'Add Contoso Widget Manager', for my already-committed changes. Create it directly — do not look up any existing PR or the current-branch PR link first. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
@@ -63,7 +63,7 @@ stimuli:
 
   # ==== azsdk_get_pull_request_link_for_current_branch triggers ====
   - name: invoke-azsdk-get-pull-request-link-for-current-branch-1
-    prompt: "Get the PR link for my current branch. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Get the pull request link for my current branch. The repository root is the relative path ./azure-rest-api-specs and my setup is already verified, so do not run azsdk_verify_setup. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:

@@ -22,7 +22,7 @@ stimuli:
 
   # ==== azsdk_check_service_label triggers ====
   - name: invoke-azsdk-check-service-label-1
-    prompt: "Check if a service label exists for my service. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Check whether a service label already exists for the Contoso.WidgetManager service. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
@@ -38,14 +38,14 @@ stimuli:
 
   # ==== azsdk_create_service_label triggers ====
   - name: invoke-azsdk-create-service-label-1
-    prompt: "Create a new service label for my service. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Create a new service label for the Contoso.WidgetManager service with service link https://github.com/Azure/azure-rest-api-specs/tree/main/specification/contosowidgetmanager. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_create_service_label"
   - name: invoke-azsdk-create-service-label-2
-    prompt: "Add a service label for Contoso Widget Manager. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Create a service label for Contoso Widget Manager with service link https://github.com/Azure/azure-rest-api-specs/tree/main/specification/contosowidgetmanager. It does not exist yet — create it directly without checking first. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:

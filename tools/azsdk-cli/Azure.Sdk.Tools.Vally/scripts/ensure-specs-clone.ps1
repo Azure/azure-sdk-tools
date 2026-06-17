@@ -1,15 +1,18 @@
 <#
 .SYNOPSIS
-  LOCAL-ONLY helper. Ensures a repo-relative shallow+sparse cache clone of
+  Ensures a repo-relative shallow+sparse cache clone of
   Azure/azure-rest-api-specs exists and is reasonably fresh.
 
 .DESCRIPTION
-  This script is a convenience for running the **live** suite
-  (`vally eval --suite scenarios-live`) on your own machine. It is NOT
-  invoked by any pipeline — the skill-eval pipeline does not call it, and the
-  hermetic PR-gate suites (unit + scenarios-mock) do not need it. CI that runs
-  the live suite in the future would check out the same cache path by its own
-  means; this script just saves you from doing that checkout by hand locally.
+  Primes the repo-relative azure-rest-api-specs cache that Vally's
+  `environment.git` worktree fixtures point at. Used in two places:
+  - Locally, before the **live** suite (`vally eval --suite scenarios-live`).
+  - In the mock-vertical CI (eng/pipelines/vally-eval.yml), before each eval
+    shard — the mock workflow scenarios use the same git worktree fixture, so
+    the cache must exist on the agent ('git worktree add' needs the source on
+    disk; Vally does not clone it).
+  The unit tool suites do not consume the cache, but priming it is cheap
+  (shallow + blobless + cone-sparse) so the CI step runs unconditionally.
 
   What it does:
   - First run: shallow + blobless + cone-sparse clone (only
@@ -44,7 +47,14 @@
 param(
     [int]      $MaxAgeHours         = 24,
     [string[]] $SparseCheckoutPaths = @('specification/contosowidgetmanager'),
-    [string]   $CacheRoot
+    [string]   $CacheRoot,
+
+    # Which repo/ref to cache. Defaults target Azure/azure-rest-api-specs @ main
+    # (the only fixture today) so existing no-arg callers are unaffected.
+    # Prime-EvalGitFixtures.ps1 passes these per discovered fixture.
+    [string]   $RepoUrl  = 'https://github.com/Azure/azure-rest-api-specs.git',
+    [string]   $RepoName = 'azure-rest-api-specs',
+    [string]   $Ref      = 'main'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -56,19 +66,19 @@ if (-not $CacheRoot) {
     $repoRoot  = (Resolve-Path (Join-Path $PSScriptRoot '../../../..')).Path
     $CacheRoot = Join-Path $repoRoot 'artifacts/specs-cache'
 }
-$cache = Join-Path $CacheRoot 'azure-rest-api-specs'
+$cache = Join-Path $CacheRoot $RepoName
 $stamp = Join-Path $cache '.vally-last-fetch'
 
 if (-not (Test-Path (Join-Path $cache '.git'))) {
-    Write-Host "[ensure-specs-clone] Cloning azure-rest-api-specs into cache: $cache"
+    Write-Host "[ensure-specs-clone] Cloning $RepoName ($Ref) into cache: $cache"
     New-Item -ItemType Directory -Force -Path $CacheRoot | Out-Null
     git clone --depth 1 --filter=blob:none --no-checkout `
-        https://github.com/Azure/azure-rest-api-specs.git $cache | Out-Null
+        $RepoUrl $cache | Out-Null
     if ($SparseCheckoutPaths.Count -gt 0) {
         git -C $cache sparse-checkout init --cone | Out-Null
         git -C $cache sparse-checkout set @SparseCheckoutPaths | Out-Null
     }
-    git -C $cache checkout main | Out-Null
+    git -C $cache checkout $Ref | Out-Null
     Set-Content -Path $stamp -Value (Get-Date -Format o)
 } else {
     $isStale = $true
@@ -78,8 +88,8 @@ if (-not (Test-Path (Join-Path $cache '.git'))) {
     }
     if ($isStale) {
         Write-Host "[ensure-specs-clone] Refreshing cache (>$MaxAgeHours h old): $cache"
-        git -C $cache fetch --depth 1 origin main | Out-Null
-        git -C $cache reset --hard origin/main | Out-Null
+        git -C $cache fetch --depth 1 origin $Ref | Out-Null
+        git -C $cache reset --hard "origin/$Ref" | Out-Null
         Set-Content -Path $stamp -Value (Get-Date -Format o)
     } else {
         Write-Host "[ensure-specs-clone] Cache is fresh (<$MaxAgeHours h): $cache"

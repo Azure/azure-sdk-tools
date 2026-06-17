@@ -38,6 +38,29 @@ BeforeAll {
   </testsuite>
 </testsuites>
 '@
+
+    # area_multitrial: two stimuli, each run 5 times (one <testcase> per trial,
+    # named '<stimulus> (trial N)'), gated at threshold 0.8. 'flaky pass' goes
+    # 4/5 (>= 0.8 -> passes); 'flaky fail' goes 2/5 (< 0.8 -> fails). Proves the
+    # summary collapses trials to stimuli and applies the gate, instead of
+    # counting 10 raw testcases.
+    New-Junit -Shard 'area_multitrial' -Xml @'
+<testsuites>
+  <testsuite name="multitrial">
+    <properties><property name="threshold" value="0.8" /></properties>
+    <testcase name="flaky pass (trial 1)" time="1.0" />
+    <testcase name="flaky pass (trial 2)" time="1.0" />
+    <testcase name="flaky pass (trial 3)" time="1.0" />
+    <testcase name="flaky pass (trial 4)" time="1.0"><failure message="x">nope</failure></testcase>
+    <testcase name="flaky pass (trial 5)" time="1.0" />
+    <testcase name="flaky fail (trial 1)" time="1.0" />
+    <testcase name="flaky fail (trial 2)" time="1.0" />
+    <testcase name="flaky fail (trial 3)" time="1.0"><failure message="x">nope</failure></testcase>
+    <testcase name="flaky fail (trial 4)" time="1.0"><failure message="x">nope</failure></testcase>
+    <testcase name="flaky fail (trial 5)" time="1.0"><failure message="x">nope</failure></testcase>
+  </testsuite>
+</testsuites>
+'@
 }
 
 AfterAll {
@@ -62,7 +85,17 @@ Describe 'New-EvalSummary.ps1' {
 
     It 'captures the failing scenario name' {
         $shards = & $script:scriptPath -ResultsRoot $script:root -OutputPath $script:outFile
-        $shards['area_typespec'].failures | Should -Contain 'renames client'
+        $shards['area_typespec'].failures | Should -Contain 'renames client (0/1 runs passed)'
+    }
+
+    It 'collapses per-trial testcases to one stimulus and applies the threshold' {
+        $shards = & $script:scriptPath -ResultsRoot $script:root -OutputPath $script:outFile
+        # 10 raw <testcase> trials -> 2 stimuli, not 10.
+        $shards['area_multitrial'].total | Should -Be 2
+        # 4/5 >= 0.8 passes; 2/5 < 0.8 fails.
+        $shards['area_multitrial'].failed | Should -Be 1
+        $shards['area_multitrial'].failures | Should -Contain 'flaky fail (2/5 runs passed)'
+        $shards['area_multitrial'].failures | Should -Not -Contain 'flaky pass (4/5 runs passed)'
     }
 
     It 'writes a Markdown file with an overall FAILED header when any shard is red' {

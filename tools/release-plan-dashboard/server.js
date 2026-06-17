@@ -82,17 +82,18 @@ function createApp() {
   // ── Auth routes ───────────────────────────────────────────────
   app.get("/auth/me", (req, res) => {
     const user = req.user;
-    let responseUser = user
-      ? { login: user.login, name: user.name, avatar: "" }
-      : /* v8 ignore next */ null;
-    if (responseUser) {
-      const pmList = (process.env.RELEASE_PLAN_DASHBOARD_PM_USERS || "")
-        .split(",")
-        .map((u) => u.trim().toLowerCase())
-        .filter(Boolean);
-      responseUser.isPM = pmList.includes((user.login || "").toLowerCase());
-    }
-    res.json(responseUser);
+    /* v8 ignore next 2 — requireAuth guarantees user is set */
+    if (!user) return res.json(null);
+    const pmList = (process.env.RELEASE_PLAN_DASHBOARD_PM_USERS || "")
+      .split(",")
+      .map((u) => u.trim().toLowerCase())
+      .filter(Boolean);
+    res.json({
+      login: user.login,
+      name: user.name,
+      avatar: "",
+      isPM: pmList.includes((user.login || "").toLowerCase()),
+    });
   });
 
   app.get("/auth/logout", (_req, res) => {

@@ -1,0 +1,102 @@
+name: azsdk-mcp-tool-invocation-eval
+description: |
+  Verify that prompts correctly invoke the expected Azure SDK MCP tools.
+  Each stimulus is a single user prompt that should trigger a specific tool.
+version: "1.0"
+type: capability
+
+environment: azsdk-mcp-mock
+
+config:
+  runs: 5
+  timeout: "120s"
+  executor: copilot-sdk
+  model: gpt-5.4
+
+tags:
+  tier: unit
+  area: engsys
+  priority: p0
+
+stimuli:
+
+  # ==== azsdk_analyze_log_file triggers ====
+  - name: invoke-azsdk-analyze-log-file-1
+    prompt: "Analyze this log file for errors. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_analyze_log_file"
+  - name: invoke-azsdk-analyze-log-file-2
+    prompt: "What errors are in this build log? Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_analyze_log_file"
+
+  # ==== azsdk_cleanup_ai_agents triggers ====
+  - name: invoke-azsdk-cleanup-ai-agents-1
+    prompt: "Clean up AI agents in my project. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_cleanup_ai_agents"
+
+  # ==== azsdk_get_failed_test_case_data triggers ====
+  - name: invoke-azsdk-get-failed-test-case-data-1
+    prompt: "Get detailed information about a specific failed test. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_get_failed_test_case_data"
+  - name: invoke-azsdk-get-failed-test-case-data-2
+    prompt: "Show me the error message and stack trace for the failed test TestAuthentication. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_get_failed_test_case_data"
+
+  # ==== azsdk_get_failed_test_cases triggers ====
+  - name: invoke-azsdk-get-failed-test-cases-1
+    prompt: "Get the list of failed test cases from my test run. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_get_failed_test_cases"
+  - name: invoke-azsdk-get-failed-test-cases-2
+    prompt: "What tests failed in this TRX file? Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_get_failed_test_cases"
+  - name: invoke-azsdk-get-failed-test-cases-3
+    prompt: "Show me which tests failed. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_get_failed_test_cases"
+
+  # ==== azsdk_get_failed_test_run_data triggers ====
+  - name: invoke-azsdk-get-failed-test-run-data-1
+    prompt: "Get complete details for all failed tests. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_get_failed_test_run_data"
+  - name: invoke-azsdk-get-failed-test-run-data-2
+    prompt: "Show me full information about all test failures including stack traces. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_get_failed_test_run_data"
+

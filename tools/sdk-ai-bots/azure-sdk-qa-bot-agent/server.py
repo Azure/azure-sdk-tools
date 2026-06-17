@@ -21,10 +21,12 @@ from models.chat import ChatRequest, ChatResponse
 from models.conversation import ConversationMessage, SaveConversationMessageResponse
 from models.feedback import FeedbackRequest, FeedbackResponse
 from models.intention import IntentionRequest, IntentionResponse
+from models.knowledge_retrieve import KnowledgeRetrieveResponse, KnowledgeRetrieveRequest
 from services.chat_service import ChatService
 from services.conversation_service import ConversationService
 from services.feedback_service import FeedbackService
 from services.intention_service import IntentionService
+from services.knowledge_service import KnowledgeService
 from services.thread_memory_service import ThreadMemoryService
 from utils.azure_ai_foundry import close_clients
 from utils.azure_cosmosdb import close_cosmos_client
@@ -133,6 +135,7 @@ _chat_service = ChatService()
 _conversation_service = ConversationService()
 _feedback_service = FeedbackService()
 _intention_service = IntentionService()
+_knowledge_service = KnowledgeService()
 _thread_memory_service = ThreadMemoryService()
 
 
@@ -218,6 +221,30 @@ async def save_conversation(req: ConversationMessage):
         asyncio.create_task(_update_thread_memory(req))
     )
     return SaveConversationMessageResponse()
+
+@app.post("/knowledge/retrieve", response_model=KnowledgeRetrieveResponse)
+async def retrieve_knowledge(req: KnowledgeRetrieveRequest):
+    """Retrieve knowledge for a request using search_knowledge_base tool."""
+    logger.info(
+        "Retrieve knowledge request: tenant=%s, message=%s",
+        req.tenant_id,
+        req.query[:200],
+    )
+    try:
+        resp = await _knowledge_service.retrieve(req)
+        logger.info(
+            "Knowledge retrieval completed: tenant=%s, knowledge=%d",
+            req.tenant_id,
+            len(resp.knowledge_list) if resp.knowledge_list else 0,
+        )
+        return resp
+    except Exception:
+        logger.error(
+            "Knowledge retrieval failed: tenant=%s",
+            req.tenant_id,
+            exc_info=True,
+        )
+        raise
 
 
 async def _update_thread_memory(message: ConversationMessage) -> None:

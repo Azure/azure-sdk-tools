@@ -20,7 +20,7 @@ stimuli:
   name: 002010-arm-action-sync-operation
   constraints:
     max_turns: 5
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/002010-arm-action-sync-operation/employee.tsp
@@ -37,6 +37,8 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/002010-arm-action-sync-operation/tspconfig.yaml
       dest: tspconfig.yaml
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -52,15 +54,11 @@ stimuli:
     config:
       path: employee.tsp
       pattern: 'exportData\s+is\s+ArmResourceActionSync'
-  - type: file-matches
-    config:
-      path: employee.tsp
-      pattern: 'ExportResponse'
   - type: prompt
     config:
       scoring: scale_1_5
       threshold: 1.0
-      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
+      prompt: 'Verify the exportData operation is correctly defined: (1) uses ArmResourceActionSync template, (2) has a response model that represents exported data with appropriate properties, (3) operation name is exportData. Do not penalize for specific model naming choices. Verify change scope and quality: no unrelated edits, and the result is semantically consistent with the task intent.'
       model: claude-opus-4.6
 scoring:
   weights:

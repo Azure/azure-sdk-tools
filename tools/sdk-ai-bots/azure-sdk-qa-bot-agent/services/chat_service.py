@@ -25,7 +25,6 @@ from models.chat import (
 from models.conversation import ConversationMessage
 from models.knowledge import (
     DocumentContext,
-    GraphReference,
     GraphSearchResult,
     Reference,
     SearchKnowledgeBaseResult,
@@ -54,7 +53,7 @@ from openai.types.responses import (
 )
 from openai.types.responses.response_input_item_param import ResponseInputItemParam
 from config.tenant_config import TenantID
-from typing import Any, cast
+from typing import cast
 from utils.background_tasks import BackgroundTaskTracker
 
 logger = logging.getLogger(__name__)
@@ -84,48 +83,31 @@ STREAM_EVENT_RESPONSE_COMPLETED = "response.completed"
 _CITATION_RE = re.compile(r"[^\w\s]*cite[^\w\s]*turn\d+\S*")
 
 
-def _graph_refs_to_references(refs: list[GraphReference]) -> list[Reference]:
-    """Convert ``search_knowledge_graph`` references to :class:`Reference`
-    entries so they can flow through the existing reference-merging /
-    enrichment path.
-
-    ``source`` is preserved from the graph reference (which carries the
-    originating ``KnowledgeSource.name`` whenever the bot was able to
-    recover it from the knowledge blob layout) so the merged list looks
-    consistent between KB and graph hits. Falls back to ``"graphrag"``
-    only when the underlying document's source folder is unknown.
-    """
-    out: list[Reference] = []
-    for r in refs:
-        out.append(
-            Reference(
-                title=r.title,
-                source=r.source or "graphrag",
-                link=r.link or "",
-                content=r.snippet or "",
-            )
-        )
-    return out
-
-
 def _merge_references(
     primary: list[Reference], secondary: list[Reference]
 ) -> list[Reference]:
-    """Merge two reference lists, deduplicating by ``(link, title)``.
+    """Merge two reference lists, deduplicating by ``link`` only.
 
-    ``primary`` wins on conflicts — keep the vector hits first since they
-    carry verbatim chunk text (primary-source evidence), then append any
-    graph citations not already represented.
+    ``primary`` (vector search) wins on conflicts: it carries verbatim
+    chunk text (primary-source evidence), so when a ``secondary`` (graph)
+    reference points at the same ``link`` it is dropped and only the
+    vector copy survives. Everything else about the reference defers to
+    the vector hit. References with no ``link`` can't be deduplicated, so
+    they are always kept (a graph-only hit without a resolvable URL still
+    carries useful grounding text).
     """
     if not secondary:
         return list(primary)
-    seen: set[tuple[str, str]] = set()
-    merged: list[Reference] = []
-    for ref in [*primary, *secondary]:
-        key = ((ref.link or "").strip(), (ref.title or "").strip())
-        if key in seen:
+    seen_links: set[str] = {
+        link for ref in primary if (link := (ref.link or "").strip())
+    }
+    merged: list[Reference] = list(primary)
+    for ref in secondary:
+        link = (ref.link or "").strip()
+        if link and link in seen_links:
             continue
-        seen.add(key)
+        if link:
+            seen_links.add(link)
         merged.append(ref)
     return merged
 
@@ -547,9 +529,7 @@ class ChatService:
         )
         graph = tool_results.get("search_knowledge_graph")
         graph_refs = (
-            _graph_refs_to_references(graph.references)
-            if isinstance(graph, GraphSearchResult)
-            else []
+            list(graph.references) if isinstance(graph, GraphSearchResult) else []
         )
         # Merge tool references for the agent's own reference-text enrichment
         # and the full_context payload. Dedup by (link, title) preserving

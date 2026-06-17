@@ -93,13 +93,13 @@ async def test_http_success_returns_parsed_payload(configured) -> None:
             {
                 "title": "doc1",
                 "link": "https://example.com/doc1",
-                "snippet": "hello world",
+                "content": "hello world",
                 "source": "typespec_docs",
             },
             {
                 "title": "doc2",
                 "link": "https://example.com/doc2",
-                "snippet": "x" * 50,
+                "content": "x" * 50,
                 "source": "azure_sdk_docs",
             },
         ],

@@ -18,12 +18,12 @@ from dotenv import load_dotenv
 
 load_dotenv(override=False)
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
 from models.chat import ChatRequest, ChatResponse
 from models.conversation import ConversationMessage, SaveConversationMessageResponse
 from models.feedback import FeedbackRequest, FeedbackResponse
 from models.intention import IntentionRequest, IntentionResponse
-from models.knowledge import GraphQueryRequest, GraphReference, GraphSearchResult
+from models.knowledge import GraphQueryRequest, GraphSearchResult, Reference
 from services.chat_service import ChatService
 from services.conversation_service import ConversationService
 from services.feedback_service import FeedbackService
@@ -119,8 +119,7 @@ async def lifespan(application: FastAPI):
             if not service.enabled:
                 return
             logger.info("Pre-warming GraphRAG knowledge base at startup")
-            await service.reload()
-            status = service.get_status()
+            status = await service.reload()
             if not status.get("loaded"):
                 logger.error(
                     "GraphRAG pre-warm did not fully load the engine: %s",
@@ -317,44 +316,11 @@ async def _update_thread_memory(message: ConversationMessage) -> None:
 # GraphRAG endpoints (all under /graph)
 # --------------------------------------------------------------------------- #
 # Authentication is delegated entirely to App Service EasyAuth (Entra ID)
-# at the ingress. Callers must present a bearer token for the backend's
-# audience; the expected callers are:
-#   * the chat-agent's Foundry-assigned Managed Identity (queries)
-#   * the knowledge-graph-sync pipeline's workload identity (reload)
-# Both are listed in the App Registration's allowed identities.
-
-
-@app.post("/graph/admin/reload")
-async def graph_admin_reload():
-    """Atomically reload the GraphRAG parquets from the configured blob source.
-
-    Called by the knowledge-graph-sync pipeline after publishing a new
-    snapshot. In-flight Local Search queries keep their captured
-    DataFrame snapshot and finish against the old data; subsequent
-    queries see the new data. On failure the prior build remains active.
-    """
-    from utils.knowledge_graph import get_knowledge_graph_service
-
-    service = get_knowledge_graph_service()
-    if not service.enabled:
-        raise HTTPException(
-            status_code=409, detail="GraphRAG service is disabled (no source configured)"
-        )
-    try:
-        status = await service.reload()
-    except Exception as exc:
-        logger.exception("GraphRAG reload failed")
-        raise HTTPException(status_code=500, detail=f"reload failed: {exc}") from exc
-    logger.info("GraphRAG reload succeeded: %s", status.get("version"))
-    return status
-
-
-@app.get("/graph/admin/status")
-async def graph_admin_status():
-    """Return the currently-loaded GraphRAG build metadata."""
-    from utils.knowledge_graph import get_knowledge_graph_service
-
-    return get_knowledge_graph_service().get_status()
+# at the ingress. The expected caller is the chat-agent's Foundry-assigned
+# Managed Identity, listed in the App Registration's allowed identities.
+# Snapshot reloads are driven by the backend's own daily manifest poll
+# (see lifespan ``_poll_graph_manifest``), so no admin reload endpoint is
+# exposed.
 
 
 # --------------------------------------------------------------------------- #
@@ -386,7 +352,10 @@ async def graph_query(req: GraphQueryRequest) -> GraphSearchResult:
     query-side failures so the chat agent can degrade gracefully.
     """
     from config.tenant_config import TenantID, get_tenant_config
-    from utils.knowledge_graph import GraphSourceRef, get_knowledge_graph_service
+    from utils.knowledge_graph import (
+        get_knowledge_graph_service,
+        parse_title_filter_terms,
+    )
 
     normalised_query = (req.query or "").strip()
     if not normalised_query:
@@ -396,12 +365,17 @@ async def graph_query(req: GraphQueryRequest) -> GraphSearchResult:
     if not service.enabled:
         return GraphSearchResult(references=[], query=normalised_query)
 
-    # Resolve the tenant's KnowledgeSource list to a set of source
-    # folder names. ``KnowledgeSource.name`` matches the
-    # ``raw_data.source_folder`` value the sync project writes for
-    # every document — same identifier the KB tool uses for its
-    # AI Search ``source_folder eq '...'`` filter.
+    # Resolve the tenant to the same two-layer filter the KB tool applies:
+    #   * source-folder layer — ``KnowledgeSource.name`` matches the
+    #     ``raw_data.source_folder`` the sync project writes for every
+    #     document (the KB tool's ``context_id eq '...'`` clause).
+    #   * file (source_path) layer — per-source title filters from
+    #     ``tenant_config.source_filter`` (the KB tool's
+    #     ``search.ismatch(...,'title')`` clauses), translated into
+    #     case-insensitive terms matched against each document's
+    #     source_path.
     allowed_source_folders: set[str] | None = None
+    source_path_filters: dict[str, list[str]] | None = None
     tenant_id_raw = (req.tenant_id or "").strip()
     if tenant_id_raw:
         try:
@@ -418,11 +392,17 @@ async def graph_query(req: GraphQueryRequest) -> GraphSearchResult:
                 allowed_source_folders = {
                     src.name for src in tenant_config.sources if src.name
                 }
+                source_path_filters = {
+                    name: terms
+                    for name, odata in tenant_config.source_filter.items()
+                    if (terms := parse_title_filter_terms(odata))
+                } or None
 
     try:
-        sources: list[GraphSourceRef] | None = await service.search_graph(
+        sources: list[Reference] | None = await service.search_graph(
             normalised_query,
             allowed_source_folders=allowed_source_folders,
+            source_path_filters=source_path_filters,
         )
     except Exception:
         logger.exception("Graph query failed for %r", normalised_query)
@@ -431,18 +411,17 @@ async def graph_query(req: GraphQueryRequest) -> GraphSearchResult:
     if sources is None:
         return GraphSearchResult(references=[], query=normalised_query)
 
-    # Dedupe by (title|link); keep first occurrence (highest-ranked).
-    # Matches the dedup logic the chat-agent tool used to do locally so
-    # the over-the-wire shape stays identical.
-    merged_refs: dict[str, GraphReference] = {}
+    # Dedupe by title; keep first occurrence (highest-ranked). Truncate
+    # each snippet so the agent's prompt stays bounded.
+    merged_refs: dict[str, Reference] = {}
     for src in sources:
-        snippet = (src.content or "")[:_GRAPH_SNIPPET_MAX_CHARS]
+        content = (src.content or "")[:_GRAPH_SNIPPET_MAX_CHARS]
         if src.content and len(src.content) > _GRAPH_SNIPPET_MAX_CHARS:
-            snippet = snippet + "\n... [truncated]"
-        ref = GraphReference(
+            content = content + "\n... [truncated]"
+        ref = Reference(
             title=src.title,
             link=src.link,
-            snippet=snippet,
+            content=content,
             source=src.source or "graphrag",
         )
         merged_refs.setdefault(ref.title or ref.link, ref)

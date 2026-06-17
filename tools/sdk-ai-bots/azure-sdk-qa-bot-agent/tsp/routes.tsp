@@ -37,6 +37,19 @@ interface Conversation {
   save(@body body: ConversationMessage): SaveConversationMessageResponse;
 }
 
+@route("/graph")
+interface Graph {
+  /** Run a GraphRAG Local-Search retrieval and return references.
+   * Called by the chat agent's search_knowledge_graph tool. Returns an
+   * empty references list (never 5xx) when the service is disabled,
+   * retrieval fails, or nothing matches, so the agent can degrade
+   * gracefully.
+   */
+  @route("/query")
+  @post
+  query(@body body: GraphQueryRequest): GraphSearchResult;
+}
+
 /** Legacy endpoints kept for backward compatibility. */
 @route("/")
 interface Legacy {

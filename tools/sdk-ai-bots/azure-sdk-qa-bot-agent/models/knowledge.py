@@ -127,42 +127,20 @@ class SearchKnowledgeBaseResult(BaseModel):
     results: list[Reference] = []
 
 
-class GraphReference(BaseModel):
-    """A single reference returned by the search_knowledge_graph tool.
-
-    Lighter than ``Reference`` — graph hits are grounded via
-    entity-description matching and 1-hop relationship expansion rather
-    than text-chunk vector search, so we expose only the visible
-    citation fields (no score). The ``snippet`` carries one
-    representative text-unit chunk per source document so the agent
-    can ground its answer the same way it does for KB chunks. The
-    ``source`` mirrors :class:`KnowledgeChunk.source` and carries the
-    originating ``KnowledgeSource.name`` (e.g. ``"typespec_docs"``) so
-    the merged reference list looks consistent between KB and graph
-    hits.
-    """
-
-    title: str
-    link: str = ""
-    snippet: str = ""
-    source: str = ""
-
-    @field_validator("title", mode="after")
-    @classmethod
-    def _strip_trailing_pipes(cls, v: str) -> str:
-        return v.strip().rstrip("| ").strip()
-
-
 class GraphSearchResult(BaseModel):
     """Output of the search_knowledge_graph tool call.
 
     Mirrors ``SearchKnowledgeBaseResult`` in spirit: a flat list of
-    references plus the echoed query. The graph tool is a *retrieval*
-    tool — like the KB tool — and the chat agent's own LLM synthesises
-    the final answer over both sets of references.
+    :class:`Reference` objects plus the echoed query. Graph hits reuse
+    the same ``Reference`` shape as KB hits so the merged reference list
+    is uniform — ``content`` carries one representative text-unit chunk
+    per source document and ``source`` carries the originating
+    ``KnowledgeSource.name`` (e.g. ``"typespec_docs"``). The graph tool
+    is a *retrieval* tool — like the KB tool — and the chat agent's own
+    LLM synthesises the final answer over both sets of references.
     """
 
-    references: list[GraphReference] = []
+    references: list[Reference] = []
     query: str = ""
 
 

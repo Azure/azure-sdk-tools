@@ -73,40 +73,8 @@ def test_chat_service_returns_none_when_user_id_empty() -> None:
     assert service._resolve_memory_scope(whitespace_id) is None
 
 
-def test_graph_refs_to_references_preserves_metadata() -> None:
-    """Graph references should round-trip into Reference; ``source`` is
-    preserved from the GraphReference so KB-style attribution
-    (e.g. ``"typespec_docs"``) flows into the merged list, with the
-    legacy ``"graphrag"`` value retained as the safe default."""
-    from models.knowledge import GraphReference
-    from services.chat_service import _graph_refs_to_references
-
-    graph_refs = [
-        GraphReference(
-            title="Doc A",
-            link="https://example.com/a",
-            snippet="excerpt",
-        ),
-        GraphReference(
-            title="Doc B",
-            link="https://example.com/b",
-            snippet="excerpt-b",
-            source="typespec_docs",
-        ),
-    ]
-    refs = _graph_refs_to_references(graph_refs)
-    assert len(refs) == 2
-    assert refs[0].title == "Doc A"
-    assert refs[0].link == "https://example.com/a"
-    assert refs[0].source == "graphrag"
-    assert refs[0].content == "excerpt"
-    # Real KB source name must propagate through, not be overwritten.
-    assert refs[1].source == "typespec_docs"
-    assert refs[1].content == "excerpt-b"
-
-
-def test_merge_references_dedups_by_link_and_title() -> None:
-    """Vector wins on conflicts (primary-source evidence first)."""
+def test_merge_references_dedups_by_link_only() -> None:
+    """Vector wins on link conflicts; non-conflicting graph hits appended."""
     from models.knowledge import Reference
     from services.chat_service import _merge_references
 
@@ -115,15 +83,18 @@ def test_merge_references_dedups_by_link_and_title() -> None:
         Reference(title="Doc B", source="ai_search", link="https://example.com/b", content="VEC-B"),
     ]
     graph = [
-        Reference(title="Doc A", source="graphrag", link="https://example.com/a", content="GRAPH"),
+        # Same link as vector Doc A — even with a different title, dedup by
+        # link drops it and the vector copy wins.
+        Reference(title="Doc A (graph title)", source="graphrag", link="https://example.com/a", content="GRAPH"),
         Reference(title="Doc C", source="graphrag", link="https://example.com/c", content="GRAPH-C"),
     ]
 
     merged = _merge_references(vector, graph)
     titles = [r.title for r in merged]
-    # Doc A deduped (vector wins), Doc B kept, Doc C appended.
+    # Doc A deduped by link (vector wins), Doc B kept, Doc C appended.
     assert titles == ["Doc A", "Doc B", "Doc C"]
-    # Vector copy survived.
+    # Vector copy survived (verbatim title + content, not the graph variant).
+    assert merged[0].title == "Doc A"
     assert merged[0].content == "VECTOR"
     assert merged[0].source == "ai_search"
 

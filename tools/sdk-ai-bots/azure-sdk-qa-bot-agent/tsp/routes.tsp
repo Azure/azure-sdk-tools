@@ -50,6 +50,14 @@ interface Graph {
   query(@body body: GraphQueryRequest): GraphSearchResult;
 }
 
+@route("/knowledge")
+interface Knowledge {
+  /* retrieve knowledge for a user request. */
+  @route("/retrieve")
+  @post
+  retrieve(@body body: KnowledgeRetrieveRequest): KnowledgeRetrieveResponse;
+}
+
 /** Legacy endpoints kept for backward compatibility. */
 @route("/")
 interface Legacy {

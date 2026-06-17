@@ -132,7 +132,7 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
         }
         if (SpecChangeRequired is { Count: > 0 })
         {
-            sb.AppendLine("Requires a separate spec-repo PR (out of scope for custom-code repair):");
+            sb.AppendLine("Spec-level fix preferred (shift-left): the canonical fix for the following belongs in the spec inputs (e.g. a @@clientName/@@access decorator in client.tsp), not in custom code. They were reported here, not applied, and should be migrated to a spec-repo PR:");
             foreach (var item in SpecChangeRequired)
             {
                 sb.AppendLine($"  - {item}");

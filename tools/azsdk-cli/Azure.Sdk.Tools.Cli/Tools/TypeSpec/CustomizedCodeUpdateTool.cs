@@ -87,13 +87,16 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         Required = true
     };
 
+    // Design intent: when editScope is CustomCode, the tool may apply custom-code workarounds for issues
+    // that could also be fixed via client.tsp. This is by design to unblock users who are already in the
+    // SDK (language) repo with a failing build, NOT because custom code is the ideal fix. The preferred
+    // ("shift-left") path remains client.tsp; spec-level items are surfaced via SpecChangeRequired so the
+    // resulting tech debt is visible and measurable, never silent.
     private readonly Option<EditScope> editScopeOption = new("--edit-scope")
     {
-        Description = "Which source categories the tool may edit (flags). All (default): both custom code and spec inputs " +
-                      "(client.tsp) may be edited. CustomCode: custom (non-generated) code only — never edits spec inputs " +
-                      "(client.tsp/tspconfig.yaml) or moves the pinned spec commit; failures requiring a spec change are " +
-                      "reported as out of scope (errorCode 'SpecChangeRequired') instead of applied. Regenerating Generated/ " +
-                      "from the unchanged pinned commit is always allowed.",
+        Description = "Which source categories the tool may edit (flags: All, CustomCode, SpecInputs; default All). " +
+                      "CustomCode restricts edits to custom (non-generated) code; spec-level failures are reported as " +
+                      "out of scope (errorCode 'SpecChangeRequired') rather than applied.",
         Required = false,
         DefaultValueFactory = _ => EditScope.All
     };
@@ -573,6 +576,14 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             }
         }
 
+        // Data tracking (per Laurent/Sam): record the spec-vs-custom-code split so we can measure how often
+        // the tool falls back to custom-code workarounds vs. items that belong in client.tsp. A high
+        // custom-code ratio is a signal that "shift-left" is not catching enough upstream. This is emitted
+        // for every run regardless of edit scope so the split is observable in logs/telemetry.
+        logger.LogInformation(
+            "Customized code update split (editScope={EditScope}): tspApplied={TspApplied}, codeCustomizations={CodeCustomizations}, specChangeRequired={SpecChangeRequired}, customCodeChangeRequired={CustomCodeChangeRequired}, manualIntervention={ManualIntervention}",
+            editScope, tspFixSucceeded, codeCustomizations, specChangeRequired.Count, customCodeChangeRequired.Count, manualInterventions.Count);
+
         // Build for error context if no build happened yet (pure CODE_CUSTOMIZATION path or regen failed)
         if (!buildSucceeded && buildError == null)
         {
@@ -720,6 +731,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     : "Build passed after code customization patches, but some items require manual intervention.",
                 TypeSpecChangesSummary = changesMade,
                 AppliedPatches = patches,
+                SpecChangeRequired = specChangeRequired.Count > 0 ? specChangeRequired : null,
                 NextSteps = manualInterventions,
                 ErrorCode = manualInterventions.Count > 0 ? CustomizedCodeUpdateResponse.KnownErrorCodes.ManualInterventionRequired : null,
             });
@@ -738,6 +750,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             BuildResult = finalBuildError,
             TypeSpecChangesSummary = changesMade,
             AppliedPatches = patches,
+            SpecChangeRequired = specChangeRequired.Count > 0 ? specChangeRequired : null,
             NextSteps = manualInterventions,
         });
         }

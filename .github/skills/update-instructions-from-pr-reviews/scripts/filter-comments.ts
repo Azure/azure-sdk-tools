@@ -280,17 +280,13 @@ export const AUTHOR_REPLY_PATTERNS: RegExp[] = [
  *   2. Reviewer-to-reviewer chatter. Agreement like "Good catch, let's
  *      remove it" from one reviewer endorsing another is conversational
  *      noise, not a reviewer ask. Text-matching tags it "reply" correctly.
- *
- * Validation (Azure/azure-dev cache, 199 PRs over 30 days): of 183 inline
- * comments tagged "reply", 178 (97%) came from the PR author and 5 are the
- * cases above. Exactly one substantive comment was misclassified ("Thanks
- * for the suggestion. This seems a bit overkill — will defer…") — an
- * acceptable trade.
  */
-export function inferKind(source: CommentSource, body: string): CommentKind {
+export function inferCommentKind(source: CommentSource, body: string): CommentKind {
     if (source === "review") return "summary";
+    
     const trimmed = body.trim();
     if (AUTHOR_REPLY_PATTERNS.some((re) => re.test(trimmed))) return "reply";
+
     return "ask";
 }
 
@@ -456,7 +452,7 @@ export function filterPullRequestData(
 
         const id = "id" in c ? c.id : undefined;
         const trimmed = c.body.trim();
-        const kind = inferKind(c._source, trimmed);
+        const kind = inferCommentKind(c._source, trimmed);
         if (opts.kinds && !opts.kinds.has(kind)) {
             dropped.kindFiltered++;
             continue;

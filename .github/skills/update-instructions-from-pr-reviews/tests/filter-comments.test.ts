@@ -11,7 +11,7 @@ import {
     classifyComment,
     DEFAULT_BOT_LOGINS,
     filterPullRequestData,
-    inferKind,
+    inferCommentKind,
     isAutomationBoilerplate,
     isBot,
     isQuotedOnly,
@@ -469,23 +469,23 @@ describe("classify with automation markers", () => {
 
 describe("inferKind", () => {
     it("review source is always 'summary'", () => {
-        assert.equal(inferKind("review", "anything here"), "summary");
+        assert.equal(inferCommentKind("review", "anything here"), "summary");
     });
 
     it("inline body starting with 'Fixed' is 'reply'", () => {
-        assert.equal(inferKind("inline", "Fixed in abc123, thanks!"), "reply");
+        assert.equal(inferCommentKind("inline", "Fixed in abc123, thanks!"), "reply");
     });
 
     it("inline body starting with 'Addressed' is 'reply'", () => {
         assert.equal(
-            inferKind("inline", "Addressed in the last commit."),
+            inferCommentKind("inline", "Addressed in the last commit."),
             "reply",
         );
     });
 
     it("inline body starting with 'Good catch' is 'reply'", () => {
         assert.equal(
-            inferKind("inline", "Good catch — pushed a fix."),
+            inferCommentKind("inline", "Good catch — pushed a fix."),
             "reply",
         );
     });
@@ -500,13 +500,13 @@ describe("inferKind", () => {
             "yes, added --version flag to support this.",
         ];
         for (const sample of samples) {
-            assert.equal(inferKind("inline", sample), "reply", sample);
+            assert.equal(inferCommentKind("inline", sample), "reply", sample);
         }
     });
 
     it("substantive feedback is 'ask'", () => {
         assert.equal(
-            inferKind(
+            inferCommentKind(
                 "inline",
                 "Please wrap this error using fmt.Errorf with %w.",
             ),

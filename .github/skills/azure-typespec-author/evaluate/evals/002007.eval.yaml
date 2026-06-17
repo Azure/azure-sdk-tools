@@ -15,103 +15,182 @@ config:
 
 # Test cases
 stimuli:
-- prompt: |
-    @azure-typespec-author Add an additional POST action called "/notify" to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). Ensure the definition meets TypeSpec Azure design guidelines.
-  name: 002007-ARM-define-custom-action
+- name: 002007-ARM-define-custom-action-trigger
+  tags:
+    suite: 'armtemplate'
+    mode: 'trigger'
+  prompt: |
+    Add an additional POST action called "/notify" to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). Ensure the definition meets TypeSpec Azure design guidelines.
+  environment: &shared_environment
+    files:
+      - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+        dest: employee.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+        dest: main.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: package-lock.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: package.json
+      - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+        dest: readme.md
+      - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+        dest: shared.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+        dest: tspconfig.yaml
+      - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+        dest: preview/2024-10-01-preview/widget.json
+      - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+        dest: stable/2021-11-01/widget.json
+    commands:
+      - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
+  - type: 'skill-invocation'
+    config:
+      required:
+        - 'azure-typespec-author'
   constraints:
     max_turns: 5
     max_tokens: 1000000
-  environment:
-    files:
-    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
-      dest: employee.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
-      dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
-    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
-      dest: readme.md
-    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
-      dest: shared.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
-      dest: tspconfig.yaml
-    - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
-      dest: stable/2021-11-01/widget.json
-    - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
-      dest: preview/2024-10-01-preview/widget.json
-    commands:
-      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
+- name: 002007-ARM-define-custom-action-forced
+  tags:
+    suite: 'armtemplate'
+    mode: 'forced'
+  prompt: |
+    @azure-typespec-author Add an additional POST action called "/notify" to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). Ensure the definition meets TypeSpec Azure design guidelines.
+  environment: *shared_environment
   graders:
-  - type: tool-calls
+  - type: 'tool-calls'
     config:
       required:
-        - edit
-        - web_fetch
-        - azure-sdk-mcp-azsdk_run_typespec_validation
-  # VP1: Extensible enum for notification priority levels (Low, Medium, High)
-  - type: skill-invocation
+        - 'edit'
+        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
+  - type: 'file-matches'
+    config:
+      pattern: 'union.*Priority|enum.*Priority'
+      path: 'employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'Low|"Low"'
+      path: 'employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'Medium|"Medium"'
+      path: 'employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'High|"High"'
+      path: 'employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'model.*Notify.*Request|model.*Notification.*Request'
+      path: 'employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'message.*:\s*string|content.*:\s*string'
+      path: 'employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'priority.*:\s*.*Priority'
+      path: 'employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'model.*Notify.*Response|model.*Notification.*Response'
+      path: 'employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'notificationId.*:\s*string|identifier.*:\s*string'
+      path: 'employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'status.*:\s*string'
+      path: 'employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'notify is ArmResourceActionSync<|notify is ArmResourceActionAsync<|notify is ArmResourceAction<'
+      path: 'employee.tsp'
+  - type: 'prompt'
+    config:
+      threshold: 1
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
+  constraints:
+    max_turns: 5
+    max_tokens: 1000000
+- name: 002007-ARM-define-custom-action-no-skill
+  tags:
+    suite: 'armtemplate'
+    mode: 'no-skill'
+  prompt: 'Add an additional POST action called "/notify" to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). Ensure the definition meets TypeSpec Azure design guidelines.'
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
     config:
       required:
-        - azure-typespec-author
-  - type: file-matches
+        - 'edit'
+  - type: 'file-matches'
     config:
       path: 'employee.tsp'
-      pattern: union.*Priority|enum.*Priority
-  - type: file-matches
+      pattern: 'union.*Priority|enum.*Priority'
+  - type: 'file-matches'
     config:
       path: 'employee.tsp'
       pattern: 'Low|"Low"'
-  - type: file-matches
+  - type: 'file-matches'
     config:
       path: 'employee.tsp'
       pattern: 'Medium|"Medium"'
-  - type: file-matches
+  - type: 'file-matches'
     config:
       path: 'employee.tsp'
       pattern: 'High|"High"'
-  # VP2: Request model with message content (string) and priority fields
-  - type: file-matches
+  - type: 'file-matches'
     config:
       path: 'employee.tsp'
-      pattern: model.*Notify.*Request|model.*Notification.*Request
-  - type: file-matches
+      pattern: 'model.*Notify.*Request|model.*Notification.*Request'
+  - type: 'file-matches'
     config:
       path: 'employee.tsp'
       pattern: 'message.*:\s*string|content.*:\s*string'
-  - type: file-matches
+  - type: 'file-matches'
     config:
       path: 'employee.tsp'
       pattern: 'priority.*:\s*.*Priority'
-  # VP3: Response model with notification identifier (string) and status (string)
-  - type: file-matches
+  - type: 'file-matches'
     config:
       path: 'employee.tsp'
-      pattern: model.*Notify.*Response|model.*Notification.*Response
-  - type: file-matches
+      pattern: 'model.*Notify.*Response|model.*Notification.*Response'
+  - type: 'file-matches'
     config:
       path: 'employee.tsp'
       pattern: 'notificationId.*:\s*string|identifier.*:\s*string'
-  - type: file-matches
+  - type: 'file-matches'
     config:
       path: 'employee.tsp'
       pattern: 'status.*:\s*string'
-  # VP4: Synchronous notify action on Employees interface
-  - type: file-matches
+  - type: 'file-matches'
     config:
       path: 'employee.tsp'
       pattern: 'notify is ArmResourceActionSync<|notify is ArmResourceActionAsync<|notify is ArmResourceAction<'
-  - type: prompt
+  - type: 'prompt'
     config:
-      scoring: scale_1_5
-      threshold: 1.0
       prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
-      model: claude-opus-4.6
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      threshold: 1.0
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+
 scoring:
   weights:
+    prompt: 1
     tool-calls: 1
     skill-invocation: 1
-    prompt: 1
     file-matches: 11
-  threshold: 1.0
+  threshold: 1

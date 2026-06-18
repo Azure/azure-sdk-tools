@@ -1,6 +1,6 @@
 # Release History
 
-## 0.6.21 (Unreleased)
+## 0.6.21 (2026-06-18)
 
 ### Features Added
 
@@ -13,9 +13,10 @@
 
 - Removed upstream RAG-based/hosted model pipeline analysis mode via `azsdk azp analyze --agent`
 
-### Bugs Fixed
-
 ### Other Changes
+
+- Added service ID and product ID as optional when creating a release plan
+- Replaced product life cycle property with release plan type when fetching attestation status
 
 ## 0.6.20 (2026-06-16)
 

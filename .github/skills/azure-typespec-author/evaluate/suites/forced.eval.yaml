@@ -946,7 +946,7 @@ stimuli:
   tags:
     suite: armtemplate
   prompt: |
-    @azure-typespec-author Define a "badge assignment" extension resource. It should be an extension resource that can be attached to an employee. Ensure the definition meets TypeSpec Azure design guidelines.
+    @azure-typespec-author Define a "badge assignment" extension resource. It should be an extension resource that attaches to an employee. Ensure the definition meets TypeSpec Azure design guidelines.
   constraints:
     max_turns: 6
     max_tokens: 100000

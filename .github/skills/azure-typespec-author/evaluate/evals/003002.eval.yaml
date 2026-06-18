@@ -108,7 +108,7 @@ stimuli:
   - type: 'file-matches'
     config:
       path: 'employee.tsp'
-      pattern: 'ArmAsyncOperationHeader<FinalResult\s*=\s*Employee>'
+      pattern: 'ArmAsyncOperationHeader\s*<\s*(FinalResult\s*=\s*Employee|ArmOperationStatus\s*,\s*string\s*,\s*Employee)\s*>'
   - type: 'file-matches'
     config:
       path: 'employee.tsp'

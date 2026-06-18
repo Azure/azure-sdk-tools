@@ -41,7 +41,6 @@ stimuli:
   - type: 'tool-calls'
     config:
       required:
-        - 'edit'
         - 'azure-sdk-mcp-azsdk_run_typespec_validation'
   - type: 'skill-invocation'
     config:

@@ -70,7 +70,7 @@ $ErrorActionPreference = 'Stop'
 $KnownRepos = @{
     'azure-rest-api-specs' = @{
         Url    = 'https://github.com/Azure/azure-rest-api-specs.git'
-        Sparse = @('specification/contosowidgetmanager')
+        Sparse = @('specification/contosowidgetmanager', 'specification/ai/Face')
     }
 }
 

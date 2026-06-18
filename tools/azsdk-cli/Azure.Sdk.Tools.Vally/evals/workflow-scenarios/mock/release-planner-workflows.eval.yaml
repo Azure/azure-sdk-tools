@@ -37,6 +37,10 @@ stimuli:
     # Spec-repo worktree fixture: defined once here and aliased by the stimuli
     # below. CI clones it via scripts/Prime-EvalGitFixtures.ps1 before this suite.
     environment: &specsWorktree
+      # Load the real release-planning skill so the executor can route to it.
+      # Path is relative to this eval file (6 levels up = repo root).
+      skills:
+        - ../../../../../../.github/skills/azsdk-common-prepare-release-plan
       git:
         type: worktree
         source: ../../../../../../artifacts/specs-cache/azure-rest-api-specs
@@ -96,11 +100,9 @@ stimuli:
         config:
           required:
             - azsdk-common-prepare-release-plan
-          # The generate half of this flow uses azsdk_run_generate_sdk, which is
-          # a pipeline-driven release-planner tool, NOT a local TypeSpec build.
-          # azsdk-common-generate-sdk-locally over-matches on the word "generate"
-          # and pulls in the wrong (local clone -> emit -> build -> test) flow.
-          # See https://github.com/Azure/azure-sdk-tools/issues/15950.
+          # generate half uses azsdk_run_generate_sdk (a release-planner pipeline
+          # tool); azsdk-common-generate-sdk-locally over-matches "generate" —
+          # see https://github.com/Azure/azure-sdk-tools/issues/15950.
           disallowed:
             - azsdk-common-generate-sdk-locally
       - type: tool-calls
@@ -130,9 +132,8 @@ stimuli:
         config:
           required:
             - azsdk-common-prepare-release-plan
-          # azsdk_run_generate_sdk is a release-planner pipeline tool, not a
-          # local TypeSpec build. azsdk-common-generate-sdk-locally over-matches
-          # on the word "generate" and pulls in the wrong workflow. See
+          # azsdk_run_generate_sdk is a release-planner pipeline tool; the
+          # generate-sdk-locally skill over-matches "generate" — see
           # https://github.com/Azure/azure-sdk-tools/issues/15950.
           disallowed:
             - azsdk-common-generate-sdk-locally

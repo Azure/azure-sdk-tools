@@ -29,9 +29,9 @@ public class PackageWorkItemTool(
         Required = false,
     };
 
-    private readonly Option<string> packageVersionMajorMinorOpt = new("--package-version", "--package-version-major-minor")
+    private readonly Option<string> packageVersionMajorMinorOpt = new("--package-version")
     {
-        Description = "SDK package major/minor version (for example, 12.30).",
+        Description = "SDK package version. Accepts major (12), major.minor (12.30), or full SemVer (12.30.1[-suffix]).",
         Required = false,
     };
 
@@ -51,6 +51,13 @@ public class PackageWorkItemTool(
     {
         Description = "Azure DevOps work item field patch in key=value format. Repeat to patch multiple fields.",
         Required = true,
+        AllowMultipleArgumentsPerToken = false,
+    };
+
+    private readonly Option<string[]> multilineFieldsFormatOpt = new("--multiline-fields-format")
+    {
+        Description = "Azure DevOps multiline field format in key=value format. Repeat to set multiple field formats. Supported values: html, markdown.",
+        Required = false,
         AllowMultipleArgumentsPerToken = false,
     };
 
@@ -76,7 +83,7 @@ public class PackageWorkItemTool(
     private Command GetUpdateWorkItemCommand() =>
         new(UpdateWorkItemCommandName, "Update the Azure DevOps package work item")
         {
-            packageNameOpt, packageVersionMajorMinorOpt, languageOpt, workItemIdOpt, fieldsOpt
+            packageNameOpt, packageVersionMajorMinorOpt, languageOpt, workItemIdOpt, fieldsOpt, multilineFieldsFormatOpt
         };
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
@@ -87,10 +94,11 @@ public class PackageWorkItemTool(
             var packageVersionMajorMinor = parseResult.GetValue(packageVersionMajorMinorOpt);
             var language = parseResult.GetValue(languageOpt);
             var workItemId = parseResult.GetValue(workItemIdOpt);
+            var multilineFieldFormats = ParseMultilineFieldFormats(parseResult.GetValue(multilineFieldsFormatOpt));
             return parseResult.CommandResult.Command.Name switch
             {
                 GetWorkItemCommandName => await GetPackageWorkItem(packageName, packageVersionMajorMinor, language, workItemId, ct),
-                UpdateWorkItemCommandName => await UpdatePackageWorkItem(packageName, packageVersionMajorMinor, language, ParseFields(parseResult.GetValue(fieldsOpt)), workItemId, ct),
+                UpdateWorkItemCommandName => await UpdatePackageWorkItem(packageName, packageVersionMajorMinor, language, ParseFields(parseResult.GetValue(fieldsOpt)), multilineFieldFormats, workItemId, ct),
                 _ => new DefaultCommandResponse { ResponseError = $"Unsupported package work item command '{parseResult.CommandResult.Command.Name}'." },
             };
         }
@@ -142,9 +150,15 @@ public class PackageWorkItemTool(
     }
 
     public async Task<RawPackageWorkItemResponse> UpdatePackageWorkItem(string packageName, string packageVersionMajorMinor, string language, Dictionary<string, string> fields, CancellationToken ct = default)
-        => await UpdatePackageWorkItem(packageName, packageVersionMajorMinor, language, fields, workItemId: null, ct);
+        => await UpdatePackageWorkItem(packageName, packageVersionMajorMinor, language, fields, multilineFieldFormats: [], workItemId: null, ct);
+
+    public async Task<RawPackageWorkItemResponse> UpdatePackageWorkItem(string packageName, string packageVersionMajorMinor, string language, Dictionary<string, string> fields, Dictionary<string, string> multilineFieldFormats, CancellationToken ct = default)
+        => await UpdatePackageWorkItem(packageName, packageVersionMajorMinor, language, fields, multilineFieldFormats, workItemId: null, ct);
 
     public async Task<RawPackageWorkItemResponse> UpdatePackageWorkItem(string? packageName, string? packageVersionMajorMinor, string? language, Dictionary<string, string> fields, int? workItemId, CancellationToken ct = default)
+        => await UpdatePackageWorkItem(packageName, packageVersionMajorMinor, language, fields, multilineFieldFormats: [], workItemId, ct);
+
+    public async Task<RawPackageWorkItemResponse> UpdatePackageWorkItem(string? packageName, string? packageVersionMajorMinor, string? language, Dictionary<string, string> fields, Dictionary<string, string> multilineFieldFormats, int? workItemId, CancellationToken ct = default)
     {
         var response = new RawPackageWorkItemResponse
         {
@@ -166,7 +180,7 @@ public class PackageWorkItemTool(
                 return response;
             }
 
-            var updatedWorkItem = await devOpsService.UpdateWorkItemAsync(workItemLookup.WorkItemId, fields, ct);
+            var updatedWorkItem = await devOpsService.UpdateWorkItemAsync(workItemLookup.WorkItemId, fields, multilineFieldFormats, ct);
             return MapWorkItemToRawModel(updatedWorkItem);
         }
         catch (Exception ex)
@@ -256,7 +270,7 @@ public class PackageWorkItemTool(
 
         if (string.IsNullOrWhiteSpace(packageVersionMajorMinor))
         {
-            response.ResponseError = "Package version major/minor cannot be null or empty.";
+            response.ResponseError = "Package version cannot be null or empty.";
             return response;
         }
 
@@ -278,7 +292,7 @@ public class PackageWorkItemTool(
 
         response.PackageVersionMajorMinor = packageVersionMajorMinor;
 
-        logger.LogDebug("Finding package work item for package {packageName}, package version major/minor {packageVersionMajorMinor}, language {language}.", packageName, packageVersionMajorMinor, language);
+        logger.LogDebug("Finding package work item for package {packageName}, package version {packageVersionMajorMinor}, language {language}.", packageName, packageVersionMajorMinor, language);
         var workItemIds = await devOpsService.FindPackageWorkItemIdsAsync(packageName, language, packageVersionMajorMinor, ct);
 
         if (workItemIds.Count == 0)
@@ -317,6 +331,28 @@ public class PackageWorkItemTool(
         }
 
         return parsedFields;
+    }
+
+    private static Dictionary<string, string> ParseMultilineFieldFormats(string[]? multilineFieldFormats)
+    {
+        var parsedFormats = ParseFields(multilineFieldFormats);
+        if (parsedFormats.Count == 0)
+        {
+            return parsedFormats;
+        }
+
+        foreach (var key in parsedFormats.Keys.ToList())
+        {
+            var value = parsedFormats[key].Trim();
+            parsedFormats[key] = value.ToLowerInvariant() switch
+            {
+                "markdown" => "Markdown",
+                "html" => "Html",
+                _ => throw new ArgumentException($"Invalid multiline field format '{value}' for field '{key}'. Supported values are: html, markdown."),
+            };
+        }
+
+        return parsedFormats;
     }
 
     private static string UnescapeFieldValue(string value)

@@ -161,7 +161,7 @@ public class PackageWorkItemToolTests
         devOpsService.Setup(service => service.FindPackageWorkItemIdsAsync("azure-storage-blob", "Python", "12.30", It.IsAny<CancellationToken>()))
             .ReturnsAsync([31370]);
         devOpsService.Setup(service => service.UpdateWorkItemAsync(31370, It.Is<Dictionary<string, string>>(fields =>
-                fields["System.State"] == "Resolved" && fields["Custom.APIReviewStatus"] == "Approved"), It.IsAny<CancellationToken>()))
+            fields["System.State"] == "Resolved" && fields["Custom.APIReviewStatus"] == "Approved"), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreatePackageWorkItem(31370, "azure-storage-blob", "12.30", "Python", "Resolved"));
 
         var result = await tool.UpdatePackageWorkItem("azure-storage-blob", "12.30", "Python", new Dictionary<string, string>
@@ -216,7 +216,7 @@ public class PackageWorkItemToolTests
     [Test]
     public async Task UpdatePackageWorkItemUsesWorkItemIdWhenProvidedWithoutMetadata()
     {
-        devOpsService.Setup(service => service.UpdateWorkItemAsync(31370, It.Is<Dictionary<string, string>>(fields => fields["System.State"] == "Resolved"), It.IsAny<CancellationToken>()))
+        devOpsService.Setup(service => service.UpdateWorkItemAsync(31370, It.Is<Dictionary<string, string>>(fields => fields["System.State"] == "Resolved"), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreatePackageWorkItem(31370, "azure-storage-blob", "12.30", "Python", "Resolved"));
 
         var result = await tool.UpdatePackageWorkItem(null, null, null, new Dictionary<string, string>
@@ -269,7 +269,7 @@ public class PackageWorkItemToolTests
             Assert.That(result.ResponseError, Does.Contain("does not match"));
         });
 
-        devOpsService.Verify(service => service.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Never);
+        devOpsService.Verify(service => service.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]
@@ -310,7 +310,7 @@ public class PackageWorkItemToolTests
         var parseResult = getCommand.Parse("--package-name azure-storage-blob --package-version 12.30 --language Python", parseConfig);
         Assert.That(parseResult.Errors, Is.Empty);
 
-        parseResult = getCommand.Parse("--package-name azure-storage-blob --package-version-major-minor 12.30 --language Python", parseConfig);
+        parseResult = getCommand.Parse("--package-name azure-storage-blob --package-version 12.30.1-beta.1 --language Python", parseConfig);
         Assert.That(parseResult.Errors, Is.Empty);
 
         parseResult = getCommand.Parse("--work-item-id 31370", parseConfig);
@@ -324,6 +324,9 @@ public class PackageWorkItemToolTests
         Assert.That(parseResult.Errors, Is.Empty);
 
         parseResult = updateCommand.Parse("--work-item-id 31370 --field System.State=Resolved", parseConfig);
+        Assert.That(parseResult.Errors, Is.Empty);
+
+        parseResult = updateCommand.Parse("--work-item-id 31370 --field System.State=Resolved --multiline-fields-format Custom.PendingAPIReviews=markdown", parseConfig);
         Assert.That(parseResult.Errors, Is.Empty);
     }
 
@@ -352,7 +355,7 @@ public class PackageWorkItemToolTests
     public async Task HandleCommandUnescapesNewlineInFieldPatchValues()
     {
         devOpsService.Setup(service => service.UpdateWorkItemAsync(31370, It.Is<Dictionary<string, string>>(fields =>
-                fields["Custom.PendingAPIReviews"] == "Test\nTest3"), It.IsAny<CancellationToken>()))
+            fields["Custom.PendingAPIReviews"] == "Test\nTest3"), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreatePackageWorkItem(31370, "azure-storage-blob", "12.30", "Python"));
 
         var updateCommand = tool.GetCommandInstances().Single(command => command.Name == "update-work-item");
@@ -367,6 +370,51 @@ public class PackageWorkItemToolTests
         var result = await tool.HandleCommand(parseResult, CancellationToken.None);
 
         Assert.That(result.ExitCode, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task HandleCommandPassesMultilineFieldFormatsToService()
+    {
+        devOpsService.Setup(service => service.UpdateWorkItemAsync(
+                31370,
+                It.Is<Dictionary<string, string>>(fields => fields["Custom.PendingAPIReviews"] == "Test\nTest3"),
+            It.Is<Dictionary<string, string>>(formats => formats["Custom.PendingAPIReviews"] == "Markdown"),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreatePackageWorkItem(31370, "azure-storage-blob", "12.30", "Python"));
+
+        var updateCommand = tool.GetCommandInstances().Single(command => command.Name == "update-work-item");
+        var parseConfig = new CommandLineConfiguration(updateCommand)
+        {
+            ResponseFileTokenReplacer = null
+        };
+
+        var parseResult = updateCommand.Parse("--work-item-id 31370 --field Custom.PendingAPIReviews=Test\\nTest3 --multiline-fields-format Custom.PendingAPIReviews=markdown", parseConfig);
+        Assert.That(parseResult.Errors, Is.Empty);
+
+        var result = await tool.HandleCommand(parseResult, CancellationToken.None);
+
+        Assert.That(result.ExitCode, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task HandleCommandReturnsErrorForInvalidMultilineFieldFormat()
+    {
+        var updateCommand = tool.GetCommandInstances().Single(command => command.Name == "update-work-item");
+        var parseConfig = new CommandLineConfiguration(updateCommand)
+        {
+            ResponseFileTokenReplacer = null
+        };
+
+        var parseResult = updateCommand.Parse("--work-item-id 31370 --field System.State=Resolved --multiline-fields-format Custom.PendingAPIReviews=foo", parseConfig);
+        Assert.That(parseResult.Errors, Is.Empty);
+
+        var result = await tool.HandleCommand(parseResult, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(1));
+            Assert.That(result.ResponseError, Does.Contain("Invalid multiline field format"));
+        });
     }
 
     private static WorkItem CreatePackageWorkItem(

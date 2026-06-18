@@ -71,9 +71,6 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         [FieldName("Custom.AttestationStatus")]
         public string AttestationStatus { get; set; } = string.Empty;
 
-        [FieldName("Custom.ProductLifecycle")]
-        public string ProductLifecycle { get; set; } = string.Empty;
-
         [FieldName("Custom.ReleasePlanType")]
         public string ReleasePlanType { get; set; } = string.Empty;
 

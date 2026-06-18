@@ -183,7 +183,7 @@ stages:
                 -OutputDir "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)"
                 -SkillEvalPrefix "$(Build.SourcesDirectory)/eng/skill-eval"
                 -Threshold 0.8
-            workingDirectory: '$(vallyRoot)'
+              workingDirectory: '$(vallyRoot)'
             env:
               GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
 

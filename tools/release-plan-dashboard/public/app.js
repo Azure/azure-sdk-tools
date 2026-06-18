@@ -963,10 +963,9 @@
       if (hasFirstGA)
         releaseTagBadge += '<span class="badge badge-first-ga">First GA</span>';
     }
-    const missingProductBadge =
-      !p.productId
-        ? '<span class="badge badge-missing-product">Missing product details</span>'
-        : "";
+    const missingProductBadge = !p.productId
+      ? '<span class="badge badge-missing-product">Missing product details</span>'
+      : "";
     const isExpanded = !!store().ui.expandedPlans[p.id];
     const summaryClass = isExpanded ? "card-summary expanded" : "card-summary";
     const detailsClass = isExpanded ? "card-details open" : "card-details";

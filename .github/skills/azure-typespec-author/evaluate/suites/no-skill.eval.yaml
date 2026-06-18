@@ -1434,7 +1434,7 @@ stimuli:
   - type: file-matches
     config:
       path: employee.tsp
-      pattern: 'ArmCombinedLroHeaders\s*<\s*FinalResult\s*=\s*MoveResponse\s*>'
+      pattern: 'ArmCombinedLroHeaders\s*<\s*(FinalResult\s*=\s*MoveResponse|ArmOperationStatus\s*,\s*MoveResponse|(Azure\.ResourceManager\.)?ArmOperationStatus\s*,\s*MoveResponse)\s*>'
   - type: prompt
     config:
       scoring: scale_1_5
@@ -1477,7 +1477,7 @@ stimuli:
   - type: file-matches
     config:
       path: employee.tsp
-      pattern: 'ArmAsyncOperationHeader<FinalResult\s*=\s*Employee>'
+      pattern: 'ArmAsyncOperationHeader\s*<\s*(FinalResult\s*=\s*Employee|ArmOperationStatus\s*,\s*string\s*,\s*Employee)\s*>'
   # VP2: createOrUpdate uses ArmResourceCreateOrReplaceAsync with custom LroHeaders
   - type: file-matches
     config:

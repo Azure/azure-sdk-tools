@@ -4,7 +4,13 @@
 
 ### Features Added
 
+- Added UX and functionality improvements to `azp` sub-commands for pipeline analysis
+- Added --copilot mode to pipeline analysis to call the user's copilot CLI installation for processing
+- Enable pipeline analysis commands to take a GitHub PR link in addition to pipeline link or ID
+
 ### Breaking Changes
+
+- Removed upstream RAG-based/hosted model pipeline analysis mode via `azsdk azp analyze --agent`
 
 ### Bugs Fixed
 

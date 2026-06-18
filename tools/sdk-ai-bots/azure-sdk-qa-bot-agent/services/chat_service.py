@@ -26,7 +26,11 @@ from models.conversation import ConversationMessage
 from models.knowledge import DocumentContext, Reference, SearchKnowledgeBaseResult
 from services.conversation_service import ConversationService
 from tools import TOOL_REGISTRY
-from skills.tenant_skills import get_skill_to_tenant_map
+from skills.tenant_skills import (
+    build_skill_content,
+    get_skill_name_for_tenant,
+    get_skill_to_tenant_map,
+)
 from utils.azure_ai_foundry import (
     get_openai_client,
     get_project_client,
@@ -505,12 +509,21 @@ class ChatService:
         return items
 
     def _build_tenant_system_message(self, tenant_id: TenantID) -> str:
-        """Inject tenant context so the agent knows the current domain."""
+        """Inject tenant context + the default skill so the agent can route itself."""
         parts: list[str] = [f"[tenant_context] original_tenant_id={tenant_id.value}"]
 
         scope_desc = get_tenant_scope_description(tenant_id)
         if scope_desc:
             parts.append(f"\n[tenant_scope]\n{scope_desc}")
+
+        skill_name = get_skill_name_for_tenant(tenant_id)
+        skill_content = build_skill_content(tenant_id) if skill_name else ""
+        if skill_content:
+            parts.append(
+                f"\n[skill] name={skill_name} "
+                "(preloaded — do NOT call load_skill for this skill)\n"
+                f"{skill_content}"
+            )
 
         return "\n".join(parts)
 

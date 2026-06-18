@@ -193,9 +193,22 @@ stages:
         pool:
           vmImage: 'ubuntu-latest'
         steps:
-          - download: current
-            patterns: 'eval-result-*/**'
+          # Download every shard's JUnit into a DEDICATED folder (not the job's
+          # Pipeline.Workspace root, which also holds the repo checkout under `s/`).
+          # Two things matter here:
+          #   * itemPattern is matched per-artifact against the *bare* file path
+          #     (the artifact name is NOT a path segment at match time), so the
+          #     old `eval-result-*/**` matched nothing. Match the file itself.
+          #   * Scope to `*.junit.xml` so non-JUnit XML (e.g. .NET doc XML from the
+          #     mock DLL artifact) can never leak into the rollup as bogus shards.
+          # Each artifact still downloads into its own `eval-result-<shard>/` folder
+          # under targetPath, so the summary can recover the shard name from the path.
+          - task: DownloadPipelineArtifact@2
             displayName: 'Download all shard results'
+            inputs:
+              buildType: 'current'
+              itemPattern: '**/*.junit.xml'
+              targetPath: '$(Pipeline.Workspace)/eval-results'
 
           - task: PowerShell@2
             displayName: 'Render Markdown rollup (build summary)'
@@ -204,7 +217,7 @@ stages:
               pwsh: true
               filePath: '$(vallyRoot)/scripts/New-EvalSummary.ps1'
               arguments: >-
-                -ResultsRoot "$(Pipeline.Workspace)"
+                -ResultsRoot "$(Pipeline.Workspace)/eval-results"
                 -OutputPath "$(Build.ArtifactStagingDirectory)/eval-summary.md"
 
           # Always-visible copy of the rollup: the build-summary upload
@@ -220,7 +233,7 @@ stages:
             displayName: 'Publish eval rollup'
             inputs:
               testResultsFormat: 'JUnit'
-              testResultsFiles: '$(Pipeline.Workspace)/eval-result-*/**/*.xml'
+              testResultsFiles: '$(Pipeline.Workspace)/eval-results/**/*.junit.xml'
               mergeTestResults: true
               # Phase 1 = report-only. The remaining red is genuine eval signal
               # (the model not invoking a tool for some prompts), not harness

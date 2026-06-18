@@ -1421,6 +1421,11 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
             PackageWorkitemResponse packageModel = new()
             {
+                Id = workItem.Id,
+                Rev = workItem.Rev,
+                Url = workItem.Url,
+                Fields = workItem.Fields?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+                Relations = workItem.Relations,
                 PackageName = GetWorkItemValue(workItem, "Custom.Package"),
                 Version = GetWorkItemValue(workItem, "Custom.PackageVersion"),
                 WorkItemId = workItem.Id ?? 0,
@@ -1432,8 +1437,10 @@ namespace Azure.Sdk.Tools.Cli.Services
                 ChangeLogValidationDetails = GetWorkItemValue(workItem, "Custom.ChangeLogValidationDetails"),
                 APIViewStatus = GetWorkItemValue(workItem, "Custom.APIReviewStatus"),
                 ApiViewValidationDetails = GetWorkItemValue(workItem, "Custom.APIReviewStatusDetails"),
+                PendingApiReviews = GetWorkItemValue(workItem, "Custom.PendingAPIReviews"),
                 PackageNameStatus = GetWorkItemValue(workItem, "Custom.PackageNameApprovalStatus"),
                 PackageNameApprovalDetails = GetWorkItemValue(workItem, "Custom.PackageNameApprovalDetails"),
+                TypeSpecProject = GetWorkItemValue(workItem, "Custom.SpecProjectPath"),
                 PipelineDefinitionUrl = GetWorkItemValue(workItem, "Custom.PipelineDefinition"),
                 LatestPipelineRun = GetWorkItemValue(workItem, "Custom.LatestPipelineRun")
             };

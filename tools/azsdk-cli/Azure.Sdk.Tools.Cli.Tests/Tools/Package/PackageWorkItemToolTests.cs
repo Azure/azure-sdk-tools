@@ -35,9 +35,58 @@ public class PackageWorkItemToolTests
         Assert.Multiple(() =>
         {
             Assert.That(result.ExitCode, Is.EqualTo(0));
-            Assert.That(result.WorkItemId, Is.EqualTo(31370));
-            Assert.That(result.PackageName, Is.EqualTo("azure-storage-blob"));
-            Assert.That(result.Version, Is.EqualTo("12.30"));
+            Assert.That(result.Id, Is.EqualTo(31370));
+            Assert.That(result.Fields, Contains.Key("Custom.Package"));
+            Assert.That(result.Fields!["Custom.Package"], Is.EqualTo("azure-storage-blob"));
+        });
+    }
+
+    [Test]
+    public async Task GetPackageWorkItemIncludesRequestedFieldKeys()
+    {
+        devOpsService.Setup(service => service.FindPackageWorkItemIdsAsync("azure-storage-blob", "Python", "12.30", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([31370]);
+        devOpsService.Setup(service => service.GetWorkItemsByIdsAsync(It.Is<IEnumerable<int>>(ids => ids.SequenceEqual(new[] { 31370 })), 200, WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CreatePackageWorkItem(
+                31370,
+                "azure-storage-blob",
+                "12.30",
+                "Python",
+                pendingApiReviews: "https://apiview.dev/review/123",
+                specProjectPath: "specification/storage/data-plane/Azure.Storage.Blob")]);
+
+        var result = await tool.GetPackageWorkItem("azure-storage-blob", "12.30", "Python", CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(0));
+            Assert.That(result.Fields, Contains.Key("Custom.PendingAPIReviews"));
+            Assert.That(result.Fields, Contains.Key("Custom.SpecProjectPath"));
+            Assert.That(result.Fields!["Custom.PendingAPIReviews"], Is.EqualTo("https://apiview.dev/review/123"));
+            Assert.That(result.Fields!["Custom.SpecProjectPath"], Is.EqualTo("specification/storage/data-plane/Azure.Storage.Blob"));
+        });
+    }
+
+    [Test]
+    public async Task GetPackageWorkItemIncludesRawWorkItemData()
+    {
+        devOpsService.Setup(service => service.FindPackageWorkItemIdsAsync("azure-storage-blob", "Python", "12.30", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([31370]);
+        devOpsService.Setup(service => service.GetWorkItemsByIdsAsync(It.Is<IEnumerable<int>>(ids => ids.SequenceEqual(new[] { 31370 })), 200, WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CreatePackageWorkItem(31370, "azure-storage-blob", "12.30", "Python")]);
+
+        var result = await tool.GetPackageWorkItem("azure-storage-blob", "12.30", "Python", CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Id, Is.EqualTo(31370));
+            Assert.That(result.Rev, Is.EqualTo(5));
+            Assert.That(result.Url, Does.Contain("/workItems/31370"));
+            Assert.That(result.Fields, Is.Not.Null);
+            Assert.That(result.Fields, Contains.Key("Custom.Package"));
+            Assert.That(result.Fields!["Custom.Package"], Is.EqualTo("azure-storage-blob"));
+            Assert.That(result.Relations, Is.Not.Null);
+            Assert.That(result.Relations, Has.Count.EqualTo(1));
         });
     }
 
@@ -89,7 +138,8 @@ public class PackageWorkItemToolTests
         Assert.Multiple(() =>
         {
             Assert.That(result.ExitCode, Is.EqualTo(0));
-            Assert.That(result.Version, Is.EqualTo(expectedPackageVersionMajorMinor));
+            Assert.That(result.Fields, Contains.Key("Custom.PackageVersion"));
+            Assert.That(result.Fields!["Custom.PackageVersion"], Is.EqualTo(expectedPackageVersionMajorMinor));
         });
     }
 
@@ -123,8 +173,9 @@ public class PackageWorkItemToolTests
         Assert.Multiple(() =>
         {
             Assert.That(result.ExitCode, Is.EqualTo(0));
-            Assert.That(result.WorkItemId, Is.EqualTo(31370));
-            Assert.That(result.State, Is.EqualTo("Resolved"));
+            Assert.That(result.Id, Is.EqualTo(31370));
+            Assert.That(result.Fields, Contains.Key("System.State"));
+            Assert.That(result.Fields!["System.State"], Is.EqualTo("Resolved"));
         });
     }
 
@@ -140,6 +191,108 @@ public class PackageWorkItemToolTests
         {
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.That(result.ResponseError, Does.Contain("Package version must be a major version"));
+        });
+    }
+
+    [Test]
+    public async Task GetPackageWorkItemUsesWorkItemIdWhenProvidedWithoutMetadata()
+    {
+        devOpsService.Setup(service => service.GetWorkItemsByIdsAsync(It.Is<IEnumerable<int>>(ids => ids.SequenceEqual(new[] { 31370 })), 200, WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CreatePackageWorkItem(31370, "azure-storage-blob", "12.30", "Python")]);
+
+        var result = await tool.GetPackageWorkItem(null, null, null, 31370, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(0));
+            Assert.That(result.Id, Is.EqualTo(31370));
+            Assert.That(result.Fields, Contains.Key("Custom.Package"));
+            Assert.That(result.Fields!["Custom.Package"], Is.EqualTo("azure-storage-blob"));
+        });
+
+        devOpsService.Verify(service => service.FindPackageWorkItemIdsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task UpdatePackageWorkItemUsesWorkItemIdWhenProvidedWithoutMetadata()
+    {
+        devOpsService.Setup(service => service.UpdateWorkItemAsync(31370, It.Is<Dictionary<string, string>>(fields => fields["System.State"] == "Resolved"), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreatePackageWorkItem(31370, "azure-storage-blob", "12.30", "Python", "Resolved"));
+
+        var result = await tool.UpdatePackageWorkItem(null, null, null, new Dictionary<string, string>
+        {
+            ["System.State"] = "Resolved"
+        }, 31370, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(0));
+            Assert.That(result.Id, Is.EqualTo(31370));
+            Assert.That(result.Fields, Contains.Key("System.State"));
+            Assert.That(result.Fields!["System.State"], Is.EqualTo("Resolved"));
+        });
+
+        devOpsService.Verify(service => service.FindPackageWorkItemIdsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task GetPackageWorkItemReturnsErrorWhenWorkItemIdDoesNotMatchResolvedMetadata()
+    {
+        devOpsService.Setup(service => service.FindPackageWorkItemIdsAsync("azure-storage-blob", "Python", "12.30", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([31370]);
+
+        var result = await tool.GetPackageWorkItem("azure-storage-blob", "12.30", "Python", 40000, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(1));
+            Assert.That(result.ResponseError, Does.Contain("does not match"));
+            Assert.That(result.ResponseError, Does.Contain("40000"));
+            Assert.That(result.ResponseError, Does.Contain("31370"));
+        });
+    }
+
+    [Test]
+    public async Task UpdatePackageWorkItemReturnsErrorWhenWorkItemIdDoesNotMatchResolvedMetadata()
+    {
+        devOpsService.Setup(service => service.FindPackageWorkItemIdsAsync("azure-storage-blob", "Python", "12.30", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([31370]);
+
+        var result = await tool.UpdatePackageWorkItem("azure-storage-blob", "12.30", "Python", new Dictionary<string, string>
+        {
+            ["System.State"] = "Resolved"
+        }, 40000, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(1));
+            Assert.That(result.ResponseError, Does.Contain("does not match"));
+        });
+
+        devOpsService.Verify(service => service.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task GetPackageWorkItemReturnsErrorForPartialMetadataWhenWorkItemIdProvided()
+    {
+        var result = await tool.GetPackageWorkItem("azure-storage-blob", null, "Python", 31370, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(1));
+            Assert.That(result.ResponseError, Does.Contain("must provide all"));
+        });
+    }
+
+    [Test]
+    public async Task GetPackageWorkItemReturnsErrorWhenNoIdentifierProvided()
+    {
+        var result = await tool.GetPackageWorkItem(null, null, null, workItemId: null, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(1));
+            Assert.That(result.ResponseError, Does.Contain("Provide either --work-item-id only"));
         });
     }
 
@@ -160,11 +313,17 @@ public class PackageWorkItemToolTests
         parseResult = getCommand.Parse("--package-name azure-storage-blob --package-version-major-minor 12.30 --language Python", parseConfig);
         Assert.That(parseResult.Errors, Is.Empty);
 
+        parseResult = getCommand.Parse("--work-item-id 31370", parseConfig);
+        Assert.That(parseResult.Errors, Is.Empty);
+
         parseConfig = new CommandLineConfiguration(updateCommand)
         {
             ResponseFileTokenReplacer = null
         };
         parseResult = updateCommand.Parse("--package-name azure-storage-blob --package-version 12.30 --language Python --field System.State=Resolved --field Custom.APIReviewStatus=Approved", parseConfig);
+        Assert.That(parseResult.Errors, Is.Empty);
+
+        parseResult = updateCommand.Parse("--work-item-id 31370 --field System.State=Resolved", parseConfig);
         Assert.That(parseResult.Errors, Is.Empty);
     }
 
@@ -189,11 +348,40 @@ public class PackageWorkItemToolTests
         });
     }
 
-    private static WorkItem CreatePackageWorkItem(int id, string packageName, string packageVersionMajorMinor, string language, string state = "Active")
+    [Test]
+    public async Task HandleCommandUnescapesNewlineInFieldPatchValues()
+    {
+        devOpsService.Setup(service => service.UpdateWorkItemAsync(31370, It.Is<Dictionary<string, string>>(fields =>
+                fields["Custom.PendingAPIReviews"] == "Test\nTest3"), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreatePackageWorkItem(31370, "azure-storage-blob", "12.30", "Python"));
+
+        var updateCommand = tool.GetCommandInstances().Single(command => command.Name == "update-work-item");
+        var parseConfig = new CommandLineConfiguration(updateCommand)
+        {
+            ResponseFileTokenReplacer = null
+        };
+
+        var parseResult = updateCommand.Parse("--work-item-id 31370 --field Custom.PendingAPIReviews=Test\\nTest3", parseConfig);
+        Assert.That(parseResult.Errors, Is.Empty);
+
+        var result = await tool.HandleCommand(parseResult, CancellationToken.None);
+
+        Assert.That(result.ExitCode, Is.EqualTo(0));
+    }
+
+    private static WorkItem CreatePackageWorkItem(
+        int id,
+        string packageName,
+        string packageVersionMajorMinor,
+        string language,
+        string state = "Active",
+        string pendingApiReviews = "",
+        string specProjectPath = "")
     {
         return new WorkItem
         {
             Id = id,
+            Rev = 5,
             Url = $"https://dev.azure.com/org/project/_apis/wit/workItems/{id}",
             Fields = new Dictionary<string, object>
             {
@@ -203,7 +391,17 @@ public class PackageWorkItemToolTests
                 ["System.State"] = state,
                 ["Custom.PackageDisplayName"] = packageName,
                 ["Custom.PackageType"] = "client",
-            }
+                ["Custom.PendingAPIReviews"] = pendingApiReviews,
+                ["Custom.SpecProjectPath"] = specProjectPath,
+            },
+            Relations =
+            [
+                new WorkItemRelation
+                {
+                    Rel = "System.LinkTypes.Hierarchy-Reverse",
+                    Url = "https://dev.azure.com/org/project/_apis/wit/workItems/12345"
+                }
+            ]
         };
     }
 }

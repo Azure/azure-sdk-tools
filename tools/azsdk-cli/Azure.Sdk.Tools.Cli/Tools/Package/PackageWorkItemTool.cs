@@ -8,6 +8,7 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tools.Core;
+using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package;
 
@@ -25,19 +26,25 @@ public class PackageWorkItemTool(
     private readonly Option<string> packageNameOpt = new("--package-name")
     {
         Description = "SDK package name.",
-        Required = true,
+        Required = false,
     };
 
     private readonly Option<string> packageVersionMajorMinorOpt = new("--package-version", "--package-version-major-minor")
     {
         Description = "SDK package major/minor version (for example, 12.30).",
-        Required = true,
+        Required = false,
     };
 
     private readonly Option<string> languageOpt = new("--language")
     {
         Description = "SDK language (for example, .NET, Java, JavaScript, Python, Go).",
-        Required = true,
+        Required = false,
+    };
+
+    private readonly Option<int?> workItemIdOpt = new("--work-item-id")
+    {
+        Description = "Package work item ID. If supplied with package metadata, the resolved work item ID must match.",
+        Required = false,
     };
 
     private readonly Option<string[]> fieldsOpt = new("--field")
@@ -63,13 +70,13 @@ public class PackageWorkItemTool(
     private Command GetWorkItemCommand() =>
         new(GetWorkItemCommandName, "Get the Azure DevOps package work item")
         {
-            packageNameOpt, packageVersionMajorMinorOpt, languageOpt
+            packageNameOpt, packageVersionMajorMinorOpt, languageOpt, workItemIdOpt
         };
 
     private Command GetUpdateWorkItemCommand() =>
         new(UpdateWorkItemCommandName, "Update the Azure DevOps package work item")
         {
-            packageNameOpt, packageVersionMajorMinorOpt, languageOpt, fieldsOpt
+            packageNameOpt, packageVersionMajorMinorOpt, languageOpt, workItemIdOpt, fieldsOpt
         };
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
@@ -79,10 +86,11 @@ public class PackageWorkItemTool(
             var packageName = parseResult.GetValue(packageNameOpt);
             var packageVersionMajorMinor = parseResult.GetValue(packageVersionMajorMinorOpt);
             var language = parseResult.GetValue(languageOpt);
+            var workItemId = parseResult.GetValue(workItemIdOpt);
             return parseResult.CommandResult.Command.Name switch
             {
-                GetWorkItemCommandName => await GetPackageWorkItem(packageName, packageVersionMajorMinor, language, ct),
-                UpdateWorkItemCommandName => await UpdatePackageWorkItem(packageName, packageVersionMajorMinor, language, ParseFields(parseResult.GetValue(fieldsOpt)), ct),
+                GetWorkItemCommandName => await GetPackageWorkItem(packageName, packageVersionMajorMinor, language, workItemId, ct),
+                UpdateWorkItemCommandName => await UpdatePackageWorkItem(packageName, packageVersionMajorMinor, language, ParseFields(parseResult.GetValue(fieldsOpt)), workItemId, ct),
                 _ => new DefaultCommandResponse { ResponseError = $"Unsupported package work item command '{parseResult.CommandResult.Command.Name}'." },
             };
         }
@@ -93,76 +101,55 @@ public class PackageWorkItemTool(
         }
     }
 
-    public async Task<PackageWorkitemResponse> GetPackageWorkItem(string packageName, string packageVersionMajorMinor, string language, CancellationToken ct = default)
+    public async Task<RawPackageWorkItemResponse> GetPackageWorkItem(string packageName, string packageVersionMajorMinor, string language, CancellationToken ct = default)
+        => await GetPackageWorkItem(packageName, packageVersionMajorMinor, language, workItemId: null, ct);
+
+    public async Task<RawPackageWorkItemResponse> GetPackageWorkItem(string? packageName, string? packageVersionMajorMinor, string? language, int? workItemId, CancellationToken ct = default)
     {
         try
         {
-            var response = new PackageWorkitemResponse
+            var response = new RawPackageWorkItemResponse
             {
-                PackageName = packageName,
-                Version = packageVersionMajorMinor,
+                Id = workItemId,
             };
-            response.SetLanguage(language ?? string.Empty);
 
-            if (string.IsNullOrWhiteSpace(packageName))
+            var workItemLookup = await ResolveWorkItemId(packageName, packageVersionMajorMinor, language, workItemId, ct);
+            if (workItemLookup.ResponseError != null)
             {
-                response.ResponseError = "Package name cannot be null or empty.";
+                response.ResponseError = workItemLookup.ResponseError;
                 return response;
             }
 
-            if (string.IsNullOrWhiteSpace(packageVersionMajorMinor))
-            {
-                response.ResponseError = "Package version major/minor cannot be null or empty.";
-                return response;
-            }
-
-            if (string.IsNullOrWhiteSpace(language))
-            {
-                response.ResponseError = "Language cannot be null or empty.";
-                return response;
-            }
-
-            packageVersionMajorMinor = NormalizePackageVersion(packageVersionMajorMinor);
-            response.Version = packageVersionMajorMinor;
-
-            var workItemIds = await FindPackageWorkItemIds(packageName, packageVersionMajorMinor, language, ct);
-            if (workItemIds.ResponseError != null)
-            {
-                response.ResponseError = workItemIds.ResponseError;
-                return response;
-            }
-
-            var workItems = await devOpsService.GetWorkItemsByIdsAsync([workItemIds.WorkItemId], ct: ct);
+            var workItems = await devOpsService.GetWorkItemsByIdsAsync([workItemLookup.WorkItemId], ct: ct);
             if (workItems.Count == 0)
             {
-                response.ResponseError = $"Package work item '{workItemIds.WorkItemId}' was found but could not be loaded.";
+                response.ResponseError = $"Package work item '{workItemLookup.WorkItemId}' was found but could not be loaded.";
                 return response;
             }
 
-            return DevOpsService.MapPackageWorkItemToModel(workItems[0]);
+            return MapWorkItemToRawModel(workItems[0]);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to get package work item for package {packageName}, version {packageVersionMajorMinor}, language {language}.", packageName, packageVersionMajorMinor, language);
-            var response = new PackageWorkitemResponse
+            var response = new RawPackageWorkItemResponse
             {
-                PackageName = packageName,
-                Version = packageVersionMajorMinor,
+                Id = workItemId,
                 ResponseError = $"Failed to get package work item: {ex.Message}"
             };
-            response.SetLanguage(language ?? string.Empty);
             return response;
         }
     }
 
-    public async Task<PackageWorkitemResponse> UpdatePackageWorkItem(string packageName, string packageVersionMajorMinor, string language, Dictionary<string, string> fields, CancellationToken ct = default)
+    public async Task<RawPackageWorkItemResponse> UpdatePackageWorkItem(string packageName, string packageVersionMajorMinor, string language, Dictionary<string, string> fields, CancellationToken ct = default)
+        => await UpdatePackageWorkItem(packageName, packageVersionMajorMinor, language, fields, workItemId: null, ct);
+
+    public async Task<RawPackageWorkItemResponse> UpdatePackageWorkItem(string? packageName, string? packageVersionMajorMinor, string? language, Dictionary<string, string> fields, int? workItemId, CancellationToken ct = default)
     {
-        var response = new PackageWorkitemResponse
+        var response = new RawPackageWorkItemResponse
         {
-            PackageName = packageName,
-            Version = packageVersionMajorMinor,
+            Id = workItemId,
         };
-        response.SetLanguage(language ?? string.Empty);
 
         if (fields.Count == 0)
         {
@@ -172,15 +159,15 @@ public class PackageWorkItemTool(
 
         try
         {
-            var workItemIds = await FindPackageWorkItemIds(packageName, packageVersionMajorMinor, language, ct);
-            if (workItemIds.ResponseError != null)
+            var workItemLookup = await ResolveWorkItemId(packageName, packageVersionMajorMinor, language, workItemId, ct);
+            if (workItemLookup.ResponseError != null)
             {
-                response.ResponseError = workItemIds.ResponseError;
+                response.ResponseError = workItemLookup.ResponseError;
                 return response;
             }
 
-            var updatedWorkItem = await devOpsService.UpdateWorkItemAsync(workItemIds.WorkItemId, fields, ct);
-            return DevOpsService.MapPackageWorkItemToModel(updatedWorkItem);
+            var updatedWorkItem = await devOpsService.UpdateWorkItemAsync(workItemLookup.WorkItemId, fields, ct);
+            return MapWorkItemToRawModel(updatedWorkItem);
         }
         catch (Exception ex)
         {
@@ -189,6 +176,68 @@ public class PackageWorkItemTool(
             return response;
         }
     }
+
+    private async Task<PackageWorkItemLookupResponse> ResolveWorkItemId(string? packageName, string? packageVersionMajorMinor, string? language, int? workItemId, CancellationToken ct)
+    {
+        var hasAnyMetadata = HasAnyPackageMetadata(packageName, packageVersionMajorMinor, language);
+        var hasAllMetadata = HasAllPackageMetadata(packageName, packageVersionMajorMinor, language);
+
+        if (workItemId is null)
+        {
+            if (!hasAllMetadata)
+            {
+                return new PackageWorkItemLookupResponse
+                {
+                    PackageName = packageName ?? string.Empty,
+                    PackageVersionMajorMinor = packageVersionMajorMinor ?? string.Empty,
+                    Language = language ?? string.Empty,
+                    ResponseError = "Provide either --work-item-id only, or all of --package-name, --package-version, and --language."
+                };
+            }
+
+            return await FindPackageWorkItemIds(packageName!, packageVersionMajorMinor!, language!, ct);
+        }
+
+        if (!hasAnyMetadata)
+        {
+            return new PackageWorkItemLookupResponse
+            {
+                WorkItemId = workItemId.Value,
+            };
+        }
+
+        if (!hasAllMetadata)
+        {
+            return new PackageWorkItemLookupResponse
+            {
+                WorkItemId = workItemId.Value,
+                PackageName = packageName ?? string.Empty,
+                PackageVersionMajorMinor = packageVersionMajorMinor ?? string.Empty,
+                Language = language ?? string.Empty,
+                ResponseError = "When using --work-item-id with package metadata, you must provide all of --package-name, --package-version, and --language."
+            };
+        }
+
+        var lookupResponse = await FindPackageWorkItemIds(packageName!, packageVersionMajorMinor!, language!, ct);
+        if (lookupResponse.ResponseError != null)
+        {
+            return lookupResponse;
+        }
+
+        if (lookupResponse.WorkItemId != workItemId.Value)
+        {
+            lookupResponse.ResponseError = $"Provided --work-item-id '{workItemId.Value}' does not match the resolved package work item ID '{lookupResponse.WorkItemId}' for package '{lookupResponse.PackageName}', version '{lookupResponse.PackageVersionMajorMinor}', and language '{lookupResponse.Language}'.";
+            return lookupResponse;
+        }
+
+        return lookupResponse;
+    }
+
+    private static bool HasAnyPackageMetadata(string? packageName, string? packageVersionMajorMinor, string? language)
+        => !string.IsNullOrWhiteSpace(packageName) || !string.IsNullOrWhiteSpace(packageVersionMajorMinor) || !string.IsNullOrWhiteSpace(language);
+
+    private static bool HasAllPackageMetadata(string? packageName, string? packageVersionMajorMinor, string? language)
+        => !string.IsNullOrWhiteSpace(packageName) && !string.IsNullOrWhiteSpace(packageVersionMajorMinor) && !string.IsNullOrWhiteSpace(language);
 
     private async Task<PackageWorkItemLookupResponse> FindPackageWorkItemIds(string packageName, string packageVersionMajorMinor, string language, CancellationToken ct)
     {
@@ -264,10 +313,55 @@ public class PackageWorkItemTool(
                 throw new ArgumentException($"Invalid field patch '{field}'. Expected key=value.");
             }
 
-            parsedFields[field[..separatorIndex]] = field[(separatorIndex + 1)..];
+            parsedFields[field[..separatorIndex]] = UnescapeFieldValue(field[(separatorIndex + 1)..]);
         }
 
         return parsedFields;
+    }
+
+    private static string UnescapeFieldValue(string value)
+    {
+        if (string.IsNullOrEmpty(value) || !value.Contains('\\'))
+        {
+            return value;
+        }
+
+        var result = new System.Text.StringBuilder(value.Length);
+        for (var index = 0; index < value.Length; index++)
+        {
+            var current = value[index];
+            if (current != '\\' || index == value.Length - 1)
+            {
+                result.Append(current);
+                continue;
+            }
+
+            var next = value[index + 1];
+            switch (next)
+            {
+                case 'n':
+                    result.Append('\n');
+                    index++;
+                    break;
+                case 'r':
+                    result.Append('\r');
+                    index++;
+                    break;
+                case 't':
+                    result.Append('\t');
+                    index++;
+                    break;
+                case '\\':
+                    result.Append('\\');
+                    index++;
+                    break;
+                default:
+                    result.Append(current);
+                    break;
+            }
+        }
+
+        return result.ToString();
     }
 
     private static string NormalizePackageVersion(string packageVersion)
@@ -281,5 +375,17 @@ public class PackageWorkItemTool(
         var major = match.Groups["major"].Value;
         var minor = match.Groups["minor"].Success ? match.Groups["minor"].Value : "0";
         return $"{major}.{minor}";
+    }
+
+    private static RawPackageWorkItemResponse MapWorkItemToRawModel(WorkItem workItem)
+    {
+        return new RawPackageWorkItemResponse
+        {
+            Id = workItem.Id,
+            Rev = workItem.Rev,
+            Url = workItem.Url,
+            Fields = workItem.Fields?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+            Relations = workItem.Relations,
+        };
     }
 }

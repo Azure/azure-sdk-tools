@@ -57,7 +57,7 @@ stimuli:
     suite: 'armtemplate'
     mode: 'forced'
   prompt: |
-    @azure-typespec-author add an extension resource named asset
+    @azure-typespec-author add an extension resource named asset, use default properties you can think of and add it to the latest api version.
   environment: *shared_environment
   graders:
   - type: 'tool-calls'

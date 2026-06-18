@@ -17,6 +17,9 @@ paths:
 
 environments:
   azsdk-mcp:
+    files:
+      - src: ../fixtures/instructions-test/copilot-instructions.md
+        dest: .github/copilot-instructions.md
     mcpServers:
       azure-sdk-mcp:
         type: stdio
@@ -33,8 +36,11 @@ environments:
         env:
           AZSDKTOOLS_AGENT_TESTING: "false"
           AZSDKTOOLS_COLLECT_TELEMETRY: "false"
-          AZURE_SDK_KB_ENDPOINT: "http://localhost:8088"
+          AZURE_SDK_KB_ENDPOINT: "http://localhost:8089"
   azsdk-mcp-remote-kb:
+    files:
+      - src: ../fixtures/instructions-test/copilot-instructions.md
+        dest: .github/copilot-instructions.md
     mcpServers:
       azure-sdk-mcp:
         type: stdio

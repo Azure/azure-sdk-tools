@@ -72,6 +72,7 @@
 # PRLabel: %azsdk-cli %design-discussion
 /tools/azsdk-cli/docs/specs/            @azure/azsdk-cli
 /.github/skills/                        @azure/azsdk-cli
+/.github/skills/azure-typespec-author/  @azure/azsdk-cli @catalinaperalta
 
 
 ###########

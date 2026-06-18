@@ -8,7 +8,7 @@ type: capability
 environment: azsdk-mcp-mock
 
 config:
-  runs: 5
+  runs: 3
   timeout: "120s"
   executor: copilot-sdk
   model: gpt-5.4

@@ -1,16 +1,14 @@
 # Vally tool-scenario eval CI — Phase 1: the hermetic "mock vertical".
 #
-# Implements the detect -> fan-out -> summarize skeleton for the tool-scenario
-# evals in tools/azsdk-cli/Azure.Sdk.Tools.Vally. Only the *hermetic* tiers run
-# here (unit tools + mock workflow scenarios) — the live tier is deferred (it is
-# auth-blocked and schedule-only). See:
-#   tools/azsdk-cli/docs/specs/agent-eval-ci-design.md (Section 1)
+# Runs the hermetic eval tiers (unit tools + mock workflow scenarios) for the
+# Vally evals in tools/azsdk-cli/Azure.Sdk.Tools.Vally. The live tier is skipped
+# (it needs real auth). Flow: prepare -> fan-out -> summarize.
 #
 # Stages:
-#   Build     - build the mock MCP DLL ONCE, publish it as a pipeline artifact.
-#   Detect    - glob the hermetic eval files and emit a fan-out matrix.
-#   Eval      - one job per eval file: download the DLL, run `vally eval`, publish JUnit.
-#   Summarize - merge all JUnit results and gate the build on the rollup.
+#   Prepare   - in parallel: build the mock MCP DLL once, and list the eval files
+#               into a fan-out matrix.
+#   Eval      - one job per shard: run `vally eval` against the mock, publish JUnit.
+#   Summarize - merge every shard's JUnit into one rollup (report-only in Phase 1).
 
 trigger:
   branches:
@@ -35,9 +33,10 @@ pr:
       - eng/skill-eval/**
 
 parameters:
-  # Shard granularity (design Section 2, Lever A). 'file' = one job per eval file
-  # (finest); 'area' = one job per `area` tag (coarser; fewer jobs at scale).
-  # Flip this when by-file job startup overhead dominates — no other edits needed.
+  # How finely to split the run into parallel jobs:
+  #   file = one job per eval file (default; best while the file count is small).
+  #   area = one job per `area` tag (fewer, larger jobs once startup cost dominates).
+  # Switching modes needs no other edits.
   - name: shardBy
     displayName: 'Shard granularity'
     type: string
@@ -55,13 +54,17 @@ variables:
 
 stages:
   # ---------------------------------------------------------------------------
-  # Stage 0 — build once. Build the mock DLL a single time and publish it as a
-  # pipeline artifact; every shard downloads it instead of rebuilding (the
-  # single biggest efficiency win). Vally launches `dotnet <dll>`, never
-  # `dotnet run`, to avoid the MSBuild boot race under parallel workers (#15947).
+  # Stage 1 — Prepare. Two independent jobs that run in PARALLEL:
+  #   BuildMock - build the mock MCP DLL once and publish it as an artifact, so
+  #               every Eval shard downloads it instead of rebuilding (the biggest
+  #               speed win; also avoids the MSBuild boot race when shards run in
+  #               parallel — #15947). Vally runs `dotnet <dll>`, not `dotnet run`.
+  #   Detect    - list the eval files (Vally has no `list` command, so we glob the
+  #               filesystem) and emit the matrix the Eval stage fans out over.
+  #               Reads only the source tree, so it doesn't need the DLL.
   # ---------------------------------------------------------------------------
-  - stage: Build
-    displayName: 'Build mock MCP (once)'
+  - stage: Prepare
+    displayName: 'Build mock + detect shards'
     jobs:
       - job: BuildMock
         displayName: 'Build + publish mock DLL'
@@ -79,15 +82,6 @@ stages:
             artifact: '$(mockArtifact)'
             displayName: 'Publish mock DLL artifact'
 
-  # ---------------------------------------------------------------------------
-  # Stage 1 — detect. Vally has no `list` command, so discovery is a filesystem
-  # glob of the hermetic suites; the script emits an Azure Pipelines matrix that
-  # Stage 2 fans out over (one job per eval file).
-  # ---------------------------------------------------------------------------
-  - stage: Detect
-    displayName: 'Detect eval shards'
-    dependsOn: Build
-    jobs:
       - job: Detect
         displayName: 'Glob eval files -> matrix'
         pool:
@@ -108,14 +102,14 @@ stages:
                 -OutputVariableName matrix
 
   # ---------------------------------------------------------------------------
-  # Stage 2 — fan-out. One job per shard. Download the prebuilt mock DLL, install
-  # the pinned Vally CLI, run `vally eval -e <file>`, publish that shard's JUnit.
-  # continueOnError keeps a single red shard from aborting siblings; the rollup
-  # lives in the Summarize stage (report-only in Phase 1).
+  # Stage 2 — Eval. One job per shard, up to 10 at a time. Each job grabs the
+  # prebuilt mock DLL, installs the pinned Vally CLI, and runs `vally eval`.
+  # continueOnError lets a single red shard finish without aborting the others —
+  # the pass/fail rollup happens in Summarize (report-only in Phase 1).
   # ---------------------------------------------------------------------------
   - stage: Eval
     displayName: 'Run eval shards'
-    dependsOn: Detect
+    dependsOn: Prepare
     jobs:
       - job: RunShard
         displayName: 'Eval'
@@ -123,16 +117,16 @@ stages:
           vmImage: 'ubuntu-latest'
         continueOnError: true
         strategy:
-          matrix: $[ stageDependencies.Detect.Detect.outputs['detect.matrix'] ]
+          matrix: $[ stageDependencies.Prepare.Detect.outputs['detect.matrix'] ]
           maxParallel: 10
         steps:
           - checkout: self
             fetchDepth: 1
 
-          - task: NodeTool@0
+          - task: UseNode@1
             displayName: 'Use Node.js 22'
             inputs:
-              versionSpec: '22.x'
+              version: '22.x'
 
           - script: npm ci
             displayName: 'Install Vally CLI (pinned via lockfile)'
@@ -150,13 +144,11 @@ stages:
               cp -r "$(Pipeline.Workspace)/$(mockArtifact)/." "$(Build.SourcesDirectory)/artifacts/mcp/mock/"
             displayName: 'Stage mock DLL at expected path'
 
-          # Prime the git worktree fixtures the eval suite declares. This scans
-          # every eval's `environment.git` block, derives the unique (repo, ref)
-          # set, and clones each into the repo-relative cache the fixtures point
-          # at — Vally does NOT clone it ('git worktree add' needs the source on
-          # disk). Without this, workflow shards die with
-          # "cannot change to '.../artifacts/specs-cache/...'". Data-driven, so a
-          # new fixture repo needs no edit here; a no-op for unit-only shards.
+          # Clone the git fixtures the workflow evals reference. We scan each
+          # eval's `environment.git` block for its (repo, ref) pairs and clone
+          # them into the cache the fixtures expect — Vally won't do this itself
+          # ('git worktree add' needs the source already on disk). No-op for
+          # unit-only shards; a new fixture repo is picked up automatically.
           - task: PowerShell@2
             displayName: 'Prime eval git fixtures (scan + clone)'
             inputs:
@@ -165,13 +157,11 @@ stages:
               arguments: >-
                 -EvalRoot "$(Build.SourcesDirectory)/$(vallyRoot)"
 
-          # Run the shard and gate on the eval *verdict*, not the `vally` process
-          # exit code. Vally can exit 1 AFTER a passing verdict when its executor /
-          # MCP child processes miss the shutdown window ("Timed out while shutting
-          # down executors."); that teardown flake must not turn a passing shard
-          # red. The script reads the authoritative `run-summary` from results.jsonl
-          # and passes the shard when every eval's pass rate >= threshold (a >=80%
-          # run is green), failing only on a genuine sub-threshold result.
+          # Pass/fail on the eval VERDICT, not the `vally` exit code. Vally can
+          # exit 1 after a passing run if its child processes miss the shutdown
+          # window ("Timed out while shutting down executors.") — that teardown
+          # flake must not turn a green shard red. The script reads the verdict
+          # from results.jsonl and passes when every eval clears the threshold.
           - task: PowerShell@2
             displayName: 'vally eval $(shardName)'
             inputs:
@@ -187,15 +177,46 @@ stages:
             env:
               GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
 
-          - publish: '$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)'
-            artifact: 'eval-result-$(shardName)'
-            displayName: 'Publish $(shardName) results'
+          # Always publish just the JUnit (a few KB) — that's all the Summarize
+          # stage consumes, so green runs stay tiny. The heavy LLM transcripts are
+          # published separately and only on failure (next step).
+          - script: |
+              mkdir -p "$(Build.ArtifactStagingDirectory)/junit"
+              find "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)" -name '*.junit.xml' -exec cp {} "$(Build.ArtifactStagingDirectory)/junit/" \;
+            displayName: 'Collect $(shardName) JUnit'
             condition: always()
 
+          - publish: '$(Build.ArtifactStagingDirectory)/junit'
+            artifact: 'eval-result-$(shardName)'
+            displayName: 'Publish $(shardName) JUnit'
+            condition: always()
+
+          # On a GENUINE failure (the shard script exited non-zero — an eval fell
+          # below threshold), keep the full Vally output for debugging: LLM
+          # transcripts, results.jsonl, etc. We strip the JUnit from this copy so
+          # the Summarize download (which globs **/*.junit.xml across every
+          # artifact) can't count the same results twice. A passing verdict that
+          # merely hit Vally's teardown timeout exits 0, so it skips this step.
+          - script: |
+              src="$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)"
+              dest="$(Build.ArtifactStagingDirectory)/debug"
+              mkdir -p "$dest"
+              if [ -d "$src" ]; then
+                cp -r "$src/." "$dest/"
+                find "$dest" -name '*.junit.xml' -delete
+              fi
+            displayName: 'Collect $(shardName) transcripts (on failure)'
+            condition: failed()
+
+          - publish: '$(Build.ArtifactStagingDirectory)/debug'
+            artifact: 'eval-debug-$(shardName)'
+            displayName: 'Publish $(shardName) transcripts (on failure)'
+            condition: failed()
+
   # ---------------------------------------------------------------------------
-  # Stage 3 — summarize. Collect every shard's JUnit, publish the rollup, and
-  # surface it. Phase 1 is report-only: the rollup is visible (Markdown summary
-  # + Tests tab) but does not fail the build — see failTaskOnFailedTests below.
+  # Stage 3 — Summarize. Gather every shard's JUnit, merge it into one rollup,
+  # and surface it (Markdown summary + Tests tab). Phase 1 is report-only: the
+  # results are visible but don't fail the build.
   # ---------------------------------------------------------------------------
   - stage: Summarize
     displayName: 'Summarize results'
@@ -207,16 +228,11 @@ stages:
         pool:
           vmImage: 'ubuntu-latest'
         steps:
-          # Download every shard's JUnit into a DEDICATED folder (not the job's
-          # Pipeline.Workspace root, which also holds the repo checkout under `s/`).
-          # Two things matter here:
-          #   * itemPattern is matched per-artifact against the *bare* file path
-          #     (the artifact name is NOT a path segment at match time), so the
-          #     old `eval-result-*/**` matched nothing. Match the file itself.
-          #   * Scope to `*.junit.xml` so non-JUnit XML (e.g. .NET doc XML from the
-          #     mock DLL artifact) can never leak into the rollup as bogus shards.
-          # Each artifact still downloads into its own `eval-result-<shard>/` folder
-          # under targetPath, so the summary can recover the shard name from the path.
+          # Pull every shard's JUnit into one folder. Match the *.junit.xml files
+          # directly and scope to JUnit only, so stray XML (e.g. the mock DLL's
+          # .NET doc XML) can't slip in as a fake shard. Each artifact keeps its
+          # own eval-result-<shard>/ subfolder, so the summary can recover the
+          # shard name from the path.
           - task: DownloadPipelineArtifact@2
             displayName: 'Download all shard results'
             inputs:
@@ -224,6 +240,8 @@ stages:
               itemPattern: '**/*.junit.xml'
               targetPath: '$(Pipeline.Workspace)/eval-results'
 
+          # Render the rollup straight to the run's Summary tab (the script emits
+          # ##vso[task.uploadsummary]); no separate downloadable copy needed.
           - task: PowerShell@2
             displayName: 'Render Markdown rollup (build summary)'
             condition: always()
@@ -234,25 +252,15 @@ stages:
                 -ResultsRoot "$(Pipeline.Workspace)/eval-results"
                 -OutputPath "$(Build.ArtifactStagingDirectory)/eval-summary.md"
 
-          # Always-visible copy of the rollup: the build-summary upload
-          # (##vso[task.uploadsummary]) only shows on the Extensions tab, so also
-          # publish the Markdown as a downloadable artifact that's reachable from
-          # the run's Artifacts list regardless of where the summary surfaces.
-          - publish: '$(Build.ArtifactStagingDirectory)/eval-summary.md'
-            artifact: 'eval-summary'
-            displayName: 'Publish eval-summary.md artifact'
-            condition: always()
-
+          # Merge all shards into a single test run for the Tests tab.
+          # Phase 1 = report-only: failTaskOnFailedTests=false surfaces the red
+          # (the model not invoking a tool for some prompts) without failing the
+          # build. Flip to true once the eval content is hardened.
           - task: PublishTestResults@2
             displayName: 'Publish eval rollup'
             inputs:
               testResultsFormat: 'JUnit'
               testResultsFiles: '$(Pipeline.Workspace)/eval-results/**/*.junit.xml'
               mergeTestResults: true
-              # Phase 1 = report-only. The remaining red is genuine eval signal
-              # (the model not invoking a tool for some prompts), not harness
-              # breakage — surface it in the rollup + Tests tab without blocking
-              # the build. Flip back to `true` once the eval content is hardened
-              # / flaky stimuli are quarantined (design Section 7, mitigation #4).
               failTaskOnFailedTests: false
               testRunTitle: 'Vally tool-scenario evals (mock vertical)'

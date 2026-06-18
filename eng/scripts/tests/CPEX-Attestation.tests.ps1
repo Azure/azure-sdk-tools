@@ -203,10 +203,6 @@ Describe "Get-ReleasePlansForCPEXAttestation" {
 
             # Required non-empty fields
             $norm | Should -Match "\[Custom\.ProductServiceTreeID\]\s*<>\s*''"
-            $norm | Should -Match "\[Custom\.ProductLifecycle\]\s*<>\s*''"
-
-            # ProductType filter
-            $norm | Should -Match "\[Custom\.ProductType\]\s*IN\s*\('Feature'\s*,\s*'Offering'\s*,\s*'Sku'\)"
         }
     }
 

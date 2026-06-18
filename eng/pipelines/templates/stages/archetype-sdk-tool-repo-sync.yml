@@ -173,6 +173,8 @@ stages:
                                 -CancelPreviousBuilds $True `
                                 -BearerToken $accessToken
                             workingDirectory: $(System.DefaultWorkingDirectory)
+                          env:
+                            GH_TOKEN: $(GH_TOKEN)
 
                     - pwsh: |
                         $PRData = "Azure;${{ repo }};$(Submitted.PullRequest.Number)"

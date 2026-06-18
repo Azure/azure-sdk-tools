@@ -1263,7 +1263,7 @@ stimuli:
   - type: file-matches
     config:
       path: '*.tsp'
-      pattern: 'listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*\{\s*\.\.\.(Azure\.Core\.)?TopQueryParameter;\s*\.\.\.(Azure\.Core\.)?SkipQueryParameter;\s*\}\s*>|listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*\{\s*\.\.\.(Azure\.ResourceManager\.)?ArmTopParameter;\s*\.\.\.(Azure\.ResourceManager\.)?ArmSkipParameter;\s*\}\s*>|model\s+\w+\s+(is|extends)\s+(Azure\.Core\.)?StandardListQueryParameters\s*;[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*\w+\s*>'
+      pattern: 'listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(Parameters\s*=\s*)?\{\s*\.\.\.(Azure\.Core\.)?TopQueryParameter;\s*\.\.\.(Azure\.Core\.)?SkipQueryParameter;\s*\}\s*>|listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(Parameters\s*=\s*)?\{\s*\.\.\.(Azure\.ResourceManager\.)?ArmTopParameter;\s*\.\.\.(Azure\.ResourceManager\.)?ArmSkipParameter;\s*\}\s*>|model\s+\w+\s+(is|extends)\s+(Azure\.Core\.)?StandardListQueryParameters\s*;[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(Parameters\s*=\s*)?\w+\s*>'
   - type: file-not-matches
     config:
       path: '*.tsp'

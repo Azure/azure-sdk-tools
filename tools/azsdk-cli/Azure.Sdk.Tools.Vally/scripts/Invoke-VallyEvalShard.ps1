@@ -6,30 +6,17 @@
     the `vally` process exit code.
 
 .DESCRIPTION
-    Vally can exit non-zero AFTER it has already computed a passing verdict and
-    written every artifact: when its executor / MCP child processes miss the
-    shutdown window it prints "Timed out while shutting down executors." and the
-    process exits 1. That teardown flake must not turn a passing shard red.
+    `vally` can exit non-zero AFTER computing a passing verdict and writing every
+    artifact — a teardown flake ("Timed out while shutting down executors.") must
+    not turn a passing shard red. So this script ignores the exit code and reads
+    the authoritative `run-summary` record from results.jsonl (see
+    Get-VallyShardVerdict). A genuine failure (below threshold, no stimuli ran, or
+    no results.jsonl) still exits 1.
 
-    The authoritative verdict is the single `run-summary` record Vally appends to
-    `results.jsonl`. This script runs `vally eval`, then reads that record and
-    decides pass/fail from it:
-
-      * Scored evals (a threshold is configured)  -> pass when the eval's
-        pass-rate `overallScore` is >= its `threshold` AND its stimuli actually
-        ran. This honours the configured gate (e.g. 0.8) — a >=80% pass rate is a
-        PASS — and is independent of the process exit code, so a post-verdict
-        shutdown timeout no longer fails a passing shard.
-      * Unscored evals (binary graders)           -> pass when the eval's own
-        `passed` verdict is true and its stimuli ran.
-
-    A genuine failure (pass-rate below threshold, no stimuli ran, or no
-    results.jsonl at all) still exits 1, so real regressions stay red.
-
-    The verdict helpers live in VallyEvalVerdict.ps1 (dot-sourced below) so unit
-    tests can exercise them without running `vally`. This runner always executes —
-    do NOT add a "skip when dot-sourced" guard: the PowerShell@2 pipeline task
-    invokes scripts by dot-sourcing them, so such a guard would skip the real run.
+    Verdict helpers live in VallyEvalVerdict.ps1 (dot-sourced below) so unit tests
+    can exercise them without running `vally`. This runner always executes — do
+    NOT add a "skip when dot-sourced" guard: the PowerShell@2 pipeline task invokes
+    scripts by dot-sourcing them, so such a guard would skip the real run.
 
 .PARAMETER EvalArgs
     The `-e <file>` arguments for the shard, exactly as the matrix emits them

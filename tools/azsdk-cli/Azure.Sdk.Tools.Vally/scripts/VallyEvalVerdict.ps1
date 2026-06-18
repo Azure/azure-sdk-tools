@@ -32,9 +32,13 @@ function Get-Prop {
 
 function Get-VallyShardVerdict {
     # Reads the canonical `run-summary` record from the newest results.jsonl under
-    # $ResultsDir and decides pass/fail from the eval verdict (threshold-based for
-    # scored evals; binary for unscored). Returns a result object so the gating is
-    # unit-testable without running `vally`.
+    # $ResultsDir and decides pass/fail from the eval verdict. Returns a result
+    # object so the gating is unit-testable without running `vally`. Policy:
+    #   * Scored evals (threshold configured) pass when overallScore >= threshold
+    #     AND stimuli ran. Honours the gate (e.g. 0.8) independent of exit code.
+    #   * Unscored evals (binary graders) pass when their own `passed` is true and
+    #     stimuli ran.
+    # A shard passes only if every eval in the run-summary passes.
     [CmdletBinding()]
     param(
         [string]$ResultsDir,

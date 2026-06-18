@@ -963,6 +963,10 @@
       if (hasFirstGA)
         releaseTagBadge += '<span class="badge badge-first-ga">First GA</span>';
     }
+    const missingProductBadge =
+      !p.productId
+        ? '<span class="badge badge-missing-product">Missing product details</span>'
+        : "";
     const isExpanded = !!store().ui.expandedPlans[p.id];
     const summaryClass = isExpanded ? "card-summary expanded" : "card-summary";
     const detailsClass = isExpanded ? "card-details open" : "card-details";
@@ -971,7 +975,7 @@
       <div class="${summaryClass}"${isExpanded ? ' data-pr-loaded="1"' : ""}>
         <span class="card-chevron">&#9654;</span>
         <div class="card-title">
-          ${esc(p.title)} ${copilotBadge} ${sdkTypeBadge} ${releaseTagBadge}
+          ${esc(p.title)} ${copilotBadge} ${sdkTypeBadge} ${releaseTagBadge} ${missingProductBadge}
         </div>
         <div class="card-meta">
           ${p.releaseMonth ? `<span>${esc(p.releaseMonth)}</span>` : ""}
@@ -1635,10 +1639,13 @@
     html += "</div>";
 
     // Expandable Product Details section
-    if (p.productName) {
+    if (p.productName || p.productId) {
+      const productHeading = p.productName
+        ? `Product: ${esc(p.productName)}`
+        : "Product";
       html += `<div class="detail-group product-collapsible">
         <h4 class="product-toggle" style="cursor:pointer;user-select:none;">
-          <span class="product-caret">&#9654;</span> Product: ${esc(p.productName)}
+          <span class="product-caret">&#9654;</span> ${productHeading}
         </h4>
         <div class="product-details" style="display:none;">`;
       if (p.serviceName)
@@ -1886,6 +1893,25 @@
       html += `<div class="action-note">
         <strong>💡 Link a different SDK PR:</strong> Use the <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">Azure SDK Tools agent</a> in Copilot CLI or VS Code and run:
         <div class="action-prompt"><code>Link SDK pull request &lt;PR link&gt; to release plan ${esc(planId)}</code></div>
+      </div>`;
+    }
+
+    // Missing product details highlight
+    if (!p.productId) {
+      const releaseType = p.releasePlanType || p.releaseType || "GA";
+      const planId = p.releasePlanId || p.id;
+      html += `<div class="missing-product-highlight">
+        <strong>⚠️ Product details are missing in release plan</strong>
+        <p>Product and Service ID are required if KPI attestation is required for your product in S360.
+        You can ignore this if your product has already completed KPI attestation for <strong>${esc(releaseType)}</strong>.</p>
+        <div class="pm-action-steps">
+          <strong>How to update Service and Product ID:</strong>
+          <ol>
+            <li>Identify your service and product ID in Service Tree at <a href="https://aka.ms/st" target="_blank" rel="noopener">aka.ms/st</a>.</li>
+            <li>Copy the Service ID and Product ID, then use the <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">Azure SDK Tools agent</a> in Copilot CLI or VS Code and run:<br>
+              <code class="action-prompt-inline">Get release plan ${esc(String(planId))} and update release plan ${esc(String(planId))} to include product and service ID. Product ID: &lt;product id&gt;, Service ID: &lt;service id&gt;</code></li>
+          </ol>
+        </div>
       </div>`;
     }
 
@@ -2421,9 +2447,40 @@
     return actDate < threeMonthsAgo;
   }
 
+  let pmSectionsInitialized = false;
+
   function renderPMView(plans) {
     // Server-verified PM check — prevents rendering even if tab is unhidden via DevTools
     if (!currentUserIsPM) return;
+
+    // Collapse all PM sections by default on first render so PMs can easily find the group they want
+    if (!pmSectionsInitialized) {
+      pmSectionsInitialized = true;
+      const pmSectionIds = [
+        "list-pm-pp-ready",
+        "list-pm-ns-missing",
+        "list-pm-approaching",
+        "list-pm-pastdue",
+        "list-pm-inactive",
+        "list-pm-tier1",
+        "list-pm-partial",
+        "list-pm-product-missing",
+        "list-pm-finished",
+      ];
+      const ui = store().ui;
+      for (const sectionId of pmSectionIds) {
+        if (ui.collapsedSections[sectionId] !== undefined) continue;
+        const listEl = document.getElementById(sectionId);
+        if (!listEl) continue;
+        listEl.style.display = "none";
+        listEl.setAttribute("hidden", "");
+        const section = listEl.parentElement;
+        if (section) section.classList.add("collapsed");
+        const caret = section && section.querySelector(".caret");
+        if (caret) caret.innerHTML = "&#9654;";
+        ui.collapsedSections[sectionId] = true;
+      }
+    }
 
     const planeFilter = getGlobalPlaneFilter();
     const monthFilter = getMonthFilter();
@@ -2459,6 +2516,7 @@
     const recentlyFinished = [];
     const ppReady = [];
     const nsMissing = [];
+    const productMissing = [];
 
     const now = new Date();
     const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -2516,6 +2574,24 @@
           </div>`;
           nsMissing.push(p);
         }
+      }
+
+      // Missing product details — no product ID in release plan
+      if (!p.productId) {
+        const planId = p.releasePlanId || p.id;
+        const releaseType = p.releasePlanType || p.releaseType || "GA";
+        p._productMissingAction = `Product details are missing in this release plan.
+          <p style="margin:4px 0;">Product and Service ID are required if KPI attestation is required for your product in S360.
+          You can ignore this if the product has already completed KPI attestation for <strong>${esc(releaseType)}</strong>.</p>
+          <div class="pm-action-steps">
+            <strong>How to update Service and Product ID:</strong>
+            <ol>
+              <li>Identify the service and product ID in Service Tree at <a href="https://aka.ms/st" target="_blank" rel="noopener">aka.ms/st</a>.</li>
+              <li>Copy the Service ID and Product ID, then run the following prompt:<br>
+                <code class="action-prompt-inline">Get release plan ${esc(String(planId))} and update release plan ${esc(String(planId))} to include product and service ID. Product ID: &lt;product id&gt;, Service ID: &lt;service id&gt;</code></li>
+            </ol>
+          </div>`;
+        productMissing.push(p);
       }
 
       // Approaching SDK release target (current month or next month, not yet finished)
@@ -2607,6 +2683,25 @@
     renderPMSection("list-pm-inactive", inactive);
     renderPMSection("list-pm-tier1", tier1Missing);
     renderPMSection("list-pm-partial", partial);
+    // Render productMissing section with product-specific action
+    {
+      const el = document.getElementById("list-pm-product-missing");
+      if (el) {
+        if (!productMissing.length) {
+          el.innerHTML = '<div class="empty-msg">None found ✓</div>';
+        } else {
+          el.innerHTML = productMissing
+            .map((p) => {
+              const saved = p._pmAction;
+              p._pmAction = p._productMissingAction;
+              const html = cardHTML(p, { showPmAction: true });
+              p._pmAction = saved;
+              return html;
+            })
+            .join("");
+        }
+      }
+    }
     renderPMSection("list-pm-finished", recentlyFinished);
 
     // Update section counts
@@ -2618,6 +2713,7 @@
       { id: "section-pm-inactive", count: inactive.length },
       { id: "section-pm-tier1", count: tier1Missing.length },
       { id: "section-pm-partial", count: partial.length },
+      { id: "section-pm-product-missing", count: productMissing.length },
       { id: "section-pm-finished", count: recentlyFinished.length },
     ];
     for (const s of sections) {

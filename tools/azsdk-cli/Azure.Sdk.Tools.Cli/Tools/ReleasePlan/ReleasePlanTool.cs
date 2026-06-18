@@ -222,7 +222,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         private readonly Option<string> releasePlanTypeOpt = new("--release-plan-type")
         {
-            Description = "Release plan type: 'In Dev', 'Private Preview', 'Public Preview', 'GA'",
+            Description = "Release plan type: 'Private Preview', 'Public Preview', 'GA'",
             Required = false,
         };
 

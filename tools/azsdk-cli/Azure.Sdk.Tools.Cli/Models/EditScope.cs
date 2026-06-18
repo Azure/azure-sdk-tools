@@ -23,7 +23,7 @@ public enum EditScope
     /// Custom (non-generated) code: .NET partial classes / <c>[CodeGen*]</c> attributes,
     /// Python <c>_patch.py</c>, Java <c>*Customization.java</c>.
     /// </summary>
-    CustomCode = 1 << 0,
+    CustomCode = 1,
 
     /// <summary>
     /// Spec inputs: <c>client.tsp</c> / <c>tspconfig.yaml</c> and the pinned spec commit in
@@ -33,7 +33,7 @@ public enum EditScope
     /// (<see cref="Responses.Package.CustomizedCodeUpdateResponse.KnownErrorCodes.SpecChangeRequired"/>)
     /// instead of applied.
     /// </summary>
-    SpecInputs = 1 << 1,
+    SpecInputs = 2,
 
     /// <summary>
     /// Both custom code and spec inputs may be edited. Default for the local generate-SDK /

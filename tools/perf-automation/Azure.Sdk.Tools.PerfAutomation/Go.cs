@@ -90,7 +90,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var errorBuilder = new StringBuilder();
 
             // Go perf runners in this scenario are CLI test apps.
-            var processResult = await Util.RunAsync(
+            await Util.RunAsync(
                 "go",
                 $"run . {testName} {arguments}",
                 projectDirectory,
@@ -98,8 +98,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 errorBuilder: errorBuilder,
                 throwOnError: false);
 
-            // Capture combined output for parsing and return.
-            var combinedOutput = (processResult.StandardOutput ?? string.Empty) + Environment.NewLine + (processResult.StandardError ?? string.Empty);
+            // Use the builders (which Util.RunAsync always appends to) so parsing works
+            // regardless of how the underlying process result is populated.
+            var standardOutput = outputBuilder.ToString();
+            var standardError = errorBuilder.ToString();
+            var combinedOutput = standardOutput + Environment.NewLine + standardError;
             var opsPerSecond = ParseOpsPerSecond(combinedOutput);
 
             var runtimePackageVersions = await GetRuntimePackageVersionsAsync(projectDirectory);
@@ -108,8 +111,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             {
                 PackageVersions = runtimePackageVersions,
                 OperationsPerSecond = opsPerSecond,
-                StandardOutput = processResult.StandardOutput ?? outputBuilder.ToString(),
-                StandardError = processResult.StandardError ?? errorBuilder.ToString()
+                StandardOutput = standardOutput,
+                StandardError = standardError
             };
         }
 
@@ -197,11 +200,21 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     }
 
                     var module = parts[0];
-                    var version = parts[1];
+                    string version;
 
-                    if (parts.Length > 2 && parts[2] == "=>")
+                    if (parts[1] == "=>")
                     {
+                        // module => replacement (no version)
                         version = string.Join(" ", parts.Skip(1));
+                    }
+                    else if (parts.Length > 2 && parts[2] == "=>")
+                    {
+                        // module version => replacement
+                        version = string.Join(" ", parts.Skip(1));
+                    }
+                    else
+                    {
+                        version = parts[1];
                     }
 
                     runtimePackageVersions[module] = version;

@@ -62,7 +62,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
         public void ResolveSourcePath_AzurePackage_ReturnsExpectedPath()
         {
             var go = new Go();
-            go.WorkingDirectory = Path.Combine(Path.DirectorySeparatorChar.ToString(), "tmp", "azure-sdk-for-go");
+            go.WorkingDirectory = Path.Combine(Path.GetTempPath(), "azure-sdk-for-go");
 
             var result = InvokePrivateInstanceString(go, "ResolveSourcePath", "github.com/Azure/azure-sdk-for-go/sdk/storage/azblob");
             var expected = Path.Combine(go.WorkingDirectory, "sdk", "storage", "azblob");
@@ -74,7 +74,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
         public void ResolveSourcePath_NonAzurePackage_Throws()
         {
             var go = new Go();
-            go.WorkingDirectory = Path.Combine(Path.DirectorySeparatorChar.ToString(), "tmp", "azure-sdk-for-go");
+            go.WorkingDirectory = Path.Combine(Path.GetTempPath(), "azure-sdk-for-go");
 
             var ex = Assert.Throws<TargetInvocationException>(() =>
                 InvokePrivateInstanceString(go, "ResolveSourcePath", "github.com/not-azure/pkg"));

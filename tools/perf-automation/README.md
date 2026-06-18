@@ -16,7 +16,7 @@
 
 6. Example (.NET): `dotnet run -- run --language Net --language-version 8 --repo-root <path-to-azure-sdk-for-net> --tests-file <path-to-azure-sdk-for-net>/sdk/storage/Azure.Storage.Blobs/perf-tests.yml --tests download --arguments 10240 --dry-run`
 
-7. Example (Go): `dotnet run -- run --language Go --language-version 1.25 --repo-root <path-to-azure-sdk-for-go> --tests-file <path-to-azure-sdk-for-go>/sdk/storage/azblob/perf-tests.yml --tests download --arguments 10240 --dry-run`
+7. Example (Go): `dotnet run -- run --language Go --language-version 1.26 --repo-root <path-to-azure-sdk-for-go> --tests-file <path-to-azure-sdk-for-go>/sdk/storage/azblob/perf-tests.yml --tests download --arguments 10240 --dry-run`
 
 8. View results in file `results/results.json`
 
@@ -30,12 +30,12 @@
 | Python   | `Python`           | `3.11`                       |
 | Cpp      | `Cpp`              | `N/A`                        |
 | Rust     | `Rust`             | `N/A`                        |
-| Go       | `Go`               | `1.25`                       |
+| Go       | `Go`               | `1.26`                       |
 
 ### Go-specific notes
 
 - Go perf runs are sync-only; the `--no-async` flag is applied automatically.
 - The `--repo-root` must point to a local clone of [`Azure/azure-sdk-for-go`](https://github.com/Azure/azure-sdk-for-go).
 - The `--tests-file` should point at a service's `perf-tests.yml` inside the Go SDK repo (for example `sdk/storage/azblob/perf-tests.yml`).
-- When `PackageVersions` is set to `source`, the runner adds a `go mod edit -replace=<pkg>=<local-path>` against the module under `--repo-root`, runs `go mod tidy`, and restores the original `go.mod` / `go.sum` on cleanup.
+- Go perf projects in `azure-sdk-for-go` are committed with a `replace` directive in their `go.mod` that points the SDK package at the in-repo source (for example, `sdk/storage/azblob/testdata/perf/go.mod`), so the perf harness runs against the checked-out source by default.
 - Throughput is parsed from lines matching the standard perf format, e.g. `Completed 721 operations in a weighted-average of 30.00s (24.033 ops/s, 0.042 s/op)`.

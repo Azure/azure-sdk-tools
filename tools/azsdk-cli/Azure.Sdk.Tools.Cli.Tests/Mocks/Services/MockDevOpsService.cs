@@ -307,7 +307,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
                 return Task.FromResult<ReleasePlanWorkItem?>(new ReleasePlanWorkItem
                 {
                     ProductTreeId = "12345678-1234-5678-9012-123456789012",
-                    ProductLifecycle = "GA",
+                    ReleasePlanType = "GA",
                     Title = "Contoso Management Release Plan",
                 });
             }

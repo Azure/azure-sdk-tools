@@ -168,7 +168,7 @@ stages:
                               $(Build.SourcesDirectory)/eng/common/scripts/Queue-Pipeline.ps1 `
                                 -Organization "azure-sdk" `
                                 -Project "public" `
-                                -SourceBranch "refs/heads/$($pr.headRefName)" `
+                                -SourceBranch "$($pr.headRefName)" `
                                 -DefinitionId "${{ prValidationPipeline.DefinitionId }}" `
                                 -CancelPreviousBuilds $True `
                                 -BearerToken $accessToken

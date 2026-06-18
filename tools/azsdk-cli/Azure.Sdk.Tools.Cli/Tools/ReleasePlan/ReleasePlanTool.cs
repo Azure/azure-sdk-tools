@@ -1851,15 +1851,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        private static readonly HashSet<string> SupportedLifecycles = new(StringComparer.OrdinalIgnoreCase)
-        {
-            "In Dev",
-            "Private Preview",
-            "Public Preview",
-            "GA",
-            "Retired"
-        };
-
         [McpServerTool(Name = GetKPIAttestationStatusToolName), Description("Get KPI attestation status for release plans with given product tree ID and release plan type. If product ID and release plan type are not provided, a TypeSpec project path can be used to resolve them.")]
         public async Task<ReleasePlanListResponse> GetKPIAttestationStatus(string productId = "", string releasePlanType = "", string typeSpecProjectPath = "", bool isTestReleasePlan = false, CancellationToken ct = default)
         {

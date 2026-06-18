@@ -29,7 +29,7 @@
     is written to -OutputPath and, under Azure Pipelines, uploaded to the Summary page.
 
 .EXAMPLE
-    ./New-EvalSummary.ps1 -ResultsRoot $(Pipeline.Workspace) -OutputPath ./eval-summary.md
+    ./Build-EvalSummary.ps1 -ResultsRoot $(Pipeline.Workspace) -OutputPath ./eval-summary.md
 #>
 [CmdletBinding()]
 param(

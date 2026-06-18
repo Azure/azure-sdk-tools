@@ -4,13 +4,13 @@
 # Pester tests for the Vally eval shard verdict gating.
 # Run from this directory:  Invoke-Pester
 #
-# We dot-source VallyEvalVerdict.ps1 (the pure helpers) directly, so no `vally`
-# run is triggered. The runner Invoke-VallyEvalShard.ps1 intentionally has no
+# We dot-source EvalVerdict.Helpers.ps1 (the pure helpers) directly, so no `vally`
+# run is triggered. The runner Invoke-EvalShard.ps1 intentionally has no
 # "skip when dot-sourced" guard (the PowerShell@2 task dot-sources its scripts),
 # so it must NOT be dot-sourced here.
 
 BeforeAll {
-    . (Join-Path $PSScriptRoot '..' 'VallyEvalVerdict.ps1')
+    . (Join-Path $PSScriptRoot '..' 'EvalVerdict.Helpers.ps1')
 
     $script:root = Join-Path ([System.IO.Path]::GetTempPath()) ("vally-shard-test-" + [Guid]::NewGuid())
 

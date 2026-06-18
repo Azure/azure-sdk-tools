@@ -6,7 +6,7 @@
     `Get-VallyShardVerdict` (and `Get-Prop`) without running an eval.
 
 .DESCRIPTION
-    Kept separate from Invoke-VallyEvalShard.ps1 so unit tests can dot-source the
+    Kept separate from Invoke-EvalShard.ps1 so unit tests can dot-source the
     pure functions while the runner script always executes its `vally` call. (The
     PowerShell@2 pipeline task itself dot-sources the script it runs, so a
     "skip when dot-sourced" guard in the runner is unreliable — hence this split.)

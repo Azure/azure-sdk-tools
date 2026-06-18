@@ -41,7 +41,7 @@
 
 .EXAMPLE
   # From the Vally project root, prime the cache before the live suite:
-  ./scripts/ensure-specs-clone.ps1
+  ./scripts/Sync-EvalGitRepo.ps1
 #>
 [CmdletBinding()]
 param(
@@ -51,7 +51,7 @@ param(
 
     # Which repo/ref to cache. Defaults target Azure/azure-rest-api-specs @ main
     # (the only fixture today) so existing no-arg callers are unaffected.
-    # Prime-EvalGitFixtures.ps1 passes these per discovered fixture.
+    # Initialize-EvalGitFixtures.ps1 passes these per discovered fixture.
     [string]   $RepoUrl  = 'https://github.com/Azure/azure-rest-api-specs.git',
     [string]   $RepoName = 'azure-rest-api-specs',
     [string]   $Ref      = 'main'
@@ -70,7 +70,7 @@ $cache = Join-Path $CacheRoot $RepoName
 $stamp = Join-Path $cache '.vally-last-fetch'
 
 if (-not (Test-Path (Join-Path $cache '.git'))) {
-    Write-Host "[ensure-specs-clone] Cloning $RepoName ($Ref) into cache: $cache"
+    Write-Host "[Sync-EvalGitRepo] Cloning $RepoName ($Ref) into cache: $cache"
     New-Item -ItemType Directory -Force -Path $CacheRoot | Out-Null
     git clone --depth 1 --filter=blob:none --no-checkout `
         $RepoUrl $cache | Out-Null
@@ -87,12 +87,12 @@ if (-not (Test-Path (Join-Path $cache '.git'))) {
         $isStale = $age.TotalHours -gt $MaxAgeHours
     }
     if ($isStale) {
-        Write-Host "[ensure-specs-clone] Refreshing cache (>$MaxAgeHours h old): $cache"
+        Write-Host "[Sync-EvalGitRepo] Refreshing cache (>$MaxAgeHours h old): $cache"
         git -C $cache fetch --depth 1 origin $Ref | Out-Null
         git -C $cache reset --hard "origin/$Ref" | Out-Null
         Set-Content -Path $stamp -Value (Get-Date -Format o)
     } else {
-        Write-Host "[ensure-specs-clone] Cache is fresh (<$MaxAgeHours h): $cache"
+        Write-Host "[Sync-EvalGitRepo] Cache is fresh (<$MaxAgeHours h): $cache"
     }
 }
 

@@ -95,7 +95,7 @@ stages:
             displayName: 'Build fan-out matrix'
             inputs:
               pwsh: true
-              filePath: '$(vallyRoot)/scripts/Get-EvalMatrix.ps1'
+              filePath: '$(vallyRoot)/scripts/Split-EvalSuite.ps1'
               arguments: >-
                 -EvalRoot "$(Build.SourcesDirectory)/$(vallyRoot)"
                 -ShardBy ${{ parameters.shardBy }}
@@ -153,7 +153,7 @@ stages:
             displayName: 'Prime eval git fixtures (scan + clone)'
             inputs:
               pwsh: true
-              filePath: '$(vallyRoot)/scripts/Prime-EvalGitFixtures.ps1'
+              filePath: '$(vallyRoot)/scripts/Initialize-EvalGitFixtures.ps1'
               arguments: >-
                 -EvalRoot "$(Build.SourcesDirectory)/$(vallyRoot)"
 
@@ -166,7 +166,7 @@ stages:
             displayName: 'vally eval $(shardName)'
             inputs:
               pwsh: true
-              filePath: '$(vallyRoot)/scripts/Invoke-VallyEvalShard.ps1'
+              filePath: '$(vallyRoot)/scripts/Invoke-EvalShard.ps1'
               arguments: >-
                 -EvalArgs "$(evalArgs)"
                 -ShardName "$(shardName)"
@@ -247,7 +247,7 @@ stages:
             condition: always()
             inputs:
               pwsh: true
-              filePath: '$(vallyRoot)/scripts/New-EvalSummary.ps1'
+              filePath: '$(vallyRoot)/scripts/Build-EvalSummary.ps1'
               arguments: >-
                 -ResultsRoot "$(Pipeline.Workspace)/eval-results"
                 -OutputPath "$(Build.ArtifactStagingDirectory)/eval-summary.md"

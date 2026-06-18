@@ -1,12 +1,12 @@
 #Requires -Version 7.0
 #Requires -Modules Pester
 
-# Pester tests for Prime-EvalGitFixtures.ps1 (discovery only — the -ListOnly
+# Pester tests for Initialize-EvalGitFixtures.ps1 (discovery only — the -ListOnly
 # dry-run path, which clones nothing).
 # Run from this directory:  Invoke-Pester
 
 BeforeAll {
-    $script:scriptPath = Join-Path $PSScriptRoot '..' 'Prime-EvalGitFixtures.ps1'
+    $script:scriptPath = Join-Path $PSScriptRoot '..' 'Initialize-EvalGitFixtures.ps1'
 
     # Throwaway eval tree so the tests do not depend on real eval content.
     $script:root = Join-Path ([System.IO.Path]::GetTempPath()) ("vally-fixtures-test-" + [Guid]::NewGuid())
@@ -43,7 +43,7 @@ AfterAll {
     }
 }
 
-Describe 'Prime-EvalGitFixtures.ps1 -ListOnly' {
+Describe 'Initialize-EvalGitFixtures.ps1 -ListOnly' {
     It 'discovers the declared git fixture' {
         $fixtures = @(& $script:scriptPath -EvalRoot $script:root -ListOnly)
         $fixtures.Count | Should -Be 1

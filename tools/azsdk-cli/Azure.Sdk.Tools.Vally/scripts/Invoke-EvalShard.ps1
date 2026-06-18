@@ -13,7 +13,7 @@
     Get-VallyShardVerdict). A genuine failure (below threshold, no stimuli ran, or
     no results.jsonl) still exits 1.
 
-    Verdict helpers live in VallyEvalVerdict.ps1 (dot-sourced below) so unit tests
+    Verdict helpers live in EvalVerdict.Helpers.ps1 (dot-sourced below) so unit tests
     can exercise them without running `vally`. This runner always executes — do
     NOT add a "skip when dot-sourced" guard: the PowerShell@2 pipeline task invokes
     scripts by dot-sourcing them, so such a guard would skip the real run.
@@ -51,7 +51,7 @@ param(
 Set-StrictMode -Version 4
 $ErrorActionPreference = 'Stop'
 
-. (Join-Path $PSScriptRoot 'VallyEvalVerdict.ps1')
+. (Join-Path $PSScriptRoot 'EvalVerdict.Helpers.ps1')
 
 # evalArgs is a whitespace-separated string like "-e evals/tools/foo.eval.yaml".
 $evalArgList = @($EvalArgs -split '\s+' | Where-Object { $_ })

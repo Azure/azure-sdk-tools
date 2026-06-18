@@ -39,7 +39,7 @@
     `##vso[task.setVariable]` log command when running under Azure Pipelines.
 
 .EXAMPLE
-    ./Get-EvalMatrix.ps1 -EvalRoot . -ShardBy area
+    ./Split-EvalSuite.ps1 -EvalRoot . -ShardBy area
 #>
 [CmdletBinding()]
 param(

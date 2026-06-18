@@ -80,7 +80,7 @@ Nothing below is invented — it already exists in `azure-sdk-tools`. The plan r
 | **Eval job template** | [`eng/common/pipelines/templates/jobs/ai-eval-job.yml`](../../../../eng/common/pipelines/templates/jobs/ai-eval-job.yml) | Conventions to copy: `UseDotNet@2` (9.0.x + 8.0.x), `sparse-checkout.yml`, `AzureCLI@2` with `azureSubscription: opensource-api-connection`, `PublishTestResults@2`, pools via `globals.yml`/`image.yml`. |
 | **Matrix / sharding primitive** | [`eng/common/pipelines/templates/jobs/generate-job-matrix.yml`](../../../../eng/common/pipelines/templates/jobs/generate-job-matrix.yml) | The mature Azure SDK matrix generator (`MatrixConfigs`, `MatrixFilters`, `JobTemplatePath`, **PR batching**). Our Stage 2 fan-out can reuse this instead of a hand-rolled matrix. |
 | **Pipeline auto-generation** | [`tools/pipeline-generator`](../../../pipeline-generator) | Stamps a DevOps pipeline from a `ci.yml`. Same tool that auto-creates SDK pipelines. |
-| **Specs clone helper** | [`scripts/ensure-specs-clone.ps1`](../../Azure.Sdk.Tools.Vally/scripts/ensure-specs-clone.ps1) | Primes a sparse `azure-rest-api-specs` cache (24h refresh) for the live tier. |
+| **Specs clone helper** | [`scripts/Sync-EvalGitRepo.ps1`](../../Azure.Sdk.Tools.Vally/scripts/Sync-EvalGitRepo.ps1) | Primes a sparse `azure-rest-api-specs` cache (24h refresh) for the live tier. |
 | **Failure notification by CODEOWNERS** | [`tools/notification-configuration`](../../../notification-configuration) (ADO pipeline `build-failure-notification-subscriptions`, id 679) | Auto-creates a DevOps **Team per pipeline** from CODEOWNERS and **emails it on scheduled build failure**. The native attribution path — see [§4](#4-attribution--notifications). |
 | **Suites + area tags** | [`.vally.yaml`](../../Azure.Sdk.Tools.Vally/.vally.yaml) | Named suites (`unit`, `scenarios-mock`, `scenarios-live`, `pr-gate`, `nightly`) **and area suites** (`release-plan`, `typespec`, `pipeline`, `github`) that filter on the `area` tag. |
 | **Existing skill-eval pipeline (ADO)** | [`eng/pipelines/skill-eval.yml`](../../../../eng/pipelines/skill-eval.yml) | **Already implements most of [§1–§2](#1-phase-1--the-mock-vertical-3-stage-skeleton).** Builds **both** MCP servers to `artifacts/mcp/{cli,mock}`, does **diff→area detection** (`git diff … \| grep skills → vally eval --tag area=<x>`), report-only (`continueOnError: true`), pinned Vally CLI, results as artifact. Triggers on **push to main** (`pr: none`). This design *extends* it — it is not greenfield. |
@@ -254,7 +254,7 @@ flowchart TB
         B2["spec/lang: install pinned → Cache@2 by version"]
     end
     subgraph C2["Cache 2: specs clone (live only)"]
-        CL["ensure-specs-clone.ps1 → Cache@2, daily key 'specs-DATE'"]
+        CL["Sync-EvalGitRepo.ps1 → Cache@2, daily key 'specs-DATE'"]
     end
     subgraph C3["Cache 3: toolchain"]
         TC["Cache@2 keyed on lockfiles (node/dotnet)"]
@@ -262,7 +262,7 @@ flowchart TB
 ```
 
 1. **MCP binary — build-once, fan-out-many.** Tools repo: build in Stage 0 (`dotnet build … -o artifacts/mcp/{cli,mock}`), publish as a pipeline artifact; shards download it. Spec/language repos: don't build — `dotnet tool install` the **pinned published** `azsdk` (.NET global tool) and let the NuGet global-packages cache (`Cache@2` keyed on the version) make it instant. **Pinning the version** is what makes this cache deterministic. *(The npm `@microsoft/vally-cli` is pinned separately via the `eng/skill-eval` lockfile — see Cache 3.)*
-2. **Specs clone — the expensive one (live tier only).** The mechanism already exists: [`ensure-specs-clone.ps1`](../../Azure.Sdk.Tools.Vally/scripts/ensure-specs-clone.ps1) primes `azure-rest-api-specs` (24h refresh); the live eval worktrees off it via `environment.git.source`. In CI, wrap that path in a `Cache@2` task with a **daily restore key** (`specs-<date>` + fallback `specs-`) so the multi-GB clone is *restored*, not re-cloned; content-addressed, so parallel shards safely share the restore. **Repo-dependent:** in **azure-rest-api-specs the repo *is* the specs** → use the PR checkout, no clone; in **tools + language repos** you need the cached clone. Gate this step on `Build.Repository.Name`.
+2. **Specs clone — the expensive one (live tier only).** The mechanism already exists: [`Sync-EvalGitRepo.ps1`](../../Azure.Sdk.Tools.Vally/scripts/Sync-EvalGitRepo.ps1) primes `azure-rest-api-specs` (24h refresh); the live eval worktrees off it via `environment.git.source`. In CI, wrap that path in a `Cache@2` task with a **daily restore key** (`specs-<date>` + fallback `specs-`) so the multi-GB clone is *restored*, not re-cloned; content-addressed, so parallel shards safely share the restore. **Repo-dependent:** in **azure-rest-api-specs the repo *is* the specs** → use the PR checkout, no clone; in **tools + language repos** you need the cached clone. Gate this step on `Build.Repository.Name`.
 3. **Toolchain (node/npm, dotnet).** Standard `Cache@2` keyed on lockfiles (`package-lock.json`, `packages.lock.json`). Cheap, repo-agnostic.
 
 Two rules that keep caching clean:
@@ -378,6 +378,6 @@ flowchart LR
 - Pipeline generator: [`tools/pipeline-generator`](../../../pipeline-generator)
 - CODEOWNERS failure notifier: [`tools/notification-configuration`](../../../notification-configuration) (ADO pipeline `build-failure-notification-subscriptions`, id 679)
 - Vally config + suites: [`.vally.yaml`](../../Azure.Sdk.Tools.Vally/.vally.yaml)
-- Specs clone helper: [`scripts/ensure-specs-clone.ps1`](../../Azure.Sdk.Tools.Vally/scripts/ensure-specs-clone.ps1)
+- Specs clone helper: [`scripts/Sync-EvalGitRepo.ps1`](../../Azure.Sdk.Tools.Vally/scripts/Sync-EvalGitRepo.ps1)
 - CODEOWNERS: [`.github/CODEOWNERS`](../../../../.github/CODEOWNERS)
 - Vally interpolation gap: [microsoft/vally#562](https://github.com/microsoft/vally/issues/562)

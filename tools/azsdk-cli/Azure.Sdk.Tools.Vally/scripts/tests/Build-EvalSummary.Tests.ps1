@@ -1,11 +1,11 @@
 #Requires -Version 7.0
 #Requires -Modules Pester
 
-# Pester tests for New-EvalSummary.ps1.
+# Pester tests for Build-EvalSummary.ps1.
 # Run from this directory:  Invoke-Pester
 
 BeforeAll {
-    $script:scriptPath = Join-Path $PSScriptRoot '..' 'New-EvalSummary.ps1'
+    $script:scriptPath = Join-Path $PSScriptRoot '..' 'Build-EvalSummary.ps1'
 
     # Build a throwaway results tree mimicking downloaded shard artifacts:
     #   <root>/eval-result-<shardName>/junit.xml
@@ -69,7 +69,7 @@ AfterAll {
     }
 }
 
-Describe 'New-EvalSummary.ps1' {
+Describe 'Build-EvalSummary.ps1' {
     BeforeEach {
         $script:outFile = Join-Path $script:root ("summary-" + [Guid]::NewGuid() + '.md')
     }

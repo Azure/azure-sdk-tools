@@ -1,11 +1,11 @@
 #Requires -Version 7.0
 #Requires -Modules Pester
 
-# Pester tests for Get-EvalMatrix.ps1.
+# Pester tests for Split-EvalSuite.ps1.
 # Run from this directory:  Invoke-Pester
 
 BeforeAll {
-    $script:scriptPath = Join-Path $PSScriptRoot '..' 'Get-EvalMatrix.ps1'
+    $script:scriptPath = Join-Path $PSScriptRoot '..' 'Split-EvalSuite.ps1'
 
     # Build a throwaway eval tree so the tests do not depend on real eval content.
     $script:root = Join-Path ([System.IO.Path]::GetTempPath()) ("vally-matrix-test-" + [Guid]::NewGuid())
@@ -30,7 +30,7 @@ AfterAll {
     }
 }
 
-Describe 'Get-EvalMatrix.ps1' {
+Describe 'Split-EvalSuite.ps1' {
     Context 'ShardBy file (default)' {
         It 'discovers the hermetic mock-vertical files by default' {
             $matrix = & $script:scriptPath -EvalRoot $script:root

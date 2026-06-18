@@ -13,7 +13,7 @@
     `source:` to a concrete cache path, and ensures that repo is cloned at the
     requested `ref:` — so adding a new fixture repo needs no pipeline edits.
 
-    Cloning is delegated to ensure-specs-clone.ps1 (shallow + blobless, with an
+    Cloning is delegated to Sync-EvalGitRepo.ps1 (shallow + blobless, with an
     optional cone-sparse checkout). The repo's clone URL is resolved by
     convention (https://github.com/<DefaultOrg>/<dir-name>.git), with per-repo
     overrides for URL and sparse paths in $KnownRepos below.
@@ -29,7 +29,7 @@
     Defaults to the hermetic "mock vertical" suites the CI fans out over.
 
 .PARAMETER MaxAgeHours
-    Forwarded to ensure-specs-clone.ps1: skip the refresh fetch if the cache was
+    Forwarded to Sync-EvalGitRepo.ps1: skip the refresh fetch if the cache was
     primed within this many hours. Default: 24.
 
 .PARAMETER DefaultOrg
@@ -37,7 +37,7 @@
     Default: Azure.
 
 .EXAMPLE
-    ./scripts/Prime-EvalGitFixtures.ps1 -EvalRoot .
+    ./scripts/Initialize-EvalGitFixtures.ps1 -EvalRoot .
 #>
 [CmdletBinding()]
 param(
@@ -80,7 +80,7 @@ function Get-EvalGitFixture {
         one record per fixture: the declaring file, the raw source/ref, and the
         resolved absolute cache path + repo (leaf) name. Uses a targeted,
         indent-scoped regex rather than a YAML parser so there is no module
-        dependency on the build agent (same approach as Get-EvalMatrix.ps1).
+        dependency on the build agent (same approach as Split-EvalSuite.ps1).
     #>
     [CmdletBinding()]
     param(
@@ -145,7 +145,7 @@ if ($ListOnly) {
     return $unique
 }
 
-$ensureScript = Join-Path $PSScriptRoot 'ensure-specs-clone.ps1'
+$syncScript = Join-Path $PSScriptRoot 'Sync-EvalGitRepo.ps1'
 
 foreach ($f in $unique) {
     $known     = $KnownRepos[$f.RepoName]
@@ -154,7 +154,7 @@ foreach ($f in $unique) {
     $cacheRoot = Split-Path -Path $f.CachePath -Parent
 
     Write-Host "[prime-fixtures] Priming $($f.RepoName) @ $($f.Ref) from $repoUrl"
-    & $ensureScript `
+    & $syncScript `
         -CacheRoot           $cacheRoot `
         -RepoUrl             $repoUrl `
         -RepoName            $f.RepoName `

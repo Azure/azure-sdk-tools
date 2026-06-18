@@ -27,7 +27,12 @@ from models.knowledge import DocumentContext, Reference, SearchKnowledgeBaseResu
 from services.conversation_service import ConversationService
 from tools import TOOL_REGISTRY
 from skills.tenant_skills import get_skill_to_tenant_map
-from utils.azure_ai_foundry import get_openai_client, get_project_client
+from utils.azure_ai_foundry import (
+    get_openai_client,
+    get_project_client,
+    get_stateless_session_id,
+    set_stateless_session_id,
+)
 from utils.teams_image import get_image_data_uri
 from utils.text_util import preprocess_message
 from utils.azure_memory_store import sanitize_scope
@@ -38,6 +43,7 @@ from openai import (
     APIStatusError,
     APITimeoutError,
     AsyncOpenAI,
+    BadRequestError,
     NotFoundError,
 )
 from openai.types.responses import Response as OpenAIResponse
@@ -91,9 +97,18 @@ class ChatService:
         agent = await self._get_agent(project_client)
         openai_client = get_openai_client()
 
-        agent_conversation_id, is_new = await self._resolve_conversation(
-            openai_client, req
-        )
+        # Stateless calls (no customer conversation_id) skip conversation
+        # threading and reuse a warm sandbox; threaded calls resolve history.
+        stateless = not req.conversation_id
+        if stateless:
+            agent_conversation_id, is_new = None, True
+            agent_session_id = get_stateless_session_id()
+            logger.info("Stateless request: reusing warm session=%s", agent_session_id)
+        else:
+            agent_conversation_id, is_new = await self._resolve_conversation(
+                openai_client, req
+            )
+            agent_session_id = None
         conversation_items: list[ResponseInputItemParam] = []
         if is_new:
             tenant_system_msg = self._build_tenant_system_message(req.tenant_id)
@@ -158,6 +173,7 @@ class ChatService:
             openai_client=openai_client,
             conversation_items=conversation_items,
             agent_conversation_id=agent_conversation_id,
+            agent_session_id=agent_session_id,
             agent_ref=agent_ref,
         )
 
@@ -170,6 +186,13 @@ class ChatService:
 
         if response is None:
             raise RuntimeError("Agent stream ended without a response.completed event")
+
+        # Cache the warm sandbox id so later stateless calls reuse it.
+        if stateless and not get_stateless_session_id():
+            extra = getattr(response, "model_extra", None) or {}
+            captured = extra.get("agent_session_id")
+            set_stateless_session_id(captured)
+            logger.info("Stateless request: captured warm session=%s", captured)
 
         # Extract AI Foundry trace ID from x-request-id header.
         # The header may contain duplicated values separated by comma.
@@ -224,29 +247,53 @@ class ChatService:
     async def _invoke_agent_with_retry(
         openai_client: AsyncOpenAI,
         conversation_items: list[ResponseInputItemParam],
-        agent_conversation_id: str,
         agent_ref: dict[str, str],
+        agent_conversation_id: str | None = None,
+        agent_session_id: str | None = None,
         max_retries: int = STREAM_CREATE_MAX_RETRIES,
         retry_delay: float = STREAM_CREATE_RETRY_DELAY_SECS,
     ):
         """Create a responses stream with bounded retries for transient failures.
 
-        Retries on ``APIStatusError`` (4xx/5xx), ``APIConnectionError``, and
-        ``APITimeoutError``.  The detailed status code and error message are
-        logged so they flow into telemetry.
+        Threaded calls pass ``conversation``; stateless calls pass a reused
+        ``agent_session_id``. A cached session that the platform rejects
+        (404/400 — deleted or expired) is dropped so the next attempt creates a
+        fresh one. Other ``APIStatusError`` / connection / timeout errors retry
+        with the same parameters.
         """
         last_error: Exception | None = None
 
         for attempt in range(1, max_retries + 1):
+            extra_body: dict[str, Any] = {"agent_reference": agent_ref}
+            kwargs: dict[str, Any] = {}
+            if agent_conversation_id:
+                kwargs["conversation"] = agent_conversation_id
+            if agent_session_id:
+                extra_body["agent_session_id"] = agent_session_id
             try:
                 return await openai_client.responses.create(
                     input=conversation_items,
-                    conversation=agent_conversation_id,
                     store=True,
                     stream=True,
-                    extra_body={
-                        "agent_reference": agent_ref,
-                    },
+                    extra_body=extra_body,
+                    **kwargs,
+                )
+            except (NotFoundError, BadRequestError) as ex:
+                last_error = ex
+                # A rejected cached session: drop it and retry without one so
+                # the platform provisions a fresh sandbox.
+                if agent_session_id:
+                    set_stateless_session_id(None)
+                    agent_session_id = None
+                    continue
+                logger.warning(
+                    "Failed to create agent stream (attempt %d/%d): "
+                    "conversation=%s, error=%s",
+                    attempt,
+                    max_retries,
+                    agent_conversation_id,
+                    ex,
+                    exc_info=True,
                 )
             except (APIConnectionError, APITimeoutError, APIStatusError) as ex:
                 last_error = ex
@@ -485,7 +532,10 @@ class ChatService:
         return f"[memory_scope] value={memory_scope}"
 
     def _postprocess(
-        self, req: ChatRequest, response: OpenAIResponse, agent_conversation_id: str
+        self,
+        req: ChatRequest,
+        response: OpenAIResponse,
+        agent_conversation_id: str | None,
     ) -> ChatResponse:
         """Map hosted-agent response to `ChatResponse`."""
         tool_results = self._extract_tool_results(response.output)

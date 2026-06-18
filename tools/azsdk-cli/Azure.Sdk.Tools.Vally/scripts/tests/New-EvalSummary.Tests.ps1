@@ -117,4 +117,30 @@ Describe 'New-EvalSummary.ps1' {
         & $script:scriptPath -ResultsRoot $passRoot -OutputPath $script:outFile | Out-Null
         (Get-Content -LiteralPath $script:outFile -Raw) | Should -Match '## .* Vally eval results — PASSED'
     }
+
+    It 'reports NO RESULTS (not PASSED) when an XML has zero testcases' {
+        $emptyRoot = Join-Path $script:root 'empty-results'
+        $dir = Join-Path $emptyRoot 'eval-result-area_empty'
+        New-Item -ItemType Directory -Path $dir -Force | Out-Null
+        Set-Content -Path (Join-Path $dir 'junit.xml') -Encoding utf8 -Value @'
+<testsuites><testsuite name="empty"></testsuite></testsuites>
+'@
+        & $script:scriptPath -ResultsRoot $emptyRoot -OutputPath $script:outFile | Out-Null
+        $md = Get-Content -LiteralPath $script:outFile -Raw
+        $md | Should -Match '## .* Vally eval results — NO RESULTS'
+        $md | Should -Not -Match 'results — PASSED'
+        $md | Should -Match 'No eval testcases were found'
+    }
+
+    It 'falls back to a meaningful shard name when not under eval-result-*' {
+        $fbRoot = Join-Path $script:root 'fallback'
+        $dir = Join-Path $fbRoot '_unit5' '2026-06-17T23-53-02-457Z'
+        New-Item -ItemType Directory -Path $dir -Force | Out-Null
+        Set-Content -Path (Join-Path $dir 'eval-results.junit.xml') -Encoding utf8 -Value @'
+<testsuites><testsuite name="x"><testcase name="ok" time="0.1" /></testsuite></testsuites>
+'@
+        $shards = & $script:scriptPath -ResultsRoot $fbRoot -OutputPath $script:outFile
+        $shards.Contains('_unit5') | Should -BeTrue
+        $shards.Contains('unknown') | Should -BeFalse
+    }
 }

@@ -56,6 +56,17 @@ function Get-ShardName {
             return $segment -replace '^eval-result-', ''
         }
     }
+
+    # Fallback when the path isn't under an `eval-result-<shard>` folder (e.g. a
+    # local combined run, or an unexpected download layout): use the nearest
+    # ancestor directory that isn't a Vally timestamp folder, so the shard column
+    # shows something diagnostic instead of a useless 'unknown'.
+    $segments = @($Path -split '[\\/]' | Where-Object { $_ })
+    for ($i = $segments.Count - 2; $i -ge 0; $i--) {
+        if ($segments[$i] -notmatch '^\d{4}-\d{2}-\d{2}T') {
+            return $segments[$i]
+        }
+    }
     return 'unknown'
 }
 
@@ -186,16 +197,32 @@ function Format-EvalSummaryMarkdown {
     $totalPassed = $totalTests - $totalFailed - $totalSkipped
 
     $sb = [System.Text.StringBuilder]::new()
-    $overall = if ($totalFailed -eq 0) { 'PASSED' } else { 'FAILED' }
-    $overallIcon = if ($totalFailed -eq 0) { '✅' } else { '❌' }
+
+    # A run that parsed zero testcases is NOT a pass — it means the shards never
+    # published JUnit (failed before running, or empty `eval-result-*` artifacts).
+    # Surface it as a loud NO RESULTS state instead of a misleading green PASSED.
+    if ($totalTests -eq 0) {
+        $overall = 'NO RESULTS'
+        $overallIcon = '⚠️'
+    }
+    elseif ($totalFailed -eq 0) {
+        $overall = 'PASSED'
+        $overallIcon = '✅'
+    }
+    else {
+        $overall = 'FAILED'
+        $overallIcon = '❌'
+    }
 
     [void]$sb.AppendLine("## $overallIcon Vally eval results — $overall")
     [void]$sb.AppendLine('')
     [void]$sb.AppendLine("**$totalPassed passed**, **$totalFailed failed**, $totalSkipped skipped across $($Shards.Count) shard(s).")
     [void]$sb.AppendLine('')
 
-    if ($Shards.Count -eq 0) {
-        [void]$sb.AppendLine('> No JUnit results were found.')
+    if ($totalTests -eq 0) {
+        [void]$sb.AppendLine('> ⚠️ No eval testcases were found in the downloaded results. This usually means the')
+        [void]$sb.AppendLine('> eval shards did not publish JUnit — the shard jobs failed before running, or the')
+        [void]$sb.AppendLine('> `eval-result-*` artifacts were empty. Check the Eval stage shard logs.')
         return $sb.ToString()
     }
 

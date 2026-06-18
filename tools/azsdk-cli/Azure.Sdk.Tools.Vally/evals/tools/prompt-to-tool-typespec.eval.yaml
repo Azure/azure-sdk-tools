@@ -70,7 +70,7 @@ stimuli:
 
   # ==== azsdk_run_typespec_validation triggers ====
   - name: invoke-azsdk-run-typespec-validation-1
-    prompt: "Run TypeSpec validation on my project. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Run TypeSpec validation on my project specification/contosowidgetmanager/Contoso.WidgetManager. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
@@ -93,7 +93,7 @@ stimuli:
           required:
             - name: "azsdk_typespec_check_project_in_public_repo"
   - name: invoke-azsdk-typespec-check-project-in-public-repo-2
-    prompt: "Check if my TypeSpec project is in the public spec repo. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Check if my TypeSpec project specification/contosowidgetmanager/Contoso.WidgetManager is in the public spec repo. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
@@ -192,6 +192,7 @@ stimuli:
       Check if my TypeSpec project is in the public repo.
       My setup has already been verified, do not run azsdk_verify_setup.
       Project root: specification/contosowidgetmanager/Contoso.WidgetManager.
+      Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself.
     constraints:
       max_turns: 5
       max_tokens: 5000

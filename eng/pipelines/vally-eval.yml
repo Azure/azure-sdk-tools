@@ -207,6 +207,15 @@ stages:
                 -ResultsRoot "$(Pipeline.Workspace)"
                 -OutputPath "$(Build.ArtifactStagingDirectory)/eval-summary.md"
 
+          # Always-visible copy of the rollup: the build-summary upload
+          # (##vso[task.uploadsummary]) only shows on the Extensions tab, so also
+          # publish the Markdown as a downloadable artifact that's reachable from
+          # the run's Artifacts list regardless of where the summary surfaces.
+          - publish: '$(Build.ArtifactStagingDirectory)/eval-summary.md'
+            artifact: 'eval-summary'
+            displayName: 'Publish eval-summary.md artifact'
+            condition: always()
+
           - task: PublishTestResults@2
             displayName: 'Publish eval rollup'
             inputs:

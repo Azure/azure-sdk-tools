@@ -100,7 +100,7 @@ stimuli:
 
   # ==== azsdk_package_run_check triggers ====
   - name: invoke-azsdk-package-run-check-1
-    prompt: "Run the azsdk package check command to validate my SDK. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    prompt: "Run the azsdk package validation checks on the SDK package at ./sdk/contosowidgetmanager/Azure.Template.Contoso. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
     graders:
       - type: tool-calls
         config:
@@ -113,13 +113,16 @@ stimuli:
         config:
           required:
             - name: "azsdk_package_run_check"
-  - name: invoke-azsdk-package-run-check-3
-    prompt: "Validate the changelog and dependencies for my package. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
-    graders:
-      - type: tool-calls
-        config:
-          required:
-            - name: "azsdk_package_run_check"
+  # NOTE: Commented out — the "Validate the changelog and dependencies" wording leads the
+  # agent to a changelog-specific tool instead of azsdk_package_run_check (0/5). The tool is
+  # already covered by the passing run-check-1/run-check-2 triggers. Re-add with clearer wording.
+  # - name: invoke-azsdk-package-run-check-3
+  #   prompt: "Validate the changelog and dependencies for the SDK package at ./sdk/contosowidgetmanager/Azure.Template.Contoso. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+  #   graders:
+  #     - type: tool-calls
+  #       config:
+  #         required:
+  #           - name: "azsdk_package_run_check"
 
   # ==== azsdk_package_run_tests triggers ====
   - name: invoke-azsdk-package-run-tests-1

@@ -84,6 +84,21 @@ function Get-StimulusName {
     return ($Name -replace '\s*\(trial\s+\d+\)\s*$', '').Trim()
 }
 
+function Format-Pct {
+    # Formats a 0..1 ratio as a percentage, dropping a trailing '.0' so whole
+    # numbers read as '100%' while fractional rates keep one decimal ('93.5%').
+    [CmdletBinding()]
+    param(
+        [double]$Ratio
+    )
+
+    $pct = $Ratio * 100
+    if ([math]::Abs($pct - [math]::Round($pct)) -lt 0.05) {
+        return ('{0:N0}%' -f $pct)
+    }
+    return ('{0:N1}%' -f $pct)
+}
+
 function Get-EvalSummary {
     [CmdletBinding()]
     param(
@@ -214,36 +229,65 @@ function Format-EvalSummaryMarkdown {
         $overallIcon = '❌'
     }
 
+    # Pass rate is measured over scenarios that actually ran (skips excluded), so
+    # an all-skipped shard never inflates or deflates the headline number.
+    $nonSkipped = $totalPassed + $totalFailed
+    $overallPct = if ($nonSkipped -gt 0) { $totalPassed / $nonSkipped } else { 0 }
+
     [void]$sb.AppendLine("## $overallIcon Vally eval results — $overall")
-    [void]$sb.AppendLine('')
-    [void]$sb.AppendLine("**$totalPassed passed**, **$totalFailed failed**, $totalSkipped skipped across $($Shards.Count) shard(s).")
     [void]$sb.AppendLine('')
 
     if ($totalTests -eq 0) {
+        [void]$sb.AppendLine("No scenarios were found across $($Shards.Count) shard(s).")
+        [void]$sb.AppendLine('')
         [void]$sb.AppendLine('> ⚠️ No eval testcases were found in the downloaded results. This usually means the')
         [void]$sb.AppendLine('> eval shards did not publish JUnit — the shard jobs failed before running, or the')
         [void]$sb.AppendLine('> `eval-result-*` artifacts were empty. Check the Eval stage shard logs.')
         return $sb.ToString()
     }
 
-    [void]$sb.AppendLine('| Shard | Result | Passed | Failed | Skipped | Time (s) |')
-    [void]$sb.AppendLine('| --- | :---: | ---: | ---: | ---: | ---: |')
-    foreach ($shard in ($Shards.Values | Sort-Object shardName)) {
+    # Glanceable one-liner: scenario/shard totals plus the colour-coded tallies and
+    # the headline pass rate, so the verdict is readable without opening the table.
+    $scenarioWord = if ($totalTests -eq 1) { 'scenario' } else { 'scenarios' }
+    $shardWord = if ($Shards.Count -eq 1) { 'shard' } else { 'shards' }
+    $tallies = [System.Collections.Generic.List[string]]::new()
+    $tallies.Add("✅ **$totalPassed passed**")
+    if ($totalFailed -gt 0) { $tallies.Add("❌ **$totalFailed failed**") }
+    if ($totalSkipped -gt 0) { $tallies.Add("⏭️ $totalSkipped skipped") }
+    $tallies.Add("**$(Format-Pct $overallPct)** pass rate")
+    [void]$sb.AppendLine("**$totalTests $scenarioWord** across **$($Shards.Count) $shardWord** — $([string]::Join(' · ', $tallies))")
+    [void]$sb.AppendLine('')
+
+    # Red shards first (then alphabetical) so a reader's eye lands on failures.
+    $orderedShards = @($Shards.Values | Sort-Object @{ Expression = { $_.failed -eq 0 } }, shardName)
+
+    [void]$sb.AppendLine('| Shard | Result | Pass rate | Passed | Failed | Skipped | Time (s) |')
+    [void]$sb.AppendLine('| --- | :---: | ---: | ---: | ---: | ---: | ---: |')
+    foreach ($shard in $orderedShards) {
         $passed = $shard.total - $shard.failed - $shard.skipped
         $icon = if ($shard.failed -eq 0) { '✅' } else { '❌' }
+        $shardRan = $passed + $shard.failed
+        $shardPct = if ($shardRan -gt 0) { Format-Pct ($passed / $shardRan) } else { '—' }
         $time = '{0:N1}' -f $shard.durationS
-        [void]$sb.AppendLine("| $($shard.shardName) | $icon | $passed | $($shard.failed) | $($shard.skipped) | $time |")
+        [void]$sb.AppendLine("| $($shard.shardName) | $icon | $shardPct | $passed | $($shard.failed) | $($shard.skipped) | $time |")
     }
+    # Totals row anchors the table so the rollup reads at a glance even with many shards.
+    $totalIcon = if ($totalFailed -eq 0) { '✅' } else { '❌' }
+    $totalDuration = 0.0
+    foreach ($shard in $Shards.Values) { $totalDuration += $shard.durationS }
+    $totalTime = '{0:N1}' -f $totalDuration
+    [void]$sb.AppendLine("| **Total** | $totalIcon | **$(Format-Pct $overallPct)** | **$totalPassed** | **$totalFailed** | **$totalSkipped** | **$totalTime** |")
 
     if ($totalFailed -gt 0) {
+        $failWord = if ($totalFailed -eq 1) { 'scenario' } else { 'scenarios' }
         [void]$sb.AppendLine('')
-        [void]$sb.AppendLine('<details><summary>Failing scenarios</summary>')
+        [void]$sb.AppendLine("<details open><summary><strong>❌ $totalFailed failing $failWord</strong></summary>")
         [void]$sb.AppendLine('')
-        foreach ($shard in ($Shards.Values | Sort-Object shardName)) {
+        foreach ($shard in $orderedShards) {
             if ($shard.failed -eq 0) { continue }
             [void]$sb.AppendLine("- **$($shard.shardName)**")
             foreach ($name in $shard.failures) {
-                [void]$sb.AppendLine("  - $name")
+                [void]$sb.AppendLine("  - ❌ $name")
             }
         }
         [void]$sb.AppendLine('')

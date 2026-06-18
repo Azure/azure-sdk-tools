@@ -165,10 +165,24 @@ stages:
               arguments: >-
                 -EvalRoot "$(Build.SourcesDirectory)/$(vallyRoot)"
 
-          - script: |
-              npm exec --no --prefix "$(Build.SourcesDirectory)/eng/skill-eval" -- \
-                vally eval $(evalArgs) --junit --threshold 0.8 --output-dir "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)"
+          # Run the shard and gate on the eval *verdict*, not the `vally` process
+          # exit code. Vally can exit 1 AFTER a passing verdict when its executor /
+          # MCP child processes miss the shutdown window ("Timed out while shutting
+          # down executors."); that teardown flake must not turn a passing shard
+          # red. The script reads the authoritative `run-summary` from results.jsonl
+          # and passes the shard when every eval's pass rate >= threshold (a >=80%
+          # run is green), failing only on a genuine sub-threshold result.
+          - task: PowerShell@2
             displayName: 'vally eval $(shardName)'
+            inputs:
+              pwsh: true
+              filePath: '$(vallyRoot)/scripts/Invoke-VallyEvalShard.ps1'
+              arguments: >-
+                -EvalArgs "$(evalArgs)"
+                -ShardName "$(shardName)"
+                -OutputDir "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)"
+                -SkillEvalPrefix "$(Build.SourcesDirectory)/eng/skill-eval"
+                -Threshold 0.8
             workingDirectory: '$(vallyRoot)'
             env:
               GITHUB_TOKEN: $(azuresdk-copilot-github-pat)

@@ -683,6 +683,39 @@ main {
   color: var(--green);
   font-size: 0.72rem;
 }
+.badge-first-preview {
+  background: #d6eaf8;
+  color: #1a5276;
+  font-size: 0.72rem;
+}
+.badge-first-ga {
+  background: #d5f5e3;
+  color: #1e8449;
+  font-size: 0.72rem;
+}
+.badge-missing-product {
+  background: #fff3cd;
+  color: #856404;
+  font-size: 0.72rem;
+}
+.missing-product-highlight {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #664d03;
+}
+.missing-product-highlight p {
+  margin: 6px 0;
+}
+.global-tag-filter {
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  font-size: 0.85rem;
+}
 
 /* Badge */
 .step-badge {
@@ -1058,6 +1091,14 @@ main {
 .pr-label-new {
   background: #e8daef;
   color: #6c3483;
+}
+.pr-label-first-preview {
+  background: #d6eaf8;
+  color: #1a5276;
+}
+.pr-label-first-ga {
+  background: #d5f5e3;
+  color: #1e8449;
 }
 .pr-label-version {
   background: var(--gray-bg);

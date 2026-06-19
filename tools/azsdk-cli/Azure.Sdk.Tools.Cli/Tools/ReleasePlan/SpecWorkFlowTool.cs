@@ -134,7 +134,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return response;
                 }
 
-                var releasePlan = await devopsService.GetReleasePlanForWorkItemAsync(workItemId, ct);
+                var releasePlan = await devopsService.ResolveReleasePlanByIdAsync(workItemId, ct);
 
                 var sdkInfoList = releasePlan?.SDKInfo;
 
@@ -196,13 +196,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     response.NextSteps = ["Create a release plan if you don't have one or get existing release plan and re-run SDK generation."];
                     return response;
                 }
-                var releasePlan = await devopsService.GetReleasePlanForWorkItemAsync(workItemId, ct);
+                // The resolver accepts either a Release Plan ID or a work item ID.
+                var releasePlan = await devopsService.ResolveReleasePlanByIdAsync(workItemId, ct);
                 if (releasePlan == null)
                 {
                     response.ResponseErrors.Add($"No release plan found for work item ID {workItemId}. Please check the work item ID and try again.");
                     response.Status = "Failed";
                     return response;
                 }
+
+                // The input may have been a Release Plan ID; use the resolved work item ID for subsequent calls.
+                workItemId = releasePlan.WorkItemId;
 
                 if (releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview)
                 {
@@ -338,7 +342,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 if (buildId == 0)
                 {
                     response.Details.Add("Build Id is not available. Checking for SDK pull request details in release plan work item.");
-                    var releasePlan = await devopsService.GetReleasePlanForWorkItemAsync(workItemId, ct);
+                    var releasePlan = await devopsService.ResolveReleasePlanByIdAsync(workItemId, ct);
                     var sdkInfo = releasePlan?.SDKInfo.FirstOrDefault(s => string.Equals(s.Language, language, StringComparison.OrdinalIgnoreCase));
                     if (sdkInfo != null && !string.IsNullOrEmpty(sdkInfo.SdkPullRequestUrl))
                     {

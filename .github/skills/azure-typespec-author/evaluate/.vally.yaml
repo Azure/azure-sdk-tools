@@ -1,5 +1,13 @@
 # Vally configuration for Azure SDK Typespec Author MCP tool evaluations
 # See: https://vally.dev/reference/vally-config
+# This file is the local/default entrypoint for developers.
+#
+# Local commands like `vally eval --suite versioning` continue to
+# behave as teammates expect.
+#
+# The pipeline parallel layout lives separately under suites/ and is invoked
+# explicitly from the pipeline with --eval-spec. That keeps local usage stable
+# without introducing a second Vally config file.
 
 paths:
   evals: [evals/]
@@ -13,7 +21,14 @@ environments:
       azure-sdk-mcp:
         type: stdio
         command: dotnet
-        args: ["run", "--project", "../../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli", "--", "start"]
+        args:
+          [
+            "run",
+            "--project",
+            "../../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli",
+            "--",
+            "start",
+          ]
         timeout: 5m
         env:
           AZSDKTOOLS_AGENT_TESTING: "false"
@@ -24,26 +39,96 @@ environments:
       azure-sdk-mcp:
         type: stdio
         command: dotnet
-        args: ["run", "--project", "../../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli", "--", "start"]
+        args:
+          [
+            "run",
+            "--project",
+            "../../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli",
+            "--",
+            "start",
+          ]
         timeout: 5m
         env:
           AZSDKTOOLS_AGENT_TESTING: "false"
           AZSDKTOOLS_COLLECT_TELEMETRY: "false"
 
+  # Mock MCP environment for skill-invocation / trigger tests.
+  # Uses Azure.Sdk.Tools.Mock to avoid spinning up the real azure-sdk-mcp
+  # server when we only care about whether the skill is invoked.
+  azsdk-mcp-mock:
+    mcpServers:
+      azure-sdk-mcp:
+        type: stdio
+        command: dotnet
+        args:
+          [
+            "run",
+            "--project",
+            "../../../../tools/azsdk-cli/Azure.Sdk.Tools.Mock",
+          ]
+        timeout: "60s"
+
 suites:
-  versioning:
-    evals: ["evals/001001.eval.yaml","evals/001002.eval.yaml","evals/001003.eval.yaml","evals/001004.eval.yaml","evals/001005.eval.yaml","evals/001006.eval.yaml","evals/001007.eval.yaml","evals/001008.eval.yaml","evals/001009.eval.yaml","evals/001010.eval.yaml","evals/001011.eval.yaml","evals/001012.eval.yaml","evals/001013.eval.yaml"]
-  version-evolution:
-    evals: ["evals/001005.eval.yaml","evals/001006.eval.yaml","evals/001007.eval.yaml","evals/001008.eval.yaml"]
-  armtemplate:
-    evals: ["evals/002001.eval.yaml","evals/002002.eval.yaml","evals/002003.eval.yaml","evals/002004.eval.yaml","evals/002005.eval.yaml","evals/002006.eval.yaml","evals/002007.eval.yaml","evals/002008.eval.yaml","evals/002009.eval.yaml","evals/002010.eval.yaml"]
-  longrunningoperation:
-    evals: ["evals/003001.eval.yaml","evals/003002.eval.yaml"]
-  decorators:
-    evals: ["evals/004001.eval.yaml","evals/004002.eval.yaml","evals/004003.eval.yaml"]
-  warning:
-    evals: ["evals/005001.eval.yaml"]
-  dataplane:
-    evals: ["evals/006001.eval.yaml","evals/006002.eval.yaml","evals/006003.eval.yaml","evals/006004.eval.yaml","evals/006005.eval.yaml","evals/006006.eval.yaml","evals/006007.eval.yaml","evals/006008.eval.yaml","evals/006009.eval.yaml"]
-  all:
+  versioning-forced:
     evals: ["evals/*.eval.yaml"]
+    filter: { suite: versioning, mode: forced }
+  armtemplate-forced:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: armtemplate, mode: forced }
+  longrunningoperation-forced:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: lro, mode: forced }
+  decorators-forced:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: decorators, mode: forced }
+  warning-forced:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: warning, mode: forced }
+  dataplane-forced:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: dataplane, mode: forced }
+  versioning-trigger:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: versioning, mode: trigger }
+  armtemplate-trigger:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: armtemplate, mode: trigger }
+  longrunningoperation-trigger:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: lro, mode: trigger }
+  decorators-trigger:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: decorators, mode: trigger }
+  warning-trigger:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: warning, mode: trigger }
+  dataplane-trigger:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: dataplane, mode: trigger }
+  versioning-no-skill:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: versioning, mode: no-skill }
+  armtemplate-no-skill:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: armtemplate, mode: no-skill }
+  longrunningoperation-no-skill:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: lro, mode: no-skill }
+  decorators-no-skill:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: decorators, mode: no-skill }
+  warning-no-skill:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: warning, mode: no-skill }
+  dataplane-no-skill:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: dataplane, mode: no-skill }
+  forced:
+    evals: ["evals/*.eval.yaml"]
+    filter: { mode: forced }
+  trigger:
+    evals: ["evals/*.eval.yaml"]
+    filter: { mode: trigger }
+  no-skill:
+    evals: ["evals/*.eval.yaml"]
+    filter: { mode: no-skill }

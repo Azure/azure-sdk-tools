@@ -1,5 +1,62 @@
 # Release History
 
+## 0.6.22 (Unreleased)
+
+### Features Added
+
+- Added an `editScope` parameter (`--edit-scope`) to the `customized-update` command / `azsdk_customized_code_update` MCP tool. It is a flags enum (`CustomCode`, `SpecInputs`, `All`; default `All`). `CustomCode` restricts the tool to custom (non-generated) code: it never edits spec inputs (client.tsp/tspconfig.yaml) or moves the pinned spec commit, and feedback requiring a spec change is reported as out of scope via the `SpecChangeRequired` error code instead of being applied. `SpecInputs` restricts the tool to spec-input edits: it never patches custom code, and feedback requiring a custom-code change is reported as out of scope via the new `CustomCodeChangeRequired` error code instead of being applied. The edit scope is also passed to the feedback classifier so that items addressable either way (e.g. renames doable in spec OR custom code) are biased toward the in-scope axis instead of being reported as out of scope. Regenerating `Generated/` from the unchanged pinned commit is always allowed.
+- Made `tspProjectPath` (`--tsp-project-path`) optional on the `customized-update` command / `azsdk_customized_code_update` MCP tool. It is now required only when the edit scope includes spec inputs (`SpecInputs`/`All`). For custom-code-only repair (`editScope CustomCode`) it may be omitted: regeneration then runs `tsp-client update` without `--local-spec-repo`, so the `tsp-client` CLI regenerates from the repo and commit pinned in the package's `tsp-location.yaml` instead of a local checkout. This enables headless custom-code build repair in a language repo where the spec is not checked out.
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
+## 0.6.21 (2026-06-18)
+
+### Features Added
+
+- Added UX and functionality improvements to `azp` sub-commands for pipeline analysis
+- Added --copilot mode to pipeline analysis to call the user's copilot CLI installation for processing
+- Enable pipeline analysis commands to take a GitHub PR link in addition to pipeline link or ID
+
+### Breaking Changes
+
+- Removed upstream RAG-based/hosted model pipeline analysis mode via `azsdk azp analyze --agent`
+
+### Other Changes
+
+- Added service ID and product ID as optional when creating a release plan
+- Replaced product life cycle property with release plan type when fetching attestation status
+
+## 0.6.20 (2026-06-16)
+
+### Features Added
+
+- Set ADO work item ID as release plan ID for new release plans.
+
+### Bugs Fixed
+
+- Fixed MCP server infinite respawn loop when upgrade or install fails due to rate limiting or network errors.
+
+### Other Changes
+
+- Improved GEPA skill quality scores for all shared skills.
+- Updated prepare-release-plan skill with canonical convergence and Release Plan ID documentation.
+
+## 0.6.19 (2026-06-12)
+
+### Features Added
+
+- Release plan is automatically marked as "Finished" when all required language SDKs are either Released or have an Approved exclusion. Management plane checks all 5 languages; data plane checks .NET, Java, Python, and JavaScript only.
+- Added the `package find-work-item` CLI command to find Azure DevOps package work item IDs by package name, package version, and language.
+
+### Bugs Fixed
+
+- Release plan tools now accept either the user-facing Release Plan ID or the Azure DevOps work item ID. Tools resolve the supplied number by trying it as a Release Plan ID first, then falling back to a work item ID lookup.
+- `GetReleasePlanForWorkItemAsync` now verifies the work item's `System.WorkItemType` is `Release Plan` before mapping, preventing a non-release-plan work item from being mapped to an empty release plan.
+
 ## 0.6.18 (2026-06-08)
 
 ### Other Changes

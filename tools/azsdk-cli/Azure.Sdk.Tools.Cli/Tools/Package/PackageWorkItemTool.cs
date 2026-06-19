@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package;
 [Description("Get and update Azure DevOps package work items")]
 public class PackageWorkItemTool(
     IDevOpsService devOpsService,
-    ILogger<PackageWorkItemTool> logger) : MCPTool
+    ILogger<PackageWorkItemTool> logger) : MCPMultiCommandTool
 {
     private const string GetWorkItemCommandName = "get-work-item";
     private const string UpdateWorkItemCommandName = "update-work-item";
@@ -61,18 +61,11 @@ public class PackageWorkItemTool(
         AllowMultipleArgumentsPerToken = false,
     };
 
-    protected override Command GetCommand() => GetWorkItemCommand();
-
-    public override List<Command> GetCommandInstances()
-    {
-        var getCommand = GetWorkItemCommand();
-        var updateCommand = GetUpdateWorkItemCommand();
-
-        getCommand.SetAction((parseResult, cancellationToken) => InstrumentedCommandHandler(getCommand, parseResult, cancellationToken));
-        updateCommand.SetAction((parseResult, cancellationToken) => InstrumentedCommandHandler(updateCommand, parseResult, cancellationToken));
-
-        return [getCommand, updateCommand];
-    }
+    protected override List<Command> GetCommands() =>
+    [
+        GetWorkItemCommand(),
+        GetUpdateWorkItemCommand(),
+    ];
 
     private Command GetWorkItemCommand() =>
         new(GetWorkItemCommandName, "Get the Azure DevOps package work item")
@@ -94,11 +87,17 @@ public class PackageWorkItemTool(
             var packageVersionMajorMinor = parseResult.GetValue(packageVersionMajorMinorOpt);
             var language = parseResult.GetValue(languageOpt);
             var workItemId = parseResult.GetValue(workItemIdOpt);
-            var multilineFieldFormats = ParseMultilineFieldFormats(parseResult.GetValue(multilineFieldsFormatOpt));
             return parseResult.CommandResult.Command.Name switch
             {
                 GetWorkItemCommandName => await GetPackageWorkItem(packageName, packageVersionMajorMinor, language, workItemId, ct),
-                UpdateWorkItemCommandName => await UpdatePackageWorkItem(packageName, packageVersionMajorMinor, language, ParseFields(parseResult.GetValue(fieldsOpt)), multilineFieldFormats, workItemId, ct),
+                UpdateWorkItemCommandName => await UpdatePackageWorkItem(
+                    packageName,
+                    packageVersionMajorMinor,
+                    language,
+                    ParseFields(parseResult.GetValue(fieldsOpt)),
+                    ParseMultilineFieldFormats(parseResult.GetValue(multilineFieldsFormatOpt)),
+                    workItemId,
+                    ct),
                 _ => new DefaultCommandResponse { ResponseError = $"Unsupported package work item command '{parseResult.CommandResult.Command.Name}'." },
             };
         }
@@ -108,9 +107,6 @@ public class PackageWorkItemTool(
             return new DefaultCommandResponse { ResponseError = $"Failed to handle package work item command: {ex.Message}" };
         }
     }
-
-    public async Task<RawPackageWorkItemResponse> GetPackageWorkItem(string packageName, string packageVersionMajorMinor, string language, CancellationToken ct = default)
-        => await GetPackageWorkItem(packageName, packageVersionMajorMinor, language, workItemId: null, ct);
 
     public async Task<RawPackageWorkItemResponse> GetPackageWorkItem(string? packageName, string? packageVersionMajorMinor, string? language, int? workItemId, CancellationToken ct = default)
     {

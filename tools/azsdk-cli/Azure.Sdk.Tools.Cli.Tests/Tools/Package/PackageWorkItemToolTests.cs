@@ -30,7 +30,7 @@ public class PackageWorkItemToolTests
         devOpsService.Setup(service => service.GetWorkItemsByIdsAsync(It.Is<IEnumerable<int>>(ids => ids.SequenceEqual(new[] { 31370 })), 200, WorkItemExpand.All, It.IsAny<CancellationToken>()))
             .ReturnsAsync([CreatePackageWorkItem(31370, "azure-storage-blob", "12.30", "Python")]);
 
-        var result = await tool.GetPackageWorkItem("azure-storage-blob", "12.30", "Python", CancellationToken.None);
+        var result = await tool.GetPackageWorkItem("azure-storage-blob", "12.30", "Python", workItemId: null, CancellationToken.None);
 
         Assert.Multiple(() =>
         {
@@ -55,7 +55,7 @@ public class PackageWorkItemToolTests
                 pendingApiReviews: "https://apiview.dev/review/123",
                 specProjectPath: "specification/storage/data-plane/Azure.Storage.Blob")]);
 
-        var result = await tool.GetPackageWorkItem("azure-storage-blob", "12.30", "Python", CancellationToken.None);
+        var result = await tool.GetPackageWorkItem("azure-storage-blob", "12.30", "Python", workItemId: null, CancellationToken.None);
 
         Assert.Multiple(() =>
         {
@@ -75,7 +75,7 @@ public class PackageWorkItemToolTests
         devOpsService.Setup(service => service.GetWorkItemsByIdsAsync(It.Is<IEnumerable<int>>(ids => ids.SequenceEqual(new[] { 31370 })), 200, WorkItemExpand.All, It.IsAny<CancellationToken>()))
             .ReturnsAsync([CreatePackageWorkItem(31370, "azure-storage-blob", "12.30", "Python")]);
 
-        var result = await tool.GetPackageWorkItem("azure-storage-blob", "12.30", "Python", CancellationToken.None);
+        var result = await tool.GetPackageWorkItem("azure-storage-blob", "12.30", "Python", workItemId: null, CancellationToken.None);
 
         Assert.Multiple(() =>
         {
@@ -96,7 +96,7 @@ public class PackageWorkItemToolTests
         devOpsService.Setup(service => service.FindPackageWorkItemIdsAsync("azure-storage-blob", "Python", "12.30", It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
 
-        var result = await tool.GetPackageWorkItem("azure-storage-blob", "12.30", "Python", CancellationToken.None);
+        var result = await tool.GetPackageWorkItem("azure-storage-blob", "12.30", "Python", workItemId: null, CancellationToken.None);
 
         Assert.Multiple(() =>
         {
@@ -111,7 +111,7 @@ public class PackageWorkItemToolTests
         devOpsService.Setup(service => service.FindPackageWorkItemIdsAsync("azure-storage-blob", "Python", "12.30", It.IsAny<CancellationToken>()))
             .ReturnsAsync([1, 2]);
 
-        var result = await tool.GetPackageWorkItem("azure-storage-blob", "12.30", "Python", CancellationToken.None);
+        var result = await tool.GetPackageWorkItem("azure-storage-blob", "12.30", "Python", workItemId: null, CancellationToken.None);
 
         Assert.Multiple(() =>
         {
@@ -133,7 +133,7 @@ public class PackageWorkItemToolTests
         devOpsService.Setup(service => service.GetWorkItemsByIdsAsync(It.IsAny<IEnumerable<int>>(), 200, WorkItemExpand.All, It.IsAny<CancellationToken>()))
             .ReturnsAsync([CreatePackageWorkItem(31370, "azure-storage-blob", expectedPackageVersionMajorMinor, "Python")]);
 
-        var result = await tool.GetPackageWorkItem("azure-storage-blob", packageVersion, "Python", CancellationToken.None);
+        var result = await tool.GetPackageWorkItem("azure-storage-blob", packageVersion, "Python", workItemId: null, CancellationToken.None);
 
         Assert.Multiple(() =>
         {
@@ -146,7 +146,7 @@ public class PackageWorkItemToolTests
     [Test]
     public async Task GetPackageWorkItemReturnsErrorForInvalidPackageVersion()
     {
-        var result = await tool.GetPackageWorkItem("azure-storage-blob", "12.x", "Python", CancellationToken.None);
+        var result = await tool.GetPackageWorkItem("azure-storage-blob", "12.x", "Python", workItemId: null, CancellationToken.None);
 
         Assert.Multiple(() =>
         {
@@ -331,6 +331,30 @@ public class PackageWorkItemToolTests
     }
 
     [Test]
+    public async Task HandleCommandDoesNotReadUpdateOnlyOptionsForGetWorkItem()
+    {
+        devOpsService.Setup(service => service.GetWorkItemsByIdsAsync(It.Is<IEnumerable<int>>(ids => ids.SequenceEqual(new[] { 31370 })), 200, WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CreatePackageWorkItem(31370, "azure-storage-blob", "12.30", "Python")]);
+
+        var getCommand = tool.GetCommandInstances().Single(command => command.Name == "get-work-item");
+        var parseConfig = new CommandLineConfiguration(getCommand)
+        {
+            ResponseFileTokenReplacer = null
+        };
+
+        var parseResult = getCommand.Parse("--work-item-id 31370", parseConfig);
+        Assert.That(parseResult.Errors, Is.Empty);
+
+        var result = await tool.HandleCommand(parseResult, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(0));
+            Assert.That(result.ResponseError, Is.Null);
+        });
+    }
+
+    [Test]
     public async Task HandleCommandReturnsStructuredErrorForInvalidFieldPatch()
     {
         var updateCommand = tool.GetCommandInstances().Single(command => command.Name == "update-work-item");
@@ -365,6 +389,27 @@ public class PackageWorkItemToolTests
         };
 
         var parseResult = updateCommand.Parse("--work-item-id 31370 --field Custom.PendingAPIReviews=Test\\nTest3", parseConfig);
+        Assert.That(parseResult.Errors, Is.Empty);
+
+        var result = await tool.HandleCommand(parseResult, CancellationToken.None);
+
+        Assert.That(result.ExitCode, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task HandleCommandPreservesTrailingBackslashInFieldPatchValues()
+    {
+        devOpsService.Setup(service => service.UpdateWorkItemAsync(31370, It.Is<Dictionary<string, string>>(fields =>
+            fields["Custom.PendingAPIReviews"] == "Test\\"), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreatePackageWorkItem(31370, "azure-storage-blob", "12.30", "Python"));
+
+        var updateCommand = tool.GetCommandInstances().Single(command => command.Name == "update-work-item");
+        var parseConfig = new CommandLineConfiguration(updateCommand)
+        {
+            ResponseFileTokenReplacer = null
+        };
+
+        var parseResult = updateCommand.Parse("--work-item-id 31370 --field Custom.PendingAPIReviews=Test\\", parseConfig);
         Assert.That(parseResult.Errors, Is.Empty);
 
         var result = await tool.HandleCommand(parseResult, CancellationToken.None);

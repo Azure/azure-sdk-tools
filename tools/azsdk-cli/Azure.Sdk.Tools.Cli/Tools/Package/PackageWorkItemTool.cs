@@ -124,6 +124,8 @@ public class PackageWorkItemTool(
                 return response;
             }
 
+            response.Id = workItemLookup.WorkItemId;
+
             var workItems = await devOpsService.GetWorkItemsByIdsAsync([workItemLookup.WorkItemId], ct: ct);
             if (workItems.Count == 0)
             {
@@ -175,6 +177,8 @@ public class PackageWorkItemTool(
                 response.ResponseError = workItemLookup.ResponseError;
                 return response;
             }
+
+            response.Id = workItemLookup.WorkItemId;
 
             var updatedWorkItem = await devOpsService.UpdateWorkItemAsync(workItemLookup.WorkItemId, fields, multilineFieldFormats, ct);
             return MapWorkItemToRawModel(updatedWorkItem);
@@ -342,8 +346,8 @@ public class PackageWorkItemTool(
             var value = parsedFormats[key].Trim();
             parsedFormats[key] = value.ToLowerInvariant() switch
             {
-                "markdown" => "Markdown",
-                "html" => "Html",
+                "markdown" => "markdown",
+                "html" => "html",
                 _ => throw new ArgumentException($"Invalid multiline field format '{value}' for field '{key}'. Supported values are: html, markdown."),
             };
         }

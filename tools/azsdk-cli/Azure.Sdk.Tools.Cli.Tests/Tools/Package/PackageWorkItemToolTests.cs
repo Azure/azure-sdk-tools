@@ -123,6 +123,24 @@ public class PackageWorkItemToolTests
     }
 
     [Test]
+    public async Task GetPackageWorkItemReturnsResolvedIdWhenMatchedWorkItemCannotBeLoaded()
+    {
+        devOpsService.Setup(service => service.FindPackageWorkItemIdsAsync("azure-storage-blob", "Python", "12.30", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([31370]);
+        devOpsService.Setup(service => service.GetWorkItemsByIdsAsync(It.Is<IEnumerable<int>>(ids => ids.SequenceEqual(new[] { 31370 })), 200, WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        var result = await tool.GetPackageWorkItem("azure-storage-blob", "12.30", "Python", workItemId: null, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(1));
+            Assert.That(result.Id, Is.EqualTo(31370));
+            Assert.That(result.ResponseError, Does.Contain("was found but could not be loaded"));
+        });
+    }
+
+    [Test]
     [TestCase("12.30.0", "12.30")]
     [TestCase("12.30.0-beta.1", "12.30")]
     [TestCase("12", "12.0")]
@@ -191,6 +209,27 @@ public class PackageWorkItemToolTests
         {
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.That(result.ResponseError, Does.Contain("Package version must be a major version"));
+        });
+    }
+
+    [Test]
+    public async Task UpdatePackageWorkItemReturnsResolvedIdWhenUpdateFails()
+    {
+        devOpsService.Setup(service => service.FindPackageWorkItemIdsAsync("azure-storage-blob", "Python", "12.30", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([31370]);
+        devOpsService.Setup(service => service.UpdateWorkItemAsync(31370, It.IsAny<Dictionary<string, string>>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("update failed"));
+
+        var result = await tool.UpdatePackageWorkItem("azure-storage-blob", "12.30", "Python", new Dictionary<string, string>
+        {
+            ["System.State"] = "Resolved"
+        }, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(1));
+            Assert.That(result.Id, Is.EqualTo(31370));
+            Assert.That(result.ResponseError, Does.Contain("update failed"));
         });
     }
 
@@ -423,7 +462,7 @@ public class PackageWorkItemToolTests
         devOpsService.Setup(service => service.UpdateWorkItemAsync(
                 31370,
                 It.Is<Dictionary<string, string>>(fields => fields["Custom.PendingAPIReviews"] == "Test\nTest3"),
-            It.Is<Dictionary<string, string>>(formats => formats["Custom.PendingAPIReviews"] == "Markdown"),
+            It.Is<Dictionary<string, string>>(formats => formats["Custom.PendingAPIReviews"] == "markdown"),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreatePackageWorkItem(31370, "azure-storage-blob", "12.30", "Python"));
 

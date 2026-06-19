@@ -32,6 +32,11 @@ DO NOT USE FOR: improving existing skills (use sensei), general documentation
 - `references/` (optional) — Detailed docs, loaded on demand
 - `scripts/` (optional) — Executable code
 
+## Formatting
+
+- run `npm ci` in `.github/skills` to install dependencies
+- run `npm run format` to auto-format markdown and yaml files using Prettier
+
 ## Progressive Disclosure
 
 Metadata loads at startup. SKILL.md on activation. References load when linked via markdown link.

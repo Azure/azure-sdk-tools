@@ -11,11 +11,17 @@ parameters:
 - name: FilePatterns
   type: object
   default: []
+- name: AdditionalCheckoutPaths
+  type: object
+  default: []
 - name: BaseBranchName
   type: string
   default: $(DefaultBranch)
 - name: Repos
   type: object
+  default: []
+- name: PreSyncValidationSteps
+  type: stepList
   default: []
 
 stages:
@@ -34,6 +40,10 @@ stages:
               parameters:
                 Paths:
                   - ${{ parameters.DirectoryToSync }}
+                  - ${{ each path in parameters.AdditionalCheckoutPaths }}:
+                    - ${{ path }}
+
+            - ${{ parameters.PreSyncValidationSteps }}
 
             - template: /eng/common/pipelines/templates/steps/login-to-github.yml
 

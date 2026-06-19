@@ -1072,7 +1072,7 @@
         body = `<p>The SDK pull request has not been generated for <strong>${esc(lang)}</strong> yet.</p>
           <p>Use the ${agentLink} to generate the SDK:</p>
           ${repoNote}
-          <div class="guide-prompt"><code>Generate ${esc(lang)} SDK${pkg ? ` for package ${esc(pkg)}` : ""}${specPath ? ` for TypeSpec project ${esc(specPath)}` : ""} for release plan ${esc(planId)}</code></div>
+          <div class="guide-prompt"><code>Run SDK generation for ${esc(lang)}${pkg ? ` for package ${esc(pkg)}` : ""}${specPath ? ` for TypeSpec project ${esc(specPath)}` : ""} for release plan ${esc(planId)}</code></div>
           ${specPath ? `<p style="font-size:.82rem;color:#605e5c;">TypeSpec path: <code>${esc(specPath)}</code></p>` : ""}`;
         break;
       case ACTION_TYPES.FIX_CHECKS:
@@ -1166,7 +1166,7 @@
           <li>Clone the <code>azure-rest-api-specs</code> repo</li>
           <li>Open <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">copilot-cli</a> from the cloned repo path, or open the cloned repo in VS Code and open GitHub Copilot chat</li>
           <li>Run the following prompt:
-            <div class="action-prompt"><code>Generate SDK for all languages from my TypeSpec project ${esc(specPath)} and link SDK pull requests to the release plan ${esc(planId)}</code></div>
+            <div class="action-prompt"><code>Run SDK generation for all languages from my TypeSpec project ${esc(specPath)} and link SDK pull requests to the release plan ${esc(planId)}</code></div>
           </li>
         </ol>
       </div>`;

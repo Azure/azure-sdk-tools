@@ -170,6 +170,7 @@ stages:
                                 -Project "public" `
                                 -SourceBranch "$($pr.headRefName)" `
                                 -DefinitionId "${{ prValidationPipeline.DefinitionId }}" `
+                                -BuildParametersJson '{"SkipPrValidation": "true"}' `
                                 -CancelPreviousBuilds $True `
                                 -BearerToken $accessToken
                             workingDirectory: $(System.DefaultWorkingDirectory)

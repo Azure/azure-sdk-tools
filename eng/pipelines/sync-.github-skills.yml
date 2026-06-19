@@ -58,5 +58,5 @@ extends:
 
       - script: npm run format:check
         workingDirectory: .github
-        displayName: Check changed skills with Prettier
+        displayName: Check .github/skills formatting with Prettier
     Repos: ${{ parameters.Repos }}

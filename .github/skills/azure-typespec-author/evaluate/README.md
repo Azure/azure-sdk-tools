@@ -23,6 +23,7 @@ eval $(node scripts/setup-environment.js)
 ```
 
 This script:
+
 1. Clones `package.json` and `package-lock.json` from [azure-rest-api-specs](https://github.com/Azure/azure-rest-api-specs) into `fixtures/Microsoft.Widget/Widget/`.
 2. Runs `npm ci` in that directory.
 3. Outputs the shell command to set `FIXTURE_NODE_MODULES` for symlink usage.
@@ -60,10 +61,10 @@ vally eval --eval-spec evals/001001.eval.yaml --tag mode=no-skill --output-dir .
 
 Use different entry files depending on your goal:
 
-| File | When to use | Example command |
-| --- | --- | --- |
-| `.vally.yaml` | Default local entry; run by suite name | `vally eval --suite versioning-forced --output-dir ./result --workspace ./debug --verbose` |
-| `evals/00xxxx.eval.yaml` | Debug one specific case file | `vally eval --eval-spec evals/003001.eval.yaml --output-dir ./result-003001 --workspace ./debug-003001 --verbose` |
+| File                     | When to use                            | Example command                                                                                                   |
+| ------------------------ | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `.vally.yaml`            | Default local entry; run by suite name | `vally eval --suite versioning-forced --output-dir ./result --workspace ./debug --verbose`                        |
+| `evals/00xxxx.eval.yaml` | Debug one specific case file           | `vally eval --eval-spec evals/003001.eval.yaml --output-dir ./result-003001 --workspace ./debug-003001 --verbose` |
 
 Notes:
 
@@ -74,26 +75,26 @@ Notes:
 
 Test suites are defined in `.vally.yaml` under the `suites` key. Available suites:
 
-| Suite                           | Description                                      |
-| ------------------------------- | ------------------------------------------------ |
-| `versioning-forced`             | Versioning cases (001xxx) — forced mode          |
-| `armtemplate-forced`            | ARM template cases (002xxx) — forced mode        |
-| `longrunningoperation-forced`   | Long-running operation cases (003xxx) — forced   |
-| `decorators-forced`             | Decorator cases (004xxx) — forced mode           |
-| `warning-forced`                | Warning cases (005xxx) — forced mode             |
-| `versioning-trigger`            | Versioning cases — trigger mode                  |
-| `armtemplate-trigger`           | ARM template cases — trigger mode                |
-| `longrunningoperation-trigger`  | LRO cases — trigger mode                         |
-| `decorators-trigger`            | Decorator cases — trigger mode                   |
-| `warning-trigger`               | Warning cases — trigger mode                     |
-| `versioning-no-skill`           | Versioning cases — no-skill baseline             |
-| `armtemplate-no-skill`          | ARM template cases — no-skill baseline           |
-| `longrunningoperation-no-skill` | LRO cases — no-skill baseline                    |
-| `decorators-no-skill`           | Decorator cases — no-skill baseline              |
-| `warning-no-skill`              | Warning cases — no-skill baseline                |
-| `forced`                        | All cases — forced mode                          |
-| `trigger`                       | All cases — trigger mode                         |
-| `no-skill`                      | All cases — no-skill baseline                    |
+| Suite                           | Description                                    |
+| ------------------------------- | ---------------------------------------------- |
+| `versioning-forced`             | Versioning cases (001xxx) — forced mode        |
+| `armtemplate-forced`            | ARM template cases (002xxx) — forced mode      |
+| `longrunningoperation-forced`   | Long-running operation cases (003xxx) — forced |
+| `decorators-forced`             | Decorator cases (004xxx) — forced mode         |
+| `warning-forced`                | Warning cases (005xxx) — forced mode           |
+| `versioning-trigger`            | Versioning cases — trigger mode                |
+| `armtemplate-trigger`           | ARM template cases — trigger mode              |
+| `longrunningoperation-trigger`  | LRO cases — trigger mode                       |
+| `decorators-trigger`            | Decorator cases — trigger mode                 |
+| `warning-trigger`               | Warning cases — trigger mode                   |
+| `versioning-no-skill`           | Versioning cases — no-skill baseline           |
+| `armtemplate-no-skill`          | ARM template cases — no-skill baseline         |
+| `longrunningoperation-no-skill` | LRO cases — no-skill baseline                  |
+| `decorators-no-skill`           | Decorator cases — no-skill baseline            |
+| `warning-no-skill`              | Warning cases — no-skill baseline              |
+| `forced`                        | All cases — forced mode                        |
+| `trigger`                       | All cases — trigger mode                       |
+| `no-skill`                      | All cases — no-skill baseline                  |
 
 Run a suite by name:
 
@@ -105,11 +106,11 @@ vally eval --suite forced --output-dir ./result --workspace ./debug --verbose
 
 Each test case has three modes:
 
-| Mode | Description |
-| --- | --- |
-| `forced` | Skill explicitly invoked via `@azure-typespec-author` prefix + full code quality graders |
-| `trigger` | Tests whether the skill is automatically triggered (skill invocation detection) |
-| `no-skill` | Baseline run without loading the skill (`--skill-dir /tmp/no-skills`) |
+| Mode       | Description                                                                              |
+| ---------- | ---------------------------------------------------------------------------------------- |
+| `forced`   | Skill explicitly invoked via `@azure-typespec-author` prefix + full code quality graders |
+| `trigger`  | Tests whether the skill is automatically triggered (skill invocation detection)          |
+| `no-skill` | Baseline run without loading the skill (`--skill-dir /tmp/no-skills`)                    |
 
 Suite names follow the pattern `<domain>-<mode>`:
 
@@ -138,11 +139,11 @@ vally eval --eval-spec suites/trigger.eval.yaml
 
 ### Useful flags
 
-| Flag | Purpose |
-|---|---|
+| Flag                           | Purpose                                                        |
+| ------------------------------ | -------------------------------------------------------------- |
 | `--keep-executor-session-logs` | Preserve agent session logs under `--output-dir` for debugging |
-| `--verbose` | Show full agent output during the run |
-| `--workers <n>` | Run multiple stimuli in parallel (default: 5) |
+| `--verbose`                    | Show full agent output during the run                          |
+| `--workers <n>`                | Run multiple stimuli in parallel (default: 5)                  |
 
 ### Parallel run the environment
 
@@ -195,10 +196,10 @@ to a small case set.
 
 The pipelines use `--eval-spec` with the consolidated suite files under `suites/`, and use `--tag suite=...` to split runs by domain:
 
-| Pipeline | Eval file | Purpose |
-| -------- | --------- | ------- |
-| benchmark | `suites/forced.eval.yaml` | Forced skill invocation + code-quality graders (real MCP environment) |
-| benchmark | `suites/trigger.eval.yaml` | Skill trigger detection (mock MCP environment) |
+| Pipeline           | Eval file                   | Purpose                                                               |
+| ------------------ | --------------------------- | --------------------------------------------------------------------- |
+| benchmark          | `suites/forced.eval.yaml`   | Forced skill invocation + code-quality graders (real MCP environment) |
+| benchmark          | `suites/trigger.eval.yaml`  | Skill trigger detection (mock MCP environment)                        |
 | benchmark-no-skill | `suites/no-skill.eval.yaml` | Baseline run without loading the skill (`--skill-dir /tmp/no-skills`) |
 
 Each stimulus has dual tags: `suite` and `mode`, for example

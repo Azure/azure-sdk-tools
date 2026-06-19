@@ -59,9 +59,10 @@ public class CustomizedCodeUpdateToolAutoTests
                 It.IsAny<string?>(),
                 It.IsAny<string?>(),
                 It.IsAny<int?>(),
+                It.IsAny<EditScope>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                (items, _, _, _, plainText, _, _, _, _) =>
+            .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                (items, _, _, _, plainText, _, _, _, _, _) =>
                 {
                     if (items.Count == 0)
                     {
@@ -241,6 +242,7 @@ public class CustomizedCodeUpdateToolAutoTests
                     It.IsAny<string?>(),
                     It.IsAny<string?>(),
                     It.IsAny<int?>(),
+                    It.IsAny<EditScope>(),
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new FeedbackClassificationResponse { Classifications = [] }));
 
@@ -267,6 +269,7 @@ public class CustomizedCodeUpdateToolAutoTests
                     It.IsAny<string?>(),
                     It.IsAny<string?>(),
                     It.IsAny<int?>(),
+                    It.IsAny<EditScope>(),
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new FeedbackClassificationResponse { Classifications = null }));
 
@@ -297,6 +300,7 @@ public class CustomizedCodeUpdateToolAutoTests
                     It.IsAny<string?>(),
                     It.IsAny<string?>(),
                     It.IsAny<int?>(),
+                    It.IsAny<EditScope>(),
                     It.IsAny<CancellationToken>()))
                 .ThrowsAsync(copilotEx));
 
@@ -325,6 +329,7 @@ public class CustomizedCodeUpdateToolAutoTests
                     It.IsAny<string?>(),
                     It.IsAny<string?>(),
                     It.IsAny<int?>(),
+                    It.IsAny<EditScope>(),
                     It.IsAny<CancellationToken>()))
                 .ThrowsAsync(unexpectedEx));
 
@@ -353,9 +358,10 @@ public class CustomizedCodeUpdateToolAutoTests
                     It.IsAny<string?>(),
                     It.IsAny<string?>(),
                     It.IsAny<int?>(),
+                    It.IsAny<EditScope>(),
                     It.IsAny<CancellationToken>()))
-                .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                    (items, _, _, _, _, _, _, _, _) =>
+                .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                    (items, _, _, _, _, _, _, _, _, _) =>
                     {
                         var item1 = new FeedbackItem { Text = "Restructure hierarchy" };
                         var item2 = new FeedbackItem { Text = "Looks good" };
@@ -412,9 +418,10 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
                         {
                             classifyCalls++;
                             if (items.Count == 0)
@@ -480,9 +487,10 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
                         {
                             classifyCalls++;
                             if (items.Count == 0)
@@ -543,9 +551,10 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
                         {
                             if (items.Count == 0)
                             {
@@ -618,9 +627,10 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
                         {
                             classifyCalls++;
                             if (items.Count == 0)
@@ -695,9 +705,10 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
                         {
                             classifyCalls++;
                             if (items.Count == 0)
@@ -904,9 +915,10 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
                         {
                             classifyCalls++;
                             if (items.Count == 0)
@@ -991,9 +1003,10 @@ public class CustomizedCodeUpdateToolAutoTests
                     It.IsAny<string?>(),
                     It.IsAny<string?>(),
                     It.IsAny<int?>(),
+                    It.IsAny<EditScope>(),
                     It.IsAny<CancellationToken>()))
-                .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                    (items, _, _, _, plainText, _, _, _, _) =>
+                .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                    (items, _, _, _, plainText, _, _, _, _, _) =>
                     {
                         capturedFeedbackText = plainText;
                         var item = new FeedbackItem { Text = plainText ?? "" };
@@ -1041,9 +1054,10 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
                         {
                             classifyCalls++;
                             if (items.Count == 0)
@@ -1119,9 +1133,10 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
                         {
                             classifyCalls++;
                             if (items.Count == 0)
@@ -1369,6 +1384,434 @@ public class CustomizedCodeUpdateToolAutoTests
     }
 
     // ========================================================================
+    // EditScope.CustomCode (custom-code-only; never edits spec inputs)
+    // ========================================================================
+
+    [Test]
+    public async Task CustomCodeScope_TspApplicableOnly_ReturnsSpecChangeRequired_DoesNotApplyTsp()
+    {
+        // The default classifier returns a single TSP_APPLICABLE item with no code customizations.
+        // With CustomCode scope this must NOT be applied (no spec-input edits); instead it is reported
+        // as out of scope with errorCode 'SpecChangeRequired'.
+        var (tool, mocks) = CreateTool();
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            tspProjectPath: tspDir,
+            customizationRequest: "Rename FooClient to BarClient",
+            editScope: EditScope.CustomCode,
+            ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.SpecChangeRequired));
+        Assert.That(result.SpecChangeRequired, Is.Not.Null.And.Count.EqualTo(1));
+
+        // Critically, CustomCode scope must never apply spec-input (client.tsp) customizations.
+        mocks.TypeSpecCustomization.Verify(t => t.ApplyCustomizationAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string?>(),
+            It.IsAny<int>(),
+            It.IsAny<CancellationToken>()), Times.Never,
+            "CustomCode scope must not apply TypeSpec (spec-input) customizations.");
+    }
+
+    [Test]
+    public async Task CustomCodeScope_CodeCustomization_PatchesApplied_BuildSucceeds()
+    {
+        // CustomCode scope still performs custom-code patching: a CODE_CUSTOMIZATION item flows through
+        // the patch pipeline exactly like update mode, and no spec-input edits are made.
+        var buildCalls = 0;
+        var svc = new ConfigurableLanguageService(
+            buildFunc: () =>
+            {
+                buildCalls++;
+                return buildCalls <= 1
+                    ? (false, "error: cannot find symbol maxSpeakers", null)
+                    : (true, null, null);
+            },
+            hasCustomizations: true,
+            patchesFunc: () =>
+            [
+                new AppliedPatch("SpeechTranscriptionCustomization.java", "Renamed maxSpeakers to maxSpeakerCount", 2)
+            ],
+            language: SdkLanguage.Java);
+
+        var (tool, mocks) = CreateTool(
+            languageService: svc,
+            configureClassifier: c =>
+                c.Setup(x => x.ClassifyItemsAsync(
+                        It.IsAny<List<FeedbackItem>>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
+                        It.IsAny<CancellationToken>()))
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
+                        {
+                            if (items.Count == 0)
+                            {
+                                var item = new FeedbackItem { Text = "Rename maxSpeakers to maxSpeakerCount in customization code" };
+                                items.Add(item);
+                                return Task.FromResult(new FeedbackClassificationResponse
+                                {
+                                    Classifications =
+                                    [
+                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        {
+                                            ItemId = item.Id,
+                                            Classification = "CODE_CUSTOMIZATION",
+                                            Reason = "Fix is in the customization file",
+                                            Text = "Rename maxSpeakers to maxSpeakerCount in customization code"
+                                        }
+                                    ]
+                                });
+                            }
+                            return Task.FromResult(new FeedbackClassificationResponse { Classifications = [] });
+                        }));
+
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            tspProjectPath: tspDir,
+            customizationRequest: "Rename maxSpeakers to maxSpeakerCount",
+            editScope: EditScope.CustomCode,
+            ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.Message, Does.Contain("Build passed after code customization patches."));
+        Assert.That(result.AppliedPatches, Is.Not.Null.And.Count.EqualTo(1));
+        Assert.That(result.ErrorCode, Is.Null);
+
+        mocks.TypeSpecCustomization.Verify(t => t.ApplyCustomizationAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string?>(),
+            It.IsAny<int>(),
+            It.IsAny<CancellationToken>()), Times.Never,
+            "CustomCode scope must not apply TypeSpec (spec-input) customizations even when patching code.");
+    }
+
+    [Test]
+    public async Task CustomCodeScope_MixedSpecAndCode_PatchesCode_SurfacesSpecChangeRequired()
+    {
+        // Mixed feedback: one TSP_APPLICABLE (out of scope) + one CODE_CUSTOMIZATION (in scope).
+        // CustomCode scope patches the code, reports the spec item as out of scope, and never edits client.tsp.
+        var buildCalls = 0;
+        var svc = new ConfigurableLanguageService(
+            buildFunc: () =>
+            {
+                buildCalls++;
+                return buildCalls <= 1
+                    ? (false, "error: cannot find symbol foo", null)
+                    : (true, null, null);
+            },
+            hasCustomizations: true,
+            patchesFunc: () => [new AppliedPatch("Customization.java", "Fixed reference", 1)],
+            language: SdkLanguage.Java);
+
+        var (tool, mocks) = CreateTool(
+            languageService: svc,
+            configureClassifier: c =>
+                c.Setup(x => x.ClassifyItemsAsync(
+                        It.IsAny<List<FeedbackItem>>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
+                        It.IsAny<CancellationToken>()))
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
+                        {
+                            if (items.Count == 0)
+                            {
+                                var specItem = new FeedbackItem { Text = "Rename client (spec change)" };
+                                var codeItem = new FeedbackItem { Text = "Fix customization reference" };
+                                items.Add(specItem);
+                                items.Add(codeItem);
+                                return Task.FromResult(new FeedbackClassificationResponse
+                                {
+                                    Classifications =
+                                    [
+                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        {
+                                            ItemId = specItem.Id, Classification = "TSP_APPLICABLE",
+                                            Reason = "Needs spec edit", Text = "Rename client (spec change)"
+                                        },
+                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        {
+                                            ItemId = codeItem.Id, Classification = "CODE_CUSTOMIZATION",
+                                            Reason = "Fix in customization file", Text = "Fix customization reference"
+                                        }
+                                    ]
+                                });
+                            }
+                            return Task.FromResult(new FeedbackClassificationResponse { Classifications = [] });
+                        }));
+
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            tspProjectPath: tspDir,
+            customizationRequest: "mixed feedback",
+            editScope: EditScope.CustomCode,
+            ct: CancellationToken.None);
+
+        // Code path succeeds; the spec item is surfaced as out of scope rather than applied.
+        Assert.That(result.SpecChangeRequired, Is.Not.Null.And.Count.EqualTo(1));
+        Assert.That(result.AppliedPatches, Is.Not.Null.And.Count.EqualTo(1));
+
+        mocks.TypeSpecCustomization.Verify(t => t.ApplyCustomizationAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string?>(),
+            It.IsAny<int>(),
+            It.IsAny<CancellationToken>()), Times.Never,
+            "CustomCode scope must not apply spec-input customizations even in mixed feedback.");
+    }
+
+    [Test]
+    public async Task DefaultScope_TspApplicable_AppliesCustomization_BackwardCompatible()
+    {
+        // Default (Update) mode is unchanged: TSP_APPLICABLE items are applied via the
+        // TypeSpec customization service. Guards backward compatibility of the new mode param.
+        var (tool, mocks) = CreateTool();
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            tspProjectPath: tspDir,
+            customizationRequest: "Rename FooClient to BarClient",
+            ct: CancellationToken.None);
+
+        Assert.That(result.SpecChangeRequired, Is.Null);
+        mocks.TypeSpecCustomization.Verify(t => t.ApplyCustomizationAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string?>(),
+            It.IsAny<int>(),
+            It.IsAny<CancellationToken>()), Times.AtLeastOnce,
+            "Update mode must still apply TypeSpec customizations for TSP_APPLICABLE items.");
+    }
+
+    // ========================================================================
+    // EditScope.All (default: both spec inputs and custom code in scope)
+    // ========================================================================
+
+    [Test]
+    public async Task AllScope_MixedSpecAndCode_AppliesSpec_AndPatchesCode()
+    {
+        // Explicit EditScope.All: both axes are in scope. A mixed feedback set (one TSP_APPLICABLE +
+        // one CODE_CUSTOMIZATION) must apply the spec-input customization AND patch the custom code,
+        // and surface neither out-of-scope list.
+        var buildCalls = 0;
+        var svc = new ConfigurableLanguageService(
+            buildFunc: () =>
+            {
+                buildCalls++;
+                return buildCalls <= 1
+                    ? (false, "error: cannot find symbol foo", null)
+                    : (true, null, null);
+            },
+            hasCustomizations: true,
+            patchesFunc: () => [new AppliedPatch("Customization.java", "Fixed reference", 1)],
+            language: SdkLanguage.Java);
+
+        var (tool, mocks) = CreateTool(
+            languageService: svc,
+            configureClassifier: c =>
+                c.Setup(x => x.ClassifyItemsAsync(
+                        It.IsAny<List<FeedbackItem>>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
+                        It.IsAny<CancellationToken>()))
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
+                        {
+                            if (items.Count == 0)
+                            {
+                                var specItem = new FeedbackItem { Text = "Rename client (spec change)" };
+                                var codeItem = new FeedbackItem { Text = "Fix customization reference" };
+                                items.Add(specItem);
+                                items.Add(codeItem);
+                                return Task.FromResult(new FeedbackClassificationResponse
+                                {
+                                    Classifications =
+                                    [
+                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        {
+                                            ItemId = specItem.Id, Classification = "TSP_APPLICABLE",
+                                            Reason = "Needs spec edit", Text = "Rename client (spec change)"
+                                        },
+                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        {
+                                            ItemId = codeItem.Id, Classification = "CODE_CUSTOMIZATION",
+                                            Reason = "Fix in customization file", Text = "Fix customization reference"
+                                        }
+                                    ]
+                                });
+                            }
+                            return Task.FromResult(new FeedbackClassificationResponse { Classifications = [] });
+                        }));
+
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            tspProjectPath: tspDir,
+            customizationRequest: "mixed feedback",
+            editScope: EditScope.All,
+            ct: CancellationToken.None);
+
+        // Both axes applied: spec via the TypeSpec customization service, code via patches.
+        Assert.That(result.AppliedPatches, Is.Not.Null.And.Count.EqualTo(1));
+        Assert.That(result.SpecChangeRequired, Is.Null, "All scope edits spec inputs, so nothing is out of scope.");
+        Assert.That(result.CustomCodeChangeRequired, Is.Null, "All scope patches custom code, so nothing is out of scope.");
+
+        mocks.TypeSpecCustomization.Verify(t => t.ApplyCustomizationAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string?>(),
+            It.IsAny<int>(),
+            It.IsAny<CancellationToken>()), Times.AtLeastOnce,
+            "All scope must apply TypeSpec (spec-input) customizations for TSP_APPLICABLE items.");
+    }
+
+    // ========================================================================
+    // EditScope.SpecInputs (spec-inputs-only; never patches custom code)
+    // ========================================================================
+
+    [Test]
+    public async Task SpecInputsScope_MixedSpecAndCode_AppliesSpec_DoesNotPatchCode()
+    {
+        // EditScope.SpecInputs: spec inputs are in scope but custom code is NOT. A mixed feedback set must
+        // apply the spec-input customization, report the CODE_CUSTOMIZATION item as out of scope, and never
+        // invoke custom-code patching.
+        var patchCalls = 0;
+        var svc = new ConfigurableLanguageService(
+            buildFunc: () => (false, "error: cannot find symbol foo", null),
+            hasCustomizations: true,
+            patchesFunc: () =>
+            {
+                patchCalls++;
+                return [new AppliedPatch("Customization.java", "Fixed reference", 1)];
+            },
+            language: SdkLanguage.Java);
+
+        var (tool, mocks) = CreateTool(
+            languageService: svc,
+            configureClassifier: c =>
+                c.Setup(x => x.ClassifyItemsAsync(
+                        It.IsAny<List<FeedbackItem>>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
+                        It.IsAny<CancellationToken>()))
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
+                        {
+                            if (items.Count == 0)
+                            {
+                                var specItem = new FeedbackItem { Text = "Rename client (spec change)" };
+                                var codeItem = new FeedbackItem { Text = "Fix customization reference" };
+                                items.Add(specItem);
+                                items.Add(codeItem);
+                                return Task.FromResult(new FeedbackClassificationResponse
+                                {
+                                    Classifications =
+                                    [
+                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        {
+                                            ItemId = specItem.Id, Classification = "TSP_APPLICABLE",
+                                            Reason = "Needs spec edit", Text = "Rename client (spec change)"
+                                        },
+                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        {
+                                            ItemId = codeItem.Id, Classification = "CODE_CUSTOMIZATION",
+                                            Reason = "Fix in customization file", Text = "Fix customization reference"
+                                        }
+                                    ]
+                                });
+                            }
+                            return Task.FromResult(new FeedbackClassificationResponse { Classifications = [] });
+                        }));
+
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            tspProjectPath: tspDir,
+            customizationRequest: "mixed feedback",
+            editScope: EditScope.SpecInputs,
+            ct: CancellationToken.None);
+
+        // Spec was applied; the code item is reported as out of scope and never patched.
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.CustomCodeChangeRequired));
+        Assert.That(result.CustomCodeChangeRequired, Is.Not.Null.And.Count.EqualTo(1));
+        Assert.That(result.SpecChangeRequired, Is.Null, "SpecInputs scope edits spec inputs, so spec items are not out of scope.");
+        Assert.That(result.AppliedPatches, Is.Null.Or.Empty, "SpecInputs scope must not patch custom code.");
+        Assert.That(patchCalls, Is.EqualTo(0), "SpecInputs scope must never invoke ApplyPatchesAsync.");
+
+        mocks.TypeSpecCustomization.Verify(t => t.ApplyCustomizationAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string?>(),
+            It.IsAny<int>(),
+            It.IsAny<CancellationToken>()), Times.AtLeastOnce,
+            "SpecInputs scope must apply TypeSpec (spec-input) customizations for TSP_APPLICABLE items.");
+    }
+
+    [Test]
+    public async Task InvalidEditScope_ReturnsInvalidInput()
+    {
+        // editScope is a non-nullable flags enum; an undefined value (e.g. a stray bit outside the All
+        // mask) is rejected up front with InvalidInput rather than silently treated as no-scope.
+        var (tool, _) = CreateTool();
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            tspProjectPath: tspDir,
+            customizationRequest: "Rename FooClient to BarClient",
+            editScope: (EditScope)99,
+            ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput));
+    }
+
+    // ========================================================================
     // Mock helpers
     // ========================================================================
 
@@ -1481,3 +1924,5 @@ internal class CallCountMockTspHelper : ITspClientHelper
     public Task<TspToolResponse> InitializeGenerationAsync(string workingDirectory, string tspConfigPath, string[]? additionalArgs = null, CancellationToken ct = default)
         => Task.FromResult(new TspToolResponse { IsSuccessful = true, TypeSpecProject = workingDirectory });
 }
+
+

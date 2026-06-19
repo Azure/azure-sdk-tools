@@ -24,6 +24,7 @@ parameters:
     # - azure-sdk-for-js
     # - azure-sdk-for-net
     # - azure-sdk-for-python
+    # - azure-rest-api-specs
     # TODO: Onboard rust and go repos
     # - azure-sdk-for-go
     # - azure-sdk-for-rust
@@ -59,5 +60,21 @@ extends:
   parameters:
     DirectoryToSync: ${{ parameters.DirectoryToSync }}
     FilePatterns: ${{ parameters.FilePatterns }}
+    AdditionalCheckoutPaths:
+      - .github/package.json
+      - .github/package-lock.json
+    PreSyncValidationSteps:
+      - task: NodeTool@0
+        inputs:
+          versionSpec: '22.x'
+        displayName: Use Node 22
+
+      - script: npm ci
+        workingDirectory: .github
+        displayName: Install Prettier
+
+      - script: npm run format:check
+        workingDirectory: .github
+        displayName: Check .github/skills formatting with Prettier
     Repos: ${{ parameters.Repos }}
     PRValidationPipelines: ${{ parameters.PRValidationPipelines }}

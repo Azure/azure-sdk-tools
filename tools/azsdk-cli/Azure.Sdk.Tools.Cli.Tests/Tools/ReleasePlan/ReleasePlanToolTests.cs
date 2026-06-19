@@ -1435,10 +1435,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task Test_GetKPIAttestationStatus_NoInputs_ReturnsError()
         {
             var result = await releasePlanTool.GetKPIAttestationStatus("", "", "");
-            Assert.That(result.ResponseError, Does.Contain("Either provide both product ID and lifecycle"));
+            Assert.That(result.ResponseError, Does.Contain("Either provide both product ID and release plan type"));
 
             var badLifecycle = await releasePlanTool.GetKPIAttestationStatus("product-123", "InvalidLifecycle");
-            Assert.That(badLifecycle.ResponseError, Does.Contain("Invalid lifecycle value"));
+            Assert.That(badLifecycle.ResponseError, Does.Contain("Invalid release plan type"));
         }
 
         [Test]

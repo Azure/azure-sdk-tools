@@ -29,7 +29,7 @@ See [ANTI-PATTERNS.md](references/ANTI-PATTERNS.md) for detection patterns and [
 
 ## Rules
 
-- Suggest only (no auto-modification)  
+- Suggest only (no auto-modification)
 - Preserve clarity in all optimizations
 - SKILL.md target: <500 tokens, references: <1000 tokens
 
@@ -44,8 +44,8 @@ High token count? Check for emojis, repeated headings, or verbose tables.
 
 ## MCP Tools
 
-| Tool | Purpose |
-|------|---------|
+| Tool | Purpose                         |
+| ---- | ------------------------------- |
 | None | CLI-only; uses local file tools |
 
 **CLI fallback:** Primary mode is CLI-based. No MCP servers required.

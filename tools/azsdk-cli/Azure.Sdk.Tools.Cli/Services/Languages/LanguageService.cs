@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models.ApiReview;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services.Languages.Samples;
@@ -746,6 +747,11 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             string packagePath, string? outputPath = null, int timeoutMinutes = 30, CancellationToken ct = default)
         {
             return Task.FromResult<(bool, string?, PackageInfo?, string?)>((false, $"Pack is not supported for {Language}.", null, null));
+        }
+
+        public virtual Task<ApiReviewArtifactResult> GenerateApiReviewArtifactsAsync(ApiReviewArtifactRequest request, CancellationToken ct = default)
+        {
+            return Task.FromResult(ApiReviewArtifactResult.CreateFailure($"API review artifact generation is not supported for {Language}."));
         }
 
         protected static string? GetSpecProjectPath(string packagePath)

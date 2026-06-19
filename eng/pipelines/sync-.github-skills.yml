@@ -18,32 +18,30 @@ parameters:
 - name: Repos
   type: object
   default:
-    # TEMP: scoped to java only for testing the PR validation queue step. Revert before merge.
+    - azure-sdk
     - azure-sdk-for-java
-    # - azure-sdk
-    # - azure-sdk-for-js
-    # - azure-sdk-for-net
-    # - azure-sdk-for-python
-    # - azure-rest-api-specs
+    - azure-sdk-for-js
+    - azure-sdk-for-net
+    - azure-sdk-for-python
+    - azure-rest-api-specs
     # TODO: Onboard rust and go repos
     # - azure-sdk-for-go
     # - azure-sdk-for-rust
 - name: PRValidationPipelines
   type: object
   default:
-    # TEMP: scoped to java only for testing. Revert before merge.
+    - Repository: azure-sdk-for-go
+      DefinitionId: 7557
     - Repository: azure-sdk-for-java
       DefinitionId: 7413
-    # - Repository: azure-sdk-for-go
-    #   DefinitionId: 7557
-    # - Repository: azure-sdk-for-js
-    #   DefinitionId: 7140
-    # - Repository: azure-sdk-for-net
-    #   DefinitionId: 7327
-    # - Repository: azure-sdk-for-python
-    #   DefinitionId: 7050
-    # - Repository: azure-sdk-for-rust
-    #   DefinitionId: 7126
+    - Repository: azure-sdk-for-js
+      DefinitionId: 7140
+    - Repository: azure-sdk-for-net
+      DefinitionId: 7327
+    - Repository: azure-sdk-for-python
+      DefinitionId: 7050
+    - Repository: azure-sdk-for-rust
+      DefinitionId: 7126
 
 trigger: none
 

@@ -78,6 +78,14 @@ extends:
                   TimeoutMinutes: 25
                   LoadSkills: false
                   Tag: suite=warning
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
+                parameters:
+                  EvalFile: no-skill.eval.yaml
+                  SuiteName: dataplane-no-skill
+                  DisplayName: Pure agent - dataplane
+                  TimeoutMinutes: 50
+                  LoadSkills: false
+                  Tag: suite=dataplane
 
             templateContext:
               outputs:

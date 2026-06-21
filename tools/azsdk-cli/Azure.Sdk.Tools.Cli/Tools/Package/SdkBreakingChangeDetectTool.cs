@@ -12,6 +12,7 @@ using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tools.Core;
+using Microsoft.Extensions.Options;
 using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
@@ -88,6 +89,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             try
             {
+                var gitHubToken = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
+                if (!string.IsNullOrWhiteSpace(gitHubToken))
+                {
+                    logger.LogInformation("Using GITHUB_TOKEN from environment variable for Copilot SDK authentication.");
+                }
+                else
+                {
+                    // If no GITHUB_TOKEN is provided, log a warning. Some Copilot features may not work properly without it.
+                    logger.LogWarning("No GITHUB_TOKEN environment variable found. Some Copilot features may not work properly.");
+                }
                 logger.LogInformation("Parameters: packagePath={PackagePath}, tspConfigPath={TspConfigPath}, changesOnly={ChangesOnly}",
                     packagePath, tspConfigPath ?? "null", changesOnly);
 

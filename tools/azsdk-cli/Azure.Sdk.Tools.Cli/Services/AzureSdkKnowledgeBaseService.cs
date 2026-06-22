@@ -5,8 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Azure.Core;
 using Azure.Identity;
-using Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion;
-using Azure.Sdk.Tools.Cli.Models.AzureSDKKnowledgeAICompletion;
+using Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledge;
 using Azure.Sdk.Tools.Cli.Options;
 using Microsoft.Extensions.Options;
 using Microsoft.Identity.Client;
@@ -134,29 +133,29 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        public async Task<ContextSearchResponse> SendContextRequestAsync(
-           CompletionRequest request,
+        public async Task<KnowledgeRetrieveResponse> SendKnowledgeRetrieveRequestAsync(
+           KnowledgeRetrieveRequest request,
            CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(request);
 
-            if (!ValidateRequest(request))
-            {
-                throw new ArgumentException("Request validation failed", nameof(request));
-            }
+            //if (!ValidateRequest(request))
+            //{
+            //    throw new ArgumentException("Request validation failed", nameof(request));
+            //}
 
             await Initialize(cancellationToken);
 
             try
             {
-                var requestUri = new Uri(new Uri(_options.Endpoint), "/search");
+                var requestUri = new Uri(new Uri(_options.Endpoint), "/knowledge/retrieve");
 
                 using var httpRequest = new HttpRequestMessage(HttpMethod.Post, requestUri);
 
-                var authResult = await RetrieveAiCompletionAccessTokenAsync(cancellationToken);
-                if (authResult != null && !string.IsNullOrEmpty(authResult.AccessToken))
+                var token = await RetrieveAiCompletionAccessTokenAsync(cancellationToken);
+                if (!string.IsNullOrEmpty(token))
                 {
-                    httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", authResult.AccessToken);
+                    httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
                 }
 
                 httpRequest.Content = JsonContent.Create(request, options: _jsonOptions);
@@ -169,7 +168,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 else
                 {
                     _logger.LogInformation("Sending AI completion request to {Endpoint} with question length: {Length}",
-                        requestUri, request.Message.Content.Length);
+                        requestUri, request.Query.Length);
                 }
 
                 var response = await _httpClient.SendAsync(httpRequest, cancellationToken)
@@ -273,13 +272,13 @@ namespace Azure.Sdk.Tools.Cli.Services
                 throw new InvalidOperationException($"Unexpected error calling AI completion endpoint: {ex.Message}", ex);
             }
         }
-        private async Task<ContextSearchResponse> HandleSearchHttpResponse(
+        private async Task<KnowledgeRetrieveResponse> HandleSearchHttpResponse(
             HttpResponseMessage response,
             CancellationToken cancellationToken)
         {
             if (response.IsSuccessStatusCode)
             {
-                var responseContent = await response.Content.ReadFromJsonAsync<ContextSearchResponse>(
+                var responseContent = await response.Content.ReadFromJsonAsync<KnowledgeRetrieveResponse>(
                     _jsonOptions, cancellationToken).ConfigureAwait(false);
 
                 if (responseContent == null)

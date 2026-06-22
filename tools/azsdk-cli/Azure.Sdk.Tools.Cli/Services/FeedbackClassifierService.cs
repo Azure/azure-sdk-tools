@@ -8,7 +8,7 @@ using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.CopilotAgents.Tools;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion;
+using Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledge;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
 using Microsoft.Extensions.AI;
@@ -120,18 +120,14 @@ public class FeedbackClassifierService : IFeedbackClassifierService
 
         /* get the global context from Azure Knowledage base. */
         // Build request
-        var completionRequest = new CompletionRequest
+        var knowledgeRetrieveRequest = new KnowledgeRetrieveRequest
         {
             AzureSdkKnowledgeServiceTenant = AzureSdkKnowledgeServiceTenant.AzureTypespecAuthoring,
-            Message = new Message
-            {
-                Role = Role.User,
-                Content = String.Join(";", items.Select(i => i.Text)),
-            },
-            WithAgenticSearch = false, // For authoring, disable agentic search
+            Query = String.Join(";", items.Select(i => i.Text)),
+            SearchMode = "quick", // For authoring, default quick search
         };
 
-        var contextResponse = await _knowledgeBaseService.SendContextRequestAsync(completionRequest, ct);
+        var contextResponse = await _knowledgeBaseService.SendKnowledgeRetrieveRequestAsync(knowledgeRetrieveRequest, ct);
         var context = contextResponse.Knowledges != null ? JsonSerializer.Serialize(contextResponse.Knowledges) : string.Empty;
 
         foreach (var chunk in items.Chunk(effectiveBatchSize))

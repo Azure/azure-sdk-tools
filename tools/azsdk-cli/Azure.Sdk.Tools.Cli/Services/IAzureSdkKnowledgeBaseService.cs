@@ -1,5 +1,4 @@
-using Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion;
-using Azure.Sdk.Tools.Cli.Models.AzureSDKKnowledgeAICompletion;
+using Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledge;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -22,8 +21,8 @@ namespace Azure.Sdk.Tools.Cli.Services
             CompletionRequest request,
             CancellationToken cancellationToken = default);
 
-        Task<ContextSearchResponse> SendContextRequestAsync(
-            CompletionRequest request,
+        Task<KnowledgeRetrieveResponse> SendKnowledgeRetrieveRequestAsync(
+            KnowledgeRetrieveRequest request,
             CancellationToken cancellationToken = default);
     }
 }

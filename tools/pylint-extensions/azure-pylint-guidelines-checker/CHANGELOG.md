@@ -5,6 +5,7 @@
 - Add `remove-deprecated-iscoroutinefunction` check
 - Add `do-not-use-logging-directly` check
 - Add `no-cross-package-private-import` check
+- Enhance `invalid-use-of-overload` to support module-level overloads and verify @overload decorator
 
 ## 0.5.7 (2025-07-15)
 - Bug fix for `do-not-use-logging-exception` checker

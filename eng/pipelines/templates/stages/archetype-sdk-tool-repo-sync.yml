@@ -22,6 +22,7 @@ parameters:
   default: []
 - name: PRValidationPipelines
   type: object
+  default: []
 - name: PreSyncValidationSteps
   type: stepList
   default: []

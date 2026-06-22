@@ -1,8 +1,7 @@
 name: azsdk-mcp-tool-scenarios
 description: |
-  Author-then-check-public-repo: the agent should author a small TypeSpec
-  change (invoking the azure-typespec-author skill), validate it, then check
-  whether the project is in the public repo.
+  Validate-then-check-public-repo: the agent should run TypeSpec validation,
+  then check if the project is in the public repo.
 version: "1.0"
 type: capability
 
@@ -19,27 +18,15 @@ config:
   executor: copilot-sdk
 
 stimuli:
-  - name: author-property-then-validate-and-check-public-repo
-    environment:
-      # Real authoring skill + the Contoso spec on disk so the agent can edit.
-      # Paths are relative to this eval file (6 levels up = repo root).
-      skills:
-        - ../../../../../../.github/skills/azure-typespec-author
-      git:
-        type: worktree
-        source: ../../../../../../artifacts/specs-cache/azure-rest-api-specs
-        ref: main
+  - name: validate-then-check-public-repo
     prompt: |
-      In the Contoso Widget Manager TypeSpec project, add a new optional string
-      property named "color" to the WidgetSuite model and validate the change.
-      After that, check whether this project is in the public
-      azure-rest-api-specs repo.
+      Run TypeSpec validation, then check if the project is in the public repo.
       Project path: specification/contosowidgetmanager/Contoso.WidgetManager.
       My setup has already been verified, do not run azsdk_verify_setup.
     constraints:
-      max_turns: 12
-      max_tokens: 16000
-    # TODO: assert ordering (author/validate before check) — blocked on https://github.com/Azure/azure-sdk-tools/issues/15832 (Vally tool-calls grader needs sequence:).
+      max_turns: 8
+      max_tokens: 8000
+    # TODO: assert ordering (validate before check) — blocked on https://github.com/Azure/azure-sdk-tools/issues/15832 (Vally tool-calls grader needs sequence:).
     graders:
       - type: tool-calls
         config:

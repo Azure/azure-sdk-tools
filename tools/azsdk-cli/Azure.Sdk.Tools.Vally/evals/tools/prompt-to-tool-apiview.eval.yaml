@@ -8,7 +8,7 @@ type: capability
 environment: azsdk-mcp-mock
 
 config:
-  runs: 3
+  runs: 5
   timeout: "120s"
   executor: copilot-sdk
   model: gpt-5.4
@@ -22,21 +22,21 @@ stimuli:
 
   # ==== azsdk_apiview_get_comments triggers ====
   - name: invoke-azsdk-apiview-get-comments-1
-    prompt: "Get all the APIView comments for the Azure.Template.Contoso .NET package. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    prompt: "Get all the APIView comments for my package. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_apiview_get_comments"
   - name: invoke-azsdk-apiview-get-comments-2
-    prompt: "Show me the API review feedback for the Azure.Template.Contoso .NET package. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    prompt: "Show me the API review feedback for this package. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_apiview_get_comments"
   - name: invoke-azsdk-apiview-get-comments-3
-    prompt: "What comments did the API reviewers leave on the Azure.Template.Contoso .NET package? Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    prompt: "What comments did the API reviewers leave? Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -82,7 +82,8 @@ stimuli:
           required:
             - name: "azsdk_apiview_get_review_url"
   - name: invoke-azsdk-apiview-get-review-url-3
-    prompt: "Give me the link to the API review page for the azure-storage-blob Java package version 12.32.0. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    prompt: >
+      Give me the link to the API review page for the Java storage blob package version 12.32.0
     graders:
       - type: tool-calls
         config:
@@ -91,21 +92,21 @@ stimuli:
 
   # ==== azsdk_apiview_request_copilot_review triggers ====
   - name: invoke-azsdk-apiview-request-copilot-review-1
-    prompt: "Request a Copilot review for the API at https://apiview.dev/Assemblies/Review/0123456789abcdef. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    prompt: "Request a Copilot review for this API. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_apiview_request_copilot_review"
   - name: invoke-azsdk-apiview-request-copilot-review-2
-    prompt: "Run an automated review on the API surface for the Azure.Template.Contoso .NET package. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    prompt: "Run an automated review on my package's API surface. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_apiview_request_copilot_review"
   - name: invoke-azsdk-apiview-request-copilot-review-3
-    prompt: "Submit the APIView URL https://apiview.dev/Assemblies/Review/0123456789abcdef for an automated Copilot review. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    prompt: "Submit this APIView URL for an automated Copilot review. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:

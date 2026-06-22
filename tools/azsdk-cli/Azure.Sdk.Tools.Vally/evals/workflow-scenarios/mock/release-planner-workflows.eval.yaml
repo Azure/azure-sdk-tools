@@ -34,13 +34,11 @@ config:
 stimuli:
   # --- Scenario 1: Create release plan ---------------------------------
   - name: create-public-preview-release-plan
-    # Spec-repo worktree fixture: defined once here and aliased by the stimuli
-    # below. CI clones it via scripts/Initialize-EvalGitFixtures.ps1 before this suite.
-    environment: &specsWorktree
-      # Load the real release-planning skill so the executor can route to it.
-      # Path is relative to this eval file (6 levels up = repo root).
-      skills:
-        - ../../../../../../.github/skills/azsdk-common-prepare-release-plan
+    environment:
+      # Repo-relative cache populated by scripts/ensure-specs-clone.ps1
+      # (idempotent shallow+sparse clone, auto-refresh every 24h). Same
+      # source the live e2e uses — keeps the relative TypeSpec path
+      # resolvable on disk even though the MCP responses are mocked.
       git:
         type: worktree
         source: ../../../../../../artifacts/specs-cache/azure-rest-api-specs
@@ -75,7 +73,13 @@ stimuli:
 
   # --- End-to-end demo prompt: create + generate -----------------------
   - name: create-release-plan-and-generate-sdk
-    environment: *specsWorktree
+    environment:
+      # Same repo-relative azure-rest-api-specs worktree as the create stimulus
+      # above so the agent sees a real on-disk spec repo.
+      git:
+        type: worktree
+        source: ../../../../../../artifacts/specs-cache/azure-rest-api-specs
+        ref: main
     prompt: |
       Walk me through creating
       a release plan and then generating SDK for the Contoso Widget Manager:
@@ -100,9 +104,11 @@ stimuli:
         config:
           required:
             - azsdk-common-prepare-release-plan
-          # generate half uses azsdk_run_generate_sdk (a release-planner pipeline
-          # tool); azsdk-common-generate-sdk-locally over-matches "generate" —
-          # see https://github.com/Azure/azure-sdk-tools/issues/15950.
+          # The generate half of this flow uses azsdk_run_generate_sdk, which is
+          # a pipeline-driven release-planner tool, NOT a local TypeSpec build.
+          # azsdk-common-generate-sdk-locally over-matches on the word "generate"
+          # and pulls in the wrong (local clone -> emit -> build -> test) flow.
+          # See https://github.com/Azure/azure-sdk-tools/issues/15950.
           disallowed:
             - azsdk-common-generate-sdk-locally
       - type: tool-calls
@@ -116,7 +122,11 @@ stimuli:
 
   # --- Scenario 2: Generate SDK for an existing release plan -----------
   - name: generate-sdk-for-existing-release-plan
-    environment: *specsWorktree
+    environment:
+      git:
+        type: worktree
+        source: ../../../../../../artifacts/specs-cache/azure-rest-api-specs
+        ref: main
     prompt: |
       Using the release-planner
       flow, generate SDK for all languages for the Contoso Widget Manager
@@ -132,8 +142,9 @@ stimuli:
         config:
           required:
             - azsdk-common-prepare-release-plan
-          # azsdk_run_generate_sdk is a release-planner pipeline tool; the
-          # generate-sdk-locally skill over-matches "generate" — see
+          # azsdk_run_generate_sdk is a release-planner pipeline tool, not a
+          # local TypeSpec build. azsdk-common-generate-sdk-locally over-matches
+          # on the word "generate" and pulls in the wrong workflow. See
           # https://github.com/Azure/azure-sdk-tools/issues/15950.
           disallowed:
             - azsdk-common-generate-sdk-locally
@@ -148,7 +159,11 @@ stimuli:
 
   # --- Scenario 3: Link a different spec PR to an existing release plan
   - name: link-different-spec-pr-to-release-plan
-    environment: *specsWorktree
+    environment:
+      git:
+        type: worktree
+        source: ../../../../../../artifacts/specs-cache/azure-rest-api-specs
+        ref: main
     prompt: |
       Using the release-planner
       flow, update the API spec pull request on an existing Contoso Widget
@@ -175,7 +190,11 @@ stimuli:
 
   # --- Scenario 4: Update SDK details (package names) ------------------
   - name: update-sdk-details-in-release-plan
-    environment: *specsWorktree
+    environment:
+      git:
+        type: worktree
+        source: ../../../../../../artifacts/specs-cache/azure-rest-api-specs
+        ref: main
     prompt: |
       Using the release-planner
       flow, refresh the SDK package-name details on an existing Contoso

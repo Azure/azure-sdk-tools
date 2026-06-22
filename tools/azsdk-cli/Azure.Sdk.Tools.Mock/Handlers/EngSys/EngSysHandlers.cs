@@ -12,6 +12,8 @@ public class AnalyzeLogFileHandler : IMockToolHandler
     public string ToolName => "azsdk_analyze_log_file";
     public CommandResponse Handle(Dictionary<string, object?>? arguments) => new LogAnalysisResponse
     {
+        Summary = "Detected one CS0246 compile error in the build log.",
+        SuggestedFix = "Add a `using Azure.Core;` directive at the top of the file.",
         Errors =
         [
             new LogEntry

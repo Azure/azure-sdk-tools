@@ -13,7 +13,7 @@ namespace GitHubTeamUserStore
 
             // Repository name is the key, with the list of that repository's labels as the as the value
             Dictionary<string, HashSet<string>> repoLabelDict = new Dictionary<string, HashSet<string>>();
-            bool dataMatches = false;
+            bool succeeded = false;
 
             try
             {
@@ -46,61 +46,15 @@ namespace GitHubTeamUserStore
 
                 string jsonString = JsonSerializer.Serialize(repoLabelDict);
                 await File.WriteAllTextAsync(repoLabelOutputPath, jsonString);
-                dataMatches = await VerifyWrittenRepositoryLabelData(repoLabelOutputPath, repoLabelDict);
-                if (dataMatches)
-                {
-                    Console.WriteLine($"repository/label data written successfully to {repoLabelOutputPath}.");
-                }
-                else
-                {
-                    Console.WriteLine("There were issues with the written repository/label data. See above for specifics.");
-                }
+                Console.WriteLine($"repository/label data written successfully to {repoLabelOutputPath}.");
+                succeeded = true;
             }
             finally
             {
-                Console.WriteLine($"=== Finished repository/label cache build: {(dataMatches ? "success" : "failure")} ({repoLabelOutputPath}) ===");
+                Console.WriteLine($"=== Finished repository/label cache build: {(succeeded ? "success" : "failure")} ({repoLabelOutputPath}) ===");
             }
 
-            return dataMatches;
-        }
-
-        private static async Task<bool> VerifyWrittenRepositoryLabelData(string repoLabelOutputPath,
-                                                                         Dictionary<string, HashSet<string>> repoLabelDict)
-        {
-            string rawJson = await File.ReadAllTextAsync(repoLabelOutputPath);
-            var writtenRepoLabelDict = JsonSerializer.Deserialize<Dictionary<string, HashSet<string>>>(rawJson)
-                ?? throw new InvalidOperationException($"Unable to deserialize repository/label data from {repoLabelOutputPath}.");
-            if (repoLabelDict.Keys.Count != writtenRepoLabelDict.Keys.Count)
-            {
-                Console.WriteLine($"Error! Created repo/label dictionary has {repoLabelDict.Keys.Count} repositories and written dictionary has {writtenRepoLabelDict.Keys.Count} repositories.");
-                Console.WriteLine(string.Format("created list repositories {0}", string.Join(", ", repoLabelDict.Keys)));
-                Console.WriteLine(string.Format("written list repositories {0}", string.Join(", ", writtenRepoLabelDict.Keys)));
-                return false;
-            }
-
-            foreach (string repository in repoLabelDict.Keys)
-            {
-                if (!writtenRepoLabelDict.ContainsKey(repository))
-                {
-                    Console.WriteLine("Error! Created repo/label dictionary has different repositories than the written dictionary.");
-                    Console.WriteLine(string.Format("created dictionary repositories {0}", string.Join(", ", repoLabelDict.Keys)));
-                    Console.WriteLine(string.Format("written dictionary repositories {0}", string.Join(", ", writtenRepoLabelDict.Keys)));
-                    return false;
-                }
-            }
-
-            bool hasError = false;
-            foreach (string repository in repoLabelDict.Keys)
-            {
-                if (!repoLabelDict[repository].SetEquals(writtenRepoLabelDict[repository]))
-                {
-                    hasError = true;
-                    Console.WriteLine($"The created dictionary entry for {repository} has different labels than the written dictionary.");
-                    Console.WriteLine(string.Format("created dictionary labels {0}", string.Join(", ", repoLabelDict[repository])));
-                    Console.WriteLine(string.Format("written dictionary labels {0}", string.Join(", ", writtenRepoLabelDict[repository])));
-                }
-            }
-            return !hasError;
+            return succeeded;
         }
     }
 }

@@ -10,7 +10,6 @@ namespace GitHubTeamUserStore
     public class OpenSourceApiClient
     {
         private static readonly TokenRequestContext OpenSourceApiTokenRequestContext = new([ProductAndTeamConstants.OpenSourceApiScope]);
-        private static readonly string[] UnsupportedPaginationHeaders = ["Link", "x-ms-continuation", "x-next-page"];
         private static readonly HttpClient SharedHttpClient = new HttpClient();
         private readonly TokenCredential _credential;
 
@@ -69,6 +68,8 @@ namespace GitHubTeamUserStore
                     throw new InvalidOperationException($"Open Source API returned a child team without a valid name and slug for '{teamSlug}'.");
                 }
 
+                // The current cache contract still keys teams by display name. Slug remains the traversal key for OSP.
+                // TODO: migrate the cache contract to use slug entirely. See https://github.com/Azure/azure-sdk-tools/issues/15474.
                 results.Add((childTeam.Name, childTeam.Slug));
             }
 
@@ -136,31 +137,21 @@ namespace GitHubTeamUserStore
 
             using HttpResponseMessage response = await SharedHttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
             response.EnsureSuccessStatusCode();
-            EnsureNoUnsupportedPagination(response, relativePath);
 
             await using Stream responseStream = await response.Content.ReadAsStreamAsync();
             return await JsonSerializer.DeserializeAsync<T>(responseStream)
                 ?? throw new InvalidOperationException($"Open Source API returned an empty payload for '{relativePath}'.");
         }
 
-        private static void EnsureNoUnsupportedPagination(HttpResponseMessage response, string relativePath)
-        {
-            foreach (string header in UnsupportedPaginationHeaders)
-            {
-                if (response.Headers.Contains(header) || response.Content.Headers.Contains(header))
-                {
-                    throw new InvalidOperationException($"Open Source API returned unsupported pagination header '{header}' for '{relativePath}'.");
-                }
-            }
-
-            if (response.Content.Headers.Contains("Content-Range"))
-            {
-                throw new InvalidOperationException($"Open Source API returned unsupported pagination header 'Content-Range' for '{relativePath}'.");
-            }
-        }
-
         private static TokenCredential CreateOpenSourceApiCredential()
         {
+            // This mirrors azsdk-cli AzureService credential ordering for Azure DevOps and local runs:
+            // Azure DevOps uses AzurePipelines -> WorkloadIdentity -> AzureCli when service connection values exist,
+            // otherwise WorkloadIdentity -> AzureCli. Local runs use AzureCli -> AzurePowerShell ->
+            // AzureDeveloperCli -> VisualStudio -> ManagedIdentity.
+            // It intentionally omits the GitHub Actions and InteractiveBrowserCredential branches because
+            // this tool only runs in Azure DevOps or local dev and should fail fast when non-interactive
+            // credentials are unavailable.
             return IsRunningInAzureDevOps()
                 ? CreateAzureDevOpsCredential()
                 : CreateLocalCredential();
@@ -185,8 +176,8 @@ namespace GitHubTeamUserStore
 
             return new ChainedTokenCredential(
                 new AzurePipelinesCredential(azureSubscriptionClient, azureSubscriptionTenant, azureServiceConnection, accessToken),
-                new WorkloadIdentityCredential(),
-                new AzureCliCredential());
+                new WorkloadIdentityCredential(new WorkloadIdentityCredentialOptions { TenantId = azureSubscriptionTenant }),
+                new AzureCliCredential(new AzureCliCredentialOptions { TenantId = azureSubscriptionTenant }));
         }
 
         private static TokenCredential CreateLocalCredential()

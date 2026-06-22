@@ -1,6 +1,6 @@
 # Release History
 
-## 0.6.22 (Unreleased)
+## 0.6.22 (2026-06-22)
 
 ### Features Added
 
@@ -9,9 +9,7 @@
 
 ### Breaking Changes
 
-### Bugs Fixed
-
-### Other Changes
+- Replaced the `package find-work-item` CLI command with `package get-work-item`, which returns the full Azure DevOps package work item, and added `package update-work-item` for patching package work item fields.
 
 ## 0.6.21 (2026-06-18)
 
@@ -34,7 +32,6 @@
 
 ### Features Added
 
-- Replaced the `package find-work-item` CLI command with `package get-work-item`, which returns the full Azure DevOps package work item, and added `package update-work-item` for patching package work item fields.
 - Set ADO work item ID as release plan ID for new release plans.
 
 ### Bugs Fixed

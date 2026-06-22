@@ -54,6 +54,7 @@ export type SwaggerToSdkConfig = {
     };
     breakingChangeLabel?: string;
     breakingChangesLabel?: string;
+    buildFailedLabel?: string;
   };
   artifactOptions: {
     artifactPathFromFileSearch?:

@@ -30,6 +30,8 @@ export type PackageReport = {
   hasBreakingChange?: boolean;
   breakingChangeLabel?: string;
   shouldLabelBreakingChange: boolean;
+  buildFailedLabel?: string;
+  shouldLabelBuildFailed: boolean;
   areBreakingChangeSuppressed?: boolean;
   presentBreakingChangeSuppressions?: string[];
   absentBreakingChangeSuppressions?: string[];

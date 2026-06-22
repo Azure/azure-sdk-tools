@@ -1,5 +1,9 @@
 # Release
 
+## 2026-06-03 - 0.9.8
+
+- Emit `buildFailedLabel` and `shouldLabelBuildFailed` in the execution report when a package result is `warning` (generation succeeded but build failed), so a generated SDK pull request can be labeled for automated build-failure repair. Configurable via `packageOptions.buildFailedLabel`.
+
 ## 2026-04-07 - 0.9.7
 
 - Made 'sdk-release-type' parameter optional, same as 'api-version'

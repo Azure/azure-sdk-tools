@@ -1,4 +1,9 @@
-import { resolvePath, getDirectoryPath, ResolveCompilerOptionsOptions } from "@typespec/compiler";
+import {
+  normalizePath,
+  resolvePath,
+  getDirectoryPath,
+  ResolveCompilerOptionsOptions,
+} from "@typespec/compiler";
 import {
   ModuleResolutionResult,
   resolveModule,
@@ -51,10 +56,10 @@ export async function discoverEntrypointFile(
 ): Promise<string> {
   Logger.debug(`Discovering entry file in ${srcDir}`);
   let entryTsp: string | undefined = undefined;
-  const files = await readdir(srcDir, { recursive: true });
+  const files = (await readdir(srcDir, { recursive: true })).map(normalizePath);
 
   function findEntrypoint(name: string): string | undefined {
-    return files.find((file) => file === name) ?? undefined;
+    return files.find((file) => file === normalizePath(name)) ?? undefined;
   }
   if (specifiedEntrypointFile) {
     entryTsp = findEntrypoint(specifiedEntrypointFile);

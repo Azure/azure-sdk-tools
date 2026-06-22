@@ -79,7 +79,8 @@ public class PackToolTests
             new JavaLanguageService(_mockProcessHelper.Object, _mockGitHelper.Object, _mockMavenHelper.Object, Mock.Of<IPythonHelper>(), mockCopilotAgentRunner.Object, languageLogger, _commonValidationHelpers.Object, _mockPackageInfoHelper.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>()),
             new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, Mock.Of<ICopilotAgentRunner>(), _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, _mockPackageInfoHelper.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>()),
             new GoLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, _mockPackageInfoHelper.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>()),
-            new DotnetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, Mock.Of<ICopilotAgentRunner>(), _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, _mockPackageInfoHelper.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>())
+            new DotnetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, Mock.Of<ICopilotAgentRunner>(), _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, _mockPackageInfoHelper.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>()),
+            new RustLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, _mockPackageInfoHelper.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>()),
         ];
 
         _tool = new PackTool(
@@ -501,6 +502,141 @@ public class PackToolTests
 
     #endregion
 
+    #region Rust Pack Tests
+
+    [Test]
+    public async Task PackAsync_Rust_Success_ReturnsSuccessWithArtifact()
+    {
+        // Arrange
+        SetupRustRepo();
+        SetupRustPackScript();
+
+        // Create package in a properly named subdirectory
+        var packageDir = Path.Combine(_tempDirectory.DirectoryPath, "sdk", "core", "azure_core");
+        Directory.CreateDirectory(packageDir);
+        File.WriteAllText(Path.Combine(packageDir, "Cargo.toml"), "[package]\nname = \"azure_core\"\n");
+        SetupCargoMetadata("azure_core", "0.34.0");
+
+        _mockPowerShellHelper
+            .Setup(x => x.Run(It.IsAny<PowershellOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "Finished packing crates")] });
+
+        // Create the .crate artifact at the expected location
+        var targetPackageDir = Path.Combine(_tempDirectory.DirectoryPath, "target", "package");
+        Directory.CreateDirectory(targetPackageDir);
+        File.WriteAllText(Path.Combine(targetPackageDir, "azure_core-0.34.0.crate"), "fake crate");
+
+        // Act
+        var result = await _tool.PackAsync(null, packageDir);
+
+        // Assert
+        Assert.That(result.ResponseErrors, Is.Null.Or.Empty);
+        Assert.That(result.Message, Does.Contain("Pack completed successfully"));
+    }
+
+    [Test]
+    public async Task PackAsync_Rust_WithOutputPath_PassesOutputArg()
+    {
+        // Arrange
+        SetupRustRepo();
+        SetupRustPackScript();
+
+        var packageDir = Path.Combine(_tempDirectory.DirectoryPath, "sdk", "core", "azure_core");
+        Directory.CreateDirectory(packageDir);
+        File.WriteAllText(Path.Combine(packageDir, "Cargo.toml"), "[package]\nname = \"azure_core\"\n");
+        SetupCargoMetadata("azure_core", "0.34.0");
+
+        var outputDir = Path.Combine(_tempDirectory.DirectoryPath, "output");
+        Directory.CreateDirectory(outputDir);
+
+        _mockPowerShellHelper
+            .Setup(x => x.Run(It.IsAny<PowershellOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [] });
+
+        // Act
+        var result = await _tool.PackAsync(null, packageDir, outputDir);
+
+        // Assert
+        Assert.That(result.ResponseErrors, Is.Null.Or.Empty);
+        _mockPowerShellHelper.Verify(x => x.Run(
+            It.Is<PowershellOptions>(o =>
+                o.Args.Contains("-OutputPath") &&
+                o.Args.Contains(outputDir)),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task PackAsync_Rust_ScriptFails_ReturnsFailure()
+    {
+        // Arrange
+        SetupRustRepo();
+        SetupRustPackScript();
+
+        var packageDir = Path.Combine(_tempDirectory.DirectoryPath, "sdk", "core", "azure_core");
+        Directory.CreateDirectory(packageDir);
+        File.WriteAllText(Path.Combine(packageDir, "Cargo.toml"), "[package]\nname = \"azure_core\"\n");
+        SetupCargoMetadata("azure_core", "0.34.0");
+
+        _mockPowerShellHelper
+            .Setup(x => x.Run(It.IsAny<PowershellOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardError, "cargo publish failed")] });
+
+        // Act
+        var result = await _tool.PackAsync(null, packageDir);
+
+        // Assert
+        Assert.That(result.ResponseErrors?.First(), Does.Contain("Pack failed with exit code 1"));
+    }
+
+    [Test]
+    public async Task PackAsync_Rust_MissingPackScript_ReturnsFailure()
+    {
+        // Arrange
+        SetupRustRepo();
+        // Do NOT create the pack script
+
+        var packageDir = Path.Combine(_tempDirectory.DirectoryPath, "sdk", "core", "azure_core");
+        Directory.CreateDirectory(packageDir);
+        File.WriteAllText(Path.Combine(packageDir, "Cargo.toml"), "[package]\nname = \"azure_core\"\n");
+        SetupCargoMetadata("azure_core", "0.34.0");
+
+        // Act
+        var result = await _tool.PackAsync(null, packageDir);
+
+        // Assert
+        Assert.That(result.ResponseErrors?.First(), Does.Contain("Pack script not found"));
+    }
+
+    [Test]
+    public async Task PackAsync_Rust_PassesNoVerifyAndPackageNames()
+    {
+        // Arrange
+        SetupRustRepo();
+        SetupRustPackScript();
+
+        var packageDir = Path.Combine(_tempDirectory.DirectoryPath, "sdk", "core", "azure_core");
+        Directory.CreateDirectory(packageDir);
+        File.WriteAllText(Path.Combine(packageDir, "Cargo.toml"), "[package]\nname = \"azure_core\"\n");
+        SetupCargoMetadata("azure_core", "0.34.0");
+
+        _mockPowerShellHelper
+            .Setup(x => x.Run(It.IsAny<PowershellOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [] });
+
+        // Act
+        await _tool.PackAsync(null, packageDir);
+
+        // Assert
+        _mockPowerShellHelper.Verify(x => x.Run(
+            It.Is<PowershellOptions>(o =>
+                o.Args.Contains("-ManifestDir") &&
+                o.Args.Contains(packageDir) &&
+                o.Args.Contains("-NoVerify")),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
     #region Exception Handling Tests
 
     [Test]
@@ -596,6 +732,31 @@ public class PackToolTests
         _mockGitHelper
             .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_tempDirectory.DirectoryPath);
+    }
+
+    private void SetupRustRepo()
+    {
+        _mockGitHelper
+            .Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("azure-sdk-for-rust");
+        _mockGitHelper
+            .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(_tempDirectory.DirectoryPath);
+    }
+
+    private void SetupRustPackScript()
+    {
+        var scriptDir = Path.Combine(_tempDirectory.DirectoryPath, "eng", "scripts");
+        Directory.CreateDirectory(scriptDir);
+        File.WriteAllText(Path.Combine(scriptDir, "Pack-Crates.ps1"), "# pack script");
+    }
+
+    private void SetupCargoMetadata(string name, string version)
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize(new { packages = new[] { new { name, version } } });
+        _mockProcessHelper
+            .Setup(x => x.Run(It.Is<ProcessOptions>(o => o.Args.Contains("metadata")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, json)] });
     }
 
     #endregion

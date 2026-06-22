@@ -273,6 +273,15 @@ const parser = yargs(hideBin(process.argv))
         .option("emitter-package-json-path", {
           type: "string",
           description: "Alternate path for emitter-package.json file",
+        })
+        .option("npm-args", {
+          type: "string",
+          description:
+            'Pass space separated string of flags to the underlying npm install command, e.g. --npm-args="--force --legacy-peer-deps"',
+        })
+        .option("use-npm-pinning", {
+          type: "boolean",
+          description: "Use `npm view` to get the package's dependencies for pinning versions",
         });
     },
     async (argv: any) => {
@@ -284,10 +293,16 @@ const parser = yargs(hideBin(process.argv))
     "generate-lock-file",
     "Generate a lock file under the eng/ directory from an existing emitter-package.json",
     (yargs: any) => {
-      return yargs.option("emitter-package-json-path", {
-        type: "string",
-        description: "Alternate path for emitter-package.json file",
-      });
+      return yargs
+        .option("emitter-package-json-path", {
+          type: "string",
+          description: "Alternate path for emitter-package.json file",
+        })
+        .option("npm-args", {
+          type: "string",
+          description:
+            'Pass space separated string of flags to the underlying npm install command, e.g. --npm-args="--force --legacy-peer-deps"',
+        });
     },
     async (argv: any) => {
       argv["output-dir"] = resolveOutputDir(argv);

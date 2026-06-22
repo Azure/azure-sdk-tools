@@ -5,6 +5,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 {
     public class MockGitHubService : IGitHubService
     {
+        public string GetAuthToken() => "mock-github-token";
+
         public Task<CreateBranchStatus> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main", CancellationToken ct = default)
         {
             // Default mock: creating a branch succeeds
@@ -358,6 +360,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         }
 
         public Task<Team> GetTeamByNameAsync(string org, string teamSlug, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<HashSet<string>> GetRepoLabels(string owner, string repo, CancellationToken ct)
         {
             throw new NotImplementedException();
         }

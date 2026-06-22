@@ -8,11 +8,12 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
 /// <summary>
 /// Language-specific service for Rust packages. Since the Rust SDK repo does not have a
-/// swagger_to_sdk_config.json, the build script path is hardcoded to eng/scripts/build-sdk.ps1.
+/// swagger_to_sdk_config.json, the build script path is hardcoded to eng/scripts/Build-Crates.ps1.
 /// </summary>
 public sealed class RustLanguageService : LanguageService
 {
-    private const string BuildScriptRelativePath = "eng/scripts/build-sdk.ps1";
+    private const string BuildScriptRelativePath = "eng/scripts/Build-Crates.ps1";
+    private const string PackScriptRelativePath = "eng/scripts/Pack-Crates.ps1";
 
     public RustLanguageService(
         IProcessHelper processHelper,
@@ -229,7 +230,7 @@ public sealed class RustLanguageService : LanguageService
 
             var options = new PowershellOptions(
                 scriptPath,
-                ["-PackagePath", packagePath],
+                ["-ManifestDir", packagePath],
                 logOutputStream: true,
                 workingDirectory: sdkRepoRoot,
                 timeout: TimeSpan.FromMinutes(timeoutMinutes)
@@ -253,5 +254,104 @@ public sealed class RustLanguageService : LanguageService
             logger.LogError(ex, "Error occurred while building Rust SDK code");
             return (false, $"An error occurred: {ex.Message}", null);
         }
+    }
+
+    /// <summary>
+    /// Packs Rust crates by executing the Pack-Crates.ps1 script from the SDK repo.
+    /// </summary>
+    public override async Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo, string? ArtifactPath)> PackAsync(
+        string packagePath, string? outputPath = null, int timeoutMinutes = 30, CancellationToken ct = default)
+    {
+        try
+        {
+            logger.LogInformation("Packing Rust crate at: {PackagePath}", packagePath);
+
+            if (string.IsNullOrWhiteSpace(packagePath))
+            {
+                return (false, "Package path is required and cannot be empty.", null, null);
+            }
+
+            string fullPath = Path.GetFullPath(packagePath);
+            if (!Directory.Exists(fullPath))
+            {
+                return (false, $"Package path does not exist: {fullPath}, input package path: {packagePath}.", null, null);
+            }
+
+            packagePath = fullPath;
+            string sdkRepoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
+            if (string.IsNullOrEmpty(sdkRepoRoot))
+            {
+                return (false, $"Failed to discover local sdk repo with project-path: {packagePath}.", null, null);
+            }
+
+            PackageInfo? packageInfo = await GetPackageInfo(packagePath, ct);
+            var scriptPath = Path.Combine(sdkRepoRoot, PackScriptRelativePath);
+            if (!File.Exists(scriptPath))
+            {
+                return (false, $"Pack script not found at: {scriptPath}.", packageInfo, null);
+            }
+
+            logger.LogDebug("Executing Rust pack script: {ScriptPath} for package: {PackageName}", scriptPath, packageInfo?.PackageName ?? "(unknown)");
+
+            var args = new List<string> { "-ManifestDir", packagePath, "-NoVerify" };
+            if (!string.IsNullOrWhiteSpace(outputPath))
+            {
+                args.AddRange(["-OutputPath", outputPath]);
+            }
+
+            var options = new PowershellOptions(
+                scriptPath,
+                args.ToArray(),
+                logOutputStream: true,
+                workingDirectory: sdkRepoRoot,
+                timeout: TimeSpan.FromMinutes(timeoutMinutes)
+            );
+
+            var result = await powershellHelper.Run(options, ct);
+            var trimmedOutput = (result.Output ?? string.Empty).Trim();
+
+            if (result.ExitCode != 0)
+            {
+                var errorMessage = $"Pack failed with exit code {result.ExitCode}. Output:\n{trimmedOutput}";
+                logger.LogDebug("Pack failed: {ErrorMessage}", errorMessage);
+                return (false, errorMessage, packageInfo, null);
+            }
+
+            var artifactPath = ResolveArtifactPath(sdkRepoRoot, packageInfo, outputPath);
+            if (artifactPath == null)
+            {
+                logger.LogDebug("Could not resolve artifact path. Package name: {Name}, version: {Version}",
+                    packageInfo?.PackageName ?? "(null)", packageInfo?.PackageVersion ?? "(null)");
+            }
+            logger.LogDebug("Pack completed successfully. Artifact: {ArtifactPath}", artifactPath ?? "(unknown)");
+            return (true, null, packageInfo, artifactPath);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error occurred while packing Rust crate");
+            return (false, $"An error occurred: {ex.Message}", null, null);
+        }
+    }
+
+    /// <summary>
+    /// Resolves the path to the generated .crate artifact after a successful pack.
+    /// When an output path is specified, the script copies artifacts to &lt;outputPath&gt;/&lt;name&gt;/&lt;name&gt;-&lt;version&gt;.crate.
+    /// Otherwise, cargo places them at target/package/&lt;name&gt;-&lt;version&gt;.crate.
+    /// </summary>
+    private static string? ResolveArtifactPath(string repoRoot, PackageInfo? packageInfo, string? outputPath)
+    {
+        var name = packageInfo?.PackageName;
+        var version = packageInfo?.PackageVersion;
+        if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(version))
+        {
+            return null;
+        }
+
+        var dir = !string.IsNullOrWhiteSpace(outputPath)
+            ? Path.Combine(outputPath, name)
+            : Path.Combine(repoRoot, "target", "package");
+
+        var artifactPath = Path.Combine(dir, $"{name}-{version}.crate");
+        return File.Exists(artifactPath) ? artifactPath : null;
     }
 }

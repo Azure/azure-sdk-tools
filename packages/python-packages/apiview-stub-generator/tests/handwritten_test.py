@@ -6,14 +6,14 @@
 
 import pytest
 from apistub.nodes import ClassNode
-from apistubgentest import HandwrittenExtendedClass, HandwrittenEnum, HandwrittenDict
+from apiview_stub_generator_test import HandwrittenExtendedClass, HandwrittenEnum, HandwrittenDict
 from ._test_util import _tokenize, MockApiView
 
 
 class TestHandwrittenTokens:
     """Test that handwritten classes and functions have proper 'handwritten' render classes."""
     
-    pkg_namespace = "apistubgentest"
+    pkg_namespace = "apiview_stub_generator_test"
 
     def test_handwritten_extended_class_tokens(self):
         """Test that HandwrittenExtendedClass tokens have 'handwritten' in render_classes.

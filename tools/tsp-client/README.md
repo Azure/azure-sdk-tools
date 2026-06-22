@@ -120,6 +120,12 @@ Example:
 tsp-client generate-config-files --package-json < path-to-emitter-repo-clone > /package.json
 ```
 
+Any additional npm flags can be forwarded to the underlying npm install command using the `--npm-args` option. This allows you to pass any npm flags such as `--registry`, `--legacy-peer-deps`, `--force`, etc. in a space separated string:
+
+```bash
+tsp-client generate-config-files --package-json < path-to-emitter-repo-clone > /package.json --npm-args="--registry=https://my-registry --legacy-peer-deps"
+```
+
 Example using the `azure-sdk-for-js` and the `@azure-tools/typespec-ts` emitter:
 
 The `--package-json` flag should be the relative or absolute path to repo clone of the @azure-tools/typespec-ts package.
@@ -209,6 +215,12 @@ Example:
 
 ```bash
 tsp-client generate-lock-file
+```
+
+Any additional npm flags can be forwarded to the underlying `npm install` command using the `--npm-args` option. This allows you to pass any npm flags such as `--registry`, `--legacy-peer-deps`, `--force`, etc. in a space separated string:
+
+```bash
+tsp-client generate-lock-file --npm-args="--registry=https://my-registry --legacy-peer-deps"
 ```
 
 ### install-dependencies

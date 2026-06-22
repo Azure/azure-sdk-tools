@@ -19,7 +19,7 @@ import { ACTIVE_API_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM, D
 import { CodePanelData, CodePanelRowData, CodePanelRowDatatype, CrossLanguageContentDto } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { ReviewPageWorkerMessageDirective } from 'src/app/_models/insertCodePanelRowDataMessage';
-import { CommentItemModel, CommentType, CommentSeverity, CommentSource } from 'src/app/_models/commentItemModel';
+import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 import { SamplesRevisionService } from 'src/app/_services/samples/samples.service';
 import { SamplesRevision } from 'src/app/_models/samples';
@@ -107,6 +107,16 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
   private destroyApiTreeBuilder$: Subject<void> | null = null;
 
   sideMenu: MenuItem[] | undefined;
+
+  get hasReleasedApprovedGARevision(): boolean {
+    return this.apiRevisions.some(rev =>
+      rev.id !== this.activeAPIRevision?.id &&
+      rev.isApproved &&
+      rev.isReleased &&
+      !!rev.packageVersion &&
+      !rev.packageVersion.includes('-')
+    );
+  }
 
   constructor(private route: ActivatedRoute, private router: Router, private apiRevisionsService: APIRevisionsService,
     private reviewsService: ReviewsService, private workerService: WorkerService,
@@ -210,11 +220,6 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
         this.sideMenu = [...this.sideMenu];
       }
     }
-
-    // Set loading message if diagnostics need migration (old revisions without hash)
-    this.loadingMessage = (this.activeAPIRevision && !this.activeAPIRevision.diagnosticsHash)
-      ? 'Processing diagnostics...'
-      : undefined;
 
     this.cdr.markForCheck();
     this.workerService.startWorker().then(() => {
@@ -567,9 +572,10 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
     this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         if (userPreferenceModel!.showSystemComments) {
-          this.codePanelComponent?.insertDiagnosticCommentThreads();
-        } else {
-          this.codePanelComponent?.removeDiagnosticCommentThreads();
+          this.codePanelComponent?.insertRowTypeIntoScroller(CodePanelRowDatatype.Diagnostics);
+        }
+        else {
+          this.codePanelComponent?.removeRowTypeFromScroller(CodePanelRowDatatype.Diagnostics);
         }
         this.cdr.markForCheck();
       }
@@ -873,21 +879,12 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
 
   checkForFatalDiagnostics() {
     for (const rowData of this.codePanelRowData) {
-      // Check legacy diagnostic rows
       if (rowData.diagnostics && rowData.diagnostics.level === 'fatal') {
         this.hasFatalDiagnostics = true;
-        break;
-      }
-      if (rowData.comments) {
-        for (const comment of rowData.comments) {
-          if (comment.commentSource === CommentSource.Diagnostic && comment.severity === CommentSeverity.MustFix) {
-            this.hasFatalDiagnostics = true;
-            break;
-          }
-        }
-        if (this.hasFatalDiagnostics) break;
+        return;
       }
     }
+    this.hasFatalDiagnostics = false;
   }
 
   updateLoadingStateBasedOnReviewDeletionStatus(): boolean {

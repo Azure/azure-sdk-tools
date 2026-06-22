@@ -162,12 +162,7 @@ namespace Azure.ClientSdk.Analyzers
 
         private void AnalyzeInvocationUnknownScope(in IInvocationOperation invocation, in MethodAnalysisContext context)
         {
-            var method = invocation.TargetMethod;
-            if (_asyncUtilities.IsConfigureAwait(method))
-            {
-                AnalyzeConfigureAwait(invocation);
-            } 
-            else if (IsGetAwaiterGetResult(invocation))
+            if (IsGetAwaiterGetResult(invocation))
             {
                 ReportDiagnosticOnGetAwaiterGetResult(invocation, Descriptors.AZC0102);
             } 
@@ -181,13 +176,7 @@ namespace Azure.ClientSdk.Analyzers
         private void AnalyzeInvocationAsyncScope(IInvocationOperation invocation, in MethodAnalysisContext context) 
         {
             var method = invocation.TargetMethod;
-            // ConfigureAwait is either an instance method with one parameter or a static extension method with two.
-            // Verify that the last argument is a bool and if it is 'true'
-            if (_asyncUtilities.IsConfigureAwait(method))
-            {
-                AnalyzeConfigureAwait(invocation);
-            }
-            else if (IsGetAwaiterGetResult(invocation))
+            if (IsGetAwaiterGetResult(invocation))
             {
                 // Use await keyword instead of GetAwaiter().GetResult()
                 ReportDiagnosticOnGetAwaiterGetResult(invocation, Descriptors.AZC0103, "GetAwaiter().GetResult()");
@@ -218,14 +207,6 @@ namespace Azure.ClientSdk.Analyzers
             else if (IsEnsureCompleted(invocation, out var firstArgument))
             {
                 AnalyzeEnsureCompleted(firstArgument, context);
-            }
-        }
-
-        private void AnalyzeConfigureAwait(IInvocationOperation invocation) 
-        {
-            if (IsEqualsToBoolValue(invocation.Arguments.Last().Value, true)) 
-            {
-                ReportDiagnosticOnMember(invocation, Descriptors.AZC0101);
             }
         }
 

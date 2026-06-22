@@ -116,7 +116,7 @@ public class RustLanguageServiceTests
         Directory.CreateDirectory(packageDir);
         var scriptDir = Path.Combine(_tempDirectory.DirectoryPath, "eng", "scripts");
         Directory.CreateDirectory(scriptDir);
-        File.WriteAllText(Path.Combine(scriptDir, "build-sdk.ps1"), "# build script");
+        File.WriteAllText(Path.Combine(scriptDir, "Build-Crates.ps1"), "# build script");
 
         _mockGitHelper
             .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -132,7 +132,7 @@ public class RustLanguageServiceTests
         Assert.That(errorMessage, Is.Null);
         _mockPowershellHelper.Verify(x => x.Run(
             It.Is<PowershellOptions>(o =>
-                o.Args.Contains("-PackagePath") &&
+                o.Args.Contains("-ManifestDir") &&
                 o.Args.Contains(packageDir)),
             It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -144,7 +144,7 @@ public class RustLanguageServiceTests
         Directory.CreateDirectory(packageDir);
         var scriptDir = Path.Combine(_tempDirectory.DirectoryPath, "eng", "scripts");
         Directory.CreateDirectory(scriptDir);
-        File.WriteAllText(Path.Combine(scriptDir, "build-sdk.ps1"), "# build script");
+        File.WriteAllText(Path.Combine(scriptDir, "Build-Crates.ps1"), "# build script");
 
         _mockGitHelper
             .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -184,7 +184,7 @@ public class RustLanguageServiceTests
         Directory.CreateDirectory(packageDir);
         var scriptDir = Path.Combine(_tempDirectory.DirectoryPath, "eng", "scripts");
         Directory.CreateDirectory(scriptDir);
-        File.WriteAllText(Path.Combine(scriptDir, "build-sdk.ps1"), "# build script");
+        File.WriteAllText(Path.Combine(scriptDir, "Build-Sdk.ps1"), "# build script");
 
         _mockGitHelper
             .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -199,6 +199,173 @@ public class RustLanguageServiceTests
         _mockSpecGenSdkConfigHelper.Verify(
             x => x.GetConfigurationAsync(It.IsAny<string>(), It.IsAny<SpecGenSdkConfigType>(), It.IsAny<CancellationToken>()),
             Times.Never);
+    }
+
+    #endregion
+
+    #region PackAsync Tests
+
+    [Test]
+    public async Task PackAsync_EmptyPath_ReturnsFailure()
+    {
+        var (success, errorMessage, _, _) = await _service.PackAsync(string.Empty);
+
+        Assert.That(success, Is.False);
+        Assert.That(errorMessage, Does.Contain("required and cannot be empty"));
+    }
+
+    [Test]
+    public async Task PackAsync_NonexistentPath_ReturnsFailure()
+    {
+        var (success, errorMessage, _, _) = await _service.PackAsync("/nonexistent/path");
+
+        Assert.That(success, Is.False);
+        Assert.That(errorMessage, Does.Contain("does not exist"));
+    }
+
+    [Test]
+    public async Task PackAsync_MissingPackScript_ReturnsFailure()
+    {
+        var packageDir = Path.Combine(_tempDirectory.DirectoryPath, "sdk", "core", "azure_core");
+        Directory.CreateDirectory(packageDir);
+        File.WriteAllText(Path.Combine(packageDir, "Cargo.toml"), "[package]\nname = \"azure_core\"\n");
+
+        _mockGitHelper
+            .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(_tempDirectory.DirectoryPath);
+
+        SetupCargoMetadata("azure_core", "0.34.0");
+
+        var (success, errorMessage, _, _) = await _service.PackAsync(packageDir);
+
+        Assert.That(success, Is.False);
+        Assert.That(errorMessage, Does.Contain("Pack script not found"));
+    }
+
+    [Test]
+    public async Task PackAsync_ScriptExists_ExecutesPowershellWithCorrectArgs()
+    {
+        var packageDir = Path.Combine(_tempDirectory.DirectoryPath, "sdk", "core", "azure_core");
+        Directory.CreateDirectory(packageDir);
+        File.WriteAllText(Path.Combine(packageDir, "Cargo.toml"), "[package]\nname = \"azure_core\"\n");
+        CreatePackScript();
+
+        _mockGitHelper
+            .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(_tempDirectory.DirectoryPath);
+
+        SetupCargoMetadata("azure_core", "0.34.0");
+
+        _mockPowershellHelper
+            .Setup(x => x.Run(It.IsAny<PowershellOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "ok")] });
+
+        var (success, _, _, _) = await _service.PackAsync(packageDir);
+
+        Assert.That(success, Is.True);
+        _mockPowershellHelper.Verify(x => x.Run(
+            It.Is<PowershellOptions>(o =>
+                o.Args.Contains("-ManifestDir") &&
+                o.Args.Contains(packageDir) &&
+                o.Args.Contains("-NoVerify")),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task PackAsync_WithOutputPath_PassesOutputPathArg()
+    {
+        var packageDir = Path.Combine(_tempDirectory.DirectoryPath, "sdk", "core", "azure_core");
+        Directory.CreateDirectory(packageDir);
+        File.WriteAllText(Path.Combine(packageDir, "Cargo.toml"), "[package]\nname = \"azure_core\"\n");
+        CreatePackScript();
+        var outputDir = Path.Combine(_tempDirectory.DirectoryPath, "output");
+
+        _mockGitHelper
+            .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(_tempDirectory.DirectoryPath);
+
+        SetupCargoMetadata("azure_core", "0.34.0");
+
+        _mockPowershellHelper
+            .Setup(x => x.Run(It.IsAny<PowershellOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [] });
+
+        await _service.PackAsync(packageDir, outputDir);
+
+        _mockPowershellHelper.Verify(x => x.Run(
+            It.Is<PowershellOptions>(o =>
+                o.Args.Contains("-OutputPath") &&
+                o.Args.Contains(outputDir)),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task PackAsync_ScriptFails_ReturnsFailure()
+    {
+        var packageDir = Path.Combine(_tempDirectory.DirectoryPath, "sdk", "core", "azure_core");
+        Directory.CreateDirectory(packageDir);
+        File.WriteAllText(Path.Combine(packageDir, "Cargo.toml"), "[package]\nname = \"azure_core\"\n");
+        CreatePackScript();
+
+        _mockGitHelper
+            .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(_tempDirectory.DirectoryPath);
+
+        SetupCargoMetadata("azure_core", "0.34.0");
+
+        _mockPowershellHelper
+            .Setup(x => x.Run(It.IsAny<PowershellOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardOutput, "cargo publish failed")] });
+
+        var (success, errorMessage, _, _) = await _service.PackAsync(packageDir);
+
+        Assert.That(success, Is.False);
+        Assert.That(errorMessage, Does.Contain("Pack failed with exit code 1"));
+    }
+
+    [Test]
+    public async Task PackAsync_ResolvesArtifactPath_WhenCrateExists()
+    {
+        var packageDir = Path.Combine(_tempDirectory.DirectoryPath, "sdk", "core", "azure_core");
+        Directory.CreateDirectory(packageDir);
+        File.WriteAllText(Path.Combine(packageDir, "Cargo.toml"), "[package]\nname = \"azure_core\"\n");
+        CreatePackScript();
+
+        // Create the .crate artifact
+        var targetDir = Path.Combine(_tempDirectory.DirectoryPath, "target", "package");
+        Directory.CreateDirectory(targetDir);
+        File.WriteAllText(Path.Combine(targetDir, "azure_core-0.34.0.crate"), "fake");
+
+        _mockGitHelper
+            .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(_tempDirectory.DirectoryPath);
+
+        SetupCargoMetadata("azure_core", "0.34.0");
+
+        _mockPowershellHelper
+            .Setup(x => x.Run(It.IsAny<PowershellOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [] });
+
+        var (success, _, _, artifactPath) = await _service.PackAsync(packageDir);
+
+        Assert.That(success, Is.True);
+        Assert.That(artifactPath, Does.Contain("azure_core-0.34.0.crate"));
+    }
+
+    [Test]
+    public async Task PackAsync_DiscoverRepoRootFails_ReturnsFailure()
+    {
+        var packageDir = Path.Combine(_tempDirectory.DirectoryPath, "sdk", "core", "azure_core");
+        Directory.CreateDirectory(packageDir);
+
+        _mockGitHelper
+            .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(string.Empty);
+
+        var (success, errorMessage, _, _) = await _service.PackAsync(packageDir);
+
+        Assert.That(success, Is.False);
+        Assert.That(errorMessage, Does.Contain("Failed to discover local sdk repo"));
     }
 
     #endregion
@@ -372,6 +539,17 @@ public class RustLanguageServiceTests
 
         Assert.That(info.PackageName, Is.EqualTo("my_crate"));
         Assert.That(info.PackageVersion, Is.EqualTo("0.1.0"));
+    }
+
+    #endregion
+
+    #region Helper Methods
+
+    private void CreatePackScript()
+    {
+        var scriptDir = Path.Combine(_tempDirectory.DirectoryPath, "eng", "scripts");
+        Directory.CreateDirectory(scriptDir);
+        File.WriteAllText(Path.Combine(scriptDir, "Pack-Crates.ps1"), "# pack script");
     }
 
     #endregion

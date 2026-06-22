@@ -85,6 +85,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 await generator.Generate(ct);
                 return new DefaultCommandResponse() { Message = $"Readme written to {outputPath}" };
             }
+            catch (CopilotCliUnavailableException ex)
+            {
+                logger.LogError(ex, "Copilot CLI is not available");
+                return new DefaultCommandResponse() { ResponseError = $"Copilot CLI setup error: {ex.Message}" };
+            }
             catch (ReadmeValidationException ex)
             {
                 logger.LogError(ex, "ReadmeGeneratorTool failed");

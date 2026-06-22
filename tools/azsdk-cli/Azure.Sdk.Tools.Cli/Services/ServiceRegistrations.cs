@@ -11,6 +11,8 @@ using GitHub.Copilot.SDK;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Helpers.Codeowners;
+using Azure.Sdk.Tools.Cli.Helpers.Codeowners.Rules;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Services.Languages;
@@ -19,6 +21,7 @@ using Azure.Sdk.Tools.Cli.Services.TypeSpec;
 using Azure.Sdk.Tools.Cli.Services.Upgrade;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.CodeownersUtils.Caches;
+using Azure.Sdk.Tools.CodeownersUtils.Utils;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -63,9 +66,21 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ICodeownersValidatorHelper, CodeownersValidatorHelper>();
             services.AddSingleton<ICodeownersGenerateHelper, CodeownersGenerateHelper>();
             services.AddSingleton<IPackageInfoHelper, PackageInfoHelper>();
+            services.AddSingleton<RepoLabelCache>();
             services.AddSingleton<ITeamUserCache, TeamUserCache>();
+            services.AddSingleton<UserOrgVisibilityCache>();
+            services.AddSingleton<ICacheValidator, CacheValidator>();
             services.AddSingleton<ICodeownersManagementHelper, CodeownersManagementHelper>();
             services.AddSingleton<ICheckPackageHelper, CheckPackageHelper>();
+            services.AddSingleton<ICodeownersAuditHelper, CodeownersAuditHelper>();
+
+            services.AddSingleton<IAuditRule, InvalidOwnerRule>();
+            services.AddSingleton<IAuditRule, MalformedTeamRule>();
+            services.AddSingleton<IAuditRule, TeamNotWriteRule>();
+            services.AddSingleton<IAuditRule, LabelNotInRepoLabelsRule>();
+            services.AddSingleton<IAuditRule, ServiceAttentionMisuseRule>();
+            services.AddSingleton<IAuditRule, LabelOwnerMissingOwnersRule>();
+            services.AddSingleton<IAuditRule, LabelOwnerMissingLabelsRule>();
             services.AddSingleton<IEnvironmentHelper, EnvironmentHelper>();
             services.AddSingleton<IEnvFileHelper, EnvFileHelper>();
             services.AddSingleton<IMcpServerContextAccessor, McpServerContextAccessor>();
@@ -93,12 +108,14 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IPythonHelper, PythonHelper>();
             services.AddSingleton<IGitCommandHelper, GitCommandHelper>();
 
+            // Pipeline helpers
+            services.AddSingleton<IPipelineIdentifierHelper, PipelineIdentifierHelper>();
+
             // Services that need to be scoped so we can track/update state across services per request
             services.AddScoped<TokenUsageHelper>();
             services.AddScoped<IOutputHelper>(_ => new OutputHelper(outputMode));
             services.AddScoped<ConversationLogger>();
             // Services depending on other scoped services
-            services.AddScoped<IAzureAgentServiceFactory, AzureAgentServiceFactory>();
             services.AddScoped<ICommonValidationHelpers, CommonValidationHelpers>();
             services.AddScoped<IVerifySetupService, VerifySetupService>();
 
@@ -108,12 +125,23 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<CopilotClient>(sp =>
             {
                 var logger = sp.GetService<ILogger<CopilotClient>>();
-                return new CopilotClient(new CopilotClientOptions
+                var options = new CopilotClientOptions
                 {
                     UseStdio = true,
                     AutoStart = true,
                     Logger = logger
-                });
+                };
+
+                // Allow overriding the bundled Copilot CLI path via environment variable.
+                // This is useful when the standalone azsdk.exe doesn't include the Copilot CLI executable
+                // but the user has it installed elsewhere (e.g. via npm).
+                var cliPath = Environment.GetEnvironmentVariable("AZSDK_COPILOT_CLI_PATH");
+                if (!string.IsNullOrWhiteSpace(cliPath))
+                {
+                    options.CliPath = cliPath.Trim();
+                }
+
+                return new CopilotClient(options);
             });
             services.AddSingleton<ICopilotClientWrapper, CopilotClientWrapper>();
             services.AddScoped<ICopilotAgentRunner, CopilotAgentRunner>();

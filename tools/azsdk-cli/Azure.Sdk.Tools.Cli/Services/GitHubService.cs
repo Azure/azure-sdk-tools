@@ -45,7 +45,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        private string GetGitHubAuthToken()
+        protected string GetGitHubAuthToken()
         {
             var token = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
             if (!string.IsNullOrEmpty(token))
@@ -99,6 +99,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
     public interface IGitHubService
     {
+        public string GetAuthToken();
         public Task<User> GetGitUserDetailsAsync(CancellationToken ct);
         public Task<List<String>> GetPullRequestChecksAsync(int pullRequestNumber, string repoName, string repoOwner, CancellationToken ct);
         public Task<PullRequest> GetPullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
@@ -123,6 +124,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<bool> HasWritePermission(string owner, string repo, string username, CancellationToken ct);
         public Task<Octokit.SearchCodeResult> SearchFilesAsync(string searchQuery, CancellationToken ct);
         public Task<Team> GetTeamByNameAsync(string org, string teamSlug, CancellationToken ct);
+        public Task<HashSet<string>> GetRepoLabels(string owner, string repo, CancellationToken ct);
     }
 
     // We enforce cancellation token usage broadly via an analyzer across this codebase,
@@ -136,6 +138,8 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             logger = _logger;
         }
+
+        public string GetAuthToken() => GetGitHubAuthToken();
 
         public async Task<User> GetGitUserDetailsAsync(CancellationToken ct)
         {
@@ -706,6 +710,12 @@ namespace Azure.Sdk.Tools.Cli.Services
         public async Task<Team> GetTeamByNameAsync(string org, string teamSlug, CancellationToken ct)
         {
             return await gitHubClient.Organization.Team.GetByName(org, teamSlug);
+        }
+
+        public async Task<HashSet<string>> GetRepoLabels(string owner, string repo, CancellationToken ct)
+        {
+            var labels = await gitHubClient.Issue.Labels.GetAllForRepository(owner, repo);
+            return labels.Select(l => l.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
         }
     }
 }

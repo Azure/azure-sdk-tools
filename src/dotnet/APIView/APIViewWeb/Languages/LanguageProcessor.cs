@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using ApiView;
+using APIView;
 using Microsoft.ApplicationInsights;
 
 namespace APIViewWeb

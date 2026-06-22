@@ -1,0 +1,23 @@
+testcase: retain_all_unique_memories
+guideline: |
+  {
+    "id": "python_design=html=python-client-async",
+    "title": "Provide async client alongside sync client",
+    "content": "DO provide an async version of every synchronous client. The async client must live in the '.aio' subpackage and mirror the sync client's API surface."
+  }
+memories: |
+  [
+    {
+      "id": "mem-010",
+      "title": "Async client must share same constructor signature",
+      "content": "Review feedback: The async client constructor must accept the same parameters as the sync client. Do not add extra parameters or remove existing ones in the async variant."
+    },
+    {
+      "id": "mem-011",
+      "title": "Async client methods should return Awaitable versions",
+      "content": "From architecture board: All method return types in the async client should be the awaitable equivalent of the sync return type. For example, if sync returns ItemPaged, async should return AsyncItemPaged."
+    }
+  ]
+response:
+  action: NONE
+  rationale: Both memories provide specific implementation details (constructor signature parity, awaitable return types) that the guideline does not cover. The guideline only says to provide an async client in .aio, not how its API should be structured.

@@ -1,0 +1,125 @@
+# Vally configuration for Azure SDK Typespec Author MCP tool evaluations
+# See: https://vally.dev/reference/vally-config
+# This file is the local/default entrypoint for developers.
+#
+# Local commands like `vally eval --suite versioning` continue to
+# behave as teammates expect.
+#
+# The pipeline parallel layout lives separately under suites/ and is invoked
+# explicitly from the pipeline with --eval-spec. That keeps local usage stable
+# without introducing a second Vally config file.
+
+paths:
+  evals: [evals/]
+  evalFilenames: ["*.eval.yaml"]
+  skills: [../]
+  results: results/
+
+environments:
+  azsdk-mcp:
+    mcpServers:
+      azure-sdk-mcp:
+        type: stdio
+        command: dotnet
+        args:
+          [
+            "run",
+            "--project",
+            "../../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli",
+            "--",
+            "start",
+          ]
+        timeout: 5m
+        env:
+          AZSDKTOOLS_AGENT_TESTING: "false"
+          AZSDKTOOLS_COLLECT_TELEMETRY: "false"
+          AZURE_SDK_KB_ENDPOINT: "http://localhost:8088"
+  azsdk-mcp-remote-kb:
+    mcpServers:
+      azure-sdk-mcp:
+        type: stdio
+        command: dotnet
+        args:
+          [
+            "run",
+            "--project",
+            "../../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli",
+            "--",
+            "start",
+          ]
+        timeout: 5m
+        env:
+          AZSDKTOOLS_AGENT_TESTING: "false"
+          AZSDKTOOLS_COLLECT_TELEMETRY: "false"
+
+  # Mock MCP environment for skill-invocation / trigger tests.
+  # Uses Azure.Sdk.Tools.Mock to avoid spinning up the real azure-sdk-mcp
+  # server when we only care about whether the skill is invoked.
+  azsdk-mcp-mock:
+    mcpServers:
+      azure-sdk-mcp:
+        type: stdio
+        command: dotnet
+        args:
+          [
+            "run",
+            "--project",
+            "../../../../tools/azsdk-cli/Azure.Sdk.Tools.Mock",
+          ]
+        timeout: "60s"
+
+suites:
+  versioning-forced:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: versioning, mode: forced }
+  armtemplate-forced:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: armtemplate, mode: forced }
+  longrunningoperation-forced:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: lro, mode: forced }
+  decorators-forced:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: decorators, mode: forced }
+  warning-forced:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: warning, mode: forced }
+  versioning-trigger:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: versioning, mode: trigger }
+  armtemplate-trigger:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: armtemplate, mode: trigger }
+  longrunningoperation-trigger:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: lro, mode: trigger }
+  decorators-trigger:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: decorators, mode: trigger }
+  warning-trigger:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: warning, mode: trigger }
+  versioning-no-skill:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: versioning, mode: no-skill }
+  armtemplate-no-skill:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: armtemplate, mode: no-skill }
+  longrunningoperation-no-skill:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: lro, mode: no-skill }
+  decorators-no-skill:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: decorators, mode: no-skill }
+  warning-no-skill:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: warning, mode: no-skill }
+  forced:
+    evals: ["evals/*.eval.yaml"]
+    filter: { mode: forced }
+  trigger:
+    evals: ["evals/*.eval.yaml"]
+    filter: { mode: trigger }
+  no-skill:
+    evals: ["evals/*.eval.yaml"]
+    filter: { mode: no-skill }

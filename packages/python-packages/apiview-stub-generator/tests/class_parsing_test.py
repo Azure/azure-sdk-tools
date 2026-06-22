@@ -5,7 +5,7 @@
 # --------------------------------------------------------------------------
 
 from apistub.nodes import ClassNode
-from apistubgentest.models import (
+from apiview_stub_generator_test.models import (
     AliasNewType,
     AliasUnion,
     ClassWithDecorators,
@@ -44,7 +44,7 @@ def _check_all(actual, expect, obj):
 
 class TestClassParsing:
 
-    pkg_namespace = "apistubgentest.models"
+    pkg_namespace = "apiview_stub_generator_test.models"
 
     def test_class_with_ivars_and_cvars(self):
         obj = ClassWithIvarsAndCvars

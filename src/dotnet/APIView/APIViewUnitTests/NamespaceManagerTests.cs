@@ -52,10 +52,10 @@ public class NamespaceManagerTests
 
     private static Project CreateProject(
         string id,
-        Dictionary<string, NamespaceDecisionEntry> currentStatus = null,
+        Dictionary<string, List<NamespaceDecisionEntry>> currentStatus = null,
         Dictionary<string, List<NamespaceDecisionEntry>> history = null,
         List<NamespaceDecisionEntry> approved = null,
-        Dictionary<string, string> reviews = null)
+        Dictionary<string, List<string>> reviews = null)
     {
         return new Project
         {
@@ -100,7 +100,7 @@ public class NamespaceManagerTests
     }
 
     private static ProjectNamespaceInfo CreateNamespaceInfo(
-        Dictionary<string, NamespaceDecisionEntry> currentStatus = null,
+        Dictionary<string, List<NamespaceDecisionEntry>> currentStatus = null,
         Dictionary<string, List<NamespaceDecisionEntry>> history = null)
     {
         return new ProjectNamespaceInfo
@@ -111,11 +111,11 @@ public class NamespaceManagerTests
         };
     }
 
-    private static Dictionary<string, PackageInfo> Packages(params (string language, string packageName, string ns)[] packages)
+    private static Dictionary<string, List<PackageInfo>> Packages(params (string language, string packageName, string ns)[] packages)
     {
         return packages.ToDictionary(
             p => p.language,
-            p => new PackageInfo { PackageName = p.packageName, Namespace = p.ns },
+            p => new List<PackageInfo> { new() { PackageName = p.packageName, Namespace = p.ns } },
             StringComparer.OrdinalIgnoreCase);
     }
 
@@ -145,10 +145,10 @@ public class NamespaceManagerTests
         var metadata = new TypeSpecMetadata
         {
             TypeSpec = new TypeSpecInfo { Namespace = "Azure.Storage" },
-            Languages = new Dictionary<string, LanguageConfig>
+            Languages = new Dictionary<string, List<LanguageConfig>>
             {
-                ["Python"] = new() { PackageName = "azure-storage", Namespace = "azure.storage" },
-                ["JavaScript"] = new() { PackageName = "@azure/storage", Namespace = "@azure/storage" }
+                ["Python"] = [new() { PackageName = "azure-storage", Namespace = "azure.storage" }],
+                ["JavaScript"] = [new() { PackageName = "@azure/storage", Namespace = "@azure/storage" }]
             }
         };
         var reviews = new List<ReviewListItemModel>();
@@ -160,16 +160,16 @@ public class NamespaceManagerTests
         Assert.True(result.CurrentNamespaceStatus.ContainsKey("Python"));
         Assert.True(result.CurrentNamespaceStatus.ContainsKey("JavaScript"));
 
-        Assert.All(result.CurrentNamespaceStatus.Values, e =>
+        Assert.All(result.CurrentNamespaceStatus.Values.SelectMany(list => list), e =>
         {
             Assert.Equal(NamespaceDecisionStatus.Proposed, e.Status);
             Assert.Equal("user1", e.ProposedBy);
             Assert.NotNull(e.ProposedOn);
         });
 
-        Assert.Equal("Azure.Storage", result.CurrentNamespaceStatus["TypeSpec"].Namespace);
-        Assert.Equal("azure.storage", result.CurrentNamespaceStatus["Python"].Namespace);
-        Assert.Equal("azure-storage", result.CurrentNamespaceStatus["Python"].PackageName);
+        Assert.Equal("Azure.Storage", result.CurrentNamespaceStatus["TypeSpec"][0].Namespace);
+        Assert.Equal("azure.storage", result.CurrentNamespaceStatus["Python"][0].Namespace);
+        Assert.Equal("azure-storage", result.CurrentNamespaceStatus["Python"][0].PackageName);
         Assert.Empty(result.ApprovedNamespaces);
     }
 
@@ -179,9 +179,9 @@ public class NamespaceManagerTests
         var metadata = new TypeSpecMetadata
         {
             TypeSpec = new TypeSpecInfo { Namespace = "Azure.Core" },
-            Languages = new Dictionary<string, LanguageConfig>
+            Languages = new Dictionary<string, List<LanguageConfig>>
             {
-                ["Python"] = new() { PackageName = "azure-core", Namespace = "azure.core" }
+                ["Python"] = [new() { PackageName = "azure-core", Namespace = "azure.core" }]
             }
         };
         var reviews = new List<ReviewListItemModel>
@@ -190,6 +190,7 @@ public class NamespaceManagerTests
             {
                 Id = "py-review-1",
                 Language = "Python",
+                PackageName = "azure-core",
                 IsApproved = true,
                 ChangeHistory =
                 [
@@ -205,7 +206,7 @@ public class NamespaceManagerTests
 
         ProjectNamespaceInfo result = _namespaceManager.BuildInitialNamespaceInfo("user1", metadata, reviews);
 
-        NamespaceDecisionEntry pyEntry = result.CurrentNamespaceStatus["Python"];
+        NamespaceDecisionEntry pyEntry = result.CurrentNamespaceStatus["Python"][0];
         Assert.Equal(NamespaceDecisionStatus.Approved, pyEntry.Status);
         Assert.Equal("approver1", pyEntry.DecidedBy);
         Assert.Equal(new DateTime(2025, 6, 1), pyEntry.DecidedOn);
@@ -236,11 +237,11 @@ public class NamespaceManagerTests
         var metadata = new TypeSpecMetadata
         {
             TypeSpec = new TypeSpecInfo { Namespace = "Azure.Test" },
-            Languages = new Dictionary<string, LanguageConfig>
+            Languages = new Dictionary<string, List<LanguageConfig>>
             {
-                ["Python"] = new() { PackageName = "azure-test", Namespace = "azure.test" },
-                ["Go"] = new() { PackageName = "aztest", Namespace = "" },
-                ["Java"] = new() { PackageName = "azure-test", Namespace = null }
+                ["Python"] = [new() { PackageName = "azure-test", Namespace = "azure.test" }],
+                ["Go"] = [new() { PackageName = "aztest", Namespace = "" }],
+                ["Java"] = [new() { PackageName = "azure-test", Namespace = null }]
             }
         };
 
@@ -259,10 +260,10 @@ public class NamespaceManagerTests
         var metadata = new TypeSpecMetadata
         {
             TypeSpec = new TypeSpecInfo { Namespace = "Azure.AI" },
-            Languages = new Dictionary<string, LanguageConfig>
+            Languages = new Dictionary<string, List<LanguageConfig>>
             {
-                ["Python"] = new() { PackageName = "azure-ai", Namespace = "azure.ai" },
-                ["JavaScript"] = new() { PackageName = "@azure/ai", Namespace = "@azure/ai" }
+                ["Python"] = [new() { PackageName = "azure-ai", Namespace = "azure.ai" }],
+                ["JavaScript"] = [new() { PackageName = "@azure/ai", Namespace = "@azure/ai" }]
             }
         };
         var reviews = new List<ReviewListItemModel>
@@ -271,6 +272,7 @@ public class NamespaceManagerTests
             {
                 Id = "py-1",
                 Language = "Python",
+                PackageName = "azure-ai",
                 IsApproved = true,
                 ChangeHistory = [new ReviewChangeHistoryModel { ChangeAction = ReviewChangeAction.Approved, ChangedBy = "approver" }]
             },
@@ -278,6 +280,7 @@ public class NamespaceManagerTests
             {
                 Id = "js-1",
                 Language = "JavaScript",
+                PackageName = "@azure/ai",
                 IsApproved = false,
                 ChangeHistory = []
             }
@@ -285,8 +288,8 @@ public class NamespaceManagerTests
 
         ProjectNamespaceInfo result = _namespaceManager.BuildInitialNamespaceInfo("user1", metadata, reviews);
 
-        Assert.Equal(NamespaceDecisionStatus.Approved, result.CurrentNamespaceStatus["Python"].Status);
-        Assert.Equal(NamespaceDecisionStatus.Proposed, result.CurrentNamespaceStatus["JavaScript"].Status);
+        Assert.Equal(NamespaceDecisionStatus.Approved, result.CurrentNamespaceStatus["Python"][0].Status);
+        Assert.Equal(NamespaceDecisionStatus.Proposed, result.CurrentNamespaceStatus["JavaScript"][0].Status);
         Assert.Single(result.ApprovedNamespaces);
     }
 
@@ -299,7 +302,7 @@ public class NamespaceManagerTests
     {
         var pyEntry = ProposedEntry("Python", "azure.storage", "azure-storage");
         var info = CreateNamespaceInfo(
-            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = pyEntry },
+            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = [pyEntry] },
             history: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = new List<NamespaceDecisionEntry>() });
 
         var oldPkgs = Packages(("Python", "azure-storage", "azure.storage"));
@@ -326,7 +329,7 @@ public class NamespaceManagerTests
         ProjectNamespaceInfo result = _namespaceManager.ResolvePackageNamespaceChanges("user1", info, oldPkgs, newPkgs, []);
 
         Assert.True(result.CurrentNamespaceStatus.ContainsKey("JavaScript"));
-        NamespaceDecisionEntry entry = result.CurrentNamespaceStatus["JavaScript"];
+        NamespaceDecisionEntry entry = result.CurrentNamespaceStatus["JavaScript"][0];
         Assert.Equal(NamespaceDecisionStatus.Proposed, entry.Status);
         Assert.Equal("@azure/storage", entry.Namespace);
         Assert.Equal("@azure/storage", entry.PackageName);
@@ -350,7 +353,7 @@ public class NamespaceManagerTests
 
         ProjectNamespaceInfo result = _namespaceManager.ResolvePackageNamespaceChanges("user1", info, oldPkgs, newPkgs, reviews);
 
-        NamespaceDecisionEntry entry = result.CurrentNamespaceStatus["Python"];
+        NamespaceDecisionEntry entry = result.CurrentNamespaceStatus["Python"][0];
         Assert.Equal(NamespaceDecisionStatus.Approved, entry.Status);
         Assert.Contains(NamespaceManagerConstants.AutoApprovalNotes, entry.Notes);
     }
@@ -360,7 +363,7 @@ public class NamespaceManagerTests
     {
         var pyEntry = ProposedEntry("Python", "azure.storage.old", "azure-storage");
         var info = CreateNamespaceInfo(
-            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = pyEntry },
+            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = [pyEntry] },
             history: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = new List<NamespaceDecisionEntry>() });
 
         var oldPkgs = Packages(("Python", "azure-storage", "azure.storage.old"));
@@ -374,7 +377,7 @@ public class NamespaceManagerTests
         Assert.Contains(NamespaceManagerConstants.AutoWithdrawalNewNameSuggested, result.NamespaceHistory["Python"][0].Notes);
 
         // New entry is proposed and in current status
-        NamespaceDecisionEntry current = result.CurrentNamespaceStatus["Python"];
+        NamespaceDecisionEntry current = result.CurrentNamespaceStatus["Python"][0];
         Assert.Equal(NamespaceDecisionStatus.Proposed, current.Status);
         Assert.Equal("azure.storage.new", current.Namespace);
 
@@ -387,7 +390,7 @@ public class NamespaceManagerTests
     {
         var pyEntry = ProposedEntry("Python", "azure.storage", "azure-storage");
         var info = CreateNamespaceInfo(
-            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = pyEntry },
+            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = [pyEntry] },
             history: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = new List<NamespaceDecisionEntry>() });
 
         var oldPkgs = Packages(("Python", "azure-storage", "azure.storage"));
@@ -395,7 +398,7 @@ public class NamespaceManagerTests
 
         ProjectNamespaceInfo result = _namespaceManager.ResolvePackageNamespaceChanges("user1", info, oldPkgs, newPkgs, []);
 
-        Assert.Equal(NamespaceDecisionStatus.Proposed, result.CurrentNamespaceStatus["Python"].Status);
+        Assert.Equal(NamespaceDecisionStatus.Proposed, result.CurrentNamespaceStatus["Python"][0].Status);
         Assert.Empty(result.NamespaceHistory["Python"]);
     }
 
@@ -431,8 +434,8 @@ public class NamespaceManagerTests
         var info = CreateNamespaceInfo(
             currentStatus: new(StringComparer.OrdinalIgnoreCase)
             {
-                ["Python"] = pyEntry,
-                ["JavaScript"] = jsEntry
+                ["Python"] = [pyEntry],
+                ["JavaScript"] = [jsEntry]
             },
             history: new(StringComparer.OrdinalIgnoreCase)
             {
@@ -452,8 +455,8 @@ public class NamespaceManagerTests
         ProjectNamespaceInfo result = _namespaceManager.ResolvePackageNamespaceChanges("user1", info, oldPkgs, newPkgs, []);
 
         // Python: withdrawn + re-proposed
-        Assert.Equal(NamespaceDecisionStatus.Proposed, result.CurrentNamespaceStatus["Python"].Status);
-        Assert.Equal("azure.new", result.CurrentNamespaceStatus["Python"].Namespace);
+        Assert.Equal(NamespaceDecisionStatus.Proposed, result.CurrentNamespaceStatus["Python"][0].Status);
+        Assert.Equal("azure.new", result.CurrentNamespaceStatus["Python"][0].Namespace);
         Assert.Equal(2, result.NamespaceHistory["Python"].Count);
 
         // JavaScript: withdrawn and removed from current
@@ -462,8 +465,8 @@ public class NamespaceManagerTests
         Assert.Equal(NamespaceDecisionStatus.Withdrawn, result.NamespaceHistory["JavaScript"][0].Status);
 
         // Go: added
-        Assert.Equal(NamespaceDecisionStatus.Proposed, result.CurrentNamespaceStatus["Go"].Status);
-        Assert.Equal("azstorage", result.CurrentNamespaceStatus["Go"].Namespace);
+        Assert.Equal(NamespaceDecisionStatus.Proposed, result.CurrentNamespaceStatus["Go"][0].Status);
+        Assert.Equal("azstorage", result.CurrentNamespaceStatus["Go"][0].Namespace);
         Assert.Single(result.NamespaceHistory["Go"]);
     }
 
@@ -474,9 +477,9 @@ public class NamespaceManagerTests
             history: new(StringComparer.OrdinalIgnoreCase) { ["Go"] = new List<NamespaceDecisionEntry>() });
 
         var oldPkgs = Packages();
-        var newPkgs = new Dictionary<string, PackageInfo>(StringComparer.OrdinalIgnoreCase)
+        var newPkgs = new Dictionary<string, List<PackageInfo>>(StringComparer.OrdinalIgnoreCase)
         {
-            ["Go"] = new() { PackageName = "azstorage", Namespace = "" }
+            ["Go"] = [new() { PackageName = "azstorage", Namespace = "" }]
         };
 
         ProjectNamespaceInfo result = _namespaceManager.ResolvePackageNamespaceChanges("user1", info, oldPkgs, newPkgs, []);
@@ -490,7 +493,7 @@ public class NamespaceManagerTests
     {
         var pyEntry = ProposedEntry("python", "azure.old", "azure-old");
         var info = CreateNamespaceInfo(
-            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["python"] = pyEntry },
+            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["python"] = [pyEntry] },
             history: new(StringComparer.OrdinalIgnoreCase) { ["python"] = new List<NamespaceDecisionEntry>() });
 
         var oldPkgs = Packages(("Python", "azure-old", "azure.old"));
@@ -499,7 +502,7 @@ public class NamespaceManagerTests
         ProjectNamespaceInfo result = _namespaceManager.ResolvePackageNamespaceChanges("user1", info, oldPkgs, newPkgs, []);
 
         // Should treat "python", "Python", "PYTHON" as the same key — changed namespace
-        Assert.Equal("azure.new", result.CurrentNamespaceStatus["python"].Namespace);
+        Assert.Equal("azure.new", result.CurrentNamespaceStatus["python"][0].Namespace);
         Assert.Equal(2, result.NamespaceHistory["python"].Count);
     }
 
@@ -512,14 +515,14 @@ public class NamespaceManagerTests
     {
         var tsEntry = ProposedEntry("TypeSpec", "Azure.Storage");
         var info = CreateNamespaceInfo(
-            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["TypeSpec"] = tsEntry },
+            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["TypeSpec"] = [tsEntry] },
             history: new(StringComparer.OrdinalIgnoreCase) { ["TypeSpec"] = new List<NamespaceDecisionEntry>() });
 
         ProjectNamespaceInfo result = _namespaceManager.ResolveTypeSpecNamespaceChange("user1", info, "Azure.Storage", "Azure.Storage");
 
         Assert.Same(info, result);
         Assert.Empty(result.NamespaceHistory["TypeSpec"]);
-        Assert.Equal(NamespaceDecisionStatus.Proposed, result.CurrentNamespaceStatus["TypeSpec"].Status);
+        Assert.Equal(NamespaceDecisionStatus.Proposed, result.CurrentNamespaceStatus["TypeSpec"][0].Status);
     }
 
     [Fact]
@@ -527,7 +530,7 @@ public class NamespaceManagerTests
     {
         var tsEntry = ProposedEntry("TypeSpec", "Azure.Storage.Old");
         var info = CreateNamespaceInfo(
-            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["TypeSpec"] = tsEntry },
+            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["TypeSpec"] = [tsEntry] },
             history: new(StringComparer.OrdinalIgnoreCase) { ["TypeSpec"] = new List<NamespaceDecisionEntry>() });
 
         ProjectNamespaceInfo result = _namespaceManager.ResolveTypeSpecNamespaceChange("user1", info, "Azure.Storage.Old", "Azure.Storage.New");
@@ -535,7 +538,7 @@ public class NamespaceManagerTests
         Assert.Equal(2, result.NamespaceHistory["TypeSpec"].Count);
         Assert.Equal(NamespaceDecisionStatus.Withdrawn, result.NamespaceHistory["TypeSpec"][0].Status);
         Assert.Equal(NamespaceDecisionStatus.Proposed, result.NamespaceHistory["TypeSpec"][1].Status);
-        Assert.Equal("Azure.Storage.New", result.CurrentNamespaceStatus["TypeSpec"].Namespace);
+        Assert.Equal("Azure.Storage.New", result.CurrentNamespaceStatus["TypeSpec"][0].Namespace);
     }
 
     #endregion
@@ -554,13 +557,13 @@ public class NamespaceManagerTests
         entry.Status = from;
         if (from != NamespaceDecisionStatus.Proposed) { entry.DecidedBy = "someone"; entry.DecidedOn = DateTime.UtcNow.AddDays(-1); }
         var project = CreateProject("project-1",
-            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = entry },
-            reviews: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = "py-review-1" });
+            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = [entry] },
+            reviews: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = ["py-review-1"] });
         SetupProject("project-1", project);
         SetupReview("py-review-1", new ReviewListItemModel { Id = "py-review-1" });
 
         NamespaceOperationResult result = await _namespaceManager.UpdateNamespaceStatusAsync(
-            "project-1", "Python", to, "test notes", CreateUser("approver"));
+            "project-1", "Python", null, to, "test notes", CreateUser("approver"));
 
         Assert.True(result.IsSuccess);
         Assert.Equal(to, entry.Status);
@@ -597,11 +600,11 @@ public class NamespaceManagerTests
         var entry = ProposedEntry("Python", "azure.storage", "azure-storage");
         entry.Status = from;
         var project = CreateProject("project-1",
-            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = entry });
+            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = [entry] });
         SetupProject("project-1", project);
 
         NamespaceOperationResult result = await _namespaceManager.UpdateNamespaceStatusAsync(
-            "project-1", "Python", to, null, CreateUser("approver"));
+            "project-1", "Python", null, to, null, CreateUser("approver"));
 
         Assert.False(result.IsSuccess);
         Assert.Equal(NamespaceOperationError.InvalidStateTransition, result.Error);
@@ -616,11 +619,11 @@ public class NamespaceManagerTests
         SetupPermissions(true);
         var entry = ProposedEntry("Python", "azure.storage", "azure-storage");
         var project = CreateProject("project-1",
-            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = entry });
+            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = [entry] });
         SetupProject("project-1", project);
 
         NamespaceOperationResult result = await _namespaceManager.UpdateNamespaceStatusAsync(
-            "project-1", "Python", NamespaceDecisionStatus.Approved, null, CreateUser("approver"));
+            "project-1", "Python", null, NamespaceDecisionStatus.Approved, null, CreateUser("approver"));
 
         Assert.Single(result.Project.NamespaceInfo.ApprovedNamespaces);
     }
@@ -631,12 +634,12 @@ public class NamespaceManagerTests
         SetupPermissions(true);
         var entry = ApprovedEntry("Python", "azure.storage", "azure-storage");
         var project = CreateProject("project-1",
-            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = entry },
+            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = [entry] },
             approved: [entry]);
         SetupProject("project-1", project);
 
         NamespaceOperationResult result = await _namespaceManager.UpdateNamespaceStatusAsync(
-            "project-1", "Python", NamespaceDecisionStatus.Rejected, null, CreateUser("approver"));
+            "project-1", "Python", null, NamespaceDecisionStatus.Rejected, null, CreateUser("approver"));
 
         Assert.Empty(result.Project.NamespaceInfo.ApprovedNamespaces);
     }
@@ -649,7 +652,7 @@ public class NamespaceManagerTests
         SetupPermissions(false);
 
         NamespaceOperationResult result = await _namespaceManager.UpdateNamespaceStatusAsync(
-            "project-1", "Python", NamespaceDecisionStatus.Approved, null, CreateUser("noperm"));
+            "project-1", "Python", null, NamespaceDecisionStatus.Approved, null, CreateUser("noperm"));
 
         Assert.False(result.IsSuccess);
         Assert.Equal(NamespaceOperationError.Unauthorized, result.Error);
@@ -662,7 +665,7 @@ public class NamespaceManagerTests
         SetupProject("project-1", null);
 
         NamespaceOperationResult result = await _namespaceManager.UpdateNamespaceStatusAsync(
-            "project-1", "Python", NamespaceDecisionStatus.Approved, null, CreateUser("approver"));
+            "project-1", "Python", null, NamespaceDecisionStatus.Approved, null, CreateUser("approver"));
 
         Assert.False(result.IsSuccess);
         Assert.Equal(NamespaceOperationError.ProjectNotFound, result.Error);
@@ -676,7 +679,7 @@ public class NamespaceManagerTests
         SetupProject("project-1", project);
 
         NamespaceOperationResult result = await _namespaceManager.UpdateNamespaceStatusAsync(
-            "project-1", "Python", NamespaceDecisionStatus.Approved, null, CreateUser("approver"));
+            "project-1", "Python", null, NamespaceDecisionStatus.Approved, null, CreateUser("approver"));
 
         Assert.False(result.IsSuccess);
         Assert.Equal(NamespaceOperationError.LanguageNotFound, result.Error);
@@ -690,7 +693,7 @@ public class NamespaceManagerTests
     public async Task GetNamespaceInfoAsync_ProjectExists_ReturnsNamespaceInfo()
     {
         var project = CreateProject("project-1",
-            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = ProposedEntry("Python", "azure.storage") });
+            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = [ProposedEntry("Python", "azure.storage")] });
         SetupProject("project-1", project);
 
         ProjectNamespaceInfo result = await _namespaceManager.GetNamespaceInfoAsync("project-1");
@@ -707,6 +710,174 @@ public class NamespaceManagerTests
         ProjectNamespaceInfo result = await _namespaceManager.GetNamespaceInfoAsync("project-1");
 
         Assert.Null(result);
+    }
+
+    #endregion
+
+    #region AzureAIProjects Real-World Scenario
+
+    // Mirrors the real tspconfig.yaml for azure-ai-projects:
+    //   TypeSpec namespace : Azure.AI.Projects
+    //   unknown            : no namespace → skipped
+    //   python             : azure.ai.projects  (1 package)
+    //   csharp             : Azure.AI.Projects + Azure.AI.Agents.Contracts.V2  (2 packages)
+    //   typescript         : @azure/ai-projects  (1 package)
+    //   java               : com.azure.ai.projects  (1 package)
+    private static TypeSpecMetadata AzureAIProjectsMetadata() => new()
+    {
+        TypeSpec = new TypeSpecInfo { Namespace = "Azure.AI.Projects" },
+        Languages = new Dictionary<string, List<LanguageConfig>>
+        {
+            // "unknown" has no Namespace on any config → all entries skipped
+            ["unknown"] = [
+                new() { EmitterName = "@typespec/openapi3", ServiceDir = "sdk/ai" },
+                new() { EmitterName = "@typespec/json-schema", ServiceDir = "sdk/ai" },
+                new() { EmitterName = "@azure-tools/typespec-metadata", ServiceDir = "sdk/ai" }
+            ],
+            ["python"] = [
+                new() { PackageName = "azure-ai-projects", Namespace = "azure.ai.projects", ServiceDir = "sdk/ai" }
+            ],
+            ["csharp"] = [
+                new() { PackageName = "Azure.AI.Projects",              Namespace = "Azure.AI.Projects",              ServiceDir = "sdk/ai" },
+                new() { PackageName = "Azure.AI.Agents.Contracts.V2",   Namespace = "Azure.AI.Agents.Contracts.V2",   ServiceDir = "sdk/ai" }
+            ],
+            ["typescript"] = [
+                new() { PackageName = "@azure/ai-projects", Namespace = "@azure/ai-projects", ServiceDir = "sdk/ai" }
+            ],
+            ["java"] = [
+                new() { PackageName = "com.azure:azure-ai-projects", Namespace = "com.azure.ai.projects", ServiceDir = "sdk/ai" }
+            ]
+        }
+    };
+
+    [Fact]
+    public void BuildInitialNamespaceInfo_AzureAIProjects_CreatesCorrectEntries()
+    {
+        ProjectNamespaceInfo result = _namespaceManager.BuildInitialNamespaceInfo("user1", AzureAIProjectsMetadata(), []);
+
+        // TypeSpec + python(1) + csharp(2) + typescript(1) + java(1) = 5 languages; unknown has no namespaces → skipped
+        Assert.Equal(5, result.CurrentNamespaceStatus.Count);
+        Assert.True(result.CurrentNamespaceStatus.ContainsKey("TypeSpec"));
+        Assert.True(result.CurrentNamespaceStatus.ContainsKey("Python"));
+        Assert.True(result.CurrentNamespaceStatus.ContainsKey("C#"));          // csharp aliased
+        Assert.True(result.CurrentNamespaceStatus.ContainsKey("JavaScript"));  // typescript aliased
+        Assert.True(result.CurrentNamespaceStatus.ContainsKey("Java"));
+        Assert.False(result.CurrentNamespaceStatus.ContainsKey("unknown"));
+
+        // TypeSpec: one entry
+        Assert.Single(result.CurrentNamespaceStatus["TypeSpec"]);
+        Assert.Equal("Azure.AI.Projects", result.CurrentNamespaceStatus["TypeSpec"][0].Namespace);
+
+        // C# has two packages → two entries
+        Assert.Equal(2, result.CurrentNamespaceStatus["C#"].Count);
+        Assert.Contains(result.CurrentNamespaceStatus["C#"], e => e.Namespace == "Azure.AI.Projects" && e.PackageName == "Azure.AI.Projects");
+        Assert.Contains(result.CurrentNamespaceStatus["C#"], e => e.Namespace == "Azure.AI.Agents.Contracts.V2" && e.PackageName == "Azure.AI.Agents.Contracts.V2");
+
+        // All proposed, no approvals
+        Assert.All(result.CurrentNamespaceStatus.Values.SelectMany(list => list), e =>
+            Assert.Equal(NamespaceDecisionStatus.Proposed, e.Status));
+        Assert.Empty(result.ApprovedNamespaces);
+    }
+
+    [Fact]
+    public void BuildInitialNamespaceInfo_AzureAIProjects_WithApprovedPythonReview_AutoApproves()
+    {
+        var reviews = new List<ReviewListItemModel>
+        {
+            new()
+            {
+                Id = "py-ai-1",
+                Language = "Python",
+                PackageName = "azure-ai-projects",
+                IsApproved = true,
+                ChangeHistory = [new ReviewChangeHistoryModel { ChangeAction = ReviewChangeAction.Approved, ChangedBy = "sdk-bot", ChangedOn = new DateTime(2026, 1, 15) }]
+            }
+        };
+
+        ProjectNamespaceInfo result = _namespaceManager.BuildInitialNamespaceInfo("user1", AzureAIProjectsMetadata(), reviews);
+
+        // Python auto-approved; everything else stays Proposed
+        Assert.Equal(NamespaceDecisionStatus.Approved, result.CurrentNamespaceStatus["Python"][0].Status);
+        Assert.Equal("sdk-bot", result.CurrentNamespaceStatus["Python"][0].DecidedBy);
+        Assert.Equal(NamespaceDecisionStatus.Proposed, result.CurrentNamespaceStatus["C#"][0].Status);
+        Assert.Equal(NamespaceDecisionStatus.Proposed, result.CurrentNamespaceStatus["JavaScript"][0].Status);
+        Assert.Single(result.ApprovedNamespaces);
+    }
+
+    [Fact]
+    public async Task UpdateNamespaceStatusAsync_AzureAIProjects_ApprovesSpecificCSharpNamespaceByNamespace()
+    {
+        // C# has two namespace entries. Approving by namespace selects the right one.
+        SetupPermissions(true);
+        var csEntries = new List<NamespaceDecisionEntry>
+        {
+            ProposedEntry("C#", "Azure.AI.Projects",            "Azure.AI.Projects"),
+            ProposedEntry("C#", "Azure.AI.Agents.Contracts.V2", "Azure.AI.Agents.Contracts.V2")
+        };
+        var project = CreateProject("ai-project-1",
+            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["C#"] = csEntries });
+        SetupProject("ai-project-1", project);
+
+        NamespaceOperationResult result = await _namespaceManager.UpdateNamespaceStatusAsync(
+            "ai-project-1", "csharp", "Azure.AI.Agents.Contracts.V2", NamespaceDecisionStatus.Approved, "LGTM", CreateUser("approver"));
+
+        Assert.True(result.IsSuccess);
+        // Only the targeted namespace is approved
+        Assert.Equal(NamespaceDecisionStatus.Approved, csEntries.First(e => e.Namespace == "Azure.AI.Agents.Contracts.V2").Status);
+        Assert.Equal(NamespaceDecisionStatus.Proposed,  csEntries.First(e => e.Namespace == "Azure.AI.Projects").Status);
+        Assert.Single(result.Project.NamespaceInfo.ApprovedNamespaces);
+        Assert.Equal("Azure.AI.Agents.Contracts.V2", result.Project.NamespaceInfo.ApprovedNamespaces[0].Namespace);
+    }
+
+    [Fact]
+    public async Task UpdateNamespaceStatusAsync_AzureAIProjects_UnknownNamespace_ReturnsNamespaceEntryNotFound()
+    {
+        SetupPermissions(true);
+        var csEntries = new List<NamespaceDecisionEntry>
+        {
+            ProposedEntry("C#", "Azure.AI.Projects", "Azure.AI.Projects")
+        };
+        var project = CreateProject("ai-project-1",
+            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["C#"] = csEntries });
+        SetupProject("ai-project-1", project);
+
+        // Passing a namespace that doesn't exist in the entries
+        NamespaceOperationResult result = await _namespaceManager.UpdateNamespaceStatusAsync(
+            "ai-project-1", "csharp", "Azure.AI.DoesNotExist", NamespaceDecisionStatus.Approved, null, CreateUser("approver"));
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(NamespaceOperationError.NamespaceEntryNotFound, result.Error);
+    }
+
+    [Fact]
+    public void ResolvePackageNamespaceChanges_AzureAIProjects_AddSecondCSharpPackage()
+    {
+        // Start with C# having one package; metadata update adds a second package with a new namespace
+        var existing = ProposedEntry("C#", "Azure.AI.Projects", "Azure.AI.Projects");
+        var info = CreateNamespaceInfo(
+            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["C#"] = [existing] });
+
+        var oldPkgs = new Dictionary<string, List<PackageInfo>>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["C#"] = [new() { PackageName = "Azure.AI.Projects", Namespace = "Azure.AI.Projects" }]
+        };
+        var newPkgs = new Dictionary<string, List<PackageInfo>>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["C#"] = [
+                new() { PackageName = "Azure.AI.Projects",            Namespace = "Azure.AI.Projects" },
+                new() { PackageName = "Azure.AI.Agents.Contracts.V2", Namespace = "Azure.AI.Agents.Contracts.V2" }
+            ]
+        };
+
+        ProjectNamespaceInfo result = _namespaceManager.ResolvePackageNamespaceChanges("user1", info, oldPkgs, newPkgs, []);
+
+        Assert.Equal(2, result.CurrentNamespaceStatus["C#"].Count);
+        // Original entry untouched
+        Assert.Equal(NamespaceDecisionStatus.Proposed, result.CurrentNamespaceStatus["C#"].First(e => e.Namespace == "Azure.AI.Projects").Status);
+        // New entry proposed
+        var newEntry = result.CurrentNamespaceStatus["C#"].First(e => e.Namespace == "Azure.AI.Agents.Contracts.V2");
+        Assert.Equal(NamespaceDecisionStatus.Proposed, newEntry.Status);
+        Assert.Equal("user1", newEntry.ProposedBy);
     }
 
     #endregion

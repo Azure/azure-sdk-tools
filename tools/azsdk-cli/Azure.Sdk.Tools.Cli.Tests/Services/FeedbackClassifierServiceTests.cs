@@ -64,14 +64,14 @@ public class FeedbackClassifierServiceTests
         _mockKnowledgeBaseService = new Mock<IAzureSdkKnowledgeBaseService>();
        _mockLoggerFactory.Setup(f => f.CreateLogger(It.IsAny<string>()))
             .Returns(new TestLogger<FeedbackClassifierService>());
-        
+
         // Set up a fake tsp project path for mocked tests
         _specRepoRoot = Path.Combine(Path.GetTempPath(), "test-spec-repo-" + Guid.NewGuid().ToString("N")[..8]);
         _testTspPath = Path.Combine(_specRepoRoot, "specification", "widget", "Widget.Management");
-        
+
         // Mock the spec repo root detection
         _mockTypeSpecHelper.Setup(x => x.GetSpecRepoRootPath(_testTspPath)).Returns(_specRepoRoot);
-        
+
         // Create the customization guide file that the service expects
         var guidePath = Path.Combine(_specRepoRoot, "eng", "common", "knowledge", "customizing-client-tsp.md");
         Directory.CreateDirectory(Path.GetDirectoryName(guidePath)!);
@@ -103,7 +103,10 @@ public class FeedbackClassifierServiceTests
     private static FeedbackItem CreateTestItem(string text, string? id = null)
     {
         var item = new FeedbackItem { Text = text };
-        if (id != null) item.Id = id;
+        if (id != null)
+        {
+            item.Id = id;
+        }
         return item;
     }
 
@@ -127,7 +130,8 @@ public class FeedbackClassifierServiceTests
     {
         var rawOutputHelper = Mock.Of<IRawOutputHelper>();
         var gitHelper = CreateRealGitHelper();
-        var typeSpecHelper = new TypeSpecHelper(gitHelper);
+        var processHelper = new ProcessHelper(new TestLogger<ProcessHelper>(), rawOutputHelper);
+        var typeSpecHelper = new TypeSpecHelper(gitHelper, processHelper);
 
         var copilotClient = new CopilotClient(new CopilotClientOptions
         {

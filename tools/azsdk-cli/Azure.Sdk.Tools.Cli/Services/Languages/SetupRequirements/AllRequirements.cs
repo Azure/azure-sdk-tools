@@ -17,6 +17,7 @@ public static class AllRequirements
         ..JavaRequirements.All,
         ..DotNetRequirements.All,
         ..GoRequirements.All,
-        ..JavaScriptRequirements.All
+        ..JavaScriptRequirements.All,
+        ..RustRequirements.All,
     ];
 }

@@ -155,10 +155,12 @@ public class AutoReviewService : IAutoReviewService
         string sourceBranch,
         string apiVersionId)
     {
+        var previousCodeFileModel = apiRevision.Files.FirstOrDefault();
         var codeFileModel = await _codeFileManager.CreateReviewCodeFileModel(apiRevision.Id, memoryStream, codeFile);
-        if (!string.IsNullOrEmpty(originalName))
+        var fileName = !string.IsNullOrEmpty(originalName) ? originalName : apiRevision.Files.FirstOrDefault()?.FileName;
+        if (!string.IsNullOrEmpty(fileName))
         {
-            codeFileModel.FileName = originalName;
+            codeFileModel.FileName = fileName;
         }
 
         if (apiRevision.Files.Any())
@@ -183,6 +185,12 @@ public class AutoReviewService : IAutoReviewService
         }
 
         await _apiRevisionsManager.UpdateAPIRevisionAsync(apiRevision);
+
+        if (previousCodeFileModel != null && previousCodeFileModel.FileId != codeFileModel.FileId)
+        {
+            await _codeFileManager.TryDeleteCodeFileModelAsync(apiRevision.Id, previousCodeFileModel);
+        }
+
         return apiRevision;
     }
 }

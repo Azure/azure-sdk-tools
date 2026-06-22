@@ -247,6 +247,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 
         Task<WorkItem> IDevOpsService.UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, CancellationToken ct)
         {
+            return ((IDevOpsService)this).UpdateWorkItemAsync(workItemId, fields, new Dictionary<string, string>(), ct);
+        }
+
+        Task<WorkItem> IDevOpsService.UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, Dictionary<string, string> multilineFieldFormats, CancellationToken ct)
+        {
             var workItem = new WorkItem
             {
                 Id = workItemId,

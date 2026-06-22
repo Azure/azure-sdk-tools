@@ -17,7 +17,7 @@ different folders. A full end-to-end gate runs *both*.
 | **Loaded subject** | Production MCP server (`Azure.Sdk.Tools.Cli`) over stdio — real tools, real network calls | Skill's `SKILL.md` + frontmatter; the agent picks tools itself |
 | **Primary grader** | `tool-calls` — checks the recorded trajectory for required tool names | Trigger / routing graders + per-skill rubric |
 | **Run command** | `vally eval --eval-spec evals/tools/<name>.eval.yaml` *from this directory* | `vally eval --skill-dir .github/skills/<skill-name>` *from repo root* |
-| **CI status** | Not wired yet (see follow-ups) | `vally lint` runs in [.github/workflows/skill-eval.yml](../../../.github/workflows/skill-eval.yml); full `eval` job pending |
+| **CI status** | Phase 1 mock vertical in [`eng/pipelines/vally-eval.yml`](../../../eng/pipelines/vally-eval.yml) (hermetic `unit` + mock tiers, detect→shard→summarize); live tier deferred | `vally lint` runs in [.github/workflows/skill-eval.yml](../../../.github/workflows/skill-eval.yml); full `eval` job pending |
 | **Cost profile** | Higher — each run spins up the MCP server, real LLM turns (~5–15), real tool calls | Variable — trigger evals are cheap; capability evals (e.g. `azure-typespec-author`) are expensive |
 
 ### Why both?
@@ -74,7 +74,7 @@ pipelines, runs nightly).
 | [`release-planner`](evals/workflow-scenarios/live/release-planner.eval.yaml) | release-plan | **live** | Create + re-fetch a release plan, kick off SDK gen, link PR back — real DevOps test-area writes |
 
 Live scenarios need a primed `azure-rest-api-specs` clone — run
-[`scripts/ensure-specs-clone.ps1`](scripts/ensure-specs-clone.ps1)
+[`scripts/Sync-EvalGitRepo.ps1`](scripts/Sync-EvalGitRepo.ps1)
 (local-only helper, auto-refreshes every 24h) before invoking the
 `scenarios-live` / `nightly` suite.
 
@@ -111,7 +111,7 @@ Azure.Sdk.Tools.Vally/
 │   └── fixtures/              # (future) pinned SHAs + per-eval mocks
 ├── fixtures/                  # Per-scenario static input files (env.files)
 │   └── <scenario-name>/...
-├── scripts/                   # Local helper scripts (ensure-specs-clone.ps1)
+├── scripts/                   # Local helper scripts (Sync-EvalGitRepo.ps1)
 └── Graders/                   # (future) Custom .NET graders
     └── Azure.Sdk.Tools.Vally.csproj  # added when first custom grader lands
 ```
@@ -171,7 +171,7 @@ $skills = '../../../.github/skills'
 test area; prime the spec clone once):
 
 ```powershell
-./scripts/ensure-specs-clone.ps1
+./scripts/Sync-EvalGitRepo.ps1
 & $vally eval -e evals/workflow-scenarios/live/release-planner.eval.yaml --skill-dir $skills --workers 1
 ```
 
@@ -247,7 +247,7 @@ Run the live scenarios tier (first, prime a per-user clone of
 `azure-rest-api-specs`; the helper refreshes it every 24h):
 
 ```powershell
-./scripts/ensure-specs-clone.ps1
+./scripts/Sync-EvalGitRepo.ps1
 & $vally eval --suite scenarios-live --skill-dir $skills --workers 1
 ```
 

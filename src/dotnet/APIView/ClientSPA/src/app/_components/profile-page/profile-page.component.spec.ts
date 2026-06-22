@@ -21,6 +21,7 @@ import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 import { NotificationsService } from 'src/app/_services/notifications/notifications.service';
 import { PermissionsService } from 'src/app/_services/permissions/permissions.service';
 import { createMockSignalRService, createMockNotificationsService } from 'src/test-helpers/mock-services';
+import { MessageService } from 'primeng/api';
 import { of } from 'rxjs';
 
 
@@ -61,7 +62,8 @@ describe('ProfilePageComponent', () => {
               paramMap: convertToParamMap({ userName: 'testuser' }),
             }
           }
-        }
+        },
+        MessageService
       ]
     })
       .compileComponents();

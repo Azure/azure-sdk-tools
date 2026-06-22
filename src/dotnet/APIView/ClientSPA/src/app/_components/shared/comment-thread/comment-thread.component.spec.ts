@@ -480,7 +480,7 @@ describe('CommentThreadComponent', () => {
       expect(editDeleteGroup).toBeUndefined();
     });
 
-    it('should include GitHub Issue submenu for code-panel location', () => {
+    it('should include Report Issue item for code-panel location', () => {
       const comment = new CommentItemModel();
       comment.id = 'comment1';
       comment.createdBy = 'other-user';
@@ -489,11 +489,11 @@ describe('CommentThreadComponent', () => {
 
       const menu = component.getCommentActionMenuContent('comment1');
 
-      const githubIssueGroup = menu.find(item => item.label === 'Create GitHub Issue');
-      expect(githubIssueGroup).toBeDefined();
+      const reportIssueGroup = menu.find(item => item.items?.some(i => i.label === 'Report Issue'));
+      expect(reportIssueGroup).toBeDefined();
     });
 
-    it('should not include GitHub Issue submenu for samples location', () => {
+    it('should not include Report Issue item for samples location', () => {
       const comment = new CommentItemModel();
       comment.id = 'comment1';
       comment.createdBy = 'other-user';
@@ -502,8 +502,8 @@ describe('CommentThreadComponent', () => {
 
       const menu = component.getCommentActionMenuContent('comment1');
 
-      const githubIssueGroup = menu.find(item => item.label === 'Create GitHub Issue');
-      expect(githubIssueGroup).toBeUndefined();
+      const reportIssueGroup = menu.find(item => item.items?.some(i => i.label === 'Report Issue'));
+      expect(reportIssueGroup).toBeUndefined();
     });
   });
 

@@ -17,6 +17,7 @@ import { NotificationsService } from 'src/app/_services/notifications/notificati
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 import { PermissionsService } from 'src/app/_services/permissions/permissions.service';
 import { environment } from 'src/environments/environment';
+import { ReportIssueDialogComponent, ReportIssueData } from '../report-issue-dialog/report-issue-dialog.component';
 
 @Component({
     selector: 'app-nav-bar',
@@ -29,7 +30,8 @@ import { environment } from 'src/environments/environment';
         RouterModule,
         DrawerModule,
         SelectButtonModule,
-        TimeagoModule
+        TimeagoModule,
+        ReportIssueDialogComponent
     ]
 })
 export class NavBarComponent implements OnInit {
@@ -56,6 +58,9 @@ export class NavBarComponent implements OnInit {
     { label: "Solarized", data: "dark-solarized-theme" }
   ];
   selectedTheme : SelectItemModel = { label: "Light", data: "light-theme" };
+
+  // Report Issue dialog
+  showReportIssueDialog: boolean = false;
 
   constructor(private userProfileService: UserProfileService, private configService: ConfigService,
     private notificationsService: NotificationsService, private authService: AuthService, private route: ActivatedRoute,
@@ -144,6 +149,18 @@ export class NavBarComponent implements OnInit {
         }
       });
     }
+  }
+
+  openReportIssueDialog(): void {
+    this.showReportIssueDialog = true;
+  }
+
+  get currentReviewLink(): string | null {
+    return this.reviewId ? window.location.href : null;
+  }
+
+  onReportIssueSubmit(data: ReportIssueData): void {
+    this.showReportIssueDialog = false;
   }
 
   changeTheme(theme: SelectItemModel) {

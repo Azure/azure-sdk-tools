@@ -1,6 +1,6 @@
 # Release History
 
-## 0.6.22 (Unreleased)
+## 0.6.22 (06/22/2026)
 
 ### Features Added
 
@@ -8,6 +8,9 @@
 - Made `tspProjectPath` (`--tsp-project-path`) optional on the `customized-update` command / `azsdk_customized_code_update` MCP tool. It is now required only when the edit scope includes spec inputs (`SpecInputs`/`All`). For custom-code-only repair (`editScope CustomCode`) it may be omitted: regeneration then runs `tsp-client update` without `--local-spec-repo`, so the `tsp-client` CLI regenerates from the repo and commit pinned in the package's `tsp-location.yaml` instead of a local checkout. This enables headless custom-code build repair in a language repo where the spec is not checked out.
 
 ### Breaking Changes
+
+- Replaced the `package find-work-item` CLI command with `package get-work-item`, which returns the full Azure DevOps package work item, and added `package update-work-item` for patching package work item fields.
+
 
 ### Bugs Fixed
 
@@ -34,7 +37,6 @@
 
 ### Features Added
 
-- Replaced the `package find-work-item` CLI command with `package get-work-item`, which returns the full Azure DevOps package work item, and added `package update-work-item` for patching package work item fields.
 - Set ADO work item ID as release plan ID for new release plans.
 
 ### Bugs Fixed

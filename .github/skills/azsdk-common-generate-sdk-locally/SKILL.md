@@ -21,7 +21,7 @@ DO NOT USE FOR: publishing to package registries, CI pipeline configuration, API
 ## Rules
 
 - This skill generates a **single language** SDK **locally**. If the user asks to "generate SDK for **all languages**", to generate **without a local clone**, or wants SDK **pull requests created** for them (release plan / pipeline flow), do **not** generate locally — call `azure-sdk-mcp:azsdk_run_generate_sdk` instead. It runs the SDK generation pipeline for each language and produces the SDK pull requests.
-- Never use `azsdk_get_sdk_pull_request_link` or `azsdk_get_pull_request` to *generate* an SDK; those only retrieve links for SDKs that were already generated.
+- Never use `azure-sdk-mcp:azsdk_get_sdk_pull_request_link` or `azure-sdk-mcp:azsdk_get_pull_request` to *generate* an SDK; those only retrieve links for SDKs that were already generated.
 - Requires the `azure-sdk-mcp` server for the MCP workflow; without MCP, use `npm exec --prefix eng/common/tsp-client -- tsp-client` CLI.
 - Verify the target language repo and the correct TypeSpec configuration file before generation.
 - After generation or customization, run the check and test steps before updating metadata or finalizing changes.

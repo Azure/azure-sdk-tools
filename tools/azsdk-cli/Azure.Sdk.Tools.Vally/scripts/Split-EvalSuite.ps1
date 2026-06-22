@@ -74,10 +74,18 @@ function Get-EvalFile {
         [string[]]$Pattern
     )
 
+    # De-dup across patterns: overlapping globs (e.g. a broad and a narrow
+    # pattern that both match a file) would otherwise yield the same eval twice,
+    # which in 'area' mode emits a duplicate `-e <file>` (running the eval twice
+    # in one shard) and in 'file' mode collides on shard name.
+    $seen = [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::OrdinalIgnoreCase)
+
     foreach ($glob in $Pattern) {
         $files = Get-ChildItem -Path (Join-Path $Root $glob) -File -ErrorAction SilentlyContinue |
             Sort-Object -Property FullName
         foreach ($file in $files) {
+            if (-not $seen.Add($file.FullName)) { continue }
             # Path relative to Root, forward-slashed so it is portable into the
             # `vally eval -e` argument on Linux agents.
             [PSCustomObject]@{

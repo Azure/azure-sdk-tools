@@ -171,10 +171,18 @@ function Get-EvalSummary {
                 }
             }
         }
+    }
 
-        # Collapse each stimulus's trials into a single pass/fail using the suite
-        # threshold (pass rate >= threshold). 1e-9 epsilon guards float rounding so
-        # e.g. 4/5 = 0.8 is not spuriously dropped below an 0.8 gate.
+    # Collapse each stimulus's trials into a single pass/fail using the suite
+    # threshold (pass rate >= threshold). 1e-9 epsilon guards float rounding so
+    # e.g. 4/5 = 0.8 is not spuriously dropped below an 0.8 gate.
+    #
+    # This runs once per shard AFTER every XML file has been read. A shard's
+    # artifact folder can hold multiple JUnit files, and `stimuli` accumulates
+    # across all of them; collapsing inside the per-file loop would re-tally
+    # already-seen stimuli on each subsequent file and double-count totals.
+    foreach ($shardName in $shards.Keys) {
+        $shard = $shards[$shardName]
         foreach ($stimulus in $shard.stimuli.Keys) {
             $entry = $shard.stimuli[$stimulus]
             $shard.total++

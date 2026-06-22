@@ -122,4 +122,27 @@ Describe 'Split-EvalSuite.ps1' {
             ($warnings -join "`n") | Should -Match 'untagged\.eval\.yaml'
         }
     }
+
+    Context 'overlapping -Pattern globs' {
+        It 'de-dups a file matched by multiple patterns (file mode does not collide)' {
+            # A broad and a narrow glob both match add-arm-resource; without de-dup
+            # this throws on a duplicate shard name.
+            $matrix = & $script:scriptPath -EvalRoot $script:root -Pattern @(
+                'evals/tools/*.eval.yaml',
+                'evals/tools/add-arm-resource.eval.yaml'
+            )
+            ($matrix.Keys | Where-Object { $_ -eq 'tools_add_arm_resource' }).Count | Should -Be 1
+        }
+
+        It 'does not emit a duplicate -e flag in area mode' {
+            $matrix = & $script:scriptPath -EvalRoot $script:root -ShardBy area -Pattern @(
+                'evals/tools/*.eval.yaml',
+                'evals/tools/add-arm-resource.eval.yaml'
+            )
+            # add-arm-resource is tagged typespec; it must appear exactly once even
+            # though two patterns match it.
+            ([regex]::Matches($matrix['area_typespec'].evalArgs, 'add-arm-resource')).Count |
+                Should -Be 1
+        }
+    }
 }

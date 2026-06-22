@@ -61,6 +61,28 @@ BeforeAll {
   </testsuite>
 </testsuites>
 '@
+    # area_multifile: one shard whose artifact folder holds TWO JUnit files
+    # (Vally can emit more than one *.xml per shard). Each file has 2 distinct
+    # passing stimuli; the shard total must be 4, not double-counted, and totals
+    # must not be re-tallied per file.
+    $multiDir = Join-Path $script:root 'eval-result-area_multifile'
+    New-Item -ItemType Directory -Path $multiDir -Force | Out-Null
+    Set-Content -Path (Join-Path $multiDir 'part1.xml') -Encoding utf8 -Value @'
+<testsuites>
+  <testsuite name="multifile-a">
+    <testcase name="alpha" time="1.0" />
+    <testcase name="beta" time="1.0" />
+  </testsuite>
+</testsuites>
+'@
+    Set-Content -Path (Join-Path $multiDir 'part2.xml') -Encoding utf8 -Value @'
+<testsuites>
+  <testsuite name="multifile-b">
+    <testcase name="gamma" time="1.0" />
+    <testcase name="delta" time="1.0"><failure message="x">nope</failure></testcase>
+  </testsuite>
+</testsuites>
+'@
 }
 
 AfterAll {
@@ -96,6 +118,16 @@ Describe 'Build-EvalSummary.ps1' {
         $shards['area_multitrial'].failed | Should -Be 1
         $shards['area_multitrial'].failures | Should -Contain 'flaky fail (2/5 runs passed)'
         $shards['area_multitrial'].failures | Should -Not -Contain 'flaky pass (4/5 runs passed)'
+    }
+
+    It 'does not double-count totals when a shard has multiple JUnit files' {
+        $shards = & $script:scriptPath -ResultsRoot $script:root -OutputPath $script:outFile
+        # 2 files x 2 stimuli = 4 stimuli total, collapsed once (not 2+4=6).
+        $shards['area_multifile'].total | Should -Be 4
+        $shards['area_multifile'].failed | Should -Be 1
+        # The failure string must appear exactly once, not duplicated per file.
+        ($shards['area_multifile'].failures | Where-Object { $_ -match '^delta ' }).Count |
+            Should -Be 1
     }
 
     It 'writes a Markdown file with an overall FAILED header when any shard is red' {

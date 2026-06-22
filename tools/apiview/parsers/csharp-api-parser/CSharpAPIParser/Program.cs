@@ -24,7 +24,8 @@ public static class Program
     private static readonly HashSet<string> _allowedDependencies = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
         "Azure.Core",
-        "System.ClientModel"
+        "System.ClientModel",
+        "System.Memory.Data"
     };
 
     public static int Main(string[] args)

@@ -1,5 +1,11 @@
 # Release History
 
+## 0.6.23 (2026-06-22)
+
+### Other Changes
+
+- `azsdk_get_release_plan` now appends a next step prompting the agent to run SDK generation for all languages via the `azsdk_run_generate_sdk` tool once the API spec is approved, and the generate-sdk-locally skill clarifies that all-language, pipeline-based, or no-local-clone SDK generation must route through `azsdk_run_generate_sdk`.
+
 ## 0.6.22 (2026-06-22)
 
 ### Features Added

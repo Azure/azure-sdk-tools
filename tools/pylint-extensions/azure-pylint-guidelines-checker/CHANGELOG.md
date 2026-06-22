@@ -5,6 +5,7 @@
 - Add `remove-deprecated-iscoroutinefunction` check
 - Add `do-not-use-logging-directly` check
 - Add `no-cross-package-private-import` check
+- Add `missing-dependency-in-setup` check (C4777) to verify third-party imports are declared in setup.py
 
 ## 0.5.7 (2025-07-15)
 - Bug fix for `do-not-use-logging-exception` checker

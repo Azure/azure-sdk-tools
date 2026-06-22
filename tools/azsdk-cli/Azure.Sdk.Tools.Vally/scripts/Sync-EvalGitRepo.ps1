@@ -1,11 +1,14 @@
 <#
 .SYNOPSIS
-  Ensures a repo-relative shallow+sparse cache clone of
-  Azure/azure-rest-api-specs exists and is reasonably fresh.
+  Ensures a repo-relative shallow+sparse cache clone of a git repo
+  (defaults to Azure/azure-rest-api-specs) exists and is reasonably fresh.
 
 .DESCRIPTION
-  Primes the repo-relative azure-rest-api-specs cache that Vally's
-  `environment.git` worktree fixtures point at. Used in two places:
+  Primes a repo-relative cache that Vally's `environment.git` worktree
+  fixtures point at. The repo/ref/sparse-paths are parameterized
+  (-RepoUrl/-RepoName/-Ref/-SparseCheckoutPaths); the defaults target
+  Azure/azure-rest-api-specs @ main so existing no-arg callers are
+  unaffected. Used in two places:
   - Locally, before the **live** suite (`vally eval --suite scenarios-live`).
   - In the mock-vertical CI (eng/pipelines/vally-eval.yml), before each eval
     shard — the mock workflow scenarios use the same git worktree fixture, so
@@ -15,8 +18,8 @@
   (shallow + blobless + cone-sparse) so the CI step runs unconditionally.
 
   What it does:
-  - First run: shallow + blobless + cone-sparse clone (only
-    specification/contosowidgetmanager/ to keep size minimal).
+  - First run: shallow + blobless + cone-sparse clone (only the configured
+    -SparseCheckoutPaths) to keep size minimal.
   - Subsequent runs within -MaxAgeHours: noop.
   - Subsequent runs past -MaxAgeHours: `git fetch --depth 1 origin main` and
     fast-forward `main`.
@@ -33,7 +36,10 @@
   hours. Default: 24.
 
 .PARAMETER SparseCheckoutPaths
-  Cone-sparse paths to include. Default: specification/contosowidgetmanager.
+  Cone-sparse paths to include. Defaults to the azure-rest-api-specs fixture
+  paths the live suite uses (specification/contosowidgetmanager and
+  specification/ai/Face), matching the overrides in
+  Initialize-EvalGitFixtures.ps1's $KnownRepos so a standalone run mirrors CI.
   Pass @() to disable sparse-checkout (full tree).
 
 .PARAMETER CacheRoot
@@ -46,7 +52,7 @@
 [CmdletBinding()]
 param(
     [int]      $MaxAgeHours         = 24,
-    [string[]] $SparseCheckoutPaths = @('specification/contosowidgetmanager'),
+    [string[]] $SparseCheckoutPaths = @('specification/contosowidgetmanager', 'specification/ai/Face'),
     [string]   $CacheRoot,
 
     # Which repo/ref to cache. Defaults target Azure/azure-rest-api-specs @ main
@@ -60,6 +66,18 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 4
 
+# PowerShell 7 does not throw on a non-zero native exit even under
+# ErrorActionPreference='Stop', so a failed `git clone` would otherwise fall
+# through to `checkout` and surface a confusing downstream error. Route every
+# git call through this wrapper so a failure stops the script immediately.
+function Invoke-Git {
+    param([Parameter(ValueFromRemainingArguments = $true)] [string[]] $GitArgs)
+    & git @GitArgs | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        throw "git $($GitArgs -join ' ') failed (exit $LASTEXITCODE)"
+    }
+}
+
 if (-not $CacheRoot) {
     # repoRoot = four levels up from this script
     # (.../Vally/scripts -> repo root). Resolve to an absolute path.
@@ -72,13 +90,12 @@ $stamp = Join-Path $cache '.vally-last-fetch'
 if (-not (Test-Path (Join-Path $cache '.git'))) {
     Write-Host "[Sync-EvalGitRepo] Cloning $RepoName ($Ref) into cache: $cache"
     New-Item -ItemType Directory -Force -Path $CacheRoot | Out-Null
-    git clone --depth 1 --filter=blob:none --no-checkout `
-        $RepoUrl $cache | Out-Null
+    Invoke-Git clone --depth 1 --filter=blob:none --no-checkout $RepoUrl $cache
     if ($SparseCheckoutPaths.Count -gt 0) {
-        git -C $cache sparse-checkout init --cone | Out-Null
-        git -C $cache sparse-checkout set @SparseCheckoutPaths | Out-Null
+        Invoke-Git -C $cache sparse-checkout init --cone
+        Invoke-Git -C $cache sparse-checkout set @SparseCheckoutPaths
     }
-    git -C $cache checkout $Ref | Out-Null
+    Invoke-Git -C $cache checkout $Ref
     Set-Content -Path $stamp -Value (Get-Date -Format o)
 } else {
     $isStale = $true
@@ -88,8 +105,8 @@ if (-not (Test-Path (Join-Path $cache '.git'))) {
     }
     if ($isStale) {
         Write-Host "[Sync-EvalGitRepo] Refreshing cache (>$MaxAgeHours h old): $cache"
-        git -C $cache fetch --depth 1 origin $Ref | Out-Null
-        git -C $cache reset --hard "origin/$Ref" | Out-Null
+        Invoke-Git -C $cache fetch --depth 1 origin $Ref
+        Invoke-Git -C $cache reset --hard "origin/$Ref"
         Set-Content -Path $stamp -Value (Get-Date -Format o)
     } else {
         Write-Host "[Sync-EvalGitRepo] Cache is fresh (<$MaxAgeHours h): $cache"

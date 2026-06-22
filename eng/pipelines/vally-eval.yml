@@ -116,6 +116,9 @@ stages:
         pool:
           vmImage: 'ubuntu-latest'
         continueOnError: true
+        # LLM-driven shards can hang; cap them well under the default 60-min
+        # agent slot so a stuck shard fails fast instead of burning the job.
+        timeoutInMinutes: 20
         strategy:
           matrix: $[ stageDependencies.Prepare.Detect.outputs['detect.matrix'] ]
           maxParallel: 10
@@ -132,8 +135,8 @@ stages:
             displayName: 'Install Vally CLI (pinned via lockfile)'
             workingDirectory: eng/skill-eval
 
-          - script: npm install -g @github/copilot-sdk
-            displayName: 'Install Copilot SDK'
+          - script: npm install -g @github/copilot-sdk@1.0.1
+            displayName: 'Install Copilot SDK (pinned)'
 
           - download: current
             artifact: '$(mockArtifact)'

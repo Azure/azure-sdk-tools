@@ -1,23 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using APIView;
 using APIViewWeb;
 using APIViewWeb.Helpers;
-using APIViewWeb.Hubs;
 using APIViewWeb.LeanControllers;
 using APIViewWeb.LeanModels;
-using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -36,13 +31,6 @@ public class APIRevisionsControllerTests
         _mockLogger = new Mock<ILogger<APIRevisionsTokenAuthController>>();
         _mockApiRevisionsManager = new Mock<IAPIRevisionsManager>();
         _mockBlobCodeFileRepository = new Mock<IBlobCodeFileRepository>();
-
-        Mock<IReviewManager> mockReviewManager = new();
-        Mock<INotificationManager> mockNotificationManager = new();
-        Mock<IHubContext<SignalRHub>> mockSignalRHubContext = new();
-        Mock<IConfiguration> mockConfiguration = new();
-        Mock<IHttpClientFactory> mockHttpClientFactory = new();
-        Mock<IPullRequestManager> mockPullRequestManager = new();
 
         _controller = new APIRevisionsTokenAuthController(
             _mockBlobCodeFileRepository.Object,

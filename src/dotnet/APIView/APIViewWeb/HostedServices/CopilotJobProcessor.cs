@@ -1,10 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using APIViewWeb.Helpers;
@@ -15,37 +12,30 @@ using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using APIViewWeb.Services;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb.HostedServices
 {
     public class CopilotJobProcessor : ICopilotJobProcessor
     {
-        private readonly string _copilotEndpoint;
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ICopilotHttpService _copilotHttp;
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly ICosmosCommentsRepository _commentsRepository;
-        private readonly ICopilotAuthenticationService _copilotAuthService;
         private readonly IHubContext<SignalRHub> _signalRHubContext;
         private readonly ILogger<CopilotJobProcessor> _logger;
 
         private const string SummarySource = "summary";
 
         public CopilotJobProcessor(
-            IConfiguration configuration,
-            IHttpClientFactory httpClientFactory,
+            ICopilotHttpService copilotHttp,
             IAPIRevisionsManager apiRevisionsManager,
             ICosmosCommentsRepository commentsRepository,
-            ICopilotAuthenticationService copilotAuthService,
             IHubContext<SignalRHub> signalRHubContext,
             ILogger<CopilotJobProcessor> logger)
         {
-            _copilotEndpoint = configuration["CopilotServiceEndpoint"];
-            _httpClientFactory = httpClientFactory;
+            _copilotHttp = copilotHttp;
             _apiRevisionsManager = apiRevisionsManager;
             _commentsRepository = commentsRepository;
-            _copilotAuthService = copilotAuthService;
             _signalRHubContext = signalRHubContext;
             _logger = logger;
         }
@@ -58,24 +48,15 @@ namespace APIViewWeb.HostedServices
             try
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                
-                var client = _httpClientFactory.CreateClient();
-                var pollUrl = $"{_copilotEndpoint}/api-review/{jobInfo.JobId}";
+
+                var pollPath = $"api-review/{jobInfo.JobId}";
                 var poller = new Poller();
-                
+
                 var result = await poller.PollAsync(
                     operation: async () =>
                     {
                         cancellationToken.ThrowIfCancellationRequested();
-                        
-                        using var request = new HttpRequestMessage(HttpMethod.Get, pollUrl);
-                        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _copilotAuthService.GetAccessTokenAsync(cancellationToken));
-
-                        HttpResponseMessage response = await client.SendAsync(request, cancellationToken);
-                        response.EnsureSuccessStatusCode();
-                        string pollResponseString = await response.Content.ReadAsStringAsync(cancellationToken);
-                        AIReviewJobPolledResponseModel pollResponse = JsonSerializer.Deserialize<AIReviewJobPolledResponseModel>(pollResponseString);
-                        return pollResponse;
+                        return await _copilotHttp.GetAsync<AIReviewJobPolledResponseModel>(pollPath, cancellationToken);
                     },
                     isComplete: response => (response.Status != "InProgress"),
                     initialInterval: 120, // Two minutes

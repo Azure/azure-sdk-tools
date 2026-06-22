@@ -58,12 +58,10 @@ public class ReviewManagerCopilotJobTests
             _mocks.LanguageServices,
             _mocks.TelemetryClient,
             _mocks.CodeFileManager.Object,
-            _mocks.Configuration.Object,
-            _mocks.HttpClientFactory.Object,
+            new CopilotHttpService(_mocks.Configuration.Object, _mocks.HttpClientFactory.Object, _mocks.CopilotAuth.Object),
             _mocks.PollingJobQueueManager.Object,
             _mocks.NotificationManager.Object,
             _mocks.PullRequestsRepository.Object,
-            _mocks.CopilotAuth.Object,
             _mocks.Logger.Object
         );
     }

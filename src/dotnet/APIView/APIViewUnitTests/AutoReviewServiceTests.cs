@@ -1195,6 +1195,56 @@ namespace APIViewUnitTests
                 It.Is<APICodeFileModel>(file => file.FileId == "old-file-id" && file.HasOriginal)), Times.Once);
         }
 
+        [Fact]
+        public async Task CreateAutomaticRevisionAsync_WhenUpdatingExistingRevisionWithoutSourceBranch_PreservesSourceBranch()
+        {
+            var codeFile = CreateCodeFile("TestPackage", "2.0.0", "C#");
+            using var memoryStream = new MemoryStream();
+
+            var review = new ReviewListItemModel { Id = "review-id", PackageName = "TestPackage", Language = "C#" };
+            var existingRevision = new APIRevisionListItemModel
+            {
+                Id = "existing-revision-id",
+                ReviewId = "review-id",
+                APIRevisionType = APIRevisionType.Automatic,
+                CreatedOn = DateTime.UtcNow,
+                SourceBranch = "feature/existing",
+                Files = new List<APICodeFileModel>
+                {
+                    new APICodeFileModel { FileId = "old-file-id", FileName = "original.json", PackageVersion = "2.0.0" }
+                }
+            };
+
+            APIRevisionListItemModel updatedRevision = null;
+
+            _mockReviewManager.Setup(m => m.GetReviewAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool?>()))
+                .ReturnsAsync(review);
+
+            _mockApiRevisionsManager.Setup(m => m.GetAPIRevisionsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>()))
+                .ReturnsAsync(new List<APIRevisionListItemModel> { existingRevision });
+
+            _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType?>()))
+                .ReturnsAsync(new List<CommentItemModel>());
+
+            _mockApiRevisionsManager.Setup(m => m.UpdateAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
+                .Callback<APIRevisionListItemModel>(revision => updatedRevision = revision)
+                .Returns(Task.CompletedTask);
+
+            _mockCodeFileManager
+                .Setup(x => x.CreateReviewCodeFileModel(It.IsAny<string>(), It.IsAny<MemoryStream>(), It.IsAny<CodeFile>()))
+                .ReturnsAsync((string apiRevisionId, MemoryStream memoryStream, CodeFile codeFile) => new APICodeFileModel
+                {
+                    FileId = "new-file-id",
+                    PackageVersion = codeFile.PackageVersion
+                });
+
+            await _service.CreateAutomaticRevisionAsync(
+                _testUser, codeFile, "build-label", "new.json", memoryStream, null);
+
+            updatedRevision.Should().NotBeNull();
+            updatedRevision.SourceBranch.Should().Be("feature/existing");
+        }
+
         #endregion
 
         #region Helper Methods

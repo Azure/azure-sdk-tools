@@ -175,7 +175,10 @@ public class AutoReviewService : IAutoReviewService
         apiRevision.PackageName = codeFile.PackageName;
         apiRevision.Language = codeFile.Language;
         apiRevision.Label = label;
-        apiRevision.SourceBranch = sourceBranch;
+        if (!string.IsNullOrEmpty(sourceBranch))
+        {
+            apiRevision.SourceBranch = sourceBranch;
+        }
         apiRevision.LastUpdatedOn = DateTime.UtcNow;
         apiRevision.IsDeleted = false;
 

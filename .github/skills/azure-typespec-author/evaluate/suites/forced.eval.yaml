@@ -1790,4 +1790,4 @@ scoring:
     file-exists: 1
     file-not-exists: 1
     prompt: 1
-  threshold: 1
+  threshold: 0.954

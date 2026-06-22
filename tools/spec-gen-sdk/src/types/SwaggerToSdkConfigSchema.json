@@ -166,6 +166,11 @@
           "$ref": "#/definitions/RunOptions"
         },
         "breakingChangeLabel": {
+          // Deprecated: use 'breakingChangesLabel' instead. Retained for
+          // backward compatibility and read as a fallback by spec-gen-sdk.
+          "type": "string"
+        },
+        "breakingChangesLabel": {
           // Label to be added in spec PR if breaking change is found
           "type": "string"
         }

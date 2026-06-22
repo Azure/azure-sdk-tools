@@ -478,8 +478,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                                 releasePlan.IsSpecApproved = true;
                                 // API spec is approved/merged, so the next step is to generate the SDK.
                                 // Surface the pipeline-based generation tool explicitly so the agent does
-                                // not pick an unrelated tool (e.g. azsdk_get_sdk_pull_request_link).
-                                response.NextSteps = ["API spec is approved. Run SDK generation for all languages using the azsdk_run_generate_sdk tool."];
+                                // not pick an unrelated tool (e.g. azsdk_get_sdk_pull_request_link).                                // Append so we don't clobber any NextSteps set by earlier logic.
+                                (response.NextSteps ??= []).Add("API spec is approved. Run SDK generation for all languages using the azsdk_run_generate_sdk tool.");
                             }
                         }
                     }

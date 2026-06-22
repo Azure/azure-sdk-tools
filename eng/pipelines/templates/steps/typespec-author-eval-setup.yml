@@ -116,7 +116,7 @@ steps:
   # Install Node.js and npm dependencies from the local lockfile.
   # All CLI tools (vally, copilot-sdk, tsp) are pinned in pipelines/package.json
   # and made available on PATH via prependpath so downstream steps can invoke them directly.
-  - task: NodeTool@0
+  - task: NodeTool@1
     displayName: Use Node.js 22
     inputs:
       versionSpec: '22.x'

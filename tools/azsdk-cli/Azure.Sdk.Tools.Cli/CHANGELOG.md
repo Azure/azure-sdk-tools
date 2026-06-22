@@ -11,11 +11,6 @@
 
 - Replaced the `package find-work-item` CLI command with `package get-work-item`, which returns the full Azure DevOps package work item, and added `package update-work-item` for patching package work item fields.
 
-
-### Bugs Fixed
-
-### Other Changes
-
 ## 0.6.21 (2026-06-18)
 
 ### Features Added

@@ -43,9 +43,9 @@ extends:
                   scenario: apispec
             steps:
               - task: UsePythonVersion@0
-                    displayName: "Use Python 3.12"
-                    inputs:
-                      versionSpec: '3.12'
+                displayName: "Use Python 3.12"
+                inputs:
+                  versionSpec: '3.12'
               - script: |
                   pip install -r requirements.txt
                 displayName: 'install requirements'

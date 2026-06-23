@@ -1,8 +1,10 @@
 name: azsdk-mcp-tool-scenarios
 description: |
   Add-arm-resource: end-to-end scenario for authoring a new ARM resource
-  via TypeSpec. This is a complex, file-producing scenario (not a single
-  tool-call check) that needs a real fixture + tsp compile verification.
+  via TypeSpec. Seeds a minimal Microsoft.Widget ARM project as a fixture and
+  checks that the authoring workflow routes through the TypeSpec authoring-plan
+  tool. Full output verification (produced asset.tsp + tsp compile) belongs to
+  a live-MCP variant.
 version: "1.0"
 type: capability
 
@@ -24,15 +26,27 @@ stimuli:
     prompt: |
       In the specification/widget/resource-manager/Microsoft.Widget/Widget project,
       add an ARM resource named 'Asset' with CRUD operations.
+    # Seed a minimal but valid Microsoft.Widget ARM TypeSpec project so the agent
+    # can locate the project referenced in the prompt and route to the authoring
+    # tool. Without this the agent spends its turns hunting for a non-existent
+    # project and never gets to author anything.
+    environment:
+      files:
+        - src: ../../fixtures/Microsoft.Widget/Widget/main.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/main.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/employee.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
     constraints:
       max_turns: 20
       max_tokens: 50000
-    # TODO: seed a fixture (environment.files or git) for the Microsoft.Widget
-    # project, add `file-exists` + `file-contains` graders on the produced
-    # asset.tsp, and a `run-command` grader to verify `npx tsp compile`.
-    # Those output graders are the real "did it author the resource" check;
-    # asserting a specific write tool (`edit`) is a flaky proxy — the agent
-    # may legitimately use `powershell` for batch edits instead.
+    # This is the routing check for the mock tier: the authoring workflow must
+    # go through azsdk_typespec_generate_authoring_plan. Output graders on the
+    # produced asset.tsp (`file-exists`/`file-contains`) and a `tsp compile`
+    # run-command grader are the "did it actually author the resource" check and
+    # belong to a live-MCP variant — the mock handler returns a canned plan and
+    # does not produce files, so asserting file output here would be flaky.
     graders:
       - type: tool-calls
         config:

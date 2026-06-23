@@ -46,6 +46,14 @@ extends:
                 inputs:
                   versionSpec: '22.x'
 
+              # The managed azsdk-pool blocks direct egress to registry.npmjs.org
+              # (npm ci fails EPERM). Point npm at the azure-sdk DevOps feed, which
+              # proxies npmjs.org via upstream sources. Empty npmrcPath writes to
+              # $HOME/.npmrc so every npm/npx call below inherits the registry+auth.
+              - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+                parameters:
+                  registryUrl: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
+
               - script: npm ci
                 displayName: 'Install Vally CLI (pinned via lockfile)'
                 workingDirectory: eng/skill-eval

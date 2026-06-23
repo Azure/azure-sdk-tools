@@ -174,7 +174,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 var response = await _httpClient.SendAsync(httpRequest, cancellationToken)
                     .ConfigureAwait(false);
 
-                return await HandleSearchHttpResponse(response, cancellationToken).ConfigureAwait(false);
+                return await HandleKnowledgeRetrieveHttpResponse(response, cancellationToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -272,7 +272,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 throw new InvalidOperationException($"Unexpected error calling AI completion endpoint: {ex.Message}", ex);
             }
         }
-        private async Task<KnowledgeRetrieveResponse> HandleSearchHttpResponse(
+        private async Task<KnowledgeRetrieveResponse> HandleKnowledgeRetrieveHttpResponse(
             HttpResponseMessage response,
             CancellationToken cancellationToken)
         {
@@ -293,8 +293,8 @@ namespace Azure.Sdk.Tools.Cli.Services
                 }
                 else
                 {
-                    _logger.LogInformation("Received AI search response, HasResult: {HasResult}",
-                        responseContent.HasResult);
+                    _logger.LogInformation("Received AI search response, HasResult: {HasResult}, knowledge count: {Count}",
+                        responseContent.HasResult, responseContent.Knowledges != null ? responseContent.Knowledges.Count : 0);
                 }
 
                 return responseContent;

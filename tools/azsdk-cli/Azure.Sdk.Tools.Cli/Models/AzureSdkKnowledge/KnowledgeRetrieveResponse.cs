@@ -7,7 +7,7 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledge
         [JsonPropertyName("has_result")]
         public bool HasResult { get; set; }
 
-        [JsonPropertyName("knowledges")]
+        [JsonPropertyName("knowledge_list")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public List<Knowledge>? Knowledges { get; set; }
     }

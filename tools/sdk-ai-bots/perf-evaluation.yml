@@ -1,0 +1,87 @@
+schedules:
+  - cron: "0 2 * * 1"  # Runs every Monday at 02:00 UTC
+    displayName: "Weekly Perf Evaluation"
+    branches:
+      include:
+        - main
+    always: true
+
+trigger: none
+pr: none
+
+# Perf evaluation: large, incrementally-grown per-scenario datasets.
+#
+# Evaluates via completion mode (concurrent /completion collection + inline grading)
+# against the deployed bot's $(BOT_SERVICE_ENDPOINT) for the qa-bot-perf-<scenario>
+# datasets. Can also be run manually.
+parameters:
+  - name: scenarios
+    type: object
+    default:
+      - typespec
+      - onboarding
+      - python
+      - apispec
+      - general
+      - releasesupport
+
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    Use1ESOfficial: false
+    stages:
+      - stage: 'perf_evaluation'
+        variables:
+          - template: /eng/pipelines/templates/variables/globals.yml
+          - template: /eng/pipelines/templates/variables/image.yml
+        pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
+        jobs:
+          - ${{ each scenario in parameters.scenarios }}:
+              - job: 'perf_${{ scenario }}'
+                displayName: 'perf evaluation (${{ scenario }})'
+                steps:
+                  - task: UsePythonVersion@0
+                    displayName: "Use Python 3.12"
+                    inputs:
+                      versionSpec: '3.12'
+                  - script: |
+                      pip install -r requirements.txt
+                    displayName: 'install requirements'
+                    workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
+                  - task: AzureCLI@2
+                    displayName: 'Run Perf Evals (${{ scenario }})'
+                    inputs:
+                      azureSubscription: 'azuresdkqabot'
+                      scriptType: bash
+                      scriptLocation: inlineScript
+                      workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
+                      inlineScript: |
+                        export BOT_AGENT_ACCESS_TOKEN=$(az account get-access-token --resource api://azure-sdk-qa-bot --query accessToken -o tsv)
+                        current_date=$(date +%Y_%m_%d)
+                        python evals_run.py \
+                          --dataset "qa-bot-perf-${{ scenario }}:latest" \
+                          --evaluation_name_prefix "perf-evaluation-$current_date" \
+                          --evaluators "bot_evals,groundedness" \
+                          --max_concurrency 8 \
+                          --baseline_check False \
+                          --cache_result full
+                    env:
+                      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+                      AZURE_AI_PROJECT_ENDPOINT: $(AZURE_AI_PROJECT_ENDPOINT)
+                      AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
+                      AZURE_EVALUATION_MODEL_NAME: $(AZURE_EVALUATION_MODEL_NAME)
+                      BOT_SERVICE_ENDPOINT: $(BOT_SERVICE_ENDPOINT)
+                      STORAGE_BLOB_ACCOUNT: $(STORAGE_BLOB_ACCOUNT)
+                      BOT_CONFIG_CONTAINER: $(BOT_CONFIG_CONTAINER)
+                      BOT_CONFIG_CHANNEL_BLOB: $(BOT_CONFIG_CHANNEL_BLOB)
+                      EVALUATE_THRESHOLD: $(EVALUATE_THRESHOLD)
+                templateContext:
+                  outputs:
+                    - output: pipelineArtifact
+                      path: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/cache
+                      artifact: perf-evaluation-results-${{ scenario }}
+                      displayName: Publish Perf Results (${{ scenario }})
+                      condition: always()

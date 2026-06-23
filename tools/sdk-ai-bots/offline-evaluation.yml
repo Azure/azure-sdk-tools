@@ -18,6 +18,12 @@ pr:
   paths:
     include:
       - tools/sdk-ai-bots/azure-sdk-qa-bot-agent/**/*.py
+
+# Offline (PR-gate) evaluation.
+#
+# Starts the agent server.py locally, then evaluates via completion mode:
+# evals_run.py calls the local /completion endpoint concurrently, collects answers,
+# and grades them inline with the Foundry builtin LLM evaluators.
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
   parameters:
@@ -38,13 +44,13 @@ extends:
               maxParallel: 2
               matrix:
                 typespec:
-                  testPrefix: typespec
+                  scenario: typespec
                 onboarding:
-                  testPrefix: onboarding
+                  scenario: onboarding
                 python:
-                  testPrefix: python
+                  scenario: python
                 apispec:
-                  testPrefix: apispec
+                  scenario: apispec
             steps:
               - template: /eng/pipelines/templates/steps/use-python-version.yml
                 parameters:
@@ -76,7 +82,7 @@ extends:
                 displayName: 'install requirements'
                 workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
               - task: AzureCLI@2
-                displayName: 'Run Evals ($(testPrefix))'
+                displayName: 'Run Evals ($(scenario))'
                 inputs:
                   azureSubscription: 'azuresdkqabot-dev'
                   scriptType: bash
@@ -84,19 +90,17 @@ extends:
                   workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
                   inlineScript: |
                     python evals_run.py \
+                      --dataset "qa-bot-basic-$(scenario):latest" \
                       --evaluation_name_prefix $(Build.BuildId) \
-                      --prefix "$(testPrefix)" \
-                      --evaluators "similarity,groundedness,response_completeness,reference_match,knowledge_match" \
+                      --evaluators "similarity,groundedness,response_completeness" \
+                      --max_concurrency 8 \
+                      --baseline_check True \
                       --cache_result full
                 env:
                   SYSTEM_ACCESSTOKEN: $(System.AccessToken)
                   AZURE_AI_PROJECT_ENDPOINT: $(AZURE_AI_PROJECT_ENDPOINT)
                   AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
-                  AZURE_OPENAI_ENDPOINT: $(AZURE_OPENAI_ENDPOINT)
-                  AZURE_OPENAI_API_KEY: $(AZURE_OPENAI_API_KEY)
-                  AZURE_COMPLETION_MODEL_NAME: $(AZURE_COMPLETION_MODEL_NAME)
                   AZURE_EVALUATION_MODEL_NAME: $(AZURE_EVALUATION_MODEL_NAME)
-                  AZURE_API_VERSION: $(AZURE_API_VERSION)
                   STORAGE_BLOB_ACCOUNT: $(STORAGE_BLOB_ACCOUNT)
                   BOT_CONFIG_CONTAINER: $(BOT_CONFIG_CONTAINER)
                   BOT_CONFIG_CHANNEL_BLOB: $(BOT_CONFIG_CHANNEL_BLOB)
@@ -105,6 +109,6 @@ extends:
               outputs:
                 - output: pipelineArtifact
                   path: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/cache
-                  artifact: evaluation-results-$(testPrefix)
-                  displayName: Publish Evaluation Results Artifact ($(testPrefix))
+                  artifact: evaluation-results-$(scenario)
+                  displayName: Publish Evaluation Results Artifact ($(scenario))
                   condition: always()

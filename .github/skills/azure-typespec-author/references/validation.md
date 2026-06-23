@@ -15,7 +15,6 @@ Invoke `azure-sdk-mcp:azsdk_run_typespec_validation` with the project root. On f
 ### 5.2: Compile
 
 Run `tsp compile .` from the project root. Verify `.json` output under the directory specified by the `@azure-tools/typespec-autorest` entry in the project's tspconfig.yaml. Fix compile errors if any.
-**A compile error when `node_modules` is present is a real code defect — you MUST resolve it.** `node_modules` is provided in the project (verify it exists). Given that,  any `tsp compile` `error` is caused by the TypeSpec code, not the environment. This step is **not complete** until `tsp compile .` reports **no errors**. Do not stop, do  not `#suppress` it, and do not reinstall dependencies — fix the code (e.g. use a decorator/template that actually exists). Pre-existing warnings unrelated to your change  may remain.
 
 > 5.1 checks for errors/warnings; 5.2 generates the OpenAPI output. Both are required.
 

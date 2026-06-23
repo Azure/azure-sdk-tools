@@ -42,8 +42,6 @@ The `azure-typespec-author` skill **must** be invoked immediately in all modes (
 - **Always validate** — run every steps in [validation](references/validation.md) after every edit.
 - **Always cite references** — provide links that justify the approach.
 - **Follow the authoring plan exactly** — code changes in Step 4 MUST follow the authoring plan generated in Step 3. Do not deviate by referring to existing code patterns in the TypeSpec project; the authoring plan is the single source of truth for what to change.
-- **Prefer fixing over suppressing** — do not proactively use `#suppress` to silence a fixable error or warning; fix the root cause first. `#suppress` is a last resort,  acceptable when genuinely needed.
-- **Compile must pass** — when `node_modules` is present (it is provided), a `tsp compile` error is a code defect you MUST fix before the task is done;  `azsdk_run_typespec_validation` reporting success does not override a failing `tsp compile`. Do not invent decorators or templates — if unsure one exists, fetch the  relevant reference (see [reference-document-links.md](references/reference-document-links.md)) instead of guessing.
 
 ## Steps
 

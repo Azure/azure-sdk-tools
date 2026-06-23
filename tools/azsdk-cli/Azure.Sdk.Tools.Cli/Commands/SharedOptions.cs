@@ -20,13 +20,14 @@ namespace Azure.Sdk.Tools.Cli.Commands
         public static readonly List<Type> ToolsList = [
             typeof(PipelineTool),
             typeof(PipelineAnalysisTool),
+            typeof(PipelineChecksTool),
             typeof(CodeownersTool),
             typeof(GitHubLabelsTool),
             typeof(LogAnalysisTool),
             typeof(TelemetryIngestionTool),
             typeof(PackageInfoTool),
             typeof(PackageCheckTool),
-            typeof(PackageWorkItemLookupTool),
+            typeof(PackageWorkItemTool),
             typeof(PipelineTestsTool),
             typeof(QuokkaTool),
             typeof(ReadMeGeneratorTool),
@@ -61,13 +62,12 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(UpgradeTool),
 #if DEBUG
             // only add these tools in debug mode
-            typeof(CleanupTool),
             typeof(ExampleTool),
             typeof(HelloWorldTool),
 #endif
         ];
 
-        public static Option<string> Format = new("--output", "-o")
+        public static readonly Option<string> Format = new("--output", "-o")
         {
             Description = "The format of the output. Supported formats are: plain, json",
             Required = false,
@@ -75,7 +75,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             DefaultValueFactory = _ => "plain",
         };
 
-        public static Option<bool> Debug = new("--debug")
+        public static readonly Option<bool> Debug = new("--debug")
         {
             Description = "Enable debug logging",
             Required = false,
@@ -83,11 +83,16 @@ namespace Azure.Sdk.Tools.Cli.Commands
             DefaultValueFactory = _ => false,
         };
 
-        public static Option<string> PackagePath = new("--package-path", "-p")
+        public static readonly Option<string> PackagePath = new("--package-path", "-p")
         {
             Description = "Path to the package directory to check. Defaults to the current working directory",
             Required = false,
             DefaultValueFactory = _ => Environment.CurrentDirectory,
+        };
+
+        public static readonly Argument<string> PipelineLocator = new("pipelineIdentifier")
+        {
+            Description = "Azure Pipelines link or Build ID, or GitHub pull request link or number",
         };
 
         public static (string outputFormat, bool debug) GetGlobalOptionValues(string[] args)

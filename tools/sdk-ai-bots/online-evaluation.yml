@@ -1,8 +1,3 @@
-parameters:
-- name: PythonVersion
-  type: string
-  default: '3.10'
-
 schedules:
   - cron: "0 1 * * 1"  # Runs every Monday at 01:00 UTC
     displayName: "Weekly Monday Morning Trigger"
@@ -47,9 +42,10 @@ extends:
                 apispec:
                   scenario: apispec
             steps:
-              - template: /eng/pipelines/templates/steps/use-python-version.yml
-                parameters:
-                  versionSpec: '${{ parameters.PythonVersion }}'
+              - task: UsePythonVersion@0
+                    displayName: "Use Python 3.12"
+                    inputs:
+                      versionSpec: '3.12'
               - script: |
                   pip install -r requirements.txt
                 displayName: 'install requirements'

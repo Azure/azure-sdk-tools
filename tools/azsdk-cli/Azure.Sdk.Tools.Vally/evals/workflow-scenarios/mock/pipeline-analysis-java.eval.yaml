@@ -83,9 +83,9 @@ stimuli:
         config:
           required:
             - azsdk-common-pipeline-troubleshooting
-      - type: output-contains
+      - type: output-matches
         config:
-          substring: "TaskManager"
+          pattern: "(?i)TaskManager"
       - type: output-matches
         config:
           pattern: "(?i)(code bug|logic|test failure|assertion)"
@@ -130,27 +130,23 @@ stimuli:
           "prUrl": "https://github.com/Azure/azure-sdk-for-java/pull/49365",
           "sourceCommit": "41452ab0ce3ddd22dd6e174df140375995384bcd",
           "category": "test failure (missing recording)",
-          "rootCauseSummary": "BlobApiTests and BlobAsyncApiTests SmartAccessTier playback tests failed during test setup because the test proxy returned 404 for missing session-record JSON files. The real failure messages name absent recordings for BlobApiTests.downloadContentSmartAccessTierHeaders, BlobApiTests.downloadSmartAccessTierHeaders, and BlobAsyncApiTests.downloadSmartAccessTierHeaders across hosted-agent path formats.",
-          "failedTestCount": 30,
+          "rootCauseSummary": "BlobApiTests and BlobAsyncApiTests SMART access tier playback tests failed during test setup because the test proxy returned 404 for missing session-record JSON files. The real failure messages name absent recordings for BlobApiTests.uploadStreamAccessTierSmart and BlobAsyncApiTests.uploadStreamAccessTierSmart across hosted-agent path formats.",
+          "failedTestCount": 2,
           "featuredFailures": [
-            "c.a.s.b.BlobApiTests.downloadContentSmartAccessTierHeaders",
-            "c.a.s.b.BlobApiTests.downloadSmartAccessTierHeaders",
-            "c.a.s.b.BlobAsyncApiTests.downloadSmartAccessTierHeaders",
-            "downloadContentSmartAccessTierHeaders",
-            "downloadSmartAccessTierHeaders"
+            "c.a.s.b.BlobApiTests.uploadStreamAccessTierSmart",
+            "c.a.s.b.BlobAsyncApiTests.uploadStreamAccessTierSmart",
+            "uploadStreamAccessTierSmart"
           ],
           "captureDate": "2026-06-23"
         },
         "failed_test_titles": {
           "com.azure.storage.blob.BlobApiTests": [
-            "c.a.s.b.BlobApiTests.downloadContentSmartAccessTierHeaders",
-            "c.a.s.b.BlobApiTests.downloadSmartAccessTierHeaders",
-            "downloadContentSmartAccessTierHeaders",
-            "downloadSmartAccessTierHeaders"
+            "c.a.s.b.BlobApiTests.uploadStreamAccessTierSmart",
+            "uploadStreamAccessTierSmart"
           ],
           "com.azure.storage.blob.BlobAsyncApiTests": [
-            "c.a.s.b.BlobAsyncApiTests.downloadSmartAccessTierHeaders",
-            "downloadSmartAccessTierHeaders"
+            "c.a.s.b.BlobAsyncApiTests.uploadStreamAccessTierSmart",
+            "uploadStreamAccessTierSmart"
           ]
         },
         "failed_tasks": [
@@ -159,48 +155,28 @@ stimuli:
             "errors": [
               {
                 "file": "sdk/storage/azure-storage-blob/src/test/java/com/azure/storage/blob/BlobApiTests.java",
-                "line": 561,
-                "message": "Test proxy returned a non-successful status code. 404; response: {\"Message\":\"Recording file path /Users/runner/work/1/s/.assets/yoPImn7QKL/java/sdk/storage/azure-storage-blob/src/test/resources/session-records/BlobApiTests.downloadContentSmartAccessTierHeaders.json does not exist.\",\"Status\":\"NotFound\"}"
-              },
-              {
-                "file": "sdk/storage/azure-storage-blob/src/test/java/com/azure/storage/blob/BlobApiTests.java",
-                "line": 548,
-                "message": "Test proxy returned a non-successful status code. 404; response: {\"Message\":\"Recording file path /Users/runner/work/1/s/.assets/yoPImn7QKL/java/sdk/storage/azure-storage-blob/src/test/resources/session-records/BlobApiTests.downloadSmartAccessTierHeaders.json does not exist.\",\"Status\":\"NotFound\"}"
+                "line": 3230,
+                "message": "Test proxy returned a non-successful status code. 404; response: {\"Message\":\"Recording file path /Users/runner/work/1/s/.assets/yoPImn7QKL/java/sdk/storage/azure-storage-blob/src/test/resources/session-records/BlobApiTests.uploadStreamAccessTierSmart.json does not exist.\",\"Status\":\"NotFound\"}"
               },
               {
                 "file": "sdk/storage/azure-storage-blob/src/test/java/com/azure/storage/blob/BlobAsyncApiTests.java",
-                "line": 387,
-                "message": "Test proxy returned a non-successful status code. 404; response: {\"Message\":\"Recording file path /Users/runner/work/1/s/.assets/yoPImn7QKL/java/sdk/storage/azure-storage-blob/src/test/resources/session-records/BlobAsyncApiTests.downloadSmartAccessTierHeaders.json does not exist.\",\"Status\":\"NotFound\"}"
+                "line": 2582,
+                "message": "Test proxy returned a non-successful status code. 404; response: {\"Message\":\"Recording file path /Users/runner/work/1/s/.assets/yoPImn7QKL/java/sdk/storage/azure-storage-blob/src/test/resources/session-records/BlobAsyncApiTests.uploadStreamAccessTierSmart.json does not exist.\",\"Status\":\"NotFound\"}"
               },
               {
                 "file": "sdk/storage/azure-storage-blob/src/test/java/com/azure/storage/blob/BlobApiTests.java",
-                "line": 561,
-                "message": "Test proxy returned a non-successful status code. 404; response: {\"Message\":\"Recording file path /mnt/vss/_work/1/s/.assets/yoPImn7QKL/java/sdk/storage/azure-storage-blob/src/test/resources/session-records/BlobApiTests.downloadContentSmartAccessTierHeaders.json does not exist.\",\"Status\":\"NotFound\"}"
+                "line": 3230,
+                "message": "Test proxy returned a non-successful status code. 404; response: {\"Message\":\"Recording file path /mnt/vss/_work/1/s/.assets/yoPImn7QKL/java/sdk/storage/azure-storage-blob/src/test/resources/session-records/BlobApiTests.uploadStreamAccessTierSmart.json does not exist.\",\"Status\":\"NotFound\"}"
               },
               {
                 "file": "sdk/storage/azure-storage-blob/src/test/java/com/azure/storage/blob/BlobApiTests.java",
-                "line": 548,
-                "message": "Test proxy returned a non-successful status code. 404; response: {\"Message\":\"Recording file path /mnt/vss/_work/1/s/.assets/yoPImn7QKL/java/sdk/storage/azure-storage-blob/src/test/resources/session-records/BlobApiTests.downloadSmartAccessTierHeaders.json does not exist.\",\"Status\":\"NotFound\"}"
+                "line": 3230,
+                "message": "Test proxy returned a non-successful status code. 404; response: {\"Message\":\"Recording file path D:/a/_work/1/s/.assets/yoPImn7QKL/java\\\\sdk\\\\storage\\\\azure-storage-blob\\\\src\\\\test\\\\resources\\\\session-records\\\\BlobApiTests.uploadStreamAccessTierSmart.json does not exist.\",\"Status\":\"NotFound\"}"
               },
               {
                 "file": "sdk/storage/azure-storage-blob/src/test/java/com/azure/storage/blob/BlobAsyncApiTests.java",
-                "line": 387,
-                "message": "Test proxy returned a non-successful status code. 404; response: {\"Message\":\"Recording file path /mnt/vss/_work/1/s/.assets/yoPImn7QKL/java/sdk/storage/azure-storage-blob/src/test/resources/session-records/BlobAsyncApiTests.downloadSmartAccessTierHeaders.json does not exist.\",\"Status\":\"NotFound\"}"
-              },
-              {
-                "file": "sdk/storage/azure-storage-blob/src/test/java/com/azure/storage/blob/BlobApiTests.java",
-                "line": 561,
-                "message": "Test proxy returned a non-successful status code. 404; response: {\"Message\":\"Recording file path D:/a/_work/1/s/.assets/yoPImn7QKL/java\\\\sdk\\\\storage\\\\azure-storage-blob\\\\src\\\\test\\\\resources\\\\session-records\\\\BlobApiTests.downloadContentSmartAccessTierHeaders.json does not exist.\",\"Status\":\"NotFound\"}"
-              },
-              {
-                "file": "sdk/storage/azure-storage-blob/src/test/java/com/azure/storage/blob/BlobApiTests.java",
-                "line": 548,
-                "message": "Test proxy returned a non-successful status code. 404; response: {\"Message\":\"Recording file path D:/a/_work/1/s/.assets/yoPImn7QKL/java\\\\sdk\\\\storage\\\\azure-storage-blob\\\\src\\\\test\\\\resources\\\\session-records\\\\BlobApiTests.downloadSmartAccessTierHeaders.json does not exist.\",\"Status\":\"NotFound\"}"
-              },
-              {
-                "file": "sdk/storage/azure-storage-blob/src/test/java/com/azure/storage/blob/BlobAsyncApiTests.java",
-                "line": 387,
-                "message": "Test proxy returned a non-successful status code. 404; response: {\"Message\":\"Recording file path D:/a/_work/1/s/.assets/yoPImn7QKL/java\\\\sdk\\\\storage\\\\azure-storage-blob\\\\src\\\\test\\\\resources\\\\session-records\\\\BlobAsyncApiTests.downloadSmartAccessTierHeaders.json does not exist.\",\"Status\":\"NotFound\"}"
+                "line": 2582,
+                "message": "Test proxy returned a non-successful status code. 404; response: {\"Message\":\"Recording file path D:/a/_work/1/s/.assets/yoPImn7QKL/java\\\\sdk\\\\storage\\\\azure-storage-blob\\\\src\\\\test\\\\resources\\\\session-records\\\\BlobAsyncApiTests.uploadStreamAccessTierSmart.json does not exist.\",\"Status\":\"NotFound\"}"
               }
             ]
           }
@@ -215,9 +191,9 @@ stimuli:
         config:
           required:
             - azsdk-common-pipeline-troubleshooting
-      - type: output-contains
+      - type: output-matches
         config:
-          substring: "SmartAccessTier"
+          pattern: "(?i)(uploadStreamAccessTierSmart|smart access tier|access tier)"
       - type: output-matches
         config:
           pattern: "(?i)(recording|playback|test.?proxy|404)"
@@ -235,7 +211,8 @@ stimuli:
           prompt: |
             Build 6449182 failed because the test proxy returned 404 - the
             recording files for the BlobApiTests / BlobAsyncApiTests
-            SmartAccessTier tests do not exist. Does the response (a) identify
+            uploadStreamAccessTierSmart (SMART access tier) tests do not exist.
+            Does the response (a) identify
             this as a missing test recording (test-proxy 404), not a code or
             service bug, and (b) recommend re-recording / syncing the recordings
             rather than editing product code? Answer "pass" or "fail".
@@ -243,7 +220,6 @@ stimuli:
 scoring:
   weights:
     skill-invocation: 1
-    output-contains: 1
     output-matches: 1
     output-not-matches: 1
     prompt: 1

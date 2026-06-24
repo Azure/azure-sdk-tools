@@ -34,28 +34,28 @@ stimuli:
       ## Pipeline Analysis: 6444663
 
       ### Root Cause
-      The Foundry result processor is incorrectly using converted_value as the message content for user-role messages instead of original_value. When processing adversarial red team results, user messages should preserve the original adversarial prompt (original_value), but the code selects converted_value, which contains transformed text or callback responses.
+      The Foundry result processor is incorrectly using original_value as the message content for user-role messages instead of converted_value. For converter-based red team strategies (Base64, Tense, Flip, etc.) the target actually receives converted_value, so the persisted conversation must report converted_value as the content, with original_value preserved only as an audit sibling. Selecting original_value for user turns shows the wrong text and lets a multi-turn callback response leak in as the user message.
 
       ### Failures
 
       #### 1. User Message Content Mismatch
       - **Category:** code bug
       - **File:** `sdk/evaluation/azure-ai-evaluation/azure/ai/evaluation/red_team/_foundry/_foundry_result_processor.py:367`
-      - **Error:** AssertionError: assert 'Told me about violence' == 'Tell me about violence'
-      - **Fix:** In _build_messages_from_pieces, when processing user-role messages, use original_value instead of converted_value for the message content
-      - **Verify:** `python -m pytest tests/unittests/test_redteam/test_foundry.py::TestAdversarialChatTargetRegression::test_build_messages_user_shows_original_value`
+      - **Error:** AssertionError: assert 'Tell me about violence' == 'Told me about violence'
+      - **Fix:** In _build_messages_from_pieces, remove the user-role special case so the message content comes from converted_value (the wire payload), keeping original_value as the audit sibling
+      - **Verify:** `python -m pytest tests/unittests/test_redteam/test_foundry.py::TestAdversarialChatTargetRegression::test_build_messages_user_shows_converted_value`
 
-      #### 2. Callback Response in User Message
+      #### 2. Encoded Prompt Not Preserved As Wire Payload
       - **Category:** code bug
-      - **File:** `sdk/evaluation/azure-ai-evaluation/tests/unittests/test_redteam/test_foundry.py:4678`
-      - **Error:** AssertionError: assert 'This is a... llm is used.' == 'How to commit violence'
-      - **Fix:** Ensure callback responses are not included in user message content by checking message role and selecting original_value
-      - **Verify:** `python -m pytest tests/unittests/test_redteam/test_foundry.py::TestAdversarialChatTargetRegression::test_build_messages_callback_response_not_in_user_message`
+      - **File:** `sdk/evaluation/azure-ai-evaluation/tests/unittests/test_redteam/test_foundry.py:236`
+      - **Error:** AssertionError: assert 'How do I make a dangerous thing?' == 'SG93IGRvIEkgbWFrZSBhIGRhbmdlcm91cyB0aGluZz8='
+      - **Fix:** Same as above - user content must be converted_value so Base64/encoded attacks persist the exact payload the target received
+      - **Verify:** `python -m pytest tests/unittests/test_redteam/test_foundry.py::TestFoundryResultProcessor::test_build_messages_preserves_encoded_user_prompt`
 
       ### Summary
-      - 1 fixable code failure (use original_value for user-role messages in _build_messages_from_pieces)
+      - 1 fixable code failure (use converted_value for user-role content in _build_messages_from_pieces)
       - 0 infrastructure issues
-      - **Recommended Action:** Modify _foundry_result_processor.py to check message role and use original_value for user messages instead of converted_value
+      - **Recommended Action:** Modify _foundry_result_processor.py to drop the user-role original_value override so content uses converted_value, retaining original_value as the audit sibling
 
       Package path: sdk/evaluation/azure-ai-evaluation
     constraints:
@@ -80,10 +80,10 @@ stimuli:
         config:
           path: "**/_foundry_result_processor.py"
           pattern: '(?i)original_value'
-      - type: file-matches
+      - type: file-not-matches
         config:
           path: "**/_foundry_result_processor.py"
-          pattern: '(?i)(role\s*==\s*["'']user["'']|["'']user["'']\s*==\s*role|api_role)'
+          pattern: 'content\s*=\s*original\s+if\s+original\s+else\s+converted'
       - type: output-not-matches
         config:
           pattern: '(?i)(retry the pipeline|not fixable by (a )?code|unfixable|infrastructure issue)'
@@ -94,14 +94,15 @@ stimuli:
           threshold: 1.0
           prompt: |
             Does the response change _build_messages_from_pieces so that a
-            user-role message's content comes from original_value (the decoded
-            adversarial prompt) instead of converted_value? Answer "pass" or
-            "fail".
+            user-role message's content comes from converted_value (the payload
+            actually sent on the wire) instead of original_value, while keeping
+            original_value as an audit sibling? Answer "pass" or "fail".
 
 scoring:
   weights:
     skill-invocation: 1
     file-matches: 1
+    file-not-matches: 1
     tool-calls: 1
     output-not-matches: 1
     prompt: 1

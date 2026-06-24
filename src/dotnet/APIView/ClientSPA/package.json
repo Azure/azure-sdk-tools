@@ -89,7 +89,9 @@
     "dompurify": "^3.3.2",
     "undici": "^7.28.0",
     "serialize-javascript": "^7.0.5",
+    "esbuild": "^0.28.1",
     "@angular/build": {
+      "esbuild": "^0.28.1",
       "vitest": "^4.0.18"
     },
     "external-editor": {

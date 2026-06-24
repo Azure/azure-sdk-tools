@@ -41,7 +41,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.AddWorkItem(abandonedParent);
 
             // Act
-            var result = await _devOpsService.GetReleasePlanAsync(pullRequestUrl, CancellationToken.None);
+            var result = await _devOpsService.GetReleasePlanAsync(pullRequestUrl, ct: CancellationToken.None);
 
             // Assert
             Assert.IsNull(result, "Should return null when parent release plan is in Abandoned state");
@@ -59,7 +59,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.AddWorkItem(closedParent);
 
             // Act
-            var result = await _devOpsService.GetReleasePlanAsync(pullRequestUrl, CancellationToken.None);
+            var result = await _devOpsService.GetReleasePlanAsync(pullRequestUrl, ct: CancellationToken.None);
 
             // Assert
             Assert.IsNull(result, "Should return null when parent release plan is in Closed state");
@@ -77,7 +77,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.AddWorkItem(duplicateParent);
 
             // Act
-            var result = await _devOpsService.GetReleasePlanAsync(pullRequestUrl, CancellationToken.None);
+            var result = await _devOpsService.GetReleasePlanAsync(pullRequestUrl, ct: CancellationToken.None);
 
             // Assert
             Assert.IsNull(result, "Should return null when parent release plan is in Duplicate state");
@@ -95,7 +95,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.AddWorkItem(activeParent);
 
             // Act
-            var result = await _devOpsService.GetReleasePlanAsync(pullRequestUrl, CancellationToken.None);
+            var result = await _devOpsService.GetReleasePlanAsync(pullRequestUrl, ct: CancellationToken.None);
 
             // Assert
             Assert.IsNotNull(result, "Should return release plan when parent is in valid state");
@@ -114,7 +114,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.AddWorkItem(newParent);
 
             // Act
-            var result = await _devOpsService.GetReleasePlanAsync(pullRequestUrl, CancellationToken.None);
+            var result = await _devOpsService.GetReleasePlanAsync(pullRequestUrl, ct: CancellationToken.None);
 
             // Assert
             Assert.IsNotNull(result, "Should return release plan when parent is in New state");
@@ -137,7 +137,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.AddWorkItem(activeParent);
 
             // Act
-            var result = await _devOpsService.GetReleasePlanAsync(pullRequestUrl, CancellationToken.None);
+            var result = await _devOpsService.GetReleasePlanAsync(pullRequestUrl, ct: CancellationToken.None);
 
             // Assert
             Assert.IsNotNull(result, "Should return active release plan when one parent is abandoned and another is active");
@@ -156,7 +156,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.AddWorkItem(abandonedParent);
 
             // Act
-            var result = await _devOpsService.GetReleasePlanAsync(pullRequestUrl, CancellationToken.None);
+            var result = await _devOpsService.GetReleasePlanAsync(pullRequestUrl, ct: CancellationToken.None);
 
             // Assert
             Assert.IsNull(result, "Should handle state comparison case-insensitively");

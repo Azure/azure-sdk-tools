@@ -22,6 +22,7 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
     private readonly string _referenceDocContent;
     private readonly List<FeedbackItem> _items;
     private readonly string _globalContext;
+    private readonly EditScope _editScope;
 
     /// <summary>
     /// Initializes a new batch classification template.
@@ -31,18 +32,25 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
     /// <param name="referenceDocContent">Content of the customizing-client-tsp.md reference document</param>
     /// <param name="items">The feedback items to classify</param>
     /// <param name="globalContext">Global context containing all changes and history</param>
+    /// <param name="editScope">
+    /// The edit scope the classification will operate under. When an axis is out of scope, the classifier
+    /// is asked to prefer the in-scope axis for items that could be addressed either way (e.g. a rename
+    /// achievable in spec inputs OR custom code), so fixable items are not reported as out of scope.
+    /// </param>
     public FeedbackClassificationTemplate(
         string? serviceName,
         string language,
         string referenceDocContent,
         List<FeedbackItem> items,
-        string globalContext)
+        string globalContext,
+        EditScope editScope = EditScope.All)
     {
         _serviceName = serviceName;
         _language = language;
         _referenceDocContent = referenceDocContent;
         _items = items;
         _globalContext = globalContext;
+        _editScope = editScope;
     }
 
     public override string BuildPrompt()
@@ -78,6 +86,16 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         **Current Context:**
         - Service: {_serviceName ?? "N/A"}
         - Language: {_language}
+        """);
+
+        var scopeGuidance = BuildEditScopeGuidance();
+        if (!string.IsNullOrEmpty(scopeGuidance))
+        {
+            sb.AppendLine();
+            sb.AppendLine(scopeGuidance);
+        }
+
+        sb.AppendLine($"""
 
         **Task:**
         Classify ALL of the feedback items listed below. For each item, determine the appropriate classification: **TSP_APPLICABLE**, **CODE_CUSTOMIZATION**, **SUCCESS**, or **REQUIRES_MANUAL_INTERVENTION**.
@@ -127,6 +145,56 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         """);
 
         return sb.ToString();
+    }
+
+    /// <summary>
+    /// Builds scope-aware guidance that biases the classifier toward the in-scope axis for items that
+    /// could be addressed either way. Returns empty when both axes are in scope (<see cref="EditScope.All"/>).
+    /// </summary>
+    private string BuildEditScopeGuidance()
+    {
+        var specInScope = _editScope.HasFlag(EditScope.SpecInputs);
+        var customCodeInScope = _editScope.HasFlag(EditScope.CustomCode);
+
+        // Both axes in scope (All): no bias — classify on technical merit.
+        if (specInScope && customCodeInScope)
+        {
+            return string.Empty;
+        }
+
+        // Custom-code-only: spec inputs cannot be edited, so prefer CODE_CUSTOMIZATION for ambiguous items.
+        if (customCodeInScope && !specInScope)
+        {
+            return """
+            **EDIT SCOPE — CUSTOM CODE ONLY (spec inputs are OUT OF SCOPE):**
+            Spec inputs (`client.tsp`, `tspconfig.yaml`) and the pinned spec commit will NOT be edited in this run.
+            Many fixes — especially renames, visibility/access changes, and type overrides — can be achieved EITHER
+            via a TypeSpec decorator OR directly in custom (customization) code.
+            - For any item that can be addressed in custom code, classify it as **CODE_CUSTOMIZATION** (NOT TSP_APPLICABLE),
+              even if a TypeSpec decorator could also address it. Include specific custom-code repair instructions in the Reason.
+            - Only classify an item as **TSP_APPLICABLE** when the fix genuinely CANNOT be expressed in custom code and
+              truly requires a spec-input change. Such items will be reported as out of scope (a separate spec-repo PR),
+              so use TSP_APPLICABLE sparingly and only when unavoidable.
+            """;
+        }
+
+        // Spec-inputs-only: custom code cannot be edited, so prefer TSP_APPLICABLE for ambiguous items.
+        if (specInScope && !customCodeInScope)
+        {
+            return """
+            **EDIT SCOPE — SPEC INPUTS ONLY (custom code is OUT OF SCOPE):**
+            Custom (customization) code will NOT be edited in this run.
+            Many fixes — especially renames, visibility/access changes, and type overrides — can be achieved EITHER
+            via a TypeSpec decorator OR directly in custom code.
+            - For any item that can be addressed with a TypeSpec decorator, classify it as **TSP_APPLICABLE**
+              (NOT CODE_CUSTOMIZATION), even if a custom-code change could also address it.
+            - Only classify an item as **CODE_CUSTOMIZATION** when the fix genuinely CANNOT be expressed via a TypeSpec
+              decorator and truly requires a custom-code change. Such items will be reported as out of scope, so use
+              CODE_CUSTOMIZATION sparingly and only when unavoidable.
+            """;
+        }
+
+        return string.Empty;
     }
 
     private string BuildClassificationConditions()

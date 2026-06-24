@@ -28,7 +28,7 @@ internal class CopilotAgentRunnerTests
 
         eventHandlers = [];
         capturedTools = null;
-        
+
         // Setup session mock
         sessionMock = new Mock<ICopilotSessionWrapper>();
         sessionMock.Setup(s => s.On(It.IsAny<SessionEventHandler>()))
@@ -103,7 +103,7 @@ internal class CopilotAgentRunnerTests
     public async Task RunAsync_WithExitTool_ReturnsResult()
     {
         const string expectedResult = "Success";
-        
+
         sessionMock.Setup(s => s.SendAsync(It.IsAny<MessageOptions>(), It.IsAny<CancellationToken>()))
             .Callback(() =>
             {
@@ -354,7 +354,7 @@ internal class CopilotAgentRunnerTests
     {
         // SendAsync respects cancellation token
         using var cts = new CancellationTokenSource();
-        
+
         sessionMock.Setup(s => s.SendAsync(It.IsAny<MessageOptions>(), It.IsAny<CancellationToken>()))
             .Returns<MessageOptions, CancellationToken>((options, ct) =>
             {
@@ -479,7 +479,7 @@ internal class CopilotAgentRunnerTests
     public async Task RunAsync_SessionConfigured_WithCorrectModelAndInstructions()
     {
         SessionConfig? capturedConfig = null;
-        
+
         clientMock.Setup(c => c.CreateSessionAsync(
                 It.IsAny<SessionConfig>(),
                 It.IsAny<CancellationToken>()))

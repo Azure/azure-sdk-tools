@@ -1,0 +1,45 @@
+name: azsdk-mcp-tool-invocation-eval
+description: |
+  Verify that prompts correctly invoke the expected Azure SDK MCP tools.
+  Each stimulus is a single user prompt that should trigger a specific tool.
+version: "1.0"
+type: capability
+
+environment: azsdk-mcp-mock
+
+config:
+  runs: 3
+  timeout: "120s"
+  executor: copilot-sdk
+  model: gpt-5.4
+
+tags:
+  tier: unit
+  area: engsys
+  priority: p0
+
+stimuli:
+
+  # ==== azsdk_verify_setup triggers ====
+  - name: invoke-azsdk-verify-setup-1
+    prompt: "Verify my environment setup. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_verify_setup"
+  - name: invoke-azsdk-verify-setup-2
+    prompt: "Verify my developer environment setup for MCP tools"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_verify_setup"
+  - name: invoke-azsdk-verify-setup-3
+    prompt: "Verify my MCP release tool setup"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_verify_setup"
+

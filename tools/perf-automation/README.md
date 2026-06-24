@@ -16,7 +16,7 @@
 
 6. Example (.NET): `dotnet run -- run --language Net --language-version 8 --repo-root <path-to-azure-sdk-for-net> --tests-file <path-to-azure-sdk-for-net>/sdk/storage/Azure.Storage.Blobs/perf-tests.yml --tests download --arguments 10240 --dry-run`
 
-7. Example (Go): `dotnet run -- run --language Go --language-version 1.26 --repo-root <path-to-azure-sdk-for-go> --tests-file <path-to-azure-sdk-for-go>/sdk/storage/azblob/perf-tests.yml --tests download --arguments 10240 --dry-run`
+7. Example (Go): `dotnet run -- run --language Go --language-version 1.26 --repo-root <path-to-azure-sdk-for-go> --tests-file <path-to-azure-sdk-for-go>/sdk/storage/azblob/testdata/perf/perfautomation-tests.yml --tests download --arguments 10240 --dry-run`
 
 8. View results in file `results/results.json`
 

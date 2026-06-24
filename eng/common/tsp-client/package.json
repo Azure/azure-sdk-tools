@@ -2,6 +2,9 @@
   "dependencies": {
     "@azure-tools/typespec-client-generator-cli": "0.32.1"
   },
+  "overrides": {
+    "tar": "^7.5.16"
+  },
   "engines": {
     "node": ">=20.19.0"
   }

@@ -88,7 +88,6 @@ extends:
                     python evals_run.py \
                       --dataset "qa-bot-basic-$(scenario):latest" \
                       --evaluation_name_prefix $(Build.BuildId) \
-                      --evaluators "similarity,groundedness,response_completeness" \
                       --max_concurrency 8 \
                       --baseline_check True \
                       --cache_result full

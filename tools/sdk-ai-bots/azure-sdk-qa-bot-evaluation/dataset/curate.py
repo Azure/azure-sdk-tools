@@ -5,7 +5,7 @@ It scans **all** blob content (no time window), parses each ``# Title / ## Quest
 / ## Answer`` markdown file into canonical cases, extracts inline links into
 ``expected_references``, performs **incremental** dedup against already-curated and
 already-staged cases, and writes only *new* candidates to
-``datasets/_staging/<scenario>.jsonl`` with ``reviewed=false`` for human review.
+``datasets/_staging/<scenario>.jsonl`` with ``reviewed="todo"`` for human review.
 
 Usage (blob, all content):
     python -m dataset.curate
@@ -20,14 +20,14 @@ import argparse
 import hashlib
 import json
 import logging
-import os
 import re
 import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
 
-from .schema import CanonicalCase, iter_jsonl
+from .schema import CanonicalCase, REVIEW_STATUS_TODO, iter_jsonl
+from ._storage import credential_for, download_md_blobs
 
 # Markdown inline link: [text](url)
 _MD_LINK_RE = re.compile(r"\[([^\]]+)\]\((https?://[^)\s]+)\)")
@@ -140,7 +140,7 @@ def parse_markdown(file_path: Path) -> list[CanonicalCase]:
                 query=full_question,
                 ground_truth=answer_text,
                 scenario=scenario,
-                reviewed=False,
+                reviewed=REVIEW_STATUS_TODO,
                 tenant=None,  # resolved per-scenario in the eval run template (O6)
                 source=file_path.name,
                 expected_references=extract_links(answer_text),
@@ -167,28 +167,11 @@ def load_existing_hashes(paths: dict[str, Path]) -> set[str]:
 
 
 def download_all_blobs(dest: Path) -> None:
-    """Download every blob from the configured container into ``dest`` (no time filter).
+    """Download every ``.md`` blob from the configured container into ``dest`` (no time filter).
 
     Dataset preparation runs locally only and authenticates via ``az login``.
     """
-    from azure.identity import AzureCliCredential
-    from azure.storage.blob import BlobServiceClient
-
-    credential = AzureCliCredential()
-
-    account = os.environ["STORAGE_BLOB_ACCOUNT"]
-    container = os.environ["AI_ONLINE_PERFORMANCE_EVALUATION_STORAGE_CONTAINER"]
-    service = BlobServiceClient(account_url=f"https://{account}.blob.core.windows.net", credential=credential)
-    container_client = service.get_container_client(container)
-
-    dest.mkdir(parents=True, exist_ok=True)
-    for item in container_client.list_blobs():
-        filename = re.split(r"[\\/]", item.name)[-1]
-        if not filename.endswith(".md"):
-            continue
-        logging.info("download %s", item.name)
-        blob_client = container_client.get_blob_client(item.name)
-        (dest / filename).write_bytes(blob_client.download_blob().readall())
+    download_md_blobs(dest, credential_for(False))
 
 
 def curate(source_md_dir: Path, paths: dict[str, Path]) -> dict[str, int]:

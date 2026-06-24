@@ -16,7 +16,15 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from dataset.schema import ValidationError, validate_case  # noqa: E402
+from dataset.schema import (  # noqa: E402
+    REVIEW_STATUS_ABANDONED,
+    REVIEW_STATUS_PASS,
+    REVIEW_STATUS_TODO,
+    ValidationError,
+    normalize_review_status,
+    validate_case,
+)
+from dataset.review import review  # noqa: E402
 from _evals_runner import (  # noqa: E402
     output_items_to_rows,
     extract_title_and_link_from_references,
@@ -33,14 +41,14 @@ def test_validate_case_ok():
             "query": "q",
             "ground_truth": "a",
             "scenario": "typespec",
-            "reviewed": True,
+            "reviewed": "pass",
         }
     )
 
 
 def test_validate_case_missing_field():
     try:
-        validate_case({"query": "q", "ground_truth": "a", "scenario": "s", "reviewed": True})
+        validate_case({"query": "q", "ground_truth": "a", "scenario": "s", "reviewed": "pass"})
     except ValidationError as exc:
         assert "testcase" in str(exc)
     else:
@@ -54,6 +62,71 @@ def test_validate_case_bad_reviewed_type():
         assert "reviewed" in str(exc)
     else:
         raise AssertionError("expected ValidationError")
+
+
+def test_normalize_review_status():
+    # Legacy booleans map onto the canonical statuses.
+    assert normalize_review_status(True) == REVIEW_STATUS_PASS
+    assert normalize_review_status(False) == REVIEW_STATUS_TODO
+    # Canonical strings pass through.
+    assert normalize_review_status(REVIEW_STATUS_TODO) == "todo"
+    assert normalize_review_status(REVIEW_STATUS_PASS) == "pass"
+    assert normalize_review_status(REVIEW_STATUS_ABANDONED) == "abandoned"
+    # Anything else is rejected.
+    try:
+        normalize_review_status("maybe")
+    except ValidationError:
+        pass
+    else:
+        raise AssertionError("expected ValidationError")
+
+
+def test_review_promotes_pass_and_abandons_leftover_todo():
+    import json
+    import tempfile
+    from pathlib import Path
+
+    def _row(testcase: str, status: str) -> dict:
+        return {
+            "testcase": testcase,
+            "query": f"q-{testcase}",
+            "ground_truth": "gt",
+            "expected_references": [],
+            "expected_knowledges": [],
+            "scenario": "typespec",
+            "tenant": None,
+            "source": "x.md",
+            "reviewed": status,
+        }
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        staging = root / "_staging"
+        target = root / "basic"
+        staging.mkdir()
+        sf = staging / "typespec.jsonl"
+        with sf.open("w", encoding="utf-8") as fh:
+            for r in [
+                _row("keep", REVIEW_STATUS_PASS),
+                _row("leftover", REVIEW_STATUS_TODO),
+                _row("already", REVIEW_STATUS_ABANDONED),
+            ]:
+                fh.write(json.dumps(r) + "\n")
+
+        promoted = review(staging, target, None)
+
+        # The pass row is promoted to the official dataset.
+        assert promoted == {"typespec": 1}
+        target_rows = [json.loads(l) for l in (target / "typespec.jsonl").read_text(encoding="utf-8").splitlines()]
+        assert [r["testcase"] for r in target_rows] == ["keep"]
+        assert target_rows[0]["reviewed"] == REVIEW_STATUS_PASS
+
+        # Staging keeps the leftover (now abandoned) and the already-abandoned row; pass row is gone.
+        staging_rows = {
+            r["testcase"]: r["reviewed"]
+            for r in (json.loads(l) for l in sf.read_text(encoding="utf-8").splitlines())
+        }
+        assert staging_rows == {"leftover": REVIEW_STATUS_ABANDONED, "already": REVIEW_STATUS_ABANDONED}
 
 
 def test_output_items_to_rows_builtin_and_composite():

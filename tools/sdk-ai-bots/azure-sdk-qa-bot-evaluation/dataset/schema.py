@@ -11,6 +11,29 @@ from pathlib import Path
 from typing import Any, Iterable, Iterator
 
 
+# Review status of a curated case (the ``reviewed`` field).
+#   todo      - newly curated, awaiting human review
+#   pass      - reviewed and accepted (promoted into official datasets)
+#   abandoned - reviewed (or left as todo at promote time) and dropped
+REVIEW_STATUS_TODO = "todo"
+REVIEW_STATUS_PASS = "pass"
+REVIEW_STATUS_ABANDONED = "abandoned"
+REVIEW_STATUSES = (REVIEW_STATUS_TODO, REVIEW_STATUS_PASS, REVIEW_STATUS_ABANDONED)
+
+
+def normalize_review_status(value: Any) -> str:
+    """Coerce a ``reviewed`` value into a canonical status string.
+
+    Accepts legacy booleans (``True`` -> ``pass``, ``False`` -> ``todo``) for
+    backward compatibility, and validates string values against ``REVIEW_STATUSES``.
+    """
+    if isinstance(value, bool):
+        return REVIEW_STATUS_PASS if value else REVIEW_STATUS_TODO
+    if isinstance(value, str) and value in REVIEW_STATUSES:
+        return value
+    raise ValidationError(f"'reviewed' must be one of {REVIEW_STATUSES} (got {value!r})")
+
+
 # Machine-readable contract (JSON Schema draft-07 shape). Kept in sync with
 # ``validate_case`` below; useful for docs/tooling and optional jsonschema use.
 JSON_SCHEMA: dict[str, Any] = {
@@ -48,7 +71,7 @@ JSON_SCHEMA: dict[str, Any] = {
         "scenario": {"type": "string", "minLength": 1},
         "tenant": {"type": ["string", "null"]},
         "source": {"type": "string"},
-        "reviewed": {"type": "boolean"},
+        "reviewed": {"type": "string", "enum": list(REVIEW_STATUSES)},
     },
 }
 
@@ -69,7 +92,7 @@ class CanonicalCase:
     query: str
     ground_truth: str
     scenario: str
-    reviewed: bool = False
+    reviewed: str = REVIEW_STATUS_TODO
     tenant: str | None = None
     source: str = ""
     expected_references: list[dict[str, str]] = field(default_factory=list)
@@ -96,7 +119,7 @@ class CanonicalCase:
             query=obj["query"],
             ground_truth=obj["ground_truth"],
             scenario=obj["scenario"],
-            reviewed=bool(obj.get("reviewed", False)),
+            reviewed=normalize_review_status(obj.get("reviewed", REVIEW_STATUS_TODO)),
             tenant=obj.get("tenant"),
             source=obj.get("source", ""),
             expected_references=list(obj.get("expected_references", []) or []),
@@ -135,8 +158,9 @@ def validate_case(obj: Any, where: str = "case") -> None:
 
     if "reviewed" not in obj:
         raise ValidationError(f"{where}: missing required field 'reviewed'")
-    if not isinstance(obj["reviewed"], bool):
-        raise ValidationError(f"{where}: 'reviewed' must be a boolean")
+    rv = obj["reviewed"]
+    if not isinstance(rv, bool) and not (isinstance(rv, str) and rv in REVIEW_STATUSES):
+        raise ValidationError(f"{where}: 'reviewed' must be one of {REVIEW_STATUSES} (got {rv!r})")
 
     if "tenant" in obj and obj["tenant"] is not None and not isinstance(obj["tenant"], str):
         raise ValidationError(f"{where}: 'tenant' must be a string or null")
@@ -169,7 +193,7 @@ def validate_file(path: str | Path, *, require_reviewed: bool = False) -> int:
 
     Args:
         path: dataset JSONL file.
-        require_reviewed: when True, also require every row to have ``reviewed==true``
+        require_reviewed: when True, also require every row to have ``reviewed=='pass'``
             (used to gate official datasets).
 
     Returns:
@@ -184,8 +208,8 @@ def validate_file(path: str | Path, *, require_reviewed: bool = False) -> int:
     for line_no, obj in iter_jsonl(p):
         where = f"{p}:{line_no}"
         validate_case(obj, where=where)
-        if require_reviewed and not obj.get("reviewed", False):
-            raise ValidationError(f"{where}: case is not reviewed (reviewed!=true)")
+        if require_reviewed and normalize_review_status(obj.get("reviewed", REVIEW_STATUS_TODO)) != REVIEW_STATUS_PASS:
+            raise ValidationError(f"{where}: case is not passed (reviewed != 'pass')")
         tc = obj["testcase"]
         if tc in seen_testcases:
             raise ValidationError(f"{where}: duplicate testcase '{tc}' within file")

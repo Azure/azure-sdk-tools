@@ -45,9 +45,13 @@ by the evaluators.
   "scenario": "typespec",
   "tenant": null,
   "source": "blob path / manual",
-  "reviewed": true
+  "reviewed": "pass"
 }
 ```
+
+The `reviewed` field is one of `"todo"` (newly curated, awaiting review),
+`"pass"` (accepted; promoted into official datasets) or `"abandoned"` (reviewed
+and dropped, or a leftover `todo` finalized at promote time).
 
 Validate any file/folder:
 
@@ -59,14 +63,15 @@ python -m dataset.validate datasets/basic --require-reviewed
 ## Part 1 — Dataset preparation
 
 ```bash
-# 1) Scan ALL blob content; stage only NEW, deduped candidates (reviewed=false).
+# 1) Scan ALL blob content; stage only NEW, deduped candidates (reviewed="todo").
 python -m dataset.curate                       # downloads all blobs first
 python -m dataset.curate --source_md_path online-qa-tests   # or use local md
 
 # 2) Human review: edit datasets/_staging/<scenario>.jsonl, fix links/answers,
-#    set "reviewed": true on keepers.
+#    set "reviewed": "pass" on keepers.
 
-# 3) Promote reviewed rows into the curated set (append, incremental).
+# 3) Promote "pass" rows into the curated set (append, incremental). Any rows
+#    still "todo" are finalized to "abandoned" and kept in staging (deduped).
 python -m dataset.review --target basic      # or --target perf
 
 # 4) Upload one versioned Foundry Dataset asset per scenario; writes registry.json.
@@ -127,9 +132,20 @@ but are not scored by an evaluator.
 
 | Pipeline | Purpose |
 |---|---|
-| `offline-evaluation.yml` | PR gate; starts agent server.py, evaluates via local /completion. |
-| `online-evaluation.yml` | weekly production check against the deployed bot. |
+| `offline-evaluation.yml` | PR gate; starts agent server.py, evaluates the curated `basic` sets via local /completion. |
+| `online-evaluation.yml` | weekly production check; snapshots the last 21 days of storage md (`dataset.online_snapshot`) and evaluates that fresh data against the deployed bot. |
 | `perf-evaluation.yml` | weekly/manual, large per-scenario perf datasets. |
+
+The online pipeline evaluates the **freshly collected weekly md** (not the static
+`basic` set): `dataset.online_snapshot` downloads recent md and converts it to
+per-scenario `online-tests/<scenario>.jsonl`, then `evals_run.py` grades each file:
+
+```bash
+python -m dataset.online_snapshot --is_ci False --days_before 21 --dest online-tests
+for f in online-tests/*.jsonl; do
+  python evals_run.py --dataset "$f" --evaluators bot_evals --baseline_check False --is_ci False
+done
+```
 
 
 ## Tests

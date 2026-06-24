@@ -80,7 +80,7 @@ def upload(target_dir: Path, target: str, scenario_filter: str | None, registry_
     with AIProjectClient(endpoint=endpoint, credential=credential) as project_client:
         for f in files:
             scenario = f.stem
-            # Fail fast if any row is not reviewed / invalid before publishing.
+            # Fail fast if any row is not 'pass' / invalid before publishing.
             n = validate_file(f, require_reviewed=True)
             name = asset_name(target, scenario)
             version = asset_version(scenario)

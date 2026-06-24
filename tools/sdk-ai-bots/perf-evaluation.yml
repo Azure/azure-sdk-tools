@@ -61,10 +61,10 @@ extends:
                       inlineScript: |
                         export BOT_AGENT_ACCESS_TOKEN=$(az account get-access-token --resource api://azure-sdk-qa-bot --query accessToken -o tsv)
                         current_date=$(date +%Y_%m_%d)
+                        rand_suffix=$(head -c 4 /dev/urandom | od -An -tx1 | tr -d ' \n')
                         python evals_run.py \
                           --dataset "qa-bot-perf-${{ scenario }}:latest" \
-                          --evaluation_name_prefix "perf-evaluation-$current_date" \
-                          --evaluators "bot_evals,groundedness" \
+                          --evaluation_name_prefix "perf-evaluation-$current_date-$rand_suffix" \
                           --max_concurrency 8 \
                           --baseline_check False \
                           --cache_result full

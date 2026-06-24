@@ -22,7 +22,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--require-reviewed",
         action="store_true",
-        help="Require every row to have reviewed==true (gate for official datasets).",
+        help="Require every row to have reviewed=='pass' (gate for official datasets).",
     )
     args = parser.parse_args(argv)
 

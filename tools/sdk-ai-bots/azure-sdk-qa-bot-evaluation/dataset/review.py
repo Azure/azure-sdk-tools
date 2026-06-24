@@ -2,15 +2,18 @@
 
 Second step of *dataset preparation*. A human edits the staged files
 (``datasets/_staging/<scenario>.jsonl``), fixes ground_truth/links, and sets
-``reviewed: true`` on the cases worth keeping. ``review.py`` then **appends** only
-the ``reviewed==true`` rows into the committed, curated locations:
+``reviewed: "pass"`` on the cases worth keeping (leaving the rest as ``"todo"``).
+``review.py`` then **appends** only the ``reviewed=="pass"`` rows into the
+committed, curated locations:
 
     datasets/basic/<scenario>.jsonl     (PR-gate / online curated sets)
     datasets/perf/<scenario>.jsonl      (perf set; grows over time, no target size)
 
 Appending (not overwriting) gives incremental, time-ordered growth. Cases already
-present in the target (by scenario+query hash) are skipped, and promoted rows are
-removed from staging so each case is reviewed once.
+present in the target (by scenario+query hash) are skipped. Promoted (``pass``)
+rows are removed from staging, and any rows still left as ``"todo"`` at promote
+time are finalized to ``"abandoned"`` (kept in staging as a deduped record so they
+are not re-curated). Already-``abandoned`` rows are left untouched.
 
 Usage:
     python -m dataset.review --target basic
@@ -26,7 +29,14 @@ import sys
 from pathlib import Path
 
 from .curate import case_hash
-from .schema import iter_jsonl, validate_case
+from .schema import (
+    REVIEW_STATUS_ABANDONED,
+    REVIEW_STATUS_PASS,
+    REVIEW_STATUS_TODO,
+    iter_jsonl,
+    normalize_review_status,
+    validate_case,
+)
 
 
 def _target_hashes(target_dir: Path) -> set[str]:
@@ -41,7 +51,10 @@ def _target_hashes(target_dir: Path) -> set[str]:
 
 
 def review(staging_dir: Path, target_dir: Path, scenario_filter: str | None) -> dict[str, int]:
-    """Promote reviewed staging rows into ``target_dir``. Returns per-scenario promoted counts."""
+    """Promote ``pass`` staging rows into ``target_dir``; abandon leftover ``todo`` rows.
+
+    Returns per-scenario promoted counts.
+    """
     target_dir.mkdir(parents=True, exist_ok=True)
     existing = _target_hashes(target_dir)
 
@@ -54,17 +67,32 @@ def review(staging_dir: Path, target_dir: Path, scenario_filter: str | None) -> 
         scenario = sf.stem
         keep_in_staging: list[dict] = []
         to_promote: list[dict] = []
+        abandoned = 0
+        mutated = False
 
         for _ln, obj in iter_jsonl(sf):
-            if not obj.get("reviewed", False):
-                keep_in_staging.append(obj)
+            status = normalize_review_status(obj.get("reviewed", REVIEW_STATUS_TODO))
+            if obj.get("reviewed") != status:  # legacy bool -> canonical string
+                obj["reviewed"] = status
+                mutated = True
+
+            if status == REVIEW_STATUS_PASS:
+                validate_case(obj, where=f"{sf}")
+                h = case_hash(obj.get("scenario", scenario), obj.get("query", ""))
+                if h in existing:
+                    mutated = True  # drop the reviewed duplicate
+                    continue
+                existing.add(h)
+                to_promote.append(obj)
+                mutated = True
                 continue
-            validate_case(obj, where=f"{sf}")
-            h = case_hash(obj.get("scenario", scenario), obj.get("query", ""))
-            if h in existing:
-                continue  # already curated; drop the reviewed duplicate
-            existing.add(h)
-            to_promote.append(obj)
+
+            # Remaining todo rows are finalized to abandoned; abandoned stays abandoned.
+            if status == REVIEW_STATUS_TODO:
+                obj["reviewed"] = REVIEW_STATUS_ABANDONED
+                abandoned += 1
+                mutated = True
+            keep_in_staging.append(obj)
 
         if to_promote:
             target = target_dir / f"{scenario}.jsonl"
@@ -74,8 +102,11 @@ def review(staging_dir: Path, target_dir: Path, scenario_filter: str | None) -> 
             promoted[scenario] = len(to_promote)
             logging.info("Promoted %d case(s) -> %s", len(to_promote), target)
 
-        # Rewrite staging without the promoted rows.
-        if to_promote:
+        if abandoned:
+            logging.info("Abandoned %d leftover todo case(s) in %s", abandoned, sf.name)
+
+        # Rewrite staging if anything changed (rows promoted out or statuses finalized).
+        if mutated:
             if keep_in_staging:
                 with sf.open("w", encoding="utf-8") as fh:
                     for obj in keep_in_staging:
@@ -84,7 +115,7 @@ def review(staging_dir: Path, target_dir: Path, scenario_filter: str | None) -> 
                 sf.unlink()
 
     if not promoted:
-        logging.info("No reviewed cases to promote.")
+        logging.info("No reviewed (pass) cases to promote.")
     return promoted
 
 

@@ -37,6 +37,7 @@ from _evals_runner import (
     resolve_tenant_for_scenario,
     retrieve_channel_tenant_map,
 )
+from dataset._storage import credential_for
 
 ALL_EVALUATORS = [
     "similarity",
@@ -58,30 +59,6 @@ OUTPUT_FIELDS: dict[str, list[str]] = {
     "fluency": ["fluency"],
     "bot_evals": ["bot_evals", "bot_evals_similarity", "bot_evals_response_completeness", "bot_evals_result"],
 }
-
-
-def _credential(is_ci: bool) -> Any:
-    from azure.identity import (
-        AzureCliCredential,
-        AzurePipelinesCredential,
-        DefaultAzureCredential,
-    )
-
-    if not is_ci:
-        return AzureCliCredential()
-    sc_id = os.getenv("AZURESUBSCRIPTION_SERVICE_CONNECTION_ID")
-    client_id = os.getenv("AZURESUBSCRIPTION_CLIENT_ID")
-    tenant_id = os.getenv("AZURESUBSCRIPTION_TENANT_ID")
-    token = os.getenv("SYSTEM_ACCESSTOKEN")
-    if all([sc_id, client_id, tenant_id, token]):
-        return AzurePipelinesCredential(
-            service_connection_id=sc_id,  # type: ignore[arg-type]
-            client_id=client_id,  # type: ignore[arg-type]
-            tenant_id=tenant_id,  # type: ignore[arg-type]
-            system_access_token=token,  # type: ignore[arg-type]
-        )
-    logging.warning("AZURESUBSCRIPTION_*/SYSTEM_ACCESSTOKEN missing; using DefaultAzureCredential.")
-    return DefaultAzureCredential()
 
 
 def _load_suppression(script_dir: Path) -> dict[str, list[str]]:
@@ -150,7 +127,7 @@ def main(argv: list[str] | None = None) -> int:
 
     from azure.ai.projects import AIProjectClient
 
-    credential = _credential(is_ci)
+    credential = credential_for(is_ci)
     all_results: dict[str, Any] = {}
 
     try:

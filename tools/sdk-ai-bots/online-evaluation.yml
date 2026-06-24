@@ -11,9 +11,11 @@ pr: none
 
 # Online (weekly, production) evaluation of the deployed bot.
 #
-# Evaluates via completion mode against the deployed bot's $(BOT_SERVICE_ENDPOINT)
-# /completion endpoint (concurrent collection + inline grading) on the curated basic
-# datasets. Results land on the Evaluation tab in the Azure AI Foundry portal.
+# Restores the original weekly logic: download the Q&A markdown uploaded in the last
+# 21 days, convert it to per-scenario JSONL (dataset.online_snapshot), then evaluate
+# each scenario via completion mode against the deployed bot's $(BOT_SERVICE_ENDPOINT)
+# /completion endpoint (concurrent collection + inline grading). Results land on the
+# Evaluation tab in the Azure AI Foundry portal.
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
   parameters:
@@ -30,17 +32,6 @@ extends:
         jobs:
           - job: 'evaluation'
             displayName: 'online evaluation'
-            strategy:
-              maxParallel: 2
-              matrix:
-                typespec:
-                  scenario: typespec
-                onboarding:
-                  scenario: onboarding
-                python:
-                  scenario: python
-                apispec:
-                  scenario: apispec
             steps:
               - task: UsePythonVersion@0
                 displayName: "Use Python 3.12"
@@ -51,21 +42,32 @@ extends:
                 displayName: 'install requirements'
                 workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
               - task: AzureCLI@2
-                displayName: 'Run Evals ($(scenario))'
+                displayName: 'Run Evals (weekly md snapshot)'
                 inputs:
                   azureSubscription: 'azuresdkqabot'
                   scriptType: bash
                   scriptLocation: inlineScript
                   workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
                   inlineScript: |
+                    set -e
                     export BOT_AGENT_ACCESS_TOKEN=$(az account get-access-token --resource api://azure-sdk-qa-bot --query accessToken -o tsv)
                     current_date=$(date +%Y_%m_%d)
-                    python evals_run.py \
-                      --dataset "qa-bot-basic-$(scenario):latest" \
-                      --evaluation_name_prefix "online-evaluation-$current_date" \
-                      --evaluators "bot_evals" \
-                      --max_concurrency 8 \
-                      --baseline_check False
+
+                    # Download the last 21 days of md and convert to per-scenario JSONL.
+                    python -m dataset.online_snapshot --is_ci True --days_before 21 --dest online-tests
+
+                    shopt -s nullglob
+                    status=0
+                    for f in online-tests/*.jsonl; do
+                      echo "===== Evaluating $f ====="
+                      python evals_run.py \
+                        --dataset "$f" \
+                        --evaluation_name_prefix "online-evaluation-$current_date" \
+                        --max_concurrency 8 \
+                        --baseline_check False \
+                        --is_ci True || status=1
+                    done
+                    exit $status
                 env:
                   SYSTEM_ACCESSTOKEN: $(System.AccessToken)
                   AZURE_AI_PROJECT_ENDPOINT: $(AZURE_AI_PROJECT_ENDPOINT)
@@ -73,6 +75,7 @@ extends:
                   AZURE_EVALUATION_MODEL_NAME: $(AZURE_EVALUATION_MODEL_NAME)
                   BOT_SERVICE_ENDPOINT: $(BOT_SERVICE_ENDPOINT)
                   STORAGE_BLOB_ACCOUNT: $(STORAGE_BLOB_ACCOUNT)
+                  AI_ONLINE_PERFORMANCE_EVALUATION_STORAGE_CONTAINER: $(AI_ONLINE_PERFORMANCE_EVALUATION_STORAGE_CONTAINER)
                   BOT_CONFIG_CONTAINER: $(BOT_CONFIG_CONTAINER)
                   BOT_CONFIG_CHANNEL_BLOB: $(BOT_CONFIG_CHANNEL_BLOB)
                   EVALUATE_THRESHOLD: $(EVALUATE_THRESHOLD)

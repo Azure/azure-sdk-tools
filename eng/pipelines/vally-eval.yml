@@ -18,6 +18,11 @@ trigger:
     include:
       - tools/azsdk-cli/Azure.Sdk.Tools.Vally/**
       - tools/azsdk-cli/Azure.Sdk.Tools.Mock/**
+      # The mock server reflects over the real tool catalog in the Cli project,
+      # and the skills are loaded via --skill-dir — so changes to either can
+      # move the eval results and must retrigger the gate.
+      - tools/azsdk-cli/Azure.Sdk.Tools.Cli/**
+      - .github/skills/**
       - eng/pipelines/vally-eval.yml
       - eng/skill-eval/**
 
@@ -29,6 +34,11 @@ pr:
     include:
       - tools/azsdk-cli/Azure.Sdk.Tools.Vally/**
       - tools/azsdk-cli/Azure.Sdk.Tools.Mock/**
+      # The mock server reflects over the real tool catalog in the Cli project,
+      # and the skills are loaded via --skill-dir — so changes to either can
+      # move the eval results and must retrigger the gate.
+      - tools/azsdk-cli/Azure.Sdk.Tools.Cli/**
+      - .github/skills/**
       - eng/pipelines/vally-eval.yml
       - eng/skill-eval/**
 
@@ -90,16 +100,18 @@ stages:
           - checkout: self
             fetchDepth: 1
 
-          - task: PowerShell@2
+          - task: UseNode@1
+            displayName: 'Use Node.js 22'
+            inputs:
+              version: '22.x'
+
+          - script: |
+              node "$(Build.SourcesDirectory)/eng/common/scripts/eval/collect-stimuli.js" \
+                --eval-root "$(Build.SourcesDirectory)/$(vallyRoot)" \
+                --shard-by ${{ parameters.shardBy }} \
+                --output-variable matrix
             name: detect
             displayName: 'Build fan-out matrix'
-            inputs:
-              pwsh: true
-              filePath: '$(vallyRoot)/scripts/Split-EvalSuite.ps1'
-              arguments: >-
-                -EvalRoot "$(Build.SourcesDirectory)/$(vallyRoot)"
-                -ShardBy ${{ parameters.shardBy }}
-                -OutputVariableName matrix
 
   # ---------------------------------------------------------------------------
   # Stage 2 — Eval. One job per shard, up to 10 at a time. Each job grabs the
@@ -152,31 +164,25 @@ stages:
           # them into the cache the fixtures expect — Vally won't do this itself
           # ('git worktree add' needs the source already on disk). No-op for
           # unit-only shards; a new fixture repo is picked up automatically.
-          - task: PowerShell@2
+          - script: |
+              node "$(Build.SourcesDirectory)/eng/common/scripts/eval/init-eval-git-fixtures.js" \
+                --eval-root "$(Build.SourcesDirectory)/$(vallyRoot)"
             displayName: 'Prime eval git fixtures (scan + clone)'
-            inputs:
-              pwsh: true
-              filePath: '$(vallyRoot)/scripts/Initialize-EvalGitFixtures.ps1'
-              arguments: >-
-                -EvalRoot "$(Build.SourcesDirectory)/$(vallyRoot)"
 
           # Pass/fail on the eval VERDICT, not the `vally` exit code. Vally can
           # exit 1 after a passing run if its child processes miss the shutdown
           # window ("Timed out while shutting down executors.") — that teardown
           # flake must not turn a green shard red. The script reads the verdict
           # from results.jsonl and passes when every eval clears the threshold.
-          - task: PowerShell@2
+          - script: |
+              node "$(Build.SourcesDirectory)/eng/common/scripts/eval/invoke-eval-shard.js" \
+                --eval-args "$(evalArgs)" \
+                --shard-name "$(shardName)" \
+                --output-dir "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)" \
+                --skill-eval-prefix "$(Build.SourcesDirectory)/eng/skill-eval" \
+                --threshold 0.8
             displayName: 'vally eval $(shardName)'
-            inputs:
-              pwsh: true
-              filePath: '$(vallyRoot)/scripts/Invoke-EvalShard.ps1'
-              arguments: >-
-                -EvalArgs "$(evalArgs)"
-                -ShardName "$(shardName)"
-                -OutputDir "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)"
-                -SkillEvalPrefix "$(Build.SourcesDirectory)/eng/skill-eval"
-                -Threshold 0.8
-              workingDirectory: '$(vallyRoot)'
+            workingDirectory: '$(vallyRoot)'
             env:
               GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
 
@@ -231,6 +237,11 @@ stages:
         pool:
           vmImage: 'ubuntu-latest'
         steps:
+          - task: UseNode@1
+            displayName: 'Use Node.js 22'
+            inputs:
+              version: '22.x'
+
           # Pull every shard's JUnit into one folder. Match the *.junit.xml files
           # directly and scope to JUnit only, so stray XML (e.g. the mock DLL's
           # .NET doc XML) can't slip in as a fake shard. Each artifact keeps its
@@ -245,15 +256,12 @@ stages:
 
           # Render the rollup straight to the run's Summary tab (the script emits
           # ##vso[task.uploadsummary]); no separate downloadable copy needed.
-          - task: PowerShell@2
+          - script: |
+              node "$(Build.SourcesDirectory)/eng/common/scripts/eval/build-eval-summary.js" \
+                --results-root "$(Pipeline.Workspace)/eval-results" \
+                --output-path "$(Build.ArtifactStagingDirectory)/eval-summary.md"
             displayName: 'Render Markdown rollup (build summary)'
             condition: always()
-            inputs:
-              pwsh: true
-              filePath: '$(vallyRoot)/scripts/Build-EvalSummary.ps1'
-              arguments: >-
-                -ResultsRoot "$(Pipeline.Workspace)/eval-results"
-                -OutputPath "$(Build.ArtifactStagingDirectory)/eval-summary.md"
 
           # Merge all shards into a single test run for the Tests tab.
           # Phase 1 = report-only: failTaskOnFailedTests=false surfaces the red

@@ -4,7 +4,7 @@ parameters:
     default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json'
   - name: CSharpAPIParserVersion
     type: string
-    default: '1.0.0-dev.20260223.3'
+    default: '1.0.0-dev.20260623.4'
   - name: JavaScriptAPIParser
     type: string
     default: '@azure-tools/ts-genapi@2.0.11'
@@ -307,7 +307,8 @@ extends:
                     @echo off
                     echo Installing .NET tool
                     call dotnet tool uninstall --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
-                    call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
+                    call dotnet tool uninstall --tool-path D:\home\site\wwwroot\csharp-parser Microsoft.ApiView.CsharpParser
+                    call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser Microsoft.ApiView.CsharpParser
                     echo Installing JavaScript parser
                     call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
                     echo Installing Rust parser
@@ -363,7 +364,8 @@ extends:
                     @echo off
                     echo Installing .NET tool
                     call dotnet tool uninstall --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
-                    call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
+                    call dotnet tool uninstall --tool-path D:\home\site\wwwroot\csharp-parser Microsoft.ApiView.CsharpParser
+                    call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser Microsoft.ApiView.CsharpParser
                     echo Installing JavaScript parser
                     call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
                     echo Installing Rust parser
@@ -428,7 +430,8 @@ extends:
                           @echo off
                           echo Installing .NET tool
                           call dotnet tool uninstall --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
-                          call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
+                          call dotnet tool uninstall --tool-path D:\home\site\wwwroot\csharp-parser Microsoft.ApiView.CsharpParser
+                          call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser Microsoft.ApiView.CsharpParser
                           echo Installing JavaScript parser
                           call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
                           echo Installing Rust parser

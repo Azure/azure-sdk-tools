@@ -1,0 +1,236 @@
+name: azsdk-mcp-tool-scenarios
+description: |
+  Evaluates how well the agent can analyze pipeline failures from the Azure SDK JavaScript pipelines.
+version: "1.0"
+type: capability
+
+tags:
+  area: pipeline
+
+environment: azsdk-mcp-mock
+
+config:
+  runs: 1
+  timeout: 5m
+  executor: copilot-sdk
+  model: gpt-5.4
+
+stimuli:
+  - name: js-base64-decode-bug
+    environment:
+      files:
+        - src: ../../../fixtures/analyze-pipeline/stacItemTiler/code/operations.ts
+          dest: sdk/planetarycomputer/planetarycomputer/src/api/data/operations.ts
+        - src: ../../../fixtures/analyze-pipeline/stacItemTiler/code/04_stacItemTiler.spec.ts
+          dest: sdk/planetarycomputer/planetarycomputer/test/public/04_stacItemTiler.spec.ts
+      commands:
+        - git init -q && git add -A && git -c user.email=vally@local -c user.name=vally commit -qm "seed pre-analysis source"
+    prompt: |
+      My JavaScript SDK pipeline failed and I'm trying to figure out what went wrong. Can you help?
+
+      "azsdk-analyze-pipeline" Test Failures Parsed Output:
+      {
+        "_provenance": {
+          "buildId": "6454089",
+          "language": "js",
+          "repository": "Azure/azure-sdk-for-js",
+          "definition": "js - pullrequest",
+          "pipelineUrl": "https://dev.azure.com/azure-sdk/public/_build/results?buildId=6454089",
+          "prUrl": "https://github.com/Azure/azure-sdk-for-js/pull/39003",
+          "sourceCommit": "d8314e78e1b2d6d6d6d21d4c815c765fda5cb560",
+          "category": "code bug",
+          "rootCauseSummary": "Planetary Computer WMTS capability operations accepted application/xml responses but deserialized string bodies with stringToUint8Array(..., \"base64\"), which invoked browser atob on XML text and failed with InvalidCharacterError.",
+          "failedTestCount": 6,
+          "featuredFailures": [
+            "STAC Item Tiler operations > should get WMTS capabilities as XML",
+            "Mosaics Tiler operations > should get mosaics WMTS capabilities as XML",
+            "Collection Tiler operations > should get collection WMTS capabilities"
+          ],
+          "captureDate": "2026-06-23"
+        },
+        "failed_test_titles": {
+          "test/public/04_stacItemTiler.spec.ts": [
+            "STAC Item Tiler operations > should get WMTS capabilities as XML"
+          ],
+          "test/public/05_mosaicsTiler.spec.ts": [
+            "Mosaics Tiler operations > should get mosaics WMTS capabilities as XML"
+          ],
+          "test/public/08_collectionTiler.spec.ts": [
+            "Collection Tiler operations > should get collection WMTS capabilities"
+          ],
+          "dist-test/browser/test/public/04_stacItemTiler.spec.js": [
+            "STAC Item Tiler operations > should get WMTS capabilities as XML"
+          ],
+          "dist-test/browser/test/public/05_mosaicsTiler.spec.js": [
+            "Mosaics Tiler operations > should get mosaics WMTS capabilities as XML"
+          ],
+          "dist-test/browser/test/public/08_collectionTiler.spec.js": [
+            "Collection Tiler operations > should get collection WMTS capabilities"
+          ]
+        },
+        "failed_tasks": [
+          {
+            "pipeline_url": "https://dev.azure.com/azure-sdk/public/_build/results?buildId=6454089",
+            "errors": [
+              {
+                "file": "sdk/planetarycomputer/planetarycomputer/src/api/data/operations.ts",
+                "line": 5993,
+                "message": "Failed to execute 'atob' on 'Window': The string to be decoded is not correctly encoded."
+              },
+              {
+                "file": "sdk/planetarycomputer/planetarycomputer/test/public/04_stacItemTiler.spec.ts",
+                "line": 87,
+                "message": "Failed to execute 'atob' on 'Window': The string to be decoded is not correctly encoded."
+              },
+              {
+                "file": "sdk/planetarycomputer/planetarycomputer/src/api/data/operations.ts",
+                "line": 1880,
+                "message": "Failed to execute 'atob' on 'Window': The string to be decoded is not correctly encoded."
+              },
+              {
+                "file": "sdk/planetarycomputer/planetarycomputer/test/public/05_mosaicsTiler.spec.ts",
+                "line": 100,
+                "message": "Failed to execute 'atob' on 'Window': The string to be decoded is not correctly encoded."
+              },
+              {
+                "file": "sdk/planetarycomputer/planetarycomputer/src/api/data/operations.ts",
+                "line": 3955,
+                "message": "Failed to execute 'atob' on 'Window': The string to be decoded is not correctly encoded."
+              },
+              {
+                "file": "sdk/planetarycomputer/planetarycomputer/test/public/08_collectionTiler.spec.ts",
+                "line": 84,
+                "message": "Failed to execute 'atob' on 'Window': The string to be decoded is not correctly encoded."
+              }
+            ]
+          }
+        ]
+      }
+    constraints:
+      max_turns: 6
+      max_tokens: 8000
+    graders:
+      - type: completed
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-pipeline-troubleshooting
+      - type: output-contains
+        config:
+          substring: "operations.ts"
+      - type: output-matches
+        config:
+          pattern: "(?i)(code bug|logic|test failure|atob|base64)"
+      - type: output-not-matches
+        config:
+          pattern: "(?i)(re-?record|missing recording|retry the pipeline|service outage)"
+      - type: prompt
+        config:
+          model: gpt-5.4
+          scoring: binary
+          threshold: 1.0
+          prompt: |
+            Build 6454089 failed WMTS XML spec tests with
+            "Failed to execute 'atob'": the generated client (operations.ts)
+            treats an XML (application/xml) response body as base64 and calls
+            stringToUint8Array(result.body, "base64"). Does the response
+            (a) identify this as a code bug in operations.ts (XML body wrongly
+            base64-decoded), and (b) recommend a code fix rather than
+            re-recording or retrying the pipeline? Answer "pass" or "fail".
+
+  - name: js-stale-recording
+    environment:
+      files:
+        - src: ../../../fixtures/analyze-pipeline/compute_examples/code/compute_examples.spec.ts
+          dest: sdk/compute/arm-compute/test/compute_examples.spec.ts
+      commands:
+        - git init -q && git add -A && git -c user.email=vally@local -c user.name=vally commit -qm "seed pre-analysis source"
+    prompt: |
+      My JavaScript SDK pipeline failed and I'm trying to figure out what went wrong. Can you help?
+
+      "azsdk-analyze-pipeline" Test Failures Parsed Output:
+      {
+        "_provenance": {
+          "buildId": "6452591",
+          "language": "js",
+          "repository": "Azure/azure-sdk-for-js",
+          "definition": "js - pullrequest",
+          "pipelineUrl": "https://dev.azure.com/azure-sdk/public/_build/results?buildId=6452591",
+          "prUrl": "https://github.com/Azure/azure-sdk-for-js/pull/38990",
+          "sourceCommit": "86867c6f4b3ef434bd9bc859a1b987ca2b84d316",
+          "category": "test failure (missing/stale recording)",
+          "rootCauseSummary": "Compute availabilitySets playback requests used api-version 2026-03-01 while the recorded entries use 2025-11-01, so the test proxy could not find matching GET and DELETE recordings.",
+          "failedTestCount": 2,
+          "featuredFailures": [
+            "Compute test > availabilitySets list test",
+            "Compute test > availabilitySets delete test"
+          ],
+          "captureDate": "2026-06-23"
+        },
+        "failed_test_titles": {
+          "test/compute_examples.spec.ts": [
+            "Compute test > availabilitySets list test",
+            "Compute test > availabilitySets delete test"
+          ]
+        },
+        "failed_tasks": [
+          {
+            "pipeline_url": "https://dev.azure.com/azure-sdk/public/_build/results?buildId=6452591",
+            "errors": [
+              {
+                "file": "sdk/compute/arm-compute/test/compute_examples.spec.ts",
+                "line": 95,
+                "message": "Unable to find a record for the request GET https://Sanitized.azure.com/subscriptions/azure_subscription_id/resourceGroups/SSS3PT_myjstest/providers/Microsoft.Compute/availabilitySets?api-version=2026-03-01 Uri doesn't match:     request <https://Sanitized.azure.com/subscriptions/azure_subscription_id/resourceGroups/SSS3PT_myjstest/providers/Microsoft.Compute/availabilitySets?api-version=2026-03-01>     record  <https://Sanitized.azure.com/subscriptions/azure_subscription_id/resourceGroups/SSS3PT_myjstest/providers/Microsoft.Compute/availabilitySets?api-version=2025-11-01> Header differences: Body differences: "
+              },
+              {
+                "file": "sdk/compute/arm-compute/test/compute_examples.spec.ts",
+                "line": 102,
+                "message": "Unable to find a record for the request DELETE https://Sanitized.azure.com/subscriptions/azure_subscription_id/resourceGroups/SSS3PT_myjstest/providers/Microsoft.Compute/availabilitySets/availabilitySets123?api-version=2026-03-01 Uri doesn't match:     request <https://Sanitized.azure.com/subscriptions/azure_subscription_id/resourceGroups/SSS3PT_myjstest/providers/Microsoft.Compute/availabilitySets/availabilitySets123?api-version=2026-03-01>     record  <https://Sanitized.azure.com/subscriptions/azure_subscription_id/resourceGroups/SSS3PT_myjstest/providers/Microsoft.Compute/availabilitySets/availabilitySets123?api-version=2025-11-01> Header differences: Body differences: "
+              }
+            ]
+          }
+        ]
+      }
+    constraints:
+      max_turns: 6
+      max_tokens: 8000
+    graders:
+      - type: completed
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-pipeline-troubleshooting
+      - type: output-contains
+        config:
+          substring: "compute_examples.spec.ts"
+      - type: output-matches
+        config:
+          pattern: "(?i)(recording|playback|record for the request|api-?version)"
+      - type: output-matches
+        config:
+          pattern: "(?i)(re-?record|record mode|update.*recording|sync.*recording|restore.*recording)"
+      - type: output-not-matches
+        config:
+          pattern: "(?i)(product code bug|service outage)"
+      - type: prompt
+        config:
+          model: gpt-5.4
+          scoring: binary
+          threshold: 1.0
+          prompt: |
+            Build 6452591 failed availabilitySets tests with
+            "Unable to find a record for the request" because the test sends
+            api-version 2026-03-01 while the recordings were made for
+            2025-11-01. Does the response (a) identify this as a stale/missing
+            recording (api-version mismatch), not a product code bug, and
+            (b) recommend re-recording / updating the recordings rather than
+            editing product code? Answer "pass" or "fail".
+
+scoring:
+  weights:
+    skill-invocation: 1
+    output-contains: 1
+    output-matches: 1
+    output-not-matches: 1
+    prompt: 1
+  threshold: 1.0

@@ -1,0 +1,38 @@
+name: azsdk-mcp-tool-scenarios
+description: |
+  Evaluates whether the agent calls the "azsdk-analyze-pipeline" tool.
+version: "1.0"
+type: capability
+
+tags:
+  area: pipeline
+
+environment: azsdk-mcp-mock
+
+config:
+  runs: 1
+  timeout: 30m
+  model: gpt-5.4
+  judge_model: gpt-5.4
+  executor: copilot-sdk
+
+stimuli:
+  - name: azsdk-analyze-pipeline-tool-call
+    prompt: |
+      My pipeline failed and I'm trying to figure out what went wrong. Can you help?
+
+      Pipeline run: https://dev.azure.com/azure-sdk/public/_build/results?buildId=6455504
+    constraints:
+      max_turns: 6
+      max_tokens: 8000
+    graders:
+      - type: completed
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_analyze_pipeline
+
+scoring:
+  weights:
+    tool-calls: 1.0
+  threshold: 1.0

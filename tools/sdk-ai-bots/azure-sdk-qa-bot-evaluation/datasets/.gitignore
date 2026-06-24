@@ -1,5 +1,0 @@
-# Staging is human-review scratch space; never commit.
-_staging/
-
-# Per-file local eval outputs.
-*-eval-results.json

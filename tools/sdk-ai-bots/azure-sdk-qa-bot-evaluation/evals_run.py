@@ -12,7 +12,7 @@ Examples:
         --evaluators bot_evals,groundedness --max_concurrency 8
 
     # Or point at a local curated file directly:
-    python evals_run.py --dataset datasets/basic/typespec.jsonl
+    python evals_run.py --dataset evaluation_datasets/basic/typespec.jsonl
 """
 
 from __future__ import annotations

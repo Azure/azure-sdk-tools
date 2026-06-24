@@ -5,7 +5,7 @@ It scans **all** blob content (no time window), parses each ``# Title / ## Quest
 / ## Answer`` markdown file into canonical cases, extracts inline links into
 ``expected_references``, performs **incremental** dedup against already-curated and
 already-staged cases, and writes only *new* candidates to
-``datasets/_staging/<scenario>.jsonl`` with ``reviewed="todo"`` for human review.
+``evaluation_datasets/_staging/<scenario>.jsonl`` with ``reviewed="todo"`` for human review.
 
 Usage (blob, all content):
     python -m dataset.curate
@@ -35,9 +35,9 @@ _MD_LINK_RE = re.compile(r"\[([^\]]+)\]\((https?://[^)\s]+)\)")
 
 def _repo_paths(script_dir: Path) -> dict[str, Path]:
     return {
-        "staging": script_dir / "datasets" / "_staging",
-        "basic": script_dir / "datasets" / "basic",
-        "perf": script_dir / "datasets" / "perf",
+        "staging": script_dir / "evaluation_datasets" / "_staging",
+        "basic": script_dir / "evaluation_datasets" / "basic",
+        "perf": script_dir / "evaluation_datasets" / "perf",
         "md_download": script_dir / "online-qa-tests",
     }
 

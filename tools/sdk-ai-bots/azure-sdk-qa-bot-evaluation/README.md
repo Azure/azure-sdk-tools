@@ -56,8 +56,8 @@ and dropped, or a leftover `todo` finalized at promote time).
 Validate any file/folder:
 
 ```bash
-python -m dataset.validate datasets/basic
-python -m dataset.validate datasets/basic --require-reviewed
+python -m dataset.validate evaluation_datasets/basic
+python -m dataset.validate evaluation_datasets/basic --require-reviewed
 ```
 
 ## Part 1 — Dataset preparation
@@ -67,7 +67,7 @@ python -m dataset.validate datasets/basic --require-reviewed
 python -m dataset.curate                       # downloads all blobs first
 python -m dataset.curate --source_md_path online-qa-tests   # or use local md
 
-# 2) Human review: edit datasets/_staging/<scenario>.jsonl, fix links/answers,
+# 2) Human review: edit evaluation_datasets/_staging/<scenario>.jsonl, fix links/answers,
 #    set "reviewed": "pass" on keepers.
 
 # 3) Promote "pass" rows into the curated set (append, incremental). Any rows
@@ -78,14 +78,14 @@ python -m dataset.review --target basic      # or --target perf
 python -m dataset.upload --target basic      # qa-bot-basic-<scenario>:<scenario>-YYYY-MM-DD
 ```
 
-`datasets/_staging/` is git-ignored; `datasets/basic/`, `datasets/perf/` and
-`datasets/registry.json` are committed.
+`evaluation_datasets/_staging/` is git-ignored; `evaluation_datasets/basic/`, `evaluation_datasets/perf/` and
+`evaluation_datasets/registry.json` are committed.
 
 ## Part 2 — Running evaluations
 
 We call the bot `/completion` endpoint **concurrently** (`--max_concurrency`, default
 8), collect each answer + context, then grade them inline. Reads cases from the local
-`datasets/<target>/<scenario>.jsonl`.
+`evaluation_datasets/<target>/<scenario>.jsonl`.
 
 ```bash
 # Concurrent /completion collection + inline grading:
@@ -96,7 +96,7 @@ python evals_run.py \
   --baseline_check False --is_ci False
 
 # Or point at a local curated file directly:
-python evals_run.py --dataset datasets/basic/typespec.jsonl --is_ci False
+python evals_run.py --dataset evaluation_datasets/basic/typespec.jsonl --is_ci False
 ```
 
 Set the bot `/completion` endpoint via `BOT_SERVICE_ENDPOINT` (+ `BOT_AGENT_TOKEN_RESOURCE`

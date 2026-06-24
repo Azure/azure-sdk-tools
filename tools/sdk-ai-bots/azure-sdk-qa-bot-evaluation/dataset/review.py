@@ -1,13 +1,13 @@
 """Promote reviewed staging cases into curated per-scenario datasets.
 
 Second step of *dataset preparation*. A human edits the staged files
-(``datasets/_staging/<scenario>.jsonl``), fixes ground_truth/links, and sets
+(``evaluation_datasets/_staging/<scenario>.jsonl``), fixes ground_truth/links, and sets
 ``reviewed: "pass"`` on the cases worth keeping (leaving the rest as ``"todo"``).
 ``review.py`` then **appends** only the ``reviewed=="pass"`` rows into the
 committed, curated locations:
 
-    datasets/basic/<scenario>.jsonl     (PR-gate / online curated sets)
-    datasets/perf/<scenario>.jsonl      (perf set; grows over time, no target size)
+    evaluation_datasets/basic/<scenario>.jsonl     (PR-gate / online curated sets)
+    evaluation_datasets/perf/<scenario>.jsonl      (perf set; grows over time, no target size)
 
 Appending (not overwriting) gives incremental, time-ordered growth. Cases already
 present in the target (by scenario+query hash) are skipped. Promoted (``pass``)
@@ -127,8 +127,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     script_dir = Path(__file__).resolve().parent.parent
-    staging_dir = script_dir / "datasets" / "_staging"
-    target_dir = script_dir / "datasets" / args.target
+    staging_dir = script_dir / "evaluation_datasets" / "_staging"
+    target_dir = script_dir / "evaluation_datasets" / args.target
 
     if not staging_dir.exists():
         logging.error("No staging folder at %s", staging_dir)

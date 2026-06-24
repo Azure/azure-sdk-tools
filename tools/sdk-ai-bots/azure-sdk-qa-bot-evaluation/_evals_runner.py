@@ -520,7 +520,7 @@ def resolve_records(dataset_spec: str, *, script_dir: Path) -> tuple[list[dict[s
 
     Accepts:
       * ``<path>.jsonl``              -> read that file; scenario = file stem.
-      * ``qa-bot-<target>-<scenario>[:version]`` -> read ``datasets/<target>/<scenario>.jsonl``.
+      * ``qa-bot-<target>-<scenario>[:version]`` -> read ``evaluation_datasets/<target>/<scenario>.jsonl``.
     """
     candidate = Path(dataset_spec)
     if dataset_spec.endswith(".jsonl") or candidate.exists():
@@ -536,7 +536,7 @@ def resolve_records(dataset_spec: str, *, script_dir: Path) -> tuple[list[dict[s
             )
         target = parts[2]
         scenario = "-".join(parts[3:])
-        path = script_dir / "datasets" / target / f"{scenario}.jsonl"
+        path = script_dir / "evaluation_datasets" / target / f"{scenario}.jsonl"
 
     if not path.exists():
         raise FileNotFoundError(f"Dataset file not found for completion mode: {path}")

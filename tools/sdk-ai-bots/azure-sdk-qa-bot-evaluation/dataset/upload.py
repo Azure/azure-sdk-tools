@@ -3,7 +3,7 @@
 Third step of *dataset preparation*. Each curated file becomes one Foundry Dataset
 asset named ``qa-bot-<target>-<scenario>`` with version ``<scenario>-YYYY-MM-DD``
 (O3: one asset per scenario, named/versioned by scenario + time). The returned
-asset id is recorded in ``datasets/registry.json`` so evaluation runs can resolve
+asset id is recorded in ``evaluation_datasets/registry.json`` so evaluation runs can resolve
 ``--dataset <name:latest>`` to an asset id.
 
 Usage:
@@ -112,8 +112,8 @@ def main(argv: list[str] | None = None) -> int:
 
     load_dotenv()
     script_dir = Path(__file__).resolve().parent.parent
-    target_dir = script_dir / "datasets" / args.target
-    registry_path = script_dir / "datasets" / REGISTRY_NAME
+    target_dir = script_dir / "evaluation_datasets" / args.target
+    registry_path = script_dir / "evaluation_datasets" / REGISTRY_NAME
 
     if not target_dir.exists():
         logging.error("No curated folder at %s", target_dir)

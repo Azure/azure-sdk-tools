@@ -28,7 +28,7 @@ public class PipelineAnalysisTool(
     IAzureService azureService,
     IDevOpsService devopsService,
     ILogAnalysisHelper logAnalysisHelper,
-    ITestHelper testHelper,
+    ITestResultParserResolver parserResolver,
     ICopilotAgentRunner copilotAgentRunner,
     ILogger<PipelineAnalysisTool> logger
 ) : MCPTool
@@ -462,7 +462,13 @@ public class PipelineAnalysisTool(
             {
                 foreach (var file in testFiles.Value)
                 {
-                    var failed = await testHelper.GetFailedTestCases(file, ct: ct);
+                    var parser = parserResolver.Resolve(file);
+                    if (parser == null)
+                    {
+                        logger.LogWarning("Skipping unrecognized test result format: {FilePath}", file);
+                        continue;
+                    }
+                    var failed = await parser.GetFailedTestCases(file, ct: ct);
                     failedTests.Items.AddRange(failed.Items);
                 }
             }

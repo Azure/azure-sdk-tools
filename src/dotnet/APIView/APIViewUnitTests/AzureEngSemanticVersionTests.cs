@@ -136,5 +136,62 @@ namespace APIViewUnitTests
         {
             Assert.Equal(expected, new AzureEngSemanticVersion(version).IsDailyDevBuild);
         }
+
+        #region Python Post-release
+
+        [Theory]
+        [InlineData("1.0.0.post1", false, "GA", 1)]
+        [InlineData("1.0.0b2.post1", true, "Beta", 1)]
+        [InlineData("1.0.0.post", false, "GA", 0)]
+        [InlineData("1.0.0-post1", false, "GA", 1)]
+        [InlineData("1.0.0POST1", false, "GA", 1)]
+        public void ParsePythonPostRelease_ShouldParseCorrectly(string version, bool isPrerelease, string versionType, int postNum)
+        {
+            var ver = new AzureEngSemanticVersion(version, "Python");
+            Assert.True(ver.IsSemVerFormat);
+            Assert.True(ver.IsPostRelease);
+            Assert.Equal(postNum, ver.PostReleaseNumber);
+            Assert.Equal(isPrerelease, ver.IsPrerelease);
+            Assert.Equal(versionType, ver.VersionType);
+        }
+
+        [Fact]
+        public void NonPythonPostLabel_ShouldTreatAsPrerelease()
+        {
+            var ver = new AzureEngSemanticVersion("1.0.0-post.1", "csharp");
+            Assert.True(ver.IsSemVerFormat);
+            Assert.False(ver.IsPostRelease);
+            Assert.Equal("post", ver.PrereleaseLabel);
+        }
+
+        [Fact]
+        public void SortPythonVersions_WithPostReleases_ShouldSortCorrectly()
+        {
+            var versions = new List<string>
+            {
+                "2.0.0", "1.0.0.post1", "2.0.0b1", "1.0.0",
+                "2.0.0b1.post1", "2.0.0.post1"
+            };
+            var expectedSort = new List<string>
+            {
+                "2.0.0.post1", "2.0.0", "2.0.0b1.post1",
+                "2.0.0b1", "1.0.0.post1", "1.0.0"
+            };
+
+            var sortedVersions = AzureEngSemanticVersion.SortVersionStrings(versions, "Python");
+            Assert.Equal(expectedSort, sortedVersions);
+        }
+
+        [Theory]
+        [InlineData("1.0.0.post1", "Python", true)]
+        [InlineData("1.0.0", "Python", false)]
+        [InlineData("1.0.0-post.1", "csharp", false)]
+        public void IsPostRelease_ShouldDetectCorrectly(string version, string language, bool expected)
+        {
+            var ver = new AzureEngSemanticVersion(version, language);
+            Assert.Equal(expected, ver.IsPostRelease);
+        }
+
+        #endregion
     }
 }

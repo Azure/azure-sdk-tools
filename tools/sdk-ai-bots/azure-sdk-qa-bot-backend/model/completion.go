@@ -43,6 +43,7 @@ const (
 	Source_AzureSDKForNetDocs              Source = "azure_sdk_for_net_docs"
 	Source_AzureRestAPISpecDocs            Source = "azure_rest_api_specs_docs"
 	Source_AzureOpenapiDiffDocs            Source = "azure_openapi_diff_docs"
+	Source_AzureSDKToolsDocs               Source = "azure_sdk_tools_docs"
 	Source_APISpecViewQA                   Source = "static_api_spec_view_qa"
 	Source_TypeSpecAzureResourceManagerLib Source = "typespec-azure-resource-manager-lib"
 )

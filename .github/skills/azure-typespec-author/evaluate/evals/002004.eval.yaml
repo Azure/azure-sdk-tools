@@ -1,79 +1,138 @@
 name: azure-typespec-author-eval
 description: Evaluation suite for azure-typespec-author.
 version: "1.0"
-type: capability               # capability | regression
+type: capability # capability | regression
 
 # Root-level environment
 environment: azsdk-mcp
 
 # Execution configuration
 config:
-  runs: 1                      # Trials per stimulus
-  timeout: 1800                # Seconds per trial
-  model: claude-opus-4.6    #gpt-4o #claude-sonnet-4.6 # Model for agent execution
-  executor: copilot-sdk        # Which executor to use
+  runs: 1 # Trials per stimulus
+  timeout: "660s" # Seconds per trial
+  model: claude-opus-4.6 #gpt-4o #claude-sonnet-4.6 # Model for agent execution
+  executor: copilot-sdk # Which executor to use
 
 # Test cases
 stimuli:
-- prompt: |
-    Define a "badge assignment" extension resource. It should be an extension resource that can be attached to an employee. Ensure the definition meets TypeSpec Azure guidelines.
-  name: 002004-ARM-define-extension-resource
-  constraints:
-    max_turns: 10
-    max_tokens: 5000
-  environment:
-    files:
-    - src: ../fixtures/002004-ARM-define-extension-resource/badgeAssignment.tsp
-      dest: badgeAssignment.tsp
-    - src: ../fixtures/002004-ARM-define-extension-resource/employee.tsp
-      dest: employee.tsp
-    - src: ../fixtures/002004-ARM-define-extension-resource/main.tsp
-      dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
-      dest: readme.md
-    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
-      dest: shared.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
-      dest: tspconfig.yaml
-  graders:
-  - type: tool-calls
-    config:
-      required:
-        - edit
-        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
-        - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
-    config:
-      required:
-        - azure-typespec-author
-  - type: file-matches
-    config:
-      path: badgeAssignment.tsp
-      pattern: model BadgeAssignment is ExtensionResource<BadgeAssignmentProperties>
-  - type: file-matches
-    config:
-      path: badgeAssignment.tsp
-      pattern: '@visibility\(Lifecycle\.Read\)'
-  - type: file-matches
-    config:
-      path: badgeAssignment.tsp
-      pattern: Extension\.Read<|Extension\.CreateOrReplaceAsync<|Extension\.CustomPatch(Sync|Async)<|Extension\.DeleteWithoutOkAsync<
-  - type: file-matches
-    config:
-      path: badgeAssignment.tsp
-      pattern: Extension\.ListByTarget<
-  - type: prompt
-    config:
-      scoring: scale_1_5
-      threshold: 1.0
-      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
-      model: claude-opus-4.6
+  - name: 002004-ARM-define-extension-resource-fromProxyResource-trigger
+    tags:
+      suite: "armtemplate"
+      mode: "trigger"
+    prompt: |
+      Define a "badge assignment" extension resource. It should be an extension resource that can be attached to an employee. Ensure the definition meets TypeSpec Azure guidelines.
+    environment: &shared_environment
+      files:
+        - src: ../fixtures/002004-ARM-define-extension-resource/badgeAssignment.tsp
+          dest: badgeAssignment.tsp
+        - src: ../fixtures/002004-ARM-define-extension-resource/employee.tsp
+          dest: employee.tsp
+        - src: ../fixtures/002004-ARM-define-extension-resource/main.tsp
+          dest: main.tsp
+        - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+          dest: package-lock.json
+        - src: ../fixtures/Microsoft.Widget/Widget/package.json
+          dest: package.json
+        - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+          dest: readme.md
+        - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+          dest: shared.tsp
+        - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+          dest: tspconfig.yaml
+      commands:
+        - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
+    graders:
+      - type: "tool-calls"
+        config:
+          required:
+            - "edit"
+            - "azure-sdk-mcp-azsdk_run_typespec_validation"
+      - type: "skill-invocation"
+        config:
+          required:
+            - "azure-typespec-author"
+    constraints:
+      max_turns: 5
+      max_tokens: 1000000
+  - name: 002004-ARM-define-extension-resource-fromProxyResource-forced
+    tags:
+      suite: "armtemplate"
+      mode: "forced"
+    prompt: |
+      @azure-typespec-author Define a "badge assignment" extension resource. It should be an extension resource that can be attached to an employee. Ensure the definition meets TypeSpec Azure guidelines.
+    environment: *shared_environment
+    graders:
+      - type: "tool-calls"
+        config:
+          required:
+            - "edit"
+            - "azure-sdk-mcp-azsdk_run_typespec_validation"
+      - type: "file-matches"
+        config:
+          pattern: "model BadgeAssignment is ExtensionResource<BadgeAssignmentProperties>"
+          path: "badgeAssignment.tsp"
+      - type: "file-matches"
+        config:
+          pattern: '@visibility\(Lifecycle\.Read\)'
+          path: "badgeAssignment.tsp"
+      - type: "file-matches"
+        config:
+          pattern: 'Extension\.Read<|Extension\.CreateOrReplaceAsync<|Extension\.CustomPatch(Sync|Async)<|Extension\.DeleteWithoutOkAsync<'
+          path: "badgeAssignment.tsp"
+      - type: "file-matches"
+        config:
+          pattern: 'Extension\.ListByTarget<'
+          path: "badgeAssignment.tsp"
+      - type: "prompt"
+        config:
+          threshold: 1
+          model: "claude-opus-4.6"
+          scoring: "scale_1_5"
+          prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."
+    constraints:
+      max_turns: 5
+      max_tokens: 1000000
+  - name: 002004-ARM-define-extension-resource-fromProxyResource-no-skill
+    tags:
+      suite: "armtemplate"
+      mode: "no-skill"
+    prompt: 'Define a "badge assignment" extension resource. It should be an extension resource that can be attached to an employee. Ensure the definition meets TypeSpec Azure guidelines.'
+    environment: *shared_environment
+    graders:
+      - type: "tool-calls"
+        config:
+          required:
+            - "edit"
+      - type: "file-matches"
+        config:
+          path: "badgeAssignment.tsp"
+          pattern: "model BadgeAssignment is ExtensionResource<BadgeAssignmentProperties>"
+      - type: "file-matches"
+        config:
+          path: "badgeAssignment.tsp"
+          pattern: '@visibility\(Lifecycle\.Read\)'
+      - type: "file-matches"
+        config:
+          path: "badgeAssignment.tsp"
+          pattern: 'Extension\.Read<|Extension\.CreateOrReplaceAsync<|Extension\.CustomPatch(Sync|Async)<|Extension\.DeleteWithoutOkAsync<'
+      - type: "file-matches"
+        config:
+          path: "badgeAssignment.tsp"
+          pattern: 'Extension\.ListByTarget<'
+      - type: "prompt"
+        config:
+          prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."
+          model: "claude-opus-4.6"
+          scoring: "scale_1_5"
+          threshold: 1.0
+    constraints:
+      max_turns: 6
+      max_tokens: 100000
+
 scoring:
   weights:
+    prompt: 1
     tool-calls: 1
     skill-invocation: 1
-    prompt: 1
     file-matches: 4
-  threshold: 1.0
+  threshold: 1

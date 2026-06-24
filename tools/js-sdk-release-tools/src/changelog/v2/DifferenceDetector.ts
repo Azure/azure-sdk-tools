@@ -2,6 +2,7 @@ import {
   AssignDirection,
   AstContext,
   createAstContext,
+  DiffLocation,
   DiffPair,
   DiffReasons,
   patchClass,
@@ -78,7 +79,10 @@ export class DifferenceDetector {
     });
 
     this.result?.classes.forEach((v, k) => {
-      if (this.hasIgnoreTargetNames(v)) this.result?.classes.delete(k);
+      let filtered = this.filterIgnoreTargetNames(v);
+      filtered = this.filterClassPropertiesMovedToInternals(filtered, k);
+      if (filtered.length === 0) this.result?.classes.delete(k);
+      else this.result?.classes.set(k, filtered);
     });
 
     this.result?.typeAliases.forEach((v, k) => {
@@ -143,6 +147,98 @@ export class DifferenceDetector {
       const name = pair.target?.name || pair.source?.name;
       return name && ignoreTargets.includes(name) && pair.reasons === DiffReasons.Removed;
     });
+  }
+
+  // Returns only the diff pairs that are NOT for ignored target names.
+  // This allows real breaking changes in the same class to still be detected.
+  private filterIgnoreTargetNames(v: DiffPair[]): DiffPair[] {
+    const ignoreTargets = ['resumeFrom', '$host', 'endpoint'];
+    return v.filter((pair) => {
+      const name = pair.target?.name || pair.source?.name;
+      return !(name && ignoreTargets.includes(name) && pair.reasons === DiffReasons.Removed);
+    });
+  }
+
+  // Filters out class property removals that are "by design" when a property is no longer
+  // a public class member but is still accessible via the current client's constructor
+  // signatures. This is applied to every SDK transition (not just HLC -> Modular), because
+  // the baseline SDK type detected from a downloaded npm package can be unreliable, and the
+  // constructor-based check below is sufficient on its own to decide whether the removal is
+  // non-breaking. A removed property is considered non-breaking when it is still accessible as:
+  //   1. The constructor parameter name itself (e.g. subscriptionId)
+  //   2. A property on the constructor parameter type (e.g. options?: XxxOptionalParams
+  //      exposing apiVersion, cloudSetting, etc.)
+  private filterClassPropertiesMovedToInternals(v: DiffPair[], className: string): DiffPair[] {
+    const currentClass = this.context!.current.getClass(className);
+    if (!currentClass) return v;
+
+    const knownNames = new Set<string>();
+
+    // Constructor parameters — ts-morph's getMembers() filters out bodyless
+    // ConstructorDeclaration nodes (API-view declarations have signature-only constructors),
+    // so iterate compilerNode.members directly.
+    // For each parameter we collect:
+    //   a) the parameter name itself (e.g. subscriptionId → filtered directly)
+    //   b) all property names of the parameter's type, but ONLY for "option bag" types
+    //      declared in the current project's own source files.
+    //      Primitives (string, number, …) and library/external types (TokenCredential, etc.)
+    //      are skipped to avoid polluting knownNames with built-in members like
+    //      `length`, `toString`, `getToken`, which could hide real breaking changes.
+    const checker = currentClass.getSourceFile().getProject().getProgram().compilerObject.getTypeChecker();
+    const projectFileNames = new Set(
+      currentClass
+        .getSourceFile()
+        .getProject()
+        .getSourceFiles()
+        .map((sf) => sf.compilerNode.fileName)
+    );
+    for (const rawMember of (currentClass.compilerNode as ts.ClassDeclaration).members) {
+      if (rawMember.kind !== ts.SyntaxKind.Constructor) continue;
+      const ctor = rawMember as ts.ConstructorDeclaration;
+      for (const param of ctor.parameters) {
+        if (ts.isIdentifier(param.name)) {
+          knownNames.add(param.name.text);
+          // Strip undefined from optional params (T | undefined → T) before property lookup
+          const paramType = checker.getNonNullableType(checker.getTypeAtLocation(param));
+          // Only expand properties for types declared in this project's source files
+          // (i.e., user-defined option bags like XxxOptionalParams).  Primitives and
+          // external library types (from lib.d.ts / node_modules) are excluded.
+          if (this.isProjectLocalType(paramType, checker, projectFileNames)) {
+            for (const prop of checker.getPropertiesOfType(paramType)) {
+              knownNames.add(prop.name);
+            }
+          }
+        }
+      }
+    }
+
+    if (knownNames.size === 0) return v;
+
+    return v.filter((pair) => {
+      if (pair.location !== DiffLocation.Property || (pair.reasons & DiffReasons.Removed) === 0) return true;
+      const name = pair.target?.name;
+      return !name || !knownNames.has(name);
+    });
+  }
+
+  // Returns true only for types whose symbol is declared in the project's own source files
+  // (i.e., user-defined option-bag interfaces such as XxxOptionalParams).
+  // Primitives (string, number, boolean, …) have no symbol; external library types
+  // (TokenCredential, PagedAsyncIterableIterator, …) are declared in node_modules or
+  // lib.d.ts — none of those match the project file set, so they are excluded.
+  private isProjectLocalType(type: ts.Type, checker: ts.TypeChecker, projectFileNames: Set<string>): boolean {
+    // Union types: treat as a local option-bag if ALL non-undefined constituent types are local.
+    // This handles the common pattern `XxxOptionalParams | undefined`.
+    if (type.isUnion()) {
+      return type.types
+        .filter((t) => !(t.flags & ts.TypeFlags.Undefined))
+        .every((t) => this.isProjectLocalType(t, checker, projectFileNames));
+    }
+    const symbol = type.getSymbol() ?? (type as ts.Type & { aliasSymbol?: ts.Symbol }).aliasSymbol;
+    if (!symbol) return false;
+    const decls = symbol.getDeclarations();
+    if (!decls || decls.length === 0) return false;
+    return decls.some((d) => projectFileNames.has(d.getSourceFile().fileName));
   }
 
   // Returns the target name for a baseline operations-group interface.

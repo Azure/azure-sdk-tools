@@ -15,6 +15,7 @@ import { logger } from '../../utils/logger.js';
 import { exists } from 'fs-extra';
 import unixify from 'unixify';
 import { codeOwnersAndIgnoreLinkGenerator } from '../../common/codeOwnersAndIgnoreLink/codeOwnersAndIgnoreLinkGenerator.js';
+import { changeReadmeMd } from '../../hlc/utils/changeReadmeMd.js';
 
 // !!!IMPORTANT:
 // this function should be used ONLY in
@@ -50,6 +51,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
     // TODO: to be compatible with current tool, input relative generated package dir
     const changelog = await generateChangelogAndBumpVersion(relativePackageDirToSdkRoot, options);
     updateChangelogResult(packageResult, changelog);
+    changeReadmeMd(packageDirectory);
     await tryBuildSamples(packageDirectory, options.sdkRepoRoot, options.runMode);
 
     const npmPackageInfo = await getNpmPackageInfo(packageDirectory);

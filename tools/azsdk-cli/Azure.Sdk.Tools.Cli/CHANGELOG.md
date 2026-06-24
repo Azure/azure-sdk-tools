@@ -1,14 +1,111 @@
 # Release History
 
-## 0.6.13 (Unreleased)
+## 0.6.22 (2026-06-22)
 
 ### Features Added
 
+- Added an `editScope` parameter (`--edit-scope`) to the `customized-update` command / `azsdk_customized_code_update` MCP tool. It is a flags enum (`CustomCode`, `SpecInputs`, `All`; default `All`). `CustomCode` restricts the tool to custom (non-generated) code: it never edits spec inputs (client.tsp/tspconfig.yaml) or moves the pinned spec commit, and feedback requiring a spec change is reported as out of scope via the `SpecChangeRequired` error code instead of being applied. `SpecInputs` restricts the tool to spec-input edits: it never patches custom code, and feedback requiring a custom-code change is reported as out of scope via the new `CustomCodeChangeRequired` error code instead of being applied. The edit scope is also passed to the feedback classifier so that items addressable either way (e.g. renames doable in spec OR custom code) are biased toward the in-scope axis instead of being reported as out of scope. Regenerating `Generated/` from the unchanged pinned commit is always allowed.
+- Made `tspProjectPath` (`--tsp-project-path`) optional on the `customized-update` command / `azsdk_customized_code_update` MCP tool. It is now required only when the edit scope includes spec inputs (`SpecInputs`/`All`). For custom-code-only repair (`editScope CustomCode`) it may be omitted: regeneration then runs `tsp-client update` without `--local-spec-repo`, so the `tsp-client` CLI regenerates from the repo and commit pinned in the package's `tsp-location.yaml` instead of a local checkout. This enables headless custom-code build repair in a language repo where the spec is not checked out.
+
 ### Breaking Changes
+
+- Replaced the `package find-work-item` CLI command with `package get-work-item`, which returns the full Azure DevOps package work item, and added `package update-work-item` for patching package work item fields.
+
+## 0.6.21 (2026-06-18)
+
+### Features Added
+
+- Added UX and functionality improvements to `azp` sub-commands for pipeline analysis
+- Added --copilot mode to pipeline analysis to call the user's copilot CLI installation for processing
+- Enable pipeline analysis commands to take a GitHub PR link in addition to pipeline link or ID
+
+### Breaking Changes
+
+- Removed upstream RAG-based/hosted model pipeline analysis mode via `azsdk azp analyze --agent`
+
+### Other Changes
+
+- Added service ID and product ID as optional when creating a release plan
+- Replaced product life cycle property with release plan type when fetching attestation status
+
+## 0.6.20 (2026-06-16)
+
+### Features Added
+
+- Set ADO work item ID as release plan ID for new release plans.
+
+### Bugs Fixed
+
+- Fixed MCP server infinite respawn loop when upgrade or install fails due to rate limiting or network errors.
+
+### Other Changes
+
+- Improved GEPA skill quality scores for all shared skills.
+- Updated prepare-release-plan skill with canonical convergence and Release Plan ID documentation.
+
+## 0.6.19 (2026-06-12)
+
+### Features Added
+
+- Release plan is automatically marked as "Finished" when all required language SDKs are either Released or have an Approved exclusion. Management plane checks all 5 languages; data plane checks .NET, Java, Python, and JavaScript only.
+
+### Bugs Fixed
+
+- Release plan tools now accept either the user-facing Release Plan ID or the Azure DevOps work item ID. Tools resolve the supplied number by trying it as a Release Plan ID first, then falling back to a work item ID lookup.
+- `GetReleasePlanForWorkItemAsync` now verifies the work item's `System.WorkItemType` is `Release Plan` before mapping, preventing a non-release-plan work item from being mapped to an empty release plan.
+
+## 0.6.18 (2026-06-08)
+
+### Other Changes
+
+- Updated the release plan response to include the link to release plan dashboard.
+- Added release plan type check in SDK generation and inform the agent that SDK generation is not required for private preview. 
+
+## 0.6.17 (2026-06-02)
+
+### Bugs Fixed
+
+- Fixed issues in the MCP tool to lookup service details using TypeSpec project path.
+
+## 0.6.16 (2026-06-01)
+
+### Bugs Fixed
+
+- Fixed DevOps work item creation for empty DateTime fields (#15795)
+
+## 0.6.15 (2026-05-29)
+
+### Bugs Fixed
+
+- Fixed the Update SDK Details MCP tool to read package names from the TypeSpec metadata emitter output (typespec-metadata.yaml).
+
+## 0.6.14 (2026-05-27)
+
+### Features Added
+
+- Added pre-build step for the .NET plugin during SDK generation
+- Added `apiReleaseType` required parameter to `CreateReleasePlan` (options: Private Preview, Public Preview, GA) to set `Custom.ReleasePlanType` in ADO work items.
+- Spec PR validation against release type: Private Preview requires `azure-rest-api-specs-pr`; Public Preview/GA requires `azure-rest-api-specs`.
+- SDK release type now defaults automatically (beta for preview, stable for GA) when not provided.
+- Duplicate release plan check now considers API release type, allowing separate plans for different release stages.
+- Release plan title format updated to include release type (e.g., "Private Preview release plan for Contoso.Management").
+
+### Breaking Changes
+
+- Removed `userEmail` parameter from `CreateReleasePlan`; email is resolved automatically.
+- `sdkReleaseType` parameter in `CreateReleasePlan` is now optional (was required).
+
+## 0.6.13 (2026-05-18)
+
+### Features Added
+
+- Added optional `--release-plan-id` parameter to `update-release-status` CLI command. When provided, it is used as an additional filter on top of the package name search to select the correct release plan. Returns a message if the specified release plan ID is not found among matching plans.
+- Get release plan returns the link to new release planner dashboard https://aka.ms/azsdk/releaseplan-dashboard
 
 ### Bugs Fixed
 
 - `azsdk_release_sdk` now passes a `release_<safeName>=true` template parameter when triggering Java release pipelines so per-package selection works (azure-sdk-for-java#48465). Previously, manually queued Java releases failed fast because no package was selected. (#14832)
+- Removed the check requiring Java package names to include group name in `groupName:packageName` format when updating release status.
 
 ### Other Changes
 

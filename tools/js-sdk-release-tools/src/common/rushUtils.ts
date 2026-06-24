@@ -136,7 +136,7 @@ export async function tryBuildSamples(packageDirectory: string, sdkRepoRoot: str
   const cwd = packageDirectory;
   const options = { ...runCommandOptions, cwd };
   const modularSDKType = getModularSDKType(packageDirectory);
-  let errorAsWarning = runMode !== RunMode.Release;
+  let errorAsWarning = runMode !== RunMode.Release && runMode !== RunMode.SpecPullRequest;
   if (modularSDKType === ModularSDKType.DataPlane) {
     errorAsWarning = true;
   }

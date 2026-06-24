@@ -36,8 +36,8 @@
 /tools/azure-rest-api-specs-examples-automation/ @weidongxu-microsoft
 /tools/codeowners-utils/                @weshaggard @danieljurek
 /tools/fxlister/                        @KrzysztofCwalina
-/tools/github/                          @jsquire @ronniegeraghty
-/tools/github-event-processor/          @benbp @jsquire @ronniegeraghty
+/tools/github/                          @jsquire @lmazuel
+/tools/github-event-processor/          @benbp @jsquire
 /tools/github-team-user-store/          @weshaggard
 /tools/issue-labeler/                   @jsquire @jeo02 @radhgupta
 /tools/js-sdk-release-tools/            @qiaozha @MaryGao @JialinHuang803 @jeremymeng
@@ -71,6 +71,8 @@
 /tools/azsdk-cli/                       @azure/azsdk-cli
 # PRLabel: %azsdk-cli %design-discussion
 /tools/azsdk-cli/docs/specs/            @azure/azsdk-cli
+/.github/skills/                        @azure/azsdk-cli
+/.github/skills/azure-typespec-author/  @azure/azsdk-cli @catalinaperalta
 
 
 ###########
@@ -83,20 +85,22 @@
 # .NET Client Tools
 ###########
 /src/dotnet/                            @azure/azsdknet @jsquire
-/src/dotnet/APIView/                    @tjprescott @AlitzelMendez @helen229 @praveenkuttappan @maririos
+/src/dotnet/APIView/                    @tjprescott @praveenkuttappan
 /tools/net-changelog-gen-mgmt           @ArthurMa1978 @ArcturusZhang
 /tools/snippet-generator/               @Azure/azsdknet @jsquire
 
 ###########
 # APIView parsers
 ###########
-/tools/apiview/                           @tjprescott @AlitzelMendez @helen229 @praveenkuttappan @maririos
+/tools/apiview/                           @tjprescott @praveenkuttappan
 /tools/apiview/emitters/typespec-apiview/ @tjprescott
 /tools/apiview/parsers/cpp-api-parser/    @LarryOsterman
 /tools/apiview/parsers/csharp-api-parser/ @azure/azsdknet @jsquire
 /tools/apiview/parsers/js-api-parser/     @jeremymeng @maorleger
 /src/swift/                               @tjprescott
 /src/java/apiview-java-processor/         @JonathanGiles @alzimmermsft @srnagar
+/packages/python-packages/apiview-copilot/ @tjprescott
+/packages/python-packages/*stub*/         @l0lawrence
 /src/go/                                  @jhendrixMSFT @chlowell @RickWinter
 
 ###########

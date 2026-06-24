@@ -62,5 +62,8 @@
         "src",
         "index.*",
         "README.md"
-    ]
+    ],
+    "overrides": {
+        "js-yaml": "^4.2.0"
+    }
 }

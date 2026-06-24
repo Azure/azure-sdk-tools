@@ -35,6 +35,19 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
         }
 
         /// <summary>
+        /// Load the CODEOWNERS content from the file or URL and parse the entries while
+        /// returning block-formatting diagnostics to the caller.
+        /// </summary>
+        public static CodeownersParseResult ParseCodeownersFileWithDiagnostics(string codeownersFilePathOrUrl,
+                                                                               string teamStorageURI = null,
+                                                                               int startLine = -1,
+                                                                               int endLine = -1)
+        {
+            List<string> codeownersFile = FileHelpers.LoadFileAsStringList(codeownersFilePathOrUrl);
+            return ParseCodeownersEntriesWithDiagnostics(codeownersFile, teamStorageURI, startLine, endLine);
+        }
+
+        /// <summary>
         /// Given a CODEOWNERS file as a List&gt;string&lt;, parse the Codeowners entries.
         /// <param name="codeownersFile">Codeowners file as a List&gt;string&lt;</param>
         /// <param name="teamStorageURI">The URI of the team storage data if being overridden.</param>
@@ -46,8 +59,25 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
                                                                    int startLine = -1,
                                                                    int endLine = -1)
         {
+            var result = ParseCodeownersEntriesWithDiagnostics(codeownersFile, teamStorageURI, startLine, endLine);
+            foreach (var error in result.BlockErrors)
+            {
+                Console.Error.WriteLine($"Block error encountered while parsing, entry will be skipped.\n{error}");
+            }
+            return result.Entries;
+        }
+
+        /// <summary>
+        /// Given a CODEOWNERS file as a List&lt;string&gt;, parse the entries while
+        /// returning block-formatting diagnostics to the caller.
+        /// </summary>
+        public static CodeownersParseResult ParseCodeownersEntriesWithDiagnostics(List<string> codeownersFile,
+                                                                                  string teamStorageURI = null,
+                                                                                  int startLine = -1,
+                                                                                  int endLine = -1)
+        {
             OwnerDataUtils ownerDataUtils = new OwnerDataUtils(teamStorageURI);
-            List<CodeownersEntry> codeownersEntries = new List<CodeownersEntry>();
+            CodeownersParseResult result = new CodeownersParseResult();
 
             if (startLine == -1)
             {
@@ -78,22 +108,25 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
                                                  codeownersFile);
                     if (errors.Count > 0)
                     {
-                        // There should only be a single block error here.
-                        foreach (BaseError error in errors)
-                        {
-                            Console.Error.WriteLine($"Block error encountered while parsing, entry will be skipped.\n{error}");
-                        }
+                       // There should only be a single block error here.
+                       foreach (BaseError error in errors)
+                       {
+                           if (error is BlockFormattingError blockError)
+                           {
+                               result.BlockErrors.Add(blockError);
+                           }
+                       }
                     }
                     else
                     {
-                        codeownersEntries.Add(ParseCodeownersEntryFromBlock(ownerDataUtils, currentLineNum, blockEnd, codeownersFile));
+                       result.Entries.Add(ParseCodeownersEntryFromBlock(ownerDataUtils, currentLineNum, blockEnd, codeownersFile));
                     }
                     // After processing the block, set the current line to the end line which will get
                     // incremented and continue the processing the line after the block
                     currentLineNum = blockEnd;
                 }
             }
-            return codeownersEntries;
+            return result;
         }
 
         /// <summary>

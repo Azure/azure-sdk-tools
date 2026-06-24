@@ -97,7 +97,7 @@ steps:
   - task: NuGetAuthenticate@1
     displayName: Authenticate NuGet
 
-  # Pre-build the azsdk-cli MCP server and the mock MCP server used by trigger evals
+  # Pre-build the azsdk-cli MCP server (and optionally the mock MCP server used by trigger evals)
   - script: |
       set -e
       dotnet restore tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj

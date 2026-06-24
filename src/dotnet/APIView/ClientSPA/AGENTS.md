@@ -2,13 +2,13 @@
 
 ## Overview
 
-Angular 20 frontend SPA. Builds to `../APIViewWeb/wwwroot/spa` for hosting by the ASP.NET backend.
+Angular 22 frontend SPA. Builds to `../APIViewWeb/wwwroot/spa` for hosting by the ASP.NET backend.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and contribution details.
 
 ## Tech Stack
 
-- **Angular 20** with standalone components
+- **Angular 22** with standalone components
 - **PrimeNG** for UI components, **Bootstrap** for layout
 - **Monaco Editor** via `ngx-monaco-editor-v2` for code display
 - **SignalR** (`@microsoft/signalr`) for real-time updates

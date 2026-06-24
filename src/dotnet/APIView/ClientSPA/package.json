@@ -90,6 +90,7 @@
     "undici": "^7.28.0",
     "serialize-javascript": "^7.0.5",
     "@angular/build": {
+      "vite": "^7.3.5",
       "vitest": "^4.0.18"
     },
     "external-editor": {

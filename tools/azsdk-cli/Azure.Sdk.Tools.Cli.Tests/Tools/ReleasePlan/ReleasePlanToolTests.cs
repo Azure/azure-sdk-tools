@@ -80,6 +80,20 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
+        public async Task Test_Create_releasePlan_copies_product_details_from_previous_release_plan()
+        {
+            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true);
+            Assert.IsNotNull(releaseplan);
+            Assert.IsNull(releaseplan.ResponseError, $"Unexpected error: {releaseplan.ResponseError}");
+
+            // Product name, type and lifecycle should be copied from the previous release plan's product info.
+            Assert.That(releaseplan.ReleasePlanDetails?.ProductName, Is.EqualTo("Contoso Management Product Name"));
+            Assert.That(releaseplan.ReleasePlanDetails?.ProductType, Is.EqualTo("Offering"));
+            Assert.That(releaseplan.ReleasePlanDetails?.ProductLifecycle, Is.EqualTo("GA"));
+        }
+
+        [Test]
         public async Task Test_Create_releasePlan_with_invalid_SDK_type()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
@@ -1200,11 +1214,17 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                     Assert.That(fields.ContainsKey("Custom.ProductServiceTreeID"));
                     Assert.That(fields["Custom.ProductServiceTreeID"], Is.EqualTo("22222222-2222-2222-2222-222222222222"));
                     Assert.That(fields.ContainsKey("Custom.ApiSpecProjectPath"));
+                    // Verify product details copied from the triage work item
+                    Assert.That(fields["Custom.ProductName"], Is.EqualTo("Contoso Product"));
+                    Assert.That(fields["Custom.ProductType"], Is.EqualTo("Offering"));
+                    Assert.That(fields["Custom.ProductLifecycle"], Is.EqualTo("GA"));
                 })
                 .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 200 });
             mockDevOps.Setup(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
             mockDevOps.Setup(x => x.UpdateApiSpecVersionAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
             mockDevOps.Setup(x => x.UpdateReleasePlanSDKDetailsAsync(It.IsAny<int>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+            mockDevOps.Setup(x => x.GetProductInfoFromTriageWorkItemAsync("22222222-2222-2222-2222-222222222222", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ProductInfo { ProductServiceTreeId = "22222222-2222-2222-2222-222222222222", ProductName = "Contoso Product", ProductType = "Offering", ProductLifecycle = "GA" });
 
             var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>());
 
@@ -1221,6 +1241,75 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             mockDevOps.Verify(x => x.UpdateWorkItemAsync(200, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Once);
             mockDevOps.Verify(x => x.UpdateSpecPullRequestAsync(200, "https://github.com/Azure/azure-rest-api-specs/pull/35446", It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Test]
+        public async Task Test_UpdateReleasePlan_with_product_id_and_no_triage_asks_for_product_type()
+        {
+            var mockDevOps = new Mock<IDevOpsService>();
+            var releasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 210,
+                ReleasePlanId = 11,
+                IsManagementPlane = true,
+                IsDataPlane = false
+            };
+            mockDevOps.Setup(x => x.ResolveReleasePlanByIdAsync(210, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
+            mockDevOps.Setup(x => x.GetReleasePlanForWorkItemAsync(210, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
+            // No triage work item found for the product ID
+            mockDevOps.Setup(x => x.GetProductInfoFromTriageWorkItemAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((ProductInfo?)null);
+
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>());
+
+            var result = await tool.UpdateReleasePlan(
+                typeSpecProjectPath: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
+                sdkReleaseType: "beta",
+                workItemId: 210,
+                productTreeId: "22222222-2222-2222-2222-222222222222");
+
+            Assert.IsNotNull(result.ResponseError);
+            Assert.That(result.ResponseError, Does.Contain("Product type could not be determined"));
+            // The release plan should not be updated until the product type is provided
+            mockDevOps.Verify(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Test]
+        public async Task Test_UpdateReleasePlan_with_explicit_product_type_proceeds()
+        {
+            var mockDevOps = new Mock<IDevOpsService>();
+            var releasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 220,
+                ReleasePlanId = 12,
+                IsManagementPlane = true,
+                IsDataPlane = false
+            };
+            mockDevOps.Setup(x => x.ResolveReleasePlanByIdAsync(220, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
+            mockDevOps.Setup(x => x.GetReleasePlanForWorkItemAsync(220, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
+            mockDevOps.Setup(x => x.GetProductInfoFromTriageWorkItemAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((ProductInfo?)null);
+            mockDevOps.Setup(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+                .Callback<int, Dictionary<string, string>, CancellationToken>((id, fields, _) =>
+                {
+                    Assert.That(fields["Custom.ProductServiceTreeID"], Is.EqualTo("22222222-2222-2222-2222-222222222222"));
+                    Assert.That(fields["Custom.ProductType"], Is.EqualTo("Feature"));
+                })
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 220 });
+            mockDevOps.Setup(x => x.UpdateReleasePlanSDKDetailsAsync(It.IsAny<int>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>());
+
+            var result = await tool.UpdateReleasePlan(
+                typeSpecProjectPath: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
+                sdkReleaseType: "beta",
+                workItemId: 220,
+                productTreeId: "22222222-2222-2222-2222-222222222222",
+                productType: ProductType.Feature);
+
+            Assert.IsNull(result.ResponseError, $"Unexpected error: {result.ResponseError}");
+            Assert.That(result.Message, Does.Contain("Successfully updated release plan"));
+            mockDevOps.Verify(x => x.UpdateWorkItemAsync(220, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]

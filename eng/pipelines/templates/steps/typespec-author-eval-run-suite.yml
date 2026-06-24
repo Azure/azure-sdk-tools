@@ -1,0 +1,55 @@
+parameters:
+  - name: Suite
+    type: string
+    default: ''
+  - name: EvalFile
+    type: string
+    default: ''
+  - name: SuiteName
+    type: string
+  - name: DisplayName
+    type: string
+  - name: TimeoutMinutes
+    type: number
+  - name: LoadSkills
+    type: boolean
+    default: true
+  - name: Tag
+    type: string
+    default: ''
+
+steps:
+  - script: |
+      SKILL_ARG=""
+      case "${{ parameters.LoadSkills }}" in
+        false|False)
+          mkdir -p /tmp/no-skills
+          SKILL_ARG="--skill-dir /tmp/no-skills"
+          ;;
+      esac
+      TAG_ARG=""
+      if [ -n "${{ parameters.Tag }}" ]; then
+        TAG_ARG="--tag ${{ parameters.Tag }}"
+      fi
+      if [ -n "${{ parameters.Suite }}" ]; then
+        if [ -n "${{ parameters.Tag }}" ]; then
+          echo "Ignoring Tag parameter in suite mode to avoid unsupported --suite + --tag combination"
+        fi
+        vally eval --suite "${{ parameters.Suite }}" --output-dir results --workspace ./debug --verbose $SKILL_ARG
+      else
+        vally eval --eval-spec "suites/${{ parameters.EvalFile }}" --output-dir results --verbose $SKILL_ARG $TAG_ARG
+      fi
+    displayName: ${{ parameters.DisplayName }}
+    workingDirectory: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate
+    timeoutInMinutes: ${{ parameters.TimeoutMinutes }}
+    continueOnError: true
+    condition: always()
+    env:
+      GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+      FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
+
+  - script: |
+      bash .github/skills/azure-typespec-author/evaluate/scripts/report-eval-results.sh "${{ parameters.SuiteName }}"
+    displayName: Report results - ${{ parameters.SuiteName }}
+    continueOnError: true
+    condition: always()

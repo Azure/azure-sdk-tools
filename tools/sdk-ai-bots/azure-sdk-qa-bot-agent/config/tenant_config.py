@@ -49,6 +49,7 @@ SRC_STATIC_TYPESPEC_QA = "static_typespec_qa"
 SRC_STATIC_TYPESPEC_MIGRATION_DOCS = "static_typespec_migration_docs"
 SRC_STATIC_TYPESPEC_TO_SWAGGER_MAPPING = "static_typespec_to_swagger_mapping"
 SRC_TYPESPEC_AZURE_RESOURCE_MANAGER_LIB = "typespec-azure-resource-manager-lib"
+SRC_TYPESPEC_AZURE_PROVIDERHUB_DOCS = "typespec_azure_providerhub_docs"
 
 # -- Azure Guidelines & Standards --
 SRC_AZURE_API_GUIDELINES = "azure_api_guidelines"
@@ -71,6 +72,9 @@ SRC_AUTOREST_JAVA_DOCS = "autorest_java_docs"
 SRC_AZURE_SDK_GUIDELINES = "azure-sdk-guidelines"
 SRC_AZURE_SDK_DOCS_ENG = "azure-sdk-docs-eng"
 SRC_AZURE_SDK_INTERNAL_WIKI = "azure-sdk-internal-wiki"
+
+# -- SDK tools --
+SRC_AZURE_SDK_TOOLS_DOCS = "azure_sdk_tools_docs"
 
 # -- General Azure & review resources --
 SRC_STATIC_AZURE_DOCS = "static_azure_docs"
@@ -138,6 +142,11 @@ _register(
         base_url="https://github.com/Azure/typespec-azure/blob/main/packages/typespec-azure-resource-manager/lib/",
         trim_format=True,
         suffix=".tsp",
+    ),
+    KnowledgeSource(
+        name=SRC_TYPESPEC_AZURE_PROVIDERHUB_DOCS,
+        description="Documentation for Azure TypeSpec ProviderHub.",
+        base_url="https://github.com/Azure/typespec-azure-pr/blob/providerhub/",
     ),
     # -- Azure Guidelines & Standards --
     KnowledgeSource(
@@ -248,6 +257,12 @@ _register(
         name=SRC_STATIC_API_SPEC_VIEW_QA,
         description="Historical Q&A for API specification review covering common validation errors and fixes.",
     ),
+    # -- SDK tools --
+    KnowledgeSource(
+        name=SRC_AZURE_SDK_TOOLS_DOCS,
+        description="Azure SDK tools documentation covering js-sdk-release-tools and related JavaScript SDK tooling.",
+        base_url="https://github.com/Azure/azure-sdk-tools/blob/main/",
+    ),
 )
 
 
@@ -317,6 +332,7 @@ _TYPESPEC_SOURCES = _sources(
     SRC_TYPESPEC_HTTP_SPECS,
     SRC_STATIC_AZURE_DOCS,
     SRC_STATIC_TYPESPEC_TO_SWAGGER_MAPPING,
+    SRC_TYPESPEC_AZURE_PROVIDERHUB_DOCS,
 )
 
 _AZURE_TYPESPEC_AUTHORING_SOURCES = _sources(
@@ -449,6 +465,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_AZURE_SDK_DOCS_ENG,
             SRC_TYPESPEC_AZURE_DOCS,
             SRC_AZURE_REST_API_SPECS_WIKI,
+            SRC_AZURE_SDK_TOOLS_DOCS,
         ),
         source_filter={
             SRC_AZURE_SDK_GUIDELINES: "search.ismatch('typescript', 'title')",

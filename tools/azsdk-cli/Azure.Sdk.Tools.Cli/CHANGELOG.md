@@ -1,14 +1,10 @@
 # Release History
 
-## 0.6.23 (Unreleased)
+## 0.6.23 (2026-06-24)
 
 ### Features Added
 
-### Breaking Changes
-
-### Bugs Fixed
-
-### Other Changes
+- Release plans now resolve and persist Product Name, Product Type, and Product Lifecycle (copied from a previous release plan on create, or from a matching Triage work item on update via a new `--product-type` / `productType` parameter).
 
 ## 0.6.22 (2026-06-22)
 

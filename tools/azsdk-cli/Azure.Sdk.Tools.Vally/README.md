@@ -59,7 +59,7 @@ One prompt → one expected MCP tool. No `environment.git`, no fixtures. Fast; s
 | [`prompt-to-tool-typespec`](evals/tools/prompt-to-tool-typespec.eval.yaml) | typespec | `azsdk_typespec_*`, `azsdk_convert_swagger_to_typespec`, `azsdk_customized_code_update`, `azsdk_run_typespec_validation` |
 | [`prompt-to-tool-verify`](evals/tools/prompt-to-tool-verify.eval.yaml) | engsys | `azsdk_verify_setup` |
 
-#### `evals/workflow-scenarios/` — multi-tool scenarios (5)
+#### `evals/workflow-scenarios/` — multi-tool scenarios (17)
 
 Multi-step prompts that exercise 2+ MCP tools end-to-end. Split into
 `mock/` (hermetic, runs on PR gate) and `live/` (real DevOps / GitHub /
@@ -71,12 +71,70 @@ pipelines, runs nightly).
 | [`typespec-generation-step02`](evals/workflow-scenarios/mock/typespec-generation-step02.eval.yaml) | typespec | mock | Step in the spec-PR generation flow |
 | [`rename-client-property`](evals/workflow-scenarios/mock/rename-client-property.eval.yaml) | typespec | mock | Stub — needs `expected-diff` grader + sparse clone |
 | [`release-planner-workflows`](evals/workflow-scenarios/mock/release-planner-workflows.eval.yaml) | release-plan | mock | Create / re-fetch / link / update release-plan flows (5 stimuli) |
+| [`pipeline-analysis-dotnet`](evals/workflow-scenarios/mock/pipeline-analysis-dotnet.eval.yaml) | pipeline | mock | Root-cause analysis of serialized .NET pipeline failures (TRX) |
+| [`pipeline-analysis-java`](evals/workflow-scenarios/mock/pipeline-analysis-java.eval.yaml) | pipeline | mock | Root-cause analysis of serialized Java pipeline failures (JUnit) |
+| [`pipeline-analysis-js`](evals/workflow-scenarios/mock/pipeline-analysis-js.eval.yaml) | pipeline | mock | Root-cause analysis of serialized JavaScript pipeline failures (JUnit) |
+| [`pipeline-analysis-python`](evals/workflow-scenarios/mock/pipeline-analysis-python.eval.yaml) | pipeline | mock | Root-cause analysis of serialized Python pipeline failures (pytest) |
+| [`pipeline-fixer-dotnet`](evals/workflow-scenarios/mock/pipeline-fixer-dotnet.eval.yaml) | pipeline | mock | Classify-only .NET failures that must not be code-fixed, plus an apply+verify stimulus (build 6455504, Storage Queues version parser) |
+| [`pipeline-fixer-java`](evals/workflow-scenarios/mock/pipeline-fixer-java.eval.yaml) | pipeline | mock | Classify-only Java failures that must not be code-fixed, plus an apply+verify stimulus (representative compute-batch SERVER_ERROR retry concurrency bug) |
+| [`pipeline-fixer-js`](evals/workflow-scenarios/mock/pipeline-fixer-js.eval.yaml) | pipeline | mock | Classify-only JavaScript failures that must not be code-fixed, plus an apply+verify stimulus (build 6454089, planetarycomputer WMTS base64) |
+| [`pipeline-fixer-python`](evals/workflow-scenarios/mock/pipeline-fixer-python.eval.yaml) | pipeline | mock | Classify-only Python failures that must not be code-fixed, plus an apply+verify stimulus (build 6444663, ai-evaluation foundry processor) |
 | [`release-planner`](evals/workflow-scenarios/live/release-planner.eval.yaml) | release-plan | **live** | Create + re-fetch a release plan, kick off SDK gen, link PR back — real DevOps test-area writes |
 
-Live scenarios need a primed `azure-rest-api-specs` clone — run
-[`sync-eval-git-repo.js`](../../../eng/common/scripts/eval/sync-eval-git-repo.js)
-(`node ../../../eng/common/scripts/eval/sync-eval-git-repo.js`; local-only
-helper, auto-refreshes every 24h) before invoking the
+Pipeline analysis evals grade the quality of the LLM's root-cause analysis over
+serialized pipeline failure data, while pipeline fixer evals grade whether the
+agent chooses the right remediation path. Both fixer dimensions — "unfixable
+correctly skipped" and "apply + verify" — run hermetically in the mock tier: the
+apply+verify stimulus overlays the real failing source via `environment.files`
+and verifies against the mock MCP server (which exposes canned package
+build/check/test tools), so it needs no live auth or language toolchain.
+
+**Most pipeline stimuli are grounded in a real Azure DevOps build.** Each mock
+analysis / unfixable-classify / apply+verify stimulus reproduces the real failing
+test, file, error text, and category from an actual `azure-sdk-for-<lang>` CI
+build, and the deterministic graders assert the analysis echoes those real
+tokens. The one exception is the Java apply+verify fixer stimulus, which is a
+faithful, self-contained reduction of a representative compute-batch task-retry
+concurrency bug rather than a single captured build. The triage that produced
+them maps each build to a category: real code bugs become apply+verify fixtures;
+recording / asset failures become unfixable-classify stimuli ("re-record", not a
+code fix); generated-code / validation failures become mock analysis stimuli
+("regenerate", not a code fix).
+
+The **apply+verify** fixer stimulus (one per `mock/pipeline-fixer-<lang>.eval.yaml`)
+makes the apply+verify dimension executable without depending on a full language
+toolchain in the grader. Each stimulus:
+
+- overlays the **real failing source file** (captured at the build's head SHA)
+  into the agent workspace via a per-stimulus `environment.files` block, plus a
+  `commands` step that runs `git init` so the agent can diff/commit;
+- describes the real build / PR / test / error in the prompt and asks the agent
+  to apply the fix;
+- grades the **actual edited file** deterministically with `file-matches` (the
+  fix must appear in the real file) — and, where the buggy form is a single
+  distinctive token, an added `file-not-matches` asserting it is gone — checks
+  `tool-calls` for "verification attempted" (rubric fixer Dim 6), and adds an
+  LLM judge for correctness. The scoring threshold is `1.0`, so every grader
+  must pass; the deterministic file graders are written to discriminate a real
+  fix from the unmodified seed. The fixtures live in
+  [`fixtures/`](fixtures/); their headers document the real build,
+  PR, test, error, and (where the original bug is a large generated file or a
+  concurrency race) note that the fixture is a faithful, self-contained
+  reduction of the same root cause.
+
+Because apply+verify now runs in mock, the whole pipeline-fixer suite is part of
+the hermetic PR gate — no live MCP server, auth, or per-language build/test
+toolchain is required; the files overlay + `file-matches` grading removes the
+toolchain dependency, and the mock MCP server's canned package tools stand in for
+the verification calls.
+
+The generated `live/pipeline-analysis-live.eval.yaml` continuous eval is produced
+by `Generate-LiveEval.ps1` and is gitignored; it calls the real
+`azsdk_analyze_pipeline` tool against the most recent live builds.
+
+Release-planner live scenarios need a primed `azure-rest-api-specs` clone — run
+[`scripts/ensure-specs-clone.ps1`](scripts/ensure-specs-clone.ps1)
+(local-only helper, auto-refreshes every 24h) before invoking the
 `scenarios-live` / `nightly` suite.
 
 **Skill evals (already in repo, *not* part of this PR)** — for reference:
@@ -106,19 +164,19 @@ Azure.Sdk.Tools.Vally/
 ├── .vally.yaml                # Vally config (environments + suites)
 ├── evals/
 │   ├── tools/                  # tool-shape + per-skill trigger evals, hermetic
-│   ├── workflow-scenarios/
-│   │   ├── mock/              # multi-tool scenarios, hermetic (PR gate)
-│   │   └── live/              # multi-tool scenarios, live MCP (nightly)
-│   └── fixtures/              # (future) pinned SHAs + per-eval mocks
-├── fixtures/                  # Per-scenario static input files (env.files)
+│   └── workflow-scenarios/
+│       ├── mock/              # multi-tool scenarios, hermetic (PR gate)
+│       └── live/              # multi-tool scenarios, live MCP + real clones (nightly)
+├── fixtures/                  # Real failing source files (env.files overlay for mock apply+verify fixer stimuli)
 │   └── <scenario-name>/...
 └── Graders/                   # (future) Custom .NET graders
     └── Azure.Sdk.Tools.Vally.csproj  # added when first custom grader lands
 ```
 
-Folder = tier (cost / CI cadence): `unit/` is hermetic + fast,
-`scenarios/mock/` is multi-tool hermetic, `scenarios/live/` is multi-tool
-against real services. Vally's suite filter is positive-match only, so the
+Folder = tier (cost / CI cadence): `evals/tools/` is hermetic + fast,
+`evals/workflow-scenarios/mock/` is multi-tool hermetic, and
+`evals/workflow-scenarios/live/` is multi-tool against real services and clones.
+Vally's suite filter is positive-match only, so the
 mock-vs-live split lives on disk rather than in tags. Feature **area** still
 lives as a `tags:` entry inside each YAML so cross-cuts (e.g. "all
 release-plan evals") select via [`.vally.yaml`](.vally.yaml) suite filters

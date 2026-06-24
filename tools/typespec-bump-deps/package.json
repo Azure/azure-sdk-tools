@@ -35,6 +35,9 @@
     "pacote": "~21.0.0",
     "semver": "^7.7.1"
   },
+  "overrides": {
+    "tar": "^7.5.16"
+  },
   "devDependencies": {
     "@types/chai": "^5.2.1",
     "@types/node": "^22.15.3",

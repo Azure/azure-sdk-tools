@@ -127,6 +127,7 @@ extends:
                 parameters:
                   SkillBranch: ${{ parameters.SkillBranch }}
                   StartQaBotBackend: false
+                  BuildMockMcpServer: true
 
               # Run evaluations — each suite gets its own step with timeout
               # and continueOnError so failures don't block subsequent suites.

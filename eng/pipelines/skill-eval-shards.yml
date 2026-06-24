@@ -1,0 +1,69 @@
+# Skill-compliance eval CI — sharded variant of eng/pipelines/skill-eval.yml.
+#
+# Same workload as the original (run the per-skill Vally evals under .github/skills),
+# but fanned out one job per skill via the shared archetype: BuildMcp (cli + mock) +
+# Detect (glob the skill evals into a matrix) -> RunShard (one leg per eval) -> Summary.
+#
+# The original skill-eval.yml is intentionally kept as-is; this is the template/shard
+# version. Both currently trigger on .github/skills/**; once this one is proven the gate
+# can switch over and the single-job pipeline can be retired.
+#
+# Thin entrypoint (D2): trigger + params + variable group, then `extends` the archetype.
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - .github/skills/**
+      # The skill evals exercise the real cli + mock MCP servers, so a tool-catalog
+      # change can move results and must retrigger the gate.
+      - tools/azsdk-cli/Azure.Sdk.Tools.Cli/**
+      - tools/azsdk-cli/Azure.Sdk.Tools.Mock/**
+      - eng/pipelines/skill-eval-shards.yml
+      - eng/common/pipelines/templates/steps/vally-build-mcp.yml
+      - eng/common/pipelines/templates/steps/vally-collect-stimuli.yml
+      - eng/common/pipelines/templates/steps/vally-run-shard.yml
+      - eng/common/pipelines/templates/steps/vally-summarize.yml
+      - eng/common/pipelines/templates/stages/archetype-vally-eval.yml
+      - eng/common/scripts/eval/**
+      - eng/skill-eval/**
+
+pr: none
+
+parameters:
+  # file = one job per skill eval file (default; the skill count is small).
+  # area = one job per `area` tag (only useful once skills are tagged).
+  - name: shardBy
+    displayName: 'Shard granularity'
+    type: string
+    default: file
+    values:
+      - file
+      - area
+
+variables:
+  # Managed-pool image selection (LINUXPOOL/LINUXVMIMAGE). Repo-local.
+  - template: /eng/pipelines/templates/variables/image.yml
+  # Linked only here (not in the synced templates — D5). Supplies azuresdk-copilot-github-pat.
+  - group: 'AzSDK_Eval_Variable_group'
+
+extends:
+  template: /eng/common/pipelines/templates/stages/archetype-vally-eval.yml
+  parameters:
+    shardBy: ${{ parameters.shardBy }}
+    # The skill evals + their .vally.yaml live under .github/skills.
+    vallyRoot: .github/skills
+    evalRoot: $(Build.SourcesDirectory)/.github/skills
+    # Each skill keeps its evals at <skill>/evals/*.eval.yaml. The single-level glob
+    # deliberately excludes azure-typespec-author/evaluate/ (its own benchmark pipeline).
+    patterns:
+      - '*/evals/*.eval.yaml'
+    # Skill evals route to either the real cli MCP or the mock, so build both.
+    mcpBuilds:
+      - project: tools/azsdk-cli/Azure.Sdk.Tools.Cli
+        outputPath: artifacts/mcp/cli
+      - project: tools/azsdk-cli/Azure.Sdk.Tools.Mock
+        outputPath: artifacts/mcp/mock
+    testRunTitle: 'Skill-compliance evals (sharded)'

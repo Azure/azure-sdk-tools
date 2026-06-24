@@ -191,7 +191,17 @@ namespace Azure.Storage.Queues
             /// <summary>
             /// The 2026-06-06 service version.
             /// </summary>
-            V2026_06_06 = 31
+            V2026_06_06 = 31,
+
+            /// <summary>
+            /// The 2026-10-06 service version.
+            /// </summary>
+            V2026_10_06 = 32,
+
+            /// <summary>
+            /// The 2026-12-06 service version.
+            /// </summary>
+            V2026_12_06 = 33
 #pragma warning restore CA1707 // Identifiers should not contain underscores
         }
 
@@ -204,208 +214,11 @@ namespace Azure.Storage.Queues
         /// </summary>
         public ServiceVersion Version { get; }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="QueueClientOptions"/>
-        /// class.
-        /// </summary>
-        /// <param name="version">
-        /// The <see cref="ServiceVersion"/> of the service API used when
-        /// making requests.
-        /// </param>
-        public QueueClientOptions(ServiceVersion version = LatestVersion)
-        {
-            if (ServiceVersion.V2019_02_02 <= version
-                && version <= StorageVersionExtensions.MaxVersion)
-            {
-                Version = version;
-            }
-            else
-            {
-                throw Errors.VersionNotSupported(nameof(version));
-            }
 
-            this.Initialize();
-            AddHeadersAndQueryParameters();
-        }
-
-        /// <summary> Initializes a new instance of QueueClientOptions from configuration. </summary>
-        /// <param name="section"> The configuration section. </param>
-        [Experimental("SCME0002")]
-        internal QueueClientOptions(IConfigurationSection section) : base(section, null)
-        {
-            Version = LatestVersion;
-            if (section is null || !section.Exists())
-            {
-                return;
-            }
-            if (section["Version"] is string version && TryGetServiceVersion(version, out ServiceVersion serviceVersion))
-            {
-                Version = serviceVersion;
-            }
-            if (Uri.TryCreate(section["GeoRedundantSecondaryUri"], UriKind.Absolute, out Uri geoRedundantSecondaryUri))
-            {
-                GeoRedundantSecondaryUri = geoRedundantSecondaryUri;
-            }
-            if (Enum.TryParse(section["MessageEncoding"], out QueueMessageEncoding messageEncoding))
-            {
-                MessageEncoding = messageEncoding;
-            }
-            if (bool.TryParse(section["EnableTenantDiscovery"], out bool enableTenantDiscovery))
-            {
-                EnableTenantDiscovery = enableTenantDiscovery;
-            }
-            if (section["Audience"] is string audience)
-            {
-                Audience = new QueueAudience(audience);
-            }
-
-            this.Initialize();
-            AddHeadersAndQueryParameters();
-        }
-
-        /// <summary>
-        /// Gets or sets the secondary storage <see cref="Uri"/> that can be read from for the storage account if the
-        /// account is enabled for RA-GRS.
-        ///
-        /// If this property is set, the secondary Uri will be used for GET or HEAD requests during retries.
-        /// If the status of the response from the secondary Uri is a 404, then subsequent retries for
-        /// the request will not use the secondary Uri again, as this indicates that the resource
-        /// may not have propagated there yet. Otherwise, subsequent retries will alternate back and forth
-        /// between primary and secondary Uri.
-        /// </summary>
-        public Uri GeoRedundantSecondaryUri { get; set; }
-
-        /// <summary>
-        /// Gets or sets a message encoding that determines how <see cref="QueueMessage.Body"/> is represented in HTTP requests and responses.
-        /// The default is <see cref="QueueMessageEncoding.None"/>.
-        /// </summary>
-        public QueueMessageEncoding MessageEncoding { get; set; } = QueueMessageEncoding.None;
-
-        /// <inheritdoc />
-        public bool EnableTenantDiscovery { get; set; }
-
-        /// <summary>
-        /// Optional. Performs the tasks needed when a message is received or peaked from the queue but cannot be decoded.
-        ///
-        /// <para>Such message can be received or peaked when <see cref="QueueClient"/> is expecting certain <see cref="QueueMessageEncoding"/>
-        /// but there's another producer that is not encoding messages in expected way. I.e. the queue contains messages with different encoding.</para>
-        ///
-        /// <para><see cref="QueueMessageDecodingFailedEventArgs"/> contains <see cref="QueueClient"/> that has received the message as well as
-        /// <see cref="QueueMessageDecodingFailedEventArgs.ReceivedMessage"/> or <see cref="QueueMessageDecodingFailedEventArgs.PeekedMessage"/>
-        /// with raw body, i.e. no decoding will be attempted so that
-        /// body can be inspected as has been received from the queue.</para>
-        ///
-        /// <para>The <see cref="QueueClient"/> won't attempt to remove the message from the queue. Therefore such handling should be included into
-        /// the event handler itself.</para>
-        ///
-        /// <para>The handler is potentially invoked by both synchronous and asynchronous receive and peek APIs. Therefore implementation of the handler should align with
-        /// <see cref="QueueClient"/> APIs that are being used.
-        /// See <see cref="SyncAsyncEventHandler{T}"/> about how to implement handler correctly. The example below shows a handler with all possible cases explored.
-        /// <code snippet="Snippet:Azure_Storage_Queues_Samples_Sample03_MessageEncoding_MessageDecodingFailedHandlerAsync" language="csharp">
-        /// QueueClientOptions queueClientOptions = new QueueClientOptions()
-        /// {
-        ///     MessageEncoding = QueueMessageEncoding.Base64
-        /// };
-        ///
-        /// queueClientOptions.MessageDecodingFailed += async (QueueMessageDecodingFailedEventArgs args) =&gt;
-        /// {
-        ///     if (args.PeekedMessage != null)
-        ///     {
-        ///         Console.WriteLine($&quot;Invalid message has been peeked, message id={args.PeekedMessage.MessageId} body={args.PeekedMessage.Body}&quot;);
-        ///     }
-        ///     else if (args.ReceivedMessage != null)
-        ///     {
-        ///         Console.WriteLine($&quot;Invalid message has been received, message id={args.ReceivedMessage.MessageId} body={args.ReceivedMessage.Body}&quot;);
-        ///
-        ///         if (args.IsRunningSynchronously)
-        ///         {
-        ///             args.Queue.DeleteMessage(args.ReceivedMessage.MessageId, args.ReceivedMessage.PopReceipt);
-        ///         }
-        ///         else
-        ///         {
-        ///             await args.Queue.DeleteMessageAsync(args.ReceivedMessage.MessageId, args.ReceivedMessage.PopReceipt);
-        ///         }
-        ///     }
-        /// };
-        ///
-        /// QueueClient queueClient = new QueueClient(connectionString, queueName, queueClientOptions);
-        /// </code>
-        /// </para>
-        /// </summary>
-        public event SyncAsyncEventHandler<QueueMessageDecodingFailedEventArgs> MessageDecodingFailed;
-
-        internal SyncAsyncEventHandler<QueueMessageDecodingFailedEventArgs> GetMessageDecodingFailedHandlers() => MessageDecodingFailed;
-
-        #region Advanced Options
-        internal ClientSideEncryptionOptions _clientSideEncryptionOptions;
-        #endregion
-
-        /// <summary>
-        /// Add headers and query parameters in <see cref="DiagnosticsOptions.LoggedHeaderNames"/> and <see cref="DiagnosticsOptions.LoggedQueryParameters"/>
-        /// </summary>
-        private void AddHeadersAndQueryParameters()
-        {
-            Diagnostics.LoggedHeaderNames.Add("Access-Control-Allow-Origin");
-            Diagnostics.LoggedHeaderNames.Add("x-ms-date");
-            Diagnostics.LoggedHeaderNames.Add("x-ms-error-code");
-            Diagnostics.LoggedHeaderNames.Add("x-ms-request-id");
-            Diagnostics.LoggedHeaderNames.Add("x-ms-version");
-            Diagnostics.LoggedHeaderNames.Add("x-ms-approximate-messages-count");
-            Diagnostics.LoggedHeaderNames.Add("x-ms-popreceipt");
-            Diagnostics.LoggedHeaderNames.Add("x-ms-time-next-visible");
-
-            Diagnostics.LoggedQueryParameters.Add("comp");
-            Diagnostics.LoggedQueryParameters.Add("maxresults");
-            Diagnostics.LoggedQueryParameters.Add("rscc");
-            Diagnostics.LoggedQueryParameters.Add("rscd");
-            Diagnostics.LoggedQueryParameters.Add("rsce");
-            Diagnostics.LoggedQueryParameters.Add("rscl");
-            Diagnostics.LoggedQueryParameters.Add("rsct");
-            Diagnostics.LoggedQueryParameters.Add("se");
-            Diagnostics.LoggedQueryParameters.Add("si");
-            Diagnostics.LoggedQueryParameters.Add("sip");
-            Diagnostics.LoggedQueryParameters.Add("sp");
-            Diagnostics.LoggedQueryParameters.Add("spr");
-            Diagnostics.LoggedQueryParameters.Add("sr");
-            Diagnostics.LoggedQueryParameters.Add("srt");
-            Diagnostics.LoggedQueryParameters.Add("ss");
-            Diagnostics.LoggedQueryParameters.Add("st");
-            Diagnostics.LoggedQueryParameters.Add("sv");
-            Diagnostics.LoggedQueryParameters.Add("include");
-            Diagnostics.LoggedQueryParameters.Add("marker");
-            Diagnostics.LoggedQueryParameters.Add("prefix");
-            Diagnostics.LoggedQueryParameters.Add("messagettl");
-            Diagnostics.LoggedQueryParameters.Add("numofmessages");
-            Diagnostics.LoggedQueryParameters.Add("peekonly");
-            Diagnostics.LoggedQueryParameters.Add("popreceipt");
-            Diagnostics.LoggedQueryParameters.Add("visibilitytimeout");
-        }
-
-        /// <summary>
-        /// Create an HttpPipeline from QueueClientOptions.
-        /// </summary>
-        /// <param name="authentication">Optional authentication policy.</param>
-        /// <returns>An HttpPipeline to use for Storage requests.</returns>
-        internal HttpPipeline Build(HttpPipelinePolicy authentication = null)
-        {
-            return this.Build(authentication, GeoRedundantSecondaryUri);
-        }
-
-        /// <summary>
-        /// Create an HttpPipeline from QueueClientOptions.
-        /// </summary>
-        /// <param name="credentials">Optional authentication credentials.</param>
-        /// <returns>An HttpPipeline to use for Storage requests.</returns>
-        internal HttpPipeline Build(object credentials)
-        {
-            return this.Build(credentials, GeoRedundantSecondaryUri);
-        }
-
-        /// <summary>
-        /// Gets or sets the Audience to use for authentication with Azure Active Directory (AAD). The audience is not considered when using a shared key.
-        /// </summary>
-        /// <value>If <c>null</c>, <see cref="QueueAudience.PublicAudience" /> will be assumed.</value>
-        public QueueAudience? Audience { get; set; }
+        // ... (unrelated QueueClientOptions properties, constructors, and Build/
+        //      authentication members elided for fixture brevity; the version-parse
+        //      bug under test lives entirely in the ServiceVersion enum above and
+        //      the TryGetServiceVersion switch below) ...
 
         internal static bool TryGetServiceVersion(string version, out ServiceVersion serviceVersion)
         {

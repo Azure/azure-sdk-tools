@@ -349,11 +349,11 @@ class FoundryResultProcessor:
             # Get role, handling api_role property
             role = getattr(piece, "api_role", None) or getattr(piece, "role", "user")
 
-            # Get content. For both user and assistant turns, ``content`` reflects
-            # what was actually sent on the wire (``converted_value``) so the
-            # stored conversation matches the payload the target received /
-            # produced. When a converter (Base64, Flip, Morse, Caesar, etc.) was
-            # applied, the pre-conversion adversarial objective is preserved as
+            # Get content. ``content`` should reflect what was actually sent on
+            # the wire (``converted_value``) so the stored conversation matches
+            # the payload the target received / produced. When a converter
+            # (Base64, Flip, Morse, Caesar, Tense, etc.) was applied, the
+            # pre-conversion adversarial objective is preserved as
             # ``original_value`` on the same message so consumers can still
             # display / score against the decoded text without losing fidelity
             # of the actual attack surface.
@@ -364,7 +364,14 @@ class FoundryResultProcessor:
             # falls back to ``""`` only when both fields are falsy / missing.
             original = getattr(piece, "original_value", None)
             converted = getattr(piece, "converted_value", None)
-            if converted:
+            if role == "user":
+                # BUG (under test): user turns persist the decoded
+                # ``original_value`` instead of the ``converted_value`` that was
+                # actually transmitted. For converter-based strategies this makes
+                # the conversation show the wrong text, and it lets a multi-turn
+                # callback response leak in as the user message.
+                content = original if original else converted
+            elif converted:
                 content = converted
             elif original:
                 content = original

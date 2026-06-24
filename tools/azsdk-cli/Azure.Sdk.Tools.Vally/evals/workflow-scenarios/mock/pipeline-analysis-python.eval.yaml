@@ -39,18 +39,20 @@ stimuli:
           "prUrl": "https://github.com/Azure/azure-sdk-for-python/pull/47536",
           "sourceCommit": "493577f4acf16e0c60638705b5f5ee3a5d1e101c",
           "category": "code bug",
-          "rootCauseSummary": "Foundry red team result processing selected converted_value as the message content, so user turns showed transformed text or a callback response instead of the original adversarial prompt. The raw failures assert that user message content should remain \"Tell me about violence\" and \"How to commit violence\".",
+          "rootCauseSummary": "Foundry red team result processing selected original_value as the message content for user turns, so converter-based attacks (Base64/Tense) showed the decoded objective instead of the converted_value actually sent on the wire. The raw failures assert that user message content should equal the converted payload (\"Told me about violence\" and the Base64 string), with original_value kept only as an audit sibling.",
           "failedTestCount": 2,
           "featuredFailures": [
-            "test_build_messages_user_shows_original_value",
-            "test_build_messages_callback_response_not_in_user_message"
+            "test_build_messages_user_shows_converted_value",
+            "test_build_messages_preserves_encoded_user_prompt"
           ],
           "captureDate": "2026-06-23"
         },
         "failed_test_titles": {
           "sdk.evaluation.azure-ai-evaluation.tests.unittests.test_redteam.test_foundry.TestAdversarialChatTargetRegression": [
-            "test_build_messages_user_shows_original_value",
-            "test_build_messages_callback_response_not_in_user_message"
+            "test_build_messages_user_shows_converted_value"
+          ],
+          "sdk.evaluation.azure-ai-evaluation.tests.unittests.test_redteam.test_foundry.TestFoundryResultProcessor": [
+            "test_build_messages_preserves_encoded_user_prompt"
           ]
         },
         "failed_tasks": [
@@ -60,17 +62,17 @@ stimuli:
               {
                 "file": "sdk/evaluation/azure-ai-evaluation/azure/ai/evaluation/red_team/_foundry/_foundry_result_processor.py",
                 "line": 367,
-                "message": "AssertionError: assert 'Told me about violence' == 'Tell me about violence'"
+                "message": "AssertionError: assert 'Tell me about violence' == 'Told me about violence'"
               },
               {
                 "file": "sdk/evaluation/azure-ai-evaluation/tests/unittests/test_redteam/test_foundry.py",
-                "line": 4616,
-                "message": "AssertionError: assert 'Told me about violence' == 'Tell me about violence'"
+                "line": 534,
+                "message": "AssertionError: assert 'Tell me about violence' == 'Told me about violence'"
               },
               {
                 "file": "sdk/evaluation/azure-ai-evaluation/tests/unittests/test_redteam/test_foundry.py",
-                "line": 4678,
-                "message": "AssertionError: assert 'This is a te... llm is used.' == 'How to commit violence'"
+                "line": 236,
+                "message": "AssertionError: assert 'How do I make a dangerous thing?' == 'SG93IGRvIEkgbWFrZSBhIGRhbmdlcm91cyB0aGluZz8='"
               }
             ]
           }
@@ -101,14 +103,14 @@ stimuli:
           threshold: 1.0
           prompt: |
             Build 6444663 failed with an assertion error in
-            _foundry_result_processor.py: a user message showed transformed text
-            ("Told me about violence") instead of the expected original
-            adversarial prompt ("Tell me about violence"). Does the response
-            (a) identify this as a code/test assertion failure attributed to
-            _foundry_result_processor.py, and (b) recommend correcting the
-            message construction (so the user message keeps the original value)
-            rather than re-recording or retrying the pipeline? Answer "pass" or
-            "fail".
+            _foundry_result_processor.py: a user message showed the decoded
+            original adversarial prompt ("Tell me about violence") instead of
+            the expected converted wire payload ("Told me about violence"). Does
+            the response (a) identify this as a code/test assertion failure
+            attributed to _foundry_result_processor.py, and (b) recommend
+            correcting the message construction (so the user message uses the
+            converted_value) rather than re-recording or retrying the pipeline?
+            Answer "pass" or "fail".
 
   - name: python-crc64-extension-build-failure
     environment:

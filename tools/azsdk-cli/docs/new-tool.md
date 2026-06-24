@@ -291,7 +291,7 @@ public YourTool(
     ILogger<YourTool> logger,                        // Logging - ALWAYS required
     IAzureService azureService,                      // Azure credentials and authentication
     IDevOpsService devopsService,                    // Azure DevOps operations
-    IAzureAgentServiceFactory agentServiceFactory,   // AI services factory
+    ICopilotAgentRunner copilotAgentRunner,           // Copilot agent runner for LLM tasks
     IYourCustomService customService                 // Your domain-specific services
 ) : base()
 ```

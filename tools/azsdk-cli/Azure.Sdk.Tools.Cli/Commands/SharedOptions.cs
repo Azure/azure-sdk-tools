@@ -43,6 +43,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(ChangelogContentUpdateTool),
             typeof(VersionUpdateTool),
             typeof(SdkReleaseTool),
+            typeof(CreateApiReviewTool),
             typeof(SpecCommonTools),
             typeof(PullRequestTools),
             typeof(SpecValidationTools),

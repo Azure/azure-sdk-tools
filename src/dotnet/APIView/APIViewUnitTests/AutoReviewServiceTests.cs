@@ -10,6 +10,8 @@ using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using FluentAssertions;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Extensibility;
 using Moq;
 using Xunit;
 
@@ -53,7 +55,8 @@ namespace APIViewUnitTests
                 _mockCommentsManager.Object,
                 _mockProjectsManager.Object,
                 _mockCodeFileManager.Object,
-                _mockApiVersionsManager.Object);
+                _mockApiVersionsManager.Object,
+                new TelemetryClient(TelemetryConfiguration.CreateDefault()));
 
             var claims = new List<Claim>
             {

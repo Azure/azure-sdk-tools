@@ -291,12 +291,22 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
                     ProductServiceTreeId = "12345678-1234-5678-9012-123456789012",
                     ServiceId = "87654321-4321-8765-1234-210987654321",
                     PackageDisplayName = "Contoso Management",
-                    ProductServiceTreeLink = "https://servicetree.msftcloudes.com/main.html#/ServiceModel/Service/12345678-1234-5678-9012-123456789012"
+                    ProductServiceTreeLink = "https://servicetree.msftcloudes.com/main.html#/ServiceModel/Service/12345678-1234-5678-9012-123456789012",
+                    ProductName = "Contoso Management Product Name",
+                    ProductType = "Offering",
+                    ProductLifecycle = "GA"
                 });
             }
 
             // Return null for paths without release plans
             return Task.FromResult<ProductInfo?>(null);
+        }
+
+        public ProductInfo? ConfiguredTriageProductInfo { get; set; }
+
+        Task<ProductInfo?> IDevOpsService.GetProductInfoFromTriageWorkItemAsync(string productServiceTreeId, CancellationToken ct)
+        {
+            return Task.FromResult(ConfiguredTriageProductInfo);
         }
 
         Task<ReleasePlanWorkItem?> IDevOpsService.GetReleasePlanByTypeSpecProjectPathAsync(string typeSpecProjectPath, bool includeFinishedPlans, ApiReleaseType apiReleaseType, CancellationToken ct)

@@ -1,1 +1,3 @@
-MaryGao is not a public member of Azure.
+/eng/pipelines/cpex-attestation.yml path or file does not exist in repository.
+/eng/scripts/Attest-CPEX-KPIs.ps1 path or file does not exist in repository.
+/tools/ai-evals/azsdk-mcp/ path or file does not exist in repository.

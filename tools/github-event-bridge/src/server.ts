@@ -21,11 +21,21 @@ const appAuthOptions = createJwt
 
 const webhooks = new Webhooks({ secret: webhookSecret });
 
+// Cache one Octokit instance per installation. `@octokit/auth-app` caches the
+// installation access token (~1 hour) on the instance, so reusing the instance
+// avoids re-minting tokens (and re-signing the App JWT in Key Vault) on every event.
+const installationOctokits = new Map<number, Octokit>();
+
 function getInstallationOctokit(installationId: number): Octokit {
-    return new Octokit({
-        authStrategy: createAppAuth,
-        auth: { ...appAuthOptions, installationId },
-    });
+    let octokit = installationOctokits.get(installationId);
+    if (!octokit) {
+        octokit = new Octokit({
+            authStrategy: createAppAuth,
+            auth: { ...appAuthOptions, installationId },
+        });
+        installationOctokits.set(installationId, octokit);
+    }
+    return octokit;
 }
 
 const messageForNewPRs = "test comment from github app";

@@ -226,8 +226,7 @@ export async function generateChangelogAndBumpVersion(
       } else {
         logger.info(`Package ${packageName} released before is track1 sdk.`);
         if (reportOnly) {
-          logger.info('Report-only mode is not supported for track1 packages; reporting no SDK changes.');
-          return undefined;
+          throw new Error(`Report-only mode is not supported for track1 packages (${packageName}).`);
         }
         logger.info('Start to generate changelog of migrating track1 to track2 sdk.');
         const newVersion =

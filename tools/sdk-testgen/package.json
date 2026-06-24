@@ -62,5 +62,8 @@
         "src",
         "index.*",
         "README.md"
-    ]
+    ],
+    "overrides": {
+        "@babel/core": "^7.29.6"
+    }
 }

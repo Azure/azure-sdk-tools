@@ -89,6 +89,7 @@
     "dompurify": "^3.3.2",
     "undici": "^7.28.0",
     "serialize-javascript": "^7.0.5",
+    "@babel/core": "^7.29.6",
     "@angular/build": {
       "vitest": "^4.0.18"
     },

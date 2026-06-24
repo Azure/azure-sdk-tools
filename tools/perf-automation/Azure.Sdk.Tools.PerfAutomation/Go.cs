@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.PerfAutomation.Models;
+using Microsoft.Crank.Agent;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,8 +15,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
     {
         protected override Language Language => Language.Go;
 
+        // Match a non-negative throughput value, e.g. "(24.033 ops/s". A leading '-' is
+        // intentionally not allowed so negative values are rejected.
         private static readonly Regex _opsRegex =
-            new Regex(@"\(([-\d\.,]+)\s+ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft | RegexOptions.Compiled);
+            new Regex(@"\(([\d][\d\.,]*)\s+ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft | RegexOptions.Compiled);
 
         public override async Task<(string output, string error, object context)> SetupAsync(
             string project,
@@ -102,8 +105,14 @@ namespace Azure.Sdk.Tools.PerfAutomation
             // regardless of how the underlying process result is populated.
             var standardOutput = outputBuilder.ToString();
             var standardError = errorBuilder.ToString();
-            var combinedOutput = standardOutput + Environment.NewLine + standardError;
-            var opsPerSecond = ParseOpsPerSecond(combinedOutput);
+
+            // Prefer the throughput line from stdout. Only fall back to stderr if stdout
+            // has no match, so a spurious ops/s string in stderr cannot override the real result.
+            var opsPerSecond = ParseOpsPerSecond(standardOutput);
+            if (opsPerSecond < 0)
+            {
+                opsPerSecond = ParseOpsPerSecond(standardError);
+            }
 
             var runtimePackageVersions = await GetRuntimePackageVersionsAsync(projectDirectory);
 
@@ -140,8 +149,13 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         public override IDictionary<string, string> FilterRuntimePackageVersions(IDictionary<string, string> runtimePackageVersions)
         {
+            if (runtimePackageVersions == null)
+            {
+                return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            }
+
             // Keep Azure packages and a minimal runtime signal.
-            return runtimePackageVersions?
+            return runtimePackageVersions
                 .Where(kvp =>
                     kvp.Key.StartsWith("github.com/Azure/", StringComparison.OrdinalIgnoreCase) ||
                     kvp.Key.Equals("go", StringComparison.OrdinalIgnoreCase) ||
@@ -149,7 +163,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
-        private static double ParseOpsPerSecond(string output)
+        public static double ParseOpsPerSecond(string output)
         {
             if (string.IsNullOrWhiteSpace(output))
             {
@@ -220,15 +234,16 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     runtimePackageVersions[module] = version;
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // Best effort: return what we have.
+                // Best effort: log a warning and return what we have so the run is not failed silently.
+                Log.WriteLine($"Warning: Failed to collect runtime package versions via 'go list -m all'. {ex.Message}");
             }
 
             return runtimePackageVersions;
         }
 
-        private string ResolveSourcePath(string packageName)
+        public string ResolveSourcePath(string packageName)
         {
             const string repoPrefix = "github.com/Azure/azure-sdk-for-go/";
             if (!packageName.StartsWith(repoPrefix, StringComparison.OrdinalIgnoreCase))
@@ -263,9 +278,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
             StringBuilder outputBuilder,
             StringBuilder errorBuilder)
         {
+            // Quote the local path so paths containing spaces (common on Windows) are passed as a single argument.
             await Util.RunAsync(
                 "go",
-                $"mod edit -replace={packageName}={localPath}",
+                $"mod edit -replace={packageName}=\"{localPath}\"",
                 projectDirectory,
                 outputBuilder: outputBuilder,
                 errorBuilder: errorBuilder);

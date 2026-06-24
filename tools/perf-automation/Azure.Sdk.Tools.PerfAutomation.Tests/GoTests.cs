@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using NUnit.Framework;
-using System.Reflection;
 
 namespace Azure.Sdk.Tools.PerfAutomation.Tests
 {
@@ -13,7 +12,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
         public void ParseOpsPerSecond_ValidOutput_ReturnsValue()
         {
             var output = "Completed 721 operations in a weighted-average of 30.00s (24.033 ops/s, 0.042 s/op)";
-            var value = InvokePrivateStaticDouble("ParseOpsPerSecond", output);
+            var value = Go.ParseOpsPerSecond(output);
 
             Assert.That(value, Is.EqualTo(24.033).Within(0.0001));
         }
@@ -22,7 +21,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
         public void ParseOpsPerSecond_CommaFormattedOutput_ReturnsValue()
         {
             var output = "Completed 1,234 operations in a weighted-average of 1.00s (12,557.81 ops/s, 0.000 s/op)";
-            var value = InvokePrivateStaticDouble("ParseOpsPerSecond", output);
+            var value = Go.ParseOpsPerSecond(output);
 
             Assert.That(value, Is.EqualTo(12557.81).Within(0.0001));
         }
@@ -31,9 +30,25 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
         public void ParseOpsPerSecond_MissingPattern_ReturnsMinusOne()
         {
             var output = "No throughput line present";
-            var value = InvokePrivateStaticDouble("ParseOpsPerSecond", output);
+            var value = Go.ParseOpsPerSecond(output);
 
             Assert.That(value, Is.EqualTo(-1d));
+        }
+
+        [Test]
+        public void ParseOpsPerSecond_NegativeValue_ReturnsMinusOne()
+        {
+            var output = "Completed 0 operations in a weighted-average of 30.00s (-24.033 ops/s, 0.042 s/op)";
+            var value = Go.ParseOpsPerSecond(output);
+
+            Assert.That(value, Is.EqualTo(-1d));
+        }
+
+        [Test]
+        public void ParseOpsPerSecond_NullOrEmpty_ReturnsMinusOne()
+        {
+            Assert.That(Go.ParseOpsPerSecond(null), Is.EqualTo(-1d));
+            Assert.That(Go.ParseOpsPerSecond(string.Empty), Is.EqualTo(-1d));
         }
 
         [Test]
@@ -59,12 +74,23 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
         }
 
         [Test]
+        public void FilterRuntimePackageVersions_NullInput_ReturnsEmptyDictionary()
+        {
+            var go = new Go();
+
+            var filtered = go.FilterRuntimePackageVersions(null);
+
+            Assert.That(filtered, Is.Not.Null);
+            Assert.That(filtered, Is.Empty);
+        }
+
+        [Test]
         public void ResolveSourcePath_AzurePackage_ReturnsExpectedPath()
         {
             var go = new Go();
             go.WorkingDirectory = Path.Combine(Path.GetTempPath(), "azure-sdk-for-go");
 
-            var result = InvokePrivateInstanceString(go, "ResolveSourcePath", "github.com/Azure/azure-sdk-for-go/sdk/storage/azblob");
+            var result = go.ResolveSourcePath("github.com/Azure/azure-sdk-for-go/sdk/storage/azblob");
             var expected = Path.Combine(go.WorkingDirectory, "sdk", "storage", "azblob");
 
             Assert.That(result, Is.EqualTo(expected));
@@ -76,34 +102,11 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
             var go = new Go();
             go.WorkingDirectory = Path.Combine(Path.GetTempPath(), "azure-sdk-for-go");
 
-            var ex = Assert.Throws<TargetInvocationException>(() =>
-                InvokePrivateInstanceString(go, "ResolveSourcePath", "github.com/not-azure/pkg"));
+            var ex = Assert.Throws<InvalidOperationException>(() =>
+                go.ResolveSourcePath("github.com/not-azure/pkg"));
 
             Assert.That(ex, Is.Not.Null);
-            Assert.That(ex.InnerException, Is.TypeOf<InvalidOperationException>());
-            Assert.That(ex.InnerException?.Message, Does.Contain("Cannot resolve source path"));
-        }
-
-        private static double InvokePrivateStaticDouble(string methodName, string arg)
-        {
-            var method = typeof(Go).GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Static);
-            Assert.That(method, Is.Not.Null, $"Method {methodName} not found");
-
-            var result = method!.Invoke(null, new object[] { arg });
-            Assert.That(result, Is.TypeOf<double>());
-
-            return (double)result!;
-        }
-
-        private static string InvokePrivateInstanceString(object instance, string methodName, string arg)
-        {
-            var method = instance.GetType().GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
-            Assert.That(method, Is.Not.Null, $"Method {methodName} not found");
-
-            var result = method!.Invoke(instance, new object[] { arg });
-            Assert.That(result, Is.TypeOf<string>());
-
-            return (string)result!;
+            Assert.That(ex.Message, Does.Contain("Cannot resolve source path"));
         }
     }
 }

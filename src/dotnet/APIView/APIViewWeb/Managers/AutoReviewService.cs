@@ -106,7 +106,14 @@ public class AutoReviewService : IAutoReviewService
 
                     if (latestAutomaticAPIRevision != null)
                     {
-                        await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(apiRevision: latestAutomaticAPIRevision, notes: "Deleted by Automatic Review Creation...");
+                        apiRevision = await UpdateAutomaticAPIRevisionCodeFile(
+                            latestAutomaticAPIRevision,
+                            label,
+                            originalName,
+                            memoryStream,
+                            codeFile,
+                            sourceBranch,
+                            incomingVersionModel?.Id);
                     }
                 }
             }
@@ -116,7 +123,10 @@ public class AutoReviewService : IAutoReviewService
             review = await _reviewManager.CreateReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: false, packageType: parsedPackageType, crossLanguagePackageId: codeFile.CrossLanguagePackageId);
         }
 
-        apiRevision = await _apiRevisionsManager.CreateAPIRevisionAsync(userName: user.GetGitHubLogin(), reviewId: review.Id, apiRevisionType: APIRevisionType.Automatic, label: label, memoryStream: memoryStream, codeFile: codeFile, originalName: originalName, sourceBranch: sourceBranch);
+        if (apiRevision == null)
+        {
+            apiRevision = await _apiRevisionsManager.CreateAPIRevisionAsync(userName: user.GetGitHubLogin(), reviewId: review.Id, apiRevisionType: APIRevisionType.Automatic, label: label, memoryStream: memoryStream, codeFile: codeFile, originalName: originalName, sourceBranch: sourceBranch);
+        }
 
         await _projectsManager.TryLinkReviewToProjectAsync(user.GetGitHubLogin(), review);
 
@@ -134,5 +144,56 @@ public class AutoReviewService : IAutoReviewService
             }
         }
         return (review, apiRevision);
+    }
+
+    private async Task<APIRevisionListItemModel> UpdateAutomaticAPIRevisionCodeFile(
+        APIRevisionListItemModel apiRevision,
+        string label,
+        string originalName,
+        MemoryStream memoryStream,
+        CodeFile codeFile,
+        string sourceBranch,
+        string apiVersionId)
+    {
+        var previousCodeFileModel = apiRevision.Files.FirstOrDefault();
+        var codeFileModel = await _codeFileManager.CreateReviewCodeFileModel(apiRevision.Id, memoryStream, codeFile);
+        var fileName = !string.IsNullOrEmpty(originalName) ? originalName : apiRevision.Files.FirstOrDefault()?.FileName;
+        if (!string.IsNullOrEmpty(fileName))
+        {
+            codeFileModel.FileName = fileName;
+        }
+
+        if (apiRevision.Files.Any())
+        {
+            apiRevision.Files[0] = codeFileModel;
+        }
+        else
+        {
+            apiRevision.Files.Add(codeFileModel);
+        }
+
+        apiRevision.PackageName = codeFile.PackageName;
+        apiRevision.Language = codeFile.Language;
+        apiRevision.Label = label;
+        if (!string.IsNullOrEmpty(sourceBranch))
+        {
+            apiRevision.SourceBranch = sourceBranch;
+        }
+        apiRevision.LastUpdatedOn = DateTime.UtcNow;
+        apiRevision.IsDeleted = false;
+
+        if (!string.IsNullOrEmpty(apiVersionId))
+        {
+            apiRevision.APIVersionId = apiVersionId;
+        }
+
+        await _apiRevisionsManager.UpdateAPIRevisionAsync(apiRevision);
+
+        if (previousCodeFileModel != null && previousCodeFileModel.FileId != codeFileModel.FileId)
+        {
+            await _codeFileManager.TryDeleteCodeFileModelAsync(apiRevision.Id, previousCodeFileModel);
+        }
+
+        return apiRevision;
     }
 }

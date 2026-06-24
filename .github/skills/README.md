@@ -15,23 +15,23 @@ pipeline to match and distribute them to all subscribed language SDK repos.
 
 ### Workflow & Utility Skills
 
-| Skill | Triggers | Description |
-| ----- | -------- | ----------- |
-| [azsdk-common-generate-sdk-locally](azsdk-common-generate-sdk-locally/SKILL.md) | "generate SDK locally", "build SDK", "run SDK tests" | Generate, build, and test Azure SDKs locally from TypeSpec |
-| [azsdk-common-prepare-release-plan](azsdk-common-prepare-release-plan/SKILL.md) | "create release plan", "link SDK PR to plan" | Create and manage release plan work items |
-| [azsdk-common-apiview-feedback-resolution](azsdk-common-apiview-feedback-resolution/SKILL.md) | "APIView comments", "resolve API review feedback" | Retrieve and resolve APIView review feedback |
-| [azsdk-common-pipeline-troubleshooting](azsdk-common-pipeline-troubleshooting/SKILL.md) | "pipeline failed", "build failure", "CI check failing" | Diagnose and resolve SDK CI and generation pipeline failures |
-| [azsdk-common-sdk-release](azsdk-common-sdk-release/SKILL.md) | "release SDK", "trigger release pipeline" | Check release readiness and trigger SDK releases |
+| Skill                                                                                         | Triggers                                               | Description                                                  |
+| --------------------------------------------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------ |
+| [azsdk-common-generate-sdk-locally](azsdk-common-generate-sdk-locally/SKILL.md)               | "generate SDK locally", "build SDK", "run SDK tests"   | Generate, build, and test Azure SDKs locally from TypeSpec   |
+| [azsdk-common-prepare-release-plan](azsdk-common-prepare-release-plan/SKILL.md)               | "create release plan", "link SDK PR to plan"           | Create and manage release plan work items                    |
+| [azsdk-common-apiview-feedback-resolution](azsdk-common-apiview-feedback-resolution/SKILL.md) | "APIView comments", "resolve API review feedback"      | Retrieve and resolve APIView review feedback                 |
+| [azsdk-common-pipeline-troubleshooting](azsdk-common-pipeline-troubleshooting/SKILL.md)       | "pipeline failed", "build failure", "CI check failing" | Diagnose and resolve SDK CI and generation pipeline failures |
+| [azsdk-common-sdk-release](azsdk-common-sdk-release/SKILL.md)                                 | "release SDK", "trigger release pipeline"              | Check release readiness and trigger SDK releases             |
 
 ### Development & Meta Skills
 
 These skills help with skill development itself:
 
-| Skill | Triggers | Description |
-| ----- | -------- | ----------- |
-| [sensei](sensei/SKILL.md) | "run sensei", "improve skill", "fix frontmatter" | Iteratively improve skill frontmatter compliance using the Ralph loop |
-| [skill-authoring](skill-authoring/SKILL.md) | "create a skill", "new skill", "skill template" | Guidelines for writing Agent Skills per agentskills.io spec |
-| [markdown-token-optimizer](markdown-token-optimizer/SKILL.md) | "optimize markdown", "reduce tokens", "token count" | Analyze markdown files for token efficiency |
+| Skill                                                         | Triggers                                            | Description                                                           |
+| ------------------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------------------------- |
+| [sensei](sensei/SKILL.md)                                     | "run sensei", "improve skill", "fix frontmatter"    | Iteratively improve skill frontmatter compliance using the Ralph loop |
+| [skill-authoring](skill-authoring/SKILL.md)                   | "create a skill", "new skill", "skill template"     | Guidelines for writing Agent Skills per agentskills.io spec           |
+| [markdown-token-optimizer](markdown-token-optimizer/SKILL.md) | "optimize markdown", "reduce tokens", "token count" | Analyze markdown files for token efficiency                           |
 
 ### Skill Anatomy
 
@@ -47,13 +47,12 @@ Each skill lives in `<name>/` and contains:
     └── trigger.eval.yaml  # Trigger & anti-trigger evals (skill-invocation checks)
 ```
 
-
 ---
 
 ## Tooling
 
-| Tool | Purpose | Install |
-| ---- | ------- | ------- |
+| Tool                                            | Purpose                             | Install                               |
+| ----------------------------------------------- | ----------------------------------- | ------------------------------------- |
 | [**vally**](https://microsoft.github.io/vally/) | Run skill evals, grade trajectories | `npm install -g @microsoft/vally-cli` |
 
 ### Linting Evals

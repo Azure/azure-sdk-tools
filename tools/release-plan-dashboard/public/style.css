@@ -693,6 +693,23 @@ main {
   color: #1e8449;
   font-size: 0.72rem;
 }
+.badge-missing-product {
+  background: #fff3cd;
+  color: #856404;
+  font-size: 0.72rem;
+}
+.missing-product-highlight {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #664d03;
+}
+.missing-product-highlight p {
+  margin: 6px 0;
+}
 .global-tag-filter {
   padding: 4px 8px;
   border-radius: 4px;

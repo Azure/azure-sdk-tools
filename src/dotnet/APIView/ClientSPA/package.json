@@ -88,7 +88,8 @@
     "dompurify": "^3.3.2",
     "serialize-javascript": "^7.0.5",
     "@angular/build": {
-      "vitest": "^4.0.18"
+      "vitest": "^4.0.18",
+      "vite": "7.3.5"
     },
     "external-editor": {
       "tmp": "^0.2.7"

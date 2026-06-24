@@ -1,0 +1,8 @@
+# Scenario fixtures live here, one folder per scenario name
+# (matching the `name:` field in the corresponding evals/*.eval.yaml).
+#
+# Reference them from the eval via:
+#   environment:
+#     files:
+#       - src: ../fixtures/<scenario-name>/<file>
+#         dest: <path inside the workspace>

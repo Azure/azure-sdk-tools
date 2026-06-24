@@ -2,7 +2,8 @@
 /*
  * Sparse-checkout https://github.com/Azure/azure-rest-api-specs (excluding the
  * `specification/` folder) and copy package.json + package-lock.json into the
- * Microsoft.Widget fixture directory.
+ * Microsoft.Widget fixture directory, plus the live `.github/copilot-instructions.md`
+ * into the instructions-test fixture directory.
  *
  * Cross-platform: runs on both Linux and Windows under Node.js (>=16).
  * Requires `git` in PATH.
@@ -14,7 +15,7 @@
  * Invoke from an eval `commands:` entry (script copied into workDir via
  * environment.files), e.g.:
  *   commands:
- *     - node setup-package-files.js .
+ *     - node setup-fixture-files.js .
  */
 
 const { execFileSync } = require('node:child_process');
@@ -25,6 +26,14 @@ const path = require('node:path');
 const REPO_URL = 'https://github.com/Azure/azure-rest-api-specs.git';
 const BRANCH = 'main';
 const FILES = ['package.json', 'package-lock.json'];
+
+// The live .github/copilot-instructions.md is pulled from the spec repo into the
+// instructions-test fixture so evals exercise the real authoring instructions
+// instead of a checked-in copy. Resolved relative to this script, independent of
+// the package-files DEST argument.
+const COPILOT_INSTRUCTIONS_SRC = path.join('.github', 'copilot-instructions.md');
+const COPILOT_INSTRUCTIONS_DEST = path.resolve(
+    __dirname, '..', 'fixtures', 'instructions-test', 'copilot-instructions.md');
 
 const DEST = process.argv[2]
     ? path.resolve(process.cwd(), process.argv[2])
@@ -63,6 +72,15 @@ try {
         fs.copyFileSync(src, dst);
         console.log(`copied ${name} -> ${dst}`);
     }
+
+    // Copy the live .github/copilot-instructions.md into the instructions-test fixture.
+    const ciSrc = path.join(tmp, COPILOT_INSTRUCTIONS_SRC);
+    if (!fs.existsSync(ciSrc)) {
+        throw new Error(`Expected file not present after sparse checkout: ${ciSrc}`);
+    }
+    fs.mkdirSync(path.dirname(COPILOT_INSTRUCTIONS_DEST), { recursive: true });
+    fs.copyFileSync(ciSrc, COPILOT_INSTRUCTIONS_DEST);
+    console.log(`copied ${COPILOT_INSTRUCTIONS_SRC} -> ${COPILOT_INSTRUCTIONS_DEST}`);
 
     // Strip "file:" workspace references from package.json and package-lock.json
     // to prevent npm ci from creating unwanted node_modules in eng/ and .github/.

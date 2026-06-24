@@ -1,6 +1,7 @@
 /**
  * Sets up the evaluation fixture environment:
- * 1. Runs setup-package-files.js to download package.json / package-lock.json.
+ * 1. Runs setup-fixture-files.js to download package.json / package-lock.json
+ *    and the live .github/copilot-instructions.md from azure-rest-api-specs.
  * 2. Runs npm ci in the Widget fixture directory.
  * 3. Outputs the shell command to set FIXTURE_NODE_MODULES.
  *
@@ -17,9 +18,9 @@ const path = require('node:path');
 const scriptDir = __dirname;
 const widgetDir = path.resolve(scriptDir, '..', 'fixtures', 'Microsoft.Widget', 'Widget');
 
-// Step 1: Download package files
-process.stderr.write('==> Downloading package files from azure-rest-api-specs...\n');
-execSync(`node ${JSON.stringify(path.join(scriptDir, 'setup-package-files.js'))}`, { stdio: ['inherit', 2, 'inherit'] });
+// Step 1: Download package files and copilot-instructions.md
+process.stderr.write('==> Downloading package files and copilot-instructions.md from azure-rest-api-specs...\n');
+execSync(`node ${JSON.stringify(path.join(scriptDir, 'setup-fixture-files.js'))}`, { stdio: ['inherit', 2, 'inherit'] });
 
 // Step 2: Run npm ci
 process.stderr.write(`==> Running npm ci in ${widgetDir} ...\n`);

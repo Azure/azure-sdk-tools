@@ -1,7 +1,8 @@
 name: azsdk-mcp-tool-scenarios
 description: |
-  TypeSpec generation workflow step 2: the agent should check whether the
-  project is in the public repo as part of the validation step.
+  TypeSpec generation workflow step 2: the agent authors a small TypeSpec
+  change (invoking the azure-typespec-author skill), validates it, and checks
+  whether the project is in the public repo as part of the step.
 version: "1.0"
 type: capability
 
@@ -19,18 +20,30 @@ config:
 
 stimuli:
   - name: typespec-generation-step02-validation
+    environment:
+      # Real authoring skill + the Contoso spec on disk so the agent can edit.
+      # Paths are relative to this eval file (6 levels up = repo root).
+      skills:
+        - ../../../../../../.github/skills/azure-typespec-author
+      git:
+        type: worktree
+        source: ../../../../../../artifacts/specs-cache/azure-rest-api-specs
+        ref: main
     prompt: |
-      I'm working on the TypeSpec generation workflow. I need to validate my TypeSpec project
-      as part of step 2. Please check if my TypeSpec project is in the public repo.
+      I'm on step 2 of the TypeSpec generation workflow for the Contoso Widget
+      Manager. Add an optional string property named "category" to the
+      WidgetSuite model, then validate the project and check whether it is in
+      the public azure-rest-api-specs repo.
       The project is at specification/contosowidgetmanager/Contoso.WidgetManager.
       My setup has already been verified, do not run azsdk_verify_setup.
     constraints:
-      max_turns: 5
-      max_tokens: 5000
+      max_turns: 12
+      max_tokens: 16000
     graders:
       - type: tool-calls
         config:
           required:
+            - azsdk_run_typespec_validation
             - azsdk_typespec_check_project_in_public_repo
           disallowed:
             - azsdk_verify_setup

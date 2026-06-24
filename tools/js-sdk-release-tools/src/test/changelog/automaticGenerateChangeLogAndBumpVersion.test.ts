@@ -484,7 +484,7 @@ describe('generateChangelogAndBumpVersion beta version test', () => {
       { apiVersion: undefined, sdkReleaseType: undefined },
       UpdateMode.ChangelogOnly,
       undefined,
-      true,
+      true
     );
 
     // Report-only mode must not write CHANGELOG.md or compute a new version.

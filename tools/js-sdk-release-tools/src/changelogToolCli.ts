@@ -45,7 +45,7 @@ const writeSdkChangesReport = async (packageFolderPath: string, reportFile: stri
     { apiVersion: undefined, sdkReleaseType: undefined },
     UpdateMode.ChangelogOnly,
     sdkRepoPath,
-    true,
+    true
   );
 
   const report = {

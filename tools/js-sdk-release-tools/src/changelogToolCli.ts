@@ -79,8 +79,12 @@ const changelogToolCli = async (
 
   // When --report-file is provided, run in report-only mode: compute the SDK
   // changes and write a JSON report without modifying CHANGELOG.md or the version.
-  if (reportFile) {
-    await writeSdkChangesReport(packageFolderPath, reportFile);
+  if (reportFile !== undefined) {
+    if (typeof reportFile !== 'string' || !reportFile.trim()) {
+      logger.error(`Invalid report file path '${reportFile}'.`);
+      process.exit(1);
+    }
+    await writeSdkChangesReport(packageFolderPath, reportFile.trim());
     return;
   }
 

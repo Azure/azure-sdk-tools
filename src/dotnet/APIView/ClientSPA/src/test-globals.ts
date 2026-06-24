@@ -40,52 +40,11 @@ Object.defineProperty(window, 'matchMedia', {
   }))
 });
 
-// Mock indexedDB early - must be set before any modules import 'idb'
-if (typeof indexedDB === 'undefined') {
-  const mockObjectStore = {
-    add: vi.fn().mockResolvedValue(undefined),
-    get: vi.fn().mockResolvedValue(undefined),
-    getAll: vi.fn().mockResolvedValue([]),
-    delete: vi.fn().mockResolvedValue(undefined),
-    clear: vi.fn().mockResolvedValue(undefined),
-    put: vi.fn().mockResolvedValue(undefined)
-  };
-
-  const mockTransaction = {
-    objectStore: vi.fn(() => mockObjectStore),
-    done: Promise.resolve()
-  };
-
-  const mockDB = {
-    createObjectStore: vi.fn(() => mockObjectStore),
-    transaction: vi.fn(() => mockTransaction),
-    close: vi.fn()
-  };
-
-  (globalThis as any).indexedDB = {
-    open: vi.fn(() => {
-      const request = {
-        result: mockDB,
-        onsuccess: null,
-        onerror: null,
-        onupgradeneeded: null
-      };
-      setTimeout(() => {
-        if (request.onupgradeneeded) {
-          request.onupgradeneeded({ target: request } as any);
-        }
-        if (request.onsuccess) {
-          request.onsuccess({ target: request } as any);
-        }
-      }, 0);
-      return request as any;
-    }),
-    deleteDatabase: vi.fn(() => ({
-      onsuccess: null,
-      onerror: null
-    }))
-  };
-}
+// NOTE: IndexedDB and EditorComponent are intentionally NOT mocked globally here.
+// Specs that exercise IndexedDB (e.g. notifications.service.spec) install their own
+// complete `idb`-compatible mock, and component specs mock NotificationsService and
+// ngx-simplemde per-file. A global stub for these conflicts with Angular's standalone/
+// NgModule validation under Angular 22.
 
 // Mock Worker (used by WorkerService)
 if (typeof Worker === 'undefined') {
@@ -124,30 +83,6 @@ vi.mock('ngx-simplemde', () => ({
     value = '';
     options = {};
     valueChange = { emit: vi.fn() };
-  }
-}));
-
-// Mock EditorComponent to avoid SimpleMDE loading issues in tests
-// The real component uses SimpleMDE in the app, but tests use this stub
-vi.mock('src/app/_components/shared/editor/editor.component', () => ({
-  EditorComponent: class {
-    content = '';
-    contentChange = { emit: vi.fn() };
-    editorId = '';
-    editorOptions = {};
-    
-    onContentChange(newContent) {
-      this.content = newContent;
-      this.contentChange.emit(newContent);
-    }
-    
-    getEditorContent() {
-      return this.content;
-    }
-    
-    ngAfterViewInit() {
-      // Stub - no-op in tests
-    }
   }
 }));
 

@@ -34,6 +34,7 @@
   "author": "azure-sdk",
   "license": "MIT",
   "dependencies": {
+    "js-yaml": "^4.2.0",
     "ts-morph": "^25.0.1"
   }
 }

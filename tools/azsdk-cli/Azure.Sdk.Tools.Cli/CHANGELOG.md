@@ -1,11 +1,22 @@
 # Release History
 
+## 0.6.23 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
 ## 0.6.22 (2026-06-22)
 
 ### Features Added
 
 - Added an `editScope` parameter (`--edit-scope`) to the `customized-update` command / `azsdk_customized_code_update` MCP tool. It is a flags enum (`CustomCode`, `SpecInputs`, `All`; default `All`). `CustomCode` restricts the tool to custom (non-generated) code: it never edits spec inputs (client.tsp/tspconfig.yaml) or moves the pinned spec commit, and feedback requiring a spec change is reported as out of scope via the `SpecChangeRequired` error code instead of being applied. `SpecInputs` restricts the tool to spec-input edits: it never patches custom code, and feedback requiring a custom-code change is reported as out of scope via the new `CustomCodeChangeRequired` error code instead of being applied. The edit scope is also passed to the feedback classifier so that items addressable either way (e.g. renames doable in spec OR custom code) are biased toward the in-scope axis instead of being reported as out of scope. Regenerating `Generated/` from the unchanged pinned commit is always allowed.
 - Made `tspProjectPath` (`--tsp-project-path`) optional on the `customized-update` command / `azsdk_customized_code_update` MCP tool. It is now required only when the edit scope includes spec inputs (`SpecInputs`/`All`). For custom-code-only repair (`editScope CustomCode`) it may be omitted: regeneration then runs `tsp-client update` without `--local-spec-repo`, so the `tsp-client` CLI regenerates from the repo and commit pinned in the package's `tsp-location.yaml` instead of a local checkout. This enables headless custom-code build repair in a language repo where the spec is not checked out.
+- Release plans now resolve and persist Product Name, Product Type, and Product Lifecycle (copied from a previous release plan on create, or from a matching Triage work item on update via a new `--product-type` / `productType` parameter).
 
 ### Breaking Changes
 

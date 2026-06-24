@@ -352,7 +352,13 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             // Parse URL to get the path component (automatically strips query params and fragments)
             var uri = new Uri(url);
             var path = uri.AbsolutePath;
-            
+
+            // Strip tspconfig.yaml from the end of the path if present
+            if (path.EndsWith($"/{TypeSpecProject.TSPCONFIG_FILENAME}", StringComparison.OrdinalIgnoreCase))
+            {
+                path = path[..^(TypeSpecProject.TSPCONFIG_FILENAME.Length + 1)];
+            }
+
             int specIndex = path.IndexOf("specification", StringComparison.OrdinalIgnoreCase);
             return specIndex >= 0 ? path[specIndex..] : string.Empty;
         }

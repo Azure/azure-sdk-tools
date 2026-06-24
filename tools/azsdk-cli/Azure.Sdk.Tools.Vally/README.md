@@ -59,7 +59,7 @@ One prompt → one expected MCP tool. No `environment.git`, no fixtures. Fast; s
 | [`prompt-to-tool-typespec`](evals/tools/prompt-to-tool-typespec.eval.yaml) | typespec | `azsdk_typespec_*`, `azsdk_convert_swagger_to_typespec`, `azsdk_customized_code_update`, `azsdk_run_typespec_validation` |
 | [`prompt-to-tool-verify`](evals/tools/prompt-to-tool-verify.eval.yaml) | engsys | `azsdk_verify_setup` |
 
-#### `evals/workflow-scenarios/` — multi-tool scenarios (17)
+#### `evals/workflow-scenarios/` — multi-tool scenarios (14)
 
 Multi-step prompts that exercise 2+ MCP tools end-to-end. Split into
 `mock/` (hermetic, runs on PR gate) and `live/` (real DevOps / GitHub /
@@ -75,10 +75,11 @@ pipelines, runs nightly).
 | [`pipeline-analysis-java`](evals/workflow-scenarios/mock/pipeline-analysis-java.eval.yaml) | pipeline | mock | Root-cause analysis of serialized Java pipeline failures (JUnit) |
 | [`pipeline-analysis-js`](evals/workflow-scenarios/mock/pipeline-analysis-js.eval.yaml) | pipeline | mock | Root-cause analysis of serialized JavaScript pipeline failures (JUnit) |
 | [`pipeline-analysis-python`](evals/workflow-scenarios/mock/pipeline-analysis-python.eval.yaml) | pipeline | mock | Root-cause analysis of serialized Python pipeline failures (pytest) |
-| [`pipeline-fixer-dotnet`](evals/workflow-scenarios/mock/pipeline-fixer-dotnet.eval.yaml) | pipeline | mock | Classify-only .NET failures that must not be code-fixed, plus an apply+verify stimulus (build 6455504, Storage Queues version parser) |
-| [`pipeline-fixer-java`](evals/workflow-scenarios/mock/pipeline-fixer-java.eval.yaml) | pipeline | mock | Classify-only Java failures that must not be code-fixed, plus an apply+verify stimulus (representative compute-batch SERVER_ERROR retry concurrency bug) |
-| [`pipeline-fixer-js`](evals/workflow-scenarios/mock/pipeline-fixer-js.eval.yaml) | pipeline | mock | Classify-only JavaScript failures that must not be code-fixed, plus an apply+verify stimulus (build 6454089, planetarycomputer WMTS base64) |
-| [`pipeline-fixer-python`](evals/workflow-scenarios/mock/pipeline-fixer-python.eval.yaml) | pipeline | mock | Classify-only Python failures that must not be code-fixed, plus an apply+verify stimulus (build 6444663, ai-evaluation foundry processor) |
+| [`pipeline-analysis-tool-call`](evals/workflow-scenarios/mock/pipeline-analysis-tool-call.eval.yaml) | pipeline | mock | Asserts analysis routes through `azsdk_analyze_pipeline` on the serialized failure data |
+| [`pipeline-fixer-dotnet`](evals/workflow-scenarios/mock/pipeline-fixer-dotnet.eval.yaml) | pipeline | mock | Classify-only .NET failures that must not be code-fixed, plus an apply+verify stimulus (`QueueClientOptionsTests` fixture, Storage Queues version parser) |
+| [`pipeline-fixer-java`](evals/workflow-scenarios/mock/pipeline-fixer-java.eval.yaml) | pipeline | mock | Classify-only Java failures that must not be code-fixed, plus an apply+verify stimulus (`TaskManagerTests` fixture, representative compute-batch SERVER_ERROR retry concurrency bug) |
+| [`pipeline-fixer-js`](evals/workflow-scenarios/mock/pipeline-fixer-js.eval.yaml) | pipeline | mock | Classify-only JavaScript failures that must not be code-fixed, plus an apply+verify stimulus (`stacItemTiler` fixture, planetarycomputer WMTS base64) |
+| [`pipeline-fixer-python`](evals/workflow-scenarios/mock/pipeline-fixer-python.eval.yaml) | pipeline | mock | Classify-only Python failures that must not be code-fixed, plus an apply+verify stimulus (`test_foundry` fixture, ai-evaluation foundry processor) |
 | [`release-planner`](evals/workflow-scenarios/live/release-planner.eval.yaml) | release-plan | **live** | Create + re-fetch a release plan, kick off SDK gen, link PR back — real DevOps test-area writes |
 
 Pipeline analysis evals grade the quality of the LLM's root-cause analysis over
@@ -168,7 +169,8 @@ Azure.Sdk.Tools.Vally/
 │       ├── mock/              # multi-tool scenarios, hermetic (PR gate)
 │       └── live/              # multi-tool scenarios, live MCP + real clones (nightly)
 ├── fixtures/                  # Real failing source files (env.files overlay for mock apply+verify fixer stimuli)
-│   └── <scenario-name>/...
+│   └── analyze-pipeline/
+│       └── <scenario-name>/...
 ├── scripts/                   # Local helper scripts (ensure-specs-clone.ps1)
 └── Graders/                   # (future) Custom .NET graders
     └── Azure.Sdk.Tools.Vally.csproj  # added when first custom grader lands

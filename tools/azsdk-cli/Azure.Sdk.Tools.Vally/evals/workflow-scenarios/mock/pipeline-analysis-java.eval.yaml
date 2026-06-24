@@ -1,0 +1,250 @@
+name: azsdk-mcp-tool-scenarios
+description: |
+  Evaluates how well the agent can analyze pipeline failures from the Azure SDK Java pipelines.
+version: "1.0"
+type: capability
+
+tags:
+  area: pipeline
+
+environment: azsdk-mcp-mock
+
+config:
+  runs: 1
+  timeout: 5m
+  executor: copilot-sdk
+  model: gpt-5.4
+
+stimuli:
+  - name: java-retry-logic-bug
+    environment:
+      files:
+        - src: ../../../fixtures/analyze-pipeline/TaskManagerTests/code/TaskManager.java
+          dest: sdk/batch/azure-compute-batch/src/main/java/com/azure/compute/batch/implementation/task/TaskManager.java
+        - src: ../../../fixtures/analyze-pipeline/TaskManagerTests/code/TaskManagerTests.java
+          dest: sdk/batch/azure-compute-batch/src/test/java/com/azure/compute/batch/TaskManagerTests.java
+      commands:
+        - git init -q && git add -A && git -c user.email=vally@local -c user.name=vally commit -qm "seed pre-analysis source"
+    prompt: |
+      My Java SDK pipeline failed and I'm trying to figure out what went wrong. Can you help?
+
+      "azsdk-analyze-pipeline" Test Failures Parsed Output:
+      {
+        "_provenance": {
+          "buildId": "6453847",
+          "language": "java",
+          "repository": "Azure/azure-sdk-for-java",
+          "definition": "java - pullrequest",
+          "pipelineUrl": "https://dev.azure.com/azure-sdk/public/_build/results?buildId=6453847",
+          "prUrl": "https://github.com/Azure/azure-sdk-for-java/pull/49554",
+          "sourceCommit": "fb22ba6fe561baf5ea68afb6a0ea2e6216755579",
+          "category": "code bug",
+          "rootCauseSummary": "TaskManagerTests.successAfterOneServerErrorDidRetry failed because task X was not submitted a second time after a BatchTaskAddStatus.SERVER_ERROR result. The implicated TaskManager retry path re-queues server-error tasks, but the observed test failure shows the retry was not performed before the method returned.",
+          "failedTestCount": 1,
+          "featuredFailures": [
+            "c.a.c.b.TaskManagerTests.successAfterOneServerErrorDidRetry"
+          ],
+          "captureDate": "2026-06-23"
+        },
+        "failed_test_titles": {
+          "com.azure.compute.batch.TaskManagerTests": [
+            "c.a.c.b.TaskManagerTests.successAfterOneServerErrorDidRetry"
+          ]
+        },
+        "failed_tasks": [
+          {
+            "pipeline_url": "https://dev.azure.com/azure-sdk/public/_build/results?buildId=6453847",
+            "errors": [
+              {
+                "file": "sdk/batch/azure-compute-batch/src/test/java/com/azure/compute/batch/TaskManagerTests.java",
+                "line": 60,
+                "message": "X should have been retried at least once ==> expected: <true> but was: <false>"
+              },
+              {
+                "file": "sdk/batch/azure-compute-batch/src/main/java/com/azure/compute/batch/implementation/task/TaskManager.java",
+                "line": 114,
+                "message": "X should have been retried at least once ==> expected: <true> but was: <false>"
+              },
+              {
+                "file": "sdk/batch/azure-compute-batch/src/main/java/com/azure/compute/batch/implementation/task/TaskManager.java",
+                "line": 225,
+                "message": "X should have been retried at least once ==> expected: <true> but was: <false>"
+              }
+            ]
+          }
+        ]
+      }
+    constraints:
+      max_turns: 6
+      max_tokens: 8000
+    graders:
+      - type: completed
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-pipeline-troubleshooting
+      - type: output-contains
+        config:
+          substring: "TaskManager"
+      - type: output-matches
+        config:
+          pattern: "(?i)(code bug|logic|test failure|assertion)"
+      - type: output-not-matches
+        config:
+          pattern: "(?i)(re-?record|missing recording|retry the pipeline|service outage)"
+      - type: prompt
+        config:
+          model: gpt-5.4
+          scoring: binary
+          threshold: 1.0
+          prompt: |
+            Build 6453847 failed one test
+            (TaskManagerTests.successAfterOneServerErrorDidRetry) with
+            "X should have been retried at least once ==> expected: <true> but
+            was: <false>", attributed to the TaskManager implementation. Does the
+            response (a) identify this as a code/logic bug in TaskManager (a
+            server-error task is not retried), and (b) recommend fixing the retry
+            logic rather than re-recording or retrying the pipeline? Answer "pass"
+            or "fail".
+  
+  - name: java-missing-recording
+    environment:
+      files:
+        - src: ../../../fixtures/analyze-pipeline/BlobApiTests/code/BlobApiTests.java
+          dest: sdk/storage/azure-storage-blob/src/test/java/com/azure/storage/blob/BlobApiTests.java
+        - src: ../../../fixtures/analyze-pipeline/BlobApiTests/code/BlobAsyncApiTests.java
+          dest: sdk/storage/azure-storage-blob/src/test/java/com/azure/storage/blob/BlobAsyncApiTests.java
+      commands:
+        - git init -q && git add -A && git -c user.email=vally@local -c user.name=vally commit -qm "seed pre-analysis source"
+    prompt: |
+      My Java SDK pipeline failed and I'm trying to figure out what went wrong. Can you help?
+
+      "azsdk-analyze-pipeline" Test Failures Parsed Output:
+      {
+        "_provenance": {
+          "buildId": "6449182",
+          "language": "java",
+          "repository": "Azure/azure-sdk-for-java",
+          "definition": "java - pullrequest",
+          "pipelineUrl": "https://dev.azure.com/azure-sdk/public/_build/results?buildId=6449182",
+          "prUrl": "https://github.com/Azure/azure-sdk-for-java/pull/49365",
+          "sourceCommit": "41452ab0ce3ddd22dd6e174df140375995384bcd",
+          "category": "test failure (missing recording)",
+          "rootCauseSummary": "BlobApiTests and BlobAsyncApiTests SmartAccessTier playback tests failed during test setup because the test proxy returned 404 for missing session-record JSON files. The real failure messages name absent recordings for BlobApiTests.downloadContentSmartAccessTierHeaders, BlobApiTests.downloadSmartAccessTierHeaders, and BlobAsyncApiTests.downloadSmartAccessTierHeaders across hosted-agent path formats.",
+          "failedTestCount": 30,
+          "featuredFailures": [
+            "c.a.s.b.BlobApiTests.downloadContentSmartAccessTierHeaders",
+            "c.a.s.b.BlobApiTests.downloadSmartAccessTierHeaders",
+            "c.a.s.b.BlobAsyncApiTests.downloadSmartAccessTierHeaders",
+            "downloadContentSmartAccessTierHeaders",
+            "downloadSmartAccessTierHeaders"
+          ],
+          "captureDate": "2026-06-23"
+        },
+        "failed_test_titles": {
+          "com.azure.storage.blob.BlobApiTests": [
+            "c.a.s.b.BlobApiTests.downloadContentSmartAccessTierHeaders",
+            "c.a.s.b.BlobApiTests.downloadSmartAccessTierHeaders",
+            "downloadContentSmartAccessTierHeaders",
+            "downloadSmartAccessTierHeaders"
+          ],
+          "com.azure.storage.blob.BlobAsyncApiTests": [
+            "c.a.s.b.BlobAsyncApiTests.downloadSmartAccessTierHeaders",
+            "downloadSmartAccessTierHeaders"
+          ]
+        },
+        "failed_tasks": [
+          {
+            "pipeline_url": "https://dev.azure.com/azure-sdk/public/_build/results?buildId=6449182",
+            "errors": [
+              {
+                "file": "sdk/storage/azure-storage-blob/src/test/java/com/azure/storage/blob/BlobApiTests.java",
+                "line": 561,
+                "message": "Test proxy returned a non-successful status code. 404; response: {\"Message\":\"Recording file path /Users/runner/work/1/s/.assets/yoPImn7QKL/java/sdk/storage/azure-storage-blob/src/test/resources/session-records/BlobApiTests.downloadContentSmartAccessTierHeaders.json does not exist.\",\"Status\":\"NotFound\"}"
+              },
+              {
+                "file": "sdk/storage/azure-storage-blob/src/test/java/com/azure/storage/blob/BlobApiTests.java",
+                "line": 548,
+                "message": "Test proxy returned a non-successful status code. 404; response: {\"Message\":\"Recording file path /Users/runner/work/1/s/.assets/yoPImn7QKL/java/sdk/storage/azure-storage-blob/src/test/resources/session-records/BlobApiTests.downloadSmartAccessTierHeaders.json does not exist.\",\"Status\":\"NotFound\"}"
+              },
+              {
+                "file": "sdk/storage/azure-storage-blob/src/test/java/com/azure/storage/blob/BlobAsyncApiTests.java",
+                "line": 387,
+                "message": "Test proxy returned a non-successful status code. 404; response: {\"Message\":\"Recording file path /Users/runner/work/1/s/.assets/yoPImn7QKL/java/sdk/storage/azure-storage-blob/src/test/resources/session-records/BlobAsyncApiTests.downloadSmartAccessTierHeaders.json does not exist.\",\"Status\":\"NotFound\"}"
+              },
+              {
+                "file": "sdk/storage/azure-storage-blob/src/test/java/com/azure/storage/blob/BlobApiTests.java",
+                "line": 561,
+                "message": "Test proxy returned a non-successful status code. 404; response: {\"Message\":\"Recording file path /mnt/vss/_work/1/s/.assets/yoPImn7QKL/java/sdk/storage/azure-storage-blob/src/test/resources/session-records/BlobApiTests.downloadContentSmartAccessTierHeaders.json does not exist.\",\"Status\":\"NotFound\"}"
+              },
+              {
+                "file": "sdk/storage/azure-storage-blob/src/test/java/com/azure/storage/blob/BlobApiTests.java",
+                "line": 548,
+                "message": "Test proxy returned a non-successful status code. 404; response: {\"Message\":\"Recording file path /mnt/vss/_work/1/s/.assets/yoPImn7QKL/java/sdk/storage/azure-storage-blob/src/test/resources/session-records/BlobApiTests.downloadSmartAccessTierHeaders.json does not exist.\",\"Status\":\"NotFound\"}"
+              },
+              {
+                "file": "sdk/storage/azure-storage-blob/src/test/java/com/azure/storage/blob/BlobAsyncApiTests.java",
+                "line": 387,
+                "message": "Test proxy returned a non-successful status code. 404; response: {\"Message\":\"Recording file path /mnt/vss/_work/1/s/.assets/yoPImn7QKL/java/sdk/storage/azure-storage-blob/src/test/resources/session-records/BlobAsyncApiTests.downloadSmartAccessTierHeaders.json does not exist.\",\"Status\":\"NotFound\"}"
+              },
+              {
+                "file": "sdk/storage/azure-storage-blob/src/test/java/com/azure/storage/blob/BlobApiTests.java",
+                "line": 561,
+                "message": "Test proxy returned a non-successful status code. 404; response: {\"Message\":\"Recording file path D:/a/_work/1/s/.assets/yoPImn7QKL/java\\\\sdk\\\\storage\\\\azure-storage-blob\\\\src\\\\test\\\\resources\\\\session-records\\\\BlobApiTests.downloadContentSmartAccessTierHeaders.json does not exist.\",\"Status\":\"NotFound\"}"
+              },
+              {
+                "file": "sdk/storage/azure-storage-blob/src/test/java/com/azure/storage/blob/BlobApiTests.java",
+                "line": 548,
+                "message": "Test proxy returned a non-successful status code. 404; response: {\"Message\":\"Recording file path D:/a/_work/1/s/.assets/yoPImn7QKL/java\\\\sdk\\\\storage\\\\azure-storage-blob\\\\src\\\\test\\\\resources\\\\session-records\\\\BlobApiTests.downloadSmartAccessTierHeaders.json does not exist.\",\"Status\":\"NotFound\"}"
+              },
+              {
+                "file": "sdk/storage/azure-storage-blob/src/test/java/com/azure/storage/blob/BlobAsyncApiTests.java",
+                "line": 387,
+                "message": "Test proxy returned a non-successful status code. 404; response: {\"Message\":\"Recording file path D:/a/_work/1/s/.assets/yoPImn7QKL/java\\\\sdk\\\\storage\\\\azure-storage-blob\\\\src\\\\test\\\\resources\\\\session-records\\\\BlobAsyncApiTests.downloadSmartAccessTierHeaders.json does not exist.\",\"Status\":\"NotFound\"}"
+              }
+            ]
+          }
+        ]
+      }
+    constraints:
+      max_turns: 6
+      max_tokens: 8000
+    graders:
+      - type: completed
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-pipeline-troubleshooting
+      - type: output-contains
+        config:
+          substring: "SmartAccessTier"
+      - type: output-matches
+        config:
+          pattern: "(?i)(recording|playback|test.?proxy|404)"
+      - type: output-matches
+        config:
+          pattern: "(?i)(re-?record|record mode|record the test|sync.*recording|restore.*recording)"
+      - type: output-not-matches
+        config:
+          pattern: "(?i)(product code bug|service outage)"
+      - type: prompt
+        config:
+          model: gpt-5.4
+          scoring: binary
+          threshold: 1.0
+          prompt: |
+            Build 6449182 failed because the test proxy returned 404 - the
+            recording files for the BlobApiTests / BlobAsyncApiTests
+            SmartAccessTier tests do not exist. Does the response (a) identify
+            this as a missing test recording (test-proxy 404), not a code or
+            service bug, and (b) recommend re-recording / syncing the recordings
+            rather than editing product code? Answer "pass" or "fail".
+
+scoring:
+  weights:
+    skill-invocation: 1
+    output-contains: 1
+    output-matches: 1
+    output-not-matches: 1
+    prompt: 1
+  threshold: 1.0

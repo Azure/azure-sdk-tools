@@ -1,0 +1,192 @@
+name: azsdk-mcp-tool-scenarios
+description: |
+  Evaluates how well the agent can fix pipeline failures from the Azure SDK Java pipelines.
+  Is given the initial azsdk-analyze-pipeline analysis output.
+version: "1.0"
+type: capability
+
+tags:
+  area: pipeline
+
+environment: azsdk-mcp-mock
+
+config:
+  runs: 1
+  timeout: 5m
+  executor: copilot-sdk
+  model: gpt-5.4
+
+stimuli:
+  - name: java-fix-missing-recording-unfixable
+    environment:
+      files:
+        - src: ../../../fixtures/analyze-pipeline/BlobApiTests/code/BlobApiTests.java
+          dest: sdk/storage/azure-storage-blob/src/test/java/com/azure/storage/blob/BlobApiTests.java
+        - src: ../../../fixtures/analyze-pipeline/BlobApiTests/code/BlobAsyncApiTests.java
+          dest: sdk/storage/azure-storage-blob/src/test/java/com/azure/storage/blob/BlobAsyncApiTests.java
+      commands:
+        - git init -q && git add -A && git -c user.email=vally@local -c user.name=vally commit -qm "seed real pre-fix source"
+    prompt: |
+      My PR's pipeline failed and I need it fixed. Can you help?
+
+      "azsdk-analyze-pipeline" Analyzed Output:
+
+      ## Pipeline Analysis: 6449182
+
+      ### Root Cause
+      BlobApiTests and BlobAsyncApiTests SmartAccessTier playback tests failed because the test proxy cannot locate session-record JSON files. The tests require pre-recorded HTTP interactions to run in playback mode, but the recording files are missing from the repository.
+
+      ### Failures
+
+      #### 1. Missing Recording: downloadContentSmartAccessTierHeaders
+      - **Category:** test failure (missing recording)
+      - **File:** `sdk/storage/azure-storage-blob/src/test/java/com/azure/storage/blob/BlobApiTests.java:561`
+      - **Error:** Test proxy returned 404; recording file path does not exist
+      - **Fix:** Re-record the test session by running tests in record mode against the live Azure Storage service to capture the SmartAccessTier header interactions
+      - **Verify:** `mvn test -Dtest=BlobApiTests#downloadContentSmartAccessTierHeaders`
+
+      #### 2. Missing Recording: downloadSmartAccessTierHeaders (BlobApiTests)
+      - **Category:** test failure (missing recording)
+      - **File:** `sdk/storage/azure-storage-blob/src/test/java/com/azure/storage/blob/BlobApiTests.java:548`
+      - **Error:** Test proxy returned 404; recording file path does not exist
+      - **Fix:** Re-record the test session using live mode
+      - **Verify:** `mvn test -Dtest=BlobApiTests#downloadSmartAccessTierHeaders`
+
+      #### 3. Missing Recording: downloadSmartAccessTierHeaders (BlobAsyncApiTests)
+      - **Category:** test failure (missing recording)
+      - **File:** `sdk/storage/azure-storage-blob/src/test/java/com/azure/storage/blob/BlobAsyncApiTests.java:387`
+      - **Error:** Test proxy returned 404; recording file path does not exist
+      - **Fix:** Re-record the test session using live mode
+      - **Verify:** `mvn test -Dtest=BlobAsyncApiTests#downloadSmartAccessTierHeaders`
+
+      ### Summary
+      - 0 fixable failures (code changes not applicable)
+      - 3 test failures requiring re-recording (recording-based tests missing session files)
+      - **Recommended Action:** Run tests in record mode against live Azure Storage service to generate missing recording files, then commit them to the repository
+
+      Package path: sdk/storage/azure-storage-blob
+    constraints:
+      max_turns: 15
+      max_tokens: 16000
+    graders:
+      - type: completed
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-pipeline-fixer
+      - type: file-matches
+        config:
+          path: "**/BlobApiTests.java"
+          pattern: '(?i)download(Content)?SmartAccessTierHeaders'
+      - type: file-matches
+        config:
+          path: "**/BlobAsyncApiTests.java"
+          pattern: '(?i)downloadSmartAccessTierHeaders'
+      - type: output-not-matches
+        config:
+          pattern: "(?i)```(csharp|cs|java|typescript|ts|javascript|js|python|py)"
+      - type: output-matches
+        config:
+          pattern: "(?i)(re-?record|recording|record mode|capture|live (service|mode))"
+      - type: output-contains
+        config:
+          substring: "SmartAccessTier"
+      - type: prompt
+        config:
+          model: gpt-5.4
+          scoring: binary
+          threshold: 1.0
+          prompt: |
+            Does the response correctly identify all 3 failures as unfixable
+            (missing recordings requiring live service access) and NOT attempt
+            to produce a code diff? Answer "pass" or "fail".
+
+  - name: java-fix-server-error-not-retried-bug
+    environment:
+      files:
+        - src: ../../../fixtures/analyze-pipeline/TaskManagerTests/code/TaskManager.java
+          dest: sdk/batch/azure-compute-batch/src/main/java/com/azure/compute/batch/implementation/task/TaskManager.java
+        - src: ../../../fixtures/analyze-pipeline/TaskManagerTests/code/TaskManagerTests.java
+          dest: sdk/batch/azure-compute-batch/src/test/java/com/azure/compute/batch/TaskManagerTests.java
+      commands:
+        - git init -q && git add -A && git -c user.email=vally@local -c user.name=vally commit -qm "seed real pre-fix source"
+    prompt: |
+      My PR's pipeline failed and I need it fixed. Can you help?
+
+      "azsdk-analyze-pipeline" Analyzed Output:
+
+      ## Pipeline Analysis: 6453847
+
+      ### Root Cause
+      TaskManagerTests.successAfterOneServerErrorDidRetry is failing because the TaskManager does not properly retry tasks after receiving a SERVER_ERROR response. Tasks are queued to pendingList when SERVER_ERROR occurs, but the retry logic does not loop until the pendingList is empty, so tasks are processed only once and the retry path is not exercised.
+
+      ### Failures
+
+      #### 1. Task Retry Logic Not Implemented
+      - **Category:** code bug
+      - **File:** `sdk/batch/azure-compute-batch/src/main/java/com/azure/compute/batch/implementation/task/TaskManager.java:114-225`
+      - **Error:** X should have been retried at least once (expected: true but was: false)
+      - **Fix:** Add retry loop in TaskManager.createTasks() or processPendingList() to continuously drain pendingList until empty, ensuring SERVER_ERROR tasks are resubmitted
+      - **Verify:** `mvn test -Dtest=TaskManagerTests#successAfterOneServerErrorDidRetry`
+
+      #### 2. Test Assertion Fails
+      - **Category:** code bug
+      - **File:** `sdk/batch/azure-compute-batch/src/test/java/com/azure/compute/batch/TaskManagerTests.java:60`
+      - **Error:** X should have been retried at least once
+      - **Fix:** Fix the TaskManager implementation to ensure tasks are retried after SERVER_ERROR; test will pass once retry logic is added
+      - **Verify:** Run the test after fixing TaskManager.java
+
+      ### Summary
+      - 1 fixable code failure (implement retry loop in TaskManager)
+      - 0 infrastructure issues
+      - **Recommended Action:** Modify TaskManager to loop and drain pendingList after each submission pass
+
+      Package path: sdk/batch/azure-compute-batch
+    constraints:
+      max_turns: 15
+      max_tokens: 16000
+    graders:
+      - type: completed
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-pipeline-fixer
+      - type: tool-calls
+        config:
+          required:
+            - name: azsdk_package_build_code
+            - name: azsdk_package_run_check
+            - name: azsdk_package_run_tests
+          disallowed:
+            - name: '^bash$'
+              command: '(?i)(^|[\s;&|/])(mvn|gradlew|gradle|javac)\s'
+      - type: file-matches
+        config:
+          path: "**/implementation/task/TaskManager.java"
+          pattern: '(?i)pendingList'
+      - type: file-matches
+        config:
+          path: "**/implementation/task/TaskManager.java"
+          pattern: '(?i)pendingList\s*\.\s*(isEmpty|peek)'
+      - type: output-not-matches
+        config:
+          pattern: '(?i)(retry the pipeline|not fixable by (a )?code|unfixable|infrastructure issue)'
+      - type: prompt
+        config:
+          model: gpt-5.4
+          scoring: binary
+          threshold: 1.0
+          prompt: |
+            Does the response change TaskManager so that tasks re-queued onto
+            pendingList after a SERVER_ERROR are retried (e.g. by looping until
+            pendingList is empty) rather than processed only once? Answer "pass"
+            or "fail".
+
+scoring:
+  weights:
+    skill-invocation: 1
+    file-matches: 1
+    tool-calls: 1
+    output-not-matches: 1
+    prompt: 1
+  threshold: 1.0

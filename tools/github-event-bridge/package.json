@@ -11,8 +11,11 @@
   },
   "dependencies": {
     "@azure/identity": "^4.13.1",
+    "@azure/keyvault-keys": "^4.10.0",
     "@azure/keyvault-secrets": "^4.11.2",
     "@azure/monitor-opentelemetry": "^1.16.0",
+    "@octokit/auth-app": "^8.1.1",
+    "@octokit/webhooks": "^14.2.0",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/api-logs": "^0.208.0",
     "@opentelemetry/instrumentation-undici": "^0.25.0",
@@ -20,7 +23,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.0",
-    "@octokit/webhooks": "^14.2.0",
     "@tsconfig/node22": "^22.0.5",
     "@vitest/coverage-v8": "^4.1.0",
     "cross-env": "^10.1.0",

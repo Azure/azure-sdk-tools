@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const secretValues = vi.hoisted(() => new Map<string, string>());
 const getSecretMock = vi.hoisted(() => vi.fn());
+const signDataMock = vi.hoisted(() => vi.fn());
+const cryptographyClientCtor = vi.hoisted(() => vi.fn());
 
 vi.mock("@azure/identity", () => ({
     DefaultAzureCredential: vi.fn(function DefaultAzureCredential() {}),
@@ -14,6 +16,15 @@ vi.mock("@azure/keyvault-secrets", () => ({
     SecretClient: vi.fn(function SecretClient() {
         return {
             getSecret: getSecretMock,
+        };
+    }),
+}));
+
+vi.mock("@azure/keyvault-keys", () => ({
+    CryptographyClient: vi.fn(function CryptographyClient(keyId: string) {
+        cryptographyClientCtor(keyId);
+        return {
+            signData: signDataMock,
         };
     }),
 }));
@@ -30,7 +41,7 @@ describe("loadConfig", () => {
             "PRIVATE_KEY_PATH",
             "KEY_VAULT_URL",
             "WEBHOOK_SECRET_NAME",
-            "PRIVATE_KEY_SECRET_NAME",
+            "PRIVATE_KEY_KEY_ID",
         ]) {
             delete process.env[key];
         }
@@ -38,6 +49,8 @@ describe("loadConfig", () => {
         secretValues.clear();
         getSecretMock.mockReset();
         getSecretMock.mockImplementation((name: string) => ({ value: secretValues.get(name) }));
+        signDataMock.mockReset();
+        cryptographyClientCtor.mockReset();
     });
 
     afterEach(() => {
@@ -66,20 +79,45 @@ describe("loadConfig", () => {
         }
     });
 
-    it("loads webhook secret and private key from Key Vault when configured", async () => {
+    it("loads webhook secret from Key Vault and signs the App JWT inside the vault", async () => {
         process.env.GITHUB_APP_ID = "123456";
         process.env.KEY_VAULT_URL = "https://example.vault.azure.net/";
         process.env.WEBHOOK_SECRET_NAME = "webhook-secret";
-        process.env.PRIVATE_KEY_SECRET_NAME = "webhook-private-key";
+        process.env.PRIVATE_KEY_KEY_ID =
+            "https://example.vault.azure.net/keys/github-app-signing-key";
         secretValues.set("webhook-secret", "vault-webhook-secret");
-        secretValues.set("webhook-private-key", "-----BEGIN RSA PRIVATE KEY-----\\nkey\\n-----END RSA PRIVATE KEY-----");
+        signDataMock.mockResolvedValue({ result: Buffer.from("signature-bytes") });
 
         const { loadConfig } = await import("../src/config.ts");
+        const config = await loadConfig();
 
-        await expect(loadConfig()).resolves.toEqual({
-            githubAppId: "123456",
-            webhookSecret: "vault-webhook-secret",
-            privateKey: "-----BEGIN RSA PRIVATE KEY-----\nkey\n-----END RSA PRIVATE KEY-----",
-        });
+        expect(config.githubAppId).toBe("123456");
+        expect(config.webhookSecret).toBe("vault-webhook-secret");
+        expect(config.privateKey).toBeUndefined();
+        expect(config.createJwt).toBeTypeOf("function");
+        expect(cryptographyClientCtor).toHaveBeenCalledWith(
+            "https://example.vault.azure.net/keys/github-app-signing-key",
+        );
+
+        const { jwt, expiresAt } = await config.createJwt!("123456");
+
+        // signData is invoked with RS256 over the header.payload signing input.
+        expect(signDataMock).toHaveBeenCalledTimes(1);
+        const [algorithm, signingInput] = signDataMock.mock.calls[0] as [string, Buffer];
+        expect(algorithm).toBe("RS256");
+
+        const [header, payload, signature] = jwt.split(".");
+        expect(`${header}.${payload}`).toBe(Buffer.from(signingInput).toString());
+        expect(signature).toBe(Buffer.from("signature-bytes").toString("base64url"));
+
+        const decodedHeader = JSON.parse(
+            Buffer.from(header, "base64url").toString(),
+        ) as Record<string, unknown>;
+        expect(decodedHeader).toEqual({ alg: "RS256", typ: "JWT" });
+        const decodedPayload = JSON.parse(
+            Buffer.from(payload, "base64url").toString(),
+        ) as Record<string, unknown>;
+        expect(decodedPayload["iss"]).toBe("123456");
+        expect(typeof expiresAt).toBe("string");
     });
 });

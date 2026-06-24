@@ -1,8 +1,9 @@
-import { createNodeMiddleware, type EmitterWebhookEvent } from "@octokit/webhooks";
+import { createAppAuth } from "@octokit/auth-app";
+import { createNodeMiddleware, type EmitterWebhookEvent, Webhooks } from "@octokit/webhooks";
 import { trace } from "@opentelemetry/api";
 import { SeverityNumber } from "@opentelemetry/api-logs";
 import { createServer } from "http";
-import { App, type Octokit } from "octokit";
+import { Octokit } from "octokit";
 import { loadConfig } from "./config.ts";
 import { logger } from "./logger.ts";
 
@@ -10,15 +11,22 @@ import { logger } from "./logger.ts";
 
 const host = process.env.NODE_ENV === "production" ? "0.0.0.0" : "localhost";
 const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
-const { githubAppId, webhookSecret, privateKey } = await loadConfig();
+const { githubAppId, webhookSecret, privateKey, createJwt } = await loadConfig();
 
-const app = new App({
-    appId: githubAppId,
-    privateKey: privateKey,
-    webhooks: {
-        secret: webhookSecret,
-    },
-});
+// When `createJwt` is set the App JWT is signed inside Key Vault and the private
+// key never leaves the vault. Otherwise fall back to a locally held private key.
+const appAuthOptions = createJwt
+    ? { appId: githubAppId, createJwt }
+    : { appId: githubAppId, privateKey: privateKey! };
+
+const webhooks = new Webhooks({ secret: webhookSecret });
+
+function getInstallationOctokit(installationId: number): Octokit {
+    return new Octokit({
+        authStrategy: createAppAuth,
+        auth: { ...appAuthOptions, installationId },
+    });
+}
 
 const messageForNewPRs = "test comment from github app";
 
@@ -109,9 +117,23 @@ async function handleIssueCommentCreated({
     }
 }
 
-app.webhooks.on("pull_request.opened", handlePullRequestOpened);
-app.webhooks.on("issue_comment.created", handleIssueCommentCreated);
-app.webhooks.onError((error) => {
+webhooks.on("pull_request.opened", async ({ payload }) => {
+    const installationId = payload.installation?.id;
+    if (!installationId) {
+        console.error("Missing installation id on pull_request.opened event");
+        return;
+    }
+    await handlePullRequestOpened({ octokit: getInstallationOctokit(installationId), payload });
+});
+webhooks.on("issue_comment.created", async ({ payload }) => {
+    const installationId = payload.installation?.id;
+    if (!installationId) {
+        console.error("Missing installation id on issue_comment.created event");
+        return;
+    }
+    await handleIssueCommentCreated({ octokit: getInstallationOctokit(installationId), payload });
+});
+webhooks.onError((error) => {
     if (error.name === "AggregateError") {
         console.error(`Error processing request: ${JSON.stringify(error.event)}`);
     } else {
@@ -122,7 +144,7 @@ app.webhooks.onError((error) => {
 const path = "/api/webhook";
 const localWebhookUrl = `http://${host}:${port}${path}`;
 
-const middleware = createNodeMiddleware(app.webhooks, { path });
+const middleware = createNodeMiddleware(webhooks, { path });
 
 createServer((req, res) => {
     console.log(

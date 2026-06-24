@@ -23,7 +23,7 @@ parameters:
     - azure-sdk-for-js
     - azure-sdk-for-net
     - azure-sdk-for-python
-    - azure-rest-api-specs
+    # - azure-rest-api-specs
     # TODO: Onboard rust and go repos
     # - azure-sdk-for-go
     # - azure-sdk-for-rust

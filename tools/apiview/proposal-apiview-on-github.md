@@ -245,6 +245,7 @@ These shapes are illustrative. The final schema should be optimized for release-
 ## Security and Authentication
 
 - GitHub webhook requests must be validated using the webhook secret or GitHub App event validation mechanism.
+- GitHub webhook secrets must be rotated at least every 90 days. Rotation should be automated through the GitHub App or repository webhook configuration APIs where possible.
 - APIView should call GitHub using installation tokens for the existing `azure-sdk-automation` GitHub App.
 - APIView APIs called by language repository pipelines must authenticate with Entra ID.
 - Repository actions should be limited to repositories where the GitHub App is installed.
@@ -260,6 +261,7 @@ These shapes are illustrative. The final schema should be optimized for release-
 - ADO pipeline logs and APIView service logs should provide enough diagnostics to explain why a release gate failed.
 - APIView should record provenance for all approval decisions.
 - Missing GitHub App installation should fail clearly with remediation instructions.
+- Webhook secret rotation should be operationalized so APIView and webhook configuration stay in sync during each 90-day rotation window. APIView should support validating both the current and next webhook secret during a short rotation grace period.
 
 ---
 

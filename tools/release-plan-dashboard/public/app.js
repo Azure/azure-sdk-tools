@@ -67,7 +67,14 @@
       },
       prCount: "",
       user: { name: "", isPM: false },
-      filters: { search: "", plane: "", month: "", prLang: "", prStatus: "" },
+      filters: {
+        search: "",
+        plane: "",
+        month: "",
+        prLang: "",
+        prStatus: "",
+        tag: "",
+      },
       prFilterVisible: false,
     },
     {
@@ -106,20 +113,20 @@
     <h3>Step 2: Collect the following details</h3>
     <ol class="guide-list">
       <li><strong>Relative path</strong> to your TypeSpec project<br><em>e.g. <code>specification/contosowidgetmanager/Contoso.Management</code></em></li>
-      <li><strong>SDK release type:</strong> beta or stable</li>
+      <li><strong>API release type:</strong> Private Preview, Public Preview, or GA</li>
       <li><strong>API spec pull request</strong> (optional)</li>
-      <li><strong>Service Tree ID</strong> for your service <em>(optional*)</em></li>
-      <li><strong>Service Tree ID</strong> for your product <em>(optional*)</em></li>
+      <li><strong>Product's ID in Service Tree</strong> <em>(optional*)</em></li>
+      <li><strong>Service ID</strong> for the service linked to your product <em>(optional*)</em></li>
     </ol>
     <p style="font-size:.82rem;color:#605e5c;">* Service Tree IDs are only required if this is the first time creating a release plan for your TypeSpec project path. For subsequent plans, they will be auto-populated.</p>
     <h3>Step 3: Use this prompt</h3>
     <p>Copy and paste the following prompt into Copilot CLI or VS Code Copilot chat, filling in your details:</p>
     <pre class="guide-prompt"><code>Create a release plan for TypeSpec project with following details:
 - TypeSpec project path: &lt;specification/your-service/Your.Management&gt;
-- SDK release type: &lt;beta or stable&gt;
+- API release type: &lt;Private Preview, Public Preview, or GA&gt;
 - API spec PR: &lt;optional PR link&gt;
-- Service Tree ID (Service): &lt;optional, your-service-tree-id&gt;
-- Service Tree ID (Product): &lt;optional, your-product-tree-id&gt;</code></pre>
+- Product ID: &lt;optional, your-product-tree-id&gt;
+- Service ID: &lt;optional, your-service-tree-id&gt;</code></pre>
     <p style="font-size:.82rem;color:#605e5c;margin-top:12px;">📘 For more details, visit <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">Azure SDK Tools Agent documentation</a>.</p>`;
 
   // Set default modal content in store once Alpine is ready
@@ -724,6 +731,21 @@
         (p) =>
           (p.releaseMonth || "").toLowerCase() === monthFilter.toLowerCase(),
       );
+    const tagFilter = store().filters.tag;
+    if (tagFilter) {
+      filtered = filtered.filter((p) => {
+        const langs = p.languages || {};
+        if (tagFilter === "first-preview") {
+          return Object.values(langs).some(
+            (l) => l.isFirstPreview && l.packageName,
+          );
+        }
+        if (tagFilter === "first-ga") {
+          return Object.values(langs).some((l) => l.isFirstGA && l.packageName);
+        }
+        return true;
+      });
+    }
 
     const mgmt = filtered.filter((p) => classifyPlane(p) === "mgmt");
     const data = filtered.filter((p) => classifyPlane(p) === "data");
@@ -925,6 +947,25 @@
     const dupHTML = p._duplicateOf
       ? `<span class="badge badge-duplicate">⚠️ Duplicate of ${esc(String(p._duplicateOf))}</span>`
       : "";
+    // First Preview / First GA badge on the card title (not for private preview plans)
+    let releaseTagBadge = "";
+    if (!isPrivatePreviewPlan(p)) {
+      const langs = p.languages || {};
+      const hasFirstPreview = Object.values(langs).some(
+        (l) => l.isFirstPreview && l.packageName,
+      );
+      const hasFirstGA = Object.values(langs).some(
+        (l) => l.isFirstGA && l.packageName,
+      );
+      if (hasFirstPreview)
+        releaseTagBadge +=
+          '<span class="badge badge-first-preview">First Preview</span>';
+      if (hasFirstGA)
+        releaseTagBadge += '<span class="badge badge-first-ga">First GA</span>';
+    }
+    const missingProductBadge = !p.productId
+      ? '<span class="badge badge-missing-product">Missing product details</span>'
+      : "";
     const isExpanded = !!store().ui.expandedPlans[p.id];
     const summaryClass = isExpanded ? "card-summary expanded" : "card-summary";
     const detailsClass = isExpanded ? "card-details open" : "card-details";
@@ -933,7 +974,7 @@
       <div class="${summaryClass}"${isExpanded ? ' data-pr-loaded="1"' : ""}>
         <span class="card-chevron">&#9654;</span>
         <div class="card-title">
-          ${esc(p.title)} ${copilotBadge} ${sdkTypeBadge}
+          ${esc(p.title)} ${copilotBadge} ${sdkTypeBadge} ${releaseTagBadge} ${missingProductBadge}
         </div>
         <div class="card-meta">
           ${p.releaseMonth ? `<span>${esc(p.releaseMonth)}</span>` : ""}
@@ -1031,7 +1072,7 @@
         body = `<p>The SDK pull request has not been generated for <strong>${esc(lang)}</strong> yet.</p>
           <p>Use the ${agentLink} to generate the SDK:</p>
           ${repoNote}
-          <div class="guide-prompt"><code>Generate ${esc(lang)} SDK${pkg ? ` for package ${esc(pkg)}` : ""}${specPath ? ` for TypeSpec project ${esc(specPath)}` : ""} for release plan ${esc(planId)}</code></div>
+          <div class="guide-prompt"><code>Run SDK generation for ${esc(lang)}${pkg ? ` for package ${esc(pkg)}` : ""}${specPath ? ` for TypeSpec project ${esc(specPath)}` : ""} for release plan ${esc(planId)}</code></div>
           ${specPath ? `<p style="font-size:.82rem;color:#605e5c;">TypeSpec path: <code>${esc(specPath)}</code></p>` : ""}`;
         break;
       case ACTION_TYPES.FIX_CHECKS:
@@ -1125,7 +1166,7 @@
           <li>Clone the <code>azure-rest-api-specs</code> repo</li>
           <li>Open <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">copilot-cli</a> from the cloned repo path, or open the cloned repo in VS Code and open GitHub Copilot chat</li>
           <li>Run the following prompt:
-            <div class="action-prompt"><code>Generate SDK for all languages from my TypeSpec project ${esc(specPath)} and link SDK pull requests to the release plan ${esc(planId)}</code></div>
+            <div class="action-prompt"><code>Run SDK generation for all languages from my TypeSpec project ${esc(specPath)} and link SDK pull requests to the release plan ${esc(planId)}</code></div>
           </li>
         </ol>
       </div>`;
@@ -1269,6 +1310,28 @@
       }
     }
 
+    // Namespace approval warning for management plane first-preview plans
+    {
+      const isMgmt = classifyPlane(p) === "mgmt";
+      const pLangs = p.languages || {};
+      const hasFirstPreviewPkg = Object.values(pLangs).some(
+        (l) => l.isFirstPreview && l.packageName,
+      );
+      if (isMgmt && hasFirstPreviewPkg && !p.namespaceApprovalIssue) {
+        const planId2 = p.releasePlanId || p.id;
+        actionContent += `<div class="action-item action-item-warning" style="margin-top:10px;">
+          <strong>⚠️ Missing namespace approval:</strong>
+          <p>This management plane release plan contains a first preview package but has no namespace approval issue linked.</p>
+          <ol>
+            <li>Get namespace approved by following the process at <a href="https://eng.ms/docs/products/azure-developer-experience/develop/namespace-review" target="_blank" rel="noopener">Namespace Review</a>.</li>
+            <li>Link the namespace approval issue to this release plan:<br>
+              <div class="action-prompt"><code>Link namespace approval issue &lt;url&gt; to the release plan ${esc(String(planId2))}</code></div>
+            </li>
+          </ol>
+        </div>`;
+      }
+    }
+
     if (!actionContent) return "";
 
     // Determine who action is required from
@@ -1316,6 +1379,18 @@
           p.submittedBy ? `Service Team (${p.submittedBy})` : "Service Team",
         );
       if (needsReviewTeam) actionFrom.push("SDK PR Reviewer");
+      // Namespace approval action is for service partner team
+      const isMgmtForAction = classifyPlane(p) === "mgmt";
+      const hasFirstPreviewForAction = Object.values(langs).some(
+        (l) => l.isFirstPreview && l.packageName,
+      );
+      if (
+        isMgmtForAction &&
+        hasFirstPreviewForAction &&
+        !p.namespaceApprovalIssue
+      ) {
+        actionFrom.push("Service Partner Team");
+      }
     }
     const actionFromHTML = actionFrom.length
       ? `<div class="action-from-label">Action required from: <strong>${esc(actionFrom.join(" & "))}</strong></div>`
@@ -1515,13 +1590,17 @@
     }
     if (specPath)
       html += `<div class="detail-row"><strong>Spec Project Path:</strong> ${esc(specPath)}</div>`;
-    // Work item link — always show using work item id
+    // Work item link — show as link for PMs, plain text for others
     {
-      const wiUrl = `https://dev.azure.com/azure-sdk/Release/_workitems/edit/${p.id}`;
       const label = p.releasePlanId
         ? `#${esc(String(p.releasePlanId))}`
         : `WI ${esc(String(p.id))}`;
-      html += `<div class="detail-row"><strong>Release Plan:</strong> <a href="${esc(wiUrl)}" target="_blank" rel="noopener">${label}</a> <span class="wi-warning">⚠️ Do not modify directly — use the <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">azsdk agent</a></span></div>`;
+      if (currentUserIsPM) {
+        const wiUrl = `https://dev.azure.com/azure-sdk/Release/_workitems/edit/${p.id}`;
+        html += `<div class="detail-row"><strong>Release Plan:</strong> <a href="${esc(wiUrl)}" target="_blank" rel="noopener">${label}</a> <span class="wi-warning">⚠️ Do not modify directly — use the <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">azsdk agent</a></span></div>`;
+      } else {
+        html += `<div class="detail-row"><strong>Release Plan:</strong> ${label}</div>`;
+      }
     }
     if (
       p.typeSpecPath &&
@@ -1559,10 +1638,13 @@
     html += "</div>";
 
     // Expandable Product Details section
-    if (p.productName) {
+    if (p.productName || p.productId) {
+      const productHeading = p.productName
+        ? `Product: ${esc(p.productName)}`
+        : "Product";
       html += `<div class="detail-group product-collapsible">
         <h4 class="product-toggle" style="cursor:pointer;user-select:none;">
-          <span class="product-caret">&#9654;</span> Product: ${esc(p.productName)}
+          <span class="product-caret">&#9654;</span> ${productHeading}
         </h4>
         <div class="product-details" style="display:none;">`;
       if (p.serviceName)
@@ -1587,13 +1669,18 @@
         const langs = p.languages || {};
         const langKeys = Object.keys(langs);
         if (langKeys.length) {
-          // Determine if any SDK PR exists to decide expanded vs collapsed
+          // Determine if any SDK PR exists or any package name is present to decide expanded vs collapsed
           const hasAnyPr = langKeys.some(
             (k) =>
               langs[k].sdkPrUrl && !isLangExcluded(langs[k].exclusionStatus),
           );
-          const sdkDisplay = hasAnyPr ? "" : "display:none;";
-          const sdkCaret = hasAnyPr ? "&#9660;" : "&#9654;";
+          const hasAnyPackageName = langKeys.some(
+            (k) =>
+              langs[k].packageName && !isLangExcluded(langs[k].exclusionStatus),
+          );
+          const shouldExpand = hasAnyPr || hasAnyPackageName;
+          const sdkDisplay = shouldExpand ? "" : "display:none;";
+          const sdkCaret = shouldExpand ? "&#9660;" : "&#9654;";
           html += `<div class="detail-group sdk-collapsible">
         <h4 class="sdk-toggle" style="cursor:pointer;user-select:none;">
           <span class="sdk-caret">${sdkCaret}</span> SDK Details
@@ -1622,17 +1709,22 @@
               ? l.releasedVersion || ""
               : l.pkgVersion || "";
 
-            // Package labels: namespace approval + new package + API review (version now in its own column)
+            // Package labels: first preview/GA + namespace approval + API review (version now in its own column)
             let pkgLabels = "";
-            if (l.isNewPackage) {
-              pkgLabels += '<span class="pr-label pr-label-new">New</span>';
-              if (
-                classifyPlane(p) !== "mgmt" &&
-                l.namespaceApproval &&
-                l.namespaceApproval.toLowerCase() !== "approved"
-              ) {
-                pkgLabels += `<span class="pr-label pr-label-ns-pending" title="Namespace: ${esc(l.namespaceApproval)}">${esc(l.namespaceApproval)}</span>`;
-              }
+            if (l.isFirstPreview) {
+              pkgLabels +=
+                '<span class="pr-label pr-label-first-preview">First Preview</span>';
+            } else if (l.isFirstGA) {
+              pkgLabels +=
+                '<span class="pr-label pr-label-first-ga">First GA</span>';
+            }
+            if (
+              l.isFirstPreview &&
+              classifyPlane(p) !== "mgmt" &&
+              l.namespaceApproval &&
+              l.namespaceApproval.toLowerCase() !== "approved"
+            ) {
+              pkgLabels += `<span class="pr-label pr-label-ns-pending" title="Namespace: ${esc(l.namespaceApproval)}">${esc(l.namespaceApproval)}</span>`;
             }
             if (
               l.apiReviewStatus &&
@@ -1800,6 +1892,25 @@
       html += `<div class="action-note">
         <strong>💡 Link a different SDK PR:</strong> Use the <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">Azure SDK Tools agent</a> in Copilot CLI or VS Code and run:
         <div class="action-prompt"><code>Link SDK pull request &lt;PR link&gt; to release plan ${esc(planId)}</code></div>
+      </div>`;
+    }
+
+    // Missing product details highlight
+    if (!p.productId) {
+      const releaseType = p.releasePlanType || p.releaseType || "GA";
+      const planId = p.releasePlanId || p.id;
+      html += `<div class="missing-product-highlight">
+        <strong>⚠️ Product details are missing in release plan</strong>
+        <p>Product and Service ID are required if KPI attestation is required for your product in S360.
+        You can ignore this if your product has already completed KPI attestation for <strong>${esc(releaseType)}</strong>.</p>
+        <div class="pm-action-steps">
+          <strong>How to update Service and Product ID:</strong>
+          <ol>
+            <li>Identify your service and product ID in Service Tree at <a href="https://aka.ms/st" target="_blank" rel="noopener">aka.ms/st</a>.</li>
+            <li>Copy the Service ID and Product ID, then use the <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">Azure SDK Tools agent</a> in Copilot CLI or VS Code and run:<br>
+              <code class="action-prompt-inline">Get release plan ${esc(String(planId))} and update release plan ${esc(String(planId))} to include product and service ID. Product ID: &lt;product id&gt;, Service ID: &lt;service id&gt;</code></li>
+          </ol>
+        </div>
       </div>`;
     }
 
@@ -2237,6 +2348,7 @@
         store().filters.sort,
         store().filters.prLang,
         store().filters.prStatus,
+        store().filters.tag,
       ];
       // Skip re-render if plans not loaded yet
       if (!getPlans().length) return;
@@ -2334,9 +2446,40 @@
     return actDate < threeMonthsAgo;
   }
 
+  let pmSectionsInitialized = false;
+
   function renderPMView(plans) {
     // Server-verified PM check — prevents rendering even if tab is unhidden via DevTools
     if (!currentUserIsPM) return;
+
+    // Collapse all PM sections by default on first render so PMs can easily find the group they want
+    if (!pmSectionsInitialized) {
+      pmSectionsInitialized = true;
+      const pmSectionIds = [
+        "list-pm-pp-ready",
+        "list-pm-ns-missing",
+        "list-pm-approaching",
+        "list-pm-pastdue",
+        "list-pm-inactive",
+        "list-pm-tier1",
+        "list-pm-partial",
+        "list-pm-product-missing",
+        "list-pm-finished",
+      ];
+      const ui = store().ui;
+      for (const sectionId of pmSectionIds) {
+        if (ui.collapsedSections[sectionId] !== undefined) continue;
+        const listEl = document.getElementById(sectionId);
+        if (!listEl) continue;
+        listEl.style.display = "none";
+        listEl.setAttribute("hidden", "");
+        const section = listEl.parentElement;
+        if (section) section.classList.add("collapsed");
+        const caret = section && section.querySelector(".caret");
+        if (caret) caret.innerHTML = "&#9654;";
+        ui.collapsedSections[sectionId] = true;
+      }
+    }
 
     const planeFilter = getGlobalPlaneFilter();
     const monthFilter = getMonthFilter();
@@ -2348,6 +2491,21 @@
         (p) =>
           (p.releaseMonth || "").toLowerCase() === monthFilter.toLowerCase(),
       );
+    const tagFilter = store().filters.tag;
+    if (tagFilter) {
+      filtered = filtered.filter((p) => {
+        const langs = p.languages || {};
+        if (tagFilter === "first-preview") {
+          return Object.values(langs).some(
+            (l) => l.isFirstPreview && l.packageName,
+          );
+        }
+        if (tagFilter === "first-ga") {
+          return Object.values(langs).some((l) => l.isFirstGA && l.packageName);
+        }
+        return true;
+      });
+    }
 
     const inactive = [];
     const tier1Missing = [];
@@ -2355,6 +2513,9 @@
     const approaching = [];
     const pastDue = [];
     const recentlyFinished = [];
+    const ppReady = [];
+    const nsMissing = [];
+    const productMissing = [];
 
     const now = new Date();
     const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -2372,6 +2533,64 @@
           recentlyFinished.push(p);
         }
         continue;
+      }
+
+      // Ready to complete private preview — non-finished private preview with merged spec PR
+      if (isPrivatePreviewPlan(p)) {
+        const specStatus = (p.apiReadiness || "").toLowerCase();
+        if (specStatus === "completed" || specStatus === "merged") {
+          const planId = p.releasePlanId || p.id;
+          p._pmAction = `This private preview release plan has a merged API spec PR. It is ready to be marked as completed.
+          <div class="pm-action-steps">
+            <strong>To complete this release plan:</strong>
+            <ol>
+              <li>Clone an Azure SDK or <a href="https://github.com/Azure/azure-rest-api-specs" target="_blank" rel="noopener">azure-rest-api-specs</a> repo and open Copilot CLI or VS Code from the repo root.</li>
+              <li>Copy and run the following prompt:<br><code class="action-prompt-inline">Complete release plan ${esc(String(planId))}</code></li>
+            </ol>
+          </div>`;
+          ppReady.push(p);
+        }
+        continue; // Private preview plans skip other categories
+      }
+
+      // Missing namespace approval — mgmt plane with first preview packages and no namespace approval link
+      {
+        const isMgmt = classifyPlane(p) === "mgmt";
+        const langs = p.languages || {};
+        const hasFirstPreview = Object.values(langs).some(
+          (l) => l.isFirstPreview && l.packageName,
+        );
+        if (isMgmt && hasFirstPreview && !p.namespaceApprovalIssue) {
+          const planId = p.releasePlanId || p.id;
+          p._nsWarning = true;
+          p._nsAction = `This management plane release plan contains a first preview package but is missing a namespace approval issue link.
+          <div class="pm-action-steps">
+            <strong>Action required for service partner team:</strong>
+            <ol>
+              <li>Get namespace approved by following the process at <a href="https://eng.ms/docs/products/azure-developer-experience/develop/namespace-review" target="_blank" rel="noopener">Namespace Review</a>.</li>
+              <li>Once approved, link the namespace approval issue to this release plan using the prompt:<br><code class="action-prompt-inline">Link namespace approval issue &lt;url&gt; to the release plan ${esc(String(planId))}</code></li>
+            </ol>
+          </div>`;
+          nsMissing.push(p);
+        }
+      }
+
+      // Missing product details — no product ID in release plan
+      if (!p.productId) {
+        const planId = p.releasePlanId || p.id;
+        const releaseType = p.releasePlanType || p.releaseType || "GA";
+        p._productMissingAction = `Product details are missing in this release plan.
+          <p style="margin:4px 0;">Product and Service ID are required if KPI attestation is required for your product in S360.
+          You can ignore this if the product has already completed KPI attestation for <strong>${esc(releaseType)}</strong>.</p>
+          <div class="pm-action-steps">
+            <strong>How to update Service and Product ID:</strong>
+            <ol>
+              <li>Identify the service and product ID in Service Tree at <a href="https://aka.ms/st" target="_blank" rel="noopener">aka.ms/st</a>.</li>
+              <li>Copy the Service ID and Product ID, then run the following prompt:<br>
+                <code class="action-prompt-inline">Get release plan ${esc(String(planId))} and update release plan ${esc(String(planId))} to include product and service ID. Product ID: &lt;product id&gt;, Service ID: &lt;service id&gt;</code></li>
+            </ol>
+          </div>`;
+        productMissing.push(p);
       }
 
       // Approaching SDK release target (current month or next month, not yet finished)
@@ -2438,20 +2657,62 @@
         parseReleaseMonth(a.releaseMonth) - parseReleaseMonth(b.releaseMonth),
     );
 
+    renderPMSection("list-pm-pp-ready", ppReady);
+    // Render nsMissing section with namespace-specific action
+    {
+      const el = document.getElementById("list-pm-ns-missing");
+      if (el) {
+        if (!nsMissing.length) {
+          el.innerHTML = '<div class="empty-msg">None found ✓</div>';
+        } else {
+          el.innerHTML = nsMissing
+            .map((p) => {
+              const saved = p._pmAction;
+              p._pmAction = p._nsAction;
+              const html = cardHTML(p, { showPmAction: true });
+              p._pmAction = saved;
+              return html;
+            })
+            .join("");
+        }
+      }
+    }
     renderPMSection("list-pm-approaching", approaching);
     renderPMSection("list-pm-pastdue", pastDue);
     renderPMSection("list-pm-inactive", inactive);
     renderPMSection("list-pm-tier1", tier1Missing);
     renderPMSection("list-pm-partial", partial);
+    // Render productMissing section with product-specific action
+    {
+      const el = document.getElementById("list-pm-product-missing");
+      if (el) {
+        if (!productMissing.length) {
+          el.innerHTML = '<div class="empty-msg">None found ✓</div>';
+        } else {
+          el.innerHTML = productMissing
+            .map((p) => {
+              const saved = p._pmAction;
+              p._pmAction = p._productMissingAction;
+              const html = cardHTML(p, { showPmAction: true });
+              p._pmAction = saved;
+              return html;
+            })
+            .join("");
+        }
+      }
+    }
     renderPMSection("list-pm-finished", recentlyFinished);
 
     // Update section counts
     const sections = [
+      { id: "section-pm-pp-ready", count: ppReady.length },
+      { id: "section-pm-ns-missing", count: nsMissing.length },
       { id: "section-pm-approaching", count: approaching.length },
       { id: "section-pm-pastdue", count: pastDue.length },
       { id: "section-pm-inactive", count: inactive.length },
       { id: "section-pm-tier1", count: tier1Missing.length },
       { id: "section-pm-partial", count: partial.length },
+      { id: "section-pm-product-missing", count: productMissing.length },
       { id: "section-pm-finished", count: recentlyFinished.length },
     ];
     for (const s of sections) {
@@ -2713,7 +2974,10 @@
     }
 
     const wiUrl = `https://dev.azure.com/azure-sdk/Release/_workitems/edit/${pr.planId}`;
-    html += `<div class="pr-detail-row"><strong>Release Plan:</strong> <a href="/?releasePlan=${esc(String(pr.releasePlanId))}">#${esc(String(pr.releasePlanId))}</a> — ${esc(pr.planTitle)} <a href="${esc(wiUrl)}" target="_blank" rel="noopener" style="font-size:.78rem;color:#605e5c;">(DevOps)</a></div>`;
+    const devOpsLink = currentUserIsPM
+      ? ` <a href="${esc(wiUrl)}" target="_blank" rel="noopener" style="font-size:.78rem;color:#605e5c;">(DevOps)</a>`
+      : "";
+    html += `<div class="pr-detail-row"><strong>Release Plan:</strong> <a href="/?releasePlan=${esc(String(pr.releasePlanId))}">#${esc(String(pr.releasePlanId))}</a> — ${esc(pr.planTitle)}${devOpsLink}</div>`;
     if (pr.releaseMonth)
       html += `<div class="pr-detail-row"><strong>Target Release:</strong> ${esc(pr.releaseMonth)}</div>`;
     if (pr.releaseStatus)

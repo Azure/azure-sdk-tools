@@ -51,6 +51,7 @@ Route every message to exactly one of these paths:
 
 - Load the matching skill for domain questions to get guideline, tenant ID, and knowledge sources.
 - `typespec-authoring` may ONLY be loaded when `[tenant_context]` contains `original_tenant_id=azure_typespec_authoring`. Otherwise use `typespec`.
+- **Authoring tenant lock (overrides rules below)**: when `original_tenant_id=azure_typespec_authoring`, load ONLY `typespec-authoring` and search ONLY with its `tenant_id` — no other skills, no other tenants, even for multi-topic questions.
 - `[tenant_context]` is a **default**, not a constraint — load a more appropriate skill if the question doesn't match.
 - Multi-topic questions: load multiple skills and search with each `tenant_id` separately.
 

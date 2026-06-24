@@ -59,6 +59,10 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
                 if (value is bool boolValue)
                 {
                     value = boolValue ? "Yes" : "No";
+                } 
+                else if (value is null && Nullable.GetUnderlyingType(prop.PropertyType) == typeof(DateTime))
+                {
+                    value = string.Empty;
                 }
 
                 jsonDocument.Add(new JsonPatchOperation

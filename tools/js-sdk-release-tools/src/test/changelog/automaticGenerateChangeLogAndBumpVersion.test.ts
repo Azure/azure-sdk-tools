@@ -49,13 +49,15 @@ describe('generateChangelogAndBumpVersion beta version test', () => {
     }));
 
     vi.doMock('../../changelog/v2/DifferenceDetector.js', () => ({
-      DifferenceDetector: vi.fn().mockImplementation(() => ({
-        detect: vi.fn().mockResolvedValue({
-          hasBreakingChange: false,
-          hasFeature: true,
-        }),
-        getDetectContext: vi.fn().mockReturnValue({}),
-      })),
+      DifferenceDetector: vi.fn().mockImplementation(function () {
+        return {
+          detect: vi.fn().mockResolvedValue({
+            hasBreakingChange: false,
+            hasFeature: true,
+          }),
+          getDetectContext: vi.fn().mockReturnValue({}),
+        };
+      }),
     }));
 
     vi.doMock('../../utils/version.js', async () => {
@@ -185,13 +187,15 @@ describe('generateChangelogAndBumpVersion beta version test', () => {
     }));
 
     vi.doMock('../../changelog/v2/ChangelogGenerator.js', () => ({
-      ChangelogGenerator: vi.fn().mockImplementation(() => ({
-        generate: vi.fn().mockReturnValue({
-          hasBreakingChange: false,
-          hasFeature: true,
-          content: '## 2.0.0 (2023-05-01)\n\n### Features\n\n- Added new feature',
-        }),
-      })),
+      ChangelogGenerator: vi.fn().mockImplementation(function () {
+        return {
+          generate: vi.fn().mockReturnValue({
+            hasBreakingChange: false,
+            hasFeature: true,
+            content: '## 2.0.0 (2023-05-01)\n\n### Features\n\n- Added new feature',
+          }),
+        };
+      }),
     }));
 
     const changelogTempDir = path.join(packageDir, 'changelog-temp', 'package');
@@ -272,13 +276,15 @@ describe('generateChangelogAndBumpVersion beta version test', () => {
     }));
 
     vi.doMock('../../changelog/v2/ChangelogGenerator.js', () => ({
-      ChangelogGenerator: vi.fn().mockImplementation(() => ({
-        generate: vi.fn().mockReturnValue({
-          hasBreakingChange: false,
-          hasFeature: true,
-          content: '## 2.0.0 (2023-05-01)\n\n### Features\n\n- Added new feature',
-        }),
-      })),
+      ChangelogGenerator: vi.fn().mockImplementation(function () {
+        return {
+          generate: vi.fn().mockReturnValue({
+            hasBreakingChange: false,
+            hasFeature: true,
+            content: '## 2.0.0 (2023-05-01)\n\n### Features\n\n- Added new feature',
+          }),
+        };
+      }),
     }));
 
     const changelogTempDir = path.join(packageDir, 'changelog-temp', 'package');
@@ -357,13 +363,15 @@ describe('generateChangelogAndBumpVersion beta version test', () => {
     }));
 
     vi.doMock('../../changelog/v2/ChangelogGenerator.js', () => ({
-      ChangelogGenerator: vi.fn().mockImplementation(() => ({
-        generate: vi.fn().mockReturnValue({
-          hasBreakingChange: false,
-          hasFeature: true,
-          content: '## 2.0.0 (2023-04-01)\n\n### Features\n\n- Added beta feature',
-        }),
-      })),
+      ChangelogGenerator: vi.fn().mockImplementation(function () {
+        return {
+          generate: vi.fn().mockReturnValue({
+            hasBreakingChange: false,
+            hasFeature: true,
+            content: '## 2.0.0 (2023-04-01)\n\n### Features\n\n- Added beta feature',
+          }),
+        };
+      }),
     }));
 
     const changelogTempDir = path.join(packageDir, 'changelog-temp', 'package');

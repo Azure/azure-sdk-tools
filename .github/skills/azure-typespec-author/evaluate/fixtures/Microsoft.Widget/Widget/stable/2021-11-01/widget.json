@@ -10,21 +10,13 @@
       }
     ]
   },
-  "schemes": [
-    "https"
-  ],
+  "schemes": ["https"],
   "host": "management.azure.com",
-  "produces": [
-    "application/json"
-  ],
-  "consumes": [
-    "application/json"
-  ],
+  "produces": ["application/json"],
+  "consumes": ["application/json"],
   "security": [
     {
-      "azure_auth": [
-        "user_impersonation"
-      ]
+      "azure_auth": ["user_impersonation"]
     }
   ],
   "securityDefinitions": {
@@ -50,9 +42,7 @@
     "/providers/Microsoft.Widget/operations": {
       "get": {
         "operationId": "Operations_List",
-        "tags": [
-          "Operations"
-        ],
+        "tags": ["Operations"],
         "description": "List the operations for the provider",
         "parameters": [
           {
@@ -81,9 +71,7 @@
     "/subscriptions/{subscriptionId}/providers/Microsoft.Widget/employees": {
       "get": {
         "operationId": "Employees_ListBySubscription",
-        "tags": [
-          "Employees"
-        ],
+        "tags": ["Employees"],
         "description": "List Employee resources by subscription ID",
         "parameters": [
           {
@@ -115,9 +103,7 @@
     "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Widget/employees": {
       "get": {
         "operationId": "Employees_ListByResourceGroup",
-        "tags": [
-          "Employees"
-        ],
+        "tags": ["Employees"],
         "description": "List Employee resources by resource group",
         "parameters": [
           {
@@ -152,9 +138,7 @@
     "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Widget/employees/{employeeName}": {
       "get": {
         "operationId": "Employees_Get",
-        "tags": [
-          "Employees"
-        ],
+        "tags": ["Employees"],
         "description": "Get a Employee",
         "parameters": [
           {
@@ -192,9 +176,7 @@
       },
       "put": {
         "operationId": "Employees_CreateOrUpdate",
-        "tags": [
-          "Employees"
-        ],
+        "tags": ["Employees"],
         "description": "Create a Employee",
         "parameters": [
           {
@@ -262,9 +244,7 @@
       },
       "patch": {
         "operationId": "Employees_Update",
-        "tags": [
-          "Employees"
-        ],
+        "tags": ["Employees"],
         "description": "Update a Employee",
         "parameters": [
           {
@@ -311,9 +291,7 @@
       },
       "delete": {
         "operationId": "Employees_Delete",
-        "tags": [
-          "Employees"
-        ],
+        "tags": ["Employees"],
         "description": "Delete a Employee",
         "parameters": [
           {
@@ -368,9 +346,7 @@
     "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Widget/employees/{employeeName}/exportData": {
       "post": {
         "operationId": "Employees_ExportData",
-        "tags": [
-          "Employees"
-        ],
+        "tags": ["Employees"],
         "description": "Export employee data",
         "parameters": [
           {
@@ -482,9 +458,7 @@
           "description": "The link to the next page of items"
         }
       },
-      "required": [
-        "value"
-      ]
+      "required": ["value"]
     },
     "EmployeeProperties": {
       "type": "object",
@@ -529,9 +503,7 @@
           "readOnly": true
         }
       },
-      "required": [
-        "assets"
-      ]
+      "required": ["assets"]
     },
     "EmployeePropertiesUpdate": {
       "type": "object",
@@ -614,10 +586,7 @@
           "description": "The moving to location"
         }
       },
-      "required": [
-        "from",
-        "to"
-      ]
+      "required": ["from", "to"]
     },
     "MoveResponse": {
       "type": "object",
@@ -628,9 +597,7 @@
           "description": "The status of the move"
         }
       },
-      "required": [
-        "movingStatus"
-      ]
+      "required": ["movingStatus"]
     },
     "ProvisioningState": {
       "type": "string",

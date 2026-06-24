@@ -1126,6 +1126,59 @@ export interface ResourceManagementClientOptionalParams extends ClientOptions {
       expect(items[0]).toBe('Class ResourceManagementClient no longer has parameter tagsOperations');
     });
 
+    test('Class Property Removed that remains a constructor parameter is filtered regardless of SDK type', async () => {
+      // The HLC -> Modular guard was removed from filterClassPropertiesMovedToInternals,
+      // so properties that are still accessible via constructor signatures are filtered
+      // for ANY transition. This case uses Modular -> Modular to prove the filtering is
+      // no longer tied to the HLC -> Modular transition.
+      const baselineApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: TokenCredential, subscriptionId: string, options?: DataProductClientOptionalParams);
+    subscriptionId: string;
+    readonly dataProducts: DataProducts;
+    readonly analytics: Analytics;
+}
+
+// @public
+export interface DataProductClientOptionalParams extends ClientOptions {
+    apiVersion?: string;
+}
+\`\`\`
+`;
+      // subscriptionId — filtered because it is still a direct constructor parameter
+      // apiVersion     — not present as a property here, but exposed via the options bag
+      // analytics      — BREAKING: genuinely removed, must still be reported
+      const currentApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: TokenCredential, subscriptionId: string, options?: DataProductClientOptionalParams);
+    readonly dataProducts: DataProducts;
+}
+
+// @public
+export interface DataProductClientOptionalParams extends ClientOptions {
+    apiVersion?: string;
+}
+\`\`\`
+`;
+      const changelogItems = await generateChangelogItems(
+        {
+          apiView: baselineApiView,
+          sdkType: SDKType.ModularClient,
+        },
+        {
+          apiView: currentApiView,
+          sdkType: SDKType.ModularClient,
+        }
+      );
+      const items = getItemsByCategory(changelogItems, ChangelogItemCategory.ClassPropertyRemoved);
+      expect(items).toHaveLength(1);
+      expect(items[0]).toBe('Class DataProductClient no longer has parameter analytics');
+    });
+
     test('Class Property Optional To Required', async () => {
       const baselineApiView = `
 \`\`\`ts
@@ -1158,6 +1211,63 @@ export class DataProductClient {
       const items = getItemsByCategory(changelogItems, ChangelogItemCategory.ClassPropertyOptionalToRequired);
       expect(items).toHaveLength(1);
       expect(items[0]).toBe('Parameter version of class DataProductClient is now required');
+    });
+
+    test('New method added to class should be reported as OperationAdded, not ClassConstructorAdded', async () => {
+      // Regression test: HLC->Modular migration adds new methods (e.g. getAdooAuthInfo) directly
+      // on the client class. These must NOT appear as "has a new constructor" messages.
+      const baselineApiView = `
+\`\`\`ts
+// @public
+export class DeveloperHubServiceClient {
+    constructor(credentials: TokenCredential, subscriptionId: string, options?: DeveloperHubServiceClientOptionalParams);
+    gitHubOAuth(location: string, options?: GitHubOAuthOptionalParams): Promise<GitHubOAuthInfoResponse>;
+}
+
+// @public
+export interface DeveloperHubServiceClientOptionalParams {
+    $host?: string;
+    apiVersion?: string;
+    endpoint?: string;
+}
+\`\`\`
+`;
+      const currentApiView = `
+\`\`\`ts
+// @public
+export class DeveloperHubServiceClient {
+    constructor(credential: TokenCredential, options?: DeveloperHubServiceClientOptionalParams);
+    constructor(credential: TokenCredential, subscriptionId: string, options?: DeveloperHubServiceClientOptionalParams);
+    gitHubOAuth(location: string, options?: GitHubOAuthOptionalParams): Promise<GitHubOAuthInfoResponse>;
+    getAdooAuthInfo(location: string, options?: GetAdooAuthInfoOptionalParams): Promise<AdooAuthInfoResponse>;
+}
+
+// @public
+export interface DeveloperHubServiceClientOptionalParams {
+    apiVersion?: string;
+    endpoint?: string;
+}
+\`\`\`
+`;
+      const changelogItems = await generateChangelogItems(
+        {
+          apiView: baselineApiView,
+          sdkType: SDKType.HighLevelClient,
+        },
+        {
+          apiView: currentApiView,
+          sdkType: SDKType.ModularClient,
+        }
+      );
+
+      // The new method must appear as a feature (OperationAdded), not a constructor
+      const constructorAddedItems = getItemsByCategory(changelogItems, ChangelogItemCategory.ClassConstructorAdded);
+      const operationAddedItems = getItemsByCategory(changelogItems, ChangelogItemCategory.OperationAdded);
+
+      // Must not produce any "has a new constructor" entry for getAdooAuthInfo
+      expect(constructorAddedItems.some((msg) => msg.includes('getAdooAuthInfo'))).toBe(false);
+      // Must produce an OperationAdded entry for getAdooAuthInfo
+      expect(operationAddedItems.some((msg) => msg.includes('getAdooAuthInfo'))).toBe(true);
     });
 
     test('Type Alias Added', async () => {

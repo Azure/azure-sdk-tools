@@ -63,59 +63,61 @@ try {
         fs.copyFileSync(src, dst);
         console.log(`copied ${name} -> ${dst}`);
     }
+
+    // Strip "file:" workspace references from package.json and package-lock.json
+    // to prevent npm ci from creating unwanted node_modules in eng/ and .github/.
+    const pkgPath = path.join(DEST, 'package.json');
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+    delete pkg.workspaces;
+    for (const depKey of ['dependencies', 'devDependencies', 'optionalDependencies']) {
+        if (!pkg[depKey]) continue;
+        for (const [name, ver] of Object.entries(pkg[depKey])) {
+            if (typeof ver === 'string' && ver.startsWith('file:')) {
+                delete pkg[depKey][name];
+            }
+        }
+    }
+    fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
+    console.log('stripped file: references from package.json');
+
+    const lockPath = path.join(DEST, 'package-lock.json');
+    const lock = JSON.parse(fs.readFileSync(lockPath, 'utf8'));
+    // Remove file: entries from top-level dependencies/packages
+    for (const section of ['dependencies', 'packages']) {
+        if (!lock[section]) continue;
+        for (const [key, val] of Object.entries(lock[section])) {
+            if (typeof val === 'object' && val !== null) {
+                // In "packages", file: deps appear as keys like "node_modules/..." with link:true
+                // or as entries whose resolved/version starts with "file:"
+                const ver = val.version || val.resolved || '';
+                if (typeof ver === 'string' && ver.startsWith('file:')) {
+                    delete lock[section][key];
+                    continue;
+                }
+                if (val.link === true) {
+                    delete lock[section][key];
+                    continue;
+                }
+            } else if (typeof val === 'string' && val.startsWith('file:')) {
+                delete lock[section][key];
+            }
+        }
+    }
+    // Also strip file: from the root package entry's dependencies
+    if (lock.packages && lock.packages['']) {
+        const rootPkg = lock.packages[''];
+        delete rootPkg.workspaces;
+        for (const depKey of ['dependencies', 'devDependencies', 'optionalDependencies']) {
+            if (!rootPkg[depKey]) continue;
+            for (const [name, ver] of Object.entries(rootPkg[depKey])) {
+                if (typeof ver === 'string' && ver.startsWith('file:')) {
+                    delete rootPkg[depKey][name];
+                }
+            }
+        }
+    }
+    fs.writeFileSync(lockPath, JSON.stringify(lock, null, 2) + '\n');
+    console.log('stripped file: references from package-lock.json');
 } finally {
     fs.rmSync(tmp, { recursive: true, force: true, maxRetries: 5 });
 }
-
-// Strip local file: workspace references from package.json to prevent
-// npm ci from creating eng/tools and .github/shared sub-packages.
-const pkgPath = path.join(DEST, 'package.json');
-const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-for (const section of ['dependencies', 'devDependencies', 'optionalDependencies']) {
-    if (!pkg[section]) continue;
-    for (const [name, version] of Object.entries(pkg[section])) {
-        if (version.startsWith('file:')) {
-            delete pkg[section][name];
-        }
-    }
-}
-if (pkg.workspaces) delete pkg.workspaces;
-fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
-console.log('stripped file: references from package.json');
-
-// Also strip file: references from package-lock.json so npm ci does not
-// attempt to resolve local workspace links.
-const lockPath = path.join(DEST, 'package-lock.json');
-const lock = JSON.parse(fs.readFileSync(lockPath, 'utf8'));
-for (const section of ['dependencies', 'packages']) {
-    if (!lock[section]) continue;
-    for (const [key, val] of Object.entries(lock[section])) {
-        if (typeof val === 'object' && val !== null) {
-            const ver = val.version || val.resolved || '';
-            if (typeof ver === 'string' && ver.startsWith('file:')) {
-                delete lock[section][key];
-                continue;
-            }
-            if (val.link === true) {
-                delete lock[section][key];
-                continue;
-            }
-        } else if (typeof val === 'string' && val.startsWith('file:')) {
-            delete lock[section][key];
-        }
-    }
-}
-if (lock.packages && lock.packages['']) {
-    const rootPkg = lock.packages[''];
-    delete rootPkg.workspaces;
-    for (const depKey of ['dependencies', 'devDependencies', 'optionalDependencies']) {
-        if (!rootPkg[depKey]) continue;
-        for (const [name, ver] of Object.entries(rootPkg[depKey])) {
-            if (typeof ver === 'string' && ver.startsWith('file:')) {
-                delete rootPkg[depKey][name];
-            }
-        }
-    }
-}
-fs.writeFileSync(lockPath, JSON.stringify(lock, null, 2) + '\n');
-console.log('stripped file: references from package-lock.json');

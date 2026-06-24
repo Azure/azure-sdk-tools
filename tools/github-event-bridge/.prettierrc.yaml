@@ -1,0 +1,12 @@
+plugins:
+  - prettier-plugin-organize-imports
+
+printWidth: 100
+
+overrides:
+  # tsconfig.json is actually parsed as JSONC
+  - files:
+      - tsconfig.json
+      - tsconfig.*.json
+    options:
+      parser: jsonc

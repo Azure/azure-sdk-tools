@@ -1,0 +1,49 @@
+{
+  "name": "github-event-bridge",
+  "private": "true",
+  "type": "module",
+  "_comments": {
+    "engines": "Min versions with CLI flag --env-file-if-exists"
+  },
+  "main": "src/server.ts",
+  "engines": {
+    "node": "^22.21.0 || >=24.10.0"
+  },
+  "dependencies": {
+    "@azure/identity": "^4.13.1",
+    "@azure/keyvault-secrets": "^4.11.2",
+    "@azure/monitor-opentelemetry": "^1.16.0",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/api-logs": "^0.208.0",
+    "@opentelemetry/instrumentation-undici": "^0.25.0",
+    "octokit": "^5.0.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.0",
+    "@octokit/webhooks": "^14.2.0",
+    "@tsconfig/node22": "^22.0.5",
+    "@vitest/coverage-v8": "^4.1.0",
+    "cross-env": "^10.1.0",
+    "eslint": "^10.0.0",
+    "globals": "^17.0.0",
+    "prettier": "3.8.1",
+    "prettier-plugin-organize-imports": "^4.2.0",
+    "smee-client": "^5.0.0",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.58.0",
+    "vitest": "^4.1.0"
+  },
+  "scripts": {
+    "check": "npm run test:ci && npm run lint && npm run format:check",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "format:check:ci": "prettier . --check --log-level debug",
+    "lint": "npm run lint:eslint && npm run lint:tsc",
+    "lint:eslint": "cross-env DEBUG=eslint:eslint,eslint:linter eslint",
+    "lint:tsc": "tsc --build --verbose",
+    "start": "node --env-file-if-exists=.env --import @azure/monitor-opentelemetry/loader --import ./src/telemetry.ts src/server.ts",
+    "smee": "node --env-file-if-exists=.env src/smee.ts",
+    "test": "vitest",
+    "test:ci": "vitest run --coverage --reporter=verbose"
+  }
+}

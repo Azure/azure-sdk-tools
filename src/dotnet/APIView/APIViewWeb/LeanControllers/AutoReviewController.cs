@@ -226,8 +226,6 @@ public class AutoReviewController : ControllerBase
         {
             { "operation", operation },
             { "packageName", packageName ?? "null" },
-            { "packageVersion", submittedPackageVersion ?? "null" },
-            { "parsedVersion", parsedArtifactPackageVersion ?? "null" },
             { "submittedPackageVersion", submittedPackageVersion ?? "null" },
             { "parsedArtifactPackageVersion", parsedArtifactPackageVersion ?? "null" },
             { "normalizedPackageVersion", normalizedPackageVersion ?? "null" },

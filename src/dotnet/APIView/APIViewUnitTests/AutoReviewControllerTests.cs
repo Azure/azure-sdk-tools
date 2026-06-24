@@ -701,8 +701,6 @@ namespace APIViewUnitTests
 
             EventTelemetry telemetry = GetPackageVersionNormalizationEvent("UploadAutoReview");
             telemetry.Properties["packageName"].Should().Be("azure-core-http-compat");
-            telemetry.Properties["packageVersion"].Should().Be(callerSuppliedVersion ?? "null");
-            telemetry.Properties["parsedVersion"].Should().Be(codeFileVersion);
             telemetry.Properties["submittedPackageVersion"].Should().Be(callerSuppliedVersion ?? "null");
             telemetry.Properties["parsedArtifactPackageVersion"].Should().Be(codeFileVersion);
             telemetry.Properties["normalizedPackageVersion"].Should().Be(expectedCodeFileVersion);
@@ -789,8 +787,6 @@ namespace APIViewUnitTests
 
             EventTelemetry telemetry = GetPackageVersionNormalizationEvent("CreateApiReview");
             telemetry.Properties["packageName"].Should().Be(packageName);
-            telemetry.Properties["packageVersion"].Should().Be(callerSuppliedVersion ?? "null");
-            telemetry.Properties["parsedVersion"].Should().Be(codeFileVersion);
             telemetry.Properties["submittedPackageVersion"].Should().Be(callerSuppliedVersion ?? "null");
             telemetry.Properties["parsedArtifactPackageVersion"].Should().Be(codeFileVersion);
             telemetry.Properties["normalizedPackageVersion"].Should().Be(expectedCodeFileVersion);

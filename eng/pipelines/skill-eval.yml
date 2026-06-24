@@ -18,77 +18,97 @@ parameters:
     type: string
     default: ' '
 
-variables:
-  - group: 'AzSDK_Eval_Variable_group'
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    Use1ESOfficial: true
+    stages:
+      - stage: SkillEval
+        displayName: 'Skill Eval'
+        variables:
+          - group: 'AzSDK_Eval_Variable_group'
+          - template: /eng/pipelines/templates/variables/globals.yml
+          - template: /eng/pipelines/templates/variables/image.yml
+        pool:
+          name: $(LINUXPOOL)
+          image: $(LINUXVMIMAGE)
+          os: linux
+        jobs:
+          - job: Evaluate
+            displayName: 'Vally Eval'
+            timeoutInMinutes: 120
+            steps:
+              - checkout: self
+                fetchDepth: 2
 
-jobs:
-  - job: Evaluate
-    displayName: 'Vally Eval'
-    pool:
-      vmImage: 'ubuntu-latest'
-    steps:
-      - checkout: self
-        fetchDepth: 2
+              - task: NodeTool@0
+                displayName: 'Use Node.js 22'
+                inputs:
+                  versionSpec: '22.x'
 
-      - task: NodeTool@0
-        displayName: 'Use Node.js 22'
-        inputs:
-          versionSpec: '22.x'
+              # The managed azsdk-pool blocks direct egress to registry.npmjs.org
+              # (npm ci fails EPERM). Point npm at the azure-sdk DevOps feed, which
+              # proxies npmjs.org via upstream sources. Empty npmrcPath writes to
+              # $HOME/.npmrc so every npm/npx call below inherits the registry+auth.
+              - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+                parameters:
+                  registryUrl: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
 
-      - script: npm ci
-        displayName: 'Install Vally CLI (pinned via lockfile)'
-        workingDirectory: eng/skill-eval
+              - script: npm ci
+                displayName: 'Install Vally CLI (pinned via lockfile)'
+                workingDirectory: eng/skill-eval
 
-      - script: npm install -g @github/copilot-sdk
-        displayName: 'Install Copilot SDK'
+              - script: npm install -g @github/copilot-sdk
+                displayName: 'Install Copilot SDK'
 
-      # Pre-build the MCP servers so vally launches `dotnet <dll>` instead of
-      # `dotnet run` — avoids the MSBuild boot race under parallel workers.
-      # See issue #15947. `-o` pins the output path so .vally.yaml doesn't
-      # have to hardcode the target framework (Debug/net8.0/...).
-      - script: |
-          dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli  -c Release -o artifacts/mcp/cli  --nologo
-          dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Mock -c Release -o artifacts/mcp/mock --nologo
-        displayName: 'Build MCP servers'
+              # Pre-build the MCP servers so vally launches `dotnet <dll>` instead of
+              # `dotnet run` — avoids the MSBuild boot race under parallel workers.
+              # See issue #15947. `-o` pins the output path so .vally.yaml doesn't
+              # have to hardcode the target framework (Debug/net8.0/...).
+              - script: |
+                  dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli  -c Release -o artifacts/mcp/cli  --nologo
+                  dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Mock -c Release -o artifacts/mcp/mock --nologo
+                displayName: 'Build MCP servers'
 
-      - script: |
-          input_areas=$(echo "${{ parameters.areas }}" | xargs)
-          if [ -n "$input_areas" ]; then
-            areas="$input_areas"
-          elif [ "${{ parameters.runAll }}" = "True" ]; then
-            areas=""
-          else
-            areas=$(git diff --name-only HEAD~1 HEAD -- .github/skills/ \
-              | grep -oP '\.github/skills/\K[^/]+(?=/)' \
-              | sort -u \
-              | grep -v '^\.' \
-              | paste -sd, -)
-          fi
+              - script: |
+                  input_areas=$(echo "${{ parameters.areas }}" | xargs)
+                  if [ -n "$input_areas" ]; then
+                    areas="$input_areas"
+                  elif [ "${{ parameters.runAll }}" = "True" ]; then
+                    areas=""
+                  else
+                    areas=$(git diff --name-only HEAD~1 HEAD -- .github/skills/ \
+                      | grep -oP '\.github/skills/\K[^/]+(?=/)' \
+                      | sort -u \
+                      | grep -v '^\.' \
+                      | paste -sd, -)
+                  fi
 
-          if [ -n "$areas" ]; then
-            echo "Evaluating areas: $areas"
-            echo "##vso[task.setvariable variable=EVAL_ARGS]--tag area=$areas"
-          elif [ "${{ parameters.runAll }}" = "True" ]; then
-            echo "Evaluating all skills"
-            echo "##vso[task.setvariable variable=EVAL_ARGS] "
-          else
-            echo "No skill changes detected — skipping evals"
-            echo "##vso[task.setvariable variable=EVAL_ARGS]SKIP"
-          fi
-        displayName: 'Detect changed skills'
+                  if [ -n "$areas" ]; then
+                    echo "Evaluating areas: $areas"
+                    echo "##vso[task.setvariable variable=EVAL_ARGS]--tag area=$areas"
+                  elif [ "${{ parameters.runAll }}" = "True" ]; then
+                    echo "Evaluating all skills"
+                    echo "##vso[task.setvariable variable=EVAL_ARGS] "
+                  else
+                    echo "No skill changes detected — skipping evals"
+                    echo "##vso[task.setvariable variable=EVAL_ARGS]SKIP"
+                  fi
+                displayName: 'Detect changed skills'
 
-      - script: |
-          cd .github/skills
-          npm exec --no --prefix "$(Build.SourcesDirectory)/eng/skill-eval" -- vally eval --tag "type=ci-gate" $(EVAL_ARGS) --output-dir ".vally/results"
-        displayName: 'Run evaluations'
-        condition: and(succeeded(), ne(variables['EVAL_ARGS'], 'SKIP'))
-        continueOnError: true
-        env:
-          GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+              - script: |
+                  cd .github/skills
+                  npm exec --no --prefix "$(Build.SourcesDirectory)/eng/skill-eval" -- vally eval --tag "type=ci-gate" $(EVAL_ARGS) --output-dir ".vally/results"
+                displayName: 'Run evaluations'
+                condition: and(succeeded(), ne(variables['EVAL_ARGS'], 'SKIP'))
+                continueOnError: true
+                env:
+                  GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
 
-      - task: PublishPipelineArtifact@1
-        displayName: 'Upload eval results'
-        condition: and(always(), ne(variables['EVAL_ARGS'], 'SKIP'))
-        inputs:
-          targetPath: '.github/skills/.vally/results'
-          artifactName: 'eval-results-$(Build.BuildId)'
+            templateContext:
+              outputs:
+                - output: pipelineArtifact
+                  displayName: 'Upload eval results'
+                  condition: and(always(), ne(variables['EVAL_ARGS'], 'SKIP'))
+                  path: '$(Build.SourcesDirectory)/.github/skills/.vally/results'
+                  artifact: 'eval-results-$(Build.BuildId)'

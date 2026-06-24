@@ -29,7 +29,7 @@
   ],
   "license": "MIT",
   "engines": {
-    "node": ">=20.10.0"
+    "node": ">=22.13.0"
   },
   "dependencies": {
     "ajv": "^6.12.6",

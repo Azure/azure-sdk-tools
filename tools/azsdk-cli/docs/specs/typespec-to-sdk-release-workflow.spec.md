@@ -5,181 +5,87 @@
 - [Definitions](#definitions)
 - [Background / Problem Statement](#background--problem-statement)
 - [Goals](#goals)
-- [Design Proposal](#design-proposal)
-- [Resumable Workflow Scenarios](#resumable-workflow-scenarios)
-- [Sub-Skills Overview](#sub-skills-overview)
-- [Agent Prompts](#agent-prompts)
+- [Workflow Design](#workflow-design)
+  - [Workflow Stages](#workflow-stages)
+  - [Architecture: Skill Chaining with Next Steps](#architecture-skill-chaining-with-next-steps)
+- [Known Gaps](#known-gaps)
 - [Success Criteria](#success-criteria)
-- [Open Questions](#open-questions)
 - [Exceptions and Limitations](#exceptions-and-limitations)
+- [Open Questions](#open-questions)
 
 ---
 
 ## Definitions
 
-_Terms used throughout this spec with precise meanings:_
+- **TypeSpec**: Language for describing cloud service APIs. See [typespec.io](https://typespec.io).
+- **SDK**: Client libraries generated from TypeSpec for .NET, Java, JavaScript, Python, Go.
+- **Release Plan**: Azure DevOps work item tracking end-to-end SDK release across languages. Managed by azsdk-cli tooling.
+- **API Spec PR**: Pull request in `azure-rest-api-specs` containing TypeSpec changes.
+- **SDK PR**: Pull request in a language SDK repo (e.g., `azure-sdk-for-python`) with generated code.
+- **APIView**: Web tool for reviewing SDK public API surface.
+- **tspconfig.yaml**: Configuration in TypeSpec project specifying emitter settings per language.
+- **tsp-location.yaml**: Configuration in SDK repos pointing to the source TypeSpec project.
+- **`@azure-tools/typespec-breaking-change`**: TypeSpec-native breaking change detector. Phase A: same-version regression (any diff = error). Phase B: cross-version evolution (request narrowing / response widening = breaking).
+- **Suppression Decorators**: `@approvedBreakingChange` (Phase B) and `@approvedUnversionedChange` (Phase A) — inline approval with auto-labeling.
+- **TypeSpec Customizations**: SDK-specific customizations in `client.tsp` (renaming, convenience methods).
+- **Code Customizations**: Hand-written SDK code that must be preserved across regeneration.
 
-### Core Concepts
-
-- **<a id="typespec"></a>TypeSpec**: A language for describing cloud service APIs and generating other API description languages, client and service code, documentation, and other assets. TypeSpec provides highly extensible core language primitives that can describe API shapes common among REST, OpenAPI, GraphQL, gRPC, and other protocols. See [TypeSpec official documentation](https://typespec.io)
-
-- **<a id="sdk"></a>SDK (Software Development Kit)**: Client libraries generated from TypeSpec specifications that allow developers to interact with Azure services in their preferred programming language (.NET, Java, JavaScript, Python, Go).
-
-- **<a id="api-spec"></a>API Specification**: The TypeSpec definition that describes the service's API surface, including operations, models, and endpoints. Stored in the `azure-rest-api-specs` repository.
-
-- **<a id="api-version"></a>API Version**: A versioned identifier (e.g., `2024-01-01`, `2024-01-01-preview`) that represents a specific version of the service's API contract.
-
-### Release and Planning
-
-- **<a id="release-plan"></a>Release Plan**: A coordinated release workflow tracked in Azure DevOps that manages the end-to-end release of SDK packages across multiple languages. It tracks API spec PR, SDK PRs, release status, and ensures all validations pass before release.
-
-- **<a id="temporary-release-plan"></a>Temporary Release Plan**: A release plan in draft/temporary state used during TypeSpec experimentation and local SDK generation. The temporary release plan is converted to an actual release plan when the user decides to create an API spec pull request and proceed with the release workflow. This allows users to iterate on TypeSpec and SDK generation without committing to a full release.
-
-- **<a id="release-plan-work-item"></a>Release Plan Work Item**: An Azure DevOps work item that tracks the release plan details including TypeSpec project path, API version, SDK language details, PR links, and release status.
-
-- **<a id="sdk-release-type"></a>SDK Release Type**: The type of SDK release being prepared. Common types include:
-  - **Preview**: A pre-GA (beta) release indicating the API is not yet stable and may have breaking changes.
-  - **GA (General Availability)**: A stable release with backward compatibility guarantees.
-  - **Patch**: A bug fix release that maintains backward compatibility.
-
-- **<a id="service-tree"></a>Service Tree**: Microsoft's service metadata repository that tracks service ownership, compliance, and KPIs. When an SDK is released, the corresponding service KPI is automatically marked as completed.
-
-- **<a id="service-kpi"></a>Service KPI**: Key Performance Indicator in Service Tree for cloud life cycle and these KPIs are marked as completed when a release plan is completed according to service life cycle.
-
-### Pull Requests and Reviews
-
-- **<a id="api-spec-pr"></a>API Spec Pull Request**: A pull request in the `azure-rest-api-specs` repository that contains TypeSpec changes defining or updating the service's API.
-
-- **<a id="sdk-pr"></a>SDK Pull Request**: A pull request in a language-specific SDK repository (e.g., `azure-sdk-for-python`) containing generated SDK code, tests, samples, and documentation.
-
-- **<a id="apiview"></a>APIView**: A web-based tool for reviewing the public API surface of SDK packages. Architects and reviewers use APIView to ensure API consistency and compliance with Azure SDK design guidelines.
-
-- **<a id="apiview-suggestions"></a>APIView Suggestions**: Comments and feedback left by reviewers in APIView that require changes to the API surface or SDK implementation.
-
-### SDK Generation
-
-- **<a id="local-sdk-generation"></a>Local SDK Generation**: Running SDK code generation on a developer's local machine using the `azsdk_package_generate_code` tool. Useful for rapid iteration, testing, and troubleshooting.
-
-- **<a id="pipeline-sdk-generation"></a>Pipeline SDK Generation**: Running SDK code generation through Azure DevOps pipelines using the `azsdk_run_generate_sdk` tool. Provides consistent, reproducible builds and automatic PR creation.
-
-- **<a id="tsp-config"></a>tspconfig.yaml**: Configuration file in the TypeSpec project that specifies SDK generation options, emitter settings, and package metadata for each target language.
-
-- **<a id="tsp-location"></a>tsp-location.yaml**: Configuration file in SDK repositories that points to the source TypeSpec project location, enabling SDK regeneration from the same spec.
-
-### TypeSpec Authoring
-
-- **<a id="typespec-customizations"></a>TypeSpec Customizations**: SDK-specific customizations made in the `client.tsp` file to control SDK generation. Examples include renaming operations, adding convenience methods, or modifying parameter types for better SDK ergonomics.
-
-- **<a id="code-customizations"></a>Code Customizations**: Hand-written modifications made directly to generated SDK code after generation. These customizations exist within the SDK language repositories and must be preserved across regeneration.
-
-- **<a id="emitter-options"></a>Emitter Options**: Configuration options passed to TypeSpec emitters that control how SDK code is generated for a specific language. Examples include package version, namespace, and feature flags.
-
-### Validation and Testing
-
-- **<a id="package-validation"></a>Package Validation**: A set of checks that verify the SDK package is ready for release, including changelog validation, dependency checks, linting, and build verification.
-
-- **<a id="pr-checks"></a>PR Checks (CI Validation)**: Automated validation pipelines that run on pull requests in SDK repositories. Includes build, test, linting, breaking change detection, and other validations.
-
-- **<a id="playback-mode"></a>Playback Mode**: Test execution mode that uses pre-recorded HTTP interactions instead of making live calls to Azure services. Enables fast, reliable testing without requiring live Azure resources.
-
- ---
+---
 
 ## Background / Problem Statement
 
 ### Current State
 
-Azure service teams face a complex, multi-step process to release SDKs from TypeSpec specifications. The current workflow involves:
+Azure service teams face a complex, multi-step process to release SDKs from TypeSpec specifications:
 
-1. **Fragmented tooling**: Different tools and processes for TypeSpec authoring, validation, SDK generation, and release management.
-2. **Manual coordination**: Service teams must manually track progress across multiple repositories (azure-rest-api-specs, azure-sdk-for-*) and systems (Azure DevOps, GitHub, Service Tree).
-3. **Knowledge gaps**: Understanding the complete workflow requires expertise across TypeSpec, SDK generation, APIView reviews, and release processes.
-4. **Error-prone handoffs**: Transitioning between steps often leads to missed configurations, incorrect metadata, or forgotten updates.
-5. **Difficulty resuming**: When users complete some steps manually or encounter failures, there's no easy way to continue the workflow from the current state.
+1. **Fragmented tooling**: Different tools for TypeSpec authoring, spec validation, breaking change detection, SDK generation, and release management — developed independently with limited integration.
+2. **Manual coordination**: Teams manually track progress across multiple repositories (`azure-rest-api-specs`, `azure-sdk-for-*`) and systems (Azure DevOps, GitHub, Service Tree).
+3. **Silent failures**: SDK generation failures are not surfaced to users — tools fail without actionable guidance.
+4. **Scattered documentation**: Process is documented across EngHub, Wiki, and repo specs with no single authoritative source.
+5. **No unified CI chain**: Spec PR validation (compile → lint → breaking change → generate → build) lacks a designed end-to-end failure-handling strategy.
+
+### What Has Changed
+
+- The standalone "release planner" system has been **fully removed**. Release tracking is now handled directly through Azure DevOps work items managed by azsdk-cli.
+- `@azure-tools/typespec-breaking-change` provides TypeSpec-native breaking change detection (replacing OpenAPI-based tools for TypeSpec specs). Crystal's breaking change detection spec defines the CI integration approach.
 
 ### Why This Matters
 
-- **Time to define api to release SDK**: Service teams spend significant time navigating the process from defining API spec to releasing SDK.
-- **Onboarding friction**: New service teams struggle to understand the end-to-end process.
-
-An intelligent, guided workflow that orchestrates the entire TypeSpec-to-SDK release process will dramatically improve developer productivity, reduce errors, and ensure consistent, high-quality SDK releases.
+- **Time from API definition to SDK release** is measured in weeks for experienced teams, longer for new ones.
+- **No agent-assisted end-to-end workflow** exists today — each stage requires manual tool invocation and knowledge of the next step.
 
 ---
 
 ## Goals
 
 1. Provide an end-to-end guided workflow from TypeSpec authoring to SDK release
-2. Support two primary user goals: publishing API Specs & SDKs for release AND experimenting with TypeSpec/SDK generation
-3. Enable users to resume the workflow from any intermediate state
-4. Automatically track and update release plan status throughout the workflow
-5. Show a visual representation of steps completed in the workflow and what's pending.
-6. Provide intelligent decision points (local vs. pipeline generation, troubleshooting guidance)
-7. Integrate sub-skills seamlessly for specialized tasks (TypeSpec authoring, APIView resolution, etc.)
-8. Support all five tier-1 SDK languages: .NET, Java, JavaScript, Python, Go
-9. Create a fully automated agentic workflow to query all required details from the user and run the steps in the workflow and until generating spec and SDK pull requests
+2. Enable resuming the workflow from any intermediate state
+3. Automatically track release plan status throughout the workflow
+4. Surface errors with actionable guidance at every failure point
+5. Integrate sub-skills seamlessly for specialized tasks
+6. Support all tier-1 SDK languages with appropriate scope:
+
+| Plane | Required Languages |
+|-------|-------------------|
+| **Management plane** | .NET, Java, JavaScript, Python, Go |
+| **Data plane** | .NET, Java, JavaScript, Python |
 
 ---
 
-## Design Proposal
+## Workflow Design
 
 ### Overview
 
-The TypeSpec to SDK Release Workflow is an intelligent orchestration skill that guides users through the complete process of defining APIs in TypeSpec and releasing SDKs. The workflow:
+The workflow is an orchestration layer that:
+1. **Identifies user intent** and gathers service details
+2. **Assesses current state** (existing release plans, PRs, completed steps)
+3. **Orchestrates sub-skills** in correct sequence
+4. **Tracks progress** via release plan work items
+5. **Handles failures** with troubleshooting guidance
 
-1. **Identifies user intent**: Determines whether the user wants to release SDKs or experiment with TypeSpec. This will also create a temporary release plan if a release plan does not exist for the TypeSpec project.
-2. **Assesses current state**: Detects existing release plans, PRs, and completed steps
-3. **Orchestrates sub-skills**: Invokes specialized skills for TypeSpec authoring, SDK generation, validation, etc.
-4. **Tracks progress**: Updates release plan status and local state after each step
-5. **Handles failures gracefully**: Provides troubleshooting guidance and alternative paths
+### Workflow Stages
 
-### Unified TypeSpec to SDK Workflow
-
-This workflow supports both experimentation and production SDK releases through a unified flow. Users start with a temporary release plan that can be converted to an actual release plan when ready to proceed with the full release.
-
-#### Process Flow
-
-```
-┌───────────────────┐    ┌───────────────────┐    ┌───────────────────┐    ┌────────────────────────────────────────────────────────────────────────────┐
-│    User Intent    │    │    Temporary      │    │    TypeSpec       │    │                          Choose Path                                       │
-│                   │───▶│   Release Plan    │───▶│    Readiness     │───▶│                                                                           │
-│ ┌───────────────┐ │    │ ┌───────────────┐ │    │ ┌───────────────┐ │    │  ┌─────────────────────┐              ┌─────────────────────────────────┐  │
-│ │ • Identify    │ │    │ │ • Create or   │ │    │ │ • Author      │ │    │  │   EXPERIMENTATION   │              │      RELEASE WORKFLOW           │  │
-│ │   release vs  │ │    │ │   find temp   │ │    │ │   TypeSpec    │ │    │  │                     │              │                                 │  │
-│ │   experiment  │ │    │ │   release     │ │    │ │ • Compile &   │ │    │  │ ┌─────────────────┐ │     ┌─ ─────▶│ ┌─────────────────────────────┐ │ │
-│ │ • Gather      │ │    │ │   plan        │ │    │ │   validate    │ │    │  │ │ Generate SDK    │ │     │        │ │ Create API Spec PR          │ │  │
-│ │   service     │ │    │ │ • Store plan  │ │    │ │ • Extract API │ │    │  │ │ locally (no PR) │ │     │        │ │ (converts temp to actual    │ │  │
-│ │   details     │ │    │ │   ID locally  │ │    │ │   version &   │ │    │  │ │ • Build & test  │ │     │        │ │  release plan)              │ │  │
-│ │               │ │    │ │               │ │    │ │   pkg names   │ │    │  │ │ • Run checks    │ │     │        │ │ • Update release plan       │ │  │
-│ └───────────────┘ │    │ └───────────────┘ │    │ └───────────────┘ │    │  │ └────────┬────────┘ │     │        │ │ • Link PR to plan           │ │  │
-└───────────────────┘    └───────────────────┘    └───────────────────┘    │  │          │          │     │        │ └─────────────┬───────────────┘ │  │
-                                                                           │  │          ▼          │     │        │               │                 │  │
-                                                                           │  │ ┌─────────────────┐ │     │        │               ▼                 │  │
-                                                                           │  │ │ Transition to   │─┼─────┘        │ ┌─────────────────────────────┐ │  │
-                                                                           │  │ │ publish changes │ │              │ │ SDK Generation              │ │  │
-                                                                           │  │ │ and release     │ │              │ │ (skip if already local gen) │ │  │
-                                                                           │  │ └─────────────────┘ │              │ │ • Local or pipeline         │ │  │
-                                                                           │  └─────────────────────┘              │ └─────────────┬───────────────┘ │  │
-                                                                           │                                       │               │                 │  │
-                                                                           │                                       │               ▼                 │  │
-                                                                           │                                       │ ┌─────────────────────────────┐ │  │
-                                                                           │                                       │ │ SDK PRs + APIView + Release │ │  │
-                                                                           │                                       │ │ • Create & link SDK PRs     │ │  │
-                                                                           │                                       │ │ • Resolve APIView feedback  │ │  │
-                                                                           │                                       │ │ • Merge & publish packages  │ │  │
-                                                                           │                                       │ └─────────────────────────────┘ │  │
-                                                                           │                                       └─────────────────────────────────┘  │
-                                                                           └────────────────────────────────────────────────────────────────────────────┘
-```
-
-#### Key Workflow Concepts
-
-1. **Temporary Release Plan**: Created at workflow start for tracking purposes. Remains temporary during experimentation.
-2. **TypeSpec Readiness**: Author and validate TypeSpec regardless of whether releasing or experimenting.
-3. **Path Selection**: After TypeSpec is ready, choose to experiment (generate SDK locally) or proceed to release (create API spec PR).
-4. **Conversion Point**: The temporary release plan converts to an actual release plan when an API spec PR is created.
-5. **Skip SDK Generation**: If SDK was already generated locally during experimentation, skip regeneration when transitioning to release.
-6. **SDK PR Linking**: SDK pull requests must be linked to the release plan when created.
-
-#### Detailed Step-wise Instructions
+The end-to-end flow consists of 5 stages (10 steps). Gaps are annotated inline.
 
 ```
                                     ┌─────────────────┐
@@ -189,24 +95,29 @@ This workflow supports both experimentation and production SDK releases through 
                                              │
                                              ▼
               ┌───────────────────────────────────────────────────┐
-              │  STEP 1: Create or find temporary release plan    │
-              │  [Release Plan Skill]                             │
+              │  STEP 0: Create or Find Release Plan             │
+              │  [Release Plan Skill]                            │
+              │  (Tracks progress across all stages)             │
               └───────────────────────┬───────────────────────────┘
                                       │
            ┌──────────────────────────┴──────────────────────────┐
            │                                                     │
            ▼                                                     ▼
 ┌─────────────────────────┐                     ┌─────────────────────────┐
-│ Create new temporary    │                     │ Find existing temporary │
-│ release plan            │                     │ or actual release plan  │
+│ Create new release plan │                     │ Find existing release   │
+│                         │                     │ plan (resume workflow)  │
 └───────────┬─────────────┘                     └───────────┬─────────────┘
             │                                               │
             └───────────────────────┬───────────────────────┘
                                     │
                                     ▼
+╔═══════════════════════════════════════════════════════════════════╗
+║  STAGE 1: TypeSpec Authoring (local)                             ║
+╚═══════════════════════════════════════════════════════════════════╝
+                                    │
               ┌───────────────────────────────────────────────────┐
-              │  STEP 2: TypeSpec Readiness                      │
-              │  [TypeSpec Authoring & Validation Skill]         │
+              │  STEP 1: Author TypeSpec                          │
+              │  [TypeSpec Authoring Skill]                       │
               └───────────────────────┬───────────────────────────┘
                                       │
            ┌──────────────────────────┴──────────────────────────┐
@@ -221,986 +132,353 @@ This workflow supports both experimentation and production SDK releases through 
                                     │
                                     ▼
               ┌───────────────────────────────────────────────────┐
-              │  Validate & Compile TypeSpec                      │
+              │  STEP 2: Validate & Compile TypeSpec              │
+              │  • TypeSpec compiler                              │
+              │  • Linter checks                                 │
+              │  • Breaking change detection (Phase A + B)       │
               └───────────────────────┬───────────────────────────┘
                                       │
            ┌──────────────────────────┴──────────────────────────┐
-           │ NO (errors)                                         │ YES (success)
+           │ FAIL (errors)                                       │ PASS (success)
            ▼                                                     ▼
 ┌─────────────────────────┐                     ┌─────────────────────────┐
 │ Report errors,          │                     │ TypeSpec Ready!         │
-│ iterate on TypeSpec     │                     │ Extract API version &   │
-└─────────────────────────┘                     │ package names           │
-                                                └───────────┬─────────────┘
+│ iterate on TypeSpec     │◀────────────────────│ Extract API version &   │
+│ (loop until passing)    │    (if user wants   │ package names           │
+└─────────────────────────┘     to fix)         └───────────┬─────────────┘
+                                                            │
+  Gap: Breaking change findings require manual fix.         │
+  No agent auto-resolves suppression decorators.            │
                                                             │
                                                             ▼
               ┌───────────────────────────────────────────────────┐
-              │  STEP 3: Choose Path                             │
-              │  Experimentation OR Release?                     │
+              │  STEP 3: Open API Spec PR                        │
+              │  (manual — developer opens PR)                   │
+              └───────────────────────┬───────────────────────────┘
+                                      │
+                                      │  Gap: No agent-driven
+                                      │  transition from local
+                                      │  authoring to PR creation.
+                                      │
+                                      ▼
+╔═══════════════════════════════════════════════════════════════════╗
+║  STAGE 2: Spec PR Validation (CI)                                ║
+╚═══════════════════════════════════════════════════════════════════╝
+                                    │
+              ┌───────────────────────────────────────────────────┐
+              │  STEP 4: CI Validation Pipeline                  │
+              │  (auto-triggers on PR open/update)               │
+              └───────────────────────┬───────────────────────────┘
+                                      │
+                                      ▼
+              ┌───────────────────────────────────────────────────┐
+              │ • TypeSpec compilation                            │
+              │ • LintDiff                                        │
+              │ • Breaking change detection (Phase A + B)         │
+              │ • APIView token generation                        │
+              │ • SDK generation dry-run (spec-gen-sdk)           │
+              │ • Labels applied                                  │
+              └───────────────────────┬───────────────────────────┘
+                                      │
+           ┌──────────────────────────┴──────────────────────────┐
+           │ FAIL                                                │ PASS
+           ▼                                                     ▼
+┌─────────────────────────┐                     ┌─────────────────────────┐
+│ Fix issues, push to PR  │                     │ All checks pass         │
+│ (re-triggers pipeline)  │                     │ PR approved & merged    │
+└─────────────────────────┘                     └───────────┬─────────────┘
+                                                            │
+  Gap: Validation steps run independently.                  │
+  No unified PR comment with all results + next steps.      │
+  No designed failure ordering.                             │
+                                                            │
+                                                            ▼
+╔═══════════════════════════════════════════════════════════════════╗
+║  STAGE 3: SDK Generation (per language)                          ║
+╚═══════════════════════════════════════════════════════════════════╝
+                                    │
+              ┌───────────────────────────────────────────────────┐
+              │  STEP 5: Generate SDKs                           │
+              │  Trigger: spec PR merge → spec-gen-sdk auto-runs │
               └───────────────────────┬───────────────────────────┘
                                       │
            ┌──────────────────────────┴──────────────────────────┐
            │                                                     │
            ▼                                                     ▼
 ┌─────────────────────────┐                     ┌─────────────────────────┐
-│ PATH A: EXPERIMENTATION │                     │ PATH B: RELEASE         │
-│ Generate SDK locally    │                     │ Create API Spec PR      │
-│ (no PR creation)        │                     │ (converts temp to       │
-│                         │                     │  actual release plan)   │
+│ PIPELINE generation     │                     │ LOCAL generation        │
+│ (auto on spec merge)    │                     │ (developer choice)      │
+├─────────────────────────┤                     ├─────────────────────────┤
+│ • spec-gen-sdk runs     │                     │ • azsdk_package_        │
+│ • Generates per lang    │                     │   generate_code         │
+│ • Creates SDK PRs       │                     │ • Build & test locally  │
+│   automatically         │                     │ • Create PR manually    │
 └───────────┬─────────────┘                     └───────────┬─────────────┘
             │                                               │
-            ▼                                               │
-┌─────────────────────────┐                                 │
-│ STEP 3A: Local SDK      │                                 │
-│ Generation              │                                 │
+            │                        ┌──────────────────────┘
+            │                        │
+            │   ┌────────────────────┴────────────────────┐
+            │   │ PASS                                    │ FAIL
+            │   ▼                                         ▼
+            │  ┌──────────────────────┐    ┌──────────────────────┐
+            │  │ SDK PRs created      │    │ Generation failed    │
+            │  │ in language repos    │    │                      │
+            │  └──────────┬───────────┘    └──────────┬───────────┘
+            │             │                           │
+            │             │                  Gap: Error buried in
+            │             │                  build logs. No structured
+            │             │                  report (which lang, which
+            │             │                  step, what error).
+            │             │                           │
+            │             │                           ▼
+            │             │                ┌──────────────────────┐
+            │             │                │ Manual debug or      │
+            │             │                │ pipeline-troubleshoot│
+            │             │                │ agent                │
+            │             │                └──────────┬───────────┘
+            │             │                           │
+            └─────────────┼───────────────────────────┘
+                          │
+                          ▼
+              ┌───────────────────────────────────────────────────┐
+              │  STEP 6: Link SDK PRs to Release Plan            │
+              │  [Release Plan Skill]                            │
+              └───────────────────────┬───────────────────────────┘
+                                      │
+                                      ▼
+╔═══════════════════════════════════════════════════════════════════╗
+║  STAGE 4: SDK PR Validation & API Review                         ║
+╚═══════════════════════════════════════════════════════════════════╝
+                                    │
+              ┌───────────────────────────────────────────────────┐
+              │  STEP 7: SDK PR CI Pipeline                      │
+              │  (auto-triggers on SDK PR open/update)           │
+              └───────────────────────┬───────────────────────────┘
+                                      │
+                                      ▼
+              ┌───────────────────────────────────────────────────┐
+              │ • Build → Test → Lint → Package validation       │
+              │ • SDK breaking change detection                   │
+              │ • APIView generated for SDK public API surface    │
+              └───────────────────────┬───────────────────────────┘
+                                      │
+           ┌──────────────────────────┴──────────────────────────┐
+           │ BUILD FAIL                                          │ BUILD PASS
+           ▼                                                     ▼
+┌─────────────────────────┐                     ┌─────────────────────────┐
+│ Custom code drift?      │                     │ CI green                │
+├─────────────────────────┤                     │ Awaiting review         │
+│ YES: auto-sdk-build-fix │                     └───────────┬─────────────┘
+│ label → Copilot agent   │                                 │
+│ auto-repairs → re-runs  │                                 │
 ├─────────────────────────┤                                 │
-│ • Verify environment    │                                 │
-│ • Generate SDK locally  │                                 │
-│ • Build SDK             │                                 │
-│ • Customize TypeSpec &  │                                 │
-│   regenerate if errors  │                                 │
-│ • Test & run validation │                                 │
-└───────────┬─────────────┘                                 │
-            │                                               │
-            ▼                                               │
-┌─────────────────────────┐                                 │
-│ Continue experimenting  │                                 │
-│ OR transition to        │────────────────────────────────▶│
-│ release workflow?       │                                 │
-└───────────┬─────────────┘                                 │
-            │ (stay experimenting)                          │
-            ▼                                               │
-┌─────────────────────────┐                                 │
-│ Iterate: modify         │                                 │
-│ TypeSpec, regenerate    │                                 │
-│ SDK, test locally       │                                 │
-└─────────────────────────┘                                 │
-                                                            │
-                                                            ▼
-              ┌───────────────────────────────────────────────────┐
-              │  STEP 4: Update Release Plan & Create API Spec PR │
-              │  (Converts temporary to actual release plan)      │
-              └───────────────────────┬───────────────────────────┘
-                                      │
-                                      ▼
-              ┌───────────────────────────────────────────────────┐
-              │ • Update release plan with API version & details │
-              │ • Convert temporary release plan to actual       │
-              │ • Create API spec PR in azure-rest-api-specs     │
-              │ • Link API spec PR to release plan               │
-              └───────────────────────┬───────────────────────────┘
-                                      │
-                                      ▼
-              ┌───────────────────────────────────────────────────┐
-              │  STEP 5: SDK Generation                          │
-              │  (Skip if already generated locally)             │
-              └───────────────────────┬───────────────────────────┘
-                                      │
-           ┌──────────────────────────┴──────────────────────────┐
-           │                                                     │
-           ▼                                                     ▼
-┌─────────────────────────┐                     ┌─────────────────────────┐
-│ SDK already generated   │                     │ Need to generate SDK    │
-│ locally?                │                     │                         │
-└───────────┬─────────────┘                     └───────────┬─────────────┘
-            │                                               │ 
-            │                                               │
-            │                        ┌──────────────────────┴──────────────────────┐
-            │                        │                                             │
-            │                        ▼                                             ▼
-            │           ┌─────────────────────────┐             ┌─────────────────────────┐
-            │           │ LOCAL generation        │             │ PIPELINE generation     │
-            │           │ • Faster iteration      │             │ • Consistent builds     │
-            │           │ • Debug locally         │             │ • Auto-creates PRs      │
-            │           └───────────┬─────────────┘             └───────────┬─────────────┘
-            │                       │                                       │
-            │                       ▼                                       ▼
-            │           ┌─────────────────────────┐             ┌─────────────────────────┐
-            │           │ Generate SDK locally    │             │ Run pipeline generation │
-            │           │ Build & test package    │             └───────────┬─────────────┘
-            │           └───────────┬─────────────┘                         │
-            │                       │                           ┌───────────┴───────────┐
-            │                       │                           │ PASS                  │ FAIL
-            │                       │                           ▼                       ▼
-            │                       │             ┌─────────────────────┐  ┌─────────────────────┐
-            │                       │             │ PRs created         │  │ Fallback to local   │
-            │                       │             │ automatically       │  │ gen for debug       │
-            │                       │             └──────────┬──────────┘  └───────────┬─────────┘
-            │                       │                        │                         │
-            │                       ▼                        │                         │
-            │           ┌─────────────────────────┐          │                         │
-            │           │ Prepare package for     │          │                         │
-            │           │ release                 │◀─────────┴─────────────────────────┘
-            │           │ [Package Skill]         │
-            │           └───────────┬─────────────┘
-            │                       │
-            └───────────────────────┼───────────────────────────────────────────────────┐
-                                    │                                                   │
-                                    ▼                                                   │
-              ┌───────────────────────────────────────────────────┐                     │
-              │  STEP 6: Create SDK PRs & Link to Release Plan    │◀────────────────────┘
-              └───────────────────────┬───────────────────────────┘
-                                      │
-                                      ▼
-              ┌───────────────────────────────────────────────────┐
-              │ • Link SDK PRs to release plan                    │
-              │ • Verify PR pipeline status                       │
-              └───────────────────────┬───────────────────────────┘
-                                      │
-                                      ▼
-              ┌───────────────────────────────────────────────────┐
-              │  STEP 7: Check APIView Feedback                   │
-              └───────────────────────┬───────────────────────────┘
-                                      │
-           ┌──────────────────────────┴──────────────────────────┐
-           │ Has API suggestions?                                │ No suggestions
-           ▼                                                     ▼
-┌─────────────────────────┐                     ┌─────────────────────────┐
-│ Resolve APIView         │                     │ Proceed to release      │
-│ suggestions             │                     │                         │
-│ [APIView Skill]         │                     │                         │
-└───────────┬─────────────┘                     └───────────┬─────────────┘
-            │                                               │
-            ▼                                               │
-┌─────────────────────────┐                                 │
-│ Re-run SDK generation   │                                 │
-│ if changes required     │                                 │
+│ NO: Pipeline troubleshoot│                                │
+│ agent diagnoses          │                                │
 └───────────┬─────────────┘                                 │
             │                                               │
             └───────────────────────┬───────────────────────┘
                                     │
                                     ▼
               ┌───────────────────────────────────────────────────┐
-              │  STEP 8: Release SDKs                            │
+              │  STEP 8: APIView Review                          │
+              │  (architects review SDK public API surface)      │
+              └───────────────────────┬───────────────────────────┘
+                                      │
+           ┌──────────────────────────┴──────────────────────────┐
+           │ Has suggestions                                     │ No suggestions
+           ▼                                                     ▼
+┌─────────────────────────┐                     ┌─────────────────────────┐
+│ Resolve APIView         │                     │ Approved                │
+│ suggestions             │                     │                         │
+│ [APIView Feedback Skill]│                     │                         │
+└───────────┬─────────────┘                     └───────────┬─────────────┘
+            │                                               │
+            ▼                                               │
+┌─────────────────────────┐                                 │
+│ Changes required →      │                                 │
+│ Update TypeSpec →       │                                 │
+│ Re-generate SDK →       │                                 │
+│ New commit to PR →      │                                 │
+│ CI re-runs (loop back   │                                 │
+│ to Step 7)              │                                 │
+└───────────┬─────────────┘                                 │
+            │                                               │
+            └───────────────────────┬───────────────────────┘
+                                    │
+                                    ▼
+              ┌───────────────────────────────────────────────────┐
+              │  SDK PR approved & merged                         │
+              └───────────────────────┬───────────────────────────┘
+                                      │
+                                      ▼
+╔═══════════════════════════════════════════════════════════════════╗
+║  STAGE 5: Release Coordination                                   ║
+╚═══════════════════════════════════════════════════════════════════╝
+                                    │
+              ┌───────────────────────────────────────────────────┐
+              │  STEP 9: Release SDKs                            │
+              │  [Release Skill]                                 │
               └───────────────────────┬───────────────────────────┘
                                       │
                                       ▼
               ┌───────────────────────────────────────────────────┐
-              │ • Wait for SDK PR approval & merge               │
-              │ • Release pipeline triggers                      │
-              │ • Approve release in pipeline                    │
-              │ • Packages published to registries               │
-              │ • Release plan auto-completes                    │
-              │ • Service Tree KPI updated                       │
+              │ • Check release readiness per language            │
+              │ • Namespace approval (if new package)             │
+              │ • Trigger release pipeline (manual approval gate) │
+              │ • Packages published to registries                │
+              │ • Release plan auto-completes                     │
+              │ • Service Tree KPI updated                        │
               └───────────────────────────────────────────────────┘
+
+  Gap: No agent-driven transition from Stage 4 → 5.
+  User manually triggers release after PR merge.
 ```
 
-##### Step 1: Create or Find Temporary Release Plan
+#### Stage ↔ Step Mapping
 
-**Skill Used**: [Prepare Release Plan Skill](#skill-6-prepare-release-plan)
+| Stage | Steps | Transition to Next Stage |
+|-------|-------|--------------------------|
+| 0 (pre) | Step 0: Release plan | Manual |
+| 1 | Steps 1–3: Author, validate, open PR | Manual (developer opens PR) |
+| 2 | Step 4: CI validation | Auto (spec-gen-sdk on merge) |
+| 3 | Steps 5–6: Generate, link PRs | Auto (PRs created by spec-gen-sdk) |
+| 4 | Steps 7–8: CI + APIView + repair | Manual (user triggers release) |
+| 5 | Step 9: Release | — |
 
-**Actions**:
-
-1. Check if a temporary release plan already exists for the TypeSpec project
-2. If no release plan exists:
-   - Prompt user for required information (TypeSpec project path or service tree ID and product tree ID)
-   - Create new **temporary** release plan work item in Azure DevOps
-3. If release plan exists:
-   - Retrieve and display release plan details
-   - Determine if it's a temporary or actual release plan
-4. Update local workflow state with release plan ID
-
-**Status Updates**:
-
-- Temporary release plan: Created/Identified
-- Local state: Release plan ID stored
-
----
-
-##### Step 2: TypeSpec Readiness (Define or Update TypeSpec)
-
-**Skill Used**: [TypeSpec Authoring Skill](#skill-2-typespec-authoring-and-validation)
-
-**Actions**:
-
-1. Determine if creating new TypeSpec project or updating existing
-2. For new projects:
-   - Initialize TypeSpec project structure
-   - Guide user through defining service operations
-3. For existing projects:
-   - Load current TypeSpec definitions
-   - Guide user through modifications
-4. Apply Azure guidelines and best practices
-5. Commit changes locally (checkpoint)
-6. Run TypeSpec compilation and validation
-7. If compilation fails:
-   - Report errors with guidance
-   - Iterate on TypeSpec until successful
-8. If compilation succeeds:
-   - Extract API version from TypeSpec
-   - Extract package names for each language
-
-**Status Updates**:
-
-- TypeSpec authoring: In Progress → Completed
-- TypeSpec validation: Completed
-- Local state: TypeSpec project path stored
+| Stage | Name | Input | Output | Key Tools |
+|-------|------|-------|--------|-----------|
+| 1 | TypeSpec Authoring | Service requirements | `.tsp` files, `tspconfig.yaml` | TypeSpec compiler, authoring agent, breaking change tool, linter |
+| 2 | Spec PR Validation | PR in `azure-rest-api-specs` | Validation checks, labels, APIView tokens | Validation pipeline, LintDiff, `@azure-tools/typespec-breaking-change`, APIView emitter, spec-gen-sdk dry-run |
+| 3 | SDK Generation | Approved/merged spec | SDK PRs per language | tsp-client, language emitters, spec-gen-sdk, azsdk-cli (`generate`, `build`, `test`, `metadata`) |
+| 4 | SDK PR Validation & API Review | SDK PRs in language repos | Approved & merged PRs | Language CI, SDK breaking change detector, APIView, feedback resolution agent, pipeline troubleshooting agent, auto SDK PR repair |
+| 5 | Release Coordination | Merged SDK PRs | Published packages, KPI update | Release plan tooling, release pipelines, Service Tree |
 
 ---
 
-##### Step 3: Choose Path (Experimentation OR Release)
+#### Stage 1: TypeSpec Authoring
 
-After TypeSpec is ready, user chooses one of two paths:
+Developer writes/updates TypeSpec locally: `.tsp` files, `tspconfig.yaml`, local compilation, linting, agent-assisted feedback.
 
-| Path | Description | When to Use |
-|------|-------------|-------------|
-| **Path A: Experimentation** | Generate SDK locally, iterate quickly | Testing API design, exploring SDK shape |
-| **Path B: Release** | Create API spec PR, follow release process | Ready to publish spec and release SDK |
+| Tool | Role | Owner |
+|------|------|-------|
+| TypeSpec compiler | Compile `.tsp` files, catch syntax/type errors | TypeSpec team |
+| TypeSpec authoring agent (`azure-typespec-author` skill) | Assist with ARM/data-plane patterns, Azure REST API guidelines | Haoling |
+| `@azure-tools/typespec-breaking-change` | Phase A: same-version regression (any diff = error). Phase B: cross-version evolution (request narrowing / response widening = breaking). Inline suppression via decorators. Also runs in Stage 2 CI. | Mark Cowlishaw |
+| TypeSpec linter | Static guideline compliance (distinct from LintDiff) | TypeSpec team |
 
----
-
-###### Step 3A: Local SDK Generation (Experimentation Path)
-
-**Skill Used**: [Generate SDK Locally Skill](#skill-4-generate-sdk-locally), [TypeSpec Customization Skill](#skill-3-typespec-customization)
-
-**Purpose**: Generate and test SDK locally without creating PRs.
-
-**Actions**:
-
-1. Verify environment setup for target languages
-2. Run local SDK generation (`azsdk_package_generate_code`)
-3. Build generated code
-4. If build fails or SDK customization is needed:
-   - Apply TypeSpec customizations using [TypeSpec Customization Skill](#skill-3-typespec-customization)
-   - Regenerate SDK and rebuild
-5. Run tests
-6. Validate and run linting
-
-**At this point, user can either:**
-
-- Continue iterating (modify TypeSpec, customize, regenerate SDK locally)
-- Transition to release workflow (proceed to Step 4)
-
-**Status Updates**:
-
-- Local SDK generation: Completed for selected languages
-- Build/Test: Validated locally
+**Gap**: Breaking change tool reports findings with DiffKind, source location, and suggested suppression decorator — but the user must apply fixes manually. No agent currently auto-resolves these findings.
 
 ---
 
-##### Step 4: Update Release Plan & Create API Spec PR
+#### Stage 2: Spec PR Validation
 
-**Skill Used**: [Prepare Release Plan Skill](#skill-6-prepare-release-plan)
+PR in `azure-rest-api-specs` triggers: compilation → LintDiff → breaking change detection (Phase A + B) → APIView token generation → SDK generation dry-run per language → labels applied.
 
-**Purpose**: Convert temporary release plan to actual and create API spec PR.
+| Tool | Role | Owner |
+|------|------|-------|
+| Spec PR validation pipeline | Orchestrates full validation suite on PR open/update | EngSys |
+| TypeSpec compiler | CI compilation | TypeSpec team |
+| LintDiff | Spectral-based linting on swagger diffs | EngSys |
+| `@azure-tools/typespec-breaking-change` | Phase A + B detection. Auto-adds `BreakingChangeReviewRequired` / `VersioningReviewRequired` labels | Mark |
+| APIView emitter (`typespec-apiview`) | Generates API surface token files for architect review | APIView team |
+| spec-gen-sdk | SDK generation validation — ensures spec can produce SDK code | EngSys (Renhe) |
 
-**Actions**:
-
-1. Prompt user for additional release information (target release month, release type)
-2. **Convert temporary release plan to actual release plan**
-3. Validate package names:
-   - Look for any existing completed release plans for the TypeSpec project
-   - Retrieve package names from those completed release plans
-   - Compare new package names with existing package names
-   - If package names conflict (different from previously released packages):
-     - **Warn user** about conflicting package names
-     - Inform user they will need to get approval for the new package names
-     - Inform user they will need to deprecate the old packages
-4. Update release plan with TypeSpec details:
-   - TypeSpec project path
-   - API version
-   - Package names per language
-5. Change release plan status to "In Progress"
-6. Stage TypeSpec changes in local git repository
-7. Create branch and commit
-8. Push to remote and create PR in azure-rest-api-specs
-9. Update release plan with API spec PR link
-
-**Status Updates**:
-
-- Release plan: Converted to actual, updated with API version and package details
-- Release plan status: In Progress
-- API spec PR: Created and linked to release plan
+**Gap**: Validation steps run independently. No designed chain for: (1) failure ordering (should linting run if compilation fails?), (2) how breaking change results gate SDK generation, (3) per-language generation failure reporting back to spec PR. No unified PR comment summarizing all results with next steps.
 
 ---
 
-##### Step 5: SDK Generation
+#### Stage 3: SDK Generation
 
-**Purpose**: Generate SDK packages. **Skip if already generated locally during experimentation (Step 3A)**.
+**Trigger**: When a spec PR is merged in `azure-rest-api-specs`, the spec-gen-sdk pipeline automatically kicks off SDK generation for each configured language and creates SDK PRs in the corresponding language repos (e.g., `azure-sdk-for-python`). Alternatively, developers can generate locally using azsdk-cli for faster iteration before opening a PR.
 
-**Decision Point**:
+For each target language: tsp-client syncs TypeSpec → emitter generates code → customizations applied → build → test (playback) → metadata updated → SDK PR created. Two paths: local (developer iterates, creates PR manually) or pipeline (spec-gen-sdk generates and creates PRs automatically on spec PR merge).
 
-| Factor | Local Generation | Pipeline Generation |
-|--------|------------------|---------------------|
-| Tools setup | Requires all language tools installed locally | No local tools needed |
-| Debugging | Easy to debug issues | Requires log analysis |
-| PR Creation | Manual (Step 6) | Automatic |
-| Best For | Iteration, troubleshooting | Production releases |
+| Tool | Role | Owner |
+|------|------|-------|
+| tsp-client | Syncs TypeSpec project into SDK repo, manages `tsp-location.yaml` | EngSys |
+| Language emitters | Generate client library code from TypeSpec (one per language) | Language teams |
+| spec-gen-sdk | Pipeline automation — runs full generation workflow, creates SDK PRs | EngSys (Renhe) |
+| azsdk-cli (`azsdk_package_generate_code`) | Local orchestration — generate, build, test, validate | azsdk-cli team |
+| azsdk-cli (`azsdk_package_build_code`, `azsdk_package_run_tests`, `azsdk_package_run_check`) | Build, test, validate locally | azsdk-cli team |
+| azsdk-cli (`azsdk_package_update_changelog_content`, `azsdk_package_update_metadata`, `azsdk_package_update_version`) | Update package metadata | azsdk-cli team |
+| `azsdk_customized_code_update` | Apply TypeSpec and code-level customizations (classify → fix → regenerate → rebuild) | azsdk-cli team |
 
-###### Option A: Use Existing Local SDK (Skip Generation)
-
-If SDK was already generated locally during Step 3A:
-
-1. Confirm local SDK is still valid and up-to-date
-2. Proceed directly to Step 6 (Create SDK PRs)
-
-###### Option B: Local SDK Generation
-
-**Skill Used**: [Generate SDK Locally Skill](#skill-4-generate-sdk-locally), [TypeSpec Customization Skill](#skill-3-typespec-customization)
-
-**Actions**:
-
-1. Verify environment setup for target languages
-2. Run `azsdk_package_generate_code` for each language
-3. Build generated code
-4. If build fails:
-   - Apply TypeSpec customizations using [TypeSpec Customization Skill](#skill-3-typespec-customization)
-   - Regenerate SDK and rebuild
-5. Run tests
-6. Validate and run linting
-7. If any step fails:
-   - Report errors with troubleshooting guidance
-   - Allow user to fix and retry
-8. Prepare package for release:
-   - Update changelog
-   - Update metadata
-   - Update version
-
-**Status Updates**:
-
-- SDK generation: Completed per language
-- Package preparation: Completed per language
-
-###### Option C: Pipeline SDK Generation
-
-**Actions**:
-
-1. Trigger SDK generation pipeline with release plan details using `azsdk_run_generate_sdk`
-2. Monitor pipeline status for each language
-3. If pipeline succeeds:
-   - PRs are automatically created
-   - Update release plan with PR links
-   - Skip to Step 7 (APIView feedback)
-4. If pipeline fails for any language:
-   - Report failure details
-   - Offer to switch to local generation for troubleshooting
-
-**Status Updates**:
-
-- Pipeline: Running → Succeeded/Failed
-- SDK PRs: Auto-linked to release plan (if pipeline generation)
+**Gap**: When SDK generation fails, spec-gen-sdk reports a failed pipeline check. The error is buried in build logs — not surfaced as a structured report (which language, which step, what error). No agent helps troubleshoot generation failures. The auto-repair pattern used at Stage 4 (label → Copilot agent → fix → rebuild) could potentially be extended here to diagnose common generation failures.
 
 ---
 
-##### Step 6: Create SDK PRs & Link to Release Plan
+#### Stage 4: SDK PR Validation & API Review
 
-**Purpose**: Create SDK pull requests and link them to the release plan.
+CI runs (build → test → lint → package validation → SDK breaking change detection). If build fails on custom code drift: `auto-sdk-build-fix` label → Copilot cloud agent auto-repairs → commits fix → CI re-runs. APIView generates SDK public API surface review → architects leave comments → developer resolves via TypeSpec changes (re-triggers generation) → iterate until approved and merged.
 
-**Actions**:
-
-1. Create SDK pull requests for each target language if not already generated.
-2. **Link SDK PRs to release plan**
-3. Verify PR pipeline status. Fix TypeSpec and rerun SDK generation if there are any build errors.
-
-**Note**: If pipeline generation (Step 5 Option C) was used, this step is automatic.
-
-**Status Updates**:
-
-- SDK PRs: Created and linked to release plan
+| Tool | Role | Owner |
+|------|------|-------|
+| Language CI pipelines | Build, test, lint, package validation | Language teams |
+| SDK breaking change detector | Detects breaking changes in generated SDK API surface. Being combined into SDK validation check. Could the auto-repair pattern (below) also apply here for resolution? | Ray & Crystal |
+| APIView | SDK public API surface review — architects review and approve | APIView team |
+| APIView feedback resolution agent (`azsdk-common-apiview-feedback-resolution` skill) | Helps resolve APIView comments via TypeSpec changes | azsdk-cli team |
+| Pipeline troubleshooting agent (`azsdk-common-pipeline-troubleshooting` skill) | Diagnoses CI failures | azsdk-cli team |
+| Auto SDK PR repair (`azsdk_customized_code_update` + Copilot cloud agent) | When custom code drifts and breaks the build, `auto-sdk-build-fix` label triggers a Copilot cloud agent to fix custom code, regenerate, and rebuild. Shared orchestration in `eng/common/`, per-language opt-in. | azsdk-cli team |
 
 ---
 
-##### Step 7: Check APIView Feedback
+#### Stage 5: Release Coordination
 
-**Skill Used**: [APIView Feedback Resolution Skill](#skill-8-apiview-feedback-resolution)
+Release plan work item created/updated → namespace approval (if new package) → readiness checked per language → release pipeline triggered (manual approval gate) → packages published → release plan auto-completes → Service Tree KPI updated.
 
-**Actions**:
+| Tool | Role | Owner |
+|------|------|-------|
+| Release plan tooling (`azsdk_create_release_plan`, `azsdk_get_release_plan`, etc.) | Create/update/link Azure DevOps work items | azsdk-cli team |
+| Release pipeline (`azsdk_release_sdk`) | Check readiness, trigger release | azsdk-cli team |
+| Language release pipelines | Publish to PyPI, Maven, npm, NuGet, Go module proxy | Language teams |
+| Service Tree integration | Mark service KPIs as completed | EngSys |
 
-1. Check APIView for comments on SDK packages using the API view revision created for the PR
-2. If no action items: Proceed to Step 8
-3. If action items exist:
-   - Display suggestions grouped by priority
-   - Guide user through resolving each item
-   - Apply TypeSpec customizations if needed
-   - Regenerate SDK if changes were made
-   - Update SDK PRs
+**Release type approval differences**:
 
-**Status Updates**:
-
-- APIView: Reviewed
-- Feedback resolution: Completed
-
----
-
-##### Step 8: Release SDK
-
-**Actions**:
-
-1. Monitor SDK PR approval status
-2. When PRs are approved:
-   - Guide user through merge process
-3. After merge:
-   - Release pipeline automatically triggers
-   - Guide user to go to release pipeline run and approve the release of required package
-   - Packages published to registries
-4. When all languages released:
-   - Release plan auto-completes
-   - Service Tree KPI updated
-
-**Status Updates**:
-
-- SDK PRs: Merged
-- Release: Completed
-- Release plan: Auto-completed
-- Service KPI: Updated
+| Release Type | Approval Gates | Notes |
+|-------------|----------------|-------|
+| Preview | No architect board review (can be requested) | Fastest path |
+| GA (first release) | Architect board review required | Namespace approval needed for new packages |
+| GA (update) | Standard review | Breaking changes require separate approval |
+| Patch | Standard review | Must maintain backward compatibility |
 
 ---
 
-## Resumable Workflow Scenarios
+### Architecture: Skill Chaining with Next Steps
 
-The workflow is designed to support users who have already completed some steps manually or encountered failures. The agent detects the current state and continues from the appropriate point.
+The current system uses a **prompt chaining** pattern: independent sub-skills are invoked sequentially, with each tool returning `NextSteps` that guide the LLM agent to the next action. Tool responses return structured data (release plan ID, TypeSpec path, package names) that the LLM agent retains in conversation context. `CommandResponse.NextSteps` is used across 20+ tool and service files.
 
-### Scenario A: Release Plan and API Spec PR Already Exist
+**What works today**:
+- Tools return actionable `NextSteps` strings that LLM agents parse to determine the next tool call
+- Cross-tool chaining exists in the release plan flow: `create release plan` → "Update SDK details" → "API spec approved, run SDK generation using `azsdk_run_generate_sdk`"
+- Each skill is independently testable and deployable
+- Human stays in the loop at each transition (critical for approval-gated stages)
 
-**Detection**:
+**Gaps to improve orchestration** (without building a full orchestrator):
 
-- User mentions existing release plan work item ID or PR link
-- Agent queries release plan to find linked API spec PR
-
-**Resume Point**: Continue from Step 5 (SDK Generation)
-
-**Actions**:
-
-1. Retrieve release plan details
-2. Verify API spec PR is approved/merged
-3. Proceed with SDK generation (local or pipeline)
-4. Continue through Steps 6-8
-
-```
-┌───────────────────────────┐
-│ Detected: Release plan    │
-│ exists with API spec PR   │
-└─────────────┬─────────────┘
-              │
-              ▼
-┌───────────────────────────┐
-│ Verify API spec PR status │
-│ (Approved/Merged?)        │
-└─────────────┬─────────────┘
-              │
-              ▼
-┌───────────────────────────┐
-│ Resume at Step 5:         │
-│ SDK Generation            │
-└───────────────────────────┘
-```
+| Gap | Current State | Improvement |
+|-----|---------------|-------------|
+| NextSteps are natural language | LLM must interpret free-text like "Run SDK generation using `azsdk_run_generate_sdk`" — works but is fragile | Consider structured NextSteps with explicit tool name + required parameters |
+| Chaining is partial (Stages 3–5 only) | No NextSteps connecting Stage 1 → 2. These transitions happen outside the agent | Add cross-tool NextSteps for early stages (authoring → "open spec PR," validation → "generate SDK") |
+| Skills don't reference each other | SKILL.md files are fully independent. Chaining relies on LLM interpretation | Document expected skill sequences in workflow skill or prompt |
+| No state detection | Agent cannot determine "where am I?" in the workflow | Add a "workflow status" tool that queries release plan + PR status to suggest next stage |
+| Errors not structured for agents | Some tools return errors buried in logs or free text | Every tool returns errors in a parseable format with suggested next action |
+| Label-driven automation gaps | Labels like `BreakingChangeReviewRequired` and `auto-sdk-build-fix` exist but routing is not fully connected | Connect label events to automation (review routing, custom-code repair, release gating) |
 
 ---
 
-### Scenario B: API Spec PR Exists Without Release Plan
-
-**Detection**:
-
-- User provides API spec PR link
-- No release plan found for this PR
-
-**Resume Point**: Create release plan, then continue from Step 5
-
-**Actions**:
-
-1. Create release plan work item and mark TypeSpec authoring was already completed.
-2. Link existing API spec PR to release plan
-3. Extract TypeSpec details from PR
-4. Proceed with SDK generation
-
-```
-┌───────────────────────────┐
-│ Detected: API spec PR     │
-│ exists, no release plan   │
-└─────────────┬─────────────┘
-              │
-              ▼
-┌───────────────────────────┐
-│ Create release plan,      │
-│ link API spec PR and      │
-| mark TypeSpec authoring   |
-| was already completed.    |
-└─────────────┬─────────────┘
-              │
-              ▼
-┌───────────────────────────┐
-│ Resume at Step 5:         │
-│ SDK Generation            │
-└───────────────────────────┘
-```
-
----
-
-### Scenario C: Pipeline SDK Generation Failed
-
-**Detection**:
-
-- User reports pipeline failure
-- Or pipeline status shows failed for specific language(s)
-
-**Resume Point**: Troubleshoot using local generation
-
-**Actions**:
-
-1. Identify the release plan
-1. Identify failed language(s)
-1. Switch to local SDK generation for debugging
-1. Guide user through error resolution
-1. If TypeSpec customization needed, invoke [TypeSpec Customization Skill](#skill-3-typespec-customization)
-1. Regenerate SDK locally
-1. Create SDK PR manually and link to release plan
-
-```
-┌───────────────────────────┐
-│ Detected: Pipeline        │
-│ generation failed         │
-└─────────────┬─────────────┘
-              │
-              ▼
-┌───────────────────────────┐
-│ Switch to local gen for   │
-│ troubleshooting           │
-│ [Local Gen Skill]         │
-└─────────────┬─────────────┘
-              │
-              ▼
-┌───────────────────────────┐
-│ Identify and resolve      │
-│ errors                    │
-└─────────────┬─────────────┘
-              │
-    ┌─────────┴─────────┐
-    │ TypeSpec change   │ Code fix
-    │ needed?           │ only
-    ▼                   ▼
-┌─────────────┐   ┌─────────────┐
-│ Apply       │   │ Apply fix   │
-│ TypeSpec    │   │ & regenerate│
-│ customization│   │             │
-└──────┬──────┘   └──────┬──────┘
-       │                 │
-       └────────┬────────┘
-                │
-                ▼
-┌───────────────────────────┐
-│ Create SDK PR & link to   │
-│ release plan              │
-└───────────────────────────┘
-```
-
----
-
-### Scenario D: SDK Generated, Need Package Preparation Help
-
-**Detection**:
-
-- User has generated SDK code
-- Needs help with changelog, metadata, or validation
-
-**Resume Point**: Package release preparation
-
-**Actions**:
-
-1. Identify the release plan using the TypeSpec project of the package.
-1. Identify which package preparation steps are needed
-1. Update changelog content
-1. Update package metadata
-1. Run validation checks
-1. Create or update SDK PR
-
-```
-┌───────────────────────────┐
-│ Detected: SDK generated,  │
-│ needs package prep        │
-└─────────────┬─────────────┘
-              │
-              ▼
-┌───────────────────────────┐
-│ Run Package Release       │
-│ Readiness Skill           │
-└─────────────┬─────────────┘
-              │
-              ▼
-┌───────────────────────────┐
-│ • Update changelog        │
-│ • Update metadata         │
-│ • Run validations         │
-│ • Create/update SDK PR    │
-└───────────────────────────┘
-```
-
----
-
-## Sub-Skills Overview
-
-The end-to-end workflow orchestrates these specialized sub-skills:
-
-### Skill 1: TypeSpec to SDK Workflow (This Document)
-
-**Purpose**: End-to-end orchestration of the complete TypeSpec to SDK release process.
-
-**Capabilities**:
-
-- Identify user intent (release vs. experiment)
-- Detect current workflow state and resume appropriately
-- Orchestrate sub-skills in correct sequence
-- Track and update release plan status
-- Handle decision points (local vs. pipeline generation)
-- Provide guidance at each step
-
-**Related Tools**:
-
-- `azsdk_create_release_plan`
-- `azsdk_get_release_plan_for_spec_pr`
-- `azsdk_update_sdk_details_in_release_plan`
-- `azsdk_link_sdk_pull_request_to_release_plan`
-
----
-
-### Skill 2: TypeSpec Authoring and Validation
-
-**Purpose**: AI-powered assistance for creating and modifying TypeSpec API specifications.
-
-**Capabilities**:
-
-- Create new TypeSpec projects following Azure guidelines
-- Modify existing TypeSpec definitions
-- Ensure compliance with ARM/Data Plane guidelines
-- Compile and validate TypeSpec
-- Provide suggestions based on Azure SDK knowledge base
-
-**Related Tools**:
-
-- `azsdk_typespec_generate_authoring_plan`
-- `azsdk_run_typespec_validation`
-
-**Spec Reference**: [typespec-authoring.spec.md](typespec-authoring.spec.md)
-
----
-
-### Skill 3: TypeSpec Customization
-
-**Purpose**: Apply SDK-specific customizations to TypeSpec to control generated code.
-
-**Capabilities**:
-
-- Modify `client.tsp` for SDK-specific behavior
-- Add convenience methods
-- Rename operations or parameters
-- Apply language-specific customizations
-
-**Related Tools**:
-
-- `azsdk_package_customize_code`
-
-**Spec Reference**: [customizing-client-tsp.spec.md](3-customizing-client-tsp.spec.md)
-**Skill reference**: TypeSpec customization should refer `TypeSpec Authoring and Validation` skill to validate the TypeSpec
----
-
-### Skill 4: Generate SDK Locally
-
-**Purpose**: Run SDK code generation on local machine for rapid iteration and troubleshooting.
-
-**Capabilities**:
-
-- Verify environment setup for target languages
-- Generate SDK code from TypeSpec
-- Build generated code
-- Troubleshoot generation failures
-- Run package tests
-- Run package validation
-- Generate readme and samples
-
-**Related Tools**:
-
-- `azsdk_package_generate_code`
-- `azsdk_verify_setup`
-- `azsdk_package_build_code`
-- `azsdk_package_run_check`
-- `azsdk_package_run_tests`
-- `azsdk_package_generate_samples`
-
----
-
-### Skill 5: Package Release Readiness
-
-**Purpose**: Prepare SDK packages for release with proper metadata, changelog, and validation.
-
-**Capabilities**:
-
-- Update changelog entries
-- Update package metadata (version, authors, description)
-- Run package validation checks (changelog, dependencies, linting)
-- Verify package is ready for PR creation
-
-**Related Tools**:
-
-- `azsdk_package_update_changelog_content`
-- `azsdk_package_update_metadata`
-- `azsdk_package_run_check`
-
-**Spec Reference**: [6-package-updater.spec.md](6-package-updater.spec.md)
-
----
-
-### Skill 6: Prepare Release Plan
-
-**Purpose**: Create and manage release plan work items for coordinated SDK releases.
-
-**Capabilities**:
-
-- Create new release plan work items
-- Update release plan with TypeSpec details
-- Link API spec PR to release plan
-- Link SDK PRs to release plan
-- Track release status
-
-**Related Tools**:
-
-- `azsdk_create_release_plan`
-- `azsdk_get_release_plan_for_spec_pr`
-- `azsdk_update_sdk_details_in_release_plan`
-- `azsdk_update_api_spec_pull_request_in_release_plan`
-- `azsdk_link_sdk_pull_request_to_release_plan`
-- `azsdk_get_release_plan`
-
----
-
-### Skill 7: Experiment TypeSpec and SDK
-
-**Purpose**: Allow users to explore TypeSpec and SDK generation without committing to a release.
-
-**Capabilities**:
-
-- Create a temporary release plan
-- Create or update TypeSpec projects
-- Iterate quickly on TypeSpec changes
-- Generate SDKs locally for testing
-- Transition to full release workflow when ready
-
-**Uses Skills**: 2, 4, 5
-
----
-
-### Skill 8: APIView Feedback Resolution
-
-**Purpose**: Review and resolve feedback from APIView reviews.
-
-**Capabilities**:
-
-- Retrieve APIView comments for SDK packages
-- Use APIView feedback resolver mcp tool
-- Trigger SDK regeneration after TypeSpec changes
-
-**Related Tools**:
-
-- `azsdk_apiview_get_comments`
-- `azsdk_typespec_delegate_apiview_feedback`
-
----
-
-### Skill 9: PR and CI Pipeline Troubleshooting
-
-**Purpose**: Diagnose and resolve failures in SDK pull requests and CI pipelines.
-
-**Capabilities**:
-
-- Analyze pipeline build logs
-- Identify common failure patterns
-- Provide resolution guidance
-- Guide through local reproduction
-- Suggest fixes for failing checks
-
-**Related Tools**:
-
-- `azsdk_analyze_pipeline`
-
-
----
-
-## Agent Prompts
-
-### Workflow Prompts
-
-#### Starting a New Release
-
-**Prompt:**
-
-```text
-I need to create a new TypeSpec project and release SDK for my Azure service.
-```
-
-**Expected Agent Activity:**
-
-1. Ask clarifying questions (service name, target languages, release timeline)
-2. Create release plan work item
-3. Initialize TypeSpec project
-4. Guide through TypeSpec authoring
-5. Continue with full release workflow
-
----
-
-**Prompt:**
-
-```text
-I have updated my TypeSpec and need to release a new version of the SDK.
-```
-
-**Expected Agent Activity:**
-
-1. Identify TypeSpec project location
-2. Check for existing release plan or create new one
-3. Validate TypeSpec changes
-4. Update release plan with new API version
-5. Continue with SDK generation and release
-
----
-
-**Prompt:**
-
-```text
-I need to update my API and release SDK for Python, .NET, and Java.
-```
-
-**Expected Agent Activity:**
-
-1. Identify TypeSpec project
-2. Guide through TypeSpec modifications
-3. Create release plan for specified languages only
-4. Generate SDKs for Python, .NET, and Java
-5. Inform users that SDK must be generated and released for JS and Go (for management plane) and also for JS (for data plane). Management plane must release .NET, JS, Java, Python and Go packages and Dataplane must release .NET, JS, Java and Python.
-6. Create and link SDK PRs
-
----
-
-#### Resuming an Existing Workflow
-
-**Prompt:**
-
-```text
-I have a release plan (work item 12345) and the API spec PR is already merged. Help me generate the SDKs.
-```
-
-**Expected Agent Activity:**
-
-1. Retrieve release plan details using work item ID
-2. Verify API spec PR is merged
-3. Determine SDK generation method preference
-4. Generate SDKs and create PRs
-5. Link SDK PRs to release plan
-
----
-
-**Prompt:**
-
-```text
-My SDK generation pipeline failed for Python. Help me troubleshoot and fix it.
-```
-
-**Expected Agent Activity:**
-
-1. Ask for release plan ID or pipeline run URL
-2. Analyze pipeline failure
-3. Switch to local SDK generation for troubleshooting
-4. Guide through error resolution
-5. Regenerate SDK and create PR manually
-
----
-
-**Prompt:**
-
-```text
-I have generated the SDK locally but need help preparing it for release.
-```
-
-**Expected Agent Activity:**
-
-1. Identify SDK package location
-2. Run package validation checks
-3. Update changelog
-4. Update metadata
-5. Guide through PR creation
-
----
-
-#### Experimentation Scenarios
-
-**Prompt:**
-
-```text
-I need to create a new TypeSpec project and see what the generated SDK looks like.
-```
-
-**Expected Agent Activity:**
-
-1. Create temporary release plan
-2. Initialize TypeSpec project
-3. Guide through TypeSpec authoring
-4. Compile and validate TypeSpec
-5. Ask if user wants to generate SDK locally
-6. If yes, run local SDK generation
-7. User can continue iterating or proceed to release workflow
-
----
-
-**Prompt:**
-
-```text
-I want to experiment with changing my TypeSpec and checking the generated SDK.
-```
-
-**Expected Agent Activity:**
-
-1. Create or find temporary release plan
-2. Load existing TypeSpec project
-3. Guide through modifications
-4. Compile and show differences
-5. Generate SDK locally to verify changes
-6. Ask if user wants to proceed to release (convert temporary to actual release plan)
-
----
-
-**Prompt:**
-
-```text
-I've been experimenting with TypeSpec and now I'm ready to publish and release.
-```
-
-**Expected Agent Activity:**
-
-1. Convert temporary release plan to actual release plan (or create new if missing)
-2. Update package metadata and changelog
-3. Create API spec PR
-4. Continue with full release workflow (SDK generation, PRs, release)
-
----
-
-### Troubleshooting Prompts
-
-**Prompt:**
-
-```text
-The APIView has comments I need to address before my SDK PR can be approved.
-```
-
-**Expected Agent Activity:**
-
-1. Retrieve APIView comments
-2. Categorize by priority
-3. Guide through resolving each comment
-4. Apply TypeSpec customizations if needed
-5. Regenerate SDK, re-validate SDK, and update PR
-
----
-
-**Prompt:**
-
-```text
-My SDK PR CI is failing. Help me fix it.
-```
-
-**Expected Agent Activity:**
-
-1. Identify failing checks
-2. Analyze error messages
-3. Provide specific guidance for each failure
-4. Guide through local reproduction if needed
-5. Help apply fixes and update PR
+## Known Gaps
+
+| # | Gap | Stage | Current State | Desired State | Owner |
+|---|-----|-------|---------------|---------------|-------|
+| 1 | Breaking change detection reports findings but resolution is manual | 1, 2 | Tool reports breaks + suggests suppression decorator. User applies manually. | Structured findings are surfaced in a format that makes manual resolution straightforward (clear PR comment with fix instructions) | Mark / Crystal |
+| 2 | End-to-end CI chain not designed | 2 | Individual validation steps exist but chaining, failure handling, and result reporting back to PR are ad-hoc | Single pipeline with clear per-step failure reporting as PR comments | Ray & Crystal |
+| 3 | Label routing for breaking change review undefined | 2 | `@azure-tools/typespec-breaking-change` defines labels but review team routing not connected | Labels auto-route to correct review team | Ray |
+| 4 | Generation errors silently fail | 3 | spec-gen-sdk fails with no user-visible error | Structured error report (which language, which step, suggested fix) | Praveen / spec-gen-sdk |
+| 5 | No troubleshooting for generation failures | 3 | User must manually diagnose | Agent diagnoses common failures (missing deps, emitter mismatch) | azsdk-cli team |
+| 6 | SDK breaking change detection integration in progress | 4 | Being combined into SDK validation check | Fully integrated into language CI | Ray & Crystal |
+| 7 | .NET team alignment needed | All | .NET team has `azsdk_customized_code_update` integration and cross-language auto-repair design. TypeSpec linter/fixer pattern (enum-member-casing) proven for .NET, being adapted cross-language. | Shared linter rules reused at all layers; auto-repair opted-in for .NET; remaining tools documented | Sameeksha + Laurent |
+| 8 | Scattered documentation | All | Process docs in EngHub, Wiki, repo specs | Single authoritative source | Sameeksha + Praveen |
 
 ---
 
@@ -1208,50 +486,74 @@ My SDK PR CI is failing. Help me fix it.
 
 This workflow is complete when:
 
-- Users can complete full TypeSpec to SDK release workflow with agent guidance
-- Workflow correctly identifies user intent (release vs. experiment) from natural language
-- Workflow detects existing state and resumes from appropriate step
-- Release plan is automatically updated at each step
-- All sub-skills integrate seamlessly
-- Local and pipeline SDK generation paths both work correctly
-- APIView feedback can be retrieved and resolved within workflow
-- Works for all tier-1 SDK languages (.NET, Java, JavaScript, Python, Go)
-- Clear guidance provided at each decision point
-- Errors and failures are handled gracefully with troubleshooting guidance
+- [ ] Users can complete full TypeSpec → SDK release workflow with agent guidance
+- [ ] Agent detects existing state and resumes from appropriate step
+- [ ] Release plan is automatically updated at each step
+- [ ] All sub-skills integrate seamlessly without context loss between stages
+- [ ] Local and pipeline SDK generation paths both work
+- [ ] Breaking change findings from CI are surfaced clearly to the user
+- [ ] APIView feedback can be resolved within the workflow
+- [ ] Works for all tier-1 SDK languages (per language scope table)
+- [ ] Errors at every stage produce structured, actionable guidance
+- [ ] Service Tree KPI is updated on release completion
 
 ---
 
-## Further enhancements(Out of scope in the initial workflow)
-
-### Breaking change validation and guidance
-
-Agent will have a breaking change detection validation and warn users about the breaking changes. It will guide users to get breaking change approval. 
-
 ## Exceptions and Limitations
 
-### Exception 1: Releases Requiring Architect Review
+### Exception 1: Architect Board Review
 
-**Description:**
-First GA releases require architect board review, which involves human decision-making outside the automated workflow. Preview releases do not require architect approval but a service team can still request a review.
+**Description**: First GA releases require architect board review (human decision-making outside automated workflow). Preview releases do not require review but can request one.
 
-**Impact:**
-The workflow cannot fully automate the architect review process.
+**Impact**: Workflow cannot fully automate GA approval.
+
+**Status**: Being automated via GitHub Forms + Actions in `azure-sdk` repo. Service teams submit review requests via a GitHub Form (replacing email to azsdkarch-help@microsoft.com). Workflow validates URLs, applies `ready-for-review` / `needs-info` labels, and auto-closes when architects apply per-language `<lang>-api-approved` labels. Review itself remains a human decision.
 
 ### Exception 2: Breaking Change Reviews
 
-**Description:**
-SDKs with breaking changes require additional review processes that cannot be fully automated.
+**Description**: SDKs with breaking changes require API breaking change review team approval. This is a separate review process with its own team and labels.
 
-**Impact:**
-Breaking change releases may require manual intervention.
+**Impact**: Breaking change releases blocked until review team approves.
 
-### Exception 3: Package Naming Approval for New Packages
+**Workaround**: Agent helps prepare suppression decorators with clear reasons, guides review request.
 
-**Description:**
-Brand new SDK packages require package naming approval before release.
+### Exception 3: Package Naming Approval
 
-**Impact:**
-New package releases are blocked until naming is approved.
+**Description**: New SDK packages require namespace/naming approval before release.
 
-**Workaround:**
-The workflow prompts users to initiate package naming approval and tracks the status. Users can continue with SDK generation while awaiting approval.
+**Impact**: New package releases blocked until naming approved.
+
+**Status**: Being automated as a merge gate directly on spec PRs in `azure-rest-api-specs`. When a PR modifies `tspconfig.yaml`, the workflow extracts namespaces using `@azure-tools/typespec-metadata` emitter, applies `<lang>-namespace-pending` labels, and blocks merge until authorized architects apply `<lang>-namespace-approved` labels (or `namespace-approved-all` for management plane). Replaces the previous manual email-based triage. Approval resets automatically if namespace values change after approval.
+
+### Exception 4: .NET Team Tooling
+
+**Description**: The .NET team has developed tooling that shares infrastructure with azsdk-cli via `azsdk_customized_code_update` (custom-code auto-repair) and TypeSpec linter/fixer patterns. Their cross-language auto-repair design proposes shared orchestration in `eng/common/` with per-language opt-in.
+
+**Impact**: .NET is ahead on auto-repair and linter integration. Other languages can adopt the same patterns.
+
+**Next step**: Schedule alignment meeting to document remaining .NET-specific tools and confirm integration points.
+
+---
+
+## Open Questions
+
+- [ ] **Q1**: Does `@azure-tools/typespec-breaking-change` CI output provide enough structured context (DiffKind, source location, suggested suppression decorator text) for an agent to auto-resolve? Need confirmation from Mark.
+  - Options: (a) Output is already sufficient, (b) Need additional structured output format
+
+- [ ] **Q2**: How should `BreakingChangeReviewRequired` / `VersioningReviewRequired` labels route to the correct review team? Is this existing GitHub CODEOWNERS-based routing or new automation?
+  - Options: (a) CODEOWNERS, (b) Custom GitHub Action, (c) Azure DevOps integration
+
+- [ ] **Q3**: What is the .NET team's tooling stack and where are the integration points with azsdk-cli?
+  - Context: .NET team has developed independent tooling. Need alignment on shared infrastructure.
+  - **Known integration points** (from cross-language auto-repair design):
+    - `azsdk_customized_code_update` MCP tool — already supports .NET (classify → fix → regen → rebuild loop for custom-code drift)
+    - Auto SDK PR repair — shared orchestration in `eng/common/`, per-language opt-in via thin trigger workflow + `SDK_BUILD_REPAIR_ENABLED` flag
+    - Safety validation gate — shared cross-language denylist + per-language build check
+    - Copilot cloud agent — triggered by `auto-sdk-build-fix` label on failing SDK PRs
+  - **Remaining question**: Are there .NET-specific tools beyond `azsdk_customized_code_update` that should integrate into the shared workflow?
+  - **Next step**: Schedule alignment meeting with .NET team.
+
+- [ ] **Q4**: Should spec-gen-sdk generation failures be reported as PR comments, or as structured data that the agent can parse and act on?
+  - Options: (a) PR comments only, (b) Structured JSON output + PR comment summary, (c) Both
+
+- [ ] **Q5**: For Patch releases — what triggers the workflow? Is it different from Preview/GA?

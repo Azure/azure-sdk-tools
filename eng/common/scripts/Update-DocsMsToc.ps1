@@ -322,3 +322,12 @@ if (Test-Path "Function:$UpdateDocsMsTocFn") {
 
 $outputYaml = ConvertTo-Yaml $output
 Set-Content -Path $OutputLocation -Value $outputYaml
+
+# Fail-closed structural guardrail.
+# See eng/common/scripts/Validate-DocsMsToc.ps1 and incident-driven rationale
+# in the PR that introduced it.
+& "$PSScriptRoot/Validate-DocsMsToc.ps1" -TocPath $OutputLocation
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Validate-DocsMsToc reported violations; refusing to publish a corrupt ToC."
+    exit $LASTEXITCODE
+}

@@ -17,6 +17,7 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         [FieldName("Custom.ProductServiceTreeID")]
         public string ProductTreeId { get; set; } = string.Empty;
 
+        [FieldName("Custom.ProductName")]
         public string ProductName { get; set; } = string.Empty;
 
         public List<string> SpecPullRequests { get; set; } = [];
@@ -35,6 +36,12 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 
         [FieldName("Custom.APISpecDefinitionType")]
         public string SpecType {  get; set; } = string.Empty;
+
+        [FieldName("Custom.ProductType")]
+        public string ProductType { get; set; } = string.Empty;
+
+        [FieldName("Custom.ProductLifecycle")]
+        public string ProductLifecycle { get; set; } = string.Empty;
 
         public string ReleasePlanLink => ReleasePlanId > 0
             ? (IsTestReleasePlan ? $"{DashboardBaseUrlTest}{ReleasePlanId}" : $"{DashboardBaseUrl}{ReleasePlanId}")
@@ -70,9 +77,6 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 
         [FieldName("Custom.AttestationStatus")]
         public string AttestationStatus { get; set; } = string.Empty;
-
-        [FieldName("Custom.ProductLifecycle")]
-        public string ProductLifecycle { get; set; } = string.Empty;
 
         [FieldName("Custom.ReleasePlanType")]
         public string ReleasePlanType { get; set; } = string.Empty;

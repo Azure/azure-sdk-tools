@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 using System.Text;
 using System.Text.Json.Serialization;
+using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
 {
@@ -46,6 +47,8 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
         public string ApiViewValidationDetails { get; set; } = string.Empty;
         [JsonPropertyName("apiview_url")]
         public string ApiViewUrl { get; set; } = string.Empty;
+        [JsonPropertyName("pending_api_reviews")]
+        public string PendingApiReviews { get; set; } = string.Empty;
         [JsonPropertyName("is_package_name_approved")]
         public bool IsPackageNameApproved
         {
@@ -69,6 +72,16 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
         public string PlannedReleaseDate { get; set; } = string.Empty;
         [JsonPropertyName("package_readiness_details")]
         public string PackageReadinessDetails { get; set; } = string.Empty;
+        [JsonPropertyName("id")]
+        public int? Id { get; set; }
+        [JsonPropertyName("rev")]
+        public int? Rev { get; set; }
+        [JsonPropertyName("url")]
+        public string Url { get; set; } = string.Empty;
+        [JsonPropertyName("fields")]
+        public Dictionary<string, object>? Fields { get; set; }
+        [JsonPropertyName("relations")]
+        public IList<WorkItemRelation>? Relations { get; set; }
 
         protected override string Format()
         {
@@ -93,6 +106,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
             output.AppendLine($"### API View Status: {APIViewStatus}");
             output.AppendLine($"### API View Validation Details: {ApiViewValidationDetails}");
             output.AppendLine($"### API View URL: {ApiViewUrl}");
+            output.AppendLine($"### Pending API Reviews: {PendingApiReviews}");
             output.AppendLine($"### Is Package PackageName Approved: {IsPackageNameApproved}");
             output.AppendLine($"### Package PackageName Status: {PackageNameStatus}");
             output.AppendLine($"### Package PackageName Approval Details: {PackageNameApprovalDetails}");
@@ -116,6 +130,10 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
             output.AppendLine($"### Is Package Ready: {IsPackageReady}");
             output.AppendLine($"### Package Readiness Details: {PackageReadinessDetails}");
             output.AppendLine($"### Planned Release Date: {PlannedReleaseDate}");
+            if (Fields?.Count > 0)
+            {
+                output.AppendLine($"### Raw Fields Count: {Fields.Count}");
+            }
             return output.ToString();
         }
     }

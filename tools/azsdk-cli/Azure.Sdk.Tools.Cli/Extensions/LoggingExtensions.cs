@@ -40,8 +40,10 @@ public static class LoggingExtensions
         }
         else
         {
-            // In CLI mode, route ALL log levels to stderr so stdout is
+            // In CLI mode, clear the default providers (which write to stdout) and
+            // add our own provider that routes ALL log levels to stderr so stdout is
             // reserved exclusively for the command response.
+            builder.ClearProviders();
             AddCliConsoleLogger(builder, debug);
         }
     }

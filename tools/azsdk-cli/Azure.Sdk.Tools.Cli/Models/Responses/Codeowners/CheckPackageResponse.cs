@@ -9,8 +9,6 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 
 public class CheckPackageResponse : CommandResponse
 {
-    private const string CodeownersSupportUrl = "aka.ms/azsdk/codeowners";
-
     [JsonPropertyName("directory_path")]
     public string DirectoryPath { get; set; } = string.Empty;
 
@@ -50,10 +48,6 @@ public class CheckPackageResponse : CommandResponse
 
     [JsonPropertyName("issues")]
     public List<CheckPackageIssue> Issues { get; } = [];
-
-    [JsonPropertyName("support_channel")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public override string? SupportChannel => OperationStatus == Status.Failed ? CodeownersSupportUrl : null;
 
     protected override string Format()
     {

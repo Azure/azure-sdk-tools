@@ -70,7 +70,7 @@ public abstract class CommandResponse
     /// </summary>
     [JsonPropertyName("support_channel")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public virtual string? SupportChannel => OperationStatus == Status.Failed ? SupportChannelMessage : null;
+    public string? SupportChannel => OperationStatus == Status.Failed ? SupportChannelMessage : null;
     
 
     protected abstract string Format();

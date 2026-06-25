@@ -615,6 +615,33 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(updateStatus.Message, Does.Not.Contain("excluded"));
         }
 
+        [Test]
+        public async Task Test_Update_SDK_Details_Data_skips_untracked_language()
+        {
+            // A data plane TypeSpec project may also emit packages for languages the release plan
+            // does not track (e.g. Rust). The tool must not fail; it should update the supported
+            // languages and skip the untracked ones, reporting them in the message.
+            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            var project = TypeSpecProject.ParseTypeSpecConfig(testCodeFilePath);
+            project.Packages = new List<PackageInfo>
+            {
+                new() { PackageName = "Azure.Contoso", Language = SdkLanguage.DotNet },
+                new() { PackageName = "azure-contoso", Language = SdkLanguage.Python },
+                new() { PackageName = "com.azure.contoso", Language = SdkLanguage.Java },
+                new() { PackageName = "@azure/contoso", Language = SdkLanguage.JavaScript },
+                new() { PackageName = "sdk/contoso/azcontoso", Language = SdkLanguage.Go },
+                new() { PackageName = "azure_contoso", Language = SdkLanguage.Rust }
+            };
+            var tool = CreateReleasePlanToolWithMockedTypeSpec(testCodeFilePath, project);
+            var updateStatus = await tool.UpdateSDKDetailsInReleasePlan(1001, testCodeFilePath, CancellationToken.None);
+            Assert.That(updateStatus.ResponseError, Is.Null);
+            Assert.That(updateStatus.Message, Does.Contain("Updated SDK details in release plan"));
+            Assert.That(updateStatus.Message, Does.Contain("Language: Go, Package name: sdk/contoso/azcontoso"));
+            // Rust is not tracked by the data plane release plan and must be skipped, not fail.
+            Assert.That(updateStatus.Message, Does.Contain("skipped: Rust"));
+            Assert.That(updateStatus.Message, Does.Not.Contain("Language: Rust"));
+        }
+
         [TestCase("Javascript", "@invalid/package/name")]
         [TestCase("Go", "invalid/package/name")]
         [Test]

@@ -1160,11 +1160,23 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 var requiredLanguages = releasePlan.IsManagementPlane ? languagesforMgmtplane : languagesforDataplane;
                 var supportedLanguages = releasePlan.IsManagementPlane ? languagesforMgmtplane : supportedLanguagesforDataplane;
 
-                // Validate SDK language name. Use the supported set so optional languages (e.g. Go for
-                // data plane) are accepted and their package names updated without failing.
-                if (SdkInfos.Any(sdk => !supportedLanguages.Contains(sdk.Language, StringComparer.OrdinalIgnoreCase)))
+                // A TypeSpec project may emit packages for languages the release plan does not track
+                // (e.g. Rust, C++). Optional languages such as Go for data plane are part of the
+                // supported set and must be updated. Skip any other detected language instead of
+                // failing, so the tool still updates the supported languages it found.
+                var skippedLanguages = SdkInfos
+                    .Where(sdk => !supportedLanguages.Contains(sdk.Language, StringComparer.OrdinalIgnoreCase))
+                    .Select(sdk => sdk.Language)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                SdkInfos = SdkInfos
+                    .Where(sdk => supportedLanguages.Contains(sdk.Language, StringComparer.OrdinalIgnoreCase))
+                    .ToList();
+
+                if (SdkInfos.Count == 0)
                 {
-                    return new DefaultCommandResponse { ResponseError = $"Unsupported SDK language found. Supported languages are: {string.Join(", ", supportedLanguages)}" };
+                    return new DefaultCommandResponse { ResponseError = $"No supported SDK languages found in the TypeSpec project metadata. Supported languages are: {string.Join(", ", supportedLanguages)}" };
                 }
 
                 // Validate SDK Package names
@@ -1200,6 +1212,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     foreach (var sdk in SdkInfos)
                     {
                         sb.AppendLine($"Language: {sdk.Language}, Package name: {sdk.PackageName}");
+                    }
+                    if (skippedLanguages.Any())
+                    {
+                        sb.AppendLine($"Note: The following detected languages are not tracked in the release plan and were skipped: {string.Join(", ", skippedLanguages)}");
                     }
                 }
 

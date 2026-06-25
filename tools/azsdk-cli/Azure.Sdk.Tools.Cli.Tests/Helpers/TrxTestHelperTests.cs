@@ -148,27 +148,27 @@ public class TrxTestHelperTests
     }
 
     [Test]
-    public void CanParse_TrxExtension()
+    public async Task CanParse_TrxExtension()
     {
         var path = WriteTestFile("test-results.trx", TrxWithTwoFailures);
-        Assert.That(_helper.CanParse(path), Is.True);
+        Assert.That(await _helper.CanParseAsync(path), Is.True);
     }
 
     [Test]
-    public void CanParse_TestRunRootElement()
+    public async Task CanParse_TestRunRootElement()
     {
         var path = WriteTestFile("test-results.xml", TrxWithTwoFailures);
-        Assert.That(_helper.CanParse(path), Is.True);
+        Assert.That(await _helper.CanParseAsync(path), Is.True);
     }
 
     [Test]
-    public void CanParse_ReturnsFalse_ForJUnitContent()
+    public async Task CanParse_ReturnsFalse_ForJUnitContent()
     {
         var xml = """
             <?xml version="1.0" encoding="UTF-8"?>
             <testsuites><testsuite name="test"><testcase name="t1"/></testsuite></testsuites>
             """;
         var path = WriteTestFile("results.xml", xml);
-        Assert.That(_helper.CanParse(path), Is.False);
+        Assert.That(await _helper.CanParseAsync(path), Is.False);
     }
 }

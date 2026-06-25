@@ -13,14 +13,14 @@ public class TrxTestHelper : ITestHelper
 {
     public string FormatName => "TRX";
 
-    public bool CanParse(string filePath)
+    public async Task<bool> CanParseAsync(string filePath, CancellationToken ct = default)
     {
         if (Path.GetExtension(filePath).Equals(".trx", StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }
 
-        return HasRootElement(filePath, "TestRun");
+        return await HasRootElementAsync(filePath, "TestRun", ct);
     }
 
     public async Task<FailedTestRunListResponse> GetFailedTestCases(string filePath, string filterTitle = "", CancellationToken ct = default)
@@ -99,18 +99,23 @@ public class TrxTestHelper : ITestHelper
         return failedTestRuns;
     }
 
-    private static bool HasRootElement(string filePath, string elementName)
+    private static async Task<bool> HasRootElementAsync(string filePath, string elementName, CancellationToken ct = default)
     {
         try
         {
-            using var reader = XmlReader.Create(filePath, new XmlReaderSettings { DtdProcessing = DtdProcessing.Ignore });
-            while (reader.Read())
+            using var reader = XmlSafeLoader.CreateReader(filePath);
+            while (await reader.ReadAsync())
             {
+                ct.ThrowIfCancellationRequested();
                 if (reader.NodeType == XmlNodeType.Element)
                 {
                     return reader.LocalName == elementName;
                 }
             }
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
         }
         catch { }
         return false;

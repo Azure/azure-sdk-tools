@@ -35,7 +35,7 @@ public class TestResultParserResolverTests
     }
 
     [Test]
-    public void Resolve_TrxFile_ReturnsTrxParser()
+    public async Task Resolve_TrxFile_ReturnsTrxParser()
     {
         var xml = """
             <?xml version="1.0" encoding="UTF-8"?>
@@ -44,42 +44,42 @@ public class TestResultParserResolverTests
             </TestRun>
             """;
         var path = WriteTestFile("results.trx", xml);
-        var parser = _resolver.Resolve(path);
+        var parser = await _resolver.ResolveAsync(path);
 
         Assert.That(parser, Is.Not.Null);
         Assert.That(parser!.FormatName, Is.EqualTo("TRX"));
     }
 
     [Test]
-    public void Resolve_JUnitFile_ReturnsJUnitParser()
+    public async Task Resolve_JUnitFile_ReturnsJUnitParser()
     {
         var xml = """
             <?xml version="1.0" encoding="UTF-8"?>
             <testsuites><testsuite name="tests" tests="1"><testcase name="t1"/></testsuite></testsuites>
             """;
         var path = WriteTestFile("results.xml", xml);
-        var parser = _resolver.Resolve(path);
+        var parser = await _resolver.ResolveAsync(path);
 
         Assert.That(parser, Is.Not.Null);
         Assert.That(parser!.FormatName, Is.EqualTo("JUnit XML"));
     }
 
     [Test]
-    public void Resolve_SingleTestsuite_ReturnsJUnitParser()
+    public async Task Resolve_SingleTestsuite_ReturnsJUnitParser()
     {
         var xml = """
             <?xml version="1.0" encoding="UTF-8"?>
             <testsuite name="tests" tests="1"><testcase name="t1"/></testsuite>
             """;
         var path = WriteTestFile("results.xml", xml);
-        var parser = _resolver.Resolve(path);
+        var parser = await _resolver.ResolveAsync(path);
 
         Assert.That(parser, Is.Not.Null);
         Assert.That(parser!.FormatName, Is.EqualTo("JUnit XML"));
     }
 
     [Test]
-    public void Resolve_TrxContentWithXmlExtension_ReturnsTrxParser()
+    public async Task Resolve_TrxContentWithXmlExtension_ReturnsTrxParser()
     {
         var xml = """
             <?xml version="1.0" encoding="UTF-8"?>
@@ -88,7 +88,7 @@ public class TestResultParserResolverTests
             </TestRun>
             """;
         var path = WriteTestFile("results.xml", xml);
-        var parser = _resolver.Resolve(path);
+        var parser = await _resolver.ResolveAsync(path);
 
         Assert.That(parser, Is.Not.Null);
         Assert.That(parser!.FormatName, Is.EqualTo("TRX"));
@@ -103,7 +103,7 @@ public class TestResultParserResolverTests
             """;
         var path = WriteTestFile("results.xml", xml);
 
-        Assert.Throws<InvalidOperationException>(() => _resolver.Resolve(path));
+        Assert.ThrowsAsync<InvalidOperationException>(() => _resolver.ResolveAsync(path));
     }
 
     [Test]
@@ -111,25 +111,25 @@ public class TestResultParserResolverTests
     {
         var path = WriteTestFile("results.txt", "This is not XML");
 
-        Assert.Throws<InvalidOperationException>(() => _resolver.Resolve(path));
+        Assert.ThrowsAsync<InvalidOperationException>(() => _resolver.ResolveAsync(path));
     }
 
     [Test]
     public void Resolve_NullPath_ThrowsArgumentNullException()
     {
-        Assert.Throws<ArgumentNullException>(() => _resolver.Resolve(null!));
+        Assert.ThrowsAsync<ArgumentNullException>(() => _resolver.ResolveAsync(null!));
     }
 
     [Test]
     public void Resolve_EmptyPath_ThrowsArgumentException()
     {
-        Assert.Throws<ArgumentException>(() => _resolver.Resolve(""));
+        Assert.ThrowsAsync<ArgumentException>(() => _resolver.ResolveAsync(""));
     }
 
     [Test]
     public void Resolve_MissingFile_ThrowsFileNotFound()
     {
-        Assert.Throws<FileNotFoundException>(() => _resolver.Resolve("/nonexistent/file.xml"));
+        Assert.ThrowsAsync<FileNotFoundException>(() => _resolver.ResolveAsync("/nonexistent/file.xml"));
     }
 
     [Test]

@@ -465,7 +465,7 @@ public class PipelineAnalysisTool(
                 {
                     try
                     {
-                        var parser = parserResolver.Resolve(file);
+                        var parser = await parserResolver.ResolveAsync(file, ct);
                         var failed = await parser.GetFailedTestCases(file, ct: ct);
                         failedTests.Items.AddRange(failed.Items);
                     }

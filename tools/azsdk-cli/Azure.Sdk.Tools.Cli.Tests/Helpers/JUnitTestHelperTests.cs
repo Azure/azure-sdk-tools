@@ -287,29 +287,29 @@ public class JUnitTestHelperTests
     }
 
     [Test]
-    public void CanParse_JUnitTestsuites()
+    public async Task CanParse_JUnitTestsuites()
     {
         var xml = """
             <?xml version="1.0" encoding="UTF-8"?>
             <testsuites><testsuite name="test"><testcase name="t1"/></testsuite></testsuites>
             """;
         var path = WriteTestFile("results.xml", xml);
-        Assert.That(_helper.CanParse(path), Is.True);
+        Assert.That(await _helper.CanParseAsync(path), Is.True);
     }
 
     [Test]
-    public void CanParse_JUnitSingleTestsuite()
+    public async Task CanParse_JUnitSingleTestsuite()
     {
         var xml = """
             <?xml version="1.0" encoding="UTF-8"?>
             <testsuite name="test"><testcase name="t1"/></testsuite>
             """;
         var path = WriteTestFile("results.xml", xml);
-        Assert.That(_helper.CanParse(path), Is.True);
+        Assert.That(await _helper.CanParseAsync(path), Is.True);
     }
 
     [Test]
-    public void CanParse_ReturnsFalse_ForTrxContent()
+    public async Task CanParse_ReturnsFalse_ForTrxContent()
     {
         var xml = """
             <?xml version="1.0" encoding="UTF-8"?>
@@ -318,7 +318,7 @@ public class JUnitTestHelperTests
             </TestRun>
             """;
         var path = WriteTestFile("results.xml", xml);
-        Assert.That(_helper.CanParse(path), Is.False);
+        Assert.That(await _helper.CanParseAsync(path), Is.False);
     }
 
     [Test]

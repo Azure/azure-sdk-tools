@@ -14,18 +14,23 @@ public class JUnitTestHelper : ITestHelper
 {
     public string FormatName => "JUnit XML";
 
-    public bool CanParse(string filePath)
+    public async Task<bool> CanParseAsync(string filePath, CancellationToken ct = default)
     {
         try
         {
-            using var reader = XmlReader.Create(filePath, new XmlReaderSettings { DtdProcessing = DtdProcessing.Ignore });
-            while (reader.Read())
+            using var reader = XmlSafeLoader.CreateReader(filePath);
+            while (await reader.ReadAsync())
             {
+                ct.ThrowIfCancellationRequested();
                 if (reader.NodeType == XmlNodeType.Element)
                 {
                     return reader.LocalName is "testsuites" or "testsuite";
                 }
             }
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
         }
         catch { }
         return false;

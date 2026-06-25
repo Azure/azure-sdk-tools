@@ -14,7 +14,7 @@ public interface ITestHelper
     /// <summary>
     /// Returns true if this parser can handle the given file.
     /// </summary>
-    bool CanParse(string filePath);
+    Task<bool> CanParseAsync(string filePath, CancellationToken ct = default);
 
     Task<FailedTestRunListResponse> GetFailedTestCases(string filePath, string filterTitle = "", CancellationToken ct = default);
     Task<FailedTestRunResponse> GetFailedTestCaseData(string filePath, string testCaseTitle, CancellationToken ct);

@@ -10,7 +10,7 @@ public interface ITestResultParserResolver
     /// does not exist, or <see cref="InvalidOperationException"/> if no registered parser recognizes
     /// the format. Throws <see cref="ArgumentException"/> for a null/empty path.
     /// </summary>
-    ITestHelper Resolve(string filePath);
+    Task<ITestHelper> ResolveAsync(string filePath, CancellationToken ct = default);
 
     /// <summary>
     /// The list of format names this resolver supports (for error messages).
@@ -25,7 +25,7 @@ public class TestResultParserResolver(IEnumerable<ITestHelper> parsers) : ITestR
     public IReadOnlyList<string> SupportedFormats =>
         _parsers.Select(p => p.FormatName).ToList().AsReadOnly();
 
-    public ITestHelper Resolve(string filePath)
+    public async Task<ITestHelper> ResolveAsync(string filePath, CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(filePath, nameof(filePath));
 
@@ -34,9 +34,16 @@ public class TestResultParserResolver(IEnumerable<ITestHelper> parsers) : ITestR
             throw new FileNotFoundException($"Test result file not found: {filePath}", filePath);
         }
 
-        var matches = _parsers.Where(p => p.CanParse(filePath)).ToArray();
+        var matches = new List<ITestHelper>();
+        foreach (var parser in _parsers)
+        {
+            if (await parser.CanParseAsync(filePath, ct))
+            {
+                matches.Add(parser);
+            }
+        }
 
-        if (matches.Length > 1)
+        if (matches.Count > 1)
         {
             throw new InvalidOperationException(
                 $"Multiple parsers recognize the test result format for: {filePath}. " +

@@ -74,7 +74,7 @@ public class TestAnalysisTool(ITestResultParserResolver parserResolver, ILogger<
     {
         try
         {
-            var parser = parserResolver.Resolve(failedTestRunsPath);
+            var parser = await parserResolver.ResolveAsync(failedTestRunsPath, ct);
             return await parser.GetFailedTestCases(failedTestRunsPath, ct: ct);
         }
         catch (Exception ex)
@@ -89,7 +89,7 @@ public class TestAnalysisTool(ITestResultParserResolver parserResolver, ILogger<
     {
         try
         {
-            var parser = parserResolver.Resolve(failedTestRunsPath);
+            var parser = await parserResolver.ResolveAsync(failedTestRunsPath, ct);
             var failedTestRuns = await parser.GetFailedTestResults(failedTestRunsPath, ct);
             var testRun = failedTestRuns.Items.FirstOrDefault(run => run.TestCaseTitle.Equals(testCaseTitle, StringComparison.OrdinalIgnoreCase));
             if (testRun == null)
@@ -113,7 +113,7 @@ public class TestAnalysisTool(ITestResultParserResolver parserResolver, ILogger<
     {
         try
         {
-            var parser = parserResolver.Resolve(failedTestRunsPath);
+            var parser = await parserResolver.ResolveAsync(failedTestRunsPath, ct);
             return await parser.GetFailedTestResults(failedTestRunsPath, ct);
         }
         catch (Exception ex)

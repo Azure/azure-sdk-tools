@@ -67,9 +67,9 @@ variables:
   # Managed-pool image selection: defines LINUXPOOL (azsdk-pool) + LINUXVMIMAGE that
   # the archetype's jobs reference. Repo-local; each repo supplies its own.
   - template: /eng/pipelines/templates/variables/image.yml
-  # The group is linked here in the repo-local entrypoint (not in the synced
-  # templates, which stay portable — D5). It supplies azuresdk-copilot-github-pat.
-  - group: 'AzSDK_Eval_Variable_group'
+  # The AzSDK_Eval_Variable_group (supplies azuresdk-copilot-github-pat) is linked
+  # to this pipeline via the ADO definition, not named in YAML, so a PR can't change
+  # which secret group is consumed.
 
 extends:
   template: /eng/common/pipelines/templates/stages/archetype-vally-eval.yml

@@ -26,7 +26,8 @@ extends:
       - stage: SkillEval
         displayName: 'Skill Eval'
         variables:
-          - group: 'AzSDK_Eval_Variable_group'
+          # AzSDK_Eval_Variable_group (azuresdk-copilot-github-pat) is linked via the
+          # ADO pipeline definition, not named in YAML.
           - template: /eng/pipelines/templates/variables/globals.yml
           - template: /eng/pipelines/templates/variables/image.yml
         pool:

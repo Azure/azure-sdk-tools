@@ -32,8 +32,8 @@ parameters:
 variables:
   # Managed-pool image selection (LINUXPOOL/LINUXVMIMAGE). Repo-local.
   - template: /eng/pipelines/templates/variables/image.yml
-  # Linked only here (not in the synced templates — D5). Supplies azuresdk-copilot-github-pat.
-  - group: 'AzSDK_Eval_Variable_group'
+  # AzSDK_Eval_Variable_group (azuresdk-copilot-github-pat) is linked via the ADO
+  # pipeline definition, not named in YAML.
 
 extends:
   template: /eng/common/pipelines/templates/stages/archetype-vally-eval.yml

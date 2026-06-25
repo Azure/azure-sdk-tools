@@ -158,7 +158,6 @@ public class TrxTestHelperTests
     [Test]
     public void CanParse_TestRunRootElement()
     {
-        // File without .trx extension but with TRX content
         var path = WriteTestFile("test-results.xml", TrxWithTwoFailures);
         Assert.That(_helper.CanParse(path), Is.True);
     }

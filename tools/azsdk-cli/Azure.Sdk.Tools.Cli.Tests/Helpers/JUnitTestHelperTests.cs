@@ -36,7 +36,6 @@ public class JUnitTestHelperTests
     [Test]
     public async Task ParsesJavaTestResults_AssertionFailure()
     {
-        // Real pattern: Java retry logic assertion failure (build 6453847)
         var xml = """
             <?xml version="1.0" encoding="UTF-8"?>
             <testsuite name="com.azure.compute.batch.TaskManagerTests" tests="5" failures="1" errors="0" skipped="0" time="3.2">
@@ -65,7 +64,6 @@ public class JUnitTestHelperTests
     [Test]
     public async Task ParsesJavaTestResults_MissingRecording()
     {
-        // Real pattern: Test proxy can't find recording file (build 6449182)
         var xml = """
             <?xml version="1.0" encoding="UTF-8"?>
             <testsuite name="com.azure.storage.blob.BlobApiTests" tests="3" failures="1" errors="0" time="2.1">
@@ -93,7 +91,6 @@ public class JUnitTestHelperTests
     [Test]
     public async Task ParsesPythonTestResults_AssertionError()
     {
-        // Real pattern: Python assertion error / code bug (build 6444663)
         var xml = """
             <?xml version="1.0" encoding="utf-8"?>
             <testsuites>
@@ -126,7 +123,6 @@ public class JUnitTestHelperTests
     [Test]
     public async Task ParsesJsTestResults_EncodingBug()
     {
-        // Real pattern: Base64 encoding failure in browser test (build 6454089)
         var xml = """
             <?xml version="1.0" encoding="UTF-8"?>
             <testsuites name="vitest tests" tests="12" failures="2" errors="0" time="8.2">
@@ -163,7 +159,6 @@ public class JUnitTestHelperTests
     [Test]
     public async Task ParsesGoTestResults_GoJunitReport()
     {
-        // Go go-junit-report output format (expected format, no real pipeline data yet)
         var xml = """
             <?xml version="1.0" encoding="UTF-8"?>
             <testsuites>
@@ -192,7 +187,6 @@ public class JUnitTestHelperTests
     [Test]
     public async Task ParsesErrorElements()
     {
-        // Some frameworks use <error> instead of <failure> for unexpected exceptions
         var xml = """
             <?xml version="1.0" encoding="UTF-8"?>
             <testsuite name="ErrorTests" tests="1" errors="1">
@@ -264,7 +258,6 @@ public class JUnitTestHelperTests
     [Test]
     public async Task ParsesMultipleTestSuites()
     {
-        // Real pattern: vitest outputs multiple testsuites in one file
         var xml = """
             <?xml version="1.0" encoding="UTF-8"?>
             <testsuites name="vitest tests" tests="6" failures="2" errors="0">

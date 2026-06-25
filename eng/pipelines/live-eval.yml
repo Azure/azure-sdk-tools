@@ -40,7 +40,7 @@ extends:
   parameters:
     shardBy: ${{ parameters.shardBy }}
     # vallyRoot defaults to the Vally project; the live evals + .vally.yaml live there.
-    patterns:
+    evalGlobs:
       - 'evals/workflow-scenarios/live/*.eval.yaml'
     # Live tier needs only the real cli MCP.
     mcpBuilds:

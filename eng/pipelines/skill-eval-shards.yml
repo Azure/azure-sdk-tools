@@ -53,12 +53,11 @@ extends:
   template: /eng/common/pipelines/templates/stages/archetype-vally-eval.yml
   parameters:
     shardBy: ${{ parameters.shardBy }}
-    # The skill evals + their .vally.yaml live under .github/skills.
+    # The skill evals + their .vally.yaml live under .github/skills; shards run from there.
     vallyRoot: .github/skills
-    evalRoot: $(Build.SourcesDirectory)/.github/skills
     # Each skill keeps its evals at <skill>/evals/*.eval.yaml. The single-level glob
     # deliberately excludes azure-typespec-author/evaluate/ (its own benchmark pipeline).
-    patterns:
+    evalGlobs:
       - '*/evals/*.eval.yaml'
     # Skill evals route to either the real cli MCP or the mock, so build both.
     mcpBuilds:

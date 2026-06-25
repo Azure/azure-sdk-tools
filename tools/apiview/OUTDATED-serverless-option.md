@@ -1,3 +1,7 @@
+
+> [!WARNING]
+> This proposal is not the latest API review workflow proposal. See [proposal-api-review-hub-webapp.md](proposal-api-review-hub-webapp.md) for the current API Review Hub proposal.
+
 # Proposal: Phase 1 — Migrate API Reviews to GitHub
 
 ## Objective

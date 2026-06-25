@@ -29,7 +29,7 @@ def _make_service() -> IntentionService:
 
 @pytest.mark.asyncio
 async def test_record_should_reply_persists_decision() -> None:
-    """When message_id and conversation metadata are present, should_reply is recorded."""
+    """When message id and conversation metadata are present, should_reply is recorded."""
     service = _make_service()
     recorded: dict[str, object] = {}
 
@@ -51,8 +51,7 @@ async def test_record_should_reply_persists_decision() -> None:
     service._conversation_service = _ConversationServiceStub()
 
     req = IntentionRequest(
-        message=Message(role=Role.User, content="Why does my build fail?"),
-        message_id="msg-1",
+        message=Message(id="msg-1", role=Role.User, content="Why does my build fail?"),
         conversation_id="conv-1",
         conversation_type=ConversationType.teams_channel,
     )
@@ -70,7 +69,7 @@ async def test_record_should_reply_persists_decision() -> None:
 
 @pytest.mark.asyncio
 async def test_record_should_reply_skipped_without_message_id() -> None:
-    """Without a message_id the recording is skipped (no record call)."""
+    """Without a message id the recording is skipped (no record call)."""
     service = _make_service()
     called = False
 
@@ -105,8 +104,7 @@ async def test_record_should_reply_swallows_errors() -> None:
     service._conversation_service = _ConversationServiceStub()
 
     req = IntentionRequest(
-        message=Message(role=Role.User, content="Question?"),
-        message_id="msg-1",
+        message=Message(id="msg-1", role=Role.User, content="Question?"),
         conversation_id="conv-1",
         conversation_type=ConversationType.teams_channel,
     )

@@ -53,7 +53,7 @@ class IntentionService:
 
         Applies rule-based pre-filters first, then falls back to LLM
         classification for ambiguous cases. The resulting ``should_respond``
-        flag is recorded on the saved message record (when a message_id is
+        flag is recorded on the saved message record (when a message id is
         provided) so the bot answering rate can be computed later.
         """
         response = await self._classify(req)
@@ -67,11 +67,11 @@ class IntentionService:
 
         Best-effort: recording must never fail the intention response.
         """
-        if not (req.message_id and req.conversation_id and req.conversation_type):
+        if not (req.message.id and req.conversation_id and req.conversation_type):
             return
         try:
             await self._conversation_service.record_should_reply(
-                req.message_id,
+                req.message.id,
                 req.conversation_id,
                 req.conversation_type,
                 response.should_respond,
@@ -79,7 +79,7 @@ class IntentionService:
         except Exception:
             logger.warning(
                 "Failed to record should_reply for message=%s",
-                req.message_id,
+                req.message.id,
                 exc_info=True,
             )
 

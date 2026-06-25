@@ -59,6 +59,9 @@ union ConversationType {
 
 @doc("A message in the conversation")
 model Message {
+  @doc("Optional message identifier")
+  id?: string;
+
   @doc("The role of the message sender")
   role: Role;
 
@@ -234,9 +237,6 @@ model SaveConversationMessageResponse {
 model IntentionRequest {
   @doc("The message to classify")
   message: Message;
-
-  @doc("Identifier of the message being classified (from Teams)")
-  message_id?: string;
 
   @doc("Existing conversation identifier")
   conversation_id?: string;

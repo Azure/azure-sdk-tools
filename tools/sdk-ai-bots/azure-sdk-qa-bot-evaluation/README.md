@@ -37,6 +37,32 @@ After the PR owner has completed the triage and documented the results in the PR
 
 ### Locally
 
+#### Local Setup
+
+1. **Environment variables**: Create a `.env` file in the evaluation directory with the required variables listed in [env-variables](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/env-variables). Key variables include:
+   - `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT`, `AZURE_AI_PROJECT_ENDPOINT` — for AI evaluators
+   - `STORAGE_BLOB_ACCOUNT`, `BOT_CONFIG_CONTAINER`, `BOT_CONFIG_CHANNEL_BLOB` — for bot configuration
+
+2. **Azure permissions**: Sign in with `az login` and select the correct subscription. Your identity needs:
+   - **App Configuration Data Reader** on the `azuresdkqabot-dev-config` App Configuration store
+   - **Key Vault Secrets User** on the `azuresdkqabot-dev-kv` Key Vault
+   - **Storage Blob Data Reader** on the `azuresdkqabotdevstorage` storage account
+
+3. **Start the bot backend**: The evaluation calls the bot API on `localhost:8088`. Build and run the Go backend before running evaluations:
+   ```bash
+   cd ../azure-sdk-qa-bot-backend
+   export AZURE_APPCONFIG_ENDPOINT="https://azuresdkqabot-dev-config.azconfig.io"
+   go build -o qa-bot-service .
+   ./qa-bot-service
+   ```
+
+4. **Install Python dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+#### Running Tests
+
 Running evaluations locally will execute evaluations on test files.
 
 The main evaluation script is `evals_run.py`. Here are common ways to use it:

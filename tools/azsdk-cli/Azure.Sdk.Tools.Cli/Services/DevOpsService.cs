@@ -110,9 +110,11 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string apiSpecBranchRef = "main", CancellationToken ct = default);
         public Task<Dictionary<string, List<string>>> GetPipelineLlmArtifacts(string project, int buildId, CancellationToken ct);
         public Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, CancellationToken ct);
+        public Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, Dictionary<string, string> multilineFieldFormats, CancellationToken ct);
         public Task<List<GitHubLableWorkItem>> GetGitHubLableWorkItemsAsync(CancellationToken ct);
         public Task<GitHubLableWorkItem> CreateGitHubLableWorkItemAsync(string label, CancellationToken ct);
         public Task<ProductInfo?> GetProductInfoByTypeSpecProjectPathAsync(string typeSpecProjectPath, CancellationToken ct);
+        public Task<ProductInfo?> GetProductInfoFromTriageWorkItemAsync(string productServiceTreeId, CancellationToken ct);
         public Task<ReleasePlanWorkItem?> GetReleasePlanByTypeSpecProjectPathAsync(string typeSpecProjectPath, bool includeFinishedPlans = false, ApiReleaseType apiReleaseType = ApiReleaseType.Unknown, CancellationToken ct = default);
         Task<List<WorkItem>> FetchWorkItemsPagedAsync(string query, int top = 100000, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All, CancellationToken ct = default);
         Task<List<WorkItem>> QueryWorkItemsByTypeAndFieldAsync(string workItemType, string fieldName, string fieldValue, WorkItemExpand expand = WorkItemExpand.Relations, CancellationToken ct = default);
@@ -330,6 +332,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                 ChangedDate = workItem.Fields.TryGetValue("System.ChangedDate", out value) && value is DateTime changedDate ? changedDate : default,
                 ServiceTreeId = workItem.Fields.TryGetValue("Custom.ServiceTreeID", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 ProductTreeId = workItem.Fields.TryGetValue("Custom.ProductServiceTreeID", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                ProductName = workItem.Fields.TryGetValue("Custom.ProductName", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                ProductType = workItem.Fields.TryGetValue("Custom.ProductType", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                ProductLifecycle = workItem.Fields.TryGetValue("Custom.ProductLifecycle", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 SDKReleaseMonth = workItem.Fields.TryGetValue("Custom.SDKReleasemonth", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 IsManagementPlane = workItem.Fields.TryGetValue("Custom.MgmtScope", out value) ? value?.ToString() == "Yes" : false,
                 IsDataPlane = workItem.Fields.TryGetValue("Custom.DataScope", out value) ? value?.ToString() == "Yes" : false,
@@ -1386,6 +1391,11 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
             PackageWorkitemResponse packageModel = new()
             {
+                Id = workItem.Id,
+                Rev = workItem.Rev,
+                Url = workItem.Url,
+                Fields = workItem.Fields?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+                Relations = workItem.Relations,
                 PackageName = GetWorkItemValue(workItem, "Custom.Package"),
                 Version = GetWorkItemValue(workItem, "Custom.PackageVersion"),
                 WorkItemId = workItem.Id ?? 0,
@@ -1397,8 +1407,10 @@ namespace Azure.Sdk.Tools.Cli.Services
                 ChangeLogValidationDetails = GetWorkItemValue(workItem, "Custom.ChangeLogValidationDetails"),
                 APIViewStatus = GetWorkItemValue(workItem, "Custom.APIReviewStatus"),
                 ApiViewValidationDetails = GetWorkItemValue(workItem, "Custom.APIReviewStatusDetails"),
+                PendingApiReviews = GetWorkItemValue(workItem, "Custom.PendingAPIReviews"),
                 PackageNameStatus = GetWorkItemValue(workItem, "Custom.PackageNameApprovalStatus"),
                 PackageNameApprovalDetails = GetWorkItemValue(workItem, "Custom.PackageNameApprovalDetails"),
+                TypeSpecProject = GetWorkItemValue(workItem, "Custom.SpecProjectPath"),
                 PipelineDefinitionUrl = GetWorkItemValue(workItem, "Custom.PipelineDefinition"),
                 LatestPipelineRun = GetWorkItemValue(workItem, "Custom.LatestPipelineRun")
             };
@@ -1572,6 +1584,11 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         public async Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, CancellationToken ct)
         {
+            return await UpdateWorkItemAsync(workItemId, fields, new Dictionary<string, string>(), ct);
+        }
+
+        public async Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, Dictionary<string, string> multilineFieldFormats, CancellationToken ct)
+        {
             var jsonLinkDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
             foreach (var item in fields)
             {
@@ -1585,6 +1602,23 @@ namespace Azure.Sdk.Tools.Cli.Services
                     }
                 );
             }
+
+            if (multilineFieldFormats.Count > 0)
+            {
+                foreach (var item in multilineFieldFormats)
+                {
+                    logger.LogDebug("Updating multiline field format {field} to {format}", item.Key, item.Value);
+                    jsonLinkDocument.Add(
+                        new JsonPatchOperation
+                        {
+                            Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                            Path = $"/multilineFieldsFormat/{item.Key}",
+                            Value = item.Value
+                        }
+                    );
+                }
+            }
+
             var workItem = await connection.GetWorkItemClient(ct).UpdateWorkItemAsync(jsonLinkDocument, workItemId, cancellationToken: ct);
             logger.LogDebug("Updated work item {workItemId}", workItem.Id);
             return workItem;
@@ -1846,7 +1880,10 @@ namespace Azure.Sdk.Tools.Cli.Services
                 var productInfo = new ProductInfo
                 {
                     ServiceId = serviceId,
-                    ProductServiceTreeId = productId
+                    ProductServiceTreeId = productId,
+                    ProductName = releasePlanWorkItem.Fields.TryGetValue("Custom.ProductName", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                    ProductType = releasePlanWorkItem.Fields.TryGetValue("Custom.ProductType", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                    ProductLifecycle = releasePlanWorkItem.Fields.TryGetValue("Custom.ProductLifecycle", out value) ? value?.ToString() ?? string.Empty : string.Empty
                 };
 
                 logger.LogInformation("Successfully retrieved product info");
@@ -1859,10 +1896,54 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
+        public async Task<ProductInfo?> GetProductInfoFromTriageWorkItemAsync(string productServiceTreeId, CancellationToken ct)
+        {
+            if (string.IsNullOrEmpty(productServiceTreeId))
+            {
+                return null;
+            }
+
+            try
+            {
+                logger.LogInformation("Searching for triage work item with product service tree ID: {productServiceTreeId}", productServiceTreeId);
+                var triageWorkItems = await QueryWorkItemsByTypeAndFieldAsync("Triage", "Custom.ProductServiceTreeID", productServiceTreeId, ct: ct);
+                if (triageWorkItems == null || triageWorkItems.Count == 0)
+                {
+                    logger.LogInformation("No triage work item found for product service tree ID: {productServiceTreeId}", productServiceTreeId);
+                    return null;
+                }
+
+                if (triageWorkItems.Count > 1)
+                {
+                    logger.LogWarning("Multiple triage work items ({count}) found for product service tree ID: {productServiceTreeId}. Using the first one.", triageWorkItems.Count, productServiceTreeId);
+                }
+
+                var triageWorkItem = triageWorkItems[0];
+                var productInfo = new ProductInfo
+                {
+                    WorkItemId = triageWorkItem.Id ?? 0,
+                    ProductServiceTreeId = productServiceTreeId,
+                    ProductName = triageWorkItem.Fields.TryGetValue("Custom.ProductName", out Object? value) ? value?.ToString() ?? string.Empty : string.Empty,
+                    ProductType = triageWorkItem.Fields.TryGetValue("Custom.ProductType", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                    ProductLifecycle = triageWorkItem.Fields.TryGetValue("Custom.ProductLifecycle", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                    Title = triageWorkItem.Fields.TryGetValue("System.Title", out value) ? value?.ToString() ?? string.Empty : string.Empty
+                };
+
+                logger.LogInformation("Found triage work item {workItemId} for product service tree ID: {productServiceTreeId}", productInfo.WorkItemId, productServiceTreeId);
+                return productInfo;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to get triage work item for product service tree ID: {productServiceTreeId}", productServiceTreeId);
+                throw new Exception($"Failed to get triage work item for product service tree ID '{productServiceTreeId}'. Error: {ex.Message}", ex);
+            }
+        }
+
         public async Task<List<WorkItem>> QueryWorkItemsByTypeAndFieldAsync(string workItemType, string fieldName, string fieldValue, WorkItemExpand expand = WorkItemExpand.Relations, CancellationToken ct = default)
         {
             var escapedValue = fieldValue.Replace("'", "''");
             var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [System.WorkItemType] = '{workItemType}' AND [{fieldName}] = '{escapedValue}'";
+            query += $" AND [System.Tags] {(IsAgentTesting ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
             return await FetchWorkItemsPagedAsync(query, expand: expand, ct: ct);
         }
 

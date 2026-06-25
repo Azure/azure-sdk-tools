@@ -23,6 +23,7 @@ public class AnalyzePipelineHandler : IMockToolHandler
             [
                 new LogAnalysisResponse
                 {
+                    PipelineUrl = $"https://dev.azure.com/azure-sdk/internal/_build/results?buildId={buildId}",
                     Errors =
                     [
                         new LogEntry

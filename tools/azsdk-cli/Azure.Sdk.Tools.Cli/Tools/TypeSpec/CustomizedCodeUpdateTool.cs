@@ -82,9 +82,12 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
     private readonly Option<string> typespecProjectPath = new("--tsp-project-path")
     {
-        Description = "Absolute path to the local TypeSpec project directory (containing main.tsp/client.tsp) where customizations will be applied.",
-        Arity = ArgumentArity.ExactlyOne,
-        Required = true
+        Description = "Absolute path to the local TypeSpec project directory (containing main.tsp/client.tsp) where " +
+                      "customizations will be applied. Required when the edit scope includes spec inputs (SpecInputs/All). " +
+                      "Optional for custom-code-only repair (editScope CustomCode): when omitted, regeneration resolves the " +
+                      "spec from the pinned commit in the package's tsp-location.yaml, so no local spec checkout is needed.",
+        Arity = ArgumentArity.ZeroOrOne,
+        Required = false
     };
 
     // Design intent: when editScope is CustomCode, the tool may apply custom-code workarounds for issues
@@ -117,7 +120,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         ArgumentException.ThrowIfNullOrWhiteSpace(packagePath, nameof(packagePath));
 
         var tspProjectPath = parseResult.GetValue(typespecProjectPath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(tspProjectPath, nameof(tspProjectPath));
 
         var customizationRequest = parseResult.GetValue(customizationRequestOption);
         ArgumentException.ThrowIfNullOrWhiteSpace(customizationRequest, nameof(customizationRequest));
@@ -147,18 +149,19 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// regenerates code if needed (Java), builds, and returns success/failure with build result.
     /// </summary>
     /// <param name="packagePath">Absolute path to the SDK package directory.</param>
-    /// <param name="tspProjectPath">Absolute path to the local TypeSpec project directory.</param>
     /// <param name="customizationRequest">Description of the requested customization to apply to the TypeSpec, used for guiding the update process.</param>
+    /// <param name="tspProjectPath">Absolute path to the local TypeSpec project directory. Optional for custom-code-only scope.</param>
+    /// <param name="editScope">Which source categories the tool may edit (custom code, spec inputs, or both).</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A <see cref="CustomizedCodeUpdateResponse"/> indicating the outcome.</returns>
     [McpServerTool(Name = CustomizedCodeUpdateToolName), Description("Applies patches to customization files based on build errors, regenerates code if needed (Java), builds, and returns success/failure with build result.")]
     public Task<CustomizedCodeUpdateResponse> UpdateAsync(
         [Description("Absolute path to the SDK package directory. REQUIRED. Example: 'path/to/azure-sdk-for-java/sdk/healthdataaiservices/azure-health-deidentification'.")]
         string packagePath,
-        [Description("Absolute path to the local TypeSpec project directory (containing main.tsp/client.tsp) where customizations will be applied. REQUIRED. Example: 'path/to/azure-rest-api-specs/specification/healthdataaiservices/HealthDataAIServices.DeidServices'.")]
-        string tspProjectPath,
         [Description("Description of the requested customization to apply to the TypeSpec or SDK code. Can also be an APIView URL for feedback-driven customizations. REQUIRED.")]
         string customizationRequest,
+        [Description("Absolute path to the local TypeSpec project directory (containing main.tsp/client.tsp) where customizations will be applied. REQUIRED when editScope includes spec inputs (SpecInputs/All). OPTIONAL for custom-code-only repair (editScope CustomCode): when omitted, regeneration resolves the spec from the pinned commit in the package's tsp-location.yaml, so no local spec checkout is required. Example: 'path/to/azure-rest-api-specs/specification/healthdataaiservices/HealthDataAIServices.DeidServices'.")]
+        string? tspProjectPath = null,
         [Description("Which source categories the tool may edit (flags: CustomCode, SpecInputs, or All). All (default): both custom code and spec inputs may be edited, regenerate, and patch custom code. CustomCode: custom-code-only — never edits spec inputs (client.tsp/tspconfig.yaml) or moves the pinned spec commit; failures that would require a spec change are reported as out of scope (errorCode 'SpecChangeRequired') instead of applied. Regenerating Generated/ from the unchanged pinned commit is always allowed.")]
         EditScope editScope = EditScope.All,
         CancellationToken ct = default)
@@ -173,7 +176,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// <param name="editScope">Which source categories the tool may edit (custom code, spec inputs, or both).</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A <see cref="CustomizedCodeUpdateResponse"/> with the pipeline result.</returns>
-    private async Task<CustomizedCodeUpdateResponse> RunUpdateAsync(string packagePath, string tspProjectPath, string customizationRequest, EditScope editScope, CancellationToken ct)
+    private async Task<CustomizedCodeUpdateResponse> RunUpdateAsync(string packagePath, string? tspProjectPath, string customizationRequest, EditScope editScope, CancellationToken ct)
     {
         // editScope is a non-nullable [Flags] enum bound from a named option (default All), so the
         // empty/whitespace validation used for the string inputs does not apply. Guard only against an
@@ -206,28 +209,53 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             };
         }
 
-        if (!Directory.Exists(tspProjectPath))
+        // tspProjectPath is only required when spec inputs are in scope (the tool must edit a local
+        // client.tsp/tspconfig.yaml). For custom-code-only repair it is optional: regeneration resolves
+        // the spec from the pinned commit recorded in the package's tsp-location.yaml, so a local spec
+        // checkout is not required (this is what enables headless custom-code repair in a language repo).
+        var hasTspProjectPath = !string.IsNullOrWhiteSpace(tspProjectPath);
+
+        if (specInputsInScope && !hasTspProjectPath)
         {
+            const string message = "A TypeSpec project path is required when spec inputs are in scope " +
+                "(editScope includes SpecInputs/All), because the tool must edit client.tsp/tspconfig.yaml locally. " +
+                "Provide --tsp-project-path, or use editScope CustomCode to repair custom (non-generated) code only.";
             return new CustomizedCodeUpdateResponse
             {
                 Success = false,
-                ResponseError = $"TypeSpec project path does not exist: {tspProjectPath}",
-                Message = $"TypeSpec project path does not exist: {tspProjectPath}",
+                ResponseError = message,
+                Message = message,
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
-                BuildResult = $"TypeSpec project path does not exist: {tspProjectPath}"
+                BuildResult = message
             };
         }
 
-        if (!typeSpecHelper.IsValidTypeSpecProjectPath(tspProjectPath))
+        // When a path is supplied it must be a valid local TypeSpec project, regardless of scope.
+        if (hasTspProjectPath)
         {
-            return new CustomizedCodeUpdateResponse
+            if (!Directory.Exists(tspProjectPath))
             {
-                Success = false,
-                ResponseError = $"Invalid TypeSpec project path: {tspProjectPath}. Directory must exist and contain tspconfig.yaml.",
-                Message = $"Invalid TypeSpec project path: {tspProjectPath}. Directory must exist and contain tspconfig.yaml.",
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
-                BuildResult = $"Invalid TypeSpec project path: {tspProjectPath}. Directory must exist and contain tspconfig.yaml."
-            };
+                return new CustomizedCodeUpdateResponse
+                {
+                    Success = false,
+                    ResponseError = $"TypeSpec project path does not exist: {tspProjectPath}",
+                    Message = $"TypeSpec project path does not exist: {tspProjectPath}",
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+                    BuildResult = $"TypeSpec project path does not exist: {tspProjectPath}"
+                };
+            }
+
+            if (!typeSpecHelper.IsValidTypeSpecProjectPath(tspProjectPath))
+            {
+                return new CustomizedCodeUpdateResponse
+                {
+                    Success = false,
+                    ResponseError = $"Invalid TypeSpec project path: {tspProjectPath}. Directory must exist and contain tspconfig.yaml.",
+                    Message = $"Invalid TypeSpec project path: {tspProjectPath}. Directory must exist and contain tspconfig.yaml.",
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+                    BuildResult = $"Invalid TypeSpec project path: {tspProjectPath}. Directory must exist and contain tspconfig.yaml."
+                };
+            }
         }
 
         // Detect if customizationRequest is an APIView URL (prod or staging)
@@ -692,12 +720,13 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         {
             logger.LogInformation("Regenerating code after patches (Java)...");
 
-            if (!TryResolveLocalSpecProjectPath(tspProjectPath, MissingTypeSpecProjectPathMessage, out var localSpecProjectPath, out var errorResponse))
-            {
-                return errorResponse!;
-            }
+            // tspProjectPath is optional in custom-code-only scope. When supplied, regenerate from the
+            // local spec project; when omitted, pass no local spec repo so tsp-client regenerates from the
+            // pinned commit recorded in the package's tsp-location.yaml (no local spec checkout required).
+            string? localSpecProjectPath = string.IsNullOrWhiteSpace(tspProjectPath) ? null : Path.GetFullPath(tspProjectPath);
 
-            logger.LogDebug("Using local spec project for Java regeneration: {localSpecProjectPath}", localSpecProjectPath);
+            logger.LogDebug("Java regeneration local spec source: {localSpecProjectPath}",
+                localSpecProjectPath ?? "(pinned commit from tsp-location.yaml)");
 
             var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: localSpecProjectPath, isCli: false, ct: ct);
             if (!regenResult.IsSuccessful)

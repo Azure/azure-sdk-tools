@@ -146,6 +146,46 @@ public class CustomizedCodeUpdateToolAutoTests
         Mock<ITypeSpecCustomizationService> TypeSpecCustomization,
         Mock<ITypeSpecHelper> TypeSpecHelper);
 
+    /// <summary>
+    /// Builds a classifier configuration whose first pass returns a single CODE_CUSTOMIZATION item, so the
+    /// flow proceeds into the custom-code patch/regen pipeline (used by the optional-tspProjectPath tests).
+    /// </summary>
+    private static Action<Mock<IFeedbackClassifierService>> CodeCustomizationClassifier(string text) =>
+        c => c.Setup(x => x.ClassifyItemsAsync(
+                It.IsAny<List<FeedbackItem>>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
+                It.IsAny<int?>(),
+                It.IsAny<EditScope>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                (items, _, _, _, _, _, _, _, _, _) =>
+                {
+                    if (items.Count == 0)
+                    {
+                        var item = new FeedbackItem { Text = text };
+                        items.Add(item);
+                        return Task.FromResult(new FeedbackClassificationResponse
+                        {
+                            Classifications =
+                            [
+                                new FeedbackClassificationResponse.ItemClassificationDetails
+                                {
+                                    ItemId = item.Id,
+                                    Classification = "CODE_CUSTOMIZATION",
+                                    Reason = "Fix in customization file",
+                                    Text = text
+                                }
+                            ]
+                        });
+                    }
+                    return Task.FromResult(new FeedbackClassificationResponse { Classifications = [] });
+                });
+
     // ========================================================================
     // Happy-path: TSP fix + build succeeds
     // ========================================================================
@@ -1805,6 +1845,194 @@ public class CustomizedCodeUpdateToolAutoTests
             tspProjectPath: tspDir,
             customizationRequest: "Rename FooClient to BarClient",
             editScope: (EditScope)99,
+            ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput));
+    }
+
+    // ========================================================================
+    // Optional tspProjectPath (auto-resolve regen from pinned tsp-location.yaml)
+    // ========================================================================
+
+    [Test]
+    public async Task CustomCodeScope_NoTspProjectPath_Java_RegeneratesFromPinnedCommit()
+    {
+        // CustomCode scope does not edit spec inputs, so a local TypeSpec checkout is optional. When
+        // tspProjectPath is omitted, the Java post-patch regeneration must pass localSpecRepoPath == null,
+        // causing tsp-client to regenerate from the commit pinned in the package's tsp-location.yaml.
+        string? capturedLocalSpecRepo = "SENTINEL";
+        var callCount = 0;
+
+        var tsp = new Mock<ITspClientHelper>();
+        tsp.Setup(t => t.UpdateGenerationAsync(
+                It.IsAny<string>(),
+                It.IsAny<string?>(),
+                It.IsAny<bool>(),
+                It.IsAny<string?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string?, bool, string?, CancellationToken>(
+                (_, _, _, localSpec, _) =>
+                {
+                    callCount++;
+                    // CODE_CUSTOMIZATION only (no TSP_APPLICABLE), so the Java post-patch regen is the
+                    // first and only UpdateGenerationAsync call.
+                    if (callCount == 1)
+                        capturedLocalSpecRepo = localSpec;
+                })
+            .ReturnsAsync(new TspToolResponse { IsSuccessful = true, TypeSpecProject = "/pkg" });
+
+        var buildCalls = 0;
+        var svc = new ConfigurableLanguageService(
+            buildFunc: () =>
+            {
+                buildCalls++;
+                return buildCalls <= 1 ? (false, "error: cannot find symbol foo", null) : (true, null, null);
+            },
+            hasCustomizations: true,
+            patchesFunc: () => [new AppliedPatch("Customization.java", "Fixed reference", 1)],
+            language: SdkLanguage.Java);
+
+        var (tool, _) = CreateTool(
+            languageService: svc,
+            tspHelper: tsp.Object,
+            configureClassifier: CodeCustomizationClassifier("Fix customization reference"));
+
+        var pkg = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            customizationRequest: "Fix customization reference",
+            editScope: EditScope.CustomCode,
+            ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.ErrorCode, Is.Null);
+        Assert.That(callCount, Is.GreaterThanOrEqualTo(1), "Java regen should run even without a local spec path.");
+        Assert.That(capturedLocalSpecRepo, Is.Null,
+            "With tspProjectPath omitted, Java regen must pass localSpecRepoPath == null so tsp-client uses the pinned tsp-location.yaml commit.");
+    }
+
+    [Test]
+    public async Task CustomCodeScope_NoTspProjectPath_NonJava_SucceedsWithoutValidatingSpecPath()
+    {
+        // For a non-Java language the custom-code flow never regenerates, so tspProjectPath is unnecessary.
+        // When omitted, the tool must not attempt to validate a (non-existent) spec path and must succeed.
+        var buildCalls = 0;
+        var svc = new ConfigurableLanguageService(
+            buildFunc: () =>
+            {
+                buildCalls++;
+                return buildCalls <= 1 ? (false, "error CS0103: name does not exist", null) : (true, null, null);
+            },
+            hasCustomizations: true,
+            patchesFunc: () => [new AppliedPatch("Customization.cs", "Fixed reference", 1)],
+            language: SdkLanguage.DotNet);
+
+        var (tool, mocks) = CreateTool(
+            languageService: svc,
+            configureClassifier: CodeCustomizationClassifier("Fix customization reference"),
+            configureGit: g => g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net"));
+
+        var pkg = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            customizationRequest: "Fix customization reference",
+            editScope: EditScope.CustomCode,
+            ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.ErrorCode, Is.Null);
+        mocks.TypeSpecHelper.Verify(t => t.IsValidTypeSpecProjectPath(It.IsAny<string>()), Times.Never,
+            "When tspProjectPath is omitted in CustomCode scope, the tool must not validate a spec path.");
+    }
+
+    [Test]
+    public async Task CustomCodeScope_WithTspProjectPath_Java_UsesLocalSpecRepo()
+    {
+        // When a local TypeSpec project path IS provided in CustomCode scope, the Java post-patch regen
+        // should use it as localSpecRepoPath (regenerate from the local checkout).
+        string? capturedLocalSpecRepo = null;
+        var callCount = 0;
+
+        var tsp = new Mock<ITspClientHelper>();
+        tsp.Setup(t => t.UpdateGenerationAsync(
+                It.IsAny<string>(),
+                It.IsAny<string?>(),
+                It.IsAny<bool>(),
+                It.IsAny<string?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string?, bool, string?, CancellationToken>(
+                (_, _, _, localSpec, _) =>
+                {
+                    callCount++;
+                    if (callCount == 1)
+                        capturedLocalSpecRepo = localSpec;
+                })
+            .ReturnsAsync(new TspToolResponse { IsSuccessful = true, TypeSpecProject = "/pkg" });
+
+        var buildCalls = 0;
+        var svc = new ConfigurableLanguageService(
+            buildFunc: () =>
+            {
+                buildCalls++;
+                return buildCalls <= 1 ? (false, "error: cannot find symbol foo", null) : (true, null, null);
+            },
+            hasCustomizations: true,
+            patchesFunc: () => [new AppliedPatch("Customization.java", "Fixed reference", 1)],
+            language: SdkLanguage.Java);
+
+        var (tool, _) = CreateTool(
+            languageService: svc,
+            tspHelper: tsp.Object,
+            configureClassifier: CodeCustomizationClassifier("Fix customization reference"));
+
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            customizationRequest: "Fix customization reference",
+            tspProjectPath: tspDir,
+            editScope: EditScope.CustomCode,
+            ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.True);
+        Assert.That(capturedLocalSpecRepo, Is.EqualTo(Path.GetFullPath(tspDir)),
+            "When provided, the local TypeSpec project path should be passed to the Java regen as localSpecRepoPath.");
+    }
+
+    [Test]
+    public async Task SpecInputsScope_NoTspProjectPath_ReturnsInvalidInput()
+    {
+        // SpecInputs scope edits local spec inputs (client.tsp), which requires a local TypeSpec project
+        // path. Omitting it must fail fast with InvalidInput rather than proceeding.
+        var (tool, _) = CreateTool();
+        var pkg = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            customizationRequest: "Rename FooClient to BarClient",
+            editScope: EditScope.SpecInputs,
+            ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput));
+        Assert.That(result.ResponseError, Does.Contain("TypeSpec project path").IgnoreCase);
+    }
+
+    [Test]
+    public async Task AllScope_NoTspProjectPath_ReturnsInvalidInput()
+    {
+        // The default scope (All) includes spec inputs, so omitting tspProjectPath must fail fast with
+        // InvalidInput just like SpecInputs scope.
+        var (tool, _) = CreateTool();
+        var pkg = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            customizationRequest: "Rename FooClient to BarClient",
             ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.False);

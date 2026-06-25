@@ -590,6 +590,31 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(updateStatus.NextSteps?.Contains("Prompt the user for justification for excluded languages and update it in the release plan.") ?? false);
         }
 
+        [Test]
+        public async Task Test_Update_SDK_Details_Data_optional_go()
+        {
+            // Data plane only requires .NET, Java, Python and JavaScript, but Go is optional.
+            // When a data plane TypeSpec project also emits Go, the tool must not fail with an
+            // "Unsupported SDK language" error and should still update the Go package name.
+            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            var project = TypeSpecProject.ParseTypeSpecConfig(testCodeFilePath);
+            project.Packages = new List<PackageInfo>
+            {
+                new() { PackageName = "Azure.Contoso", Language = SdkLanguage.DotNet },
+                new() { PackageName = "azure-contoso", Language = SdkLanguage.Python },
+                new() { PackageName = "com.azure.contoso", Language = SdkLanguage.Java },
+                new() { PackageName = "@azure/contoso", Language = SdkLanguage.JavaScript },
+                new() { PackageName = "sdk/contoso/azcontoso", Language = SdkLanguage.Go }
+            };
+            var tool = CreateReleasePlanToolWithMockedTypeSpec(testCodeFilePath, project);
+            var updateStatus = await tool.UpdateSDKDetailsInReleasePlan(1001, testCodeFilePath, CancellationToken.None);
+            Assert.That(updateStatus.ResponseError, Is.Null);
+            Assert.That(updateStatus.Message, Does.Contain("Updated SDK details in release plan"));
+            Assert.That(updateStatus.Message, Does.Contain("Language: Go, Package name: sdk/contoso/azcontoso"));
+            // Go is optional for data plane, so it must not be reported as an excluded language.
+            Assert.That(updateStatus.Message, Does.Not.Contain("excluded"));
+        }
+
         [TestCase("Javascript", "@invalid/package/name")]
         [TestCase("Go", "invalid/package/name")]
         [Test]

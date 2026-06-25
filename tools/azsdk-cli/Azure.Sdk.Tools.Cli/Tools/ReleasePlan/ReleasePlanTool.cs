@@ -273,6 +273,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             ".NET", "Java", "Python", "JavaScript", "Go"
         };
 
+        // Languages that are supported (allowed) for a data plane release plan. Go is optional for
+        // data plane: it must not cause an "unsupported language" failure when present, but it is
+        // not part of the mandatory language set (languagesforDataplane) used for exclusion tracking.
+        internal static readonly HashSet<string> supportedLanguagesforDataplane = new(System.StringComparer.OrdinalIgnoreCase)
+        {
+            ".NET", "Java", "Python", "JavaScript", "Go"
+        };
+
         [GeneratedRegex("https:\\/\\/github.com\\/Azure\\/azure-sdk\\/issues\\/([0-9]+)")]
         private static partial Regex NameSpaceIssueUrlRegex();
 
@@ -1150,11 +1158,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 releasePlanWorkItemId = releasePlan.WorkItemId;
 
                 var requiredLanguages = releasePlan.IsManagementPlane ? languagesforMgmtplane : languagesforDataplane;
+                var supportedLanguages = releasePlan.IsManagementPlane ? languagesforMgmtplane : supportedLanguagesforDataplane;
 
-                // Validate SDK language name
-                if (SdkInfos.Any(sdk => !requiredLanguages.Contains(sdk.Language, StringComparer.OrdinalIgnoreCase)))
+                // Validate SDK language name. Use the supported set so optional languages (e.g. Go for
+                // data plane) are accepted and their package names updated without failing.
+                if (SdkInfos.Any(sdk => !supportedLanguages.Contains(sdk.Language, StringComparer.OrdinalIgnoreCase)))
                 {
-                    return new DefaultCommandResponse { ResponseError = $"Unsupported SDK language found. Supported languages are: {string.Join(", ", requiredLanguages)}" };
+                    return new DefaultCommandResponse { ResponseError = $"Unsupported SDK language found. Supported languages are: {string.Join(", ", supportedLanguages)}" };
                 }
 
                 // Validate SDK Package names

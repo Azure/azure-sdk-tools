@@ -543,7 +543,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                             "Run check-package again with a valid --codeowners-cache path or HTTPS URL, or omit --codeowners-cache to use the repo cache.");
                     }
 
-                    resolvedRepo = await TryResolveRepo(repo, ct);
                     cacheSource = NormalizeCodeownersCacheSource(codeownersCachePath);
                 }
                 else
@@ -564,44 +563,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     cacheSource = $"{CacheBaseUrl}/{parts[0].ToLowerInvariant()}/{parts[1]}/CODEOWNERS.cache";
                 }
 
-                CodeownersParseResult parseResult;
-                try
-                {
-                    parseResult = CodeownersParser.ParseCodeownersFileWithDiagnostics(cacheSource);
-                }
-                catch (ArgumentException ex) when (!string.IsNullOrEmpty(codeownersCachePath))
-                {
-                    return CreateCheckPackageFailureResponse(
-                        directoryPath,
-                        packageName,
-                        resolvedRepo,
-                        "invalid_cache_source",
-                        ex.Message,
-                        "Run check-package again with a valid --codeowners-cache path or HTTPS URL, or omit --codeowners-cache to use the repo cache.");
-                }
-                catch (FileLoadException ex) when (!string.IsNullOrEmpty(codeownersCachePath))
-                {
-                    return CreateCheckPackageFailureResponse(
-                        directoryPath,
-                        packageName,
-                        resolvedRepo,
-                        "invalid_cache_source",
-                        ex.Message,
-                        "Run check-package again with a valid --codeowners-cache path or HTTPS URL, or omit --codeowners-cache to use the repo cache.");
-                }
-
-                if (parseResult.BlockErrors.Count > 0)
-                {
-                    return CreateCheckPackageFailureResponse(
-                        directoryPath,
-                        packageName,
-                        resolvedRepo,
-                        "malformed_cache",
-                        $"CODEOWNERS cache contains {parseResult.BlockErrors.Count} malformed block(s) and cannot be used for check-package.",
-                        "Refresh or regenerate the CODEOWNERS cache before running check-package again.");
-                }
-
-                return checkPackageHelper.CheckPackage(directoryPath, resolvedRepo, parseResult.Entries);
+                var entries = CodeownersParser.ParseCodeownersFile(cacheSource);
+                return checkPackageHelper.CheckPackage(directoryPath, resolvedRepo, entries);
             }
             catch (Exception ex)
             {
@@ -851,24 +814,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 }
             }
             return repo;
-        }
-
-        private async Task<string?> TryResolveRepo(string? repo, CancellationToken ct)
-        {
-            if (!string.IsNullOrEmpty(repo))
-            {
-                return repo;
-            }
-
-            try
-            {
-                return await ResolveRepo(repo, ct);
-            }
-            catch (Exception ex)
-            {
-                logger.LogDebug(ex, "Could not infer repository for check-package prompt generation");
-                return null;
-            }
         }
 
         private static CheckPackageResponse CreateCheckPackageFailureResponse(

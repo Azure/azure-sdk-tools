@@ -382,7 +382,8 @@
                               "role": "user",
                               "user_id": "@body('Get_message_details')?['from']?['user']?['id']",
                               "user_name": "@body('Get_message_details')?['from']?['user']?['displayName']"
-                            }
+                            },
+                            "message_id": "@item()?['messageId']"
                           }
                         },
                         "Check_Intention": {

@@ -16,6 +16,7 @@ class IntentionRequest(BaseModel):
     """
 
     message: Message
+    message_id: str | None = None
     conversation_id: str | None = None
     conversation_type: ConversationType | None = None
 

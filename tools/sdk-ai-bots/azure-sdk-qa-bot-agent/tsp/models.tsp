@@ -216,6 +216,9 @@ model ConversationMessage {
   @doc("Conversation type")
   conversation_type?: ConversationType;
 
+  @doc("Whether the message passed intention recognition (in bot scope)")
+  should_reply?: boolean;
+
   @doc("Additional message metadata")
   extra_info?: ConversationMessageExtraInfo;
 }
@@ -231,6 +234,9 @@ model SaveConversationMessageResponse {
 model IntentionRequest {
   @doc("The message to classify")
   message: Message;
+
+  @doc("Identifier of the message being classified (from Teams)")
+  message_id?: string;
 
   @doc("Existing conversation identifier")
   conversation_id?: string;

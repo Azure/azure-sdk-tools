@@ -110,13 +110,22 @@ Custom endpoints that mutate state or expose non-public metadata must use Entra 
 
 ### Endpoint Summary
 
-The proposed TypeSpec contract defines the following service endpoints under `/api`:
+The proposed TypeSpec contract defines the following service endpoints under `/api`.
+
+The following endpoints are required for the end-to-end review and release process.
 
 | Endpoint | Primary User | Purpose |
 |---|---|---|
 | `POST /api/github/webhook-events` | GitHub | Accepts GitHub webhook deliveries so API Review Hub can respond to and synchronize with GitHub changes, including review activity, pushed commits, pull request lifecycle changes, and other workflow events. |
 | `POST /api/review-prs` | User/Agent | Requests creation of a GitHub API review pull request for a package API change. This is an LRO that returns an operation ID. |
 | `GET /api/review-prs/operations/{operationId}` | User/Agent | Gets the status of an async review PR creation operation and returns the created review pull request when the operation succeeds. |
+| `GET /api/releases/check-gate` | ADO | Evaluates whether a package version and API hash have the approval needed for release. |
+| `POST /api/releases/mark-released` | ADO | Marks a package version as released after the release pipeline succeeds. Returns only a status code on success. |
+
+The following endpoints are secondary, but useful for agentic queries and for a simple dashboard that preserves some of the grouping functionality that the legacy APIView provides today.
+
+| Endpoint | Primary User | Purpose |
+|---|---|---|
 | `GET /api/review-prs` | User/Agent | Lists review pull requests known to API Review Hub, optionally filtered by package language or working branch. |
 | `GET /api/review-prs/{reviewPullRequestId}` | User/Agent | Gets a review pull request by API Review Hub identifier. |
 | `POST /api/review-prs/resolve` | User/Agent | Functionally similar to `GET /api/review-prs/{reviewPullRequestId}`, but resolves a review pull request using values callers are more likely to know, such as a review PR URL or package coordinates, instead of an opaque API Review Hub ID. |
@@ -124,10 +133,8 @@ The proposed TypeSpec contract defines the following service endpoints under `/a
 | `GET /api/services/{serviceId}` | User/Agent | Gets service metadata and associated packages. |
 | `GET /api/packages` | User/Agent | Lists package records known to API Review Hub, optionally filtered by language or service. |
 | `GET /api/packages/{packageId}` | User/Agent | Gets package metadata by package identifier. |
-| `POST /api/packages/resolve` | User/Agent | Functionally similar to getting a package or package version by API Review Hub identifiers, but resolves using values callers are more likely to know, such as package coordinates or a review PR URL, instead of opaque API Review Hub IDs. Returns a wrapper object with a `kind` field indicating whether the resolved resource is a package or package version. |
 | `GET /api/packages/{packageId}/versions` | User/Agent | Lists version records for a package. |
-| `GET /api/releases/check-gate` | ADO | Evaluates whether a package version and API hash have the approval needed for release. |
-| `POST /api/releases/mark-released` | ADO | Marks a package version as released after the release pipeline succeeds. Returns only a status code on success. |
+| `POST /api/packages/resolve` | User/Agent | Functionally similar to getting a package or package version by API Review Hub identifiers, but resolves using values callers are more likely to know, such as package coordinates or a review PR URL, instead of opaque API Review Hub IDs. Returns a wrapper object with a `kind` field indicating whether the resolved resource is a package or package version. |
 | `GET /api/health` | User/Agent | Returns service health for probes and operational checks. |
 
 ### Workflow Scenarios
@@ -172,6 +179,19 @@ The proposed TypeSpec contract defines the following service endpoints under `/a
 3. API Review Hub updates the review pull request lifecycle status to `closed` or `merged`.
 4. API Review Hub uses the GitHub App to delete synthetic base and review branches when cleanup is safe.
 5. The review pull request remains available in GitHub, and API Review Hub preserves the historical review record.
+
+#### Webhook Secret Rotation
+
+1. On a regular schedule, API Review Hub enumerates repository registrations whose `rotationDate` has passed or is due soon.
+2. For each linked repository, API Review Hub generates a new webhook secret.
+3. API Review Hub copies the current secret value from the stable `webhookSecretKey` Key Vault reference to the stable `lastWebhookSecretKey` Key Vault reference.
+4. API Review Hub stores the new webhook secret value in Key Vault at the existing `webhookSecretKey` reference for that repository.
+5. API Review Hub sets the Key Vault expiration on the current secret value, sets the Key Vault expiration on the last secret value to the end of the old-secret grace period, and updates `rotationDate` to the next time API Review Hub should rotate the current secret before it expires.
+6. During the overlap window, API Review Hub accepts webhook deliveries signed with either the current or last webhook secret value for that repository, as long as the corresponding Key Vault secret value has not expired.
+7. API Review Hub uses the GitHub App or GitHub webhook configuration APIs to update the repository webhook configuration to use the new webhook secret value.
+8. After the overlap window expires and webhook delivery has stabilized on the new secret, API Review Hub stops accepting deliveries signed with the old secret and clears the secret value at the `lastWebhookSecretKey` reference.
+9. API Review Hub repeats this process for every linked repository.
+10. This workflow is an internal operational process and does not require a new public service API.
 
 ---
 
@@ -220,8 +240,9 @@ Suggested logical containers include:
 | `services` | Service records that group related language packages, such as Azure Storage Blobs. |
 | `packages` | Package records keyed by language and package name, with service association. |
 | `packageVersions` | Version records with release status, API hash, approval state, and review PR links. |
+| `reviewPullRequests` | Review pull request records associated with package versions, including GitHub PR identity, branch metadata, approval state, and lifecycle status. |
 | `webhookEvents` | GitHub delivery IDs, event metadata, processing status, retry state, and failure details. |
-| `repositoryInstallations` | GitHub App installation metadata and repository capability flags. |
+| `repositoryRegistrations` | Linked repository records, including stable Key Vault references for current and previous webhook secret values, the registration update time, and the next API Review Hub rotation date. Secret expiration is enforced by Key Vault secret attributes. |
 
 The final partitioning strategy should be chosen around the most common access patterns: webhook correlation, package lookup by language and package name, release-gating lookup by package version and API hash, and operational inspection by delivery ID.
 

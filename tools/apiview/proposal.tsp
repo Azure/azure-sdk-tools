@@ -241,6 +241,24 @@ namespace ApiReviewHub {
       packageVersion?: PackageVersion;
     }
 
+    /** Repository linked to API Review Hub for GitHub webhook and automation workflows. */
+    model RepositoryRegistration {
+      /** Repository linked to API Review Hub. */
+      repository: GitHubRepository;
+
+      /** Stable Key Vault key whose secret value is the currently accepted webhook secret. */
+      webhookSecretKey: string;
+
+      /** Stable Key Vault key whose secret value is the previous webhook secret accepted during a rotation overlap window. */
+      lastWebhookSecretKey: string;
+
+      /** Time this repository registration was last updated. */
+      lastUpdated: offsetDateTime;
+
+      /** Time API Review Hub should rotate the current webhook secret before it expires. */
+      rotationDate: offsetDateTime;
+    }
+
     /** GitHub repository identity associated with a review, webhook, or automation request. */
     model GitHubRepository {
       /** Repository owner or organization. */
@@ -248,9 +266,6 @@ namespace ApiReviewHub {
 
       /** Repository name. */
       name: string;
-
-      /** Full repository name in owner/name form. */
-      fullName: string;
     }
 
     /** Health probe response. */

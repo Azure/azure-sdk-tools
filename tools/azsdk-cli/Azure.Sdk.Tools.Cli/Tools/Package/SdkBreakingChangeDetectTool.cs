@@ -1,6 +1,7 @@
 using System.CommandLine;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
@@ -78,7 +79,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         }
 
         [McpServerTool(Name = DetectSdkBreakingChangToolName), Description("Detects breaking changes in the SDK.")]
-        public async Task<SdkBreakingChangeDetectResponse> DetectSDKBreakingChangesAsync(
+        public async Task<PackageOperationResponse> DetectSDKBreakingChangesAsync(
             [Description("The absolute path to the package directory. REQUIRED. Example: 'path/to/azure-sdk-for-go/sdk/resourcemanager/webpubsub/armwebpubsub'")]
             string packagePath,
             [Description("Path to the 'tspconfig.yaml' file. It is a local file path. Optional.")]
@@ -104,7 +105,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
                 if (string.IsNullOrEmpty(packagePath) || !Directory.Exists(packagePath))
                 {
-                    return new SdkBreakingChangeDetectResponse
+                    return new PackageOperationResponse
                     {
                         ResponseError = $"The directory for the local sdk does not provide or exist at the specified path: {packagePath}. Prompt user to clone the matched SDK repository users want to generate SDK against."
                     };
@@ -115,7 +116,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
                 if (languageService == null)
                 {
-                    return new SdkBreakingChangeDetectResponse
+                    return new PackageOperationResponse
                     {
                         ResponseError = "Tooling error: unable to determine language service for the specified package path.",
                     };
@@ -124,7 +125,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 var sdkRepoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
                 if (sdkRepoRoot == null)
                 {
-                    return new SdkBreakingChangeDetectResponse
+                    return new PackageOperationResponse
                     {
                         ResponseError = "Unable to find git repository root from the provided package path."
                     };
@@ -160,7 +161,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                                 if (!File.Exists(sdkChangeFilePath))
                                 {
                                     logger.LogWarning("SDK change file not found at: {FilePath}", sdkChangeFilePath);
-                                    return new SdkBreakingChangeDetectResponse
+                                    return new PackageOperationResponse
                                     {
                                         ResponseError = $"SDK change file not found: {sdkChangeFilePath}"
                                     };
@@ -179,20 +180,29 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                                     if (sdkchanges.HasBreakingChange && !changesOnly)
                                     {
                                         var tspProjectPath = tspConfigPath != null ? await gitHelper.DiscoverRepoRootAsync(tspConfigPath, ct) : null;
-                                        return new SdkBreakingChangeDetectResponse
+                                        var result = new SdkBreakingChangeDetectResult
                                         {
                                             HasBreakingChanges = true,
                                             BreakingChanges = await ClassifySDKBreakingChanges(sdkchanges.ChangelogMD, sdkRepoRoot, languageService, tspProjectPath, ct),
-                                            Language = languageService.Language,
+                                        };
+                                        return new PackageOperationResponse()
+                                        {
+                                            Result = result,
+                                            Message = "SDK breaking changes detected and classified.",                                            Language = languageService.Language,
                                         };
                                     }
                                     else
                                     {
-                                        return new SdkBreakingChangeDetectResponse
+                                        var result = new SdkBreakingChangeDetectResult
                                         {
                                             HasBreakingChanges = sdkchanges.HasBreakingChange,
                                             BreakingChanges = [],
                                             SdkChangesMd = sdkchanges.ChangelogMD,
+                                        };
+                                        return new PackageOperationResponse()
+                                        {
+                                            Result = result,
+                                            Message = sdkchanges.HasBreakingChange ? "SDK changes detected but no breaking changes found." : "No SDK breaking changes detected.",
                                             Language = languageService.Language,
                                         };
                                     }
@@ -200,7 +210,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                                 else
                                 {
                                     logger.LogError("Failed to deserialize the SDK change script output. Falling back to default logic to detect SDK breaking changes.");
-                                    return new SdkBreakingChangeDetectResponse
+                                    return new PackageOperationResponse
                                     {
                                         ResponseError = "Failed to deserialize the SDK change script output. Falling back to default logic to detect SDK breaking changes.",
                                         Language = languageService.Language,
@@ -210,7 +220,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                             else
                             {
                                 logger.LogError("SDK change script execution failed or returned errors.");
-                                return new SdkBreakingChangeDetectResponse
+                                return new PackageOperationResponse
                                 {
                                     ResponseError = $"SDK change script execution failed or returned errors: {string.Join("; ", sdkChangeResponse?.ResponseErrors ?? new List<string> { "Unknown error" })}",
                                     Language = languageService.Language,
@@ -226,7 +236,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             catch (Exception ex)
             {
                 logger.LogError(ex, "An error occurred while detecting SDK breaking changes.");
-                return new SdkBreakingChangeDetectResponse
+                return new PackageOperationResponse
                 {
                     ResponseError = $"An error occurred while detecting SDK breaking changes: {ex.Message}"
                 };
@@ -312,5 +322,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         public string? Resolution { get; set; }
         [JsonPropertyName("originBreaks")]
         public List<string>? OriginBreaks { get; set; }
+    }
+    public class SdkBreakingChangeDetectResult
+    {
+        [JsonPropertyName("breakingChanges")]
+        public SdkBreakingChange[] BreakingChanges { get; set; }
+        [JsonPropertyName("hasBreakingChanges")]
+        public bool HasBreakingChanges { get; set; }
+        [JsonPropertyName("SdkChangesMd")]
+        public string? SdkChangesMd { get; set; } = null;
     }
 }

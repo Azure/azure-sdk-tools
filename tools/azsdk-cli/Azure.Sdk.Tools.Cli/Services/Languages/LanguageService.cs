@@ -498,10 +498,10 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                     result: "noop"));
         }
 
-        public virtual Task<SdkBreakingChangeDetectResponse> DetectSdkBreakingChangeAsync(string packagePath, CancellationToken ct)
+        public virtual Task<PackageOperationResponse> DetectSdkBreakingChangeAsync(string packagePath, CancellationToken ct)
         {
             return Task.FromResult(
-                new SdkBreakingChangeDetectResponse
+                new PackageOperationResponse
                 {
                         ResponseError = "SDK Breaking Change Detection is not implemented for this language.",
                         NextSteps = ["Manually detect the sdk breaking changes."],

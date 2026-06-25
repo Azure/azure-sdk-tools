@@ -204,16 +204,18 @@ def validate_file(path: str | Path, *, require_reviewed: bool = False) -> int:
     """
     p = Path(path)
     count = 0
-    seen_testcases: set[str] = set()
+    seen_queries: set[str] = set()
     for line_no, obj in iter_jsonl(p):
         where = f"{p}:{line_no}"
         validate_case(obj, where=where)
         if require_reviewed and normalize_review_status(obj.get("reviewed", REVIEW_STATUS_TODO)) != REVIEW_STATUS_PASS:
             raise ValidationError(f"{where}: case is not passed (reviewed != 'pass')")
-        tc = obj["testcase"]
-        if tc in seen_testcases:
-            raise ValidationError(f"{where}: duplicate testcase '{tc}' within file")
-        seen_testcases.add(tc)
+        # The canonical dedup key is the (normalized) query, applied at curation time;
+        # testcase titles may legitimately repeat (e.g. the placeholder "Untitled").
+        q = " ".join(obj.get("query", "").split()).lower()
+        if q in seen_queries:
+            raise ValidationError(f"{where}: duplicate query within file")
+        seen_queries.add(q)
         count += 1
     return count
 

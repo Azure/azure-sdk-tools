@@ -65,6 +65,7 @@ def review(staging_dir: Path, target_dir: Path, scenario_filter: str | None) -> 
     promoted: dict[str, int] = {}
     for sf in staging_files:
         scenario = sf.stem
+        target = target_dir / f"{scenario}.jsonl"
         keep_in_staging: list[dict] = []
         to_promote: list[dict] = []
         abandoned = 0
@@ -80,7 +81,7 @@ def review(staging_dir: Path, target_dir: Path, scenario_filter: str | None) -> 
                 validate_case(obj, where=f"{sf}")
                 h = case_hash(obj.get("scenario", scenario), obj.get("query", ""))
                 if h in existing:
-                    mutated = True  # drop the reviewed duplicate
+                    mutated = True  # drop the reviewed duplicate (same normalized query)
                     continue
                 existing.add(h)
                 to_promote.append(obj)
@@ -95,7 +96,6 @@ def review(staging_dir: Path, target_dir: Path, scenario_filter: str | None) -> 
             keep_in_staging.append(obj)
 
         if to_promote:
-            target = target_dir / f"{scenario}.jsonl"
             with target.open("a", encoding="utf-8") as fh:
                 for obj in to_promote:
                     fh.write(json.dumps(obj, ensure_ascii=False) + "\n")

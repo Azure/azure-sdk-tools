@@ -23,6 +23,7 @@ from dataset.schema import (  # noqa: E402
     ValidationError,
     normalize_review_status,
     validate_case,
+    validate_file,
 )
 from dataset.review import review  # noqa: E402
 from _evals_runner import (  # noqa: E402
@@ -127,6 +128,43 @@ def test_review_promotes_pass_and_abandons_leftover_todo():
             for r in (json.loads(l) for l in sf.read_text(encoding="utf-8").splitlines())
         }
         assert staging_rows == {"leftover": REVIEW_STATUS_ABANDONED, "already": REVIEW_STATUS_ABANDONED}
+
+
+def test_validate_file_dedups_on_query_not_testcase():
+    import json
+    import tempfile
+    from pathlib import Path
+
+    def _row(testcase: str, query: str) -> dict:
+        return {
+            "testcase": testcase,
+            "query": query,
+            "ground_truth": "gt",
+            "scenario": "typespec",
+            "reviewed": REVIEW_STATUS_PASS,
+        }
+
+    with tempfile.TemporaryDirectory() as tmp:
+        # Two distinct cases sharing a placeholder title are valid (dedup key is query).
+        ok = Path(tmp) / "ok.jsonl"
+        ok.write_text(
+            json.dumps(_row("Untitled", "q1")) + "\n" + json.dumps(_row("Untitled", "q2")) + "\n",
+            encoding="utf-8",
+        )
+        assert validate_file(ok, require_reviewed=True) == 2
+
+        # Two rows with the same (normalized) query are a real duplicate -> reject.
+        dup = Path(tmp) / "dup.jsonl"
+        dup.write_text(
+            json.dumps(_row("A", "same query")) + "\n" + json.dumps(_row("B", "Same   Query")) + "\n",
+            encoding="utf-8",
+        )
+        try:
+            validate_file(dup)
+        except ValidationError as exc:
+            assert "duplicate query" in str(exc)
+        else:
+            raise AssertionError("expected ValidationError for duplicate query")
 
 
 def test_output_items_to_rows_builtin_and_composite():

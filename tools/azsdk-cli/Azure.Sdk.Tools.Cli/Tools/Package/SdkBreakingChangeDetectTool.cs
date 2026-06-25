@@ -131,9 +131,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     };
                 }
                 var packageInfo = await languageService.GetPackageInfo(packagePath, ct);
-                if (packageInfo?.SdkType == SdkType.Management)
+                // TODO: remove the following check when .net SDKs is ready
+                if (languageService.Language != SdkLanguage.DotNet)
                 {
-                    // For management-plane packages, execute configured changelog update script
+                    // execute configured sdk change retrieve script
                     var (configContentType, configValue) = await _specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.GetSDKChanges, ct);
                     if (configContentType != SpecGenSdkConfigContentType.Unknown && !string.IsNullOrEmpty(configValue))
                     {

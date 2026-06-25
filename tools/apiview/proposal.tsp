@@ -229,52 +229,16 @@ namespace ApiReviewHub {
       releasedOn: offsetDateTime;
     }
 
-    /** GitHub App installation metadata and service policy state for a repository. */
-    model RepositoryInstallation {
-      /** GitHub App installation identifier. */
-      installationId: int64;
+    /** Response returned when package lookup inputs resolve to a package or package version. */
+    model PackageResolveResponse {
+      /** Kind of resource resolved from the lookup inputs. */
+      kind: "package" | "packageVersion";
 
-      /** Repository associated with the installation. */
-      repository: GitHubRepository;
+      /** Package resolved from the lookup inputs when no package version was provided. */
+      package?: Package;
 
-      /** Whether the service is allowed to write to this repository after internal policy checks. */
-      writeAllowed: boolean;
-
-      /** Source of the write authorization decision. */
-      writePolicy: "githubAppInstallation" | "internalAllowlist" | "blocked";
-
-      /** Repository capability flags used by API review workflows. */
-      capabilities?: string[];
-    }
-
-    /** Stored webhook delivery record used for idempotency, processing state, and diagnostics. */
-    model WebhookEventRecord {
-      /** GitHub delivery identifier. */
-      deliveryId: string;
-
-      /** GitHub event name. */
-      eventType: string;
-
-      /** Repository from the webhook payload. */
-      repository?: GitHubRepository;
-
-      /** GitHub App installation identifier, when available. */
-      installationId?: int64;
-
-      /** Processing status for idempotency and diagnostics. */
-      status: WebhookProcessingStatus;
-
-      /** Time the webhook was received. */
-      receivedOn: offsetDateTime;
-
-      /** Time the webhook was last processed. */
-      processedOn?: offsetDateTime;
-
-      /** Failure reason, when processing failed. */
-      failureReason?: string;
-
-      /** Number of processing attempts. */
-      attemptCount: int32;
+      /** Package version resolved from the lookup inputs when a package version was provided. */
+      packageVersion?: PackageVersion;
     }
 
     /** GitHub repository identity associated with a review, webhook, or automation request. */
@@ -335,9 +299,6 @@ namespace ApiReviewHub {
 
     /** GitHub pull request lifecycle status derived from state, draft, and merged state. */
     alias GitHubPullRequestStatus = "draft" | "open" | "closed" | "merged";
-
-    /** The processing status of a webhook event. */
-    alias WebhookProcessingStatus = "accepted" | "duplicate" | "processing" | "processed" | "failed" | "ignored";
   }
 
   @route("/api")
@@ -447,13 +408,13 @@ namespace ApiReviewHub {
       @header("Authorization") authorization: string,
     ): PackageVersion[] | ApiErrorResponse;
 
-    /** Resolves package version coordinates to a package version record. */
+    /** Resolves package lookup inputs to a package or package version record. */
     @route("/packages/resolve")
     @post
-    op resolvePackageVersion(
+    op resolvePackage(
       @header("Authorization") authorization: string,
       @body request: ReviewLookupRequest,
-    ): PackageVersion | ApiErrorResponse;
+    ): PackageResolveResponse | ApiErrorResponse;
 
     /** Evaluates whether a package or API artifact has the approval needed for release. */
     @route("/releases/check-gate")

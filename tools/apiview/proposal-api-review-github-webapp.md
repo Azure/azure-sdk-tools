@@ -108,6 +108,71 @@ Custom endpoints should be added for specific workflow actions or queries, such 
 
 Custom endpoints that mutate state or expose non-public metadata must use Entra ID authentication unless there is a specific documented reason to use another authentication model.
 
+### Endpoint Summary
+
+The proposed TypeSpec contract defines the following service endpoints under `/api`:
+
+| Endpoint | Primary User | Purpose |
+|---|---|---|
+| `POST /api/github/webhook-events` | GitHub | Accepts GitHub webhook deliveries so API Review Hub can respond to and synchronize with GitHub changes, including review activity, pushed commits, pull request lifecycle changes, and other workflow events. |
+| `POST /api/review-prs` | User/Agent | Requests creation of a GitHub API review pull request for a package API change. This is an LRO that returns an operation ID. |
+| `GET /api/review-prs/operations/{operationId}` | User/Agent | Gets the status of an async review PR creation operation and returns the created review pull request when the operation succeeds. |
+| `GET /api/review-prs` | User/Agent | Lists review pull requests known to API Review Hub, optionally filtered by package language or working branch. |
+| `GET /api/review-prs/{reviewPullRequestId}` | User/Agent | Gets a review pull request by API Review Hub identifier. |
+| `POST /api/review-prs/resolve` | User/Agent | Functionally similar to `GET /api/review-prs/{reviewPullRequestId}`, but resolves a review pull request using values callers are more likely to know, such as a review PR URL or package coordinates, instead of an opaque API Review Hub ID. |
+| `GET /api/services` | User/Agent | Lists service groupings known to API Review Hub. |
+| `GET /api/services/{serviceId}` | User/Agent | Gets service metadata and associated packages. |
+| `GET /api/packages` | User/Agent | Lists package records known to API Review Hub, optionally filtered by language or service. |
+| `GET /api/packages/{packageId}` | User/Agent | Gets package metadata by package identifier. |
+| `POST /api/packages/resolve` | User/Agent | Functionally similar to getting a package or package version by API Review Hub identifiers, but resolves using values callers are more likely to know, such as package coordinates or a review PR URL, instead of opaque API Review Hub IDs. Returns a wrapper object with a `kind` field indicating whether the resolved resource is a package or package version. |
+| `GET /api/packages/{packageId}/versions` | User/Agent | Lists version records for a package. |
+| `GET /api/releases/check-gate` | ADO | Evaluates whether a package version and API hash have the approval needed for release. |
+| `POST /api/releases/mark-released` | ADO | Marks a package version as released after the release pipeline succeeds. Returns only a status code on success. |
+| `GET /api/health` | User/Agent | Returns service health for probes and operational checks. |
+
+### Workflow Scenarios
+
+#### Create Review Pull Request
+
+1. A user or automation requests a review pull request with `POST /api/review-prs`.
+2. API Review Hub accepts the request and returns an operation ID.
+3. API Review Hub uses the `azure-sdk-automation` GitHub App to create the required synthetic branches and open the review pull request.
+4. API Review Hub assigns the appropriate architect reviewers and applies the `architecture-review-needed` label.
+5. API Review Hub records the review pull request, associates it with the package version, and initializes approval state as `pending`.
+6. The caller polls `GET /api/review-prs/operations/{operationId}` to retrieve the created review pull request when the operation succeeds.
+
+#### Architect Review
+
+1. The architect submits their review in GitHub.
+2. GitHub sends a webhook delivery to `POST /api/github/webhook-events`.
+3. API Review Hub validates the webhook signature, delivery metadata, repository, and actor.
+4. API Review Hub determines whether the review represents an approval, rejection, revocation, or other supported review state change.
+5. API Review Hub updates the approval record associated with the review pull request and package version.
+
+#### Updates Pushed
+
+1. GitHub sends a webhook delivery when a new commit is pushed.
+2. API Review Hub checks whether the pushed branch is a working branch for any open review pull request.
+3. When the branch matches a known review workflow, API Review Hub uses the GitHub App to synchronize changes from the working branch to the review branch.
+4. API Review Hub updates review pull request state as needed so later lookup and release-gate calls observe the current review state.
+
+#### Release
+
+1. The service team triggers the release pipeline in Azure DevOps.
+2. The release pipeline calls `GET /api/releases/check-gate` with package language, package name, version, and API hash.
+3. API Review Hub checks whether the package version has a matching approved API hash and no later state has made the approval stale.
+4. If the gate allows release, the pipeline proceeds.
+5. After a successful release, the pipeline calls `POST /api/releases/mark-released`.
+6. API Review Hub records the package version as released and uses the GitHub App to close the associated review pull request when appropriate.
+
+#### Review Pull Request Cleanup
+
+1. A service team or API Review Hub closes or merges the review pull request in GitHub.
+2. GitHub sends a webhook delivery to `POST /api/github/webhook-events`.
+3. API Review Hub updates the review pull request lifecycle status to `closed` or `merged`.
+4. API Review Hub uses the GitHub App to delete synthetic base and review branches when cleanup is safe.
+5. The review pull request remains available in GitHub, and API Review Hub preserves the historical review record.
+
 ---
 
 ## GitHub App Integration

@@ -1,6 +1,6 @@
 {
   "name": "@azure-tools/js-sdk-release-tools",
-  "version": "2.16.9",
+  "version": "2.16.10",
   "description": "",
   "files": [
     "dist"
@@ -89,5 +89,10 @@
   },
   "peerDependencies": {
     "@typespec/compiler": "^1.0.0"
+  },
+  "overrides": {
+    "front-matter": {
+      "js-yaml": "^4.2.0"
+    }
   }
 }

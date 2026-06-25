@@ -37,5 +37,20 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         /// Title of the product work item
         /// </summary>
         public string Title { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Product name
+        /// </summary>
+        public string ProductName { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Product type (e.g. Offering, Feature, SKU)
+        /// </summary>
+        public string ProductType { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Product lifecycle
+        /// </summary>
+        public string ProductLifecycle { get; set; } = string.Empty;
     }
 }

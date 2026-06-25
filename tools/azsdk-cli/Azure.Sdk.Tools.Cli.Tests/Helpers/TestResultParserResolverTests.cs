@@ -15,8 +15,8 @@ public class TestResultParserResolverTests
     [SetUp]
     public void SetUp()
     {
-        var trxParser = new TrxTestHelper(new TestLogger<TrxTestHelper>());
-        var junitParser = new JUnitTestHelper(new TestLogger<JUnitTestHelper>());
+        var trxParser = new TrxTestHelper();
+        var junitParser = new JUnitTestHelper();
         _resolver = new TestResultParserResolver([trxParser, junitParser]);
         _tempDir = TempDirectory.Create("TestResultParserResolverTests");
     }
@@ -95,25 +95,23 @@ public class TestResultParserResolverTests
     }
 
     [Test]
-    public void Resolve_UnrecognizedFormat_ReturnsNull()
+    public void Resolve_UnrecognizedFormat_Throws()
     {
         var xml = """
             <?xml version="1.0" encoding="UTF-8"?>
             <html><body>Not a test result</body></html>
             """;
         var path = WriteTestFile("results.xml", xml);
-        var parser = _resolver.Resolve(path);
 
-        Assert.That(parser, Is.Null);
+        Assert.Throws<InvalidOperationException>(() => _resolver.Resolve(path));
     }
 
     [Test]
-    public void Resolve_NonXmlFile_ReturnsNull()
+    public void Resolve_NonXmlFile_Throws()
     {
         var path = WriteTestFile("results.txt", "This is not XML");
-        var parser = _resolver.Resolve(path);
 
-        Assert.That(parser, Is.Null);
+        Assert.Throws<InvalidOperationException>(() => _resolver.Resolve(path));
     }
 
     [Test]
@@ -129,10 +127,9 @@ public class TestResultParserResolverTests
     }
 
     [Test]
-    public void Resolve_MissingFile_ReturnsNull()
+    public void Resolve_MissingFile_ThrowsFileNotFound()
     {
-        var parser = _resolver.Resolve("/nonexistent/file.xml");
-        Assert.That(parser, Is.Null);
+        Assert.Throws<FileNotFoundException>(() => _resolver.Resolve("/nonexistent/file.xml"));
     }
 
     [Test]

@@ -15,8 +15,7 @@ public class JUnitTestHelperTests
     [SetUp]
     public void SetUp()
     {
-        var logger = new TestLogger<JUnitTestHelper>();
-        _helper = new JUnitTestHelper(logger);
+        _helper = new JUnitTestHelper();
         _tempDir = TempDirectory.Create("JUnitTestHelperTests");
     }
 
@@ -233,10 +232,10 @@ public class JUnitTestHelperTests
     }
 
     [Test]
-    public async Task ReturnsEmpty_WhenFileNotFound()
+    public void Throws_WhenFileNotFound()
     {
-        var result = await _helper.GetFailedTestResults("/nonexistent/file.xml", CancellationToken.None);
-        Assert.That(result.Items, Is.Empty);
+        Assert.ThrowsAsync<FileNotFoundException>(
+            async () => await _helper.GetFailedTestResults("/nonexistent/file.xml", CancellationToken.None));
     }
 
     [Test]

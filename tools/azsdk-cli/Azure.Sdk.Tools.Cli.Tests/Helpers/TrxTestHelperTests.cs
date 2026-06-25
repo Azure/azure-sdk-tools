@@ -15,8 +15,7 @@ public class TrxTestHelperTests
     [SetUp]
     public void SetUp()
     {
-        var logger = new TestLogger<TrxTestHelper>();
-        _helper = new TrxTestHelper(logger);
+        _helper = new TrxTestHelper();
         _tempDir = TempDirectory.Create("TrxTestHelperTests");
     }
 
@@ -142,10 +141,10 @@ public class TrxTestHelperTests
     }
 
     [Test]
-    public async Task ReturnsEmpty_WhenFileNotFound()
+    public void Throws_WhenFileNotFound()
     {
-        var result = await _helper.GetFailedTestResults("/nonexistent/file.trx", CancellationToken.None);
-        Assert.That(result.Items, Is.Empty);
+        Assert.ThrowsAsync<FileNotFoundException>(
+            async () => await _helper.GetFailedTestResults("/nonexistent/file.trx", CancellationToken.None));
     }
 
     [Test]

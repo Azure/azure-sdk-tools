@@ -9,7 +9,7 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// Parses TRX (Visual Studio Test Results) files used by .NET (dotnet test).
 /// Root element is TestRun with failed results in UnitTestResult outcome="Failed";.
 /// </summary>
-public class TrxTestHelper(ILogger<TrxTestHelper> logger) : ITestHelper
+public class TrxTestHelper : ITestHelper
 {
     public string FormatName => "TRX";
 
@@ -49,13 +49,10 @@ public class TrxTestHelper(ILogger<TrxTestHelper> logger) : ITestHelper
         var failedTestRuns = new FailedTestRunListResponse();
         if (!File.Exists(filePath))
         {
-            logger.LogError("TRX file not found: {filePath}", filePath);
-            return failedTestRuns;
+            throw new FileNotFoundException($"TRX file not found: {filePath}", filePath);
         }
 
-        var xmlContent = await File.ReadAllTextAsync(filePath, ct);
-        var doc = new XmlDocument();
-        doc.LoadXml(xmlContent);
+        var doc = await XmlSafeLoader.LoadAsync(filePath, ct);
         var unitTestResults = doc.GetElementsByTagName("UnitTestResult");
         foreach (XmlNode resultNode in unitTestResults)
         {

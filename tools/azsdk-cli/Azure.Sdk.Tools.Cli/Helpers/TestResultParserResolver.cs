@@ -6,10 +6,11 @@ namespace Azure.Sdk.Tools.Cli.Services;
 public interface ITestResultParserResolver
 {
     /// <summary>
-    /// Returns the correct parser for the given file, or null if no parser can handle it
-    /// or the file doesn't exist. Throws ArgumentException for null/empty path.
+    /// Returns the parser for the given file. Throws <see cref="FileNotFoundException"/> if the file
+    /// does not exist, or <see cref="InvalidOperationException"/> if no registered parser recognizes
+    /// the format. Throws <see cref="ArgumentException"/> for a null/empty path.
     /// </summary>
-    ITestHelper? Resolve(string filePath);
+    ITestHelper Resolve(string filePath);
 
     /// <summary>
     /// The list of format names this resolver supports (for error messages).
@@ -24,15 +25,26 @@ public class TestResultParserResolver(IEnumerable<ITestHelper> parsers) : ITestR
     public IReadOnlyList<string> SupportedFormats =>
         _parsers.Select(p => p.FormatName).ToList().AsReadOnly();
 
-    public ITestHelper? Resolve(string filePath)
+    public ITestHelper Resolve(string filePath)
     {
         ArgumentException.ThrowIfNullOrEmpty(filePath, nameof(filePath));
 
         if (!File.Exists(filePath))
         {
-            return null;
+            throw new FileNotFoundException($"Test result file not found: {filePath}", filePath);
         }
 
-        return _parsers.FirstOrDefault(p => p.CanParse(filePath));
+        var matches = _parsers.Where(p => p.CanParse(filePath)).ToArray();
+
+        if (matches.Length > 1)
+        {
+            throw new InvalidOperationException(
+                $"Multiple parsers recognize the test result format for: {filePath}. " +
+                $"Matching formats: {string.Join(", ", matches.Select(p => p.FormatName))}");
+        }
+
+        return matches.FirstOrDefault()
+            ?? throw new InvalidOperationException(
+                $"Unrecognized test result format for: {filePath}. Supported formats: {string.Join(", ", SupportedFormats)}");
     }
 }

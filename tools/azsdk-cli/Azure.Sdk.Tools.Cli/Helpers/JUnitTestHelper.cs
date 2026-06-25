@@ -10,7 +10,7 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// JavaScript/TypeScript (vitest junit reporter), and Go (go-junit-report).
 /// See: https://github.com/testmoapp/junitxml for the JUnit XML format specification.
 /// </summary>
-public class JUnitTestHelper(ILogger<JUnitTestHelper> logger) : ITestHelper
+public class JUnitTestHelper : ITestHelper
 {
     public string FormatName => "JUnit XML";
 
@@ -57,18 +57,15 @@ public class JUnitTestHelper(ILogger<JUnitTestHelper> logger) : ITestHelper
         return GetFailedTestRunDataFromJUnit(filePath, ct);
     }
 
-    public async Task<FailedTestRunListResponse> GetFailedTestRunDataFromJUnit(string filePath, CancellationToken ct)
+    private async Task<FailedTestRunListResponse> GetFailedTestRunDataFromJUnit(string filePath, CancellationToken ct)
     {
         var failedTestRuns = new FailedTestRunListResponse();
         if (!File.Exists(filePath))
         {
-            logger.LogError("JUnit XML file not found: {filePath}", filePath);
-            return failedTestRuns;
+            throw new FileNotFoundException($"JUnit XML file not found: {filePath}", filePath);
         }
 
-        var xmlContent = await File.ReadAllTextAsync(filePath, ct);
-        var doc = new XmlDocument();
-        doc.LoadXml(xmlContent);
+        var doc = await XmlSafeLoader.LoadAsync(filePath, ct);
 
         // JUnit XML can have <testsuites> or <testsuite> as root, with <testcase> elements nested inside.
         // A test case has failed if it contains a <failure> or <error> child element.

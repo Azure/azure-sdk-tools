@@ -4,7 +4,6 @@ using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Tools.Pipeline;
 using Azure.Sdk.Tools.Cli.Services;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
@@ -13,7 +12,7 @@ using Azure.Sdk.Tools.Cli.Tools.Core;
 namespace Azure.Sdk.Tools.Cli.Tools.EngSys;
 
 [McpServerToolType, Description("Processes and analyzes test results from test result files (TRX, JUnit XML, etc.)")]
-public class TestAnalysisTool(ITestResultParserResolver parserResolver, ILogger<PipelineAnalysisTool> logger) : MCPTool()
+public class TestAnalysisTool(ITestResultParserResolver parserResolver, ILogger<TestAnalysisTool> logger) : MCPTool()
 {
     // MCP Tool Names
     private const string GetFailedTestCasesToolName = "azsdk_get_failed_test_cases";
@@ -75,8 +74,7 @@ public class TestAnalysisTool(ITestResultParserResolver parserResolver, ILogger<
     {
         try
         {
-            var parser = parserResolver.Resolve(failedTestRunsPath)
-                ?? throw new InvalidOperationException($"Unrecognized test result format for: {failedTestRunsPath}. Supported formats: {string.Join(", ", parserResolver.SupportedFormats)}");
+            var parser = parserResolver.Resolve(failedTestRunsPath);
             return await parser.GetFailedTestCases(failedTestRunsPath, ct: ct);
         }
         catch (Exception ex)
@@ -91,8 +89,7 @@ public class TestAnalysisTool(ITestResultParserResolver parserResolver, ILogger<
     {
         try
         {
-            var parser = parserResolver.Resolve(failedTestRunsPath)
-                ?? throw new InvalidOperationException($"Unrecognized test result format for: {failedTestRunsPath}. Supported formats: {string.Join(", ", parserResolver.SupportedFormats)}");
+            var parser = parserResolver.Resolve(failedTestRunsPath);
             var failedTestRuns = await parser.GetFailedTestResults(failedTestRunsPath, ct);
             var testRun = failedTestRuns.Items.FirstOrDefault(run => run.TestCaseTitle.Equals(testCaseTitle, StringComparison.OrdinalIgnoreCase));
             if (testRun == null)
@@ -116,8 +113,7 @@ public class TestAnalysisTool(ITestResultParserResolver parserResolver, ILogger<
     {
         try
         {
-            var parser = parserResolver.Resolve(failedTestRunsPath)
-                ?? throw new InvalidOperationException($"Unrecognized test result format for: {failedTestRunsPath}. Supported formats: {string.Join(", ", parserResolver.SupportedFormats)}");
+            var parser = parserResolver.Resolve(failedTestRunsPath);
             return await parser.GetFailedTestResults(failedTestRunsPath, ct);
         }
         catch (Exception ex)

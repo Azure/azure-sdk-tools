@@ -89,5 +89,10 @@
   },
   "peerDependencies": {
     "@typespec/compiler": "^1.0.0"
+  },
+  "overrides": {
+    "front-matter": {
+      "js-yaml": "^4.2.0"
+    }
   }
 }

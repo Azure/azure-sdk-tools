@@ -96,8 +96,11 @@ namespace ApiReviewHub {
       /** Stable review pull request identifier. */
       id: Guid;
 
-      /** GitHub pull request containing the API review. */
-      reviewPR: GitHubPullRequest;
+      /** Package version associated with this review pull request. */
+      packageVersion: PackageVersion;
+
+      /** GitHub pull request identity for the API review. */
+      ...GitHubPullRequest;
 
       /** Baseline branch used to compare the API surface. */
       baseBranch: string;
@@ -128,6 +131,9 @@ namespace ApiReviewHub {
 
       /** Pull request URL. */
       url: string;
+
+      /** GitHub-derived pull request lifecycle status. */
+      status: GitHubPullRequestStatus;
     }
 
     /** Request to create a GitHub review pull request for a package API change. */
@@ -206,6 +212,21 @@ namespace ApiReviewHub {
 
       /** Most recent approval record. */
       approval: ApprovalRecord;
+    }
+
+    /** Request to mark a package version as released. */
+    model MarkPackageVersionReleasedRequest {
+      /** Package language or ecosystem. */
+      language: string;
+
+      /** Package name within the language ecosystem. */
+      packageName: string;
+
+      /** Package version string. */
+      version: string;
+
+      /** Time this package version was released. */
+      releasedOn: offsetDateTime;
     }
 
     /** GitHub App installation metadata and service policy state for a repository. */
@@ -311,6 +332,9 @@ namespace ApiReviewHub {
 
     /** The kind of package version. */
     alias PackageVersionKind = "stable" | "preview";
+
+    /** GitHub pull request lifecycle status derived from state, draft, and merged state. */
+    alias GitHubPullRequestStatus = "draft" | "open" | "closed" | "merged";
 
     /** The processing status of a webhook event. */
     alias WebhookProcessingStatus = "accepted" | "duplicate" | "processing" | "processed" | "failed" | "ignored";
@@ -432,7 +456,7 @@ namespace ApiReviewHub {
     ): PackageVersion | ApiErrorResponse;
 
     /** Evaluates whether a package or API artifact has the approval needed for release. */
-    @route("/release-gates/check")
+    @route("/releases/check-gate")
     @get
     op evaluateReleaseGate(
       @header("Authorization") authorization: string,
@@ -441,6 +465,16 @@ namespace ApiReviewHub {
       @query version: string,
       @query apiHash: string,
     ): ReleaseGateDecision | ApiErrorResponse;
+
+    /** Marks a package version as released after the release gate succeeds. */
+    @route("/releases/mark-released")
+    @post
+    op markPackageVersionReleased(
+      @header("Authorization") authorization: string,
+      @body request: MarkPackageVersionReleasedRequest,
+    ): {
+      @statusCode statusCode: 204;
+    } | ApiErrorResponse;
 
     /** Service health probe. */
     @route("/health")

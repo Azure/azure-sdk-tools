@@ -27,6 +27,33 @@ This keeps the new GitHub-centered workflow from inheriting APIView UI-era assum
 
 ---
 
+## Approach Tradeoffs
+
+API Review Hub is intentionally a skinny workflow and state service. GitHub remains the review surface, Azure DevOps remains the release pipeline entry point, and API Review Hub coordinates the state and automation that would otherwise be spread across GitHub webhooks, Azure DevOps work items, and pipeline scripts.
+
+The main reason to consider this service approach is that the earlier serverless plan depended on GitHub Actions connecting to Azure DevOps through OIDC, and that connection model is considered insecure for this workflow. Because that was a foundational requirement for keeping the implementation entirely in GitHub and Azure DevOps automation, API Review Hub provides a narrower service boundary where repository automation can use the GitHub App and managed identity instead.
+
+| Benefit | Impact |
+|---|---|
+| Centralized workflow state | Review PR status, approval state, package version state, release gate decisions, and webhook processing state can be queried from one service instead of inferred from GitHub, Azure DevOps, and pipeline history. |
+| Simpler pipelines and scripts | Language-specific API review complexity can move into API Review Hub, allowing Azure DevOps pipelines and repository scripts to become fewer, smaller, and more consistent. |
+| GitHub-first review experience | Architects and service teams continue to review in GitHub, while API Review Hub stores the durable state projection needed for automation and release gating. |
+| Better automation boundary | GitHub App operations, webhook validation, branch synchronization, review PR cleanup, and webhook secret rotation are owned by one service instead of scattered through scripts. |
+| Reduced pipeline credential risk | Repository automation can use the GitHub App and managed service identity rather than expanding Azure DevOps OIDC-based access patterns across many language-specific pipelines. |
+| Future extensibility | Additional agents, dashboards, or release planner integrations can query API Review Hub through explicit APIs rather than scraping GitHub or Azure DevOps state. |
+
+| Cost or Risk | Impact |
+|---|---|
+| Continued service maintenance | API Review Hub still requires hosting, deployment, monitoring, incident response, backup strategy, and long-term ownership, similar to APIView today. |
+| Azure resource ownership | The team that owns API Review Hub must also own the App Service, Cosmos DB, Key Vault, App Configuration, Application Insights, managed identities, and deployment configuration. |
+| Central team ownership | API review workflow ownership remains concentrated in one service team instead of being fully dispersed to individual language teams. |
+| Additional persisted state | The service must keep its Cosmos DB projection consistent with GitHub events, release pipeline calls, and any migrated Azure DevOps metadata. |
+| Failure modes remain service-centered | If API Review Hub is unavailable or stale, review PR creation, release gates, or cleanup automation may be blocked or require fallback behavior, as with APIView-owned workflows today. |
+
+The alternative is to keep the workflow distributed across GitHub, Azure DevOps, and pipeline scripts. That avoids introducing a new hosted service, but it pushes coordination logic into less discoverable places, makes approval state harder to query consistently, and makes future agent or dashboard scenarios depend on scraping or reimplementing workflow logic.
+
+---
+
 ## Technology Stack
 
 - Runtime: Node.js on Azure App Service.

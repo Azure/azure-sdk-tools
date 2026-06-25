@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Azure App Configuration API Documentation</title>
+    <style>
+        :root {
+            --bg: #f6f3ee;
+            --panel: #fffdf8;
+            --ink: #24201a;
+            --muted: #6f675e;
+            --line: #ded7cd;
+            --accent: #176b87;
+            --accent-soft: #dff0f3;
+            --code: #28323a;
+            --method: #7a4c1d;
+            --model: #26613d;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(23, 107, 135, 0.16), transparent 32rem),
+                linear-gradient(135deg, #f8f4ed 0%, #eef6f5 48%, #f7f1e8 100%);
+            font-family: Georgia, "Times New Roman", serif;
+        }
+
+        a {
+            color: inherit;
+        }
+
+        .shell {
+            display: grid;
+            grid-template-columns: 18rem minmax(0, 1fr);
+            min-height: 100vh;
+        }
+
+        .toc {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow: auto;
+            padding: 1.25rem;
+            border-right: 1px solid var(--line);
+            background: rgba(255, 253, 248, 0.88);
+            backdrop-filter: blur(16px);
+        }
+
+        .toc h1 {
+            margin: 0 0 0.35rem;
+            font-family: "Segoe UI", Verdana, sans-serif;
+            font-size: 1.05rem;
+            letter-spacing: 0;
+        }
+
+        .toc .source {
+            margin: 0 0 1rem;
+            color: var(--muted);
+            font-family: "Segoe UI", Verdana, sans-serif;
+            font-size: 0.78rem;
+            line-height: 1.35;
+        }
+
+        .toc nav {
+            display: grid;
+            gap: 0.35rem;
+        }
+
+        .search-box {
+            display: grid;
+            gap: 0.35rem;
+            margin: 0 0 1rem;
+            font-family: "Segoe UI", Verdana, sans-serif;
+        }
+
+        .search-box label {
+            color: var(--muted);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .search-box input {
+            width: 100%;
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            background: #fffdf8;
+            color: var(--ink);
+            font: inherit;
+            font-size: 0.9rem;
+            padding: 0.55rem 0.65rem;
+        }
+
+        .search-box input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(23, 107, 135, 0.16);
+            outline: none;
+        }
+
+        .search-count {
+            min-height: 1rem;
+            color: var(--muted);
+            font-size: 0.74rem;
+        }
+
+        .toc details {
+            border-radius: 7px;
+        }
+
+        .toc details[open] {
+            background: rgba(223, 240, 243, 0.42);
+        }
+
+        .toc summary {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            padding: 0.48rem 0.55rem;
+            border-radius: 7px;
+            color: var(--muted);
+            cursor: pointer;
+            font-family: "Segoe UI", Verdana, sans-serif;
+            font-size: 0.86rem;
+            list-style: none;
+        }
+
+        .toc summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .toc summary::before {
+            content: "+";
+            display: inline-grid;
+            width: 1rem;
+            height: 1rem;
+            place-items: center;
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            color: var(--accent);
+            font-size: 0.8rem;
+            line-height: 1;
+        }
+
+        .toc details[open] summary::before {
+            content: "-";
+        }
+
+        .toc summary:hover,
+        .toc summary:focus {
+            color: var(--ink);
+            background: var(--accent-soft);
+            outline: none;
+        }
+
+        .toc .class-jump {
+            flex: 1;
+            min-width: 0;
+            color: inherit;
+            font-weight: 700;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .toc .member-count {
+            color: var(--muted);
+            font-size: 0.72rem;
+        }
+
+        .member-links {
+            display: grid;
+            gap: 0.15rem;
+            padding: 0 0.35rem 0.45rem 1.65rem;
+        }
+
+        .toc a {
+            display: block;
+            padding: 0.48rem 0.55rem;
+            border-radius: 6px;
+            color: var(--muted);
+            font-family: "Segoe UI", Verdana, sans-serif;
+            font-size: 0.86rem;
+            text-decoration: none;
+        }
+
+        .toc a.member-link {
+            padding: 0.32rem 0.45rem;
+            font-size: 0.78rem;
+            line-height: 1.25;
+        }
+
+        .toc a:hover,
+        .toc a:focus {
+            color: var(--ink);
+            background: var(--accent-soft);
+            outline: none;
+        }
+
+        main {
+            padding: 2rem clamp(1rem, 4vw, 4rem) 4rem;
+        }
+
+        .hero {
+            max-width: 70rem;
+            padding-bottom: 1.2rem;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .eyebrow {
+            margin: 0 0 0.4rem;
+            color: var(--accent);
+            font-family: "Segoe UI", Verdana, sans-serif;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .hero h2 {
+            margin: 0;
+            font-size: clamp(2rem, 5vw, 4.4rem);
+            line-height: 0.98;
+            letter-spacing: 0;
+        }
+
+        .hero p {
+            max-width: 48rem;
+            margin: 1rem 0 0;
+            color: var(--muted);
+            font-size: 1.08rem;
+            line-height: 1.55;
+        }
+
+        .class-section {
+            max-width: 70rem;
+            margin-top: 2.5rem;
+            scroll-margin-top: 1rem;
+        }
+
+        .class-section.is-search-match > .class-header h3,
+        .member.is-search-match h4 {
+            color: var(--accent);
+        }
+
+        .is-hidden {
+            display: none !important;
+        }
+
+        .class-header {
+            padding: 1.1rem 0;
+            border-bottom: 2px solid var(--ink);
+        }
+
+        .class-header h3 {
+            margin: 0 0 0.45rem;
+            font-size: clamp(1.55rem, 3vw, 2.35rem);
+            line-height: 1.05;
+            letter-spacing: 0;
+        }
+
+        .signature {
+            display: inline-block;
+            max-width: 100%;
+            padding: 0.35rem 0.5rem;
+            overflow-x: auto;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            background: #fbf8f1;
+            color: var(--code);
+            font-family: Consolas, "Cascadia Code", monospace;
+            font-size: 0.82rem;
+            white-space: nowrap;
+        }
+
+        .doc {
+            margin-top: 1rem;
+            color: #38322b;
+            font-size: 1rem;
+            line-height: 1.62;
+        }
+
+        .doc p {
+            margin: 0 0 0.85rem;
+        }
+
+        .doc code,
+        .member code {
+            padding: 0.08rem 0.24rem;
+            border-radius: 4px;
+            background: #ebe4d8;
+            font-family: Consolas, "Cascadia Code", monospace;
+            font-size: 0.9em;
+        }
+
+        .members {
+            display: grid;
+            gap: 0.85rem;
+            margin-top: 1.2rem;
+        }
+
+        .member {
+            padding: 1rem;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: rgba(255, 253, 248, 0.84);
+            scroll-margin-top: 1rem;
+        }
+
+        .member h4 {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+            margin: 0 0 0.55rem;
+            font-family: "Segoe UI", Verdana, sans-serif;
+            font-size: 1rem;
+            letter-spacing: 0;
+        }
+
+        .kind {
+            padding: 0.13rem 0.38rem;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .kind.model {
+            background: #e3f1e7;
+            color: var(--model);
+        }
+
+        .kind.method {
+            background: #f1e6d5;
+            color: var(--method);
+        }
+
+        .member p {
+            margin: 0.45rem 0 0;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .member ul {
+            margin: 0.6rem 0 0;
+            padding-left: 1.2rem;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        pre {
+            margin: 0.9rem 0 0;
+            padding: 0.85rem;
+            overflow-x: auto;
+            border-radius: 8px;
+            background: #1f2b30;
+            color: #f3efe5;
+            font-family: Consolas, "Cascadia Code", monospace;
+            font-size: 0.83rem;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 860px) {
+            .shell {
+                display: block;
+            }
+
+            .toc {
+                position: relative;
+                height: auto;
+                border-right: 0;
+                border-bottom: 1px solid var(--line);
+            }
+
+            .toc nav {
+                grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+            }
+
+            .toc details[open] {
+                background: transparent;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <aside class="toc">
+            <h1>App Configuration Docs</h1>
+            <p class="source">Static mock-up converted from <code>data_appconfiguration.txt</code>. Classes are sorted alphabetically.</p>
+            <div class="search-box">
+                <label for="api-search">Search API docs</label>
+                <input id="api-search" type="search" placeholder="Class, method, field, or text" autocomplete="off">
+                <div class="search-count" id="search-count" aria-live="polite"></div>
+            </div>
+            <nav id="toc-nav" aria-label="Class and member table of contents">
+            </nav>
+        </aside>
+
+        <main>
+            <section class="hero" aria-labelledby="page-title">
+                <p class="eyebrow">com.azure.data.appconfiguration</p>
+                <h2 id="page-title">Azure App Configuration REST API</h2>
+                <p>Package documentation and public API doc comments rendered into a readable reference view. This mock-up favors the APIView shape: package, class, method, model, selector, and enum documentation in one scannable page.</p>
+            </section>
+
+            <section class="class-section" id="ConfigurationAsyncClient">
+                <div class="class-header">
+                    <h3>ConfigurationAsyncClient</h3>
+                    <span class="signature">public final class ConfigurationAsyncClient</span>
+                </div>
+                <div class="doc">
+                    <p>Provides an asynchronous client containing operations for <code>ConfigurationSetting</code>, <code>FeatureFlagConfigurationSetting</code>, and <code>SecretReferenceConfigurationSetting</code> resources in an Azure App Configuration store.</p>
+                    <p>Operations include adding, retrieving, deleting, setting read-only status, listing settings, listing revisions, and adding external synchronization tokens with <code>updateSyncToken(String)</code>.</p>
+                    <pre>ConfigurationAsyncClient configurationAsyncClient = new ConfigurationClientBuilder()
+    .connectionString(connectionString)
+    .buildAsyncClient();</pre>
+                </div>
+                <div class="members">
+                    <article class="member"><h4><span class="kind method">method</span> addConfigurationSetting(ConfigurationSetting setting)</h4><span class="signature">public Mono&lt;ConfigurationSetting&gt; addConfigurationSetting(ConfigurationSetting setting)</span><p>Adds a configuration value if the key and optional label combination does not already exist. Throws for null settings, null keys, key collisions, and empty string keys.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> addConfigurationSetting(String key, String label, String value)</h4><span class="signature">public Mono&lt;ConfigurationSetting&gt; addConfigurationSetting(String key, String label, String value)</span><p>Adds a configuration value by key, optional label, and value.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> addConfigurationSettingWithResponse</h4><span class="signature">public Mono&lt;Response&lt;ConfigurationSetting&gt;&gt; addConfigurationSettingWithResponse(ConfigurationSetting setting)</span><p>Adds a setting and returns the full REST response containing the created setting.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> archiveSnapshot</h4><span class="signature">public Mono&lt;ConfigurationSnapshot&gt; archiveSnapshot(String snapshotName)</span><p>Updates a snapshot status from <code>READY</code> to <code>ARCHIVED</code>.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> archiveSnapshotWithResponse</h4><span class="signature">public Mono&lt;Response&lt;ConfigurationSnapshot&gt;&gt; archiveSnapshotWithResponse(String snapshotName, MatchConditions matchConditions)</span><p>Archives a snapshot using optional match conditions such as <code>if-match</code> to guard the operation with an ETag.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> beginCreateSnapshot</h4><span class="signature">public PollerFlux&lt;PollOperationDetails, ConfigurationSnapshot&gt; beginCreateSnapshot(String snapshotName, ConfigurationSnapshot snapshot)</span><p>Starts a long-running create snapshot operation.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> checkConfigurationSettings</h4><span class="signature">public PagedFlux&lt;ConfigurationSetting&gt; checkConfigurationSettings(SettingSelector selector)</span><p>Checks configuration settings that match a selector.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> getConfigurationSetting</h4><span class="signature">public Mono&lt;ConfigurationSetting&gt; getConfigurationSetting(ConfigurationSetting setting)</span><p>Gets a configuration setting using the key and label from the provided setting.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> getConfigurationSetting overloads</h4><span class="signature">public Mono&lt;ConfigurationSetting&gt; getConfigurationSetting(String key, String label[, OffsetDateTime acceptDateTime])</span><p>Gets the current or historical representation of a setting by key and optional label.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> setConfigurationSetting</h4><span class="signature">public Mono&lt;ConfigurationSetting&gt; setConfigurationSetting(ConfigurationSetting setting)</span><p>Updates or creates a configuration setting. The samples show changing <code>prodDBConnection</code> from <code>db_connection</code> to <code>updated_db_connection</code>.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> deleteConfigurationSetting</h4><span class="signature">public Mono&lt;ConfigurationSetting&gt; deleteConfigurationSetting(ConfigurationSetting setting)</span><p>Deletes a setting by key and optional label.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> listConfigurationSettings</h4><span class="signature">public PagedFlux&lt;ConfigurationSetting&gt; listConfigurationSettings(SettingSelector selector)</span><p>Lists settings matching filters such as key, label, tags, fields, and accept date time.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> listConfigurationSettingsForSnapshot</h4><span class="signature">public PagedFlux&lt;ConfigurationSetting&gt; listConfigurationSettingsForSnapshot(String snapshotName[, List&lt;SettingFields&gt; fields])</span><p>Lists configuration settings captured by a named snapshot.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> listLabels</h4><span class="signature">public PagedFlux&lt;SettingLabel&gt; listLabels([SettingLabelSelector selector])</span><p>Lists labels, optionally filtered by label selector options.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> listRevisions</h4><span class="signature">public PagedFlux&lt;ConfigurationSetting&gt; listRevisions(SettingSelector selector)</span><p>Lists all revisions of configuration settings matching a selector.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> listSnapshots</h4><span class="signature">public PagedFlux&lt;ConfigurationSnapshot&gt; listSnapshots(SnapshotSelector selector)</span><p>Lists snapshots matching name, status, and field filters.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> setReadOnly</h4><span class="signature">public Mono&lt;ConfigurationSetting&gt; setReadOnly(ConfigurationSetting setting, boolean isReadOnly)</span><p>Conditionally sets or clears read-only status for a configuration setting.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> recoverSnapshot</h4><span class="signature">public Mono&lt;ConfigurationSnapshot&gt; recoverSnapshot(String snapshotName)</span><p>Recovers an archived snapshot.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> getSnapshot</h4><span class="signature">public Mono&lt;ConfigurationSnapshot&gt; getSnapshot(String snapshotName)</span><p>Gets a snapshot by name, with an overload for selecting returned fields.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> updateSyncToken</h4><span class="signature">public void updateSyncToken(String token)</span><p>Adds an external synchronization token so future service requests can receive up-to-date values.</p></article>
+                </div>
+            </section>
+
+            <section class="class-section" id="ConfigurationAudience">
+                <div class="class-header"><h3>ConfigurationAudience</h3><span class="signature">public final class ConfigurationAudience extends ExpandableStringEnum&lt;ConfigurationAudience&gt;</span></div>
+                <div class="doc"><p>Specifies the target Microsoft Entra audience for the Azure App Configuration service. It is configured through <code>ConfigurationClientBuilder.audience(ConfigurationAudience)</code>.</p></div>
+                <div class="members">
+                    <article class="member"><h4><span class="kind model">field</span> AZURE_CHINA</h4><span class="signature">https://appconfig.azure.cn</span></article>
+                    <article class="member"><h4><span class="kind model">field</span> AZURE_GOVERNMENT</h4><span class="signature">https://appconfig.azure.us</span></article>
+                    <article class="member"><h4><span class="kind model">field</span> AZURE_PUBLIC_CLOUD</h4><span class="signature">https://appconfig.azure.com</span></article>
+                    <article class="member"><h4><span class="kind method">method</span> fromString / values</h4><p>Creates an audience from a string or lists known audiences.</p></article>
+                </div>
+            </section>
+
+            <section class="class-section" id="ConfigurationClient">
+                <div class="class-header"><h3>ConfigurationClient</h3><span class="signature">public final class ConfigurationClient</span></div>
+                <div class="doc">
+                    <p>Synchronous client for Azure App Configuration settings, feature flags, secret references, snapshots, labels, revisions, and sync tokens.</p>
+                    <pre>ConfigurationClient configurationClient = new ConfigurationClientBuilder()
+    .connectionString(connectionString)
+    .buildClient();</pre>
+                </div>
+                <div class="members">
+                    <article class="member"><h4><span class="kind method">method</span> addConfigurationSetting</h4><span class="signature">public ConfigurationSetting addConfigurationSetting(ConfigurationSetting setting)</span><p>Adds a configuration setting when the key and optional label do not already exist.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> addConfigurationSettingWithResponse</h4><span class="signature">public Response&lt;ConfigurationSetting&gt; addConfigurationSettingWithResponse(ConfigurationSetting setting, Context context)</span><p>Adds a setting and returns response metadata in addition to the value.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> archiveSnapshot</h4><span class="signature">public ConfigurationSnapshot archiveSnapshot(String snapshotName)</span><p>Archives a snapshot that is ready.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> beginCreateSnapshot</h4><span class="signature">public SyncPoller&lt;PollOperationDetails, ConfigurationSnapshot&gt; beginCreateSnapshot(String snapshotName, ConfigurationSnapshot snapshot, Context context)</span><p>Starts snapshot creation and returns a synchronous poller.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> get / set / delete configuration setting</h4><span class="signature">ConfigurationSetting getConfigurationSetting(...), setConfigurationSetting(...), deleteConfigurationSetting(...)</span><p>Retrieves, updates, and deletes settings using either a <code>ConfigurationSetting</code> or key and label arguments.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> listConfigurationSettings</h4><span class="signature">public PagedIterable&lt;ConfigurationSetting&gt; listConfigurationSettings(SettingSelector selector[, Context context])</span><p>Lists settings matching selector filters.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> listConfigurationSettingsForSnapshot</h4><span class="signature">public PagedIterable&lt;ConfigurationSetting&gt; listConfigurationSettingsForSnapshot(String snapshotName[, List&lt;SettingFields&gt; fields, Context context])</span><p>Lists settings for a snapshot.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> listLabels</h4><span class="signature">public PagedIterable&lt;SettingLabel&gt; listLabels([SettingLabelSelector selector, Context context])</span><p>Lists setting labels.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> listRevisions</h4><span class="signature">public PagedIterable&lt;ConfigurationSetting&gt; listRevisions(SettingSelector selector[, Context context])</span><p>Lists revisions of matching configuration settings.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> listSnapshots</h4><span class="signature">public PagedIterable&lt;ConfigurationSnapshot&gt; listSnapshots(SnapshotSelector selector[, Context context])</span><p>Lists snapshots.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> setReadOnly</h4><span class="signature">public ConfigurationSetting setReadOnly(ConfigurationSetting setting, boolean isReadOnly)</span><p>Sets or clears read-only status.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> recoverSnapshot / getSnapshot</h4><span class="signature">ConfigurationSnapshot recoverSnapshot(String snapshotName), getSnapshot(String snapshotName)</span><p>Recovers archived snapshots and retrieves snapshots by name.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> getEndpoint / updateSyncToken</h4><p>Returns the configured endpoint and adds synchronization tokens.</p></article>
+                </div>
+            </section>
+
+            <section class="class-section" id="ConfigurationClientBuilder">
+                <div class="class-header"><h3>ConfigurationClientBuilder</h3><span class="signature">public final class ConfigurationClientBuilder implements TokenCredentialTrait, ConnectionStringTrait, HttpTrait, ConfigurationTrait, EndpointTrait</span></div>
+                <div class="doc"><p>Fluent builder for constructing <code>ConfigurationClient</code> and <code>ConfigurationAsyncClient</code> instances. The client requires an App Configuration endpoint and credential, or a connection string.</p></div>
+                <div class="members">
+                    <article class="member"><h4><span class="kind method">method</span> connectionString</h4><span class="signature">public ConfigurationClientBuilder connectionString(String connectionString)</span><p>Configures the service endpoint and access credential from a connection string.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> credential / audience / endpoint</h4><p>Configures token credential authentication, cloud audience, and service endpoint.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> pipeline / httpClient / policies</h4><p>Allows a caller to provide a custom HTTP pipeline, HTTP client, policies, retry behavior, logging, and client options.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> buildAsyncClient</h4><span class="signature">public ConfigurationAsyncClient buildAsyncClient()</span><p>Constructs the asynchronous client.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> buildClient</h4><span class="signature">public ConfigurationClient buildClient()</span><p>Constructs the synchronous client.</p></article>
+                </div>
+            </section>
+
+            <section class="class-section" id="ConfigurationServiceVersion">
+                <div class="class-header"><h3>ConfigurationServiceVersion</h3><span class="signature">public enum ConfigurationServiceVersion implements ServiceVersion</span></div>
+                <div class="doc"><p>The Azure App Configuration service API versions supported by this client library.</p></div>
+                <div class="members"><article class="member"><h4><span class="kind model">values</span> V1_0, V2023_10_01, V2023_11_01</h4><p><code>getLatest()</code> returns <code>V2023_11_01</code>; <code>getVersion()</code> returns the service version string.</p></article></div>
+            </section>
+
+            <section class="class-section" id="ConfigurationSetting">
+                <div class="class-header"><h3>ConfigurationSetting</h3><span class="signature">public class ConfigurationSetting implements JsonSerializable&lt;ConfigurationSetting&gt;</span></div>
+                <div class="doc"><p>A resource identified by a unique combination of <code>key</code> and <code>label</code>. By default, the label is null; use <code>NO_LABEL</code> to explicitly reference the default label.</p></div>
+                <div class="members">
+                    <article class="member"><h4><span class="kind model">constant</span> NO_LABEL</h4><span class="signature">public static final String NO_LABEL = "\0"</span></article>
+                    <article class="member"><h4><span class="kind method">properties</span> key, label, value, contentType, description, etag, tags</h4><p>Standard getters and fluent setters expose the setting identity, metadata, value, and tags.</p></article>
+                    <article class="member"><h4><span class="kind method">method</span> isReadOnly / getLastModified</h4><p>Returns lock status and last modification time from the service representation.</p></article>
+                </div>
+            </section>
+
+            <section class="class-section" id="ConfigurationSettingsFilter">
+                <div class="class-header"><h3>ConfigurationSettingsFilter</h3><span class="signature">public final class ConfigurationSettingsFilter implements JsonSerializable&lt;ConfigurationSettingsFilter&gt;</span></div>
+                <div class="doc"><p>Enables filtering key-values for snapshot creation. Syntax reference: <code>https://aka.ms/azconfig/docs/restapisnapshots</code>.</p></div>
+                <div class="members"><article class="member"><h4><span class="kind method">properties</span> key, label, tags</h4><p>The constructor requires a key; label and tags can be set fluently.</p></article></div>
+            </section>
+
+            <section class="class-section" id="ConfigurationSnapshot">
+                <div class="class-header"><h3>ConfigurationSnapshot</h3><span class="signature">public final class ConfigurationSnapshot implements JsonSerializable&lt;ConfigurationSnapshot&gt;</span></div>
+                <div class="doc"><p>The Configuration Snapshot model.</p></div>
+                <div class="members"><article class="member"><h4><span class="kind method">properties</span> filters, status, composition, retention, size, tags</h4><p>Captures snapshot filters and metadata such as created time, expiration time, item count, size, ETag, description, and tags.</p></article></div>
+            </section>
+
+            <section class="class-section" id="ConfigurationSnapshotStatus">
+                <div class="class-header"><h3>ConfigurationSnapshotStatus</h3><span class="signature">public final class ConfigurationSnapshotStatus extends ExpandableStringEnum&lt;ConfigurationSnapshotStatus&gt;</span></div>
+                <div class="doc"><p>The desired status of a snapshot.</p></div>
+                <div class="members"><article class="member"><h4><span class="kind model">values</span> PROVISIONING, READY, ARCHIVED, FAILED</h4><p>Includes <code>fromString(String)</code> and <code>values()</code>.</p></article></div>
+            </section>
+
+            <section class="class-section" id="FeatureFlagConfigurationSetting">
+                <div class="class-header"><h3>FeatureFlagConfigurationSetting</h3><span class="signature">public final class FeatureFlagConfigurationSetting extends ConfigurationSetting</span></div>
+                <div class="doc"><p>Allows customization of feature flags used to dynamically administer a feature's lifecycle. Feature flags can enable or disable features.</p></div>
+                <div class="members">
+                    <article class="member"><h4><span class="kind model">constant</span> KEY_PREFIX</h4><span class="signature">.appconfig.featureflag/</span></article>
+                    <article class="member"><h4><span class="kind method">constructor</span> FeatureFlagConfigurationSetting(String featureId, boolean isEnabled)</h4><p>Creates a feature flag setting with an id and enabled state.</p></article>
+                    <article class="member"><h4><span class="kind method">properties</span> clientFilters, description, displayName, enabled, featureId</h4><p>Supports feature flag metadata, filters, and overridden fluent setters inherited from <code>ConfigurationSetting</code>.</p></article>
+                </div>
+            </section>
+
+            <section class="class-section" id="FeatureFlagFilter">
+                <div class="class-header"><h3>FeatureFlagFilter</h3><span class="signature">public final class FeatureFlagFilter</span></div>
+                <div class="doc"><p>A filter in a feature flag setting. A filter is a rule for evaluating feature flag state.</p></div>
+                <div class="members"><article class="member"><h4><span class="kind method">properties</span> name, parameters</h4><p>The constructor requires a filter name. Parameters can be added individually or set as a map.</p></article></div>
+            </section>
+
+            <section class="class-section" id="SecretReferenceConfigurationSetting">
+                <div class="class-header"><h3>SecretReferenceConfigurationSetting</h3><span class="signature">public final class SecretReferenceConfigurationSetting extends ConfigurationSetting</span></div>
+                <div class="doc"><p>Represents a configuration setting that references a Key Vault secret.</p></div>
+                <div class="members"><article class="member"><h4><span class="kind method">constructor</span> SecretReferenceConfigurationSetting(String key, String secretId)</h4><p>Creates a setting with a key and secret identifier. Includes <code>getSecretId()</code>, <code>setSecretId(String)</code>, and overridden fluent setters.</p></article></div>
+            </section>
+
+            <section class="class-section" id="SettingFields">
+                <div class="class-header"><h3>SettingFields</h3><span class="signature">public final class SettingFields extends ExpandableStringEnum&lt;SettingFields&gt;</span></div>
+                <div class="doc"><p>Fields in <code>ConfigurationSetting</code> that can be returned from GET queries.</p></div>
+                <div class="members"><article class="member"><h4><span class="kind model">values</span> KEY, LABEL, VALUE, CONTENT_TYPE, ETAG, LAST_MODIFIED, IS_READ_ONLY, TAGS, DESCRIPTION</h4><p>Includes mapping helpers such as <code>fromString</code>, <code>values</code>, and deprecated <code>toStringMapper</code>.</p></article></div>
+            </section>
+
+            <section class="class-section" id="SettingLabel">
+                <div class="class-header"><h3>SettingLabel</h3><span class="signature">public final class SettingLabel implements JsonSerializable&lt;SettingLabel&gt;</span></div>
+                <div class="doc"><p>The Setting Label model.</p></div>
+                <div class="members"><article class="member"><h4><span class="kind method">property</span> name</h4><span class="signature">public String getName()</span></article></div>
+            </section>
+
+            <section class="class-section" id="SettingLabelFields">
+                <div class="class-header"><h3>SettingLabelFields</h3><span class="signature">public final class SettingLabelFields extends ExpandableStringEnum&lt;SettingLabelFields&gt;</span></div>
+                <div class="doc"><p>Defines fields available for setting label queries.</p></div>
+                <div class="members"><article class="member"><h4><span class="kind model">value</span> NAME</h4><p>Includes <code>fromString(String)</code> and <code>values()</code>.</p></article></div>
+            </section>
+
+            <section class="class-section" id="SettingLabelSelector">
+                <div class="class-header"><h3>SettingLabelSelector</h3><span class="signature">public final class SettingLabelSelector</span></div>
+                <div class="doc"><p>Contains label selector options for GET requests to the service.</p></div>
+                <div class="members"><article class="member"><h4><span class="kind method">properties</span> acceptDateTime, fields, nameFilter</h4><p>Filters labels by name, selected fields, and historical accept datetime.</p></article></div>
+            </section>
+
+            <section class="class-section" id="SettingSelector">
+                <div class="class-header"><h3>SettingSelector</h3><span class="signature">public class SettingSelector</span></div>
+                <div class="doc"><p>Selects configuration settings from the App Configuration service. It can filter by label, point-in-time representation, returned fields, key, match conditions, and tags.</p></div>
+                <div class="members"><article class="member"><h4><span class="kind method">properties</span> keyFilter, labelFilter, acceptDateTime, fields, matchConditions, tagsFilter</h4><p>Used by client list, revision, and check operations.</p></article></div>
+            </section>
+
+            <section class="class-section" id="SnapshotComposition">
+                <div class="class-header"><h3>SnapshotComposition</h3><span class="signature">public final class SnapshotComposition extends ExpandableStringEnum&lt;SnapshotComposition&gt;</span></div>
+                <div class="doc"><p>Describes how key-values inside a snapshot are composed. <code>key</code> prevents duplicate keys, while <code>key_label</code> prevents duplicate key and label combinations.</p></div>
+                <div class="members"><article class="member"><h4><span class="kind model">values</span> KEY, KEY_LABEL</h4><p>Includes <code>fromString(String)</code> and <code>values()</code>.</p></article></div>
+            </section>
+
+            <section class="class-section" id="SnapshotFields">
+                <div class="class-header"><h3>SnapshotFields</h3><span class="signature">public final class SnapshotFields extends ExpandableStringEnum&lt;SnapshotFields&gt;</span></div>
+                <div class="doc"><p>Defines fields that can be returned for snapshot queries.</p></div>
+                <div class="members"><article class="member"><h4><span class="kind model">values</span> NAME, STATUS, FILTERS, SNAPSHOT_COMPOSITION, CREATED_AT, EXPIRES_AT, RETENTION_PERIOD, ITEM_COUNT, SIZE_IN_BYTES, ETAG, TAGS, DESCRIPTION</h4><p>Maps snapshot field names to service field strings.</p></article></div>
+            </section>
+
+            <section class="class-section" id="SnapshotSelector">
+                <div class="class-header"><h3>SnapshotSelector</h3><span class="signature">public final class SnapshotSelector</span></div>
+                <div class="doc"><p>Optional bag for selecting snapshots.</p></div>
+                <div class="members"><article class="member"><h4><span class="kind method">properties</span> fields, nameFilter, status</h4><p>Filters snapshots by name and status, and selects returned snapshot fields.</p></article></div>
+            </section>
+        </main>
+    </div>
+    <script>
+        const tocNav = document.querySelector("#toc-nav");
+        const searchInput = document.querySelector("#api-search");
+        const searchCount = document.querySelector("#search-count");
+        const sections = Array.from(document.querySelectorAll(".class-section"));
+
+        function slugify(value) {
+            return value
+                .toLowerCase()
+                .replace(/&lt;|&gt;|\[[^\]]*\]|\([^)]*\)/g, "")
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, "") || "member";
+        }
+
+        const index = sections.map(section => {
+            const className = section.querySelector("h3").textContent.trim();
+            const members = Array.from(section.querySelectorAll(".member")).map((member, memberIndex) => {
+                const heading = member.querySelector("h4").textContent.replace(/\s+/g, " ").trim();
+                member.id = `${section.id}-${slugify(heading)}-${memberIndex + 1}`;
+                return {
+                    element: member,
+                    id: member.id,
+                    title: heading,
+                    searchText: member.textContent.toLowerCase()
+                };
+            });
+
+            return {
+                element: section,
+                id: section.id,
+                className,
+                members,
+                searchText: section.textContent.toLowerCase()
+            };
+        });
+
+        function buildToc() {
+            const fragment = document.createDocumentFragment();
+            index.forEach(item => {
+                const details = document.createElement("details");
+                details.dataset.classId = item.id;
+
+                const summary = document.createElement("summary");
+                const classLink = document.createElement("a");
+                classLink.href = `#${item.id}`;
+                classLink.className = "class-jump";
+                classLink.textContent = item.className;
+                classLink.addEventListener("click", event => event.stopPropagation());
+
+                const count = document.createElement("span");
+                count.className = "member-count";
+                count.textContent = item.members.length;
+
+                summary.append(classLink, count);
+                details.append(summary);
+
+                const memberLinks = document.createElement("div");
+                memberLinks.className = "member-links";
+                item.members.forEach(member => {
+                    const link = document.createElement("a");
+                    link.href = `#${member.id}`;
+                    link.className = "member-link";
+                    link.dataset.memberId = member.id;
+                    link.textContent = member.title;
+                    memberLinks.append(link);
+                });
+
+                details.append(memberLinks);
+                fragment.append(details);
+            });
+            tocNav.append(fragment);
+        }
+
+        function applySearch() {
+            const query = searchInput.value.trim().toLowerCase();
+            let visibleSections = 0;
+            let visibleMembers = 0;
+
+            index.forEach(item => {
+                const classMatches = !query || item.className.toLowerCase().includes(query) || item.searchText.includes(query);
+                let memberMatches = 0;
+
+                item.members.forEach(member => {
+                    const matches = !query || member.title.toLowerCase().includes(query) || member.searchText.includes(query) || item.className.toLowerCase().includes(query);
+                    member.element.classList.toggle("is-hidden", !matches);
+                    member.element.classList.toggle("is-search-match", Boolean(query && matches));
+                    const memberLink = tocNav.querySelector(`[data-member-id="${member.id}"]`);
+                    memberLink.classList.toggle("is-hidden", !matches);
+                    if (matches) {
+                        memberMatches += 1;
+                    }
+                });
+
+                const visible = classMatches || memberMatches > 0;
+                item.element.classList.toggle("is-hidden", !visible);
+                item.element.classList.toggle("is-search-match", Boolean(query && visible));
+                const details = tocNav.querySelector(`[data-class-id="${item.id}"]`);
+                details.classList.toggle("is-hidden", !visible);
+                details.open = Boolean(query && visible);
+
+                if (visible) {
+                    visibleSections += 1;
+                    visibleMembers += memberMatches;
+                }
+            });
+
+            searchCount.textContent = query
+                ? `${visibleSections} classes, ${visibleMembers} members match`
+                : `${index.length} classes`;
+        }
+
+        buildToc();
+        applySearch();
+        searchInput.addEventListener("input", applySearch);
+    </script>
+</body>
+</html>

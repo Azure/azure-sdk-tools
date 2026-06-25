@@ -1,0 +1,13 @@
+{
+  "name": "apiview-proposals",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "compile:proposal": "tsp compile proposal.tsp --no-emit"
+  },
+  "devDependencies": {
+    "@typespec/compiler": "latest",
+    "@typespec/http": "latest"
+  }
+}

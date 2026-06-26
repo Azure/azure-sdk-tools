@@ -28,7 +28,7 @@ trigger:
       - eng/common/pipelines/templates/steps/vally-summarize.yml
       - eng/common/pipelines/templates/stages/archetype-vally-eval.yml
       - eng/common/scripts/eval/**
-      - eng/skill-eval/**
+      - eng/common/vally-eval/**
 
 pr: none
 

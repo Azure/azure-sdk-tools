@@ -1,0 +1,25 @@
+# Values in this file are intentionally environment-neutral. Resource names are
+# suffixed with `-staging` or `-backup` when ENVIRONMENT_NAME is set to those
+# values. Production uses the names as written.
+RG_LOCATION: eastus2
+RG_NAME: api-review-hub
+SUBSCRIPTION_ID: a18897a6-7e44-457d-9260-f2854c0aca42
+TENANT_ID: 72f988bf-86f1-41af-91ab-2d7cd011db47
+
+APP_SERVICE_PLAN_NAME: api-review-hub-asp
+WEBAPP_NAME: api-review-hub
+APPLICATION_INSIGHTS_NAME: api-review-hub-appinsights
+
+COSMOS_ACCOUNT_NAME: api-review-hub-cosmos
+COSMOS_DB_NAME: api-review-hub
+
+KEYVAULT_NAME: api-reviewhub-kv
+APP_CONFIGURATION_NAME: api-review-hub-appconfig
+
+# Non-secret settings copied into App Configuration. Leave blank until the
+# GitHub App and ADO caller model are finalized.
+GITHUB_APP_ID: 1086291
+GITHUB_APP_KEYVAULT_URL: "https://azuresdkengkeyvault.vault.azure.net/"
+GITHUB_APP_KEY_NAME: "azure-sdk-automation"
+GITHUB_INSTALL_OWNER: Azure
+ALLOWED_REPOSITORY_OWNERS: Azure

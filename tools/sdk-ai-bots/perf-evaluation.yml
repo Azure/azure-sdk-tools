@@ -66,9 +66,11 @@ extends:
                         pip install --pre -r requirements.txt
                         export AZURE_CLIENT_ID=$servicePrincipalId
                         export AZURE_TENANT_ID=$tenantId
-                        nohup python server.py </dev/null >/dev/null 2>&1 &
-                        sleep 20
-                        lsof -ti:8089
+                        EVAL_CACHE="$(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/cache"
+                        mkdir -p "$EVAL_CACHE"
+                        nohup python server.py </dev/null > "$EVAL_CACHE/server.log" 2>&1 &
+                        sleep 5
+                        lsof -ti:8089 || { echo "##[error]agent server failed to start"; cat "$EVAL_CACHE/server.log" || true; exit 1; }
                     env:
                       SYSTEM_ACCESSTOKEN: $(System.AccessToken)
                       AZURESUBSCRIPTION_SERVICE_CONNECTION_ID: $(AZURESUBSCRIPTION_SERVICE_CONNECTION_ID)
@@ -76,6 +78,10 @@ extends:
                   - script: |
                       pip install -r requirements.txt
                     displayName: 'install requirements'
+                    workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
+                  - script: |
+                      bash wait_for_agent_server.sh "$(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/cache/server.log"
+                    displayName: 'wait for agent server'
                     workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
                   - task: AzureCLI@2
                     displayName: 'Run Perf Evals (${{ scenario }})'

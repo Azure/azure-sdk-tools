@@ -83,10 +83,6 @@ extends:
                   pip install -r requirements.txt
                 displayName: 'install requirements'
                 workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
-              - script: |
-                  bash wait_for_agent_server.sh "$(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/cache/server.log"
-                displayName: 'wait for agent server'
-                workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
               - task: AzureCLI@2
                 displayName: 'Run Evals ($(scenario))'
                 inputs:

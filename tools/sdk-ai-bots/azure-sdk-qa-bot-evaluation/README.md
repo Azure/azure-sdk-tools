@@ -78,7 +78,8 @@ python -m dataset.review --target basic      # or --target perf
 python -m dataset.upload --target basic      # qa-bot-basic-<scenario>:<scenario>-YYYY-MM-DD
 ```
 
-`evaluation_datasets/_staging/` is git-ignored; `evaluation_datasets/basic/`, `evaluation_datasets/perf/` and
+`evaluation_datasets/_staging/` is committed (shared review state, so concurrent
+contributors don't re-curate the same cases); `evaluation_datasets/basic/`, `evaluation_datasets/perf/` and
 `evaluation_datasets/registry.json` are committed.
 
 ## Part 2 — Running evaluations

@@ -18,9 +18,6 @@ online-tests/
 eval-archive/
 smoke-tests/
 
-# Human-review scratch space under evaluation_datasets; never commit.
-evaluation_datasets/_staging/
-
 # Local secrets / env.
 .env
 auth.json

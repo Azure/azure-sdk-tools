@@ -1,8 +1,3 @@
-parameters:
-- name: PythonVersion
-  type: string
-  default: '3.10'
-
 trigger:
   branches:
     include:
@@ -46,9 +41,10 @@ extends:
                 apispec:
                   testPrefix: apispec
             steps:
-              - template: /eng/pipelines/templates/steps/use-python-version.yml
-                parameters:
-                  versionSpec: '${{ parameters.PythonVersion }}'
+              - task: UsePythonVersion@0
+                displayName: "Use Python 3.12"
+                inputs:
+                  versionSpec: '3.12'
               - script: |
                   python --version
                 displayName: 'check python'

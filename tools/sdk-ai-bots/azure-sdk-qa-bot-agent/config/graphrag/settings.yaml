@@ -1,0 +1,76 @@
+# GraphRAG query-side configuration for the Azure SDK QA Bot Agent.
+#
+# This file mirrors the model + vector-store config of the
+# `azure-sdk-qa-bot-knowledge-graph-sync` project so we can query the same
+# AI Search indexes and run local/global search via the GraphRAG Python API.
+#
+# Only the sections needed for QUERY are present (no input / extract_graph /
+# community_reports prompts, etc.). Indexing happens in the sync project.
+#
+# Environment variables resolved by graphrag_common.config._parse_env_variables:
+#   AOAI_CHAT_COMPLETIONS_ENDPOINT — e.g. https://<resource>.openai.azure.com
+#   AI_SEARCH_BASE_URL             — e.g. https://<service>.search.windows.net
+#   AI_SEARCH_INDEX_TEXT_UNITS     — text units index name
+#   AI_SEARCH_INDEX_ENTITIES       — entity description index name
+#   AI_SEARCH_INDEX_COMMUNITIES    — community full-content index name
+
+completion_models:
+  default_completion_model:
+    model_provider: azure
+    model: gpt-5.4
+    auth_method: azure_managed_identity
+    api_base: ${AOAI_CHAT_COMPLETIONS_ENDPOINT}
+    api_version: "2024-12-01-preview"
+    cognitive_services_endpoint: https://cognitiveservices.azure.com/.default
+
+embedding_models:
+  default_embedding_model:
+    model_provider: azure
+    model: text-embedding-3-small
+    auth_method: azure_managed_identity
+    api_base: ${AOAI_CHAT_COMPLETIONS_ENDPOINT}
+    api_version: "2024-12-01-preview"
+    cognitive_services_endpoint: https://cognitiveservices.azure.com/.default
+    rate_limit:
+      type: sliding_window
+      period_in_seconds: 60
+      requests_per_period: 60
+      tokens_per_period: 100000
+    retry:
+      type: exponential_backoff
+      max_retries: 5
+      base_delay: 2.0
+      max_delay: 30.0
+      jitter: true
+
+vector_store:
+  type: azure_ai_search
+  url: ${AI_SEARCH_BASE_URL}
+  audience: "https://search.azure.com"
+  index_schema:
+    text_unit_text:
+      index_name: "azuresdkqabot-dev-search-index-text-units"
+      vector_size: 1536
+    entity_description:
+      index_name: "azuresdkqabot-dev-search-index-entities"
+      vector_size: 1536
+    community_full_content:
+      index_name: "azuresdkqabot-dev-search-index-communities"
+      vector_size: 1536
+
+# Local Search latency tuning.
+#
+# Defaults yield ~21s/query end-to-end (single LLM call). We keep the
+# default ``max_context_tokens`` (12000) so the prompt has room for
+# both the entity neighbourhood AND the community summaries that give
+# Local Search its cross-document grounding — trimming it materially
+# (e.g. to 4000) triggers the "Reached token limit" fallback and drops
+# the community context entirely.
+#
+# top_k_entities / top_k_relationships are tightened from 10 → 5: the
+# 1-hop neighbourhood is still useful at this depth and we cut a small
+# amount of prompt-assembly work without hurting answer quality on the
+# bot's snapshot.
+local_search:
+  top_k_entities: 5         # default 10 — entities matched per query
+  top_k_relationships: 5    # default 10 — relationships per matched entity

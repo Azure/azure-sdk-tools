@@ -248,6 +248,29 @@ model IntentionResponse {
   reason: string;
 }
 
+// ── Graph Models ─────────────────────────────────────────────
+
+@doc("Request for a GraphRAG Local-Search retrieval")
+model GraphQueryRequest {
+  @doc("Natural-language query to retrieve graph-grounded references for")
+  query: string;
+
+  @doc("""
+    Optional tenant identifier; when set to a known tenant, graph retrieval
+    is restricted to entities sourced from that tenant's knowledge sources.
+    """)
+  tenant_id?: string;
+}
+
+@doc("Response from a GraphRAG Local-Search retrieval")
+model GraphSearchResult {
+  @doc("The graph-grounded references retrieved for the query")
+  references?: Reference[];
+
+  @doc("The query the references were retrieved for")
+  query: string;
+}
+
 // ── Knowledge Models ─────────────────────────────────────────
 
 @doc("Request for knowledge retrieval")

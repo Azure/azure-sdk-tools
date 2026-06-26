@@ -71,11 +71,11 @@ stages:
 
       - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
         parameters:
-          # This artifact is published for debugging/information only and has no downstream
-          # consumer, so scope its name per job attempt to avoid "cannot override artifact"
-          # collisions when the job is retried.
-          ArtifactName: 'github-team-user-store-cache-Attempt$(System.JobAttempt)'
+          # Published for debugging/information only; no downstream consumer. The template
+          # renames to a per-attempt name on failure, so retries don't collide on this artifact.
+          ArtifactName: 'github-team-user-store-cache'
           ArtifactPath: '$(CacheOutputDirectory)'
+          CustomCondition: succeededOrFailed()
 
       - ${{ if or(parameters.AuditCodeowners, eq(variables['Build.Reason'], 'Schedule')) }}:
         - template: /eng/common/pipelines/templates/steps/install-azsdk-cli.yml
@@ -104,13 +104,15 @@ stages:
           scriptType: pscore
           scriptLocation: inlineScript
           inlineScript: pipeline-owners-extractor --output "$(OutputPath)"
-      - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
-        parameters:
-          # The pipeline-witness service consumes this artifact by the exact name 'pipelineOwners'.
-          # publish-artifact.yml keeps this name on success and only renames it on failure, so the
-          # consumer keeps working while retries no longer collide.
-          ArtifactName: 'pipelineOwners'
-          ArtifactPath: '$(OutputPath)'
+      # The pipeline-witness service consumes this artifact by the exact name 'pipelineOwners'
+      # (AzurePipelinesProcessor.GetOwnersFromBuildArtifactAsync), so it must keep that stable
+      # name on every run. It is the last step in the job, so a fixed name does not collide on
+      # retry: a successful publish means the job succeeds (no retry), and if an earlier step
+      # failed the extractor never produced $(OutputPath) to publish.
+      - publish: $(OutputPath)
+        displayName: Publish pipelineOwners artifact
+        artifact: pipelineOwners
+        condition: succeededOrFailed()
 
 - stage: GenerateCodeowners
   dependsOn: BuildTeamCache

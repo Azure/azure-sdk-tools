@@ -88,12 +88,16 @@ The workflow is an orchestration layer that:
 The end-to-end flow consists of 5 stages (10 steps). Gaps are annotated inline.
 
 ```
-                                    ┌─────────────────┐
-                                    │  User provides  │
-                                    │  initial prompt │
-                                    └────────┬────────┘
-                                             │
-                                             ▼
+                         ┌─────────────────────────────────┐
+                         │  ENTRY POINTS                   │
+                         ├─────────────────────────────────┤
+                         │ A) User provides initial prompt │
+                         │ B) Spec PR merge triggers       │
+                         │    auto release plan creation   │
+                         │    (two-stage pipeline Stage 1) │
+                         └──────────────┬──────────────────┘
+                                        │
+                                        ▼
               ┌───────────────────────────────────────────────────┐
               │  STEP 0: Create or Find Release Plan             │
               │  [Release Plan Skill]                            │
@@ -147,8 +151,15 @@ The end-to-end flow consists of 5 stages (10 steps). Gaps are annotated inline.
 │ (loop until passing)    │    (if user wants   │ package names           │
 └─────────────────────────┘     to fix)         └───────────┬─────────────┘
                                                             │
-  Gap: Breaking change findings require manual fix.         │
-  No agent auto-resolves suppression decorators.            │
+  Gap: Breaking change findings require manual fix.         ▼
+  No agent auto-resolves suppression decorators.  ┌─────────────────────────┐
+                                                  │ Namespace Approval      │
+                                                  │ (new packages only)     │
+                                                  │ • Check if pkg name     │
+                                                  │   already approved      │
+                                                  │ • Request approval if   │
+                                                  │   new namespace         │
+                                                  └───────────┬─────────────┘
                                                             │
                                                             ▼
               ┌───────────────────────────────────────────────────┐
@@ -209,41 +220,31 @@ The end-to-end flow consists of 5 stages (10 steps). Gaps are annotated inline.
 │ PIPELINE generation     │                     │ LOCAL generation        │
 │ (auto on spec merge)    │                     │ (developer choice)      │
 ├─────────────────────────┤                     ├─────────────────────────┤
-│ • spec-gen-sdk runs     │                     │ • azsdk_package_        │
-│ • Generates per lang    │                     │   generate_code         │
-│ • Creates SDK PRs       │                     │ • Build & test locally  │
-│   automatically         │                     │ • Create PR manually    │
-└───────────┬─────────────┘                     └───────────┬─────────────┘
+│ • Two-stage pipeline:   │                     │ • azsdk_package_        │
+│   1) Release plan create│                     │   generate_code         │
+│   2) SDK gen per lang   │                     │ • Build & test locally  │
+│ • Auto-creates SDK PRs  │                     │ • Create PR manually    │
+│ • Trigger: spec merge   │                     └───────────┬─────────────┘
+│   OR manual invocation  │                                 │
+└───────────┬─────────────┘                                 │
             │                                               │
-            │                        ┌──────────────────────┘
-            │                        │
-            │   ┌────────────────────┴────────────────────┐
-            │   │ PASS                                    │ FAIL
-            │   ▼                                         ▼
-            │  ┌──────────────────────┐    ┌──────────────────────┐
-            │  │ SDK PRs created      │    │ Generation failed    │
-            │  │ in language repos    │    │                      │
-            │  └──────────┬───────────┘    └──────────┬───────────┘
-            │             │                           │
-            │             │                  Gap: Error buried in
-            │             │                  build logs. No structured
-            │             │                  report (which lang, which
-            │             │                  step, what error).
-            │             │                           │
-            │             │                           ▼
-            │             │                ┌──────────────────────┐
-            │             │                │ Manual debug or      │
-            │             │                │ pipeline-troubleshoot│
-            │             │                │ agent                │
-            │             │                └──────────┬───────────┘
-            │             │                           │
-            └─────────────┼───────────────────────────┘
-                          │
-                          ▼
-              ┌───────────────────────────────────────────────────┐
-              │  STEP 6: Link SDK PRs to Release Plan            │
-              │  [Release Plan Skill]                            │
-              └───────────────────────┬───────────────────────────┘
+ ┌──────────┴──────────┐                                    │
+ │ PASS                │ FAIL                               │
+ ▼                     ▼                                    │
+┌────────────────┐  ┌─────────────────────┐                 │
+│ PRs created &  │  │ Report failure,     │                 │
+│ linked to      │  │ retry or escalate   │                 │
+│ release plan   │  │ (loop back to fix   │                 │
+│ automatically  │  │  TypeSpec & retry)  │                 │
+└───────┬────────┘  └─────────────────────┘                 │
+        │                                                   │
+        └───────────────────────┬───────────────────────────┘
+                                │
+                                ▼
+             ┌───────────────────────────────────────────────────┐
+             │  STEP 6: Link SDK PRs to Release Plan            │
+             │  (Local gen only — pipeline auto-links)          │
+             └───────────────────────┬───────────────────────────┘
                                       │
                                       ▼
 ╔═══════════════════════════════════════════════════════════════════╗
@@ -389,7 +390,7 @@ PR in `azure-rest-api-specs` triggers: compilation → LintDiff → breaking cha
 
 #### Stage 3: SDK Generation
 
-**Trigger**: When a spec PR is merged in `azure-rest-api-specs`, the spec-gen-sdk pipeline automatically kicks off SDK generation for each configured language and creates SDK PRs in the corresponding language repos (e.g., `azure-sdk-for-python`). Alternatively, developers can generate locally using azsdk-cli for faster iteration before opening a PR.
+**Trigger**: When a spec PR is merged in `azure-rest-api-specs`, a two-stage pipeline runs: Stage 1 automatically creates/finds the release plan, Stage 2 triggers SDK generation for each configured language and creates SDK PRs in the corresponding language repos (e.g., `azure-sdk-for-python`). The `azsdk_run_generate_sdk` tool drives this via `SpecWorkflowTool`, taking TypeSpec project path, release plan work item ID, language, and release type as inputs. If an existing SDK PR is already open for that language (linked in the release plan), the pipeline pushes to the same branch rather than creating a new PR. Alternatively, developers can generate locally using azsdk-cli for faster iteration before opening a PR.
 
 For each target language: tsp-client syncs TypeSpec → emitter generates code → customizations applied → build → test (playback) → metadata updated → SDK PR created. Two paths: local (developer iterates, creates PR manually) or pipeline (spec-gen-sdk generates and creates PRs automatically on spec PR merge).
 
@@ -557,3 +558,6 @@ This workflow is complete when:
   - Options: (a) PR comments only, (b) Structured JSON output + PR comment summary, (c) Both
 
 - [ ] **Q5**: For Patch releases — what triggers the workflow? Is it different from Preview/GA?
+
+- [ ] **Q6**: Is there a process to auto-release SDKs after SDK PRs are merged? Auto SDK PR creation is actively being built via the two-stage pipeline (release plan creation → SDK generation), but the auto-release step after merge is unclear — is anyone actively working on it?
+  - Context: Auto-release would complete the end-to-end automation (spec merge → release plan → SDK generation → SDK PR → merge → publish). Currently Stage 5 (Release Coordination) requires manual trigger.

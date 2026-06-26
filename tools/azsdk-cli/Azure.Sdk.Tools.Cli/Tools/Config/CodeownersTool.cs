@@ -524,43 +524,58 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             string? repo = null,
             CancellationToken ct = default)
         {
+            var packageName = CheckPackageHelper.ResolvePackageName(directoryPath);
+
             try
             {
+                string? resolvedRepo = repo;
                 string cacheSource;
                 if (!string.IsNullOrEmpty(codeownersCachePath))
                 {
-                    if (!File.Exists(codeownersCachePath))
+                    if (!IsLocalFileOrHttpsUrl(codeownersCachePath))
                     {
-                        return new DefaultCommandResponse
-                        {
-                            ResponseError = $"CODEOWNERS cache file not found: {codeownersCachePath}"
-                        };
+                        return CreateCheckPackageFailureResponse(
+                            directoryPath,
+                            packageName,
+                            resolvedRepo,
+                            "invalid_cache_source",
+                            $"CODEOWNERS cache path must be an existing file or HTTPS URL: {codeownersCachePath}",
+                            "Run check-package again with a valid --codeowners-cache path or HTTPS URL, or omit --codeowners-cache to use the repo cache.");
                     }
-                    cacheSource = codeownersCachePath;
+
+                    cacheSource = NormalizeCodeownersCacheSource(codeownersCachePath);
                 }
                 else
                 {
-                    repo = await ResolveRepo(repo, ct);
+                    resolvedRepo = await ResolveRepo(repo, ct);
                     // repo is "Azure/azure-sdk-for-net" → split to build URL
-                    var parts = repo.Split('/');
+                    var parts = resolvedRepo.Split('/');
                     if (parts.Length != 2)
                     {
-                        return new DefaultCommandResponse
-                        {
-                            ResponseError = $"Invalid repo format '{repo}'. Expected '<owner>/<repo>'."
-                        };
+                        return CreateCheckPackageFailureResponse(
+                            directoryPath,
+                            packageName,
+                            resolvedRepo,
+                            "invalid_repo",
+                            $"Invalid repo format '{resolvedRepo}'. Expected '<owner>/<repo>'.",
+                            "Run check-package again with a repo of the form 'Azure/<repo>', or omit --repo to let azsdk infer it.");
                     }
                     cacheSource = $"{CacheBaseUrl}/{parts[0].ToLowerInvariant()}/{parts[1]}/CODEOWNERS.cache";
                 }
 
                 var entries = CodeownersParser.ParseCodeownersFile(cacheSource);
-
-                return checkPackageHelper.CheckPackage(directoryPath, entries);
+                return checkPackageHelper.CheckPackage(directoryPath, resolvedRepo, entries);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "check-package failed");
-                return new DefaultCommandResponse { ResponseError = ex.Message };
+                logger.LogDebug(ex, "check-package failed unexpectedly");
+                return CreateCheckPackageFailureResponse(
+                    directoryPath,
+                    packageName,
+                    repo,
+                    "unexpected_error",
+                    ex.Message,
+                    "Retry the command. If the failure persists, use the support channel returned in this response.");
             }
         }
 
@@ -799,6 +814,66 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 }
             }
             return repo;
+        }
+
+        private static CheckPackageResponse CreateCheckPackageFailureResponse(
+            string directoryPath,
+            string packageName,
+            string? repo,
+            string issueCode,
+            string message,
+            string nextStep)
+        {
+            var response = new CheckPackageResponse
+            {
+                DirectoryPath = directoryPath,
+                PackageName = packageName,
+                Repo = repo,
+                ResponseError = message,
+            };
+
+            response.Issues.Add(new CheckPackageIssue
+            {
+                Code = issueCode,
+                Message = message,
+                NextStep = nextStep,
+            });
+
+            return response;
+        }
+
+        private static bool IsLocalFileOrHttpsUrl(string pathOrUrl)
+        {
+            if (File.Exists(pathOrUrl))
+            {
+                return true;
+            }
+
+            if (Uri.TryCreate(pathOrUrl, UriKind.Absolute, out Uri? uri))
+            {
+                return uri.Scheme == Uri.UriSchemeHttps;
+            }
+
+            return false;
+        }
+
+        private static string NormalizeCodeownersCacheSource(string cacheSource)
+        {
+            if (!Uri.TryCreate(cacheSource, UriKind.Absolute, out Uri? uri) ||
+                uri.Scheme != Uri.UriSchemeHttps ||
+                !uri.Host.Equals("github.com", StringComparison.OrdinalIgnoreCase) ||
+                !uri.AbsolutePath.Contains("/blob/", StringComparison.Ordinal))
+            {
+                return cacheSource;
+            }
+
+            if (uri.Query.Contains("raw=1", StringComparison.OrdinalIgnoreCase))
+            {
+                return cacheSource;
+            }
+
+            var separator = string.IsNullOrEmpty(uri.Query) ? "?" : "&";
+            return cacheSource + $"{separator}raw=1";
         }
 
         private async Task<OwnerWorkItem[]> GetOwnerWorkItems(string[] ownerAliases, CancellationToken ct)

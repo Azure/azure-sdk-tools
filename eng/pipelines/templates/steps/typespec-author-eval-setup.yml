@@ -10,6 +10,9 @@ parameters:
   - name: StartQaBotBackend
     type: boolean
     default: true
+  - name: BuildMockMcpServer
+    type: boolean
+    default: false
 
 steps:
   # Optionally overlay the azure-typespec-author skill source from a different branch.
@@ -94,7 +97,7 @@ steps:
   - task: NuGetAuthenticate@1
     displayName: Authenticate NuGet
 
-  # Pre-build the azsdk-cli MCP server
+  # Pre-build the azsdk-cli MCP server (and optionally the mock MCP server used by trigger evals)
   - script: |
       set -e
       dotnet restore tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj
@@ -102,13 +105,21 @@ steps:
         --no-restore --nologo
     displayName: Build azsdk-cli (MCP server)
 
+  - ${{ if eq(parameters.BuildMockMcpServer, true) }}:
+    - script: |
+        set -e
+        dotnet restore tools/azsdk-cli/Azure.Sdk.Tools.Mock/Azure.Sdk.Tools.Mock.csproj
+        dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Mock/Azure.Sdk.Tools.Mock.csproj \
+          --no-restore --nologo
+      displayName: Build azsdk-mock (Mock MCP server)
+
   # Install Node.js and npm dependencies from the local lockfile.
   # All CLI tools (vally, copilot-sdk, tsp) are pinned in pipelines/package.json
   # and made available on PATH via prependpath so downstream steps can invoke them directly.
-  - task: NodeTool@0
+  - task: UseNode@1
     displayName: Use Node.js 22
     inputs:
-      versionSpec: '22.x'
+      version: '22.x'
 
   - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
     parameters:

@@ -16,8 +16,11 @@ namespace GitHubTeamUserStore
 
         // The Open Source API occasionally returns transient 5xx/throttling errors. Retry those
         // with exponential backoff so the scheduled cache-building job does not fail spuriously.
+        // The API's rate limiter is the only response that carries a Retry-After header (on 429),
+        // and that delta is bounded by its request window (60s by default), so the max delay is
+        // sized to honor it. 5xx/408/network failures carry no Retry-After and use plain backoff.
         private const int MaxAttempts = 5;
-        private static readonly TimeSpan MaxRetryDelay = TimeSpan.FromSeconds(30);
+        private static readonly TimeSpan MaxRetryDelay = TimeSpan.FromSeconds(60);
 
         private readonly TokenCredential _credential;
 

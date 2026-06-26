@@ -21,7 +21,7 @@ trigger:
       # change can move results and must retrigger the gate.
       - tools/azsdk-cli/Azure.Sdk.Tools.Cli/**
       - tools/azsdk-cli/Azure.Sdk.Tools.Mock/**
-      - eng/pipelines/skill-eval-shards.yml
+      - eng/pipelines/skill-eval-2.yml
       - eng/common/pipelines/templates/steps/vally-build-mcp.yml
       - eng/common/pipelines/templates/steps/vally-collect-stimuli.yml
       - eng/common/pipelines/templates/steps/vally-run-shard.yml

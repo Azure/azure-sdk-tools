@@ -273,6 +273,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             ".NET", "Java", "Python", "JavaScript", "Go"
         };
 
+        // Languages that are supported (allowed) for a data plane release plan. Go is optional for
+        // data plane: it must not cause an "unsupported language" failure when present, but it is
+        // not part of the mandatory language set (languagesforDataplane) used for exclusion tracking.
+        internal static readonly HashSet<string> supportedLanguagesforDataplane = new(System.StringComparer.OrdinalIgnoreCase)
+        {
+            ".NET", "Java", "Python", "JavaScript", "Go"
+        };
+
         [GeneratedRegex("https:\\/\\/github.com\\/Azure\\/azure-sdk\\/issues\\/([0-9]+)")]
         private static partial Regex NameSpaceIssueUrlRegex();
 
@@ -1150,11 +1158,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 releasePlanWorkItemId = releasePlan.WorkItemId;
 
                 var requiredLanguages = releasePlan.IsManagementPlane ? languagesforMgmtplane : languagesforDataplane;
+                var supportedLanguages = releasePlan.IsManagementPlane ? languagesforMgmtplane : supportedLanguagesforDataplane;
 
-                // Validate SDK language name
-                if (SdkInfos.Any(sdk => !requiredLanguages.Contains(sdk.Language, StringComparer.OrdinalIgnoreCase)))
+                // A TypeSpec project may emit packages for languages the release plan does not track
+                // (e.g. Rust, C++). Optional languages such as Go for data plane are part of the
+                // supported set and must be updated. Skip any other detected language instead of
+                // failing, so the tool still updates the supported languages it found.
+                var skippedLanguages = SdkInfos
+                    .Where(sdk => !supportedLanguages.Contains(sdk.Language))
+                    .Select(sdk => sdk.Language)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                SdkInfos = SdkInfos
+                    .Where(sdk => supportedLanguages.Contains(sdk.Language))
+                    .ToList();
+
+                if (SdkInfos.Count == 0)
                 {
-                    return new DefaultCommandResponse { ResponseError = $"Unsupported SDK language found. Supported languages are: {string.Join(", ", requiredLanguages)}" };
+                    return new DefaultCommandResponse { ResponseError = $"No supported SDK languages found in the TypeSpec project metadata. Supported languages are: {string.Join(", ", supportedLanguages)}" };
                 }
 
                 // Validate SDK Package names
@@ -1190,6 +1212,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     foreach (var sdk in SdkInfos)
                     {
                         sb.AppendLine($"Language: {sdk.Language}, Package name: {sdk.PackageName}");
+                    }
+                    if (skippedLanguages.Any())
+                    {
+                        sb.AppendLine($"Note: The following detected languages are not tracked in the release plan and were skipped: {string.Join(", ", skippedLanguages)}");
                     }
                 }
 

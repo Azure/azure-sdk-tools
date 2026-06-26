@@ -5,15 +5,15 @@ Flags, recipes, and result handling for `evals_run.py`. Run from
 
 ## Flags
 
-| Flag                       | Default  | Notes                                                                              |
-| -------------------------- | -------- | ---------------------------------------------------------------------------------- |
-| `--dataset`                | required | Local `<...>.jsonl` path or `qa-bot-<target>-<scenario>[:version]`.                |
-| `--evaluators`             | all      | Comma-separated subset of the evaluators below.                                    |
-| `--max_concurrency`        | 8        | Parallel `/completion` calls.                                                      |
-| `--evaluation_name_prefix` | none     | Names the Foundry eval run; add a random suffix to avoid clashes.                  |
-| `--baseline_check`         | `True`   | `True` gates against the stored baseline; `False` just reports.                    |
-| `--is_ci`                  | `True`   | Use `False` locally (uses `az login` credential).                                  |
-| `--cache_result`           | `none`   | `none` \| `score` \| `full` (full writes per-case + failed-case JSON to `cache/`). |
+| Flag                | Default  | Notes                                                                                                                                                                     |
+| ------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--dataset`         | required | Local `<...>.jsonl` path or `qa-bot-<target>-<scenario>[:version]`.                                                                                                       |
+| `--evaluators`      | all      | Comma-separated subset of the evaluators below.                                                                                                                           |
+| `--max_concurrency` | 8        | Parallel `/completion` calls.                                                                                                                                             |
+| `--run_context`     | `local`  | Context tag appended to the dataset name (e.g. `local` or the pipeline name). The eval name is `<dataset>-<run_context>`, kept stable to avoid flooding the Foundry list. |
+| `--baseline_check`  | `True`   | `True` gates against the stored baseline; `False` just reports.                                                                                                           |
+| `--is_ci`           | `True`   | Use `False` locally (uses `az login` credential).                                                                                                                         |
+| `--cache_result`    | `none`   | `none` \| `score` \| `full` (full writes per-case + failed-case JSON to `cache/`).                                                                                        |
 
 ## Evaluators
 
@@ -56,7 +56,6 @@ used; tenant routing falls back to default, which is fine for a quick local chec
 ```bash
 for f in evaluation_datasets/perf/*.jsonl; do
   python evals_run.py --dataset "$f" \
-    --evaluation_name_prefix "perf-$(date +%Y_%m_%d)" \
     --is_ci False --baseline_check False --cache_result full
 done
 ```

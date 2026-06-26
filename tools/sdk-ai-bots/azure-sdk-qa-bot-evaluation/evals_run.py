@@ -76,6 +76,23 @@ def _load_suppression(script_dir: Path) -> dict[str, list[str]]:
     return suppression
 
 
+def _dataset_label(dataset_spec: str, scenario: str) -> str:
+    """Stable dataset identity for the evaluation name.
+
+    ``qa-bot-<target>-<scenario>[:version]`` -> ``qa-bot-<target>-<scenario>``;
+    a ``.../<target>/<scenario>.jsonl`` path -> ``qa-bot-<target>-<scenario>``;
+    anything else falls back to ``qa-bot-<scenario>``.
+    """
+    base = dataset_spec.split(":", 1)[0]
+    if base.endswith(".jsonl"):
+        p = Path(base)
+        target = p.parent.name
+        return f"qa-bot-{target}-{p.stem}" if target else f"qa-bot-{p.stem}"
+    if base.startswith("qa-bot-"):
+        return base
+    return f"qa-bot-{scenario}"
+
+
 def main(argv: list[str] | None = None) -> int:
     # Ensure emoji in log/table output don't crash a non-UTF-8 console (e.g. Windows cp1252).
     for stream in (sys.stdout, sys.stderr):
@@ -90,7 +107,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--dataset", required=True, help="<path.jsonl> | qa-bot-<target>-<scenario>[:version]")
     parser.add_argument("--max_concurrency", type=int, default=8, help="parallel /completion calls")
     parser.add_argument("--evaluators", type=str, default=None, help="comma-separated subset; default all")
-    parser.add_argument("--evaluation_name_prefix", type=str, default=None)
+    parser.add_argument(
+        "--run_context",
+        type=str,
+        default="local",
+        help="context tag appended to the dataset name (e.g. 'local' or the pipeline name)",
+    )
     parser.add_argument("--baseline_check", type=str, default="True")
     parser.add_argument("--is_ci", type=str, default="True")
     parser.add_argument("--cache_result", type=str, default="none", help="none | score | full")
@@ -136,11 +158,10 @@ def main(argv: list[str] | None = None) -> int:
 
             records, scenario = resolve_records(args.dataset, script_dir=script_dir)
             logging.info("Resolved %d records for scenario=%s", len(records), scenario)
-            name = (
-                f"{args.evaluation_name_prefix}-{scenario}"
-                if args.evaluation_name_prefix
-                else f"qa-bot-{scenario}"
-            )
+            # Stable evaluation name = dataset identity + run context (local / pipeline),
+            # so the Foundry list is not flooded with date/build/random-suffixed entries.
+            dataset_label = _dataset_label(args.dataset, scenario)
+            name = f"{dataset_label}-{args.run_context}"
             tenant_map = None
             try:
                 tenant_map = retrieve_channel_tenant_map(credential)

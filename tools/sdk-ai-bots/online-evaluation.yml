@@ -55,7 +55,6 @@ extends:
                   inlineScript: |
                     set -e
                     export BOT_AGENT_ACCESS_TOKEN=$(az account get-access-token --resource api://azure-sdk-qa-bot --query accessToken -o tsv)
-                    current_date=$(date +%Y_%m_%d)
 
                     # Download the last 21 days of md and convert to per-scenario JSONL.
                     python -m dataset.online_snapshot --is_ci True --days_before 21 --dest online-tests
@@ -66,7 +65,7 @@ extends:
                       echo "===== Evaluating $f ====="
                       python evals_run.py \
                         --dataset "$f" \
-                        --evaluation_name_prefix "online-evaluation-$current_date" \
+                        --run_context "online-evaluation" \
                         --max_concurrency 8 \
                         --baseline_check False \
                         --is_ci True || status=1

@@ -1,0 +1,51 @@
+name: azsdk-mcp-tool-scenarios
+description: |
+  Analyze-failed-pipeline: a two-tool mock workflow. The agent should pull a
+  pipeline's status, then analyze the run to surface the failing test. This is
+  a pure MCP-tool path — there is no local file the agent can read instead, so
+  the tool-calls grader is a faithful signal (no valid bypass). Good template
+  for "add a new mock-based workflow test".
+version: "1.0"
+type: capability
+
+
+tags:
+  area: pipeline
+
+environment: azsdk-mcp-mock
+
+config:
+  runs: 1
+  timeout: 5m
+  model: gpt-5.4
+  executor: copilot-sdk
+
+stimuli:
+  - name: status-then-analyze
+    prompt: |
+      For Azure DevOps build 90001 in the internal project, first pull its
+      current status, then analyze the run to identify any failing tests and
+      report exactly which test is failing.
+    constraints:
+      max_turns: 10
+      max_tokens: 16000
+    # Two graders, two grader types:
+    #   tool-calls    - process check: both MCP tools were invoked (robust here -
+    #                   pipeline data has no local-file shortcut).
+    #   output-contains - outcome check: the agent actually surfaced the failing
+    #                   test the mock returns.
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_get_pipeline_status
+            - azsdk_analyze_pipeline
+      - type: output-contains
+        config:
+          substring: WidgetClientLiveTests
+
+scoring:
+  weights:
+    tool-calls: 1
+    output-contains: 1
+  threshold: 1.0

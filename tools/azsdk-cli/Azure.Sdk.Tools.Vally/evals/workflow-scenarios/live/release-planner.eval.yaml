@@ -25,7 +25,7 @@ description: |
 
   Prerequisite: a clone of Azure/azure-rest-api-specs at the path referenced
   by environment.git.source below. Locally, run
-  scripts/Sync-EvalGitRepo.ps1 to prime the cache (auto-refresh every
+  eng/common/scripts/eval/sync-eval-git-repo.js to prime the cache (auto-refresh every
   24h) at the repo-relative path this source points at. CI should run the
   same script (or clone into the same artifacts/specs-cache path) before the
   scenarios-live suite.
@@ -53,13 +53,19 @@ config:
 stimuli:
   - name: release-planner-e2e
     environment:
+      # Load the real release-planning skill so the executor can route to it
+      # (matches the mock suite). Without this the live executor reports
+      # "Skills used 0" and the skill-invocation grader can never pass.
+      # Path is relative to this eval file (6 levels up = repo root).
+      skills:
+        - ../../../../../../.github/skills/azsdk-common-prepare-release-plan
       # Repo-relative azure-rest-api-specs worktree. Vally resolves a
       # non-absolute source relative to THIS eval file's directory (no
       # repo-root/env token yet — microsoft/vally#562), so the ../ depth is
       # fixed by the file's location and must match the mock suite's depth.
       # Prime it before the scenarios-live suite: CI runs
-      # scripts/Initialize-EvalGitFixtures.ps1 (scans this path + clones it);
-      # locally run scripts/Sync-EvalGitRepo.ps1 once (auto-refresh 24h).
+      # eng/common/scripts/eval/init-eval-git-fixtures.js (scans this path + clones it);
+      # locally run eng/common/scripts/eval/sync-eval-git-repo.js once (auto-refresh 24h).
       git:
         type: worktree
         source: ../../../../../../artifacts/specs-cache/azure-rest-api-specs

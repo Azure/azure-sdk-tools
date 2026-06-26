@@ -8,7 +8,7 @@ environment: azsdk-mcp
 
 # Execution configuration
 config:
-  runs: 1 # Trials per stimulus
+  runs: 2 # Trials per stimulus
   timeout: "660s" # Seconds per trial
   model: claude-opus-4.6 #gpt-4o #claude-sonnet-4.6 # Model for agent execution
   executor: copilot-sdk # Which executor to use

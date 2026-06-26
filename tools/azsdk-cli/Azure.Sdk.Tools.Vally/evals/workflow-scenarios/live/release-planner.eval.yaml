@@ -53,6 +53,12 @@ config:
 stimuli:
   - name: release-planner-e2e
     environment:
+      # Load the real release-planning skill so the executor can route to it
+      # (matches the mock suite). Without this the live executor reports
+      # "Skills used 0" and the skill-invocation grader can never pass.
+      # Path is relative to this eval file (6 levels up = repo root).
+      skills:
+        - ../../../../../../.github/skills/azsdk-common-prepare-release-plan
       # Repo-relative azure-rest-api-specs worktree. Vally resolves a
       # non-absolute source relative to THIS eval file's directory (no
       # repo-root/env token yet — microsoft/vally#562), so the ../ depth is

@@ -61,3 +61,13 @@ python evals_run.py --dataset "qa-bot-basic-python:latest" \
 
 For a **single test case**, **all scenarios**, the **deployed bot**, and reading
 results / the gate, see [running evaluations](references/running-evaluations.md).
+
+## Steps
+
+1. Ensure the required env vars are set; for a local run, start the agent `server.py`.
+2. Choose the dataset: a scenario file, an asset name, or a one-row file for a single case.
+3. Run `python evals_run.py --dataset <...> --is_ci False` (add `--baseline_check False`
+   for ad-hoc runs, `--evaluators` to subset).
+4. Open the printed Foundry **Report URL** and review the per-case score table.
+5. With `--cache_result full`, inspect `cache/<scenario>-*.json` for per-case and
+   failed-case detail.

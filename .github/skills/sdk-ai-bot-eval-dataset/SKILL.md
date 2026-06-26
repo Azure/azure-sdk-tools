@@ -28,7 +28,7 @@ DO NOT USE FOR: running evaluations, pipeline troubleshooting, knowledge-graph i
 
 - A **dataset** is one file: `evaluation_datasets/<target>/<scenario>.jsonl`. **Creating a new dataset = creating a new `<scenario>.jsonl`** in `basic/` or `perf/`.
 - The canonical **dedup key is the normalized `query`** (applied at curation). `testcase` titles may legitimately repeat (e.g. `Untitled`) — never dedup or fail on `testcase`.
-- Curated/committed rows must have `reviewed: "pass"`. The three states are `todo` / `pass` / `abandoned`.
+- Only `reviewed: "pass"` rows are curated/committed; see the [review status lifecycle](references/dataset-schema-and-workflows.md) for the three states and how leftovers are finalized.
 - `evaluation_datasets/_staging/` **is committed** (shared review state) so concurrent contributors don't re-curate the same cases; `basic/`, `perf/` and `registry.json` are committed too.
 - Always validate before upload, and after editing any curated file.
 
@@ -63,7 +63,7 @@ env vars; only `dataset.upload` then requires `AZURE_AI_PROJECT_ENDPOINT` + `az 
 # Validate a file or folder (--require-reviewed gates official datasets on reviewed=="pass")
 python -m dataset.validate evaluation_datasets/<target>/<scenario>.jsonl --require-reviewed
 
-# Promote reviewed staging rows; leftover todo -> abandoned
+# Promote reviewed (pass) staging rows; leftover items are finalized to abandoned
 python -m dataset.review --target <basic|perf> [--scenario <scenario>]
 
 # Upload one versioned Foundry asset per scenario; writes registry.json
@@ -72,3 +72,12 @@ python -m dataset.upload --target <basic|perf> [--scenario <scenario>]
 
 After adding or creating a dataset: **validate → upload → commit** the per-scenario
 file, `registry.json`, and updated `_staging/` files.
+
+## Steps
+
+1. Pick a workflow from the table above (manual add, curate from blob, or new dataset).
+2. Add or stage canonical rows in `evaluation_datasets/<target>/<scenario>.jsonl`.
+3. For staged cases, promote the reviewed ones with `python -m dataset.review`.
+4. Validate the file with `python -m dataset.validate ... --require-reviewed`.
+5. Publish with `python -m dataset.upload`, then commit the per-scenario file,
+   `registry.json`, and updated `_staging/`.

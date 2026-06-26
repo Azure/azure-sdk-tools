@@ -37,6 +37,10 @@ extends:
                 displayName: "Use Python 3.12"
                 inputs:
                   versionSpec: '3.12'
+              - task: PipAuthenticate@1
+                displayName: 'Authenticate pip to Azure Artifacts'
+                inputs:
+                  artifactFeeds: 'public/azure-sdk-for-python'
               - script: |
                   pip install -r requirements.txt
                 displayName: 'install requirements'

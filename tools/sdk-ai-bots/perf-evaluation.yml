@@ -69,7 +69,7 @@ extends:
                         EVAL_CACHE="$(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/cache"
                         mkdir -p "$EVAL_CACHE"
                         nohup python server.py </dev/null > "$EVAL_CACHE/server.log" 2>&1 &
-                        sleep 5
+                        sleep 20
                         lsof -ti:8089 || { echo "##[error]agent server failed to start"; cat "$EVAL_CACHE/server.log" || true; exit 1; }
                     env:
                       SYSTEM_ACCESSTOKEN: $(System.AccessToken)

@@ -4,6 +4,7 @@ import { handleGitHubWebhookEvent } from "./github.js";
 import { handleGetReviewPullRequestCreationOperationStatus, handleRequestReviewPullRequestCreation } from "./review-prs.js";
 import { handleEvaluateReleaseGate, handleMarkPackageVersionReleased } from "./releases.js";
 import { sendError } from "./http.js";
+import { handleTestIssue } from "./test.js";
 
 type RouteHandler = (request: IncomingMessage, response: ServerResponse, url: URL, pathMatch: RegExpMatchArray) => Promise<void>;
 
@@ -23,6 +24,7 @@ const requiredRoutes: readonly Route[] = [
     },
     { method: "GET", pattern: /^\/api\/releases\/check-gate$/, handler: handleEvaluateReleaseGate },
     { method: "POST", pattern: /^\/api\/releases\/mark-released$/, handler: handleMarkPackageVersionReleased },
+    { method: "POST", pattern: /^\/api\/test-issue$/, handler: handleTestIssue },
 ];
 
 export interface Router {

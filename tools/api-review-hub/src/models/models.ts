@@ -43,3 +43,14 @@ export interface MarkPackageVersionReleasedRequest {
     readonly version: string;
     readonly releasedOn: string;
 }
+
+export interface TestIssueRequest {
+    readonly message: string;
+}
+
+export interface TestIssueResponse {
+    readonly status: "created";
+    readonly message: string;
+    readonly issueNumber: number;
+    readonly issueUrl: string;
+}

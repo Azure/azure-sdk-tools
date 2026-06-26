@@ -12,7 +12,9 @@
     "dev": "tsx src/server.ts",
     "check": "tsc -p tsconfig.json --noEmit",
     "deploy": "tsx scripts/deploy-app.ts",
+    "create-test-issue": "tsx scripts/create-test-issue.ts",
     "infra:create": "tsx scripts/infra/create-resources.ts",
+    "infra:grant-github-app-key-access": "tsx scripts/infra/grant-github-app-key-access.ts",
     "infra:populate-appconfig": "tsx scripts/infra/populate-app-configuration.ts",
     "infra:check": "tsc -p tsconfig.json --noEmit"
   },
@@ -20,6 +22,8 @@
     "@azure/app-configuration": "^1.12.1",
     "@azure/arm-resources": "^6.1.0",
     "@azure/identity": "^4.10.2",
+    "@azure/keyvault-keys": "^4.10.2",
+    "@azure/keyvault-secrets": "^4.11.2",
     "adm-zip": "^0.5.17",
     "dotenv": "^17.4.2",
     "js-yaml": "^4.1.0"

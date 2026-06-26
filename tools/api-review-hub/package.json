@@ -7,6 +7,11 @@
     "node": ">=24.0.0"
   },
   "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/src/server.js",
+    "dev": "tsx src/server.ts",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "deploy": "tsx scripts/deploy-app.ts",
     "infra:create": "tsx scripts/infra/create-resources.ts",
     "infra:populate-appconfig": "tsx scripts/infra/populate-app-configuration.ts",
     "infra:check": "tsc -p tsconfig.json --noEmit"
@@ -15,10 +20,12 @@
     "@azure/app-configuration": "^1.12.1",
     "@azure/arm-resources": "^6.1.0",
     "@azure/identity": "^4.10.2",
+    "adm-zip": "^0.5.17",
     "dotenv": "^17.4.2",
     "js-yaml": "^4.1.0"
   },
   "devDependencies": {
+    "@types/adm-zip": "^0.5.8",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^24.0.0",
     "tsx": "^4.20.0",

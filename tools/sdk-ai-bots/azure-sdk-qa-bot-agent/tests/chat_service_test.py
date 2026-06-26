@@ -15,6 +15,17 @@ if _PROJECT_ROOT not in sys.path:
 from services.chat_service import ChatService
 
 
+class _FakeEvent:
+    def __init__(self, type_: str, response=None) -> None:
+        self.type = type_
+        self.response = response
+
+
+async def _fake_stream(events):
+    for ev in events:
+        yield ev
+
+
 def test_chat_service_resolves_memory_scope() -> None:
     service = ChatService()
 
@@ -71,3 +82,31 @@ def test_chat_service_returns_none_when_user_id_empty() -> None:
         message=ChatMessage(role="user", content="hello", user_id="  "),
     )
     assert service._resolve_memory_scope(whitespace_id) is None
+
+
+def test_collect_completed_response_returns_response() -> None:
+    """A stream containing a response.completed event yields its response."""
+    import asyncio
+
+    sentinel = object()
+    events = [
+        _FakeEvent("response.created"),
+        _FakeEvent("response.completed", response=sentinel),
+    ]
+    response, last = asyncio.run(
+        ChatService._collect_completed_response(_fake_stream(events))
+    )
+    assert response is sentinel
+    assert last == "response.completed"
+
+
+def test_collect_completed_response_none_when_no_completed_event() -> None:
+    """A stream that ends without a completed event yields (None, last_event)."""
+    import asyncio
+
+    events = [_FakeEvent("response.created"), _FakeEvent("response.in_progress")]
+    response, last = asyncio.run(
+        ChatService._collect_completed_response(_fake_stream(events))
+    )
+    assert response is None
+    assert last == "response.in_progress"

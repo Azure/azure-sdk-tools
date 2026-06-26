@@ -2,7 +2,7 @@ using Octokit;
 
 namespace Azure.Sdk.Tools.Cli.Prompts.Templates
 {
-    public class SdkBreakingChangeClassificationTemplate: BasePromptTemplate
+    public class SdkBreakingChangeClassificationTemplate : BasePromptTemplate
     {
         public override string TemplateId => "sdk-breaking-change-classification";
         public override string Version => "1.0.0";
@@ -56,11 +56,16 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
 
         private string BuildTaskInstructions()
         {
+            var referenceTypeSpecInstruction = _tspProjectPath != null ? "" : $"""
+                when identify SDK breaking change, read the typespec in the provided TypeSpec project path `{_tspProjectPath}` to check if it match the **spec pattern** in the SDK Breaking Change Pattern Document.
+                """;
+
             return $"""
             **Current Context:**
             - Language: {_language}
 
             **Task:**
+            {referenceTypeSpecInstruction}
             Analyze the following SDK changes and classify each change based on the provided SDK breaking change pattern document.
             Compare each SDK change against the patterns and conditions outlined in the document to determine if it constitutes a breaking change and categorize it accordingly. And retrieve the resolution if any in the matched pattern.
             First pass requirement: iterate through every item in input `sdk changes ### Breaking Changes` and determine its root cause candidate.
@@ -86,12 +91,29 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
             var breakingReferenceInstruction = "- Use the TypeSpec element name (model, operation, enum, or property) as the target in the breaking change. For example: `[Model Foo renamed]`, `[Operation Bar parameter removed]`, `[Enum Baz value removed]`.";
             if (_tspProjectPath != null)
             {
-               breakingReferenceInstruction += $" Read the TypeSpec definitions in directory `{_tspProjectPath}` to obtain the canonical TypeSpec element names used in each breaking change description.";
+                breakingReferenceInstruction += $"""
+
+                    **How to identify the canonical TypeSpec element name from the TypeSpec project:**
+                    The TypeSpec project is located at `{_tspProjectPath}`. Follow these steps to resolve the correct TypeSpec element name for each breaking change:
+
+                    1. **Start with `client.tsp`** (if it exists): This file contains client-layer customizations such as `@clientName`, `@@clientName`, `@access`, or model/operation renames applied via augment decorators. If the SDK-level name in the breaking change matches a customized name here, the *origin* TypeSpec name is the one being decorated — use that origin name.
+
+                    2. **Check `back-compatible.tsp`** (or similarly named compatibility files, e.g. `BackCompatible.tsp`): These files suppress or alias breaking changes introduced during Swagger-to-TypeSpec conversion. An element listed here indicates it was added back for compatibility; its origin TypeSpec name may differ from the SDK-visible name.
+
+                    3. **Read the core `.tsp` files** (e.g. `main.tsp`, `models.tsp`, `operations.tsp`, or any other `.tsp` files in the directory): These define the authoritative TypeSpec models, enums, operations, and properties. Use the identifier exactly as declared with `model`, `enum`, `op`, `interface`, or `union` keywords.
+
+                    4. **Mapping rules:**
+                       - If the SDK breaking change references a name that differs from what is declared in the core `.tsp` files, look for a `@clientName` or `@@clientName` decorator in `client.tsp` that maps the TypeSpec name to the SDK name. Use the TypeSpec name (the decorated target), not the SDK name.
+                       - If no mapping is found in `client.tsp`, use the name as declared in the core `.tsp` files verbatim.
+                       - For properties and enum values, qualify the name with its parent: e.g. `Model Foo property bar`, `Enum Status value Active`.
+
+                    5. **When the element cannot be found** in any `.tsp` file, fall back to the SDK-level name from the breaking change and note it as unresolved.
+                    """;
             }
             return $"""
             **CRITICAL: Required Output Format**
         
-            You MUST output one block per classified sdk breaking change item (one merged root-cause item per block).
+            You MUST output one block per classified SDK breaking change item (one merged root-cause item per block).
 
             ```
             [<item-id>]
@@ -115,34 +137,57 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
             ```
 
             **Rules:**
+            **General Requirements**
             - The `[<item-id>]` header refers to the SDK breaking change type.
             {breakingReferenceInstruction}
-            - One classified SDK breaking change must map to one separate output block.
-            - One classified SDK breaking change may be caused by several original breakings from input `sdk changes ### Breaking Changes`.
-            - Every input breaking item must be processed; do not skip any input item.
-            - Merge is conditional: only merge items that clearly share the same root cause and same classified breaking intent.
-            - Do NOT split one classified SDK breaking change into multiple blocks.
+            - Output exactly one block per classified SDK breaking change.
+            - Every original breaking item from sdk changes ### Breaking Changes must be processed.
+            - No original breaking item may be skipped.
+            - No original breaking item may appear in more than one block.
+            **Merging Rules**
+            - Merge only when multiple input breaking items clearly share:
+                - the same root cause (e.g. a model rename, enum rename, operation signature change), and
+                - the same classified breaking intent (e.g. all are model property renames, or all are operation parameter removals).
+            - Do **not** merge unrelated breakings merely because they affect similar models or APIs.
+            - Do **not** split a single root-cause breaking into multiple blocks.
+            - The breaking field must describe exactly one root change.
+            **Split Rules**
+            - If a candidate breaking description contains multiple root changes, split it into separate blocks.
             - The `breaking` line must describe exactly one classified SDK breaking change (one root change only).
             - If a candidate `breaking` sentence contains two root changes joined by words like `and`, commas, or multiple rename clauses, split into separate blocks.
             - Example split rule: `Model ResourceInfo renamed to Resource, and ResourceInfoList renamed to ResourceList` MUST be two blocks: one for `ResourceInfo -> Resource`, one for `ResourceInfoList -> ResourceList`.
             - category must be exactly one of: emitter change, conversion-by design, conversion-need resolve, spec change, unknown
-            - `originBreaks` is REQUIRED and must be a bullet list (`- ...`) containing ALL related original breakings for that merged root-cause item from input `sdk changes ### Breaking Changes`.
-            - If a merged item is caused by N related original breakings, `originBreaks` must contain exactly N bullets for that item (not 1 unless N = 1).
-            - `originBreaks` items must use the exact original text from input (no paraphrasing), with no duplicates and no missing related entries.
-            - If the `breaking` summary says words like `affecting`, `including`, `across`, or `all references`, `originBreaks` must list multiple bullets whenever multiple matching input breakings exist.
-            - Before finalizing output, run a coverage check: every original breaking in `sdk changes ### Breaking Changes` must appear in exactly one item's `originBreaks`.
-            - Count check is REQUIRED: the total number of bullets across all `originBreaks` lists must be exactly equal to the number of items in input `sdk changes ### Breaking Changes`.
-            - If the counts do not match, revise classification and `originBreaks` until they match exactly.
-            - Never output a merged item with only one `originBreaks` bullet when multiple related breakings for the same root cause are present in input.
-            - Invalid pattern: `breaking` claims broad impact but `originBreaks` has only one bullet while more related input items exist.
-            - Valid pattern: each merged root-cause block contains every matching original input breaking as separate bullets in `originBreaks`.
-            - Reason must clearly state which condition triggered the classification
-            - For emitter change: the SDK breaking change is caused by a change in the code emitter that generates the client code
-            - For conversion-by design: the SDK breaking change is caused by conversion swagger to typespec and it is accepted and does not need resolve, such as common types.
-            - For conversion-need resolve: the SDK breaking change is caused by conversion swagger to typespec and need resolve
-            - For spec change: the SDK breaking change is caused by a change in the service spec (swagger/typespec)
-            - For unknown: the root cause of the SDK breaking change cannot be determined by the provided information
-            - Do NOT include Next Action or step-by-step guidance (that is handled separately)
+            **originBreaks Rules**
+            - originBreaks is required.
+            - It must contain all original breaking items that contribute to the classified breaking.
+            - Requirements:
+                - Use a bullet list (- item).
+                - Preserve the exact original text from sdk changes ### Breaking Changes.
+                - Do not paraphrase.
+                - Do not modify wording.
+                - Do not remove details.
+                - Do not duplicate entries.
+            **Mandatory Merge Coverage Requirement**
+            - If a merged item is caused by N original breaking items:
+                - originBreaks must contain exactly N bullets
+                - Every contributing input breaking must appear as a separate bullet.
+            **Consistency Validation (MANDATORY)**
+            Before producing the final answer:
+            - Classify every original breaking item.
+            - Ensure each original breaking appears in exactly one block.
+            - Verify no original breaking is omitted.
+            - Verify no original breaking is duplicated.
+            - Verify every merged block includes all contributing original breakings.
+            - Verify the total number of bullets across all originBreaks equals the total number of original breaking items from the input.
+            **Forbidden Pattern**
+            A merged block absorbs multiple original breakings but lists only one entry in originBreaks.
+            **Required Pattern**
+            - Every merged root-cause block must list all contributing original breakings.
+            **Output Restrictions**
+            - Do not include explanations outside the required blocks.
+            - Do not include summaries.
+            - Do not include next actions.
+            - Output only the classified breaking change blocks.
             """;
         }
 

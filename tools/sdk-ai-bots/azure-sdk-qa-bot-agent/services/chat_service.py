@@ -58,10 +58,6 @@ POLL_MAX_RETRIES = 5
 POLL_RETRY_DELAY_SECS = 3.0
 STREAM_CREATE_MAX_RETRIES = 3
 STREAM_CREATE_RETRY_DELAY_SECS = 1.5
-# Retries for the whole invoke+consume when a stream is created (HTTP 200) but ends
-# without a ``response.completed`` event — a transient upstream agent-streaming failure.
-STREAM_CONSUME_MAX_RETRIES = 3
-STREAM_CONSUME_RETRY_DELAY_SECS = 2.0
 
 COMPACT_THRESHOLD = 100000
 """Token count at which conversation history is compacted."""
@@ -158,40 +154,22 @@ class ChatService:
             "type": AgentReferenceType.agent_reference.value,
         }
 
-        # Invoke the agent and consume the stream until ``response.completed``.
-        # Stream *creation* can return 200 yet the stream may end without a completed
-        # event (transient upstream agent-streaming failure); retry the whole
-        # invoke+consume in that case instead of surfacing a 500.
-        response: OpenAIResponse | None = None
-        last_event_type: str | None = None
-        for attempt in range(1, STREAM_CONSUME_MAX_RETRIES + 1):
-            stream = await self._invoke_agent_with_retry(
-                openai_client=openai_client,
-                conversation_items=conversation_items,
-                agent_conversation_id=agent_conversation_id,
-                agent_ref=agent_ref,
-            )
+        stream = await self._invoke_agent_with_retry(
+            openai_client=openai_client,
+            conversation_items=conversation_items,
+            agent_conversation_id=agent_conversation_id,
+            agent_ref=agent_ref,
+        )
 
-            response, last_event_type = await self._collect_completed_response(stream)
-            if response is not None:
+        response: OpenAIResponse | None = None
+        async for event in stream:
+            logger.debug("Stream event: type=%s, content=%s", event.type, event)
+            if event.type == STREAM_EVENT_RESPONSE_COMPLETED:
+                response = event.response
                 break
 
-            logger.warning(
-                "Agent stream ended without a response.completed event "
-                "(attempt %d/%d): last_event=%s, conversation=%s",
-                attempt,
-                STREAM_CONSUME_MAX_RETRIES,
-                last_event_type,
-                agent_conversation_id,
-            )
-            if attempt < STREAM_CONSUME_MAX_RETRIES:
-                await asyncio.sleep(STREAM_CONSUME_RETRY_DELAY_SECS * attempt)
-
         if response is None:
-            raise RuntimeError(
-                "Agent stream ended without a response.completed event after "
-                f"{STREAM_CONSUME_MAX_RETRIES} attempts (last_event={last_event_type})"
-            )
+            raise RuntimeError("Agent stream ended without a response.completed event")
 
         # Extract AI Foundry trace ID from x-request-id header.
         # The header may contain duplicated values separated by comma.
@@ -241,21 +219,6 @@ class ChatService:
             )
         )
         return chat_response
-
-    @staticmethod
-    async def _collect_completed_response(stream):
-        """Consume a responses stream, returning ``(response, last_event_type)``.
-
-        Returns the response from the ``response.completed`` event, or ``None`` if the
-        stream ends without one (a transient upstream condition the caller retries).
-        """
-        last_event_type: str | None = None
-        async for event in stream:
-            logger.debug("Stream event: type=%s, content=%s", event.type, event)
-            last_event_type = event.type
-            if event.type == STREAM_EVENT_RESPONSE_COMPLETED:
-                return event.response, last_event_type
-        return None, last_event_type
 
     @staticmethod
     async def _invoke_agent_with_retry(

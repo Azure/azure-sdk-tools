@@ -69,10 +69,13 @@ stages:
               --auth-mode login `
               --overwrite true
 
-      - publish: $(CacheOutputDirectory)
-        displayName: Publish cache files artifact
-        artifact: github-team-user-store-cache
-        condition: succeededOrFailed()
+      - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
+        parameters:
+          # This artifact is published for debugging/information only and has no downstream
+          # consumer, so scope its name per job attempt to avoid "cannot override artifact"
+          # collisions when the job is retried.
+          ArtifactName: 'github-team-user-store-cache-Attempt$(System.JobAttempt)'
+          ArtifactPath: '$(CacheOutputDirectory)'
 
       - ${{ if or(parameters.AuditCodeowners, eq(variables['Build.Reason'], 'Schedule')) }}:
         - template: /eng/common/pipelines/templates/steps/install-azsdk-cli.yml
@@ -101,10 +104,13 @@ stages:
           scriptType: pscore
           scriptLocation: inlineScript
           inlineScript: pipeline-owners-extractor --output "$(OutputPath)"
-      - publish: $(OutputPath)
-        displayName: Publish pipelineOwners artifact
-        artifact: pipelineOwners
-        condition: succeededOrFailed()
+      - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
+        parameters:
+          # The pipeline-witness service consumes this artifact by the exact name 'pipelineOwners'.
+          # publish-artifact.yml keeps this name on success and only renames it on failure, so the
+          # consumer keeps working while retries no longer collide.
+          ArtifactName: 'pipelineOwners'
+          ArtifactPath: '$(OutputPath)'
 
 - stage: GenerateCodeowners
   dependsOn: BuildTeamCache

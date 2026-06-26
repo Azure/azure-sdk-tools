@@ -60,10 +60,4 @@ extends:
     # deliberately excludes azure-typespec-author/evaluate/ (its own benchmark pipeline).
     evalGlobs:
       - '*/evals/*.eval.yaml'
-    # Skill evals route to either the real cli MCP or the mock, so build both.
-    mcpBuilds:
-      - project: tools/azsdk-cli/Azure.Sdk.Tools.Cli
-        outputPath: artifacts/mcp/cli
-      - project: tools/azsdk-cli/Azure.Sdk.Tools.Mock
-        outputPath: artifacts/mcp/mock
     testRunTitle: 'Skill-compliance evals (sharded)'

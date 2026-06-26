@@ -43,10 +43,6 @@ extends:
     # vallyRoot defaults to the Vally project; the live evals + .vally.yaml live there.
     evalGlobs:
       - 'evals/workflow-scenarios/live/*.eval.yaml'
-    # Live tier needs only the real cli MCP.
-    mcpBuilds:
-      - project: tools/azsdk-cli/Azure.Sdk.Tools.Cli
-        outputPath: artifacts/mcp/cli
     # Run each shard inside AzureCLI@2 so the MCP's DevOps calls are authenticated.
     # Model auth stays copilot-sdk via GITHUB_TOKEN (the default githubTokenVariable).
     azureServiceConnection: opensource-api-connection

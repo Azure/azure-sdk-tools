@@ -89,6 +89,7 @@
     "dompurify": "^3.3.2",
     "undici": "^7.28.0",
     "serialize-javascript": "^7.0.5",
+    "esbuild": "^0.28.1",
     "@babel/core": "^7.29.6",
     "@angular/build": {
       "vite": "^7.3.5",
@@ -97,8 +98,5 @@
     "external-editor": {
       "tmp": "^0.2.7"
     }
-  },
-  "optionalDependencies": {
-    "esbuild": "^0.28.1"
   }
 }

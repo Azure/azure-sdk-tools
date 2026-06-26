@@ -94,7 +94,7 @@ extends:
                     python evals_run.py \
                       --dataset "qa-bot-basic-$(scenario):latest" \
                       --run_context "offline-evaluation" \
-                      --max_concurrency 8 \
+                      --max_concurrency 2 \
                       --baseline_check True \
                       --cache_result full
                 env:

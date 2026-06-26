@@ -74,6 +74,8 @@ EMPTY_RESPONSE_MESSAGE = (
 
 # -- Stream event types ---------------------------------------------------
 STREAM_EVENT_RESPONSE_COMPLETED = "response.completed"
+STREAM_EVENT_RESPONSE_FAILED = "response.failed"
+STREAM_EVENT_RESPONSE_INCOMPLETE = "response.incomplete"
 
 _CITATION_RE = re.compile(r"[^\w\s]*cite[^\w\s]*turn\d+\S*")
 
@@ -162,14 +164,33 @@ class ChatService:
         )
 
         response: OpenAIResponse | None = None
+        last_event_type: str | None = None
         async for event in stream:
             logger.debug("Stream event: type=%s, content=%s", event.type, event)
+            last_event_type = event.type
             if event.type == STREAM_EVENT_RESPONSE_COMPLETED:
                 response = event.response
                 break
+            if event.type in (
+                STREAM_EVENT_RESPONSE_FAILED,
+                STREAM_EVENT_RESPONSE_INCOMPLETE,
+            ):
+                failed = getattr(event, "response", None)
+                logger.error(
+                    "Agent stream %s: error=%s, incomplete_details=%s, status=%s, "
+                    "conversation=%s",
+                    event.type,
+                    getattr(failed, "error", None),
+                    getattr(failed, "incomplete_details", None),
+                    getattr(failed, "status", None),
+                    agent_conversation_id,
+                )
 
         if response is None:
-            raise RuntimeError("Agent stream ended without a response.completed event")
+            raise RuntimeError(
+                "Agent stream ended without a response.completed event "
+                f"(last_event={last_event_type})"
+            )
 
         # Extract AI Foundry trace ID from x-request-id header.
         # The header may contain duplicated values separated by comma.

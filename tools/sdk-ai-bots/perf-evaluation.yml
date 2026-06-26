@@ -90,7 +90,7 @@ extends:
                         python evals_run.py \
                           --dataset "qa-bot-perf-${{ scenario }}:latest" \
                           --run_context "perf-evaluation" \
-                          --max_concurrency 8 \
+                          --max_concurrency 2 \
                           --baseline_check False \
                           --cache_result full
                     env:

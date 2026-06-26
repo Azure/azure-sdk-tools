@@ -67,6 +67,7 @@ for name in sorted(trials):
         "passed_trials": passed_trials,
         "total": total,
         "tool_calls_passed": tool_calls_passed,
+        "trial_statuses": [trial_passed(g) for g in grades],
     }
 
     if flaky:
@@ -101,20 +102,40 @@ for name in sorted(trials):
                 else:
                     print(f'  - {gname} (score: {d.get("score")})')
 
-# Print per-case pass rate summary (pass@k).
+# Per-trial pass rate: for trial index t, how many stimuli passed that trial.
+# The i-th record of a stimulus is its i-th trial (Vally writes one record per
+# trial when config.runs > 1).
+max_trials = max((len(g) for g in trials.values()), default=0)
+trial_passed_counts = [0] * max_trials
+trial_total_counts = [0] * max_trials
+for grades in trials.values():
+    for t, g in enumerate(grades):
+        trial_total_counts[t] += 1
+        if trial_passed(g):
+            trial_passed_counts[t] += 1
+
+# Print per-trial summary, then the count of stimuli that failed every trial.
 total_cases = len(case_data)
 total_passed = sum(1 for v in case_data.values() if v["passed"])
-print(f"\n--- Suite $SUITE_NAME Pass Rate (pass@k): {total_passed}/{total_cases} ({total_passed*100//total_cases if total_cases else 0}%) ---")
+print(f"\n--- Suite $SUITE_NAME trial results ---")
+for t in range(max_trials):
+    print(f"trial {t + 1} ({trial_passed_counts[t]}/{trial_total_counts[t]})")
+print(f"fail in {'both' if max_trials == 2 else 'all'} trials: {failed_count}")
+
+# Per-case pass@k breakdown with each trial's status (a case passes if any trial passes).
+print(f"\nPass@k: {total_passed}/{total_cases} ({total_passed*100//total_cases if total_cases else 0}%), {flaky_count} flaky")
 for case_id in sorted(case_data.keys()):
     r = case_data[case_id]
     status = "PASS" if r["passed"] else "FAIL"
-    flaky_mark = f"flaky({r['passed_trials']}/{r['total']})" if r["flaky"] else ""
+    trial_marks = " ".join(
+        f"trial{i + 1}:{'PASS' if ok else 'FAIL'}" for i, ok in enumerate(r["trial_statuses"])
+    )
     tc = r.get("tool_calls_passed")
     tc_mark = "tool-calls:pass" if tc else "tool-calls:fail" if tc is not None else ""
-    print(f"  {case_id} [{status}] {tc_mark} {flaky_mark}".rstrip())
+    print(f"  {case_id} [{status}] {trial_marks} {tc_mark}".rstrip())
 
 if failed_count > 0:
-    print(f"\n##vso[task.logissue type=error]Suite $SUITE_NAME: {failed_count} stimulus/stimuli failed all trials (pass rate: {total_passed}/{total_cases})")
+    print(f"\n##vso[task.logissue type=error]Suite $SUITE_NAME: {failed_count} stimulus/stimuli failed all trials (pass@k: {total_passed}/{total_cases})")
 else:
     print(f"Suite $SUITE_NAME: all stimuli passed within trials ({total_passed}/{total_cases}, {flaky_count} flaky)")
 EOF

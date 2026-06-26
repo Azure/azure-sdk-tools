@@ -10,7 +10,7 @@ config:
   timeout: "660s"
   model: claude-opus-4.6
   executor: copilot-sdk
-  workers: 3
+  workers: 6
 
 stimuli:
   - name: 001001-version-spread-property

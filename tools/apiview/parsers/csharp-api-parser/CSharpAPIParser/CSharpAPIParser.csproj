@@ -3,6 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <PackAsTool>true</PackAsTool>
+    <PackageId>Microsoft.ApiView.CsharpParser</PackageId>
     <ToolCommandName>CSharpAPIParserForAPIView</ToolCommandName>
     <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>CSharpAPIParser</RootNamespace>

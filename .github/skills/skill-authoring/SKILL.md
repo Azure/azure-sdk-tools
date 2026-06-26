@@ -1,6 +1,6 @@
 ---
 name: skill-authoring
-description: "Write Agent Skills that comply with the agentskills.io specification. WHEN: \"create a skill\", \"new skill\", \"write a skill\", \"skill template\", \"skill structure\", \"review skill\", \"skill PR\", \"skill compliance\", \"SKILL.md format\", \"skill frontmatter\", \"skill best practices\". DO NOT USE FOR: improving existing skills (use sensei), general documentation. INVOKES: waza CLI."
+description: 'Write Agent Skills that comply with the agentskills.io specification. WHEN: "create a skill", "new skill", "write a skill", "skill template", "skill structure", "review skill", "skill PR", "skill compliance", "SKILL.md format", "skill frontmatter", "skill best practices". DO NOT USE FOR: improving existing skills (use sensei), general documentation. INVOKES: waza CLI.'
 license: MIT
 metadata:
   author: Microsoft
@@ -24,7 +24,7 @@ DO NOT USE FOR: improving existing skills (use sensei), general documentation
 - `description`: inline double-quoted, ≤60 words, ≤1024 chars
 - Use `WHEN:` with quoted trigger phrases (preferred over `USE FOR:`)
 - SKILL.md: <500 tokens (soft), <5000 (hard)
-- references/*.md: <1000 tokens each
+- references/\*.md: <1000 tokens each
 
 ## Structure
 
@@ -32,14 +32,19 @@ DO NOT USE FOR: improving existing skills (use sensei), general documentation
 - `references/` (optional) — Detailed docs, loaded on demand
 - `scripts/` (optional) — Executable code
 
+## Formatting
+
+- run `npm ci` in `.github/skills` to install dependencies
+- run `npm run format` to auto-format markdown and yaml files using Prettier
+
 ## Progressive Disclosure
 
 Metadata loads at startup. SKILL.md on activation. References load when linked via markdown link.
 
 ## MCP Tools
 
-| Tool | Purpose |
-|------|---------|
+| Tool | Purpose                         |
+| ---- | ------------------------------- |
 | None | CLI-only; uses local file tools |
 
 **CLI fallback:** Primary mode is CLI-based. No MCP servers required.

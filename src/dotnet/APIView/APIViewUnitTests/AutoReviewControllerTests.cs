@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using APIView;
@@ -12,6 +13,9 @@ using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using FluentAssertions;
 using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Channel;
+using Microsoft.ApplicationInsights.DataContracts;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -29,6 +33,7 @@ namespace APIViewUnitTests
         private readonly Mock<IConfiguration> _mockConfiguration;
         private readonly Mock<INamespaceManager> _mockNamespaceManager;
         private readonly List<LanguageService> _languageServices;
+        private readonly CapturingTelemetryChannel _telemetryChannel;
         private readonly TelemetryClient _telemetryClient;
         private readonly AutoReviewController _controller;
 
@@ -44,7 +49,11 @@ namespace APIViewUnitTests
             {
                 new MockLanguageService("C#", false)
             };
-            _telemetryClient = new TelemetryClient();
+            _telemetryChannel = new CapturingTelemetryChannel();
+            _telemetryClient = new TelemetryClient(new TelemetryConfiguration
+            {
+                TelemetryChannel = _telemetryChannel
+            });
 
             _controller = new AutoReviewController(
                 _mockCodeFileManager.Object,
@@ -689,6 +698,14 @@ namespace APIViewUnitTests
             _mockApiRevisionsManager.Verify(m => m.UpdateRevisionMetadataAsync(
                 mockApiRevision, expectedMetadataVersion, "test-label", false),
                 Times.Once);
+
+            EventTelemetry telemetry = GetPackageVersionNormalizationEvent("UploadAutoReview");
+            telemetry.Properties["packageName"].Should().Be("azure-core-http-compat");
+            telemetry.Properties["submittedPackageVersion"].Should().Be(callerSuppliedVersion ?? "null");
+            telemetry.Properties["parsedArtifactPackageVersion"].Should().Be(codeFileVersion);
+            telemetry.Properties["normalizedPackageVersion"].Should().Be(expectedCodeFileVersion);
+            telemetry.Properties["packageVersionSubmitted"].Should().Be((!string.IsNullOrWhiteSpace(callerSuppliedVersion)).ToString());
+            telemetry.Properties["submittedPackageVersionUsed"].Should().Be((expectedCodeFileVersion == callerSuppliedVersion).ToString());
         }
 
         [Theory]
@@ -767,6 +784,42 @@ namespace APIViewUnitTests
             _mockApiRevisionsManager.Verify(m => m.UpdateRevisionMetadataAsync(
                 mockApiRevision, expectedMetadataVersion, "CI Build", false),
                 Times.Once);
+
+            EventTelemetry telemetry = GetPackageVersionNormalizationEvent("CreateApiReview");
+            telemetry.Properties["packageName"].Should().Be(packageName);
+            telemetry.Properties["submittedPackageVersion"].Should().Be(callerSuppliedVersion ?? "null");
+            telemetry.Properties["parsedArtifactPackageVersion"].Should().Be(codeFileVersion);
+            telemetry.Properties["normalizedPackageVersion"].Should().Be(expectedCodeFileVersion);
+            telemetry.Properties["packageVersionSubmitted"].Should().Be((!string.IsNullOrWhiteSpace(callerSuppliedVersion)).ToString());
+            telemetry.Properties["submittedPackageVersionUsed"].Should().Be((expectedCodeFileVersion == callerSuppliedVersion).ToString());
+        }
+
+        private EventTelemetry GetPackageVersionNormalizationEvent(string operation)
+        {
+            return _telemetryChannel.Telemetries
+                .OfType<EventTelemetry>()
+                .Single(t => t.Name == "APIViewAutomaticRevisionPackageVersionNormalization" && t.Properties["operation"] == operation);
+        }
+
+        private class CapturingTelemetryChannel : ITelemetryChannel
+        {
+            public List<ITelemetry> Telemetries { get; } = new();
+
+            public bool? DeveloperMode { get; set; }
+            public string EndpointAddress { get; set; }
+
+            public void Send(ITelemetry item)
+            {
+                Telemetries.Add(item);
+            }
+
+            public void Flush()
+            {
+            }
+
+            public void Dispose()
+            {
+            }
         }
 
         [Theory]

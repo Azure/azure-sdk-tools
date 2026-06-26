@@ -1165,13 +1165,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 // supported set and must be updated. Skip any other detected language instead of
                 // failing, so the tool still updates the supported languages it found.
                 var skippedLanguages = SdkInfos
-                    .Where(sdk => !supportedLanguages.Contains(sdk.Language, StringComparer.OrdinalIgnoreCase))
+                    .Where(sdk => !supportedLanguages.Contains(sdk.Language))
                     .Select(sdk => sdk.Language)
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToList();
 
                 SdkInfos = SdkInfos
-                    .Where(sdk => supportedLanguages.Contains(sdk.Language, StringComparer.OrdinalIgnoreCase))
+                    .Where(sdk => supportedLanguages.Contains(sdk.Language))
                     .ToList();
 
                 if (SdkInfos.Count == 0)

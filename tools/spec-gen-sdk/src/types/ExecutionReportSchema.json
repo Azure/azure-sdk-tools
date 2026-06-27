@@ -77,6 +77,10 @@
           "breakingChangeLabel": {
             "type": "string"
           },
+          "shouldLabelBreakingChange": {
+            // Whether this package should receive the breaking-change label based on generated report results.
+            "type": "boolean"
+          },
           "areBreakingChangeSuppressed": {
             "type": "boolean"
           },
@@ -101,4 +105,3 @@
       }
     }
   }
-  

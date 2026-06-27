@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion
+namespace Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledge
 {
     /// <summary>
     /// Represents a document reference used in the AI chat completion.

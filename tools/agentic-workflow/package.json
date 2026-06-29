@@ -1,0 +1,48 @@
+{
+    "name": "@azure-tools/agentic-workflow",
+    "version": "0.1.0",
+    "description": "Agentic research -> plan -> implement workflow: one fresh Copilot SDK session per phase, artifacts on disk, orchestrator-gated.",
+    "main": "dist/index.js",
+    "homepage": "https://github.com/Azure/azure-sdk-tools/tree/main/tools/agentic-workflow#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Azure/azure-sdk-tools.git"
+    },
+    "bugs": {
+        "url": "https://github.com/Azure/azure-sdk-tools/issues"
+    },
+    "type": "module",
+    "engines": {
+        "node": ">=20.19.0"
+    },
+    "bin": {
+        "agentic-workflow": "dist/cli.js"
+    },
+    "files": [
+        "dist",
+        "prompts"
+    ],
+    "scripts": {
+        "build": "npm run clean && tsc",
+        "clean": "rimraf ./dist",
+        "start": "tsx src/cli.ts",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "format": "prettier . --write",
+        "format:check": "prettier . --check"
+    },
+    "author": "Microsoft Corporation",
+    "license": "MIT",
+    "dependencies": {
+        "@github/copilot-sdk": "^1.0.4",
+        "yaml": "^2.5.0"
+    },
+    "devDependencies": {
+        "@types/node": "^20.19.0",
+        "prettier": "^3.3.3",
+        "rimraf": "^6.0.1",
+        "tsx": "^4.19.0",
+        "typescript": "^5.6.0",
+        "vitest": "^2.1.0"
+    }
+}

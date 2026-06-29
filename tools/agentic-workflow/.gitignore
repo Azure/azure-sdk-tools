@@ -1,0 +1,6 @@
+node_modules/
+dist/
+*.tgz
+.agentic-workflow/
+spike/node_modules/
+spike/package-lock.json

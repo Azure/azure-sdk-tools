@@ -79,7 +79,7 @@ any phase's prompt independently.
 | 3 | classify + split *(skippable, §3.2)* | ✅ | specs + assumptions *(or task + codebase if research skipped)* | `classification.md`, `subitems.json` |
 | 4 | research-item (loop ×N, parallel) *(skippable, §3.2)* | ✅ each | one sub-item + specs | `research/<item-id>.md` |
 | 5 | plan | ✅ | specs + assumptions + all item research *(whatever exists)* | `plan.md` (structured, with checkpoint gates — see §5) |
-| 6 | implement | ✅ | `plan.md` | code edits + `execution-log.md` |
+| 6 | implement *(staged, §5)* | ✅ per stage | `plan.md`, `execution-log.md`, `handoff.md` | code edits + `execution-log.md` + `handoff.md` (cross-stage memory, §6.3) |
 
 `specs/apispec.md` is **conditional**: phase 1 produces it only when the task touches an API
 surface (REST/RPC/SDK contract, schema, public interface). It captures the relevant existing
@@ -233,7 +233,7 @@ tools/agentic-workflow/
     ├── orchestrator.ts phase sequencing, checkpoint/resume, gate enforcement
     ├── phase.ts        runPhase: createSession → render prompt → sendAndWait → validate
     ├── policy.ts       per-phase tool/filesystem policy + post-phase git-diff guard (§6.1)
-    ├── gates.ts        parse plan stages/gates; run gate commands; enforce allowed_files (§6.2)
+    ├── gates.ts        parse plan stages/gates; run gate commands; check expected_files scope (§6.2)
     ├── prompts.ts      load + render templates (var substitution)
     ├── artifacts.ts    working-dir mgmt, atomic read/write, hashing, run lock, state file
     ├── tools.ts        custom SDK tools: write_artifact, validate_subitems
@@ -260,9 +260,15 @@ await mapWithConcurrency(items, config.concurrency, it =>
 await phase(client, "plan", { reads: ["specs/*","assumptions.md","research/*"], writes: ["plan.md"], validate: planSchema, policy: READ_ONLY });
 
 // Phase 6 is STAGED: each plan stage runs in its own fresh sub-session, gated by the orchestrator.
+// Fresh ≠ blank: the orchestrator curates a context pack so no inter-stage knowledge is lost (§6.3).
 const stages = parsePlanStages("plan.md");     // structured stages + machine-readable gates (§6.2)
 for (const stage of stages) {
-  await phase(client, "implement-stage", { stage, reads: ["plan.md"], appends: ["execution-log.md"], updates: ["plan.md"], policy: implementPolicy(stage) });
+  const pack = buildContextPack(ctx, stage);   // plan.md + prior handoffs + cumulative diff + dep files (§6.3)
+  await phase(client, "implement-stage", {
+    stage, contextPack: pack,
+    reads: ["plan.md", "execution-log.md", "handoff.md"],   // durable cross-stage memory
+    appends: ["execution-log.md", "handoff.md"],            // each stage writes a handoff for the next
+    updates: ["plan.md"], policy: implementPolicy(stage) });
   const dev = checkDeviation(stage);            // edits outside expected_files must be documented (§5)
   if (dev.undocumented) { markPaused(state, stage, dev); break; }  // missing docs → pause for review
   const result = runGate(stage.gate);           // ORCHESTRATOR runs gate cmds, checks exit codes
@@ -344,6 +350,7 @@ Examples of the intent per phase:
   stages:
     - id: stage-1
       expected_files: ["src/foo.ts", "test/foo.test.ts"]  # the plan's best guess at scope (advisory)
+      context_needed: ["src/bar.ts", "src/types.ts"]      # existing files/symbols this stage depends on
       steps:
         - { id: "1.1", description: "..." }
       gate:
@@ -353,8 +360,13 @@ Examples of the intent per phase:
   ```
 
   Each stage names its `expected_files` (the plan's anticipated scope — **advisory, not a hard
-  wall**, see phase 6) and a `gate` with concrete validation `commands` + expected result.
+  wall**, see phase 6), the `context_needed` files/symbols it depends on (seeded into the stage's
+  context pack, §6.3), and a `gate` with concrete validation `commands` + expected result.
   Free-form prose gates alone are insufficient because they're unenforceable.
+  **Stage sizing for context safety:** the plan phase must split work into stages that are
+  **cohesive and loosely coupled** — each independently completable and verifiable by its gate —
+  to minimize what must cross a session boundary. Tightly-coupled changes that only make sense
+  together belong in **one** stage, not split across two.
 - **06-implement (staged).** Implementation is **not** one big session. Each plan *stage* runs in
   its **own fresh sub-session** (`implement-stage-1 → gate → implement-stage-2 → …`), preserving
   the clean-context guarantee inside the riskiest phase and bounding context growth. Per stage:
@@ -365,6 +377,11 @@ Examples of the intent per phase:
   - The agent appends to `execution-log.md`. For **every action** the log must (a) **justify the
     scope** — why it was necessary — and (b) **map it to a concrete step** in `plan.md` (by
     stage/step id).
+  - **Stage handoff (cross-stage memory).** Before its gate, each stage appends a concise entry to
+    `handoff.md` for the *next* stage: what it built, the **new/changed public symbols and files**,
+    decisions or conventions established, anything intentionally deferred, and known follow-ups. The
+    **next** stage's prompt is seeded with this (plus the cumulative diff and `context_needed`
+    files, §6.3) so reasoning/intent — not just code — carries forward across the session boundary.
   - **Gate enforcement is the orchestrator's job, not the agent's:** after the sub-session ends,
     the orchestrator runs the stage's `gate.commands`, checks `expected`, records pass/fail +
     output in the log, and **halts at the first failing gate** rather than continuing.
@@ -430,6 +447,30 @@ Gates are **machine-checked by the orchestrator**, never self-reported by the ag
   `execution-log.md`.
 - On failure the run **halts at that gate** (autopilot stops too); the user can inspect, fix, and
   `resume`. This removes reliance on the agent to honestly stop, validate, and report.
+
+### 6.3 Cross-stage context continuity
+
+Splitting phase 6 into one fresh sub-session per stage bounds context growth and drift, but risks
+losing knowledge built up in earlier stages. We treat a fresh session as *clean*, **not blank** —
+`buildContextPack(ctx, stage)` curates an explicit context pack for each stage so nothing material
+is lost across the boundary:
+
+- **Code on disk** — the real source written by prior stages *is* the shared state; the new session
+  reads actual symbols/signatures rather than reconstructing them from memory.
+- **`plan.md`** — the durable source of truth, including the running **Plan-changes** log.
+- **`handoff.md`** — the prior stages' concise handoff entries (what was built, new/changed public
+  symbols, decisions/conventions, deferred items) — see §5.
+- **Cumulative diff** — a summary of files changed so far in the run, so the stage sees what already
+  moved.
+- **`context_needed`** — the existing files/symbols the plan declared this stage depends on (§5),
+  pre-opened so the agent doesn't have to rediscover them.
+
+This is a deliberate trade: a **curated, bounded handoff** over an ever-growing single transcript.
+It usually beats one long session, which accretes noise, drifts, and risks context-window limits in
+exactly the riskiest phase. Two design rules reinforce it: the plan phase **sizes stages to be
+cohesive and loosely coupled** (§5) so little must cross a boundary, and tightly-coupled work stays
+in a single stage. If a context pack would have to be enormous for a stage to succeed, that's a
+signal the plan split the work at the wrong seam.
 
 ## 7. Configuration
 
@@ -711,7 +752,8 @@ agentic-workflow run "Add a null guard in src/parse.ts:42" --simple --type bug -
    + validator tool; parallel phase-4 sessions ordered by `dependsOn`, with a concurrency cap.
 6. **M5 — Plan + staged implement + gates (1.5 days):** wire phase 5 (incl. machine-readable
    `stages:`/`gate:` block + `planSchema`) and the **staged** phase 6 with orchestrator-enforced
-   gates and `allowed_files`; execution-log + deviation handling; end-to-end run on a sample.
+   gates, `expected_files` scope checks, and the cross-stage context pack (§6.3); execution-log +
+   handoff + deviation handling; end-to-end run on a sample.
 7. **M6 — Hardening (1 day):** retries/backoff, resume revalidation + locking, dry-run, redaction.
 8. **M7 — CLI surface (½ day):** wire commands (`run`/`resume`/`status`/`list`/`approve`/`abort`/
    `clean`), the gate-set resolution (presets + `--pause-after`/`--pause-before`/`--auto`),
@@ -739,7 +781,7 @@ agentic-workflow run "Add a null guard in src/parse.ts:42" --simple --type bug -
 - **Context size for phase 5:** plan phase reads all specs + all item research — may need
   summarization if large.
 - **Implementation safety:** phase 6 edits real code. Run on a dedicated branch; gates +
-  `allowed_files` + deviation policy bound scope; human review of `plan.md` recommended.
+  `expected_files` + deviation policy bound scope; human review of `plan.md` recommended.
 - **Artifact location:** scratch by default — runs live under a locally-ignored `.agentic-workflow/`
   root (`.git/info/exclude` + inner `.gitignore`; root-`.gitignore` only via opt-in flag); see §3.1.
 - **Determinism:** prompt templates are versioned; the template version is stamped into each
@@ -753,8 +795,9 @@ agentic-workflow run "Add a null guard in src/parse.ts:42" --simple --type bug -
 - **Guarantees are orchestrator-enforced, not prompt-only:** per-phase tool/FS policy + git-diff
   guard (§6.1), machine-readable checkpoint gates the orchestrator runs (§6.2), and resume
   revalidation + hashing + run lock (§9.4).
-- **Phase 6 is staged:** one fresh sub-session per plan stage, each gated and confined to
-  `allowed_files`.
+- **Phase 6 is staged:** one fresh sub-session per plan stage, each gated. `expected_files` is
+  advisory (documented deviations allowed, §5); cross-stage knowledge is preserved via a curated
+  context pack — `plan.md` + `handoff.md` + cumulative diff + `context_needed` (§6.3).
 - Location: new tool at `tools/agentic-workflow/` (this design doc lives at repo root for now).
 - End state: SDK engine + optional thin skill as the single entrypoint.
 - CLI: `run` + `resume` core commands. Execution is controlled by a **per-phase gate set** —

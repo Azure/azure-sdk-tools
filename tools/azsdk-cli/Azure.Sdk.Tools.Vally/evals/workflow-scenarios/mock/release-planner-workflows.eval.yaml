@@ -35,7 +35,7 @@ stimuli:
   # --- Scenario 1: Create release plan ---------------------------------
   - name: create-public-preview-release-plan
     # Spec-repo worktree fixture: defined once here and aliased by the stimuli
-    # below. CI clones it via scripts/Initialize-EvalGitFixtures.ps1 before this suite.
+    # below. CI clones it via eng/common/scripts/eval/init-eval-git-fixtures.js before this suite.
     environment: &specsWorktree
       # Load the real release-planning skill so the executor can route to it.
       # Path is relative to this eval file (6 levels up = repo root).

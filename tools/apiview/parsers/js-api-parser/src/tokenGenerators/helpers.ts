@@ -72,12 +72,16 @@ export function createToken(
   };
 }
 
-export function needsLeadingSpace(value: string): boolean {
+function needsSpace(value: string): boolean {
   return value === "|" || value === "&" || value === "is" || value === "extends";
 }
 
+export function needsLeadingSpace(value: string): boolean {
+  return needsSpace(value);
+}
+
 export function needsTrailingSpace(value: string): boolean {
-  return value === "|" || value === "&" || value === "is" || value === "extends";
+  return needsSpace(value);
 }
 
 function getTokenKind(text: string): TokenKind {
@@ -482,9 +486,14 @@ export function buildTypeNodeTokens(
     // Handle parenthesized types: (TypeA | TypeB)
     tokens.push(createToken(TokenKind.Punctuation, "(", { deprecated }));
     const nestedChildren = buildTypeNodeTokens(node.type, tokens, deprecated, depth, referenceMap);
-    tokens.push(createToken(TokenKind.Punctuation, ")", { deprecated }));
     if (nestedChildren?.length) {
       children.push(...nestedChildren);
+      // Put the closing ")" on the same line as the last nested child's content.
+      nestedChildren[nestedChildren.length - 1].Tokens.push(
+        createToken(TokenKind.Punctuation, ")", { deprecated }),
+      );
+    } else {
+      tokens.push(createToken(TokenKind.Punctuation, ")", { deprecated }));
     }
     return children.length > 0 ? children : undefined;
   }
@@ -646,7 +655,10 @@ export function buildTypeNodeTokens(
   }
 
   if (ts.isImportTypeNode(node)) {
-    // Handle import("@azure/logger").AzureLogger
+    // Handle typeof import("...") and import("@azure/logger").AzureLogger
+    if (node.isTypeOf) {
+      tokens.push(createToken(TokenKind.Keyword, "typeof", { hasSuffixSpace: true, deprecated }));
+    }
     tokens.push(createToken(TokenKind.Keyword, "import", { deprecated }));
     tokens.push(createToken(TokenKind.Punctuation, "(", { deprecated }));
 
@@ -762,50 +774,70 @@ export function buildTypeNodeTokens(
       return undefined;
     }
 
+    // Pre-render all elements once to determine inline vs multiline
+    interface RenderedElement {
+      tokens: ReviewToken[];
+      children: ReviewLine[] | undefined;
+      isNamed: boolean;
+      dotDotDot: boolean;
+      question: boolean;
+      name?: string;
+    }
+    const rendered: RenderedElement[] = [];
+    let hasMultiline = false;
+
+    for (const el of node.elements) {
+      const elTokens: ReviewToken[] = [];
+      let elChildren: ReviewLine[] | undefined;
+      const isNamed = ts.isNamedTupleMember(el);
+      const dotDotDot = isNamed && !!el.dotDotDotToken;
+      const question = isNamed && !!el.questionToken;
+      const name = isNamed ? el.name.getText() : undefined;
+      const typeNode = isNamed ? el.type : el;
+      elChildren = buildTypeNodeTokens(typeNode, elTokens, deprecated, depth, referenceMap);
+      if (elChildren?.length) hasMultiline = true;
+      rendered.push({ tokens: elTokens, children: elChildren, isNamed, dotDotDot, question, name });
+    }
+
+    if (!hasMultiline) {
+      // Inline path: all elements fit on one line
+      tokens.push(createToken(TokenKind.Punctuation, "[", { deprecated }));
+      for (let i = 0; i < rendered.length; i++) {
+        if (i > 0) tokens.push(createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }));
+        const r = rendered[i];
+        if (r.isNamed) {
+          if (r.dotDotDot) tokens.push(createToken(TokenKind.Punctuation, "...", { deprecated }));
+          tokens.push(createToken(TokenKind.MemberName, r.name!, { deprecated }));
+          if (r.question) tokens.push(createToken(TokenKind.Punctuation, "?", { deprecated }));
+          tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
+        }
+        tokens.push(...r.tokens);
+      }
+      tokens.push(createToken(TokenKind.Punctuation, "]", { deprecated }));
+      return undefined;
+    }
+
+    // Multiline path: at least one element has children
     tokens.push(createToken(TokenKind.Punctuation, "[", { deprecated }));
 
-    for (let i = 0; i < node.elements.length; i++) {
-      const element = node.elements[i];
-      const isLast = i === node.elements.length - 1;
+    for (let i = 0; i < rendered.length; i++) {
+      const r = rendered[i];
+      const isLast = i === rendered.length - 1;
       const memberTokens: ReviewToken[] = [];
       const indent = createIndentation(depth + 1, deprecated);
       if (indent) memberTokens.push(indent);
 
-      let memberChildren: ReviewLine[] | undefined;
-
-      if (ts.isNamedTupleMember(element)) {
-        if (element.dotDotDotToken) {
-          memberTokens.push(createToken(TokenKind.Punctuation, "...", { deprecated }));
-        }
-        memberTokens.push(
-          createToken(TokenKind.MemberName, element.name.getText(), { deprecated }),
-        );
-        if (element.questionToken) {
-          memberTokens.push(createToken(TokenKind.Punctuation, "?", { deprecated }));
-        }
-        memberTokens.push(
-          createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }),
-        );
-        memberChildren = buildTypeNodeTokens(
-          element.type,
-          memberTokens,
-          deprecated,
-          depth + 1,
-          referenceMap,
-        );
-      } else {
-        memberChildren = buildTypeNodeTokens(
-          element,
-          memberTokens,
-          deprecated,
-          depth + 1,
-          referenceMap,
-        );
+      if (r.isNamed) {
+        if (r.dotDotDot) memberTokens.push(createToken(TokenKind.Punctuation, "...", { deprecated }));
+        memberTokens.push(createToken(TokenKind.MemberName, r.name!, { deprecated }));
+        if (r.question) memberTokens.push(createToken(TokenKind.Punctuation, "?", { deprecated }));
+        memberTokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
       }
+      memberTokens.push(...r.tokens);
 
       if (!isLast) {
-        if (memberChildren?.length) {
-          memberChildren[memberChildren.length - 1].Tokens.push(
+        if (r.children?.length) {
+          r.children[r.children.length - 1].Tokens.push(
             createToken(TokenKind.Punctuation, ",", { deprecated }),
           );
         } else {
@@ -814,9 +846,7 @@ export function buildTypeNodeTokens(
       }
 
       const childLine: ReviewLine = { Tokens: memberTokens };
-      if (memberChildren?.length) {
-        childLine.Children = memberChildren;
-      }
+      if (r.children?.length) childLine.Children = r.children;
       children.push(childLine);
     }
 
@@ -855,10 +885,252 @@ export function buildTypeNodeTokens(
     return children.length > 0 ? children : undefined;
   }
 
+  // Type operators: keyof, typeof, readonly T[]
+  if (ts.isTypeOperatorNode(node)) {
+    const keyword = node.operator === ts.SyntaxKind.KeyOfKeyword ? "keyof"
+      : node.operator === ts.SyntaxKind.UniqueKeyword ? "unique"
+      : node.operator === ts.SyntaxKind.ReadonlyKeyword ? "readonly"
+      : null;
+    if (keyword) {
+      tokens.push(createToken(TokenKind.Keyword, keyword, { hasSuffixSpace: true, deprecated }));
+    }
+    const innerChildren = buildTypeNodeTokens(node.type, tokens, deprecated, depth, referenceMap);
+    if (innerChildren?.length) children.push(...innerChildren);
+    return children.length > 0 ? children : undefined;
+  }
+
+  // typeof T (type query)
+  if (ts.isTypeQueryNode(node)) {
+    tokens.push(createToken(TokenKind.Keyword, "typeof", { hasSuffixSpace: true, deprecated }));
+    const exprName = node.exprName.getText();
+    // Check if it's a reference we know about
+    const navId = referenceMap?.get(exprName);
+    if (navId) {
+      tokens.push(createToken(TokenKind.TypeName, exprName, { navigateToId: navId, deprecated }));
+    } else {
+      tokens.push(createToken(TokenKind.TypeName, exprName, { deprecated }));
+    }
+    // Handle type arguments if present (typeof X<Y>)
+    if (node.typeArguments?.length) {
+      tokens.push(createToken(TokenKind.Punctuation, "<", { deprecated }));
+      node.typeArguments.forEach((arg, i) => {
+        if (i > 0) tokens.push(createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }));
+        const argChildren = buildTypeNodeTokens(arg, tokens, deprecated, depth, referenceMap);
+        if (argChildren?.length) children.push(...argChildren);
+      });
+      tokens.push(createToken(TokenKind.Punctuation, ">", { deprecated }));
+    }
+    return children.length > 0 ? children : undefined;
+  }
+
+  // Indexed access: T[K], T["key"]
+  if (ts.isIndexedAccessTypeNode(node)) {
+    const objChildren = buildTypeNodeTokens(node.objectType, tokens, deprecated, depth, referenceMap);
+    if (objChildren?.length) children.push(...objChildren);
+    tokens.push(createToken(TokenKind.Punctuation, "[", { deprecated }));
+    const idxChildren = buildTypeNodeTokens(node.indexType, tokens, deprecated, depth, referenceMap);
+    if (idxChildren?.length) children.push(...idxChildren);
+    tokens.push(createToken(TokenKind.Punctuation, "]", { deprecated }));
+    return children.length > 0 ? children : undefined;
+  }
+
+  // Optional type: T? (rare, usually in infer/conditional)
+  if (ts.isOptionalTypeNode(node)) {
+    const innerChildren = buildTypeNodeTokens(node.type, tokens, deprecated, depth, referenceMap);
+    if (innerChildren?.length) children.push(...innerChildren);
+    tokens.push(createToken(TokenKind.Punctuation, "?", { deprecated }));
+    return children.length > 0 ? children : undefined;
+  }
+
+  // Rest type: ...T (in tuples)
+  if (ts.isRestTypeNode(node)) {
+    tokens.push(createToken(TokenKind.Punctuation, "...", { deprecated }));
+    const innerChildren = buildTypeNodeTokens(node.type, tokens, deprecated, depth, referenceMap);
+    if (innerChildren?.length) children.push(...innerChildren);
+    return children.length > 0 ? children : undefined;
+  }
+
+  // Mapped type: { [K in keyof T]: V }
+  if (ts.isMappedTypeNode(node)) {
+    tokens.push(createToken(TokenKind.Punctuation, "{", { hasSuffixSpace: true, deprecated }));
+    if (node.readonlyToken) {
+      const readonlyMod = node.readonlyToken.kind === ts.SyntaxKind.PlusToken ? "+readonly"
+        : node.readonlyToken.kind === ts.SyntaxKind.MinusToken ? "-readonly"
+        : "readonly";
+      tokens.push(createToken(TokenKind.Keyword, readonlyMod, { hasSuffixSpace: true, deprecated }));
+    }
+    tokens.push(createToken(TokenKind.Punctuation, "[", { deprecated }));
+    tokens.push(createToken(TokenKind.TypeName, node.typeParameter.name.text, { deprecated }));
+    tokens.push(createToken(TokenKind.Keyword, "in", { hasPrefixSpace: true, hasSuffixSpace: true, deprecated }));
+    if (node.typeParameter.constraint) {
+      const constraintChildren = buildTypeNodeTokens(node.typeParameter.constraint, tokens, deprecated, depth, referenceMap);
+      if (constraintChildren?.length) children.push(...constraintChildren);
+    }
+    if (node.nameType) {
+      tokens.push(createToken(TokenKind.Keyword, "as", { hasPrefixSpace: true, hasSuffixSpace: true, deprecated }));
+      const nameChildren = buildTypeNodeTokens(node.nameType, tokens, deprecated, depth, referenceMap);
+      if (nameChildren?.length) children.push(...nameChildren);
+    }
+    tokens.push(createToken(TokenKind.Punctuation, "]", { deprecated }));
+    if (node.questionToken) {
+      const questionMod = node.questionToken.kind === ts.SyntaxKind.PlusToken ? "+?"
+        : node.questionToken.kind === ts.SyntaxKind.MinusToken ? "-?"
+        : "?";
+      tokens.push(createToken(TokenKind.Punctuation, questionMod, { deprecated }));
+    }
+    tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
+    if (node.type) {
+      const typeChildren = buildTypeNodeTokens(node.type, tokens, deprecated, depth, referenceMap);
+      if (typeChildren?.length) children.push(...typeChildren);
+    }
+    tokens.push(createToken(TokenKind.Punctuation, "}", { hasPrefixSpace: true, deprecated }));
+    return children.length > 0 ? children : undefined;
+  }
+
+  // Type predicate: x is Foo, asserts x, asserts x is Foo
+  if (ts.isTypePredicateNode(node)) {
+    if (node.assertsModifier) {
+      tokens.push(createToken(TokenKind.Keyword, "asserts", { hasSuffixSpace: true, deprecated }));
+    }
+    const paramName = ts.isIdentifier(node.parameterName)
+      ? node.parameterName.text
+      : node.parameterName.getText(); // "this"
+    tokens.push(createToken(TokenKind.MemberName, paramName, { deprecated }));
+    if (node.type) {
+      tokens.push(createToken(TokenKind.Keyword, "is", { hasPrefixSpace: true, hasSuffixSpace: true, deprecated }));
+      const typeChildren = buildTypeNodeTokens(node.type, tokens, deprecated, depth, referenceMap);
+      if (typeChildren?.length) children.push(...typeChildren);
+    }
+    return children.length > 0 ? children : undefined;
+  }
+
+  // Constructor type: new <T>(...args) => T
+  if (ts.isConstructorTypeNode(node)) {
+    tokens.push(createToken(TokenKind.Keyword, "new", { hasSuffixSpace: true, deprecated }));
+    const sigChildren: ReviewLine[] = [];
+    buildSignatureBodyTokens(
+      node.typeParameters,
+      node.parameters,
+      node.type,
+      tokens,
+      sigChildren,
+      deprecated,
+      depth,
+      referenceMap,
+    );
+    if (sigChildren.length) children.push(...sigChildren);
+    return children.length > 0 ? children : undefined;
+  }
+
   const text = node.getText();
   const tokenKind = getTokenKind(text);
   tokens.push(createToken(tokenKind, text, { deprecated }));
   return undefined;
+}
+
+/**
+ * Shared helper: emits type-parameters, parameter list, and optional return
+ * type for method, call, and construct signatures.  Mutates `tokens` (and
+ * possibly grows `sigChildren`) in place; returns the final target array.
+ */
+function buildSignatureBodyTokens(
+  typeParameters: ts.NodeArray<ts.TypeParameterDeclaration> | undefined,
+  parameters: ts.NodeArray<ts.ParameterDeclaration>,
+  returnType: ts.TypeNode | undefined,
+  tokens: ReviewToken[],
+  sigChildren: ReviewLine[],
+  deprecated: boolean | undefined,
+  depth: number,
+  referenceMap?: ReferenceMap,
+): ReviewToken[] {
+  let target: ReviewToken[] = tokens;
+
+  if (typeParameters?.length) {
+    target.push(createToken(TokenKind.Punctuation, "<", { deprecated }));
+    typeParameters.forEach((typeParameter, index) => {
+      target.push(createToken(TokenKind.TypeName, typeParameter.name.getText(), { deprecated }));
+
+      if (typeParameter.constraint) {
+        target.push(
+          createToken(TokenKind.Keyword, "extends", {
+            hasPrefixSpace: true,
+            hasSuffixSpace: true,
+            deprecated,
+          }),
+        );
+        target = addTypeNodeTokensOrInlineLiteral(
+          typeParameter.constraint,
+          target,
+          sigChildren,
+          deprecated,
+          depth,
+          referenceMap,
+        );
+      }
+
+      if (typeParameter.default) {
+        target.push(
+          createToken(TokenKind.Punctuation, "=", {
+            hasPrefixSpace: true,
+            hasSuffixSpace: true,
+            deprecated,
+          }),
+        );
+        target = addTypeNodeTokensOrInlineLiteral(
+          typeParameter.default,
+          target,
+          sigChildren,
+          deprecated,
+          depth,
+          referenceMap,
+        );
+      }
+
+      if (index < typeParameters.length - 1) {
+        target.push(
+          createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }),
+        );
+      }
+    });
+    target.push(createToken(TokenKind.Punctuation, ">", { deprecated }));
+  }
+
+  target.push(createToken(TokenKind.Punctuation, "(", { deprecated }));
+  parameters.forEach((param, index) => {
+    if (index > 0) {
+      target.push(createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }));
+    }
+
+    if (param.dotDotDotToken) {
+      target.push(createToken(TokenKind.Punctuation, "...", { deprecated }));
+    }
+
+    target.push(createToken(TokenKind.MemberName, param.name.getText(), { deprecated }));
+
+    if (param.questionToken) {
+      target.push(createToken(TokenKind.Punctuation, "?", { deprecated }));
+    }
+
+    if (param.type) {
+      target.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
+      target = addTypeNodeTokensOrInlineLiteral(
+        param.type,
+        target,
+        sigChildren,
+        deprecated,
+        depth,
+        referenceMap,
+      );
+    }
+  });
+  target.push(createToken(TokenKind.Punctuation, ")", { deprecated }));
+
+  if (returnType) {
+    target.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
+    target = addTypeNodeTokensOrInlineLiteral(returnType, target, sigChildren, deprecated, depth, referenceMap);
+  }
+
+  return target;
 }
 
 /**
@@ -910,9 +1182,7 @@ export function buildTypeElementTokens(
       tokens.push(createToken(TokenKind.MemberName, param.name.getText(), { deprecated }));
       tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
       if (param.type) {
-        const typeText = param.type.getText();
-        const tokenKind = getTokenKind(typeText);
-        tokens.push(createToken(tokenKind, typeText, { deprecated }));
+        buildTypeNodeTokens(param.type, tokens, deprecated, depth, referenceMap);
       }
     }
 
@@ -934,107 +1204,22 @@ export function buildTypeElementTokens(
     const methodChildren: ReviewLine[] = [];
 
     const name = member.name.getText();
-    let target: ReviewToken[] = tokens;
-    target.push(createToken(TokenKind.MemberName, name, { deprecated }));
+    tokens.push(createToken(TokenKind.MemberName, name, { deprecated }));
 
     if (member.questionToken) {
-      target.push(createToken(TokenKind.Punctuation, "?", { deprecated }));
+      tokens.push(createToken(TokenKind.Punctuation, "?", { deprecated }));
     }
 
-    if (member.typeParameters?.length) {
-      target.push(createToken(TokenKind.Punctuation, "<", { deprecated }));
-      member.typeParameters.forEach((typeParameter, index) => {
-        target.push(createToken(TokenKind.TypeName, typeParameter.name.getText(), { deprecated }));
-
-        if (typeParameter.constraint) {
-          target.push(
-            createToken(TokenKind.Keyword, "extends", {
-              hasPrefixSpace: true,
-              hasSuffixSpace: true,
-              deprecated,
-            }),
-          );
-          target = addTypeNodeTokensOrInlineLiteral(
-            typeParameter.constraint,
-            target,
-            methodChildren,
-            deprecated,
-            depth,
-            referenceMap,
-          );
-        }
-
-        if (typeParameter.default) {
-          target.push(
-            createToken(TokenKind.Punctuation, "=", {
-              hasPrefixSpace: true,
-              hasSuffixSpace: true,
-              deprecated,
-            }),
-          );
-          target = addTypeNodeTokensOrInlineLiteral(
-            typeParameter.default,
-            target,
-            methodChildren,
-            deprecated,
-            depth,
-            referenceMap,
-          );
-        }
-
-        if (index < member.typeParameters.length - 1) {
-          target.push(
-            createToken(TokenKind.Punctuation, ",", {
-              hasSuffixSpace: true,
-              deprecated,
-            }),
-          );
-        }
-      });
-      target.push(createToken(TokenKind.Punctuation, ">", { deprecated }));
-    }
-
-    target.push(createToken(TokenKind.Punctuation, "(", { deprecated }));
-    member.parameters.forEach((param, index) => {
-      if (index > 0) {
-        target.push(createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }));
-      }
-
-      if (param.dotDotDotToken) {
-        target.push(createToken(TokenKind.Punctuation, "...", { deprecated }));
-      }
-
-      target.push(createToken(TokenKind.MemberName, param.name.getText(), { deprecated }));
-
-      if (param.questionToken) {
-        target.push(createToken(TokenKind.Punctuation, "?", { deprecated }));
-      }
-
-      if (param.type) {
-        target.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
-        target = addTypeNodeTokensOrInlineLiteral(
-          param.type,
-          target,
-          methodChildren,
-          deprecated,
-          depth,
-          referenceMap,
-        );
-      }
-    });
-    target.push(createToken(TokenKind.Punctuation, ")", { deprecated }));
-
-    if (member.type) {
-      target.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
-      target = addTypeNodeTokensOrInlineLiteral(
-        member.type,
-        target,
-        methodChildren,
-        deprecated,
-        depth,
-        referenceMap,
-      );
-    }
+    buildSignatureBodyTokens(
+      member.typeParameters,
+      member.parameters,
+      member.type,
+      tokens,
+      methodChildren,
+      deprecated,
+      depth,
+      referenceMap,
+    );
 
     if (!methodChildren.length) {
       tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
@@ -1045,6 +1230,56 @@ export function buildTypeElementTokens(
       createToken(TokenKind.Punctuation, ";", { deprecated }),
     );
     return methodChildren;
+  } else if (ts.isCallSignatureDeclaration(member)) {
+    // Call signatures: (param: Type): ReturnType
+    const sigChildren: ReviewLine[] = [];
+
+    buildSignatureBodyTokens(
+      member.typeParameters,
+      member.parameters,
+      member.type,
+      tokens,
+      sigChildren,
+      deprecated,
+      depth,
+      referenceMap,
+    );
+
+    if (!sigChildren.length) {
+      tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+      return undefined;
+    }
+
+    sigChildren[sigChildren.length - 1].Tokens.push(
+      createToken(TokenKind.Punctuation, ";", { deprecated }),
+    );
+    return sigChildren;
+  } else if (ts.isConstructSignatureDeclaration(member)) {
+    // Construct signatures: new (param: Type): ReturnType
+    const sigChildren: ReviewLine[] = [];
+
+    tokens.push(createToken(TokenKind.Keyword, "new", { hasSuffixSpace: true, deprecated }));
+
+    buildSignatureBodyTokens(
+      member.typeParameters,
+      member.parameters,
+      member.type,
+      tokens,
+      sigChildren,
+      deprecated,
+      depth,
+      referenceMap,
+    );
+
+    if (!sigChildren.length) {
+      tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+      return undefined;
+    }
+
+    sigChildren[sigChildren.length - 1].Tokens.push(
+      createToken(TokenKind.Punctuation, ";", { deprecated }),
+    );
+    return sigChildren;
   }
 
   tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));

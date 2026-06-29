@@ -4,6 +4,8 @@
 
 ### Features Added
 
+- Update package details in release plan using package name in tspconfig.yaml when a new release plan is created.
+
 ### Breaking Changes
 
 ### Bugs Fixed

@@ -1099,6 +1099,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         releasePlan.ReleasePlanId = releasePlanId;
                     }
 
+                    reporter.NextStep($"Release plan work item created successfully. Release Plan ID: {releasePlan.ReleasePlanId}. Updating SDK details in release plan");
                     // Attempt to update SDK details if the TypeSpec path is a valid local path
                     List<string> warnings = [];
                     List<string> nextSteps = [];
@@ -1107,8 +1108,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                     if (isLocalValidTypeSpec && releasePlan.WorkItemId > 0)
                     {
-                        reporter.NextStep("Updating SDK details in release plan");
-
                         try
                         {
                             var sdkDetailsResult = await UpdateSDKDetailsInReleasePlan(releasePlan.WorkItemId, typeSpecProjectPath, ct);

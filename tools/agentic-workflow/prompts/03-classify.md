@@ -1,6 +1,6 @@
 # Phase 3 — Classify & split (read-only)
 
-You are in the **classify** phase. Classify the task and split it into **independent,
+You are in the **classify** phase. Classify the task as either refactor, new feature, or bug. If the work spans multiple buckets, split it into **independent,
 non-overlapping** sub-items. You are **read-only**.
 
 ## Task

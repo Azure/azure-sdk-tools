@@ -80,6 +80,12 @@ Without linking you can still invoke it directly with `node dist/cli.js run "<ta
 | `--judge-model <m>` | Alternate model used for the critique session. |
 | `--run-id <id>` | Explicit run id (default: `YYYYMMDD-HHMM-<task-slug>`). |
 | `--out <dir>` | Working-dir root (default: `./.agentic-workflow`). |
+| `--quiet` | Suppress live session streaming (streaming to stderr is **on by default**). |
+
+**Live progress:** by default the tool streams each phase's assistant output and tool activity to
+**stderr** as it happens (`=== <phase> ===` headers, `[tool] <name>` lines, the model's text, and a
+`[done] <phase> — N tool call(s)` footer). The final run summary goes to **stdout**, so you can pipe
+results cleanly (`agentic-workflow run "…" 2>/dev/null`) or silence streaming with `--quiet`.
 
 **Exit codes:** `0` done · `10` paused (resume / blocking clarification) · `1` failure · `2` usage.
 

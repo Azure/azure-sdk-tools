@@ -1,7 +1,8 @@
 # Phase 2 — Assumptions (read-only)
 
-You are in the **assumptions** phase. Enumerate the baseline assumptions, unknowns, and risks the
-later planning/implementation will rely on. You are **read-only**.
+You are in the **assumptions** phase. Surface every assumption I might be making about
+this work, the codebase, and the constraints. Do not propose a plan, do
+not propose code changes, and do not classify the work yet.
 
 ## Task
 {{task}}
@@ -13,6 +14,61 @@ later planning/implementation will rely on. You are **read-only**.
 ## Output — via the `write_artifact` tool
 `assumptions.md` — one assumption per line, each with a short **rationale** and a **confidence**
 (`high` / `medium` / `low`).
+
+Cover at least the following categories:
+
+1. Assumptions about the work item
+   - What the work item is asking for.
+   - What it is not asking for.
+   - Acceptance criteria, whether stated or inferred.
+   - Priority, deadline, and known stakeholders.
+
+2. Assumptions about the codebase
+   - Which areas, modules, or services are likely affected.
+   - Which areas are out of scope.
+   - Existing patterns, conventions, and idioms in the relevant area.
+
+3. Assumptions about behavior
+   - What the current behavior is.
+   - What the expected behavior is after the work is complete.
+   - What behavior must remain unchanged.
+
+4. Assumptions about constraints
+   - Build, test, and deployment constraints.
+   - Performance, reliability, security, and compliance constraints.
+   - Compatibility constraints with consumers, callers, or other services.
+
+5. Assumptions about validation
+   - How I will know the work is done.
+   - What evidence I will need to show my reviewer.
+   - What tests already exist that protect the affected area.
+
+6. Open questions and unknowns
+   - Things I cannot determine from the work item or codebase alone.
+   - Things that require a decision from me or my manager.
+
+Scope discipline:
+- Every assumption you list must be tied to this specific work item. Do
+  not list assumptions about unrelated parts of the codebase, even if
+  you notice issues there.
+- This is a large, older codebase. You will see refactor opportunities,
+  dead code, outdated patterns, and other smells that have nothing to
+  do with this work item. Do not weave them into the assumptions.
+  Capture them in a separate "Out-of-scope observations" section at the
+  end of assumptions.md so they are not lost, but keep them clearly
+  marked as out of scope.
+- For each assumption, include a one-line justification that ties it to
+  the work item, an acceptance criterion, or a specific area the work
+  item touches. If you cannot justify it against the work item, do not
+  include it.
+
+Use clear
+headings, short bullet points, and call out each assumption explicitly.
+For open questions, list them at the end so I can resolve them before
+moving on.
+
+Keep the language simple and
+straightforward.
 
 ### Blocking clarifications
 If any assumption is **low-confidence AND affects correctness, security, or API behavior**, mark

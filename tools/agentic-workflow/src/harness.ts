@@ -43,7 +43,7 @@ const DEFAULT_TIMEOUT_MS = 15 * 60 * 1000;
 export class SdkHarness implements Harness {
     private client: CopilotClient | undefined;
 
-    constructor(private readonly defaults: { workingDirectory?: string } = {}) {}
+    constructor(private readonly defaults: { workingDirectory?: string; stream?: boolean } = {}) {}
 
     private async getClient(): Promise<CopilotClient> {
         if (!this.client) {
@@ -58,8 +58,15 @@ export class SdkHarness implements Harness {
         const client = await this.getClient();
         logEvent(req.logPath, { kind: "phase_start", label: req.label, readOnly: req.readOnly, model: req.model });
 
+        const streaming = this.defaults.stream === true;
+        const write = (s: string) => process.stderr.write(s);
+        if (streaming) {
+            write(`\n=== ${req.label}${req.model ? ` (model: ${req.model})` : ""} ===\n`);
+        }
+
         const session = await client.createSession({
             model: req.model,
+            streaming,
             onPermissionRequest: approveAll,
             tools: [makeWriteArtifactTool(req.runDir, req.logPath)],
             hooks: {
@@ -70,8 +77,28 @@ export class SdkHarness implements Harness {
 
         let finalText = "";
         let toolCalls = 0;
+        let midLine = false;
         session.on("assistant.message", (e) => {
             finalText += e.data?.content ?? "";
+        });
+        if (streaming) {
+            session.on("assistant.message_delta", (e) => {
+                const chunk = e.data?.deltaContent ?? "";
+                if (chunk) {
+                    write(chunk);
+                    midLine = !chunk.endsWith("\n");
+                }
+            });
+            session.on("tool.execution_start", (e) => {
+                if (midLine) {
+                    write("\n");
+                    midLine = false;
+                }
+                write(`  [tool] ${e.data?.toolName ?? "?"}\n`);
+            });
+        }
+        session.on("tool.execution_start", (e) => {
+            logEvent(req.logPath, { kind: "tool_start", toolName: e.data?.toolName, toolCallId: e.data?.toolCallId });
         });
         session.on("tool.execution_complete", (e) => {
             toolCalls += 1;
@@ -95,6 +122,12 @@ export class SdkHarness implements Harness {
             await session.disconnect().catch(() => {});
         }
 
+        if (streaming) {
+            if (midLine) {
+                write("\n");
+            }
+            write(`  [done] ${req.label} — ${toolCalls} tool call(s)\n`);
+        }
         logEvent(req.logPath, { kind: "phase_end", label: req.label, toolCalls });
         return { artifacts: [], finalText };
     }

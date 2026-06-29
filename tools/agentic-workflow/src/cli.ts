@@ -47,8 +47,8 @@ function parseArgs(argv: string[]): ParsedArgs {
 const USAGE = `agentic-workflow — research -> plan -> implement, one fresh session per phase
 
 Usage:
-  agentic-workflow run "<task>" [--simple] [--no-judge] [--judge-model <m>] [--out <dir>] [--run-id <id>]
-  agentic-workflow resume [<run-id>] [--out <dir>]
+  agentic-workflow run "<task>" [--simple] [--no-judge] [--judge-model <m>] [--out <dir>] [--run-id <id>] [--quiet]
+  agentic-workflow resume [<run-id>] [--out <dir>] [--quiet]
 
 Options:
   --simple              Skip research, classify, per-item research (assumptions -> plan -> implement).
@@ -56,6 +56,7 @@ Options:
   --judge-model <m>     Alternate model used for the critique session.
   --out <dir>           Working-dir root (default: ./.agentic-workflow).
   --run-id <id>         Explicit run id (default: timestamp + task slug).
+  --quiet               Suppress live session streaming to stderr (streaming is on by default).
 
 Exit codes: 0 done, 10 paused (resume/clarify), 1 failure, 2 usage.`;
 
@@ -142,7 +143,8 @@ async function main(): Promise<number> {
         return 2;
     }
 
-    const harness = new SdkHarness({ workingDirectory: process.cwd() });
+    const stream = flags.quiet !== true;
+    const harness = new SdkHarness({ workingDirectory: process.cwd(), stream });
     let result: RunResult;
     try {
         result = await runWorkflow(opts, harness);

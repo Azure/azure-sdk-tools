@@ -182,3 +182,30 @@ than reverting them or expanding the thinnerplan scope to build the handoff/cont
 Anyone reconciling the doc against the code should treat §6.3 (and the `handoff.md` / `context_needed`
 / `buildContextPack` references in §3, §5, the M5 milestone, and the summary) as **planned, not yet
 built**.
+
+---
+
+## Post-T3 enhancement — live session streaming
+
+**Action.** Surfaced the live Copilot session to the console so a run is observable while it
+executes. The SDK exposes `streaming: true` on `createSession` (emitting ephemeral
+`assistant.message_delta` with `deltaContent`) plus `tool.execution_start` (which, unlike
+`tool.execution_complete`, carries a clean `toolName`). `SdkHarness` now takes a `stream` flag; when
+set it enables `streaming`, prints a `=== <phase> (model: …) ===` header, streams assistant
+`deltaContent` inline, prints `[tool] <name>` on each tool start, and a `[done] <phase> — N tool
+call(s)` footer — **all to stderr**, leaving stdout for the final machine-readable summary. The CLI
+defaults streaming **on** and adds `--quiet` to disable. As a side benefit, `tool_start` (with
+`toolName`) is now also recorded in `execution-log.jsonl`, filling the gap where
+`tool.execution_complete` lacked a tool name.
+
+**Justification.** Kept inside the adapter (`harness.ts`) — the orchestrator is untouched because
+`stream` is a harness-construction concern, preserving the "harness churn stays in harness.ts" seam.
+Streaming goes to stderr so `2>/dev/null` still yields clean, pipeable stdout.
+
+**Gate validation:**
+- `tsc` clean, `npm run build` ok, `format:check` clean, **36/36** tests pass (FakeHarness unaffected
+  by the `SdkHarness` constructor change).
+- **Live E2E** in a throwaway repo (`--simple --no-judge`): exit **0**; stderr streamed all three
+  phases live (`assumptions`/`plan`/`implement:stage-1`) with per-tool lines, the model's prose, and
+  the `STAGE_RESULT: pass`; the real code edit landed (`farewell()` added to `src/greet.js`); the
+  final summary appeared on **stdout** only.

@@ -29,6 +29,7 @@
     "@azure/keyvault-secrets": "^4.11.2",
     "adm-zip": "^0.5.17",
     "dotenv": "^17.4.2",
+    "jose": "^6.2.3",
     "js-yaml": "^4.1.0"
   },
   "devDependencies": {

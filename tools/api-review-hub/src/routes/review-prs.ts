@@ -2,15 +2,9 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 
 import type { OperationUpdate, ReviewPullRequestCreationRequest } from "../models/models.js";
 import { acceptOperationUpdate, acceptReviewPullRequestCreation, getOperation } from "../services/review-pr-service.js";
-import { getRequiredHeader, getString, isRecord, logRequest, readJsonBody, sendError, sendJson } from "./http.js";
+import { getString, isRecord, logRequest, readJsonBody, sendError, sendJson } from "./http.js";
 
 export async function handleRequestReviewPullRequestCreation(request: IncomingMessage, response: ServerResponse): Promise<void> {
-    const authorization = getRequiredHeader(request, "Authorization");
-    if (!authorization) {
-        sendError(response, 401, "missingAuthorization", "The Authorization header is required.", "Authorization");
-        return;
-    }
-
     let body: unknown;
     try {
         body = await readJsonBody(request);
@@ -20,7 +14,6 @@ export async function handleRequestReviewPullRequestCreation(request: IncomingMe
     }
 
     logRequest("POST /api/review-prs", {
-        hasAuthorization: Boolean(authorization),
         body,
     });
 
@@ -40,15 +33,8 @@ export async function handleGetOperationStatus(
     _url: URL,
     pathMatch: RegExpMatchArray,
 ): Promise<void> {
-    const authorization = getRequiredHeader(request, "Authorization");
-    if (!authorization) {
-        sendError(response, 401, "missingAuthorization", "The Authorization header is required.", "Authorization");
-        return;
-    }
-
     const operationId = pathMatch[1] ?? "";
     logRequest("GET /api/operations/{operationId}", {
-        hasAuthorization: Boolean(authorization),
         operationId,
     });
 
@@ -68,12 +54,6 @@ export async function handleAcceptOperationUpdate(
     _url: URL,
     pathMatch: RegExpMatchArray,
 ): Promise<void> {
-    const authorization = getRequiredHeader(request, "Authorization");
-    if (!authorization) {
-        sendError(response, 401, "missingAuthorization", "The Authorization header is required.", "Authorization");
-        return;
-    }
-
     let body: unknown;
     try {
         body = await readJsonBody(request);
@@ -84,7 +64,6 @@ export async function handleAcceptOperationUpdate(
 
     const operationId = pathMatch[1] ?? "";
     logRequest("POST /api/operations/{operationId}", {
-        hasAuthorization: Boolean(authorization),
         operationId,
         body,
     });

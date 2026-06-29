@@ -36,6 +36,7 @@ export interface Variables {
     readonly githubAppKeyName: string;
     readonly githubInstallOwner: string;
     readonly allowedRepositoryOwners: string;
+    readonly entraClientId: string;
     readonly assigneeObjectId?: string;
     readonly cosmosEndpoint: string;
     readonly keyVaultUri: string;
@@ -110,6 +111,7 @@ export async function loadVariables(path = process.env.VARIABLES_PATH ?? default
     const githubAppKeyName = getOptionalValue(variables, "GITHUB_APP_KEY_NAME");
     const githubInstallOwner = getOptionalValue(variables, "GITHUB_INSTALL_OWNER");
     const allowedRepositoryOwners = getOptionalValue(variables, "ALLOWED_REPOSITORY_OWNERS");
+    const entraClientId = getOptionalValue(variables, "ENTRA_CLIENT_ID");
     const assigneeObjectId = getOptionalValue(process.env, "ASSIGNEE_OBJECT_ID") || undefined;
     const cosmosEndpoint = `https://${cosmosAccountName}.documents.azure.com:443/`;
     const keyVaultUri = `https://${keyVaultName}.vault.azure.net/`;
@@ -118,6 +120,8 @@ export async function loadVariables(path = process.env.VARIABLES_PATH ?? default
 
     const appConfigurationSettings: readonly AppConfigurationSetting[] = [
         { key: "environment_name", value: environmentName },
+        { key: "tenant_id", value: tenantId },
+        { key: "entra_client_id", value: entraClientId },
         { key: "app_configuration_endpoint", value: appConfigurationEndpoint },
         { key: "app_configuration_name", value: appConfigurationName },
         { key: "application_insights_name", value: applicationInsightsName },
@@ -155,6 +159,7 @@ export async function loadVariables(path = process.env.VARIABLES_PATH ?? default
         githubAppKeyName,
         githubInstallOwner,
         allowedRepositoryOwners,
+        entraClientId,
         assigneeObjectId,
         cosmosEndpoint,
         keyVaultUri,

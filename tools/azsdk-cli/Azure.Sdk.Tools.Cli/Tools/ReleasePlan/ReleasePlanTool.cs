@@ -1052,8 +1052,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 var specType = isValidTypeSpec ? "TypeSpec" : "OpenAPI";
                 logger.LogInformation("Attempting to retrieve current user email.");
 
-                var userEmail = await userHelper.GetUserEmail(ct);
-                logger.LogInformation("User email for release plan submission: {userEmail}", userEmail);
+                var userEmail = "";
+                try
+                {
+                    userEmail = await userHelper.GetUserEmail(ct);
+                    logger.LogInformation("User email for release plan submission: {userEmail}", userEmail);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Failed to retrieve user email. Proceeding without user email for release plan submission.");
+                }
 
                 var productDisplayName = productName;
                 var releasePlan = new ReleasePlanWorkItem

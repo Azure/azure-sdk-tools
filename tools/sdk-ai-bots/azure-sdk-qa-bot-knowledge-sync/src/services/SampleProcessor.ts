@@ -70,7 +70,7 @@ export class SampleProcessor {
             }
         };
         walk(root);
-        return result;
+        return result.sort();
     }
 
     /** Render a single sample folder into one markdown document. */
@@ -78,7 +78,8 @@ export class SampleProcessor {
         const tspFiles = fs
             .readdirSync(sampleDir, { withFileTypes: true })
             .filter(e => e.isFile() && e.name.endsWith('.tsp'))
-            .map(e => e.name);
+            .map(e => e.name)
+            .sort();
 
         if (tspFiles.length === 0) {
             console.warn(`No .tsp files in sample folder, skipping: ${sampleDir}`);
@@ -96,7 +97,7 @@ export class SampleProcessor {
             lines.push(config.danger, '');
         }
         for (const fileName of tspFiles) {
-            const code = fs.readFileSync(path.join(sampleDir, fileName), 'utf-8').trim();
+            const code = fs.readFileSync(path.join(sampleDir, fileName), 'utf-8').trimEnd();
             lines.push(`## ${fileName}`, '```typespec', code, '```', '');
         }
 

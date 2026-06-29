@@ -33,9 +33,8 @@ def asset_name(target: str, scenario: str) -> str:
     return f"qa-bot-{target}-{scenario}"
 
 
-def asset_version(scenario: str, when: datetime | None = None) -> str:
-    when = when or datetime.now(timezone.utc)
-    return f"{scenario}-{when.strftime('%Y-%m-%d')}"
+def asset_version(scenario: str) -> str:
+    return f"{scenario}-{datetime.now(timezone.utc).strftime('%Y-%m-%d')}"
 
 
 def _credential() -> Any:

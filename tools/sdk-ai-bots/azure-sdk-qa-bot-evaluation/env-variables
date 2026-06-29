@@ -1,5 +1,4 @@
 AZURE_AI_PROJECT_ENDPOINT="your_azure_ai_project_endpoint"
-AZURE_SUBSCRIPTION_ID="ai_foundry_subscription_id"
 AZURE_EVALUATION_MODEL_NAME="gpt-4o"
 
 # bot /completion endpoint + token + tenant routing config
@@ -10,11 +9,7 @@ BOT_AGENT_ACCESS_TOKEN=""
 BOT_CONFIG_CONTAINER=""
 BOT_CONFIG_CHANNEL_BLOB=""
 
-# CI credential (Azure Pipelines) - leave empty locally (uses az login)
-AZURE_SUBSCRIPTION_SERVICE_CONNECTION_ID=""
-AZURE_SUBSCRIPTION_CLIENT_ID=""
-AZURE_SUBSCRIPTION_TENANT_ID=""
-SYSTEM_ACCESSTOKEN=""
+# CI credential (Azure Pipelines) - injected automatically; leave to az login locally
 
 # dataset preparation only (blob scan)
 STORAGE_BLOB_ACCOUNT=""

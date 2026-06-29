@@ -100,7 +100,6 @@ extends:
                 env:
                   SYSTEM_ACCESSTOKEN: $(System.AccessToken)
                   AZURE_AI_PROJECT_ENDPOINT: $(AZURE_AI_PROJECT_ENDPOINT)
-                  AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
                   AZURE_EVALUATION_MODEL_NAME: $(AZURE_EVALUATION_MODEL_NAME)
                   STORAGE_BLOB_ACCOUNT: $(STORAGE_BLOB_ACCOUNT)
                   BOT_CONFIG_CONTAINER: $(BOT_CONFIG_CONTAINER)

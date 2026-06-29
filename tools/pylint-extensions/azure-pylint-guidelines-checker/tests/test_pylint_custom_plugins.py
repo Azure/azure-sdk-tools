@@ -3630,6 +3630,17 @@ class TestInvalidUseOfOverload(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_classdef(node.body[1])
 
+    def test_valid_use_overload_module_level(self):
+        file = open(
+            os.path.join(
+                TEST_FOLDER, "test_files", "invalid_use_of_overload_acceptable.py"
+            )
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        with self.assertNoMessages():
+            self.checker.visit_module(node)
+
     def test_invalid_use_overload(self):
         file = open(
             os.path.join(
@@ -3658,6 +3669,31 @@ class TestInvalidUseOfOverload(pylint.testutils.CheckerTestCase):
             ),
         ):
             self.checker.visit_classdef(node)
+
+    def test_invalid_use_overload_module_level(self):
+        file = open(
+            os.path.join(
+                TEST_FOLDER,
+                "test_files",
+                "invalid_use_of_overload_module_violation.py",
+            )
+        )
+        node = astroid.parse(file.read())
+        file.close()
+
+        # The async implementation at module level should be flagged
+        async_impl = node.body[3]  # async def module_mixed
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="invalid-use-of-overload",
+                line=14,
+                node=async_impl,
+                col_offset=0,
+                end_line=14,
+                end_col_offset=22,
+            ),
+        ):
+            self.checker.visit_module(node)
 
 
 class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):

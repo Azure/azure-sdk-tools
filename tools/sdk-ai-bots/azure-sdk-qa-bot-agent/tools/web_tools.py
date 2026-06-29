@@ -171,7 +171,15 @@ async def _fetch_async(url: str, max_chars: int) -> FetchWebpageResult:
 
                 location = response.headers.get("location")
                 if not location:
-                    break
+                    return FetchWebpageResult(
+                        success=False,
+                        url=url,
+                        resolved_url=current_url,
+                        status_code=response.status_code,
+                        content_type=response.headers.get("content-type", ""),
+                        content_excerpt="",
+                        error=f"Redirect response {response.status_code} missing Location header.",
+                    )
 
                 if redirects >= _MAX_REDIRECTS:
                     return FetchWebpageResult(

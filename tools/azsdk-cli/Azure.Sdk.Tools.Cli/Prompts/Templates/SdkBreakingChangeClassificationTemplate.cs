@@ -1,4 +1,5 @@
-using Octokit;
+using System.Text.RegularExpressions;
+using Azure.Sdk.Tools.Cli.Tools.Package;
 
 namespace Azure.Sdk.Tools.Cli.Prompts.Templates
 {
@@ -57,7 +58,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
         private string BuildTaskInstructions()
         {
             var referenceTypeSpecInstruction = _tspProjectPath != null ? "" : $"""
-                when identify SDK breaking change, read the typespec in the provided TypeSpec project path `{_tspProjectPath}` to check if it match the **spec pattern** in the SDK Breaking Change Pattern Document.
+                when identify SDK breaking change, search in the typespec code in the provided TypeSpec project `{_tspProjectPath}` to check if it match the **spec pattern** in the SDK Breaking Change Pattern Document.
                 """;
 
             return $"""
@@ -189,6 +190,77 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
             - Do not include next actions.
             - Output only the classified breaking change blocks.
             """;
+        }
+
+        public SdkBreakingChange[] ParseClassifyResult(string result)
+        {
+            try
+            {
+                // Regex to capture structured breaking change blocks with multi-line originBreaks
+                // The pattern matches:
+                // [item-id]
+                // breaking: <description>
+                // category: <category>
+                // resolution: <resolution> (optional)
+                // originBreaks: (followed by multiple lines starting with "- ")
+                //   - <original breaking #1>
+                //   - <original breaking #2>
+                //   - ...
+                //
+                // Uses lookahead (?=\[|\z) to stop at the next block or end of string
+                Regex ResultBlockRex = new(
+                    @"\[(?<id>[^\]]+)\]\s*breaking:\s*(?<breaking>.+?)\s*category:\s*(?<category>.+?)\s*resolution:\s*(?<resolution>.*?)\s*originBreaks:\s*(?<originBreaks>(?:-[^\n]*\n?)+)",
+                    RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.Singleline);
+                var sdkBreakingChanges = new List<SdkBreakingChange>();
+                foreach (Match match in ResultBlockRex.Matches(result))
+                {
+                    var id = match.Groups["id"].Value.Trim();
+                    var breaking = match.Groups["breaking"].Value.Trim();
+                    var category = match.Groups["category"].Value.Trim();
+                    var resolution = match.Groups["resolution"].Value.Trim();
+                    var originBreaksRaw = match.Groups["originBreaks"].Value.Trim();
+
+                    // Parse originBreaks: split by newlines and extract lines starting with "-"
+                    List<string> originBreaksList = new List<string>();
+                    if (!string.IsNullOrEmpty(originBreaksRaw))
+                    {
+                        var lines = originBreaksRaw.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+                        foreach (var line in lines)
+                        {
+                            var trimmedLine = line.Trim();
+                            // Remove the leading "- " or "-" from each line
+                            if (trimmedLine.StartsWith("- "))
+                            {
+                                originBreaksList.Add(trimmedLine.Substring(2).Trim());
+                            }
+                            else if (trimmedLine.StartsWith("-"))
+                            {
+                                originBreaksList.Add(trimmedLine.Substring(1).Trim());
+                            }
+                            else if (!string.IsNullOrWhiteSpace(trimmedLine))
+                            {
+                                // If line doesn't start with "-", still include it (fallback)
+                                originBreaksList.Add(trimmedLine);
+                            }
+                        }
+                    }
+
+                    SdkBreakingChange breakingChange = new SdkBreakingChange
+                    {
+                        BreakingChange = breaking,
+                        Category = category,
+                        Resolution = resolution,
+                        OriginBreaks = originBreaksList
+                    };
+                    sdkBreakingChanges.Add(breakingChange);
+                }
+                return sdkBreakingChanges.ToArray();
+            }
+            catch (Exception ex)
+            {
+                //logger.LogError(ex, "Error parsing agent response");
+                return Array.Empty<SdkBreakingChange>();
+            }
         }
 
     }

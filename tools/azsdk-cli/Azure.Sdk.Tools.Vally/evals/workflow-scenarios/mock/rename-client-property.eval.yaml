@@ -21,8 +21,8 @@ config:
 stimuli:
   - name: rename-client-property
     # Spec-repo worktree fixture so models.common.tsp is on disk for the agent to
-    # edit. CI clones it via scripts/Initialize-EvalGitFixtures.ps1 (the Face path is
-    # added to that script's sparse checkout) before this suite runs.
+    # edit. CI clones it via eng/common/scripts/eval/init-eval-git-fixtures.js (the
+    # Face path is added to that script's sparse checkout) before this suite runs.
     environment:
       # Load the real TypeSpec authoring skill so the executor can route to it.
       skills:

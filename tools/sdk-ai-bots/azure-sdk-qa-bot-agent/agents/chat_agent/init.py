@@ -35,6 +35,7 @@ from tools.knowledge_tools import KnowledgeTools
 from tools.web_tools import WebTools
 from tools.ado_mcp_tools import create_ado_mcp_tool
 from tools.github_mcp_tools import create_github_mcp_tool
+from tools.enghub_mcp_tools import create_enghub_mcp_tool
 from tools.pipeline_tools import PipelineTools
 from skills.tenant_skills import create_tenant_skills
 from utils.azure_ai_foundry import (
@@ -114,13 +115,14 @@ async def main() -> None:
             logger.exception("%s failed to initialize, skipped", factory.__name__)
             return None
 
-    memory_task, ado_task, github_task = await asyncio.gather(
+    memory_task, ado_task, github_task, enghub_task = await asyncio.gather(
         _init_memory(),
         _init_mcp(create_ado_mcp_tool),
         _init_mcp(create_github_mcp_tool),
+        _init_mcp(create_enghub_mcp_tool),
     )
 
-    for mcp_tool in (ado_task, github_task):
+    for mcp_tool in (ado_task, github_task, enghub_task):
         if mcp_tool is not None:
             tools.append(mcp_tool)
 

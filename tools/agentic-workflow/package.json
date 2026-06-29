@@ -23,7 +23,8 @@
         "prompts"
     ],
     "scripts": {
-        "build": "npm run clean && tsc",
+        "build": "npm run clean && tsc && npm run postbuild",
+        "postbuild": "node -e \"require('fs').chmodSync('dist/cli.js', 0o755)\"",
         "clean": "rimraf ./dist",
         "start": "tsx src/cli.ts",
         "test": "vitest run",

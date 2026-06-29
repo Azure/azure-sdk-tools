@@ -10,6 +10,7 @@ Each tenant becomes a Skill with:
 from __future__ import annotations
 
 import logging
+from functools import lru_cache
 
 from agent_framework import InlineSkill, Skill, SkillFrontmatter
 
@@ -70,6 +71,7 @@ _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
 }
 
 
+@lru_cache(maxsize=None)
 def build_skill_content(tenant_id: TenantID) -> str:
     """Build skill content combining tenant_id, knowledge sources, and guideline."""
     config = get_tenant_config(tenant_id)

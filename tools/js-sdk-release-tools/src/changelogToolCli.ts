@@ -30,7 +30,7 @@ function findSdkRepoRoot(startPath: string): string {
 }
 
 /**
- * Report-only mode (mirrors Go's `generator changelog --report-file`): compare the
+ * Report-only mode: compare the
  * package against its latest GA release and write the SDK change report as JSON
  * without modifying CHANGELOG.md or bumping the package version. The report follows
  * the `Component 1: SDK change Analyzer` output defined in the SDK breaking change

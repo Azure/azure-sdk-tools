@@ -1135,7 +1135,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                     else
                     {
-                        reporter.NextStep("Skipping SDK details update");
                         nextSteps.Add("Update SDK details in the release plan.");
                     }
 

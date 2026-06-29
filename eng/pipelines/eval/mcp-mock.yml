@@ -1,0 +1,24 @@
+# azure-sdk-tools MCP build for the hermetic eval tiers (skill + workflow "mock vertical").
+#
+# Builds the in-repo .NET Mock MCP server and publishes it under artifacts/mcp/mock — the
+# layout the BuildMcp job ships as the `mcp-servers` artifact and every shard re-stages, so
+# the eval .vally.yaml environments resolve the mock DLL at that path.
+#
+# This is azure-sdk-tools' own MCP build, wired in via the archetype's `mcpSetupTemplate`
+# parameter. It builds from the current checkout (these eval pipelines only run here), so no
+# cross-repo clone is needed. Other repos point mcpSetupTemplate at their own equivalent.
+
+parameters:
+  - name: mcpStageRoot
+    # Common parent the built server is published from (relative to Build.SourcesDirectory).
+    type: string
+    default: artifacts/mcp
+
+steps:
+  - checkout: self
+    fetchDepth: 1
+
+  - script: |
+      set -e
+      dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Mock -c Release -o "$(Build.SourcesDirectory)/${{ parameters.mcpStageRoot }}/mock" --nologo
+    displayName: 'Build MCP: Mock server'

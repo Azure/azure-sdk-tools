@@ -1,0 +1,40 @@
+# Live-tier run-time invocation for one eval shard: the same `vally eval` run as the hermetic
+# eng/common/.../steps/eval-invoke.yml, wrapped in AzureCLI@2 so the live azsdk-cli MCP's Azure
+# DevOps calls inherit the service-connection identity. Model auth stays copilot-sdk via
+# GITHUB_TOKEN (the default githubTokenVariable).
+#
+# azure-sdk-tools' live-eval points eval-run-shard.yml's `evalInvokeTemplate` here. The service
+# connection is owned by this repo-local step, not the shared orchestrator — that is why
+# archetype-eval.yml exposes no azureServiceConnection knob.
+
+parameters:
+  - name: scriptDir
+    type: string
+    default: eng/common/scripts/eval
+  - name: vallyRoot
+    type: string
+    default: tools/azsdk-cli/Azure.Sdk.Tools.Vally
+  - name: threshold
+    type: string
+    default: '0.8'
+  - name: githubTokenVariable
+    type: string
+    default: azuresdk-copilot-github-pat
+
+steps:
+  - task: AzureCLI@2
+    displayName: 'vally eval $(shardName) (live)'
+    inputs:
+      azureSubscription: opensource-api-connection
+      scriptType: bash
+      scriptLocation: inlineScript
+      workingDirectory: ${{ parameters.vallyRoot }}
+      inlineScript: |
+        node "$(Build.SourcesDirectory)/${{ parameters.scriptDir }}/invoke-eval-shard.js" \
+          --eval-args "$(evalArgs)" \
+          --shard-name "$(shardName)" \
+          --output-dir "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)" \
+          --skill-eval-prefix "$(Build.SourcesDirectory)/${{ parameters.scriptDir }}" \
+          --threshold ${{ parameters.threshold }}
+    env:
+      GITHUB_TOKEN: $(${{ parameters.githubTokenVariable }})

@@ -224,6 +224,37 @@ namespace APIViewWeb.Managers
             return reviewCodeFileModel;
         }
 
+        public async Task TryDeleteCodeFileModelAsync(string apiRevisionId, APICodeFileModel codeFileModel)
+        {
+            if (codeFileModel == null)
+            {
+                return;
+            }
+
+            try
+            {
+                await _codeFileRepository.DeleteCodeFileAsync(apiRevisionId, codeFileModel.FileId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to delete code file blob for revision {ApiRevisionId} and file {FileId}", apiRevisionId, codeFileModel.FileId);
+            }
+
+            if (!codeFileModel.HasOriginal)
+            {
+                return;
+            }
+
+            try
+            {
+                await _originalsRepository.DeleteOriginalAsync(codeFileModel.FileId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to delete original blob for file {FileId}", codeFileModel.FileId);
+            }
+        }
+
         /// <summary>
         /// Computes a SHA-256 hash of the API surface content, using the same filtering logic
         /// as <see cref="AreAPICodeFilesTheSame"/> so that hashes are invariant to skip-diff

@@ -14,7 +14,7 @@ using Azure.Sdk.Tools.Cli.Tools.Core;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Config
 {
-    [McpServerToolType, Description("Tools for working with GitHub labels for services")]
+    [McpServerToolType, Description("Work with GitHub labels for services")]
     public class GitHubLabelsTool(
         ILogger<GitHubLabelsTool> logger,
         IGitHubService githubService,

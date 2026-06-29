@@ -170,15 +170,6 @@ namespace Azure.ClientSdk.Analyzers
             true,
             "Suffix is not recommended. Consider to remove or modify it.");
 
-        public static readonly DiagnosticDescriptor AZC0034 = new DiagnosticDescriptor(
-            nameof(AZC0034),
-            "Avoid duplicate type names",
-            "Type name '{0}' conflicts with '{1}'. {2}",
-            DiagnosticCategory.Naming,
-            DiagnosticSeverity.Error,
-            true,
-            "Type names should not conflict with other SDK and .NET platform types.");
-
         public static readonly DiagnosticDescriptor AZC0036 = new DiagnosticDescriptor(
             nameof(AZC0036),
             "Improper model name suffix",

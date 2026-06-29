@@ -15,7 +15,6 @@ public class AnalyzePipelineHandler : IMockToolHandler
         var buildId = arguments?.GetValueOrDefault("buildId")?.ToString() ?? "90001";
         return new AnalyzePipelineResponse
         {
-            PipelineUrl = $"https://dev.azure.com/azure-sdk/internal/_build/results?buildId={buildId}",
             FailedTests = new Dictionary<string, List<string>>
             {
                 ["Contoso.Widgets.Tests"] = ["WidgetClientLiveTests.GetWidget"]
@@ -24,8 +23,7 @@ public class AnalyzePipelineHandler : IMockToolHandler
             [
                 new LogAnalysisResponse
                 {
-                    Summary = "1 test failure detected in WidgetClientLiveTests",
-                    SuggestedFix = "Check the live test recording for stale data and re-record.",
+                    PipelineUrl = $"https://dev.azure.com/azure-sdk/internal/_build/results?buildId={buildId}",
                     Errors =
                     [
                         new LogEntry

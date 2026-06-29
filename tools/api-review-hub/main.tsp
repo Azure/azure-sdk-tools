@@ -279,14 +279,23 @@ namespace ApiReviewHub {
 
     /** Repository linked to API Review Hub for GitHub webhook and automation workflows. */
     model RepositoryRegistration {
-      /** Repository linked to API Review Hub. */
-      repository: GitHubRepository;
+      /** Repository full name in owner/name form. Informational only; do not use as the authoritative validation identity. */
+      repositoryFullName: string;
+
+      /** Stable GitHub repository ID used to validate repository webhook deliveries. */
+      githubRepositoryId: int64;
+
+      /** Stable GitHub repository webhook ID used to look up the registration before signature validation. */
+      githubWebhookId: int64;
 
       /** Stable Key Vault key whose secret value is the currently accepted webhook secret. */
       webhookSecretKey: string;
 
       /** Stable Key Vault key whose secret value is the previous webhook secret accepted during a rotation overlap window. */
       lastWebhookSecretKey: string;
+
+      /** Whether this repository registration should accept and process webhook deliveries. */
+      status: "active" | "disabled";
 
       /** Time this repository registration was last updated. */
       lastUpdated: offsetDateTime;

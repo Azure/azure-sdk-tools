@@ -75,6 +75,7 @@ const suffixedVariableNames = new Set<string>([
 ]);
 
 const cosmosContainers: readonly CosmosContainerConfig[] = [
+    { name: "adoOperations", partitionKeyPath: "/operationId" },
     { name: "services", partitionKeyPath: "/id" },
     { name: "packages", partitionKeyPath: "/serviceId" },
     { name: "packageVersions", partitionKeyPath: "/packageId" },

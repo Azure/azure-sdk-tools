@@ -60,3 +60,14 @@ export interface MarkPackageVersionReleasedRequest {
     readonly version: string;
     readonly releasedOn: string;
 }
+
+export interface RepositoryRegistration {
+    readonly repositoryFullName: string;
+    readonly githubRepositoryId: number;
+    readonly githubWebhookId: number;
+    readonly webhookSecretKey: string;
+    readonly lastWebhookSecretKey: string;
+    readonly rotationDate: string;
+    readonly status: "active" | "disabled";
+    readonly lastUpdated: string;
+}

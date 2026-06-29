@@ -72,5 +72,5 @@ vector_store:
 # amount of prompt-assembly work without hurting answer quality on the
 # bot's snapshot.
 local_search:
-  top_k_entities: 5         # default 10 — entities matched per query
-  top_k_relationships: 5    # default 10 — relationships per matched entity
+  top_k_entities: 10        # widened 5 -> 10 for fuller 1-hop recall
+  top_k_relationships: 10   # widened 5 -> 10 for richer context

@@ -101,7 +101,7 @@
           }
         },
         {
-          "description": "TypeSpec Azure samples (content of the website Samples tab)",
+          "description": "TypeSpec Azure samples",
           "path": "/packages/samples/specs",
           "folder": "typespec_azure_samples",
           "ignoredPaths": ["README.md"],

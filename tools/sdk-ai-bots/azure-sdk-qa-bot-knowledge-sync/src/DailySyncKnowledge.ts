@@ -80,7 +80,7 @@ export async function processDailySyncKnowledge(): Promise<void> {
         console.log(`processing typespec-azure-resource-manager library`);
         processTypeSpec(docsDir, "typespec-azure/packages/typespec-azure-resource-manager/lib");
 
-        console.log(`processing typespec-azure samples specs (Samples tab content)`);
+        console.log(`processing typespec-azure samples`);
         processSamples(docsDir, "typespec-azure/packages/samples/specs");
 
         console.log('Processing documentation sources...');
@@ -881,7 +881,7 @@ async function preprocessSpectorCases(docsDir: string): Promise<void> {
 }
 
 /**
- * Process TypeSpec samples specs (Samples tab content) into generated markdown
+ * Process TypeSpec samples into generated markdown
  */
 function processSamples(docsDir: string, relativeSamplesDir: string) : void {
     try {

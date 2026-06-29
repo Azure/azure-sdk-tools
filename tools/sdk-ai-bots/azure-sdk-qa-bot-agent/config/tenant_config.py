@@ -112,7 +112,7 @@ _register(
     ),
     KnowledgeSource(
         name=SRC_TYPESPEC_AZURE_SAMPLES,
-        description="Azure TypeSpec sample scenarios from the samples tab, useful for end-to-end authoring patterns and concrete example structures.",
+        description="Azure TypeSpec samples covering common ARM and data-plane patterns, useful as references when building similar scenarios.",
         base_url="https://github.com/Azure/typespec-azure/tree/main/packages/samples/specs/",
         trim_format=True,
     ),

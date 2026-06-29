@@ -5,6 +5,7 @@
 - Add `remove-deprecated-iscoroutinefunction` check
 - Add `do-not-use-logging-directly` check
 - Add `no-cross-package-private-import` check
+- Add `do-not-use-future-annotations` check (C4777) to flag `from __future__ import annotations`
 
 ## 0.5.7 (2025-07-15)
 - Bug fix for `do-not-use-logging-exception` checker

@@ -145,7 +145,7 @@ The following endpoints are required for the end-to-end review and release proce
 |---|---|---|
 | `POST /api/github/webhook-events` | GitHub | Accepts GitHub webhook deliveries so API Review Hub can respond to and synchronize with GitHub changes, including review activity, pushed commits, pull request lifecycle changes, and other workflow events. |
 | `POST /api/review-prs` | User/Agent | Requests creation of a GitHub API review pull request for a package API change. This is an LRO that returns an operation ID. |
-| `GET /api/review-prs/operations/{operationId}` | User/Agent | Gets the status of an async review PR creation operation and returns the created review pull request when the operation succeeds. |
+| `GET /api/operations/{operationId}` | User/Agent | Gets the status of an async operation and returns the created review pull request when the operation succeeds. |
 | `GET /api/releases/check-gate` | ADO | Evaluates whether a package version and API hash have the approval needed for release. |
 | `POST /api/releases/mark-released` | ADO | Marks a package version as released after the release pipeline succeeds. Returns only a status code on success. |
 
@@ -173,7 +173,7 @@ The following endpoints are secondary, but useful for agentic queries and for a 
 3. API Review Hub uses the `azure-sdk-automation` GitHub App to create the required synthetic branches and open the review pull request.
 4. API Review Hub assigns the appropriate architect reviewers and applies the `architecture-review-needed` label.
 5. API Review Hub records the review pull request, associates it with the package version, and initializes approval state as `pending`.
-6. The caller polls `GET /api/review-prs/operations/{operationId}` to retrieve the created review pull request when the operation succeeds.
+6. The caller polls `GET /api/operations/{operationId}` to retrieve the created review pull request when the operation succeeds.
 
 #### Architect Review
 

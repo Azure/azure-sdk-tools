@@ -24,11 +24,28 @@ export interface ReviewPullRequestCreationAcceptedResponse {
     readonly status: "accepted";
 }
 
-export interface ReviewPullRequestCreationOperationStatus {
+export interface OperationStatus {
     readonly operationId: string;
     readonly status: "accepted" | "running" | "succeeded" | "failed";
     readonly reviewPullRequest?: unknown;
     readonly failureReason?: string;
+    readonly log?: string;
+}
+
+export interface OperationArtifactNames {
+    readonly base?: string;
+    readonly target?: string;
+    readonly result: string;
+}
+
+export interface OperationUpdate {
+    readonly operationId: string;
+    readonly mode: "create" | "update";
+    readonly language: string;
+    readonly buildId: string;
+    readonly project: string;
+    readonly result: "Succeeded" | "SucceededWithIssues" | "Failed" | "Canceled" | "Skipped";
+    readonly artifacts: OperationArtifactNames;
 }
 
 export interface ReleaseGateDecision {
@@ -42,15 +59,4 @@ export interface MarkPackageVersionReleasedRequest {
     readonly packageName: string;
     readonly version: string;
     readonly releasedOn: string;
-}
-
-export interface TestIssueRequest {
-    readonly message: string;
-}
-
-export interface TestIssueResponse {
-    readonly status: "created";
-    readonly message: string;
-    readonly issueNumber: number;
-    readonly issueUrl: string;
 }

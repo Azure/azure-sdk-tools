@@ -1,0 +1,83 @@
+# Generate one Python API review artifact bundle for one ref. This template
+# assumes the Python job wrapper already installed azpysdk and selected the
+# repository through PythonApiReviewRepositoryFullName.
+parameters:
+  - name: requestMode
+    type: string
+  - name: operationId
+    type: string
+  - name: packageName
+    type: string
+  - name: ref
+    type: string
+  - name: kind
+    type: string
+  - name: outputDir
+    type: string
+  - name: workingDir
+    type: string
+steps:
+  # Output contract for the caller: api.md, api.metadata.yml, and
+  # artifact-metadata.json are required for every generated bundle.
+  - bash: |
+      set -Eeuo pipefail
+
+      source_repo="${{ parameters.workingDir }}/source"
+      output_dir="${{ parameters.outputDir }}"
+      repository_full_name="$(PythonApiReviewRepositoryFullName)"
+
+      mkdir -p "$source_repo" "$output_dir"
+
+      clone_ref() {
+        local ref="$1"
+        local destination="$2"
+
+        echo "Cloning $repository_full_name at $ref into $destination"
+        git clone --filter=blob:none --no-checkout "https://github.com/$repository_full_name.git" "$destination"
+        git -C "$destination" fetch --depth=1 origin "$ref"
+        git -C "$destination" checkout FETCH_HEAD
+      }
+
+      find_package_dir() {
+        local repo="$1"
+        local package_name="$2"
+        local matches
+
+        matches=$(find "$repo/sdk" -mindepth 2 -maxdepth 2 -type d -name "$package_name" | sort)
+        if [ -z "$matches" ]; then
+          echo "Package '$package_name' was not found under sdk/*/." >&2
+          return 1
+        fi
+
+        if [ "$(printf '%s\n' "$matches" | wc -l)" -ne 1 ]; then
+          echo "Package '$package_name' matched multiple directories:" >&2
+          printf '%s\n' "$matches" >&2
+          return 1
+        fi
+
+        printf '%s' "$matches"
+      }
+
+      clone_ref "${{ parameters.ref }}" "$source_repo"
+
+      package_dir=$(find_package_dir "$source_repo" "${{ parameters.packageName }}")
+      package_relative_path=$(realpath --relative-to="$source_repo" "$package_dir")
+
+      echo "Generating ${{ parameters.kind }} API review artifact from ${{ parameters.ref }}"
+      python -m azpysdk.main apistub --dest-dir "$package_dir" "${{ parameters.packageName }}"
+
+      if [ ! -f "$package_dir/api.md" ]; then
+        echo "Expected api.md was not generated at $package_dir/api.md" >&2
+        exit 1
+      fi
+      if [ ! -f "$package_dir/api.metadata.yml" ]; then
+        echo "Expected api.metadata.yml was not generated at $package_dir/api.metadata.yml" >&2
+        exit 1
+      fi
+
+      cp "$package_dir/api.md" "$output_dir/api.md"
+      cp "$package_dir/api.metadata.yml" "$output_dir/api.metadata.yml"
+
+      version=$(python -c 'import pathlib, re, sys; package_dir = pathlib.Path(sys.argv[1]); pattern = re.compile(r"^\s*VERSION\s*[:=]\s*[\"'"'"']([^\"'"'"']+)[\"'"'"']", re.MULTILINE); candidates = sorted(package_dir.rglob("*_version.py")) + sorted(package_dir.rglob("version.py")); match = next((pattern.search(candidate.read_text(encoding="utf-8")) for candidate in candidates if "_generated" not in candidate.parts and pattern.search(candidate.read_text(encoding="utf-8"))), None); print(match.group(1) if match else "")' "$package_dir")
+      python -c 'import json, pathlib, sys; output_dir, mode, operation_id, repository, package_name, package_path, ref, version, kind = sys.argv[1:]; metadata = {"operationId": operation_id, "mode": mode, "language": "python", "repositoryFullName": repository, "packageName": package_name, "packageRelativePath": package_path, "ref": ref, "version": version, "kind": kind}; pathlib.Path(output_dir, "artifact-metadata.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")' "$output_dir" "${{ parameters.requestMode }}" "${{ parameters.operationId }}" "$repository_full_name" "${{ parameters.packageName }}" "$package_relative_path" "${{ parameters.ref }}" "$version" "${{ parameters.kind }}"
+    displayName: 'Generate ${{ parameters.kind }} Python API review bundle'

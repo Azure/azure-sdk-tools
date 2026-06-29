@@ -187,8 +187,8 @@ namespace ApiReviewHub {
       status: "accepted";
     }
 
-    /** Status of an asynchronous review pull request creation operation. */
-    model ReviewPullRequestCreationOperationStatus {
+    /** Status of an asynchronous API Review Hub operation. */
+    model OperationStatus {
       /** Service-owned operation identifier. */
       operationId: string;
 
@@ -200,6 +200,42 @@ namespace ApiReviewHub {
 
       /** Failure reason when the operation fails. */
       failureReason?: string;
+    }
+
+    /** Artifact names published by an API Review Hub operation pipeline. */
+    model OperationArtifactNames {
+      /** Baseline API review artifact name. Present for create requests. */
+      base?: string;
+
+      /** Target API review artifact name. Present when target artifact creation succeeds. */
+      target?: string;
+
+      /** Result summary artifact name. */
+      result: string;
+    }
+
+    /** Update sent by Azure DevOps after operation artifacts are published. */
+    model OperationUpdate {
+      /** Service-owned operation identifier. */
+      operationId: string;
+
+      /** Review request mode handled by the pipeline. */
+      mode: OperationMode;
+
+      /** Package language or ecosystem. */
+      language: string;
+
+      /** Azure DevOps build identifier that published the artifacts. */
+      buildId: string;
+
+      /** Azure DevOps project that owns the build. */
+      project: string;
+
+      /** Final Azure DevOps job result reported by the callback step. */
+      result: AzureDevOpsJobResult;
+
+      /** Published artifact names API Review Hub should verify and download from Azure DevOps. */
+      artifacts: OperationArtifactNames;
     }
 
     /** Release-gating decision returned for a package or API artifact. */
@@ -312,6 +348,12 @@ namespace ApiReviewHub {
     /** The kind of package version. */
     alias PackageVersionKind = "stable" | "preview";
 
+    /** Operation mode handled by an artifact creation pipeline. */
+    alias OperationMode = "create" | "update";
+
+    /** Azure DevOps job result values reported by artifact creation callbacks. */
+    alias AzureDevOpsJobResult = "Succeeded" | "SucceededWithIssues" | "Failed" | "Canceled" | "Skipped";
+
     /** GitHub pull request lifecycle status derived from state, draft, and merged state. */
     alias GitHubPullRequestStatus = "draft" | "open" | "closed" | "merged";
   }
@@ -375,13 +417,24 @@ namespace ApiReviewHub {
       @header("Authorization") authorization: string,
     ): ReviewPullRequest | ApiErrorResponse;
 
-    /** Gets the status of a review pull request creation operation. */
-    @route("/review-prs/operations/{operationId}")
+    /** Gets the status of an API Review Hub operation. */
+    @route("/operations/{operationId}")
     @get
-    op getReviewPullRequestCreationOperationStatus(
+    op getOperationStatus(
       @path operationId: string,
       @header("Authorization") authorization: string,
-    ): ReviewPullRequestCreationOperationStatus | ApiErrorResponse;
+    ): OperationStatus | ApiErrorResponse;
+
+    /** Accepts an Azure DevOps update after operation artifacts are published. */
+    @route("/operations/{operationId}")
+    @post
+    op acceptOperationUpdate(
+      @path operationId: string,
+      @header("Authorization") authorization: string,
+      @body request: OperationUpdate,
+    ): {
+      @statusCode statusCode: 202;
+    } | ApiErrorResponse;
 
     /** Lists all Services known to API Review Hub. */
     @route("/services")

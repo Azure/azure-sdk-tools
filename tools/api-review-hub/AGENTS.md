@@ -118,7 +118,7 @@ Implement the required endpoints from the proposal before adding secondary dashb
 | --- | --- | --- |
 | `POST /api/github/webhook-events` | GitHub | Accepts GitHub webhook deliveries and synchronizes review workflow state. |
 | `POST /api/review-prs` | User/Agent | Requests creation of an API review pull request; returns an operation ID. |
-| `GET /api/review-prs/operations/{operationId}` | User/Agent | Gets async review PR creation status. |
+| `GET /api/operations/{operationId}` | User/Agent | Gets async operation status. |
 | `GET /api/releases/check-gate` | Azure DevOps | Evaluates whether a package version and API hash are approved for release. |
 | `POST /api/releases/mark-released` | Azure DevOps | Marks a package version as released after the release pipeline succeeds. |
 

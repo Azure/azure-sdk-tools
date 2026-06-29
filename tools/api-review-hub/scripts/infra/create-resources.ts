@@ -340,6 +340,7 @@ function productionSlotResource(): ArmResource {
 function siteConfig(environmentName: string): Record<string, unknown> {
     return {
         alwaysOn: true,
+        appCommandLine: "npm start",
         appSettings: [
             {
                 name: "APPLICATIONINSIGHTS_CONNECTION_STRING",

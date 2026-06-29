@@ -12,7 +12,8 @@
     "dev": "tsx src/server.ts",
     "check": "tsc -p tsconfig.json --noEmit",
     "deploy": "tsx scripts/deploy-app.ts",
-    "create-test-issue": "tsx scripts/create-test-issue.ts",
+    "create-review-pr": "tsx scripts/create-review-pr.ts",
+    "request-review-pr": "tsx scripts/request-review-pr.ts",
     "infra:create": "tsx scripts/infra/create-resources.ts",
     "infra:grant-github-app-key-access": "tsx scripts/infra/grant-github-app-key-access.ts",
     "infra:populate-appconfig": "tsx scripts/infra/populate-app-configuration.ts",
@@ -32,6 +33,8 @@
     "@types/adm-zip": "^0.5.8",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^24.0.0",
+    "@typespec/compiler": "^1.3.0",
+    "@typespec/http": "^1.3.0",
     "tsx": "^4.20.0",
     "typescript": "~5.8.3"
   }

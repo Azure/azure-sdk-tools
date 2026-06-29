@@ -102,7 +102,6 @@ async function runCommand(command: string, args: readonly string[], cwd = packag
             })
             : spawn(command, args, {
                 cwd,
-                stdio: "inherit",
                 shell: false,
             });
 

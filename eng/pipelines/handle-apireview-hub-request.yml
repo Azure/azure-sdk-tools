@@ -1,0 +1,244 @@
+# API Review Hub queues this pipeline for create and update requests. Keep this
+# file language-agnostic: it decides which artifact bundles are needed, compares
+# them when appropriate, and publishes the result artifacts for the web service.
+pr: none
+trigger: none
+
+parameters:
+  - name: requestMode
+    type: string
+    values:
+      - create
+      - update
+  - name: language
+    type: string
+    values:
+      - python
+  - name: operationId
+    type: string
+    default: ''
+  - name: packageName
+    type: string
+    default: ''
+  - name: baseRef
+    type: string
+    default: ''
+  - name: targetRef
+    type: string
+    default: ''
+  - name: apiReviewHubEndpoint
+    type: string
+    default: 'https://api-review-hub-staging.azurewebsites.net'
+  - name: completionCallbackAzureSubscription
+    type: string
+    default: ''
+  - name: completionCallbackResourceUrl
+    type: string
+    default: 'api://api-review-hub'
+
+jobs:
+# The language value is validated above. Each supported language must provide:
+# - /eng/pipelines/templates/jobs/apireview-hub-job-{language}.yml
+# - /eng/pipelines/templates/steps/create-apireview-hub-artifacts-{language}.yml
+- template: ${{ format('/eng/pipelines/templates/jobs/apireview-hub-job-{0}.yml', parameters.language) }}
+  parameters:
+    steps:
+      - pwsh: |
+          $ErrorActionPreference = 'Stop'
+
+          if ([string]::IsNullOrWhiteSpace('${{ parameters.operationId }}')) {
+            throw 'operationId is required.'
+          }
+          if ([string]::IsNullOrWhiteSpace('${{ parameters.packageName }}')) {
+            throw 'packageName is required.'
+          }
+          if ('${{ parameters.requestMode }}' -eq 'create' -and [string]::IsNullOrWhiteSpace('${{ parameters.baseRef }}')) {
+            throw 'baseRef is required for create requests.'
+          }
+          if ([string]::IsNullOrWhiteSpace('${{ parameters.targetRef }}')) {
+            throw 'targetRef is required.'
+          }
+
+          New-Item -ItemType Directory -Force -Path '$(Build.ArtifactStagingDirectory)/base' | Out-Null
+          New-Item -ItemType Directory -Force -Path '$(Build.ArtifactStagingDirectory)/target' | Out-Null
+          New-Item -ItemType Directory -Force -Path '$(Build.ArtifactStagingDirectory)/result' | Out-Null
+        displayName: 'Validate request parameters'
+
+      # Always generate the target bundle. Update requests stop at this artifact;
+      # create requests also generate a base bundle below for comparison.
+      - template: ${{ format('/eng/pipelines/templates/steps/create-apireview-hub-artifacts-{0}.yml', parameters.language) }}
+        parameters:
+          requestMode: ${{ parameters.requestMode }}
+          operationId: ${{ parameters.operationId }}
+          packageName: ${{ parameters.packageName }}
+          ref: ${{ parameters.targetRef }}
+          kind: target
+          outputDir: $(Build.ArtifactStagingDirectory)/target
+          workingDir: $(Pipeline.Workspace)/apireview/target
+
+      # Create requests need both sides of the review. The language-specific
+      # template still generates only one bundle for one ref per invocation.
+      - ${{ if eq(parameters.requestMode, 'create') }}:
+        - template: ${{ format('/eng/pipelines/templates/steps/create-apireview-hub-artifacts-{0}.yml', parameters.language) }}
+          parameters:
+            requestMode: ${{ parameters.requestMode }}
+            operationId: ${{ parameters.operationId }}
+            packageName: ${{ parameters.packageName }}
+            ref: ${{ parameters.baseRef }}
+            kind: base
+            outputDir: $(Build.ArtifactStagingDirectory)/base
+            workingDir: $(Pipeline.Workspace)/apireview/base
+
+          # The web service reads this summary to decide whether the operation
+          # succeeded, whether a create request changed API shape, and which build
+          # artifacts to download.
+      - pwsh: |
+          $ErrorActionPreference = 'Stop'
+
+          $targetMetadataPath = '$(Build.ArtifactStagingDirectory)/target/artifact-metadata.json'
+          $targetMetadata = Get-Content -Raw -Path $targetMetadataPath | ConvertFrom-Json
+          $artifacts = [ordered]@{
+            target = 'apireview-target'
+            result = 'apireview-result'
+          }
+
+          $baseVersion = ''
+          $changed = $null
+          if ('${{ parameters.requestMode }}' -eq 'create') {
+            $baseMetadataPath = '$(Build.ArtifactStagingDirectory)/base/artifact-metadata.json'
+            $baseMetadata = Get-Content -Raw -Path $baseMetadataPath | ConvertFrom-Json
+            $baseVersion = $baseMetadata.version
+            $artifacts.base = 'apireview-base'
+
+            $baseHash = (Get-FileHash -Algorithm SHA256 -Path '$(Build.ArtifactStagingDirectory)/base/api.md').Hash
+            $targetHash = (Get-FileHash -Algorithm SHA256 -Path '$(Build.ArtifactStagingDirectory)/target/api.md').Hash
+            $changed = $baseHash -ne $targetHash
+          }
+
+          $summary = [ordered]@{
+            operationId = '${{ parameters.operationId }}'
+            mode = '${{ parameters.requestMode }}'
+            language = '${{ parameters.language }}'
+            repositoryFullName = $targetMetadata.repositoryFullName
+            packageName = '${{ parameters.packageName }}'
+            baseRef = '${{ parameters.baseRef }}'
+            targetRef = '${{ parameters.targetRef }}'
+            status = 'succeeded'
+            changed = $changed
+            baseVersion = $baseVersion
+            targetVersion = $targetMetadata.version
+            packageRelativePath = $targetMetadata.packageRelativePath
+            artifacts = $artifacts
+          }
+
+          $summary | ConvertTo-Json -Depth 10 | Set-Content -Path '$(Build.ArtifactStagingDirectory)/result/result-summary.json' -Encoding utf8
+          Get-Content -Path '$(Build.ArtifactStagingDirectory)/result/result-summary.json'
+        displayName: 'Compare and write result summary'
+
+      # Ensure failed runs still publish an operation result artifact that the
+      # web service can surface to callers.
+      - pwsh: |
+          $ErrorActionPreference = 'Stop'
+
+          New-Item -ItemType Directory -Force -Path '$(Build.ArtifactStagingDirectory)/result' | Out-Null
+          $summary = [ordered]@{
+            operationId = '${{ parameters.operationId }}'
+            mode = '${{ parameters.requestMode }}'
+            language = '${{ parameters.language }}'
+            packageName = '${{ parameters.packageName }}'
+            baseRef = '${{ parameters.baseRef }}'
+            targetRef = '${{ parameters.targetRef }}'
+            status = 'failed'
+            artifacts = [ordered]@{
+              result = 'apireview-result'
+            }
+          }
+
+          $summary | ConvertTo-Json -Depth 10 | Set-Content -Path '$(Build.ArtifactStagingDirectory)/result/result-summary.json' -Encoding utf8
+          Get-Content -Path '$(Build.ArtifactStagingDirectory)/result/result-summary.json'
+        displayName: 'Write failure result summary'
+        condition: failed()
+
+      - task: PublishBuildArtifacts@1
+        displayName: 'Publish base API review bundle'
+        condition: and(succeeded(), eq('${{ parameters.requestMode }}', 'create'))
+        inputs:
+          pathtoPublish: '$(Build.ArtifactStagingDirectory)/base'
+          artifactName: 'apireview-base'
+
+      - task: PublishBuildArtifacts@1
+        displayName: 'Publish target API review bundle'
+        condition: succeeded()
+        inputs:
+          pathtoPublish: '$(Build.ArtifactStagingDirectory)/target'
+          artifactName: 'apireview-target'
+
+      - task: PublishBuildArtifacts@1
+        displayName: 'Publish API review result summary'
+        condition: succeededOrFailed()
+        inputs:
+          pathtoPublish: '$(Build.ArtifactStagingDirectory)/result'
+          artifactName: 'apireview-result'
+
+      # Completion notification is intentionally sent after artifacts are
+      # published. API Review Hub treats this as a signal, then verifies the
+      # operation/run identity and downloads artifacts from ADO itself.
+      - task: AzurePowerShell@5
+        displayName: 'Notify API Review Hub of artifact completion'
+        condition: and(succeededOrFailed(), ne('${{ parameters.completionCallbackAzureSubscription }}', ''))
+        inputs:
+          azureSubscription: '${{ parameters.completionCallbackAzureSubscription }}'
+          azurePowerShellVersion: latestVersion
+          pwsh: true
+          ScriptType: InlineScript
+          Inline: |
+            $ErrorActionPreference = 'Stop'
+
+            try {
+              $tokenResponse = Get-AzAccessToken -ResourceUrl '${{ parameters.completionCallbackResourceUrl }}' -AsSecureString -ErrorAction Stop
+            }
+            catch {
+              throw "Failed to acquire access token for API Review Hub callback resource '${{ parameters.completionCallbackResourceUrl }}': $($_.Exception.Message)"
+            }
+
+            $secureToken = $tokenResponse.Token
+            if (-not $secureToken) {
+              throw "Failed to acquire access token for API Review Hub callback resource '${{ parameters.completionCallbackResourceUrl }}'"
+            }
+
+            $token = [System.Net.NetworkCredential]::new('', $secureToken).Password
+            if (-not $token) {
+              throw 'Acquired API Review Hub callback token was empty after unwrap'
+            }
+
+            $body = [ordered]@{
+              operationId = '${{ parameters.operationId }}'
+              mode = '${{ parameters.requestMode }}'
+              language = '${{ parameters.language }}'
+              buildId = '$(Build.BuildId)'
+              project = '$(System.TeamProject)'
+              result = '$(Agent.JobStatus)'
+              artifacts = [ordered]@{
+                result = 'apireview-result'
+              }
+            }
+
+            if ('$(Agent.JobStatus)' -eq 'Succeeded' -or '$(Agent.JobStatus)' -eq 'SucceededWithIssues') {
+              $body.artifacts.target = 'apireview-target'
+            }
+
+            if (('${{ parameters.requestMode }}' -eq 'create') -and ('$(Agent.JobStatus)' -eq 'Succeeded' -or '$(Agent.JobStatus)' -eq 'SucceededWithIssues')) {
+              $body.artifacts.base = 'apireview-base'
+            }
+
+            $apiReviewHubEndpoint = '${{ parameters.apiReviewHubEndpoint }}'.TrimEnd('/')
+            $completionCallbackUrl = "$apiReviewHubEndpoint/api/operations/${{ parameters.operationId }}"
+            $headers = @{
+              Authorization = "Bearer $token"
+              'Content-Type' = 'application/json'
+            }
+            $jsonBody = $body | ConvertTo-Json -Depth 10 -Compress
+
+            Write-Host "Completion callback URL: $completionCallbackUrl"
+            Write-Host "Completion callback body: $jsonBody"
+            Invoke-WebRequest -Method POST -Uri $completionCallbackUrl -Headers $headers -Body $jsonBody -MaximumRetryCount 3 | Out-Null

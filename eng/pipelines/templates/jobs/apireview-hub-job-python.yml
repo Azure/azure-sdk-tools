@@ -1,0 +1,67 @@
+# Python job wrapper for API Review Hub requests. This file owns Python-specific
+# job setup such as pool/image selection and installing the API review tooling.
+# The caller supplies the create/update orchestration steps.
+parameters:
+  - name: poolName
+    type: string
+    default: 'azsdk-pool'
+  - name: imageOverride
+    type: string
+    default: 'ubuntu-24.04'
+  - name: repositoryFullName
+    type: string
+    default: 'tjprescott/azure-sdk-for-python'
+  - name: toolRef
+    type: string
+    default: 'main'
+  - name: pythonVersion
+    type: string
+    default: '3.12'
+  - name: steps
+    type: stepList
+    default: []
+
+jobs:
+- job: CreatePythonApiReviewArtifacts
+  displayName: 'Create Python API review artifacts'
+
+  pool:
+    name: ${{ parameters.poolName }}
+    demands: ImageOverride -equals ${{ parameters.imageOverride }}
+
+  variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+  # Share the selected Python SDK repository with artifact-generation steps so
+  # tooling install and source checkout cannot accidentally use different repos.
+  - name: PythonApiReviewRepositoryFullName
+    value: ${{ parameters.repositoryFullName }}
+
+  steps:
+  - template: /eng/pipelines/templates/steps/use-python-version.yml
+    parameters:
+      versionSpec: ${{ parameters.pythonVersion }}
+
+  # Install azpysdk once for the job. The base and target generation steps reuse
+  # this prepared environment instead of installing the parser independently.
+  - bash: |
+      set -Eeuo pipefail
+
+      tool_repo="$(Pipeline.Workspace)/apireview/python-tools"
+      repository_full_name="$(PythonApiReviewRepositoryFullName)"
+
+      mkdir -p "$tool_repo"
+
+      echo "Cloning Python API review tooling from $repository_full_name at ${{ parameters.toolRef }}"
+      git clone --filter=blob:none --no-checkout "https://github.com/$repository_full_name.git" "$tool_repo"
+      git -C "$tool_repo" fetch --depth=1 origin "${{ parameters.toolRef }}"
+      git -C "$tool_repo" checkout FETCH_HEAD
+
+      python -m pip install --upgrade pip
+      python -m pip install virtualenv
+
+      echo "Installing azpysdk tooling from ${{ parameters.toolRef }}"
+      python -m pip install "$tool_repo/eng/tools/azure-sdk-tools[build]"
+    displayName: 'Install Python API review tooling'
+
+  # These steps are assembled by the generic API Review Hub request pipeline.
+  - ${{ parameters.steps }}

@@ -34,7 +34,7 @@ artifact, which is then re-validated. Disable with `--no-judge`.
 - **Fresh context per phase / retry** — every phase, fan-out item, judge session, and retry is a
   brand-new `createSession()`. This is the one piece of bespoke rigor.
 - **Read-only non-impl phases** — enforced by an `onPreToolUse` hook that *denies* edit/shell tools
-  in phases 1–5 (verified live; see `spike/FINDINGS.md`). A post-phase git-diff check is a backstop.
+  in phases 1–5 (verified live during the capability spike). A post-phase git-diff check is a backstop.
 - **Sanctioned writes** — phases persist artifacts only through a `write_artifact` custom tool
   (path-traversal guarded).
 - **Gates** — the plan embeds a machine-readable `stages:`/`gate:` block. The implement agent runs
@@ -108,7 +108,6 @@ src/
   artifacts.ts        run-dir, atomic write, local git-ignore
   state.ts            state.json (resume)
   cli.ts              headless entry point
-spike/          archived T0 capability spike + FINDINGS.md (SDK assumptions, verified live)
 ```
 
 ## Develop

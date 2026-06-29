@@ -1,6 +1,5 @@
 node_modules/
 dist/
 prompts/
-spike/
 *.md
 .agentic-workflow/

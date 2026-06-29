@@ -134,7 +134,7 @@ async def main() -> None:
         if mcp_tool is not None:
             tools.append(mcp_tool)
 
-    # Memory context provider (memory store is ready after gather)
+    # Memory context provider (memory store initializes in background; may not be ready yet)
     memory_provider = MemoryContextProvider(project_client)
 
     # Compaction provider — compact history before and after each turn

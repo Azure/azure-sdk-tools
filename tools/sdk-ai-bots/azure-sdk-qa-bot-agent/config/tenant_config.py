@@ -113,7 +113,7 @@ _register(
     KnowledgeSource(
         name=SRC_TYPESPEC_AZURE_SAMPLES,
         description="Azure TypeSpec samples covering common ARM and data-plane patterns, useful as references when building similar scenarios.",
-        base_url="https://github.com/Azure/typespec-azure/tree/main/packages/samples/specs/",
+        base_url="https://azure.github.io/typespec-azure/docs/samples/",
         trim_format=True,
     ),
     KnowledgeSource(
@@ -347,6 +347,7 @@ _AZURE_TYPESPEC_AUTHORING_SOURCES = _sources(
     SRC_AZURE_API_GUIDELINES,
     SRC_AZURE_RESOURCE_MANAGER_RPC,
     SRC_TYPESPEC_AZURE_DOCS,
+    SRC_TYPESPEC_AZURE_SAMPLES,
     SRC_STATIC_TYPESPEC_QA,
     SRC_TYPESPEC_AZURE_HTTP_SPECS,
     SRC_TYPESPEC_DOCS,

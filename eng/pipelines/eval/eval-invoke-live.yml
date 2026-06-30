@@ -1,17 +1,6 @@
-# Live-tier run-time invocation for one eval shard: the same `vally eval` run as the hermetic
-# eng/common/.../steps/eval-invoke.yml, wrapped in AzureCLI@2 so the live azsdk-cli MCP's Azure
-# DevOps calls inherit the service-connection identity.
-#
-# This is the RESOURCE-AUTH override of the pluggable invoke seam: azure-sdk-tools' live-eval
-# points the archetype RunShard job's `evalInvokeTemplate` here instead of the hermetic default. The
-# service connection lives in THIS repo-local file, never in the shared archetype — that is why
-# archetype-eval.yml exposes no azureServiceConnection knob. A different auth scheme (workload /
-# managed identity, a different connection, another repo's scheme) = its own copy of this file;
-# no new pipeline parameter is ever added.
-#
-# Resource auth (DevOps) is a federated exchange so it MUST be wrapped here; it can't come from a
-# variable group. Model auth (GITHUB_TOKEN today) is the other axis and arrives ambiently from
-# the entrypoint's linked variable group — so this file wraps only the resource credential.
+# Live-tier invocation for one eval shard: the same `vally eval` run as the hermetic
+# eval-invoke.yml, wrapped in AzureCLI@2 so the live MCP's Azure DevOps calls inherit the
+# service-connection identity. The archetype's evalInvokeTemplate seam points here for live.
 
 parameters:
   - name: vallyRoot

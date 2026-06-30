@@ -1,7 +1,7 @@
 // Agentic-workflow Copilot CLI extension.
 //
 // Self-contained, agent-first driver for a phased research -> plan -> implement workflow.
-// One joinSession() registers a custom sub-agent per phase (scoped tools + phase prompt); models
+// One joinSession() registers a custom sub-agent per phase (phase prompt + access to all tools); models
 // are repinnable at runtime via session.setModel before each dispatch. State lives entirely in a
 // per-run directory on disk (<cwd>/.aw/<slug>/) so the workflow is inspectable, resumable, and
 // survives an extension reload. The agent self-reports each phase with a sentinel line:
@@ -21,23 +21,22 @@ const PROMPTS_DIR = path.join(HERE, "prompts");
 const PHASE_TIMEOUT_MS = 30 * 60 * 1000; // generous wait; does not abort in-flight agent work
 const MAX_RETRIES = 2;
 
-// --- Phase registry: the per-phase config (default model + scoped tools + prompt template). ------
-// Models default here but are mutable at runtime (see /aw-model). Tool scoping + prompt are bound
+// --- Phase registry: the per-phase config (default model + tools + prompt template). ------------
+// Models default here but are mutable at runtime (see /aw-model). Tool access + prompt are bound
 // into customAgents at join time. `artifact` is the sentinel file/dir that marks the phase complete.
 // `simple` phases form the abbreviated flow used by `/aw-start <task> simple`.
-const READ_TOOLS = ["view", "glob", "grep"];
-const READ_SHELL_TOOLS = ["view", "glob", "grep", "bash"];
+const ALL_TOOLS = null;
 
 const PHASES = [
-    { id: "research", agent: "aw-research", template: "01-research.md", model: "claude-sonnet-4.5", tools: READ_SHELL_TOOLS, artifact: "specs/architecture.md", simple: true },
-    { id: "assumptions", agent: "aw-assumptions", template: "02-assumptions.md", model: null, tools: READ_TOOLS, artifact: "assumptions.md", simple: true },
-    { id: "classify", agent: "aw-classify", template: "03-classify.md", model: "claude-haiku-4.5", tools: READ_TOOLS, artifact: "subitems.json", simple: false },
-    { id: "research-item", agent: "aw-research-item", template: "04-research-item.md", model: "claude-sonnet-4.5", tools: READ_TOOLS, artifact: "research", simple: false },
-    { id: "plan", agent: "aw-plan", template: "05-plan.md", model: "claude-sonnet-4.5", tools: READ_TOOLS, artifact: "plan.md", simple: true },
-    { id: "implement", agent: "aw-implement", template: "06-implement.md", model: "claude-sonnet-4.5", tools: null, artifact: "execution-log.md", simple: true },
+    { id: "research", agent: "aw-research", template: "01-research.md", model: "claude-sonnet-4.5", tools: ALL_TOOLS, artifact: "specs/architecture.md", simple: true },
+    { id: "assumptions", agent: "aw-assumptions", template: "02-assumptions.md", model: null, tools: ALL_TOOLS, artifact: "assumptions.md", simple: true },
+    { id: "classify", agent: "aw-classify", template: "03-classify.md", model: "claude-haiku-4.5", tools: ALL_TOOLS, artifact: "subitems.json", simple: false },
+    { id: "research-item", agent: "aw-research-item", template: "04-research-item.md", model: "claude-sonnet-4.5", tools: ALL_TOOLS, artifact: "research", simple: false },
+    { id: "plan", agent: "aw-plan", template: "05-plan.md", model: "claude-sonnet-4.5", tools: ALL_TOOLS, artifact: "plan.md", simple: true },
+    { id: "implement", agent: "aw-implement", template: "06-implement.md", model: "claude-sonnet-4.5", tools: ALL_TOOLS, artifact: "execution-log.md", simple: true },
 ];
 
-const CRITIQUE = { id: "critique", agent: "aw-critique", template: "critique.md", model: "claude-haiku-4.5", tools: READ_TOOLS };
+const CRITIQUE = { id: "critique", agent: "aw-critique", template: "critique.md", model: "claude-haiku-4.5", tools: ALL_TOOLS };
 
 // Map an artifact filename to the phase that authors it (for /aw-judge).
 const ARTIFACT_TO_PHASE = {
@@ -408,7 +407,7 @@ async function cmdCompact() {
 }
 
 // --- Register the session: per-phase sub-agents + commands. --------------------------------------
-// The agent's pinned identity = role + scoped tools. The full, parameterized phase instructions
+// The agent's pinned identity = role + tool access. The full, parameterized phase instructions
 // (the durable IP in prompts/) are delivered per-dispatch via sendAndWait, since the templates
 // depend on the task/run dir which are unknown at join time. Keeping a short role prompt here
 // avoids injecting unfilled {{task}}/{{runDir}} placeholders into the agent context.
@@ -416,23 +415,20 @@ const customAgents = [...PHASES, CRITIQUE].map((p) => ({
     name: p.agent,
     displayName: p.agent,
     description: `Agentic-workflow ${p.id} phase`,
-    tools: p.tools, // null => all tools (implement); read/read-shell scoping otherwise
+    tools: p.tools, // null => all tools
     prompt:
         `You are the **${p.id}** phase of an automated research → plan → implement workflow. ` +
-        `Follow the detailed phase instructions delivered in each message exactly, honor your tool ` +
-        `restrictions, persist artifacts under the run directory you are given, and end your turn ` +
+        `Follow the detailed phase instructions delivered in each message exactly, persist artifacts ` +
+        `under the run directory you are given, and end your turn ` +
         `with the single sentinel line \`PHASE_RESULT: pass | fail | needs_input\` (plus an optional reason).`,
 }));
 
 const cmd = (name, description, handler) => ({ name, description, handler: (ctx) => Promise.resolve(handler(ctx)).catch((e) => diag(`/${name} error: ${e?.stack ?? e}`)) });
 
-// The full join configuration, built once so it can be inspected by tests (the seven agents, the
-// command surface, and the read-only guardrail) without standing up a live session host.
+// The full join configuration, built once so it can be inspected by tests (the seven agents and the
+// command surface) without standing up a live session host.
 export const joinConfig = {
     customAgents,
-    // The one cheap guardrail: hide mutating tools from the default agent so only the implement
-    // sub-agent (tools: null) can change source. Read-only phases scope tools explicitly above.
-    defaultAgent: { excludedTools: ["edit", "create", "delete", "write"] },
     infiniteSessions: { enabled: true },
     commands: [
         cmd("aw-start", "Start a workflow run on a task (append 'simple' for the short flow).", (c) => cmdStart(c.args)),

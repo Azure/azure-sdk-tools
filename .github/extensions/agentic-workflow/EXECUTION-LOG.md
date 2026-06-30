@@ -14,8 +14,8 @@ validators, gate parsers, artifact tools, or a state machine.
 - Verified import: `node -e "import('@github/copilot-sdk/extension')…"` → `ok`.
 - **Verification of SDK surface (v1.0.4 .d.ts):** confirmed every API the plan/design name before
   using it — `joinSession` (extension.d.ts), `CustomAgentConfig {name,model,tools:string[]|null,
-  prompt}` (types.d.ts:1157), `DefaultAgentConfig.excludedTools` (1208), `customAgents`/`defaultAgent`
-  /`infiniteSessions` on the join config (1626/1633/InfiniteSessionConfig), `session.rpc.agent.select
+  prompt}` (types.d.ts:1157), `customAgents`/`infiniteSessions` on the join config
+  (1626/InfiniteSessionConfig), `session.rpc.agent.select
   ({name})` (rpc.d.ts), `session.sendAndWait(prompt|MessageOptions,timeout)` returning
   `AssistantMessageEvent` with text at `.data.content` (session.d.ts:126, session-events.d.ts:2634),
   `session.ui.{confirm,select,input,elicitation}` gated on `session.capabilities.ui?.elicitation`
@@ -62,15 +62,13 @@ revision. `revise.md` was intentionally dropped.
 
 ## Steps 2–5 — `extension.mjs`
 
-Single file: a phase registry (`PHASES` + `CRITIQUE`) carrying per-phase model, scoped tools,
+Single file: a phase registry (`PHASES` + `CRITIQUE`) carrying per-phase model, tool access,
 template, and the sentinel artifact for completion detection; `dispatch`; `autoRun`; thin command
 handlers; and the `joinSession` config.
 
-- **Step 2 (agents + guardrail).** Built `customAgents` (one per phase incl. critique) with scoped
-  `tools` and a stable role `prompt`, plus `defaultAgent.excludedTools:
-  ["edit","create","delete","write"]` and `infiniteSessions.enabled`. Read phases get
-  `["view","glob","grep"]` (research also `bash` for `gh`/`git`/`curl`); implement gets `tools:null`
-  (all). Tool names match this CLI host's tools.
+- **Step 2 (agents + tool access).** Built `customAgents` (one per phase incl. critique) with
+  `tools:null` and a stable role `prompt`, plus `infiniteSessions.enabled`. Every phase gets all
+  tools so it can create/write its own artifacts under the run directory.
 
   **Deviation D4 — models repinned at runtime via `setModel`, not pinned in `customAgents[].model`.**
   The plan's table pins a model per agent and `/aw-model` is supposed to repin live. But
@@ -131,7 +129,7 @@ handlers; and the `joinSession` config.
 - Added `.gitignore` (`node_modules/`, `.aw/`) and a `test` npm script.
 - **Light test (optional in plan):** `test/smoke.test.mjs` (node:test) covers the only non-trivial
   pure logic — `parsePhaseResult`, `parseKv`, `isTruthy`, `slugify` — plus the `joinConfig` shape
-  (seven agents, tool scoping, default-agent guardrail, command surface). Guarded the top-level
+  (seven agents, all-tools phase access, command surface). Guarded the top-level
   `joinSession` behind `AW_SKIP_JOIN` so the module imports cleanly under test without a live host.
 
   Left the older `agentic-workflow-design.md` (the *prototype's* historical design doc) untouched —
@@ -154,8 +152,8 @@ branch).
 
 ## What is code vs delegated to the agent (as built)
 
-Irreducible code: `customAgents` registry (scoped tools + role) + runtime `setModel` repin;
-`defaultAgent.excludedTools` guardrail; thin `commands` + `parseKv`/`isTruthy` arg parsing;
+Irreducible code: `customAgents` registry (tool access + role) + runtime `setModel` repin;
+thin `commands` + `parseKv`/`isTruthy` arg parsing;
 `dispatch` + `parsePhaseResult` (one regex); `autoRun` loop + stop branching; `session.ui`
 elicitation calls. Delegated to the agent: artifact correctness/self-check, running gate commands,
 stage breakdown/sequencing, reading/writing artifacts, classification + research fan-out, judging

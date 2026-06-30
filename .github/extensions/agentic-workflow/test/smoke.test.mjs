@@ -50,16 +50,14 @@ test("joinConfig registers the seven phase agents", () => {
     ].sort());
 });
 
-test("joinConfig scopes tools: implement has all, read phases are restricted", () => {
+test("joinConfig gives every phase all tools", () => {
     const byName = Object.fromEntries(joinConfig.customAgents.map((a) => [a.name, a]));
-    assert.equal(byName["aw-implement"].tools, null); // all tools
-    assert.ok(!byName["aw-research"].tools.includes("edit"));
-    assert.ok(byName["aw-research"].tools.includes("bash")); // research gets read + shell
-    assert.ok(!byName["aw-plan"].tools.includes("bash")); // pure read phase, no shell
+    for (const name of Object.keys(byName)) {
+        assert.equal(byName[name].tools, null, `${name} should inherit all tools`);
+    }
 });
 
-test("joinConfig guards the default agent and registers the command surface", () => {
-    assert.deepEqual(joinConfig.defaultAgent.excludedTools, ["edit", "create", "delete", "write"]);
+test("joinConfig registers the command surface", () => {
     assert.equal(joinConfig.infiniteSessions.enabled, true);
     const cmds = joinConfig.commands.map((c) => c.name);
     for (const expected of ["aw-start", "aw-run", "aw-continue", "aw-pause", "aw-judge", "aw-redo", "aw-model", "aw-status", "aw-compact", "aw-implement"]) {

@@ -2,7 +2,7 @@
 
 A self-contained [Copilot CLI](https://github.com/github/copilot-cli) extension that drives a
 disciplined **research → plan → implement** workflow inside your interactive session. Each phase
-runs as its own sub-agent with a **pinned model**, **scoped tools**, and a **phase prompt**, handing
+runs as its own sub-agent with a **pinned model**, **all tools**, and a **phase prompt**, handing
 off to the next phase through **artifacts on disk**. You stay in the loop — advance phases manually,
 inspect artifacts between steps, repin models, answer decisions via dialogs — or let the auto-runner
 chain phases unattended.
@@ -36,16 +36,15 @@ with normal file tools.
 
 | Phase | Agent | Model (default) | Tools | Writes |
 | --- | --- | --- | --- | --- |
-| research | `aw-research` | `claude-sonnet-4.5` | read + shell | `specs/*.md`, `manifest.json` |
-| assumptions | `aw-assumptions` | session default | read | `assumptions.md` |
-| classify | `aw-classify` | `claude-haiku-4.5` | read | `subitems.json`, `classification.md` |
-| research-item | `aw-research-item` | `claude-sonnet-4.5` | read | `research/<id>.md` |
-| plan | `aw-plan` | `claude-sonnet-4.5` | read | `plan.md` |
+| research | `aw-research` | `claude-sonnet-4.5` | **all** | `specs/*.md`, `manifest.json` |
+| assumptions | `aw-assumptions` | session default | **all** | `assumptions.md` |
+| classify | `aw-classify` | `claude-haiku-4.5` | **all** | `subitems.json`, `classification.md` |
+| research-item | `aw-research-item` | `claude-sonnet-4.5` | **all** | `research/<id>.md` |
+| plan | `aw-plan` | `claude-sonnet-4.5` | **all** | `plan.md` |
 | implement | `aw-implement` | `claude-sonnet-4.5` | **all** | code edits + `execution-log.md`, `handoff.md` |
-| critique | `aw-critique` | `claude-haiku-4.5` | read | `critiques/<name>.md` |
+| critique | `aw-critique` | `claude-haiku-4.5` | **all** | `critiques/<name>.md` |
 
-The default agent has mutating tools (`edit`/`create`/`delete`/`write`) excluded, so only the
-`implement` phase can change source.
+All phase agents can write their own artifacts under the run directory.
 
 State lives entirely in a per-run directory: `<cwd>/.aw/<task-slug>/`. The workflow is inspectable,
 resumable, and survives an extension reload — the next phase is derived from which artifact files

@@ -1121,7 +1121,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     {
                         try
                         {
-                            await using (reporter.StartHeartbeat("Running tsp-client update for code re-generation", ct))
+                            await using (reporter.StartHeartbeat("Parsing TypeSpec project to add SDK details in release plan.", ct))
                             {
                                 var sdkDetailsResult = await UpdateSDKDetailsInReleasePlan(releasePlan.WorkItemId, typeSpecProjectPath, ct);
                                 if (!string.IsNullOrEmpty(sdkDetailsResult.ResponseError))

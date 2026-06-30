@@ -196,6 +196,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             Required = false,
         };
 
+        private readonly Option<ProductType> productTypeOpt = new("--product-type")
+        {
+            Description = "Product type. Allowed values: Offering, Feature, Sku. Used when the product type cannot be resolved from a triage work item.",
+            Required = false,
+            DefaultValueFactory = _ => ProductType.Unknown,
+        };
+
         private readonly Option<string> optionalPullRequestOpt = new("--pull-request", "-p")
         {
             Description = "Api spec pull request URL",
@@ -266,6 +273,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             ".NET", "Java", "Python", "JavaScript", "Go"
         };
 
+        // Languages that are supported (allowed) for a data plane release plan. Go is optional for
+        // data plane: it must not cause an "unsupported language" failure when present, but it is
+        // not part of the mandatory language set (languagesforDataplane) used for exclusion tracking.
+        internal static readonly HashSet<string> supportedLanguagesforDataplane = new(System.StringComparer.OrdinalIgnoreCase)
+        {
+            ".NET", "Java", "Python", "JavaScript", "Go"
+        };
+
         [GeneratedRegex("https:\\/\\/github.com\\/Azure\\/azure-sdk\\/issues\\/([0-9]+)")]
         private static partial Regex NameSpaceIssueUrlRegex();
 
@@ -306,6 +321,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 optionalPullRequestOpt,
                 optionalServiceTreeIdOpt,
                 optionalProductTreeIdOpt,
+                productTypeOpt,
             },
             new McpCommand(updateReleasePlanTargetCommandName, "Update the SDK release target month on an existing release plan", UpdateReleasePlanTargetToolName) { workItemIdOpt, targetReleaseOpt, },
         ];
@@ -378,6 +394,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         specPullRequestUrl: commandParser.GetValue(optionalPullRequestOpt),
                         serviceTreeId: commandParser.GetValue(optionalServiceTreeIdOpt),
                         productTreeId: commandParser.GetValue(optionalProductTreeIdOpt),
+                        productType: commandParser.GetValue(productTypeOpt),
                         ct: ct
                     );
 
@@ -560,8 +577,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         /// Runs the @azure-tools/typespec-metadata emitter to resolve package names and updates SDK details.
         /// </summary>
         [McpServerTool(Name = UpdateReleasePlanToolName), Description("Update an existing release plan. Updates spec PR URL, TypeSpec project path, SDK release type, and optionally service/product IDs. " +
+            "When a product ID is provided, product name, product lifecycle and product type are resolved from a matching triage work item in Azure DevOps. " +
+            "If the product type cannot be determined, provide it via productType (allowed values: Offering, Feature, Sku). " +
             "Runs TypeSpec metadata emitter to resolve package names and updates SDK details. If work item ID is not provided, finds the active release plan by TypeSpec project path or spec PR URL.")]
-        public async Task<ReleasePlanResponse> UpdateReleasePlan(string typeSpecProjectPath, string specPullRequestUrl = "", string sdkReleaseType = "", int workItemId = 0, string serviceTreeId = "", string productTreeId = "", CancellationToken ct = default)
+        public async Task<ReleasePlanResponse> UpdateReleasePlan(string typeSpecProjectPath, string specPullRequestUrl = "", string sdkReleaseType = "", int workItemId = 0, string serviceTreeId = "", string productTreeId = "", ProductType productType = ProductType.Unknown, CancellationToken ct = default)
         {
             try
             {
@@ -678,6 +697,42 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 if (!string.IsNullOrEmpty(productTreeId))
                 {
                     fieldsToUpdate["Custom.ProductServiceTreeID"] = productTreeId;
+
+                    // Resolve product details (name, lifecycle, type) from a matching triage work item.
+                    var triageProductInfo = await devOpsService.GetProductInfoFromTriageWorkItemAsync(productTreeId, ct);
+
+                    var resolvedProductType = triageProductInfo?.ProductType ?? string.Empty;
+
+                    // An explicitly provided product type always takes precedence.
+                    if (productType != ProductType.Unknown)
+                    {
+                        resolvedProductType = productType.ToAdoFieldValue();
+                    }
+
+                    // If the product type is still unknown, ask the user to provide it before proceeding.
+                    if (ProductTypeExtensions.FromAdoFieldValue(resolvedProductType) == ProductType.Unknown)
+                    {
+                        logger.LogInformation("Product type could not be determined for product ID {productTreeId}. Requesting product type from user.", productTreeId);
+                        return new ReleasePlanResponse
+                        {
+                            ResponseError = $"Product type could not be determined for product ID '{productTreeId}'. Please provide the product type to update the release plan.",
+                            NextSteps = ["Ask the user to provide the product type. Allowed values are: Offering, Feature, Sku. Then re-run the update release plan command/tool with the provided product type."]
+                        };
+                    }
+
+                    if (triageProductInfo != null)
+                    {
+                        if (!string.IsNullOrEmpty(triageProductInfo.ProductName))
+                        {
+                            fieldsToUpdate["Custom.ProductName"] = triageProductInfo.ProductName;
+                        }
+                        if (!string.IsNullOrEmpty(triageProductInfo.ProductLifecycle))
+                        {
+                            fieldsToUpdate["Custom.ProductLifecycle"] = triageProductInfo.ProductLifecycle;
+                        }
+                    }
+
+                    fieldsToUpdate["Custom.ProductType"] = resolvedProductType;
                 }
 
                 await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, fieldsToUpdate, ct);
@@ -923,6 +978,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
 
                 // Get service and product id from previous release plan
+                string productName = Path.GetFileName(specProject);
+                string productType = string.Empty;
+                string productLifecycle = string.Empty;
                 if (string.IsNullOrEmpty(serviceTreeId) || string.IsNullOrEmpty(productTreeId))
                 {
                     logger.LogInformation("Service and product id are not available. Checking for a previous release plan with same TypeSpec project {specProject}", specProject);
@@ -933,6 +991,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         logger.LogInformation("Found product details for TypeSpec project {specProject} from previous release plans.", specProject);
                         serviceTreeId = string.IsNullOrEmpty(serviceTreeId) ? productDetails?.ServiceId ?? string.Empty : serviceTreeId;
                         productTreeId = string.IsNullOrEmpty(productTreeId) ? productDetails?.ProductServiceTreeId ?? string.Empty : productTreeId;
+
+                        // Copy product name, product type and product lifecycle from the previous release plan
+                        if (!string.IsNullOrEmpty(productDetails?.ProductName))
+                        {
+                            productName = productDetails.ProductName;
+                        }
+                        productType = productDetails?.ProductType ?? string.Empty;
+                        productLifecycle = productDetails?.ProductLifecycle ?? string.Empty;
                     }
 
                     if (string.IsNullOrEmpty(serviceTreeId) || string.IsNullOrEmpty(productTreeId))
@@ -982,7 +1048,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 var userEmail = await userHelper.GetUserEmail(ct);
                 logger.LogInformation("User email for release plan submission: {userEmail}", userEmail);
 
-                var productDisplayName = Path.GetFileName(specProject);
+                var productDisplayName = productName;
                 var releasePlan = new ReleasePlanWorkItem
                 {
                     SDKReleaseMonth = targetReleaseMonthYear,
@@ -998,6 +1064,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     ReleasePlanSubmittedByEmail = userEmail,
                     APISpecProjectPath = specProject,
                     ProductName = productDisplayName,
+                    ProductType = productType,
+                    ProductLifecycle = productLifecycle,
                     ApiReleaseType = parsedApiReleaseType
                 };
                 var workItem = await devOpsService.CreateReleasePlanWorkItemAsync(releasePlan, ct);
@@ -1090,11 +1158,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 releasePlanWorkItemId = releasePlan.WorkItemId;
 
                 var requiredLanguages = releasePlan.IsManagementPlane ? languagesforMgmtplane : languagesforDataplane;
+                var supportedLanguages = releasePlan.IsManagementPlane ? languagesforMgmtplane : supportedLanguagesforDataplane;
 
-                // Validate SDK language name
-                if (SdkInfos.Any(sdk => !requiredLanguages.Contains(sdk.Language, StringComparer.OrdinalIgnoreCase)))
+                // A TypeSpec project may emit packages for languages the release plan does not track
+                // (e.g. Rust, C++). Optional languages such as Go for data plane are part of the
+                // supported set and must be updated. Skip any other detected language instead of
+                // failing, so the tool still updates the supported languages it found.
+                var skippedLanguages = SdkInfos
+                    .Where(sdk => !supportedLanguages.Contains(sdk.Language))
+                    .Select(sdk => sdk.Language)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                SdkInfos = SdkInfos
+                    .Where(sdk => supportedLanguages.Contains(sdk.Language))
+                    .ToList();
+
+                if (SdkInfos.Count == 0)
                 {
-                    return new DefaultCommandResponse { ResponseError = $"Unsupported SDK language found. Supported languages are: {string.Join(", ", requiredLanguages)}" };
+                    return new DefaultCommandResponse { ResponseError = $"No supported SDK languages found in the TypeSpec project metadata. Supported languages are: {string.Join(", ", supportedLanguages)}" };
                 }
 
                 // Validate SDK Package names
@@ -1130,6 +1212,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     foreach (var sdk in SdkInfos)
                     {
                         sb.AppendLine($"Language: {sdk.Language}, Package name: {sdk.PackageName}");
+                    }
+                    if (skippedLanguages.Any())
+                    {
+                        sb.AppendLine($"Note: The following detected languages are not tracked in the release plan and were skipped: {string.Join(", ", skippedLanguages)}");
                     }
                 }
 

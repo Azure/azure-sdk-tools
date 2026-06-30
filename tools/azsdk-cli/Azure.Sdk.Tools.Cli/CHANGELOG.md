@@ -1,8 +1,10 @@
 # Release History
 
-## 0.6.24 (Unreleased)
+## 0.6.24 (2026-06-30)
 
 ### Features Added
+
+- Update package details in release plan using package name in tspconfig.yaml when a new release plan is created.
 
 ### Bugs Fixed
 

@@ -9,6 +9,7 @@ using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Microsoft.Extensions.Logging;
+using ModelContextProtocol;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 {
@@ -64,14 +65,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 environmentHelper,
                 inputSanitizer,
                 httpClient,
-                Mock.Of<INpxHelper>());
+                Mock.Of<INpxHelper>(),
+                Mock.Of<IRawOutputHelper>());
         }
 
         [Test]
         public async Task Test_Create_releasePlan_for_existing_product()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
-            var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true);
+            var releaseplan = await releasePlanTool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true);
             Assert.IsNotNull(releaseplan);
 
             //Verify service ID and product ID in response. It should have values from previous release plans.
@@ -83,7 +85,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task Test_Create_releasePlan_copies_product_details_from_previous_release_plan()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
-            var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true);
+            var releaseplan = await releasePlanTool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true);
             Assert.IsNotNull(releaseplan);
             Assert.IsNull(releaseplan.ResponseError, $"Unexpected error: {releaseplan.ResponseError}");
 
@@ -94,10 +96,32 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
+        public async Task Test_Create_releasePlan_reports_progress()
+        {
+            var reported = new List<ProgressNotificationValue>();
+            var progressMock = new Mock<IProgress<ProgressNotificationValue>>();
+            progressMock.Setup(p => p.Report(It.IsAny<ProgressNotificationValue>()))
+                .Callback<ProgressNotificationValue>(v => reported.Add(v));
+
+            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            var releaseplan = await releasePlanTool.CreateReleasePlan(progressMock.Object, testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true);
+
+            Assert.IsNotNull(releaseplan);
+            Assert.IsNull(releaseplan.ResponseError, $"Unexpected error: {releaseplan.ResponseError}");
+
+            // The release plan creation should report progress via the MCP progress channel.
+            Assert.That(reported, Is.Not.Empty, "Expected at least one progress notification to be reported.");
+            Assert.That(reported.Any(r => r.Message != null && r.Message.Contains("Creating a release plan")), Is.True,
+                "Expected a 'Creating a release plan' progress notification.");
+            Assert.That(reported[0].Total, Is.EqualTo(2));
+            Assert.That(reported[0].Progress, Is.EqualTo(1));
+        }
+
+        [Test]
         public async Task Test_Create_releasePlan_with_invalid_SDK_type()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
-            var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "GA", sdkReleaseType: "invalid-sdk-type", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true);
+            var releaseplan = await releasePlanTool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "GA", sdkReleaseType: "invalid-sdk-type", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true);
             Assert.IsNotNull(releaseplan);
             Assert.IsNotNull(releaseplan.ResponseError);
             Assert.True(releaseplan.ResponseError.Contains("Invalid SDK release type"));
@@ -107,7 +131,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task Test_Create_releasePlan_with_invalid_api_release_type()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
-            var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "invalid-type", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true);
+            var releaseplan = await releasePlanTool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "invalid-type", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true);
             Assert.IsNotNull(releaseplan);
             Assert.IsNotNull(releaseplan.ResponseError);
             Assert.True(releaseplan.ResponseError.Contains("Invalid API release type"));
@@ -117,7 +141,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task Test_Create_releasePlan_with_invalid_service_tree_id()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
-            var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", serviceTreeId: "InvalidServiceTreeId", isTestReleasePlan: true);
+            var releaseplan = await releasePlanTool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", serviceTreeId: "InvalidServiceTreeId", isTestReleasePlan: true);
             Assert.IsNotNull(releaseplan);
             Assert.IsNotNull(releaseplan.ResponseError);
             Assert.True(releaseplan.ResponseError.Contains("Service tree ID 'InvalidServiceTreeId' is not a valid GUID"));
@@ -127,7 +151,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task Test_Create_releasePlan_with_invalid_product_tree_id()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
-            var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", productTreeId: "InvalidProductTreeId", isTestReleasePlan: true);
+            var releaseplan = await releasePlanTool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", productTreeId: "InvalidProductTreeId", isTestReleasePlan: true);
             Assert.IsNotNull(releaseplan);
             Assert.IsNotNull(releaseplan.ResponseError);
             Assert.True(releaseplan.ResponseError.Contains("Product tree ID 'InvalidProductTreeId' is not a valid GUID"));
@@ -137,7 +161,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task Test_Create_releasePlan_with_invalid_pull_request_url()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
-            var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/invalid-repo/pull/35446", isTestReleasePlan: true);
+            var releaseplan = await releasePlanTool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/invalid-repo/pull/35446", isTestReleasePlan: true);
             Assert.IsNotNull(releaseplan);
             Assert.IsNotNull(releaseplan.ResponseError);
             Assert.True(releaseplan.ResponseError.Contains("Invalid spec pull request URL"));
@@ -150,7 +174,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [Test]
         public async Task Test_Create_releasePlan_with_valid_inputs(string typeSpecPath, string targetMonth, string prUrl, string apiType, string serviceId, string productId)
         {
-            var result = await releasePlanTool.CreateReleasePlan(
+            var result = await releasePlanTool.CreateReleasePlan(null, 
                 typeSpecPath, 
                 targetMonth,
                 apiType,
@@ -183,12 +207,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 environmentHelperMock.Object,
                 inputSanitizer,
                 httpClient,
-                Mock.Of<INpxHelper>());
+                Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>());
 
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
 
             // Act
-            var releaseplan = await testReleasePlanTool.CreateReleasePlan(
+            var releaseplan = await testReleasePlanTool.CreateReleasePlan(null, 
                 testCodeFilePath,
                 "July 2025",
                 "GA",
@@ -223,12 +247,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 environmentHelperMock.Object,
                 inputSanitizer,
                 httpClient,
-                Mock.Of<INpxHelper>());
+                Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>());
 
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
 
             // Act
-            var releaseplan = await testReleasePlanTool.CreateReleasePlan(
+            var releaseplan = await testReleasePlanTool.CreateReleasePlan(null, 
                 testCodeFilePath,
                 "July 2025",
                 "GA",
@@ -250,7 +274,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task Test_Create_releasePlan_private_preview_accepts_azure_rest_api_specs_pr_repo()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
-            var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "Private Preview", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs-pr/pull/35446", isTestReleasePlan: true);
+            var releaseplan = await releasePlanTool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "Private Preview", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs-pr/pull/35446", isTestReleasePlan: true);
             Assert.IsNotNull(releaseplan);
             Assert.IsNull(releaseplan.ResponseError, $"Unexpected error: {releaseplan.ResponseError}");
             Assert.IsNotNull(releaseplan.ReleasePlanDetails);
@@ -260,7 +284,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task Test_Create_releasePlan_private_preview_rejects_public_spec_pr()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
-            var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "Private Preview", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true);
+            var releaseplan = await releasePlanTool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "Private Preview", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true);
             Assert.IsNotNull(releaseplan);
             Assert.IsNotNull(releaseplan.ResponseError);
             Assert.True(releaseplan.ResponseError.Contains("cannot be linked to a Private Preview release plan"));
@@ -270,7 +294,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task Test_Create_releasePlan_public_preview_rejects_private_spec_pr()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
-            var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "Public Preview", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs-pr/pull/35446", isTestReleasePlan: true);
+            var releaseplan = await releasePlanTool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "Public Preview", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs-pr/pull/35446", isTestReleasePlan: true);
             Assert.IsNotNull(releaseplan);
             Assert.IsNotNull(releaseplan.ResponseError);
             Assert.True(releaseplan.ResponseError.Contains("cannot be linked to a Public Preview or GA release plan"));
@@ -280,7 +304,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task Test_Create_releasePlan_ga_rejects_private_spec_pr()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
-            var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs-pr/pull/35446", isTestReleasePlan: true);
+            var releaseplan = await releasePlanTool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs-pr/pull/35446", isTestReleasePlan: true);
             Assert.IsNotNull(releaseplan);
             Assert.IsNotNull(releaseplan.ResponseError);
             Assert.True(releaseplan.ResponseError.Contains("cannot be linked to a Public Preview or GA release plan"));
@@ -291,7 +315,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
             // Use uppercase URL - should still work
-            var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "Private Preview", specPullRequestUrl: "https://github.com/Azure/Azure-Rest-Api-Specs-PR/pull/35446", isTestReleasePlan: true);
+            var releaseplan = await releasePlanTool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "Private Preview", specPullRequestUrl: "https://github.com/Azure/Azure-Rest-Api-Specs-PR/pull/35446", isTestReleasePlan: true);
             Assert.IsNotNull(releaseplan);
             Assert.IsNull(releaseplan.ResponseError, $"Unexpected error: {releaseplan.ResponseError}");
         }
@@ -300,7 +324,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task Test_Create_releasePlan_defaults_sdk_type_to_beta_for_preview()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
-            var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "Public Preview", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true);
+            var releaseplan = await releasePlanTool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "Public Preview", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true);
             Assert.IsNotNull(releaseplan);
             Assert.IsNull(releaseplan.ResponseError, $"Unexpected error: {releaseplan.ResponseError}");
             var details = releaseplan.ReleasePlanDetails as ReleasePlanWorkItem;
@@ -312,7 +336,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task Test_Create_releasePlan_defaults_sdk_type_to_stable_for_ga()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
-            var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true);
+            var releaseplan = await releasePlanTool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true);
             Assert.IsNotNull(releaseplan);
             Assert.IsNull(releaseplan.ResponseError, $"Unexpected error: {releaseplan.ResponseError}");
             var details = releaseplan.ReleasePlanDetails as ReleasePlanWorkItem;
@@ -324,7 +348,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task Test_Create_releasePlan_without_spec_pr_with_service_and_product_ids()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
-            var releaseplan = await releasePlanTool.CreateReleasePlan(
+            var releaseplan = await releasePlanTool.CreateReleasePlan(null, 
                 testCodeFilePath,
                 "July 2025",
                 "GA",
@@ -342,7 +366,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         {
             // Use a URL TypeSpec path that has no previous release plans in mock
             var testCodeFilePath = "https://github.com/Azure/azure-rest-api-specs/blob/main/specification/unknownservice/Unknown.Service";
-            var releaseplan = await releasePlanTool.CreateReleasePlan(
+            var releaseplan = await releasePlanTool.CreateReleasePlan(null, 
                 testCodeFilePath,
                 "July 2025",
                 "GA",
@@ -360,7 +384,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task Test_Create_releasePlan_without_spec_pr_sets_empty_spec_pull_requests()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
-            var releaseplan = await releasePlanTool.CreateReleasePlan(
+            var releaseplan = await releasePlanTool.CreateReleasePlan(null, 
                 testCodeFilePath,
                 "July 2025",
                 "GA",
@@ -399,13 +423,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 environmentHelper,
                 inputSanitizer,
                 httpClient,
-                Mock.Of<INpxHelper>());
+                Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>());
 
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
             var specPrUrl = "https://github.com/Azure/azure-rest-api-specs/pull/35446";
 
             // Act: create a Public Preview plan using the same spec PR (should succeed because release type differs)
-            var releaseplan = await tool.CreateReleasePlan(
+            var releaseplan = await tool.CreateReleasePlan(null, 
                 testCodeFilePath,
                 "July 2025",
                 "Public Preview",
@@ -444,13 +468,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 environmentHelper,
                 inputSanitizer,
                 httpClient,
-                Mock.Of<INpxHelper>());
+                Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>());
 
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
             var specPrUrl = "https://github.com/Azure/azure-rest-api-specs/pull/35446";
 
             // Act: attempt to create another GA plan for the same spec PR (should be blocked)
-            var releaseplan = await tool.CreateReleasePlan(
+            var releaseplan = await tool.CreateReleasePlan(null, 
                 testCodeFilePath,
                 "July 2025",
                 "GA",
@@ -488,7 +512,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAsync("specification/testcontoso/Contoso.Management", It.IsAny<bool>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(expectedReleasePlan);
 
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>());
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>());
 
             var releaseplan = await tool.GetReleasePlan(typeSpecProjectPath: "specification/testcontoso/Contoso.Management");
             Assert.IsNotNull(releaseplan);
@@ -510,7 +534,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAsync("specification/testcontoso/Contoso.Management", It.IsAny<bool>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(expectedReleasePlan);
 
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>());
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>());
 
             var absolutePath = Path.GetFullPath("TypeSpecTestData/specification/testcontoso/Contoso.Management");
             var releaseplan = await tool.GetReleasePlan(typeSpecProjectPath: absolutePath);
@@ -681,7 +705,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         {
             var mockTypeSpecHelper = new Mock<ITypeSpecHelper>();
             mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>())).Returns(false);
-            var tool = new ReleasePlanTool(devOpsService, gitHelper, mockTypeSpecHelper.Object, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>());
+            var tool = new ReleasePlanTool(devOpsService, gitHelper, mockTypeSpecHelper.Object, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>());
             var updateStatus = await tool.UpdateSDKDetailsInReleasePlan(100, "/nonexistent/path", CancellationToken.None);
             Assert.That(updateStatus.ResponseError, Does.Contain("invalid"));
         }
@@ -694,7 +718,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>())).Returns(true);
             mockTypeSpecHelper.Setup(x => x.ParseTypeSpecProjectAsync(It.IsAny<string>(), It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync((TypeSpecProject?)null);
-            var tool = new ReleasePlanTool(devOpsService, gitHelper, mockTypeSpecHelper.Object, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>());
+            var tool = new ReleasePlanTool(devOpsService, gitHelper, mockTypeSpecHelper.Object, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>());
             var updateStatus = await tool.UpdateSDKDetailsInReleasePlan(100, testCodeFilePath, CancellationToken.None);
             Assert.That(updateStatus.ResponseError, Does.Contain("Failed to parse TypeSpec project"));
         }
@@ -856,7 +880,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 });
 
             var testHttpClient = new HttpClient(mockHttpMessageHandler.Object);
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, testHttpClient, Mock.Of<INpxHelper>());
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, testHttpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>());
 
             await tool.ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://test.com/email");
 
@@ -903,7 +927,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 });
 
             var testHttpClient = new HttpClient(mockHttpMessageHandler.Object);
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, testHttpClient, Mock.Of<INpxHelper>());
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, testHttpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>());
 
             await tool.ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://test.com/email");
 
@@ -949,7 +973,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 });
 
             var testHttpClient = new HttpClient(mockHttpMessageHandler.Object);
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, testHttpClient, Mock.Of<INpxHelper>());
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, testHttpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>());
 
             await tool.ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://test.com/email");
 
@@ -995,7 +1019,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 });
 
             var testHttpClient = new HttpClient(mockHttpMessageHandler.Object);
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, testHttpClient, Mock.Of<INpxHelper>());
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, testHttpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>());
 
             await tool.ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://test.com/email");
 
@@ -1278,7 +1302,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOps.Setup(x => x.GetProductInfoFromTriageWorkItemAsync("22222222-2222-2222-2222-222222222222", It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProductInfo { ProductServiceTreeId = "22222222-2222-2222-2222-222222222222", ProductName = "Contoso Product", ProductType = "Offering", ProductLifecycle = "GA" });
 
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>());
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>());
 
             var result = await tool.UpdateReleasePlan(
                 typeSpecProjectPath: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
@@ -1312,7 +1336,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOps.Setup(x => x.GetProductInfoFromTriageWorkItemAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync((ProductInfo?)null);
 
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>());
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>());
 
             var result = await tool.UpdateReleasePlan(
                 typeSpecProjectPath: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
@@ -1350,7 +1374,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 220 });
             mockDevOps.Setup(x => x.UpdateReleasePlanSDKDetailsAsync(It.IsAny<int>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>());
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>());
 
             var result = await tool.UpdateReleasePlan(
                 typeSpecProjectPath: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
@@ -1387,7 +1411,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOps.Setup(x => x.UpdateApiSpecVersionAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
             mockDevOps.Setup(x => x.UpdateReleasePlanSDKDetailsAsync(It.IsAny<int>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>());
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>());
 
             var result = await tool.UpdateReleasePlan(
                 typeSpecProjectPath: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
@@ -1422,7 +1446,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockNpxHelper.Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 0 });
 
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, mockNpxHelper.Object);
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, mockNpxHelper.Object, Mock.Of<IRawOutputHelper>());
 
             var result = await tool.UpdateReleasePlan(
                 typeSpecProjectPath: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
@@ -1491,7 +1515,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             var tool = new ReleasePlanTool(
                 mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper,
-                gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>());
+                gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>());
 
             var result = await tool.UpdateReleasePlanTarget(workItemId: 999, targetReleaseMonthYear: "January 2026");
 
@@ -1521,7 +1545,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOps.Setup(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
             mockDevOps.Setup(x => x.UpdateApiSpecVersionAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>());
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>());
 
             var result = await tool.UpdateReleasePlan(
                 typeSpecProjectPath: "https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contoso/Contoso.Management",
@@ -1556,7 +1580,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOps.Setup(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
             mockDevOps.Setup(x => x.UpdateApiSpecVersionAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, mockNpxHelper.Object);
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, mockNpxHelper.Object, Mock.Of<IRawOutputHelper>());
 
             var result = await tool.UpdateReleasePlan(
                 typeSpecProjectPath: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
@@ -1605,7 +1629,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(typeSpecPath)).Returns(true);
             mockTypeSpecHelper.Setup(x => x.ParseTypeSpecProjectAsync(typeSpecPath, It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(typeSpecProject);
-            return new ReleasePlanTool(devOpsService, gitHelper, mockTypeSpecHelper.Object, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>());
+            return new ReleasePlanTool(devOpsService, gitHelper, mockTypeSpecHelper.Object, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>());
         }
     }
 }

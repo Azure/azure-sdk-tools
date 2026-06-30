@@ -7,11 +7,15 @@ not propose code changes, and do not classify the work yet.
 ## Task
 {{task}}
 
-## Inputs
-- `specs/architecture.md`, `specs/functional.md`, and `specs/apispec.md` if present.
-- {{researchNote}}
+## Run directory
+Your workflow run directory is `{{runDir}}`. Read prior artifacts from there and write your output
+there using your **normal file tools**. Artifact paths below are relative to the run directory.
 
-## Output — via the `write_artifact` tool
+## Inputs
+- `specs/architecture.md`, `specs/functional.md`, and `specs/apispec.md` if present (read them from
+  the run directory).
+
+## Output — write under the run directory with your normal file tools
 `assumptions.md` — one assumption per line, each with a short **rationale** and a **confidence**
 (`high` / `medium` / `low`).
 
@@ -78,10 +82,19 @@ it explicitly with a leading `blocking: true` token on that line, e.g.:
 - blocking: true | We assume tokens are validated upstream | rationale: no validation found in scope | confidence: low
 ```
 
-The orchestrator pauses the run and asks the human when any `blocking: true` assumption exists,
-rather than inventing an answer. Use this sparingly and only when it genuinely gates correctness.
+When any `blocking: true` assumption exists, do **not** invent an answer: report `needs_input`
+(see below) with the blocking question so the human can resolve it. Use this sparingly and only
+when it genuinely gates correctness.
 
 ## Constraints
 - Read-only; no source edits, no shell.
 - Be concrete and tied to the specs/codebase, not generic.
 - End your turn once `assumptions.md` is written.
+
+## Report at the end of your turn
+End with exactly one status line the runner reads:
+- `PHASE_RESULT: pass` if `assumptions.md` is written with no blocking clarification,
+- `PHASE_RESULT: needs_input — <question>` if a `blocking: true` assumption needs a human decision,
+- `PHASE_RESULT: fail — <reason>` if you could not produce the artifact.
+
+{{priorErrors}}

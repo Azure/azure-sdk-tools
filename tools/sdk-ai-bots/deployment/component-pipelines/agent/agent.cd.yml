@@ -1,0 +1,82 @@
+# CD pipeline — agent (agent-server slot + hosted Foundry agent).
+name: tools - sdk-ai-bots-agent - cd
+
+trigger: none
+pr: none
+
+parameters:
+    - name: environment
+      type: string
+      default: dev
+      values: [dev, preview, prod]
+    - name: imageTag
+      type: string
+    - name: deployTarget
+      type: string
+      default: server # server | hosted-agent | both
+      values: [server, hosted-agent, both]
+
+variables:
+    - template: /eng/pipelines/templates/variables/globals.yml
+    - template: /eng/pipelines/templates/variables/image.yml
+    - name: appName
+      value: 'azuresdkqabot-backend' # the agent runs in the 'agent' slot of the backend App Service
+    - name: imageName
+      value: 'azure-sdk-qa-bot-agent-server'
+
+extends:
+    template: /eng/pipelines/templates/stages/1es-redirect.yml
+    parameters:
+        Use1ESOfficial: true
+        stages:
+            - stage: DeployAgent
+              displayName: 'Deploy agent → ${{ parameters.environment }}'
+              jobs:
+                  - deployment: Deploy
+                    environment: 'sdk-ai-bots-${{ parameters.environment }}'
+                    pool:
+                        name: $(LINUXPOOL)
+                        image: $(LINUXVMIMAGE)
+                        os: linux
+                    strategy:
+                        runOnce:
+                            deploy:
+                                steps:
+                                    - checkout: self
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+                                      parameters:
+                                          environment: '${{ parameters.environment }}'
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+
+                                    # 1. Agent server slot deploy.
+                                    - ${{ if in(parameters.deployTarget, 'server', 'both') }}:
+                                          - template: /tools/sdk-ai-bots/deployment/pipelines/templates/webapp-deploy.yml
+                                            parameters:
+                                                appName: $(appName)
+                                                imageName: $(imageName)
+                                                imageTag: '${{ parameters.imageTag }}'
+                                                slot: agent
+                                          - template: /tools/sdk-ai-bots/deployment/pipelines/templates/smoke-test.yml
+                                            parameters:
+                                                appName: $(appName)
+                                                slot: agent
+                                                healthPath: /ping
+                                                easyAuthAudience: $(EASYAUTH_AUDIENCE)
+
+                                    # 2. Hosted Foundry agent deploy via azd.
+                                    - ${{ if in(parameters.deployTarget, 'hosted-agent', 'both') }}:
+                                          - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-deploy.yml
+                                            parameters:
+                                                service: agent
+                                                imageTag: '${{ parameters.imageTag }}'
+
+                                    - task: AzureCLI@2
+                                      displayName: 'Record LastKnownGoodTag'
+                                      inputs:
+                                          azureSubscription: $(SERVICE_CONNECTION)
+                                          scriptType: bash
+                                          scriptLocation: inlineScript
+                                          inlineScript: |
+                                              az appconfig kv set --name "$APP_CONFIG_NAME" \
+                                                --key "Deployment:agent-server:LastKnownGoodTag" \
+                                                --value "${{ parameters.imageTag }}" --yes

@@ -1,0 +1,77 @@
+# CD pipeline — function-app.
+name: tools - sdk-ai-bots-function-app - cd
+
+trigger: none
+pr: none
+
+parameters:
+    - name: environment
+      type: string
+      default: dev
+      values: [dev, preview, prod]
+    - name: imageTag
+      type: string
+
+variables:
+    - template: /eng/pipelines/templates/variables/globals.yml
+    - template: /eng/pipelines/templates/variables/image.yml
+    - name: appName
+      value: 'azuresdkqabot-function'
+    - name: imageName
+      value: 'azure-sdk-qa-bot-function'
+
+extends:
+    template: /eng/pipelines/templates/stages/1es-redirect.yml
+    parameters:
+        Use1ESOfficial: true
+        stages:
+            - stage: DeployFunction
+              displayName: 'Deploy function-app → ${{ parameters.environment }}'
+              jobs:
+                  - deployment: Deploy
+                    environment: 'sdk-ai-bots-${{ parameters.environment }}'
+                    pool:
+                        name: $(LINUXPOOL)
+                        image: $(LINUXVMIMAGE)
+                        os: linux
+                    strategy:
+                        runOnce:
+                            deploy:
+                                steps:
+                                    - checkout: self
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+                                      parameters:
+                                          environment: '${{ parameters.environment }}'
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+
+                                    # Deploy to staging slot.
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/webapp-deploy.yml
+                                      parameters:
+                                          appName: $(appName)
+                                          imageName: $(imageName)
+                                          imageTag: '${{ parameters.imageTag }}'
+                                          slot: staging
+
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/smoke-test.yml
+                                      parameters:
+                                          appName: $(appName)
+                                          slot: staging
+                                          healthPath: /api/health
+
+                                    - ${{ if ne(parameters.environment, 'dev') }}:
+                                          - template: /tools/sdk-ai-bots/deployment/pipelines/templates/swap-slot.yml
+                                            parameters:
+                                                appName: $(appName)
+                                                sourceSlot: staging
+                                                targetSlot: production
+
+                                    - task: AzureCLI@2
+                                      displayName: 'Record LastKnownGoodTag'
+                                      inputs:
+                                          azureSubscription: $(SERVICE_CONNECTION)
+                                          scriptType: bash
+                                          scriptLocation: inlineScript
+                                          inlineScript: |
+                                              az appconfig kv set --name "$APP_CONFIG_NAME" \
+                                                --key "Deployment:function-app:LastKnownGoodTag" \
+                                                --value "${{ parameters.imageTag }}" --yes

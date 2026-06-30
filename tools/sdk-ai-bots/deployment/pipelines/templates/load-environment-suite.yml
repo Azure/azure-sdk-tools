@@ -1,0 +1,71 @@
+# Pipeline template — load environment-suite into ADO variables.
+#
+# Reads tools/sdk-ai-bots/deployment/infra/environments/environment-suite.yaml,
+# selects the requested environment, and exposes its fields as pipeline
+# variables for downstream steps.
+#
+# Usage:
+#   - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+#     parameters:
+#       environment: dev   # one of dev | preview | prod
+#
+# Exports (as pipeline variables):
+#   AZURE_ENV_NAME, AZURE_SUBSCRIPTION_ID, AZURE_TENANT_ID, SERVICE_CONNECTION,
+#   AZURE_RESOURCE_GROUP, AZURE_LOCATION, ACR_NAME, KEY_VAULT_NAME,
+#   APP_CONFIG_NAME, APPROVAL_REQUIRED, PROD_DEPLOY_ONLY_FROM_PIPELINE,
+#   ROLLOUT_STRATEGY
+#
+# Implementation: uses `yq` (pre-installed on 1ES Linux images) to extract
+# values; no PowerShell yaml parsing required.
+
+parameters:
+    - name: environment
+      type: string
+      values: [dev, preview, prod]
+    - name: suitePath
+      type: string
+      default: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment/infra/environments/environment-suite.yaml'
+
+steps:
+    - bash: |
+          set -euo pipefail
+          SUITE="${{ parameters.suitePath }}"
+          ENV="${{ parameters.environment }}"
+          if [ ! -f "$SUITE" ]; then
+            echo "##[error]environment-suite.yaml not found at $SUITE"
+            exit 1
+          fi
+          command -v yq >/dev/null || { echo "##[error]yq not on PATH"; exit 1; }
+
+          export_var() {
+            local name="$1"
+            local path="$2"
+            local val
+            val=$(yq -r "$path" "$SUITE")
+            if [ -z "$val" ] || [ "$val" = "null" ]; then
+              echo "##[warning]${name} resolved to empty for env=${ENV} (path=${path})"
+              val=""
+            fi
+            echo "##vso[task.setvariable variable=${name}]${val}"
+            echo "  ${name} = ${val}"
+          }
+
+          echo "Loading environment-suite contract for '$ENV'..."
+          export_var AZURE_ENV_NAME                 ".environments.${ENV}.subscription"
+          export_var SERVICE_CONNECTION             ".environments.${ENV}.subscription"
+          export_var AZURE_SUBSCRIPTION_ID          ".environments.${ENV}.subscriptionId"
+          export_var AZURE_TENANT_ID                ".environments.${ENV}.tenantId"
+          export_var AZURE_RESOURCE_GROUP           ".environments.${ENV}.resourceGroupPrefix"
+          export_var AZURE_LOCATION                 ".environments.${ENV}.regions[0].name"
+          export_var ACR_NAME                       ".environments.${ENV}.containerRegistryName"
+          export_var KEY_VAULT_NAME                 ".environments.${ENV}.keyVaultName"
+          export_var APP_CONFIG_NAME                ".environments.${ENV}.appConfigName"
+          export_var APPROVAL_REQUIRED              ".environments.${ENV}.approvalRequired"
+          export_var PROD_DEPLOY_ONLY_FROM_PIPELINE ".environments.${ENV}.prodDeployOnlyFromPipeline"
+          export_var ROLLOUT_STRATEGY               ".environments.${ENV}.rolloutStrategy"
+
+          # Also export AZURE_ENV_NAME = literal env name (not the subscription alias),
+          # which is what azd / hooks expect.
+          echo "##vso[task.setvariable variable=AZURE_ENV_NAME]${ENV}"
+          echo "  AZURE_ENV_NAME = ${ENV}"
+      displayName: 'Load environment-suite (${{ parameters.environment }})'

@@ -1,0 +1,143 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+#
+# Top-level azd manifest for the Azure SDK QA Bot (sdk-ai-bots) deployment.
+#
+# Ported and adapted from ../azd-experiments/azure.yaml. The key differences:
+#
+#  - `infra/` paths are now relative to this file (tools/sdk-ai-bots/deployment).
+#  - Service `project` paths are relative to this file and point at the
+#    sibling component folders inside tools/sdk-ai-bots/.
+#  - All hooks are invoked via `tsx` from this folder so the hook code is
+#    self-contained inside the deployment tree.
+#
+# Three azd services run application code:
+#   - frontend     (Teams bot, App Service container)
+#   - function-app (Azure Function, container)
+#   - agent        (Foundry hosted agent)
+#
+# Three infra-only layers are deployed by the postprovision hook:
+#   - shared-resources, agent-platform, backend, logic-app
+# (See hooks/lib/layers.ts.)
+
+name: sdk-ai-bots
+metadata:
+    template: sdk-ai-bots@1.0.0
+
+infra:
+    provider: bicep
+    path: infra
+    module: main
+
+services:
+    frontend:
+        # Teams bot — App Service running the bot Docker container.
+        # CD performs slot-deploy + swap; predeploy builds and pushes the image
+        # to ACR (only used for local `azd deploy frontend` — pipelines build
+        # the image in CI and skip this step via AZD_SKIP_IMAGE_BUILD=1).
+        project: ../azure-sdk-qa-bot
+        language: ts
+        host: appservice
+        hooks:
+            predeploy:
+                - shell: pwsh
+                  run: |
+                      if ($env:AZD_SKIP_IMAGE_BUILD -eq "1") {
+                        Write-Host "AZD_SKIP_IMAGE_BUILD=1, using existing image $env:CONTAINER_REGISTRY_NAME.azurecr.io/azure-sdk-qa-bot:$env:AZURE_ENV_NAME"
+                        exit 0
+                      }
+                      ./scripts/setup-docker-image.ps1 -Tag $env:AZURE_ENV_NAME -AcrName $env:CONTAINER_REGISTRY_NAME -Push
+                  interactive: true
+                  continueOnError: false
+            postdeploy:
+                - shell: sh
+                  run: cd ../deployment && npx tsx hooks/frontend-postdeploy.ts
+                  interactive: true
+                  continueOnError: false
+
+    function-app:
+        # Azure Function — processes queue messages and background jobs.
+        project: ../azure-sdk-qa-bot-function
+        language: ts
+        host: function
+        hooks:
+            predeploy:
+                - shell: sh
+                  run: |
+                      if [ "$AZD_SKIP_IMAGE_BUILD" = "1" ]; then
+                        echo "AZD_SKIP_IMAGE_BUILD=1, using existing image"
+                        exit 0
+                      fi
+                      npx tsx scripts/setup-docker-image.ts --tag "$AZURE_ENV_NAME" --acr-name "$CONTAINER_REGISTRY_NAME" --push
+                  interactive: true
+                  continueOnError: false
+            postdeploy:
+                - shell: sh
+                  run: cd ../deployment && npx tsx hooks/function-postdeploy.ts
+                  interactive: true
+                  continueOnError: false
+
+    agent:
+        # Hosted Chat Agent on Microsoft Foundry (container agent).
+        project: ../azure-sdk-qa-bot-agent/agents/chat_agent
+        language: python
+        host: azure.ai.agent
+        config:
+            startupCommand: 'python init.py'
+            container:
+                resources:
+                    cpu: '1'
+                    memory: '2Gi'
+            # Model deployments are owned by infra/modules/qaBotAgent/component.bicep,
+            # so config.deployments[] is intentionally omitted here.
+        hooks:
+            predeploy:
+                - shell: sh
+                  run: cd ../../../deployment && npx tsx hooks/agent-predeploy.ts
+                  interactive: true
+                  continueOnError: false
+            postdeploy:
+                - shell: sh
+                  run: cd ../../../deployment && npx tsx hooks/agent-postdeploy.ts
+                  interactive: true
+                  continueOnError: false
+
+# ── Global lifecycle hooks ─────────────────────────────────────────────────────
+hooks:
+    preprovision:
+        - shell: sh
+          run: npx tsx hooks/preprovision.ts
+          interactive: true
+          continueOnError: false
+
+    # Deploys infra-only layers in order:
+    #   shared-resources → agent-platform → backend → logic-app
+    # DEPLOY_LAYER=<name> runs a single layer.
+    postprovision:
+        - shell: sh
+          run: npx tsx hooks/postprovision.ts
+          interactive: true
+          continueOnError: false
+
+    predeploy:
+        - shell: sh
+          run: npx tsx hooks/predeploy.ts
+          interactive: true
+          continueOnError: false
+
+    postdeploy:
+        - shell: sh
+          run: npx tsx hooks/postdeploy.ts
+          interactive: true
+          continueOnError: false
+
+    predown:
+        - shell: sh
+          run: npx tsx hooks/predown.ts
+          interactive: true
+          continueOnError: false
+
+    postdown:
+        - shell: sh
+          run: npx tsx hooks/postdown.ts
+          interactive: true
+          continueOnError: false

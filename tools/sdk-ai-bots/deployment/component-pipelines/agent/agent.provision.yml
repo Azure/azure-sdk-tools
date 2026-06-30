@@ -1,0 +1,50 @@
+# Provision pipeline — agent (Foundry project + agent slot).
+name: tools - sdk-ai-bots-agent - provision
+
+trigger: none
+pr:
+    branches:
+        include:
+            - main
+    paths:
+        include:
+            - tools/sdk-ai-bots/deployment/infra/modules/qaBotAgent/**
+            - tools/sdk-ai-bots/deployment/infra/modules/qaBotLogicApp/**
+
+parameters:
+    - name: environment
+      type: string
+      default: dev
+      values: [dev, preview, prod]
+
+extends:
+    template: /eng/pipelines/templates/stages/1es-redirect.yml
+    parameters:
+        Use1ESOfficial: true
+        stages:
+            - stage: ProvisionAgent
+              displayName: 'agent provision (${{ parameters.environment }})'
+              jobs:
+                  - deployment: Apply
+                    environment: 'sdk-ai-bots-${{ parameters.environment }}'
+                    pool:
+                        name: $(LINUXPOOL)
+                        image: $(LINUXVMIMAGE)
+                        os: linux
+                    strategy:
+                        runOnce:
+                            deploy:
+                                steps:
+                                    - checkout: self
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+                                      parameters:
+                                          environment: '${{ parameters.environment }}'
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-validate.yml
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-what-if.yml
+                                      parameters:
+                                          parametersFile: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment/infra/environments/${{ parameters.environment }}.parameters.json'
+                                    # Use the layer-scoped provision to apply agent-platform only.
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
+                                      parameters:
+                                          deployLayer: agent-platform

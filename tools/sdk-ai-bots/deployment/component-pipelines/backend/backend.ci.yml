@@ -1,0 +1,94 @@
+# CI pipeline — backend (Go).
+#
+# Replaces tools/sdk-ai-bots/azure-sdk-qa-bot-backend/pipeline/ci.yml in the
+# new structure. Builds, tests, AND builds the container image in CI — the
+# CD pipeline now NEVER builds.
+
+name: tools - sdk-ai-bots-backend - ci
+
+trigger:
+    branches:
+        include:
+            - main
+    paths:
+        include:
+            - tools/sdk-ai-bots/azure-sdk-qa-bot-backend/**
+
+pr:
+    branches:
+        include:
+            - main
+    paths:
+        include:
+            - tools/sdk-ai-bots/azure-sdk-qa-bot-backend/**
+
+variables:
+    - template: /eng/pipelines/templates/variables/globals.yml
+    - template: /eng/pipelines/templates/variables/image.yml
+    - name: workingDirectory
+      value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend'
+
+extends:
+    template: /eng/pipelines/templates/stages/1es-redirect.yml
+    parameters:
+        Use1ESOfficial: false
+        stages:
+            - stage: BackendCI
+              jobs:
+                  - job: BuildTest
+                    displayName: 'Build, test, lint, publish image'
+                    pool:
+                        name: $(LINUXPOOL)
+                        image: $(LINUXVMIMAGE)
+                        os: linux
+                    steps:
+                        - checkout: self
+                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+                          parameters:
+                              environment: dev
+                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+
+                        - task: GoTool@0
+                          inputs: { version: '1.24.1' }
+                          displayName: 'Install Go'
+
+                        - script: |
+                              set -euo pipefail
+                              go mod tidy
+                              git diff --exit-code go.mod go.sum
+                          workingDirectory: $(workingDirectory)
+                          displayName: 'go mod tidy + drift check'
+
+                        - script: |
+                              set -euo pipefail
+                              go build -v ./...
+                              go vet ./...
+                          workingDirectory: $(workingDirectory)
+                          displayName: 'go build + vet'
+
+                        - script: |
+                              set -euo pipefail
+                              curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.4.0
+                              ~/go/bin/golangci-lint run ./...
+                          workingDirectory: $(workingDirectory)
+                          displayName: 'golangci-lint'
+
+                        - task: AzureCLI@2
+                          displayName: 'go test'
+                          inputs:
+                              azureSubscription: $(SERVICE_CONNECTION)
+                              scriptType: bash
+                              scriptLocation: inlineScript
+                              workingDirectory: $(workingDirectory)
+                              inlineScript: |
+                                  set -euo pipefail
+                                  go test -timeout 10m -v -race -coverprofile=coverage.out ./...
+
+                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/container-build.yml
+                          parameters:
+                              imageName: 'azure-sdk-qa-bot-backend'
+                              dockerContext: '$(System.DefaultWorkingDirectory)'
+                              dockerfile: '$(workingDirectory)/Dockerfile'
+                              buildMode: 'docker'
+                              tagStrategy: 'semver'
+                              semverFile: '$(workingDirectory)/version.go'

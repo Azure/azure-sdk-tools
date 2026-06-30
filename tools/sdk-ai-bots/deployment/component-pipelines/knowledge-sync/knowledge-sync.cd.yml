@@ -1,0 +1,87 @@
+# "CD" pipeline — knowledge-sync.
+#
+# Knowledge-sync has no traffic exposure; this pipeline runs on a daily
+# schedule and refreshes the Search index. It is the standardized version
+# of the existing tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync/sync_knowledge.yml.
+
+name: tools - sdk-ai-bots-knowledge-sync - cd
+
+trigger: none
+pr: none
+
+schedules:
+    - cron: '0 2 * * *'
+      displayName: Daily knowledge sync (02:00 UTC)
+      branches:
+          include:
+              - main
+      always: true
+
+parameters:
+    - name: environment
+      type: string
+      default: prod
+      values: [dev, preview, prod]
+
+variables:
+    - template: /eng/pipelines/templates/variables/globals.yml
+    - template: /eng/pipelines/templates/variables/image.yml
+    - name: workingDirectory
+      value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync'
+
+resources:
+    repositories:
+        - repository: 1ESPipelineTemplates
+          type: git
+          name: 1ESPipelineTemplates/1ESPipelineTemplates
+          ref: refs/tags/release
+        - repository: azure-sdk-docs-eng.ms
+          type: git
+          name: internal/azure-sdk-docs-eng.ms
+          ref: main
+        - repository: internal-wiki
+          type: git
+          name: internal/internal.wiki
+          ref: wikiMaster
+
+extends:
+    template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
+    parameters:
+        settings:
+            skipBuildTagsForGitHubPullRequests: true
+            networkIsolationPolicy: Permissive
+        stages:
+            - stage: SyncKnowledge
+              jobs:
+                  - job: Sync
+                    pool:
+                        name: $(LINUXPOOL)
+                        image: $(LINUXVMIMAGE)
+                        os: linux
+                    steps:
+                        - checkout: self
+                        - checkout: azure-sdk-docs-eng.ms
+                        - checkout: internal-wiki
+                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+                          parameters:
+                              environment: '${{ parameters.environment }}'
+                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+                        - task: NodeTool@0
+                          inputs: { versionSpec: '24.x' }
+                        - script: npm ci
+                          workingDirectory: $(workingDirectory)
+                        - script: npm start
+                          workingDirectory: $(workingDirectory)
+                          displayName: 'Run knowledge sync'
+                        # Post-run guard: fail if Search index doc count regressed > 10 %.
+                        - task: AzureCLI@2
+                          displayName: 'Validate Search index doc count'
+                          inputs:
+                              azureSubscription: $(SERVICE_CONNECTION)
+                              scriptType: bash
+                              scriptLocation: inlineScript
+                              inlineScript: |
+                                  set -euo pipefail
+                                  # TODO: call Search admin API to compare current vs previous doc count;
+                                  # fail if delta < -10%. Stub for now.
+                                  echo "TODO: implement index regression guard"

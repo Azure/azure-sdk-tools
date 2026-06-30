@@ -1,0 +1,131 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Shared environment-suite for the sdk-ai-bots deployment.
+#
+# ╔═══════════════════════════════════════════════════════════════════════════╗
+# ║  ACTION REQUIRED BEFORE FIRST DEPLOY                                      ║
+# ║                                                                           ║
+# ║  Replace every `REPLACE_WITH_*` placeholder below with the real value:    ║
+# ║    - subscriptionId (dev / preview / prod)                                ║
+# ║    - tenantId (if non-default)                                            ║
+# ║    - serverAudience (Entra app registration GUID — see                    ║
+# ║      docs/manual-setup.md §5)                                             ║
+# ║                                                                           ║
+# ║  Validate with:                                                           ║
+# ║    pwsh ./scripts/validate-env-suite.ps1                                  ║
+# ║                                                                           ║
+# ║  Full setup guide: docs/manual-setup.md §4                                ║
+# ╚═══════════════════════════════════════════════════════════════════════════╝
+#
+# This file is the single source of truth for:
+#   - which environments exist
+#   - which subscription each one targets
+#   - the resource group prefix
+#   - the region / ring topology
+#   - whether approval is required
+#   - whether prod can only be deployed from the pipeline
+#
+# All provision / CI / CD pipelines load this file via
+# pipelines/templates/load-environment-suite.yml and read individual fields by
+# name. No pipeline may hard-code an environment list, subscription ID, region,
+# or RG name — change them here and they propagate.
+# ─────────────────────────────────────────────────────────────────────────────
+
+environments:
+    dev:
+        # Symbolic subscription reference. The pipeline maps this to a real
+        # service-connection name via /eng/pipelines/templates/variables/globals.yml
+        # (entry: subscriptionMap.dev → SERVICE_CONNECTION + AZURE_SUBSCRIPTION_ID).
+        subscription: 'azuresdkqabot-dev'
+        subscriptionId: 'REPLACE_WITH_DEV_SUBSCRIPTION_ID'
+        tenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
+        resourceGroupPrefix: 'rg-azuresdkqabot-dev'
+        keyVaultName: 'azsdkqabot-kv-dev'
+        appConfigName: 'azsdkqabot-config-dev'
+        containerRegistryName: 'azsdkqabotacrdev'
+        regions:
+            - name: 'westus2'
+              ring: 'single'
+              enabled: true
+        approvalRequired: false
+        prodDeployOnlyFromPipeline: false
+        localDeployAllowed: true
+        healthChecks:
+            minSuccessRate: 0.90
+            latencyP95Ms: 5000
+        rolloutStrategy: 'direct'
+
+    preview:
+        subscription: 'azuresdkqabot-preview'
+        subscriptionId: 'REPLACE_WITH_PREVIEW_SUBSCRIPTION_ID'
+        tenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
+        resourceGroupPrefix: 'rg-azuresdkqabot-preview'
+        keyVaultName: 'azsdkqabot-kv-preview'
+        appConfigName: 'azsdkqabot-config-preview'
+        containerRegistryName: 'azsdkqabotacrpreview'
+        regions:
+            - name: 'westus2'
+              ring: 'single'
+              enabled: true
+        approvalRequired: true
+        prodDeployOnlyFromPipeline: false
+        localDeployAllowed: false
+        healthChecks:
+            minSuccessRate: 0.95
+            latencyP95Ms: 3000
+        rolloutStrategy: 'slot-swap'
+
+    prod:
+        subscription: 'azuresdkqabot-prod'
+        subscriptionId: 'REPLACE_WITH_PROD_SUBSCRIPTION_ID'
+        tenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
+        resourceGroupPrefix: 'rg-azuresdkqabot-prod'
+        keyVaultName: 'azsdkqabot-kv-prod'
+        appConfigName: 'azsdkqabot-config-prod'
+        containerRegistryName: 'azsdkqabotacrprod'
+        regions:
+            - name: 'westus2'
+              ring: 'canary'
+              enabled: true
+            # Future second region — uncomment after multi-region infra lands:
+            # - name: "eastus"
+            #   ring: "broad"
+            #   enabled: false
+        approvalRequired: true
+        prodDeployOnlyFromPipeline: true
+        localDeployAllowed: false
+        healthChecks:
+            minSuccessRate: 0.99
+            latencyP95Ms: 2000
+            stabilizationWindowMinutes: 10
+        rolloutStrategy: 'slot-swap-with-watch'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Component contract — names azd / Bicep need to agree on per environment.
+# These values flow through to deployment/infra/environments/<env>.parameters.json
+# and are consumed by pipelines/templates/load-environment-suite.yml.
+# ─────────────────────────────────────────────────────────────────────────────
+components:
+    frontend:
+        imageName: 'azure-sdk-qa-bot'
+        serviceName: 'frontend'
+        healthPath: '/health'
+        slot: 'staging'
+    backend:
+        imageName: 'azure-sdk-qa-bot-backend'
+        serviceName: 'backend'
+        healthPath: '/ping'
+        slot: 'authoring'
+    function-app:
+        imageName: 'azure-sdk-qa-bot-function'
+        serviceName: 'function-app'
+        healthPath: '/api/health'
+        slot: 'staging'
+    agent-server:
+        imageName: 'azure-sdk-qa-bot-agent-server'
+        serviceName: 'agent'
+        healthPath: '/ping'
+        slot: 'agent'
+        easyAuthRequired: true
+    knowledge-sync:
+        schedule: '0 2 * * *' # daily 02:00 UTC
+        searchIndexName: 'azure-sdk-knowledge'

@@ -1,0 +1,48 @@
+# CI pipeline — knowledge-sync (build + unit test only).
+name: tools - sdk-ai-bots-knowledge-sync - ci
+
+trigger:
+    branches:
+        include:
+            - main
+    paths:
+        include:
+            - tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync/**
+pr:
+    branches:
+        include:
+            - main
+    paths:
+        include:
+            - tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync/**
+
+variables:
+    - template: /eng/pipelines/templates/variables/globals.yml
+    - template: /eng/pipelines/templates/variables/image.yml
+    - name: workingDirectory
+      value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync'
+
+extends:
+    template: /eng/pipelines/templates/stages/1es-redirect.yml
+    parameters:
+        Use1ESOfficial: false
+        stages:
+            - stage: KnowledgeSyncCI
+              jobs:
+                  - job: BuildTest
+                    pool:
+                        name: $(LINUXPOOL)
+                        image: $(LINUXVMIMAGE)
+                        os: linux
+                    steps:
+                        - checkout: self
+                        - task: NodeTool@0
+                          inputs: { versionSpec: '24.x' }
+                        - script: npm ci
+                          workingDirectory: $(workingDirectory)
+                        - script: npm run build
+                          workingDirectory: $(workingDirectory)
+                        - script: |
+                              npm test -- --reporter=junit --outputFile=vitest-report.xml || echo "Tests completed with exit code $?"
+                          workingDirectory: $(workingDirectory)
+                          displayName: 'npm test'

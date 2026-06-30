@@ -1,0 +1,35 @@
+# Pipeline template — `azd deploy <service>` (consumes pre-built image).
+#
+# Required pipeline variables: SERVICE_CONNECTION, AZURE_ENV_NAME, ACR_NAME.
+
+parameters:
+    - name: service
+      type: string # frontend | function-app | agent
+    - name: imageTag
+      type: string # tag produced by container-build.yml in CI
+    - name: workingDirectory
+      type: string
+      default: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment'
+
+steps:
+    - task: AzureCLI@2
+      displayName: 'azd deploy ${{ parameters.service }} (tag ${{ parameters.imageTag }})'
+      inputs:
+          azureSubscription: $(SERVICE_CONNECTION)
+          scriptType: bash
+          scriptLocation: inlineScript
+          workingDirectory: '${{ parameters.workingDirectory }}'
+          inlineScript: |
+              set -euo pipefail
+              # Hard-enforce build-once: CD must never rebuild the image.
+              export AZD_SKIP_IMAGE_BUILD=1
+              export AZURE_ENV_NAME
+              export CONTAINER_REGISTRY_NAME="$ACR_NAME"
+              case "${{ parameters.service }}" in
+                frontend)        export FRONTEND_IMAGE_TAG="${{ parameters.imageTag }}" ;;
+                function-app)    export FUNCTION_IMAGE_TAG="${{ parameters.imageTag }}" ;;
+                agent)           export AGENT_IMAGE_TAG="${{ parameters.imageTag }}" ;;
+              esac
+              npm ci
+              azd env select "$AZURE_ENV_NAME"
+              azd deploy "${{ parameters.service }}" --environment "$AZURE_ENV_NAME" --no-prompt

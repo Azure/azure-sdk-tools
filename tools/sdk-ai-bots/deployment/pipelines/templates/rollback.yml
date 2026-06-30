@@ -1,0 +1,46 @@
+# Pipeline template — rollback to LastKnownGoodTag (no rebuild).
+#
+# Reads Deployment:<component>:LastKnownGoodTag from App Configuration and
+# re-points the app/slot to that image.
+#
+# Required pipeline variables: SERVICE_CONNECTION, ACR_NAME,
+# AZURE_RESOURCE_GROUP, APP_CONFIG_NAME.
+
+parameters:
+    - name: component
+      type: string # frontend | backend | function-app | agent-server
+    - name: appName
+      type: string
+    - name: imageName
+      type: string
+    - name: slot
+      type: string
+      default: 'default'
+
+steps:
+    - task: AzureCLI@2
+      displayName: 'Rollback ${{ parameters.component }} on ${{ parameters.appName }}/${{ parameters.slot }}'
+      inputs:
+          azureSubscription: $(SERVICE_CONNECTION)
+          scriptType: bash
+          scriptLocation: inlineScript
+          inlineScript: |
+              set -euo pipefail
+              KEY="Deployment:${{ parameters.component }}:LastKnownGoodTag"
+              TAG=$(az appconfig kv show --name "$APP_CONFIG_NAME" --key "$KEY" --query value -o tsv)
+              [ -n "$TAG" ] || { echo "##[error]No LastKnownGoodTag found in App Config for $KEY"; exit 1; }
+              echo "Rolling back to tag: $TAG"
+
+              SLOT_ARG=""
+              if [ "${{ parameters.slot }}" != "default" ]; then
+                SLOT_ARG="--slot ${{ parameters.slot }}"
+              fi
+              ACR_LOGIN_SERVER=$(az acr show --name "$ACR_NAME" --query loginServer -o tsv)
+              az webapp config container set \
+                --name "${{ parameters.appName }}" \
+                --resource-group "$AZURE_RESOURCE_GROUP" \
+                $SLOT_ARG \
+                --container-image-name "$ACR_LOGIN_SERVER/${{ parameters.imageName }}:$TAG" \
+                --container-registry-url "https://$ACR_LOGIN_SERVER"
+              az webapp restart --name "${{ parameters.appName }}" --resource-group "$AZURE_RESOURCE_GROUP" $SLOT_ARG
+              echo "✓ rolled back to $TAG"

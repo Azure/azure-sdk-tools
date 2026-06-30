@@ -1,0 +1,120 @@
+# CD pipeline — frontend (Teams bot).
+#
+# Consumes the image tag produced by frontend.ci.yml.
+# Rollout: deploy to staging slot → smoke test → swap to production.
+
+name: tools - sdk-ai-bots-frontend - cd
+
+trigger: none
+pr: none
+
+parameters:
+    - name: environment
+      type: string
+      default: dev
+      values: [dev, preview, prod]
+    - name: imageTag
+      type: string # must already exist in ACR
+    - name: rollbackOnFailure
+      type: boolean
+      default: true
+
+variables:
+    - template: /eng/pipelines/templates/variables/globals.yml
+    - template: /eng/pipelines/templates/variables/image.yml
+    - name: appName
+      value: 'azsdkqabot' # TODO replace once env-aware names land in env-suite
+    - name: imageName
+      value: 'azure-sdk-qa-bot'
+
+extends:
+    template: /eng/pipelines/templates/stages/1es-redirect.yml
+    parameters:
+        Use1ESOfficial: true
+        stages:
+            - stage: DeployFrontend
+              displayName: 'Deploy frontend → ${{ parameters.environment }}'
+              jobs:
+                  - deployment: Deploy
+                    environment: 'sdk-ai-bots-${{ parameters.environment }}'
+                    pool:
+                        name: $(LINUXPOOL)
+                        image: $(LINUXVMIMAGE)
+                        os: linux
+                    strategy:
+                        runOnce:
+                            deploy:
+                                steps:
+                                    - checkout: self
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+                                      parameters:
+                                          environment: '${{ parameters.environment }}'
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+
+                                    # 1. Deploy image to staging slot.
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/webapp-deploy.yml
+                                      parameters:
+                                          appName: $(appName)
+                                          imageName: $(imageName)
+                                          imageTag: '${{ parameters.imageTag }}'
+                                          slot: staging
+
+                                    # 2. Smoke test the staging slot.
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/smoke-test.yml
+                                      parameters:
+                                          appName: $(appName)
+                                          slot: staging
+                                          healthPath: /health
+
+                                    # 3. Swap staging → production (skip for dev: direct-deploy).
+                                    - ${{ if ne(parameters.environment, 'dev') }}:
+                                          - template: /tools/sdk-ai-bots/deployment/pipelines/templates/swap-slot.yml
+                                            parameters:
+                                                appName: $(appName)
+                                                sourceSlot: staging
+                                                targetSlot: production
+
+                                    # 4. Verify production slot post-swap.
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/smoke-test.yml
+                                      parameters:
+                                          appName: $(appName)
+                                          slot: default
+                                          healthPath: /health
+
+                                    # 5. Record LastKnownGoodTag.
+                                    - task: AzureCLI@2
+                                      displayName: 'Record LastKnownGoodTag'
+                                      inputs:
+                                          azureSubscription: $(SERVICE_CONNECTION)
+                                          scriptType: bash
+                                          scriptLocation: inlineScript
+                                          inlineScript: |
+                                              set -euo pipefail
+                                              az appconfig kv set \
+                                                --name "$APP_CONFIG_NAME" \
+                                                --key "Deployment:frontend:LastKnownGoodTag" \
+                                                --value "${{ parameters.imageTag }}" --yes
+
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/notify.yml
+                                      parameters:
+                                          component: frontend
+                                          environment: '${{ parameters.environment }}'
+                                          status: success
+                                          details: 'tag=${{ parameters.imageTag }}'
+
+                            on:
+                                failure:
+                                    steps:
+                                        - ${{ if eq(parameters.rollbackOnFailure, true) }}:
+                                              - template: /tools/sdk-ai-bots/deployment/pipelines/templates/rollback.yml
+                                                parameters:
+                                                    component: frontend
+                                                    appName: $(appName)
+                                                    imageName: $(imageName)
+                                                    slot: default
+                                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/notify.yml
+                                          parameters:
+                                              component: frontend
+                                              environment: '${{ parameters.environment }}'
+                                              status: failure
+                                              details: 'failed deploying tag=${{ parameters.imageTag }}'

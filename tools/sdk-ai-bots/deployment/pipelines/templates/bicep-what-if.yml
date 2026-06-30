@@ -1,0 +1,46 @@
+# Pipeline template — `az deployment sub what-if`.
+#
+# Required pipeline variables: SERVICE_CONNECTION, AZURE_LOCATION,
+# AZURE_ENV_NAME.
+
+parameters:
+    - name: bicepFile
+      type: string
+      default: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment/infra/main.bicep'
+    - name: parametersFile
+      type: string
+    - name: failOnDelete
+      type: boolean
+      default: true # default behaviour for prod / preview; dev callers can override
+
+steps:
+    - task: AzureCLI@2
+      displayName: 'az deployment sub what-if'
+      inputs:
+          azureSubscription: $(SERVICE_CONNECTION)
+          scriptType: bash
+          scriptLocation: inlineScript
+          inlineScript: |
+              set -euo pipefail
+              echo "Running what-if for env=$AZURE_ENV_NAME"
+              OUTPUT=$(az deployment sub what-if \
+                --location "$AZURE_LOCATION" \
+                --template-file "${{ parameters.bicepFile }}" \
+                --parameters "@${{ parameters.parametersFile }}" \
+                --no-pretty-print 2>&1) || {
+                  echo "$OUTPUT"
+                  echo "##[error]what-if failed"
+                  exit 1
+                }
+              echo "$OUTPUT"
+
+              if [ "${{ parameters.failOnDelete }}" = "True" ]; then
+                if echo "$OUTPUT" | grep -E '^\s*(Delete|Modify)' >/dev/null; then
+                  echo "##[warning]what-if reports Delete or Modify operations — review the diff above."
+                  # Hard-fail only when env-suite says approvalRequired is true.
+                  if [ "${APPROVAL_REQUIRED:-false}" = "true" ]; then
+                    echo "##[error]Refusing to proceed without manual approval on Delete/Modify."
+                    exit 1
+                  fi
+                fi
+              fi

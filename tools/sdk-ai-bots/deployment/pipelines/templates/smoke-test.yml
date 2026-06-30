@@ -1,0 +1,57 @@
+# Pipeline template — HTTP smoke probe.
+#
+# Required pipeline variables: SERVICE_CONNECTION, AZURE_RESOURCE_GROUP.
+
+parameters:
+    - name: appName
+      type: string
+    - name: slot
+      type: string
+      default: 'default'
+    - name: healthPath
+      type: string
+      default: '/health'
+    - name: easyAuthAudience
+      type: string
+      default: '' # set to require Entra bearer for the probe
+    - name: maxAttempts
+      type: number
+      default: 12
+    - name: waitSeconds
+      type: number
+      default: 10
+
+steps:
+    - task: AzureCLI@2
+      displayName: 'Smoke test ${{ parameters.appName }}/${{ parameters.slot }}${{ parameters.healthPath }}'
+      inputs:
+          azureSubscription: $(SERVICE_CONNECTION)
+          scriptType: bash
+          scriptLocation: inlineScript
+          inlineScript: |
+              set -euo pipefail
+              SLOT_ARG=""
+              if [ "${{ parameters.slot }}" != "default" ]; then
+                SLOT_ARG="--slot ${{ parameters.slot }}"
+              fi
+              APP_HOST=$(az webapp show --name "${{ parameters.appName }}" --resource-group "$AZURE_RESOURCE_GROUP" $SLOT_ARG --query defaultHostName -o tsv)
+              URL="https://${APP_HOST}${{ parameters.healthPath }}"
+
+              AUTH_HEADER=""
+              if [ -n "${{ parameters.easyAuthAudience }}" ]; then
+                TOKEN=$(az account get-access-token --resource "${{ parameters.easyAuthAudience }}" --query accessToken -o tsv)
+                AUTH_HEADER="-H \"Authorization: Bearer $TOKEN\""
+              fi
+
+              echo "Probing $URL"
+              for i in $(seq 1 ${{ parameters.maxAttempts }}); do
+                STATUS=$(eval curl -s -o /dev/null -w '%{http_code}' $AUTH_HEADER "$URL" || echo 000)
+                if [ "$STATUS" = "200" ]; then
+                  echo "  ✓ healthy (HTTP $STATUS) after attempt $i"
+                  exit 0
+                fi
+                echo "  attempt $i: HTTP $STATUS"
+                sleep ${{ parameters.waitSeconds }}
+              done
+              echo "##[error]Smoke test failed for $URL"
+              exit 1

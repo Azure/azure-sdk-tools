@@ -1,0 +1,80 @@
+# Orchestrator pipeline — full dev rollout.
+# Provisions infra and deploys all components against dev in dependency order.
+
+name: tools - sdk-ai-bots - deploy-all-dev
+
+trigger: none
+pr: none
+
+variables:
+    - template: /eng/pipelines/templates/variables/globals.yml
+    - template: /eng/pipelines/templates/variables/image.yml
+
+parameters:
+    - name: imageTagFrontend
+      type: string
+    - name: imageTagBackend
+      type: string
+    - name: imageTagFunctionApp
+      type: string
+    - name: imageTagAgent
+      type: string
+
+extends:
+    template: /eng/pipelines/templates/stages/1es-redirect.yml
+    parameters:
+        Use1ESOfficial: true
+        stages:
+            - stage: Provision
+              displayName: 'Provision (dev)'
+              jobs:
+                  - deployment: AzdProvision
+                    environment: 'sdk-ai-bots-dev'
+                    pool:
+                        name: $(LINUXPOOL)
+                        image: $(LINUXVMIMAGE)
+                        os: linux
+                    strategy:
+                        runOnce:
+                            deploy:
+                                steps:
+                                    - checkout: self
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+                                      parameters:
+                                          environment: dev
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
+
+            - stage: DeployBackend
+              dependsOn: Provision
+              jobs:
+                  - template: /tools/sdk-ai-bots/deployment/component-pipelines/backend/backend.cd.yml@self
+                    parameters:
+                        environment: dev
+                        imageTag: '${{ parameters.imageTagBackend }}'
+                        slot: authoring
+
+            - stage: DeployFunctionApp
+              dependsOn: DeployBackend
+              jobs:
+                  - template: /tools/sdk-ai-bots/deployment/component-pipelines/function-app/function-app.cd.yml@self
+                    parameters:
+                        environment: dev
+                        imageTag: '${{ parameters.imageTagFunctionApp }}'
+
+            - stage: DeployAgent
+              dependsOn: DeployFunctionApp
+              jobs:
+                  - template: /tools/sdk-ai-bots/deployment/component-pipelines/agent/agent.cd.yml@self
+                    parameters:
+                        environment: dev
+                        imageTag: '${{ parameters.imageTagAgent }}'
+                        deployTarget: both
+
+            - stage: DeployFrontend
+              dependsOn: DeployAgent
+              jobs:
+                  - template: /tools/sdk-ai-bots/deployment/component-pipelines/frontend/frontend.cd.yml@self
+                    parameters:
+                        environment: dev
+                        imageTag: '${{ parameters.imageTagFrontend }}'

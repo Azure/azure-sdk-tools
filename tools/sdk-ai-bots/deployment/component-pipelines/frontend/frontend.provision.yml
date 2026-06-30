@@ -1,0 +1,71 @@
+# Provision pipeline — frontend (Teams bot) infrastructure layer.
+#
+# Applies infra/modules/qaBotFrontend/* via the full `azd provision` graph
+# (azd always provisions the whole graph; this pipeline exists so a
+# frontend-only infra change can be reviewed and rolled out in isolation).
+
+name: tools - sdk-ai-bots-frontend - provision
+
+trigger: none
+pr:
+    branches:
+        include:
+            - main
+    paths:
+        include:
+            - tools/sdk-ai-bots/deployment/infra/modules/qaBotFrontend/**
+            - tools/sdk-ai-bots/deployment/infra/main.bicep
+
+parameters:
+    - name: environment
+      type: string
+      default: dev
+      values:
+          - dev
+          - preview
+          - prod
+
+extends:
+    template: /eng/pipelines/templates/stages/1es-redirect.yml
+    parameters:
+        Use1ESOfficial: true
+        stages:
+            - stage: ValidateAndProvision
+              displayName: 'frontend provision (${{ parameters.environment }})'
+              jobs:
+                  - job: WhatIf
+                    displayName: 'what-if'
+                    pool:
+                        name: $(LINUXPOOL)
+                        image: $(LINUXVMIMAGE)
+                        os: linux
+                    steps:
+                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+                          parameters:
+                              environment: '${{ parameters.environment }}'
+                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-validate.yml
+                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-what-if.yml
+                          parameters:
+                              parametersFile: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment/infra/environments/${{ parameters.environment }}.parameters.json'
+
+                  - deployment: Apply
+                    displayName: 'azd provision (frontend layer)'
+                    dependsOn: WhatIf
+                    environment: 'sdk-ai-bots-${{ parameters.environment }}'
+                    pool:
+                        name: $(LINUXPOOL)
+                        image: $(LINUXVMIMAGE)
+                        os: linux
+                    strategy:
+                        runOnce:
+                            deploy:
+                                steps:
+                                    - checkout: self
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+                                      parameters:
+                                          environment: '${{ parameters.environment }}'
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
+                                      # No deployLayer → runs the full graph. Use DEPLOY_LAYER
+                                      # in the postprovision hook for layer-only re-runs.

@@ -1,0 +1,9 @@
+# Node hook dependencies (installed by `npm install` in this folder)
+node_modules/
+
+# Local azd environment state — managed per-developer, never committed
+.azure/
+
+# Build artifacts from bicep build / what-if
+*.bicep.json
+*.what-if.json

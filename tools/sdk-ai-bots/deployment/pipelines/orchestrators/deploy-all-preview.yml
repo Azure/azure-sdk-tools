@@ -1,0 +1,23 @@
+# Orchestrator — preview rollout. Same as dev but with approval gate at the
+# 'sdk-ai-bots-preview' ADO environment.
+name: tools - sdk-ai-bots - deploy-all-preview
+
+trigger: none
+pr: none
+
+parameters:
+    - name: imageTagFrontend
+      type: string
+    - name: imageTagBackend
+      type: string
+    - name: imageTagFunctionApp
+      type: string
+    - name: imageTagAgent
+      type: string
+
+extends:
+    template: deploy-all-dev.yml
+    parameters:
+        # Re-targets stages to preview env. In practice the per-component CD
+        # pipelines accept an `environment` parameter; this file is a thin
+        # wrapper showing how the same orchestrator template is reused.

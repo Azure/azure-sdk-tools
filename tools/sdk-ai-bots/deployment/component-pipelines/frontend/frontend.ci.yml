@@ -1,0 +1,87 @@
+# CI pipeline — frontend (Teams bot).
+#
+# Build-once: builds container image + Teams app zip, publishes both as
+# immutable artifacts. CD consumes them; no rebuild downstream.
+
+name: tools - sdk-ai-bots-frontend - ci
+
+trigger:
+    branches:
+        include:
+            - main
+    paths:
+        include:
+            - tools/sdk-ai-bots/azure-sdk-qa-bot/**
+
+pr:
+    branches:
+        include:
+            - main
+    paths:
+        include:
+            - tools/sdk-ai-bots/azure-sdk-qa-bot/**
+
+variables:
+    - template: /eng/pipelines/templates/variables/globals.yml
+    - template: /eng/pipelines/templates/variables/image.yml
+    - name: workingDirectory
+      value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot'
+
+extends:
+    template: /eng/pipelines/templates/stages/1es-redirect.yml
+    parameters:
+        Use1ESOfficial: false
+        stages:
+            - stage: FrontendCI
+              jobs:
+                  - job: BuildTest
+                    displayName: 'Build, test, publish'
+                    pool:
+                        name: $(LINUXPOOL)
+                        image: $(LINUXVMIMAGE)
+                        os: linux
+                    steps:
+                        - checkout: self
+                        # Resolve env vars from the dev env-suite entry (CI runs against dev ACR).
+                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+                          parameters:
+                              environment: dev
+                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+
+                        - task: NodeTool@0
+                          inputs: { versionSpec: '20.x' }
+                          displayName: 'Use Node 20'
+
+                        - script: npm ci
+                          workingDirectory: $(workingDirectory)
+                          displayName: 'npm ci'
+
+                        - script: npm test
+                          workingDirectory: $(workingDirectory)
+                          displayName: 'npm test'
+
+                        - script: npm run build
+                          workingDirectory: $(workingDirectory)
+                          displayName: 'npm run build'
+
+                        # Validate + zip the Teams app package.
+                        - script: |
+                              npx teamsapp validate --manifest-path appPackage/manifest.json
+                              npx teamsapp package --manifest-path appPackage/manifest.json --output-zip-path appPackage/build/appPackage.zip
+                          workingDirectory: $(workingDirectory)
+                          displayName: 'Teams app package'
+                          continueOnError: true
+
+                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/container-build.yml
+                          parameters:
+                              imageName: 'azure-sdk-qa-bot'
+                              dockerContext: '$(workingDirectory)'
+                              dockerfile: '$(workingDirectory)/Dockerfile'
+                              buildMode: 'acr-build'
+                              tagStrategy: 'semver'
+                              semverFile: '$(workingDirectory)/package.json'
+
+                        - publish: $(workingDirectory)/appPackage/build
+                          artifact: teams-app-package
+                          displayName: 'Publish Teams app package artifact'
+                          condition: succeededOrFailed()

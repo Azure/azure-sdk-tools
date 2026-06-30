@@ -1,0 +1,16 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location":            { "value": "westus2" },
+    "resourceGroupName":   { "value": "rg-azuresdkqabot-dev" },
+    "teamsGroupId":        { "value": "3e17dcb0-4257-4a30-b843-77f47f1d4121" },
+    "teamsChannelIds":     { "value": [
+      "19:de3fce22c2994be18cac50502c55f717@thread.skype"
+    ]},
+    "serverAudience":              { "value": "REPLACE_WITH_DEV_AAD_APP_AUDIENCE" },
+    "functionImageRepository":     { "value": "azure-sdk-qa-bot-function:dev" },
+    "ragBasedBackendImageRepository": { "value": "azure-sdk-qa-bot-backend:dev" },
+    "agentBasedImageRepository":   { "value": "azure-sdk-qa-bot-agent-server:dev" }
+  }
+}

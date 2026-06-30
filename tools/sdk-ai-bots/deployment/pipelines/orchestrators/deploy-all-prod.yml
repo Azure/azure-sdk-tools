@@ -1,0 +1,99 @@
+# Orchestrator — prod rollout with explicit approval at every stage and a
+# 10-minute stabilization watch between deploys.
+name: tools - sdk-ai-bots - deploy-all-prod
+
+trigger: none
+pr: none
+
+parameters:
+    - name: imageTagFrontend
+      type: string
+    - name: imageTagBackend
+      type: string
+    - name: imageTagFunctionApp
+      type: string
+    - name: imageTagAgent
+      type: string
+
+variables:
+    - template: /eng/pipelines/templates/variables/globals.yml
+    - template: /eng/pipelines/templates/variables/image.yml
+
+extends:
+    template: /eng/pipelines/templates/stages/1es-redirect.yml
+    parameters:
+        Use1ESOfficial: true
+        stages:
+            - stage: PreflightProd
+              displayName: 'Preflight (what-if + readiness)'
+              jobs:
+                  - deployment: Preflight
+                    environment: 'sdk-ai-bots-prod' # blocks on approval
+                    pool:
+                        name: $(LINUXPOOL)
+                        image: $(LINUXVMIMAGE)
+                        os: linux
+                    strategy:
+                        runOnce:
+                            deploy:
+                                steps:
+                                    - checkout: self
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+                                      parameters:
+                                          environment: prod
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-validate.yml
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-what-if.yml
+                                      parameters:
+                                          parametersFile: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment/infra/environments/prod.parameters.json'
+                                    - bash: |
+                                          echo "Verify operational-readiness-checklist.md is signed off before continuing."
+                                      displayName: 'Operational readiness reminder'
+
+            - stage: DeployBackendProd
+              dependsOn: PreflightProd
+              jobs:
+                  - template: /tools/sdk-ai-bots/deployment/component-pipelines/backend/backend.cd.yml@self
+                    parameters:
+                        environment: prod
+                        imageTag: '${{ parameters.imageTagBackend }}'
+                        slot: authoring
+
+            - stage: WatchBackend
+              dependsOn: DeployBackendProd
+              jobs:
+                  - job: Watch
+                    pool:
+                        name: $(LINUXPOOL)
+                        image: $(LINUXVMIMAGE)
+                        os: linux
+                    steps:
+                        - bash: |
+                              echo "Stabilization window: 10 minutes."
+                              sleep 600
+                          displayName: 'Stabilize 10m'
+
+            - stage: DeployFunctionAppProd
+              dependsOn: WatchBackend
+              jobs:
+                  - template: /tools/sdk-ai-bots/deployment/component-pipelines/function-app/function-app.cd.yml@self
+                    parameters:
+                        environment: prod
+                        imageTag: '${{ parameters.imageTagFunctionApp }}'
+
+            - stage: DeployAgentProd
+              dependsOn: DeployFunctionAppProd
+              jobs:
+                  - template: /tools/sdk-ai-bots/deployment/component-pipelines/agent/agent.cd.yml@self
+                    parameters:
+                        environment: prod
+                        imageTag: '${{ parameters.imageTagAgent }}'
+                        deployTarget: both
+
+            - stage: DeployFrontendProd
+              dependsOn: DeployAgentProd
+              jobs:
+                  - template: /tools/sdk-ai-bots/deployment/component-pipelines/frontend/frontend.cd.yml@self
+                    parameters:
+                        environment: prod
+                        imageTag: '${{ parameters.imageTagFrontend }}'

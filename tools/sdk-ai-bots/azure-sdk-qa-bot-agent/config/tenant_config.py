@@ -43,6 +43,7 @@ class TenantID(str, Enum):
 # -- TypeSpec --
 SRC_TYPESPEC_DOCS = "typespec_docs"
 SRC_TYPESPEC_AZURE_DOCS = "typespec_azure_docs"
+SRC_TYPESPEC_AZURE_SAMPLES = "typespec_azure_samples"
 SRC_TYPESPEC_AZURE_HTTP_SPECS = "typespec_azure_http_specs"
 SRC_TYPESPEC_HTTP_SPECS = "typespec_http_specs"
 SRC_STATIC_TYPESPEC_QA = "static_typespec_qa"
@@ -107,6 +108,12 @@ _register(
         name=SRC_TYPESPEC_AZURE_DOCS,
         description="Azure-specific TypeSpec documentation, patterns, and templates for management and data-plane services.",
         base_url="https://azure.github.io/typespec-azure/docs/",
+        trim_format=True,
+    ),
+    KnowledgeSource(
+        name=SRC_TYPESPEC_AZURE_SAMPLES,
+        description="Azure TypeSpec samples covering common ARM and data-plane patterns, useful as references when building similar scenarios.",
+        base_url="https://azure.github.io/typespec-azure/docs/samples/",
         trim_format=True,
     ),
     KnowledgeSource(
@@ -324,6 +331,7 @@ _TYPESPEC_SOURCES = _sources(
     SRC_AZURE_RESOURCE_MANAGER_RPC,
     SRC_AZURE_API_GUIDELINES,
     SRC_TYPESPEC_AZURE_DOCS,
+    SRC_TYPESPEC_AZURE_SAMPLES,
     SRC_STATIC_TYPESPEC_QA,
     SRC_TYPESPEC_AZURE_HTTP_SPECS,
     SRC_TYPESPEC_DOCS,
@@ -339,6 +347,7 @@ _AZURE_TYPESPEC_AUTHORING_SOURCES = _sources(
     SRC_AZURE_API_GUIDELINES,
     SRC_AZURE_RESOURCE_MANAGER_RPC,
     SRC_TYPESPEC_AZURE_DOCS,
+    SRC_TYPESPEC_AZURE_SAMPLES,
     SRC_STATIC_TYPESPEC_QA,
     SRC_TYPESPEC_AZURE_HTTP_SPECS,
     SRC_TYPESPEC_DOCS,

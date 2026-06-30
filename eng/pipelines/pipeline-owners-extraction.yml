@@ -69,10 +69,13 @@ stages:
               --auth-mode login `
               --overwrite true
 
-      - publish: $(CacheOutputDirectory)
-        displayName: Publish cache files artifact
-        artifact: github-team-user-store-cache
-        condition: succeededOrFailed()
+      - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
+        parameters:
+          # Published for debugging/information only; no downstream consumer. The template
+          # renames to a per-attempt name on failure, so retries don't collide on this artifact.
+          ArtifactName: 'github-team-user-store-cache'
+          ArtifactPath: '$(CacheOutputDirectory)'
+          CustomCondition: succeededOrFailed()
 
       - ${{ if or(parameters.AuditCodeowners, eq(variables['Build.Reason'], 'Schedule')) }}:
         - template: /eng/common/pipelines/templates/steps/install-azsdk-cli.yml
@@ -101,6 +104,11 @@ stages:
           scriptType: pscore
           scriptLocation: inlineScript
           inlineScript: pipeline-owners-extractor --output "$(OutputPath)"
+      # The pipeline-witness service consumes this artifact by the exact name 'pipelineOwners'
+      # (AzurePipelinesProcessor.GetOwnersFromBuildArtifactAsync), so it must keep that stable
+      # name on every run. It is the last step in the job, so a fixed name does not collide on
+      # retry: a successful publish means the job succeeds (no retry), and if an earlier step
+      # failed the extractor never produced $(OutputPath) to publish.
       - publish: $(OutputPath)
         displayName: Publish pipelineOwners artifact
         artifact: pipelineOwners

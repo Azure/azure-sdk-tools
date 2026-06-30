@@ -89,4 +89,16 @@ public abstract class BasePromptTemplate
         - Ensure output follows Azure SDK guidelines
         """;
     }
+
+    /// <summary>
+    /// Parses the classification result and optionally updates the provided items with the classified data.
+    /// </summary>
+    /// <param name="result">The raw classification result.</param>
+    /// <param name="items">Optional list of items to update with the classified result.</param>
+    /// <returns>Parsed classification result.</returns>
+    public virtual Object ParseClassifyResult(string result, List<Object>? items = null)
+    {
+        // Default implementation returns the raw result; derived classes can override for specific parsing logic
+        return result;
+    }
 }

@@ -1,19 +1,24 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.CommandLine;
 using System.ComponentModel;
 using System.Text;
-using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.ClassifyItems;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Services.TypeSpec;
 using Azure.Sdk.Tools.Cli.Tools.Core;
+using Microsoft.TeamFoundation.Common;
 using ModelContextProtocol.Server;
+using static Azure.Sdk.Tools.Cli.Models.Responses.FeedbackClassificationResponse;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 
@@ -26,7 +31,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 {
     private readonly ITspClientHelper tspClientHelper;
     private readonly IAPIViewFeedbackService feedbackService;
-    private readonly IFeedbackClassifierService _classifierService;
+    private readonly IClassifyService _classifierService;
     private readonly ITypeSpecCustomizationService typeSpecCustomizationService;
     private readonly ITypeSpecHelper typeSpecHelper;
     private readonly INpxHelper npxHelper;
@@ -40,7 +45,8 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     private const string ClassificationCodeCustomization = "CODE_CUSTOMIZATION";
     private const string ClassificationRequiresManualIntervention = "REQUIRES_MANUAL_INTERVENTION";
     private const string ClassificationSuccess = "SUCCESS";
-    
+    private static readonly ConcurrentDictionary<string, string> TspCustomizationGuideCache = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>
     /// Initializes a new instance of the <see cref="CustomizedCodeUpdateTool"/> class.
     /// </summary>
@@ -57,7 +63,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         IGitHelper gitHelper,
         ITspClientHelper tspClientHelper,
         IAPIViewFeedbackService feedbackService,
-        IFeedbackClassifierService classifierService,
+        IClassifyService classifierService,
         ITypeSpecCustomizationService typeSpecCustomizationService,
         ITypeSpecHelper typeSpecHelper,
         INpxHelper npxHelper
@@ -266,7 +272,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
         try
         {
-            packageInfo = await languageService.GetPackageInfo(packagePath, ct);
+            packageInfo = languageService != null ? await languageService.GetPackageInfo(packagePath, ct) : null;
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
@@ -274,6 +280,10 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         }
         catch (Exception ex)
         {
+            if (customCodeInScope)
+            {
+                throw;
+            }
             logger.LogWarning(ex, "Failed to resolve package info for {PackagePath}", packagePath);
         }
 
@@ -288,7 +298,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         CustomizedCodeUpdateResponse CreateResponse(CustomizedCodeUpdateResponse response)
         {
             response.PackageName ??= packageInfo?.PackageName;
-            response.Language = packageInfo?.Language ?? languageService.Language;
+            response.Language = packageInfo?.Language ?? (languageService != null ? languageService.Language : SdkLanguage.Unknown);
             response.PackageType = packageInfo?.SdkType ?? SdkType.Unknown;
             response.TypeSpecProject ??= packageInfo?.SpecProjectPath ?? tspProjectPath;
             if (specChangeRequired.Count > 0)
@@ -301,487 +311,542 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             }
             return response;
         }
-
+        ClassifyResponse response;
         try
         {
-        List<FeedbackItem> feedbackItems = [];
-        FeedbackClassificationResponse response;
-        try
-        {
-            response = await _classifierService.ClassifyItemsAsync(
-                feedbackItems,
-                globalContext: string.Empty,
-                tspProjectPath: tspProjectPath,
-                apiViewUrl: apiViewUrl,
-                plainTextFeedback: customizationRequest,
-                language: languageService.Language.ToString(),
-                editScope: editScope,
-                ct: ct);
-        }
-        catch (CopilotCliUnavailableException ex)
-        {
-            logger.LogError(ex, "GitHub Copilot CLI is not available.");
-            return CreateResponse(new CustomizedCodeUpdateResponse
+            List<FeedbackItem> feedbackItems = [];
+            if (apiViewUrl != null)
             {
-                Success = false,
-                ResponseError = ex.Message,
-                Message = ex.Message,
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError,
-                BuildResult = ex.Message
-            });
-        }
-        catch (ArgumentException ex)
-        {
-            logger.LogError(ex, "Invalid input for feedback classification.");
-            return CreateResponse(new CustomizedCodeUpdateResponse
-            {
-                Success = false,
-                ResponseError = ex.Message,
-                Message = ex.Message,
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
-                BuildResult = ex.Message
-            });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Feedback classification failed unexpectedly.");
-            return CreateResponse(new CustomizedCodeUpdateResponse
-            {
-                Success = false,
-                ResponseError = $"Feedback classification failed: {ex.Message}",
-                Message = $"Feedback classification failed: {ex.Message}",
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError,
-                BuildResult = $"Feedback classification failed: {ex.Message}"
-            });
-        }
-        var feedbackDictionary = feedbackItems.ToDictionary(i => i.Id, i => i);
-
-        List<string> changesMade = new();
-        List<string> manualInterventions = new();
-        StringBuilder codeCustomizationLog = new();
-        StringBuilder tspFixFailedReasons = new();
-        bool buildSucceeded = false;
-        string? buildError = null;
-
-        if (response.Classifications == null || response.Classifications.Count == 0)
-        {
-            return CreateResponse(new CustomizedCodeUpdateResponse
-            {
-                Success = false,
-                ResponseError = "Feedback could not be classified.",
-                Message = "Feedback could not be classified.",
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
-                BuildResult = "Feedback could not be classified."
-            });
-        }
-
-        var tspFixFailed = 0;
-        var tspFixSucceeded = 0;
-        var tspApplicable = 0;
-        var codeCustomizations = 0;
-        var manualChanges = 0;
-        var noChanges = 0;
-
-        foreach (var itemDetails in response.Classifications)
-        {
-            feedbackDictionary.TryGetValue(itemDetails.ItemId, out var feedbackItem);
-
-            if (feedbackItem == null)
-            {
-                logger.LogWarning("Classifier returned non-existent feedback item ID '{ItemId}', skipping.", itemDetails.ItemId);
-                continue;
-            }
-
-            if (itemDetails.Classification == ClassificationTspApplicable)
-            {
-                tspApplicable++;
-
-                // When spec inputs are out of scope: a TSP_APPLICABLE item can only be fixed by editing
-                // spec inputs (client.tsp/tspconfig.yaml), which belongs in a separate spec-repo PR.
-                // Never apply it here — record it as out of scope and continue with custom-code fixes.
-                if (!specInputsInScope)
-                {
-                    logger.LogInformation("Spec inputs out of scope: item '{ItemId}' requires a spec change; reporting instead of applying.", itemDetails.ItemId);
-                    specChangeRequired.Add($"'{itemDetails.Text}' (Reason: {itemDetails.Reason})");
-                    feedbackDictionary.Remove(itemDetails.ItemId);
-                    continue;
-                }
-
-                logger.LogDebug("Applying tsp customization for: {feedback}", itemDetails.Text);
-                var languageTaggedRequest = $"For {languageService.Language}: {itemDetails.Text}";
-                var tspCustomizationResult = await typeSpecCustomizationService.ApplyCustomizationAsync(tspProjectPath, languageTaggedRequest, ct: ct);
-
-                if (tspCustomizationResult.Success)
-                {
-                    var changes = string.Join("; ", tspCustomizationResult.ChangesSummary);
-                    logger.LogInformation("Successfully applied tsp customization changes, changes applied: {changes}", changes);
-                    feedbackItem.AppendContext(changes, "Typespec changes applied");
-                    changesMade.AddRange(tspCustomizationResult.ChangesSummary);
-                    tspFixSucceeded++;
-                }
-                else
-                {
-                    logger.LogWarning("Some customizations failed to apply: {FailureReasons}", tspCustomizationResult.FailureReason);
-                    feedbackItem.AppendContext(tspCustomizationResult.FailureReason ?? "Unknown failure", "TypeSpec customization failed");
-                    tspFixFailedReasons.Append(tspCustomizationResult.FailureReason);
-                    tspFixFailedReasons.Append("; ");
-                    tspFixFailed++;
-                }
-            }
-            else if (itemDetails.Classification == ClassificationCodeCustomization)
-            {
-                // When custom code is out of scope: a CODE_CUSTOMIZATION item can only be fixed by editing
-                // customization code, which the current edit scope does not permit. Record and skip patching.
-                if (!customCodeInScope)
-                {
-                    logger.LogInformation("Custom code out of scope: item '{ItemId}' requires a custom-code change; reporting instead of patching.", itemDetails.ItemId);
-                    customCodeChangeRequired.Add($"'{itemDetails.Text}' (Reason: {itemDetails.Reason})");
-                    feedbackDictionary.Remove(itemDetails.ItemId);
-                    continue;
-                }
-
-                codeCustomizations++;
-                logger.LogInformation("Item '{ItemId}' classified as CODE_CUSTOMIZATION — will be handled via code patching.", itemDetails.ItemId);
-                codeCustomizationLog.AppendLine($"[{itemDetails.ItemId}] Classification: {itemDetails.Classification}, Reason: {itemDetails.Reason}");
-                feedbackDictionary.Remove(itemDetails.ItemId);
-            }
-            else if (itemDetails.Classification == ClassificationRequiresManualIntervention)
-            {
-                manualChanges++;
-                manualInterventions.Add($"'{itemDetails.Text}' (Reason: {itemDetails.Reason})");
-                feedbackDictionary.Remove(itemDetails.ItemId);
-            }
-            else if (itemDetails.Classification == ClassificationSuccess)
-            {
-                noChanges++;
-                feedbackDictionary.Remove(itemDetails.ItemId);
-            }
-        }
-
-        // ── Early exit cases based on first classification ──
-
-        // Spec inputs out of scope: there is no custom code to patch and one or more items require a
-        // spec change, so there is nothing this scope can apply. Stop and report — a human routes the
-        // spec-change items to a separate spec-repo PR (manual-intervention items, if any, are surfaced
-        // via NextSteps). This scope never edits spec inputs.
-        if (!specInputsInScope && specChangeRequired.Count > 0 && codeCustomizations == 0)
-        {
-            return CreateResponse(new CustomizedCodeUpdateResponse
-            {
-                Success = false,
-                Message = "Out of scope: one or more items require a spec change (client.tsp/tspconfig.yaml), which belongs in a separate spec-repo PR, and there is no custom code to patch.",
-                SpecChangeRequired = specChangeRequired,
-                NextSteps = manualInterventions.Count > 0 ? manualInterventions : null,
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.SpecChangeRequired
-            });
-        }
-
-        // Nothing was classified as tsp applicable and at least some feedback requires manual intervention
-        if (tspApplicable == 0 && codeCustomizations == 0 && manualChanges > 0)
-        {
-            return CreateResponse(new CustomizedCodeUpdateResponse
-            {
-                Success = false,
-                Message = "The requested changes require manual intervention and cannot be applied via TypeSpec customizations.",
-                NextSteps = manualInterventions,
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.ManualInterventionRequired
-            });
-        }
-
-        // Everything was classified as success
-        if (tspApplicable == 0 && codeCustomizations == 0 && noChanges > 0)
-        {
-            return CreateResponse(new CustomizedCodeUpdateResponse
-            {
-                Success = true,
-                Message = "No changes needed — the requested customizations are already in place."
-            });
-        }
-
-        // ── Regen + Build if TSP fixes were applied ──
-        if (tspFixSucceeded > 0)
-        {
-            logger.LogDebug("Regenerating {packagePath}", packagePath);
-
-            if (!TryResolveLocalSpecProjectPath(tspProjectPath, MissingTypeSpecProjectPathMessage, out var localSpecProjectPath, out var errorResponse))
-            {
-                return errorResponse!;
-            }
-
-            logger.LogDebug("Using local spec project for regeneration: {localSpecProjectPath}", localSpecProjectPath);
-
-            var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
-            await languageService.PreGenerateAsync(repoRoot, ct);
-            var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: localSpecProjectPath, isCli: false, ct: ct);
-            if (!regenResult.IsSuccessful)
-            {
-                logger.LogWarning("Regeneration failed: {Error}", regenResult.ResponseError);
-                // Enrich remaining items with regen failure context for the second classifier pass
-                foreach (var item in feedbackDictionary.Values)
-                {
-                    item.AppendContext($"Regeneration failed: {regenResult.ResponseError}", "Regeneration Result");
-                }
+                feedbackItems = await feedbackService.GetFeedbackItemsAsync(apiViewUrl, ct);
             }
             else
             {
-                // JavaScript: apply customization merge after regeneration
-                await ApplyJavaScriptCustomizationAsync(languageService, packagePath, ct);
-
-                logger.LogDebug("Building {packagePath}", packagePath);
-                var (success, error, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
-                buildSucceeded = success;
-                buildError = error;
-
-                if (buildSucceeded && codeCustomizations == 0)
+                if (!customizationRequest.IsNullOrEmpty())
                 {
-                    logger.LogInformation("Build passed after TypeSpec customizations.");
-                    return CreateResponse(new CustomizedCodeUpdateResponse
-                    {
-                        Success = manualInterventions.Count == 0,
-                        Message = manualInterventions.Count == 0
-                            ? "Build passed after attempting TypeSpec customizations."
-                            : "Build passed after attempting TypeSpec customizations, but some items require manual intervention.",
-                        TypeSpecChangesSummary = changesMade,
-                        NextSteps = manualInterventions,
-                        ErrorCode = manualInterventions.Count > 0 ? CustomizedCodeUpdateResponse.KnownErrorCodes.ManualInterventionRequired : null,
-                    });
-                }
-
-                // Enrich remaining items with build error context for the second classifier pass
-                if (!buildSucceeded)
-                {
-                    foreach (var item in feedbackDictionary.Values)
-                    {
-                        item.AppendContext(error ?? "Build failed with unknown error.", "Build Result");
-                    }
+                    feedbackItems = [new FeedbackItem { Text = customizationRequest, Context = string.Empty }];
                 }
             }
-        }
-
-        // ── Pass 2: Re-classify remaining items with regen/build context ──
-        // Items that had TSP fixes applied but regen/build failed get re-evaluated.
-        // The classifier can now reclassify them as CODE_CUSTOMIZATION or REQUIRES_MANUAL_INTERVENTION.
-        if (feedbackDictionary.Count > 0)
-        {
-            var secondResponse = await _classifierService.ClassifyItemsAsync([.. feedbackDictionary.Values], globalContext: string.Join(";", changesMade), tspProjectPath: tspProjectPath, language: languageService.Language.ToString(), editScope: editScope, ct: ct);
-
-            if (secondResponse.Classifications != null)
+            if (feedbackItems.Count == 0)
             {
-                foreach (var itemDetails in secondResponse.Classifications)
-                {
-                    if (itemDetails.Classification == ClassificationCodeCustomization)
-                    {
-                        if (!customCodeInScope)
-                        {
-                            logger.LogInformation("Custom code out of scope: item '{ItemId}' reclassified as CODE_CUSTOMIZATION on second pass; reporting instead of patching.", itemDetails.ItemId);
-                            customCodeChangeRequired.Add($"'{itemDetails.Text}' (Reason: {itemDetails.Reason})");
-                            feedbackDictionary.Remove(itemDetails.ItemId);
-                            continue;
-                        }
-
-                        codeCustomizations++;
-                        logger.LogInformation("Item '{ItemId}' reclassified as CODE_CUSTOMIZATION on second pass.", itemDetails.ItemId);
-                        codeCustomizationLog.AppendLine($"[{itemDetails.ItemId}] Classification: {itemDetails.Classification}, Reason: {itemDetails.Reason}");
-                        feedbackDictionary.Remove(itemDetails.ItemId);
-                    }
-                    else if (itemDetails.Classification == ClassificationRequiresManualIntervention)
-                    {
-                        manualInterventions.Add($"'{itemDetails.Text}' (Reason: {itemDetails.Reason})");
-                        feedbackDictionary.Remove(itemDetails.ItemId);
-                    }
-                    else if (itemDetails.Classification == ClassificationSuccess)
-                    {
-                        feedbackDictionary.Remove(itemDetails.ItemId);
-                    }
-                    else if (!specInputsInScope && itemDetails.Classification == ClassificationTspApplicable)
-                    {
-                        // Spec inputs out of scope — surface as out of scope instead of applying.
-                        logger.LogInformation("Spec inputs out of scope: item '{ItemId}' reclassified as TSP_APPLICABLE on second pass; reporting.", itemDetails.ItemId);
-                        specChangeRequired.Add($"'{itemDetails.Text}' (Reason: {itemDetails.Reason})");
-                        feedbackDictionary.Remove(itemDetails.ItemId);
-                    }
-                }
-            }
-        }
-
-        // Data tracking (per Laurent/Sam): record the spec-vs-custom-code split so we can measure how often
-        // the tool falls back to custom-code workarounds vs. items that belong in client.tsp. A high
-        // custom-code ratio is a signal that "shift-left" is not catching enough upstream. This is emitted
-        // for every run regardless of edit scope so the split is observable in logs/telemetry.
-        logger.LogInformation(
-            "Customized code update split (editScope={EditScope}): tspApplied={TspApplied}, codeCustomizations={CodeCustomizations}, specChangeRequired={SpecChangeRequired}, customCodeChangeRequired={CustomCodeChangeRequired}, manualIntervention={ManualIntervention}",
-            editScope, tspFixSucceeded, codeCustomizations, specChangeRequired.Count, customCodeChangeRequired.Count, manualInterventions.Count);
-
-        // Build for error context if no build happened yet (pure CODE_CUSTOMIZATION path or regen failed)
-        if (!buildSucceeded && buildError == null)
-        {
-            logger.LogInformation("Building for error context...");
-            var (s, e, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
-            buildSucceeded = s;
-            buildError = e;
-        }
-
-        if (buildSucceeded && codeCustomizations == 0)
-        {
-            logger.LogInformation("Build passed after TypeSpec customizations.");
-            return CreateResponse(new CustomizedCodeUpdateResponse
-            {
-                Success = manualInterventions.Count == 0,
-                Message = manualInterventions.Count == 0
-                    ? "Build passed after attempting TypeSpec customizations."
-                    : "Build passed after attempting TypeSpec customizations, but some items require manual intervention.",
-                TypeSpecChangesSummary = changesMade,
-                NextSteps = manualInterventions,
-                ErrorCode = manualInterventions.Count > 0 ? CustomizedCodeUpdateResponse.KnownErrorCodes.ManualInterventionRequired : null,
-            });
-        }
-
-        // Step 2: If the build failed or CODE_CUSTOMIZATION items still need patching, start customized code update process
-
-        // Custom code out of scope: never patch custom code in this edit scope. The build still failed
-        // (or items remain), but those can only be fixed by editing customization code, which the current
-        // scope does not permit. Stop and report so a human can address the custom-code changes separately.
-        if (!customCodeInScope)
-        {
-            logger.LogInformation("Custom code out of scope: skipping customized code patching.");
-            return CreateResponse(new CustomizedCodeUpdateResponse
-            {
-                Success = false,
-                Message = "Out of scope: remaining build failures require custom-code changes, which are not permitted by the current edit scope.",
-                TypeSpecChangesSummary = changesMade.Count > 0 ? changesMade : null,
-                CustomCodeChangeRequired = customCodeChangeRequired.Count > 0 ? customCodeChangeRequired : null,
-                NextSteps = manualInterventions.Count > 0 ? manualInterventions : null,
-                BuildResult = buildError,
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.CustomCodeChangeRequired
-            });
-        }
-
-        if (!languageService.IsCustomizedCodeUpdateSupported)
-        {
-            return CreateResponse(new CustomizedCodeUpdateResponse
-            {
-                Success = false,
-                ResponseError = "Language service does not support customized code updates.",
-                Message = "Language service does not support customized code updates.",
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.NoLanguageService,
-                BuildResult = "No language service available for this package type."
-            });
-        }
-
-        // Step 3: Check for customization files to repair
-        var customizationRoot = languageService.HasCustomizations(packagePath, ct);
-        if (customizationRoot == null)
-        {
-            logger.LogInformation("Build failed but no customization files found.");
-            return CreateResponse(new CustomizedCodeUpdateResponse
-            {
-                Success = false,
-                ResponseError = string.IsNullOrWhiteSpace(buildError)
-                    ? "Build failed but no customization files found to repair."
-                    : $"Build failed but no customization files found to repair.\n{buildError}",
-                Message = "Build failed but no customization files found to repair.",
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildNoCustomizationsFailed,
-                BuildResult = buildError
-            });
-        }
-
-        // Step 4: Apply patches based on build errors
-        var patchContext = BuildPatchContext(customizationRequest, codeCustomizationLog, buildError);
-
-        logger.LogInformation("Applying patches to fix build errors...");
-        var patches = await languageService.ApplyPatchesAsync(
-            customizationRoot,
-            packagePath,
-            patchContext,
-            ct);
-
-        foreach (var patch in patches)
-        {
-            logger.LogInformation("{Description}", patch.Description);
-        }
-
-        if (patches.Count == 0)
-        {
-            logger.LogInformation("No patches applied.");
-            return CreateResponse(new CustomizedCodeUpdateResponse
-            {
-                Success = false,
-                ResponseError = string.IsNullOrWhiteSpace(buildError)
-                    ? "No patches could be applied - automated repair found nothing to fix."
-                    : $"No patches could be applied - automated repair found nothing to fix.\n{buildError}",
-                Message = "No patches could be applied - automated repair found nothing to fix.",
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.PatchesFailed,
-                BuildResult = buildError
-            });
-        }
-
-        // Step 5: Regenerate if Java (only Java needs regen after patching customization files)
-        if (languageService.Language == SdkLanguage.Java)
-        {
-            logger.LogInformation("Regenerating code after patches (Java)...");
-
-            // tspProjectPath is optional in custom-code-only scope. When supplied, regenerate from the
-            // local spec project; when omitted, pass no local spec repo so tsp-client regenerates from the
-            // pinned commit recorded in the package's tsp-location.yaml (no local spec checkout required).
-            string? localSpecProjectPath = string.IsNullOrWhiteSpace(tspProjectPath) ? null : Path.GetFullPath(tspProjectPath);
-
-            logger.LogDebug("Java regeneration local spec source: {localSpecProjectPath}",
-                localSpecProjectPath ?? "(pinned commit from tsp-location.yaml)");
-
-            var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: localSpecProjectPath, isCli: false, ct: ct);
-            if (!regenResult.IsSuccessful)
-            {
-                logger.LogWarning("Regeneration failed: {Error}", regenResult.ResponseError);
+                var message = "No feedback items found to classify. Provide an APIView URL or plain text feedback.";
                 return CreateResponse(new CustomizedCodeUpdateResponse
                 {
                     Success = false,
-                    ResponseError = $"Regeneration failed after patches: {regenResult.ResponseError}",
-                    Message = $"Regeneration failed after patches: {regenResult.ResponseError}",
-                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateAfterPatchesFailed,
-                    BuildResult = regenResult.ResponseError,
-                    TypeSpecChangesSummary = changesMade,
-                    AppliedPatches = patches
+                    ResponseError = message,
+                    Message = message,
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+                    BuildResult = message
                 });
             }
-        }
+            string? specRepoBasePath = null;
+            var referencePatternContent = string.Empty;
+            try
+            {
+                specRepoBasePath = typeSpecHelper.GetSpecRepoRootPath(tspProjectPath);
+                if (string.IsNullOrEmpty(specRepoBasePath))
+                {
+                    throw new ArgumentException(
+                        $"Could not determine spec repo root from TypeSpec project path: {tspProjectPath}",
+                        nameof(tspProjectPath));
+                }
+                referencePatternContent = await LoadTspCustomizationGuideAsync(specRepoBasePath, ct);
+            } catch(Exception ex)
+            {
+                logger.LogError(ex, "Failed to load TypeSpec customization guide.");
+                if (specInputsInScope)
+                {
+                    throw;
+                }
+            }
+            try
+            {
+                var classifyRequest = new ClassifyCustomizationRequest(null, referencePatternContent, feedbackItems, languageService?.Language.ToString() ?? string.Empty, tspProjectPath)
+                {
 
-        // Step 6: Final build to validate patches
-        logger.LogInformation("Running final build to validate code customization patches...");
-        var (finalBuildSuccess, finalBuildError, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
+                    IsBatchClassify = true,
+                    BatchSize = 50,
+                    EditScope = editScope
+                };
+                response = await _classifierService.ClassifyItemsAsync(ClassifyType.Customization, classifyRequest, ct);
 
-        if (finalBuildSuccess)
-        {
-            logger.LogInformation("Build passed after code customization patches.");
+            }
+            catch (CopilotCliUnavailableException ex)
+            {
+                logger.LogError(ex, "GitHub Copilot CLI is not available.");
+                return CreateResponse(new CustomizedCodeUpdateResponse
+                {
+                    Success = false,
+                    ResponseError = ex.Message,
+                    Message = ex.Message,
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError,
+                    BuildResult = ex.Message
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                logger.LogError(ex, "Invalid input for feedback classification.");
+                return CreateResponse(new CustomizedCodeUpdateResponse
+                {
+                    Success = false,
+                    ResponseError = ex.Message,
+                    Message = ex.Message,
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+                    BuildResult = ex.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Feedback classification failed unexpectedly.");
+                return CreateResponse(new CustomizedCodeUpdateResponse
+                {
+                    Success = false,
+                    ResponseError = $"Feedback classification failed: {ex.Message}",
+                    Message = $"Feedback classification failed: {ex.Message}",
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError,
+                    BuildResult = $"Feedback classification failed: {ex.Message}"
+                });
+            }
+            var feedbackDictionary = feedbackItems.ToDictionary(i => i.Id, i => i);
+
+            List<string> changesMade = new();
+            List<string> manualInterventions = new();
+            StringBuilder codeCustomizationLog = new();
+            StringBuilder tspFixFailedReasons = new();
+            bool buildSucceeded = false;
+            string? buildError = null;
+
+            if (response.ClassifiedResult == null || !(response.ClassifiedResult is List<FeedbackClassificationResponse.ItemClassificationDetails> classifiedItems) || classifiedItems.Count == 0)
+            {
+                return CreateResponse(new CustomizedCodeUpdateResponse
+                {
+                    Success = false,
+                    ResponseError = "Feedback could not be classified.",
+                    Message = "Feedback could not be classified.",
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+                    BuildResult = "Feedback could not be classified."
+                });
+            }
+
+            var tspFixFailed = 0;
+            var tspFixSucceeded = 0;
+            var tspApplicable = 0;
+            var codeCustomizations = 0;
+            var manualChanges = 0;
+            var noChanges = 0;
+
+            List <FeedbackClassificationResponse.ItemClassificationDetails> classifications = response.ClassifiedResult as List<FeedbackClassificationResponse.ItemClassificationDetails> ?? new List<FeedbackClassificationResponse.ItemClassificationDetails>();
+            foreach (var itemDetails in classifications)
+            {
+                feedbackDictionary.TryGetValue(itemDetails.ItemId, out var feedbackItem);
+
+                if (feedbackItem == null)
+                {
+                    logger.LogWarning("Classifier returned non-existent feedback item ID '{ItemId}', skipping.", itemDetails.ItemId);
+                    continue;
+                }
+
+                if (itemDetails.Classification == ClassificationTspApplicable)
+                {
+                    tspApplicable++;
+
+                    // When spec inputs are out of scope: a TSP_APPLICABLE item can only be fixed by editing
+                    // spec inputs (client.tsp/tspconfig.yaml), which belongs in a separate spec-repo PR.
+                    // Never apply it here — record it as out of scope and continue with custom-code fixes.
+                    if (!specInputsInScope)
+                    {
+                        logger.LogInformation("Spec inputs out of scope: item '{ItemId}' requires a spec change; reporting instead of applying.", itemDetails.ItemId);
+                        specChangeRequired.Add($"'{itemDetails.Text}' (Reason: {itemDetails.Reason})");
+                        feedbackDictionary.Remove(itemDetails.ItemId);
+                        continue;
+                    }
+
+                    logger.LogDebug("Applying tsp customization for: {feedback}", itemDetails.Text);
+                    var languageTaggedRequest = $"For {languageService?.Language.ToString() ?? string.Empty}: {itemDetails.Text}";
+                    var tspCustomizationResult = await typeSpecCustomizationService.ApplyCustomizationAsync(tspProjectPath, languageTaggedRequest, ct: ct);
+
+                    if (tspCustomizationResult.Success)
+                    {
+                        var changes = string.Join("; ", tspCustomizationResult.ChangesSummary);
+                        logger.LogInformation("Successfully applied tsp customization changes, changes applied: {changes}", changes);
+                        feedbackItem.AppendContext(changes, "Typespec changes applied");
+                        changesMade.AddRange(tspCustomizationResult.ChangesSummary);
+                        tspFixSucceeded++;
+                    }
+                    else
+                    {
+                        logger.LogWarning("Some customizations failed to apply: {FailureReasons}", tspCustomizationResult.FailureReason);
+                        feedbackItem.AppendContext(tspCustomizationResult.FailureReason ?? "Unknown failure", "TypeSpec customization failed");
+                        tspFixFailedReasons.Append(tspCustomizationResult.FailureReason);
+                        tspFixFailedReasons.Append("; ");
+                        tspFixFailed++;
+                    }
+                }
+                else if (itemDetails.Classification == ClassificationCodeCustomization)
+                {
+                    // When custom code is out of scope: a CODE_CUSTOMIZATION item can only be fixed by editing
+                    // customization code, which the current edit scope does not permit. Record and skip patching.
+                    if (!customCodeInScope)
+                    {
+                        logger.LogInformation("Custom code out of scope: item '{ItemId}' requires a custom-code change; reporting instead of patching.", itemDetails.ItemId);
+                        customCodeChangeRequired.Add($"'{itemDetails.Text}' (Reason: {itemDetails.Reason})");
+                        feedbackDictionary.Remove(itemDetails.ItemId);
+                        continue;
+                    }
+
+                    codeCustomizations++;
+                    logger.LogInformation("Item '{ItemId}' classified as CODE_CUSTOMIZATION — will be handled via code patching.", itemDetails.ItemId);
+                    codeCustomizationLog.AppendLine($"[{itemDetails.ItemId}] Classification: {itemDetails.Classification}, Reason: {itemDetails.Reason}");
+                    feedbackDictionary.Remove(itemDetails.ItemId);
+                }
+                else if (itemDetails.Classification == ClassificationRequiresManualIntervention)
+                {
+                    manualChanges++;
+                    manualInterventions.Add($"'{itemDetails.Text}' (Reason: {itemDetails.Reason})");
+                    feedbackDictionary.Remove(itemDetails.ItemId);
+                }
+                else if (itemDetails.Classification == ClassificationSuccess)
+                {
+                    noChanges++;
+                    feedbackDictionary.Remove(itemDetails.ItemId);
+                }
+            }
+
+            // ── Early exit cases based on first classification ──
+
+            // Spec inputs out of scope: there is no custom code to patch and one or more items require a
+            // spec change, so there is nothing this scope can apply. Stop and report — a human routes the
+            // spec-change items to a separate spec-repo PR (manual-intervention items, if any, are surfaced
+            // via NextSteps). This scope never edits spec inputs.
+            if (!specInputsInScope && specChangeRequired.Count > 0 && codeCustomizations == 0)
+            {
+                return CreateResponse(new CustomizedCodeUpdateResponse
+                {
+                    Success = false,
+                    Message = "Out of scope: one or more items require a spec change (client.tsp/tspconfig.yaml), which belongs in a separate spec-repo PR, and there is no custom code to patch.",
+                    SpecChangeRequired = specChangeRequired,
+                    NextSteps = manualInterventions.Count > 0 ? manualInterventions : null,
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.SpecChangeRequired
+                });
+            }
+
+            // Nothing was classified as tsp applicable and at least some feedback requires manual intervention
+            if (tspApplicable == 0 && codeCustomizations == 0 && manualChanges > 0)
+            {
+                return CreateResponse(new CustomizedCodeUpdateResponse
+                {
+                    Success = false,
+                    Message = "The requested changes require manual intervention and cannot be applied via TypeSpec customizations.",
+                    NextSteps = manualInterventions,
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.ManualInterventionRequired
+                });
+            }
+
+            // Everything was classified as success
+            if (tspApplicable == 0 && codeCustomizations == 0 && noChanges > 0)
+            {
+                return CreateResponse(new CustomizedCodeUpdateResponse
+                {
+                    Success = true,
+                    Message = "No changes needed — the requested customizations are already in place."
+                });
+            }
+
+            // ── Regen + Build if TSP fixes were applied ──
+            if (tspFixSucceeded > 0)
+            {
+                logger.LogDebug("Regenerating {packagePath}", packagePath);
+
+                if (!TryResolveLocalSpecProjectPath(tspProjectPath, MissingTypeSpecProjectPathMessage, out var localSpecProjectPath, out var errorResponse))
+                {
+                    return errorResponse!;
+                }
+
+                logger.LogDebug("Using local spec project for regeneration: {localSpecProjectPath}", localSpecProjectPath);
+
+                var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
+                if (languageService != null)
+                {
+                    await languageService.PreGenerateAsync(repoRoot, ct);
+                }
+                var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: localSpecProjectPath, isCli: false, ct: ct);
+                if (!regenResult.IsSuccessful)
+                {
+                    logger.LogWarning("Regeneration failed: {Error}", regenResult.ResponseError);
+                    // Enrich remaining items with regen failure context for the second classifier pass
+                    foreach (var item in feedbackDictionary.Values)
+                    {
+                        item.AppendContext($"Regeneration failed: {regenResult.ResponseError}", "Regeneration Result");
+                    }
+                }
+                else
+                {
+                    // JavaScript: apply customization merge after regeneration
+                    await ApplyJavaScriptCustomizationAsync(languageService, packagePath, ct);
+
+                    logger.LogDebug("Building {packagePath}", packagePath);
+                    var (success, error, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
+                    buildSucceeded = success;
+                    buildError = error;
+
+                    if (buildSucceeded && codeCustomizations == 0)
+                    {
+                        logger.LogInformation("Build passed after TypeSpec customizations.");
+                        return CreateResponse(new CustomizedCodeUpdateResponse
+                        {
+                            Success = manualInterventions.Count == 0,
+                            Message = manualInterventions.Count == 0
+                                ? "Build passed after attempting TypeSpec customizations."
+                                : "Build passed after attempting TypeSpec customizations, but some items require manual intervention.",
+                            TypeSpecChangesSummary = changesMade,
+                            NextSteps = manualInterventions,
+                            ErrorCode = manualInterventions.Count > 0 ? CustomizedCodeUpdateResponse.KnownErrorCodes.ManualInterventionRequired : null,
+                        });
+                    }
+
+                    // Enrich remaining items with build error context for the second classifier pass
+                    if (!buildSucceeded)
+                    {
+                        foreach (var item in feedbackDictionary.Values)
+                        {
+                            item.AppendContext(error ?? "Build failed with unknown error.", "Build Result");
+                        }
+                    }
+                }
+            }
+
+            // ── Pass 2: Re-classify remaining items with regen/build context ──
+            // Items that had TSP fixes applied but regen/build failed get re-evaluated.
+            // The classifier can now reclassify them as CODE_CUSTOMIZATION or REQUIRES_MANUAL_INTERVENTION.
+            if (feedbackDictionary.Count > 0)
+            {
+                var classifyRequest = new ClassifyCustomizationRequest(null, referencePatternContent, feedbackDictionary.Values.ToList(), languageService?.Language.ToString() ?? string.Empty, tspProjectPath)
+                {
+
+                    IsBatchClassify = true,
+                    BatchSize = 50,
+                    EditScope = editScope
+                };
+                var secondResponse = await _classifierService.ClassifyItemsAsync(ClassifyType.Customization, classifyRequest, ct);
+
+                if (secondResponse.ClassifiedResult != null)
+                {
+                    var secondClassifications = secondResponse.ClassifiedResult as List<FeedbackClassificationResponse.ItemClassificationDetails> ?? new List<FeedbackClassificationResponse.ItemClassificationDetails>();
+
+                    foreach (var itemDetails in secondClassifications)
+                    {
+                        if (itemDetails.Classification == ClassificationCodeCustomization)
+                        {
+                            if (!customCodeInScope)
+                            {
+                                logger.LogInformation("Custom code out of scope: item '{ItemId}' reclassified as CODE_CUSTOMIZATION on second pass; reporting instead of patching.", itemDetails.ItemId);
+                                customCodeChangeRequired.Add($"'{itemDetails.Text}' (Reason: {itemDetails.Reason})");
+                                feedbackDictionary.Remove(itemDetails.ItemId);
+                                continue;
+                            }
+
+                            codeCustomizations++;
+                            logger.LogInformation("Item '{ItemId}' reclassified as CODE_CUSTOMIZATION on second pass.", itemDetails.ItemId);
+                            codeCustomizationLog.AppendLine($"[{itemDetails.ItemId}] Classification: {itemDetails.Classification}, Reason: {itemDetails.Reason}");
+                            feedbackDictionary.Remove(itemDetails.ItemId);
+                        }
+                        else if (itemDetails.Classification == ClassificationRequiresManualIntervention)
+                        {
+                            manualInterventions.Add($"'{itemDetails.Text}' (Reason: {itemDetails.Reason})");
+                            feedbackDictionary.Remove(itemDetails.ItemId);
+                        }
+                        else if (itemDetails.Classification == ClassificationSuccess)
+                        {
+                            feedbackDictionary.Remove(itemDetails.ItemId);
+                        }
+                        else if (!specInputsInScope && itemDetails.Classification == ClassificationTspApplicable)
+                        {
+                            // Spec inputs out of scope — surface as out of scope instead of applying.
+                            logger.LogInformation("Spec inputs out of scope: item '{ItemId}' reclassified as TSP_APPLICABLE on second pass; reporting.", itemDetails.ItemId);
+                            specChangeRequired.Add($"'{itemDetails.Text}' (Reason: {itemDetails.Reason})");
+                            feedbackDictionary.Remove(itemDetails.ItemId);
+                        }
+                    }
+                }
+            }
+
+            // Data tracking (per Laurent/Sam): record the spec-vs-custom-code split so we can measure how often
+            // the tool falls back to custom-code workarounds vs. items that belong in client.tsp. A high
+            // custom-code ratio is a signal that "shift-left" is not catching enough upstream. This is emitted
+            // for every run regardless of edit scope so the split is observable in logs/telemetry.
+            logger.LogInformation(
+                "Customized code update split (editScope={EditScope}): tspApplied={TspApplied}, codeCustomizations={CodeCustomizations}, specChangeRequired={SpecChangeRequired}, customCodeChangeRequired={CustomCodeChangeRequired}, manualIntervention={ManualIntervention}",
+                editScope, tspFixSucceeded, codeCustomizations, specChangeRequired.Count, customCodeChangeRequired.Count, manualInterventions.Count);
+
+            // Build for error context if no build happened yet (pure CODE_CUSTOMIZATION path or regen failed)
+            if (!buildSucceeded && buildError == null)
+            {
+                logger.LogInformation("Building for error context...");
+                var (s, e, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
+                buildSucceeded = s;
+                buildError = e;
+            }
+
+            if (buildSucceeded && codeCustomizations == 0)
+            {
+                logger.LogInformation("Build passed after TypeSpec customizations.");
+                return CreateResponse(new CustomizedCodeUpdateResponse
+                {
+                    Success = manualInterventions.Count == 0,
+                    Message = manualInterventions.Count == 0
+                        ? "Build passed after attempting TypeSpec customizations."
+                        : "Build passed after attempting TypeSpec customizations, but some items require manual intervention.",
+                    TypeSpecChangesSummary = changesMade,
+                    NextSteps = manualInterventions,
+                    ErrorCode = manualInterventions.Count > 0 ? CustomizedCodeUpdateResponse.KnownErrorCodes.ManualInterventionRequired : null,
+                });
+            }
+
+            // Step 2: If the build failed or CODE_CUSTOMIZATION items still need patching, start customized code update process
+
+            // Custom code out of scope: never patch custom code in this edit scope. The build still failed
+            // (or items remain), but those can only be fixed by editing customization code, which the current
+            // scope does not permit. Stop and report so a human can address the custom-code changes separately.
+            if (!customCodeInScope)
+            {
+                logger.LogInformation("Custom code out of scope: skipping customized code patching.");
+                return CreateResponse(new CustomizedCodeUpdateResponse
+                {
+                    Success = false,
+                    Message = "Out of scope: remaining build failures require custom-code changes, which are not permitted by the current edit scope.",
+                    TypeSpecChangesSummary = changesMade.Count > 0 ? changesMade : null,
+                    CustomCodeChangeRequired = customCodeChangeRequired.Count > 0 ? customCodeChangeRequired : null,
+                    NextSteps = manualInterventions.Count > 0 ? manualInterventions : null,
+                    BuildResult = buildError,
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.CustomCodeChangeRequired
+                });
+            }
+
+            if (!languageService.IsCustomizedCodeUpdateSupported)
+            {
+                return CreateResponse(new CustomizedCodeUpdateResponse
+                {
+                    Success = false,
+                    ResponseError = "Language service does not support customized code updates.",
+                    Message = "Language service does not support customized code updates.",
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.NoLanguageService,
+                    BuildResult = "No language service available for this package type."
+                });
+            }
+
+            // Step 3: Check for customization files to repair
+            var customizationRoot = languageService.HasCustomizations(packagePath, ct);
+            if (customizationRoot == null)
+            {
+                logger.LogInformation("Build failed but no customization files found.");
+                return CreateResponse(new CustomizedCodeUpdateResponse
+                {
+                    Success = false,
+                    ResponseError = string.IsNullOrWhiteSpace(buildError)
+                        ? "Build failed but no customization files found to repair."
+                        : $"Build failed but no customization files found to repair.\n{buildError}",
+                    Message = "Build failed but no customization files found to repair.",
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildNoCustomizationsFailed,
+                    BuildResult = buildError
+                });
+            }
+
+            // Step 4: Apply patches based on build errors
+            var patchContext = BuildPatchContext(customizationRequest, codeCustomizationLog, buildError);
+
+            logger.LogInformation("Applying patches to fix build errors...");
+            var patches = await languageService.ApplyPatchesAsync(
+                customizationRoot,
+                packagePath,
+                patchContext,
+                ct);
+
+            foreach (var patch in patches)
+            {
+                logger.LogInformation("{Description}", patch.Description);
+            }
+
+            if (patches.Count == 0)
+            {
+                logger.LogInformation("No patches applied.");
+                return CreateResponse(new CustomizedCodeUpdateResponse
+                {
+                    Success = false,
+                    ResponseError = string.IsNullOrWhiteSpace(buildError)
+                        ? "No patches could be applied - automated repair found nothing to fix."
+                        : $"No patches could be applied - automated repair found nothing to fix.\n{buildError}",
+                    Message = "No patches could be applied - automated repair found nothing to fix.",
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.PatchesFailed,
+                    BuildResult = buildError
+                });
+            }
+
+            // Step 5: Regenerate if Java (only Java needs regen after patching customization files)
+            if (languageService.Language == SdkLanguage.Java)
+            {
+                logger.LogInformation("Regenerating code after patches (Java)...");
+
+                // tspProjectPath is optional in custom-code-only scope. When supplied, regenerate from the
+                // local spec project; when omitted, pass no local spec repo so tsp-client regenerates from the
+                // pinned commit recorded in the package's tsp-location.yaml (no local spec checkout required).
+                string? localSpecProjectPath = string.IsNullOrWhiteSpace(tspProjectPath) ? null : Path.GetFullPath(tspProjectPath);
+
+                logger.LogDebug("Java regeneration local spec source: {localSpecProjectPath}",
+                    localSpecProjectPath ?? "(pinned commit from tsp-location.yaml)");
+
+                var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: localSpecProjectPath, isCli: false, ct: ct);
+                if (!regenResult.IsSuccessful)
+                {
+                    logger.LogWarning("Regeneration failed: {Error}", regenResult.ResponseError);
+                    return CreateResponse(new CustomizedCodeUpdateResponse
+                    {
+                        Success = false,
+                        ResponseError = $"Regeneration failed after patches: {regenResult.ResponseError}",
+                        Message = $"Regeneration failed after patches: {regenResult.ResponseError}",
+                        ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateAfterPatchesFailed,
+                        BuildResult = regenResult.ResponseError,
+                        TypeSpecChangesSummary = changesMade,
+                        AppliedPatches = patches
+                    });
+                }
+            }
+
+            // Step 6: Final build to validate patches
+            logger.LogInformation("Running final build to validate code customization patches...");
+            var (finalBuildSuccess, finalBuildError, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
+
+            if (finalBuildSuccess)
+            {
+                logger.LogInformation("Build passed after code customization patches.");
+                return CreateResponse(new CustomizedCodeUpdateResponse
+                {
+                    Success = manualInterventions.Count == 0,
+                    Message = manualInterventions.Count == 0
+                        ? "Build passed after code customization patches."
+                        : "Build passed after code customization patches, but some items require manual intervention.",
+                    TypeSpecChangesSummary = changesMade,
+                    AppliedPatches = patches,
+                    SpecChangeRequired = specChangeRequired.Count > 0 ? specChangeRequired : null,
+                    NextSteps = manualInterventions,
+                    ErrorCode = manualInterventions.Count > 0 ? CustomizedCodeUpdateResponse.KnownErrorCodes.ManualInterventionRequired : null,
+                });
+            }
+
+            // Build still failing after patches
+            logger.LogInformation("Build still failing after code customization patches.");
             return CreateResponse(new CustomizedCodeUpdateResponse
             {
-                Success = manualInterventions.Count == 0,
-                Message = manualInterventions.Count == 0
-                    ? "Build passed after code customization patches."
-                    : "Build passed after code customization patches, but some items require manual intervention.",
+                Success = false,
+                ResponseError = string.IsNullOrWhiteSpace(finalBuildError)
+                    ? "Code customization patches applied but build still failing."
+                    : $"Code customization patches applied but build still failing.\n{finalBuildError}",
+                Message = "Code customization patches applied but build still failing.",
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildAfterPatchesFailed,
+                BuildResult = finalBuildError,
                 TypeSpecChangesSummary = changesMade,
                 AppliedPatches = patches,
                 SpecChangeRequired = specChangeRequired.Count > 0 ? specChangeRequired : null,
                 NextSteps = manualInterventions,
-                ErrorCode = manualInterventions.Count > 0 ? CustomizedCodeUpdateResponse.KnownErrorCodes.ManualInterventionRequired : null,
             });
-        }
-
-        // Build still failing after patches
-        logger.LogInformation("Build still failing after code customization patches.");
-        return CreateResponse(new CustomizedCodeUpdateResponse
-        {
-            Success = false,
-            ResponseError = string.IsNullOrWhiteSpace(finalBuildError)
-                ? "Code customization patches applied but build still failing."
-                : $"Code customization patches applied but build still failing.\n{finalBuildError}",
-            Message = "Code customization patches applied but build still failing.",
-            ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildAfterPatchesFailed,
-            BuildResult = finalBuildError,
-            TypeSpecChangesSummary = changesMade,
-            AppliedPatches = patches,
-            SpecChangeRequired = specChangeRequired.Count > 0 ? specChangeRequired : null,
-            NextSteps = manualInterventions,
-        });
         }
         catch (OperationCanceledException)
         {
@@ -946,6 +1011,31 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             || host.EndsWith(".apiview.dev", StringComparison.OrdinalIgnoreCase)
             || host.Equals("apiviewstagingtest.com", StringComparison.OrdinalIgnoreCase)
             || host.EndsWith(".apiviewstagingtest.com", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Loads the TypeSpec client customization guide from eng/common/knowledge/customizing-client-tsp.md.
+    /// </summary>
+    private async Task<string> LoadTspCustomizationGuideAsync(string specRepoBasePath, CancellationToken ct)
+    {
+        var guidePath = Path.Combine(specRepoBasePath, "eng", "common", "knowledge", "customizing-client-tsp.md");
+
+        if (TspCustomizationGuideCache.TryGetValue(guidePath, out var cachedContent))
+        {
+            return cachedContent;
+        }
+
+        if (!File.Exists(guidePath))
+        {
+            throw new FileNotFoundException(
+                $"TypeSpec client customization guide not found at: {guidePath}. " +
+                "Ensure the azure-rest-api-specs repository is up to date.",
+                guidePath);
+        }
+
+        var content = await File.ReadAllTextAsync(guidePath, ct);
+        TspCustomizationGuideCache.TryAdd(guidePath, content);
+        return content;
     }
 
 }

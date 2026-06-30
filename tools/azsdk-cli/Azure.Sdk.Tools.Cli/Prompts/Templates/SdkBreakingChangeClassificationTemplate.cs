@@ -13,6 +13,9 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
         private readonly string _sdkChanges;
         private readonly string _language;
         private readonly string _tspProjectPath;
+        private static readonly Regex ResultBlockRex = new(
+                    @"\[(?<id>[^\]]+)\]\s*breaking:\s*(?<breaking>.+?)\s*category:\s*(?<category>.+?)\s*resolution:\s*(?<resolution>.*?)\s*originBreaks:\s*(?<originBreaks>(?:-[^\n]*\n?)+)",
+                    RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.Singleline);
 
         public SdkBreakingChangeClassificationTemplate(string sdkBreakingPatternContent, string sdkChanges, string language, string tspProjectPath)
         {
@@ -192,7 +195,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
             """;
         }
 
-        public SdkBreakingChange[] ParseClassifyResult(string result)
+        public override Object ParseClassifyResult(string result, List<Object>? items = null)
         {
             try
             {
@@ -208,9 +211,9 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
                 //   - ...
                 //
                 // Uses lookahead (?=\[|\z) to stop at the next block or end of string
-                Regex ResultBlockRex = new(
-                    @"\[(?<id>[^\]]+)\]\s*breaking:\s*(?<breaking>.+?)\s*category:\s*(?<category>.+?)\s*resolution:\s*(?<resolution>.*?)\s*originBreaks:\s*(?<originBreaks>(?:-[^\n]*\n?)+)",
-                    RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.Singleline);
+                //Regex ResultBlockRex = new(
+                //    @"\[(?<id>[^\]]+)\]\s*breaking:\s*(?<breaking>.+?)\s*category:\s*(?<category>.+?)\s*resolution:\s*(?<resolution>.*?)\s*originBreaks:\s*(?<originBreaks>(?:-[^\n]*\n?)+)",
+                //    RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.Singleline);
                 var sdkBreakingChanges = new List<SdkBreakingChange>();
                 foreach (Match match in ResultBlockRex.Matches(result))
                 {

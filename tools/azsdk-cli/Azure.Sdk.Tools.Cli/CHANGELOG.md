@@ -4,13 +4,11 @@
 
 ### Features Added
 
-### Breaking Changes
-
 ### Bugs Fixed
 
 - `azsdk_update_sdk_details_in_release_plan` no longer fails for data-plane release plans when the TypeSpec project emits an optional Go package. Go is now accepted as an optional data-plane language and its package name is written to the release plan (Go remains not required, so it is not flagged as an excluded language when absent). Languages the release plan does not track (e.g. Rust, C++) are now skipped instead of causing the update to fail, and are reported in the result message.
 
-### Other Changes
+- Update SDK details to use explicit output directory param when running TypeSpec emitter.
 
 ## 0.6.23 (2026-06-24)
 

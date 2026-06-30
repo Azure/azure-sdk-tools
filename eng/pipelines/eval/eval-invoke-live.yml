@@ -1,25 +1,22 @@
 # Live-tier run-time invocation for one eval shard: the same `vally eval` run as the hermetic
 # eng/common/.../steps/eval-invoke.yml, wrapped in AzureCLI@2 so the live azsdk-cli MCP's Azure
-# DevOps calls inherit the service-connection identity. Model auth stays copilot-sdk via
-# GITHUB_TOKEN (the default githubTokenVariable).
+# DevOps calls inherit the service-connection identity.
 #
-# azure-sdk-tools' live-eval points eval-run-shard.yml's `evalInvokeTemplate` here. The service
-# connection is owned by this repo-local step, not the shared orchestrator — that is why
-# archetype-eval.yml exposes no azureServiceConnection knob.
+# This is the RESOURCE-AUTH override of the pluggable invoke seam: azure-sdk-tools' live-eval
+# points the archetype RunShard job's `evalInvokeTemplate` here instead of the hermetic default. The
+# service connection lives in THIS repo-local file, never in the shared archetype — that is why
+# archetype-eval.yml exposes no azureServiceConnection knob. A different auth scheme (workload /
+# managed identity, a different connection, another repo's scheme) = its own copy of this file;
+# no new pipeline parameter is ever added.
+#
+# Resource auth (DevOps) is a federated exchange so it MUST be wrapped here; it can't come from a
+# variable group. Model auth (GITHUB_TOKEN today) is the other axis and arrives ambiently from
+# the entrypoint's linked variable group — so this file wraps only the resource credential.
 
 parameters:
-  - name: scriptDir
-    type: string
-    default: eng/common/scripts/eval
   - name: vallyRoot
     type: string
     default: tools/azsdk-cli/Azure.Sdk.Tools.Vally
-  - name: threshold
-    type: string
-    default: '0.8'
-  - name: githubTokenVariable
-    type: string
-    default: azuresdk-copilot-github-pat
 
 steps:
   - task: AzureCLI@2
@@ -30,11 +27,9 @@ steps:
       scriptLocation: inlineScript
       workingDirectory: ${{ parameters.vallyRoot }}
       inlineScript: |
-        node "$(Build.SourcesDirectory)/${{ parameters.scriptDir }}/invoke-eval-shard.js" \
+        node "$(Build.SourcesDirectory)/eng/common/scripts/eval/invoke-eval-shard.js" \
           --eval-args "$(evalArgs)" \
           --shard-name "$(shardName)" \
           --output-dir "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)" \
-          --skill-eval-prefix "$(Build.SourcesDirectory)/${{ parameters.scriptDir }}" \
-          --threshold ${{ parameters.threshold }}
-    env:
-      GITHUB_TOKEN: $(${{ parameters.githubTokenVariable }})
+          --skill-eval-prefix "$(Build.SourcesDirectory)/eng/common/scripts/eval" \
+          --threshold 0.8

@@ -8,17 +8,11 @@
 # parameter. It builds from the current checkout (these eval pipelines only run here), so no
 # cross-repo clone is needed. Other repos point mcpSetupTemplate at their own equivalent.
 
-parameters:
-  - name: mcpStageRoot
-    # Common parent the built server is published from (relative to Build.SourcesDirectory).
-    type: string
-    default: artifacts/mcp
-
 steps:
   - checkout: self
     fetchDepth: 1
 
   - script: |
       set -e
-      dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli -c Release -o "$(Build.SourcesDirectory)/${{ parameters.mcpStageRoot }}/cli" --nologo
+      dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli -c Release -o "$(Build.SourcesDirectory)/artifacts/mcp/cli" --nologo
     displayName: 'Build MCP: Cli (live) server'

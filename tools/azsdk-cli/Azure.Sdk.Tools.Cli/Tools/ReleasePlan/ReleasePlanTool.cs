@@ -922,9 +922,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         public async Task<ReleasePlanResponse> CreateReleasePlan(IProgress<ProgressNotificationValue>? progress, string typeSpecProjectPath, string targetReleaseMonthYear, string apiReleaseType, string sdkReleaseType = "", string specPullRequestUrl = "", string serviceTreeId = "", string productTreeId = "", bool isTestReleasePlan = false, bool forceCreateReleasePlan = false, CancellationToken ct = default)
         {
             try
-            {
-                var reporter = new ProgressReporter(progress, logger, totalSteps: 3, outputHelper);
-
+            {         
                 // Validate and map API release type
                 if (!ApiReleaseTypeExtensions.TryParseFromUserInput(apiReleaseType, out var parsedApiReleaseType))
                 {
@@ -948,9 +946,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     {
                         sdkReleaseType = mappedType;
                     }
-                }
-
-                reporter.NextStep("Validating TypeSpec project and release plan inputs");
+                }                
 
                 await ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType, parsedApiReleaseType, ct);
 
@@ -1049,6 +1045,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                 }
 
+                List<string> warnings = [];
+                List<string> nextSteps = [];
                 var specType = isValidTypeSpec ? "TypeSpec" : "OpenAPI";
                 logger.LogInformation("Attempting to retrieve current user email.");
 
@@ -1060,6 +1058,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
                 catch (Exception ex)
                 {
+                    var warning = "Failed to retrieve user email. Proceeding without user email for release plan submission.";
+                    warnings.Add(warning);
                     logger.LogWarning(ex, "Failed to retrieve user email. Proceeding without user email for release plan submission.");
                 }
 
@@ -1083,11 +1083,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     ProductLifecycle = productLifecycle,
                     ApiReleaseType = parsedApiReleaseType
                 };
-                reporter.NextStep("Creating release plan work item");
 
+                var reporter = new ProgressReporter(progress, logger, totalSteps: 2, outputHelper);
+                reporter.NextStep("Creating a release plan");
                 var workItem = await devOpsService.CreateReleasePlanWorkItemAsync(releasePlan, ct);
                 if (workItem == null)
                 {
+                    reporter.NextStep("Failed to create a release plan");
                     return new ReleasePlanResponse
                     {
                         ResponseError = "Failed to create release plan work item.",
@@ -1111,32 +1113,32 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         releasePlan.ReleasePlanId = releasePlan.WorkItemId;
                     }
                     
-                    // Attempt to update SDK details if the TypeSpec path is a valid local path
-                    List<string> warnings = [];
-                    List<string> nextSteps = [];
+                    // Attempt to update SDK details if the TypeSpec path is a valid local path                    
                     string sdkDetailsMessage = string.Empty;
                     bool isLocalValidTypeSpec = !typeSpecHelper.IsUrl(typeSpecProjectPath) && isValidTypeSpec && Directory.Exists(typeSpecProjectPath);
 
                     if (isLocalValidTypeSpec && releasePlan.WorkItemId > 0 && parsedApiReleaseType != ApiReleaseType.PrivatePreview)
                     {
-                        reporter.NextStep($"Release plan work item created successfully. Release Plan ID: {releasePlan.ReleasePlanId}. Updating SDK details in release plan");
                         try
                         {
-                            var sdkDetailsResult = await UpdateSDKDetailsInReleasePlan(releasePlan.WorkItemId, typeSpecProjectPath, ct);
-                            if (!string.IsNullOrEmpty(sdkDetailsResult.ResponseError))
+                            await using (reporter.StartHeartbeat("Running tsp-client update for code re-generation", ct))
                             {
-                                logger.LogWarning("Failed to update SDK details in release plan: {Error}", sdkDetailsResult.ResponseError);
-                                warnings.Add($"Failed to update SDK details in the release plan: {sdkDetailsResult.ResponseError}");
-                                nextSteps.Add("Update SDK details in the release plan.");
-                            }
-                            else
-                            {
-                                sdkDetailsMessage = sdkDetailsResult.Message ?? string.Empty;
-                                if (sdkDetailsResult.NextSteps?.Count > 0)
+                                var sdkDetailsResult = await UpdateSDKDetailsInReleasePlan(releasePlan.WorkItemId, typeSpecProjectPath, ct);
+                                if (!string.IsNullOrEmpty(sdkDetailsResult.ResponseError))
                                 {
-                                    nextSteps.AddRange(sdkDetailsResult.NextSteps);
+                                    logger.LogWarning("Failed to update SDK details in release plan: {Error}", sdkDetailsResult.ResponseError);
+                                    warnings.Add($"Failed to update SDK details in the release plan: {sdkDetailsResult.ResponseError}");
+                                    nextSteps.Add("Update SDK details in the release plan.");
                                 }
-                            }
+                                else
+                                {
+                                    sdkDetailsMessage = sdkDetailsResult.Message ?? string.Empty;
+                                    if (sdkDetailsResult.NextSteps?.Count > 0)
+                                    {
+                                        nextSteps.AddRange(sdkDetailsResult.NextSteps);
+                                    }
+                                }
+                            }                            
                         }
                         catch (Exception sdkEx)
                         {
@@ -1156,6 +1158,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         message.AppendLine().Append(sdkDetailsMessage);
                     }
 
+                    reporter.NextStep(message.ToString());
                     return new ReleasePlanResponse
                     {
                         Message = message.ToString(),

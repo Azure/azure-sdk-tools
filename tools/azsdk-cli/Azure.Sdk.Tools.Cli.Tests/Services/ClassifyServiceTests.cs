@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.ClassifyItems;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
@@ -141,7 +142,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         //[TestCase("", SdkLanguage.Python, "azure-sdk-for-python")]
         //[TestCase("", SdkLanguage.Java, "azure-sdk-for-java")]
         //[TestCase("", SdkLanguage.JavaScript, "azure-sdk-for-js")]
-        public async Task ClassifySDKBreakingChanges_ReturnsExpectedResult(string sdkchanges, SdkLanguage language, string sdkRepoName)
+        public async Task ClassifySDKBreakingChanges_RenameProperty(string sdkchanges, SdkLanguage language, string sdkRepoName)
         {
             var sdkRepoRoot = Path.Combine(
                 TestContext.CurrentContext.TestDirectory,
@@ -152,10 +153,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             var ct = CancellationToken.None;
             var sdkBreakingPattern = await languageService.GetSDKBreakingPattern(sdkRepoRoot, ct);
             var tspProjectFile = Path.Combine(_typeSpecProjectPath, "tspconfig.yaml");
-            var result = await service.ClassifySDKBreakingChanges(sdkchanges, sdkRepoRoot, sdkBreakingPattern, language.ToString(), tspProjectFile, ct);
+            var classifyRequest = new ClassifySdkBreakingChangesRequest(sdkchanges, sdkRepoRoot, sdkBreakingPattern, languageService.Language.ToString(), tspProjectFile);
+            var classifyResult = await service.ClassifyItemsAsync(ClassifyType.SdkBreakingChange, classifyRequest, ct);
+            Assert.IsNotNull(classifyRequest);
+            var result = classifyResult.ClassifiedResult;
             Assert.IsNotNull(result);
             Assert.IsInstanceOf<Array>(result);
-            Assert.That((result as Array).Length, Is.EqualTo(1));
+            Assert.That((result as Array), Has.Length.EqualTo(1));
         }
         #endregion
 

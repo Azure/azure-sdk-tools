@@ -9,11 +9,14 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.ClassifyItems;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
+using Azure.Sdk.Tools.Cli.Prompts.Templates;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using ModelContextProtocol.Server;
+using Octokit;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
@@ -181,15 +184,27 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                                     {
                                         var tspProjectPath = tspConfigPath != null ? await gitHelper.DiscoverRepoRootAsync(tspConfigPath, ct) : null;
                                         var sdkBreakingPattern = await languageService.GetSDKBreakingPattern(sdkRepoRoot, ct);
+                                        var classifyRequest = new ClassifySdkBreakingChangesRequest(sdkchanges.ChangelogMD, sdkRepoRoot, sdkBreakingPattern, languageService.Language.ToString(), tspProjectPath);
+                                        var classifyResult = await _classifyService.ClassifyItemsAsync(ClassifyType.SdkBreakingChange, classifyRequest, ct);
+                                        if (classifyResult == null || classifyResult.ClassifiedResult == null)
+                                        {
+                                            logger.LogError("Failed to classify SDK breaking changes.");
+                                            return new PackageOperationResponse
+                                            {
+                                                ResponseError = "Failed to classify SDK breaking changes.",
+                                                Language = languageService.Language,
+                                            };
+                                        }
                                         var result = new SdkBreakingChangeDetectResult
                                         {
                                             HasBreakingChanges = true,
-                                            BreakingChanges = await _classifyService.ClassifySDKBreakingChanges(sdkchanges.ChangelogMD, sdkRepoRoot, sdkBreakingPattern, languageService.Language.ToString(), tspProjectPath, ct),
+                                            BreakingChanges = (SdkBreakingChange[])classifyResult.ClassifiedResult,
                                         };
                                         return new PackageOperationResponse()
                                         {
                                             Result = result,
-                                            Message = "SDK breaking changes detected and classified.",                                            Language = languageService.Language,
+                                            Message = "SDK breaking changes detected and classified.",
+                                            Language = languageService.Language,
                                         };
                                     }
                                     else

@@ -1,15 +1,16 @@
 using Azure.Sdk.Tools.Cli.CopilotAgents;
-using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.ClassifyItems;
+using Azure.Sdk.Tools.Cli.Models.Responses;
+using Azure.Sdk.Tools.Cli.Prompts;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
-using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tools.Package;
-using Octokit;
+using Microsoft.TeamFoundation.Common;
 
 namespace Azure.Sdk.Tools.Cli.Services
-{
+{   
     public interface IClassifyService
     {
-        Task<SdkBreakingChange[]> ClassifySDKBreakingChanges(string sdkchange, string sdkRepoRoot, string sdkBreakingPattern, string language, string? tspProjectPath, CancellationToken ct);
+        Task<ClassifyResponse> ClassifyItemsAsync(ClassifyType classifyType, ClassifyRequest request, CancellationToken ct);
     }
     public class ClassifyService: IClassifyService
     {
@@ -18,26 +19,77 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             _agentRunner = agentRunner;
         }
-        public async Task<SdkBreakingChange[]> ClassifySDKBreakingChanges(string sdkchange, string sdkRepoRoot, string sdkBreakingPattern, string language, string? tspProjectPath, CancellationToken ct)
+
+        public async Task<ClassifyResponse> ClassifyItemsAsync(ClassifyType classifyType, ClassifyRequest request, CancellationToken ct)
         {
-            //LanguageService languageService = await GetLanguageServiceAsync(sdkRepoRoot, ct);
-            //var languageService = languageServices.FirstOrDefault(s => s.Language == language);
-            //var sdkBreakingPattern = await languageService.GetSDKBreakingPattern(sdkRepoRoot, ct);
-            var template = new SdkBreakingChangeClassificationTemplate(sdkBreakingPattern, sdkchange, language, tspProjectPath);
+            switch (classifyType)
+            {
+                case ClassifyType.SdkBreakingChange:
+                    if (request is ClassifySdkBreakingChangesRequest sdkBreakingRequest)
+                    {
+                        if (sdkBreakingRequest.SdkChange.IsNullOrEmpty() || sdkBreakingRequest.SdkBreakingPattern.IsNullOrEmpty())
+                        {
+                            return new ClassifyResponse(classifyType, new List<SdkBreakingChange>());
+                        }
+                        var classifyTemplate = new SdkBreakingChangeClassificationTemplate(
+                            sdkBreakingRequest.SdkBreakingPattern,
+                            sdkBreakingRequest.SdkChange,
+                            sdkBreakingRequest.Language,
+                            sdkBreakingRequest.TspProjectPath
+                        );
+                        var classifiedResult = await BatchClassifyItems(classifyTemplate, null, ct);
+                        return new ClassifyResponse(classifyType, classifiedResult);
+
+                    } else
+                    {
+                        throw new ArgumentException("Invalid request type for SdkBreakingChange classification.");
+                    }
+                case ClassifyType.Customization:
+                    if (request is ClassifyCustomizationRequest customizationRequest)
+                    {
+                        List<FeedbackClassificationResponse.ItemClassificationDetails> allClassifiedResults = new List<FeedbackClassificationResponse.ItemClassificationDetails>();
+                        if (customizationRequest.Items == null || customizationRequest.Items.Count == 0)
+                        {
+                            return new ClassifyResponse(classifyType, allClassifiedResults);
+                        }
+                        foreach (var chunk in customizationRequest.Items.Chunk(customizationRequest.BatchSize))
+                        {
+                            var classifyTemplate = new FeedbackClassificationTemplate(
+                                customizationRequest.ServiceName,
+                                customizationRequest.Language,
+                                customizationRequest.ReferencePatternContent,
+                                chunk.ToList(),
+                                customizationRequest.GlobalContext,
+                                customizationRequest.EditScope
+                            );
+                            List<object> feedbackItems = chunk.Cast<object>().ToList();
+                            var classifyResult = await BatchClassifyItems(classifyTemplate, feedbackItems, ct);
+                            allClassifiedResults.AddRange((List<FeedbackClassificationResponse.ItemClassificationDetails>)classifyResult);
+
+                        }
+                        return new ClassifyResponse(classifyType, allClassifiedResults);
+
+                    } else
+                    {
+                        throw new ArgumentException("Invalid request type for Customization classification.");
+                    }
+                default:
+                    throw new ArgumentException($"Unsupported classify type: {classifyType}");
+            }
+        }
+
+        private async Task<Object> BatchClassifyItems(BasePromptTemplate template, List<object>? items, CancellationToken ct)
+        {
             var agent = new CopilotAgent<string>
             {
                 Instructions = template.BuildPrompt(),
                 Model = "claude-opus-4.5"
             };
-            var result = await _agentRunner.RunAsync(agent, ct);
-            var breakings = template.ParseClassifyResult(result);
 
-            return breakings;
-        }
-        private string BuildClassifyInstructions(string sdkchange, string sdkchangeToBreakingPattern, string language, string tspProjectPath)
-        {
-            var template = new SdkBreakingChangeClassificationTemplate(sdkchangeToBreakingPattern, sdkchange, language, tspProjectPath);
-            return template.BuildPrompt();
+            var result = await _agentRunner.RunAsync(agent, ct);
+            var classifiedResult = template.ParseClassifyResult(result, items);
+            return classifiedResult;
         }
     }
 }
+

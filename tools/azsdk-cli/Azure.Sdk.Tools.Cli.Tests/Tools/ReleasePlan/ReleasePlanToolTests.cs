@@ -9,6 +9,7 @@ using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Microsoft.Extensions.Logging;
+using ModelContextProtocol;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 {
@@ -92,6 +93,28 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(releaseplan.ReleasePlanDetails?.ProductName, Is.EqualTo("Contoso Management Product Name"));
             Assert.That(releaseplan.ReleasePlanDetails?.ProductType, Is.EqualTo("Offering"));
             Assert.That(releaseplan.ReleasePlanDetails?.ProductLifecycle, Is.EqualTo("GA"));
+        }
+
+        [Test]
+        public async Task Test_Create_releasePlan_reports_progress()
+        {
+            var reported = new List<ProgressNotificationValue>();
+            var progressMock = new Mock<IProgress<ProgressNotificationValue>>();
+            progressMock.Setup(p => p.Report(It.IsAny<ProgressNotificationValue>()))
+                .Callback<ProgressNotificationValue>(v => reported.Add(v));
+
+            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            var releaseplan = await releasePlanTool.CreateReleasePlan(progressMock.Object, testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true);
+
+            Assert.IsNotNull(releaseplan);
+            Assert.IsNull(releaseplan.ResponseError, $"Unexpected error: {releaseplan.ResponseError}");
+
+            // The release plan creation should report progress via the MCP progress channel.
+            Assert.That(reported, Is.Not.Empty, "Expected at least one progress notification to be reported.");
+            Assert.That(reported.Any(r => r.Message != null && r.Message.Contains("Creating a release plan")), Is.True,
+                "Expected a 'Creating a release plan' progress notification.");
+            Assert.That(reported[0].Total, Is.EqualTo(2));
+            Assert.That(reported[0].Progress, Is.EqualTo(1));
         }
 
         [Test]

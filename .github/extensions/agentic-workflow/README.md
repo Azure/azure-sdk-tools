@@ -61,6 +61,7 @@ files between phases at any time. If your session reloads, pick the run back up 
 | `/aw-research` … `/aw-implement` | Run one specific phase by name (`/aw-research`, `/aw-assumptions`, `/aw-classify`, `/aw-research-item`, `/aw-plan`, `/aw-implement`). |
 | `/aw-redo <phase> <feedback>` | Re-run a phase with steering notes appended to its prompt. |
 | `/aw-judge <artifact>` | Critique an artifact with the critique model, then re-run its author phase to revise it (e.g. `/aw-judge plan.md`). |
+| `/aw-autojudge [on\|off]` | Toggle auto-judge for the active run. When on, the auto-runner critiques + revises each phase's judgeable artifacts right after the phase passes. No arg flips the current state. Persisted to `state.json`. |
 | `/aw-model <phase> <model>` | Repin a phase's model for its next run (persisted for the active run). |
 | `/aw-status` | Show the phase checklist, run-dir artifacts, and `git diff --stat`. |
 | `/aw-compact` | Reclaim context by queuing `/compact`. |

@@ -55,6 +55,7 @@ let session;
 let activeTask = "";
 let activeRunDir = "";
 let activeSimple = false;
+let autoJudge = false;
 let pauseRequested = false;
 
 const log = (msg) => session?.log(`agentic-workflow: ${msg}`).catch(() => {});
@@ -261,10 +262,14 @@ async function autoRun({ from, to, unattended = false, pauseAt } = {}) {
 
         let priorErrors = "";
         let retries = 0;
+        let passed = false;
         // Re-dispatch this phase until it passes, is skipped, or the run aborts.
         for (;;) {
             const res = await dispatch(phase, { priorErrors });
-            if (res.result === "pass") break;
+            if (res.result === "pass") {
+                passed = true;
+                break;
+            }
 
             if (res.result === "needs_input") {
                 const answer = await askHuman(res.reason || `${phase.id} needs a decision`, unattended);
@@ -293,6 +298,9 @@ async function autoRun({ from, to, unattended = false, pauseAt } = {}) {
             }
             priorErrors = res.reason || "The previous attempt did not pass. Fix the issues and try again.";
         }
+
+        // Auto-judge: when enabled, critique this phase's artifact and revise it before advancing.
+        if (passed && autoJudge) await autoJudgePhase(phase);
 
         if (pauseAt && phase.id === pauseAt) {
             await log(`paused at breakpoint ${pauseAt}.`);
@@ -361,6 +369,7 @@ async function cmdStart(argstr, { forceSimple = false } = {}) {
     state.simple = simple;
     writeState(activeRunDir, state);
     applyModelOverrides(state);
+    autoJudge = !!state.autoJudge;
     await log(`run dir: ${path.relative(process.cwd(), activeRunDir) || activeRunDir}${simple ? " (simple flow)" : ""}`);
     const next = nextPhase(activeRunDir, activeSimple);
     if (!next) {
@@ -421,7 +430,9 @@ async function cmdResume(argstr) {
     activeTask = run.task;
     activeSimple = run.simple;
     activeRunDir = run.dir;
-    applyModelOverrides(readState(run.dir));
+    const rstate = readState(run.dir);
+    applyModelOverrides(rstate);
+    autoJudge = !!rstate?.autoJudge;
     const next = nextPhase(activeRunDir, activeSimple);
     await log(
         `resumed "${activeTask}" (${path.relative(process.cwd(), activeRunDir) || activeRunDir})` +
@@ -470,18 +481,15 @@ async function cmdPause() {
     await log("pause requested; the auto-runner will stop at the next phase boundary.");
 }
 
-async function cmdJudge(argstr) {
-    const artifact = (argstr ?? "").trim();
-    if (!artifact) {
-        await log("usage: /aw-judge <artifact>, e.g. /aw-judge plan.md");
-        return;
-    }
-    const base = path.basename(artifact);
+// Critique one artifact with the critique agent, then (if the artifact maps to an author phase)
+// re-run that phase to revise it. Shared by /aw-judge and the auto-judge runner.
+async function judgeArtifact(artifactRel) {
+    const base = path.basename(artifactRel);
     const phaseId = ARTIFACT_TO_PHASE[base];
-    const reviewInstr = `Review the artifact at \`${artifact}\` (relative to the run dir). Read it, then write your critique to \`critiques/${base}.md\`.`;
+    const reviewInstr = `Review the artifact at \`${artifactRel}\` (relative to the run dir). Read it, then write your critique to \`critiques/${base}.md\`.`;
     const crit = await dispatch(CRITIQUE, { priorErrors: reviewInstr });
     if (crit.result !== "pass") {
-        await log(`critique did not complete (${crit.result}).`);
+        await log(`critique of ${base} did not complete (${crit.result}).`);
         return;
     }
     const author = phaseId ? phaseById(phaseId) : null;
@@ -490,8 +498,43 @@ async function cmdJudge(argstr) {
         return;
     }
     await dispatch(author, {
-        priorErrors: `A critique of your previous \`${artifact}\` is at \`critiques/${base}.md\`. Read it and revise \`${artifact}\` to address every blocker/should-fix point you agree with; justify any you reject.`,
+        priorErrors: `A critique of your previous \`${artifactRel}\` is at \`critiques/${base}.md\`. Read it and revise \`${artifactRel}\` to address every blocker/should-fix point you agree with; justify any you reject.`,
     });
+}
+
+// After a phase passes under auto-judge, critique+revise each judgeable artifact it authored.
+async function autoJudgePhase(phase) {
+    const targets = walkArtifacts(activeRunDir).filter((rel) => ARTIFACT_TO_PHASE[path.basename(rel)] === phase.id);
+    if (targets.length === 0) {
+        diag(`auto-judge: nothing judgeable for ${phase.id}`);
+        return;
+    }
+    for (const rel of targets) {
+        await log(`auto-judging ${rel} (from ${phase.id})…`);
+        await judgeArtifact(rel);
+    }
+}
+
+async function cmdJudge(argstr) {
+    const artifact = (argstr ?? "").trim();
+    if (!artifact) {
+        await log("usage: /aw-judge <artifact>, e.g. /aw-judge plan.md");
+        return;
+    }
+    await judgeArtifact(artifact);
+}
+
+// Toggle auto-judge for the active run. `/aw-autojudge` flips it; `on`/`off` set it explicitly.
+async function cmdAutoJudge(argstr) {
+    const v = (argstr ?? "").trim().toLowerCase();
+    if (v === "on" || v === "off") autoJudge = v === "on";
+    else autoJudge = !autoJudge;
+    if (activeRunDir) {
+        const state = readState(activeRunDir) || {};
+        state.autoJudge = autoJudge;
+        writeState(activeRunDir, state);
+    }
+    await log(`auto-judge is now ${autoJudge ? "ON" : "OFF"}${autoJudge ? " — each phase's artifacts will be critiqued and revised after it passes." : "."}`);
 }
 
 async function cmdRedo(argstr) {
@@ -609,6 +652,7 @@ export const joinConfig = {
         cmd("aw-plan", "Run the plan phase.", (c) => cmdPhase("plan", c.args)),
         cmd("aw-implement", "Run the implement phase.", (c) => cmdPhase("implement", c.args)),
         cmd("aw-judge", "Critique an artifact, then revise it: /aw-judge <artifact>.", (c) => cmdJudge(c.args)),
+        cmd("aw-autojudge", "Toggle auto-judge: critique+revise each phase's artifacts after it passes. /aw-autojudge [on|off].", (c) => cmdAutoJudge(c.args)),
         cmd("aw-redo", "Re-run a phase with steering notes: /aw-redo <phase> <feedback>.", (c) => cmdRedo(c.args)),
         cmd("aw-model", "Repin a phase's model: /aw-model <phase> <model>.", (c) => cmdModel(c.args)),
         cmd("aw-status", "Show phase state, artifacts, and git diff --stat.", () => cmdStatus()),

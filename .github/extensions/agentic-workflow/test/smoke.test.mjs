@@ -179,7 +179,7 @@ test("joinConfig gives every phase all tools", () => {
 test("joinConfig registers the command surface", () => {
     assert.equal(joinConfig.infiniteSessions.enabled, true);
     const cmds = joinConfig.commands.map((c) => c.name);
-    for (const expected of ["aw-start", "aw-start-simple", "aw-resume", "aw-run", "aw-continue", "aw-pause", "aw-judge", "aw-redo", "aw-model", "aw-status", "aw-compact", "aw-implement"]) {
+    for (const expected of ["aw-start", "aw-start-simple", "aw-resume", "aw-run", "aw-continue", "aw-pause", "aw-judge", "aw-autojudge", "aw-redo", "aw-model", "aw-status", "aw-compact", "aw-implement"]) {
         assert.ok(cmds.includes(expected), `missing /${expected}`);
     }
 });

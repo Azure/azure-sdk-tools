@@ -75,8 +75,9 @@ function Test-LabelDefinitionMatches([object]$Left, [object]$Right) {
 }
 
 function Get-GitRelativePath([string]$RepositoryRoot, [string]$Path) {
-    $resolvedPath = (Resolve-Path $Path).Path
-    return $resolvedPath.Substring($RepositoryRoot.Length).TrimStart('/', '\')
+    $resolvedPath = (Resolve-Path -LiteralPath $Path).Path
+    $resolvedRoot = (Resolve-Path -LiteralPath $RepositoryRoot).Path
+    return [System.IO.Path]::GetRelativePath($resolvedRoot, $resolvedPath)
 }
 
 function Get-GitFileContent([string]$RepositoryRoot, [string]$RelativePath, [string]$Revision) {
@@ -223,6 +224,7 @@ $labelCount = 0
 
 foreach ($repo in $Repositories) {
     if ($Incremental -and -not (Test-IncrementalSyncNeeded -Repository $repo -ChangedLabels $changedLabels -Path $LabelsFilePath)) {
+        $totalLabels -= $labels.Count
         continue
     }
 

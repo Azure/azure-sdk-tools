@@ -46,6 +46,10 @@ stimuli:
             - edit
             - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
             - azure-sdk-mcp-azsdk_run_typespec_validation
+      - type: run-command
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       - type: file-matches
         config:
           path: main.tsp
@@ -98,6 +102,10 @@ stimuli:
             - edit
             - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
             - azure-sdk-mcp-azsdk_run_typespec_validation
+      - type: run-command
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       - type: file-matches
         config:
           path: employee.tsp
@@ -155,6 +163,10 @@ stimuli:
           required:
             - edit
             - azure-sdk-mcp-azsdk_run_typespec_validation
+      - type: run-command
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       - type: file-matches
         config:
           path: main.tsp
@@ -207,6 +219,10 @@ stimuli:
             - edit
             - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
             - azure-sdk-mcp-azsdk_run_typespec_validation
+      - type: run-command
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       - type: file-matches
         config:
           path: employee.tsp
@@ -289,7 +305,11 @@ stimuli:
             - edit
             - web_fetch
             - azure-sdk-mcp-azsdk_run_typespec_validation
-      - type: file-exists
+      - type: run-command
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
+      - type: file-matches
         config:
           path: examples/2025-05-04-preview/Employees_Get_MaximumSet_Gen.json
       - type: file-not-exists
@@ -391,7 +411,11 @@ stimuli:
             - edit
             - web_fetch
             - azure-sdk-mcp-azsdk_run_typespec_validation
-      - type: file-exists
+      - type: run-command
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
+      - type: file-matches
         config:
           path: examples/2025-05-04-preview/Employees_Get_MaximumSet_Gen.json
       - type: file-exists
@@ -485,7 +509,11 @@ stimuli:
             - edit
             - web_fetch
             - azure-sdk-mcp-azsdk_run_typespec_validation
-      - type: file-exists
+      - type: run-command
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
+      - type: file-matches
         config:
           path: examples/2025-01-01/Employees_Get_MaximumSet_Gen.json
       - type: file-not-exists
@@ -589,7 +617,11 @@ stimuli:
             - edit
             - web_fetch
             - azure-sdk-mcp-azsdk_run_typespec_validation
-      - type: file-exists
+      - type: run-command
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
+      - type: file-matches
         config:
           path: examples/2024-10-01/Employees_Get_MaximumSet_Gen.json
       - type: file-exists
@@ -646,6 +678,10 @@ stimuli:
           required:
             - edit
             - azure-sdk-mcp-azsdk_run_typespec_validation
+      - type: run-command
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       - type: file-matches
         config:
           path: Microsoft.Widget/Widget/main.tsp
@@ -697,6 +733,10 @@ stimuli:
           required:
             - edit
             - azure-sdk-mcp-azsdk_run_typespec_validation
+      - type: run-command
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       - type: file-matches
         config:
           path: Microsoft.Widget/Widget/main.tsp
@@ -742,6 +782,10 @@ stimuli:
           required:
             - edit
             - azure-sdk-mcp-azsdk_run_typespec_validation
+      - type: run-command
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       - type: file-matches
         config:
           path: Microsoft.Widget/Widget/main.tsp
@@ -787,6 +831,10 @@ stimuli:
           required:
             - edit
             - azure-sdk-mcp-azsdk_run_typespec_validation
+      - type: run-command
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       - type: file-matches
         config:
           path: Microsoft.Widget/Widget/main.tsp
@@ -839,6 +887,10 @@ stimuli:
             - edit
             - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
             - azure-sdk-mcp-azsdk_run_typespec_validation
+      - type: run-command
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       - type: file-matches
         config:
           path: "*.tsp"
@@ -893,6 +945,10 @@ stimuli:
             - edit
             - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
             - azure-sdk-mcp-azsdk_run_typespec_validation
+      - type: run-command
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       - type: file-matches
         config:
           path: "*.tsp"
@@ -939,6 +995,10 @@ stimuli:
             - edit
             - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
             - azure-sdk-mcp-azsdk_run_typespec_validation
+      - type: run-command
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       - type: file-matches
         config:
           path: "*.tsp"
@@ -979,6 +1039,10 @@ stimuli:
             - edit
             - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
             - azure-sdk-mcp-azsdk_run_typespec_validation
+      - type: run-command
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       - type: file-matches
         config:
           path: badgeAssignment.tsp
@@ -1033,6 +1097,10 @@ stimuli:
             - edit
             - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
             - azure-sdk-mcp-azsdk_run_typespec_validation
+      - type: run-command
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       - type: file-matches
         config:
           path: "*.tsp"
@@ -1107,6 +1175,10 @@ stimuli:
             - edit
             - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
             - azure-sdk-mcp-azsdk_run_typespec_validation
+      - type: run-command
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       - type: file-matches
         config:
           path: "*.tsp"
@@ -1212,6 +1284,10 @@ stimuli:
             - edit
             - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
             - azure-sdk-mcp-azsdk_run_typespec_validation
+      - type: run-command
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       # VP1: Extensible enum for notification priority levels (Low, Medium, High)
       - type: file-matches
         config:
@@ -1299,6 +1375,10 @@ stimuli:
           required:
             - edit
             - azure-sdk-mcp-azsdk_run_typespec_validation
+      - type: run-command
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       - type: file-matches
         config:
           path: "*.tsp"
@@ -1341,6 +1421,10 @@ stimuli:
             - edit
             - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
             - azure-sdk-mcp-azsdk_run_typespec_validation
+      - type: run-command
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       - type: file-matches
         config:
           path: employee.tsp
@@ -1385,6 +1469,10 @@ stimuli:
             - edit
             - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
             - azure-sdk-mcp-azsdk_run_typespec_validation
+      - type: run-command
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       - type: file-matches
         config:
           path: employee.tsp
@@ -1429,6 +1517,10 @@ stimuli:
             - edit
             - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
             - azure-sdk-mcp-azsdk_run_typespec_validation
+      - type: run-command
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       - type: file-matches
         config:
           path: employee.tsp
@@ -1473,6 +1565,10 @@ stimuli:
             - edit
             - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
             - azure-sdk-mcp-azsdk_run_typespec_validation
+      - type: run-command
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       # VP1: Accept either inline ArmCombinedLroHeaders or alias-based EmployeeMoveLroHeaders usage.
       - type: file-matches
         config:
@@ -1522,6 +1618,10 @@ stimuli:
             - edit
             - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
             - azure-sdk-mcp-azsdk_run_typespec_validation
+      - type: run-command
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       # VP1: ArmAsyncOperationHeader with FinalResult = Employee (alias or inline)
       - type: file-matches
         config:
@@ -1581,6 +1681,10 @@ stimuli:
             - edit
             - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
             - azure-sdk-mcp-azsdk_run_typespec_validation
+      - type: run-command
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       - type: file-matches
         config:
           path: "*.tsp"
@@ -1625,6 +1729,10 @@ stimuli:
             - edit
             - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
             - azure-sdk-mcp-azsdk_run_typespec_validation
+      - type: run-command
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       - type: file-matches
         config:
           path: employee.tsp
@@ -1688,6 +1796,10 @@ stimuli:
       commands:
         - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
     graders:
+      - type: run-command
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       # VP1: Underscore operationIds should be removed (e.g. BgpConnection has only underscore ones)
       - type: file-not-matches
         config:
@@ -1774,6 +1886,10 @@ stimuli:
         config:
           required:
             - azure-sdk-mcp-azsdk_run_typespec_validation
+      - type: run-command
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       - type: file-matches
         config:
           path: models.tsp
@@ -1785,6 +1901,7 @@ stimuli:
 scoring:
   weights:
     tool-calls: 1
+    run-command: 1
     file-matches: 3
     file-not-matches: 2
     file-exists: 1

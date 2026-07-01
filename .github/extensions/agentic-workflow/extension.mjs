@@ -26,16 +26,16 @@ const MAX_RETRIES = 2;
 // --- Phase registry: the per-phase config (tools + prompt). -------------------------------------
 // The workflow does not switch models; every phase runs on the user's session model. Tool access +
 // prompt are bound into customAgents at join time. `artifact` is the sentinel file/dir that marks
-// the phase complete. `simple` phases form the abbreviated flow used by `/aw-start <task> simple`.
+// the phase complete. `simple` phases form the abbreviated flow used by `/rpi-start <task> simple`.
 const ALL_TOOLS = null;
 
 const PHASES = [
-    { id: "research", agent: "aw-research", template: "01-research.md", tools: ALL_TOOLS, artifact: "specs/architecture.md", simple: true },
-    { id: "assumptions", agent: "aw-assumptions", template: "02-assumptions.md", tools: ALL_TOOLS, artifact: "assumptions.md", simple: true },
-    { id: "classify", agent: "aw-classify", template: "03-classify.md", tools: ALL_TOOLS, artifact: "subitems.json", simple: false },
-    { id: "research-item", agent: "aw-research-item", template: "04-research-item.md", tools: ALL_TOOLS, artifact: "research", simple: false },
-    { id: "plan", agent: "aw-plan", template: "05-plan.md", tools: ALL_TOOLS, artifact: "plan.md", simple: true },
-    { id: "implement", agent: "aw-implement", template: "06-implement.md", tools: ALL_TOOLS, artifact: "execution-log.md", simple: true },
+    { id: "research", agent: "rpi-research", template: "01-research.md", tools: ALL_TOOLS, artifact: "specs/architecture.md", simple: true },
+    { id: "assumptions", agent: "rpi-assumptions", template: "02-assumptions.md", tools: ALL_TOOLS, artifact: "assumptions.md", simple: true },
+    { id: "classify", agent: "rpi-classify", template: "03-classify.md", tools: ALL_TOOLS, artifact: "subitems.json", simple: false },
+    { id: "research-item", agent: "rpi-research-item", template: "04-research-item.md", tools: ALL_TOOLS, artifact: "research", simple: false },
+    { id: "plan", agent: "rpi-plan", template: "05-plan.md", tools: ALL_TOOLS, artifact: "plan.md", simple: true },
+    { id: "implement", agent: "rpi-implement", template: "06-implement.md", tools: ALL_TOOLS, artifact: "execution-log.md", simple: true },
 ];
 
 
@@ -59,7 +59,7 @@ export { slugify };
 
 // Deterministic run id: human-readable slug + short content hash. The hash disambiguates tasks that
 // share a 40-char slug prefix (which would otherwise collide onto the same run dir) and is stable
-// for a given task, so `/aw-start <same task>` and `/aw-resume` resolve to the exact same dir.
+// for a given task, so `/rpi-start <same task>` and `/rpi-resume` resolve to the exact same dir.
 function runId(task) {
     const h = createHash("sha1").update(task, "utf8").digest("hex").slice(0, 8);
     return `${slugify(task)}-${h}`;
@@ -159,7 +159,7 @@ export function parsePhaseResult(text) {
 // --- Core dispatch: select agent, send phase prompt, parse PHASE_RESULT. -------------------------
 async function dispatch(phase, { priorErrors = "" } = {}) {
     if (!activeRunDir) {
-        await log("no active run. Start one with /aw-start <task>.");
+        await log("no active run. Start one with /rpi-start <task>.");
         return { result: "fail", reason: "no active run", text: "" };
     }
     // Automatic context check before the expensive implement phase.
@@ -209,7 +209,7 @@ async function resolveFailure(phase, reason, unattended) {
 // --- Auto-runner: walk phases from -> to, branching on PHASE_RESULT. ------------------------------
 async function autoRun({ from, to, unattended = false, pauseAt } = {}) {
     if (!activeRunDir) {
-        await log("no active run. Start one with /aw-auto <task>.");
+        await log("no active run. Start one with /rpi-auto <task>.");
         return;
     }
     pauseRequested = false;
@@ -304,8 +304,8 @@ function isTruthy(v) {
     return v === "" || /^(true|1|yes|on)$/i.test(v ?? "");
 }
 
-// Extract the task string and simple-flow flag from a command's args. Shared by /aw-start and
-// /aw-auto so both entry points parse tasks identically. `simple` is set by forceSimple, a
+// Extract the task string and simple-flow flag from a command's args. Shared by /rpi-start and
+// /rpi-auto so both entry points parse tasks identically. `simple` is set by forceSimple, a
 // `simple:` kv pair, or a bare `simple` token in the free text; those tokens are stripped from the
 // task. Returns the raw kv map too so callers can read from:/to:/unattended:/pause-at:.
 function parseTaskArgs(argstr, forceSimple = false) {
@@ -362,14 +362,14 @@ function ensureGitignore() {
 async function cmdStart(argstr, { forceSimple = false } = {}) {
     const { task, simple } = parseTaskArgs(argstr, forceSimple);
     if (!task) {
-        await log("provide a task, e.g. /aw-start Add CSV export, or /aw-start Fix bug simple");
+        await log("provide a task, e.g. /rpi-start Add CSV export, or /rpi-start Fix bug simple");
         return;
     }
     initRun(task, simple);
     await log(`run dir: ${path.relative(process.cwd(), activeRunDir) || activeRunDir}${simple ? " (simple flow)" : ""}`);
     const next = nextPhase(activeRunDir, activeSimple);
     if (!next) {
-        await log("all phases already complete for this task. Use /aw-status or /aw-redo <phase>.");
+        await log("all phases already complete for this task. Use /rpi-status or /rpi-redo <phase>.");
         return;
     }
     await dispatch(next);
@@ -377,7 +377,7 @@ async function cmdStart(argstr, { forceSimple = false } = {}) {
 
 // Initialize (or re-attach to) a run for `task`: set module state, create the run dir, protect it
 // via .gitignore, persist task/flow metadata (preserving prior phase results for an existing run
-// dir), and restore the auto-judge toggle. Shared by /aw-start and /aw-auto.
+// dir), and restore the auto-judge toggle. Shared by /rpi-start and /rpi-auto.
 function initRun(task, simple) {
     activeTask = task;
     activeSimple = simple;
@@ -426,7 +426,7 @@ async function cmdResume(argstr) {
     const query = (argstr ?? "").trim();
     const runs = listRuns();
     if (runs.length === 0) {
-        await log("no runs found under .aw/. Start one with /aw-start <task>.");
+        await log("no runs found under .aw/. Start one with /rpi-start <task>.");
         return;
     }
     let run;
@@ -440,7 +440,7 @@ async function cmdResume(argstr) {
     } else if (runs.length === 1) {
         run = runs[0];
     } else {
-        await log(`multiple runs found; pick one with /aw-resume <name-or-text>:\n${runs.map((r) => `  ${r.name} — ${r.task}`).join("\n")}`);
+        await log(`multiple runs found; pick one with /rpi-resume <name-or-text>:\n${runs.map((r) => `  ${r.name} — ${r.task}`).join("\n")}`);
         return;
     }
     activeTask = run.task;
@@ -450,7 +450,7 @@ async function cmdResume(argstr) {
     const next = nextPhase(activeRunDir, activeSimple);
     await log(
         `resumed "${activeTask}" (${path.relative(process.cwd(), activeRunDir) || activeRunDir})` +
-            `${next ? `; next phase: ${next.id}. Use /aw-continue or /aw-auto.` : "; all phases complete."}`,
+            `${next ? `; next phase: ${next.id}. Use /rpi-continue or /rpi-auto.` : "; all phases complete."}`,
     );
 }
 
@@ -482,7 +482,7 @@ async function cmdContinue(argstr) {
 
 // Auto-run entry point. With a task, cold-start a run (init dir + state) then auto-run to
 // completion; with no task and an active run, auto-run the active run from the next incomplete
-// phase (the former /aw-run behavior); with neither, print guidance. Honors from:/to:/unattended:/
+// phase (the former /rpi-run behavior); with neither, print guidance. Honors from:/to:/unattended:/
 // pause-at: kv args.
 async function cmdAuto(argstr, { forceSimple = false } = {}) {
     const { task, simple, kv } = parseTaskArgs(argstr, forceSimple);
@@ -490,7 +490,7 @@ async function cmdAuto(argstr, { forceSimple = false } = {}) {
         initRun(task, simple);
         await log(`run dir: ${path.relative(process.cwd(), activeRunDir) || activeRunDir}${simple ? " (simple flow)" : ""} (auto)`);
     } else if (!activeRunDir) {
-        await log("no active run. Provide a task: /aw-auto <task> (or /aw-auto-simple <task>), or /aw-resume first.");
+        await log("no active run. Provide a task: /rpi-auto <task> (or /rpi-auto-simple <task>), or /rpi-resume first.");
         return;
     }
     await autoRun({
@@ -511,11 +511,11 @@ async function cmdPause() {
 // otherwise changed. Non-markdown artifacts (e.g. JSON) are skipped so their structure stays valid.
 async function judgeArtifact(artifactRel) {
     if (!activeRunDir) {
-        await log("no active run. Start one with /aw-start <task>.");
+        await log("no active run. Start one with /rpi-start <task>.");
         return;
     }
     if (!/\.md$/i.test(artifactRel)) {
-        await log(`skipping /aw-judge for ${artifactRel} (not a markdown artifact; append-critique would corrupt it).`);
+        await log(`skipping /rpi-judge for ${artifactRel} (not a markdown artifact; append-critique would corrupt it).`);
         return;
     }
     const abs = path.join(activeRunDir, artifactRel);
@@ -553,8 +553,8 @@ async function autoJudgePhase(phase, before) {
     }
 }
 
-// On-demand critique. `/aw-judge <artifact>` rubber-ducks that artifact and appends the critique to
-// it. `/aw-judge diff` rubber-ducks the current git diff and writes a critique artifact. With no
+// On-demand critique. `/rpi-judge <artifact>` rubber-ducks that artifact and appends the critique to
+// it. `/rpi-judge diff` rubber-ducks the current git diff and writes a critique artifact. With no
 // argument, enqueue a plain /rubber-duck to critique the current work inline.
 async function cmdJudge(argstr) {
     const artifact = (argstr ?? "").trim();
@@ -576,7 +576,7 @@ async function cmdJudge(argstr) {
 
 async function judgeDiff() {
     if (!activeRunDir) {
-        await log("no active run. Start one with /aw-start <task>.");
+        await log("no active run. Start one with /rpi-start <task>.");
         return;
     }
     const critiqueRel = diffCritiqueRel();
@@ -595,7 +595,7 @@ async function judgeDiff() {
     }
 }
 
-// Toggle auto-judge for the active run. `/aw-autojudge` flips it; `on`/`off` set it explicitly.
+// Toggle auto-judge for the active run. `/rpi-autojudge` flips it; `on`/`off` set it explicitly.
 // When on, the auto-runner rubber-ducks every markdown artifact each phase generates after it passes.
 async function cmdAutoJudge(argstr) {
     const v = (argstr ?? "").trim().toLowerCase();
@@ -614,7 +614,7 @@ async function cmdRedo(argstr) {
     const id = rest.shift();
     const feedback = rest.join(" ").trim();
     if (!id) {
-        await log("usage: /aw-redo <phase> <feedback>");
+        await log("usage: /rpi-redo <phase> <feedback>");
         return;
     }
     await cmdPhase(id, feedback);
@@ -637,7 +637,7 @@ function walkArtifacts(dir, base = dir, out = []) {
 
 async function cmdStatus() {
     if (!activeRunDir) {
-        await log("no active run. Start one with /aw-start <task>.");
+        await log("no active run. Start one with /rpi-start <task>.");
         return;
     }
     const order = phaseOrder(activeSimple);
@@ -688,24 +688,24 @@ export const joinConfig = {
     customAgents,
     infiniteSessions: { enabled: true },
     commands: [
-        cmd("aw-start", "Start a full workflow run on a task.", (c) => cmdStart(c.args)),
-        cmd("aw-start-simple", "Start a short-flow run (research → assumptions → plan → implement).", (c) => cmdStart(c.args, { forceSimple: true })),
-        cmd("aw-resume", "Resume a run after a reload: /aw-resume [name-or-text] (rehydrates from .aw/).", (c) => cmdResume(c.args)),
-        cmd("aw-auto", "Start (if given a task) and auto-run to completion: /aw-auto <task> [from:<p>] [to:<p>] [unattended:true] [pause-at:<p>].", (c) => cmdAuto(c.args)),
-        cmd("aw-auto-simple", "Same as /aw-auto but the short flow (research → assumptions → plan → implement).", (c) => cmdAuto(c.args, { forceSimple: true })),
-        cmd("aw-continue", "Run the next phase (or next N).", (c) => cmdContinue(c.args)),
-        cmd("aw-pause", "Stop the auto-runner at the next phase boundary.", () => cmdPause()),
-        cmd("aw-research", "Run the research phase.", (c) => cmdPhase("research", c.args)),
-        cmd("aw-assumptions", "Run the assumptions phase.", (c) => cmdPhase("assumptions", c.args)),
-        cmd("aw-classify", "Run the classify phase.", (c) => cmdPhase("classify", c.args)),
-        cmd("aw-research-item", "Run the per-sub-item research phase.", (c) => cmdPhase("research-item", c.args)),
-        cmd("aw-plan", "Run the plan phase.", (c) => cmdPhase("plan", c.args)),
-        cmd("aw-implement", "Run the implement phase.", (c) => cmdPhase("implement", c.args)),
-        cmd("aw-judge", "Rubber-duck an artifact or git diff: /aw-judge <artifact|diff>. No arg critiques current work inline.", (c) => cmdJudge(c.args)),
-        cmd("aw-autojudge", "Toggle auto-judge: rubber-duck phase artifacts and the post-implement git diff. /aw-autojudge [on|off].", (c) => cmdAutoJudge(c.args)),
-        cmd("aw-redo", "Re-run a phase with steering notes: /aw-redo <phase> <feedback>.", (c) => cmdRedo(c.args)),
-        cmd("aw-status", "Show phase state, artifacts, and git diff --stat.", () => cmdStatus()),
-        cmd("aw-compact", "Reclaim context by queuing /compact.", () => cmdCompact()),
+        cmd("rpi-start", "Start a full workflow run on a task.", (c) => cmdStart(c.args)),
+        cmd("rpi-start-simple", "Start a short-flow run (research → assumptions → plan → implement).", (c) => cmdStart(c.args, { forceSimple: true })),
+        cmd("rpi-resume", "Resume a run after a reload: /rpi-resume [name-or-text] (rehydrates from .aw/).", (c) => cmdResume(c.args)),
+        cmd("rpi-auto", "Start (if given a task) and auto-run to completion: /rpi-auto <task> [from:<p>] [to:<p>] [unattended:true] [pause-at:<p>].", (c) => cmdAuto(c.args)),
+        cmd("rpi-auto-simple", "Same as /rpi-auto but the short flow (research → assumptions → plan → implement).", (c) => cmdAuto(c.args, { forceSimple: true })),
+        cmd("rpi-continue", "Run the next phase (or next N).", (c) => cmdContinue(c.args)),
+        cmd("rpi-pause", "Stop the auto-runner at the next phase boundary.", () => cmdPause()),
+        cmd("rpi-research", "Run the research phase.", (c) => cmdPhase("research", c.args)),
+        cmd("rpi-assumptions", "Run the assumptions phase.", (c) => cmdPhase("assumptions", c.args)),
+        cmd("rpi-classify", "Run the classify phase.", (c) => cmdPhase("classify", c.args)),
+        cmd("rpi-research-item", "Run the per-sub-item research phase.", (c) => cmdPhase("research-item", c.args)),
+        cmd("rpi-plan", "Run the plan phase.", (c) => cmdPhase("plan", c.args)),
+        cmd("rpi-implement", "Run the implement phase.", (c) => cmdPhase("implement", c.args)),
+        cmd("rpi-judge", "Rubber-duck an artifact or git diff: /rpi-judge <artifact|diff>. No arg critiques current work inline.", (c) => cmdJudge(c.args)),
+        cmd("rpi-autojudge", "Toggle auto-judge: rubber-duck phase artifacts and the post-implement git diff. /rpi-autojudge [on|off].", (c) => cmdAutoJudge(c.args)),
+        cmd("rpi-redo", "Re-run a phase with steering notes: /rpi-redo <phase> <feedback>.", (c) => cmdRedo(c.args)),
+        cmd("rpi-status", "Show phase state, artifacts, and git diff --stat.", () => cmdStatus()),
+        cmd("rpi-compact", "Reclaim context by queuing /compact.", () => cmdCompact()),
     ],
 };
 

@@ -205,8 +205,8 @@ test("diff judge helpers recognize git diff targets and build critique instructi
     assert.match(instr, /\/repo\/\.aw\/my-run\/critiques\/git-diff-20260701T194359Z\.md/);
 });
 
-test("aw-judge advertises diff review", () => {
-    const cmd = joinConfig.commands.find((c) => c.name === "aw-judge");
+test("rpi-judge advertises diff review", () => {
+    const cmd = joinConfig.commands.find((c) => c.name === "rpi-judge");
     assert.match(cmd.description, /diff/);
 });
 
@@ -232,7 +232,7 @@ test("initRun creates the run dir and state.json", () => {
 test("joinConfig registers the six phase agents", () => {
     const names = joinConfig.customAgents.map((a) => a.name).sort();
     assert.deepEqual(names, [
-        "aw-assumptions", "aw-classify", "aw-implement", "aw-plan", "aw-research", "aw-research-item",
+        "rpi-assumptions", "rpi-classify", "rpi-implement", "rpi-plan", "rpi-research", "rpi-research-item",
     ].sort());
 });
 
@@ -246,7 +246,7 @@ test("joinConfig gives every phase all tools", () => {
 test("joinConfig registers the command surface", () => {
     assert.equal(joinConfig.infiniteSessions.enabled, true);
     const cmds = joinConfig.commands.map((c) => c.name);
-    for (const expected of ["aw-start", "aw-start-simple", "aw-resume", "aw-auto", "aw-auto-simple", "aw-continue", "aw-pause", "aw-judge", "aw-autojudge", "aw-redo", "aw-status", "aw-compact", "aw-implement"]) {
+    for (const expected of ["rpi-start", "rpi-start-simple", "rpi-resume", "rpi-auto", "rpi-auto-simple", "rpi-continue", "rpi-pause", "rpi-judge", "rpi-autojudge", "rpi-redo", "rpi-status", "rpi-compact", "rpi-implement"]) {
         assert.ok(cmds.includes(expected), `missing /${expected}`);
     }
 });

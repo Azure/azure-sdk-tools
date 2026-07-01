@@ -31,52 +31,52 @@ Then make the CLI (re)discover it and confirm it loaded:
 ## Quickstart
 
 ```
-/aw-auto Add CSV export to the report endpoint      # start + auto-run the whole flow to implement
+/rpi-auto Add CSV export to the report endpoint      # start + auto-run the whole flow to implement
 ```
 
 Prefer to drive it one phase at a time?
 
 ```
-/aw-start Add CSV export to the report endpoint    # init the run + run the first phase
-/aw-status                                          # see phase checklist + artifacts + git diff
-/aw-continue                                        # run the next phase, then stop
-/aw-auto                                             # or: auto-run the rest to implement
+/rpi-start Add CSV export to the report endpoint    # init the run + run the first phase
+/rpi-status                                          # see phase checklist + artifacts + git diff
+/rpi-continue                                        # run the next phase, then stop
+/rpi-auto                                             # or: auto-run the rest to implement
 ```
 
-Prefer a shorter loop? Use `/aw-auto-simple` (or `/aw-start-simple`) to skip the classify /
-per-item research phases (the `simple` suffix on `/aw-start` still works as an alias):
+Prefer a shorter loop? Use `/rpi-auto-simple` (or `/rpi-start-simple`) to skip the classify /
+per-item research phases (the `simple` suffix on `/rpi-start` still works as an alias):
 
 ```
-/aw-auto-simple Fix null deref in TokenCache
+/rpi-auto-simple Fix null deref in TokenCache
 ```
 
 Everything a run produces lives under `<cwd>/.aw/<task-slug>-<hash>/` — specs, assumptions, the
 plan, execution log, and a `state.json` that tracks which phases have passed. Inspect or edit those
-files between phases at any time. If your session reloads, pick the run back up with `/aw-resume`.
+files between phases at any time. If your session reloads, pick the run back up with `/rpi-resume`.
 
 ## Commands
 
 | Command | Behavior |
 | --- | --- |
-| `/aw-auto <task>` | Start a run (if given a task) and auto-run to completion. On an existing run with no task, auto-runs the rest. Accepts `[from:<p>] [to:<p>] [unattended:true] [pause-at:<p>]`. |
-| `/aw-auto-simple <task>` | Same as `/aw-auto` but the short flow (research → assumptions → plan → implement). |
-| `/aw-start <task>` | Init the run dir and run the first phase (full flow). |
-| `/aw-start-simple <task>` | Same, but the short flow (research → assumptions → plan → implement). Equivalent to `/aw-start <task> simple`. |
-| `/aw-resume [name-or-text]` | Rehydrate a run after a reload from `.aw/` (task, flow, auto-judge toggle). With no arg, resumes the only/most-recent run; otherwise matches by dir name or task text. |
-| `/aw-continue [n]` | Run the next phase (or next `n`), then stop. |
-| `/aw-pause` | Stop the auto-runner at the next phase boundary. |
-| `/aw-research` … `/aw-implement` | Run one specific phase by name (`/aw-research`, `/aw-assumptions`, `/aw-classify`, `/aw-research-item`, `/aw-plan`, `/aw-implement`). |
-| `/aw-redo <phase> <feedback>` | Re-run a phase with steering notes appended to its prompt. |
-| `/aw-judge [artifact\|diff]` | Rubber-duck an artifact via the native `/rubber-duck` agent and append its critique to that file (e.g. `/aw-judge plan.md`). Use `/aw-judge diff` to critique the current git diff into `critiques/git-diff-*.md`. With no arg, critiques the current work inline. |
-| `/aw-autojudge [on\|off]` | Toggle auto-judge for the active run. When on, the auto-runner rubber-ducks every new markdown artifact a phase generates right after it passes, appending each critique to the artifact; after `implement`, it also critiques the git diff. No arg flips the current state. Persisted to `state.json`. |
-| `/aw-status` | Show the phase checklist, run-dir artifacts, and `git diff --stat`. |
-| `/aw-compact` | Reclaim context by queuing `/compact`. |
+| `/rpi-auto <task>` | Start a run (if given a task) and auto-run to completion. On an existing run with no task, auto-runs the rest. Accepts `[from:<p>] [to:<p>] [unattended:true] [pause-at:<p>]`. |
+| `/rpi-auto-simple <task>` | Same as `/rpi-auto` but the short flow (research → assumptions → plan → implement). |
+| `/rpi-start <task>` | Init the run dir and run the first phase (full flow). |
+| `/rpi-start-simple <task>` | Same, but the short flow (research → assumptions → plan → implement). Equivalent to `/rpi-start <task> simple`. |
+| `/rpi-resume [name-or-text]` | Rehydrate a run after a reload from `.aw/` (task, flow, auto-judge toggle). With no arg, resumes the only/most-recent run; otherwise matches by dir name or task text. |
+| `/rpi-continue [n]` | Run the next phase (or next `n`), then stop. |
+| `/rpi-pause` | Stop the auto-runner at the next phase boundary. |
+| `/rpi-research` … `/rpi-implement` | Run one specific phase by name (`/rpi-research`, `/rpi-assumptions`, `/rpi-classify`, `/rpi-research-item`, `/rpi-plan`, `/rpi-implement`). |
+| `/rpi-redo <phase> <feedback>` | Re-run a phase with steering notes appended to its prompt. |
+| `/rpi-judge [artifact\|diff]` | Rubber-duck an artifact via the native `/rubber-duck` agent and append its critique to that file (e.g. `/rpi-judge plan.md`). Use `/rpi-judge diff` to critique the current git diff into `critiques/git-diff-*.md`. With no arg, critiques the current work inline. |
+| `/rpi-autojudge [on\|off]` | Toggle auto-judge for the active run. When on, the auto-runner rubber-ducks every new markdown artifact a phase generates right after it passes, appending each critique to the artifact; after `implement`, it also critiques the git diff. No arg flips the current state. Persisted to `state.json`. |
+| `/rpi-status` | Show the phase checklist, run-dir artifacts, and `git diff --stat`. |
+| `/rpi-compact` | Reclaim context by queuing `/compact`. |
 
 ### Execution modes
 
-- **Manual** — `/aw-<phase>` or `/aw-continue`; stops after every phase so you can inspect artifacts.
-- **Ranged auto** — `/aw-auto from:assumptions to:plan`; stops at the boundary or a stop condition.
-- **Full auto** — `/aw-auto <task>` (or add `unattended:true`); starts the run if needed and runs to
+- **Manual** — `/rpi-<phase>` or `/rpi-continue`; stops after every phase so you can inspect artifacts.
+- **Ranged auto** — `/rpi-auto from:assumptions to:plan`; stops at the boundary or a stop condition.
+- **Full auto** — `/rpi-auto <task>` (or add `unattended:true`); starts the run if needed and runs to
   `implement`, halting only at gates, `needs_input`, or hard failure.
 
 At a `needs_input` stop (interactive, not `unattended`) the runner shows a `session.ui` dialog to
@@ -96,11 +96,11 @@ set it for your session (e.g. via the CLI's model selection) before starting a r
 
 For an independent critique, use the native `/rubber-duck` agent through the workflow:
 
-- **On demand:** `/aw-judge <artifact>` reviews that artifact and appends a `## Rubber-duck critique`
-  section to the file (e.g. `/aw-judge plan.md`). `/aw-judge diff` reviews the current `git diff`
+- **On demand:** `/rpi-judge <artifact>` reviews that artifact and appends a `## Rubber-duck critique`
+  section to the file (e.g. `/rpi-judge plan.md`). `/rpi-judge diff` reviews the current `git diff`
   after implementation and writes the critique to `critiques/git-diff-*.md`. With no argument,
-  `/aw-judge` critiques the current work inline and the agent decides whether to apply the findings.
-- **Automatic:** `/aw-autojudge [on|off]` toggles auto-judge for the active run (persisted to
+  `/rpi-judge` critiques the current work inline and the agent decides whether to apply the findings.
+- **Automatic:** `/rpi-autojudge [on|off]` toggles auto-judge for the active run (persisted to
   `state.json`). When on, the auto-runner rubber-ducks every **new markdown artifact** a phase
   generates right after the phase passes, appending each critique to the artifact. After the
   `implement` phase passes, it also rubber-ducks the repository git diff and writes the critique to
@@ -118,12 +118,12 @@ keeps tasks that share a slug prefix from colliding onto the same dir.
   sub-item in `subitems.json`.
 - Run metadata (task, flow, auto-judge toggle) is persisted to `state.json`, so after a reload you
   only need enough information to identify the run:
-  - `/aw-resume` resumes the only run under `.aw/`; if there are multiple runs, it lists them.
-  - `/aw-resume <dir-name>` resumes by the run directory name, for example
-    `/aw-resume add-csv-export-1a2b3c4d`.
-  - `/aw-resume <task-substring>` resumes by matching text from the original task, for example
-    `/aw-resume CSV export`.
-- On `/aw-start`, `.aw/` is auto-appended to the target repo's `.gitignore` so run artifacts never
+  - `/rpi-resume` resumes the only run under `.aw/`; if there are multiple runs, it lists them.
+  - `/rpi-resume <dir-name>` resumes by the run directory name, for example
+    `/rpi-resume add-csv-export-1a2b3c4d`.
+  - `/rpi-resume <task-substring>` resumes by matching text from the original task, for example
+    `/rpi-resume CSV export`.
+- On `/rpi-start`, `.aw/` is auto-appended to the target repo's `.gitignore` so run artifacts never
   leak into commits.
 
 ## Design
@@ -158,12 +158,12 @@ Every phase runs on your configured session model (recommended: `claude-opus-4.8
 
 | Phase | Agent | Tools | Writes |
 | --- | --- | --- | --- |
-| research | `aw-research` | **all** | `specs/*.md`, `manifest.json` |
-| assumptions | `aw-assumptions` | **all** | `assumptions.md` |
-| classify | `aw-classify` | **all** | `subitems.json`, `classification.md` |
-| research-item | `aw-research-item` | **all** | `research/<id>.md` |
-| plan | `aw-plan` | **all** | `plan.md` |
-| implement | `aw-implement` | **all** | code edits + `execution-log.md`, `handoff.md` |
+| research | `rpi-research` | **all** | `specs/*.md`, `manifest.json` |
+| assumptions | `rpi-assumptions` | **all** | `assumptions.md` |
+| classify | `rpi-classify` | **all** | `subitems.json`, `classification.md` |
+| research-item | `rpi-research-item` | **all** | `research/<id>.md` |
+| plan | `rpi-plan` | **all** | `plan.md` |
+| implement | `rpi-implement` | **all** | code edits + `execution-log.md`, `handoff.md` |
 
 All phase agents can write their own artifacts under the run directory.
 

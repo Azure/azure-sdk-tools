@@ -31,20 +31,12 @@ if ($PSCmdlet.ParameterSetName -eq 'Languages') {
 }
 
 if ($PSCmdlet.ParameterSetName -eq 'RepositoryFile') {
-    $Repositories = Get-Content $RepositoryFilePath
+    $Repositories = @(
+        Get-Content $RepositoryFilePath |
+            ForEach-Object { ([string]$_).Trim() } |
+            Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and -not $_.EndsWith('-pr', [StringComparison]::OrdinalIgnoreCase) }
+    )
 }
-
-$Repositories = @(
-    foreach ($repository in $Repositories) {
-        $repository = ([string]$repository).Trim()
-
-        if ([string]::IsNullOrWhiteSpace($repository) -or $repository.EndsWith('-pr', [StringComparison]::OrdinalIgnoreCase)) {
-            continue
-        }
-
-        $repository
-    }
-)
 
 $date = $StartDate
 [pscustomobject[]] $milestones = do {
@@ -102,16 +94,16 @@ Write-Progress -Activity $activity -Completed
 Creates Azure SDK milestones in the form of "yyyy-MM".
 
 .DESCRIPTION
-Creates Azure SDK milestones in the form of "yyyy-MM" with the due date set to the first Friday of the following month at 11:59 PM UTC. Repositories ending in "-pr" are skipped before any milestones are created or reported.
+Creates Azure SDK milestones in the form of "yyyy-MM" with the due date set to the first Friday of the following month at 11:59 PM UTC. When repositories are loaded from RepositoryFilePath, entries ending in "-pr" are skipped before any milestones are created or reported.
 
 .PARAMETER Repositories
-The GitHub repositories to update. Repositories ending in "-pr" are skipped.
+The GitHub repositories to update.
 
 .PARAMETER Languages
-The Azure SDK languages to query for milestones e.g., "net" for "Azure/azure-sdk-for-net". Repositories ending in "-pr" are skipped.
+The Azure SDK languages to query for milestones e.g., "net" for "Azure/azure-sdk-for-net".
 
 .PARAMETER RepositoryFilePath
-The fully-qualified path (including filename) to a new line-delmited file of respositories to update. Repositories ending in "-pr" are skipped.
+The fully-qualified path (including filename) to a new line-delmited file of respositories to update. Entries ending in "-pr" are skipped.
 
 .PARAMETER StartDate
 The starting date for new milestones.

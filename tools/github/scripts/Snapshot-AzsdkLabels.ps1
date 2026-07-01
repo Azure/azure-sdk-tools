@@ -40,20 +40,12 @@ if ($PSCmdlet.ParameterSetName -eq 'Languages') {
 }
 
 if ($PSCmdlet.ParameterSetName -eq 'RepositoryFile') {
-    $Repositories = Get-Content $RepositoryFilePath
+    $Repositories = @(
+        Get-Content $RepositoryFilePath |
+            ForEach-Object { ([string]$_).Trim() } |
+            Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and -not $_.EndsWith('-pr', [StringComparison]::OrdinalIgnoreCase) }
+    )
 }
-
-$Repositories = @(
-    foreach ($repository in $Repositories) {
-        $repository = ([string]$repository).Trim()
-
-        if ([string]::IsNullOrWhiteSpace($repository) -or $repository.EndsWith('-pr', [StringComparison]::OrdinalIgnoreCase)) {
-            continue
-        }
-
-        $repository
-    }
-)
 
 # If the output path does not exist, create it.
 if (-not (Test-Path $SnapshotDirectory -PathType Container)) {
@@ -119,7 +111,7 @@ foreach ($repo in $Repositories) {
 Inspects labels for a set of repositories and creates a snapshot of those not part of the common set.
 
 .DESCRIPTION
-Inspects labels for a set of repositories and creates a snapshot of those labels not part of the common set.  The snapshot is written as a line-delimited list of label names in the specified directory named after the source repository. Repositories ending in "-pr" are skipped before any snapshots or reporting are generated.
+Inspects labels for a set of repositories and creates a snapshot of those labels not part of the common set.  The snapshot is written as a line-delimited list of label names in the specified directory named after the source repository. When repositories are loaded from RepositoryFilePath, entries ending in "-pr" are skipped before any snapshots or reporting are generated.
 
 .PARAMETER SnapshotDirectory
 The fully-qualifeid path to the directory in which repository shapshot files should be written.
@@ -128,13 +120,13 @@ The fully-qualifeid path to the directory in which repository shapshot files sho
 The fully-qualifeid path (including filename) to a CSV file of the common Azure SDK labels that will filtered from snapshots.  Columns have no headers and are in the form of "Name,Description,Color".
 
 .PARAMETER Repositories
-The GitHub repositories to inspect and build snapshots for. Repositories ending in "-pr" are skipped.
+The GitHub repositories to inspect and build snapshots for.
 
 .PARAMETER Languages
-The Azure SDK languages whose repositories should be inspected and snapshots built for.   e.g., "net" for "Azure/azure-sdk-for-net". Repositories ending in "-pr" are skipped.
+The Azure SDK languages whose repositories should be inspected and snapshots built for.   e.g., "net" for "Azure/azure-sdk-for-net".
 
 .PARAMETER RepositoryFilePath
-The fully-qualified path (including filename) to a new line-delmited file of respositories to inspect and build snapshots for. Repositories ending in "-pr" are skipped.
+The fully-qualified path (including filename) to a new line-delmited file of respositories to inspect and build snapshots for. Entries ending in "-pr" are skipped.
 
 .PARAMETER Force
 Build snapshots for each repository without prompting.

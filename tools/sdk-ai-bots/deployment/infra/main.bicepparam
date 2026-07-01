@@ -23,8 +23,13 @@ param ragBasedBackendImageRepository = 'azure-sdk-qa-bot-backend:${envName}'
 param agentBasedImageRepository    = 'azure-sdk-qa-bot-agent-server:${envName}'
 
 // ── Per-env values (read from .azure/<env>/.env; pipelines override via JSON) ─
-// Required for any non-dev env. Set with:
-//   azd env set SERVER_AUDIENCE <aad-app-guid>
+// SERVER_AUDIENCE is auto-populated by the preprovision hook
+// (hooks/preprovision.ts → ensureServerAudience), which creates or looks up
+// an Entra ID app registration named `azuresdkqabot-server-<envName>` via
+// `az ad app` and persists its clientId with `azd env set`. Only set this
+// manually to pin a specific external app registration.
+//
+// TEAMS_GROUP_ID / TEAMS_CHANNEL_IDS are set per-env with:
 //   azd env set TEAMS_GROUP_ID <guid>
 //   azd env set TEAMS_CHANNEL_IDS '19:foo@thread.skype,19:bar@thread.skype'
 param serverAudience  = readEnvironmentVariable('SERVER_AUDIENCE', '')

@@ -2,13 +2,10 @@
 #
 # Top-level azd manifest for the Azure SDK QA Bot (sdk-ai-bots) deployment.
 #
-# Ported and adapted from ../azd-experiments/azure.yaml. The key differences:
-#
-#  - `infra/` paths are now relative to this file (tools/sdk-ai-bots/deployment).
-#  - Service `project` paths are relative to this file and point at the
-#    sibling component folders inside tools/sdk-ai-bots/.
-#  - All hooks are invoked via `tsx` from this folder so the hook code is
-#    self-contained inside the deployment tree.
+# NOTE: This file lives at tools/sdk-ai-bots/ (not tools/sdk-ai-bots/deployment/)
+# because azd forbids service `project:` paths that escape the azure.yaml
+# directory with `..`. All component projects are siblings here, and infra /
+# hooks / pipelines live under the sibling `deployment/` folder.
 #
 # Three azd services run application code:
 #   - frontend     (Teams bot, App Service container)
@@ -17,7 +14,7 @@
 #
 # Three infra-only layers are deployed by the postprovision hook:
 #   - shared-resources, agent-platform, backend, logic-app
-# (See hooks/lib/layers.ts.)
+# (See deployment/hooks/lib/layers.ts.)
 
 name: sdk-ai-bots
 metadata:
@@ -25,7 +22,7 @@ metadata:
 
 infra:
     provider: bicep
-    path: infra
+    path: deployment/infra
     module: main
 
 services:
@@ -34,7 +31,7 @@ services:
         # CD performs slot-deploy + swap; predeploy builds and pushes the image
         # to ACR (only used for local `azd deploy frontend` — pipelines build
         # the image in CI and skip this step via AZD_SKIP_IMAGE_BUILD=1).
-        project: ../azure-sdk-qa-bot
+        project: azure-sdk-qa-bot
         language: ts
         host: appservice
         hooks:
@@ -56,7 +53,7 @@ services:
 
     function-app:
         # Azure Function — processes queue messages and background jobs.
-        project: ../azure-sdk-qa-bot-function
+        project: azure-sdk-qa-bot-function
         language: ts
         host: function
         hooks:
@@ -78,7 +75,7 @@ services:
 
     agent:
         # Hosted Chat Agent on Microsoft Foundry (container agent).
-        project: ../azure-sdk-qa-bot-agent/agents/chat_agent
+        project: azure-sdk-qa-bot-agent/agents/chat_agent
         language: python
         host: azure.ai.agent
         config:
@@ -105,7 +102,7 @@ services:
 hooks:
     preprovision:
         - shell: sh
-          run: npx tsx hooks/preprovision.ts
+          run: npx tsx deployment/hooks/preprovision.ts
           interactive: true
           continueOnError: false
 
@@ -114,30 +111,30 @@ hooks:
     # DEPLOY_LAYER=<name> runs a single layer.
     postprovision:
         - shell: sh
-          run: npx tsx hooks/postprovision.ts
+          run: npx tsx deployment/hooks/postprovision.ts
           interactive: true
           continueOnError: false
 
     predeploy:
         - shell: sh
-          run: npx tsx hooks/predeploy.ts
+          run: npx tsx deployment/hooks/predeploy.ts
           interactive: true
           continueOnError: false
 
     postdeploy:
         - shell: sh
-          run: npx tsx hooks/postdeploy.ts
+          run: npx tsx deployment/hooks/postdeploy.ts
           interactive: true
           continueOnError: false
 
     predown:
         - shell: sh
-          run: npx tsx hooks/predown.ts
+          run: npx tsx deployment/hooks/predown.ts
           interactive: true
           continueOnError: false
 
     postdown:
         - shell: sh
-          run: npx tsx hooks/postdown.ts
+          run: npx tsx deployment/hooks/postdown.ts
           interactive: true
           continueOnError: false

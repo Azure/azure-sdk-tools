@@ -35,8 +35,8 @@ environments:
         # Symbolic subscription reference. The pipeline maps this to a real
         # service-connection name via /eng/pipelines/templates/variables/globals.yml
         # (entry: subscriptionMap.dev → SERVICE_CONNECTION + AZURE_SUBSCRIPTION_ID).
-        subscription: 'azuresdkqabot-dev'
-        subscriptionId: 'REPLACE_WITH_DEV_SUBSCRIPTION_ID'
+        subscription: 'Azure SDK Developer Playground'
+        subscriptionId: 'faa080af-c1d8-40ad-9cce-e1a450ca5b57'
         tenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
         resourceGroupPrefix: 'rg-azuresdkqabot-dev'
         keyVaultName: 'azsdkqabot-kv-dev'

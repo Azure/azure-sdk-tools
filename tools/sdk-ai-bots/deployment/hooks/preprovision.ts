@@ -9,11 +9,16 @@
  *     outside Azure DevOps for the prod env.
  *   - Detects local-dev drift between the env-suite and the azd env vars
  *     and tells the developer to run scripts/sync-env-suite.ps1.
+ *   - Ensures the Entra ID app registration backing `serverAudience` exists
+ *     and exports its clientId as SERVER_AUDIENCE so main.bicepparam picks
+ *     it up on the same provision run.
  */
 
 import { execSync } from "child_process";
 import { readFileSync, existsSync } from "fs";
 import { resolve } from "path";
+
+import { ensureEntraApp } from "./lib/ensure-entra-app.js";
 
 const ENV_NAME = process.env.AZURE_ENV_NAME ?? "";
 const SUBSCRIPTION_ID = process.env.AZURE_SUBSCRIPTION_ID ?? "";
@@ -124,6 +129,37 @@ function validateAuth(): void {
   else log("  AZURE_SUBSCRIPTION_ID not set — azd will use the default subscription.");
 }
 
+/**
+ * Ensures the Entra ID app registration that backs `serverAudience` exists,
+ * then persists its clientId (appId) as SERVER_AUDIENCE so main.bicepparam
+ * picks it up in this same provision run.
+ *
+ * No-op when SERVER_AUDIENCE is already set (e.g. pipelines pass it in
+ * explicitly via environments/<env>.parameters.json).
+ */
+function ensureServerAudience(): void {
+  const existing = process.env.SERVER_AUDIENCE?.trim();
+  if (existing) {
+    log(`  ✓ SERVER_AUDIENCE already set (${existing}); skipping Entra app creation`);
+    return;
+  }
+  if (!ENV_NAME) {
+    log("  AZURE_ENV_NAME not set — skipping Entra app registration.");
+    return;
+  }
+
+  const displayName = `azuresdkqabot-server-${ENV_NAME}`;
+  log(`SERVER_AUDIENCE not set — ensuring Entra app registration '${displayName}'`);
+  const appId = ensureEntraApp({ displayName });
+
+  // Persist for subsequent azd runs (.azure/<env>/.env).
+  execSync(`azd env set SERVER_AUDIENCE ${appId}`, { stdio: "inherit" });
+  // Export into the current process so main.bicepparam's readEnvironmentVariable
+  // sees the value on the same `azd provision` invocation.
+  process.env.SERVER_AUDIENCE = appId;
+  log(`  ✓ SERVER_AUDIENCE=${appId} persisted via azd env set`);
+}
+
 (async () => {
   log(`Starting preprovision for environment '${ENV_NAME}' in '${LOCATION}'`);
   log(`  Resource group: ${RESOURCE_GROUP || "(not set; will be created by main.bicep)"}`);
@@ -133,6 +169,7 @@ function validateAuth(): void {
   detectLocalDrift();
   enforceProdGuardrail();
   validateAuth();
+  ensureServerAudience();
 
   log("Preprovision checks passed.");
 })().catch((err) => {

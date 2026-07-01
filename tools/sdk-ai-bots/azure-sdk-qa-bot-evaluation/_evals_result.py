@@ -209,7 +209,7 @@ class EvalsResult:
                 baseline_path = pathlib.Path(__file__).parent / "results" / baseline_name
 
                 if baseline_path.exists():
-                    with open(baseline_path, "r") as f:
+                    with open(baseline_path, "r", encoding="utf-8") as f:
                         baseline_data = json.load(f)
                         for result in baseline_data[:-1]:  # Skip summary
                             baseline_results[result["testcase"]] = result
@@ -240,7 +240,7 @@ class EvalsResult:
                 baseline_path = pathlib.Path(__file__).parent / "results" / baseline_name
 
                 if baseline_path.exists():
-                    with open(baseline_path, "r") as f:
+                    with open(baseline_path, "r", encoding="utf-8") as f:
                         baseline_data = json.load(f)
                         for result in baseline_data[:-1]:  # Skip summary
                             baseline_results[result["testcase"]] = result
@@ -304,7 +304,7 @@ class EvalsResult:
                     partial_result = filter_keys_recursive(result, exclude_keys)
                     baseline_name = f"{name.split('_')[0]}-test.json"
                     baseline_path = pathlib.Path(__file__).parent / "results" / baseline_name
-                    with open(str(baseline_path), "w") as f:
+                    with open(str(baseline_path), "w", encoding="utf-8") as f:
                         json.dump(partial_result, indent=4, fp=f)
 
         # whether or not we establish a baseline, we want to write results to a temp dir
@@ -317,7 +317,7 @@ class EvalsResult:
             partial_result = filter_keys_recursive(result, exclude_keys)
             baseline_name = f"{name.split('_')[0]}-test.json"
             output_path = log_path / baseline_name
-            with open(str(output_path), "w") as f:
+            with open(str(output_path), "w", encoding="utf-8") as f:
                 json.dump(partial_result, indent=4, fp=f)
 
 

@@ -38,7 +38,7 @@ environments:
         subscription: 'Azure SDK Developer Playground'
         subscriptionId: 'faa080af-c1d8-40ad-9cce-e1a450ca5b57'
         tenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
-        resourceGroupPrefix: 'rg-azuresdkqabot-dev'
+        resourceGroupPrefix: 'azure-sdk-qa-bot-dev'
         keyVaultName: 'azsdkqabot-kv-dev'
         appConfigName: 'azsdkqabot-config-dev'
         containerRegistryName: 'azsdkqabotacrdev'

@@ -204,7 +204,11 @@ if ($PSCmdlet.ParameterSetName -eq 'Languages') {
 }
 
 if ($PSCmdlet.ParameterSetName -eq 'RepositoryFile') {
-    $Repositories = Get-Content $RepositoryFilePath
+    $Repositories = @(
+        Get-Content $RepositoryFilePath |
+            ForEach-Object { ([string]$_).Trim() } |
+            Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and -not $_.EndsWith('-pr', [StringComparison]::OrdinalIgnoreCase) }
+    )
 }
 
 # Extract the label content to be sync'd.
@@ -261,7 +265,7 @@ Write-Progress -Activity $activity -Completed
 Synchonizes the common set of Azure SDK labels to one or more repository.
 
 .DESCRIPTION
-Creates or updates labels - without deleting any - ensuring the common Azure SDK label set exists in all listed repositories.
+Creates or updates labels - without deleting any - ensuring the common Azure SDK label set exists in all listed repositories. When repositories are loaded from RepositoryFilePath, entries ending in "-pr" are skipped before any synchronization, progress reporting, or delay calculations occur.
 
 .PARAMETER LabelsFilePath
 The fully-qualifeid path (including filename) to a CSV file of the common Azure SDK labels that will be created or updated in each repository.  Columns have no headers and are in the form of "Name,Description,Color".
@@ -273,7 +277,7 @@ The GitHub repositories to update with the common label set.
 The Azure SDK languages whose repositories should be updated with the common label set.  e.g., "net" for "Azure/azure-sdk-for-net".
 
 .PARAMETER RepositoryFilePath
-The fully-qualified path (including filename) to a new line-delmited file of respositories to update with the common label set.
+The fully-qualified path (including filename) to a new line-delmited file of respositories to update with the common label set. Entries ending in "-pr" are skipped.
 
 .PARAMETER Incremental
 Determines whether each repository should be synchronized based only on labels added or updated in the labels CSV. When local staged or unstaged changes exist for the labels file, those pending changes are evaluated; otherwise, the last commit that changed the file is evaluated.

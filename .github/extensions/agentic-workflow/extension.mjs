@@ -233,7 +233,7 @@ async function resolveFailure(phase, reason, unattended) {
 // --- Auto-runner: walk phases from -> to, branching on PHASE_RESULT. ------------------------------
 async function autoRun({ from, to, unattended = false, pauseAt } = {}) {
     if (!activeRunDir) {
-        await log("no active run. Start one with /aw-start <task>.");
+        await log("no active run. Start one with /aw-auto <task>.");
         return;
     }
     pauseRequested = false;
@@ -325,7 +325,18 @@ function parseKv(argstr) {
 function isTruthy(v) {
     return v === "" || /^(true|1|yes|on)$/i.test(v ?? "");
 }
-export { parseKv, isTruthy };
+
+// Extract the task string and simple-flow flag from a command's args. Shared by /aw-start and
+// /aw-auto so both entry points parse tasks identically. `simple` is set by forceSimple, a
+// `simple:` kv pair, or a bare `simple` token in the free text; those tokens are stripped from the
+// task. Returns the raw kv map too so callers can read from:/to:/unattended:/pause-at:.
+function parseTaskArgs(argstr, forceSimple = false) {
+    const { kv, rest } = parseKv(argstr);
+    const simple = forceSimple || isTruthy(kv.simple) || rest.some((t) => /^(--?)?simple$/i.test(t));
+    const task = rest.filter((t) => !/^(--?)?simple$/i.test(t)).join(" ").trim() || kv.task || "";
+    return { task, simple, kv };
+}
+export { parseKv, isTruthy, parseTaskArgs };
 
 // --- Commands ------------------------------------------------------------------------------------
 // Ensure the target repo ignores the on-disk run state so `.aw/` artifacts never leak into commits.
@@ -349,13 +360,25 @@ function ensureGitignore() {
 }
 
 async function cmdStart(argstr, { forceSimple = false } = {}) {
-    const { kv, rest } = parseKv(argstr);
-    let simple = forceSimple || isTruthy(kv.simple) || rest.some((t) => /^(--?)?simple$/i.test(t));
-    const task = rest.filter((t) => !/^(--?)?simple$/i.test(t)).join(" ").trim() || kv.task || "";
+    const { task, simple } = parseTaskArgs(argstr, forceSimple);
     if (!task) {
         await log("provide a task, e.g. /aw-start Add CSV export, or /aw-start Fix bug simple");
         return;
     }
+    initRun(task, simple);
+    await log(`run dir: ${path.relative(process.cwd(), activeRunDir) || activeRunDir}${simple ? " (simple flow)" : ""}`);
+    const next = nextPhase(activeRunDir, activeSimple);
+    if (!next) {
+        await log("all phases already complete for this task. Use /aw-status or /aw-redo <phase>.");
+        return;
+    }
+    await dispatch(next);
+}
+
+// Initialize (or re-attach to) a run for `task`: set module state, create the run dir, protect it
+// via .gitignore, persist task/flow metadata (preserving prior phase results + model overrides for
+// an existing run dir), and apply any model/autojudge overrides. Shared by /aw-start and /aw-auto.
+function initRun(task, simple) {
     activeTask = task;
     activeSimple = simple;
     activeRunDir = path.join(process.cwd(), ".aw", runId(task));
@@ -370,14 +393,8 @@ async function cmdStart(argstr, { forceSimple = false } = {}) {
     writeState(activeRunDir, state);
     applyModelOverrides(state);
     autoJudge = !!state.autoJudge;
-    await log(`run dir: ${path.relative(process.cwd(), activeRunDir) || activeRunDir}${simple ? " (simple flow)" : ""}`);
-    const next = nextPhase(activeRunDir, activeSimple);
-    if (!next) {
-        await log("all phases already complete for this task. Use /aw-status or /aw-redo <phase>.");
-        return;
-    }
-    await dispatch(next);
 }
+export { initRun };
 
 // List resumable runs under <cwd>/.aw/, newest first, from their persisted state.json.
 function listRuns() {
@@ -436,7 +453,7 @@ async function cmdResume(argstr) {
     const next = nextPhase(activeRunDir, activeSimple);
     await log(
         `resumed "${activeTask}" (${path.relative(process.cwd(), activeRunDir) || activeRunDir})` +
-            `${next ? `; next phase: ${next.id}. Use /aw-continue or /aw-run.` : "; all phases complete."}`,
+            `${next ? `; next phase: ${next.id}. Use /aw-continue or /aw-auto.` : "; all phases complete."}`,
     );
 }
 
@@ -466,8 +483,19 @@ async function cmdContinue(argstr) {
     }
 }
 
-async function cmdRun(argstr) {
-    const { kv } = parseKv(argstr);
+// Auto-run entry point. With a task, cold-start a run (init dir + state) then auto-run to
+// completion; with no task and an active run, auto-run the active run from the next incomplete
+// phase (the former /aw-run behavior); with neither, print guidance. Honors from:/to:/unattended:/
+// pause-at: kv args.
+async function cmdAuto(argstr, { forceSimple = false } = {}) {
+    const { task, simple, kv } = parseTaskArgs(argstr, forceSimple);
+    if (task) {
+        initRun(task, simple);
+        await log(`run dir: ${path.relative(process.cwd(), activeRunDir) || activeRunDir}${simple ? " (simple flow)" : ""} (auto)`);
+    } else if (!activeRunDir) {
+        await log("no active run. Provide a task: /aw-auto <task> (or /aw-auto-simple <task>), or /aw-resume first.");
+        return;
+    }
     await autoRun({
         from: kv.from,
         to: kv.to,
@@ -642,7 +670,8 @@ export const joinConfig = {
         cmd("aw-start", "Start a full workflow run on a task.", (c) => cmdStart(c.args)),
         cmd("aw-start-simple", "Start a short-flow run (research → assumptions → plan → implement).", (c) => cmdStart(c.args, { forceSimple: true })),
         cmd("aw-resume", "Resume a run after a reload: /aw-resume [name-or-text] (rehydrates from .aw/).", (c) => cmdResume(c.args)),
-        cmd("aw-run", "Auto-run phases: from:<phase> to:<phase> unattended:true pause-at:<phase>.", (c) => cmdRun(c.args)),
+        cmd("aw-auto", "Start (if given a task) and auto-run to completion: /aw-auto <task> [from:<p>] [to:<p>] [unattended:true] [pause-at:<p>].", (c) => cmdAuto(c.args)),
+        cmd("aw-auto-simple", "Same as /aw-auto but the short flow (research → assumptions → plan → implement).", (c) => cmdAuto(c.args, { forceSimple: true })),
         cmd("aw-continue", "Run the next phase (or next N).", (c) => cmdContinue(c.args)),
         cmd("aw-pause", "Stop the auto-runner at the next phase boundary.", () => cmdPause()),
         cmd("aw-research", "Run the research phase.", (c) => cmdPhase("research", c.args)),

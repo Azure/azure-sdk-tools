@@ -30,17 +30,23 @@ Then make the CLI (re)discover it and confirm it loaded:
 ## Quickstart
 
 ```
+/aw-auto Add CSV export to the report endpoint      # start + auto-run the whole flow to implement
+```
+
+Prefer to drive it one phase at a time?
+
+```
 /aw-start Add CSV export to the report endpoint    # init the run + run the first phase
 /aw-status                                          # see phase checklist + artifacts + git diff
 /aw-continue                                        # run the next phase, then stop
-/aw-run                                             # or: auto-run the rest to implement
+/aw-auto                                             # or: auto-run the rest to implement
 ```
 
-Prefer a shorter loop? Use `/aw-start-simple` to skip the classify / per-item research phases (the
-`simple` suffix on `/aw-start` still works as an alias):
+Prefer a shorter loop? Use `/aw-auto-simple` (or `/aw-start-simple`) to skip the classify /
+per-item research phases (the `simple` suffix on `/aw-start` still works as an alias):
 
 ```
-/aw-start-simple Fix null deref in TokenCache
+/aw-auto-simple Fix null deref in TokenCache
 ```
 
 Everything a run produces lives under `<cwd>/.aw/<task-slug>-<hash>/` — specs, assumptions, the
@@ -51,11 +57,12 @@ files between phases at any time. If your session reloads, pick the run back up 
 
 | Command | Behavior |
 | --- | --- |
+| `/aw-auto <task>` | Start a run (if given a task) and auto-run to completion. On an existing run with no task, auto-runs the rest. Accepts `[from:<p>] [to:<p>] [unattended:true] [pause-at:<p>]`. |
+| `/aw-auto-simple <task>` | Same as `/aw-auto` but the short flow (research → assumptions → plan → implement). |
 | `/aw-start <task>` | Init the run dir and run the first phase (full flow). |
 | `/aw-start-simple <task>` | Same, but the short flow (research → assumptions → plan → implement). Equivalent to `/aw-start <task> simple`. |
 | `/aw-resume [name-or-text]` | Rehydrate a run after a reload from `.aw/` (task, flow, model overrides). With no arg, resumes the only/most-recent run; otherwise matches by dir name or task text. |
 | `/aw-continue [n]` | Run the next phase (or next `n`), then stop. |
-| `/aw-run [from:<p>] [to:<p>] [unattended:true] [pause-at:<p>]` | Auto-run a range of phases (defaults: next incomplete → `implement`). |
 | `/aw-pause` | Stop the auto-runner at the next phase boundary. |
 | `/aw-research` … `/aw-implement` | Run one specific phase by name (`/aw-research`, `/aw-assumptions`, `/aw-classify`, `/aw-research-item`, `/aw-plan`, `/aw-implement`). |
 | `/aw-redo <phase> <feedback>` | Re-run a phase with steering notes appended to its prompt. |
@@ -68,9 +75,9 @@ files between phases at any time. If your session reloads, pick the run back up 
 ### Execution modes
 
 - **Manual** — `/aw-<phase>` or `/aw-continue`; stops after every phase so you can inspect artifacts.
-- **Ranged auto** — `/aw-run from:assumptions to:plan`; stops at the boundary or a stop condition.
-- **Full auto** — `/aw-run` (or add `unattended:true`); runs to `implement`, halting only at gates,
-  `needs_input`, or hard failure.
+- **Ranged auto** — `/aw-auto from:assumptions to:plan`; stops at the boundary or a stop condition.
+- **Full auto** — `/aw-auto <task>` (or add `unattended:true`); starts the run if needed and runs to
+  `implement`, halting only at gates, `needs_input`, or hard failure.
 
 At a `needs_input` stop (interactive, not `unattended`) the runner shows a `session.ui` dialog to
 collect the answer and feeds it back into the next attempt. On `fail` it retries up to twice with the

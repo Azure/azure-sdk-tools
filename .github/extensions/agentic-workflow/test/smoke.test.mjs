@@ -12,6 +12,8 @@ const {
     parsePhaseResult,
     parseKv,
     isTruthy,
+    parseTaskArgs,
+    initRun,
     slugify,
     runId,
     researchNotesComplete,
@@ -160,6 +162,40 @@ test("resume: listRuns rehydrates task/flow from state.json and resumes at the r
     }
 });
 
+test("parseTaskArgs extracts task and simple flag", () => {
+    assert.deepEqual(
+        (({ task, simple }) => ({ task, simple }))(parseTaskArgs("Add CSV export")),
+        { task: "Add CSV export", simple: false },
+    );
+    assert.deepEqual(
+        (({ task, simple }) => ({ task, simple }))(parseTaskArgs("Fix bug simple")),
+        { task: "Fix bug", simple: true },
+    );
+    assert.equal(parseTaskArgs("Fix bug", true).simple, true);
+    const parsed = parseTaskArgs("to:plan Add CSV export");
+    assert.equal(parsed.task, "Add CSV export");
+    assert.equal(parsed.kv.to, "plan");
+});
+
+test("initRun creates the run dir and state.json", () => {
+    const cwd0 = process.cwd();
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "aw-init-"));
+    try {
+        process.chdir(tmp);
+        initRun("My task", true);
+        const runDir = path.join(tmp, ".aw", runId("My task"));
+        assert.ok(fs.existsSync(path.join(runDir, "task.txt")), "task.txt written");
+        const state = JSON.parse(fs.readFileSync(path.join(runDir, "state.json"), "utf8"));
+        assert.equal(state.task, "My task");
+        assert.equal(state.simple, true);
+        // A freshly-initialized simple run starts at the first phase.
+        assert.equal(nextPhase(runDir, true).id, "research");
+    } finally {
+        process.chdir(cwd0);
+        fs.rmSync(tmp, { recursive: true, force: true });
+    }
+});
+
 const { joinConfig } = await import("../extension.mjs");
 
 test("joinConfig registers the seven phase agents", () => {
@@ -179,7 +215,7 @@ test("joinConfig gives every phase all tools", () => {
 test("joinConfig registers the command surface", () => {
     assert.equal(joinConfig.infiniteSessions.enabled, true);
     const cmds = joinConfig.commands.map((c) => c.name);
-    for (const expected of ["aw-start", "aw-start-simple", "aw-resume", "aw-run", "aw-continue", "aw-pause", "aw-judge", "aw-autojudge", "aw-redo", "aw-model", "aw-status", "aw-compact", "aw-implement"]) {
+    for (const expected of ["aw-start", "aw-start-simple", "aw-resume", "aw-auto", "aw-auto-simple", "aw-continue", "aw-pause", "aw-judge", "aw-autojudge", "aw-redo", "aw-model", "aw-status", "aw-compact", "aw-implement"]) {
         assert.ok(cmds.includes(expected), `missing /${expected}`);
     }
 });

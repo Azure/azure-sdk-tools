@@ -16,6 +16,7 @@ import logging
 import time
 from typing import Any
 
+from config.app_config import get as cfg
 from utils.knowledge_graph.filtering import wrap_entity_store
 
 logger = logging.getLogger(__name__)
@@ -147,16 +148,32 @@ def build_context_builder(
     )
     context_builder = engine.context_builder
     context_params = dict(engine.context_builder_params or {})
+
+    # Optimization #1: in refs-only mode we never run the LLM synthesis that
+    # would consume the community-report summaries, so the default
+    # community_prop (~0.15 of the token budget) is spent assembling context we
+    # discard. Redirect that budget to source text units — the only thing we
+    # extract as references — and widen the window so more candidate units are
+    # pulled in. Overridable via GRAPH_* App Configuration keys.
+    context_params["community_prop"] = float(cfg("GRAPH_LS_COMMUNITY_PROP", "0.0"))
+    context_params["text_unit_prop"] = float(cfg("GRAPH_LS_TEXT_UNIT_PROP", "0.8"))
+    context_params["max_context_tokens"] = int(
+        cfg("GRAPH_LS_MAX_CONTEXT_TOKENS", "16000")
+    )
     wrap_entity_store(context_builder)
 
     logger.info(
         "Built LocalSearch context builder in %.2fs "
-        "(entities=%d, reports=%d, text_units=%d, relationships=%d)",
+        "(entities=%d, reports=%d, text_units=%d, relationships=%d, "
+        "text_unit_prop=%.2f, community_prop=%.2f, max_context_tokens=%d)",
         time.monotonic() - start,
         len(entities_),
         len(reports),
         len(text_units_),
         len(relationships_),
+        context_params["text_unit_prop"],
+        context_params["community_prop"],
+        context_params["max_context_tokens"],
     )
     return context_builder, context_params
 

@@ -142,6 +142,11 @@ class GraphSearchResult(BaseModel):
 
     references: list[Reference] = []
     query: str = ""
+    # DRIFT mode only: a short grounded intermediate conclusion synthesised by
+    # GraphRAG's drift search over the retrieved subgraph. Empty in local-search
+    # (refs-only) mode. The chat agent may use it as a grounded lead but must
+    # still answer concisely in its own words.
+    analysis: str = ""
 
 
 class GraphQueryRequest(BaseModel):

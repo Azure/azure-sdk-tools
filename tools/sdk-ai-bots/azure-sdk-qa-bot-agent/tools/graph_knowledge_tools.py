@@ -54,6 +54,9 @@ class GraphKnowledgeTools:
     ) -> GraphSearchResult:
         """Retrieve graph-grounded references for ``query`` via the backend.
 
+        Returns ``references`` (source snippets) plus, in drift mode, an
+        ``analysis`` field — a short grounded intermediate conclusion the
+        backend synthesised by decomposing the query over the knowledge graph.
         Returns an empty ``references`` list when the query is blank,
         the backend endpoint is not configured, the HTTP call fails, or
         retrieval returned nothing. The chat agent is responsible for

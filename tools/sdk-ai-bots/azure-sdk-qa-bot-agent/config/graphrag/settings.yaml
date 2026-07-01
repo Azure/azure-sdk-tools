@@ -74,3 +74,17 @@ vector_store:
 local_search:
   top_k_entities: 5         # default 10 — entities matched per query
   top_k_relationships: 5    # default 10 — relationships per matched entity
+
+# DRIFT search tuning (used only when GRAPH_SEARCH_MODE=drift).
+#
+# DRIFT decomposes the query (primer over community reports), runs local
+# searches on the follow-up sub-questions, and reduces them into a short
+# grounded intermediate conclusion. The library defaults (n_depth 3,
+# drift_k_followups 20, primer_folds 5) issue dozens of LLM calls per query
+# (~1-2 min). We tighten them hard so a graph query stays ~1 extra LLM
+# round-trip's worth of latency while still gaining query decomposition and a
+# grounded conclusion the concise chat agent can lead with.
+drift_search:
+  n_depth: 1                # default 3 — follow-up expansion depth
+  drift_k_followups: 3      # default 20 — sub-questions explored
+  primer_folds: 1           # default 5 — primer community folds

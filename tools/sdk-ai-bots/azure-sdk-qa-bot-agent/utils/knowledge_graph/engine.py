@@ -161,6 +161,89 @@ def build_context_builder(
     return context_builder, context_params
 
 
+def build_drift_engine(
+    config: Any,
+    dfs: "dict[str, Any]",
+    community_level: int,
+    report_embeddings_cache: dict[str, list[float]],
+) -> "Any":
+    """Build a GraphRAG DRIFTSearch engine (query decomposition + reduce).
+
+    Unlike :func:`build_context_builder` (which stops at context assembly and
+    lets the chat agent synthesise), DRIFT runs the full search: a primer over
+    community reports decomposes the query, local searches answer the follow-up
+    sub-questions, and a reduce step produces a short grounded conclusion. We
+    reuse the same in-memory reports/entities/text_units/relationships and the
+    bulk-preloaded community-report embeddings, then hand them to
+    ``get_drift_search_engine``. Returns the ``DRIFTSearch`` instance.
+    """
+    from graphrag.config.embeddings import entity_description_embedding
+    from graphrag.query.factory import get_drift_search_engine
+    from graphrag.query.indexer_adapters import (
+        read_indexer_entities,
+        read_indexer_relationships,
+        read_indexer_reports,
+        read_indexer_text_units,
+    )
+    from graphrag.utils.api import get_embedding_store
+
+    start = time.monotonic()
+
+    description_embedding_store = get_embedding_store(
+        config=config.vector_store,
+        embedding_name=entity_description_embedding,
+    )
+
+    entities_ = read_indexer_entities(dfs["entities"], dfs["communities"], community_level)
+    reports = read_indexer_reports(
+        dfs["community_reports"], dfs["communities"], community_level
+    )
+    text_units_ = read_indexer_text_units(dfs["text_units"])
+    relationships_ = read_indexer_relationships(dfs["relationships"])
+
+    _apply_report_embeddings(config, reports, report_embeddings_cache)
+
+    engine = get_drift_search_engine(
+        config=config,
+        reports=reports,
+        text_units=text_units_,
+        entities=entities_,
+        relationships=relationships_,
+        description_embedding_store=description_embedding_store,
+        response_type="multiple paragraphs",
+        callbacks=None,
+    )
+
+    # Tenant entity filtering: DRIFT builds its local-search context per query
+    # (init_local_context_builder), so there is no stable builder to wrap up
+    # front. We attempt known attribute paths; if none exist, drift follow-ups
+    # run unscoped (the primer already scores community reports globally).
+    local_cb = getattr(engine.context_builder, "local_search_context_builder", None) or getattr(
+        engine.context_builder, "local_context_builder", None
+    )
+    if local_cb is not None:
+        try:
+            wrap_entity_store(local_cb)
+        except Exception:  # noqa: BLE001
+            logger.info("DRIFT: local-search entity filtering unavailable; running unscoped.")
+    else:
+        logger.info(
+            "DRIFT: local context builder is created per-query; tenant filtering "
+            "runs unscoped for drift follow-ups."
+        )
+
+    logger.info(
+        "Built DRIFT search engine in %.2fs "
+        "(entities=%d, reports=%d, text_units=%d, relationships=%d)",
+        time.monotonic() - start,
+        len(entities_),
+        len(reports),
+        len(text_units_),
+        len(relationships_),
+    )
+    return engine
+
+
 def _apply_report_embeddings(
     config: Any, reports: Any, cache: dict[str, list[float]]
 ) -> None:

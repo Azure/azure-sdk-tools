@@ -46,6 +46,11 @@ class KnowledgeGraphService:
         )
         # Blob container holding the parquet snapshots + ``latest.json``.
         self._blob_container = cfg("STORAGE_GRAPHRAG_OUTPUT_CONTAINER", "")
+        # Retrieval mode: "local" (refs-only context, agent synthesises) or
+        # "drift" (query decomposition + a short grounded conclusion). This
+        # branch defaults to drift for the experiment; App Configuration key
+        # ``GRAPH_SEARCH_MODE`` overrides it.
+        self._mode = cfg("GRAPH_SEARCH_MODE", "drift").strip().lower()
 
         self._config: Any = None
         self._dfs: "dict[str, Any] | None" = None
@@ -53,10 +58,12 @@ class KnowledgeGraphService:
         self._report_embeddings_cache: dict[str, list[float]] = {}
         self._context_builder: Any = None
         self._context_params: dict[str, Any] = {}
+        self._drift_engine: Any = None
         # ``{source_folder: {entity_id: frozenset(source_path)}}`` reverse
         # index used to scope retrieval per tenant. Empty disables filtering.
         self._entity_index: "dict[str, dict[str, frozenset[str]]]" = {}
         self._load_lock = asyncio.Lock()
+
 
         self._enabled = bool(self._blob_container)
         if not self._enabled:
@@ -84,8 +91,8 @@ class KnowledgeGraphService:
         query: str,
         allowed_source_folders: "set[str] | None" = None,
         source_path_filters: "dict[str, list[str]] | None" = None,
-    ) -> "list[Reference] | None":
-        """Retrieve graph-grounded source references for a query.
+    ) -> "tuple[list[Reference] | None, str]":
+        """Retrieve graph-grounded references (and, in drift mode, a conclusion).
 
         Args:
             query: The user's question.
@@ -102,48 +109,104 @@ class KnowledgeGraphService:
                 per-source title filter).
 
         Returns:
-            A list of :class:`Reference` (one per unique cited document),
-            an empty list when nothing matched, or ``None`` when the service
-            is disabled or the context build failed.
+            ``(references, analysis)``. ``references`` is a list of
+            :class:`Reference` (one per unique cited document), an empty list
+            when nothing matched, or ``None`` when the service is disabled or
+            retrieval failed. ``analysis`` is a short grounded intermediate
+            conclusion in drift mode, or ``""`` in local (refs-only) mode.
         """
         if not self._enabled:
             logger.debug("GraphRAG search_graph short-circuit: service is disabled")
-            return None
+            return None, ""
         if not await self._ensure_loaded():
             logger.warning(
                 "GraphRAG search_graph short-circuit: _ensure_loaded() returned False"
             )
-            return None
-        if self._context_builder is None:
-            # Half-loaded state (parquets present but builder missing) —
-            # clear and force a rebuild on the next request.
-            logger.warning(
-                "GraphRAG search_graph: context builder missing — clearing "
-                "state and forcing a rebuild on the next request"
-            )
-            async with self._load_lock:
-                self._reset_state()
-            return None
+            return None, ""
 
         allowed_entity_ids = filtering.resolve_allowed_entity_ids(
             self._entity_index, allowed_source_folders, source_path_filters
         )
         token = filtering.allowed_entity_ids_var().set(allowed_entity_ids)
         try:
-            result = await asyncio.to_thread(
-                self._context_builder.build_context,
-                query=query,
-                **self._context_params,
-            )
-        except Exception:
-            logger.warning("GraphRAG search_graph failed", exc_info=True)
-            return None
+            if self._mode == "drift":
+                return await self._search_drift(query)
+            return await self._search_local(query)
         finally:
             filtering.allowed_entity_ids_var().reset(token)
 
-        return extraction.extract_references_from_context(
+    async def _search_local(self, query: str) -> "tuple[list[Reference] | None, str]":
+        """Local-search context assembly (refs only, no LLM)."""
+        if self._context_builder is None:
+            logger.warning(
+                "GraphRAG search_graph: context builder missing — clearing "
+                "state and forcing a rebuild on the next request"
+            )
+            async with self._load_lock:
+                self._reset_state()
+            return None, ""
+        try:
+            result = await asyncio.to_thread(
+                self._context_builder.build_context, query=query, **self._context_params
+            )
+        except Exception:
+            logger.warning("GraphRAG local search_graph failed", exc_info=True)
+            return None, ""
+        refs = extraction.extract_references_from_context(
             self._dfs, result.context_records
         )
+        return refs, ""
+
+    async def _search_drift(self, query: str) -> "tuple[list[Reference] | None, str]":
+        """DRIFT search: query decomposition + reduce → refs + a conclusion."""
+        if self._drift_engine is None:
+            logger.warning(
+                "GraphRAG search_graph: drift engine missing — clearing state "
+                "and forcing a rebuild on the next request"
+            )
+            async with self._load_lock:
+                self._reset_state()
+            return None, ""
+        try:
+            result = await self._drift_engine.search(query=query, reduce=True)
+        except Exception:
+            logger.warning("GraphRAG drift search_graph failed", exc_info=True)
+            return None, ""
+
+        analysis = self._extract_drift_answer(getattr(result, "response", ""))
+        refs = extraction.extract_references_from_context(
+            self._dfs, getattr(result, "context_data", None)
+        )
+        logger.info(
+            "DRIFT search: analysis_len=%d, references=%d",
+            len(analysis),
+            len(refs or []),
+        )
+        return refs, analysis
+
+    @staticmethod
+    def _extract_drift_answer(response: Any) -> str:
+        """Pull a plain-text conclusion out of DRIFT's response payload.
+
+        DRIFT's reduced ``response`` is usually a string, but can be a dict
+        (``{"nodes": [...]}`` / ``{"response": "..."}``) depending on version.
+        """
+        if isinstance(response, str):
+            return response.strip()
+        if isinstance(response, dict):
+            for key in ("response", "answer", "content"):
+                val = response.get(key)
+                if isinstance(val, str) and val.strip():
+                    return val.strip()
+            nodes = response.get("nodes")
+            if isinstance(nodes, list):
+                parts = [
+                    str(n.get("answer") or n.get("response") or "")
+                    for n in nodes
+                    if isinstance(n, dict)
+                ]
+                return "\n\n".join(p for p in parts if p).strip()
+        return ""
 
     # ------------------------------------------------------------------ #
     # Loading / reloading
@@ -261,6 +324,21 @@ class KnowledgeGraphService:
                 "GraphRAG context builder produced no instance — "
                 "refusing to swap to a half-built state"
             )
+        if self._mode == "drift":
+            self._drift_engine = await asyncio.to_thread(
+                engine.build_drift_engine,
+                new_config,
+                new_dfs,
+                self._community_level,
+                self._report_embeddings_cache,
+            )
+            if self._drift_engine is None:
+                raise RuntimeError(
+                    "GraphRAG drift engine produced no instance — "
+                    "refusing to swap to a half-built state"
+                )
+        else:
+            self._drift_engine = None
         self._entity_index = filtering.build_entity_index(new_dfs)
 
     async def _load_parquets_with_manifest(
@@ -300,6 +378,7 @@ class KnowledgeGraphService:
         self._report_embeddings_cache = {}
         self._context_builder = None
         self._context_params = {}
+        self._drift_engine = None
         self._entity_index = {}
 
     def _snapshot_state(self) -> tuple:
@@ -310,6 +389,7 @@ class KnowledgeGraphService:
             self._report_embeddings_cache,
             self._context_builder,
             self._context_params,
+            self._drift_engine,
             self._entity_index,
         )
 
@@ -321,6 +401,7 @@ class KnowledgeGraphService:
             self._report_embeddings_cache,
             self._context_builder,
             self._context_params,
+            self._drift_engine,
             self._entity_index,
         ) = state
 

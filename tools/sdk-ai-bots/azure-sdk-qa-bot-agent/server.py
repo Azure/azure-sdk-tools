@@ -426,7 +426,7 @@ async def graph_query(req: GraphQueryRequest) -> GraphSearchResult:
                 } or None
 
     try:
-        sources: list[Reference] | None = await service.search_graph(
+        sources, analysis = await service.search_graph(
             normalised_query,
             allowed_source_folders=allowed_source_folders,
             source_path_filters=source_path_filters,
@@ -436,7 +436,7 @@ async def graph_query(req: GraphQueryRequest) -> GraphSearchResult:
         return GraphSearchResult(references=[], query=normalised_query)
 
     if sources is None:
-        return GraphSearchResult(references=[], query=normalised_query)
+        return GraphSearchResult(references=[], query=normalised_query, analysis=analysis or "")
 
     # Dedupe by title; keep first occurrence (highest-ranked). Truncate
     # each snippet so the agent's prompt stays bounded.
@@ -456,6 +456,7 @@ async def graph_query(req: GraphQueryRequest) -> GraphSearchResult:
     return GraphSearchResult(
         references=list(merged_refs.values()),
         query=normalised_query,
+        analysis=analysis or "",
     )
 
 

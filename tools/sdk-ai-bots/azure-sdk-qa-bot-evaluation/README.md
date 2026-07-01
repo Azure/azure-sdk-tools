@@ -20,7 +20,7 @@ There are **two independent parts**:
 - Python 3.12+
 - `az login` (local) against the `azuresdkqabot` subscription
 - `pip install -r requirements.txt`
-- Environment (or `.env`) — see [`env-variables`](env-variables):
+- Environment (or `.env`) — see [`env-variables`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/env-variables):
   - `AZURE_AI_PROJECT_ENDPOINT`, `AZURE_EVALUATION_MODEL_NAME`, `EVALUATE_THRESHOLD`
   - bot `/completion`: `BOT_SERVICE_ENDPOINT` (+ `BOT_AGENT_TOKEN_RESOURCE` /
     `BOT_AGENT_ACCESS_TOKEN`) for the deployed bot, or run the agent `server.py`

@@ -207,6 +207,18 @@ if ($PSCmdlet.ParameterSetName -eq 'RepositoryFile') {
     $Repositories = Get-Content $RepositoryFilePath
 }
 
+$Repositories = @(
+    foreach ($repository in $Repositories) {
+        $repository = ([string]$repository).Trim()
+
+        if ([string]::IsNullOrWhiteSpace($repository) -or $repository.EndsWith('-pr', [StringComparison]::OrdinalIgnoreCase)) {
+            continue
+        }
+
+        $repository
+    }
+)
+
 # Extract the label content to be sync'd.
 $labels = Get-LabelDefinitionsFromFile -Path $LabelsFilePath
 $changedLabels = @()
@@ -261,19 +273,19 @@ Write-Progress -Activity $activity -Completed
 Synchonizes the common set of Azure SDK labels to one or more repository.
 
 .DESCRIPTION
-Creates or updates labels - without deleting any - ensuring the common Azure SDK label set exists in all listed repositories.
+Creates or updates labels - without deleting any - ensuring the common Azure SDK label set exists in all listed repositories. Repositories ending in "-pr" are skipped before any synchronization, progress reporting, or delay calculations occur.
 
 .PARAMETER LabelsFilePath
 The fully-qualifeid path (including filename) to a CSV file of the common Azure SDK labels that will be created or updated in each repository.  Columns have no headers and are in the form of "Name,Description,Color".
 
 .PARAMETER Repositories
-The GitHub repositories to update with the common label set.
+The GitHub repositories to update with the common label set. Repositories ending in "-pr" are skipped.
 
 .PARAMETER Languages
-The Azure SDK languages whose repositories should be updated with the common label set.  e.g., "net" for "Azure/azure-sdk-for-net".
+The Azure SDK languages whose repositories should be updated with the common label set.  e.g., "net" for "Azure/azure-sdk-for-net". Repositories ending in "-pr" are skipped.
 
 .PARAMETER RepositoryFilePath
-The fully-qualified path (including filename) to a new line-delmited file of respositories to update with the common label set.
+The fully-qualified path (including filename) to a new line-delmited file of respositories to update with the common label set. Repositories ending in "-pr" are skipped.
 
 .PARAMETER Incremental
 Determines whether each repository should be synchronized based only on labels added or updated in the labels CSV. When local staged or unstaged changes exist for the labels file, those pending changes are evaluated; otherwise, the last commit that changed the file is evaluated.

@@ -34,6 +34,18 @@ if ($PSCmdlet.ParameterSetName -eq 'RepositoryFile') {
     $Repositories = Get-Content $RepositoryFilePath
 }
 
+$Repositories = @(
+    foreach ($repository in $Repositories) {
+        $repository = ([string]$repository).Trim()
+
+        if ([string]::IsNullOrWhiteSpace($repository) -or $repository.EndsWith('-pr', [StringComparison]::OrdinalIgnoreCase)) {
+            continue
+        }
+
+        $repository
+    }
+)
+
 $date = $StartDate
 [pscustomobject[]] $milestones = do {
     # Start with the first of the month at 23:59 UTC.
@@ -90,16 +102,16 @@ Write-Progress -Activity $activity -Completed
 Creates Azure SDK milestones in the form of "yyyy-MM".
 
 .DESCRIPTION
-Creates Azure SDK milestones in the form of "yyyy-MM" with the due date set to the first Friday of the following month at 11:59 PM UTC.
+Creates Azure SDK milestones in the form of "yyyy-MM" with the due date set to the first Friday of the following month at 11:59 PM UTC. Repositories ending in "-pr" are skipped before any milestones are created or reported.
 
 .PARAMETER Repositories
-The GitHub repositories to update.
+The GitHub repositories to update. Repositories ending in "-pr" are skipped.
 
 .PARAMETER Languages
-The Azure SDK languages to query for milestones e.g., "net" for "Azure/azure-sdk-for-net".
+The Azure SDK languages to query for milestones e.g., "net" for "Azure/azure-sdk-for-net". Repositories ending in "-pr" are skipped.
 
 .PARAMETER RepositoryFilePath
-The fully-qualified path (including filename) to a new line-delmited file of respositories to update.
+The fully-qualified path (including filename) to a new line-delmited file of respositories to update. Repositories ending in "-pr" are skipped.
 
 .PARAMETER StartDate
 The starting date for new milestones.

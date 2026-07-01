@@ -1,5 +1,7 @@
-# Orchestrator pipeline — full dev rollout.
-# Provisions infra and deploys all components against dev in dependency order.
+# Orchestrator pipeline — full dev deploy.
+# Deploys all component images (backend → function-app → agent → frontend) to
+# dev in dependency order. Assumes infra is already provisioned; run
+# provision-all-dev.yml first for a greenfield environment.
 
 name: tools - sdk-ai-bots - deploy-all-dev
 
@@ -25,28 +27,7 @@ extends:
     parameters:
         Use1ESOfficial: true
         stages:
-            - stage: Provision
-              displayName: 'Provision (dev)'
-              jobs:
-                  - deployment: AzdProvision
-                    environment: 'sdk-ai-bots-dev'
-                    pool:
-                        name: $(LINUXPOOL)
-                        image: $(LINUXVMIMAGE)
-                        os: linux
-                    strategy:
-                        runOnce:
-                            deploy:
-                                steps:
-                                    - checkout: self
-                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
-                                      parameters:
-                                          environment: dev
-                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
-                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
-
             - stage: DeployBackend
-              dependsOn: Provision
               jobs:
                   - template: /tools/sdk-ai-bots/deployment/component-pipelines/backend/backend.cd.yml@self
                     parameters:

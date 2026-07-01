@@ -28,13 +28,27 @@ export async function deployLayer(layer: Layer, ctx: LayerContext): Promise<void
 
   log(layer.name, `deploying → ${bicepPath}`);
 
-  const cmd = [
+  const paramArgs: string[] = [];
+  if (layer.params) {
+    const values = layer.params();
+    for (const [k, v] of Object.entries(values)) {
+      // az CLI accepts key=value; escape embedded single quotes for the shell.
+      const escaped = v.replace(/'/g, `'\\''`);
+      paramArgs.push(`${k}='${escaped}'`);
+    }
+  }
+
+  const parts = [
     "az deployment group create",
     `--resource-group "${ctx.resourceGroup}"`,
     `--template-file "${bicepPath}"`,
     `--name "${layer.name}"`,
     "--no-prompt",
-  ].join(" \\\n  ");
+  ];
+  if (paramArgs.length > 0) {
+    parts.push(`--parameters ${paramArgs.join(" ")}`);
+  }
+  const cmd = parts.join(" \\\n  ");
 
   execSync(cmd, { stdio: "inherit" });
   log(layer.name, "deployment succeeded");

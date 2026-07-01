@@ -22,6 +22,12 @@ export interface Layer {
   name: string;
   /** Path to the .bicep file, relative to the deployment/ folder. */
   bicepFile: string;
+  /**
+   * Parameters passed to `az deployment group create --parameters key=value`.
+   * Values are sourced from process.env, populated by azd from main.bicep
+   * outputs (see main.bicep). A missing key throws before the deployment runs.
+   */
+  params?: () => Record<string, string>;
   /** Optional hook that runs before `az deployment group create`. */
   pre?: (ctx: LayerContext) => Promise<void>;
   /** Optional hook that runs after `az deployment group create` succeeds. */
@@ -29,6 +35,18 @@ export interface Layer {
 }
 
 const BICEP_BASE = "infra/modules";
+
+/** Reads a required env var; throws with the layer name if missing. */
+function req(layer: string, name: string): string {
+  const v = process.env[name];
+  if (!v) {
+    throw new Error(
+      `[${layer}] required env var '${name}' is not set. ` +
+        `Run \`azd provision\` (full graph) once so main.bicep outputs are captured into .azure/<env>/.env.`
+    );
+  }
+  return v;
+}
 
 export const INFRA_LAYERS: Layer[] = [
   // ── Layer 1: Shared resources ──────────────────────────────────────────────
@@ -48,6 +66,11 @@ export const INFRA_LAYERS: Layer[] = [
   {
     name: "agent-platform",
     bicepFile: `${BICEP_BASE}/qaBotAgent/component.bicep`,
+    params: () => ({
+      managedIdentityPrincipalId: req("agent-platform", "MANAGED_IDENTITY_PRINCIPAL_ID"),
+      storageAccountName:         req("agent-platform", "STORAGE_ACCOUNT_NAME"),
+      storageBlobEndpoint:        req("agent-platform", "STORAGE_BLOB_ENDPOINT"),
+    }),
     pre: async (_ctx) => {
       // TODO: Verify Cognitive Services quota in the target region is sufficient.
     },
@@ -60,6 +83,23 @@ export const INFRA_LAYERS: Layer[] = [
   {
     name: "backend",
     bicepFile: `${BICEP_BASE}/qaBotBackend/serverfarm.bicep`,
+    params: () => ({
+      location:               req("backend", "AZURE_LOCATION"),
+      ragBasedBackendImage:   req("backend", "RAG_BASED_BACKEND_IMAGE"),
+      agentBasedBackendImage: req("backend", "AGENT_BASED_BACKEND_IMAGE"),
+      managedIdentityClientId: req("backend", "MANAGED_IDENTITY_CLIENT_ID"),
+      serverAudience:         req("backend", "SERVER_AUDIENCE"),
+      sharedIdentityName:     req("backend", "MANAGED_IDENTITY_NAME"),
+      frontendIdentityName:   req("backend", "BOT_IDENTITY_NAME"),
+      aiResourceName:         req("backend", "AI_RESOURCE_NAME"),
+      aiProjectName:          req("backend", "AI_PROJECT_NAME"),
+      searchServiceName:      req("backend", "SEARCH_SERVICE_NAME"),
+      cosmosDbAccountName:    req("backend", "COSMOSDB_ACCOUNT_NAME"),
+      storageAccountName:     req("backend", "STORAGE_ACCOUNT_NAME"),
+      keyVaultName:           req("backend", "KEY_VAULT_NAME"),
+      appConfigName:          req("backend", "APP_CONFIG_NAME"),
+      actionGroupName:        req("backend", "ACTION_GROUP_NAME"),
+    }),
     pre: async (_ctx) => {
       // TODO: Confirm prerequisite resources (ACR, Storage, Vault) already exist.
     },
@@ -69,11 +109,26 @@ export const INFRA_LAYERS: Layer[] = [
   },
 
   // ── Layer 4: Logic App ────────────────────────────────────────────────────
-  // frontend (Layer 3) and function-app (Layer 5 in the diagram) are azd
-  // services and are deployed via `azd deploy`, not this pipeline.
+  // frontend (Layer 3) and function-app (Layer 5) are also declared here so the
+  // component-pipelines can scope `azd provision` to a single layer via
+  // DEPLOY_LAYER. Application code for those services is still deployed via
+  // `azd deploy`; only the module Bicep is (re-)applied here.
   {
     name: "logic-app",
     bicepFile: `${BICEP_BASE}/qaBotLogicApp/logicAppResources.bicep`,
+    params: () => ({
+      location:               req("logic-app", "AZURE_LOCATION"),
+      teamsGroupId:           req("logic-app", "TEAMS_GROUP_ID"),
+      teamsChannelIds:        JSON.stringify(req("logic-app", "TEAMS_CHANNEL_IDS").split(",")),
+      serverBaseUrl:          req("logic-app", "SERVER_BASE_URL"),
+      serverAudience:         req("logic-app", "SERVER_AUDIENCE"),
+      botBaseUrl:             req("logic-app", "BOT_BASE_URL"),
+      botAudience:            req("logic-app", "BOT_AUDIENCE"),
+      blobStorageAccountName: req("logic-app", "STORAGE_ACCOUNT_NAME"),
+      managedIdentityName:    req("logic-app", "MANAGED_IDENTITY_NAME"),
+      botIdentityName:        req("logic-app", "BOT_IDENTITY_NAME"),
+      functionAppName:        req("logic-app", "FUNCTION_APP_NAME"),
+    }),
     pre: async (_ctx) => {
       // TODO: Verify the storage account connection string is available
       // for the 'azureblob' managed API connection.
@@ -83,5 +138,24 @@ export const INFRA_LAYERS: Layer[] = [
       // These require an OAuth consent flow that cannot be automated in Bicep.
       // Print the consent URLs so an operator can complete them once.
     },
+  },
+
+  // ── Frontend (azd service — infra module deployed standalone here) ─────────
+  {
+    name: "frontend",
+    bicepFile: `${BICEP_BASE}/qaBotFrontend/userAssignedIdentity.bicep`,
+  },
+
+  // ── Function App (azd service — infra module deployed standalone here) ────
+  {
+    name: "function-app",
+    bicepFile: `${BICEP_BASE}/qaBotFunctionApp/serverfarm.bicep`,
+    params: () => ({
+      location:                  req("function-app", "AZURE_LOCATION"),
+      containerImage:            req("function-app", "FUNCTION_CONTAINER_IMAGE"),
+      managedIdentityClientId:   req("function-app", "MANAGED_IDENTITY_CLIENT_ID"),
+      storageAccountName:        req("function-app", "STORAGE_ACCOUNT_NAME"),
+      managedIdentityResourceId: req("function-app", "MANAGED_IDENTITY_RESOURCE_ID"),
+    }),
   },
 ];

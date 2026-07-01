@@ -1,0 +1,37 @@
+# Orchestrator pipeline — full dev provision.
+# Provisions the whole Azure infra graph for dev via `azd provision`.
+# Runs the postprovision layer pipeline (all layers) as part of azd's lifecycle.
+
+name: tools - sdk-ai-bots - provision-all-dev
+
+trigger: none
+pr: none
+
+variables:
+    - template: /eng/pipelines/templates/variables/globals.yml
+    - template: /eng/pipelines/templates/variables/image.yml
+
+extends:
+    template: /eng/pipelines/templates/stages/1es-redirect.yml
+    parameters:
+        Use1ESOfficial: true
+        stages:
+            - stage: Provision
+              displayName: 'Provision (dev)'
+              jobs:
+                  - deployment: AzdProvision
+                    environment: 'sdk-ai-bots-dev'
+                    pool:
+                        name: $(LINUXPOOL)
+                        image: $(LINUXVMIMAGE)
+                        os: linux
+                    strategy:
+                        runOnce:
+                            deploy:
+                                steps:
+                                    - checkout: self
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+                                      parameters:
+                                          environment: dev
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml

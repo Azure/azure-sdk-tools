@@ -123,7 +123,46 @@ module logicApp './modules/qaBotLogicApp/logicAppResources.bicep' = {
 }
 
 // ── Outputs consumed by azd / hooks ────────────────────────────────────────────
+// Everything downstream layers need for standalone deploys (via
+// postprovision's runLayerPipeline → az deployment group create) is exposed
+// here so azd persists it into .azure/<env>/.env after `azd provision`.
 output CONTAINER_REGISTRY_LOGIN_SERVER string = sharedResources.outputs.containerRegistryLoginServer
 output CONTAINER_REGISTRY_NAME string = sharedResources.outputs.containerRegistryName
 output AZURE_RESOURCE_GROUP string = rg.name
 output AZURE_LOCATION string = location
+
+// Shared-resources outputs
+output MANAGED_IDENTITY_NAME string = sharedResources.outputs.managedIdentityName
+output MANAGED_IDENTITY_CLIENT_ID string = sharedResources.outputs.managedIdentityClientId
+output MANAGED_IDENTITY_RESOURCE_ID string = sharedResources.outputs.managedIdentityResourceId
+output MANAGED_IDENTITY_PRINCIPAL_ID string = sharedResources.outputs.managedIdentityPrincipalId
+output STORAGE_ACCOUNT_NAME string = sharedResources.outputs.storageAccountName
+output STORAGE_BLOB_ENDPOINT string = sharedResources.outputs.storageBlobEndpoint
+output KEY_VAULT_NAME string = sharedResources.outputs.keyVaultName
+output APP_CONFIG_NAME string = sharedResources.outputs.appConfigName
+output SEARCH_SERVICE_NAME string = sharedResources.outputs.searchServiceName
+output COSMOSDB_ACCOUNT_NAME string = sharedResources.outputs.cosmosDbAccountName
+output ACTION_GROUP_NAME string = sharedResources.outputs.actionGroupName
+
+// Agent-platform outputs
+output AI_RESOURCE_NAME string = agent.outputs.aiResourceName
+output AI_PROJECT_NAME string = agent.outputs.aiProjectName
+
+// Frontend outputs
+output BOT_IDENTITY_NAME string = frontend.outputs.botIdentityName
+output BOT_BASE_URL string = frontend.outputs.botBaseUrl
+output BOT_AUDIENCE string = frontend.outputs.botAudience
+
+// Backend outputs
+output SERVER_BASE_URL string = backend.outputs.serverBaseUrl
+
+// Function-app outputs
+output FUNCTION_APP_NAME string = functionApp.outputs.functionAppName
+
+// Inputs re-exported so standalone module deploys can source them from env
+output SERVER_AUDIENCE string = serverAudience
+output TEAMS_GROUP_ID string = teamsGroupId
+output TEAMS_CHANNEL_IDS string = join(teamsChannelIds, ',')
+output RAG_BASED_BACKEND_IMAGE string = '${sharedResources.outputs.containerRegistryLoginServer}/${ragBasedBackendImageRepository}'
+output AGENT_BASED_BACKEND_IMAGE string = '${sharedResources.outputs.containerRegistryLoginServer}/${agentBasedImageRepository}'
+output FUNCTION_CONTAINER_IMAGE string = '${sharedResources.outputs.containerRegistryLoginServer}/${functionImageRepository}'

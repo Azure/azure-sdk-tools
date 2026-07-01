@@ -1,0 +1,41 @@
+# Orchestrator pipeline — full preview provision.
+# Same shape as provision-all-dev; the 'sdk-ai-bots-preview' ADO environment
+# is expected to require approval before the Provision stage runs.
+
+name: tools - sdk-ai-bots - provision-all-preview
+
+trigger: none
+pr: none
+
+variables:
+    - template: /eng/pipelines/templates/variables/globals.yml
+    - template: /eng/pipelines/templates/variables/image.yml
+
+extends:
+    template: /eng/pipelines/templates/stages/1es-redirect.yml
+    parameters:
+        Use1ESOfficial: true
+        stages:
+            - stage: Provision
+              displayName: 'Provision (preview)'
+              jobs:
+                  - deployment: AzdProvision
+                    environment: 'sdk-ai-bots-preview'
+                    pool:
+                        name: $(LINUXPOOL)
+                        image: $(LINUXVMIMAGE)
+                        os: linux
+                    strategy:
+                        runOnce:
+                            deploy:
+                                steps:
+                                    - checkout: self
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+                                      parameters:
+                                          environment: preview
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-validate.yml
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-what-if.yml
+                                      parameters:
+                                          parametersFile: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment/infra/environments/preview.parameters.json'
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml

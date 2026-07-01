@@ -1,9 +1,17 @@
-# Orchestrator — preview rollout. Same as dev but with approval gate at the
-# 'sdk-ai-bots-preview' ADO environment.
+# Orchestrator pipeline — full preview deploy.
+# Deploys all component images (backend → function-app → agent → frontend) to
+# preview in dependency order. Assumes infra is already provisioned via
+# provision-all-preview.yml. Each component's cd.yml gates on the
+# 'sdk-ai-bots-preview' ADO environment approval.
+
 name: tools - sdk-ai-bots - deploy-all-preview
 
 trigger: none
 pr: none
+
+variables:
+    - template: /eng/pipelines/templates/variables/globals.yml
+    - template: /eng/pipelines/templates/variables/image.yml
 
 parameters:
     - name: imageTagFrontend
@@ -16,8 +24,39 @@ parameters:
       type: string
 
 extends:
-    template: deploy-all-dev.yml
+    template: /eng/pipelines/templates/stages/1es-redirect.yml
     parameters:
-        # Re-targets stages to preview env. In practice the per-component CD
-        # pipelines accept an `environment` parameter; this file is a thin
-        # wrapper showing how the same orchestrator template is reused.
+        Use1ESOfficial: true
+        stages:
+            - stage: DeployBackend
+              jobs:
+                  - template: /tools/sdk-ai-bots/deployment/component-pipelines/backend/backend.cd.yml@self
+                    parameters:
+                        environment: preview
+                        imageTag: '${{ parameters.imageTagBackend }}'
+                        slot: authoring
+
+            - stage: DeployFunctionApp
+              dependsOn: DeployBackend
+              jobs:
+                  - template: /tools/sdk-ai-bots/deployment/component-pipelines/function-app/function-app.cd.yml@self
+                    parameters:
+                        environment: preview
+                        imageTag: '${{ parameters.imageTagFunctionApp }}'
+
+            - stage: DeployAgent
+              dependsOn: DeployFunctionApp
+              jobs:
+                  - template: /tools/sdk-ai-bots/deployment/component-pipelines/agent/agent.cd.yml@self
+                    parameters:
+                        environment: preview
+                        imageTag: '${{ parameters.imageTagAgent }}'
+                        deployTarget: both
+
+            - stage: DeployFrontend
+              dependsOn: DeployAgent
+              jobs:
+                  - template: /tools/sdk-ai-bots/deployment/component-pipelines/frontend/frontend.cd.yml@self
+                    parameters:
+                        environment: preview
+                        imageTag: '${{ parameters.imageTagFrontend }}'

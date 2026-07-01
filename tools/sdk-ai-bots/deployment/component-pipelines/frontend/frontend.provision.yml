@@ -24,6 +24,17 @@ parameters:
           - dev
           - preview
           - prod
+    - name: deployLayer
+      type: string
+      default: frontend
+      values:
+          - '' # empty = full azd provision graph, no scoping
+          - shared-resources
+          - agent-platform
+          - backend
+          - logic-app
+          - frontend
+          - function-app
 
 extends:
     template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -67,5 +78,5 @@ extends:
                                           environment: '${{ parameters.environment }}'
                                     - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
                                     - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
-                                      # No deployLayer → runs the full graph. Use DEPLOY_LAYER
-                                      # in the postprovision hook for layer-only re-runs.
+                                      parameters:
+                                          deployLayer: '${{ parameters.deployLayer }}'

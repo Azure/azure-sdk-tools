@@ -15,6 +15,17 @@ parameters:
       type: string
       default: dev
       values: [dev, preview, prod]
+    - name: deployLayer
+      type: string
+      default: function-app
+      values:
+          - '' # empty = full azd provision graph, no scoping
+          - shared-resources
+          - agent-platform
+          - backend
+          - logic-app
+          - frontend
+          - function-app
 
 extends:
     template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -44,3 +55,5 @@ extends:
                                       parameters:
                                           parametersFile: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment/infra/environments/${{ parameters.environment }}.parameters.json'
                                     - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
+                                      parameters:
+                                          deployLayer: '${{ parameters.deployLayer }}'

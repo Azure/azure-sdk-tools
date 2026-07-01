@@ -17,6 +17,17 @@ parameters:
       type: string
       default: dev
       values: [dev, preview, prod]
+    - name: deployLayer
+      type: string
+      default: shared-resources
+      values:
+          - '' # empty = full azd provision graph, no scoping
+          - shared-resources
+          - agent-platform
+          - backend
+          - logic-app
+          - frontend
+          - function-app
 
 extends:
     template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -43,4 +54,4 @@ extends:
                                     - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
                                     - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
                                       parameters:
-                                          deployLayer: shared-resources
+                                          deployLayer: '${{ parameters.deployLayer }}'

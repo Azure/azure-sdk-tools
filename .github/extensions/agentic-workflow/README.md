@@ -8,10 +8,10 @@ inspect artifacts between steps, repin models, answer decisions via dialogs — 
 chain phases unattended.
 
 ## Getting started
+> Currently, requires toggling experimental mode in Copilot CLI. Either run `/experimental on` in the session or start it with `copilot --experimental.`
 
 The Copilot CLI **auto-discovers** extensions — it scans `.github/extensions/` (project) and
-`~/.copilot/extensions/` (user) for subdirectories containing an `extension.mjs`. There is no
-`/extensions` command; discovery is automatic. This extension ships in the repo under
+`~/.copilot/extensions/` (user) for subdirectories containing an `extension.mjs`. This extension ships in the repo under
 `.github/extensions/agentic-workflow/`. Install its dependencies once:
 
 ```bash
@@ -26,7 +26,6 @@ Then make the CLI (re)discover it and confirm it loaded:
 /env       # lists loaded extensions, agents, and commands — confirm agentic-workflow is there
 ```
 
-> Currently, requires toggling experimental mode in Copilot CLI. Either run `/experimental on` in the session or start it with `copilot --experimental.`
 
 ## Quickstart
 

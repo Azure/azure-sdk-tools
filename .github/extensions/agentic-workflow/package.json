@@ -1,0 +1,16 @@
+{
+    "name": "agentic-workflow-extension",
+    "version": "0.1.0",
+    "description": "Copilot CLI extension driving a phased research -> plan -> implement workflow with per-phase sub-agents and on-disk artifacts.",
+    "private": true,
+    "type": "module",
+    "engines": {
+        "node": ">=20.19.0"
+    },
+    "scripts": {
+        "test": "node --test"
+    },
+    "dependencies": {
+        "@github/copilot-sdk": "^1.0.4"
+    }
+}

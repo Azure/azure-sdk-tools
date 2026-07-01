@@ -30,7 +30,7 @@ const MAX_RETRIES = 2;
 const ALL_TOOLS = null;
 
 const PHASES = [
-    { id: "research", agent: "rpi-research", template: "01-research.md", tools: ALL_TOOLS, artifact: "specs/architecture.md", simple: true },
+    { id: "research", agent: "rpi-research", template: "01-research.md", tools: ALL_TOOLS, artifact: "specs/architecture.md", simple: false },
     { id: "assumptions", agent: "rpi-assumptions", template: "02-assumptions.md", tools: ALL_TOOLS, artifact: "assumptions.md", simple: true },
     { id: "classify", agent: "rpi-classify", template: "03-classify.md", tools: ALL_TOOLS, artifact: "subitems.json", simple: false },
     { id: "research-item", agent: "rpi-research-item", template: "04-research-item.md", tools: ALL_TOOLS, artifact: "research", simple: false },
@@ -688,7 +688,7 @@ export const joinConfig = {
     customAgents,
     infiniteSessions: { enabled: true },
     commands: [
-        cmd("rpi-start", "Start a full workflow run on a task.", (c) => cmdStart(c.args)),
+        cmd("rpi-start", "Start a full research->plan->implement workflow run on a task.", (c) => cmdStart(c.args)),
         cmd("rpi-start-simple", "Start a short-flow run (research → assumptions → plan → implement).", (c) => cmdStart(c.args, { forceSimple: true })),
         cmd("rpi-resume", "Resume a run after a reload: /rpi-resume [name-or-text] (rehydrates from .aw/).", (c) => cmdResume(c.args)),
         cmd("rpi-auto", "Start (if given a task) and auto-run to completion: /rpi-auto <task> [from:<p>] [to:<p>] [unattended:true] [pause-at:<p>].", (c) => cmdAuto(c.args)),

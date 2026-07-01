@@ -43,8 +43,8 @@ Prefer to drive it one phase at a time?
 /rpi-auto                                             # or: auto-run the rest to implement
 ```
 
-Prefer a shorter loop? Use `/rpi-auto-simple` (or `/rpi-start-simple`) to skip the classify /
-per-item research phases (the `simple` suffix on `/rpi-start` still works as an alias):
+Prefer a shorter loop? Use `/rpi-auto-simple` (or `/rpi-start-simple`) to skip the research,
+classify, and per-item research phases (the `simple` suffix on `/rpi-start` still works as an alias):
 
 ```
 /rpi-auto-simple Fix null deref in TokenCache
@@ -59,9 +59,9 @@ files between phases at any time. If your session reloads, pick the run back up 
 | Command | Behavior |
 | --- | --- |
 | `/rpi-auto <task>` | Start a run (if given a task) and auto-run to completion. On an existing run with no task, auto-runs the rest. Accepts `[from:<p>] [to:<p>] [unattended:true] [pause-at:<p>]`. |
-| `/rpi-auto-simple <task>` | Same as `/rpi-auto` but the short flow (research → assumptions → plan → implement). |
+| `/rpi-auto-simple <task>` | Same as `/rpi-auto` but the short flow (assumptions → plan → implement). |
 | `/rpi-start <task>` | Init the run dir and run the first phase (full flow). |
-| `/rpi-start-simple <task>` | Same, but the short flow (research → assumptions → plan → implement). Equivalent to `/rpi-start <task> simple`. |
+| `/rpi-start-simple <task>` | Same, but the short flow (assumptions → plan → implement). Equivalent to `/rpi-start <task> simple`. |
 | `/rpi-resume [name-or-text]` | Rehydrate a run after a reload from `.aw/` (task, flow, auto-judge toggle). With no arg, resumes the only/most-recent run; otherwise matches by dir name or task text. |
 | `/rpi-continue [n]` | Run the next phase (or next `n`), then stop. |
 | `/rpi-pause` | Stop the auto-runner at the next phase boundary. |

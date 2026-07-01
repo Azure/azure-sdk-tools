@@ -93,26 +93,22 @@ test("researchNotesComplete requires a note for every sub-item", () => {
 test("phase continuity: a phase advances only after a recorded pass AND its artifact exists", () => {
     const dir = mkRun();
     // Fresh run starts at the first simple-flow phase.
-    assert.equal(nextPhase(dir, true).id, "research");
-
-    // Artifact present but no recorded pass (partial failure) => phase is NOT complete.
-    w(dir, "specs/architecture.md");
-    assert.equal(phaseComplete(dir, nextPhase(dir, true)), false);
-    assert.equal(nextPhase(dir, true).id, "research", "partial artifact must not advance");
-
-    // Recorded pass advances to the next phase.
-    recordPhaseResult(dir, "research", "pass");
     assert.equal(nextPhase(dir, true).id, "assumptions");
 
-    // A recorded FAIL (even with the artifact written) does not advance.
+    // Artifact present but no recorded pass (partial failure) => phase is NOT complete.
     w(dir, "assumptions.md");
-    recordPhaseResult(dir, "assumptions", "fail", "blocked");
-    assert.equal(nextPhase(dir, true).id, "assumptions", "recorded fail must not advance");
+    assert.equal(phaseComplete(dir, nextPhase(dir, true)), false);
+    assert.equal(nextPhase(dir, true).id, "assumptions", "partial artifact must not advance");
 
+    // Recorded pass advances to the next phase.
     recordPhaseResult(dir, "assumptions", "pass");
     assert.equal(nextPhase(dir, true).id, "plan");
 
+    // A recorded FAIL (even with the artifact written) does not advance.
     w(dir, "plan.md");
+    recordPhaseResult(dir, "plan", "fail", "blocked");
+    assert.equal(nextPhase(dir, true).id, "plan", "recorded fail must not advance");
+
     recordPhaseResult(dir, "plan", "pass");
     assert.equal(nextPhase(dir, true).id, "implement");
 
@@ -151,15 +147,15 @@ test("resume: listRuns rehydrates task/flow from state.json and resumes at the r
         const runDir = path.join(tmp, ".aw", "my-task-deadbeef");
         fs.mkdirSync(runDir, { recursive: true });
         writeState(runDir, { task: "My task", simple: true });
-        w(runDir, "specs/architecture.md");
-        recordPhaseResult(runDir, "research", "pass");
+        w(runDir, "assumptions.md");
+        recordPhaseResult(runDir, "assumptions", "pass");
 
         const runs = listRuns();
         assert.equal(runs.length, 1);
         assert.equal(runs[0].task, "My task");
         assert.equal(runs[0].simple, true);
         // The resumed run continues from the first incomplete phase, not from the start.
-        assert.equal(nextPhase(runs[0].dir, runs[0].simple).id, "assumptions");
+        assert.equal(nextPhase(runs[0].dir, runs[0].simple).id, "plan");
     } finally {
         process.chdir(cwd0);
         fs.rmSync(tmp, { recursive: true, force: true });
@@ -222,7 +218,7 @@ test("initRun creates the run dir and state.json", () => {
         assert.equal(state.task, "My task");
         assert.equal(state.simple, true);
         // A freshly-initialized simple run starts at the first phase.
-        assert.equal(nextPhase(runDir, true).id, "research");
+        assert.equal(nextPhase(runDir, true).id, "assumptions");
     } finally {
         process.chdir(cwd0);
         fs.rmSync(tmp, { recursive: true, force: true });

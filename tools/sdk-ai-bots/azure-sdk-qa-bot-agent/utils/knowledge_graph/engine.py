@@ -53,20 +53,36 @@ async def preload_report_embeddings(config: Any) -> dict[str, list[float]]:
         )
         id_field = store.id_field
         vector_field = store.vector_field
-        # Azure AI Search caps ``$top`` at 1000, so page via
-        # ``results_per_page``; the SDK iterates continuation tokens.
-        results = store.db_connection.search(
-            search_text="*",
-            select=[id_field, vector_field],
-            results_per_page=1000,
-        )
-        cache: dict[str, list[float]] = {}
-        for result in results:
-            doc_id = result.get(id_field)
-            vector = result.get(vector_field)
-            if doc_id and vector is not None:
-                cache[str(doc_id)] = list(vector)
-        return cache
+
+        # ``SearchItemPaged`` already iterates every match via continuation
+        # tokens, so ``results_per_page`` only tunes the page size to reduce
+        # round-trips. Older/newer azure-search-documents releases disagree on
+        # whether ``search()`` accepts ``results_per_page`` — some forward the
+        # unknown kwarg all the way down to ``Session.request()`` and raise
+        # ``TypeError`` *lazily during iteration*. So collect inside a helper and
+        # retry with default paging if the page-size kwarg is rejected.
+        def _collect(**extra: object) -> dict[str, list[float]]:
+            results = store.db_connection.search(
+                search_text="*",
+                select=[id_field, vector_field],
+                **extra,
+            )
+            out: dict[str, list[float]] = {}
+            for result in results:
+                doc_id = result.get(id_field)
+                vector = result.get(vector_field)
+                if doc_id and vector is not None:
+                    out[str(doc_id)] = list(vector)
+            return out
+
+        try:
+            return _collect(results_per_page=1000)
+        except TypeError:
+            logger.warning(
+                "azure-search 'search()' rejected results_per_page; "
+                "retrying community-embedding preload with default paging."
+            )
+            return _collect()
 
     start = time.monotonic()
     try:

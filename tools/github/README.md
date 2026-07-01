@@ -72,6 +72,9 @@ _Creates or updates the set of labels expected to be common across the Azure SDK
 # Synchronize the common labels to the Azure SDK for .NET repository.
 ./Sync-AzsdkLabels.ps1 -LabelsFilePath "../data/common-labels.csv" -Languages 'net'
 
+# Preview only the repositories that would need syncing based on changed labels in the labels file.
+./Sync-AzsdkLabels.ps1 -Incremental -WhatIf
+
 # View the help for the full set of parameters.
 get-help ./Sync-AzsdkLabels.ps1 -full
 ```

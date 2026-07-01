@@ -146,6 +146,8 @@ class KnowledgeGraphService:
             result.context_records,
             expand_communities=(cfg("GRAPH_LS_EXPAND_COMMUNITIES", "true").lower() == "true"),
             max_expansion_units=int(cfg("GRAPH_LS_EXPANSION_UNITS", "40")),
+            two_hop=(cfg("GRAPH_LS_TWO_HOP", "true").lower() == "true"),
+            max_two_hop_units=int(cfg("GRAPH_LS_TWO_HOP_UNITS", "40")),
         )
 
     # ------------------------------------------------------------------ #

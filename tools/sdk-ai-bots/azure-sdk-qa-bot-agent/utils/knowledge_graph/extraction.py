@@ -36,6 +36,8 @@ def extract_references_from_context(
     *,
     expand_communities: bool = False,
     max_expansion_units: int = 40,
+    two_hop: bool = False,
+    max_two_hop_units: int = 40,
 ) -> list[Reference]:
     """Resolve cited text-unit short IDs back to source-document references.
 
@@ -70,24 +72,29 @@ def extract_references_from_context(
         return []
 
     base_mask = text_units_df["human_readable_id"].isin(list(normalised_ids))
-    matched_units = text_units_df[base_mask]
-    if matched_units.empty:
+    base_units = text_units_df[base_mask]
+    if base_units.empty:
         return []
 
+    extra_ids: set[str] = set()
     if expand_communities:
-        expansion_ids = _community_expansion_unit_ids(
-            dfs, matched_units, max_expansion_units
+        extra_ids |= _community_expansion_unit_ids(dfs, base_units, max_expansion_units)
+    if two_hop:
+        extra_ids |= _two_hop_expansion_unit_ids(dfs, base_units, max_two_hop_units)
+
+    matched_units = base_units
+    if extra_ids and "id" in text_units_df.columns:
+        expand_mask = text_units_df["id"].astype(str).isin(extra_ids)
+        matched_units = text_units_df[base_mask | expand_mask]
+        logger.info(
+            "GraphRAG ref expansion: +%d associated text units "
+            "(base=%d, total=%d, community=%s, two_hop=%s)",
+            max(0, len(matched_units) - int(base_mask.sum())),
+            int(base_mask.sum()),
+            len(matched_units),
+            expand_communities,
+            two_hop,
         )
-        if expansion_ids and "id" in text_units_df.columns:
-            expand_mask = text_units_df["id"].astype(str).isin(expansion_ids)
-            matched_units = text_units_df[base_mask | expand_mask]
-            logger.info(
-                "GraphRAG community expansion: +%d associated text units "
-                "(base=%d, total=%d)",
-                max(0, len(matched_units) - int(base_mask.sum())),
-                int(base_mask.sum()),
-                len(matched_units),
-            )
 
     doc_index = documents_df.drop_duplicates(subset=["id"]).set_index("id")
     # ``raw_data`` is the column GraphRAG persists from
@@ -242,7 +249,81 @@ def _community_expansion_unit_ids(
         return set()
 
 
-def _read_doc_attribution(doc_index: Any, doc_id: str) -> tuple[str, str]:
+def _two_hop_expansion_unit_ids(
+    dfs: "dict[str, Any]",
+    matched_units: Any,
+    cap: int,
+) -> set[str]:
+    """Text-unit ids reachable within two relationship hops (optimization #3).
+
+    Chain: cited text units → their ``entity_ids`` (hop-0 entities) → the
+    ``relationships`` incident to those entities give hop-1 neighbor entities
+    (and the edges' own ``text_unit_ids``) → the relationships incident to the
+    hop-1 neighbors give hop-2 edges' ``text_unit_ids``. Entities are matched by
+    both ``id`` and ``title`` because relationship ``source``/``target`` columns
+    reference entity titles. All hops are guarded and the result is capped at
+    ``cap`` so the reference list stays bounded.
+    """
+    entities_df = dfs.get("entities")
+    relationships_df = dfs.get("relationships")
+    if entities_df is None or relationships_df is None:
+        return set()
+    if "entity_ids" not in matched_units.columns:
+        return set()
+    rel_cols = relationships_df.columns
+    if "source" not in rel_cols or "target" not in rel_cols:
+        return set()
+    if "text_unit_ids" not in rel_cols:
+        return set()
+
+    try:
+        # hop-0: entities appearing in the cited text units.
+        entity_ids: set[str] = set()
+        for cell in matched_units["entity_ids"]:
+            entity_ids.update(_flatten_ids(cell))
+        if not entity_ids:
+            return set()
+
+        # Build the set of matchable names (ids + titles) for hop-0 entities.
+        def _names_for(ids: set[str]) -> set[str]:
+            names = set(ids)
+            if "id" in entities_df.columns and "title" in entities_df.columns:
+                rows = entities_df[entities_df["id"].astype(str).isin(ids)]
+                names.update(rows["title"].astype(str).tolist())
+            return names
+
+        def _edge_hop(names: set[str]) -> tuple[set[str], set[str]]:
+            """Return (edge text_unit_ids, neighbor endpoint names)."""
+            src = relationships_df["source"].astype(str)
+            tgt = relationships_df["target"].astype(str)
+            mask = src.isin(names) | tgt.isin(names)
+            edges = relationships_df[mask]
+            unit_ids: set[str] = set()
+            for cell in edges["text_unit_ids"]:
+                unit_ids.update(_flatten_ids(cell))
+            neighbors = set(edges["source"].astype(str).tolist())
+            neighbors |= set(edges["target"].astype(str).tolist())
+            neighbors -= names
+            return unit_ids, neighbors
+
+        names0 = _names_for(entity_ids)
+        collected: set[str] = set()
+
+        # hop-1 edges.
+        hop1_units, hop1_neighbors = _edge_hop(names0)
+        collected |= hop1_units
+        if len(collected) < cap and hop1_neighbors:
+            # hop-2 edges from the hop-1 neighbor entities.
+            hop2_units, _ = _edge_hop(hop1_neighbors)
+            collected |= hop2_units
+
+        return set(list(collected)[:cap])
+    except Exception:  # noqa: BLE001
+        logger.warning(
+            "GraphRAG two-hop expansion failed; falling back to base refs.",
+            exc_info=True,
+        )
+        return set()
     """Return ``(source_folder, source_path)`` for a document id."""
     if doc_id not in doc_index.index:
         return "", ""

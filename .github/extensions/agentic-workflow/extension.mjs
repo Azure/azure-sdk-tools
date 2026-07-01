@@ -14,6 +14,7 @@ import { joinSession } from "@github/copilot-sdk/extension";
 import { fileURLToPath } from "node:url";
 import * as path from "node:path";
 import * as fs from "node:fs";
+import { createHash } from "node:crypto";
 import { execSync } from "node:child_process";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -28,15 +29,15 @@ const MAX_RETRIES = 2;
 const ALL_TOOLS = null;
 
 const PHASES = [
-    { id: "research", agent: "aw-research", template: "01-research.md", model: "claude-sonnet-4.5", tools: ALL_TOOLS, artifact: "specs/architecture.md", simple: true },
-    { id: "assumptions", agent: "aw-assumptions", template: "02-assumptions.md", model: null, tools: ALL_TOOLS, artifact: "assumptions.md", simple: true },
-    { id: "classify", agent: "aw-classify", template: "03-classify.md", model: "claude-haiku-4.5", tools: ALL_TOOLS, artifact: "subitems.json", simple: false },
-    { id: "research-item", agent: "aw-research-item", template: "04-research-item.md", model: "claude-sonnet-4.5", tools: ALL_TOOLS, artifact: "research", simple: false },
-    { id: "plan", agent: "aw-plan", template: "05-plan.md", model: "claude-sonnet-4.5", tools: ALL_TOOLS, artifact: "plan.md", simple: true },
-    { id: "implement", agent: "aw-implement", template: "06-implement.md", model: "claude-sonnet-4.5", tools: ALL_TOOLS, artifact: "execution-log.md", simple: true },
+    { id: "research", agent: "aw-research", template: "01-research.md", model: "claude-opus-4.8", tools: ALL_TOOLS, artifact: "specs/architecture.md", simple: true },
+    { id: "assumptions", agent: "aw-assumptions", template: "02-assumptions.md", model: "claude-opus-4.8", tools: ALL_TOOLS, artifact: "assumptions.md", simple: true },
+    { id: "classify", agent: "aw-classify", template: "03-classify.md", model: "claude-opus-4.8", tools: ALL_TOOLS, artifact: "subitems.json", simple: false },
+    { id: "research-item", agent: "aw-research-item", template: "04-research-item.md", model: "claude-opus-4.8", tools: ALL_TOOLS, artifact: "research", simple: false },
+    { id: "plan", agent: "aw-plan", template: "05-plan.md", model: "claude-opus-4.8", tools: ALL_TOOLS, artifact: "plan.md", simple: true },
+    { id: "implement", agent: "aw-implement", template: "06-implement.md", model: "claude-opus-4.8", tools: ALL_TOOLS, artifact: "execution-log.md", simple: true },
 ];
 
-const CRITIQUE = { id: "critique", agent: "aw-critique", template: "critique.md", model: "claude-haiku-4.5", tools: ALL_TOOLS };
+const CRITIQUE = { id: "critique", agent: "aw-critique", template: "critique.md", model: "gpt-5.5", tools: ALL_TOOLS };
 
 // Map an artifact filename to the phase that authors it (for /aw-judge).
 const ARTIFACT_TO_PHASE = {
@@ -66,18 +67,87 @@ function slugify(task) {
 }
 export { slugify };
 
+// Deterministic run id: human-readable slug + short content hash. The hash disambiguates tasks that
+// share a 40-char slug prefix (which would otherwise collide onto the same run dir) and is stable
+// for a given task, so `/aw-start <same task>` and `/aw-resume` resolve to the exact same dir.
+function runId(task) {
+    const h = createHash("sha1").update(task, "utf8").digest("hex").slice(0, 8);
+    return `${slugify(task)}-${h}`;
+}
+export { runId };
+
 function readTemplate(name) {
     return fs.readFileSync(path.join(PROMPTS_DIR, name), "utf8");
 }
+
+// --- On-disk run state (state.json): the durable record of what each phase reported + run meta. ---
+// The artifact files remain the primary output; state.json records the PHASE_RESULT sentinel so a
+// phase counts as complete only when it actually reported `pass` (not merely because it left a
+// partial file behind), and carries the metadata needed to resume after an extension reload.
+function stateFile(runDir) {
+    return path.join(runDir, "state.json");
+}
+
+function readState(runDir) {
+    try {
+        return JSON.parse(fs.readFileSync(stateFile(runDir), "utf8"));
+    } catch {
+        return null;
+    }
+}
+
+function writeState(runDir, state) {
+    try {
+        fs.writeFileSync(stateFile(runDir), JSON.stringify(state, null, 2) + "\n");
+    } catch (e) {
+        diag(`could not write state.json: ${e?.message ?? e}`);
+    }
+}
+
+function recordPhaseResult(runDir, phaseId, result, reason) {
+    const state = readState(runDir) || {};
+    state.phases = state.phases || {};
+    state.phases[phaseId] = { result, reason: reason || "", at: new Date().toISOString() };
+    writeState(runDir, state);
+}
+export { recordPhaseResult, writeState };
+
+// Reapply any per-run model overrides (from /aw-model) onto the in-memory phase registry.
+function applyModelOverrides(state) {
+    for (const [id, model] of Object.entries(state?.models || {})) {
+        const p = phaseById(id) || (id === "critique" ? CRITIQUE : null);
+        if (p) p.model = model;
+    }
+}
+
+// research-item is complete only when there is a note for EVERY sub-item in subitems.json, not just
+// when the research/ dir holds some file — a phase that wrote 1 of N notes then failed is not done.
+function researchNotesComplete(runDir) {
+    let ids = [];
+    try {
+        const sub = JSON.parse(fs.readFileSync(path.join(runDir, "subitems.json"), "utf8"));
+        ids = (sub.items || []).map((it) => it.id).filter(Boolean);
+    } catch {
+        return false; // cannot verify coverage without a readable subitems.json
+    }
+    if (ids.length === 0) return false;
+    return ids.every((id) => fs.existsSync(path.join(runDir, "research", `${id}.md`)));
+}
+export { researchNotesComplete };
 
 function phaseOrder(simple) {
     return simple ? PHASES.filter((p) => p.simple) : PHASES;
 }
 
+// A phase is complete only when it reported `pass` AND its artifact exists (with per-phase coverage
+// checks). Requiring the recorded pass stops a failed phase that left a partial artifact from being
+// silently skipped by the auto-runner.
 function phaseComplete(runDir, phase) {
+    const state = readState(runDir);
+    if (state?.phases?.[phase.id]?.result !== "pass") return false;
     const target = path.join(runDir, phase.artifact);
     if (!fs.existsSync(target)) return false;
-    // research-item's artifact is a directory: complete only when it holds at least one note.
+    if (phase.id === "research-item") return researchNotesComplete(runDir);
     try {
         const st = fs.statSync(target);
         if (st.isDirectory()) return fs.readdirSync(target).length > 0;
@@ -90,6 +160,7 @@ function phaseComplete(runDir, phase) {
 function nextPhase(runDir, simple) {
     return phaseOrder(simple).find((p) => !phaseComplete(runDir, p)) || null;
 }
+export { nextPhase, phaseComplete };
 
 function phaseById(id) {
     return PHASES.find((p) => p.id === id) || null;
@@ -134,6 +205,7 @@ async function dispatch(phase, { priorErrors = "" } = {}) {
     const ev = await session.sendAndWait({ prompt }, PHASE_TIMEOUT_MS);
     const text = ev?.data?.content ?? "";
     const { result, reason } = parsePhaseResult(text);
+    if (activeRunDir) recordPhaseResult(activeRunDir, phase.id, result, reason);
     diag(`phase ${phase.id} -> ${result}${reason ? ` (${reason})` : ""}`);
     return { result, reason, text };
 }
@@ -248,9 +320,29 @@ function isTruthy(v) {
 export { parseKv, isTruthy };
 
 // --- Commands ------------------------------------------------------------------------------------
-async function cmdStart(argstr) {
+// Ensure the target repo ignores the on-disk run state so `.aw/` artifacts never leak into commits.
+function ensureGitignore() {
+    try {
+        const gi = path.join(process.cwd(), ".gitignore");
+        let content = "";
+        try {
+            content = fs.readFileSync(gi, "utf8");
+        } catch {
+            content = "";
+        }
+        const already = content.split(/\r?\n/).some((l) => l.trim().replace(/\/+$/, "") === ".aw");
+        if (already) return;
+        const prefix = content && !content.endsWith("\n") ? "\n" : "";
+        fs.appendFileSync(gi, `${prefix}.aw/\n`);
+        diag("added .aw/ to .gitignore");
+    } catch (e) {
+        diag(`could not update .gitignore: ${e?.message ?? e}`);
+    }
+}
+
+async function cmdStart(argstr, { forceSimple = false } = {}) {
     const { kv, rest } = parseKv(argstr);
-    let simple = isTruthy(kv.simple) || rest.some((t) => /^(--?)?simple$/i.test(t));
+    let simple = forceSimple || isTruthy(kv.simple) || rest.some((t) => /^(--?)?simple$/i.test(t));
     const task = rest.filter((t) => !/^(--?)?simple$/i.test(t)).join(" ").trim() || kv.task || "";
     if (!task) {
         await log("provide a task, e.g. /aw-start Add CSV export, or /aw-start Fix bug simple");
@@ -258,9 +350,17 @@ async function cmdStart(argstr) {
     }
     activeTask = task;
     activeSimple = simple;
-    activeRunDir = path.join(process.cwd(), ".aw", slugify(task));
+    activeRunDir = path.join(process.cwd(), ".aw", runId(task));
     fs.mkdirSync(activeRunDir, { recursive: true });
+    ensureGitignore();
     fs.writeFileSync(path.join(activeRunDir, "task.txt"), task + "\n");
+    // Persist/refresh run metadata so the run can be resumed after a reload; preserve prior phase
+    // results and model overrides if this task's run dir already exists.
+    const state = readState(activeRunDir) || {};
+    state.task = task;
+    state.simple = simple;
+    writeState(activeRunDir, state);
+    applyModelOverrides(state);
     await log(`run dir: ${path.relative(process.cwd(), activeRunDir) || activeRunDir}${simple ? " (simple flow)" : ""}`);
     const next = nextPhase(activeRunDir, activeSimple);
     if (!next) {
@@ -268,6 +368,65 @@ async function cmdStart(argstr) {
         return;
     }
     await dispatch(next);
+}
+
+// List resumable runs under <cwd>/.aw/, newest first, from their persisted state.json.
+function listRuns() {
+    const base = path.join(process.cwd(), ".aw");
+    let names = [];
+    try {
+        names = fs.readdirSync(base, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name);
+    } catch {
+        return [];
+    }
+    return names
+        .map((name) => {
+            const dir = path.join(base, name);
+            const st = readState(dir) || {};
+            let mtime = 0;
+            try {
+                mtime = fs.statSync(dir).mtimeMs;
+            } catch {
+                mtime = 0;
+            }
+            return { name, dir, task: st.task || name, simple: !!st.simple, mtime };
+        })
+        .sort((a, b) => b.mtime - a.mtime);
+}
+export { listRuns };
+
+// Restore module state (and any model overrides) from a persisted run so the workflow can continue
+// after an extension reload without re-typing the exact task string.
+async function cmdResume(argstr) {
+    const query = (argstr ?? "").trim();
+    const runs = listRuns();
+    if (runs.length === 0) {
+        await log("no runs found under .aw/. Start one with /aw-start <task>.");
+        return;
+    }
+    let run;
+    if (query) {
+        const q = query.toLowerCase();
+        run = runs.find((r) => r.name === query) || runs.find((r) => r.task.toLowerCase().includes(q));
+        if (!run) {
+            await log(`no run matches "${query}". Available:\n${runs.map((r) => `  ${r.name} — ${r.task}`).join("\n")}`);
+            return;
+        }
+    } else if (runs.length === 1) {
+        run = runs[0];
+    } else {
+        await log(`multiple runs found; pick one with /aw-resume <name-or-text>:\n${runs.map((r) => `  ${r.name} — ${r.task}`).join("\n")}`);
+        return;
+    }
+    activeTask = run.task;
+    activeSimple = run.simple;
+    activeRunDir = run.dir;
+    applyModelOverrides(readState(run.dir));
+    const next = nextPhase(activeRunDir, activeSimple);
+    await log(
+        `resumed "${activeTask}" (${path.relative(process.cwd(), activeRunDir) || activeRunDir})` +
+            `${next ? `; next phase: ${next.id}. Use /aw-continue or /aw-run.` : "; all phases complete."}`,
+    );
 }
 
 async function cmdPhase(id, argstr) {
@@ -360,6 +519,12 @@ async function cmdModel(argstr) {
         return;
     }
     phase.model = model; // applied via session.setModel on the next dispatch of this phase
+    if (activeRunDir) {
+        const state = readState(activeRunDir) || {};
+        state.models = state.models || {};
+        state.models[id] = model;
+        writeState(activeRunDir, state);
+    }
     await log(`${id} will use model ${model} on its next run.`);
 }
 
@@ -385,7 +550,7 @@ async function cmdStatus() {
     }
     const order = phaseOrder(activeSimple);
     const phaseLines = order.map((p) => `  ${phaseComplete(activeRunDir, p) ? "[x]" : "[ ]"} ${p.id}`).join("\n");
-    const artifacts = walkArtifacts(activeRunDir).filter((f) => f !== "task.txt").sort();
+    const artifacts = walkArtifacts(activeRunDir).filter((f) => f !== "task.txt" && f !== "state.json").sort();
     let diffStat = "";
     try {
         diffStat = execSync("git diff --stat", { cwd: process.cwd(), encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
@@ -431,7 +596,9 @@ export const joinConfig = {
     customAgents,
     infiniteSessions: { enabled: true },
     commands: [
-        cmd("aw-start", "Start a workflow run on a task (append 'simple' for the short flow).", (c) => cmdStart(c.args)),
+        cmd("aw-start", "Start a full workflow run on a task.", (c) => cmdStart(c.args)),
+        cmd("aw-start-simple", "Start a short-flow run (research → assumptions → plan → implement).", (c) => cmdStart(c.args, { forceSimple: true })),
+        cmd("aw-resume", "Resume a run after a reload: /aw-resume [name-or-text] (rehydrates from .aw/).", (c) => cmdResume(c.args)),
         cmd("aw-run", "Auto-run phases: from:<phase> to:<phase> unattended:true pause-at:<phase>.", (c) => cmdRun(c.args)),
         cmd("aw-continue", "Run the next phase (or next N).", (c) => cmdContinue(c.args)),
         cmd("aw-pause", "Stop the auto-runner at the next phase boundary.", () => cmdPause()),

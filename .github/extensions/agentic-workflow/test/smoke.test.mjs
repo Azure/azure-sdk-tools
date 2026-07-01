@@ -3,9 +3,31 @@
 // not try to join a live session host).
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
 
 process.env.AW_SKIP_JOIN = "1";
-const { parsePhaseResult, parseKv, isTruthy, slugify } = await import("../extension.mjs");
+const {
+    parsePhaseResult,
+    parseKv,
+    isTruthy,
+    slugify,
+    runId,
+    researchNotesComplete,
+    nextPhase,
+    phaseComplete,
+    recordPhaseResult,
+    writeState,
+    listRuns,
+} = await import("../extension.mjs");
+
+const mkRun = () => fs.mkdtempSync(path.join(os.tmpdir(), "aw-run-"));
+const w = (dir, rel, body = "x") => {
+    const full = path.join(dir, rel);
+    fs.mkdirSync(path.dirname(full), { recursive: true });
+    fs.writeFileSync(full, body);
+};
 
 test("parsePhaseResult reads pass/fail/needs_input and reason", () => {
     assert.equal(parsePhaseResult("work...\nPHASE_RESULT: pass").result, "pass");
@@ -41,6 +63,103 @@ test("slugify produces a safe run-dir name", () => {
     assert.equal(slugify("a".repeat(80)).length, 40);
 });
 
+test("runId appends a stable content hash and disambiguates slug collisions", () => {
+    // Deterministic for a given task.
+    assert.equal(runId("Add CSV export"), runId("Add CSV export"));
+    assert.match(runId("Add CSV export"), /^add-csv-export-[0-9a-f]{8}$/);
+    // Two tasks sharing the same 40-char slug prefix get distinct run ids.
+    const a = "a".repeat(80);
+    const b = "a".repeat(80) + " different tail";
+    assert.equal(slugify(a), slugify(b));
+    assert.notEqual(runId(a), runId(b));
+});
+
+test("researchNotesComplete requires a note for every sub-item", () => {
+    const dir = mkRun();
+    w(dir, "subitems.json", JSON.stringify({ items: [{ id: "one" }, { id: "two" }] }));
+    w(dir, "research/one.md", "note");
+    assert.equal(researchNotesComplete(dir), false, "missing two.md => incomplete");
+    w(dir, "research/two.md", "note");
+    assert.equal(researchNotesComplete(dir), true, "all notes present => complete");
+    fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test("phase continuity: a phase advances only after a recorded pass AND its artifact exists", () => {
+    const dir = mkRun();
+    // Fresh run starts at the first simple-flow phase.
+    assert.equal(nextPhase(dir, true).id, "research");
+
+    // Artifact present but no recorded pass (partial failure) => phase is NOT complete.
+    w(dir, "specs/architecture.md");
+    assert.equal(phaseComplete(dir, nextPhase(dir, true)), false);
+    assert.equal(nextPhase(dir, true).id, "research", "partial artifact must not advance");
+
+    // Recorded pass advances to the next phase.
+    recordPhaseResult(dir, "research", "pass");
+    assert.equal(nextPhase(dir, true).id, "assumptions");
+
+    // A recorded FAIL (even with the artifact written) does not advance.
+    w(dir, "assumptions.md");
+    recordPhaseResult(dir, "assumptions", "fail", "blocked");
+    assert.equal(nextPhase(dir, true).id, "assumptions", "recorded fail must not advance");
+
+    recordPhaseResult(dir, "assumptions", "pass");
+    assert.equal(nextPhase(dir, true).id, "plan");
+
+    w(dir, "plan.md");
+    recordPhaseResult(dir, "plan", "pass");
+    assert.equal(nextPhase(dir, true).id, "implement");
+
+    w(dir, "execution-log.md");
+    recordPhaseResult(dir, "implement", "pass");
+    assert.equal(nextPhase(dir, true), null, "all simple-flow phases complete");
+    fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test("phase continuity: research-item needs coverage even with a recorded pass", () => {
+    const dir = mkRun();
+    // Fast-forward the earlier full-flow phases.
+    w(dir, "specs/architecture.md");
+    recordPhaseResult(dir, "research", "pass");
+    w(dir, "assumptions.md");
+    recordPhaseResult(dir, "assumptions", "pass");
+    w(dir, "subitems.json", JSON.stringify({ items: [{ id: "one" }, { id: "two" }] }));
+    recordPhaseResult(dir, "classify", "pass");
+    assert.equal(nextPhase(dir, false).id, "research-item");
+
+    // A recorded pass with only one of two notes must NOT advance (coverage gate).
+    w(dir, "research/one.md", "note");
+    recordPhaseResult(dir, "research-item", "pass");
+    assert.equal(nextPhase(dir, false).id, "research-item", "incomplete coverage must not advance");
+
+    w(dir, "research/two.md", "note");
+    assert.equal(nextPhase(dir, false).id, "plan", "full coverage advances");
+    fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test("resume: listRuns rehydrates task/flow from state.json and resumes at the right phase", () => {
+    const cwd0 = process.cwd();
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "aw-cwd-"));
+    try {
+        process.chdir(tmp);
+        const runDir = path.join(tmp, ".aw", "my-task-deadbeef");
+        fs.mkdirSync(runDir, { recursive: true });
+        writeState(runDir, { task: "My task", simple: true });
+        w(runDir, "specs/architecture.md");
+        recordPhaseResult(runDir, "research", "pass");
+
+        const runs = listRuns();
+        assert.equal(runs.length, 1);
+        assert.equal(runs[0].task, "My task");
+        assert.equal(runs[0].simple, true);
+        // The resumed run continues from the first incomplete phase, not from the start.
+        assert.equal(nextPhase(runs[0].dir, runs[0].simple).id, "assumptions");
+    } finally {
+        process.chdir(cwd0);
+        fs.rmSync(tmp, { recursive: true, force: true });
+    }
+});
+
 const { joinConfig } = await import("../extension.mjs");
 
 test("joinConfig registers the seven phase agents", () => {
@@ -60,7 +179,7 @@ test("joinConfig gives every phase all tools", () => {
 test("joinConfig registers the command surface", () => {
     assert.equal(joinConfig.infiniteSessions.enabled, true);
     const cmds = joinConfig.commands.map((c) => c.name);
-    for (const expected of ["aw-start", "aw-run", "aw-continue", "aw-pause", "aw-judge", "aw-redo", "aw-model", "aw-status", "aw-compact", "aw-implement"]) {
+    for (const expected of ["aw-start", "aw-start-simple", "aw-resume", "aw-run", "aw-continue", "aw-pause", "aw-judge", "aw-redo", "aw-model", "aw-status", "aw-compact", "aw-implement"]) {
         assert.ok(cmds.includes(expected), `missing /${expected}`);
     }
 });

@@ -1,12 +1,15 @@
 targetScope = 'resourceGroup'
 
+@description('Environment name (dev | preview | prod). Suffix on resource names for multi-env deployability.')
+param envName string
+
 resource userAssignedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2025-05-31-preview' = {
-  name: 'azsdkqabot'
+  name: 'azsdkqabot-${envName}'
   location: 'westus2'
 }
 
 resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
-  name: 'azsdkqabot'
+  name: 'azsdkqabot-${envName}'
   location: 'westus2'
   properties: {
     sku: {
@@ -24,7 +27,7 @@ resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
 }
 
 resource component 'Microsoft.Insights/components@2020-02-02' = {
-  name: 'azsdkqabot-insights'
+  name: 'azsdkqabot-insights-${envName}'
   location: 'westus2'
   kind: 'web'
   properties: {
@@ -45,7 +48,7 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
 }
 
 resource actionGroup 'Microsoft.Insights/actionGroups@2024-10-01-preview' = {
-  name: 'azsdkqabot-email-alerts'
+  name: 'azsdkqabot-email-alerts-${envName}'
   location: 'Global'
   properties: {
     groupShortName: 'EmailAlerts'
@@ -75,7 +78,7 @@ resource actionGroup 'Microsoft.Insights/actionGroups@2024-10-01-preview' = {
 }
 
 resource registry 'Microsoft.ContainerRegistry/registries@2026-01-01-preview' = {
-  name: 'azsdkqabot'
+  name: 'azsdkqabot${envName}'
   location: 'westus2'
   sku: {
     name: 'Standard'
@@ -93,7 +96,7 @@ resource roleAssignment2 'Microsoft.Authorization/roleAssignments@2022-04-01' = 
 }
 
 resource serverfarm 'Microsoft.Web/serverfarms@2025-05-01' = {
-  name: 'azsdkqabot'
+  name: 'azsdkqabot-${envName}'
   location: 'westus2'
   properties: {
     reserved: true
@@ -109,7 +112,7 @@ resource serverfarm 'Microsoft.Web/serverfarms@2025-05-01' = {
 }
 
 resource site 'Microsoft.Web/sites@2025-05-01' = {
-  name: 'azsdkqabot'
+  name: 'azsdkqabot-${envName}'
   location: 'westus2'
   properties: {
     httpsOnly: true
@@ -159,7 +162,7 @@ resource site 'Microsoft.Web/sites@2025-05-01' = {
         }
         {
           name: 'STORAGE_ACCOUNT_NAME'
-          value: 'qzqabotstorage'
+          value: 'qzqabotstorage${envName}'
         }
         {
           name: 'AZURE_TABLE_NAME_FOR_CONVERSATION'
@@ -203,7 +206,7 @@ resource site 'Microsoft.Web/sites@2025-05-01' = {
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
-      '/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.ManagedIdentity/userAssignedIdentities/azsdkqabot': {}
+      '${userAssignedIdentity.id}': {}
     }
   }
   kind: 'app,linux,container'
@@ -211,7 +214,7 @@ resource site 'Microsoft.Web/sites@2025-05-01' = {
 
 resource diagnosticSetting 'microsoft.insights/diagnosticSettings@2021-05-01-preview' = {
   scope: site
-  name: 'azsdkqabot-diagnostic'
+  name: 'azsdkqabot-diagnostic-${envName}'
   properties: {
     workspaceId: workspace.id
     logs: [
@@ -246,7 +249,7 @@ resource diagnosticSetting 'microsoft.insights/diagnosticSettings@2021-05-01-pre
 }
 
 resource botService 'Microsoft.BotService/botServices@2023-09-15-preview' = {
-  name: 'azsdkqabot'
+  name: 'azsdkqabot-${envName}'
   properties: {
     displayName: 'Azure SDK Q&A Bot'
     endpoint: 'https://${site.properties.defaultHostName}/api/messages'
@@ -273,14 +276,14 @@ resource channel 'Microsoft.BotService/botServices/channels@2023-09-15-preview' 
 }
 
 resource webtest 'Microsoft.Insights/webtests@2022-06-15' = {
-  name: 'azsdkqabot-health-test'
+  name: 'azsdkqabot-health-test-${envName}'
   location: 'westus2'
   tags: {
-    'hidden-link:/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.Insights/components/azsdkqabot-insights': 'Resource'
+    'hidden-link:${component.id}': 'Resource'
   }
   kind: 'ping'
   properties: {
-    SyntheticMonitorId: 'azsdkqabot-health-test'
+    SyntheticMonitorId: 'azsdkqabot-health-test-${envName}'
     Name: 'azsdkqabot Health Check Test'
     Description: 'Health check test to monitor server availability'
     Enabled: true
@@ -312,7 +315,7 @@ resource webtest 'Microsoft.Insights/webtests@2022-06-15' = {
 }
 
 resource metricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
-  name: 'azsdkqabot-server-errors'
+  name: 'azsdkqabot-server-errors-${envName}'
   location: 'Global'
   properties: {
     description: 'Alert when server returns 5xx HTTP errors'
@@ -347,7 +350,7 @@ resource metricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
 }
 
 resource metricAlert2 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
-  name: 'azsdkqabot-health-check-failure'
+  name: 'azsdkqabot-health-check-failure-${envName}'
   location: 'Global'
   properties: {
     description: 'Alert when health check fails (server is down or not responding)'
@@ -382,7 +385,7 @@ resource metricAlert2 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
 }
 
 resource lock 'Microsoft.Authorization/locks@2020-05-01' = {
-  name: 'azsdkqabot-delete-lock'
+  name: 'azsdkqabot-delete-lock-${envName}'
   properties: {
     level: 'CanNotDelete'
     notes: 'This resource group is protected from deletion. Contact the Azure SDK team if you need to remove it.'
@@ -391,8 +394,9 @@ resource lock 'Microsoft.Authorization/locks@2020-05-01' = {
 
 module azureSdkQaBotModule './azureSdkQaBotModule.bicep' = {
   name: 'azureSdkQaBotModule'
-  scope: resourceGroup('azure-sdk-qa-bot')
+  scope: resourceGroup('azure-sdk-qa-bot-${envName}')
   params: {
+    envName: envName
     userAssignedIdentityPropertiesPrincipalId: userAssignedIdentity.properties.principalId
   }
 }

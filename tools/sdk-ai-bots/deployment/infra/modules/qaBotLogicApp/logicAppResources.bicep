@@ -1,5 +1,8 @@
 targetScope = 'resourceGroup'
 
+@description('Environment name (dev | preview | prod). Suffix on resource names for multi-env deployability.')
+param envName string
+
 @description('Azure region for the Logic App and managed API connections.')
 param location string
 
@@ -42,7 +45,7 @@ var blobIdentityResourceId = serverIdentityResourceId
 var functionAppResourceId = resourceId('Microsoft.Web/sites', functionAppName)
 
 resource integrationAccount 'Microsoft.Logic/integrationAccounts@2019-05-01' = {
-  name: 'azuresdkqabot-ia'
+  name: 'azuresdkqabot-ia-${envName}'
   location: location
   sku: {
     name: 'Basic'
@@ -51,7 +54,7 @@ resource integrationAccount 'Microsoft.Logic/integrationAccounts@2019-05-01' = {
 }
 
 resource teamsConnection 'Microsoft.Web/connections@2016-06-01' = {
-  name: 'teams'
+  name: 'teams-${envName}'
   location: location
   properties: {
     displayName: 'teams'
@@ -63,7 +66,7 @@ resource teamsConnection 'Microsoft.Web/connections@2016-06-01' = {
 }
 
 resource blobConnection 'Microsoft.Web/connections@2016-06-01' = {
-  name: 'azureblob'
+  name: 'azureblob-${envName}'
   location: location
   properties: {
     displayName: 'azureblob'
@@ -78,7 +81,7 @@ resource blobConnection 'Microsoft.Web/connections@2016-06-01' = {
 }
 
 resource documentDbConnection 'Microsoft.Web/connections@2016-06-01' = {
-  name: 'documentdb'
+  name: 'documentdb-${envName}'
   location: location
   properties: {
     displayName: 'documentdb'
@@ -90,7 +93,7 @@ resource documentDbConnection 'Microsoft.Web/connections@2016-06-01' = {
 }
 
 resource workflow 'Microsoft.Logic/workflows@2019-05-01' = {
-  name: 'azuresdkqabot-logicapp'
+  name: 'azuresdkqabot-logicapp-${envName}'
   location: location
   identity: {
     type: 'UserAssigned'
@@ -181,7 +184,7 @@ resource workflow 'Microsoft.Logic/workflows@2019-05-01' = {
 }
 
 resource metricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
-  name: 'azuresdkqabot-logicapp-alert'
+  name: 'azuresdkqabot-logicapp-alert-${envName}'
   location: 'global'
   properties: {
     severity: 3

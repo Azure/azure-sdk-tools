@@ -3,6 +3,9 @@ targetScope = 'resourceGroup'
 @description('Azure region for the Function App, plan, and Application Insights.')
 param location string
 
+@description('Environment name (dev | preview | prod). Suffix on resource names for multi-env deployability.')
+param envName string
+
 @description('Container image (registry/repository:tag) the Function App runs.')
 param containerImage string
 
@@ -16,7 +19,7 @@ param storageAccountName string
 param managedIdentityResourceId string
 
 resource serverfarm 'Microsoft.Web/serverfarms@2025-05-01' = {
-  name: 'azuresdkqabot-functionserviceplan'
+  name: 'azuresdkqabot-functionserviceplan-${envName}'
   location: location
   properties: {
     elasticScaleEnabled: true
@@ -34,7 +37,7 @@ resource serverfarm 'Microsoft.Web/serverfarms@2025-05-01' = {
 }
 
 resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
-  name: 'azuresdkqabot-function-log'
+  name: 'azuresdkqabot-function-log-${envName}'
   location: location
   properties: {
     sku: {
@@ -45,7 +48,7 @@ resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
 }
 
 resource component 'Microsoft.Insights/components@2020-02-02' = {
-  name: 'azuresdkqabot-function'
+  name: 'azuresdkqabot-function-${envName}'
   location: location
   kind: 'web'
   properties: {
@@ -56,7 +59,7 @@ resource component 'Microsoft.Insights/components@2020-02-02' = {
 }
 
 resource site 'Microsoft.Web/sites@2025-05-01' = {
-  name: 'azuresdkqabot-function'
+  name: 'azuresdkqabot-function-${envName}'
   tags: {
     'hidden-link: /app-insights-resource-id': component.id
   }
@@ -91,11 +94,11 @@ resource site 'Microsoft.Web/sites@2025-05-01' = {
         }
         {
           name: 'KEY_VAULT_NAME'
-          value: 'qzqabot-keyvalut'
+          value: 'qzqabot-keyvalut-${envName}'
         }
         {
           name: 'APP_CONFIG_NAME'
-          value: 'qzqabot-config'
+          value: 'qzqabot-config-${envName}'
         }
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'

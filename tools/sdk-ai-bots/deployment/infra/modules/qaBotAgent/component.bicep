@@ -1,5 +1,8 @@
 targetScope = 'resourceGroup'
 
+@description('Environment name (dev | preview | prod). Suffix on resource names for multi-env deployability.')
+param envName string
+
 @description('Principal (object) ID of the qzqabot-identity managed identity to grant OpenAI access.')
 param managedIdentityPrincipalId string
 
@@ -13,7 +16,7 @@ param storageBlobEndpoint string
 // the agent layer is self-contained and does not depend on the (now removed)
 // shared qzqabot-log workspace.
 resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
-  name: 'qzqabot-agent-log'
+  name: 'qzqabot-agent-log-${envName}'
   location: 'eastus'
   properties: {
     sku: {
@@ -24,7 +27,7 @@ resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
 }
 
 resource component 'Microsoft.Insights/components@2020-02-02' = {
-  name: 'qzqabot-agent'
+  name: 'qzqabot-agent-${envName}'
   location: 'eastus'
   kind: 'web'
   properties: {
@@ -37,10 +40,10 @@ resource component 'Microsoft.Insights/components@2020-02-02' = {
 }
 
 resource account 'Microsoft.CognitiveServices/accounts@2026-05-01' = {
-  name: 'qzqabot-ai-resource'
+  name: 'qzqabot-ai-resource-${envName}'
   properties: {
     apiProperties: {}
-    customSubDomainName: 'qzqabot-ai-resource'
+    customSubDomainName: 'qzqabot-ai-resource-${envName}'
     networkAcls: {
       defaultAction: 'Allow'
       virtualNetworkRules: []
@@ -162,7 +165,7 @@ resource adaEmbeddingDeployment 'Microsoft.CognitiveServices/accounts/deployment
 }
 
 resource accountStorageConnection 'Microsoft.CognitiveServices/accounts/connections@2026-05-01' = {
-  name: 'qzqabotstorage'
+  name: 'qzqabotstorage${envName}'
   parent: account
   properties: {
     authType: 'AAD'
@@ -195,7 +198,7 @@ resource project 'Microsoft.CognitiveServices/accounts/projects@2026-05-01' = {
 }
 
 resource projectStorageConnection 'Microsoft.CognitiveServices/accounts/projects/connections@2026-05-01' = {
-  name: 'qzqabotstorage'
+  name: 'qzqabotstorage${envName}'
   parent: project
   properties: {
     authType: 'AAD'

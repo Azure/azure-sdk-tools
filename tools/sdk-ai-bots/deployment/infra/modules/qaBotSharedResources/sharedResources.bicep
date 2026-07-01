@@ -1,14 +1,17 @@
 targetScope = 'resourceGroup'
 
+@description('Environment name (dev | preview | prod). Suffix on resource names for multi-env deployability.')
+param envName string
+
 // User-assigned managed identity for the QA bot app. Its principalId (Entra object ID)
 // is referenced below to grant the app data-plane access to Cosmos DB.
 resource userAssignedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2025-05-31-preview' = {
-  name: 'qzqabot-identity'
+  name: 'qzqabot-identity-${envName}'
   location: 'westus2'
 }
 
 resource actionGroup 'Microsoft.Insights/actionGroups@2024-10-01-preview' = {
-  name: 'qzqabot-alert'
+  name: 'qzqabot-alert-${envName}'
   location: 'Global'
   properties: {
     groupShortName: 'Alert'
@@ -24,7 +27,7 @@ resource actionGroup 'Microsoft.Insights/actionGroups@2024-10-01-preview' = {
 }
 
 resource vault 'Microsoft.KeyVault/vaults@2026-03-01-preview' = {
-  name: 'qzqabot-keyvalut'
+  name: 'qzqabot-keyvalut-${envName}'
   properties: {
     sku: {
       family: 'A'
@@ -41,7 +44,7 @@ resource vault 'Microsoft.KeyVault/vaults@2026-03-01-preview' = {
 }
 
 resource configurationStore 'Microsoft.AppConfiguration/configurationStores@2025-08-01-preview' = {
-  name: 'qzqabot-config'
+  name: 'qzqabot-config-${envName}'
   location: 'westus2'
   properties: {
     encryption: {}
@@ -60,7 +63,7 @@ resource configurationStore 'Microsoft.AppConfiguration/configurationStores@2025
 }
 
 resource searchService 'Microsoft.Search/searchServices@2026-03-01-preview' = {
-  name: 'qzqabot-search'
+  name: 'qzqabot-search-${envName}'
   location: 'West US 2'
   properties: {
     computeType: 'Default'
@@ -89,7 +92,7 @@ resource searchService 'Microsoft.Search/searchServices@2026-03-01-preview' = {
 }
 
 resource registry 'Microsoft.ContainerRegistry/registries@2026-01-01-preview' = {
-  name: 'qzqabotcontainer'
+  name: 'qzqabotcontainer${envName}'
   location: 'westus2'
   sku: {
     name: 'Standard'
@@ -97,7 +100,7 @@ resource registry 'Microsoft.ContainerRegistry/registries@2026-01-01-preview' = 
 }
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2026-04-01' = {
-  name: 'qzqabotstorage'
+  name: 'qzqabotstorage${envName}'
   location: 'westus2'
   properties: {
     dualStackEndpointPreference: {
@@ -219,7 +222,7 @@ resource table2 'Microsoft.Storage/storageAccounts/tableServices/tables@2026-04-
 }
 
 resource databaseAccount 'Microsoft.DocumentDB/databaseAccounts@2026-03-15' = {
-  name: 'qzqabot-db'
+  name: 'qzqabot-db-${envName}'
   properties: {
     publicNetworkAccess: 'Enabled'
     enableAutomaticFailover: true

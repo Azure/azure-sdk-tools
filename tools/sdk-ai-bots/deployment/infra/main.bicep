@@ -19,6 +19,9 @@ param location string = 'westus2'
 @description('Name of the resource group to deploy into.')
 param resourceGroupName string
 
+@description('Environment name (dev | preview | prod). Suffix on resource names for multi-env deployability.')
+param envName string
+
 @description('Teams team (group) ID the Logic App monitors.')
 param teamsGroupId string
 
@@ -47,6 +50,9 @@ resource rg 'Microsoft.Resources/resourceGroups@2024-03-01' = {
 module sharedResources './modules/qaBotSharedResources/sharedResources.bicep' = {
   name: 'shared-resources'
   scope: rg
+  params: {
+    envName: envName
+  }
 }
 
 // ── Layer 2: Agent / AI services ───────────────────────────────────────────────
@@ -54,6 +60,7 @@ module agent './modules/qaBotAgent/component.bicep' = {
   name: 'agent'
   scope: rg
   params: {
+    envName: envName
     managedIdentityPrincipalId: sharedResources.outputs.managedIdentityPrincipalId
     storageAccountName: sharedResources.outputs.storageAccountName
     storageBlobEndpoint: sharedResources.outputs.storageBlobEndpoint
@@ -64,6 +71,9 @@ module agent './modules/qaBotAgent/component.bicep' = {
 module frontend './modules/qaBotFrontend/userAssignedIdentity.bicep' = {
   name: 'frontend'
   scope: rg
+  params: {
+    envName: envName
+  }
   dependsOn: [sharedResources]
 }
 
@@ -72,6 +82,7 @@ module backend './modules/qaBotBackend/serverfarm.bicep' = {
   name: 'backend'
   scope: rg
   params: {
+    envName: envName
     location: location
     ragBasedBackendImage: '${sharedResources.outputs.containerRegistryLoginServer}/${ragBasedBackendImageRepository}'
     agentBasedBackendImage: '${sharedResources.outputs.containerRegistryLoginServer}/${agentBasedImageRepository}'
@@ -95,6 +106,7 @@ module functionApp './modules/qaBotFunctionApp/serverfarm.bicep' = {
   name: 'function-app'
   scope: rg
   params: {
+    envName: envName
     location: location
     containerImage: '${sharedResources.outputs.containerRegistryLoginServer}/${functionImageRepository}'
     managedIdentityClientId: sharedResources.outputs.managedIdentityClientId
@@ -108,6 +120,7 @@ module logicApp './modules/qaBotLogicApp/logicAppResources.bicep' = {
   name: 'logic-app'
   scope: rg
   params: {
+    envName: envName
     location: location
     teamsGroupId: teamsGroupId
     teamsChannelIds: teamsChannelIds

@@ -1,5 +1,8 @@
 targetScope = 'resourceGroup'
 
+@description('Environment name (dev | preview | prod). Suffix on resource names for multi-env deployability.')
+param envName string
+
 @description('Azure region for all resources.')
 param location string
 
@@ -52,7 +55,7 @@ var siteUserAssignedIdentities = {
 }
 
 resource serverfarm 'Microsoft.Web/serverfarms@2025-05-01' = {
-  name: 'azuresdkqabot-appserviceplan'
+  name: 'azuresdkqabot-appserviceplan-${envName}'
   location: location
   properties: {
     reserved: true
@@ -69,7 +72,7 @@ resource serverfarm 'Microsoft.Web/serverfarms@2025-05-01' = {
 
 // Log Analytics workspace backing the backend Application Insights components.
 resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
-  name: 'azuresdkqabot-log'
+  name: 'azuresdkqabot-log-${envName}'
   location: location
   properties: {
     sku: {
@@ -81,7 +84,7 @@ resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
 }
 
 resource serverAppInsights 'Microsoft.Insights/components@2020-02-02' = {
-  name: 'azuresdkqabot-server'
+  name: 'azuresdkqabot-server-${envName}'
   location: location
   kind: 'web'
   properties: {
@@ -92,7 +95,7 @@ resource serverAppInsights 'Microsoft.Insights/components@2020-02-02' = {
 }
 
 resource slotAppInsights 'Microsoft.Insights/components@2020-02-02' = {
-  name: 'azuresdkqabot-server202510300250'
+  name: 'azuresdkqabot-server202510300250-${envName}'
   location: location
   kind: 'web'
   properties: {
@@ -103,7 +106,7 @@ resource slotAppInsights 'Microsoft.Insights/components@2020-02-02' = {
 }
 
 resource site 'Microsoft.Web/sites@2025-05-01' = {
-  name: 'azuresdkqabot-server'
+  name: 'azuresdkqabot-server-${envName}'
   tags: {
     'hidden-link: /app-insights-resource-id': slotAppInsights.id
   }
@@ -275,7 +278,7 @@ resource slot 'Microsoft.Web/sites/slots@2025-05-01' = {
 }
 
 resource serverMetricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
-  name: 'azuresdkqabot-alert'
+  name: 'azuresdkqabot-alert-${envName}'
   location: 'global'
   properties: {
     severity: 3
@@ -314,7 +317,7 @@ resource serverMetricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' 
 }
 
 resource slotMetricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
-  name: 'azuresdkqabot-agent-alert'
+  name: 'azuresdkqabot-agent-alert-${envName}'
   location: 'global'
   properties: {
     severity: 3

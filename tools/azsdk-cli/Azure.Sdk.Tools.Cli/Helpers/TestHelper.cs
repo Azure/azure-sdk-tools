@@ -1,97 +1,22 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using System.Xml;
 using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
 public interface ITestHelper
 {
-    Task<FailedTestRunListResponse> GetFailedTestCases(string trxFilePath, string filterTitle = "", CancellationToken ct = default);
-    Task<FailedTestRunResponse> GetFailedTestCaseData(string trxFilePath, string testCaseTitle, CancellationToken ct);
-    Task<FailedTestRunListResponse> GetFailedTestRunDataFromTrx(string trxFilePath, CancellationToken ct);
-}
+    /// <summary>
+    /// Human-readable name for the format this parser handles (e.g., "TRX", "JUnit XML").
+    /// </summary>
+    string FormatName { get; }
 
-public class TestHelper(ILogger<TestHelper> logger) : ITestHelper
-{
-    private readonly ILogger<TestHelper> logger = logger;
+    /// <summary>
+    /// Returns true if this parser can handle the given file.
+    /// </summary>
+    Task<bool> CanParseAsync(string filePath, CancellationToken ct = default);
 
-    public async Task<FailedTestRunListResponse> GetFailedTestCases(string trxFilePath, string filterTitle = "", CancellationToken ct = default)
-    {
-        var failedTestRuns = await GetFailedTestRunDataFromTrx(trxFilePath, ct);
-        failedTestRuns.Items = failedTestRuns.Items
-                .Where(run => string.IsNullOrEmpty(filterTitle) || run.TestCaseTitle.Contains(filterTitle, StringComparison.OrdinalIgnoreCase))
-                .Select(run => new FailedTestRunResponse
-                {
-                    TestCaseTitle = run.TestCaseTitle,
-                    Uri = run.Uri
-                })
-                .ToList();
-        return failedTestRuns;
-    }
-
-    public async Task<FailedTestRunResponse> GetFailedTestCaseData(string trxFilePath, string testCaseTitle, CancellationToken ct)
-    {
-        var failedTestRuns = await GetFailedTestRunDataFromTrx(trxFilePath, ct);
-        return failedTestRuns.Items.FirstOrDefault(run => run.TestCaseTitle.Equals(testCaseTitle, StringComparison.OrdinalIgnoreCase));
-    }
-
-    public async Task<FailedTestRunListResponse> GetFailedTestRunDataFromTrx(string trxFilePath, CancellationToken ct)
-    {
-        var failedTestRuns = new FailedTestRunListResponse();
-        if (!File.Exists(trxFilePath))
-        {
-            logger.LogError("TRX file not found: {trxFilePath}", trxFilePath);
-            return failedTestRuns;
-        }
-
-        var xmlContent = await File.ReadAllTextAsync(trxFilePath, ct);
-        var doc = new XmlDocument();
-        doc.LoadXml(xmlContent);
-        var unitTestResults = doc.GetElementsByTagName("UnitTestResult");
-        foreach (XmlNode resultNode in unitTestResults)
-        {
-            var outcome = resultNode.Attributes?["outcome"]?.Value ?? "";
-            if (!string.Equals(outcome, "Failed", StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            var testId = resultNode.Attributes?["testId"]?.Value ?? "";
-            var testName = resultNode.Attributes?["testName"]?.Value ?? "";
-            var errorMessage = "";
-            var stackTrace = "";
-
-            var outputNode = resultNode.ChildNodes.OfType<XmlNode>().FirstOrDefault(n => n.Name == "Output");
-            if (outputNode != null)
-            {
-                var errorInfoNode = outputNode.ChildNodes.OfType<XmlNode>().FirstOrDefault(n => n.Name == "ErrorInfo");
-                if (errorInfoNode != null)
-                {
-                    var messageNode = errorInfoNode.ChildNodes.OfType<XmlNode>().FirstOrDefault(n => n.Name == "Message");
-                    if (messageNode != null)
-                    {
-                        errorMessage = messageNode.InnerText ?? "";
-                    }
-
-                    var stackTraceNode = errorInfoNode.ChildNodes.OfType<XmlNode>().FirstOrDefault(n => n.Name == "StackTrace");
-                    if (stackTraceNode != null)
-                    {
-                        stackTrace = stackTraceNode.InnerText ?? "";
-                    }
-                }
-            }
-
-            failedTestRuns.Items.Add(new FailedTestRunResponse
-            {
-                TestCaseTitle = testName,
-                ErrorMessage = errorMessage,
-                StackTrace = stackTrace,
-                Outcome = outcome,
-                Uri = trxFilePath
-            });
-        }
-
-        return failedTestRuns;
-    }
+    Task<FailedTestRunListResponse> GetFailedTestCases(string filePath, string filterTitle = "", CancellationToken ct = default);
+    Task<FailedTestRunResponse> GetFailedTestCaseData(string filePath, string testCaseTitle, CancellationToken ct);
+    Task<FailedTestRunListResponse> GetFailedTestResults(string filePath, CancellationToken ct);
 }

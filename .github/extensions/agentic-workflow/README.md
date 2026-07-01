@@ -2,9 +2,10 @@
 
 A self-contained [Copilot CLI](https://github.com/github/copilot-cli) extension that drives a
 disciplined **research → plan → implement** workflow inside your interactive session. Each phase
-runs as its own sub-agent with a **pinned model**, **all tools**, and a **phase prompt**, handing
-off to the next phase through **artifacts on disk**. You stay in the loop — advance phases manually,
-inspect artifacts between steps, repin models, answer decisions via dialogs — or let the auto-runner
+runs as its own sub-agent with **all tools** and a **phase prompt**, handing
+off to the next phase through **artifacts on disk**. Every phase runs on your configured session
+model — the workflow never switches models. You stay in the loop — advance phases manually,
+inspect artifacts between steps, answer decisions via dialogs — or let the auto-runner
 chain phases unattended.
 
 ## Getting started
@@ -61,14 +62,13 @@ files between phases at any time. If your session reloads, pick the run back up 
 | `/aw-auto-simple <task>` | Same as `/aw-auto` but the short flow (research → assumptions → plan → implement). |
 | `/aw-start <task>` | Init the run dir and run the first phase (full flow). |
 | `/aw-start-simple <task>` | Same, but the short flow (research → assumptions → plan → implement). Equivalent to `/aw-start <task> simple`. |
-| `/aw-resume [name-or-text]` | Rehydrate a run after a reload from `.aw/` (task, flow, model overrides). With no arg, resumes the only/most-recent run; otherwise matches by dir name or task text. |
+| `/aw-resume [name-or-text]` | Rehydrate a run after a reload from `.aw/` (task, flow, auto-judge toggle). With no arg, resumes the only/most-recent run; otherwise matches by dir name or task text. |
 | `/aw-continue [n]` | Run the next phase (or next `n`), then stop. |
 | `/aw-pause` | Stop the auto-runner at the next phase boundary. |
 | `/aw-research` … `/aw-implement` | Run one specific phase by name (`/aw-research`, `/aw-assumptions`, `/aw-classify`, `/aw-research-item`, `/aw-plan`, `/aw-implement`). |
 | `/aw-redo <phase> <feedback>` | Re-run a phase with steering notes appended to its prompt. |
-| `/aw-judge <artifact>` | Critique an artifact with the critique model, then re-run its author phase to revise it (e.g. `/aw-judge plan.md`). |
-| `/aw-autojudge [on\|off]` | Toggle auto-judge for the active run. When on, the auto-runner critiques + revises each phase's judgeable artifacts right after the phase passes. No arg flips the current state. Persisted to `state.json`. |
-| `/aw-model <phase> <model>` | Repin a phase's model for its next run (persisted for the active run). |
+| `/aw-judge [artifact\|diff]` | Rubber-duck an artifact via the native `/rubber-duck` agent and append its critique to that file (e.g. `/aw-judge plan.md`). Use `/aw-judge diff` to critique the current git diff into `critiques/git-diff-*.md`. With no arg, critiques the current work inline. |
+| `/aw-autojudge [on\|off]` | Toggle auto-judge for the active run. When on, the auto-runner rubber-ducks every new markdown artifact a phase generates right after it passes, appending each critique to the artifact; after `implement`, it also critiques the git diff. No arg flips the current state. Persisted to `state.json`. |
 | `/aw-status` | Show the phase checklist, run-dir artifacts, and `git diff --stat`. |
 | `/aw-compact` | Reclaim context by queuing `/compact`. |
 
@@ -86,22 +86,26 @@ it auto-resolves with safe defaults and only halts on hard failure.
 
 ## Configuration
 
-### Pinned models
+### Model
 
-Each phase has a default model (see the [Phases](#phases) table). The **critique** phase runs a
-different model family (`gpt-5.5`) on purpose, so an artifact is judged by a model other than the one
-that wrote it.
+The workflow never switches models: every phase runs on whatever model you have configured for your
+Copilot CLI session. The recommended session model is `claude-opus-4.8`. To use a different model,
+set it for your session (e.g. via the CLI's model selection) before starting a run.
 
-Repin any phase at runtime with `/aw-model <phase> <model>`:
+### Critique
 
-```
-/aw-model plan claude-opus-4.8
-/aw-model critique gpt-5.5
-```
+For an independent critique, use the native `/rubber-duck` agent through the workflow:
 
-The override applies on that phase's **next** run and is persisted to the active run's `state.json`,
-so it survives a reload and is re-applied on `/aw-resume`. To change a default permanently, edit the
-`PHASES` (or `CRITIQUE`) entry in `extension.mjs`.
+- **On demand:** `/aw-judge <artifact>` reviews that artifact and appends a `## Rubber-duck critique`
+  section to the file (e.g. `/aw-judge plan.md`). `/aw-judge diff` reviews the current `git diff`
+  after implementation and writes the critique to `critiques/git-diff-*.md`. With no argument,
+  `/aw-judge` critiques the current work inline and the agent decides whether to apply the findings.
+- **Automatic:** `/aw-autojudge [on|off]` toggles auto-judge for the active run (persisted to
+  `state.json`). When on, the auto-runner rubber-ducks every **new markdown artifact** a phase
+  generates right after the phase passes, appending each critique to the artifact. After the
+  `implement` phase passes, it also rubber-ducks the repository git diff and writes the critique to
+  `critiques/git-diff-*.md`. Non-markdown artifacts (e.g. JSON) are skipped so their structure stays
+  valid. Critiques are append-only — auto-judge does not rewrite or auto-revise the artifact.
 
 ### Run directory, state, and resume
 
@@ -112,9 +116,13 @@ keeps tasks that share a slug prefix from colliding onto the same dir.
   only when it reported `pass` **and** its artifact exists — a phase that failed after writing a
   partial file is **not** skipped. `research-item` additionally requires one `research/<id>.md` per
   sub-item in `subitems.json`.
-- Run metadata (task, flow, model overrides) is persisted to `state.json`, so after a reload you can
-  `/aw-resume` instead of re-typing the exact task string. `/aw-resume` with no argument restores the
-  most-recent run; pass a dir name or task substring to pick a specific one.
+- Run metadata (task, flow, auto-judge toggle) is persisted to `state.json`, so after a reload you
+  only need enough information to identify the run:
+  - `/aw-resume` resumes the only run under `.aw/`; if there are multiple runs, it lists them.
+  - `/aw-resume <dir-name>` resumes by the run directory name, for example
+    `/aw-resume add-csv-export-1a2b3c4d`.
+  - `/aw-resume <task-substring>` resumes by matching text from the original task, for example
+    `/aw-resume CSV export`.
 - On `/aw-start`, `.aw/` is auto-appended to the target repo's `.gitignore` so run artifacts never
   leak into commits.
 
@@ -139,22 +147,23 @@ result with its artifact to decide what is complete and what to run next.
 .github/extensions/agentic-workflow/
   extension.mjs     # joinSession: per-phase sub-agents + commands + auto-runner loop
   package.json      # @github/copilot-sdk dependency
-  prompts/          # one .md per phase (+ critique) — the durable IP
+  prompts/          # one .md per phase — the durable IP
   test/             # smoke + state-machine tests (arg/sentinel parsing, continuity, resume)
   README.md
 ```
 
 ### Phases
 
-| Phase | Agent | Model (default) | Tools | Writes |
-| --- | --- | --- | --- | --- |
-| research | `aw-research` | `claude-opus-4.8` | **all** | `specs/*.md`, `manifest.json` |
-| assumptions | `aw-assumptions` | `claude-opus-4.8` | **all** | `assumptions.md` |
-| classify | `aw-classify` | `claude-opus-4.8` | **all** | `subitems.json`, `classification.md` |
-| research-item | `aw-research-item` | `claude-opus-4.8` | **all** | `research/<id>.md` |
-| plan | `aw-plan` | `claude-opus-4.8` | **all** | `plan.md` |
-| implement | `aw-implement` | `claude-opus-4.8` | **all** | code edits + `execution-log.md`, `handoff.md` |
-| critique | `aw-critique` | `gpt-5.5` | **all** | `critiques/<name>.md` |
+Every phase runs on your configured session model (recommended: `claude-opus-4.8`).
+
+| Phase | Agent | Tools | Writes |
+| --- | --- | --- | --- |
+| research | `aw-research` | **all** | `specs/*.md`, `manifest.json` |
+| assumptions | `aw-assumptions` | **all** | `assumptions.md` |
+| classify | `aw-classify` | **all** | `subitems.json`, `classification.md` |
+| research-item | `aw-research-item` | **all** | `research/<id>.md` |
+| plan | `aw-plan` | **all** | `plan.md` |
+| implement | `aw-implement` | **all** | code edits + `execution-log.md`, `handoff.md` |
 
 All phase agents can write their own artifacts under the run directory.
 

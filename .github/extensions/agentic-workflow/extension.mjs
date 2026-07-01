@@ -1,8 +1,9 @@
 // Agentic-workflow Copilot CLI extension.
 //
 // Self-contained, agent-first driver for a phased research -> plan -> implement workflow.
-// One joinSession() registers a custom sub-agent per phase (phase prompt + access to all tools); models
-// are repinnable at runtime via session.setModel before each dispatch. State lives entirely in a
+// One joinSession() registers a custom sub-agent per phase (phase prompt + access to all tools). The
+// workflow never switches models: every phase runs on the user's configured Copilot CLI session
+// model (claude-opus-4.8 is the recommended default). State lives entirely in a
 // per-run directory on disk (<cwd>/.aw/<slug>/) so the workflow is inspectable, resumable, and
 // survives an extension reload. The agent self-reports each phase with a sentinel line:
 //   PHASE_RESULT: pass | fail | needs_input  (+ optional reason)
@@ -22,33 +23,21 @@ const PROMPTS_DIR = path.join(HERE, "prompts");
 const PHASE_TIMEOUT_MS = 30 * 60 * 1000; // generous wait; does not abort in-flight agent work
 const MAX_RETRIES = 2;
 
-// --- Phase registry: the per-phase config (default model + tools + prompt template). ------------
-// Models default here but are mutable at runtime (see /aw-model). Tool access + prompt are bound
-// into customAgents at join time. `artifact` is the sentinel file/dir that marks the phase complete.
-// `simple` phases form the abbreviated flow used by `/aw-start <task> simple`.
+// --- Phase registry: the per-phase config (tools + prompt). -------------------------------------
+// The workflow does not switch models; every phase runs on the user's session model. Tool access +
+// prompt are bound into customAgents at join time. `artifact` is the sentinel file/dir that marks
+// the phase complete. `simple` phases form the abbreviated flow used by `/aw-start <task> simple`.
 const ALL_TOOLS = null;
 
 const PHASES = [
-    { id: "research", agent: "aw-research", template: "01-research.md", model: "claude-opus-4.8", tools: ALL_TOOLS, artifact: "specs/architecture.md", simple: true },
-    { id: "assumptions", agent: "aw-assumptions", template: "02-assumptions.md", model: "claude-opus-4.8", tools: ALL_TOOLS, artifact: "assumptions.md", simple: true },
-    { id: "classify", agent: "aw-classify", template: "03-classify.md", model: "claude-opus-4.8", tools: ALL_TOOLS, artifact: "subitems.json", simple: false },
-    { id: "research-item", agent: "aw-research-item", template: "04-research-item.md", model: "claude-opus-4.8", tools: ALL_TOOLS, artifact: "research", simple: false },
-    { id: "plan", agent: "aw-plan", template: "05-plan.md", model: "claude-opus-4.8", tools: ALL_TOOLS, artifact: "plan.md", simple: true },
-    { id: "implement", agent: "aw-implement", template: "06-implement.md", model: "claude-opus-4.8", tools: ALL_TOOLS, artifact: "execution-log.md", simple: true },
+    { id: "research", agent: "aw-research", template: "01-research.md", tools: ALL_TOOLS, artifact: "specs/architecture.md", simple: true },
+    { id: "assumptions", agent: "aw-assumptions", template: "02-assumptions.md", tools: ALL_TOOLS, artifact: "assumptions.md", simple: true },
+    { id: "classify", agent: "aw-classify", template: "03-classify.md", tools: ALL_TOOLS, artifact: "subitems.json", simple: false },
+    { id: "research-item", agent: "aw-research-item", template: "04-research-item.md", tools: ALL_TOOLS, artifact: "research", simple: false },
+    { id: "plan", agent: "aw-plan", template: "05-plan.md", tools: ALL_TOOLS, artifact: "plan.md", simple: true },
+    { id: "implement", agent: "aw-implement", template: "06-implement.md", tools: ALL_TOOLS, artifact: "execution-log.md", simple: true },
 ];
 
-const CRITIQUE = { id: "critique", agent: "aw-critique", template: "critique.md", model: "gpt-5.5", tools: ALL_TOOLS };
-
-// Map an artifact filename to the phase that authors it (for /aw-judge).
-const ARTIFACT_TO_PHASE = {
-    "architecture.md": "research",
-    "functional.md": "research",
-    "apispec.md": "research",
-    "assumptions.md": "assumptions",
-    "subitems.json": "classify",
-    "classification.md": "classify",
-    "plan.md": "plan",
-};
 
 // --- Module-scoped run state (in memory; the run dir on disk is the source of truth). ------------
 let session;
@@ -113,14 +102,6 @@ function recordPhaseResult(runDir, phaseId, result, reason) {
 }
 export { recordPhaseResult, writeState };
 
-// Reapply any per-run model overrides (from /aw-model) onto the in-memory phase registry.
-function applyModelOverrides(state) {
-    for (const [id, model] of Object.entries(state?.models || {})) {
-        const p = phaseById(id) || (id === "critique" ? CRITIQUE : null);
-        if (p) p.model = model;
-    }
-}
-
 // research-item is complete only when there is a note for EVERY sub-item in subitems.json, not just
 // when the research/ dir holds some file — a phase that wrote 1 of N notes then failed is not done.
 function researchNotesComplete(runDir) {
@@ -175,7 +156,7 @@ export function parsePhaseResult(text) {
     return { result, reason };
 }
 
-// --- Core dispatch: select agent, repin model, send phase prompt, parse PHASE_RESULT. ------------
+// --- Core dispatch: select agent, send phase prompt, parse PHASE_RESULT. -------------------------
 async function dispatch(phase, { priorErrors = "" } = {}) {
     if (!activeRunDir) {
         await log("no active run. Start one with /aw-start <task>.");
@@ -189,11 +170,6 @@ async function dispatch(phase, { priorErrors = "" } = {}) {
             diag(`pre-implement compact skipped: ${e?.message ?? e}`);
         }
     }
-    try {
-        if (phase.model) await session.setModel(phase.model);
-    } catch (e) {
-        diag(`setModel(${phase.model}) failed, using session default: ${e?.message ?? e}`);
-    }
     await session.rpc.agent.select({ name: phase.agent });
 
     const priorBlock = priorErrors ? `## Prior feedback to address\n${priorErrors}\n` : "";
@@ -202,7 +178,7 @@ async function dispatch(phase, { priorErrors = "" } = {}) {
         .replaceAll("{{runDir}}", activeRunDir)
         .replaceAll("{{priorErrors}}", priorBlock);
 
-    await log(`running ${phase.id}${phase.model ? ` (${phase.model})` : ""}…`);
+    await log(`running ${phase.id}…`);
     const ev = await session.sendAndWait({ prompt }, PHASE_TIMEOUT_MS);
     const text = ev?.data?.content ?? "";
     const { result, reason } = parsePhaseResult(text);
@@ -263,6 +239,8 @@ async function autoRun({ from, to, unattended = false, pauseAt } = {}) {
         let priorErrors = "";
         let retries = 0;
         let passed = false;
+        // Snapshot artifacts before the phase runs so we can rubber-duck exactly what it generates.
+        const before = new Set(walkArtifacts(activeRunDir));
         // Re-dispatch this phase until it passes, is skipped, or the run aborts.
         for (;;) {
             const res = await dispatch(phase, { priorErrors });
@@ -299,8 +277,8 @@ async function autoRun({ from, to, unattended = false, pauseAt } = {}) {
             priorErrors = res.reason || "The previous attempt did not pass. Fix the issues and try again.";
         }
 
-        // Auto-judge: when enabled, critique this phase's artifact and revise it before advancing.
-        if (passed && autoJudge) await autoJudgePhase(phase);
+        // Auto-judge: when enabled, rubber-duck every artifact this phase generated (append-only).
+        if (passed && autoJudge) await autoJudgePhase(phase, before);
 
         if (pauseAt && phase.id === pauseAt) {
             await log(`paused at breakpoint ${pauseAt}.`);
@@ -337,6 +315,28 @@ function parseTaskArgs(argstr, forceSimple = false) {
     return { task, simple, kv };
 }
 export { parseKv, isTruthy, parseTaskArgs };
+
+function isDiffJudgeTarget(argstr) {
+    return /^(--?)?(diff|git[- ]?diff|changes|code[- ]?changes)$/i.test((argstr ?? "").trim());
+}
+
+function diffCritiqueRel(date = new Date()) {
+    return `critiques/git-diff-${date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z")}.md`;
+}
+
+function buildDiffJudgeInstruction({ cwd, runDir, critiqueRel, task }) {
+    const critiqueAbs = path.join(runDir, critiqueRel);
+    return (
+        `Review the current repository code changes for the agentic-workflow run "${task}". ` +
+        `Work in \`${cwd}\`. Run \`git status --short\`, \`git diff HEAD --stat\`, and ` +
+        `\`git diff HEAD -- . ':(exclude).aw'\` to inspect staged and unstaged implementation changes. ` +
+        `If useful, compare the changes with \`${path.join(runDir, "plan.md")}\` and ` +
+        `\`${path.join(runDir, "execution-log.md")}\`. Focus on correctness bugs, regressions, ` +
+        `missed requirements, unsafe behavior, and meaningful test gaps. Do not change code. ` +
+        `Write the critique as markdown to \`${critiqueAbs}\`, creating parent directories as needed.`
+    );
+}
+export { isDiffJudgeTarget, diffCritiqueRel, buildDiffJudgeInstruction };
 
 // --- Commands ------------------------------------------------------------------------------------
 // Ensure the target repo ignores the on-disk run state so `.aw/` artifacts never leak into commits.
@@ -376,8 +376,8 @@ async function cmdStart(argstr, { forceSimple = false } = {}) {
 }
 
 // Initialize (or re-attach to) a run for `task`: set module state, create the run dir, protect it
-// via .gitignore, persist task/flow metadata (preserving prior phase results + model overrides for
-// an existing run dir), and apply any model/autojudge overrides. Shared by /aw-start and /aw-auto.
+// via .gitignore, persist task/flow metadata (preserving prior phase results for an existing run
+// dir), and restore the auto-judge toggle. Shared by /aw-start and /aw-auto.
 function initRun(task, simple) {
     activeTask = task;
     activeSimple = simple;
@@ -386,12 +386,11 @@ function initRun(task, simple) {
     ensureGitignore();
     fs.writeFileSync(path.join(activeRunDir, "task.txt"), task + "\n");
     // Persist/refresh run metadata so the run can be resumed after a reload; preserve prior phase
-    // results and model overrides if this task's run dir already exists.
+    // results if this task's run dir already exists.
     const state = readState(activeRunDir) || {};
     state.task = task;
     state.simple = simple;
     writeState(activeRunDir, state);
-    applyModelOverrides(state);
     autoJudge = !!state.autoJudge;
 }
 export { initRun };
@@ -421,8 +420,8 @@ function listRuns() {
 }
 export { listRuns };
 
-// Restore module state (and any model overrides) from a persisted run so the workflow can continue
-// after an extension reload without re-typing the exact task string.
+// Restore module state (and the auto-judge toggle) from a persisted run so the workflow can
+// continue after an extension reload without re-typing the exact task string.
 async function cmdResume(argstr) {
     const query = (argstr ?? "").trim();
     const runs = listRuns();
@@ -447,9 +446,7 @@ async function cmdResume(argstr) {
     activeTask = run.task;
     activeSimple = run.simple;
     activeRunDir = run.dir;
-    const rstate = readState(run.dir);
-    applyModelOverrides(rstate);
-    autoJudge = !!rstate?.autoJudge;
+    autoJudge = !!readState(run.dir)?.autoJudge;
     const next = nextPhase(activeRunDir, activeSimple);
     await log(
         `resumed "${activeTask}" (${path.relative(process.cwd(), activeRunDir) || activeRunDir})` +
@@ -509,50 +506,97 @@ async function cmdPause() {
     await log("pause requested; the auto-runner will stop at the next phase boundary.");
 }
 
-// Critique one artifact with the critique agent, then (if the artifact maps to an author phase)
-// re-run that phase to revise it. Shared by /aw-judge and the auto-judge runner.
+// Rubber-duck one artifact: enqueue the native /rubber-duck command, instructing it to review the
+// artifact and append its critique to that file. Append-only; the file's existing content is not
+// otherwise changed. Non-markdown artifacts (e.g. JSON) are skipped so their structure stays valid.
 async function judgeArtifact(artifactRel) {
-    const base = path.basename(artifactRel);
-    const phaseId = ARTIFACT_TO_PHASE[base];
-    const reviewInstr = `Review the artifact at \`${artifactRel}\` (relative to the run dir). Read it, then write your critique to \`critiques/${base}.md\`.`;
-    const crit = await dispatch(CRITIQUE, { priorErrors: reviewInstr });
-    if (crit.result !== "pass") {
-        await log(`critique of ${base} did not complete (${crit.result}).`);
+    if (!activeRunDir) {
+        await log("no active run. Start one with /aw-start <task>.");
         return;
     }
-    const author = phaseId ? phaseById(phaseId) : null;
-    if (!author) {
-        await log(`critique written to critiques/${base}.md (no author phase mapped for ${base}; not auto-revising).`);
+    if (!/\.md$/i.test(artifactRel)) {
+        await log(`skipping /aw-judge for ${artifactRel} (not a markdown artifact; append-critique would corrupt it).`);
         return;
     }
-    await dispatch(author, {
-        priorErrors: `A critique of your previous \`${artifactRel}\` is at \`critiques/${base}.md\`. Read it and revise \`${artifactRel}\` to address every blocker/should-fix point you agree with; justify any you reject.`,
-    });
-}
-
-// After a phase passes under auto-judge, critique+revise each judgeable artifact it authored.
-async function autoJudgePhase(phase) {
-    const targets = walkArtifacts(activeRunDir).filter((rel) => ARTIFACT_TO_PHASE[path.basename(rel)] === phase.id);
-    if (targets.length === 0) {
-        diag(`auto-judge: nothing judgeable for ${phase.id}`);
-        return;
-    }
-    for (const rel of targets) {
-        await log(`auto-judging ${rel} (from ${phase.id})…`);
-        await judgeArtifact(rel);
+    const abs = path.join(activeRunDir, artifactRel);
+    const instr =
+        `Review the workflow artifact at \`${abs}\`. Read the whole file, then append your critique ` +
+        `to the END of that same file as a new section titled ` +
+        `"## Rubber-duck critique (${new Date().toISOString()})". Make no other changes to the file.`;
+    try {
+        await session.rpc.commands.enqueue({ command: `/rubber-duck ${instr}` });
+        await log(`queued /rubber-duck critique for ${artifactRel} (appended to the artifact).`);
+    } catch (e) {
+        await log(`rubber-duck failed for ${artifactRel}: ${e?.message ?? e}`);
     }
 }
 
+// After a phase passes under auto-judge, rubber-duck every markdown artifact the phase just
+// generated. `before` is the artifact set snapshotted before the phase ran, so only new files are
+// critiqued (existing artifacts from earlier phases are left alone).
+async function autoJudgePhase(phase, before) {
+    const generated = walkArtifacts(activeRunDir)
+        .filter((rel) => rel !== "task.txt" && rel !== "state.json")
+        .filter((rel) => /\.md$/i.test(rel))
+        .filter((rel) => !before.has(rel));
+    if (generated.length === 0) {
+        diag(`auto-judge: no new markdown artifacts to critique for ${phase.id}`);
+    } else {
+        for (const rel of generated) {
+            await log(`auto-judging ${rel} (from ${phase.id})…`);
+            await judgeArtifact(rel);
+        }
+    }
+    if (phase.id === "implement") {
+        await log("auto-judging implementation git diff…");
+        await judgeDiff();
+    }
+}
+
+// On-demand critique. `/aw-judge <artifact>` rubber-ducks that artifact and appends the critique to
+// it. `/aw-judge diff` rubber-ducks the current git diff and writes a critique artifact. With no
+// argument, enqueue a plain /rubber-duck to critique the current work inline.
 async function cmdJudge(argstr) {
     const artifact = (argstr ?? "").trim();
-    if (!artifact) {
-        await log("usage: /aw-judge <artifact>, e.g. /aw-judge plan.md");
+    if (isDiffJudgeTarget(artifact)) {
+        await judgeDiff();
         return;
     }
-    await judgeArtifact(artifact);
+    if (artifact) {
+        await judgeArtifact(artifact);
+        return;
+    }
+    try {
+        await session.rpc.commands.enqueue({ command: "/rubber-duck" });
+        await log("queued /rubber-duck for an independent critique of the current work.");
+    } catch (e) {
+        await log(`rubber-duck failed: ${e?.message ?? e}`);
+    }
+}
+
+async function judgeDiff() {
+    if (!activeRunDir) {
+        await log("no active run. Start one with /aw-start <task>.");
+        return;
+    }
+    const critiqueRel = diffCritiqueRel();
+    const instr = buildDiffJudgeInstruction({
+        cwd: process.cwd(),
+        runDir: activeRunDir,
+        critiqueRel,
+        task: activeTask,
+    });
+    try {
+        fs.mkdirSync(path.join(activeRunDir, path.dirname(critiqueRel)), { recursive: true });
+        await session.rpc.commands.enqueue({ command: `/rubber-duck ${instr}` });
+        await log(`queued /rubber-duck critique for git diff (${critiqueRel}).`);
+    } catch (e) {
+        await log(`rubber-duck failed for git diff: ${e?.message ?? e}`);
+    }
 }
 
 // Toggle auto-judge for the active run. `/aw-autojudge` flips it; `on`/`off` set it explicitly.
+// When on, the auto-runner rubber-ducks every markdown artifact each phase generates after it passes.
 async function cmdAutoJudge(argstr) {
     const v = (argstr ?? "").trim().toLowerCase();
     if (v === "on" || v === "off") autoJudge = v === "on";
@@ -562,7 +606,7 @@ async function cmdAutoJudge(argstr) {
         state.autoJudge = autoJudge;
         writeState(activeRunDir, state);
     }
-    await log(`auto-judge is now ${autoJudge ? "ON" : "OFF"}${autoJudge ? " — each phase's artifacts will be critiqued and revised after it passes." : "."}`);
+    await log(`auto-judge is now ${autoJudge ? "ON" : "OFF"}${autoJudge ? " — each phase's new markdown artifacts get a /rubber-duck critique appended after it passes, and implement also gets a git-diff critique." : "."}`);
 }
 
 async function cmdRedo(argstr) {
@@ -574,29 +618,6 @@ async function cmdRedo(argstr) {
         return;
     }
     await cmdPhase(id, feedback);
-}
-
-async function cmdModel(argstr) {
-    const { rest } = parseKv(argstr);
-    const id = rest.shift();
-    const model = rest.shift();
-    if (!id || !model) {
-        await log("usage: /aw-model <phase> <model>");
-        return;
-    }
-    const phase = phaseById(id) || (id === "critique" ? CRITIQUE : null);
-    if (!phase) {
-        await log(`unknown phase: ${id}`);
-        return;
-    }
-    phase.model = model; // applied via session.setModel on the next dispatch of this phase
-    if (activeRunDir) {
-        const state = readState(activeRunDir) || {};
-        state.models = state.models || {};
-        state.models[id] = model;
-        writeState(activeRunDir, state);
-    }
-    await log(`${id} will use model ${model} on its next run.`);
 }
 
 function walkArtifacts(dir, base = dir, out = []) {
@@ -647,7 +668,7 @@ async function cmdCompact() {
 // (the durable IP in prompts/) are delivered per-dispatch via sendAndWait, since the templates
 // depend on the task/run dir which are unknown at join time. Keeping a short role prompt here
 // avoids injecting unfilled {{task}}/{{runDir}} placeholders into the agent context.
-const customAgents = [...PHASES, CRITIQUE].map((p) => ({
+const customAgents = PHASES.map((p) => ({
     name: p.agent,
     displayName: p.agent,
     description: `Agentic-workflow ${p.id} phase`,
@@ -661,7 +682,7 @@ const customAgents = [...PHASES, CRITIQUE].map((p) => ({
 
 const cmd = (name, description, handler) => ({ name, description, handler: (ctx) => Promise.resolve(handler(ctx)).catch((e) => diag(`/${name} error: ${e?.stack ?? e}`)) });
 
-// The full join configuration, built once so it can be inspected by tests (the seven agents and the
+// The full join configuration, built once so it can be inspected by tests (the six agents and the
 // command surface) without standing up a live session host.
 export const joinConfig = {
     customAgents,
@@ -680,10 +701,9 @@ export const joinConfig = {
         cmd("aw-research-item", "Run the per-sub-item research phase.", (c) => cmdPhase("research-item", c.args)),
         cmd("aw-plan", "Run the plan phase.", (c) => cmdPhase("plan", c.args)),
         cmd("aw-implement", "Run the implement phase.", (c) => cmdPhase("implement", c.args)),
-        cmd("aw-judge", "Critique an artifact, then revise it: /aw-judge <artifact>.", (c) => cmdJudge(c.args)),
-        cmd("aw-autojudge", "Toggle auto-judge: critique+revise each phase's artifacts after it passes. /aw-autojudge [on|off].", (c) => cmdAutoJudge(c.args)),
+        cmd("aw-judge", "Rubber-duck an artifact or git diff: /aw-judge <artifact|diff>. No arg critiques current work inline.", (c) => cmdJudge(c.args)),
+        cmd("aw-autojudge", "Toggle auto-judge: rubber-duck phase artifacts and the post-implement git diff. /aw-autojudge [on|off].", (c) => cmdAutoJudge(c.args)),
         cmd("aw-redo", "Re-run a phase with steering notes: /aw-redo <phase> <feedback>.", (c) => cmdRedo(c.args)),
-        cmd("aw-model", "Repin a phase's model: /aw-model <phase> <model>.", (c) => cmdModel(c.args)),
         cmd("aw-status", "Show phase state, artifacts, and git diff --stat.", () => cmdStatus()),
         cmd("aw-compact", "Reclaim context by queuing /compact.", () => cmdCompact()),
     ],

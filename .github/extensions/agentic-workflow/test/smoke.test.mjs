@@ -22,6 +22,10 @@ const {
     recordPhaseResult,
     writeState,
     listRuns,
+    isDiffJudgeTarget,
+    diffCritiqueRel,
+    buildDiffJudgeInstruction,
+    joinConfig,
 } = await import("../extension.mjs");
 
 const mkRun = () => fs.mkdtempSync(path.join(os.tmpdir(), "aw-run-"));
@@ -177,6 +181,35 @@ test("parseTaskArgs extracts task and simple flag", () => {
     assert.equal(parsed.kv.to, "plan");
 });
 
+test("diff judge helpers recognize git diff targets and build critique instructions", () => {
+    for (const arg of ["diff", "git-diff", "git diff", "changes", "code-changes", "--diff"]) {
+        assert.equal(isDiffJudgeTarget(arg), true, arg);
+    }
+    assert.equal(isDiffJudgeTarget("plan.md"), false);
+
+    assert.equal(
+        diffCritiqueRel(new Date("2026-07-01T19:43:59.847Z")),
+        "critiques/git-diff-20260701T194359Z.md",
+    );
+    const instr = buildDiffJudgeInstruction({
+        cwd: "/repo",
+        runDir: "/repo/.aw/my-run",
+        critiqueRel: "critiques/git-diff-20260701T194359Z.md",
+        task: "My task",
+    });
+    assert.match(instr, /git status --short/);
+    assert.match(instr, /git diff HEAD --stat/);
+    assert.match(instr, /git diff HEAD -- \. ':\(exclude\)\.aw'/);
+    assert.match(instr, /staged and unstaged implementation changes/);
+    assert.match(instr, /Do not change code/);
+    assert.match(instr, /\/repo\/\.aw\/my-run\/critiques\/git-diff-20260701T194359Z\.md/);
+});
+
+test("aw-judge advertises diff review", () => {
+    const cmd = joinConfig.commands.find((c) => c.name === "aw-judge");
+    assert.match(cmd.description, /diff/);
+});
+
 test("initRun creates the run dir and state.json", () => {
     const cwd0 = process.cwd();
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "aw-init-"));
@@ -196,12 +229,10 @@ test("initRun creates the run dir and state.json", () => {
     }
 });
 
-const { joinConfig } = await import("../extension.mjs");
-
-test("joinConfig registers the seven phase agents", () => {
+test("joinConfig registers the six phase agents", () => {
     const names = joinConfig.customAgents.map((a) => a.name).sort();
     assert.deepEqual(names, [
-        "aw-assumptions", "aw-classify", "aw-critique", "aw-implement", "aw-plan", "aw-research", "aw-research-item",
+        "aw-assumptions", "aw-classify", "aw-implement", "aw-plan", "aw-research", "aw-research-item",
     ].sort());
 });
 
@@ -215,7 +246,7 @@ test("joinConfig gives every phase all tools", () => {
 test("joinConfig registers the command surface", () => {
     assert.equal(joinConfig.infiniteSessions.enabled, true);
     const cmds = joinConfig.commands.map((c) => c.name);
-    for (const expected of ["aw-start", "aw-start-simple", "aw-resume", "aw-auto", "aw-auto-simple", "aw-continue", "aw-pause", "aw-judge", "aw-autojudge", "aw-redo", "aw-model", "aw-status", "aw-compact", "aw-implement"]) {
+    for (const expected of ["aw-start", "aw-start-simple", "aw-resume", "aw-auto", "aw-auto-simple", "aw-continue", "aw-pause", "aw-judge", "aw-autojudge", "aw-redo", "aw-status", "aw-compact", "aw-implement"]) {
         assert.ok(cmds.includes(expected), `missing /${expected}`);
     }
 });

@@ -1623,16 +1623,28 @@ stimuli:
           dest: NetworkInterface.tsp
         - src: ../fixtures/004003-delete-and-restore-operationId-decorator/P2SVpnGateway.tsp
           dest: P2SVpnGateway.tsp
-        - src: ../fixtures/Microsoft.Widget/Widget/package.json
-          dest: package.json
-        - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-          dest: package-lock.json
         - src: ../fixtures/004003-delete-and-restore-operationId-decorator/Route.tsp
           dest: Route.tsp
+        - src: ../fixtures/004003-delete-and-restore-operationId-decorator/RouteTable.tsp
+          dest: RouteTable.tsp
+        - src: ../fixtures/004003-delete-and-restore-operationId-decorator/VirtualHub.tsp
+          dest: VirtualHub.tsp
+        - src: ../fixtures/004003-delete-and-restore-operationId-decorator/VpnGateway.tsp
+          dest: VpnGateway.tsp
+        - src: ../fixtures/004003-delete-and-restore-operationId-decorator/VpnServerConfiguration.tsp
+          dest: VpnServerConfiguration.tsp
         - src: ../fixtures/004003-delete-and-restore-operationId-decorator/VpnServerConfigurationPolicyGroup.tsp
           dest: VpnServerConfigurationPolicyGroup.tsp
         - src: ../fixtures/004003-delete-and-restore-operationId-decorator/VpnSiteLinkConnection.tsp
           dest: VpnSiteLinkConnection.tsp
+        - src: ../fixtures/004003-delete-and-restore-operationId-decorator/main.tsp
+          dest: main.tsp
+        - src: ../fixtures/004003-delete-and-restore-operationId-decorator/models.tsp
+          dest: models.tsp
+        - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+          dest: package-lock.json
+        - src: ../fixtures/Microsoft.Widget/Widget/package.json
+          dest: package.json
         - src: ../fixtures/004003-delete-and-restore-operationId-decorator/tspconfig.yaml
           dest: tspconfig.yaml
       commands:

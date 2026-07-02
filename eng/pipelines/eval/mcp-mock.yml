@@ -1,0 +1,10 @@
+# Builds azure-sdk-tools' in-repo .NET Mock MCP server and publishes it under artifacts/mcp/mock,
+# the path the BuildMcp job ships as `mcp-servers` and every shard re-stages. Wired in via the
+# archetype's mcpSetupTemplate; other repos point that at their own equivalent. The BuildMcp job
+# performs the checkout, so this template only builds.
+
+steps:
+  - script: |
+      set -e
+      dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Mock -c Release -o "$(Build.SourcesDirectory)/artifacts/mcp/mock" --nologo
+    displayName: 'Build MCP: Mock server'

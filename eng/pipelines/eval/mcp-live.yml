@@ -1,0 +1,10 @@
+# Builds azure-sdk-tools' in-repo .NET Cli MCP server and publishes it under artifacts/mcp/cli,
+# the path the BuildMcp job ships as `mcp-servers` and every shard re-stages. Wired in via the
+# archetype's mcpSetupTemplate; other repos point that at their own equivalent. The BuildMcp job
+# performs the checkout, so this template only builds.
+
+steps:
+  - script: |
+      set -e
+      dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli -c Release -o "$(Build.SourcesDirectory)/artifacts/mcp/cli" --nologo
+    displayName: 'Build MCP: Cli (live) server'

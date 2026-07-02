@@ -1,0 +1,74 @@
+# Reusable eval CI orchestrator. Stages: Prepare (build MCP + glob a fan-out matrix),
+# Eval (one shard job per matrix leg), Summary (merge JUnit + gate). Each stage just
+# references a job template — no inline steps live here.
+# A thin entrypoint supplies trigger + params + `extends` this.
+#
+# The per-shard timeout flows in as the `shardTimeoutInMinutes` parameter (compile-time, so
+# 1ES can set the job's timeoutInMinutes); the live tier raises it via the same param.
+
+parameters:
+  - name: vallyRoot
+    # Dir each shard runs `vally eval` from; anchor for the matrix's -e paths. Required (no default).
+    type: string
+  - name: evalGlobs
+    # Globs selecting *.eval.yaml under vallyRoot. Default = hermetic mock suite; skill/live override.
+    # collect-stimuli.js mirrors this list as its no-args fallback — keep them in sync.
+    type: object
+    default:
+      - 'evals/tools/*.eval.yaml'
+      - 'evals/workflow-scenarios/mock/*.eval.yaml'
+  - name: mcpSetupTemplate
+    # SWAP POINT: builds/installs the MCP server(s) under artifacts/mcp/<name>. Differs per tier.
+    type: string
+    default: /eng/common/pipelines/templates/steps/eval-mcp-setup.yml
+  - name: evalInvokeTemplate
+    # SWAP POINT: runs `vally eval` per shard. Default = the conditional common invoke template.
+    type: string
+    default: /eng/common/pipelines/templates/steps/eval-invoke.yml
+  - name: UseAzSdkAuthentication
+    # When true, the invoke step runs under AzureCLI@2 (live MCP inherits the service connection).
+    type: boolean
+    default: false
+  - name: failOnFailedTests
+    type: boolean
+    default: false
+  - name: shardTimeoutInMinutes
+    # Per-shard job timeout, passed to the shard job's timeoutInMinutes. Live tier raises it.
+    type: number
+    default: 20
+
+extends:
+  # 1es-redirect picks Official (internal) vs Unofficial; its Use1ESOfficial defaults true.
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    stages:
+      - stage: Prepare
+        displayName: 'Build MCP'
+        jobs:
+          - template: /eng/common/pipelines/templates/jobs/build-mcp.yml
+            parameters:
+              mcpSetupTemplate: ${{ parameters.mcpSetupTemplate }}
+          - template: /eng/common/pipelines/templates/jobs/generate-eval-matrix.yml
+            parameters:
+              vallyRoot: ${{ parameters.vallyRoot }}
+              evalGlobs: ${{ parameters.evalGlobs }}
+
+      - stage: Eval
+        displayName: 'Run eval shards'
+        dependsOn: Prepare
+        jobs:
+          - template: /eng/common/pipelines/templates/jobs/eval-shard.yml
+            parameters:
+              vallyRoot: ${{ parameters.vallyRoot }}
+              evalInvokeTemplate: ${{ parameters.evalInvokeTemplate }}
+              UseAzSdkAuthentication: ${{ parameters.UseAzSdkAuthentication }}
+              shardTimeoutInMinutes: ${{ parameters.shardTimeoutInMinutes }}
+
+      - stage: Summary
+        displayName: 'Summarize results'
+        dependsOn: Eval
+        condition: always()
+        jobs:
+          - template: /eng/common/pipelines/templates/jobs/eval-summarize.yml
+            parameters:
+              failOnFailedTests: ${{ parameters.failOnFailedTests }}

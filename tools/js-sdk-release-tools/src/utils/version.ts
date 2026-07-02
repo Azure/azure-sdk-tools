@@ -107,7 +107,9 @@ export function getNextBetaVersion(npmViewResult: Record<string, unknown> | unde
   // now-deprecated version that has no matching changelog. Fall back to the most recent
   // non-deprecated beta so downstream changelog/breaking-change logic has a valid baseline.
   if (candidate && isVersionDeprecated(npmViewResult, candidate)) {
-    logger.warn(`Next preview version '${candidate}' is deprecated; falling back to the latest non-deprecated preview.`);
+    logger.warn(
+      `Next preview version '${candidate}' is deprecated; falling back to the latest non-deprecated preview.`
+    );
     const fallback = getLatestNonDeprecatedVersion(
       npmViewResult,
       (version) => version.includes('beta') || version.includes('next')

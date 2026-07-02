@@ -1,0 +1,102 @@
+name: azure-typespec-author-eval
+description: Evaluation suite for azure-typespec-author.
+version: '1.0'
+type: capability
+environment: azsdk-mcp
+config:
+  runs: 1
+  timeout: 660s
+  model: claude-opus-4.6
+  executor: copilot-sdk
+stimuli:
+- name: 006009-dp-version-property-renamed-trigger
+  tags:
+    suite: dataplane
+    mode: trigger
+  prompt: Rename the `color` property to `widgetColor` in the WidgetSuite model only for version `2023-06-01-preview`. Also add this new version to the Versions enum.
+  environment: &id001
+    files:
+    - src: ../fixtures/006009-dp-version-property-renamed/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/006009-dp-version-property-renamed/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
+    - src: ../fixtures/006009-dp-version-property-renamed/tspconfig.yaml
+      dest: tspconfig.yaml
+    commands:
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
+  graders:
+  - &id002
+    type: tool-calls
+    config:
+      required:
+      - edit
+      - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+      - azure-typespec-author
+  constraints:
+    max_turns: 5
+    max_tokens: 1000000
+- name: 006009-dp-version-property-renamed-forced
+  tags:
+    suite: dataplane
+    mode: forced
+  prompt: '@azure-typespec-author Rename the `color` property to `widgetColor` in the WidgetSuite model only for version `2023-06-01-preview`. Also add this new version to the Versions enum.'
+  environment: *id001
+  graders:
+  - *id002
+  - &id003
+    type: file-matches
+    config:
+      path: main.tsp
+      pattern: v2023_06_01_Preview
+  - &id004
+    type: file-matches
+    config:
+      path: main.tsp
+      pattern: '@renamedFrom\(Versions\.v2023_06_01_Preview,\s*"color"\)'
+  - &id005
+    type: file-matches
+    config:
+      path: main.tsp
+      pattern: widgetColor
+  - &id006
+    type: prompt
+    config:
+      prompt: The color property should be renamed to widgetColor and decorated with @renamedFrom(Versions.v2023_06_01_Preview, "color"). A new version v2023_06_01_Preview should be added to the Versions
+        enum.
+      model: claude-opus-4.6
+      scoring: scale_1_5
+      threshold: 1.0
+  constraints:
+    max_turns: 5
+    max_tokens: 1000000
+- name: 006009-dp-version-property-renamed-no-skill
+  tags:
+    suite: dataplane
+    mode: no-skill
+  prompt: Rename the `color` property to `widgetColor` in the WidgetSuite model only for version `2023-06-01-preview`. Also add this new version to the Versions enum.
+  environment: *id001
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - edit
+  - *id003
+  - *id004
+  - *id005
+  - *id006
+  constraints:
+    max_turns: 5
+    max_tokens: 100000
+scoring:
+  weights:
+    tool-calls: 1
+    file-matches: 3
+    prompt: 2
+  threshold: 1

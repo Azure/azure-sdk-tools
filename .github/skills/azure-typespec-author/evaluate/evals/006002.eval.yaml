@@ -1,0 +1,95 @@
+name: azure-typespec-author-eval
+description: Evaluation suite for azure-typespec-author.
+version: '1.0'
+type: capability
+environment: azsdk-mcp
+config:
+  runs: 1
+  timeout: 660s
+  model: claude-opus-4.6
+  executor: copilot-sdk
+stimuli:
+- name: 006002-dp-add-get-operation-trigger
+  tags:
+    suite: dataplane
+    mode: trigger
+  prompt: Add a get operation for the WidgetSuite resource to the Widgets interface. The operation should allow fetching a Widget by name.
+  environment: &id001
+    files:
+    - src: ../fixtures/006002-dp-add-get-operation/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/006002-dp-add-get-operation/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
+    - src: ../fixtures/006002-dp-add-get-operation/tspconfig.yaml
+      dest: tspconfig.yaml
+    commands:
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
+  graders:
+  - &id002
+    type: tool-calls
+    config:
+      required:
+      - edit
+      - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+      - azure-typespec-author
+  constraints:
+    max_turns: 5
+    max_tokens: 1000000
+- name: 006002-dp-add-get-operation-forced
+  tags:
+    suite: dataplane
+    mode: forced
+  prompt: '@azure-typespec-author Add a get operation for the WidgetSuite resource to the Widgets interface. The operation should allow fetching a Widget by name.'
+  environment: *id001
+  graders:
+  - *id002
+  - &id003
+    type: file-matches
+    config:
+      path: main.tsp
+      pattern: ResourceRead<WidgetSuite>
+  - &id004
+    type: file-matches
+    config:
+      path: main.tsp
+      pattern: '@doc\('
+  - &id005
+    type: prompt
+    config:
+      prompt: The Widgets interface should include a get/read operation for WidgetSuite using the ResourceRead<WidgetSuite> Azure.Core operation template. The operation should have a descriptive @doc decorator.
+      model: claude-opus-4.6
+      scoring: scale_1_5
+      threshold: 1.0
+  constraints:
+    max_turns: 5
+    max_tokens: 1000000
+- name: 006002-dp-add-get-operation-no-skill
+  tags:
+    suite: dataplane
+    mode: no-skill
+  prompt: Add a get operation for the WidgetSuite resource to the Widgets interface. The operation should allow fetching a Widget by name.
+  environment: *id001
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - edit
+  - *id003
+  - *id004
+  - *id005
+  constraints:
+    max_turns: 5
+    max_tokens: 100000
+scoring:
+  weights:
+    tool-calls: 1
+    file-matches: 3
+    prompt: 2
+  threshold: 1

@@ -11,8 +11,8 @@
 # - Stage: EvalTypeSpecAuthor
 # - Job A: RunEvalsForCodeQuality   -> uses forced eval mode
 # - Job B: RunEvalsForSkillInvokation -> uses trigger eval mode
-# - Each job executes 5 domain suites (versioning, armtemplate, longrunningoperation,
-#   decorators, warning) as separate steps and uploads artifacts.
+# - Each job executes 6 domain suites (versioning, armtemplate, longrunningoperation,
+#   decorators, warning, dataplane) as separate steps and uploads artifacts.
 #
 # Why split by suite:
 # - Faster fault isolation: failures are scoped to a small case group.
@@ -97,6 +97,13 @@ extends:
                   DisplayName: Run force invokation suite - warning
                   TimeoutMinutes: 25
                   Tag: suite=warning
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
+                parameters:
+                  EvalFile: forced.eval.yaml
+                  SuiteName: dataplane-forced
+                  DisplayName: Run force invokation suite - dataplane
+                  TimeoutMinutes: 50
+                  Tag: suite=dataplane
 
             templateContext:
               outputs:
@@ -166,6 +173,13 @@ extends:
                   DisplayName: Run suite - warning
                   TimeoutMinutes: 25
                   Tag: suite=warning
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
+                parameters:
+                  EvalFile: trigger.eval.yaml
+                  SuiteName: dataplane
+                  DisplayName: Run suite - dataplane
+                  TimeoutMinutes: 50
+                  Tag: suite=dataplane
 
             templateContext:
               outputs:

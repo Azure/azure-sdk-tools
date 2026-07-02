@@ -309,7 +309,7 @@ stimuli:
         config:
           command: "tsp compile ."
           expected_exit_code: 0
-      - type: file-matches
+      - type: file-exists
         config:
           path: examples/2025-05-04-preview/Employees_Get_MaximumSet_Gen.json
       - type: file-not-exists
@@ -415,7 +415,7 @@ stimuli:
         config:
           command: "tsp compile ."
           expected_exit_code: 0
-      - type: file-matches
+      - type: file-exists
         config:
           path: examples/2025-05-04-preview/Employees_Get_MaximumSet_Gen.json
       - type: file-exists
@@ -513,7 +513,7 @@ stimuli:
         config:
           command: "tsp compile ."
           expected_exit_code: 0
-      - type: file-matches
+      - type: file-exists
         config:
           path: examples/2025-01-01/Employees_Get_MaximumSet_Gen.json
       - type: file-not-exists
@@ -621,7 +621,7 @@ stimuli:
         config:
           command: "tsp compile ."
           expected_exit_code: 0
-      - type: file-matches
+      - type: file-exists
         config:
           path: examples/2024-10-01/Employees_Get_MaximumSet_Gen.json
       - type: file-exists

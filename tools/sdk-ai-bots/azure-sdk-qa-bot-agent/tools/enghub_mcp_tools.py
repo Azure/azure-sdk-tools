@@ -38,6 +38,7 @@ _TOKEN_REFRESH_BUFFER_SECS = 5 * 60
 _MCP_REQUEST_TIMEOUT_SECS = 60
 
 # Client-side allowed tool names
+_ENGHUB_ALLOWED_TOOLS: list[str] = ["search", "fetch"]
 
 class _EntraTokenManager:
     """Caches an Entra bearer token and refreshes it before expiry."""

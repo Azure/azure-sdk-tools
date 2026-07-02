@@ -187,6 +187,35 @@ describe('Skip deprecated versions when selecting comparison baseline (issue #15
     expect(getNextBetaVersion(npmView)).toBe('1.2.0-beta.1');
   });
 
+  test('getNextBetaVersion falls back to the latest non-deprecated next when the next dist-tag is a deprecated non-beta prerelease', () => {
+    const npmView = {
+      'dist-tags': { next: '1.0.0-next.2' },
+      time: {
+        '1.0.0-next.1': '2025-06-01T00:00:00.000Z',
+        '1.0.0-next.2': '2025-07-01T00:00:00.000Z',
+        '1.0.1-alpha.20260101.1': '2026-01-01T00:00:00.000Z',
+      },
+      versions: {
+        '1.0.0-next.1': { name: '@azure/arm-test', version: '1.0.0-next.1' },
+        '1.0.0-next.2': { name: '@azure/arm-test', version: '1.0.0-next.2', deprecated: deprecatedMessage },
+        // A newer alpha nightly must NOT be picked as a preview fallback.
+        '1.0.1-alpha.20260101.1': { name: '@azure/arm-test', version: '1.0.1-alpha.20260101.1' },
+      },
+    };
+    expect(getNextBetaVersion(npmView)).toBe('1.0.0-next.1');
+  });
+
+  test('getNextBetaVersion keeps the deprecated next when no non-deprecated preview exists', () => {
+    const npmView = {
+      'dist-tags': { next: '1.0.0-next.2' },
+      time: { '1.0.0-next.2': '2025-07-01T00:00:00.000Z' },
+      versions: {
+        '1.0.0-next.2': { name: '@azure/arm-test', version: '1.0.0-next.2', deprecated: deprecatedMessage },
+      },
+    };
+    expect(getNextBetaVersion(npmView)).toBe('1.0.0-next.2');
+  });
+
   test('getLatestStableVersion falls back to the latest non-deprecated GA when the latest dist-tag is deprecated', () => {
     const npmView = {
       'dist-tags': { latest: '1.2.0' },

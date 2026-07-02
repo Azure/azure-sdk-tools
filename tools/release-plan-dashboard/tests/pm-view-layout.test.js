@@ -26,22 +26,17 @@ describe("PM View Attention Required layout", () => {
     const informationalIndex = indexHtml.indexOf('id="pm-informational"');
     const needsAttentionIndex = indexHtml.indexOf('id="pm-needs-attention"');
 
-    expect(informationalIndex).toBeGreaterThanOrEqual(0);
-    expect(indexHtml).toMatch(
-      /id="pm-informational"[\s\S]*?>\s*Informational\s*</,
-    );
     expect(needsAttentionIndex).toBeGreaterThanOrEqual(0);
     expect(indexHtml).toMatch(
-      /id="pm-needs-attention"[\s\S]*?>\s*Needs Attention\s*</,
+      /aria-labelledby="pm-needs-attention"[\s\S]*class="pm-section-group-header section-header"[\s\S]*data-target="list-pm-needs-attention"[\s\S]*id="pm-needs-attention"[\s\S]*>\s*Needs Attention\s*</,
     );
-    expect(needsAttentionIndex).toBeGreaterThan(informationalIndex);
+    expect(informationalIndex).toBeGreaterThanOrEqual(0);
+    expect(indexHtml).toMatch(
+      /aria-labelledby="pm-informational"[\s\S]*class="pm-section-group-header section-header"[\s\S]*data-target="list-pm-informational"[\s\S]*id="pm-informational"[\s\S]*>\s*Informational\s*</,
+    );
+    expect(informationalIndex).toBeGreaterThan(needsAttentionIndex);
 
-    expectOrdered(indexHtml.slice(informationalIndex, needsAttentionIndex), [
-      "Recently Finished (Last 2",
-      "Approaching SDK Release",
-    ]);
-
-    expectOrdered(indexHtml.slice(needsAttentionIndex), [
+    expectOrdered(indexHtml.slice(needsAttentionIndex, informationalIndex), [
       "Ready to Complete Private",
       "Past Due Release Plans",
       "Stale Release Plans",
@@ -49,6 +44,11 @@ describe("PM View Attention Required layout", () => {
       "Partially Released",
       "Missing Namespace Approval",
       "Missing Product Details",
+    ]);
+
+    expectOrdered(indexHtml.slice(informationalIndex), [
+      "Recently Finished (Last 2",
+      "Approaching SDK Release",
     ]);
   });
 

@@ -464,6 +464,18 @@ main {
   margin-bottom: 8px;
 }
 
+.pm-section-group-header.section-header {
+  padding-top: 0;
+}
+
+.pm-section-group-header.section-header > div {
+  min-width: 0;
+}
+
+.pm-section-group-header.section-header:hover .pm-section-group-title {
+  color: var(--azure-blue);
+}
+
 .pm-section-group-title {
   margin: 0;
   font-size: 1.1rem;
@@ -475,6 +487,10 @@ main {
   margin: 4px 0 0;
   color: var(--gray);
   font-size: 0.9rem;
+}
+
+.pm-section-group.collapsed > .pm-section-group-content {
+  display: none !important;
 }
 
 .section-header {

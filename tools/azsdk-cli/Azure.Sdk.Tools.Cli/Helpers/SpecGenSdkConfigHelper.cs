@@ -63,6 +63,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         private const string BuildScriptPathJsonPath = "packageOptions/buildScript/path";
         private const string UpdateChangelogContentCommandJsonPath = "packageOptions/updateChangelogContentScript/command";
         private const string UpdateChangelogContentScriptPathJsonPath = "packageOptions/updateChangelogContentScript/path";
+        private const string GetSDKChangesCommandJsonPath = "packageOptions/getSDKChangesScript/command";
+        private const string GetSDKChangesScriptPathJsonPath = "packageOptions/getSDKChangesScript/path";
         private const string UpdateVersionCommandJsonPath = "packageOptions/updateVersionScript/command";
         private const string UpdateVersionScriptPathJsonPath = "packageOptions/updateVersionScript/path";
         private const string UpdateMetadataCommandJsonPath = "packageOptions/updateMetadataScript/command";
@@ -235,6 +237,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 SpecGenSdkConfigType.UpdateChangelogContent => (UpdateChangelogContentCommandJsonPath, UpdateChangelogContentScriptPathJsonPath),
                 SpecGenSdkConfigType.UpdateVersion => (UpdateVersionCommandJsonPath, UpdateVersionScriptPathJsonPath),
                 SpecGenSdkConfigType.UpdateMetadata => (UpdateMetadataCommandJsonPath, UpdateMetadataScriptPathJsonPath),
+                SpecGenSdkConfigType.GetSDKChanges => (GetSDKChangesCommandJsonPath, GetSDKChangesScriptPathJsonPath),
                 _ => throw new ArgumentException($"Unsupported config type: {configType}")
             };
         }
@@ -401,6 +404,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     {
         Build,
         UpdateChangelogContent,
+        GetSDKChanges,
         UpdateVersion,
         UpdateMetadata
     }

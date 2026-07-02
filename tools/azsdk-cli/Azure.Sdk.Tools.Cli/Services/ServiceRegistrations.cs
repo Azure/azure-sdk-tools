@@ -99,6 +99,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ITspClientHelper, TspClientHelper>();
             services.AddSingleton<IAPIViewFeedbackService, APIViewFeedbackService>();
             services.AddScoped<IFeedbackClassifierService, FeedbackClassifierService>();
+            services.AddScoped<IClassifyService, ClassifyService>();
             services.AddScoped<IUserPromptProcessor, UserPromptProcessor>();
 
             // Process Helper Classes
@@ -143,6 +144,16 @@ namespace Azure.Sdk.Tools.Cli.Services
                     options.CliPath = cliPath.Trim();
                 }
 
+                var gitHubToken = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
+                if (!string.IsNullOrWhiteSpace(gitHubToken))
+                {
+                    logger?.LogInformation("Using GITHUB_TOKEN from environment variable for Copilot SDK authentication.");
+                    options.GitHubToken = gitHubToken.Trim();
+                } else
+                {
+                    // If no GITHUB_TOKEN is provided, log a warning. Some Copilot features may not work properly without it.
+                    logger?.LogWarning("No GITHUB_TOKEN environment variable found. Some Copilot features may not work properly.");
+                }
                 return new CopilotClient(options);
             });
             services.AddSingleton<ICopilotClientWrapper, CopilotClientWrapper>();

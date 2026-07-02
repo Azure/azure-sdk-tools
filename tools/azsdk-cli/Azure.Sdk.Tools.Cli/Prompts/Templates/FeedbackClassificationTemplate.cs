@@ -1,8 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses;
 
 namespace Azure.Sdk.Tools.Cli.Prompts.Templates;
 
@@ -23,6 +26,9 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
     private readonly List<FeedbackItem> _items;
     private readonly string _globalContext;
     private readonly EditScope _editScope;
+    private static readonly Regex BatchResultBlockPattern = new(
+        @"\[(?<id>[^\]]+)\]\s*\n\s*Classification:\s*(?<classification>\S+)\s*\n\s*Reason:\s*(?<reason>[^\n]+)",
+        RegexOptions.Multiline | RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     /// <summary>
     /// Initializes a new batch classification template.
@@ -62,6 +68,118 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         
         return BuildStructuredPrompt(taskInstructions, constraints, examples, outputRequirements);
     }
+
+    /// <summary>
+    /// Parses the batch LLM result with ID-keyed blocks and applies classifications to items.
+    /// Expected format:
+    /// [item-id]
+    /// Classification: TSP_APPLICABLE | SUCCESS | CODE_CUSTOMIZATION | REQUIRES_MANUAL_INTERVENTION
+    /// Reason: explanation
+    /// </summary>
+    public override Object ParseClassifyResult(string result, List<Object>? items = null)
+    {
+        if (items == null || items.Count == 0)
+        {
+            throw new ArgumentException("Items list cannot be null or empty for classification parsing.");
+        }
+        var feedbackItems = items.Cast<FeedbackItem>().ToList();
+        var itemLookup = feedbackItems.ToDictionary(i => i.Id, i => i);
+        var matchedIds = new HashSet<string>();
+
+        foreach (Match match in BatchResultBlockPattern.Matches(result))
+        {
+            var id = match.Groups["id"].Value.Trim();
+            var classification = match.Groups["classification"].Value.Trim();
+            var reason = match.Groups["reason"].Value.Trim();
+
+            if (!itemLookup.TryGetValue(id, out var item))
+            {
+                //_logger.LogWarning("Batch result contains unknown item ID: {Id}", id);
+                continue;
+            }
+
+            matchedIds.Add(id);
+            ApplyClassification(item, classification, reason);
+        }
+
+        // Handle any items that weren't in the response
+        foreach (var item in feedbackItems.Where(i => !matchedIds.Contains(i.Id)))
+        {
+            //_logger.LogWarning("Item {Id} was not found in batch classification result. Defaulting to REQUIRES_MANUAL_INTERVENTION.", item.Id);
+            item.Status = FeedbackStatus.REQUIRES_MANUAL_INTERVENTION;
+            item.AppendContext("Classification failed: item missing from batch LLM response", leadingNewLines: 1);
+        }
+
+        return BuildClassificationItems(feedbackItems);
+    }
+
+    private static List<FeedbackClassificationResponse.ItemClassificationDetails> BuildClassificationItems(List<FeedbackItem> items)
+    {
+        var successCount = 0;
+        var failureCount = 0;
+        var tspApplicableCount = 0;
+        var codeCustomizationCount = 0;
+        var classifications = new List<FeedbackClassificationResponse.ItemClassificationDetails>();
+
+        foreach (var item in items)
+        {
+            var classification = item.Status switch
+            {
+                FeedbackStatus.SUCCESS => "SUCCESS",
+                FeedbackStatus.CODE_CUSTOMIZATION => "CODE_CUSTOMIZATION",
+                FeedbackStatus.REQUIRES_MANUAL_INTERVENTION => "REQUIRES_MANUAL_INTERVENTION",
+                _ => "TSP_APPLICABLE"
+            };
+
+            switch (item.Status)
+            {
+                case FeedbackStatus.SUCCESS: successCount++; break;
+                case FeedbackStatus.CODE_CUSTOMIZATION: codeCustomizationCount++; break;
+                case FeedbackStatus.REQUIRES_MANUAL_INTERVENTION: failureCount++; break;
+                default: tspApplicableCount++; break;
+            }
+
+            classifications.Add(new FeedbackClassificationResponse.ItemClassificationDetails
+            {
+                ItemId = item.Id,
+                Classification = classification,
+                Reason = item.ClassificationReason ?? $"Item classified as {classification}",
+                Text = item.Text
+            });
+        }
+
+        return classifications;
+    }
+
+    /// <summary>
+    /// Applies a classification string and reason to a single feedback item.
+    /// </summary>
+    private void ApplyClassification(FeedbackItem item, string classification, string reason)
+    {
+        var status = classification switch
+        {
+            "SUCCESS" => FeedbackStatus.SUCCESS,
+            "CODE_CUSTOMIZATION" => FeedbackStatus.CODE_CUSTOMIZATION,
+            "REQUIRES_MANUAL_INTERVENTION" => FeedbackStatus.REQUIRES_MANUAL_INTERVENTION,
+            "TSP_APPLICABLE" => FeedbackStatus.TSP_APPLICABLE,
+            _ => FeedbackStatus.TSP_APPLICABLE
+        };
+
+        if (status == FeedbackStatus.TSP_APPLICABLE && classification != "TSP_APPLICABLE")
+        {
+            //_logger.LogWarning("Unknown classification '{Classification}' for item {Id}. Defaulting to TSP_APPLICABLE.", classification, item.Id);
+        }
+
+        item.Status = status;
+        if (!string.IsNullOrEmpty(reason))
+        {
+            item.ClassificationReason = reason;
+            item.AppendContext($"Classification: {classification}\nReason: {reason}", leadingNewLines: 2);
+        }
+
+        //_logger.LogInformation("Item {Id} classified as {Status}: {Reason}", item.Id, status, reason);
+    }
+
 
     protected override string BuildSystemRole()
     {

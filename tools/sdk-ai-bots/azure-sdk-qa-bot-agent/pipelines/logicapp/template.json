@@ -380,6 +380,7 @@
                             "message": {
                               "content": "@body('Get_message_details')?['body']?['content']",
                               "role": "user",
+                              "id": "@item()?['messageId']",
                               "user_id": "@body('Get_message_details')?['from']?['user']?['id']",
                               "user_name": "@body('Get_message_details')?['from']?['user']?['displayName']"
                             }

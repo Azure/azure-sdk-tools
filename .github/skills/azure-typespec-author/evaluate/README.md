@@ -35,7 +35,7 @@ Why each piece matters:
 - **`FIXTURE_NODE_MODULES`** lets the agent symlink a prebuilt `node_modules` instead of running
   `npm install` on every case. Without it evals still work, just slower.
 - **`copilot-instructions.md`** is copied into each run's `.github/` by the `azsdk-mcp` environments
-  in `.vally.yaml`, so evals exercise the *real* spec-repo authoring guidance. It is intentionally
+  in `.vally.yaml`, so evals exercise the _real_ spec-repo authoring guidance. It is intentionally
   **not** checked in (it is git-ignored) and always refreshed from `main`, so the eval reflects what
   authors actually see today.
 

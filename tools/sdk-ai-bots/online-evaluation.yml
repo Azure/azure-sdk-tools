@@ -42,9 +42,6 @@ extends:
                 inputs:
                   artifactFeeds: 'public/azure-sdk-for-python'
               - script: |
-                  python --version
-                displayName: 'check python'
-              - script: |
                   pip install -r requirements.txt
                 displayName: 'install requirements'
                 workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation

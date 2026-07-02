@@ -81,7 +81,7 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
                 {
                     Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
                     Path = "/fields/Custom.CreatedUsing",
-                    Value = Environment.GetEnvironmentVariable(SystemTeamProjectIdEnvironmentVariableName) is not null ? "Automation" : "Copilot"
+                    Value = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(SystemTeamProjectIdEnvironmentVariableName)) ? "Copilot" : "Automation"
                 });
             }
 

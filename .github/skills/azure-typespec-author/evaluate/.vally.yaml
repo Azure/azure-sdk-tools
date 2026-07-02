@@ -33,7 +33,7 @@ environments:
         env:
           AZSDKTOOLS_AGENT_TESTING: "false"
           AZSDKTOOLS_COLLECT_TELEMETRY: "false"
-          AZURE_SDK_KB_ENDPOINT: "http://localhost:8088"
+          AZURE_SDK_KB_ENDPOINT: "http://localhost:8089"
   azsdk-mcp-remote-kb:
     mcpServers:
       azure-sdk-mcp:

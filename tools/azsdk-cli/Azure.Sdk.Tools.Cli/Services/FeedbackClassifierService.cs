@@ -2,14 +2,17 @@
 // Licensed under the MIT License.
 
 using System.Collections.Concurrent;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.CopilotAgents.Tools;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledge;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
 using Microsoft.Extensions.AI;
+using Microsoft.TeamFoundation.TestManagement.WebApi;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -53,6 +56,7 @@ public class FeedbackClassifierService : IFeedbackClassifierService
     private readonly ILogger<FeedbackClassifierService> _logger;
     private readonly ITypeSpecHelper _typeSpecHelper;
     private readonly IAPIViewFeedbackService _feedbackService;
+    private readonly IAzureSdkKnowledgeBaseService _knowledgeBaseService;
 
     public const int DefaultBatchSize = 50;
 
@@ -60,12 +64,14 @@ public class FeedbackClassifierService : IFeedbackClassifierService
         ICopilotAgentRunner agentRunner,
         ILoggerFactory loggerFactory,
         ITypeSpecHelper typeSpecHelper,
-        IAPIViewFeedbackService feedbackService)
+        IAPIViewFeedbackService feedbackService,
+        IAzureSdkKnowledgeBaseService knowledgeBaseService)
     {
         _agentRunner = agentRunner;
         _logger = loggerFactory.CreateLogger<FeedbackClassifierService>();
         _typeSpecHelper = typeSpecHelper;
         _feedbackService = feedbackService;
+        _knowledgeBaseService = knowledgeBaseService;
     }
 
     /// <summary>
@@ -111,6 +117,18 @@ public class FeedbackClassifierService : IFeedbackClassifierService
             items.Count, effectiveBatchSize);
 
         var referenceDocContent = await LoadTspCustomizationGuideAsync(specRepoBasePath, ct);
+
+        /* get the global context from Azure Knowledage base. */
+        // Build request
+        var knowledgeRetrieveRequest = new KnowledgeRetrieveRequest
+        {
+            AzureSdkKnowledgeServiceTenant = AzureSdkKnowledgeServiceTenant.AzureTypespecAuthoring,
+            Query = String.Join(";", items.Select(i => i.Text)),
+            SearchMode = "quick", // For authoring, default quick search
+        };
+
+        var contextResponse = await _knowledgeBaseService.SendKnowledgeRetrieveRequestAsync(knowledgeRetrieveRequest, ct);
+        var context = contextResponse.Knowledges != null ? JsonSerializer.Serialize(contextResponse.Knowledges) : string.Empty;
 
         foreach (var chunk in items.Chunk(effectiveBatchSize))
         {

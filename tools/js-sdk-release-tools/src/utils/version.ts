@@ -130,15 +130,21 @@ export function getLatestStableVersion(npmViewResult: Record<string, unknown>) {
   // Prefer the dist-tag targets, but only when they are not deprecated. issue #15981:
   // `npm deprecate` does not move dist-tags, so `latest`/`beta` may still point to an
   // accidentally published, now-deprecated version that has no matching changelog.
-  if (isLatestComparable && !isVersionDeprecated(npmViewResult, latestVersion)) return latestVersion;
-  if (!isLatestComparable && betaVersion && !isVersionDeprecated(npmViewResult, betaVersion)) return betaVersion;
+  const latestDeprecated = !!latestVersion && !!isLatestComparable && isVersionDeprecated(npmViewResult, latestVersion);
+  const betaDeprecated = !!betaVersion && !isLatestComparable && isVersionDeprecated(npmViewResult, betaVersion);
 
-  // The preferred dist-tag target is deprecated: fall back to the most recent
-  // non-deprecated version, preferring a pure stable GA over a beta.
-  const nonDeprecatedStable = getLatestNonDeprecatedVersion(npmViewResult, (version) => !version.includes('-'));
-  if (nonDeprecatedStable) return nonDeprecatedStable;
-  const nonDeprecatedBeta = getLatestNonDeprecatedVersion(npmViewResult, (version) => version.includes('beta'));
-  if (nonDeprecatedBeta) return nonDeprecatedBeta;
+  if (isLatestComparable && !latestDeprecated) return latestVersion;
+  if (!isLatestComparable && betaVersion && !betaDeprecated) return betaVersion;
+
+  // Only fall back to scanning the versions map when the preferred dist-tag target is actually deprecated.
+  if (latestDeprecated || betaDeprecated) {
+    // The preferred dist-tag target is deprecated: fall back to the most recent
+    // non-deprecated version, preferring a pure stable GA over a beta.
+    const nonDeprecatedStable = getLatestNonDeprecatedVersion(npmViewResult, (version) => !version.includes('-'));
+    if (nonDeprecatedStable) return nonDeprecatedStable;
+    const nonDeprecatedBeta = getLatestNonDeprecatedVersion(npmViewResult, (version) => version.includes('beta'));
+    if (nonDeprecatedBeta) return nonDeprecatedBeta;
+  }
 
   // Last resort: every candidate is deprecated (or no `versions` map is available).
   // Preserve the original dist-tag based behavior.

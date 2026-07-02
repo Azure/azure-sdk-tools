@@ -150,6 +150,19 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
         }
 
         [Test]
+        public async Task RunPackageCheck_WithAllChecksAndFixEnabled_ReturnsErrorResult()
+        {
+            // Act - --fix is not allowed with check type All since checks run in parallel
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath.DirectoryPath, PackageCheckType.All, true);
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.That(result.ExitCode, Is.EqualTo(1));
+            Assert.That(result.ResponseError, Is.Not.Null.And.Not.Empty);
+            Assert.That(result.ResponseError, Does.Contain("--fix").And.Contain("All"));
+        }
+
+        [Test]
         public async Task RunPackageCheck_WithInvalidPath_ReturnsErrorResult()
         {
             // Arrange

@@ -37,13 +37,14 @@ public class WorkItemBaseTests
         Assert.That(operation["Value"]?.GetValue<string>(), Is.EqualTo(string.Empty));
     }
 
-    [Test]
-    public void GetPatchDocument_WhenAgentCreatedOutsidePipeline_SetsCreatedUsingToCopilot()
+    [TestCase(null)]
+    [TestCase("")]
+    public void GetPatchDocument_WhenAgentCreatedOutsidePipeline_SetsCreatedUsingToCopilot(string? teamProjectId)
     {
         var originalValue = Environment.GetEnvironmentVariable(SystemTeamProjectIdEnvironmentVariableName);
         try
         {
-            Environment.SetEnvironmentVariable(SystemTeamProjectIdEnvironmentVariableName, null);
+            Environment.SetEnvironmentVariable(SystemTeamProjectIdEnvironmentVariableName, teamProjectId);
             var workItem = new WorkItemBase
             {
                 IsCreatedByAgent = true

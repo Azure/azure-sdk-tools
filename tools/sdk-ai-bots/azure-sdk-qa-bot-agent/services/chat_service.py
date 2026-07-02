@@ -521,7 +521,6 @@ class ChatService:
         if skill_content:
             parts.append(
                 f"\n[skill] name={skill_name} "
-                "(preloaded — do NOT call load_skill for this skill)\n"
                 f"{skill_content}"
             )
 

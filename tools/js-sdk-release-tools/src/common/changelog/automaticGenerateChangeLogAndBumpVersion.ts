@@ -54,7 +54,8 @@ export async function generateChangelogAndBumpVersion(
     skdReleaseDate?: string | undefined;
   },
   updateMode: UpdateMode = UpdateMode.Both,
-  sdkRepoPath?: string
+  sdkRepoPath?: string,
+  reportOnly: boolean = false
 ) {
   logger.info(`Start to generate changelog and bump version in ${packageFolderPath}`);
   const jsSdkRepoPath = sdkRepoPath ?? String(shell.pwd());
@@ -75,6 +76,10 @@ export async function generateChangelogAndBumpVersion(
   const skdReleaseDate = options.skdReleaseDate ?? getCurrentDate();
   const isFirstRelease = shouldTreatAsFirstRelease(npmViewResult, stableVersion, isStableRelease);
   if (isFirstRelease) {
+    if (reportOnly) {
+      logger.info(`Package ${packageName} is treated as a first release; reporting no SDK changes.`);
+      return undefined;
+    }
     const isComparableStableVersion =
       !!stableVersion && (!stableVersion.includes('-') || stableVersion.includes('beta'));
     const releaseType = !npmViewResult ? 'initial' : !isComparableStableVersion ? 'comparable' : 'stable';
@@ -142,6 +147,9 @@ export async function generateChangelogAndBumpVersion(
         const detectContext = diffDetector.getDetectContext();
         const changelogGenerator = new ChangelogGenerator(detectContext, detectResult);
         const changelog = changelogGenerator.generate();
+        if (reportOnly) {
+          return changelog;
+        }
         const changelogPath = path.join(npmPackageRoot, 'CHANGELOG.md');
         const lastStableChangelog: NpmViewParameters = {
           file: 'CHANGELOG.md',
@@ -217,6 +225,9 @@ export async function generateChangelogAndBumpVersion(
         return changelog;
       } else {
         logger.info(`Package ${packageName} released before is track1 sdk.`);
+        if (reportOnly) {
+          throw new Error(`Report-only mode is not supported for track1 packages (${packageName}).`);
+        }
         logger.info('Start to generate changelog of migrating track1 to track2 sdk.');
         const newVersion =
           options.sdkVersion && options.sdkVersion.trim() !== ''

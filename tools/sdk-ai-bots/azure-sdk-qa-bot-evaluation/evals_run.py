@@ -1,292 +1,242 @@
+"""Entry point: run QA bot evaluation on the Foundry OpenAI-evals surface.
+
+We call the bot ``/completion`` endpoint **concurrently** (bounded by
+``--max_concurrency``), collect each answer + retrieved context + references, then
+grade them as inline eval data where the builtin LLM evaluators read
+``{{item.response}}`` / ``{{item.context}}``. Parallelizing the slow
+answer-generation step is the main lever for evaluation speed.
+
+Examples:
+    # Run all configured evaluators against the typespec basic dataset:
+    python evals_run.py --dataset qa-bot-basic-typespec:latest \
+        --evaluators bot_evals,groundedness --max_concurrency 8
+
+    # Or point at a local curated file directly:
+    python evals_run.py --dataset evaluation_datasets/basic/typespec.jsonl
+"""
+
+from __future__ import annotations
+
 import argparse
-from datetime import datetime
 import json
 import logging
 import os
-import pathlib
 import sys
+from datetime import datetime
+from pathlib import Path
 from typing import Any
-from _evals_runner import EvalsRunner, EvaluatorClass
-from dotenv import load_dotenv
-from azure.ai.evaluation import SimilarityEvaluator, GroundednessEvaluator, ResponseCompletenessEvaluator
-from azure.identity import AzurePipelinesCredential, DefaultAzureCredential, AzureCliCredential
-from _evals_result import EvalsResult, VerificationResult
-from eval import AzureBotEvaluator, AzureBotReferenceEvaluator
 
-if __name__ == "__main__":
+from dotenv import load_dotenv
+
+from _evals_result import EvalsResult, VerificationResult
+from _evals_runner import (
+    FoundryEvalsRunner,
+    resolve_bot_token,
+    resolve_completion_url,
+    resolve_records,
+    resolve_tenant_for_scenario,
+    retrieve_channel_tenant_map,
+)
+from dataset._storage import credential_for
+
+ALL_EVALUATORS = [
+    "similarity",
+    "response_completeness",
+    "groundedness",
+    "relevance",
+    "coherence",
+    "fluency",
+    "bot_evals",
+]
+
+# Output fields surfaced per evaluator in the result table.
+OUTPUT_FIELDS: dict[str, list[str]] = {
+    "similarity": ["similarity"],
+    "response_completeness": ["response_completeness"],
+    "groundedness": ["groundedness"],
+    "relevance": ["relevance"],
+    "coherence": ["coherence"],
+    "fluency": ["fluency"],
+    "bot_evals": ["bot_evals", "bot_evals_similarity", "bot_evals_response_completeness", "bot_evals_result"],
+}
+
+
+def _load_suppression(script_dir: Path) -> dict[str, list[str]]:
+    suppression: dict[str, list[str]] = {"evaluators": [], "testcases": []}
+    f = script_dir / "suppression.json"
+    if f.exists():
+        try:
+            loaded = json.loads(f.read_text(encoding="utf-8"))
+            for key in ("evaluators", "testcases"):
+                val = loaded.get(key, [])
+                if isinstance(val, list):
+                    suppression[key] = [str(x) for x in val]
+        except (json.JSONDecodeError, TypeError) as exc:
+            logging.warning("Failed to parse suppression.json: %s", exc)
+    return suppression
+
+
+def _dataset_label(dataset_spec: str, scenario: str) -> str:
+    """Stable dataset identity for the evaluation name.
+
+    ``qa-bot-<target>-<scenario>[:version]`` -> ``qa-bot-<target>-<scenario>``;
+    a ``.../<target>/<scenario>.jsonl`` path -> ``qa-bot-<target>-<scenario>``;
+    anything else falls back to ``qa-bot-<scenario>``.
+    """
+    base = dataset_spec.split(":", 1)[0]
+    if base.endswith(".jsonl"):
+        p = Path(base)
+        target = p.parent.name
+        return f"qa-bot-{target}-{p.stem}" if target else f"qa-bot-{p.stem}"
+    if base.startswith("qa-bot-"):
+        return base
+    return f"qa-bot-{scenario}"
+
+
+def main(argv: list[str] | None = None) -> int:
+    # Ensure emoji in log/table output don't crash a non-UTF-8 console (e.g. Windows cp1252).
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8")  # type: ignore[attr-defined]
+        except (AttributeError, ValueError):
+            pass
     logging.basicConfig(level=logging.INFO, stream=sys.stdout, format="%(asctime)s - %(levelname)s - %(message)s")
     logging.info("🚀 Starting evaluation ...")
 
-    parser = argparse.ArgumentParser(description="Run evals for Azure Chat Bot.")
-
-    parser.add_argument("--test_folder", type=str, help="the path to the test folder")
-    parser.add_argument("--prefix", type=str, help="Process only files starting with this prefix")
-    parser.add_argument("--is_bot", type=str, default="True", help="Use bot API for processing Q&A pairs (True/False)")
-    parser.add_argument("--is_ci", type=str, default="True", help="Run in CI/CD pipeline (True/False)")
-    parser.add_argument("--evaluation_name_prefix", type=str, help="the prefix of evaluation name")
+    parser = argparse.ArgumentParser(description="Run QA bot evaluation on the Foundry evals surface.")
+    parser.add_argument("--dataset", required=True, help="<path.jsonl> | qa-bot-<target>-<scenario>[:version]")
+    parser.add_argument("--max_concurrency", type=int, default=8, help="parallel /completion calls")
+    parser.add_argument("--evaluators", type=str, default=None, help="comma-separated subset; default all")
     parser.add_argument(
-        "--send_result", type=str, default="True", help="Send the evaluation result to AI foundry project"
+        "--run_context",
+        type=str,
+        default="local",
+        help="context tag appended to the dataset name (e.g. 'local' or the pipeline name)",
     )
-    parser.add_argument("--baseline_check", type=str, default="True", help="Compare the result with baseline.")
-    parser.add_argument("--retrieve_response", type=str, default="True", help="Call bot api to retrieve response.")
-    parser.add_argument("--cache_result", type=str, default="none", help="cache the evaluation result persistently, none, full, or score.")
-    parser.add_argument("--evaluators", type=str, help="choose evaluators to run, string separated by comma")
-    args = parser.parse_args()
+    parser.add_argument("--baseline_check", type=str, default="True")
+    parser.add_argument("--is_ci", type=str, default="True")
+    parser.add_argument("--cache_result", type=str, default="none", help="none | score | full")
+    args = parser.parse_args(argv)
 
-    args.is_bot = args.is_bot.lower() in ("true", "1", "yes", "on")
-    args.is_ci = args.is_ci.lower() in ("true", "1", "yes", "on")
-    args.send_result = args.send_result.lower() in ("true", "1", "yes")
-    args.baseline_check = args.baseline_check.lower() in ("true", "1", "yes")
-    args.retrieve_response = args.retrieve_response.lower() in ("true", "1", "yes")
-    args.evaluators = args.evaluators.split(",") if args.evaluators is not None else None
+    is_ci = args.is_ci.lower() in ("true", "1", "yes", "on")
+    baseline_check = args.baseline_check.lower() in ("true", "1", "yes")
+    evaluators = args.evaluators.split(",") if args.evaluators else list(ALL_EVALUATORS)
 
-    script_directory = os.path.dirname(os.path.abspath(__file__))
-    logging.info(f"Script directory:{script_directory}")
-
-    current_file_path = os.getcwd()
-    logging.info(f"Current working directory:{current_file_path}")
-
-    if args.test_folder is None:
-        args.test_folder = os.path.join(script_directory, "tests")
-
-    logging.info(f"test folder: {args.test_folder}")
-    # Required environment variables
     load_dotenv()
+    script_dir = Path(__file__).resolve().parent
 
-    all_results = {}
     try:
-        logging.info("📊 Preparing dataset...")
-        azure_ai_project_endpoint = os.environ["AZURE_AI_PROJECT_ENDPOINT"]
-        logging.info(f"📋 Using project endpoint: {azure_ai_project_endpoint}")
-        model_config: dict[str, str] = {
-            "azure_endpoint": os.environ["AZURE_OPENAI_ENDPOINT"],
-            "api_key": os.environ["AZURE_OPENAI_API_KEY"],
-            "azure_deployment": os.environ["AZURE_EVALUATION_MODEL_NAME"],
-            "api_version": os.environ["AZURE_API_VERSION"],
-        }
+        endpoint = os.environ["AZURE_AI_PROJECT_ENDPOINT"]
+        model = os.environ["AZURE_EVALUATION_MODEL_NAME"]
+        threshold = int(os.environ.get("EVALUATE_THRESHOLD", "3"))
+    except KeyError as exc:
+        logging.error("Missing required environment variable: %s", exc)
+        return 1
 
-        evaluate_threshold = int(os.environ.get("EVALUATE_THRESHOLD", "3"))
-        similarity_evaluator = SimilarityEvaluator(model_config=model_config, threshold=evaluate_threshold)
-        groundedness_evaluator = GroundednessEvaluator(model_config=model_config)
-        similarity_class = EvaluatorClass(
-            "similarity",
-            similarity_evaluator,
-            {
-                "column_mapping": {
-                    "query": "${data.query}",
-                    "response": "${data.response}",
-                    "ground_truth": "${data.ground_truth}",
-                    "testcase": "${data.testcase}",
-                }
-            },
-        )
+    metrics = {e: OUTPUT_FIELDS.get(e) for e in evaluators}
+    suppression = _load_suppression(script_dir)
+    evals_result = EvalsResult(metrics=metrics, suppressions=suppression)
 
-        groundedness_class = EvaluatorClass(
-            "groundedness",
-            groundedness_evaluator,
-            {
-                "column_mapping": {
-                    "query": "${data.query}",
-                    "response": "${data.response}",
-                    "context": "${data.context}",
-                    "testcase": "${data.testcase}",
-                }
-            },
-        )
+    runner = FoundryEvalsRunner(
+        evaluators=evaluators,
+        evals_result=evals_result,
+        model=model,
+        threshold=threshold,
+        max_concurrency=args.max_concurrency,
+        completion_url=resolve_completion_url(),
+        access_token=resolve_bot_token(),
+    )
 
-        response_completion_evaluator = ResponseCompletenessEvaluator(model_config=model_config, threshold=float(evaluate_threshold))
-        response_completion_class = EvaluatorClass(
-            "response_completeness",
-            response_completion_evaluator,
-            {
-                "column_mapping": {
-                    "response": "${data.response}",
-                    "ground_truth": "${data.ground_truth}",
-                    "testcase": "${data.testcase}",
-                }
-            },
-        )
+    from azure.ai.projects import AIProjectClient
 
-        qa_evaluator = AzureBotEvaluator(model_config=model_config, threshold=evaluate_threshold)
-        qa_evaluator_class = EvaluatorClass(
-            "bot_evals",
-            qa_evaluator,
-            {
-                "column_mapping": {
-                    "response": "${data.response}",
-                    "ground_truth": "${data.ground_truth}",
-                    "testcase": "${data.testcase}",
-                }
-            },
-            ["bot_evals", "bot_evals_similarity", "bot_evals_response_completeness", "bot_evals_result"],
-        )
+    credential = credential_for(is_ci)
+    all_results: dict[str, Any] = {}
 
-        reference_evaluator = AzureBotReferenceEvaluator()
-        reference_evaluator_class = EvaluatorClass(
-            "reference_match",
-            reference_evaluator,
-            {
-                "column_mapping": {
-                    "expected_references": "${data.expected_references}",
-                    "references": "${data.references}"
-                }
-            }
-        )
+    try:
+        with AIProjectClient(endpoint=endpoint, credential=credential) as project_client:
+            openai_client = project_client.get_openai_client()
 
-        knowledge_evaluator_threshold = float(evaluate_threshold)/5.0
-        knowledge_evaluator = AzureBotReferenceEvaluator(result_key="knowledge_match", threshold=knowledge_evaluator_threshold)
-        knowledge_evaluator_class = EvaluatorClass(
-            "knowledge_match",
-            knowledge_evaluator,
-            {
-                "column_mapping": {
-                    "expected_references": "${data.expected_knowledges}",
-                    "references": "${data.knowledges}"
-                }
-            }
-        )
+            records, scenario = resolve_records(args.dataset, script_dir=script_dir)
+            logging.info("Resolved %d records for scenario=%s", len(records), scenario)
+            # Stable evaluation name = dataset identity + run context (local / pipeline),
+            # so the Foundry list is not flooded with date/build/random-suffixed entries.
+            dataset_label = _dataset_label(args.dataset, scenario)
+            name = f"{dataset_label}-{args.run_context}"
+            tenant_map = None
+            try:
+                tenant_map = retrieve_channel_tenant_map(credential)
+            except Exception as exc:  # noqa: BLE001
+                logging.warning("Could not load channel->tenant map (using default routing): %s", exc)
+            tenant_id = resolve_tenant_for_scenario(scenario, tenant_map)
+            all_results = runner.evaluate_run_completion(
+                openai_client, records, scenario, tenant_id=tenant_id, evaluation_name=name
+            )
 
-        evaluators = {
-            "similarity": similarity_class,
-            "groundedness": groundedness_class,
-            "response_completeness": response_completion_class,
-            "bot_evals": qa_evaluator_class,
-            "reference_match": reference_evaluator_class,
-            "knowledge_match": knowledge_evaluator_class,
-        }
+        _cache_results(args.cache_result, script_dir, all_results, metrics, suppression, evals_result)
 
-        metrics = {}
-        evals = {}
-        if args.evaluators:
-            evals = {eval_key: evaluators[eval_key] for eval_key in args.evaluators}
-            metrics = {eval_key: evaluators[eval_key].output_fields for eval_key in args.evaluators}
-        else:
-            evals = evaluators
-            metrics = {eval_key: evaluators[eval_key].output_fields for eval_key in evaluators.keys()}
-
-        weights: dict[str, float] = {
-            "similarity_weight": 0.6,  # Similarity between expected and actual
-            "groundedness_weight": 0.4,  # Staying grounded in guidelines
-            "response_completeness_weight": 0.4,
-        }
-
-
-        suppression_file = os.path.join(script_directory, "suppression.json")
-        suppression: dict[str, list[str]] = {"evaluators": [], "testcases": []}
-        if os.path.exists(suppression_file):
-            with open(suppression_file, "r", encoding="utf-8") as f:
-                try:
-                    loaded = json.load(f)
-                    # Ensure both keys exist and are lists of str
-                    for key in ["evaluators", "testcases"]:
-                        val = loaded.get(key, [])
-                        if not isinstance(val, list):
-                            val = []
-                        # Convert all elements to str, ignore non-str
-                        val = [str(x) for x in val if isinstance(x, str) or isinstance(x, int) or isinstance(x, float)]
-                        suppression[key] = val
-                except (json.JSONDecodeError, TypeError) as exc:
-                    logging.warning(
-                        "Failed to parse context JSON in extract_title_and_link_from_context: %s",
-                        exc,
-                    )
-
-        eval_result = EvalsResult(weights=weights, metrics=metrics, suppressions=suppression)
-
-        credential = None
-        kwargs: dict[str, Any] = {}
-        if args.send_result:
-            if args.is_ci:
-                service_connection_id = os.getenv("AZURESUBSCRIPTION_SERVICE_CONNECTION_ID")
-                client_id = os.getenv("AZURESUBSCRIPTION_CLIENT_ID")
-                tenant_id = os.getenv("AZURESUBSCRIPTION_TENANT_ID")
-                system_access_token = os.getenv("SYSTEM_ACCESSTOKEN")
-                if all([service_connection_id, client_id, tenant_id, system_access_token]):
-                    credential = AzurePipelinesCredential(
-                        service_connection_id=service_connection_id,
-                        client_id=client_id,
-                        tenant_id=tenant_id,
-                        system_access_token=system_access_token,
-                    )
-                else:
-                    logging.warning(
-                        "One or more AZURESUBSCRIPTION_* or SYSTEM_ACCESSTOKEN "
-                        "environment variables are missing. Falling back to default credentials."
-                    )
-                    credential = DefaultAzureCredential()
-            else:
-                credential = AzureCliCredential()
-            kwargs = {"credential": credential}
-
-        evals_runner = EvalsRunner(evaluators=evals, evals_result=eval_result, credential=credential)
-
-        all_results = evals_runner.evaluate_run(
-            args.test_folder,
-            args.prefix,
-            args.retrieve_response,
-            args.evaluation_name_prefix,
-            azure_ai_project_endpoint if args.send_result else None,
-            **kwargs,
-        )
-
-        if args.cache_result.lower() == "score":
-            now = datetime.now()
-            result_file_path = os.path.join(script_directory, f"evaluate-result-{now.strftime('%Y-%m-%d-%H-%S')}")
-            logging.info(f"all_results:{len(all_results.keys())}")
-            with open(result_file_path, "a", encoding="utf-8") as result_file:
-                for name, test_results in all_results.items():
-                    result_file.write(f"\n-----------{name}----------------------\n")
-                    result_file.write(evals_runner.evals_result.build_output_table(test_results))
-                result_file.flush()
-                result_file.close()
-        elif args.cache_result.lower() == "full":
-            now = datetime.now()
-            cache_result_path = pathlib.Path(__file__).parent / "cache"
-            logging.info(f"cache results under {cache_result_path.absolute()}")
-            if not cache_result_path.exists():
-                cache_result_path.mkdir(parents=True, exist_ok=True)
-
-            for name, result in all_results.items():
-                cache_file_name = f"{name.split('_')[0]}-result-{now.strftime('%Y-%m-%d-%H-%S')}.json"
-                output_path = cache_result_path / cache_file_name
-                with open(str(output_path), "w") as f:
-                    json.dump(result, indent=4, fp=f)
-            
-            # record failed cases
-            for name, results in all_results.items():
-                failed_cases_file_name = f"{name.split('_')[0]}-failed-cases-{now.strftime('%Y-%m-%d-%H-%S')}.json"
-                failed_case_output_path = cache_result_path / failed_cases_file_name
-                failed_cases = []
-                for ret in results[:-1]:
-                    is_failed_case = False
-                    for metric in metrics.keys():
-                        if metric in suppression["evaluators"]:
-                            continue
-                        if metric == "groundedness":
-                            if "groundedness_result" in ret and ret["groundedness_result"] == "fail":
-                                is_failed_case = True
-                        else:
-                            if ret[f"{metric}_result"] != "pass":
-                                is_failed_case = True
-                    if is_failed_case:
-                        failed_cases.append(ret)
-                        logging.info(f"test case: {ret['testcase']} - Failed")
-                if failed_cases:
-                    with open(str(failed_case_output_path), "w") as f:
-                        json.dump(failed_cases, indent=4, fp=f)
-
-        evals_runner.evals_result.show_results(all_results, args.baseline_check)
-        if args.baseline_check:
-            evals_runner.evals_result.establish_baseline(all_results, args.is_ci)
-        isPass = evals_runner.evals_result.verify_results(all_results, args.baseline_check)
-        if isPass == VerificationResult.PASS_WITH_WARNING:
+        evals_result.show_results(all_results, baseline_check)
+        if baseline_check:
+            evals_result.establish_baseline(all_results, is_ci)
+        verdict = evals_result.verify_results(all_results, baseline_check)
+        if verdict == VerificationResult.PASS_WITH_WARNING:
             print("##vso[task.logissue type=warning]Evaluation succeeded with warning. Some tests failed but suppressed.")
-        elif isPass == VerificationResult.FAIL:
+        elif verdict == VerificationResult.FAIL:
             logging.error("Evaluation failed; see the published failed-cases artifact for details.")
-            sys.exit(1)
-    except Exception as e:
-        logging.info(f"❌ Error occurred: {str(e)}")
-        import traceback
+            return 1
+    except Exception as exc:  # noqa: BLE001
+        logging.exception("❌ Error occurred: %s", exc)
+        return 1
+    return 0
 
-        traceback.print_exc()
-        sys.exit(1)
+
+def _cache_results(
+    mode: str,
+    script_dir: Path,
+    all_results: dict[str, Any],
+    metrics: dict[str, Any],
+    suppression: dict[str, list[str]],
+    evals_result: EvalsResult,
+) -> None:
+    mode = mode.lower()
+    if mode == "score":
+        now = datetime.now()
+        out = script_dir / f"evaluate-result-{now.strftime('%Y-%m-%d-%H-%S')}"
+        with out.open("a", encoding="utf-8") as fh:
+            for name, test_results in all_results.items():
+                fh.write(f"\n-----------{name}----------------------\n")
+                fh.write(evals_result.build_output_table(test_results))
+        return
+    if mode != "full":
+        return
+
+    now = datetime.now()
+    cache_dir = script_dir / "cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    for name, result in all_results.items():
+        out = cache_dir / f"{name.split('_')[0]}-result-{now.strftime('%Y-%m-%d-%H-%S')}.json"
+        with out.open("w", encoding="utf-8") as fh:
+            json.dump(result, fh, indent=4)
+
+    for name, results in all_results.items():
+        failed = []
+        for ret in results[:-1]:
+            is_failed = False
+            for metric in metrics.keys():
+                if metric in suppression["evaluators"]:
+                    continue
+                if metric == "groundedness":
+                    if ret.get("groundedness_result") == "fail":
+                        is_failed = True
+                elif ret.get(f"{metric}_result") not in (None, "pass"):
+                    is_failed = True
+            if is_failed:
+                failed.append(ret)
+                logging.info("test case: %s - Failed", ret.get("testcase"))
+        if failed:
+            out = cache_dir / f"{name.split('_')[0]}-failed-cases-{now.strftime('%Y-%m-%d-%H-%S')}.json"
+            with out.open("w", encoding="utf-8") as fh:
+                json.dump(failed, fh, indent=4)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

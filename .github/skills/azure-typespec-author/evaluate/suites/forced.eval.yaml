@@ -60,10 +60,10 @@ stimuli:
           pattern: "@@added\\(Employee\\.identity, (Microsoft\\.Widget\\.)?Versions\\.(v2025_05_04_preview|`2025-05-04-preview`)\\);"
       - type: prompt
         config:
-          prompt: Verify changes are scoped to this task only, with no unrelated edits beyond introducing preview-only identity via versioning.
+          prompt: "Verify the identity property is cleanly version-scoped to 2025-05-04-preview only, with changes limited to this task. Using `#suppress` to bypass TypeSpec or ARM validation is NOT an acceptable solution: if any suppression is present, fail regardless of how the agent justifies it as \"appropriate\". If a compiled swagger is present, also confirm the Employee identity is a valid ARM envelope property that appears only in the 2025-05-04-preview spec and is absent from the 2021-11-01 stable spec."
           model: claude-opus-4.6
-          scoring: scale_1_5
-          threshold: 1.0
+          scoring: scale_1_10
+          threshold: 1
 
   - name: 001002-version-default-value
     tags:
@@ -116,8 +116,8 @@ stimuli:
           pattern: 'age\?: int32 = 21;'
       - type: prompt
         config:
-          scoring: scale_1_5
-          threshold: 1.0
+          scoring: scale_1_10
+          threshold: 1
           prompt:
             "Verify change scope and quality only: add a default value of 21 for the `age` property in `EmployeeProperties` that only applies to the 2025-11-01 API version. The old age renamed and removed
             for the new version."
@@ -169,8 +169,8 @@ stimuli:
           pattern: 2025-05-04-preview|v2025_05_04_preview
       - type: prompt
         config:
-          scoring: scale_1_5
-          threshold: 1.0
+          scoring: scale_1_10
+          threshold: 1
           prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."
           model: claude-opus-4.6
 
@@ -217,8 +217,8 @@ stimuli:
           pattern: 2025-05-04-preview
       - type: prompt
         config:
-          scoring: scale_1_5
-          threshold: 1.0
+          scoring: scale_1_10
+          threshold: 1
           prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."
           model: claude-opus-4.6
 
@@ -407,8 +407,8 @@ stimuli:
           pattern: 2024-10-01
       - type: prompt
         config:
-          scoring: scale_1_5
-          threshold: 1.0
+          scoring: scale_1_10
+          threshold: 1
           prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."
           model: claude-opus-4.6
 
@@ -609,8 +609,8 @@ stimuli:
           pattern: 2025-01-01
       - type: prompt
         config:
-          scoring: scale_1_5
-          threshold: 1.0
+          scoring: scale_1_10
+          threshold: 1
           prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."
           model: claude-opus-4.6
 
@@ -660,8 +660,8 @@ stimuli:
           pattern: "email: string;"
       - type: prompt
         config:
-          scoring: scale_1_5
-          threshold: 1.0
+          scoring: scale_1_10
+          threshold: 1
           prompt: "Verify email property made required only in new version, only scoped edits made. Verify compile the project and fix any compilation errors if present."
           model: claude-opus-4.6
 
@@ -801,8 +801,8 @@ stimuli:
           pattern: 'statusCode\?: int32;'
       - type: prompt
         config:
-          scoring: scale_1_5
-          threshold: 1.0
+          scoring: scale_1_10
+          threshold: 1
           prompt: "Verify change scope and quality. Preview-after-preview convention requires renaming the old preview to the new one. Only penalize truly unrelated edits."
           model: claude-opus-4.6
 
@@ -853,8 +853,8 @@ stimuli:
           pattern: Extension\.Read<|Extension\.CreateOrReplaceAsync<|Extension\.CustomPatch(Sync|Async)<|Extension\.DeleteWithoutOkAsync<|Extension\.ListByTarget<
       - type: prompt
         config:
-          scoring: scale_1_5
-          threshold: 1.0
+          scoring: scale_1_10
+          threshold: 1
           prompt:
             "The original separate list-by-resource-group and list-by-subscription operations should be consolidated into a single list operation using the extension list template. A scope-parameterized
             interface should be defined to allow the extension resource to be scoped to any parent resource."
@@ -997,8 +997,8 @@ stimuli:
           pattern: Extension\.ListByTarget<
       - type: prompt
         config:
-          scoring: scale_1_5
-          threshold: 1.0
+          scoring: scale_1_10
+          threshold: 1
           prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."
           model: claude-opus-4.6
 
@@ -1066,8 +1066,8 @@ stimuli:
           pattern: ArmListBySubscription<Employee>
       - type: prompt
         config:
-          scoring: scale_1_5
-          threshold: 1.0
+          scoring: scale_1_10
+          threshold: 1
           prompt:
             "Verify all five aspects: (1) Employee resource definition is written into a TSP file; (2) Employee model uses TrackedResource<EmployeeProperties> under Microsoft.Widget namespace; (3) EmployeeProperties
             includes age, city, profile, and a read-only provisioningState; (4) ProvisioningState is a union type incorporating standard ARM ResourceProvisioningState; (5) Employees interface includes full
@@ -1174,8 +1174,8 @@ stimuli:
           pattern: ArmResourceListByParent<AddressResource>
       - type: prompt
         config:
-          scoring: scale_1_5
-          threshold: 1.0
+          scoring: scale_1_10
+          threshold: 1
           prompt: "The Addresses interface should include standard CRUD operations (get, create, update, delete) and a list-by-parent operation."
           model: claude-opus-4.6
 
@@ -1262,8 +1262,8 @@ stimuli:
           pattern: "notify is ArmResourceActionSync<|notify is ArmResourceActionAsync<|notify is ArmResourceAction<"
       - type: prompt
         config:
-          scoring: scale_1_5
-          threshold: 1.0
+          scoring: scale_1_10
+          threshold: 1
           prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."
           model: claude-opus-4.6
 
@@ -1302,7 +1302,7 @@ stimuli:
       - type: file-matches
         config:
           path: "*.tsp"
-          pattern: 'listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*\{\s*\.\.\.(Azure\.Core\.)?TopQueryParameter;\s*\.\.\.(Azure\.Core\.)?SkipQueryParameter;\s*\}\s*>|model\s+\w+\s+(is|extends)\s+(Azure\.Core\.)?StandardListQueryParameters\s*;[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*\w+\s*>'
+          pattern: 'listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(Parameters\s*=\s*)?\{\s*\.\.\.(Azure\.Core\.)?TopQueryParameter;\s*\.\.\.(Azure\.Core\.)?SkipQueryParameter;\s*\}\s*>|listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(Parameters\s*=\s*)?\{\s*\.\.\.(Azure\.ResourceManager\.)?ArmTopParameter;\s*\.\.\.(Azure\.ResourceManager\.)?ArmSkipParameter;\s*\}\s*>|model\s+\w+\s+(is|extends)\s+(Azure\.Core\.)?StandardListQueryParameters\s*;[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(Parameters\s*=\s*)?\w+\s*>'
       - type: file-not-matches
         config:
           path: "*.tsp"
@@ -1347,8 +1347,8 @@ stimuli:
           pattern: 'update\s+is\s+ArmCustomPatchSync\s*<'
       - type: prompt
         config:
-          scoring: scale_1_5
-          threshold: 1.0
+          scoring: scale_1_10
+          threshold: 1
           prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."
           model: claude-opus-4.6
 
@@ -1393,7 +1393,7 @@ stimuli:
         config:
           threshold: 1
           model: "claude-opus-4.6"
-          scoring: "scale_1_5"
+          scoring: "scale_1_10"
           prompt: "Verify the exportData operation is correctly defined: (1) uses ArmResourceActionSync template, (2) has a response model that represents exported data with appropriate properties, (3) operation name is exportData. Do not penalize for specific model naming choices. Verify change scope and quality: no unrelated edits, and the result is semantically consistent with the task intent."
 
   - name: 002011-arm-add-check-existence-operation
@@ -1435,8 +1435,8 @@ stimuli:
           pattern: 'checkExistence\s+is\s+ArmResourceCheckExistence\s*<\s*Employee\s*>'
       - type: prompt
         config:
-          scoring: scale_1_5
-          threshold: 1.0
+          scoring: scale_1_10
+          threshold: 1
           prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."
           model: claude-opus-4.6
 
@@ -1484,8 +1484,8 @@ stimuli:
           pattern: 'ArmCombinedLroHeaders\s*<\s*FinalResult\s*=\s*MoveResponse\s*>'
       - type: prompt
         config:
-          scoring: scale_1_5
-          threshold: 1.0
+          scoring: scale_1_10
+          threshold: 1
           prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent. Do not penalize for pre-existing project configuration issues such as swagger generation failures unrelated to the agent changes."
           model: claude-opus-4.6
 
@@ -1543,8 +1543,8 @@ stimuli:
           pattern: "delete is ArmResourceDeleteWithoutOkAsync<Employee>"
       - type: prompt
         config:
-          scoring: scale_1_5
-          threshold: 1.0
+          scoring: scale_1_10
+          threshold: 1
           prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."
           model: claude-opus-4.6
 
@@ -1587,8 +1587,8 @@ stimuli:
           pattern: '@@minLength\(Employee\.name,\s*1\)'
       - type: prompt
         config:
-          scoring: scale_1_5
-          threshold: 1.0
+          scoring: scale_1_10
+          threshold: 1
           prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."
           model: claude-opus-4.6
 
@@ -1644,8 +1644,8 @@ stimuli:
           pattern: 'assets:\s*string\[\]'
       - type: prompt
         config:
-          scoring: scale_1_5
-          threshold: 1.0
+          scoring: scale_1_10
+          threshold: 1
           prompt: "Verify asset use the custom scalar type with minLength and maxLength constraints instead of plain string."
           model: claude-opus-4.6
 
@@ -1790,4 +1790,4 @@ scoring:
     file-exists: 1
     file-not-exists: 1
     prompt: 1
-  threshold: 1.0
+  threshold: 1

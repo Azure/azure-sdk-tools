@@ -28,9 +28,11 @@ This area is focused on the management of the Azure SDK GitHub repositories, con
 
 ## Scripts
 
+> When these scripts load repositories from `repositories.txt`, entries ending in `-pr` are skipped before any querying, progress reporting, delay calculations, or updates occur.
+
 ### `Add-AzsdkMilestones.ps1`
 
-_Creates a set of milestones in one or more repositories.  The milestones follow Azure SDK conventions for naming and due dates.  With the default parameter set, milestones will be created for the next 6 months in repositories in the 'repositories.txt' file in the script directory._
+_Creates a set of milestones in one or more repositories.  The milestones follow Azure SDK conventions for naming and due dates.  With the default parameter set, milestones will be created for the next 6 months in repositories in the 'repositories.txt' file in the script directory, excluding entries whose names end in `-pr`._
 
 ```powershell
 # Create the default set of milestone and repository data.
@@ -45,7 +47,7 @@ get-help ./Add-AzsdkMilestones.ps1 -full
 
 ### `Add-AzsdkProjectIssues.ps1`
 
-_Adds a set of Azure SDK repository issues tagged with a given set of labels to a GitHub project.  With the default parameter set, the issues with the specified labels will be queried from a set of core language repositories._
+_Adds a set of Azure SDK repository issues tagged with a given set of labels to a GitHub project.  With the default parameter set, the issues with the specified labels will be queried from repositories in `repositories.txt`, excluding entries whose names end in `-pr`._
 
 ```powershell
 # Adds issues with the "Client" and "KeyVault" labels to project #150, querying a set
@@ -62,7 +64,7 @@ get-help ./Add-AzsdkProjectIssues.ps1 -full
 
 ### `Sync-AzsdkLabels.ps1`
 
-_Creates or updates the set of labels expected to be common across the Azure SDK repositories, ensuring that names, descriptions, and colors share the common configuration._
+_Creates or updates the set of labels expected to be common across the Azure SDK repositories, ensuring that names, descriptions, and colors share the common configuration while skipping `repositories.txt` entries whose names end in `-pr`._
 
 ```powershell
 # Uses the files from the `data` directory to synchronize the common labels to all centrally managed
@@ -72,13 +74,16 @@ _Creates or updates the set of labels expected to be common across the Azure SDK
 # Synchronize the common labels to the Azure SDK for .NET repository.
 ./Sync-AzsdkLabels.ps1 -LabelsFilePath "../data/common-labels.csv" -Languages 'net'
 
+# Preview only the repositories that would need syncing based on changed labels in the labels file.
+./Sync-AzsdkLabels.ps1 -Incremental -WhatIf
+
 # View the help for the full set of parameters.
 get-help ./Sync-AzsdkLabels.ps1 -full
 ```
 
 ### `Snapshot-AzsdkLabels.ps1`
 
-_Creates or updates the set of labels expected to be common across the Azure SDK repositories, ensuring that names, descriptions, and colors share the common configuration._
+_Creates or updates the set of labels expected to be common across the Azure SDK repositories, ensuring that names, descriptions, and colors share the common configuration while skipping `repositories.txt` entries whose names end in `-pr`._
 
 ```powershell
 # Uses the files from the "data" directory to generate snapshots of non-common labels for each

@@ -59,7 +59,9 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IChangelogHelper, ChangelogHelper>();
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();
             services.AddSingleton<IGitHelper, GitHelper>();
-            services.AddSingleton<ITestHelper, TestHelper>();
+            services.AddSingleton<ITestHelper, TrxTestHelper>();
+            services.AddSingleton<ITestHelper, JUnitTestHelper>();
+            services.AddSingleton<ITestResultParserResolver, TestResultParserResolver>();
             services.AddSingleton<ITypeSpecHelper, TypeSpecHelper>();
             services.AddSingleton<ISpecPullRequestHelper, SpecPullRequestHelper>();
             services.AddSingleton<IUserHelper, UserHelper>();

@@ -14,6 +14,7 @@ parameters:
     - '*event*'
     - 'post-apiview.yml'
     - 'protected-files.yml'
+    - 'verify-links.yml'
 - name: Repos
   type: object
   default:
@@ -42,7 +43,7 @@ pr:
       - .github/workflows/*event*
       - .github/workflows/post-apiview.yml
       - .github/workflows/protected-files.yml
-
+      - .github/workflows/verify-links.yml
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-repo-sync.yml
   parameters:

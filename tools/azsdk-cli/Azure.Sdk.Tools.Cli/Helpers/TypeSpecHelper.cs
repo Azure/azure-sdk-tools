@@ -154,7 +154,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
                 var npxOptions = new NpxOptions(
                     package: "@typespec/compiler",
-                    args: ["tsp", "compile", ".", "--emit", "@azure-tools/typespec-metadata"],
+                    args: ["tsp", "compile", ".", "--emit", "@azure-tools/typespec-metadata", "--output-dir", "./tsp-output"],
                     logOutputStream: true,
                     workingDirectory: project.ProjectRootPath,
                     timeout: TimeSpan.FromMinutes(5)
@@ -352,7 +352,13 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             // Parse URL to get the path component (automatically strips query params and fragments)
             var uri = new Uri(url);
             var path = uri.AbsolutePath;
-            
+
+            // Strip tspconfig.yaml from the end of the path if present
+            if (path.EndsWith($"/{TypeSpecProject.TSPCONFIG_FILENAME}", StringComparison.OrdinalIgnoreCase))
+            {
+                path = path[..^(TypeSpecProject.TSPCONFIG_FILENAME.Length + 1)];
+            }
+
             int specIndex = path.IndexOf("specification", StringComparison.OrdinalIgnoreCase);
             return specIndex >= 0 ? path[specIndex..] : string.Empty;
         }

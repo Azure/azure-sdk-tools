@@ -29,7 +29,7 @@
   ],
   "license": "MIT",
   "engines": {
-    "node": ">=20.10.0"
+    "node": ">=22.13.0"
   },
   "dependencies": {
     "ajv": "^6.12.6",
@@ -43,9 +43,6 @@
     "winston-transport": "^4.4.0",
     "yaml": "^2.7.0",
     "yargs": "^17.7.2"
-  },
-  "overrides": {
-    "glob": "^9.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.14.0",
@@ -62,7 +59,6 @@
     "rimraf": "^5.0.10",
     "source-map-support": "^0.5.19",
     "ts-node": "9.0.0",
-    "tslint": "^5.20.1",
     "typescript": "~5.3.3",
     "typescript-eslint": "^8.14.0",
     "vitest": "^4.1.8"

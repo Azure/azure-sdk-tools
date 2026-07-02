@@ -30,13 +30,29 @@ case_data = {}
 with open("$LATEST") as f:
     for line in f:
         r = json.loads(line)
-        name = r.get("gradeResult", {}).get("stimulusName", "")
+        grade = r.get("gradeResult") or {}
+        name = grade.get("stimulusName") or r.get("stimulusName", "")
         if not name:
+            # No grade and no stimulus name — nothing actionable to report.
             continue
-        grade = r.get("gradeResult", {})
+        case_id = name.split("-")[0]
+        if not grade:
+            # Stimulus produced no grade result (e.g. it errored or timed out).
+            # Surface it as a failure instead of crashing the report.
+            failed_count += 1
+            case_data[case_id] = {"passed": False, "score": 0, "tool_calls_passed": None}
+            print(f"[FAILED] {name} (no grade result — stimulus errored or timed out)")
+            continue
         score = grade.get("score", 1)
-        case_id = name.split("-")[0] if name else "unknown"
-        passed = isinstance(score, (int, float)) and score >= 1.0
+        # A case passes when every grader meets its own threshold. Do NOT use the
+        # aggregate score (a weighted average of raw grader scores), because a
+        # passing LLM prompt grader (e.g. threshold 0.77 on a scale_1_10 rubric)
+        # can score below 1.0 and incorrectly drag the aggregate under 1.0.
+        details = grade.get("details", [])
+        if details:
+            passed = all(g.get("passed", True) for g in details)
+        else:
+            passed = grade.get("passed", isinstance(score, (int, float)) and score >= 1.0)
 
         # Collect tool-calls grader result
         tool_calls_passed = None

@@ -13,6 +13,7 @@ using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan;
 using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tools.Core;
+using ModelContextProtocol;
 using ModelContextProtocol.Server;
 using Octokit;
 
@@ -30,7 +31,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         IEnvironmentHelper environmentHelper,
         IInputSanitizer inputSanitizer,
         HttpClient httpClient,
-        INpxHelper npxHelper
+        INpxHelper npxHelper,
+        IRawOutputHelper outputHelper
     ) : MCPMultiCommandTool
     {
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.ReleasePlan];
@@ -351,6 +353,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var isTestReleasePlan = commandParser.GetValue(isTestReleasePlanOpt);
                     var forceCreateReleasePlan = commandParser.GetValue(forceCreateReleasePlanOpt);
                     return await CreateReleasePlan(
+                        null,
                         typeSpecProjectPath,
                         targetReleaseMonthYear,
                         apiReleaseType,
@@ -916,10 +919,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         }
 
         [McpServerTool(Name = CreateReleasePlanToolName), Description("Create Release Plan for a TypeSpec project and API release type. API release types support Private Preview, Public Preview, and GA. Service ID and product ID are optional and will be resolved from existing release plans when available.")]
-        public async Task<ReleasePlanResponse> CreateReleasePlan(string typeSpecProjectPath, string targetReleaseMonthYear, string apiReleaseType, string sdkReleaseType = "", string specPullRequestUrl = "", string serviceTreeId = "", string productTreeId = "", bool isTestReleasePlan = false, bool forceCreateReleasePlan = false, CancellationToken ct = default)
+        public async Task<ReleasePlanResponse> CreateReleasePlan(IProgress<ProgressNotificationValue>? progress, string typeSpecProjectPath, string targetReleaseMonthYear, string apiReleaseType, string sdkReleaseType = "", string specPullRequestUrl = "", string serviceTreeId = "", string productTreeId = "", bool isTestReleasePlan = false, bool forceCreateReleasePlan = false, CancellationToken ct = default)
         {
             try
-            {
+            {         
                 // Validate and map API release type
                 if (!ApiReleaseTypeExtensions.TryParseFromUserInput(apiReleaseType, out var parsedApiReleaseType))
                 {
@@ -943,7 +946,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     {
                         sdkReleaseType = mappedType;
                     }
-                }
+                }                
 
                 await ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType, parsedApiReleaseType, ct);
 
@@ -1042,11 +1045,23 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                 }
 
+                List<string> warnings = [];
+                List<string> nextSteps = [];
                 var specType = isValidTypeSpec ? "TypeSpec" : "OpenAPI";
                 logger.LogInformation("Attempting to retrieve current user email.");
 
-                var userEmail = await userHelper.GetUserEmail(ct);
-                logger.LogInformation("User email for release plan submission: {userEmail}", userEmail);
+                var userEmail = "";
+                try
+                {
+                    userEmail = await userHelper.GetUserEmail(ct);
+                    logger.LogInformation("User email for release plan submission: {userEmail}", userEmail);
+                }
+                catch (Exception ex)
+                {
+                    var warning = "Failed to retrieve user email. Proceeding without user email for release plan submission.";
+                    warnings.Add(warning);
+                    logger.LogWarning(ex, "Failed to retrieve user email. Proceeding without user email for release plan submission.");
+                }
 
                 var productDisplayName = productName;
                 var releasePlan = new ReleasePlanWorkItem
@@ -1068,9 +1083,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     ProductLifecycle = productLifecycle,
                     ApiReleaseType = parsedApiReleaseType
                 };
+
+                var reporter = new ProgressReporter(progress, logger, totalSteps: 2, outputHelper);
+                reporter.NextStep("Creating a release plan");
                 var workItem = await devOpsService.CreateReleasePlanWorkItemAsync(releasePlan, ct);
                 if (workItem == null)
                 {
+                    reporter.NextStep("Failed to create a release plan");
                     return new ReleasePlanResponse
                     {
                         ResponseError = "Failed to create release plan work item.",
@@ -1089,12 +1108,63 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     {
                         releasePlan.ReleasePlanId = releasePlanId;
                     }
+                    else
+                    {
+                        releasePlan.ReleasePlanId = releasePlan.WorkItemId;
+                    }
+                    
+                    // Attempt to update SDK details if the TypeSpec path is a valid local path                    
+                    string sdkDetailsMessage = string.Empty;
+                    bool isLocalValidTypeSpec = !typeSpecHelper.IsUrl(typeSpecProjectPath) && isValidTypeSpec && Directory.Exists(typeSpecProjectPath);
 
+                    if (isLocalValidTypeSpec && releasePlan.WorkItemId > 0 && parsedApiReleaseType != ApiReleaseType.PrivatePreview)
+                    {
+                        try
+                        {
+                            await using (reporter.StartHeartbeat("Parsing TypeSpec project to add SDK details in release plan.", ct))
+                            {
+                                var sdkDetailsResult = await UpdateSDKDetailsInReleasePlan(releasePlan.WorkItemId, typeSpecProjectPath, ct);
+                                if (!string.IsNullOrEmpty(sdkDetailsResult.ResponseError))
+                                {
+                                    logger.LogWarning("Failed to update SDK details in release plan: {Error}", sdkDetailsResult.ResponseError);
+                                    warnings.Add($"Failed to update SDK details in the release plan: {sdkDetailsResult.ResponseError}");
+                                    nextSteps.Add("Update SDK details in the release plan.");
+                                }
+                                else
+                                {
+                                    sdkDetailsMessage = sdkDetailsResult.Message ?? string.Empty;
+                                    if (sdkDetailsResult.NextSteps?.Count > 0)
+                                    {
+                                        nextSteps.AddRange(sdkDetailsResult.NextSteps);
+                                    }
+                                }
+                            }                            
+                        }
+                        catch (Exception sdkEx)
+                        {
+                            logger.LogWarning(sdkEx, "Failed to update SDK details in release plan");
+                            warnings.Add($"Failed to update SDK details in the release plan: {sdkEx.Message}");
+                            nextSteps.Add("Update SDK details in the release plan.");
+                        }
+                    }
+                    else
+                    {
+                        nextSteps.Add("Update SDK details in the release plan.");
+                    }
+
+                    var message = new StringBuilder("Created release plan.");
+                    if (!string.IsNullOrEmpty(sdkDetailsMessage))
+                    {
+                        message.AppendLine().Append(sdkDetailsMessage);
+                    }
+
+                    reporter.NextStep(message.ToString());
                     return new ReleasePlanResponse
                     {
-                        Message = "Created release plan.",
+                        Message = message.ToString(),
                         ReleasePlanDetails = releasePlan,
-                        NextSteps = [$"Update SDK details in the release plan."],
+                        Warnings = warnings.Count > 0 ? warnings : null,
+                        NextSteps = nextSteps.Count > 0 ? nextSteps : null,
                         TypeSpecProject = specProject,
                         PackageType = isMgmt ? SdkType.Management : SdkType.Dataplane
                     };

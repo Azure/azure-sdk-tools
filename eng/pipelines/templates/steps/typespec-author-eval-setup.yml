@@ -137,7 +137,7 @@ steps:
   # Download spec repo packages and install node_modules
   - script: |
       set -e
-      node .github/skills/azure-typespec-author/evaluate/scripts/setup-package-files.js
+      node .github/skills/azure-typespec-author/evaluate/scripts/setup-fixture-files.js
       FIXTURE_DIR=".github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget"
       echo "Installing node_modules in fixture directory..."
       cd "$FIXTURE_DIR"

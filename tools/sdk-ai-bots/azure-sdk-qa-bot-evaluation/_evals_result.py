@@ -1,7 +1,6 @@
 from enum import IntFlag, Enum
 import json
 import logging
-import math
 import pathlib
 import re
 from typing import Any, Optional
@@ -19,14 +18,11 @@ class EvalReturnCode(IntFlag):
     WARNING = 2 << 1
 
 class EvalsResult:
-    def __init__(self, weights: dict[str, float] | None, metrics: dict[str, list[str] | None], suppressions: dict[str, list[str]] | None):
+    def __init__(self, metrics: dict[str, list[str] | None], suppressions: dict[str, list[str]] | None):
         """
         Initialize an EvalsResult instance for managing evaluation results.
 
         Args:
-            weights: A dictionary mapping metric names to their weights for calculating
-                     overall scores. Keys should be in the format "{metric}_weight".
-                     If None, an empty dictionary is used and metrics are weighted equally.
             metrics: A dictionary mapping evaluator names to their output field names.
                      Each key is an evaluator name, and the value is a list of field names
                      that the evaluator outputs, or None if only the default field is used.
@@ -36,7 +32,6 @@ class EvalsResult:
                           - "testcases": List of test case names to suppress.
                           If None, defaults to empty lists for both.
         """
-        self._weights = weights or {}
         self._metrics = metrics
         # Ensure suppressions dict always has lists, never None
         self._suppressions: dict[str, list[str]]
@@ -48,30 +43,8 @@ class EvalsResult:
                 "testcases": suppressions.get("testcases") or []
             }
 
-    def calculate_overall_score(self, row: dict[str, Any]) -> float:
-        """Calculate weighted score based on various metrics."""
-        # calculate the overall score when there are multiple metrics.
-        metrics = self._metrics.keys()
-        overall_score = 0.0
-        for metric in metrics:
-            metric_key = f"outputs.{metric}.{metric}"
-            if metric_key not in row:
-                logging.info(f"calculate_overall_score key:{metric_key} does not exits")
-                overall_score += 0.0
-            else:
-                score = float(row[metric_key])
-                if math.isnan(score):
-                    overall_score += 0.0
-                if f"{metric}_weight" in self._weights:
-                    overall_score += score * self._weights[f"{metric}_weight"]
-                else:
-                    overall_score += score
-
-        return overall_score
-
     def record_run_result(self, result: dict[str, Any]) -> list[dict[str, Any]]:
         run_result: list[dict[str, Any]] = []
-        total_score = 0.0
 
         metrics = self._metrics.keys()
 
@@ -82,13 +55,8 @@ class EvalsResult:
             fail_rates[metric] = 0
 
         for row in result["rows"]:
-            score = self.calculate_overall_score(row)
-            total_score += score
-
             row_result: dict[str, Any] = {}
             row_result["testcase"] = row["inputs.testcase"]
-            if "inputs.response_id" in row:
-                row_result["response_id"] = row["inputs.response_id"]
             row_result["expected"] = {
                 "answer": row["inputs.ground_truth"],
                 "references": row["inputs.expected_references"],
@@ -106,7 +74,11 @@ class EvalsResult:
                     metric = match.group(1)
                     metric_name = match.group(2)
                     logging.debug(f"Metric: {metric}, Name: {metric_name}")
-                    if key == f"outputs.{metric}.{metric}_result":
+                    # Only gate metrics that were explicitly requested (i.e. are tracked in
+                    # pass_rates/fail_rates). Component sub-metrics (e.g. the similarity /
+                    # response_completeness that feed the bot_evals composite) appear in the
+                    # output but are not separately gated, so skip their pass/fail counting.
+                    if key == f"outputs.{metric}.{metric}_result" and metric in pass_rates:
                         if value == "fail":
                             if row["inputs.testcase"] not in self._suppressions["testcases"]:
                                 fail_rates[metric] += 1
@@ -119,15 +91,9 @@ class EvalsResult:
                         row_result[metric_name] = float(value)
                     else:
                         row_result[metric_name] = value
-            row_result["overall_score"] = score
             run_result.append(row_result)
 
-        if result:
-            average_score = total_score / len(result["rows"])
-        else:
-            average_score = 0
-
-        summary_result: dict[str, Any] = {"average_score": average_score, "total_evals": len(result["rows"])}
+        summary_result: dict[str, Any] = {"total_evals": len(result["rows"])}
         for index, (key, value) in enumerate(pass_rates.items()):
             summary_result[f"{key}_pass_rate"] = value
         for index, (key, value) in enumerate(fail_rates.items()):
@@ -168,14 +134,11 @@ class EvalsResult:
             else:
                 headers.append(f"{metric} Result")
 
-        headers.append("Score")
-
         terminal_rows = []
 
         for result in eval_results[:-1]:  # Skip summary object
             logging.debug(json.dumps(result, ensure_ascii=False))
             testcase = result["testcase"]
-            score = float(result["overall_score"])
 
             terminal_row = [testcase]
             values = []
@@ -199,7 +162,6 @@ class EvalsResult:
                     else:
                         metric_result = result[f"{metric}_result"] if f"{metric}_result" in result else "N/A"
                         values.append(f"{metric_result}")
-                values.append(f"{score:.2f}{EvalsResult.format_terminal_diff(score, float(base['overall_score']))}")
             else:
                 for metric in metrics:
                     metric_score = result[f"{metric}"] if f"{metric}" in result else -1
@@ -213,7 +175,6 @@ class EvalsResult:
                     else:
                         metric_result = result[f"{metric}_result"] if f"{metric}_result" in result else "N/A"
                         values.append(f"{metric_result}")
-                values.append(f"{score:.2f}")
 
             terminal_row.extend(values)
             terminal_rows.append(terminal_row)
@@ -230,10 +191,6 @@ class EvalsResult:
         print(self.build_output_table(eval_results, baseline_results), flush=True)
 
         if baseline_results:
-            print(
-                f"\n{file_name} average score: {eval_results[-1]['average_score']} {EvalsResult.format_terminal_diff(eval_results[-1]['average_score'], baseline_results['average_score'])}",
-                flush=True
-            )
             for metric in metrics:
                 pass_rate = eval_results[-1][f"{metric}_pass_rate"] if f"{metric}_pass_rate" in eval_results[-1] else 0
                 fail_rate = eval_results[-1][f"{metric}_fail_rate"] if f"{metric}_fail_rate" in eval_results[-1] else 0
@@ -252,11 +209,10 @@ class EvalsResult:
                 baseline_path = pathlib.Path(__file__).parent / "results" / baseline_name
 
                 if baseline_path.exists():
-                    with open(baseline_path, "r") as f:
+                    with open(baseline_path, "r", encoding="utf-8") as f:
                         baseline_data = json.load(f)
                         for result in baseline_data[:-1]:  # Skip summary
                             baseline_results[result["testcase"]] = result
-                        baseline_results["average_score"] = baseline_data[-1]["average_score"]
 
             self.output_table(test_results, name, baseline_results)
 
@@ -284,14 +240,10 @@ class EvalsResult:
                 baseline_path = pathlib.Path(__file__).parent / "results" / baseline_name
 
                 if baseline_path.exists():
-                    with open(baseline_path, "r") as f:
+                    with open(baseline_path, "r", encoding="utf-8") as f:
                         baseline_data = json.load(f)
                         for result in baseline_data[:-1]:  # Skip summary
                             baseline_results[result["testcase"]] = result
-                        baseline_results["average_score"] = baseline_data[-1]["average_score"]
-                        if test_results[-1]["average_score"] < baseline_data[-1]["average_score"]:
-                            logging.warning(f"scenario {name} avarage score decrease!")
-                            warning = True
 
             for metric in metrics:
                 pass_rate = test_results[-1][f"{metric}_pass_rate"] if f"{metric}_pass_rate" in test_results[-1] else 0
@@ -352,7 +304,7 @@ class EvalsResult:
                     partial_result = filter_keys_recursive(result, exclude_keys)
                     baseline_name = f"{name.split('_')[0]}-test.json"
                     baseline_path = pathlib.Path(__file__).parent / "results" / baseline_name
-                    with open(str(baseline_path), "w") as f:
+                    with open(str(baseline_path), "w", encoding="utf-8") as f:
                         json.dump(partial_result, indent=4, fp=f)
 
         # whether or not we establish a baseline, we want to write results to a temp dir
@@ -365,7 +317,7 @@ class EvalsResult:
             partial_result = filter_keys_recursive(result, exclude_keys)
             baseline_name = f"{name.split('_')[0]}-test.json"
             output_path = log_path / baseline_name
-            with open(str(output_path), "w") as f:
+            with open(str(output_path), "w", encoding="utf-8") as f:
                 json.dump(partial_result, indent=4, fp=f)
 
 

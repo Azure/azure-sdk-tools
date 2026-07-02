@@ -94,11 +94,11 @@ resource site 'Microsoft.Web/sites@2025-05-01' = {
         }
         {
           name: 'KEY_VAULT_NAME'
-          value: 'qzqabot-keyvalut-${envName}'
+          value: 'qabot-keyvalut-${envName}'
         }
         {
           name: 'APP_CONFIG_NAME'
-          value: 'qzqabot-config-${envName}'
+          value: 'qabot-config-${envName}'
         }
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'

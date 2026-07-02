@@ -12,11 +12,10 @@
 using './main.bicep'
 
 // ── azd-managed values (set automatically when an env is selected) ───────────
-var envName = readEnvironmentVariable('AZURE_ENV_NAME', 'dev')
-
 param location = readEnvironmentVariable('AZURE_LOCATION', 'westus2')
 
-param envName = envName
+param envName = readEnvironmentVariable('AZURE_ENV_NAME', 'dev')
+
 
 // ── Sourced from environment-suite.yaml via scripts/sync-env-suite.ps1 ───────
 // The sync script writes these into .azure/<env>/.env with `azd env set`.

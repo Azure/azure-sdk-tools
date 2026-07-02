@@ -162,7 +162,7 @@ resource site 'Microsoft.Web/sites@2025-05-01' = {
         }
         {
           name: 'STORAGE_ACCOUNT_NAME'
-          value: 'qzqabotstorage${envName}'
+          value: 'qabotstorage${envName}'
         }
         {
           name: 'AZURE_TABLE_NAME_FOR_CONVERSATION'

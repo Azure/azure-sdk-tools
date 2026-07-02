@@ -3,7 +3,7 @@ targetScope = 'resourceGroup'
 @description('Environment name (dev | preview | prod). Suffix on resource names for multi-env deployability.')
 param envName string
 
-@description('Principal (object) ID of the qzqabot-identity managed identity to grant OpenAI access.')
+@description('Principal (object) ID of the qabot-identity managed identity to grant OpenAI access.')
 param managedIdentityPrincipalId string
 
 @description('Name of the shared storage account (created by the shared resources module) connected to the Foundry project.')
@@ -14,9 +14,9 @@ param storageBlobEndpoint string
 
 // Log Analytics workspace backing the agent Application Insights. Created here so
 // the agent layer is self-contained and does not depend on the (now removed)
-// shared qzqabot-log workspace.
+// shared qabot-log workspace.
 resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
-  name: 'qzqabot-agent-log-${envName}'
+  name: 'qabot-agent-log-${envName}'
   location: 'eastus'
   properties: {
     sku: {
@@ -27,7 +27,7 @@ resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
 }
 
 resource component 'Microsoft.Insights/components@2020-02-02' = {
-  name: 'qzqabot-agent-${envName}'
+  name: 'qabot-agent-${envName}'
   location: 'eastus'
   kind: 'web'
   properties: {
@@ -40,19 +40,19 @@ resource component 'Microsoft.Insights/components@2020-02-02' = {
 }
 
 resource account 'Microsoft.CognitiveServices/accounts@2026-05-01' = {
-  name: 'qzqabot-ai-resource-${envName}'
+  name: 'qabot-ai-resource-${envName}'
   properties: {
     apiProperties: {}
-    customSubDomainName: 'qzqabot-ai-resource-${envName}'
+    customSubDomainName: 'qabot-ai-resource-${envName}'
     networkAcls: {
       defaultAction: 'Allow'
       virtualNetworkRules: []
       ipRules: []
     }
     allowProjectManagement: true
-    defaultProject: 'qzqabot-ai'
+    defaultProject: 'qabot-ai'
     associatedProjects: [
-      'qzqabot-ai'
+      'qabot-ai'
     ]
     publicNetworkAccess: 'Enabled'
     disableLocalAuth: false
@@ -165,7 +165,7 @@ resource adaEmbeddingDeployment 'Microsoft.CognitiveServices/accounts/deployment
 }
 
 resource accountStorageConnection 'Microsoft.CognitiveServices/accounts/connections@2026-05-01' = {
-  name: 'qzqabotstorage${envName}'
+  name: 'qabotstorage${envName}'
   parent: account
   properties: {
     authType: 'AAD'
@@ -188,7 +188,7 @@ resource accountStorageConnection 'Microsoft.CognitiveServices/accounts/connecti
 // managed storage/runtime rather than a Standard Setup capabilityHost.
 
 resource project 'Microsoft.CognitiveServices/accounts/projects@2026-05-01' = {
-  name: 'qzqabot-ai'
+  name: 'qabot-ai'
   parent: account
   properties: {}
   location: 'eastus'
@@ -198,7 +198,7 @@ resource project 'Microsoft.CognitiveServices/accounts/projects@2026-05-01' = {
 }
 
 resource projectStorageConnection 'Microsoft.CognitiveServices/accounts/projects/connections@2026-05-01' = {
-  name: 'qzqabotstorage${envName}'
+  name: 'qabotstorage${envName}'
   parent: project
   properties: {
     authType: 'AAD'
@@ -217,9 +217,9 @@ resource projectStorageConnection 'Microsoft.CognitiveServices/accounts/projects
 }
 
 // Application Insights connection so the Foundry project emits agent traces and
-// telemetry to the qzqabot-agent component created above.
+// telemetry to the qabot-agent component created above.
 resource appInsightsConnection 'Microsoft.CognitiveServices/accounts/projects/connections@2026-05-01' = {
-  name: 'qzqabot-agent-appinsights'
+  name: 'qabot-agent-appinsights'
   parent: project
   properties: {
     authType: 'ApiKey'
@@ -236,7 +236,7 @@ resource appInsightsConnection 'Microsoft.CognitiveServices/accounts/projects/co
   }
 }
 
-// Cognitive Services OpenAI User grant for qzqabot-identity, scoped to the AI
+// Cognitive Services OpenAI User grant for qabot-identity, scoped to the AI
 // account created above so the backend can call the model deployments via MSI.
 resource openAiUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: account

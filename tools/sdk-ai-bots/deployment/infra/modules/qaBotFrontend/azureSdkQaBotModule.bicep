@@ -6,7 +6,7 @@ param envName string
 param userAssignedIdentityPropertiesPrincipalId any
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2026-04-01' existing = {
-  name: 'qzqabotstorage${envName}'
+  name: 'qabotstorage${envName}'
 }
 
 resource roleAssignment3 'Microsoft.Authorization/roleAssignments@2022-04-01' = {

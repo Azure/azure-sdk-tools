@@ -6,12 +6,12 @@ param envName string
 // User-assigned managed identity for the QA bot app. Its principalId (Entra object ID)
 // is referenced below to grant the app data-plane access to Cosmos DB.
 resource userAssignedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2025-05-31-preview' = {
-  name: 'qzqabot-identity-${envName}'
+  name: 'qabot-identity-${envName}'
   location: 'westus2'
 }
 
 resource actionGroup 'Microsoft.Insights/actionGroups@2024-10-01-preview' = {
-  name: 'qzqabot-alert-${envName}'
+  name: 'qabot-alert-${envName}'
   location: 'Global'
   properties: {
     groupShortName: 'Alert'
@@ -27,7 +27,7 @@ resource actionGroup 'Microsoft.Insights/actionGroups@2024-10-01-preview' = {
 }
 
 resource vault 'Microsoft.KeyVault/vaults@2026-03-01-preview' = {
-  name: 'qzqabot-keyvalut-${envName}'
+  name: 'qabot-keyvalut-${envName}'
   properties: {
     sku: {
       family: 'A'
@@ -44,7 +44,7 @@ resource vault 'Microsoft.KeyVault/vaults@2026-03-01-preview' = {
 }
 
 resource configurationStore 'Microsoft.AppConfiguration/configurationStores@2025-08-01-preview' = {
-  name: 'qzqabot-config-${envName}'
+  name: 'qabot-config-${envName}'
   location: 'westus2'
   properties: {
     encryption: {}
@@ -63,7 +63,7 @@ resource configurationStore 'Microsoft.AppConfiguration/configurationStores@2025
 }
 
 resource searchService 'Microsoft.Search/searchServices@2026-03-01-preview' = {
-  name: 'qzqabot-search-${envName}'
+  name: 'qabot-search-${envName}'
   location: 'West US 2'
   properties: {
     computeType: 'Default'
@@ -92,7 +92,7 @@ resource searchService 'Microsoft.Search/searchServices@2026-03-01-preview' = {
 }
 
 resource registry 'Microsoft.ContainerRegistry/registries@2026-01-01-preview' = {
-  name: 'qzqabotcontainer${envName}'
+  name: 'qabotcontainer${envName}'
   location: 'westus2'
   sku: {
     name: 'Standard'
@@ -100,7 +100,7 @@ resource registry 'Microsoft.ContainerRegistry/registries@2026-01-01-preview' = 
 }
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2026-04-01' = {
-  name: 'qzqabotstorage${envName}'
+  name: 'qabotstorage${envName}'
   location: 'westus2'
   properties: {
     dualStackEndpointPreference: {
@@ -222,7 +222,7 @@ resource table2 'Microsoft.Storage/storageAccounts/tableServices/tables@2026-04-
 }
 
 resource databaseAccount 'Microsoft.DocumentDB/databaseAccounts@2026-03-15' = {
-  name: 'qzqabot-db-${envName}'
+  name: 'qabot-db-${envName}'
   properties: {
     publicNetworkAccess: 'Enabled'
     enableAutomaticFailover: true
@@ -415,7 +415,7 @@ resource container9 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containe
 // Azure RBAC role assignments
 // ----------------------------------------------------------------------------
 // Principals:
-//   userAssignedIdentity.properties.principalId -> qzqabot-identity (app runtime)
+//   userAssignedIdentity.properties.principalId -> qabot-identity (app runtime)
 //   developerGroupObjectId                       -> AzureSDKChatBot_Developer group
 //
 // ============================================================================
@@ -440,7 +440,7 @@ var roleIds = {
   cosmosDbDataContributor: '00000000-0000-0000-0000-000000000002'
 }
 
-// --- Managed identity (qzqabot-identity) ------------------------------------
+// --- Managed identity (qabot-identity) ------------------------------------
 
 // Blob read/write/delete for app runtime data.
 resource identityStorageBlobOwner 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
@@ -596,13 +596,13 @@ output storageBlobEndpoint string = storageAccount.properties.primaryEndpoints.b
 @description('Container registry resource name ')
 output containerRegistryName string = registry.name
 
-@description('Client ID of the user-assigned managed identity (qzqabot-identity).')
+@description('Client ID of the user-assigned managed identity (qabot-identity).')
 output managedIdentityClientId string = userAssignedIdentity.properties.clientId
 
-@description('Resource ID of the user-assigned managed identity (qzqabot-identity).')
+@description('Resource ID of the user-assigned managed identity (qabot-identity).')
 output managedIdentityResourceId string = userAssignedIdentity.id
 
-@description('Principal (object) ID of the user-assigned managed identity (qzqabot-identity).')
+@description('Principal (object) ID of the user-assigned managed identity (qabot-identity).')
 output managedIdentityPrincipalId string = userAssignedIdentity.properties.principalId
 
 @description('Container registry login server')

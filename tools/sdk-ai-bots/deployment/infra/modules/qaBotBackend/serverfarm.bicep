@@ -12,7 +12,7 @@ param ragBasedBackendImage string
 @description('Full container image reference for the agent server slot (registry/repository:tag).')
 param agentBasedBackendImage string
 
-@description('Client ID of the qzqabot-identity managed identity; used by DefaultAzureCredential to select the identity.')
+@description('Client ID of the qabot-identity managed identity; used by DefaultAzureCredential to select the identity.')
 param managedIdentityClientId string
 
 @description('Client ID (audience) of the Entra app registration that fronts the backend, used by App Service authentication (Easy Auth).')

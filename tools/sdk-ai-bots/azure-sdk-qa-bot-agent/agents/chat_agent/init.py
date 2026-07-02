@@ -52,6 +52,9 @@ logger = logging.getLogger(__name__)
 MAX_TOOL_CALL_ITERATIONS = 5
 MAX_TOOL_CALLS_PER_TURN = 10
 
+# Strong refs to fire-and-forget startup tasks so they aren't GC'd mid-flight.
+_background_tasks: set[asyncio.Task] = set()
+
 
 def _load_instructions(file_path: Path) -> str:
     """Load agent instructions from the instructions markdown file."""
@@ -114,8 +117,15 @@ async def main() -> None:
             logger.exception("%s failed to initialize, skipped", factory.__name__)
             return None
 
-    memory_task, ado_task, github_task = await asyncio.gather(
-        _init_memory(),
+    # Ensuring the memory store is idempotent and usually a no-op, so run it in
+    # the background instead of gating readiness on it.
+    memory_init_task = asyncio.create_task(_init_memory())
+    _background_tasks.add(memory_init_task)
+    memory_init_task.add_done_callback(_background_tasks.discard)
+
+    # Only the MCP tools must exist before building the agent; create in
+    # parallel (connection is lazy).
+    ado_task, github_task = await asyncio.gather(
         _init_mcp(create_ado_mcp_tool),
         _init_mcp(create_github_mcp_tool),
     )
@@ -124,7 +134,7 @@ async def main() -> None:
         if mcp_tool is not None:
             tools.append(mcp_tool)
 
-    # Memory context provider (memory store is ready after gather)
+    # Memory context provider (memory store initializes in background; may not be ready yet)
     memory_provider = MemoryContextProvider(project_client)
 
     # Compaction provider — compact history before and after each turn

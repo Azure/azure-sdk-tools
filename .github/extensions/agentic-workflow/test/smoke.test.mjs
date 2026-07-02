@@ -144,7 +144,7 @@ test("resume: listRuns rehydrates task/flow from state.json and resumes at the r
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "aw-cwd-"));
     try {
         process.chdir(tmp);
-        const runDir = path.join(tmp, ".aw", "my-task-deadbeef");
+        const runDir = path.join(tmp, ".rpi", "my-task-deadbeef");
         fs.mkdirSync(runDir, { recursive: true });
         writeState(runDir, { task: "My task", simple: true });
         w(runDir, "assumptions.md");
@@ -189,16 +189,16 @@ test("diff judge helpers recognize git diff targets and build critique instructi
     );
     const instr = buildDiffJudgeInstruction({
         cwd: "/repo",
-        runDir: "/repo/.aw/my-run",
+        runDir: "/repo/.rpi/my-run",
         critiqueRel: "critiques/git-diff-20260701T194359Z.md",
         task: "My task",
     });
     assert.match(instr, /git status --short/);
     assert.match(instr, /git diff HEAD --stat/);
-    assert.match(instr, /git diff HEAD -- \. ':\(exclude\)\.aw'/);
+    assert.match(instr, /git diff HEAD -- \. ':\(exclude\)\.rpi'/);
     assert.match(instr, /staged and unstaged implementation changes/);
     assert.match(instr, /Do not change code/);
-    assert.match(instr, /\/repo\/\.aw\/my-run\/critiques\/git-diff-20260701T194359Z\.md/);
+    assert.match(instr, /\/repo\/\.rpi\/my-run\/critiques\/git-diff-20260701T194359Z\.md/);
 });
 
 test("rpi-judge advertises diff review", () => {
@@ -212,7 +212,7 @@ test("initRun creates the run dir and state.json", () => {
     try {
         process.chdir(tmp);
         initRun("My task", true);
-        const runDir = path.join(tmp, ".aw", runId("My task"));
+        const runDir = path.join(tmp, ".rpi", runId("My task"));
         assert.ok(fs.existsSync(path.join(runDir, "task.txt")), "task.txt written");
         const state = JSON.parse(fs.readFileSync(path.join(runDir, "state.json"), "utf8"));
         assert.equal(state.task, "My task");

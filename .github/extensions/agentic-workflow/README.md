@@ -50,7 +50,7 @@ classify, and per-item research phases (the `simple` suffix on `/rpi-start` stil
 /rpi-auto-simple Fix null deref in TokenCache
 ```
 
-Everything a run produces lives under `<cwd>/.aw/<task-slug>-<hash>/` — specs, assumptions, the
+Everything a run produces lives under `<cwd>/.rpi/<task-slug>-<hash>/` — specs, assumptions, the
 plan, execution log, and a `state.json` that tracks which phases have passed. Inspect or edit those
 files between phases at any time. If your session reloads, pick the run back up with `/rpi-resume`.
 
@@ -62,7 +62,7 @@ files between phases at any time. If your session reloads, pick the run back up 
 | `/rpi-auto-simple <task>` | Same as `/rpi-auto` but the short flow (assumptions → plan → implement). |
 | `/rpi-start <task>` | Init the run dir and run the first phase (full flow). |
 | `/rpi-start-simple <task>` | Same, but the short flow (assumptions → plan → implement). Equivalent to `/rpi-start <task> simple`. |
-| `/rpi-resume [name-or-text]` | Rehydrate a run after a reload from `.aw/` (task, flow, auto-judge toggle). With no arg, resumes the only/most-recent run; otherwise matches by dir name or task text. |
+| `/rpi-resume [name-or-text]` | Rehydrate a run after a reload from `.rpi/` (task, flow, auto-judge toggle). With no arg, resumes the only/most-recent run; otherwise matches by dir name or task text. |
 | `/rpi-continue [n]` | Run the next phase (or next `n`), then stop. |
 | `/rpi-pause` | Stop the auto-runner at the next phase boundary. |
 | `/rpi-research` … `/rpi-implement` | Run one specific phase by name (`/rpi-research`, `/rpi-assumptions`, `/rpi-classify`, `/rpi-research-item`, `/rpi-plan`, `/rpi-implement`). |
@@ -109,7 +109,7 @@ For an independent critique, use the native `/rubber-duck` agent through the wor
 
 ### Run directory, state, and resume
 
-State lives entirely in a per-run directory: `<cwd>/.aw/<task-slug>-<hash>/`. The short content hash
+State lives entirely in a per-run directory: `<cwd>/.rpi/<task-slug>-<hash>/`. The short content hash
 keeps tasks that share a slug prefix from colliding onto the same dir.
 
 - Each phase's `PHASE_RESULT` sentinel is recorded in `state.json`. A phase counts as **complete**
@@ -118,12 +118,12 @@ keeps tasks that share a slug prefix from colliding onto the same dir.
   sub-item in `subitems.json`.
 - Run metadata (task, flow, auto-judge toggle) is persisted to `state.json`, so after a reload you
   only need enough information to identify the run:
-  - `/rpi-resume` resumes the only run under `.aw/`; if there are multiple runs, it lists them.
+  - `/rpi-resume` resumes the only run under `.rpi/`; if there are multiple runs, it lists them.
   - `/rpi-resume <dir-name>` resumes by the run directory name, for example
     `/rpi-resume add-csv-export-1a2b3c4d`.
   - `/rpi-resume <task-substring>` resumes by matching text from the original task, for example
     `/rpi-resume CSV export`.
-- On `/rpi-start`, `.aw/` is auto-appended to the target repo's `.gitignore` so run artifacts never
+- On `/rpi-start`, `.rpi/` is auto-appended to the target repo's `.gitignore` so run artifacts never
   leak into commits.
 
 ## Design

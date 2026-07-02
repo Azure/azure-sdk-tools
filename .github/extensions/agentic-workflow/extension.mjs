@@ -4,7 +4,7 @@
 // One joinSession() registers a custom sub-agent per phase (phase prompt + access to all tools). The
 // workflow never switches models: every phase runs on the user's configured Copilot CLI session
 // model (claude-opus-4.8 is the recommended default). State lives entirely in a
-// per-run directory on disk (<cwd>/.aw/<slug>/) so the workflow is inspectable, resumable, and
+// per-run directory on disk (<cwd>/.rpi/<slug>/) so the workflow is inspectable, resumable, and
 // survives an extension reload. The agent self-reports each phase with a sentinel line:
 //   PHASE_RESULT: pass | fail | needs_input  (+ optional reason)
 // which the dispatch loop and auto-runner read instead of any deterministic validator.
@@ -329,7 +329,7 @@ function buildDiffJudgeInstruction({ cwd, runDir, critiqueRel, task }) {
     return (
         `Review the current repository code changes for the agentic-workflow run "${task}". ` +
         `Work in \`${cwd}\`. Run \`git status --short\`, \`git diff HEAD --stat\`, and ` +
-        `\`git diff HEAD -- . ':(exclude).aw'\` to inspect staged and unstaged implementation changes. ` +
+        `\`git diff HEAD -- . ':(exclude).rpi'\` to inspect staged and unstaged implementation changes. ` +
         `If useful, compare the changes with \`${path.join(runDir, "plan.md")}\` and ` +
         `\`${path.join(runDir, "execution-log.md")}\`. Focus on correctness bugs, regressions, ` +
         `missed requirements, unsafe behavior, and meaningful test gaps. Do not change code. ` +
@@ -339,7 +339,7 @@ function buildDiffJudgeInstruction({ cwd, runDir, critiqueRel, task }) {
 export { isDiffJudgeTarget, diffCritiqueRel, buildDiffJudgeInstruction };
 
 // --- Commands ------------------------------------------------------------------------------------
-// Ensure the target repo ignores the on-disk run state so `.aw/` artifacts never leak into commits.
+// Ensure the target repo ignores the on-disk run state so `.rpi/` artifacts never leak into commits.
 function ensureGitignore() {
     try {
         const gi = path.join(process.cwd(), ".gitignore");
@@ -349,11 +349,11 @@ function ensureGitignore() {
         } catch {
             content = "";
         }
-        const already = content.split(/\r?\n/).some((l) => l.trim().replace(/\/+$/, "") === ".aw");
+        const already = content.split(/\r?\n/).some((l) => l.trim().replace(/\/+$/, "") === ".rpi");
         if (already) return;
         const prefix = content && !content.endsWith("\n") ? "\n" : "";
-        fs.appendFileSync(gi, `${prefix}.aw/\n`);
-        diag("added .aw/ to .gitignore");
+        fs.appendFileSync(gi, `${prefix}.rpi/\n`);
+        diag("added .rpi/ to .gitignore");
     } catch (e) {
         diag(`could not update .gitignore: ${e?.message ?? e}`);
     }
@@ -381,7 +381,7 @@ async function cmdStart(argstr, { forceSimple = false } = {}) {
 function initRun(task, simple) {
     activeTask = task;
     activeSimple = simple;
-    activeRunDir = path.join(process.cwd(), ".aw", runId(task));
+    activeRunDir = path.join(process.cwd(), ".rpi", runId(task));
     fs.mkdirSync(activeRunDir, { recursive: true });
     ensureGitignore();
     fs.writeFileSync(path.join(activeRunDir, "task.txt"), task + "\n");
@@ -395,9 +395,9 @@ function initRun(task, simple) {
 }
 export { initRun };
 
-// List resumable runs under <cwd>/.aw/, newest first, from their persisted state.json.
+// List resumable runs under <cwd>/.rpi/, newest first, from their persisted state.json.
 function listRuns() {
-    const base = path.join(process.cwd(), ".aw");
+    const base = path.join(process.cwd(), ".rpi");
     let names = [];
     try {
         names = fs.readdirSync(base, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name);
@@ -426,7 +426,7 @@ async function cmdResume(argstr) {
     const query = (argstr ?? "").trim();
     const runs = listRuns();
     if (runs.length === 0) {
-        await log("no runs found under .aw/. Start one with /rpi-start <task>.");
+        await log("no runs found under .rpi/. Start one with /rpi-start <task>.");
         return;
     }
     let run;
@@ -472,8 +472,23 @@ async function cmdContinue(argstr) {
             await log("no remaining phases.");
             return;
         }
-        const res = await dispatch(next);
-        if (res.result !== "pass") {
+        // Re-dispatch this phase until it passes, is cancelled, or fails. `needs_input` is resolved
+        // by asking the human and feeding the answer back as steering, mirroring the auto-runner —
+        // otherwise a phase that asks a blocking question would be re-run from scratch on the next
+        // /rpi-continue, discarding the answer and looping forever on the same question.
+        let priorErrors = "";
+        for (;;) {
+            const res = await dispatch(next, { priorErrors });
+            if (res.result === "pass") break;
+            if (res.result === "needs_input") {
+                const answer = await askHuman(res.reason || `${next.id} needs a decision`, false);
+                if (answer === null) {
+                    await log(`stopped: ${next.id} needs input and the request was cancelled.`);
+                    return;
+                }
+                priorErrors = answer;
+                continue;
+            }
             await log(`stopped at ${next.id} (${res.result}${res.reason ? `: ${res.reason}` : ""}).`);
             return;
         }
@@ -690,7 +705,7 @@ export const joinConfig = {
     commands: [
         cmd("rpi-start", "Start a full research->plan->implement workflow run on a task.", (c) => cmdStart(c.args)),
         cmd("rpi-start-simple", "Start a short-flow run (research → assumptions → plan → implement).", (c) => cmdStart(c.args, { forceSimple: true })),
-        cmd("rpi-resume", "Resume a run after a reload: /rpi-resume [name-or-text] (rehydrates from .aw/).", (c) => cmdResume(c.args)),
+        cmd("rpi-resume", "Resume a run after a reload: /rpi-resume [name-or-text] (rehydrates from .rpi/).", (c) => cmdResume(c.args)),
         cmd("rpi-auto", "Start (if given a task) and auto-run to completion: /rpi-auto <task> [from:<p>] [to:<p>] [unattended:true] [pause-at:<p>].", (c) => cmdAuto(c.args)),
         cmd("rpi-auto-simple", "Same as /rpi-auto but the short flow (research → assumptions → plan → implement).", (c) => cmdAuto(c.args, { forceSimple: true })),
         cmd("rpi-continue", "Run the next phase (or next N).", (c) => cmdContinue(c.args)),
@@ -712,5 +727,5 @@ export const joinConfig = {
 // Guard so the pure helpers / config can be imported by tests without a live session host.
 if (!process.env.AW_SKIP_JOIN) {
     session = await joinSession(joinConfig);
-    diag(`loaded with ${customAgents.length} phase agents; run dir base ${path.join(process.cwd(), ".aw")}`);
+    diag(`loaded with ${customAgents.length} phase agents; run dir base ${path.join(process.cwd(), ".rpi")}`);
 }

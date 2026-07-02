@@ -14,21 +14,20 @@ using './main.bicep'
 // ── azd-managed values (set automatically when an env is selected) ───────────
 param location = readEnvironmentVariable('AZURE_LOCATION', 'westus2')
 
-param envName = readEnvironmentVariable('AZURE_ENV_NAME', 'dev')
-
+var env = readEnvironmentVariable('AZURE_ENV_NAME', 'dev')
 
 // ── Sourced from environment-suite.yaml via scripts/sync-env-suite.ps1 ───────
 // The sync script writes these into .azure/<env>/.env with `azd env set`.
 // Fallbacks are used only when a value is missing (e.g., first-run before sync).
-param resourceGroupName              = readEnvironmentVariable('AZURE_RESOURCE_GROUP',              'rg-azuresdkqabot-${envName}')
-param functionImageRepository        = readEnvironmentVariable('FUNCTION_IMAGE_REPOSITORY',        'azure-sdk-qa-bot-function:${envName}')
-param ragBasedBackendImageRepository = readEnvironmentVariable('RAG_BASED_BACKEND_IMAGE_REPOSITORY', 'azure-sdk-qa-bot-backend:${envName}')
-param agentBasedImageRepository      = readEnvironmentVariable('AGENT_BASED_IMAGE_REPOSITORY',      'azure-sdk-qa-bot-agent-server:${envName}')
+param resourceGroupName              = readEnvironmentVariable('AZURE_RESOURCE_GROUP',              'rg-azuresdkqabot-${env}')
+param functionImageRepository        = readEnvironmentVariable('FUNCTION_IMAGE_REPOSITORY',        'azure-sdk-qa-bot-function:${env}')
+param ragBasedBackendImageRepository = readEnvironmentVariable('RAG_BASED_BACKEND_IMAGE_REPOSITORY', 'azure-sdk-qa-bot-backend:${env}')
+param agentBasedImageRepository      = readEnvironmentVariable('AGENT_BASED_IMAGE_REPOSITORY',      'azure-sdk-qa-bot-agent-server:${env}')
 
 // ── Per-env values (read from .azure/<env>/.env; pipelines override via JSON) ─
 // SERVER_AUDIENCE is auto-populated by the preprovision hook
 // (hooks/preprovision.ts → ensureServerAudience), which creates or looks up
-// an Entra ID app registration named `azuresdkqabot-server-<envName>` via
+// an Entra ID app registration named `azuresdkqabot-server-<env>` via
 // `az ad app` and persists its clientId with `azd env set`. Only set this
 // manually to pin a specific external app registration.
 //

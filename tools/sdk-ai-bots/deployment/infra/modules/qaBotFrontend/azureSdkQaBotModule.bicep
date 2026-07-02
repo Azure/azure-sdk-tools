@@ -1,12 +1,12 @@
 targetScope = 'resourceGroup'
 
-@description('Environment name (dev | preview | prod). Suffix on resource names for multi-env deployability.')
-param envName string
+@description('Name of the shared storage account (created by the shared resources module) that the frontend identity needs data-plane access to.')
+param storageAccountName string
 
 param userAssignedIdentityPropertiesPrincipalId any
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2026-04-01' existing = {
-  name: 'qabotstorage${envName}'
+  name: storageAccountName
 }
 
 resource roleAssignment3 'Microsoft.Authorization/roleAssignments@2022-04-01' = {

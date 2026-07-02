@@ -1,8 +1,5 @@
 targetScope = 'resourceGroup'
 
-@description('Environment name (dev | preview | prod). Suffix on resource names for multi-env deployability.')
-param envName string
-
 @description('Principal (object) ID of the qabot-identity managed identity to grant OpenAI access.')
 param managedIdentityPrincipalId string
 
@@ -16,7 +13,7 @@ param storageBlobEndpoint string
 // the agent layer is self-contained and does not depend on the (now removed)
 // shared qabot-log workspace.
 resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
-  name: 'qabot-agent-log-${envName}'
+  name: 'qabot-agent-log-${substring(uniqueString(resourceGroup().id), 0, 6)}'
   location: 'eastus'
   properties: {
     sku: {
@@ -27,7 +24,7 @@ resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
 }
 
 resource component 'Microsoft.Insights/components@2020-02-02' = {
-  name: 'qabot-agent-${envName}'
+  name: 'qabot-agent-${substring(uniqueString(resourceGroup().id), 0, 6)}'
   location: 'eastus'
   kind: 'web'
   properties: {
@@ -40,10 +37,10 @@ resource component 'Microsoft.Insights/components@2020-02-02' = {
 }
 
 resource account 'Microsoft.CognitiveServices/accounts@2026-05-01' = {
-  name: 'qabot-ai-resource-${envName}'
+  name: 'qabot-ai-resource-${substring(uniqueString(resourceGroup().id), 0, 6)}'
   properties: {
     apiProperties: {}
-    customSubDomainName: 'qabot-ai-resource-${envName}'
+    customSubDomainName: 'qabot-ai-resource-${substring(uniqueString(resourceGroup().id), 0, 6)}'
     networkAcls: {
       defaultAction: 'Allow'
       virtualNetworkRules: []
@@ -165,7 +162,7 @@ resource adaEmbeddingDeployment 'Microsoft.CognitiveServices/accounts/deployment
 }
 
 resource accountStorageConnection 'Microsoft.CognitiveServices/accounts/connections@2026-05-01' = {
-  name: 'qabotstorage${envName}'
+  name: 'qabotstorage${substring(uniqueString(resourceGroup().id), 0, 6)}'
   parent: account
   properties: {
     authType: 'AAD'
@@ -198,7 +195,7 @@ resource project 'Microsoft.CognitiveServices/accounts/projects@2026-05-01' = {
 }
 
 resource projectStorageConnection 'Microsoft.CognitiveServices/accounts/projects/connections@2026-05-01' = {
-  name: 'qabotstorage${envName}'
+  name: 'qabotstorage${substring(uniqueString(resourceGroup().id), 0, 6)}'
   parent: project
   properties: {
     authType: 'AAD'

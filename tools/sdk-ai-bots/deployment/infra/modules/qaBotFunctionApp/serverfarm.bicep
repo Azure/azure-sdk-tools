@@ -3,9 +3,6 @@ targetScope = 'resourceGroup'
 @description('Azure region for the Function App, plan, and Application Insights.')
 param location string
 
-@description('Environment name (dev | preview | prod). Suffix on resource names for multi-env deployability.')
-param envName string
-
 @description('Container image (registry/repository:tag) the Function App runs.')
 param containerImage string
 
@@ -19,7 +16,7 @@ param storageAccountName string
 param managedIdentityResourceId string
 
 resource serverfarm 'Microsoft.Web/serverfarms@2025-05-01' = {
-  name: 'azuresdkqabot-functionserviceplan-${envName}'
+  name: 'azuresdkqabot-functionserviceplan-${substring(uniqueString(resourceGroup().id), 0, 6)}'
   location: location
   properties: {
     elasticScaleEnabled: true
@@ -37,7 +34,7 @@ resource serverfarm 'Microsoft.Web/serverfarms@2025-05-01' = {
 }
 
 resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
-  name: 'azuresdkqabot-function-log-${envName}'
+  name: 'azuresdkqabot-function-log-${substring(uniqueString(resourceGroup().id), 0, 6)}'
   location: location
   properties: {
     sku: {
@@ -48,7 +45,7 @@ resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
 }
 
 resource component 'Microsoft.Insights/components@2020-02-02' = {
-  name: 'azuresdkqabot-function-${envName}'
+  name: 'azuresdkqabot-function-${substring(uniqueString(resourceGroup().id), 0, 6)}'
   location: location
   kind: 'web'
   properties: {
@@ -59,7 +56,7 @@ resource component 'Microsoft.Insights/components@2020-02-02' = {
 }
 
 resource site 'Microsoft.Web/sites@2025-05-01' = {
-  name: 'azuresdkqabot-function-${envName}'
+  name: 'azuresdkqabot-function-${substring(uniqueString(resourceGroup().id), 0, 6)}'
   tags: {
     'hidden-link: /app-insights-resource-id': component.id
   }
@@ -94,11 +91,11 @@ resource site 'Microsoft.Web/sites@2025-05-01' = {
         }
         {
           name: 'KEY_VAULT_NAME'
-          value: 'qabot-keyvalut-${envName}'
+          value: 'qabot-keyvalut-${substring(uniqueString(resourceGroup().id), 0, 6)}'
         }
         {
           name: 'APP_CONFIG_NAME'
-          value: 'qabot-config-${envName}'
+          value: 'qabot-config-${substring(uniqueString(resourceGroup().id), 0, 6)}'
         }
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'

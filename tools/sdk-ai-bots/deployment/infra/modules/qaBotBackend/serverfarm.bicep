@@ -1,8 +1,5 @@
 targetScope = 'resourceGroup'
 
-@description('Environment name (dev | preview | prod). Suffix on resource names for multi-env deployability.')
-param envName string
-
 @description('Azure region for all resources.')
 param location string
 
@@ -55,7 +52,7 @@ var siteUserAssignedIdentities = {
 }
 
 resource serverfarm 'Microsoft.Web/serverfarms@2025-05-01' = {
-  name: 'azuresdkqabot-appserviceplan-${envName}'
+  name: 'azuresdkqabot-appserviceplan-${substring(uniqueString(resourceGroup().id), 0, 6)}'
   location: location
   properties: {
     reserved: true
@@ -72,7 +69,7 @@ resource serverfarm 'Microsoft.Web/serverfarms@2025-05-01' = {
 
 // Log Analytics workspace backing the backend Application Insights components.
 resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
-  name: 'azuresdkqabot-log-${envName}'
+  name: 'azuresdkqabot-log-${substring(uniqueString(resourceGroup().id), 0, 6)}'
   location: location
   properties: {
     sku: {
@@ -84,7 +81,7 @@ resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
 }
 
 resource serverAppInsights 'Microsoft.Insights/components@2020-02-02' = {
-  name: 'azuresdkqabot-server-${envName}'
+  name: 'azuresdkqabot-server-${substring(uniqueString(resourceGroup().id), 0, 6)}'
   location: location
   kind: 'web'
   properties: {
@@ -95,7 +92,7 @@ resource serverAppInsights 'Microsoft.Insights/components@2020-02-02' = {
 }
 
 resource slotAppInsights 'Microsoft.Insights/components@2020-02-02' = {
-  name: 'azuresdkqabot-server202510300250-${envName}'
+  name: 'azuresdkqabot-server202510300250-${substring(uniqueString(resourceGroup().id), 0, 6)}'
   location: location
   kind: 'web'
   properties: {
@@ -106,7 +103,7 @@ resource slotAppInsights 'Microsoft.Insights/components@2020-02-02' = {
 }
 
 resource site 'Microsoft.Web/sites@2025-05-01' = {
-  name: 'azuresdkqabot-server-${envName}'
+  name: 'azuresdkqabot-server-${substring(uniqueString(resourceGroup().id), 0, 6)}'
   tags: {
     'hidden-link: /app-insights-resource-id': slotAppInsights.id
   }
@@ -278,7 +275,7 @@ resource slot 'Microsoft.Web/sites/slots@2025-05-01' = {
 }
 
 resource serverMetricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
-  name: 'azuresdkqabot-alert-${envName}'
+  name: 'azuresdkqabot-alert-${substring(uniqueString(resourceGroup().id), 0, 6)}'
   location: 'global'
   properties: {
     severity: 3
@@ -317,7 +314,7 @@ resource serverMetricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' 
 }
 
 resource slotMetricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
-  name: 'azuresdkqabot-agent-alert-${envName}'
+  name: 'azuresdkqabot-agent-alert-${substring(uniqueString(resourceGroup().id), 0, 6)}'
   location: 'global'
   properties: {
     severity: 3

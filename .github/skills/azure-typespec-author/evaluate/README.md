@@ -10,7 +10,8 @@ This directory contains [Vally](https://aka.ms/vally) evaluation cases for the `
 
 ## Environment Setup
 
-Run the setup script to download spec repo package files, run `npm ci`, and configure `FIXTURE_NODE_MODULES`:
+Before running any evals, prime the fixtures from the live
+[azure-rest-api-specs](https://github.com/Azure/azure-rest-api-specs) `main` branch:
 
 ```powershell
 # PowerShell
@@ -22,13 +23,23 @@ node scripts/setup-environment.js | Invoke-Expression
 eval $(node scripts/setup-environment.js)
 ```
 
-This script:
+`setup-environment.js` calls `setup-fixture-files.js` and then runs `npm ci`. Together they:
 
-1. Clones `package.json` and `package-lock.json` from [azure-rest-api-specs](https://github.com/Azure/azure-rest-api-specs) into `fixtures/Microsoft.Widget/Widget/`.
-2. Runs `npm ci` in that directory.
-3. Outputs the shell command to set `FIXTURE_NODE_MODULES` for symlink usage.
+1. Download `package.json` / `package-lock.json` into `fixtures/Microsoft.Widget/Widget/` and run
+   `npm ci` there.
+2. Download `.github/copilot-instructions.md` into `fixtures/instructions-test/copilot-instructions.md`.
+3. Print the shell command that exports `FIXTURE_NODE_MODULES`.
 
-Without `FIXTURE_NODE_MODULES`, the agent will run `npm install` each time (slow but functional).
+Why each piece matters:
+
+- **`FIXTURE_NODE_MODULES`** lets the agent symlink a prebuilt `node_modules` instead of running
+  `npm install` on every case. Without it evals still work, just slower.
+- **`copilot-instructions.md`** is copied into each run's `.github/` by the `azsdk-mcp` environments
+  in `.vally.yaml`, so evals exercise the *real* spec-repo authoring guidance. It is intentionally
+  **not** checked in (it is git-ignored) and always refreshed from `main`, so the eval reflects what
+  authors actually see today.
+
+CI runs `setup-fixture-files.js` during setup, so these fixtures are always present in pipeline runs.
 
 ## Running Evaluations
 

@@ -28,7 +28,7 @@ public class PipelineAnalysisTool(
     IAzureService azureService,
     IDevOpsService devopsService,
     ILogAnalysisHelper logAnalysisHelper,
-    ITestHelper testHelper,
+    ITestResultParserResolver parserResolver,
     ICopilotAgentRunner copilotAgentRunner,
     ILogger<PipelineAnalysisTool> logger
 ) : MCPTool
@@ -457,13 +457,23 @@ public class PipelineAnalysisTool(
 
             var failedTests = new FailedTestRunListResponse();
             var failedTestArtifacts = await devopsService.GetPipelineLlmArtifacts(project, buildId, ct);
+            var skippedArtifacts = new List<string>();
 
             foreach (var testFiles in failedTestArtifacts)
             {
                 foreach (var file in testFiles.Value)
                 {
-                    var failed = await testHelper.GetFailedTestCases(file, ct: ct);
-                    failedTests.Items.AddRange(failed.Items);
+                    try
+                    {
+                        var parser = await parserResolver.ResolveAsync(file, ct);
+                        var failed = await parser.GetFailedTestCases(file, ct: ct);
+                        failedTests.Items.AddRange(failed.Items);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogWarning(ex, "Skipping test result artifact {FilePath}", file);
+                        skippedArtifacts.Add(file);
+                    }
                 }
             }
 
@@ -474,11 +484,22 @@ public class PipelineAnalysisTool(
                     g => g.Select(ft => ft.TestCaseTitle).ToList()
                 );
 
-            return new AnalyzePipelineResponse()
+            var response = new AnalyzePipelineResponse()
             {
                 FailedTasks = analysis.HasErrors ? [analysis] : [],
                 FailedTests = failedTestsByUri
             };
+
+            if (skippedArtifacts.Count > 0)
+            {
+                response.NextSteps =
+                [
+                    $"Test results may be incomplete: {skippedArtifacts.Count} artifact(s) could not be read or parsed " +
+                    $"(missing file, unrecognized format, or malformed content): {string.Join(", ", skippedArtifacts)}."
+                ];
+            }
+
+            return response;
         }
         catch (Exception ex) when (IsAuthException(ex) && project != Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT)
         {

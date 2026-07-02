@@ -133,6 +133,7 @@ DevOps,,e99695
 DevOps - Infrastructure,,e99695
 Device Update,,e99695
 Devtestlab,,e99695
+DigitalAssets,,e99695
 Digital Twins,,e99695
 Do Not Merge,,b60205
 Docs,,e99695
@@ -276,6 +277,9 @@ Web Apps,,e99695
 WebPubSub,,e99695
 Weights & Biases,,e99695
 Workload Orchestration,,e99695
+architecture-review-added,Architecture review completed,0e8a16
+architecture-review-in-progress,Architecture review is in progress,fbca04
+architecture-review-needed,Triggers Archie: AI architecture review agent,1d76db
 auto-close-exempt,Prevents the auto-close from closing based on max lifetime,ededed
 blocking-release,Blocks release,d73a49
 breaking-change,,d73a49

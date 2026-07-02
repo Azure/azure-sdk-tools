@@ -17,7 +17,7 @@
 # Eng Sys
 ###########
 /eng/                                  @azure/azure-sdk-eng
-/.config/1espt/                        @benbp @weshaggard
+/.config/1espt/                        @benbp
 
 ###########
 # Files used to manage spelling version and installation
@@ -34,22 +34,22 @@
 ###########
 /tools/                                 @azure/azure-sdk-eng
 /tools/azure-rest-api-specs-examples-automation/ @weidongxu-microsoft
-/tools/codeowners-utils/                @weshaggard @danieljurek
+/tools/codeowners-utils/                @danieljurek
 /tools/fxlister/                        @KrzysztofCwalina
 /tools/github/                          @jsquire @lmazuel
 /tools/github-event-processor/          @benbp @jsquire
-/tools/github-team-user-store/          @weshaggard
+/tools/github-team-user-store/          @danieljurek
 /tools/issue-labeler/                   @jsquire @jeo02 @radhgupta
 /tools/js-sdk-release-tools/            @qiaozha @MaryGao @JialinHuang803 @jeremymeng
 /tools/keyvault-mock-attestation/       @maorleger
 /tools/perf-automation/                 @mikeharder @benbp
 /tools/perf-automation/**/*Rust*.cs     @heaths @LarryOsterman @RickWinter
-/tools/pipeline-generator/              @weshaggard @benbp
+/tools/pipeline-generator/              @benbp
 /tools/pipeline-witness/                @hallipr
 /tools/sdk-testgen/                     @lirenhe @tadelesh
 /tools/spec-gen-sdk/                    @raych1 @chidozieononiwu
 /tools/test-proxy/                      @scbedd @mikeharder @benbp
-/tools/tsp-client/                      @catalinaperalta
+/tools/tsp-client/                      @catalinaperalta @mikeharder
 /tools/typespec-bump-deps/              @weidongxu-microsoft
 /tools/content-validation/              @xiangyan99 @zedy-wj
 /tools/perf-regression-finder/          @m-redding @jsquire
@@ -119,7 +119,7 @@
 /tools/sdk-ai-bots/azure-sdk-qa-bot-backend-shared  @chunyu3 @JiaqiZhang-Dev
 
 # Add owners for notifications for specific pipelines
-/eng/common/pipelines/codeowners-linter.yml         @weshaggard @danieljurek
+/eng/common/pipelines/codeowners-linter.yml        @danieljurek
 /eng/pipelines/pipeline-owners-extraction.yml      @danieljurek
 
 # EngSys should own all package-lock.json under eng/common

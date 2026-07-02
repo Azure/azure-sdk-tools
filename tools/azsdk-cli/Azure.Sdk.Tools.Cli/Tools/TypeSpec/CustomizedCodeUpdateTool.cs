@@ -678,7 +678,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 editScope, tspFixSucceeded, codeCustomizations, specChangeRequired.Count, customCodeChangeRequired.Count, manualInterventions.Count);
 
             // Build for error context if no build happened yet (pure CODE_CUSTOMIZATION path or regen failed)
-            if (!buildSucceeded && buildError == null)
+            if (!buildSucceeded && buildError == null && languageService != null)
             {
                 logger.LogInformation("Building for error context...");
                 var (s, e, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
@@ -721,7 +721,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 });
             }
 
-            if (!languageService.IsCustomizedCodeUpdateSupported)
+            if (languageService == null || !languageService.IsCustomizedCodeUpdateSupported)
             {
                 return CreateResponse(new CustomizedCodeUpdateResponse
                 {

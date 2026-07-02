@@ -33,7 +33,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// - JavaScript: "eng/common/breaking-change-patterns/js-patterns.md"
         /// - Go: "eng/common/breaking-change-patterns/go-patterns.md"
         /// 
-        /// The file content is read by <see cref="GetChangeToBreakingPattern"/> and used in
+        /// The file content is used in
         /// <see cref="DetectSdkBreakingChangeAsync"/> for analyzing SDK changes.
         /// 
         /// Returns an empty string by default if not overridden.

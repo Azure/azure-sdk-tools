@@ -424,7 +424,7 @@ public class CustomizedCodeUpdateToolAutoTests
                         {
                             classifyCalls++;
                             var customizationRequest = classifyRequest as ClassifyCustomizationRequest;
-                            var items = customizationRequest?.Items;
+                            var items = customizationRequest!.Items;
                             if (classifyCalls == 1)
                             {
                                 items.Clear();
@@ -486,7 +486,7 @@ public class CustomizedCodeUpdateToolAutoTests
                         {
                             classifyCalls++;
                             var customizationRequest = classifyRequest as ClassifyCustomizationRequest;
-                            var items = customizationRequest?.Items;
+                            var items = customizationRequest!.Items;
                             if (classifyCalls == 1)
                             {
                                 items.Clear();
@@ -606,7 +606,7 @@ public class CustomizedCodeUpdateToolAutoTests
                         {
                             classifyCalls++;
                             var customizationRequest = classifyRequest as ClassifyCustomizationRequest;
-                            var items = customizationRequest?.Items;
+                            var items = customizationRequest!.Items;
                             if (classifyCalls == 1)
                             {
                                 items.Clear();
@@ -676,9 +676,9 @@ public class CustomizedCodeUpdateToolAutoTests
                             var customizationRequest = classifyRequest as ClassifyCustomizationRequest;
                             if (classifyCalls == 1)
                             {
-                                customizationRequest.Items.Clear();
+                                customizationRequest!.Items.Clear();
                             }
-                            var items = customizationRequest.Items;
+                            var items = customizationRequest!.Items;
                             if (items.Count == 0)
                             {
                                 // First pass: populate items with TSP_APPLICABLE
@@ -875,7 +875,7 @@ public class CustomizedCodeUpdateToolAutoTests
                         {
                             classifyCalls++;
                             var customizationRequest = classifyRequest as ClassifyCustomizationRequest;
-                            var items = customizationRequest?.Items;
+                            var items = customizationRequest!.Items;
                             if (classifyCalls == 1)
                             {
                                 items.Clear();
@@ -956,8 +956,8 @@ public class CustomizedCodeUpdateToolAutoTests
                     {
                         if (classifyRequest is ClassifyCustomizationRequest customizationRequest)
                         {
-                            var item = customizationRequest.Items.FirstOrDefault();
-                            capturedFeedbackText = item.Text;
+                            var item = customizationRequest!.Items.FirstOrDefault();
+                            capturedFeedbackText = item!.Text;
                             return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
                             {
                                 new FeedbackClassificationResponse.ItemClassificationDetails
@@ -1560,7 +1560,7 @@ public class CustomizedCodeUpdateToolAutoTests
                         {
                             classifyCalls++;
                             var customizationRequest = classifyRequest as ClassifyCustomizationRequest;
-                            var items = customizationRequest?.Items;
+                            var items = customizationRequest!.Items;
                             if (classifyCalls == 1)
                             {
                                 items.Clear();

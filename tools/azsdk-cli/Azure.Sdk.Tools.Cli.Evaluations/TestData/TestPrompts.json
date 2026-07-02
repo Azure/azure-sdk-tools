@@ -167,6 +167,8 @@
 
     { "toolName": "azsdk_get_kpi_attestation_status", "prompt": "What is the status of my KPI attestation.", "category": "all" },
     { "toolName": "azsdk_get_kpi_attestation_status", "prompt": "Check KPI attestation for my TypeSpec project", "category": "all" },
-    { "toolName": "azsdk_get_kpi_attestation_status", "prompt": "Is KPI attestation completed for product ID 12345 in GA?", "category": "all" }
+    { "toolName": "azsdk_get_kpi_attestation_status", "prompt": "Is KPI attestation completed for product ID 12345 in GA?", "category": "all" },
+
+    { "toolName": "azsdk_package_detect_breaking_change", "prompt": "Detect SDK breaking changes for my package.", "category": "all" }
   ]
 }

@@ -3,7 +3,6 @@ using Azure.Sdk.Tools.Cli.Models.ClassifyItems;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Prompts;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
-using Azure.Sdk.Tools.Cli.Tools.Package;
 using Microsoft.TeamFoundation.Common;
 
 namespace Azure.Sdk.Tools.Cli.Services

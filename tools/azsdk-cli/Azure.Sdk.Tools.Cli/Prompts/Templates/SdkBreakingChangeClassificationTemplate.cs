@@ -259,9 +259,8 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
                 }
                 return sdkBreakingChanges.ToArray();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                //logger.LogError(ex, "Error parsing agent response");
                 return Array.Empty<SdkBreakingChange>();
             }
         }

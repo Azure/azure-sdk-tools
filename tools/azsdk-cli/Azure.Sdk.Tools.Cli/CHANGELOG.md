@@ -1,14 +1,50 @@
 # Release History
 
-## 0.6.21 (Unreleased)
+## 0.6.24 (2026-06-30)
 
 ### Features Added
 
-### Breaking Changes
+- Update package details in release plan using package name in tspconfig.yaml when a new release plan is created.
 
 ### Bugs Fixed
 
+- `azsdk_update_sdk_details_in_release_plan` no longer fails for data-plane release plans when the TypeSpec project emits an optional Go package. Go is now accepted as an optional data-plane language and its package name is written to the release plan (Go remains not required, so it is not flagged as an excluded language when absent). Languages the release plan does not track (e.g. Rust, C++) are now skipped instead of causing the update to fail, and are reported in the result message.
+
+- Update SDK details to use explicit output directory param when running TypeSpec emitter.
+
+## 0.6.23 (2026-06-24)
+
+### Features Added
+
+- Release plans now resolve and persist Product Name, Product Type, and Product Lifecycle (copied from a previous release plan on create, or from a matching Triage work item on update via a new `--product-type` / `productType` parameter).
+
+## 0.6.22 (2026-06-22)
+
+### Features Added
+
+- Added an `editScope` parameter (`--edit-scope`) to the `customized-update` command / `azsdk_customized_code_update` MCP tool. It is a flags enum (`CustomCode`, `SpecInputs`, `All`; default `All`). `CustomCode` restricts the tool to custom (non-generated) code: it never edits spec inputs (client.tsp/tspconfig.yaml) or moves the pinned spec commit, and feedback requiring a spec change is reported as out of scope via the `SpecChangeRequired` error code instead of being applied. `SpecInputs` restricts the tool to spec-input edits: it never patches custom code, and feedback requiring a custom-code change is reported as out of scope via the new `CustomCodeChangeRequired` error code instead of being applied. The edit scope is also passed to the feedback classifier so that items addressable either way (e.g. renames doable in spec OR custom code) are biased toward the in-scope axis instead of being reported as out of scope. Regenerating `Generated/` from the unchanged pinned commit is always allowed.
+- Made `tspProjectPath` (`--tsp-project-path`) optional on the `customized-update` command / `azsdk_customized_code_update` MCP tool. It is now required only when the edit scope includes spec inputs (`SpecInputs`/`All`). For custom-code-only repair (`editScope CustomCode`) it may be omitted: regeneration then runs `tsp-client update` without `--local-spec-repo`, so the `tsp-client` CLI regenerates from the repo and commit pinned in the package's `tsp-location.yaml` instead of a local checkout. This enables headless custom-code build repair in a language repo where the spec is not checked out.
+
+### Breaking Changes
+
+- Replaced the `package find-work-item` CLI command with `package get-work-item`, which returns the full Azure DevOps package work item, and added `package update-work-item` for patching package work item fields.
+
+## 0.6.21 (2026-06-18)
+
+### Features Added
+
+- Added UX and functionality improvements to `azp` sub-commands for pipeline analysis
+- Added --copilot mode to pipeline analysis to call the user's copilot CLI installation for processing
+- Enable pipeline analysis commands to take a GitHub PR link in addition to pipeline link or ID
+
+### Breaking Changes
+
+- Removed upstream RAG-based/hosted model pipeline analysis mode via `azsdk azp analyze --agent`
+
 ### Other Changes
+
+- Added service ID and product ID as optional when creating a release plan
+- Replaced product life cycle property with release plan type when fetching attestation status
 
 ## 0.6.20 (2026-06-16)
 
@@ -30,7 +66,6 @@
 ### Features Added
 
 - Release plan is automatically marked as "Finished" when all required language SDKs are either Released or have an Approved exclusion. Management plane checks all 5 languages; data plane checks .NET, Java, Python, and JavaScript only.
-- Added the `package find-work-item` CLI command to find Azure DevOps package work item IDs by package name, package version, and language.
 
 ### Bugs Fixed
 

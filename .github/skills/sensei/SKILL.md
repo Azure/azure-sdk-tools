@@ -1,6 +1,6 @@
 ---
 name: sensei
-description: "**WORKFLOW SKILL** — Iteratively improve skill frontmatter compliance using the Ralph loop pattern. WHEN: \"run sensei\", \"sensei help\", \"improve skill\", \"fix frontmatter\", \"skill compliance\", \"frontmatter audit\", \"score skill\", \"check skill tokens\". INVOKES: token counting tools, test runners, git commands. FOR SINGLE OPERATIONS: use token CLI directly for counts/checks."
+description: '**WORKFLOW SKILL** — Iteratively improve skill frontmatter compliance using the Ralph loop pattern. WHEN: "run sensei", "sensei help", "improve skill", "fix frontmatter", "skill compliance", "frontmatter audit", "score skill", "check skill tokens". INVOKES: token counting tools, test runners, git commands. FOR SINGLE OPERATIONS: use token CLI directly for counts/checks.'
 license: MIT
 metadata:
   author: Microsoft
@@ -69,26 +69,31 @@ When user says "sensei help" or asks how to use sensei, show this:
 ## Invocation Modes
 
 ### Single Skill
+
 ```
 Run sensei on azure-deploy
 ```
 
 ### Multiple Skills
+
 ```
 Run sensei on azure-security, azure-observability
 ```
 
 ### By Adherence Level
+
 ```
 Run sensei on all Low-adherence skills
 ```
 
 ### All Skills
+
 ```
 Run sensei on all skills
 ```
 
 ### GEPA Mode (Deep Optimization)
+
 ```
 Run sensei on my-skill --gepa
 Run sensei on my-skill --gepa --skip-integration
@@ -102,6 +107,7 @@ An LLM proposes and evaluates many candidate improvements automatically. Note: G
 execute Jest tests directly — it uses the test data (prompts) as evaluation inputs.
 
 **GEPA score-only mode** (no LLM calls, just evaluate current quality):
+
 ```
 Run sensei score my-skill
 Run sensei score all skills
@@ -121,7 +127,7 @@ For each skill, execute this loop until score >= Medium-High AND tests pass:
 3. **CHECK** - If score >= Medium-High AND tests pass → go to TOKENS step
 4. **SCAFFOLD** - If `tests/{skill-name}/` doesn't exist, create from `tests/_template/`
 5. **IMPROVE FRONTMATTER** - Add WHEN: triggers (stay under 60 words and 1024 chars)
-5b. **IMPROVE WITH GEPA** (when `--gepa` flag is set) — Replaces step 5 (IMPROVE FRONTMATTER) with automated optimization; step 6 (IMPROVE TESTS) still runs normally:
+   5b. **IMPROVE WITH GEPA** (when `--gepa` flag is set) — Replaces step 5 (IMPROVE FRONTMATTER) with automated optimization; step 6 (IMPROVE TESTS) still runs normally:
    - Auto-discovers `tests/{skill-name}/triggers.test.ts` and extracts prompt arrays
    - Builds a GEPA evaluator scoring content quality + trigger accuracy based on those trigger prompt arrays (not Jest test pass/fail results)
    - Runs `python .github/skills/sensei/scripts/gepa/auto_evaluator.py optimize --skill {skill-name} --skills-dir .github/skills --tests-dir tests`
@@ -139,13 +145,13 @@ For each skill, execute this loop until score >= Medium-High AND tests pass:
 
 Sensei validates skills against the [agentskills.io specification](https://agentskills.io/specification). See [SCORING.md](references/SCORING.md) for full details.
 
-| Score | Requirements |
-|-------|--------------|
-| **Invalid** | Name fails spec validation (consecutive hyphens, start/end hyphen, uppercase, etc.) |
-| **Low** | Basic description, no explicit triggers |
-| **Medium** | Has trigger keywords/phrases, description > 150 chars, >60 words |
-| **Medium-High** | Has "WHEN:" (preferred) or "USE FOR:" triggers, ≤60 words |
-| **High** | Medium-High + compatibility field |
+| Score           | Requirements                                                                        |
+| --------------- | ----------------------------------------------------------------------------------- |
+| **Invalid**     | Name fails spec validation (consecutive hyphens, start/end hyphen, uppercase, etc.) |
+| **Low**         | Basic description, no explicit triggers                                             |
+| **Medium**      | Has trigger keywords/phrases, description > 150 chars, >60 words                    |
+| **Medium-High** | Has "WHEN:" (preferred) or "USE FOR:" triggers, ≤60 words                           |
+| **High**        | Medium-High + compatibility field                                                   |
 
 **Target: Medium-High** (distinctive triggers, concise description)
 
@@ -154,6 +160,7 @@ Sensei validates skills against the [agentskills.io specification](https://agent
 > **Exception — disambiguation-critical skills:** When a skill's `USE FOR` triggers directly overlap with a broader skill (e.g., `azure-prepare` owns "deploy to Azure"), `DO NOT USE FOR:` is **REQUIRED** to prevent the broader skill from capturing prompts that belong to the specialized skill. Removing it causes routing regressions. Integration tests validate this routing -- run them before removing any `DO NOT USE FOR:` clause.
 
 **Strongly recommended** (reported as suggestions if missing):
+
 - `license` — identifies the license applied to the skill
 - `metadata.version` — tracks the skill version for consumers
 
@@ -164,7 +171,7 @@ Per the [agentskills.io spec](https://agentskills.io/specification), required an
 ```yaml
 ---
 name: skill-name
-description: "[ACTION VERB] [UNIQUE_DOMAIN]. [One clarifying sentence]. WHEN: \"trigger 1\", \"trigger 2\", \"trigger 3\"."
+description: '[ACTION VERB] [UNIQUE_DOMAIN]. [One clarifying sentence]. WHEN: "trigger 1", "trigger 2", "trigger 3".'
 license: MIT
 metadata:
   version: "1.0"
@@ -189,11 +196,13 @@ cp -r tests/_template tests/{skill-name}
 ```
 
 Then update:
+
 1. `SKILL_NAME` constant in all test files
 2. `shouldTriggerPrompts` - 5+ prompts matching new frontmatter triggers
 3. `shouldNotTriggerPrompts` - 5+ prompts matching anti-triggers
 
 **Commit Messages:**
+
 ```
 sensei: improve {skill-name} frontmatter
 ```
@@ -210,10 +219,10 @@ sensei: improve {skill-name} frontmatter
 
 ## Flags
 
-| Flag | Description |
-|------|-------------|
-| `--skip-integration` | Skip integration tests for faster iteration. Only runs unit and trigger tests. |
-| `--gepa` | Use GEPA evolutionary optimization instead of template-based improvement. Auto-discovers tests and builds evaluator at runtime. |
+| Flag                 | Description                                                                                                                     |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `--skip-integration` | Skip integration tests for faster iteration. Only runs unit and trigger tests.                                                  |
+| `--gepa`             | Use GEPA evolutionary optimization instead of template-based improvement. Auto-discovers tests and builds evaluator at runtime. |
 
 > ⚠️ Skipping integration tests speeds up the loop but may miss runtime issues. Consider running full tests before final commit.
 

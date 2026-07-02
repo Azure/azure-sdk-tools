@@ -106,6 +106,7 @@ The Ralph loop is an iterative improvement cycle inspired by the ["Ralph Wiggum"
 **Action:** Load the skill's current state
 
 **Files to read:**
+
 ```
 .github/skills/{skill-name}/SKILL.md    # Required
 tests/{skill-name}/unit.test.ts        # If exists
@@ -114,6 +115,7 @@ tests/{skill-name}/integration.test.ts # If exists
 ```
 
 **Extract:**
+
 - Frontmatter (name, description, compatibility)
 - Current trigger/anti-trigger phrases
 - Existing test prompts
@@ -123,6 +125,7 @@ tests/{skill-name}/integration.test.ts # If exists
 **Action:** Evaluate frontmatter compliance per the [agentskills.io specification](https://agentskills.io/specification)
 
 **Checks:**
+
 1. **Name validation** (spec-required):
    - Lowercase alphanumeric + hyphens only
    - No consecutive hyphens (`--`)
@@ -147,13 +150,15 @@ tests/{skill-name}/integration.test.ts # If exists
 **Action:** Create test directory from template
 
 **Commands:**
+
 ```bash
 cp -r tests/_template tests/{skill-name}
 ```
 
 **Then update in each test file:**
+
 ```javascript
-const SKILL_NAME = '{skill-name}';  // Replace placeholder
+const SKILL_NAME = "{skill-name}"; // Replace placeholder
 ```
 
 ### Step 4: IMPROVE FRONTMATTER
@@ -161,6 +166,7 @@ const SKILL_NAME = '{skill-name}';  // Replace placeholder
 **Action:** Enhance the SKILL.md frontmatter
 
 **Goals:**
+
 1. Add "WHEN:" section with distinctive quoted trigger phrases (preferred over "USE FOR:")
 2. Remove any "DO NOT USE FOR:" clauses (keyword contamination risk)
 3. Keep description under 60 words and 1024 characters
@@ -169,16 +175,18 @@ const SKILL_NAME = '{skill-name}';  // Replace placeholder
 > ⚠️ **Do NOT add "DO NOT USE FOR:" clauses.** They cause keyword contamination on Claude Sonnet — anti-triggers introduce the very keywords that trigger wrong-skill activation. Use positive routing with distinctive `WHEN:` phrases instead.
 
 **Strategy:**
+
 - Read skill content to understand purpose
 - Identify distinctive action verbs and domain for lead sentence
 - Extract 3-5 quoted phrases unique to this skill for WHEN: triggers
 - Keep total description ≤60 words for cross-model reliability
 
 **Template:**
+
 ```yaml
 ---
-name: {skill-name}
-description: "[ACTION VERB] [UNIQUE_DOMAIN]. [One clarifying sentence]. WHEN: \"[phrase1]\", \"[phrase2]\", \"[phrase3]\", \"[phrase4]\", \"[phrase5]\"."
+name: { skill-name }
+description: '[ACTION VERB] [UNIQUE_DOMAIN]. [One clarifying sentence]. WHEN: "[phrase1]", "[phrase2]", "[phrase3]", "[phrase4]", "[phrase5]".'
 ---
 ```
 
@@ -187,6 +195,7 @@ description: "[ACTION VERB] [UNIQUE_DOMAIN]. [One clarifying sentence]. WHEN: \"
 **Action:** Update test prompts to match new frontmatter
 
 **Files to update:**
+
 - `tests/{skill-name}/triggers.test.ts`
 
 **Updates needed:**
@@ -206,6 +215,7 @@ description: "[ACTION VERB] [UNIQUE_DOMAIN]. [One clarifying sentence]. WHEN: \"
 **Action:** Run tests to ensure changes work
 
 **Command:**
+
 ```bash
 # Standard (unit + trigger tests only - fast)
 cd tests && npm test -- --testPathPatterns={skill-name} --testPathIgnorePatterns=integration
@@ -217,6 +227,7 @@ cd tests && npm test -- --testPathPatterns={skill-name}
 **Skip Integration Tests Flag:**
 
 When invoking Sensei, you can skip integration tests for faster iteration:
+
 ```
 Run sensei on azure-deploy --skip-integration
 ```
@@ -226,10 +237,12 @@ This runs only unit and trigger tests, which are fast and don't require the Copi
 > ⚠️ **Note:** Skipping integration tests may affect confidence in skill quality. Consider running full tests before final commit.
 
 **Expected outcome:**
+
 - All tests pass
 - Snapshots may need updating (auto-update is OK)
 
 **If tests fail:**
+
 - Analyze failure
 - Adjust frontmatter or test prompts
 - Re-run (counts as sub-iteration)
@@ -239,25 +252,30 @@ This runs only unit and trigger tests, which are fast and don't require the Copi
 **Action:** Check that all markdown links in skill files are valid and don't escape the skill directory
 
 **Command:**
+
 ```bash
 cd scripts && npm run references {skill-name}
 ```
 
 **What it checks:**
+
 1. Every local markdown link points to an actual file or directory
 2. Every local markdown link stays within the skill's own directory
 3. External links (http://, https://, mailto:) are ignored
 4. Fragment-only links (#anchor) are ignored
 
 **Expected outcome:**
+
 - ✅ All references are valid and contained within skill directory
 
 **If validation fails:**
+
 - Review broken or escaped references
 - Fix invalid links or move referenced files into skill directory
 - Re-run validation (counts as sub-iteration)
 
 **Example issues caught:**
+
 - Broken link: `[CLI Commands](references/CLI-COMMANDS.md)` when file doesn't exist
 - Escaped reference: `[Other skill](../../other-skill/SKILL.md)` crosses skill boundary
 
@@ -266,22 +284,27 @@ cd scripts && npm run references {skill-name}
 **Action:** Analyze token usage, line count, and gather optimization suggestions
 
 **Commands:**
+
 ```bash
 cd scripts && npm run tokens -- check .github/skills/{skill-name}/SKILL.md
 cd scripts && npm run tokens -- suggest .github/skills/{skill-name}/SKILL.md
 ```
 
 **Line count check (per spec):**
+
 ```bash
 wc -l .github/skills/{skill-name}/SKILL.md
 ```
+
 Report a warning if SKILL.md exceeds 500 lines (spec recommendation).
 
 **Token Budgets** (from [skill-authoring](/.github/skills/skill-authoring)):
+
 - SKILL.md: < 500 tokens (soft limit), < 5000 (hard limit)
-- references/*.md: < 1000 tokens each
+- references/\*.md: < 1000 tokens each
 
 **Capture:**
+
 - Current token count
 - Token delta from start
 - Optimization suggestions (for summary)
@@ -295,6 +318,7 @@ See [TOKEN-INTEGRATION.md](TOKEN-INTEGRATION.md) for details on token optimizati
 **Action:** Generate before/after comparison for user review
 
 **Display format:**
+
 ```
 ╔══════════════════════════════════════════════════════════════════╗
 ║  SENSEI SUMMARY: {skill-name}                                    ║
@@ -318,6 +342,7 @@ See [TOKEN-INTEGRATION.md](TOKEN-INTEGRATION.md) for details on token optimizati
 ```
 
 **Captured metrics:**
+
 - Score change (Low → Medium-High)
 - Token delta (+/- tokens)
 - Trigger count change
@@ -330,6 +355,7 @@ See [TOKEN-INTEGRATION.md](TOKEN-INTEGRATION.md) for details on token optimizati
 **Action:** Ask user how to proceed with changes
 
 **Options:**
+
 ```
 Choose an action:
   [C] Commit changes - Save improvements with "sensei: improve {skill-name}"
@@ -338,6 +364,7 @@ Choose an action:
 ```
 
 **Commit flow:**
+
 ```bash
 git add .github/skills/{skill-name}/SKILL.md
 git add tests/{skill-name}/
@@ -351,6 +378,7 @@ git commit -m "sensei: improve {skill-name} frontmatter
 
 **Issue flow:**
 Creates a GitHub issue with:
+
 - Title: `[sensei] Token optimization suggestions for {skill-name}`
 - Body: Summary table + unimplemented suggestions
 - Labels: `enhancement`, `skill-quality`
@@ -360,11 +388,13 @@ Creates a GitHub issue with:
 **Check:** Has the target been reached?
 
 **Exit conditions (move to next skill):**
+
 - Score >= Medium-High AND tests pass
 - Iteration count >= 5 (timeout)
 - Unrecoverable error
 
 **Continue condition:**
+
 - Score < Medium-High OR tests failing
 - Iteration count < 5
 
@@ -438,36 +468,38 @@ git log --oneline -- .github/skills/{skill-name}/SKILL.md
 git show {commit-hash}
 ```
 
-
 ## Success Criteria
 
 Beyond frontmatter scoring, Anthropic's [Complete Guide](https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf) recommends defining runtime success criteria.
 
 ### Quantitative Metrics
 
-| Metric | Target | How to Measure |
-|--------|--------|----------------|
-| Trigger accuracy | 90%+ of relevant queries | Run 10-20 test queries that should trigger the skill |
-| Tool call efficiency | Fewer calls with skill than without | Compare same task with/without skill |
-| Error rate | 0 failed API calls per workflow | Monitor MCP logs during test runs |
+| Metric               | Target                              | How to Measure                                       |
+| -------------------- | ----------------------------------- | ---------------------------------------------------- |
+| Trigger accuracy     | 90%+ of relevant queries            | Run 10-20 test queries that should trigger the skill |
+| Tool call efficiency | Fewer calls with skill than without | Compare same task with/without skill                 |
+| Error rate           | 0 failed API calls per workflow     | Monitor MCP logs during test runs                    |
 
 ### Qualitative Metrics
 
-| Metric | How to Assess |
-|--------|---------------|
-| No next-step prompting needed | Note how often you redirect or clarify during testing |
-| Workflows complete without correction | Run same request 3-5 times, compare consistency |
+| Metric                                | How to Assess                                         |
+| ------------------------------------- | ----------------------------------------------------- |
+| No next-step prompting needed         | Note how often you redirect or clarify during testing |
+| Workflows complete without correction | Run same request 3-5 times, compare consistency       |
 
 ## Runtime Iteration Signals
 
 ### Undertriggering
+
 **Symptoms:** Skill doesn't load when it should, users manually enabling it.
 **Fixes:** Add more trigger phrases, include technical term keywords, test with paraphrased requests.
 
 ### Overtriggering
+
 **Symptoms:** Skill loads for irrelevant queries, users disabling it.
 **Fixes:** Make description more specific, use distinctive WHEN: phrases. In small skill sets: adding negative triggers may help. In large sets (15+): prefer positive-only routing.
 
 ### Execution Issues
+
 **Symptoms:** Inconsistent results, API failures, user corrections needed.
 **Fixes:** Add error handling to body, add validation steps, consider bundling validation scripts.

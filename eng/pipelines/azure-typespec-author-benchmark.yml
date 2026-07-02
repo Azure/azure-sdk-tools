@@ -1,0 +1,176 @@
+# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+# Internal Usage Guide:
+# - Purpose: benchmark azure-typespec-author in two execution modes:
+#   1) forced mode (code-quality oriented), 2) trigger mode (skill-invocation oriented).
+# - Entry: run this pipeline manually (trigger/pr are disabled).
+# - Skill source:
+#   - SkillBranch empty: evaluate the current checked-out branch.
+#   - SkillBranch set: overlay SKILL.md + references from that branch before evaluation.
+#
+# Structure:
+# - Stage: EvalTypeSpecAuthor
+# - Job A: RunEvalsForCodeQuality   -> uses forced eval mode
+# - Job B: RunEvalsForSkillInvokation -> uses trigger eval mode
+# - Each job executes 5 domain suites (versioning, armtemplate, longrunningoperation,
+#   decorators, warning) as separate steps and uploads artifacts.
+#
+# Why split by suite:
+# - Faster fault isolation: failures are scoped to a small case group.
+# - Easier log querying and triage: each suite has a dedicated step name and timeout.
+# - Better resiliency: continueOnError at step level keeps later suites running.
+trigger: none
+pr: none
+
+parameters:
+- name: PythonVersion
+  type: string
+  default: '3.10'
+- name: SkillBranch
+  displayName: Branch containing the azure-typespec-author skill source (SKILL.md + references/) to evaluate. Defaults to the branch this pipeline was triggered from.
+  type: string
+  default: $(Build.SourceBranchName)
+
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    Use1ESOfficial: true
+    stages:
+      - stage: EvalTypeSpecAuthor
+        displayName: Azure TypeSpec Author Skill Evaluation
+        variables:
+          - template: /eng/pipelines/templates/variables/globals.yml
+          - template: /eng/pipelines/templates/variables/image.yml
+        pool:
+          name: $(LINUXPOOL)
+          image: $(LINUXVMIMAGE)
+          os: linux
+        jobs:
+          # Forced mode: each suite runs in an independent step to isolate failures
+          # and simplify error-log lookup by suite name.
+          - job: RunEvalsForCodeQuality
+            displayName: Run Vally Evaluations for Code Quality
+            timeoutInMinutes: 170
+            steps:
+              - checkout: self
+                fetchDepth: 0
+
+              - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-setup.yml
+                parameters:
+                  SkillBranch: ${{ parameters.SkillBranch }}
+
+              # Run evaluations — each suite gets its own step with timeout
+              # and continueOnError so failures don't block subsequent suites.
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
+                parameters:
+                  EvalFile: forced.eval.yaml
+                  SuiteName: versioning-forced
+                  DisplayName: Run force invokation suite - versioning
+                  TimeoutMinutes: 50
+                  Tag: suite=versioning
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
+                parameters:
+                  EvalFile: forced.eval.yaml
+                  SuiteName: armtemplate-forced
+                  DisplayName: Run force invokation suite - armtemplate
+                  TimeoutMinutes: 40
+                  Tag: suite=armtemplate
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
+                parameters:
+                  EvalFile: forced.eval.yaml
+                  SuiteName: longrunningoperation-forced
+                  DisplayName: Run force invokation suite - longrunningoperation
+                  TimeoutMinutes: 25
+                  Tag: suite=lro
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
+                parameters:
+                  EvalFile: forced.eval.yaml
+                  SuiteName: decorators-forced
+                  DisplayName: Run force invokation suite - decorators
+                  TimeoutMinutes: 15
+                  Tag: suite=decorators
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
+                parameters:
+                  EvalFile: forced.eval.yaml
+                  SuiteName: warning-forced
+                  DisplayName: Run force invokation suite - warning
+                  TimeoutMinutes: 25
+                  Tag: suite=warning
+
+            templateContext:
+              outputs:
+                - output: pipelineArtifact
+                  path: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/results
+                  artifact: eval-results-code-quality-$(Build.BuildId)
+                  displayName: Upload eval results
+                  condition: always()
+
+                - output: pipelineArtifact
+                  path: $(Build.StagingDirectory)/qa-bot-log
+                  artifact: qa-bot-service-log-code-quality
+                  displayName: Upload QA bot backend log
+                  condition: always()
+
+          # Trigger mode: same suite split strategy for comparable diagnostics
+          # and easier cross-mode failure analysis.
+          - job: RunEvalsForSkillInvocation
+            displayName: Run Vally Evaluations for Skill Invocation
+            timeoutInMinutes: 170
+            steps:
+              - checkout: self
+                fetchDepth: 0
+
+              - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-setup.yml
+                parameters:
+                  SkillBranch: ${{ parameters.SkillBranch }}
+                  StartQaBotBackend: false
+                  BuildMockMcpServer: true
+
+              # Run evaluations — each suite gets its own step with timeout
+              # and continueOnError so failures don't block subsequent suites.
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
+                parameters:
+                  EvalFile: trigger.eval.yaml
+                  SuiteName: versioning
+                  DisplayName: Run suite - versioning
+                  TimeoutMinutes: 50
+                  Tag: suite=versioning
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
+                parameters:
+                  EvalFile: trigger.eval.yaml
+                  SuiteName: armtemplate
+                  DisplayName: Run suite - armtemplate
+                  TimeoutMinutes: 40
+                  Tag: suite=armtemplate
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
+                parameters:
+                  EvalFile: trigger.eval.yaml
+                  SuiteName: longrunningoperation
+                  DisplayName: Run suite - longrunningoperation
+                  TimeoutMinutes: 25
+                  Tag: suite=lro
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
+                parameters:
+                  EvalFile: trigger.eval.yaml
+                  SuiteName: decorators
+                  DisplayName: Run suite - decorators
+                  TimeoutMinutes: 15
+                  Tag: suite=decorators
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
+                parameters:
+                  EvalFile: trigger.eval.yaml
+                  SuiteName: warning
+                  DisplayName: Run suite - warning
+                  TimeoutMinutes: 25
+                  Tag: suite=warning
+
+            templateContext:
+              outputs:
+                - output: pipelineArtifact
+                  path: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/results
+                  artifact: eval-results-skill-invocation-$(Build.BuildId)
+                  displayName: Upload eval results
+                  condition: always()

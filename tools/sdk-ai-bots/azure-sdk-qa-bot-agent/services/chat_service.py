@@ -31,8 +31,17 @@ from models.knowledge import (
 )
 from services.conversation_service import ConversationService
 from tools import TOOL_REGISTRY
-from skills.tenant_skills import get_skill_to_tenant_map
-from utils.azure_ai_foundry import get_openai_client, get_project_client
+from skills.tenant_skills import (
+    build_skill_content,
+    get_skill_name_for_tenant,
+    get_skill_to_tenant_map,
+)
+from utils.azure_ai_foundry import (
+    get_openai_client,
+    get_project_client,
+    get_stateless_session_id,
+    set_stateless_session_id,
+)
 from utils.teams_image import get_image_data_uri
 from utils.text_util import preprocess_message
 from utils.azure_memory_store import sanitize_scope
@@ -43,6 +52,7 @@ from openai import (
     APIStatusError,
     APITimeoutError,
     AsyncOpenAI,
+    BadRequestError,
     NotFoundError,
 )
 from openai.types.responses import Response as OpenAIResponse
@@ -79,6 +89,8 @@ EMPTY_RESPONSE_MESSAGE = (
 
 # -- Stream event types ---------------------------------------------------
 STREAM_EVENT_RESPONSE_COMPLETED = "response.completed"
+STREAM_EVENT_RESPONSE_FAILED = "response.failed"
+STREAM_EVENT_RESPONSE_INCOMPLETE = "response.incomplete"
 
 _CITATION_RE = re.compile(r"[^\w\s]*cite[^\w\s]*turn\d+\S*")
 
@@ -125,9 +137,18 @@ class ChatService:
         agent = await self._get_agent(project_client)
         openai_client = get_openai_client()
 
-        agent_conversation_id, is_new = await self._resolve_conversation(
-            openai_client, req
-        )
+        # Stateless calls (no customer conversation_id) skip conversation
+        # threading and reuse a warm sandbox; threaded calls resolve history.
+        stateless = not req.conversation_id
+        if stateless:
+            agent_conversation_id, is_new = None, True
+            agent_session_id = get_stateless_session_id()
+            logger.info("Stateless request: reusing warm session=%s", agent_session_id)
+        else:
+            agent_conversation_id, is_new = await self._resolve_conversation(
+                openai_client, req
+            )
+            agent_session_id = None
         conversation_items: list[ResponseInputItemParam] = []
         if is_new:
             tenant_system_msg = self._build_tenant_system_message(req.tenant_id)
@@ -192,18 +213,45 @@ class ChatService:
             openai_client=openai_client,
             conversation_items=conversation_items,
             agent_conversation_id=agent_conversation_id,
+            agent_session_id=agent_session_id,
             agent_ref=agent_ref,
         )
 
         response: OpenAIResponse | None = None
+        last_event_type: str | None = None
         async for event in stream:
             logger.debug("Stream event: type=%s, content=%s", event.type, event)
+            last_event_type = event.type
             if event.type == STREAM_EVENT_RESPONSE_COMPLETED:
                 response = event.response
                 break
+            if event.type in (
+                STREAM_EVENT_RESPONSE_FAILED,
+                STREAM_EVENT_RESPONSE_INCOMPLETE,
+            ):
+                failed = getattr(event, "response", None)
+                logger.error(
+                    "Agent stream %s: error=%s, incomplete_details=%s, status=%s, "
+                    "conversation=%s",
+                    event.type,
+                    getattr(failed, "error", None),
+                    getattr(failed, "incomplete_details", None),
+                    getattr(failed, "status", None),
+                    agent_conversation_id,
+                )
 
         if response is None:
-            raise RuntimeError("Agent stream ended without a response.completed event")
+            raise RuntimeError(
+                "Agent stream ended without a response.completed event "
+                f"(last_event={last_event_type})"
+            )
+
+        # Cache the warm sandbox id so later stateless calls reuse it.
+        if stateless and not get_stateless_session_id():
+            extra = getattr(response, "model_extra", None) or {}
+            captured = extra.get("agent_session_id")
+            set_stateless_session_id(captured)
+            logger.info("Stateless request: captured warm session=%s", captured)
 
         # Extract AI Foundry trace ID from x-request-id header.
         # The header may contain duplicated values separated by comma.
@@ -258,29 +306,53 @@ class ChatService:
     async def _invoke_agent_with_retry(
         openai_client: AsyncOpenAI,
         conversation_items: list[ResponseInputItemParam],
-        agent_conversation_id: str,
         agent_ref: dict[str, str],
+        agent_conversation_id: str | None = None,
+        agent_session_id: str | None = None,
         max_retries: int = STREAM_CREATE_MAX_RETRIES,
         retry_delay: float = STREAM_CREATE_RETRY_DELAY_SECS,
     ):
         """Create a responses stream with bounded retries for transient failures.
 
-        Retries on ``APIStatusError`` (4xx/5xx), ``APIConnectionError``, and
-        ``APITimeoutError``.  The detailed status code and error message are
-        logged so they flow into telemetry.
+        Threaded calls pass ``conversation``; stateless calls pass a reused
+        ``agent_session_id``. A cached session that the platform rejects
+        (404/400 — deleted or expired) is dropped so the next attempt creates a
+        fresh one. Other ``APIStatusError`` / connection / timeout errors retry
+        with the same parameters.
         """
         last_error: Exception | None = None
 
         for attempt in range(1, max_retries + 1):
+            extra_body: dict[str, Any] = {"agent_reference": agent_ref}
+            kwargs: dict[str, Any] = {}
+            if agent_conversation_id:
+                kwargs["conversation"] = agent_conversation_id
+            if agent_session_id:
+                extra_body["agent_session_id"] = agent_session_id
             try:
                 return await openai_client.responses.create(
                     input=conversation_items,
-                    conversation=agent_conversation_id,
                     store=True,
                     stream=True,
-                    extra_body={
-                        "agent_reference": agent_ref,
-                    },
+                    extra_body=extra_body,
+                    **kwargs,
+                )
+            except (NotFoundError, BadRequestError) as ex:
+                last_error = ex
+                # A rejected cached session: drop it and retry without one so
+                # the platform provisions a fresh sandbox.
+                if agent_session_id:
+                    set_stateless_session_id(None)
+                    agent_session_id = None
+                    continue
+                logger.warning(
+                    "Failed to create agent stream (attempt %d/%d): "
+                    "conversation=%s, error=%s",
+                    attempt,
+                    max_retries,
+                    agent_conversation_id,
+                    ex,
+                    exc_info=True,
                 )
             except (APIConnectionError, APITimeoutError, APIStatusError) as ex:
                 last_error = ex
@@ -492,12 +564,20 @@ class ChatService:
         return items
 
     def _build_tenant_system_message(self, tenant_id: TenantID) -> str:
-        """Inject tenant context so the agent knows the current domain."""
+        """Inject tenant context + the default skill so the agent can route itself."""
         parts: list[str] = [f"[tenant_context] original_tenant_id={tenant_id.value}"]
 
         scope_desc = get_tenant_scope_description(tenant_id)
         if scope_desc:
             parts.append(f"\n[tenant_scope]\n{scope_desc}")
+
+        skill_name = get_skill_name_for_tenant(tenant_id)
+        skill_content = build_skill_content(tenant_id) if skill_name else ""
+        if skill_content:
+            parts.append(
+                f"\n[skill] name={skill_name} "
+                f"{skill_content}"
+            )
 
         return "\n".join(parts)
 
@@ -519,7 +599,10 @@ class ChatService:
         return f"[memory_scope] value={memory_scope}"
 
     def _postprocess(
-        self, req: ChatRequest, response: OpenAIResponse, agent_conversation_id: str
+        self,
+        req: ChatRequest,
+        response: OpenAIResponse,
+        agent_conversation_id: str | None,
     ) -> ChatResponse:
         """Map hosted-agent response to `ChatResponse`."""
         tool_results = self._extract_tool_results(response.output)

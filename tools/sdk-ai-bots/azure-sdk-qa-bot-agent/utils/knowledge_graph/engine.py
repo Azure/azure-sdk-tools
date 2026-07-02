@@ -16,6 +16,7 @@ import logging
 import time
 from typing import Any
 
+from config.app_config import get as cfg
 from utils.knowledge_graph.filtering import wrap_entity_store
 
 logger = logging.getLogger(__name__)
@@ -53,20 +54,36 @@ async def preload_report_embeddings(config: Any) -> dict[str, list[float]]:
         )
         id_field = store.id_field
         vector_field = store.vector_field
-        # Azure AI Search caps ``$top`` at 1000, so page via
-        # ``results_per_page``; the SDK iterates continuation tokens.
-        results = store.db_connection.search(
-            search_text="*",
-            select=[id_field, vector_field],
-            results_per_page=1000,
-        )
-        cache: dict[str, list[float]] = {}
-        for result in results:
-            doc_id = result.get(id_field)
-            vector = result.get(vector_field)
-            if doc_id and vector is not None:
-                cache[str(doc_id)] = list(vector)
-        return cache
+
+        # ``SearchItemPaged`` already iterates every match via continuation
+        # tokens, so ``results_per_page`` only tunes the page size to reduce
+        # round-trips. Older/newer azure-search-documents releases disagree on
+        # whether ``search()`` accepts ``results_per_page`` — some forward the
+        # unknown kwarg all the way down to ``Session.request()`` and raise
+        # ``TypeError`` *lazily during iteration*. So collect inside a helper and
+        # retry with default paging if the page-size kwarg is rejected.
+        def _collect(**extra: object) -> dict[str, list[float]]:
+            results = store.db_connection.search(
+                search_text="*",
+                select=[id_field, vector_field],
+                **extra,
+            )
+            out: dict[str, list[float]] = {}
+            for result in results:
+                doc_id = result.get(id_field)
+                vector = result.get(vector_field)
+                if doc_id and vector is not None:
+                    out[str(doc_id)] = list(vector)
+            return out
+
+        try:
+            return _collect(results_per_page=1000)
+        except TypeError:
+            logger.warning(
+                "azure-search 'search()' rejected results_per_page; "
+                "retrying community-embedding preload with default paging."
+            )
+            return _collect()
 
     start = time.monotonic()
     try:
@@ -147,16 +164,32 @@ def build_context_builder(
     )
     context_builder = engine.context_builder
     context_params = dict(engine.context_builder_params or {})
+
+    # Optimization #1: in refs-only mode we never run the LLM synthesis that
+    # would consume the community-report summaries, so the default
+    # community_prop (~0.15 of the token budget) is spent assembling context we
+    # discard. Redirect that budget to source text units — the only thing we
+    # extract as references — and widen the window so more candidate units are
+    # pulled in. Overridable via GRAPH_* App Configuration keys.
+    context_params["community_prop"] = float(cfg("GRAPH_LS_COMMUNITY_PROP", "0.0"))
+    context_params["text_unit_prop"] = float(cfg("GRAPH_LS_TEXT_UNIT_PROP", "0.8"))
+    context_params["max_context_tokens"] = int(
+        cfg("GRAPH_LS_MAX_CONTEXT_TOKENS", "16000")
+    )
     wrap_entity_store(context_builder)
 
     logger.info(
         "Built LocalSearch context builder in %.2fs "
-        "(entities=%d, reports=%d, text_units=%d, relationships=%d)",
+        "(entities=%d, reports=%d, text_units=%d, relationships=%d, "
+        "text_unit_prop=%.2f, community_prop=%.2f, max_context_tokens=%d)",
         time.monotonic() - start,
         len(entities_),
         len(reports),
         len(text_units_),
         len(relationships_),
+        context_params["text_unit_prop"],
+        context_params["community_prop"],
+        context_params["max_context_tokens"],
     )
     return context_builder, context_params
 

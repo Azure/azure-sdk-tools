@@ -142,7 +142,10 @@ class KnowledgeGraphService:
             filtering.allowed_entity_ids_var().reset(token)
 
         return extraction.extract_references_from_context(
-            self._dfs, result.context_records
+            self._dfs,
+            result.context_records,
+            expand_communities=(cfg("GRAPH_LS_EXPAND_COMMUNITIES", "true").lower() == "true"),
+            max_expansion_units=int(cfg("GRAPH_LS_EXPANSION_UNITS", "40")),
         )
 
     # ------------------------------------------------------------------ #

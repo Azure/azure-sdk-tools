@@ -51,7 +51,7 @@ _request_id_ctx_var: ContextVar[str] = ContextVar("request_id", default="system"
 # Snippet length cap mirrored from the chat-agent tool that used to do
 # this dedupe locally. Keeps the over-the-wire shape identical to the
 # pre-A-route implementation so the agent's prompt stays bounded.
-_GRAPH_SNIPPET_MAX_CHARS = 1200
+_GRAPH_SNIPPET_MAX_CHARS = 3000
 
 
 class _RequestIdFilter(logging.Filter):

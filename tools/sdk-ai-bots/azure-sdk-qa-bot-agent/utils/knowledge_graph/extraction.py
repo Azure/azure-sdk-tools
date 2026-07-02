@@ -31,13 +31,25 @@ _FENCE_RE = re.compile(r"^\s*(`{3,}|~{3,})")
 
 
 def extract_references_from_context(
-    dfs: "dict[str, Any]", context_records: Any
+    dfs: "dict[str, Any]",
+    context_records: Any,
+    *,
+    expand_communities: bool = False,
+    max_expansion_units: int = 40,
 ) -> list[Reference]:
     """Resolve cited text-unit short IDs back to source-document references.
 
     Returns one :class:`Reference` per unique cited document (the largest
     text-unit chunk wins as the representative excerpt). Returns an empty
     list when the required parquets are missing or nothing matched.
+
+    When ``expand_communities`` is set (optimization #2), the directly-cited
+    text units are augmented with additional units drawn from the **community
+    membership** of the cited entities: the query's matched entities → the
+    communities they belong to → those communities' other member text units.
+    This surfaces topically-associated source documents from the same
+    knowledge cluster that the token-limited local context did not select,
+    bounded by ``max_expansion_units``.
     """
     text_units_df = dfs.get("text_units")
     documents_df = dfs.get("documents")
@@ -57,11 +69,25 @@ def extract_references_from_context(
     if not normalised_ids:
         return []
 
-    matched_units = text_units_df[
-        text_units_df["human_readable_id"].isin(list(normalised_ids))
-    ]
+    base_mask = text_units_df["human_readable_id"].isin(list(normalised_ids))
+    matched_units = text_units_df[base_mask]
     if matched_units.empty:
         return []
+
+    if expand_communities:
+        expansion_ids = _community_expansion_unit_ids(
+            dfs, matched_units, max_expansion_units
+        )
+        if expansion_ids and "id" in text_units_df.columns:
+            expand_mask = text_units_df["id"].astype(str).isin(expansion_ids)
+            matched_units = text_units_df[base_mask | expand_mask]
+            logger.info(
+                "GraphRAG community expansion: +%d associated text units "
+                "(base=%d, total=%d)",
+                max(0, len(matched_units) - int(base_mask.sum())),
+                int(base_mask.sum()),
+                len(matched_units),
+            )
 
     doc_index = documents_df.drop_duplicates(subset=["id"]).set_index("id")
     # ``raw_data`` is the column GraphRAG persists from
@@ -138,6 +164,82 @@ def extract_references_from_context(
         )
 
     return references
+
+
+def _flatten_ids(value: Any) -> list[str]:
+    """Coerce a cell holding id(s) into a flat list of string ids.
+
+    GraphRAG stores list-valued id columns (``entity_ids``, ``community_ids``,
+    ``text_unit_ids``) as python lists / numpy arrays, but older snapshots may
+    store a single scalar. This normalises both.
+    """
+    if value is None:
+        return []
+    if isinstance(value, (list, tuple, set)):
+        return [str(v) for v in value if v is not None and str(v) != ""]
+    try:
+        import numpy as np
+
+        if isinstance(value, np.ndarray):
+            return [str(v) for v in value.tolist() if v is not None and str(v) != ""]
+    except Exception:  # noqa: BLE001
+        pass
+    text = str(value).strip()
+    return [text] if text else []
+
+
+def _community_expansion_unit_ids(
+    dfs: "dict[str, Any]", matched_units: Any, cap: int
+) -> set[str]:
+    """Text-unit ids from the communities of the cited entities (optimization #2).
+
+    Chain: cited text units → their ``entity_ids`` → those entities'
+    ``community_ids`` → the communities' ``text_unit_ids``. All hops use stable
+    parquet columns and are guarded — any missing column disables expansion
+    (returns an empty set) rather than raising. The result is capped at ``cap``
+    to keep the reference list bounded.
+    """
+    entities_df = dfs.get("entities")
+    communities_df = dfs.get("communities")
+    if entities_df is None or communities_df is None:
+        return set()
+    if "entity_ids" not in matched_units.columns:
+        return set()
+    if "id" not in entities_df.columns or "community_ids" not in entities_df.columns:
+        return set()
+    if "id" not in communities_df.columns or "text_unit_ids" not in communities_df.columns:
+        return set()
+
+    try:
+        # 1) entities appearing in the cited text units
+        entity_ids: set[str] = set()
+        for cell in matched_units["entity_ids"]:
+            entity_ids.update(_flatten_ids(cell))
+        if not entity_ids:
+            return set()
+
+        # 2) the communities those entities belong to
+        ent_rows = entities_df[entities_df["id"].astype(str).isin(entity_ids)]
+        community_ids: set[str] = set()
+        for cell in ent_rows["community_ids"]:
+            community_ids.update(_flatten_ids(cell))
+        if not community_ids:
+            return set()
+
+        # 3) the member text units of those communities (bounded)
+        comm_rows = communities_df[communities_df["id"].astype(str).isin(community_ids)]
+        unit_ids: set[str] = set()
+        for cell in comm_rows["text_unit_ids"]:
+            unit_ids.update(_flatten_ids(cell))
+            if len(unit_ids) >= cap:
+                break
+        return set(list(unit_ids)[:cap])
+    except Exception:  # noqa: BLE001
+        logger.warning(
+            "GraphRAG community expansion failed; falling back to base refs.",
+            exc_info=True,
+        )
+        return set()
 
 
 def _read_doc_attribution(doc_index: Any, doc_id: str) -> tuple[str, str]:

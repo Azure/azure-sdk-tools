@@ -164,14 +164,16 @@ if __name__ == "__main__":
         stream=sys.stdout,
     )
     # Silence noisy loggers that flood container logs.
-    for noisy_logger in [
-        "azure.core.pipeline.policies.http_logging_policy",  # HTTP request/response headers
-        "azure.cosmos._cosmos_http_logging_policy",  # Cosmos DB request/response logging
-        "azure.monitor.opentelemetry.exporter",  # telemetry transmission
-        "uvicorn.access",  # health-probe GET /readiness /liveness
-        "uvicorn",  # uvicorn root logger (also emits access logs)
+    for noisy_logger, level in [
+        ("azure.core.pipeline.policies.http_logging_policy", logging.WARNING),  # HTTP request/response headers
+        ("azure.cosmos._cosmos_http_logging_policy", logging.WARNING),  # Cosmos DB request/response logging
+        ("azure.monitor.opentelemetry.exporter", logging.WARNING),  # telemetry transmission
+        ("uvicorn.access", logging.WARNING),  # health-probe GET /readiness /liveness
+        ("uvicorn", logging.WARNING),  # uvicorn root logger (also emits access logs)
+        ("microsoft.opentelemetry.a365.core.exporters.agent365_exporter", logging.CRITICAL),  # A365 telemetry export 403s
+        ("microsoft.opentelemetry._distro", logging.ERROR),  # benign "No module named 'agents'" (openai-agents SDK unused)
     ]:
-        logging.getLogger(noisy_logger).setLevel(logging.WARNING)
+        logging.getLogger(noisy_logger).setLevel(level)
 
     logger.info("Agent container starting...")
 

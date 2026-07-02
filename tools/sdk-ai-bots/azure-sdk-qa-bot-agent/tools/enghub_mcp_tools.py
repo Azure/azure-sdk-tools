@@ -37,9 +37,7 @@ _DEFAULT_ENGHUB_MCP_SCOPE = "api://91c02195-fbbd-4bc8-8c69-5b75dadc5672/.default
 _TOKEN_REFRESH_BUFFER_SECS = 5 * 60
 _MCP_REQUEST_TIMEOUT_SECS = 60
 
-# Client-side allowed tool names (defence in depth). Trim to what you need.
-_ENGHUB_ALLOWED_TOOLS: list[str] | None = None
-
+# Client-side allowed tool names
 
 class _EntraTokenManager:
     """Caches an Entra bearer token and refreshes it before expiry."""

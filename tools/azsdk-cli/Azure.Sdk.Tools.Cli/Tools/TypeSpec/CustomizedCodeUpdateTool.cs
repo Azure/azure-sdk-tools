@@ -267,12 +267,24 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         // Detect if customizationRequest is an APIView URL (prod or staging)
         string? apiViewUrl = IsApiViewUrl(customizationRequest) ? customizationRequest : null;
 
-        var languageService = await ResolveLanguageServiceAsync(packagePath, apiViewUrl, ct);
+        LanguageService? languageService = await ResolveLanguageServiceAsync(packagePath, apiViewUrl, ct);
+        if (languageService == null)
+        {
+            var message = $"No language service found for package path: {packagePath}";
+            return new CustomizedCodeUpdateResponse
+            {
+                Success = false,
+                ResponseError = message,
+                Message = message,
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.NoLanguageService,
+                BuildResult = message
+            };
+        }
         PackageInfo? packageInfo = null;
 
         try
         {
-            packageInfo = languageService != null ? await languageService.GetPackageInfo(packagePath, ct) : null;
+            packageInfo = await languageService.GetPackageInfo(packagePath, ct);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
@@ -360,7 +372,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             }
             try
             {
-                var classifyRequest = new ClassifyCustomizationRequest(null, referencePatternContent, feedbackItems, languageService?.Language.ToString() ?? string.Empty, tspProjectPath)
+                var classifyRequest = new ClassifyCustomizationRequest(null, referencePatternContent, feedbackItems, languageService.Language.ToString() ?? string.Empty, tspProjectPath)
                 {
 
                     IsBatchClassify = true,
@@ -461,7 +473,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     }
 
                     logger.LogDebug("Applying tsp customization for: {feedback}", itemDetails.Text);
-                    var languageTaggedRequest = $"For {languageService?.Language.ToString() ?? string.Empty}: {itemDetails.Text}";
+                    var languageTaggedRequest = $"For {languageService.Language.ToString()}: {itemDetails.Text}";
                     var tspCustomizationResult = await typeSpecCustomizationService.ApplyCustomizationAsync(tspProjectPath, languageTaggedRequest, ct: ct);
 
                     if (tspCustomizationResult.Success)
@@ -678,10 +690,10 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 editScope, tspFixSucceeded, codeCustomizations, specChangeRequired.Count, customCodeChangeRequired.Count, manualInterventions.Count);
 
             // Build for error context if no build happened yet (pure CODE_CUSTOMIZATION path or regen failed)
-            if (!buildSucceeded && buildError == null && languageService != null)
+            if (!buildSucceeded && buildError == null)
             {
                 logger.LogInformation("Building for error context...");
-                var (s, e, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
+                var (s, e, _) = await languageService!.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
                 buildSucceeded = s;
                 buildError = e;
             }
@@ -721,7 +733,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 });
             }
 
-            if (languageService == null || !languageService.IsCustomizedCodeUpdateSupported)
+            if (!languageService!.IsCustomizedCodeUpdateSupported)
             {
                 return CreateResponse(new CustomizedCodeUpdateResponse
                 {

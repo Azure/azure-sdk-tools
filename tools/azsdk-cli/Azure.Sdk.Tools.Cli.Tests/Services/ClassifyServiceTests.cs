@@ -30,8 +30,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         private Mock<INpxHelper> _mockNpxHelper;
         private Mock<IPowershellHelper> _mockPowerShellHelper;
         private Mock<ISpecGenSdkConfigHelper> _mockSpecGenSdkConfigHelper;
-        private TestLogger<SdkBuildTool> _logger;
-        private TempDirectory _tempDirectory;
+        private TestLogger<SdkBuildTool> logger;
         private List<LanguageService> _languageServices;
         private Mock<ICommonValidationHelpers> _commonValidationHelpers;
         [OneTimeSetUp]
@@ -69,7 +68,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _mockSpecGenSdkConfigHelper = new Mock<ISpecGenSdkConfigHelper>();
             _mockNpxHelper = new Mock<INpxHelper>();
             _mockPowerShellHelper = new Mock<IPowershellHelper>();
-            _logger = new TestLogger<SdkBuildTool>();
+            logger = new TestLogger<SdkBuildTool>();
             _commonValidationHelpers = new Mock<ICommonValidationHelpers>();
             _mockAgentRunner = new Mock<ICopilotAgentRunner>();
             _mockTypeSpecHelper = new Mock<ITypeSpecHelper>();

@@ -1,6 +1,6 @@
 # Tools available in Azure SDK MCP server
 
-This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.23.
+This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.24.
 
 ## Tools list
 
@@ -29,9 +29,9 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_engsys_codeowner_remove_package_owner |  | Remove source owner(s) from a package in CODEOWNERS work items. |
 | azsdk_engsys_codeowner_update_cache | `azsdk config codeowners update-cache` | Run the CODEOWNERS cache update pipeline. Use this after making changes to ownership information to unblock releases or other pipelines. |
 | azsdk_engsys_codeowner_view |  | View CODEOWNERS associations for a user, label(s), package, or path. Exactly one axis (githubUser, label, package, or path) must be specified. Multiple labels are treated as AND. |
-| azsdk_get_failed_test_case_data |  | Get detailed information (error messages, stack traces, output) for a specific failed test case by title from a TRX file. Use this to debug a particular test failure. |
-| azsdk_get_failed_test_cases | `azsdk pkg test results` | Get list of all failed test case titles (names only) from a TRX file. Use this to quickly see which tests failed without details. |
-| azsdk_get_failed_test_run_data |  | Get complete details for all failed test cases from a TRX file. Returns full data including error messages, stack traces, and output for every failed test. Use this for comprehensive analysis. |
+| azsdk_get_failed_test_case_data |  | Get detailed information (error messages, stack traces, output) for a specific failed test case by title from a test result file. Use this to debug a particular test failure. |
+| azsdk_get_failed_test_cases | `azsdk pkg test results` | Get list of all failed test case titles (names only) from a test result file. Use this to quickly see which tests failed without details. |
+| azsdk_get_failed_test_run_data |  | Get complete details for all failed test cases from a test result file. Returns full data including error messages, stack traces, and output for every failed test. Use this for comprehensive analysis. |
 | azsdk_get_github_user_details |  | Get GitHub user details and profile information. Find out who a GitHub user is by their username. |
 | azsdk_get_kpi_attestation_status | `azsdk release-plan get-kpi-attestation` | Get KPI attestation status for release plans with given product tree ID and release plan type. If product ID and release plan type are not provided, a TypeSpec project path can be used to resolve them. |
 | azsdk_get_modified_typespec_projects | `azsdk tsp project modified-projects` | This tool returns list of TypeSpec projects modified in current branch |

@@ -550,6 +550,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         {
             if (string.IsNullOrEmpty(SDKBreakingPatternFilePath))
             {
+                logger.LogWarning("SDK breaking change pattern file path is not set.");
                 return Task.FromResult(string.Empty);
             }
             try

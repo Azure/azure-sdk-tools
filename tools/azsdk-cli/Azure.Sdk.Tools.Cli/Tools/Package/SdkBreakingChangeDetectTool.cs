@@ -88,16 +88,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             try
             {
-                var gitHubToken = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
-                if (!string.IsNullOrWhiteSpace(gitHubToken))
-                {
-                    logger.LogInformation("Using GITHUB_TOKEN from environment variable for Copilot SDK authentication.");
-                }
-                else
-                {
-                    // If no GITHUB_TOKEN is provided, log a warning. Some Copilot features may not work properly without it.
-                    logger.LogWarning("No GITHUB_TOKEN environment variable found. Some Copilot features may not work properly.");
-                }
                 logger.LogInformation("Parameters: packagePath={PackagePath}, tspConfigPath={TspConfigPath}, changesOnly={ChangesOnly}",
                     packagePath, tspConfigPath ?? "null", changesOnly);
 

@@ -15,8 +15,8 @@ parameters:
 variables:
     - template: /eng/pipelines/templates/variables/globals.yml
     - template: /eng/pipelines/templates/variables/image.yml
-    - name: appName
-      value: 'azuresdkqabot-function'
+    # `appName` comes from FUNCTION_APP_NAME (exported by load-environment-suite.yml).
+    # Downstream templates read $(FUNCTION_APP_NAME) directly.
     - name: imageName
       value: 'azure-sdk-qa-bot-function'
 
@@ -47,21 +47,21 @@ extends:
                                     # Deploy to staging slot.
                                     - template: /tools/sdk-ai-bots/deployment/pipelines/templates/webapp-deploy.yml
                                       parameters:
-                                          appName: $(appName)
+                                          appName: $(FUNCTION_APP_NAME)
                                           imageName: $(imageName)
                                           imageTag: '${{ parameters.imageTag }}'
                                           slot: staging
 
                                     - template: /tools/sdk-ai-bots/deployment/pipelines/templates/smoke-test.yml
                                       parameters:
-                                          appName: $(appName)
+                                          appName: $(FUNCTION_APP_NAME)
                                           slot: staging
                                           healthPath: /api/health
 
                                     - ${{ if ne(parameters.environment, 'dev') }}:
                                           - template: /tools/sdk-ai-bots/deployment/pipelines/templates/swap-slot.yml
                                             parameters:
-                                                appName: $(appName)
+                                                appName: $(FUNCTION_APP_NAME)
                                                 sourceSlot: staging
                                                 targetSlot: production
 

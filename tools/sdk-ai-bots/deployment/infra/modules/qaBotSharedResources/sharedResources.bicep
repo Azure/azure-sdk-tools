@@ -1,14 +1,44 @@
 targetScope = 'resourceGroup'
 
+// ── Resource-name overrides ─────────────────────────────────────────────────
+// Every resource this module creates gets a param with a sensible default so
+// callers (main.bicep, per-env parameters JSON) can point Bicep at existing
+// resources without a rename — e.g. prod's `azure-sdk-qa-bot` RG was manually
+// built and has different naming from the generated dev/preview environments.
+
+@description('Name of the shared user-assigned managed identity.')
+param managedIdentityName string = 'qabot-identity-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the shared action group.')
+param actionGroupName string = 'qabot-alert-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the shared Key Vault.')
+param keyVaultName string = 'qabot-keyvault-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the shared App Configuration store.')
+param appConfigName string = 'qabot-config-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the shared Azure AI Search service.')
+param searchServiceName string = 'qabot-search-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the shared container registry.')
+param containerRegistryName string = 'qabotcontainer${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the shared storage account.')
+param storageAccountName string = 'qabotstorage${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the shared Cosmos DB account.')
+param cosmosDbAccountName string = 'qabot-db-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
 // User-assigned managed identity for the QA bot app. Its principalId (Entra object ID)
 // is referenced below to grant the app data-plane access to Cosmos DB.
 resource userAssignedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2025-05-31-preview' = {
-  name: 'qabot-identity-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: managedIdentityName
   location: 'westus2'
 }
 
 resource actionGroup 'Microsoft.Insights/actionGroups@2024-10-01-preview' = {
-  name: 'qabot-alert-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: actionGroupName
   location: 'Global'
   properties: {
     groupShortName: 'Alert'
@@ -24,7 +54,7 @@ resource actionGroup 'Microsoft.Insights/actionGroups@2024-10-01-preview' = {
 }
 
 resource vault 'Microsoft.KeyVault/vaults@2026-03-01-preview' = {
-  name: 'qabot-keyvault-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: keyVaultName
   properties: {
     sku: {
       family: 'A'
@@ -41,7 +71,7 @@ resource vault 'Microsoft.KeyVault/vaults@2026-03-01-preview' = {
 }
 
 resource configurationStore 'Microsoft.AppConfiguration/configurationStores@2025-08-01-preview' = {
-  name: 'qabot-config-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: appConfigName
   location: 'westus2'
   properties: {
     encryption: {}
@@ -60,7 +90,7 @@ resource configurationStore 'Microsoft.AppConfiguration/configurationStores@2025
 }
 
 resource searchService 'Microsoft.Search/searchServices@2026-03-01-preview' = {
-  name: 'qabot-search-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: searchServiceName
   location: 'West US 2'
   properties: {
     computeType: 'Default'
@@ -89,7 +119,7 @@ resource searchService 'Microsoft.Search/searchServices@2026-03-01-preview' = {
 }
 
 resource registry 'Microsoft.ContainerRegistry/registries@2026-01-01-preview' = {
-  name: 'qabotcontainer${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: containerRegistryName
   location: 'westus2'
   sku: {
     name: 'Standard'
@@ -97,7 +127,7 @@ resource registry 'Microsoft.ContainerRegistry/registries@2026-01-01-preview' = 
 }
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2026-04-01' = {
-  name: 'qabotstorage${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: storageAccountName
   location: 'westus2'
   properties: {
     dualStackEndpointPreference: {
@@ -219,7 +249,7 @@ resource table2 'Microsoft.Storage/storageAccounts/tableServices/tables@2026-04-
 }
 
 resource databaseAccount 'Microsoft.DocumentDB/databaseAccounts@2026-03-15' = {
-  name: 'qabot-db-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: cosmosDbAccountName
   properties: {
     publicNetworkAccess: 'Enabled'
     enableAutomaticFailover: true

@@ -25,6 +25,13 @@ param ragBasedBackendImageRepository = readEnvironmentVariable('RAG_BASED_BACKEN
 param agentBasedImageRepository      = readEnvironmentVariable('AGENT_BASED_IMAGE_REPOSITORY',      'azure-sdk-qa-bot-agent-server:${env}')
 param frontendImageRepository        = readEnvironmentVariable('FRONTEND_IMAGE_REPOSITORY',        'azure-sdk-qa-bot:${env}')
 
+// Resource names for the primary web apps. Kept in sync with env-suite so the
+// CD pipelines (which read the same values as FRONTEND_SITE_NAME / etc.) and
+// the bicep templates agree on the site names.
+param frontendBaseName               = readEnvironmentVariable('FRONTEND_SITE_NAME',               '')
+param backendSiteName                = readEnvironmentVariable('BACKEND_SITE_NAME',                '')
+param functionAppName                = readEnvironmentVariable('FUNCTION_APP_NAME',                '')
+
 // ── Per-env values (read from .azure/<env>/.env; pipelines override via JSON) ─
 // SERVER_AUDIENCE is auto-populated by the preprovision hook
 // (hooks/preprovision.ts → ensureServerAudience), which creates or looks up

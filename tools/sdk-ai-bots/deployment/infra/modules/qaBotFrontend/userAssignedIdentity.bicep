@@ -9,13 +9,40 @@ param containerRegistryName string
 @description('Frontend container image repository and tag (e.g. `azure-sdk-qa-bot:dev`), pushed to the shared registry by CI / `frontend-predeploy.ts`.')
 param frontendImageRepository string
 
+// Resource-name overrides — see qaBotSharedResources/sharedResources.bicep. In
+// prod the frontend identity, Log Analytics workspace, App Service plan, web
+// app, and bot service share the same short name (`azsdkqabot`).
+@description('Base name shared by the frontend managed identity, Log Analytics workspace, App Service plan, web app, and bot service.')
+param frontendBaseName string = 'azsdkqabot-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the frontend Application Insights component.')
+param frontendAppInsightsName string = 'azsdkqabot-insights-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the email-alerts action group.')
+param frontendEmailActionGroupName string = 'azsdkqabot-email-alerts-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the frontend site diagnostic setting.')
+param frontendDiagnosticSettingName string = 'azsdkqabot-diagnostic-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the health-check web test.')
+param frontendHealthTestName string = 'azsdkqabot-health-test-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the server-errors metric alert.')
+param frontendServerErrorsAlertName string = 'azsdkqabot-server-errors-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the health-check-failure metric alert.')
+param frontendHealthCheckAlertName string = 'azsdkqabot-health-check-failure-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the delete lock guarding the frontend resource group.')
+param frontendDeleteLockName string = 'azsdkqabot-delete-lock-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
 resource userAssignedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2025-05-31-preview' = {
-  name: 'azsdkqabot-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: frontendBaseName
   location: 'westus2'
 }
 
 resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
-  name: 'azsdkqabot-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: frontendBaseName
   location: 'westus2'
   properties: {
     sku: {
@@ -33,7 +60,7 @@ resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
 }
 
 resource component 'Microsoft.Insights/components@2020-02-02' = {
-  name: 'azsdkqabot-insights-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: frontendAppInsightsName
   location: 'westus2'
   kind: 'web'
   properties: {
@@ -54,7 +81,7 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
 }
 
 resource actionGroup 'Microsoft.Insights/actionGroups@2024-10-01-preview' = {
-  name: 'azsdkqabot-email-alerts-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: frontendEmailActionGroupName
   location: 'Global'
   properties: {
     groupShortName: 'EmailAlerts'
@@ -100,7 +127,7 @@ resource roleAssignment2 'Microsoft.Authorization/roleAssignments@2022-04-01' = 
 }
 
 resource serverfarm 'Microsoft.Web/serverfarms@2025-05-01' = {
-  name: 'azsdkqabot-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: frontendBaseName
   location: 'westus2'
   properties: {
     reserved: true
@@ -116,7 +143,7 @@ resource serverfarm 'Microsoft.Web/serverfarms@2025-05-01' = {
 }
 
 resource site 'Microsoft.Web/sites@2025-05-01' = {
-  name: 'azsdkqabot-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: frontendBaseName
   location: 'westus2'
   properties: {
     httpsOnly: true
@@ -218,7 +245,7 @@ resource site 'Microsoft.Web/sites@2025-05-01' = {
 
 resource diagnosticSetting 'microsoft.insights/diagnosticSettings@2021-05-01-preview' = {
   scope: site
-  name: 'azsdkqabot-diagnostic-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: frontendDiagnosticSettingName
   properties: {
     workspaceId: workspace.id
     logs: [
@@ -253,7 +280,7 @@ resource diagnosticSetting 'microsoft.insights/diagnosticSettings@2021-05-01-pre
 }
 
 resource botService 'Microsoft.BotService/botServices@2023-09-15-preview' = {
-  name: 'azsdkqabot-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: frontendBaseName
   properties: {
     displayName: 'Azure SDK Q&A Bot'
     endpoint: 'https://${site.properties.defaultHostName}/api/messages'
@@ -280,7 +307,7 @@ resource channel 'Microsoft.BotService/botServices/channels@2023-09-15-preview' 
 }
 
 resource webtest 'Microsoft.Insights/webtests@2022-06-15' = {
-  name: 'azsdkqabot-health-test-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: frontendHealthTestName
   location: 'westus2'
   tags: {
     'hidden-link:${component.id}': 'Resource'
@@ -319,7 +346,7 @@ resource webtest 'Microsoft.Insights/webtests@2022-06-15' = {
 }
 
 resource metricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
-  name: 'azsdkqabot-server-errors-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: frontendServerErrorsAlertName
   location: 'Global'
   properties: {
     description: 'Alert when server returns 5xx HTTP errors'
@@ -354,7 +381,7 @@ resource metricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
 }
 
 resource metricAlert2 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
-  name: 'azsdkqabot-health-check-failure-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: frontendHealthCheckAlertName
   location: 'Global'
   properties: {
     description: 'Alert when health check fails (server is down or not responding)'
@@ -389,7 +416,7 @@ resource metricAlert2 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
 }
 
 resource lock 'Microsoft.Authorization/locks@2020-05-01' = {
-  name: 'azsdkqabot-delete-lock-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: frontendDeleteLockName
   properties: {
     level: 'CanNotDelete'
     notes: 'This resource group is protected from deletion. Contact the Azure SDK team if you need to remove it.'

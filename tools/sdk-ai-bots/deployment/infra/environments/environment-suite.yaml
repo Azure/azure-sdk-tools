@@ -42,10 +42,17 @@ environments:
         keyVaultName: 'azsdkqabot-kv-dev'
         appConfigName: 'azsdkqabot-config-dev'
         containerRegistryName: 'azsdkqabotacrdev'
+        # Site names for CD pipelines. These are passed as bicep params
+        # (frontendBaseName / backendSiteName / functionAppName) so the
+        # deployed resources match — no post-provision discovery required.
+        frontendSiteName: 'azsdkqabot-dev'
+        backendSiteName: 'azuresdkqabot-server-dev'
+        functionAppName: 'azuresdkqabot-function-dev'
         regions:
             - name: 'westus2'
               ring: 'single'
               enabled: true
+        aiLocation: 'westus2'
         approvalRequired: false
         prodDeployOnlyFromPipeline: false
         localDeployAllowed: true
@@ -62,10 +69,14 @@ environments:
         keyVaultName: 'azsdkqabot-kv-preview'
         appConfigName: 'azsdkqabot-config-preview'
         containerRegistryName: 'azsdkqabotacrpreview'
+        frontendSiteName: 'azsdkqabot-preview'
+        backendSiteName: 'azuresdkqabot-server-preview'
+        functionAppName: 'azuresdkqabot-function-preview'
         regions:
             - name: 'westus2'
               ring: 'single'
               enabled: true
+        aiLocation: 'westus2'
         approvalRequired: true
         prodDeployOnlyFromPipeline: false
         localDeployAllowed: false
@@ -75,13 +86,22 @@ environments:
         rolloutStrategy: 'slot-swap'
 
     prod:
-        subscription: 'azuresdkqabot-prod'
-        subscriptionId: 'REPLACE_WITH_PROD_SUBSCRIPTION_ID'
+        # Real prod values are captured from the pre-existing `azure-sdk-qa-bot` RG
+        # in the Azure SDK Engineering System subscription. Bicep params in
+        # environments/prod.parameters.json override the auto-generated resource
+        # names so `az deployment sub what-if` attaches to the existing resources.
+        subscription: 'Azure SDK Engineering System'
+        subscriptionId: 'a18897a6-7e44-457d-9260-f2854c0aca42'
         tenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
-        resourceGroupPrefix: 'rg-azuresdkqabot-prod'
-        keyVaultName: 'azsdkqabot-kv-prod'
-        appConfigName: 'azsdkqabot-config-prod'
-        containerRegistryName: 'azsdkqabotacrprod'
+        resourceGroupPrefix: 'azure-sdk-qa-bot'
+        keyVaultName: 'azuresdkqabot-keyvalut'
+        appConfigName: 'azuresdkqabot-config'
+        containerRegistryName: 'azuresdkqabotcontainer'
+        # Site names for CD pipelines (must match the resources currently
+        # deployed to the `azure-sdk-qa-bot` RG).
+        frontendSiteName: 'azsdkqabot'
+        backendSiteName: 'azuresdkqabot-server'
+        functionAppName: 'azuresdkqabot-function'
         regions:
             - name: 'westus2'
               ring: 'canary'
@@ -90,6 +110,7 @@ environments:
             # - name: "eastus"
             #   ring: "broad"
             #   enabled: false
+        aiLocation: 'swedencentral'
         approvalRequired: true
         prodDeployOnlyFromPipeline: true
         localDeployAllowed: false

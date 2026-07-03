@@ -13,6 +13,9 @@
     "functionImageRepository":     { "value": "azure-sdk-qa-bot-function:preview" },
     "ragBasedBackendImageRepository": { "value": "azure-sdk-qa-bot-backend:preview" },
     "agentBasedImageRepository":   { "value": "azure-sdk-qa-bot-agent-server:preview" },
-    "frontendImageRepository":     { "value": "azure-sdk-qa-bot:preview" }
+    "frontendImageRepository":     { "value": "azure-sdk-qa-bot:preview" },
+    "frontendBaseName":            { "value": "azsdkqabot-preview" },
+    "backendSiteName":             { "value": "azuresdkqabot-server-preview" },
+    "functionAppName":             { "value": "azuresdkqabot-function-preview" }
   }
 }

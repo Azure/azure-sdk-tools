@@ -1,6 +1,6 @@
 targetScope = 'resourceGroup'
 
-@description('Azure region for the Cognitive Services / Foundry account, its model deployments, and backing Application Insights.')
+@description('Azure region for the Cognitive Services / Foundry account, its model deployments, and backing Application Insights. May differ from the primary `location` because model availability is region-specific (prod uses swedencentral).')
 param location string
 
 @description('Principal (object) ID of the qabot-identity managed identity to grant OpenAI access.')
@@ -12,11 +12,23 @@ param storageAccountName string
 @description('Primary blob service endpoint of the shared storage account (from the shared resources module output).')
 param storageBlobEndpoint string
 
+@description('Name of the Log Analytics workspace backing the agent Application Insights.')
+param agentLogWorkspaceName string = 'qabot-agent-log-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the Application Insights component for the agent.')
+param agentAppInsightsName string = 'qabot-agent-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the Cognitive Services (AIServices) account.')
+param aiResourceName string = 'qabot-ai-resource-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the Foundry project inside the AIServices account.')
+param aiProjectName string = 'qabot-ai'
+
 // Log Analytics workspace backing the agent Application Insights. Created here so
 // the agent layer is self-contained and does not depend on the (now removed)
 // shared qabot-log workspace.
 resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
-  name: 'qabot-agent-log-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: agentLogWorkspaceName
   location: location
   properties: {
     sku: {
@@ -27,7 +39,7 @@ resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
 }
 
 resource component 'Microsoft.Insights/components@2020-02-02' = {
-  name: 'qabot-agent-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: agentAppInsightsName
   location: location
   kind: 'web'
   properties: {
@@ -40,19 +52,19 @@ resource component 'Microsoft.Insights/components@2020-02-02' = {
 }
 
 resource account 'Microsoft.CognitiveServices/accounts@2026-05-01' = {
-  name: 'qabot-ai-resource-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: aiResourceName
   properties: {
     apiProperties: {}
-    customSubDomainName: 'qabot-ai-resource-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+    customSubDomainName: aiResourceName
     networkAcls: {
       defaultAction: 'Allow'
       virtualNetworkRules: []
       ipRules: []
     }
     allowProjectManagement: true
-    defaultProject: 'qabot-ai'
+    defaultProject: aiProjectName
     associatedProjects: [
-      'qabot-ai'
+      aiProjectName
     ]
     publicNetworkAccess: 'Enabled'
     disableLocalAuth: false
@@ -165,7 +177,7 @@ resource adaEmbeddingDeployment 'Microsoft.CognitiveServices/accounts/deployment
 }
 
 resource accountStorageConnection 'Microsoft.CognitiveServices/accounts/connections@2026-05-01' = {
-  name: 'qabotstorage${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: storageAccountName
   parent: account
   properties: {
     authType: 'AAD'
@@ -188,7 +200,7 @@ resource accountStorageConnection 'Microsoft.CognitiveServices/accounts/connecti
 // managed storage/runtime rather than a Standard Setup capabilityHost.
 
 resource project 'Microsoft.CognitiveServices/accounts/projects@2026-05-01' = {
-  name: 'qabot-ai'
+  name: aiProjectName
   parent: account
   properties: {}
   location: location
@@ -198,7 +210,7 @@ resource project 'Microsoft.CognitiveServices/accounts/projects@2026-05-01' = {
 }
 
 resource projectStorageConnection 'Microsoft.CognitiveServices/accounts/projects/connections@2026-05-01' = {
-  name: 'qabotstorage${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: storageAccountName
   parent: project
   properties: {
     authType: 'AAD'

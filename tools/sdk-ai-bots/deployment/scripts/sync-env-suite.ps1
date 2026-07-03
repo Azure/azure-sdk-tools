@@ -84,6 +84,10 @@ $Mapping = @(
     @{ Path = ".environments.$Environment.tenantId";             Key = 'AZURE_TENANT_ID' }
     @{ Path = ".environments.$Environment.resourceGroupPrefix";  Key = 'AZURE_RESOURCE_GROUP' }
     @{ Path = ".environments.$Environment.regions[0].name";      Key = 'AZURE_LOCATION' }
+    @{ Path = ".environments.$Environment.aiLocation";           Key = 'AZURE_AI_LOCATION' }
+    @{ Path = ".environments.$Environment.frontendSiteName";     Key = 'FRONTEND_SITE_NAME' }
+    @{ Path = ".environments.$Environment.backendSiteName";      Key = 'BACKEND_SITE_NAME' }
+    @{ Path = ".environments.$Environment.functionAppName";      Key = 'FUNCTION_APP_NAME' }
     @{ Path = ".environments.$Environment.containerRegistryName";Key = 'CONTAINER_REGISTRY_NAME' }
     @{ Path = ".environments.$Environment.keyVaultName";         Key = 'KEY_VAULT_NAME' }
     @{ Path = ".environments.$Environment.appConfigName";        Key = 'APP_CONFIG_NAME' }

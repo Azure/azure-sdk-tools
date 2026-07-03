@@ -27,8 +27,8 @@ parameters:
 variables:
     - template: /eng/pipelines/templates/variables/globals.yml
     - template: /eng/pipelines/templates/variables/image.yml
-    - name: appName
-      value: 'azuresdkqabot-backend'
+    # `appName` comes from BACKEND_SITE_NAME (exported by load-environment-suite.yml).
+    # Downstream templates read $(BACKEND_SITE_NAME) directly.
     - name: imageName
       value: 'azure-sdk-qa-bot-backend'
 
@@ -58,14 +58,14 @@ extends:
 
                                     - template: /tools/sdk-ai-bots/deployment/pipelines/templates/webapp-deploy.yml
                                       parameters:
-                                          appName: $(appName)
+                                          appName: $(BACKEND_SITE_NAME)
                                           imageName: $(imageName)
                                           imageTag: '${{ parameters.imageTag }}'
                                           slot: '${{ parameters.slot }}'
 
                                     - template: /tools/sdk-ai-bots/deployment/pipelines/templates/smoke-test.yml
                                       parameters:
-                                          appName: $(appName)
+                                          appName: $(BACKEND_SITE_NAME)
                                           slot: '${{ parameters.slot }}'
                                           healthPath: /ping
 
@@ -73,12 +73,12 @@ extends:
                                     - ${{ if and(ne(parameters.environment, 'dev'), eq(parameters.slot, 'authoring')) }}:
                                           - template: /tools/sdk-ai-bots/deployment/pipelines/templates/swap-slot.yml
                                             parameters:
-                                                appName: $(appName)
+                                                appName: $(BACKEND_SITE_NAME)
                                                 sourceSlot: authoring
                                                 targetSlot: production
                                           - template: /tools/sdk-ai-bots/deployment/pipelines/templates/smoke-test.yml
                                             parameters:
-                                                appName: $(appName)
+                                                appName: $(BACKEND_SITE_NAME)
                                                 slot: default
                                                 healthPath: /ping
 
@@ -107,7 +107,7 @@ extends:
                                               - template: /tools/sdk-ai-bots/deployment/pipelines/templates/rollback.yml
                                                 parameters:
                                                     component: backend
-                                                    appName: $(appName)
+                                                    appName: $(BACKEND_SITE_NAME)
                                                     imageName: $(imageName)
                                                     slot: default
                                         - template: /tools/sdk-ai-bots/deployment/pipelines/templates/notify.yml

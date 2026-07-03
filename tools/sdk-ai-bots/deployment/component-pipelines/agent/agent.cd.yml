@@ -19,8 +19,8 @@ parameters:
 variables:
     - template: /eng/pipelines/templates/variables/globals.yml
     - template: /eng/pipelines/templates/variables/image.yml
-    - name: appName
-      value: 'azuresdkqabot-backend' # the agent runs in the 'agent' slot of the backend App Service
+    # Agent server runs in the `agent` slot of the backend App Service, so its
+    # webapp is BACKEND_SITE_NAME (exported by load-environment-suite.yml).
     - name: imageName
       value: 'azure-sdk-qa-bot-agent-server'
 
@@ -52,13 +52,13 @@ extends:
                                     - ${{ if in(parameters.deployTarget, 'server', 'both') }}:
                                           - template: /tools/sdk-ai-bots/deployment/pipelines/templates/webapp-deploy.yml
                                             parameters:
-                                                appName: $(appName)
+                                                appName: $(BACKEND_SITE_NAME)
                                                 imageName: $(imageName)
                                                 imageTag: '${{ parameters.imageTag }}'
                                                 slot: agent
                                           - template: /tools/sdk-ai-bots/deployment/pipelines/templates/smoke-test.yml
                                             parameters:
-                                                appName: $(appName)
+                                                appName: $(BACKEND_SITE_NAME)
                                                 slot: agent
                                                 healthPath: /ping
                                                 easyAuthAudience: $(EASYAUTH_AUDIENCE)

@@ -11,8 +11,9 @@
 #
 # Exports (as pipeline variables):
 #   AZURE_ENV_NAME, AZURE_SUBSCRIPTION_ID, AZURE_TENANT_ID, SERVICE_CONNECTION,
-#   AZURE_RESOURCE_GROUP, AZURE_LOCATION, ACR_NAME, KEY_VAULT_NAME,
-#   APP_CONFIG_NAME, APPROVAL_REQUIRED, PROD_DEPLOY_ONLY_FROM_PIPELINE,
+#   AZURE_RESOURCE_GROUP, AZURE_LOCATION, AZURE_AI_LOCATION, ACR_NAME,
+#   KEY_VAULT_NAME, APP_CONFIG_NAME, FRONTEND_SITE_NAME, BACKEND_SITE_NAME,
+#   FUNCTION_APP_NAME, APPROVAL_REQUIRED, PROD_DEPLOY_ONLY_FROM_PIPELINE,
 #   ROLLOUT_STRATEGY
 #
 # Implementation: uses `yq` (pre-installed on 1ES Linux images) to extract
@@ -57,9 +58,13 @@ steps:
           export_var AZURE_TENANT_ID                ".environments.${ENV}.tenantId"
           export_var AZURE_RESOURCE_GROUP           ".environments.${ENV}.resourceGroupPrefix"
           export_var AZURE_LOCATION                 ".environments.${ENV}.regions[0].name"
+          export_var AZURE_AI_LOCATION              ".environments.${ENV}.aiLocation"
           export_var ACR_NAME                       ".environments.${ENV}.containerRegistryName"
           export_var KEY_VAULT_NAME                 ".environments.${ENV}.keyVaultName"
           export_var APP_CONFIG_NAME                ".environments.${ENV}.appConfigName"
+          export_var FRONTEND_SITE_NAME             ".environments.${ENV}.frontendSiteName"
+          export_var BACKEND_SITE_NAME              ".environments.${ENV}.backendSiteName"
+          export_var FUNCTION_APP_NAME              ".environments.${ENV}.functionAppName"
           export_var APPROVAL_REQUIRED              ".environments.${ENV}.approvalRequired"
           export_var PROD_DEPLOY_ONLY_FROM_PIPELINE ".environments.${ENV}.prodDeployOnlyFromPipeline"
           export_var ROLLOUT_STRATEGY               ".environments.${ENV}.rolloutStrategy"

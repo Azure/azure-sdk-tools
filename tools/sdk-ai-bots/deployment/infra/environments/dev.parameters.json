@@ -30,6 +30,15 @@
     },
     "frontendImageRepository": {
       "value": "azure-sdk-qa-bot:dev"
+    },
+    "frontendBaseName": {
+      "value": "azsdkqabot-dev"
+    },
+    "backendSiteName": {
+      "value": "azuresdkqabot-server-dev"
+    },
+    "functionAppName": {
+      "value": "azuresdkqabot-function-dev"
     }
   }
 }

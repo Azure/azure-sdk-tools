@@ -45,6 +45,26 @@ param appConfigName string
 @description('Name of the shared action group notified by the metric alerts.')
 param actionGroupName string
 
+// Resource-name overrides — see qaBotSharedResources/sharedResources.bicep for
+// the rationale (prod's manually-built RG has different naming).
+@description('Name of the backend App Service plan.')
+param backendAppServicePlanName string = 'azuresdkqabot-appserviceplan-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the Log Analytics workspace backing backend Application Insights.')
+param backendLogWorkspaceName string = 'azuresdkqabot-log-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the backend web app. Also used as the name of its matching Application Insights component.')
+param backendSiteName string = 'azuresdkqabot-server-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the Application Insights component paired with the agent slot (prod uses a timestamped legacy name).')
+param backendSlotAppInsightsName string = 'azuresdkqabot-server202510300250-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the metric alert on the backend site.')
+param backendAlertName string = 'azuresdkqabot-alert-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the metric alert on the agent slot.')
+param backendAgentAlertName string = 'azuresdkqabot-agent-alert-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
 // User-assigned identities attached to both the site and the agent slot.
 var siteUserAssignedIdentities = {
   '${resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', sharedIdentityName)}': {}
@@ -52,7 +72,7 @@ var siteUserAssignedIdentities = {
 }
 
 resource serverfarm 'Microsoft.Web/serverfarms@2025-05-01' = {
-  name: 'azuresdkqabot-appserviceplan-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: backendAppServicePlanName
   location: location
   properties: {
     reserved: true
@@ -69,7 +89,7 @@ resource serverfarm 'Microsoft.Web/serverfarms@2025-05-01' = {
 
 // Log Analytics workspace backing the backend Application Insights components.
 resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
-  name: 'azuresdkqabot-log-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: backendLogWorkspaceName
   location: location
   properties: {
     sku: {
@@ -81,7 +101,7 @@ resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
 }
 
 resource serverAppInsights 'Microsoft.Insights/components@2020-02-02' = {
-  name: 'azuresdkqabot-server-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: backendSiteName
   location: location
   kind: 'web'
   properties: {
@@ -92,7 +112,7 @@ resource serverAppInsights 'Microsoft.Insights/components@2020-02-02' = {
 }
 
 resource slotAppInsights 'Microsoft.Insights/components@2020-02-02' = {
-  name: 'azuresdkqabot-server202510300250-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: backendSlotAppInsightsName
   location: location
   kind: 'web'
   properties: {
@@ -103,7 +123,7 @@ resource slotAppInsights 'Microsoft.Insights/components@2020-02-02' = {
 }
 
 resource site 'Microsoft.Web/sites@2025-05-01' = {
-  name: 'azuresdkqabot-server-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: backendSiteName
   tags: {
     'hidden-link: /app-insights-resource-id': slotAppInsights.id
   }
@@ -275,7 +295,7 @@ resource slot 'Microsoft.Web/sites/slots@2025-05-01' = {
 }
 
 resource serverMetricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
-  name: 'azuresdkqabot-alert-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: backendAlertName
   location: 'global'
   properties: {
     severity: 3
@@ -314,7 +334,7 @@ resource serverMetricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' 
 }
 
 resource slotMetricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
-  name: 'azuresdkqabot-agent-alert-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: backendAgentAlertName
   location: 'global'
   properties: {
     severity: 3

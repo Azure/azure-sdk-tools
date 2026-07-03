@@ -22,8 +22,8 @@ parameters:
 variables:
     - template: /eng/pipelines/templates/variables/globals.yml
     - template: /eng/pipelines/templates/variables/image.yml
-    - name: appName
-      value: 'azsdkqabot' # TODO replace once env-aware names land in env-suite
+    # `appName` comes from FRONTEND_SITE_NAME (exported by load-environment-suite.yml).
+    # Downstream templates read $(FRONTEND_SITE_NAME) directly.
     - name: imageName
       value: 'azure-sdk-qa-bot'
 
@@ -54,7 +54,7 @@ extends:
                                     # 1. Deploy image to staging slot.
                                     - template: /tools/sdk-ai-bots/deployment/pipelines/templates/webapp-deploy.yml
                                       parameters:
-                                          appName: $(appName)
+                                          appName: $(FRONTEND_SITE_NAME)
                                           imageName: $(imageName)
                                           imageTag: '${{ parameters.imageTag }}'
                                           slot: staging
@@ -62,7 +62,7 @@ extends:
                                     # 2. Smoke test the staging slot.
                                     - template: /tools/sdk-ai-bots/deployment/pipelines/templates/smoke-test.yml
                                       parameters:
-                                          appName: $(appName)
+                                          appName: $(FRONTEND_SITE_NAME)
                                           slot: staging
                                           healthPath: /health
 
@@ -70,14 +70,14 @@ extends:
                                     - ${{ if ne(parameters.environment, 'dev') }}:
                                           - template: /tools/sdk-ai-bots/deployment/pipelines/templates/swap-slot.yml
                                             parameters:
-                                                appName: $(appName)
+                                                appName: $(FRONTEND_SITE_NAME)
                                                 sourceSlot: staging
                                                 targetSlot: production
 
                                     # 4. Verify production slot post-swap.
                                     - template: /tools/sdk-ai-bots/deployment/pipelines/templates/smoke-test.yml
                                       parameters:
-                                          appName: $(appName)
+                                          appName: $(FRONTEND_SITE_NAME)
                                           slot: default
                                           healthPath: /health
 
@@ -109,7 +109,7 @@ extends:
                                               - template: /tools/sdk-ai-bots/deployment/pipelines/templates/rollback.yml
                                                 parameters:
                                                     component: frontend
-                                                    appName: $(appName)
+                                                    appName: $(FRONTEND_SITE_NAME)
                                                     imageName: $(imageName)
                                                     slot: default
                                         - template: /tools/sdk-ai-bots/deployment/pipelines/templates/notify.yml

@@ -15,8 +15,18 @@ param storageAccountName string
 @description('Resource ID of the user-assigned managed identity the Function App runs as.')
 param managedIdentityResourceId string
 
+// Resource-name overrides — see qaBotSharedResources/sharedResources.bicep.
+@description('Name of the Function App service plan.')
+param functionAppServicePlanName string = 'azuresdkqabot-functionserviceplan-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the Log Analytics workspace backing Function App insights.')
+param functionLogWorkspaceName string = 'azuresdkqabot-function-log-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the Function App (also used for its Application Insights component).')
+param functionAppName string = 'azuresdkqabot-function-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
 resource serverfarm 'Microsoft.Web/serverfarms@2025-05-01' = {
-  name: 'azuresdkqabot-functionserviceplan-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: functionAppServicePlanName
   location: location
   properties: {
     elasticScaleEnabled: true
@@ -34,7 +44,7 @@ resource serverfarm 'Microsoft.Web/serverfarms@2025-05-01' = {
 }
 
 resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
-  name: 'azuresdkqabot-function-log-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: functionLogWorkspaceName
   location: location
   properties: {
     sku: {
@@ -45,7 +55,7 @@ resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
 }
 
 resource component 'Microsoft.Insights/components@2020-02-02' = {
-  name: 'azuresdkqabot-function-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: functionAppName
   location: location
   kind: 'web'
   properties: {
@@ -56,7 +66,7 @@ resource component 'Microsoft.Insights/components@2020-02-02' = {
 }
 
 resource site 'Microsoft.Web/sites@2025-05-01' = {
-  name: 'azuresdkqabot-function-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: functionAppName
   tags: {
     'hidden-link: /app-insights-resource-id': component.id
   }

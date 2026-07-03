@@ -33,6 +33,25 @@ param botIdentityName string
 @description('Name of the Function App hosting convertActivity.')
 param functionAppName string
 
+// Resource-name overrides — see qaBotSharedResources/sharedResources.bicep.
+@description('Name of the Logic Apps integration account.')
+param integrationAccountName string = 'azuresdkqabot-ia-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the Teams managed API connection.')
+param teamsConnectionName string = 'teams-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the Azure Blob managed API connection.')
+param azureBlobConnectionName string = 'azureblob-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the Cosmos DB (documentdb) managed API connection.')
+param documentDbConnectionName string = 'documentdb-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the Logic App workflow.')
+param logicAppWorkflowName string = 'azuresdkqabot-logicapp-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the metric alert on the Logic App workflow.')
+param logicAppAlertName string = 'azuresdkqabot-logicapp-alert-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
 
 // Resource IDs the workflow authenticates with via managed identity. Computed
 // from names so the same module resolves correctly in any subscription / RG.
@@ -42,7 +61,7 @@ var blobIdentityResourceId = serverIdentityResourceId
 var functionAppResourceId = resourceId('Microsoft.Web/sites', functionAppName)
 
 resource integrationAccount 'Microsoft.Logic/integrationAccounts@2019-05-01' = {
-  name: 'azuresdkqabot-ia-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: integrationAccountName
   location: location
   sku: {
     name: 'Basic'
@@ -51,7 +70,7 @@ resource integrationAccount 'Microsoft.Logic/integrationAccounts@2019-05-01' = {
 }
 
 resource teamsConnection 'Microsoft.Web/connections@2016-06-01' = {
-  name: 'teams-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: teamsConnectionName
   location: location
   properties: {
     displayName: 'teams'
@@ -63,7 +82,7 @@ resource teamsConnection 'Microsoft.Web/connections@2016-06-01' = {
 }
 
 resource blobConnection 'Microsoft.Web/connections@2016-06-01' = {
-  name: 'azureblob-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: azureBlobConnectionName
   location: location
   properties: {
     displayName: 'azureblob'
@@ -78,7 +97,7 @@ resource blobConnection 'Microsoft.Web/connections@2016-06-01' = {
 }
 
 resource documentDbConnection 'Microsoft.Web/connections@2016-06-01' = {
-  name: 'documentdb-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: documentDbConnectionName
   location: location
   properties: {
     displayName: 'documentdb'
@@ -90,7 +109,7 @@ resource documentDbConnection 'Microsoft.Web/connections@2016-06-01' = {
 }
 
 resource workflow 'Microsoft.Logic/workflows@2019-05-01' = {
-  name: 'azuresdkqabot-logicapp-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: logicAppWorkflowName
   location: location
   identity: {
     type: 'UserAssigned'
@@ -181,7 +200,7 @@ resource workflow 'Microsoft.Logic/workflows@2019-05-01' = {
 }
 
 resource metricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
-  name: 'azuresdkqabot-logicapp-alert-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: logicAppAlertName
   location: 'global'
   properties: {
     severity: 3

@@ -68,7 +68,6 @@ Sources are limited to <https://azure.github.io/typespec-azure/> and <https://ty
 - [stable → preview](https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/): Add a preview after a stable version.
 - [stable → stable](https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/): Add a new stable after an existing stable version.
 - [Evolving APIs](https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/): Add, remove, or modify resources, operations, and properties across versions — including `@@`-augment decorators (`@@added(Model.member, Versions.x)`) for spread/augmented members.
-- [ARM versioning](https://azure.github.io/typespec-azure/docs/howtos/arm/versioning/): ARM-specific versioning guidance and common-types interaction.
 - [Versioning (getstarted)](https://azure.github.io/typespec-azure/docs/getstarted/versioning/): Introduction to versioning in TypeSpec Azure projects.
 - [Uncommon: Perpetual preview](https://azure.github.io/typespec-azure/docs/howtos/versioning/uncommon-scenarios/02-perpetual-preview/): Long-lived preview-only services.
 

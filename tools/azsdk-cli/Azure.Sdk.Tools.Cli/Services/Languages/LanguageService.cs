@@ -21,7 +21,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <summary>
         /// Gets the relative path from the SDK repository root to the breaking change pattern file.
         /// This file contains language-specific patterns that define what constitutes a breaking change
-        /// in the SDK based on TypeSpec/OpenAPI changes. The patterns are used by the breaking change
+        /// in the SDK based on TypeSpec/SDK changes. The patterns are used by the breaking change
         /// detection tool to classify changes and provide mitigation guidance.
         /// </summary>
         /// <remarks>
@@ -528,7 +528,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <para>
         /// The returned content is typically used by AI agents or classification tools to analyze
         /// SDK changes and provide mitigation guidance. The pattern content should describe:
-        /// - What API changes are considered breaking for the specific language
+        /// - What SDK changes are considered breaking for the specific language
         /// - How these changes impact client code
         /// - Recommended mitigation strategies (e.g., client.tsp customizations)
         /// </para>
@@ -540,10 +540,10 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <example>
         /// Example usage in a language service:
         /// <code>
-        /// protected override string SDKBreakingPatternFilePath => "eng/common/breaking-change-patterns/dotnet-patterns.md";
+        /// protected override string SDKBreakingPatternFilePath => "eng/common/breaking-change-patterns/go-patterns.md";
         /// 
         /// var pattern = await GetSDKBreakingPattern(repoRoot, ct);
-        /// // pattern contains the markdown content describing .NET-specific breaking changes
+        /// // pattern contains the markdown content describing Go-specific breaking changes
         /// </code>
         /// </example>
         public virtual Task<string> GetSDKBreakingPattern(string sdkRepoRoot, CancellationToken ct)

@@ -69,6 +69,10 @@ POLL_RETRY_DELAY_SECS = 3.0
 STREAM_CREATE_MAX_RETRIES = 3
 STREAM_CREATE_RETRY_DELAY_SECS = 1.5
 
+# Max time to wait for a stream to reach ``response.completed`` before the
+# attempt is abandoned with a timeout error and retried.
+STREAM_COMPLETE_TIMEOUT_SECS = 180.0
+
 COMPACT_THRESHOLD = 100000
 """Token count at which conversation history is compacted."""
 
@@ -247,12 +251,15 @@ class ChatService:
         agent_session_id: str | None = None,
         max_retries: int = STREAM_CREATE_MAX_RETRIES,
         retry_delay: float = STREAM_CREATE_RETRY_DELAY_SECS,
+        stream_timeout: float = STREAM_COMPLETE_TIMEOUT_SECS,
     ):
         """Invoke the agent with bounded retries and return ``(stream, response)``.
 
         Each attempt creates a responses stream, consumes it to the
         ``response.completed`` event, and polls briefly for late-arriving text.
-        An empty ``output_text`` is treated as a retryable failure so we loop
+        Consuming the stream is bounded by ``stream_timeout``; a stream that
+        does not complete in time raises a timeout error and is retried. An
+        empty ``output_text`` is treated as a retryable failure so we loop
         into another attempt instead of returning a fallback message.
 
         Threaded calls pass ``conversation``; stateless calls pass a reused
@@ -278,8 +285,11 @@ class ChatService:
                     extra_body=extra_body,
                     **kwargs,
                 )
-                response = await ChatService._consume_stream(
-                    stream, agent_conversation_id
+                # Bound the wait for the stream to reach completion; a stream
+                # that stalls past the timeout is abandoned and retried.
+                response = await asyncio.wait_for(
+                    ChatService._consume_stream(stream, agent_conversation_id),
+                    timeout=stream_timeout,
                 )
                 # Poll if completed with empty text (Foundry persistence delay).
                 if response.status == "completed" and not response.output_text:
@@ -319,6 +329,16 @@ class ChatService:
                     agent_conversation_id,
                     ex,
                     exc_info=True,
+                )
+            except asyncio.TimeoutError as ex:
+                last_error = ex
+                logger.warning(
+                    "Agent stream did not complete within %.0fs "
+                    "(attempt %d/%d): conversation=%s",
+                    stream_timeout,
+                    attempt,
+                    max_retries,
+                    agent_conversation_id,
                 )
             except _EmptyAgentResponseError as ex:
                 last_error = ex

@@ -120,11 +120,19 @@ async def main() -> None:
             logger.exception("%s failed to initialize, skipped", factory.__name__)
             return None
 
+    # Memory can be disabled (e.g. for evaluation) via ENABLE_MEMORY=false so the
+    # agent does not read historical Q&A from the tenant/user memory stores or write
+    # this turn back into them. Defaults to enabled (production unaffected).
+    memory_enabled = cfg("ENABLE_MEMORY", "true").lower() == "true"
+
     # Ensuring the memory store is idempotent and usually a no-op, so run it in
     # the background instead of gating readiness on it.
-    memory_init_task = asyncio.create_task(_init_memory())
-    _background_tasks.add(memory_init_task)
-    memory_init_task.add_done_callback(_background_tasks.discard)
+    if memory_enabled:
+        memory_init_task = asyncio.create_task(_init_memory())
+        _background_tasks.add(memory_init_task)
+        memory_init_task.add_done_callback(_background_tasks.discard)
+    else:
+        logger.warning("ENABLE_MEMORY=false — user/tenant memory read+write disabled")
 
     # Only the MCP tools must exist before building the agent; create in
     # parallel (connection is lazy).
@@ -138,7 +146,7 @@ async def main() -> None:
             tools.append(mcp_tool)
 
     # Memory context provider (memory store initializes in background; may not be ready yet)
-    memory_provider = MemoryContextProvider(project_client)
+    memory_provider = MemoryContextProvider(project_client) if memory_enabled else None
 
     # Compaction provider — compact history before and after each turn
     compaction_provider = CompactionProvider(
@@ -150,6 +158,11 @@ async def main() -> None:
     skills = create_tenant_skills()
     skills_provider = SkillsProvider(skills)
 
+    context_providers = [skills_provider]
+    if memory_provider is not None:
+        context_providers.append(memory_provider)
+    context_providers.append(compaction_provider)
+
     reasoning_effort = cfg("AI_FOUNDRY_AGENT_REASONING_EFFORT")
     agent = Agent(
         agent_client,
@@ -157,7 +170,7 @@ async def main() -> None:
         id=agent_id,
         instructions=instructions,
         tools=tools,
-        context_providers=[skills_provider, memory_provider, compaction_provider],
+        context_providers=context_providers,
         default_options={
             "reasoning": {"effort": reasoning_effort},
             "max_tool_calls": MAX_TOOL_CALLS_PER_TURN,

@@ -157,13 +157,13 @@ Tag filtering is useful for ad-hoc local runs on individual files:
 
 ```bash
 # Run forced mode for versioning cases only
-vally eval --eval-spec suites/forced.eval.yaml --tag suite=versioning --skill-dir ..
+vally eval --suite versioning-forced --skill-dir ..
 
 # Run no-skill baseline for armtemplate cases
-vally eval --eval-spec suites/no-skill.eval.yaml --tag suite=armtemplate --skill-dir /tmp/no-skills
+vally eval --suite armtemplate-no-skill --skill-dir /tmp/no-skills
 
 # Run trigger detection for all cases (no tag = all 29 cases)
-vally eval --eval-spec suites/trigger.eval.yaml --skill-dir ..
+vally eval --suite trigger --skill-dir ..
 ```
 
 ### Useful flags
@@ -203,11 +203,6 @@ evaluate/
 ├── evals/               # Individual eval specs (one per test case, for local dev)
 │   ├── 001001.eval.yaml
 │   ├── ...
-│   └── forced.eval.yaml # Consolidated forced-mode file with all cases
-├── suites/              # Consolidated eval files used by pipelines
-│   ├── forced.eval.yaml    # Forced skill invocation + code quality graders
-│   ├── trigger.eval.yaml   # Skill trigger detection (mock MCP)
-│   └── no-skill.eval.yaml  # Pure agent baseline (no environment)
 ├── fixtures/            # TypeSpec project fixtures referenced by evals
 │   ├── 001-share-version-new-feature/
 │   ├── Microsoft.Widget/
@@ -220,16 +215,17 @@ evaluate/
 ## Pipeline Architecture
 
 The CI runs in three mode groups (forced, trigger, no-skill), and each group is split into
-five suite steps. Splitting by suite makes error logs easier to query and helps isolate failures
-to a small case set.
+five suite steps. Each step runs the corresponding `.vally.yaml` suite branch directly,
+for example `--suite versioning-forced`, `--suite versioning-trigger`, or
+`--suite versioning-no-skill`. Vally 0.6.0 supports parallel execution across multiple
+eval files, so the pipelines no longer need consolidated suite eval files plus
+`--tag suite=...` filtering.
 
-The pipelines use `--eval-spec` with the consolidated suite files under `suites/`, and use `--tag suite=...` to split runs by domain:
-
-| Pipeline           | Eval file                   | Purpose                                                               |
+| Pipeline           | Command/source              | Purpose                                                               |
 | ------------------ | --------------------------- | --------------------------------------------------------------------- |
-| benchmark          | `suites/forced.eval.yaml`   | Forced skill invocation + code-quality graders (real MCP environment) |
-| benchmark          | `suites/trigger.eval.yaml`  | Skill trigger detection (mock MCP environment)                        |
-| benchmark-no-skill | `suites/no-skill.eval.yaml` | Baseline run without loading the skill (`--skill-dir /tmp/no-skills`) |
+| benchmark          | `--suite *-forced`          | Forced skill invocation + code-quality graders (real MCP environment) |
+| benchmark          | `--suite *-trigger`         | Skill trigger detection (mock MCP environment)                        |
+| benchmark-no-skill | `--suite *-no-skill`        | Baseline run without loading the skill (`--skill-dir /tmp/no-skills`) |
 
 Each stimulus has dual tags: `suite` and `mode`, for example
 `{ suite: versioning, mode: forced }`.

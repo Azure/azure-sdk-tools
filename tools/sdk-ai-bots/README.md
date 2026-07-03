@@ -57,6 +57,8 @@ A Python application that builds a knowledge graph layer using [Microsoft GraphR
 - Writes the resulting vectors to Azure AI Search and publishes the parquet graph artifacts to Blob Storage as an immutable snapshot
 - Runs a **full GraphRAG build** each run; the bot picks up the new snapshot by polling its `latest.json` manifest
 
+See [GraphRAG Knowledge-Graph Retrieval — Design](docs/graphrag_retrieval_design.md) for the end-to-end design, how graph retrieval is used alongside the KB path, and the differences from the original architecture.
+
 ## Knowledge Sources
 
 The bot provides intelligent responses by searching through comprehensive knowledge bases including:

@@ -6,6 +6,8 @@
 # sign off the operational-readiness checklist. Infra deploys for prod are
 # executed manually via the per-component <component>.provision.yml pipelines
 # — see provision-all-prod.yml for details.
+#
+# Shape delegated to templates/deploy-stage.yml.
 
 name: tools - sdk-ai-bots - deploy-all-prod
 
@@ -31,49 +33,13 @@ extends:
     parameters:
         Use1ESOfficial: true
         stages:
-            - stage: DeployBackendProd
-              jobs:
-                  - template: /tools/sdk-ai-bots/deployment/component-pipelines/backend/backend.cd.yml@self
-                    parameters:
-                        environment: prod
-                        imageTag: '${{ parameters.imageTagBackend }}'
-                        slot: authoring
+            - template: /tools/sdk-ai-bots/deployment/pipelines/templates/deploy-stage.yml
+              parameters:
+                  environment: prod
+                  stageSuffix: Prod
+                  stabilizationSeconds: 600
+                  imageTagBackend: '${{ parameters.imageTagBackend }}'
+                  imageTagFunctionApp: '${{ parameters.imageTagFunctionApp }}'
+                  imageTagAgent: '${{ parameters.imageTagAgent }}'
+                  imageTagFrontend: '${{ parameters.imageTagFrontend }}'
 
-            - stage: WatchBackend
-              dependsOn: DeployBackendProd
-              jobs:
-                  - job: Watch
-                    pool:
-                        name: $(LINUXPOOL)
-                        image: $(LINUXVMIMAGE)
-                        os: linux
-                    steps:
-                        - bash: |
-                              echo "Stabilization window: 10 minutes."
-                              sleep 600
-                          displayName: 'Stabilize 10m'
-
-            - stage: DeployFunctionAppProd
-              dependsOn: WatchBackend
-              jobs:
-                  - template: /tools/sdk-ai-bots/deployment/component-pipelines/function-app/function-app.cd.yml@self
-                    parameters:
-                        environment: prod
-                        imageTag: '${{ parameters.imageTagFunctionApp }}'
-
-            - stage: DeployAgentProd
-              dependsOn: DeployFunctionAppProd
-              jobs:
-                  - template: /tools/sdk-ai-bots/deployment/component-pipelines/agent/agent.cd.yml@self
-                    parameters:
-                        environment: prod
-                        imageTag: '${{ parameters.imageTagAgent }}'
-                        deployTarget: both
-
-            - stage: DeployFrontendProd
-              dependsOn: DeployAgentProd
-              jobs:
-                  - template: /tools/sdk-ai-bots/deployment/component-pipelines/frontend/frontend.cd.yml@self
-                    parameters:
-                        environment: prod
-                        imageTag: '${{ parameters.imageTagFrontend }}'

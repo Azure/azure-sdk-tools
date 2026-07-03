@@ -2,6 +2,8 @@
 # Deploys all component images (backend → function-app → agent → frontend) to
 # dev in dependency order. Assumes infra is already provisioned; run
 # provision-all-dev.yml first for a greenfield environment.
+#
+# Shape delegated to templates/deploy-stage.yml.
 
 name: tools - sdk-ai-bots - deploy-all-dev
 
@@ -27,35 +29,11 @@ extends:
     parameters:
         Use1ESOfficial: true
         stages:
-            - stage: DeployBackend
-              jobs:
-                  - template: /tools/sdk-ai-bots/deployment/component-pipelines/backend/backend.cd.yml@self
-                    parameters:
-                        environment: dev
-                        imageTag: '${{ parameters.imageTagBackend }}'
-                        slot: authoring
+            - template: /tools/sdk-ai-bots/deployment/pipelines/templates/deploy-stage.yml
+              parameters:
+                  environment: dev
+                  imageTagBackend: '${{ parameters.imageTagBackend }}'
+                  imageTagFunctionApp: '${{ parameters.imageTagFunctionApp }}'
+                  imageTagAgent: '${{ parameters.imageTagAgent }}'
+                  imageTagFrontend: '${{ parameters.imageTagFrontend }}'
 
-            - stage: DeployFunctionApp
-              dependsOn: DeployBackend
-              jobs:
-                  - template: /tools/sdk-ai-bots/deployment/component-pipelines/function-app/function-app.cd.yml@self
-                    parameters:
-                        environment: dev
-                        imageTag: '${{ parameters.imageTagFunctionApp }}'
-
-            - stage: DeployAgent
-              dependsOn: DeployFunctionApp
-              jobs:
-                  - template: /tools/sdk-ai-bots/deployment/component-pipelines/agent/agent.cd.yml@self
-                    parameters:
-                        environment: dev
-                        imageTag: '${{ parameters.imageTagAgent }}'
-                        deployTarget: both
-
-            - stage: DeployFrontend
-              dependsOn: DeployAgent
-              jobs:
-                  - template: /tools/sdk-ai-bots/deployment/component-pipelines/frontend/frontend.cd.yml@self
-                    parameters:
-                        environment: dev
-                        imageTag: '${{ parameters.imageTagFrontend }}'

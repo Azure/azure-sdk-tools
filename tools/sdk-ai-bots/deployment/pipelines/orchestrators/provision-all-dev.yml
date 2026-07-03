@@ -1,6 +1,10 @@
 # Orchestrator pipeline — full dev provision.
 # Provisions the whole Azure infra graph for dev via `azd provision`.
 # Runs the postprovision layer pipeline (all layers) as part of azd's lifecycle.
+#
+# Shape delegated to templates/provision-stage.yml. Dev skips bicep-validate /
+# what-if because rapid iteration is expected; approval gating is inherited
+# from the `sdk-ai-bots-dev` ADO environment (typically no approval policy).
 
 name: tools - sdk-ai-bots - provision-all-dev
 
@@ -16,22 +20,10 @@ extends:
     parameters:
         Use1ESOfficial: true
         stages:
-            - stage: Provision
-              displayName: 'Provision (dev)'
-              jobs:
-                  - deployment: AzdProvision
-                    environment: 'sdk-ai-bots-dev'
-                    pool:
-                        name: $(LINUXPOOL)
-                        image: $(LINUXVMIMAGE)
-                        os: linux
-                    strategy:
-                        runOnce:
-                            deploy:
-                                steps:
-                                    - checkout: self
-                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
-                                      parameters:
-                                          environment: dev
-                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
-                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
+            - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-stage.yml
+              parameters:
+                  environment: dev
+                  runValidateAndWhatIf: false
+                  runProvision: true
+                  showReadinessReminder: false
+

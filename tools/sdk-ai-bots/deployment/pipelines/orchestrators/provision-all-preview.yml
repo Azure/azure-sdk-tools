@@ -1,6 +1,7 @@
 # Orchestrator pipeline — full preview provision.
-# Same shape as provision-all-dev; the 'sdk-ai-bots-preview' ADO environment
-# is expected to require approval before the Provision stage runs.
+# Runs bicep-validate + what-if, then applies with `azd provision`. Approval
+# gating comes from the `sdk-ai-bots-preview` ADO environment (which is
+# expected to have a manual approval policy configured).
 
 name: tools - sdk-ai-bots - provision-all-preview
 
@@ -16,26 +17,10 @@ extends:
     parameters:
         Use1ESOfficial: true
         stages:
-            - stage: Provision
-              displayName: 'Provision (preview)'
-              jobs:
-                  - deployment: AzdProvision
-                    environment: 'sdk-ai-bots-preview'
-                    pool:
-                        name: $(LINUXPOOL)
-                        image: $(LINUXVMIMAGE)
-                        os: linux
-                    strategy:
-                        runOnce:
-                            deploy:
-                                steps:
-                                    - checkout: self
-                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
-                                      parameters:
-                                          environment: preview
-                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
-                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-validate.yml
-                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-what-if.yml
-                                      parameters:
-                                          parametersFile: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment/infra/environments/preview.parameters.json'
-                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
+            - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-stage.yml
+              parameters:
+                  environment: preview
+                  runValidateAndWhatIf: true
+                  runProvision: true
+                  showReadinessReminder: false
+

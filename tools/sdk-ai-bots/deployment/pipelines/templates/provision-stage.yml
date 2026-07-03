@@ -1,0 +1,75 @@
+# Reusable stage template for provision orchestrators (dev / preview / prod).
+#
+# Encapsulates the common shape: load env-suite → azd auth → (optional
+# bicep-validate + what-if) → (optional azd provision) → (optional readiness
+# reminder). The three provision-all-*.yml orchestrators consume this
+# template with different flag values instead of duplicating the stage body.
+#
+# Approval gating lives on the ADO environment `sdk-ai-bots-<env>` — the
+# environment name resolves per-call, so preview/prod runs block on the same
+# ADO approval as before while dev runs pass through.
+#
+# Usage:
+#   stages:
+#     - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-stage.yml
+#       parameters:
+#         environment: preview
+#         runValidateAndWhatIf: true
+#         runProvision: true
+
+parameters:
+    - name: environment
+      type: string
+      values: [dev, preview, prod]
+    - name: stageName
+      type: string
+      default: 'Provision'
+    - name: stageDisplayName
+      type: string
+      default: 'Provision'
+    - name: runValidateAndWhatIf
+      type: boolean
+      default: false
+    - name: runProvision
+      type: boolean
+      default: true
+    - name: showReadinessReminder
+      type: boolean
+      default: false
+    - name: workingDirectory
+      type: string
+      default: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment'
+
+stages:
+    - stage: ${{ parameters.stageName }}
+      displayName: ${{ format('{0} ({1})', parameters.stageDisplayName, parameters.environment) }}
+      jobs:
+          - deployment: AzdProvision
+            environment: 'sdk-ai-bots-${{ parameters.environment }}'
+            pool:
+                name: $(LINUXPOOL)
+                image: $(LINUXVMIMAGE)
+                os: linux
+            strategy:
+                runOnce:
+                    deploy:
+                        steps:
+                            - checkout: self
+                            - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+                              parameters:
+                                  environment: ${{ parameters.environment }}
+                            - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+
+                            - ${{ if parameters.runValidateAndWhatIf }}:
+                                  - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-validate.yml
+                                  - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-what-if.yml
+                                    parameters:
+                                        parametersFile: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment/infra/environments/${{ parameters.environment }}.parameters.json'
+
+                            - ${{ if parameters.runProvision }}:
+                                  - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
+
+                            - ${{ if parameters.showReadinessReminder }}:
+                                  - bash: |
+                                        echo "Verify operational-readiness-checklist.md is signed off before continuing."
+                                    displayName: 'Operational readiness reminder'

@@ -3,8 +3,7 @@
 # NOTE: this pipeline does NOT auto-run `azd provision`. Prod provisioning is
 # intentionally left as a manual operator step performed via the per-component
 # <component>.provision.yml pipelines after the preflight what-if is reviewed
-# and the operational-readiness checklist is signed off. This preserves the
-# gating that was in the original deploy-all-prod.yml PreflightProd stage.
+# and the operational-readiness checklist is signed off.
 #
 # Flow: Preflight (what-if + readiness reminder, blocks on ADO approval)
 #         → operator triggers component provisions manually
@@ -24,28 +23,12 @@ extends:
     parameters:
         Use1ESOfficial: true
         stages:
-            - stage: PreflightProd
-              displayName: 'Preflight (what-if + readiness)'
-              jobs:
-                  - deployment: Preflight
-                    environment: 'sdk-ai-bots-prod' # blocks on approval
-                    pool:
-                        name: $(LINUXPOOL)
-                        image: $(LINUXVMIMAGE)
-                        os: linux
-                    strategy:
-                        runOnce:
-                            deploy:
-                                steps:
-                                    - checkout: self
-                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
-                                      parameters:
-                                          environment: prod
-                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
-                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-validate.yml
-                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-what-if.yml
-                                      parameters:
-                                          parametersFile: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment/infra/environments/prod.parameters.json'
-                                    - bash: |
-                                          echo "Verify operational-readiness-checklist.md is signed off before continuing."
-                                      displayName: 'Operational readiness reminder'
+            - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-stage.yml
+              parameters:
+                  environment: prod
+                  stageName: PreflightProd
+                  stageDisplayName: 'Preflight (what-if + readiness)'
+                  runValidateAndWhatIf: true
+                  runProvision: false
+                  showReadinessReminder: true
+

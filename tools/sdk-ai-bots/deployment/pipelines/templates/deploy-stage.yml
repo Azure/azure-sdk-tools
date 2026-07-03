@@ -1,0 +1,89 @@
+# Reusable stage template for deploy-all-* orchestrators.
+#
+# Encapsulates the shared dependency chain
+#   Backend → [optional stabilization watch] → FunctionApp → Agent → Frontend
+# so the three deploy-all-<env>.yml orchestrators only supply parameters.
+#
+# Approval gating still lives on the ADO environment `sdk-ai-bots-<env>` used
+# by each component's cd.yml.
+
+parameters:
+    - name: environment
+      type: string
+      values: [dev, preview, prod]
+    - name: imageTagBackend
+      type: string
+    - name: imageTagFunctionApp
+      type: string
+    - name: imageTagAgent
+      type: string
+    - name: imageTagFrontend
+      type: string
+    - name: backendSlot
+      type: string
+      default: authoring
+    - name: agentDeployTarget
+      type: string
+      default: both
+    - name: stabilizationSeconds
+      type: number
+      default: 0
+    # Distinguishes stage identifiers per env when multiple deploy pipelines
+    # coexist in the same run (unused today, but prod historically used
+    # `-Prod` suffixes on stage names — kept for backwards-compat readability).
+    - name: stageSuffix
+      type: string
+      default: ''
+
+stages:
+    - stage: DeployBackend${{ parameters.stageSuffix }}
+      jobs:
+          - template: /tools/sdk-ai-bots/deployment/component-pipelines/backend/backend.cd.yml@self
+            parameters:
+                environment: ${{ parameters.environment }}
+                imageTag: '${{ parameters.imageTagBackend }}'
+                slot: ${{ parameters.backendSlot }}
+
+    - ${{ if gt(parameters.stabilizationSeconds, 0) }}:
+          - stage: WatchBackend${{ parameters.stageSuffix }}
+            dependsOn: DeployBackend${{ parameters.stageSuffix }}
+            jobs:
+                - job: Watch
+                  pool:
+                      name: $(LINUXPOOL)
+                      image: $(LINUXVMIMAGE)
+                      os: linux
+                  steps:
+                      - bash: |
+                            echo "Stabilization window: ${{ parameters.stabilizationSeconds }}s."
+                            sleep ${{ parameters.stabilizationSeconds }}
+                        displayName: 'Stabilize ${{ parameters.stabilizationSeconds }}s'
+
+    - stage: DeployFunctionApp${{ parameters.stageSuffix }}
+      dependsOn:
+          - ${{ if gt(parameters.stabilizationSeconds, 0) }}:
+                - WatchBackend${{ parameters.stageSuffix }}
+          - ${{ if not(gt(parameters.stabilizationSeconds, 0)) }}:
+                - DeployBackend${{ parameters.stageSuffix }}
+      jobs:
+          - template: /tools/sdk-ai-bots/deployment/component-pipelines/function-app/function-app.cd.yml@self
+            parameters:
+                environment: ${{ parameters.environment }}
+                imageTag: '${{ parameters.imageTagFunctionApp }}'
+
+    - stage: DeployAgent${{ parameters.stageSuffix }}
+      dependsOn: DeployFunctionApp${{ parameters.stageSuffix }}
+      jobs:
+          - template: /tools/sdk-ai-bots/deployment/component-pipelines/agent/agent.cd.yml@self
+            parameters:
+                environment: ${{ parameters.environment }}
+                imageTag: '${{ parameters.imageTagAgent }}'
+                deployTarget: ${{ parameters.agentDeployTarget }}
+
+    - stage: DeployFrontend${{ parameters.stageSuffix }}
+      dependsOn: DeployAgent${{ parameters.stageSuffix }}
+      jobs:
+          - template: /tools/sdk-ai-bots/deployment/component-pipelines/frontend/frontend.cd.yml@self
+            parameters:
+                environment: ${{ parameters.environment }}
+                imageTag: '${{ parameters.imageTagFrontend }}'

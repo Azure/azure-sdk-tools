@@ -5,7 +5,7 @@ Given a text document that is potentially relevant to this activity and a list o
 -Steps-
 1. Identify all entities. For each identified entity, extract the following information:
 - entity_name: Name of the entity, capitalized
-- entity_type: One of the following types: [documentation domain, tooling platform, specification language, code generator, SDK library, programming language, API review tool, release management artifact, workflow automation agent, build pipeline, repository, versioning policy, breaking change governance body, validation rule, package manager, communication channel]
+- entity_type: One of the following types: [repository, branch, specification project, api specification language, api description format, service plane, programming language, sdk artifact, development tool, ide extension, containerized development environment, ci/cd pipeline, validation check, linter rule, suppression configuration, pull request, release plan, dashboard, governance board, support channel, versioning policy, breaking change category, http operation pattern, http header, api version lifecycle stage, service team role]
 - entity_description: Comprehensive description of the entity's attributes and activities
 Format each entity as ("entity"<|><entity_name><|><entity_type><|><entity_description>)
 
@@ -28,182 +28,277 @@ Format each relationship as ("relationship"<|><source_entity><|><target_entity><
 
 Example 1:
 
-entity_types: [documentation domain, tooling platform, specification language, code generator, SDK library, programming language, API review tool, release management artifact, workflow automation agent, build pipeline, repository, versioning policy, breaking change governance body, validation rule, package manager, communication channel]
+entity_types: [repository, branch, specification project, api specification language, api description format, service plane, programming language, sdk artifact, development tool, ide extension, containerized development environment, ci/cd pipeline, validation check, linter rule, suppression configuration, pull request, release plan, dashboard, governance board, support channel, versioning policy, breaking change category, http operation pattern, http header, api version lifecycle stage, service team role]
 text:
- (URLs)](#uniform-resource-locators-urls)
-- [HTTP Request / Response Pattern](#http-request--response-pattern)
-- [HTTP Query Parameters and Header Values](#http-query-parameters-and-header-values)
+# Azure REST API, SDK development process with TypeSpec
 
-#### Uniform Resource Locators (URLs)
+## Table Of Content
 
-A Uniform Resource Locator (URL) is how developers access the resources of your service. Ultimately, URLs are how developers form a cognitive model of your service's resources.
+1. Introduction
+2. Repo setup & prerequisites
+3. Creating a new TypeSpec project
+4. Prepare and submit a Pull Request for reviewing
+5. Generate SDK code from a TypeSpec project
 
-<a href="#http-url-pattern" name="http-url-pattern">:white_check_mark:</a> **DO** use this URL pattern:
-\`\`\`text
-https://<tenant>.<region>.<service>.<cloud>/<service-root>/<resource-collection>/<resource-id>
-\`\`\`
+### 1. Introduction
 
-Where:
- | Field | Description
- | - | - |
- | tenant | Regionally-unique ID representing a tenant (used for isolation, billing, quota enforcement, lifetime of resources, etc.)
- | region | Identifies the tenant's selected region. This region string MUST match one of the strings in the "Name" column returned from running this Azure CLI's "az account list-locations -o table"
- | service | Name of the service (ex: blobstore, servicebus, directory, or management)
- | cloud | Cloud domain name, e.g. `azure.net` (see Azure CLI's "az cloud list")
- | service&#x2011;root | Service-specific path (ex: blobcontainer, myqueue)
- | resource&#x2011;collection | Name of the collection, unabbreviated, pluralized
- | resource&#x2011;id | Id of resource within the resource-collection. This MUST be the raw string/number/guid value with no quoting but properly escaped to fit in a URL segment.
+This document describes the processes of developing Azure REST APIs and SDKs with TypeSpec language. The steps below
+ assumes that you are developing TypeSpec API specifications in the `azure-rest-api-specs` and `azure-rest-api-specs-pr`repos.
 
-<a href="#http-url-casing" name="http-url-casing">:white_check_mark:</a> **DO** use kebab-casing (preferred) or camel-casing for URL path segments. If the segment refers to a JSON field, use camel casing.
+If you are developing within your own ADO repo first and then submitting into `azure-rest-api-specs` repos for review and
+ release, you will need to copy the TypeSpec files over.
 
-<a href="#http-url-length" name="http-url-length">:white_check_mark:</a> **DO** return `414-URI Too Long` if a URL exceeds 2083 characters
+### 2. Repo setup & prerequisites
 
-<a href="#http-url-case-sensitivity" name="http-url-case-sensitivity">:white_check_mark:</a> **DO** treat service-defined URL path segments as case-sensitive. If the passed-in case doesn't match what the service expects, the request **MUST** fail with a `404-Not found` HTTP return code.
+- The main repos for Azure REST APIs are [azure-rest-api-specs](https://github.com/azure/azure-rest-api-specs) and [azure-rest-api-specs-pr](https://github.com/azure/azure-rest-api-specs-pr)
+ repos. The `-pr` repo contains `RPSaaSMaster` and `RPSaaSDev` branches for ProviderHub based ARM service specs.
 
-Some customer-provided path segment values may be compared case-insensitivity if the abstraction they represent is normally compared with case-insensitivity. For example, a UUID path segment of 'c55f6b35-05f6-42da-8321-2af5099bd2a2' should be treated identical to 'C55F6B35-05F6-42DA-8321-2AF5099BD2A2'
+#### 2.1 With local machine development
 
-<a href="#http-url-return-casing" name="http-url-return-casing">:white_check_mark:</a> **DO** ensure proper casing when returning a URL in an HTTP response header value or inside a JSON response body
+- [Node.js LTS](https://nodejs.org/en) version 18 or above (LTS Recommended).
+ Ensure you can run the npm command in a command prompt:
 
-<a href="#http-url-allowed-characters" name="http-url-allowed-characters">:white_check_mark:</a> **DO** restrict the characters in service-defined path segments to `0-9  A-Z  a-z  -  .  _  ~`, with `:` allowed only as described below to designate an action operation.
+  \`\`\`npm
+    npm --version
+  \`\`\`
 
-<a href="#http-url-allowed-characters-2" name="http-url-allowed-characters-2">:ballot_box_with_check:</a> **YOU SHOULD** restrict the characters allowed in user-specified path segments (i.e. path parameters values) to `0-9  A-Z  a-z  -  .  _  ~` (do not allow `:`).
+- Run following command in the **repository root folder**. This will install required packages such as TypeSpec
+ compilers and Azure Library packages.
 
-<a href="#http-url-should-be-readable" name="http-url-should-be-readable">:ballot_box_with_check:</a> **YOU SHOULD** keep URLs readable; if possible, avoid UUIDs & %-encoding (ex: Cádiz is %-encoded as C%C3%A1diz)
+  \`\`\`npm
+     npm ci
+  \`\`\`
 
-<a href="#http-url-allowed-characters-3" name="http-url-allowed-characters-3">:heavy_check_mark:</a> **YOU MAY** use these other characters in the URL path but they will likely require %-encoding [[RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986#section-2.1)]: `/  ?  #  [  ]  @  !  $  &  '  (  )  *  +  ,  ;  =`
+- Ensure you can run TypeSpec command within the repo folders.
 
-<a href="#http-direct-endpoints" name="http-direct-endpoints">:heavy_check_mark:</a> **YOU MAY** support a direct endpoint URL for performance/routing:
-\`\`\`text
-https://<tenant>-<service-root>.<service>.<cloud>/...
-\`\`\`
+  \`\`\`npm
+     npx tsp --version
+  \`\`\`
 
-Examples:
-- Request URL: `https://blobstore.azure.net/contoso.com/account1/container1/blob2`
-- Response header ([RFC 2557](https://datatracker.ietf.org/doc/html/rfc2557#section-4)): `content-location : https://contoso-dot-com-account1.blobstore.azure.net/container1/blob2`
-- GUID format: `https://00000000-0000-0000-C000-000000000046-account1.blobstore.azure.net/container1/blob2`
+- One-time set up: Install TypeSpec VisualStudio or VS Code extensions to get syntex highlighting, tool tips in IDE:
+  
+  \`\`\`npm
+    npx tsp code install
+  \`\`\`
 
-<a href="#http-url-return-consistent-form" name="http-url-return-consistent-form">:white_check_mark:</a> **DO** return URLs in response headers/bodies in a consistent form regardless of the
+  OR
+
+    \`\`\`npm
+      npx tsp vs install
+    \`\`\`
+
+#### 2.2  VS Code with local docker .devcontainer
+
+All prerequisites have been installed in the dev container. You should to have `Docker Desktop` and `WSL2` running if
+ you are on Windows machine.
+
+To start, you just need to install `Dev Containers` VS code extension, then open the repo path.
+
+- VS Code will detect the .devcontainer and prompt you to reopen the workspace.
+
+- Alternatively, you can use Command Palette -> Dev Containers: Reopen in Container.
+  
+Once VS Code reopened in Container, you can run any of the program below in the VS Code integrated terminal.
+
+#### 2.2 VS Code in browser via GitHub codespaces
+
+GitHub codespaces leverage the same dev container in the repo. The difference is it is hosted in cloud with VS Code in
+ browser.
+
+To start, you just need to browse to the `azure-rest-api-specs` repo, select `<> Code` drop down and follow `Codespaces`
+ instructions.
+
+### 3. Creating a new TypeSpec project
+
+Please first review recommended folder structure detailed in [this document](https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/directory-structure.md).
+
+1. Under `[reporoot]\specification`, create service folder directly.
+   - Select `(rest-api-spec repo) ARM` or `(rest-api-spec repo) Data-plane` and answer appropriate naming questions.
+   - If it's ARM service, the service folder would be `specification/{{organization}}/resource-manager/<RPNS>/{{service}}`.
+   - If it's Data Plane service, the service folder would be `specification/{{organization}}/data-plane/{{service}}`
+2. Create a new TypeSpec project based on Azure template with command:
+
+    \`\`\`cli
+       npx tsp init https://aka.ms/typespec/azure-init
+    \`\`\`
+3. Compile the generated TypeSpec project with command:
+
+    \`\`\`cli
+      npx tsp compile .
+    \`\`\`
+
+    The generated OpenAPI files should be correctly placed in the `{{service}}`folders following the naming conventions.
+
+4. Now the project has been set up. You can modify the sample and develop your own APIs with TypeSpec.
+
+### 4. Prepare and submit a Pull Request for reviewing
+
+1. Create a branch in your local repository for your changes.
+
+2. Create or update the TypeSpec files for your service.
+
+3. Add or update 'examples' files for each operation of your OpenAPI file.
+
+   The [oav](https://github.com/Azure/oav) provides two ways to generate OpenAPI examples:
+
+   1. Generating basic examples and then manually modify the values. It will generate two examples for each operation:
+    one contains minimal properties set, the other contains the maximal properties set. Since the auto-generated
+     examples consist of random values for most types, you need replace them with meaningful values.
+
+       \`\`\`bash
+       oav generate-examples openapi.json
+       \`\`\`
+
+    Note, latest OAV tool should automatically generate the following. However, if you are generating the examples manually,
+     please ensure you have:
+    - include `title` field and make sure it is descriptive and unique for each operation.
+    - include `operationId`. This is used to match with declared operations in TypeSpec and correctly output in OpenAPI.
+
+4. Add/update the `readme.md` file in the `{{service}}` folder to specify the version and location of the OpenAPI files. The `readme.md` is needed for both management-plane and data-plane services for REST API Docs
 ------------------------
 output:
-("entity"<|>OPENAPI/SWAGGER SPEC<|>specification language<|>An API specification format referenced as the place where error status codes may be documented. The text treats it as the contract description artifact for REST APIs and advises against documenting specific error status codes there unless the default response cannot describe the error body schema properly.)##
-("entity"<|>JSON<|>documentation domain<|>The document section describing JSON-based API contract guidance, including naming, casing, null handling, numeric ranges, string constraints, interoperability, and date/time formatting expectations for Azure services and clients.)##
-("entity"<|>CAMEL CASE<|>validation rule<|>A rule requiring all JSON field names to use camel case, including guidance not to upper-case acronyms and to keep field naming consistent for service contracts.)##
-("entity"<|>CASE-SENSITIVE JSON FIELD NAMES<|>validation rule<|>A rule stating that JSON field names must be treated as case-sensitive by services and clients.)##
-("entity"<|>CASE-SENSITIVE JSON FIELD VALUES<|>validation rule<|>A rule stating that JSON field values should be treated as case-sensitive, with exceptions discouraged wherever possible.)##
-("entity"<|>OPAQUE UNIQUE ID STRING RULE<|>validation rule<|>A rule requiring JSON field values that represent unique identifiers to be treated as opaque strings and compared with case-sensitivity, without client parsing or interpretation beyond storage and retransmission.)##
-("entity"<|>UTF-8<|>programming language<|>A wire encoding format referenced as the byte representation used when JSON is transmitted between services and clients, supporting cross-language interoperability in the lowest common denominator type system.)##
-("entity"<|>JSON MERGE PATCH<|>specification language<|>A JSON patch payload format referenced as the only case in which JSON null values should be accepted in requests, where null indicates deletion of a field.)##
-("entity"<|>NO NULL JSON RESPONSE VALUES<|>validation rule<|>A rule stating that services must not send JSON fields with null values in responses and should omit such fields entirely, since null and missing are treated identically semantically in Azure services.)##
-("entity"<|>NULL ONLY FOR JSON MERGE PATCH REQUESTS<|>validation rule<|>A rule stating that JSON null values should be accepted only for PATCH operations using JSON Merge Patch payloads, where null requests deletion of a field.)##
-("entity"<|>JSON INTEGER RANGE RULE<|>validation rule<|>A rule directing services to use integers only within the acceptable range of the JSON number type.)##
-("entity"<|>STRING CONSTRAINT CONTRACT RULE<|>validation rule<|>A rule requiring services to define clear contracts for string formats, such as minimum and maximum lengths, legal characters, and case-sensitivity behavior.)##
-("entity"<|>STANDARD STRING FORMAT RULE<|>validation rule<|>A rule recommending the use of well-known, easily parseable string formats so that many programming languages can reliably format and read values.)##
-("entity"<|>ROUND-TRIPPABLE JSON RULE<|>validation rule<|>A rule requiring information exchanged between a service and clients to remain round-trippable across multiple programming languages without loss of meaning.)##
-("entity"<|>RFC 3339<|>specification language<|>A standard date/time format referenced as the required representation for date and time values in JSON, and also mentioned as a potential standard for string formatting in API contracts.)##
-("entity"<|>FIXED TIME INTERVAL DURATION RULE<|>validation rule<|>A rule requiring durations to be expressed as fixed time intervals such as milliseconds, seconds, minutes, or days, with the time unit embedded in the property name.)##
-("entity"<|>RFC 3339 TIME INTERVALS<|>specification language<|>A time interval representation mentioned as an optional format that services may use for expressing durations.)##
-("relationship"<|>JSON<|>CAMEL CASE<|>The JSON guidance section explicitly requires camel case for all JSON field names.<|>10)##
-("relationship"<|>JSON<|>CASE-SENSITIVE JSON FIELD NAMES<|>The JSON guidance explicitly states that JSON field names must be treated as case-sensitive.<|>10)##
-("relationship"<|>JSON<|>CASE-SENSITIVE JSON FIELD VALUES<|>The JSON guidance explicitly states that JSON field values should be treated as case-sensitive.<|>10)##
-("relationship"<|>JSON<|>OPAQUE UNIQUE ID STRING RULE<|>The JSON guidance defines how unique identifier values in JSON must be handled as opaque case-sensitive strings.<|>9)##
-("relationship"<|>JSON<|>UTF-8<|>The text explains that JSON is sent over the wire as UTF-8 bytes to support interoperability.<|>8)##
-("relationship"<|>JSON<|>JSON MERGE PATCH<|>The JSON guidance references JSON Merge Patch as the special request format in which null values are allowed for PATCH operations.<|>9)##
-("relationship"<|>JSON<|>NO NULL JSON RESPONSE VALUES<|>The JSON guidance explicitly prohibits sending null-valued fields in service responses.<|>10)##
-("relationship"<|>JSON<|>NULL ONLY FOR JSON MERGE PATCH REQUESTS<|>The JSON guidance permits null request values only under the JSON Merge Patch pattern for PATCH.<|>10)##
-("relationship"<|>JSON<|>JSON INTEGER RANGE RULE<|>The JSON guidance specifies that integers must stay within the acceptable JSON number range.<|>9)##
-("relationship"<|>JSON<|>STRING CONSTRAINT CONTRACT RULE<|>The JSON guidance requires well-defined string formatting contracts for service fields.<|>9)##
-("relationship"<|>JSON<|>STANDARD STRING FORMAT RULE<|>The JSON guidance recommends standard string formats for interoperability across languages.<|>8)##
-("relationship"<|>JSON<|>ROUND-TRIPPABLE JSON RULE<|>The JSON guidance requires values to round-trip correctly across multiple programming languages.<|>9)##
-("relationship"<|>JSON<|>RFC 3339<|>The JSON guidance explicitly requires RFC 3339 for date/time values.<|>10)##
-("relationship"<|>JSON<|>FIXED TIME INTERVAL DURATION RULE<|>The JSON guidance requires durations to be represented as fixed time intervals with units in property names.<|>9)##
-("relationship"<|>JSON<|>RFC 3339 TIME INTERVALS<|>The JSON guidance says RFC 3339 time intervals may be used for durations.<|>7)##
-("relationship"<|>OPENAPI/SWAGGER SPEC<|>JSON<|>The text discusses how error responses may be documented in an OpenAPI/Swagger specification and contrasts that contract documentation with JSON payload behavior guidance.<|>6)##
-("relationship"<|>NULL ONLY FOR JSON MERGE PATCH REQUESTS<|>JSON MERGE PATCH<|>This rule directly depends on JSON Merge Patch because it allows null only when that payload format is used.<|>10)##
-("relationship"<|>STANDARD STRING FORMAT RULE<|>RFC 3339<|>RFC 3339 is given as a concrete example of a well-known standard string format recommended by the rule.<|>8)##
-("relationship"<|>FIXED TIME INTERVAL DURATION RULE<|>RFC 3339 TIME INTERVALS<|>The text contrasts fixed time interval duration guidance with the optional use of RFC 3339 time intervals.<|>7)##
-("relationship"<|>ROUND-TRIPPABLE JSON RULE<|>UTF-8<|>The round-trippable interoperability guidance is supported by the use of UTF-8 as the wire encoding for JSON data exchanged across languages.<|>6)<|COMPLETE|>
+("entity"<|>AZURE SDK - GITHUB ISSUES (ADX)<|>dashboard<|>A dashboard used to view customer issues for Azure service libraries and their SLA status. It provides multiple pages and filtering parameters so teams can analyze issue volume, aging, ownership, and SLA compliance across repositories and services.)##
+("entity"<|>AZURE SDK - ISSUE DASHBOARD<|>support channel<|>The named security-group-backed access path referenced for obtaining permission to use the Azure SDK - GitHub Issues (ADX) dashboard. Users request membership in this group so their dashboard access can be reviewed and processed.)##
+("entity"<|>CLOUDMINE-EV<|>support channel<|>A Core Identity entitlement required in order to gain access to the Azure SDK - GitHub Issues (ADX) dashboard. Users must request this entitlement through Core Identity, and VPN access is noted as required to reach that system.)##
+("entity"<|>DATA PLANE LIBRARIES (CLIENT)<|>service plane<|>The data-plane/client area used as a dashboard filtering dimension. It represents issues related to client libraries for data-plane services.)##
+("entity"<|>MANAGEMENT PLANE LIBRARIES (MGMT)<|>service plane<|>The management-plane area used as a dashboard filtering dimension. It represents issues related to management plane libraries.)##
+("entity"<|>AZURE SDK TEAM (SDK)<|>service team role<|>A service ownership role shown in the dashboard's Owner parameter. It identifies issues for which the Azure SDK team is responsible for resolution.)##
+("entity"<|>AZURE SERVICE TEAM (SERVICE)<|>service team role<|>A service ownership role shown in the dashboard's Owner parameter. It identifies issues for which the Azure service team is responsible for resolution.)##
+("entity"<|>CXP TEAM (CXP)<|>service team role<|>A service ownership role shown in the dashboard's Owner parameter. It identifies issues for which the customer experience team is responsible for resolution.)##
+("relationship"<|>AZURE SDK - ISSUE DASHBOARD<|>AZURE SDK - GITHUB ISSUES (ADX)<|>Membership in the Azure SDK - Issue Dashboard security group is required to gain access to the Azure SDK - GitHub Issues (ADX) dashboard.<|>9)##
+("relationship"<|>CLOUDMINE-EV<|>AZURE SDK - GITHUB ISSUES (ADX)<|>The CloudMine-EV entitlement is also required to gain access to the Azure SDK - GitHub Issues (ADX) dashboard.<|>9)##
+("relationship"<|>AZURE SDK - GITHUB ISSUES (ADX)<|>DATA PLANE LIBRARIES (CLIENT)<|>The dashboard uses Area as a filter and includes data plane libraries (Client) as one of the supported service-plane values.<|>8)##
+("relationship"<|>AZURE SDK - GITHUB ISSUES (ADX)<|>MANAGEMENT PLANE LIBRARIES (MGMT)<|>The dashboard uses Area as a filter and includes management plane libraries (Mgmt) as one of the supported service-plane values.<|>8)##
+("relationship"<|>AZURE SDK - GITHUB ISSUES (ADX)<|>AZURE SDK TEAM (SDK)<|>The dashboard Owner parameter can filter issues that the Azure SDK team is responsible for resolving.<|>8)##
+("relationship"<|>AZURE SDK - GITHUB ISSUES (ADX)<|>AZURE SERVICE TEAM (SERVICE)<|>The dashboard Owner parameter can filter issues that the Azure Service team is responsible for resolving.<|>8)##
+("relationship"<|>AZURE SDK - GITHUB ISSUES (ADX)<|>CXP TEAM (CXP)<|>The dashboard Owner parameter can filter issues that the CXP team is responsible for resolving.<|>8)##
+("relationship"<|>DATA PLANE LIBRARIES (CLIENT)<|>MANAGEMENT PLANE LIBRARIES (MGMT)<|>These are the two Area values used by the dashboard to categorize issues by service plane.<|>6)##
+("relationship"<|>AZURE SDK TEAM (SDK)<|>AZURE SERVICE TEAM (SERVICE)<|>These roles appear together in the dashboard Owner filter as alternative teams responsible for issue resolution.<|>5)##
+("relationship"<|>AZURE SDK TEAM (SDK)<|>CXP TEAM (CXP)<|>These roles appear together in the dashboard Owner filter as possible ownership categories for issue resolution.<|>5)##
+("relationship"<|>AZURE SERVICE TEAM (SERVICE)<|>CXP TEAM (CXP)<|>These roles appear together in the dashboard Owner filter as possible ownership categories for issue resolution.<|>5)##
+<|COMPLETE|>
 #############################
 
 
 Example 2:
 
-entity_types: [documentation domain, tooling platform, specification language, code generator, SDK library, programming language, API review tool, release management artifact, workflow automation agent, build pipeline, repository, versioning policy, breaking change governance body, validation rule, package manager, communication channel]
+entity_types: [repository, branch, specification project, api specification language, api description format, service plane, programming language, sdk artifact, development tool, ide extension, containerized development environment, ci/cd pipeline, validation check, linter rule, suppression configuration, pull request, release plan, dashboard, governance board, support channel, versioning policy, breaking change category, http operation pattern, http header, api version lifecycle stage, service team role]
 text:
-# Build triggers
+### 1032 - DifferentAllOf
 
-## Continuous Integration
-Public CI builds run in our Public project, and are triggered automatically whenever a pull request is opened, or a new commit is pushed to an existing pull request, or new commits are merged into the master branch. They run a full build, code linting, unit tests, dependency analysis, and Component Governance detection. They do not run any integration tests.
+**Description**: Checks whether any model's `allOf` has changed from the previous specification.
 
-Rarely, Azure DevOps will miss a pull request trigger, and a CI build will not be queued when it should have been. If the build is Required, it will cause your pull request to be blocked from merging, and you will see a Required build with a status of "Expected — Waiting for status to be reported". In this case, you can manually trigger the build to run on your PR as documented in the next section.
+**Cause**: This is considered a breaking change.
 
-## Manual PR Triggers
-Any build pipeline that has enabled pull request validation can be triggered by issuing a bot command in a [comment](https://docs.microsoft.com/en-us/azure/devops/pipelines/repos/github?view=azure-devops&tabs=yaml#comment-triggers) like `/azp run <full name of pipeline including spaces>`. This includes both public CI builds (as above), as well as internal pipelines which have been designed only to be triggered from a bot command issued by a member of the Azure SDK team. These pipelines exist to take actions (such as running live tests) that require access to secrets or to our Azure infrastructure, but that we don't want to risk exposing to untrusted pull requests. 
+**Example**: Value of `allOf` element of Parameter `Cat` changed from `#definitions/Pet` to `#definitions/CustomPet` in the new version.
 
-To create a manually-triggered build, create an internal pipeline with the following options:
+Old specification
+\`\`\`json5
+{{
+  "swagger": "2.0",
+  "info": {{
+    "title": "swagger",
+    "description": "The Azure Management API.",
+    "version": "2016-12-01",
+    ...
+    ...
+  "definitions": {{
+    ...
+    "Pet": {{
+      "type": "object",
+      "discriminator": "petType",
+      "properties": {{
+        "name": {{
+          "type": "string"
+        }},
+        "petType": {{
+          "type": "string"
+        }}
+        ...
+      }}
+    }},
+    "Cat": {{
+      "allOf": [{{
+        "$ref": "#definitions/Pet"
+      }}],
+      ...
+    }}
+    ...
+\`\`\`
 
-![image.png](/.attachments/image-50b79bda-44a5-4b33-a903-d70de7391920.png =500x)
+New specification
+\`\`\`json5
+{{
+  "swagger": "2.0",
+  "info": {{
+    "title": "swagger",
+    "description": "The Azure Management API.",
+    "version": "2016-12-01",
+    ...
+    ...
+  "definitions": {{
+    ...
+    "Pet": {{
+      "type": "object",
+      "discriminator": "petType",
+      "properties": {{
+        "name": {{
+          "type": "string"
+        }},
+        "petType": {{
+          "type": "string"
+        }}
+        ...
+      }}
+    }},
+    "Cat": {{
+      "allOf": [{{
+        "$ref": "#definitions/CustomPet"
+      }}],
+      ...
+    }}
+    ...
+\`\`\`
 
-The key settings are:
-1. "**_Require a team members' comment before building a pull request_**" must always be checked otherwise this pipeline will automatically trigger which we don't want.
-2. "**_Make Secrets available to builds of forks_**" must be checked if this build pipeline requires secrets to run live tests otherwise the pipeline will not have access to the secrets and will fail for any PR submitted from a fork, which is the common scenario. 
-
-### Manually trigger other pipelines
-
-In some cases, changes to one service may need to be tested using pipelines associated with another service. For example, working on files in `sdk/storage` or `sdk/core` and wanting to ensure that other services are not impacted.
-
-To trigger a pipeline against a specific PR, navigate to the pipeline in your browser and click the blue `Run Pipeline` button
-
-<IMG  src="https://user-images.githubusercontent.com/2158838/212986512-c42aa5ae-aaf7-45e8-9697-da927c736f15.png"  alt="image"/>
-
-In the `Branch/tag` field enter `refs/pull/<PR-Number>/merge` (e.g. `refs/pull/4241/merge`): 
-
-<IMG  src="https://user-images.githubusercontent.com/2158838/212986713-d3d8b26a-b788-41a5-80ad-461b131f803b.png"  alt="image"/>
-
-Then click the blue `Run` button to execute the pipeline.
-
-## Scheduled Builds
-Internal builds are scheduled to run daily to ensure that factors outside the repo (e.g. build machines, network resources, etc.) don't cause failures. These builds typically run the same set of tasks that CI builds do, but additionally, dailies may also run integration tests or publish documentation updates. 
-
-The specifics of the daily build tasks vary from repo to repo. Daily builds should follow the template convention described in the "Build Pipelines" section with a template YAML and scenario specific YAML files where appropriate for projects that have integration tests. 
-
-The build schedules should be staggered across all 24-hours of the day to spread out workloads as we are a international team and there isn't any time where people aren't working. When the pipeline generation tool creates the pipeline it will try and use the definition id to bucket it across the 24-hour day, and we occasionally will rebalance the schedules as we find hotspots during the day for when a build happens.
-
-For our daily builds we should only schedule them for Mon-Fri to leave the weekends for other weekly or monthly builds. For longer runs or runs we don't need all the time we should schedule them for the weekends. 
-
-## Security tools
-
-Our DevOps org has 2 sets of security tools installed:
- - [Secure Development Tools (Guardian)](https://marketplace.visualstudio.com/items?itemName=securedevelopmentteam.vss-secure-development-tools&targetId=0fb41ef4-5012-48a9-bf39-4ee3de03ee35&utm_source=vstsproduct&utm_medium=ExtHubManageList) - is the extension expected to be used only in Internal Microsoft. This enables teams to meet our SDL tooling requirements. 
- - [Microsoft Security Code Analysis](https://nam06.safelinks.protection.outlook.com/?url=https%3A%2F%2Fmarketplace.visualstudio.com%2Fitems%3FitemName%3Dms-codeanalysis.vss-microsoft-security-code-analysis-devops%26targetId%3D0fb41ef4-5012-48a9-bf39-4ee3de03ee35%26utm_source%3Dvstsproduct%26utm_medium%3DExtHubManageList&data=02%7C01%7CWes.Haggard%40microsoft.com%7Cfc7177ae301c4afa095708d7f8f3e278%7C72f988
 ------------------------
 output:
-("entity"<|>OPENAPI/SWAGGER SPEC<|>specification language<|>An API specification format referenced as the place where specific error status codes might be documented, with guidance recommending use of a default response unless a specific error response schema differs materially.)##
-("entity"<|>JSON<|>documentation domain<|>The data interchange format and documentation topic described in the text, including rules for field naming, case sensitivity, null handling, numeric ranges, string constraints, round-trippability, and interoperability across clients and services.)##
-("entity"<|>JSON MERGE PATCH<|>specification language<|>A patch payload format referenced as the allowed context in which JSON fields with null values may be accepted, where null indicates deletion of a field.)##
-("entity"<|>PATCH OPERATION<|>documentation domain<|>An HTTP partial-update operation mentioned as the context in which JSON null values are accepted when using a JSON Merge Patch payload.)##
-("entity"<|>UUIDS<|>documentation domain<|>A unique identifier format cited as an example of opaque string IDs that clients should store and transmit without parsing or interpreting.)##
-("entity"<|>CUIDS<|>documentation domain<|>A unique identifier format cited as another example of opaque string IDs used as service implementation details.)##
-("entity"<|>NANO ID<|>documentation domain<|>A unique identifier format mentioned alongside UUIDs and CUIDs as an example of IDs that should be treated as opaque strings.)##
-("entity"<|>UTF-8<|>documentation domain<|>The character encoding identified as the wire representation for JSON, establishing interoperable byte-level exchange across clients and services.)##
-("entity"<|>BOOLEAN<|>documentation domain<|>One of the three JSON primitive types described in the text, represented as lowercase true or false.)##
-("entity"<|>NUMBER<|>documentation domain<|>One of the three JSON primitive types, described as signed floating point IEEE-754 binary64 with an integer-safe range.)##
-("entity"<|>STRING<|>documentation domain<|>One of the three JSON primitive types, used broadly for values including identifiers and formatted text such as date/time strings.)##
-("entity"<|>IEEE-754 BINARY64<|>documentation domain<|>The numeric representation referenced for JSON numbers, defining the floating-point model and safe integer range discussed in the guidance.)##
-("entity"<|>RFC 3339<|>validation rule<|>A standards-based date and time string format explicitly required by the guidance for date/time values and recommended as a well-known, parsable string format.)##
-("entity"<|>RFC 3339 TIME INTERVALS<|>validation rule<|>A standards-based interval representation mentioned as an optional format that services may use for expressing time intervals.)##
-("relationship"<|>JSON<|>UTF-8<|>The text states that JSON is always sent over the wire as UTF-8 bytes to ensure interoperability across services and clients.<|>9)##
-("relationship"<|>JSON<|>BOOLEAN<|>Boolean is identified as one of the primitive types in the JSON type system described in the guidance.<|>9)##
-("relationship"<|>JSON<|>NUMBER<|>Number is identified as one of the primitive types in the JSON type system described in the guidance.<|>9)##
-("relationship"<|>JSON<|>STRING<|>String is identified as one of the primitive types in the JSON type system described in the guidance.<|>9)##
-("relationship"<|>NUMBER<|>IEEE-754 BINARY64<|>The guidance defines the JSON number type as signed floating point using IEEE-754 binary64 representation.<|>9)##
-("relationship"<|>PATCH OPERATION<|>JSON MERGE PATCH<|>The text specifies that null-valued JSON fields are accepted only for a PATCH operation with a JSON Merge Patch payload.<|>9)##
-("relationship"<|>JSON<|>JSON MERGE PATCH<|>JSON Merge Patch is described as a specific payload format governing how null JSON fields are interpreted for deletion semantics.<|>8)##
-("relationship"<|>JSON<|>RFC 3339<|>The guidance requires using RFC 3339 for JSON date/time values and recommends it as a standard string format.<|>9)##
-("relationship"<|>JSON<|>RFC 3339 TIME INTERVALS<|>The guidance says services may use RFC 3339 time intervals when expressing durations in JSON-related contracts.<|>6)##
-("relationship"<|>JSON<|>UUIDS<|>UUIDs are given as an example of JSON field values representing unique IDs that must be treated as opaque strings.<|>7)##
-("relationship"<|>JSON<|>CUIDS<|>CUIDs are given as another example of JSON field values representing unique IDs that must be treated as opaque strings.<|>7)##
-("relationship"<|>JSON<|>NANO ID<|>Nano ID is listed as an example identifier format whose values should be treated as opaque strings in JSON contracts.<|>7)##
-("relationship"<|>OPENAPI/SWAGGER SPEC<|>JSON<|>The guidance discusses documenting error responses in an OpenAPI/Swagger spec while the surrounding section defines JSON conventions for payload shape and behavior.<|>5)##
+("entity"<|>AZURE SDK - GITHUB ISSUES (ADX)<|>dashboard<|>A dashboard used to view customer issues for Azure service libraries, including SLA status, issue counts, aging, repository distribution, service label distribution, and other filtered analytics across several dashboard pages such as Issues, Volume, and Monthly SLA.)
+##
+("entity"<|>AZURE SDK - ISSUE DASHBOARD<|>support channel<|>The named security-group-backed access target that users must request membership in to gain access to the Azure SDK - GitHub Issues (ADX) dashboard.)
+##
+("entity"<|>CLOUDMINE-EV<|>support channel<|>The entitlement users must request through Core Identity in order to gain access to the Azure SDK - GitHub Issues (ADX) dashboard environment and data.)
+##
+("entity"<|>DATA PLANE<|>service plane<|>A service-plane classification used in the dashboard Area filter to identify issues related to client or data plane libraries.)
+##
+("entity"<|>MANAGEMENT PLANE<|>service plane<|>A service-plane classification used in the dashboard Area filter to identify issues related to management plane libraries.)
+##
+("entity"<|>AZURE SDK TEAM<|>service team role<|>A responsibility category in the dashboard Owner filter representing the Azure SDK team as the party responsible for resolving certain issues.)
+##
+("entity"<|>AZURE SERVICE TEAM<|>service team role<|>A responsibility category in the dashboard Owner filter representing the Azure service team as the party responsible for resolving certain issues.)
+##
+("entity"<|>CXP TEAM<|>service team role<|>A responsibility category in the dashboard Owner filter representing the CXP team as the party responsible for resolving certain issues.)
+##
+("relationship"<|>AZURE SDK - ISSUE DASHBOARD<|>AZURE SDK - GITHUB ISSUES (ADX)<|>Membership in the Azure SDK - Issue Dashboard security group is required to gain access to the Azure SDK - GitHub Issues (ADX) dashboard<|>9)
+##
+("relationship"<|>CLOUDMINE-EV<|>AZURE SDK - GITHUB ISSUES (ADX)<|>The CloudMine-EV entitlement is also required to gain access to the Azure SDK - GitHub Issues (ADX) dashboard<|>8)
+##
+("relationship"<|>DATA PLANE<|>AZURE SDK - GITHUB ISSUES (ADX)<|>The dashboard uses Data Plane as an Area filter value for issues related to client libraries<|>8)
+##
+("relationship"<|>MANAGEMENT PLANE<|>AZURE SDK - GITHUB ISSUES (ADX)<|>The dashboard uses Management Plane as an Area filter value for issues related to management libraries<|>8)
+##
+("relationship"<|>AZURE SDK TEAM<|>AZURE SDK - GITHUB ISSUES (ADX)<|>The dashboard Owner filter can show issues for which the Azure SDK team is responsible<|>8)
+##
+("relationship"<|>AZURE SERVICE TEAM<|>AZURE SDK - GITHUB ISSUES (ADX)<|>The dashboard Owner filter can show issues for which the Azure Service team is responsible<|>8)
+##
+("relationship"<|>CXP TEAM<|>AZURE SDK - GITHUB ISSUES (ADX)<|>The dashboard Owner filter can show issues for which the CXP team is responsible<|>8)
+##
+("relationship"<|>DATA PLANE<|>MANAGEMENT PLANE<|>Data Plane and Management Plane are the two service-plane categories referenced by the dashboard Area filter<|>6)
+##
+("relationship"<|>AZURE SDK TEAM<|>AZURE SERVICE TEAM<|>Both are owner categories in the dashboard used to indicate which team is responsible for issue resolution<|>6)
+##
+("relationship"<|>AZURE SDK TEAM<|>CXP TEAM<|>Both are owner categories in the dashboard used to indicate which team is responsible for issue resolution<|>6)
+##
+("relationship"<|>AZURE SERVICE TEAM<|>CXP TEAM<|>Both are owner categories in the dashboard used to indicate which team is responsible for issue resolution<|>6)
 <|COMPLETE|>
 #############################
 
@@ -211,7 +306,7 @@ output:
 
 -Real Data-
 ######################
-entity_types: [documentation domain, tooling platform, specification language, code generator, SDK library, programming language, API review tool, release management artifact, workflow automation agent, build pipeline, repository, versioning policy, breaking change governance body, validation rule, package manager, communication channel]
+entity_types: [repository, branch, specification project, api specification language, api description format, service plane, programming language, sdk artifact, development tool, ide extension, containerized development environment, ci/cd pipeline, validation check, linter rule, suppression configuration, pull request, release plan, dashboard, governance board, support channel, versioning policy, breaking change category, http operation pattern, http header, api version lifecycle stage, service team role]
 text: {input_text}
 ######################
 output:

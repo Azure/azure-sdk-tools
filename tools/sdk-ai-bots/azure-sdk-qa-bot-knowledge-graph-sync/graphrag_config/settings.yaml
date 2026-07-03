@@ -102,7 +102,11 @@ input:
   # from the markdown's first H1 (falling back to the basename), and
   # markdown structure (headings, code blocks, front-matter) is
   # preserved going into chunking.
-  file_pattern: ".*\\.mdx?$"
+  # NOTE: the trailing regex end-anchor is doubled below because graphrag
+  # resolves environment placeholders in this file via
+  # string.Template.substitute, which rejects a lone dollar sign; the
+  # doubled form is rendered back to a single end-anchor at load time.
+  file_pattern: ".*\\.mdx?$$"
 
 input_storage:
   type: blob

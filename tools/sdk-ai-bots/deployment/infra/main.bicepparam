@@ -23,6 +23,7 @@ param resourceGroupName              = readEnvironmentVariable('AZURE_RESOURCE_G
 param functionImageRepository        = readEnvironmentVariable('FUNCTION_IMAGE_REPOSITORY',        'azure-sdk-qa-bot-function:${env}')
 param ragBasedBackendImageRepository = readEnvironmentVariable('RAG_BASED_BACKEND_IMAGE_REPOSITORY', 'azure-sdk-qa-bot-backend:${env}')
 param agentBasedImageRepository      = readEnvironmentVariable('AGENT_BASED_IMAGE_REPOSITORY',      'azure-sdk-qa-bot-agent-server:${env}')
+param frontendImageRepository        = readEnvironmentVariable('FRONTEND_IMAGE_REPOSITORY',        'azure-sdk-qa-bot:${env}')
 
 // ── Per-env values (read from .azure/<env>/.env; pipelines override via JSON) ─
 // SERVER_AUDIENCE is auto-populated by the preprovision hook

@@ -27,6 +27,9 @@
     },
     "agentBasedImageRepository": {
       "value": "azure-sdk-qa-bot-agent-server:dev"
+    },
+    "frontendImageRepository": {
+      "value": "azure-sdk-qa-bot:dev"
     }
   }
 }

@@ -37,6 +37,9 @@ param ragBasedBackendImageRepository string
 @description('Agent server (slot) container image repository and tag.')
 param agentBasedImageRepository string
 
+@description('Frontend (Teams bot) container image repository and tag.')
+param frontendImageRepository string
+
 // ── Resource Group ─────────────────────────────────────────────────────────────
 resource rg 'Microsoft.Resources/resourceGroups@2024-03-01' = {
   name: resourceGroupName
@@ -67,6 +70,8 @@ module frontend './modules/qaBotFrontend/userAssignedIdentity.bicep' = {
   scope: rg
   params: {
     storageAccountName: sharedResources.outputs.storageAccountName
+    containerRegistryName: sharedResources.outputs.containerRegistryName
+    frontendImageRepository: frontendImageRepository
   }
 }
 

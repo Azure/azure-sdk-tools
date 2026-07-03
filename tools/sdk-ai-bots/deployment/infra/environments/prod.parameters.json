@@ -17,6 +17,7 @@
     "serverAudience":              { "value": "899da762-d510-48f2-911a-db9ea0cc41fd" },
     "functionImageRepository":     { "value": "azure-sdk-qa-bot-function:latest" },
     "ragBasedBackendImageRepository": { "value": "azure-sdk-qa-bot-backend:latest" },
-    "agentBasedImageRepository":   { "value": "azure-sdk-qa-bot-agent-server:latest" }
+    "agentBasedImageRepository":   { "value": "azure-sdk-qa-bot-agent-server:latest" },
+    "frontendImageRepository":     { "value": "azure-sdk-qa-bot:latest" }
   }
 }

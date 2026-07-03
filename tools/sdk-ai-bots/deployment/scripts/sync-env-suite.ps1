@@ -92,6 +92,7 @@ $Mapping = @(
     @{ Path = ".components.`"function-app`".imageName + `":$Environment`"";  Key = 'FUNCTION_IMAGE_REPOSITORY' }
     @{ Path = ".components.backend.imageName + `":$Environment`"";           Key = 'RAG_BASED_BACKEND_IMAGE_REPOSITORY' }
     @{ Path = ".components.`"agent-server`".imageName + `":$Environment`"";  Key = 'AGENT_BASED_IMAGE_REPOSITORY' }
+    @{ Path = ".components.frontend.imageName + `":$Environment`"";          Key = 'FRONTEND_IMAGE_REPOSITORY' }
 )
 
 Write-Host "Syncing environment-suite.yaml → azd env '$Environment'..." -ForegroundColor Cyan

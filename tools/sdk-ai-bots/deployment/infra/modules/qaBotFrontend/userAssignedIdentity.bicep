@@ -3,6 +3,12 @@ targetScope = 'resourceGroup'
 @description('Name of the shared storage account (created by the shared resources module) that the frontend identity needs data-plane access to.')
 param storageAccountName string
 
+@description('Name of the shared container registry (created by the shared resources module) that hosts the frontend image.')
+param containerRegistryName string
+
+@description('Frontend container image repository and tag (e.g. `azure-sdk-qa-bot:dev`), pushed to the shared registry by CI / `frontend-predeploy.ts`.')
+param frontendImageRepository string
+
 resource userAssignedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2025-05-31-preview' = {
   name: 'azsdkqabot-${substring(uniqueString(resourceGroup().id), 0, 6)}'
   location: 'westus2'
@@ -77,17 +83,15 @@ resource actionGroup 'Microsoft.Insights/actionGroups@2024-10-01-preview' = {
   }
 }
 
-resource registry 'Microsoft.ContainerRegistry/registries@2026-01-01-preview' = {
-  name: 'azsdkqabot${substring(uniqueString(resourceGroup().id), 0, 6)}'
-  location: 'westus2'
-  sku: {
-    name: 'Standard'
-  }
+resource sharedRegistry 'Microsoft.ContainerRegistry/registries@2026-01-01-preview' existing = {
+  name: containerRegistryName
 }
 
+// Grant the frontend identity AcrPull on the shared registry so the site can
+// pull its container image using this user-assigned identity.
 resource roleAssignment2 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  scope: registry
-  name: guid(registry.id, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d'))
+  scope: sharedRegistry
+  name: guid(sharedRegistry.id, userAssignedIdentity.id, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d'))
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
     principalId: userAssignedIdentity.properties.principalId
@@ -119,7 +123,7 @@ resource site 'Microsoft.Web/sites@2025-05-01' = {
     publicNetworkAccess: 'Enabled'
     serverFarmId: serverfarm.id
     siteConfig: {
-      linuxFxVersion: 'DOCKER|azsdkqabot.azurecr.io/azure-sdk-qa-bot:latest'
+      linuxFxVersion: 'DOCKER|${sharedRegistry.properties.loginServer}/${frontendImageRepository}'
       alwaysOn: true
       acrUseManagedIdentityCreds: true
       acrUserManagedIdentityID: userAssignedIdentity.properties.clientId

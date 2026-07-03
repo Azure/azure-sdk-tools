@@ -189,7 +189,6 @@ class ChatService:
             agent_session_id=agent_session_id,
             agent_ref=agent_ref,
         )
-
         # Cache the warm sandbox id so later stateless calls reuse it.
         if stateless and not get_stateless_session_id():
             extra = getattr(response, "model_extra", None) or {}
@@ -242,8 +241,8 @@ class ChatService:
         )
         return chat_response
 
-    @staticmethod
     async def _invoke_agent_with_retry(
+        self,
         openai_client: AsyncOpenAI,
         conversation_items: list[ResponseInputItemParam],
         agent_ref: dict[str, str],
@@ -277,6 +276,7 @@ class ChatService:
                 kwargs["conversation"] = agent_conversation_id
             if agent_session_id:
                 extra_body["agent_session_id"] = agent_session_id
+            stream = None
             try:
                 stream = await openai_client.responses.create(
                     input=conversation_items,
@@ -288,12 +288,12 @@ class ChatService:
                 # Bound the wait for the stream to reach completion; a stream
                 # that stalls past the timeout is abandoned and retried.
                 response = await asyncio.wait_for(
-                    ChatService._consume_stream(stream, agent_conversation_id),
+                    self._consume_stream(stream, agent_conversation_id),
                     timeout=stream_timeout,
                 )
                 # Poll if completed with empty text (Foundry persistence delay).
                 if response.status == "completed" and not response.output_text:
-                    response = await ChatService._poll_response_text(
+                    response = await self._poll_response_text(
                         openai_client, response
                     )
                 if not response.output_text:
@@ -304,6 +304,7 @@ class ChatService:
                 return stream, response
             except (NotFoundError, BadRequestError) as ex:
                 last_error = ex
+                await self._close_stream(stream)
                 # A rejected cached session: drop it and retry without one so
                 # the platform provisions a fresh sandbox.
                 if agent_session_id:
@@ -321,6 +322,7 @@ class ChatService:
                 )
             except (APIConnectionError, APITimeoutError, APIStatusError) as ex:
                 last_error = ex
+                await self._close_stream(stream)
                 logger.warning(
                     "Failed to create agent stream (attempt %d/%d): "
                     "conversation=%s, error=%s",
@@ -332,6 +334,7 @@ class ChatService:
                 )
             except asyncio.TimeoutError as ex:
                 last_error = ex
+                await self._close_stream(stream)
                 logger.warning(
                     "Agent stream did not complete within %.0fs "
                     "(attempt %d/%d): conversation=%s",
@@ -340,10 +343,11 @@ class ChatService:
                     max_retries,
                     agent_conversation_id,
                 )
-            except _EmptyAgentResponseError as ex:
+            except (_EmptyAgentResponseError, RuntimeError) as ex:
                 last_error = ex
+                await self._close_stream(stream)
                 logger.warning(
-                    "Agent returned empty response (attempt %d/%d): "
+                    "Agent returned no usable response (attempt %d/%d): "
                     "conversation=%s, error=%s",
                     attempt,
                     max_retries,
@@ -360,8 +364,27 @@ class ChatService:
             f"attempts (conversation={agent_conversation_id})"
         ) from last_error
 
-    @staticmethod
+    async def _close_stream(self, stream) -> None:
+        """Best-effort close of a responses stream to release HTTP resources.
+
+        ``stream`` may be ``None`` (creation failed) or already closed; any
+        error while closing is swallowed since it must not mask the original
+        failure that triggered the retry.
+        """
+        if stream is None:
+            return
+        close = getattr(stream, "close", None)
+        if close is None:
+            return
+        try:
+            result = close()
+            if asyncio.iscoroutine(result):
+                await result
+        except Exception:
+            logger.debug("Failed to close agent stream", exc_info=True)
+
     async def _consume_stream(
+        self,
         stream,
         agent_conversation_id: str | None,
     ) -> OpenAIResponse:
@@ -400,8 +423,8 @@ class ChatService:
             )
         return response
 
-    @staticmethod
     async def _poll_response_text(
+        self,
         openai_client: AsyncOpenAI,
         response: OpenAIResponse,
         max_retries: int = POLL_MAX_RETRIES,

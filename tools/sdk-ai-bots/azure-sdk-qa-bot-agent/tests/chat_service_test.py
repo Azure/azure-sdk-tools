@@ -1,5 +1,4 @@
-"""Unit tests for ChatService
-"""
+"""Unit tests for ChatService memory scope resolution and agent invocation."""
 
 from __future__ import annotations
 
@@ -127,7 +126,7 @@ async def test_invoke_returns_stream_and_response_on_success() -> None:
     resp = _FakeResponse(output_text="hello", status="completed", id="r1")
     client = _mock_client([_completed_stream(resp)])
 
-    stream, out = await ChatService._invoke_agent_with_retry(
+    stream, out = await ChatService()._invoke_agent_with_retry(
         openai_client=client,
         conversation_items=[],
         agent_ref={},
@@ -150,7 +149,7 @@ async def test_invoke_retries_on_empty_response_then_succeeds() -> None:
     with patch.object(
         ChatService, "_poll_response_text", AsyncMock(side_effect=lambda c, r: r)
     ):
-        _, out = await ChatService._invoke_agent_with_retry(
+        _, out = await ChatService()._invoke_agent_with_retry(
             openai_client=client,
             conversation_items=[],
             agent_ref={},
@@ -172,7 +171,7 @@ async def test_invoke_raises_after_empty_responses_exhaust_retries() -> None:
         ChatService, "_poll_response_text", AsyncMock(side_effect=lambda c, r: r)
     ):
         with pytest.raises(RuntimeError):
-            await ChatService._invoke_agent_with_retry(
+            await ChatService()._invoke_agent_with_retry(
                 openai_client=client,
                 conversation_items=[],
                 agent_ref={},
@@ -194,7 +193,7 @@ async def test_invoke_retries_on_stream_completion_timeout() -> None:
 
     client = _mock_client([_stalled_stream(), _completed_stream(good)])
 
-    _, out = await ChatService._invoke_agent_with_retry(
+    _, out = await ChatService()._invoke_agent_with_retry(
         openai_client=client,
         conversation_items=[],
         agent_ref={},
@@ -210,7 +209,7 @@ async def test_invoke_retries_on_stream_completion_timeout() -> None:
 async def test_consume_stream_returns_completed_response() -> None:
     """``_consume_stream`` returns the response carried by ``response.completed``."""
     resp = _FakeResponse(output_text="x")
-    out = await ChatService._consume_stream(_completed_stream(resp), "conv")
+    out = await ChatService()._consume_stream(_completed_stream(resp), "conv")
     assert out is resp
 
 
@@ -221,4 +220,4 @@ async def test_consume_stream_raises_without_completed_event() -> None:
         [_FakeEvent("response.created"), _FakeEvent("response.in_progress")]
     )
     with pytest.raises(RuntimeError):
-        await ChatService._consume_stream(stream, "conv")
+        await ChatService()._consume_stream(stream, "conv")

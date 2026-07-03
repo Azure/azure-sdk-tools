@@ -76,18 +76,21 @@ COMPACT_THRESHOLD = 100000
 BOT_SENDER_ID = "azure-sdk-qa-bot"
 BOT_SENDER_NAME = "Azure SDK Q&A Bot"
 
-# -- Fallback error message when agent returns empty text -----------------
-EMPTY_RESPONSE_MESSAGE = (
-    "Sorry, something went wrong and I couldn't generate a response. "
-    "Please send your message again to retry."
-)
-
 # -- Stream event types ---------------------------------------------------
 STREAM_EVENT_RESPONSE_COMPLETED = "response.completed"
 STREAM_EVENT_RESPONSE_FAILED = "response.failed"
 STREAM_EVENT_RESPONSE_INCOMPLETE = "response.incomplete"
 
 _CITATION_RE = re.compile(r"[^\w\s]*cite[^\w\s]*turn\d+\S*")
+
+
+class _EmptyAgentResponseError(Exception):
+    """Raised when the agent completes with empty ``output_text``.
+
+    Treated as a retryable condition so the invocation loops into another
+    ``_invoke_agent_with_retry`` attempt instead of returning a fallback
+    message to the user.
+    """
 
 
 class ChatService:
@@ -175,42 +178,13 @@ class ChatService:
             "type": AgentReferenceType.agent_reference.value,
         }
 
-        stream = await self._invoke_agent_with_retry(
+        stream, response = await self._invoke_agent_with_retry(
             openai_client=openai_client,
             conversation_items=conversation_items,
             agent_conversation_id=agent_conversation_id,
             agent_session_id=agent_session_id,
             agent_ref=agent_ref,
         )
-
-        response: OpenAIResponse | None = None
-        last_event_type: str | None = None
-        async for event in stream:
-            logger.debug("Stream event: type=%s, content=%s", event.type, event)
-            last_event_type = event.type
-            if event.type == STREAM_EVENT_RESPONSE_COMPLETED:
-                response = event.response
-                break
-            if event.type in (
-                STREAM_EVENT_RESPONSE_FAILED,
-                STREAM_EVENT_RESPONSE_INCOMPLETE,
-            ):
-                failed = getattr(event, "response", None)
-                logger.error(
-                    "Agent stream %s: error=%s, incomplete_details=%s, status=%s, "
-                    "conversation=%s",
-                    event.type,
-                    getattr(failed, "error", None),
-                    getattr(failed, "incomplete_details", None),
-                    getattr(failed, "status", None),
-                    agent_conversation_id,
-                )
-
-        if response is None:
-            raise RuntimeError(
-                "Agent stream ended without a response.completed event "
-                f"(last_event={last_event_type})"
-            )
 
         # Cache the warm sandbox id so later stateless calls reuse it.
         if stateless and not get_stateless_session_id():
@@ -231,10 +205,6 @@ class ChatService:
             response.id,
             agent_conversation_id,
         )
-
-        # Poll if response completed with empty text (Foundry persistence delay).
-        if response.status == "completed" and not response.output_text:
-            response = await self._poll_response_text(openai_client, response)
 
         if response.status != "completed":
             logger.warning(
@@ -278,13 +248,18 @@ class ChatService:
         max_retries: int = STREAM_CREATE_MAX_RETRIES,
         retry_delay: float = STREAM_CREATE_RETRY_DELAY_SECS,
     ):
-        """Create a responses stream with bounded retries for transient failures.
+        """Invoke the agent with bounded retries and return ``(stream, response)``.
+
+        Each attempt creates a responses stream, consumes it to the
+        ``response.completed`` event, and polls briefly for late-arriving text.
+        An empty ``output_text`` is treated as a retryable failure so we loop
+        into another attempt instead of returning a fallback message.
 
         Threaded calls pass ``conversation``; stateless calls pass a reused
         ``agent_session_id``. A cached session that the platform rejects
         (404/400 — deleted or expired) is dropped so the next attempt creates a
-        fresh one. Other ``APIStatusError`` / connection / timeout errors retry
-        with the same parameters.
+        fresh one. Other ``APIStatusError`` / connection / timeout errors and
+        empty responses retry with the same parameters.
         """
         last_error: Exception | None = None
 
@@ -296,13 +271,27 @@ class ChatService:
             if agent_session_id:
                 extra_body["agent_session_id"] = agent_session_id
             try:
-                return await openai_client.responses.create(
+                stream = await openai_client.responses.create(
                     input=conversation_items,
                     store=True,
                     stream=True,
                     extra_body=extra_body,
                     **kwargs,
                 )
+                response = await ChatService._consume_stream(
+                    stream, agent_conversation_id
+                )
+                # Poll if completed with empty text (Foundry persistence delay).
+                if response.status == "completed" and not response.output_text:
+                    response = await ChatService._poll_response_text(
+                        openai_client, response
+                    )
+                if not response.output_text:
+                    raise _EmptyAgentResponseError(
+                        "Agent returned empty output_text "
+                        f"(id={response.id}, status={response.status})"
+                    )
+                return stream, response
             except (NotFoundError, BadRequestError) as ex:
                 last_error = ex
                 # A rejected cached session: drop it and retry without one so
@@ -331,14 +320,65 @@ class ChatService:
                     ex,
                     exc_info=True,
                 )
+            except _EmptyAgentResponseError as ex:
+                last_error = ex
+                logger.warning(
+                    "Agent returned empty response (attempt %d/%d): "
+                    "conversation=%s, error=%s",
+                    attempt,
+                    max_retries,
+                    agent_conversation_id,
+                    ex,
+                )
 
             if attempt >= max_retries:
                 break
             await asyncio.sleep(retry_delay * attempt)
 
         raise RuntimeError(
-            f"Failed to create agent stream after {max_retries} attempts"
+            f"Failed to obtain a non-empty agent response after {max_retries} "
+            f"attempts (conversation={agent_conversation_id})"
         ) from last_error
+
+    @staticmethod
+    async def _consume_stream(
+        stream,
+        agent_conversation_id: str | None,
+    ) -> OpenAIResponse:
+        """Consume a responses stream until the ``response.completed`` event.
+
+        ``stream`` is the ``AsyncStream`` returned by ``responses.create``;
+        ``agent_conversation_id`` is used only for correlating log output.
+        """
+        response: OpenAIResponse | None = None
+        last_event_type: str | None = None
+        async for event in stream:
+            logger.debug("Stream event: type=%s, content=%s", event.type, event)
+            last_event_type = event.type
+            if event.type == STREAM_EVENT_RESPONSE_COMPLETED:
+                response = event.response
+                break
+            if event.type in (
+                STREAM_EVENT_RESPONSE_FAILED,
+                STREAM_EVENT_RESPONSE_INCOMPLETE,
+            ):
+                failed = getattr(event, "response", None)
+                logger.error(
+                    "Agent stream %s: error=%s, incomplete_details=%s, status=%s, "
+                    "conversation=%s",
+                    event.type,
+                    getattr(failed, "error", None),
+                    getattr(failed, "incomplete_details", None),
+                    getattr(failed, "status", None),
+                    agent_conversation_id,
+                )
+
+        if response is None:
+            raise RuntimeError(
+                "Agent stream ended without a response.completed event "
+                f"(last_event={last_event_type})"
+            )
+        return response
 
     @staticmethod
     async def _poll_response_text(
@@ -579,13 +619,6 @@ class ChatService:
         tenant = self._extract_routed_tenant(response.output)
 
         output_text = response.output_text or ""
-        if not output_text:
-            output_text = EMPTY_RESPONSE_MESSAGE
-            logger.error(
-                "Empty output_text for response %s (status=%s), returning error message",
-                response.id,
-                response.status,
-            )
 
         # Strip model citation artifacts (e.g. "citeturn0search0").
         output_text = _CITATION_RE.sub("", output_text)

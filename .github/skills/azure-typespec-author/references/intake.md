@@ -15,7 +15,7 @@
 | 2    | Add Resource Operations | Add CRUD or custom actions on an existing resource                          | ARM              |
 | 3    | API Versioning          | Add/bump/promote a version, or add/update code scoped to a specific version | ARM / Data-plane |
 
-> Only cases 1–3 need extra intake. All other cases (4 = LRO, 5 = Paging, 6 = Models and Enums, 7 = Decorators, 8–13 = ARM/data-plane-specific) are still selectable for document links from [reference-document-links.md](reference-document-links.md) with no extra intake.
+> Only cases 1–3 need extra intake. All other cases (4 = LRO, 5 = Paging, 6 = Models and Enums, 7 = Decorators, 8 = Warnings) are still selectable for document links from [reference-document-links.md](reference-document-links.md) with no extra intake.
 
 ---
 

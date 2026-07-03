@@ -27,11 +27,50 @@ GraphRAG is added as a **second retriever over the same corpus**, not a replacem
 
 The rest of this section walks through each piece; §3 covers how snapshots stay fresh and tenant-scoped, §4 covers synthesis, and §6 lists the concrete differences from the original architecture.
 
+```mermaid
+flowchart LR
+    corpus[(Knowledge corpus<br/>markdown in blob)]
+
+    subgraph KB[KB path - existing]
+        idx[(AI Search index<br/>chunks + vectors)]
+    end
+    subgraph GR[Graph path - this update]
+        snap[(Graph snapshot<br/>+ manifest)]
+        svc[Warm retrieval service]
+    end
+
+    corpus -->|incremental index| idx
+    corpus -->|full rebuild| snap
+    snap -->|loaded by| svc
+
+    subgraph AGENT[Chat agent]
+        kbtool[search_knowledge_base]
+        grtool[search_knowledge_graph]
+        merge[Merge + weight by question type]
+        ans([Grounded answer<br/>150-200 words])
+    end
+
+    idx --> kbtool
+    svc --> grtool
+    kbtool --> merge
+    grtool --> merge
+    merge --> ans
+```
+
 ### 2.1 The graph build (offline)
 
 A separate sync project reads the **same** markdown the KB path indexes and runs the GraphRAG pipeline to extract entities and relationships and cluster them into communities. Every document keeps a **source attribution** tag so each graph hit can be traced back to a concrete knowledge source and resolve a link consistent with the KB path.
 
 Each run is a **full rebuild** that writes a new, immutable snapshot (a set of graph artifacts) under a timestamped path, plus a small manifest file that points at the current snapshot. Full rebuilds keep snapshots reproducible and make activation atomic — nothing consumes a snapshot until the manifest flips to it. The build runs on a daily schedule.
+
+```mermaid
+flowchart LR
+    corpus[(Markdown corpus<br/>in blob)] --> read[Read + source attribution]
+    read --> pipe[GraphRAG pipeline<br/>entities / relationships / communities]
+    pipe --> snap[(New immutable snapshot<br/>timestamped path)]
+    snap --> man[Update manifest<br/>points at current snapshot]
+    sched([Daily schedule]) -. triggers .-> read
+```
 
 ### 2.2 The retrieval service (online)
 
@@ -52,6 +91,24 @@ Crucially, the service runs **only the retrieval half** of GraphRAG: it embeds t
 ## 4 Hybrid synthesis — how the two paths combine
 
 Both retrievers are **mandatory on every domain question** and are issued in the **same parallel batch**, so there is no added latency turn. The agent then merges the two reference sets and **de-duplicates by link**, with the KB (primary-source) hit winning when both return the same document.
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant A as Chat agent
+    participant K as KB (AI Search)
+    participant G as Graph service
+    U->>A: domain question
+    par KB search
+        A->>K: search_knowledge_base
+    and Graph search
+        A->>G: search_knowledge_graph
+    end
+    K-->>A: KB references
+    G-->>A: graph references
+    A->>A: merge + dedup by link,<br/>weight by question type
+    A-->>U: single grounded answer (150-200 words)
+```
 
 The two sources are **weighted by question type** rather than blended equally (this weighting was tuned from case-level analysis of where each path helps or hurts):
 

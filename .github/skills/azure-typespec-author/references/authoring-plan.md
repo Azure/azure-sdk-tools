@@ -30,7 +30,7 @@ Use **both** tools to build an authoring plan, if the retrieved results have con
 
 ### Case 4 — Add Data-Plane Operations
 
-Use the MCP tool (`azsdk_typespec_generate_authoring_plan`) to build the plan. Key guidance for data-plane:
+Key guidance for data-plane:
 
 1. Use `Azure.Core` resource operation templates (see [intake.md](intake.md) Case 4 for the template table).
 2. Define operations inside an `interface` block.

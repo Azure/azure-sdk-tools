@@ -54,7 +54,7 @@ module agent './modules/qaBotAgent/component.bicep' = {
   name: 'agent'
   scope: rg
   params: {
-
+    location: location
     managedIdentityPrincipalId: sharedResources.outputs.managedIdentityPrincipalId
     storageAccountName: sharedResources.outputs.storageAccountName
     storageBlobEndpoint: sharedResources.outputs.storageBlobEndpoint

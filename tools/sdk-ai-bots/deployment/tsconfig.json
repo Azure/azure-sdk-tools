@@ -11,5 +11,5 @@
         "noEmit": true,
         "types": ["node"]
     },
-    "include": ["hooks/**/*.ts"]
+    "include": ["hooks/**/*.ts", "scripts/**/*.ts"]
 }

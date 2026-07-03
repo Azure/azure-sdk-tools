@@ -19,6 +19,7 @@ import { readFileSync, existsSync } from "fs";
 import { resolve } from "path";
 
 import { ensureEntraApp } from "./lib/ensure-entra-app.js";
+import { runQuotaCheck } from "./lib/quota-check.js";
 
 const ENV_NAME = process.env.AZURE_ENV_NAME ?? "";
 const SUBSCRIPTION_ID = process.env.AZURE_SUBSCRIPTION_ID ?? "";
@@ -130,6 +131,41 @@ function validateAuth(): void {
 }
 
 /**
+ * Pre-flight quota check for the providers this deployment consumes.
+ * Delegates to hooks/lib/quota-check.ts so scripts/check-quotas.ts can share
+ * the same logic. Opt out with SKIP_QUOTA_CHECK=1.
+ */
+function checkResourceQuotas(): void {
+  if (process.env.SKIP_QUOTA_CHECK === "1") {
+    log("SKIP_QUOTA_CHECK=1 — skipping quota verification.");
+    return;
+  }
+  log(`Checking resource quotas in '${LOCATION}'...`);
+  if (!SUBSCRIPTION_ID) {
+    log("  AZURE_SUBSCRIPTION_ID not set — skipping quota check.");
+    return;
+  }
+
+  const result = runQuotaCheck({
+    subscriptionId: SUBSCRIPTION_ID,
+    location: LOCATION,
+    envName: ENV_NAME,
+  });
+
+  for (const p of result.unreachable) {
+    log(`  ${p} @ ${LOCATION}: unable to query usages (skipping)`);
+  }
+  for (const w of result.warnings) log(`  ⚠ ${w}`);
+
+  if (result.ok) {
+    log("  ✓ quota check passed");
+    return;
+  }
+
+  throw new Error(result.message + "\n\nOr set SKIP_QUOTA_CHECK=1 to bypass this gate.");
+}
+
+/**
  * Ensures the Entra ID app registration that backs `serverAudience` exists,
  * then persists its clientId (appId) as SERVER_AUDIENCE so main.bicepparam
  * picks it up in this same provision run.
@@ -169,6 +205,7 @@ function ensureServerAudience(): void {
   detectLocalDrift();
   enforceProdGuardrail();
   validateAuth();
+  checkResourceQuotas();
   ensureServerAudience();
 
   log("Preprovision checks passed.");

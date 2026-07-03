@@ -1,5 +1,8 @@
 targetScope = 'resourceGroup'
 
+@description('Azure region for the Cognitive Services / Foundry account, its model deployments, and backing Application Insights.')
+param location string
+
 @description('Principal (object) ID of the qabot-identity managed identity to grant OpenAI access.')
 param managedIdentityPrincipalId string
 
@@ -14,7 +17,7 @@ param storageBlobEndpoint string
 // shared qabot-log workspace.
 resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
   name: 'qabot-agent-log-${substring(uniqueString(resourceGroup().id), 0, 6)}'
-  location: 'eastus'
+  location: location
   properties: {
     sku: {
       name: 'PerGB2018'
@@ -25,7 +28,7 @@ resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
 
 resource component 'Microsoft.Insights/components@2020-02-02' = {
   name: 'qabot-agent-${substring(uniqueString(resourceGroup().id), 0, 6)}'
-  location: 'eastus'
+  location: location
   kind: 'web'
   properties: {
     Application_Type: 'web'
@@ -54,7 +57,7 @@ resource account 'Microsoft.CognitiveServices/accounts@2026-05-01' = {
     publicNetworkAccess: 'Enabled'
     disableLocalAuth: false
   }
-  location: 'eastus'
+  location: location
   kind: 'AIServices'
   sku: {
     name: 'S0'
@@ -188,7 +191,7 @@ resource project 'Microsoft.CognitiveServices/accounts/projects@2026-05-01' = {
   name: 'qabot-ai'
   parent: account
   properties: {}
-  location: 'eastus'
+  location: location
   identity: {
     type: 'SystemAssigned'
   }

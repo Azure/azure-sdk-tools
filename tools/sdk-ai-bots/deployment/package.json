@@ -9,7 +9,8 @@
     "predeploy": "tsx hooks/predeploy.ts",
     "postdeploy": "tsx hooks/postdeploy.ts",
     "predown": "tsx hooks/predown.ts",
-    "postdown": "tsx hooks/postdown.ts"
+    "postdown": "tsx hooks/postdown.ts",
+    "check-quotas": "tsx scripts/check-quotas.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

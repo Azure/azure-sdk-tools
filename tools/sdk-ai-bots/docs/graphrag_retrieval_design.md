@@ -61,7 +61,7 @@ flowchart LR
 
 A separate sync project reads the **same** markdown the KB path indexes and runs the GraphRAG pipeline to extract entities and relationships and cluster them into communities. Every document keeps a **source attribution** tag so each graph hit can be traced back to a concrete knowledge source and resolve a link consistent with the KB path.
 
-Each run is a **full rebuild** that writes a new, immutable snapshot (a set of graph artifacts) under a timestamped path, plus a small manifest file that points at the current snapshot. Full rebuilds keep snapshots reproducible and make activation atomic — nothing consumes a snapshot until the manifest flips to it. The build runs on a daily schedule.
+Each run is a **full rebuild** that writes a new, immutable snapshot (a set of graph artifacts) under a timestamped path, plus a small manifest file that points at the current snapshot. Full rebuilds keep snapshots reproducible and make activation atomic — nothing consumes a snapshot until the manifest flips to it. The build runs on a monthly schedule; the corpus changes slowly, so a monthly rebuild keeps the graph current while keeping the (heavier) full-build cost low.
 
 ```mermaid
 flowchart LR
@@ -69,7 +69,7 @@ flowchart LR
     read --> pipe[GraphRAG pipeline<br/>entities / relationships / communities]
     pipe --> snap[(New immutable snapshot<br/>timestamped path)]
     snap --> man[Update manifest<br/>points at current snapshot]
-    sched([Daily schedule]) -. triggers .-> read
+    sched([Monthly schedule]) -. triggers .-> read
 ```
 
 ### 2.2 The retrieval service (online)
@@ -134,7 +134,7 @@ The answer-length target stays **150–200 words** regardless of which path lead
 | Best at | Single-concept, definitional, verbatim rules, code snippets | Relational, multi-hop, cross-document, troubleshooting |
 | Corpus build | TypeScript sync, **incremental** index updates | Python sync, **full rebuild** → versioned snapshots |
 | Artefact | AI Search index (chunks + vectors) | Immutable graph snapshot + manifest in blob storage |
-| Refresh | Incremental per changed file | Daily full rebuild; backend **pulls** the new snapshot |
+| Refresh | Incremental per changed file | Monthly full rebuild; backend **pulls** the new snapshot |
 | Where retrieval runs | Inline search client | Warm backend service behind an HTTP endpoint (avoids per-sandbox cold start) |
 | Answer generation | Agent composes over chunks | Agent composes over graph refs — **no GraphRAG answer-generation step** |
 | Tenant scoping | Source + per-source filter on the index | Same two-layer semantics applied to the graph |

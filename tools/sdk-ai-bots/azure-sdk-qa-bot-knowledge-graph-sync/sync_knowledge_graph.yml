@@ -4,8 +4,8 @@ trigger: none
 pr: none
 
 schedules:
-- cron: "0 3 * * *"  # Daily at 3 AM UTC (after the doc sync that maintains the knowledge container)
-  displayName: Daily knowledge graph build
+- cron: "0 3 1 * *"  # Monthly on the 1st at 3 AM UTC (after the doc sync that maintains the knowledge container)
+  displayName: Monthly knowledge graph build
   branches:
     include:
     - main

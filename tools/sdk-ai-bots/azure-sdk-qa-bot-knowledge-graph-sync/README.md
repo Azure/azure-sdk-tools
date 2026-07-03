@@ -135,7 +135,7 @@ tests/
 | File | Purpose |
 |------|---------|
 | `ci.yml` | Build + tests on every PR and on `main` (path-scoped to this project). |
-| `sync_knowledge_graph.yml` | Daily scheduled run (03:00 UTC) on an internal 1ES agent — installs the project, runs `sync-knowledge-graph`, and publishes the new parquet snapshot + `latest.json` to blob storage. The bot picks up the new snapshot on its own daily `latest.json` poll. |
+| `sync_knowledge_graph.yml` | Monthly scheduled run (03:00 UTC on the 1st) on an internal 1ES agent — installs the project, runs `sync-knowledge-graph`, and publishes the new parquet snapshot + `latest.json` to blob storage. The bot picks up the new snapshot on its own daily `latest.json` poll. |
 
 ## Relationship to Other Projects
 

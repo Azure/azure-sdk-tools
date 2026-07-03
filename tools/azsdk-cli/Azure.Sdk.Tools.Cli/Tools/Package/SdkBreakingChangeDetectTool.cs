@@ -12,14 +12,12 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using ModelContextProtocol.Server;
-using Octokit;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
     public class SdkBreakingChangeDetectTool : LanguageMcpTool
     {
         private readonly ISpecGenSdkConfigHelper _specGenSdkConfigHelper;
-        private readonly ITspClientHelper _tspClientHelper;
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
 
         private readonly IClassifyService _classifyService;
@@ -52,11 +50,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             ILogger<SdkBreakingChangeDetectTool> logger,
             IEnumerable<LanguageService> languageServices,
             ISpecGenSdkConfigHelper specGenSdkConfigHelper,
-            ITspClientHelper tspClientHelper,
             IClassifyService classifyService) : base(languageServices, gitHelper, logger)
         {
             _specGenSdkConfigHelper = specGenSdkConfigHelper;
-            _tspClientHelper = tspClientHelper;
             _classifyService = classifyService;
         }
 
@@ -179,6 +175,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                                             {
                                                 ResponseError = "Failed to classify SDK breaking changes.",
                                                 Language = languageService.Language,
+                                                PackageName = packageInfo?.PackageName,
                                             };
                                         }
                                         var result = new SdkBreakingChangeDetectResult
@@ -191,6 +188,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                                             Result = result,
                                             Message = "SDK breaking changes detected and classified.",
                                             Language = languageService.Language,
+                                            PackageName = packageInfo?.PackageName,
                                         };
                                     }
                                     else
@@ -206,6 +204,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                                             Result = result,
                                             Message = sdkchanges.HasBreakingChange ? "SDK changes detected but no breaking changes found." : "No SDK breaking changes detected.",
                                             Language = languageService.Language,
+                                            PackageName = packageInfo?.PackageName,
                                         };
                                     }
                                 }
@@ -216,6 +215,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                                     {
                                         ResponseError = "Failed to deserialize the SDK change script output. Falling back to default logic to detect SDK breaking changes.",
                                         Language = languageService.Language,
+                                        PackageName = packageInfo?.PackageName,
                                     };
                                 }
                             }

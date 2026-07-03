@@ -12,7 +12,7 @@ This design adds a second, complementary retrieval path built on **Microsoft Gra
 
 - **Goal** — add graph-grounded recall for relational/cross-document questions **without regressing** the KB path or the concise (150–200 word) answer style.
 - **Goal** — keep the graph reference shape **identical** to KB references so the agent and UI treat both uniformly, and tenant-scope graph retrieval with the same semantics as the KB tool.
-- **Non-goal** — replacing the KB path. GraphRAG is additive; the two are weighted per question type (§4).
+- **Non-goal** — replacing the KB path. GraphRAG is additive; the two are weighted per question type (see [Hybrid synthesis](#4-hybrid-synthesis--how-the-two-paths-combine)).
 - **Non-goal** — running GraphRAG's own answer generation. We use only its retrieval (context-building) stage and let the chat agent compose the answer.
 
 ---
@@ -25,7 +25,7 @@ GraphRAG is added as a **second retriever over the same corpus**, not a replacem
 2. **A warm backend retrieval service** loads the current snapshot and answers graph queries over HTTP, returning source references in the same shape as KB results.
 3. **The chat agent** calls the KB tool and the graph tool in parallel, then merges and weights the two reference sets before composing a single grounded answer.
 
-The rest of this section walks through each piece; §3 covers how snapshots stay fresh and tenant-scoped, §4 covers synthesis, and §6 lists the concrete differences from the original architecture.
+The rest of this section walks through each piece; [Freshness and tenant scoping](#3-freshness-and-tenant-scoping) covers how snapshots stay fresh and tenant-scoped, and [Hybrid synthesis](#4-hybrid-synthesis--how-the-two-paths-combine) covers synthesis.
 
 ```mermaid
 flowchart LR
@@ -122,23 +122,4 @@ The answer-length target stays **150–200 words** regardless of which path lead
 ## 5 Evaluation
 
 - **Evaluations run with memory disabled.** The agent can inject historical Q&A from its memory store; because the eval datasets are built from prior Q&A, leaving memory on leaks ground-truth answers and biases the comparison. All evaluation is run with memory off.
-- **Latest result (223-case perf set, memory off, concise answers):** KB-only **78.0 %** vs Graph RAG **81.2 %**. Case-level analysis shows Graph's advantage is concentrated in its designed strengths (relational / troubleshooting / versioning questions), with small dilutions on definitional ones — which the question-type weighting in §4 keeps in check. Remaining failures are dominated by **corpus gaps** (short, thread-specific facts that simply aren't in the indexed corpus); the next lever is curated corpus expansion rather than further retrieval or prompt tuning.
-
----
-
-## 6 Key differences from the original architecture
-
-| Dimension | Original KB path | GraphRAG path (this update) |
-|---|---|---|
-| Retrieval model | Vector / semantic + agentic search over document chunks | Entity-graph traversal: query → entities → 1-hop → source passages |
-| Best at | Single-concept, definitional, verbatim rules, code snippets | Relational, multi-hop, cross-document, troubleshooting |
-| Corpus build | TypeScript sync, **incremental** index updates | Python sync, **full rebuild** → versioned snapshots |
-| Artefact | AI Search index (chunks + vectors) | Immutable graph snapshot + manifest in blob storage |
-| Refresh | Incremental per changed file | Monthly full rebuild; backend **pulls** the new snapshot |
-| Where retrieval runs | Inline search client | Warm backend service behind an HTTP endpoint (avoids per-sandbox cold start) |
-| Answer generation | Agent composes over chunks | Agent composes over graph refs — **no GraphRAG answer-generation step** |
-| Tenant scoping | Source + per-source filter on the index | Same two-layer semantics applied to the graph |
-| Reference shape | KB `Reference` | **Same** `Reference` shape and linking |
-| Relationship to each other | — | **Additive & complementary**; merged, de-duped, weighted by question type |
-
-**What did *not* change:** the KB path, the AI Search index, the agent framework, the memory design, the answer style, and the reference contract the UI renders. GraphRAG is a bolt-on second retriever that reuses the same corpus, the same tenant model, and the same reference shape — the bot simply has one more, complementary way to find grounding evidence.
+- **Latest result (223-case perf set, memory off, concise answers):** KB-only **78.0 %** vs Graph RAG **81.2 %**. Case-level analysis shows Graph's advantage is concentrated in its designed strengths (relational / troubleshooting / versioning questions), with small dilutions on definitional ones — which the question-type weighting in [Hybrid synthesis](#4-hybrid-synthesis--how-the-two-paths-combine) keeps in check. Remaining failures are dominated by **corpus gaps** (short, thread-specific facts that simply aren't in the indexed corpus); the next lever is curated corpus expansion rather than further retrieval or prompt tuning.

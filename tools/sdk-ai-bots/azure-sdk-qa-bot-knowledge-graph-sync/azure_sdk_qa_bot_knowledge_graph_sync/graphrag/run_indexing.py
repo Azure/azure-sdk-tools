@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import datetime as _dt
 import logging
+import os
 import uuid
 from pathlib import Path
 
@@ -53,6 +54,16 @@ async def run_graphrag_pipeline() -> str:
     """
     snapshot_id = _new_snapshot_id()
     output_base_dir = snapshot_base_dir(snapshot_id)
+
+    # litellm's default aiohttp transport intermittently raises
+    # ``ServerDisconnectedError`` when the Azure OpenAI endpoint closes a
+    # pooled keep-alive connection between requests. On a full rebuild the
+    # embeddings workflow issues tens of thousands of requests over many
+    # hours, so this reliably aborts the build near the end (observed on two
+    # consecutive full rebuilds, both failing only in ``generate_text_embeddings``).
+    # Falling back to the httpx transport recovers from closed keep-alive
+    # connections gracefully. See litellm ``_should_use_aiohttp_transport``.
+    os.environ.setdefault("DISABLE_AIOHTTP_TRANSPORT", "True")
 
     # Override GraphRAG's default markitdown reader with our source-aware
     # variant so every documents.parquet row carries

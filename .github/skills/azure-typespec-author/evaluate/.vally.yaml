@@ -37,11 +37,14 @@ environments:
           AZSDKTOOLS_AGENT_TESTING: "false"
           AZSDKTOOLS_COLLECT_TELEMETRY: "false"
           # New KB agent test endpoint (issue #15675). Was: http://localhost:8088 (local qa-bot backend).
-          # The endpoint is MSAL-protected; AZURE_SDK_KB_CLIENT_ID is required so azsdk-cli
-          # requests a token for "<client-id>/.default". The ambient Azure credential is
-          # provided by the pipeline (AzureCLI@2 / azuresdkqabot-dev) or `az login` locally.
-          AZURE_SDK_KB_ENDPOINT: "https://azuresdkqabot-test-serv-agent-dydweeaxaah6g3b4.westus2-01.azurewebsites.net/"
-          AZURE_SDK_KB_CLIENT_ID: "899da762-d510-48f2-911a-db9ea0cc41fd"
+          # When the endpoint is overridden the CLI no longer applies the built-in prod
+          # client id/scope, so the test backend's client id and scope must be supplied
+          # explicitly (values validated in issue #15675). The access token is requested
+          # as "{AZURE_SDK_KB_CLIENT_ID}/.default"; the ambient Azure credential is provided
+          # by the pipeline (AzureCLI@2 / azuresdkqabot-dev) or `az login` locally.
+          AZURE_SDK_KB_ENDPOINT: "https://azuresdkqabot-test-serv-agent-dydweeaxaah6g3b4.westus2-01.azurewebsites.net"
+          AZURE_SDK_KB_CLIENT_ID: "674414e1-152b-41ac-b0d2-763535edea6c"
+          AZURE_SDK_KB_SCOPE: "api://azure-sdk-qa-bot-test/user_impersonation"
   azsdk-mcp-remote-kb:
     files:
       - src: ../fixtures/instructions-test/copilot-instructions.md

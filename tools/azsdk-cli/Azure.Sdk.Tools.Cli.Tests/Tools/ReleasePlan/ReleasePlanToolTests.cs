@@ -1012,9 +1012,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                     "SendAsync",
                     ItExpr.IsAny<HttpRequestMessage>(),
                     ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync((HttpRequestMessage request, CancellationToken token) =>
+                .Returns(async (HttpRequestMessage request, CancellationToken token) =>
                 {
-                    var content = request.Content?.ReadAsStringAsync(token).Result ?? "";
+                    var content = request.Content is not null
+                        ? await request.Content.ReadAsStringAsync(token).ConfigureAwait(false)
+                        : "";
                     var payload = JsonSerializer.Deserialize<JsonElement>(content);
                     capturedBody = payload.GetProperty("Body").GetString() ?? "";
                     return new HttpResponseMessage(System.Net.HttpStatusCode.OK);

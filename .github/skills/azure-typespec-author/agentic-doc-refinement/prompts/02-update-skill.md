@@ -19,6 +19,8 @@ Rules:
 - Keep case numbering consistent with `reference-document-links.md` (8 cases).
 - Do not touch eval fixtures, `.vally.yaml`, or pipeline files.
 - If nothing needs changing, make no edits and say so explicitly.
+- Do **not** commit, stage, or push. Leave your edits unstaged in the working tree so
+  the user can review them and decide whether to commit.
 
 ## Validation
 

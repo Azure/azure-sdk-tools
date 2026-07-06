@@ -48,6 +48,11 @@ together without shipping results between systems.
   `results.jsonl` for analysis.
 - **Prompts and output are identical to Approach B** - only the orchestration differs.
 
+> **Steps 1 & 2 never commit.** The agent leaves the reference-doc and skill edits
+> **unstaged in the working tree** so you can review them and decide whether to commit.
+> The orchestrator's system message and the step 1/2 prompts forbid `git add`/`commit`/
+> `push`, so an autonomous run cannot commit them on your behalf.
+
 ### Flow (Approach A)
 
 ```

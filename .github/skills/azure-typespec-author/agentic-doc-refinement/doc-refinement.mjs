@@ -147,7 +147,11 @@ async function runAgent(client, prompt, cfg) {
       mode: "append",
       content:
         "You are running fully autonomously in a script; never ask for confirmation " +
-        "or further input. Make the edits directly, then stop.",
+        "or further input. Make the edits directly, then stop. " +
+        "Do NOT run any git commands that change history or the index/remote " +
+        "(no `git add`, `git commit`, `git push`, `git stash`, `git reset`, etc.). " +
+        "Leave every change unstaged in the working tree so the user can review and " +
+        "decide whether to commit.",
     },
   });
   try {

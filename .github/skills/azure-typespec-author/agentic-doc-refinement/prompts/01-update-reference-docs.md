@@ -26,6 +26,8 @@ Rules:
   scenarios (private endpoints/links, network security perimeter, common types, change
   provider namespace, portal defaults, content negotiation) into the closest core case.
 - Keep the existing markdown format and table structure.
+- Do **not** commit, stage, or push. Leave your edits unstaged in the working tree so
+  the user can review them and decide whether to commit.
 
 ## Sources (authoritative only)
 

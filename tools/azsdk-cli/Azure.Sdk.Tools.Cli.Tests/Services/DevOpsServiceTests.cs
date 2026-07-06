@@ -477,7 +477,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         }
 
         [Test]
-        public async Task FindPackageWorkItemIdsAsync_PythonLanguage_QueryUsesEqualCondition()
+        public async Task FindPackageWorkItemIdsAsync_PythonLanguage_QueryUsesInConditionForBothCases()
         {
             // Arrange - no work items needed, just capture the query
             // Act
@@ -485,8 +485,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             // Assert
             var capturedQuery = _connection.LastCapturedQuery;
-            Assert.That(capturedQuery, Does.Contain("[Custom.Language] = 'Python'"),
-                "Non-Go languages should use simple equality condition");
+            Assert.That(capturedQuery, Does.Contain("[Custom.Language] IN ('Python', 'python')"),
+                "Language query should search for both canonical and lowercase forms to handle ADO case inconsistency");
         }
 
         #endregion
@@ -507,7 +507,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         }
 
         [Test]
-        public async Task ListPartialPackageWorkItemAsync_PythonLanguage_QueryUsesEqualCondition()
+        public async Task ListPartialPackageWorkItemAsync_PythonLanguage_QueryUsesInConditionForBothCases()
         {
             // Arrange - no work items needed, just capture the query
             // Act
@@ -515,8 +515,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             // Assert
             var capturedQuery = _connection.LastCapturedQuery;
-            Assert.That(capturedQuery, Does.Contain("[Custom.Language] = 'Python'"),
-                "Non-Go languages should use simple equality condition");
+            Assert.That(capturedQuery, Does.Contain("[Custom.Language] IN ('Python', 'python')"),
+                "Language query should search for both canonical and lowercase forms to handle ADO case inconsistency");
         }
 
         #endregion

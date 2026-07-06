@@ -246,7 +246,7 @@ The skill is a Markdown-defined capability (`SKILL.md` plus a set of `references
 
 #### Architecture
 
-![alt text](azure-typespec-author-architecture.png)
+![Azure TypeSpec author skill architecture diagram](azure-typespec-author-architecture.png)
 
 #### Skill Workflow
 

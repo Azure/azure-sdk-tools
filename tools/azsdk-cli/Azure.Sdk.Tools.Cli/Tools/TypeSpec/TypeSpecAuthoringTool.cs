@@ -281,8 +281,8 @@ Returns an answer with supporting references and documentation links
                 var response = await _azureSdkKnowledgeBaseService.SendKnowledgeRetrieveRequestAsync(
                     knowledgeRetrieveRequest, ct);
 
-                _logger.LogInformation("Received response with HasResult: {HasResult}",
-                    response.HasResult);
+                _logger.LogInformation("Received response with HasResult: {HasResult}, knowledges: {Knowledges}",
+                    response.HasResult, response.Knowledges != null ? JsonSerializer.Serialize(response.Knowledges) : "null");
 
                 if (!response.HasResult)
                 {

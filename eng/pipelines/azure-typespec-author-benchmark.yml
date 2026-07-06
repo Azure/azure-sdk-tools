@@ -10,7 +10,7 @@
 # Structure:
 # - Stage: EvalTypeSpecAuthor
 # - Job A: RunEvalsForCodeQuality   -> uses forced suite branches
-# - Job B: RunEvalsForSkillInvokation -> uses trigger suite branches
+# - Job B: RunEvalsForSkillInvocation -> uses trigger suite branches
 # - Each job executes 5 suite branches (versioning, armtemplate,
 #   longrunningoperation, decorators, warning) as separate steps and uploads artifacts.
 #

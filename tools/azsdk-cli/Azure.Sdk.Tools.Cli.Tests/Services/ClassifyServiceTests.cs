@@ -75,7 +75,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _mockLoggerFactory = new Mock<ILoggerFactory>();
             _mockFeedbackService = new Mock<IAPIViewFeedbackService>();
             _mockLoggerFactory.Setup(f => f.CreateLogger(It.IsAny<string>()))
-                .Returns(new TestLogger<ClassifyService>());
+                .Returns(new TestLogger<ClassificationService>());
 
             // Set up a fake tsp project path for mocked tests
             _specRepoRoot = Path.Combine(Path.GetTempPath(), "test-spec-repo-" + Guid.NewGuid().ToString("N")[..8]);
@@ -112,9 +112,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         }
 
         #region Mocked Test Helpers
-        private ClassifyService CreateMockedService()
+        private ClassificationService CreateMockedService()
         {
-            return new ClassifyService(
+            return new ClassificationService(
                 _mockAgentRunner.Object);
         }
         private static FeedbackItem CreateTestItem(string text, string? id = null)
@@ -129,7 +129,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         #endregion
 
         #region Live Test Helpers
-        private ClassifyService CreateRealService()
+        private ClassificationService CreateRealService()
         {
             var rawOutputHelper = Mock.Of<IRawOutputHelper>();
             var copilotClient = new CopilotClient(new CopilotClientOptions
@@ -143,7 +143,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 copilotClientWrapper,
                 tokenUsageHelper,
                 new TestLogger<CopilotAgentRunner>());
-            return new ClassifyService(
+            return new ClassificationService(
                 copilotAgentRunner);
         }
         private static GitHelper CreateRealGitHelper()
@@ -197,7 +197,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             var sdkBreakingPattern = await languageService.GetSDKBreakingPattern(sdkRepoRoot, ct);
             var tspProjectFile = Path.Combine(_typeSpecProjectPath, "tspconfig.yaml");
             var classifyRequest = new ClassifySdkBreakingChangesRequest(sdkchanges, sdkRepoRoot, sdkBreakingPattern, languageService.Language.ToString(), tspProjectFile);
-            var classifyResult = await service.ClassifyItemsAsync(ClassifyType.SdkBreakingChange, classifyRequest, ct);
+            var classifyResult = await service.ClassifyItemsAsync(ClassificationKind.SdkBreakingChange, classifyRequest, ct);
             Assert.IsNotNull(classifyRequest);
             var result = classifyResult.ClassifiedResult;
             Assert.IsNotNull(result);
@@ -218,7 +218,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             // Act & Assert
             // Empty list with no input sources should throw
             Assert.ThrowsAsync<ArgumentException>(
-                () => service.ClassifyItemsAsync(ClassifyType.Customization, classifyRequest, CancellationToken.None));
+                () => service.ClassifyItemsAsync(ClassificationKind.Customization, classifyRequest, CancellationToken.None));
 
             _mockAgentRunner.Verify(x => x.RunAsync(It.IsAny<CopilotAgent<string>>(), It.IsAny<CancellationToken>()), Times.Never);
         }
@@ -253,7 +253,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             // Act
             var classifyRequest = new ClassifyCustomizationRequest("TestService", "global context", items, "python", _testTspPath);
-            await service.ClassifyItemsAsync(ClassifyType.Customization, classifyRequest, CancellationToken.None);
+            await service.ClassifyItemsAsync(ClassificationKind.Customization, classifyRequest, CancellationToken.None);
 
             // Assert
             Assert.That(item1.Status, Is.EqualTo(FeedbackStatus.SUCCESS));
@@ -283,7 +283,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             // Act
             var classifyRequest = new ClassifyCustomizationRequest("TestService", "global context", items, "python", _testTspPath);
-            await service.ClassifyItemsAsync(ClassifyType.Customization, classifyRequest, CancellationToken.None);
+            await service.ClassifyItemsAsync(ClassificationKind.Customization, classifyRequest, CancellationToken.None);
 
             // Assert
             Assert.That(item1.Status, Is.EqualTo(FeedbackStatus.TSP_APPLICABLE));
@@ -312,7 +312,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             // Act
             var classifyRequest = new ClassifyCustomizationRequest("TestService", "global context", items, "python", _testTspPath);
-            await service.ClassifyItemsAsync(ClassifyType.Customization, classifyRequest, CancellationToken.None);
+            await service.ClassifyItemsAsync(ClassificationKind.Customization, classifyRequest, CancellationToken.None);
 
             // Assert
             Assert.That(item1.Status, Is.EqualTo(FeedbackStatus.REQUIRES_MANUAL_INTERVENTION));
@@ -340,7 +340,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             // Act
             var classifyRequest = new ClassifyCustomizationRequest("TestService", "global context", items, "python", _testTspPath);
-            await service.ClassifyItemsAsync(ClassifyType.Customization, classifyRequest, CancellationToken.None);
+            await service.ClassifyItemsAsync(ClassificationKind.Customization, classifyRequest, CancellationToken.None);
 
             // Assert
             Assert.That(item.ClassificationReason, Is.EqualTo("Non-actionable feedback - approval comment with no requested changes"));
@@ -371,7 +371,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             // Act
             var classifyRequest = new ClassifyCustomizationRequest("TestService", "global context", items, "python", _testTspPath);
-            await service.ClassifyItemsAsync(ClassifyType.Customization, classifyRequest, CancellationToken.None);
+            await service.ClassifyItemsAsync(ClassificationKind.Customization, classifyRequest, CancellationToken.None);
 
             // Assert
             Assert.That(item1.Status, Is.EqualTo(FeedbackStatus.SUCCESS));
@@ -400,7 +400,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 CreateLiveTestItem("Add support for custom retry policies with circuit breaker pattern for transient failures")
             };
             var classifyRequest = new ClassifyCustomizationRequest("TestService", "global context", items, "python", _testTspPath);
-            await service.ClassifyItemsAsync(ClassifyType.Customization, classifyRequest, CancellationToken.None);
+            await service.ClassifyItemsAsync(ClassificationKind.Customization, classifyRequest, CancellationToken.None);
 
             LogClassificationResults(items);
 
@@ -448,7 +448,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             CreateLiveTestItem("Add support for streaming responses with progress callbacks when downloading large blobs")
         };
             var classifyRequest = new ClassifyCustomizationRequest("StorageBlob", "global context", items, "python", _typeSpecProjectPath);
-            await service.ClassifyItemsAsync(ClassifyType.Customization,classifyRequest, CancellationToken.None);
+            await service.ClassifyItemsAsync(ClassificationKind.Customization,classifyRequest, CancellationToken.None);
 
             LogClassificationResults(items);
 

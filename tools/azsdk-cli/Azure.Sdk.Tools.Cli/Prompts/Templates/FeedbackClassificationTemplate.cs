@@ -94,7 +94,6 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
 
             if (!itemLookup.TryGetValue(id, out var item))
             {
-                //_logger.LogWarning("Batch result contains unknown item ID: {Id}", id);
                 continue;
             }
 
@@ -105,7 +104,6 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         // Handle any items that weren't in the response
         foreach (var item in feedbackItems.Where(i => !matchedIds.Contains(i.Id)))
         {
-            //_logger.LogWarning("Item {Id} was not found in batch classification result. Defaulting to REQUIRES_MANUAL_INTERVENTION.", item.Id);
             item.Status = FeedbackStatus.REQUIRES_MANUAL_INTERVENTION;
             item.AppendContext("Classification failed: item missing from batch LLM response", leadingNewLines: 1);
         }
@@ -165,19 +163,12 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
             _ => FeedbackStatus.TSP_APPLICABLE
         };
 
-        if (status == FeedbackStatus.TSP_APPLICABLE && classification != "TSP_APPLICABLE")
-        {
-            //_logger.LogWarning("Unknown classification '{Classification}' for item {Id}. Defaulting to TSP_APPLICABLE.", classification, item.Id);
-        }
-
         item.Status = status;
         if (!string.IsNullOrEmpty(reason))
         {
             item.ClassificationReason = reason;
             item.AppendContext($"Classification: {classification}\nReason: {reason}", leadingNewLines: 2);
         }
-
-        //_logger.LogInformation("Item {Id} classified as {Status}: {Reason}", item.Id, status, reason);
     }
 
 

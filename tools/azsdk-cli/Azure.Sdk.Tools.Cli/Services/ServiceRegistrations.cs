@@ -98,7 +98,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IInputSanitizer, InputSanitizer>();
             services.AddSingleton<ITspClientHelper, TspClientHelper>();
             services.AddSingleton<IAPIViewFeedbackService, APIViewFeedbackService>();
-            services.AddScoped<IClassifyService, ClassifyService>();
+            services.AddScoped<IClassifyService, ClassificationService>();
             services.AddScoped<IUserPromptProcessor, UserPromptProcessor>();
 
             // Process Helper Classes
@@ -148,7 +148,8 @@ namespace Azure.Sdk.Tools.Cli.Services
                 {
                     logger?.LogInformation("Using GITHUB_TOKEN from environment variable for Copilot SDK authentication.");
                     options.GitHubToken = gitHubToken.Trim();
-                } else
+                }
+                else
                 {
                     // If no GITHUB_TOKEN is provided, log a warning. Some Copilot features may not work properly without it.
                     logger?.LogWarning("No GITHUB_TOKEN environment variable found. Some Copilot features may not work properly.");

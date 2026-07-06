@@ -6,11 +6,11 @@ namespace Azure.Sdk.Tools.Cli.Models.ClassifyItems
     public class ClassifyResponse
     {
         /// <summary>The type of classification that was performed.</summary>
-        public ClassifyType ClassifyType { get; set; }
+        public ClassificationKind ClassifyType { get; set; }
 
         /// <summary>The classification result. The concrete type depends on <see cref="ClassifyType"/>.</summary>
         public object? ClassifiedResult { get; set; }
-        public ClassifyResponse(ClassifyType classifyType, object? classifiedResult)
+        public ClassifyResponse(ClassificationKind classifyType, object? classifiedResult)
         {
             ClassifyType = classifyType;
             ClassifiedResult = classifiedResult;

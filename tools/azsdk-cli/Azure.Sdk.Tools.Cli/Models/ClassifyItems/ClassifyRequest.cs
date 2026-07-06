@@ -5,8 +5,8 @@ namespace Azure.Sdk.Tools.Cli.Models.ClassifyItems
     /// </summary>
     public class ClassifyRequest
     {
-        /// <summary>The type of classification to perform.</summary>
-        public ClassifyType ClassifyType { get; set; }
+        /// <summary>The kind of classification to perform.</summary>
+        public ClassificationKind ClassificationKind { get; }
 
         /// <summary>The target SDK language (e.g., "dotnet", "java", "python").</summary>
         public string Language { get; set; }
@@ -19,9 +19,9 @@ namespace Azure.Sdk.Tools.Cli.Models.ClassifyItems
 
         /// <summary>The number of items to classify per batch when <see cref="IsBatchClassify"/> is enabled.</summary>
         public int BatchSize { get; set; } = 50;
-        public ClassifyRequest(ClassifyType classifyType, string language, string? tspProjectPath)
+        public ClassifyRequest(ClassificationKind kind, string language, string? tspProjectPath)
         {
-            ClassifyType = classifyType;
+            ClassificationKind = kind;
             Language = language;
             TspProjectPath = tspProjectPath;
         }
@@ -37,7 +37,7 @@ namespace Azure.Sdk.Tools.Cli.Models.ClassifyItems
 
         /// <summary>The pattern or rules used to determine whether the SDK change is breaking.</summary>
         public string SdkBreakingPattern { get; set; }
-        public ClassifySdkBreakingChangesRequest(string sdkChange, string sdkRepoRoot, string sdkBreakingPattern, string language, string? tspProjectPath) : base(ClassifyType.SdkBreakingChange, language, tspProjectPath)
+        public ClassifySdkBreakingChangesRequest(string sdkChange, string sdkRepoRoot, string sdkBreakingPattern, string language, string? tspProjectPath) : base(ClassificationKind.SdkBreakingChange, language, tspProjectPath)
         {
             SdkChange = sdkChange;
             SdkBreakingPattern = sdkBreakingPattern;
@@ -63,7 +63,7 @@ namespace Azure.Sdk.Tools.Cli.Models.ClassifyItems
 
         /// <summary>The list of feedback items to classify.</summary>
         public List<FeedbackItem> Items { get; set; }
-        public ClassifyCustomizationRequest(string? serviceName, string referencePatternContent, List<FeedbackItem> items, string language, string? tspProjectPath) : base(ClassifyType.Customization, language, tspProjectPath)
+        public ClassifyCustomizationRequest(string? serviceName, string referencePatternContent, List<FeedbackItem> items, string language, string? tspProjectPath) : base(ClassificationKind.Customization, language, tspProjectPath)
         {
             ServiceName = serviceName;
             ReferencePatternContent = referencePatternContent;

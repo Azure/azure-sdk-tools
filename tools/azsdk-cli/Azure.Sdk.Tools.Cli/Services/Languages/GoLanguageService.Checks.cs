@@ -61,6 +61,7 @@ public partial class GoLanguageService : LanguageService
     }
 
     #endregion
+
     public override async Task<PackageCheckResponse> AnalyzeDependencies(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         var results = new List<ProcessResult>();

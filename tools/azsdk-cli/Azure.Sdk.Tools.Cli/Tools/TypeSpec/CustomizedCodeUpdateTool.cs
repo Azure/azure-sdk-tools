@@ -379,7 +379,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     BatchSize = 50,
                     EditScope = editScope
                 };
-                response = await _classifierService.ClassifyItemsAsync(ClassifyType.Customization, classifyRequest, ct);
+                response = await _classifierService.ClassifyItemsAsync(ClassificationKind.Customization, classifyRequest, ct);
 
             }
             catch (CopilotCliUnavailableException ex)
@@ -638,7 +638,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     BatchSize = 50,
                     EditScope = editScope
                 };
-                var secondResponse = await _classifierService.ClassifyItemsAsync(ClassifyType.Customization, classifyRequest, ct);
+                var secondResponse = await _classifierService.ClassifyItemsAsync(ClassificationKind.Customization, classifyRequest, ct);
 
                 if (secondResponse.ClassifiedResult != null)
                 {

@@ -4,8 +4,8 @@ using Azure.Sdk.Tools.Cli.Models.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models.ClassifyItems
 {
-    [JsonConverter(typeof(JsonStringEnumWithEnumMemberConverter<ClassifyType>))]
-    public enum ClassifyType
+    [JsonConverter(typeof(JsonStringEnumWithEnumMemberConverter<ClassificationKind>))]
+    public enum ClassificationKind
     {
         [EnumMember(Value = "sdk-breaking-change")]
         SdkBreakingChange,

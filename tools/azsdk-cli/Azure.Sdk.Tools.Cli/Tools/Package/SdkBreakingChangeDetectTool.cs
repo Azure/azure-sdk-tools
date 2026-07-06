@@ -94,7 +94,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                         ResponseError = $"The directory for the local sdk does not provide or exist at the specified path: {packagePath}. Prompt user to clone the matched SDK repository users want to generate SDK against."
                     };
                 }
-
                 
                 LanguageService languageService = await GetLanguageServiceAsync(packagePath, ct);
 
@@ -167,7 +166,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                                         var tspProjectPath = tspConfigPath != null ? await gitHelper.DiscoverRepoRootAsync(tspConfigPath, ct) : null;
                                         var sdkBreakingPattern = await languageService.GetSDKBreakingPattern(sdkRepoRoot, ct);
                                         var classifyRequest = new ClassifySdkBreakingChangesRequest(sdkchanges.ChangelogMD, sdkRepoRoot, sdkBreakingPattern, languageService.Language.ToString(), tspProjectPath);
-                                        var classifyResult = await _classifyService.ClassifyItemsAsync(ClassifyType.SdkBreakingChange, classifyRequest, ct);
+                                        var classifyResult = await _classifyService.ClassifyItemsAsync(ClassificationKind.SdkBreakingChange, classifyRequest, ct);
                                         if (classifyResult == null || classifyResult.ClassifiedResult == null)
                                         {
                                             logger.LogError("Failed to classify SDK breaking changes.");

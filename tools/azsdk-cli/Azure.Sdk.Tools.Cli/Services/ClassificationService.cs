@@ -9,21 +9,21 @@ namespace Azure.Sdk.Tools.Cli.Services
 {   
     public interface IClassifyService
     {
-        Task<ClassifyResponse> ClassifyItemsAsync(ClassifyType classifyType, ClassifyRequest request, CancellationToken ct);
+        Task<ClassifyResponse> ClassifyItemsAsync(ClassificationKind classifyType, ClassifyRequest request, CancellationToken ct);
     }
-    public class ClassifyService: IClassifyService
+    public class ClassificationService: IClassifyService
     {
         private readonly ICopilotAgentRunner _agentRunner;
-        public ClassifyService(ICopilotAgentRunner agentRunner)
+        public ClassificationService(ICopilotAgentRunner agentRunner)
         {
             _agentRunner = agentRunner;
         }
 
-        public async Task<ClassifyResponse> ClassifyItemsAsync(ClassifyType classifyType, ClassifyRequest request, CancellationToken ct)
+        public async Task<ClassifyResponse> ClassifyItemsAsync(ClassificationKind classifyType, ClassifyRequest request, CancellationToken ct)
         {
             switch (classifyType)
             {
-                case ClassifyType.SdkBreakingChange:
+                case ClassificationKind.SdkBreakingChange:
                     if (request is ClassifySdkBreakingChangesRequest sdkBreakingRequest)
                     {
                         if (sdkBreakingRequest.SdkChange.IsNullOrEmpty() || sdkBreakingRequest.SdkBreakingPattern.IsNullOrEmpty())
@@ -43,7 +43,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                     {
                         throw new ArgumentException("Invalid request type for SdkBreakingChange classification.");
                     }
-                case ClassifyType.Customization:
+                case ClassificationKind.Customization:
                     if (request is ClassifyCustomizationRequest customizationRequest)
                     {
                         List<FeedbackClassificationResponse.ItemClassificationDetails> allClassifiedResults = new List<FeedbackClassificationResponse.ItemClassificationDetails>();

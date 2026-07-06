@@ -65,8 +65,8 @@ public class CustomizedCodeUpdateToolAutoTests
         // Default ClassifyItemsAsync: handles both passes via a single mock.
         // - First pass (items is empty): populates the list and returns TSP_APPLICABLE.
         // - Second pass (items already populated): returns TSP_APPLICABLE for existing items.
-        classifierService.Setup(c => c.ClassifyItemsAsync(It.IsAny<ClassifyType>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
-            .Returns<ClassifyType, ClassifyRequest, CancellationToken>(
+        classifierService.Setup(c => c.ClassifyItemsAsync(It.IsAny<ClassificationKind>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
+            .Returns<ClassificationKind, ClassifyRequest, CancellationToken>(
                 (classifyType, request, ct) =>
                 {
                     classifyCallCount++;
@@ -81,7 +81,7 @@ public class CustomizedCodeUpdateToolAutoTests
                         // First pass: gather items - create a default item
                         var item = new FeedbackItem { Text = "Rename FooClient to BarClient" };
                         items.Add(item);
-                        return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                        return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
                         { 
                             new FeedbackClassificationResponse.ItemClassificationDetails
                             {
@@ -96,7 +96,7 @@ public class CustomizedCodeUpdateToolAutoTests
                     // Second pass: classify already-gathered items
                     var actualId = items.FirstOrDefault()?.Id ?? "1";
                     var actualText = items.FirstOrDefault()?.Text ?? "Rename FooClient to BarClient";
-                    return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                    return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
                     {
                         new FeedbackClassificationResponse.ItemClassificationDetails
                         {
@@ -182,8 +182,8 @@ public class CustomizedCodeUpdateToolAutoTests
     /// flow proceeds into the custom-code patch/regen pipeline (used by the optional-tspProjectPath tests).
     /// </summary>
     private static Action<Mock<IClassifyService>> CodeCustomizationClassifier(string text) =>
-        c => c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassifyType>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
-            .Returns<ClassifyType, ClassifyRequest, CancellationToken>(
+        c => c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassificationKind>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
+            .Returns<ClassificationKind, ClassifyRequest, CancellationToken>(
                 (classifyType, request, ct) =>
                 {
                     var customizationRequest = request as ClassifyCustomizationRequest;
@@ -193,7 +193,7 @@ public class CustomizedCodeUpdateToolAutoTests
                     {
                         var item = new FeedbackItem { Text = text };
                         items.Add(item);
-                        return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                        return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
                         {
                                 new FeedbackClassificationResponse.ItemClassificationDetails
                                 {
@@ -204,7 +204,7 @@ public class CustomizedCodeUpdateToolAutoTests
                                 }
                         }));
                     }
-                    return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>()));
+                    return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>()));
                 });
 
     // ========================================================================
@@ -294,8 +294,8 @@ public class CustomizedCodeUpdateToolAutoTests
     public async Task Classification_ReturnsEmptyList_ReturnsInvalidInput()
     {
         var (tool, _) = CreateTool(configureClassifier: c =>
-            c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassifyType>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>())));
+            c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassificationKind>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>())));
 
         var pkg = CreateTempDir();
         var tspDir = CreateTestTypespecProjectPath();
@@ -311,8 +311,8 @@ public class CustomizedCodeUpdateToolAutoTests
     public async Task Classification_ReturnsNullList_ReturnsInvalidInput()
     {
         var (tool, _) = CreateTool(configureClassifier: c =>
-            c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassifyType>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new ClassifyResponse(ClassifyType.Customization, null)));
+            c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassificationKind>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ClassifyResponse(ClassificationKind.Customization, null)));
 
         var pkg = CreateTempDir();
         var tspDir = CreateTestTypespecProjectPath();
@@ -332,7 +332,7 @@ public class CustomizedCodeUpdateToolAutoTests
             "The GitHub Copilot CLI could not be found or failed to start.", innerEx);
 
         var (tool, _) = CreateTool(configureClassifier: c =>
-            c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassifyType>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
+            c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassificationKind>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
                 .ThrowsAsync(copilotEx));
 
         var pkg = CreateTempDir();
@@ -351,7 +351,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var unexpectedEx = new HttpRequestException("Network timeout connecting to AI service");
 
         var (tool, _) = CreateTool(configureClassifier: c =>
-            c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassifyType>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
+            c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassificationKind>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
                 .ThrowsAsync(unexpectedEx));
 
         var pkg = CreateTempDir();
@@ -370,8 +370,8 @@ public class CustomizedCodeUpdateToolAutoTests
         // When all items are SUCCESS or REQUIRES_MANUAL_INTERVENTION,
         // no TSP customizations are attempted. Returns success with manual intervention info.
         var (tool, _) = CreateTool(configureClassifier: c =>
-            c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassifyType>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
-                .Returns<ClassifyType, ClassifyRequest, CancellationToken>(
+            c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassificationKind>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
+                .Returns<ClassificationKind, ClassifyRequest, CancellationToken>(
                     (classifyType, classifyRequest, cancellationToken) =>
                     {
                         var items = new List<FeedbackItem>();
@@ -379,7 +379,7 @@ public class CustomizedCodeUpdateToolAutoTests
                         var item2 = new FeedbackItem { Text = "Looks good" };
                         items.Add(item1);
                         items.Add(item2);
-                        return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                        return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
                         {
                                 new FeedbackClassificationResponse.ItemClassificationDetails
                                 {
@@ -418,8 +418,8 @@ public class CustomizedCodeUpdateToolAutoTests
         var (tool, _) = CreateTool(
             languageService: svc,
             configureClassifier: c =>
-                c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassifyType>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
-                    .Returns<ClassifyType, ClassifyRequest, CancellationToken>(
+                c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassificationKind>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
+                    .Returns<ClassificationKind, ClassifyRequest, CancellationToken>(
                         (classifyType, classifyRequest, cancellationToken) =>
                         {
                             classifyCalls++;
@@ -434,7 +434,7 @@ public class CustomizedCodeUpdateToolAutoTests
                                 // First pass: populate items with TSP_APPLICABLE
                                 var item = new FeedbackItem { Text = "rename X" };
                                 items.Add(item);
-                                return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
                                 {
                                         new FeedbackClassificationResponse.ItemClassificationDetails
                                         {
@@ -444,7 +444,7 @@ public class CustomizedCodeUpdateToolAutoTests
                                 }));
                             }
                             // Second pass: return empty
-                            return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>()));
+                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>()));
                         }));
 
         var pkg = CreateTempDir();
@@ -480,8 +480,8 @@ public class CustomizedCodeUpdateToolAutoTests
                         FailureReason = "Could not parse TypeSpec project"
                     }),
             configureClassifier: c =>
-                c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassifyType>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
-                    .Returns<ClassifyType, ClassifyRequest, CancellationToken>(
+                c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassificationKind>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
+                    .Returns<ClassificationKind, ClassifyRequest, CancellationToken>(
                         (classifyType, classifyRequest, cancellationToken) =>
                         {
                             classifyCalls++;
@@ -496,7 +496,7 @@ public class CustomizedCodeUpdateToolAutoTests
                                 // First pass: populate items with TSP_APPLICABLE
                                 var item = new FeedbackItem { Text = "rename X" };
                                 items.Add(item);
-                                return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
                                 {
                                     new FeedbackClassificationResponse.ItemClassificationDetails
                                     {
@@ -507,7 +507,7 @@ public class CustomizedCodeUpdateToolAutoTests
                             }
                             // Second pass: classifier sees failure context and flags manual intervention
                             var actualId = items.FirstOrDefault()?.Id ?? "1";
-                            return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
                             {
      
                                 new FeedbackClassificationResponse.ItemClassificationDetails
@@ -535,8 +535,8 @@ public class CustomizedCodeUpdateToolAutoTests
         var customizeCalls = 0;
         var (tool, _) = CreateTool(
             configureClassifier: c =>
-                c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassifyType>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
-                    .Returns<ClassifyType, ClassifyRequest, CancellationToken>(
+                c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassificationKind>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
+                    .Returns<ClassificationKind, ClassifyRequest, CancellationToken>(
                         (classifyType, classifyRequest, cancellationToken) =>
                         {
                             var items = new List<FeedbackItem>();
@@ -548,7 +548,7 @@ public class CustomizedCodeUpdateToolAutoTests
                             {
                                 var item = new FeedbackItem { Text = "rename X to Y" };
                                 items.Add(item);
-                                return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
                                 {
                                         new FeedbackClassificationResponse.ItemClassificationDetails
                                         {
@@ -558,7 +558,7 @@ public class CustomizedCodeUpdateToolAutoTests
                                 }));
                             }
                             var actualId = items.FirstOrDefault()?.Id ?? "1";
-                            return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
                             {
                                     new FeedbackClassificationResponse.ItemClassificationDetails
                                     {
@@ -600,8 +600,8 @@ public class CustomizedCodeUpdateToolAutoTests
         var (tool, _) = CreateTool(
             tspHelper: failingTsp,
             configureClassifier: c =>
-                c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassifyType>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
-                    .Returns<ClassifyType, ClassifyRequest, CancellationToken>(
+                c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassificationKind>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
+                    .Returns<ClassificationKind, ClassifyRequest, CancellationToken>(
                         (classifyType, classifyRequest, cancellationToken) =>
                         {
                             classifyCalls++;
@@ -616,7 +616,7 @@ public class CustomizedCodeUpdateToolAutoTests
                                 // First pass: populate items with TSP_APPLICABLE
                                 var item = new FeedbackItem { Text = "rename X" };
                                 items.Add(item);
-                                return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
                                 {
                                     new FeedbackClassificationResponse.ItemClassificationDetails
                                     {
@@ -627,7 +627,7 @@ public class CustomizedCodeUpdateToolAutoTests
                             }
                             // Second pass: reclassify as manual intervention (emitter issue)
                             var actualId = items.FirstOrDefault()?.Id ?? "1";
-                            return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
                             {
                                     new FeedbackClassificationResponse.ItemClassificationDetails
                                     {
@@ -668,8 +668,8 @@ public class CustomizedCodeUpdateToolAutoTests
             languageService: svc,
             tspHelper: failingTsp,
             configureClassifier: c =>
-                c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassifyType>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
-                    .Returns<ClassifyType, ClassifyRequest, CancellationToken>(
+                c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassificationKind>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
+                    .Returns<ClassificationKind, ClassifyRequest, CancellationToken>(
                         (classifyType, classifyRequest, cancellationToken) =>
                         {
                             classifyCalls++;
@@ -684,7 +684,7 @@ public class CustomizedCodeUpdateToolAutoTests
                                 // First pass: populate items with TSP_APPLICABLE
                                 var item = new FeedbackItem { Text = "rename FooClient to BarClient" };
                                 items.Add(item);
-                                return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
                                 {
 
                                         new FeedbackClassificationResponse.ItemClassificationDetails
@@ -697,7 +697,7 @@ public class CustomizedCodeUpdateToolAutoTests
                             // Second pass: classifier sees regen failure and determines manual intervention
                             secondPassContext = items.FirstOrDefault()?.Context;
                             var actualId = items.FirstOrDefault()?.Id ?? "1";
-                            return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
                             {
                                     new FeedbackClassificationResponse.ItemClassificationDetails
                                     {
@@ -869,8 +869,8 @@ public class CustomizedCodeUpdateToolAutoTests
         var (tool, _) = CreateTool(
             languageService: svc,
             configureClassifier: c =>
-                c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassifyType>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
-                    .Returns<ClassifyType, ClassifyRequest, CancellationToken>(
+                c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassificationKind>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
+                    .Returns<ClassificationKind, ClassifyRequest, CancellationToken>(
                         (classifyType, classifyRequest, cancellationToken) =>
                         {
                             classifyCalls++;
@@ -885,7 +885,7 @@ public class CustomizedCodeUpdateToolAutoTests
                                 // First pass: CODE_CUSTOMIZATION classification
                                 var item = new FeedbackItem { Text = "Rename maxSpeakers to maxSpeakerCount in customization code" };
                                 items.Add(item);
-                                return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
                                 {
                                         new FeedbackClassificationResponse.ItemClassificationDetails
                                         {
@@ -897,7 +897,7 @@ public class CustomizedCodeUpdateToolAutoTests
                                 }));
                             }
                             // Second iteration: feedback dictionary is empty → return empty
-                            return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>()));
+                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>()));
                         }));
 
         var pkg = CreateTempDir();
@@ -950,15 +950,15 @@ public class CustomizedCodeUpdateToolAutoTests
     {
         string? capturedFeedbackText = null;
         var (tool, _) = CreateTool(configureClassifier: c =>
-            c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassifyType>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
-                .Returns<ClassifyType, ClassifyRequest, CancellationToken>(
+            c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassificationKind>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
+                .Returns<ClassificationKind, ClassifyRequest, CancellationToken>(
                     (classifyType, classifyRequest, cancellationToken) =>
                     {
                         if (classifyRequest is ClassifyCustomizationRequest customizationRequest)
                         {
                             var item = customizationRequest!.Items.FirstOrDefault();
                             capturedFeedbackText = item!.Text;
-                            return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
                             {
                                 new FeedbackClassificationResponse.ItemClassificationDetails
                                 {
@@ -967,7 +967,7 @@ public class CustomizedCodeUpdateToolAutoTests
                                 }
                             }));
                         }
-                        return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>()));
+                        return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>()));
                     }));
 
         var pkg = CreateTempDir();
@@ -991,8 +991,8 @@ public class CustomizedCodeUpdateToolAutoTests
         var (tool, _) = CreateTool(
             languageService: svc,
             configureClassifier: c =>
-                c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassifyType>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
-                    .Returns<ClassifyType, ClassifyRequest, CancellationToken>(
+                c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassificationKind>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
+                    .Returns<ClassificationKind, ClassifyRequest, CancellationToken>(
                         (classifyType, classifyRequest, cancellationToken) =>
                         {
                             classifyCalls++;
@@ -1006,7 +1006,7 @@ public class CustomizedCodeUpdateToolAutoTests
                                 // First pass: populate items with TSP_APPLICABLE
                                 var item = new FeedbackItem { Text = "rename FooClient" };
                                 items.Add(item);
-                                return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
                                 {
 
                                         new FeedbackClassificationResponse.ItemClassificationDetails
@@ -1023,7 +1023,7 @@ public class CustomizedCodeUpdateToolAutoTests
                             }
 
                             var actualId = items.FirstOrDefault()?.Id ?? "1";
-                            return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
                             {
                                     new FeedbackClassificationResponse.ItemClassificationDetails
                                     {
@@ -1062,8 +1062,8 @@ public class CustomizedCodeUpdateToolAutoTests
         var (tool, _) = CreateTool(
             languageService: svc,
             configureClassifier: c =>
-                c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassifyType>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
-                    .Returns<ClassifyType, ClassifyRequest, CancellationToken>(
+                c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassificationKind>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
+                    .Returns<ClassificationKind, ClassifyRequest, CancellationToken>(
                         (classifyType, classifyRequest, cancellationToken) =>
                         {
                             classifyCalls++;
@@ -1077,7 +1077,7 @@ public class CustomizedCodeUpdateToolAutoTests
                                 // First pass: populate items with TSP_APPLICABLE
                                 var item = new FeedbackItem { Text = "rename X" };
                                 items.Add(item);
-                                return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
                                 {
                                         new FeedbackClassificationResponse.ItemClassificationDetails
                                         {
@@ -1088,7 +1088,7 @@ public class CustomizedCodeUpdateToolAutoTests
                             }
                             // Second pass
                             var actualId = items.FirstOrDefault()?.Id ?? "1";
-                            return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
                             {
                                     new FeedbackClassificationResponse.ItemClassificationDetails
                                     {
@@ -1371,8 +1371,8 @@ public class CustomizedCodeUpdateToolAutoTests
         var (tool, mocks) = CreateTool(
             languageService: svc,
             configureClassifier: c =>
-                c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassifyType>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
-                    .Returns<ClassifyType, ClassifyRequest, CancellationToken>(
+                c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassificationKind>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
+                    .Returns<ClassificationKind, ClassifyRequest, CancellationToken>(
                         (classifyType, classifyRequest, cancellationToken) =>
                         {
                             var items = new List<FeedbackItem>();
@@ -1385,7 +1385,7 @@ public class CustomizedCodeUpdateToolAutoTests
                             {
                                 var item = new FeedbackItem { Text = "Rename maxSpeakers to maxSpeakerCount in customization code" };
                                 items.Add(item);
-                                return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
                                 {
                                         new FeedbackClassificationResponse.ItemClassificationDetails
                                         {
@@ -1396,7 +1396,7 @@ public class CustomizedCodeUpdateToolAutoTests
                                         }
                                 }));
                             }
-                            return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>()));
+                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>()));
                         }));
 
         var pkg = CreateTempDir();
@@ -1445,8 +1445,8 @@ public class CustomizedCodeUpdateToolAutoTests
         var (tool, mocks) = CreateTool(
             languageService: svc,
             configureClassifier: c =>
-                c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassifyType>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
-                    .Returns<ClassifyType, ClassifyRequest, CancellationToken>(
+                c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassificationKind>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
+                    .Returns<ClassificationKind, ClassifyRequest, CancellationToken>(
                         (classifyType, classifyRequest, cancellationToken) =>
                         {
                             classifyCalls++;
@@ -1462,7 +1462,7 @@ public class CustomizedCodeUpdateToolAutoTests
                                 var codeItem = new FeedbackItem { Text = "Fix customization reference" };
                                 items.Add(specItem);
                                 items.Add(codeItem);
-                                return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
                                 {
                                         new FeedbackClassificationResponse.ItemClassificationDetails
                                         {
@@ -1476,7 +1476,7 @@ public class CustomizedCodeUpdateToolAutoTests
                                         }
                                 }));
                             }
-                            return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>()));
+                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>()));
                         }));
 
         var pkg = CreateTempDir();
@@ -1554,8 +1554,8 @@ public class CustomizedCodeUpdateToolAutoTests
         var (tool, mocks) = CreateTool(
             languageService: svc,
             configureClassifier: c =>
-                c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassifyType>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
-                    .Returns<ClassifyType, ClassifyRequest, CancellationToken>(
+                c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassificationKind>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
+                    .Returns<ClassificationKind, ClassifyRequest, CancellationToken>(
                         (classifyType, classifyRequest, cancellationToken) =>
                         {
                             classifyCalls++;
@@ -1572,7 +1572,7 @@ public class CustomizedCodeUpdateToolAutoTests
                                 var codeItem = new FeedbackItem { Text = "Fix customization reference" };
                                 items.Add(specItem);
                                 items.Add(codeItem);
-                                return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
                                 {
                                         new FeedbackClassificationResponse.ItemClassificationDetails
                                         {
@@ -1586,7 +1586,7 @@ public class CustomizedCodeUpdateToolAutoTests
                                         }
                                 }));
                             }
-                            return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>()));
+                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>()));
                         }));
 
         var pkg = CreateTempDir();
@@ -1638,8 +1638,8 @@ public class CustomizedCodeUpdateToolAutoTests
         var (tool, mocks) = CreateTool(
             languageService: svc,
             configureClassifier: c =>
-                c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassifyType>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
-                    .Returns<ClassifyType, ClassifyRequest, CancellationToken>(
+                c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassificationKind>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
+                    .Returns<ClassificationKind, ClassifyRequest, CancellationToken>(
                         (classifyType, request, ct) =>
                         {
                             classifyCalls++;
@@ -1655,7 +1655,7 @@ public class CustomizedCodeUpdateToolAutoTests
                                 var codeItem = new FeedbackItem { Text = "Fix customization reference" };
                                 items.Add(specItem);
                                 items.Add(codeItem);
-                                return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
                                 {
                                         new FeedbackClassificationResponse.ItemClassificationDetails
                                         {
@@ -1669,7 +1669,7 @@ public class CustomizedCodeUpdateToolAutoTests
                                         }
                                 }));
                             }
-                            return Task.FromResult(new ClassifyResponse(ClassifyType.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>()));
+                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>()));
                         }));
 
         var pkg = CreateTempDir();

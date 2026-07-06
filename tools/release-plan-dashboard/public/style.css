@@ -739,6 +739,11 @@ main {
   color: #856404;
   font-size: 0.72rem;
 }
+.badge-missing-emitter-config {
+  background: #fde7e9;
+  color: var(--red);
+  font-size: 0.72rem;
+}
 .missing-product-highlight {
   margin-top: 10px;
   padding: 10px 14px;
@@ -895,10 +900,10 @@ main {
   color: var(--red);
 }
 .sdk-table tr.row-missing-emitter-config {
-  background: #fff8e1;
+  background: #fde7e9;
 }
 .sdk-table tr.row-missing-emitter-config td {
-  color: #7a6200;
+  color: var(--red);
 }
 
 .scope-badges {

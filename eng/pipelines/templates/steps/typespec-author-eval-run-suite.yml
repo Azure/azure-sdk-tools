@@ -34,6 +34,12 @@ steps:
         scriptLocation: inlineScript
         workingDirectory: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate
         inlineScript: |
+          # AzureCLI@2 logs `az` in via the service connection. azsdk-cli uses
+          # AzureCliCredential (it shells out to `az account get-access-token`) to obtain a
+          # bearer token for the remote KB, so verify the login context before the long eval
+          # and fail fast if it is missing/expired.
+          echo "Verifying Azure CLI login context before running vally..."
+          az account show --output table
           SKILL_ARG=""
           case "${{ parameters.LoadSkills }}" in
             false|False)

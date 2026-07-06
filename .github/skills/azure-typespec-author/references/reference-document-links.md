@@ -53,7 +53,8 @@ Sources are limited to <https://azure.github.io/typespec-azure/> and <https://ty
 - [Long-running operations (ARM)](https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/): Async PUT/DELETE/POST patterns, `ArmCombinedLroHeaders`, `LroHeaders = ArmCombinedLroHeaders<FinalResult = ...>`.
 - [ARM rules](https://azure.github.io/typespec-azure/docs/howtos/arm/arm-rules/): Linter rules covering operation shape, response codes, and pagination.
 - [RPC guidelines coverage](https://azure.github.io/typespec-azure/docs/howtos/arm/rpc-guidelines-coverage/): Required vs optional operations per resource category.
-- [Getting started — ARM step 05 (Defining Custom Actions)](https://azure.github.io/typespec-azure/docs/getstarted/azure-resource-manager/step05/): Walkthrough of adding custom POST actions to a resource.
+- [Getting started — ARM step 04 (Defining Custom Actions)](https://azure.github.io/typespec-azure/docs/getstarted/azure-resource-manager/step04/): Walkthrough of adding custom POST actions and action templates (`ArmResourceActionSync`, `ArmResourceActionAsync`) to a resource.
+- [Getting started — ARM step 05 (Defining long-running resource operations)](https://azure.github.io/typespec-azure/docs/getstarted/azure-resource-manager/step05/): Walkthrough of defining async ARM operations.
 - [Content negotiation](https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/): Model `Accept`/`Content-Type` variants and multi-representation responses (data-plane).
 
 ---
@@ -70,6 +71,7 @@ Sources are limited to <https://azure.github.io/typespec-azure/> and <https://ty
 - [Evolving APIs](https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/): Add, remove, or modify resources, operations, and properties across versions — including `@@`-augment decorators (`@@added(Model.member, Versions.x)`) for spread/augmented members.
 - [Versioning (getstarted)](https://azure.github.io/typespec-azure/docs/getstarted/versioning/): Introduction to versioning in TypeSpec Azure projects.
 - [Uncommon: Perpetual preview](https://azure.github.io/typespec-azure/docs/howtos/versioning/uncommon-scenarios/02-perpetual-preview/): Long-lived preview-only services.
+- [Uncommon: Converting specs](https://azure.github.io/typespec-azure/docs/howtos/versioning/uncommon-scenarios/01-converting-specs/): Converting a spec with multiple preview versions into a single latest preview version, handling versioning decorator ordering.
 
 ---
 
@@ -104,6 +106,7 @@ Sources are limited to <https://azure.github.io/typespec-azure/> and <https://ty
 - [Unions (TypeSpec core)](https://typespec.io/docs/language-basics/unions/): Define named/anonymous unions; the Azure pattern for extensible (open) enums.
 - [Extensible enum troubleshooting](https://azure.github.io/typespec-azure/docs/troubleshoot/enum-not-extensible/): Fix the `enum-not-extensible` diagnostic by switching a fixed `enum` to an extensible (union) enum.
 - [Type relations & constraints](https://typespec.io/docs/language-basics/type-relations/): Scalars, constraints, and how property types validate.
+- [Scalars (TypeSpec core)](https://typespec.io/docs/language-basics/scalars/): Built-in scalar types (`string`, `int32`, `float64`, `boolean`, `utcDateTime`, `url`, etc.) and how to declare custom scalars.
 - [Getting started — Azure Core step 03 (Defining your first resource)](https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step03/): Modeling a resource and its properties in a data-plane service.
 - [Getting started — ARM step 02 (Defining the Resources)](https://azure.github.io/typespec-azure/docs/getstarted/azure-resource-manager/step02/): Modeling ARM resource properties and the `properties` envelope.
 
@@ -117,6 +120,7 @@ Sources are limited to <https://azure.github.io/typespec-azure/> and <https://ty
 - [Built-in decorators](https://typespec.io/docs/standard-library/built-in-decorators/): Constraint/format decorators (`@minLength`, `@maxLength`, `@minValue`, `@maxValue`, `@pattern`, `@format`, `@minItems`, `@maxItems`) — including applying constraints to array items via the element type.
 - [Visibility](https://typespec.io/docs/language-basics/visibility/): Property lifecycle visibility (`@visibility`, `Lifecycle.Read`/`Create`/`Update`) controlling which operations expose a property.
 - [ARM decorators reference](https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/decorators/): ARM-specific decorators (e.g. `@key`, `@armResourceOperations`, resource-name parameter constraints).
+- [Azure Core decorators reference](https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/decorators/): Azure Core decorators (`@finalLocation`, `@pollingOperation`, `@lroStatus`, `@pagedResult`, `@items`, `@nextLink`) for LRO and paging patterns.
 - [Azure portal default experiences](https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/): Portal decorators (`@azureResourceBase`, `@browse`, `@about`, …) that customize how a resource surfaces in the Azure portal.
 
 ---

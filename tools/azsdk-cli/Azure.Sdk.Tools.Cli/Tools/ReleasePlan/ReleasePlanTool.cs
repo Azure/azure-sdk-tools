@@ -1289,17 +1289,27 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                 }
 
-                // Check if any required language is missing emitter configuration in the TypeSpec project
-                var languagesMissingEmitterConfig = requiredLanguages.Except(SdkInfos.Select(sdk => sdk.Language), StringComparer.OrdinalIgnoreCase);
-                if (languagesMissingEmitterConfig.Any())
+                // Check if any required language is missing emitter configuration in the TypeSpec project.
+                // Preserve an existing Requested/Approved exclusion status so intentional exclusions are not
+                // overwritten by the inferred MissingEmitterConfig state.
+                var languagesMissingEmitterConfig = requiredLanguages
+                    .Except(SdkInfos.Select(sdk => sdk.Language), StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+                var languagesToMarkMissingEmitterConfig = languagesMissingEmitterConfig
+                    .Where(lang => releasePlan.SDKInfo.All(info =>
+                        !string.Equals(info.Language, lang, StringComparison.OrdinalIgnoreCase)
+                        || (!string.Equals(info.ReleaseExclusionStatus, "Requested", StringComparison.OrdinalIgnoreCase)
+                            && !string.Equals(info.ReleaseExclusionStatus, "Approved", StringComparison.OrdinalIgnoreCase))))
+                    .ToList();
+                if (languagesToMarkMissingEmitterConfig.Any())
                 {
-                    logger.LogDebug("Languages missing emitter configuration in TypeSpec project. Work Item: {releasePlanWorkItemId}, languages: {languagesMissingEmitterConfig}", releasePlanWorkItemId, string.Join(", ", languagesMissingEmitterConfig));
-                    sb.AppendLine($"Important: The following languages have missing emitter configuration in the TypeSpec project: [{string.Join(", ", languagesMissingEmitterConfig)}]. SDK must be released for all required languages: [{string.Join(", ", requiredLanguages)}].");
+                    logger.LogDebug("Languages missing emitter configuration in TypeSpec project. Work Item: {releasePlanWorkItemId}, languages: {languagesMissingEmitterConfig}", releasePlanWorkItemId, string.Join(", ", languagesToMarkMissingEmitterConfig));
+                    sb.AppendLine($"Important: The following languages have missing emitter configuration in the TypeSpec project: [{string.Join(", ", languagesToMarkMissingEmitterConfig)}]. SDK must be released for all required languages: [{string.Join(", ", requiredLanguages)}].");
                     sb.AppendLine("Add the emitter configuration for each missing language in tspconfig.yaml, or request exclusion justification if the language is intentionally excluded.");
 
                     // Mark languages with missing emitter configuration in the release plan work item.
                     Dictionary<string, string> fieldsToUpdate = [];
-                    foreach (var lang in languagesMissingEmitterConfig)
+                    foreach (var lang in languagesToMarkMissingEmitterConfig)
                     {
                         fieldsToUpdate[$"Custom.ReleaseExclusionStatusFor{DevOpsService.MapLanguageToId(lang)}"] = "MissingEmitterConfig";
                     }
@@ -1310,7 +1320,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 return new DefaultCommandResponse
                 {
                     Message = sb.ToString(),
-                    NextSteps = languagesMissingEmitterConfig.Any() ? ["Configure the TypeSpec emitter for missing languages in tspconfig.yaml, or provide a justification for language exclusion."] : []
+                    NextSteps = languagesToMarkMissingEmitterConfig.Any() ? ["Configure the TypeSpec emitter for missing languages in tspconfig.yaml, or provide a justification for language exclusion."] : []
                 };
             }
             catch (Exception ex)

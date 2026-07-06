@@ -1,6 +1,34 @@
 # Release History
 
-## 0.6.22 (Unreleased)
+## 0.6.25 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
+## 0.6.24 (2026-06-30)
+
+### Features Added
+
+- Update package details in release plan using package name in tspconfig.yaml when a new release plan is created.
+
+### Bugs Fixed
+
+- `azsdk_update_sdk_details_in_release_plan` no longer fails for data-plane release plans when the TypeSpec project emits an optional Go package. Go is now accepted as an optional data-plane language and its package name is written to the release plan (Go remains not required, so it is not flagged as an excluded language when absent). Languages the release plan does not track (e.g. Rust, C++) are now skipped instead of causing the update to fail, and are reported in the result message.
+
+- Update SDK details to use explicit output directory param when running TypeSpec emitter.
+
+## 0.6.23 (2026-06-24)
+
+### Features Added
+
+- Release plans now resolve and persist Product Name, Product Type, and Product Lifecycle (copied from a previous release plan on create, or from a matching Triage work item on update via a new `--product-type` / `productType` parameter).
+
+## 0.6.22 (2026-06-22)
 
 ### Features Added
 
@@ -9,9 +37,7 @@
 
 ### Breaking Changes
 
-### Bugs Fixed
-
-### Other Changes
+- Replaced the `package find-work-item` CLI command with `package get-work-item`, which returns the full Azure DevOps package work item, and added `package update-work-item` for patching package work item fields.
 
 ## 0.6.21 (2026-06-18)
 
@@ -50,7 +76,6 @@
 ### Features Added
 
 - Release plan is automatically marked as "Finished" when all required language SDKs are either Released or have an Approved exclusion. Management plane checks all 5 languages; data plane checks .NET, Java, Python, and JavaScript only.
-- Added the `package find-work-item` CLI command to find Azure DevOps package work item IDs by package name, package version, and language.
 
 ### Bugs Fixed
 

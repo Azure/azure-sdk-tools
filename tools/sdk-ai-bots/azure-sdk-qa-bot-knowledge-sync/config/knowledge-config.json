@@ -99,6 +99,16 @@
             "scope": "branded",
             "service_type": "management-plane"
           }
+        },
+        {
+          "description": "TypeSpec Azure samples",
+          "path": "/packages/samples/specs",
+          "folder": "typespec_azure_samples",
+          "ignoredPaths": ["README.md"],
+          "isGenerated": true,
+          "metadata": {
+            "scope": "branded"
+          }
         }
       ]
     },

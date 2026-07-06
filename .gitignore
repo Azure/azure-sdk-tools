@@ -555,6 +555,18 @@ tools/sdk-ai-bots/azure-sdk-qa-bot/codeowners-utils
 tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/*env
 tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/output
 tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/data
+# Runtime evaluation artifacts (per-run outputs, not source).
+tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/cache/
+tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/results/.log/
+tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/*-eval-results.json
+tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/evaluate-result-*
+# Dataset-preparation working dirs (blob downloads / conversions are transient).
+tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/online-qa-tests/
+tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/online-tests/
+tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/eval-archive/
+tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/smoke-tests/
+# Local secrets.
+tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/auth.json
 tools/sdk-ai-bots/azure-sdk-qa-bot-backend-shared/infra/azure.parameters.generated.json
 
 # Azure SDK CLI Tool logs

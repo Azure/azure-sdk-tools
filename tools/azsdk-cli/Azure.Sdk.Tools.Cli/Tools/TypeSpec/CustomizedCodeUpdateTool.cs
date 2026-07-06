@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.CommandLine;
 using System.ComponentModel;
 using System.Text;
@@ -10,7 +9,6 @@ using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.ClassifyItems;
-using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
@@ -18,7 +16,6 @@ using Azure.Sdk.Tools.Cli.Services.TypeSpec;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Microsoft.TeamFoundation.Common;
 using ModelContextProtocol.Server;
-using static Azure.Sdk.Tools.Cli.Models.Responses.FeedbackClassificationResponse;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 
@@ -427,7 +424,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             bool buildSucceeded = false;
             string? buildError = null;
 
-            if (response.ClassifiedResult == null || !(response.ClassifiedResult is List<FeedbackClassificationResponse.ItemClassificationDetails> classifiedItems) || classifiedItems.Count == 0)
+            if (response.ClassifiedResult == null || !(response.ClassifiedResult is List<FeedbackItemClassificationDetails> classifiedItems) || classifiedItems.Count == 0)
             {
                 return CreateResponse(new CustomizedCodeUpdateResponse
                 {
@@ -446,7 +443,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             var manualChanges = 0;
             var noChanges = 0;
 
-            List <FeedbackClassificationResponse.ItemClassificationDetails> classifications = response.ClassifiedResult as List<FeedbackClassificationResponse.ItemClassificationDetails> ?? new List<FeedbackClassificationResponse.ItemClassificationDetails>();
+            List<FeedbackItemClassificationDetails> classifications = response.ClassifiedResult as List<FeedbackItemClassificationDetails> ?? new List<FeedbackItemClassificationDetails>();
             foreach (var itemDetails in classifications)
             {
                 feedbackDictionary.TryGetValue(itemDetails.ItemId, out var feedbackItem);
@@ -642,7 +639,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
                 if (secondResponse.ClassifiedResult != null)
                 {
-                    var secondClassifications = secondResponse.ClassifiedResult as List<FeedbackClassificationResponse.ItemClassificationDetails> ?? new List<FeedbackClassificationResponse.ItemClassificationDetails>();
+                    var secondClassifications = secondResponse.ClassifiedResult as List<FeedbackItemClassificationDetails> ?? new List<FeedbackItemClassificationDetails>();
 
                     foreach (var itemDetails in secondClassifications)
                     {

@@ -546,30 +546,30 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// // pattern contains the markdown content describing Go-specific breaking changes
         /// </code>
         /// </example>
-        public virtual Task<string> GetSDKBreakingPattern(string sdkRepoRoot, CancellationToken ct)
+        public virtual async Task<string> GetSDKBreakingPattern(string sdkRepoRoot, CancellationToken ct)
         {
             if (string.IsNullOrEmpty(SDKBreakingPatternFilePath))
             {
                 logger.LogWarning("SDK breaking change pattern file path is not set.");
-                return Task.FromResult(string.Empty);
+                return string.Empty;
             }
             try
             {
                 var patternFilePath = Path.Combine(sdkRepoRoot, SDKBreakingPatternFilePath);
                 if (File.Exists(patternFilePath))
                 {
-                    return Task.FromResult(File.ReadAllText(patternFilePath));
+                    return await File.ReadAllTextAsync(patternFilePath, ct);
                 }
                 else
                 {
                     logger.LogWarning("SDK breaking change pattern file not found at expected path: {PatternFilePath}", patternFilePath);
-                    return Task.FromResult(string.Empty);
+                    return string.Empty;
                 }
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error reading SDK breaking change pattern file for language {Language}", Language);
-                return Task.FromResult(string.Empty);
+                return string.Empty;
             }
         }
 

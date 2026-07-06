@@ -1,8 +1,9 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.ClassifyItems;
-using Azure.Sdk.Tools.Cli.Models.Responses;
-using Azure.Sdk.Tools.Cli.Prompts;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
 using Microsoft.TeamFoundation.Common;
 
@@ -15,6 +16,10 @@ namespace Azure.Sdk.Tools.Cli.Services
     public class ClassificationService: IClassifyService
     {
         private readonly ICopilotAgentRunner _agentRunner;
+        /// <summary>
+        /// The model that this agent will use. Defaults to "claude-opus-4.5".
+        /// </summary>
+        public string CopilotAgentModel { get; set; } = "claude-opus-4.5";
         public ClassificationService(ICopilotAgentRunner agentRunner)
         {
             _agentRunner = agentRunner;
@@ -47,7 +52,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 case ClassificationKind.Customization:
                     if (request is ClassifyCustomizationRequest customizationRequest)
                     {
-                        List<FeedbackClassificationResponse.ItemClassificationDetails> allClassifiedResults = new List<FeedbackClassificationResponse.ItemClassificationDetails>();
+                        List<FeedbackItemClassificationDetails> allClassifiedResults = new List<FeedbackItemClassificationDetails>();
                         if (customizationRequest.Items == null || customizationRequest.Items.Count == 0)
                         {
                             throw new ArgumentException("No feedback items to classify.");
@@ -83,7 +88,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             var agent = new CopilotAgent<string>
             {
                 Instructions = template.BuildPrompt(),
-                Model = "claude-opus-4.5"
+                Model = this.CopilotAgentModel,
             };
 
             var result = await _agentRunner.RunAsync(agent, ct);

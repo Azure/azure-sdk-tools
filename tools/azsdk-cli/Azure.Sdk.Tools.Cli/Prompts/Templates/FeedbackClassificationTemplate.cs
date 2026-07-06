@@ -1,11 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.Responses;
 
 namespace Azure.Sdk.Tools.Cli.Prompts.Templates;
 
@@ -14,7 +12,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates;
 /// Supports batch classification of multiple feedback items in a single LLM call,
 /// with strictly formatted ID-keyed output for robust parsing.
 /// </summary>
-public class FeedbackClassificationTemplate : ClassificationBaseTemplate<FeedbackClassificationResponse.ItemClassificationDetails, FeedbackItem>
+public class FeedbackClassificationTemplate : ClassificationBaseTemplate<FeedbackItemClassificationDetails, FeedbackItem>
 {
     public override string TemplateId => "feedback-classification";
     public override string Version => "1.0.0";
@@ -76,7 +74,7 @@ public class FeedbackClassificationTemplate : ClassificationBaseTemplate<Feedbac
     /// Classification: TSP_APPLICABLE | SUCCESS | CODE_CUSTOMIZATION | REQUIRES_MANUAL_INTERVENTION
     /// Reason: explanation
     /// </summary>
-    public override List<FeedbackClassificationResponse.ItemClassificationDetails> ParseClassifyResult(string result, List<FeedbackItem>? items = null)
+    public override List<FeedbackItemClassificationDetails> ParseClassifyResult(string result, List<FeedbackItem>? items = null)
     {
         if (items == null || items.Count == 0)
         {
@@ -111,13 +109,13 @@ public class FeedbackClassificationTemplate : ClassificationBaseTemplate<Feedbac
         return BuildClassificationItems(feedbackItems);
     }
 
-    private static List<FeedbackClassificationResponse.ItemClassificationDetails> BuildClassificationItems(List<FeedbackItem> items)
+    private static List<FeedbackItemClassificationDetails> BuildClassificationItems(List<FeedbackItem> items)
     {
         var successCount = 0;
         var failureCount = 0;
         var tspApplicableCount = 0;
         var codeCustomizationCount = 0;
-        var classifications = new List<FeedbackClassificationResponse.ItemClassificationDetails>();
+        var classifications = new List<FeedbackItemClassificationDetails>();
 
         foreach (var item in items)
         {
@@ -137,7 +135,7 @@ public class FeedbackClassificationTemplate : ClassificationBaseTemplate<Feedbac
                 default: tspApplicableCount++; break;
             }
 
-            classifications.Add(new FeedbackClassificationResponse.ItemClassificationDetails
+            classifications.Add(new FeedbackItemClassificationDetails
             {
                 ItemId = item.Id,
                 Classification = classification,

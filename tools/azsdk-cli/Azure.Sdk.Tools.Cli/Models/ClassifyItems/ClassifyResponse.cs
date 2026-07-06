@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 namespace Azure.Sdk.Tools.Cli.Models.ClassifyItems
 {
     /// <summary>

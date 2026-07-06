@@ -106,3 +106,30 @@ public class FeedbackItem
         Context = sb.ToString();
     }
 }
+
+
+/// <summary>
+/// Detailed classification result for a single feedback item.
+/// </summary>
+public class FeedbackItemClassificationDetails
+{
+    /// <summary>
+    /// Unique identifier of the feedback item.
+    /// </summary>
+    public string ItemId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Classification outcome for the item.
+    /// </summary>
+    public string Classification { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Reason provided for the classification decision.
+    /// </summary>
+    public string Reason { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Original feedback text for the item.
+    /// </summary>
+    public string Text { get; set; } = string.Empty;
+}

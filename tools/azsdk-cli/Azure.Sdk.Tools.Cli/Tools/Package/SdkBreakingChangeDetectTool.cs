@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 using System.CommandLine;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -257,7 +260,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
     public class SdkBreakingChange
     {
-        [JsonPropertyName("breakingchange")]
+        [JsonPropertyName("breakingChange")]
         [Required]
         public string BreakingChange { get; set; }
         [JsonPropertyName("category")]

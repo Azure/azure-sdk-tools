@@ -2,7 +2,6 @@ using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.ClassifyItems;
-using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec;
 using Azure.Sdk.Tools.Cli.Services;
@@ -81,9 +80,9 @@ public class CustomizedCodeUpdateToolAutoTests
                         // First pass: gather items - create a default item
                         var item = new FeedbackItem { Text = "Rename FooClient to BarClient" };
                         items.Add(item);
-                        return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                        return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>
                         { 
-                            new FeedbackClassificationResponse.ItemClassificationDetails
+                            new FeedbackItemClassificationDetails
                             {
                                 ItemId = item.Id,
                                 Classification = "TSP_APPLICABLE",
@@ -96,9 +95,9 @@ public class CustomizedCodeUpdateToolAutoTests
                     // Second pass: classify already-gathered items
                     var actualId = items.FirstOrDefault()?.Id ?? "1";
                     var actualText = items.FirstOrDefault()?.Text ?? "Rename FooClient to BarClient";
-                    return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                    return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>
                     {
-                        new FeedbackClassificationResponse.ItemClassificationDetails
+                        new FeedbackItemClassificationDetails
                         {
                             ItemId = actualId,
                             Classification = "TSP_APPLICABLE",
@@ -193,9 +192,9 @@ public class CustomizedCodeUpdateToolAutoTests
                     {
                         var item = new FeedbackItem { Text = text };
                         items.Add(item);
-                        return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                        return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>
                         {
-                                new FeedbackClassificationResponse.ItemClassificationDetails
+                                new FeedbackItemClassificationDetails
                                 {
                                     ItemId = item.Id,
                                     Classification = "CODE_CUSTOMIZATION",
@@ -204,7 +203,7 @@ public class CustomizedCodeUpdateToolAutoTests
                                 }
                         }));
                     }
-                    return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>()));
+                    return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>()));
                 });
 
     // ========================================================================
@@ -295,7 +294,7 @@ public class CustomizedCodeUpdateToolAutoTests
     {
         var (tool, _) = CreateTool(configureClassifier: c =>
             c.Setup(x => x.ClassifyItemsAsync(It.IsAny<ClassificationKind>(), It.IsAny<ClassifyRequest>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>())));
+                .ReturnsAsync(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>())));
 
         var pkg = CreateTempDir();
         var tspDir = CreateTestTypespecProjectPath();
@@ -379,14 +378,14 @@ public class CustomizedCodeUpdateToolAutoTests
                         var item2 = new FeedbackItem { Text = "Looks good" };
                         items.Add(item1);
                         items.Add(item2);
-                        return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                        return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>
                         {
-                                new FeedbackClassificationResponse.ItemClassificationDetails
+                                new FeedbackItemClassificationDetails
                                 {
                                     ItemId = item1.Id, Classification = "REQUIRES_MANUAL_INTERVENTION",
                                     Reason = "Complex change", Text = "Restructure hierarchy"
                                 },
-                                new FeedbackClassificationResponse.ItemClassificationDetails
+                                new FeedbackItemClassificationDetails
                                 {
                                     ItemId = item2.Id, Classification = "SUCCESS",
                                     Reason = "Already addressed", Text = "Looks good"
@@ -434,9 +433,9 @@ public class CustomizedCodeUpdateToolAutoTests
                                 // First pass: populate items with TSP_APPLICABLE
                                 var item = new FeedbackItem { Text = "rename X" };
                                 items.Add(item);
-                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>
                                 {
-                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        new FeedbackItemClassificationDetails
                                         {
                                             ItemId = item.Id, Classification = "TSP_APPLICABLE",
                                             Reason = "fixable", Text = "rename X"
@@ -444,7 +443,7 @@ public class CustomizedCodeUpdateToolAutoTests
                                 }));
                             }
                             // Second pass: return empty
-                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>()));
+                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>()));
                         }));
 
         var pkg = CreateTempDir();
@@ -496,9 +495,9 @@ public class CustomizedCodeUpdateToolAutoTests
                                 // First pass: populate items with TSP_APPLICABLE
                                 var item = new FeedbackItem { Text = "rename X" };
                                 items.Add(item);
-                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>
                                 {
-                                    new FeedbackClassificationResponse.ItemClassificationDetails
+                                    new FeedbackItemClassificationDetails
                                     {
                                             ItemId = item.Id, Classification = "TSP_APPLICABLE",
                                             Reason = "fixable", Text = "rename X"
@@ -507,10 +506,10 @@ public class CustomizedCodeUpdateToolAutoTests
                             }
                             // Second pass: classifier sees failure context and flags manual intervention
                             var actualId = items.FirstOrDefault()?.Id ?? "1";
-                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>
                             {
      
-                                new FeedbackClassificationResponse.ItemClassificationDetails
+                                new FeedbackItemClassificationDetails
                                 {
                                     ItemId = actualId, Classification = "REQUIRES_MANUAL_INTERVENTION",
                                     Reason = "TSP customization failed, manual fix needed", Text = "rename X"
@@ -548,9 +547,9 @@ public class CustomizedCodeUpdateToolAutoTests
                             {
                                 var item = new FeedbackItem { Text = "rename X to Y" };
                                 items.Add(item);
-                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>
                                 {
-                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        new FeedbackItemClassificationDetails
                                         {
                                             ItemId = item.Id, Classification = "TSP_APPLICABLE",
                                             Reason = "fixable", Text = "rename X to Y"
@@ -558,9 +557,9 @@ public class CustomizedCodeUpdateToolAutoTests
                                 }));
                             }
                             var actualId = items.FirstOrDefault()?.Id ?? "1";
-                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>
                             {
-                                    new FeedbackClassificationResponse.ItemClassificationDetails
+                                    new FeedbackItemClassificationDetails
                                     {
                                         ItemId = actualId, Classification = "TSP_APPLICABLE",
                                         Reason = "fixable", Text = "rename X to Y"
@@ -616,9 +615,9 @@ public class CustomizedCodeUpdateToolAutoTests
                                 // First pass: populate items with TSP_APPLICABLE
                                 var item = new FeedbackItem { Text = "rename X" };
                                 items.Add(item);
-                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>
                                 {
-                                    new FeedbackClassificationResponse.ItemClassificationDetails
+                                    new FeedbackItemClassificationDetails
                                     {
                                             ItemId = item.Id, Classification = "TSP_APPLICABLE",
                                             Reason = "fixable", Text = "rename X"
@@ -627,9 +626,9 @@ public class CustomizedCodeUpdateToolAutoTests
                             }
                             // Second pass: reclassify as manual intervention (emitter issue)
                             var actualId = items.FirstOrDefault()?.Id ?? "1";
-                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>
                             {
-                                    new FeedbackClassificationResponse.ItemClassificationDetails
+                                    new FeedbackItemClassificationDetails
                                     {
                                         ItemId = actualId, Classification = "REQUIRES_MANUAL_INTERVENTION",
                                         Reason = "Emitter issue, cannot be patched", Text = "rename X"
@@ -684,10 +683,10 @@ public class CustomizedCodeUpdateToolAutoTests
                                 // First pass: populate items with TSP_APPLICABLE
                                 var item = new FeedbackItem { Text = "rename FooClient to BarClient" };
                                 items.Add(item);
-                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>
                                 {
 
-                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        new FeedbackItemClassificationDetails
                                         {
                                             ItemId = item.Id, Classification = "TSP_APPLICABLE",
                                             Reason = "rename operation", Text = "rename FooClient to BarClient"
@@ -697,9 +696,9 @@ public class CustomizedCodeUpdateToolAutoTests
                             // Second pass: classifier sees regen failure and determines manual intervention
                             secondPassContext = items.FirstOrDefault()?.Context;
                             var actualId = items.FirstOrDefault()?.Id ?? "1";
-                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>
                             {
-                                    new FeedbackClassificationResponse.ItemClassificationDetails
+                                    new FeedbackItemClassificationDetails
                                     {
                                         ItemId = actualId, Classification = "REQUIRES_MANUAL_INTERVENTION",
                                         Reason = "Emitter issue — cannot resolve via TSP or patching",
@@ -885,9 +884,9 @@ public class CustomizedCodeUpdateToolAutoTests
                                 // First pass: CODE_CUSTOMIZATION classification
                                 var item = new FeedbackItem { Text = "Rename maxSpeakers to maxSpeakerCount in customization code" };
                                 items.Add(item);
-                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>
                                 {
-                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        new FeedbackItemClassificationDetails
                                         {
                                             ItemId = item.Id,
                                             Classification = "CODE_CUSTOMIZATION",
@@ -897,7 +896,7 @@ public class CustomizedCodeUpdateToolAutoTests
                                 }));
                             }
                             // Second iteration: feedback dictionary is empty → return empty
-                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>()));
+                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>()));
                         }));
 
         var pkg = CreateTempDir();
@@ -958,16 +957,16 @@ public class CustomizedCodeUpdateToolAutoTests
                         {
                             var item = customizationRequest!.Items.FirstOrDefault();
                             capturedFeedbackText = item!.Text;
-                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>
                             {
-                                new FeedbackClassificationResponse.ItemClassificationDetails
+                                new FeedbackItemClassificationDetails
                                 {
                                     ItemId = item.Id, Classification = "TSP_APPLICABLE",
                                     Reason = "test", Text = item.Text
                                 }
                             }));
                         }
-                        return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>()));
+                        return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>()));
                     }));
 
         var pkg = CreateTempDir();
@@ -1006,10 +1005,10 @@ public class CustomizedCodeUpdateToolAutoTests
                                 // First pass: populate items with TSP_APPLICABLE
                                 var item = new FeedbackItem { Text = "rename FooClient" };
                                 items.Add(item);
-                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>
                                 {
 
-                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        new FeedbackItemClassificationDetails
                                         {
                                             ItemId = item.Id, Classification = "TSP_APPLICABLE",
                                             Reason = "fixable", Text = "rename FooClient"
@@ -1023,9 +1022,9 @@ public class CustomizedCodeUpdateToolAutoTests
                             }
 
                             var actualId = items.FirstOrDefault()?.Id ?? "1";
-                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>
                             {
-                                    new FeedbackClassificationResponse.ItemClassificationDetails
+                                    new FeedbackItemClassificationDetails
                                     {
                                         ItemId = actualId, Classification = "TSP_APPLICABLE",
                                         Reason = "fixable", Text = "rename FooClient"
@@ -1077,9 +1076,9 @@ public class CustomizedCodeUpdateToolAutoTests
                                 // First pass: populate items with TSP_APPLICABLE
                                 var item = new FeedbackItem { Text = "rename X" };
                                 items.Add(item);
-                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>
                                 {
-                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        new FeedbackItemClassificationDetails
                                         {
                                             ItemId = item.Id, Classification = "TSP_APPLICABLE",
                                             Reason = "fixable", Text = "rename X"
@@ -1088,9 +1087,9 @@ public class CustomizedCodeUpdateToolAutoTests
                             }
                             // Second pass
                             var actualId = items.FirstOrDefault()?.Id ?? "1";
-                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>
                             {
-                                    new FeedbackClassificationResponse.ItemClassificationDetails
+                                    new FeedbackItemClassificationDetails
                                     {
                                         ItemId = actualId, Classification = "TSP_APPLICABLE",
                                         Reason = "fixable", Text = "rename X"
@@ -1385,9 +1384,9 @@ public class CustomizedCodeUpdateToolAutoTests
                             {
                                 var item = new FeedbackItem { Text = "Rename maxSpeakers to maxSpeakerCount in customization code" };
                                 items.Add(item);
-                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>
                                 {
-                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        new FeedbackItemClassificationDetails
                                         {
                                             ItemId = item.Id,
                                             Classification = "CODE_CUSTOMIZATION",
@@ -1396,7 +1395,7 @@ public class CustomizedCodeUpdateToolAutoTests
                                         }
                                 }));
                             }
-                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>()));
+                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>()));
                         }));
 
         var pkg = CreateTempDir();
@@ -1462,21 +1461,21 @@ public class CustomizedCodeUpdateToolAutoTests
                                 var codeItem = new FeedbackItem { Text = "Fix customization reference" };
                                 items.Add(specItem);
                                 items.Add(codeItem);
-                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>
                                 {
-                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        new FeedbackItemClassificationDetails
                                         {
                                             ItemId = specItem.Id, Classification = "TSP_APPLICABLE",
                                             Reason = "Needs spec edit", Text = "Rename client (spec change)"
                                         },
-                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        new FeedbackItemClassificationDetails
                                         {
                                             ItemId = codeItem.Id, Classification = "CODE_CUSTOMIZATION",
                                             Reason = "Fix in customization file", Text = "Fix customization reference"
                                         }
                                 }));
                             }
-                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>()));
+                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>()));
                         }));
 
         var pkg = CreateTempDir();
@@ -1572,21 +1571,21 @@ public class CustomizedCodeUpdateToolAutoTests
                                 var codeItem = new FeedbackItem { Text = "Fix customization reference" };
                                 items.Add(specItem);
                                 items.Add(codeItem);
-                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>
                                 {
-                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        new FeedbackItemClassificationDetails
                                         {
                                             ItemId = specItem.Id, Classification = "TSP_APPLICABLE",
                                             Reason = "Needs spec edit", Text = "Rename client (spec change)"
                                         },
-                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        new FeedbackItemClassificationDetails
                                         {
                                             ItemId = codeItem.Id, Classification = "CODE_CUSTOMIZATION",
                                             Reason = "Fix in customization file", Text = "Fix customization reference"
                                         }
                                 }));
                             }
-                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>()));
+                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>()));
                         }));
 
         var pkg = CreateTempDir();
@@ -1655,21 +1654,21 @@ public class CustomizedCodeUpdateToolAutoTests
                                 var codeItem = new FeedbackItem { Text = "Fix customization reference" };
                                 items.Add(specItem);
                                 items.Add(codeItem);
-                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>
+                                return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>
                                 {
-                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        new FeedbackItemClassificationDetails
                                         {
                                             ItemId = specItem.Id, Classification = "TSP_APPLICABLE",
                                             Reason = "Needs spec edit", Text = "Rename client (spec change)"
                                         },
-                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        new FeedbackItemClassificationDetails
                                         {
                                             ItemId = codeItem.Id, Classification = "CODE_CUSTOMIZATION",
                                             Reason = "Fix in customization file", Text = "Fix customization reference"
                                         }
                                 }));
                             }
-                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackClassificationResponse.ItemClassificationDetails>()));
+                            return Task.FromResult(new ClassifyResponse(ClassificationKind.Customization, new List<FeedbackItemClassificationDetails>()));
                         }));
 
         var pkg = CreateTempDir();

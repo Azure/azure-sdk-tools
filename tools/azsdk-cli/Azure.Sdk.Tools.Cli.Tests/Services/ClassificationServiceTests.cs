@@ -8,13 +8,12 @@ using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Package;
 using GitHub.Copilot.SDK;
-using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Services
 {
-    public class ClassifyServiceTests
+    public class ClassificationServiceTests
     {
         private Mock<ICopilotAgentRunner> _mockAgentRunner = null!;
         private Mock<ITypeSpecHelper> _mockTypeSpecHelper = null!;

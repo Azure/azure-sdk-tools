@@ -1154,6 +1154,11 @@ main {
   background: #fff4ce;
   color: var(--orange);
 }
+.pr-label-version-pending {
+  background: #fff4ce;
+  color: var(--orange);
+  cursor: help;
+}
 
 /* Spec PR labels (BreakingChange, ARM, API) shown on their own wrapping row */
 .spec-pr-label {

@@ -156,7 +156,7 @@ class ChatService:
         }
 
         agent_client = HostedAgentClient(openai_client)
-        stream, response = await agent_client.invoke(
+        trace_id, response = await agent_client.invoke(
             conversation_items=conversation_items,
             agent_conversation_id=agent_conversation_id,
             agent_session_id=agent_session_id,
@@ -169,12 +169,6 @@ class ChatService:
             set_stateless_session_id(captured)
             logger.info("Stateless request: captured warm session=%s", captured)
 
-        # Extract AI Foundry trace ID from x-request-id header.
-        # The header may contain duplicated values separated by comma.
-        x_request_id = ""
-        if hasattr(stream, "response") and stream.response:
-            x_request_id = stream.response.headers.get("x-request-id", "")
-        trace_id = x_request_id.split(",")[0].strip() if x_request_id else None
         logger.info(
             "Agent trace: trace_id=%s, response_id=%s, conversation=%s",
             trace_id,

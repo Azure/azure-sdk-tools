@@ -75,8 +75,8 @@ class HostedAgentClient:
         agent_ref: dict[str, str],
         agent_conversation_id: str | None = None,
         agent_session_id: str | None = None,
-    ) -> tuple[Any, OpenAIResponse]:
-        """Invoke the agent with bounded retries and return ``(stream, response)``.
+    ) -> tuple[str | None, OpenAIResponse]:
+        """Invoke the agent with bounded retries and return ``(trace_id, response)``.
 
         Threaded calls pass ``agent_conversation_id``; stateless calls pass a
         reused ``agent_session_id``. A cached session rejected by the platform
@@ -114,10 +114,12 @@ class HostedAgentClient:
                         "Agent returned empty output_text "
                         f"(id={response.id}, status={response.status})"
                     )
-                return stream, response
+                trace_id = self._extract_trace_id(stream)
+                await self.close_stream(stream)
+                return trace_id, response
             except (NotFoundError, BadRequestError) as ex:
                 last_error = ex
-                await self._close_stream(stream)
+                await self.close_stream(stream)
                 # Rejected cached session: drop it and retry without one.
                 if agent_session_id:
                     set_stateless_session_id(None)
@@ -134,7 +136,7 @@ class HostedAgentClient:
                 )
             except (APIConnectionError, APITimeoutError, APIStatusError) as ex:
                 last_error = ex
-                await self._close_stream(stream)
+                await self.close_stream(stream)
                 logger.warning(
                     "Failed to create agent stream (attempt %d/%d): "
                     "conversation=%s, error=%s",
@@ -146,7 +148,7 @@ class HostedAgentClient:
                 )
             except asyncio.TimeoutError as ex:
                 last_error = ex
-                await self._close_stream(stream)
+                await self.close_stream(stream)
                 logger.warning(
                     "Agent stream did not complete within %.0fs "
                     "(attempt %d/%d): conversation=%s",
@@ -159,7 +161,7 @@ class HostedAgentClient:
                 # ``RuntimeError`` = stream ended without a completed event;
                 # both are transient and retryable.
                 last_error = ex
-                await self._close_stream(stream)
+                await self.close_stream(stream)
                 logger.warning(
                     "Agent returned no usable response (attempt %d/%d): "
                     "conversation=%s, error=%s",
@@ -178,7 +180,7 @@ class HostedAgentClient:
             f"{self._max_retries} attempts (conversation={agent_conversation_id})"
         ) from last_error
 
-    async def _close_stream(self, stream) -> None:
+    async def close_stream(self, stream) -> None:
         """Best-effort close of a responses stream; errors are swallowed."""
         if stream is None:
             return
@@ -191,6 +193,19 @@ class HostedAgentClient:
                 await result
         except Exception:
             logger.debug("Failed to close agent stream", exc_info=True)
+
+    @staticmethod
+    def _extract_trace_id(stream) -> str | None:
+        """Read the AI Foundry trace id from the stream's ``x-request-id`` header.
+
+        The header may contain duplicated values separated by comma; the first
+        one is returned. Returns ``None`` when the header is absent.
+        """
+        response = getattr(stream, "response", None)
+        if response is None:
+            return None
+        x_request_id = response.headers.get("x-request-id", "")
+        return x_request_id.split(",")[0].strip() if x_request_id else None
 
     async def _consume_stream(
         self,

@@ -11,11 +11,14 @@ import sys
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
+import httpx
 import pytest
 
 _PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
+
+from openai import BadRequestError, NotFoundError
 
 from utils.azure_ai_foundry_agent import HostedAgentClient
 
@@ -52,6 +55,27 @@ def _completed_stream(response: _FakeResponse):
     return _make_stream([_FakeEvent("response.completed", response)])
 
 
+class _StreamWithHeaders:
+    """Async-iterable stream stub exposing ``.response.headers`` and ``.close``."""
+
+    def __init__(self, response: _FakeResponse, x_request_id: str = ""):
+        self._events = [_FakeEvent("response.completed", response)]
+        self.response = type(
+            "_Resp", (), {"headers": {"x-request-id": x_request_id}}
+        )()
+        self.closed = False
+
+    def __aiter__(self):
+        return self._iter()
+
+    async def _iter(self):
+        for event in self._events:
+            yield event
+
+    async def close(self) -> None:
+        self.closed = True
+
+
 def _mock_client(create_side_effect):
     """Build a mock OpenAI client whose ``responses.create`` uses the side effect."""
     client = AsyncMock()
@@ -60,18 +84,20 @@ def _mock_client(create_side_effect):
 
 
 @pytest.mark.asyncio
-async def test_invoke_returns_stream_and_response_on_success() -> None:
-    """A completed, non-empty response is returned on the first attempt."""
+async def test_invoke_returns_trace_id_and_closes_stream_on_success() -> None:
+    """A completed response yields its trace id and the stream is closed."""
     resp = _FakeResponse(output_text="hello", status="completed", id="r1")
-    client = _mock_client([_completed_stream(resp)])
+    stream = _StreamWithHeaders(resp, x_request_id="trace-123, trace-123")
+    client = _mock_client([stream])
 
-    stream, out = await HostedAgentClient(client, retry_delay=0).invoke(
+    trace_id, out = await HostedAgentClient(client, retry_delay=0).invoke(
         conversation_items=[],
         agent_ref={},
     )
 
     assert out is resp
-    assert stream is not None
+    assert trace_id == "trace-123"
+    assert stream.closed is True
     assert client.responses.create.await_count == 1
 
 
@@ -175,3 +201,49 @@ async def test_consume_stream_raises_without_completed_event() -> None:
     )
     with pytest.raises(RuntimeError):
         await HostedAgentClient(AsyncMock())._consume_stream(stream, "conv")
+
+
+def _api_error(error_cls, status_code: int):
+    """Build a real OpenAI ``APIStatusError`` subclass instance for tests."""
+    request = httpx.Request("POST", "https://example.test/v1/responses")
+    response = httpx.Response(status_code, request=request)
+    return error_cls("rejected", response=response, body=None)
+
+
+@pytest.mark.parametrize(
+    "error_cls, status_code",
+    [(NotFoundError, 404), (BadRequestError, 400)],
+)
+@pytest.mark.asyncio
+async def test_invoke_drops_rejected_session_and_retries_without_it(
+    error_cls, status_code
+) -> None:
+    """A cached session rejected with 404/400 is dropped; the retry omits it."""
+    good = _FakeResponse(output_text="answer", status="completed", id="r2")
+    captured_extra_bodies: list[dict] = []
+
+    def _create(*_a, **kwargs):
+        captured_extra_bodies.append(kwargs.get("extra_body", {}))
+        if len(captured_extra_bodies) == 1:
+            raise _api_error(error_cls, status_code)
+        return _completed_stream(good)
+
+    client = _mock_client(_create)
+
+    with patch(
+        "utils.azure_ai_foundry_agent.set_stateless_session_id"
+    ) as mock_set:
+        _, out = await HostedAgentClient(client, retry_delay=0).invoke(
+            conversation_items=[],
+            agent_ref={},
+            agent_session_id="stale-session",
+        )
+
+    assert out is good
+    assert client.responses.create.await_count == 2
+    # The rejected session is cleared so a fresh one is created next time.
+    mock_set.assert_called_once_with(None)
+    # First attempt carried the stale session; the retry dropped it.
+    assert captured_extra_bodies[0].get("agent_session_id") == "stale-session"
+    assert "agent_session_id" not in captured_extra_bodies[1]
+

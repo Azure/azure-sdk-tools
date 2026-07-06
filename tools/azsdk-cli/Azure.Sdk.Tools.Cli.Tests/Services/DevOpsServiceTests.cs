@@ -520,6 +520,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         }
 
         #endregion
+        #region TestDevOpsConnection
 
         private class TestDevOpsConnection : IDevOpsConnection
         {

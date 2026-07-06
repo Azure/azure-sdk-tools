@@ -338,6 +338,83 @@ Before the first prod rollout, sign off
 - [ ] Application Insights availability tests configured
 - [ ] Alerts wired to action group
 - [ ] `Deployment:<component>:LastKnownGoodTag` keys exist in prod App Config
+
+---
+
+## 16. Ephemeral PR environments (Azure Deployment Environments)
+
+Optional — only if you enable per-PR ephemeral environments. This provisions
+the ADE control plane that the [pr-ephemeral.yml](../pipelines/orchestrators/pr-ephemeral.yml)
+and [pr-reaper.yml](../pipelines/orchestrators/pr-reaper.yml) pipelines depend on.
+
+The pipelines and IaC are already in the repo; only the Dev Center control
+plane and RBAC below must be created by hand (one-time).
+
+### 16.1 Environment definition (already in repo)
+
+- The ADE environment definition manifest is [infra/environment.yaml](../infra/environment.yaml).
+- It runs the **RG-scoped** entry template [infra/ade/main.bicep](../infra/ade/main.bicep)
+  (ADE owns the resource group; the subscription-scoped [infra/main.bicep](../infra/main.bicep)
+  is used only by azd / `az deployment sub`).
+- `ade/main.bicep` mirrors the layer wiring of `main.bicep`; keep them in sync.
+
+### 16.2 Dedicated sandbox subscription
+
+- [ ] Confirm a **sandbox subscription** for PR environments, isolated from
+  dev/preview/prod so PR churn can't exhaust their quota.
+
+### 16.3 Create the Dev Center control plane
+
+```bash
+RG=rg-devcenter; LOC=westus2
+az group create -n $RG -l $LOC
+
+# Dev Center + project
+az devcenter admin devcenter create -n sdk-ai-bots-dc -g $RG -l $LOC --identity-type SystemAssigned
+DC_ID=$(az devcenter admin devcenter show -n sdk-ai-bots-dc -g $RG --query id -o tsv)
+az devcenter admin project create -n sdk-ai-bots --devcenter-id "$DC_ID" -g $RG -l $LOC
+
+# Catalog pointing at deployment/infra (folder with environment.yaml)
+az devcenter admin catalog create -n sdkaibots-catalog --project-name sdk-ai-bots -g $RG \
+  --git-hub path="/tools/sdk-ai-bots/deployment/infra" branch="main" \
+  uri="https://github.com/Azure/azure-sdk-tools.git"
+
+# Environment type = the "pool", mapped to the sandbox subscription
+az devcenter admin environment-type create -n pr-sandbox --devcenter-name sdk-ai-bots-dc -g $RG
+az devcenter admin project-environment-type create -n pr-sandbox --project-name sdk-ai-bots -g $RG \
+  --deployment-target-id "/subscriptions/<SANDBOX_SUBSCRIPTION_ID>" \
+  --identity-type SystemAssigned --status Enabled \
+  --roles '{"b24988ac-6180-42a0-ab88-20f7382dd24c":{}}'   # Contributor
+```
+
+### 16.4 RBAC for the pipeline identity
+
+Grant the service connection's identity (used by [azd-auth.yml](../pipelines/templates/azd-auth.yml))
+data-plane access on the ADE project:
+
+- [ ] **Deployment Environments User** — for [pr-ephemeral.yml](../pipelines/orchestrators/pr-ephemeral.yml)
+  (create/deploy PR environments).
+- [ ] **DevCenter Project Admin** — for [pr-reaper.yml](../pipelines/orchestrators/pr-reaper.yml)
+  (delete any environment in the project).
+
+### 16.5 Pipeline variables
+
+Set on the PR pipelines (or a shared variable group):
+
+- [ ] `DEVCENTER_NAME` = `sdk-ai-bots-dc`
+- [ ] `DEVCENTER_PROJECT` = `sdk-ai-bots`
+- [ ] `ADE_CATALOG_NAME` = `sdkaibots-catalog`
+- [ ] `ADE_ENV_DEFINITION` = `sdk-ai-bots`
+- [ ] `ADO_ORG_URL`, `ADO_REPO_ID`, `TTL_HOURS` (reaper)
+- [ ] `SERVER_AUDIENCE`, `TEAMS_GROUP_ID`, `TEAMS_CHANNEL_IDS`, and the CI image
+  tags (`FRONTEND_IMAGE_TAG`, `FUNCTION_IMAGE_TAG`, `AGENT_IMAGE_TAG`)
+
+### 16.6 Wire the trigger
+
+- [ ] Register [pr-ephemeral.yml](../pipelines/orchestrators/pr-ephemeral.yml) as a
+  **branch-policy build validation** on `main` (Azure Repos YAML PR triggers
+  come from branch policy, not a `pr:` block).
+- [ ] The reaper runs on its own hourly schedule — no trigger wiring needed.
 - [ ] Rollback rehearsed in preview within last 90 days
 
 ---

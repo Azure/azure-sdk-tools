@@ -1,0 +1,87 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Azure Deployment Environments (ADE) — Environment Definition manifest.
+#
+# This file turns the existing Bicep in this folder into an ADE *environment
+# definition* that lives in a Dev Center *catalog*. ADE reads this manifest to
+# know which template to run and which parameters to prompt for / accept.
+#
+# Catalog layout expected by the Dev Center (Git-synced):
+#   deployment/infra/
+#     ├─ environment.yaml   ← THIS FILE (one definition = one folder)
+#     ├─ ade/main.bicep     ← RG-scoped entry template ADE deploys
+#     ├─ main.bicep         ← subscription-scoped entry used by azd (not ADE)
+#     └─ modules/ …
+#
+# RESOURCE GROUP SCOPE:
+#   ADE creates and OWNS a resource group per environment, then deploys the
+#   template INTO it. `ade/main.bicep` is therefore `targetScope =
+#   'resourceGroup'` and does NOT create a resource group — so this manifest
+#   does NOT expose `resourceGroupName` as a parameter. The subscription-scoped
+#   ../main.bicep (which self-creates the RG) is used only by azd / az CLI.
+#
+# Docs: https://learn.microsoft.com/azure/deployment-environments/configure-environment-definition
+
+name: sdk-ai-bots
+version: 1.0.0
+summary: Azure SDK QA Bot — full stack (frontend, function-app, agent, backend, logic-app).
+description: >-
+  Provisions one isolated Azure SDK QA Bot environment (shared-resources,
+  agent/AI, frontend, backend, function-app, logic-app). Used for ephemeral
+  per-PR environments drawn from the `pr-sandbox` environment type.
+
+# ADE runner that executes the template. The ARM runner compiles and deploys
+# Bicep. `templatePath` points at the RG-scoped Bicep entry file.
+runner: ARM
+templatePath: ade/main.bicep
+
+parameters:
+  - id: location
+    name: Location
+    description: Azure region for all resources.
+    type: string
+    required: false
+    default: westus2
+
+  # ── Required app inputs (no default in ade/main.bicep) ─────────────────────
+  - id: serverAudience
+    name: Server audience (Entra app client ID)
+    description: Client ID (audience) for authenticating to the agent server.
+    type: string
+    required: true
+
+  - id: teamsGroupId
+    name: Teams group ID
+    description: Teams team (group) ID the Logic App monitors.
+    type: string
+    required: true
+
+  - id: teamsChannelIds
+    name: Teams channel IDs
+    description: Teams channel IDs the Logic App subscribes to.
+    type: array
+    required: true
+
+  # ── Container image repositories (repo:tag pushed to the shared ACR by CI) ──
+  - id: frontendImageRepository
+    name: Frontend image repository
+    description: Frontend (Teams bot) container image repository and tag.
+    type: string
+    required: true
+
+  - id: ragBasedBackendImageRepository
+    name: Backend image repository
+    description: RAG-based backend container image repository and tag.
+    type: string
+    required: true
+
+  - id: agentBasedImageRepository
+    name: Agent server image repository
+    description: Agent server (slot) container image repository and tag.
+    type: string
+    required: true
+
+  - id: functionImageRepository
+    name: Function image repository
+    description: Function App container image repository and tag.
+    type: string
+    required: true

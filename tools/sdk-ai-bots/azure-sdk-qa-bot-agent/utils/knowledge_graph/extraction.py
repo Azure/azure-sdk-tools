@@ -36,40 +36,53 @@ def extract_references_from_context(
     *,
     expand_communities: bool = False,
     max_expansion_units: int = 40,
+    top_k: int = 8,
 ) -> list[Reference]:
     """Resolve cited text-unit short IDs back to source-document references.
 
-    Returns one :class:`Reference` per unique cited document (the largest
-    text-unit chunk wins as the representative excerpt). Returns an empty
-    list when the required parquets are missing or nothing matched.
+    Returns one :class:`Reference` per unique cited document, **ranked by
+    graph relevance and capped at ``top_k``**. GraphRAG orders the cited
+    text units by relevance (most-connected first); we preserve that order,
+    keep the highest-ranked text unit as each document's representative
+    excerpt, stamp a normalised ``score`` (1.0 = most relevant) on every
+    reference, sort by that score, and return only the top ``top_k``. This
+    mirrors the KB tool's rerank-and-cap contract so the two reference sets
+    the chat agent fuses share ordering semantics and a comparable size,
+    instead of the graph flooding the prompt with ~20 unranked refs.
 
-    When ``expand_communities`` is set (optimization #2), the directly-cited
-    text units are augmented with additional units drawn from the **community
-    membership** of the cited entities: the query's matched entities → the
-    communities they belong to → those communities' other member text units.
-    This surfaces topically-associated source documents from the same
-    knowledge cluster that the token-limited local context did not select,
-    bounded by ``max_expansion_units``.
+    Returns an empty list when the required parquets are missing or nothing
+    matched.
+
+    When ``expand_communities`` is set, the directly-cited text units are
+    augmented with additional units drawn from the **community membership**
+    of the cited entities. These carry no relevance rank, so they are scored
+    below every directly-cited unit and only surface if the ranked directly-
+    cited set does not already fill ``top_k``.
     """
     text_units_df = dfs.get("text_units")
     documents_df = dfs.get("documents")
     if text_units_df is None or documents_df is None:
         return []
 
-    short_ids = _collect_text_unit_short_ids(context_records)
-    if not short_ids:
+    ordered_short_ids = _collect_text_unit_short_ids(context_records)
+    if not ordered_short_ids:
         return []
 
-    normalised_ids: set[int] = set()
-    for sid in short_ids:
+    # ``ordered_short_ids`` is in graph relevance order (most-connected
+    # text unit first). Map each id to its 0-based rank so the resolved
+    # references can be scored and sorted by relevance instead of length.
+    rank_by_id: dict[int, int] = {}
+    for rank, sid in enumerate(ordered_short_ids):
         try:
-            normalised_ids.add(int(sid))
+            key = int(sid)
         except (TypeError, ValueError):
             continue
-    if not normalised_ids:
+        rank_by_id.setdefault(key, rank)
+    if not rank_by_id:
         return []
 
-    base_mask = text_units_df["human_readable_id"].isin(list(normalised_ids))
+    base_rank_count = len(rank_by_id)
+    base_mask = text_units_df["human_readable_id"].isin(list(rank_by_id.keys()))
     matched_units = text_units_df[base_mask]
     if matched_units.empty:
         return []
@@ -105,16 +118,28 @@ def extract_references_from_context(
         )
         return []
 
-    # Group text units by document so each citation carries a single
-    # representative chunk excerpt (largest chunk wins).
-    sorted_units = matched_units.assign(
-        _len=[len(str(v)) for v in matched_units["text"]]
-    ).sort_values("_len", ascending=False)
+    # Rank each matched text unit by its graph-relevance position. Units that
+    # were pulled in by community expansion have no rank; they sort after every
+    # directly-cited unit (rank = base_rank_count + i) so they only surface when
+    # the ranked set does not already fill ``top_k``.
+    def _unit_rank(row: Any) -> int:
+        try:
+            hrid = int(row.get("human_readable_id"))
+        except (TypeError, ValueError):
+            return base_rank_count
+        return rank_by_id.get(hrid, base_rank_count)
 
+    ranked_units = matched_units.assign(
+        _rank=[_unit_rank(row) for _, row in matched_units.iterrows()]
+    ).sort_values("_rank", ascending=True)
+
+    # Collapse to one reference per document, keeping the highest-ranked
+    # (most relevant) text unit as that document's representative excerpt.
     references: list[Reference] = []
     seen_docs: set[str] = set()
     unattributed = 0
-    for _, row in sorted_units.iterrows():
+    denom = float(max(base_rank_count, 1))
+    for _, row in ranked_units.iterrows():
         doc_id = row.get("document_id")
         if not doc_id or doc_id in seen_docs:
             continue
@@ -146,12 +171,17 @@ def extract_references_from_context(
         chunk_title = _extract_chunk_header_path(str(row.get("text") or ""))
         ref_title = chunk_title or display_path or f"Document {doc_id[:12]}"
 
+        # Normalised relevance score in (0, 1]: rank 0 -> 1.0, descending.
+        rank = int(row.get("_rank", base_rank_count))
+        score = max(0.0, (denom - rank) / denom)
+
         references.append(
             Reference(
                 title=ref_title,
                 source=source_name,
                 link=link,
                 content=str(row.get("text") or ""),
+                score=score,
             )
         )
 
@@ -162,6 +192,15 @@ def extract_references_from_context(
             "source='graphrag'. Rebuild the snapshot to fix.",
             unattributed,
         )
+
+    # Cap at ``top_k`` so the graph contributes a focused, relevance-ranked
+    # set comparable to the KB tool — not a ~20-ref flood that dilutes the
+    # answer. References are already ordered best-first.
+    if top_k > 0 and len(references) > top_k:
+        logger.info(
+            "GraphRAG references capped %d -> %d (top_k)", len(references), top_k
+        )
+        references = references[:top_k]
 
     return references
 
@@ -257,17 +296,21 @@ def _read_doc_attribution(doc_index: Any, doc_id: str) -> tuple[str, str]:
     return "", ""
 
 
-def _collect_text_unit_short_ids(context_records: Any) -> set[str]:
-    """Recursively collect every text-unit short id in a context payload.
+def _collect_text_unit_short_ids(context_records: Any) -> list[str]:
+    """Recursively collect text-unit short ids **in relevance order**.
 
     The LocalSearch mixed context builder returns a flat
     ``{table_name: DataFrame}`` dict whose exact shape varies across
     graphrag versions, so we treat any DataFrame carrying both ``id`` and
-    ``text`` columns as a candidate "sources" table.
+    ``text`` columns as a candidate "sources" table. GraphRAG orders that
+    table by relevance (most-connected text units first), so we preserve
+    first-seen order and de-duplicate — the position of each id is its
+    relevance rank, which the caller turns into a per-reference score.
     """
     import pandas as pd
 
-    found: set[str] = set()
+    ordered: list[str] = []
+    seen: set[str] = set()
 
     def visit(node: Any) -> None:
         if node is None:
@@ -275,8 +318,9 @@ def _collect_text_unit_short_ids(context_records: Any) -> set[str]:
         if isinstance(node, pd.DataFrame):
             if {"id", "text"}.issubset(node.columns):
                 for value in node["id"].astype(str).tolist():
-                    if value:
-                        found.add(value)
+                    if value and value not in seen:
+                        seen.add(value)
+                        ordered.append(value)
             return
         if isinstance(node, dict):
             for v in node.values():
@@ -287,7 +331,7 @@ def _collect_text_unit_short_ids(context_records: Any) -> set[str]:
                 visit(v)
 
     visit(context_records)
-    return found
+    return ordered
 
 
 def _source_path_to_rel_title(source_path: str, source_folder: str) -> str:

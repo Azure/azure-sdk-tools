@@ -593,8 +593,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var tool = CreateReleasePlanToolWithMockedTypeSpec(testCodeFilePath, project);
             var updateStatus = await tool.UpdateSDKDetailsInReleasePlan(100, testCodeFilePath, CancellationToken.None);
             Assert.That(updateStatus.Message, Does.Contain("Updated SDK details in release plan"));
-            Assert.That(updateStatus.Message, Does.Contain("Important: The following languages were excluded in the release plan. SDK must be released for all languages."));
-            Assert.True(updateStatus.NextSteps?.Contains("Prompt the user for justification for excluded languages and update it in the release plan.") ?? false);
+            Assert.That(updateStatus.Message, Does.Contain("Important: The following languages have missing emitter configuration in the TypeSpec project:"));
+            Assert.True(updateStatus.NextSteps?.Contains("Configure the TypeSpec emitter for missing languages in tspconfig.yaml, or provide a justification for language exclusion.") ?? false);
         }
 
         [Test]
@@ -610,8 +610,53 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var tool = CreateReleasePlanToolWithMockedTypeSpec(testCodeFilePath, project);
             var updateStatus = await tool.UpdateSDKDetailsInReleasePlan(1001, testCodeFilePath, CancellationToken.None);
             Assert.That(updateStatus.Message, Does.Contain("Updated SDK details in release plan"));
-            Assert.That(updateStatus.Message, Does.Contain("Important: The following languages were excluded in the release plan. SDK must be released for all languages."));
-            Assert.That(updateStatus.NextSteps?.Contains("Prompt the user for justification for excluded languages and update it in the release plan.") ?? false);
+            Assert.That(updateStatus.Message, Does.Contain("Important: The following languages have missing emitter configuration in the TypeSpec project:"));
+            Assert.That(updateStatus.NextSteps?.Contains("Configure the TypeSpec emitter for missing languages in tspconfig.yaml, or provide a justification for language exclusion.") ?? false);
+        }
+
+        [Test]
+        public async Task Test_Update_SDK_Details_sets_MissingEmitterConfig_status_for_missing_languages()
+        {
+            // When a required language has no emitter configuration in the TypeSpec project,
+            // the tool must set ReleaseExclusionStatus to "MissingEmitterConfig" (not "Requested")
+            // so that the dashboard can display a distinct "Missing emitter configuration" label.
+            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            var project = TypeSpecProject.ParseTypeSpecConfig(testCodeFilePath);
+            project.Packages = new List<PackageInfo>
+            {
+                new() { PackageName = "Azure.ResourceManager.Contoso", Language = SdkLanguage.DotNet },
+                new() { PackageName = "@azure/arm-contoso", Language = SdkLanguage.JavaScript }
+            };
+
+            Dictionary<string, string>? capturedFields = null;
+            var mockDevOps = new Mock<IDevOpsService>();
+            var releasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 100,
+                ReleasePlanId = 1,
+                IsManagementPlane = true
+            };
+            mockDevOps.Setup(x => x.ResolveReleasePlanByIdAsync(100, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
+            mockDevOps.Setup(x => x.UpdateReleasePlanSDKDetailsAsync(It.IsAny<int>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+            mockDevOps.Setup(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+                .Callback<int, Dictionary<string, string>, CancellationToken>((_, fields, _) => capturedFields = fields)
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 100 });
+
+            var mockTypeSpecHelper = new Mock<ITypeSpecHelper>();
+            mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(testCodeFilePath)).Returns(true);
+            mockTypeSpecHelper.Setup(x => x.ParseTypeSpecProjectAsync(testCodeFilePath, It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(project);
+
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, mockTypeSpecHelper.Object, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>());
+            var updateStatus = await tool.UpdateSDKDetailsInReleasePlan(100, testCodeFilePath, CancellationToken.None);
+
+            Assert.That(updateStatus.ResponseError, Is.Null);
+            Assert.That(updateStatus.Message, Does.Contain("missing emitter configuration"));
+            // The work item must be updated with "MissingEmitterConfig" (not "Requested") for languages
+            // that do not have an emitter entry in the TypeSpec project.
+            Assert.IsNotNull(capturedFields, "UpdateWorkItemAsync should have been called");
+            Assert.That(capturedFields!.Values, Has.All.EqualTo("MissingEmitterConfig"));
+            Assert.That(capturedFields.Values, Does.Not.Contain("Requested"));
         }
 
         [Test]
@@ -934,6 +979,55 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(capturedBody, Does.Contain("Java"));
             Assert.That(capturedBody, Does.Not.Contain("Python")); // Approved exclusion
             Assert.That(capturedBody, Does.Not.Contain(".NET")); // Requested exclusion
+        }
+
+        [Test]
+        public async Task Test_notification_excludes_missing_emitter_config_languages()
+        {
+            // Languages marked "MissingEmitterConfig" by the auto-update tool must not appear
+            // in the overdue SDK notification, since the emitter configuration has not been set up.
+            var mockDevOps = new Mock<IDevOpsService>();
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 203,
+                Owner = "Test Owner",
+                ReleasePlanSubmittedByEmail = "valid@example.com",
+                IsManagementPlane = true,
+                IsDataPlane = false,
+                SDKReleaseMonth = "January 2026",
+                ReleasePlanId = 203,
+                SDKInfo =
+                [
+                    new SDKInfo { Language = "Java", ReleaseStatus = "", ReleaseExclusionStatus = "Not applicable" },
+                    new SDKInfo { Language = "Python", ReleaseStatus = "", ReleaseExclusionStatus = "MissingEmitterConfig" },
+                    new SDKInfo { Language = ".NET", ReleaseStatus = "", ReleaseExclusionStatus = "MissingEmitterConfig" }
+                ]
+            };
+            mockDevOps.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([plan]);
+
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            var capturedBody = "";
+            mockHttpMessageHandler.Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync((HttpRequestMessage request, CancellationToken token) =>
+                {
+                    var content = request.Content?.ReadAsStringAsync(token).Result ?? "";
+                    var payload = JsonSerializer.Deserialize<JsonElement>(content);
+                    capturedBody = payload.GetProperty("Body").GetString() ?? "";
+                    return new HttpResponseMessage(System.Net.HttpStatusCode.OK);
+                });
+
+            var testHttpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, testHttpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>());
+
+            await tool.ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://test.com/email");
+
+            Assert.That(capturedBody, Does.Contain("Java"));
+            Assert.That(capturedBody, Does.Not.Contain("Python")); // MissingEmitterConfig
+            Assert.That(capturedBody, Does.Not.Contain(".NET")); // MissingEmitterConfig
         }
 
         [Test]

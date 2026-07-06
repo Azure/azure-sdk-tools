@@ -1289,28 +1289,28 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                 }
 
-                // Check if any language is excluded
-                var excludedLanguages = requiredLanguages.Except(SdkInfos.Select(sdk => sdk.Language), StringComparer.OrdinalIgnoreCase);
-                if (excludedLanguages.Any())
+                // Check if any required language is missing emitter configuration in the TypeSpec project
+                var languagesMissingEmitterConfig = requiredLanguages.Except(SdkInfos.Select(sdk => sdk.Language), StringComparer.OrdinalIgnoreCase);
+                if (languagesMissingEmitterConfig.Any())
                 {
-                    logger.LogDebug("Languages excluded in release plan. Work Item: {releasePlanWorkItemId}, languages: {excludedLanguages}", releasePlanWorkItemId, string.Join(", ", excludedLanguages));
-                    sb.AppendLine($"Important: The following languages were excluded in the release plan. SDK must be released for all languages. [{string.Join(", ", requiredLanguages)}]");
-                    sb.AppendLine("Explanation is required for any language exclusion. Please provide a justification for each excluded language.");
+                    logger.LogDebug("Languages missing emitter configuration in TypeSpec project. Work Item: {releasePlanWorkItemId}, languages: {languagesMissingEmitterConfig}", releasePlanWorkItemId, string.Join(", ", languagesMissingEmitterConfig));
+                    sb.AppendLine($"Important: The following languages have missing emitter configuration in the TypeSpec project: [{string.Join(", ", languagesMissingEmitterConfig)}]. SDK must be released for all required languages: [{string.Join(", ", requiredLanguages)}].");
+                    sb.AppendLine("Add the emitter configuration for each missing language in tspconfig.yaml, or request exclusion justification if the language is intentionally excluded.");
 
-                    // Mark excluded language as 'Requested' in the release plan work item.
+                    // Mark languages with missing emitter configuration in the release plan work item.
                     Dictionary<string, string> fieldsToUpdate = [];
-                    foreach (var lang in excludedLanguages)
+                    foreach (var lang in languagesMissingEmitterConfig)
                     {
-                        fieldsToUpdate[$"Custom.ReleaseExclusionStatusFor{DevOpsService.MapLanguageToId(lang)}"] = "Requested";
+                        fieldsToUpdate[$"Custom.ReleaseExclusionStatusFor{DevOpsService.MapLanguageToId(lang)}"] = "MissingEmitterConfig";
                     }
                     await devOpsService.UpdateWorkItemAsync(releasePlanWorkItemId, fieldsToUpdate, ct);
-                    logger.LogDebug("Marked excluded languages as 'Requested' in release plan work item {releasePlanWorkItemId}.", releasePlanWorkItemId);
+                    logger.LogDebug("Marked languages with missing emitter configuration in release plan work item {releasePlanWorkItemId}.", releasePlanWorkItemId);
                 }
 
                 return new DefaultCommandResponse
                 {
                     Message = sb.ToString(),
-                    NextSteps = excludedLanguages.Any() && string.IsNullOrEmpty(releasePlan.LanguageExclusionRequesterNote) ? ["Prompt the user for justification for excluded languages and update it in the release plan."] : []
+                    NextSteps = languagesMissingEmitterConfig.Any() ? ["Configure the TypeSpec emitter for missing languages in tspconfig.yaml, or provide a justification for language exclusion."] : []
                 };
             }
             catch (Exception ex)
@@ -1773,12 +1773,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 var releasePlanLink = releasePlan.ReleasePlanLink;
                 var releasePlanDate = releasePlan.SDKReleaseMonth;
 
-                // Identify SDKs not yet released (skip Go for Data Plane and skip excluded languages)
+                // Identify SDKs not yet released (skip Go for Data Plane and skip excluded/missing-emitter languages)
                 var missingSDKs = releasePlan.SDKInfo
                     .Where(info => (string.IsNullOrEmpty(info.ReleaseStatus) || !string.Equals(info.ReleaseStatus, "Released", StringComparison.OrdinalIgnoreCase))
                              && (releasePlan.IsManagementPlane || !string.Equals(info.Language, "Go", StringComparison.OrdinalIgnoreCase))
                              && !string.Equals(info.ReleaseExclusionStatus, "Requested", StringComparison.OrdinalIgnoreCase)
-                             && !string.Equals(info.ReleaseExclusionStatus, "Approved", StringComparison.OrdinalIgnoreCase))
+                             && !string.Equals(info.ReleaseExclusionStatus, "Approved", StringComparison.OrdinalIgnoreCase)
+                             && !string.Equals(info.ReleaseExclusionStatus, "MissingEmitterConfig", StringComparison.OrdinalIgnoreCase))
                     .Select(info => info.Language)
                     .ToList();
 

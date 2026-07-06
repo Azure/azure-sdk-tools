@@ -375,6 +375,8 @@
       return { text: "Exclusion Approved", cls: "row-excluded" };
     if (val === "requested")
       return { text: "Exclusion Requested", cls: "row-exclusion-requested" };
+    if (val === "missingemitterconfig")
+      return { text: "Missing emitter configuration", cls: "row-missing-emitter-config" };
     return null;
   }
 

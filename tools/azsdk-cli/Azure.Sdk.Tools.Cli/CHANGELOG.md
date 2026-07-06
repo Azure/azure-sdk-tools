@@ -8,6 +8,8 @@
 
 ### Bugs Fixed
 
+- `azsdk_update_sdk_details_in_release_plan` now marks languages with missing emitter configuration in the TypeSpec project as `MissingEmitterConfig` instead of `Requested` in the release plan work item, so the release plan dashboard shows a distinct "Missing emitter configuration" label instead of the misleading "Exclusion Requested" label.
+
 ### Other Changes
 
 ## 0.6.24 (2026-06-30)

@@ -894,6 +894,12 @@ main {
 .sdk-table tr.row-exclusion-requested td {
   color: var(--red);
 }
+.sdk-table tr.row-missing-emitter-config {
+  background: #fff8e1;
+}
+.sdk-table tr.row-missing-emitter-config td {
+  color: #7a6200;
+}
 
 .scope-badges {
   display: flex;

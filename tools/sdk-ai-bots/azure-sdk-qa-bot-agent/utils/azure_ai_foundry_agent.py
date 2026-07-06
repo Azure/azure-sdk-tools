@@ -51,9 +51,9 @@ class EmptyAgentResponseError(Exception):
 class HostedAgentClient:
     """Drives a Foundry hosted agent through the OpenAI Responses API.
 
-    ``invoke`` performs a bounded-retry invocation and returns the raw
-    ``(stream, response)`` so the caller can read stream headers (e.g. the AI
-    Foundry trace id) and map the response into its own domain shape.
+    ``invoke`` performs a bounded-retry invocation and returns
+    ``(trace_id, response)`` so the caller can access the AI Foundry trace id
+    and map the response into its own domain shape.
     """
 
     def __init__(

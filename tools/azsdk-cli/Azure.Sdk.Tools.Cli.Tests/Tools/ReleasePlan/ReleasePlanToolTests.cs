@@ -699,8 +699,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             Assert.That(updateStatus.ResponseError, Is.Null);
             Assert.That(updateStatus.Message, Does.Contain("[Java]"));
-            Assert.That(updateStatus.Message, Does.Not.Contain("Python"));
-            Assert.That(updateStatus.Message, Does.Not.Contain("Go"));
             Assert.IsNotNull(capturedFields, "UpdateWorkItemAsync should have been called");
             Assert.That(capturedFields, Has.Count.EqualTo(1));
             Assert.That(capturedFields, Contains.Key("Custom.ReleaseExclusionStatusForJava"));

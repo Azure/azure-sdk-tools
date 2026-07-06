@@ -267,7 +267,7 @@ _register(
     ),
     KnowledgeSource(
         name=SRC_STATIC_ARM_DOCS,
-        description="Azure Resource Manager (ARM) important documentation.",
+        description="ARM Wiki (RPaaS) documentation for ARM resource modeling, OpenAPI/TypeSpec onboarding, and related RP platform guidance.",
         base_url="https://armwiki.azurewebsites.net/rpaas/",
         trim_format=True,
         suffix=".html",

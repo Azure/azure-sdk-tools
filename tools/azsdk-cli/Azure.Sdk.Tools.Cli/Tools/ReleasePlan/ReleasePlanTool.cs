@@ -1202,21 +1202,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return new DefaultCommandResponse { ResponseError = $"Failed to parse TypeSpec project at {typeSpecProjectPath}." };
                 }
 
-                // Convert resolved packages to SDKInfo list
-                List<SDKInfo> SdkInfos = resolvedPackages
-                    .Where(p => p.Language != SdkLanguage.Unknown && !string.IsNullOrEmpty(p.PackageName))
-                    .Select(p => new SDKInfo
-                    {
-                        Language = p.Language.ToWorkItemString(),
-                        PackageName = p.PackageName!
-                    })
-                    .ToList();
-
-                if (SdkInfos.Count == 0)
-                {
-                    return new DefaultCommandResponse { ResponseError = "No valid SDK packages found in the TypeSpec project metadata." };
-                }
-
                 // Get release plan. The resolver accepts either a Release Plan ID or a work item ID.
                 var releasePlan = await devOpsService.ResolveReleasePlanByIdAsync(releasePlanWorkItemId, ct);
                 if (releasePlan == null)
@@ -1230,24 +1215,34 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 var requiredLanguages = releasePlan.IsManagementPlane ? languagesforMgmtplane : languagesforDataplane;
                 var supportedLanguages = releasePlan.IsManagementPlane ? languagesforMgmtplane : supportedLanguagesforDataplane;
 
+                var resolvedKnownLanguagePackages = resolvedPackages
+                    .Where(p => p.Language != SdkLanguage.Unknown)
+                    .ToList();
+
+                // Convert resolved packages to SDKInfo list. Empty package names are treated as missing
+                // emitter configuration and handled below instead of failing early.
+                List<SDKInfo> SdkInfos = resolvedKnownLanguagePackages
+                    .Where(p => !string.IsNullOrEmpty(p.PackageName))
+                    .Select(p => new SDKInfo
+                    {
+                        Language = p.Language.ToWorkItemString(),
+                        PackageName = p.PackageName!
+                    })
+                    .ToList();
+
                 // A TypeSpec project may emit packages for languages the release plan does not track
                 // (e.g. Rust, C++). Optional languages such as Go for data plane are part of the
                 // supported set and must be updated. Skip any other detected language instead of
                 // failing, so the tool still updates the supported languages it found.
-                var skippedLanguages = SdkInfos
-                    .Where(sdk => !supportedLanguages.Contains(sdk.Language))
-                    .Select(sdk => sdk.Language)
+                var skippedLanguages = resolvedKnownLanguagePackages
+                    .Select(pkg => pkg.Language.ToWorkItemString())
+                    .Where(lang => !supportedLanguages.Contains(lang))
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToList();
 
                 SdkInfos = SdkInfos
                     .Where(sdk => supportedLanguages.Contains(sdk.Language))
                     .ToList();
-
-                if (SdkInfos.Count == 0)
-                {
-                    return new DefaultCommandResponse { ResponseError = $"No supported SDK languages found in the TypeSpec project metadata. Supported languages are: {string.Join(", ", supportedLanguages)}" };
-                }
 
                 // Validate SDK Package names
                 var languagePrefixMap = new Dictionary<string, string>
@@ -1270,23 +1265,26 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
 
                 StringBuilder sb = new();
-                // Update SDK package name and languages in work item
-                var updated = await devOpsService.UpdateReleasePlanSDKDetailsAsync(releasePlanWorkItemId, SdkInfos, ct);
-                if (!updated)
+                if (SdkInfos.Count > 0)
                 {
-                    return new DefaultCommandResponse { ResponseError = "Failed to update release plan with SDK details." };
+                    // Update SDK package name and languages in work item
+                    var updated = await devOpsService.UpdateReleasePlanSDKDetailsAsync(releasePlanWorkItemId, SdkInfos, ct);
+                    if (!updated)
+                    {
+                        return new DefaultCommandResponse { ResponseError = "Failed to update release plan with SDK details." };
+                    }
+                    else
+                    {
+                        sb.Append("Updated SDK details in release plan.").AppendLine();
+                        foreach (var sdk in SdkInfos)
+                        {
+                            sb.AppendLine($"Language: {sdk.Language}, Package name: {sdk.PackageName}");
+                        }
+                    }
                 }
-                else
+                if (skippedLanguages.Any())
                 {
-                    sb.Append("Updated SDK details in release plan.").AppendLine();
-                    foreach (var sdk in SdkInfos)
-                    {
-                        sb.AppendLine($"Language: {sdk.Language}, Package name: {sdk.PackageName}");
-                    }
-                    if (skippedLanguages.Any())
-                    {
-                        sb.AppendLine($"Note: The following detected languages are not tracked in the release plan and were skipped: {string.Join(", ", skippedLanguages)}");
-                    }
+                    sb.AppendLine($"Note: The following detected languages are not tracked in the release plan and were skipped: {string.Join(", ", skippedLanguages)}");
                 }
 
                 // Check if any required language is missing emitter configuration in the TypeSpec project.
@@ -1295,11 +1293,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 var languagesMissingEmitterConfig = requiredLanguages
                     .Except(SdkInfos.Select(sdk => sdk.Language), StringComparer.OrdinalIgnoreCase)
                     .ToList();
+                var existingSdkInfos = releasePlan.SDKInfo ?? [];
                 var languagesToMarkMissingEmitterConfig = languagesMissingEmitterConfig
-                    .Where(lang => releasePlan.SDKInfo.All(info =>
-                        !string.Equals(info.Language, lang, StringComparison.OrdinalIgnoreCase)
-                        || (!string.Equals(info.ReleaseExclusionStatus, "Requested", StringComparison.OrdinalIgnoreCase)
-                            && !string.Equals(info.ReleaseExclusionStatus, "Approved", StringComparison.OrdinalIgnoreCase))))
+                    .Where(lang => !existingSdkInfos.Any(info =>
+                        string.Equals(info.Language, lang, StringComparison.OrdinalIgnoreCase)
+                        && (string.Equals(info.ReleaseExclusionStatus, "Requested", StringComparison.OrdinalIgnoreCase)
+                            || string.Equals(info.ReleaseExclusionStatus, "Approved", StringComparison.OrdinalIgnoreCase))))
                     .ToList();
                 if (languagesToMarkMissingEmitterConfig.Any())
                 {

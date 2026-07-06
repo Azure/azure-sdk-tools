@@ -1688,7 +1688,7 @@
         <div class="sdk-details-content" style="${sdkDisplay}">
         <table class="sdk-table"><thead><tr>
           <th>Language</th><th>Package</th><th>SDK PR</th><th>PR Status</th>
-          <th>APIView</th><th>Release Status</th><th>Version</th><th>Package Link</th><th>Action Required</th>
+          <th>Release Status</th><th>Version</th><th>Package Link</th><th>Action Required</th>
         </tr></thead><tbody>`;
           for (const lang of langKeys) {
             const l = langs[lang];
@@ -1702,12 +1702,25 @@
             let releaseDisplay = l.releaseStatus || "";
             if (exLabel) releaseDisplay = exLabel.text;
 
-            // Determine display version: use releasedVersion when released, pkgVersion otherwise
+            // Determine display version: use releasedVersion when released;
+            // when not released, show pkgVersion with "Pending" label only if PR is merged
             const isReleased =
               (l.releaseStatus || "").toLowerCase() === "released";
+            const prStForVersion = (
+              l.sdkPrGitHubStatus ||
+              l.prStatus ||
+              ""
+            ).toLowerCase();
+            const isPrMerged =
+              prStForVersion.includes("merged") ||
+              prStForVersion === "completed";
             const displayVersion = isReleased
               ? l.releasedVersion || ""
-              : l.pkgVersion || "";
+              : isPrMerged
+                ? l.pkgVersion || ""
+                : "";
+            const isVersionPending =
+              !isReleased && isPrMerged && !!displayVersion;
 
             // Package labels: first preview/GA + namespace approval + API review (version now in its own column)
             let pkgLabels = "";
@@ -1736,16 +1749,6 @@
                   ? "pr-label-approved"
                   : "pr-label-api-pending";
               pkgLabels += `<span class="pr-label ${arClass}">API: ${esc(l.apiReviewStatus)}</span>`;
-            }
-
-            // APIView column — loaded on-demand when card is expanded
-            let apiViewCell = "—";
-            if (l.sdkPrUrl) {
-              if (l.prDetails && l.prDetails.apiViewUrl) {
-                apiViewCell = `<a href="${esc(l.prDetails.apiViewUrl)}" target="_blank" rel="noopener">APIView</a>`;
-              } else {
-                apiViewCell = `<span class="apiview-placeholder">…</span>`;
-              }
             }
 
             // Action column — determine per-language action
@@ -1805,9 +1808,8 @@
             <td>${esc(l.packageName) || "—"} ${pkgLabels}</td>
             <td>${prLink} ${prLabels}</td>
             <td>${l.sdkPrUrl ? statusSpan(l.sdkPrGitHubStatus || l.prStatus) : ""}</td>
-            <td class="apiview-cell">${apiViewCell}</td>
             <td>${statusSpan(releaseDisplay)}</td>
-            <td>${displayVersion ? esc(displayVersion) : isReleased ? '<span class="version-na">Not available</span>' : "—"}</td>
+            <td>${displayVersion ? `<span title="${isVersionPending ? "This indicates current package version on the main branch in SDK repo" : ""}">${esc(displayVersion)}</span>${isVersionPending ? ' <span class="pr-label pr-label-version-pending" title="This indicates current package version on the main branch in SDK repo">Pending</span>' : ""}` : isReleased ? '<span class="version-na">Not available</span>' : "—"}</td>
             <td>${feedLinkCell}</td>
             <td class="action-cell">${actionCell}</td>
           </tr>`;
@@ -2002,14 +2004,6 @@
               prTd.insertAdjacentHTML("beforeend", " " + labels);
             }
           }
-        }
-
-        const apiViewTd = row.children[4];
-        if (apiViewTd && apiViewTd.classList.contains("apiview-cell")) {
-          const apiViewUrl = info.prDetails && info.prDetails.apiViewUrl;
-          apiViewTd.innerHTML = apiViewUrl
-            ? `<a href="${esc(apiViewUrl)}" target="_blank" rel="noopener">APIView</a>`
-            : "Not available";
         }
       }
 

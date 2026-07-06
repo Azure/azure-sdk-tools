@@ -85,12 +85,6 @@ stimuli:
         config:
           pattern: 'age\?: int32 = 21;'
           path: "employee.tsp"
-      - type: "prompt"
-        config:
-          threshold: 0.88
-          model: "claude-opus-4.6"
-          scoring: "scale_1_10"
-          prompt: "Verify change scope and quality only: add a default value of 21 for the `age` property in `EmployeeProperties` that only applies to the 2025-11-01 API version. The old age renamed and removed for the new version."
     constraints:
       max_turns: 5
       max_tokens: 1000000

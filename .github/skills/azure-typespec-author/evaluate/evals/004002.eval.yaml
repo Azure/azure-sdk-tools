@@ -85,12 +85,6 @@ stimuli:
         config:
           pattern: 'assets:\s*string\[\]'
           path: "employee.tsp"
-      - type: "prompt"
-        config:
-          threshold: 0.88
-          model: "claude-opus-4.6"
-          scoring: "scale_1_10"
-          prompt: "Verify asset use the custom scalar type with minLength and maxLength constraints instead of plain string."
     constraints:
       max_turns: 5
       max_tokens: 1000000

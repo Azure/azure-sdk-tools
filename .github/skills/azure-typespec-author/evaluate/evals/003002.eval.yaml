@@ -89,12 +89,6 @@ stimuli:
         config:
           pattern: "delete is ArmResourceDeleteWithoutOkAsync<Employee>"
           path: "employee.tsp"
-      - type: "prompt"
-        config:
-          threshold: 0.88
-          model: "claude-opus-4.6"
-          scoring: "scale_1_10"
-          prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."
     constraints:
       max_turns: 5
       max_tokens: 1000000

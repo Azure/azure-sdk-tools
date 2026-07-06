@@ -14,7 +14,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates;
 /// Supports batch classification of multiple feedback items in a single LLM call,
 /// with strictly formatted ID-keyed output for robust parsing.
 /// </summary>
-public class FeedbackClassificationTemplate : BasePromptTemplate
+public class FeedbackClassificationTemplate : ClassificationBaseTemplate<FeedbackClassificationResponse.ItemClassificationDetails, FeedbackItem>
 {
     public override string TemplateId => "feedback-classification";
     public override string Version => "1.0.0";
@@ -76,7 +76,7 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
     /// Classification: TSP_APPLICABLE | SUCCESS | CODE_CUSTOMIZATION | REQUIRES_MANUAL_INTERVENTION
     /// Reason: explanation
     /// </summary>
-    public override Object ParseClassifyResult(string result, List<Object>? items = null)
+    public override List<FeedbackClassificationResponse.ItemClassificationDetails> ParseClassifyResult(string result, List<FeedbackItem>? items = null)
     {
         if (items == null || items.Count == 0)
         {

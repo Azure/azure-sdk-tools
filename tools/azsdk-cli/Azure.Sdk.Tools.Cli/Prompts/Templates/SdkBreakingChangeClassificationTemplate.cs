@@ -3,7 +3,7 @@ using Azure.Sdk.Tools.Cli.Tools.Package;
 
 namespace Azure.Sdk.Tools.Cli.Prompts.Templates
 {
-    public class SdkBreakingChangeClassificationTemplate : BasePromptTemplate
+    public class SdkBreakingChangeClassificationTemplate : ClassificationBaseTemplate<SdkBreakingChange, SdkBreakingChange>
     {
         public override string TemplateId => "sdk-breaking-change-classification";
         public override string Version => "1.0.0";
@@ -195,7 +195,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
             """;
         }
 
-        public override Object ParseClassifyResult(string result, List<Object>? items = null)
+        public override List<SdkBreakingChange> ParseClassifyResult(string result, List<SdkBreakingChange>? items = null)
         {
             try
             {
@@ -257,11 +257,11 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
                     };
                     sdkBreakingChanges.Add(breakingChange);
                 }
-                return sdkBreakingChanges.ToArray();
+                return sdkBreakingChanges;
             }
             catch (Exception)
             {
-                return Array.Empty<SdkBreakingChange>();
+                return new List<SdkBreakingChange>();
             }
         }
 

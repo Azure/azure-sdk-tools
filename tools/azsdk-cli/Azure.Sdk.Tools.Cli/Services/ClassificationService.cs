@@ -1,4 +1,5 @@
 using Azure.Sdk.Tools.Cli.CopilotAgents;
+using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.ClassifyItems;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Prompts;
@@ -61,9 +62,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                                 customizationRequest.GlobalContext,
                                 customizationRequest.EditScope
                             );
-                            List<object> feedbackItems = chunk.Cast<object>().ToList();
+                            List<FeedbackItem> feedbackItems = chunk.Cast<FeedbackItem>().ToList();
                             var classifyResult = await BatchClassifyItems(classifyTemplate, feedbackItems, ct);
-                            allClassifiedResults.AddRange((List<FeedbackClassificationResponse.ItemClassificationDetails>)classifyResult);
+                            allClassifiedResults.AddRange(classifyResult);
 
                         }
                         return new ClassifyResponse(classifyType, allClassifiedResults);
@@ -77,7 +78,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        private async Task<Object> BatchClassifyItems(BasePromptTemplate template, List<object>? items, CancellationToken ct)
+        private async Task<List<T>> BatchClassifyItems<T, I>(ClassificationBaseTemplate<T, I> template, List<I>? items, CancellationToken ct)
         {
             var agent = new CopilotAgent<string>
             {

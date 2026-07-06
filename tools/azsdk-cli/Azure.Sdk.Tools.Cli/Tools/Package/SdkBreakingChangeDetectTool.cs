@@ -180,7 +180,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                                         var result = new SdkBreakingChangeDetectResult
                                         {
                                             HasBreakingChanges = true,
-                                            BreakingChanges = (SdkBreakingChange[])classifyResult.ClassifiedResult,
+                                            BreakingChanges = classifyResult.ClassifiedResult as List<SdkBreakingChange> ?? new List<SdkBreakingChange>(),
                                         };
                                         return new PackageOperationResponse()
                                         {
@@ -271,7 +271,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     public class SdkBreakingChangeDetectResult
     {
         [JsonPropertyName("breakingChanges")]
-        public SdkBreakingChange[] BreakingChanges { get; set; }
+        public List<SdkBreakingChange> BreakingChanges { get; set; } = new List<SdkBreakingChange>();
         [JsonPropertyName("hasBreakingChanges")]
         public bool HasBreakingChanges { get; set; }
         [JsonPropertyName("SdkChangesMd")]

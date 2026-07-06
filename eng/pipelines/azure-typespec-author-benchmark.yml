@@ -59,9 +59,16 @@ extends:
               - template: /eng/pipelines/templates/steps/typespec-author-eval-setup.yml
                 parameters:
                   SkillBranch: ${{ parameters.SkillBranch }}
+                  # Do not build/start the local qa-bot backend: evaluate against the
+                  # new remote KB agent test endpoint instead (issue #15675). The KB
+                  # endpoint + client id are configured in the azsdk-mcp environment in
+                  # .github/skills/azure-typespec-author/evaluate/.vally.yaml.
+                  StartQaBotBackend: false
 
               # Run evaluations — each suite gets its own step with timeout
               # and continueOnError so failures don't block subsequent suites.
+              # AzureSubscription runs each eval inside an authenticated AzureCLI@2
+              # context so azsdk-cli can obtain a bearer token for the remote KB.
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
                   EvalFile: forced.eval.yaml
@@ -69,6 +76,7 @@ extends:
                   DisplayName: Run force invokation suite - versioning
                   TimeoutMinutes: 50
                   Tag: suite=versioning
+                  AzureSubscription: 'azuresdkqabot-dev'
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
                   EvalFile: forced.eval.yaml
@@ -76,6 +84,7 @@ extends:
                   DisplayName: Run force invokation suite - armtemplate
                   TimeoutMinutes: 40
                   Tag: suite=armtemplate
+                  AzureSubscription: 'azuresdkqabot-dev'
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
                   EvalFile: forced.eval.yaml
@@ -83,6 +92,7 @@ extends:
                   DisplayName: Run force invokation suite - longrunningoperation
                   TimeoutMinutes: 25
                   Tag: suite=lro
+                  AzureSubscription: 'azuresdkqabot-dev'
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
                   EvalFile: forced.eval.yaml
@@ -90,6 +100,7 @@ extends:
                   DisplayName: Run force invokation suite - decorators
                   TimeoutMinutes: 15
                   Tag: suite=decorators
+                  AzureSubscription: 'azuresdkqabot-dev'
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
                   EvalFile: forced.eval.yaml
@@ -97,6 +108,7 @@ extends:
                   DisplayName: Run force invokation suite - warning
                   TimeoutMinutes: 25
                   Tag: suite=warning
+                  AzureSubscription: 'azuresdkqabot-dev'
 
             templateContext:
               outputs:
@@ -104,12 +116,6 @@ extends:
                   path: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/results
                   artifact: eval-results-code-quality-$(Build.BuildId)
                   displayName: Upload eval results
-                  condition: always()
-
-                - output: pipelineArtifact
-                  path: $(Build.StagingDirectory)/qa-bot-log
-                  artifact: qa-bot-service-log-code-quality
-                  displayName: Upload QA bot backend log
                   condition: always()
 
           # Trigger mode: same suite split strategy for comparable diagnostics

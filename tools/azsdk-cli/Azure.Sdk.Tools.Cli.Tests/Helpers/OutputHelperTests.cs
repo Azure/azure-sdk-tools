@@ -86,7 +86,7 @@ message2
         {
             Code = "insufficient_owners",
             Message = "single issue message",
-            NextStep = "/owners add owner <current-github-user> [additional github aliases] to package Azure.Test",
+            NextStep = "/owners add owner <current-github-user> to package Azure.Test",
         });
 
         Assert.Multiple(() =>
@@ -119,5 +119,20 @@ message2
         });
 
         Assert.That(response.ResponseError, Is.EqualTo("check-package found 2 issue(s) for path 'sdk/test/Azure.Test'."));
+    }
+
+    [Test]
+    public void CheckPackageResponse_DoesNotSerializeOwnerPromptUser()
+    {
+        var response = new CheckPackageResponse
+        {
+            DirectoryPath = "sdk/test/Azure.Test",
+            PackageName = "Azure.Test",
+        };
+
+        var output = new OutputHelper(OutputHelper.OutputModes.Json);
+        var formatted = output.Format(response);
+
+        Assert.That(formatted, Does.Not.Contain("owner_prompt_user"));
     }
 }

@@ -74,7 +74,7 @@ public class CheckPackageHelperTests
             entries);
 
         AssertFailure(result, "insufficient_owners", "1 unique owner");
-        Assert.That(result.Issues[0].NextStep, Does.Contain("/owners add owner <current-github-user> [additional github aliases]"));
+        Assert.That(result.Issues[0].NextStep, Does.Contain("/owners add owner <current-github-user>"));
     }
 
     [Test]
@@ -98,7 +98,7 @@ public class CheckPackageHelperTests
             entries);
 
         AssertFailure(result, "insufficient_service_owners", "PR label \"ZeroOwners\" has 0 unique service owner(s)");
-        Assert.That(result.Issues[0].NextStep, Does.StartWith("/owners add service owners "));
+        Assert.That(result.Issues[0].NextStep, Does.StartWith("/owners add service owners <current-github-user>"));
         Assert.That(result.Issues[0].NextStep, Does.Contain("to label \"ZeroOwners\""));
     }
 
@@ -171,7 +171,7 @@ public class CheckPackageHelperTests
         AssertFailure(result, "insufficient_owners", "resolved service-level path entry '/sdk/service'");
         Assert.That(result.ResolvedTargetType, Is.EqualTo("path"));
         Assert.That(result.ResolvedTarget, Is.EqualTo("/sdk/service"));
-        Assert.That(result.Issues[0].NextStep, Does.Contain("/owners add owner <current-github-user> [additional github aliases] to path /sdk/service"));
+        Assert.That(result.Issues[0].NextStep, Does.Contain("/owners add owner <current-github-user> to path /sdk/service"));
     }
 
     [Test]

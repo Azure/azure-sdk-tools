@@ -3,7 +3,6 @@
 
 using System.Text;
 using System.Text.Json.Serialization;
-using Azure.Sdk.Tools.Cli.Helpers.Codeowners;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 
@@ -18,9 +17,6 @@ public class CheckPackageResponse : CommandResponse
     [JsonPropertyName("repo")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Repo { get; set; }
-
-    [JsonPropertyName("owner_prompt_user")]
-    public string OwnerPromptUser { get; set; } = CheckPackageHelper.CurrentGitHubUserPlaceholder;
 
     [JsonPropertyName("matched_path_expression")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -74,7 +70,6 @@ public class CheckPackageResponse : CommandResponse
         {
             sb.AppendLine($"Repo: {Repo}");
         }
-        sb.AppendLine($"Owner Prompt User: {OwnerPromptUser}");
         if (!string.IsNullOrEmpty(MatchedPathExpression))
         {
             sb.AppendLine($"Matched Path Expression: {MatchedPathExpression}");

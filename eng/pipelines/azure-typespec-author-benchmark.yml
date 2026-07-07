@@ -29,6 +29,10 @@ parameters:
   displayName: Branch containing the azure-typespec-author skill source (SKILL.md + references/) to evaluate. Defaults to the branch this pipeline was triggered from.
   type: string
   default: $(Build.SourceBranchName)
+- name: EvalRuns
+  displayName: Number of Vally runs per case. Runs greater than 1 automatically reduce workers to 1.
+  type: number
+  default: 1
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -50,7 +54,7 @@ extends:
           # this no longer needs suites/forced.eval.yaml plus tag filtering.
           - job: RunEvalsForCodeQuality
             displayName: Run Vally Evaluations for Code Quality
-            timeoutInMinutes: 170
+            timeoutInMinutes: 360
             steps:
               - checkout: self
                 fetchDepth: 0
@@ -67,30 +71,35 @@ extends:
                   SuiteName: versioning-forced
                   DisplayName: Run force invokation suite - versioning
                   TimeoutMinutes: 50
+                  Runs: ${{ parameters.EvalRuns }}
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
                   Suite: armtemplate-forced
                   SuiteName: armtemplate-forced
                   DisplayName: Run force invokation suite - armtemplate
                   TimeoutMinutes: 40
+                  Runs: ${{ parameters.EvalRuns }}
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
                   Suite: longrunningoperation-forced
                   SuiteName: longrunningoperation-forced
                   DisplayName: Run force invokation suite - longrunningoperation
                   TimeoutMinutes: 25
+                  Runs: ${{ parameters.EvalRuns }}
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
                   Suite: decorators-forced
                   SuiteName: decorators-forced
                   DisplayName: Run force invokation suite - decorators
                   TimeoutMinutes: 15
+                  Runs: ${{ parameters.EvalRuns }}
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
                   Suite: warning-forced
                   SuiteName: warning-forced
                   DisplayName: Run force invokation suite - warning
                   TimeoutMinutes: 25
+                  Runs: ${{ parameters.EvalRuns }}
 
             templateContext:
               outputs:
@@ -110,7 +119,7 @@ extends:
           # diagnostics and easier cross-mode failure analysis.
           - job: RunEvalsForSkillInvocation
             displayName: Run Vally Evaluations for Skill Invocation
-            timeoutInMinutes: 170
+            timeoutInMinutes: 360
             steps:
               - checkout: self
                 fetchDepth: 0
@@ -131,30 +140,35 @@ extends:
                   SuiteName: versioning-trigger
                   DisplayName: Run suite - versioning
                   TimeoutMinutes: 50
+                  Runs: ${{ parameters.EvalRuns }}
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
                   Suite: armtemplate-trigger
                   SuiteName: armtemplate-trigger
                   DisplayName: Run suite - armtemplate
                   TimeoutMinutes: 40
+                  Runs: ${{ parameters.EvalRuns }}
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
                   Suite: longrunningoperation-trigger
                   SuiteName: longrunningoperation-trigger
                   DisplayName: Run suite - longrunningoperation
                   TimeoutMinutes: 25
+                  Runs: ${{ parameters.EvalRuns }}
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
                   Suite: decorators-trigger
                   SuiteName: decorators-trigger
                   DisplayName: Run suite - decorators
                   TimeoutMinutes: 15
+                  Runs: ${{ parameters.EvalRuns }}
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
                   Suite: warning-trigger
                   SuiteName: warning-trigger
                   DisplayName: Run suite - warning
                   TimeoutMinutes: 25
+                  Runs: ${{ parameters.EvalRuns }}
 
             templateContext:
               outputs:

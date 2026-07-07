@@ -8,6 +8,10 @@ parameters:
 - name: PythonVersion
   type: string
   default: '3.10'
+- name: EvalRuns
+  displayName: Number of Vally runs per case. Runs greater than 1 automatically reduce workers to 1.
+  type: number
+  default: 1
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -28,7 +32,7 @@ extends:
           # apples-to-apples error investigation.
           - job: RunEvalsNoSkill
             displayName: Evaluate on pure agent without skill
-            timeoutInMinutes: 170
+            timeoutInMinutes: 360
             steps:
               - checkout: self
                 fetchDepth: 0
@@ -46,6 +50,7 @@ extends:
                   DisplayName: Pure agent - versioning
                   TimeoutMinutes: 50
                   LoadSkills: false
+                  Runs: ${{ parameters.EvalRuns }}
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
                   Suite: armtemplate-no-skill
@@ -53,6 +58,7 @@ extends:
                   DisplayName: Pure agent - armtemplate
                   TimeoutMinutes: 40
                   LoadSkills: false
+                  Runs: ${{ parameters.EvalRuns }}
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
                   Suite: longrunningoperation-no-skill
@@ -60,6 +66,7 @@ extends:
                   DisplayName: Pure agent - longrunningoperation
                   TimeoutMinutes: 25
                   LoadSkills: false
+                  Runs: ${{ parameters.EvalRuns }}
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
                   Suite: decorators-no-skill
@@ -67,6 +74,7 @@ extends:
                   DisplayName: Pure agent - decorators
                   TimeoutMinutes: 15
                   LoadSkills: false
+                  Runs: ${{ parameters.EvalRuns }}
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
                   Suite: warning-no-skill
@@ -74,6 +82,7 @@ extends:
                   DisplayName: Pure agent - warning
                   TimeoutMinutes: 25
                   LoadSkills: false
+                  Runs: ${{ parameters.EvalRuns }}
 
             templateContext:
               outputs:

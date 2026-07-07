@@ -42,6 +42,7 @@ function comment(over: Partial<AttributedComment>): AttributedComment {
         pr: prNum,
         externalId: id,
         url: `https://x/c/${String(id)}`,
+        rowId: over.rowId ?? `${String(prNum)}:inline:${String(id)}`,
         findingId:
             over.findingId ??
             `${String(prNum)}:${login}:${path}:${String(lineStart)}-${String(lineEnd)}`,

@@ -91,6 +91,7 @@ export const CommentRowSchema = z
         pr: z.number().int(),
         externalId: z.number().int(),
         url: z.string().nullable(),
+        rowId: z.string(),
         findingId: z.string(),
         authorKind: AuthorKind,
         authorLogin: z.string().nullable(),

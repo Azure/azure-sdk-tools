@@ -45,6 +45,7 @@
       "pr": 7012,
       "externalId": 99887766,
       "url": "https://github.com/Azure/azure-sdk-for-go/pull/7012#discussion_r99887766",
+      "rowId": "7012:inline:99887766",
       "findingId": "7012:alice:sdk/foo/client.go:41-41",
       "authorKind": "human",
       "authorLogin": "alice",

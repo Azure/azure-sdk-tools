@@ -50,6 +50,7 @@ function ccrComment(id: number): AttributedComment {
         pr: 1,
         externalId: id,
         url: `https://x/c/${String(id)}`,
+        rowId: `1:inline:${String(id)}`,
         findingId: `1:bot:src/a.ts:${String(id)}-${String(id)}`,
         authorKind: "ccr",
         authorLogin: "copilot-pull-request-reviewer[bot]",
@@ -116,6 +117,7 @@ describe("emit-run-json buildRunJson", () => {
         const row = run.comments[0] as Record<string, unknown>;
         expect("body" in row).toBe(false);
         expect(row.findingId).toBe("1:bot:src/a.ts:1-1");
+        expect(row.rowId).toBe("1:inline:1");
     });
 
     it("re-emission is content-stable except generatedAt", () => {

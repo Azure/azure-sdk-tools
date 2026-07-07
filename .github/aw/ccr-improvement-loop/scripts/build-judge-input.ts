@@ -106,7 +106,7 @@ export function buildJudgeInputForPr(
         if (c.pathExcluded) continue;
         const rawInline = inlineById.get(c.externalId);
         const base = {
-            id: c.findingId,
+            id: c.rowId,
             body: clip(c.body.trim(), opts.maxBodyChars),
             diffHunk: clip(rawInline?.diffHunk, opts.maxDiffChars),
             path: c.path,
@@ -190,11 +190,11 @@ function main(): void {
     ) as AttributedFile;
     const opts = {
         maxBodyChars: parsePositiveInt(
-            v["max-body-chars"] ?? "2000",
+            v["max-body-chars"],
             "--max-body-chars",
         ),
         maxDiffChars: parsePositiveInt(
-            v["max-diff-chars"] ?? "4000",
+            v["max-diff-chars"],
             "--max-diff-chars",
         ),
     };

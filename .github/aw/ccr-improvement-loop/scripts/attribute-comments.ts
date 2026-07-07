@@ -55,6 +55,19 @@ export function makeFindingId(
     return `${pr}:${login ?? "unknown"}:${path ?? "_"}:${lineStart ?? "_"}-${lineEnd ?? "_"}`;
 }
 
+/**
+ * Unique per-row identity key. Unlike {@link makeFindingId} (a grouping key that
+ * intentionally collides for repeated findings on the same anchor), this never
+ * collides: `${pr}:${source}:${externalId}` is unique per source comment.
+ */
+export function makeRowId(
+    pr: number,
+    source: AttributedComment["source"],
+    externalId: number,
+): string {
+    return `${pr}:${source}:${externalId}`;
+}
+
 /** CCR "review event" timestamps: CCR review submissions + inline comments. */
 function ccrReviewEventTimes(data: PullRequestData, cfg: Config): number[] {
     const times: number[] = [];
@@ -167,6 +180,7 @@ export function attributePr(
             pr: prNumber,
             externalId: params.externalId,
             url: params.url,
+            rowId: makeRowId(prNumber, params.source, params.externalId),
             findingId: makeFindingId(
                 prNumber,
                 params.login,

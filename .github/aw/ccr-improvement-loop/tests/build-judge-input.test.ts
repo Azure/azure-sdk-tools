@@ -57,4 +57,59 @@ describe("build-judge-input", () => {
         expect(ccr?.postCommentDiff).toContain("if (!resp)");
         expect(ccr?.authorReplies).toContain("Fixed in a later commit, thanks.");
     });
+
+    it("gives judge input items unique ids for same-line comments", () => {
+        const data: PullRequestData = {
+            rawSchemaVersion: "1.0",
+            pr: {
+                number: 200,
+                title: "t",
+                author: { login: "author", type: "User" },
+                url: "https://x/pull/200",
+                state: "closed",
+                createdAt: "2026-01-01T00:00:00Z",
+                mergedAt: "2026-01-02T00:00:00Z",
+            },
+            reviews: [],
+            inline: [
+                {
+                    id: 810,
+                    path: "src/bar.ts",
+                    line: 12,
+                    originalLine: 12,
+                    body: "please validate the input on this line",
+                    diffHunk: "@@ -10,3 +10,4 @@\n+  const x = req.body;",
+                    createdAt: "2026-01-01T01:05:00Z",
+                    user: { login: "carol", type: "User" },
+                    authorAssociation: "MEMBER",
+                },
+                {
+                    id: 811,
+                    path: "src/bar.ts",
+                    line: 12,
+                    originalLine: 12,
+                    body: "also handle the error path on this same line",
+                    diffHunk: "@@ -10,3 +10,4 @@\n+  const x = req.body;",
+                    createdAt: "2026-01-01T01:06:00Z",
+                    user: { login: "carol", type: "User" },
+                    authorAssociation: "MEMBER",
+                },
+            ],
+            issue: [],
+            commits: [],
+            commitPrs: {},
+        };
+
+        const rows = attributePr(data, new Set([810, 811]), cfg);
+        // Same anchor → shared findingId, but distinct rowId.
+        expect(rows[0]?.findingId).toBe(rows[1]?.findingId);
+
+        const items = buildJudgeInputForPr(data, rows, {
+            maxBodyChars: 2000,
+            maxDiffChars: 4000,
+        });
+        const ids = items.map((i) => i.id);
+        expect(ids).toHaveLength(2);
+        expect(new Set(ids).size).toBe(ids.length);
+    });
 });

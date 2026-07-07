@@ -77,6 +77,7 @@ function toCommentRow(c: AttributedComment): CommentRow {
         pr: c.pr,
         externalId: c.externalId,
         url: c.url ?? null,
+        rowId: c.rowId,
         findingId: c.findingId,
         authorKind: c.authorKind,
         authorLogin: c.authorLogin ?? null,

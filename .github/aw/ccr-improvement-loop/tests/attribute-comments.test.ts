@@ -5,7 +5,11 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { loadConfig } from "../scripts/config.ts";
-import { attributePr, makeFindingId } from "../scripts/attribute-comments.ts";
+import {
+    attributePr,
+    makeFindingId,
+    makeRowId,
+} from "../scripts/attribute-comments.ts";
 import type { AttributedComment, PullRequestData } from "../scripts/types.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -247,6 +251,94 @@ describe("findingId de-duplication", () => {
         );
         expect(makeFindingId(100, "carol", "src/bar.ts", 10, 10)).not.toBe(
             makeFindingId(100, "carol", "src/bar.ts", 11, 11),
+        );
+    });
+});
+
+describe("rowId uniqueness", () => {
+    function sameLineData(): PullRequestData {
+        return {
+            rawSchemaVersion: "1.0",
+            pr: {
+                number: 100,
+                title: "t",
+                author: { login: "author", type: "User" },
+                url: "https://x/pull/100",
+                state: "closed",
+                createdAt: "2026-01-01T00:00:00Z",
+                mergedAt: "2026-01-02T00:00:00Z",
+            },
+            reviews: [
+                {
+                    id: 500,
+                    state: "COMMENTED",
+                    body: "Overall looks fine, minor asks below.",
+                    submittedAt: "2026-01-01T01:00:00Z",
+                    user: { login: "reviewer", type: "User" },
+                    authorAssociation: "MEMBER",
+                },
+                {
+                    id: 501,
+                    state: "COMMENTED",
+                    body: "Second pass, still a couple things to address.",
+                    submittedAt: "2026-01-01T02:00:00Z",
+                    user: { login: "reviewer", type: "User" },
+                    authorAssociation: "MEMBER",
+                },
+            ],
+            inline: [
+                {
+                    id: 800,
+                    path: "src/bar.ts",
+                    line: 10,
+                    originalLine: 10,
+                    body: "please validate the input here",
+                    createdAt: "2026-01-01T01:05:00Z",
+                    user: { login: "carol", type: "User" },
+                    authorAssociation: "MEMBER",
+                },
+                {
+                    id: 801,
+                    path: "src/bar.ts",
+                    line: 10,
+                    originalLine: 10,
+                    body: "also handle the error path on this line",
+                    createdAt: "2026-01-01T01:06:00Z",
+                    user: { login: "carol", type: "User" },
+                    authorAssociation: "MEMBER",
+                },
+            ],
+            issue: [],
+            commits: [],
+            commitPrs: {},
+        };
+    }
+
+    it("gives two same-author/path/line comments different rowIds", () => {
+        const rows = attributePr(sameLineData(), new Set([800, 801]), cfg);
+        const a = byId(rows, 800);
+        const b = byId(rows, 801);
+        expect(a.rowId).not.toBe(b.rowId);
+    });
+
+    it("may still share findingId for those same-anchor comments", () => {
+        const rows = attributePr(sameLineData(), new Set([800, 801]), cfg);
+        expect(byId(rows, 800).findingId).toBe(byId(rows, 801).findingId);
+    });
+
+    it("gives pathless review summaries unique rowIds", () => {
+        const rows = attributePr(sameLineData(), new Set([500, 501]), cfg);
+        const a = byId(rows, 500);
+        const b = byId(rows, 501);
+        expect(a.path).toBeNull();
+        expect(b.path).toBeNull();
+        expect(a.rowId).not.toBe(b.rowId);
+    });
+
+    it("makeRowId encodes pr, source, and externalId", () => {
+        expect(makeRowId(100, "inline", 800)).toBe("100:inline:800");
+        expect(makeRowId(100, "review", 800)).not.toBe(
+            makeRowId(100, "inline", 800),
         );
     });
 });

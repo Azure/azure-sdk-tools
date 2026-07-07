@@ -256,7 +256,17 @@ export interface AttributedComment {
     externalId: number;
     /** Deep link to the source comment when GitHub exposes one. */
     url: string | undefined;
-    /** Canonical de-dup key: `${pr}:${authorLogin}:${path}:${lineStart}-${lineEnd}`. */
+    /**
+     * Unique per-row identity key: `${pr}:${source}:${externalId}`. Never
+     * collides — even for repeated comments on the same line or pathless review
+     * summaries. Use this to key judge input and any per-row join.
+     */
+    rowId: string;
+    /**
+     * Canonical de-dup/grouping key: `${pr}:${authorLogin}:${path}:${lineStart}-${lineEnd}`.
+     * Intentionally collides for repeated findings on the same anchor so metrics
+     * can dedupe; it is NOT a unique row key — use {@link rowId} for that.
+     */
     findingId: string;
     authorKind: AuthorKind;
     authorLogin: string | undefined;
@@ -388,7 +398,13 @@ export interface ProposedEdit {
 // ---------------------------------------------------------------------------
 
 export interface JudgeInputItem {
-    /** Stable per-item id within a batch (the comment's findingId). */
+    /**
+     * Stable, unique per-item id within a batch — the comment's {@link
+     * AttributedComment.rowId} (`${pr}:${source}:${externalId}`), NOT its
+     * findingId. Using rowId guarantees ids are unique even when two comments
+     * share an anchor (same findingId), so the judge can never conflate two
+     * distinct rows.
+     */
     id: string;
     body: string;
     diffHunk: string;

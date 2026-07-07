@@ -565,9 +565,11 @@ class ConversationService:
         return "\n\n".join(lines), has_expert_reply
 
     def _load_eval_prompt(self) -> str:
-        if type(self)._eval_prompt is None:
-            type(self)._eval_prompt = _EVAL_PROMPT_PATH.read_text(encoding="utf-8")
-        return type(self)._eval_prompt
+        prompt = type(self)._eval_prompt
+        if prompt is None:
+            prompt = _EVAL_PROMPT_PATH.read_text(encoding="utf-8")
+            type(self)._eval_prompt = prompt
+        return prompt
 
     async def _evaluate_transcript(
         self, transcript: str

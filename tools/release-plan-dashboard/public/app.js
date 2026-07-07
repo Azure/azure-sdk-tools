@@ -998,6 +998,9 @@
           '<span class="badge badge-first-preview">First Preview</span>';
       if (hasFirstGA)
         releaseTagBadge += '<span class="badge badge-first-ga">First GA</span>';
+      if (isSdkReadyToReleasePlan(p))
+        releaseTagBadge +=
+          '<span class="badge badge-sdk-ready-to-release">SDK Ready To Release</span>';
     }
     const missingProductBadge = !p.productId
       ? '<span class="badge badge-missing-product">Missing product details</span>'

@@ -481,6 +481,7 @@ tools/test-proxy/docker/docker_build
 
 # pnpm lockfiles (this repo does not use pnpm)
 pnpm-lock.yaml
+!.github/aw/ccr-improvement-loop/pnpm-lock.yaml
 
 # Visual Studio launch settings (frequently user-specific)
 launchSettings.json

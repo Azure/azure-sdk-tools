@@ -145,6 +145,7 @@ class KnowledgeGraphService:
             self._dfs,
             result.context_records,
             top_k=int(cfg("GRAPH_REF_TOP_K", "8")),
+            community_top_n=int(cfg("GRAPH_COMMUNITY_REPORTS_TOP_N", "2")),
         )
 
     # ------------------------------------------------------------------ #

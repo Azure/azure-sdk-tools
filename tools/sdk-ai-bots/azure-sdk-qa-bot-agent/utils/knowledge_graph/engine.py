@@ -165,14 +165,13 @@ def build_context_builder(
     context_builder = engine.context_builder
     context_params = dict(engine.context_builder_params or {})
 
-    # Optimization #1: in refs-only mode we never run the LLM synthesis that
-    # would consume the community-report summaries, so the default
-    # community_prop (~0.15 of the token budget) is spent assembling context we
-    # discard. Redirect that budget to source text units — the only thing we
-    # extract as references — and widen the window so more candidate units are
-    # pulled in. Overridable via GRAPH_* App Configuration keys.
-    context_params["community_prop"] = float(cfg("GRAPH_LS_COMMUNITY_PROP", "0.0"))
-    context_params["text_unit_prop"] = float(cfg("GRAPH_LS_TEXT_UNIT_PROP", "0.8"))
+    # Optimization: surface community-report synthesis (step 1.A). Community
+    # reports are GraphRAG's cross-document summaries — the one artifact the KB
+    # cannot produce — so we spend part of the context budget on them and lift
+    # them into the returned references (see extraction.py). The remainder goes
+    # to source text units. Overridable via GRAPH_* App Configuration keys.
+    context_params["community_prop"] = float(cfg("GRAPH_LS_COMMUNITY_PROP", "0.25"))
+    context_params["text_unit_prop"] = float(cfg("GRAPH_LS_TEXT_UNIT_PROP", "0.6"))
     context_params["max_context_tokens"] = int(
         cfg("GRAPH_LS_MAX_CONTEXT_TOKENS", "16000")
     )

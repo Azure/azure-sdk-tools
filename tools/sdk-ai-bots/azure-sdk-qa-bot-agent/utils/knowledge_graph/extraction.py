@@ -40,30 +40,40 @@ def extract_references_from_context(
     context_records: Any,
     *,
     top_k: int = 8,
+    community_top_n: int = 2,
 ) -> list[Reference]:
-    """Resolve cited text-unit short IDs back to source-document references.
+    """Resolve a graph context payload into ranked source + synthesis references.
 
-    Returns one :class:`Reference` per unique cited document, **ranked by
-    graph relevance and capped at ``top_k``**. GraphRAG orders the cited
-    text units by relevance (most-connected first); we preserve that order,
-    keep the highest-ranked text unit as each document's representative
-    excerpt, stamp a normalised ``score`` (1.0 = most relevant) on every
-    reference, sort by that score, and return only the top ``top_k``. This
-    mirrors the KB tool's rerank-and-cap contract so the two reference sets
-    the chat agent fuses share ordering semantics and a comparable size,
-    instead of the graph flooding the prompt with ~20 unranked refs.
+    Two kinds of reference are returned:
+
+    * **Source text-unit references** — one :class:`Reference` per unique cited
+      document, **ranked by graph relevance and capped at ``top_k``**. GraphRAG
+      orders the cited text units by relevance (most-connected first); we
+      preserve that order, keep the highest-ranked text unit as each document's
+      representative excerpt, stamp a normalised ``score`` (1.0 = most relevant)
+      on every reference, sort by that score, and return only the top ``top_k``.
+      This mirrors the KB tool's rerank-and-cap contract.
+    * **Community-report references** (step 1.A) — up to ``community_top_n``
+      GraphRAG *community reports*: cross-document syntheses that summarise how
+      an entity cluster relates. These are the graph's differentiator — content
+      the KB (which retrieves independent chunks) cannot produce — so they are
+      appended with ``source="graphrag_community"`` and no ``link`` (they are
+      synthesis, not a single citable document).
 
     Returns an empty list when the required parquets are missing or nothing
-    matched.
+    matched. Community reports are only present when the context builder was run
+    with ``community_prop > 0`` (see engine.py).
     """
+    community_refs = _extract_community_reports(context_records, community_top_n)
+
     text_units_df = dfs.get("text_units")
     documents_df = dfs.get("documents")
     if text_units_df is None or documents_df is None:
-        return []
+        return community_refs
 
     ordered_short_ids = _collect_text_unit_short_ids(context_records)
     if not ordered_short_ids:
-        return []
+        return community_refs
 
     # ``ordered_short_ids`` is in graph relevance order (most-connected
     # text unit first). Map each id to its 0-based rank so the resolved
@@ -76,13 +86,13 @@ def extract_references_from_context(
             continue
         rank_by_id.setdefault(key, rank)
     if not rank_by_id:
-        return []
+        return community_refs
 
     base_rank_count = len(rank_by_id)
     base_mask = text_units_df["human_readable_id"].isin(list(rank_by_id.keys()))
     matched_units = text_units_df[base_mask]
     if matched_units.empty:
-        return []
+        return community_refs
 
     doc_index = documents_df.drop_duplicates(subset=["id"]).set_index("id")
     # ``raw_data`` is the column GraphRAG persists from
@@ -98,7 +108,7 @@ def extract_references_from_context(
             "documents.parquet is missing the 'raw_data' column — this "
             "snapshot is incompatible. Republish from the sync project to fix."
         )
-        return []
+        return community_refs
 
     # Rank each matched text unit by its graph-relevance position (its index
     # in ``ordered_short_ids``). Any unit without a rank sorts last.
@@ -182,7 +192,73 @@ def extract_references_from_context(
         )
         references = references[:top_k]
 
-    return references
+    # Append the community-report synthesis (step 1.A) after the doc-grounded
+    # text-unit references, so specific source excerpts lead and the
+    # cross-document synthesis supplements.
+    return references + community_refs
+
+
+def _extract_community_reports(
+    context_records: Any, top_n: int
+) -> list[Reference]:
+    """Lift GraphRAG community reports out of the context payload as references.
+
+    Community reports are cross-document syntheses (``id, title, content``) that
+    the LocalSearch context builder includes when run with ``community_prop > 0``.
+    They are the graph's differentiator versus the KB's independent-chunk recall,
+    so we surface the top ``top_n`` (the builder emits them relevance-ordered) as
+    :class:`Reference` objects with ``source="graphrag_community"`` and no
+    ``link`` — they are synthesis, not a single citable document. Returns an
+    empty list when ``top_n <= 0`` or no reports table is present.
+    """
+    if top_n <= 0:
+        return []
+
+    import pandas as pd
+
+    reports_df = None
+
+    def visit(node: Any) -> None:
+        nonlocal reports_df
+        if reports_df is not None or node is None:
+            return
+        if isinstance(node, pd.DataFrame):
+            if {"title", "content"}.issubset(node.columns) and "text" not in node.columns:
+                reports_df = node
+            return
+        if isinstance(node, dict):
+            for v in node.values():
+                visit(v)
+        elif isinstance(node, (list, tuple, set)):
+            for v in node:
+                visit(v)
+
+    visit(context_records)
+    if reports_df is None or reports_df.empty:
+        return []
+
+    refs: list[Reference] = []
+    n = min(top_n, len(reports_df))
+    for i in range(n):
+        row = reports_df.iloc[i]
+        content = str(row.get("content") or "")
+        if not content:
+            continue
+        title = str(row.get("title") or "").strip() or f"Community {row.get('id')}"
+        # Relevance-ordered by the builder; score descending from 1.0.
+        score = max(0.0, (n - i) / n)
+        refs.append(
+            Reference(
+                title=title,
+                source="graphrag_community",
+                link="",
+                content=content,
+                score=score,
+            )
+        )
+    if refs:
+        logger.info("GraphRAG surfaced %d community-report synthesis reference(s)", len(refs))
+    return refs
 
 
 def _read_doc_attribution(doc_index: Any, doc_id: str) -> tuple[str, str]:

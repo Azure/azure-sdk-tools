@@ -643,8 +643,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     logger.LogWarning("Failed to identify a TypeSpec project path from {typeSpecProjectPath}", typeSpecProjectPath);
                     return new ReleasePlanResponse
                     {
-                        ResponseError = $"Failed to find the TypeSpec project from {typeSpecProjectPath}",
-                        NextSteps = ["Retry with valid TypeSpec project path"]
+                        ResponseError = $"Could not resolve a TypeSpec project from '{typeSpecProjectPath}'. " +
+                            "Provide the absolute path to the TypeSpec project directory, a URL to the TypeSpec project in the azure-rest-api-specs or azure-rest-api-specs-pr repository, " +
+                            "or run this command from within a local clone of one of those repositories.",
+                        NextSteps = ["Provide the absolute path or a valid azure-rest-api-specs / azure-rest-api-specs-pr URL to the TypeSpec project, or run this command from within a local clone of one of those repositories."]
                     };
                 }
                                
@@ -879,6 +881,31 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             if (!typeSpecHelper.IsUrl(typeSpecProjectPath) && apiReleaseType != ApiReleaseType.PrivatePreview)
             {
                 var repoRoot = typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectPath);
+
+                // When this command is run from a language SDK repository (or any other directory) with a
+                // relative path, the path does not resolve within the azure-rest-api-specs(-pr) repository.
+                // In that case, guide the user instead of incorrectly reporting a private-repo error.
+                bool isSpecRepo = false;
+                if (!string.IsNullOrEmpty(repoRoot))
+                {
+                    try
+                    {
+                        isSpecRepo = await typeSpecHelper.IsRepoPathForSpecRepoAsync(repoRoot, ct);
+                    }
+                    catch (Exception ex) when (ex is not OperationCanceledException)
+                    {
+                        logger.LogDebug(ex, "Failed to determine whether '{RepoRoot}' is an azure-rest-api-specs(-pr) repository; falling back to user guidance.", repoRoot);
+                        isSpecRepo = false;
+                    }
+                }
+
+                if (!isSpecRepo)
+                {
+                    throw new Exception(
+                        $"Could not locate the Azure REST API specs repository (azure-rest-api-specs or azure-rest-api-specs-pr) from the TypeSpec project path '{typeSpecProjectPath}'. " +
+                        "If you are running this from a language SDK repository or another directory, provide the absolute path to the TypeSpec project, " +
+                        "or run this command from within a local clone of the Azure/azure-rest-api-specs repository.");
+                }
 
                 // Ensure a release plan is created only if the API specs pull request is in a public repository.
                 if (!await typeSpecHelper.IsRepoPathForPublicSpecRepoAsync(repoRoot, ct))

@@ -10,8 +10,8 @@ This design adds a second, complementary retrieval path built on **Microsoft Gra
 
 ### 1.1 Goals / non-goals
 
-- **Goal** — add graph-grounded recall for relational/cross-document questions **without regressing** the KB path or the concise (150–200 word) answer style.
-- **Goal** — keep the graph reference shape **identical** to KB references so the agent and UI treat both uniformly, and tenant-scope graph retrieval with the same semantics as the KB tool.
+- **Goal** — add graph-grounded recall for relational/cross-document questions **without regressing** the KB path or the concise, in-scope answer style.
+- **Goal** — keep the graph reference shape **identical** to KB references — same fields, same relevance-ranked + top-K-capped contract — so the agent and UI treat both uniformly, and tenant-scope graph retrieval with the same semantics as the KB tool.
 - **Non-goal** — replacing the KB path. GraphRAG is additive; the two are weighted per question type (see [Hybrid synthesis](#4-hybrid-synthesis--how-the-two-paths-combine)).
 - **Non-goal** — running GraphRAG's own answer generation. We use only its retrieval (context-building) stage and let the chat agent compose the answer.
 
@@ -47,7 +47,7 @@ flowchart LR
         kbtool[search_knowledge_base]
         grtool[search_knowledge_graph]
         merge[Merge + weight by question type]
-        ans([Grounded answer<br/>150-200 words])
+        ans([Grounded answer<br/>concise + complete])
     end
 
     idx --> kbtool
@@ -76,7 +76,7 @@ flowchart LR
 
 Loading a graph and building its search context is expensive, so graph retrieval lives in the **backend as a warm, long-lived service** rather than being reconstructed inside each short-lived chat-agent sandbox. The backend loads the current snapshot once and serves graph queries over an HTTP endpoint; the chat agent reaches it through a `search_knowledge_graph` tool that mirrors the KB tool's interface and fails soft (an empty result never breaks a turn).
 
-Crucially, the service runs **only the retrieval half** of GraphRAG: it embeds the query, finds the most relevant entities, expands one hop through their relationships, and resolves back to the **source text passages** those entities came from. It does **not** call an LLM to write an answer. The passages are returned as references — the same shape as KB chunks — and the chat agent composes the final answer over them, exactly as it does for KB results. This keeps a single, consistent answering path and preserves the concise answer style.
+Crucially, the service runs **only the retrieval half** of GraphRAG: it embeds the query, finds the most relevant entities, expands one hop through their relationships, and resolves back to the **source text passages** those entities came from. It does **not** call an LLM to write an answer. The passages are returned as references — the same shape as KB chunks, **relevance-ranked, scored, and capped to a top-K** (see [Hybrid synthesis](#4-hybrid-synthesis--how-the-two-paths-combine)) — and the chat agent composes the final answer over them, exactly as it does for KB results. This keeps a single, consistent answering path and preserves the concise answer style.
 
 ---
 
@@ -92,6 +92,8 @@ Crucially, the service runs **only the retrieval half** of GraphRAG: it embeds t
 
 Both retrievers are **mandatory on every domain question** and are issued in the **same parallel batch**, so there is no added latency turn. The agent then merges the two reference sets and **de-duplicates by link**, with the KB (primary-source) hit winning when both return the same document.
 
+**Symmetric ranking so the two sets fuse cleanly.** The two retrievers must hand the agent reference sets it can weigh on the same terms. The KB tool returns its chunks ordered by a semantic reranker, each carrying a relevance score, capped at a small top-K. The graph tool now does the same: GraphRAG already orders the passages it surfaces by graph relevance (most-connected first), so the service **preserves that order, keeps the most-relevant passage per document, stamps a normalised relevance score on each reference, and caps the result at a comparable top-K**. Before this, the graph returned every resolved passage (~20 per query) ordered only by chunk length with no score — a large, unranked set that crowded the tightly-ranked KB list and diluted the answer on definitional questions. Ranking and capping the graph side gives both sets shared ordering semantics and a comparable size, so the agent's per-question-type weighting operates on an even footing.
+
 ```mermaid
 sequenceDiagram
     participant U as User
@@ -104,10 +106,10 @@ sequenceDiagram
     and Graph search
         A->>G: search_knowledge_graph
     end
-    K-->>A: KB references
-    G-->>A: graph references
+    K-->>A: KB references (reranked + top-K)
+    G-->>A: graph references (relevance-ranked + top-K)
     A->>A: merge + dedup by link,<br/>weight by question type
-    A-->>U: single grounded answer (150-200 words)
+    A-->>U: single grounded answer (concise + complete)
 ```
 
 The two sources are **weighted by question type** rather than blended equally (this weighting was tuned from case-level analysis of where each path helps or hurts):
@@ -115,11 +117,13 @@ The two sources are **weighted by question type** rather than blended equally (t
 - **Definitional / decorator / language-feature questions → KB is the backbone**, graph is confirmation-only, with an anti-dilution rule: don't pull in adjacent or legacy mechanisms the user didn't ask about, and prefer the KB answer if the graph contradicts it.
 - **Process / workflow / permissions / CI / release / cross-team questions → graph is the backbone**, with KB grounding exact wording and links.
 
-The answer-length target stays **150–200 words** regardless of which path leads.
+The answer aims to be **concise and in-scope**: lead with the direct answer, cover every specific fact the question needs, and cut generic padding — completeness on the specific point, not length.
 
 ---
 
 ## 5 Evaluation
 
 - **Evaluations run with memory disabled.** The agent can inject historical Q&A from its memory store; because the eval datasets are built from prior Q&A, leaving memory on leaks ground-truth answers and biases the comparison. All evaluation is run with memory off.
-- **Latest result (223-case perf set, memory off, concise answers):** KB-only **78.0 %** vs Graph RAG **81.2 %**. Case-level analysis shows Graph's advantage is concentrated in its designed strengths (relational / troubleshooting / versioning questions), with small dilutions on definitional ones — which the question-type weighting in [Hybrid synthesis](#4-hybrid-synthesis--how-the-two-paths-combine) keeps in check. Remaining failures are dominated by **corpus gaps** (short, thread-specific facts that simply aren't in the indexed corpus); the next lever is curated corpus expansion rather than further retrieval or prompt tuning.
+- **Result (223-case perf set, memory off, concise answers ~250 words).** On a like-for-like run the hybrid KB+graph configuration scores **~81 %** vs **~76 %** for KB-only. The gain comes from two reinforcing levers: **(1) symmetric graph-reference ranking** (see [Hybrid synthesis](#4-hybrid-synthesis--how-the-two-paths-combine)), which removes the earlier graph dilution on definitional questions and lifts the relational/versioning categories where the graph is designed to help; and **(2) a concise-completeness answer policy** — cover the specific expected fact and stop, rather than either capping length prematurely or padding for coverage — which raises `response_completeness`, the sole gating metric, while keeping answers in the concise ~200–300 word range. Groundedness/relevance/coherence/fluency stay at ~100 %.
+- **Remaining failures are dominated by corpus gaps** — short, thread-specific facts that simply aren't in the indexed corpus, so no retrieval or prompt change can recover them. The next lever is **curated corpus expansion**, not further retrieval or prompt tuning.
+- **Measurement caveat.** Category pass rates carry meaningful run-to-run and cross-day noise (the largest category alone swings ~±5 pp), so configurations are compared from same-day runs and small deltas are treated as noise rather than signal.

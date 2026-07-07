@@ -559,7 +559,7 @@
       const st = (l.sdkPrGitHubStatus || l.prStatus || "").toLowerCase();
       const rel = (l.releaseStatus || "").toLowerCase();
 
-      const isMergedOrCompleted = st.includes("merged") || st === "completed";
+      const isMergedOrCompleted = st === "merged" || st === "completed";
       const isReleasedOrCompleted = rel === "released" || rel === "completed";
 
       return isMergedOrCompleted && !isReleasedOrCompleted;

@@ -461,6 +461,65 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
         #endregion
 
+        #region FindPackageWorkItemIdsAsync Tests
+
+        [Test]
+        public async Task FindPackageWorkItemIdsAsync_GoLanguage_QueryUsesInConditionForBothCases()
+        {
+            // Arrange - no work items needed, just capture the query
+            // Act
+            await _devOpsService.FindPackageWorkItemIdsAsync("azure-sdk-go", "go", "1.0", CancellationToken.None);
+
+            // Assert
+            var capturedQuery = _connection.LastCapturedQuery;
+            Assert.That(capturedQuery, Does.Contain("[Custom.Language] IN ('Go', 'go')"),
+                "Go language query should search for both 'Go' and 'go' to handle ADO case inconsistency");
+        }
+
+        [Test]
+        public async Task FindPackageWorkItemIdsAsync_PythonLanguage_QueryUsesInConditionForBothCases()
+        {
+            // Arrange - no work items needed, just capture the query
+            // Act
+            await _devOpsService.FindPackageWorkItemIdsAsync("azure-core", "Python", "1.0", CancellationToken.None);
+
+            // Assert
+            var capturedQuery = _connection.LastCapturedQuery;
+            Assert.That(capturedQuery, Does.Contain("[Custom.Language] IN ('Python', 'python')"),
+                "Language query should search for both canonical and lowercase forms to handle ADO case inconsistency");
+        }
+
+        #endregion
+
+        #region ListPartialPackageWorkItemAsync Tests
+
+        [Test]
+        public async Task ListPartialPackageWorkItemAsync_GoLanguage_QueryUsesInConditionForBothCases()
+        {
+            // Arrange - no work items needed, just capture the query
+            // Act
+            await _devOpsService.ListPartialPackageWorkItemAsync("azure-sdk-go", "go", CancellationToken.None);
+
+            // Assert
+            var capturedQuery = _connection.LastCapturedQuery;
+            Assert.That(capturedQuery, Does.Contain("[Custom.Language] IN ('Go', 'go')"),
+                "Go language query should search for both 'Go' and 'go' to handle ADO case inconsistency");
+        }
+
+        [Test]
+        public async Task ListPartialPackageWorkItemAsync_PythonLanguage_QueryUsesInConditionForBothCases()
+        {
+            // Arrange - no work items needed, just capture the query
+            // Act
+            await _devOpsService.ListPartialPackageWorkItemAsync("azure-core", "Python", CancellationToken.None);
+
+            // Assert
+            var capturedQuery = _connection.LastCapturedQuery;
+            Assert.That(capturedQuery, Does.Contain("[Custom.Language] IN ('Python', 'python')"),
+                "Language query should search for both canonical and lowercase forms to handle ADO case inconsistency");
+        }
+
+        #endregion
         #region TestDevOpsConnection
 
         private class TestDevOpsConnection : IDevOpsConnection

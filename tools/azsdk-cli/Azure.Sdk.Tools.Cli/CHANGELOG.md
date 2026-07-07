@@ -1,16 +1,14 @@
 # Release History
 
-## 0.6.25 (Unreleased)
+## 0.6.25 (2026-07-07)
 
 ### Features Added
 
-### Breaking Changes
+- `azsdk_update_sdk_details_in_release_plan` now marks languages with missing emitter configuration in the TypeSpec project as `MissingEmitterConfig` instead of `Requested` in the release plan work item, so the release plan dashboard shows a distinct "Missing emitter configuration" label instead of the misleading "Exclusion Requested" label.
 
 ### Bugs Fixed
 
-- `azsdk_update_sdk_details_in_release_plan` now marks languages with missing emitter configuration in the TypeSpec project as `MissingEmitterConfig` instead of `Requested` in the release plan work item, so the release plan dashboard shows a distinct "Missing emitter configuration" label instead of the misleading "Exclusion Requested" label.
-
-### Other Changes
+- The create release plan tool no longer accepts an `--sdk-type` parameter. The SDK release type is now always derived from the API release type (GA maps to a stable SDK release, preview maps to a beta SDK release), preventing a stable SDK release from a preview API version.
 
 ## 0.6.24 (2026-06-30)
 

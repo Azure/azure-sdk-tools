@@ -102,7 +102,7 @@ extends:
 
                     python scripts/evaluate_channel_conversations.py \
                       "${EVAL_ARGS[@]}" \
-                      --output "$OUTPUT_DIR/channel_conversation_evaluation.json"
+                      --output "$OUTPUT_DIR"
                 env:
                   AZURE_CORE_WELCOME_MESSAGE: 'false'
                   AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)

@@ -4,12 +4,13 @@ Reads channel conversation threads over a time window from Cosmos DB and asks
 an LLM to judge each bot answer as ``correct``, ``incorrect``, or ``unknown`` —
 using the user's question and any subsequent human expert reply as context.
 
-Results are logged and written as a JSON artifact suitable for a pipeline to
-publish.
+Results are logged and written as per-channel JSON artifacts (one file per
+channel plus an ``index.json``) into an output directory suitable for a
+pipeline to publish.
 
 Usage::
 
-    # Evaluate the last 7 days (default) and write the artifact
+    # Evaluate the last 7 days (default) and write the artifacts
     python scripts/evaluate_channel_conversations.py
 
     # Evaluate the last 1 day
@@ -19,8 +20,8 @@ Usage::
     python scripts/evaluate_channel_conversations.py \
         --start 2026-07-01T00:00:00 --end 2026-07-02T00:00:00
 
-    # Cap the number of threads and choose the artifact path
-    python scripts/evaluate_channel_conversations.py --limit 20 --output out/eval.json
+    # Cap the number of threads and choose the output directory
+    python scripts/evaluate_channel_conversations.py --limit 20 --output out/eval
 """
 
 from __future__ import annotations
@@ -29,6 +30,7 @@ import argparse
 import asyncio
 import json
 import logging
+import re
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -58,7 +60,7 @@ from utils.azure_storage import close_storage_client, download_blob
 
 logger = logging.getLogger("evaluate_channel_conversations")
 
-_DEFAULT_OUTPUT = _PROJECT_DIR / "channel_conversation_evaluation.json"
+_DEFAULT_OUTPUT = _PROJECT_DIR / "channel_conversation_evaluation"
 
 # Fixed Microsoft tenant used when constructing Teams message deep links,
 # matching the Logic App's MessageLink formula.
@@ -347,47 +349,77 @@ def _log_summary(
             logger.info("    reasoning       : %s", t.reasoning)
 
 
+def _channel_slug(channel_id: str, channel_name: str) -> str:
+    """Build a filesystem-safe file stem for a channel."""
+    base = channel_name if channel_name and channel_name != channel_id else channel_id
+    slug = re.sub(r"[^0-9A-Za-z]+", "-", base).strip("-").lower()
+    return slug or "channel"
+
+
 def _write_artifact(
     threads: Sequence[ConversationEvaluationItem],
     output: Path,
     channel_names: dict[str, str] | None = None,
 ) -> None:
-    """Write the evaluation results as a JSON array grouped by channel."""
+    """Write one JSON file per channel into the ``output`` directory."""
     channel_names = channel_names or {}
-    output.parent.mkdir(parents=True, exist_ok=True)
+    output.mkdir(parents=True, exist_ok=True)
 
     channels: dict[str, list[ConversationEvaluationItem]] = {}
     for t in threads:
         channels.setdefault(_channel_key(t), []).append(t)
 
-    groups = []
+    index = []
+    used_slugs: dict[str, int] = {}
     for channel, items in channels.items():
+        channel_name = channel_names.get(channel, channel)
         correct = sum(1 for t in items if t.verdict == BotAnswerVerdict.Correct)
         incorrect = sum(
             1 for t in items if t.verdict == BotAnswerVerdict.Incorrect
         )
         unknown = len(items) - correct - incorrect
-        groups.append(
+        summary = {
+            "threads": len(items),
+            "correct": correct,
+            "incorrect": incorrect,
+            "unknown": unknown,
+            "correct_rate": round(100.0 * correct / len(items), 1)
+            if items
+            else 0.0,
+        }
+        group = {
+            "channel_id": channel,
+            "channel_name": channel_name,
+            "summary": summary,
+            "conversations": [t.model_dump(mode="json") for t in items],
+        }
+
+        slug = _channel_slug(channel, channel_name)
+        seen = used_slugs.get(slug, 0)
+        used_slugs[slug] = seen + 1
+        file_stem = slug if seen == 0 else f"{slug}-{seen + 1}"
+        file_name = f"{file_stem}.json"
+
+        channel_path = output / file_name
+        channel_path.write_text(
+            json.dumps(group, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
+        logger.info("Wrote channel artifact: %s", channel_path)
+
+        index.append(
             {
                 "channel_id": channel,
-                "channel_name": channel_names.get(channel, channel),
-                "summary": {
-                    "threads": len(items),
-                    "correct": correct,
-                    "incorrect": incorrect,
-                    "unknown": unknown,
-                    "correct_rate": round(100.0 * correct / len(items), 1)
-                    if items
-                    else 0.0,
-                },
-                "conversations": [t.model_dump(mode="json") for t in items],
+                "channel_name": channel_name,
+                "file": file_name,
+                "summary": summary,
             }
         )
 
-    output.write_text(
-        json.dumps(groups, indent=2, ensure_ascii=False), encoding="utf-8"
+    index_path = output / "index.json"
+    index_path.write_text(
+        json.dumps(index, indent=2, ensure_ascii=False), encoding="utf-8"
     )
-    logger.info("Wrote evaluation artifact: %s", output)
+    logger.info("Wrote channel index: %s", index_path)
 
 
 
@@ -424,7 +456,10 @@ async def main() -> None:
         "-o",
         type=str,
         default=str(_DEFAULT_OUTPUT),
-        help=f"Path to write the JSON artifact. Default: {_DEFAULT_OUTPUT}",
+        help=(
+            "Directory to write per-channel JSON artifacts (plus index.json). "
+            f"Default: {_DEFAULT_OUTPUT}"
+        ),
     )
     parser.add_argument(
         "--verbose",

@@ -8,6 +8,8 @@
 
 ### Bugs Fixed
 
+- The create release plan tool no longer accepts an `--sdk-type` parameter. The SDK release type is now always derived from the API release type (GA maps to a stable SDK release, preview maps to a beta SDK release), preventing a stable SDK release from a preview API version.
+
 ### Other Changes
 
 ## 0.6.24 (2026-06-30)

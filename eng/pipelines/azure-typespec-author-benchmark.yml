@@ -9,10 +9,10 @@
 #
 # Structure:
 # - Stage: EvalTypeSpecAuthor
-# - Job A: RunEvalsForCodeQuality   -> uses forced eval mode
-# - Job B: RunEvalsForSkillInvokation -> uses trigger eval mode
-# - Each job executes 5 domain suites (versioning, armtemplate, longrunningoperation,
-#   decorators, warning) as separate steps and uploads artifacts.
+# - Job A: RunEvalsForCodeQuality   -> uses forced suite branches
+# - Job B: RunEvalsForSkillInvocation -> uses trigger suite branches
+# - Each job executes 5 suite branches (versioning, armtemplate,
+#   longrunningoperation, decorators, warning) as separate steps and uploads artifacts.
 #
 # Why split by suite:
 # - Faster fault isolation: failures are scoped to a small case group.
@@ -45,8 +45,9 @@ extends:
           image: $(LINUXVMIMAGE)
           os: linux
         jobs:
-          # Forced mode: each suite runs in an independent step to isolate failures
-          # and simplify error-log lookup by suite name.
+          # Forced mode: each .vally.yaml suite branch runs in an independent step.
+          # Vally 0.6.0 supports parallel execution across multiple eval files, so
+          # this no longer needs suites/forced.eval.yaml plus tag filtering.
           - job: RunEvalsForCodeQuality
             displayName: Run Vally Evaluations for Code Quality
             timeoutInMinutes: 170
@@ -60,43 +61,36 @@ extends:
                 parameters:
                   SkillBranch: ${{ parameters.SkillBranch }}
 
-              # Run evaluations — each suite gets its own step with timeout
-              # and continueOnError so failures don't block subsequent suites.
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: forced.eval.yaml
+                  Suite: versioning-forced
                   SuiteName: versioning-forced
                   DisplayName: Run force invokation suite - versioning
                   TimeoutMinutes: 50
-                  Tag: suite=versioning
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: forced.eval.yaml
+                  Suite: armtemplate-forced
                   SuiteName: armtemplate-forced
                   DisplayName: Run force invokation suite - armtemplate
                   TimeoutMinutes: 40
-                  Tag: suite=armtemplate
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: forced.eval.yaml
+                  Suite: longrunningoperation-forced
                   SuiteName: longrunningoperation-forced
                   DisplayName: Run force invokation suite - longrunningoperation
                   TimeoutMinutes: 25
-                  Tag: suite=lro
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: forced.eval.yaml
+                  Suite: decorators-forced
                   SuiteName: decorators-forced
                   DisplayName: Run force invokation suite - decorators
                   TimeoutMinutes: 15
-                  Tag: suite=decorators
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: forced.eval.yaml
+                  Suite: warning-forced
                   SuiteName: warning-forced
                   DisplayName: Run force invokation suite - warning
                   TimeoutMinutes: 25
-                  Tag: suite=warning
 
             templateContext:
               outputs:
@@ -112,8 +106,8 @@ extends:
                   displayName: Upload QA bot backend log
                   condition: always()
 
-          # Trigger mode: same suite split strategy for comparable diagnostics
-          # and easier cross-mode failure analysis.
+          # Trigger mode: same .vally.yaml suite branch strategy for comparable
+          # diagnostics and easier cross-mode failure analysis.
           - job: RunEvalsForSkillInvocation
             displayName: Run Vally Evaluations for Skill Invocation
             timeoutInMinutes: 170
@@ -133,39 +127,34 @@ extends:
               # and continueOnError so failures don't block subsequent suites.
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: trigger.eval.yaml
-                  SuiteName: versioning
+                  Suite: versioning-trigger
+                  SuiteName: versioning-trigger
                   DisplayName: Run suite - versioning
                   TimeoutMinutes: 50
-                  Tag: suite=versioning
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: trigger.eval.yaml
-                  SuiteName: armtemplate
+                  Suite: armtemplate-trigger
+                  SuiteName: armtemplate-trigger
                   DisplayName: Run suite - armtemplate
                   TimeoutMinutes: 40
-                  Tag: suite=armtemplate
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: trigger.eval.yaml
-                  SuiteName: longrunningoperation
+                  Suite: longrunningoperation-trigger
+                  SuiteName: longrunningoperation-trigger
                   DisplayName: Run suite - longrunningoperation
                   TimeoutMinutes: 25
-                  Tag: suite=lro
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: trigger.eval.yaml
-                  SuiteName: decorators
+                  Suite: decorators-trigger
+                  SuiteName: decorators-trigger
                   DisplayName: Run suite - decorators
                   TimeoutMinutes: 15
-                  Tag: suite=decorators
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: trigger.eval.yaml
-                  SuiteName: warning
+                  Suite: warning-trigger
+                  SuiteName: warning-trigger
                   DisplayName: Run suite - warning
                   TimeoutMinutes: 25
-                  Tag: suite=warning
 
             templateContext:
               outputs:

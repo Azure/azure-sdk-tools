@@ -1,0 +1,46 @@
+name: azsdk-typespec-generate-authoring-plan-tool-eval
+description: |
+  Verify that prompts correctly invoke the expected Azure SDK MCP tools.
+  Each stimulus is a single user prompt that should trigger a specific tool.
+version: "1.0"
+type: capability
+
+environment: azsdk-mcp
+
+config:
+  runs: 1
+  timeout: 120s
+  executor: copilot-sdk
+  model: claude-opus-4.6
+
+tags: 
+  priority: p0
+
+stimuli:
+  # ==== azsdk_typespec_generate_authoring_plan triggers ====
+  - name: 002010-arm-action-sync-operation
+    prompt: |
+      invoke azure-sdk-mcp-azsdk_typespec_generate_authoring_plan mcp tool with parameter:
+      request - In the Widget project, add a sync operation exportData for employee resource.
+    constraints:
+      max_turns: 10
+      max_tokens: 5000
+    environment:
+      files:
+      - src: ../fixtures/002010-arm-action-sync-operation/employee.tsp
+        dest: employee.tsp
+      - src: ../fixtures/002010-arm-action-sync-operation/main.tsp
+        dest: main.tsp
+      - src: ../fixtures/002010-arm-action-sync-operation/package.json
+        dest: package.json
+      - src: ../fixtures/002010-arm-action-sync-operation/readme.md
+        dest: readme.md
+      - src: ../fixtures/002010-arm-action-sync-operation/shared.tsp
+        dest: shared.tsp
+      - src: ../fixtures/002010-arm-action-sync-operation/tspconfig.yaml
+        dest: tspconfig.yaml
+    graders:
+    - type: tool-calls
+      config:
+        required:
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan

@@ -83,7 +83,8 @@ extends:
 
                     pip install -r requirements.txt --retries 5 --timeout 60
 
-                    mkdir -p "$(Build.ArtifactStagingDirectory)"
+                    OUTPUT_DIR="$(Build.ArtifactStagingDirectory)/eval"
+                    mkdir -p "$OUTPUT_DIR"
 
                     EVAL_ARGS=()
                     START_DATE="$(echo '${{ parameters.startDate }}' | xargs)"
@@ -101,7 +102,7 @@ extends:
 
                     python scripts/evaluate_channel_conversations.py \
                       "${EVAL_ARGS[@]}" \
-                      --output "$(Build.ArtifactStagingDirectory)/channel_conversation_evaluation.json"
+                      --output "$OUTPUT_DIR/channel_conversation_evaluation.json"
                 env:
                   AZURE_CORE_WELCOME_MESSAGE: 'false'
                   AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
@@ -110,5 +111,5 @@ extends:
               - task: 1ES.PublishPipelineArtifact@1
                 displayName: 'Publish Evaluation Artifact'
                 inputs:
-                  targetPath: '$(Build.ArtifactStagingDirectory)/channel_conversation_evaluation.json'
+                  targetPath: '$(Build.ArtifactStagingDirectory)/eval'
                   artifactName: 'channel-conversation-evaluation'

@@ -7,9 +7,12 @@ description: |
   plan work item ID created in turn 0 is reused in turn 1).
 
   These complement the single-turn routing scenarios in
-  release-planner-workflows.eval.yaml. Graders are scoped per conversation turn
-  via the `turn:` field so each turn's skill/tool routing is asserted
-  independently:
+  release-planner-workflows.eval.yaml. Where a turn's routing is unambiguous the
+  graders pin to that turn via the `turn:` field; scenarios whose intent is a
+  whole-conversation property (e.g. a vague opener the agent may act on
+  immediately, or a required tool the agent may call during either step) assert
+  session-wide (no `turn:`), so front-loading or spreading work across turns does
+  not cause a false failure:
 
     1. create-then-generate       — create a release plan, then generate SDKs
                                      for the plan created in the previous turn.
@@ -165,37 +168,29 @@ stimuli:
       max_turns: 14
       max_tokens: 20000
     graders:
-      # Turn 0 — update the spec PR on the plan.
+      # Session-scoped: the conversation must update the spec PR on the plan and
+      # regenerate via the pipeline, never publishing, re-verifying, creating a
+      # new plan, or generating locally. Turn-pinning is avoided because the agent
+      # may call `azsdk_get_release_plan` during either the update or the
+      # regenerate step.
       - type: skill-invocation
-        turn: 0
         config:
           required:
             - azsdk-common-prepare-release-plan
-      - type: tool-calls
-        turn: 0
-        config:
-          required:
-            - azsdk_get_release_plan
-            - azsdk_update_api_spec_pull_request_in_release_plan
-          disallowed:
-            - azsdk_verify_setup
-            - azsdk_create_release_plan
-      # Turn 1 — regenerate via the pipeline for the same plan.
-      - type: skill-invocation
-        turn: 1
-        config:
-          required:
             - azsdk-common-generate-sdk-pipeline
           disallowed:
             - azsdk-common-generate-sdk-locally
       - type: tool-calls
-        turn: 1
         config:
           required:
+            - azsdk_get_release_plan
+            - azsdk_update_api_spec_pull_request_in_release_plan
             - azsdk_run_generate_sdk
           disallowed:
             - azsdk_release_sdk
             - azsdk_verify_setup
+            - azsdk_create_release_plan
+            - azsdk_package_generate_code
 
   # --- Scenario 4: Vague first turn, then clarify with the release plan
   # A vague opening must not jump to azsdk_release_sdk (or re-verify setup);
@@ -215,23 +210,17 @@ stimuli:
       max_turns: 14
       max_tokens: 20000
     graders:
-      # Turn 0 — vague: must not grab the release (publish) tool or re-verify.
-      - type: tool-calls
-        turn: 0
-        config:
-          disallowed:
-            - azsdk_release_sdk
-            - azsdk_verify_setup
-      # Turn 1 — clarified: route to pipeline generation.
+      # Session-scoped: the conversation must route to pipeline generation and
+      # must never publish (release_sdk), re-verify, or generate locally
+      # (package_generate_code). The vague opener may trigger brief local
+      # exploration, so the local *skill* is not disallowed at session scope; the
+      # tool-level guard (no package_generate_code) is what enforces correct
+      # routing.
       - type: skill-invocation
-        turn: 1
         config:
           required:
             - azsdk-common-generate-sdk-pipeline
-          disallowed:
-            - azsdk-common-generate-sdk-locally
       - type: tool-calls
-        turn: 1
         config:
           required:
             - azsdk_get_release_plan
@@ -239,6 +228,7 @@ stimuli:
           disallowed:
             - azsdk_release_sdk
             - azsdk_verify_setup
+            - azsdk_package_generate_code
 
   # --- Scenario 5: vague opening, then reveals LOCAL intent (#16226) ---
   # Counterpart to scenario 4 (which clarifies toward the pipeline): here the
@@ -259,31 +249,25 @@ stimuli:
       max_turns: 16
       max_tokens: 22000
     graders:
-      # Turn 0 — vague: a clarifying question is correct, so assert only that the
-      # agent does not jump to the release/publish or verify tools.
-      - type: tool-calls
-        turn: 0
-        config:
-          disallowed:
-            - azsdk_release_sdk
-            - azsdk_verify_setup
-      # Turn 1 — context revealed -> LOCAL: local skill + local codegen, never the
-      # pipeline tool.
+      # Session-scoped: the conversation must route to LOCAL generation (local
+      # skill + package_generate_code) and never touch the pipeline/publish path
+      # or re-verify. The agent commonly acts on the first, already-actionable
+      # turn rather than waiting for the clarifying turn, so these are asserted
+      # session-wide rather than pinned to a single turn.
       - type: skill-invocation
-        turn: 1
         config:
           required:
             - azsdk-common-generate-sdk-locally
           disallowed:
             - azsdk-common-generate-sdk-pipeline
       - type: tool-calls
-        turn: 1
         config:
           required:
             - azsdk_package_generate_code
           disallowed:
             - azsdk_run_generate_sdk
             - azsdk_release_sdk
+            - azsdk_verify_setup
 
   # --- Scenario 6: local first, then the user switches to pipeline (#16226)
   # A self-contained local request, then the user changes their mind mid-session

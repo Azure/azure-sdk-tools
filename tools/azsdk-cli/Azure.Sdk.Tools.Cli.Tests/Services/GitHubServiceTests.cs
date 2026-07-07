@@ -54,7 +54,7 @@ public class GitHubServiceTests
     }
 
     [Test]
-    public async Task ReadWithAnonymousFallback_retries_authenticated_when_anonymous_requires_auth()
+    public async Task ReadWithAnonymousFallback_RetriesAuthenticated_WhenAnonymousRequiresAuth()
     {
         // A token is available in the environment, so the authenticated fallback can succeed.
         Environment.SetEnvironmentVariable("GITHUB_TOKEN", "fake-token", EnvironmentVariableTarget.Process);

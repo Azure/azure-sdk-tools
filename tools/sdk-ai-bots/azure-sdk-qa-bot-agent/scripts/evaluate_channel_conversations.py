@@ -68,6 +68,10 @@ _TEAMS_TENANT_ID = "72f988bf-86f1-41af-91ab-2d7cd011db47"
 _CHANNEL_CONFIG_CONTAINER = "bot-configs"
 _CHANNEL_CONFIG_BLOB = "channel.yaml"
 
+# Channels whose display name ends with this suffix (case-insensitive) are
+# treated as testing channels and excluded from evaluation.
+_TESTING_CHANNEL_SUFFIX = "testing"
+
 
 async def _load_channel_names() -> dict[str, str]:
     """Load the ``channel_id`` -> display ``name`` map from ``channel.yaml``.
@@ -165,12 +169,33 @@ def _resolve_teams_link(
     )
 
 
+def _messages_channel_key(
+    messages: Sequence[ConversationMessageItem],
+) -> str | None:
+    """Derive the Teams channel id a group of messages belongs to.
+
+    Prefers the user message's ``extra_info.channel_id`` and falls back to
+    splitting the ``conversation_id`` on the ``;messageid=`` root suffix.
+    """
+    for m in messages:
+        channel_id = (
+            m.extra_info.channel_id if m.extra_info else None
+        )
+        if channel_id:
+            return channel_id
+    for m in messages:
+        if m.conversation_id:
+            return m.conversation_id.split(";messageid=", 1)[0]
+    return None
+
+
 async def _run_evaluation(
     service: ConversationService,
     start: datetime,
     end: datetime,
     *,
     limit: int | None,
+    excluded_channels: set[str] | None = None,
 ) -> list[ConversationEvaluationItem]:
     """Evaluate every conversation that started in the window.
 
@@ -181,12 +206,19 @@ async def _run_evaluation(
     messages = await service.get_messages_in_period(start, end)
     conversations = ConversationService.group_by_conversation(messages)
     total_threads = len(conversations)
+    excluded_channels = excluded_channels or set()
 
     threads: list[ConversationEvaluationItem] = []
     skipped = 0
+    excluded = 0
     for partition, items in conversations.items():
         if limit is not None and len(threads) >= limit:
             break
+
+        channel_key = _messages_channel_key(items)
+        if channel_key and channel_key in excluded_channels:
+            excluded += 1
+            continue
 
         try:
             conv_eval = await service.evaluate_conversation(items)
@@ -209,10 +241,11 @@ async def _run_evaluation(
     unknown = len(threads) - correct - incorrect
     logger.info(
         "Evaluation run complete: conversations=%d evaluated=%d skipped=%d "
-        "correct=%d incorrect=%d unknown=%d",
+        "excluded=%d correct=%d incorrect=%d unknown=%d",
         total_threads,
         len(threads),
         skipped,
+        excluded,
         correct,
         incorrect,
         unknown,
@@ -415,9 +448,28 @@ async def main() -> None:
 
     try:
         service = ConversationService()
-        threads = await _run_evaluation(service, start, end, limit=args.limit)
-
         channel_names = await _load_channel_names()
+        excluded_channels = {
+            channel_id
+            for channel_id, name in channel_names.items()
+            if name.strip().lower().endswith(_TESTING_CHANNEL_SUFFIX)
+        }
+        if excluded_channels:
+            logger.info(
+                "Excluding %d testing channel(s): %s",
+                len(excluded_channels),
+                ", ".join(
+                    sorted(channel_names[c] for c in excluded_channels)
+                ),
+            )
+        threads = await _run_evaluation(
+            service,
+            start,
+            end,
+            limit=args.limit,
+            excluded_channels=excluded_channels,
+        )
+
         _log_summary(threads, start, end, channel_names)
         _write_artifact(threads, Path(args.output), channel_names)
     finally:

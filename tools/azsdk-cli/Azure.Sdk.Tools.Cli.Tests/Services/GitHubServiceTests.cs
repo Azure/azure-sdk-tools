@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using System.Net;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
 using Moq;
@@ -13,11 +14,12 @@ public class GitHubServiceTests
     private string? originalGitHubToken;
     private string? originalGitHubPat;
 
-    // Exposes the protected read-only client selection so it can be exercised in isolation.
+    // Exposes the protected anonymous-first read helper so it can be exercised in isolation.
     private sealed class TestableGitConnection : GitConnection
     {
         public TestableGitConnection(IProcessHelper processHelper) : base(processHelper) { }
-        public GitHubClient GetReadOnlyClientForTest() => GetReadOnlyClient();
+        public Task<T> ReadWithAnonymousFallbackForTest<T>(Func<GitHubClient, Task<T>> operation)
+            => ReadWithAnonymousFallbackAsync(operation, CancellationToken.None);
     }
 
     [SetUp]
@@ -38,33 +40,59 @@ public class GitHubServiceTests
     }
 
     [Test]
-    public void GetReadOnlyClient_returns_anonymous_client_when_no_auth_token_available()
+    public async Task ReadWithAnonymousFallback_uses_anonymous_client_when_public_read_succeeds()
     {
-        // Simulate `gh auth token` failing (user not authenticated).
+        var processHelperMock = new Mock<IProcessHelper>();
+        var connection = new TestableGitConnection(processHelperMock.Object);
+
+        var usedAuthType = await connection.ReadWithAnonymousFallbackForTest(
+            client => Task.FromResult(client.Credentials.AuthenticationType));
+
+        Assert.That(usedAuthType, Is.EqualTo(AuthenticationType.Anonymous));
+        // No authentication was attempted for a successful anonymous read.
+        processHelperMock.Verify(x => x.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task ReadWithAnonymousFallback_retries_authenticated_when_anonymous_requires_auth()
+    {
+        // A token is available in the environment, so the authenticated fallback can succeed.
+        Environment.SetEnvironmentVariable("GITHUB_TOKEN", "fake-token", EnvironmentVariableTarget.Process);
+        var processHelperMock = new Mock<IProcessHelper>();
+        var connection = new TestableGitConnection(processHelperMock.Object);
+
+        // Simulate GitHub hiding a private resource as Not Found for the anonymous client.
+        var usedAuthType = await connection.ReadWithAnonymousFallbackForTest(client =>
+        {
+            if (client.Credentials.AuthenticationType == AuthenticationType.Anonymous)
+            {
+                throw new NotFoundException("Not Found", HttpStatusCode.NotFound);
+            }
+            return Task.FromResult(client.Credentials.AuthenticationType);
+        });
+
+        Assert.That(usedAuthType, Is.EqualTo(AuthenticationType.Bearer));
+    }
+
+    [Test]
+    public void ReadWithAnonymousFallback_prompts_for_auth_when_required_and_no_token()
+    {
+        // No token in the environment and `gh auth token` fails, so the authenticated fallback must
+        // surface the standard authentication guidance instead of silently swallowing the failure.
         var processHelperMock = new Mock<IProcessHelper>();
         processHelperMock
             .Setup(x => x.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ProcessResult { ExitCode = 1 });
-
         var connection = new TestableGitConnection(processHelperMock.Object);
 
-        var client = connection.GetReadOnlyClientForTest();
-
-        Assert.That(client.Credentials.AuthenticationType, Is.EqualTo(AuthenticationType.Anonymous));
-    }
-
-    [Test]
-    public void GetReadOnlyClient_returns_authenticated_client_when_token_available()
-    {
-        Environment.SetEnvironmentVariable("GITHUB_TOKEN", "fake-token", EnvironmentVariableTarget.Process);
-        var processHelperMock = new Mock<IProcessHelper>();
-
-        var connection = new TestableGitConnection(processHelperMock.Object);
-
-        var client = connection.GetReadOnlyClientForTest();
-
-        Assert.That(client.Credentials.AuthenticationType, Is.EqualTo(AuthenticationType.Bearer));
-        // `gh auth token` should not be invoked when a token is already present in the environment.
-        processHelperMock.Verify(x => x.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await connection.ReadWithAnonymousFallbackForTest<int>(client =>
+            {
+                if (client.Credentials.AuthenticationType == AuthenticationType.Anonymous)
+                {
+                    throw new NotFoundException("Not Found", HttpStatusCode.NotFound);
+                }
+                return Task.FromResult(0);
+            }));
     }
 }

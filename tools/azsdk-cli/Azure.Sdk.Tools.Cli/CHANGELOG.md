@@ -8,7 +8,7 @@
 
 ### Bugs Fixed
 
-- Reading the status, checks, and labels of a public pull request (for example, the spec pull request during SDK generation) no longer requires GitHub authentication. These read-only operations now fall back to an unauthenticated GitHub client when no token is available, so users are not prompted to run `gh auth login` for public-repository reads.
+- Reading the status, checks, and labels of a public pull request (for example, the spec pull request during SDK generation) no longer requires GitHub authentication. These read-only operations are now attempted anonymously first, and only fall back to an authenticated request (prompting the user to run `gh auth login`) when GitHub indicates authentication is required, such as for a private repository.
 
 - The create release plan tool no longer accepts an `--sdk-type` parameter. The SDK release type is now always derived from the API release type (GA maps to a stable SDK release, preview maps to a beta SDK release), preventing a stable SDK release from a preview API version.
 

@@ -24,7 +24,6 @@ namespace Azure.Sdk.Tools.Cli.Services
         private readonly IProcessHelper processHelper;
         private GitHubClient? _gitHubClient; // Backing field for the property
         private GitHubClient? _anonymousGitHubClient; // Backing field for the anonymous client
-        private bool _authTokenUnavailable; // Cache negative auth lookups to avoid repeated `gh auth token` calls
 
         protected GitConnection(IProcessHelper processHelper)
         {
@@ -54,73 +53,21 @@ namespace Azure.Sdk.Tools.Cli.Services
             _anonymousGitHubClient ??= new GitHubClient(new ProductHeaderValue("AzureSDKDevToolsMCP"));
 
         /// <summary>
-        /// Returns an authenticated GitHub client when a token is available, otherwise an anonymous client
-        /// suitable for read-only access to public repositories. Unlike <see cref="gitHubClient"/>, this does
-        /// not throw when the user is not authenticated, so operations that only read public data (for example,
-        /// checking the status or labels of a public spec pull request during SDK generation) do not force the
-        /// user to run `gh auth login`.
+        /// Runs a read-only GitHub operation anonymously first so that public data (for example, the status
+        /// or labels of a public spec pull request during SDK generation) can be read without authentication.
+        /// If the anonymous request fails (the resource is private, access is forbidden, or the rate limit is
+        /// exhausted), it is retried with an authenticated client, which prompts the user to run `gh auth login`
+        /// when no token is available.
         /// </summary>
-        protected GitHubClient GetReadOnlyClient()
+        protected async Task<T> ReadWithAnonymousFallbackAsync<T>(Func<GitHubClient, Task<T>> operation, CancellationToken ct)
         {
-            if (_gitHubClient != null)
-            {
-                return _gitHubClient;
-            }
-
-            if (!_authTokenUnavailable && TryGetGitHubAuthToken(out var token))
-            {
-                _gitHubClient = new GitHubClient(new ProductHeaderValue("AzureSDKDevToolsMCP"))
-                {
-                    Credentials = new Credentials(token, AuthenticationType.Bearer)
-                };
-                return _gitHubClient;
-            }
-
-            _authTokenUnavailable = true;
-            return anonymousGitHubClient;
-        }
-
-        /// <summary>
-        /// Attempts to resolve a GitHub auth token without throwing. Returns true and sets <paramref name="token"/>
-        /// when a token is available (from the GITHUB_TOKEN / GITHUB_PERSONAL_ACCESS_TOKEN environment variables or
-        /// the GitHub CLI); otherwise returns false.
-        /// </summary>
-        protected bool TryGetGitHubAuthToken(out string token)
-        {
-            token = Environment.GetEnvironmentVariable("GITHUB_TOKEN") ?? string.Empty;
-            if (!string.IsNullOrEmpty(token))
-            {
-                return true;
-            }
-
-            var patToken = Environment.GetEnvironmentVariable("GITHUB_PERSONAL_ACCESS_TOKEN");
-            if (!string.IsNullOrEmpty(patToken))
-            {
-                Environment.SetEnvironmentVariable("GITHUB_TOKEN", patToken, EnvironmentVariableTarget.Process);
-                token = patToken;
-                return true;
-            }
-
             try
             {
-                var options = new ProcessOptions("gh", ["auth", "token"], timeout: TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs));
-                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs));
-                var result = processHelper.Run(options, timeoutCts.Token).GetAwaiter().GetResult();
-                var ghToken = result.ExitCode == 0 ? result.Stdout.Trim() : string.Empty;
-                if (string.IsNullOrWhiteSpace(ghToken))
-                {
-                    token = string.Empty;
-                    return false;
-                }
-
-                Environment.SetEnvironmentVariable("GITHUB_TOKEN", ghToken, EnvironmentVariableTarget.Process);
-                token = ghToken;
-                return true;
+                return await operation(anonymousGitHubClient);
             }
-            catch
+            catch (Octokit.ApiException)
             {
-                token = string.Empty;
-                return false;
+                return await operation(gitHubClient);
             }
         }
 
@@ -229,8 +176,8 @@ namespace Azure.Sdk.Tools.Cli.Services
         public async Task<PullRequest> GetPullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
         {
             // Reading a pull request (including its status and labels) is a read-only operation that works
-            // anonymously for public repositories, so avoid forcing GitHub authentication here.
-            var pullRequest = await GetReadOnlyClient().PullRequest.Get(repoOwner, repoName, pullRequestNumber);
+            // anonymously for public repositories, so try anonymously first and only prompt for auth if needed.
+            var pullRequest = await ReadWithAnonymousFallbackAsync(client => client.PullRequest.Get(repoOwner, repoName, pullRequestNumber), ct);
             return pullRequest;
         }
 
@@ -270,7 +217,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             try
             {
                 logger.LogInformation("Getting head SHA for PR #{PullRequestNumber} in {Owner}/{Repo}", pullRequestNumber, repoOwner, repoName);
-                var pr = await GetReadOnlyClient().PullRequest.Get(repoOwner, repoName, pullRequestNumber);
+                var pr = await ReadWithAnonymousFallbackAsync(client => client.PullRequest.Get(repoOwner, repoName, pullRequestNumber), ct);
                 return pr?.Head?.Sha;
             }
             catch (Exception ex)
@@ -575,7 +522,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                     throw new NotFoundException($"Pull request {pullRequestNumber} not found.", System.Net.HttpStatusCode.NotFound);
                 }
 
-                var checkResponse = await GetReadOnlyClient().Check.Run.GetAllForReference(repoOwner, repoName, pr.Head.Sha);
+                var checkResponse = await ReadWithAnonymousFallbackAsync(client => client.Check.Run.GetAllForReference(repoOwner, repoName, pr.Head.Sha), ct);
                 if (checkResponse == null || checkResponse.TotalCount == 0)
                 {
                     logger.LogError("No checkruns found for pull request.");

@@ -46,24 +46,46 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 _token = credential.GetToken(new TokenRequestContext([Constants.AZURE_DEVOPS_TOKEN_SCOPE]), ct);
             }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
             catch
             {
-                credential = new InteractiveBrowserCredential(new InteractiveBrowserCredentialOptions { TenantId = null });
-                // Retry with interactive browser credential if the initial credential fails
-                _token = credential.GetToken(new TokenRequestContext([Constants.AZURE_DEVOPS_TOKEN_SCOPE]), ct);
+                try
+                {
+                    credential = new InteractiveBrowserCredential(new InteractiveBrowserCredentialOptions { TenantId = null });
+                    // Retry with interactive browser credential if the initial credential fails
+                    _token = credential.GetToken(new TokenRequestContext([Constants.AZURE_DEVOPS_TOKEN_SCOPE]), ct);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception(GetAuthenticationFailureMessage(), ex);
+                }
             }
             // If we still don't have a token, throw an exception
             if (_token == null)
             {
-                throw new Exception("Failed to get devops access token. " +
-                                    "Ensure you have access to the azure-sdk devops project (http://aka.ms/azsdk/access)" +
-                                    "and are logged in via az cli, az powershell, vs/vscode or interactive browser sign-in.");
+                throw new Exception(GetAuthenticationFailureMessage());
             }
 
             var connection = new VssConnection(new Uri(Constants.AZURE_SDK_DEVOPS_BASE_URL), new VssOAuthAccessTokenCredential(_token?.Token));
             _buildClient = connection.GetClient<BuildHttpClient>();
             _workItemClient = connection.GetClient<WorkItemTrackingHttpClient>();
             _projectClient = connection.GetClient<ProjectHttpClient>();
+        }
+
+        private static string GetAuthenticationFailureMessage()
+        {
+            return "Failed to authenticate with Azure DevOps. " +
+                   "The azsdk tool can only access Azure DevOps work items and Azure resources when you are signed in with the default Microsoft tenant (microsoft.onmicrosoft.com). " +
+                   "If you are signed in with a different tenant, sign in again with the Azure CLI using the default tenant: " +
+                   "`az login --tenant microsoft.onmicrosoft.com`. " +
+                   "Also ensure you have access to the azure-sdk DevOps project (https://aka.ms/azsdk/access).";
         }
 
         public BuildHttpClient GetBuildClient(CancellationToken ct)

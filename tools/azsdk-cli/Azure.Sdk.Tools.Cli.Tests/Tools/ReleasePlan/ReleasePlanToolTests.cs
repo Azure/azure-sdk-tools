@@ -157,6 +157,43 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.True(releaseplan.ResponseError.Contains("Invalid spec pull request URL"));
         }
 
+        [Test]
+        public async Task Test_Create_releasePlan_from_language_repo_returns_guidance()
+        {
+            // Simulate running from a language SDK repository (or any non-spec repo): the git remote
+            // is not an azure-rest-api-specs(-pr) repo, so the tool should guide the user to provide an
+            // absolute path or run from the specs repo instead of reporting a private-repo error.
+            var languageRepoGitHelperMock = new Mock<IGitHelper>();
+            languageRepoGitHelperMock.Setup(x => x.GetBranchNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("testBranch");
+            languageRepoGitHelperMock.Setup(x => x.GetRepoRemoteUriAsync(It.Is<string>(p => !string.IsNullOrEmpty(p) && !Uri.IsWellFormedUriString(p, UriKind.Absolute)), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Uri("https://github.com/Azure/azure-sdk-for-net.git"));
+            languageRepoGitHelperMock.Setup(x => x.DiscoverRepoRootAsync(It.Is<string>(p => !string.IsNullOrEmpty(p) && !Uri.IsWellFormedUriString(p, UriKind.Absolute)), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((string path, CancellationToken _) => path.Contains("specification") ? path.Substring(0, path.IndexOf("specification")) : path);
+
+            var processHelper = new ProcessHelper(new TestLogger<ProcessHelper>(), Mock.Of<IRawOutputHelper>());
+            var languageRepoTypeSpecHelper = new TypeSpecHelper(languageRepoGitHelperMock.Object, processHelper);
+
+            var languageRepoReleasePlanTool = new ReleasePlanTool(
+                devOpsService,
+                languageRepoGitHelperMock.Object,
+                languageRepoTypeSpecHelper,
+                logger,
+                userHelper,
+                gitHubService,
+                environmentHelper,
+                inputSanitizer,
+                httpClient,
+                Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>());
+
+            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            var releaseplan = await languageRepoReleasePlanTool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true);
+
+            Assert.IsNotNull(releaseplan);
+            Assert.IsNotNull(releaseplan.ResponseError);
+            Assert.True(releaseplan.ResponseError.Contains("Could not locate the Azure REST API specs repository"), $"Unexpected error: {releaseplan.ResponseError}");
+            Assert.True(releaseplan.ResponseError.Contains("absolute path"), $"Unexpected error: {releaseplan.ResponseError}");
+        }
+
         [TestCase("TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "https://github.com/Azure/azure-rest-api-specs/pull/35446", "GA", "", "")]
         [TestCase("TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "https://github.com/Azure/azure-rest-api-specs/pull/35447", "Public Preview", "", "")]
         [TestCase("TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "https://github.com/Azure/azure-rest-api-specs-pr/pull/35448", "Private Preview", "", "")]

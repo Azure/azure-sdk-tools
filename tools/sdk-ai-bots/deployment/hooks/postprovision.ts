@@ -13,11 +13,13 @@
 
 import { INFRA_LAYERS } from "./lib/layers.js";
 import { runLayerPipeline } from "./lib/deploy-layer.js";
+import { uploadBotConfigs } from "./lib/upload-bot-configs.js";
 
 const ENV_NAME = process.env.AZURE_ENV_NAME ?? "";
 const SUBSCRIPTION_ID = process.env.AZURE_SUBSCRIPTION_ID ?? "";
 const RESOURCE_GROUP = process.env.AZURE_RESOURCE_GROUP ?? "";
 const LOCATION = process.env.AZURE_LOCATION ?? "westus2";
+const STORAGE_ACCOUNT_NAME = process.env.STORAGE_ACCOUNT_NAME ?? "";
 
 function log(msg: string): void {
   console.log(`[postprovision] ${msg}`);
@@ -29,6 +31,14 @@ async function runInfraLayers(): Promise<void> {
     resourceGroup: RESOURCE_GROUP,
     subscriptionId: SUBSCRIPTION_ID,
     location: LOCATION,
+  });
+}
+
+function uploadPerEnvBotConfigs(): void {
+  uploadBotConfigs({
+    envName: ENV_NAME,
+    storageAccountName: STORAGE_ACCOUNT_NAME,
+    log,
   });
 }
 
@@ -55,6 +65,7 @@ function printSummary(): void {
 (async () => {
   log(`Starting postprovision for environment '${ENV_NAME}'`);
   await runInfraLayers();
+  uploadPerEnvBotConfigs();
   seedKeyVaultSecrets();
   updateAppConfiguration();
   printSummary();

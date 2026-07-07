@@ -644,9 +644,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return new ReleasePlanResponse
                     {
                         ResponseError = $"Could not resolve a TypeSpec project from '{typeSpecProjectPath}'. " +
-                            "If you are running this from a language SDK repository or another directory, provide the absolute path to the TypeSpec project, " +
-                            "or run this command from within a local clone of the Azure/azure-rest-api-specs repository.",
-                        NextSteps = ["Provide the absolute path to the TypeSpec project, or run this command from within the azure-rest-api-specs repository."]
+                            "Provide the absolute path to the TypeSpec project directory, a URL to the TypeSpec project in the azure-rest-api-specs or azure-rest-api-specs-pr repository, " +
+                            "or run this command from within a local clone of one of those repositories.",
+                        NextSteps = ["Provide the absolute path or a valid azure-rest-api-specs / azure-rest-api-specs-pr URL to the TypeSpec project, or run this command from within a local clone of one of those repositories."]
                     };
                 }
                                
@@ -894,6 +894,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                     catch (Exception ex) when (ex is not OperationCanceledException)
                     {
+                        logger.LogDebug(ex, "Failed to determine whether '{RepoRoot}' is an azure-rest-api-specs(-pr) repository; falling back to user guidance.", repoRoot);
                         isSpecRepo = false;
                     }
                 }

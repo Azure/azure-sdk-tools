@@ -32,15 +32,15 @@
 2. **Open a spec PR** — Push to `azure-rest-api-specs` and open a PR. CI validates automatically.
 3. 🧑‍💻 **Wait for approvals** — The following require human sign-off before spec PR can merge:
    - **Namespace approval** (first preview only) — Architect approves new package namespaces
-   - **Spec review** — ARM review (ARM specs) + API review via APIView (all data-plane + C# ARM). Could eventually be reduced to suppression review + auto-approve with better linters.
+   - **Spec review** — ARM review (ARM specs) + API review. With API Review Hub (ARH), spec-level API review requires no separate tool — the TypeSpec spec PR on GitHub IS the API surface review. ARH does not operate at the spec level. Today, APIView emitter generates tokens for spec-level review (will be retired with ARH).
 4. **Spec PR merges → SDK generation is automatic** — Release plan is created, SDKs are generated, and SDK PRs are opened in each language repo automatically ⚠️ *Caveat: generation failures currently fail silently — see [Known Gap #4](#known-gaps)*
-5. 🧑‍💻 **SDK PR review & approval** — SDK CI runs automatically. If API review has suggestions or CI fails, resolve them (auto-repair handles custom code drift). For management plane, Shanghai team reviews SDK PRs with release plans. APIView approval required for generated SDK API surface — review requests currently use a [GitHub Form template](https://github.com/Azure/azure-sdk/blob/main/.github/workflows/src/arch-board-review/ARCH-BOARD-REVIEW-PROCESS.md) as a **bridge** (replaces email; will be retired when API Review Hub goes live). Could eventually be reduced once changelog/versioning automation matures.
+5. 🧑‍💻 **SDK PR review & approval** — SDK CI runs automatically. API review of generated SDK surface happens via APIView (current) or API Review Hub review PRs (future) — approval signaled on SDK PR via label or comment (mechanism TBD). For management plane, Shanghai team reviews SDK PRs with release plans. Review requests currently use a [GitHub Form template](https://github.com/Azure/azure-sdk/blob/main/.github/workflows/src/arch-board-review/ARCH-BOARD-REVIEW-PROCESS.md) as a **bridge** (replaces email; will be retired when API Review Hub goes live).
 6. 🧑‍💻 **Release** — Once SDK PRs merge, trigger release pipeline (**manual approval gate** required for security; difficult to remove. ARM approval = Shanghai team). Packages publish, release plan completes. See also: [Management plane release responsibilities](https://eng.ms/docs/products/azure-developer-experience/plan/mgmt-sdk-release-process)
 
 ### For Reviewers
 
 1. **ARM review** (ARM specs only) — Review resource model correctness on spec PRs; apply `ARMSignedOff` label
-2. **API review** — Review API design via APIView tokens on spec PRs and SDK PRs; apply `api-approved` / `<lang>-api-approved` labels
+2. **API review** — Review generated SDK API surface on SDK PRs via APIView (current) or API Review Hub review PRs (future). At spec level, the TypeSpec spec PR itself serves as the API review (no separate tool with ARH). Approval signaled via label or comment on SDK PR (mechanism TBD).
 3. **SDK PR review** (Shanghai team, management plane only) — Review generated SDK PRs that have a release plan attached; approve & merge
 4. **Breaking change review** — Review breaking changes flagged by `BreakingChangeReviewRequired` label on spec PRs (ARM specs only)
 5. **Namespace review** — Approve new package namespaces; apply `<lang>-namespace-approved` labels
@@ -65,7 +65,7 @@
 - **API Spec PR**: Pull request in `azure-rest-api-specs` or `azure-rest-api-specs-pr` containing TypeSpec changes.
 - **SDK PR**: Pull request in a language SDK repo (e.g., `azure-sdk-for-python`) with generated and customized SDK code.
 - **APIView**: Current web tool for reviewing SDK public API surface. Being replaced by **API Review Hub**.
-- **API Review Hub**: New service (PR #15789, @tjprescott) that replaces APIView with a GitHub-native API review workflow. Creates synthetic "review PRs" in language repos containing generated `API.md` files showing API diffs — these PRs are **never merged** and exist only for review. Architects are auto-assigned as reviewers and approve/request changes via standard GitHub PR review. Approval is recorded in **ADO Package Work Items** (API hash stored as "approved"), and CI gates release by checking this hash. Namespace approvals are explicitly out of scope — they continue using the current mechanism.
+- **API Review Hub**: New service (@tjprescott) that replaces APIView for **SDK-level API review only** — does not operate at the spec PR level (the TypeSpec spec PR on GitHub IS the API surface review). Creates synthetic "review PRs" in language repos containing generated `API.md` files showing API diffs — these PRs are **never merged** and exist only for review. Architects are auto-assigned as reviewers and approve/request changes via standard GitHub PR review. Approval is recorded in **ADO Package Work Items** (API hash stored as "approved"), and CI gates release by checking this hash. ⚠️ Opening ARH review PRs on generated SDK PRs is an open design gap — not automated today.
 - **tspconfig.yaml**: Configuration in TypeSpec project specifying emitter settings per language.
 - **tsp-location.yaml**: Configuration in SDK repos pointing to the source TypeSpec project.
 - **`@azure-tools/typespec-breaking-change`**: TypeSpec-native breaking change detector. Phase A: same-version regression (any diff = error). Phase B: cross-version evolution (request narrowing / response widening = breaking).
@@ -365,7 +365,7 @@ PR in `azure-rest-api-specs` triggers: compilation → LintDiff → breaking cha
 | TypeSpec compiler | CI compilation | TypeSpec team |
 | TypeSpec Lintdiff | TypeSpec-native linting on PR diffs — validates guideline compliance, replacing older Swagger-based Spectral LintDiff. Includes a suppression process for known exceptions (linter-based, see @catalinaperalta). | EngSys / TypeSpec team |
 | `@azure-tools/typespec-breaking-change` | Phase A + B detection. Auto-adds `BreakingChangeReviewRequired` / `VersioningReviewRequired` labels | Mark |
-| APIView emitter (`typespec-apiview`) | Generates API surface token files for architect review | APIView team |
+| APIView emitter (`typespec-apiview`) | Generates API surface token files for spec-level architect review. **Will be retired with ARH** — TypeSpec spec PR on GitHub serves as the API review directly, no tokens needed. | APIView team |
 | spec-gen-sdk | SDK generation validation — ensures spec can produce SDK code | EngSys (Renhe) |
 | Avocado / OAV | Legacy Swagger-based validation tools — **being deprecated** as TypeSpec-native tooling (Lintdiff, breaking change detector) replaces them. Tied to @timotheeguerin's work on example and readme validation. | EngSys |
 
@@ -428,7 +428,7 @@ CI runs (build → test → lint → package validation → SDK breaking change 
 
 **✅ Supported today**: Language CI pipelines, APIView feedback resolution agent, pipeline troubleshooting agent, auto SDK PR repair (label-triggered). SDK breaking change detection being integrated. API Review Hub has end-to-end prototype working for Python.
 
-**⚠️ Gap**: SDK breaking change detection integration in progress (being combined into validation check). Auto-repair only handles custom-code drift — not all CI failure types. API review routing relies on manual label application in some cases. API Review Hub is not yet in production — transition from APIView to API Review Hub is in progress.
+**⚠️ Gap**: SDK breaking change detection integration in progress (being combined into validation check). Auto-repair only handles custom-code drift — not all CI failure types. API Review Hub review PR creation on generated SDK PRs is not automated — mechanism TBD (open design gap). API review feedback resolution agent needs evaluation for ARH compatibility. Release gates transitioning from APIView → both → ARH only.
 
 **🎯 Next step**: Complete SDK breaking change integration into CI. Extend auto-repair pattern to cover more failure categories. Transition API review from APIView to API Review Hub (GitHub-native review PRs with release-gating).
 
@@ -510,6 +510,9 @@ The current system uses a **prompt chaining** pattern: independent sub-skills ar
 | 13 | Late spec validation — issues detected at SDK PR stage | 2, 4 | Namespace approval, API version, and spec branch issues are only caught during SDK PR review instead of at spec PR stage | Validate namespace, API version, and spec branch during spec PR CI — fail early before SDK generation | Praveen / spec-gen-sdk |
 | 14 | SDK PR not fully ready for review after generation | 4 | Auto-generated SDK PRs require manual fixes: linter failures (especially samples), recorded test failures (API/version changes), merge conflicts, title/description not updated on re-generation | SDK PRs are generated ready-to-merge: linter-clean, tests passing, no conflicts, metadata updated | Praveen / Language teams |
 | 15 | Release pipeline provisioning delay for new RPs | 5 | Pipelines for newly onboarded resource providers are created asynchronously (overnight/weekend batch), delaying release readiness | CI-triggered `prepare-pipelines` pipeline eliminates provisioning delay | EngSys |
+| 16 | API Review Hub review PR creation not automated | 4 | ARH review PRs on generated SDK PRs must be opened manually — no automation triggers creation today. Mechanism TBD (could be triggered by SDK PR creation). | SDK PR creation automatically triggers ARH review PR in language repo | @tjprescott |
+| 17 | API review feedback resolution agent needs ARH compatibility | 4 | Current agent resolves APIView comments. Needs evaluation for ARH's GitHub-based review comments (should be easier since GitHub is more accessible than APIView API). | Agent works with both APIView and ARH review comments | azsdk-cli team |
+| 18 | Release gate transition from APIView to ARH | 5 | Release gates currently check APIView for API approval. Must transition to accept both APIView and ARH, then eventually ARH only. | Release pipeline checks ARH approval state (API hash in ADO) | @tjprescott / EngSys |
 
 > **See also**: [SDK PR Release Readiness tracking issue (#15705)](https://github.com/Azure/azure-sdk-tools/issues/15705) for the full consolidated gap list including .NET-specific gaps, ESRP publishing failures, and network isolation policy impacts.
 
@@ -525,7 +528,7 @@ This workflow is complete when:
 - [ ] All sub-skills integrate seamlessly without context loss between stages
 - [ ] Local and pipeline SDK generation paths both work
 - [ ] Breaking change findings from CI are surfaced clearly to the user
-- [ ] APIView feedback can be resolved within the workflow
+- [ ] API review feedback can be resolved within the workflow
 - [ ] Works for all tier-1 SDK languages (per language scope table)
 - [ ] Errors at every stage produce structured, actionable guidance
 - [ ] Service Tree KPI is updated on release completion
@@ -693,8 +696,10 @@ The following detailed flowchart shows every step, decision branch, and gap in t
              │  STEP 4b: ARM Review & API Review (offline)      │
              │  • ARM review (ARM specs only — architect signs   │
              │    off on resource model correctness)             │
-             │  • API review via APIView (all specs — reviewer   │
-             │    approves API design based on generated tokens) │
+             │  • API review: spec PR itself serves as API       │
+             │    surface review (TypeSpec IS the API). Today    │
+             │    APIView emitter generates tokens; with ARH,   │
+             │    no separate tool needed at spec level.         │
              │  • Both triggered by spec PR, block merge         │
              └───────────────────────┬───────────────────────────┘
                                      │
@@ -755,6 +760,7 @@ The following detailed flowchart shows every step, decision branch, and gap in t
               │ • Build → Test → Lint → Package validation       │
               │ • SDK breaking change detection                   │
               │ • APIView generated for SDK public API surface    │
+              │   (future: API Review Hub review PR created)      │
               └───────────────────────┬───────────────────────────┘
                                       │
            ┌──────────────────────────┴──────────────────────────┐

@@ -734,6 +734,11 @@ main {
   color: #1e8449;
   font-size: 0.72rem;
 }
+.badge-sdk-ready-to-release {
+  background: #d4edda;
+  color: #155724;
+  font-size: 0.72rem;
+}
 .badge-missing-product {
   background: #fff3cd;
   color: #856404;

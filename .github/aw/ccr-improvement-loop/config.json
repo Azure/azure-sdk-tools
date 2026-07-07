@@ -1,5 +1,5 @@
 {
-  "ccrLogins": ["copilot-pull-request-reviewer[bot]", "github-copilot[bot]", "copilot[bot]"],
+  "ccrLogins": ["copilot-pull-request-reviewer[bot]", "Copilot", "github-copilot[bot]", "copilot[bot]"],
   "automationLogins": ["dependabot[bot]", "github-actions[bot]", "azure-sdk", "renovate[bot]"],
   "excludedPaths": [
     "**/*.lock",

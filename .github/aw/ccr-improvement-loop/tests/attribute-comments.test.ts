@@ -39,6 +39,15 @@ describe("attribute-comments (fixture)", () => {
         expect(byId(rows, 2).authorKind).toBe("ccr");
     });
 
+    it("classifies Copilot inline comment author kind as ccr", () => {
+        const data = loadSample();
+        const ccrInline = data.inline.find((c) => c.id === 2);
+        if (!ccrInline) throw new Error("missing fixture CCR inline comment");
+        ccrInline.user = { login: "Copilot", type: "Bot" };
+        const rows = attributePr(data, allIds(data), cfg);
+        expect(byId(rows, 2).authorKind).toBe("ccr");
+    });
+
     it("classifies a repo member as human", () => {
         expect(byId(rows, 1).authorKind).toBe("human");
     });

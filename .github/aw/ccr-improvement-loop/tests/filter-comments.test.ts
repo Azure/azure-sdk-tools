@@ -18,7 +18,7 @@ const opts: FilterOpts = {
     includeSelf: false,
     minLength: 20,
     defaultBots: true,
-    ccrLogins: new Set(["copilot-pull-request-reviewer[bot]"]),
+    ccrLogins: new Set(["copilot-pull-request-reviewer[bot]", "copilot"]),
     automationLogins: new Set(["dependabot[bot]", "azure-sdk"]),
 };
 
@@ -35,6 +35,19 @@ describe("filter-comments", () => {
                     login: "copilot-pull-request-reviewer[bot]",
                     type: "Bot",
                 },
+                authorAssociation: "NONE",
+            },
+            prAuthor: "alice",
+            opts,
+        });
+        expect(verdict).toBe("keep");
+    });
+
+    it("keeps Copilot inline comments whose login is not bracketed as a bot", () => {
+        const verdict = classifyComment({
+            comment: {
+                body: "This inline code review comment is long enough to keep.",
+                user: { login: "Copilot", type: "Bot" },
                 authorAssociation: "NONE",
             },
             prAuthor: "alice",

@@ -28,9 +28,10 @@ A single-page web dashboard for viewing Azure SDK Release Plan work items from A
 
 ### SDK Details Table
 
-- **Per-language rows** — Language, Package, SDK PR, PR Status, APIView, Release Status, Version, Package Link, Action Required
+- **Per-language rows** — Language, Package, SDK PR, PR Status, Release Status, Version, Package Link, Action Required
 - **Package feed links** — direct links to NuGet, PyPI, npm, Maven Central, or GitHub (Go) with icons and labels; shown only for released packages
 - **Released version display** — shows version from `ReleasedVersionFor<Language>` field; shows "Not available" when released but version field is empty
+- **Pending version display** — when SDK is not yet released but the pull request is merged, shows the package version from the package work item with a "Pending" label and tooltip explaining it reflects the current version on the main branch in the SDK repo
 - **PR status labels** — Approved, Ready to merge, failed checks (with deduplication on lazy-load)
 - **Action buttons** — contextual actions per language:
   - ⚡ **Generate SDK** — when no PR exists

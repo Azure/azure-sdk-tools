@@ -452,6 +452,47 @@ main {
   opacity: 0.8;
 }
 
+.pm-section-group {
+  border: 1px solid #e1dfdd;
+  border-radius: var(--radius);
+  background: #faf9f8;
+  padding: 16px 18px 8px;
+  margin-bottom: 20px;
+}
+
+.pm-section-group-header {
+  margin-bottom: 8px;
+}
+
+.pm-section-group-header.section-header {
+  padding-top: 0;
+}
+
+.pm-section-group-header.section-header > div {
+  min-width: 0;
+}
+
+.pm-section-group-header.section-header:hover .pm-section-group-title {
+  color: var(--azure-blue);
+}
+
+.pm-section-group-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--azure-dark);
+}
+
+.pm-section-group-desc {
+  margin: 4px 0 0;
+  color: var(--gray);
+  font-size: 0.9rem;
+}
+
+.pm-section-group.collapsed > .pm-section-group-content {
+  display: none !important;
+}
+
 .section-header {
   cursor: pointer;
   user-select: none;
@@ -1112,6 +1153,11 @@ main {
 .pr-label-api-pending {
   background: #fff4ce;
   color: var(--orange);
+}
+.pr-label-version-pending {
+  background: #fff4ce;
+  color: var(--orange);
+  cursor: help;
 }
 
 /* Spec PR labels (BreakingChange, ARM, API) shown on their own wrapping row */

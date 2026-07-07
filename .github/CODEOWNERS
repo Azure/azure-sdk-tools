@@ -76,7 +76,7 @@
 /eng/pipelines/azure-typespec-author-eval/                      @azure/azsdk-cli @haolingdong-msft @catalinaperalta
 /eng/pipelines/azure-typespec-author-benchmark.yml              @azure/azsdk-cli @haolingdong-msft @catalinaperalta
 /eng/pipelines/azure-typespec-author-benchmark-no-skill.yml     @azure/azsdk-cli @haolingdong-msft @catalinaperalta
-/eng/pipelines/templates/steps/typespec-author-eval-*.yml  @azure/azsdk-cli @haolingdong-msft @catalinaperalta
+/eng/pipelines/templates/steps/typespec-author-eval-*.yml              @azure/azsdk-cli @haolingdong-msft @catalinaperalta
 
 
 ###########

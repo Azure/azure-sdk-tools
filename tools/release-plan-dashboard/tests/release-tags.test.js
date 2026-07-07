@@ -9,6 +9,10 @@ const indexHtml = readFileSync(
   path.join(__dirname, "../public/index.html"),
   "utf8",
 );
+const styleCss = readFileSync(
+  path.join(__dirname, "../public/style.css"),
+  "utf8",
+);
 
 describe("SDK ready-to-release tag and status", () => {
   test("uses renamed SDK status text", () => {
@@ -20,5 +24,27 @@ describe("SDK ready-to-release tag and status", () => {
     expect(indexHtml).toContain('value="sdk-ready-to-release"');
     expect(indexHtml).toContain("SDK Ready To Release");
     expect(appJs).toContain('tagFilter === "sdk-ready-to-release"');
+  });
+
+  test("shows SDK Ready To Release badge in card title using isSdkReadyToReleasePlan", () => {
+    // The badge is rendered in the card title (releaseTagBadge) when isSdkReadyToReleasePlan
+    // returns true AND the step status is not already "SDK Ready To Release" (avoiding duplicate).
+    expect(appJs).toContain("badge-sdk-ready-to-release");
+    expect(appJs).toContain("isSdkReadyToReleasePlan(p)");
+    // The releaseTagBadge block should include the sdk-ready-to-release badge
+    const releaseTagBadgeBlock = appJs.slice(
+      appJs.indexOf("releaseTagBadge"),
+      appJs.indexOf("missingProductBadge"),
+    );
+    expect(releaseTagBadgeBlock).toContain("badge-sdk-ready-to-release");
+    expect(releaseTagBadgeBlock).toContain("isSdkReadyToReleasePlan(p)");
+    // Guard against double-display: the badge must not appear when step already shows it
+    expect(releaseTagBadgeBlock).toContain(
+      'step.status !== "SDK Ready To Release"',
+    );
+  });
+
+  test("badge-sdk-ready-to-release CSS class is defined in style.css", () => {
+    expect(styleCss).toContain(".badge-sdk-ready-to-release");
   });
 });

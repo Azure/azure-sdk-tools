@@ -11,6 +11,7 @@
 - The create release plan tool no longer accepts an `--sdk-type` parameter. The SDK release type is now always derived from the API release type (GA maps to a stable SDK release, preview maps to a beta SDK release), preventing a stable SDK release from a preview API version.
 
 - The create and update release plan tools now give clear guidance when run from a language SDK repository (or any directory that is not the `azure-rest-api-specs`/`azure-rest-api-specs-pr` repo). Instead of incorrectly reporting that the spec is in a private repository, they now ask the user to provide the absolute path to the TypeSpec project or to run the command from within the `Azure/azure-rest-api-specs` repository.
+- Authentication failures against Azure DevOps now return a clearer error message that instructs the user to sign in with the Azure CLI using the default Microsoft tenant (`az login --tenant microsoft.onmicrosoft.com`), which resolves failures caused by being signed in with a different tenant.
 
 - Requests such as "run SDK generation for all languages for release <id>" are now routed to the correct SDK generation pipeline tool. The `azsdk_run_generate_sdk` and `azsdk_release_sdk` tool descriptions were clarified to disambiguate generating an SDK from releasing an already-generated package, and a dedicated `azsdk-common-generate-sdk-pipeline` skill was added to route release-plan / all-language / pipeline generation prompts to `azsdk_run_generate_sdk` (called once per language).
 

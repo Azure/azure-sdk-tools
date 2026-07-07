@@ -77,7 +77,9 @@ def test_graph_query_service_exception_returns_empty(client):
 
 
 def test_graph_query_happy_path_with_dedup_and_truncation(client):
-    long_body = "x" * 1500  # > _GRAPH_SNIPPET_MAX_CHARS (1200)
+    from server import _GRAPH_SNIPPET_MAX_CHARS
+
+    long_body = "x" * (_GRAPH_SNIPPET_MAX_CHARS + 300)  # exceeds the snippet cap
     refs = [
         _make_ref(
             title="doc1",
@@ -117,8 +119,8 @@ def test_graph_query_happy_path_with_dedup_and_truncation(client):
 
     doc2 = body["references"][1]
     assert doc2["content"].endswith("\n... [truncated]")
-    # 1200 chars of body + truncation marker
-    assert doc2["content"].startswith("x" * 1200)
+    # snippet cap chars of body + truncation marker
+    assert doc2["content"].startswith("x" * _GRAPH_SNIPPET_MAX_CHARS)
 
 
 def test_graph_query_search_returns_none(client):

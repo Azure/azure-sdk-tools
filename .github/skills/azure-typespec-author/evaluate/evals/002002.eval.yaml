@@ -65,6 +65,10 @@ stimuli:
           required:
             - "edit"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
+      - type: "run-command"
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       - type: "file-matches"
         config:
           pattern: "model Asset is ExtensionResource<AssetProperties>"
@@ -109,7 +113,7 @@ stimuli:
 
 scoring:
   weights:
-    tool-calls: 1
+    run-command: 1
     skill-invocation: 1
     file-matches: 3
   threshold: 1

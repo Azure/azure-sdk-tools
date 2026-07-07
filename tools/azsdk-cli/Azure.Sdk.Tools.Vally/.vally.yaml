@@ -64,12 +64,20 @@ suites:
       `eng/common/scripts/eval/sync-eval-git-repo.js`.
     evals: ["evals/workflow-scenarios/live/*.eval.yaml"]
 
+  quality:
+    description: |
+      Output-quality evals: the agent must produce a correct, actionable
+      answer (LLM-judge `prompt` grader + deterministic output-*/file-*
+      graders), not merely route to a tool.
+    evals: ["evals/quality/**/*.eval.yaml"]
+
   # ---- composite suites ----
   pr-gate:
-    description: Hermetic tiers only (unit + scenarios-mock). Target for CI PR check.
+    description: Hermetic tiers only (unit + scenarios-mock + quality). Target for CI PR check.
     evals:
       - "evals/tools/*.eval.yaml"
       - "evals/workflow-scenarios/mock/*.eval.yaml"
+      - "evals/quality/**/*.eval.yaml"
   nightly:
     description: All tiers including live scenarios.
     evals: ["evals/**/*.eval.yaml"]

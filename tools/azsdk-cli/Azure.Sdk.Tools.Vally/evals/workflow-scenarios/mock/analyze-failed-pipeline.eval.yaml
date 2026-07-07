@@ -42,7 +42,7 @@ stimuli:
             - azsdk_analyze_pipeline
       - type: output-contains
         config:
-          substring: WidgetClientLiveTests
+          substring: QueueClientOptions
 
 scoring:
   weights:

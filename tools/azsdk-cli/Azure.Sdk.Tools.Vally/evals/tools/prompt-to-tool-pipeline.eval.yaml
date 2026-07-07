@@ -92,3 +92,34 @@ stimuli:
           disallowed:
             - name: "azsdk_verify_setup"
 
+  # ==== pipeline-failure routing (ported from the pipeline skill eval.yaml files) ====
+  # The analysis + fix capability evals asserted, as their tool signal, that a
+  # realistic troubleshoot OR fix request routes to azsdk_analyze_pipeline (the
+  # fixer starts by analyzing) and an unrelated request does not. That
+  # tool-routing coverage lives here; skill routing stays in each skill's
+  # trigger.eval.yaml and answer quality in evals/quality/pipeline/. (The fix
+  # flow's package build/check/test routing is covered by
+  # prompt-to-tool-package.eval.yaml; a full build-ref fix workflow is too slow
+  # for this unit tier and is exercised in evals/quality/pipeline/fix-pipeline.)
+  - name: analyze-routing-pipeline-failed
+    prompt: "My Azure SDK generation pipeline failed for the Python language: https://dev.azure.com/azure-sdk/internal/_build/results?buildId=12345. Can you help me figure out what went wrong?"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_analyze_pipeline"
+  - name: fix-routing-pipeline-failed
+    prompt: "Fix the failing tests in my Azure SDK PR pipeline: https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6447834"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_analyze_pipeline"
+  - name: analyze-routing-negative-typespec
+    prompt: "How do I define a new REST operation in my TypeSpec project?"
+    graders:
+      - type: tool-calls
+        config:
+          disallowed:
+            - name: "azsdk_analyze_pipeline"
+

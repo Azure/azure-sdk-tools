@@ -390,23 +390,32 @@ query($owner: String!, $repo: String!, $pr: Int!) {
     }
 
     /// <summary>
-    /// If the project looks like a GUID, resolve it to a human-readable name via the API.
+    /// Validates and resolves a project name to a recognized DevOps project. Known names (public/internal)
+    /// are trusted as-is; anything else (a project GUID, the org name "azure-sdk", or a typo) is not
+    /// trusted and is resolved from the build id, since a build id uniquely identifies its project.
     /// </summary>
     private async Task<string> ResolveProjectNameAsync(int buildId, string project = null, CancellationToken ct = default)
     {
-        if (Guid.TryParse(project, out _))
+        var normalized = NormalizeProjectName(project);
+
+        // A recognized project name is trusted without an extra API call.
+        if (normalized == Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT || normalized == Constants.AZURE_SDK_DEVOPS_INTERNAL_PROJECT)
         {
-            try
-            {
-                var resolved = await GetPipelineProjectAsync(buildId, project, ct);
-                return NormalizeProjectName(resolved);
-            }
-            catch (Exception ex)
-            {
-                logger.LogDebug(ex, "Could not resolve project GUID {project} for build {buildId}", project, buildId);
-            }
+            return normalized;
         }
-        return NormalizeProjectName(project);
+
+        // Unrecognized: resolve the real project from the build. A GUID is looked up directly; any other
+        // value uses public-first discovery (null). Fall back to the original name if resolution fails.
+        try
+        {
+            var lookupProject = Guid.TryParse(project, out _) ? project : null;
+            return NormalizeProjectName(await GetPipelineProjectAsync(buildId, lookupProject, ct));
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "Could not resolve project {project} for build {buildId}", project, buildId);
+            return normalized;
+        }
     }
 
     /// <summary>

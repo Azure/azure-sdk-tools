@@ -54,12 +54,21 @@ One prompt → one expected MCP tool. No `environment.git`, no fixtures. Fast; s
 | [`prompt-to-tool-engsys`](evals/tools/prompt-to-tool-engsys.eval.yaml) | engsys | `azsdk_analyze_log_file`, failed-test tools, codeowner-cache |
 | [`prompt-to-tool-github`](evals/tools/prompt-to-tool-github.eval.yaml) | github | `azsdk_create_pull_request`, `azsdk_get_pull_request*`, `azsdk_get_github_user_details`, `azsdk_get_pull_request_link_for_current_branch` |
 | [`prompt-to-tool-package`](evals/tools/prompt-to-tool-package.eval.yaml) | package | `azsdk_package_*`, `azsdk_release_sdk` |
-| [`prompt-to-tool-pipeline`](evals/tools/prompt-to-tool-pipeline.eval.yaml) | pipeline | `azsdk_analyze_pipeline`, `azsdk_get_pipeline_*` |
+| [`prompt-to-tool-pipeline`](evals/tools/prompt-to-tool-pipeline.eval.yaml) | pipeline | `azsdk_analyze_pipeline`, `azsdk_get_pipeline_*` — incl. analyze + fix routing (required) and an unrelated-request negative (disallowed), ported from the pipeline skill `eval.yaml` files |
 | [`prompt-to-tool-releaseplan`](evals/tools/prompt-to-tool-releaseplan.eval.yaml) | release-plan | `azsdk_*_release_plan*`, `azsdk_run_generate_sdk`, `azsdk_link_*` |
 | [`prompt-to-tool-typespec`](evals/tools/prompt-to-tool-typespec.eval.yaml) | typespec | `azsdk_typespec_*`, `azsdk_convert_swagger_to_typespec`, `azsdk_customized_code_update`, `azsdk_run_typespec_validation` |
 | [`prompt-to-tool-verify`](evals/tools/prompt-to-tool-verify.eval.yaml) | engsys | `azsdk_verify_setup` |
 
-#### `evals/workflow-scenarios/` — multi-tool scenarios (14)
+#### `evals/quality/` — output-quality evals (2 files)
+
+Single or multi-step prompts that grade the correctness of the agent's answer. The output of the evaluation is graded, either by an LLM-judge `prompt` grader for correctness, or by deterministic `output-*` / `file-*` graders. Heavier and slower than tool checks, so they run in their own tier.
+
+| Scenario | Skill exercised | Shape |
+|---|---|---|
+| [`analyze-pipeline`](evals/quality/pipeline/analyze-pipeline.eval.yaml) | `azsdk-common-pipeline-troubleshooting` | Given a build ref, analyze it and produce a correct root-cause diagnosis (identify the code bug, don't recommend re-record/retry) |
+| [`fix-pipeline`](evals/quality/pipeline/fix-pipeline.eval.yaml) | `azsdk-common-pipeline-fixer` | Given the analysis, apply the fix to the overlaid source and verify via the package `build`/`check`/`test` MCP tools |
+
+#### `evals/workflow-scenarios/` — multi-tool scenarios (6)
 
 Multi-step prompts that exercise 2+ MCP tools end-to-end. Split into
 `mock/` (hermetic, runs on PR gate) and `live/` (real DevOps / GitHub /
@@ -71,71 +80,14 @@ pipelines, runs nightly).
 | [`typespec-generation-step02`](evals/workflow-scenarios/mock/typespec-generation-step02.eval.yaml) | typespec | mock | Step in the spec-PR generation flow |
 | [`rename-client-property`](evals/workflow-scenarios/mock/rename-client-property.eval.yaml) | typespec | mock | Stub — needs `expected-diff` grader + sparse clone |
 | [`release-planner-workflows`](evals/workflow-scenarios/mock/release-planner-workflows.eval.yaml) | release-plan | mock | Create / re-fetch / link / update release-plan flows (5 stimuli) |
-| [`pipeline-analysis-dotnet`](evals/workflow-scenarios/mock/pipeline-analysis-dotnet.eval.yaml) | pipeline | mock | Root-cause analysis of serialized .NET pipeline failures (TRX) |
-| [`pipeline-analysis-java`](evals/workflow-scenarios/mock/pipeline-analysis-java.eval.yaml) | pipeline | mock | Root-cause analysis of serialized Java pipeline failures (JUnit) |
-| [`pipeline-analysis-js`](evals/workflow-scenarios/mock/pipeline-analysis-js.eval.yaml) | pipeline | mock | Root-cause analysis of serialized JavaScript pipeline failures (JUnit) |
-| [`pipeline-analysis-python`](evals/workflow-scenarios/mock/pipeline-analysis-python.eval.yaml) | pipeline | mock | Root-cause analysis of serialized Python pipeline failures (pytest) |
-| [`pipeline-analysis-tool-call`](evals/workflow-scenarios/mock/pipeline-analysis-tool-call.eval.yaml) | pipeline | mock | Asserts analysis routes through `azsdk_analyze_pipeline` on the serialized failure data |
-| [`pipeline-fixer-dotnet`](evals/workflow-scenarios/mock/pipeline-fixer-dotnet.eval.yaml) | pipeline | mock | Classify-only .NET failures that must not be code-fixed, plus an apply+verify stimulus (`QueueClientOptionsTests` fixture, Storage Queues version parser) |
-| [`pipeline-fixer-java`](evals/workflow-scenarios/mock/pipeline-fixer-java.eval.yaml) | pipeline | mock | Classify-only Java failures that must not be code-fixed, plus an apply+verify stimulus (`TaskManagerTests` fixture, representative compute-batch SERVER_ERROR retry concurrency bug) |
-| [`pipeline-fixer-js`](evals/workflow-scenarios/mock/pipeline-fixer-js.eval.yaml) | pipeline | mock | Classify-only JavaScript failures that must not be code-fixed, plus an apply+verify stimulus (`stacItemTiler` fixture, planetarycomputer WMTS base64) |
-| [`pipeline-fixer-python`](evals/workflow-scenarios/mock/pipeline-fixer-python.eval.yaml) | pipeline | mock | Classify-only Python failures that must not be code-fixed, plus an apply+verify stimulus (`test_foundry` fixture, ai-evaluation foundry processor) |
+| [`analyze-failed-pipeline`](evals/workflow-scenarios/mock/analyze-failed-pipeline.eval.yaml) | pipeline | mock | Two-tool path — pull pipeline status, then analyze the run to surface the failing test |
 | [`release-planner`](evals/workflow-scenarios/live/release-planner.eval.yaml) | release-plan | **live** | Create + re-fetch a release plan, kick off SDK gen, link PR back — real DevOps test-area writes |
 
-Pipeline analysis evals grade the quality of the LLM's root-cause analysis over
-serialized pipeline failure data, while pipeline fixer evals grade whether the
-agent chooses the right remediation path. Both fixer dimensions — "unfixable
-correctly skipped" and "apply + verify" — run hermetically in the mock tier: the
-apply+verify stimulus overlays the real failing source via `environment.files`
-and verifies against the mock MCP server (which exposes canned package
-build/check/test tools), so it needs no live auth or language toolchain.
 
-**Most pipeline stimuli are grounded in a real Azure DevOps build.** Each mock
-analysis / unfixable-classify / apply+verify stimulus reproduces the real failing
-test, file, error text, and category from an actual `azure-sdk-for-<lang>` CI
-build, and the deterministic graders assert the analysis echoes those real
-tokens. The one exception is the Java apply+verify fixer stimulus, which is a
-faithful, self-contained reduction of a representative compute-batch task-retry
-concurrency bug rather than a single captured build. The triage that produced
-them maps each build to a category: real code bugs become apply+verify fixtures;
-recording / asset failures become unfixable-classify stimuli ("re-record", not a
-code fix); generated-code / validation failures become mock analysis stimuli
-("regenerate", not a code fix).
-
-The **apply+verify** fixer stimulus (one per `mock/pipeline-fixer-<lang>.eval.yaml`)
-makes the apply+verify dimension executable without depending on a full language
-toolchain in the grader. Each stimulus:
-
-- overlays the **real failing source file** (captured at the build's head SHA)
-  into the agent workspace via a per-stimulus `environment.files` block, plus a
-  `commands` step that runs `git init` so the agent can diff/commit;
-- describes the real build / PR / test / error in the prompt and asks the agent
-  to apply the fix;
-- grades the **actual edited file** deterministically with `file-matches` (the
-  fix must appear in the real file) — and, where the buggy form is a single
-  distinctive token, an added `file-not-matches` asserting it is gone — checks
-  `tool-calls` for "verification attempted" (rubric fixer Dim 6), and adds an
-  LLM judge for correctness. The scoring threshold is `1.0`, so every grader
-  must pass; the deterministic file graders are written to discriminate a real
-  fix from the unmodified seed. The fixtures live in
-  [`fixtures/`](fixtures/); their headers document the real build,
-  PR, test, error, and (where the original bug is a large generated file or a
-  concurrency race) note that the fixture is a faithful, self-contained
-  reduction of the same root cause.
-
-Because apply+verify now runs in mock, the whole pipeline-fixer suite is part of
-the hermetic PR gate — no live MCP server, auth, or per-language build/test
-toolchain is required; the files overlay + `file-matches` grading removes the
-toolchain dependency, and the mock MCP server's canned package tools stand in for
-the verification calls.
-
-The generated `live/pipeline-analysis-live.eval.yaml` continuous eval is produced
-by `Generate-LiveEval.ps1` and is gitignored; it calls the real
-`azsdk_analyze_pipeline` tool against the most recent live builds.
-
-Release-planner live scenarios need a primed `azure-rest-api-specs` clone — run
-[`scripts/ensure-specs-clone.ps1`](scripts/ensure-specs-clone.ps1)
-(local-only helper, auto-refreshes every 24h) before invoking the
+Live scenarios need a primed `azure-rest-api-specs` clone — run
+[`sync-eval-git-repo.js`](../../../eng/common/scripts/eval/sync-eval-git-repo.js)
+(`node ../../../eng/common/scripts/eval/sync-eval-git-repo.js`; local-only
+helper, auto-refreshes every 24h) before invoking the
 `scenarios-live` / `nightly` suite.
 
 **Skill evals (already in repo, *not* part of this PR)** — for reference:
@@ -164,11 +116,12 @@ tracks the migration in
 Azure.Sdk.Tools.Vally/
 ├── .vally.yaml                # Vally config (environments + suites)
 ├── evals/
-│   ├── tools/                  # tool-shape + per-skill trigger evals, hermetic
+│   ├── tools/                 # tool-shape + per-skill trigger evals, hermetic
+│   ├── quality/               # output-quality evals (prompt + output-*/file-*), hermetic
 │   └── workflow-scenarios/
 │       ├── mock/              # multi-tool scenarios, hermetic (PR gate)
 │       └── live/              # multi-tool scenarios, live MCP + real clones (nightly)
-├── fixtures/                  # Real failing source files (env.files overlay for mock apply+verify fixer stimuli)
+├── fixtures/                  # Real failing source files overlaid into the agent workspace via env.files
 │   └── analyze-pipeline/
 │       └── <scenario-name>/...
 ├── scripts/                   # Local helper scripts (ensure-specs-clone.ps1)

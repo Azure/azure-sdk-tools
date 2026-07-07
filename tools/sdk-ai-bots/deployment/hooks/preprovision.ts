@@ -27,7 +27,7 @@ const RESOURCE_GROUP = process.env.AZURE_RESOURCE_GROUP ?? "";
 const LOCATION = process.env.AZURE_LOCATION ?? "westus2";
 const RUNNING_IN_PIPELINE = !!process.env.TF_BUILD || !!process.env.GITHUB_ACTIONS;
 
-const SUITE_PATH = resolve(process.cwd(), "infra/environments/environment-suite.yaml");
+const SUITE_PATH = resolve(process.cwd(), "deployment/infra/environments/environment-suite.yaml");
 
 function log(msg: string): void {
   console.log(`[preprovision] ${msg}`);
@@ -186,7 +186,10 @@ function ensureServerAudience(): void {
 
   const displayName = `azuresdkqabot-server-${ENV_NAME}`;
   log(`SERVER_AUDIENCE not set — ensuring Entra app registration '${displayName}'`);
-  const appId = ensureEntraApp({ displayName });
+  const appId = ensureEntraApp({
+    displayName,
+    serviceManagementReference: process.env.SERVICE_MANAGEMENT_REFERENCE?.trim() || undefined,
+  });
 
   // Persist for subsequent azd runs (.azure/<env>/.env).
   execSync(`azd env set SERVER_AUDIENCE ${appId}`, { stdio: "inherit" });
@@ -194,6 +197,56 @@ function ensureServerAudience(): void {
   // sees the value on the same `azd provision` invocation.
   process.env.SERVER_AUDIENCE = appId;
   log(`  ✓ SERVER_AUDIENCE=${appId} persisted via azd env set`);
+}
+
+/**
+ * Detects the currently authenticated principal's object ID and type, then
+ * persists them as DEVELOPER_PRINCIPAL_ID / DEVELOPER_PRINCIPAL_TYPE so Bicep
+ * grants the deployer direct access to Azure resources (Key Vault, ACR, etc.).
+ *
+ * Only runs when DEVELOPER_PRINCIPAL_ID is not already set.
+ */
+function ensureDeveloperPrincipal(): void {
+  if (process.env.DEVELOPER_PRINCIPAL_ID?.trim()) {
+    log(`  ✓ DEVELOPER_PRINCIPAL_ID already set (${process.env.DEVELOPER_PRINCIPAL_ID.trim()})`);
+    return;
+  }
+  log("DEVELOPER_PRINCIPAL_ID not set — detecting current auth principal...");
+  try {
+    // Try signed-in user first (interactive / user login).
+    const userId = execSync(
+      "az ad signed-in-user show --query id -o tsv 2>/dev/null",
+      { encoding: "utf8" }
+    ).trim();
+    if (userId) {
+      execSync(`azd env set DEVELOPER_PRINCIPAL_ID ${userId}`, { stdio: "inherit" });
+      execSync(`azd env set DEVELOPER_PRINCIPAL_TYPE User`, { stdio: "inherit" });
+      process.env.DEVELOPER_PRINCIPAL_ID = userId;
+      process.env.DEVELOPER_PRINCIPAL_TYPE = "User";
+      log(`  ✓ DEVELOPER_PRINCIPAL_ID=${userId} (User)`);
+      return;
+    }
+  } catch {
+    // Not a user login — fall through to service principal.
+  }
+  try {
+    // Service principal (pipeline / federated login).
+    const spId = execSync(
+      "az ad sp show --id $(az account show --query user.name -o tsv) --query id -o tsv 2>/dev/null",
+      { encoding: "utf8" }
+    ).trim();
+    if (spId) {
+      execSync(`azd env set DEVELOPER_PRINCIPAL_ID ${spId}`, { stdio: "inherit" });
+      execSync(`azd env set DEVELOPER_PRINCIPAL_TYPE ServicePrincipal`, { stdio: "inherit" });
+      process.env.DEVELOPER_PRINCIPAL_ID = spId;
+      process.env.DEVELOPER_PRINCIPAL_TYPE = "ServicePrincipal";
+      log(`  ✓ DEVELOPER_PRINCIPAL_ID=${spId} (ServicePrincipal)`);
+      return;
+    }
+  } catch {
+    // ignore
+  }
+  log("  ⚠ Could not detect principal ID — developer role assignments will be skipped.");
 }
 
 (async () => {
@@ -207,6 +260,7 @@ function ensureServerAudience(): void {
   validateAuth();
   checkResourceQuotas();
   ensureServerAudience();
+  ensureDeveloperPrincipal();
 
   log("Preprovision checks passed.");
 })().catch((err) => {

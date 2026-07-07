@@ -72,7 +72,8 @@ if ($declared -notcontains $Environment) {
 
 # Confirm the azd env exists locally; if not, create it.
 $existingEnvs = & azd env list --output json | ConvertFrom-Json
-if (-not ($existingEnvs.Name -contains $Environment)) {
+$existingNames = @($existingEnvs | ForEach-Object { $_.Name })
+if (-not ($existingNames -contains $Environment)) {
     Write-Host "azd env '$Environment' does not exist yet — creating..." -ForegroundColor Yellow
     & azd env new $Environment --no-prompt
 }
@@ -85,6 +86,7 @@ $Mapping = @(
     @{ Path = ".environments.$Environment.resourceGroupPrefix";  Key = 'AZURE_RESOURCE_GROUP' }
     @{ Path = ".environments.$Environment.regions[0].name";      Key = 'AZURE_LOCATION' }
     @{ Path = ".environments.$Environment.aiLocation";           Key = 'AZURE_AI_LOCATION' }
+    @{ Path = ".environments.$Environment.aiLocation";           Key = 'AZURE_AI_DEPLOYMENTS_LOCATION' }
     @{ Path = ".environments.$Environment.frontendSiteName";     Key = 'FRONTEND_SITE_NAME' }
     @{ Path = ".environments.$Environment.backendSiteName";      Key = 'BACKEND_SITE_NAME' }
     @{ Path = ".environments.$Environment.functionAppName";      Key = 'FUNCTION_APP_NAME' }

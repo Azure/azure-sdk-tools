@@ -60,6 +60,7 @@ var _suffix = substring(uniqueString(resourceGroup().id), 0, 6)
 module sharedResources '../modules/qaBotSharedResources/sharedResources.bicep' = {
   name: 'shared-resources'
   params: {
+    location:              location
     managedIdentityName:   'qabot-identity-${_suffix}'
     actionGroupName:       'qabot-alert-${_suffix}'
     keyVaultName:          'qabot-keyvault-${_suffix}'

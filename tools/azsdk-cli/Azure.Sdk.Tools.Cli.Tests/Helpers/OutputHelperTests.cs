@@ -1,5 +1,6 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Helpers;
 
@@ -71,5 +72,52 @@ message2
 
         // Normalize line endings before comparison. See comment in TestTypedJsonOutput.
         Assert.That(formatted.ReplaceLineEndings("\n"), Is.EqualTo(expectedStr.ReplaceLineEndings("\n")));
+    }
+
+    [Test]
+    public void CheckPackageResponse_UsesDerivedResponseErrorWhenReferencedAsBase()
+    {
+        CommandResponse response = new CheckPackageResponse
+        {
+            DirectoryPath = "sdk/test/Azure.Test",
+        };
+
+        ((CheckPackageResponse)response).Issues.Add(new CheckPackageIssue
+        {
+            Code = "insufficient_owners",
+            Message = "single issue message",
+            NextStep = "/owners add owner <current-github-user> [additional github aliases] to package Azure.Test",
+        });
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.ResponseError, Is.EqualTo("single issue message"));
+            Assert.That(response.OperationStatus, Is.EqualTo(Status.Failed));
+            Assert.That(response.ExitCode, Is.EqualTo(1));
+        });
+    }
+
+    [Test]
+    public void CheckPackageResponse_AggregatesMultipleIssuesIntoSummary()
+    {
+        var response = new CheckPackageResponse
+        {
+            DirectoryPath = "sdk/test/Azure.Test",
+        };
+
+        response.Issues.Add(new CheckPackageIssue
+        {
+            Code = "insufficient_owners",
+            Message = "first issue",
+            NextStep = "first prompt",
+        });
+        response.Issues.Add(new CheckPackageIssue
+        {
+            Code = "missing_pr_label",
+            Message = "second issue",
+            NextStep = "second prompt",
+        });
+
+        Assert.That(response.ResponseError, Is.EqualTo("check-package found 2 issue(s) for path 'sdk/test/Azure.Test'."));
     }
 }

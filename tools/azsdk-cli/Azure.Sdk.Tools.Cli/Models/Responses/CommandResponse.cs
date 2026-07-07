@@ -34,7 +34,7 @@ public abstract class CommandResponse
     /// </summary>
     [JsonPropertyName("response_error")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? ResponseError { get; set; }
+    public virtual string? ResponseError { get; set; }
 
     /// <summary>
     /// ResponseErrors represents a list of error messages associated with the response.

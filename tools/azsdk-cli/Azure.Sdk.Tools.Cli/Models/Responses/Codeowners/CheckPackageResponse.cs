@@ -49,6 +49,22 @@ public class CheckPackageResponse : CommandResponse
     [JsonPropertyName("issues")]
     public List<CheckPackageIssue> Issues { get; } = [];
 
+    [JsonIgnore]
+    public int IssueCount => Issues.Count;
+
+    [JsonPropertyName("response_error")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public override string? ResponseError
+    {
+        get => IssueCount switch
+        {
+            0 => base.ResponseError,
+            1 => Issues[0].Message,
+            _ => $"check-package found {IssueCount} issue(s) for path '{DirectoryPath}'."
+        };
+        set => base.ResponseError = value;
+    }
+
     protected override string Format()
     {
         var sb = new StringBuilder();
@@ -72,7 +88,7 @@ public class CheckPackageResponse : CommandResponse
             sb.AppendLine($"Resolved Target Type: {ResolvedTargetType}");
         }
 
-        if (Issues.Count == 0)
+        if (IssueCount == 0)
         {
             sb.AppendLine($"Owners: {string.Join(", ", Owners)}");
             sb.AppendLine($"PR Labels: {string.Join(", ", PRLabels)}");
@@ -81,7 +97,7 @@ public class CheckPackageResponse : CommandResponse
             return sb.ToString().TrimEnd();
         }
 
-        sb.AppendLine($"Issues: {Issues.Count}");
+        sb.AppendLine($"Issues: {IssueCount}");
         foreach (var issue in Issues)
         {
             sb.AppendLine($"- [{issue.Code}] {issue.Message}");
@@ -100,14 +116,15 @@ public class CheckPackageResponse : CommandResponse
     {
         var messages = new List<string>();
         var formatted = Format();
+        var responseError = ResponseError;
         if (!string.IsNullOrWhiteSpace(formatted))
         {
             messages.Add(formatted);
         }
 
-        if (!string.IsNullOrEmpty(ResponseError))
+        if (!string.IsNullOrEmpty(responseError))
         {
-            messages.Add("[ERROR] " + ResponseError);
+            messages.Add("[ERROR] " + responseError);
         }
 
         foreach (var error in ResponseErrors ?? [])

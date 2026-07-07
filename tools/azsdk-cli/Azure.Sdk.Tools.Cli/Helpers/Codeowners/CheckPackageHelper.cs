@@ -74,7 +74,7 @@ public class CheckPackageHelper : ICheckPackageHelper
                 CurrentValues = [directoryPath],
             });
 
-            return FinalizeResponse(response);
+            return response;
         }
 
         var matchedEntry = TryFindMatchingEntry(directoryPath, codeownersEntries);
@@ -87,7 +87,7 @@ public class CheckPackageHelper : ICheckPackageHelper
                 NextStep = BuildPathCoverageNextStep(directoryPath, packageName, repo),
             });
 
-            return FinalizeResponse(response);
+            return response;
         }
 
         response.MatchedPathExpression = matchedEntry.PathExpression;
@@ -122,7 +122,7 @@ public class CheckPackageHelper : ICheckPackageHelper
                 NextStep = BuildPrLabelNextStep(packageName, resolvedTargetType, resolvedTarget, repo),
             });
 
-            return FinalizeResponse(response);
+            return response;
         }
 
         var serviceOwnerLabels = GetServiceOwnerPromptLabels(response.PRLabels);
@@ -139,7 +139,7 @@ public class CheckPackageHelper : ICheckPackageHelper
                 RequiredCount = MinimumOwnerCount,
             });
 
-            return FinalizeResponse(response);
+            return response;
         }
 
         response.ServiceLabels = matchingServiceEntry.ServiceLabels ?? [];
@@ -161,7 +161,7 @@ public class CheckPackageHelper : ICheckPackageHelper
             });
         }
 
-        return FinalizeResponse(response);
+        return response;
     }
 
     /// <summary>
@@ -251,20 +251,6 @@ public class CheckPackageHelper : ICheckPackageHelper
             .ToList();
     }
 
-    private static CheckPackageResponse FinalizeResponse(CheckPackageResponse response)
-    {
-        if (response.Issues.Count == 0)
-        {
-            return response;
-        }
-
-        response.ResponseError = response.Issues.Count == 1
-            ? response.Issues[0].Message
-            : $"check-package found {response.Issues.Count} issue(s) for path '{response.DirectoryPath}'.";
-
-        return response;
-    }
-
     internal static string ResolvePackageName(string directoryPath)
     {
         var trimmedPath = directoryPath.TrimEnd('/');
@@ -328,8 +314,8 @@ public class CheckPackageHelper : ICheckPackageHelper
         string? repo)
     {
         return resolvedTargetType == PackageTargetType
-            ? $"/owner add owner {CurrentGitHubUserPlaceholder} {AdditionalGitHubAliasesPlaceholder} to package {FormatPromptValue(packageName)}{FormatRepoPhrase(repo)}"
-            : $"/owner add owner {CurrentGitHubUserPlaceholder} {AdditionalGitHubAliasesPlaceholder} to path {FormatPromptValue(resolvedTarget)}{FormatRepoPhrase(repo)}";
+            ? $"/owners add owner {CurrentGitHubUserPlaceholder} {AdditionalGitHubAliasesPlaceholder} to package {FormatPromptValue(packageName)}{FormatRepoPhrase(repo)}"
+            : $"/owners add owner {CurrentGitHubUserPlaceholder} {AdditionalGitHubAliasesPlaceholder} to path {FormatPromptValue(resolvedTarget)}{FormatRepoPhrase(repo)}";
     }
 
     private static string BuildPrLabelNextStep(
@@ -340,20 +326,20 @@ public class CheckPackageHelper : ICheckPackageHelper
     {
         var labelTarget = FormatQuotedValue(PrLabelPlaceholder);
         return resolvedTargetType == PackageTargetType
-            ? $"/owner add label {labelTarget} to package {FormatPromptValue(packageName)}{FormatRepoPhrase(repo)}"
-            : $"/owner add label {labelTarget} to path {FormatPromptValue(resolvedTarget)}{FormatRepoPhrase(repo)}";
+            ? $"/owners add label {labelTarget} to package {FormatPromptValue(packageName)}{FormatRepoPhrase(repo)}"
+            : $"/owners add label {labelTarget} to path {FormatPromptValue(resolvedTarget)}{FormatRepoPhrase(repo)}";
     }
 
     private static string BuildServiceOwnerNextStep(IReadOnlyList<string> labels, string? repo)
     {
-        return $"/owner add service owners {CurrentGitHubUserPlaceholder} {AdditionalGitHubAliasesPlaceholder} to {FormatPrLabelTargetForPrompt(labels)}{FormatRepoPhrase(repo)}";
+        return $"/owners add service owners {CurrentGitHubUserPlaceholder} {AdditionalGitHubAliasesPlaceholder} to {FormatPrLabelTargetForPrompt(labels)}{FormatRepoPhrase(repo)}";
     }
 
     private static string BuildPathCoverageNextStep(string directoryPath, string packageName, string? repo)
-        => $"/owner inspect path {FormatPromptValue(directoryPath)}{FormatRepoPhrase(repo)} and add package ownership, PR labels, and service owners so package {FormatPromptValue(packageName)} is covered";
+        => $"/owners inspect path {FormatPromptValue(directoryPath)}{FormatRepoPhrase(repo)} and add package ownership, PR labels, and service owners so package {FormatPromptValue(packageName)} is covered";
 
     private static string BuildConcretePathNextStep(string directoryPath, string? repo)
-        => $"/owner inspect path {FormatPromptValue(directoryPath)}{FormatRepoPhrase(repo)} and rerun the ownership check with a concrete package directory path";
+        => $"/owners inspect path {FormatPromptValue(directoryPath)}{FormatRepoPhrase(repo)} and rerun the ownership check with a concrete package directory path";
 
     private static IReadOnlyList<string> GetServiceOwnerPromptLabels(IEnumerable<string>? labels)
     {

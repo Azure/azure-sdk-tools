@@ -28,11 +28,11 @@ DO NOT USE FOR: generating a single SDK locally from a local clone (use `azsdk-c
 
 ## MCP Tools
 
-| Tool                                             | Purpose                                                        |
-| ------------------------------------------------ | -------------------------------------------------------------- |
-| `azure-sdk-mcp:azsdk_get_release_plan`           | Fetch the release plan to determine target languages / details |
-| `azure-sdk-mcp:azsdk_run_generate_sdk`           | Run the generation pipeline (once per language)                |
-| `azure-sdk-mcp:azsdk_get_sdk_pull_request_link`  | Retrieve the generated SDK pull request link after generation  |
+| Tool                                            | Purpose                                                        |
+| ----------------------------------------------- | -------------------------------------------------------------- |
+| `azure-sdk-mcp:azsdk_get_release_plan`          | Fetch the release plan to determine target languages / details |
+| `azure-sdk-mcp:azsdk_run_generate_sdk`          | Run the generation pipeline (once per language)                |
+| `azure-sdk-mcp:azsdk_get_sdk_pull_request_link` | Retrieve the generated SDK pull request link after generation  |
 
 ## Steps
 

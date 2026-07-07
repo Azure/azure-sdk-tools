@@ -1,12 +1,14 @@
 # Release History
 
-## 0.6.25 (Unreleased)
+## 0.6.25 (2026-07-07)
 
 ### Features Added
 
-### Breaking Changes
+- `azsdk_update_sdk_details_in_release_plan` now marks languages with missing emitter configuration in the TypeSpec project as `MissingEmitterConfig` instead of `Requested` in the release plan work item, so the release plan dashboard shows a distinct "Missing emitter configuration" label instead of the misleading "Exclusion Requested" label.
 
 ### Bugs Fixed
+
+- The create release plan tool no longer accepts an `--sdk-type` parameter. The SDK release type is now always derived from the API release type (GA maps to a stable SDK release, preview maps to a beta SDK release), preventing a stable SDK release from a preview API version.
 
 - Authentication failures against Azure DevOps now return a clearer error message that instructs the user to sign in with the Azure CLI using the default Microsoft tenant (`az login --tenant microsoft.onmicrosoft.com`), which resolves failures caused by being signed in with a different tenant.
 

@@ -45,9 +45,9 @@ export interface Aggregation {
     runsSkipped: number;
     dateSpan: { earliest: string | null; latest: string | null };
     missRateOverTime: TrendPoint[];
-    verifiedMissRateOverTime: TrendPoint[];
+    bugFixPrRateOverTime: TrendPoint[];
     addressedRateBySeverityOverTime: SeverityTrendPoint[];
-    verifiedMissRateByRepo: RepoRate[];
+    bugFixPrRateByRepo: RepoRate[];
 }
 
 /**
@@ -79,7 +79,7 @@ function sortByTime(runs: RunJson[]): RunJson[] {
 
 /**
  * Build the trend aggregation from a set of already-parsed runs. Pure. De-dups by
- * `run.id` and orders time series by `generatedAt`. `verifiedMissRateByRepo` reports
+ * `run.id` and orders time series by `generatedAt`. `bugFixPrRateByRepo` reports
  * the latest run per repo.
  */
 export function aggregate(
@@ -96,11 +96,11 @@ export function aggregate(
         value: r.metrics.rates.missRate?.value ?? null,
     }));
 
-    const verifiedMissRateOverTime: TrendPoint[] = deduped.map((r) => ({
+    const bugFixPrRateOverTime: TrendPoint[] = deduped.map((r) => ({
         runId: r.run.id,
         repo: r.run.repo,
         generatedAt: r.run.generatedAt,
-        value: r.metrics.rates.verifiedMissRate?.value ?? null,
+        value: r.metrics.rates.bugFixPrRate?.value ?? null,
     }));
 
     const addressedRateBySeverityOverTime: SeverityTrendPoint[] = deduped.map(
@@ -120,13 +120,13 @@ export function aggregate(
         },
     );
 
-    // Latest run per repo drives the by-repo verified-miss rate.
+    // Latest run per repo drives the by-repo bug-fix rate.
     const latestByRepo = new Map<string, RunJson>();
     for (const r of deduped) latestByRepo.set(r.run.repo, r); // deduped is time-sorted
-    const verifiedMissRateByRepo: RepoRate[] = [...latestByRepo.entries()]
+    const bugFixPrRateByRepo: RepoRate[] = [...latestByRepo.entries()]
         .map(([repo, r]) => ({
             repo,
-            value: r.metrics.rates.verifiedMissRate?.value ?? null,
+            value: r.metrics.rates.bugFixPrRate?.value ?? null,
         }))
         .sort((a, b) => a.repo.localeCompare(b.repo));
 
@@ -140,9 +140,9 @@ export function aggregate(
             latest: times.at(-1) ?? null,
         },
         missRateOverTime,
-        verifiedMissRateOverTime,
+        bugFixPrRateOverTime,
         addressedRateBySeverityOverTime,
-        verifiedMissRateByRepo,
+        bugFixPrRateByRepo,
     };
 }
 

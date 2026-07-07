@@ -11,13 +11,12 @@
  *   - coverage: comment counts by authorKind, CCR counts by login and
  *     source/kind, missing diffHunk / postCommentDiff evidence, and gap
  *     candidates with no prior CCR comments.
- *   - pipeline health: classification status counts and trace counts.
+ *   - pipeline health: classification status counts.
  */
 import type {
     AttributedComment,
     JudgeInputItem,
     PullRequestData,
-    VerifiedMiss,
 } from "./types.ts";
 
 export interface PrepSummaryInput {
@@ -28,7 +27,6 @@ export interface PrepSummaryInput {
         number: number;
         classificationStatus?: string;
     }[];
-    traced: VerifiedMiss[];
 }
 
 export interface PrepSummary {
@@ -51,9 +49,6 @@ export interface PrepSummary {
     missingPostCommentDiff: number;
     gapCandidatesWithNoPriorCcr: number;
     classificationStatusCounts: Record<string, number>;
-    traceCount: number;
-    verifiedMissCount: number;
-    traceOutcomeCounts: Record<string, number>;
     /** True when any fatal audit check tripped. */
     fatal: boolean;
     fatalReasons: string[];
@@ -77,7 +72,7 @@ function increment(counts: Record<string, number>, key: string): void {
 }
 
 export function buildPrepSummary(input: PrepSummaryInput): PrepSummary {
-    const { prs, attributed, judgeInput, classified, traced } = input;
+    const { prs, attributed, judgeInput, classified } = input;
 
     const distinctFiles = new Set<string>();
     for (const data of prs) {
@@ -106,9 +101,6 @@ export function buildPrepSummary(input: PrepSummaryInput): PrepSummary {
             p.classificationStatus ?? "unknown",
         );
     }
-
-    const traceOutcomeCounts: Record<string, number> = {};
-    for (const t of traced) increment(traceOutcomeCounts, t.traceOutcome);
 
     const duplicateRowIds = countDuplicates(attributed, (c) => c.rowId);
     const duplicateFindingIds = countDuplicates(attributed, (c) => c.findingId);
@@ -165,9 +157,6 @@ export function buildPrepSummary(input: PrepSummaryInput): PrepSummary {
         missingPostCommentDiff,
         gapCandidatesWithNoPriorCcr,
         classificationStatusCounts,
-        traceCount: traced.length,
-        verifiedMissCount: traced.filter((t) => t.verifiedMiss).length,
-        traceOutcomeCounts,
         fatal: fatalReasons.length > 0,
         fatalReasons,
         warnings,

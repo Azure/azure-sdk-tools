@@ -66,8 +66,7 @@ function authorReplies(
     if (!prAuthor) return [];
     const replies = data.inline.filter(
         (c) =>
-            c.inReplyToId === comment.externalId &&
-            c.user?.login === prAuthor,
+            c.inReplyToId === comment.externalId && c.user?.login === prAuthor,
     );
     return replies.map((c) => clip(c.body.trim(), maxChars));
 }
@@ -77,14 +76,24 @@ function ccrCommentsForPr(
     candidate: AttributedComment,
     maxChars: number,
 ): NonNullable<JudgeInputItem["ccrComments"]> {
-    const candidateTs = candidate.createdAt ? Date.parse(candidate.createdAt) : NaN;
+    const candidateTs = candidate.createdAt
+        ? Date.parse(candidate.createdAt)
+        : NaN;
     return comments
         .filter((c) => {
-            if (c.pr !== candidate.pr || c.authorKind !== "ccr" || c.pathExcluded) {
+            if (
+                c.pr !== candidate.pr ||
+                c.authorKind !== "ccr" ||
+                c.pathExcluded
+            ) {
                 return false;
             }
             const ccrTs = c.createdAt ? Date.parse(c.createdAt) : NaN;
-            return !Number.isNaN(candidateTs) && !Number.isNaN(ccrTs) && ccrTs <= candidateTs;
+            return (
+                !Number.isNaN(candidateTs) &&
+                !Number.isNaN(ccrTs) &&
+                ccrTs <= candidateTs
+            );
         })
         .map((c) => ({
             path: c.path,
@@ -119,13 +128,9 @@ export function buildJudgeInputForPr(
             items.push({
                 ...base,
                 purpose: "gap-candidate",
-                ccrComments: ccrCommentsForPr(
-                    comments,
-                    c,
-                    opts.maxBodyChars,
-                ),
+                ccrComments: ccrCommentsForPr(comments, c, opts.maxBodyChars),
             });
-        } else if (c.authorKind === "ccr") {
+        } else if (c.authorKind === "ccr" && c.kind === "ask") {
             items.push({
                 ...base,
                 purpose: "ccr-comment",
@@ -189,14 +194,8 @@ function main(): void {
         fs.readFileSync(v.attributed, "utf8"),
     ) as AttributedFile;
     const opts = {
-        maxBodyChars: parsePositiveInt(
-            v["max-body-chars"],
-            "--max-body-chars",
-        ),
-        maxDiffChars: parsePositiveInt(
-            v["max-diff-chars"],
-            "--max-diff-chars",
-        ),
+        maxBodyChars: parsePositiveInt(v["max-body-chars"], "--max-body-chars"),
+        maxDiffChars: parsePositiveInt(v["max-diff-chars"], "--max-diff-chars"),
     };
 
     const items: JudgeInputItem[] = [];

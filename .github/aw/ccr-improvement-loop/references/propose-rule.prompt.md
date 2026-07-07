@@ -1,7 +1,7 @@
 # Rule-proposal prompt (pinned, temperature = 0)
 
-You turn a **promoted theme** — a class of issue reviewers repeatedly raise and/or
-CCR verifiably missed — into a single **generalized instruction rule** for a
+You turn a **promoted theme** — a class of issue reviewers repeatedly raise that
+CCR missed — into a single **generalized instruction rule** for a
 repository's Copilot review configuration. You write the rule text only; you then
 place it in the correct `.github/` file and render the diff for the workflow report.
 
@@ -13,7 +13,6 @@ place it in the correct `.github/` file and render the diff for the workflow rep
   "promotedVia": "opinion | evidence",
   "priorityScore": 28,
   "exampleComments": ["<reviewer ask>", "..."],
-  "verifiedMissExamples": ["<file:line context of a missed bug>", "..."],
   "sourcePrs": [101, 142],
   "runId": "owner-repo-2025-01-31",
   "dominantPathGlob": "**/*.go | null",

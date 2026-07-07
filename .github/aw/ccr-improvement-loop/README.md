@@ -172,21 +172,20 @@ Pair it with `missRate`, never read it alone.
 
 ---
 
-## Q4 — Verified misses (optional, low-confidence, off by default)
+## Q4 — Bug-fix PR rate (merged-bug signal)
 
-**Measures:** for a bug-fix PR, trace the fixed lines back to the PR that
-introduced them and check whether CCR was active-but-silent on that introducing
-PR — a miss corroborated by a real, merged fix.
+**Measures:** `bugFixPrRate` — the share of PRs in the window classified as
+`bug-fix`. A rising bug-fix rate on stable coverage is a signal worth watching
+next to `missRate`.
 
-**Why it's the highest-signal input when it fires:** unlike a human _opinion_ that
-CCR should have caught something, a shipped bug fix is objective proof the issue
-mattered.
-
-**Why it's off by default:** on a weekly-to-biweekly window a single repo yields
-maybe zero to two cleanly-traceable bug fixes, so the rate is almost always n < 5;
-and git-blame attribution is fragile across squashes, renames, and force-pushes.
-We compute it when asked, mark it **low-confidence**, and never headline it until
-it has accumulated across many runs.
+**Why it's a proxy, not proof:** it counts merged bugs but does not attribute them
+to a review CCR could have caught. That's deliberate. An earlier design traced a
+bug-fix's lines back to the introducing PR via `git blame` to build a
+"verified miss," but that attribution is fragile across squashes, renames, and
+force-pushes, a single weekly window yields maybe zero to two cleanly-traceable
+fixes (so the rate was almost always n < 5), and in practice it produced no
+signal. We removed it in favor of the simpler deterministic count and may revisit
+causal tracing once it can be made robust.
 
 ---
 

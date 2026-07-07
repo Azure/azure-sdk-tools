@@ -55,7 +55,9 @@ describe("build-judge-input", () => {
 
         const ccr = items.find((i) => i.purpose === "ccr-comment");
         expect(ccr?.postCommentDiff).toContain("if (!resp)");
-        expect(ccr?.authorReplies).toContain("Fixed in a later commit, thanks.");
+        expect(ccr?.authorReplies).toContain(
+            "Fixed in a later commit, thanks.",
+        );
     });
 
     it("gives judge input items unique ids for same-line comments", () => {

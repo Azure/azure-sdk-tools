@@ -72,27 +72,17 @@ steps:
         echo "::error::Target $TARGET_REPO is a fork; refusing to mine. See references/upstream-fork-check.md."
         exit 1
       fi
-  - name: Deterministic prep (fetch → classify → filter → attribute → trace)
+  - name: Deterministic prep (fetch → classify → filter → attribute → audit)
     working-directory: .github/aw/ccr-improvement-loop
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     run: |
       set -euo pipefail
       mkdir -p "$CCR_CACHE" "$CCR_RUNS"
-      node ./scripts/fetch-prs.ts --repo "$TARGET_REPO" --state merged \
-        --min-prs 50 --settle-days 14 --cache-dir "$CCR_CACHE" --quiet
-      GLOB="$CCR_CACHE/pr-*.json"
-      node ./scripts/classify-pr.ts        --glob "$GLOB" --cache-dir "$CCR_CACHE"
-      node ./scripts/filter-comments.ts    --glob "$GLOB" --cache-dir "$CCR_CACHE"
-      node ./scripts/attribute-comments.ts --glob "$GLOB" \
-        --filtered "$CCR_CACHE/filtered.json" --cache-dir "$CCR_CACHE"
-      node ./scripts/build-judge-input.ts  --glob "$GLOB" \
-        --attributed "$CCR_CACHE/attributed.json" --cache-dir "$CCR_CACHE"
-      node ./scripts/trace-bug-origin.ts   --repo "$TARGET_REPO" \
-        --classified "$CCR_CACHE/classified.json" --glob "$GLOB" \
-        --cache-dir "$CCR_CACHE" || true
-      # Minimal run metadata for emit-run-json (agent may refine model/hashes).
-      printf '%s' "{\"repo\":\"$TARGET_REPO\",\"windowStart\":\"\",\"windowEnd\":\"$(date -u +%F)\",\"windowLagDays\":14,\"prState\":\"merged\",\"model\":\"agentic-workflow\",\"modelTool\":\"gh-aw\",\"temperature\":0,\"matchedCcrLogin\":\"copilot-pull-request-reviewer[bot]\",\"promptHashes\":{},\"vocabularyHash\":null,\"toolVersion\":\"1.0\",\"ccrEnabledSince\":null}" > "$CCR_CACHE/meta.json"
+      # prep-run orchestrates every stage with explicit-arg subprocess calls,
+      # writes meta.json + prep-summary.json, and exits non-zero if a fatal
+      # audit check (duplicate rowIds / judge-input ids) trips.
+      node ./scripts/prep-run.ts --repo "$TARGET_REPO" --cache-dir "$CCR_CACHE"
 ---
 
 # CCR Improvement Loop
@@ -102,14 +92,37 @@ this window, then report the result as one cited tracking issue. This run is
 scheduled or manually dispatched — there is no triggering issue/PR. The
 deterministic prep steps have already fetched the settled PRs and written the
 normalized cache to `${{ env.CCR_CACHE }}` (`classified.json`, `filtered.json`,
-`attributed.json`, `judge-input.json`, `traced.json`, `meta.json`).
+`attributed.json`, `judge-input.json`, `meta.json`,
+`prep-summary.json`). Read `prep-summary.json` first — it reports comment counts
+by author kind, CCR inline counts, identity-integrity checks, and any evidence
+gaps you should account for in the methodology note.
 
 Do the agent-judgment work below using the **pinned prompts** in the workflow
 support package under `.github/aw/ccr-improvement-loop/references/`. Never invent
 a label outside the closed
 [controlled-vocabulary.md](../aw/ccr-improvement-loop/references/controlled-vocabulary.md).
 
-## 1. Judge the comments
+## 1. Classify PRs the deterministic rules could not type
+
+The deterministic `classify-pr.ts` prep only types a PR when a label,
+Conventional-Commit title prefix, or linked-issue label applies; every other PR
+is left `prType: null`, `prTypeSource: "unknown"`, `classificationStatus:
+"needs-agent"`. Resolve those now — otherwise `prType` and `bugFixPrRate` (the
+merged-bug signal) stay empty.
+
+Read `${{ env.CCR_CACHE }}/classified.json` and select every PR whose
+`classificationStatus == "needs-agent"`. Batch them (don't classify one per
+turn). For each, apply
+[classify-pr.prompt.md](../aw/ccr-improvement-loop/references/classify-pr.prompt.md)
+using the PR title (and labels/body from the matching
+`${{ env.CCR_CACHE }}/pr-*.json` cache file) to pick exactly one `prType`
+(`bug-fix | feature | refactor | docs | test | chore`). Then set
+`prTypeSource: "agent"` and `classificationStatus: "complete"` on that row.
+Leave already-`complete` rows untouched. Write the updated array back to
+`${{ env.CCR_CACHE }}/classified.json` (same shape) so the Step 4 emit picks it
+up and `bugFixPrRate` reflects the true bug-fix count for the window.
+
+## 2. Judge the comments
 
 Read `${{ env.CCR_CACHE }}/judge-input.json` for the bounded evidence and
 `${{ env.CCR_CACHE }}/attributed.json` for the rows to augment. Batch the judge
@@ -128,20 +141,19 @@ Use only the evidence already present in `judge-input.json` — never full-file 
 and `theme = isSubstantive ? category : null`. Leave any un-judgeable row's judge
 fields `null` with `judgeStatus: "failed"`.
 
-## 2. Cluster and promote themes
+## 3. Cluster and promote themes
 
 Cluster the `isGap` rows per
 [theme.prompt.md](../aw/ccr-improvement-loop/references/theme.prompt.md), apply
 the promotion gate, and write `${{ env.CCR_CACHE }}/themes.json`.
 
-## 3. Compute metrics (deterministic)
+## 4. Compute metrics (deterministic)
 
 ```bash
 node .github/aw/ccr-improvement-loop/scripts/emit-run-json.ts \
   --meta "$CCR_CACHE/meta.json" \
   --classified "$CCR_CACHE/classified.json" \
   --attributed "$CCR_CACHE/judged.json" \
-  --verified-misses "$CCR_CACHE/traced.json" \
   --themes "$CCR_CACHE/themes.json" \
   --glob "$CCR_CACHE/pr-*.json" \
   --out-dir "$CCR_RUNS" --print-summary
@@ -151,7 +163,7 @@ The emitted `run-*.json` is the system of record; its schema validation rejects
 any label outside the controlled vocabulary, so a mislabel fails the run rather
 than skewing a metric.
 
-## 4. Report (safe outputs only — proposal, no file writes)
+## 5. Report (safe outputs only — proposal, no file writes)
 
 - Emit an **`upload-artifact`** safe output for `${{ env.CCR_RUNS }}/run-*.json`
   (durable trend record).
@@ -159,8 +171,8 @@ than skewing a metric.
   `CCR Improvement Loop — <repo> (<window>)` whose body contains, in GitHub-flavored
   markdown with nested headings starting at `###`:
   - headline metrics **sliced** (miss rate; addressed/ignored by severity; CCR
-    coverage), each read as a trend, with any n < 5 slice flagged low-confidence;
-  - verified-miss highlights (fix PR → introducing PR), if any;
+    coverage; bug-fix PR rate), each read as a trend, with any low-confidence
+    slice (n < 5) or rate (n < 10) flagged;
   - the ranked **promoted** themes with source-PR citations;
   - for each promoted theme, one **generalized** proposed `.github/` instruction
     rule (imperative, not tied to a specific PR/file), for human approval.

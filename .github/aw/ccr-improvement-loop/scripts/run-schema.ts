@@ -121,41 +121,10 @@ export const CommentRowSchema = z
     })
     .strict();
 
-export const VerifiedMissSchema = z
-    .object({
-        fixPr: z.number().int(),
-        fixUrl: z.string().nullable(),
-        path: z.string(),
-        introducedByPr: z.number().int().nullable(),
-        introducedUrl: z.string().nullable(),
-        introducingCommit: z.string().nullable(),
-        traceOutcome: z.enum([
-            "resolved",
-            "unresolved-no-pr",
-            "ambiguous-multiple-prs",
-            "unsupported-generated-file",
-            "low-confidence-refactor",
-        ]),
-        ccrOpportunity: z.enum([
-            "ccrCommentedOnLines",
-            "ccrCommentedOnFile",
-            "ccrActiveOnPr",
-            "ccrSummaryOnly",
-            "ccrInactive",
-        ]),
-        ccrActiveOnIntroducingPr: z.boolean(),
-        ccrCommentedOnLines: z.boolean(),
-        verifiedMiss: z.boolean(),
-        theme: Category.nullable(),
-        blameConfidence: z.enum(["high", "medium", "low"]),
-    })
-    .strict();
-
 export const ThemeSchema = z
     .object({
         label: Category,
         gapCount: z.number().int().nonnegative(),
-        verifiedMissCount: z.number().int().nonnegative(),
         askCount: z.number().int().nonnegative(),
         distinctReviewers: z.number().int().nonnegative(),
         promoted: z.boolean(),
@@ -230,7 +199,6 @@ export const RunSchema = z
         run: RunMetaSchema,
         prs: z.array(PrRowSchema),
         comments: z.array(CommentRowSchema),
-        verifiedMisses: z.array(VerifiedMissSchema),
         themes: z.array(ThemeSchema),
         metrics: MetricsSchema,
         proposedEdits: z.array(ProposedEditSchema),

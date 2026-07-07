@@ -24,9 +24,8 @@ import type {
     AttributedComment,
     JudgeInputItem,
     PullRequestData,
-    VerifiedMiss,
 } from "./types.ts";
-import { makeLogger } from "./utils.ts";
+import { makeLogger, sha256 } from "./utils.ts";
 
 const log = makeLogger("prep-run");
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -44,18 +43,21 @@ function runStage(script: string, args: string[]): void {
 
 interface MetaInput {
     repo: string;
+    windowStart: string;
     windowEnd: string;
     windowLagDays: number;
     prState: string;
     matchedCcrLogin: string | null;
     ccrEnabledSince: string | null;
+    promptHashes: Record<string, string>;
+    vocabularyHash: string | null;
 }
 
-/** Minimal run metadata; the agent may later refine model/hashes. */
+/** Minimal run metadata; the agent may later refine the model field. */
 export function buildMeta(input: MetaInput): Record<string, unknown> {
     return {
         repo: input.repo,
-        windowStart: "",
+        windowStart: input.windowStart,
         windowEnd: input.windowEnd,
         windowLagDays: input.windowLagDays,
         prState: input.prState,
@@ -63,11 +65,38 @@ export function buildMeta(input: MetaInput): Record<string, unknown> {
         modelTool: "gh-aw",
         temperature: 0,
         matchedCcrLogin: input.matchedCcrLogin,
-        promptHashes: {},
-        vocabularyHash: null,
+        promptHashes: input.promptHashes,
+        vocabularyHash: input.vocabularyHash,
         toolVersion: "1.0",
         ccrEnabledSince: input.ccrEnabledSince,
     };
+}
+
+/**
+ * sha256 of each pinned reference prompt + the controlled vocabulary, for run
+ * provenance/reproducibility. Missing files are skipped (hash omitted).
+ */
+export function computeProvenance(referencesDir: string): {
+    promptHashes: Record<string, string>;
+    vocabularyHash: string | null;
+} {
+    const prompts: Record<string, string> = {
+        judge: "judge.prompt.md",
+        theme: "theme.prompt.md",
+        classify: "classify-pr.prompt.md",
+    };
+    const promptHashes: Record<string, string> = {};
+    for (const [key, file] of Object.entries(prompts)) {
+        const p = path.join(referencesDir, file);
+        if (fs.existsSync(p)) {
+            promptHashes[key] = sha256(fs.readFileSync(p, "utf8"));
+        }
+    }
+    const vocabPath = path.join(referencesDir, "controlled-vocabulary.md");
+    const vocabularyHash = fs.existsSync(vocabPath)
+        ? sha256(fs.readFileSync(vocabPath, "utf8"))
+        : null;
+    return { promptHashes, vocabularyHash };
 }
 
 function readArrayField<T>(file: string, key: string): T[] {
@@ -78,26 +107,6 @@ function readArrayField<T>(file: string, key: string): T[] {
     >;
     const arr = parsed[key];
     return Array.isArray(arr) ? (arr as T[]) : [];
-}
-
-/** Ensure a schema-shaped, empty traced.json exists (trace may fail offline). */
-function ensureTracedJson(cacheDir: string): void {
-    const out = path.join(cacheDir, "traced.json");
-    if (fs.existsSync(out)) return;
-    fs.writeFileSync(
-        out,
-        JSON.stringify(
-            {
-                processed: 0,
-                kept: 0,
-                skipped: 0,
-                skipReasons: { verified: 0 },
-                verifiedMisses: [],
-            },
-            null,
-            2,
-        ),
-    );
 }
 
 /** Assemble the prep summary from the normalized cache written by the stages. */
@@ -120,18 +129,32 @@ export function summarizeCache(cacheDir: string, glob: string): PrepSummary {
         number: number;
         classificationStatus?: string;
     }>(path.join(cacheDir, "classified.json"), "prs");
-    const traced = readArrayField<VerifiedMiss>(
-        path.join(cacheDir, "traced.json"),
-        "verifiedMisses",
-    );
 
     return buildPrepSummary({
         prs,
         attributed,
         judgeInput,
         classified,
-        traced,
     });
+}
+
+/**
+ * Earliest merged/created date (YYYY-MM-DD) across the PR cache — the start of
+ * the sampled window. Empty string when no dated PR is present.
+ */
+export function windowStartOf(glob: string): string {
+    let earliest = Number.POSITIVE_INFINITY;
+    for (const file of fs.globSync(glob, { withFileTypes: false })) {
+        const data = JSON.parse(
+            fs.readFileSync(file, "utf8"),
+        ) as PullRequestData;
+        const stamp = data.pr.mergedAt ?? data.pr.createdAt;
+        if (!stamp) continue;
+        const t = Date.parse(stamp);
+        if (!Number.isNaN(t) && t < earliest) earliest = t;
+    }
+    if (earliest === Number.POSITIVE_INFINITY) return "";
+    return new Date(earliest).toISOString().slice(0, 10);
 }
 
 function usage(): string {
@@ -219,32 +242,17 @@ function main(): void {
         cacheDir,
     ]);
 
-    // Trace may fail offline / on unsupported repos; always leave valid traced.json.
-    try {
-        runStage("trace-bug-origin.ts", [
-            "--repo",
-            repo,
-            "--classified",
-            path.join(cacheDir, "classified.json"),
-            "--glob",
-            glob,
-            "--cache-dir",
-            cacheDir,
-        ]);
-    } catch (err: unknown) {
-        log.error(
-            `trace-bug-origin failed (non-fatal): ${err instanceof Error ? err.message : String(err)}`,
-        );
-    }
-    ensureTracedJson(cacheDir);
-
+    const provenance = computeProvenance(path.join(here, "..", "references"));
     const meta = buildMeta({
         repo,
+        windowStart: windowStartOf(glob),
         windowEnd: new Date().toISOString().slice(0, 10),
         windowLagDays: Number.parseInt(v["settle-days"], 10),
         prState: v.state,
         matchedCcrLogin: cfg.ccrLogins[0] ?? null,
         ccrEnabledSince: cfg.ccrEnabledSince,
+        promptHashes: provenance.promptHashes,
+        vocabularyHash: provenance.vocabularyHash,
     });
     fs.writeFileSync(
         path.join(cacheDir, "meta.json"),

@@ -9,11 +9,7 @@ import { describe, expect, it, afterEach } from "vitest";
 import { buildMeta } from "../scripts/prep-run.ts";
 import { buildPrepSummary } from "../scripts/prep-summary.ts";
 import type { PrepSummaryInput } from "../scripts/prep-summary.ts";
-import type {
-    AttributedComment,
-    JudgeInputItem,
-    VerifiedMiss,
-} from "../scripts/types.ts";
+import type { AttributedComment, JudgeInputItem } from "../scripts/types.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const scripts = join(here, "..", "scripts");
@@ -75,7 +71,6 @@ function baseInput(over: Partial<PrepSummaryInput>): PrepSummaryInput {
         attributed: [],
         judgeInput: [],
         classified: [],
-        traced: [],
         ...over,
     };
 }
@@ -188,38 +183,17 @@ describe("buildPrepSummary", () => {
         expect(summary.gapCandidatesWithNoPriorCcr).toBe(1);
     });
 
-    it("counts classification status and trace outcomes", () => {
-        const traced: VerifiedMiss[] = [
-            {
-                fixPr: 2,
-                fixUrl: undefined,
-                path: "src/a.ts",
-                introducedByPr: 1,
-                introducedUrl: undefined,
-                introducingCommit: "abc",
-                traceOutcome: "resolved",
-                ccrOpportunity: "ccrCommentedOnLines",
-                ccrActiveOnIntroducingPr: true,
-                ccrCommentedOnLines: false,
-                verifiedMiss: true,
-                theme: null,
-                blameConfidence: "high",
-            },
-        ];
+    it("counts classification status", () => {
         const summary = buildPrepSummary(
             baseInput({
                 classified: [
                     { number: 1, classificationStatus: "complete" },
                     { number: 2, classificationStatus: "needs-agent" },
                 ],
-                traced,
             }),
         );
         expect(summary.classificationStatusCounts.complete).toBe(1);
         expect(summary.classificationStatusCounts["needs-agent"]).toBe(1);
-        expect(summary.traceCount).toBe(1);
-        expect(summary.verifiedMissCount).toBe(1);
-        expect(summary.traceOutcomeCounts.resolved).toBe(1);
     });
 
     it("produces a stable summary for identical input", () => {
@@ -236,15 +210,20 @@ describe("buildMeta", () => {
     it("emits the minimal run metadata shape", () => {
         const meta = buildMeta({
             repo: "Acme/widget",
+            windowStart: "2026-06-01",
             windowEnd: "2026-07-07",
             windowLagDays: 14,
             prState: "merged",
             matchedCcrLogin: "copilot-pull-request-reviewer[bot]",
             ccrEnabledSince: null,
+            promptHashes: { judge: "sha256:abc" },
+            vocabularyHash: "sha256:def",
         });
         expect(meta.repo).toBe("Acme/widget");
         expect(meta.windowEnd).toBe("2026-07-07");
+        expect(meta.windowStart).toBe("2026-06-01");
         expect(meta.matchedCcrLogin).toBe("copilot-pull-request-reviewer[bot]");
+        expect(meta.vocabularyHash).toBe("sha256:def");
         expect(meta.toolVersion).toBe("1.0");
     });
 });
@@ -283,9 +262,11 @@ describe("prep-run orchestrator (offline fixture)", () => {
         };
         const meta = JSON.parse(
             readFileSync(join(cache, "meta.json"), "utf8"),
-        ) as { repo: string };
+        ) as { repo: string; windowStart: string };
 
         expect(meta.repo).toBe("Acme/widget");
+        // windowStart is derived from the fixture PR's merged/created date.
+        expect(meta.windowStart).toMatch(/^\d{4}-\d{2}-\d{2}$/);
         expect(summary.prCount).toBe(1);
         expect(summary.ccrInlineCount).toBeGreaterThanOrEqual(1);
         expect(summary.duplicateRowIds).toBe(0);

@@ -71,28 +71,10 @@
       "theme": "error-handling"
     }
   ],
-  "verifiedMisses": [
-    {
-      "fixPr": 7300,
-      "fixUrl": "https://github.com/Azure/azure-sdk-for-go/pull/7300",
-      "path": "sdk/foo/client.go",
-      "introducedByPr": 7012,
-      "introducedUrl": "https://github.com/Azure/azure-sdk-for-go/pull/7012",
-      "introducingCommit": "abc123",
-      "traceOutcome": "resolved",
-      "ccrOpportunity": "ccrCommentedOnFile",
-      "ccrActiveOnIntroducingPr": true,
-      "ccrCommentedOnLines": false,
-      "verifiedMiss": true,
-      "theme": "error-handling",
-      "blameConfidence": "high"
-    }
-  ],
   "themes": [
     {
       "label": "error-handling",
       "gapCount": 9,
-      "verifiedMissCount": 3,
       "askCount": 11,
       "distinctReviewers": 4,
       "promoted": true,

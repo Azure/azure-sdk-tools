@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { computeMetrics } from "../scripts/compute-metrics.ts";
 import type { ComputeMetricsOpts } from "../scripts/compute-metrics.ts";
 import type { PrRowOut } from "../scripts/pr-metrics.ts";
-import type { AttributedComment, VerifiedMiss } from "../scripts/types.ts";
+import type { AttributedComment } from "../scripts/types.ts";
 import type { Metric } from "../scripts/run-schema.ts";
 
 const OPTS: ComputeMetricsOpts = {
@@ -98,7 +98,7 @@ function sliceSum(m: Metric, key: "numerator" | "denominator"): number {
 describe("compute-metrics", () => {
     it("division-by-zero yields value null, not NaN (zero-CCR window)", () => {
         const prs = [pr({ number: 1, ccrReviewed: false })];
-        const m = computeMetrics(prs, [], [], OPTS);
+        const m = computeMetrics(prs, [], OPTS);
         const addressed = rate(m, "addressedRate");
         expect(addressed.denominator).toBe(0);
         expect(addressed.value).toBeNull();
@@ -132,7 +132,7 @@ describe("compute-metrics", () => {
                 lineStart: 40,
             }),
         ];
-        const m = computeMetrics(prs, comments, [], OPTS);
+        const m = computeMetrics(prs, comments, OPTS);
         expect(rate(m, "addressedRate").value).toBeCloseTo(1 / 3);
         expect(rate(m, "rejectedRate").value).toBeCloseTo(1 / 3);
         expect(rate(m, "ignoredRate").value).toBeCloseTo(1 / 3);
@@ -153,7 +153,7 @@ describe("compute-metrics", () => {
                 lineStart: 20,
             }),
         ];
-        const m = computeMetrics(prs, comments, [], OPTS);
+        const m = computeMetrics(prs, comments, OPTS);
         expect(rate(m, "addressedRate").denominator).toBe(1);
         expect(m.counts.ccrCommentsPathExcluded).toBe(1);
     });
@@ -175,7 +175,7 @@ describe("compute-metrics", () => {
                 lineStart: 20,
             }),
         ];
-        const m = computeMetrics(prs, comments, [], OPTS);
+        const m = computeMetrics(prs, comments, OPTS);
         const addressed = rate(m, "addressedRate");
         expect(addressed.denominator).toBe(1);
         expect(addressed.value).toBeCloseTo(1);
@@ -208,7 +208,7 @@ describe("compute-metrics", () => {
                 lineStart: 30,
             }),
         ];
-        const m = computeMetrics(prs, comments, [], OPTS);
+        const m = computeMetrics(prs, comments, OPTS);
         const addressed = rate(m, "addressedRate");
         expect(sliceSum(addressed, "numerator")).toBe(addressed.numerator);
         expect(sliceSum(addressed, "denominator")).toBe(addressed.denominator);
@@ -228,7 +228,7 @@ describe("compute-metrics", () => {
             ccr({ pr: 1, ccrOutcome: "addressed", lineStart: 10 }),
             ccr({ pr: 2, ccrOutcome: "ignored", lineStart: 20 }),
         ];
-        const m = computeMetrics(prs, comments, [], OPTS);
+        const m = computeMetrics(prs, comments, OPTS);
         const addressed = rate(m, "addressedRate");
         expect(sliceSum(addressed, "numerator")).toBe(addressed.numerator);
         expect(sliceSum(addressed, "denominator")).toBe(addressed.denominator);
@@ -254,7 +254,7 @@ describe("compute-metrics", () => {
                 source: "review",
             }),
         ];
-        const m = computeMetrics(prs, comments, [], OPTS);
+        const m = computeMetrics(prs, comments, OPTS);
         expect(m.counts.humanAsks).toBe(1);
         expect(rate(m, "humanCommentsPerPr").numerator).toBe(1);
     });
@@ -295,7 +295,7 @@ describe("compute-metrics", () => {
                 lineStart: 4,
             }),
         ];
-        const m = computeMetrics(prs, comments, [], OPTS);
+        const m = computeMetrics(prs, comments, OPTS);
         const miss = rate(m, "missRate");
         // the ccrSawCode=false ask is excluded from the denominator.
         expect(miss.numerator).toBe(1);
@@ -313,7 +313,7 @@ describe("compute-metrics", () => {
                 mergedAt: "2020-01-02T00:00:00Z",
             }),
         ];
-        const m = computeMetrics(prs, [], [], {
+        const m = computeMetrics(prs, [], {
             ccrEnabledSince: "2025-01-01T00:00:00Z",
             automationLogins: [],
         });
@@ -323,64 +323,21 @@ describe("compute-metrics", () => {
         expect(m.counts.eligibleForCoverage).toBe(1);
     });
 
-    it("computes bugFixPrRate and verified-miss Q3 rates", () => {
+    it("computes bugFixPrRate from merged bug-fix PRs", () => {
         const prs = [
             pr({ number: 1, prType: "bug-fix" }),
             pr({ number: 2, prType: "feature" }),
         ];
-        const misses: VerifiedMiss[] = [
-            {
-                fixPr: 1,
-                fixUrl: "u",
-                path: "src/a.ts",
-                introducedByPr: 9,
-                introducedUrl: "u9",
-                introducingCommit: "abc",
-                traceOutcome: "resolved",
-                ccrOpportunity: "ccrActiveOnPr",
-                ccrActiveOnIntroducingPr: true,
-                ccrCommentedOnLines: false,
-                verifiedMiss: true,
-                theme: null,
-                blameConfidence: "high",
-            },
-        ];
-        const m = computeMetrics(prs, [], misses, OPTS);
+        const m = computeMetrics(prs, [], OPTS);
         expect(rate(m, "bugFixPrRate").value).toBeCloseTo(1 / 2);
-        expect(rate(m, "verifiedMissRate").value).toBeCloseTo(1 / 1);
-        expect(rate(m, "preventableBugRate").value).toBeCloseTo(1 / 1);
-    });
-
-    it("excludes low-confidence blame from verified-miss rates", () => {
-        const prs = [
-            pr({ number: 1, prType: "bug-fix" }),
-            pr({ number: 2, prType: "bug-fix" }),
-        ];
-        const misses: VerifiedMiss[] = [
-            {
-                fixPr: 1,
-                fixUrl: "u",
-                path: "src/a.ts",
-                introducedByPr: 9,
-                introducedUrl: "u9",
-                introducingCommit: "abc",
-                traceOutcome: "resolved",
-                ccrOpportunity: "ccrActiveOnPr",
-                ccrActiveOnIntroducingPr: true,
-                ccrCommentedOnLines: false,
-                verifiedMiss: true,
-                theme: null,
-                blameConfidence: "low",
-            },
-        ];
-        const m = computeMetrics(prs, [], misses, OPTS);
-        expect(rate(m, "verifiedMissRate").numerator).toBe(0);
-        expect(rate(m, "preventableBugRate").denominator).toBe(0);
-        expect(rate(m, "preventableBugRate").value).toBeNull();
+        expect(m.counts.bugFixPrs).toBe(1);
+        // verified-miss tracing was removed; those rates no longer exist.
+        expect(m.rates.verifiedMissRate).toBeUndefined();
+        expect(m.rates.preventableBugRate).toBeUndefined();
     });
 
     it("flags criticalCatchRate as lowConfidence", () => {
-        const m = computeMetrics([pr({ number: 1 })], [], [], OPTS);
+        const m = computeMetrics([pr({ number: 1 })], [], OPTS);
         expect(rate(m, "criticalCatchRate").lowConfidence).toBe(true);
     });
 
@@ -389,7 +346,7 @@ describe("compute-metrics", () => {
         const comments = [
             ccr({ pr: 1, ccrOutcome: "addressed", lineStart: 1 }),
         ];
-        const m = computeMetrics(prs, comments, [], OPTS);
+        const m = computeMetrics(prs, comments, OPTS);
         expect(
             m.coverageWarnings.some((w) => w.startsWith("addressedRate")),
         ).toBe(true);
@@ -404,7 +361,7 @@ describe("compute-metrics", () => {
             ccr({ pr: 1, ccrOutcome: "addressed", lineStart: 1 }),
             ccr({ pr: 2, ccrOutcome: "ignored", lineStart: 2 }),
         ];
-        const m = computeMetrics(prs, comments, [], OPTS);
+        const m = computeMetrics(prs, comments, OPTS);
         const addressed = rate(m, "addressedRate");
         expect(addressed.slices?.length).toBe(1);
         expect(addressed.slices?.[0]?.value).toBeCloseTo(

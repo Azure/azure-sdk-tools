@@ -4,11 +4,7 @@ import { aggregate, dedupeRuns } from "../scripts/aggregate-runs.ts";
 import { buildRunJson } from "../scripts/emit-run-json.ts";
 import type { BuildRunInput, RunMetaInput } from "../scripts/emit-run-json.ts";
 import type { PrRowOut } from "../scripts/pr-metrics.ts";
-import type {
-    AttributedComment,
-    Category,
-    VerifiedMiss,
-} from "../scripts/types.ts";
+import type { AttributedComment } from "../scripts/types.ts";
 import type { RunJson } from "../scripts/run-schema.ts";
 
 function meta(repo: string): RunMetaInput {
@@ -123,36 +119,16 @@ function ccrComment(
     };
 }
 
-function miss(theme: Category): VerifiedMiss {
-    return {
-        fixPr: 9,
-        fixUrl: undefined,
-        path: "src/a.ts",
-        introducedByPr: 5,
-        introducedUrl: undefined,
-        introducingCommit: "abc",
-        traceOutcome: "resolved",
-        ccrOpportunity: "ccrActiveOnPr",
-        ccrActiveOnIntroducingPr: true,
-        ccrCommentedOnLines: false,
-        verifiedMiss: true,
-        theme,
-        blameConfidence: "high",
-    };
-}
-
 function run(over: {
     repo?: string;
     generatedAt: string;
     prs?: PrRowOut[];
     comments?: AttributedComment[];
-    verifiedMisses?: VerifiedMiss[];
 }): RunJson {
     const input: BuildRunInput = {
         meta: meta(over.repo ?? "Azure/go"),
         prs: over.prs ?? [prRow(1, true)],
         comments: over.comments ?? [],
-        verifiedMisses: over.verifiedMisses ?? [],
         themes: [],
         proposedEdits: [],
         experiment: null,
@@ -217,19 +193,18 @@ describe("aggregate — fixture math", () => {
         expect(point?.bySeverity.nit).toBe(0);
     });
 
-    it("reports verifiedMissRate by repo using the latest run per repo", () => {
+    it("reports bugFixPrRate by repo using the latest run per repo", () => {
         const go = run({
             repo: "Azure/go",
             generatedAt: "2026-06-10T00:00:00Z",
             prs: [prRow(1, true)],
-            verifiedMisses: [miss("error-handling")],
         });
         const py = run({
             repo: "Azure/py",
             generatedAt: "2026-06-11T00:00:00Z",
         });
         const agg = aggregate([go, py]);
-        expect(agg.verifiedMissRateByRepo.map((r) => r.repo)).toEqual([
+        expect(agg.bugFixPrRateByRepo.map((r) => r.repo)).toEqual([
             "Azure/go",
             "Azure/py",
         ]);

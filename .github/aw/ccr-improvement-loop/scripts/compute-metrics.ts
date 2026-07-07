@@ -1,8 +1,8 @@
 /**
  * compute-metrics.ts — pure arithmetic over attributed comments + PR rows.
  *
- * Produces the metric block in a single pass over already-judged,
- * already-traced rows. Design rules pinned here (and asserted in tests):
+ * Produces the metric block in a single pass over already-judged rows. Design
+ * rules pinned here (and asserted in tests):
  *
  * - Every rate carries {numerator, denominator, value, denominatorDef, direction}
  *   plus a `slices` array. `value` is `null` (never NaN) when the denominator is 0.
@@ -14,15 +14,14 @@
  *   reconcile over every row.
  * - `criticalCatchRate` is flagged `lowConfidence: true` in V1.
  *
- * The function is invoked once in the live pipeline, after judge (Step 3) and
- * trace (Step 4); here it is unit-tested against severity-bearing fixtures.
+ * The function is invoked once in the live pipeline, after the judge stage;
+ * here it is unit-tested against severity-bearing fixtures.
  */
 import type {
     AttributedComment,
     CcrOutcome,
     PrType,
     Severity,
-    VerifiedMiss,
 } from "./types.ts";
 import type { Metric, Metrics } from "./run-schema.ts";
 import type { PrRowOut } from "./pr-metrics.ts";
@@ -49,6 +48,8 @@ interface SliceKey {
 }
 
 const COVERAGE_MIN = 5;
+/** Denominators below this are statistically weak; the rate is flagged low-confidence. */
+const LOW_CONFIDENCE_MIN = 10;
 
 function ratio(num: number, den: number): number | null {
     return den === 0 ? null : num / den;
@@ -146,7 +147,10 @@ function buildRate(
         direction,
         slices,
     };
-    if (lowConfidence) metric.lowConfidence = true;
+    // Flag low confidence when explicitly requested OR the denominator is small.
+    if (lowConfidence || (den > 0 && den < LOW_CONFIDENCE_MIN)) {
+        metric.lowConfidence = true;
+    }
     return metric;
 }
 
@@ -227,7 +231,6 @@ function distinctByFindingId(
 export function computeMetrics(
     prs: PrRowOut[],
     comments: AttributedComment[],
-    verifiedMisses: VerifiedMiss[],
     opts: ComputeMetricsOpts,
 ): Metrics {
     const warnings: string[] = [];
@@ -295,12 +298,14 @@ export function computeMetrics(
     );
 
     // ---- Q2 — CCR comment usefulness (judged outcome) -------------------
-    // Outcome is an LLM verdict from the post-comment change + replies. Excluded
-    // paths and severity-null rows are dropped from the severity-sliced rates so
-    // slices reconcile; unclear/null outcomes are excluded from denominators and
+    // Only actionable CCR findings (kind === "ask") count: review-summary and
+    // reply rows are the overview/acknowledgement blurb, not findings, so they
+    // are excluded from every usefulness denominator. Excluded paths and
+    // severity-null rows are dropped from the severity-sliced rates so slices
+    // reconcile; unclear/null outcomes are excluded from denominators and
     // reported in counts.
     const ccrAll = distinctByFindingId(
-        comments.filter((c) => c.authorKind === "ccr"),
+        comments.filter((c) => c.authorKind === "ccr" && c.kind === "ask"),
     );
     const ccrEligible = ccrAll.filter((c) => !c.pathExcluded);
     const ccrSeverityNull = ccrEligible.filter(
@@ -397,9 +402,10 @@ export function computeMetrics(
         "ccrCoverage",
     );
 
-    // ---- Q3 — bug-verified track ----------------------------------------
-    // bugFixPrRate is PR-based and computable now; the verified-miss rates are
-    // null until trace-bug-origin.ts (Step 4) populates verifiedMisses.
+    // ---- Q3 — bug track --------------------------------------------------
+    // bugFixPrRate is the deterministic merged-bug signal (PR-based). Blame-based
+    // verified-miss tracing was removed as too noisy/complex; this rate is the
+    // proxy we keep.
     rates.bugFixPrRate = buildRate(
         prs.map((p) => ({
             prType: p.prType,
@@ -414,43 +420,14 @@ export function computeMetrics(
         "bugFixPrRate",
     );
 
-    const tracedMisses = verifiedMisses.filter(
-        (m) => m.traceOutcome === "resolved" && m.blameConfidence !== "low",
-    );
     const bugFixPrs = prs.filter((p) => p.prType === "bug-fix").length;
-    rates.verifiedMissRate = {
-        numerator: tracedMisses.filter((m) => m.verifiedMiss).length,
-        denominator: bugFixPrs,
-        value: ratio(
-            tracedMisses.filter((m) => m.verifiedMiss).length,
-            bugFixPrs,
-        ),
-        denominatorDef: "verified misses ÷ successfully traced bug-fix PRs",
-        direction: "down",
-        slices: [],
-    };
-    const ccrActiveMisses = verifiedMisses.filter(
-        (m) => m.ccrActiveOnIntroducingPr && m.blameConfidence !== "low",
-    );
-    rates.preventableBugRate = {
-        numerator: ccrActiveMisses.filter((m) => m.verifiedMiss).length,
-        denominator: ccrActiveMisses.length,
-        value: ratio(
-            ccrActiveMisses.filter((m) => m.verifiedMiss).length,
-            ccrActiveMisses.length,
-        ),
-        denominatorDef:
-            "verified misses where CCR was active ÷ introducing PRs with CCR active",
-        direction: "down",
-        slices: [],
-    };
     {
+        // criticalCatchRate: of critical-severity CCR comments, the fraction the
+        // author acted on. Always flagged low-confidence in V1.
         const criticalCcr = ccrEligible.filter(
             (c) => c.severity === "critical",
         );
-        const known =
-            criticalCcr.length +
-            verifiedMisses.filter((m) => m.verifiedMiss).length;
+        const known = criticalCcr.length;
         const caught = criticalCcr.filter(
             (c) => c.ccrOutcome === "addressed",
         ).length;
@@ -459,7 +436,7 @@ export function computeMetrics(
             denominator: known,
             value: ratio(caught, known),
             denominatorDef:
-                "critical CCR comments acted on ÷ critical issues known (CCR + verified miss)",
+                "critical CCR comments acted on ÷ critical CCR comments",
             direction: "up",
             lowConfidence: true,
             slices: [],
@@ -482,7 +459,6 @@ export function computeMetrics(
         ccrOutcomeUnclear,
         ccrOutcomeNull,
         ccrDecided: decided.length,
-        verifiedMisses: verifiedMisses.filter((m) => m.verifiedMiss).length,
     };
 
     return { rates, coverageWarnings: warnings, counts };

@@ -34,7 +34,6 @@ import type {
     PrTypeSource,
     PullRequestData,
     Theme,
-    VerifiedMiss,
 } from "./types.ts";
 import { makeLogger } from "./utils.ts";
 
@@ -62,7 +61,6 @@ export interface BuildRunInput {
     meta: RunMetaInput;
     prs: PrRowOut[];
     comments: AttributedComment[];
-    verifiedMisses: VerifiedMiss[];
     themes: Theme[];
     proposedEdits: ProposedEdit[];
     experiment: Experiment | null;
@@ -104,25 +102,6 @@ function toCommentRow(c: AttributedComment): CommentRow {
     };
 }
 
-/** Normalize undefined URLs to null so the row matches the schema. */
-function toVerifiedMissRow(m: VerifiedMiss): RunJson["verifiedMisses"][number] {
-    return {
-        fixPr: m.fixPr,
-        fixUrl: m.fixUrl ?? null,
-        path: m.path,
-        introducedByPr: m.introducedByPr,
-        introducedUrl: m.introducedUrl ?? null,
-        introducingCommit: m.introducingCommit,
-        traceOutcome: m.traceOutcome,
-        ccrOpportunity: m.ccrOpportunity,
-        ccrActiveOnIntroducingPr: m.ccrActiveOnIntroducingPr,
-        ccrCommentedOnLines: m.ccrCommentedOnLines,
-        verifiedMiss: m.verifiedMiss,
-        theme: m.theme,
-        blameConfidence: m.blameConfidence,
-    };
-}
-
 export function ownerRepoOf(repo: string): { owner: string; repo: string } {
     const [owner, name] = repo.split("/");
     if (!owner || !name) {
@@ -139,15 +118,10 @@ export function runIdOf(windowEnd: string, repo: string): string {
 /** Pure assembly + validation. Throws if the result violates run-schema. */
 export function buildRunJson(input: BuildRunInput): RunJson {
     const { meta } = input;
-    const metrics = computeMetrics(
-        input.prs,
-        input.comments,
-        input.verifiedMisses,
-        {
-            ccrEnabledSince: meta.ccrEnabledSince,
-            automationLogins: input.automationLogins,
-        },
-    );
+    const metrics = computeMetrics(input.prs, input.comments, {
+        ccrEnabledSince: meta.ccrEnabledSince,
+        automationLogins: input.automationLogins,
+    });
 
     const run: RunJson = {
         schemaVersion: SCHEMA_VERSION,
@@ -171,7 +145,6 @@ export function buildRunJson(input: BuildRunInput): RunJson {
         },
         prs: input.prs,
         comments: input.comments.map(toCommentRow),
-        verifiedMisses: input.verifiedMisses.map(toVerifiedMissRow),
         themes: input.themes,
         metrics,
         proposedEdits: input.proposedEdits,
@@ -235,7 +208,6 @@ function usage(): string {
         "  --classified <path>      classified.json (PR classifications)",
         "  --attributed <path>      attributed.json (comments[])",
         "  --glob <pattern>         Raw PR cache files (for derived PR metrics)",
-        "  --verified-misses <path> verifiedMisses.json (optional)",
         "  --themes <path>          themes.json (optional)",
         "  --proposed-edits <path>  proposedEdits.json (optional)",
         "  --experiment <path>      experiment.json (optional)",
@@ -254,7 +226,6 @@ function main(): void {
             classified: { type: "string" },
             attributed: { type: "string" },
             glob: { type: "string" },
-            "verified-misses": { type: "string" },
             themes: { type: "string" },
             "proposed-edits": { type: "string" },
             experiment: { type: "string" },
@@ -310,10 +281,6 @@ function main(): void {
         meta,
         prs,
         comments: attributed.comments,
-        verifiedMisses: readOptionalArray<VerifiedMiss>(
-            v["verified-misses"],
-            "verifiedMisses",
-        ),
         themes: readOptionalArray<Theme>(v.themes, "themes"),
         proposedEdits: readOptionalArray<ProposedEdit>(
             v["proposed-edits"],

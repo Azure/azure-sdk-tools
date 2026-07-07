@@ -311,47 +311,6 @@ export interface AttributedComment {
 }
 
 // ---------------------------------------------------------------------------
-// Trace / verified-miss shapes.
-// ---------------------------------------------------------------------------
-
-export type TraceOutcome =
-    | "resolved"
-    | "unresolved-no-pr"
-    | "ambiguous-multiple-prs"
-    | "unsupported-generated-file"
-    | "low-confidence-refactor";
-
-export type CcrOpportunity =
-    | "ccrCommentedOnLines"
-    | "ccrCommentedOnFile"
-    | "ccrActiveOnPr"
-    | "ccrSummaryOnly"
-    | "ccrInactive";
-
-export type BlameConfidence = "high" | "medium" | "low";
-
-export interface VerifiedMiss {
-    /** Bug-fix PR that removed or changed the faulty line. */
-    fixPr: number;
-    fixUrl: string | undefined;
-    path: string;
-    /** PR that introduced the blamed commit, if it maps cleanly to one PR. */
-    introducedByPr: number | null;
-    introducedUrl: string | undefined;
-    introducingCommit: string | null;
-    /** Why blame tracing did or did not produce a usable origin. */
-    traceOutcome: TraceOutcome;
-    /** Highest CCR signal found on the introducing PR. */
-    ccrOpportunity: CcrOpportunity;
-    ccrActiveOnIntroducingPr: boolean;
-    ccrCommentedOnLines: boolean;
-    /** True only when CCR was active on the introducing PR and silent on the lines. */
-    verifiedMiss: boolean;
-    theme: Category | null;
-    blameConfidence: BlameConfidence;
-}
-
-// ---------------------------------------------------------------------------
 // Theme / proposal shapes.
 // ---------------------------------------------------------------------------
 
@@ -362,8 +321,6 @@ export interface Theme {
     label: Category;
     /** Number of missed human asks in this theme. */
     gapCount: number;
-    /** Number of traced bug fixes supporting this theme. */
-    verifiedMissCount: number;
     /** Total substantive asks in this theme, including non-gaps. */
     askCount: number;
     distinctReviewers: number;

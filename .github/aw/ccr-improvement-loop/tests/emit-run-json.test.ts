@@ -83,7 +83,6 @@ function baseInput(generatedAt: string): BuildRunInput {
         meta: META,
         prs: [prRow(1)],
         comments: [ccrComment(1)],
-        verifiedMisses: [],
         themes: [],
         proposedEdits: [],
         experiment: null,

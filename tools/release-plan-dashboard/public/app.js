@@ -998,7 +998,7 @@
           '<span class="badge badge-first-preview">First Preview</span>';
       if (hasFirstGA)
         releaseTagBadge += '<span class="badge badge-first-ga">First GA</span>';
-      if (isSdkReadyToReleasePlan(p))
+      if (isSdkReadyToReleasePlan(p) && step.status !== "SDK Ready To Release")
         releaseTagBadge +=
           '<span class="badge badge-sdk-ready-to-release">SDK Ready To Release</span>';
     }

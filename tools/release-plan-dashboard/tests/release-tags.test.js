@@ -27,8 +27,8 @@ describe("SDK ready-to-release tag and status", () => {
   });
 
   test("shows SDK Ready To Release badge in card title using isSdkReadyToReleasePlan", () => {
-    // The badge should be rendered in the card title (releaseTagBadge) whenever
-    // isSdkReadyToReleasePlan returns true, not only when all languages are merged.
+    // The badge is rendered in the card title (releaseTagBadge) when isSdkReadyToReleasePlan
+    // returns true AND the step status is not already "SDK Ready To Release" (avoiding duplicate).
     expect(appJs).toContain("badge-sdk-ready-to-release");
     expect(appJs).toContain("isSdkReadyToReleasePlan(p)");
     // The releaseTagBadge block should include the sdk-ready-to-release badge
@@ -38,6 +38,10 @@ describe("SDK ready-to-release tag and status", () => {
     );
     expect(releaseTagBadgeBlock).toContain("badge-sdk-ready-to-release");
     expect(releaseTagBadgeBlock).toContain("isSdkReadyToReleasePlan(p)");
+    // Guard against double-display: the badge must not appear when step already shows it
+    expect(releaseTagBadgeBlock).toContain(
+      'step.status !== "SDK Ready To Release"',
+    );
   });
 
   test("badge-sdk-ready-to-release CSS class is defined in style.css", () => {

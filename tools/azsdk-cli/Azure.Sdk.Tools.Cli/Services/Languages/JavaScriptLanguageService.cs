@@ -35,6 +35,7 @@ public sealed partial class JavaScriptLanguageService : LanguageService
     }
     public override SdkLanguage Language { get; } = SdkLanguage.JavaScript;
     public override bool IsCustomizedCodeUpdateSupported => true;
+    protected override string SDKBreakingPatternFilePath => "documentation/sdk-breaking-changes-guide-migration.md";
 
     /// <summary>
     /// JavaScript packages are identified by package.json files.

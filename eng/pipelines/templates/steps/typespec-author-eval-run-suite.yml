@@ -17,84 +17,36 @@ parameters:
   - name: Tag
     type: string
     default: ''
-  # When set, the Vally eval runs inside an AzureCLI@2 task authenticated against this
-  # service connection, so azsdk-cli can obtain a bearer token for the (MSAL-protected)
-  # remote knowledge base. Leave empty for local/mock KB runs that need no Azure auth.
-  - name: AzureSubscription
-    type: string
-    default: ''
 
 steps:
-  - ${{ if ne(parameters.AzureSubscription, '') }}:
-    - task: AzureCLI@2
-      displayName: ${{ parameters.DisplayName }}
-      inputs:
-        azureSubscription: ${{ parameters.AzureSubscription }}
-        scriptType: bash
-        scriptLocation: inlineScript
-        workingDirectory: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate
-        inlineScript: |
-          # AzureCLI@2 logs `az` in via the service connection. azsdk-cli uses
-          # AzureCliCredential (it shells out to `az account get-access-token`) to obtain a
-          # bearer token for the remote KB, so verify the login context before the long eval
-          # and fail fast if it is missing/expired.
-          echo "Verifying Azure CLI login context before running vally..."
-          az account show --output table
-          SKILL_ARG=""
-          case "${{ parameters.LoadSkills }}" in
-            false|False)
-              mkdir -p /tmp/no-skills
-              SKILL_ARG="--skill-dir /tmp/no-skills"
-              ;;
-          esac
-          TAG_ARG=""
-          if [ -n "${{ parameters.Tag }}" ]; then
-            TAG_ARG="--tag ${{ parameters.Tag }}"
-          fi
-          if [ -n "${{ parameters.Suite }}" ]; then
-            if [ -n "${{ parameters.Tag }}" ]; then
-              echo "Ignoring Tag parameter in suite mode to avoid unsupported --suite + --tag combination"
-            fi
-            vally eval --suite "${{ parameters.Suite }}" --output-dir results --workspace ./debug --verbose $SKILL_ARG
-          else
-            vally eval --eval-spec "suites/${{ parameters.EvalFile }}" --output-dir results --verbose $SKILL_ARG $TAG_ARG
-          fi
-      timeoutInMinutes: ${{ parameters.TimeoutMinutes }}
-      continueOnError: true
-      condition: always()
-      env:
-        GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
-        FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
-
-  - ${{ else }}:
-    - script: |
-        SKILL_ARG=""
-        case "${{ parameters.LoadSkills }}" in
-          false|False)
-            mkdir -p /tmp/no-skills
-            SKILL_ARG="--skill-dir /tmp/no-skills"
-            ;;
-        esac
-        TAG_ARG=""
+  - script: |
+      SKILL_ARG="--skill-dir .."
+      case "${{ parameters.LoadSkills }}" in
+        false|False)
+          mkdir -p /tmp/no-skills
+          SKILL_ARG="--skill-dir /tmp/no-skills"
+          ;;
+      esac
+      TAG_ARG=""
+      if [ -n "${{ parameters.Tag }}" ]; then
+        TAG_ARG="--tag ${{ parameters.Tag }}"
+      fi
+      if [ -n "${{ parameters.Suite }}" ]; then
         if [ -n "${{ parameters.Tag }}" ]; then
-          TAG_ARG="--tag ${{ parameters.Tag }}"
+          echo "Ignoring Tag parameter in suite mode to avoid unsupported --suite + --tag combination"
         fi
-        if [ -n "${{ parameters.Suite }}" ]; then
-          if [ -n "${{ parameters.Tag }}" ]; then
-            echo "Ignoring Tag parameter in suite mode to avoid unsupported --suite + --tag combination"
-          fi
-          vally eval --suite "${{ parameters.Suite }}" --output-dir results --workspace ./debug --verbose $SKILL_ARG
-        else
-          vally eval --eval-spec "suites/${{ parameters.EvalFile }}" --output-dir results --verbose $SKILL_ARG $TAG_ARG
-        fi
-      displayName: ${{ parameters.DisplayName }}
-      workingDirectory: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate
-      timeoutInMinutes: ${{ parameters.TimeoutMinutes }}
-      continueOnError: true
-      condition: always()
-      env:
-        GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
-        FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
+        vally eval --suite "${{ parameters.Suite }}" --output-dir results --workspace ./debug --verbose $SKILL_ARG
+      else
+        vally eval --eval-spec "suites/${{ parameters.EvalFile }}" --output-dir results --verbose $SKILL_ARG $TAG_ARG
+      fi
+    displayName: ${{ parameters.DisplayName }}
+    workingDirectory: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate
+    timeoutInMinutes: ${{ parameters.TimeoutMinutes }}
+    continueOnError: true
+    condition: always()
+    env:
+      GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+      FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
 
   - script: |
       bash .github/skills/azure-typespec-author/evaluate/scripts/report-eval-results.sh "${{ parameters.SuiteName }}"

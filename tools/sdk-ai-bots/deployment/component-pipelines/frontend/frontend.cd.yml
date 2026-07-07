@@ -1,7 +1,9 @@
 # CD pipeline — frontend (Teams bot).
+# Infrastructure provisioning (qaBotFrontend layer) is an integrated first
+# stage that only runs when the relevant infra files have changed since the
+# previous commit, or when runProvision is forced to true.
 #
-# Consumes the image tag produced by frontend.ci.yml.
-# Rollout: deploy to staging slot → smoke test → swap to production.
+# Rollout: (optional provision) → deploy to staging slot → smoke test → swap to production.
 
 name: tools - sdk-ai-bots-frontend - cd
 
@@ -18,6 +20,21 @@ parameters:
     - name: rollbackOnFailure
       type: boolean
       default: true
+    - name: runProvision
+      type: boolean
+      default: false
+      displayName: 'Force provision (skip infra-diff check)'
+    - name: deployLayer
+      type: string
+      default: frontend
+      values:
+          - '' # empty = full azd provision graph, no scoping
+          - shared-resources
+          - agent-platform
+          - backend
+          - logic-app
+          - frontend
+          - function-app
 
 variables:
     - template: /eng/pipelines/templates/variables/globals.yml
@@ -32,8 +49,66 @@ extends:
     parameters:
         Use1ESOfficial: true
         stages:
+            # ── Stage 1: Provision ────────────────────────────────────────────────
+            # InfraDiff detects whether qaBotFrontend infra files changed.
+            # Apply only runs when a diff is found or runProvision is forced.
+            - stage: ProvisionFrontend
+              displayName: 'Provision frontend infra (${{ parameters.environment }})'
+              jobs:
+                  - job: InfraDiff
+                    displayName: 'Detect infra diff'
+                    pool:
+                        name: $(LINUXPOOL)
+                        image: $(LINUXVMIMAGE)
+                        os: linux
+                    steps:
+                        - checkout: self
+                        - bash: |
+                              CHANGED=$(git diff HEAD~1 --name-only 2>/dev/null \
+                                | grep -E "^tools/sdk-ai-bots/deployment/infra/modules/qaBotFrontend/|^tools/sdk-ai-bots/deployment/infra/main\.bicep$" \
+                                || true)
+                              if [ -n "$CHANGED" ]; then
+                                echo "Infra changes detected:"
+                                echo "$CHANGED"
+                                echo "##vso[task.setvariable variable=INFRA_CHANGED;isOutput=true]true"
+                              else
+                                echo "No infra changes detected."
+                                echo "##vso[task.setvariable variable=INFRA_CHANGED;isOutput=true]false"
+                              fi
+                          name: diffCheck
+                          displayName: 'Check infra diff (HEAD~1)'
+
+                  - deployment: Apply
+                    displayName: 'Apply infra changes'
+                    dependsOn: InfraDiff
+                    condition: and(succeeded('InfraDiff'), or(${{ parameters.runProvision }}, eq(dependencies.InfraDiff.outputs['diffCheck.INFRA_CHANGED'], 'true')))
+                    environment: 'sdk-ai-bots-${{ parameters.environment }}'
+                    pool:
+                        name: $(LINUXPOOL)
+                        image: $(LINUXVMIMAGE)
+                        os: linux
+                    strategy:
+                        runOnce:
+                            deploy:
+                                steps:
+                                    - checkout: self
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+                                      parameters:
+                                          environment: '${{ parameters.environment }}'
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-validate.yml
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-what-if.yml
+                                      parameters:
+                                          parametersFile: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment/infra/environments/${{ parameters.environment }}.parameters.json'
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
+                                      parameters:
+                                          deployLayer: '${{ parameters.deployLayer }}'
+
+            # ── Stage 2: Deploy ───────────────────────────────────────────────────
             - stage: DeployFrontend
               displayName: 'Deploy frontend → ${{ parameters.environment }}'
+              dependsOn: ProvisionFrontend
+              condition: in(dependencies.ProvisionFrontend.result, 'Succeeded', 'SucceededWithIssues')
               jobs:
                   - deployment: Deploy
                     environment: 'sdk-ai-bots-${{ parameters.environment }}'

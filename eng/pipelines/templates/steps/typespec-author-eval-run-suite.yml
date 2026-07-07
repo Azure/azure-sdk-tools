@@ -23,18 +23,12 @@ parameters:
   - name: Workers
     type: number
     default: 5
-  - name: MultiRunWorkers
-    type: number
-    default: 1
 
 steps:
   - script: |
       SKILL_ARG="--skill-dir .."
       RUNS=${{ parameters.Runs }}
       WORKERS=${{ parameters.Workers }}
-      if [ "$RUNS" -gt 1 ]; then
-        WORKERS=${{ parameters.MultiRunWorkers }}
-      fi
       RUNS_ARG=""
       if [ "$RUNS" -gt 1 ]; then
         RUNS_ARG="--runs $RUNS"

@@ -273,7 +273,7 @@ interface RawCommit {
     commit: { committer?: { date?: string }; author?: { date?: string } };
 }
 interface RawCommitFiles {
-    files?: { filename: string }[];
+    files?: { filename: string; patch?: string }[];
 }
 interface RawPrFull {
     number: number;
@@ -392,11 +392,18 @@ async function fetchPrToCache(
         const filesRes = await ghApiJsonAsync<RawCommitFiles>(
             `${base}/commits/${c.sha}`,
         );
+        const files = filesRes.files ?? [];
+        const patches = Object.fromEntries(
+            files
+                .filter((f) => f.patch != null)
+                .map((f) => [f.filename, f.patch ?? ""]),
+        );
         commits.push({
             sha: c.sha,
             committedAt:
                 c.commit.committer?.date ?? c.commit.author?.date ?? null,
-            files: (filesRes.files ?? []).map((f) => f.filename),
+            files: files.map((f) => f.filename),
+            ...(Object.keys(patches).length > 0 ? { patches } : {}),
         });
         try {
             const prs = await ghApiJsonAsync<{ number: number }[]>(

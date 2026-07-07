@@ -4,7 +4,11 @@ import { aggregate, dedupeRuns } from "../scripts/aggregate-runs.ts";
 import { buildRunJson } from "../scripts/emit-run-json.ts";
 import type { BuildRunInput, RunMetaInput } from "../scripts/emit-run-json.ts";
 import type { PrRowOut } from "../scripts/pr-metrics.ts";
-import type { AttributedComment, VerifiedMiss } from "../scripts/types.ts";
+import type {
+    AttributedComment,
+    Category,
+    VerifiedMiss,
+} from "../scripts/types.ts";
 import type { RunJson } from "../scripts/run-schema.ts";
 
 function meta(repo: string): RunMetaInput {
@@ -117,7 +121,7 @@ function ccrComment(
     };
 }
 
-function miss(theme: string): VerifiedMiss {
+function miss(theme: Category): VerifiedMiss {
     return {
         fixPr: 9,
         fixUrl: undefined,

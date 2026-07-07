@@ -200,6 +200,18 @@ describe("attribute-comments (ccrSawCode timing)", () => {
         ).toBe(false);
     });
 
+    it("false when CCR only reviewed after the human ask", () => {
+        expect(
+            sawCode(
+                makeData({
+                    ccrReviewTimes: ["2026-06-01T12:00:00Z"],
+                    pathCommitAt: "2026-06-01T10:00:00Z",
+                    humanAt: "2026-06-01T11:00:00Z",
+                }),
+            ),
+        ).toBe(false);
+    });
+
     it("false when CCR never reviewed the PR", () => {
         expect(
             sawCode(

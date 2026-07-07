@@ -67,6 +67,23 @@ export type JudgeStatus = "ok" | "failed" | "lowConfidence";
 /** Judge verdict on whether the author acted on a CCR comment. */
 export type CcrOutcome = "addressed" | "rejected" | "ignored" | "unclear";
 
+export type Category =
+    | "error-handling"
+    | "concurrency"
+    | "input-validation"
+    | "security"
+    | "resource-management"
+    | "api-design"
+    | "backward-compatibility"
+    | "type-safety"
+    | "performance"
+    | "testing"
+    | "logging-observability"
+    | "documentation"
+    | "style-naming"
+    | "configuration"
+    | "other";
+
 // ---------------------------------------------------------------------------
 // Raw GitHub cache shapes (written by fetch-prs.ts, rawSchemaVersion-tagged).
 // ---------------------------------------------------------------------------
@@ -119,6 +136,8 @@ export interface TimelineCommit {
     sha: string;
     committedAt: string | null;
     files: string[];
+    /** Optional filename -> unified diff patch for changed files. */
+    patches?: Record<string, string>;
 }
 
 /** Top-level PR metadata + the normalization/classification fields. */
@@ -264,7 +283,7 @@ export interface AttributedComment {
     diffDetectable: boolean | null;
     /** Closed-vocabulary label assigned by the judge. */
     severity: Severity | null;
-    category: string | null;
+    category: Category | null;
     confidence: number | null;
     judgeStatus: JudgeStatus | null;
     judgeError: string | null;
@@ -275,7 +294,7 @@ export interface AttributedComment {
     /** Derived for human asks: substantive && diffDetectable && ccrSawCode && !ccrAddressedConcern. */
     isGap: boolean | null;
     /** Usually the judged category for substantive rows; null for non-substantive rows. */
-    theme: string | null;
+    theme: Category | null;
 
     /** Raw body, retained for judging + de-dup; trimmed to a budget on emit. */
     body: string;
@@ -318,7 +337,7 @@ export interface VerifiedMiss {
     ccrCommentedOnLines: boolean;
     /** True only when CCR was active on the introducing PR and silent on the lines. */
     verifiedMiss: boolean;
-    theme: string | null;
+    theme: Category | null;
     blameConfidence: BlameConfidence;
 }
 
@@ -330,7 +349,7 @@ export type PromotedVia = "opinion" | "evidence";
 
 export interface Theme {
     /** Controlled-vocabulary category label. */
-    label: string;
+    label: Category;
     /** Number of missed human asks in this theme. */
     gapCount: number;
     /** Number of traced bug fixes supporting this theme. */
@@ -353,7 +372,7 @@ export interface ProposedEdit {
     file: string;
     /** Optional applyTo glob if the rule belongs in a scoped instruction file. */
     applyTo: string | null;
-    theme: string;
+    theme: Category;
     /** Generalized imperative rule for human approval. */
     rule: string;
     /** Existing rule this proposal duplicates, if any. */
@@ -394,7 +413,7 @@ export interface JudgeInputItem {
 
 export interface JudgeResultItem {
     id: string;
-    category: string;
+    category: Category;
     confidence: number;
     // gap-candidate outputs
     isSubstantive?: boolean;

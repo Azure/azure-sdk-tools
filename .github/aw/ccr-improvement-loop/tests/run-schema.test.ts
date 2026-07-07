@@ -43,6 +43,16 @@ describe("run-schema", () => {
         expect(() => parseRun(clone)).toThrow();
     });
 
+    it("rejects category labels outside the controlled vocabulary", () => {
+        const clone = structuredClone(sample) as {
+            comments: Record<string, unknown>[];
+            themes: Record<string, unknown>[];
+        };
+        clone.comments[0] = { ...clone.comments[0], category: "made-up" };
+        clone.themes[0] = { ...clone.themes[0], label: "made-up" };
+        expect(() => parseRun(clone)).toThrow();
+    });
+
     it("round-trips content-stably excluding generatedAt", () => {
         const parsed = parseRun(sample);
         const reSerialized: unknown = JSON.parse(JSON.stringify(parsed));

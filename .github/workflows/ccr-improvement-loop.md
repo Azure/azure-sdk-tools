@@ -86,6 +86,8 @@ steps:
       node ./scripts/filter-comments.ts    --glob "$GLOB" --cache-dir "$CCR_CACHE"
       node ./scripts/attribute-comments.ts --glob "$GLOB" \
         --filtered "$CCR_CACHE/filtered.json" --cache-dir "$CCR_CACHE"
+      node ./scripts/build-judge-input.ts  --glob "$GLOB" \
+        --attributed "$CCR_CACHE/attributed.json" --cache-dir "$CCR_CACHE"
       node ./scripts/trace-bug-origin.ts   --repo "$TARGET_REPO" \
         --classified "$CCR_CACHE/classified.json" --glob "$GLOB" \
         --cache-dir "$CCR_CACHE" || true
@@ -100,7 +102,7 @@ this window, then report the result as one cited tracking issue. This run is
 scheduled or manually dispatched — there is no triggering issue/PR. The
 deterministic prep steps have already fetched the settled PRs and written the
 normalized cache to `${{ env.CCR_CACHE }}` (`classified.json`, `filtered.json`,
-`attributed.json`, `traced.json`, `meta.json`).
+`attributed.json`, `judge-input.json`, `traced.json`, `meta.json`).
 
 Do the agent-judgment work below using the **pinned prompts** in the workflow
 support package under `.github/aw/ccr-improvement-loop/references/`. Never invent
@@ -109,8 +111,9 @@ a label outside the closed
 
 ## 1. Judge the comments
 
-Read `${{ env.CCR_CACHE }}/attributed.json`. Batch the rows (don't judge one per
-turn). Apply
+Read `${{ env.CCR_CACHE }}/judge-input.json` for the bounded evidence and
+`${{ env.CCR_CACHE }}/attributed.json` for the rows to augment. Batch the judge
+input `items` (don't judge one per turn). Apply
 [judge.prompt.md](../aw/ccr-improvement-loop/references/judge.prompt.md):
 
 - human `ask` rows → decide `isSubstantive`, `diffDetectable`, `category`, and
@@ -119,8 +122,8 @@ turn). Apply
   (addressed / rejected / ignored / unclear) from the post-comment change +
   replies.
 
-Feed only the comment body + minimal diff hunk — never full-file or `excludedPaths`
-content. Write the augmented rows to `${{ env.CCR_CACHE }}/judged.json`, deriving
+Use only the evidence already present in `judge-input.json` — never full-file or
+`excludedPaths` content. Write the augmented rows to `${{ env.CCR_CACHE }}/judged.json`, deriving
 `isGap = ask && isSubstantive && diffDetectable && ccrSawCode && !ccrAddressedConcern`
 and `theme = isSubstantive ? category : null`. Leave any un-judgeable row's judge
 fields `null` with `judgeStatus: "failed"`.

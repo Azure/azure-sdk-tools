@@ -62,6 +62,14 @@ describe("end-to-end deterministic pipeline (offline fixture)", () => {
             "--cache-dir",
             cache,
         ]);
+        runStage("build-judge-input.ts", [
+            "--glob",
+            fixtureGlob,
+            "--attributed",
+            path.join(cache, "attributed.json"),
+            "--cache-dir",
+            cache,
+        ]);
         attributed = JSON.parse(
             fs.readFileSync(path.join(cache, "attributed.json"), "utf8"),
         ) as AttributedFile;
@@ -74,6 +82,7 @@ describe("end-to-end deterministic pipeline (offline fixture)", () => {
     it("classify → filter → attribute produce consistent cache files", () => {
         expect(fs.existsSync(path.join(cache, "classified.json"))).toBe(true);
         expect(fs.existsSync(path.join(cache, "filtered.json"))).toBe(true);
+        expect(fs.existsSync(path.join(cache, "judge-input.json"))).toBe(true);
         expect(Array.isArray(attributed.comments)).toBe(true);
     });
 

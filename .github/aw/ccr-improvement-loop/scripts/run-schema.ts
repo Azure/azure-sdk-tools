@@ -27,6 +27,23 @@ const CommentKind = z.enum(["ask", "reply", "summary"]);
 const CommentSource = z.enum(["review", "inline", "issue"]);
 const AuthorKind = z.enum(["human", "ccr", "bot"]);
 const CcrOutcome = z.enum(["addressed", "rejected", "ignored", "unclear"]);
+const Category = z.enum([
+    "error-handling",
+    "concurrency",
+    "input-validation",
+    "security",
+    "resource-management",
+    "api-design",
+    "backward-compatibility",
+    "type-safety",
+    "performance",
+    "testing",
+    "logging-observability",
+    "documentation",
+    "style-naming",
+    "configuration",
+    "other",
+]);
 
 export const RunMetaSchema = z
     .object({
@@ -88,7 +105,7 @@ export const CommentRowSchema = z
         isSubstantive: z.boolean().nullable(),
         diffDetectable: z.boolean().nullable(),
         severity: Severity.nullable(),
-        category: z.string().nullable(),
+        category: Category.nullable(),
         confidence: z.number().nullable(),
         judgeStatus: JudgeStatus.nullable(),
         judgeError: z.string().nullable(),
@@ -99,7 +116,7 @@ export const CommentRowSchema = z
         ccrOutcome: CcrOutcome.nullable(),
         ccrAddressedConcern: z.boolean().nullable(),
         isGap: z.boolean().nullable(),
-        theme: z.string().nullable(),
+        theme: Category.nullable(),
     })
     .strict();
 
@@ -128,14 +145,14 @@ export const VerifiedMissSchema = z
         ccrActiveOnIntroducingPr: z.boolean(),
         ccrCommentedOnLines: z.boolean(),
         verifiedMiss: z.boolean(),
-        theme: z.string().nullable(),
+        theme: Category.nullable(),
         blameConfidence: z.enum(["high", "medium", "low"]),
     })
     .strict();
 
 export const ThemeSchema = z
     .object({
-        label: z.string(),
+        label: Category,
         gapCount: z.number().int().nonnegative(),
         verifiedMissCount: z.number().int().nonnegative(),
         askCount: z.number().int().nonnegative(),
@@ -151,7 +168,7 @@ export const ProposedEditSchema = z
     .object({
         file: z.string(),
         applyTo: z.string().nullable(),
-        theme: z.string(),
+        theme: Category,
         rule: z.string(),
         redundantWith: z.string().nullable(),
         sourcePrs: z.array(z.number().int()),
@@ -195,7 +212,7 @@ export const MetricsSchema = z
 
 export const ExperimentSchema = z
     .object({
-        sourceThemes: z.array(z.string()),
+        sourceThemes: z.array(Category),
         filesTouched: z.array(z.string()),
         sourcePrs: z.array(z.number().int()),
         replayPrSet: z.array(z.number().int()),

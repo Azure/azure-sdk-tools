@@ -77,7 +77,8 @@ function ccrReviewEventTimes(data: PullRequestData, cfg: Config): number[] {
  * Deterministic eligibility gate: did CCR review the code version a human ask
  * anchors to? True only if CCR reviewed the PR AND at least one CCR review
  * happened at or after the latest commit that touched the ask's file at/before
- * the human comment. Path-less asks fall back to "CCR reviewed the PR at all".
+ * the human comment, but no later than the human comment. Path-less asks fall
+ * back to "CCR reviewed the PR before the ask".
  * Never true for non-human/non-ask rows or excluded paths.
  */
 function computeCcrSawCode(
@@ -94,9 +95,13 @@ function computeCcrSawCode(
     if (params.authorKind !== "human" || params.kind !== "ask") return false;
     if (ccrTimes.length === 0) return false;
     if (params.pathExcluded) return false;
-    if (!params.path) return true;
 
     const commentTs = params.createdAt ? Date.parse(params.createdAt) : NaN;
+    if (Number.isNaN(commentTs)) return false;
+    const priorCcrTimes = ccrTimes.filter((t) => t <= commentTs);
+    if (priorCcrTimes.length === 0) return false;
+    if (!params.path) return true;
+
     let latestPathCommit = Number.NEGATIVE_INFINITY;
     for (const commit of data.commits) {
         if (commit.committedAt == null) continue;
@@ -112,7 +117,7 @@ function computeCcrSawCode(
             ? Date.parse(data.pr.createdAt)
             : Number.NEGATIVE_INFINITY;
     }
-    return ccrTimes.some((t) => t >= latestPathCommit);
+    return priorCcrTimes.some((t) => t >= latestPathCommit);
 }
 
 /**

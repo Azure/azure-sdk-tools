@@ -75,7 +75,7 @@ public class GitHubServiceTests
     }
 
     [Test]
-    public void ReadWithAnonymousFallback_prompts_for_auth_when_required_and_no_token()
+    public void ReadWithAnonymousFallback_PromptsForAuth_WhenRequiredAndNoToken()
     {
         // No token in the environment and `gh auth token` fails, so the authenticated fallback must
         // surface the standard authentication guidance instead of silently swallowing the failure.

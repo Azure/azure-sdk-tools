@@ -120,11 +120,10 @@ Azure.Sdk.Tools.Vally/
 │   ├── quality/               # output-quality evals (prompt + output-*/file-*), hermetic
 │   └── workflow-scenarios/
 │       ├── mock/              # multi-tool scenarios, hermetic (PR gate)
-│       └── live/              # multi-tool scenarios, live MCP + real clones (nightly)
+│       └── live/              # multi-tool scenarios, live MCP (nightly)
 ├── fixtures/                  # Real failing source files overlaid into the agent workspace via env.files
 │   └── analyze-pipeline/
 │       └── <scenario-name>/...
-├── scripts/                   # Local helper scripts (ensure-specs-clone.ps1)
 └── Graders/                   # (future) Custom .NET graders
     └── Azure.Sdk.Tools.Vally.csproj  # added when first custom grader lands
 ```

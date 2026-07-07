@@ -1,0 +1,25 @@
+{
+  "benchmarkVersion": "1.0",
+  "repo": "Azure/azure-sdk-for-go",
+  "frozenAt": "2026-06-30",
+  "prs": [
+    {
+      "pr": 100,
+      "path": "sdk/azcore/runtime/pipeline.go",
+      "lineStart": 42,
+      "lineEnd": 44,
+      "label": "useful-catch",
+      "theme": "error-handling",
+      "note": "CCR should flag unwrapped error return here"
+    },
+    {
+      "pr": 117,
+      "path": "sdk/internal/poller.go",
+      "lineStart": 12,
+      "lineEnd": 12,
+      "label": "noise-if-flagged",
+      "theme": "naming",
+      "note": "stylistic rename CCR should NOT comment on"
+    }
+  ]
+}

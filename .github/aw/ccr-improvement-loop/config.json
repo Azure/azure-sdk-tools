@@ -1,0 +1,15 @@
+{
+  "ccrLogins": ["copilot-pull-request-reviewer[bot]", "github-copilot[bot]", "copilot[bot]"],
+  "automationLogins": ["dependabot[bot]", "github-actions[bot]", "azure-sdk", "renovate[bot]"],
+  "excludedPaths": [
+    "**/*.lock",
+    "**/package-lock.json",
+    "**/pnpm-lock.yaml",
+    "**/generated/**",
+    "**/vendor/**",
+    "**/*.min.*"
+  ],
+  "minPrs": 50,
+  "windowLagDays": 14,
+  "ccrEnabledSince": null
+}

@@ -1,0 +1,151 @@
+{
+  "rawSchemaVersion": "1.0",
+  "pr": {
+    "number": 100,
+    "title": "fix: add null checks and wrap errors",
+    "author": { "login": "alice", "type": "User" },
+    "url": "https://github.com/Acme/widget/pull/100",
+    "state": "closed",
+    "isDraft": false,
+    "additions": 40,
+    "deletions": 5,
+    "createdAt": "2026-06-01T08:00:00Z",
+    "mergedAt": "2026-06-02T08:00:00Z",
+    "labels": ["bug"],
+    "linkedIssues": [{ "number": 90, "labels": ["regression"] }]
+  },
+  "reviews": [
+    {
+      "id": 50,
+      "state": "COMMENTED",
+      "body": "Looks good overall, a couple of asks below.",
+      "submittedAt": "2026-06-01T10:05:00Z",
+      "user": { "login": "bob", "type": "User" },
+      "authorAssociation": "MEMBER"
+    }
+  ],
+  "inline": [
+    {
+      "id": 1,
+      "path": "src/foo.ts",
+      "line": 41,
+      "startLine": null,
+      "originalLine": 41,
+      "body": "Please add a null check here to avoid a nil deref on the response.",
+      "diffHunk": "@@ -38,6 +38,8 @@\n+  const v = resp.value;",
+      "pullRequestReviewId": 50,
+      "createdAt": "2026-06-01T10:00:00Z",
+      "user": { "login": "bob", "type": "User" },
+      "authorAssociation": "MEMBER",
+      "lineStale": false,
+      "threadResolved": true,
+      "reactions": []
+    },
+    {
+      "id": 2,
+      "path": "src/foo.ts",
+      "line": 42,
+      "startLine": null,
+      "originalLine": 42,
+      "body": "Consider guarding against a nil response before dereferencing.",
+      "diffHunk": "@@ -38,6 +38,8 @@\n+  const v = resp.value;",
+      "pullRequestReviewId": 51,
+      "createdAt": "2026-06-01T09:00:00Z",
+      "user": { "login": "copilot-pull-request-reviewer[bot]", "type": "Bot" },
+      "authorAssociation": "NONE",
+      "lineStale": false,
+      "threadResolved": false,
+      "reactions": []
+    },
+    {
+      "id": 3,
+      "path": "src/bar.ts",
+      "line": 10,
+      "startLine": null,
+      "originalLine": 10,
+      "body": "Wrap this returned error with %w so callers can use errors.Is/errors.As.",
+      "diffHunk": "@@ -8,3 +8,3 @@\n-  return err\n+  return fmt.Errorf(...)",
+      "pullRequestReviewId": 50,
+      "createdAt": "2026-06-01T10:01:00Z",
+      "user": { "login": "carol", "type": "User" },
+      "authorAssociation": "COLLABORATOR",
+      "lineStale": false,
+      "threadResolved": false,
+      "reactions": [{ "content": "+1", "user": { "login": "alice", "type": "User" } }]
+    },
+    {
+      "id": 4,
+      "path": "src/bar.ts",
+      "line": 10,
+      "originalLine": 10,
+      "body": "Fixed in a later commit, thanks.",
+      "inReplyToId": 3,
+      "pullRequestReviewId": 52,
+      "createdAt": "2026-06-01T11:30:00Z",
+      "user": { "login": "alice", "type": "User" },
+      "authorAssociation": "OWNER",
+      "lineStale": false,
+      "threadResolved": false,
+      "reactions": []
+    },
+    {
+      "id": 5,
+      "path": "src/baz.ts",
+      "line": 5,
+      "originalLine": 5,
+      "body": "This is working as intended, won't fix.",
+      "pullRequestReviewId": 50,
+      "createdAt": "2026-06-01T10:02:00Z",
+      "user": { "login": "dave", "type": "User" },
+      "authorAssociation": "MEMBER",
+      "lineStale": false,
+      "threadResolved": false,
+      "reactions": []
+    },
+    {
+      "id": 6,
+      "path": "src/generated/api.ts",
+      "line": 200,
+      "originalLine": 200,
+      "body": "This generated file has an inconsistent style, please adjust the template.",
+      "pullRequestReviewId": 50,
+      "createdAt": "2026-06-01T10:03:00Z",
+      "user": { "login": "bob", "type": "User" },
+      "authorAssociation": "MEMBER",
+      "lineStale": false,
+      "threadResolved": false,
+      "reactions": []
+    }
+  ],
+  "issue": [
+    {
+      "id": 60,
+      "body": "+1",
+      "createdAt": "2026-06-01T10:10:00Z",
+      "user": { "login": "bob", "type": "User" },
+      "authorAssociation": "MEMBER",
+      "reactions": []
+    },
+    {
+      "id": 61,
+      "body": "Bumps lodash from 1 to 2.",
+      "createdAt": "2026-06-01T10:11:00Z",
+      "user": { "login": "dependabot[bot]", "type": "Bot" },
+      "authorAssociation": "NONE",
+      "reactions": []
+    }
+  ],
+  "commits": [
+    {
+      "sha": "c1",
+      "committedAt": "2026-06-01T11:00:00Z",
+      "files": ["src/foo.ts"]
+    },
+    {
+      "sha": "c2",
+      "committedAt": "2026-06-01T12:00:00Z",
+      "files": ["src/bar.ts", "src/generated/api.ts"]
+    }
+  ],
+  "commitPrs": { "c1": [100], "c2": [100] }
+}

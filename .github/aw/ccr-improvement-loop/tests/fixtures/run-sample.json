@@ -1,0 +1,141 @@
+{
+  "schemaVersion": "1.0",
+  "run": {
+    "id": "2026-06-18_Azure_azure-sdk-for-go",
+    "repo": "Azure/azure-sdk-for-go",
+    "windowStart": "2026-06-11",
+    "windowEnd": "2026-06-18",
+    "windowLagDays": 14,
+    "prState": "merged",
+    "prCount": 1,
+    "model": "openai/gpt-4o",
+    "modelTool": "gh models",
+    "temperature": 0,
+    "matchedCcrLogin": "copilot-pull-request-reviewer[bot]",
+    "promptHashes": {
+      "judge": "sha256:abc",
+      "theme": "sha256:def",
+      "propose": "sha256:ghi"
+    },
+    "vocabularyHash": "sha256:voc",
+    "toolVersion": "git:abc123",
+    "ccrEnabledSince": "2026-01-15",
+    "generatedAt": "2026-06-18T00:14:03Z"
+  },
+  "prs": [
+    {
+      "number": 7012,
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/7012",
+      "title": "fix: wrap returned errors",
+      "author": "alice",
+      "additions": 120,
+      "deletions": 8,
+      "createdAt": "2026-06-12T00:00:00Z",
+      "mergedAt": "2026-06-13T07:30:00Z",
+      "prType": "bug-fix",
+      "prTypeSource": "title",
+      "classificationStatus": "complete",
+      "ccrReviewed": true,
+      "cycleTimeHours": 31.5,
+      "iterations": 3
+    }
+  ],
+  "comments": [
+    {
+      "pr": 7012,
+      "externalId": 99887766,
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/7012#discussion_r99887766",
+      "findingId": "7012:alice:sdk/foo/client.go:41-41",
+      "authorKind": "human",
+      "authorLogin": "alice",
+      "kind": "ask",
+      "source": "inline",
+      "path": "sdk/foo/client.go",
+      "lineStart": 41,
+      "lineEnd": 41,
+      "lineStale": false,
+      "createdAt": "2026-06-12T03:00:00Z",
+      "isSubstantive": true,
+      "diffDetectable": true,
+      "severity": "critical",
+      "category": "error-handling",
+      "confidence": 0.82,
+      "judgeStatus": "ok",
+      "judgeError": null,
+      "ccrSawCode": true,
+      "pathExcluded": false,
+      "ccrOutcome": null,
+      "ccrAddressedConcern": false,
+      "isGap": true,
+      "theme": "error-handling"
+    }
+  ],
+  "verifiedMisses": [
+    {
+      "fixPr": 7300,
+      "fixUrl": "https://github.com/Azure/azure-sdk-for-go/pull/7300",
+      "path": "sdk/foo/client.go",
+      "introducedByPr": 7012,
+      "introducedUrl": "https://github.com/Azure/azure-sdk-for-go/pull/7012",
+      "introducingCommit": "abc123",
+      "traceOutcome": "resolved",
+      "ccrOpportunity": "ccrCommentedOnFile",
+      "ccrActiveOnIntroducingPr": true,
+      "ccrCommentedOnLines": false,
+      "verifiedMiss": true,
+      "theme": "error-handling",
+      "blameConfidence": "high"
+    }
+  ],
+  "themes": [
+    {
+      "label": "error-handling",
+      "gapCount": 9,
+      "verifiedMissCount": 3,
+      "askCount": 11,
+      "distinctReviewers": 4,
+      "promoted": true,
+      "promotedVia": "opinion",
+      "priorityScore": 132.0,
+      "sourcePrs": [7012, 7034, 7045]
+    }
+  ],
+  "metrics": {
+    "rates": {
+      "missRate": {
+        "numerator": 5,
+        "denominator": 12,
+        "value": 0.4167,
+        "denominatorDef": "substantive-detectable human asks",
+        "direction": "down",
+        "slices": [
+          {
+            "prType": "bug-fix",
+            "severity": "critical",
+            "numerator": 2,
+            "denominator": 4,
+            "value": 0.5
+          }
+        ]
+      }
+    },
+    "coverageWarnings": ["bug-fix/critical cell denominator < 5 (n=4)"],
+    "counts": {
+      "prsFetched": 1,
+      "judgeCalls": 1
+    }
+  },
+  "proposedEdits": [
+    {
+      "file": ".github/instructions/go.instructions.md",
+      "applyTo": "**/*.go",
+      "theme": "error-handling",
+      "rule": "Wrap returned errors with %w so callers can use errors.Is/errors.As.",
+      "redundantWith": null,
+      "sourcePrs": [7012, 7034, 7045],
+      "provenance": "<!-- run-id=2026-06-18_Azure_azure-sdk-for-go; source-prs=7012,7034,7045 -->",
+      "status": "proposed"
+    }
+  ],
+  "experiment": null
+}

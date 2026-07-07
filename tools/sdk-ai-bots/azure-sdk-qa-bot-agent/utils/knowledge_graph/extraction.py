@@ -5,6 +5,11 @@ The LocalSearch mixed context builder returns a flat
 cited text-unit short IDs back to their original source documents, and
 returns them as :class:`~models.knowledge.Reference` objects — the same
 shape the KB tool produces, so KB and graph hits merge uniformly.
+
+References are returned **ranked by graph relevance and capped at a top-K**,
+each carrying a normalised ``score`` — mirroring the KB tool's
+rerank-and-cap contract so the two reference sets the chat agent fuses share
+ordering semantics and a comparable size.
 """
 
 from __future__ import annotations

@@ -107,6 +107,11 @@ def _merge_references(
     the vector hit. References with no ``link`` can't be deduplicated, so
     they are always kept (a graph-only hit without a resolvable URL still
     carries useful grounding text).
+
+    Both lists arrive relevance-ranked and top-K capped (KB by its semantic
+    reranker, graph by its relevance-rank cap in
+    :mod:`utils.knowledge_graph.extraction`), so the merge preserves order:
+    ``primary`` first, then the graph hits it did not already cover.
     """
     if not secondary:
         return list(primary)

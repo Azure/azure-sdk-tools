@@ -118,12 +118,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             Required = true,
         };
 
-        private readonly Option<string> sdkReleaseTypeOpt = new("--sdk-type")
-        {
-            Description = "SDK release type: beta or stable",
-            Required = false,
-        };
-
         private readonly Option<string> apiReleaseTypeOpt = new("--api-release-type")
         {
             Description = "API release type. Allowed values: Private Preview, Public Preview, GA",
@@ -303,7 +297,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 serviceTreeIdOpt,
                 productTreeIdOpt,
                 optionalPullRequestOpt,
-                sdkReleaseTypeOpt,
                 isTestReleasePlanOpt,
                 forceCreateReleasePlanOpt,
             },
@@ -348,7 +341,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var serviceTreeId = commandParser.GetValue(serviceTreeIdOpt);
                     var productTreeId = commandParser.GetValue(productTreeIdOpt);
                     var specPullRequestUrl = commandParser.GetValue(optionalPullRequestOpt);
-                    var sdkReleaseType = commandParser.GetValue(sdkReleaseTypeOpt);
                     var apiReleaseType = commandParser.GetValue(apiReleaseTypeOpt);
                     var isTestReleasePlan = commandParser.GetValue(isTestReleasePlanOpt);
                     var forceCreateReleasePlan = commandParser.GetValue(forceCreateReleasePlanOpt);
@@ -357,7 +349,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         typeSpecProjectPath,
                         targetReleaseMonthYear,
                         apiReleaseType,
-                        sdkReleaseType: sdkReleaseType,
                         specPullRequestUrl: specPullRequestUrl,
                         serviceTreeId: serviceTreeId,
                         productTreeId: productTreeId,
@@ -871,7 +862,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             return match.Success ? int.Parse(match.Groups[1].Value) : 0;
         }
 
-        private async Task ValidateCreateReleasePlanInputAsync(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, string sdkReleaseType, ApiReleaseType apiReleaseType, CancellationToken ct)
+        private async Task ValidateCreateReleasePlanInputAsync(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, ApiReleaseType apiReleaseType, CancellationToken ct)
         {
             if (!string.IsNullOrEmpty(specPullRequestUrl))
             {
@@ -881,12 +872,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             if (string.IsNullOrEmpty(typeSpecProjectPath))
             {
                 throw new Exception("TypeSpec project path is empty. Cannot create a release plan without a TypeSpec project root path");
-            }
-
-            var supportedReleaseTypes = new[] { "beta", "stable" };
-            if (!supportedReleaseTypes.Contains(sdkReleaseType))
-            {
-                throw new Exception($"Invalid SDK release type. Supported release types are: {string.Join(", ", supportedReleaseTypes)}");
             }
 
             // Skip filesystem validation for URLs since GetSpecRepoRootPath expects local paths
@@ -919,7 +904,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         }
 
         [McpServerTool(Name = CreateReleasePlanToolName), Description("Create Release Plan for a TypeSpec project and API release type. API release types support Private Preview, Public Preview, and GA. Service ID and product ID are optional and will be resolved from existing release plans when available.")]
-        public async Task<ReleasePlanResponse> CreateReleasePlan(IProgress<ProgressNotificationValue>? progress, string typeSpecProjectPath, string targetReleaseMonthYear, string apiReleaseType, string sdkReleaseType = "", string specPullRequestUrl = "", string serviceTreeId = "", string productTreeId = "", bool isTestReleasePlan = false, bool forceCreateReleasePlan = false, CancellationToken ct = default)
+        public async Task<ReleasePlanResponse> CreateReleasePlan(IProgress<ProgressNotificationValue>? progress, string typeSpecProjectPath, string targetReleaseMonthYear, string apiReleaseType, string specPullRequestUrl = "", string serviceTreeId = "", string productTreeId = "", bool isTestReleasePlan = false, bool forceCreateReleasePlan = false, CancellationToken ct = default)
         {
             try
             {         
@@ -929,26 +914,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return new ReleasePlanResponse { ResponseError = $"Invalid API release type '{apiReleaseType}'. Supported values are: Private Preview, Public Preview, GA" };
                 }
 
-                // Default SDK release type based on API release type if not provided
-                if (string.IsNullOrEmpty(sdkReleaseType))
-                {
-                    sdkReleaseType = parsedApiReleaseType.GetDefaultSdkReleaseType();
-                }
-                else
-                {
-                    sdkReleaseType = sdkReleaseType.ToLower();
-                    var sdkReleaseTypeMappings = new Dictionary<string, string>
-                    {
-                        { "ga", "stable" },
-                        { "preview", "beta" }
-                    };
-                    if (sdkReleaseTypeMappings.TryGetValue(sdkReleaseType, out var mappedType))
-                    {
-                        sdkReleaseType = mappedType;
-                    }
-                }                
+                // SDK release type is always derived from the API release type to prevent
+                // a stable SDK release from a preview API version.
+                var sdkReleaseType = parsedApiReleaseType.GetDefaultSdkReleaseType();
 
-                await ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType, parsedApiReleaseType, ct);
+                await ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, parsedApiReleaseType, ct);
 
                 // Validate spec PR against release type
                 ValidateSpecPullRequestForReleaseType(specPullRequestUrl, parsedApiReleaseType);

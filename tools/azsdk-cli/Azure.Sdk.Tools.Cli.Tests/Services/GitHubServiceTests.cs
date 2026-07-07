@@ -40,7 +40,7 @@ public class GitHubServiceTests
     }
 
     [Test]
-    public async Task ReadWithAnonymousFallback_uses_anonymous_client_when_public_read_succeeds()
+    public async Task ReadWithAnonymousFallback_UsesAnonymousClient_WhenPublicReadSucceeds()
     {
         var processHelperMock = new Mock<IProcessHelper>();
         var connection = new TestableGitConnection(processHelperMock.Object);

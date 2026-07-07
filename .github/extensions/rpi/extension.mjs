@@ -1,8 +1,14 @@
-// Agentic-workflow Copilot CLI extension.
+// RPI — Copilot CLI extension.
 //
 // Self-contained, agent-first driver for a phased research -> plan -> implement workflow.
-// One joinSession() registers a custom sub-agent per phase (phase prompt + access to all tools). The
-// workflow never switches models: every phase runs on the user's configured Copilot CLI session
+// One joinSession() registers a custom sub-agent per phase (phase prompt + access to all tools).
+// Each phase is dispatched in one of two user-selectable execution modes (persisted per run):
+//   * COMPACT (default): the phase runs inline in the host's conversation timeline so its work
+//     streams natively; a /compact runs before the expensive implement phase to reclaim context.
+//   * SUB-AGENTS (/rpi-subagents on): the phase runs in its OWN fresh-context sub-agent spawned via
+//     tasks.startAgent, seeded only by its prompt + prior phases' on-disk artifacts, so context
+//     never has to be compacted between stages; its progress is relayed back to the session.
+// The workflow never switches models: every phase runs on the user's configured Copilot CLI session
 // model (claude-opus-4.8 is the recommended default). State lives entirely in a
 // per-run directory on disk (<cwd>/.rpi/<slug>/) so the workflow is inspectable, resumable, and
 // survives an extension reload. The agent self-reports each phase with a sentinel line:
@@ -46,9 +52,20 @@ let activeRunDir = "";
 let activeSimple = false;
 let autoJudge = false;
 let pauseRequested = false;
+// Execution mode: false => COMPACT (phases share the host timeline, /compact before implement) —
+// the default; true => SUB-AGENTS (each phase runs in its own fresh-context sub-agent). Toggled
+// per-run via /rpi-subagents and persisted to state.json (like autoJudge). SUB-AGENTS only takes
+// effect during an *unattended* auto-run (see unattendedActive); every interactive path stays
+// COMPACT so the host session is never left racing an extension-spawned background sub-agent.
+let useSubagents = false;
+// True only while an unattended autoRun is executing its phase loop. Gates sub-agent mode: an
+// interactive session (manual phase commands or attended auto) always runs inline/compact, even
+// when useSubagents is on, because there a human is watching and the runtime's own
+// "background agent completed" notice would collide with the interactive agent.
+let unattendedActive = false;
 
-const log = (msg) => session?.log(`agentic-workflow: ${msg}`).catch(() => {});
-const diag = (msg) => process.stderr.write(`[agentic-workflow] ${msg}\n`);
+const log = (msg) => session?.log(`rpi: ${msg}`).catch(() => {});
+const diag = (msg) => process.stderr.write(`[rpi] ${msg}\n`);
 
 // --- Run-dir + phase helpers ---------------------------------------------------------------------
 function slugify(task) {
@@ -156,13 +173,119 @@ export function parsePhaseResult(text) {
     return { result, reason };
 }
 
-// --- Core dispatch: select agent, send phase prompt, parse PHASE_RESULT. -------------------------
-async function dispatch(phase, { priorErrors = "" } = {}) {
-    if (!activeRunDir) {
-        await log("no active run. Start one with /rpi-start <task>.");
-        return { result: "fail", reason: "no active run", text: "" };
+// --- Fresh-context sub-agent spawner (SUB-AGENTS mode). ------------------------------------------
+// Spawn the phase's registered custom agent (agentType == phase.agent) as its OWN background
+// sub-agent via tasks.startAgent — the same RPC surface exercised by test/spawn-subagent.live.mjs.
+// A fresh-context sub-agent starts from a clean window seeded only by `prompt`, so context never has
+// to be compacted between stages. The trade-off is that its work does not land in the host timeline
+// the way an inline turn does — so we relay it: sub-agent events arrive on the host's OWN event
+// stream tagged with a non-empty `agentId` (see registerSubAgentRelay), which we forward to the user
+// while relayActive. Task completion is detected by polling tasks.list (getProgress does not surface
+// activity for these tasks). Background sub-agents rest at "idle" rather than "completed", so idle is
+// a terminal state for these one-shot phase runs.
+const TERMINAL_STATUS = new Set(["completed", "failed", "cancelled", "idle"]);
+const POLL_INTERVAL_MS = 3000;
+let spawnSeq = 0;
+// Relay state: while a phase runs as a sub-agent, forward its (agentId-tagged) events to the user.
+let relayActive = false;
+let activePhaseId = "";
+
+async function runSubAgent(phase, prompt) {
+    // Unique name per spawn so retries/re-dispatches never collide onto a prior task's id in the list.
+    const name = `${phase.id}-${++spawnSeq}`;
+    activePhaseId = phase.id;
+    relayActive = true; // start forwarding this sub-agent's events (see registerSubAgentRelay)
+    // Ensure the interactive session is on the DEFAULT agent, not pinned to a phase role from a prior
+    // COMPACT run. The CLI delivers a "background agent … completed" notification to its interactive
+    // agent when this sub-agent finishes; if that agent were still pinned to e.g. rpi-research it
+    // would react by doing the phase's work itself, duplicating the sub-agent. Default agent = neutral.
+    try { await session.rpc.agent.deselect(); } catch { /* best-effort */ }
+    let agentId;
+    try {
+        ({ agentId } = await session.rpc.tasks.startAgent({
+            agentType: phase.agent,
+            name,
+            description: `rpi ${phase.id} phase`,
+            prompt,
+        }));
+    } catch (e) {
+        relayActive = false;
+        return { status: "failed", text: "", error: `startAgent failed: ${e?.message ?? e}` };
     }
-    // Automatic context check before the expensive implement phase.
+    await log(`↳ ${phase.id} running in a fresh-context sub-agent; relaying its activity below…`);
+
+    const deadline = Date.now() + PHASE_TIMEOUT_MS;
+    let info;
+    try {
+        while (Date.now() < deadline) {
+            let tasks = [];
+            try {
+                ({ tasks } = await session.rpc.tasks.list());
+            } catch (e) {
+                diag(`tasks.list failed: ${e?.message ?? e}`);
+            }
+            info = tasks.find((t) => t.id === agentId);
+            if (info && TERMINAL_STATUS.has(info.status)) break;
+            await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+        }
+    } finally {
+        relayActive = false; // stop forwarding once this phase settles (or times out)
+    }
+
+    const text = info?.result ?? info?.latestResponse ?? "";
+    const status = info?.status ?? "timeout";
+    const error = info?.error ?? (status === "timeout" ? "sub-agent did not finish before the phase timeout" : undefined);
+    // NOTE: do NOT cancel/remove the task here. tasks.startAgent registers a session-level background
+    // agent, and the interactive Copilot CLI notifies its main agent when that agent completes and
+    // then auto-reads it. Cancelling an idle task (idle→cancelled) followed by remove() deletes it
+    // out from under that read, which surfaces to the user as a confusing "background agent … no
+    // longer exists / Read failed". Leaving the task in place lets the CLI's native completion read
+    // succeed; the runtime garbage-collects settled tasks on its own.
+    return { status, text, error };
+}
+
+// First line of a string, trimmed to `max` chars — keeps relayed activity to one tidy line each.
+function firstLine(s, max = 160) {
+    const line = (s ?? "").split(/\r?\n/, 1)[0].trim();
+    return line.length > max ? line.slice(0, max) + "…" : line;
+}
+export { firstLine };
+
+// A short hint for a tool call: the most telling argument (command / path / pattern / query …).
+function toolArgHint(data) {
+    const a = data?.arguments ?? {};
+    const v = a.command ?? a.path ?? a.file_path ?? a.pattern ?? a.query ?? a.description ?? a.prompt ?? "";
+    const s = typeof v === "string" ? firstLine(v, 80) : "";
+    return s ? ` ${s}` : "";
+}
+export { toolArgHint };
+
+// Subscribe once (at join) to the host event stream and relay a running sub-agent's work to the
+// user. Sub-agent events carry a non-empty `agentId`; root/main-agent events (inline/compact phases,
+// the runner's own polling) carry none, so gating on `ev.agentId` + `relayActive` means inline
+// phases — which already stream natively — are never double-reported. Handlers are fire-and-forget
+// via `log`, so a slow write never blocks the runtime.
+function registerSubAgentRelay(sess) {
+    const forward = (line) => { if (relayActive && line) log(line); };
+    sess.on("assistant.intent", (ev) => {
+        if (ev.agentId) forward(`  ${activePhaseId} … ${firstLine(ev.data?.intent, 160)}`);
+    });
+    sess.on("tool.execution_start", (ev) => {
+        if (ev.agentId) forward(`  ${activePhaseId} · ${ev.data?.toolName ?? "tool"}${toolArgHint(ev.data)}`);
+    });
+    sess.on("assistant.message", (ev) => {
+        if (!ev.agentId) return;
+        const c = firstLine(ev.data?.content, 200);
+        if (c) forward(`  ${activePhaseId} 💬 ${c}`);
+    });
+}
+export { registerSubAgentRelay };
+
+// --- Inline execution (COMPACT mode, the default). ----------------------------------------------
+// Run the phase in the host's conversation timeline via agent.select + sendAndWait, so its work
+// streams natively to the user. Context is kept in check by compacting before the expensive
+// implement phase. This is the default; /rpi-subagents switches to the fresh-context sub-agent path.
+async function runInline(phase, prompt) {
     if (phase.id === "implement") {
         try {
             await session.rpc.commands.enqueue({ command: "/compact" });
@@ -170,7 +293,26 @@ async function dispatch(phase, { priorErrors = "" } = {}) {
             diag(`pre-implement compact skipped: ${e?.message ?? e}`);
         }
     }
-    await session.rpc.agent.select({ name: phase.agent });
+    try {
+        await session.rpc.agent.select({ name: phase.agent });
+        const ev = await session.sendAndWait({ prompt }, PHASE_TIMEOUT_MS);
+        return { status: "completed", text: ev?.data?.content ?? "" };
+    } catch (e) {
+        return { status: "failed", text: "", error: `phase run failed: ${e?.message ?? e}` };
+    } finally {
+        // Return the session to the default agent so it is never left pinned to a phase role after
+        // the turn — a lingering selection would make the interactive agent behave as that phase
+        // (e.g. keep "doing research") on any later wake, including background-completion notices.
+        try { await session.rpc.agent.deselect(); } catch { /* best-effort */ }
+    }
+}
+
+// --- Core dispatch: run the phase (inline or sub-agent), parse PHASE_RESULT. ---------------------
+async function dispatch(phase, { priorErrors = "" } = {}) {
+    if (!activeRunDir) {
+        await log("no active run. Start one with /rpi-start <task>.");
+        return { result: "fail", reason: "no active run", text: "" };
+    }
 
     const priorBlock = priorErrors ? `## Prior feedback to address\n${priorErrors}\n` : "";
     const prompt = readTemplate(phase.template)
@@ -178,12 +320,20 @@ async function dispatch(phase, { priorErrors = "" } = {}) {
         .replaceAll("{{runDir}}", activeRunDir)
         .replaceAll("{{priorErrors}}", priorBlock);
 
-    await log(`running ${phase.id}…`);
-    const ev = await session.sendAndWait({ prompt }, PHASE_TIMEOUT_MS);
-    const text = ev?.data?.content ?? "";
-    const { result, reason } = parsePhaseResult(text);
+    // Effective mode: sub-agents only when toggled on AND inside an unattended auto-run.
+    const subagentMode = useSubagents && unattendedActive;
+    await log(`running ${phase.id} (${subagentMode ? "sub-agent" : "inline/compact"})…`);
+    const { status, text, error } = subagentMode ? await runSubAgent(phase, prompt) : await runInline(phase, prompt);
+
+    let { result, reason } = parsePhaseResult(text);
+    // A run that failed/was cancelled/timed out is a phase failure regardless of any partial output;
+    // surface the runtime error as the reason when the phase left no better sentinel reason.
+    if (status === "failed" || status === "cancelled" || status === "timeout") {
+        result = "fail";
+        if (!reason || reason === "no PHASE_RESULT sentinel found") reason = error || `phase ${status}`;
+    }
     if (activeRunDir) recordPhaseResult(activeRunDir, phase.id, result, reason);
-    diag(`phase ${phase.id} -> ${result}${reason ? ` (${reason})` : ""}`);
+    diag(`phase ${phase.id} (${subagentMode ? "sub-agent" : "inline"} ${status}) -> ${result}${reason ? ` (${reason})` : ""}`);
     return { result, reason, text };
 }
 
@@ -225,6 +375,9 @@ async function autoRun({ from, to, unattended = false, pauseAt } = {}) {
         return;
     }
 
+    // Sub-agent mode is enabled only for the duration of an unattended auto-run.
+    unattendedActive = unattended;
+    try {
     for (let i = startIdx; i <= toIdx; i++) {
         if (pauseRequested) {
             await log(`paused before ${order[i].id}.`);
@@ -286,6 +439,9 @@ async function autoRun({ from, to, unattended = false, pauseAt } = {}) {
         }
     }
     await log(`auto-run reached ${order[toIdx].id}.`);
+    } finally {
+        unattendedActive = false;
+    }
 }
 
 // --- Tiny arg parsing (key:value pairs + free text). ---------------------------------------------
@@ -327,7 +483,7 @@ function diffCritiqueRel(date = new Date()) {
 function buildDiffJudgeInstruction({ cwd, runDir, critiqueRel, task }) {
     const critiqueAbs = path.join(runDir, critiqueRel);
     return (
-        `Review the current repository code changes for the agentic-workflow run "${task}". ` +
+        `Review the current repository code changes for the rpi run "${task}". ` +
         `Work in \`${cwd}\`. Run \`git status --short\`, \`git diff HEAD --stat\`, and ` +
         `\`git diff HEAD -- . ':(exclude).rpi'\` to inspect staged and unstaged implementation changes. ` +
         `If useful, compare the changes with \`${path.join(runDir, "plan.md")}\` and ` +
@@ -392,6 +548,7 @@ function initRun(task, simple) {
     state.simple = simple;
     writeState(activeRunDir, state);
     autoJudge = !!state.autoJudge;
+    useSubagents = !!state.subagents;
 }
 export { initRun };
 
@@ -447,6 +604,7 @@ async function cmdResume(argstr) {
     activeSimple = run.simple;
     activeRunDir = run.dir;
     autoJudge = !!readState(run.dir)?.autoJudge;
+    useSubagents = !!readState(run.dir)?.subagents;
     const next = nextPhase(activeRunDir, activeSimple);
     await log(
         `resumed "${activeTask}" (${path.relative(process.cwd(), activeRunDir) || activeRunDir})` +
@@ -624,6 +782,27 @@ async function cmdAutoJudge(argstr) {
     await log(`auto-judge is now ${autoJudge ? "ON" : "OFF"}${autoJudge ? " — each phase's new markdown artifacts get a /rubber-duck critique appended after it passes, and implement also gets a git-diff critique." : "."}`);
 }
 
+// Toggle execution mode for the active run. `/rpi-subagents` flips it; `on`/`off` set it explicitly.
+// COMPACT (off, the default): phases run inline in the host timeline and stream natively, with a
+// /compact before the implement phase. SUB-AGENTS (on): each phase runs in its own fresh-context
+// sub-agent — but ONLY during an unattended auto-run (`/rpi-auto … unattended:true`). Interactive
+// paths always stay COMPACT to avoid colliding with the runtime's background-completion notice.
+async function cmdSubagents(argstr) {
+    const v = (argstr ?? "").trim().toLowerCase();
+    if (v === "on" || v === "off") useSubagents = v === "on";
+    else useSubagents = !useSubagents;
+    if (activeRunDir) {
+        const state = readState(activeRunDir) || {};
+        state.subagents = useSubagents;
+        writeState(activeRunDir, state);
+    }
+    await log(
+        useSubagents
+            ? "execution mode: SUB-AGENTS — each phase runs in its own fresh context window during unattended auto-runs (/rpi-auto … unattended:true); interactive runs stay COMPACT."
+            : "execution mode: COMPACT (default) — phases run inline in this session and /compact runs before the implement phase.",
+    );
+}
+
 async function cmdRedo(argstr) {
     const { rest } = parseKv(argstr);
     const id = rest.shift();
@@ -665,7 +844,35 @@ async function cmdStatus() {
         diffStat = "(not a git repo or git unavailable)";
     }
     await log(
-        `status for "${activeTask}"\nphases:\n${phaseLines}\nartifacts (${artifacts.length}):\n  ${artifacts.join("\n  ") || "(none yet)"}\ngit diff --stat:\n${diffStat || "(no changes)"}`,
+        `status for "${activeTask}"\nmode: ${useSubagents ? "SUB-AGENTS (fresh context per phase, unattended auto-runs only)" : "COMPACT (inline)"}` +
+            ` | auto-judge: ${autoJudge ? "ON" : "OFF"}\nphases:\n${phaseLines}\nartifacts (${artifacts.length}):\n  ${artifacts.join("\n  ") || "(none yet)"}\ngit diff --stat:\n${diffStat || "(no changes)"}`,
+    );
+}
+
+// Brief, self-contained explanation of the extension and its command surface.
+async function cmdHelp() {
+    await log(
+        [
+            "RPI — a disciplined research → plan → implement workflow.",
+            "Each phase runs with all tools and a phase prompt, handing off to the next phase through",
+            "artifacts on disk under .rpi/. You stay in the loop: advance phases manually, inspect",
+            "artifacts between steps, and answer decisions via dialogs — or let the auto-runner chain",
+            "phases for you.",
+            "",
+            "Get going:",
+            "  /rpi-start <task>       begin a run (full flow); /rpi-start-simple for the short flow",
+            "  /rpi-auto <task>        start and auto-run to completion (add unattended:true to skip prompts)",
+            "  /rpi-continue           run the next phase; /rpi-status shows phase state + artifacts",
+            "  /rpi-resume [name]      pick a run back up after a reload",
+            "",
+            "Handy toggles & tools:",
+            "  /rpi-autojudge [on|off] rubber-duck each phase's output and the final diff",
+            "  /rpi-subagents [on|off] run each phase in a fresh context window (unattended auto-runs only)",
+            "  /rpi-judge <target>     rubber-duck an artifact or git diff on demand",
+            "  /rpi-redo <phase> <fb>  re-run a phase with steering feedback",
+            "",
+            "Run /rpi-status any time to see where you are.",
+        ].join("\n"),
     );
 }
 
@@ -679,20 +886,24 @@ async function cmdCompact() {
 }
 
 // --- Register the session: per-phase sub-agents + commands. --------------------------------------
-// The agent's pinned identity = role + tool access. The full, parameterized phase instructions
-// (the durable IP in prompts/) are delivered per-dispatch via sendAndWait, since the templates
-// depend on the task/run dir which are unknown at join time. Keeping a short role prompt here
-// avoids injecting unfilled {{task}}/{{runDir}} placeholders into the agent context.
+// Each phase is registered as a custom agent so it can be run either inline via agent.select
+// (COMPACT mode) or spawned by name as a fresh-context sub-agent via tasks.startAgent
+// (agentType == p.agent, SUB-AGENTS mode). The agent's pinned identity = role prompt + tool
+// access; the full, parameterized phase instructions (the durable IP in prompts/) are delivered
+// per-dispatch as the message/startAgent prompt, since the templates depend on the task/run dir
+// which are unknown at join time. Keeping a short role prompt here avoids injecting unfilled
+// {{task}}/{{runDir}} placeholders into the agent's pinned context.
 const customAgents = PHASES.map((p) => ({
     name: p.agent,
     displayName: p.agent,
-    description: `Agentic-workflow ${p.id} phase`,
+    description: `RPI ${p.id} phase`,
     tools: p.tools, // null => all tools
     prompt:
         `You are the **${p.id}** phase of an automated research → plan → implement workflow. ` +
-        `Follow the detailed phase instructions delivered in each message exactly, persist artifacts ` +
-        `under the run directory you are given, and end your turn ` +
-        `with the single sentinel line \`PHASE_RESULT: pass | fail | needs_input\` (plus an optional reason).`,
+        `The only state you share with other phases is the artifacts on disk under the run directory, ` +
+        `so read what prior phases wrote and persist your own outputs there. Follow the detailed phase ` +
+        `instructions in your task prompt exactly, and end your turn with the single sentinel line ` +
+        `\`PHASE_RESULT: pass | fail | needs_input\` (plus an optional reason).`,
 }));
 
 const cmd = (name, description, handler) => ({ name, description, handler: (ctx) => Promise.resolve(handler(ctx)).catch((e) => diag(`/${name} error: ${e?.stack ?? e}`)) });
@@ -718,8 +929,10 @@ export const joinConfig = {
         cmd("rpi-implement", "Run the implement phase.", (c) => cmdPhase("implement", c.args)),
         cmd("rpi-judge", "Rubber-duck an artifact or git diff: /rpi-judge <artifact|diff>. No arg critiques current work inline.", (c) => cmdJudge(c.args)),
         cmd("rpi-autojudge", "Toggle auto-judge: rubber-duck phase artifacts and the post-implement git diff. /rpi-autojudge [on|off].", (c) => cmdAutoJudge(c.args)),
+        cmd("rpi-subagents", "Toggle execution mode: COMPACT (default, inline + /compact) vs SUB-AGENTS (fresh context per phase). /rpi-subagents [on|off].", (c) => cmdSubagents(c.args)),
         cmd("rpi-redo", "Re-run a phase with steering notes: /rpi-redo <phase> <feedback>.", (c) => cmdRedo(c.args)),
         cmd("rpi-status", "Show phase state, artifacts, and git diff --stat.", () => cmdStatus()),
+        cmd("rpi-help", "Show a brief explanation of the workflow and its commands.", () => cmdHelp()),
         cmd("rpi-compact", "Reclaim context by queuing /compact.", () => cmdCompact()),
     ],
 };
@@ -727,5 +940,6 @@ export const joinConfig = {
 // Guard so the pure helpers / config can be imported by tests without a live session host.
 if (!process.env.AW_SKIP_JOIN) {
     session = await joinSession(joinConfig);
+    registerSubAgentRelay(session); // forward sub-agent activity to the user in SUB-AGENTS mode
     diag(`loaded with ${customAgents.length} phase agents; run dir base ${path.join(process.cwd(), ".rpi")}`);
 }

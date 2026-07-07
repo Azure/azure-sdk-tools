@@ -242,7 +242,7 @@ test("joinConfig gives every phase all tools", () => {
 test("joinConfig registers the command surface", () => {
     assert.equal(joinConfig.infiniteSessions.enabled, true);
     const cmds = joinConfig.commands.map((c) => c.name);
-    for (const expected of ["rpi-start", "rpi-start-simple", "rpi-resume", "rpi-auto", "rpi-auto-simple", "rpi-continue", "rpi-pause", "rpi-judge", "rpi-autojudge", "rpi-redo", "rpi-status", "rpi-compact", "rpi-implement"]) {
+    for (const expected of ["rpi-start", "rpi-start-simple", "rpi-resume", "rpi-auto", "rpi-auto-simple", "rpi-continue", "rpi-pause", "rpi-judge", "rpi-autojudge", "rpi-subagents", "rpi-redo", "rpi-status", "rpi-help", "rpi-compact", "rpi-implement"]) {
         assert.ok(cmds.includes(expected), `missing /${expected}`);
     }
 });

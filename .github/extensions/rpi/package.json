@@ -1,5 +1,5 @@
 {
-    "name": "agentic-workflow-extension",
+    "name": "rpi-extension",
     "version": "0.1.0",
     "description": "Copilot CLI extension driving a phased research -> plan -> implement workflow with per-phase sub-agents and on-disk artifacts.",
     "private": true,

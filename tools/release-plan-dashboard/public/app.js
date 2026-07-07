@@ -489,7 +489,7 @@
       return { status: "Released", action: "", statusClass: "step-released" };
     if (allMerged)
       return {
-        status: "SDK Ready To Be Released",
+        status: "SDK Ready To Release",
         action: serviceTeam,
         statusClass: "step-ready",
       };
@@ -548,6 +548,24 @@
     }
     const nonExcluded = langKeys.length - excludedCount;
     return releasedCount > 0 && releasedCount < nonExcluded;
+  }
+
+  function isSdkReadyToReleasePlan(p) {
+    const langs = p.languages || {};
+    return Object.keys(langs).some((k) => {
+      if (isLangExcluded(langs[k].exclusionStatus)) return false;
+      const st = (
+        langs[k].sdkPrGitHubStatus ||
+        langs[k].prStatus ||
+        ""
+      ).toLowerCase();
+      const rel = (langs[k].releaseStatus || "").toLowerCase();
+      return (
+        (st.includes("merged") || st.includes("completed")) &&
+        !rel.includes("completed") &&
+        !rel.includes("released")
+      );
+    });
   }
 
   // Parse "MMMM yyyy" into a sortable Date (or far future if unparseable)
@@ -742,6 +760,9 @@
         }
         if (tagFilter === "first-ga") {
           return Object.values(langs).some((l) => l.isFirstGA && l.packageName);
+        }
+        if (tagFilter === "sdk-ready-to-release") {
+          return isSdkReadyToReleasePlan(p);
         }
         return true;
       });
@@ -1185,7 +1206,7 @@
         <strong>Merge SDK PRs:</strong>
         <p>SDK pull requests are approved and ready to be merged.</p>
       </div>`;
-    } else if (step.status === "SDK Ready To Be Released") {
+    } else if (step.status === "SDK Ready To Release") {
       // Build list of languages with merged PRs but not yet released
       const langs = p.languages || {};
       const langKeys = Object.keys(langs);
@@ -1370,7 +1391,7 @@
         step.status === "API Spec In Progress" ||
         step.status === "SDK To Be Generated" ||
         step.status === "SDK Generation Failed" ||
-        step.status === "SDK Ready To Be Released"
+        step.status === "SDK Ready To Release"
       ) {
         needsServiceTeam = true;
       }
@@ -2496,6 +2517,9 @@
         }
         if (tagFilter === "first-ga") {
           return Object.values(langs).some((l) => l.isFirstGA && l.packageName);
+        }
+        if (tagFilter === "sdk-ready-to-release") {
+          return isSdkReadyToReleasePlan(p);
         }
         return true;
       });

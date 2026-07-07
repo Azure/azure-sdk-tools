@@ -1218,8 +1218,8 @@
         const rel = (langs[k].releaseStatus || "").toLowerCase();
         return (
           (st.includes("merged") || st.includes("completed")) &&
-          !rel.includes("completed") &&
-          !rel.includes("released")
+          rel !== "completed" &&
+          rel !== "released"
         );
       });
       const langList = toRelease.length

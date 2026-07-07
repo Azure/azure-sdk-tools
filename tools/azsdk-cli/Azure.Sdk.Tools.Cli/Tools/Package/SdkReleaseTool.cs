@@ -70,7 +70,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return await ReleasePackageAsync(packageName, language, branch, checkReady, ct);
         }
 
-        [McpServerTool(Name = ReleaseSdkToolName), Description("Releases the specified SDK package for a language. This includes checking if the package is ready for release and triggering the release pipeline. To ONLY check package release readiness pass checkReady as true.")]
+        [McpServerTool(Name = ReleaseSdkToolName), Description("Releases an already-generated SDK package for a language by publishing it to the package registry. This includes checking if the package is ready for release and triggering the release pipeline. To ONLY check package release readiness pass checkReady as true. This tool does NOT generate SDK code; to generate an SDK from a TypeSpec project (including 'run SDK generation for all languages for a release plan') use azsdk_run_generate_sdk instead.")]
         public async Task<SdkReleaseResponse> ReleasePackageAsync(string packageName, string language, string branch = "main", bool checkReady = false, CancellationToken ct = default)
         {
             try

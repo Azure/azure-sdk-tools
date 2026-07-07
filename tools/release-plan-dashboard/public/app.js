@@ -553,18 +553,16 @@
   function isSdkReadyToReleasePlan(p) {
     const langs = p.languages || {};
     return Object.keys(langs).some((k) => {
-      if (isLangExcluded(langs[k].exclusionStatus)) return false;
-      const st = (
-        langs[k].sdkPrGitHubStatus ||
-        langs[k].prStatus ||
-        ""
-      ).toLowerCase();
-      const rel = (langs[k].releaseStatus || "").toLowerCase();
-      return (
-        (st.includes("merged") || st.includes("completed")) &&
-        !rel.includes("completed") &&
-        !rel.includes("released")
-      );
+      const l = langs[k];
+      if (isLangExcluded(l.exclusionStatus)) return false;
+
+      const st = (l.sdkPrGitHubStatus || l.prStatus || "").toLowerCase();
+      const rel = (l.releaseStatus || "").toLowerCase();
+
+      const isMergedOrCompleted = st.includes("merged") || st === "completed";
+      const isReleasedOrCompleted = rel === "released" || rel === "completed";
+
+      return isMergedOrCompleted && !isReleasedOrCompleted;
     });
   }
 

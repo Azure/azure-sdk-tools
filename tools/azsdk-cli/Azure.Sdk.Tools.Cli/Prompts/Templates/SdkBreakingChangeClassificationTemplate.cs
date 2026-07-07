@@ -31,11 +31,8 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
         public override string BuildPrompt()
         {
             var taskInstructions = BuildTaskInstructions();
-            //var constraints = BuildClassificationConditions();
-            //var examples = BuildExamples();
             var outputRequirements = BuildOutputRequirements();
 
-            //return BuildStructuredPrompt(taskInstructions, constraints, examples, outputRequirements);
             return BuildStructuredPrompt(taskInstructions, null, null, outputRequirements);
         }
 
@@ -63,7 +60,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
 
         private string BuildTaskInstructions()
         {
-            var referenceTypeSpecInstruction = _tspProjectPath != null ? "" : $"""
+            var referenceTypeSpecInstruction = string.IsNullOrEmpty(_tspProjectPath) ? "" : $"""
                 when identify SDK breaking change, search in the typespec code in the provided TypeSpec project `{_tspProjectPath}` to check if it match the **spec pattern** in the SDK Breaking Change Pattern Document.
                 """;
 

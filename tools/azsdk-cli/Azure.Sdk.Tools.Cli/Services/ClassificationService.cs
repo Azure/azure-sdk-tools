@@ -5,7 +5,6 @@ using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.ClassifyItems;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
-using Microsoft.TeamFoundation.Common;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {   
@@ -32,7 +31,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 case ClassificationKind.SdkBreakingChange:
                     if (request is ClassifySdkBreakingChangesRequest sdkBreakingRequest)
                     {
-                        if (sdkBreakingRequest.SdkChange.IsNullOrEmpty() || sdkBreakingRequest.SdkBreakingPattern.IsNullOrEmpty())
+                        if (string.IsNullOrEmpty(sdkBreakingRequest.SdkChange) || string.IsNullOrEmpty(sdkBreakingRequest.SdkBreakingPattern))
                         {
                             throw new ArgumentException("No feedback items to classify.");
                         }

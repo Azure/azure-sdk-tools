@@ -41,7 +41,8 @@ Symlink it (recommended — stays in sync as you `git pull` this repo):
 
 ```bash
 mkdir -p ~/.copilot/extensions
-ln -s "$(pwd)/.github/extensions/rpi" ~/.copilot/extensions/rpi
+# `git rev-parse --show-toplevel` resolves the repo root, so this works from any dir inside the repo:
+ln -s "$(git rev-parse --show-toplevel)/.github/extensions/rpi" ~/.copilot/extensions/rpi
 cd ~/.copilot/extensions/rpi && npm install   # install deps at the link target once
 ```
 
@@ -49,7 +50,7 @@ Or copy it (a detached snapshot you update manually):
 
 ```bash
 mkdir -p ~/.copilot/extensions
-cp -r .github/extensions/rpi ~/.copilot/extensions/rpi
+cp -r "$(git rev-parse --show-toplevel)/.github/extensions/rpi" ~/.copilot/extensions/rpi
 cd ~/.copilot/extensions/rpi && npm install
 ```
 

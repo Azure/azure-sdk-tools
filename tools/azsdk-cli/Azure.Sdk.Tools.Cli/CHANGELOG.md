@@ -12,8 +12,6 @@
 
 - Authentication failures against Azure DevOps now return a clearer error message that instructs the user to sign in with the Azure CLI using the default Microsoft tenant (`az login --tenant microsoft.onmicrosoft.com`), which resolves failures caused by being signed in with a different tenant.
 
-### Other Changes
-
 ## 0.6.24 (2026-06-30)
 
 ### Features Added

@@ -11,9 +11,9 @@ namespace Azure.Sdk.Tools.Mock.Handlers.Pipeline;
 /// two newest service-version cases, "2026-10-06" (V2026_10_06) and "2026-12-06" (V2026_12_06) —
 /// a real, identifiable code bug. Because TryGetServiceVersion_ParsesAllServiceVersions iterates
 /// every enum value, a complete fix must add BOTH cases; adding only one leaves the test red. This
-/// is the same bug the fixtures/analyze-pipeline/QueueClientOptionsTests fixture overlays for the
+/// is the same bug the tools/azsdk-cli/Azure.Sdk.Tools.Vally/fixtures/analyze-pipeline/QueueClientOptionsTests fixture overlays for the
 /// fixer, so a single fixture drives both the analyze and fix quality evals. See
-/// Azure.Sdk.Tools.Vally/evals/quality/ and fixtures/analyze-pipeline/QueueClientOptionsTests.
+/// tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/quality/ and tools/azsdk-cli/Azure.Sdk.Tools.Vally/fixtures/analyze-pipeline/QueueClientOptionsTests.
 /// </summary>
 public class AnalyzePipelineHandler : IMockToolHandler
 {

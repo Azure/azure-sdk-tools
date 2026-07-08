@@ -141,11 +141,29 @@ class KnowledgeGraphService:
         finally:
             filtering.allowed_entity_ids_var().reset(token)
 
-        return extraction.extract_references_from_context(
+        # Semantic rerank (default on) reorders the graph's connectivity-ranked
+        # candidates by query relevance so the answering passage rises into the
+        # small top_k instead of being capped off. It issues one batched
+        # embedding round-trip, so run the whole resolution off the event loop.
+        rerank_enabled = cfg("GRAPH_RERANK", "true").strip().lower() in (
+            "1",
+            "true",
+            "yes",
+            "on",
+        )
+        embedder = (
+            getattr(self._context_builder, "text_embedder", None)
+            if rerank_enabled
+            else None
+        )
+        return await asyncio.to_thread(
+            extraction.extract_references_from_context,
             self._dfs,
             result.context_records,
             top_k=int(cfg("GRAPH_REF_TOP_K", "8")),
             community_top_n=int(cfg("GRAPH_COMMUNITY_REPORTS_TOP_N", "2")),
+            query=query if rerank_enabled else None,
+            embedder=embedder,
         )
 
     # ------------------------------------------------------------------ #

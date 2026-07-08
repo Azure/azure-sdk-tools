@@ -14,7 +14,9 @@ are re-exported for unit tests.
 from __future__ import annotations
 
 from utils.knowledge_graph.extraction import (
+    _cosine_similarity,
     _extract_chunk_header_path,
+    _semantic_rerank,
     _source_path_to_rel_title,
 )
 from utils.knowledge_graph.filtering import parse_title_filter_terms
@@ -27,6 +29,8 @@ __all__ = [
     "KnowledgeGraphService",
     "get_knowledge_graph_service",
     "parse_title_filter_terms",
+    "_cosine_similarity",
     "_extract_chunk_header_path",
+    "_semantic_rerank",
     "_source_path_to_rel_title",
 ]

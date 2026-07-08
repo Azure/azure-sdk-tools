@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -12,6 +13,15 @@ namespace GitHubTeamUserStore
         private static readonly TokenRequestContext OpenSourceApiTokenRequestContext = new([ProductAndTeamConstants.OpenSourceApiScope]);
         private static readonly string[] UnsupportedPaginationHeaders = ["Link", "x-ms-continuation", "x-next-page"];
         private static readonly HttpClient SharedHttpClient = new HttpClient();
+
+        // The Open Source API occasionally returns transient 5xx/throttling errors. Retry those
+        // with exponential backoff so the scheduled cache-building job does not fail spuriously.
+        // The API's rate limiter is the only response that carries a Retry-After header (on 429),
+        // and that delta is bounded by its request window (60s by default), so the max delay is
+        // sized to honor it. 5xx/408/network failures carry no Retry-After and use plain backoff.
+        private const int MaxAttempts = 5;
+        private static readonly TimeSpan MaxRetryDelay = TimeSpan.FromSeconds(60);
+
         private readonly TokenCredential _credential;
 
         public OpenSourceApiClient()
@@ -126,21 +136,90 @@ namespace GitHubTeamUserStore
 
         private async Task<T> GetFromOpenSourceApi<T>(string relativePath)
         {
-            AccessToken accessToken = await _credential.GetTokenAsync(OpenSourceApiTokenRequestContext, CancellationToken.None);
+            string requestUri = $"{ProductAndTeamConstants.OpenSourceApiBaseUrl}/{relativePath}";
 
-            using HttpRequestMessage request = new HttpRequestMessage(
-                HttpMethod.Get,
-                $"{ProductAndTeamConstants.OpenSourceApiBaseUrl}/{relativePath}");
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken.Token);
-            request.Headers.Add("api-version", ProductAndTeamConstants.OpenSourceApiVersion);
+            for (int attempt = 1; ; attempt++)
+            {
+                // Re-acquire the token each attempt (the credential caches internally, so this is
+                // cheap) and rebuild the request because HttpRequestMessage instances are single-use.
+                AccessToken accessToken = await _credential.GetTokenAsync(OpenSourceApiTokenRequestContext, CancellationToken.None);
 
-            using HttpResponseMessage response = await SharedHttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
-            response.EnsureSuccessStatusCode();
-            EnsureNoUnsupportedPagination(response, relativePath);
+                using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken.Token);
+                request.Headers.Add("api-version", ProductAndTeamConstants.OpenSourceApiVersion);
 
-            await using Stream responseStream = await response.Content.ReadAsStreamAsync();
-            return await JsonSerializer.DeserializeAsync<T>(responseStream)
-                ?? throw new InvalidOperationException($"Open Source API returned an empty payload for '{relativePath}'.");
+                HttpResponseMessage response;
+                try
+                {
+                    response = await SharedHttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+                }
+                catch (HttpRequestException ex) when (attempt < MaxAttempts)
+                {
+                    TimeSpan delay = GetRetryDelay(attempt, null);
+                    Console.WriteLine($"Network failure calling Open Source API '{relativePath}' (attempt {attempt}/{MaxAttempts}): {ex.Message}. Retrying in {delay.TotalSeconds:0.#}s.");
+                    await Task.Delay(delay);
+                    continue;
+                }
+
+                // Only SendAsync is guarded above; EnsureSuccessStatusCode below intentionally throws
+                // (and is not retried) for non-transient statuses such as 4xx.
+                using (response)
+                {
+                    if (IsTransientStatusCode(response.StatusCode) && attempt < MaxAttempts)
+                    {
+                        TimeSpan delay = GetRetryDelay(attempt, GetRetryAfterDelay(response));
+                        Console.WriteLine($"Transient status {(int)response.StatusCode} from Open Source API '{relativePath}' (attempt {attempt}/{MaxAttempts}). Retrying in {delay.TotalSeconds:0.#}s.");
+                        await Task.Delay(delay);
+                        continue;
+                    }
+
+                    // On the final attempt a transient status falls through here so the real failure surfaces.
+                    response.EnsureSuccessStatusCode();
+                    EnsureNoUnsupportedPagination(response, relativePath);
+
+                    await using Stream responseStream = await response.Content.ReadAsStreamAsync();
+                    return await JsonSerializer.DeserializeAsync<T>(responseStream)
+                        ?? throw new InvalidOperationException($"Open Source API returned an empty payload for '{relativePath}'.");
+                }
+            }
+        }
+
+        private static bool IsTransientStatusCode(HttpStatusCode statusCode)
+        {
+            int code = (int)statusCode;
+            return (code >= 500 && code <= 599)
+                || statusCode == HttpStatusCode.RequestTimeout
+                || statusCode == HttpStatusCode.TooManyRequests;
+        }
+
+        private static TimeSpan? GetRetryAfterDelay(HttpResponseMessage response)
+        {
+            RetryConditionHeaderValue retryAfter = response.Headers.RetryAfter;
+            if (retryAfter == null)
+            {
+                return null;
+            }
+
+            if (retryAfter.Delta.HasValue)
+            {
+                return retryAfter.Delta;
+            }
+
+            if (retryAfter.Date.HasValue)
+            {
+                TimeSpan delay = retryAfter.Date.Value - DateTimeOffset.UtcNow;
+                return delay > TimeSpan.Zero ? delay : TimeSpan.Zero;
+            }
+
+            return null;
+        }
+
+        private static TimeSpan GetRetryDelay(int attempt, TimeSpan? retryAfter)
+        {
+            // Exponential backoff: 1s, 2s, 4s, 8s, ... capped at MaxRetryDelay.
+            TimeSpan backoff = TimeSpan.FromSeconds(Math.Pow(2, attempt - 1));
+            TimeSpan delay = (retryAfter.HasValue && retryAfter.Value > backoff) ? retryAfter.Value : backoff;
+            return delay < MaxRetryDelay ? delay : MaxRetryDelay;
         }
 
         private static void EnsureNoUnsupportedPagination(HttpResponseMessage response, string relativePath)

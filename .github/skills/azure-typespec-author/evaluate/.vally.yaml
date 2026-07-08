@@ -5,9 +5,9 @@
 # Local commands like `vally eval --suite versioning` continue to
 # behave as teammates expect.
 #
-# The pipeline parallel layout lives separately under suites/ and is invoked
-# explicitly from the pipeline with --eval-spec. That keeps local usage stable
-# without introducing a second Vally config file.
+# The benchmark pipelines invoke suite branches from this file directly with --suite.
+# Vally 0.6.0 supports parallel execution across multiple eval files, so pipeline
+# runs do not need consolidated suite eval files plus tag filtering.
 
 paths:
   evals: [evals/]
@@ -17,6 +17,9 @@ paths:
 
 environments:
   azsdk-mcp:
+    files:
+      - src: ../fixtures/instructions-test/copilot-instructions.md
+        dest: .github/copilot-instructions.md
     mcpServers:
       azure-sdk-mcp:
         type: stdio
@@ -35,6 +38,9 @@ environments:
           AZSDKTOOLS_COLLECT_TELEMETRY: "false"
           AZURE_SDK_KB_ENDPOINT: "http://localhost:8088"
   azsdk-mcp-remote-kb:
+    files:
+      - src: ../fixtures/instructions-test/copilot-instructions.md
+        dest: .github/copilot-instructions.md
     mcpServers:
       azure-sdk-mcp:
         type: stdio

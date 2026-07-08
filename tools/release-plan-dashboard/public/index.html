@@ -216,6 +216,7 @@
         <option value="">All Tags</option>
         <option value="first-preview">First Preview</option>
         <option value="first-ga">First GA</option>
+        <option value="sdk-ready-to-release">SDK Ready To Release</option>
       </select>
       <select
         id="global-sort-order"
@@ -644,76 +645,113 @@
       </div>
 
       <div id="pm-content">
-        <section id="section-pm-pp-ready" class="plan-section">
-          <h3 class="section-header" data-target="list-pm-pp-ready">
-            <span class="caret">&#9660;</span> 🏁 Ready to Complete Private
-            Preview Release Plans <span class="section-count"></span>
-          </h3>
-          <div id="list-pm-pp-ready" class="plan-list"></div>
+        <section class="pm-section-group" aria-labelledby="pm-needs-attention">
+          <div
+            class="pm-section-group-header section-header"
+            data-target="list-pm-needs-attention"
+          >
+            <span class="caret">&#9660;</span>
+            <div>
+              <h3 id="pm-needs-attention" class="pm-section-group-title">
+                Needs Attention
+              </h3>
+              <p class="pm-section-group-desc">
+                Priority-ordered groups that require PM follow-up
+              </p>
+            </div>
+          </div>
+          <div id="list-pm-needs-attention" class="pm-section-group-content">
+            <section id="section-pm-pp-ready" class="plan-section">
+              <h3 class="section-header" data-target="list-pm-pp-ready">
+                <span class="caret">&#9660;</span> 🏁 Ready to Complete Private
+                Preview Release Plans <span class="section-count"></span>
+              </h3>
+              <div id="list-pm-pp-ready" class="plan-list"></div>
+            </section>
+
+            <section id="section-pm-pastdue" class="plan-section">
+              <h3 class="section-header" data-target="list-pm-pastdue">
+                <span class="caret">&#9660;</span> 🕐 Past Due Release Plans
+                <span class="section-count"></span>
+              </h3>
+              <div id="list-pm-pastdue" class="plan-list"></div>
+            </section>
+
+            <section id="section-pm-inactive" class="plan-section">
+              <h3 class="section-header" data-target="list-pm-inactive">
+                <span class="caret">&#9660;</span> ⚠️ Stale Release Plans (No
+                activity for 3+ months) <span class="section-count"></span>
+              </h3>
+              <div id="list-pm-inactive" class="plan-list"></div>
+            </section>
+
+            <section id="section-pm-tier1" class="plan-section">
+              <h3 class="section-header" data-target="list-pm-tier1">
+                <span class="caret">&#9660;</span> 🔴 Release Plans Without SDK
+                for All Languages <span class="section-count"></span>
+              </h3>
+              <div id="list-pm-tier1" class="plan-list"></div>
+            </section>
+
+            <section id="section-pm-partial" class="plan-section">
+              <h3 class="section-header" data-target="list-pm-partial">
+                <span class="caret">&#9660;</span> 🟡 Partially Released
+                <span class="section-count"></span>
+              </h3>
+              <div id="list-pm-partial" class="plan-list"></div>
+            </section>
+
+            <section id="section-pm-ns-missing" class="plan-section">
+              <h3 class="section-header" data-target="list-pm-ns-missing">
+                <span class="caret">&#9660;</span> ⚠️ Missing Namespace Approval
+                <span class="section-count"></span>
+              </h3>
+              <div id="list-pm-ns-missing" class="plan-list"></div>
+            </section>
+
+            <section id="section-pm-product-missing" class="plan-section">
+              <h3 class="section-header" data-target="list-pm-product-missing">
+                <span class="caret">&#9660;</span> 📋 Missing Product Details
+                <span class="section-count"></span>
+              </h3>
+              <div id="list-pm-product-missing" class="plan-list"></div>
+            </section>
+          </div>
         </section>
 
-        <section id="section-pm-ns-missing" class="plan-section">
-          <h3 class="section-header" data-target="list-pm-ns-missing">
-            <span class="caret">&#9660;</span> ⚠️ Missing Namespace Approval
-            <span class="section-count"></span>
-          </h3>
-          <div id="list-pm-ns-missing" class="plan-list"></div>
-        </section>
+        <section class="pm-section-group" aria-labelledby="pm-informational">
+          <div
+            class="pm-section-group-header section-header"
+            data-target="list-pm-informational"
+          >
+            <span class="caret">&#9660;</span>
+            <div>
+              <h3 id="pm-informational" class="pm-section-group-title">
+                Informational
+              </h3>
+              <p class="pm-section-group-desc">
+                No immediate PM action required
+              </p>
+            </div>
+          </div>
+          <div id="list-pm-informational" class="pm-section-group-content">
+            <section id="section-pm-finished" class="plan-section">
+              <h3 class="section-header" data-target="list-pm-finished">
+                <span class="caret">&#9660;</span> ✅ Recently Finished (Last 2
+                Months) <span class="section-count"></span>
+              </h3>
+              <div id="list-pm-finished" class="plan-list"></div>
+            </section>
 
-        <section id="section-pm-approaching" class="plan-section">
-          <h3 class="section-header" data-target="list-pm-approaching">
-            <span class="caret">&#9660;</span> 📅 Approaching SDK Release Target
-            (This &amp; Next Month) <span class="section-count"></span>
-          </h3>
-          <div id="list-pm-approaching" class="plan-list"></div>
-        </section>
-
-        <section id="section-pm-pastdue" class="plan-section">
-          <h3 class="section-header" data-target="list-pm-pastdue">
-            <span class="caret">&#9660;</span> 🕐 Past Due Release Plans
-            <span class="section-count"></span>
-          </h3>
-          <div id="list-pm-pastdue" class="plan-list"></div>
-        </section>
-
-        <section id="section-pm-inactive" class="plan-section">
-          <h3 class="section-header" data-target="list-pm-inactive">
-            <span class="caret">&#9660;</span> ⚠️ Stale Release Plans (No
-            activity for 3+ months) <span class="section-count"></span>
-          </h3>
-          <div id="list-pm-inactive" class="plan-list"></div>
-        </section>
-
-        <section id="section-pm-tier1" class="plan-section">
-          <h3 class="section-header" data-target="list-pm-tier1">
-            <span class="caret">&#9660;</span> 🔴 Release Plans Without SDK for
-            All Languages <span class="section-count"></span>
-          </h3>
-          <div id="list-pm-tier1" class="plan-list"></div>
-        </section>
-
-        <section id="section-pm-partial" class="plan-section">
-          <h3 class="section-header" data-target="list-pm-partial">
-            <span class="caret">&#9660;</span> 🟡 Partially Released
-            <span class="section-count"></span>
-          </h3>
-          <div id="list-pm-partial" class="plan-list"></div>
-        </section>
-
-        <section id="section-pm-product-missing" class="plan-section">
-          <h3 class="section-header" data-target="list-pm-product-missing">
-            <span class="caret">&#9660;</span> 📋 Missing Product Details
-            <span class="section-count"></span>
-          </h3>
-          <div id="list-pm-product-missing" class="plan-list"></div>
-        </section>
-
-        <section id="section-pm-finished" class="plan-section">
-          <h3 class="section-header" data-target="list-pm-finished">
-            <span class="caret">&#9660;</span> ✅ Recently Finished (Last 2
-            Months) <span class="section-count"></span>
-          </h3>
-          <div id="list-pm-finished" class="plan-list"></div>
+            <section id="section-pm-approaching" class="plan-section">
+              <h3 class="section-header" data-target="list-pm-approaching">
+                <span class="caret">&#9660;</span> 📅 Approaching SDK Release
+                Target (This &amp; Next Month)
+                <span class="section-count"></span>
+              </h3>
+              <div id="list-pm-approaching" class="plan-list"></div>
+            </section>
+          </div>
         </section>
       </div>
     </div>

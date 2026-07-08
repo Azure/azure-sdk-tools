@@ -17,10 +17,11 @@ namespace Azure.Sdk.Tools.Cli.Services
     {
         private readonly ICopilotAgentRunner _agentRunner;
         private static readonly string _defaultCopilotAgentModel = "claude-opus-4.5";
+        public const string SdkBreakingChangeClassifierModelVariable = "AZURE_SDK_BREAKING_CLASSIFIER_MODEL";
         /// <summary>
         /// The model that this agent will use. Defaults to "claude-opus-4.5".
         /// </summary>
-        public string CopilotAgentModel { get; set; } = _defaultCopilotAgentModel;
+        public string CopilotAgentModel { get; set; } = Environment.GetEnvironmentVariable(SdkBreakingChangeClassifierModelVariable) ?? _defaultCopilotAgentModel;
         public ClassificationService(ICopilotAgentRunner agentRunner)
         {
             _agentRunner = agentRunner;

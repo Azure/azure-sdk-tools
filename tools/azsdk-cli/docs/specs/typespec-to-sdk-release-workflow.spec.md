@@ -24,6 +24,10 @@
 
 The end-to-end process from TypeSpec authoring → spec PR → SDK generation → SDK PR validation → release.
 
+> **Scope note**: This document covers the **spec-change-triggered** release path. Data shows ~50% of SDK releases (Python, .NET) happen **without a spec change** — for example, customization-only updates, bug fixes, or dependency bumps. That flow shares Stages 4–5 (SDK PR validation → release) but skips Stages 1–3. Additionally, some packages have **no spec at all** (messaging services, companion packages, language ecosystem helpers). These still require namespace/naming approval and architect review but enter the workflow at Stage 4.
+>
+> **Open question**: Should the no-spec-change and no-spec paths be documented as first-class entry points in this document? See also [#16297](https://github.com/Azure/azure-sdk-tools/issues/16297).
+
 > 🧑‍💻 = requires human approval or manual gating
 
 ### The five-stage workflow
@@ -82,6 +86,24 @@ flowchart TD
    - Manual approval gate required for security (cannot be removed; ARM approval = Haoling/Shanghai team)
    - Release gate: API Review Hub verifies approved API hash
    - Packages published → release plan completes → Service Tree KPI updated
+
+### For Reviewers
+
+1. **ARM review** (ARM specs only) — Review resource model correctness on spec PRs; apply `ARMSignedOff` label
+2. **SDK API review** — Review generated SDK API surface on SDK PRs via APIView (current) or API Review Hub review PRs (future). **There is no spec-level API review** — API review applies only to the generated SDK. `<lang>-api-approved` labels are **informational** — source of truth is ADO Package Work Items (API hash).
+3. **SDK PR review** (Haoling/Shanghai team, management plane only) — Review generated SDK PRs that have a release plan attached; approve & merge
+4. **Breaking change review** — Review breaking changes flagged by `BreakingChangeReviewRequired` label on spec PRs (ARM specs only)
+5. **Namespace review** — Approve new package namespaces; apply `namespace-<lang>-approved` labels
+6. **Release approval** — Approve release pipeline runs (Haoling/Shanghai team for ARM)
+
+### For EngSys / SDK Team
+
+1. **Monitor pipelines** — Spec PR validation, SDK generation, and SDK CI pipelines run automatically
+2. **Label routing** — Labels like `BreakingChangeReviewRequired`, `namespace-<lang>-pending`, and `auto-sdk-build-fix` trigger review routing and automation
+3. **Generation failures** — When SDK generation fails, diagnose via pipeline logs (structured error reporting is a [known gap](#gap-tracker))
+4. **Auto-repair** — `auto-sdk-build-fix` label triggers Copilot cloud agent to fix custom code drift on SDK PRs
+5. **Release coordination** — `azsdk_release_sdk` checks readiness; release pipelines publish to package registries (manual approval gate required)
+6. **Track progress** — [Release plan dashboard](https://aka.ms/azsdk/releaseplan-dashboard) shows where each service is in the process
 
 
 ---
@@ -145,6 +167,8 @@ flowchart TD
 **Key insight**: After spec PR merge, the flow is largely **automated**. Service team re-engages only if SDK CI fails, API review has feedback, or release needs manual approval.
 
 > **ARM vs Data Plane divergence** — Same high-level flow but diverge at review gates. ARM requires ARM review sign-off + stricter resource model constraints. Data plane skips ARM review. See: [ARM review](https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/arm-review)
+>
+> **Open question: Data-plane review model** — With the stewardship board being reconsidered, who reviews data-plane PRs? An emerging pattern: for ARM, if the REST API spec looks fine, we assume the SDK is ok to ship. For data-plane, if the SDK looks fine, we could assume the TypeSpec spec is ok to merge. This would mean ARM quality flows spec → SDK, while data-plane quality flows SDK → spec.
 
 ---
 
@@ -355,6 +379,7 @@ Structured error reporting from generation pipeline + agent-assisted troubleshoo
 | Custom code drift | Build failure | azsdk-cli team | `auto-sdk-build-fix` label → Copilot agent auto-repairs | Automatic |
 | Other CI failure | Build/test/lint red | Language owner | Pipeline troubleshooting agent diagnoses | Manual (agent-assisted) |
 | API review feedback | Architect comments | Author | Resolve via TypeSpec changes → re-generate → new commit → CI re-runs | Manual |
+| API review not approved | Architect rejects API surface | Author | Revise TypeSpec design, update spec PR, re-generate SDK. May require follow-up architect discussion. Not all languages auto-approve — rejection path varies per language. | Manual |
 | SDK breaking change | Detection report | @raych1 / @catalinaperalta | Review and approve or fix | Manual |
 
 <details>
@@ -438,8 +463,8 @@ Structured error reporting from generation pipeline + agent-assisted troubleshoo
 | Preview (first) | Namespace approval required | Fastest path; namespace needed for new packages |
 | Preview (update) | No architect board review (can be requested) | Fastest path |
 | GA (first release) | Architect board review required | Namespace approval if new package |
-| GA (update) | Standard review | Breaking changes need separate approval |
-| Patch | Standard review | Must maintain backward compatibility |
+| GA (update) | Architect board review required (all GA releases) | Breaking changes need separate approval |
+| Patch | SDK PR review + CI pass (no architect board review) | Must maintain backward compatibility |
 
 <details>
 <summary>Deep spec: tools, contracts, and unresolved questions</summary>
@@ -549,7 +574,6 @@ The system uses **prompt chaining**: independent sub-skills invoked sequentially
 ## Decision log
 
 - [ ] **D1**: How does ARH review PR creation get triggered on SDK PRs? (No automation today)
-- [x] **D2**: `api-approved` / `<lang>-api-approved` labels are **informational**. Source of truth is ADO Package Work Items (API hash). ARH will assign `<lang>-api-approved` labels on SDK PRs automatically when architect approves. *(Resolved)*
 - [ ] **D3**: Should service teams approve SDK PRs? (Not required today)
 - [ ] **D4**: Where does breaking-change enforcement live? (Spec level vs SDK level)
 - [ ] **D5**: What triggers auto-release after SDK PR merge? (Last E2E automation piece)
@@ -606,7 +630,7 @@ The system uses **prompt chaining**: independent sub-skills invoked sequentially
 <details>
 <summary>Exception 1: Architect Board Review & Namespace Approval</summary>
 
-**Description**: First GA releases require architect board review. First preview requires namespace approval for new packages. New SDK packages require namespace/naming approval before release.
+**Description**: All GA releases should expect architect board review (some languages may opt out for specific scenarios, but the workflow must account for it). First preview requires namespace approval for new packages. New SDK packages require namespace/naming approval before release.
 
 **Impact**: Cannot fully automate GA approval or first preview namespace approval. New package releases blocked until naming approved.
 
@@ -629,11 +653,11 @@ The system uses **prompt chaining**: independent sub-skills invoked sequentially
 </details>
 
 <details>
-<summary>Exception 3: .NET Team Tooling</summary>
+<summary>Exception 3: .NET Team Complementary Tooling</summary>
 
-**Description**: .NET team has tooling sharing infrastructure with azsdk-cli via `azsdk_customized_code_update` and TypeSpec linter/fixer patterns.
+**Description**: .NET team has developed **complementary** tooling aligned with azsdk-cli — sharing infrastructure via `azsdk_customized_code_update` (custom-code auto-repair) and TypeSpec linter/fixer patterns. Cross-language potential has been surfaced for discussion and integration. Nothing competes or conflicts with the inner-loop work and azsdk-cli tooling.
 
-**Impact**: .NET ahead on auto-repair and linter integration. Other languages can adopt same patterns.
+**Impact**: .NET is ahead on auto-repair and linter integration. Areas with cross-language potential are being integrated into shared orchestration in `eng/common/` with per-language opt-in.
 
 **Next step**: Alignment meeting to document remaining .NET-specific tools.
 
@@ -671,135 +695,61 @@ The system uses **prompt chaining**: independent sub-skills invoked sequentially
 <details>
 <summary>Expand full detailed flowchart</summary>
 
-```
-                         ┌─────────────────────────────────┐
-                         │  ENTRY POINT A                  │
-                         │  User provides initial prompt   │
-                         │  (starts at Stage 1)            │
-                         └──────────────┬──────────────────┘
-                                        │
-                                        ▼
-╔═══════════════════════════════════════════════════════════════════╗
-║  STAGE 1: TypeSpec Authoring (local)                             ║
-╚═══════════════════════════════════════════════════════════════════╝
-                                    │
-              ┌───────────────────────────────────────────────────┐
-              │  STEP 1: Author TypeSpec                          │
-              └───────────────────────┬───────────────────────────┘
-                                      │
-           ┌──────────────────────────┴──────────────────────────┐
-           │                                                     │
-           ▼                                                     ▼
-┌─────────────────────────┐                     ┌─────────────────────────┐
-│ Create new TypeSpec     │                     │ Update existing         │
-│ project                 │                     │ TypeSpec project        │
-└───────────┬─────────────┘                     └───────────┬─────────────┘
-            │                                               │
-            └───────────────────────┬───────────────────────┘
-                                    │
-                                    ▼
-              ┌───────────────────────────────────────────────────┐
-              │  STEP 2: Validate & Compile TypeSpec              │
-              │  • TypeSpec compiler                              │
-              │  • Linter checks                                 │
-              │  • Breaking change detection (Phase A + B)       │
-              └───────────────────────┬───────────────────────────┘
-                                      │
-           ┌──────────────────────────┴──────────────────────────┐
-           │ FAIL                                                │ PASS
-           ▼                                                     ▼
-┌─────────────────────────┐                     ┌─────────────────────────┐
-│ Report errors,          │                     │ TypeSpec Ready!         │
-│ iterate on TypeSpec     │◀────────────────────│ Extract API version &   │
-│ (loop until passing)    │                     │ package names           │
-└─────────────────────────┘                     └───────────┬─────────────┘
-                                                            │
-                                                            ▼
-              ┌───────────────────────────────────────────────────┐
-              │  STEP 3: Open API Spec PR                        │
-              └───────────────────────┬───────────────────────────┘
-                                      │
-                                      ▼
-╔═══════════════════════════════════════════════════════════════════╗
-║  STAGE 2: Spec PR Validation (CI)                                ║
-╚═══════════════════════════════════════════════════════════════════╝
-                                    │
-              ┌───────────────────────────────────────────────────┐
-              │  STEP 4: CI Validation Pipeline                  │
-              │  • TypeSpec compilation                          │
-              │  • LintDiff                                      │
-              │  • Breaking change detection                     │
-              │  • APIView token generation                      │
-              │  • SDK generation dry-run                        │
-              │  • Labels applied                                │
-              └───────────────────────┬───────────────────────────┘
-                                      │
-           ┌──────────────────────────┴──────────────────────────┐
-           │ FAIL                                                │ PASS
-           ▼                                                     ▼
-┌─────────────────────────┐                     ┌─────────────────────────┐
-│ Fix issues, push to PR  │                     │ STEP 4b: Reviews       │
-│ (re-triggers pipeline)  │                     │ • ARM review           │
-└─────────────────────────┘                     │ • Namespace approval   │
-                                                └───────────┬─────────────┘
-                                                            │
-                                                            ▼
-              ┌───────────────────────────────────────────────────┐
-              │  PR approved & merged                             │
-              └───────────────────────┬───────────────────────────┘
-                                      │
-                                      ▼
-╔═══════════════════════════════════════════════════════════════════╗
-║  STAGE 3: Automated SDK Generation                               ║
-╚═══════════════════════════════════════════════════════════════════╝
-                                    │
-              ┌───────────────────────────────────────────────────┐
-              │  Pipeline runs automatically:                     │
-              │  1) Create/find release plan                     │
-              │  2) Generate SDK per language                    │
-              │  3) Apply customizations                         │
-              │  4) Create SDK PRs & link to release plan        │
-              └───────────────────────┬───────────────────────────┘
-                                      │
-                                      ▼
-╔═══════════════════════════════════════════════════════════════════╗
-║  STAGE 4: SDK PR Validation & API Review                         ║
-╚═══════════════════════════════════════════════════════════════════╝
-                                    │
-              ┌───────────────────────────────────────────────────┐
-              │  STEP 5: SDK PR CI                               │
-              │  • Build → Test → Lint → Package validation      │
-              │  • SDK breaking change detection                 │
-              │  • API review (APIView / ARH review PR)          │
-              └───────────────────────┬───────────────────────────┘
-                                      │
-           ┌──────────────────────────┴──────────────────────────┐
-           │ FAIL                                                │ PASS
-           ▼                                                     ▼
-┌─────────────────────────┐                     ┌─────────────────────────┐
-│ Custom code drift?      │                     │ STEP 6: API Review     │
-│ YES: auto-repair        │                     │ Architects review      │
-│ NO: troubleshoot agent  │                     │ SDK public API surface │
-└───────────┬─────────────┘                     └───────────┬─────────────┘
-            │                                               │
-            └───────────────────────┬───────────────────────┘
-                                    │
-              ┌───────────────────────────────────────────────────┐
-              │  SDK PR approved & merged                         │
-              └───────────────────────┬───────────────────────────┘
-                                      │
-                                      ▼
-╔═══════════════════════════════════════════════════════════════════╗
-║  STAGE 5: Release Coordination                                   ║
-╚═══════════════════════════════════════════════════════════════════╝
-                                    │
-              ┌───────────────────────────────────────────────────┐
-              │  STEP 7: Release                                 │
-              │  Note: Changelog/metadata done BEFORE merge    │
-              │  7a. Release trigger (becoming automatic)       │
-              │  7b. Release gate (ARH check-gate)              │
-              │  7c. Packages published → KPI updated            │
-              └─────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    %% Stage 1: TypeSpec Authoring
+    entry["ENTRY POINT<br/>User provides initial prompt"]
+    entry --> step1
+
+    subgraph S1["STAGE 1: TypeSpec Authoring (local)"]
+        step1{"Step 1: Author TypeSpec"}
+        step1 --> newProj["Create new TypeSpec project"]
+        step1 --> updateProj["Update existing TypeSpec project"]
+        newProj --> step2
+        updateProj --> step2
+        step2["Step 2: Validate & Compile<br/>• TypeSpec compiler<br/>• Linter checks<br/>• Breaking change detection (Phase A + B)"]
+        step2 -->|FAIL| fixLoop["Report errors → iterate on TypeSpec"]
+        fixLoop --> step2
+        step2 -->|PASS| ready["TypeSpec ready<br/>Extract API version & package names"]
+    end
+
+    ready --> step3["Step 3: Open API Spec PR"]
+    step3 --> S2
+
+    subgraph S2["STAGE 2: Spec PR Validation (CI)"]
+        step4["Step 4: CI Validation Pipeline<br/>• TypeSpec compilation<br/>• LintDiff<br/>• Breaking change detection<br/>• APIView token generation<br/>• SDK generation dry-run<br/>• Labels applied"]
+        step4 -->|FAIL| fixPR["Fix issues → push to PR<br/>(re-triggers pipeline)"]
+        step4 -->|PASS| reviews["Step 4b: Reviews<br/>• ARM review<br/>• Namespace approval"]
+    end
+
+    reviews --> merged["PR approved & merged"]
+    merged --> S3
+
+    subgraph S3["STAGE 3: Automated SDK Generation"]
+        genPipeline["Pipeline runs automatically:<br/>1) Create/find release plan<br/>2) Generate SDK per language<br/>3) Apply customizations<br/>4) Create SDK PRs & link to release plan"]
+    end
+
+    genPipeline --> S4
+
+    subgraph S4["STAGE 4: SDK PR Validation & API Review"]
+        step5["Step 5: SDK PR CI<br/>• Build → Test → Lint → Package validation<br/>• SDK breaking change detection<br/>• API review (APIView / ARH review PR)"]
+        step5 -->|FAIL| repair{"Custom code drift?"}
+        repair -->|YES| autoRepair["auto-sdk-build-fix → Copilot auto-repair"]
+        repair -->|NO| troubleshoot["Pipeline troubleshooting agent"]
+        step5 -->|PASS| step6["Step 6: API Review<br/>Architects review SDK public API surface"]
+        autoRepair --> step5
+        troubleshoot --> step5
+    end
+
+    step6 --> sdkMerged["SDK PR approved & merged"]
+    sdkMerged --> S5
+
+    subgraph S5["STAGE 5: Release Coordination"]
+        step7["Step 7: Release<br/>Changelog/metadata done BEFORE merge"]
+        step7 --> trigger["7a. Release trigger (becoming automatic)"]
+        trigger --> gate["7b. Release gate (ARH check-gate)"]
+        gate --> publish["7c. Packages published → KPI updated"]
+    end
 ```
 
 </details>

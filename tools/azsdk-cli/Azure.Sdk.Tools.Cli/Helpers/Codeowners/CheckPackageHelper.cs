@@ -66,7 +66,7 @@ public class CheckPackageHelper : ICheckPackageHelper
         {
             response.Issues.Add(new CheckPackageIssue
             {
-                Code = "invalid_directory_path",
+                Code = CheckPackageIssue.Codes.InvalidDirectoryPath,
                 Message = $"check-package failed for path '{directoryPath}': Package directory paths must not contain '*'.",
                 NextStep = $"/owners inspect path {FormatPromptValue(directoryPath)}{FormatRepoPhrase(repo)} and rerun the ownership check with a concrete package directory path",
                 CurrentValues = [directoryPath],
@@ -80,7 +80,7 @@ public class CheckPackageHelper : ICheckPackageHelper
         {
             response.Issues.Add(new CheckPackageIssue
             {
-                Code = "no_matching_path",
+                Code = CheckPackageIssue.Codes.NoMatchingPath,
                 Message = $"check-package failed: No CODEOWNERS entry matches path '{directoryPath}'.",
                 NextStep = $"/owners inspect path {FormatPromptValue(directoryPath)}{FormatRepoPhrase(repo)} and add package ownership, PR labels, and service owners so package {FormatPromptValue(packageName)} is covered",
             });
@@ -100,7 +100,7 @@ public class CheckPackageHelper : ICheckPackageHelper
         {
             response.Issues.Add(new CheckPackageIssue
             {
-                Code = "insufficient_owners",
+                Code = CheckPackageIssue.Codes.InsufficientOwners,
                 Message =
                     $"check-package failed for path '{directoryPath}': " +
                     $"{BuildResolvedTargetDescription(resolvedTargetType, resolvedTarget)} has {owners.Count} unique owner(s); " +
@@ -121,7 +121,7 @@ public class CheckPackageHelper : ICheckPackageHelper
         {
             response.Issues.Add(new CheckPackageIssue
             {
-                Code = "missing_pr_label",
+                Code = CheckPackageIssue.Codes.MissingPrLabel,
                 Message =
                     $"check-package failed for path '{directoryPath}': " +
                     $"{BuildResolvedTargetDescription(resolvedTargetType, resolvedTarget)} has no PR label.",
@@ -140,7 +140,7 @@ public class CheckPackageHelper : ICheckPackageHelper
             response.ServiceLabels = [.. serviceOwnerLabels];
             response.Issues.Add(new CheckPackageIssue
             {
-                Code = "insufficient_service_owners",
+                Code = CheckPackageIssue.Codes.InsufficientServiceOwners,
                 Message = BuildServiceOwnerIssueMessage(directoryPath, serviceOwnerLabels, 0, null),
                 NextStep = BuildServiceOwnerNextStep(serviceOwnerLabels, repo),
                 FoundCount = 0,
@@ -158,7 +158,7 @@ public class CheckPackageHelper : ICheckPackageHelper
         {
             response.Issues.Add(new CheckPackageIssue
             {
-                Code = "insufficient_service_owners",
+                Code = CheckPackageIssue.Codes.InsufficientServiceOwners,
                 Message = BuildServiceOwnerIssueMessage(directoryPath, serviceOwnerLabels, serviceOwners.Count, matchingServiceEntry.ServiceOwners),
                 NextStep = BuildServiceOwnerNextStep(serviceOwnerLabels, repo),
                 FoundCount = serviceOwners.Count,

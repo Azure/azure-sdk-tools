@@ -538,7 +538,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                             directoryPath,
                             packageName,
                             resolvedRepo,
-                            "invalid_cache_source",
+                            CheckPackageIssue.Codes.InvalidCacheSource,
                             $"CODEOWNERS cache path must be an existing file or HTTPS URL: {codeownersCachePath}",
                             "Run check-package again with a valid --codeowners-cache path or HTTPS URL, or omit --codeowners-cache to use the repo cache.");
                     }
@@ -556,7 +556,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                             directoryPath,
                             packageName,
                             resolvedRepo,
-                            "invalid_repo",
+                            CheckPackageIssue.Codes.InvalidRepo,
                             $"Invalid repo format '{resolvedRepo}'. Expected '<owner>/<repo>'.",
                             "Run check-package again with a repo of the form 'Azure/<repo>', or omit --repo to let azsdk infer it.");
                     }
@@ -573,7 +573,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     directoryPath,
                     packageName,
                     repo,
-                    "unexpected_error",
+                    CheckPackageIssue.Codes.UnexpectedError,
                     ex.Message,
                     "Retry the command. If the failure persists, use the support channel returned in this response.");
             }

@@ -73,7 +73,7 @@ public class CheckPackageHelperTests
             "Azure/azure-sdk-for-net",
             entries);
 
-        AssertFailure(result, "insufficient_owners", "1 unique owner");
+        AssertFailure(result, CheckPackageIssue.Codes.InsufficientOwners, "1 unique owner");
     }
 
     [Test]
@@ -84,7 +84,7 @@ public class CheckPackageHelperTests
             "Azure/azure-sdk-for-net",
             entries);
 
-        AssertFailure(result, "missing_pr_label", "has no PR label");
+        AssertFailure(result, CheckPackageIssue.Codes.MissingPrLabel, "has no PR label");
     }
 
     [Test]
@@ -95,7 +95,7 @@ public class CheckPackageHelperTests
             "Azure/azure-sdk-for-net",
             entries);
 
-        AssertFailure(result, "insufficient_service_owners", "PR label \"ZeroOwners\" has 0 unique service owner(s)");
+        AssertFailure(result, CheckPackageIssue.Codes.InsufficientServiceOwners, "PR label \"ZeroOwners\" has 0 unique service owner(s)");
     }
 
     [Test]
@@ -106,7 +106,7 @@ public class CheckPackageHelperTests
             "Azure/azure-sdk-for-net",
             entries);
 
-        AssertFailure(result, "insufficient_service_owners", "PR label \"NoMatchingSvcLabel\" has 0 unique service owner(s)");
+        AssertFailure(result, CheckPackageIssue.Codes.InsufficientServiceOwners, "PR label \"NoMatchingSvcLabel\" has 0 unique service owner(s)");
         Assert.That(result.ServiceLabels, Does.Contain("NoMatchingSvcLabel"));
     }
 
@@ -118,7 +118,7 @@ public class CheckPackageHelperTests
             "Azure/azure-sdk-for-net",
             entries);
 
-        AssertFailure(result, "no_matching_path", "No CODEOWNERS entry matches path");
+        AssertFailure(result, CheckPackageIssue.Codes.NoMatchingPath, "No CODEOWNERS entry matches path");
     }
 
     [Test]
@@ -143,8 +143,8 @@ public class CheckPackageHelperTests
         Assert.That(result.Issues, Has.Count.EqualTo(2));
         Assert.That(result.Issues.Select(issue => issue.Code), Is.EquivalentTo(new[]
         {
-            "insufficient_owners",
-            "insufficient_service_owners",
+            CheckPackageIssue.Codes.InsufficientOwners,
+            CheckPackageIssue.Codes.InsufficientServiceOwners,
         }));
     }
 
@@ -162,7 +162,7 @@ public class CheckPackageHelperTests
             "Azure/azure-sdk-for-net",
             customEntries);
 
-        AssertFailure(result, "insufficient_owners", "resolved service-level path entry '/sdk/service'");
+        AssertFailure(result, CheckPackageIssue.Codes.InsufficientOwners, "resolved service-level path entry '/sdk/service'");
         Assert.That(result.ResolvedTargetType, Is.EqualTo("path"));
         Assert.That(result.ResolvedTarget, Is.EqualTo("/sdk/service"));
     }
@@ -184,7 +184,7 @@ public class CheckPackageHelperTests
             "Azure/azure-sdk-for-net",
             customEntries);
 
-        AssertFailure(result, "missing_pr_label", "resolved service-level path entry '/sdk/service' has no PR label");
+        AssertFailure(result, CheckPackageIssue.Codes.MissingPrLabel, "resolved service-level path entry '/sdk/service' has no PR label");
         Assert.That(result.ResolvedTargetType, Is.EqualTo("path"));
     }
 
@@ -196,7 +196,7 @@ public class CheckPackageHelperTests
             "Azure/azure-sdk-for-net",
             entries);
 
-        AssertFailure(result, "insufficient_service_owners", "PR label \"MultiLabel1\" has 0 unique service owner(s)");
+        AssertFailure(result, CheckPackageIssue.Codes.InsufficientServiceOwners, "PR label \"MultiLabel1\" has 0 unique service owner(s)");
     }
 
     [Test]
@@ -289,7 +289,7 @@ public class CheckPackageHelperTests
             "Azure/azure-sdk-for-net",
             customEntries);
 
-        AssertFailure(result, "insufficient_owners", "Azure/unresolved-team");
+        AssertFailure(result, CheckPackageIssue.Codes.InsufficientOwners, "Azure/unresolved-team");
     }
 
     [Test]
@@ -305,7 +305,7 @@ public class CheckPackageHelperTests
             "Azure/azure-sdk-for-net",
             customEntries);
 
-        AssertFailure(result, "insufficient_service_owners", "Azure/unresolved-team");
+        AssertFailure(result, CheckPackageIssue.Codes.InsufficientServiceOwners, "Azure/unresolved-team");
     }
 
     [Test]

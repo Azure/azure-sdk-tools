@@ -4,6 +4,18 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 
 public class CheckPackageIssue
 {
+    public static class Codes
+    {
+        public const string InvalidDirectoryPath = "invalid_directory_path";
+        public const string NoMatchingPath = "no_matching_path";
+        public const string InsufficientOwners = "insufficient_owners";
+        public const string MissingPrLabel = "missing_pr_label";
+        public const string InsufficientServiceOwners = "insufficient_service_owners";
+        public const string InvalidCacheSource = "invalid_cache_source";
+        public const string InvalidRepo = "invalid_repo";
+        public const string UnexpectedError = "unexpected_error";
+    }
+
     [JsonPropertyName("code")]
     public string Code { get; set; } = string.Empty;
 

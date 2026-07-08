@@ -532,18 +532,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 string cacheSource;
                 if (!string.IsNullOrEmpty(codeownersCachePath))
                 {
-                    if (!IsLocalFileOrHttpsUrl(codeownersCachePath))
+                    if (!File.Exists(codeownersCachePath))
                     {
                         return CreateCheckPackageFailureResponse(
                             directoryPath,
                             packageName,
                             resolvedRepo,
                             CheckPackageIssue.Codes.InvalidCacheSource,
-                            $"CODEOWNERS cache path must be an existing file or HTTPS URL: {codeownersCachePath}",
-                            "Run check-package again with a valid --codeowners-cache path or HTTPS URL, or omit --codeowners-cache to use the repo cache.");
+                            $"CODEOWNERS cache path must be an existing file: {codeownersCachePath}",
+                            "Run check-package again with a valid --codeowners-cache file path, or omit --codeowners-cache to use the repo cache.");
                     }
 
-                    cacheSource = NormalizeCodeownersCacheSource(codeownersCachePath);
+                    cacheSource = codeownersCachePath;
                 }
                 else
                 {
@@ -840,40 +840,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             });
 
             return response;
-        }
-
-        private static bool IsLocalFileOrHttpsUrl(string pathOrUrl)
-        {
-            if (File.Exists(pathOrUrl))
-            {
-                return true;
-            }
-
-            if (Uri.TryCreate(pathOrUrl, UriKind.Absolute, out Uri? uri))
-            {
-                return uri.Scheme == Uri.UriSchemeHttps;
-            }
-
-            return false;
-        }
-
-        private static string NormalizeCodeownersCacheSource(string cacheSource)
-        {
-            if (!Uri.TryCreate(cacheSource, UriKind.Absolute, out Uri? uri) ||
-                uri.Scheme != Uri.UriSchemeHttps ||
-                !uri.Host.Equals("github.com", StringComparison.OrdinalIgnoreCase) ||
-                !uri.AbsolutePath.Contains("/blob/", StringComparison.Ordinal))
-            {
-                return cacheSource;
-            }
-
-            if (uri.Query.Contains("raw=1", StringComparison.OrdinalIgnoreCase))
-            {
-                return cacheSource;
-            }
-
-            var separator = string.IsNullOrEmpty(uri.Query) ? "?" : "&";
-            return cacheSource + $"{separator}raw=1";
         }
 
         private async Task<OwnerWorkItem[]> GetOwnerWorkItems(string[] ownerAliases, CancellationToken ct)

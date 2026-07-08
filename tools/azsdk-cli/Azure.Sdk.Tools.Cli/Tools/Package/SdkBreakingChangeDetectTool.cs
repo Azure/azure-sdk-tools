@@ -225,7 +225,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                             };
                         }
                     }
-                } else
+                }
+                else
                 {
                     logger.LogInformation("Detecting SDK breaking changes for {language} is not implemented.", languageService.Language.ToString());
                 }

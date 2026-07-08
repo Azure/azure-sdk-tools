@@ -15,7 +15,6 @@ ordering semantics and a comparable size.
 from __future__ import annotations
 
 import logging
-import math
 import re
 from typing import Any
 
@@ -42,25 +41,18 @@ def extract_references_from_context(
     *,
     top_k: int = 8,
     community_top_n: int = 2,
-    query: "str | None" = None,
-    embedder: Any = None,
 ) -> list[Reference]:
     """Resolve a graph context payload into ranked source + synthesis references.
 
     Two kinds of reference are returned:
 
     * **Source text-unit references** — one :class:`Reference` per unique cited
-      document, **ranked and capped at ``top_k``**. GraphRAG orders the cited
-      text units by *entity-graph connectivity* (most-connected first), which is
-      not the same as query relevance — so the passage that actually answers the
-      question often sits past ``top_k`` and is dropped. When ``query`` and
-      ``embedder`` are supplied we therefore **semantically rerank the full
-      candidate set by query-embedding cosine similarity before capping**
-      (see :func:`_semantic_rerank`), so the most query-relevant passage rises
-      into the small top-K instead of being buried by connectivity order. This
-      makes the graph side truly symmetric with the KB tool's semantic reranker.
-      Without ``query``/``embedder`` we fall back to the connectivity order. Each
-      reference carries a normalised ``score`` (1.0 = most relevant, descending).
+      document, **ranked by graph relevance and capped at ``top_k``**. GraphRAG
+      orders the cited text units by relevance (most-connected first); we
+      preserve that order, keep the highest-ranked text unit as each document's
+      representative excerpt, stamp a normalised ``score`` (1.0 = most relevant)
+      on every reference, sort by that score, and return only the top ``top_k``.
+      This mirrors the KB tool's rerank-and-cap contract.
     * **Community-report references** (step 1.A) — up to ``community_top_n``
       GraphRAG *community reports*: cross-document syntheses that summarise how
       an entity cluster relates. These are the graph's differentiator — content
@@ -191,16 +183,6 @@ def extract_references_from_context(
             unattributed,
         )
 
-    # Semantically rerank the full candidate set by query relevance BEFORE the
-    # top_k cap. GraphRAG hands us the passages in entity-connectivity order,
-    # which routinely buries the query-answering passage past the cap; a
-    # cosine rerank against the query embedding lifts it into the small top-K
-    # (recall) without widening the returned set (precision — no agent-diluting
-    # flood). Falls back to connectivity order if query/embedder are absent or
-    # embedding fails.
-    if query and embedder is not None and len(references) > 1:
-        references = _semantic_rerank(references, query, embedder)
-
     # Cap at ``top_k`` so the graph contributes a focused, relevance-ranked
     # set comparable to the KB tool — not a ~20-ref flood that dilutes the
     # answer. References are already ordered best-first.
@@ -214,82 +196,6 @@ def extract_references_from_context(
     # text-unit references, so specific source excerpts lead and the
     # cross-document synthesis supplements.
     return references + community_refs
-
-
-# Cap on how much of each passage is embedded for reranking. The answering
-# sentence is almost always near the top of a chunk, and embedding models
-# truncate long inputs anyway, so this bounds latency/cost without hurting the
-# similarity signal.
-_RERANK_CHARS = 3000
-
-
-def _semantic_rerank(
-    references: list[Reference], query: str, embedder: Any
-) -> list[Reference]:
-    """Reorder candidate references by cosine similarity to the query.
-
-    GraphRAG orders passages by entity-graph connectivity, not query relevance,
-    so the passage that actually answers the question is frequently buried past
-    the ``top_k`` cap. We embed the query and every candidate passage in a
-    **single** batched call (``embedding(input=[query, *passages])``), rank the
-    passages by cosine similarity to the query, and re-stamp a normalised
-    descending ``score`` so the downstream contract (1.0 = most relevant) is
-    preserved. On any failure the original connectivity order is returned
-    unchanged — reranking is a best-effort refinement, never a hard dependency.
-    """
-    if len(references) <= 1:
-        return references
-    texts = [query] + [
-        (ref.content or ref.title or "")[:_RERANK_CHARS] for ref in references
-    ]
-    try:
-        vectors = embedder.embedding(input=texts).embeddings
-    except Exception:
-        logger.warning(
-            "GraphRAG semantic rerank failed to embed; keeping connectivity order",
-            exc_info=True,
-        )
-        return references
-    if not vectors or len(vectors) != len(texts):
-        logger.warning(
-            "GraphRAG semantic rerank got %d embeddings for %d inputs; "
-            "keeping connectivity order",
-            len(vectors) if vectors else 0,
-            len(texts),
-        )
-        return references
-
-    query_vec = vectors[0]
-    scored = [
-        (_cosine_similarity(query_vec, vec), ref)
-        for ref, vec in zip(references, vectors[1:])
-    ]
-    scored.sort(key=lambda pair: pair[0], reverse=True)
-
-    denom = float(len(scored))
-    reranked: list[Reference] = []
-    for rank, (_, ref) in enumerate(scored):
-        ref.score = max(0.0, (denom - rank) / denom)
-        reranked.append(ref)
-    logger.info(
-        "GraphRAG semantically reranked %d references by query relevance",
-        len(reranked),
-    )
-    return reranked
-
-
-def _cosine_similarity(a: "list[float]", b: "list[float]") -> float:
-    """Cosine similarity between two equal-length embedding vectors."""
-    dot = 0.0
-    norm_a = 0.0
-    norm_b = 0.0
-    for x, y in zip(a, b):
-        dot += x * y
-        norm_a += x * x
-        norm_b += y * y
-    if norm_a <= 0.0 or norm_b <= 0.0:
-        return 0.0
-    return dot / math.sqrt(norm_a * norm_b)
 
 
 def _extract_community_reports(

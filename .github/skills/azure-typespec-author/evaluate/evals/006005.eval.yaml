@@ -50,6 +50,10 @@ stimuli:
   environment: *id001
   graders:
   - *id002
+  - type: run-command
+    config:
+      command: tsp compile .
+      expected_exit_code: 0
   - &id003
     type: file-matches
     config:
@@ -82,5 +86,7 @@ stimuli:
 scoring:
   weights:
     tool-calls: 1
+    skill-invocation: 1
+    run-command: 1
     file-matches: 3
-  threshold: 1
+  threshold: 0.95

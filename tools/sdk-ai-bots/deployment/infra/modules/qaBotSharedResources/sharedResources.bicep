@@ -30,11 +30,23 @@ param storageAccountName string = 'qabotstorage${substring(uniqueString(resource
 @description('Name of the shared Cosmos DB account.')
 param cosmosDbAccountName string = 'qabot-db-${substring(uniqueString(resourceGroup().id), 0, 6)}'
 
+@description('Azure region for all resources in this module.')
+param location string = 'westus2'
+
+@description('Azure region for the Cosmos DB account. Defaults to `location`; override when the primary region has AZ capacity constraints.')
+param cosmosDbLocation string = location
+
+@description('Object ID of the AzureSDKChatBot_Developer Entra group. Leave empty to skip developer group role assignments (required when deploying to a tenant where the group does not exist, e.g. non-Microsoft tenants).')
+param developerGroupObjectId string = ''
+
+@description('Principal type for the developer role assignments: User, Group, or ServicePrincipal.')
+param developerPrincipalType string = 'User'
+
 // User-assigned managed identity for the QA bot app. Its principalId (Entra object ID)
 // is referenced below to grant the app data-plane access to Cosmos DB.
 resource userAssignedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2025-05-31-preview' = {
   name: managedIdentityName
-  location: 'westus2'
+  location: location
 }
 
 resource actionGroup 'Microsoft.Insights/actionGroups@2024-10-01-preview' = {
@@ -67,12 +79,12 @@ resource vault 'Microsoft.KeyVault/vaults@2026-03-01-preview' = {
     }
     accessPolicies: []
   }
-  location: 'westus2'
+  location: location
 }
 
 resource configurationStore 'Microsoft.AppConfiguration/configurationStores@2025-08-01-preview' = {
   name: appConfigName
-  location: 'westus2'
+  location: location
   properties: {
     encryption: {}
     disableLocalAuth: true
@@ -91,7 +103,7 @@ resource configurationStore 'Microsoft.AppConfiguration/configurationStores@2025
 
 resource searchService 'Microsoft.Search/searchServices@2026-03-01-preview' = {
   name: searchServiceName
-  location: 'West US 2'
+  location: location
   properties: {
     computeType: 'Default'
     networkRuleSet: {
@@ -120,7 +132,7 @@ resource searchService 'Microsoft.Search/searchServices@2026-03-01-preview' = {
 
 resource registry 'Microsoft.ContainerRegistry/registries@2026-01-01-preview' = {
   name: containerRegistryName
-  location: 'westus2'
+  location: location
   sku: {
     name: 'Standard'
   }
@@ -128,7 +140,7 @@ resource registry 'Microsoft.ContainerRegistry/registries@2026-01-01-preview' = 
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2026-04-01' = {
   name: storageAccountName
-  location: 'westus2'
+  location: location
   properties: {
     dualStackEndpointPreference: {
       publishIpv6Endpoint: false
@@ -276,7 +288,7 @@ resource databaseAccount 'Microsoft.DocumentDB/databaseAccounts@2026-03-15' = {
     }
     locations: [
       {
-        locationName: 'West US 2'
+        locationName: cosmosDbLocation
         failoverPriority: 0
         isZoneRedundant: false
       }
@@ -292,7 +304,7 @@ resource databaseAccount 'Microsoft.DocumentDB/databaseAccounts@2026-03-15' = {
     }
     networkAclBypassResourceIds: []
   }
-  location: 'West US 2'
+  location: cosmosDbLocation
   tags: {
     defaultExperience: 'Core (SQL)'
     'hidden-workload-type': 'Development/Testing'
@@ -448,7 +460,8 @@ resource container9 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containe
 // ============================================================================
 
 // AzureSDKChatBot_Developer Entra group object ID.
-var developerGroupObjectId = '2efb50ed-0ca9-4cf1-b43b-9b31a87e08f5'
+// Passed as a parameter; empty means no developer group role assignments (e.g. non-Microsoft tenants).
+// var developerGroupObjectId = '2efb50ed-0ca9-4cf1-b43b-9b31a87e08f5'  ← moved to param above
 
 // Built-in role definition IDs.
 // Azure RBAC roles are referenced via subscriptionResourceId(...).
@@ -560,51 +573,51 @@ resource sqlRoleAssignment2 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssign
 // --- AzureSDKChatBot_Developer group ----------------------------------------
 
 // Blob read/write for developers.
-resource developerStorageBlobContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource developerStorageBlobContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(developerGroupObjectId)) {
   name: guid(storageAccount.id, developerGroupObjectId, roleIds.storageBlobDataContributor)
   scope: storageAccount
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleIds.storageBlobDataContributor)
     principalId: developerGroupObjectId
-    principalType: 'Group'
+    principalType: developerPrincipalType
   }
 }
 
 // Read configuration values from App Configuration.
-resource developerAppConfigDataReader 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource developerAppConfigDataReader 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(developerGroupObjectId)) {
   name: guid(configurationStore.id, developerGroupObjectId, roleIds.appConfigurationDataReader)
   scope: configurationStore
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleIds.appConfigurationDataReader)
     principalId: developerGroupObjectId
-    principalType: 'Group'
+    principalType: developerPrincipalType
   }
 }
 
 // Manage Key Vault secrets for developers.
-resource developerKeyVaultSecretsOfficer 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource developerKeyVaultSecretsOfficer 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(developerGroupObjectId)) {
   name: guid(vault.id, developerGroupObjectId, roleIds.keyVaultSecretsOfficer)
   scope: vault
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleIds.keyVaultSecretsOfficer)
     principalId: developerGroupObjectId
-    principalType: 'Group'
+    principalType: developerPrincipalType
   }
 }
 
 // Manage the container registry for developers.
-resource developerAcrContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource developerAcrContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(developerGroupObjectId)) {
   name: guid(registry.id, developerGroupObjectId, roleIds.contributor)
   scope: registry
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleIds.contributor)
     principalId: developerGroupObjectId
-    principalType: 'Group'
+    principalType: developerPrincipalType
   }
 }
 
 // Read/write Cosmos DB data for developers (Cosmos data-plane role).
-resource sqlRoleAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2026-03-15' = {
+resource sqlRoleAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2026-03-15' = if (!empty(developerGroupObjectId)) {
   name: guid(databaseAccount.id, developerGroupObjectId, roleIds.cosmosDbDataContributor)
   parent: databaseAccount
   properties: {

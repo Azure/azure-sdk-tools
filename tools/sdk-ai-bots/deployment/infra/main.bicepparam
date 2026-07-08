@@ -12,7 +12,10 @@
 using './main.bicep'
 
 // ── azd-managed values (set automatically when an env is selected) ───────────
-param location = readEnvironmentVariable('AZURE_LOCATION', 'westus2')
+param location   = readEnvironmentVariable('AZURE_LOCATION', 'westus2')
+// AZURE_AI_DEPLOYMENTS_LOCATION is the var read by the azure.ai.agents extension
+// for its model-catalog pre-check; AZURE_AI_LOCATION is the fallback.
+param aiLocation = readEnvironmentVariable('AZURE_AI_DEPLOYMENTS_LOCATION', readEnvironmentVariable('AZURE_AI_LOCATION', readEnvironmentVariable('AZURE_LOCATION', 'westus2')))
 
 var env = readEnvironmentVariable('AZURE_ENV_NAME', 'dev')
 
@@ -43,5 +46,13 @@ param functionAppName                = readEnvironmentVariable('FUNCTION_APP_NAM
 //   azd env set TEAMS_GROUP_ID <guid>
 //   azd env set TEAMS_CHANNEL_IDS '19:foo@thread.skype,19:bar@thread.skype'
 param serverAudience  = readEnvironmentVariable('SERVER_AUDIENCE', '')
+
+// ── Developer access (auto-detected by preprovision hook) ─────────────────
+// The preprovision hook detects the deployer's object ID and type and persists
+// them. Override by setting DEVELOPER_PRINCIPAL_ID / DEVELOPER_PRINCIPAL_TYPE
+// in the azd env (or via environments/<env>.parameters.json for prod groups).
+param developerGroupObjectId  = readEnvironmentVariable('DEVELOPER_PRINCIPAL_ID', '')
+param developerPrincipalType  = readEnvironmentVariable('DEVELOPER_PRINCIPAL_TYPE', 'User')
+param cosmosDbLocation        = readEnvironmentVariable('COSMOS_DB_LOCATION', readEnvironmentVariable('AZURE_LOCATION', 'westus2'))
 param teamsGroupId    = readEnvironmentVariable('TEAMS_GROUP_ID', '3e17dcb0-4257-4a30-b843-77f47f1d4121')
 param teamsChannelIds = split(readEnvironmentVariable('TEAMS_CHANNEL_IDS', '19:de3fce22c2994be18cac50502c55f717@thread.skype'), ',')

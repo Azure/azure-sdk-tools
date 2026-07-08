@@ -3,7 +3,10 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "location": {
-      "value": "westus2"
+      "value": "centralus"
+    },
+    "cosmosDbLocation": {
+      "value": "eastus"
     },
     "resourceGroupName": {
       "value": "azure-sdk-qa-bot-dev"

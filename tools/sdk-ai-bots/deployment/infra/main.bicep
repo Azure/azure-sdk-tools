@@ -16,6 +16,15 @@ targetScope = 'subscription'
 @description('Azure region for all resources.')
 param location string = 'westus2'
 
+@description('Object ID of the AzureSDKChatBot_Developer Entra group. Leave empty when deploying to a tenant where the group does not exist (e.g. dev in non-Microsoft tenants).')
+param developerGroupObjectId string = ''
+
+@description('Principal type for developer role assignments: User, Group, or ServicePrincipal.')
+param developerPrincipalType string = 'User'
+
+@description('Azure region for the Cosmos DB account. Defaults to `location`; set to a different region when the primary region has AZ capacity constraints.')
+param cosmosDbLocation string = location
+
 @description('Name of the resource group to deploy into.')
 param resourceGroupName string
 
@@ -112,6 +121,10 @@ module sharedResources './modules/qaBotSharedResources/sharedResources.bicep' = 
   name: 'shared-resources'
   scope: rg
   params: {
+    location:              location
+    developerGroupObjectId: developerGroupObjectId
+    developerPrincipalType: developerPrincipalType
+    cosmosDbLocation:      cosmosDbLocation
     managedIdentityName:   !empty(managedIdentityName)   ? managedIdentityName   : 'qabot-identity-${_suffix}'
     actionGroupName:       !empty(actionGroupName)       ? actionGroupName       : 'qabot-alert-${_suffix}'
     keyVaultName:          !empty(keyVaultName)          ? keyVaultName          : 'qabot-keyvault-${_suffix}'
@@ -132,6 +145,8 @@ module agent './modules/qaBotAgent/component.bicep' = {
     managedIdentityPrincipalId: sharedResources.outputs.managedIdentityPrincipalId
     storageAccountName: sharedResources.outputs.storageAccountName
     storageBlobEndpoint: sharedResources.outputs.storageBlobEndpoint
+    developerGroupObjectId: developerGroupObjectId
+    developerPrincipalType:  developerPrincipalType
     aiResourceName:         !empty(aiResourceName)         ? aiResourceName         : 'qabot-ai-resource-${_suffix}'
     aiProjectName:          !empty(aiProjectName)          ? aiProjectName          : 'qabot-ai'
     agentLogWorkspaceName:  !empty(agentLogWorkspaceName)  ? agentLogWorkspaceName  : 'qabot-agent-log-${_suffix}'

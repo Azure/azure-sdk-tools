@@ -5,6 +5,12 @@
     "location": {
       "value": "westus2"
     },
+    "developerGroupObjectId": {
+      "value": "2efb50ed-0ca9-4cf1-b43b-9b31a87e08f5"
+    },
+    "developerPrincipalType": {
+      "value": "Group"
+    },
     "aiLocation": {
       "value": "swedencentral"
     },

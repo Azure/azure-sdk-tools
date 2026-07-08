@@ -24,6 +24,12 @@ param aiResourceName string = 'qabot-ai-resource-${substring(uniqueString(resour
 @description('Name of the Foundry project inside the AIServices account.')
 param aiProjectName string = 'qabot-ai'
 
+@description('Object ID of the developer principal (user, group, or SP) to grant OpenAI access. Empty = skip.')
+param developerGroupObjectId string = ''
+
+@description('Principal type for the developer role assignment: User, Group, or ServicePrincipal.')
+param developerPrincipalType string = 'User'
+
 // Log Analytics workspace backing the agent Application Insights. Created here so
 // the agent layer is self-contained and does not depend on the (now removed)
 // shared qabot-log workspace.
@@ -261,17 +267,17 @@ resource openAiUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-
 }
 
 // AzureSDKChatBot_Developer Entra group object ID.
-var developerGroupObjectId = '2efb50ed-0ca9-4cf1-b43b-9b31a87e08f5'
+// Passed as a parameter; empty means no developer role assignment.
+// var developerGroupObjectId = '2efb50ed-0ca9-4cf1-b43b-9b31a87e08f5'  ← moved to param above
 
-// Cognitive Services OpenAI User grant for the developer group so devs can call
-// the model deployments interactively.
-resource developerOpenAiUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+// Cognitive Services OpenAI User grant for the developer principal.
+resource developerOpenAiUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(developerGroupObjectId)) {
   scope: account
   name: guid(account.id, developerGroupObjectId, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'))
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd')
     principalId: developerGroupObjectId
-    principalType: 'Group'
+    principalType: developerPrincipalType
   }
 }
 

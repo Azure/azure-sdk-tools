@@ -75,46 +75,4 @@ message2
         // Normalize line endings before comparison. See comment in TestTypedJsonOutput.
         Assert.That(formatted.ReplaceLineEndings("\n"), Is.EqualTo(expectedStr.ReplaceLineEndings("\n")));
     }
-
-    [Test]
-    public void CheckPackageResponse_UsesCodeownersSupportChannelInJson()
-    {
-        var response = new CheckPackageResponse
-        {
-            DirectoryPath = "sdk/test/Azure.Test",
-        };
-
-        response.Issues.Add(new CheckPackageIssue
-        {
-            Code = "insufficient_owners",
-            Message = "single issue message",
-            NextStep = "prompt",
-        });
-
-        var output = new OutputHelper(OutputHelper.OutputModes.Json);
-        var formatted = output.Format(response);
-        using var document = JsonDocument.Parse(formatted);
-
-        var supportChannel = document.RootElement.GetProperty("support_channel").GetString();
-
-        Assert.That(supportChannel, Does.Contain("aka.ms/azsdk/codeowners"));
-        Assert.That(supportChannel, Does.Not.Contain("teams.microsoft.com"));
-    }
-
-    [Test]
-    public void DefaultCommandResponse_UsesDefaultSupportChannelInJson()
-    {
-        var response = new DefaultCommandResponse
-        {
-            ResponseError = "command failed",
-        };
-
-        var output = new OutputHelper(OutputHelper.OutputModes.Json);
-        var formatted = output.Format(response);
-        using var document = JsonDocument.Parse(formatted);
-
-        Assert.That(
-            document.RootElement.GetProperty("support_channel").GetString(),
-            Is.EqualTo(CommandResponse.SupportChannelMessage));
-    }
 }

@@ -546,9 +546,15 @@ function initRun(task, simple) {
     const state = readState(activeRunDir) || {};
     state.task = task;
     state.simple = simple;
+    // Restore the toggles from a run that already persisted them; otherwise honor whatever was set
+    // in memory (e.g. a `/rpi-autojudge on` issued before this run existed) and persist it. Without
+    // this, a fresh `/rpi-auto <task>` would read the new run's empty state and silently reset the
+    // toggle to OFF, so auto-judge never fired on a brand-new auto-run.
+    if (typeof state.autoJudge === "boolean") autoJudge = state.autoJudge;
+    else state.autoJudge = autoJudge;
+    if (typeof state.subagents === "boolean") useSubagents = state.subagents;
+    else state.subagents = useSubagents;
     writeState(activeRunDir, state);
-    autoJudge = !!state.autoJudge;
-    useSubagents = !!state.subagents;
 }
 export { initRun };
 

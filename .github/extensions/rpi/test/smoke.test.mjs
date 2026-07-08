@@ -225,6 +225,43 @@ test("initRun creates the run dir and state.json", () => {
     }
 });
 
+test("initRun preserves an already-persisted autoJudge/subagents toggle for the same run", () => {
+    const cwd0 = process.cwd();
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "aw-init-toggle-"));
+    try {
+        process.chdir(tmp);
+        const runDir = path.join(tmp, ".rpi", runId("Toggle task"));
+        // Simulate a run that previously had auto-judge turned on and was persisted to disk.
+        fs.mkdirSync(runDir, { recursive: true });
+        writeState(runDir, { task: "Toggle task", simple: false, autoJudge: true, subagents: true });
+        // Re-initializing the same run (e.g. /rpi-auto <same task>) must NOT reset the toggles.
+        initRun("Toggle task", false);
+        const state = JSON.parse(fs.readFileSync(path.join(runDir, "state.json"), "utf8"));
+        assert.equal(state.autoJudge, true, "autoJudge must survive re-init");
+        assert.equal(state.subagents, true, "subagents must survive re-init");
+    } finally {
+        process.chdir(cwd0);
+        fs.rmSync(tmp, { recursive: true, force: true });
+    }
+});
+
+test("initRun persists a default autoJudge/subagents value for a brand-new run", () => {
+    const cwd0 = process.cwd();
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "aw-init-default-"));
+    try {
+        process.chdir(tmp);
+        initRun("Fresh task", false);
+        const runDir = path.join(tmp, ".rpi", runId("Fresh task"));
+        const state = JSON.parse(fs.readFileSync(path.join(runDir, "state.json"), "utf8"));
+        // A brand-new run records the toggles explicitly so later reads are stable booleans.
+        assert.equal(typeof state.autoJudge, "boolean", "autoJudge persisted as a boolean");
+        assert.equal(typeof state.subagents, "boolean", "subagents persisted as a boolean");
+    } finally {
+        process.chdir(cwd0);
+        fs.rmSync(tmp, { recursive: true, force: true });
+    }
+});
+
 test("joinConfig registers the six phase agents", () => {
     const names = joinConfig.customAgents.map((a) => a.name).sort();
     assert.deepEqual(names, [

@@ -386,6 +386,33 @@ stimuli:
             - azsdk_package_generate_code
             - azsdk_verify_setup
 
+  # --- Scenario 11: PRIVATE PREVIEW release plans cannot generate via pipeline (#16226)
+  # The azsdk-common-generate-sdk-pipeline skill documents that private preview release
+  # plans cannot generate SDKs through the pipeline — only the API spec PR needs to merge
+  # (validation, if needed, is done via local generation). So an "all languages for my
+  # private preview release plan" request must route to the pipeline skill (where the rule
+  # lives) but must NOT actually invoke the pipeline generation tool azsdk_run_generate_sdk.
+  # Both generate skills are loaded so the routing choice is real.
+  - name: private-preview-release-plan-no-pipeline-generation
+    environment: *bothGenerateSkills
+    prompt: |
+      Generate the SDK for all languages for my private preview release plan
+      (work item 29262) for the Contoso Widget Manager.
+    constraints:
+      max_turns: 8
+      max_tokens: 12000
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-generate-sdk-pipeline
+      - type: tool-calls
+        config:
+          disallowed:
+            - azsdk_run_generate_sdk
+            - azsdk_release_sdk
+            - azsdk_verify_setup
+
 scoring:
   weights:
     skill-invocation: 0.5

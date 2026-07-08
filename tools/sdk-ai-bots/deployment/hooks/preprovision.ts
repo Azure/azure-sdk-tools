@@ -14,7 +14,7 @@
  *     it up on the same provision run.
  */
 
-import { execSync } from "child_process";
+import { execFileSync, execSync } from "child_process";
 import { readFileSync, existsSync } from "fs";
 import { resolve } from "path";
 
@@ -35,9 +35,10 @@ function log(msg: string): void {
 
 function checkPrerequisites(): void {
   log("Checking prerequisites...");
+  const lookup = process.platform === "win32" ? "where" : "command -v";
   for (const tool of ["az", "azd"]) {
     try {
-      execSync(`command -v ${tool}`, { stdio: "ignore" });
+      execSync(`${lookup} ${tool}`, { stdio: "ignore" });
       log(`  ✓ ${tool} found`);
     } catch {
       throw new Error(`Required tool '${tool}' is not installed or not on PATH.`);
@@ -80,8 +81,9 @@ function detectLocalDrift(): void {
   if (RUNNING_IN_PIPELINE || !ENV_NAME) return;
 
   let yqAvailable = false;
+  const lookup = process.platform === "win32" ? "where" : "command -v";
   try {
-    execSync("command -v yq", { stdio: "ignore" });
+    execSync(`${lookup} yq`, { stdio: "ignore" });
     yqAvailable = true;
   } catch {
     log("  yq not on PATH — skipping env-suite drift check.");
@@ -90,7 +92,7 @@ function detectLocalDrift(): void {
   if (!yqAvailable) return;
 
   const read = (path: string): string =>
-    execSync(`yq -r '${path}' "${SUITE_PATH}"`, { encoding: "utf8" }).trim();
+    execFileSync("yq", ["-r", path, SUITE_PATH], { encoding: "utf8" }).trim();
 
   const expected: Record<string, string> = {
     AZURE_SUBSCRIPTION_ID: read(`.environments.${ENV_NAME}.subscriptionId`),
@@ -188,6 +190,7 @@ function ensureServerAudience(): void {
   log(`SERVER_AUDIENCE not set — ensuring Entra app registration '${displayName}'`);
   const appId = ensureEntraApp({
     displayName,
+    ownedDisplayNameContains: "qabot",
     serviceManagementReference: process.env.SERVICE_MANAGEMENT_REFERENCE?.trim() || undefined,
   });
 

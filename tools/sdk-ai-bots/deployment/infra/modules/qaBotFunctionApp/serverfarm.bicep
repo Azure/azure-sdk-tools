@@ -69,6 +69,7 @@ resource site 'Microsoft.Web/sites@2025-05-01' = {
   name: functionAppName
   tags: {
     'hidden-link: /app-insights-resource-id': component.id
+    'azd-service-name': 'function-app'
   }
   location: location
   properties: {

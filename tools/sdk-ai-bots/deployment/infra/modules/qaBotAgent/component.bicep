@@ -107,6 +107,7 @@ resource gpt41Deployment 'Microsoft.CognitiveServices/accounts/deployments@2026-
 resource gpt54Deployment 'Microsoft.CognitiveServices/accounts/deployments@2026-05-01' = {
   name: 'gpt-5.4'
   parent: account
+  dependsOn: [gpt41Deployment]
   properties: {
     model: {
       format: 'OpenAI'
@@ -127,6 +128,7 @@ resource gpt54Deployment 'Microsoft.CognitiveServices/accounts/deployments@2026-
 resource gpt51Deployment 'Microsoft.CognitiveServices/accounts/deployments@2026-05-01' = {
   name: 'gpt-5.1'
   parent: account
+  dependsOn: [gpt54Deployment]
   properties: {
     model: {
       format: 'OpenAI'
@@ -147,6 +149,7 @@ resource gpt51Deployment 'Microsoft.CognitiveServices/accounts/deployments@2026-
 resource gpt5MiniDeployment 'Microsoft.CognitiveServices/accounts/deployments@2026-05-01' = {
   name: 'gpt-5-mini'
   parent: account
+  dependsOn: [gpt51Deployment]
   properties: {
     model: {
       format: 'OpenAI'
@@ -166,6 +169,7 @@ resource gpt5MiniDeployment 'Microsoft.CognitiveServices/accounts/deployments@20
 resource adaEmbeddingDeployment 'Microsoft.CognitiveServices/accounts/deployments@2026-05-01' = {
   name: 'text-embedding-ada-002'
   parent: account
+  dependsOn: [gpt5MiniDeployment]
   properties: {
     model: {
       format: 'OpenAI'
@@ -185,6 +189,7 @@ resource adaEmbeddingDeployment 'Microsoft.CognitiveServices/accounts/deployment
 resource accountStorageConnection 'Microsoft.CognitiveServices/accounts/connections@2026-05-01' = {
   name: storageAccountName
   parent: account
+  dependsOn: [adaEmbeddingDeployment]
   properties: {
     authType: 'AAD'
     category: 'AzureStorageAccount'
@@ -216,7 +221,7 @@ resource project 'Microsoft.CognitiveServices/accounts/projects@2026-05-01' = {
 }
 
 resource projectStorageConnection 'Microsoft.CognitiveServices/accounts/projects/connections@2026-05-01' = {
-  name: storageAccountName
+  name: '${storageAccountName}-project'
   parent: project
   properties: {
     authType: 'AAD'

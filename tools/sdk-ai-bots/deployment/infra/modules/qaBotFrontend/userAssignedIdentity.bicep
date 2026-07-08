@@ -145,6 +145,9 @@ resource serverfarm 'Microsoft.Web/serverfarms@2025-05-01' = {
 resource site 'Microsoft.Web/sites@2025-05-01' = {
   name: frontendBaseName
   location: 'westus2'
+  tags: {
+    'azd-service-name': 'frontend'
+  }
   properties: {
     httpsOnly: true
     publicNetworkAccess: 'Enabled'

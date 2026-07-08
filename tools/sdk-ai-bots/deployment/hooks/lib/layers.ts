@@ -34,7 +34,7 @@ export interface Layer {
   post?: (ctx: LayerContext) => Promise<void>;
 }
 
-const BICEP_BASE = "infra/modules";
+const BICEP_BASE = "deployment/infra/modules";
 
 /** Reads a required env var; throws with the layer name if missing. */
 function req(layer: string, name: string): string {
@@ -108,37 +108,13 @@ export const INFRA_LAYERS: Layer[] = [
     },
   },
 
-  // ── Layer 4: Logic App ────────────────────────────────────────────────────
-  // frontend (Layer 3) and function-app (Layer 5) are also declared here so the
-  // component-pipelines can scope `azd provision` to a single layer via
-  // DEPLOY_LAYER. Application code for those services is still deployed via
-  // `azd deploy`; only the module Bicep is (re-)applied here.
-  {
-    name: "logic-app",
-    bicepFile: `${BICEP_BASE}/qaBotLogicApp/logicAppResources.bicep`,
-    params: () => ({
-      location:               req("logic-app", "AZURE_LOCATION"),
-      teamsGroupId:           req("logic-app", "TEAMS_GROUP_ID"),
-      teamsChannelIds:        JSON.stringify(req("logic-app", "TEAMS_CHANNEL_IDS").split(",")),
-      serverBaseUrl:          req("logic-app", "SERVER_BASE_URL"),
-      serverAudience:         req("logic-app", "SERVER_AUDIENCE"),
-      botBaseUrl:             req("logic-app", "BOT_BASE_URL"),
-      botAudience:            req("logic-app", "BOT_AUDIENCE"),
-      blobStorageAccountName: req("logic-app", "STORAGE_ACCOUNT_NAME"),
-      managedIdentityName:    req("logic-app", "MANAGED_IDENTITY_NAME"),
-      botIdentityName:        req("logic-app", "BOT_IDENTITY_NAME"),
-      functionAppName:        req("logic-app", "FUNCTION_APP_NAME"),
-    }),
-    pre: async (_ctx) => {
-      // TODO: Verify the storage account connection string is available
-      // for the 'azureblob' managed API connection.
-    },
-    post: async (_ctx) => {
-      // TODO: Authorise the Teams and Azure Blob managed API connections.
-      // These require an OAuth consent flow that cannot be automated in Bicep.
-      // Print the consent URLs so an operator can complete them once.
-    },
-  },
+  // ── Layer 4: (Logic App removed) ──────────────────────────────────────────
+  // The Logic App workflow references a function inside the Function App
+  // container and ARM validates that at deploy time. On the first provision
+  // the container isn't pushed yet, so the workflow create fails with
+  // "ServiceUnavailable from host runtime". main.bicep creates the workflow
+  // shell with an empty definition; hooks/function-postdeploy.ts PATCHes the
+  // real definition after the container image is live.
 
   // ── Frontend (azd service — infra module deployed standalone here) ─────────
   {

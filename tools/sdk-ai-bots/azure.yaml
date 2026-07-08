@@ -11,18 +11,18 @@ services:
         config:
             container:
                 resources:
-                    cpu: "1"
-                    memory: 2Gi
-            startupCommand: python init.py
+                    cpu: "0.5"
+                    memory: 1Gi
         container:
             resources:
-                cpu: "0.5"
-                memory: 1Gi
+                cpu: "1"
+                memory: 2Gi
         kind: hosted
         name: azure-sdk-chat-agent
         protocols:
             - protocol: responses
               version: 2.0.0
+        startupCommand: python init.py
     frontend:
         project: azure-sdk-qa-bot
         host: appservice

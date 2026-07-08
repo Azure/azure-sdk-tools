@@ -1,8 +1,6 @@
 name: azure-sdk-chat-agent
-template:
-    description: Hosted container agent using pre-built image placeholder.azurecr.io/agent:v1
-    kind: hosted
-    name: azure-sdk-chat-agent
-    protocols:
-        - protocol: responses
-          version: 2.0.0
+kind: hosted
+description: Hosted container agent using pre-built image placeholder.azurecr.io/agent:v1
+protocols:
+    - protocol: responses
+      version: 2.0.0

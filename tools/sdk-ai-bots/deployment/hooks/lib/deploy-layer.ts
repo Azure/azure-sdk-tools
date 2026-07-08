@@ -48,7 +48,10 @@ export async function deployLayer(layer: Layer, ctx: LayerContext): Promise<void
   if (paramArgs.length > 0) {
     parts.push(`--parameters ${paramArgs.join(" ")}`);
   }
-  const cmd = parts.join(" \\\n  ");
+  // Join on single spaces (no backslash-newline continuations) so the command
+  // parses correctly under both bash and Windows cmd.exe — execSync picks the
+  // default shell per platform and cmd.exe treats trailing `\` as literal.
+  const cmd = parts.join(" ");
 
   execSync(cmd, { stdio: "inherit" });
   log(layer.name, "deployment succeeded");
@@ -63,22 +66,28 @@ export async function runLayerPipeline(
 ): Promise<void> {
   const targetLayer = process.env.DEPLOY_LAYER?.trim();
 
-  const toRun = targetLayer
-    ? layers.filter((l) => l.name === targetLayer)
-    : layers;
+  // Without DEPLOY_LAYER, main.bicep has already applied every module in the
+  // same `azd provision` invocation — re-running the whole pipeline here is
+  // redundant (and hits parameter drift since main.bicep passes locations /
+  // names that this pipeline doesn't). The pipeline exists for targeted
+  // per-layer redeploys via `DEPLOY_LAYER=<name> azd provision`.
+  if (!targetLayer) {
+    console.log(
+      "[pipeline] DEPLOY_LAYER not set — skipping (main.bicep already applied all modules)."
+    );
+    return;
+  }
 
-  if (targetLayer && toRun.length === 0) {
+  const toRun = layers.filter((l) => l.name === targetLayer);
+
+  if (toRun.length === 0) {
     throw new Error(
       `DEPLOY_LAYER='${targetLayer}' does not match any layer. ` +
         `Valid names: ${layers.map((l) => l.name).join(", ")}`
     );
   }
 
-  if (targetLayer) {
-    console.log(`[pipeline] Partial deployment — running layer: ${targetLayer}`);
-  } else {
-    console.log(`[pipeline] Full deployment — running ${toRun.length} layers`);
-  }
+  console.log(`[pipeline] Partial deployment — running layer: ${targetLayer}`);
 
   for (const layer of toRun) {
     await deployLayer(layer, ctx);

@@ -28,6 +28,15 @@ export interface EnsureEntraAppOptions {
    *   export SERVICE_MANAGEMENT_REFERENCE=<your-smr-value>
    */
   serviceManagementReference?: string;
+  /**
+   * If set, before falling back to creation the function first searches app
+   * registrations owned by the currently signed-in user (`az ad app list
+   * --show-mine`) for one whose displayName contains this substring
+   * (case-insensitive). If exactly one match is found, its appId is reused.
+   * Lets developers reuse a pre-existing app registration when the tenant
+   * blocks new app creation (e.g. missing ServiceManagementReference).
+   */
+  ownedDisplayNameContains?: string;
 }
 
 function log(msg: string): void {
@@ -43,7 +52,12 @@ function run(cmd: string): string {
  * creating one if none exists. Idempotent — safe to call on every provision.
  */
 export function ensureEntraApp(opts: EnsureEntraAppOptions): string {
-  const { displayName, signInAudience = "AzureADMyOrg", serviceManagementReference } = opts;
+  const {
+    displayName,
+    signInAudience = "AzureADMyOrg",
+    serviceManagementReference,
+    ownedDisplayNameContains,
+  } = opts;
 
   log(`Looking up existing app registration '${displayName}'`);
   const existing = run(
@@ -52,6 +66,37 @@ export function ensureEntraApp(opts: EnsureEntraAppOptions): string {
   if (existing) {
     log(`  ✓ found existing appId=${existing}`);
     return existing;
+  }
+
+  if (ownedDisplayNameContains) {
+    const needle = ownedDisplayNameContains.toLowerCase();
+    log(`  no exact match — searching apps you own for displayName containing '${needle}'`);
+    const ownedJson = run(
+      `az ad app list --show-mine --query "[].{appId:appId, displayName:displayName}" --output json`,
+    );
+    let owned: Array<{ appId: string; displayName: string }> = [];
+    try {
+      owned = JSON.parse(ownedJson || "[]");
+    } catch {
+      owned = [];
+    }
+    const matches = owned.filter((a) =>
+      (a.displayName ?? "").toLowerCase().includes(needle),
+    );
+    if (matches.length === 1) {
+      const m = matches[0];
+      log(`  ✓ reusing owned appId=${m.appId} (displayName='${m.displayName}')`);
+      return m.appId;
+    }
+    if (matches.length > 1) {
+      const list = matches.map((m) => `    - ${m.displayName} (${m.appId})`).join("\n");
+      throw new Error(
+        `Multiple app registrations you own match '${needle}':\n${list}\n` +
+        `Refusing to guess. Set SERVER_AUDIENCE=<appId> and re-run, ` +
+        `or narrow the filter passed to ensureEntraApp.`,
+      );
+    }
+    log(`  no owned apps matched '${needle}' — will attempt to create '${displayName}'`);
   }
 
   const smrFlag = serviceManagementReference

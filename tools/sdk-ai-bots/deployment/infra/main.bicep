@@ -9,6 +9,12 @@
 //   1. shared-resources  →  2. agent  →  3. frontend  →  4. backend
 //                                                ↓
 //                                       5. function-app  →  6. logic-app
+//
+// The Logic App workflow is created with an EMPTY definition here — its real
+// definition references convertActivity inside the Function App container and
+// ARM validates that reference against the host runtime, which returns 503
+// until `azd deploy function-app` pushes the image. The full definition is
+// applied afterwards by hooks/function-postdeploy.ts via an ARM PATCH.
 // ─────────────────────────────────────────────────────────────────────────────
 
 targetScope = 'subscription'
@@ -97,7 +103,9 @@ param functionAppServicePlanName string = ''
 param functionLogWorkspaceName string = ''
 param functionAppName string = ''
 
-// Logic App
+// Logic App resource names — passed through to the logic-app module and
+// re-exported as outputs so hooks/function-postdeploy.ts can find the
+// workflow by name when it PATCHes the definition post-deploy.
 param integrationAccountName string = ''
 param teamsConnectionName string = ''
 param azureBlobConnectionName string = ''
@@ -219,6 +227,14 @@ module functionApp './modules/qaBotFunctionApp/serverfarm.bicep' = {
 }
 
 // ── Layer 6: Logic App ─────────────────────────────────────────────────────────
+// Deployed here with an EMPTY workflow definition (see includeWorkflowDefinition
+// in the module). All Logic App infrastructure — the workflow resource, its
+// user-assigned identities, the Teams/Blob/CosmosDB managed API connections,
+// the integration account, and the failure metric alert — is created up front.
+// The real workflow definition (which references convertActivity inside the
+// Function App container) is applied afterwards by hooks/function-postdeploy.ts
+// via an ARM PATCH, once `azd deploy function-app` has pushed the image and
+// the Functions host is responding to ARM validation.
 module logicApp './modules/qaBotLogicApp/logicAppResources.bicep' = {
   name: 'logic-app'
   scope: rg
@@ -240,6 +256,8 @@ module logicApp './modules/qaBotLogicApp/logicAppResources.bicep' = {
     documentDbConnectionName:!empty(documentDbConnectionName)? documentDbConnectionName: 'documentdb-${_suffix}'
     logicAppWorkflowName:    !empty(logicAppWorkflowName)    ? logicAppWorkflowName    : 'azuresdkqabot-logicapp-${_suffix}'
     logicAppAlertName:       !empty(logicAppAlertName)       ? logicAppAlertName       : 'azuresdkqabot-logicapp-alert-${_suffix}'
+    actionGroupName:         sharedResources.outputs.actionGroupName
+    includeWorkflowDefinition: false
   }
 }
 
@@ -279,6 +297,17 @@ output SERVER_BASE_URL string = backend.outputs.serverBaseUrl
 
 // Function-app outputs
 output FUNCTION_APP_NAME string = functionApp.outputs.functionAppName
+
+// Effective Logic App resource names — outputs return the same values passed
+// to the module (falling back to the same _suffix defaults) so
+// hooks/function-postdeploy.ts can PATCH the workflow without recomputing
+// them.
+output INTEGRATION_ACCOUNT_NAME string = !empty(integrationAccountName) ? integrationAccountName : 'azuresdkqabot-ia-${_suffix}'
+output TEAMS_CONNECTION_NAME string = !empty(teamsConnectionName) ? teamsConnectionName : 'teams-${_suffix}'
+output AZURE_BLOB_CONNECTION_NAME string = !empty(azureBlobConnectionName) ? azureBlobConnectionName : 'azureblob-${_suffix}'
+output DOCUMENT_DB_CONNECTION_NAME string = !empty(documentDbConnectionName) ? documentDbConnectionName : 'documentdb-${_suffix}'
+output LOGIC_APP_WORKFLOW_NAME string = !empty(logicAppWorkflowName) ? logicAppWorkflowName : 'azuresdkqabot-logicapp-${_suffix}'
+output LOGIC_APP_ALERT_NAME string = !empty(logicAppAlertName) ? logicAppAlertName : 'azuresdkqabot-logicapp-alert-${_suffix}'
 
 // Inputs re-exported so standalone module deploys can source them from env
 output SERVER_AUDIENCE string = serverAudience

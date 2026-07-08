@@ -10,7 +10,8 @@
     "postdeploy": "tsx hooks/postdeploy.ts",
     "predown": "tsx hooks/predown.ts",
     "postdown": "tsx hooks/postdown.ts",
-    "check-quotas": "tsx scripts/check-quotas.ts"
+    "check-quotas": "tsx scripts/check-quotas.ts",
+    "deploy:logic-app": "tsx scripts/deploy-logic-app.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

@@ -161,7 +161,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                             {
                                 if (sdkchanges.HasBreakingChange && !changesOnly)
                                 {
-                                    var tspProjectPath = tspConfigPath != null ? await gitHelper.DiscoverRepoRootAsync(tspConfigPath, ct) : null;
+                                    var tspProjectPath = tspConfigPath != null ? Path.GetDirectoryName(tspConfigPath) : null;
                                     var sdkBreakingPattern = await languageService.GetSDKBreakingPattern(sdkRepoRoot, ct);
                                     var sdkBreakingChanges = await _classifyService.ClassifySdkBreakingChangesAsync(sdkchanges.ChangelogMD, sdkRepoRoot, sdkBreakingPattern, languageService.Language.ToString(), tspProjectPath, ct);
                                     if (sdkBreakingChanges.Count == 0)

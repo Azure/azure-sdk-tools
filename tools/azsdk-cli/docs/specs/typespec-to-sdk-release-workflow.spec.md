@@ -76,7 +76,7 @@ flowchart TD
      - SDK breaking change detection
      - APIView generates SDK API surface review (current) or API Review Hub creates review PR (future)
    - **API review**: Architects review generated SDK public API surface
-     - `<lang>-api-approved` labels are **informational** — source of truth is ADO Package Work Items (API hash)
+     - `<lang>-api-approved` labels are **informational** — source of truth is the ARH database (API hash)
      - ARH will assign `<lang>-api-approved` labels on SDK PRs automatically when architect approves
    - **Auto-repair**: `auto-sdk-build-fix` label triggers Copilot agent to fix custom code drift
    - **ARM SDK PRs**: Reviewed by Haoling/Shanghai team with release plans attached
@@ -90,7 +90,7 @@ flowchart TD
 ### For Reviewers
 
 1. **ARM review** (ARM specs only) — Review resource model correctness on spec PRs; apply `ARMSignedOff` label
-2. **SDK API review** — Review generated SDK API surface on SDK PRs via APIView (current) or API Review Hub review PRs (future). **There is no spec-level API review** — API review applies only to the generated SDK. `<lang>-api-approved` labels are **informational** — source of truth is ADO Package Work Items (API hash).
+2. **SDK API review** — Review generated SDK API surface on SDK PRs via APIView (current) or API Review Hub review PRs (future). **There is no spec-level API review** — API review applies only to the generated SDK. `<lang>-api-approved` labels are **informational** — source of truth is the ARH database (API hash).
 3. **SDK PR review** (Haoling/Shanghai team, management plane only) — Review generated SDK PRs that have a release plan attached; approve & merge
 4. **Breaking change review** — Review breaking changes flagged by `BreakingChangeReviewRequired` label on spec PRs (ARM specs only)
 5. **Namespace review** — Approve new package namespaces; apply `namespace-<lang>-approved` labels
@@ -392,7 +392,7 @@ Structured error reporting from generation pipeline + agent-assisted troubleshoo
 | Language CI pipelines | Build, test, lint, package validation | Language teams |
 | SDK breaking change detector | Detects breaking changes in generated SDK API surface. Being combined into validation check. | @raych1 / @catalinaperalta |
 | APIView (current) | SDK public API surface review via web UI | APIView team |
-| **API Review Hub** (replacing APIView) | Creates synthetic review PRs with `API.md` diffs. PRs never merged — exist only for review. Architects auto-assigned. Approval recorded in ADO Package Work Items (API hash). CI gates release by checking hash. | @tjprescott |
+| **API Review Hub** (replacing APIView) | Creates synthetic review PRs with `API.md` diffs. PRs never merged — exist only for review. Architects auto-assigned. Approval recorded in ARH database (API hash). CI gates release by checking hash. | @tjprescott |
 | API review feedback resolution agent | Helps resolve API review comments via TypeSpec changes | azsdk-cli team |
 | Pipeline troubleshooting agent | Diagnoses CI failures | azsdk-cli team |
 | Auto SDK PR repair | `auto-sdk-build-fix` label → Copilot cloud agent fixes custom code drift → regenerate → rebuild. Shared orchestration in `eng/common/`, per-language opt-in. | azsdk-cli team |
@@ -409,7 +409,7 @@ Structured error reporting from generation pipeline + agent-assisted troubleshoo
 
 - [ ] What triggers ARH review PR creation? SDK PR creation? Manual? Label?
 
-> **Note**: `<lang>-api-approved` labels are **informational** — source of truth is ADO Package Work Items (API hash). ARH will assign `<lang>-api-approved` labels on SDK PRs automatically when architect approves in future.
+> **Note**: `<lang>-api-approved` labels are **informational** — source of truth is the ARH database (API hash). ARH will assign `<lang>-api-approved` labels on SDK PRs automatically when architect approves in future.
 
 </details>
 
@@ -435,7 +435,7 @@ Structured error reporting from generation pipeline + agent-assisted troubleshoo
 3. Readiness checked per language
 4. SDK PR approved and merged (changelog, metadata, tests all done *before* merge)
 5. Release pipeline triggered — **becoming automatic** (@raych1 working on auto-trigger on SDK PR merge)
-6. **Release gate check** — API Review Hub verifies approved API hash
+6. **Release gate check** — Pipelines check both APIView and ARH for API approval (transitioning to ARH only)
 7. Packages published → release plan auto-completes → Service Tree KPI updated
 
 #### The two release processes
@@ -564,7 +564,7 @@ The system uses **prompt chaining**: independent sub-skills invoked sequentially
 | ARM review | [ARM review](https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/arm-review) | ARM-specific gates |
 | REST API spec review | [Review process](https://eng.ms/docs/products/azure-developer-experience/design/api-review) | Architect board flow |
 | SDK API review (bridge) | [Arch board review process](https://github.com/Azure/azure-sdk/blob/main/.github/workflows/src/arch-board-review/ARCH-BOARD-REVIEW-PROCESS.md) | GitHub Form — **bridge** until ARH |
-| API Review Hub | TBD | Synthetic review PRs replacing APIView |
+| API Review Hub | [POC implementation (PR #49)](https://github.com/tjprescott/azure-sdk-tools/pull/49) | Synthetic review PRs replacing APIView |
 | Mgmt plane release | [Release process](https://eng.ms/docs/products/azure-developer-experience/plan/mgmt-sdk-release-process) | Service + SDK team responsibilities |
 | SDK PR readiness gaps | [Tracking issue #15705](https://github.com/Azure/azure-sdk-tools/issues/15705) | Consolidated gaps |
 | Release plan dashboard | [Dashboard](https://aka.ms/azsdk/releaseplan-dashboard) | Track release progress |
@@ -601,7 +601,7 @@ The system uses **prompt chaining**: independent sub-skills invoked sequentially
 | 9 | ARM vs data plane review gates not documented in detail (different review teams, labels, and blocking behavior) | 2, 4 | @samvaity / @prkannap | No | Open |
 | 10 | Release pipeline provisioning delay for new RPs | 5 | EngSys | No | In progress |
 | 11 | API review feedback agent needs ARH compatibility | 4 | azsdk-cli team | No | Open |
-| 12 | Release gate transition (APIView → ARH) | 5 | @tjprescott / EngSys | No | Open |
+| 12 | Release gate transition (APIView → ARH) | 5 | @tjprescott / EngSys | No | In progress — pipelines will check both APIView and ARH, then transition to ARH only |
 | 13 | No endpoint liveness verification before spec PR merge | 2 | TBD | No | Aspirational |
 
 > **See also**: [SDK PR Release Readiness tracking issue (#15705)](https://github.com/Azure/azure-sdk-tools/issues/15705)
@@ -676,7 +676,7 @@ The system uses **prompt chaining**: independent sub-skills invoked sequentially
 - **API Spec PR**: Pull request in `azure-rest-api-specs` containing TypeSpec changes.
 - **SDK PR**: Pull request in a language SDK repo with generated and customized SDK code.
 - **APIView**: Current web tool for reviewing SDK public API surface. Being replaced by API Review Hub. Operates at **SDK level only** — there is no spec-level API review.
-- **API Review Hub (ARH)**: New service replacing APIView for **SDK-level API review only** — there is no spec-level API review. Creates synthetic "review PRs" in language repos with `API.md` diffs — never merged, exist only for review. Approval recorded in ADO Package Work Items. `<lang>-api-approved` labels are **informational**. ⚠️ ARH review PR creation on SDK PRs is an open design gap.
+- **API Review Hub (ARH)**: New service replacing APIView for **SDK-level API review only** — there is no spec-level API review. Creates synthetic "review PRs" in language repos with `API.md` diffs — never merged, exist only for review. Approval recorded in ARH database (API hash). `<lang>-api-approved` labels are **informational**. ⚠️ ARH review PR creation on SDK PRs is an open design gap.
 - **tspconfig.yaml**: Configuration specifying emitter settings per language.
 - **tsp-location.yaml**: Configuration in SDK repos pointing to source TypeSpec project.
 - **`@azure-tools/typespec-breaking-change`**: TypeSpec-native breaking change detector. Phase A: same-version regression. Phase B: cross-version evolution.

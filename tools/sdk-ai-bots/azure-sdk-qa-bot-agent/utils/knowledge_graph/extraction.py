@@ -241,7 +241,7 @@ def _extract_community_reports(
     n = min(top_n, len(reports_df))
     for i in range(n):
         row = reports_df.iloc[i]
-        content = str(row.get("content") or "")
+        content = _condense_report(str(row.get("content") or ""))
         if not content:
             continue
         title = str(row.get("title") or "").strip() or f"Community {row.get('id')}"
@@ -259,6 +259,35 @@ def _extract_community_reports(
     if refs:
         logger.info("GraphRAG surfaced %d community-report synthesis reference(s)", len(refs))
     return refs
+
+
+# Community reports are cross-document *overviews*. The GraphRAG-generated
+# ``full_content`` is a long governance narrative (title + summary paragraph +
+# several ``## Finding`` sections + ``[Data: Entities (...)]`` provenance
+# markers). Fed verbatim, that wall of generic prose over-generalises the
+# answer on specific / spec-validation questions (measured drag on the apispec
+# category). We keep only the connective **title + summary**, which is the part
+# that genuinely helps relational/process questions, and drop the detailed
+# findings and provenance noise.
+_REPORT_MAX_CHARS = 800
+_DATA_MARKER_RE = re.compile(r"\s*\[Data:[^\]]*\]")
+
+
+def _condense_report(content: str) -> str:
+    """Condense a community report to its title + summary overview."""
+    if not content:
+        return ""
+    text = _DATA_MARKER_RE.sub("", content)
+    # Cut at the first findings section header ("## ..."), keeping the leading
+    # title (a single "# ...") and summary paragraph.
+    findings = re.search(r"\n#{2,}\s", text)
+    if findings:
+        text = text[: findings.start()]
+    text = text.strip()
+    if len(text) > _REPORT_MAX_CHARS:
+        cut = text.rfind(". ", 0, _REPORT_MAX_CHARS)
+        text = text[: cut + 1] if cut > 200 else text[:_REPORT_MAX_CHARS]
+    return text.strip()
 
 
 def _read_doc_attribution(doc_index: Any, doc_id: str) -> tuple[str, str]:

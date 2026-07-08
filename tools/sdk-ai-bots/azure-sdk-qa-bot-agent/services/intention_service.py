@@ -8,6 +8,7 @@ Hybrid approach:
 from __future__ import annotations
 
 import logging
+import re
 from pathlib import Path
 from typing import Sequence, cast
 
@@ -29,16 +30,12 @@ def _load_classify_prompt() -> str:
     return (_PROMPTS_DIR / "intention_classify.md").read_text(encoding="utf-8").strip()
 
 
-def _cfg_or_default(key: str, default: str) -> str:
-    try:
-        value = cfg(key, default)
-        return value if value is not None else default
-    except RuntimeError:
-        logger.debug(
-            "App config is not initialized; using default for %s",
-            key,
-        )
-        return default
+def _extract_root_message_id(conversation_id: str | None) -> str | None:
+    """Extract the root message id from a ``<channelId>;messageid=<id>`` conversation id."""
+    if not conversation_id:
+        return None
+    match = re.search(r"messageid=([^;]+)", conversation_id)
+    return match.group(1) if match else None
 
 
 class IntentionService:
@@ -108,6 +105,23 @@ class IntentionService:
                 req.conversation_type,
             )
 
+        # A thread that started before the agent was deployed has no saved
+        # root message. If the current message is a mid-thread reply (not the
+        # root) and there is no prior saved history, the bot is seeing it out
+        # of context and must not auto-reply.
+        root_message_id = _extract_root_message_id(req.conversation_id)
+        prior_messages = [item for item in history if item.id != req.message.id]
+        if (
+            req.message.id
+            and root_message_id
+            and not prior_messages
+            and req.message.id != root_message_id
+        ):
+            return IntentionResponse(
+                should_respond=False,
+                reason="no_history_and_not_root_message",
+            )
+
         if req.message.user_id and self._has_expert_reply(history, req.message.user_id):
             return IntentionResponse(
                 should_respond=False,
@@ -139,10 +153,10 @@ class IntentionService:
             project_client = get_project_client()
             openai_client = project_client.get_openai_client()
 
-            model = _cfg_or_default("AI_FOUNDRY_AGENT_COMPLETION_MODEL", "gpt-4o-mini")
+            model = cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL", "gpt-4o-mini")
             reasoning_effort = cast(
                 ReasoningEffort,
-                _cfg_or_default("AI_FOUNDRY_INTENTION_REASONING_EFFORT", "low"),
+                cfg("AI_FOUNDRY_INTENTION_REASONING_EFFORT", "low"),
             )
 
             messages: list[ChatCompletionMessageParam] = [

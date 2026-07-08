@@ -4,8 +4,6 @@
 # license information.
 # --------------------------------------------------------------------------
 
-import os
-
 from dotenv import load_dotenv
 from src._github_manager import GithubManager
 
@@ -21,10 +19,7 @@ class OpenGuidelinesIssueWorkflow(MentionWorkflow):
     deduplication_prompt_file = "deduplicate_guidelines_issue.prompty"
 
     def _get_client_and_owner(self):
-        client = GithubManager.get_instance()
-        environment = os.getenv("ENVIRONMENT_NAME")
-        owner = "Azure" if environment == "production" else "tjprescott"
-        return client, owner
+        return GithubManager.get_instance(), GithubManager.resolve_owner()
 
     def check_for_duplicates(self, plan: dict):
         """Check for duplicate guidelines issues."""

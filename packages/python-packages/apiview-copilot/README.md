@@ -18,11 +18,12 @@ ENVIRONMENT_NAME="staging"
 
 ## Review Process and Stages
 
-For each section of the APIView, the review process now consists of three distinct stages:
+For each section of the APIView, the review process consists of two prompt stages:
 
 - **Guideline Stage:** Reviews the section against language-specific guidelines.
 - **Context Stage:** Reviews the section using the full context (guidelines, examples, and memories) retrieved for that section.
-- **Generic Stage:** Applies generic review rules and best practices.
+
+> **Note:** A generic review stage previously existed but is now **disabled** for all languages.
 
 ## Creating Reviews
 

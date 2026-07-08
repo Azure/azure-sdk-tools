@@ -4,8 +4,9 @@
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using ApiView;
-using APIView.DIff;
+using APIView;
+using APIViewLegacy;
+using APIView.Diff;
 using APIView.Model;
 
 namespace APIViewWeb.Models

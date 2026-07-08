@@ -1,0 +1,54 @@
+name: azsdk-mcp-tool-invocation-eval
+description: |
+  Verify that prompts correctly invoke the expected Azure SDK MCP tools.
+  Each stimulus is a single user prompt that should trigger a specific tool.
+version: "1.0"
+type: capability
+
+environment: azsdk-mcp-mock
+
+config:
+  runs: 3
+  timeout: "120s"
+  executor: copilot-sdk
+  model: gpt-5.4
+
+tags:
+  tier: unit
+  area: engsys
+  priority: p0
+
+stimuli:
+
+  # ==== azsdk_check_service_label triggers ====
+  - name: invoke-azsdk-check-service-label-1
+    prompt: "Check whether a service label already exists for the Contoso.WidgetManager service. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_check_service_label"
+  - name: invoke-azsdk-check-service-label-2
+    prompt: "Does the service label for Contoso already exist? Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_check_service_label"
+
+  # ==== azsdk_create_service_label triggers ====
+  - name: invoke-azsdk-create-service-label-1
+    prompt: "Create a new service label for the Contoso.WidgetManager service with service link https://github.com/Azure/azure-rest-api-specs/tree/main/specification/contosowidgetmanager. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_create_service_label"
+  - name: invoke-azsdk-create-service-label-2
+    prompt: "Create a service label for Contoso Widget Manager with service link https://github.com/Azure/azure-rest-api-specs/tree/main/specification/contosowidgetmanager. It does not exist yet — create it directly without checking first. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_create_service_label"
+

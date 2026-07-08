@@ -1,4 +1,4 @@
 export enum RunningEnvironment {
-    SwaggerSdkAutomation,
-    SdkGeneration,
+  SwaggerSdkAutomation,
+  SdkGeneration,
 }

@@ -39,5 +39,6 @@ npm start            # dev server with SSL
 - Data is stored in **Cosmos DB** (metadata) + **Azure Blob Storage** (token files).
 - Language parsers use a **mixed model**: most run as **external processes** on the server host, while some (e.g., C, C++, JSON, Swagger) are parsed/deserialized **in-process**.
 - The common data format is the **CodeFile** JSON token model.
+- The `APIView/` core library has two namespaces: **`APIView`** (shared models, diff, utilities) and **`APIViewLegacy`** (deprecated flat-token rendering). New code goes in `APIView`.
 - Follow existing Controller → Manager → Repository layering in `APIViewWeb/`.
 - **After making changes, evaluate whether any files in `docs/` need updates** to stay consistent with the code.

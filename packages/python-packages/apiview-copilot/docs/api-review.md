@@ -7,7 +7,7 @@ This document describes the full API review pipeline implemented in `src/_apivie
 When a review is requested, the `ApiViewReview` class:
 
 1. Splits the API text into sections
-2. Runs three LLM prompt types in parallel across all sections
+2. Runs two LLM prompt types in parallel across all sections (guideline and context)
 3. Filters, deduplicates, and scores the resulting comments
 4. Returns a sorted, deduplicated list of `Comment` objects
 
@@ -34,7 +34,7 @@ The pipeline supports two **review modes**:
 
 ### Stage 2 — Parallel Prompt Evaluation
 
-For each section, **three prompts run concurrently** in a thread pool. Each prompt type targets a different source of review knowledge:
+For each section, prompts run concurrently in a thread pool. Each prompt type targets a different source of review knowledge. Currently only **two prompts** run per section (guideline and context); the generic review is disabled for all languages (see Stage 2c).
 
 #### 2a — Guideline Review (`guidelines_review.prompty` / `guidelines_diff_review.prompty`)
 
@@ -60,9 +60,13 @@ For each section, **three prompts run concurrently** in a thread pool. Each prom
 
 **Output:** Comments flagged as `is_generic = True`. These undergo additional filtering in Stage 3.
 
+> **Note:** The generic review stage is **disabled for all languages**. Only the guideline and context reviews run. Stages that operate exclusively on generic comments (Stage 3) are effectively no-ops.
+
 ---
 
 ### Stage 3 — Generic Comment Filtering
+
+> **Note:** This stage is effectively skipped for all languages because the generic review prompt (Stage 2c) is disabled, so no generic comments exist to filter.
 
 **Purpose:** Generic comments are less anchored to documented guidelines and carry higher false-positive risk. This stage validates each generic comment against the knowledge base before keeping it.
 

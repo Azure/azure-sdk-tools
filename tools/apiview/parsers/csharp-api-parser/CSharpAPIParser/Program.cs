@@ -3,7 +3,7 @@ using System.IO.Compression;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
-using ApiView;
+using APIView;
 using APIView.Model.V2;
 using NuGet.Common;
 using NuGet.Packaging;
@@ -24,7 +24,8 @@ public static class Program
     private static readonly HashSet<string> _allowedDependencies = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
         "Azure.Core",
-        "System.ClientModel"
+        "System.ClientModel",
+        "System.Memory.Data"
     };
 
     public static int Main(string[] args)

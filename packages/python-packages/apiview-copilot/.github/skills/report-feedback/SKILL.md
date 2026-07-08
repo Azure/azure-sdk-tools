@@ -23,7 +23,27 @@ Unless the user says otherwise, always apply these defaults:
 - **Environment**: `production`
 - **Language**: All languages (do not pass `--language` unless user specifies one)
 - **Exclude**: Do not pass `--exclude` unless user asks to filter out certain feedback types
+- **Include implicit**: Always pass `--include-implicit` by default. Only omit it if the user explicitly asks to exclude implicit bad comments.
 - **Format**: JSON (do not pass `--format`)
+
+## Implicit Bad Comments
+
+The `--include-implicit` flag also returns **implicit bad** comments: AI comments on approved revisions that were never upvoted, downvoted, resolved, and have no Feedback entries. The inference is that the reviewer ignored them and approved anyway, suggesting they were unhelpful.
+
+> **Date semantics differ**: Explicit feedback is filtered by feedback submission time (`Feedback[].SubmittedOn` / `ChangeHistory[].ChangedOn`), but implicit bad is filtered by comment creation time (`CreatedOn`). A comment created in January with no interaction will appear in January's implicit bad results, not March's.
+
+This skill always passes `--include-implicit` (the CLI flag defaults to off, but the skill includes it for completeness). It has a weaker signal than explicit feedback because there is no reason or confirmation — just silence. Only omit `--include-implicit` if the user explicitly asks to exclude them (e.g., "only explicit feedback", "exclude implicit bad").
+
+The output will contain items with `"FeedbackTypes": ["implicit_bad"]`.
+
+### Summarizing Implicit Bad
+
+When presenting results, **break out implicit bad themes separately** from explicit feedback:
+
+1. **Explicit feedback** — Summarize count, breakdown by reason, and themes for items that have explicit feedback types (e.g., `bad`, `delete`).
+2. **Implicit bad** — Summarize separately: count, common comment topics/patterns, and any notable themes. Note that these lack a reason — group them by the comment content or guideline referenced instead.
+
+This separation helps the user understand the strength of signal behind each theme.
 
 ## Date Resolution
 
@@ -45,7 +65,7 @@ Show the resolved command and run it immediately in a **foreground terminal** wi
 
 **Full terminal command** (cleanup + run):
 ```powershell
-New-Item -ItemType Directory -Path output -Force | Out-Null; if (Test-Path output/feedback_output.json) { Remove-Item output/feedback_output.json }; python cli.py report feedback -s <start_date> -e <end_date> | Out-File -Encoding UTF8 output/feedback_output.json
+New-Item -ItemType Directory -Path output -Force | Out-Null; if (Test-Path output/feedback_output.json) { Remove-Item output/feedback_output.json }; python cli.py report feedback -s <start_date> -e <end_date> --include-implicit | Out-File -Encoding UTF8 output/feedback_output.json
 ```
 
 After the command completes, **read the output file** with `read_file` to get the JSON results. Summarize the findings for the user (total count, breakdown by feedback reason, common themes, etc.).
@@ -57,20 +77,23 @@ For follow-up questions about the same data (filtering, counting, searching), **
 ### Examples
 
 ```powershell
-# All feedback for March 2025
-python cli.py report feedback -s 2025-03-01 -e 2025-03-31
+# All feedback for March 2025 (implicit bad included by default)
+python cli.py report feedback -s 2025-03-01 -e 2025-03-31 --include-implicit
 
 # Python feedback only
-python cli.py report feedback -s 2025-03-01 -e 2025-03-31 -l python
+python cli.py report feedback -s 2025-03-01 -e 2025-03-31 -l python --include-implicit
+
+# Exclude implicit bad (only explicit feedback)
+python cli.py report feedback -s 2025-03-01 -e 2025-03-31
 
 # Exclude good feedback (show only bad and deleted)
-python cli.py report feedback -s 2025-03-01 -e 2025-03-31 --exclude good
+python cli.py report feedback -s 2025-03-01 -e 2025-03-31 --include-implicit --exclude good
 
 # YAML output
-python cli.py report feedback -s 2025-03-01 -e 2025-03-31 --format yaml
+python cli.py report feedback -s 2025-03-01 -e 2025-03-31 --include-implicit --format yaml
 
 # Staging environment
-python cli.py report feedback -s 2025-03-01 -e 2025-03-31 --environment staging
+python cli.py report feedback -s 2025-03-01 -e 2025-03-31 --include-implicit --environment staging
 ```
 
 ## Available Flags
@@ -81,13 +104,14 @@ python cli.py report feedback -s 2025-03-01 -e 2025-03-31 --environment staging
 | `--end-date` / `-e` | string | required | End date (`YYYY-MM-DD`) |
 | `--language` / `-l` | string | all | Language to filter by (e.g., `python`, `Go`, `C#`) |
 | `--environment` | string | `production` | `production` or `staging` |
-| `--exclude` | list | none | Feedback types to exclude: `good`, `bad`, `delete` |
+| `--exclude` | list | none | Feedback types to exclude: `good`, `bad`, `delete`, `implicit_bad` |
+| `--include-implicit` | flag | off | Include implicit bad comments (unresolved, unvoted on approved revisions) |
 | `--format` / `-f` | string | `json` | Output format: `json` or `yaml` |
 
 ## Gotchas
 
 - **Output can be large**: Redirect to file and use `read_file` rather than relying on terminal output.
-- **Date range filters by feedback submission time**: Not by when the comment was created. A comment created in January but downvoted in March will appear in March's feedback report.
+- **Date range semantics are mixed**: Explicit feedback filters by feedback submission time (a comment created in January but downvoted in March appears in March). Implicit bad filters by comment creation time (a comment created in January with no interaction appears in January).
 - **Use `python cli.py` not `.\avc`**: The `avc.bat` script may resolve to system Python.
 - **Do NOT use `2>&1`**: Merges stderr into stdout, corrupting JSON. Only redirect stdout.
 - **Do NOT use `>`**: Produces UTF-16 in PowerShell 5.1. Use `| Out-File -Encoding UTF8`.

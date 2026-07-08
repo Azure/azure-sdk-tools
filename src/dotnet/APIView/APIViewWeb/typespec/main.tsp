@@ -1,10 +1,7 @@
 import "@typespec/http";
 import "@typespec/openapi3";
 import "./models.tsp";
-import "./autoreview.tsp";
-import "./apirevisions.tsp";
-import "./comments.tsp";
-import "./reviews.tsp";
+import "./operations.tsp";
 
 using TypeSpec.Http;
 

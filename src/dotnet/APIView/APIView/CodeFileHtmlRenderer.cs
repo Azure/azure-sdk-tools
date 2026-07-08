@@ -1,11 +1,11 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using APIView;
 using System.Text;
 using System.Web;
 
-namespace ApiView
+namespace APIViewLegacy
 {
     public class CodeFileHtmlRenderer : CodeFileRenderer
     {
@@ -81,7 +81,7 @@ namespace ApiView
                 if (a)
                 {
                     stringBuilder.Append("a");
-                    stringBuilder.Append(" href=\"").Append(href).Append("\"");
+                    stringBuilder.Append(" href=\"").Append(HttpUtility.HtmlAttributeEncode(href)).Append("\"");
                 }
                 else
                 {
@@ -89,7 +89,7 @@ namespace ApiView
                 }
                 if (!string.IsNullOrEmpty(id) && !_readOnly)
                 {
-                    stringBuilder.Append(" id=\"").Append(id).Append("\"");
+                    stringBuilder.Append(" id=\"").Append(HttpUtility.HtmlAttributeEncode(id)).Append("\"");
                 }
                 stringBuilder.Append(" class=\"").Append(elementClass).Append("\"");
                 stringBuilder.Append(">");
@@ -121,7 +121,7 @@ namespace ApiView
 
         private string EscapeHTML(string word)
         {
-            return word.Replace("<", "&lt;").Replace(">", "&gt;");
+            return word.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
         }
     }
 }

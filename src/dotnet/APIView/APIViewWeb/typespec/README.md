@@ -58,11 +58,8 @@ APIs for retrieving comments on API revisions:
 ## Files
 
 - `main.tsp` - Main TypeSpec entry point with service definition
-- `models.tsp` - Common models, enums, and error responses
-- `autoreview.tsp` - AutoReview API endpoints (no auth for status, API Key auth for others)
-- `reviews.tsp` - Reviews API endpoints (Azure AD)
-- `apirevisions.tsp` - API Revisions endpoints (Azure AD auth)
-- `comments.tsp` - Comments endpoints (Azure AD auth)
+- `models.tsp` - All models, enums, and error responses (grouped by namespace)
+- `operations.tsp` - All API operations (grouped by namespace: `AutoReviewLegacy`, `AutoReview`, `APIRevisions`, `Comments`, `Reviews`)
 - `tspconfig.yaml` - TypeSpec compiler configuration
 - `package.json` - NPM package configuration
 

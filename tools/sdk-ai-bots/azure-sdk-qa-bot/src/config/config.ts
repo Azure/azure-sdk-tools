@@ -33,6 +33,8 @@ const config = {
   githubAppKeyVaultName: process.env.GITHUB_APP_KEY_VAULT_NAME,
   githubAppKeyName: process.env.GITHUB_APP_KEY_NAME,
   githubAppInstallOwner: process.env.GITHUB_APP_INSTALL_OWNER,
+  // Bot display name
+  botDisplayName: process.env.TEAMS_BOT_FULL_DISPLAY_NAME || 'Azure SDK QA bot',
 };
 
 // Validate required environment variables at startup

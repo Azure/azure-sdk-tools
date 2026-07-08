@@ -45,6 +45,22 @@ APIView.sln
 └── docs/                 Documentation (you are here)
 ```
 
+### Namespaces in the `APIView/` Core Library
+
+The `APIView/` project uses two root namespaces to separate modern shared code from the deprecated flat-token pipeline:
+
+| Namespace | Purpose | Key Types |
+|---|---|---|
+| `APIView` | Shared core models, utilities, analysis, and diff | `CodeFile`, `CodeFileToken`, `CodeFileTokenKind`, `NavigationItem`, `CodeDiagnostic`, `CodeLine`, `CompilationFactory`, `DependencyInfo`, `SymbolExtensions` |
+| `APIView.Model.V2` | Modern tree-token model | `ReviewLine`, `ReviewToken`, `TokenKind` |
+| `APIView.Diff` | Diff algorithm | `Diff`, `InlineDiff`, `InlineDiffLine`, `DiffLineKind` |
+| `APIView.Analysis` | SDK analysis adapters | `Analyzer`, `SdkAnalyzerAdapter` |
+| `APIView.TreeToken` | Tree-token structured model | `StructuredToken`, `TokenTreeModel` |
+| `APIView.Identity` | Auth helpers | `ClaimConstants`, `TestUser` |
+| `APIViewLegacy` | **Deprecated** flat-token rendering and legacy C# parser | `CodeFileRenderer`, `CodeFileHtmlRenderer`, `CodeFileTokensBuilder`, `CodeFileBuilder`, `CodeFileBuilderSymbolSorter` |
+
+> **Rule:** New code should use the `APIView` namespace (or a sub-namespace). Only flat-token rendering and the legacy C# parser belong in `APIViewLegacy`.
+
 ---
 
 ## 3. Data Model Hierarchy
@@ -269,7 +285,7 @@ Each CodeFile gets a **SHA-256 hash** of its API surface (excluding package vers
 
 1. Two `CodeFile` blobs are loaded (active revision vs. selected diff revision).
 2. `ReviewLine` trees are flattened to comparable line sequences.
-3. **Myers' O(ND) diff algorithm** (`APIView/DIff/Diff.cs`) computes the minimal edit script.
+3. **Myers' O(ND) diff algorithm** (`APIView/Diff/Diff.cs`) computes the minimal edit script.
 4. Each line is tagged as `Added`, `Removed`, or `Unchanged`.
 5. The frontend renders additions/removals inline with configurable context lines.
 6. Section headings with diffs are pre-computed by `LinesWithDiffBackgroundHostedService` so the nav tree can highlight changed areas.
@@ -484,8 +500,9 @@ Each language repo follows a similar pattern: `ci.yml` → archetype stage → j
 |---|---|
 | Solution | `APIView.sln` |
 | Core models | `APIView/Model/CodeFile.cs`, `APIView/Model/V2/ReviewLine.cs`, `APIView/Model/V2/ReviewToken.cs` |
-| Diff algorithm | `APIView/DIff/Diff.cs` |
-| C# parser | `APIView/Languages/CodeFileBuilder.cs` |
+| Diff algorithm | `APIView/Diff/Diff.cs` |
+| Roslyn utilities | `APIView/Languages/CompilationFactory.cs`, `DependencyInfo.cs`, `SymbolExtensions.cs` |
+| Legacy C# parser | `APIView/Languages/CodeFileBuilder.cs` (`APIViewLegacy` namespace) |
 | Web app entry | `APIViewWeb/Program.cs`, `APIViewWeb/Startup.cs` |
 | REST controllers | `APIViewWeb/LeanControllers/` |
 | Business logic | `APIViewWeb/Managers/` |

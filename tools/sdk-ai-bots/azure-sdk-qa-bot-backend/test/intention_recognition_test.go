@@ -200,7 +200,7 @@ func TestIntentionRecognition_ReviewRequest(t *testing.T) {
 	service, err := agent.NewCompletionService()
 	require.NoError(t, err)
 
-	// Test case: PR review request (should need RAG processing)
+	// Test case: PR review request (asking *for* a review is a request/announcement, not a question, so it should NOT need RAG processing)
 	messages := []model.Message{
 		{
 			Role:    model.Role_User,
@@ -213,8 +213,7 @@ func TestIntentionRecognition_ReviewRequest(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult)
-	require.True(t, intentionResult.NeedsRagProcessing, "Review request should require RAG processing")
-	require.NotEmpty(t, intentionResult.Question)
+	require.False(t, intentionResult.NeedsRagProcessing, "PR review request (asking for a review) should NOT require RAG processing")
 }
 
 func TestIntentionRecognition_NonQuestion(t *testing.T) {

@@ -5,21 +5,20 @@ license: MIT
 metadata:
   author: Microsoft
   version: "1.0.0"
-compatibility:
-  platforms: "copilot-chat"
+compatibility: "copilot-chat"
 ---
 
 # Markdown Token Optimizer
 
-Analyzes markdown files and suggests optimizations to reduce token consumption while maintaining clarity.
+This skill analyzes markdown files for token efficiency and reduces context-window bloat by identifying verbose patterns, duplicated content, and oversized sections, then suggesting concise revisions that preserve meaning while making documentation easier for AI systems to consume.
 
-## When to Use
+## Triggers
 
-- Optimize markdown files for token efficiency
-- Reduce SKILL.md file size or check for bloat
-- Make documentation more concise for AI consumption
+USE FOR: analyze markdown files for token efficiency and reduce context-window bloat
+WHEN: "optimize markdown", "reduce tokens", "token count", "token bloat", "too many tokens", "make concise", "shrink file", "file too large", "optimize for AI", "token efficiency", "verbose markdown", "reduce file size"
+DO NOT USE FOR: code optimization, general file editing, non-markdown files
 
-## Workflow
+## Steps
 
 1. **Count** - Calculate tokens (~4 chars = 1 token), report totals
 2. **Scan** - Find patterns: emojis, verbosity, duplication, large blocks
@@ -30,7 +29,7 @@ See [ANTI-PATTERNS.md](references/ANTI-PATTERNS.md) for detection patterns and [
 
 ## Rules
 
-- Suggest only (no auto-modification)  
+- Suggest only (no auto-modification)
 - Preserve clarity in all optimizations
 - SKILL.md target: <500 tokens, references: <1000 tokens
 
@@ -45,8 +44,8 @@ High token count? Check for emojis, repeated headings, or verbose tables.
 
 ## MCP Tools
 
-| Tool | Purpose |
-|------|---------|
+| Tool | Purpose                         |
+| ---- | ------------------------------- |
 | None | CLI-only; uses local file tools |
 
 **CLI fallback:** Primary mode is CLI-based. No MCP servers required.

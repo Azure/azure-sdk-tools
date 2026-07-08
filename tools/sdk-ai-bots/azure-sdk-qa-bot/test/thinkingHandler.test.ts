@@ -320,7 +320,9 @@ describe('ThinkingHandler', () => {
       const mockPrompt: Prompt = {
         textWithoutMention: 'Test prompt',
         userName: 'TestUser',
+        userID: 'user-123',
         timestamp: new Date(),
+        conversationID: 'test-conversation',
       };
 
       // Test the stop method with error
@@ -345,7 +347,9 @@ describe('ThinkingHandler', () => {
       const mockPrompt: Prompt = {
         textWithoutMention: 'Another test prompt',
         userName: 'TestUser',
+        userID: 'user-123',
         timestamp: new Date(),
+        conversationID: 'test-conversation',
       };
 
       // Test the stop method with error

@@ -59,19 +59,19 @@ namespace Azure.Sdk.Tools.Cli.Services
         /// exhausted), it is retried with an authenticated client, which prompts the user to run `gh auth login`
         /// when no token is available.
         /// </summary>
-protected async Task<T> ReadWithAnonymousFallbackAsync<T>(Func<GitHubClient, Task<T>> operation, CancellationToken ct)
-{
-    ct.ThrowIfCancellationRequested();
-    try
-    {
-        return await operation(anonymousGitHubClient);
-    }
-    catch (Octokit.ApiException)
-    {
-        ct.ThrowIfCancellationRequested();
-        return await operation(gitHubClient);
-    }
-}
+        protected async Task<T> ReadWithAnonymousFallbackAsync<T>(Func<GitHubClient, Task<T>> operation, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+            try
+            {
+                return await operation(anonymousGitHubClient);
+            }
+            catch (Octokit.ApiException)
+            {
+                ct.ThrowIfCancellationRequested();
+                return await operation(gitHubClient);
+            }
+        }
 
         protected string GetGitHubAuthToken()
         {

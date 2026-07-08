@@ -3,19 +3,13 @@
 > [!IMPORTANT]
 > **Review goal**: Validate the end-to-end workflow contract, stage ownership, gates, and unresolved decisions.
 
-**Status:** In review
-**Document owner:** Sameeksha
-**Primary audience:** SDK tooling owners, EngSys, language teams, API review stakeholders
-**Last meaningful update:** 2026-07-07
-**PR focus:** Workflow structure + gaps + decision log
-
 ---
 
 ## Navigation
 
 | Need | Jump |
 |------|------|
-| Quick walkthrough | [Start here](#start-here-10-minute-walkthrough) |
+| Workflow overview | [Overview](#workflow-overview) |
 | Workflow map | [Workflow map](#workflow-map) |
 | Stage details | [Stage modules](#stage-modules) |
 | Labels & gates | [Cross-cutting contracts](#cross-cutting-contracts) |
@@ -24,11 +18,13 @@
 
 ---
 
-## Start here: 10-minute walkthrough
+## Workflow overview
 
-### What this spec defines
+### Scope
 
-The end-to-end process from TypeSpec change → spec PR → API review → SDK generation → SDK PR validation → release. One document covering all stages, owners, gates, and gaps.
+The end-to-end process from TypeSpec authoring → spec PR → SDK generation → SDK PR validation → release.
+
+> 🧑‍💻 = requires human approval or manual gating
 
 ### The five-stage workflow
 
@@ -40,14 +36,52 @@ flowchart TD
     D --> E["5. Release Coordination"]
 ```
 
-### How a service team uses this (6 steps)
+### Service team journey
 
-1. **Author TypeSpec** — Write `.tsp` files and `tspconfig.yaml` locally (or use `azure-typespec-author` agent skill)
-2. **Open a spec PR** — Push to `azure-rest-api-specs`. CI validates automatically.
-3. 🧑‍💻 **Wait for approvals** — Namespace approval (first preview), ARM review (ARM specs), breaking change review (ARM specs). **There is no spec-level API review** — API review happens only at the SDK level (Stage 4).
-4. **Spec PR merges → SDK generation is automatic** — Release plan created, SDKs generated, SDK PRs opened per language ⚠️ *Generation failures currently fail silently — [Gap #4](#gap-tracker)*
-5. 🧑‍💻 **SDK PR review & approval** — SDK CI runs. **SDK API review** of generated SDK surface via APIView (current) or API Review Hub review PRs (future). ARH will assign `<lang>-api-approved` labels on SDK PRs as **informational** signals — source of truth is ADO Package Work Items (API hash). `auto-sdk-build-fix` label triggers Copilot auto-repair for custom code drift. ARM SDK PRs reviewed by Haoling/Shanghai team with release plans attached.
-6. 🧑‍💻 **Release** — Trigger release pipeline (manual approval gate required for security). Packages publish, release plan completes.
+1. **Author TypeSpec**
+   - Write `.tsp` files and `tspconfig.yaml` locally
+   - Or use `azure-typespec-author` agent skill for guided authoring
+   - Compile and lint locally before opening a PR
+
+2. **Open a spec PR**
+   - Push to `azure-rest-api-specs` and open a PR
+   - CI validates automatically:
+     - TypeSpec compilation
+     - TypeSpec LintDiff (guideline compliance)
+     - Breaking change detection (Phase A + B)
+     - APIView token generation (for SDK-level review at Stage 4)
+     - SDK generation dry-run (spec-gen-sdk)
+     - Labels applied based on results
+
+3. 🧑‍💻 **Wait for approvals** *(human gating)*
+   - **Namespace approval** — required for first preview of new packages (`namespace-<lang>-pending` → `namespace-<lang>-approved`)
+   - **ARM review** — required for ARM/management-plane specs (`ARM-Review-Required` → `ARMSignedOff`)
+   - **Breaking change review** — required for ARM specs with breaking changes (`BreakingChangeReviewRequired` → `Approved-BreakingChange`)
+   - > **Note**: There is no spec-level API review. API review happens only at the SDK level (Stage 4).
+
+4. **Spec PR merges → SDK generation is automatic**
+   - Release plan work item created
+   - SDK code generated per language via emitters
+   - Customizations applied (`client.tsp` + code customizations)
+   - SDK PRs opened in each language repo and linked to release plan
+   - ⚠️ Generation failures currently fail silently — [Gap #4](#gap-tracker)
+
+5. 🧑‍💻 **SDK PR review & approval** *(human gating)*
+   - SDK CI runs automatically:
+     - Build → test → lint → package validation
+     - SDK breaking change detection
+     - APIView generates SDK API surface review (current) or API Review Hub creates review PR (future)
+   - **API review**: Architects review generated SDK public API surface
+     - `<lang>-api-approved` labels are **informational** — source of truth is ADO Package Work Items (API hash)
+     - ARH will assign `<lang>-api-approved` labels on SDK PRs automatically when architect approves
+   - **Auto-repair**: `auto-sdk-build-fix` label triggers Copilot agent to fix custom code drift
+   - **ARM SDK PRs**: Reviewed by Haoling/Shanghai team with release plans attached
+
+6. 🧑‍💻 **Release** *(human gating)*
+   - Release pipeline triggered (becoming automatic — @raych1)
+   - Manual approval gate required for security (cannot be removed; ARM approval = Haoling/Shanghai team)
+   - Release gate: API Review Hub verifies approved API hash
+   - Packages published → release plan completes → Service Tree KPI updated
 
 
 ---
@@ -58,8 +92,8 @@ flowchart TD
 
 | Stage | Entry signal | Exit signal | Primary owner |
 |-------|-------------|------------|---------------|
-| 1. TypeSpec Authoring | Local TypeSpec change | PR-ready `.tsp` files | TypeSpec team / Haoling/Shanghai |
-| 2. Spec PR Validation | PR opened in `azure-rest-api-specs` | CI pass + labels + approved | Ray / Crystal / EngSys |
+| 1. TypeSpec Authoring | Local TypeSpec change | PR-ready `.tsp` files | TypeSpec team / @prkannap |
+| 2. Spec PR Validation | PR opened in `azure-rest-api-specs` | CI pass + labels + approved | @raych1 / @catalinaperalta / EngSys |
 | 3. SDK Generation | Spec PR merged | SDK PRs created per language | spec-gen-sdk / EngSys |
 | 4. SDK PR Validation | SDK PR opened in language repo | PR approved & merged | Language teams / architects |
 | 5. Release Coordination | SDK PR merged | Packages published + KPI updated | Release tooling / EngSys |
@@ -126,7 +160,7 @@ flowchart TD
 | **Purpose** | Author/update TypeSpec locally, validate, prepare for spec PR |
 | **Entry signal** | Service team has API requirements |
 | **Exit signal** | `.tsp` files compile, lint passes, ready for PR |
-| **Owners** | TypeSpec team (compiler/linter), Haoling/Shanghai (authoring agent), Mark (breaking change) |
+| **Owners** | TypeSpec team (compiler/linter), Haoling/Shanghai (authoring agent), @markcowl (breaking change) |
 | **Reviewer ask** | Confirm tool list and breaking change workflow |
 
 #### Happy path
@@ -155,7 +189,7 @@ flowchart TD
 | TypeSpec compiler | Compile `.tsp` files, catch syntax/type errors | TypeSpec team |
 | TypeSpec linter | Static guideline compliance (distinct from LintDiff) | TypeSpec team |
 | TypeSpec authoring agent (`azure-typespec-author` skill) | Assist with ARM/data-plane patterns, Azure REST API guidelines | Haoling/Shanghai |
-| `@azure-tools/typespec-breaking-change` | Phase A: same-version regression. Phase B: cross-version evolution. Inline suppression via decorators. | Mark Cowlishaw |
+| `@azure-tools/typespec-breaking-change` | Phase A: same-version regression. Phase B: cross-version evolution. Inline suppression via decorators. | @markcowl |
 
 #### Gap
 
@@ -167,7 +201,7 @@ Build author-validation loop where agent auto-applies suppression decorators bas
 
 #### Open questions
 
-- [ ] Does `@azure-tools/typespec-breaking-change` output provide enough structured context for agent auto-resolution? Need confirmation from Mark.
+- [ ] Does `@azure-tools/typespec-breaking-change` output provide enough structured context for agent auto-resolution? Need confirmation from @markcowl.
 
 </details>
 
@@ -183,7 +217,7 @@ Build author-validation loop where agent auto-applies suppression decorators bas
 | **Purpose** | Validate spec PR: compile, lint, breaking changes, APIView tokens, SDK dry-run |
 | **Entry signal** | PR opened/updated in `azure-rest-api-specs` |
 | **Exit signal** | CI passes + review labels applied + approved & merged |
-| **Owners** | EngSys (pipeline), Ray/Crystal (breaking change), TypeSpec team (lintdiff) |
+| **Owners** | EngSys (pipeline), @raych1 / @catalinaperalta (breaking change), TypeSpec team (lintdiff) |
 | **Reviewer ask** | Confirm CI ordering, label semantics, and blocking vs informational |
 
 #### Happy path
@@ -200,7 +234,7 @@ Build author-validation loop where agent auto-applies suppression decorators bas
 |---------|--------|-------|-------------|------------|
 | TypeSpec compile failure | CI red + compile error | Author | Fix TypeSpec | Manual |
 | LintDiff violation | CI warning/error | Author | Fix or request suppression | Manual |
-| Breaking change detected | `BreakingChangeReviewRequired` label | Breaking change review team | Approve, suppress, or redesign | Manual |
+| Breaking change detected | `BreakingChangeReviewRequired` label | @raych1 / @markcowl / @catalinaperalta | Approve, suppress, or redesign | Manual |
 | SDK dry-run failure | CI failure in spec-gen-sdk | Author / EngSys | Fix TypeSpec or escalate | Manual |
 | Namespace needs approval | `namespace-<lang>-pending` label | Namespace approvers | Apply `namespace-<lang>-approved` | Manual (label) |
 
@@ -214,10 +248,10 @@ Build author-validation loop where agent auto-applies suppression decorators bas
 | Spec PR validation pipeline | Orchestrates full validation suite | EngSys |
 | TypeSpec compiler | CI compilation | TypeSpec team |
 | TypeSpec Lintdiff | TypeSpec-native linting on PR diffs. Replacing Swagger-based Spectral LintDiff. Includes suppression process (@catalinaperalta). | EngSys / TypeSpec team |
-| `@azure-tools/typespec-breaking-change` | Phase A + B detection at **TypeSpec/spec level**. Auto-adds `BreakingChangeReviewRequired` / `VersioningReviewRequired` labels. Detects breaking changes in the API spec itself. | Mark |
-| SDK breaking change detector ([PR #15588](https://github.com/Azure/azure-sdk-tools/pull/15588)) | Detects breaking changes in the **generated SDK API surface** (complements spec-level detection). Reports changes that may not be visible at spec level but affect SDK consumers. Being integrated into spec CI validation. | Ray & Crystal |
+| `@azure-tools/typespec-breaking-change` | Phase A + B detection at **TypeSpec/spec level**. Auto-adds `BreakingChangeReviewRequired` / `VersioningReviewRequired` labels. Detects breaking changes in the API spec itself. | @markcowl |
+| SDK breaking change detector ([PR #15588](https://github.com/Azure/azure-sdk-tools/pull/15588)) | Detects breaking changes in the **generated SDK API surface** (complements spec-level detection). Reports changes that may not be visible at spec level but affect SDK consumers. Being integrated into spec CI validation. | @raych1 / @catalinaperalta |
 | APIView emitter (`typespec-apiview`) | Generates API surface tokens for SDK-level architect review (tokens used at Stage 4). **Will be retired with ARH.** | APIView team |
-| spec-gen-sdk | SDK generation validation (dry-run) | EngSys (Renhe) |
+| spec-gen-sdk | SDK generation validation (dry-run) | EngSys (@prkannap) |
 | Avocado / OAV | Legacy Swagger validation — **being deprecated** as TypeSpec-native tooling replaces them. | EngSys |
 
 #### Gaps
@@ -273,7 +307,7 @@ Build author-validation loop where agent auto-applies suppression decorators bas
 |------|------|-------|
 | tsp-client | Syncs TypeSpec project into SDK repo | EngSys |
 | Language emitters | Generate client library code (one per language) | Language teams |
-| spec-gen-sdk | Pipeline automation — runs full workflow, creates SDK PRs | EngSys (Renhe) |
+| spec-gen-sdk | Pipeline automation — runs full workflow, creates SDK PRs | EngSys (@prkannap) |
 | azsdk-cli (`azsdk_package_generate_code`) | Local orchestration (available for dev iteration) | azsdk-cli team |
 | `azsdk_customized_code_update` | Apply TypeSpec and code-level customizations | azsdk-cli team |
 
@@ -321,7 +355,7 @@ Structured error reporting from generation pipeline + agent-assisted troubleshoo
 | Custom code drift | Build failure | azsdk-cli team | `auto-sdk-build-fix` label → Copilot agent auto-repairs | Automatic |
 | Other CI failure | Build/test/lint red | Language owner | Pipeline troubleshooting agent diagnoses | Manual (agent-assisted) |
 | API review feedback | Architect comments | Author | Resolve via TypeSpec changes → re-generate → new commit → CI re-runs | Manual |
-| SDK breaking change | Detection report | Ray / Crystal | Review and approve or fix | Manual |
+| SDK breaking change | Detection report | @raych1 / @catalinaperalta | Review and approve or fix | Manual |
 
 <details>
 <summary>Deep spec: tools, contracts, and unresolved questions</summary>
@@ -331,7 +365,7 @@ Structured error reporting from generation pipeline + agent-assisted troubleshoo
 | Tool | Role | Owner |
 |------|------|-------|
 | Language CI pipelines | Build, test, lint, package validation | Language teams |
-| SDK breaking change detector | Detects breaking changes in generated SDK API surface. Being combined into validation check. | Ray & Crystal |
+| SDK breaking change detector | Detects breaking changes in generated SDK API surface. Being combined into validation check. | @raych1 / @catalinaperalta |
 | APIView (current) | SDK public API surface review via web UI | APIView team |
 | **API Review Hub** (replacing APIView) | Creates synthetic review PRs with `API.md` diffs. PRs never merged — exist only for review. Architects auto-assigned. Approval recorded in ADO Package Work Items (API hash). CI gates release by checking hash. | @tjprescott |
 | API review feedback resolution agent | Helps resolve API review comments via TypeSpec changes | azsdk-cli team |
@@ -383,10 +417,10 @@ Structured error reporting from generation pipeline + agent-assisted troubleshoo
 
 | Process | What | Owner | Status |
 |---------|------|-------|--------|
-| **SDK PR readiness** (before merge) | Make SDK PR release-ready: fix linter failures, test failures, merge conflicts, breaking changes, update changelog/metadata. Tracked in [#15705](https://github.com/Azure/azure-sdk-tools/issues/15705). | Praveen / Language teams / EngSys | Multiple items open — see issue |
+| **SDK PR readiness** (before merge) | Make SDK PR release-ready: fix linter failures, test failures, merge conflicts, breaking changes, update changelog/metadata. Tracked in [#15705](https://github.com/Azure/azure-sdk-tools/issues/15705). | @prkannap / Language teams / EngSys | Multiple items open — see issue |
 | **Release trigger** (after merge) | Auto-trigger release pipeline when SDK PR merges. Once PR is merged, changelog and metadata are already done — just need to release. | @raych1 | In progress — becoming automatic |
 
-> **Key clarification**: Changelog, metadata, and version updates happen *inside the SDK PR before merge* — they are part of SDK PR readiness. After merge, the only step is triggering the release pipeline (which Ray is automating). The manual approval gate on the release pipeline itself cannot be removed for security reasons.
+> **Key clarification**: Changelog, metadata, and version updates happen *inside the SDK PR before merge* — they are part of SDK PR readiness. After merge, the only step is triggering the release pipeline (which @raych1 is automating). The manual approval gate on the release pipeline itself cannot be removed for security reasons.
 
 #### Failure paths
 
@@ -469,6 +503,8 @@ Manual approval gate on release pipeline cannot be removed for security (ARM app
 | `review-out-of-date` | ARH | Review PR stale | No | 🔜 Part of ARH |
 | `architecture-review-needed` | ARH | Flags for architect review | No | 🔜 Part of ARH |
 
+> **📋 Proposal: Label naming consistency** — Current labels use mixed conventions: `PascalCase` (`BreakingChangeReviewRequired`, `ARMSignedOff`, `APIStewardshipBoard-SignedOff`), `kebab-case` (`auto-sdk-build-fix`, `release-plan-linked`, `namespace-<lang>-approved`), and hybrid (`ARM-Review-Required`). Consider standardizing to `kebab-case` (e.g., `breaking-change-review-required`, `arm-signed-off`) for new labels, with backward-compatible aliasing for existing ones.
+
 ### Approval gates (3 workstreams converging)
 
 | Workstream | Status | Scope | Long-term fate |
@@ -513,7 +549,7 @@ The system uses **prompt chaining**: independent sub-skills invoked sequentially
 ## Decision log
 
 - [ ] **D1**: How does ARH review PR creation get triggered on SDK PRs? (No automation today)
-- [x] **D2**: ~~Are `api-approved` / `<lang>-api-approved` labels authoritative or informational?~~ **Resolved: Labels are informational.** Source of truth is ADO Package Work Items (API hash). ARH will assign `<lang>-api-approved` labels on SDK PRs automatically when architect approves.
+- [x] **D2**: `api-approved` / `<lang>-api-approved` labels are **informational**. Source of truth is ADO Package Work Items (API hash). ARH will assign `<lang>-api-approved` labels on SDK PRs automatically when architect approves. *(Resolved)*
 - [ ] **D3**: Should service teams approve SDK PRs? (Not required today)
 - [ ] **D4**: Where does breaking-change enforcement live? (Spec level vs SDK level)
 - [ ] **D5**: What triggers auto-release after SDK PR merge? (Last E2E automation piece)
@@ -525,24 +561,28 @@ The system uses **prompt chaining**: independent sub-skills invoked sequentially
 
 ## Gap tracker
 
+<details>
+<summary>Gap tracker</summary>
+
 | # | Gap | Stage | Owner | Blocking? | Status |
 |---|-----|-------|-------|-----------|--------|
-| 1 | Breaking change findings require manual resolution | 1, 2 | Mark / Crystal | No | Open |
-| 2 | End-to-end CI chain not designed (no unified PR comment) | 2 | Ray & Crystal | Yes | Open |
-| 3 | `BreakingChangeReviewRequired` label routing to correct review team undefined | 2 | Ray | No | Open |
-| 4 | Generation errors silently fail — not surfaced as structured report, no agent troubleshooting | 3 | Praveen / spec-gen-sdk | Yes | Open |
-| 5 | SDK breaking change detection integration in progress | 4 | Ray & Crystal | No | In progress |
-| 6 | SDK PR not fully release-ready after generation: linter failures, test failures, merge conflicts, missing changelog/metadata. Tracked in [#15705](https://github.com/Azure/azure-sdk-tools/issues/15705). | 4 | Praveen / Language teams | Yes | Open |
-| 7 | Release trigger not automated — auto-trigger on SDK PR merge being built | 5 | @raych1 | Yes | In progress |
-| 8 | ARM vs data plane review gates not documented in detail (different review teams, labels, and blocking behavior) | 2, 4 | Sameeksha + Praveen | No | Open |
-| 9 | No endpoint liveness verification before spec PR merge | 2 | TBD | No | Aspirational |
-| 10 | Late spec validation (caught at SDK PR stage instead of spec PR stage) | 2, 4 | Praveen / spec-gen-sdk | Yes | Open |
-| 11 | Release pipeline provisioning delay for new RPs | 5 | EngSys | No | In progress |
-| 12 | ARH review PR creation not automated on SDK PRs | 4 | @tjprescott | Yes | Open |
-| 13 | API review feedback agent needs ARH compatibility | 4 | azsdk-cli team | No | Open |
-| 14 | Release gate transition (APIView → ARH) | 5 | @tjprescott / EngSys | No | Open |
+| 1 | End-to-end CI chain not designed (no unified PR comment) | 2 | @raych1 / @prkannap / @catalinaperalta | Yes | Open |
+| 2 | Generation errors silently fail — not surfaced as structured report, no agent troubleshooting | 3 | @prkannap / spec-gen-sdk | Yes | Open |
+| 3 | SDK PR not fully release-ready after generation: linter failures, test failures, merge conflicts, missing changelog/metadata. Tracked in [#15705](https://github.com/Azure/azure-sdk-tools/issues/15705). | 4 | @prkannap / Language teams | Yes | Open |
+| 4 | Release trigger not automated — auto-trigger on SDK PR merge being built | 5 | @raych1 | Yes | In progress |
+| 5 | ARH review PR creation not automated on SDK PRs | 4 | @tjprescott | Yes | Open |
+| 6 | Breaking change findings require manual resolution | 1, 2 | @markcowl / @catalinaperalta | No | Open |
+| 7 | `BreakingChangeReviewRequired` label routing to correct review team undefined | 2 | @raych1 / @markcowl / @catalinaperalta | No | Open |
+| 8 | SDK breaking change detection integration in progress | 4 | @raych1 / @catalinaperalta | No | In progress |
+| 9 | ARM vs data plane review gates not documented in detail (different review teams, labels, and blocking behavior) | 2, 4 | @samvaity / @prkannap | No | Open |
+| 10 | Release pipeline provisioning delay for new RPs | 5 | EngSys | No | In progress |
+| 11 | API review feedback agent needs ARH compatibility | 4 | azsdk-cli team | No | Open |
+| 12 | Release gate transition (APIView → ARH) | 5 | @tjprescott / EngSys | No | Open |
+| 13 | No endpoint liveness verification before spec PR merge | 2 | TBD | No | Aspirational |
 
 > **See also**: [SDK PR Release Readiness tracking issue (#15705)](https://github.com/Azure/azure-sdk-tools/issues/15705)
+
+</details>
 
 ---
 
@@ -564,16 +604,16 @@ The system uses **prompt chaining**: independent sub-skills invoked sequentially
 ## Exceptions and limitations
 
 <details>
-<summary>Exception 1: Architect Board Review</summary>
+<summary>Exception 1: Architect Board Review & Namespace Approval</summary>
 
-**Description**: First GA releases require architect board review. First preview requires namespace approval for new packages.
+**Description**: First GA releases require architect board review. First preview requires namespace approval for new packages. New SDK packages require namespace/naming approval before release.
 
-**Impact**: Cannot fully automate GA approval or first preview namespace approval.
+**Impact**: Cannot fully automate GA approval or first preview namespace approval. New package releases blocked until naming approved.
 
 **Status**: Three workstreams converging:
 1. **GitHub Forms + Actions (shipped)** — `arch-board-review.yml` is bridge until ARH. `namespace-review.yml` stays long-term.
 2. **API Review Hub (in progress)** — Replaces APIView for SDK review. Namespace out of scope.
-3. **Spec PR-based namespace approval ([PR #44085](https://github.com/Azure/azure-rest-api-specs/pull/44085), in progress)** — Namespace approval on spec PR merge.
+3. **Spec PR-based namespace approval ([PR #44085](https://github.com/Azure/azure-rest-api-specs/pull/44085), in progress)** — Namespace approval on spec PR merge. CI extracts namespaces, applies `namespace-<lang>-pending` labels, blocks merge until approved.
 
 </details>
 
@@ -589,18 +629,7 @@ The system uses **prompt chaining**: independent sub-skills invoked sequentially
 </details>
 
 <details>
-<summary>Exception 3: Package Naming Approval</summary>
-
-**Description**: New packages require namespace/naming approval before release.
-
-**Impact**: New package releases blocked until approved.
-
-**Status**: Being automated as merge gate on spec PRs. CI extracts namespaces, applies `namespace-<lang>-pending` labels, blocks merge until approved. Longer-term: namespace approval may move entirely to spec PR flow.
-
-</details>
-
-<details>
-<summary>Exception 4: .NET Team Tooling</summary>
+<summary>Exception 3: .NET Team Tooling</summary>
 
 **Description**: .NET team has tooling sharing infrastructure with azsdk-cli via `azsdk_customized_code_update` and TypeSpec linter/fixer patterns.
 

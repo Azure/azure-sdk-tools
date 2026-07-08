@@ -84,6 +84,7 @@ class KnowledgeGraphService:
         query: str,
         allowed_source_folders: "set[str] | None" = None,
         source_path_filters: "dict[str, list[str]] | None" = None,
+        top_k: "int | None" = None,
     ) -> "list[Reference] | None":
         """Retrieve graph-grounded source references for a query.
 
@@ -144,7 +145,7 @@ class KnowledgeGraphService:
         return extraction.extract_references_from_context(
             self._dfs,
             result.context_records,
-            top_k=int(cfg("GRAPH_REF_TOP_K", "8")),
+            top_k=(top_k if top_k is not None else int(cfg("GRAPH_REF_TOP_K", "8"))),
             community_top_n=int(cfg("GRAPH_COMMUNITY_REPORTS_TOP_N", "2")),
         )
 

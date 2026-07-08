@@ -426,10 +426,27 @@ async def graph_query(req: GraphQueryRequest) -> GraphSearchResult:
                 } or None
 
     try:
+        # Per-tenant graph-reference cap. Graph text-unit refs lift
+        # relational/process tenants but dilute definitional / spec-validation
+        # tenants (apispec, typespec) under a strict grader — the extra
+        # related-but-not-exact passages lengthen the answer off the precise
+        # rule. The community-report synthesis helps everywhere and is kept;
+        # only the text-unit flood is trimmed. Tenants and cap are
+        # config-overridable via GRAPH_DEFINITIONAL_TENANTS / GRAPH_DEFINITIONAL_TOP_K.
+        top_k: int | None = None
+        definitional_raw = app_config.get(
+            "GRAPH_DEFINITIONAL_TENANTS",
+            "api_spec_review_bot,typespec_channel_qa_bot",
+        )
+        definitional = {t.strip() for t in definitional_raw.split(",") if t.strip()}
+        if tenant_id_raw and tenant_id_raw in definitional:
+            top_k = int(app_config.get("GRAPH_DEFINITIONAL_TOP_K", "3"))
+
         sources: list[Reference] | None = await service.search_graph(
             normalised_query,
             allowed_source_folders=allowed_source_folders,
             source_path_filters=source_path_filters,
+            top_k=top_k,
         )
     except Exception:
         logger.exception("Graph query failed for %r", normalised_query)

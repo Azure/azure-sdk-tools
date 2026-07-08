@@ -1687,7 +1687,6 @@ class CheckDocstringParameters(BaseChecker):
         arg_names = []
         method_keyword_only_args = []
         vararg_name = None
-        kwarg_name = None
         is_overload_impl = False
         # specific case for constructor where docstring found in class def
         if isinstance(node, astroid.ClassDef):
@@ -1701,14 +1700,12 @@ class CheckDocstringParameters(BaseChecker):
                         arg.name for arg in constructor.args.kwonlyargs
                     ]
                     vararg_name = node.args.vararg
-                    kwarg_name = getattr(constructor.args, "kwarg", None)
                     break
 
         if isinstance(node, astroid.FunctionDef):
             arg_names = [arg.name for arg in node.args.args]
             method_keyword_only_args = [arg.name for arg in node.args.kwonlyargs]
             vararg_name = node.args.vararg
-            kwarg_name = node.args.kwarg
             is_overload_impl = self._is_overload_implementation(node)
 
         try:

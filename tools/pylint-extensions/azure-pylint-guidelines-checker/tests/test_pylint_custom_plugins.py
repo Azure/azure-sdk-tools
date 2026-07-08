@@ -3159,7 +3159,7 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
             self.checker.visit_functiondef(impl_node)
 
     def test_docstring_no_overload_still_checks_args(self):
-        """Regular function with *args (not an overload impl) should still be checked."""
+        """Regular function with undocumented *args (not an overload impl) should still be flagged."""
         file = open(
             os.path.join(
                 TEST_FOLDER,
@@ -3171,8 +3171,34 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
         file.close()
         # regular_function is the last function in the module (body[3])
         regular_node = node.body[3]
-        with self.assertNoMessages():
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="docstring-missing-param",
+                line=59,
+                node=regular_node,
+                args="args",
+                col_offset=0,
+                end_line=59,
+                end_col_offset=20,
+            ),
+        ):
             self.checker.check_parameters(regular_node)
+
+    def test_docstring_overload_implementation_async_skips_args_kwargs(self):
+        """Async overload implementation with *args/**kwargs should not report missing param errors."""
+        file = open(
+            os.path.join(
+                TEST_FOLDER,
+                "test_files",
+                "docstring_overload_args_kwargs.py",
+            )
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        # AsyncClient.do_thing implementation (3rd method in class body)
+        impl_node = node.body[4].body[2]
+        with self.assertNoMessages():
+            self.checker.visit_asyncfunctiondef(impl_node)
 
 
 class TestDoNotImportLegacySix(pylint.testutils.CheckerTestCase):

@@ -72,7 +72,7 @@ public class CheckPackageHelper : ICheckPackageHelper
                 CurrentValues = [directoryPath],
             });
 
-            return FinalizeResponse(response);
+            return response;
         }
 
         var matchedEntry = TryFindMatchingEntry(directoryPath, codeownersEntries);
@@ -85,7 +85,7 @@ public class CheckPackageHelper : ICheckPackageHelper
                 NextStep = $"/owners inspect path {FormatPromptValue(directoryPath)}{FormatRepoPhrase(repo)} and add package ownership, PR labels, and service owners so package {FormatPromptValue(packageName)} is covered",
             });
 
-            return FinalizeResponse(response);
+            return response;
         }
 
         response.MatchedPathExpression = matchedEntry.PathExpression;
@@ -130,7 +130,7 @@ public class CheckPackageHelper : ICheckPackageHelper
                     : $"/owners add label {FormatQuotedValue(PrLabelPlaceholder)} to path {FormatPromptValue(resolvedTarget)}{FormatRepoPhrase(repo)}",
             });
 
-            return FinalizeResponse(response);
+            return response;
         }
 
         var serviceOwnerLabels = GetServiceOwnerPromptLabels(response.PRLabels);
@@ -147,7 +147,7 @@ public class CheckPackageHelper : ICheckPackageHelper
                 RequiredCount = MinimumOwnerCount,
             });
 
-            return FinalizeResponse(response);
+            return response;
         }
 
         response.ServiceLabels = matchingServiceEntry.ServiceLabels ?? [];
@@ -169,7 +169,7 @@ public class CheckPackageHelper : ICheckPackageHelper
             });
         }
 
-        return FinalizeResponse(response);
+        return response;
     }
 
     /// <summary>
@@ -257,20 +257,6 @@ public class CheckPackageHelper : ICheckPackageHelper
             .Where(o => !string.IsNullOrEmpty(o) && !ParsingUtils.IsGitHubTeam(o))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
-    }
-
-    private static CheckPackageResponse FinalizeResponse(CheckPackageResponse response)
-    {
-        if (response.Issues.Count == 0)
-        {
-            return response;
-        }
-
-        response.ResponseError = response.Issues.Count == 1
-            ? response.Issues[0].Message
-            : $"check-package found {response.Issues.Count} issue(s) for path '{response.DirectoryPath}'.";
-
-        return response;
     }
 
     internal static string ResolvePackageName(string directoryPath)

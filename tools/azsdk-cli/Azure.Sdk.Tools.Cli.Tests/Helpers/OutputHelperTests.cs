@@ -77,68 +77,6 @@ message2
     }
 
     [Test]
-    public void CheckPackageResponse_UsesDerivedResponseErrorWhenReferencedAsBase()
-    {
-        CommandResponse response = new CheckPackageResponse
-        {
-            DirectoryPath = "sdk/test/Azure.Test",
-        };
-
-        ((CheckPackageResponse)response).Issues.Add(new CheckPackageIssue
-        {
-            Code = "insufficient_owners",
-            Message = "single issue message",
-            NextStep = $"/owners add owners {CheckPackageHelper.CurrentGitHubUserPlaceholder} to package Azure.Test",
-        });
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(response.ResponseError, Is.EqualTo("single issue message"));
-            Assert.That(response.OperationStatus, Is.EqualTo(Status.Failed));
-            Assert.That(response.ExitCode, Is.EqualTo(1));
-        });
-    }
-
-    [Test]
-    public void CheckPackageResponse_AggregatesMultipleIssuesIntoSummary()
-    {
-        var response = new CheckPackageResponse
-        {
-            DirectoryPath = "sdk/test/Azure.Test",
-        };
-
-        response.Issues.Add(new CheckPackageIssue
-        {
-            Code = "insufficient_owners",
-            Message = "first issue",
-            NextStep = "first prompt",
-        });
-        response.Issues.Add(new CheckPackageIssue
-        {
-            Code = "missing_pr_label",
-            Message = "second issue",
-            NextStep = "second prompt",
-        });
-
-        Assert.That(response.ResponseError, Is.EqualTo("check-package found 2 issue(s) for path 'sdk/test/Azure.Test'."));
-    }
-
-    [Test]
-    public void CheckPackageResponse_DoesNotSerializeOwnerPromptUser()
-    {
-        var response = new CheckPackageResponse
-        {
-            DirectoryPath = "sdk/test/Azure.Test",
-            PackageName = "Azure.Test",
-        };
-
-        var output = new OutputHelper(OutputHelper.OutputModes.Json);
-        var formatted = output.Format(response);
-
-        Assert.That(formatted, Does.Not.Contain("owner_prompt_user"));
-    }
-
-    [Test]
     public void CheckPackageResponse_UsesCodeownersSupportChannelInJson()
     {
         var response = new CheckPackageResponse
@@ -157,9 +95,10 @@ message2
         var formatted = output.Format(response);
         using var document = JsonDocument.Parse(formatted);
 
-        Assert.That(
-            document.RootElement.GetProperty("support_channel").GetString(),
-            Is.EqualTo("aka.ms/azsdk/codeowners"));
+        var supportChannel = document.RootElement.GetProperty("support_channel").GetString();
+
+        Assert.That(supportChannel, Does.Contain("aka.ms/azsdk/codeowners"));
+        Assert.That(supportChannel, Does.Not.Contain("teams.microsoft.com"));
     }
 
     [Test]

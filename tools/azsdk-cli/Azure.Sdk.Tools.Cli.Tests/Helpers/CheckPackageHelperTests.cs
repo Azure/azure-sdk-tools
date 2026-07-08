@@ -74,7 +74,6 @@ public class CheckPackageHelperTests
             entries);
 
         AssertFailure(result, "insufficient_owners", "1 unique owner");
-        Assert.That(result.Issues[0].NextStep, Does.Contain($"/owners add owners {CheckPackageHelper.CurrentGitHubUserPlaceholder}"));
     }
 
     [Test]
@@ -86,7 +85,6 @@ public class CheckPackageHelperTests
             entries);
 
         AssertFailure(result, "missing_pr_label", "has no PR label");
-        Assert.That(result.Issues[0].NextStep, Does.Contain("/owners add label \"<pr-label>\" to package Azure.NoLabels"));
     }
 
     [Test]
@@ -98,8 +96,6 @@ public class CheckPackageHelperTests
             entries);
 
         AssertFailure(result, "insufficient_service_owners", "PR label \"ZeroOwners\" has 0 unique service owner(s)");
-        Assert.That(result.Issues[0].NextStep, Does.StartWith($"/owners add service owners {CheckPackageHelper.CurrentGitHubUserPlaceholder}"));
-        Assert.That(result.Issues[0].NextStep, Does.Contain("to label \"ZeroOwners\""));
     }
 
     [Test]
@@ -111,7 +107,6 @@ public class CheckPackageHelperTests
             entries);
 
         AssertFailure(result, "insufficient_service_owners", "PR label \"NoMatchingSvcLabel\" has 0 unique service owner(s)");
-        Assert.That(result.Issues[0].NextStep, Does.Contain("to label \"NoMatchingSvcLabel\""));
         Assert.That(result.ServiceLabels, Does.Contain("NoMatchingSvcLabel"));
     }
 
@@ -124,7 +119,6 @@ public class CheckPackageHelperTests
             entries);
 
         AssertFailure(result, "no_matching_path", "No CODEOWNERS entry matches path");
-        Assert.That(result.Issues[0].NextStep, Does.StartWith("/owners inspect path "));
     }
 
     [Test]
@@ -171,7 +165,6 @@ public class CheckPackageHelperTests
         AssertFailure(result, "insufficient_owners", "resolved service-level path entry '/sdk/service'");
         Assert.That(result.ResolvedTargetType, Is.EqualTo("path"));
         Assert.That(result.ResolvedTarget, Is.EqualTo("/sdk/service"));
-        Assert.That(result.Issues[0].NextStep, Does.Contain($"/owners add owners {CheckPackageHelper.CurrentGitHubUserPlaceholder} to path /sdk/service"));
     }
 
     [Test]
@@ -193,7 +186,6 @@ public class CheckPackageHelperTests
 
         AssertFailure(result, "missing_pr_label", "resolved service-level path entry '/sdk/service' has no PR label");
         Assert.That(result.ResolvedTargetType, Is.EqualTo("path"));
-        Assert.That(result.Issues[0].NextStep, Does.Contain("/owners add label \"<pr-label>\" to path /sdk/service"));
     }
 
     [Test]

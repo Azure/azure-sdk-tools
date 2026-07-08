@@ -8,6 +8,8 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 
 public class CheckPackageResponse : CommandResponse
 {
+    private const string CodeownersSupportChannel = "See instructions for updating ownership at https://aka.ms/azsdk/codeowners";
+
     [JsonPropertyName("directory_path")]
     public string DirectoryPath { get; set; } = string.Empty;
 
@@ -60,6 +62,10 @@ public class CheckPackageResponse : CommandResponse
         };
         set => base.ResponseError = value;
     }
+
+    [JsonPropertyName("support_channel")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public override string? SupportChannel => OperationStatus == Status.Failed ? CodeownersSupportChannel : null;
 
     protected override string Format()
     {

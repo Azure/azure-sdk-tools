@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Helpers.Codeowners;
 using Azure.Sdk.Tools.Cli.Models;
@@ -135,5 +136,46 @@ message2
         var formatted = output.Format(response);
 
         Assert.That(formatted, Does.Not.Contain("owner_prompt_user"));
+    }
+
+    [Test]
+    public void CheckPackageResponse_UsesCodeownersSupportChannelInJson()
+    {
+        var response = new CheckPackageResponse
+        {
+            DirectoryPath = "sdk/test/Azure.Test",
+        };
+
+        response.Issues.Add(new CheckPackageIssue
+        {
+            Code = "insufficient_owners",
+            Message = "single issue message",
+            NextStep = "prompt",
+        });
+
+        var output = new OutputHelper(OutputHelper.OutputModes.Json);
+        var formatted = output.Format(response);
+        using var document = JsonDocument.Parse(formatted);
+
+        Assert.That(
+            document.RootElement.GetProperty("support_channel").GetString(),
+            Is.EqualTo("aka.ms/azsdk/codeowners"));
+    }
+
+    [Test]
+    public void DefaultCommandResponse_UsesDefaultSupportChannelInJson()
+    {
+        var response = new DefaultCommandResponse
+        {
+            ResponseError = "command failed",
+        };
+
+        var output = new OutputHelper(OutputHelper.OutputModes.Json);
+        var formatted = output.Format(response);
+        using var document = JsonDocument.Parse(formatted);
+
+        Assert.That(
+            document.RootElement.GetProperty("support_channel").GetString(),
+            Is.EqualTo(CommandResponse.SupportChannelMessage));
     }
 }

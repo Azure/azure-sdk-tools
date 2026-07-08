@@ -64,7 +64,7 @@ def upload(target_dir: Path, target: str, scenario_filter: str | None, registry_
     """
     from azure.ai.projects import AIProjectClient
 
-    endpoint = os.environ["AZURE_AI_PROJECT_ENDPOINT"]
+    endpoint = os.environ["AI_FOUNDRY_PROJECT_ENDPOINT"]
     files = sorted(target_dir.glob("*.jsonl"))
     if scenario_filter:
         files = [f for f in files if f.stem == scenario_filter]

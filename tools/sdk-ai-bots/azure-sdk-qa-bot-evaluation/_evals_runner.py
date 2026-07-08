@@ -251,11 +251,12 @@ def resolve_bot_token() -> str | None:
 def retrieve_channel_tenant_map(credential: Any) -> dict[str, str]:
     """Load the channel->tenant map from the bot config blob (for /completion routing)."""
     from azure.storage.blob import BlobServiceClient
+    from _app_config import storage_base_url
 
-    account = os.environ["STORAGE_BLOB_ACCOUNT"]
+    account_url = storage_base_url(credential)
     container = os.environ["BOT_CONFIG_CONTAINER"]
     blob_name = os.environ["BOT_CONFIG_CHANNEL_BLOB"]
-    service = BlobServiceClient(account_url=f"https://{account}.blob.core.windows.net", credential=credential)
+    service = BlobServiceClient(account_url=account_url, credential=credential)
     blob = service.get_container_client(container).get_blob_client(blob_name)
     import yaml
 

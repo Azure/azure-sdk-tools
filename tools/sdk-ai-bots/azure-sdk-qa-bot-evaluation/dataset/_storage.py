@@ -60,10 +60,11 @@ def credential_for(is_ci: bool) -> Any:
 def get_md_container_client(credential: Any) -> Any:
     """Container client for the configured Q&A markdown storage container."""
     from azure.storage.blob import BlobServiceClient
+    from _app_config import storage_base_url
 
-    account = os.environ["STORAGE_BLOB_ACCOUNT"]
+    account_url = storage_base_url(credential)
     container = os.environ["AI_ONLINE_PERFORMANCE_EVALUATION_STORAGE_CONTAINER"]
-    service = BlobServiceClient(account_url=f"https://{account}.blob.core.windows.net", credential=credential)
+    service = BlobServiceClient(account_url=account_url, credential=credential)
     return service.get_container_client(container)
 
 

@@ -15,6 +15,14 @@ pr: none
 # against the deployed bot's $(BOT_SERVICE_ENDPOINT) for the qa-bot-perf-<scenario>
 # datasets. Can also be run manually.
 parameters:
+  - name: environment
+    displayName: 'Target Environment'
+    type: string
+    default: dev
+    values:
+      - dev
+      - preview
+      - prod
   - name: scenarios
     type: object
     default:
@@ -25,15 +33,22 @@ parameters:
       - general
       - releasesupport
 
+variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+  - template: /eng/pipelines/templates/variables/image.yml
+  - ${{ if eq(parameters.environment, 'dev') }}:
+    - group: 'Azure SDK QA Bot Dev Variables'
+  - ${{ if eq(parameters.environment, 'preview') }}:
+    - group: 'Azure SDK QA Bot Preview Variables'
+  - ${{ if eq(parameters.environment, 'prod') }}:
+    - group: 'Azure SDK QA Bot Prod Variables'
+
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
   parameters:
     Use1ESOfficial: true
     stages:
       - stage: 'perf_evaluation'
-        variables:
-          - template: /eng/pipelines/templates/variables/globals.yml
-          - template: /eng/pipelines/templates/variables/image.yml
         pool:
               name: $(LINUXPOOL)
               image: $(LINUXVMIMAGE)
@@ -57,7 +72,7 @@ extends:
                   - task: AzureCLI@2
                     displayName: 'start agent server'
                     inputs:
-                      azureSubscription: 'azuresdkqabot-dev'
+                      azureSubscription: $(SERVICE_CONNECTION)
                       addSpnToEnvironment: true
                       scriptType: bash
                       scriptLocation: inlineScript
@@ -82,7 +97,7 @@ extends:
                   - task: AzureCLI@2
                     displayName: 'Run Perf Evals (${{ scenario }})'
                     inputs:
-                      azureSubscription: 'azuresdkqabot-dev'
+                      azureSubscription: $(SERVICE_CONNECTION)
                       scriptType: bash
                       scriptLocation: inlineScript
                       workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
@@ -95,9 +110,9 @@ extends:
                           --cache_result full
                     env:
                       SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-                      AZURE_AI_PROJECT_ENDPOINT: $(AZURE_AI_PROJECT_ENDPOINT)
+                      AI_FOUNDRY_PROJECT_ENDPOINT: $(AI_FOUNDRY_PROJECT_ENDPOINT)
                       AZURE_EVALUATION_MODEL_NAME: $(AZURE_EVALUATION_MODEL_NAME)
-                      STORAGE_BLOB_ACCOUNT: $(STORAGE_BLOB_ACCOUNT)
+                      AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
                       BOT_CONFIG_CONTAINER: $(BOT_CONFIG_CONTAINER)
                       BOT_CONFIG_CHANNEL_BLOB: $(BOT_CONFIG_CHANNEL_BLOB)
                       EVALUATE_THRESHOLD: $(EVALUATE_THRESHOLD)

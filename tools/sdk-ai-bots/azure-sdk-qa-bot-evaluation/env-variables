@@ -1,4 +1,4 @@
-AZURE_AI_PROJECT_ENDPOINT="your_azure_ai_project_endpoint"
+AI_FOUNDRY_PROJECT_ENDPOINT="your_azure_ai_project_endpoint"
 AZURE_EVALUATION_MODEL_NAME="gpt-4o"
 
 # bot /completion endpoint + token + tenant routing config
@@ -12,7 +12,10 @@ BOT_CONFIG_CHANNEL_BLOB=""
 # CI credential (Azure Pipelines) - injected automatically; leave to az login locally
 
 # dataset preparation only (blob scan)
-STORAGE_BLOB_ACCOUNT=""
+# Storage location is read from App Configuration (STORAGE_BASE_URL); set the
+# App Configuration endpoint below. Optionally set STORAGE_BASE_URL to override locally.
+AZURE_APPCONFIG_ENDPOINT=""
+# STORAGE_BASE_URL=""
 AI_ONLINE_PERFORMANCE_EVALUATION_STORAGE_CONTAINER=""
 
 #evaluation variables

@@ -21,18 +21,32 @@ Then `/clear` (extensions reload on `/clear`, or restart the CLI) and run `/env`
 
 ### Use it globally (any repo)
 
-The project install only loads inside this repo. To get `/rpi-*` in **every** repo, link the
-extension into the user directory:
+The project install only loads inside this repo. To get `/rpi-*` in **every** repo, put the
+extension in the user directory (`~/.copilot/extensions/`), which the CLI scans from any working
+directory. Two ways:
+
+**Symlink** — stays in sync as you `git pull`, and reuses the repo's already-installed deps:
 
 ```bash
 mkdir -p ~/.copilot/extensions
 ln -s "$(git rev-parse --show-toplevel)/.github/extensions/rpi" ~/.copilot/extensions/rpi
 ```
 
-A symlink stays in sync as you `git pull` (and reuses the repo's already-installed deps). Prefer a
-detached copy? `cp -r "$(git rev-parse --show-toplevel)/.github/extensions/rpi" ~/.copilot/extensions/rpi`
-then `npm install` in it. Uninstall with `rm ~/.copilot/extensions/rpi`. Run artifacts still land in
-`.rpi/` of whatever repo you launch the CLI from, so each project keeps its own runs.
+> Caveat: a symlink tracks a working-tree path, so it breaks if you switch the repo to a branch that
+> doesn't contain `.github/extensions/rpi/` (the folder disappears until you switch back). Use a
+> detached copy if you want it independent of the repo's current branch.
+
+**Detached copy** — a snapshot independent of the repo's branch; update it manually by re-copying:
+
+```bash
+mkdir -p ~/.copilot/extensions
+cp -r "$(git rev-parse --show-toplevel)/.github/extensions/rpi" ~/.copilot/extensions/rpi
+cd ~/.copilot/extensions/rpi && npm install
+```
+
+Either way: `/clear` (or restart) then `/env` to confirm `rpi` loaded. Uninstall with
+`rm ~/.copilot/extensions/rpi`. Run artifacts still land in `.rpi/` of whatever repo you launch the
+CLI from, so each project keeps its own runs.
 
 ## Quickstart
 

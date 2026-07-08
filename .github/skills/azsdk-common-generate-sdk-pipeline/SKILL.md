@@ -15,7 +15,7 @@ This skill runs the Azure SDK generation pipeline for a release plan and produce
 ## Triggers
 
 USE FOR: run SDK generation for all languages, generate SDK for a release plan, generate SDK for a release ID, pipeline SDK generation, generate SDK without a local clone, create SDK pull requests
-WHEN: "run SDK generation for all languages for release <id>", "generate SDK for release plan <id>", "generate SDK for release <id>", "pipeline SDK generation", "generate SDK without a local clone"
+WHEN: "run SDK generation, run SDK generation for all languages for release plan <id>", "generate SDK for release plan <id>", "generate SDK for release <id>", "pipeline SDK generation", "generate SDK without a local clone"
 DO NOT USE FOR: generating a single SDK locally from a local clone (use `azsdk-common-generate-sdk-locally`); releasing or publishing an already-generated package (use `azsdk-common-sdk-release`); API design review
 
 ## Rules

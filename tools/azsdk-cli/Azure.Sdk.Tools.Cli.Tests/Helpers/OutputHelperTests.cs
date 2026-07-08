@@ -1,8 +1,5 @@
-using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Helpers.Codeowners;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Helpers;
 

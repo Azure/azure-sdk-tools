@@ -71,11 +71,22 @@ stimuli:
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "run-command"
         config:
+          command: >-
+            node -e "const fs=require('fs');if(!fs.existsSync('node_modules')){console.error('[dependency-check:node_modules] missing');process.exit(2)}console.log('[dependency-check:node_modules] ok')"
+          expected_exit_code: 0
+      - type: "run-command"
+        config:
+          command: >-
+            node -e "const fs=require('fs');const path=require('path');const required=['@typespec/compiler','@typespec/http','@typespec/rest','@typespec/versioning','@azure-tools/typespec-azure-core','@azure-tools/typespec-azure-resource-manager','@azure-tools/typespec-autorest'];const missing=required.filter(p=>!fs.existsSync(path.join('node_modules',...p.split('/'),'package.json')));if(missing.length){console.error('[dependency-check:packages] missing: '+missing.join(', '));process.exit(2)}console.log('[dependency-check:packages] ok')"
+          expected_exit_code: 0
+      - type: "run-command"
+        config:
           command: "tsp compile ."
           expected_exit_code: 0
       - type: "file-matches"
         config:
-          pattern: 'listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(Parameters\s*=\s*)?\{\s*\.\.\.(Azure\.Core\.)?TopQueryParameter;\s*\.\.\.(Azure\.Core\.)?SkipQueryParameter;\s*\}\s*>|listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(Parameters\s*=\s*)?\{\s*\.\.\.(Azure\.ResourceManager\.)?ArmTopParameter;\s*\.\.\.(Azure\.ResourceManager\.)?ArmSkipParameter;\s*\}\s*>|model\s+\w+\s+(is|extends)\s+(Azure\.Core\.)?StandardListQueryParameters\s*;[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(Parameters\s*=\s*)?\w+\s*>'
+          # Accept standard top/skip params as inline spreads, intersection, wrapper model, or StandardListQueryParameters wrapper.
+          pattern: '(?:model\s+(\w+)\s*(?:\{\s*(?=[^}]*\.\.\.(?:Azure\.(?:Core\.TopQueryParameter|ResourceManager\.ArmTopParameter)|TopQueryParameter|ArmTopParameter)\s*;)(?=[^}]*\.\.\.(?:Azure\.(?:Core\.SkipQueryParameter|ResourceManager\.ArmSkipParameter)|SkipQueryParameter|ArmSkipParameter)\s*;)[^}]*\}|(?:is|extends)\s+(?:Azure\.Core\.)?StandardListQueryParameters\s*;)\s*[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*Parameters\s*=\s*\1\s*>|listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(?:(?:Parameters\s*=\s*)?\{\s*(?=[^}]*\.\.\.(?:Azure\.(?:Core\.TopQueryParameter|ResourceManager\.ArmTopParameter)|TopQueryParameter|ArmTopParameter)\s*;)(?=[^}]*\.\.\.(?:Azure\.(?:Core\.SkipQueryParameter|ResourceManager\.ArmSkipParameter)|SkipQueryParameter|ArmSkipParameter)\s*;)[^}]*\}|Parameters\s*=\s*(?:(?:Azure\.(?:Core\.TopQueryParameter|ResourceManager\.ArmTopParameter)|TopQueryParameter|ArmTopParameter)\s*&\s*(?:Azure\.(?:Core\.SkipQueryParameter|ResourceManager\.ArmSkipParameter)|SkipQueryParameter|ArmSkipParameter)|(?:Azure\.(?:Core\.SkipQueryParameter|ResourceManager\.ArmSkipParameter)|SkipQueryParameter|ArmSkipParameter)\s*&\s*(?:Azure\.(?:Core\.TopQueryParameter|ResourceManager\.ArmTopParameter)|TopQueryParameter|ArmTopParameter)))\s*>)'
           path: "*.tsp"
       - type: "file-not-matches"
         config:
@@ -98,7 +109,8 @@ stimuli:
       - type: "file-matches"
         config:
           path: "*.tsp"
-          pattern: 'listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(Parameters\s*=\s*)?\{\s*\.\.\.(Azure\.Core\.)?TopQueryParameter;\s*\.\.\.(Azure\.Core\.)?SkipQueryParameter;\s*\}\s*>|listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(Parameters\s*=\s*)?\{\s*\.\.\.(Azure\.ResourceManager\.)?ArmTopParameter;\s*\.\.\.(Azure\.ResourceManager\.)?ArmSkipParameter;\s*\}\s*>|model\s+\w+\s+(is|extends)\s+(Azure\.Core\.)?StandardListQueryParameters\s*;[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(Parameters\s*=\s*)?\w+\s*>'
+          # Accept standard top/skip params as inline spreads, intersection, wrapper model, or StandardListQueryParameters wrapper.
+          pattern: '(?:model\s+(\w+)\s*(?:\{\s*(?=[^}]*\.\.\.(?:Azure\.(?:Core\.TopQueryParameter|ResourceManager\.ArmTopParameter)|TopQueryParameter|ArmTopParameter)\s*;)(?=[^}]*\.\.\.(?:Azure\.(?:Core\.SkipQueryParameter|ResourceManager\.ArmSkipParameter)|SkipQueryParameter|ArmSkipParameter)\s*;)[^}]*\}|(?:is|extends)\s+(?:Azure\.Core\.)?StandardListQueryParameters\s*;)\s*[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*Parameters\s*=\s*\1\s*>|listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(?:(?:Parameters\s*=\s*)?\{\s*(?=[^}]*\.\.\.(?:Azure\.(?:Core\.TopQueryParameter|ResourceManager\.ArmTopParameter)|TopQueryParameter|ArmTopParameter)\s*;)(?=[^}]*\.\.\.(?:Azure\.(?:Core\.SkipQueryParameter|ResourceManager\.ArmSkipParameter)|SkipQueryParameter|ArmSkipParameter)\s*;)[^}]*\}|Parameters\s*=\s*(?:(?:Azure\.(?:Core\.TopQueryParameter|ResourceManager\.ArmTopParameter)|TopQueryParameter|ArmTopParameter)\s*&\s*(?:Azure\.(?:Core\.SkipQueryParameter|ResourceManager\.ArmSkipParameter)|SkipQueryParameter|ArmSkipParameter)|(?:Azure\.(?:Core\.SkipQueryParameter|ResourceManager\.ArmSkipParameter)|SkipQueryParameter|ArmSkipParameter)\s*&\s*(?:Azure\.(?:Core\.TopQueryParameter|ResourceManager\.ArmTopParameter)|TopQueryParameter|ArmTopParameter)))\s*>)'
       - type: "file-not-matches"
         config:
           path: "*.tsp"

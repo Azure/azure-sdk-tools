@@ -67,19 +67,29 @@ stimuli:
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "run-command"
         config:
+          command: >-
+            node -e "const fs=require('fs');if(!fs.existsSync('node_modules')){console.error('[dependency-check:node_modules] missing');process.exit(2)}console.log('[dependency-check:node_modules] ok')"
+          expected_exit_code: 0
+      - type: "run-command"
+        config:
+          command: >-
+            node -e "const fs=require('fs');const path=require('path');const required=['@typespec/compiler','@typespec/http','@typespec/rest','@typespec/versioning','@azure-tools/typespec-azure-core','@azure-tools/typespec-azure-resource-manager','@azure-tools/typespec-autorest'];const missing=required.filter(p=>!fs.existsSync(path.join('node_modules',...p.split('/'),'package.json')));if(missing.length){console.error('[dependency-check:packages] missing: '+missing.join(', '));process.exit(2)}console.log('[dependency-check:packages] ok')"
+          expected_exit_code: 0
+      - type: "run-command"
+        config:
           command: "tsp compile ."
           expected_exit_code: 0
       - type: "file-matches"
         config:
-          pattern: '@removed\(Versions\.v2025_11_01\)'
+          pattern: '@removed\((?:Microsoft\.Widget\.)?Versions\.v2025_11_01\)'
           path: "employee.tsp"
       - type: "file-matches"
         config:
-          pattern: '@renamedFrom\(Versions\.v2025_11_01, "age"\)'
+          pattern: '@renamedFrom\((?:Microsoft\.Widget\.)?Versions\.v2025_11_01, "age"\)'
           path: "employee.tsp"
       - type: "file-matches"
         config:
-          pattern: '@added\(Versions\.v2025_11_01\)'
+          pattern: '@added\((?:Microsoft\.Widget\.)?Versions\.v2025_11_01\)'
           path: "employee.tsp"
       - type: "file-matches"
         config:
@@ -102,15 +112,15 @@ stimuli:
       - type: "file-matches"
         config:
           path: "employee.tsp"
-          pattern: '@removed\(Versions\.v2025_11_01\)'
+          pattern: '@removed\((?:Microsoft\.Widget\.)?Versions\.v2025_11_01\)'
       - type: "file-matches"
         config:
           path: "employee.tsp"
-          pattern: '@renamedFrom\(Versions\.v2025_11_01, "age"\)'
+          pattern: '@renamedFrom\((?:Microsoft\.Widget\.)?Versions\.v2025_11_01, "age"\)'
       - type: "file-matches"
         config:
           path: "employee.tsp"
-          pattern: '@added\(Versions\.v2025_11_01\)'
+          pattern: '@added\((?:Microsoft\.Widget\.)?Versions\.v2025_11_01\)'
       - type: "file-matches"
         config:
           path: "employee.tsp"

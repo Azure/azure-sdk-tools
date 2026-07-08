@@ -426,26 +426,10 @@ async def graph_query(req: GraphQueryRequest) -> GraphSearchResult:
                 } or None
 
     try:
-        # Per-tenant community-report gate. Community-report synthesis lifts
-        # relational/process tenants (general, python, onboarding) but dilutes
-        # definitional / spec-validation tenants (API-spec review, TypeSpec),
-        # where a broad cross-document overview pulls the answer away from the
-        # precise rule. Disable it for those tenants; the list is
-        # config-overridable via GRAPH_COMMUNITY_DISABLED_TENANTS.
-        community_top_n: int | None = None
-        disabled_raw = app_config.get(
-            "GRAPH_COMMUNITY_DISABLED_TENANTS",
-            "api_spec_review_bot,typespec_channel_qa_bot",
-        )
-        disabled = {t.strip() for t in disabled_raw.split(",") if t.strip()}
-        if tenant_id_raw and tenant_id_raw in disabled:
-            community_top_n = 0
-
         sources: list[Reference] | None = await service.search_graph(
             normalised_query,
             allowed_source_folders=allowed_source_folders,
             source_path_filters=source_path_filters,
-            community_top_n=community_top_n,
         )
     except Exception:
         logger.exception("Graph query failed for %r", normalised_query)

@@ -5,25 +5,38 @@ using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.ClassifyItems;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
+using Azure.Sdk.Tools.Cli.Tools.Package;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {   
     public interface IClassifyService
     {
-        Task<ClassifyResponse> ClassifyItemsAsync(ClassificationKind classifyType, ClassifyRequest request, CancellationToken ct);
+        public Task<TResponse> ClassifyItemsAsync<TResponse>(ClassificationKind classifyType, ClassifyRequest request, CancellationToken ct) where TResponse : ClassifyResponse;
     }
     public class ClassificationService: IClassifyService
     {
         private readonly ICopilotAgentRunner _agentRunner;
+        private static readonly string _defaultCopilotAgentModel = "claude-opus-4.5";
         /// <summary>
         /// The model that this agent will use. Defaults to "claude-opus-4.5".
         /// </summary>
-        public string CopilotAgentModel { get; set; } = "claude-opus-4.5";
+        public string CopilotAgentModel { get; set; } = _defaultCopilotAgentModel;
         public ClassificationService(ICopilotAgentRunner agentRunner)
         {
             _agentRunner = agentRunner;
         }
-
+        public async Task<TResponse> ClassifyItemsAsync<TResponse>(ClassificationKind classifyType, ClassifyRequest request, CancellationToken ct) where TResponse : ClassifyResponse
+        {
+            var response = await ClassifyItemsAsync(classifyType, request, ct);
+            if (response is TResponse typedResponse)
+            {
+                return typedResponse;
+            }
+            else
+            {
+                throw new InvalidOperationException($"Classification kind '{classifyType}' returned '{response.GetType().Name}', but caller expected '{typeof(TResponse).Name}'.");
+            }
+        }
         public async Task<ClassifyResponse> ClassifyItemsAsync(ClassificationKind classifyType, ClassifyRequest request, CancellationToken ct)
         {
             switch (classifyType)
@@ -42,7 +55,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                             sdkBreakingRequest.TspProjectPath
                         );
                         var classifiedResult = await BatchClassifyItems(classifyTemplate, null, ct);
-                        return new ClassifyResponse(classifyType, classifiedResult);
+                        return new ClassifySdkBreakingChangesResponse(classifiedResult);
 
                     } else
                     {
@@ -71,7 +84,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                             allClassifiedResults.AddRange(classifyResult);
 
                         }
-                        return new ClassifyResponse(classifyType, allClassifiedResults);
+                        return new ClassifyCustomizationResponse(allClassifiedResults);
 
                     } else
                     {

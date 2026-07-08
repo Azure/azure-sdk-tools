@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using System.Text;
-using Octokit;
 
 namespace Azure.Sdk.Tools.Cli.Prompts;
 

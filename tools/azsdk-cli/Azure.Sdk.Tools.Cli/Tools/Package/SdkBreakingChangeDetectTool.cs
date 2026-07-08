@@ -166,7 +166,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                                     var tspProjectPath = tspConfigPath != null ? await gitHelper.DiscoverRepoRootAsync(tspConfigPath, ct) : null;
                                     var sdkBreakingPattern = await languageService.GetSDKBreakingPattern(sdkRepoRoot, ct);
                                     var classifyRequest = new ClassifySdkBreakingChangesRequest(sdkchanges.ChangelogMD, sdkRepoRoot, sdkBreakingPattern, languageService.Language.ToString(), tspProjectPath);
-                                    var classifyResult = await _classifyService.ClassifyItemsAsync(ClassificationKind.SdkBreakingChange, classifyRequest, ct);
+                                    var classifyResult = await _classifyService.ClassifyItemsAsync<ClassifySdkBreakingChangesResponse>(ClassificationKind.SdkBreakingChange, classifyRequest, ct);
                                     if (classifyResult == null || classifyResult.ClassifiedResult == null)
                                     {
                                         logger.LogError("Failed to classify SDK breaking changes.");
@@ -180,7 +180,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                                     var result = new SdkBreakingChangeDetectResult
                                     {
                                         HasBreakingChanges = true,
-                                        BreakingChanges = classifyResult.ClassifiedResult as List<SdkBreakingChange> ?? new List<SdkBreakingChange>(),
+                                        BreakingChanges = classifyResult.ClassifiedResult,
                                     };
                                     return new PackageOperationResponse()
                                     {
@@ -251,20 +251,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     internal class SdkChange
     {
         [JsonPropertyName("changes")]
-        [Required]
+        [JsonRequired]
         public string ChangelogMD { get; set; }
         [JsonPropertyName("hasBreakingChange")]
-        [Required]
+        [JsonRequired]
         public bool HasBreakingChange { get; set; }
     }
 
     public class SdkBreakingChange
     {
         [JsonPropertyName("breakingChange")]
-        [Required]
+        [JsonRequired]
         public string BreakingChange { get; set; }
         [JsonPropertyName("category")]
-        [Required]
+        [JsonRequired]
         public string Category { get; set; }
         [JsonPropertyName("resolution")]
         public string? Resolution { get; set; }

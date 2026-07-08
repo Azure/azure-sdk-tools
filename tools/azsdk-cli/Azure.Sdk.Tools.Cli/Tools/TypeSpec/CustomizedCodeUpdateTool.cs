@@ -320,7 +320,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             }
             return response;
         }
-        ClassifyResponse response;
+        ClassifyCustomizationResponse response;
         try
         {
             List<FeedbackItem> feedbackItems = [];
@@ -376,7 +376,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     BatchSize = 50,
                     EditScope = editScope
                 };
-                response = await _classifierService.ClassifyItemsAsync(ClassificationKind.Customization, classifyRequest, ct);
+                response = await _classifierService.ClassifyItemsAsync<ClassifyCustomizationResponse>(ClassificationKind.Customization, classifyRequest, ct);
 
             }
             catch (CopilotCliUnavailableException ex)
@@ -424,7 +424,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             bool buildSucceeded = false;
             string? buildError = null;
 
-            if (response.ClassifiedResult == null || !(response.ClassifiedResult is List<FeedbackItemClassificationDetails> classifiedItems) || classifiedItems.Count == 0)
+            if (response.ClassifiedResult == null || response.ClassifiedResult.Count == 0)
             {
                 return CreateResponse(new CustomizedCodeUpdateResponse
                 {
@@ -443,8 +443,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             var manualChanges = 0;
             var noChanges = 0;
 
-            List<FeedbackItemClassificationDetails> classifications = response.ClassifiedResult as List<FeedbackItemClassificationDetails> ?? new List<FeedbackItemClassificationDetails>();
-            foreach (var itemDetails in classifications)
+            foreach (var itemDetails in response.ClassifiedResult)
             {
                 feedbackDictionary.TryGetValue(itemDetails.ItemId, out var feedbackItem);
 
@@ -635,13 +634,11 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     BatchSize = 50,
                     EditScope = editScope
                 };
-                var secondResponse = await _classifierService.ClassifyItemsAsync(ClassificationKind.Customization, classifyRequest, ct);
+                var secondResponse = await _classifierService.ClassifyItemsAsync<ClassifyCustomizationResponse>(ClassificationKind.Customization, classifyRequest, ct);
 
                 if (secondResponse.ClassifiedResult != null)
                 {
-                    var secondClassifications = secondResponse.ClassifiedResult as List<FeedbackItemClassificationDetails> ?? new List<FeedbackItemClassificationDetails>();
-
-                    foreach (var itemDetails in secondClassifications)
+                    foreach (var itemDetails in secondResponse.ClassifiedResult)
                     {
                         if (itemDetails.Classification == ClassificationCodeCustomization)
                         {

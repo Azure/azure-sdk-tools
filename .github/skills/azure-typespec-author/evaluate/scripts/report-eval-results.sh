@@ -50,30 +50,19 @@ def trial_passed(grade):
     return grade.get("passed", isinstance(score, (int, float)) and score >= 1.0)
 
 
-def clean_evidence(evidence):
-    evidence_lines = [line for line in evidence.splitlines() if not line.startswith("No disallowed")]
-    return "\n".join(evidence_lines).strip()
+def trial_tool_calls_passed(grade):
+    for detail in grade.get("details", []):
+        if detail.get("name", detail.get("type", "?")) == "tool-calls":
+            return detail.get("passed", True)
+    return None
 
 
-def report_grader_failure(grader):
-    gname = grader.get("name", grader.get("type", "?"))
-    if gname not in REPORT_GRADERS:
-        return []
-
-    lines = []
-    if not grader.get("passed", True):
-        evidence = clean_evidence(grader.get("evidence", "no evidence"))
-        if evidence:
-            lines.append(f"  - {gname}: {evidence}")
-        else:
-            lines.append(f"  - {gname}")
-    elif isinstance(grader.get("score"), (int, float)) and grader.get("score") < 1.0:
-        evidence = clean_evidence(grader.get("evidence", ""))
-        if evidence:
-            lines.append(f"  - {gname} (score: {grader.get('score')}): {evidence}")
-        else:
-            lines.append(f"  - {gname} (score: {grader.get('score')})")
-    return lines
+def trial_summary(record):
+    grade = record.get("gradeResult") or {}
+    status = "PASS" if trial_passed(grade) else "FAIL"
+    tool_calls = trial_tool_calls_passed(grade)
+    tool_calls_mark = "tool-calls:pass" if tool_calls else "tool-calls:fail" if tool_calls is not None else "tool-calls:n/a"
+    return f"trial{record.get('trialIndex', '?')}:{status} {tool_calls_mark}"
 
 
 # With config.runs > 1, Vally emits one record per trial. Group trials by
@@ -90,17 +79,16 @@ with open(RESULTS_FILE, encoding="utf-8") as results:
         if not name:
             # No grade and no stimulus name - nothing actionable to report.
             continue
-        trials[name].append(grade)
+        trials[name].append(record)
 
 failed_count = 0
 flaky_count = 0
 case_data = {}
-detail_lines = []
 
 for name in sorted(trials):
-    grades = trials[name]
-    total = len(grades)
-    trial_statuses = [trial_passed(grade) for grade in grades]
+    records = sorted(trials[name], key=lambda record: record.get("trialIndex", 0))
+    total = len(records)
+    trial_statuses = [trial_passed(record.get("gradeResult") or {}) for record in records]
     passed_trials = sum(1 for passed in trial_statuses if passed)
     passed = passed_trials > 0
     flaky = 0 < passed_trials < total
@@ -108,7 +96,8 @@ for name in sorted(trials):
 
     # The tool-calls grader is considered satisfied if it passed in any trial.
     tool_calls_passed = None
-    for grade in grades:
+    for record in records:
+        grade = record.get("gradeResult") or {}
         for detail in grade.get("details", []):
             if detail.get("name", detail.get("type", "?")) == "tool-calls":
                 detail_passed = detail.get("passed", True)
@@ -121,36 +110,28 @@ for name in sorted(trials):
         "total": total,
         "tool_calls_passed": tool_calls_passed,
         "trial_statuses": trial_statuses,
+        "trial_summaries": [trial_summary(record) for record in records],
     }
 
     if flaky:
         flaky_count += 1
-        detail_lines.append(f"[FLAKY] {name} (passed {passed_trials}/{total} trials)")
 
     if passed:
         continue
 
-    # Hard failure: every trial failed. Report evidence from the first trial
-    # with grade details; no-grade trials are still represented in the summary.
+    # Hard failure: every trial failed.
     failed_count += 1
-    detail_lines.append(f"[FAILED] {name} (passed {passed_trials}/{total} trials)")
-    first_grade_with_details = next((grade for grade in grades if grade.get("details")), None)
-    if first_grade_with_details:
-        for detail in first_grade_with_details.get("details", []):
-            detail_lines.extend(report_grader_failure(detail))
-    else:
-        detail_lines.append("  - no grade result - stimulus errored or timed out")
 
 # Per-trial pass rate: for trial index t, how many stimuli passed that trial.
 # The i-th record of a stimulus is its i-th trial when Vally writes one record
 # per trial.
-max_trials = max((len(grades) for grades in trials.values()), default=0)
+max_trials = max((len(records) for records in trials.values()), default=0)
 trial_passed_counts = [0] * max_trials
 trial_total_counts = [0] * max_trials
-for grades in trials.values():
-    for trial_index, grade in enumerate(grades):
+for records in trials.values():
+    for trial_index, record in enumerate(sorted(records, key=lambda item: item.get("trialIndex", 0))):
         trial_total_counts[trial_index] += 1
-        if trial_passed(grade):
+        if trial_passed(record.get("gradeResult") or {}):
             trial_passed_counts[trial_index] += 1
 
 total_cases = len(case_data)
@@ -163,25 +144,19 @@ for trial_index in range(max_trials):
 print(f"fail in {fail_label} trials: {failed_count}")
 
 pass_rate = total_passed * 100 // total_cases if total_cases else 0
-print(f"Effective pass rate (pass@k): {total_passed}/{total_cases} ({pass_rate}%), {flaky_count} flaky")
+print(f"Summary pass rate: {total_passed}/{total_cases} ({pass_rate}%), {flaky_count} flaky")
 for case_id in sorted(case_data.keys()):
     result = case_data[case_id]
     status = "PASS" if result["passed"] else "FAIL"
-    trial_marks = " ".join(
-        f"trial{index + 1}:{'PASS' if passed else 'FAIL'}"
-        for index, passed in enumerate(result["trial_statuses"])
-    )
     tool_calls_passed = result.get("tool_calls_passed")
     tool_calls_mark = "tool-calls:pass" if tool_calls_passed else "tool-calls:fail" if tool_calls_passed is not None else ""
-    print(f"  {case_id} [{status}] {trial_marks} {tool_calls_mark}".rstrip())
-
-if detail_lines:
-    print(f"\n--- Suite $SUITE_NAME flaky/failed details ---")
-    for line in detail_lines:
-        print(line)
+    case_pass_rate = result["passed_trials"] * 100 // result["total"] if result["total"] else 0
+    print(f"  {case_id} [{status}] passRate={case_pass_rate}% ({result['passed_trials']}/{result['total']}) {tool_calls_mark}".rstrip())
+    for summary in result["trial_summaries"]:
+        print(f"    {summary}")
 
 if failed_count > 0:
-    print(f"\n##vso[task.logissue type=error]Suite $SUITE_NAME: {failed_count} stimulus/stimuli failed all trials (effective pass rate pass@k: {total_passed}/{total_cases})")
+    print(f"\n##vso[task.logissue type=error]Suite $SUITE_NAME: {failed_count} stimulus/stimuli failed all trials (summary pass rate: {total_passed}/{total_cases})")
 else:
     print(f"Suite $SUITE_NAME: all stimuli passed within trials ({total_passed}/{total_cases}, {flaky_count} flaky)")
 EOF

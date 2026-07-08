@@ -63,6 +63,14 @@ namespace ApiViewCopilot {
     @header("Authorization") authorization: string,
   ): ResolvePackageResponse;
 
+  /** Files a GitHub issue from an APIView "Report Issue" interaction. */
+  @route("/report-issue")
+  @post
+  op reportIssue(
+    @body request: ReportIssueRequest,
+    @header("Authorization") authorization: string,
+  ): ReportIssueResponse;
+
   /** Test endpoint to verify authentication is working. */
   @route("/auth-test")
   @get
@@ -261,5 +269,29 @@ namespace ApiViewCopilot {
 
     /** The revision label (e.g., 'Source Branch:main'). */
     revisionLabel?: string;
+  }
+
+  /** Request to file a GitHub issue from an APIView "Report Issue" interaction. */
+  model ReportIssueRequest {
+    /** The user's free-form description of the problem. */
+    description: string;
+
+    /** Optional URL to the APIView review the user is on. */
+    reviewLink?: string;
+
+    /** Optional language hint (e.g. 'python', 'C#'). The LLM may also infer it from the description / context. */
+    language?: string;
+
+    /** Optional APIView comment id. When provided, the server fetches the comment context (text, code snippet, language, element id, source) automatically. */
+    commentId?: string;
+  }
+
+  /** Response after filing a GitHub issue. */
+  model ReportIssueResponse {
+    /** The URL of the newly created GitHub issue. */
+    issueUrl: string;
+
+    /** The number of the newly created GitHub issue. */
+    issueNumber: int32;
   }
 }

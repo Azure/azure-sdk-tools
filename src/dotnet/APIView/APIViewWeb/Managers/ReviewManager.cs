@@ -12,7 +12,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using ApiView;
+using APIView;
 using APIViewWeb.Helpers;
 using APIViewWeb.Hubs;
 using APIViewWeb.LeanModels;
@@ -395,23 +395,6 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
-        /// ApproveReviewAsync
-        /// </summary>
-        /// <param name="user"></param>
-        /// <param name="reviewId"></param>
-        /// <param name="notes"></param>
-        /// <returns></returns>
-        public async Task ApproveReviewAsync(ClaimsPrincipal user, string reviewId, string notes = "")
-        {
-            ReviewListItemModel review = await _reviewsRepository.GetReviewAsync(reviewId);
-            if (review.IsApproved)
-            {
-                return;
-            }
-            await ToggleReviewApproval(user, review);
-        }
-
-        /// <summary>
         /// Request namespace review for TypeSpec and mark related SDK language reviews as namespace approval requested
         /// </summary>
         /// <param name="user"></param>
@@ -611,9 +594,7 @@ namespace APIViewWeb.Managers
                 _logger.LogInformation("Copilot job started successfully. JobId: {JobId}, ReviewId: {ReviewId}, APIRevisionId: {APIRevisionId}", 
                     jobStartedResponse.JobId, reviewId, activeApiRevision.Id);
                 
-                activeApiRevision.CopilotReviewJobId = jobStartedResponse.JobId;
-                activeApiRevision.CopilotReviewInProgress = true;
-                await _apiRevisionsManager.UpdateAPIRevisionAsync(activeApiRevision);
+                await _apiRevisionsManager.UpdateAPIRevisionCopilotDetailsAsync(activeApiRevision, copilotReviewInProgress: true, copilotReviewJobId: jobStartedResponse.JobId);
                 _pollingJobQueueManager.Enqueue(new AIReviewJobInfoModel()
                 {
                     JobId = jobStartedResponse.JobId,
@@ -626,8 +607,7 @@ namespace APIViewWeb.Managers
                 _logger.LogError(e, "Failed to start Copilot job for ReviewId: {ReviewId}, APIRevisionId: {APIRevisionId}", 
                     reviewId, activeApiRevision.Id);
                 
-                activeApiRevision.CopilotReviewInProgress = false;
-                await _apiRevisionsManager.UpdateAPIRevisionAsync(activeApiRevision);
+                await _apiRevisionsManager.UpdateAPIRevisionCopilotDetailsAsync(activeApiRevision, copilotReviewInProgress: false);
                 throw new Exception($"Copilot Failed: {e.Message}");
             }
         }
@@ -823,27 +803,29 @@ namespace APIViewWeb.Managers
                     foreach (var review in reviews)
                     {
                         var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(review.Id);
-                        foreach (var revision in revisions)
+                        foreach (var revision in revisions.Where(r => !r.IsDeleted))
                         {
-                            if (
-                                revision.Files.First().HasOriginal &&
-                                LanguageServiceHelpers.GetLanguageService(revision.Language, _languageServices)?.CanUpdate(revision.Files.First().VersionString) == true)
+                            APICodeFileModel firstFile = revision.Files.First();
+                            if (!firstFile.HasOriginal || LanguageServiceHelpers.GetLanguageService(revision.Language, _languageServices)
+                                    ?.CanUpdate(firstFile.VersionString) != true)
                             {
-                                var requestTelemetry = new RequestTelemetry { Name = $"Updating {review.Language} Review with id: {review.Id}"  };
-                                var operation = _telemetryClient.StartOperation(requestTelemetry);
-                                try
-                                {
-                                    await Task.Delay(100);
-                                    await _apiRevisionsManager.UpdateAPIRevisionAsync(revision, languageService, verifyUpgradabilityOnly);
-                                }
-                                catch (Exception e)
-                                {
-                                    _telemetryClient.TrackException(e);
-                                }
-                                finally
-                                {
-                                    _telemetryClient.StopOperation(operation);
-                                }
+                                continue;
+                            }
+
+                            var requestTelemetry = new RequestTelemetry { Name = $"Updating {review.Language} Review with id: {review.Id}"  };
+                            var operation = _telemetryClient.StartOperation(requestTelemetry);
+                            try
+                            {
+                                await Task.Delay(100);
+                                await _apiRevisionsManager.UpdateAPIRevisionAsync(revision, languageService, verifyUpgradabilityOnly);
+                            }
+                            catch (Exception e)
+                            {
+                                _telemetryClient.TrackException(e);
+                            }
+                            finally
+                            {
+                                _telemetryClient.StopOperation(operation);
                             }
                         }
                     }
@@ -962,7 +944,7 @@ namespace APIViewWeb.Managers
                     try
                     {
                         var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(review.Id);
-                        foreach (var revision in revisions)
+                        foreach (var revision in revisions.Where(r => !r.IsDeleted))
                         {
                             foreach (var file in revision.Files)
                             {

@@ -84,7 +84,7 @@ def _add_setup_package_to_temp(src_dir):
     return dest_dir
 
 
-PKG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest"))
+PKG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apiview-stub-generator-test"))
 SDIST_PATH = _build_dist(PKG_PATH, "sdist", ".tar.gz")
 WHL_PATH = _build_dist(PKG_PATH, "wheel", ".whl")
 
@@ -161,12 +161,12 @@ class TestApiView:
         # uninstall optional dependencies if installed
         for dep in ["httpx", "pandas"]:
             self._uninstall_dep(dep)
-        # uninstall apistubgentest if installed, so new install will be from pkg_path
-        self._uninstall_dep("apistubgentest")
+        # uninstall apiview_stub_generator_test if installed, so new install will be from pkg_path
+        self._uninstall_dep("apiview_stub_generator_test")
         # if pkg is src, rm *.egg-info from path to check that pkg metadata parsing works
         if os.path.isdir(pkg_path):
             for f in os.listdir(pkg_path):
-                if f == "apistubgentest.egg-info":
+                if f == "apiview_stub_generator_test.egg-info":
                     shutil.rmtree(os.path.join(pkg_path, f))
                     break
         temp_path = tempfile.gettempdir()
@@ -177,12 +177,12 @@ class TestApiView:
         # skip conditional optional dependencies
         assert not self._dependency_installed("qsharp")
         # assert package name is correct
-        assert apiview.package_name == "apistubgentest"
+        assert apiview.package_name == "apiview-stub-generator-test"
 
     @mark.parametrize("pkg_path", SETUP_PATHS, ids=SETUP_IDS)
     def test_setup_py_line_ids(self, pkg_path):
-        # uninstall apistubgentest if installed, so new install will be from pkg_path
-        self._uninstall_dep("apistubgentest")
+        # uninstall apiview_stub_generator_test if installed, so new install will be from pkg_path
+        self._uninstall_dep("apiview_stub_generator_test")
         temp_path = tempfile.gettempdir()
         stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path, verbose=True)
         apiview = stub_gen.generate_tokens()
@@ -243,11 +243,11 @@ class TestApiView:
         temp_path = tempfile.gettempdir()
         stub_gen = StubGenerator(pkg_path=PKG_PATH, temp_path=temp_path)
         apiview = stub_gen.generate_tokens()
-        # ensure we have only the expected diagnostics when testing apistubgentest
+        # ensure we have only the expected diagnostics when testing apiview_stub_generator_test
         unclaimed = PylintParser.get_unclaimed()
         # AdvancedTypeHintClient.validate_endpoint adds 1 diagnostic (client-method-should-not-use-static-method).
         # Python 3.12+ produces 2 additional diagnostics due to pylint behavior differences.
-        expected_diagnostic_count = 96 if sys.version_info >= (3, 12) else 94
+        expected_diagnostic_count = 84 if sys.version_info >= (3, 12) else 82
         assert len(apiview.diagnostics) == expected_diagnostic_count
         # The "needs copyright header" error corresponds to a file, which isn't directly
         # represented in APIView
@@ -270,14 +270,14 @@ class TestApiView:
 
         # Verify PylintCheckerViolationsClient has diagnostics at class, constructor, and method levels
         violations_diags = [d for d in apiview.diagnostics if 'PylintCheckerViolationsClient' in d['TargetId']]
-        class_level = [d for d in violations_diags if d['TargetId'] == 'apistubgentest.PylintCheckerViolationsClient']
-        constructor_level = [d for d in violations_diags if d['TargetId'] == 'apistubgentest.PylintCheckerViolationsClient.__init__']
+        class_level = [d for d in violations_diags if d['TargetId'] == 'apiview_stub_generator_test.PylintCheckerViolationsClient']
+        constructor_level = [d for d in violations_diags if d['TargetId'] == 'apiview_stub_generator_test.PylintCheckerViolationsClient.__init__']
         method_level = [d for d in violations_diags if 'with_too_many_args' in d['TargetId'] or 'list_secrets' in d['TargetId'] or 'set_secret' in d['TargetId'] or 'get_secret' in d['TargetId']]
 
-        assert len(violations_diags) == 16, f"Should have 16 total diagnostics, got {len(violations_diags)}"
+        assert len(violations_diags) == 15, f"Should have 15 total diagnostics, got {len(violations_diags)}"
         assert len(class_level) == 2, f"Should have 2 class-level diagnostics, got {len(class_level)}"
         assert len(constructor_level) == 2, f"Should have 2 constructor-level diagnostics, got {len(constructor_level)}"
-        assert len(method_level) == 12, f"Should have 12 method-level diagnostics (including overloads), got {len(method_level)}"
+        assert len(method_level) == 11, f"Should have 11 method-level diagnostics (including overloads), got {len(method_level)}"
 
         # Verify that overload methods with @distributed_trace have diagnostics without duplicates
         list_secrets_overload1_diags = [d for d in violations_diags if 'list_secrets_1' in d['TargetId']]
@@ -288,7 +288,7 @@ class TestApiView:
         assert len(set_secret_overload2_diags) == 3, f"set_secret overload 2 should have diagnostics for overloads and implementation, got {len(set_secret_overload2_diags)}"
 
         # Verify enum value and property diagnostics exist
-        enum_value_diags = [d for d in apiview.diagnostics if d['TargetId'] == 'apistubgentest.PylintViolationEnum.password' or d['TargetId'] == 'apistubgentest.PylintViolationEnum.CERTIFICATE']
+        enum_value_diags = [d for d in apiview.diagnostics if d['TargetId'] == 'apiview_stub_generator_test.PylintViolationEnum.password' or d['TargetId'] == 'apiview_stub_generator_test.PylintViolationEnum.CERTIFICATE']
         property_diags = [d for d in apiview.diagnostics if 'handwritten_property' in d['TargetId']]
 
         assert len(enum_value_diags) == 2, f"Should have 2 enum value diagnostics for PylintViolationEnum.password and PylintViolationEnum.CERTIFICATE, got {len(enum_value_diags)}"

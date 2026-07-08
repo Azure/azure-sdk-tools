@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
@@ -15,6 +15,7 @@ namespace Azure.Sdk.Tools.SnippetGenerator
     public class Program
     {
         [Option(ShortName = "b")] public string BasePath { get; set; }
+        [Option(ShortName = "t")] public string TargetPath { get; set; }
         [Option(ShortName = "sm")] public bool StrictMode { get; set; }
 
         public async Task OnExecuteAsync()
@@ -22,13 +23,25 @@ namespace Azure.Sdk.Tools.SnippetGenerator
             List<string> unUsedSnippets = null;
             Stopwatch sw = new Stopwatch();
             sw.Start();
+            var targetPath = TargetPath ?? BasePath;
             var baseDirectory = new DirectoryInfo(BasePath).Name;
+            
+            if (Directory.Exists(BasePath) == false)
+            {
+                throw new DirectoryNotFoundException($"The specified base path '{BasePath}' does not exist.");
+            }
+
+            if (Directory.Exists(targetPath) == false)
+            {
+                throw new DirectoryNotFoundException($"The specified target path '{targetPath}' does not exist.");
+            }
+
             if (baseDirectory.Equals("sdk"))
             {
                 var tasks = new List<Task<IEnumerable<string>>>();
                 foreach (var sdkDir in Directory.GetDirectories(BasePath))
                 {
-                    tasks.Add(new DirectoryProcessor(sdkDir).ProcessAsync());
+                    tasks.Add(new DirectoryProcessor(sdkDir, targetPath).ProcessAsync());
                 }
 
                 await Task.WhenAll(tasks);
@@ -38,7 +51,7 @@ namespace Azure.Sdk.Tools.SnippetGenerator
             }
             else
             {
-                unUsedSnippets = (await new DirectoryProcessor(BasePath).ProcessAsync()).ToList();
+                unUsedSnippets = (await new DirectoryProcessor(BasePath, targetPath).ProcessAsync()).ToList();
             }
             Console.WriteLine();
             if (unUsedSnippets.Any())

@@ -225,3 +225,299 @@ Describe "Integration: Update Changelog Entry and Write Back" {
         $updatedEntries["0.9.0"] | Should -Not -BeNullOrEmpty
     }
 }
+
+Describe "Python post-release changelog parsing" {
+    BeforeEach {
+        $global:Language = "python"
+    }
+
+    AfterEach {
+        $global:Language = ""
+    }
+
+    It "Should parse changelog with GA post-release version '1.0.0.post1'" {
+        $changelogContent = @"
+# Release History
+
+## 1.0.0.post1 (2025-03-01)
+
+### Other Changes
+
+- Updated package metadata for distribution
+
+## 1.0.0 (2025-02-15)
+
+### Features Added
+
+- Initial GA release
+"@
+        $entries = Get-ChangeLogEntriesFromContent $changelogContent
+        $entries | Should -Not -BeNullOrEmpty
+        $entries["1.0.0.post1"] | Should -Not -BeNullOrEmpty
+        $entries["1.0.0.post1"].ReleaseVersion | Should -Be "1.0.0.post1"
+        $entries["1.0.0.post1"].ReleaseStatus | Should -Be "(2025-03-01)"
+        $entries["1.0.0.post1"].Sections.ContainsKey("Other Changes") | Should -BeTrue
+        $entries["1.0.0"] | Should -Not -BeNullOrEmpty
+    }
+
+    It "Should parse changelog with beta post-release version '1.0.0b2.post1'" {
+        $changelogContent = @"
+# Release History
+
+## 1.0.0b2.post1 (2025-03-01)
+
+### Other Changes
+
+- Updated classifier metadata for beta release
+
+## 1.0.0b2 (2025-02-15)
+
+### Features Added
+
+- Beta feature
+"@
+        $entries = Get-ChangeLogEntriesFromContent $changelogContent
+        $entries | Should -Not -BeNullOrEmpty
+        $entries["1.0.0b2.post1"] | Should -Not -BeNullOrEmpty
+        $entries["1.0.0b2.post1"].ReleaseVersion | Should -Be "1.0.0b2.post1"
+        $entries["1.0.0b2.post1"].Sections.ContainsKey("Other Changes") | Should -BeTrue
+        $entries["1.0.0b2"] | Should -Not -BeNullOrEmpty
+    }
+
+    It "Should parse changelog with alpha post-release version '2.0.0a20201208001.post2'" {
+        $changelogContent = @"
+# Release History
+
+## 2.0.0a20201208001.post2 (2025-03-01)
+
+### Other Changes
+
+- Updated alpha package metadata
+
+## 2.0.0a20201208001 (2025-02-15)
+
+### Features Added
+
+- Alpha feature
+"@
+        $entries = Get-ChangeLogEntriesFromContent $changelogContent
+        $entries | Should -Not -BeNullOrEmpty
+        $entries["2.0.0a20201208001.post2"] | Should -Not -BeNullOrEmpty
+        $entries["2.0.0a20201208001.post2"].ReleaseVersion | Should -Be "2.0.0a20201208001.post2"
+        $entries["2.0.0a20201208001"] | Should -Not -BeNullOrEmpty
+    }
+
+    It "Should parse changelog with unreleased post-release version" {
+        $changelogContent = @"
+# Release History
+
+## 1.0.0.post2 (Unreleased)
+
+### Other Changes
+
+## 1.0.0.post1 (2025-02-15)
+
+### Other Changes
+
+- Updated package metadata
+"@
+        $entries = Get-ChangeLogEntriesFromContent $changelogContent
+        $entries | Should -Not -BeNullOrEmpty
+        $entries["1.0.0.post2"] | Should -Not -BeNullOrEmpty
+        $entries["1.0.0.post2"].ReleaseStatus | Should -Be "(Unreleased)"
+        $entries["1.0.0.post1"] | Should -Not -BeNullOrEmpty
+    }
+
+    It "Should parse changelog with multiple post-release versions" {
+        $changelogContent = @"
+# Release History
+
+## 1.0.0.post3 (2025-04-01)
+
+### Other Changes
+
+- Updated package classifiers
+
+## 1.0.0.post2 (2025-03-15)
+
+### Other Changes
+
+- Updated package description
+
+## 1.0.0.post1 (2025-03-01)
+
+### Other Changes
+
+- Updated package metadata
+
+## 1.0.0 (2025-02-15)
+
+### Features Added
+
+- Initial release
+"@
+        $entries = Get-ChangeLogEntriesFromContent $changelogContent
+        $entries | Should -Not -BeNullOrEmpty
+        $entries["1.0.0.post3"] | Should -Not -BeNullOrEmpty
+        $entries["1.0.0.post2"] | Should -Not -BeNullOrEmpty
+        $entries["1.0.0.post1"] | Should -Not -BeNullOrEmpty
+        $entries["1.0.0"] | Should -Not -BeNullOrEmpty
+    }
+}
+
+Describe "Python post-release changelog sorting" {
+    BeforeEach {
+        $global:Language = "python"
+    }
+
+    AfterEach {
+        $global:Language = ""
+    }
+
+    It "Should sort post-release versions after their base version" {
+        $changelogContent = @"
+# Release History
+
+## 1.0.0 (2025-02-15)
+
+### Features Added
+
+- Initial release
+
+## 1.0.0.post1 (2025-03-01)
+
+### Other Changes
+
+- Updated package metadata
+"@
+        $entries = Get-ChangeLogEntriesFromContent $changelogContent
+        $sorted = Sort-ChangeLogEntries -changeLogEntries $entries
+
+        # post1 should come before (sort higher than) base 1.0.0 in descending sort
+        $sortedVersions = @($sorted | ForEach-Object { $_.ReleaseVersion })
+        $postIndex = [array]::IndexOf($sortedVersions, "1.0.0.post1")
+        $baseIndex = [array]::IndexOf($sortedVersions, "1.0.0")
+        $postIndex | Should -BeLessThan $baseIndex
+    }
+}
+
+Describe "Python post-release changelog integration" {
+    BeforeEach {
+        $global:Language = "python"
+        $script:tempChangelogPath = Join-Path ([System.IO.Path]::GetTempPath()) "CHANGELOG_$([System.Guid]::NewGuid().ToString()).md"
+    }
+
+    AfterEach {
+        $global:Language = ""
+        if (Test-Path $script:tempChangelogPath) {
+            Remove-Item -Path $script:tempChangelogPath -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    It "Should round-trip a changelog with post-release versions" {
+        $initialChangelog = @"
+# Release History
+
+## 1.0.0.post1 (2025-03-01)
+
+### Other Changes
+
+- Updated package metadata
+
+## 1.0.0 (2025-02-15)
+
+### Features Added
+
+- Initial release
+"@
+        Set-Content -Path $script:tempChangelogPath -Value $initialChangelog
+
+        $entries = Get-ChangeLogEntries -ChangeLogLocation $script:tempChangelogPath
+        $entries | Should -Not -BeNullOrEmpty
+        $entries["1.0.0.post1"] | Should -Not -BeNullOrEmpty
+        $entries["1.0.0"] | Should -Not -BeNullOrEmpty
+
+        # Write back and re-read
+        Set-ChangeLogContent -ChangeLogLocation $script:tempChangelogPath -ChangeLogEntries $entries
+
+        $reReadEntries = Get-ChangeLogEntries -ChangeLogLocation $script:tempChangelogPath
+        $reReadEntries["1.0.0.post1"] | Should -Not -BeNullOrEmpty
+        $reReadEntries["1.0.0.post1"].ReleaseVersion | Should -Be "1.0.0.post1"
+        $reReadEntries["1.0.0.post1"].ReleaseStatus | Should -Be "(2025-03-01)"
+        $reReadEntries["1.0.0"] | Should -Not -BeNullOrEmpty
+    }
+
+    It "Should update a post-release changelog entry content" {
+        $initialChangelog = @"
+# Release History
+
+## 1.0.0.post1 (Unreleased)
+
+### Other Changes
+
+## 1.0.0 (2025-02-15)
+
+### Features Added
+
+- Initial release
+"@
+        Set-Content -Path $script:tempChangelogPath -Value $initialChangelog
+
+        $entries = Get-ChangeLogEntries -ChangeLogLocation $script:tempChangelogPath
+        $postEntry = $entries["1.0.0.post1"]
+        $postEntry | Should -Not -BeNullOrEmpty
+
+        $newContent = "### Other Changes`n`n- Updated package metadata`n- Updated readme formatting"
+        Set-ChangeLogEntryContent -ChangeLogEntry $postEntry -NewContent $newContent -InitialAtxHeader $entries.InitialAtxHeader
+        Set-ChangeLogContent -ChangeLogLocation $script:tempChangelogPath -ChangeLogEntries $entries
+
+        $updatedEntries = Get-ChangeLogEntries -ChangeLogLocation $script:tempChangelogPath
+        $updatedEntries["1.0.0.post1"] | Should -Not -BeNullOrEmpty
+        $updatedEntries["1.0.0.post1"].Sections.ContainsKey("Other Changes") | Should -BeTrue
+
+        $updatedContent = Get-Content -Path $script:tempChangelogPath -Raw
+        $updatedContent | Should -Match "Updated package metadata"
+        $updatedContent | Should -Match "Updated readme formatting"
+
+        # Verify the base version is preserved
+        $updatedEntries["1.0.0"] | Should -Not -BeNullOrEmpty
+    }
+
+    It "Should preserve post-release entries when adding a new version" {
+        $initialChangelog = @"
+# Release History
+
+## 1.0.0.post1 (2025-03-01)
+
+### Other Changes
+
+- Updated package metadata
+
+## 1.0.0 (2025-02-15)
+
+### Features Added
+
+- Initial release
+"@
+        Set-Content -Path $script:tempChangelogPath -Value $initialChangelog
+
+        $entries = Get-ChangeLogEntries -ChangeLogLocation $script:tempChangelogPath
+
+        # Add a new version entry
+        $newEntry = [pscustomobject]@{
+            ReleaseVersion = "1.1.0"
+            ReleaseStatus  = "(Unreleased)"
+            ReleaseTitle   = "## 1.1.0 (Unreleased)"
+            ReleaseContent = @("", "### Features Added", "", "- New feature for 1.1.0")
+            Sections = @{ "Features Added" = @("", "- New feature for 1.1.0") }
+        }
+        $entries["1.1.0"] = $newEntry
+
+        Set-ChangeLogContent -ChangeLogLocation $script:tempChangelogPath -ChangeLogEntries $entries
+
+        $updatedEntries = Get-ChangeLogEntries -ChangeLogLocation $script:tempChangelogPath
+        $updatedEntries["1.1.0"] | Should -Not -BeNullOrEmpty
+        $updatedEntries["1.0.0.post1"] | Should -Not -BeNullOrEmpty
+        $updatedEntries["1.0.0"] | Should -Not -BeNullOrEmpty
+    }
+}

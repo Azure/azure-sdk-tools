@@ -23,9 +23,11 @@ jobs:
     displayName: Merge '${{ parameters.BranchToMergeFrom }}' into '${{ parameters.BranchToMergeTo }}'
 
     steps:
+    - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+
     - template: ./templates/steps/sync-repo-merge-branch.yml
       parameters:
-        GH_TOKEN: $(azuresdk-github-pat)
+        GH_TOKEN: $(GH_TOKEN)
         EnableAutoMerge: false
         Repos:
           ${{ parameters.Repo }}:

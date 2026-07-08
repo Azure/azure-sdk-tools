@@ -42,3 +42,4 @@ jobs:
         PRBranchName: increment-package-version-${{ parameters.ToolDirectory }}-$(Build.BuildId)
         CommitMsg: "Update MCP tools documentation"
         WorkingDirectory: $(System.DefaultWorkingDirectory)
+        AuthToken: ''

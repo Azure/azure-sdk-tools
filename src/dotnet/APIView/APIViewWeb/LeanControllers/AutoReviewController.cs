@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using ApiView;
+using APIView;
 using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
@@ -68,11 +68,14 @@ public class AutoReviewController : ControllerBase
                 var codeFile = await _codeFileManager.CreateCodeFileAsync(originalName: file.FileName, fileStream: openReadStream,
                     runAnalysis: false, memoryStream: memoryStream);
 
-                // Override the CI daily-build version embedded in the token file with the caller-supplied version.
-                bool shouldOverrideCodeFileVersion = string.IsNullOrWhiteSpace(codeFile.PackageVersion) || new AzureEngSemanticVersion(codeFile.PackageVersion).IsDailyDevBuild;
-                packageVersion = !string.IsNullOrWhiteSpace(packageVersion) && shouldOverrideCodeFileVersion
+                string submittedPackageVersion = packageVersion;
+                string parsedArtifactPackageVersion = codeFile.PackageVersion;
+                bool shouldOverrideCodeFileVersion = string.IsNullOrWhiteSpace(parsedArtifactPackageVersion) || new AzureEngSemanticVersion(parsedArtifactPackageVersion).IsDailyDevBuild;
+                packageVersion = !string.IsNullOrWhiteSpace(submittedPackageVersion) && shouldOverrideCodeFileVersion
                     ? packageVersion
-                    : codeFile.PackageVersion;
+                    : parsedArtifactPackageVersion;
+
+                TrackPackageVersionNormalization("UploadAutoReview", codeFile.PackageName, submittedPackageVersion, parsedArtifactPackageVersion, packageVersion, shouldOverrideCodeFileVersion);
 
                 codeFile.PackageVersion = packageVersion;
                 (ReviewListItemModel review, APIRevisionListItemModel apiRevision) = await _autoReviewService.CreateAutomaticRevisionAsync(user: User, codeFile: codeFile, label: label, originalName: file.FileName, memoryStream: memoryStream, packageType: packageType, compareAllRevisions: compareAllRevisions);
@@ -153,11 +156,15 @@ public class AutoReviewController : ControllerBase
                 return StatusCode(statusCode: StatusCodes.Status204NoContent, $"API review code file for package {packageName} is not found in DevOps pipeline artifacts.");
             }
 
-            // Override the CI daily-build version embedded in the token file with the caller-supplied version.
-            bool shouldOverrideCodeFileVersion = string.IsNullOrWhiteSpace(codeFile.PackageVersion) || new AzureEngSemanticVersion(codeFile.PackageVersion).IsDailyDevBuild;
-            packageVersion = !string.IsNullOrWhiteSpace(packageVersion) && shouldOverrideCodeFileVersion
+            string submittedPackageVersion = packageVersion;
+            string parsedArtifactPackageVersion = codeFile.PackageVersion;
+            bool shouldOverrideCodeFileVersion = string.IsNullOrWhiteSpace(parsedArtifactPackageVersion) || new AzureEngSemanticVersion(parsedArtifactPackageVersion).IsDailyDevBuild;
+            packageVersion = !string.IsNullOrWhiteSpace(submittedPackageVersion) && shouldOverrideCodeFileVersion
                 ? packageVersion
-                : codeFile.PackageVersion;
+                : parsedArtifactPackageVersion;
+
+            TrackPackageVersionNormalization("CreateApiReview", codeFile.PackageName, submittedPackageVersion, parsedArtifactPackageVersion, packageVersion, shouldOverrideCodeFileVersion);
+
             codeFile.PackageVersion = packageVersion;
 
             (ReviewListItemModel review, APIRevisionListItemModel apiRevision) = await _autoReviewService.CreateAutomaticRevisionAsync(user: User, codeFile: codeFile, label: label, originalName: originalFilePath, memoryStream: memoryStream, packageType: packageType, compareAllRevisions: compareAllRevisions, sourceBranch: sourceBranch);
@@ -211,6 +218,21 @@ public class AutoReviewController : ControllerBase
                 }
             });
         }
+    }
+
+    private void TrackPackageVersionNormalization(string operation, string packageName, string submittedPackageVersion, string parsedArtifactPackageVersion, string normalizedPackageVersion, bool parsedVersionCanBeOverridden)
+    {
+        _telemetryClient.TrackEvent("APIViewAutomaticRevisionPackageVersionNormalization", new Dictionary<string, string>
+        {
+            { "operation", operation },
+            { "packageName", packageName ?? "null" },
+            { "submittedPackageVersion", submittedPackageVersion ?? "null" },
+            { "parsedArtifactPackageVersion", parsedArtifactPackageVersion ?? "null" },
+            { "normalizedPackageVersion", normalizedPackageVersion ?? "null" },
+            { "packageVersionSubmitted", (!string.IsNullOrWhiteSpace(submittedPackageVersion)).ToString() },
+            { "parsedVersionCanBeOverridden", parsedVersionCanBeOverridden.ToString() },
+            { "submittedPackageVersionUsed", (!string.IsNullOrWhiteSpace(submittedPackageVersion) && parsedVersionCanBeOverridden).ToString() }
+        });
     }
 
 

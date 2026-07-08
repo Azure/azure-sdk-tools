@@ -36,6 +36,7 @@ import { basename, dirname, extname, relative, resolve } from "node:path";
 import { doesFileExist } from "./network.js";
 import { sortOpenAPIDocument } from "@azure-tools/typespec-autorest";
 import { createTspClientMetadata } from "./metadata.js";
+import { parse as parseShell } from "shell-quote";
 
 const defaultRelativeEmitterPackageJsonPath = joinPaths("eng", "emitter-package.json");
 
@@ -735,7 +736,7 @@ export async function generateConfigFilesCommand(argv: any) {
   await writeFile(emitterPath, JSON.stringify(emitterPackageJson, null, 2));
   Logger.info(`${basename(emitterPath)} file generated in '${dirname(emitterPath)}' directory`);
 
-  await generateLockFileCommandCore(outputDir, emitterPath);
+  await generateLockFileCommandCore(outputDir, emitterPath, parseNpmArgs(argv["npm-args"]));
 }
 
 export async function generateLockFileCommand(argv: any) {
@@ -743,17 +744,23 @@ export async function generateLockFileCommand(argv: any) {
     argv["output-dir"],
     resolveEmitterPathFromArgs(argv) ??
       joinPaths(await getRepoRoot(argv["output-dir"]), defaultRelativeEmitterPackageJsonPath),
+    parseNpmArgs(argv["npm-args"]),
   );
 }
 
 export async function generateLockFileCommandCore(
   outputDir: string,
   emitterPackageJsonPath: string,
+  npmArgs: string[] = [],
 ) {
   Logger.info("Generating lock file...");
   const args: string[] = ["install"];
   if (process.env["TSPCLIENT_FORCE_INSTALL"]?.toLowerCase() === "true") {
     args.push("--force");
+  }
+  args.push(...npmArgs);
+  if (npmArgs.length > 0) {
+    Logger.info("Passing additional npm flags to the `npm install` command.");
   }
   const tempRoot = await createTempDirectory(outputDir);
   await cp(emitterPackageJsonPath, joinPaths(tempRoot, "package.json"));
@@ -838,4 +845,24 @@ function resolveEmitterPathFromArgs(argv: any): string | undefined {
   }
 
   return undefined;
+}
+
+/**
+ * Parses a shell-like string of npm arguments into an array using the shell-quote library.
+ * Properly handles quoted strings, escaping, and all standard shell argument patterns.
+ * Examples:
+ *   - `--tag "foo bar"` becomes `["--tag", "foo bar"]`
+ *   - `--name 'my package'` becomes `["--name", "my package"]`
+ *   - `--message "He said \"hello\""` becomes `["--message", "He said \"hello\""]`
+ * Returns an empty array if the input is undefined or empty.
+ */
+export function parseNpmArgs(npmArgsString: string | undefined): string[] {
+  if (!npmArgsString) {
+    return [];
+  }
+
+  const parsed = parseShell(npmArgsString);
+
+  // Filter out any non-string entries (shell-quote can return objects for complex shell constructs)
+  return parsed.filter((arg): arg is string => typeof arg === "string");
 }

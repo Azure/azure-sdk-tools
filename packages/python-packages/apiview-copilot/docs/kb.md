@@ -136,6 +136,38 @@ avc kb all-guidelines -l python
 avc kb search --ids python_design.html#general-namespaces python_design.html#general-client
 ```
 
+## Guideline Ingestion
+
+Guidelines and examples can be ingested automatically from the [azure-sdk](https://github.com/Azure/azure-sdk) repository using the `avc db ingest-guidelines` command (see `docs/cli.md`).
+
+### How It Works
+
+1. **Change detection** — The ingestor compares two explicit commit SHAs (`--base-sha` and `--target-sha`) of the azure-sdk repo. Only changed markdown files in `docs/` between those commits are processed.
+2. **Markdown parsing** — Each file is rendered to HTML via `markdown-it`, then parsed with BeautifulSoup to extract guidelines identified by Jekyll requirement tags (`{% include requirement/MUST id="..." %}`, etc.). Tags are replaced with readable text (e.g., `DO`, `YOU SHOULD NOT`).
+3. **Content hashing** — Each guideline's text is normalized (whitespace, line endings) and hashed with SHA-256. This enables efficient change detection without full text comparison.
+4. **LLM enrichment** — Guidelines are batched (10 per batch) and sent to an LLM to extract structured titles, enriched content, and good/bad code examples.
+5. **Sync** — New/updated/deleted guidelines and examples are written to Cosmos DB. Content hash comparison avoids unnecessary updates.
+6. **Memory reconciliation** — For each updated guideline with linked memories, the LLM evaluates whether any memories are now redundant (absorbed by the updated guideline text). Absorbed memories are unlinked and soft-deleted if orphaned.
+7. **Reindex** — Search indexers are triggered at the end of the sync.
+
+### Sync Modes
+
+- **Incremental sync** — Processes files changed between the base and target commits. Both `--base-sha` and `--target-sha` are required, and `base_sha` must be an ancestor of `target_sha`.
+- **Language-scoped sync** (`--language`) — Restricts processing to guideline files belonging to specific languages, plus the `general/` folder. Useful for testing or targeted updates.
+
+### Content Tracking Fields
+
+Guideline and Example records include these fields for sync tracking:
+
+| Field | Description |
+|-------|-------------|
+| `content_hash` | SHA-256 hash of normalized content |
+| `source_file_path` | Path to the source file in the azure-sdk repo |
+| `source_commit_sha` | Git commit SHA from which the record was extracted |
+| `last_synced_at` | Timestamp of the last successful sync |
+
+---
+
 ## Reindexing
 
 If KB data is updated directly in Cosmos DB (outside of the CLI), or if the search index gets out of sync, trigger a reindex:

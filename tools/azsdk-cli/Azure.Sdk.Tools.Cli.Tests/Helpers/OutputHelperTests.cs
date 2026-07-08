@@ -1,4 +1,5 @@
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Helpers.Codeowners;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 
@@ -86,7 +87,7 @@ message2
         {
             Code = "insufficient_owners",
             Message = "single issue message",
-            NextStep = "/owners add owner <current-github-user> to package Azure.Test",
+            NextStep = $"/owners add owners {CheckPackageHelper.CurrentGitHubUserPlaceholder} to package Azure.Test",
         });
 
         Assert.Multiple(() =>

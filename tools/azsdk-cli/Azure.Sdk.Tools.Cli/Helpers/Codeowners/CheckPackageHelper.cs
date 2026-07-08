@@ -68,7 +68,7 @@ public class CheckPackageHelper : ICheckPackageHelper
             {
                 Code = "invalid_directory_path",
                 Message = $"check-package failed for path '{directoryPath}': Package directory paths must not contain '*'.",
-                NextStep = BuildConcretePathNextStep(directoryPath, repo),
+                NextStep = $"/owners inspect path {FormatPromptValue(directoryPath)}{FormatRepoPhrase(repo)} and rerun the ownership check with a concrete package directory path",
                 CurrentValues = [directoryPath],
             });
 
@@ -82,7 +82,7 @@ public class CheckPackageHelper : ICheckPackageHelper
             {
                 Code = "no_matching_path",
                 Message = $"check-package failed: No CODEOWNERS entry matches path '{directoryPath}'.",
-                NextStep = BuildPathCoverageNextStep(directoryPath, packageName, repo),
+                NextStep = $"/owners inspect path {FormatPromptValue(directoryPath)}{FormatRepoPhrase(repo)} and add package ownership, PR labels, and service owners so package {FormatPromptValue(packageName)} is covered",
             });
 
             return FinalizeResponse(response);
@@ -101,8 +101,14 @@ public class CheckPackageHelper : ICheckPackageHelper
             response.Issues.Add(new CheckPackageIssue
             {
                 Code = "insufficient_owners",
-                Message = BuildOwnerIssueMessage(directoryPath, resolvedTargetType, resolvedTarget, owners.Count, matchedEntry.SourceOwners),
-                NextStep = BuildSourceOwnerNextStep(packageName, resolvedTargetType, resolvedTarget, repo),
+                Message =
+                    $"check-package failed for path '{directoryPath}': " +
+                    $"{BuildResolvedTargetDescription(resolvedTargetType, resolvedTarget)} has {owners.Count} unique owner(s); " +
+                    $"at least {MinimumOwnerCount} are required. " +
+                    $"Owners: [{string.Join(", ", matchedEntry.SourceOwners ?? [])}]",
+                NextStep = resolvedTargetType == PackageTargetType
+                    ? $"/owners add owners {CurrentGitHubUserPlaceholder} to package {FormatPromptValue(packageName)}{FormatRepoPhrase(repo)}"
+                    : $"/owners add owners {CurrentGitHubUserPlaceholder} to path {FormatPromptValue(resolvedTarget)}{FormatRepoPhrase(repo)}",
                 FoundCount = owners.Count,
                 RequiredCount = MinimumOwnerCount,
                 CurrentValues = matchedEntry.SourceOwners != null
@@ -116,8 +122,12 @@ public class CheckPackageHelper : ICheckPackageHelper
             response.Issues.Add(new CheckPackageIssue
             {
                 Code = "missing_pr_label",
-                Message = BuildMissingPrLabelMessage(directoryPath, resolvedTargetType, resolvedTarget),
-                NextStep = BuildPrLabelNextStep(packageName, resolvedTargetType, resolvedTarget, repo),
+                Message =
+                    $"check-package failed for path '{directoryPath}': " +
+                    $"{BuildResolvedTargetDescription(resolvedTargetType, resolvedTarget)} has no PR label.",
+                NextStep = resolvedTargetType == PackageTargetType
+                    ? $"/owners add label {FormatQuotedValue(PrLabelPlaceholder)} to package {FormatPromptValue(packageName)}{FormatRepoPhrase(repo)}"
+                    : $"/owners add label {FormatQuotedValue(PrLabelPlaceholder)} to path {FormatPromptValue(resolvedTarget)}{FormatRepoPhrase(repo)}",
             });
 
             return FinalizeResponse(response);
@@ -275,30 +285,6 @@ public class CheckPackageHelper : ICheckPackageHelper
         return string.IsNullOrEmpty(lastSegment) ? "<package-name>" : lastSegment;
     }
 
-    private static string BuildOwnerIssueMessage(
-        string directoryPath,
-        string resolvedTargetType,
-        string resolvedTarget,
-        int foundCount,
-        IEnumerable<string>? owners)
-    {
-        return
-            $"check-package failed for path '{directoryPath}': " +
-            $"{BuildResolvedTargetDescription(resolvedTargetType, resolvedTarget)} has {foundCount} unique owner(s); " +
-            $"at least {MinimumOwnerCount} are required. " +
-            $"Owners: [{string.Join(", ", owners ?? [])}]";
-    }
-
-    private static string BuildMissingPrLabelMessage(
-        string directoryPath,
-        string resolvedTargetType,
-        string resolvedTarget)
-    {
-        return
-            $"check-package failed for path '{directoryPath}': " +
-            $"{BuildResolvedTargetDescription(resolvedTargetType, resolvedTarget)} has no PR label.";
-    }
-
     private static string BuildServiceOwnerIssueMessage(
         string directoryPath,
         IReadOnlyList<string> labels,
@@ -319,39 +305,10 @@ public class CheckPackageHelper : ICheckPackageHelper
         return message;
     }
 
-    private static string BuildSourceOwnerNextStep(
-        string packageName,
-        string resolvedTargetType,
-        string resolvedTarget,
-        string? repo)
-    {
-        return resolvedTargetType == PackageTargetType
-            ? $"/owners add owners {CurrentGitHubUserPlaceholder} to package {FormatPromptValue(packageName)}{FormatRepoPhrase(repo)}"
-            : $"/owners add owners {CurrentGitHubUserPlaceholder} to path {FormatPromptValue(resolvedTarget)}{FormatRepoPhrase(repo)}";
-    }
-
-    private static string BuildPrLabelNextStep(
-        string packageName,
-        string resolvedTargetType,
-        string resolvedTarget,
-        string? repo)
-    {
-        var labelTarget = FormatQuotedValue(PrLabelPlaceholder);
-        return resolvedTargetType == PackageTargetType
-            ? $"/owners add label {labelTarget} to package {FormatPromptValue(packageName)}{FormatRepoPhrase(repo)}"
-            : $"/owners add label {labelTarget} to path {FormatPromptValue(resolvedTarget)}{FormatRepoPhrase(repo)}";
-    }
-
     private static string BuildServiceOwnerNextStep(IReadOnlyList<string> labels, string? repo)
     {
         return $"/owners add service owners {CurrentGitHubUserPlaceholder} to {FormatPrLabelTargetForPrompt(labels)}{FormatRepoPhrase(repo)}";
     }
-
-    private static string BuildPathCoverageNextStep(string directoryPath, string packageName, string? repo)
-        => $"/owners inspect path {FormatPromptValue(directoryPath)}{FormatRepoPhrase(repo)} and add package ownership, PR labels, and service owners so package {FormatPromptValue(packageName)} is covered";
-
-    private static string BuildConcretePathNextStep(string directoryPath, string? repo)
-        => $"/owners inspect path {FormatPromptValue(directoryPath)}{FormatRepoPhrase(repo)} and rerun the ownership check with a concrete package directory path";
 
     private static IReadOnlyList<string> GetServiceOwnerPromptLabels(IEnumerable<string>? labels)
     {

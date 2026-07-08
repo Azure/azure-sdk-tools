@@ -4,7 +4,7 @@ license: MIT
 metadata:
   version: "1.0.0"
 description: "Authors and modifies Azure TypeSpec (.tsp) API specifications. USE FOR: any TypeSpec/tsp change — api versions (add, bump, preview, stable, promote), resources, operations, models, properties, decorators, visibility, constraints, breaking changes, LRO, suppressions, operationId, spread model. Covers ARM resource-manager and data-plane services. DO NOT USE FOR: SDK generation, releasing SDK packages, or single MCP tool calls. INVOKES: azure-sdk-mcp:azsdk_run_typespec_validation."
-compatibility: "azure-sdk-mcp server with azsdk_run_typespec_validation tool"
+compatibility: "azure-sdk-mcp server with azsdk_run_typespec_validation tool (and azsdk_typespec_generate_authoring_plan for the KB fallback)"
 ---
 
 # Azure TypeSpec Author
@@ -17,7 +17,7 @@ This skill authors and modifies Azure TypeSpec (`.tsp`) API specifications for A
 
 **Prerequisite:** `azure-sdk-mcp` server must be running.
 
-> The authoring plan is built using **agentic search only** (fetching curated documentation URLs client-side). The `azsdk_typespec_generate_authoring_plan` MCP tool is no longer invoked from this skill.
+> The authoring plan is built primarily via **agentic search** (fetching curated documentation URLs from [reference-document-links.md](references/reference-document-links.md) client-side). When a request is **not covered** by that curated catalog, the skill falls back to the knowledge base via the `azsdk_typespec_generate_authoring_plan` MCP tool.
 
 # When to invoke the azure-typespec-author skill
 
@@ -33,7 +33,7 @@ The `azure-typespec-author` skill **must** be invoked immediately in all modes (
 
 | Tool                                                   | Purpose                                                   |
 | ------------------------------------------------------ | --------------------------------------------------------- |
-| `azure-sdk-mcp:azsdk_typespec_generate_authoring_plan` | Generate grounded authoring plan (General Authoring only) |
+| `azure-sdk-mcp:azsdk_typespec_generate_authoring_plan` | Generate grounded authoring plan (**KB fallback** — only when the request is not covered by the curated catalog) |
 | `azure-sdk-mcp:azsdk_run_typespec_validation`          | Validate TypeSpec                                         |
 
 **Prerequisite:** `azure-sdk-mcp` server must be running.
@@ -68,7 +68,7 @@ See [intake.md](references/intake.md).
 
 ### Step 3: Build Authoring Plan
 
-See [authoring-plan.md](references/authoring-plan.md). The plan is built using **agentic search only** over the curated documentation in [reference-document-links.md](references/reference-document-links.md).
+See [authoring-plan.md](references/authoring-plan.md). The plan is built via **agentic search** over the curated documentation in [reference-document-links.md](references/reference-document-links.md); if the request matches no relevant documents there, it falls back to the knowledge base (`azsdk_typespec_generate_authoring_plan`).
 
 ### Step 4: Apply Changes
 
@@ -88,7 +88,7 @@ Output all referenced document URLs from Step 3. This gives the user direct link
 | --------------------------------------------------------------------- | ------------------------------------------- |
 | [analyze-project.md](references/analyze-project.md)                   | Step 1: project analysis                                 |
 | [intake.md](references/intake.md)                                     | Step 2: general + case-specific intake                   |
-| [authoring-plan.md](references/authoring-plan.md)                     | Step 3: build authoring plan via agentic search          |
+| [authoring-plan.md](references/authoring-plan.md)                     | Step 3: build authoring plan via agentic search, or KB fallback |
 | [agentic-search.md](references/agentic-search.md)                     | Procedure: fetch URLs → extract guidance                 |
 | [reference-document-links.md](references/reference-document-links.md) | Catalog of external guide URLs, categorized by case      |
 | [validation.md](references/validation.md)                             | Step 5: validate → compile → verify                      |

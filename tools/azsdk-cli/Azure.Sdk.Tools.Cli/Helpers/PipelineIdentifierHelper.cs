@@ -398,24 +398,26 @@ query($owner: String!, $repo: String!, $pr: Int!) {
     {
         var normalized = NormalizeProjectName(project);
 
-        // A recognized project name is trusted without an extra API call.
         if (normalized == Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT || normalized == Constants.AZURE_SDK_DEVOPS_INTERNAL_PROJECT)
         {
             return normalized;
         }
 
-        // Unrecognized: resolve the real project from the build. A GUID is looked up directly; any other
-        // value uses public-first discovery (null). Fall back to the original name if resolution fails.
-        try
+        if (Guid.TryParse(project, out _))
         {
-            var lookupProject = Guid.TryParse(project, out _) ? project : null;
-            return NormalizeProjectName(await GetPipelineProjectAsync(buildId, lookupProject, ct));
+            try
+            {
+                var resolved = await GetPipelineProjectAsync(buildId, project, ct);
+                return NormalizeProjectName(resolved);
+            }
+            catch (Exception ex)
+            {
+                logger.LogDebug(ex, "Could not resolve project GUID {project} for build {buildId}", project, buildId);
+            }
         }
-        catch (Exception ex)
-        {
-            logger.LogDebug(ex, "Could not resolve project {project} for build {buildId}", project, buildId);
-            return normalized;
-        }
+
+        logger.LogDebug("Unrecognized project name {project} for build {buildId}. Expected a known project name (public, internal) or a valid project GUID.", project, buildId);
+        throw new ArgumentException($"Unrecognized project name: {project} for build {buildId}. Expected a known project name (public, internal) or a valid project GUID.");
     }
 
     /// <summary>

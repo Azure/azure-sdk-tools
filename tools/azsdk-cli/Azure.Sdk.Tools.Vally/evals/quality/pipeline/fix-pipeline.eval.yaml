@@ -26,6 +26,8 @@ config:
 stimuli:
   - name: fix-version-parser-bug
     environment:
+      skills:
+        - ../../../../../../.github/skills/azsdk-common-pipeline-fixer
       files:
         - src: ../../../fixtures/analyze-pipeline/QueueClientOptionsTests/code/QueueClientOptions.cs
           dest: sdk/storage/Azure.Storage.Queues/src/QueueClientOptions.cs
@@ -70,6 +72,10 @@ stimuli:
       max_tokens: 16000
     graders:
       - type: completed
+      - type: skill-invocation
+        config:
+          required: ["azsdk-common-pipeline-fixer"]
+          disallowed: ["azsdk-common-pipeline-troubleshooting"]
       - type: tool-calls
         config:
           required:

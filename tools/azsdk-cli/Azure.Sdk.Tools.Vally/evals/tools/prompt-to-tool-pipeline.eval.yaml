@@ -108,13 +108,6 @@ stimuli:
         config:
           required:
             - name: "azsdk_analyze_pipeline"
-  - name: fix-routing-pipeline-failed
-    prompt: "Fix the failing tests in my Azure SDK PR pipeline: https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6447834"
-    graders:
-      - type: tool-calls
-        config:
-          required:
-            - name: "azsdk_analyze_pipeline"
   - name: analyze-routing-negative-typespec
     prompt: "How do I define a new REST operation in my TypeSpec project?"
     graders:
@@ -122,4 +115,3 @@ stimuli:
         config:
           disallowed:
             - name: "azsdk_analyze_pipeline"
-

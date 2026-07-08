@@ -23,6 +23,9 @@ config:
 
 stimuli:
   - name: analyze-version-parser-bug
+    environment:
+      skills:
+        - ../../../../../../.github/skills/azsdk-common-pipeline-troubleshooting
     prompt: |
       My .NET SDK pipeline failed for Azure DevOps build 6455504 in the
       internal project. Analyze the run.
@@ -31,6 +34,10 @@ stimuli:
       max_tokens: 8000
     graders:
       - type: completed
+      - type: skill-invocation
+        config:
+          required: ["azsdk-common-pipeline-troubleshooting"]
+          disallowed: ["azsdk-common-pipeline-fixer"]
       - type: tool-calls
         config:
           required:

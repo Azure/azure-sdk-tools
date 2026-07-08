@@ -227,7 +227,6 @@ stimuli:
       specification/contosowidgetmanager/Contoso.WidgetManager and link the SDK
       pull requests to the release plan. Here is the context you need:
         - release plan work item ID: "29262"
-      My environment is already set up, so there's no need to re-verify it.
     constraints:
       max_turns: 8
       max_tokens: 12000
@@ -253,7 +252,6 @@ stimuli:
     prompt: |
       Generate SDK for all languages from my TypeSpec project
       specification/contosowidgetmanager/Contoso.WidgetManager.
-      My environment is already set up, so there's no need to re-verify it.
     constraints:
       max_turns: 6
       max_tokens: 10000
@@ -288,7 +286,6 @@ stimuli:
     prompt: |
       Run SDK generation for all languages for release 29262. My TypeSpec project is
       specification/contosowidgetmanager/Contoso.WidgetManager.
-      My environment is already set up, so there's no need to re-verify it.
     constraints:
       max_turns: 8
       max_tokens: 12000
@@ -322,7 +319,6 @@ stimuli:
       for the Contoso Widget Manager from
       specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml, then
       build it and run the checks locally.
-      My environment is already set up, so there's no need to re-verify it.
     constraints:
       max_turns: 8
       max_tokens: 12000
@@ -349,7 +345,6 @@ stimuli:
       regenerated it. Regenerate and build it again from
       specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml and
       fix the build errors.
-      My environment is already set up, so there's no need to re-verify it.
     constraints:
       max_turns: 8
       max_tokens: 12000
@@ -372,7 +367,6 @@ stimuli:
     prompt: |
       I don't have any SDK repos cloned. Generate the SDK for the Contoso Widget
       Manager release plan (work item 29262) and open the SDK pull requests for me.
-      My environment is already set up, so there's no need to re-verify it.
     constraints:
       max_turns: 8
       max_tokens: 12000

@@ -11,11 +11,11 @@ import os.path
 from io import open
 from setuptools import find_packages, setup
 
-PACKAGE_NAME = "apistubgentest"
+PACKAGE_NAME = "apiview-stub-generator-test"
 PACKAGE_PPRINT_NAME = "ApiView"
 
-package_folder_path = PACKAGE_NAME.replace('-', '/')
-namespace_name = PACKAGE_NAME.replace('-', '.')
+package_folder_path = PACKAGE_NAME.replace('-', '_')
+namespace_name = PACKAGE_NAME.replace('-', '_')
 
 with open(os.path.join(package_folder_path, '_version.py')) as fd:
     version = re.search(r'^VERSION\s*=\s*[\'"]([^\'"]*)[\'"]',

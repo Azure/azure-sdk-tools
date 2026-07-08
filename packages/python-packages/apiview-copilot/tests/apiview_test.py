@@ -672,6 +672,126 @@ class TestGetAiCommentFeedback:
 
             assert all(c["Language"] == "" for c in results)
 
+    def test_include_implicit_returns_implicit_bad(self):
+        """Test that include_implicit=True returns implicit bad comments from approved revisions."""
+        implicit_comments = [
+            {
+                "id": "implicit-1",
+                "ReviewId": "review-1",
+                "APIRevisionId": "rev-1",
+                "CommentText": "No interaction comment",
+                "CommentSource": "AIGenerated",
+                "CreatedOn": "2026-01-10T12:00:00Z",
+                "Upvotes": [],
+                "Downvotes": [],
+                "IsDeleted": False,
+                "IsResolved": False,
+                "Feedback": [],
+            },
+        ]
+        revisions_data = [
+            {"id": "rev-1", "ChangeHistory": [{"ChangeAction": "Approved"}]},
+        ]
+        reviews_data = [{"id": "review-1", "Language": "Python"}]
+
+        with patch("src._apiview.get_apiview_cosmos_client") as mock_client:
+            comments_container = MockContainerClient(implicit_comments)
+            revisions_container = MockContainerClient(revisions_data)
+            reviews_container = MockContainerClient(reviews_data)
+
+            call_count = [0]
+
+            def get_container(container_name, environment, db_name=None):
+                if container_name == "APIRevisions":
+                    return revisions_container
+                if container_name == "Reviews":
+                    return reviews_container
+                # First Comments call is for explicit feedback (returns nothing),
+                # second is for implicit bad comments
+                call_count[0] += 1
+                if call_count[0] == 1:
+                    return MockContainerClient([])
+                return comments_container
+
+            mock_client.side_effect = get_container
+            results = get_ai_comment_feedback(None, "2026-01-01", "2026-01-31", include_implicit=True)
+
+            implicit_results = [c for c in results if "implicit_bad" in c.get("FeedbackTypes", [])]
+            assert len(implicit_results) == 1
+            assert implicit_results[0]["id"] == "implicit-1"
+
+    def test_include_implicit_excluded_when_in_exclude_list(self):
+        """Test that implicit_bad in exclude list suppresses implicit comments."""
+        with patch("src._apiview.get_apiview_cosmos_client") as mock_client:
+            # Even with include_implicit=True, exclude=['implicit_bad'] should skip them
+            self._setup_mocks(mock_client, [], [])
+            results = get_ai_comment_feedback(
+                None, "2026-01-01", "2026-01-31", include_implicit=True, exclude=["implicit_bad"]
+            )
+            assert results == []
+
+    def test_include_implicit_language_filter(self):
+        """Test that language filtering applies to implicit bad comments."""
+        implicit_comments = [
+            {
+                "id": "implicit-py",
+                "ReviewId": "review-py",
+                "APIRevisionId": "rev-1",
+                "CommentText": "Python implicit",
+                "CommentSource": "AIGenerated",
+                "CreatedOn": "2026-01-10T12:00:00Z",
+                "Upvotes": [],
+                "Downvotes": [],
+                "IsDeleted": False,
+                "IsResolved": False,
+                "Feedback": [],
+            },
+            {
+                "id": "implicit-java",
+                "ReviewId": "review-java",
+                "APIRevisionId": "rev-1",
+                "CommentText": "Java implicit",
+                "CommentSource": "AIGenerated",
+                "CreatedOn": "2026-01-10T12:00:00Z",
+                "Upvotes": [],
+                "Downvotes": [],
+                "IsDeleted": False,
+                "IsResolved": False,
+                "Feedback": [],
+            },
+        ]
+        revisions_data = [
+            {"id": "rev-1", "ChangeHistory": [{"ChangeAction": "Approved"}]},
+        ]
+        reviews_data = [
+            {"id": "review-py", "Language": "Python"},
+            {"id": "review-java", "Language": "Java"},
+        ]
+
+        with patch("src._apiview.get_apiview_cosmos_client") as mock_client:
+            comments_container = MockContainerClient(implicit_comments)
+            revisions_container = MockContainerClient(revisions_data)
+            reviews_container = MockContainerClient(reviews_data)
+
+            call_count = [0]
+
+            def get_container(container_name, environment, db_name=None):
+                if container_name == "APIRevisions":
+                    return revisions_container
+                if container_name == "Reviews":
+                    return reviews_container
+                call_count[0] += 1
+                if call_count[0] == 1:
+                    return MockContainerClient([])
+                return comments_container
+
+            mock_client.side_effect = get_container
+            results = get_ai_comment_feedback("python", "2026-01-01", "2026-01-31", include_implicit=True)
+
+            assert len(results) == 1
+            assert results[0]["id"] == "implicit-py"
+            assert results[0]["Language"] == "Python"
+
 
 class TestGetCommentsInDateRange:
     """Tests for get_comments_in_date_range query construction."""
@@ -726,9 +846,27 @@ class TestGetCreatedRevisions:
     @pytest.fixture
     def revisions_data(self):
         return [
-            {"id": "rev-1", "ReviewId": "review-1", "APIRevisionType": "Manual", "Language": "Python", "CreatedOn": "2026-03-05T00:00:00Z"},
-            {"id": "rev-2", "ReviewId": "review-1", "APIRevisionType": "Automatic", "Language": "Python", "CreatedOn": "2026-03-06T00:00:00Z"},
-            {"id": "rev-3", "ReviewId": "review-2", "APIRevisionType": "PullRequest", "Language": "Java", "CreatedOn": "2026-03-07T00:00:00Z"},
+            {
+                "id": "rev-1",
+                "ReviewId": "review-1",
+                "APIRevisionType": "Manual",
+                "Language": "Python",
+                "CreatedOn": "2026-03-05T00:00:00Z",
+            },
+            {
+                "id": "rev-2",
+                "ReviewId": "review-1",
+                "APIRevisionType": "Automatic",
+                "Language": "Python",
+                "CreatedOn": "2026-03-06T00:00:00Z",
+            },
+            {
+                "id": "rev-3",
+                "ReviewId": "review-2",
+                "APIRevisionType": "PullRequest",
+                "Language": "Java",
+                "CreatedOn": "2026-03-07T00:00:00Z",
+            },
         ]
 
     def _setup_mocks(self, mock_client, revisions):
@@ -780,7 +918,13 @@ class TestGetCreatedRevisions:
 
     def test_unknown_revision_type_mapped_to_unknown(self):
         revisions = [
-            {"id": "rev-1", "ReviewId": "review-1", "APIRevisionType": "SomeNewType", "Language": "Python", "CreatedOn": "2026-03-05T00:00:00Z"},
+            {
+                "id": "rev-1",
+                "ReviewId": "review-1",
+                "APIRevisionType": "SomeNewType",
+                "Language": "Python",
+                "CreatedOn": "2026-03-05T00:00:00Z",
+            },
         ]
         with patch("src._apiview.get_apiview_cosmos_client") as mock_client:
             self._setup_mocks(mock_client, revisions)
@@ -802,7 +946,13 @@ class TestGetCreatedRevisions:
 
     def test_many_revisions(self):
         revisions = [
-            {"id": f"rev-{i}", "ReviewId": "review-1", "APIRevisionType": "Manual", "Language": "Python", "CreatedOn": "2026-03-05T00:00:00Z"}
+            {
+                "id": f"rev-{i}",
+                "ReviewId": "review-1",
+                "APIRevisionType": "Manual",
+                "Language": "Python",
+                "CreatedOn": "2026-03-05T00:00:00Z",
+            }
             for i in range(250)
         ]
         with patch("src._apiview.get_apiview_cosmos_client") as mock_client:
@@ -827,8 +977,20 @@ class TestGetOpenedRevisions:
     @pytest.fixture
     def revisions_data(self):
         return [
-            {"id": "rev-1", "ReviewId": "review-1", "APIRevisionType": "Manual", "Language": "Python", "CreatedOn": "2026-03-05T00:00:00Z"},
-            {"id": "rev-2", "ReviewId": "review-2", "APIRevisionType": "PullRequest", "Language": "Java", "CreatedOn": "2026-03-10T00:00:00Z"},
+            {
+                "id": "rev-1",
+                "ReviewId": "review-1",
+                "APIRevisionType": "Manual",
+                "Language": "Python",
+                "CreatedOn": "2026-03-05T00:00:00Z",
+            },
+            {
+                "id": "rev-2",
+                "ReviewId": "review-2",
+                "APIRevisionType": "PullRequest",
+                "Language": "Java",
+                "CreatedOn": "2026-03-10T00:00:00Z",
+            },
         ]
 
     def _setup_mocks(self, mock_client, revisions):
@@ -918,7 +1080,13 @@ class TestGetOpenedRevisions:
     def test_batching_with_many_viewed_ids(self):
         viewed_ids = {f"rev-{i}" for i in range(250)}
         revisions = [
-            {"id": f"rev-{i}", "ReviewId": "review-1", "APIRevisionType": "Automatic", "Language": "Python", "CreatedOn": "2026-03-05T00:00:00Z"}
+            {
+                "id": f"rev-{i}",
+                "ReviewId": "review-1",
+                "APIRevisionType": "Automatic",
+                "Language": "Python",
+                "CreatedOn": "2026-03-05T00:00:00Z",
+            }
             for i in range(250)
         ]
         revision_query_count = [0]

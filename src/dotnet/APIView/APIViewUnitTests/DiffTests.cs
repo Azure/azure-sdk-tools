@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
-using APIView.DIff;
+using APIView.Diff;
 using Xunit;
 
 namespace APIViewUnitTests

@@ -11,11 +11,20 @@ parameters:
 - name: FilePatterns
   type: object
   default: []
+- name: AdditionalCheckoutPaths
+  type: object
+  default: []
 - name: BaseBranchName
   type: string
   default: $(DefaultBranch)
 - name: Repos
   type: object
+  default: []
+- name: PRValidationPipelines
+  type: object
+  default: []
+- name: PreSyncValidationSteps
+  type: stepList
   default: []
 
 stages:
@@ -34,6 +43,12 @@ stages:
               parameters:
                 Paths:
                   - ${{ parameters.DirectoryToSync }}
+                  - ${{ each path in parameters.AdditionalCheckoutPaths }}:
+                    - ${{ path }}
+
+            - ${{ parameters.PreSyncValidationSteps }}
+
+            - template: /eng/common/pipelines/templates/steps/login-to-github.yml
 
             - pwsh: |
                 Set-PsDebug -Trace 1
@@ -69,7 +84,7 @@ stages:
                 CommitMessage: "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository for Tools PR $(System.PullRequest.PullRequestNumber)"
                 DirectoryToSync: ${{ parameters.DirectoryToSync }}
                 FilePatterns: ${{ parameters.FilePatterns }}
-                UpstreamBranchName: "sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
+                UpstreamBranchName: "sync-${{ replace(parameters.DirectoryToSync, '/', '-') }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
                 BaseBranchName: $(system.pullRequest.targetBranch)
                 SkipCheckingForChanges: true
                 Repos: ${{ parameters.Repos }}
@@ -93,6 +108,8 @@ stages:
                       Paths:
                         - ${{ parameters.DirectoryToSync }}
 
+                  - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+
                   - pwsh: |
                       New-Item -Path $(Build.ArtifactStagingDirectory)/${{ parameters.PRDataFileName }} -ItemType File
                     displayName: Create PRData Artifact
@@ -106,7 +123,7 @@ stages:
                         -RepoOwner "Azure"
                         -RepoName "azure-sdk-tools"
                         -PullRequestNumber "$(System.PullRequest.PullRequestNumber)"
-                        -AuthToken "$(azuresdk-github-pat)"
+                        -AuthToken "$(GH_TOKEN)"
                       pwsh: true
 
                   - ${{ each repo in parameters.Repos }}:
@@ -122,14 +139,53 @@ stages:
                           -RepoName "${{ repo }}"
                           -BaseBranch $(system.pullRequest.targetBranch)
                           -PROwner "Azure"
-                          -PRBranch "sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
-                          -AuthToken "$(azuresdk-github-pat)"
+                          -PRBranch "sync-${{ replace(parameters.DirectoryToSync, '/', '-') }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
+                          -AuthToken "$(GH_TOKEN)"
                           -PRTitle "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR $(System.PullRequest.PullRequestNumber)"
                           -PRLabels "Central-EngSys,EngSys"
                           -UserReviewers $(System.PullRequest.Creator)
                           -Assignees $(System.PullRequest.Creator)
                           -PRBody "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR https://github.com/Azure/azure-sdk-tools/pull/$(System.PullRequest.PullRequestNumber) `
                           See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/README.md#workflow)"
+
+                    - ${{ each prValidationPipeline in parameters.PRValidationPipelines }}:
+                      - ${{ if eq(prValidationPipeline.Repository, repo) }}:
+                        - task: AzureCLI@2
+                          displayName: Queue PR validation pipeline
+                          condition: succeeded()
+                          inputs:
+                            azureSubscription: opensource-api-connection
+                            scriptType: pscore
+                            scriptLocation: inlineScript
+                            inlineScript: |
+                              $ErrorActionPreference = 'Stop'
+
+                              $accessToken = az account get-access-token --resource "499b84ac-1321-427f-aa17-267ca6975798" --query "accessToken" --output tsv
+                              if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($accessToken)) {
+                                throw "Failed to acquire access token for queueing PR validation pipeline."
+                              }
+
+                              $prJson = gh pr view "$(Submitted.PullRequest.Number)" -R "Azure/${{ repo }}" --json "headRefName,headRefOid,url"
+                              if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($prJson)) {
+                                throw "Failed to look up PR $(Submitted.PullRequest.Number) in Azure/${{ repo }}."
+                              }
+                              $pr = $prJson | ConvertFrom-Json
+                              if ([string]::IsNullOrWhiteSpace($pr.headRefName)) {
+                                throw "Could not resolve head branch for PR $(Submitted.PullRequest.Number) in Azure/${{ repo }}."
+                              }
+
+                              Write-Host "Queueing PR validation for $($pr.url) at $($pr.headRefOid)"
+                              $(Build.SourcesDirectory)/eng/common/scripts/Queue-Pipeline.ps1 `
+                                -Organization "azure-sdk" `
+                                -Project "public" `
+                                -SourceBranch "$($pr.headRefName)" `
+                                -DefinitionId "${{ prValidationPipeline.DefinitionId }}" `
+                                -TemplateParametersJson '{"SkipPrValidation": "true"}' `
+                                -CancelPreviousBuilds $True `
+                                -BearerToken $accessToken
+                            workingDirectory: $(System.DefaultWorkingDirectory)
+                          env:
+                            GH_TOKEN: $(GH_TOKEN)
 
                     - pwsh: |
                         $PRData = "Azure;${{ repo }};$(Submitted.PullRequest.Number)"
@@ -163,6 +219,8 @@ stages:
                       Paths:
                         - ${{ parameters.DirectoryToSync }}
 
+                  - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+
                   - download: current
                     artifact: ${{parameters.ArtifactName}}
                     displayName: Download ${{ parameters.PRDataFileName }}
@@ -174,7 +232,7 @@ stages:
                       filePath: $(Build.SourcesDirectory)/eng/scripts/Verify-And-Merge-PRs.ps1
                       arguments: >
                         -PRDataArtifactPath "$(Pipeline.Workspace)/${{parameters.ArtifactName}}/${{ parameters.PRDataFileName }}"
-                        -AuthToken "$(azuresdk-github-pat)"
+                        -AuthToken "$(GH_TOKEN)"
                       pwsh: true
 
                   - ${{ each repo in parameters.Repos }}:
@@ -187,8 +245,8 @@ stages:
                         filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
                         arguments: >
                           -RepoId "Azure/${{ repo }}"
-                          -TargetBranch "sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
-                          -AuthToken $(azuresdk-github-pat)
+                          -TargetBranch "sync-${{ replace(parameters.DirectoryToSync, '/', '-') }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
+                          -AuthToken $(GH_TOKEN)
 
   - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
     - stage: CreateSync
@@ -201,11 +259,13 @@ stages:
             demands: ImageOverride -equals ubuntu-24.04
 
           steps:
+            - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+
             - template: /eng/pipelines/templates/steps/sync-directory.yml
               parameters:
                 CommitMessage: Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository
                 DirectoryToSync: ${{ parameters.DirectoryToSync }}
                 FilePatterns: ${{ parameters.FilePatterns }}
-                UpstreamBranchName: "sync-${{ parameters.DirectoryToSync }}"
+                UpstreamBranchName: "sync-${{ replace(parameters.DirectoryToSync, '/', '-') }}"
                 BaseBranchName: ${{ parameters.BaseBranchName }}
                 Repos: ${{ parameters.Repos }}

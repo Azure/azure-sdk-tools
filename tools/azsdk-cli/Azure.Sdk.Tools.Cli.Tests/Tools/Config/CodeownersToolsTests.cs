@@ -3,27 +3,24 @@ using Moq;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Helpers.Codeowners;
+using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
-using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 using Azure.Sdk.Tools.Cli.Tools.Config;
 using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
-using Azure.Sdk.Tools.CodeownersUtils.Caches;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
 {
     [TestFixture]
     public class CodeownersToolsTests
     {
-        private MockGitHubService _mockGithub;
         private Mock<IGitHelper> _mockGitHelper;
         private Mock<ICodeownersValidatorHelper> _mockCodeownersValidator;
         private Mock<ICodeownersGenerateHelper> _mockcodeownersGenerateHelper;
         private Mock<ICodeownersManagementHelper> _mockCodeownersManagement;
         private Mock<IDevOpsService> _mockDevOps;
-        private Mock<ITeamUserCache> _mockTeamUserCache;
         private Mock<ICheckPackageHelper> _mockCheckPackageHelper;
         private Mock<ICodeownersAuditHelper> _mockAuditHelper;
 
@@ -32,19 +29,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
         [SetUp]
         public void Setup()
         {
-            _mockGithub = new MockGitHubService();
             _mockCodeownersValidator = new Mock<ICodeownersValidatorHelper>();
             _mockcodeownersGenerateHelper = new Mock<ICodeownersGenerateHelper>();
             _mockGitHelper = new Mock<IGitHelper>();
             _mockCodeownersManagement = new Mock<ICodeownersManagementHelper>();
             _mockDevOps = new Mock<IDevOpsService>();
-            _mockTeamUserCache = new Mock<ITeamUserCache>();
-            _mockTeamUserCache.Setup(c => c.GetUsersForTeam(It.IsAny<string>())).Returns(new List<string>());
             _mockCheckPackageHelper = new Mock<ICheckPackageHelper>();
             _mockAuditHelper = new Mock<ICodeownersAuditHelper>();
 
             _tool = new CodeownersTool(
-                _mockGithub,
                 new TestLogger<CodeownersTool>(),
                 null,
                 _mockCodeownersValidator.Object,
@@ -188,6 +181,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
             var result = await _tool.Audit(true, false, "Azure/azure-sdk-for-net", CancellationToken.None);
 
             Assert.That(result, Is.TypeOf<CodeownersAuditResponse>());
+            _mockAuditHelper.Verify(h => h.RunAudit(true, false, "Azure/azure-sdk-for-net", CancellationToken.None), Times.Once);
 
             var response = (CodeownersAuditResponse)result;
             Assert.Multiple(() =>

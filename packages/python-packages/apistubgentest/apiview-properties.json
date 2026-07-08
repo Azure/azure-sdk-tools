@@ -1,8 +1,0 @@
-{
-    "CrossLanguagePackageId": "ApiStubGenTest",
-    "CrossLanguageVersion": "6488ad4199a4",
-    "CrossLanguageDefinitionId": {
-        "apistubgentest.models.DocstringClass.docstring_with_default_formal": "Docstring_DocstringWithFormalDefault",
-        "apistubgentest.models.DocstringClass": "Formal_Model_Id"
-    }
-}

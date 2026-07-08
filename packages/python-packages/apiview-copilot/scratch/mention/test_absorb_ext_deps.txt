@@ -1,0 +1,25 @@
+{
+  "language": "python",
+  "package_name": "azure.storage.blob",
+  "code": "from azure.storage.blob import BlobServiceClient\nimport requests",
+  "comments": [
+        {
+            "lineNo": 2,
+            "createdBy": "azure-sdk",
+            "createdOn": "2026-03-15T10:00:00-07:00",
+            "commentText": "The `requests` library is not on the approved list of external dependencies for Azure SDK Python libraries.\n\nSee: https://azure.github.io/azure-sdk/python_design.html#python-dependencies-external"
+        },
+        {
+            "lineNo": 2,
+            "createdBy": "storagedev",
+            "createdOn": "2026-03-15T10:30:00-07:00",
+            "commentText": "We were told we could use well-known dependencies. Isn't requests well-known?"
+        },
+        {
+            "lineNo": 2,
+            "createdBy": "tjprescott",
+            "createdOn": "2026-03-15T11:00:00-07:00",
+            "commentText": "@azure-sdk This is wrong. The guideline says you can't use dependencies outside the well-known list, but actually even the well-known list is being deprecated. Going forward, NO external dependencies should be used at all, period. The Architecture Board has decided to remove the approved list entirely. Please update your knowledge to reflect that no external dependencies are allowed whatsoever."
+        }
+    ]
+}

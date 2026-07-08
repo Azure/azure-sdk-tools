@@ -14,8 +14,7 @@ export enum CommentSeverity {
 
 export enum CommentSource {
     UserGenerated = 'userGenerated',
-    AIGenerated = 'aiGenerated',
-    Diagnostic = 'diagnostic'
+    AIGenerated = 'aiGenerated'
 }
 
 export class CommentItemModel {

@@ -62,8 +62,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
   @Input() activeAPIRevision : APIRevision | undefined = undefined;
   @Input() diffAPIRevision : APIRevision | undefined = undefined;
   @Input() hasReleasedApprovedGARevision : boolean = false;
-  @Input() hasFatalDiagnostics : boolean = false;
   @Input() hasActiveConversation : boolean = false;
+  @Input() hasFatalDiagnostics : boolean = false;
   @Input() hasHiddenAPIs : boolean = false;
   @Input() hasHiddenAPIThatIsDiff : boolean = false;
   @Input() codeLineSearchInfo : CodeLineSearchInfo | undefined = undefined;
@@ -136,7 +136,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
   qualityScore: ReviewQualityScore | undefined = undefined;
   qualityScoreLoading: boolean = false;
   unresolvedMustFixCount: number = 0;
-  hasDiagnosticMustFixApprovalWarning: boolean = false;
 
   associatedPullRequests  : PullRequestModel[] = [];
   pullRequestsOfAssociatedAPIRevisions : PullRequestModel[] = [];
@@ -492,9 +491,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
       next: (score: ReviewQualityScore) => {
         if (requestId !== this.qualityScoreRequestId) return;
         this.qualityScore = score;
-        const mustFixDiagnosticsCount = score.unresolvedMustFixDiagnostics ?? 0;
-        this.unresolvedMustFixCount = score.unresolvedMustFixCount - mustFixDiagnosticsCount;
-        this.hasDiagnosticMustFixApprovalWarning = mustFixDiagnosticsCount > 0;
+        this.unresolvedMustFixCount = score.unresolvedMustFixCount;
         this.qualityScoreLoading = false;
         this.setAPIRevisionApprovalStates();
         this.cdr.markForCheck();
@@ -503,7 +500,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
         if (requestId !== this.qualityScoreRequestId) return;
         this.qualityScore = undefined;
         this.unresolvedMustFixCount = 0;
-        this.hasDiagnosticMustFixApprovalWarning = false;
         this.qualityScoreLoading = false;
         this.setAPIRevisionApprovalStates();
         this.cdr.markForCheck();
@@ -689,7 +685,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
       return;
     }
 
-    if (!this.activeAPIRevisionIsApprovedByCurrentUser && (this.hasActiveConversation || this.hasFatalDiagnostics || this.hasDiagnosticMustFixApprovalWarning)) {
+    if (!this.activeAPIRevisionIsApprovedByCurrentUser && (this.hasActiveConversation || this.hasFatalDiagnostics)) {
       this.showAPIRevisionApprovalModal = true;
     } else {
       this.toggleAPIRevisionApproval();

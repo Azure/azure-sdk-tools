@@ -21,6 +21,7 @@ using Azure.Sdk.Tools.Cli.Services.TypeSpec;
 using Azure.Sdk.Tools.Cli.Services.Upgrade;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.CodeownersUtils.Caches;
+using Azure.Sdk.Tools.CodeownersUtils.Utils;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -58,14 +59,19 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IChangelogHelper, ChangelogHelper>();
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();
             services.AddSingleton<IGitHelper, GitHelper>();
-            services.AddSingleton<ITestHelper, TestHelper>();
+            services.AddSingleton<ITestHelper, TrxTestHelper>();
+            services.AddSingleton<ITestHelper, JUnitTestHelper>();
+            services.AddSingleton<ITestResultParserResolver, TestResultParserResolver>();
             services.AddSingleton<ITypeSpecHelper, TypeSpecHelper>();
             services.AddSingleton<ISpecPullRequestHelper, SpecPullRequestHelper>();
             services.AddSingleton<IUserHelper, UserHelper>();
             services.AddSingleton<ICodeownersValidatorHelper, CodeownersValidatorHelper>();
             services.AddSingleton<ICodeownersGenerateHelper, CodeownersGenerateHelper>();
             services.AddSingleton<IPackageInfoHelper, PackageInfoHelper>();
+            services.AddSingleton<RepoLabelCache>();
             services.AddSingleton<ITeamUserCache, TeamUserCache>();
+            services.AddSingleton<UserOrgVisibilityCache>();
+            services.AddSingleton<ICacheValidator, CacheValidator>();
             services.AddSingleton<ICodeownersManagementHelper, CodeownersManagementHelper>();
             services.AddSingleton<ICheckPackageHelper, CheckPackageHelper>();
             services.AddSingleton<ICodeownersAuditHelper, CodeownersAuditHelper>();
@@ -73,7 +79,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IAuditRule, InvalidOwnerRule>();
             services.AddSingleton<IAuditRule, MalformedTeamRule>();
             services.AddSingleton<IAuditRule, TeamNotWriteRule>();
-            services.AddSingleton<IAuditRule, LabelNotInGitHubRule>();
+            services.AddSingleton<IAuditRule, LabelNotInRepoLabelsRule>();
             services.AddSingleton<IAuditRule, ServiceAttentionMisuseRule>();
             services.AddSingleton<IAuditRule, LabelOwnerMissingOwnersRule>();
             services.AddSingleton<IAuditRule, LabelOwnerMissingLabelsRule>();
@@ -104,12 +110,14 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IPythonHelper, PythonHelper>();
             services.AddSingleton<IGitCommandHelper, GitCommandHelper>();
 
+            // Pipeline helpers
+            services.AddSingleton<IPipelineIdentifierHelper, PipelineIdentifierHelper>();
+
             // Services that need to be scoped so we can track/update state across services per request
             services.AddScoped<TokenUsageHelper>();
             services.AddScoped<IOutputHelper>(_ => new OutputHelper(outputMode));
             services.AddScoped<ConversationLogger>();
             // Services depending on other scoped services
-            services.AddScoped<IAzureAgentServiceFactory, AzureAgentServiceFactory>();
             services.AddScoped<ICommonValidationHelpers, CommonValidationHelpers>();
             services.AddScoped<IVerifySetupService, VerifySetupService>();
 
@@ -119,12 +127,23 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<CopilotClient>(sp =>
             {
                 var logger = sp.GetService<ILogger<CopilotClient>>();
-                return new CopilotClient(new CopilotClientOptions
+                var options = new CopilotClientOptions
                 {
                     UseStdio = true,
                     AutoStart = true,
                     Logger = logger
-                });
+                };
+
+                // Allow overriding the bundled Copilot CLI path via environment variable.
+                // This is useful when the standalone azsdk.exe doesn't include the Copilot CLI executable
+                // but the user has it installed elsewhere (e.g. via npm).
+                var cliPath = Environment.GetEnvironmentVariable("AZSDK_COPILOT_CLI_PATH");
+                if (!string.IsNullOrWhiteSpace(cliPath))
+                {
+                    options.CliPath = cliPath.Trim();
+                }
+
+                return new CopilotClient(options);
             });
             services.AddSingleton<ICopilotClientWrapper, CopilotClientWrapper>();
             services.AddScoped<ICopilotAgentRunner, CopilotAgentRunner>();

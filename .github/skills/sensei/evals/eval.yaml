@@ -1,29 +1,35 @@
-name: sensei-evals
-description: Evaluations for the sensei skill compliance improver
-skill: sensei
-version: "1.0"
+name: sensei-eval
+description: Evaluation suite for the sensei skill
+type: capability
+
+environment: azsdk-mcp-mock
+
+tags:
+  area: sensei
+  type: ci-gate
+
 config:
-  model: gpt-4o
-  executor: mock
-  trials_per_task: 1
-  timeout_seconds: 300
-  parallel: false
-metrics:
-  - name: task_completion
-    weight: 0.7
-    threshold: 0.8
-    description: Did the skill complete trigger and anti-trigger checks?
-  - name: efficiency
-    weight: 0.3
-    threshold: 0.7
-    description: Did the skill stay within behavior limits?
-graders:
-- type: text
-  name: no_fatal_errors
-  config:
-    regex_not_match:
-    - (?i)fatal error
-    - (?i)unhandled exception
-    - '(?i)panic:'
-tasks:
-  - "tasks/*.yaml"
+  runs: 1
+  timeout: "90s"
+  model: claude-opus-4.6
+  executor: copilot-sdk
+
+stimuli:
+  - name: basic-trigger
+    prompt: "Run sensei on the api-validation skill to improve its frontmatter compliance"
+    graders:
+      - type: output-contains
+        config:
+          substring: "skill"
+    constraints:
+      expect_skills: ["sensei"]
+
+  - name: anti-trigger
+    prompt: "How do I set up automatic retries for my HTTP client?"
+    graders:
+      - type: output-not-contains
+        config:
+          substring: "frontmatter"
+      - type: output-not-contains
+        config:
+          substring: "Ralph loop"

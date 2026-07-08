@@ -1,8 +1,9 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using APIView;
 
-namespace ApiView
+namespace APIViewLegacy
 {
     public class Program
     {
@@ -22,7 +23,7 @@ namespace ApiView
         {
             if (args.Length != 2)
             {
-                throw new ArgumentException("usage: ApiView [input-path] [output-path]", nameof(args));
+                throw new ArgumentException("usage: APIView [input-path] [output-path]", nameof(args));
             }
 
             var assemblySymbol = CompilationFactory.GetCompilation(args[0]);

@@ -3,6 +3,7 @@
 
 using APIView;
 using APIView.Analysis;
+using APIView.CSharp;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.SymbolDisplay;
@@ -11,7 +12,7 @@ using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Linq;
 
-namespace ApiView
+namespace APIViewLegacy
 {
     public class CodeFileBuilder
     {

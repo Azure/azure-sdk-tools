@@ -4,6 +4,8 @@
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.CodeownersUtils.Caches;
+using Azure.Sdk.Tools.CodeownersUtils.Constants;
+using Azure.Sdk.Tools.CodeownersUtils.Utils;
 
 namespace Azure.Sdk.Tools.Cli.Helpers.Codeowners.Rules;
 
@@ -16,7 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers.Codeowners.Rules;
 /// </summary>
 public class TeamNotWriteRule(
     ITeamUserCache teamUserCache,
-    IGitHubService githubService,
+    ICacheValidator cacheValidator,
     IDevOpsService devOpsService
 ) : IAuditRule
 {
@@ -38,6 +40,13 @@ public class TeamNotWriteRule(
             .Where(o => o.IsGitHubTeam)
             .ToList();
 
+        if (teamOwners.Count == 0)
+        {
+            return violations;
+        }
+
+        await EnsureTeamCacheIsFresh(ct);
+
         foreach (var owner in teamOwners)
         {
             // Skip malformed aliases — those are handled by AUD-OWN-002
@@ -50,7 +59,7 @@ public class TeamNotWriteRule(
             }
 
             var teamSlug = parts[1];
-            var isWriteTeam = await CheckTeamIsUnderWriteTeam(teamSlug, ct);
+            var isWriteTeam = CheckTeamIsUnderWriteTeam(teamSlug);
 
             if (!isWriteTeam)
             {
@@ -126,7 +135,7 @@ public class TeamNotWriteRule(
         return Task.FromResult(fixes);
     }
 
-    private async Task<bool> CheckTeamIsUnderWriteTeam(string teamSlug, CancellationToken ct)
+    private bool CheckTeamIsUnderWriteTeam(string teamSlug)
     {
         // azure-sdk-write itself is valid
         if (teamSlug.Equals("azure-sdk-write", StringComparison.OrdinalIgnoreCase))
@@ -140,24 +149,7 @@ public class TeamNotWriteRule(
             return true;
         }
 
-        // Fall back to GitHub API parent-chain check
-        try
-        {
-            var current = await githubService.GetTeamByNameAsync("Azure", teamSlug, ct);
-            while (current?.Parent != null)
-            {
-                if (current.Parent.Slug.Equals("azure-sdk-write", StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
-                current = await githubService.GetTeamByNameAsync("Azure", current.Parent.Slug, ct);
-            }
-            return false;
-        }
-        catch (Octokit.NotFoundException)
-        {
-            return false;
-        }
+        return false;
     }
 
     private async Task<AuditFixResult> SetInvalidSince(int ownerId, string alias, DateTime invalidSince, CancellationToken ct)
@@ -178,5 +170,11 @@ public class TeamNotWriteRule(
             ["Custom.InvalidSince"] = ""
         }, ct);
         return new AuditFixResult { RuleId = RuleId, Description = desc, Success = true };
+    }
+
+    private async Task EnsureTeamCacheIsFresh(CancellationToken ct)
+    {
+        DateTime minimumLastModifiedUtc = DateTime.UtcNow.Subtract(AuditRuleCacheSettings.CacheMaxAge);
+        await cacheValidator.ThrowIfCacheOlderThan(DefaultStorageConstants.TeamUserBlobUri, minimumLastModifiedUtc, ct);
     }
 }

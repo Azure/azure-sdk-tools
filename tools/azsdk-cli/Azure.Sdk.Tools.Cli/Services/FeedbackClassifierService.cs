@@ -33,6 +33,7 @@ public interface IFeedbackClassifierService
         string? language = null,
         string? serviceName = null,
         int? batchSize = null,
+        EditScope editScope = EditScope.All,
         CancellationToken ct = default);
 }
 
@@ -82,6 +83,7 @@ public class FeedbackClassifierService : IFeedbackClassifierService
         string? language = null,
         string? serviceName = null,
         int? batchSize = null,
+        EditScope editScope = EditScope.All,
         CancellationToken ct = default)
     {
         // If no items were provided, try gathering them from the input sources first.
@@ -112,7 +114,7 @@ public class FeedbackClassifierService : IFeedbackClassifierService
 
         foreach (var chunk in items.Chunk(effectiveBatchSize))
         {
-            await BatchClassifyAsync(chunk.ToList(), globalContext, language, serviceName, referenceDocContent, specRepoBasePath, ct);
+            await BatchClassifyAsync(chunk.ToList(), globalContext, language, serviceName, referenceDocContent, specRepoBasePath, editScope, ct);
         }
         return BuildClassificationResponse(items);
     }
@@ -191,6 +193,7 @@ public class FeedbackClassifierService : IFeedbackClassifierService
         string? serviceName,
         string referenceDocContent,
         string specRepoBasePath,
+        EditScope editScope,
         CancellationToken ct)
     {
         var template = new FeedbackClassificationTemplate(
@@ -198,7 +201,8 @@ public class FeedbackClassifierService : IFeedbackClassifierService
             language: language ?? string.Empty,
             referenceDocContent: referenceDocContent,
             items: items,
-            globalContext: globalContext
+            globalContext: globalContext,
+            editScope: editScope
         );
 
         var prompt = template.BuildPrompt();

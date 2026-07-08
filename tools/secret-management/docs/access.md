@@ -7,10 +7,8 @@ This directory contains a tool to manage various access configurations for ident
     - These can be used to authorize an Application to access Azure resources like KeyVault secrets.
 1. Create or Update [Federated Identity Credentials](https://learn.microsoft.com/graph/api/resources/federatedidentitycredentials-overview?view=graph-rest-1.0) in Microsoft Graph for an Application.
     - These can be used to authorize Github Actions to provide tokens on behalf of an Application.
-1. Create [GitHub Repository Secrets](https://docs.github.com/actions/security-guides/encrypted-secrets).
-    - These can be used to add configuration details for an Application to allow a GitHub Action to login with that identity and make requests to Azure.
 
-Access management is done via a declarative configuration model. See the [test-configs](../Azure.Sdk.Tools.AccessManagement.Tests/test-configs) for example usage. The tool attempts to reconcile the state of the configuration file with the state in Azure, Graph and GitHub.
+Access management is done via a declarative configuration model. See the [test-configs](../Azure.Sdk.Tools.AccessManagement.Tests/test-configs) for example usage. The tool attempts to reconcile the state of the configuration file with the state in Azure and Graph.
 
 ## Running the tool
 
@@ -24,22 +22,6 @@ az login
 
 # az powershell
 Connect-AzAccount
-```
-
-Additionally the user must be logged into GitHub if any repository secrets are configured. See [GitHub CLI installation](https://cli.github.com/manual/installation).
-
-```
-gh auth login
-```
-
-Alternatively, you can use a [GitHub Personal Access Token](https://docs.github.com/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token).
-
-```
-# bash
-export GITHUB_TOKEN="<pat>"
-
-# powershell
-env:GITHUB_TOKEN="<pat>"
 ```
 
 ### Tool execution

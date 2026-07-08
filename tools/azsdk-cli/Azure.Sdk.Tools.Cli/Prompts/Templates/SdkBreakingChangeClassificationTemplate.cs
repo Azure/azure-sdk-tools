@@ -1,12 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using System.Text.RegularExpressions;
-using Azure.Sdk.Tools.Cli.Tools.Package;
-
 namespace Azure.Sdk.Tools.Cli.Prompts.Templates
 {
-    public class SdkBreakingChangeClassificationTemplate : ClassificationBaseTemplate<SdkBreakingChange, SdkBreakingChange>
+    public class SdkBreakingChangeClassificationTemplate : BasePromptTemplate
     {
         public override string TemplateId => "sdk-breaking-change-classification";
         public override string Version => "1.0.0";
@@ -16,9 +13,6 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
         private readonly string _sdkChanges;
         private readonly string _language;
         private readonly string _tspProjectPath;
-        private static readonly Regex ResultBlockRex = new(
-                    @"\[(?<id>[^\]]+)\]\s*breaking:\s*(?<breaking>.+?)\s*category:\s*(?<category>.+?)\s*resolution:\s*(?<resolution>.*?)\s*originBreaks:\s*(?<originBreaks>(?:-[^\n]*\n?)+)",
-                    RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.Singleline);
 
         public SdkBreakingChangeClassificationTemplate(string sdkBreakingPatternContent, string sdkChanges, string language, string tspProjectPath)
         {
@@ -194,76 +188,5 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
             - Output only the classified breaking change blocks.
             """;
         }
-
-        public override List<SdkBreakingChange> ParseClassifyResult(string result, List<SdkBreakingChange>? items = null)
-        {
-            try
-            {
-                // Regex to capture structured breaking change blocks with multi-line originBreaks
-                // The pattern matches:
-                // [item-id]
-                // breaking: <description>
-                // category: <category>
-                // resolution: <resolution> (optional)
-                // originBreaks: (followed by multiple lines starting with "- ")
-                //   - <original breaking #1>
-                //   - <original breaking #2>
-                //   - ...
-                //
-                // Uses lookahead (?=\[|\z) to stop at the next block or end of string
-                //Regex ResultBlockRex = new(
-                //    @"\[(?<id>[^\]]+)\]\s*breaking:\s*(?<breaking>.+?)\s*category:\s*(?<category>.+?)\s*resolution:\s*(?<resolution>.*?)\s*originBreaks:\s*(?<originBreaks>(?:-[^\n]*\n?)+)",
-                //    RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.Singleline);
-                var sdkBreakingChanges = new List<SdkBreakingChange>();
-                foreach (Match match in ResultBlockRex.Matches(result))
-                {
-                    var id = match.Groups["id"].Value.Trim();
-                    var breaking = match.Groups["breaking"].Value.Trim();
-                    var category = match.Groups["category"].Value.Trim();
-                    var resolution = match.Groups["resolution"].Value.Trim();
-                    var originBreaksRaw = match.Groups["originBreaks"].Value.Trim();
-
-                    // Parse originBreaks: split by newlines and extract lines starting with "-"
-                    List<string> originBreaksList = new List<string>();
-                    if (!string.IsNullOrEmpty(originBreaksRaw))
-                    {
-                        var lines = originBreaksRaw.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-                        foreach (var line in lines)
-                        {
-                            var trimmedLine = line.Trim();
-                            // Remove the leading "- " or "-" from each line
-                            if (trimmedLine.StartsWith("- "))
-                            {
-                                originBreaksList.Add(trimmedLine.Substring(2).Trim());
-                            }
-                            else if (trimmedLine.StartsWith("-"))
-                            {
-                                originBreaksList.Add(trimmedLine.Substring(1).Trim());
-                            }
-                            else if (!string.IsNullOrWhiteSpace(trimmedLine))
-                            {
-                                // If line doesn't start with "-", still include it (fallback)
-                                originBreaksList.Add(trimmedLine);
-                            }
-                        }
-                    }
-
-                    SdkBreakingChange breakingChange = new SdkBreakingChange
-                    {
-                        BreakingChange = breaking,
-                        Category = category,
-                        Resolution = resolution,
-                        OriginBreaks = originBreaksList
-                    };
-                    sdkBreakingChanges.Add(breakingChange);
-                }
-                return sdkBreakingChanges;
-            }
-            catch (Exception)
-            {
-                return new List<SdkBreakingChange>();
-            }
-        }
-
     }
 }

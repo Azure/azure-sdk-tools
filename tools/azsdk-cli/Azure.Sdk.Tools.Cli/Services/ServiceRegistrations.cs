@@ -98,7 +98,8 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IInputSanitizer, InputSanitizer>();
             services.AddSingleton<ITspClientHelper, TspClientHelper>();
             services.AddSingleton<IAPIViewFeedbackService, APIViewFeedbackService>();
-            services.AddScoped<IClassifyService, ClassificationService>();
+            services.AddScoped<IFeedbackClassifierService, FeedbackClassifierService>();
+            services.AddScoped<ISdkBreakingChangeClassificationService, SdkBreakingChangeClassificationService>();
             services.AddScoped<IUserPromptProcessor, UserPromptProcessor>();
 
             // Process Helper Classes

@@ -3,13 +3,11 @@
 
 using System.CommandLine;
 using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.ClassifyItems;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
@@ -23,7 +21,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private readonly ISpecGenSdkConfigHelper _specGenSdkConfigHelper;
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
 
-        private readonly IClassifyService _classifyService;
+        private readonly ISdkBreakingChangeClassificationService _classifyService;
         // Command names
         private const string DetectSdkBreakingChangeCommandName = "detect-breaking-change";
         private const string DetectSdkBreakingChangToolName = "azsdk_package_detect_breaking_change";
@@ -53,7 +51,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             ILogger<SdkBreakingChangeDetectTool> logger,
             IEnumerable<LanguageService> languageServices,
             ISpecGenSdkConfigHelper specGenSdkConfigHelper,
-            IClassifyService classifyService) : base(languageServices, gitHelper, logger)
+            ISdkBreakingChangeClassificationService classifyService) : base(languageServices, gitHelper, logger)
         {
             _specGenSdkConfigHelper = specGenSdkConfigHelper;
             _classifyService = classifyService;
@@ -165,9 +163,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                                 {
                                     var tspProjectPath = tspConfigPath != null ? await gitHelper.DiscoverRepoRootAsync(tspConfigPath, ct) : null;
                                     var sdkBreakingPattern = await languageService.GetSDKBreakingPattern(sdkRepoRoot, ct);
-                                    var classifyRequest = new ClassifySdkBreakingChangesRequest(sdkchanges.ChangelogMD, sdkRepoRoot, sdkBreakingPattern, languageService.Language.ToString(), tspProjectPath);
-                                    var classifyResult = await _classifyService.ClassifyItemsAsync<ClassifySdkBreakingChangesResponse>(ClassificationKind.SdkBreakingChange, classifyRequest, ct);
-                                    if (classifyResult == null || classifyResult.ClassifiedResult == null)
+                                    var sdkBreakingChanges = await _classifyService.ClassifySdkBreakingChangesAsync(sdkchanges.ChangelogMD, sdkRepoRoot, sdkBreakingPattern, languageService.Language.ToString(), tspProjectPath, ct);
+                                    if (sdkBreakingChanges.Count == 0)
                                     {
                                         logger.LogError("Failed to classify SDK breaking changes.");
                                         return new PackageOperationResponse
@@ -180,7 +177,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                                     var result = new SdkBreakingChangeDetectResult
                                     {
                                         HasBreakingChanges = true,
-                                        BreakingChanges = classifyResult.ClassifiedResult,
+                                        BreakingChanges = sdkBreakingChanges,
                                     };
                                     return new PackageOperationResponse()
                                     {

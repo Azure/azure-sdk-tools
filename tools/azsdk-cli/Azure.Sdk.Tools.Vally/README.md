@@ -13,11 +13,11 @@ different folders. A full end-to-end gate runs *both*.
 |---|---|---|
 | **Question** | Given a user prompt, does the agent invoke the right MCP tool(s) with the right shape? | Given a user prompt, does the agent route to the right skill and follow its instructions? |
 | **Catches** | Tool name / description / parameter regressions; multi-tool ordering; tool-catalog conflicts | Skill frontmatter / `description` / instruction regressions; skill-routing collisions |
-| **Path** | [`tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/`](evals/) (`tools/` + `workflow-scenarios/`) | [`.github/skills/<skill-name>/evals/*.eval.yaml`](../../../.github/skills/) (and `evaluate/evals/` for capability suites) |
+| **Path** | [`tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/`](https://github.com/Azure/azure-sdk-tools/tree/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals) (`tools/` + `workflow-scenarios/`) | [`.github/skills/<skill-name>/evals/*.eval.yaml`](https://github.com/Azure/azure-sdk-tools/tree/main/.github/skills) (and `evaluate/evals/` for capability suites) |
 | **Loaded subject** | Production MCP server (`Azure.Sdk.Tools.Cli`) over stdio — real tools, real network calls | Skill's `SKILL.md` + frontmatter; the agent picks tools itself |
 | **Primary grader** | `tool-calls` — checks the recorded trajectory for required tool names | Trigger / routing graders + per-skill rubric |
 | **Run command** | `vally eval --eval-spec evals/tools/<name>.eval.yaml` *from this directory* | `vally eval --skill-dir .github/skills/<skill-name>` *from repo root* |
-| **CI status** | Phase 1 mock vertical in [`eng/pipelines/vally-eval.yml`](../../../eng/pipelines/vally-eval.yml) (hermetic `unit` + mock tiers, detect→shard→summarize); live tier deferred | `vally lint` runs in [.github/workflows/skill-eval.yml](../../../.github/workflows/skill-eval.yml); full `eval` job pending |
+| **CI status** | Phase 1 mock vertical in `eng/pipelines/vally-eval.yml` (hermetic `unit` + mock tiers, detect→shard→summarize); live tier deferred | `vally lint` runs in [.github/workflows/skill-eval.yml](https://github.com/Azure/azure-sdk-tools/blob/main/.github/workflows/skill-eval.yml); full `eval` job pending |
 | **Cost profile** | Higher — each run spins up the MCP server, real LLM turns (~5–15), real tool calls | Variable — trigger evals are cheap; capability evals (e.g. `azure-typespec-author`) are expensive |
 
 ### Why both?
@@ -40,7 +40,7 @@ conditional branches, recovery), both matter independently.
 
 ### Scenarios checked in today
 
-**Tool-scenario evals (this project)** — organised by the standard test pyramid under [`evals/`](evals/). The folder is the **cost tier** (and CI cadence); the feature **area** is a tag inside each YAML so cross-cuts work via `.vally.yaml` suite filters.
+**Tool-scenario evals (this project)** — organised by the standard test pyramid under [`evals/`](https://github.com/Azure/azure-sdk-tools/tree/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals). The folder is the **cost tier** (and CI cadence); the feature **area** is a tag inside each YAML so cross-cuts work via `.vally.yaml` suite filters.
 
 #### `evals/tools/` — hermetic single-tool evals (10 files)
 
@@ -48,16 +48,16 @@ One prompt → one expected MCP tool. No `environment.git`, no fixtures. Fast; s
 
 | Scenario | Area | Shape |
 |---|---|---|
-| [`add-arm-resource`](evals/tools/add-arm-resource.eval.yaml) | typespec | File-producing scenario — calls `azsdk_typespec_generate_authoring_plan` + `edit` for an ARM resource |
-| [`prompt-to-tool-apiview`](evals/tools/prompt-to-tool-apiview.eval.yaml) | apiview | `azsdk_apiview_*` |
-| [`prompt-to-tool-config`](evals/tools/prompt-to-tool-config.eval.yaml) | engsys | `azsdk_check_service_label`, `azsdk_create_service_label` |
-| [`prompt-to-tool-engsys`](evals/tools/prompt-to-tool-engsys.eval.yaml) | engsys | `azsdk_analyze_log_file`, failed-test tools, codeowner-cache |
-| [`prompt-to-tool-github`](evals/tools/prompt-to-tool-github.eval.yaml) | github | `azsdk_create_pull_request`, `azsdk_get_pull_request*`, `azsdk_get_github_user_details`, `azsdk_get_pull_request_link_for_current_branch` |
-| [`prompt-to-tool-package`](evals/tools/prompt-to-tool-package.eval.yaml) | package | `azsdk_package_*`, `azsdk_release_sdk` |
-| [`prompt-to-tool-pipeline`](evals/tools/prompt-to-tool-pipeline.eval.yaml) | pipeline | `azsdk_analyze_pipeline`, `azsdk_get_pipeline_*` — incl. analyze + fix routing (required) and an unrelated-request negative (disallowed), ported from the pipeline skill `eval.yaml` files |
-| [`prompt-to-tool-releaseplan`](evals/tools/prompt-to-tool-releaseplan.eval.yaml) | release-plan | `azsdk_*_release_plan*`, `azsdk_run_generate_sdk`, `azsdk_link_*` |
-| [`prompt-to-tool-typespec`](evals/tools/prompt-to-tool-typespec.eval.yaml) | typespec | `azsdk_typespec_*`, `azsdk_convert_swagger_to_typespec`, `azsdk_customized_code_update`, `azsdk_run_typespec_validation` |
-| [`prompt-to-tool-verify`](evals/tools/prompt-to-tool-verify.eval.yaml) | engsys | `azsdk_verify_setup` |
+| [`add-arm-resource`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/tools/add-arm-resource.eval.yaml) | typespec | File-producing scenario — calls `azsdk_typespec_generate_authoring_plan` + `edit` for an ARM resource |
+| [`prompt-to-tool-apiview`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/tools/prompt-to-tool-apiview.eval.yaml) | apiview | `azsdk_apiview_*` |
+| [`prompt-to-tool-config`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/tools/prompt-to-tool-config.eval.yaml) | engsys | `azsdk_check_service_label`, `azsdk_create_service_label` |
+| [`prompt-to-tool-engsys`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/tools/prompt-to-tool-engsys.eval.yaml) | engsys | `azsdk_analyze_log_file`, failed-test tools, codeowner-cache |
+| [`prompt-to-tool-github`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/tools/prompt-to-tool-github.eval.yaml) | github | `azsdk_create_pull_request`, `azsdk_get_pull_request*`, `azsdk_get_github_user_details`, `azsdk_get_pull_request_link_for_current_branch` |
+| [`prompt-to-tool-package`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/tools/prompt-to-tool-package.eval.yaml) | package | `azsdk_package_*`, `azsdk_release_sdk` |
+| [`prompt-to-tool-pipeline`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/tools/prompt-to-tool-pipeline.eval.yaml) | pipeline | `azsdk_analyze_pipeline`, `azsdk_get_pipeline_*` — incl. analyze + fix routing (required) and an unrelated-request negative (disallowed), ported from the pipeline skill `eval.yaml` files |
+| [`prompt-to-tool-releaseplan`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/tools/prompt-to-tool-releaseplan.eval.yaml) | release-plan | `azsdk_*_release_plan*`, `azsdk_run_generate_sdk`, `azsdk_link_*` |
+| [`prompt-to-tool-typespec`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/tools/prompt-to-tool-typespec.eval.yaml) | typespec | `azsdk_typespec_*`, `azsdk_convert_swagger_to_typespec`, `azsdk_customized_code_update`, `azsdk_run_typespec_validation` |
+| [`prompt-to-tool-verify`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/tools/prompt-to-tool-verify.eval.yaml) | engsys | `azsdk_verify_setup` |
 
 #### `evals/quality/` — output-quality evals (2 files)
 
@@ -65,8 +65,8 @@ Single or multi-step prompts that grade the correctness of the agent's answer. T
 
 | Scenario | Skill exercised | Shape |
 |---|---|---|
-| [`analyze-pipeline`](evals/quality/pipeline/analyze-pipeline.eval.yaml) | `azsdk-common-pipeline-troubleshooting` | Given a build ref, analyze it and produce a correct root-cause diagnosis (identify the code bug, don't recommend re-record/retry) |
-| [`fix-pipeline`](evals/quality/pipeline/fix-pipeline.eval.yaml) | `azsdk-common-pipeline-fixer` | Given the analysis, apply the fix to the overlaid source and verify via the package `build`/`check`/`test` MCP tools |
+| [`analyze-pipeline`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/quality/pipeline/analyze-pipeline.eval.yaml) | `azsdk-common-pipeline-troubleshooting` | Given a build ref, analyze it and produce a correct root-cause diagnosis (identify the code bug, don't recommend re-record/retry) |
+| [`fix-pipeline`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/quality/pipeline/fix-pipeline.eval.yaml) | `azsdk-common-pipeline-fixer` | Given the analysis, apply the fix to the overlaid source and verify via the package `build`/`check`/`test` MCP tools |
 
 #### `evals/workflow-scenarios/` — multi-tool scenarios (6)
 
@@ -76,16 +76,16 @@ pipelines, runs nightly).
 
 | Scenario | Area | Mode | Shape |
 |---|---|---|---|
-| [`check-public-repo-then-validate`](evals/workflow-scenarios/mock/check-public-repo-then-validate.eval.yaml) | typespec | mock | Validate, then check public-repo presence |
-| [`typespec-generation-step02`](evals/workflow-scenarios/mock/typespec-generation-step02.eval.yaml) | typespec | mock | Step in the spec-PR generation flow |
-| [`rename-client-property`](evals/workflow-scenarios/mock/rename-client-property.eval.yaml) | typespec | mock | Stub — needs `expected-diff` grader + sparse clone |
-| [`release-planner-workflows`](evals/workflow-scenarios/mock/release-planner-workflows.eval.yaml) | release-plan | mock | Create / re-fetch / link / update release-plan flows (5 stimuli) |
-| [`analyze-failed-pipeline`](evals/workflow-scenarios/mock/analyze-failed-pipeline.eval.yaml) | pipeline | mock | Two-tool path — pull pipeline status, then analyze the run to surface the failing test |
-| [`release-planner`](evals/workflow-scenarios/live/release-planner.eval.yaml) | release-plan | **live** | Create + re-fetch a release plan, kick off SDK gen, link PR back — real DevOps test-area writes |
+| [`check-public-repo-then-validate`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/workflow-scenarios/mock/check-public-repo-then-validate.eval.yaml) | typespec | mock | Validate, then check public-repo presence |
+| [`typespec-generation-step02`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/workflow-scenarios/mock/typespec-generation-step02.eval.yaml) | typespec | mock | Step in the spec-PR generation flow |
+| [`rename-client-property`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/workflow-scenarios/mock/rename-client-property.eval.yaml) | typespec | mock | Stub — needs `expected-diff` grader + sparse clone |
+| [`release-planner-workflows`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/workflow-scenarios/mock/release-planner-workflows.eval.yaml) | release-plan | mock | Create / re-fetch / link / update release-plan flows (5 stimuli) |
+| [`analyze-failed-pipeline`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/workflow-scenarios/mock/analyze-failed-pipeline.eval.yaml) | pipeline | mock | Two-tool path — pull pipeline status, then analyze the run to surface the failing test |
+| [`release-planner`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/workflow-scenarios/live/release-planner.eval.yaml) | release-plan | **live** | Create + re-fetch a release plan, kick off SDK gen, link PR back — real DevOps test-area writes |
 
 
 Live scenarios need a primed `azure-rest-api-specs` clone — run
-[`sync-eval-git-repo.js`](../../../eng/common/scripts/eval/sync-eval-git-repo.js)
+[`sync-eval-git-repo.js`](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/eval/sync-eval-git-repo.js)
 (`node ../../../eng/common/scripts/eval/sync-eval-git-repo.js`; local-only
 helper, auto-refreshes every 24h) before invoking the
 `scenarios-live` / `nightly` suite.
@@ -93,13 +93,13 @@ helper, auto-refreshes every 24h) before invoking the
 **Skill evals (already in repo, *not* part of this PR)** — for reference:
 
 - **Trigger evals** (one per skill, verify routing): see e.g.
-  [`.github/skills/azsdk-common-prepare-release-plan/evals/trigger.eval.yaml`](../../../.github/skills/azsdk-common-prepare-release-plan/evals/trigger.eval.yaml),
+  [`.github/skills/azsdk-common-prepare-release-plan/evals/trigger.eval.yaml`](https://github.com/Azure/azure-sdk-tools/blob/main/.github/skills/azsdk-common-prepare-release-plan/evals/trigger.eval.yaml),
   plus `azsdk-common-sdk-release`, `azsdk-common-pipeline-troubleshooting`,
   `azsdk-common-apiview-feedback-resolution`, `sensei`,
   `skill-authoring`, `markdown-token-optimizer`.
-- **Capability suite** for [`azure-typespec-author`](../../../.github/skills/azure-typespec-author/) —
+- **Capability suite** for [`azure-typespec-author`](https://github.com/Azure/azure-sdk-tools/tree/main/.github/skills/azure-typespec-author) —
   29 numbered cases under
-  [`.github/skills/azure-typespec-author/evaluate/evals/`](../../../.github/skills/azure-typespec-author/evaluate/evals/)
+  [`.github/skills/azure-typespec-author/evaluate/evals/`](https://github.com/Azure/azure-sdk-tools/tree/main/.github/skills/azure-typespec-author/evaluate/evals)
   (`001001.eval.yaml` … `005001.eval.yaml`). These are the data-driven
   TypeSpec authoring scenarios that *would* have been our follow-up #1
   here — they're already covered as skill evals, so this project doesn't
@@ -134,7 +134,7 @@ Folder = tier (cost / CI cadence): `evals/tools/` is hermetic + fast,
 Vally's suite filter is positive-match only, so the
 mock-vs-live split lives on disk rather than in tags. Feature **area** still
 lives as a `tags:` entry inside each YAML so cross-cuts (e.g. "all
-release-plan evals") select via [`.vally.yaml`](.vally.yaml) suite filters
+release-plan evals") select via [`.vally.yaml`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/.vally.yaml) suite filters
 or `vally eval --tag`.
 
 ## Quickstart — run one scenario
@@ -357,7 +357,7 @@ $rows | Group-Object { $_.gradeResult.stimulusName } | ForEach-Object {
    - `prompt` — LLM-as-judge for free-form quality checks.
    - Custom (`Graders/`) — add a .NET grader when no built-in fits.
 7. The suite picks it up automatically (folders are globbed). Add a new
-   tag-filtered suite to [`.vally.yaml`](.vally.yaml) only if you’re
+   tag-filtered suite to [`.vally.yaml`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/.vally.yaml) only if you’re
    introducing a brand-new feature area.
 8. Run locally to confirm it passes, then open a PR.
 
@@ -402,13 +402,13 @@ those constraints are captured in prompt text and inline `TODO:` comments.
       `optional`, argument-matching, and ordering to the built-in `tool-calls`
       grader (or accept that those gaps need custom graders).
 - [ ] Wire a `vally eval` CI job for this project (current
-      [`.github/workflows/skill-eval.yml`](../../../.github/workflows/skill-eval.yml)
+      [`.github/workflows/skill-eval.yml`](https://github.com/Azure/azure-sdk-tools/blob/main/.github/workflows/skill-eval.yml)
       runs `vally lint` only and is scoped to skills). See
       [#15126](https://github.com/Azure/azure-sdk-tools/issues/15126) and
       [#15127](https://github.com/Azure/azure-sdk-tools/issues/15127).
 - [ ] Decide on `AuthoringScenario` parity: the 29 TypeSpec authoring cases
       are already covered as **skill evals** under
-      [`.github/skills/azure-typespec-author/evaluate/evals/`](../../../.github/skills/azure-typespec-author/evaluate/evals/).
+      [`.github/skills/azure-typespec-author/evaluate/evals/`](https://github.com/Azure/azure-sdk-tools/tree/main/.github/skills/azure-typespec-author/evaluate/evals).
       Tracked as [#15767](https://github.com/Azure/azure-sdk-tools/issues/15767) —
       likely close as duplicate unless we also want tool-level coverage of the
       same prompts (catches catalog regressions even when the skill isn't

@@ -122,6 +122,18 @@ public class CheckPackageHelperTests
     }
 
     [Test]
+    public void CheckPackage_WildcardPath_ReturnsInvalidDirectoryPathFailure()
+    {
+        var result = helper.CheckPackage(
+            "sdk/*/Azure.Wildcard",
+            "Azure/azure-sdk-for-net",
+            entries);
+
+        AssertFailure(result, CheckPackageIssue.Codes.InvalidDirectoryPath, "must not contain '*'");
+        Assert.That(result.Issues[0].CurrentValues, Is.EquivalentTo(new[] { "sdk/*/Azure.Wildcard" }));
+    }
+
+    [Test]
     public void CheckPackage_MultipleIssues_AreCollected()
     {
         var customEntries = new List<CodeownersEntry>

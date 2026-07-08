@@ -4,8 +4,8 @@
 # Reference them from the eval via:
 #   environment:
 #     files:
-#       - src: ../../../fixtures/<scenario-name>/<file>   # relative to the eval file
+#       - src: ../../fixtures/<scenario-name>/<file>      # evals/tools/*.eval.yaml (2 levels up)
+#       - src: ../../../fixtures/<scenario-name>/<file>   # evals/workflow-scenarios/{mock,live}/* (3 levels up)
 #         dest: <path inside the workspace>
 #
-# (src paths resolve relative to the eval file; evals under
-#  evals/workflow-scenarios/{mock,live}/ are three levels up from fixtures/.)
+# (src paths resolve relative to the eval file; adjust the number of ../ segments if the eval moves or is nested deeper.)

@@ -364,6 +364,23 @@
     }
   }
 
+  // The automation account used to auto-create release plans. When a plan is
+  // submitted by this account there is no real service-team member to act, so
+  // the submitter name is omitted from "Action required from" labels.
+  const AUTOMATION_SUBMITTER = "azure-sdk-1es-open-source-assistant";
+
+  function isAutomationSubmitter(submittedBy) {
+    return (submittedBy || "").toLowerCase().trim() === AUTOMATION_SUBMITTER;
+  }
+
+  // Builds the "Service Team" action label, including the submitter name unless
+  // the plan was submitted by the automation account.
+  function serviceTeamLabel(submittedBy) {
+    return submittedBy && !isAutomationSubmitter(submittedBy)
+      ? `Service Team (${submittedBy})`
+      : "Service Team";
+  }
+
   // A language is excluded only when ReleaseExclusionStatus is "Approved"
   function isLangExcluded(exclusionStatus) {
     const val = (exclusionStatus || "").toLowerCase().trim();
@@ -422,9 +439,7 @@
     const apiReady = (p.apiReadiness || "").toLowerCase();
 
     // Step 1: API Spec checks
-    const serviceTeam = p.submittedBy
-      ? `Service Team (${p.submittedBy})`
-      : "Service Team";
+    const serviceTeam = serviceTeamLabel(p.submittedBy);
     if (!specPrUrl)
       return {
         status: "API Spec Not Available",
@@ -1549,22 +1564,7 @@
       ) {
         needsServiceTeam = true;
       }
-      if (needsServiceTeam)
-        actionFrom.push(
-          p.submittedBy ? `Service Team (${p.submittedBy})` : "Service Team",
-        );
-      // Namespace approval action is for service partner team
-      const isMgmtForAction = classifyPlane(p) === "mgmt";
-      const hasFirstPreviewForAction = Object.values(langs).some(
-        (l) => l.isFirstPreview && l.packageName,
-      );
-      if (
-        isMgmtForAction &&
-        hasFirstPreviewForAction &&
-        !p.namespaceApprovalIssue
-      ) {
-        actionFrom.push("Service Partner Team");
-      }
+      if (needsServiceTeam) actionFrom.push(serviceTeamLabel(p.submittedBy));
     }
     const actionFromHTML = actionFrom.length
       ? `<div class="action-from-label">Action required from: <strong>${esc(actionFrom.join(" & "))}</strong></div>`
@@ -3246,18 +3246,19 @@
         html += `<div class="pr-detail-row"><strong>APIView:</strong> <a href="${esc(d.apiViewUrl)}" target="_blank" rel="noopener">View API Changes</a></div>`;
       }
       // Action required — context-specific guidance for the PR tab
-      const serviceTeamLabel = pr.submittedBy
-        ? `Service Team (${esc(pr.submittedBy)})`
-        : "Service Team";
+      const serviceTeamLabelHTML =
+        pr.submittedBy && !isAutomationSubmitter(pr.submittedBy)
+          ? `Service Team (${esc(pr.submittedBy)})`
+          : "Service Team";
       if (!prIsMerged) {
         if (prIsOpenOrDraft && d.failedChecks && d.failedChecks.length) {
-          html += `<div class="action-required-section" style="margin-top:10px;"><h4>⚡ Action Required</h4><div class="action-from-label">Action required from: <strong>${serviceTeamLabel}</strong></div><div class="action-item action-item-warning"><strong>Fix check failures:</strong> Clone the repo, checkout the PR, and use the <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">Azure SDK Tools agent</a> to resolve build errors.</div></div>`;
+          html += `<div class="action-required-section" style="margin-top:10px;"><h4>⚡ Action Required</h4><div class="action-from-label">Action required from: <strong>${serviceTeamLabelHTML}</strong></div><div class="action-item action-item-warning"><strong>Fix check failures:</strong> Clone the repo, checkout the PR, and use the <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">Azure SDK Tools agent</a> to resolve build errors.</div></div>`;
         } else if (prIsClosed) {
-          html += `<div class="action-required-section" style="margin-top:10px;"><h4>⚡ Action Required</h4><div class="action-from-label">Action required from: <strong>${serviceTeamLabel}</strong></div><div class="action-item action-item-warning"><strong>PR Closed:</strong> Regenerate the SDK or link a different PR to the release plan.</div></div>`;
+          html += `<div class="action-required-section" style="margin-top:10px;"><h4>⚡ Action Required</h4><div class="action-from-label">Action required from: <strong>${serviceTeamLabelHTML}</strong></div><div class="action-item action-item-warning"><strong>PR Closed:</strong> Regenerate the SDK or link a different PR to the release plan.</div></div>`;
         } else if (st === "draft") {
-          html += `<div class="action-required-section" style="margin-top:10px;"><h4>⚡ Action Required</h4><div class="action-from-label">Action required from: <strong>${serviceTeamLabel}</strong></div><div class="action-item"><strong>Mark as ready for review:</strong> This PR is in draft status. Mark it as ready for review when the SDK changes are complete.</div></div>`;
+          html += `<div class="action-required-section" style="margin-top:10px;"><h4>⚡ Action Required</h4><div class="action-from-label">Action required from: <strong>${serviceTeamLabelHTML}</strong></div><div class="action-item"><strong>Mark as ready for review:</strong> This PR is in draft status. Mark it as ready for review when the SDK changes are complete.</div></div>`;
         } else if (d.isApproved && st === "open") {
-          html += `<div class="action-required-section" style="margin-top:10px;"><h4>⚡ Action Required</h4><div class="action-from-label">Action required from: <strong>${serviceTeamLabel}</strong></div><div class="action-item"><strong>Merge the SDK pull request:</strong> This PR has been approved by the SDK team. <a href="${esc(pr.prUrl)}" target="_blank" rel="noopener">Open the PR on GitHub</a> and merge it.</div></div>`;
+          html += `<div class="action-required-section" style="margin-top:10px;"><h4>⚡ Action Required</h4><div class="action-from-label">Action required from: <strong>${serviceTeamLabelHTML}</strong></div><div class="action-item"><strong>Merge the SDK pull request:</strong> This PR has been approved by the SDK team. <a href="${esc(pr.prUrl)}" target="_blank" rel="noopener">Open the PR on GitHub</a> and merge it.</div></div>`;
         }
       }
       // Latest comment

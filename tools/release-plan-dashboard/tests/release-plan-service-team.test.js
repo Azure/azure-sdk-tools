@@ -137,6 +137,27 @@ describe("mapReleasePlan pipeline fields", () => {
   });
 });
 
+describe("Action required never attributes to Service Partner Team", () => {
+  test("Service Partner Team is not pushed as an action owner", () => {
+    expect(appJs).not.toContain('actionFrom.push("Service Partner Team")');
+    expect(appJs).not.toContain("Service Partner Team");
+  });
+});
+
+describe("Automation submitter is not shown as action owner", () => {
+  test("serviceTeamLabel omits the automation account name", () => {
+    expect(appJs).toContain("function serviceTeamLabel(submittedBy)");
+    expect(appJs).toContain("function isAutomationSubmitter(submittedBy)");
+    expect(appJs).toContain('"azure-sdk-1es-open-source-assistant"');
+  });
+
+  test("all service team labels use the helper (no inline submitter suffix)", () => {
+    // The raw inline "Service Team (${p.submittedBy})" pattern must be gone so
+    // the automation account name is never surfaced as an action owner.
+    expect(appJs).not.toContain("`Service Team (${p.submittedBy})`");
+  });
+});
+
 describe("Failed to generate SDK tag", () => {
   test("tag filter option and logic exist", () => {
     expect(indexHtml).toContain('value="sdk-generation-failed"');

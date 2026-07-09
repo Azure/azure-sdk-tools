@@ -76,8 +76,8 @@ flowchart TD
      - SDK breaking change detection
      - APIView generates SDK API surface review (current) or API Review Hub creates review PR (future)
    - **API review**: Architects review generated SDK public API surface
-     - `<lang>-api-approved` labels are **informational** — source of truth is the ARH database (API hash)
-     - ARH will assign `<lang>-api-approved` labels on SDK PRs automatically when architect approves
+     - `<lang>-api-approved` labels (current) are **informational** — source of truth is the ARH database (API hash)
+     - ARH will assign `api-approved` label on SDK PRs automatically when architect approves (replacing per-language labels)
    - **Auto-repair**: `auto-sdk-build-fix` label triggers Copilot agent to fix custom code drift
    - **ARM SDK PRs**: Reviewed by Haoling/Shanghai team with release plans attached
 
@@ -90,7 +90,7 @@ flowchart TD
 ### For Reviewers
 
 1. **ARM review** (ARM specs only) — Review resource model correctness on spec PRs; apply `ARMSignedOff` label
-2. **SDK API review** — Review generated SDK API surface on SDK PRs via APIView (current) or API Review Hub review PRs (future). **There is no spec-level API review** — API review applies only to the generated SDK. `<lang>-api-approved` labels are **informational** — source of truth is the ARH database (API hash).
+2. **SDK API review** — Review generated SDK API surface on SDK PRs via APIView (current) or API Review Hub review PRs (future). **There is no spec-level API review** — API review applies only to the generated SDK. **Current**: `<lang>-api-approved` labels applied manually by architects. **Future (ARH)**: `api-approved` label applied automatically via webhooks/GH App. Labels are **informational** — source of truth is the ARH database (API hash).
 3. **SDK PR review** (Haoling/Shanghai team, management plane only) — Review generated SDK PRs that have a release plan attached; approve & merge
 4. **Breaking change review** — Review breaking changes flagged by `BreakingChangeReviewRequired` label on spec PRs (ARM specs only)
 5. **Namespace review** — Approve new package namespaces; apply `namespace-<lang>-approved` labels
@@ -408,8 +408,16 @@ Structured error reporting from generation pipeline + agent-assisted troubleshoo
 #### Open questions
 
 - [ ] What triggers ARH review PR creation? SDK PR creation? Manual? Label?
+- [ ] How is the review request (tracking issue) linked to the ARH review PR? Swap APIView link with ARH PR link in the tracking board?
 
-> **Note**: `<lang>-api-approved` labels are **informational** — source of truth is the ARH database (API hash). ARH will assign `<lang>-api-approved` labels on SDK PRs automatically when architect approves in future.
+#### Confirmed behavior (per @tjprescott)
+
+- ARH uses its own **webhooks + GitHub App** (not GitHub Actions) to propagate approval status.
+- When an ARH review PR is **associated with a working SDK PR**, approval automatically applies `api-approved` or `api-changes-requested` labels on the working PR.
+- **No separate GitHub Action is needed** for label automation — ARH handles it natively.
+- Current state: label step kept manual during transition to avoid premature dependency on ARH while APIView is still active.
+
+> **Note**: **Current**: `<lang>-api-approved` labels applied manually by architects — **informational**. **Future (ARH)**: `api-approved` label assigned automatically via webhooks/GH App. Source of truth is the ARH database (API hash) in both cases.
 
 </details>
 
@@ -442,7 +450,7 @@ Structured error reporting from generation pipeline + agent-assisted troubleshoo
 
 | Process | What | Owner | Status |
 |---------|------|-------|--------|
-| **SDK PR readiness** (before merge) | Make SDK PR release-ready: fix linter failures, test failures, merge conflicts, breaking changes, update changelog/metadata. Tracked in [#15705](https://github.com/Azure/azure-sdk-tools/issues/15705). | @prkannap / Language teams / EngSys | Multiple items open — see issue |
+| **SDK PR readiness** (before merge) | Make SDK PR release-ready: fix linter failures, test failures, merge conflicts, breaking changes, update changelog/metadata. Tracked in [#15705](https://github.com/Azure/azure-sdk-tools/issues/15705). | @raych1 / Language teams / EngSys | Multiple items open — see issue |
 | **Release trigger** (after merge) | Auto-trigger release pipeline when SDK PR merges. Once PR is merged, changelog and metadata are already done — just need to release. | @raych1 | In progress — becoming automatic |
 
 > **Key clarification**: Changelog, metadata, and version updates happen *inside the SDK PR before merge* — they are part of SDK PR readiness. After merge, the only step is triggering the release pipeline (which @raych1 is automating). The manual approval gate on the release pipeline itself cannot be removed for security reasons.
@@ -521,7 +529,7 @@ Manual approval gate on release pipeline cannot be removed for security (ARM app
 | Label | Applied by | Meaning | Blocking? | Automation |
 |-------|-----------|---------|-----------|------------|
 | `auto-sdk-build-fix` | CI / human | Triggers Copilot auto-repair | No | ✅ Triggers cloud agent |
-| `<lang>-api-approved` | ARH (future) / Architect (current) | SDK API approved — **informational only**. Source of truth is ADO (API hash). ARH will assign this label on SDK PRs automatically when architect approves. | Informational | ⚠️ ARH will assign automatically in future |
+| `<lang>-api-approved` (current) / `api-approved` (ARH future) | ARH (future) / Architect (current) | SDK API approved — **informational only**. Source of truth is ARH database (API hash). Current: architects apply `<lang>-api-approved` manually. Future: ARH assigns `api-approved` automatically. | Informational | ⚠️ Transitioning to ARH |
 | `release-plan-linked` | Automation | Marks PR for Haoling/Shanghai team review (ARM SDK PRs) | No | ✅ Auto-applied |
 | `ready-for-review` | GitHub Form | Triggers architect review process | No | ✅ Applied via workflow |
 | `needs-info` | Reviewer | Needs more info from service team | No | ⚠️ Manual, no automation |
@@ -592,13 +600,13 @@ The system uses **prompt chaining**: independent sub-skills invoked sequentially
 |---|-----|-------|-------|-----------|--------|
 | 1 | End-to-end CI chain not designed (no unified PR comment) | 2 | @raych1 / @prkannap / @catalinaperalta | Yes | Open |
 | 2 | Generation errors silently fail — not surfaced as structured report, no agent troubleshooting | 3 | @prkannap / spec-gen-sdk | Yes | Open |
-| 3 | SDK PR not fully release-ready after generation: linter failures, test failures, merge conflicts, missing changelog/metadata. Tracked in [#15705](https://github.com/Azure/azure-sdk-tools/issues/15705). | 4 | @prkannap / Language teams | Yes | Open |
+| 3 | SDK PR not fully release-ready after generation: linter failures, test failures, merge conflicts, missing changelog/metadata. Tracked in [#15705](https://github.com/Azure/azure-sdk-tools/issues/15705). | 4 | @raych1 / Language teams | Yes | Open |
 | 4 | Release trigger not automated — auto-trigger on SDK PR merge being built | 5 | @raych1 | Yes | In progress |
 | 5 | ARH review PR creation not automated on SDK PRs | 4 | @tjprescott | Yes | Open |
 | 6 | Breaking change findings require manual resolution | 1, 2 | @markcowl / @catalinaperalta | No | Open |
 | 7 | `BreakingChangeReviewRequired` label routing to correct review team undefined | 2 | @raych1 / @markcowl / @catalinaperalta | No | Open |
 | 8 | SDK breaking change detection integration in progress | 4 | @raych1 / @catalinaperalta | No | In progress |
-| 9 | ARM vs data plane review gates not documented in detail (different review teams, labels, and blocking behavior) | 2, 4 | @samvaity / @prkannap | No | Open |
+| 9 | REST API spec review gates not documented in detail (different review teams, labels, and blocking behavior) | 2, 4 | @samvaity / @prkannap | No | Open |
 | 10 | Release pipeline provisioning delay for new RPs | 5 | EngSys | No | In progress |
 | 11 | API review feedback agent needs ARH compatibility | 4 | azsdk-cli team | No | Open |
 | 12 | Release gate transition (APIView → ARH) | 5 | @tjprescott / EngSys | No | In progress — pipelines will check both APIView and ARH, then transition to ARH only |
@@ -676,7 +684,7 @@ The system uses **prompt chaining**: independent sub-skills invoked sequentially
 - **API Spec PR**: Pull request in `azure-rest-api-specs` containing TypeSpec changes.
 - **SDK PR**: Pull request in a language SDK repo with generated and customized SDK code.
 - **APIView**: Current web tool for reviewing SDK public API surface. Being replaced by API Review Hub. Operates at **SDK level only** — there is no spec-level API review.
-- **API Review Hub (ARH)**: New service replacing APIView for **SDK-level API review only** — there is no spec-level API review. Creates synthetic "review PRs" in language repos with `API.md` diffs — never merged, exist only for review. Approval recorded in ARH database (API hash). `<lang>-api-approved` labels are **informational**. ⚠️ ARH review PR creation on SDK PRs is an open design gap.
+- **API Review Hub (ARH)**: New service replacing APIView for **SDK-level API review only** — there is no spec-level API review. Creates synthetic "review PRs" in language repos with `API.md` diffs — never merged, exist only for review. Approval recorded in ARH database (API hash). When associated with a working SDK PR, ARH auto-applies `api-approved`/`api-changes-requested` labels via webhooks + GH App (no GH Actions needed). Replaces current per-language `<lang>-api-approved` labels with single `api-approved`. ⚠️ ARH review PR creation trigger on SDK PRs is an open design gap.
 - **tspconfig.yaml**: Configuration specifying emitter settings per language.
 - **tsp-location.yaml**: Configuration in SDK repos pointing to source TypeSpec project.
 - **`@azure-tools/typespec-breaking-change`**: TypeSpec-native breaking change detector. Phase A: same-version regression. Phase B: cross-version evolution.

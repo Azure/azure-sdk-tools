@@ -1,14 +1,14 @@
 # Release History
 
-## 0.6.26 (Unreleased)
-
-### Features Added
+## 0.6.26 (2026-07-09)
 
 ### Breaking Changes
 
-### Bugs Fixed
+- `azsdk config codeowners check-package` now returns structured issue results with target-aware metadata (`resolved_target`, `resolved_target_type`, `issues[]`), issue-specific `/owners ...` fix prompts, and a CODEOWNERS-specific support link. 
 
 ### Other Changes
+
+`eng/common/scripts/Test-CodeownersForArtifacts.ps1` now prints each `check-package` result and summarizes failed packages with the matching issue text and prompt template.
 
 ## 0.6.25 (2026-07-07)
 

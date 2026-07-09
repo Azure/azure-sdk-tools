@@ -66,6 +66,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 .Setup(x => x.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 0 });
             _mockSpecGenSdkConfigHelper = new Mock<ISpecGenSdkConfigHelper>();
+            _mockSpecGenSdkConfigHelper.Setup(x => x.GetSdkBreakingChangePatternFileConfigurationAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                                        .Returns<string, CancellationToken>((path, ct) => Task.FromResult("documentation/development/breaking-changes/sdk-breaking-changes-guide-migration.md"));
             _mockNpxHelper = new Mock<INpxHelper>();
             _mockPowerShellHelper = new Mock<IPowershellHelper>();
             logger = new TestLogger<SdkBuildTool>();
@@ -152,7 +154,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         #region Classify SDK Breaking Changes Tests
         [Test, Explicit]
         [Category(TestCategories.CopilotAgent)]
-        [TestCase("### Breaking Changes\n\n- Field `Tier` of struct `ResourceSKU` has been removed\n\n### Features Added\n\n- New field `TierNew` in struct `ResourceSKU`\n", SdkLanguage.Go, "azure-sdk-for-go")]
+        [TestCase("### Breaking Changes\n\n- Field `Tier` of struct `ResourceSKU` has been removed\n\n### Features Added\n\n- New field `GroupPresenceEvents` in struct `EventHandler`\n- New field `TierNew` in struct `ResourceSKU`\n", SdkLanguage.Go, "azure-sdk-for-go")]
         public async Task ClassifySDKBreakingChanges_RenameProperty(string sdkchanges, SdkLanguage language, string sdkRepoName)
         {
             var sdkRepoRoot = Path.Combine(
@@ -162,7 +164,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             var service = CreateRealService();
             var languageService = _languageServices.First(s => s.Language == language);
             var ct = CancellationToken.None;
-            var sdkBreakingPattern = await languageService.GetSDKBreakingPattern(sdkRepoRoot, ct);
+            var sdkBreakingPattern = await languageService.GetSdkBreakingPattern(sdkRepoRoot, ct);
             var tspProjectFile = Path.Combine(_typeSpecProjectPath, "tspconfig.yaml");
             var classifyResult = await service.ClassifySdkBreakingChangesAsync(sdkchanges, sdkRepoRoot, sdkBreakingPattern, languageService.Language.ToString(), _typeSpecProjectPath, ct);
             Assert.IsNotNull(classifyResult);

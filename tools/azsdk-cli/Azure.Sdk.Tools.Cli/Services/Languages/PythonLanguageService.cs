@@ -37,8 +37,6 @@ public sealed partial class PythonLanguageService : LanguageService
     public override SdkLanguage Language { get; } = SdkLanguage.Python;
     public override bool IsCustomizedCodeUpdateSupported => true;
 
-    protected override string SDKBreakingPatternFilePath => "doc/dev/mgmt/sdk-breaking-changes-guide.md";
-
     /// <summary>
     /// Python packages are identified by setup.py or pyproject.toml files.
     /// </summary>

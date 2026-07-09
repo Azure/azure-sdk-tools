@@ -116,17 +116,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 }
                 var packageInfo = await languageService.GetPackageInfo(packagePath, ct);
                 // execute configured sdk change retrieve script
-                var (configContentType, configValue) = await _specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.GetSDKChanges, ct);
+                var (configContentType, configValue) = await _specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.GetSdkChanges, ct);
                 if (configContentType != SpecGenSdkConfigContentType.Unknown && !string.IsNullOrEmpty(configValue))
                 {
                     logger.LogInformation("Found valid configuration for getting sdk changes. Executing configured script...");
 
                     // Prepare script parameters
+                    string tempDir = Path.GetTempPath();
+                    var sdkChangeFilePath = Path.Combine(tempDir, SdkChangeJsonFileName);
                     var scriptParameters = new Dictionary<string, string>
                         {
                             { "SdkRepoPath", sdkRepoRoot },
                             { "PackagePath", packagePath },
-                            {"OutputJsonFile", Path.Combine(packagePath, SdkChangeJsonFileName) }
+                            {"OutputJsonFile", sdkChangeFilePath }
                         };
 
                     // Create and execute process options for the get-sdk-changes script
@@ -138,8 +140,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                         // Fixed condition: proceed when there are NO errors (Count == 0 or null)
                         if (sdkChangeResponse != null && (sdkChangeResponse.ResponseErrors == null || sdkChangeResponse.ResponseErrors.Count == 0))
                         {
-                            var sdkChangeFilePath = Path.Combine(packagePath, SdkChangeJsonFileName);
-
                             if (!File.Exists(sdkChangeFilePath))
                             {
                                 logger.LogWarning("SDK change file not found at: {FilePath}", sdkChangeFilePath);
@@ -149,20 +149,24 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                                 };
                             }
 
+                            SdkChange? sdkchanges;
                             // Read and deserialize the JSON file with proper disposal
-                            using var fileStream = File.OpenRead(sdkChangeFilePath);
-                            var sdkchanges = await JsonSerializer.DeserializeAsync<SdkChange>(fileStream, cancellationToken: ct);
+                            await using (var fileStream = File.OpenRead(sdkChangeFilePath))
+                            {
+                                sdkchanges = await JsonSerializer.DeserializeAsync<SdkChange>(
+                                    fileStream,
+                                    cancellationToken: ct);
+                            }
 
                             // clean up the SDK change file after reading
-                            fileStream.Close();
                             File.Delete(sdkChangeFilePath);
 
                             if (sdkchanges != null)
                             {
                                 if (sdkchanges.HasBreakingChange && !changesOnly)
                                 {
-                                    var tspProjectPath = tspConfigPath != null ? Path.GetDirectoryName(tspConfigPath) : null;
-                                    var sdkBreakingPattern = await languageService.GetSDKBreakingPattern(sdkRepoRoot, ct);
+                                    var tspProjectPath = tspConfigPath != null ? Path.GetDirectoryName(tspConfigPath): null;
+                                    var sdkBreakingPattern = await languageService.GetSdkBreakingPattern(sdkRepoRoot, ct);
                                     var sdkBreakingChanges = await _classifyService.ClassifySdkBreakingChangesAsync(sdkchanges.ChangelogMD, sdkRepoRoot, sdkBreakingPattern, languageService.Language.ToString(), tspProjectPath, ct);
                                     if (sdkBreakingChanges.Count == 0)
                                     {
@@ -195,10 +199,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                                         BreakingChanges = [],
                                         SdkChangesMd = sdkchanges.ChangelogMD,
                                     };
+                                    
                                     return new PackageOperationResponse()
                                     {
                                         Result = result,
-                                        Message = sdkchanges.HasBreakingChange ? "SDK changes detected but no breaking changes found." : "No SDK breaking changes detected.",
+                                        Message = sdkchanges.HasBreakingChange ? "SDK changes detected. Breaking change classification skipped as per the 'changes-only' option." : "No SDK breaking changes detected.",
                                         Language = languageService.Language,
                                         PackageName = packageInfo?.PackageName,
                                     };
@@ -206,10 +211,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                             }
                             else
                             {
-                                logger.LogError("Failed to deserialize the SDK change script output. Falling back to default logic to detect SDK breaking changes.");
+                                logger.LogError("Failed to deserialize the SDK change script output.");
                                 return new PackageOperationResponse
                                 {
-                                    ResponseError = "Failed to deserialize the SDK change script output. Falling back to default logic to detect SDK breaking changes.",
+                                    ResponseError = "Failed to deserialize the SDK change script output.",
                                     Language = languageService.Language,
                                     PackageName = packageInfo?.PackageName,
                                 };

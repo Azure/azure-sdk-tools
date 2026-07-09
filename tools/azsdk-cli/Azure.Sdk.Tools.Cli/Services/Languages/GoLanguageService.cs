@@ -30,8 +30,6 @@ public partial class GoLanguageService(
     public override SdkLanguage Language { get; } = SdkLanguage.Go;
     public override bool IsCustomizedCodeUpdateSupported => true;
 
-    protected override string SDKBreakingPatternFilePath => "documentation/development/breaking-changes/sdk-breaking-changes-guide-migration.md";
-
     /// <summary>
     /// Go does not produce distributable artifacts, so pack is a no-op.
     /// </summary>

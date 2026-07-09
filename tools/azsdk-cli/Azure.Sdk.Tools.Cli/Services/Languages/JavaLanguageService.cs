@@ -28,7 +28,6 @@ public sealed partial class JavaLanguageService : LanguageService
     private readonly IPythonHelper pythonHelper;
 
     private const string CustomizationDirName = "customization";
-    protected override string SDKBreakingPatternFilePath => "docs/breaking-changes-mitigation.md";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JavaLanguageService"/> class.

@@ -8,6 +8,7 @@ Pylint custom checkers for SDK guidelines: C4717 - C4777
 """
 
 import os
+import re
 import logging
 import astroid
 from pylint.checkers import BaseChecker
@@ -3779,19 +3780,17 @@ class CheckMissingDependency(BaseChecker):
 
         deps = set()
         try:
-            with open(setup_path, "r") as f:
+            with open(setup_path, "r", encoding="utf-8", errors="replace") as f:
                 content = f.read()
-            # Simple regex to find package names in install_requires
-            import re
-            # Match strings inside install_requires list
-            match = re.search(r"install_requires\s*=\s*\[([^\]]*)\]", content, re.DOTALL)
+            # Match strings inside install_requires list or tuple
+            match = re.search(r"install_requires\s*=\s*[\[\(]([^\]\)]*)[\]\)]", content, re.DOTALL)
             if match:
                 requires_text = match.group(1)
                 # Extract package names from quoted strings
                 for pkg_match in re.finditer(r'["\']([a-zA-Z0-9_-]+)', requires_text):
                     deps.add(pkg_match.group(1).lower().replace("-", "_"))
-        except Exception:
-            pass
+        except Exception as ex:
+            logger.debug("CheckMissingDependency: failed to parse %s: %s", setup_path, ex)
 
         self._setup_deps_cache[setup_path] = deps
         return deps

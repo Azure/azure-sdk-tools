@@ -31,7 +31,7 @@ def _load_classify_prompt() -> str:
 
 
 def _extract_root_message_id(conversation_id: str | None) -> str | None:
-    """Extract the root message id from a ``<channelId>;messageid=<id>`` conversation id."""
+    """Extract the root message id from a conversation id ``<channelId>;messageid=<id>``."""
     if not conversation_id:
         return None
     match = re.search(r"messageid=([^;]+)", conversation_id)

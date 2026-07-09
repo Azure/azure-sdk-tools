@@ -95,7 +95,7 @@ extends:
                 parameters:
                   Suite: dataplane-forced
                   SuiteName: dataplane-forced
-                  DisplayName: Run force invokation suite - dataplane
+                  DisplayName: Run force invocation suite - dataplane
                   TimeoutMinutes: 50
 
             templateContext:

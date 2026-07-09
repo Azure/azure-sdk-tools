@@ -118,12 +118,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             Required = true,
         };
 
-        private readonly Option<string> sdkReleaseTypeOpt = new("--sdk-type")
-        {
-            Description = "SDK release type: beta or stable",
-            Required = false,
-        };
-
         private readonly Option<string> apiReleaseTypeOpt = new("--api-release-type")
         {
             Description = "API release type. Allowed values: Private Preview, Public Preview, GA",
@@ -303,7 +297,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 serviceTreeIdOpt,
                 productTreeIdOpt,
                 optionalPullRequestOpt,
-                sdkReleaseTypeOpt,
                 isTestReleasePlanOpt,
                 forceCreateReleasePlanOpt,
             },
@@ -348,7 +341,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var serviceTreeId = commandParser.GetValue(serviceTreeIdOpt);
                     var productTreeId = commandParser.GetValue(productTreeIdOpt);
                     var specPullRequestUrl = commandParser.GetValue(optionalPullRequestOpt);
-                    var sdkReleaseType = commandParser.GetValue(sdkReleaseTypeOpt);
                     var apiReleaseType = commandParser.GetValue(apiReleaseTypeOpt);
                     var isTestReleasePlan = commandParser.GetValue(isTestReleasePlanOpt);
                     var forceCreateReleasePlan = commandParser.GetValue(forceCreateReleasePlanOpt);
@@ -357,7 +349,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         typeSpecProjectPath,
                         targetReleaseMonthYear,
                         apiReleaseType,
-                        sdkReleaseType: sdkReleaseType,
                         specPullRequestUrl: specPullRequestUrl,
                         serviceTreeId: serviceTreeId,
                         productTreeId: productTreeId,
@@ -652,8 +643,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     logger.LogWarning("Failed to identify a TypeSpec project path from {typeSpecProjectPath}", typeSpecProjectPath);
                     return new ReleasePlanResponse
                     {
-                        ResponseError = $"Failed to find the TypeSpec project from {typeSpecProjectPath}",
-                        NextSteps = ["Retry with valid TypeSpec project path"]
+                        ResponseError = $"Could not resolve a TypeSpec project from '{typeSpecProjectPath}'. " +
+                            "Provide the absolute path to the TypeSpec project directory, a URL to the TypeSpec project in the azure-rest-api-specs or azure-rest-api-specs-pr repository, " +
+                            "or run this command from within a local clone of one of those repositories.",
+                        NextSteps = ["Provide the absolute path or a valid azure-rest-api-specs / azure-rest-api-specs-pr URL to the TypeSpec project, or run this command from within a local clone of one of those repositories."]
                     };
                 }
                                
@@ -871,7 +864,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             return match.Success ? int.Parse(match.Groups[1].Value) : 0;
         }
 
-        private async Task ValidateCreateReleasePlanInputAsync(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, string sdkReleaseType, ApiReleaseType apiReleaseType, CancellationToken ct)
+        private async Task ValidateCreateReleasePlanInputAsync(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, ApiReleaseType apiReleaseType, CancellationToken ct)
         {
             if (!string.IsNullOrEmpty(specPullRequestUrl))
             {
@@ -883,17 +876,36 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 throw new Exception("TypeSpec project path is empty. Cannot create a release plan without a TypeSpec project root path");
             }
 
-            var supportedReleaseTypes = new[] { "beta", "stable" };
-            if (!supportedReleaseTypes.Contains(sdkReleaseType))
-            {
-                throw new Exception($"Invalid SDK release type. Supported release types are: {string.Join(", ", supportedReleaseTypes)}");
-            }
-
             // Skip filesystem validation for URLs since GetSpecRepoRootPath expects local paths
             // For Private Preview, allow private spec repos
             if (!typeSpecHelper.IsUrl(typeSpecProjectPath) && apiReleaseType != ApiReleaseType.PrivatePreview)
             {
                 var repoRoot = typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectPath);
+
+                // When this command is run from a language SDK repository (or any other directory) with a
+                // relative path, the path does not resolve within the azure-rest-api-specs(-pr) repository.
+                // In that case, guide the user instead of incorrectly reporting a private-repo error.
+                bool isSpecRepo = false;
+                if (!string.IsNullOrEmpty(repoRoot))
+                {
+                    try
+                    {
+                        isSpecRepo = await typeSpecHelper.IsRepoPathForSpecRepoAsync(repoRoot, ct);
+                    }
+                    catch (Exception ex) when (ex is not OperationCanceledException)
+                    {
+                        logger.LogDebug(ex, "Failed to determine whether '{RepoRoot}' is an azure-rest-api-specs(-pr) repository; falling back to user guidance.", repoRoot);
+                        isSpecRepo = false;
+                    }
+                }
+
+                if (!isSpecRepo)
+                {
+                    throw new Exception(
+                        $"Could not locate the Azure REST API specs repository (azure-rest-api-specs or azure-rest-api-specs-pr) from the TypeSpec project path '{typeSpecProjectPath}'. " +
+                        "If you are running this from a language SDK repository or another directory, provide the absolute path to the TypeSpec project, " +
+                        "or run this command from within a local clone of the Azure/azure-rest-api-specs repository.");
+                }
 
                 // Ensure a release plan is created only if the API specs pull request is in a public repository.
                 if (!await typeSpecHelper.IsRepoPathForPublicSpecRepoAsync(repoRoot, ct))
@@ -919,7 +931,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         }
 
         [McpServerTool(Name = CreateReleasePlanToolName), Description("Create Release Plan for a TypeSpec project and API release type. API release types support Private Preview, Public Preview, and GA. Service ID and product ID are optional and will be resolved from existing release plans when available.")]
-        public async Task<ReleasePlanResponse> CreateReleasePlan(IProgress<ProgressNotificationValue>? progress, string typeSpecProjectPath, string targetReleaseMonthYear, string apiReleaseType, string sdkReleaseType = "", string specPullRequestUrl = "", string serviceTreeId = "", string productTreeId = "", bool isTestReleasePlan = false, bool forceCreateReleasePlan = false, CancellationToken ct = default)
+        public async Task<ReleasePlanResponse> CreateReleasePlan(IProgress<ProgressNotificationValue>? progress, string typeSpecProjectPath, string targetReleaseMonthYear, string apiReleaseType, string specPullRequestUrl = "", string serviceTreeId = "", string productTreeId = "", bool isTestReleasePlan = false, bool forceCreateReleasePlan = false, CancellationToken ct = default)
         {
             try
             {         
@@ -929,26 +941,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return new ReleasePlanResponse { ResponseError = $"Invalid API release type '{apiReleaseType}'. Supported values are: Private Preview, Public Preview, GA" };
                 }
 
-                // Default SDK release type based on API release type if not provided
-                if (string.IsNullOrEmpty(sdkReleaseType))
-                {
-                    sdkReleaseType = parsedApiReleaseType.GetDefaultSdkReleaseType();
-                }
-                else
-                {
-                    sdkReleaseType = sdkReleaseType.ToLower();
-                    var sdkReleaseTypeMappings = new Dictionary<string, string>
-                    {
-                        { "ga", "stable" },
-                        { "preview", "beta" }
-                    };
-                    if (sdkReleaseTypeMappings.TryGetValue(sdkReleaseType, out var mappedType))
-                    {
-                        sdkReleaseType = mappedType;
-                    }
-                }                
+                // SDK release type is always derived from the API release type to prevent
+                // a stable SDK release from a preview API version.
+                var sdkReleaseType = parsedApiReleaseType.GetDefaultSdkReleaseType();
 
-                await ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType, parsedApiReleaseType, ct);
+                await ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, parsedApiReleaseType, ct);
 
                 // Validate spec PR against release type
                 ValidateSpecPullRequestForReleaseType(specPullRequestUrl, parsedApiReleaseType);
@@ -1202,21 +1199,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return new DefaultCommandResponse { ResponseError = $"Failed to parse TypeSpec project at {typeSpecProjectPath}." };
                 }
 
-                // Convert resolved packages to SDKInfo list
-                List<SDKInfo> SdkInfos = resolvedPackages
-                    .Where(p => p.Language != SdkLanguage.Unknown && !string.IsNullOrEmpty(p.PackageName))
-                    .Select(p => new SDKInfo
-                    {
-                        Language = p.Language.ToWorkItemString(),
-                        PackageName = p.PackageName!
-                    })
-                    .ToList();
-
-                if (SdkInfos.Count == 0)
-                {
-                    return new DefaultCommandResponse { ResponseError = "No valid SDK packages found in the TypeSpec project metadata." };
-                }
-
                 // Get release plan. The resolver accepts either a Release Plan ID or a work item ID.
                 var releasePlan = await devOpsService.ResolveReleasePlanByIdAsync(releasePlanWorkItemId, ct);
                 if (releasePlan == null)
@@ -1230,24 +1212,34 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 var requiredLanguages = releasePlan.IsManagementPlane ? languagesforMgmtplane : languagesforDataplane;
                 var supportedLanguages = releasePlan.IsManagementPlane ? languagesforMgmtplane : supportedLanguagesforDataplane;
 
+                var resolvedKnownLanguagePackages = resolvedPackages
+                    .Where(p => p.Language != SdkLanguage.Unknown)
+                    .ToList();
+
+                // Convert resolved packages to SDKInfo list. Empty package names are treated as missing
+                // emitter configuration and handled below instead of failing early.
+                List<SDKInfo> SdkInfos = resolvedKnownLanguagePackages
+                    .Where(p => !string.IsNullOrEmpty(p.PackageName))
+                    .Select(p => new SDKInfo
+                    {
+                        Language = p.Language.ToWorkItemString(),
+                        PackageName = p.PackageName!
+                    })
+                    .ToList();
+
                 // A TypeSpec project may emit packages for languages the release plan does not track
                 // (e.g. Rust, C++). Optional languages such as Go for data plane are part of the
                 // supported set and must be updated. Skip any other detected language instead of
                 // failing, so the tool still updates the supported languages it found.
-                var skippedLanguages = SdkInfos
-                    .Where(sdk => !supportedLanguages.Contains(sdk.Language))
-                    .Select(sdk => sdk.Language)
+                var skippedLanguages = resolvedKnownLanguagePackages
+                    .Select(pkg => pkg.Language.ToWorkItemString())
+                    .Where(lang => !supportedLanguages.Contains(lang))
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToList();
 
                 SdkInfos = SdkInfos
                     .Where(sdk => supportedLanguages.Contains(sdk.Language))
                     .ToList();
-
-                if (SdkInfos.Count == 0)
-                {
-                    return new DefaultCommandResponse { ResponseError = $"No supported SDK languages found in the TypeSpec project metadata. Supported languages are: {string.Join(", ", supportedLanguages)}" };
-                }
 
                 // Validate SDK Package names
                 var languagePrefixMap = new Dictionary<string, string>
@@ -1270,47 +1262,61 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
 
                 StringBuilder sb = new();
-                // Update SDK package name and languages in work item
-                var updated = await devOpsService.UpdateReleasePlanSDKDetailsAsync(releasePlanWorkItemId, SdkInfos, ct);
-                if (!updated)
+                if (SdkInfos.Count > 0)
                 {
-                    return new DefaultCommandResponse { ResponseError = "Failed to update release plan with SDK details." };
+                    // Update SDK package name and languages in work item
+                    var updated = await devOpsService.UpdateReleasePlanSDKDetailsAsync(releasePlanWorkItemId, SdkInfos, ct);
+                    if (!updated)
+                    {
+                        return new DefaultCommandResponse { ResponseError = "Failed to update release plan with SDK details." };
+                    }
+                    else
+                    {
+                        sb.Append("Updated SDK details in release plan.").AppendLine();
+                        foreach (var sdk in SdkInfos)
+                        {
+                            sb.AppendLine($"Language: {sdk.Language}, Package name: {sdk.PackageName}");
+                        }
+                    }
                 }
-                else
+                if (skippedLanguages.Any())
                 {
-                    sb.Append("Updated SDK details in release plan.").AppendLine();
-                    foreach (var sdk in SdkInfos)
-                    {
-                        sb.AppendLine($"Language: {sdk.Language}, Package name: {sdk.PackageName}");
-                    }
-                    if (skippedLanguages.Any())
-                    {
-                        sb.AppendLine($"Note: The following detected languages are not tracked in the release plan and were skipped: {string.Join(", ", skippedLanguages)}");
-                    }
+                    sb.AppendLine($"Note: The following detected languages are not tracked in the release plan and were skipped: {string.Join(", ", skippedLanguages)}");
                 }
 
-                // Check if any language is excluded
-                var excludedLanguages = requiredLanguages.Except(SdkInfos.Select(sdk => sdk.Language), StringComparer.OrdinalIgnoreCase);
-                if (excludedLanguages.Any())
+                // Check if any required language is missing emitter configuration in the TypeSpec project.
+                // Preserve an existing Requested/Approved exclusion status so intentional exclusions are not
+                // overwritten by the inferred MissingEmitterConfig state.
+                var languagesMissingEmitterConfig = requiredLanguages
+                    .Except(SdkInfos.Select(sdk => sdk.Language), StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+                var existingSdkInfos = releasePlan.SDKInfo ?? [];
+                var languagesToMarkMissingEmitterConfig = languagesMissingEmitterConfig
+                    .Where(lang => !existingSdkInfos.Any(info =>
+                        string.Equals(info.Language, lang, StringComparison.OrdinalIgnoreCase)
+                        && (string.Equals(info.ReleaseExclusionStatus, "Requested", StringComparison.OrdinalIgnoreCase)
+                            || string.Equals(info.ReleaseExclusionStatus, "Approved", StringComparison.OrdinalIgnoreCase))))
+                    .ToList();
+                if (languagesToMarkMissingEmitterConfig.Any())
                 {
-                    logger.LogDebug("Languages excluded in release plan. Work Item: {releasePlanWorkItemId}, languages: {excludedLanguages}", releasePlanWorkItemId, string.Join(", ", excludedLanguages));
-                    sb.AppendLine($"Important: The following languages were excluded in the release plan. SDK must be released for all languages. [{string.Join(", ", requiredLanguages)}]");
-                    sb.AppendLine("Explanation is required for any language exclusion. Please provide a justification for each excluded language.");
+                    logger.LogDebug("Languages missing emitter configuration in TypeSpec project. Work Item: {releasePlanWorkItemId}, languages: {languagesMissingEmitterConfig}", releasePlanWorkItemId, string.Join(", ", languagesToMarkMissingEmitterConfig));
+                    sb.AppendLine($"Important: The following languages have missing emitter configuration in the TypeSpec project: [{string.Join(", ", languagesToMarkMissingEmitterConfig)}]. SDK must be released for all required languages: [{string.Join(", ", requiredLanguages)}].");
+                    sb.AppendLine("Add the emitter configuration for each missing language in tspconfig.yaml, or request exclusion justification if the language is intentionally excluded.");
 
-                    // Mark excluded language as 'Requested' in the release plan work item.
+                    // Mark languages with missing emitter configuration in the release plan work item.
                     Dictionary<string, string> fieldsToUpdate = [];
-                    foreach (var lang in excludedLanguages)
+                    foreach (var lang in languagesToMarkMissingEmitterConfig)
                     {
-                        fieldsToUpdate[$"Custom.ReleaseExclusionStatusFor{DevOpsService.MapLanguageToId(lang)}"] = "Requested";
+                        fieldsToUpdate[$"Custom.ReleaseExclusionStatusFor{DevOpsService.MapLanguageToId(lang)}"] = "MissingEmitterConfig";
                     }
                     await devOpsService.UpdateWorkItemAsync(releasePlanWorkItemId, fieldsToUpdate, ct);
-                    logger.LogDebug("Marked excluded languages as 'Requested' in release plan work item {releasePlanWorkItemId}.", releasePlanWorkItemId);
+                    logger.LogDebug("Marked languages with missing emitter configuration in release plan work item {releasePlanWorkItemId}.", releasePlanWorkItemId);
                 }
 
                 return new DefaultCommandResponse
                 {
                     Message = sb.ToString(),
-                    NextSteps = excludedLanguages.Any() && string.IsNullOrEmpty(releasePlan.LanguageExclusionRequesterNote) ? ["Prompt the user for justification for excluded languages and update it in the release plan."] : []
+                    NextSteps = languagesToMarkMissingEmitterConfig.Any() ? ["Configure the TypeSpec emitter for missing languages in tspconfig.yaml, or provide a justification for language exclusion."] : []
                 };
             }
             catch (Exception ex)
@@ -1773,12 +1779,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 var releasePlanLink = releasePlan.ReleasePlanLink;
                 var releasePlanDate = releasePlan.SDKReleaseMonth;
 
-                // Identify SDKs not yet released (skip Go for Data Plane and skip excluded languages)
+                // Identify SDKs not yet released (skip Go for Data Plane and skip excluded/missing-emitter languages)
                 var missingSDKs = releasePlan.SDKInfo
                     .Where(info => (string.IsNullOrEmpty(info.ReleaseStatus) || !string.Equals(info.ReleaseStatus, "Released", StringComparison.OrdinalIgnoreCase))
                              && (releasePlan.IsManagementPlane || !string.Equals(info.Language, "Go", StringComparison.OrdinalIgnoreCase))
                              && !string.Equals(info.ReleaseExclusionStatus, "Requested", StringComparison.OrdinalIgnoreCase)
-                             && !string.Equals(info.ReleaseExclusionStatus, "Approved", StringComparison.OrdinalIgnoreCase))
+                             && !string.Equals(info.ReleaseExclusionStatus, "Approved", StringComparison.OrdinalIgnoreCase)
+                             && !string.Equals(info.ReleaseExclusionStatus, "MissingEmitterConfig", StringComparison.OrdinalIgnoreCase))
                     .Select(info => info.Language)
                     .ToList();
 

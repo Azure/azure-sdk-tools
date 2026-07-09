@@ -126,7 +126,7 @@ def main(argv: list[str] | None = None) -> int:
     script_dir = Path(__file__).resolve().parent
 
     try:
-        endpoint = os.environ["AI_FOUNDRY_PROJECT_ENDPOINT"]
+        endpoint = os.environ["AZURE_AI_PROJECT_ENDPOINT"]
         model = os.environ["AZURE_EVALUATION_MODEL_NAME"]
         threshold = int(os.environ.get("EVALUATE_THRESHOLD", "3"))
     except KeyError as exc:

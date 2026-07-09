@@ -110,9 +110,9 @@ extends:
                           --cache_result full
                     env:
                       SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-                      AI_FOUNDRY_PROJECT_ENDPOINT: $(AI_FOUNDRY_PROJECT_ENDPOINT)
+                      AZURE_AI_PROJECT_ENDPOINT: $(AZURE_AI_PROJECT_ENDPOINT)
                       AZURE_EVALUATION_MODEL_NAME: $(AZURE_EVALUATION_MODEL_NAME)
-                      AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
+                      STORAGE_BLOB_ACCOUNT: $(STORAGE_BLOB_ACCOUNT)
                       BOT_CONFIG_CONTAINER: $(BOT_CONFIG_CONTAINER)
                       BOT_CONFIG_CHANNEL_BLOB: $(BOT_CONFIG_CHANNEL_BLOB)
                       EVALUATE_THRESHOLD: $(EVALUATE_THRESHOLD)

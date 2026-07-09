@@ -21,13 +21,12 @@ There are **two independent parts**:
 - `az login` (local) against the `azuresdkqabot` subscription
 - `pip install -r requirements.txt`
 - Environment (or `.env`) — see [`env-variables`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/env-variables):
-  - `AI_FOUNDRY_PROJECT_ENDPOINT`, `AZURE_EVALUATION_MODEL_NAME`, `EVALUATE_THRESHOLD`
+  - `AZURE_AI_PROJECT_ENDPOINT`, `AZURE_EVALUATION_MODEL_NAME`, `EVALUATE_THRESHOLD`
   - bot `/completion`: `BOT_SERVICE_ENDPOINT` (+ `BOT_AGENT_TOKEN_RESOURCE` /
     `BOT_AGENT_ACCESS_TOKEN`) for the deployed bot, or run the agent `server.py`
     locally (`http://localhost:8089`); tenant routing from `BOT_CONFIG_CONTAINER` /
     `BOT_CONFIG_CHANNEL_BLOB`
-  - dataset prep only: `AZURE_APPCONFIG_ENDPOINT` (storage location is read from
-    App Configuration via `STORAGE_BASE_URL`),
+  - dataset prep only: `STORAGE_BLOB_ACCOUNT`,
     `AI_ONLINE_PERFORMANCE_EVALUATION_STORAGE_CONTAINER`
 
 ## Canonical dataset schema

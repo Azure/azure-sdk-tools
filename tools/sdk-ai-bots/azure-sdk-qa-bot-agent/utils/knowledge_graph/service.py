@@ -141,16 +141,11 @@ class KnowledgeGraphService:
         finally:
             filtering.allowed_entity_ids_var().reset(token)
 
-        # Return the graph's UNIQUE signal only: multi-hop relationship context
-        # (how the query's concepts connect across the corpus). Direct document
-        # references are the KB tool's job — the graph no longer competes with
-        # it on citations, and community synthesis is dropped. This keeps the
-        # graph additive (relational reasoning) without duplicating or diluting
-        # the KB's direct answer.
-        return extraction.extract_relationships_from_context(
+        return extraction.extract_references_from_context(
             self._dfs,
             result.context_records,
-            top_n=int(cfg("GRAPH_RELATIONSHIP_TOP_N", "10")),
+            top_k=int(cfg("GRAPH_REF_TOP_K", "8")),
+            community_top_n=int(cfg("GRAPH_COMMUNITY_REPORTS_TOP_N", "2")),
         )
 
     # ------------------------------------------------------------------ #

@@ -198,6 +198,98 @@ def extract_references_from_context(
     return references + community_refs
 
 
+def extract_relationships_from_context(
+    dfs: "dict[str, Any]",
+    context_records: Any,
+    *,
+    top_n: int = 10,
+) -> list[Reference]:
+    """Resolve a graph context payload into **multi-hop relationship** context.
+
+    This is the graph's *unique* contribution versus the KB: not document
+    references (the KB owns all direct citations) and not community synthesis,
+    but the **connections between the concepts** the query touches — how
+    entities relate across the corpus, which flat KB chunks cannot express.
+
+    We take the in-context entities the local search surfaced, look up the
+    relationship edges **among those entities** in ``dfs['relationships']``,
+    rank them by graph degree (most-connected first), and return the top
+    ``top_n`` as compact ``"<source> → <target>: <description>"`` statements.
+    Each is a :class:`Reference` with ``source="graphrag_relationship"`` and no
+    ``link`` — it is relational context to reason over, never a citable source.
+
+    Returns an empty list when the relationships parquet is missing, no
+    in-context entities were found, or no edges connect them.
+    """
+    if top_n <= 0:
+        return []
+
+    import pandas as pd
+
+    rel = dfs.get("relationships")
+    if rel is None or getattr(rel, "empty", True):
+        return []
+    if not {"source", "target", "description"}.issubset(rel.columns):
+        return []
+
+    entity_names: set[str] = set()
+
+    def visit(node: Any) -> None:
+        if isinstance(node, pd.DataFrame):
+            if "entity" in node.columns:
+                for value in node["entity"].astype(str).tolist():
+                    if value:
+                        entity_names.add(value.strip().upper())
+            return
+        if isinstance(node, dict):
+            for v in node.values():
+                visit(v)
+        elif isinstance(node, (list, tuple, set)):
+            for v in node:
+                visit(v)
+
+    visit(context_records)
+    if not entity_names:
+        return []
+
+    src_up = rel["source"].astype(str).str.upper()
+    tgt_up = rel["target"].astype(str).str.upper()
+    edges = rel[src_up.isin(entity_names) & tgt_up.isin(entity_names)]
+    if edges.empty:
+        return []
+
+    rank_col = "combined_degree" if "combined_degree" in edges.columns else "weight"
+    if rank_col in edges.columns:
+        edges = edges.sort_values(rank_col, ascending=False)
+
+    refs: list[Reference] = []
+    n = min(top_n, len(edges))
+    denom = float(max(n, 1))
+    for i in range(n):
+        row = edges.iloc[i]
+        src = str(row.get("source") or "").strip()
+        tgt = str(row.get("target") or "").strip()
+        desc = str(row.get("description") or "").strip()
+        if not (src and tgt):
+            continue
+        content = f"{src} \u2192 {tgt}: {desc}" if desc else f"{src} \u2192 {tgt}"
+        refs.append(
+            Reference(
+                title=f"{src} \u2192 {tgt}",
+                source="graphrag_relationship",
+                link="",
+                content=content,
+                score=max(0.0, (n - i) / denom),
+            )
+        )
+    if refs:
+        logger.info(
+            "GraphRAG surfaced %d relationship edge(s) as relational context",
+            len(refs),
+        )
+    return refs
+
+
 def _extract_community_reports(
     context_records: Any, top_n: int
 ) -> list[Reference]:

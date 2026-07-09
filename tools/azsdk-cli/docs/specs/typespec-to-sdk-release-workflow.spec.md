@@ -90,7 +90,7 @@ flowchart TD
 ### For Reviewers
 
 1. **ARM review** (ARM specs only) — Review resource model correctness on spec PRs; apply `ARMSignedOff` label
-2. **SDK API review** — Review generated SDK API surface on SDK PRs via APIView (current) or API Review Hub review PRs (future). **There is no spec-level API review** — API review applies only to the generated SDK. `<lang>-api-approved` labels are **informational** — source of truth is the ARH database (API hash).
+2. **SDK API review** — Review generated SDK API surface on SDK PRs via APIView (current) or API Review Hub review PRs (future). **There is no spec-level API review** — API review applies only to the generated SDK. `<lang>-api-approved` labels are **informational** — source of truth is the ARH database (API hash). ARH auto-applies labels via webhooks/GH App on approval.
 3. **SDK PR review** (Haoling/Shanghai team, management plane only) — Review generated SDK PRs that have a release plan attached; approve & merge
 4. **Breaking change review** — Review breaking changes flagged by `BreakingChangeReviewRequired` label on spec PRs (ARM specs only)
 5. **Namespace review** — Approve new package namespaces; apply `namespace-<lang>-approved` labels
@@ -408,8 +408,16 @@ Structured error reporting from generation pipeline + agent-assisted troubleshoo
 #### Open questions
 
 - [ ] What triggers ARH review PR creation? SDK PR creation? Manual? Label?
+- [ ] How is the review request (tracking issue) linked to the ARH review PR? Swap APIView link with ARH PR link in the tracking board?
 
-> **Note**: `<lang>-api-approved` labels are **informational** — source of truth is the ARH database (API hash). ARH will assign `<lang>-api-approved` labels on SDK PRs automatically when architect approves in future.
+#### Confirmed behavior (per @tjprescott)
+
+- ARH uses its own **webhooks + GitHub App** (not GitHub Actions) to propagate approval status.
+- When an ARH review PR is **associated with a working SDK PR**, approval automatically applies `api-approved` or `api-changes-requested` labels on the working PR.
+- **No separate GitHub Action is needed** for label automation — ARH handles it natively.
+- Current state: label step kept manual during transition to avoid premature dependency on ARH while APIView is still active.
+
+> **Note**: `<lang>-api-approved` labels are **informational** — source of truth is the ARH database (API hash). ARH assigns `<lang>-api-approved` labels on SDK PRs automatically when architect approves via webhooks/GH App.
 
 </details>
 
@@ -676,7 +684,7 @@ The system uses **prompt chaining**: independent sub-skills invoked sequentially
 - **API Spec PR**: Pull request in `azure-rest-api-specs` containing TypeSpec changes.
 - **SDK PR**: Pull request in a language SDK repo with generated and customized SDK code.
 - **APIView**: Current web tool for reviewing SDK public API surface. Being replaced by API Review Hub. Operates at **SDK level only** — there is no spec-level API review.
-- **API Review Hub (ARH)**: New service replacing APIView for **SDK-level API review only** — there is no spec-level API review. Creates synthetic "review PRs" in language repos with `API.md` diffs — never merged, exist only for review. Approval recorded in ARH database (API hash). `<lang>-api-approved` labels are **informational**. ⚠️ ARH review PR creation on SDK PRs is an open design gap.
+- **API Review Hub (ARH)**: New service replacing APIView for **SDK-level API review only** — there is no spec-level API review. Creates synthetic "review PRs" in language repos with `API.md` diffs — never merged, exist only for review. Approval recorded in ARH database (API hash). When associated with a working SDK PR, ARH auto-applies `api-approved`/`api-changes-requested` labels via webhooks + GH App (no GH Actions needed). `<lang>-api-approved` labels are **informational**. ⚠️ ARH review PR creation trigger on SDK PRs is an open design gap.
 - **tspconfig.yaml**: Configuration specifying emitter settings per language.
 - **tsp-location.yaml**: Configuration in SDK repos pointing to source TypeSpec project.
 - **`@azure-tools/typespec-breaking-change`**: TypeSpec-native breaking change detector. Phase A: same-version regression. Phase B: cross-version evolution.

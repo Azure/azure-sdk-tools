@@ -4,3 +4,4 @@ pr-cache
 run-cache
 *.json
 pnpm-lock.yaml
+dashboard/vendor

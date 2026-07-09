@@ -15,6 +15,54 @@ noisy, and no amount of schema rigor downstream fixes a bad proxy. Those are gon
 from a **deterministic fact** or an **explicit LLM judgment made from the actual
 evidence**, never from co-location or keyword guessing.
 
+## Choosing the target repo
+
+The workflow measures **one target repo per run**. The source lives in
+[`.github/workflows/ccr-improvement-loop.md`](../../workflows/ccr-improvement-loop.md)
+(gh-aw source); GitHub actually runs the compiled
+`ccr-improvement-loop.lock.yml`, so any config change must be followed by a
+recompile (`gh aw compile`) and a commit of **both** files.
+
+The target is resolved by
+`TARGET_REPO: ${{ github.event.inputs.repo || github.repository }}` and flows
+into every prep script as `--repo <owner/name>`. The emitted filename embeds the
+target (`run-<windowEnd>_<owner>_<repo>.json`) and the concurrency group is
+per-repo, so multiple repos coexist cleanly — both in Actions and in the
+dashboard.
+
+- **One-off run against any repo (no config change):** dispatch with the `repo`
+  input.
+  ```bash
+  gh workflow run ccr-improvement-loop --repo <workflow-repo> -f repo=Azure/azure-sdk-for-python
+  ```
+  (Or use the Actions UI "Run workflow" button and set the `repo` input.)
+- **Change the standing/scheduled target:** the weekly `schedule` cannot pass an
+  input, so it falls back to `github.repository` (the repo the workflow lives
+  in). To point the schedule at a real repo, edit the fallback in the `.md`:
+  ```yaml
+  env:
+    TARGET_REPO: ${{ github.event.inputs.repo || 'Azure/azure-sdk-tools' }}
+  ```
+  then recompile and commit.
+- **Several repos on a schedule:** add a build matrix over a repo list. Only do
+  this if you need multiple standing targets; the per-repo concurrency group and
+  filename scheme already make concurrent repos safe.
+
+Notes:
+
+- The default `GITHUB_TOKEN` can read **public** target repos cross-repo; a
+  **private** target needs a PAT / GitHub App with `pull-requests: read` and
+  `issues: read` on that repo.
+- A run refuses **fork/mirror** targets (see
+  [`references/upstream-fork-check.md`](references/upstream-fork-check.md)).
+
+## Dashboard
+
+A static, zero-backend web dashboard visualizes these metrics and their trends
+across many `run-*.json` files. See [`dashboard/README.md`](dashboard/README.md)
+for how to run it locally (`python3 -m http.server --directory dashboard`), feed it
+data, and enable GitHub Pages later.
+
 ## Reading rules (apply to every metric)
 
 These make the difference between a number that means something and one that

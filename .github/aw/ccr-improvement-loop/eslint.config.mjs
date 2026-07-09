@@ -3,7 +3,13 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["node_modules", "coverage", "pr-cache", "run-cache"],
+    ignores: [
+      "node_modules",
+      "coverage",
+      "pr-cache",
+      "run-cache",
+      "dashboard/vendor",
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
@@ -44,5 +50,27 @@ export default tseslint.config(
   {
     files: ["*.mjs", "*.config.ts"],
     extends: [tseslint.configs.disableTypeChecked],
+  },
+  {
+    // Browser dashboard: plain ESM, kept out of the Node tsconfig project.
+    // disableTypeChecked drops type-aware rules + the project requirement so
+    // these files don't destabilize the existing typecheck/lint pipeline.
+    files: ["dashboard/**/*.mjs"],
+    extends: [tseslint.configs.disableTypeChecked],
+    languageOptions: {
+      globals: {
+        // browser
+        document: "readonly",
+        window: "readonly",
+        fetch: "readonly",
+        HTMLElement: "readonly",
+        HTMLCanvasElement: "readonly",
+        HTMLInputElement: "readonly",
+        // vendored Chart.js UMD global
+        Chart: "readonly",
+        // shared
+        console: "readonly",
+      },
+    },
   },
 );

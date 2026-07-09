@@ -1,0 +1,219 @@
+:root {
+  --fg: #1f2328;
+  --muted: #6e7781;
+  --border: #d0d7de;
+  --bg: #ffffff;
+  --card: #f6f8fa;
+  --accent: #0969da;
+  --warn: #9a6700;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  color: var(--fg);
+  background: var(--bg);
+  line-height: 1.5;
+}
+
+header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+header h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.4rem;
+}
+
+.sub {
+  margin: 0.25rem 0 0.75rem;
+  color: var(--muted);
+  max-width: 70ch;
+}
+
+.summary {
+  font-variant-numeric: tabular-nums;
+  padding: 0.4rem 0.6rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  display: inline-block;
+}
+
+.filter {
+  margin-top: 0.75rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.filter-label {
+  font-weight: 600;
+}
+
+#repo-filter {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+#repo-filter label {
+  cursor: pointer;
+  user-select: none;
+}
+
+main {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  background: var(--bg);
+}
+
+.card.wide {
+  grid-column: 1 / -1;
+}
+
+.card h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.05rem;
+}
+
+.hint {
+  margin: 0 0 0.75rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.chart-box {
+  position: relative;
+  height: 300px;
+}
+
+.table-box {
+  overflow-x: auto;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+th,
+td {
+  border: 1px solid var(--border);
+  padding: 0.35rem 0.5rem;
+  text-align: right;
+  white-space: nowrap;
+}
+
+th:first-child,
+td:first-child,
+th:nth-child(2),
+td:nth-child(2) {
+  text-align: left;
+}
+
+thead th,
+tr:first-child th {
+  background: var(--card);
+  position: sticky;
+  top: 0;
+}
+
+td.na,
+.na {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.lc {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--muted);
+  border-radius: 4px;
+  padding: 0 0.25rem;
+  vertical-align: middle;
+}
+
+.warn {
+  color: var(--warn);
+  cursor: help;
+  text-decoration: underline dotted;
+}
+
+/* Hoverable info icon + CSS tooltip on column headers. */
+.info {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  margin-left: 0.3rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  font-style: italic;
+  font-family: Georgia, "Times New Roman", serif;
+  color: #fff;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: help;
+  vertical-align: middle;
+  user-select: none;
+  position: relative;
+}
+
+.info:hover,
+.info:focus {
+  outline: none;
+  background: #0550ae;
+}
+
+/* Shared tooltip element, positioned with fixed coords by app.mjs so it is
+   never clipped by the scrollable table container. */
+#tooltip {
+  position: fixed;
+  z-index: 50;
+  max-width: 280px;
+  white-space: normal;
+  text-align: left;
+  font:
+    400 0.75rem/1.4 -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Helvetica,
+    Arial,
+    sans-serif;
+  color: var(--fg);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(31, 35, 40, 0.15);
+  padding: 0.5rem 0.6rem;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.08s ease;
+}
+
+#tooltip.visible {
+  opacity: 1;
+  visibility: visible;
+}

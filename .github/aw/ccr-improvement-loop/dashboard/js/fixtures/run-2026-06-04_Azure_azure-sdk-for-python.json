@@ -1,0 +1,216 @@
+{
+  "schemaVersion": "1.0",
+  "run": {
+    "id": "2026-06-04_Azure_azure-sdk-for-python",
+    "repo": "Azure/azure-sdk-for-python",
+    "windowStart": "2026-05-28",
+    "windowEnd": "2026-06-04",
+    "windowLagDays": 14,
+    "prState": "merged",
+    "prCount": 6,
+    "model": "openai/gpt-4o",
+    "modelTool": "gh models",
+    "temperature": 0,
+    "matchedCcrLogin": "copilot-pull-request-reviewer[bot]",
+    "promptHashes": {
+      "judge": "sha256:abc",
+      "theme": "sha256:def",
+      "propose": "sha256:ghi"
+    },
+    "vocabularyHash": "sha256:voc",
+    "toolVersion": "git:abc123",
+    "ccrEnabledSince": "2026-01-15",
+    "generatedAt": "2026-06-04T00:21:00Z"
+  },
+  "prs": [],
+  "comments": [],
+  "themes": [],
+  "metrics": {
+    "rates": {
+      "missRate": {
+        "numerator": null,
+        "denominator": 0,
+        "value": null,
+        "denominatorDef": "substantive ∧ diff-detectable human asks CCR could see that CCR did not raise ÷ those asks",
+        "direction": "down",
+        "slices": []
+      },
+      "ccrCoverage": {
+        "numerator": 5,
+        "denominator": 6,
+        "value": 0.83,
+        "denominatorDef": "PRs that received a CCR review ÷ eligible PRs (post-enablement, non-bot)",
+        "direction": "up",
+        "slices": []
+      },
+      "bugFixPrRate": {
+        "numerator": 2,
+        "denominator": 6,
+        "value": 0.33,
+        "denominatorDef": "bug-fix PRs ÷ all PRs in window",
+        "direction": "down",
+        "slices": []
+      },
+      "addressedRate": {
+        "numerator": 2,
+        "denominator": 4,
+        "value": 0.5,
+        "denominatorDef": "CCR comments the author addressed ÷ CCR comments with a definite outcome (severity-known)",
+        "direction": "up",
+        "slices": [
+          {
+            "prType": null,
+            "severity": "critical",
+            "numerator": 1,
+            "denominator": 2,
+            "value": 0.5
+          },
+          {
+            "prType": null,
+            "severity": "substantive",
+            "numerator": 1,
+            "denominator": 2,
+            "value": 0.5
+          }
+        ],
+        "lowConfidence": true
+      },
+      "rejectedRate": {
+        "numerator": 1,
+        "denominator": 4,
+        "value": 0.25,
+        "denominatorDef": "CCR comments the author rejected ÷ CCR comments with a definite outcome (severity-known)",
+        "direction": "down",
+        "slices": [
+          {
+            "prType": null,
+            "severity": "critical",
+            "numerator": 1,
+            "denominator": 2,
+            "value": 0.5
+          },
+          {
+            "prType": null,
+            "severity": "substantive",
+            "numerator": 0,
+            "denominator": 2,
+            "value": 0
+          }
+        ],
+        "lowConfidence": true
+      },
+      "ignoredRate": {
+        "numerator": 1,
+        "denominator": 4,
+        "value": 0.25,
+        "denominatorDef": "CCR comments the author ignored ÷ CCR comments with a definite outcome (severity-known)",
+        "direction": "down",
+        "slices": [
+          {
+            "prType": null,
+            "severity": "critical",
+            "numerator": 0,
+            "denominator": 2,
+            "value": 0
+          },
+          {
+            "prType": null,
+            "severity": "substantive",
+            "numerator": 1,
+            "denominator": 2,
+            "value": 0.5
+          }
+        ],
+        "lowConfidence": true
+      },
+      "criticalCatchRate": {
+        "numerator": 1,
+        "denominator": 2,
+        "value": 0.5,
+        "denominatorDef": "critical CCR comments acted on ÷ critical CCR comments",
+        "direction": "up",
+        "lowConfidence": true,
+        "slices": []
+      },
+      "humanCommentsPerPr": {
+        "numerator": null,
+        "denominator": 6,
+        "value": 2,
+        "denominatorDef": "distinct substantive human ask findings ÷ PRs",
+        "direction": "down",
+        "slices": [
+          {
+            "prType": "bug-fix",
+            "severity": null,
+            "numerator": null,
+            "denominator": 2,
+            "value": 2
+          },
+          {
+            "prType": "feature",
+            "severity": null,
+            "numerator": null,
+            "denominator": 3,
+            "value": 2
+          }
+        ]
+      },
+      "prCycleTime": {
+        "numerator": null,
+        "denominator": 6,
+        "value": 36,
+        "denominatorDef": "median PR cycle time hours",
+        "direction": "down",
+        "slices": [
+          {
+            "prType": "bug-fix",
+            "severity": null,
+            "numerator": null,
+            "denominator": 2,
+            "value": 28
+          },
+          {
+            "prType": "feature",
+            "severity": null,
+            "numerator": null,
+            "denominator": 3,
+            "value": 40
+          }
+        ]
+      },
+      "iterationsPerPr": {
+        "numerator": null,
+        "denominator": 6,
+        "value": 2,
+        "denominatorDef": "median iterations per PR",
+        "direction": "down",
+        "slices": [
+          {
+            "prType": "bug-fix",
+            "severity": null,
+            "numerator": null,
+            "denominator": 2,
+            "value": 2
+          },
+          {
+            "prType": "feature",
+            "severity": null,
+            "numerator": null,
+            "denominator": 3,
+            "value": 2
+          }
+        ]
+      }
+    },
+    "coverageWarnings": [
+      "missRate: n=0 (no eligible asks in window)",
+      "addressedRate: n=4 < 10 (too small to trust)"
+    ],
+    "counts": {
+      "prsFetched": 6,
+      "judgeCalls": 6
+    }
+  },
+  "proposedEdits": [],
+  "experiment": null
+}

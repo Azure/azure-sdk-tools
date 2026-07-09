@@ -38,7 +38,7 @@ stimuli:
         - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
           dest: Microsoft.Widget/Widget/tspconfig.yaml
       commands:
-        - 'node -e "const fs=require(''fs'');const path=require(''path'');const t=process.env.FIXTURE_NODE_MODULES;for(const dir of [''.'',''Microsoft.Widget/Widget'']){const link=path.join(dir,''node_modules'');if(t&&fs.existsSync(t)&&!fs.existsSync(link)){fs.symlinkSync(t,link,''junction'')}}"'
+        - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
     graders:
       - type: "tool-calls"
         config:
@@ -69,13 +69,11 @@ stimuli:
         config:
           command: >-
             node -e "const fs=require('fs');if(!fs.existsSync('node_modules')){console.error('[dependency-check:node_modules] missing');process.exit(2)}console.log('[dependency-check:node_modules] ok')"
-          sub_path: "Microsoft.Widget/Widget"
           expected_exit_code: 0
       - type: "run-command"
         config:
           command: >-
             node -e "const fs=require('fs');const path=require('path');const required=['@typespec/compiler','@typespec/http','@typespec/rest','@typespec/versioning','@azure-tools/typespec-azure-core','@azure-tools/typespec-azure-resource-manager','@azure-tools/typespec-autorest'];const missing=required.filter(p=>!fs.existsSync(path.join('node_modules',...p.split('/'),'package.json')));if(missing.length){console.error('[dependency-check:packages] missing: '+missing.join(', '));process.exit(2)}console.log('[dependency-check:packages] ok')"
-          sub_path: "Microsoft.Widget/Widget"
           expected_exit_code: 0
       - type: "run-command"
         config:

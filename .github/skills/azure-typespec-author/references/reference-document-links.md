@@ -2,7 +2,7 @@
 
 Curated catalog of authoritative TypeSpec Azure documentation, **categorized by authoring case**. The cases are derived from the structure of the [TypeSpec Azure documentation](https://azure.github.io/typespec-azure/docs/intro/) (`docs/howtos/`, `docs/getstarted/`) and, for core language concepts (models, enums, paging, decorators, suppressions), the underlying [TypeSpec core documentation](https://typespec.io/docs) that the Azure libraries build on.
 
-For each case, Step 3 (`authoring-plan.md`) selects the listed URLs as input to [agentic search](agentic-search.md). Select only the URLs relevant to the request; if no case matches exactly, use the **General References** section plus any URLs whose title matches request keywords. If **nothing** here is relevant to the request, treat the request as not covered by this catalog and use the **KB fallback** (`authoring-plan.md` Step 3.3) instead.
+For each case, Step 3 (`authoring-plan.md`) selects the listed URLs as input to [agentic search](agentic-search.md). Select only the URLs relevant to the request; if no case matches exactly, use the **General References** section plus any URLs whose title matches request keywords. Agentic search always runs over the selected URLs; if it does **not** surface guidance relevant to the request (the catalog does not cover it), Step 3.1 switches to the **KB fallback** (`authoring-plan.md` Step 3.3).
 
 The catalog is organized into **8 cases**:
 

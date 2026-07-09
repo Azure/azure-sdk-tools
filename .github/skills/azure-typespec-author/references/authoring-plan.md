@@ -4,29 +4,26 @@
 
 ## 3.1 Choose the plan source
 
-Step 2.1 (Intake) already decided which source applies, based on whether the request matched relevant documents in [reference-document-links.md](reference-document-links.md):
+Intake (Step 2) has already run **agentic search** over the catalog URLs. Now decide, based on what that search actually surfaced, how to build the plan:
 
-- **Relevant documents found** → build the plan via **agentic search** (Step 3.2).
-- **No relevant documents found** → build the plan via the **KB fallback** (Step 3.3).
+- **Agentic search returned relevant guidance** that covers the request → build the plan from it (Step 3.2). This is the normal path.
+- **Agentic search did not surface relevant guidance** (the request is not covered by the curated catalog, so the fetched docs don't address it) → build the plan via the **KB fallback** (Step 3.3).
 
 Use exactly one source. Never build a plan from prior/internal knowledge without one of these two grounding sources.
 
-## 3.2 Agentic search path (relevant documents found)
+## 3.2 Agentic search path (relevant guidance found)
 
-Build the authoring plan using **agentic search**, based on the URLs already selected in Step 2 (Intake). You **must** run agentic search and fetch those URLs before writing the plan — do not produce a plan from prior knowledge or without fetching:
+Build the authoring plan from the agentic-search results gathered in Step 2 (Intake) — the fetched content of the URLs selected from [reference-document-links.md](reference-document-links.md):
 
-1. Take the documentation URLs gathered in Step 2.1 (the links from the matched case(s) in [reference-document-links.md](reference-document-links.md)).
-2. Run [agentic search](agentic-search.md) with:
+1. Confirm agentic search was run and fetched **every** selected URL. If it was not, run [agentic search](agentic-search.md) now with:
    - **URLs**: the URLs from Step 2.1.
    - **Query**: derived from the user's request plus Step 1 analysis output (service type, version, target resource/operation, intent).
+2. Synthesize the **fetched** guidance into a concrete, ordered authoring plan with explicit file/edit-level actions. Every plan step must be grounded in fetched documentation, not assumptions.
+3. Record each cited URL alongside the plan step it informs — these will be emitted verbatim in Step 6 (Output Reference Links).
 
-   Agentic search **must** be run and fetch **every** one of those URLs. Do not proceed to step 3 until you have fetched content for all of them.
-3. Synthesize the **fetched** guidance into a concrete, ordered authoring plan with explicit file/edit-level actions. Every plan step must be grounded in fetched documentation, not assumptions.
-4. Record each cited URL alongside the plan step it informs — these will be emitted verbatim in Step 6 (Output Reference Links).
+## 3.3 KB fallback path (no relevant guidance found)
 
-## 3.3 KB fallback path (no relevant documents found)
-
-When Step 2.1 found **no** relevant documents in [reference-document-links.md](reference-document-links.md), fall back to the knowledge base instead of agentic search. Call the `azsdk_typespec_generate_authoring_plan` MCP tool with:
+When the agentic search from Step 2 did **not** surface guidance relevant to the request (the curated catalog does not cover it), fall back to the knowledge base. Call the `azsdk_typespec_generate_authoring_plan` MCP tool with:
 
 - `request`: the user's request (verbatim).
 - `additionalInformation`: all context gathered in Steps 1–2 (project analysis output, service type, versions, intent, target, constraints, and any case-specific intake answers).
@@ -34,7 +31,7 @@ When Step 2.1 found **no** relevant documents in [reference-document-links.md](r
 
 Use the plan returned by the tool as the authoring plan. Record the sources it cites (if any) for Step 6 (Output Reference Links).
 
-> Prefer the curated catalog whenever it covers the request — only use this KB fallback when Step 2.1 found no relevant documents.
+> Prefer the curated catalog whenever agentic search covers the request — only use this KB fallback when it does not.
 
 ---
 

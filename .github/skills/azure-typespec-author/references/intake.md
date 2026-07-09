@@ -4,11 +4,9 @@
 
 ## 2.1 General Intake (All Cases)
 
-1. **Match links** — try to match the request to one or more cases in the full catalog [reference-document-links.md](reference-document-links.md), and select the document URLs relevant to the request. This match decides how Step 3 builds the plan:
+1. **Get links** — match the request to one or more cases in the full catalog [reference-document-links.md](reference-document-links.md). Pick the best-matching case(s) and select the document URLs relevant to the request; if no case matches exactly, use the **General References** section plus any URLs whose title matches request keywords.
    - A request may map to multiple cases (e.g. version-scoped enum change → API Versioning **and** Models and Enums); select docs from every match.
-   - **If relevant documents are found** → the plan is built via **agentic search** (Step 3.2). Continue to step 2 below.
-   - **If no relevant documents are found** (the request is not covered by the catalog — not even the General References — so agentic search would have nothing meaningful to fetch) → **skip agentic search** and record that the plan will be built via the **KB fallback** (Step 3.3). Skip step 2 below and go straight to step 3.
-2. **Run agentic search** — *only when step 1 found relevant documents.* Run [agentic search](agentic-search.md) with the matched URLs, the Step 1 analysis result, and the request to collect information for the Step 3 plan. When it applies, agentic search **must** be run and **must** fetch the selected URLs — never skip it or rely on prior knowledge.
+2. **Run agentic search** — always run [agentic search](agentic-search.md) with the URLs from step 1, the Step 1 analysis result, and the request to collect information for the Step 3 plan. Agentic search **must** be run and **must** fetch the selected URLs — never skip it or rely on prior knowledge. (Whether that fetched content is sufficient to build the plan, or the KB fallback is needed, is decided later in Step 3.1.)
 3. **Case-specific intake** — only the cases in the table below need extra questions (Step 2.2). For any other case, no extra intake is needed.
 
 | Case | Name                    | Description                                                                  | Service Type     |

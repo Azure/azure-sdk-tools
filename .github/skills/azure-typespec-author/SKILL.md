@@ -68,7 +68,7 @@ See [intake.md](references/intake.md).
 
 ### Step 3: Build Authoring Plan
 
-See [authoring-plan.md](references/authoring-plan.md). The plan is built via **agentic search** over the curated documentation in [reference-document-links.md](references/reference-document-links.md); if the request matches no relevant documents there, it falls back to the knowledge base (`azsdk_typespec_generate_authoring_plan`).
+See [authoring-plan.md](references/authoring-plan.md). Intake always runs **agentic search** over the curated documentation in [reference-document-links.md](references/reference-document-links.md); the plan is built from those results, and only if agentic search surfaces no relevant guidance does it fall back to the knowledge base (`azsdk_typespec_generate_authoring_plan`).
 
 ### Step 4: Apply Changes
 

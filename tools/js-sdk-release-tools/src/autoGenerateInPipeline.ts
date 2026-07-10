@@ -60,24 +60,12 @@ async function automationGenerateInPipeline(
         });
         break;
       case SDKType.RestLevelClient:
-        // RLC + swagger is not supported.
-        await generateRLCInPipeline({
-          sdkRepo: String(shell.pwd()),
-          swaggerRepo: path.isAbsolute(specFolder) ? specFolder : path.join(String(shell.pwd()), specFolder),
-          readmeMd: readmeMd,
-          typespecProject: typespecProject,
-          use: use,
-          typespecEmitter: !!typespecEmitter ? typespecEmitter : `@azure-tools/typespec-ts`,
-          outputJson: outputJson,
-          skipGeneration: skipGeneration,
-          sdkGenerationType: sdkGenerationType === 'command' ? 'command' : 'script',
-          runningEnvironment: runningEnvironment,
-          swaggerRepoUrl: repoHttpsUrl,
-          gitCommitId: gitCommitId,
-          apiVersion: apiVersion,
-          sdkReleaseType: sdkReleaseType,
-          runMode: runMode as RunMode,
-        });
+        // RLC generation via TypeSpec is no longer supported. The @azure-tools/typespec-ts emitter has dropped RLC output.
+        // To migrate, set 'is-modular-library: true' (or remove the field) in tspconfig.yaml to use the Modular client path.
+        logger.warn(
+          `RestLevelClient (RLC) generation is no longer supported. ` +
+          `Please update your tspconfig.yaml to remove 'is-modular-library: false' or set it to 'true' to use the Modular client path instead.`
+        );
         break;
 
       case SDKType.ModularClient: {

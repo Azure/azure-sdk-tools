@@ -318,11 +318,12 @@ class ConversationService:
         """Retrieve all messages of conversations *active* in the window.
 
         The lower bound is normalized to the **start of the day** (00:00:00) of
-        ``start``. A conversation qualifies when it has at least one message
-        whose ``created_at`` falls within ``[start_of_day, end)`` — regardless
-        of when the conversation started. When it qualifies, **all** of its
-        messages are returned — including earlier messages before ``start`` and
-        later replies after ``end`` — so the full thread can be evaluated.
+        ``start``. A conversation qualifies when it has at least one *bot*
+        message (system/assistant) whose ``created_at`` falls within
+        ``[start_of_day, end)`` — regardless of when the conversation started.
+        When it qualifies, **all** of its messages are returned — including
+        earlier messages before ``start`` and later replies after ``end`` — so
+        the full thread can be evaluated.
 
         Runs cross-partition queries over the message container. Intended for
         offline/batch jobs (e.g. answer-quality evaluation), not the hot path.
@@ -345,16 +346,20 @@ class ConversationService:
         # using simple projection queries.
         #
         # A conversation is "active" in the window when it has at least one
-        # message in [start, end). Its full thread is then fetched.
+        # *bot* message (system/assistant) in [start, end). Its full thread is
+        # then fetched.
 
-        # Step 1: partitions that have a message inside the window.
+        # Step 1: partitions that have a bot message inside the window.
+        bot_roles = [Role.System.value, Role.Assistant.value]
         window_query = (
             "SELECT c.conversation_partition AS partition FROM c "
             "WHERE c.document_type = @dtype "
+            "AND ARRAY_CONTAINS(@bot_roles, c.sender_role) "
             "AND c.created_at >= @start AND c.created_at < @end"
         )
         window_params: list[dict[str, object]] = [
             {"name": "@dtype", "value": ConversationDocumentType.message.value},
+            {"name": "@bot_roles", "value": bot_roles},
             {"name": "@start", "value": start_iso},
             {"name": "@end", "value": end_iso},
         ]
@@ -370,7 +375,7 @@ class ConversationService:
 
         if not candidate_partitions:
             logger.info(
-                "No conversations had messages in period [%s, %s)",
+                "No conversations had a bot message in period [%s, %s)",
                 start_iso,
                 end_iso,
             )

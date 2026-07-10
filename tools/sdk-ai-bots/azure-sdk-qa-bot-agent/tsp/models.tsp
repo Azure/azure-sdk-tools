@@ -59,6 +59,9 @@ union ConversationType {
 
 @doc("A message in the conversation")
 model Message {
+  @doc("Optional message identifier")
+  id?: string;
+
   @doc("The role of the message sender")
   role: Role;
 
@@ -215,6 +218,9 @@ model ConversationMessage {
 
   @doc("Conversation type")
   conversation_type?: ConversationType;
+
+  @doc("Whether the message passed intention recognition (in bot scope)")
+  should_reply?: boolean;
 
   @doc("Additional message metadata")
   extra_info?: ConversationMessageExtraInfo;

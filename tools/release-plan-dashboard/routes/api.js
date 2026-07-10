@@ -176,7 +176,7 @@ async function enrichPackageData(plans) {
       if (!langData.packageName) continue;
       const isReleased =
         (langData.releaseStatus || "").toLowerCase() === "released";
-      const key = `${langData.packageName}|${LANGUAGE_PACKAGE_WI[displayLang] || displayLang}`;
+      const key = `${langData.packageName}|${(LANGUAGE_PACKAGE_WI[displayLang] || displayLang).toLowerCase()}`;
       const pkgData = pkgMap.get(key);
       if (pkgData) {
         langData.pkgVersion = pkgData.version;

@@ -17,7 +17,6 @@ Usage (local md folder, e.g. an existing download):
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import logging
 import re
@@ -26,7 +25,14 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from .schema import CanonicalCase, REVIEW_STATUS_TODO, iter_jsonl
+from .schema import (
+    CanonicalCase,
+    REVIEW_STATUS_TODO,
+    case_hash,
+    iter_jsonl,
+    normalize_query,  # noqa: F401  (re-exported for backward-compatible imports)
+    resolve_dedup_key,
+)
 from ._storage import credential_for, download_md_blobs
 
 # Markdown inline link: [text](url)
@@ -47,15 +53,6 @@ def scenario_from_filename(filename: str) -> str:
     base = re.split(r"[\\/]", filename)[-1]
     match = re.match(r"^([^_]+)_", base)
     return match.group(1) if match else Path(base).stem
-
-
-def normalize_query(query: str) -> str:
-    """Stable normalization for dedup: lowercase, collapse whitespace."""
-    return re.sub(r"\s+", " ", query.strip().lower())
-
-
-def case_hash(scenario: str, query: str) -> str:
-    return hashlib.sha256(f"{scenario}\x00{normalize_query(query)}".encode("utf-8")).hexdigest()
 
 
 def extract_links(text: str) -> list[dict[str, str]]:
@@ -145,6 +142,7 @@ def parse_markdown(file_path: Path) -> list[CanonicalCase]:
                 source=file_path.name,
                 expected_references=extract_links(answer_text),
                 expected_knowledges=[],
+                dedup_key=case_hash(scenario, full_question),
             )
         )
     return cases
@@ -160,9 +158,8 @@ def load_existing_hashes(paths: dict[str, Path]) -> set[str]:
         for f in folder.glob("*.jsonl"):
             for _line_no, obj in iter_jsonl(f):
                 scenario = obj.get("scenario") or scenario_from_filename(f.name)
-                query = obj.get("query", "")
-                if query:
-                    hashes.add(case_hash(scenario, query))
+                if obj.get("dedup_key") or obj.get("query"):
+                    hashes.add(resolve_dedup_key(obj, scenario))
     return hashes
 
 
@@ -190,7 +187,7 @@ def curate(source_md_dir: Path, paths: dict[str, Path]) -> dict[str, int]:
     batch_seen: set[str] = set()
     for md in md_files:
         for case in parse_markdown(md):
-            h = case_hash(case.scenario, case.query)
+            h = case.dedup_key or case_hash(case.scenario, case.query)
             if h in existing or h in batch_seen:
                 continue
             batch_seen.add(h)

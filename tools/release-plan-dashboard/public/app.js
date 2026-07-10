@@ -369,12 +369,23 @@
     return val === "approved";
   }
 
+  // A language has missing emitter config when ReleaseExclusionStatus is "MissingEmitterConfig"
+  function isLangMissingEmitterConfig(exclusionStatus) {
+    const val = (exclusionStatus || "").toLowerCase().trim();
+    return val === "missingemitterconfig";
+  }
+
   function exclusionLabel(exclusionStatus) {
     const val = (exclusionStatus || "").toLowerCase().trim();
     if (val === "approved")
       return { text: "Exclusion Approved", cls: "row-excluded" };
     if (val === "requested")
       return { text: "Exclusion Requested", cls: "row-exclusion-requested" };
+    if (val === "missingemitterconfig")
+      return {
+        text: "Missing emitter configuration",
+        cls: "row-missing-emitter-config",
+      };
     return null;
   }
 
@@ -434,7 +445,9 @@
     const langs = p.languages || {};
     const langKeys = Object.keys(langs);
     const activeLangs = langKeys.filter(
-      (k) => !isLangExcluded(langs[k].exclusionStatus),
+      (k) =>
+        !isLangExcluded(langs[k].exclusionStatus) &&
+        !isLangMissingEmitterConfig(langs[k].exclusionStatus),
     );
     if (!activeLangs.length)
       return {
@@ -489,7 +502,7 @@
       return { status: "Released", action: "", statusClass: "step-released" };
     if (allMerged)
       return {
-        status: "SDK Ready To Be Released",
+        status: "SDK Ready To Release",
         action: serviceTeam,
         statusClass: "step-ready",
       };
@@ -542,12 +555,32 @@
     for (const lang of langKeys) {
       const l = langs[lang];
       const rel = (l.releaseStatus || "").toLowerCase();
-      if (isLangExcluded(l.exclusionStatus)) excludedCount++;
+      if (
+        isLangExcluded(l.exclusionStatus) ||
+        isLangMissingEmitterConfig(l.exclusionStatus)
+      )
+        excludedCount++;
       if (rel.includes("completed") || rel.includes("released"))
         releasedCount++;
     }
     const nonExcluded = langKeys.length - excludedCount;
     return releasedCount > 0 && releasedCount < nonExcluded;
+  }
+
+  function isSdkReadyToReleasePlan(p) {
+    const langs = p.languages || {};
+    return Object.keys(langs).some((k) => {
+      const l = langs[k];
+      if (isLangExcluded(l.exclusionStatus)) return false;
+
+      const st = (l.sdkPrGitHubStatus || l.prStatus || "").toLowerCase();
+      const rel = (l.releaseStatus || "").toLowerCase();
+
+      const isMergedOrCompleted = st === "merged" || st === "completed";
+      const isReleasedOrCompleted = rel === "released" || rel === "completed";
+
+      return isMergedOrCompleted && !isReleasedOrCompleted;
+    });
   }
 
   // Parse "MMMM yyyy" into a sortable Date (or far future if unparseable)
@@ -742,6 +775,9 @@
         }
         if (tagFilter === "first-ga") {
           return Object.values(langs).some((l) => l.isFirstGA && l.packageName);
+        }
+        if (tagFilter === "sdk-ready-to-release") {
+          return isSdkReadyToReleasePlan(p);
         }
         return true;
       });
@@ -962,10 +998,22 @@
           '<span class="badge badge-first-preview">First Preview</span>';
       if (hasFirstGA)
         releaseTagBadge += '<span class="badge badge-first-ga">First GA</span>';
+      if (isSdkReadyToReleasePlan(p) && step.status !== "SDK Ready To Release")
+        releaseTagBadge +=
+          '<span class="badge badge-sdk-ready-to-release">SDK Ready To Release</span>';
     }
     const missingProductBadge = !p.productId
       ? '<span class="badge badge-missing-product">Missing product details</span>'
       : "";
+    const missingEmitterConfigBadge = (() => {
+      const langs = p.languages || {};
+      const hasMissing = Object.values(langs).some((l) =>
+        isLangMissingEmitterConfig(l.exclusionStatus),
+      );
+      return hasMissing
+        ? '<span class="badge badge-missing-emitter-config">Missing emitter config</span>'
+        : "";
+    })();
     const isExpanded = !!store().ui.expandedPlans[p.id];
     const summaryClass = isExpanded ? "card-summary expanded" : "card-summary";
     const detailsClass = isExpanded ? "card-details open" : "card-details";
@@ -974,7 +1022,7 @@
       <div class="${summaryClass}"${isExpanded ? ' data-pr-loaded="1"' : ""}>
         <span class="card-chevron">&#9654;</span>
         <div class="card-title">
-          ${esc(p.title)} ${copilotBadge} ${sdkTypeBadge} ${releaseTagBadge} ${missingProductBadge}
+          ${esc(p.title)} ${copilotBadge} ${sdkTypeBadge} ${releaseTagBadge} ${missingProductBadge} ${missingEmitterConfigBadge}
         </div>
         <div class="card-meta">
           ${p.releaseMonth ? `<span>${esc(p.releaseMonth)}</span>` : ""}
@@ -1185,7 +1233,7 @@
         <strong>Merge SDK PRs:</strong>
         <p>SDK pull requests are approved and ready to be merged.</p>
       </div>`;
-    } else if (step.status === "SDK Ready To Be Released") {
+    } else if (step.status === "SDK Ready To Release") {
       // Build list of languages with merged PRs but not yet released
       const langs = p.languages || {};
       const langKeys = Object.keys(langs);
@@ -1199,8 +1247,8 @@
         const rel = (langs[k].releaseStatus || "").toLowerCase();
         return (
           (st.includes("merged") || st.includes("completed")) &&
-          !rel.includes("completed") &&
-          !rel.includes("released")
+          rel !== "completed" &&
+          rel !== "released"
         );
       });
       const langList = toRelease.length
@@ -1227,6 +1275,7 @@
       const langs = p.languages || {};
       const langsWithFailedChecks = Object.keys(langs).filter((k) => {
         if (isLangExcluded(langs[k].exclusionStatus)) return false;
+        if (isLangMissingEmitterConfig(langs[k].exclusionStatus)) return false;
         // Only show check failures for open/draft PRs, not merged
         const st = (
           langs[k].sdkPrGitHubStatus ||
@@ -1270,6 +1319,7 @@
       const langs = p.languages || {};
       const closedPrLangs = Object.keys(langs).filter((k) => {
         if (isLangExcluded(langs[k].exclusionStatus)) return false;
+        if (isLangMissingEmitterConfig(langs[k].exclusionStatus)) return false;
         if (!langs[k].sdkPrUrl) return false;
         const st = (
           langs[k].sdkPrGitHubStatus ||
@@ -1299,7 +1349,9 @@
       const langs = p.languages || {};
       const missingPkgDetails = Object.keys(langs).some(
         (k) =>
-          !isLangExcluded(langs[k].exclusionStatus) && !langs[k].packageName,
+          !isLangExcluded(langs[k].exclusionStatus) &&
+          !isLangMissingEmitterConfig(langs[k].exclusionStatus) &&
+          !langs[k].packageName,
       );
       if (missingPkgDetails) {
         actionContent += `<div class="action-item" style="margin-top:10px;">
@@ -1342,6 +1394,7 @@
       let needsReviewTeam = false;
       for (const k of Object.keys(langs)) {
         if (isLangExcluded(langs[k].exclusionStatus)) continue;
+        if (isLangMissingEmitterConfig(langs[k].exclusionStatus)) continue;
         const st = (
           langs[k].sdkPrGitHubStatus ||
           langs[k].prStatus ||
@@ -1370,7 +1423,7 @@
         step.status === "API Spec In Progress" ||
         step.status === "SDK To Be Generated" ||
         step.status === "SDK Generation Failed" ||
-        step.status === "SDK Ready To Be Released"
+        step.status === "SDK Ready To Release"
       ) {
         needsServiceTeam = true;
       }
@@ -1411,7 +1464,9 @@
     const langs = p.languages || {};
     const langKeys = Object.keys(langs);
     const activeLangs = langKeys.filter(
-      (k) => !isLangExcluded(langs[k].exclusionStatus),
+      (k) =>
+        !isLangExcluded(langs[k].exclusionStatus) &&
+        !isLangMissingEmitterConfig(langs[k].exclusionStatus),
     );
     // A language counts as "SDK generated" if it has a PR URL, or release is completed, or PR status is merged
     function isLangGenerated(k) {
@@ -1688,7 +1743,7 @@
         <div class="sdk-details-content" style="${sdkDisplay}">
         <table class="sdk-table"><thead><tr>
           <th>Language</th><th>Package</th><th>SDK PR</th><th>PR Status</th>
-          <th>APIView</th><th>Release Status</th><th>Version</th><th>Package Link</th><th>Action Required</th>
+          <th>Release Status</th><th>Version</th><th>Package Link</th><th>Action Required</th>
         </tr></thead><tbody>`;
           for (const lang of langKeys) {
             const l = langs[lang];
@@ -1702,12 +1757,25 @@
             let releaseDisplay = l.releaseStatus || "";
             if (exLabel) releaseDisplay = exLabel.text;
 
-            // Determine display version: use releasedVersion when released, pkgVersion otherwise
+            // Determine display version: use releasedVersion when released;
+            // when not released, show pkgVersion with "Pending" label only if PR is merged
             const isReleased =
               (l.releaseStatus || "").toLowerCase() === "released";
+            const prStForVersion = (
+              l.sdkPrGitHubStatus ||
+              l.prStatus ||
+              ""
+            ).toLowerCase();
+            const isPrMerged =
+              prStForVersion.includes("merged") ||
+              prStForVersion === "completed";
             const displayVersion = isReleased
               ? l.releasedVersion || ""
-              : l.pkgVersion || "";
+              : isPrMerged
+                ? l.pkgVersion || ""
+                : "";
+            const isVersionPending =
+              !isReleased && isPrMerged && !!displayVersion;
 
             // Package labels: first preview/GA + namespace approval + API review (version now in its own column)
             let pkgLabels = "";
@@ -1738,19 +1806,13 @@
               pkgLabels += `<span class="pr-label ${arClass}">API: ${esc(l.apiReviewStatus)}</span>`;
             }
 
-            // APIView column — loaded on-demand when card is expanded
-            let apiViewCell = "—";
-            if (l.sdkPrUrl) {
-              if (l.prDetails && l.prDetails.apiViewUrl) {
-                apiViewCell = `<a href="${esc(l.prDetails.apiViewUrl)}" target="_blank" rel="noopener">APIView</a>`;
-              } else {
-                apiViewCell = `<span class="apiview-placeholder">…</span>`;
-              }
-            }
-
             // Action column — determine per-language action
             let actionCell = "";
-            if (!excluded && p.state !== "Finished") {
+            if (
+              !excluded &&
+              !isLangMissingEmitterConfig(l.exclusionStatus) &&
+              p.state !== "Finished"
+            ) {
               const prSt = (
                 l.sdkPrGitHubStatus ||
                 l.prStatus ||
@@ -1805,9 +1867,8 @@
             <td>${esc(l.packageName) || "—"} ${pkgLabels}</td>
             <td>${prLink} ${prLabels}</td>
             <td>${l.sdkPrUrl ? statusSpan(l.sdkPrGitHubStatus || l.prStatus) : ""}</td>
-            <td class="apiview-cell">${apiViewCell}</td>
             <td>${statusSpan(releaseDisplay)}</td>
-            <td>${displayVersion ? esc(displayVersion) : isReleased ? '<span class="version-na">Not available</span>' : "—"}</td>
+            <td>${displayVersion ? `<span title="${isVersionPending ? "This indicates current package version on the main branch in SDK repo" : ""}">${esc(displayVersion)}</span>${isVersionPending ? ' <span class="pr-label pr-label-version-pending" title="This indicates current package version on the main branch in SDK repo">Pending</span>' : ""}` : isReleased ? '<span class="version-na">Not available</span>' : "—"}</td>
             <td>${feedLinkCell}</td>
             <td class="action-cell">${actionCell}</td>
           </tr>`;
@@ -2002,14 +2063,6 @@
               prTd.insertAdjacentHTML("beforeend", " " + labels);
             }
           }
-        }
-
-        const apiViewTd = row.children[4];
-        if (apiViewTd && apiViewTd.classList.contains("apiview-cell")) {
-          const apiViewUrl = info.prDetails && info.prDetails.apiViewUrl;
-          apiViewTd.innerHTML = apiViewUrl
-            ? `<a href="${esc(apiViewUrl)}" target="_blank" rel="noopener">APIView</a>`
-            : "Not available";
         }
       }
 
@@ -2502,6 +2555,9 @@
         }
         if (tagFilter === "first-ga") {
           return Object.values(langs).some((l) => l.isFirstGA && l.packageName);
+        }
+        if (tagFilter === "sdk-ready-to-release") {
+          return isSdkReadyToReleasePlan(p);
         }
         return true;
       });

@@ -452,6 +452,47 @@ main {
   opacity: 0.8;
 }
 
+.pm-section-group {
+  border: 1px solid #e1dfdd;
+  border-radius: var(--radius);
+  background: #faf9f8;
+  padding: 16px 18px 8px;
+  margin-bottom: 20px;
+}
+
+.pm-section-group-header {
+  margin-bottom: 8px;
+}
+
+.pm-section-group-header.section-header {
+  padding-top: 0;
+}
+
+.pm-section-group-header.section-header > div {
+  min-width: 0;
+}
+
+.pm-section-group-header.section-header:hover .pm-section-group-title {
+  color: var(--azure-blue);
+}
+
+.pm-section-group-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--azure-dark);
+}
+
+.pm-section-group-desc {
+  margin: 4px 0 0;
+  color: var(--gray);
+  font-size: 0.9rem;
+}
+
+.pm-section-group.collapsed > .pm-section-group-content {
+  display: none !important;
+}
+
 .section-header {
   cursor: pointer;
   user-select: none;
@@ -693,9 +734,19 @@ main {
   color: #1e8449;
   font-size: 0.72rem;
 }
+.badge-sdk-ready-to-release {
+  background: #d4edda;
+  color: #155724;
+  font-size: 0.72rem;
+}
 .badge-missing-product {
   background: #fff3cd;
   color: #856404;
+  font-size: 0.72rem;
+}
+.badge-missing-emitter-config {
+  background: #fde7e9;
+  color: var(--red);
   font-size: 0.72rem;
 }
 .missing-product-highlight {
@@ -851,6 +902,12 @@ main {
   background: #fde7e9;
 }
 .sdk-table tr.row-exclusion-requested td {
+  color: var(--red);
+}
+.sdk-table tr.row-missing-emitter-config {
+  background: #fde7e9;
+}
+.sdk-table tr.row-missing-emitter-config td {
   color: var(--red);
 }
 
@@ -1112,6 +1169,11 @@ main {
 .pr-label-api-pending {
   background: #fff4ce;
   color: var(--orange);
+}
+.pr-label-version-pending {
+  background: #fff4ce;
+  color: var(--orange);
+  cursor: help;
 }
 
 /* Spec PR labels (BreakingChange, ARM, API) shown on their own wrapping row */

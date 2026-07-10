@@ -21,7 +21,9 @@ from dataset.schema import (  # noqa: E402
     REVIEW_STATUS_PASS,
     REVIEW_STATUS_TODO,
     ValidationError,
+    case_hash,
     normalize_review_status,
+    resolve_dedup_key,
     validate_case,
     validate_file,
 )
@@ -162,9 +164,62 @@ def test_validate_file_dedups_on_query_not_testcase():
         try:
             validate_file(dup)
         except ValidationError as exc:
-            assert "duplicate query" in str(exc)
+            assert "duplicate case" in str(exc)
         else:
             raise AssertionError("expected ValidationError for duplicate query")
+
+
+def test_resolve_dedup_key_frozen_on_query_edit():
+    # A persisted dedup_key is the stable identity: editing the query must NOT change it,
+    # so an edited question (e.g. neutralised PR link) still dedups against its source.
+    base = {"scenario": "typespec", "query": "how do I add @added?", "dedup_key": "frozen123"}
+    edited = dict(base, query="how do I add @added? [PR link removed]")
+    assert resolve_dedup_key(base) == "frozen123"
+    assert resolve_dedup_key(edited) == "frozen123"  # unchanged despite edited query
+
+    # Legacy rows without dedup_key fall back to the scenario+query content hash.
+    legacy = {"scenario": "typespec", "query": "q"}
+    assert resolve_dedup_key(legacy) == case_hash("typespec", "q")
+    # explicit scenario override wins over obj["scenario"]
+    assert resolve_dedup_key({"query": "q"}, "python") == case_hash("python", "q")
+
+
+def test_validate_file_dedups_on_dedup_key():
+    import json
+    import tempfile
+    from pathlib import Path
+
+    def _row(testcase: str, query: str, dedup_key: str) -> dict:
+        return {
+            "testcase": testcase,
+            "query": query,
+            "ground_truth": "gt",
+            "scenario": "typespec",
+            "reviewed": REVIEW_STATUS_PASS,
+            "dedup_key": dedup_key,
+        }
+
+    with tempfile.TemporaryDirectory() as tmp:
+        # Same dedup_key on two rows (even with different query text) -> duplicate.
+        dup = Path(tmp) / "dup.jsonl"
+        dup.write_text(
+            json.dumps(_row("A", "q1", "same-key")) + "\n" + json.dumps(_row("B", "q2 edited", "same-key")) + "\n",
+            encoding="utf-8",
+        )
+        try:
+            validate_file(dup)
+        except ValidationError as exc:
+            assert "duplicate case" in str(exc)
+        else:
+            raise AssertionError("expected ValidationError for duplicate dedup_key")
+
+        # Distinct dedup_keys -> valid.
+        ok = Path(tmp) / "ok.jsonl"
+        ok.write_text(
+            json.dumps(_row("A", "q", "k1")) + "\n" + json.dumps(_row("B", "q", "k2")) + "\n",
+            encoding="utf-8",
+        )
+        assert validate_file(ok, require_reviewed=True) == 2
 
 
 def test_output_items_to_rows_builtin_and_composite():

@@ -27,7 +27,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             { Language.Net, new Net() },
             { Language.Python, new Python() },
             { Language.Cpp, new Cpp() },
-            { Language.Rust, new Rust() }
+            { Language.Rust, new Rust() },
+            { Language.Go, new Go() }
         };
 
         public static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
@@ -151,6 +152,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
             else if (options.Language == Language.Rust)
             {
                 // Rust is sync-only
+                options.NoAsync = true;
+            }
+            else if (options.Language == Language.Go)
+            {
+                // Go is sync-only
                 options.NoAsync = true;
             }
             var serviceInfo = DeserializeYaml<ServiceInfo>(options.TestsFile);

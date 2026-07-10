@@ -3782,20 +3782,21 @@ class NoCrossPackagePrivateImport(BaseChecker):
 
 
 class CheckMissingDependency(BaseChecker):
-    """Rule to check that imported third-party packages are declared in setup.py.
+    """Rule to check that imported third-party packages are declared as dependencies.
     Starts with a hardcoded list of known third-party packages and checks that
-    they are listed as install_requires in the nearest setup.py.
+    they are listed in the nearest setup.py (install_requires) or pyproject.toml
+    ([project].dependencies or [tool.poetry.dependencies]).
     """
 
     name = "check-missing-dependency"
     priority = -1
     msgs = {
         "C4777": (
-            'Package "%s" is imported but not found in setup.py install_requires.'
-            " Ensure the dependency is declared in setup.py. See details:"
+            'Package "%s" is imported but not declared as a dependency in setup.py or pyproject.toml.'
+            " Ensure the dependency is declared in setup.py install_requires or pyproject.toml. See details:"
             " https://azure.github.io/azure-sdk/python_design.html",
             "missing-dependency-in-setup",
-            "Imported third-party package is not declared in setup.py.",
+            "Imported third-party package is not declared as a dependency in setup.py or pyproject.toml.",
         ),
     }
 
@@ -3806,7 +3807,7 @@ class CheckMissingDependency(BaseChecker):
         "aiohttp",
     }
 
-    # Map import names to setup.py package names when they differ
+    # Map import names to package distribution names when they differ
     _IMPORT_TO_PACKAGE = {
         "typing_extensions": "typing-extensions",
     }
@@ -3818,13 +3819,15 @@ class CheckMissingDependency(BaseChecker):
     def _find_package_dir(self, filepath):
         """Walk up from filepath to find the nearest dir containing setup.py or pyproject.toml."""
         directory = os.path.dirname(os.path.abspath(filepath))
-        while directory != os.path.dirname(directory):  # stop at root
+        while True:
             if os.path.isfile(os.path.join(directory, "setup.py")) or os.path.isfile(
                 os.path.join(directory, "pyproject.toml")
             ):
                 return directory
-            directory = os.path.dirname(directory)
-        return None
+            parent = os.path.dirname(directory)
+            if parent == directory:  # reached filesystem root
+                return None
+            directory = parent
 
     def _parse_setup_deps(self, setup_path):
         """Parse install_requires from setup.py using simple text matching."""

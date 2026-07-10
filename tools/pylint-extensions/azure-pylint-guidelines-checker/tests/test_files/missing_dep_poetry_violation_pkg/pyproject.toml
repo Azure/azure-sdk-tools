@@ -1,0 +1,6 @@
+[tool.poetry]
+name = "test-package-poetry-no-deps"
+version = "1.0.0"
+
+[tool.poetry.dependencies]
+python = "^3.9"

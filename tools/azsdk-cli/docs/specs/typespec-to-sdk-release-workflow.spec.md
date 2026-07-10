@@ -247,7 +247,7 @@ Build author-validation loop where agent auto-applies suppression decorators bas
 #### Happy path
 
 1. PR opens → CI triggers automatically
-2. TypeSpec compiles → LintDiff runs → breaking change detection → APIView tokens generated → SDK dry-run
+2. TypeSpec compiles → LintDiff runs → breaking change detection → APIView tokens generated → SDK dry-run → SDK APIView generated
 3. Labels applied based on results
 4. ARM review (if ARM spec) + namespace approval (if new package)
 5. All approvals → PR merges
@@ -260,6 +260,7 @@ Build author-validation loop where agent auto-applies suppression decorators bas
 | LintDiff violation | CI warning/error | Author | Fix or request suppression | Manual |
 | Breaking change detected | `BreakingChangeReviewRequired` label | @raych1 / @markcowl / @catalinaperalta | Approve, suppress, or redesign | Manual |
 | SDK dry-run failure | CI failure in spec-gen-sdk | Author / EngSys | Fix TypeSpec or escalate | Manual |
+| SDK breaking change detected | `BreakingChange-{Language}-Sdk` label | Author | Address breaking change or add suppression | Manual |
 | Namespace needs approval | `namespace-<lang>-pending` label | Namespace approvers | Apply `namespace-<lang>-approved` | Manual (label) |
 
 <details>
@@ -275,7 +276,7 @@ Build author-validation loop where agent auto-applies suppression decorators bas
 | `@azure-tools/typespec-breaking-change` | Phase A + B detection at **TypeSpec/spec level**. Auto-adds `BreakingChangeReviewRequired` / `VersioningReviewRequired` labels. Detects breaking changes in the API spec itself. | @markcowl |
 | SDK breaking change detector ([PR #15588](https://github.com/Azure/azure-sdk-tools/pull/15588)) | Detects breaking changes in the **generated SDK API surface** (complements spec-level detection). Reports changes that may not be visible at spec level but affect SDK consumers. Being integrated into spec CI validation. | @raych1 / @catalinaperalta |
 | APIView emitter (`typespec-apiview`) | Generates API surface tokens for SDK-level architect review (tokens used at Stage 4). **Will be retired with ARH.** | APIView team |
-| spec-gen-sdk | SDK generation validation (dry-run) | EngSys (@prkannap) |
+| spec-gen-sdk | SDK generation validation (dry-run) | EngSys (@raych1) |
 | Avocado / OAV | Legacy Swagger validation — **being deprecated** as TypeSpec-native tooling replaces them. | EngSys |
 
 #### Gaps
@@ -440,9 +441,9 @@ Structured error reporting from generation pipeline + agent-assisted troubleshoo
 
 1. Release plan work item updated
 2. Changelog prepared (mgmt: auto-generated; data-plane: manual review needed)
-3. Readiness checked per language
-4. SDK PR approved and merged (changelog, metadata, tests all done *before* merge)
-5. Release pipeline triggered — **becoming automatic** (@raych1 working on auto-trigger on SDK PR merge)
+3. SDK PR approved and merged (changelog, metadata, tests all done *before* merge)
+4. Release pipeline triggered — **becoming automatic** (@raych1 working on auto-trigger on SDK PR merge)
+5. Readiness checked per language (This happens in the release stage of release pipelines, and it would be expected to run earlier in SDK PR phase)
 6. **Release gate check** — Pipelines check both APIView and ARH for API approval (transitioning to ARH only)
 7. Packages published → release plan auto-completes → Service Tree KPI updated
 
@@ -453,7 +454,7 @@ Structured error reporting from generation pipeline + agent-assisted troubleshoo
 | **SDK PR readiness** (before merge) | Make SDK PR release-ready: fix linter failures, test failures, merge conflicts, breaking changes, update changelog/metadata. Tracked in [#15705](https://github.com/Azure/azure-sdk-tools/issues/15705). | @raych1 / Language teams / EngSys | Multiple items open — see issue |
 | **Release trigger** (after merge) | Auto-trigger release pipeline when SDK PR merges. Once PR is merged, changelog and metadata are already done — just need to release. | @raych1 | In progress — becoming automatic |
 
-> **Key clarification**: Changelog, metadata, and version updates happen *inside the SDK PR before merge* — they are part of SDK PR readiness. After merge, the only step is triggering the release pipeline (which @raych1 is automating). The manual approval gate on the release pipeline itself cannot be removed for security reasons.
+> **Key clarification**: Changelog, metadata, and version updates happen *when the SDK PR is created*. The validation on these updates should be part of the CI *inside the SDK PR before merge* — they are part of SDK PR readiness. After merge, the only step is triggering the release pipeline (which @raych1 is automating). The manual approval gate on the release pipeline itself cannot be removed for security reasons.
 
 #### Failure paths
 
@@ -522,7 +523,11 @@ Manual approval gate on release pipeline cannot be removed for security (ARM app
 | `namespace-<lang>-approved` | Architect | Namespace approved | Unblocks | ✅ Manual label, gate automated |
 | `namespace-approved-all` | Architect | Approves all languages (mgmt) | Unblocks | ✅ Manual label, gate automated |
 | `Approved-BreakingChange` | Review team | Breaking change approved | Unblocks | ⚠️ Manual label, gate works |
-| `Suppression-Approved` | Review team | Linter suppression approved | Unblocks | ⚠️ Manual label, validation automated |
+| `BreakingChange-{Language}-Sdk` | CI | Sdk breaking change detected | Yes | ✅ Fully automated |
+| `BreakingChange-{Language}-Sdk-Approved` | Review team | Sdk breaking change approved | Yes | ⚠️ Manual label, validation automated |
+| `BreakingChange-{Language}-Sdk-Suppression` | Authors | SDK breaking change suppression updates | Yes | ✅ Fully automated |
+| `BreakingChange-{Language}-Sdk-Suppression-Approved` | Review team | SDK breaking change suppression approved | Yes | ⚠️ Manual label, validation automated |
+
 
 #### SDK PR Labels (language repos)
 

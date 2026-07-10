@@ -11,9 +11,14 @@ can defend than a dozen that look rigorous but rest on weak proxies. An earlier
 iteration measured CCR with structural shortcuts — line-range overlap, "a later
 commit touched the file", regex sentiment on replies. Each was individually
 noisy, and no amount of schema rigor downstream fixes a bad proxy. Those are gone
-(see [Rejected metrics](#rejected-metrics-and-why)). What remains either comes
+(see [Rejected metrics](decisions.md#d1--subtractive-metric-set-defend-a-few-not-display-many)
+in `decisions.md`). What remains either comes
 from a **deterministic fact** or an **explicit LLM judgment made from the actual
 evidence**, never from co-location or keyword guessing.
+
+For the engineering decisions behind this design — the phase split, the
+`ccrSawCode` gate, the honesty invariants, and the dashboard — see
+[`decisions.md`](decisions.md).
 
 ## Choosing the target repo
 
@@ -251,18 +256,6 @@ reporting confidently on a handful. The settle lag ensures threads are resolved
 and follow-up commits have landed before we read a PR.
 
 ---
-
-## Rejected metrics, and why
-
-Kept here so the omissions are auditable — each was load-bearing in an earlier
-draft and cut for a stated reason.
-
-| Rejected                                                                 | Why it was invalid                                                                                                                                                |
-| ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Line-range overlap** (`ccrOverlap`, `ccrOverlapRate`, `overlapTiming`) | Co-location is not the same concern. Counted unrelated nearby comments as catches and missed same-issue-different-line. Replaced by LLM same-concern judgment.    |
-| **`actedOn` = a later commit touched the file**                          | True on nearly every active PR; measured "file still being edited," not usefulness. Replaced by line-level `ccrOutcome`.                                          |
-| **`resolved` = thread-resolved OR regex-positive reply**                 | Brittle keyword matching ("not fixed yet" false-matched; "good catch, but by design" matched both signals). Folded into the judged `rejected`/`ignored` outcomes. |
-| **`overlapTiming` "same round" via 60-second wall clock**                | Fragile heuristic that no metric decision consumed.                                                                                                               |
 
 ## The judge — done in the agentic workflow, not a bespoke API client
 

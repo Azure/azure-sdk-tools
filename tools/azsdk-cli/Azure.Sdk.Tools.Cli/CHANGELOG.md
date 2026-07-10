@@ -18,6 +18,8 @@
 
 ### Bugs Fixed
 
+- Reading the status, checks, and labels of a public pull request (for example, the spec pull request during SDK generation) no longer requires GitHub authentication. These read-only operations are now attempted anonymously first, and only fall back to an authenticated request (prompting the user to run `gh auth login`) when GitHub indicates authentication is required, such as for a private repository.
+
 - The create release plan tool no longer accepts an `--sdk-type` parameter. The SDK release type is now always derived from the API release type (GA maps to a stable SDK release, preview maps to a beta SDK release), preventing a stable SDK release from a preview API version.
 
 - The create and update release plan tools now give clear guidance when run from a language SDK repository (or any directory that is not the `azure-rest-api-specs`/`azure-rest-api-specs-pr` repo). Instead of incorrectly reporting that the spec is in a private repository, they now ask the user to provide the absolute path to the TypeSpec project or to run the command from within the `Azure/azure-rest-api-specs` repository.

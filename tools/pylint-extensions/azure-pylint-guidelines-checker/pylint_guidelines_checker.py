@@ -3761,23 +3761,21 @@ class CheckMissingDependency(BaseChecker):
 
     def __init__(self, linter=None):
         super(CheckMissingDependency, self).__init__(linter)
-        self._setup_deps_cache = {}
+        self._deps_cache = {}  # keyed by package directory
 
-    def _find_setup_py(self, filepath):
-        """Walk up from filepath to find the nearest setup.py."""
+    def _find_package_dir(self, filepath):
+        """Walk up from filepath to find the nearest dir containing setup.py or pyproject.toml."""
         directory = os.path.dirname(os.path.abspath(filepath))
         while directory != os.path.dirname(directory):  # stop at root
-            setup_path = os.path.join(directory, "setup.py")
-            if os.path.isfile(setup_path):
-                return setup_path
+            if os.path.isfile(os.path.join(directory, "setup.py")) or os.path.isfile(
+                os.path.join(directory, "pyproject.toml")
+            ):
+                return directory
             directory = os.path.dirname(directory)
         return None
 
     def _parse_setup_deps(self, setup_path):
         """Parse install_requires from setup.py using simple text matching."""
-        if setup_path in self._setup_deps_cache:
-            return self._setup_deps_cache[setup_path]
-
         deps = set()
         try:
             with open(setup_path, "r", encoding="utf-8", errors="replace") as f:
@@ -3785,14 +3783,57 @@ class CheckMissingDependency(BaseChecker):
             # Match strings inside install_requires list or tuple
             match = re.search(r"install_requires\s*=\s*[\[\(]([^\]\)]*)[\]\)]", content, re.DOTALL)
             if match:
-                requires_text = match.group(1)
-                # Extract package names from quoted strings
-                for pkg_match in re.finditer(r'["\']([a-zA-Z0-9_-]+)', requires_text):
+                for pkg_match in re.finditer(r'["\']([a-zA-Z0-9_-]+)', match.group(1)):
                     deps.add(pkg_match.group(1).lower().replace("-", "_"))
         except Exception as ex:
             logger.debug("CheckMissingDependency: failed to parse %s: %s", setup_path, ex)
+        return deps
 
-        self._setup_deps_cache[setup_path] = deps
+    def _parse_pyproject_deps(self, pyproject_path):
+        """Parse dependencies from pyproject.toml (PEP 621 and Poetry)."""
+        deps = set()
+        try:
+            with open(pyproject_path, "r", encoding="utf-8", errors="replace") as f:
+                content = f.read()
+            # PEP 621: dependencies array under [project]
+            project_match = re.search(
+                r"^\[project\]\s*\n(.*?)(?=^\[|\Z)", content, re.DOTALL | re.MULTILINE
+            )
+            if project_match:
+                deps_match = re.search(
+                    r"^dependencies\s*=\s*\[(.*?)\]", project_match.group(1), re.DOTALL | re.MULTILINE
+                )
+                if deps_match:
+                    for pkg_match in re.finditer(r'["\']([a-zA-Z0-9_-]+)', deps_match.group(1)):
+                        deps.add(pkg_match.group(1).lower().replace("-", "_"))
+            # Poetry: [tool.poetry.dependencies] key = value pairs
+            poetry_match = re.search(
+                r"^\[tool\.poetry\.dependencies\]\s*\n(.*?)(?=^\[|\Z)", content, re.DOTALL | re.MULTILINE
+            )
+            if poetry_match:
+                for line_match in re.finditer(r"^([a-zA-Z0-9_-]+)\s*=", poetry_match.group(1), re.MULTILINE):
+                    pkg = line_match.group(1)
+                    if pkg.lower() != "python":
+                        deps.add(pkg.lower().replace("-", "_"))
+        except Exception as ex:
+            logger.debug("CheckMissingDependency: failed to parse %s: %s", pyproject_path, ex)
+        return deps
+
+    def _get_declared_deps(self, package_dir):
+        """Aggregate declared dependencies from setup.py and/or pyproject.toml in package_dir."""
+        if package_dir in self._deps_cache:
+            return self._deps_cache[package_dir]
+
+        deps = set()
+        setup_py = os.path.join(package_dir, "setup.py")
+        if os.path.isfile(setup_py):
+            deps |= self._parse_setup_deps(setup_py)
+
+        pyproject = os.path.join(package_dir, "pyproject.toml")
+        if os.path.isfile(pyproject):
+            deps |= self._parse_pyproject_deps(pyproject)
+
+        self._deps_cache[package_dir] = deps
         return deps
 
     def visit_importfrom(self, node):
@@ -3809,7 +3850,7 @@ class CheckMissingDependency(BaseChecker):
             self._check_import(top_level, node)
 
     def _check_import(self, package_name, node):
-        """Check if a known third-party package is declared in setup.py."""
+        """Check if a known third-party package is declared in setup.py or pyproject.toml."""
         if package_name not in self._KNOWN_THIRD_PARTY:
             return
 
@@ -3818,11 +3859,11 @@ class CheckMissingDependency(BaseChecker):
         except AttributeError:
             return
 
-        setup_path = self._find_setup_py(filepath)
-        if setup_path is None:
+        package_dir = self._find_package_dir(filepath)
+        if package_dir is None:
             return
 
-        deps = self._parse_setup_deps(setup_path)
+        deps = self._get_declared_deps(package_dir)
         # Check both the import name and the package name variant
         setup_name = self._IMPORT_TO_PACKAGE.get(package_name, package_name)
         normalized = setup_name.lower().replace("-", "_")

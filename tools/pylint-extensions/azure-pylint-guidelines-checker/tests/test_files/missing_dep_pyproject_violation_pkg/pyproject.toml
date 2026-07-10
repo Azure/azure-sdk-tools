@@ -1,0 +1,4 @@
+[project]
+name = "test-package-pyproject-no-deps"
+version = "1.0.0"
+dependencies = []

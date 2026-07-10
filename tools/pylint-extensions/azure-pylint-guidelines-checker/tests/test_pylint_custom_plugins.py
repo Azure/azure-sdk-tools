@@ -4736,3 +4736,81 @@ class TestCheckMissingDependency(pylint.testutils.CheckerTestCase):
             ),
         ):
             self.checker.visit_importfrom(aiohttp_node)
+
+    def test_acceptable_deps_in_pyproject(self):
+        """Imports declared in pyproject.toml [project].dependencies should not be flagged."""
+        filepath = os.path.join(
+            TEST_FOLDER,
+            "test_files",
+            "missing_dep_pyproject_test_pkg",
+            "acceptable.py",
+        )
+        node = astroid.MANAGER.ast_from_file(filepath)
+        with self.assertNoMessages():
+            for child in node.body:
+                if isinstance(child, astroid.node_classes.Import):
+                    self.checker.visit_import(child)
+                elif isinstance(child, astroid.node_classes.ImportFrom):
+                    self.checker.visit_importfrom(child)
+
+    def test_violation_missing_dep_pyproject(self):
+        """Imports of known 3rd party packages not in pyproject.toml should be flagged."""
+        filepath = os.path.join(
+            TEST_FOLDER,
+            "test_files",
+            "missing_dep_pyproject_violation_pkg",
+            "violation.py",
+        )
+        node = astroid.MANAGER.ast_from_file(filepath)
+
+        import_nodes = [
+            child
+            for child in node.body
+            if isinstance(
+                child, (astroid.node_classes.Import, astroid.node_classes.ImportFrom)
+            )
+        ]
+
+        typing_ext_node = import_nodes[0]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="missing-dependency-in-setup",
+                line=typing_ext_node.lineno,
+                node=typing_ext_node,
+                args="typing_extensions",
+                col_offset=typing_ext_node.col_offset,
+                end_line=typing_ext_node.end_lineno,
+                end_col_offset=typing_ext_node.end_col_offset,
+            ),
+        ):
+            self.checker.visit_import(typing_ext_node)
+
+        aiohttp_node = import_nodes[1]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="missing-dependency-in-setup",
+                line=aiohttp_node.lineno,
+                node=aiohttp_node,
+                args="aiohttp",
+                col_offset=aiohttp_node.col_offset,
+                end_line=aiohttp_node.end_lineno,
+                end_col_offset=aiohttp_node.end_col_offset,
+            ),
+        ):
+            self.checker.visit_importfrom(aiohttp_node)
+
+    def test_acceptable_deps_in_poetry_pyproject(self):
+        """Imports declared in pyproject.toml [tool.poetry.dependencies] should not be flagged."""
+        filepath = os.path.join(
+            TEST_FOLDER,
+            "test_files",
+            "missing_dep_poetry_test_pkg",
+            "acceptable.py",
+        )
+        node = astroid.MANAGER.ast_from_file(filepath)
+        with self.assertNoMessages():
+            for child in node.body:
+                if isinstance(child, astroid.node_classes.Import):
+                    self.checker.visit_import(child)
+                elif isinstance(child, astroid.node_classes.ImportFrom):
+                    self.checker.visit_importfrom(child)

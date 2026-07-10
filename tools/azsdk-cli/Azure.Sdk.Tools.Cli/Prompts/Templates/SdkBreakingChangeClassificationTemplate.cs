@@ -142,6 +142,15 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
             - Every original breaking item from sdk changes ### Breaking Changes must be processed.
             - No original breaking item may be skipped.
             - No original breaking item may appear in more than one block.
+            **SDK breaking change Rule**
+            When describing a SDK breaking change:
+            - Report the change from the SDK consumer's perspective.
+            - Use the SDK type, method, property, enum, parameter, response type, or namespace names that developers interact with.
+            - If available, include the originating typespec entity as additional context, but do not make it the primary subject of the breaking change.
+            - Clearly state what SDK element changed and how it changed (renamed, removed, moved, type changed, requiredness changed, visibility changed, etc.).
+            - Avoid reporting internal service-model or code-generation changes unless they directly affect the SDK surface.
+            - When a service model maps to an SDK type with a different name, describe the SDK type change and optionally mention the corresponding service model for context.e.g Struct ResourceInfo for model WebPubSubResource renamed to Resource.
+            - Prefer concise, user-impact-focused wording that helps SDK consumers understand what code may need to be updated.
             **Merging Rules**
             - Merge only when multiple input breaking items clearly share:
                 - the same root cause (e.g. a model rename, enum rename, operation signature change), and

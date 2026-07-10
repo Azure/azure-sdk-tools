@@ -281,7 +281,7 @@ architecture-review-added,Architecture review completed,0e8a16
 architecture-review-in-progress,Architecture review is in progress,fbca04
 architecture-review-needed,Triggers Archie: AI architecture review agent,1d76db
 auto-close-exempt,Prevents the auto-close from closing based on max lifetime,ededed
-auto-release,"When merged to main, this PR's changed packages are automatically released.",2cbe4e
+auto-release,"When merged to main, the release pipelines for this PR's changed packages are triggered automatically.",2cbe4e
 blocking-release,Blocks release,d73a49
 breaking-change,,d73a49
 bug,This issue requires a change to an existing behavior in the product in order to be resolved.,eaa875

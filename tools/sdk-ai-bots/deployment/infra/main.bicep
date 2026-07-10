@@ -286,6 +286,8 @@ output ACTION_GROUP_NAME string = sharedResources.outputs.actionGroupName
 // Agent-platform outputs
 output AI_RESOURCE_NAME string = agent.outputs.aiResourceName
 output AI_PROJECT_NAME string = agent.outputs.aiProjectName
+output AZURE_AI_PROJECT_ID string = agent.outputs.aiProjectId
+output FOUNDRY_PROJECT_ENDPOINT string = agent.outputs.aiProjectEndpoint
 
 // Frontend outputs
 output BOT_IDENTITY_NAME string = frontend.outputs.botIdentityName

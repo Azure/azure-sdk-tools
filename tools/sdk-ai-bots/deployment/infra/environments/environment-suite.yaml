@@ -52,7 +52,7 @@ environments:
             - name: 'centralus'
               ring: 'single'
               enabled: true
-        aiLocation: 'centralus'
+        aiLocation: 'eastus2'
         approvalRequired: false
         prodDeployOnlyFromPipeline: false
         localDeployAllowed: true

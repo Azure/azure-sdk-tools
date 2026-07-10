@@ -188,6 +188,7 @@ resource blobConnection 'Microsoft.Web/connections@2016-06-01' = {
     api: {
       id: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Web/locations/${location}/managedApis/azureblob'
     }
+    #disable-next-line BCP089
     parameterValueSet: {
       name: 'managedIdentityAuth'
       values: {}
@@ -203,6 +204,7 @@ resource documentDbConnection 'Microsoft.Web/connections@2016-06-01' = {
     api: {
       id: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Web/locations/${location}/managedApis/documentdb'
     }
+    #disable-next-line BCP089
     parameterValueSet: {
       name: 'managedIdentityAuth'
       values: {}

@@ -477,6 +477,7 @@ var roleIds = {
   appConfigurationDataReader: '516239f1-63e1-4d78-a4de-a74fb236a071'
   searchIndexDataContributor: '8ebe5a00-799e-43f5-93ac-243d3dce84a7'
   contributor: 'b24988ac-6180-42a0-ab88-20f7382dd24c'
+  acrPull: '7f951dda-4ed3-4680-a7ca-43fe172d538d'
   cosmosDbDataContributor: '00000000-0000-0000-0000-000000000002'
 }
 
@@ -554,6 +555,21 @@ resource identityAcrContributor 'Microsoft.Authorization/roleAssignments@2022-04
   scope: registry
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleIds.contributor)
+    principalId: userAssignedIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// Pull images from the container registry at runtime. Contributor above is a
+// control-plane role and does NOT include the `Microsoft.ContainerRegistry/
+// registries/pull/read` data action, so an explicit AcrPull is required for
+// managed-identity image pulls (e.g. the Function App container). Without it
+// the container fails to start and the Functions host returns 503.
+resource identityAcrPull 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(registry.id, userAssignedIdentity.id, roleIds.acrPull)
+  scope: registry
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleIds.acrPull)
     principalId: userAssignedIdentity.properties.principalId
     principalType: 'ServicePrincipal'
   }

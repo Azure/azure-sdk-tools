@@ -286,9 +286,34 @@ resource developerOpenAiUserRoleAssignment 'Microsoft.Authorization/roleAssignme
   }
 }
 
+// Foundry Project Manager grant for the developer principal on the AI account.
+// This is the role that authorizes hosted-agent management: it includes the
+// `Microsoft.CognitiveServices/*` action set (covering
+// `accounts/AIServices/agents/write`) that `azd deploy agent` — via the
+// azure.ai.agents extension — needs to create hosted agent versions through the
+// Foundry REST API. It supersedes both "Azure AI Developer" (which lacks the
+// AIServices/agents action) and "Cognitive Services Contributor" (whose
+// CognitiveServices/* wildcard this role already includes), so neither of those
+// is assigned here.
+resource developerFoundryProjectManagerRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(developerGroupObjectId)) {
+  scope: account
+  name: guid(account.id, developerGroupObjectId, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'eadc314b-1a2d-4efa-be10-5d325db5065e'))
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'eadc314b-1a2d-4efa-be10-5d325db5065e')
+    principalId: developerGroupObjectId
+    principalType: developerPrincipalType
+  }
+}
+
 // Output
 @description('Azure AI Services (Cognitive Services) account name.')
 output aiResourceName string = account.name
 
 @description('Azure AI project name.')
 output aiProjectName string = project.name
+
+@description('Full ARM resource ID of the Azure AI Foundry project (CognitiveServices path).')
+output aiProjectId string = project.id
+
+@description('Azure AI Foundry project REST API endpoint.')
+output aiProjectEndpoint string = 'https://${account.name}.services.ai.azure.com/api/projects/${project.name}'

@@ -133,15 +133,20 @@ async function waitForFunctionAppReady(
   while (Date.now() < deadline) {
     attempt++;
     lastCode = tryRun(`curl -s -o /dev/null -w "%{http_code}" --max-time 15 "${url}"`) ?? "0";
-    if (lastCode === "200") {
-      log(`  ✓ Function host healthy after ${attempt} attempt(s).`);
+    // 200 = healthy with admin access. 401/403 also mean the Functions host is
+    // up and loaded — /admin/host/status requires the master key, so an
+    // unauthenticated probe is rejected with 401/403 only once the runtime is
+    // serving requests. A host that hasn't pulled its container yet returns 503
+    // (or the connection fails), so treat 401/403 as ready too.
+    if (lastCode === "200" || lastCode === "401" || lastCode === "403") {
+      log(`  ✓ Function host healthy after ${attempt} attempt(s) (status ${lastCode}).`);
       return;
     }
     log(`  attempt ${attempt}: /admin/host/status returned ${lastCode} — retrying in 15s`);
     await sleep(15_000);
   }
   throw new Error(
-    `Function host at ${url} did not return 200 within ${Math.round(timeoutMs / 1000)}s ` +
+    `Function host at ${url} did not return 200/401/403 within ${Math.round(timeoutMs / 1000)}s ` +
       `(last status: ${lastCode}). The container image is probably not deployed yet — ` +
       `run \`azd deploy function-app -e <env>\` first, then retry this step.`,
   );

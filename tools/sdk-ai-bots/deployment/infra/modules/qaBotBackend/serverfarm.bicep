@@ -126,6 +126,7 @@ resource site 'Microsoft.Web/sites@2025-05-01' = {
   name: backendSiteName
   tags: {
     'hidden-link: /app-insights-resource-id': slotAppInsights.id
+    'azd-service-name': 'backend'
   }
   location: location
   properties: {
@@ -136,10 +137,22 @@ resource site 'Microsoft.Web/sites@2025-05-01' = {
       linuxFxVersion: 'DOCKER|${ragBasedBackendImage}'
       alwaysOn: true
       acrUseManagedIdentityCreds: true
+      // Which user-assigned identity to use for the ACR pull. Required because
+      // the site has multiple user-assigned identities — without this the
+      // platform falls back to the (nonexistent) system-assigned identity and
+      // the container image pull fails, leaving the site returning 503.
+      acrUserManagedIdentityID: managedIdentityClientId
       ftpsState: 'FtpsOnly'
       httpLoggingEnabled: false
       minTlsVersion: '1.2'
       appSettings: [
+        {
+          // The Go backend listens on :8088 (see main.go `r.Run(":8088")`).
+          // App Service must be told this port or it probes the default 8080
+          // and the site returns 503.
+          name: 'WEBSITES_PORT'
+          value: '8088'
+        }
         {
           name: 'AZURE_CLIENT_ID'
           value: managedIdentityClientId
@@ -187,6 +200,13 @@ resource site 'Microsoft.Web/sites@2025-05-01' = {
         {
           name: 'APP_CONFIG_NAME'
           value: appConfigName
+        }
+        {
+          // The Go backend reads AZURE_APPCONFIG_ENDPOINT (a full URL) in
+          // config.InitConfiguration(); without it the App Configuration load
+          // fails with log.Fatalf and the container exits (503).
+          name: 'AZURE_APPCONFIG_ENDPOINT'
+          value: 'https://${appConfigName}.azconfig.io'
         }
       ]
     }
@@ -245,9 +265,18 @@ resource slot 'Microsoft.Web/sites/slots@2025-05-01' = {
       linuxFxVersion: 'DOCKER|${agentBasedBackendImage}'
       alwaysOn: true
       acrUseManagedIdentityCreds: true
+      // See the main site above — required so the ACR pull uses a real
+      // user-assigned identity rather than the nonexistent system-assigned one.
+      acrUserManagedIdentityID: managedIdentityClientId
       ftpsState: 'FtpsOnly'
       httpLoggingEnabled: false
       appSettings: [
+        {
+          // The agent-server container listens on :8088; tell App Service so it
+          // routes to the right port instead of the default 8080 (else 503).
+          name: 'WEBSITES_PORT'
+          value: '8088'
+        }
         {
           name: 'AZURE_CLIENT_ID'
           value: managedIdentityClientId

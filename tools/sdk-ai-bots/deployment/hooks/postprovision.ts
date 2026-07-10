@@ -11,6 +11,7 @@
  *   DEPLOY_LAYER=agent-platform azd provision   — deploy only one layer
  */
 
+import { execSync } from "child_process";
 import { INFRA_LAYERS } from "./lib/layers.js";
 import { runLayerPipeline } from "./lib/deploy-layer.js";
 import { uploadBotConfigs } from "./lib/upload-bot-configs.js";
@@ -23,6 +24,62 @@ const STORAGE_ACCOUNT_NAME = process.env.STORAGE_ACCOUNT_NAME ?? "";
 
 function log(msg: string): void {
   console.log(`[postprovision] ${msg}`);
+}
+
+/**
+ * Reads the subscription-scoped deployment outputs produced by main.bicep and
+ * writes each one into the azd environment with `azd env set KEY VALUE`.
+ *
+ * azd names the subscription-level deployment `<ENV_NAME>-<timestamp>` (e.g.
+ * `dev-1783668832`), so we resolve the most recent succeeded deployment whose
+ * name starts with `<ENV_NAME>-` rather than assuming an exact `<ENV_NAME>`.
+ *
+ * Only runs when triggered by a full `azd provision` (i.e. DEPLOY_LAYER is not
+ * set). When DEPLOY_LAYER is set the caller is doing a targeted per-layer
+ * re-deploy and the top-level main.bicep was not re-run, so its outputs have
+ * not changed and there is nothing new to persist.
+ */
+async function persistBicepOutputs(): Promise<void> {
+  if (process.env.DEPLOY_LAYER) {
+    log(`DEPLOY_LAYER=${process.env.DEPLOY_LAYER} — skipping bicep output persistence (main.bicep was not re-run).`);
+    return;
+  }
+
+  log("Persisting bicep outputs into azd environment...");
+
+  // Resolve azd's actual deployment name: the most recent succeeded
+  // subscription deployment whose name starts with `<ENV_NAME>-`.
+  const deploymentName = execSync(
+    `az deployment sub list --subscription "${SUBSCRIPTION_ID}" ` +
+      `--query "sort_by([?starts_with(name, '${ENV_NAME}-') && properties.provisioningState=='Succeeded'], &properties.timestamp)[-1].name" ` +
+      `-o tsv`,
+    { encoding: "utf8" }
+  ).trim();
+
+  if (!deploymentName) {
+    throw new Error(
+      `No succeeded subscription deployment found matching '${ENV_NAME}-*'. ` +
+        `Did 'azd provision' complete the infra deployment?`
+    );
+  }
+  log(`Resolved deployment name: ${deploymentName}`);
+
+  const raw = execSync(
+    `az deployment sub show --name "${deploymentName}" --subscription "${SUBSCRIPTION_ID}" --query "properties.outputs" -o json`,
+    { encoding: "utf8" }
+  );
+
+  const outputs: Record<string, { value: string }> = JSON.parse(raw);
+
+  for (const [key, entry] of Object.entries(outputs)) {
+    const value = String(entry.value ?? "");
+    execSync(`azd env set "${key}" "${value.replace(/"/g, '\\"')}"`, {
+      stdio: "inherit",
+    });
+    log(`  set ${key}`);
+  }
+
+  log(`Persisted ${Object.keys(outputs).length} outputs.`);
 }
 
 async function runInfraLayers(): Promise<void> {
@@ -64,6 +121,7 @@ function printSummary(): void {
 
 (async () => {
   log(`Starting postprovision for environment '${ENV_NAME}'`);
+  await persistBicepOutputs();
   await runInfraLayers();
   uploadPerEnvBotConfigs();
   seedKeyVaultSecrets();

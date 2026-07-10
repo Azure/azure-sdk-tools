@@ -80,6 +80,11 @@ resource site 'Microsoft.Web/sites@2025-05-01' = {
       linuxFxVersion: 'DOCKER|${containerImage}'
       alwaysOn: false
       acrUseManagedIdentityCreds: true
+      // Which user-assigned identity to use for the ACR pull. Required because
+      // this app has only a user-assigned identity — without this the platform
+      // falls back to the (nonexistent) system-assigned identity and the
+      // container image pull fails, leaving the Functions host unavailable (503).
+      acrUserManagedIdentityID: managedIdentityClientId
       ftpsState: 'FtpsOnly'
       httpLoggingEnabled: false
       minTlsVersion: '1.2'

@@ -136,6 +136,7 @@ Write-Host "Syncing environment-suite.yaml → $([System.IO.Path]::GetFileName($
 
 # Values pulled from the suite. Image repositories are <componentImageName>:<env>.
 $location                       = (& yq -r ".environments.$Environment.regions[0].name" $SuitePath).Trim()
+$aiLocation                     = (& yq -r ".environments.$Environment.aiLocation" $SuitePath).Trim()
 $resourceGroupName              = (& yq -r ".environments.$Environment.resourceGroupPrefix" $SuitePath).Trim()
 $functionImageName              = (& yq -r '.components."function-app".imageName' $SuitePath).Trim()
 $backendImageName               = (& yq -r '.components.backend.imageName' $SuitePath).Trim()
@@ -143,6 +144,7 @@ $agentImageName                 = (& yq -r '.components."agent-server".imageName
 
 foreach ($pair in @(
     @{ Name = 'location';               Value = $location },
+    @{ Name = 'aiLocation';             Value = $aiLocation },
     @{ Name = 'resourceGroupName';      Value = $resourceGroupName },
     @{ Name = 'function-app imageName'; Value = $functionImageName },
     @{ Name = 'backend imageName';      Value = $backendImageName },
@@ -166,6 +168,7 @@ function Set-ParamValue {
 }
 
 Set-ParamValue $paramsJson.parameters 'location'                       $location
+Set-ParamValue $paramsJson.parameters 'aiLocation'                     $aiLocation
 Set-ParamValue $paramsJson.parameters 'resourceGroupName'              $resourceGroupName
 Set-ParamValue $paramsJson.parameters 'functionImageRepository'        "${functionImageName}:${Environment}"
 Set-ParamValue $paramsJson.parameters 'ragBasedBackendImageRepository' "${backendImageName}:${Environment}"
@@ -177,6 +180,7 @@ Set-Content -Path $ParametersFile -Value $json -Encoding utf8 -NoNewline
 Add-Content -Path $ParametersFile -Value "" -Encoding utf8
 
 Write-Host "  location                       = $location"
+Write-Host "  aiLocation                     = $aiLocation"
 Write-Host "  resourceGroupName              = $resourceGroupName"
 Write-Host "  functionImageRepository        = ${functionImageName}:${Environment}"
 Write-Host "  ragBasedBackendImageRepository = ${backendImageName}:${Environment}"

@@ -5,8 +5,11 @@
     "location": {
       "value": "centralus"
     },
+    "aiLocation": {
+      "value": "eastus2"
+    },
     "cosmosDbLocation": {
-      "value": "eastus"
+      "value": "eastus2"
     },
     "resourceGroupName": {
       "value": "azure-sdk-qa-bot-dev"

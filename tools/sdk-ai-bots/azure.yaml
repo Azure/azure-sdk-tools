@@ -15,14 +15,30 @@ services:
                     memory: 1Gi
         container:
             resources:
-                cpu: "1"
-                memory: 2Gi
+                cpu: "0.5"
+                memory: 1Gi
         kind: hosted
         name: azure-sdk-chat-agent
         protocols:
             - protocol: responses
               version: 2.0.0
         startupCommand: python init.py
+    backend:
+        project: azure-sdk-qa-bot-backend
+        host: appservice
+        language: docker
+        docker:
+            # The backend Go module is self-contained, so the build context is
+            # this service's own directory (the Dockerfile uses `COPY . .`).
+            path: Dockerfile
+            context: .
+            # Build the image in ACR (cloud-side) so no local Docker is required.
+            remoteBuild: true
+        hooks:
+            postdeploy:
+                shell: sh
+                run: cd ../deployment && npx tsx hooks/backend-postdeploy.ts
+                interactive: true
     frontend:
         project: azure-sdk-qa-bot
         host: appservice
@@ -33,13 +49,8 @@ services:
                 run: cd ../deployment && npx tsx hooks/frontend-postdeploy.ts
                 interactive: true
             predeploy:
-                shell: pwsh
-                run: |
-                    if ($env:AZD_SKIP_IMAGE_BUILD -eq "1") {
-                      Write-Host "AZD_SKIP_IMAGE_BUILD=1, using existing image $env:CONTAINER_REGISTRY_NAME.azurecr.io/azure-sdk-qa-bot:$env:AZURE_ENV_NAME"
-                      exit 0
-                    }
-                    ./scripts/setup-docker-image.ps1 -Tag $env:AZURE_ENV_NAME -AcrName $env:CONTAINER_REGISTRY_NAME -Push
+                shell: sh
+                run: cd ../deployment && npx tsx hooks/frontend-predeploy.ts
                 interactive: true
     function-app:
         project: azure-sdk-qa-bot-function
@@ -52,12 +63,7 @@ services:
                 interactive: true
             predeploy:
                 shell: sh
-                run: |
-                    if [ "$AZD_SKIP_IMAGE_BUILD" = "1" ]; then
-                      echo "AZD_SKIP_IMAGE_BUILD=1, using existing image"
-                      exit 0
-                    fi
-                    npx tsx scripts/setup-docker-image.ts --tag "$AZURE_ENV_NAME" --acr-name "$CONTAINER_REGISTRY_NAME" --push
+                run: cd ../deployment && npx tsx hooks/function-predeploy.ts
                 interactive: true
 infra:
     provider: bicep

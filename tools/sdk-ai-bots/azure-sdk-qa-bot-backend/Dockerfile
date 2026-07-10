@@ -17,8 +17,8 @@ WORKDIR /app
 # Set Go proxy to use public proxy
 ENV GOPROXY=https://proxy.golang.org,direct
 
-# Copy Go application files
-COPY tools/sdk-ai-bots/azure-sdk-qa-bot-backend .
+# Copy Go application files (build context is this backend directory)
+COPY . .
 
 # Build Go application
 RUN go mod download

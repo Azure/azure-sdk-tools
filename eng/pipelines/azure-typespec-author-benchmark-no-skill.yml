@@ -24,7 +24,8 @@ extends:
           image: $(LINUXVMIMAGE)
           os: linux
         jobs:
-          # No-skill baseline: same suite split for apples-to-apples error investigation.
+          # No-skill baseline: same .vally.yaml suite branch split for
+          # apples-to-apples error investigation.
           - job: RunEvalsNoSkill
             displayName: Evaluate on pure agent without skill
             timeoutInMinutes: 170
@@ -40,44 +41,39 @@ extends:
               # Run evaluations on pure agent without skill
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: no-skill.eval.yaml
+                  Suite: versioning-no-skill
                   SuiteName: versioning-no-skill
                   DisplayName: Pure agent - versioning
                   TimeoutMinutes: 50
                   LoadSkills: false
-                  Tag: suite=versioning
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: no-skill.eval.yaml
+                  Suite: armtemplate-no-skill
                   SuiteName: armtemplate-no-skill
                   DisplayName: Pure agent - armtemplate
                   TimeoutMinutes: 40
                   LoadSkills: false
-                  Tag: suite=armtemplate
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: no-skill.eval.yaml
+                  Suite: longrunningoperation-no-skill
                   SuiteName: longrunningoperation-no-skill
                   DisplayName: Pure agent - longrunningoperation
                   TimeoutMinutes: 25
                   LoadSkills: false
-                  Tag: suite=lro
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: no-skill.eval.yaml
+                  Suite: decorators-no-skill
                   SuiteName: decorators-no-skill
                   DisplayName: Pure agent - decorators
                   TimeoutMinutes: 15
                   LoadSkills: false
-                  Tag: suite=decorators
               - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: no-skill.eval.yaml
+                  Suite: warning-no-skill
                   SuiteName: warning-no-skill
                   DisplayName: Pure agent - warning
                   TimeoutMinutes: 25
                   LoadSkills: false
-                  Tag: suite=warning
 
             templateContext:
               outputs:

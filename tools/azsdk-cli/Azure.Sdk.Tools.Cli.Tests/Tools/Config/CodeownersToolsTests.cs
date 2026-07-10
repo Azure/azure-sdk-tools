@@ -10,6 +10,7 @@ using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Config;
 using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
+using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
 {
@@ -198,6 +199,64 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
                 Assert.That(response.ToString(), Does.Contain("--- AUD-OWN-001 (1 violations) ---"));
                 Assert.That(response.ToString(), Does.Contain("[SUCCESS] Set Invalid Since on Owner 'baduser' (10)"));
             });
+        }
+
+        [Test]
+        public async Task CheckPackage_WithInvalidCachePath_ReturnsStructuredFailure()
+        {
+            var result = await _tool.CheckPackage(
+                directoryPath: "sdk/test/Azure.Test",
+                codeownersCachePath: "/definitely/not/a/real/CODEOWNERS.cache",
+                repo: "Azure/azure-sdk-for-net",
+                ct: CancellationToken.None);
+
+            Assert.That(result, Is.TypeOf<CheckPackageResponse>());
+
+            var response = (CheckPackageResponse)result;
+            Assert.Multiple(() =>
+            {
+                Assert.That(response.OperationStatus, Is.EqualTo(Status.Failed));
+                Assert.That(response.Issues, Has.Count.EqualTo(1));
+                Assert.That(response.Issues[0].Code, Is.EqualTo(CheckPackageIssue.Codes.InvalidCacheSource));
+                Assert.That(response.ResponseError, Does.Contain("must be an existing file"));
+            });
+
+            _mockCheckPackageHelper.Verify(
+                h => h.CheckPackage(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<List<CodeownersEntry>>()),
+                Times.Never);
+        }
+
+        [Test]
+        public async Task CheckPackage_WithLocalCacheFile_CallsHelper()
+        {
+            var fixturePath = Path.Combine(
+                TestContext.CurrentContext.TestDirectory,
+                "TestAssets",
+                "check-package-test-codeowners.txt");
+
+            Assert.That(File.Exists(fixturePath), Is.True, $"Test fixture not found at {fixturePath}");
+
+            var expected = new CheckPackageResponse
+            {
+                DirectoryPath = "sdk/test/Azure.Test",
+                PackageName = "Azure.Test",
+            };
+
+            _mockCheckPackageHelper
+                .Setup(h => h.CheckPackage(
+                    "sdk/test/Azure.Test",
+                    "Azure/azure-sdk-for-net",
+                    It.Is<List<CodeownersEntry>>(entries => entries.Count > 0)))
+                .Returns(expected);
+
+            var result = await _tool.CheckPackage(
+                directoryPath: "sdk/test/Azure.Test",
+                codeownersCachePath: fixturePath,
+                repo: "Azure/azure-sdk-for-net",
+                ct: CancellationToken.None);
+
+            Assert.That(result, Is.SameAs(expected));
+            _mockCheckPackageHelper.VerifyAll();
         }
 
     }

@@ -61,6 +61,33 @@ Notes:
 - A run refuses **fork/mirror** targets (see
   [`references/upstream-fork-check.md`](references/upstream-fork-check.md)).
 
+## Backfilling historical windows
+
+To build a historical trend (e.g. the whole year for one repo), dispatch the
+workflow once per window with explicit `window_start` / `window_end`
+(`YYYY-MM-DD`). Each dispatch fetches that window's PRs, runs the agent judgment,
+and emits `run-<window_end>_<owner>_<repo>.json` — distinct windows produce
+distinct files, so the dashboard plots them as separate points.
+
+```bash
+# One month of Azure/azure-sdk-for-python
+gh workflow run ccr-improvement-loop --repo <workflow-repo> \
+  -f repo=Azure/azure-sdk-for-python \
+  -f window_start=2026-01-01 -f window_end=2026-01-31
+```
+
+Repeat per month (Feb, Mar, …). Guidance:
+
+- **Monthly windows** give a busy repo ~180–300 PRs each — large, comparable
+  denominators and clean calendar points. Bi-weekly doubles the points but halves
+  per-point `n`, worsening the `n/a` problem for thin metrics.
+- Backfill runs are **uncapped** (full cohort). GitHub search caps at 1000 hits
+  per window, so keep windows ≤ ~1 month on the highest-volume repos.
+- Trend points key on `windowEnd`, **not** the run date, so all backfilled runs
+  (generated the same day) still spread across their real windows. After
+  collecting the JSONs, drop them in `dashboard/data/`, add each filename to
+  `data/manifest.json`, and refresh.
+
 ## Dashboard
 
 A static, zero-backend web dashboard visualizes these metrics and their trends
@@ -242,18 +269,32 @@ causal tracing once it can be made robust.
 
 ---
 
-## Sampling window — count-based, not calendar-based
+## Sampling window — time-based, full cohort by default
 
-The window is **the most recent `minPrs` (default 50) merged PRs that have settled
-for at least `windowLagDays` (default 14)**, not "the last week."
+Each run measures a **time window** of merged PRs that have settled for at least
+`windowLagDays` (default 14):
 
-**Why:** metrics need a floor of data to clear the n ≥ 5 bar, and PR throughput
-varies wildly week to week — a calendar window gives you 8 PRs one week and 60 the
-next, making trends incomparable. A count-based window holds the denominator
-roughly fixed so run-to-run deltas reflect CCR, not traffic. The run **refuses to
-produce headline numbers if fewer than `minPrs` settled PRs exist**, rather than
-reporting confidently on a handful. The settle lag ensures threads are resolved
-and follow-up commits have landed before we read a PR.
+- **Weekly schedule (default):** a rolling settled window — `end = today −
+settleDays`, `start = end − windowDays` (both 14 → the fortnight ending two
+  weeks ago). No count cap: the **full cohort** in the window is measured.
+- **Backfill (manual):** pass explicit `window_start` / `window_end` to measure
+  any historical window — see
+  [Backfilling historical windows](#backfilling-historical-windows).
+
+`prep-run.ts` resolves the window and `fetch-prs.ts` lists
+`merged:>=<start> merged:<=<end>`. A count cap exists but is **off by default**
+(`--max-prs 0` = uncapped); set `--max-prs N` only to bound cost on a window too
+large to fetch, accepting a recency-biased sample (GitHub returns
+most-recent-first).
+
+**Why full cohorts, not a fixed count.** A complete time window is an unbiased
+sample of that period, so window-to-window trends are comparable and the rate
+denominators are as large as traffic allows — the best chance of clearing the
+n ≥ 10 confidence bar instead of `n/a`. The settle lag ensures threads are
+resolved and follow-up commits have landed before we read a PR. The trade-off:
+throughput varies, so a light window may still fall below the n ≥ 5 / n ≥ 10 bars
+and honestly surface `n/a`, and the run **no-ops below 50 settled PRs** rather
+than reporting on a handful.
 
 ---
 

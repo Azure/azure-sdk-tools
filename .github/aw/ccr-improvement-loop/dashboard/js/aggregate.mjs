@@ -14,12 +14,14 @@
  * @property {string} runId
  * @property {string} repo
  * @property {string} generatedAt
+ * @property {string} windowEnd
  * @property {number|null} value
  *
  * @typedef {Object} SeverityTrendPoint
  * @property {string} runId
  * @property {string} repo
  * @property {string} generatedAt
+ * @property {string} windowEnd
  * @property {Record<string, number|null>} bySeverity
  *
  * @typedef {Object} RepoRate
@@ -88,13 +90,19 @@ export function dedupeRuns(runs) {
 }
 
 /**
+ * Order runs for display along the time axis. A run measures a *window*, so the
+ * trend x-axis is keyed on `run.windowEnd` (when the measured window closed),
+ * NOT `generatedAt` (when the script happened to run). This keeps backfilled
+ * runs — all generated on the same day — spread across their real windows.
+ * De-dup/supersede still keys on `generatedAt` (see `dedupeRuns`).
+ *
  * @param {any[]} runs
  * @returns {any[]}
  */
 function sortByTime(runs) {
   return [...runs].sort(
     (a, b) =>
-      Date.parse(a.run.generatedAt) - Date.parse(b.run.generatedAt) ||
+      String(a.run.windowEnd).localeCompare(String(b.run.windowEnd)) ||
       String(a.run.id).localeCompare(String(b.run.id)),
   );
 }
@@ -114,7 +122,7 @@ function rateValue(run, key) {
 
 /**
  * Build the trend aggregation from a set of already-validated runs. Pure. De-dups
- * by `run.id`, orders time series by `generatedAt`, and reports the latest run per
+ * by `run.id`, orders time series by `windowEnd`, and reports the latest run per
  * repo for the by-repo bug-fix rate. Mirrors `aggregate` in aggregate-runs.ts.
  * `value` passthrough may be `null` and is NEVER coerced to 0.
  *
@@ -131,6 +139,7 @@ export function aggregate(runs, skipped = 0, scanned = runs.length + skipped) {
     runId: r.run.id,
     repo: r.run.repo,
     generatedAt: r.run.generatedAt,
+    windowEnd: r.run.windowEnd,
     value: rateValue(r, "missRate"),
   }));
 
@@ -139,6 +148,7 @@ export function aggregate(runs, skipped = 0, scanned = runs.length + skipped) {
     runId: r.run.id,
     repo: r.run.repo,
     generatedAt: r.run.generatedAt,
+    windowEnd: r.run.windowEnd,
     value: rateValue(r, "bugFixPrRate"),
   }));
 
@@ -156,6 +166,7 @@ export function aggregate(runs, skipped = 0, scanned = runs.length + skipped) {
       runId: r.run.id,
       repo: r.run.repo,
       generatedAt: r.run.generatedAt,
+      windowEnd: r.run.windowEnd,
       bySeverity,
     };
   });
@@ -169,7 +180,7 @@ export function aggregate(runs, skipped = 0, scanned = runs.length + skipped) {
     .map(([repo, r]) => ({ repo, value: rateValue(r, "bugFixPrRate") }))
     .sort((a, b) => a.repo.localeCompare(b.repo));
 
-  const times = deduped.map((r) => r.run.generatedAt);
+  const times = deduped.map((r) => r.run.windowEnd);
   return {
     runsScanned: scanned,
     runsKept: deduped.length,

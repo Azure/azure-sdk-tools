@@ -24,12 +24,14 @@ export interface TrendPoint {
     runId: string;
     repo: string;
     generatedAt: string;
+    windowEnd: string;
     value: number | null;
 }
 
 export interface SeverityTrendPoint {
     runId: string;
     generatedAt: string;
+    windowEnd: string;
     /** severity → usefulRate value (null when no denominator). */
     bySeverity: Record<string, number | null>;
 }
@@ -70,16 +72,19 @@ export function dedupeRuns(runs: RunJson[]): RunJson[] {
 }
 
 function sortByTime(runs: RunJson[]): RunJson[] {
+    // Trend order keys on the measured window's close (`windowEnd`), not
+    // `generatedAt`; see the dashboard `sortByTime` note. De-dup still keys on
+    // `generatedAt` (supersede rule).
     return [...runs].sort(
         (a, b) =>
-            Date.parse(a.run.generatedAt) - Date.parse(b.run.generatedAt) ||
+            a.run.windowEnd.localeCompare(b.run.windowEnd) ||
             a.run.id.localeCompare(b.run.id),
     );
 }
 
 /**
  * Build the trend aggregation from a set of already-parsed runs. Pure. De-dups by
- * `run.id` and orders time series by `generatedAt`. `bugFixPrRateByRepo` reports
+ * `run.id` and orders time series by `windowEnd`. `bugFixPrRateByRepo` reports
  * the latest run per repo.
  */
 export function aggregate(
@@ -93,6 +98,7 @@ export function aggregate(
         runId: r.run.id,
         repo: r.run.repo,
         generatedAt: r.run.generatedAt,
+        windowEnd: r.run.windowEnd,
         value: r.metrics.rates.missRate?.value ?? null,
     }));
 
@@ -100,6 +106,7 @@ export function aggregate(
         runId: r.run.id,
         repo: r.run.repo,
         generatedAt: r.run.generatedAt,
+        windowEnd: r.run.windowEnd,
         value: r.metrics.rates.bugFixPrRate?.value ?? null,
     }));
 
@@ -115,6 +122,7 @@ export function aggregate(
             return {
                 runId: r.run.id,
                 generatedAt: r.run.generatedAt,
+                windowEnd: r.run.windowEnd,
                 bySeverity,
             };
         },
@@ -130,7 +138,7 @@ export function aggregate(
         }))
         .sort((a, b) => a.repo.localeCompare(b.repo));
 
-    const times = deduped.map((r) => r.run.generatedAt);
+    const times = deduped.map((r) => r.run.windowEnd);
     return {
         runsScanned: scanned,
         runsKept: deduped.length,

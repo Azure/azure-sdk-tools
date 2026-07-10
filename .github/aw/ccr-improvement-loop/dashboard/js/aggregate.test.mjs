@@ -104,11 +104,11 @@ test("bugFixPrRateByRepo has one entry per repo, sorted, latest run wins", () =>
   assert.ok(repos.length >= 2);
 });
 
-test("trend arrays are sorted by generatedAt", () => {
+test("trend arrays are sorted by windowEnd", () => {
   const runs = loadFixtures();
   const agg = aggregate(runs);
-  const times = agg.missRateOverTime.map((p) => Date.parse(p.generatedAt));
-  const sorted = [...times].sort((a, b) => a - b);
+  const times = agg.missRateOverTime.map((p) => p.windowEnd);
+  const sorted = [...times].sort();
   assert.deepEqual(times, sorted);
 });
 

@@ -138,6 +138,13 @@ export function summarizeCache(cacheDir: string, glob: string): PrepSummary {
     });
 }
 
+const DAY_MS = 86_400_000;
+
+/** UTC calendar date (YYYY-MM-DD) for an epoch-millisecond instant. */
+export function isoDate(ms: number): string {
+    return new Date(ms).toISOString().slice(0, 10);
+}
+
 /**
  * Earliest merged/created date (YYYY-MM-DD) across the PR cache — the start of
  * the sampled window. Empty string when no dated PR is present.
@@ -166,8 +173,11 @@ function usage(): string {
         "  --repo <owner/repo>      Target repository (required)",
         "  --cache-dir <path>       Normalized cache directory (required)",
         "  --state <state>          PR state to fetch (default: merged)",
-        "  --min-prs <N>            Minimum settled PRs (default: 50)",
         "  --settle-days <N>        Settle lag in days (default: 14)",
+        "  --window-start <DATE>    Window start YYYY-MM-DD (backfill; default: rolling)",
+        "  --window-end <DATE>      Window end YYYY-MM-DD (backfill; default: settle cutoff)",
+        "  --window-days <N>        Rolling window length when no --window-start (default: 14)",
+        "  --max-prs <N>            Cap PRs per window; 0 = uncapped full cohort (default: 0)",
         "  --config <path>          Override config.json",
         "  --skip-fetch             Reuse existing pr-*.json in cache-dir (offline)",
         "  -h, --help",
@@ -183,6 +193,10 @@ function main(): void {
             state: { type: "string", default: "merged" },
             "min-prs": { type: "string", default: "50" },
             "settle-days": { type: "string", default: "14" },
+            "window-start": { type: "string" },
+            "window-end": { type: "string" },
+            "window-days": { type: "string", default: "14" },
+            "max-prs": { type: "string", default: "0" },
             config: { type: "string" },
             "skip-fetch": { type: "boolean", default: false },
             help: { type: "boolean", short: "h", default: false },
@@ -204,20 +218,40 @@ function main(): void {
     fs.mkdirSync(cacheDir, { recursive: true });
     const glob = path.join(cacheDir, "pr-*.json");
 
+    const settleDays = Number.parseInt(v["settle-days"], 10);
+    const windowDays = Number.parseInt(v["window-days"], 10);
+    // Resolve the measurement window. Explicit --window-end/--window-start drive
+    // a historical backfill; otherwise fall back to a rolling settled window:
+    // end = today - settleDays (the settle cutoff), start = end - windowDays.
+    // Passing both bounds explicitly means the fetch is bounded by TIME, so it
+    // stays safe even when uncapped.
+    const windowEnd =
+        v["window-end"] ?? isoDate(Date.now() - settleDays * DAY_MS);
+    const windowStart =
+        v["window-start"] ??
+        isoDate(Date.parse(windowEnd) - windowDays * DAY_MS);
+
     if (!v["skip-fetch"]) {
+        const maxPrs = Number.parseInt(v["max-prs"], 10);
         const fetchArgs = [
             "--repo",
             repo,
             "--state",
             v.state,
-            "--min-prs",
-            v["min-prs"],
-            "--settle-days",
-            v["settle-days"],
+            "--window-start",
+            windowStart,
+            "--window-end",
+            windowEnd,
             "--cache-dir",
             cacheDir,
             "--quiet",
         ];
+        if (Number.isFinite(maxPrs) && maxPrs > 0) {
+            fetchArgs.push("--min-prs", String(maxPrs));
+        } else {
+            // Uncapped: take the whole window. GitHub search caps at 1000 hits.
+            fetchArgs.push("--limit", "1000");
+        }
         runStage("fetch-prs.ts", fetchArgs);
     } else {
         log.error("skip-fetch: reusing existing pr-*.json in cache-dir");
@@ -245,9 +279,9 @@ function main(): void {
     const provenance = computeProvenance(path.join(here, "..", "references"));
     const meta = buildMeta({
         repo,
-        windowStart: windowStartOf(glob),
-        windowEnd: new Date().toISOString().slice(0, 10),
-        windowLagDays: Number.parseInt(v["settle-days"], 10),
+        windowStart,
+        windowEnd,
+        windowLagDays: settleDays,
         prState: v.state,
         matchedCcrLogin: cfg.ccrLogins[0] ?? null,
         ccrEnabledSince: cfg.ccrEnabledSince,

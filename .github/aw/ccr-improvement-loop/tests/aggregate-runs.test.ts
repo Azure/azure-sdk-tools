@@ -7,11 +7,11 @@ import type { PrRowOut } from "../scripts/pr-metrics.ts";
 import type { AttributedComment } from "../scripts/types.ts";
 import type { RunJson } from "../scripts/run-schema.ts";
 
-function meta(repo: string): RunMetaInput {
+function meta(repo: string, windowEnd = "2026-06-18"): RunMetaInput {
     return {
         repo,
         windowStart: "2026-06-01",
-        windowEnd: "2026-06-18",
+        windowEnd,
         windowLagDays: 14,
         prState: "merged",
         model: "openai/gpt-4o",
@@ -122,11 +122,12 @@ function ccrComment(
 function run(over: {
     repo?: string;
     generatedAt: string;
+    windowEnd?: string;
     prs?: PrRowOut[];
     comments?: AttributedComment[];
 }): RunJson {
     const input: BuildRunInput = {
-        meta: meta(over.repo ?? "Azure/go"),
+        meta: meta(over.repo ?? "Azure/go", over.windowEnd),
         prs: over.prs ?? [prRow(1, true)],
         comments: over.comments ?? [],
         themes: [],
@@ -151,16 +152,18 @@ describe("dedupeRuns", () => {
 });
 
 describe("aggregate — fixture math", () => {
-    it("computes missRate time series in chronological order", () => {
+    it("computes missRate time series in windowEnd order", () => {
         // Run A: 1 acted-on critical human ask, CCR did not overlap → 1 miss / ? denom.
         const a = run({
             repo: "Azure/go",
             generatedAt: "2026-06-10T00:00:00Z",
+            windowEnd: "2026-06-10",
             comments: [humanAsk("substantive", true)],
         });
         const b = run({
             repo: "Azure/py",
             generatedAt: "2026-06-12T00:00:00Z",
+            windowEnd: "2026-06-12",
             comments: [humanAsk("substantive", true)],
         });
         const agg = aggregate([b, a]);
@@ -172,8 +175,8 @@ describe("aggregate — fixture math", () => {
         expect(agg.missRateOverTime[0]?.value).toBe(
             a.metrics.rates.missRate?.value ?? null,
         );
-        expect(agg.dateSpan.earliest).toBe("2026-06-10T00:00:00Z");
-        expect(agg.dateSpan.latest).toBe("2026-06-12T00:00:00Z");
+        expect(agg.dateSpan.earliest).toBe("2026-06-10");
+        expect(agg.dateSpan.latest).toBe("2026-06-12");
     });
 
     it("reports addressedRate by severity slices over time", () => {

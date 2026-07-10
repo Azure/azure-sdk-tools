@@ -46,7 +46,7 @@ const RATE_LABELS = {
 const COLUMN_TIPS = {
   repo: "The repository whose PRs were mined for this run.",
   windowEnd:
-    "End of the count-based sampling window for this run. Each run is one window (a data point), so read metrics as a trend across runs.",
+    "End of the settled time window this run measured. Each run is one window (a data point), and trends are plotted by this date — so read metrics as a trend across windows.",
   prCount: "Number of PRs evaluated in this window.",
   missRate:
     "Of the locally-detectable substantive human asks CCR had a real chance to catch, the share CCR did NOT raise. Lower is better.",
@@ -98,9 +98,9 @@ function fmt(value, key) {
   return String(Math.round(value * 100) / 100);
 }
 
-/** @param {string} generatedAt */
-function dateLabel(generatedAt) {
-  return generatedAt.slice(0, 10);
+/** @param {string} isoDate — an ISO date/time; only the YYYY-MM-DD prefix is kept. */
+function dateLabel(isoDate) {
+  return isoDate.slice(0, 10);
 }
 
 /** @param {string} repo */
@@ -226,12 +226,12 @@ async function loadRuns() {
 }
 
 /**
- * Build the sorted union of date labels across trend points.
- * @param {{generatedAt: string}[]} points
+ * Build the sorted union of window-end date labels across trend points.
+ * @param {{windowEnd: string}[]} points
  * @returns {string[]}
  */
 function unionDateLabels(points) {
-  const set = new Set(points.map((p) => dateLabel(p.generatedAt)));
+  const set = new Set(points.map((p) => dateLabel(p.windowEnd)));
   return [...set].sort();
 }
 
@@ -249,7 +249,7 @@ function seriesByRepo(points, labels) {
       m = new Map();
       byRepo.set(p.repo, m);
     }
-    m.set(dateLabel(p.generatedAt), p.value);
+    m.set(dateLabel(p.windowEnd), p.value);
   }
   return [...byRepo.entries()]
     .sort((a, b) => a[0].localeCompare(b[0]))
@@ -313,13 +313,13 @@ function render() {
  */
 function renderSeverityChart(points) {
   const multi = SELECTED_REPOS.size > 1;
-  const sorted = [...points].sort(
-    (a, b) => Date.parse(a.generatedAt) - Date.parse(b.generatedAt),
+  const sorted = [...points].sort((a, b) =>
+    a.windowEnd.localeCompare(b.windowEnd),
   );
   const labels = sorted.map((p) =>
     multi
-      ? `${dateLabel(p.generatedAt)} ${repoShort(p.repo)}`
-      : dateLabel(p.generatedAt),
+      ? `${dateLabel(p.windowEnd)} ${repoShort(p.repo)}`
+      : dateLabel(p.windowEnd),
   );
   const severities = ["critical", "substantive", "nit"];
   const series = severities.map((sev) => ({
@@ -347,8 +347,7 @@ function renderTable(runs) {
     .map(perRunHeadline)
     .sort(
       (a, b) =>
-        a.repo.localeCompare(b.repo) ||
-        a.generatedAt.localeCompare(b.generatedAt),
+        a.repo.localeCompare(b.repo) || a.windowEnd.localeCompare(b.windowEnd),
     );
 
   const head =

@@ -10,6 +10,12 @@ on:
       repo:
         description: "Target repo (owner/name); defaults to this repository"
         required: false
+      window_start:
+        description: "Backfill window start YYYY-MM-DD (empty = rolling weekly window)"
+        required: false
+      window_end:
+        description: "Backfill window end YYYY-MM-DD (empty = settle cutoff, today - settle-days)"
+        required: false
 # One run per (repo, ref) — no schedule/dispatch races.
 concurrency:
   group: ccr-loop-${{ github.event.inputs.repo || github.repository }}
@@ -42,6 +48,10 @@ safe-outputs:
       - ".ccr-runs/run-*.json"
 env:
   TARGET_REPO: ${{ github.event.inputs.repo || github.repository }}
+  # Optional explicit backfill window; empty on the weekly schedule so prep-run
+  # falls back to its rolling settled window.
+  WINDOW_START: ${{ github.event.inputs.window_start }}
+  WINDOW_END: ${{ github.event.inputs.window_end }}
   CCR_CACHE: ${{ github.workspace }}/.ccr-cache
   CCR_RUNS: ${{ github.workspace }}/.ccr-runs
 # Deterministic data prep runs as custom steps (outside the agent sandbox, with
@@ -81,8 +91,12 @@ steps:
       mkdir -p "$CCR_CACHE" "$CCR_RUNS"
       # prep-run orchestrates every stage with explicit-arg subprocess calls,
       # writes meta.json + prep-summary.json, and exits non-zero if a fatal
-      # audit check (duplicate rowIds / judge-input ids) trips.
-      node ./scripts/prep-run.ts --repo "$TARGET_REPO" --cache-dir "$CCR_CACHE"
+      # audit check (duplicate rowIds / judge-input ids) trips. The window flags
+      # are appended only when a manual backfill supplies them; the weekly
+      # schedule leaves them empty and prep-run uses its rolling window.
+      node ./scripts/prep-run.ts --repo "$TARGET_REPO" --cache-dir "$CCR_CACHE" \
+        ${WINDOW_START:+--window-start "$WINDOW_START"} \
+        ${WINDOW_END:+--window-end "$WINDOW_END"}
 ---
 
 # CCR Improvement Loop

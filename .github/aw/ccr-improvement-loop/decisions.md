@@ -247,6 +247,36 @@ warnings, multiple repos) live permanently in the fixtures folder.
 
 ---
 
+## D13 — Time-windowed full-cohort sampling; trends keyed on `windowEnd`
+
+**Decision.** A run measures a **time window** of settled merged PRs, not a fixed
+count. The weekly schedule uses a rolling settled window (`end = today −
+settleDays`, `start = end − windowDays`); a manual dispatch can pass explicit
+`window_start` / `window_end` to measure any historical window
+([`ccr-improvement-loop.md`](../../workflows/ccr-improvement-loop.md) →
+`prep-run.ts` → `fetch-prs.ts`). Windows are **uncapped** (full cohort) by
+default; `--max-prs N` is an opt-in cost cap. The dashboard plots every trend on
+`run.windowEnd` (`aggregate.mjs` / `aggregate-runs.ts` `sortByTime`), not
+`generatedAt`.
+
+**Why.** Backfilling a year of history is the driving use case, and it needs two
+things a count-based window couldn't give: (1) each window must be an unbiased,
+comparable sample — a "most recent 50" cap returns a recency-biased slice
+(GitHub lists newest-first), and complete monthly cohorts (~180–300 PRs on a busy
+repo) also give the rate metrics large enough denominators to clear the
+confidence bars instead of `n/a`; (2) many runs generated on the same backfill
+day must still spread across the timeline — so trends key on the measured
+window's close, not wall-clock emit time. De-dup/supersede still keys on
+`generatedAt` (newest wins for a duplicate `run.id`).
+
+**Consequences.** Uncapping the weekly run required giving it a time lower bound
+(`windowDays`), or an unbounded fetch would walk the entire repo history. PR
+throughput varies, so a light window may fall below the n ≥ 5 / n ≥ 10 bars and
+honestly report `n/a`. GitHub search caps at 1000 hits, so a single window must
+stay ≤ ~1 month on the highest-volume repos.
+
+---
+
 ## Cross-cutting principle
 
 Where judgment is irreducible, use the agent — on bounded evidence, with a pinned

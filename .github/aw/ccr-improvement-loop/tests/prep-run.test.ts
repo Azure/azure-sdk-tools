@@ -265,7 +265,8 @@ describe("prep-run orchestrator (offline fixture)", () => {
         ) as { repo: string; windowStart: string };
 
         expect(meta.repo).toBe("Acme/widget");
-        // windowStart is derived from the fixture PR's merged/created date.
+        // No explicit window → rolling settled window; windowStart is the
+        // computed lower bound (today - settleDays - windowDays), a valid date.
         expect(meta.windowStart).toMatch(/^\d{4}-\d{2}-\d{2}$/);
         expect(summary.prCount).toBe(1);
         expect(summary.ccrInlineCount).toBeGreaterThanOrEqual(1);

@@ -59,15 +59,6 @@ One prompt → one expected MCP tool. No `environment.git`, no fixtures. Fast; s
 | [`prompt-to-tool-typespec`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/tools/prompt-to-tool-typespec.eval.yaml) | typespec | `azsdk_typespec_*`, `azsdk_convert_swagger_to_typespec`, `azsdk_customized_code_update`, `azsdk_run_typespec_validation` |
 | [`prompt-to-tool-verify`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/tools/prompt-to-tool-verify.eval.yaml) | engsys | `azsdk_verify_setup` |
 
-#### `evals/quality/` — output-quality evals (2 files)
-
-Single or multi-step prompts that grade the correctness of the agent's answer. The output of the evaluation is graded, either by an LLM-judge `prompt` grader for correctness, or by deterministic `output-*` / `file-*` graders. Heavier and slower than tool checks, so they run in their own tier.
-
-| Scenario | Skill exercised | Shape |
-|---|---|---|
-| [`analyze-pipeline`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/quality/pipeline/analyze-pipeline.eval.yaml) | `azsdk-common-pipeline-troubleshooting` | Given a build ref, analyze it and produce a correct root-cause diagnosis (identify the code bug, don't recommend re-record/retry) |
-| [`fix-pipeline`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/quality/pipeline/fix-pipeline.eval.yaml) | `azsdk-common-pipeline-fixer` | Given the analysis, apply the fix to the overlaid source and verify via the package `build`/`check`/`test` MCP tools |
-
 #### `evals/workflow-scenarios/` — multi-tool scenarios (6)
 
 Multi-step prompts that exercise 2+ MCP tools end-to-end. Split into
@@ -81,8 +72,8 @@ pipelines, runs nightly).
 | [`rename-client-property`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/workflow-scenarios/mock/rename-client-property.eval.yaml) | typespec | mock | Stub — needs `expected-diff` grader + sparse clone |
 | [`release-planner-workflows`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/workflow-scenarios/mock/release-planner-workflows.eval.yaml) | release-plan | mock | Create / re-fetch / link / update release-plan flows (5 stimuli) |
 | [`analyze-failed-pipeline`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/workflow-scenarios/mock/analyze-failed-pipeline.eval.yaml) | pipeline | mock | Two-tool path — pull pipeline status, then analyze the run to surface the failing test |
+| [`fix-pipeline`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals//workflow-scenarios/mock/fix-pipeline.eval.yaml) | pipeline | mock | Given the analysis, apply the fix to the overlaid source and verify via the package `build`/`check`/`test` MCP tools |
 | [`release-planner`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/workflow-scenarios/live/release-planner.eval.yaml) | release-plan | **live** | Create + re-fetch a release plan, kick off SDK gen, link PR back — real DevOps test-area writes |
-
 
 Live scenarios need a primed `azure-rest-api-specs` clone — run
 [`sync-eval-git-repo.js`](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/eval/sync-eval-git-repo.js)
@@ -117,13 +108,11 @@ Azure.Sdk.Tools.Vally/
 ├── .vally.yaml                # Vally config (environments + suites)
 ├── evals/
 │   ├── tools/                 # tool-shape + per-skill trigger evals, hermetic
-│   ├── quality/               # output-quality evals (prompt + output-*/file-*), hermetic
 │   └── workflow-scenarios/
 │       ├── mock/              # multi-tool scenarios, hermetic (PR gate)
 │       └── live/              # multi-tool scenarios, live MCP (nightly)
 ├── fixtures/                  # Real failing source files overlaid into the agent workspace via env.files
-│   └── analyze-pipeline/
-│       └── <scenario-name>/...
+│   └── <scenario-name>/...
 └── Graders/                   # (future) Custom .NET graders
     └── Azure.Sdk.Tools.Vally.csproj  # added when first custom grader lands
 ```

@@ -1,4 +1,4 @@
-name: azsdk-mcp-tool-quality
+name: azsdk-mcp-tool-scenarios
 description: |
   Output-quality eval for the azsdk-common-pipeline-fixer skill. Given the
   analyzed pipeline failure (the canonical fixture — the Storage

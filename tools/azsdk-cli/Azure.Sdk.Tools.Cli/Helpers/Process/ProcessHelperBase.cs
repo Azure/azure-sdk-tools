@@ -139,6 +139,10 @@ public abstract class ProcessHelperBase<T>(ILogger<T> logger, IRawOutputHelper o
 
     private void tryPrintSeparator(bool logOutputStream)
     {
+        if (!logOutputStream)
+        {
+            return;
+        }
         try
         {
             var windowWidth = Console.WindowWidth;

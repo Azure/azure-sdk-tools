@@ -81,6 +81,10 @@
     { "toolName": "azsdk_get_pipeline_status", "prompt": "Get the pipeline build status for run 9876543", "category": "all" },
     { "toolName": "azsdk_get_pipeline_status", "prompt": "Get the pipeline build status for my CI run", "category": "all" },
 
+    { "toolName": "azsdk_evaluate_pipeline_fixes", "prompt": "Evaluate whether Copilot's fixes for failing pipelines worked and survived into merged PRs in Azure/azure-sdk-for-net over the last 7 days", "category": "all" },
+    { "toolName": "azsdk_evaluate_pipeline_fixes", "prompt": "Did GitHub Copilot actually fix the failing pipelines and make it into the merged code?", "category": "all" },
+    { "toolName": "azsdk_evaluate_pipeline_fixes", "prompt": "Measure Copilot's pipeline-failure fix success rate across recently merged pull requests", "category": "all" },
+
     { "toolName": "azsdk_check_api_spec_ready_for_sdk", "prompt": "Check if my API spec is ready to generate SDK", "category": "azure-rest-api-specs" },
     { "toolName": "azsdk_check_api_spec_ready_for_sdk", "prompt": "Is my TypeSpec ready for SDK generation?", "category": "azure-rest-api-specs" },
     { "toolName": "azsdk_create_release_plan", "prompt": "Create a release plan for my service", "category": "all" },

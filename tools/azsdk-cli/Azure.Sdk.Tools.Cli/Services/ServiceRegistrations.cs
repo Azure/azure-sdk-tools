@@ -12,8 +12,10 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Helpers.Codeowners;
+using Azure.Sdk.Tools.Cli.Helpers.Pipeline;
 using Azure.Sdk.Tools.Cli.Helpers.Codeowners.Rules;
 using Azure.Sdk.Tools.Cli.Tools.Core;
+using Azure.Sdk.Tools.Cli.Tools.Pipeline;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Services.SetupRequirements;
@@ -112,6 +114,12 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             // Pipeline helpers
             services.AddSingleton<IPipelineIdentifierHelper, PipelineIdentifierHelper>();
+
+            // Continuous Copilot-contribution evaluation.
+            // Scoped because the evaluator uses the scoped ICopilotAgentRunner / TokenUsageHelper, and
+            // it injects the PipelineAnalysisTool to fetch pipeline-failure context for model judging.
+            services.AddScoped<PipelineAnalysisTool>();
+            services.AddScoped<IPipelineFixEvaluator, PipelineFixEvaluator>();
 
             // Services that need to be scoped so we can track/update state across services per request
             services.AddScoped<TokenUsageHelper>();

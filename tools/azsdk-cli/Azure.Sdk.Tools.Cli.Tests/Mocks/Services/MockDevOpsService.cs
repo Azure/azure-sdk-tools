@@ -110,6 +110,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(ConfiguredPipelineRun);
         }
 
+        Task<List<Build>> IDevOpsService.GetPullRequestBuildsAsync(string repoOwner, string repoName, int prNumber, CancellationToken ct)
+        {
+            return Task.FromResult(new List<Build>());
+        }
+
         Task<ReleasePlanWorkItem> IDevOpsService.GetReleasePlanAsync(int releasePlanId, CancellationToken ct)
         {
             var releasePlan = new ReleasePlanWorkItem

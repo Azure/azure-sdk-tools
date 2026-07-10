@@ -1,0 +1,116 @@
+# Evaluates whether GitHub Copilot's fixes for failing Azure SDK pipelines took
+# the pipeline from failure to success and survived into the merged PR, then emits
+# a single marker line into the build log:
+#
+#     AZSDK_PIPELINE_FIX_EVAL {minified-json}
+#
+# pipeline-witness ingests build logs into Kusto (azsdkengsys.westus2 / Pipelines /
+# BuildLogLine), where the Copilot pipeline-fix dashboard parses this line. Set the
+# dashboard's _pipelineName parameter to THIS pipeline's Build Definition name.
+#
+# Manual for now: push a branch, create a pipeline pointing at this file, and run it
+# (defaults to --dry-run so no Copilot model-judge auth is required). The nightly
+# schedule below only fires once this is merged to main.
+
+trigger: none
+pr: none
+
+schedules:
+  - cron: "0 8 * * *"
+    displayName: Nightly Copilot pipeline-fix evaluation (08:00 UTC)
+    branches:
+      include:
+        - main
+    always: true
+
+parameters:
+  - name: owner
+    displayName: GitHub repository owner
+    type: string
+    default: Azure
+  - name: repo
+    displayName: GitHub repository name
+    type: string
+    default: azure-sdk-tools
+  - name: sinceDays
+    displayName: Look back this many days for merged PRs
+    type: number
+    default: 7
+  - name: dryRun
+    displayName: Dry run (deterministic tiers only; skip the model-judge tier)
+    type: boolean
+    default: true
+
+variables:
+  # Provides azuresdk-copilot-github-pat (GitHub token for the evaluator's Octokit client).
+  - group: 'AzSDK_Eval_Variable_group'
+  - name: CliDir
+    value: tools/azsdk-cli/Azure.Sdk.Tools.Cli
+  - name: OutDir
+    value: $(Build.ArtifactStagingDirectory)/azsdk-cli
+
+jobs:
+  - job: Evaluate
+    displayName: 'Evaluate Copilot pipeline fixes'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+      - checkout: self
+        fetchDepth: 1
+
+      - task: UseDotNet@2
+        displayName: 'Install .NET SDK (global.json)'
+        inputs:
+          useGlobalJson: true
+
+      # The CLI is a Microsoft.NET.Sdk.Web app targeting net8.0, so running it needs
+      # the ASP.NET Core 8 shared framework. Installing the 8.0 SDK provides it (the
+      # 9.0 SDK from global.json only ships the 9.0 shared frameworks). global.json
+      # still pins the build to the 9.0 SDK.
+      - task: UseDotNet@2
+        displayName: 'Install .NET 8 SDK (ASP.NET Core 8 runtime to run the CLI)'
+        inputs:
+          packageType: sdk
+          version: '8.0.x'
+
+      - script: dotnet build $(CliDir) -c Release -o $(OutDir) --nologo
+        displayName: 'Build azsdk CLI'
+
+      # Note: the Copilot CLI (used only by the non-dry-run model-judge tier) is
+      # downloaded and copied into $(OutDir)/runtimes/<rid>/native by the
+      # GitHub.Copilot.SDK NuGet build targets during the 'dotnet build' above, so
+      # no separate Copilot CLI / Node install step is required here.
+      - task: AzureCLI@2
+        displayName: 'Run evaluate + emit dashboard marker'
+        inputs:
+          # Service connection whose SP can read azure-sdk DevOps builds. The AzureCLI@2
+          # task exports AZURESUBSCRIPTION_* + SYSTEM_ACCESSTOKEN, which the tool's
+          # AzurePipelinesCredential uses to get an Azure DevOps-scoped AAD token.
+          azureSubscription: 'opensource-api-connection'
+          scriptType: bash
+          scriptLocation: inlineScript
+          inlineScript: |
+            set -euo pipefail
+
+            DRY=""
+            if [ "${{ parameters.dryRun }}" = "True" ]; then
+              DRY="--dry-run"
+            fi
+
+            dotnet "$(OutDir)/azsdk.dll" azp evaluate "${{ parameters.owner }}" "${{ parameters.repo }}" \
+              --since-days ${{ parameters.sinceDays }} $DRY --output json > eval.json
+
+            # Fail loudly if the tool didn't produce valid JSON on stdout.
+            jq -e . eval.json > /dev/null
+
+            # Emit exactly one line the dashboard can parse out of BuildLogLine.Message.
+            echo "AZSDK_PIPELINE_FIX_EVAL $(jq -c . eval.json)"
+        env:
+          GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+
+      - task: PublishPipelineArtifact@1
+        displayName: 'Publish raw evaluate JSON'
+        condition: always()
+        inputs:
+          targetPath: eval.json
+          artifactName: 'eval-json-$(Build.BuildId)'

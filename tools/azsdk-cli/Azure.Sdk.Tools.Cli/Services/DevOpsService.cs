@@ -119,6 +119,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlanWorkItem releasePlan, CancellationToken ct);
         public Task<Build> RunSDKGenerationPipelineAsync(string apiSpecBranchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch = "", CancellationToken ct = default);
         public Task<Build> GetPipelineRunAsync(int buildId, CancellationToken ct);
+        public Task<List<Build>> GetPullRequestBuildsAsync(string repoOwner, string repoName, int prNumber, CancellationToken ct);
         public Task<string> GetSDKPullRequestFromPipelineRunAsync(int buildId, string language, int workItemId, CancellationToken ct);
         public Task<bool> AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl, string generationStatus = "", CancellationToken ct = default);
         public Task<bool> UpdateReleasePlanSDKDetailsAsync(int workItemId, List<SDKInfo> sdkLanguages, CancellationToken ct);
@@ -369,7 +370,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 LanguageExclusionRequesterNote = workItem.Fields.TryGetValue("Custom.ReleaseExclusionRequestNote", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 LanguageExclusionApproverNote = workItem.Fields.TryGetValue("Custom.ReleaseExclusionApprovalNote", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 APISpecProjectPath = workItem.Fields.TryGetValue("Custom.ApiSpecProjectPath", out value) ? value?.ToString() ?? string.Empty : string.Empty,
-                AttestationStatus = workItem.Fields.TryGetValue("Custom.AttestationStatus", out value) ? value?.ToString() ?? string.Empty : string.Empty,                
+                AttestationStatus = workItem.Fields.TryGetValue("Custom.AttestationStatus", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 ReleasePlanType = workItem.Fields.TryGetValue("Custom.ReleasePlanType", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 Owner = workItem.Fields.TryGetValue("Custom.PrimaryPM", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 IsTestReleasePlan = workItem.Fields.TryGetValue("System.Tags", out value) && value is String tags && tags.Contains(RELEASE_PLANNER_APP_TEST)
@@ -995,6 +996,68 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             var buildClient = connection.GetBuildClient(ct);
             return await buildClient.GetBuildAsync(Constants.AZURE_SDK_DEVOPS_INTERNAL_PROJECT, buildId, cancellationToken: ct);
+        }
+
+        /// <summary>
+        /// Returns every Azure Pipelines build triggered by a GitHub pull request, across the public and
+        /// internal projects, ordered by queue time. The repository filter prevents an identical PR number
+        /// in another SDK repository from contributing builds.
+        /// </summary>
+        public async Task<List<Build>> GetPullRequestBuildsAsync(string repoOwner, string repoName, int prNumber, CancellationToken ct)
+        {
+            var buildClient = connection.GetBuildClient(ct);
+            var projects = new[] { Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT, Constants.AZURE_SDK_DEVOPS_INTERNAL_PROJECT };
+            var branchNames = new[] { $"refs/pull/{prNumber}/merge", $"refs/pull/{prNumber}/head" };
+            var repositoryId = $"{repoOwner}/{repoName}";
+
+            var builds = new List<Build>();
+            foreach (var project in projects)
+            {
+                foreach (var branchName in branchNames)
+                {
+                    try
+                    {
+                        string? continuationToken = null;
+
+                        do
+                        {
+                            var page = await buildClient.GetBuildsAsync(
+                                project: project,
+                                branchName: branchName,
+                                queryOrder: BuildQueryOrder.QueueTimeAscending,
+                                continuationToken: continuationToken,
+                                repositoryId: repositoryId,
+                                repositoryType: "GitHub",
+                                cancellationToken: ct);
+                            builds.AddRange(page);
+                            continuationToken = (page as IPagedList)?.ContinuationToken;
+                        }
+                        while (!string.IsNullOrEmpty(continuationToken));
+                    }
+                    catch (OperationCanceledException) when (ct.IsCancellationRequested)
+                    {
+                        throw;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogDebug(
+                            ex,
+                            "Could not query {Project} builds for {Repository} PR #{PrNumber} ref {BranchName}",
+                            project,
+                            repositoryId,
+                            prNumber,
+                            branchName);
+                    }
+                }
+            }
+
+            return builds
+                .DistinctBy(b => (
+                    ProjectId: b.Project?.Id ?? Guid.Empty,
+                    ProjectName: b.Project?.Name ?? string.Empty,
+                    b.Id))
+                .OrderBy(b => b.QueueTime ?? b.StartTime)
+                .ToList();
         }
 
         public async Task<string> GetSDKPullRequestFromPipelineRunAsync(int buildId, string language, int workItemId, CancellationToken ct)

@@ -91,7 +91,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             ProcessResult result;
             try
             {
-                var options = new ProcessOptions("gh", ["auth", "token"], timeout: TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs));
+                var options = new ProcessOptions("gh", ["auth", "token"], logOutputStream: false, timeout: TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs));
                 using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs));
                 result = processHelper.Run(options, timeoutCts.Token).GetAwaiter().GetResult();
             }
@@ -134,8 +134,13 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<string> GetGitHubParentRepoUrlAsync(string owner, string repoName, CancellationToken ct);
         public Task<PullRequestResult> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body, bool draft = true, CancellationToken ct = default);
         public Task<List<string>> GetPullRequestCommentsAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
+        public Task<IReadOnlyList<IssueComment>> GetIssueCommentsAsync(string repoOwner, string repoName, int issueNumber, CancellationToken ct);
+        public Task<IReadOnlyList<PullRequestCommit>> GetPullRequestCommitsAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
+        public Task<IReadOnlyList<PullRequestFile>> GetPullRequestFilesAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
+        public Task<IReadOnlyList<GitHubCommitFile>> GetCommitFilesAsync(string repoOwner, string repoName, string sha, CancellationToken ct);
         public Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch, CancellationToken ct);
         public Task<IReadOnlyList<PullRequest?>> SearchPullRequestsByTitleAsync(string repoOwner, string repoName, string titleSearchTerm, ItemState? state = ItemState.Open, CancellationToken ct = default);
+        public Task<IReadOnlyList<PullRequest>> GetPullRequestByTimeFrameAsync(string repoOwner, string repoName, DateTimeOffset since, DateTimeOffset until, CancellationToken ct = default);
         public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber, CancellationToken ct);
         public Task<Issue> CreateIssueAsync(string repoOwner, string repoName, string title, string body, List<string>? assignees = null, CancellationToken ct = default);
         public Task<string?> GetPullRequestHeadSha(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
@@ -386,6 +391,72 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
+        public async Task<IReadOnlyList<PullRequest>> GetPullRequestByTimeFrameAsync(string repoOwner, string repoName, DateTimeOffset since, DateTimeOffset until, CancellationToken ct = default)
+        {
+            try
+            {
+                var range = $"{since.UtcDateTime:yyyy-MM-ddTHH:mm:ssZ}..{until.UtcDateTime:yyyy-MM-ddTHH:mm:ssZ}";
+                logger.LogInformation(
+                    "Listing pull requests merged in {Range} in {RepoOwner}/{RepoName}", range, repoOwner, repoName);
+
+                var request = new PullRequestRequest
+                {
+                    State = ItemStateFilter.Closed,
+                    SortProperty = PullRequestSort.Updated,
+                    SortDirection = SortDirection.Descending,
+                };
+
+                var pullRequests = new List<PullRequest>();
+                for (var page = 1; ; page++)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    var options = new ApiOptions
+                    {
+                        PageSize = 100, // Maximum allowed by GitHub API.
+                        PageCount = 1,
+                        StartPage = page,
+                    };
+
+                    var pageResults = await gitHubClient.PullRequest.GetAllForRepository(repoOwner, repoName, request, options);
+                    if (pageResults.Count == 0)
+                    {
+                        break;
+                    }
+
+                    var reachedWindowStart = false;
+                    foreach (var pr in pageResults)
+                    {
+                        if (pr.UpdatedAt < since)
+                        {
+                            // Sorted by UpdatedAt desc: nothing after this can be in the window.
+                            reachedWindowStart = true;
+                            break;
+                        }
+
+                        if (pr.MergedAt is { } mergedAt && mergedAt >= since && mergedAt <= until)
+                        {
+                            pullRequests.Add(pr);
+                        }
+                    }
+
+                    if (reachedWindowStart || pageResults.Count < options.PageSize)
+                    {
+                        break;
+                    }
+                }
+
+                logger.LogInformation(
+                    "Found {PullRequestCount} merged pull request(s) in {RepoOwner}/{RepoName} for {Range}",
+                    pullRequests.Count, repoOwner, repoName, range);
+                return pullRequests;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error getting merged pull requests in {RepoOwner}/{RepoName}", repoOwner, repoName);
+                throw;
+            }
+        }
+
         private async Task<CompareResult> CompareBranchesAsync(string targetRepoOwner, string repoName, string baseBranch, string headBranch, CancellationToken ct)
         {
             logger.LogInformation("Comparing the head branch against target branch");
@@ -510,6 +581,27 @@ namespace Azure.Sdk.Tools.Cli.Services
                 responseList.Add($"Failed to get comments for pull request {pullRequestNumber}. Error: {ex.Message}");
                 return responseList;
             }
+        }
+
+        public async Task<IReadOnlyList<IssueComment>> GetIssueCommentsAsync(string repoOwner, string repoName, int issueNumber, CancellationToken ct)
+        {
+            return await gitHubClient.Issue.Comment.GetAllForIssue(repoOwner, repoName, issueNumber);
+        }
+
+        public async Task<IReadOnlyList<PullRequestCommit>> GetPullRequestCommitsAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
+        {
+            return await gitHubClient.PullRequest.Commits(repoOwner, repoName, pullRequestNumber);
+        }
+
+        public async Task<IReadOnlyList<PullRequestFile>> GetPullRequestFilesAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
+        {
+            return await gitHubClient.PullRequest.Files(repoOwner, repoName, pullRequestNumber);
+        }
+
+        public async Task<IReadOnlyList<GitHubCommitFile>> GetCommitFilesAsync(string repoOwner, string repoName, string sha, CancellationToken ct)
+        {
+            var commit = await gitHubClient.Repository.Commit.Get(repoOwner, repoName, sha);
+            return commit.Files;
         }
 
         public async Task<List<String>> GetPullRequestChecksAsync(int pullRequestNumber, string repoName, string repoOwner, CancellationToken ct)

@@ -66,6 +66,26 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(comments);
         }
 
+        public Task<IReadOnlyList<IssueComment>> GetIssueCommentsAsync(string repoOwner, string repoName, int issueNumber, CancellationToken ct)
+        {
+            return Task.FromResult<IReadOnlyList<IssueComment>>([]);
+        }
+
+        public Task<IReadOnlyList<PullRequestCommit>> GetPullRequestCommitsAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
+        {
+            return Task.FromResult<IReadOnlyList<PullRequestCommit>>([]);
+        }
+
+        public Task<IReadOnlyList<PullRequestFile>> GetPullRequestFilesAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
+        {
+            return Task.FromResult<IReadOnlyList<PullRequestFile>>([]);
+        }
+
+        public Task<IReadOnlyList<GitHubCommitFile>> GetCommitFilesAsync(string repoOwner, string repoName, string sha, CancellationToken ct)
+        {
+            return Task.FromResult<IReadOnlyList<GitHubCommitFile>>([]);
+        }
+
         public Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch, CancellationToken ct)
         {
             // Default: no existing PR for branch
@@ -76,6 +96,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         {
             // Default: no matching PRs
             return Task.FromResult<IReadOnlyList<PullRequest?>>(new List<PullRequest?>().AsReadOnly());
+        }
+
+        public Task<IReadOnlyList<PullRequest>> GetPullRequestByTimeFrameAsync(string repoOwner, string repoName, DateTimeOffset since, DateTimeOffset until, CancellationToken ct = default)
+        {
+            // Default: no merged PRs in the window
+            return Task.FromResult<IReadOnlyList<PullRequest>>(new List<PullRequest>().AsReadOnly());
         }
 
         public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber, CancellationToken ct)

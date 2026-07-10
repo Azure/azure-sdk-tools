@@ -315,20 +315,21 @@ class ConversationService:
         start: datetime,
         end: datetime,
     ) -> list[ConversationMessageItem]:
-        """Retrieve all messages of conversations that *started* in the window.
+        """Retrieve all messages of conversations *active* in the window.
 
         The lower bound is normalized to the **start of the day** (00:00:00) of
-        ``start``. A conversation qualifies when its first message (earliest
-        ``created_at``) falls within ``[start_of_day, end)``. When it qualifies,
-        **all** of its messages are returned — including later replies that may
-        arrive after ``end`` — so the full thread can be evaluated.
+        ``start``. A conversation qualifies when it has at least one message
+        whose ``created_at`` falls within ``[start_of_day, end)`` — regardless
+        of when the conversation started. When it qualifies, **all** of its
+        messages are returned — including earlier messages before ``start`` and
+        later replies after ``end`` — so the full thread can be evaluated.
 
         Runs cross-partition queries over the message container. Intended for
         offline/batch jobs (e.g. answer-quality evaluation), not the hot path.
 
         Args:
             start: Lower bound; normalized to the start of its day (UTC).
-            end: Exclusive upper bound on the conversation start time.
+            end: Exclusive upper bound on message activity.
 
         Returns:
             Messages of qualifying conversations, ordered by ``created_at``.
@@ -340,11 +341,11 @@ class ConversationService:
         end_iso = end.isoformat()
 
         # Cosmos' gateway cannot serve GROUP BY / aggregate cross-partition
-        # queries, so conversation start times are derived client-side using
-        # simple projection queries.
+        # queries, so the qualifying conversations are derived client-side
+        # using simple projection queries.
         #
-        # A conversation "started" in the window when it has at least one
-        # message in [start, end) AND no message before ``start``.
+        # A conversation is "active" in the window when it has at least one
+        # message in [start, end). Its full thread is then fetched.
 
         # Step 1: partitions that have a message inside the window.
         window_query = (
@@ -375,37 +376,9 @@ class ConversationService:
             )
             return []
 
-        # Step 2: partitions that already existed before the window start;
-        # these conversations did not *start* in the window.
-        preexisting_query = (
-            "SELECT c.conversation_partition AS partition FROM c "
-            "WHERE c.document_type = @dtype AND c.created_at < @start"
-        )
-        preexisting_params: list[dict[str, object]] = [
-            {"name": "@dtype", "value": ConversationDocumentType.message.value},
-            {"name": "@start", "value": start_iso},
-        ]
+        partitions = sorted(candidate_partitions)
 
-        preexisting_partitions: set[str] = set()
-        async for row in container.query_items(
-            query=preexisting_query,
-            parameters=preexisting_params,
-        ):
-            partition = row.get("partition")
-            if partition in candidate_partitions:
-                preexisting_partitions.add(partition)
-
-        partitions = sorted(candidate_partitions - preexisting_partitions)
-
-        if not partitions:
-            logger.info(
-                "No conversations started in period [%s, %s)",
-                start_iso,
-                end_iso,
-            )
-            return []
-
-        # Step 3: fetch all messages for the qualifying conversations.
+        # Step 2: fetch all messages for the qualifying conversations.
         messages_query = (
             "SELECT * FROM c "
             "WHERE c.document_type = @dtype "
@@ -426,7 +399,7 @@ class ConversationService:
         items.sort(key=lambda m: m.created_at)
 
         logger.info(
-            "Retrieved %d messages from %d conversations started in [%s, %s)",
+            "Retrieved %d messages from %d conversations active in [%s, %s)",
             len(items),
             len(partitions),
             start_iso,

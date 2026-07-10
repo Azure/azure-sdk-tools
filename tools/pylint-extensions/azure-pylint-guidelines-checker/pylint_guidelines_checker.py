@@ -1529,6 +1529,12 @@ class CheckDocstringParameters(BaseChecker):
             "docstring-type-do-not-use-class",
             "Docstring type is formatted incorrectly. Do not use `:class` in docstring type.",
         ),
+        "C4753": (
+            'Do not use "kwargs" as a keyword argument in docstring. Either expand kwargs into individual arguments or use ":keyword Dict[str, Any] **kwargs:" format. See details: '
+            "https://azure.github.io/azure-sdk/python_documentation.html#docstrings",
+            "docstring-kwargs-keyword",
+            "Docstring should not use 'kwargs' as a keyword argument.",
+        ),
     }
     options = (
         (
@@ -1687,6 +1693,7 @@ class CheckDocstringParameters(BaseChecker):
         arg_names = []
         method_keyword_only_args = []
         vararg_name = None
+        kwarg_name = None
         is_overload_impl = False
         # specific case for constructor where docstring found in class def
         if isinstance(node, astroid.ClassDef):
@@ -1699,13 +1706,15 @@ class CheckDocstringParameters(BaseChecker):
                     method_keyword_only_args = [
                         arg.name for arg in constructor.args.kwonlyargs
                     ]
-                    vararg_name = node.args.vararg
+                    vararg_name = constructor.args.vararg
+                    kwarg_name = constructor.args.kwarg
                     break
 
         if isinstance(node, astroid.FunctionDef):
             arg_names = [arg.name for arg in node.args.args]
             method_keyword_only_args = [arg.name for arg in node.args.kwonlyargs]
             vararg_name = node.args.vararg
+            kwarg_name = node.args.kwarg
             is_overload_impl = self._is_overload_implementation(node)
 
         try:
@@ -1731,6 +1740,14 @@ class CheckDocstringParameters(BaseChecker):
             # check for params in docstring
             docparams.update(self._find_param(line, docstring, idx, docparams))
 
+        # check for incorrect use of "kwargs" as keyword argument
+        if "kwargs" in docstring_keyword_args:
+            self.add_message(
+                msgid="docstring-kwargs-keyword",
+                node=node,
+                confidence=None,
+            )
+
         # check that all params are documented
         missing_params = []
         for param in arg_names:
@@ -1740,12 +1757,17 @@ class CheckDocstringParameters(BaseChecker):
                 missing_params.append(param)
 
         # check that all keyword-only args are documented
+        # Exclude **kwargs from mismatch check if method has variable keyword arg
+        docstring_kwargs_to_check = dict(docstring_keyword_args)
+        if kwarg_name and f"**{kwarg_name}" in docstring_kwargs_to_check:
+            del docstring_kwargs_to_check[f"**{kwarg_name}"]
+
         # For overload implementations, skip this check since the overloads document the params
         if is_overload_impl:
             missing_kwonly_args = []
         else:
             missing_kwonly_args = list(
-                set(docstring_keyword_args) ^ set(method_keyword_only_args)
+                set(docstring_kwargs_to_check) ^ set(method_keyword_only_args)
             )
 
         if missing_params:

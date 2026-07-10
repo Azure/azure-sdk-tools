@@ -1,0 +1,14 @@
+{
+  "name": "azure-typespec-author-doc-refinement",
+  "private": true,
+  "description": "Code-based agentic doc-refinement loop for the azure-typespec-author skill, driven by the GitHub Copilot SDK; runs the 5-step reference-doc/skill/eval/report loop. Not published.",
+  "type": "module",
+  "scripts": {
+    "refine": "node doc-refinement.mjs"
+  },
+  "dependencies": {
+    "@github/copilot": "^1.0.68",
+    "@github/copilot-sdk": "1.0.0-beta.5",
+    "@microsoft/vally-cli": "0.6.0"
+  }
+}

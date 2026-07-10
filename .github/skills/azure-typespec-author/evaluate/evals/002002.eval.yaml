@@ -20,7 +20,7 @@ stimuli:
       suite: "armtemplate"
       mode: "trigger"
     prompt: |
-      add an extension resource named asset
+      add an extension resource named asset available in the latest API version only, with default properties and default extension resource operations.
     environment: &shared_environment
       files:
         - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -57,7 +57,7 @@ stimuli:
       suite: "armtemplate"
       mode: "forced"
     prompt: |
-      @azure-typespec-author add an extension resource named asset
+      @azure-typespec-author add an extension resource named asset available in the latest API version only, with default properties and default extension resource operations.
     environment: *shared_environment
     graders:
       - type: "tool-calls"
@@ -88,7 +88,8 @@ stimuli:
     tags:
       suite: "armtemplate"
       mode: "no-skill"
-    prompt: "add an extension resource named asset"
+    prompt: |
+      add an extension resource named asset available in the latest API version only, with default properties and default extension resource operations.
     environment: *shared_environment
     graders:
       - type: "tool-calls"

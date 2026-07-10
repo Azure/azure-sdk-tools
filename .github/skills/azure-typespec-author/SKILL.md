@@ -3,19 +3,23 @@ name: azure-typespec-author
 license: MIT
 metadata:
   version: "1.0.0"
-description: "Authors and modifies Azure TypeSpec (.tsp) API specifications. USE FOR: any TypeSpec/tsp change — api versions (add, bump, preview, stable, promote), resources, operations, models, properties, decorators, visibility, constraints, breaking changes, LRO, suppressions, operationId, spread model. Covers ARM resource-manager and data-plane services. DO NOT USE FOR: SDK generation, releasing SDK packages, or single MCP tool calls. INVOKES: azure-sdk-mcp:azsdk_typespec_generate_authoring_plan, azure-sdk-mcp:azsdk_run_typespec_validation."
-compatibility: "azure-sdk-mcp server with azsdk_typespec_generate_authoring_plan and azsdk_run_typespec_validation tools"
+description: "Authors and modifies Azure TypeSpec (.tsp) API specifications. USE FOR: any TypeSpec/tsp change — api versions (add, bump, preview, stable, promote), resources, operations, models, properties, decorators, visibility, constraints, breaking changes, LRO, suppressions, operationId, spread model. Covers ARM resource-manager and data-plane services. DO NOT USE FOR: SDK generation, releasing SDK packages, or single MCP tool calls. INVOKES: azure-sdk-mcp:azsdk_run_typespec_validation."
+compatibility: "azure-sdk-mcp server with azsdk_run_typespec_validation tool (and azsdk_typespec_generate_authoring_plan for the KB fallback)"
 ---
 
 # Azure TypeSpec Author
 
 This skill authors and modifies Azure TypeSpec (`.tsp`) API specifications for ARM resource-manager and data-plane services, covering versioning, resources, operations, models, decorators, constraints, and other schema changes that must follow the repository's TypeSpec authoring workflow.
 
-## Triggers
+| Tool                                          | Purpose           |
+| --------------------------------------------- | ----------------- |
+| `azure-sdk-mcp:azsdk_run_typespec_validation` | Validate TypeSpec |
 
-USE FOR: any TypeSpec/tsp change — api versions (add, bump, preview, stable, promote), resources, operations, models, properties, decorators, visibility, constraints, breaking changes, LRO, suppressions, operationId, spread model
-WHEN: "add TypeSpec API version", "modify .tsp file", "change TypeSpec decorators", "update TypeSpec models or operations", "author Azure TypeSpec"
-DO NOT USE FOR: SDK generation, releasing SDK packages, or single MCP tool calls
+**Prerequisite:** `azure-sdk-mcp` server must be running.
+
+> The authoring plan is built primarily via **agentic search** (fetching curated documentation URLs from [reference-document-links.md](references/reference-document-links.md) client-side). When a request is **not covered** by that curated catalog, the skill falls back to the knowledge base via the `azsdk_typespec_generate_authoring_plan` MCP tool.
+
+# When to invoke the azure-typespec-author skill
 
 The `azure-typespec-author` skill **must** be invoked immediately in all modes (including plan mode) for any task that involves creating and modifying TypeSpec (`.tsp`) files except for `client.tsp` under the specification directory in this repository. This includes but is not limited to:
 
@@ -29,7 +33,7 @@ The `azure-typespec-author` skill **must** be invoked immediately in all modes (
 
 | Tool                                                   | Purpose                                                   |
 | ------------------------------------------------------ | --------------------------------------------------------- |
-| `azure-sdk-mcp:azsdk_typespec_generate_authoring_plan` | Generate grounded authoring plan (General Authoring only) |
+| `azure-sdk-mcp:azsdk_typespec_generate_authoring_plan` | Generate grounded authoring plan (**KB fallback** — only when the request is not covered by the curated catalog) |
 | `azure-sdk-mcp:azsdk_run_typespec_validation`          | Validate TypeSpec                                         |
 
 **Prerequisite:** `azure-sdk-mcp` server must be running.
@@ -64,7 +68,7 @@ See [intake.md](references/intake.md).
 
 ### Step 3: Build Authoring Plan
 
-See [authoring-plan.md](references/authoring-plan.md).
+See [authoring-plan.md](references/authoring-plan.md). Intake always runs **agentic search** over the curated documentation in [reference-document-links.md](references/reference-document-links.md); the plan is built from those results, and only if agentic search surfaces no relevant guidance does it fall back to the knowledge base (`azsdk_typespec_generate_authoring_plan`).
 
 ### Step 4: Apply Changes
 
@@ -72,7 +76,7 @@ Make minimal `.tsp` edits following the plan from Step 3. Confirm uncertainties 
 
 ### Step 5: Validate
 
-See [validation.md](references/validation.md). Run 5.1 (TypeSpec validation) and 5.2 (`tsp compile .`) always; 5.3 (example verification) for API version evolution only.
+See [validation.md](references/validation.md). Run 5.1 (TypeSpec validation) and 5.2 (`tsp compile .`) always; 5.3 (example verification) for API Versioning (Case 3) only.
 
 ### Step 6: Output Reference Links
 
@@ -82,12 +86,12 @@ Output all referenced document URLs from Step 3. This gives the user direct link
 
 | File                                                                  | Purpose                                     |
 | --------------------------------------------------------------------- | ------------------------------------------- |
-| [analyze-project.md](references/analyze-project.md)                   | Step 1: project analysis                    |
-| [intake.md](references/intake.md)                                     | Step 2: general + case-specific intake      |
-| [authoring-plan.md](references/authoring-plan.md)                     | Step 3: build authoring plan (Option A + B) |
-| [agentic-search.md](references/agentic-search.md)                     | Procedure: fetch URLs → extract guidance    |
-| [reference-document-links.md](references/reference-document-links.md) | Catalog of external guide URLs              |
-| [validation.md](references/validation.md)                             | Step 5: validate → compile → verify         |
+| [analyze-project.md](references/analyze-project.md)                   | Step 1: project analysis                                 |
+| [intake.md](references/intake.md)                                     | Step 2: general + case-specific intake                   |
+| [authoring-plan.md](references/authoring-plan.md)                     | Step 3: build authoring plan via agentic search, or KB fallback |
+| [agentic-search.md](references/agentic-search.md)                     | Procedure: fetch URLs → extract guidance                 |
+| [reference-document-links.md](references/reference-document-links.md) | Catalog of external guide URLs, categorized by case      |
+| [validation.md](references/validation.md)                             | Step 5: validate → compile → verify                      |
 
 ## Examples
 

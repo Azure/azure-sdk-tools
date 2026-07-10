@@ -80,6 +80,7 @@ SRC_AZURE_SDK_TOOLS_DOCS = "azure_sdk_tools_docs"
 # -- General Azure & review resources --
 SRC_STATIC_AZURE_DOCS = "static_azure_docs"
 SRC_STATIC_API_SPEC_VIEW_QA = "static_api_spec_view_qa"
+SRC_STATIC_ARM_DOCS = "static_arm_docs"
 
 
 # ---------------------------------------------------------------------------
@@ -264,6 +265,13 @@ _register(
         name=SRC_STATIC_API_SPEC_VIEW_QA,
         description="Historical Q&A for API specification review covering common validation errors and fixes.",
     ),
+    KnowledgeSource(
+        name=SRC_STATIC_ARM_DOCS,
+        description="ARM Wiki (RPaaS) documentation for ARM resource modeling, OpenAPI/TypeSpec onboarding, and related RP platform guidance.",
+        base_url="https://armwiki.azurewebsites.net/rpaas/",
+        trim_format=True,
+        suffix=".html",
+    ),
     # -- SDK tools --
     KnowledgeSource(
         name=SRC_AZURE_SDK_TOOLS_DOCS,
@@ -341,6 +349,7 @@ _TYPESPEC_SOURCES = _sources(
     SRC_STATIC_AZURE_DOCS,
     SRC_STATIC_TYPESPEC_TO_SWAGGER_MAPPING,
     SRC_TYPESPEC_AZURE_PROVIDERHUB_DOCS,
+    SRC_STATIC_ARM_DOCS,
 )
 
 _AZURE_TYPESPEC_AUTHORING_SOURCES = _sources(
@@ -553,6 +562,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_AZURE_REST_API_SPECS_DOCS,
             SRC_AZURE_OPENAPI_DIFF_DOCS,
             SRC_AZURE_SDK_DOCS_ENG,
+            SRC_STATIC_ARM_DOCS,
         ),
         source_filter={
             SRC_AZURE_SDK_DOCS_ENG: "search.ismatch('design*', 'title')",

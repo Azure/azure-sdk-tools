@@ -1625,6 +1625,51 @@ class CheckDocstringParameters(BaseChecker):
 
         return docparams
 
+    def _is_overload_implementation(self, node):
+        """Check if a function is the implementation of an overloaded function.
+        Returns True if the function has same-name siblings with @overload decorators
+        and the function itself is NOT @overload-decorated.
+
+        :param node: ast.FunctionDef
+        :return: bool
+        """
+        if not isinstance(node, astroid.FunctionDef):
+            return False
+
+        # Check if this function itself has @overload
+        try:
+            decorators = node.decoratornames()
+            overload_names = {
+                "typing.overload",
+                "typing_extensions.overload",
+                "builtins.overload",
+            }
+            if decorators & overload_names:
+                return False
+        except Exception:
+            return False
+
+        # Check if there are same-name siblings with @overload
+        parent = node.parent
+        if parent is None:
+            return False
+
+        for sibling in parent.body:
+            if not isinstance(sibling, (astroid.FunctionDef, astroid.AsyncFunctionDef)):
+                continue
+            if sibling is node:
+                continue
+            if sibling.name != node.name:
+                continue
+            try:
+                sibling_decorators = sibling.decoratornames()
+                if sibling_decorators & overload_names:
+                    return True
+            except Exception:
+                continue
+
+        return False
+
     def check_parameters(self, node):
         """Parse the docstring for any params and types
         and compares it to the function's parameters.
@@ -1643,6 +1688,7 @@ class CheckDocstringParameters(BaseChecker):
         arg_names = []
         method_keyword_only_args = []
         vararg_name = None
+        is_overload_impl = False
         # specific case for constructor where docstring found in class def
         if isinstance(node, astroid.ClassDef):
             for constructor in node.body:
@@ -1661,6 +1707,7 @@ class CheckDocstringParameters(BaseChecker):
             arg_names = [arg.name for arg in node.args.args]
             method_keyword_only_args = [arg.name for arg in node.args.kwonlyargs]
             vararg_name = node.args.vararg
+            is_overload_impl = self._is_overload_implementation(node)
 
         try:
             # check for incorrect type :class to prevent splitting
@@ -1670,8 +1717,8 @@ class CheckDocstringParameters(BaseChecker):
         except AttributeError:
             return
 
-        # If there is a vararg, treat it as a param
-        if vararg_name:
+        # If there is a vararg, treat it as a param (unless this is an overload implementation)
+        if vararg_name and not is_overload_impl:
             arg_names.append(vararg_name)
 
         docparams = {}
@@ -1694,9 +1741,13 @@ class CheckDocstringParameters(BaseChecker):
                 missing_params.append(param)
 
         # check that all keyword-only args are documented
-        missing_kwonly_args = list(
-            set(docstring_keyword_args) ^ set(method_keyword_only_args)
-        )
+        # For overload implementations, skip this check since the overloads document the params
+        if is_overload_impl:
+            missing_kwonly_args = []
+        else:
+            missing_kwonly_args = list(
+                set(docstring_keyword_args) ^ set(method_keyword_only_args)
+            )
 
         if missing_params:
             self.add_message(
@@ -1747,7 +1798,8 @@ class CheckDocstringParameters(BaseChecker):
         for param in docparams:
             if docparams[param] is None:
                 missing_types.append(param)
-            if param not in arg_names:
+            # For overload implementations, don't flag params that come from overload signatures
+            if param not in arg_names and not is_overload_impl:
                 should_be_keywords.append(param)
 
         if missing_types:

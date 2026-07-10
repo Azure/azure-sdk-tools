@@ -1,0 +1,7 @@
+[project]
+name = "test-package-pyproject"
+version = "1.0.0"
+dependencies = [
+    "typing-extensions>=3.7",
+    "requests>=2.20",
+]

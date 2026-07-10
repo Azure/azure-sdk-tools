@@ -4,10 +4,11 @@
 # ------------------------------------
 
 """
-Pylint custom checkers for SDK guidelines: C4717 - C4776
+Pylint custom checkers for SDK guidelines: C4717 - C4777
 """
 
 import os
+import re
 import logging
 import astroid
 from pylint.checkers import BaseChecker
@@ -3780,6 +3781,157 @@ class NoCrossPackagePrivateImport(BaseChecker):
             )
 
 
+class CheckMissingDependency(BaseChecker):
+    """Rule to check that imported third-party packages are declared as dependencies.
+    Starts with a hardcoded list of known third-party packages and checks that
+    they are listed in the nearest setup.py (install_requires) or pyproject.toml
+    ([project].dependencies or [tool.poetry.dependencies]).
+    """
+
+    name = "check-missing-dependency"
+    priority = -1
+    msgs = {
+        "C4777": (
+            'Package "%s" is imported but not declared as a dependency in setup.py or pyproject.toml.'
+            " Ensure the dependency is declared in setup.py install_requires or pyproject.toml. See details:"
+            " https://azure.github.io/azure-sdk/python_design.html",
+            "missing-dependency-in-setup",
+            "Imported third-party package is not declared as a dependency in setup.py or pyproject.toml.",
+        ),
+    }
+
+    # Known third-party packages to check. Extend this list as needed.
+    _KNOWN_THIRD_PARTY = {
+        "typing_extensions",
+        "requests",
+        "aiohttp",
+    }
+
+    # Map import names to package distribution names when they differ
+    _IMPORT_TO_PACKAGE = {
+        "typing_extensions": "typing-extensions",
+    }
+
+    def __init__(self, linter=None):
+        super(CheckMissingDependency, self).__init__(linter)
+        self._deps_cache = {}  # keyed by package directory
+
+    def _find_package_dir(self, filepath):
+        """Walk up from filepath to find the nearest dir containing setup.py or pyproject.toml."""
+        directory = os.path.dirname(os.path.abspath(filepath))
+        while True:
+            if os.path.isfile(os.path.join(directory, "setup.py")) or os.path.isfile(
+                os.path.join(directory, "pyproject.toml")
+            ):
+                return directory
+            parent = os.path.dirname(directory)
+            if parent == directory:  # reached filesystem root
+                return None
+            directory = parent
+
+    def _parse_setup_deps(self, setup_path):
+        """Parse install_requires from setup.py using simple text matching."""
+        deps = set()
+        try:
+            with open(setup_path, "r", encoding="utf-8", errors="replace") as f:
+                content = f.read()
+            # Match strings inside install_requires list or tuple
+            match = re.search(r"install_requires\s*=\s*[\[\(]([^\]\)]*)[\]\)]", content, re.DOTALL)
+            if match:
+                for pkg_match in re.finditer(r'["\']([a-zA-Z0-9_-]+)', match.group(1)):
+                    deps.add(pkg_match.group(1).lower().replace("-", "_"))
+        except Exception as ex:
+            logger.debug("CheckMissingDependency: failed to parse %s: %s", setup_path, ex)
+        return deps
+
+    def _parse_pyproject_deps(self, pyproject_path):
+        """Parse dependencies from pyproject.toml (PEP 621 and Poetry)."""
+        deps = set()
+        try:
+            with open(pyproject_path, "r", encoding="utf-8", errors="replace") as f:
+                content = f.read()
+            # PEP 621: dependencies array under [project]
+            project_match = re.search(
+                r"^\[project\]\s*\n(.*?)(?=^\[|\Z)", content, re.DOTALL | re.MULTILINE
+            )
+            if project_match:
+                deps_match = re.search(
+                    r"^dependencies\s*=\s*\[(.*?)\]", project_match.group(1), re.DOTALL | re.MULTILINE
+                )
+                if deps_match:
+                    for pkg_match in re.finditer(r'["\']([a-zA-Z0-9_-]+)', deps_match.group(1)):
+                        deps.add(pkg_match.group(1).lower().replace("-", "_"))
+            # Poetry: [tool.poetry.dependencies] key = value pairs
+            poetry_match = re.search(
+                r"^\[tool\.poetry\.dependencies\]\s*\n(.*?)(?=^\[|\Z)", content, re.DOTALL | re.MULTILINE
+            )
+            if poetry_match:
+                for line_match in re.finditer(r"^([a-zA-Z0-9_-]+)\s*=", poetry_match.group(1), re.MULTILINE):
+                    pkg = line_match.group(1)
+                    if pkg.lower() != "python":
+                        deps.add(pkg.lower().replace("-", "_"))
+        except Exception as ex:
+            logger.debug("CheckMissingDependency: failed to parse %s: %s", pyproject_path, ex)
+        return deps
+
+    def _get_declared_deps(self, package_dir):
+        """Aggregate declared dependencies from setup.py and/or pyproject.toml in package_dir."""
+        if package_dir in self._deps_cache:
+            return self._deps_cache[package_dir]
+
+        deps = set()
+        setup_py = os.path.join(package_dir, "setup.py")
+        if os.path.isfile(setup_py):
+            deps |= self._parse_setup_deps(setup_py)
+
+        pyproject = os.path.join(package_dir, "pyproject.toml")
+        if os.path.isfile(pyproject):
+            deps |= self._parse_pyproject_deps(pyproject)
+
+        self._deps_cache[package_dir] = deps
+        return deps
+
+    def visit_importfrom(self, node):
+        """Check 'from package import ...' style imports."""
+        if node.modname is None:
+            return
+        top_level = node.modname.split(".")[0]
+        self._check_import(top_level, node)
+
+    def visit_import(self, node):
+        """Check 'import package' style imports."""
+        for name, _ in node.names:
+            top_level = name.split(".")[0]
+            self._check_import(top_level, node)
+
+    def _check_import(self, package_name, node):
+        """Check if a known third-party package is declared in setup.py or pyproject.toml."""
+        if package_name not in self._KNOWN_THIRD_PARTY:
+            return
+
+        try:
+            filepath = node.root().file
+        except AttributeError:
+            return
+
+        package_dir = self._find_package_dir(filepath)
+        if package_dir is None:
+            return
+
+        deps = self._get_declared_deps(package_dir)
+        # Check both the import name and the package name variant
+        setup_name = self._IMPORT_TO_PACKAGE.get(package_name, package_name)
+        normalized = setup_name.lower().replace("-", "_")
+
+        if normalized not in deps and package_name not in deps:
+            self.add_message(
+                msgid="missing-dependency-in-setup",
+                args=package_name,
+                node=node,
+                confidence=None,
+            )
+
+
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
     linter.register_checker(ClientsDoNotUseStaticMethods(linter))
@@ -3835,3 +3987,4 @@ def register(linter):
     linter.register_checker(DoNotStoreSecretsInTestVariables(linter))
     linter.register_checker(DoNotUseLoggingDirectly(linter))
     linter.register_checker(NoCrossPackagePrivateImport(linter))
+    linter.register_checker(CheckMissingDependency(linter))

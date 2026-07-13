@@ -39,7 +39,7 @@ def function_with_correct_kwargs_format(**kwargs):
     """
     Function with correct kwargs documentation format.
 
-    :keyword Dict[str, Any] **kwargs: Additional keyword arguments
+    :keyword Dict[str, Any] ``**kwargs``: Additional keyword arguments
     :return: None
     :rtype: None
     """

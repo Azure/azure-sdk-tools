@@ -59,6 +59,7 @@ This document contains code examples showing how to fix violations of the Azure 
 - [missing-distributed-tracing-policy](#missing-distributed-tracing-policy)
 - [do-not-use-logging-exception](#do-not-use-logging-exception)
 - [remove-deprecated-iscoroutinefunction](#remove-deprecated-iscoroutinefunction)
+- [docstring-kwargs-keyword](#docstring-kwargs-keyword)
 
 ## client-method-should-not-use-static-method
 
@@ -750,12 +751,12 @@ def process_data(*, option1=None, option2=None, **kwargs):
     """
 ```
 
-✅ **Also Correct** (document kwargs with the `**kwargs` format):
+✅ **Also Correct** (document kwargs with inline-literal backticks to avoid RST markup conflicts):
 ```python
 def process_data(**kwargs):
     """Process data with various options.
 
-    :keyword Dict[str, Any] **kwargs: Additional keyword arguments.
+    :keyword Dict[str, Any] ``**kwargs``: Additional keyword arguments.
     """
 ```
 

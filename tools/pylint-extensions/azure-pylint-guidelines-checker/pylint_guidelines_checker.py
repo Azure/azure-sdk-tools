@@ -1530,7 +1530,7 @@ class CheckDocstringParameters(BaseChecker):
             "Docstring type is formatted incorrectly. Do not use `:class` in docstring type.",
         ),
         "C4753": (
-            'Do not use "kwargs" as a keyword argument in docstring. Either expand kwargs into individual arguments or use ":keyword Dict[str, Any] **kwargs:" format. See details: '
+            'Do not use "kwargs" as a keyword argument in docstring. Either expand kwargs into individual arguments or use ":keyword Dict[str, Any] ``**kwargs``:" format. See details: '
             "https://azure.github.io/azure-sdk/python_documentation.html#docstrings",
             "docstring-kwargs-keyword",
             "Docstring should not use 'kwargs' as a keyword argument.",
@@ -1591,15 +1591,15 @@ class CheckDocstringParameters(BaseChecker):
         keyword_args = {}
         # this param has its type on a separate line
         if line.startswith("keyword") and line.count(" ") == 1:
-            param = line.split("keyword ")[1]
+            param = line.split("keyword ")[1].strip("`")
             keyword_args[param] = None
         # this param has its type on the same line
         if line.startswith("keyword") and line.count(" ") == 2:
             _, param_type, param = line.split(" ")
-            keyword_args[param] = param_type
+            keyword_args[param.strip("`")] = param_type
         # if the param has its type on the same line with additional spaces
         if line.startswith("keyword") and line.count(" ") > 2:
-            param = line.split(" ")[-1]
+            param = line.split(" ")[-1].strip("`")
             param_type = ("").join(line.split(" ")[1:-1])
             keyword_args[param] = param_type
         if line.startswith("paramtype"):

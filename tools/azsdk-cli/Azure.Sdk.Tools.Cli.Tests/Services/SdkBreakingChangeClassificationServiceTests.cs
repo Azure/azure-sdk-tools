@@ -10,6 +10,7 @@ using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Package;
 using GitHub.Copilot.SDK;
 using Microsoft.Extensions.Logging;
+using Microsoft.TeamFoundation.TestManagement.WebApi;
 using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Services
@@ -166,10 +167,122 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             var ct = CancellationToken.None;
             var sdkBreakingPattern = await languageService.GetSdkBreakingPattern(sdkRepoRoot, ct);
             var tspProjectFile = Path.Combine(_typeSpecProjectPath, "tspconfig.yaml");
-            var classifyResult = await service.ClassifySdkBreakingChangesAsync(sdkchanges, sdkRepoRoot, sdkBreakingPattern, languageService.Language.ToString(), _typeSpecProjectPath, ct);
+            var classifyResult = await service.ClassifySdkBreakingChangesAsync(sdkchanges, sdkBreakingPattern, languageService.Language.ToString(), _typeSpecProjectPath, ct);
             Assert.IsNotNull(classifyResult);
             Assert.IsInstanceOf<List<SdkBreakingChange>>(classifyResult);
             Assert.That(classifyResult, Has.Count.EqualTo(1));
+        }
+        #endregion
+
+        #region Passer AI result Tests
+        [Test]
+        public async Task ClassifySDKBreakingChanges_MultipleLine()
+        {
+            var service = CreateMockedService();
+            var batchResponse = """
+            [rename model]
+            breaking: Model WebPubSubResource renamed to Resource.
+
+            This affects request payloads
+            and response payloads.
+            category: conversion-need resolve
+            resolution:
+            Use @clientName to in client.tsp to restore the original SDK name.
+
+            originBreaks:
+            - break1
+            - break2
+            [method parameter order changed]
+            breaking: The Function parameter order changed.
+            category:spec-change
+            resolution: use @override to restore the original parameter orders
+            originBreaks:- breakA
+            - breakB
+            """;
+            _mockAgentRunner
+            .Setup(x => x.RunAsync(It.IsAny<CopilotAgent<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(batchResponse);
+
+            var result = await service.ClassifySdkBreakingChangesAsync("test sdk changes", "test pattern", "Go", _typeSpecProjectPath, CancellationToken.None);
+            Assert.IsNotNull(result);
+            Assert.IsInstanceOf<List<SdkBreakingChange>>(result);
+            Assert.That(result, Has.Count.EqualTo(2));
+            var firstChange = result[0];
+            Assert.That(firstChange.BreakingChange, Is.EqualTo("""
+                Model WebPubSubResource renamed to Resource.
+                
+                This affects request payloads
+                and response payloads.
+                """));
+            Assert.That(firstChange.Category, Is.EqualTo("conversion-need resolve"));
+            Assert.That(firstChange.Resolution, Is.EqualTo("Use @clientName to in client.tsp to restore the original SDK name."));
+            Assert.IsNotNull(firstChange.OriginBreaks);
+            Assert.That(firstChange.OriginBreaks, Has.Count.EqualTo(2));
+            Assert.That(firstChange.OriginBreaks[0], Does.Contain("break1"));
+            Assert.That(firstChange.OriginBreaks[1], Does.Contain("break2"));
+            var secondChange = result[1];
+            Assert.That(secondChange.BreakingChange, Is.EqualTo("The Function parameter order changed."));
+            Assert.That(secondChange.Category, Is.EqualTo("spec-change"));
+            Assert.That(secondChange.Resolution, Is.EqualTo("use @override to restore the original parameter orders"));
+            Assert.IsNotNull(secondChange.OriginBreaks);
+            Assert.That(secondChange.OriginBreaks, Has.Count.EqualTo(2));
+            Assert.That(secondChange.OriginBreaks[0], Does.Contain("breakA"));
+            Assert.That(secondChange.OriginBreaks[1], Does.Contain("breakB"));
+        }
+
+        [Test]
+        public async Task ClassifySDKBreakingChanges_ContentContainsLabel()
+        {
+            var service = CreateMockedService();
+            var batchResponse = """
+            [rename model]
+            breaking: Model WebPubSubResource renamed to Resource.
+
+            This affects request payloads and category
+            and response payloads.
+            category: conversion-need resolve
+            resolution:
+            Use @clientName to in client.tsp to restore the original SDK name.
+
+            originBreaks:
+            - break1
+            - break2
+            """;
+            _mockAgentRunner
+            .Setup(x => x.RunAsync(It.IsAny<CopilotAgent<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(batchResponse);
+
+            var result = await service.ClassifySdkBreakingChangesAsync("test sdk changes", "test pattern", "Go", _typeSpecProjectPath, CancellationToken.None);
+            Assert.IsNotNull(result);
+            Assert.IsInstanceOf<List<SdkBreakingChange>>(result);
+            Assert.That(result, Has.Count.EqualTo(1));
+            var firstChange = result[0];
+            Assert.That(firstChange.BreakingChange, Is.EqualTo("""
+                Model WebPubSubResource renamed to Resource.
+                
+                This affects request payloads and category
+                and response payloads.
+                """));
+            Assert.That(firstChange.Category, Is.EqualTo("conversion-need resolve"));
+            Assert.That(firstChange.Resolution, Is.EqualTo("Use @clientName to in client.tsp to restore the original SDK name."));
+            Assert.IsNotNull(firstChange.OriginBreaks);
+            Assert.That(firstChange.OriginBreaks, Has.Count.EqualTo(2));
+            Assert.That(firstChange.OriginBreaks[0], Does.Contain("break1"));
+            Assert.That(firstChange.OriginBreaks[1], Does.Contain("break2"));
+        }
+
+        [Test]
+        public async Task ClassifySDKBreakingChanges_EmptyResponse()
+        {
+            var service = CreateMockedService();
+            _mockAgentRunner
+           .Setup(x => x.RunAsync(It.IsAny<CopilotAgent<string>>(), It.IsAny<CancellationToken>()))
+           .ReturnsAsync("");
+
+            var result = await service.ClassifySdkBreakingChangesAsync("test sdk changes", "test pattern", "Go", _typeSpecProjectPath, CancellationToken.None);
+            Assert.IsNotNull(result);
+            Assert.IsInstanceOf<List<SdkBreakingChange>>(result);
+            Assert.That(result, Has.Count.EqualTo(0));
         }
         #endregion
     }

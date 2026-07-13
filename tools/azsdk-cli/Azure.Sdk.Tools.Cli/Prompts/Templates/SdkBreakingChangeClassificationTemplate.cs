@@ -12,9 +12,9 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
         private readonly string _sdkBreakingPatternContent;
         private readonly string _sdkChanges;
         private readonly string _language;
-        private readonly string _tspProjectPath;
+        private readonly string? _tspProjectPath;
 
-        public SdkBreakingChangeClassificationTemplate(string sdkBreakingPatternContent, string sdkChanges, string language, string tspProjectPath)
+        public SdkBreakingChangeClassificationTemplate(string sdkBreakingPatternContent, string sdkChanges, string language, string? tspProjectPath)
         {
             _sdkBreakingPatternContent = sdkBreakingPatternContent;
             _sdkChanges = sdkChanges;

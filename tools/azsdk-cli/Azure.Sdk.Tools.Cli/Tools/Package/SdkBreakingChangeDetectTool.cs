@@ -123,7 +123,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
                     // Prepare script parameters
                     string tempDir = Path.GetTempPath();
-                    var sdkChangeFilePath = Path.Combine(tempDir, SdkChangeJsonFileName);
+                    // The SDK change file path is constructed using the temporary directory, service name (or a new GUID if not available), and the SDK change JSON file name.
+                    string sdkChangeFileName = $"{packageInfo.ServiceName ?? Guid.NewGuid().ToString("N")}-{SdkChangeJsonFileName}";
+                    var sdkChangeFilePath = Path.Combine(tempDir, sdkChangeFileName);
                     var scriptParameters = new Dictionary<string, string>
                         {
                             { "SdkRepoPath", sdkRepoRoot },
@@ -167,7 +169,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                                 {
                                     var tspProjectPath = tspConfigPath != null ? Path.GetDirectoryName(tspConfigPath): null;
                                     var sdkBreakingPattern = await languageService.GetSdkBreakingPattern(sdkRepoRoot, ct);
-                                    var sdkBreakingChanges = await _classifyService.ClassifySdkBreakingChangesAsync(sdkchanges.ChangelogMD, sdkRepoRoot, sdkBreakingPattern, languageService.Language.ToString(), tspProjectPath, ct);
+                                    var sdkBreakingChanges = await _classifyService.ClassifySdkBreakingChangesAsync(sdkchanges.ChangelogMD, sdkBreakingPattern, languageService.Language.ToString(), tspProjectPath, ct);
                                     if (sdkBreakingChanges.Count == 0)
                                     {
                                         logger.LogError("Failed to classify SDK breaking changes.");
@@ -280,7 +282,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         public List<SdkBreakingChange> BreakingChanges { get; set; } = new List<SdkBreakingChange>();
         [JsonPropertyName("hasBreakingChanges")]
         public bool HasBreakingChanges { get; set; }
-        [JsonPropertyName("SdkChangesMd")]
+        [JsonPropertyName("sdkChangesMd")]
         public string? SdkChangesMd { get; set; } = null;
     }
 }

@@ -168,11 +168,16 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             {
                 return await GetConfigValueFromRepoAsync<string>(repositoryRoot, SdkBreakingChangePatternFilePath, ct);
             }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogDebug("No {configType} configuration found. Error: {errorMessage}", SdkBreakingChangePatternFilePath, ex.Message);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while retrieving SDK breaking change pattern file path.");
-                return string.Empty;
             }
+
+            return string.Empty;
         }
         // Substitute template variables in command strings
         public string SubstituteCommandVariables(string command, Dictionary<string, string> variables)

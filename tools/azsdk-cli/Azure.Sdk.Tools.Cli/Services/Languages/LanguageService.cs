@@ -531,7 +531,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                 var sdkBreakingPatternFilePath = await specGenSdkConfigHelper.GetSdkBreakingChangePatternFileConfigurationAsync(sdkRepoRoot, ct);
                 if (string.IsNullOrEmpty(sdkBreakingPatternFilePath))
                 {
-                    logger.LogWarning("SDK breaking change pattern file path for language {language} is not configured in swagger_to_sdk_config.json. No pattern file will be read.", Language);
+                    logger.LogWarning("Failed to retrieve the SDK breaking change pattern file path for language '{language}' from swagger_to_sdk_config.json. Please verify the configuration. No pattern file will be loaded.", Language);
                     return string.Empty;
                 }
                 var patternFilePath = Path.Combine(sdkRepoRoot, sdkBreakingPatternFilePath);

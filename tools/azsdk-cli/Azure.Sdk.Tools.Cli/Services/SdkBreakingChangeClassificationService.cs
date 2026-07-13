@@ -10,7 +10,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 {   
     public interface ISdkBreakingChangeClassificationService
     {
-        Task<List<SdkBreakingChange>> ClassifySdkBreakingChangesAsync(string sdkchange, string sdkRepoRoot, string sdkBreakingPattern, string language, string? tspProjectPath, CancellationToken ct);
+        Task<List<SdkBreakingChange>> ClassifySdkBreakingChangesAsync(string sdkchange, string sdkBreakingPattern, string language, string? tspProjectPath, CancellationToken ct);
     }
     public class SdkBreakingChangeClassificationService: ISdkBreakingChangeClassificationService
     {
@@ -19,8 +19,9 @@ namespace Azure.Sdk.Tools.Cli.Services
         public const string SdkBreakingChangeClassifierModelVariable = "AZURE_SDK_BREAKING_CLASSIFIER_MODEL";
 
         private static readonly Regex ResultBlockRex = new(
-                    @"\[(?<id>[^\]]+)\]\s*breaking:\s*(?<breaking>.+?)\s*category:\s*(?<category>.+?)\s*resolution:\s*(?<resolution>.*?)\s*originBreaks:\s*(?<originBreaks>(?:-[^\n]*\n?)+)",
-                    RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.Singleline);
+                    @"^\[(?<id>[^\]]+)\]\s*^breaking:\s*(?<breaking>.+?)\s*^category:\s*(?<category>.+?)\s*^resolution:\s*(?<resolution>.*?)\s*^originBreaks:\s*(?<originBreaks>(?:-[^\n]*\n?)+)",
+                    RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.Multiline);
+
         /// <summary>
         /// The model that this agent will use. Defaults to "claude-opus-4.5".
         /// </summary>
@@ -30,7 +31,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             _agentRunner = agentRunner;
         }
 
-        public async Task<List<SdkBreakingChange>> ClassifySdkBreakingChangesAsync(string sdkchange, string sdkRepoRoot, string sdkBreakingPattern, string language, string? tspProjectPath, CancellationToken ct)
+        public async Task<List<SdkBreakingChange>> ClassifySdkBreakingChangesAsync(string sdkchange, string sdkBreakingPattern, string language, string? tspProjectPath, CancellationToken ct)
         {
             var template = new SdkBreakingChangeClassificationTemplate(sdkBreakingPattern, sdkchange, language, tspProjectPath);
             var agent = new CopilotAgent<string>
@@ -58,9 +59,6 @@ namespace Azure.Sdk.Tools.Cli.Services
                 //   - ...
                 //
                 // Uses lookahead (?=\[|\z) to stop at the next block or end of string
-                //Regex ResultBlockRex = new(
-                //    @"\[(?<id>[^\]]+)\]\s*breaking:\s*(?<breaking>.+?)\s*category:\s*(?<category>.+?)\s*resolution:\s*(?<resolution>.*?)\s*originBreaks:\s*(?<originBreaks>(?:-[^\n]*\n?)+)",
-                //    RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.Singleline);
                 var sdkBreakingChanges = new List<SdkBreakingChange>();
                 foreach (Match match in ResultBlockRex.Matches(result))
                 {

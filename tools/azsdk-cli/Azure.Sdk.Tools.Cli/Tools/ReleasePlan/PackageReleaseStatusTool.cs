@@ -254,7 +254,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 // If an SDK pull request URL is provided, try to select the release plan that matches it.
                 if (!string.IsNullOrWhiteSpace(sdkPullRequest))
                 {
-                    var releasePlanWithSdkPullRequest = releasePlans.FirstOrDefault(rp => rp.SDKInfo.Any(s => !string.IsNullOrEmpty(s.SdkPullRequestUrl) && s.SdkPullRequestUrl.Equals(sdkPullRequest, StringComparison.OrdinalIgnoreCase)));
+                    var releasePlanWithSdkPullRequest = releasePlans.FirstOrDefault(rp =>
+                        rp.SDKInfo.Any(s =>
+                            string.Equals(s.PackageName, packageName, StringComparison.OrdinalIgnoreCase)
+                            && !string.IsNullOrWhiteSpace(s.SdkPullRequestUrl)
+                            && string.Equals(s.SdkPullRequestUrl, sdkPullRequest, StringComparison.OrdinalIgnoreCase)));
                     if (releasePlanWithSdkPullRequest != null)
                     {
                         logger.LogInformation("Selected release plan {releasePlanId} with SDK pull request {sdkPullRequest}.", releasePlanWithSdkPullRequest.ReleasePlanId, sdkPullRequest);

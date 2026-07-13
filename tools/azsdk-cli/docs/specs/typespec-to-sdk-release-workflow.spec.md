@@ -241,7 +241,7 @@ Build author-validation loop where agent auto-applies suppression decorators bas
 | **Purpose** | Validate spec PR: compile, lint, breaking changes, APIView tokens, SDK dry-run |
 | **Entry signal** | PR opened/updated in `azure-rest-api-specs` |
 | **Exit signal** | CI passes + review labels applied + approved & merged |
-| **Owners** | EngSys (pipeline), @raych1 / @catalinaperalta (breaking change), TypeSpec team (lintdiff) |
+| **Owners** | EngSys (pipeline), @raych1 / @markcowl (breaking change), TypeSpec team (lintdiff) |
 | **Reviewer ask** | Confirm CI ordering, label semantics, and blocking vs informational |
 
 #### Happy path

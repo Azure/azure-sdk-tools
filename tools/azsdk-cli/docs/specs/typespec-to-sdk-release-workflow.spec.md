@@ -391,7 +391,7 @@ Structured error reporting from generation pipeline + agent-assisted troubleshoo
 | Tool | Role | Owner |
 |------|------|-------|
 | Language CI pipelines | Build, test, lint, package validation | Language teams |
-| SDK breaking change detector | Detects breaking changes in generated SDK API surface. Being combined into validation check. | @raych1 / @catalinaperalta |
+| SDK breaking change detector | Detects breaking changes in generated SDK API surface. Being combined into validation check. | @raych1 |
 | APIView (current) | SDK public API surface review via web UI | APIView team |
 | **API Review Hub** (replacing APIView) | Creates synthetic review PRs with `API.md` diffs. PRs never merged — exist only for review. Architects auto-assigned. Approval recorded in ARH database (API hash). CI gates release by checking hash. | @tjprescott |
 | API review feedback resolution agent | Helps resolve API review comments via TypeSpec changes | azsdk-cli team |

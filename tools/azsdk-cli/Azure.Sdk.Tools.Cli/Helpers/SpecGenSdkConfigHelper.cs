@@ -170,7 +170,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             }
             catch (InvalidOperationException ex)
             {
-                _logger.LogDebug("No {configType} configuration found. Error: {errorMessage}", SdkBreakingChangePatternFilePath, ex.Message);
+                _logger.LogDebug("No {configOption} configuration found. Error: {errorMessage}", SdkBreakingChangePatternFilePath, ex.Message);
             }
             catch (Exception ex)
             {

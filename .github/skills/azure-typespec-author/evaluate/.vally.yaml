@@ -17,9 +17,6 @@ paths:
 
 environments:
   azsdk-mcp:
-    files:
-      - src: ../fixtures/instructions-test/copilot-instructions.md
-        dest: .github/copilot-instructions.md
     mcpServers:
       azure-sdk-mcp:
         type: stdio
@@ -36,7 +33,9 @@ environments:
         env:
           AZSDKTOOLS_AGENT_TESTING: "false"
           AZSDKTOOLS_COLLECT_TELEMETRY: "false"
-          AZURE_SDK_KB_ENDPOINT: "http://localhost:8089"
+          AZURE_SDK_KB_ENDPOINT: "https://azuresdkqabot-test-serv-agent-dydweeaxaah6g3b4.westus2-01.azurewebsites.net"
+          AZURE_SDK_KB_CLIENT_ID: "674414e1-152b-41ac-b0d2-763535edea6c"
+          AZURE_SDK_KB_SCOPE: "api://azure-sdk-qa-bot-test/user_impersonation"
   azsdk-mcp-remote-kb:
     files:
       - src: ../fixtures/instructions-test/copilot-instructions.md

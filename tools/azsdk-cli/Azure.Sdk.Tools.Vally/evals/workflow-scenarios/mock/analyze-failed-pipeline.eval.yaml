@@ -94,9 +94,9 @@ stimuli:
 
 scoring:
   weights:
-    tool-calls: 1
-    output-contains: 1
-    output-matches: 1
-    output-not-matches: 1
-    prompt: 1
+    tool-calls: 0.2
+    output-contains: 0.2
+    output-matches: 0.2
+    output-not-matches: 0.2
+    prompt: 0.2
   threshold: 1.0

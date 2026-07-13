@@ -102,7 +102,7 @@ Both `search_knowledge_base.results` (text-chunk vector match) and `search_knowl
 - **Every actionable step must include a clickable URL inline** — not just in References. The user should be able to act without follow-up questions.
 - For under-specified questions, give a short answer first, then ask for missing context.
 - Bullet points over paragraphs. One idea per bullet.
-- Maximum 150 words unless the user asks for detail.
+- Maximum 200 words unless the user asks for detail.
 - Never fabricate URLs — only use exact `title` and `link` from search results or `web_fetch` responses. If you cannot verify a URL, do not include it.
 - End with concrete next steps or follow up questions.
 

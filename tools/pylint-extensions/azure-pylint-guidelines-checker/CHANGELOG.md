@@ -5,6 +5,7 @@
 - Add `remove-deprecated-iscoroutinefunction` check
 - Add `do-not-use-logging-directly` check
 - Add `no-cross-package-private-import` check
+- Enhance `invalid-use-of-overload` to support module-level overloads and verify @overload decorator
 - Fix `check-docstrings` to skip `*args`/`**kwargs` linting for overload implementations
 
 ## 0.5.7 (2025-07-15)

@@ -1,6 +1,6 @@
 # Release History
 
-## 0.5.8 (Unreleased)
+## 0.5.8 (2026-07-13)
 - Add `do-not-store-secrets-in-test-variables` check
 - Add `remove-deprecated-iscoroutinefunction` check
 - Add `do-not-use-logging-directly` check

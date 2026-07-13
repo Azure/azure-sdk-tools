@@ -380,6 +380,17 @@ export function computeMetrics(
                 c.ccrOutcome === "rejected" ||
                 c.ccrOutcome === "ignored"),
     );
+    // Guard against a silent judge-skip: if there are eligible CCR comments but
+    // the judge assigned no definite outcome to any of them, every CCR-usefulness
+    // rate (addressed/rejected/ignored) collapses to n/a with no other signal.
+    // Surface it as a warning so an unjudged run is visible rather than silent.
+    if (ccrEligible.length > 0 && decided.length === 0) {
+        warnings.push(
+            `ccr-outcome: judge assigned no definite outcome to any of ${String(
+                ccrEligible.length,
+            )} eligible CCR comments (all null/unclear); addressedRate/rejectedRate/ignoredRate are n/a — likely a skipped judging pass`,
+        );
+    }
     const outcomeItems = (outcome: CcrOutcome): RateItem[] =>
         decided.map((c) => ({
             prType: typeOf(c.pr),

@@ -141,6 +141,37 @@ describe("compute-metrics", () => {
         expect(m.counts.ccrOutcomeUnclear).toBe(1);
     });
 
+    it("warns when eligible CCR comments exist but none got a definite outcome (judge skip)", () => {
+        const prs = [pr({ number: 1 })];
+        const comments = [
+            ccr({
+                pr: 1,
+                ccrOutcome: null,
+                severity: "critical",
+                lineStart: 10,
+            }),
+            ccr({
+                pr: 1,
+                ccrOutcome: null,
+                severity: "substantive",
+                lineStart: 20,
+            }),
+        ];
+        const m = computeMetrics(prs, comments, OPTS);
+        expect(rate(m, "addressedRate").value).toBeNull();
+        expect(m.counts.ccrDecided).toBe(0);
+        expect(
+            m.coverageWarnings.some((w) => w.startsWith("ccr-outcome:")),
+        ).toBe(true);
+    });
+
+    it("does not emit the judge-skip warning when there are no CCR comments", () => {
+        const m = computeMetrics([pr({ number: 1 })], [], OPTS);
+        expect(
+            m.coverageWarnings.some((w) => w.startsWith("ccr-outcome:")),
+        ).toBe(false);
+    });
+
     it("excludes pathExcluded CCR comments from Q2 denominators", () => {
         const prs = [pr({ number: 1 })];
         const comments = [

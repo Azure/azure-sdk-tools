@@ -171,7 +171,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             }
             else
             {
-                result = await Util.RunAsync(perfExe, finalParams, WorkingDirectory);
+                result = await Util.RunAsync(perfExe, finalParams, WorkingDirectory, trackStatistics: true);
             }
             IDictionary<string, string> reportedVersions = new Dictionary<string, string>();
 
@@ -203,7 +203,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 OperationsPerSecond = opsPerSecond,
                 StandardOutput = result.StandardOutput,
                 StandardError = result.StandardError,
-                PackageVersions = reportedVersions
+                PackageVersions = reportedVersions,
+                AverageCpu = result.AverageCpu,
+                AverageMemory = result.AverageMemory,
             };
         }
 

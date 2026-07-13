@@ -2,11 +2,14 @@
 
 > Prerequisite: Steps 1 (Analyze Project) and 2 (Intake) must be complete.
 
-## 3.1 General (All Cases)
+## 3.1 Retrieve knowledge
 
-Use **both** tools to gather comprehensive guidance, then synthesize into a concrete plan:
+Select and execute the appropriate step based on the case identified in Step 2:
 
-### Step A: Retrieve AI-Guided Knowledge (All Cases)
+- **Case 3 (API Version Evolution):** Execute **Step B** — use reference documentation via agentic search.
+- **Other cases:** Execute **Step A** — use `azsdk_typespec_retrieve_knowledge` for AI-guided guidance.
+
+### Step A: Retrieve AI-Guided Knowledge (All cases except Case 3)
 
 Call `azsdk_typespec_retrieve_knowledge` with:
 - `request`: the user's request (verbatim)
@@ -14,18 +17,15 @@ Call `azsdk_typespec_retrieve_knowledge` with:
 
 Extract the `context` field from the tool response. This provides AI-generated authoring guidance based on the TypeSpec project.
 
-### Step B: Fetch Reference Documentation (All Cases)
+### Step B: Fetch Reference Documentation (Case 3 — API Version Evolution)
 
 Run [agentic search](agentic-search.md) using URLs from [reference-document-links.md](reference-document-links.md) relevant to your case (identified in Step 2). Extract specific guidance for your scenario.
 
-### Step C: Synthesize and Resolve Conflicts
+## 3.2 Generate Authoring Plan
 
-Combine guidance from Steps A and B:
-- If results agree → use the guidance directly
-- If results conflict → **prioritize AI-Guided knowledge** (MCP retrievalare is authoritative; reference docs are supportive)
-- If guidance is incomplete → refine your query and repeat Step B
+synthesize the result into a concrete plan derived from the retrieved context in step 3.1.
 
-Document your final plan with references to supporting documents.
+Document your final plan with references to supporting documents, and ensure the plan follows the retrieved context above.
 
 ---
 

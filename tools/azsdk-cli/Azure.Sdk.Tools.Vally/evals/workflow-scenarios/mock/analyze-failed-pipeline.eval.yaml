@@ -46,6 +46,6 @@ stimuli:
 
 scoring:
   weights:
-    tool-calls: 1
-    output-contains: 1
+    tool-calls: 0.5
+    output-contains: 0.5
   threshold: 1.0

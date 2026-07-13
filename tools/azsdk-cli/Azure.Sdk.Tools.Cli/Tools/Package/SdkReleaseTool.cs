@@ -256,8 +256,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     package.PackageReadinessDetails = $"No planned release date found in package details for current package version {package.Version}. Please check the package version and verify that change log file is correct. ";
                 }
 
-                var releaseType = plannedRelease?.ReleaseType ?? "Unknown";
-                bool isPreviewRelease = releaseType.Equals("Beta");
+                // Determine preview vs. stable from the package version (a pre-release suffix such
+                // as "-beta.1" indicates a preview release), not from the Planned Releases label.
+                // The label can be Patch/GA/Beta/Stable/etc.; keying off it previously misclassified
+                // Patch releases and blocked them.
+                bool isPreviewRelease = package.Version?.Contains('-') ?? false;
                 bool isDataPlanePackage = package.PackageType == SdkType.Dataplane;
                 // Check for namespace approval if preview release for data plane
                 if (isDataPlanePackage && isPreviewRelease)

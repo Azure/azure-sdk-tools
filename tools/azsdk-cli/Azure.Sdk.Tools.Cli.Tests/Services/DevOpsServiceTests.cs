@@ -320,6 +320,68 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
         #endregion
 
+        #region MapPackageWorkItemToModel PlannedReleases parsing Tests
+
+        private static WorkItem CreatePackageWorkItem(string plannedPackages, string version = "1.2.1")
+        {
+            return new WorkItem
+            {
+                Id = 1,
+                Url = "https://dev.azure.com/azure-sdk/internal/_apis/wit/workItems/1",
+                Fields = new Dictionary<string, object>
+                {
+                    { "System.WorkItemType", "Package" },
+                    { "System.State", "Active" },
+                    { "Custom.Package", "arm-computelimit" },
+                    { "Custom.PackageVersion", version },
+                    { "Custom.Language", "JavaScript" },
+                    { "Custom.PlannedPackages", plannedPackages }
+                },
+                Relations = new List<WorkItemRelation>()
+            };
+        }
+
+        [Test]
+        public void MapPackageWorkItemToModel_ParsesPatchPlannedReleaseRow()
+        {
+            // A Patch row must parse; previously the release-type allowlist (Beta|Stable|GA)
+            // dropped it, causing a false "No planned release date found" readiness failure.
+            var plannedPackages =
+                "| Release type | Version | Release date |\n" +
+                "| Patch | 1.2.1 | 2026-07-07 |";
+
+            var model = DevOpsService.MapPackageWorkItemToModel(CreatePackageWorkItem(plannedPackages));
+
+            Assert.That(model.PlannedReleases, Has.Count.EqualTo(1));
+            var planned = model.PlannedReleases[0];
+            Assert.Multiple(() =>
+            {
+                Assert.That(planned.ReleaseType, Is.EqualTo("Patch"));
+                Assert.That(planned.Version, Is.EqualTo("1.2.1"));
+                Assert.That(planned.ReleaseDate, Is.EqualTo("2026-07-07"));
+            });
+        }
+
+        [Test]
+        public void MapPackageWorkItemToModel_ParsesAllReleaseTypeLabels()
+        {
+            // Every release-type label should parse; the header row (multi-word cells) must not.
+            var plannedPackages =
+                "| Release type | Version | Release date |\n" +
+                "| Beta | 1.0.0-beta.1 | 2026-07-01 |\n" +
+                "| Stable | 1.0.0 | 2026-07-02 |\n" +
+                "| GA | 1.3.0 | 2026-07-03 |\n" +
+                "| Patch | 1.2.1 | 2026-07-04 |";
+
+            var model = DevOpsService.MapPackageWorkItemToModel(CreatePackageWorkItem(plannedPackages));
+
+            Assert.That(
+                model.PlannedReleases.Select(r => r.ReleaseType),
+                Is.EqualTo(new[] { "Beta", "Stable", "GA", "Patch" }));
+        }
+
+        #endregion
+
         #region GetReleasePlansForPackageAsync Tests
 
         [TestCase("python", "Python")]

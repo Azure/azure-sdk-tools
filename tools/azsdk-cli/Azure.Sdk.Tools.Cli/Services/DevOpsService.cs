@@ -154,7 +154,11 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         private static readonly string[] SUPPORTED_SDK_LANGUAGES = { "Dotnet", "JavaScript", "Python", "Java", "Go" };
 
-        [GeneratedRegex("\\|\\s(Beta|Stable|GA)\\s\\|\\s([\\S]+)\\s\\|\\s([\\S]+)\\s\\|")]
+        // Capture any release-type label (e.g. Beta, Stable, GA, Patch) so every planned/shipped
+        // row parses. The release type must not be used to classify preview vs. stable; callers
+        // derive that from the package version. Cells are single, space-delimited tokens, so the
+        // header row (which contains multi-word cells like "Release type") does not match.
+        [GeneratedRegex("\\|\\s([\\S]+)\\s\\|\\s([\\S]+)\\s\\|\\s([\\S]+)\\s\\|")]
         private static partial Regex SdkReleaseDetailsRegex();
 
         private async Task<List<WorkItemRelationType>> GetCachedRelationTypes(CancellationToken ct)

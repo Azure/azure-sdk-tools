@@ -257,10 +257,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var releasePlanWithSdkPullRequest = releasePlans.FirstOrDefault(rp => rp.SDKInfo.Any(s => !string.IsNullOrEmpty(s.SdkPullRequestUrl) && s.SdkPullRequestUrl.Equals(sdkPullRequest, StringComparison.OrdinalIgnoreCase)));
                     if (releasePlanWithSdkPullRequest != null)
                     {
-                        logger.LogInformation("Selected first release plan {releasePlanId} with SDK pull request {sdkPullRequest}.", releasePlanWithSdkPullRequest.ReleasePlanId, sdkPullRequest);
+                        logger.LogInformation("Selected release plan {releasePlanId} with SDK pull request {sdkPullRequest}.", releasePlanWithSdkPullRequest.ReleasePlanId, sdkPullRequest);
                         releasePlan = releasePlanWithSdkPullRequest;
                         return releasePlan;
                     }
+                    logger.LogInformation("No release plan matched the SDK pull request {sdkPullRequest}.", sdkPullRequest);
                 }
                 // If an SDK release type is provided, try to select the release plan that matches it.
                 if (!string.IsNullOrWhiteSpace(sdkReleaseType))
@@ -268,10 +269,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var releasePlanWithSdkReleaseType = releasePlans.FirstOrDefault(rp => string.Equals(rp.SDKReleaseType, sdkReleaseType, StringComparison.OrdinalIgnoreCase));
                     if (releasePlanWithSdkReleaseType != null)
                     {
-                        logger.LogInformation("Selected first release plan {releasePlanId} with SDK release type {sdkReleaseType}.", releasePlanWithSdkReleaseType.ReleasePlanId, sdkReleaseType);
+                        logger.LogInformation("Selected release plan {releasePlanId} with SDK release type {sdkReleaseType}.", releasePlanWithSdkReleaseType.ReleasePlanId, sdkReleaseType);
                         releasePlan = releasePlanWithSdkReleaseType;
                         return releasePlan;
                     }
+                    logger.LogInformation("No release plan matched the SDK release type {sdkReleaseType}.", sdkReleaseType);
                 }
                 // If no release plan was selected by SDK pull request or SDK release type, try to select the release plan with a merged pull request.
                 var releasePlanWithPrMerged = releasePlans.FirstOrDefault(rp => rp.SDKInfo.Any(s => s.PullRequestStatus.Equals("Merged")));

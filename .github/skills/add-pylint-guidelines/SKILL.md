@@ -20,7 +20,12 @@ description: Create, update, or test custom rules in `azure-pylint-guidelines-ch
    - Using the appropriate AST node classes to analyze the code structure.
    - Update the rule number range in the comment at the top of the file.
 5. Add a test case in `test_pylint_custom_plugins.py` to verify that the new guideline is correctly identified and that valid code does not trigger false positives.
-6. Update the changelog to document newly added guidelines
+6. If the rule is potentially ambiguous (e.g., it has edge cases, nuanced conditions, or may be unclear to users about what constitutes a violation), add an entry to `tools/pylint-extensions/azure-pylint-guidelines-checker/code_examples.md` with:
+   - A section header matching the rule name (e.g., `## <rule-name>`).
+   - A brief explanation of what the rule enforces and when it fires.
+   - A "violation" code snippet showing code that triggers the rule.
+   - A "compliant" code snippet showing the correct alternative.
+7. Update the changelog to document newly added guidelines
 
 ### Testing
 1. Run the tests using `pytest` to ensure your new guideline is correctly implemented.

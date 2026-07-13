@@ -749,6 +749,16 @@ main {
   color: var(--red);
   font-size: 0.72rem;
 }
+.badge-generated-by-automation {
+  background: #e8f0fe;
+  color: #6b46c1;
+  font-size: 0.72rem;
+}
+.badge-release-approval-required {
+  background: #fff3cd;
+  color: #856404;
+  font-size: 0.72rem;
+}
 .missing-product-highlight {
   margin-top: 10px;
   padding: 10px 14px;
@@ -762,6 +772,12 @@ main {
   margin: 6px 0;
 }
 .global-tag-filter {
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+.global-language-filter {
   padding: 4px 8px;
   border-radius: 4px;
   border: 1px solid var(--border);

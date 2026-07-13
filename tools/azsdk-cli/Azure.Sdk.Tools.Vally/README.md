@@ -85,7 +85,7 @@ helper, auto-refreshes every 24h) before invoking the
 
 - **Trigger evals** (one per skill, verify routing): see e.g.
   [`.github/skills/azsdk-common-prepare-release-plan/evals/trigger.eval.yaml`](https://github.com/Azure/azure-sdk-tools/blob/main/.github/skills/azsdk-common-prepare-release-plan/evals/trigger.eval.yaml),
-  plus `azsdk-common-sdk-release`, `azsdk-common-pipeline-troubleshooting`,
+  plus `azsdk-common-sdk-release`, `azsdk-common-pipeline-analysis`,
   `azsdk-common-apiview-feedback-resolution`, `sensei`,
   `skill-authoring`, `markdown-token-optimizer`.
 - **Capability suite** for [`azure-typespec-author`](https://github.com/Azure/azure-sdk-tools/tree/main/.github/skills/azure-typespec-author) —

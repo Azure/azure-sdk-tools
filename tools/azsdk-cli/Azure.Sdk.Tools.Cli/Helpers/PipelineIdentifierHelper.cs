@@ -414,6 +414,9 @@ query($owner: String!, $repo: String!, $pr: Int!) {
             catch (Exception ex)
             {
                 logger.LogDebug(ex, "Could not resolve project GUID {project} for build {buildId}", project, buildId);
+                throw new ArgumentException(
+                    $"Project GUID {project} is valid but could not be resolved for build {buildId} " +
+                    "(network error, authentication issue, or the build does not exist under that project).", ex);
             }
         }
 

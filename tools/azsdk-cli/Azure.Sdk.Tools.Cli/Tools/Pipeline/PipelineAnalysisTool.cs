@@ -373,7 +373,7 @@ public class PipelineAnalysisTool(
         }
     }
 
-    [McpServerTool(Name = AnalyzePipelineToolName), Description("Returns raw failure data for an Azure Pipeline build. Accepts an Azure Pipeline link, Build ID, GitHub Pull Request link, or PR number.")]
+    [McpServerTool(Name = AnalyzePipelineToolName), Description("Analyzes and returns structured failure data and logs from an Azure Pipeline build. Accepts an Azure Pipeline link, Build ID, GitHub Pull Request link, or PR number.")]
     public async Task<AnalyzePipelineResponse> AnalyzePipeline(
         [Description("Azure Pipeline link, Build ID, GitHub Pull Request link, or PR number")] string pipelineIdentifier,
         [Description("Pipeline project name (optional)")] string? project = null,

@@ -75,7 +75,7 @@ stimuli:
       - type: skill-invocation
         config:
           required: ["azsdk-common-pipeline-fixer"]
-          disallowed: ["azsdk-common-pipeline-troubleshooting"]
+          disallowed: ["azsdk-common-pipeline-analysis"]
       - type: tool-calls
         config:
           required:

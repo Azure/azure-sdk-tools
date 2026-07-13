@@ -20,7 +20,6 @@ Azure/azure-sdk-pr
 Azure/azure-sdk-tools
 Azure/azure-sdk-actions
 Azure/autorest
-Azure/autorest.java
 Azure/autorest.go
 Azure/autorest.cpp
 Azure/azure-rest-api-specs

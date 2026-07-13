@@ -53,7 +53,8 @@ jobs:
   - job: Evaluate
     displayName: 'Evaluate Copilot pipeline fixes'
     pool:
-      vmImage: 'ubuntu-latest'
+      name: azsdk-pool
+      demands: ImageOverride -equals ubuntu-24.04
     steps:
       - checkout: self
         fetchDepth: 1
@@ -97,7 +98,7 @@ jobs:
               DRY="--dry-run"
             fi
 
-            dotnet "$(OutDir)/azsdk.dll" azp evaluate "${{ parameters.owner }}" "${{ parameters.repo }}" \
+            dotnet "$(OutDir)/azsdk.dll" azp evaluate "$OWNER" "$REPO" \
               --since-days ${{ parameters.sinceDays }} $DRY --output json > eval.json
 
             # Fail loudly if the tool didn't produce valid JSON on stdout.
@@ -106,6 +107,8 @@ jobs:
             # Emit exactly one line the dashboard can parse out of BuildLogLine.Message.
             echo "AZSDK_PIPELINE_FIX_EVAL $(jq -c . eval.json)"
         env:
+          OWNER: ${{ parameters.owner }}
+          REPO: ${{ parameters.repo }}
           GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
 
       - task: PublishPipelineArtifact@1

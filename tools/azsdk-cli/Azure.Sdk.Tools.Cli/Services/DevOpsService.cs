@@ -1021,16 +1021,14 @@ namespace Azure.Sdk.Tools.Cli.Services
 
                         do
                         {
-                            var page = await buildClient.GetBuildsAsync(
+                            var page = await buildClient.GetBuildsAsync2(
                                 project: project,
                                 branchName: branchName,
                                 queryOrder: BuildQueryOrder.QueueTimeAscending,
                                 continuationToken: continuationToken,
-                                repositoryId: repositoryId,
-                                repositoryType: "GitHub",
                                 cancellationToken: ct);
-                            builds.AddRange(page);
-                            continuationToken = (page as IPagedList)?.ContinuationToken;
+                            builds.AddRange(page.Where(b => string.Equals(b.Repository?.Id, repositoryId, StringComparison.OrdinalIgnoreCase)));
+                            continuationToken = page.ContinuationToken;
                         }
                         while (!string.IsNullOrEmpty(continuationToken));
                     }

@@ -222,7 +222,7 @@ public class PipelineFixEvaluator(
         PullRequestCommit commit,
         DateTimeOffset failedAt,
         DateTimeOffset succeededAt) =>
-        commit.Commit?.Author?.Date is { } date && date > failedAt && date <= succeededAt;
+        (commit.Commit?.Committer?.Date ?? commit.Commit?.Author?.Date) is { } date && date > failedAt && date <= succeededAt;
 
     /// <summary>
     /// Finds the first FAILURE -> SUCCESS transition per pipeline definition from the PR's Azure

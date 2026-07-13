@@ -17,22 +17,19 @@ You are given the **full transcript of a single conversation thread**. Each mess
 
 ## Your job
 
-Judge whether the **bot's answers, taken together across the whole thread**, correctly and helpfully resolved the user's question(s). Read the entire conversation — including follow-ups and any expert messages — before deciding. Use expert messages, when present, as the strongest ground-truth signal.
+Judge whether the **bot's answers, taken together across the whole thread**, correctly and helpfully resolved the user's question(s).
 
-Return one of three verdicts:
+Evaluate the answer on its own merits — a thread where nobody replied is not automatically correct. Judge using only what is in the transcript plus your own reasoning.
 
-- **correct** — The bot's answers are technically accurate and adequately address the question(s). If an expert participated, they broadly agreed with, confirmed, or added minor detail on top of the bot's answers without contradicting them.
-- **incorrect** — The bot's answers are wrong, misleading, or miss the point. An expert who corrects, contradicts, or replaces the bot's answer is strong evidence of this verdict.
-- **unknown** — There is not enough information to judge. Use this when there is no expert confirmation and correctness cannot be determined from the content alone, when the question is ambiguous, or when the expert messages are unrelated to what the bot said.
+When experts are present, treat their messages as the strongest signal: an expert who confirms, agrees with, or builds on the bot's answer means **correct**; one who corrects, contradicts, or replaces it means **incorrect**.
 
-Guidance:
+## Verdicts
 
-- Judge only the **bot's** answers, not the experts' messages.
-- If the conversation shows the poster's problem was resolved by the bot (e.g. the poster thanks the bot or stops asking, with no expert correction), lean **correct**.
-- An expert providing a different or opposite solution supports **incorrect**.
-- If the bot said it did not know, could not help, or asked to escalate to a human, and no expert confirmed a correct answer, prefer **unknown** (unless an answer was clearly wrong).
-- Do not penalize the bot for style or verbosity — only correctness and relevance matter.
-- If the bot answered several questions with mixed quality, weigh the overall outcome: a materially wrong answer to the main question is **incorrect** even if minor follow-ups were fine.
+- **correct** — Technically accurate and adequately addresses the question(s). A helpful answer that is directionally right but slightly incomplete still counts; do not penalize minor omissions, style, or verbosity.
+- **incorrect** — Wrong, misleading, misses the point, or only treats symptoms while missing a known root cause (e.g. an underlying bug) so following it would not resolve the problem. A reply that is only an error, refusal, or "I don't know" to a question that had a real answer is not correct.
+- **unknown** — The transcript genuinely does not let you decide: the question is too ambiguous or the thread is inconclusive. Do not use this as a default just because no expert replied.
+
+## Output
 
 Reply with a JSON object containing exactly three fields:
 
@@ -42,6 +39,6 @@ Reply with a JSON object containing exactly three fields:
 
 Example responses:
 
-{"verdict": "correct", "reasoning": "The bot answered the TypeSpec question and its follow-up accurately, and the poster confirmed it worked with no expert correction.", "confidence": 0.9}
-{"verdict": "incorrect", "reasoning": "An expert pointed out the bot recommended the wrong client library and provided the correct one.", "confidence": 0.85}
-{"verdict": "unknown", "reasoning": "No expert joined and the answer's correctness cannot be verified from the thread alone.", "confidence": 0.4}
+{"verdict": "correct", "reasoning": "The bot correctly explained the TypeSpec versioning decorator and an expert later confirmed the same approach.", "confidence": 0.9}
+{"verdict": "incorrect", "reasoning": "The bot suggested a permissions fix, but the real cause was an infrastructure bug it never mentioned, so its advice would not resolve the issue.", "confidence": 0.8}
+{"verdict": "unknown", "reasoning": "The question lacks enough context to determine whether the bot's answer applies, and no expert weighed in.", "confidence": 0.4}

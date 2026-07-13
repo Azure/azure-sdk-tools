@@ -458,16 +458,7 @@ class ConversationService:
         ordered = sorted(messages, key=lambda m: m.created_at)
         first = ordered[0]
 
-        if not has_expert_reply:
-            # No expert weighed in, so nobody contradicted the bot: treat the
-            # bot's answer as correct and skip the LLM judgement entirely.
-            verdict = BotAnswerVerdict.Correct
-            reasoning = "No expert reply in the thread; bot answer left unchallenged."
-            confidence = 1.0
-        else:
-            verdict, reasoning, confidence = await self._evaluate_transcript(
-                transcript
-            )
+        verdict, reasoning, confidence = await self._evaluate_transcript(transcript)
 
         return ConversationEvaluationItem(
             conversation_id=first.conversation_id or first.conversation_partition,

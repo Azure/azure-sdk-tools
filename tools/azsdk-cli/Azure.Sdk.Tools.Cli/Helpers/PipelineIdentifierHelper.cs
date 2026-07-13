@@ -391,8 +391,9 @@ query($owner: String!, $repo: String!, $pr: Int!) {
 
     /// <summary>
     /// Validates and resolves a project name to a recognized DevOps project. Known names (public/internal)
-    /// are trusted as-is; anything else (a project GUID, the org name "azure-sdk", or a typo) is not
-    /// trusted and is resolved from the build id, since a build id uniquely identifies its project.
+    /// are trusted as-is; a project GUID is resolved to its real name via the build API, since a build id
+    /// uniquely identifies its project. Any other value (the org name "azure-sdk", a typo, etc.) is
+    /// unrecognized and rejected with an ArgumentException so callers fail early.
     /// </summary>
     private async Task<string> ResolveProjectNameAsync(int buildId, string project = null, CancellationToken ct = default)
     {

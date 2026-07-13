@@ -13,7 +13,7 @@ namespace Azure.Sdk.Tools.Mock.Handlers.Pipeline;
 /// every enum value, a complete fix must add BOTH cases; adding only one leaves the test red. This
 /// is the same bug the tools/azsdk-cli/Azure.Sdk.Tools.Vally/fixtures/analyze-pipeline/QueueClientOptionsTests fixture overlays for the
 /// fixer, so a single fixture drives both the analyze and fix quality evals. See
-/// tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/quality/ and tools/azsdk-cli/Azure.Sdk.Tools.Vally/fixtures/analyze-pipeline/QueueClientOptionsTests.
+/// tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/workflow-scenarios/mock/ and tools/azsdk-cli/Azure.Sdk.Tools.Vally/fixtures/analyze-pipeline/QueueClientOptionsTests.
 /// </summary>
 public class AnalyzePipelineHandler : IMockToolHandler
 {

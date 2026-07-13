@@ -1741,7 +1741,7 @@ class CheckDocstringParameters(BaseChecker):
             docparams.update(self._find_param(line, docstring, idx, docparams))
 
         # check for incorrect use of "kwargs" as keyword argument
-        if "kwargs" in docstring_keyword_args:
+        if "kwargs" in docstring_keyword_args and "kwargs" not in method_keyword_only_args:
             self.add_message(
                 msgid="docstring-kwargs-keyword",
                 node=node,

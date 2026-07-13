@@ -1,5 +1,11 @@
 {
   "runs": [
+    "run-2026-01-31_Azure_azure-sdk-for-python.json",
+    "run-2026-02-28_Azure_azure-sdk-for-python.json",
+    "run-2026-03-31_Azure_azure-sdk-for-python.json",
+    "run-2026-04-30_Azure_azure-sdk-for-python.json",
+    "run-2026-05-31_Azure_azure-sdk-for-python.json",
+    "run-2026-06-30_Azure_azure-sdk-for-python.json",
     "run-2026-07-09_Azure_azure-sdk-for-python.json",
     "run-2026-07-09_Azure_azure-sdk-tools.json"
   ]

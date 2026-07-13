@@ -46,7 +46,7 @@ export interface Aggregation {
     runsKept: number;
     runsSkipped: number;
     dateSpan: { earliest: string | null; latest: string | null };
-    missRateOverTime: TrendPoint[];
+    ccrRecallRateOverTime: TrendPoint[];
     bugFixPrRateOverTime: TrendPoint[];
     addressedRateBySeverityOverTime: SeverityTrendPoint[];
     bugFixPrRateByRepo: RepoRate[];
@@ -94,12 +94,12 @@ export function aggregate(
 ): Aggregation {
     const deduped = sortByTime(dedupeRuns(runs));
 
-    const missRateOverTime: TrendPoint[] = deduped.map((r) => ({
+    const ccrRecallRateOverTime: TrendPoint[] = deduped.map((r) => ({
         runId: r.run.id,
         repo: r.run.repo,
         generatedAt: r.run.generatedAt,
         windowEnd: r.run.windowEnd,
-        value: r.metrics.rates.missRate?.value ?? null,
+        value: r.metrics.rates.ccrRecallRate?.value ?? null,
     }));
 
     const bugFixPrRateOverTime: TrendPoint[] = deduped.map((r) => ({
@@ -147,7 +147,7 @@ export function aggregate(
             earliest: times[0] ?? null,
             latest: times.at(-1) ?? null,
         },
-        missRateOverTime,
+        ccrRecallRateOverTime,
         bugFixPrRateOverTime,
         addressedRateBySeverityOverTime,
         bugFixPrRateByRepo,

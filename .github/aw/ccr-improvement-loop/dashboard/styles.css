@@ -103,6 +103,37 @@ main {
   height: 300px;
 }
 
+/* Responsive grid of per-rate trend charts inside the wide trends card. */
+.trend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 1rem;
+}
+
+.trend-item {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.75rem;
+  background: var(--card);
+}
+
+.trend-item h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+}
+
+.trend-item .chart-box {
+  height: 260px;
+}
+
+/* Short explanatory caption shown under a chart. */
+.chart-note {
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
 .table-box {
   overflow-x: auto;
 }

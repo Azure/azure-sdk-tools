@@ -85,6 +85,10 @@ are marked not detectable.
 
 ## D4 — `ccrSawCode` eligibility gate: don't blame CCR for rounds it never saw
 
+> **Superseded in part by D14.** `ccrSawCode` no longer gates a headline rate; it
+> now gates only the agent-derived `isGap` flag. The retired `missRate` referenced
+> below is replaced by `ccrRecallRate` (PR-level `ccrReviewed` gate).
+
 **Decision.** A human review ask only enters the `missRate` denominator if CCR
 had a real opportunity to catch it. `attribute-comments.ts:computeCcrSawCode`
 computes this deterministically: some CCR review event must fall **at or after**
@@ -274,6 +278,53 @@ window's close, not wall-clock emit time. De-dup/supersede still keys on
 throughput varies, so a light window may fall below the n ≥ 5 / n ≥ 10 bars and
 honestly report `n/a`. GitHub search caps at 1000 hits, so a single window must
 stay ≤ ~1 month on the highest-volume repos.
+
+---
+
+## D14 — Retire `missRate`; headline `ccrRecallRate` (PR-level gate, positive framing)
+
+**Decision.** Replace the headline `missRate` (down, lower-is-better) with
+`ccrRecallRate` (up, higher-is-better): of the substantive, diff-detectable issues
+human reviewers raised on **PRs CCR reviewed** (`ccrReviewed`), the share CCR
+independently raised the same concern (`ccrAddressedConcern === true`), over such
+**judged** asks (`ccrAddressedConcern != null` abstains). Computed by the exported
+`computeCcrRecallRate` in `compute-metrics.ts`, reused verbatim by the historical
+data migration.
+
+**Why.** `missRate` was **degenerate — exactly 1.0 in every non-`n/a` run**. Its
+denominator was gated by the per-comment `ccrSawCode` timing sandwich (D4): an ask
+counts only if a CCR review event falls between the latest commit touching the
+ask's file and the human comment. That window **closes precisely when a fix commit
+lands after CCR's review — i.e. exactly when CCR succeeded** — so every CCR success
+was ejected from the denominator, leaving only misses. Cross-tabulating the emitted
+runs confirmed it: of asks with `ccrSawCode = true`, essentially none also had
+`ccrAddressedConcern = true`. The metric could not, by construction, ever report a
+catch. The name ("miss rate") also inverted the intuitive reading.
+
+**Fix.** Gate eligibility at the **PR level** (`ccrReviewed`) instead of the
+per-comment commit-timing sandwich, and frame the metric positively (recall). On
+the same eight historical runs this yields non-degenerate values (e.g. Python Jan
+2026 = 0.20, May 2026 = 0.08, others 0/n with 1–28 denominators) — real variation
+a reader can act on.
+
+**What is kept.** The agent-derived `isGap` flag (`ask ∧ isSubstantive ∧
+diffDetectable ∧ ccrSawCode ∧ !ccrAddressedConcern`, workflow `.md` line 162) is
+**unchanged** and still emitted per comment, feeding `counts.gaps`, theme
+clustering, and rule proposals. Amending it would require re-running the agent over
+history; its strictness is appropriate for "which specific misses should spawn a
+rule," even though it is the wrong basis for a headline rate. This supersedes the
+D4 claim that `ccrSawCode` gates the headline metric (it now gates only `isGap`)
+and extends D6 (same-concern judgment is now the numerator of a positive recall
+rate).
+
+**Migration.** Existing `run-*.json` carry every raw field needed
+(`prs[].ccrReviewed`, `comments[].{isSubstantive,diffDetectable,pathExcluded,ccrAddressedConcern,pr}`),
+so `ccrRecallRate` was recomputed and spliced in (dropping `metrics.rates.missRate`)
+without re-running the agent, then re-validated with `parseRun`.
+
+**Not touched.** The A/B replay-benchmark fields `experiment.missRateBefore` /
+`missRateAfter` (run-schema) belong to a separate, currently-inactive feature and
+are left as-is pending that feature's revisit.
 
 ---
 

@@ -192,9 +192,9 @@ than skewing a metric.
 - Emit **one `create-issue`** safe output titled
   `CCR Improvement Loop — <repo> (<window>)` whose body contains, in GitHub-flavored
   markdown with nested headings starting at `###`:
-  - headline metrics **sliced** (miss rate; addressed/ignored by severity; CCR
-    coverage; bug-fix PR rate), each read as a trend, with any low-confidence
-    slice (n < 5) or rate (n < 10) flagged;
+  - headline metrics **sliced** (CCR catch rate — recall vs. reviewers;
+    addressed/ignored by severity; CCR coverage; bug-fix PR rate), each read as a
+    trend, with any low-confidence slice (n < 5) or rate (n < 10) flagged;
   - the ranked **promoted** themes with source-PR citations;
   - for each promoted theme, one **generalized** proposed `.github/` instruction
     rule (imperative, not tied to a specific PR/file), for human approval.

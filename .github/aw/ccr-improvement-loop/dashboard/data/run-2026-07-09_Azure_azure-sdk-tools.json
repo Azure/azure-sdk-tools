@@ -4355,23 +4355,6 @@
           }
         ]
       },
-      "missRate": {
-        "numerator": 2,
-        "denominator": 2,
-        "value": 1,
-        "denominatorDef": "substantive ∧ diff-detectable human asks CCR could see that CCR did not raise ÷ those asks",
-        "direction": "down",
-        "lowConfidence": true,
-        "slices": [
-          {
-            "prType": "chore",
-            "severity": null,
-            "numerator": 2,
-            "denominator": 2,
-            "value": 1
-          }
-        ]
-      },
       "ccrCoverage": {
         "numerator": 38,
         "denominator": 38,
@@ -4468,6 +4451,36 @@
         "direction": "up",
         "lowConfidence": true,
         "slices": []
+      },
+      "ccrRecallRate": {
+        "numerator": 0,
+        "denominator": 14,
+        "value": 0,
+        "denominatorDef": "substantive ∧ diff-detectable human asks on CCR-reviewed PRs where CCR independently raised the same concern ÷ those judged asks",
+        "direction": "up",
+        "slices": [
+          {
+            "prType": "chore",
+            "severity": null,
+            "numerator": 0,
+            "denominator": 11,
+            "value": 0
+          },
+          {
+            "prType": "docs",
+            "severity": null,
+            "numerator": 0,
+            "denominator": 1,
+            "value": 0
+          },
+          {
+            "prType": "bug-fix",
+            "severity": null,
+            "numerator": 0,
+            "denominator": 2,
+            "value": 0
+          }
+        ]
       }
     },
     "coverageWarnings": [
@@ -4507,7 +4520,9 @@
       "ccrCommentsSeverityNull": 0,
       "ccrOutcomeUnclear": 7,
       "ccrOutcomeNull": 0,
-      "ccrDecided": 11
+      "ccrDecided": 11,
+      "ccrRecallEligible": 14,
+      "ccrRecallCaught": 0
     }
   },
   "proposedEdits": [],

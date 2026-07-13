@@ -228,6 +228,59 @@ function distinctByFindingId(
     return out;
 }
 
+/**
+ * ccrRecallRate — of the substantive, diff-detectable issues human reviewers
+ * raised on PRs CCR reviewed (and that were judged), the share CCR independently
+ * flagged the same concern (`ccrAddressedConcern === true`). This is CCR's recall
+ * measured against human reviewers as ground truth: higher is better.
+ *
+ * Eligibility is gated at the PR level (`ccrReviewed`), deliberately NOT by the
+ * per-comment `ccrSawCode` commit-timing sandwich. That per-comment gate flips to
+ * `false` precisely when a fix commit lands after CCR's review — i.e. exactly when
+ * CCR succeeded — which self-excluded every CCR success from the old `missRate`
+ * denominator and pinned it at 1.0 by construction (see decisions.md D14). Unjudged
+ * asks (`ccrAddressedConcern == null`) abstain from the denominator.
+ *
+ * Exported so the historical-data migration recomputes the metric with identical
+ * logic to the live pipeline.
+ */
+export function computeCcrRecallRate(
+    prs: PrRowOut[],
+    comments: AttributedComment[],
+    warnings: string[] = [],
+): Metric {
+    const ccrReviewedByNumber = new Map<number, boolean>(
+        prs.map((p) => [p.number, p.ccrReviewed]),
+    );
+    const prTypeByNumber = new Map<number, PrType | null>(
+        prs.map((p) => [p.number, p.prType]),
+    );
+    const humanAsks = distinctByFindingId(
+        comments.filter((c) => c.authorKind === "human" && c.kind === "ask"),
+    );
+    const eligible = humanAsks.filter(
+        (c) =>
+            c.isSubstantive === true &&
+            c.diffDetectable === true &&
+            !c.pathExcluded &&
+            ccrReviewedByNumber.get(c.pr) === true &&
+            c.ccrAddressedConcern != null,
+    );
+    return buildRate(
+        eligible.map((c) => ({
+            prType: prTypeByNumber.get(c.pr) ?? null,
+            severity: null,
+            inDen: true,
+            inNum: c.ccrAddressedConcern === true,
+        })),
+        "substantive ∧ diff-detectable human asks on CCR-reviewed PRs where CCR independently raised the same concern ÷ those judged asks",
+        "up",
+        false,
+        warnings,
+        "ccrRecallRate",
+    );
+}
+
 export function computeMetrics(
     prs: PrRowOut[],
     comments: AttributedComment[],
@@ -364,22 +417,12 @@ export function computeMetrics(
     const diffDetectableAsks = substantiveAsks.filter(
         (c) => c.diffDetectable === true,
     );
-    // missRate: of substantive, diff-detectable human asks CCR *could* have seen
-    // (ccrSawCode), the fraction CCR did not raise the same concern (isGap).
+    // missRate is retired; the headline reviewer-parity metric is now the
+    // positive `ccrRecallRate` (see decisions.md D14). The strict `eligibleAsks`
+    // / `gaps` counts below are kept (they drive theme clustering & rule
+    // proposals, which depend on the agent-derived `isGap`).
     const eligibleAsks = diffDetectableAsks.filter((c) => c.ccrSawCode);
-    rates.missRate = buildRate(
-        eligibleAsks.map((c) => ({
-            prType: typeOf(c.pr),
-            severity: null,
-            inDen: true,
-            inNum: c.isGap === true,
-        })),
-        "substantive ∧ diff-detectable human asks CCR could see that CCR did not raise ÷ those asks",
-        "down",
-        false,
-        warnings,
-        "missRate",
-    );
+    rates.ccrRecallRate = computeCcrRecallRate(prs, comments, warnings);
 
     const coverageItems: RateItem[] = prs
         .filter(
@@ -453,6 +496,8 @@ export function computeMetrics(
         diffDetectableAsks: diffDetectableAsks.length,
         eligibleAsks: eligibleAsks.length,
         gaps: eligibleAsks.filter((c) => c.isGap === true).length,
+        ccrRecallEligible: rates.ccrRecallRate.denominator ?? 0,
+        ccrRecallCaught: rates.ccrRecallRate.numerator ?? 0,
         ccrComments: ccrAll.length,
         ccrCommentsPathExcluded: ccrAll.length - ccrEligible.length,
         ccrCommentsSeverityNull: ccrSeverityNull,

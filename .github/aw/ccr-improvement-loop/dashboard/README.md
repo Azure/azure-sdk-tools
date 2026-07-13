@@ -11,8 +11,11 @@ sample) are flagged, not headlined** (see the package
 
 ## What it shows
 
-- **Miss rate over time** — one line per repo (lower is better).
-- **Bug-fix PR rate over time** — one line per repo (lower is better).
+- **Rate trends over time** — one trend chart per rate (CCR catch rate, CCR
+  coverage, bug-fix PR rate, addressed / rejected / ignored rates, critical
+  catch rate, human comments per PR, PR cycle time, iterations per PR), each
+  with one line per repo. Percentage rates share a 0–100% axis; raw-number
+  rates auto-scale. `null` renders as a gap, never zero.
 - **Addressed rate by severity** — one line per severity across the shown runs.
 - **Bug-fix PR rate by repo** — latest run per repo.
 - **Per-run headline metrics** — a table of every headline rate per run, with
@@ -61,8 +64,8 @@ To add data:
 2. Add its filename to the `runs` array in `data/manifest.json`.
 
 The sample files currently in `data/` are synthetic fixtures across two repos and
-several dates, including a thin-data run (null miss rate, low-confidence rates,
-coverage warnings) so the edge-case rendering is visible out of the box.
+several dates, including a thin-data run (null CCR catch rate, low-confidence
+rates, coverage warnings) so the edge-case rendering is visible out of the box.
 
 ## Unit tests
 

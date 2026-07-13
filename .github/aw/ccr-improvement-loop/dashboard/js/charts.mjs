@@ -23,6 +23,13 @@ const SEVERITY_COLORS = {
   nit: "#6e7781",
 };
 
+/** Fixed colors for CCR comment outcomes (grouped-bar charts). */
+export const OUTCOME_COLORS = {
+  addressed: "#1a7f37",
+  rejected: "#9a6700",
+  ignored: "#6e7781",
+};
+
 /** @type {Chart[]} */
 const liveCharts = [];
 
@@ -91,6 +98,49 @@ export function lineChart(canvas, labels, series, opts = {}) {
       },
       plugins: {
         legend: { position: "bottom" },
+      },
+    },
+  });
+  liveCharts.push(chart);
+  return chart;
+}
+
+/**
+ * Render a vertical grouped bar chart over a shared category x-axis. Each series
+ * is one bar-group color; `data` aligns by index to `categories`. A `null` value
+ * is dropped (Chart.js renders a gap, never a 0 bar). Legend shows when there is
+ * more than one series.
+ *
+ * @param {HTMLCanvasElement} canvas
+ * @param {string[]} categories
+ * @param {{label: string, data: Array<number|null>, color?: string}[]} series
+ * @param {{yLabel?: string, yMax?: number, xLabel?: string}} [opts]
+ */
+export function groupedBar(canvas, categories, series, opts = {}) {
+  const datasets = series.map((s, i) => ({
+    label: s.label,
+    data: s.data,
+    backgroundColor: s.color ?? repoColor(i),
+  }));
+
+  const chart = new Chart(canvas, {
+    type: "bar",
+    data: { labels: categories, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          title: { display: !!opts.xLabel, text: opts.xLabel ?? "" },
+        },
+        y: {
+          beginAtZero: true,
+          suggestedMax: opts.yMax,
+          title: { display: !!opts.yLabel, text: opts.yLabel ?? "" },
+        },
+      },
+      plugins: {
+        legend: { display: series.length > 1, position: "bottom" },
       },
     },
   });

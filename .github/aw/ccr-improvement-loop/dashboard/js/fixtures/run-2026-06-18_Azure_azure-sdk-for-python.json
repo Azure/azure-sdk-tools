@@ -27,7 +27,7 @@
   "themes": [],
   "metrics": {
     "rates": {
-      "missRate": {
+      "ccrRecallRate": {
         "numerator": 14,
         "denominator": 34,
         "value": 0.41,

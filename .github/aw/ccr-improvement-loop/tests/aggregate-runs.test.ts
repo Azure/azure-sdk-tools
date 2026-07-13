@@ -152,8 +152,8 @@ describe("dedupeRuns", () => {
 });
 
 describe("aggregate — fixture math", () => {
-    it("computes missRate time series in windowEnd order", () => {
-        // Run A: 1 acted-on critical human ask, CCR did not overlap → 1 miss / ? denom.
+    it("computes ccrRecallRate time series in windowEnd order", () => {
+        // Run A/B each carry one substantive human ask on a CCR-reviewed PR.
         const a = run({
             repo: "Azure/go",
             generatedAt: "2026-06-10T00:00:00Z",
@@ -167,13 +167,13 @@ describe("aggregate — fixture math", () => {
             comments: [humanAsk("substantive", true)],
         });
         const agg = aggregate([b, a]);
-        expect(agg.missRateOverTime.map((p) => p.runId)).toEqual([
+        expect(agg.ccrRecallRateOverTime.map((p) => p.runId)).toEqual([
             a.run.id,
             b.run.id,
         ]);
         // Values mirror each run's own metric exactly.
-        expect(agg.missRateOverTime[0]?.value).toBe(
-            a.metrics.rates.missRate?.value ?? null,
+        expect(agg.ccrRecallRateOverTime[0]?.value).toBe(
+            a.metrics.rates.ccrRecallRate?.value ?? null,
         );
         expect(agg.dateSpan.earliest).toBe("2026-06-10");
         expect(agg.dateSpan.latest).toBe("2026-06-12");

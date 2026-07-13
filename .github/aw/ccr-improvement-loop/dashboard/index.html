@@ -25,16 +25,13 @@
     </header>
 
     <main>
-      <section class="card">
-        <h2>Miss rate over time</h2>
-        <p class="hint">Lower is better. One line per repo.</p>
-        <div class="chart-box"><canvas id="chart-miss"></canvas></div>
-      </section>
-
-      <section class="card">
-        <h2>Bug-fix PR rate over time</h2>
-        <p class="hint">Lower is better. One line per repo.</p>
-        <div class="chart-box"><canvas id="chart-bugfix"></canvas></div>
+      <section class="card wide">
+        <h2>Rate trends over time</h2>
+        <p class="hint">
+          One chart per rate. One line per repo. <code>null</code> renders as a
+          gap, never zero.
+        </p>
+        <div id="rate-trends" class="trend-grid"></div>
       </section>
 
       <section class="card">
@@ -43,11 +40,75 @@
           Higher is better. One line per severity across the shown runs.
         </p>
         <div class="chart-box"><canvas id="chart-severity"></canvas></div>
+        <p class="chart-note">
+          Of the human review asks at each severity, the share CCR also raised.
+          Split by severity so critical misses aren't hidden by easy nit
+          catches.
+        </p>
       </section>
 
       <section class="card">
         <h2>Bug-fix PR rate by repo (latest run)</h2>
         <div class="chart-box"><canvas id="chart-byrepo"></canvas></div>
+        <p class="chart-note">
+          Share of merged PRs classified as bug-fix in each repo's latest
+          window. A proxy for escaped bugs (lower/stable is better), not proof.
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>CCR comment outcomes by severity</h2>
+        <p class="hint">
+          Pooled across the shown runs. Higher addressed is better.
+        </p>
+        <div class="chart-box">
+          <canvas id="chart-outcome-severity"></canvas>
+        </div>
+        <p class="chart-note">
+          Of the CCR comments at each severity, the share the author addressed,
+          rejected, or ignored. A high ignored share on critical comments is the
+          real problem to watch.
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>Addressed vs ignored by PR type</h2>
+        <p class="hint">Pooled across the shown runs.</p>
+        <div class="chart-box">
+          <canvas id="chart-outcome-prtype"></canvas>
+        </div>
+        <p class="chart-note">
+          Where CCR's comments land (acted on) versus where they go unaddressed,
+          split by PR type. Denominator-weighted across the window.
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>Human asks per PR by PR type</h2>
+        <p class="hint">
+          Pooled across the shown runs. An average count, not a ratio.
+        </p>
+        <div class="chart-box">
+          <canvas id="chart-humancomments-prtype"></canvas>
+        </div>
+        <p class="chart-note">
+          Average distinct substantive human review asks per PR, by PR type.
+          Shows which kinds of PRs draw the most human review attention.
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>CCR catch rate by PR type</h2>
+        <p class="hint">Pooled across the shown runs. Higher is better.</p>
+        <div class="chart-box">
+          <canvas id="chart-recall-prtype"></canvas>
+        </div>
+        <p class="chart-note">
+          Of the substantive, diff-visible issues reviewers raised on
+          CCR-reviewed PRs, the share CCR independently caught — split by PR
+          type. Small samples per type; read as a rough profile, not a precise
+          number.
+        </p>
       </section>
 
       <section class="card wide">

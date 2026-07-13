@@ -33,7 +33,8 @@
  * @property {number} runsKept
  * @property {number} runsSkipped
  * @property {{earliest: string|null, latest: string|null}} dateSpan
- * @property {TrendPoint[]} missRateOverTime
+ * @property {Record<string, TrendPoint[]>} ratesOverTime
+ * @property {TrendPoint[]} ccrRecallRateOverTime
  * @property {TrendPoint[]} bugFixPrRateOverTime
  * @property {SeverityTrendPoint[]} addressedRateBySeverityOverTime
  * @property {RepoRate[]} bugFixPrRateByRepo
@@ -41,6 +42,85 @@
 
 /** Schema version this dashboard understands; mirrors `SCHEMA_VERSION`. */
 export const SCHEMA_VERSION = "1.0";
+
+/**
+ * Ordered list of the rate keys shown in the per-run headline table and in the
+ * per-rate trend charts. headline = the primary CCR-quality signals; the rest
+ * are detail rates.
+ */
+export const HEADLINE_RATE_KEYS = [
+  "ccrRecallRate",
+  "ccrCoverage",
+  "bugFixPrRate",
+  "addressedRate",
+  "rejectedRate",
+  "ignoredRate",
+  "criticalCatchRate",
+  "humanCommentsPerPr",
+  "prCycleTime",
+  "iterationsPerPr",
+];
+
+/**
+ * Fixed display order for PR-type slice categories (stable across charts).
+ * Unknown types fall to the end, alphabetically.
+ */
+export const PR_TYPE_ORDER = [
+  "bug-fix",
+  "feature",
+  "refactor",
+  "test",
+  "docs",
+  "chore",
+];
+
+/** Fixed display order for severity slice categories. */
+export const SEVERITY_ORDER = ["critical", "substantive", "nit"];
+
+/**
+ * Pool a rate's per-slice numerators/denominators across many runs, grouped by
+ * one slice dimension. Summing raw counts (not averaging per-run rates) keeps the
+ * pooled value denominator-weighted and gives usable sample sizes on dimensions
+ * whose per-run cells are tiny. Presentation-only (dashboard charts); NOT part of
+ * the mirrored trend `aggregate` core.
+ *
+ * @param {any[]} runs
+ * @param {string} rateKey
+ * @param {"prType"|"severity"} dim
+ * @param {string[]} [order] optional category display order
+ * @returns {{category: string, numerator: number, denominator: number, value: number|null}[]}
+ */
+export function poolSlices(runs, rateKey, dim, order) {
+  /** @type {Map<string, {num: number, den: number}>} */
+  const acc = new Map();
+  for (const r of runs) {
+    const slices = r?.metrics?.rates?.[rateKey]?.slices ?? [];
+    for (const s of slices) {
+      const cat = s?.[dim];
+      if (cat == null) continue;
+      const cur = acc.get(cat) ?? { num: 0, den: 0 };
+      cur.num += s.numerator ?? 0;
+      cur.den += s.denominator ?? 0;
+      acc.set(cat, cur);
+    }
+  }
+  const rank = (c) => {
+    const i = (order ?? []).indexOf(c);
+    return i === -1 ? Number.MAX_SAFE_INTEGER : i;
+  };
+  return [...acc.entries()]
+    .map(([category, { num, den }]) => ({
+      category,
+      numerator: num,
+      denominator: den,
+      value: den > 0 ? num / den : null,
+    }))
+    .sort(
+      (a, b) =>
+        rank(a.category) - rank(b.category) ||
+        a.category.localeCompare(b.category),
+    );
+}
 
 /**
  * Light validity guard mirroring `loadRun`'s skip logic: accept only objects with
@@ -134,23 +214,25 @@ function rateValue(run, key) {
 export function aggregate(runs, skipped = 0, scanned = runs.length + skipped) {
   const deduped = sortByTime(dedupeRuns(runs));
 
-  /** @type {TrendPoint[]} */
-  const missRateOverTime = deduped.map((r) => ({
-    runId: r.run.id,
-    repo: r.run.repo,
-    generatedAt: r.run.generatedAt,
-    windowEnd: r.run.windowEnd,
-    value: rateValue(r, "missRate"),
-  }));
+  /**
+   * One trend series per rate key, aligned by run window. `value` passthrough
+   * may be `null` and is NEVER coerced to 0.
+   * @type {Record<string, TrendPoint[]>}
+   */
+  const ratesOverTime = {};
+  for (const key of HEADLINE_RATE_KEYS) {
+    ratesOverTime[key] = deduped.map((r) => ({
+      runId: r.run.id,
+      repo: r.run.repo,
+      generatedAt: r.run.generatedAt,
+      windowEnd: r.run.windowEnd,
+      value: rateValue(r, key),
+    }));
+  }
 
-  /** @type {TrendPoint[]} */
-  const bugFixPrRateOverTime = deduped.map((r) => ({
-    runId: r.run.id,
-    repo: r.run.repo,
-    generatedAt: r.run.generatedAt,
-    windowEnd: r.run.windowEnd,
-    value: rateValue(r, "bugFixPrRate"),
-  }));
+  // Kept as named aliases for existing callers/tests.
+  const ccrRecallRateOverTime = ratesOverTime.ccrRecallRate;
+  const bugFixPrRateOverTime = ratesOverTime.bugFixPrRate;
 
   /** @type {SeverityTrendPoint[]} */
   const addressedRateBySeverityOverTime = deduped.map((r) => {
@@ -189,29 +271,13 @@ export function aggregate(runs, skipped = 0, scanned = runs.length + skipped) {
       earliest: times[0] ?? null,
       latest: times.at(-1) ?? null,
     },
-    missRateOverTime,
+    ratesOverTime,
+    ccrRecallRateOverTime,
     bugFixPrRateOverTime,
     addressedRateBySeverityOverTime,
     bugFixPrRateByRepo,
   };
 }
-
-/**
- * Ordered list of the rate keys shown in the per-run headline table.
- * headline = the primary CCR-quality signals; the rest are detail rates.
- */
-export const HEADLINE_RATE_KEYS = [
-  "missRate",
-  "ccrCoverage",
-  "bugFixPrRate",
-  "addressedRate",
-  "rejectedRate",
-  "ignoredRate",
-  "criticalCatchRate",
-  "humanCommentsPerPr",
-  "prCycleTime",
-  "iterationsPerPr",
-];
 
 /**
  * @typedef {Object} HeadlineRate

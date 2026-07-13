@@ -16,6 +16,7 @@ import {
   dedupeRuns,
   isValidRun,
   perRunHeadline,
+  poolSlices,
 } from "./aggregate.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -61,15 +62,15 @@ test("isValidRun rejects malformed / wrong-version objects", () => {
 test("dedupeRuns keeps the newest generatedAt per run.id", () => {
   const older = {
     run: { id: "dup", repo: "a/b", generatedAt: "2026-01-01T00:00:00Z" },
-    metrics: { rates: { missRate: { value: 0.9 } } },
+    metrics: { rates: { ccrRecallRate: { value: 0.9 } } },
   };
   const newer = {
     run: { id: "dup", repo: "a/b", generatedAt: "2026-02-01T00:00:00Z" },
-    metrics: { rates: { missRate: { value: 0.1 } } },
+    metrics: { rates: { ccrRecallRate: { value: 0.1 } } },
   };
   const out = dedupeRuns([older, newer]);
   assert.equal(out.length, 1);
-  assert.equal(out[0].metrics.rates.missRate.value, 0.1);
+  assert.equal(out[0].metrics.rates.ccrRecallRate.value, 0.1);
 });
 
 test("a broken object is skipped by isValidRun (aggregate consumes only valid)", () => {
@@ -87,10 +88,10 @@ test("a broken object is skipped by isValidRun (aggregate consumes only valid)",
 test("null metric value stays null, never coerced to 0", () => {
   const runs = loadFixtures();
   const agg = aggregate(runs);
-  const nullPoints = agg.missRateOverTime.filter((p) => p.value === null);
-  assert.ok(nullPoints.length >= 1, "expected a null missRate fixture");
+  const nullPoints = agg.ccrRecallRateOverTime.filter((p) => p.value === null);
+  assert.ok(nullPoints.length >= 1, "expected a null ccrRecallRate fixture");
   // ensure no null became 0
-  for (const p of agg.missRateOverTime) {
+  for (const p of agg.ccrRecallRateOverTime) {
     assert.notEqual(p.value, undefined);
   }
 });
@@ -107,7 +108,7 @@ test("bugFixPrRateByRepo has one entry per repo, sorted, latest run wins", () =>
 test("trend arrays are sorted by windowEnd", () => {
   const runs = loadFixtures();
   const agg = aggregate(runs);
-  const times = agg.missRateOverTime.map((p) => p.windowEnd);
+  const times = agg.ccrRecallRateOverTime.map((p) => p.windowEnd);
   const sorted = [...times].sort();
   assert.deepEqual(times, sorted);
 });
@@ -119,6 +120,83 @@ test("addressedRateBySeverityOverTime exposes severity slices", () => {
     (p) => Object.keys(p.bySeverity).length > 0,
   );
   assert.ok(withSlices, "expected at least one run with severity slices");
+});
+
+test("poolSlices sums slice counts across runs (denominator-weighted)", () => {
+  const runs = [
+    {
+      metrics: {
+        rates: {
+          addressedRate: {
+            slices: [
+              {
+                prType: "bug-fix",
+                severity: "critical",
+                numerator: 1,
+                denominator: 4,
+              },
+              {
+                prType: "feature",
+                severity: "critical",
+                numerator: 0,
+                denominator: 2,
+              },
+            ],
+          },
+        },
+      },
+    },
+    {
+      metrics: {
+        rates: {
+          addressedRate: {
+            slices: [
+              {
+                prType: "bug-fix",
+                severity: "critical",
+                numerator: 2,
+                denominator: 6,
+              },
+            ],
+          },
+        },
+      },
+    },
+  ];
+  // Pool by severity: critical = (1+0+2) / (4+2+6) = 3/12.
+  const bySev = poolSlices(runs, "addressedRate", "severity", ["critical"]);
+  assert.deepEqual(bySev, [
+    { category: "critical", numerator: 3, denominator: 12, value: 0.25 },
+  ]);
+  // Pool by prType: bug-fix = (1+2)/(4+6)=3/10; feature = 0/2 -> value 0.
+  const byType = poolSlices(runs, "addressedRate", "prType", [
+    "bug-fix",
+    "feature",
+  ]);
+  assert.deepEqual(
+    byType.map((r) => r.category),
+    ["bug-fix", "feature"],
+  );
+  assert.equal(byType[0].value, 0.3);
+  assert.equal(byType[1].value, 0);
+});
+
+test("poolSlices yields null value when the pooled denominator is 0", () => {
+  const runs = [
+    {
+      metrics: {
+        rates: {
+          ccrRecallRate: {
+            slices: [
+              { prType: "docs", severity: null, numerator: 0, denominator: 0 },
+            ],
+          },
+        },
+      },
+    },
+  ];
+  const pooled = poolSlices(runs, "ccrRecallRate", "prType");
+  assert.equal(pooled[0].value, null);
 });
 
 test("perRunHeadline surfaces rates, lowConfidence flags and coverage warnings", () => {

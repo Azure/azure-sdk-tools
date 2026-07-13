@@ -3426,14 +3426,6 @@
           }
         ]
       },
-      "missRate": {
-        "numerator": 0,
-        "denominator": 0,
-        "value": null,
-        "denominatorDef": "substantive ∧ diff-detectable human asks CCR could see that CCR did not raise ÷ those asks",
-        "direction": "down",
-        "slices": []
-      },
       "ccrCoverage": {
         "numerator": 23,
         "denominator": 36,
@@ -3544,6 +3536,23 @@
         "direction": "up",
         "lowConfidence": true,
         "slices": []
+      },
+      "ccrRecallRate": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0,
+        "denominatorDef": "substantive ∧ diff-detectable human asks on CCR-reviewed PRs where CCR independently raised the same concern ÷ those judged asks",
+        "direction": "up",
+        "slices": [
+          {
+            "prType": "chore",
+            "severity": null,
+            "numerator": 0,
+            "denominator": 1,
+            "value": 0
+          }
+        ],
+        "lowConfidence": true
       }
     },
     "coverageWarnings": [
@@ -3583,7 +3592,9 @@
       "ccrCommentsSeverityNull": 0,
       "ccrOutcomeUnclear": 12,
       "ccrOutcomeNull": 0,
-      "ccrDecided": 10
+      "ccrDecided": 10,
+      "ccrRecallEligible": 1,
+      "ccrRecallCaught": 0
     }
   },
   "proposedEdits": [],

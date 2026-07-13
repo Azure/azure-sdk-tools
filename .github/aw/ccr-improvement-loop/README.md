@@ -209,33 +209,37 @@ the comment.
 This is the headline "is CCR missing things?" story, and it carries the two
 guards that make it defensible.
 
-### `missRate` — substantive human asks CCR didn't raise, gated twice
+### `ccrRecallRate` — the share of reviewer-caught issues CCR also caught
 
-**Measures:** of the substantive, diff-detectable human asks that **CCR had a
-real opportunity to catch**, the fraction where **CCR did not raise the same
-concern**. Lower is better.
+**Measures:** of the substantive, diff-detectable issues **human reviewers raised
+on PRs CCR reviewed**, the fraction where **CCR independently raised the same
+concern**. This is CCR's recall against human reviewers as ground truth. Higher is
+better.
 
-**Why it's valid — guard 1 (same concern, not same line):** whether CCR "already
-caught it" is an **LLM judgment that the CCR comment addresses the same concern**
-as the human ask — not line-range proximity. The old overlap check counted two
-unrelated comments three lines apart as a catch, and missed CCR flagging the same
-class of issue at a different location. Same-concern judgment removes that
-co-location fallacy in both directions.
+**Why it's valid — same concern, not same line:** whether CCR "also caught it" is
+an **LLM judgment that a CCR comment addresses the same concern** as the human ask
+(`ccrAddressedConcern`) — not line-range proximity. The old overlap check counted
+two unrelated comments three lines apart as a catch, and missed CCR flagging the
+same class of issue at a different location. Same-concern judgment removes that
+co-location fallacy in both directions. Asks the judge could not decide
+(`ccrAddressedConcern == null`) abstain from the denominator.
 
-**Why it's valid — guard 2 (`ccrSawCode`):** a human ask only enters the
-denominator if CCR actually reviewed the version of the code it anchors to. This
-is computed deterministically: CCR must have posted a review on the PR, and the
-latest commit touching the ask's file must be at or before CCR's most recent
-review that precedes the human comment. If the human is commenting on code pushed
-_after_ CCR's last look, CCR never had the chance — that ask is **excluded**, not
-scored as a miss. This closes the "blamed for a round it never reviewed" hole.
+**Why it's PR-level gated:** an ask only enters the denominator if CCR reviewed
+the PR at all (`ccrReviewed`). It deliberately does **not** use the older
+per-comment `ccrSawCode` commit-timing gate. That gate flipped to `false` exactly
+when a fix commit landed after CCR's review — i.e. precisely when CCR had
+succeeded — which self-excluded every CCR success and pinned the retired
+`missRate` at 1.0 by construction. See [decisions.md](./decisions.md) **D14**.
 
 **Limits:** the judge sees a **truncated diff hunk**, so `diffDetectable` — and
-therefore `missRate` — covers issues detectable from **local context**. Bugs that
-require whole-repo or runtime knowledge are deliberately out of scope and marked
-not-detectable. So `missRate` answers _"of the locally-detectable issues CCR
-could see, how many did it miss?"_ — a fair bar for an automated reviewer, but not
-"how good is CCR at everything." We state that framing rather than hide it.
+therefore `ccrRecallRate` — covers issues detectable from **local context**. Bugs
+that require whole-repo or runtime knowledge are deliberately out of scope and
+marked not-detectable. So `ccrRecallRate` answers _"of the locally-detectable
+issues human reviewers caught, how many did CCR also catch?"_ — a fair bar for an
+automated reviewer, but not "how good is CCR at everything." We state that framing
+rather than hide it. The agent-derived `isGap` signal (the strict, twice-gated
+per-ask miss flag) is retained internally to drive theme clustering and rule
+proposals, but is no longer surfaced as a headline rate.
 
 ### `ccrCoverage` — PRs CCR reviewed, of those eligible
 
@@ -248,7 +252,7 @@ story than on 95%. PRs merged before CCR was enabled (`ccrEnabledSince`) are
 excluded so coverage can't be dragged down by history.
 
 **Limits:** "reviewed" means CCR posted something, not that it reviewed deeply.
-Pair it with `missRate`, never read it alone.
+Pair it with `ccrRecallRate`, never read it alone.
 
 ---
 
@@ -256,7 +260,7 @@ Pair it with `missRate`, never read it alone.
 
 **Measures:** `bugFixPrRate` — the share of PRs in the window classified as
 `bug-fix`. A rising bug-fix rate on stable coverage is a signal worth watching
-next to `missRate`.
+next to `ccrRecallRate`.
 
 **Why it's a proxy, not proof:** it counts merged bugs but does not attribute them
 to a review CCR could have caught. That's deliberate. An earlier design traced a

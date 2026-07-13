@@ -259,33 +259,28 @@ describe("compute-metrics", () => {
         expect(rate(m, "humanCommentsPerPr").numerator).toBe(1);
     });
 
-    it("missRate counts gaps over ccrSawCode substantive diff-detectable asks", () => {
-        const prs = [pr({ number: 1 })];
+    it("ccrRecallRate: caught over judged substantive diff-detectable asks on CCR-reviewed PRs", () => {
+        const prs = [pr({ number: 1 }), pr({ number: 2, ccrReviewed: false })];
         const comments = [
             comment({
                 pr: 1,
                 isSubstantive: true,
                 diffDetectable: true,
-                ccrSawCode: true,
-                isGap: true,
-                ccrAddressedConcern: false,
+                ccrAddressedConcern: true,
                 lineStart: 1,
             }),
             comment({
                 pr: 1,
                 isSubstantive: true,
                 diffDetectable: true,
-                ccrSawCode: true,
-                isGap: false,
-                ccrAddressedConcern: true,
+                ccrAddressedConcern: false,
                 lineStart: 2,
             }),
             comment({
                 pr: 1,
                 isSubstantive: true,
                 diffDetectable: true,
-                ccrSawCode: false,
-                isGap: false,
+                ccrAddressedConcern: null,
                 lineStart: 3,
             }),
             comment({
@@ -294,12 +289,21 @@ describe("compute-metrics", () => {
                 diffDetectable: true,
                 lineStart: 4,
             }),
+            comment({
+                pr: 2,
+                isSubstantive: true,
+                diffDetectable: true,
+                ccrAddressedConcern: true,
+                lineStart: 5,
+            }),
         ];
         const m = computeMetrics(prs, comments, OPTS);
-        const miss = rate(m, "missRate");
-        // the ccrSawCode=false ask is excluded from the denominator.
-        expect(miss.numerator).toBe(1);
-        expect(miss.denominator).toBe(2);
+        const recall = rate(m, "ccrRecallRate");
+        // Unjudged (null) ask abstains; the ask on the non-CCR-reviewed PR is
+        // excluded by the PR-level gate.
+        expect(recall.numerator).toBe(1);
+        expect(recall.denominator).toBe(2);
+        expect(recall.direction).toBe("up");
     });
 
     it("ccrCoverage excludes bot-authored and pre-enablement PRs", () => {

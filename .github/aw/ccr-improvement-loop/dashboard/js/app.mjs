@@ -11,12 +11,21 @@ import {
   isValidRun,
   perRunHeadline,
   HEADLINE_RATE_KEYS,
+  poolSlices,
+  PR_TYPE_ORDER,
+  SEVERITY_ORDER,
 } from "./aggregate.mjs";
-import { lineChart, barChart, destroyCharts } from "./charts.mjs";
+import {
+  lineChart,
+  barChart,
+  groupedBar,
+  destroyCharts,
+  OUTCOME_COLORS,
+} from "./charts.mjs";
 
 /** Rates rendered as percentages (0..1 ratios). Others shown as raw numbers. */
 const PERCENT_RATES = new Set([
-  "missRate",
+  "ccrRecallRate",
   "ccrCoverage",
   "bugFixPrRate",
   "addressedRate",
@@ -27,7 +36,7 @@ const PERCENT_RATES = new Set([
 
 /** Human-friendly labels for the rate keys. */
 const RATE_LABELS = {
-  missRate: "Miss rate",
+  ccrRecallRate: "CCR catch rate",
   ccrCoverage: "CCR coverage",
   bugFixPrRate: "Bug-fix PR rate",
   addressedRate: "Addressed rate",
@@ -48,12 +57,12 @@ const COLUMN_TIPS = {
   windowEnd:
     "End of the settled time window this run measured. Each run is one window (a data point), and trends are plotted by this date — so read metrics as a trend across windows.",
   prCount: "Number of PRs evaluated in this window.",
-  missRate:
-    "Of the locally-detectable substantive human asks CCR had a real chance to catch, the share CCR did NOT raise. Lower is better.",
+  ccrRecallRate:
+    "Of the substantive, diff-visible issues human reviewers raised on CCR-reviewed PRs, the share CCR independently flagged the same concern. CCR's recall against human reviewers. Higher is better.",
   ccrCoverage:
     "Share of eligible PRs (post-enablement, non-bot) that received any CCR review. Frames every other quality number. Higher is better.",
   bugFixPrRate:
-    "Share of merged PRs classified as bug-fix. A proxy for escaped bugs, not proof. Read next to miss rate; lower/stable is better.",
+    "Share of merged PRs classified as bug-fix. A proxy for escaped bugs, not proof. Read next to CCR catch rate; lower/stable is better.",
   addressedRate:
     "Share of CCR comments the author acted on (changed the code at those lines). Higher is better.",
   rejectedRate:
@@ -274,23 +283,8 @@ function render() {
     `Runs kept: ${String(agg.runsKept)} · skipped: ${String(TOTAL_SKIPPED)} · ` +
     `repos shown: ${String(SELECTED_REPOS.size)} · span: ${span}`;
 
-  // Miss rate over time (one line per repo)
-  const missLabels = unionDateLabels(agg.missRateOverTime);
-  lineChart(
-    /** @type {HTMLCanvasElement} */ (el("chart-miss")),
-    missLabels,
-    seriesByRepo(agg.missRateOverTime, missLabels),
-    { yLabel: "miss rate", yMax: 1 },
-  );
-
-  // Bug-fix PR rate over time (one line per repo)
-  const bugLabels = unionDateLabels(agg.bugFixPrRateOverTime);
-  lineChart(
-    /** @type {HTMLCanvasElement} */ (el("chart-bugfix")),
-    bugLabels,
-    seriesByRepo(agg.bugFixPrRateOverTime, bugLabels),
-    { yLabel: "bug-fix PR rate", yMax: 1 },
-  );
+  // Per-rate trend charts (one chart per rate, one line per repo).
+  renderRateTrends(agg);
 
   // Addressed rate by severity (one line per severity) over the filtered runs.
   renderSeverityChart(agg.addressedRateBySeverityOverTime);
@@ -305,7 +299,170 @@ function render() {
     { xLabel: "bug-fix PR rate" },
   );
 
+  // Slice breakdowns pooled across the filtered runs (denominator-weighted).
+  renderSliceCharts(runs);
+
   renderTable(runs);
+}
+
+/**
+ * Render the four pooled slice-breakdown charts. Each pools per-slice counts
+ * across all filtered runs (denominator-weighted), so small per-run cells add up
+ * to usable samples. Bars whose pooled denominator is 0 are dropped, and a chart
+ * with no data at all is left blank.
+ *
+ * @param {any[]} runs
+ */
+function renderSliceCharts(runs) {
+  // 1. CCR comment outcomes (addressed / rejected / ignored) by severity.
+  {
+    const addressed = poolSlices(
+      runs,
+      "addressedRate",
+      "severity",
+      SEVERITY_ORDER,
+    );
+    const rejected = poolSlices(
+      runs,
+      "rejectedRate",
+      "severity",
+      SEVERITY_ORDER,
+    );
+    const ignored = poolSlices(runs, "ignoredRate", "severity", SEVERITY_ORDER);
+    const cats = SEVERITY_ORDER.filter((s) =>
+      addressed.some((r) => r.category === s && r.denominator > 0),
+    );
+    const pick = (rows, cat) =>
+      rows.find((r) => r.category === cat)?.value ?? null;
+    groupedBar(
+      /** @type {HTMLCanvasElement} */ (el("chart-outcome-severity")),
+      cats,
+      [
+        {
+          label: "addressed",
+          data: cats.map((c) => pick(addressed, c)),
+          color: OUTCOME_COLORS.addressed,
+        },
+        {
+          label: "rejected",
+          data: cats.map((c) => pick(rejected, c)),
+          color: OUTCOME_COLORS.rejected,
+        },
+        {
+          label: "ignored",
+          data: cats.map((c) => pick(ignored, c)),
+          color: OUTCOME_COLORS.ignored,
+        },
+      ],
+      { yLabel: "share of CCR comments", yMax: 1 },
+    );
+  }
+
+  // 2. Addressed vs ignored rate by PR type.
+  {
+    const addressed = poolSlices(
+      runs,
+      "addressedRate",
+      "prType",
+      PR_TYPE_ORDER,
+    );
+    const ignored = poolSlices(runs, "ignoredRate", "prType", PR_TYPE_ORDER);
+    const cats = addressed
+      .filter((r) => r.denominator > 0)
+      .map((r) => r.category);
+    const pick = (rows, cat) =>
+      rows.find((r) => r.category === cat)?.value ?? null;
+    groupedBar(
+      /** @type {HTMLCanvasElement} */ (el("chart-outcome-prtype")),
+      cats,
+      [
+        {
+          label: "addressed",
+          data: cats.map((c) => pick(addressed, c)),
+          color: OUTCOME_COLORS.addressed,
+        },
+        {
+          label: "ignored",
+          data: cats.map((c) => pick(ignored, c)),
+          color: OUTCOME_COLORS.ignored,
+        },
+      ],
+      { yLabel: "share of CCR comments", yMax: 1 },
+    );
+  }
+
+  // 3. Human asks per PR by PR type (an average count, not a ratio).
+  {
+    const pooled = poolSlices(
+      runs,
+      "humanCommentsPerPr",
+      "prType",
+      PR_TYPE_ORDER,
+    ).filter((r) => r.denominator > 0);
+    groupedBar(
+      /** @type {HTMLCanvasElement} */ (el("chart-humancomments-prtype")),
+      pooled.map((r) => r.category),
+      [{ label: "human asks / PR", data: pooled.map((r) => r.value) }],
+      { yLabel: "asks per PR" },
+    );
+  }
+
+  // 4. CCR catch rate (recall vs reviewers) by PR type.
+  {
+    const pooled = poolSlices(
+      runs,
+      "ccrRecallRate",
+      "prType",
+      PR_TYPE_ORDER,
+    ).filter((r) => r.denominator > 0);
+    groupedBar(
+      /** @type {HTMLCanvasElement} */ (el("chart-recall-prtype")),
+      pooled.map((r) => r.category),
+      [{ label: "CCR catch rate", data: pooled.map((r) => r.value) }],
+      { yLabel: "catch rate", yMax: 1 },
+    );
+  }
+}
+
+/**
+ * Render one trend line chart per rate key into #rate-trends. Percentage rates
+ * are capped to a 0..1 y-axis; raw-number rates (comments/PR, cycle time,
+ * iterations) auto-scale. Rates with no measured value in any shown run are
+ * skipped so empty charts don't add noise.
+ *
+ * @param {import("./aggregate.mjs").Aggregation} agg
+ */
+function renderRateTrends(agg) {
+  const grid = el("rate-trends");
+  grid.innerHTML = "";
+  for (const key of HEADLINE_RATE_KEYS) {
+    const points = agg.ratesOverTime[key] ?? [];
+    if (!points.some((p) => p.value != null)) continue;
+
+    const box = document.createElement("div");
+    box.className = "trend-item";
+    const title = document.createElement("h3");
+    title.textContent = RATE_LABELS[key] ?? key;
+    const chartBox = document.createElement("div");
+    chartBox.className = "chart-box";
+    const canvas = document.createElement("canvas");
+    chartBox.append(canvas);
+    box.append(title, chartBox);
+    const tip = COLUMN_TIPS[key];
+    if (tip) {
+      const note = document.createElement("p");
+      note.className = "chart-note";
+      note.textContent = tip;
+      box.append(note);
+    }
+    grid.append(box);
+
+    const labels = unionDateLabels(points);
+    lineChart(canvas, labels, seriesByRepo(points, labels), {
+      yLabel: RATE_LABELS[key] ?? key,
+      yMax: PERCENT_RATES.has(key) ? 1 : undefined,
+    });
+  }
 }
 
 /**

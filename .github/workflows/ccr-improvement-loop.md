@@ -16,6 +16,9 @@ on:
       window_end:
         description: "Backfill window end YYYY-MM-DD (empty = settle cutoff, today - settle-days)"
         required: false
+      max_prs:
+        description: "Cap PRs per window (empty/0 = uncapped full cohort). Use to stay under the API rate limit on high-volume repos."
+        required: false
 # One run per (repo, ref) — no schedule/dispatch races.
 concurrency:
   group: ccr-loop-${{ github.event.inputs.repo || github.repository }}
@@ -52,6 +55,10 @@ env:
   # falls back to its rolling settled window.
   WINDOW_START: ${{ github.event.inputs.window_start }}
   WINDOW_END: ${{ github.event.inputs.window_end }}
+  # Optional per-window PR cap; empty on the weekly schedule so prep-run stays
+  # uncapped (full cohort). Set on manual backfills of high-volume repos to
+  # bound API calls under the App installation rate limit.
+  MAX_PRS: ${{ github.event.inputs.max_prs }}
   CCR_CACHE: ${{ github.workspace }}/.ccr-cache
   CCR_RUNS: ${{ github.workspace }}/.ccr-runs
 # Deterministic data prep runs as custom steps (outside the agent sandbox, with
@@ -96,7 +103,8 @@ steps:
       # schedule leaves them empty and prep-run uses its rolling window.
       node ./scripts/prep-run.ts --repo "$TARGET_REPO" --cache-dir "$CCR_CACHE" \
         ${WINDOW_START:+--window-start "$WINDOW_START"} \
-        ${WINDOW_END:+--window-end "$WINDOW_END"}
+        ${WINDOW_END:+--window-end "$WINDOW_END"} \
+        ${MAX_PRS:+--max-prs "$MAX_PRS"}
 ---
 
 # CCR Improvement Loop

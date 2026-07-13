@@ -108,6 +108,18 @@ extends:
                   AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
                   SYSTEM_ACCESSTOKEN: $(System.AccessToken)
 
+              - task: Bash@3
+                displayName: 'Score Against Baseline'
+                inputs:
+                  targetType: inline
+                  workingDirectory: $(workingDirectory)
+                  script: |
+                    set -euo pipefail
+                    python eval_baseline/score_baseline.py \
+                      --run "$(Build.ArtifactStagingDirectory)/eval" \
+                      --baseline eval_baseline/baseline.json \
+                      --summary-json "$(Build.ArtifactStagingDirectory)/eval/baseline_score.json"
+
               - task: 1ES.PublishPipelineArtifact@1
                 displayName: 'Publish Evaluation Artifact'
                 inputs:

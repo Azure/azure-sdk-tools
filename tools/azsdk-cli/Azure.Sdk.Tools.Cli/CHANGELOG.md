@@ -1,14 +1,14 @@
 # Release History
 
-## 0.6.26 (Unreleased)
-
-### Features Added
+## 0.6.26 (2026-07-09)
 
 ### Breaking Changes
 
-### Bugs Fixed
+- `azsdk config codeowners check-package` now returns structured issue results with target-aware metadata (`resolved_target`, `resolved_target_type`, `issues[]`), issue-specific `/owners ...` fix prompts, and a CODEOWNERS-specific support link. 
 
 ### Other Changes
+
+`eng/common/scripts/Test-CodeownersForArtifacts.ps1` now prints each `check-package` result and summarizes failed packages with the matching issue text and prompt template.
 
 ## 0.6.25 (2026-07-07)
 
@@ -17,6 +17,8 @@
 - `azsdk_update_sdk_details_in_release_plan` now marks languages with missing emitter configuration in the TypeSpec project as `MissingEmitterConfig` instead of `Requested` in the release plan work item, so the release plan dashboard shows a distinct "Missing emitter configuration" label instead of the misleading "Exclusion Requested" label.
 
 ### Bugs Fixed
+
+- Reading the status, checks, and labels of a public pull request (for example, the spec pull request during SDK generation) no longer requires GitHub authentication. These read-only operations are now attempted anonymously first, and only fall back to an authenticated request (prompting the user to run `gh auth login`) when GitHub indicates authentication is required, such as for a private repository.
 
 - The create release plan tool no longer accepts an `--sdk-type` parameter. The SDK release type is now always derived from the API release type (GA maps to a stable SDK release, preview maps to a beta SDK release), preventing a stable SDK release from a preview API version.
 

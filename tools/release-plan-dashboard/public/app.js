@@ -74,6 +74,7 @@
         prLang: "",
         prStatus: "",
         tag: "",
+        language: "",
       },
       prFilterVisible: false,
     },
@@ -363,6 +364,23 @@
     }
   }
 
+  // The automation account used to auto-create release plans. When a plan is
+  // submitted by this account there is no real service-team member to act, so
+  // the submitter name is omitted from "Action required from" labels.
+  const AUTOMATION_SUBMITTER = "azure-sdk-1es-open-source-assistant";
+
+  function isAutomationSubmitter(submittedBy) {
+    return (submittedBy || "").toLowerCase().trim() === AUTOMATION_SUBMITTER;
+  }
+
+  // Builds the "Service Team" action label, including the submitter name unless
+  // the plan was submitted by the automation account.
+  function serviceTeamLabel(submittedBy) {
+    return submittedBy && !isAutomationSubmitter(submittedBy)
+      ? `Service Team (${submittedBy})`
+      : "Service Team";
+  }
+
   // A language is excluded only when ReleaseExclusionStatus is "Approved"
   function isLangExcluded(exclusionStatus) {
     const val = (exclusionStatus || "").toLowerCase().trim();
@@ -421,9 +439,7 @@
     const apiReady = (p.apiReadiness || "").toLowerCase();
 
     // Step 1: API Spec checks
-    const serviceTeam = p.submittedBy
-      ? `Service Team (${p.submittedBy})`
-      : "Service Team";
+    const serviceTeam = serviceTeamLabel(p.submittedBy);
     if (!specPrUrl)
       return {
         status: "API Spec Not Available",
@@ -581,6 +597,70 @@
 
       return isMergedOrCompleted && !isReleasedOrCompleted;
     });
+  }
+
+  // A release plan was created by automation when Custom.CreatedUsing is "Automation".
+  function isGeneratedByAutomationPlan(p) {
+    return (p.createdUsing || "").toLowerCase() === "automation";
+  }
+
+  // A release plan needs release approval when any active language has a
+  // release status of "Approval pending" (approve the package release in the
+  // release pipeline).
+  function isReleaseApprovalRequiredPlan(p) {
+    const langs = p.languages || {};
+    return Object.keys(langs).some((k) => {
+      const l = langs[k];
+      if (isLangExcluded(l.exclusionStatus)) return false;
+      if (isLangMissingEmitterConfig(l.exclusionStatus)) return false;
+      return (l.releaseStatus || "").toLowerCase() === "approval pending";
+    });
+  }
+
+  // A release plan failed SDK generation when any active language has a
+  // generation failure (generation status failed/errored, or the SDK pull
+  // request status reports "Failed to generate SDK.").
+  function isSdkGenerationFailedPlan(p) {
+    const langs = p.languages || {};
+    return Object.keys(langs).some((k) => {
+      const l = langs[k];
+      if (isLangExcluded(l.exclusionStatus)) return false;
+      if (isLangMissingEmitterConfig(l.exclusionStatus)) return false;
+      const gen = (l.generationStatus || "").toLowerCase();
+      const prStatus = (l.prStatus || "").toLowerCase().trim();
+      if (gen.includes("failed") || gen.includes("error")) return true;
+      return !l.sdkPrUrl && prStatus === "failed to generate sdk.";
+    });
+  }
+
+  // ── Language filter helpers ─────────────────────────────────
+  function getLanguageFilter() {
+    return store().filters.language || "";
+  }
+
+  // Returns a shallow clone of the plan whose `languages` map is narrowed to a
+  // single language. Used so the release plan tab can display only the selected
+  // language's SDK details and action required guidance.
+  function narrowPlanToLanguage(p, lang) {
+    const langs = p.languages || {};
+    if (!lang || !langs[lang]) return p;
+    return { ...p, languages: { [lang]: langs[lang] } };
+  }
+
+  // Resolves the plan used for display. When a language filter is active on the
+  // release plan tab, the plan is narrowed to the selected language.
+  function displayPlan(p) {
+    const lang = getLanguageFilter();
+    if (lang && store().activeTab === "tab-release-plans") {
+      return narrowPlanToLanguage(p, lang);
+    }
+    return p;
+  }
+
+  // Action required from the service team (or a service team member) — used to
+  // decide which "Action required from" badges are surfaced on release plan tiles.
+  function isServiceTeamAction(action) {
+    return (action || "").toLowerCase().includes("service team");
   }
 
   // Parse "MMMM yyyy" into a sortable Date (or far future if unparseable)
@@ -765,9 +845,11 @@
           (p.releaseMonth || "").toLowerCase() === monthFilter.toLowerCase(),
       );
     const tagFilter = store().filters.tag;
+    const langFilter = store().filters.language;
     if (tagFilter) {
       filtered = filtered.filter((p) => {
-        const langs = p.languages || {};
+        const pt = langFilter ? narrowPlanToLanguage(p, langFilter) : p;
+        const langs = pt.languages || {};
         if (tagFilter === "first-preview") {
           return Object.values(langs).some(
             (l) => l.isFirstPreview && l.packageName,
@@ -777,7 +859,16 @@
           return Object.values(langs).some((l) => l.isFirstGA && l.packageName);
         }
         if (tagFilter === "sdk-ready-to-release") {
-          return isSdkReadyToReleasePlan(p);
+          return isSdkReadyToReleasePlan(pt);
+        }
+        if (tagFilter === "generated-by-automation") {
+          return isGeneratedByAutomationPlan(pt);
+        }
+        if (tagFilter === "release-approval-required") {
+          return isReleaseApprovalRequiredPlan(pt);
+        }
+        if (tagFilter === "sdk-generation-failed") {
+          return isSdkGenerationFailedPlan(pt);
         }
         return true;
       });
@@ -789,7 +880,13 @@
     // Detect if filtering is active (needed by splitByState)
     const params = new URLSearchParams(window.location.search);
     const singlePlan = params.get("releasePlan") || params.get("releaseplan");
-    const isFiltering = !!(filter || singlePlan || monthFilter);
+    const isFiltering = !!(
+      filter ||
+      singlePlan ||
+      monthFilter ||
+      tagFilter ||
+      langFilter
+    );
 
     function sortByReleaseMonth(a, b) {
       return (
@@ -866,22 +963,22 @@
     sec.dataFinished = dataSplit.finished;
     store().isFiltering = isFiltering;
 
-    // Hide plane columns based on global plane filter
+    // Hide plane columns based on global plane filter, and hide a plane group
+    // entirely when filtering yields no release plans for that plane.
     const mgmtCol = document.getElementById("plane-col-mgmt");
     const dataCol = document.getElementById("plane-col-data");
-    if (mgmtCol) mgmtCol.style.display = planeFilter === "data" ? "none" : "";
-    if (dataCol) dataCol.style.display = planeFilter === "mgmt" ? "none" : "";
+    const mgmtHidden =
+      planeFilter === "data" || (isFiltering && mgmt.length === 0);
+    const dataHidden =
+      planeFilter === "mgmt" || (isFiltering && data.length === 0);
+    if (mgmtCol) mgmtCol.style.display = mgmtHidden ? "none" : "";
+    if (dataCol) dataCol.style.display = dataHidden ? "none" : "";
 
-    // Hide plane headings when single releasePlan param or when plane has no items
+    // Show plane headings (a hidden column above already hides its heading).
     const mgmtHeading = $(".plane-heading-mgmt");
     const dataHeading = $(".plane-heading-data");
-    if (singlePlan) {
-      if (mgmtHeading) mgmtHeading.style.display = mgmt.length ? "" : "none";
-      if (dataHeading) dataHeading.style.display = data.length ? "" : "none";
-    } else {
-      if (mgmtHeading) mgmtHeading.style.display = "";
-      if (dataHeading) dataHeading.style.display = "";
-    }
+    if (mgmtHeading) mgmtHeading.style.display = "";
+    if (dataHeading) dataHeading.style.display = "";
 
     // Stats — update Alpine store
     const totalInProgress =
@@ -951,6 +1048,10 @@
 
   /** Generates the HTML for a release plan card (collapsed summary + expandable detail). */
   function cardHTML(p, options) {
+    const isPmCard = !!(options && options.showPmAction);
+    // The language filter only narrows cards on the Release Plans tab. PM view
+    // cards must keep all languages (their categorization uses the full plan).
+    if (!isPmCard) p = displayPlan(p);
     const showPmAction = !!(options && options.showPmAction && currentUserIsPM);
     const pastDue = isPastDue(p);
     const cardClass = pastDue ? "plan-card past-due" : "plan-card";
@@ -959,6 +1060,9 @@
       (p.createdUsing || "").toLowerCase() === "copilot"
         ? '<span class="badge badge-created-using">Copilot</span>'
         : "";
+    const automationBadge = isGeneratedByAutomationPlan(p)
+      ? '<span class="badge badge-generated-by-automation">Generated by automation</span>'
+      : "";
     const rt = (p.releaseType || "").toLowerCase();
     const sdkTypeBadge =
       rt.includes("beta") || rt.includes("preview")
@@ -977,7 +1081,10 @@
         ? `<span class="step-badge ${step.statusClass}">${esc(step.status)}</span>`
         : "";
     const actionHTML =
-      step.action && !isTerminal && !(showPmAction && p._pmAction)
+      step.action &&
+      !isTerminal &&
+      !(showPmAction && p._pmAction) &&
+      isServiceTeamAction(step.action)
         ? `<span class="action-badge">Action required from: ${esc(step.action)}</span>`
         : "";
     const dupHTML = p._duplicateOf
@@ -1001,6 +1108,9 @@
       if (isSdkReadyToReleasePlan(p) && step.status !== "SDK Ready To Release")
         releaseTagBadge +=
           '<span class="badge badge-sdk-ready-to-release">SDK Ready To Release</span>';
+      if (isReleaseApprovalRequiredPlan(p))
+        releaseTagBadge +=
+          '<span class="badge badge-release-approval-required">Release approval required</span>';
     }
     const missingProductBadge = !p.productId
       ? '<span class="badge badge-missing-product">Missing product details</span>'
@@ -1022,7 +1132,7 @@
       <div class="${summaryClass}"${isExpanded ? ' data-pr-loaded="1"' : ""}>
         <span class="card-chevron">&#9654;</span>
         <div class="card-title">
-          ${esc(p.title)} ${copilotBadge} ${sdkTypeBadge} ${releaseTagBadge} ${missingProductBadge} ${missingEmitterConfigBadge}
+          ${esc(p.title)} ${copilotBadge} ${automationBadge} ${sdkTypeBadge} ${releaseTagBadge} ${missingProductBadge} ${missingEmitterConfigBadge}
         </div>
         <div class="card-meta">
           ${p.releaseMonth ? `<span>${esc(p.releaseMonth)}</span>` : ""}
@@ -1224,10 +1334,9 @@
         <p>One or more SDK pull requests are in <strong>draft</strong> status. Mark them as ready for review on GitHub so the SDK team can begin their review.</p>
       </div>`;
     } else if (step.status === "SDK Review In Progress") {
-      actionContent = `<div class="action-item">
-        <strong>SDK PRs Under Review:</strong>
-        <p>SDK pull requests are currently being reviewed. Please ensure all required reviews are addressed.</p>
-      </div>`;
+      // SDK pull requests are being reviewed by the SDK review team. No action
+      // is required from the service team, so nothing is surfaced here.
+      actionContent = "";
     } else if (step.status === "SDK To Be Merged") {
       actionContent = `<div class="action-item">
         <strong>Merge SDK PRs:</strong>
@@ -1248,7 +1357,8 @@
         return (
           (st.includes("merged") || st.includes("completed")) &&
           rel !== "completed" &&
-          rel !== "released"
+          rel !== "released" &&
+          rel !== "approval pending"
         );
       });
       const langList = toRelease.length
@@ -1258,7 +1368,8 @@
         .map((k) => langs[k].packageName)
         .filter(Boolean)
         .join(", ");
-      actionContent = `<div class="action-item">
+      if (toRelease.length) {
+        actionContent = `<div class="action-item">
         <strong>Release SDKs (${esc(langList)}):</strong>
         <ol>
           <li>Open <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">copilot-cli</a> from the <code>azure-rest-api-specs</code> or SDK language repo path, or open the repo in VS Code and open GitHub Copilot chat</li>
@@ -1268,6 +1379,7 @@
           <li>After the build stage completes, approve the release stage in the release pipeline</li>
         </ol>
       </div>`;
+      }
     }
 
     // Check for SDK PRs with failed checks
@@ -1343,6 +1455,30 @@
       }
     }
 
+    // Release approval pending — the service team must approve the package
+    // release using the release pipeline.
+    {
+      const langs = p.languages || {};
+      const approvalLangs = Object.keys(langs).filter((k) => {
+        if (isLangExcluded(langs[k].exclusionStatus)) return false;
+        if (isLangMissingEmitterConfig(langs[k].exclusionStatus)) return false;
+        return (
+          (langs[k].releaseStatus || "").toLowerCase() === "approval pending"
+        );
+      });
+      for (const lang of approvalLangs) {
+        const l = langs[lang];
+        const pipeline = l.releasePipeline || "";
+        const pipelineLink = pipeline
+          ? ` <a href="${esc(pipeline)}" target="_blank" rel="noopener">Open release pipeline</a>`
+          : "";
+        actionContent += `<div class="action-item action-item-warning" style="margin-top:10px;">
+          <strong>Approve the package release using release pipeline (${esc(lang)}):</strong>
+          <p>The release for ${esc(l.packageName || lang)} is pending approval. Approve the package release using the release pipeline.${pipelineLink}</p>
+        </div>`;
+      }
+    }
+
     // Additional prompt: if package details are missing but spec info is available
     const hasSpecInfo = specPrUrl || specPath;
     if (hasSpecInfo) {
@@ -1391,7 +1527,6 @@
     {
       const langs = p.languages || {};
       let needsServiceTeam = false;
-      let needsReviewTeam = false;
       for (const k of Object.keys(langs)) {
         if (isLangExcluded(langs[k].exclusionStatus)) continue;
         if (isLangMissingEmitterConfig(langs[k].exclusionStatus)) continue;
@@ -1412,9 +1547,11 @@
         ) {
           needsServiceTeam = true;
         }
-        // Open PR → review team
-        if (st === "open") {
-          needsReviewTeam = true;
+        // Release approval pending → service team
+        if (
+          (langs[k].releaseStatus || "").toLowerCase() === "approval pending"
+        ) {
+          needsServiceTeam = true;
         }
       }
       // Non-PR actions (spec not ready, SDK not generated) → service team
@@ -1427,23 +1564,7 @@
       ) {
         needsServiceTeam = true;
       }
-      if (needsServiceTeam)
-        actionFrom.push(
-          p.submittedBy ? `Service Team (${p.submittedBy})` : "Service Team",
-        );
-      if (needsReviewTeam) actionFrom.push("SDK PR Reviewer");
-      // Namespace approval action is for service partner team
-      const isMgmtForAction = classifyPlane(p) === "mgmt";
-      const hasFirstPreviewForAction = Object.values(langs).some(
-        (l) => l.isFirstPreview && l.packageName,
-      );
-      if (
-        isMgmtForAction &&
-        hasFirstPreviewForAction &&
-        !p.namespaceApprovalIssue
-      ) {
-        actionFrom.push("Service Partner Team");
-      }
+      if (needsServiceTeam) actionFrom.push(serviceTeamLabel(p.submittedBy));
     }
     const actionFromHTML = actionFrom.length
       ? `<div class="action-from-label">Action required from: <strong>${esc(actionFrom.join(" & "))}</strong></div>`
@@ -1637,7 +1758,10 @@
       html += `<div class="detail-row detail-step-highlight">
         <strong>Current stage:</strong> <span class="step-badge ${step.statusClass}">${esc(step.status)}</span>`;
       if (step.action) {
-        if (!(showPmAction && p._pmAction)) {
+        if (
+          !(showPmAction && p._pmAction) &&
+          isServiceTeamAction(step.action)
+        ) {
           html += ` <strong>Action required from:</strong> <span class="action-badge">${esc(step.action)}</span>`;
         }
       }
@@ -1862,12 +1986,46 @@
               feedLinkCell = `<a href="${esc(feedUrl)}" target="_blank" rel="noopener" title="View on ${feedInfo.name}">${feedInfo.icon} ${feedInfo.name}</a>`;
             }
 
+            // PR Status cell — when a PR exists, show its status. Otherwise
+            // surface SDK generation status/pipeline links so the service team
+            // can track generation progress or failures.
+            let prStatusCell = "";
+            if (l.sdkPrUrl) {
+              prStatusCell = statusSpan(l.sdkPrGitHubStatus || l.prStatus);
+            } else {
+              const prStatusText = (l.prStatus || "").toLowerCase().trim();
+              const genStatus = l.generationStatus || "";
+              const genLower = genStatus.toLowerCase();
+              const genPipeline = l.sdkGenerationPipeline || "";
+              if (prStatusText === "failed to generate sdk." && genPipeline) {
+                prStatusCell = `${statusSpan("Failed to generate SDK")} <a href="${esc(genPipeline)}" target="_blank" rel="noopener" title="View SDK generation pipeline">View pipeline</a>`;
+              } else if (
+                (genLower.includes("progress") ||
+                  genLower.includes("running") ||
+                  genLower.includes("inprogress")) &&
+                genPipeline
+              ) {
+                prStatusCell = `${statusSpan(genStatus)} <a href="${esc(genPipeline)}" target="_blank" rel="noopener" title="View SDK generation pipeline">View pipeline</a>`;
+              }
+            }
+
+            // Release Status cell — when release approval is pending, link to the
+            // release pipeline so the service team can approve the release.
+            let releaseCell = statusSpan(releaseDisplay);
+            if (
+              !exLabel &&
+              (l.releaseStatus || "").toLowerCase() === "approval pending" &&
+              l.releasePipeline
+            ) {
+              releaseCell = `${statusSpan(releaseDisplay)} <a href="${esc(l.releasePipeline)}" target="_blank" rel="noopener" title="Approve the package release using release pipeline">Approve in pipeline</a>`;
+            }
+
             html += `<tr${rowClass}>
             <td><strong>${esc(lang)}</strong></td>
             <td>${esc(l.packageName) || "—"} ${pkgLabels}</td>
             <td>${prLink} ${prLabels}</td>
-            <td>${l.sdkPrUrl ? statusSpan(l.sdkPrGitHubStatus || l.prStatus) : ""}</td>
-            <td>${statusSpan(releaseDisplay)}</td>
+            <td>${prStatusCell}</td>
+            <td>${releaseCell}</td>
             <td>${displayVersion ? `<span title="${isVersionPending ? "This indicates current package version on the main branch in SDK repo" : ""}">${esc(displayVersion)}</span>${isVersionPending ? ' <span class="pr-label pr-label-version-pending" title="This indicates current package version on the main branch in SDK repo">Pending</span>' : ""}` : isReleased ? '<span class="version-na">Not available</span>' : "—"}</td>
             <td>${feedLinkCell}</td>
             <td class="action-cell">${actionCell}</td>
@@ -2067,14 +2225,20 @@
       }
 
       if (plan && cardEl) {
-        const step = computeCurrentStep(plan);
+        // Don't narrow PM-view cards to a single language (see cardHTML).
+        const cardIsInPmTab = !!(cardEl && cardEl.closest("#tab-pm-view"));
+        const dPlan = cardIsInPmTab ? plan : displayPlan(plan);
+        const step = computeCurrentStep(dPlan);
+        const cardAction = isServiceTeamAction(step.action) ? step.action : "";
         cardEl.querySelectorAll(".card-meta .step-badge").forEach((el) => {
           el.className = `step-badge ${step.statusClass}`;
           el.textContent = step.status;
         });
         cardEl.querySelectorAll(".card-meta .action-badge").forEach((el) => {
-          el.textContent = step.action || "";
-          el.style.display = step.action ? "" : "none";
+          el.textContent = cardAction
+            ? `Action required from: ${cardAction}`
+            : "";
+          el.style.display = cardAction ? "" : "none";
         });
         detailsEl
           .querySelectorAll(".detail-step-highlight .step-badge")
@@ -2085,8 +2249,8 @@
         detailsEl
           .querySelectorAll(".detail-step-highlight .action-badge")
           .forEach((el) => {
-            el.textContent = step.action || "";
-            el.style.display = step.action ? "" : "none";
+            el.textContent = cardAction || "";
+            el.style.display = cardAction ? "" : "none";
           });
 
         const oldAction = detailsEl.querySelector(".action-required-section");
@@ -2095,7 +2259,7 @@
         if (isInPmTab && plan._pmAction) {
           if (oldAction) oldAction.remove();
         } else {
-          const newActionHTML = actionRequiredHTML(plan);
+          const newActionHTML = actionRequiredHTML(dPlan);
           if (oldAction) {
             if (newActionHTML) oldAction.outerHTML = newActionHTML;
             else oldAction.remove();
@@ -2402,6 +2566,7 @@
         store().filters.prLang,
         store().filters.prStatus,
         store().filters.tag,
+        store().filters.language,
       ];
       // Skip re-render if plans not loaded yet
       if (!getPlans().length) return;
@@ -2558,6 +2723,15 @@
         }
         if (tagFilter === "sdk-ready-to-release") {
           return isSdkReadyToReleasePlan(p);
+        }
+        if (tagFilter === "generated-by-automation") {
+          return isGeneratedByAutomationPlan(p);
+        }
+        if (tagFilter === "release-approval-required") {
+          return isReleaseApprovalRequiredPlan(p);
+        }
+        if (tagFilter === "sdk-generation-failed") {
+          return isSdkGenerationFailedPlan(p);
         }
         return true;
       });
@@ -3072,18 +3246,19 @@
         html += `<div class="pr-detail-row"><strong>APIView:</strong> <a href="${esc(d.apiViewUrl)}" target="_blank" rel="noopener">View API Changes</a></div>`;
       }
       // Action required — context-specific guidance for the PR tab
-      const serviceTeamLabel = pr.submittedBy
-        ? `Service Team (${esc(pr.submittedBy)})`
-        : "Service Team";
+      const serviceTeamLabelHTML =
+        pr.submittedBy && !isAutomationSubmitter(pr.submittedBy)
+          ? `Service Team (${esc(pr.submittedBy)})`
+          : "Service Team";
       if (!prIsMerged) {
         if (prIsOpenOrDraft && d.failedChecks && d.failedChecks.length) {
-          html += `<div class="action-required-section" style="margin-top:10px;"><h4>⚡ Action Required</h4><div class="action-from-label">Action required from: <strong>${serviceTeamLabel}</strong></div><div class="action-item action-item-warning"><strong>Fix check failures:</strong> Clone the repo, checkout the PR, and use the <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">Azure SDK Tools agent</a> to resolve build errors.</div></div>`;
+          html += `<div class="action-required-section" style="margin-top:10px;"><h4>⚡ Action Required</h4><div class="action-from-label">Action required from: <strong>${serviceTeamLabelHTML}</strong></div><div class="action-item action-item-warning"><strong>Fix check failures:</strong> Clone the repo, checkout the PR, and use the <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">Azure SDK Tools agent</a> to resolve build errors.</div></div>`;
         } else if (prIsClosed) {
-          html += `<div class="action-required-section" style="margin-top:10px;"><h4>⚡ Action Required</h4><div class="action-from-label">Action required from: <strong>${serviceTeamLabel}</strong></div><div class="action-item action-item-warning"><strong>PR Closed:</strong> Regenerate the SDK or link a different PR to the release plan.</div></div>`;
+          html += `<div class="action-required-section" style="margin-top:10px;"><h4>⚡ Action Required</h4><div class="action-from-label">Action required from: <strong>${serviceTeamLabelHTML}</strong></div><div class="action-item action-item-warning"><strong>PR Closed:</strong> Regenerate the SDK or link a different PR to the release plan.</div></div>`;
         } else if (st === "draft") {
-          html += `<div class="action-required-section" style="margin-top:10px;"><h4>⚡ Action Required</h4><div class="action-from-label">Action required from: <strong>${serviceTeamLabel}</strong></div><div class="action-item"><strong>Mark as ready for review:</strong> This PR is in draft status. Mark it as ready for review when the SDK changes are complete.</div></div>`;
+          html += `<div class="action-required-section" style="margin-top:10px;"><h4>⚡ Action Required</h4><div class="action-from-label">Action required from: <strong>${serviceTeamLabelHTML}</strong></div><div class="action-item"><strong>Mark as ready for review:</strong> This PR is in draft status. Mark it as ready for review when the SDK changes are complete.</div></div>`;
         } else if (d.isApproved && st === "open") {
-          html += `<div class="action-required-section" style="margin-top:10px;"><h4>⚡ Action Required</h4><div class="action-from-label">Action required from: <strong>${serviceTeamLabel}</strong></div><div class="action-item"><strong>Merge the SDK pull request:</strong> This PR has been approved by the SDK team. <a href="${esc(pr.prUrl)}" target="_blank" rel="noopener">Open the PR on GitHub</a> and merge it.</div></div>`;
+          html += `<div class="action-required-section" style="margin-top:10px;"><h4>⚡ Action Required</h4><div class="action-from-label">Action required from: <strong>${serviceTeamLabelHTML}</strong></div><div class="action-item"><strong>Merge the SDK pull request:</strong> This PR has been approved by the SDK team. <a href="${esc(pr.prUrl)}" target="_blank" rel="noopener">Open the PR on GitHub</a> and merge it.</div></div>`;
         }
       }
       // Latest comment

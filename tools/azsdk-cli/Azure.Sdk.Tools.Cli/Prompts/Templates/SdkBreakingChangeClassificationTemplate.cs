@@ -87,7 +87,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
         private string BuildOutputRequirements()
         {
             var breakingReferenceInstruction = "- Use the TypeSpec element name (model, operation, enum, or property) as the target in the breaking change. For example: `[Model Foo renamed]`, `[Operation Bar parameter removed]`, `[Enum Baz value removed]`.";
-            if (_tspProjectPath != null)
+            if (!string.IsNullOrEmpty(_tspProjectPath))
             {
                 breakingReferenceInstruction += $"""
 

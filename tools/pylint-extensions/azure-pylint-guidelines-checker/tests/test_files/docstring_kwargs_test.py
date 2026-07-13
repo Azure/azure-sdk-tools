@@ -34,6 +34,30 @@ def function_with_other_keyword(*, other_arg=None):
     """
     return None
 
+# test_docstring_classdef_kwargs_error - class __init__ with kwargs in docstring (incorrect)
+class ClassWithKwargsError:
+    """
+    Class with kwargs in docstring (incorrect).
+
+    :keyword kwargs: Some description
+    """
+
+    def __init__(self, **kwargs):
+        pass
+
+
+# test_docstring_classdef_kwargs_correct - class __init__ with correct kwargs format (no error)
+class ClassWithKwargsCorrect:
+    """
+    Class with correct kwargs documentation.
+
+    :keyword Dict[str, Any] ``**kwargs``: Additional keyword arguments
+    """
+
+    def __init__(self, **kwargs):
+        pass
+
+
 # test_docstring_kwargs_correct_format - should not trigger error
 def function_with_correct_kwargs_format(**kwargs):
     """

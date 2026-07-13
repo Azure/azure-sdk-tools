@@ -6,6 +6,7 @@
 - Add `do-not-use-logging-directly` check
 - Add `no-cross-package-private-import` check
 - Fix `check-docstrings` to skip `*args`/`**kwargs` linting for overload implementations
+- Add `docstring-kwargs-keyword` check (C4753): flags use of `kwargs` (without `**`) as a keyword argument name in docstrings
 
 ## 0.5.7 (2025-07-15)
 - Bug fix for `do-not-use-logging-exception` checker

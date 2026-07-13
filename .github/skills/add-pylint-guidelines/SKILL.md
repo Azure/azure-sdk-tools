@@ -25,7 +25,8 @@ description: Create, update, or test custom rules in `azure-pylint-guidelines-ch
    - A brief explanation of what the rule enforces and when it fires.
    - A "violation" code snippet showing code that triggers the rule.
    - A "compliant" code snippet showing the correct alternative.
-7. Update the changelog to document newly added guidelines
+7. Update `tools/pylint-extensions/azure-pylint-guidelines-checker/README.md` to document the new rule, including its rule ID, a short description, and any relevant usage notes.
+8. Update the changelog to document newly added guidelines
 
 ### Testing
 1. Run the tests using `pytest` to ensure your new guideline is correctly implemented.

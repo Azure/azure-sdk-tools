@@ -40,6 +40,9 @@ class ConversationMessage(BaseModel):
     created_at: datetime  # UTC datetime
     conversation_id: str | None = None  # Customer Conversation ID
     conversation_type: ConversationType | None = None  # Customer Conversation Type
+    should_reply: bool | None = (
+        None  # Whether the message passed intention recognition (in bot scope)
+    )
     extra_info: ConversationMessageExtraInfo | None = (
         None  # Any additional info(channel_id, etc.)
     )

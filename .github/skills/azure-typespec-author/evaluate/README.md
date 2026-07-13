@@ -4,13 +4,14 @@ This directory contains [Vally](https://aka.ms/vally) evaluation cases for the `
 
 ## Prerequisites
 
-- [Vally CLI](https://aka.ms/vally) installed globally: `npm install -g @microsoft/vally-cli`
+- [Vally CLI](https://aka.ms/vally) installed globally: `npm install -g @microsoft/vally-cli@0.6.0`
 - The `azsdk-cli` MCP server built: `dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli`
 - An API key for the model configured (e.g., Anthropic or OpenAI key via environment variable)
 
 ## Environment Setup
 
-Run the setup script to download spec repo package files, run `npm ci`, and configure `FIXTURE_NODE_MODULES`:
+Before running any evals, prime the fixtures from the live
+[azure-rest-api-specs](https://github.com/Azure/azure-rest-api-specs) `main` branch:
 
 ```powershell
 # PowerShell
@@ -22,13 +23,23 @@ node scripts/setup-environment.js | Invoke-Expression
 eval $(node scripts/setup-environment.js)
 ```
 
-This script:
+`setup-environment.js` calls `setup-fixture-files.js` and then runs `npm ci`. Together they:
 
-1. Clones `package.json` and `package-lock.json` from [azure-rest-api-specs](https://github.com/Azure/azure-rest-api-specs) into `fixtures/Microsoft.Widget/Widget/`.
-2. Runs `npm ci` in that directory.
-3. Outputs the shell command to set `FIXTURE_NODE_MODULES` for symlink usage.
+1. Download `package.json` / `package-lock.json` into `fixtures/Microsoft.Widget/Widget/` and run
+   `npm ci` there.
+2. Download `.github/copilot-instructions.md` into `fixtures/instructions-test/copilot-instructions.md`.
+3. Print the shell command that exports `FIXTURE_NODE_MODULES`.
 
-Without `FIXTURE_NODE_MODULES`, the agent will run `npm install` each time (slow but functional).
+Why each piece matters:
+
+- **`FIXTURE_NODE_MODULES`** lets the agent symlink a prebuilt `node_modules` instead of running
+  `npm install` on every case. Without it evals still work, just slower.
+- **`copilot-instructions.md`** is copied into each run's `.github/` by the `azsdk-mcp` environments
+  in `.vally.yaml`, so evals exercise the *real* spec-repo authoring guidance. It is intentionally
+  **not** checked in (it is git-ignored) and always refreshed from `main`, so the eval reflects what
+  authors actually see today.
+
+CI runs `setup-fixture-files.js` during setup, so these fixtures are always present in pipeline runs.
 
 ## Running Evaluations
 
@@ -37,9 +48,9 @@ All commands below should be run from this directory (`evaluate/`).
 ### Run all evaluations by mode
 
 ```bash
-vally eval --suite forced --output-dir ./result --workspace ./debug --verbose
-vally eval --suite trigger --output-dir ./result --workspace ./debug --verbose
-vally eval --suite no-skill --output-dir ./result --workspace ./debug --verbose
+vally eval --suite forced --skill-dir .. --output-dir ./result --workspace ./debug --verbose
+vally eval --suite trigger --skill-dir .. --output-dir ./result --workspace ./debug --verbose
+vally eval --suite no-skill --skill-dir /tmp/no-skills --output-dir ./result --workspace ./debug --verbose
 ```
 
 ### Run a single evaluation file with a specific mode
@@ -48,13 +59,13 @@ Combine `--eval-spec` with `--tag` to run a specific mode for a single test case
 
 ```bash
 # Run only the forced mode for a single file
-vally eval --eval-spec evals/001001.eval.yaml --tag mode=forced --output-dir ./result --workspace ./debug --verbose
+vally eval --eval-spec evals/001001.eval.yaml --tag mode=forced --skill-dir .. --output-dir ./result --workspace ./debug --verbose
 
 # Run only the trigger mode for a single file
-vally eval --eval-spec evals/001001.eval.yaml --tag mode=trigger --output-dir ./result --workspace ./debug --verbose
+vally eval --eval-spec evals/001001.eval.yaml --tag mode=trigger --skill-dir .. --output-dir ./result --workspace ./debug --verbose
 
 # Run only the no-skill mode for a single file
-vally eval --eval-spec evals/001001.eval.yaml --tag mode=no-skill --output-dir ./result --workspace ./debug --verbose
+vally eval --eval-spec evals/001001.eval.yaml --tag mode=no-skill --skill-dir /tmp/no-skills --output-dir ./result --workspace ./debug --verbose
 ```
 
 ### Which file to use
@@ -63,8 +74,8 @@ Use different entry files depending on your goal:
 
 | File                     | When to use                            | Example command                                                                                                   |
 | ------------------------ | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `.vally.yaml`            | Default local entry; run by suite name | `vally eval --suite versioning-forced --output-dir ./result --workspace ./debug --verbose`                        |
-| `evals/00xxxx.eval.yaml` | Debug one specific case file           | `vally eval --eval-spec evals/003001.eval.yaml --output-dir ./result-003001 --workspace ./debug-003001 --verbose` |
+| `.vally.yaml`            | Default local entry; run by suite name | `vally eval --suite versioning-forced --skill-dir .. --output-dir ./result --workspace ./debug --verbose`                        |
+| `evals/00xxxx.eval.yaml` | Debug one specific case file           | `vally eval --eval-spec evals/003001.eval.yaml --skill-dir .. --output-dir ./result-003001 --workspace ./debug-003001 --verbose` |
 
 Notes:
 
@@ -99,7 +110,7 @@ Test suites are defined in `.vally.yaml` under the `suites` key. Available suite
 Run a suite by name:
 
 ```bash
-vally eval --suite forced --output-dir ./result --workspace ./debug --verbose
+vally eval --suite forced --skill-dir .. --output-dir ./result --workspace ./debug --verbose
 ```
 
 ### Suite modes (forced / trigger / no-skill)
@@ -116,11 +127,29 @@ Suite names follow the pattern `<domain>-<mode>`:
 
 ```bash
 # Forced mode for LRO cases
-vally eval --suite longrunningoperation-forced --output-dir ./result --workspace ./debug --verbose
+vally eval --suite longrunningoperation-forced --skill-dir .. --output-dir ./result --workspace ./debug --verbose
 
 # Trigger mode for versioning cases
-vally eval --suite versioning-trigger --output-dir ./result --workspace ./debug --verbose
+vally eval --suite versioning-trigger --skill-dir .. --output-dir ./result --workspace ./debug --verbose
 ```
+
+### Vally 0.6.0 local runs
+
+Vally 0.6.0 uses the `copilot-sdk` executor and records skill/tool calls differently from 0.5.0.
+For local forced and trigger runs, pass `--skill-dir ..` explicitly so Vally discovers the
+`azure-typespec-author` skill directory that contains `SKILL.md`. The prompts still include the
+`@azure-typespec-author` prefix, and the evals still use `skill-invocation` graders to verify that
+the skill was invoked.
+
+Compared with 0.5.0, 0.6.0 result output includes additional run metadata such as `Turns`,
+`Tool Calls`, `Executor: copilot-sdk`, and richer JSONL fields (`type`, `itemId`, `stimulus`,
+`durationMs`, `workspacePath`). Because tool-call tracking is stricter, forced-mode failures often
+mean the agent did not call a required tool such as `azure-sdk-mcp-azsdk_run_typespec_validation`.
+When debugging local runs, keep `--verbose` enabled and inspect the `Tool Calls` column in
+`eval-results.md` or the trial entries in `results.jsonl`.
+
+Do not add `--skill-dir ..` to no-skill baseline runs. Those runs intentionally use an empty skill
+directory, for example `--skill-dir /tmp/no-skills`, to measure behavior without loading the skill.
 
 ### Run with tag filtering (optional)
 
@@ -128,13 +157,13 @@ Tag filtering is useful for ad-hoc local runs on individual files:
 
 ```bash
 # Run forced mode for versioning cases only
-vally eval --eval-spec suites/forced.eval.yaml --tag suite=versioning
+vally eval --suite versioning-forced --skill-dir ..
 
 # Run no-skill baseline for armtemplate cases
-vally eval --eval-spec suites/no-skill.eval.yaml --tag suite=armtemplate --skill-dir /tmp/no-skills
+vally eval --suite armtemplate-no-skill --skill-dir /tmp/no-skills
 
 # Run trigger detection for all cases (no tag = all 29 cases)
-vally eval --eval-spec suites/trigger.eval.yaml
+vally eval --suite trigger --skill-dir ..
 ```
 
 ### Useful flags
@@ -174,11 +203,6 @@ evaluate/
 ├── evals/               # Individual eval specs (one per test case, for local dev)
 │   ├── 001001.eval.yaml
 │   ├── ...
-│   └── forced.eval.yaml # Consolidated forced-mode file with all cases
-├── suites/              # Consolidated eval files used by pipelines
-│   ├── forced.eval.yaml    # Forced skill invocation + code quality graders
-│   ├── trigger.eval.yaml   # Skill trigger detection (mock MCP)
-│   └── no-skill.eval.yaml  # Pure agent baseline (no environment)
 ├── fixtures/            # TypeSpec project fixtures referenced by evals
 │   ├── 001-share-version-new-feature/
 │   ├── Microsoft.Widget/
@@ -191,16 +215,17 @@ evaluate/
 ## Pipeline Architecture
 
 The CI runs in three mode groups (forced, trigger, no-skill), and each group is split into
-five suite steps. Splitting by suite makes error logs easier to query and helps isolate failures
-to a small case set.
+five suite steps. Each step runs the corresponding `.vally.yaml` suite branch directly,
+for example `--suite versioning-forced`, `--suite versioning-trigger`, or
+`--suite versioning-no-skill`. Vally 0.6.0 supports parallel execution across multiple
+eval files, so the pipelines no longer need consolidated suite eval files plus
+`--tag suite=...` filtering.
 
-The pipelines use `--eval-spec` with the consolidated suite files under `suites/`, and use `--tag suite=...` to split runs by domain:
-
-| Pipeline           | Eval file                   | Purpose                                                               |
+| Pipeline           | Command/source              | Purpose                                                               |
 | ------------------ | --------------------------- | --------------------------------------------------------------------- |
-| benchmark          | `suites/forced.eval.yaml`   | Forced skill invocation + code-quality graders (real MCP environment) |
-| benchmark          | `suites/trigger.eval.yaml`  | Skill trigger detection (mock MCP environment)                        |
-| benchmark-no-skill | `suites/no-skill.eval.yaml` | Baseline run without loading the skill (`--skill-dir /tmp/no-skills`) |
+| benchmark          | `--suite *-forced`          | Forced skill invocation + code-quality graders (real MCP environment) |
+| benchmark          | `--suite *-trigger`         | Skill trigger detection (mock MCP environment)                        |
+| benchmark-no-skill | `--suite *-no-skill`        | Baseline run without loading the skill (`--skill-dir /tmp/no-skills`) |
 
 Each stimulus has dual tags: `suite` and `mode`, for example
 `{ suite: versioning, mode: forced }`.

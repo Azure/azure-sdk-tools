@@ -1,8 +1,3 @@
-parameters:
-- name: PythonVersion
-  type: string
-  default: '3.10'
-
 trigger:
   branches:
     include:
@@ -18,6 +13,12 @@ pr:
   paths:
     include:
       - tools/sdk-ai-bots/azure-sdk-qa-bot-agent/**/*.py
+
+# Offline (PR-gate) evaluation.
+#
+# Starts the agent server.py locally, then evaluates via completion mode:
+# evals_run.py calls the local /completion endpoint concurrently, collects answers,
+# and grades them inline with the Foundry builtin LLM evaluators.
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
   parameters:
@@ -38,17 +39,22 @@ extends:
               maxParallel: 2
               matrix:
                 typespec:
-                  testPrefix: typespec
+                  scenario: typespec
                 onboarding:
-                  testPrefix: onboarding
+                  scenario: onboarding
                 python:
-                  testPrefix: python
+                  scenario: python
                 apispec:
-                  testPrefix: apispec
+                  scenario: apispec
             steps:
-              - template: /eng/pipelines/templates/steps/use-python-version.yml
-                parameters:
-                  versionSpec: '${{ parameters.PythonVersion }}'
+              - task: UsePythonVersion@0
+                displayName: "Use Python 3.12"
+                inputs:
+                  versionSpec: '3.12'
+              - task: PipAuthenticate@1
+                displayName: 'Authenticate pip to Azure Artifacts'
+                inputs:
+                  artifactFeeds: 'public/azure-sdk-for-python'
               - script: |
                   python --version
                 displayName: 'check python'
@@ -64,9 +70,11 @@ extends:
                     pip install --pre -r requirements.txt
                     export AZURE_CLIENT_ID=$servicePrincipalId
                     export AZURE_TENANT_ID=$tenantId
-                    nohup python server.py </dev/null >/dev/null 2>&1 &
+                    EVAL_CACHE="$(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/cache"
+                    mkdir -p "$EVAL_CACHE"
+                    nohup python server.py </dev/null > "$EVAL_CACHE/server.log" 2>&1 &
                     sleep 20
-                    lsof -ti:8089
+                    lsof -ti:8089 || { echo "##[error]agent server failed to start"; cat "$EVAL_CACHE/server.log" || true; exit 1; }
                 env:
                   SYSTEM_ACCESSTOKEN: $(System.AccessToken)
                   AZURESUBSCRIPTION_SERVICE_CONNECTION_ID: $(AZURESUBSCRIPTION_SERVICE_CONNECTION_ID)
@@ -76,7 +84,7 @@ extends:
                 displayName: 'install requirements'
                 workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
               - task: AzureCLI@2
-                displayName: 'Run Evals ($(testPrefix))'
+                displayName: 'Run Evals ($(scenario))'
                 inputs:
                   azureSubscription: 'azuresdkqabot-dev'
                   scriptType: bash
@@ -84,19 +92,15 @@ extends:
                   workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
                   inlineScript: |
                     python evals_run.py \
-                      --evaluation_name_prefix $(Build.BuildId) \
-                      --prefix "$(testPrefix)" \
-                      --evaluators "similarity,groundedness,response_completeness,reference_match,knowledge_match" \
+                      --dataset "qa-bot-basic-$(scenario):latest" \
+                      --run_context "offline-evaluation" \
+                      --max_concurrency 2 \
+                      --baseline_check True \
                       --cache_result full
                 env:
                   SYSTEM_ACCESSTOKEN: $(System.AccessToken)
                   AZURE_AI_PROJECT_ENDPOINT: $(AZURE_AI_PROJECT_ENDPOINT)
-                  AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
-                  AZURE_OPENAI_ENDPOINT: $(AZURE_OPENAI_ENDPOINT)
-                  AZURE_OPENAI_API_KEY: $(AZURE_OPENAI_API_KEY)
-                  AZURE_COMPLETION_MODEL_NAME: $(AZURE_COMPLETION_MODEL_NAME)
                   AZURE_EVALUATION_MODEL_NAME: $(AZURE_EVALUATION_MODEL_NAME)
-                  AZURE_API_VERSION: $(AZURE_API_VERSION)
                   STORAGE_BLOB_ACCOUNT: $(STORAGE_BLOB_ACCOUNT)
                   BOT_CONFIG_CONTAINER: $(BOT_CONFIG_CONTAINER)
                   BOT_CONFIG_CHANNEL_BLOB: $(BOT_CONFIG_CHANNEL_BLOB)
@@ -105,6 +109,6 @@ extends:
               outputs:
                 - output: pipelineArtifact
                   path: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/cache
-                  artifact: evaluation-results-$(testPrefix)
-                  displayName: Publish Evaluation Results Artifact ($(testPrefix))
+                  artifact: evaluation-results-$(scenario)
+                  displayName: Publish Evaluation Results Artifact ($(scenario))
                   condition: always()

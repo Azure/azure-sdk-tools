@@ -280,7 +280,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     logger.LogInformation("No release plan matched the SDK release type {sdkReleaseType}.", sdkReleaseType);
                 }
                 // If no release plan was selected by SDK pull request or SDK release type, try to select the release plan with a merged pull request.
-                var releasePlanWithPrMerged = releasePlans.FirstOrDefault(rp => rp.SDKInfo.Any(s => s.PullRequestStatus.Equals("Merged")));
+                var releasePlanWithPrMerged = releasePlans.FirstOrDefault(rp => rp.SDKInfo.Any(s => string.Equals(s.PackageName, packageName, StringComparison.OrdinalIgnoreCase) && s.PullRequestStatus.Equals("Merged")));
                 if (releasePlanWithPrMerged != null)
                 {
                     logger.LogInformation("Selected first release plan {releasePlanId} with pull request as merged.", releasePlanWithPrMerged.ReleasePlanId);

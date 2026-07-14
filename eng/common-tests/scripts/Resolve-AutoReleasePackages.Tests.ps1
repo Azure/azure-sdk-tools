@@ -13,6 +13,10 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
             param([string]$Name, $Value = '', [switch]$IsOutput, [switch]$IsSecret)
             $global:AutoReleaseEmittedVars[$Name] = "$Value"
         }
+        # logging.ps1 is not loaded in the injected-dependency path, so provide the warning helper it exports.
+        function global:LogWarning {
+            Write-Host "##[warning]$args"
+        }
         function global:Get-GitHubAutoReleasePullRequestForCommit {
             param($RepoId, $CommitSha, $TargetBranch, $RequiredLabel, $AuthToken)
             if ($global:AutoReleaseThrowOnResolve) { throw 'boom resolving PR' }
@@ -45,6 +49,7 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
 
     AfterAll {
         Remove-Item function:global:Set-PipelineVariable -ErrorAction SilentlyContinue
+        Remove-Item function:global:LogWarning -ErrorAction SilentlyContinue
         Remove-Item function:global:Get-GitHubAutoReleasePullRequestForCommit -ErrorAction SilentlyContinue
         Remove-Item function:global:Get-GitHubPullRequestFiles -ErrorAction SilentlyContinue
         Remove-Item function:global:New-GitHubPullRequestDiffObject -ErrorAction SilentlyContinue
@@ -71,20 +76,21 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
 
             $vars = Invoke-ResolveScript -Artifacts '[{"name":"Azure.Storage.Blobs","safeName":"AzureStorageBlobs"}]'
 
-            $vars['AutoReleaseLabelPresent'] | Should -Be 'false'
             $vars['HasAutoReleaseArtifacts'] | Should -Be 'false'
             $vars['AutoReleaseArtifactsJson'] | Should -Be '[]'
             $vars['ReleaseArtifact_AzureStorageBlobs'] | Should -Be 'false'
             $global:AutoReleaseGetPrPkgCalled | Should -BeFalse
         }
 
-        It "still emits the resolved PR number when the pull request is not eligible" {
-            $global:AutoReleaseStubRelease = [pscustomobject]@{ PullRequestNumber = 321; IsEligible = $false; SkipReason = 'missing label'; PullRequest = $null }
+        It "fails closed when a pull request is resolved but not eligible" {
+            $global:AutoReleaseStubRelease = [pscustomobject]@{ PullRequestNumber = 321; IsEligible = $false; SkipReason = 'missing label'; PullRequest = [pscustomobject]@{ number = 321 } }
 
             $vars = Invoke-ResolveScript -Artifacts '[{"name":"pkg","safeName":"pkg"}]'
 
-            $vars['AutoReleasePrNumber'] | Should -Be '321'
-            $vars['AutoReleaseLabelPresent'] | Should -Be 'false'
+            $vars['HasAutoReleaseArtifacts'] | Should -Be 'false'
+            $vars['AutoReleaseArtifactsJson'] | Should -Be '[]'
+            $vars['ReleaseArtifact_pkg'] | Should -Be 'false'
+            $global:AutoReleaseGetPrPkgCalled | Should -BeFalse
         }
 
         It "forwards commit, repo, branch and label to the resolver with the documented defaults" {
@@ -109,8 +115,6 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
 
             $vars = Invoke-ResolveScript -Artifacts '[{"name":"Azure.Storage.Blobs","safeName":"AzureStorageBlobs"}]'
 
-            $vars['AutoReleasePrNumber'] | Should -Be '123'
-            $vars['AutoReleaseLabelPresent'] | Should -Be 'true'
             $vars['HasAutoReleaseArtifacts'] | Should -Be 'true'
             $vars['ReleaseArtifact_AzureStorageBlobs'] | Should -Be 'true'
 
@@ -128,7 +132,6 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
 
             $vars = Invoke-ResolveScript -Artifacts '[{"name":"Azure.Messaging.EventHubs","safeName":"AzureMessagingEventHubs"}]'
 
-            $vars['AutoReleaseLabelPresent'] | Should -Be 'true'
             $vars['HasAutoReleaseArtifacts'] | Should -Be 'false'
             $vars['AutoReleaseArtifactsJson'] | Should -Be '[]'
             $vars['ReleaseArtifact_AzureMessagingEventHubs'] | Should -Be 'false'
@@ -204,13 +207,44 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
         }
     }
 
+    Context "pull request link logging" {
+        BeforeEach {
+            $global:AutoReleaseStubChangedPackages = @(
+                [pscustomobject]@{ Name = 'Pkg'; ArtifactName = 'Pkg'; Group = $null; IncludedForValidation = $false }
+            )
+        }
+
+        It "logs the pull request's html_url when the payload provides it" {
+            $global:AutoReleaseStubRelease = [pscustomobject]@{
+                PullRequestNumber = 777; IsEligible = $true; SkipReason = ''
+                PullRequest       = [pscustomobject]@{ number = 777; html_url = 'https://github.com/Azure/azure-sdk-for-net/pull/777' }
+            }
+
+            $log = & $script:scriptPath -CommitSha 'abc123' -RepoId 'Azure/azure-sdk-for-net' -Artifacts '[{"name":"Pkg","safeName":"Pkg"}]' -AuthToken 'fake-token' 6>&1 | Out-String
+
+            $log | Should -Match 'https://github\.com/Azure/azure-sdk-for-net/pull/777'
+            # The bare "PR #<number>" form should no longer appear in the log.
+            $log | Should -Not -Match 'PR #777'
+        }
+
+        It "constructs a pull request link from the repo id and number when html_url is absent" {
+            $global:AutoReleaseStubRelease = [pscustomobject]@{
+                PullRequestNumber = 654; IsEligible = $true; SkipReason = ''
+                PullRequest       = [pscustomobject]@{ number = 654 }
+            }
+
+            $log = & $script:scriptPath -CommitSha 'abc123' -RepoId 'Azure/azure-sdk-for-python' -Artifacts '[{"name":"Pkg","safeName":"Pkg"}]' -AuthToken 'fake-token' 6>&1 | Out-String
+
+            $log | Should -Match 'https://github\.com/Azure/azure-sdk-for-python/pull/654'
+        }
+    }
+
     Context "when there is nothing to release" {
-        It "marks the label present but releases nothing when the pipeline declares no artifacts" {
+        It "releases nothing when an eligible pull request's pipeline declares no artifacts" {
             $global:AutoReleaseStubRelease = [pscustomobject]@{ PullRequestNumber = 9; IsEligible = $true; SkipReason = ''; PullRequest = [pscustomobject]@{ number = 9 } }
 
             $vars = Invoke-ResolveScript -Artifacts '[]'
 
-            $vars['AutoReleaseLabelPresent'] | Should -Be 'true'
             $vars['HasAutoReleaseArtifacts'] | Should -Be 'false'
             $vars['AutoReleaseArtifactsJson'] | Should -Be '[]'
             $global:AutoReleaseGetPrPkgCalled | Should -BeFalse
@@ -222,7 +256,6 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
             { Invoke-ResolveScript -Artifacts 'not-valid-json' } | Should -Not -Throw
 
             $vars = $global:AutoReleaseEmittedVars
-            $vars['AutoReleaseLabelPresent'] | Should -Be 'false'
             $vars['HasAutoReleaseArtifacts'] | Should -Be 'false'
             $vars['AutoReleaseArtifactsJson'] | Should -Be '[]'
         }
@@ -235,28 +268,23 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
             { Invoke-ResolveScript -Artifacts '[{"name":"pkg","safeName":"pkg"}]' } | Should -Not -Throw
 
             $vars = $global:AutoReleaseEmittedVars
-            $vars['AutoReleaseLabelPresent'] | Should -Be 'false'
             $vars['HasAutoReleaseArtifacts'] | Should -Be 'false'
             $vars['AutoReleaseArtifactsJson'] | Should -Be '[]'
             $vars['ReleaseArtifact_pkg'] | Should -Be 'false'
         }
 
-        It "resets the label-present signal when a failure occurs after the PR is deemed eligible" {
-            # The PR resolves as eligible (AutoReleaseLabelPresent is flipped to 'true') but package
-            # detection then throws. The catch block must re-emit the fail-closed defaults so no partial
-            # release decision leaks downstream.
+        It "fails closed when a failure occurs after the PR is deemed eligible" {
+            # The PR resolves as eligible but package detection then throws. The catch block must re-emit
+            # the fail-closed defaults so no partial release decision leaks downstream.
             $global:AutoReleaseStubRelease = [pscustomobject]@{ PullRequestNumber = 500; IsEligible = $true; SkipReason = ''; PullRequest = [pscustomobject]@{ number = 500 } }
             $global:AutoReleaseThrowOnGetPrPkg = $true
 
             { Invoke-ResolveScript -Artifacts '[{"name":"pkg","safeName":"pkg"}]' } | Should -Not -Throw
 
             $vars = $global:AutoReleaseEmittedVars
-            $vars['AutoReleaseLabelPresent'] | Should -Be 'false'
             $vars['HasAutoReleaseArtifacts'] | Should -Be 'false'
             $vars['AutoReleaseArtifactsJson'] | Should -Be '[]'
             $vars['ReleaseArtifact_pkg'] | Should -Be 'false'
-            # The resolved PR number is informational and is intentionally preserved.
-            $vars['AutoReleasePrNumber'] | Should -Be '500'
         }
     }
 }

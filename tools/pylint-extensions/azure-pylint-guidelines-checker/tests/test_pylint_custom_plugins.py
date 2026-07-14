@@ -3200,6 +3200,94 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(impl_node)
 
+    def test_docstring_kwargs_error(self):
+        # Test that using "kwargs" as keyword argument name triggers error
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "docstring_kwargs_test.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+
+        function_node = node.body[0]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="docstring-kwargs-keyword",
+                line=4,
+                node=function_node,
+                col_offset=0,
+                end_line=4,
+                end_col_offset=30,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="docstring-keyword-should-match-keyword-only",
+                line=4,
+                node=function_node,
+                args="kwargs",
+                col_offset=0,
+                end_line=4,
+                end_col_offset=30,
+            ),
+        ):
+            self.checker.visit_functiondef(function_node)
+
+    def test_docstring_kwargs_correct(self):
+        # Test that proper kwargs documentation does not trigger error
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "docstring_kwargs_test.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+
+        # function_with_kwargs_expanded - should not trigger error
+        function_node_expanded = node.body[1]
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(function_node_expanded)
+
+        # function_with_other_keyword - should not trigger error
+        function_node_other = node.body[2]
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(function_node_other)
+
+        # function_with_correct_kwargs_format - should not trigger error
+        function_node_correct_format = node.body[5]
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(function_node_correct_format)
+
+    def test_docstring_kwargs_classdef_error(self):
+        # Test that using "kwargs" as keyword argument name in a class docstring triggers error
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "docstring_kwargs_test.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+
+        class_node_error = node.body[3]  # ClassWithKwargsError
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="docstring-kwargs-keyword",
+                node=class_node_error,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="docstring-keyword-should-match-keyword-only",
+                node=class_node_error,
+                args="kwargs",
+            ),
+            ignore_position=True,
+        ):
+            self.checker.visit_classdef(class_node_error)
+
+    def test_docstring_kwargs_classdef_correct(self):
+        # Test that correct kwargs format in a class docstring does not trigger error
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "docstring_kwargs_test.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+
+        class_node_correct = node.body[4]  # ClassWithKwargsCorrect
+        with self.assertNoMessages():
+            self.checker.visit_classdef(class_node_correct)
+
 
 class TestDoNotImportLegacySix(pylint.testutils.CheckerTestCase):
     """Test that we are blocking disallowed imports and allowing allowed imports."""

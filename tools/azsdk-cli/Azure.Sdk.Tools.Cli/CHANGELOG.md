@@ -1,14 +1,10 @@
 # Release History
 
-## 0.6.27 (Unreleased)
+## 0.6.27 (2026-07-13)
 
 ### Features Added
 
-### Breaking Changes
-
-### Bugs Fixed
-
-### Other Changes
+- Update release status CLI command to take release pipeline URL as a parameter to update it in the release plan. Also updated this tool to accept SDK release type and SDK pull request to lookup the release plan using pull request/release type.
 
 ## 0.6.26 (2026-07-09)
 

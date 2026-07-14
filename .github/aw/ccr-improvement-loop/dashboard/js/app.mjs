@@ -303,6 +303,10 @@ function render() {
   renderSliceCharts(runs);
 
   renderTable(runs);
+
+  // Drill-down examples: specific PRs / review threads behind the aggregates.
+  renderNotableExamples(runs);
+  renderThemeCards(runs);
 }
 
 /**
@@ -550,6 +554,233 @@ function renderTable(runs) {
     .join("");
 
   el("table").innerHTML = `<table>${head}${rows}</table>`;
+}
+
+/**
+ * Collect PRs where CCR missed a human-raised concern across the given runs.
+ * A "missed ask" = a substantive, diff-detectable human ask on a CCR-reviewed
+ * PR that was judged and that CCR did NOT independently raise
+ * (ccrAddressedConcern === false). Grouped by PR, sorted by missed count (desc).
+ *
+ * @param {any[]} runs
+ * @returns {{repo: string, windowEnd: string, prNumber: number, prUrl: string,
+ *   prTitle: string, author: string|null, prType: string|null,
+ *   missed: {url: string, path: string, lineStart: number, category: string|null,
+ *   authorLogin: string|null}[]}[]}
+ */
+function collectMissedExamples(runs) {
+  /** @type {Map<string, any>} */
+  const groups = new Map();
+  for (const run of runs) {
+    const repo = run.run.repo;
+    const windowEnd = run.run.windowEnd ? dateLabel(run.run.windowEnd) : "";
+    /** @type {Map<number, any>} */
+    const prById = new Map(
+      (run.prs ?? []).map((/** @type {any} */ p) => [p.number, p]),
+    );
+    for (const c of run.comments ?? []) {
+      if (
+        c.authorKind === "human" &&
+        c.kind === "ask" &&
+        c.isSubstantive === true &&
+        c.diffDetectable === true &&
+        !c.pathExcluded &&
+        c.ccrAddressedConcern === false
+      ) {
+        const key = `${repo}#${String(c.pr)}`;
+        let g = groups.get(key);
+        if (!g) {
+          const pr = prById.get(c.pr);
+          g = {
+            repo,
+            windowEnd,
+            prNumber: c.pr,
+            prUrl: pr?.url ?? `https://github.com/${repo}/pull/${String(c.pr)}`,
+            prTitle: pr?.title ?? `PR #${String(c.pr)}`,
+            author: pr?.author ?? null,
+            prType: pr?.prType ?? null,
+            missed: [],
+          };
+          groups.set(key, g);
+        }
+        g.missed.push({
+          url: c.url,
+          path: c.path,
+          lineStart: c.lineStart,
+          category: c.category,
+          authorLogin: c.authorLogin,
+        });
+      }
+    }
+  }
+  return [...groups.values()].sort((a, b) => b.missed.length - a.missed.length);
+}
+
+/**
+ * Render the "Notable examples" drill-down: top PRs (by missed-ask count) where
+ * CCR did not independently raise a concern a human reviewer did. Each PR is an
+ * expandable row deep-linking to the exact GitHub review threads. Text comes
+ * from structured fields only (comment bodies are not stored in the run JSON).
+ *
+ * @param {any[]} runs
+ */
+function renderNotableExamples(runs) {
+  const container = el("examples");
+  container.innerHTML = "";
+  const groups = collectMissedExamples(runs);
+  if (groups.length === 0) {
+    const p = document.createElement("p");
+    p.className = "hint";
+    p.textContent =
+      "No missed human asks in the selected runs (nothing where a human raised a diff-visible concern CCR didn't).";
+    container.append(p);
+    return;
+  }
+
+  const LIMIT = 15;
+  const shown = groups.slice(0, LIMIT);
+  const totalMissed = groups.reduce((n, g) => n + g.missed.length, 0);
+  const intro = document.createElement("p");
+  intro.className = "hint";
+  intro.textContent =
+    `${String(groups.length)} PR(s) where CCR missed a human-raised concern ` +
+    `(${String(totalMissed)} asks total). Showing the top ${String(
+      shown.length,
+    )} by missed count — expand a PR to open the exact review threads.`;
+  container.append(intro);
+
+  for (const g of shown) {
+    const det = document.createElement("details");
+    det.className = "example";
+
+    const sum = document.createElement("summary");
+    const count = document.createElement("span");
+    count.className = "example-count";
+    count.textContent = `${String(g.missed.length)}×`;
+    const meta = document.createElement("span");
+    meta.className = "example-meta";
+    meta.textContent =
+      ` ${repoShort(g.repo)} · ${g.windowEnd}` +
+      `${g.prType ? ` · ${g.prType}` : ""} · `;
+    const link = document.createElement("a");
+    link.href = g.prUrl;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = `#${String(g.prNumber)} ${g.prTitle}`;
+    sum.append(count, meta, link);
+    det.append(sum);
+
+    const ul = document.createElement("ul");
+    ul.className = "example-list";
+    for (const m of g.missed) {
+      const li = document.createElement("li");
+      const tag = document.createElement("span");
+      tag.className = "tag";
+      tag.textContent = m.category ?? "uncategorized";
+      const a = document.createElement("a");
+      a.href = m.url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.textContent = `${m.path}:${String(m.lineStart)}`;
+      li.append(tag, document.createTextNode(" "), a);
+      if (m.authorLogin) {
+        const who = document.createElement("span");
+        who.className = "example-who";
+        who.textContent = ` — ${m.authorLogin}`;
+        li.append(who);
+      }
+      ul.append(li);
+    }
+    det.append(ul);
+    container.append(det);
+  }
+}
+
+/**
+ * Render "Recurring themes": the promoted issue clusters the loop identified in
+ * each selected window, grouped by run, each theme card deep-linking to the PRs
+ * that sourced it. Themes are per-run and PR numbers are repo-scoped, so runs
+ * are shown as separate collapsible groups.
+ *
+ * @param {any[]} runs
+ */
+function renderThemeCards(runs) {
+  const container = el("themes");
+  container.innerHTML = "";
+  const withThemes = [...runs]
+    .filter(
+      (r) =>
+        Array.isArray(r.themes) &&
+        r.themes.some((/** @type {any} */ t) => t.promoted),
+    )
+    .sort(
+      (a, b) =>
+        a.run.repo.localeCompare(b.run.repo) ||
+        String(a.run.windowEnd).localeCompare(String(b.run.windowEnd)),
+    );
+
+  if (withThemes.length === 0) {
+    const p = document.createElement("p");
+    p.className = "hint";
+    p.textContent = "No promoted themes in the selected runs.";
+    container.append(p);
+    return;
+  }
+
+  for (const run of withThemes) {
+    const repo = run.run.repo;
+    const windowEnd = run.run.windowEnd ? dateLabel(run.run.windowEnd) : "";
+    const promoted = run.themes
+      .filter((/** @type {any} */ t) => t.promoted)
+      .sort(
+        (/** @type {any} */ a, /** @type {any} */ b) =>
+          (b.priorityScore ?? 0) - (a.priorityScore ?? 0),
+      );
+
+    const det = document.createElement("details");
+    det.className = "theme-run";
+    const sum = document.createElement("summary");
+    sum.textContent = `${repoShort(repo)} · ${windowEnd} — ${String(
+      promoted.length,
+    )} theme(s)`;
+    det.append(sum);
+
+    const grid = document.createElement("div");
+    grid.className = "theme-grid";
+    for (const t of promoted) {
+      const card = document.createElement("div");
+      card.className = "theme-card";
+      const h = document.createElement("h4");
+      h.textContent = t.label ?? "theme";
+      const stats = document.createElement("p");
+      stats.className = "theme-stats";
+      stats.textContent =
+        `${String(t.askCount ?? 0)} asks · ${String(t.gapCount ?? 0)} gaps · ` +
+        `${String(t.distinctReviewers ?? 0)} reviewers · priority ${String(
+          t.priorityScore ?? 0,
+        )}${t.promotedVia ? ` · via ${t.promotedVia}` : ""}`;
+      card.append(h, stats);
+
+      const prs = Array.isArray(t.sourcePrs) ? t.sourcePrs : [];
+      if (prs.length) {
+        const chips = document.createElement("div");
+        chips.className = "theme-prs";
+        for (const n of prs) {
+          const a = document.createElement("a");
+          a.className = "chip";
+          a.href = `https://github.com/${repo}/pull/${String(n)}`;
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          a.textContent = `#${String(n)}`;
+          chips.append(a);
+        }
+        card.append(chips);
+      }
+      grid.append(card);
+    }
+    det.append(grid);
+    container.append(det);
+  }
 }
 
 /** Build the repo filter checkboxes. */

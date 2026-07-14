@@ -248,3 +248,131 @@ td.na,
   opacity: 1;
   visibility: visible;
 }
+
+/* ---- Notable examples (drill-down) ---------------------------------- */
+.example {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  padding: 0.4rem 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.example > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.example > summary::-webkit-details-marker {
+  display: none;
+}
+
+.example-count {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--warn);
+  min-width: 2.2rem;
+}
+
+.example-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.example-list {
+  margin: 0.5rem 0 0.25rem;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.3rem;
+}
+
+.example-list li {
+  font-size: 0.85rem;
+  font-family:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+.example-who {
+  color: var(--muted);
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+.tag {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  color: var(--fg);
+  background: #eaeef2;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0 0.45rem;
+  vertical-align: middle;
+}
+
+/* ---- Recurring themes ------------------------------------------------ */
+.theme-run {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  padding: 0.4rem 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.theme-run > summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+}
+
+.theme-card {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  padding: 0.6rem 0.7rem;
+}
+
+.theme-card h4 {
+  margin: 0 0 0.25rem;
+  font-size: 0.95rem;
+}
+
+.theme-stats {
+  margin: 0 0 0.5rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.theme-prs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.chip {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  background: #ddf4ff;
+  border: 1px solid #b6e3ff;
+  border-radius: 999px;
+  padding: 0 0.5rem;
+  text-decoration: none;
+}
+
+.chip:hover {
+  text-decoration: underline;
+}

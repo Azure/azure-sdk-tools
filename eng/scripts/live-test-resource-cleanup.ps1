@@ -286,18 +286,27 @@ function FindOrCreateDeleteAfterTag {
   if (!$deleteAfter -or !($deleteAfter -as [datetime])) {
     $deleteAfter = [datetime]::UtcNow.AddHours($HoursToDelete)
     if ($Force -or $PSCmdlet.ShouldProcess("$($ResourceGroup.ResourceGroupName) [DeleteAfter (UTC): $deleteAfter]", "Adding DeleteAfter Tag to Group")) {
+      # A ReadOnly lock (at the group, subscription, or management group scope) blocks tag writes on the group.
+      # Skip the update in that case to avoid a terminating error under $ErrorActionPreference = 'Stop'.
+      if (HasDeleteLock $ResourceGroup) {
+        return
+      }
       Write-Host "Adding DeleteAfter tag with value '$deleteAfter' to group '$($ResourceGroup.ResourceGroupName)'"
-      $result = ($ResourceGroup | Update-AzTag -Operation Merge -Tag @{ DeleteAfter = $deleteAfter }) 2>&1
-      if ("Exception" -in $result.PSObject.Properties.Name) {
-          # Handle race conditions where the group starts deleting after we get its info, in order to avoid pipeline warning/failure emails
-          # "The resource group '<group name>' is in deprovisioning state and cannot perform this operation"
-          if ($result.Exception.Message -notlike '*is in deprovisioning state*') {
-              Write-Error $result.Exception.Message
-          } else {
-              Write-Host "Skipping '$($ResourceGroup.ResourceGroupName)' as it is in a deprovisioning state"
-          }
-      } else {
-          $result
+      try {
+        $result = $ResourceGroup | Update-AzTag -Operation Merge -Tag @{ DeleteAfter = $deleteAfter } -ErrorAction Stop
+        $result
+      } catch {
+        $msg = $_.Exception.Message
+        # Handle race conditions where the group starts deleting after we get its info, in order to avoid pipeline warning/failure emails
+        # "The resource group '<group name>' is in deprovisioning state and cannot perform this operation"
+        if ($msg -like '*is in deprovisioning state*') {
+          Write-Host "Skipping '$($ResourceGroup.ResourceGroupName)' as it is in a deprovisioning state"
+        } elseif ($msg -like '*scope(s) are locked*') {
+          # A ReadOnly lock was applied between our HasDeleteLock check and the tag update, or the lock exists at an ancestor scope.
+          Write-Warning "Skipping tag update for '$($ResourceGroup.ResourceGroupName)' due to a ReadOnly lock: $msg"
+        } else {
+          Write-Error $msg
+        }
       }
     }
   }

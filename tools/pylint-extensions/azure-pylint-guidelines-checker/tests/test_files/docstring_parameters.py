@@ -130,7 +130,7 @@ def function_foo() -> NoReturn:
     raise ValueError("This function never returns")
 
 
-# test_docstring_class_vararg_not_required - *args in __init__ should NOT be flagged as missing
+# test_docstring_class_vararg_required - undocumented *args in non-overloaded __init__ should be flagged
 class ClassWithVararg:
     """A class whose constructor accepts extra positional args.
 

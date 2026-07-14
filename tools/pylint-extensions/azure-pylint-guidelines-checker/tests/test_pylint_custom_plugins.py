@@ -3158,11 +3158,8 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_functiondef(impl_node)
 
-    def test_docstring_no_overload_args_not_required(self):
-        """Regular function with undocumented *args should NOT be flagged.
-
-        *args passthroughs are never required to be documented.
-        """
+    def test_docstring_no_overload_still_checks_args(self):
+        """Regular function with undocumented *args (not an overload impl) should be flagged."""
         file = open(
             os.path.join(
                 TEST_FOLDER,
@@ -3174,17 +3171,34 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
         file.close()
         # regular_function is body[3]
         regular_node = node.body[3]
-        with self.assertNoMessages():
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="docstring-missing-param",
+                line=59,
+                node=regular_node,
+                args="args",
+                col_offset=0,
+                end_line=59,
+                end_col_offset=20,
+            ),
+        ):
             self.checker.check_parameters(regular_node)
 
-    def test_docstring_class_vararg_not_required(self):
-        """Class __init__ with undocumented *args should NOT be flagged."""
+    def test_docstring_class_vararg_required(self):
+        """Class __init__ with undocumented *args (no overloading) should be flagged."""
         file = open(os.path.join(TEST_FOLDER, "test_files", "docstring_parameters.py"))
         node = astroid.parse(file.read())
         file.close()
         # ClassWithVararg is body[14]
         class_node = node.body[14]
-        with self.assertNoMessages():
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="docstring-missing-param",
+                node=class_node,
+                args="args",
+            ),
+            ignore_position=True,
+        ):
             self.checker.visit_classdef(class_node)
 
     def test_docstring_class_vararg_documented_ok(self):

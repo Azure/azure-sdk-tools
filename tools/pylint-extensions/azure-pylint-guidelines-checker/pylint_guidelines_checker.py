@@ -1726,10 +1726,8 @@ class CheckDocstringParameters(BaseChecker):
         except AttributeError:
             return
 
-        # Always track the vararg name so that a documented *args (e.g. ":param args:")
-        # is not mistakenly flagged as "should be keyword".  We do NOT require it to be
-        # documented (see missing_params loop below).
-        if vararg_name:
+        # If there is a vararg, treat it as a param (unless this is an overload implementation)
+        if vararg_name and not is_overload_impl:
             arg_names.append(vararg_name)
 
         docparams = {}
@@ -1755,10 +1753,6 @@ class CheckDocstringParameters(BaseChecker):
         missing_params = []
         for param in arg_names:
             if param == "self" or param == "cls":
-                continue
-            if param == vararg_name:
-                # *args passthroughs are never required to be documented; documenting
-                # them is optional and valid, but omitting them is not a gap.
                 continue
             if param not in docparams:
                 missing_params.append(param)

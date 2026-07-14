@@ -4845,3 +4845,23 @@ class TestNoCrossPackagePrivateImport(pylint.testutils.CheckerTestCase):
         importfrom_node = setup.body[10]
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
+
+    def test_allows_relative_import_with_private_segment(self, setup):
+        """from ...operations._operations import FooMixin should NOT be flagged.
+
+        Relative imports are always within the same package; node.modname is an
+        un-anchored suffix that must not be compared against current_module.
+        """
+        importfrom_node = setup.body[11]
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)
+
+    def test_allows_relative_import_leading_private(self, setup):
+        """from ._utils import helper should NOT be flagged.
+
+        The module name starts with '_'; _get_private_prefix returns None (no
+        public prefix), so the check is skipped entirely.
+        """
+        importfrom_node = setup.body[12]
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)

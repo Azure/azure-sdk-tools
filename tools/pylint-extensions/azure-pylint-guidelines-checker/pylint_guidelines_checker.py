@@ -3774,11 +3774,16 @@ class NoCrossPackagePrivateImport(BaseChecker):
           'azure.storage.blob._generated.models' -> 'azure.storage.blob'
           'azure.core._pipeline_client' -> 'azure.core'
 
-        Returns None if there is no private segment.
+        Returns None if there is no private segment, or if the first segment itself is
+        private (no meaningful public prefix to compare against).
         """
         parts = module_name.split(".")
         for i, part in enumerate(parts):
             if part.startswith("_"):
+                # If the very first segment is private there is no public prefix,
+                # so we cannot reliably determine the owning package. Skip.
+                if i == 0:
+                    return None
                 return ".".join(parts[:i])
         return None
 
@@ -3804,6 +3809,14 @@ class NoCrossPackagePrivateImport(BaseChecker):
     def visit_importfrom(self, node):
         """Check 'from x.y._z import foo' style imports."""
         if node.modname is None:
+            return
+        # Relative imports (level > 0) are by definition within the same package.
+        # node.modname for a relative import is the *un-anchored* suffix (e.g.
+        # "operations._operations" for "from ...operations._operations import …"),
+        # which cannot be compared against the fully-qualified current_module without
+        # first resolving the anchor — which we don't do here.  Skipping is safe:
+        # a relative import can never be a cross-package import.
+        if node.level and node.level > 0:
             return
         current_module = node.root().name
         if self._is_cross_package_private_import(node.modname, current_module):

@@ -18,3 +18,10 @@ import azure.identity
 # Non-azure imports are fine
 import os
 from collections import OrderedDict
+
+# ---- relative imports are always same-package — must not be flagged ----
+# Simulates: from ...operations._operations import FooMixin
+# (level=3, modname="operations._operations")
+from ...operations._operations import FooMixin  # noqa: F401, E402
+# Simulates: from ._utils import helper
+from ._utils import helper  # noqa: F401, E402

@@ -1,6 +1,10 @@
 # Release History
 
-## 0.5.8 (Unreleased)
+## 0.5.9 (Unreleased)
+- Fix `no-cross-package-private-import` (C4776) to skip relative imports (`from .x import …`); `node.modname` for a relative import is an un-anchored suffix that was incorrectly compared against the fully-qualified current module, causing false positives on legitimate same-package imports
+- Fix `no-cross-package-private-import` (C4776) to skip modules whose first segment is already private (e.g. `_utils.model_base`); previously `_get_private_prefix` returned `""`, making `startswith("")` always `True` and silencing the check
+
+## 0.5.8 (2026-07-13)
 - Add `do-not-store-secrets-in-test-variables` check
 - Add `remove-deprecated-iscoroutinefunction` check
 - Add `do-not-use-logging-directly` check

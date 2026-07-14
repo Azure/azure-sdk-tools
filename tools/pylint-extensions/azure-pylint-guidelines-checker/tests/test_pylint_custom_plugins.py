@@ -3186,9 +3186,10 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
 
     def test_docstring_class_vararg_documented_ok(self):
         """Class __init__ that documents *args in the docstring should NOT be flagged."""
-        file = open(os.path.join(TEST_FOLDER, "test_files", "docstring_parameters.py"))
-        node = astroid.parse(file.read())
-        file.close()
+        with open(
+            os.path.join(TEST_FOLDER, "test_files", "docstring_parameters.py")
+        ) as file:
+            node = astroid.parse(file.read())
         # ClassWithDocumentedVararg is body[14]
         class_node = node.body[14]
         with self.assertNoMessages():
@@ -3196,15 +3197,14 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
 
     def test_docstring_class_overload_init_skips_args(self):
         """Class with overloaded __init__ implementation should not flag *args/**kwargs."""
-        file = open(
+        with open(
             os.path.join(
                 TEST_FOLDER,
                 "test_files",
                 "docstring_overload_args_kwargs.py",
             )
-        )
-        node = astroid.parse(file.read())
-        file.close()
+        ) as file:
+            node = astroid.parse(file.read())
         # ClientWithOverloadedInit is body[5]
         class_node = node.body[5]
         with self.assertNoMessages():
@@ -4951,4 +4951,19 @@ class TestNoCrossPackagePrivateImport(pylint.testutils.CheckerTestCase):
             ),
             ignore_position=True,
         ):
+            self.checker.visit_importfrom(importfrom_node)
+
+    def test_relative_import_escaping_top_level_package_is_skipped(self):
+        """A relative import that escapes above the top-level package is invalid Python.
+
+        For the top-level "azure" package __init__.py, "from .. import x" (level=2)
+        would resolve above "azure"; ups == len(package_parts), so it must be skipped
+        rather than resolved to a bare module name.
+        """
+        source = "from .. import something\n"
+        module = astroid.parse(source)
+        module.name = "azure"
+        module.package = True
+        importfrom_node = module.body[0]
+        with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)

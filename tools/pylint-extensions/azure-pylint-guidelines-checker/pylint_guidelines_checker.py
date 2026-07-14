@@ -3831,7 +3831,7 @@ class NoCrossPackagePrivateImport(BaseChecker):
             else:
                 package_parts = parts[:-1]
             ups = node.level - 1  # level=1 → current package (0 ups); level=2 → 1 up; etc.
-            if ups > len(package_parts):
+            if ups >= len(package_parts):
                 # Import would escape above the top-level package — invalid Python; skip.
                 return
             base_parts = package_parts[:-ups] if ups > 0 else package_parts

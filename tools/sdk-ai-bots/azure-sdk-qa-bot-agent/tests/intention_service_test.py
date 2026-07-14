@@ -690,3 +690,86 @@ async def test_cc_routing_addendum_should_not_respond(
     assert resp.should_respond is False
 
 
+@pytest.mark.asyncio(loop_scope="module")
+async def test_assistance_plea_after_cc_ping_should_not_respond(
+    service: IntentionService, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A human-assistance plea that trails a cc routing ping should not be answered.
+
+    Real case (screenshot): the bot answered the PR merge-readiness question, the
+    asker then posted a ``cc @<account>`` ping followed by "Can someone please
+    assist on this request? Thanks!". The plea is a hand-off to a human, not a
+    follow-up for the bot, even though it trails the cc ping and the technical
+    thread. The bot must stay silent instead of offering to draft a nudge.
+    """
+    user_id = "user-555"
+    conversation_id = "conv-plea-cc"
+    conversation_type = ConversationType.teams_channel
+
+    prior_user_msg = ConversationMessageItem(
+        id="msg-1",
+        sender_role=Role.User,
+        sender_id=user_id,
+        sender_name="Heidi",
+        content="Is this PR ready to merge, or is something still blocking it?",
+        created_at=datetime.now(timezone.utc),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+        conversation_partition=f"channel:{conversation_id}",
+    )
+    prior_bot_reply = ConversationMessageItem(
+        id="msg-2",
+        sender_role=Role.Assistant,
+        sender_id="bot",
+        sender_name="Azure SDK QA Bot",
+        content=(
+            "This PR is not ready to merge yet: checks are green, but it is still "
+            "missing human approval (branch protection / CODEOWNERS). Get an "
+            "approving review from a requested reviewer to unblock the merge.\n\n"
+            "Not resolved? Please re-post in the Language - Python channel."
+        ),
+        created_at=datetime.now(timezone.utc),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+        conversation_partition=f"channel:{conversation_id}",
+    )
+    cc_ping_msg = ConversationMessageItem(
+        id="msg-3",
+        sender_role=Role.User,
+        sender_id=user_id,
+        sender_name="Heidi",
+        content="cc <at>non-people-account-for-chatbot</at>",
+        created_at=datetime.now(timezone.utc),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+        conversation_partition=f"channel:{conversation_id}",
+    )
+
+    async def fake_has_expert_reply(*_args, **_kwargs):
+        return False
+
+    async def fake_get_messages_by_conversation(*_args, **_kwargs):
+        return [prior_user_msg, prior_bot_reply, cc_ping_msg]
+
+    monkeypatch.setattr(
+        service._conversation_service, "has_expert_reply", fake_has_expert_reply
+    )
+    monkeypatch.setattr(
+        service._conversation_service,
+        "get_messages_by_conversation",
+        fake_get_messages_by_conversation,
+    )
+
+    req = IntentionRequest(
+        message=Message(
+            role=Role.User,
+            user_id=user_id,
+            content="Can someone please assist on this request? Thanks!",
+        ),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+    )
+    resp = await service.classify(req)
+    assert resp.should_respond is False
+
+

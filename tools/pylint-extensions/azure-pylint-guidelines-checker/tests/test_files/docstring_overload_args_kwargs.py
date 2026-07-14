@@ -78,3 +78,20 @@ class AsyncClient:
         :type x: str or int
         """
         return None
+
+
+# test_docstring_class_overload_init_skips_args - overloaded __init__ impl should NOT flag args
+class ClientWithOverloadedInit:
+    @overload
+    def __init__(self, url: str) -> None: ...
+
+    @overload
+    def __init__(self, credential: object) -> None: ...
+
+    def __init__(self, *args, **kwargs):
+        """Create a new client.
+
+        :param url: The service endpoint URL.
+        :type url: str
+        """
+        pass

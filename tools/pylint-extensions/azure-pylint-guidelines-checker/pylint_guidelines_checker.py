@@ -1708,6 +1708,7 @@ class CheckDocstringParameters(BaseChecker):
                     ]
                     vararg_name = constructor.args.vararg
                     kwarg_name = constructor.args.kwarg
+                    is_overload_impl = self._is_overload_implementation(constructor)
                     break
 
         if isinstance(node, astroid.FunctionDef):
@@ -1725,8 +1726,10 @@ class CheckDocstringParameters(BaseChecker):
         except AttributeError:
             return
 
-        # If there is a vararg, treat it as a param (unless this is an overload implementation)
-        if vararg_name and not is_overload_impl:
+        # Always track the vararg name so that a documented *args (e.g. ":param args:")
+        # is not mistakenly flagged as "should be keyword".  We do NOT require it to be
+        # documented (see missing_params loop below).
+        if vararg_name:
             arg_names.append(vararg_name)
 
         docparams = {}
@@ -1752,6 +1755,10 @@ class CheckDocstringParameters(BaseChecker):
         missing_params = []
         for param in arg_names:
             if param == "self" or param == "cls":
+                continue
+            if param == vararg_name:
+                # *args passthroughs are never required to be documented; documenting
+                # them is optional and valid, but omitting them is not a gap.
                 continue
             if param not in docparams:
                 missing_params.append(param)
@@ -3810,16 +3817,29 @@ class NoCrossPackagePrivateImport(BaseChecker):
         """Check 'from x.y._z import foo' style imports."""
         if node.modname is None:
             return
-        # Relative imports (level > 0) are by definition within the same package.
-        # node.modname for a relative import is the *un-anchored* suffix (e.g.
-        # "operations._operations" for "from ...operations._operations import …"),
-        # which cannot be compared against the fully-qualified current_module without
-        # first resolving the anchor — which we don't do here.  Skipping is safe:
-        # a relative import can never be a cross-package import.
-        if node.level and node.level > 0:
-            return
         current_module = node.root().name
-        if self._is_cross_package_private_import(node.modname, current_module):
+
+        if node.level and node.level > 0:
+            # Relative import: resolve node.modname to an absolute module name before
+            # checking.  A level-1 import anchors at the current package; level-2 at
+            # the parent; level-3 at the grandparent; and so on.
+            #
+            # Example: from azure.storage.file.datalake._some_module,
+            #   "from ...blob._generated.models import …"  (level=3, modname="blob._generated.models")
+            # resolves to azure.storage.blob._generated.models — a genuine cross-package
+            # private import that must still be flagged.
+            parts = current_module.split(".")
+            package_parts = parts[:-1]  # drop the module name, keep the package
+            ups = node.level - 1        # level=1 → current package (0 ups); level=2 → 1 up; etc.
+            if ups >= len(package_parts):
+                # Import would escape above the top-level package — invalid Python; skip.
+                return
+            base_parts = package_parts[:-ups] if ups > 0 else package_parts
+            resolved = ".".join(base_parts + [node.modname]) if node.modname else ".".join(base_parts)
+        else:
+            resolved = node.modname
+
+        if self._is_cross_package_private_import(resolved, current_module):
             self.add_message(
                 msgid="no-cross-package-private-import",
                 node=node,

@@ -3158,8 +3158,11 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_functiondef(impl_node)
 
-    def test_docstring_no_overload_still_checks_args(self):
-        """Regular function with undocumented *args (not an overload impl) should still be flagged."""
+    def test_docstring_no_overload_args_not_required(self):
+        """Regular function with undocumented *args should NOT be flagged.
+
+        *args passthroughs are never required to be documented.
+        """
         file = open(
             os.path.join(
                 TEST_FOLDER,
@@ -3169,20 +3172,46 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
         )
         node = astroid.parse(file.read())
         file.close()
-        # regular_function is the last function in the module (body[3])
+        # regular_function is body[3]
         regular_node = node.body[3]
-        with self.assertAddsMessages(
-            pylint.testutils.MessageTest(
-                msg_id="docstring-missing-param",
-                line=59,
-                node=regular_node,
-                args="args",
-                col_offset=0,
-                end_line=59,
-                end_col_offset=20,
-            ),
-        ):
+        with self.assertNoMessages():
             self.checker.check_parameters(regular_node)
+
+    def test_docstring_class_vararg_not_required(self):
+        """Class __init__ with undocumented *args should NOT be flagged."""
+        file = open(os.path.join(TEST_FOLDER, "test_files", "docstring_parameters.py"))
+        node = astroid.parse(file.read())
+        file.close()
+        # ClassWithVararg is body[14]
+        class_node = node.body[14]
+        with self.assertNoMessages():
+            self.checker.visit_classdef(class_node)
+
+    def test_docstring_class_vararg_documented_ok(self):
+        """Class __init__ that explicitly documents *args should NOT fire should-be-keyword."""
+        file = open(os.path.join(TEST_FOLDER, "test_files", "docstring_parameters.py"))
+        node = astroid.parse(file.read())
+        file.close()
+        # ClassWithDocumentedVararg is body[15]
+        class_node = node.body[15]
+        with self.assertNoMessages():
+            self.checker.visit_classdef(class_node)
+
+    def test_docstring_class_overload_init_skips_args(self):
+        """Class with overloaded __init__ implementation should not flag *args/**kwargs."""
+        file = open(
+            os.path.join(
+                TEST_FOLDER,
+                "test_files",
+                "docstring_overload_args_kwargs.py",
+            )
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        # ClientWithOverloadedInit is body[5]
+        class_node = node.body[5]
+        with self.assertNoMessages():
+            self.checker.visit_classdef(class_node)
 
     def test_docstring_overload_implementation_async_skips_args_kwargs(self):
         """Async overload implementation with *args/**kwargs should not report missing param errors."""
@@ -4847,10 +4876,10 @@ class TestNoCrossPackagePrivateImport(pylint.testutils.CheckerTestCase):
             self.checker.visit_importfrom(importfrom_node)
 
     def test_allows_relative_import_with_private_segment(self, setup):
-        """from ...operations._operations import FooMixin should NOT be flagged.
+        """from ._operations import SomeMixin should NOT be flagged.
 
-        Relative imports are always within the same package; node.modname is an
-        un-anchored suffix that must not be compared against current_module.
+        level=1 resolves to azure.storage.file.datalake._operations — same package
+        as the current module, so the check correctly passes.
         """
         importfrom_node = setup.body[11]
         with self.assertNoMessages():
@@ -4859,9 +4888,35 @@ class TestNoCrossPackagePrivateImport(pylint.testutils.CheckerTestCase):
     def test_allows_relative_import_leading_private(self, setup):
         """from ._utils import helper should NOT be flagged.
 
-        The module name starts with '_'; _get_private_prefix returns None (no
-        public prefix), so the check is skipped entirely.
+        level=1 resolves to azure.storage.file.datalake._utils — the public prefix
+        is azure.storage.file.datalake, which matches the current module.
         """
         importfrom_node = setup.body[12]
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)
+
+    def test_flags_cross_package_relative_importfrom(self, setup):
+        """from ...blob._generated.models import BlobItem should be flagged.
+
+        level=3 from azure.storage.file.datalake._some_module resolves to
+        azure.storage.blob._generated.models — a genuine cross-package private import.
+        """
+        importfrom_node = setup.body[13]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="no-cross-package-private-import",
+                node=importfrom_node,
+            ),
+            ignore_position=True,
+        ):
+            self.checker.visit_importfrom(importfrom_node)
+
+    def test_allows_absolute_leading_private_importfrom(self, setup):
+        """from _utils import something_absolute should NOT be flagged.
+
+        The modname starts with '_' at position 0; _get_private_prefix returns None
+        because there is no public prefix to compare against, so the check is skipped.
+        """
+        importfrom_node = setup.body[14]
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)

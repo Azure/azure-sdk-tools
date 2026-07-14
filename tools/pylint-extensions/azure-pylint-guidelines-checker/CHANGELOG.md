@@ -3,6 +3,9 @@
 ## 0.5.9 (Unreleased)
 - Fix `no-cross-package-private-import` (C4776) to skip relative imports (`from .x import …`); `node.modname` for a relative import is an un-anchored suffix that was incorrectly compared against the fully-qualified current module, causing false positives on legitimate same-package imports
 - Fix `no-cross-package-private-import` (C4776) to skip modules whose first segment is already private (e.g. `_utils.model_base`); previously `_get_private_prefix` returned `""`, making `startswith("")` always `True` and silencing the check
+- Fix `check-docstrings` (C4739) ClassDef branch reading `vararg_name` from the class node instead of `__init__`; `node.args.vararg` → `constructor.args.vararg`
+- Fix `check-docstrings` (C4739) `is_overload_impl` never set for ClassDef path, making the overload-implementation escape hatch unreachable for class constructors
+- Fix `check-docstrings` (C4739) to never require `*args` to be documented; `*args` passthroughs are optional to document — omitting them is not a gap
 
 ## 0.5.8 (2026-07-13)
 - Add `do-not-store-secrets-in-test-variables` check

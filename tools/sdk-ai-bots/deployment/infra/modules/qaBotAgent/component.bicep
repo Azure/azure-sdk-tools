@@ -24,6 +24,9 @@ param aiResourceName string = 'qabot-ai-resource-${substring(uniqueString(resour
 @description('Name of the Foundry project inside the AIServices account.')
 param aiProjectName string = 'qabot-ai'
 
+@description('Name of the shared container registry the hosted agent pulls its image from. The Foundry project managed identity is granted AcrPull on it.')
+param containerRegistryName string
+
 @description('Object ID of the developer principal (user, group, or SP) to grant OpenAI access. Empty = skip.')
 param developerGroupObjectId string = ''
 
@@ -302,6 +305,26 @@ resource developerFoundryProjectManagerRoleAssignment 'Microsoft.Authorization/r
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'eadc314b-1a2d-4efa-be10-5d325db5065e')
     principalId: developerGroupObjectId
     principalType: developerPrincipalType
+  }
+}
+
+// The hosted agent pulls its image from the shared container registry using the
+// Foundry project's system-assigned managed identity (confirmed as the image-
+// pull principal by the Foundry hosted-agent docs and the azd agent extension's
+// own bicep templates). Without AcrPull on the registry, `azd deploy agent`
+// fails with `[ImageError] Container registry rejected the image pull (HTTP 403
+// Forbidden)`.
+resource registry 'Microsoft.ContainerRegistry/registries@2026-01-01-preview' existing = {
+  name: containerRegistryName
+}
+
+resource projectAcrPull 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: registry
+  name: guid(registry.id, project.id, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d'))
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
+    principalId: project.identity.principalId
+    principalType: 'ServicePrincipal'
   }
 }
 

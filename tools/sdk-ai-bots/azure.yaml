@@ -8,6 +8,7 @@ services:
         project: azure-sdk-qa-bot-agent/agents/chat_agent
         host: azure.ai.agent
         language: python
+        image: qabotcontainervb64x5.azurecr.io/azure-sdk-qa-bot-agent-server:dev
         config:
             container:
                 resources:
@@ -28,11 +29,8 @@ services:
         host: appservice
         language: docker
         docker:
-            # The backend Go module is self-contained, so the build context is
-            # this service's own directory (the Dockerfile uses `COPY . .`).
             path: Dockerfile
             context: .
-            # Build the image in ACR (cloud-side) so no local Docker is required.
             remoteBuild: true
         hooks:
             postdeploy:

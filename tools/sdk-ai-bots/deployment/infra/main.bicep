@@ -153,6 +153,7 @@ module agent './modules/qaBotAgent/component.bicep' = {
     managedIdentityPrincipalId: sharedResources.outputs.managedIdentityPrincipalId
     storageAccountName: sharedResources.outputs.storageAccountName
     storageBlobEndpoint: sharedResources.outputs.storageBlobEndpoint
+    containerRegistryName: sharedResources.outputs.containerRegistryName
     developerGroupObjectId: developerGroupObjectId
     developerPrincipalType:  developerPrincipalType
     aiResourceName:         !empty(aiResourceName)         ? aiResourceName         : 'qabot-ai-resource-${_suffix}'

@@ -71,12 +71,18 @@ async function persistBicepOutputs(): Promise<void> {
 
   const outputs: Record<string, { value: string }> = JSON.parse(raw);
 
+  // ARM returns `properties.outputs` keys transformed by .NET's camelCase JSON
+  // naming policy (e.g. AI_PROJECT_NAME → aI_PROJECT_NAME, ACTION_GROUP_NAME →
+  // actioN_GROUP_NAME). All main.bicep outputs are SCREAMING_SNAKE_CASE, so
+  // upper-casing restores the original name and avoids `azd env set` creating a
+  // case-mismatched duplicate of the var azd already persisted.
   for (const [key, entry] of Object.entries(outputs)) {
+    const name = key.toUpperCase();
     const value = String(entry.value ?? "");
-    execSync(`azd env set "${key}" "${value.replace(/"/g, '\\"')}"`, {
+    execSync(`azd env set "${name}" "${value.replace(/"/g, '\\"')}"`, {
       stdio: "inherit",
     });
-    log(`  set ${key}`);
+    log(`  set ${name}`);
   }
 
   log(`Persisted ${Object.keys(outputs).length} outputs.`);

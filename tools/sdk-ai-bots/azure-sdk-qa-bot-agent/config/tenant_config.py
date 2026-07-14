@@ -14,6 +14,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
+from urllib.parse import quote
 
 from models.knowledge import KnowledgeSource, _trim_file_format
 
@@ -248,7 +249,7 @@ _register(
         link_fn=lambda title: (
             "https://dev.azure.com/azure-sdk/internal/_wiki/wikis/internal.wiki"
             "?wikiVersion=GBwikiMaster&pagePath=/"
-            + _trim_file_format(title.replace("#", "/"))
+            + quote(_trim_file_format(title.replace("#", "/")), safe="/")
         ),
     ),
     # -- General Azure & review resources --

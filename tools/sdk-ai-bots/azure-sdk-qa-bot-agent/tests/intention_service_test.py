@@ -554,3 +554,139 @@ async def test_pre_deployment_thread_reply_should_not_respond(
     assert resp.reason == "no_history_and_not_root_message"
 
 
+@pytest.mark.asyncio(loop_scope="module")
+async def test_human_assistance_plea_after_bot_reply_should_not_respond(
+    service: IntentionService, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A generic plea for a human to assist after the bot already answered should not trigger another reply.
+
+    Real case: the bot answered the technical question, then the asker posted a
+    generic "Can someone please assist on this request?" to escalate to a human.
+    That is a thread-bump directed at people, not a new question for the bot.
+    """
+    user_id = "user-333"
+    conversation_id = "conv-plea"
+    conversation_type = ConversationType.teams_channel
+
+    prior_user_msg = ConversationMessageItem(
+        id="msg-1",
+        sender_role=Role.User,
+        sender_id=user_id,
+        sender_name="Frank",
+        content="Why are my PRs stuck on the license/cla check and how do I unblock them?",
+        created_at=datetime.now(timezone.utc),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+        conversation_partition=f"channel:{conversation_id}",
+    )
+    prior_bot_reply = ConversationMessageItem(
+        id="msg-2",
+        sender_role=Role.Assistant,
+        sender_id="bot",
+        sender_name="Azure SDK QA Bot",
+        content=(
+            "The license/cla check blocks PRs until the CLA is signed. Ask the PR "
+            "author to sign the CLA, then re-run the check to unblock the PR."
+        ),
+        created_at=datetime.now(timezone.utc),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+        conversation_partition=f"channel:{conversation_id}",
+    )
+
+    async def fake_has_expert_reply(*_args, **_kwargs):
+        return False
+
+    async def fake_get_messages_by_conversation(*_args, **_kwargs):
+        return [prior_user_msg, prior_bot_reply]
+
+    monkeypatch.setattr(
+        service._conversation_service, "has_expert_reply", fake_has_expert_reply
+    )
+    monkeypatch.setattr(
+        service._conversation_service,
+        "get_messages_by_conversation",
+        fake_get_messages_by_conversation,
+    )
+
+    req = IntentionRequest(
+        message=Message(
+            role=Role.User,
+            user_id=user_id,
+            content="Can someone please assist on this request? Thanks!",
+        ),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+    )
+    resp = await service.classify(req)
+    assert resp.should_respond is False
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_cc_routing_addendum_should_not_respond(
+    service: IntentionService, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A pure cc/fyi routing addendum that only loops in a teammate should not be answered.
+
+    Real case: the bot already answered the technical question, then the asker
+    posts a "cc @Alice fyi" addendum to loop in a teammate. That is a routing
+    ping directed at people, not a new question for the bot.
+    """
+    user_id = "user-444"
+    conversation_id = "conv-cc"
+    conversation_type = ConversationType.teams_channel
+
+    prior_user_msg = ConversationMessageItem(
+        id="msg-1",
+        sender_role=Role.User,
+        sender_id=user_id,
+        sender_name="Grace",
+        content="How do I add a suppression for a breaking change in my spec PR?",
+        created_at=datetime.now(timezone.utc),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+        conversation_partition=f"channel:{conversation_id}",
+    )
+    prior_bot_reply = ConversationMessageItem(
+        id="msg-2",
+        sender_role=Role.Assistant,
+        sender_id="bot",
+        sender_name="Azure SDK QA Bot",
+        content=(
+            "Add a suppression entry under the `suppressions` section of your PR and "
+            "have an approver apply the breaking-change label."
+        ),
+        created_at=datetime.now(timezone.utc),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+        conversation_partition=f"channel:{conversation_id}",
+    )
+
+    async def fake_has_expert_reply(*_args, **_kwargs):
+        return False
+
+    async def fake_get_messages_by_conversation(*_args, **_kwargs):
+        return [prior_user_msg, prior_bot_reply]
+
+    monkeypatch.setattr(
+        service._conversation_service, "has_expert_reply", fake_has_expert_reply
+    )
+    monkeypatch.setattr(
+        service._conversation_service,
+        "get_messages_by_conversation",
+        fake_get_messages_by_conversation,
+    )
+
+    req = IntentionRequest(
+        message=Message(
+            role=Role.User,
+            user_id=user_id,
+            content="cc <at>Alice</at> /cc <at>SDK Team</at> fyi",
+        ),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+    )
+    resp = await service.classify(req)
+    assert resp.should_respond is False
+
+

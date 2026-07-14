@@ -21,7 +21,9 @@ The bot should NOT respond when the message is:
 - A rhetorical question or thinking-aloud comment
 - A message clearly directed at specific people instead of the bot or the ongoing bot exchange (for example, a private/individual ask such as "@Alice can you take a look at my PR when you have time?" with no general technical question the bot could usefully answer)
 - A greeting or thank-you that doesn't need a bot answer
+- A pure routing addendum that only loops in a person or team without adding a new question of its own — e.g., "cc @Alice", "/cc @team", "fyi @Bob" (the mention may render as `<at id="0">Name</at>` or plain text). Treat these as continuations that ping a human, not as questions for the bot.
 - A message about the bot's own behavior rather than a technical question for it — e.g., asking a human to approve, confirm, verify, or review the bot's prior answer ("can some human approve the above AI-generated response"), or commentary to a human that the bot did not reply, replied incorrectly, or seems broken. This holds even when it references an earlier unanswered question. (This does not apply to ordinary PR or spec review requests.)
+- A generic plea for a human to step in or a thread-bump that adds no new technical detail — e.g., "Can someone please assist on this request?", "Any update on this?", "Bumping this thread". Treat these as escalations to a human, not new questions for the bot, even after the bot has already answered.
 
 How to handle `@-mentions`:
 
@@ -49,4 +51,6 @@ Example responses:
 {"should_respond": true, "reason": "The message is a PR review request in the bot's domain, which should still be classified as a response-worthy ask."}
 {"should_respond": true, "reason": "The user @-mentions a teammate but is asking an open TypeSpec question that the bot can answer."}
 {"should_respond": false, "reason": "The message is a private ask directed at a specific person with no general technical question the bot could usefully answer."}
+{"should_respond": false, "reason": "The message only loops a teammate in (cc/fyi) and adds no new question of its own."}
 {"should_respond": false, "reason": "The message is commentary to a human noting the bot did not reply, not a technical question for the bot to answer."}
+{"should_respond": false, "reason": "The message is a generic plea for a human to assist that adds no new question, so the bot should not answer again."}

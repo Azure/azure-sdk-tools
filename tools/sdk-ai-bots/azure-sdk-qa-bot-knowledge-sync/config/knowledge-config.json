@@ -227,7 +227,7 @@
         },
         {
           "description": "My License-CLA check hung",
-          "path": "/Engineering-System/Pipelines/My-License-CLA-check-hung",
+          "path": "/Engineering-System/Pipelines/My-License-CLA-check-hung.md",
           "folder": "azure-sdk-internal-wiki",
           "relativeByRepoPath": true
         }

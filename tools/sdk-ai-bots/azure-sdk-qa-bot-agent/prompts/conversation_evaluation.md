@@ -25,17 +25,17 @@ Judge whether the **bot's answers, taken together across the whole thread**, cor
 
 When a human expert replies, treat it as the strongest signal. Judge what the expert *does*, not whether they say "you're wrong":
 
-- **Confirms, agrees with, builds on, or implements** a more specific version of the bot's direction → **correct**. A procedural nudge that still matches the bot's advice (e.g. "work with the assigned reviewers directly") is agreement, not a contradiction.
+- **Confirms, agrees with, builds on, or implements** a more specific version of the bot's direction → **correct**. A procedural nudge that still matches the bot's advice (e.g. "work with the assigned reviewers directly") is agreement, not a contradiction. But an expert who supplies a materially different cause or corrects a substantive detail is not agreeing, even if their tone is helpful.
 - **Corrects, contradicts, or points to a different approach** than the bot's → **incorrect**.
-- **Only defers** — points to another owner/thread or leaves it "being discussed" without endorsing the bot → not a confirmation; if no resolution is captured and the bot's answer isn't independently verifiable, choose **unknown**.
+- **Only defers** — points to another owner/thread or leaves it "being discussed" without endorsing the bot → not a confirmation. This does **not** by itself make the answer **unknown**: if the bot's answer is concrete and independently verifiable as correct/standard, keep **correct**; choose **unknown** only when the answer is also non-specific or you cannot verify it from the transcript or your own knowledge.
 - If the original poster later **confirms** the problem was resolved along the bot's direction — including adopting one of several valid paths it offered — that's a strong **correct** signal.
-- If a later expert or outcome **supersedes** the bot's premise or shows its recommended path was moot without confirming the bot's claim, choose **unknown**.
+- If a later expert or outcome **supersedes** the bot's premise so its recommended path became moot — without showing the bot's answer was wrong — choose **unknown**. If instead the expert shows the bot's concrete guidance was actually wrong or inconsistent with the real process, that's **incorrect**, not unknown.
 
 ## Verdicts
 
 - **correct** — Technically accurate and adequately addresses the question(s). Directionally right but slightly incomplete still counts; do not penalize minor omissions, style, or verbosity. A concrete answer that addresses the real question and is independently verifiable as correct/standard is **correct** even if nobody confirmed it — including a thorough answer that flags its own uncertainties and matches standard practice.
 - **incorrect** — Wrong, misleading, misses the point, or only treats symptoms while missing a known root cause (e.g. an underlying bug) so following it would not resolve the problem. A substantive refusal or "I don't know" to a question that had a real answer is not correct. A clean "looks good / no blocker" review is **incorrect** if an expert then flags a real defect it missed or approves a different artifact instead. This means *actually* wrong — unverified specifics are not **incorrect** by themselves.
-- **unknown** — The transcript genuinely does not let you decide: the question is too ambiguous, or the bot's answer cannot be verified from the transcript or your own knowledge. Also use this when the bot only emitted a system/generation error (e.g. "Sorry, something went wrong, please retry") and produced no real answer to judge.
+- **unknown** — The transcript genuinely does not let you decide: the question is too ambiguous, or the bot's answer cannot be verified from the transcript or your own knowledge. Do **not** choose unknown merely because no expert confirmed the bot or an expert only redirected — a concrete answer you can independently verify as correct/standard is **correct**. Also use unknown when the bot only emitted a system/generation error (e.g. "Sorry, something went wrong, please retry") and produced no real answer to judge.
 
 ## Output
 

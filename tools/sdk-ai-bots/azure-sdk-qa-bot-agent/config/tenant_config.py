@@ -563,6 +563,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_AZURE_OPENAPI_DIFF_DOCS,
             SRC_AZURE_SDK_DOCS_ENG,
             SRC_STATIC_ARM_DOCS,
+            SRC_AZURE_SDK_INTERNAL_WIKI,
         ),
         source_filter={
             SRC_AZURE_SDK_DOCS_ENG: "search.ismatch('design*', 'title')",

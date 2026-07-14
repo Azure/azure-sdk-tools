@@ -1,7 +1,7 @@
 # Release History
 
 ## 0.5.9 (Unreleased)
-- Fix `no-cross-package-private-import` (C4776) to skip relative imports (`from .x import …`); `node.modname` for a relative import is an un-anchored suffix that was incorrectly compared against the fully-qualified current module, causing false positives on legitimate same-package imports
+- Fix `no-cross-package-private-import` (C4776) to correctly handle relative imports (`from .x import …`); previously `node.modname` for a relative import was an un-anchored suffix that was incorrectly compared against the fully-qualified current module, causing false positives on legitimate same-package imports. Relative imports are now resolved to their absolute module name (accounting for `__init__.py` packages) before running the cross-package check, so genuine cross-package relative imports are still flagged.
 - Fix `no-cross-package-private-import` (C4776) to skip modules whose first segment is already private (e.g. `_utils.model_base`); previously `_get_private_prefix` returned `""`, making `startswith("")` always `True` and silencing the check
 - Fix `check-docstrings` (C4739) ClassDef branch reading `vararg_name` from the class node instead of `__init__`; `node.args.vararg` → `constructor.args.vararg`
 - Fix `check-docstrings` (C4739) `is_overload_impl` never set for ClassDef path, making the overload-implementation escape hatch unreachable for class constructors with overloaded `__init__`

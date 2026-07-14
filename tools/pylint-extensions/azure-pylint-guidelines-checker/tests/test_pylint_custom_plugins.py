@@ -3202,7 +3202,7 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
             self.checker.visit_classdef(class_node)
 
     def test_docstring_class_vararg_documented_ok(self):
-        """Class __init__ that explicitly documents *args should NOT fire should-be-keyword."""
+        """Class __init__ that documents *args in the docstring should NOT be flagged."""
         file = open(os.path.join(TEST_FOLDER, "test_files", "docstring_parameters.py"))
         node = astroid.parse(file.read())
         file.close()
@@ -4933,4 +4933,39 @@ class TestNoCrossPackagePrivateImport(pylint.testutils.CheckerTestCase):
         """
         importfrom_node = setup.body[14]
         with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)
+
+    def test_allows_relative_import_in_package_init(self):
+        """Relative imports in __init__.py resolve against the package itself.
+
+        For azure.storage.file.datalake/__init__.py, "from ._models import X" resolves
+        to azure.storage.file.datalake._models — same-package, not flagged.
+        """
+        source = "from ._models import DataLakeFileClient\n"
+        module = astroid.parse(source)
+        # Simulate this being __init__.py for the azure.storage.file.datalake package.
+        module.name = "azure.storage.file.datalake"
+        module.package = True
+        importfrom_node = module.body[0]
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)
+
+    def test_flags_cross_package_relative_import_in_package_init(self):
+        """Cross-package relative imports in __init__.py should still be flagged.
+
+        For azure.storage.file.datalake/__init__.py, "from ..blob._generated.models import X"
+        resolves to azure.storage.blob._generated.models — cross-package, must be flagged.
+        """
+        source = "from ..blob._generated.models import BlobItem\n"
+        module = astroid.parse(source)
+        module.name = "azure.storage.file.datalake"
+        module.package = True
+        importfrom_node = module.body[0]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="no-cross-package-private-import",
+                node=importfrom_node,
+            ),
+            ignore_position=True,
+        ):
             self.checker.visit_importfrom(importfrom_node)

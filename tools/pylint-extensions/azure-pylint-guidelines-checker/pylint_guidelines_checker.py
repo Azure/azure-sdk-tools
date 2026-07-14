@@ -3811,21 +3811,27 @@ class NoCrossPackagePrivateImport(BaseChecker):
         """Check 'from x.y._z import foo' style imports."""
         if node.modname is None:
             return
-        current_module = node.root().name
+        root = node.root()
+        current_module = root.name
 
         if node.level and node.level > 0:
             # Relative import: resolve node.modname to an absolute module name before
             # checking.  A level-1 import anchors at the current package; level-2 at
-            # the parent; level-3 at the grandparent; and so on.
+            # the parent; and so on.
             #
-            # Example: from azure.storage.file.datalake._some_module,
+            # Example (regular module): from azure.storage.file.datalake._some_module,
             #   "from ...blob._generated.models import …"  (level=3, modname="blob._generated.models")
-            # resolves to azure.storage.blob._generated.models — a genuine cross-package
-            # private import that must still be flagged.
+            # resolves to azure.storage.blob._generated.models.
+            #
+            # For __init__.py, astroid marks the module as a package and current_module
+            # is already the package name (no leaf module to drop).
             parts = current_module.split(".")
-            package_parts = parts[:-1]  # drop the module name, keep the package
-            ups = node.level - 1        # level=1 → current package (0 ups); level=2 → 1 up; etc.
-            if ups >= len(package_parts):
+            if getattr(root, "package", False):
+                package_parts = parts
+            else:
+                package_parts = parts[:-1]
+            ups = node.level - 1  # level=1 → current package (0 ups); level=2 → 1 up; etc.
+            if ups > len(package_parts):
                 # Import would escape above the top-level package — invalid Python; skip.
                 return
             base_parts = package_parts[:-ups] if ups > 0 else package_parts

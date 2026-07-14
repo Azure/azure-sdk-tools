@@ -130,7 +130,7 @@ def function_foo() -> NoReturn:
     raise ValueError("This function never returns")
 
 
-# test_docstring_class_vararg_documented_ok - documenting *args explicitly is also fine
+# test_docstring_class_vararg_documented_ok - documenting *args explicitly is fine
 class ClassWithDocumentedVararg:
     """A class that explicitly documents its vararg.
 

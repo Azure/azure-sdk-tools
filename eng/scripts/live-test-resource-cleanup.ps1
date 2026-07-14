@@ -458,6 +458,35 @@ function Invoke-PreDeleteResourceCleanup() {
 
   $errors = @()
   $resourceGroupName = $ResourceGroup.ResourceGroupName
+
+  if ($ResourceGroup.ManagedBy) {
+    Write-Host "Resource group '$resourceGroupName' is managed by '$($ResourceGroup.ManagedBy)'. Attempting to delete the managing resource before deleting the group."
+    try {
+      $managedByResourceId = $ResourceGroup.ManagedBy
+      $verifyManagedResourceDeleted = {
+        $null -eq (Get-AzResource -ResourceId $managedByResourceId -ErrorAction SilentlyContinue)
+      }.GetNewClosure()
+
+      $managedResourceDeleteJob = Remove-AzResource -ResourceId $managedByResourceId -Force -AsJob
+      $managedResourceDeleteError = Wait-DeleteJob -Job $managedResourceDeleteJob -DisplayName "Managing resource '$managedByResourceId'" -VerifyDeleted $verifyManagedResourceDeleted
+      if ($managedResourceDeleteError) {
+        $errors += "Failed deleting managing resource '$managedByResourceId' for group '$resourceGroupName': $managedResourceDeleteError"
+      }
+    } catch {
+      $errors += "Failed deleting managing resource '$($ResourceGroup.ManagedBy)' for group '$resourceGroupName': $($_.Exception.Message)"
+    }
+  }
+
+  $groupLocks = @(Get-AzResourceLock -ResourceGroupName $resourceGroupName -AtScope -ErrorAction SilentlyContinue)
+  foreach ($groupLock in $groupLocks) {
+    Write-Host "Removing resource group lock '$($groupLock.Name)' from '$resourceGroupName'"
+    try {
+      Remove-AzResourceLock -LockId $groupLock.LockId -Force -ErrorAction Stop
+    } catch {
+      $errors += "Failed removing lock '$($groupLock.Name)' from resource group '$resourceGroupName': $($_.Exception.Message)"
+    }
+  }
+
   $resources = @(Get-AzResource -ResourceGroupName $resourceGroupName -ErrorAction SilentlyContinue)
 
   if (!$resources) {
@@ -467,7 +496,12 @@ function Invoke-PreDeleteResourceCleanup() {
   foreach ($resource in $resources) {
     $locks = @(Get-AzResourceLock -Scope $resource.ResourceId -AtScope -ErrorAction SilentlyContinue)
     foreach ($lock in $locks) {
-      $errors += "Resource group '$resourceGroupName' contains lock '$($lock.Name)' on '$($resource.ResourceId)'. Remove the lock before retrying deletion."
+      Write-Host "Removing resource lock '$($lock.Name)' from '$($resource.ResourceId)'"
+      try {
+        Remove-AzResourceLock -LockId $lock.LockId -Force -ErrorAction Stop
+      } catch {
+        $errors += "Failed removing lock '$($lock.Name)' from '$($resource.ResourceId)': $($_.Exception.Message)"
+      }
     }
   }
 
@@ -544,9 +578,6 @@ function DeleteOrUpdateResourceGroups() {
       } else {
         $toClean += $rg
       }
-      continue
-    }
-    if ((IsChildResource $rg) -or (HasDeleteLock $rg)) {
       continue
     }
     if (HasDoNotDeleteTag $rg) {
@@ -627,11 +658,20 @@ function DeleteAndPurgeGroups {
 
         # For storage tests specifically, if they are aborted then blobs with immutability policies
         # can be left around which prevent deletion.
+        # These helpers throw in CI when the group prefix doesn't start with 'rg-' or 'SSS3PT_rg-'
+        # (a safety guard against wildcard-matching non-live-test resources). We still want the
+        # resource group delete to be attempted even if the helpers fail/throw for that reason,
+        # so wrap each call in its own try/catch and continue.
+        $ci = $null -ne $env:SYSTEM_TEAMPROJECTID
         if ($rg.Tags?.ContainsKey('ServiceDirectory') -and $rg.Tags.ServiceDirectory -like '*storage*') {
-          SetStorageNetworkAccessRules -ResourceGroupName $rg.ResourceGroupName -SetFirewall -CI:($null -ne $env:SYSTEM_TEAMPROJECTID) 
-          Remove-WormStorageAccounts -GroupPrefix $rg.ResourceGroupName -CI:($null -ne $env:SYSTEM_TEAMPROJECTID)
+          try { SetStorageNetworkAccessRules -ResourceGroupName $rg.ResourceGroupName -SetFirewall -CI:$ci }
+          catch { Write-Warning "SetStorageNetworkAccessRules failed for '$($rg.ResourceGroupName)': $($_.Exception.Message). Continuing with group delete." }
+
+          try { Remove-WormStorageAccounts -GroupPrefix $rg.ResourceGroupName -CI:$ci }
+          catch { Write-Warning "Remove-WormStorageAccounts failed for '$($rg.ResourceGroupName)': $($_.Exception.Message). Continuing with group delete." }
         }
-        Remove-StorageSyncServices -GroupPrefix $rg.ResourceGroupName -CI:($null -ne $env:SYSTEM_TEAMPROJECTID)
+        try { Remove-StorageSyncServices -GroupPrefix $rg.ResourceGroupName -CI:$ci }
+        catch { Write-Warning "Remove-StorageSyncServices failed for '$($rg.ResourceGroupName)': $($_.Exception.Message). Continuing with group delete." }
 
         $verifyDeleted = {
           $null -eq (Get-AzResourceGroup -Name $rg.ResourceGroupName -ErrorAction SilentlyContinue)

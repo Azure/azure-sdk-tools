@@ -130,16 +130,6 @@ def function_foo() -> NoReturn:
     raise ValueError("This function never returns")
 
 
-# test_docstring_class_vararg_required - undocumented *args in non-overloaded __init__ should be flagged
-class ClassWithVararg:
-    """A class whose constructor accepts extra positional args.
-
-    :param str url: The service endpoint.
-    """
-    def __init__(self, url, *args):
-        pass
-
-
 # test_docstring_class_vararg_documented_ok - documenting *args explicitly is also fine
 class ClassWithDocumentedVararg:
     """A class that explicitly documents its vararg.

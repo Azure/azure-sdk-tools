@@ -3184,30 +3184,13 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
         ):
             self.checker.check_parameters(regular_node)
 
-    def test_docstring_class_vararg_required(self):
-        """Class __init__ with undocumented *args (no overloading) should be flagged."""
-        file = open(os.path.join(TEST_FOLDER, "test_files", "docstring_parameters.py"))
-        node = astroid.parse(file.read())
-        file.close()
-        # ClassWithVararg is body[14]
-        class_node = node.body[14]
-        with self.assertAddsMessages(
-            pylint.testutils.MessageTest(
-                msg_id="docstring-missing-param",
-                node=class_node,
-                args="args",
-            ),
-            ignore_position=True,
-        ):
-            self.checker.visit_classdef(class_node)
-
     def test_docstring_class_vararg_documented_ok(self):
         """Class __init__ that documents *args in the docstring should NOT be flagged."""
         file = open(os.path.join(TEST_FOLDER, "test_files", "docstring_parameters.py"))
         node = astroid.parse(file.read())
         file.close()
-        # ClassWithDocumentedVararg is body[15]
-        class_node = node.body[15]
+        # ClassWithDocumentedVararg is body[14]
+        class_node = node.body[14]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 

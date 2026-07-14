@@ -27,7 +27,7 @@ The bot should NOT respond when the message is:
 
 How to handle `@-mentions`:
 
-- Treat `@-mentions` as routing hints, not as a hard block. Decide based on the substance of the message.
+- Treat `@-mentions` as routing hints, not as a hard block. Decide based on the substance of the message. A mention's text is only a name, never question content — if a message is nothing but one or more mentions plus routing/filler words (cc, fyi, ping, adding, looping in, thanks, etc.), it asks nothing and the bot should not reply.
 - If the message contains a domain question that anyone (including the bot) could answer, classify as should_respond=true even when other people are @-mentioned.
 - Only classify as should_respond=false when the message is plainly a private/personal ask to the named person and providing a bot answer would not add value.
 - **Exception (takes priority):** if the message is about the bot's own behavior — asking a human to approve/confirm/review the bot's prior answer, or noting the bot did not reply, replied wrong, or is broken — classify as should_respond=false even when it @-mentions that human and restates the underlying technical question. The user is escalating to or talking *about* the bot to a human, not asking it something.

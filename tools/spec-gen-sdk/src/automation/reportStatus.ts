@@ -31,6 +31,10 @@ export const generateReport = (context: WorkflowContext) => {
   if (context.specConfigPath && context.specConfigPath.endsWith('tspconfig.yaml')) {
     generateFromTypeSpec = true;
   }
+  const breakingChangeLabel =
+    context.swaggerToSdkConfig.packageOptions.breakingChangesLabel ??
+    context.swaggerToSdkConfig.packageOptions.breakingChangeLabel;
+
   for (const pkg of context.handledPackages) {
     setSdkAutoStatus(context, pkg.status);
     hasSuppressions = Boolean(pkg.presentSuppressionLines.length > 0);
@@ -52,7 +56,7 @@ export const generateReport = (context: WorkflowContext) => {
       apiViewArtifact: pkg.apiViewArtifactPath,
       language: pkg.language,
       hasBreakingChange: pkg.hasBreakingChange,
-      breakingChangeLabel: context.swaggerToSdkConfig.packageOptions.breakingChangesLabel,
+      breakingChangeLabel,
       shouldLabelBreakingChange,
       areBreakingChangeSuppressed,
       presentBreakingChangeSuppressions: pkg.presentSuppressionLines,

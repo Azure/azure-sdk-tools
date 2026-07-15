@@ -61,7 +61,7 @@ suites:
     description: |
       Scenarios against live MCP — real DevOps / GitHub / pipelines. Slow;
       nightly only. Prime any required clones first via
-      `scripts/Sync-EvalGitRepo.ps1`.
+      `eng/common/scripts/eval/sync-eval-git-repo.js`.
     evals: ["evals/workflow-scenarios/live/*.eval.yaml"]
 
   # ---- composite suites ----

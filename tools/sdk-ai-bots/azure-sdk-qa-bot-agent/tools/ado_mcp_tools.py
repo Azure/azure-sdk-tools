@@ -28,6 +28,9 @@ logger = logging.getLogger(__name__)
 _DEFAULT_ADO_ORG = "azure-sdk"
 # Environment variable read by the ADO MCP server in ``-a envvar`` auth mode.
 _ADO_TOKEN_ENV = "ADO_MCP_AUTH_TOKEN"
+# Pinned to match the copy baked into the image (Dockerfile ADO_MCP_VERSION)
+# so `npx` resolves from cache instead of hitting the registry on cold start.
+_ADO_MCP_PACKAGE = os.environ.get("ADO_MCP_PACKAGE", "@azure-devops/mcp@2.7.0")
 
 
 async def create_ado_mcp_tool() -> MCPStdioTool:
@@ -57,7 +60,7 @@ async def create_ado_mcp_tool() -> MCPStdioTool:
         command="npx",
         args=[
             "-y",
-            "@azure-devops/mcp",
+            _ADO_MCP_PACKAGE,
             org,
             "-d",
             "core",

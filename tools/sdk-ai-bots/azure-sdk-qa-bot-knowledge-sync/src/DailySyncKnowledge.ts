@@ -7,6 +7,7 @@ import { ConfigurationLoader, RepositoryConfig, DocumentationSource, Metadata } 
 import { SearchService } from './services/SearchService';
 import { MetadataResolver } from './services/MetadataResolver';
 import { TypeSpecProcessor } from './services/TypeSpecProcessor';
+import { SampleProcessor } from './services/SampleProcessor';
 
 /**
  * Daily sync knowledge function that processes documentation from various repositories
@@ -79,6 +80,9 @@ export async function processDailySyncKnowledge(): Promise<void> {
         console.log(`processing typespec-azure-resource-manager library`);
         processTypeSpec(docsDir, "typespec-azure/packages/typespec-azure-resource-manager/lib");
 
+        console.log(`processing typespec-azure samples`);
+        processSamples(docsDir, "typespec-azure/packages/samples/specs");
+
         console.log('Processing documentation sources...');
         
         console.log('Loading existing blob metadata for change detection...');
@@ -146,6 +150,10 @@ export async function processDailySyncKnowledge(): Promise<void> {
         
         // Clean up expired blobs
         await cleanupExpiredBlobs(allChangedFiles.concat(allUnchangedFiles).concat(allMetadataChangedFiles));
+
+        // Trigger AI Search to reindex the knowledge base so the updated blobs are picked up
+        await searchService.runIndexer();
+
         console.log('Daily sync knowledge processing completed');
 
     } finally {
@@ -873,6 +881,17 @@ async function preprocessSpectorCases(docsDir: string): Promise<void> {
     } catch (error) {
         console.error('Error processing spector cases:', error);
         throw error;
+    }
+}
+
+/**
+ * Process TypeSpec samples into generated markdown
+ */
+function processSamples(docsDir: string, relativeSamplesDir: string) : void {
+    try {
+        new SampleProcessor(docsDir, relativeSamplesDir).processSamples();
+    } catch (error) {
+        console.error(`Error processing typespec samples: ${relativeSamplesDir}`, error);
     }
 }
 

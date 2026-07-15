@@ -213,17 +213,24 @@
       // Populate month filter dropdown from available release months
       populateMonthFilter(getPlans());
 
-      // Apply URL filter param if present
+      // Apply URL filter params if present (sticky, shareable filters)
       const urlFilter = params.get("filter") || "";
-      if (urlFilter) {
-        store().filters.search = urlFilter;
-      }
+      if (urlFilter) store().filters.search = urlFilter;
 
-      // Apply URL month param if present
       const urlMonth = params.get("month") || "";
-      if (urlMonth) {
-        store().filters.month = urlMonth;
-      }
+      if (urlMonth) store().filters.month = urlMonth;
+
+      const urlPlane = params.get("plane") || "";
+      if (urlPlane) store().filters.plane = urlPlane;
+
+      const urlTag = params.get("tag") || "";
+      if (urlTag) store().filters.tag = urlTag;
+
+      const urlLanguage = params.get("language") || "";
+      if (urlLanguage) store().filters.language = urlLanguage;
+
+      const urlSort = params.get("sort") || "";
+      if (urlSort) store().filters.sort = urlSort;
 
       render(getPlans());
       if (currentUserIsPM) renderPMView(getPlans());
@@ -774,13 +781,19 @@
   // Update URL parameters to reflect current filter state (for sharing)
   function syncFiltersToUrl() {
     const params = new URLSearchParams(window.location.search);
-    const filter = store().filters.search.trim();
-    const month = store().filters.month;
+    const f = store().filters;
+    const setOrDelete = (key, value) => {
+      if (value) params.set(key, value);
+      else params.delete(key);
+    };
 
-    if (filter) params.set("filter", filter);
-    else params.delete("filter");
-    if (month) params.set("month", month);
-    else params.delete("month");
+    setOrDelete("filter", (f.search || "").trim());
+    setOrDelete("month", f.month);
+    setOrDelete("plane", f.plane);
+    setOrDelete("tag", f.tag);
+    setOrDelete("language", f.language);
+    // Only persist sort when it differs from the default ("month")
+    setOrDelete("sort", f.sort && f.sort !== "month" ? f.sort : "");
 
     const newUrl = params.toString()
       ? `${window.location.pathname}?${params}`
@@ -1961,6 +1974,10 @@
 
               if (isReleased) {
                 actionCell = "";
+              } else if (relSt === "approval pending" && l.releasePipeline) {
+                // Release is queued and waiting for the service team to approve
+                // the release stage in the release pipeline. Link directly to it.
+                actionCell = `<a class="lang-action-btn action-btn-approve" href="${esc(l.releasePipeline)}" target="_blank" rel="noopener" title="Approve the package release in the release pipeline">Approve Release</a>`;
               } else if (!hasPr) {
                 actionCell = langActionBtn(ACTION_TYPES.GENERATE, lang, p, l);
               } else if (isClosed && !isMerged) {
@@ -2009,15 +2026,15 @@
               }
             }
 
-            // Release Status cell — when release approval is pending, link to the
-            // release pipeline so the service team can approve the release.
+            // Release Status cell — when release approval is pending, show a
+            // prominent badge. The pipeline approval link is surfaced as an
+            // "Approve Release" action in the Action Required column.
             let releaseCell = statusSpan(releaseDisplay);
             if (
               !exLabel &&
-              (l.releaseStatus || "").toLowerCase() === "approval pending" &&
-              l.releasePipeline
+              (l.releaseStatus || "").toLowerCase() === "approval pending"
             ) {
-              releaseCell = `${statusSpan(releaseDisplay)} <a href="${esc(l.releasePipeline)}" target="_blank" rel="noopener" title="Approve the package release using release pipeline">Approve in pipeline</a>`;
+              releaseCell = `<span class="release-approval-pending-badge" title="The package release is queued and pending approval in the release pipeline"><span class="release-approval-pending-icon" aria-hidden="true">⏳</span> Pending Release Approval</span>`;
             }
 
             html += `<tr${rowClass}>

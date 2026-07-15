@@ -213,24 +213,17 @@
       // Populate month filter dropdown from available release months
       populateMonthFilter(getPlans());
 
-      // Apply URL filter params if present (sticky, shareable filters)
+      // Apply URL filter param if present
       const urlFilter = params.get("filter") || "";
-      if (urlFilter) store().filters.search = urlFilter;
+      if (urlFilter) {
+        store().filters.search = urlFilter;
+      }
 
+      // Apply URL month param if present
       const urlMonth = params.get("month") || "";
-      if (urlMonth) store().filters.month = urlMonth;
-
-      const urlPlane = params.get("plane") || "";
-      if (urlPlane) store().filters.plane = urlPlane;
-
-      const urlTag = params.get("tag") || "";
-      if (urlTag) store().filters.tag = urlTag;
-
-      const urlLanguage = params.get("language") || "";
-      if (urlLanguage) store().filters.language = urlLanguage;
-
-      const urlSort = params.get("sort") || "";
-      if (urlSort) store().filters.sort = urlSort;
+      if (urlMonth) {
+        store().filters.month = urlMonth;
+      }
 
       render(getPlans());
       if (currentUserIsPM) renderPMView(getPlans());
@@ -781,19 +774,13 @@
   // Update URL parameters to reflect current filter state (for sharing)
   function syncFiltersToUrl() {
     const params = new URLSearchParams(window.location.search);
-    const f = store().filters;
-    const setOrDelete = (key, value) => {
-      if (value) params.set(key, value);
-      else params.delete(key);
-    };
+    const filter = store().filters.search.trim();
+    const month = store().filters.month;
 
-    setOrDelete("filter", (f.search || "").trim());
-    setOrDelete("month", f.month);
-    setOrDelete("plane", f.plane);
-    setOrDelete("tag", f.tag);
-    setOrDelete("language", f.language);
-    // Only persist sort when it differs from the default ("month")
-    setOrDelete("sort", f.sort && f.sort !== "month" ? f.sort : "");
+    if (filter) params.set("filter", filter);
+    else params.delete("filter");
+    if (month) params.set("month", month);
+    else params.delete("month");
 
     const newUrl = params.toString()
       ? `${window.location.pathname}?${params}`

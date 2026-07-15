@@ -1,5 +1,9 @@
 # Release
 
+## 2026-07-16 - 0.34.0
+
+- Copy a repository's checked-in `eng/common/.npmrc` (if present) into the `TempTypeSpecFiles` directory before running npm for the `init`, `sync`, `generate`, `update`, `generate-lock-file`, and `generate-config-files` commands, so those npm operations honor the repository's npm registry configuration.
+
 ## 2026-04-30 - 0.33.1
 
 - Added support for passing flags to underlying npm commands using the `--npm-args` flag with the `generate-config-files` and `generate-lock-file` commands.

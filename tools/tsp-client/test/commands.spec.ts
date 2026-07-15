@@ -9,7 +9,7 @@ import {
   generateConfigFilesCommand,
   parseNpmArgs,
 } from "../src/commands.js";
-import { afterAll, afterEach, beforeAll, describe, it, expect } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, it, expect, vi } from "vitest";
 import { assert } from "chai";
 import { getRepoRoot } from "../src/git.js";
 import { cwd } from "node:process";
@@ -19,6 +19,18 @@ import { doesFileExist } from "../src/network.js";
 import { TspLocation } from "../src/typespec.js";
 import { writeTspLocationYaml } from "../src/utils.js";
 import { dirname, resolve } from "node:path";
+
+// The command integration tests below run real `npm` installs. tsp-client copies the
+// repository's eng/common/.npmrc into the temp directory, which in this repo repoints npm to
+// a feed that can't resolve the test emitter packages. The copy behavior is covered directly
+// by test/npmrc.spec.ts, so neutralize it here to keep these tests on the default registry.
+vi.mock("../src/fs.js", async (importActual) => {
+  const actual = await importActual<typeof import("../src/fs.js")>();
+  return {
+    ...actual,
+    copyRepoNpmrcToTemp: vi.fn().mockResolvedValue(undefined),
+  };
+});
 
 describe.sequential("Verify commands", () => {
   let repoRoot: string;

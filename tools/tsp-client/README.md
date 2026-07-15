@@ -235,6 +235,16 @@ tsp-client install-dependencies [optional install path]
 
 ## Important concepts
 
+### npm registry configuration (eng/common/.npmrc)
+
+If your repository checks in an `.npmrc` file at `<repo root>/eng/common/.npmrc`, tsp-client
+copies it into the `TempTypeSpecFiles` working directory before running npm for the `init`, `update`, `sync`,
+`generate`, `generate-lock-file`, and `generate-config-files` commands. npm
+then picks it up as project-level configuration, so those npm operations honor the
+repository's npm registry settings. Copying it into `TempTypeSpecFiles` also means developers
+debugging directly inside that directory get the same behavior. If the file is not present,
+this is a no-op and npm uses its default configuration.
+
 ### Per project setup
 
 Each project will need to have a configuration file called tsp-location.yaml that will tell the tool where to find the TypeSpec project.

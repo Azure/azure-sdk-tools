@@ -1,8 +1,14 @@
-import { mkdir, rm, stat, readFile, access } from "node:fs/promises";
+import { cp, mkdir, rm, stat, readFile, access } from "node:fs/promises";
 import { Logger } from "./log.js";
 import { parse as parseYaml } from "yaml";
 import { joinPaths, normalizePath, resolvePath } from "@typespec/compiler";
 import { TspLocation } from "./typespec.js";
+
+/**
+ * Relative path (from the repository root) to the npmrc file that repositories may check in
+ * to configure the npm registry used by tsp-client's npm operations.
+ */
+export const relativeRepoNpmrcPath = joinPaths("eng", "common", ".npmrc");
 
 export async function ensureDirectory(path: string) {
   await mkdir(path, { recursive: true });
@@ -17,6 +23,34 @@ export async function createTempDirectory(outputDir: string): Promise<string> {
   await mkdir(tempRoot, { recursive: true });
   Logger.debug(`Created temporary working directory ${tempRoot}`);
   return tempRoot;
+}
+
+/**
+ * Copies the repository's checked-in npmrc file (eng/common/.npmrc) into the provided
+ * TempTypeSpecFiles directory as .npmrc so that npm operations run from that directory pick
+ * it up as project-level configuration. This also ensures developers debugging inside the
+ * temp directory get the same npm registry behavior. No-op when the repo doesn't ship the file.
+ */
+export async function copyRepoNpmrcToTemp(repoRoot: string, tempRoot: string): Promise<void> {
+  const npmrcPath = joinPaths(repoRoot, relativeRepoNpmrcPath);
+  try {
+    const fileStat = await stat(npmrcPath);
+    if (!fileStat.isFile()) {
+      Logger.debug(
+        `${relativeRepoNpmrcPath} exists but is not a file. Skipping npmrc copy to ${tempRoot}.`,
+      );
+      return;
+    }
+  } catch {
+    // The file doesn't exist; nothing to copy.
+    Logger.debug(
+      `No ${relativeRepoNpmrcPath} found in the repository. Skipping npmrc copy to ${tempRoot}.`,
+    );
+    return;
+  }
+  const destination = joinPaths(tempRoot, ".npmrc");
+  await cp(npmrcPath, destination);
+  Logger.debug(`Copied ${npmrcPath} to ${destination}`);
 }
 
 export async function readTspLocation(rootDir: string): Promise<TspLocation> {

@@ -90,7 +90,9 @@ describe("Release approval required", () => {
 
   test("approval pending shows an Approve Release action linking to the pipeline", () => {
     expect(appJs).toContain('=== "approval pending"');
-    expect(appJs).toContain('relSt === "approval pending" && l.releasePipeline');
+    expect(appJs).toContain(
+      'relSt === "approval pending" && l.releasePipeline',
+    );
     expect(appJs).toContain("Approve Release");
     expect(appJs).toContain("l.releasePipeline");
   });

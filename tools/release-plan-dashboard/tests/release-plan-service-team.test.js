@@ -88,10 +88,20 @@ describe("Release approval required", () => {
     );
   });
 
-  test("approval pending links to the release pipeline in release status", () => {
+  test("approval pending shows an Approve Release action linking to the pipeline", () => {
     expect(appJs).toContain('=== "approval pending"');
-    expect(appJs).toContain("Approve in pipeline");
+    expect(appJs).toContain(
+      'relSt === "approval pending" && l.releasePipeline',
+    );
+    expect(appJs).toContain("Approve Release");
     expect(appJs).toContain("l.releasePipeline");
+  });
+
+  test("approval pending shows a prominent Pending Release Approval badge", () => {
+    expect(appJs).toContain("release-approval-pending-badge");
+    expect(appJs).toContain("Pending Release Approval");
+    expect(styleCss).toContain(".release-approval-pending-badge");
+    expect(styleCss).toContain(".action-btn-approve");
   });
 
   test("release approval badge CSS class is defined", () => {

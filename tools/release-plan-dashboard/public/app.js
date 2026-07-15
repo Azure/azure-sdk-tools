@@ -1961,6 +1961,10 @@
 
               if (isReleased) {
                 actionCell = "";
+              } else if (relSt === "approval pending" && l.releasePipeline) {
+                // Release is queued and waiting for the service team to approve
+                // the release stage in the release pipeline. Link directly to it.
+                actionCell = `<a class="lang-action-btn action-btn-approve" href="${esc(l.releasePipeline)}" target="_blank" rel="noopener" title="Approve the package release in the release pipeline">Approve Release</a>`;
               } else if (!hasPr) {
                 actionCell = langActionBtn(ACTION_TYPES.GENERATE, lang, p, l);
               } else if (isClosed && !isMerged) {
@@ -2009,15 +2013,15 @@
               }
             }
 
-            // Release Status cell — when release approval is pending, link to the
-            // release pipeline so the service team can approve the release.
+            // Release Status cell — when release approval is pending, show a
+            // prominent badge. The pipeline approval link is surfaced as an
+            // "Approve Release" action in the Action Required column.
             let releaseCell = statusSpan(releaseDisplay);
             if (
               !exLabel &&
-              (l.releaseStatus || "").toLowerCase() === "approval pending" &&
-              l.releasePipeline
+              (l.releaseStatus || "").toLowerCase() === "approval pending"
             ) {
-              releaseCell = `${statusSpan(releaseDisplay)} <a href="${esc(l.releasePipeline)}" target="_blank" rel="noopener" title="Approve the package release using release pipeline">Approve in pipeline</a>`;
+              releaseCell = `<span class="release-approval-pending-badge" title="The package release is queued and pending approval in the release pipeline"><span class="release-approval-pending-icon" aria-hidden="true">⏳</span> Pending Release Approval</span>`;
             }
 
             html += `<tr${rowClass}>

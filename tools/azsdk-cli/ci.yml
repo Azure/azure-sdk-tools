@@ -45,7 +45,7 @@ extends:
     # Install copilot-cli separately from the copilot agent sdk.
     # We skip the auto-bundling due to network/compliance restrictions
     TestPreSteps:
-      - task: NodeTool@0
+      - task: UseNode@1
         inputs:
           versionSpec: '24.x'
         displayName: Install Node.js

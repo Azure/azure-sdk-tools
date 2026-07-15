@@ -4,7 +4,7 @@ parameters:
     default: false
 
 steps:
-  - task: NodeTool@0
+  - task: UseNode@1
     inputs:
       versionSpec: "$(NodeVersion)"
     displayName: "Install Node.js"

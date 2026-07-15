@@ -28,7 +28,7 @@ jobs:
   - template: /eng/pipelines/templates/variables/globals.yml
 
   steps:
-  - task: NodeTool@0
+  - task: UseNode@1
     inputs:
       versionSpec: $(NodeVersion)
     displayName: "Use Node $(NodeVersion)"

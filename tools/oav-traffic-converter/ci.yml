@@ -46,7 +46,7 @@ extends:
         - job: Test
 
           steps:
-          - task: NodeTool@0
+          - task: UseNode@1
             inputs:
               versionSpec: '$(NodeVersion)'
             displayName: 'Use Node $(NodeVersion)'

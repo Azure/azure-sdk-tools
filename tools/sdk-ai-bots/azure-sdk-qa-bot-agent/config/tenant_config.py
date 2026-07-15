@@ -14,6 +14,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
+from urllib.parse import quote
 
 from models.knowledge import KnowledgeSource, _trim_file_format
 
@@ -248,7 +249,7 @@ _register(
         link_fn=lambda title: (
             "https://dev.azure.com/azure-sdk/internal/_wiki/wikis/internal.wiki"
             "?wikiVersion=GBwikiMaster&pagePath=/"
-            + _trim_file_format(title.replace("#", "/"))
+            + quote(_trim_file_format(title.replace("#", "/")), safe="/")
         ),
     ),
     # -- General Azure & review resources --
@@ -563,6 +564,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_AZURE_OPENAPI_DIFF_DOCS,
             SRC_AZURE_SDK_DOCS_ENG,
             SRC_STATIC_ARM_DOCS,
+            SRC_AZURE_SDK_INTERNAL_WIKI,
         ),
         source_filter={
             SRC_AZURE_SDK_DOCS_ENG: "search.ismatch('design*', 'title')",

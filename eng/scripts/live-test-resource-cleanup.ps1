@@ -459,6 +459,152 @@ function Remove-DependencyResources() {
   return $errors
 }
 
+function Remove-RecoveryServicesVaults() {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$ResourceGroupName
+  )
+
+  $errors = @()
+
+  if (!(Get-Command Get-AzRecoveryServicesVault -ErrorAction SilentlyContinue)) {
+    $errors += "Skipping Recovery Services vault teardown in '$ResourceGroupName' because the Az.RecoveryServices module is not installed."
+    return $errors
+  }
+
+  $vaults = @()
+  try {
+    $vaults = @(Get-AzRecoveryServicesVault -ResourceGroupName $ResourceGroupName -ErrorAction Stop)
+  } catch {
+    $errors += "Failed enumerating Recovery Services vaults in '$ResourceGroupName': $($_.Exception.Message)"
+    return $errors
+  }
+
+  if (!$vaults) {
+    return $errors
+  }
+
+  foreach ($vault in $vaults) {
+    Write-Host "Tearing down Recovery Services vault '$($vault.Name)' in resource group '$ResourceGroupName'"
+
+    # Disable soft delete and security features so items can be permanently removed.
+    try {
+      Set-AzRecoveryServicesVaultProperty -VaultId $vault.ID -SoftDeleteFeatureState Disable -ErrorAction Stop | Out-Null
+    } catch {
+      Write-Warning "Failed disabling soft delete on vault '$($vault.Name)': $($_.Exception.Message)"
+    }
+    try {
+      Set-AzRecoveryServicesVaultProperty -VaultId $vault.ID -DisableHybridBackupSecurityFeature $true -ErrorAction Stop | Out-Null
+    } catch {
+      # Not all vaults expose this property; ignore.
+    }
+
+    # Undelete any soft-deleted items and stop protection with recovery-point removal.
+    $backupManagementTypes = @('AzureVM', 'AzureStorage', 'AzureWorkload', 'MAB')
+    foreach ($bmt in $backupManagementTypes) {
+      $containers = @()
+      try {
+        $containers = @(Get-AzRecoveryServicesBackupContainer -VaultId $vault.ID -ContainerType $bmt -ErrorAction Stop)
+      } catch {
+        # Skip container types the vault doesn't support.
+      }
+      foreach ($container in $containers) {
+        $items = @()
+        try {
+          $items = @(Get-AzRecoveryServicesBackupItem -Container $container -WorkloadType $bmt -VaultId $vault.ID -ErrorAction Stop)
+        } catch {
+          continue
+        }
+        foreach ($item in $items) {
+          try {
+            if ($item.PSObject.Properties.Name -contains 'DeleteState' -and $item.DeleteState -eq 'ToBeDeleted') {
+              Undo-AzRecoveryServicesBackupItemDeletion -Item $item -VaultId $vault.ID -Force -ErrorAction SilentlyContinue | Out-Null
+            }
+            Disable-AzRecoveryServicesBackupProtection -Item $item -VaultId $vault.ID -RemoveRecoveryPoints -Force -ErrorAction Stop | Out-Null
+          } catch {
+            $errors += "Failed removing backup item '$($item.Name)' in vault '$($vault.Name)': $($_.Exception.Message)"
+          }
+        }
+        try {
+          Unregister-AzRecoveryServicesBackupContainer -Container $container -VaultId $vault.ID -Confirm:$false -ErrorAction Stop | Out-Null
+        } catch {
+          # Best-effort; the vault delete will surface any remaining registration issues.
+        }
+      }
+    }
+
+    # Remove backup protection policies.
+    $policies = @()
+    try {
+      $policies = @(Get-AzRecoveryServicesBackupProtectionPolicy -VaultId $vault.ID -ErrorAction Stop)
+    } catch {
+      # No policies or module doesn't support the call.
+    }
+    foreach ($policy in $policies) {
+      try {
+        Remove-AzRecoveryServicesBackupProtectionPolicy -Policy $policy -VaultId $vault.ID -Force -ErrorAction Stop | Out-Null
+      } catch {
+        $errors += "Failed removing backup policy '$($policy.Name)' in vault '$($vault.Name)': $($_.Exception.Message)"
+      }
+    }
+
+    # Set vault context for ASR cmdlets which are context-scoped rather than -VaultId scoped.
+    try {
+      Set-AzRecoveryServicesAsrVaultContext -Vault $vault -ErrorAction Stop | Out-Null
+    } catch {
+      # If ASR isn't in use on this vault, context set may fail; proceed to enumeration which will no-op.
+    }
+
+    # Remove Site Recovery (ASR) fabrics first (cascades to protected items, containers, and mappings) then policies.
+    $fabrics = @()
+    try {
+      $fabrics = @(Get-AzRecoveryServicesAsrFabric -ErrorAction Stop)
+    } catch { }
+    foreach ($fabric in $fabrics) {
+      try {
+        Remove-AzRecoveryServicesAsrFabric -Fabric $fabric -Force -ErrorAction Stop | Out-Null
+      } catch {
+        $errors += "Failed removing ASR fabric '$($fabric.Name)' in vault '$($vault.Name)': $($_.Exception.Message)"
+      }
+    }
+
+    $asrPolicies = @()
+    try {
+      $asrPolicies = @(Get-AzRecoveryServicesAsrPolicy -ErrorAction Stop)
+    } catch { }
+    foreach ($asrPolicy in $asrPolicies) {
+      try {
+        Remove-AzRecoveryServicesAsrPolicy -Policy $asrPolicy -ErrorAction Stop | Out-Null
+      } catch {
+        $errors += "Failed removing ASR policy '$($asrPolicy.Name)' in vault '$($vault.Name)': $($_.Exception.Message)"
+      }
+    }
+
+    # Remove private endpoint connections that would otherwise block the vault delete.
+    $pecs = @()
+    try {
+      $pecs = @(Get-AzResource -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue |
+        Where-Object { $_.ResourceType -ieq 'Microsoft.RecoveryServices/vaults/privateEndpointConnections' -and $_.ResourceId -like "$($vault.ID)/*" })
+    } catch { }
+    foreach ($pec in $pecs) {
+      try {
+        Remove-AzResource -ResourceId $pec.ResourceId -Force -ErrorAction Stop | Out-Null
+      } catch {
+        $errors += "Failed removing private endpoint connection '$($pec.Name)' from vault '$($vault.Name)': $($_.Exception.Message)"
+      }
+    }
+
+    # Finally delete the vault itself.
+    try {
+      Remove-AzRecoveryServicesVault -Vault $vault -ErrorAction Stop | Out-Null
+    } catch {
+      $errors += "Failed deleting Recovery Services vault '$($vault.Name)' in '$ResourceGroupName': $($_.Exception.Message)"
+    }
+  }
+
+  return $errors
+}
+
 function Invoke-PreDeleteResourceCleanup() {
   param(
     [Parameter(Mandatory = $true)]
@@ -522,6 +668,10 @@ function Invoke-PreDeleteResourceCleanup() {
   $errors += @(Remove-DependencyResources -ResourceGroupName $resourceGroupName -ResourceType 'Microsoft.Cache/Redis/linkedServers' -Description 'Azure Cache for Redis linked server')
   $errors += @(Remove-DependencyResources -ResourceGroupName $resourceGroupName -ResourceType 'Microsoft.DevCenter/projects' -Description 'DevCenter project')
 
+  if ($resources | Where-Object { $_.ResourceType -ieq 'Microsoft.RecoveryServices/vaults' }) {
+    $errors += @(Remove-RecoveryServicesVaults -ResourceGroupName $resourceGroupName)
+  }
+
   $knownBlockers = @(
     @{
       ResourceType = 'Microsoft.EventHub/namespaces/disasterRecoveryConfigs'
@@ -530,10 +680,6 @@ function Invoke-PreDeleteResourceCleanup() {
     @{
       ResourceType = 'Microsoft.Migrate/moveCollections'
       Message = 'contains Azure Resource Mover collections that must be cleaned up before the resource group can be deleted'
-    },
-    @{
-      ResourceType = 'Microsoft.RecoveryServices/vaults'
-      Message = 'contains Recovery Services vaults that require provider-specific teardown before the resource group can be deleted'
     },
     @{
       ResourceType = 'microsoft.visualstudio/account'

@@ -106,7 +106,7 @@ function LoadAllowList() {
   $lines = Get-Content $AllowListPath
   foreach ($line in $lines) {
     if ($line -and !$line.StartsWith("#")) {
-      $_ = $Exceptions.Add($line.Trim())
+      $null = $Exceptions.Add($line.Trim())
     }
   }
 }
@@ -286,18 +286,27 @@ function FindOrCreateDeleteAfterTag {
   if (!$deleteAfter -or !($deleteAfter -as [datetime])) {
     $deleteAfter = [datetime]::UtcNow.AddHours($HoursToDelete)
     if ($Force -or $PSCmdlet.ShouldProcess("$($ResourceGroup.ResourceGroupName) [DeleteAfter (UTC): $deleteAfter]", "Adding DeleteAfter Tag to Group")) {
+      # A ReadOnly lock (at the group, subscription, or management group scope) blocks tag writes on the group.
+      # Skip the update in that case to avoid a terminating error under $ErrorActionPreference = 'Stop'.
+      if (HasDeleteLock $ResourceGroup) {
+        return
+      }
       Write-Host "Adding DeleteAfter tag with value '$deleteAfter' to group '$($ResourceGroup.ResourceGroupName)'"
-      $result = ($ResourceGroup | Update-AzTag -Operation Merge -Tag @{ DeleteAfter = $deleteAfter }) 2>&1
-      if ("Exception" -in $result.PSObject.Properties.Name) {
-          # Handle race conditions where the group starts deleting after we get its info, in order to avoid pipeline warning/failure emails
-          # "The resource group '<group name>' is in deprovisioning state and cannot perform this operation"
-          if ($result.Exception.Message -notlike '*is in deprovisioning state*') {
-              Write-Error $result.Exception.Message
-          } else {
-              Write-Host "Skipping '$($ResourceGroup.ResourceGroupName)' as it is in a deprovisioning state"
-          }
-      } else {
-          $result
+      try {
+        $result = $ResourceGroup | Update-AzTag -Operation Merge -Tag @{ DeleteAfter = $deleteAfter } -ErrorAction Stop
+        $result
+      } catch {
+        $msg = $_.Exception.Message
+        # Handle race conditions where the group starts deleting after we get its info, in order to avoid pipeline warning/failure emails
+        # "The resource group '<group name>' is in deprovisioning state and cannot perform this operation"
+        if ($msg -like '*is in deprovisioning state*') {
+          Write-Host "Skipping '$($ResourceGroup.ResourceGroupName)' as it is in a deprovisioning state"
+        } elseif ($msg -like '*scope(s) are locked*') {
+          # A ReadOnly lock was applied between our HasDeleteLock check and the tag update, or the lock exists at an ancestor scope.
+          Write-Warning "Skipping tag update for '$($ResourceGroup.ResourceGroupName)' due to a ReadOnly lock: $msg"
+        } else {
+          Write-Error $msg
+        }
       }
     }
   }
@@ -305,10 +314,10 @@ function FindOrCreateDeleteAfterTag {
 
 function HasDoNotDeleteTag([object]$ResourceGroup) {
   $doNotDelete = GetTag $ResourceGroup "DoNotDelete"
-  if ($doNotDelete -ne $null) {
+  if ($null -ne $doNotDelete) {
     Write-Host " Skipping resource group '$($ResourceGroup.ResourceGroupName)' because it has a 'DoNotDelete' tag"
   }
-  return $doNotDelete -ne $null
+  return $null -ne $doNotDelete
 }
 
 function IsChildResource([object]$ResourceGroup) {
@@ -361,6 +370,338 @@ function DeleteSubscriptionDeployments() {
   }
 }
 
+function Wait-DeleteJob() {
+  param(
+    [Parameter(Mandatory = $true)]
+    $Job,
+
+    [Parameter(Mandatory = $true)]
+    [string]$DisplayName,
+
+    [Parameter()]
+    [scriptblock]$VerifyDeleted,
+
+    [Parameter()]
+    [ValidateRange(1, [int]::MaxValue)]
+    [int]$TimeoutSeconds = 900
+  )
+
+  $null = Wait-Job -Job $Job -Timeout $TimeoutSeconds
+
+  if ($Job.State -notin @('Completed', 'Failed', 'Stopped')) {
+    if ($VerifyDeleted -and (& $VerifyDeleted)) {
+      return $null
+    }
+
+    return "$DisplayName delete job did not complete within $TimeoutSeconds seconds."
+  }
+
+  $jobErrors = @()
+  $jobFailureMessages = @(
+    $Job.ChildJobs |
+      Where-Object { $_.JobStateInfo.State -eq 'Failed' -and $_.JobStateInfo.Reason } |
+      ForEach-Object { $_.JobStateInfo.Reason.Message }
+  )
+  $null = Receive-Job -Job $Job -Keep -ErrorVariable +jobErrors -ErrorAction SilentlyContinue
+
+  if ($Job.State -ne 'Completed') {
+    $allMessages = @($jobFailureMessages + ($jobErrors | ForEach-Object { $_.ToString() })) | Where-Object { $_ }
+    if ($allMessages) {
+      return "$DisplayName delete job ended in state '$($Job.State)': $($allMessages -join ' | ')"
+    }
+
+    return "$DisplayName delete job ended in state '$($Job.State)'."
+  }
+
+  if ($jobErrors) {
+    return "$DisplayName delete job reported errors: $((@($jobErrors | ForEach-Object { $_.ToString() }) | Where-Object { $_ }) -join ' | ')"
+  }
+
+  if ($VerifyDeleted -and -not (& $VerifyDeleted)) {
+    return "$DisplayName delete job completed but the resource still exists."
+  }
+
+  return $null
+}
+
+function Remove-DependencyResources() {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$ResourceGroupName,
+
+    [Parameter(Mandatory = $true)]
+    [string]$ResourceType,
+
+    [Parameter(Mandatory = $true)]
+    [string]$Description
+  )
+
+  $errors = @()
+  $resources = @(
+    Get-AzResource -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue |
+      Where-Object { $_.ResourceType -ieq $ResourceType } |
+      Sort-Object ResourceId -Descending
+  )
+
+  foreach ($resource in $resources) {
+    Write-Host "Deleting $Description '$($resource.Name)' in resource group '$ResourceGroupName'"
+    $verifyDeleted = {
+      $null -eq (Get-AzResource -ResourceId $resource.ResourceId -ErrorAction SilentlyContinue)
+    }.GetNewClosure()
+
+    $job = Remove-AzResource -ResourceId $resource.ResourceId -Force -AsJob
+    $deleteError = Wait-DeleteJob -Job $job -DisplayName "$Description '$($resource.Name)'" -VerifyDeleted $verifyDeleted
+    if ($deleteError) {
+      $errors += $deleteError
+    }
+  }
+
+  return $errors
+}
+
+function Remove-RecoveryServicesVaults() {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$ResourceGroupName
+  )
+
+  $errors = @()
+
+  if (!(Get-Command Get-AzRecoveryServicesVault -ErrorAction SilentlyContinue)) {
+    $errors += "Skipping Recovery Services vault teardown in '$ResourceGroupName' because the Az.RecoveryServices module is not installed."
+    return $errors
+  }
+
+  $vaults = @()
+  try {
+    $vaults = @(Get-AzRecoveryServicesVault -ResourceGroupName $ResourceGroupName -ErrorAction Stop)
+  } catch {
+    $errors += "Failed enumerating Recovery Services vaults in '$ResourceGroupName': $($_.Exception.Message)"
+    return $errors
+  }
+
+  if (!$vaults) {
+    return $errors
+  }
+
+  foreach ($vault in $vaults) {
+    Write-Host "Tearing down Recovery Services vault '$($vault.Name)' in resource group '$ResourceGroupName'"
+
+    # Disable soft delete and security features so items can be permanently removed.
+    try {
+      Set-AzRecoveryServicesVaultProperty -VaultId $vault.ID -SoftDeleteFeatureState Disable -ErrorAction Stop | Out-Null
+    } catch {
+      Write-Warning "Failed disabling soft delete on vault '$($vault.Name)': $($_.Exception.Message)"
+    }
+    try {
+      Set-AzRecoveryServicesVaultProperty -VaultId $vault.ID -DisableHybridBackupSecurityFeature $true -ErrorAction Stop | Out-Null
+    } catch {
+      # Not all vaults expose this property; ignore.
+    }
+
+    # Undelete any soft-deleted items and stop protection with recovery-point removal.
+    $backupManagementTypes = @('AzureVM', 'AzureStorage', 'AzureWorkload', 'MAB')
+    foreach ($bmt in $backupManagementTypes) {
+      $containers = @()
+      try {
+        $containers = @(Get-AzRecoveryServicesBackupContainer -VaultId $vault.ID -ContainerType $bmt -ErrorAction Stop)
+      } catch {
+        # Skip container types the vault doesn't support.
+      }
+      foreach ($container in $containers) {
+        $items = @()
+        try {
+          $items = @(Get-AzRecoveryServicesBackupItem -Container $container -WorkloadType $bmt -VaultId $vault.ID -ErrorAction Stop)
+        } catch {
+          continue
+        }
+        foreach ($item in $items) {
+          try {
+            if ($item.PSObject.Properties.Name -contains 'DeleteState' -and $item.DeleteState -eq 'ToBeDeleted') {
+              Undo-AzRecoveryServicesBackupItemDeletion -Item $item -VaultId $vault.ID -Force -ErrorAction SilentlyContinue | Out-Null
+            }
+            Disable-AzRecoveryServicesBackupProtection -Item $item -VaultId $vault.ID -RemoveRecoveryPoints -Force -ErrorAction Stop | Out-Null
+          } catch {
+            $errors += "Failed removing backup item '$($item.Name)' in vault '$($vault.Name)': $($_.Exception.Message)"
+          }
+        }
+        try {
+          Unregister-AzRecoveryServicesBackupContainer -Container $container -VaultId $vault.ID -Confirm:$false -ErrorAction Stop | Out-Null
+        } catch {
+          # Best-effort; the vault delete will surface any remaining registration issues.
+        }
+      }
+    }
+
+    # Remove backup protection policies.
+    $policies = @()
+    try {
+      $policies = @(Get-AzRecoveryServicesBackupProtectionPolicy -VaultId $vault.ID -ErrorAction Stop)
+    } catch {
+      # No policies or module doesn't support the call.
+    }
+    foreach ($policy in $policies) {
+      try {
+        Remove-AzRecoveryServicesBackupProtectionPolicy -Policy $policy -VaultId $vault.ID -Force -ErrorAction Stop | Out-Null
+      } catch {
+        $errors += "Failed removing backup policy '$($policy.Name)' in vault '$($vault.Name)': $($_.Exception.Message)"
+      }
+    }
+
+    # Set vault context for ASR cmdlets which are context-scoped rather than -VaultId scoped.
+    try {
+      Set-AzRecoveryServicesAsrVaultContext -Vault $vault -ErrorAction Stop | Out-Null
+    } catch {
+      # If ASR isn't in use on this vault, context set may fail; proceed to enumeration which will no-op.
+    }
+
+    # Remove Site Recovery (ASR) fabrics first (cascades to protected items, containers, and mappings) then policies.
+    $fabrics = @()
+    try {
+      $fabrics = @(Get-AzRecoveryServicesAsrFabric -ErrorAction Stop)
+    } catch { }
+    foreach ($fabric in $fabrics) {
+      try {
+        Remove-AzRecoveryServicesAsrFabric -Fabric $fabric -Force -ErrorAction Stop | Out-Null
+      } catch {
+        $errors += "Failed removing ASR fabric '$($fabric.Name)' in vault '$($vault.Name)': $($_.Exception.Message)"
+      }
+    }
+
+    $asrPolicies = @()
+    try {
+      $asrPolicies = @(Get-AzRecoveryServicesAsrPolicy -ErrorAction Stop)
+    } catch { }
+    foreach ($asrPolicy in $asrPolicies) {
+      try {
+        Remove-AzRecoveryServicesAsrPolicy -Policy $asrPolicy -ErrorAction Stop | Out-Null
+      } catch {
+        $errors += "Failed removing ASR policy '$($asrPolicy.Name)' in vault '$($vault.Name)': $($_.Exception.Message)"
+      }
+    }
+
+    # Remove private endpoint connections that would otherwise block the vault delete.
+    $pecs = @()
+    try {
+      $pecs = @(Get-AzResource -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue |
+        Where-Object { $_.ResourceType -ieq 'Microsoft.RecoveryServices/vaults/privateEndpointConnections' -and $_.ResourceId -like "$($vault.ID)/*" })
+    } catch { }
+    foreach ($pec in $pecs) {
+      try {
+        Remove-AzResource -ResourceId $pec.ResourceId -Force -ErrorAction Stop | Out-Null
+      } catch {
+        $errors += "Failed removing private endpoint connection '$($pec.Name)' from vault '$($vault.Name)': $($_.Exception.Message)"
+      }
+    }
+
+    # Finally delete the vault itself.
+    try {
+      Remove-AzRecoveryServicesVault -Vault $vault -ErrorAction Stop | Out-Null
+    } catch {
+      $errors += "Failed deleting Recovery Services vault '$($vault.Name)' in '$ResourceGroupName': $($_.Exception.Message)"
+    }
+  }
+
+  return $errors
+}
+
+function Invoke-PreDeleteResourceCleanup() {
+  param(
+    [Parameter(Mandatory = $true)]
+    [object]$ResourceGroup
+  )
+
+  $errors = @()
+  $resourceGroupName = $ResourceGroup.ResourceGroupName
+
+  if ($ResourceGroup.ManagedBy) {
+    Write-Host "Resource group '$resourceGroupName' is managed by '$($ResourceGroup.ManagedBy)'. Attempting to delete the managing resource before deleting the group."
+    try {
+      $managedByResourceId = $ResourceGroup.ManagedBy
+      $verifyManagedResourceDeleted = {
+        $null -eq (Get-AzResource -ResourceId $managedByResourceId -ErrorAction SilentlyContinue)
+      }.GetNewClosure()
+
+      $managedResourceDeleteJob = Remove-AzResource -ResourceId $managedByResourceId -Force -AsJob
+      $managedResourceDeleteError = Wait-DeleteJob -Job $managedResourceDeleteJob -DisplayName "Managing resource '$managedByResourceId'" -VerifyDeleted $verifyManagedResourceDeleted
+      if ($managedResourceDeleteError) {
+        $errors += "Failed deleting managing resource '$managedByResourceId' for group '$resourceGroupName': $managedResourceDeleteError"
+      }
+    } catch {
+      $errors += "Failed deleting managing resource '$($ResourceGroup.ManagedBy)' for group '$resourceGroupName': $($_.Exception.Message)"
+    }
+  }
+
+  $groupLocks = @(Get-AzResourceLock -ResourceGroupName $resourceGroupName -AtScope -ErrorAction SilentlyContinue)
+  foreach ($groupLock in $groupLocks) {
+    Write-Host "Removing resource group lock '$($groupLock.Name)' from '$resourceGroupName'"
+    try {
+      Remove-AzResourceLock -LockId $groupLock.LockId -Force -ErrorAction Stop
+    } catch {
+      $errors += "Failed removing lock '$($groupLock.Name)' from resource group '$resourceGroupName': $($_.Exception.Message)"
+    }
+  }
+
+  $resources = @(Get-AzResource -ResourceGroupName $resourceGroupName -ErrorAction SilentlyContinue)
+
+  if (!$resources) {
+    return $errors
+  }
+
+  foreach ($resource in $resources) {
+    $locks = @(Get-AzResourceLock -Scope $resource.ResourceId -AtScope -ErrorAction SilentlyContinue)
+    foreach ($lock in $locks) {
+      Write-Host "Removing resource lock '$($lock.Name)' from '$($resource.ResourceId)'"
+      try {
+        Remove-AzResourceLock -LockId $lock.LockId -Force -ErrorAction Stop
+      } catch {
+        $errors += "Failed removing lock '$($lock.Name)' from '$($resource.ResourceId)': $($_.Exception.Message)"
+      }
+    }
+  }
+
+  if ($errors.Count -ne 0) {
+    return $errors
+  }
+
+  $errors += @(Remove-DependencyResources -ResourceGroupName $resourceGroupName -ResourceType 'Microsoft.Search/searchServices/sharedPrivateLinkResources' -Description 'Azure AI Search shared private link resource')
+  $errors += @(Remove-DependencyResources -ResourceGroupName $resourceGroupName -ResourceType 'Microsoft.Cache/Redis/linkedServers' -Description 'Azure Cache for Redis linked server')
+  $errors += @(Remove-DependencyResources -ResourceGroupName $resourceGroupName -ResourceType 'Microsoft.DevCenter/projects' -Description 'DevCenter project')
+
+  if ($resources | Where-Object { $_.ResourceType -ieq 'Microsoft.RecoveryServices/vaults' }) {
+    $errors += @(Remove-RecoveryServicesVaults -ResourceGroupName $resourceGroupName)
+  }
+
+  $knownBlockers = @(
+    @{
+      ResourceType = 'Microsoft.EventHub/namespaces/disasterRecoveryConfigs'
+      Message = 'contains Event Hubs GeoDR configuration resources that must be broken or failed over before the resource group can be deleted'
+    },
+    @{
+      ResourceType = 'Microsoft.Migrate/moveCollections'
+      Message = 'contains Azure Resource Mover collections that must be cleaned up before the resource group can be deleted'
+    },
+    @{
+      ResourceType = 'microsoft.visualstudio/account'
+      Message = 'contains Azure DevOps organization resources that must have billing removed before the resource group can be deleted'
+    },
+    @{
+      ResourceType = 'Microsoft.VirtualMachineImages/imageTemplates'
+      Message = 'contains VM image templates that may require active runs or dependent artifacts to be removed before the resource group can be deleted'
+    }
+  )
+
+  foreach ($blocker in $knownBlockers) {
+    $matchedResources = @($resources | Where-Object { $_.ResourceType -ieq $blocker.ResourceType })
+    if ($matchedResources) {
+      $resourceIds = $matchedResources | ForEach-Object { $_.ResourceId }
+      $errors += "Skipping group '$resourceGroupName' because it $($blocker.Message). Resources: $($resourceIds -join ', ')"
+    }
+  }
+
+  return $errors
+}
+
 function DeleteOrUpdateResourceGroups() {
   [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'Medium')]
   param()
@@ -392,9 +733,6 @@ function DeleteOrUpdateResourceGroups() {
       } else {
         $toClean += $rg
       }
-      continue
-    }
-    if ((IsChildResource $rg) -or (HasDeleteLock $rg)) {
       continue
     }
     if (HasDoNotDeleteTag $rg) {
@@ -434,12 +772,17 @@ function DeleteOrUpdateResourceGroups() {
 
   if ($errors.Count -ne 0) {
     Write-Host "Encountered errors removing some resource groups:"
-    $errors | % { Write-Host "  $_"}
+    $errors | ForEach-Object { Write-Host "  $_" }
     exit 1
   }
 }
 
-function DeleteAndPurgeGroups([array]$toDelete) {
+function DeleteAndPurgeGroups {
+  [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'Medium')]
+  param(
+    [array]$toDelete
+  )
+
   $errors = @()
   # Get purgeable resources already in a deleted state.
   $purgeableResources = @(Get-PurgeableResources)
@@ -451,6 +794,12 @@ function DeleteAndPurgeGroups([array]$toDelete) {
     try {
       $deleteAfter = GetTag $rg "DeleteAfter"
       if ($Force -or $PSCmdlet.ShouldProcess("$($rg.ResourceGroupName) [DeleteAfter (UTC): $deleteAfter]", "Delete Group")) {
+        $preDeleteErrors = @(Invoke-PreDeleteResourceCleanup -ResourceGroup $rg)
+        if ($preDeleteErrors.Count -ne 0) {
+          $errors += $preDeleteErrors
+          continue
+        }
+
         # Add purgeable resources that will be deleted with the resource group to the collection.
         $purgeableResourcesFromRG = @(Get-PurgeableGroupResources $rg.ResourceGroupName)
 
@@ -464,13 +813,31 @@ function DeleteAndPurgeGroups([array]$toDelete) {
 
         # For storage tests specifically, if they are aborted then blobs with immutability policies
         # can be left around which prevent deletion.
+        # These helpers throw in CI when the group prefix doesn't start with 'rg-' or 'SSS3PT_rg-'
+        # (a safety guard against wildcard-matching non-live-test resources). We still want the
+        # resource group delete to be attempted even if the helpers fail/throw for that reason,
+        # so wrap each call in its own try/catch and continue.
+        $ci = $null -ne $env:SYSTEM_TEAMPROJECTID
         if ($rg.Tags?.ContainsKey('ServiceDirectory') -and $rg.Tags.ServiceDirectory -like '*storage*') {
-          SetStorageNetworkAccessRules -ResourceGroupName $rg.ResourceGroupName -SetFirewall -CI:($null -ne $env:SYSTEM_TEAMPROJECTID) 
-          Remove-WormStorageAccounts -GroupPrefix $rg.ResourceGroupName -CI:($null -ne $env:SYSTEM_TEAMPROJECTID)
-        }
-        Remove-StorageSyncServices -GroupPrefix $rg.ResourceGroupName -CI:($null -ne $env:SYSTEM_TEAMPROJECTID)
+          try { SetStorageNetworkAccessRules -ResourceGroupName $rg.ResourceGroupName -SetFirewall -CI:$ci }
+          catch { Write-Warning "SetStorageNetworkAccessRules failed for '$($rg.ResourceGroupName)': $($_.Exception.Message). Continuing with group delete." }
 
-        Write-Host ($rg | Remove-AzResourceGroup -Force -AsJob).Name
+          try { Remove-WormStorageAccounts -GroupPrefix $rg.ResourceGroupName -CI:$ci }
+          catch { Write-Warning "Remove-WormStorageAccounts failed for '$($rg.ResourceGroupName)': $($_.Exception.Message). Continuing with group delete." }
+        }
+        try { Remove-StorageSyncServices -GroupPrefix $rg.ResourceGroupName -CI:$ci }
+        catch { Write-Warning "Remove-StorageSyncServices failed for '$($rg.ResourceGroupName)': $($_.Exception.Message). Continuing with group delete." }
+
+        $verifyDeleted = {
+          $null -eq (Get-AzResourceGroup -Name $rg.ResourceGroupName -ErrorAction SilentlyContinue)
+        }.GetNewClosure()
+        $job = $rg | Remove-AzResourceGroup -Force -AsJob
+        Write-Host $job.Name
+
+        $deleteError = Wait-DeleteJob -Job $job -DisplayName "Resource group '$($rg.ResourceGroupName)'" -VerifyDeleted $verifyDeleted
+        if ($deleteError) {
+          $errors += $deleteError
+        }
       }
     } catch {
       $errorMsg = "ERROR: Failure deleting/purging group $($rg.ResourceGroupName): `n $($_.ToString())"

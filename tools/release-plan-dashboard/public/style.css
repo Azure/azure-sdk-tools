@@ -1372,9 +1372,9 @@ main {
 }
 /* Approve Release action — links directly to the release pipeline */
 .action-btn-approve {
-  background: #fde7e9;
-  color: #a4262c;
-  border-color: #d13438;
+  background: #cce5ff;
+  color: #004085;
+  border-color: #007bff;
   text-decoration: none;
   display: inline-block;
 }

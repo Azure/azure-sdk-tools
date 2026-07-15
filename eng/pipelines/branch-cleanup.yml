@@ -7,7 +7,6 @@ parameters:
   default:
     - Azure/azure-sdk
     - Azure/azure-sdk-for-android
-    - Azure/azure-sdk-for-c
     - Azure/azure-sdk-for-cpp
     - Azure/azure-sdk-for-go
     - Azure/azure-sdk-for-ios

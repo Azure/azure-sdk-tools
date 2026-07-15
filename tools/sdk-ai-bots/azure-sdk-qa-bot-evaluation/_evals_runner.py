@@ -1,482 +1,565 @@
+"""Foundry evaluation runner (completion mode).
+
+We call the bot ``/completion`` HTTP endpoint **concurrently** (bounded by
+``max_concurrency``), collect each answer + ``full_context`` + references, then grade
+them as **inline** eval data where the builtin LLM evaluators read
+``{{item.response}}`` / ``{{item.context}}``. Driving the slow answer-generation step
+ourselves is the main lever for evaluation speed.
+
+Flow: concurrent ``/completion`` collection -> ``evals.create`` (inline item source)
+-> ``evals.runs.create`` -> poll -> ``output_items.list`` -> ``output_items_to_rows``
+-> the existing ``EvalsResult`` gate/baseline logic.
+
+"""
+
+from __future__ import annotations
+
 import asyncio
-from collections import defaultdict
-from datetime import datetime
 import json
 import logging
 import os
-from pathlib import Path
-import re
-import shutil
-import threading
+import subprocess
 import time
-from typing import Any, Dict, Optional, List
-from azure.ai.evaluation import evaluate
+from pathlib import Path
+from typing import Any, Optional
+
 from _evals_result import EvalsResult
-from azure.identity import DefaultAzureCredential
-from azure.storage.blob import BlobServiceClient
-import aiohttp
-import yaml
+from eval.criteria import build_testing_criteria
+
+logger = logging.getLogger(__name__)
+
+# Channel/tenant text mirrors the bot's _build_tenant_system_message so /completion
+# routes the same way it does in production.
+SCENARIO_TO_CHANNEL: dict[str, str] = {
+    "typespec": "TypeSpec Discussion",
+    "python": "Language - Python",
+    "advocacy": "Advocacy",
+    "ai": "AI Discussion",
+    "apispec": "API Spec Review",
+    "apiview": "APIView",
+    "onboarding": "Azure SDK Onboarding",
+    "go": "Language - Go",
+    "java": "Language - Java",
+    "net": "Language - DotNet",
+    "javascript": "Language - JavaScript",
+    "general": "General",
+    "releasesupport": "SDK release support",
+}
+
+# Composite weights
+BOT_EVALS_WEIGHTS = {"similarity": 0.6, "response_completeness": 0.4}
+
+# Item schema for the inline eval data: the answer/context are collected from
+# /completion and carried in the item (read via {{item.response}} / {{item.context}}).
+COMPLETION_ITEM_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "testcase": {"type": "string"},
+        "query": {"type": "string"},
+        "ground_truth": {"type": "string"},
+        "response": {"type": "string"},
+        "context": {"type": "string"},
+        "expected_references": {"type": "array", "items": {"type": "object"}},
+        "expected_knowledges": {"type": "array", "items": {"type": "object"}},
+        "references": {"type": "array", "items": {"type": "object"}},
+        "knowledges": {"type": "array", "items": {"type": "object"}},
+    },
+    "required": ["query", "response"],
+}
 
 
-def extract_title_and_link_from_references(
-    references: List[Dict[str, Any]],
-) -> List[Dict[str, Any]]:
-    """
-    Map an array of reference objects to a string array of their 'link' properties.
+def _completion_item(it: dict[str, Any]) -> dict[str, Any]:
+    """Project a collected record into the eval ``item`` payload (JSON-safe)."""
+    return {
+        "testcase": it.get("testcase", "unknown"),
+        "query": it.get("query", ""),
+        "ground_truth": it.get("ground_truth", ""),
+        "response": it.get("response", ""),
+        "context": it.get("context", "") or "",
+        "expected_references": it.get("expected_references", []),
+        "expected_knowledges": it.get("expected_knowledges", []),
+        "references": it.get("references", []),
+        "knowledges": it.get("knowledges", []),
+    }
 
-    Args:
-        references: List of reference objects, each containing a 'link' field
 
-    Returns:
-        List of link strings extracted from the reference objects
-    """
+def extract_title_and_link_from_references(references: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Map ``/completion`` reference objects to ``[{title, link}]`` (case-tolerant)."""
     if not references:
         return []
-
-    refs = []
+    refs: list[dict[str, Any]] = []
     for ref in references:
-        title: str = ""
-        link: str = ""
-
-        if isinstance(ref, dict) and "title" in ref and ref["title"]:
-            title = ref["title"]
-        elif (
-            isinstance(ref, dict) and "Title" in ref and ref["Title"]
-        ):  # Handle capitalized version
-            title = ref["Title"]
-
-        if isinstance(ref, dict) and "link" in ref and ref["link"]:
-            link = ref["link"]
-        elif (
-            isinstance(ref, dict) and "Link" in ref and ref["Link"]
-        ):  # Handle capitalized version
-            link = ref["Link"]
-
+        title = ""
+        link = ""
+        if isinstance(ref, dict):
+            title = ref.get("title") or ref.get("Title") or ""
+            link = ref.get("link") or ref.get("Link") or ""
         refs.append({"title": title, "link": link})
     return refs
 
 
-def extract_title_and_link_from_context(context: str) -> List[Dict[str, Any]]:
+def extract_title_and_link_from_context(context: str) -> list[dict[str, Any]]:
+    """Parse the ``full_context`` JSON string into ``[{title, link}]`` knowledge hits."""
     if not context:
         return []
-
-    docs = []
-
+    docs: list[dict[str, Any]] = []
     try:
         docs_obj = json.loads(context)
         for doc in docs_obj:
-            title: str = ""
-            link: str = ""
-            if (
-                isinstance(doc, dict)
-                and "document_title" in doc
-                and doc["document_title"]
-            ):
-                title = doc["document_title"]
-
-            if (
-                isinstance(doc, dict)
-                and "document_link" in doc
-                and doc["document_link"]
-            ):
-                link = doc["document_link"]
-
+            title = ""
+            link = ""
+            if isinstance(doc, dict):
+                title = doc.get("document_title") or doc.get("title") or ""
+                link = doc.get("document_link") or doc.get("link") or ""
             docs.append({"title": title, "link": link})
     except (json.JSONDecodeError, TypeError) as exc:
-        logging.warning(
-            "Failed to parse context JSON in extract_title_and_link_from_context: %s",
-            exc,
-        )
+        logger.warning("Failed to parse full_context JSON: %s", exc)
     return docs
 
 
-# class EvaluatorConfig:
-#     """Configuration for an evaluator"""
+class CompletionCollector:
+    """Concurrently collect bot answers from the ``/completion`` HTTP endpoint.
 
-#     column_mapping: Dict[str, str]
-#     """Dictionary mapping evaluator input name to column in data"""
-
-
-class EvaluatorClass:
-    def __init__(
-        self,
-        name: str,
-        evaluator: Any,
-        evaluator_config: Optional[Any] = None,
-        output_fields: Optional[list[str]] = None,
-    ):
-        self._name = name
-        self._evaluator = evaluator
-        self._evaluator_config = evaluator_config
-        self._output_fields = output_fields
-
-    @property
-    def name(self) -> str:
-        """Getter for name"""
-        return self._name
-
-    @name.setter
-    def name(self, value: str) -> None:
-        """Setter for name"""
-        if not value:
-            raise ValueError("Name cannot be empty")
-        self._name = value
-
-    @property
-    def evaluator(self) -> Any:
-        """Getter for evaluator"""
-        return self._evaluator
-
-    @evaluator.setter
-    def evaluator(self, value: Any) -> None:
-        """Setter for evaluator"""
-        if not value:
-            raise ValueError("evaluator cannot be None")
-        self._evaluator = value
-
-    @property
-    def evaluator_config(self) -> Any | None:
-        """Getter for evaluator config"""
-        return self._evaluator_config
-
-    @evaluator_config.setter
-    def evaluator_config(self, value: Any) -> None:
-        """Setter for evaluator config"""
-        self._evaluator_config = value
-
-    @property
-    def output_fields(self) -> list[str] | None:
-        """Getter for output fields"""
-        return self._output_fields
-
-
-class EvalsRunner:
-    _tenant_ids_lock = threading.Lock()
-    channel_to_tenant_id_dict: dict[str, str] | None = None
-
-    scenario_to_channel: dict[str, str] = {
-        "typespec": "TypeSpec Discussion",
-        "python": "Language - Python",
-        "advocacy": "Advocacy",
-        "ai": "AI Discussion",
-        "apispec": "API Spec Review",
-        "apiview": "APIView",
-        "onboarding": "Azure SDK Onboarding",
-        "go": "Language - Go",
-        "java": "Language - Java",
-        "net": "Language - DotNet",
-        "javascript": "Language - JavaScript",
-        "general": "General",
-        "releasesupport": "SDK release support",
-    }
+    The slow part of evaluation is the bot generating an answer (full RAG pipeline);
+    driving ``/completion`` ourselves with bounded concurrency parallelizes that step.
+    """
 
     def __init__(
         self,
-        evaluators: dict[str, EvaluatorClass] | None = None,
-        evals_result: EvalsResult | None = None,
-        num_to_run: int = 1,
-        credential: Any | None = None,
-    ):
-        self._evaluators = evaluators or {}
-        self._evals_result: EvalsResult = evals_result or EvalsResult(None, {}, None)
-        self._num_to_run = num_to_run
-        # Initialize the shared cache lazily once
-        if EvalsRunner.channel_to_tenant_id_dict is None:
-            with EvalsRunner._tenant_ids_lock:
-                if EvalsRunner.channel_to_tenant_id_dict is None:
-                    EvalsRunner.channel_to_tenant_id_dict = (
-                        EvalsRunner._retrieve_tenant_ids(credential)
-                    )
-
-    @property
-    def evaluators(self) -> dict[str, EvaluatorClass]:
-        """Read-only view of evaluators."""
-        return self._evaluators
-
-    @property
-    def evals_result(self) -> EvalsResult:
-        """Getter for evals result"""
-        return self._evals_result
-
-    def registerEvaluator(self, name: str, evaluator: EvaluatorClass) -> None:
-        self._evaluators[name] = evaluator
-
-    @classmethod
-    def _retrieve_tenant_ids(cls, credential=None) -> dict[str, str]:
-        if credential is None:
-            credential = DefaultAzureCredential()
-        storage_blob_account = os.environ["STORAGE_BLOB_ACCOUNT"]
-        blob_service_client = BlobServiceClient(
-            account_url=f"https://{storage_blob_account}.blob.core.windows.net",
-            credential=credential,
-        )
-        container_name = os.environ["BOT_CONFIG_CONTAINER"]
-        container_client = blob_service_client.get_container_client(container_name)
-        filename = os.environ["BOT_CONFIG_CHANNEL_BLOB"]
-        blob_client = container_client.get_blob_client(filename)
-        download_stream = blob_client.download_blob()
-        channel_data_yaml = yaml.safe_load(download_stream.readall())
-        channels = channel_data_yaml["channels"]
-        channel_to_tenant_id = {}
-        channel_to_tenant_id["default"] = channel_data_yaml["default"]["tenant"]
-        if channels:
-            for item in channels:
-                channel_to_tenant_id[item["name"]] = item["tenant"]
-
-        return channel_to_tenant_id
-
-    async def _process_file(
-        self, input_file: str, output_file: str, scenario: str, retrieve_response: bool
-    ) -> None:
-        """Process a single input file"""
-        logging.info(f"Processing file: {input_file}")
-
-        azure_bot_service_access_token = os.environ.get("BOT_AGENT_ACCESS_TOKEN", None)
-        bot_service_endpoint = os.environ.get("BOT_SERVICE_ENDPOINT", None)
-        api_url = (
-            f"{bot_service_endpoint}/completion"
-            if bot_service_endpoint is not None
-            else "http://localhost:8089/completion"
-        )
-        start_time = time.time()
-        tenant_id = None
-        if EvalsRunner.channel_to_tenant_id_dict:
-            tenant_id = EvalsRunner.channel_to_tenant_id_dict[
-                (
-                    EvalsRunner.scenario_to_channel[scenario]
-                    if scenario in EvalsRunner.scenario_to_channel
-                    else scenario
-                )
-            ]
-            if tenant_id is None:
-                tenant_id = EvalsRunner.channel_to_tenant_id_dict["default"]
-
-        with open(output_file, "a", encoding="utf-8") as outputFile:
-            with open(input_file, "r", encoding="utf-8") as f:
-                for line in f:
-                    record = json.loads(line)
-                    logging.debug(record)
-                    if retrieve_response:
-                        try:
-                            api_response = await self._call_bot_api(
-                                record["query"],
-                                api_url,
-                                azure_bot_service_access_token,
-                                tenant_id,
-                            )
-                            answer = api_response.get("answer", "")
-                            full_context = api_response.get("full_context", "")
-                            references = api_response.get("references", [])
-                            response_id = api_response.get("id", "")
-                            latency = time.time() - start_time
-                            processed_test_data = {
-                                "query": record["query"],
-                                "ground_truth": record["ground_truth"],
-                                "response": answer,
-                                "response_id": response_id,
-                                "context": full_context,
-                                "latency": latency,
-                                "response_length": len(answer),
-                                "expected_knowledges": (
-                                    record["expected_knowledges"]
-                                    if "expected_knowledges" in record
-                                    else []
-                                ),
-                                "knowledges": extract_title_and_link_from_context(
-                                    full_context
-                                ),
-                                "expected_references": (
-                                    record["expected_references"]
-                                    if "expected_references" in record
-                                    else []
-                                ),
-                                "references": extract_title_and_link_from_references(
-                                    references
-                                ),
-                                "testcase": record.get("testcase", "unknown"),
-                            }
-                            if processed_test_data:
-                                outputFile.write(
-                                    json.dumps(processed_test_data, ensure_ascii=False)
-                                    + "\n"
-                                )
-                        except Exception as e:
-                            logging.error(
-                                f"❌ Error occurred when process {input_file}: {str(e)}"
-                            )
-                            import traceback
-
-                            traceback.print_exc()
-                    else:
-                        outputFile.write(line)
-            outputFile.flush()
-            outputFile.close()
-
-    async def _call_bot_api(
-        self,
-        question: str,
-        bot_endpoint: str,
+        *,
+        api_url: str,
         access_token: str | None,
-        tenant_id: str | None = None,
-        with_full_context: bool = True,
-    ) -> Any:
-        """Call the completion API endpoint."""
-        headers = {
-            "Content-Type": "application/json; charset=utf8",
-        }
-        if access_token:
-            headers["Authorization"] = f"Bearer {access_token}"
+        max_concurrency: int = 8,
+        timeout_seconds: int = 600,
+        max_retries: int = 4,
+    ) -> None:
+        self._api_url = api_url
+        self._access_token = access_token
+        self._max_concurrency = max(1, max_concurrency)
+        self._timeout_seconds = timeout_seconds
+        self._max_retries = max_retries
 
+    def collect(self, records: list[dict[str, Any]], tenant_id: str | None) -> list[dict[str, Any]]:
+        """Return enriched items (one per input record) in original order.
+
+        Records whose bot call fails are dropped (logged).
+        """
+        return asyncio.run(self._collect_async(records, tenant_id))
+
+    async def _collect_async(self, records: list[dict[str, Any]], tenant_id: str | None) -> list[dict[str, Any]]:
+        import aiohttp
+
+        semaphore = asyncio.Semaphore(self._max_concurrency)
+        results: list[dict[str, Any] | None] = [None] * len(records)
+        logger.info(
+            "🚀 Collecting %d bot responses with concurrency=%d via %s",
+            len(records),
+            self._max_concurrency,
+            self._api_url,
+        )
+
+        async def _run(session: "aiohttp.ClientSession", index: int, record: dict[str, Any]) -> None:
+            async with semaphore:
+                start = time.time()
+                try:
+                    api_response = await self._call_bot_api(record["query"], tenant_id, session)
+                except Exception as exc:  # noqa: BLE001
+                    logger.error("❌ collect failed for %s: %s", record.get("testcase", "?"), exc)
+                    return
+                answer = api_response.get("answer", "")
+                full_context = api_response.get("full_context", "") or ""
+                references = api_response.get("references", []) or []
+                results[index] = {
+                    "testcase": record.get("testcase", "unknown"),
+                    "query": record["query"],
+                    "ground_truth": record.get("ground_truth", ""),
+                    "response": answer,
+                    "response_id": api_response.get("id", ""),
+                    "context": full_context,
+                    "latency": time.time() - start,
+                    "response_length": len(answer),
+                    "expected_references": record.get("expected_references", []),
+                    "references": extract_title_and_link_from_references(references),
+                    "expected_knowledges": record.get("expected_knowledges", []),
+                    "knowledges": extract_title_and_link_from_context(full_context),
+                }
+
+        timeout = aiohttp.ClientTimeout(total=self._timeout_seconds)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            await asyncio.gather(*(_run(session, i, r) for i, r in enumerate(records)))
+
+        collected = [r for r in results if r is not None]
+        logger.info("Collected %d/%d bot responses.", len(collected), len(records))
+        return collected
+
+    async def _call_bot_api(self, question: str, tenant_id: str | None, session: Any) -> Any:
+        import aiohttp
+
+        headers = {"Content-Type": "application/json; charset=utf8"}
+        if self._access_token:
+            headers["Authorization"] = f"Bearer {self._access_token}"
         payload = {
             "tenant_id": tenant_id if tenant_id is not None else "general_qa_bot",
             "message": {"role": "user", "content": question},
-            "with_full_context": with_full_context,
+            "with_full_context": True,
+        }
+        last_status: int | None = None
+        for attempt in range(self._max_retries):
+            try:
+                async with session.post(self._api_url, json=payload, headers=headers) as resp:
+                    if resp.status == 200:
+                        return await resp.json()
+                    last_status = resp.status
+                    if resp.status in (400, 422):
+                        raise Exception(f"API request failed with status {resp.status} (non-retryable)")
+            except aiohttp.ClientError as exc:
+                last_status = -1
+                logger.warning("⚠️  transport error attempt %d/%d: %s", attempt + 1, self._max_retries, exc)
+            if attempt < self._max_retries - 1:
+                await asyncio.sleep(2 ** attempt * 5)
+        raise Exception(f"API request failed with status {last_status}")
+
+
+def resolve_completion_url() -> str:
+    """Resolve the bot ``/completion`` URL from env (default local server)."""
+    endpoint = os.environ.get("BOT_SERVICE_ENDPOINT")
+    if endpoint:
+        return f"{endpoint.rstrip('/')}/completion"
+    return "http://localhost:8089/completion"
+
+
+def resolve_bot_token() -> str | None:
+    """Resolve a bearer token for the bot service.
+
+    Uses ``BOT_AGENT_TOKEN_RESOURCE`` via ``az account get-access-token`` when set,
+    else falls back to ``BOT_AGENT_ACCESS_TOKEN``. Local server needs no token.
+    """
+    resource = os.environ.get("BOT_AGENT_TOKEN_RESOURCE")
+    if resource:
+        try:
+            out = subprocess.run(
+                ["az", "account", "get-access-token", "--resource", resource,
+                 "--query", "accessToken", "-o", "tsv"],
+                capture_output=True, text=True, check=True, shell=True,
+            )
+            return out.stdout.strip()
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("⚠️  failed to get bot token via az cli: %s", exc)
+    return os.environ.get("BOT_AGENT_ACCESS_TOKEN")
+
+
+def retrieve_channel_tenant_map(credential: Any) -> dict[str, str]:
+    """Load the channel->tenant map from the bot config blob (for /completion routing)."""
+    from azure.storage.blob import BlobServiceClient
+
+    account = os.environ["STORAGE_BLOB_ACCOUNT"]
+    container = os.environ["BOT_CONFIG_CONTAINER"]
+    blob_name = os.environ["BOT_CONFIG_CHANNEL_BLOB"]
+    service = BlobServiceClient(account_url=f"https://{account}.blob.core.windows.net", credential=credential)
+    blob = service.get_container_client(container).get_blob_client(blob_name)
+    import yaml
+
+    data = yaml.safe_load(blob.download_blob().readall())
+    mapping: dict[str, str] = {"default": data["default"]["tenant"]}
+    for item in data.get("channels") or []:
+        mapping[item["name"]] = item["tenant"]
+    return mapping
+
+
+def resolve_tenant_for_scenario(scenario: str, channel_tenant_map: dict[str, str] | None) -> str | None:
+    """Resolve the bot tenant_id for a scenario from the channel->tenant map."""
+    if not channel_tenant_map:
+        return None
+    channel = SCENARIO_TO_CHANNEL.get(scenario, scenario)
+    return channel_tenant_map.get(channel) or channel_tenant_map.get("default")
+
+
+def _coerce_score(value: Any) -> float:
+    try:
+        f = float(value)
+        return f if f == f else 0.0  # NaN guard
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _get(obj: Any, attr: str, default: Any) -> Any:
+    """Attribute or dict access against SDK models or plain dicts."""
+    if isinstance(obj, dict):
+        return obj.get(attr, default)
+    return getattr(obj, attr, default)
+
+
+def output_items_to_rows(
+    output_items: list[Any],
+    evaluators: list[str],
+    *,
+    threshold: float = 3.0,
+) -> dict[str, Any]:
+    """Adapt OpenAI-evals ``output_items`` into the legacy ``{"rows": [...]}`` shape.
+
+    Each output item exposes ``datasource_item`` (the inline input row incl. the
+    collected ``response``/``references``) and ``results`` (one grader result per
+    criterion with ``name``/``score``/``passed``). We emit ``inputs.*`` and
+    ``outputs.<metric>.<metric>`` / ``outputs.<metric>.<metric>_result`` keys
+    consumed by ``EvalsResult``.
+    """
+    rows: list[dict[str, Any]] = []
+    want_bot_evals = "bot_evals" in evaluators
+
+    for oi in output_items:
+        item = _get(oi, "datasource_item", {}) or {}
+        results = _get(oi, "results", []) or []
+
+        row: dict[str, Any] = {
+            "inputs.testcase": item.get("testcase", item.get("query", "unknown")),
+            "inputs.ground_truth": item.get("ground_truth", ""),
+            "inputs.expected_references": item.get("expected_references", []),
+            "inputs.expected_knowledges": item.get("expected_knowledges", []),
+            "inputs.response": item.get("response", ""),
+            "inputs.references": item.get("references", []) or [],
+            "inputs.knowledges": item.get("knowledges", []) or [],
         }
 
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                bot_endpoint, json=payload, headers=headers
-            ) as resp:
-                if resp.status == 200:
-                    return await resp.json()
-                else:
-                    raise Exception(f"API request failed with status {resp.status}")
+        per_metric: dict[str, float] = {}
+        for r in results:
+            name = _get(r, "name", None)
+            if not name:
+                continue
+            score = _coerce_score(_get(r, "score", 0.0))
+            passed = bool(_get(r, "passed", False))
+            per_metric[name] = score
+            row[f"outputs.{name}.{name}"] = score
+            row[f"outputs.{name}.{name}_result"] = "pass" if passed else "fail"
 
-    async def _prepare_dataset(
-        self,
-        testdata_dir: str,
-        file_prefix: str | None = None,
-        retrieve_response: bool = True,
-    ) -> Path | None:
-        """
-        Process markdown files in the data directory and generate Q&A pairs.
-
-        Args:
-            prefix: Optional prefix to filter which markdown files to process.
-                        If provided, only files starting with this prefix will be processed.
-        """
-        logging.info("📁 Preparing dataset...")
-        data_dir = Path(testdata_dir)
-        logging.info(f"📂 Data directory: {data_dir.absolute()}")
-        script_directory = os.path.dirname(os.path.abspath(__file__))
-        logging.info(f"Script directory:{script_directory}")
-        output_dir = Path(os.path.join(script_directory, "output"))
-        output_dir.mkdir(exist_ok=True)
-        logging.info(f"📂 Output directory: {output_dir.absolute()}")
-
-        for filename in os.listdir(output_dir.absolute()):
-            file_path = os.path.join(output_dir.absolute(), filename)
-            try:
-                if os.path.isfile(file_path) or os.path.islink(file_path):
-                    os.unlink(file_path)  # remove file or link
-                elif os.path.isdir(file_path):
-                    shutil.rmtree(file_path)  # remove directory
-            except Exception as e:
-                print(f"Failed to delete {file_path}. Reason: {e}")
-        print(f"Directory '{output_dir.absolute()}' cleared.")
-
-        if not data_dir.exists():
-            logging.error(f"❌ Data directory {data_dir.absolute()} does not exist!")
-            return None
-
-        current_date = datetime.now().strftime("%Y_%m_%d")
-        # Process jsonl files in the folder, optionally filtered by prefix
-        glob_pattern = f"{file_prefix}*.jsonl" if file_prefix else "*.jsonl"
-        matching_files = list(data_dir.glob(glob_pattern))
-
-        logging.info(f"🔍 Looking for files matching pattern: {glob_pattern}")
-        logging.info(f"📋 Found {len(matching_files)} matching files")
-
-        if matching_files:
-            logging.info(
-                f"Found {len(matching_files)} files matching prefix '{file_prefix}' in {data_dir}/"
+        if want_bot_evals and ("similarity" in per_metric or "response_completeness" in per_metric):
+            composite = (
+                per_metric.get("similarity", 0.0) * BOT_EVALS_WEIGHTS["similarity"]
+                + per_metric.get("response_completeness", 0.0) * BOT_EVALS_WEIGHTS["response_completeness"]
             )
-            # group files
-            grouped: dict[str, list[Path]] = defaultdict(list[Path])
-
-            for item in matching_files:
-                match = re.match(r"^([^_]+)_", item.name)
-                if match:
-                    key = match.group(1)
-                    grouped[key].append(item)
-
-            for key, paths in grouped.items():
-                output_file = os.path.join(
-                    output_dir.absolute(), f"{key}_{current_date}.jsonl"
-                )
-                for input_file_path in paths:
-                    logging.info(f"  - {input_file_path.name}")
-                    await self._process_file(
-                        str(input_file_path), str(output_file), key, retrieve_response
-                    )
-
-            logging.info("Processing complete. Results written to output directory.")
-            return output_dir.absolute()
-        elif file_prefix:
-            logging.info(
-                f"No files found matching prefix '{file_prefix}' in {data_dir}/"
+            row["outputs.bot_evals.bot_evals"] = composite
+            row["outputs.bot_evals.bot_evals_similarity"] = per_metric.get("similarity", 0.0)
+            row["outputs.bot_evals.bot_evals_response_completeness"] = per_metric.get(
+                "response_completeness", 0.0
             )
-            return None
-        else:
-            logging.info(f"No files found in {data_dir}/")
-            return None
+            row["outputs.bot_evals.bot_evals_result"] = "pass" if composite >= threshold else "fail"
 
-    def evaluate_run(
+        rows.append(row)
+
+    return {"rows": rows}
+
+
+class FoundryEvalsRunner:
+    """Collect bot answers concurrently and grade them inline on the Foundry project."""
+
+    def __init__(
         self,
-        test_folder: str,
-        prefix: Optional[str] = None,
-        need_retrieve_response: bool = True,
-        evaluation_name_prefix: Optional[str] = None,
-        ai_project_endpoint: Optional[str] = None,
-        **kwargs: Any,
+        evaluators: list[str],
+        evals_result: EvalsResult,
+        *,
+        model: str,
+        threshold: int = 3,
+        poll_interval: float = 5.0,
+        poll_timeout: float = 1800.0,
+        max_concurrency: int = 8,
+        completion_url: str | None = None,
+        access_token: str | None = None,
+    ) -> None:
+        self._evaluators = evaluators
+        self._evals_result = evals_result
+        self._model = model
+        self._threshold = threshold
+        self._poll_interval = poll_interval
+        self._poll_timeout = poll_timeout
+        self._max_concurrency = max_concurrency
+        self._completion_url = completion_url
+        self._access_token = access_token
+
+    @property
+    def evals_result(self) -> EvalsResult:
+        return self._evals_result
+
+    def _poll_and_adapt(
+        self,
+        openai_client: Any,
+        eval_id: str,
+        run_id: str,
+        scenario: str,
+        extra_failed_rows: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
+        """Shared poll-to-terminal + output_items -> rows -> record step.
 
-        all_results: dict[str, Any] = {}
-        evaluators = {}
-        evaluator_config: Dict[str, Any] = {}
-        # metrics = evaluator_filter if evaluator_filter is not None else self._evaluators.keys()
-        for index, (key, value) in enumerate(self._evaluators.items()):
-            evaluators[key] = value.evaluator
-            if value.evaluator_config:
-                evaluator_config[key] = value.evaluator_config
+        ``extra_failed_rows`` are appended before recording so that cases which never
+        reached the grader (e.g. dropped /completion collection failures) still count
+        as failures in the gate rather than vanishing from the denominator.
+        """
+        deadline = time.time() + self._poll_timeout
+        run = openai_client.evals.runs.retrieve(run_id=run_id, eval_id=eval_id)
+        while run.status not in ("completed", "failed"):
+            if time.time() > deadline:
+                raise TimeoutError(f"Eval run {run_id} did not finish within {self._poll_timeout}s")
+            time.sleep(self._poll_interval)
+            run = openai_client.evals.runs.retrieve(run_id=run_id, eval_id=eval_id)
+            logger.info("  run status: %s", run.status)
 
-        if not evaluators or not evaluator_config:
-            logging.info("No evaluators. return empty result")
+        report_url = getattr(run, "report_url", None)
+        if report_url:
+            logger.info("Report URL: %s", report_url)
+        if run.status == "failed":
+            raise RuntimeError(f"Eval run {run_id} failed")
+
+        output_items = list(openai_client.evals.runs.output_items.list(run_id=run_id, eval_id=eval_id))
+        raw = output_items_to_rows(output_items, self._evaluators, threshold=float(self._threshold))
+        if extra_failed_rows:
+            raw["rows"].extend(extra_failed_rows)
+        return {f"{scenario}_{run_id}": self._evals_result.record_run_result(raw)}
+
+    def _failed_row(self, record: dict[str, Any]) -> dict[str, Any]:
+        """A synthetic result row that fails every requested metric (uncollected case)."""
+        row: dict[str, Any] = {
+            "inputs.testcase": record.get("testcase", record.get("query", "unknown")),
+            "inputs.ground_truth": record.get("ground_truth", ""),
+            "inputs.expected_references": record.get("expected_references", []),
+            "inputs.expected_knowledges": record.get("expected_knowledges", []),
+            "inputs.response": "",
+            "inputs.references": [],
+            "inputs.knowledges": [],
+        }
+        for name in self._evaluators:
+            row[f"outputs.{name}.{name}"] = 0.0
+            row[f"outputs.{name}.{name}_result"] = "fail"
+        return row
+
+    def evaluate_run_completion(
+        self,
+        openai_client: Any,
+        records: list[dict[str, Any]],
+        scenario: str,
+        *,
+        tenant_id: str | None = None,
+        evaluation_name: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """Completion mode: concurrently collect bot answers, then grade them inline."""
+        from openai.types.eval_create_params import DataSourceConfigCustom
+        from openai.types.evals.create_eval_jsonl_run_data_source_param import (
+            CreateEvalJSONLRunDataSourceParam,
+            SourceFileContent,
+            SourceFileContentContent,
+        )
+
+        # 1) Collect bot answers concurrently (the slow, now-parallelized step).
+        collector = CompletionCollector(
+            api_url=self._completion_url or resolve_completion_url(),
+            access_token=self._access_token,
+            max_concurrency=self._max_concurrency,
+        )
+        items = collector.collect(records, tenant_id)
+
+        # Cases whose /completion call failed must still count as failures so the
+        # gate is not blind to collection errors (agent mode grades every row).
+        collected_keys = [it.get("testcase") for it in items]
+        seen: dict[Any, int] = {}
+        for key in collected_keys:
+            seen[key] = seen.get(key, 0) + 1
+        dropped: list[dict[str, Any]] = []
+        for record in records:
+            rkey = record.get("testcase", record.get("query", "unknown"))
+            if seen.get(rkey, 0) > 0:
+                seen[rkey] -= 1
+            else:
+                dropped.append(record)
+        if dropped:
+            logger.error(
+                "❌ %d/%d cases had no bot response (counted as failures): %s",
+                len(dropped),
+                len(records),
+                ", ".join(str(r.get("testcase", "?")) for r in dropped),
+            )
+        failed_rows = [self._failed_row(r) for r in dropped]
+
+        # 2) Build criteria that read the answer/context from the inline item.
+        testing_criteria = build_testing_criteria(
+            self._evaluators, model=self._model, threshold=self._threshold
+        )
+        if not testing_criteria:
+            logger.warning("No testing criteria built for evaluators=%s", self._evaluators)
             return {}
 
-        output_file_dir = asyncio.run(
-            self._prepare_dataset(test_folder, prefix, need_retrieve_response)
+        # If nothing was collected, skip the Foundry run and report all-failed rows.
+        if not items:
+            logger.error("No bot responses collected for scenario=%s; all cases fail.", scenario)
+            if not failed_rows:
+                return {}
+            raw = {"rows": failed_rows}
+            return {f"{scenario}_no-responses": self._evals_result.record_run_result(raw)}
+
+        data_source_config = DataSourceConfigCustom(
+            type="custom", item_schema=COMPLETION_ITEM_SCHEMA, include_sample_schema=False
         )
-        if not output_file_dir:
-            logging.info("No test data file to evaluate.")
-            return all_results
+        name = evaluation_name or f"qa-bot-{scenario}"
+        eval_object = openai_client.evals.create(
+            name=name,
+            data_source_config=data_source_config,
+            testing_criteria=testing_criteria,  # type: ignore[arg-type]
+        )
+        logger.info("Evaluation created (id=%s, name=%s)", eval_object.id, name)
 
-        for output_file in output_file_dir.glob("*.jsonl"):
-            evaluation_name = (
-                f"{evaluation_name_prefix}-{output_file.stem}"
-                if evaluation_name_prefix
-                else output_file.stem
+        # 3) Grade the pre-collected answers as inline data (no agent target).
+        content = [SourceFileContentContent(item=_completion_item(it)) for it in items]
+        data_source = CreateEvalJSONLRunDataSourceParam(
+            type="jsonl", source=SourceFileContent(type="file_content", content=content)
+        )
+        run = openai_client.evals.runs.create(
+            eval_id=eval_object.id, name=f"{name}-run", data_source=data_source  # type: ignore[arg-type]
+        )
+        logger.info("Evaluation run created (id=%s)", run.id)
+        return self._poll_and_adapt(openai_client, eval_object.id, run.id, scenario, failed_rows)
+
+
+def resolve_records(dataset_spec: str, *, script_dir: Path) -> tuple[list[dict[str, Any]], str]:
+    """Resolve ``--dataset`` to ``(records, scenario)`` for completion mode (local read).
+
+    Accepts:
+      * ``<path>.jsonl``              -> read that file; scenario = file stem.
+      * ``qa-bot-<target>-<scenario>[:version]`` -> read ``evaluation_datasets/<target>/<scenario>.jsonl``.
+    """
+    candidate = Path(dataset_spec)
+    if dataset_spec.endswith(".jsonl") or candidate.exists():
+        path = candidate if candidate.is_absolute() else (script_dir / candidate)
+        scenario = path.stem
+    else:
+        name = dataset_spec.split(":", 1)[0]
+        # name form: qa-bot-<target>-<scenario>
+        parts = name.split("-")
+        if len(parts) < 4 or parts[0] != "qa" or parts[1] != "bot":
+            raise ValueError(
+                f"--dataset {dataset_spec!r} not a local path and not a qa-bot-<target>-<scenario> name"
             )
-            result = evaluate(
-                data=output_file,
-                evaluators=evaluators,
-                evaluation_name=evaluation_name,
-                # column mapping
-                evaluator_config=evaluator_config,
-                # Optionally provide your Azure AI Foundry project information to track your evaluation results in your project portal
-                azure_ai_project=ai_project_endpoint,
-                # Optionally provide an output path to dump a json of metric summary, row level data and metric and Azure AI project URL
-                output_path=f"./{output_file.stem}-eval-results.json",
-                **kwargs,
-            )
-            # print("✅ Evaluation completed. Results:", result)
-            logging.info(
-                f"✅ Evaluation completed. evaluation in AI project: {evaluation_name}"
-            )
-            run_result = self._evals_result.record_run_result(dict(result))
-            all_results[output_file.name] = run_result
+        target = parts[2]
+        scenario = "-".join(parts[3:])
+        path = script_dir / "evaluation_datasets" / target / f"{scenario}.jsonl"
 
-        return all_results
+    if not path.exists():
+        raise FileNotFoundError(f"Dataset file not found for completion mode: {path}")
+
+    records: list[dict[str, Any]] = []
+    with path.open("r", encoding="utf-8") as fh:
+        for line in fh:
+            line = line.strip()
+            if line:
+                records.append(json.loads(line))
+    return records, scenario
 
 
-__all__ = ["EvalsRunner"]
+__all__ = [
+    "FoundryEvalsRunner",
+    "CompletionCollector",
+    "output_items_to_rows",
+    "resolve_records",
+    "resolve_completion_url",
+    "resolve_bot_token",
+    "retrieve_channel_tenant_map",
+    "resolve_tenant_for_scenario",
+    "extract_title_and_link_from_references",
+    "extract_title_and_link_from_context",
+    "COMPLETION_ITEM_SCHEMA",
+]

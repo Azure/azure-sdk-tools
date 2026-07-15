@@ -99,6 +99,16 @@
             "scope": "branded",
             "service_type": "management-plane"
           }
+        },
+        {
+          "description": "TypeSpec Azure samples",
+          "path": "/packages/samples/specs",
+          "folder": "typespec_azure_samples",
+          "ignoredPaths": ["README.md"],
+          "isGenerated": true,
+          "metadata": {
+            "scope": "branded"
+          }
         }
       ]
     },
@@ -212,6 +222,12 @@
         {
           "description": "Azure DevOps Pipeline Guidance - main page",
           "path": "/Engineering-System/Pipelines/Azure-DevOps-Pipeline-Guidance.md",
+          "folder": "azure-sdk-internal-wiki",
+          "relativeByRepoPath": true
+        },
+        {
+          "description": "My License-CLA check hung",
+          "path": "/Engineering-System/Pipelines/My-License%2DCLA-check-hung.md",
           "folder": "azure-sdk-internal-wiki",
           "relativeByRepoPath": true
         }

@@ -69,9 +69,13 @@ stimuli:
           required:
             - "edit"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
+      - type: "run-command"
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       - type: "file-matches"
         config:
-          pattern: 'listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*\{\s*\.\.\.(Azure\.Core\.)?TopQueryParameter;\s*\.\.\.(Azure\.Core\.)?SkipQueryParameter;\s*\}\s*>|model\s+\w+\s+(is|extends)\s+(Azure\.Core\.)?StandardListQueryParameters\s*;[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*\w+\s*>'
+          pattern: 'listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(Parameters\s*=\s*)?\{\s*\.\.\.(Azure\.Core\.)?TopQueryParameter;\s*\.\.\.(Azure\.Core\.)?SkipQueryParameter;\s*\}\s*>|listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(Parameters\s*=\s*)?\{\s*\.\.\.(Azure\.ResourceManager\.)?ArmTopParameter;\s*\.\.\.(Azure\.ResourceManager\.)?ArmSkipParameter;\s*\}\s*>|model\s+\w+\s+(is|extends)\s+(Azure\.Core\.)?StandardListQueryParameters\s*;[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(Parameters\s*=\s*)?\w+\s*>'
           path: "*.tsp"
       - type: "file-not-matches"
         config:
@@ -94,7 +98,7 @@ stimuli:
       - type: "file-matches"
         config:
           path: "*.tsp"
-          pattern: 'listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*\{\s*\.\.\.(Azure\.Core\.)?TopQueryParameter;\s*\.\.\.(Azure\.Core\.)?SkipQueryParameter;\s*\}\s*>|model\s+\w+\s+(is|extends)\s+(Azure\.Core\.)?StandardListQueryParameters\s*;[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*\w+\s*>'
+          pattern: 'listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(Parameters\s*=\s*)?\{\s*\.\.\.(Azure\.Core\.)?TopQueryParameter;\s*\.\.\.(Azure\.Core\.)?SkipQueryParameter;\s*\}\s*>|listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(Parameters\s*=\s*)?\{\s*\.\.\.(Azure\.ResourceManager\.)?ArmTopParameter;\s*\.\.\.(Azure\.ResourceManager\.)?ArmSkipParameter;\s*\}\s*>|model\s+\w+\s+(is|extends)\s+(Azure\.Core\.)?StandardListQueryParameters\s*;[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(Parameters\s*=\s*)?\w+\s*>'
       - type: "file-not-matches"
         config:
           path: "*.tsp"
@@ -105,7 +109,7 @@ stimuli:
 
 scoring:
   weights:
-    tool-calls: 1
+    run-command: 1
     skill-invocation: 1
     file-matches: 1
   threshold: 1

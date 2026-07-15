@@ -272,10 +272,12 @@ resource slot 'Microsoft.Web/sites/slots@2025-05-01' = {
       httpLoggingEnabled: false
       appSettings: [
         {
-          // The agent-server container listens on :8088; tell App Service so it
-          // routes to the right port instead of the default 8080 (else 503).
+          // The agent-server container (FastAPI server.py) listens on :8089
+          // (its Dockerfile: `EXPOSE 8089` / `uvicorn server:app --port 8089`);
+          // tell App Service so it routes to the right port instead of the
+          // default 8080 (else the warm-up probe fails and the slot returns 503).
           name: 'WEBSITES_PORT'
-          value: '8088'
+          value: '8089'
         }
         {
           name: 'AZURE_CLIENT_ID'
@@ -312,6 +314,14 @@ resource slot 'Microsoft.Web/sites/slots@2025-05-01' = {
         {
           name: 'STORAGE_ACCOUNT_NAME'
           value: storageAccountName
+        }
+        {
+          // The Python agent server reads AZURE_APPCONFIG_ENDPOINT in
+          // config/app_config.py `init()` and raises RuntimeError (container
+          // exits 1 → 503) if it is missing. All other settings are loaded
+          // from the App Configuration store at this endpoint.
+          name: 'AZURE_APPCONFIG_ENDPOINT'
+          value: 'https://${appConfigName}.azconfig.io'
         }
       ]
     }

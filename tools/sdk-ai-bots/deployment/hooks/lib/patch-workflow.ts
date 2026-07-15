@@ -214,8 +214,12 @@ export async function patchWorkflow(opts: PatchWorkflowOptions = {}): Promise<vo
 
   const parameters = {
     $connections: {
+      // Keyed by the connector token (teams / azureblob / documentdb) — the
+      // static, designer-friendly form the portal Logic App designer expects.
+      // The connectionId / id still point at the real connection resources, so
+      // runtime behavior is identical to keying by resource name.
       value: {
-        [blobConnName]: {
+        azureblob: {
           connectionId: blobConnResourceId,
           connectionName: blobConnName,
           connectionProperties: {
@@ -226,7 +230,7 @@ export async function patchWorkflow(opts: PatchWorkflowOptions = {}): Promise<vo
           },
           id: managedApiId(subscriptionId, location, "azureblob"),
         },
-        [docDbConnName]: {
+        documentdb: {
           connectionId: docDbConnResourceId,
           connectionName: docDbConnName,
           connectionProperties: {
@@ -237,7 +241,7 @@ export async function patchWorkflow(opts: PatchWorkflowOptions = {}): Promise<vo
           },
           id: managedApiId(subscriptionId, location, "documentdb"),
         },
-        [teamsConnName]: {
+        teams: {
           connectionId: teamsConnResourceId,
           connectionName: teamsConnName,
           connectionProperties: {},
@@ -255,7 +259,6 @@ export async function patchWorkflow(opts: PatchWorkflowOptions = {}): Promise<vo
     botIdentityResourceId: { value: botIdentityResourceId },
     functionAppResourceId: { value: functionAppResourceId },
     blobStorageAccountName: { value: blobStorageAccountName },
-    blobConnectionName: { value: blobConnName },
   };
 
   const workflowUrl =

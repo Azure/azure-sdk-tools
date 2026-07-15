@@ -1,11 +1,18 @@
 /**
  * agent — postdeploy hook
  *
- * 1. Ensure the server app registration (SERVER_AUDIENCE) is fully authorized
+ * 1. Grant the hosted Foundry agent's runtime managed identity (the auto-created
+ *    "…-AgentIdentity") the data-plane roles it needs. In a hosted container the
+ *    agent runs as this identity (not the shared qabot-identity), and its very
+ *    first startup step — `await app_config.init()` — reads Azure App
+ *    Configuration via that identity. Without at least "App Configuration Data
+ *    Reader" the container crashes on boot, its /readiness never returns 200, and
+ *    every session fails with 424 session_not_ready → /agent/chat returns 500.
+ * 2. Ensure the server app registration (SERVER_AUDIENCE) is fully authorized
  *    so callers can obtain tokens EasyAuth accepts (service principal,
  *    identifier URI, delegated scope, application app-role, pre-authorized
  *    clients, and the managed-identity app-role assignment).
- * 2. Sanity-check the hosted agent by pinging its /ping endpoint.
+ * 3. Sanity-check the hosted agent by pinging its /ping endpoint.
  */
 
 import { execSync } from "child_process";
@@ -62,7 +69,142 @@ function ensureAgentServerAuthorization(): void {
   });
 }
 
+/**
+ * Resolve the hosted agent's runtime managed-identity principal (object) ID by
+ * reading the deployed agent version from the Foundry data-plane API. The
+ * container runs as `instance_identity` (the auto-created "…-AgentIdentity"
+ * ServiceIdentity), which is what needs the data-plane role grants.
+ */
+async function getAgentIdentityPrincipalId(): Promise<string | undefined> {
+  let endpoint = process.env.AGENT_AGENT_ENDPOINT?.trim();
+  if (!endpoint) {
+    const projectEndpoint = process.env.FOUNDRY_PROJECT_ENDPOINT?.trim();
+    const agentName = process.env.AGENT_AGENT_NAME?.trim();
+    const agentVersion = process.env.AGENT_AGENT_VERSION?.trim();
+    if (projectEndpoint && agentName && agentVersion) {
+      endpoint = `${projectEndpoint}/agents/${agentName}/versions/${agentVersion}`;
+    }
+  }
+  if (!endpoint) {
+    log("AGENT_AGENT_ENDPOINT not set and cannot be derived — skipping agent identity RBAC.");
+    return undefined;
+  }
+
+  const token = execSync(
+    "az account get-access-token --resource https://ai.azure.com --query accessToken -o tsv",
+    { encoding: "utf8" }
+  ).trim();
+
+  const url = `${endpoint}${endpoint.includes("?") ? "&" : "?"}api-version=2025-05-15-preview`;
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) {
+    log(`Failed to read agent version (HTTP ${res.status}) — skipping agent identity RBAC.`);
+    return undefined;
+  }
+  const body = (await res.json()) as {
+    instance_identity?: { principal_id?: string };
+  };
+  const principalId = body.instance_identity?.principal_id?.trim();
+  if (!principalId) {
+    log("Agent version has no instance_identity.principal_id — skipping agent identity RBAC.");
+    return undefined;
+  }
+  return principalId;
+}
+
+/**
+ * Idempotently grant a built-in role to a service principal at a scope.
+ * Returns true on success (including when the assignment already exists).
+ */
+function grantRole(principalId: string, role: string, scope: string): boolean {
+  try {
+    execSync(
+      `az role assignment create --assignee-object-id "${principalId}" ` +
+        `--assignee-principal-type ServicePrincipal --role "${role}" --scope "${scope}"`,
+      { stdio: "pipe", encoding: "utf8" }
+    );
+    log(`  ✓ granted "${role}"`);
+    return true;
+  } catch (err) {
+    const msg = err instanceof Error && "stderr" in err ? String((err as { stderr?: unknown }).stderr ?? err.message) : String(err);
+    if (/RoleAssignmentExists|already exists/i.test(msg)) {
+      log(`  ✓ "${role}" already assigned`);
+      return true;
+    }
+    log(`  ✗ failed to grant "${role}": ${msg.split("\n")[0]}`);
+    return false;
+  }
+}
+
+/**
+ * Grant the hosted agent's runtime identity every data-plane role it needs.
+ * Mirrors the role set held by the shared qabot-identity, since the hosted
+ * container authenticates as the agent's own identity (AZURE_CLIENT_ID is unset
+ * in Foundry hosted containers, so ManagedIdentityCredential() resolves to the
+ * agent identity rather than the shared one).
+ *
+ * "App Configuration Data Reader" is the critical, boot-blocking grant: without
+ * it the container crashes in app_config.init() before it can serve /readiness.
+ */
+async function ensureAgentIdentityRbac(): Promise<void> {
+  loadAzdEnv();
+
+  const sub = process.env.AZURE_SUBSCRIPTION_ID?.trim();
+  const rg = process.env.AZURE_RESOURCE_GROUP?.trim();
+  if (!sub || !rg) {
+    log("AZURE_SUBSCRIPTION_ID / AZURE_RESOURCE_GROUP not set — skipping agent identity RBAC.");
+    return;
+  }
+
+  const principalId = await getAgentIdentityPrincipalId();
+  if (!principalId) return;
+
+  const providers = `/subscriptions/${sub}/resourceGroups/${rg}/providers`;
+  const scopeFor = (type: string, name: string | undefined) =>
+    name ? `${providers}/${type}/${name}` : undefined;
+
+  const appConfigScope = scopeFor("Microsoft.AppConfiguration/configurationStores", process.env.APP_CONFIG_NAME?.trim());
+  const aiScope = scopeFor("Microsoft.CognitiveServices/accounts", process.env.AI_RESOURCE_NAME?.trim());
+  const storageScope = scopeFor("Microsoft.Storage/storageAccounts", process.env.STORAGE_ACCOUNT_NAME?.trim());
+  const searchScope = scopeFor("Microsoft.Search/searchServices", process.env.SEARCH_SERVICE_NAME?.trim());
+  const kvScope = scopeFor("Microsoft.KeyVault/vaults", process.env.KEY_VAULT_NAME?.trim());
+
+  // [role, scope, critical] — critical grants abort the hook on failure.
+  const grants: Array<[string, string | undefined, boolean]> = [
+    ["App Configuration Data Reader", appConfigScope, true],
+    ["Cognitive Services OpenAI User", aiScope, false],
+    ["Foundry User", aiScope, false],
+    ["Storage Blob Data Owner", storageScope, false],
+    ["Storage Table Data Contributor", storageScope, false],
+    ["Storage Queue Data Contributor", storageScope, false],
+    ["Search Index Data Contributor", searchScope, false],
+    ["Key Vault Secrets User", kvScope, false],
+  ];
+
+  log(`Granting data-plane roles to hosted agent identity ${principalId}`);
+  let criticalFailed = false;
+  for (const [role, scope, critical] of grants) {
+    if (!scope) {
+      log(`  – skipping "${role}" (target resource name not set)`);
+      if (critical) criticalFailed = true;
+      continue;
+    }
+    const ok = grantRole(principalId, role, scope);
+    if (!ok && critical) criticalFailed = true;
+  }
+
+  if (criticalFailed) {
+    throw new Error(
+      "Failed to grant the critical 'App Configuration Data Reader' role to the hosted " +
+        "agent identity; the agent container will crash on startup until this is resolved."
+    );
+  }
+  log("Agent identity RBAC complete.");
+}
+
 (async () => {
+  await ensureAgentIdentityRbac();
+
   ensureAgentServerAuthorization();
 
   if (!AGENT_BASE_URL) {

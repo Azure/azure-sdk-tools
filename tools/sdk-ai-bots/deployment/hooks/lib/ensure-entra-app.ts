@@ -136,6 +136,24 @@ export function ensureEntraApp(opts: EnsureEntraAppOptions): string {
  *  get-access-token` / local dev can call the server without a consent prompt. */
 const AZURE_CLI_CLIENT_ID = "04b07795-8ddb-461a-bbee-02f9e1bf7b46";
 
+/**
+ * Returns true if an Application registration with this appId can be resolved
+ * in the signed-in tenant. Microsoft Graph rejects the entire
+ * `preAuthorizedApplications` PATCH with `InvalidAppId` if any referenced
+ * client appId is not a resolvable *Application* — a bare service principal
+ * (e.g. a ManagedIdentity, or an enterprise app whose registration lives in
+ * another tenant) is NOT valid here. So we deliberately check for the
+ * Application object only and do not fall back to `az ad sp show`; callers must
+ * filter unresolvable ids out before writing.
+ */
+function clientAppResolvable(clientId: string): boolean {
+  try {
+    return !!run(`az ad app show --id ${clientId} --query appId --output tsv`);
+  } catch {
+    return false;
+  }
+}
+
 interface OAuth2Scope {
   id: string;
   value: string;
@@ -290,7 +308,17 @@ export function ensureServerAppAuthorization(opts: EnsureServerAppAuthorizationO
 
   const clientsToAuthorize = Array.from(
     new Set([AZURE_CLI_CLIENT_ID, ...preAuthorizeClientIds]),
-  ).filter(Boolean);
+  ).filter(Boolean).filter((clientId) => {
+    // Azure CLI is a well-known Microsoft first-party client present in every
+    // tenant; never probe or skip it. For any other client, skip (with a
+    // warning) when no app/service principal resolves in this tenant — a
+    // dangling reference would make Graph reject the whole api PATCH with
+    // InvalidAppId and fail the deploy.
+    if (clientId === AZURE_CLI_CLIENT_ID) return true;
+    if (clientAppResolvable(clientId)) return true;
+    log(`  ⚠ skipping pre-authorization of ${clientId} — no app/service principal found in this tenant`);
+    return false;
+  });
   for (const clientId of clientsToAuthorize) {
     const entry = api.preAuthorizedApplications.find((p) => p.appId === clientId);
     if (!entry) {
@@ -303,6 +331,24 @@ export function ensureServerAppAuthorization(opts: EnsureServerAppAuthorizationO
       log(`  pre-authorizing client ${clientId} (adding scope)`);
     }
   }
+
+  // Prune any pre-authorized client that no longer resolves in the directory.
+  // The PATCH below resends the ENTIRE preAuthorizedApplications array, and
+  // Graph rejects the whole api PATCH with InvalidAppId if any referenced appId
+  // is dangling — including entries that were valid when first added but have
+  // since been deleted from the tenant. Azure CLI is a well-known first-party
+  // client and is never pruned.
+  const preAuthBefore = api.preAuthorizedApplications.length;
+  api.preAuthorizedApplications = api.preAuthorizedApplications.filter((p) => {
+    if (p.appId === AZURE_CLI_CLIENT_ID) return true;
+    if (clientAppResolvable(p.appId)) return true;
+    log(`  ⚠ pruning stale pre-authorized app ${p.appId} — not found in this tenant`);
+    return false;
+  });
+  if (api.preAuthorizedApplications.length !== preAuthBefore) {
+    apiChanged = true;
+  }
+
   if (apiChanged) {
     azRest("PATCH", graphApp, { api });
     log(`  ✓ api (scopes + pre-authorized apps) updated`);

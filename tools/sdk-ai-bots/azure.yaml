@@ -70,25 +70,25 @@ infra:
 hooks:
     postdeploy:
         shell: sh
-        run: npx tsx deployment/hooks/postdeploy.ts
+        run: npx --yes tsx deployment/hooks/postdeploy.ts
         interactive: true
     postdown:
         shell: sh
-        run: npx tsx deployment/hooks/postdown.ts
+        run: npx --yes tsx deployment/hooks/postdown.ts
         interactive: true
     postprovision:
         shell: sh
-        run: npx tsx deployment/hooks/postprovision.ts
+        run: npx --yes tsx deployment/hooks/postprovision.ts
         interactive: true
     predeploy:
         shell: sh
-        run: npx tsx deployment/hooks/predeploy.ts
+        run: npx --yes tsx deployment/hooks/predeploy.ts
         interactive: true
     predown:
         shell: sh
-        run: npx tsx deployment/hooks/predown.ts
+        run: npx --yes tsx deployment/hooks/predown.ts
         interactive: true
     preprovision:
         shell: sh
-        run: npx tsx deployment/hooks/preprovision.ts
+        run: npx --yes tsx deployment/hooks/preprovision.ts
         interactive: true

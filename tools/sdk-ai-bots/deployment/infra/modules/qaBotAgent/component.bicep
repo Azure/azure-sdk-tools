@@ -274,6 +274,24 @@ resource openAiUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-
   }
 }
 
+// Azure AI User grant for qabot-identity, scoped to the AI account. The agent
+// server (server.py) reads/uses the hosted Foundry agent at runtime via
+// `project_client.agents.get(...)`, which requires the data action
+// `Microsoft.CognitiveServices/accounts/AIServices/agents/read`. "Cognitive
+// Services OpenAI User" (assigned above) only covers model-deployment calls and
+// lacks the agents action, so without this role every /agent/chat request fails
+// with HTTP 500 (UserError: identity does not have permissions for
+// .../AIServices/agents/read).
+resource aiUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: account
+  name: guid(account.id, managedIdentityPrincipalId, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '53ca6127-db72-4b80-b1b0-d745d6d5456d'))
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '53ca6127-db72-4b80-b1b0-d745d6d5456d')
+    principalId: managedIdentityPrincipalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
 // AzureSDKChatBot_Developer Entra group object ID.
 // Passed as a parameter; empty means no developer role assignment.
 // var developerGroupObjectId = '2efb50ed-0ca9-4cf1-b43b-9b31a87e08f5'  ← moved to param above

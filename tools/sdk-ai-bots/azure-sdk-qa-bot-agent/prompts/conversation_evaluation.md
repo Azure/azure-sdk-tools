@@ -8,34 +8,17 @@ You are given the **full transcript of a single conversation thread**. Each mess
 - `[Bot]` — an automated reply from the support bot.
 - `[Expert: Name]` — a human other than the original poster (a domain expert).
 
-## How the conversation flows
-
-The poster asks a question and the bot auto-replies; the poster may follow up and the bot keeps replying. The bot stops once the poster asks nothing further or a human **expert** joins. A thread may contain several human messages (from the poster and/or one or more experts).
+The poster asks a question and the bot auto-replies; the poster may follow up and the bot keeps replying. The bot stops once the poster asks nothing further or a human expert joins. A thread may contain several human messages, from the poster and/or one or more experts.
 
 ## What to judge
 
-Judge whether the **bot's answers, taken together across the whole thread**, correctly and helpfully resolved the user's actual question(s). Use only the transcript plus your own reasoning.
-
-- **Judge on merits, not silence.** A thread where nobody replied is not automatically **correct**, and the absence of an expert is not automatically **unknown**.
-- **Answer the user's real question.** An expert adding a side-detail or one-off fix the bot couldn't know does not make it **incorrect** if its answer to the question still holds. A true but tangential point that only restates what's already known and leaves the real question unresolved is not **correct**.
-- **Weight the final converged answer.** In a multi-turn thread, if the bot corrects an earlier mistake and lands on the right resolution, that's **correct** — don't penalize an earlier wrong turn.
-- **A right general principle isn't enough.** It doesn't rescue the bot if its concrete recommendation was wrong or endorsed a workaround an expert overrode; mark **correct** only when the bot delivered the actual resolution.
-
-## Reading expert and outcome signals
-
-When a human expert replies, treat it as the strongest signal. Judge what the expert *does*, not whether they say "you're wrong":
-
-- **Confirms, agrees with, builds on, or implements** a more specific version of the bot's direction → **correct**. A procedural nudge that still matches the bot's advice (e.g. "work with the assigned reviewers directly") is agreement, not a contradiction. But an expert who supplies a materially different cause or corrects a substantive detail is not agreeing, even if their tone is helpful.
-- **Corrects, contradicts, or points to a different approach** than the bot's → **incorrect**.
-- **Only defers** — points to another owner/thread or leaves it "being discussed" without endorsing the bot → not a confirmation. This does **not** by itself make the answer **unknown**: if the bot's answer is concrete and independently verifiable as correct/standard, keep **correct**; choose **unknown** only when the answer is also non-specific or you cannot verify it from the transcript or your own knowledge.
-- If the original poster later **confirms** the problem was resolved along the bot's direction — including adopting one of several valid paths it offered — that's a strong **correct** signal.
-- If a later expert or outcome **supersedes** the bot's premise so its recommended path became moot — without showing the bot's answer was wrong — choose **unknown**. If instead the expert shows the bot's concrete guidance was actually wrong or inconsistent with the real process, that's **incorrect**, not unknown.
+Judge the **bot's answers across the whole thread** by the **human response to them**. The verdict is driven by whether a human — the poster or an expert — confirmed or corrected the bot, not by whether you personally think the answer is right. In a multi-turn thread, weight the bot's **final converged answer**.
 
 ## Verdicts
 
-- **correct** — Technically accurate and adequately addresses the question(s). Directionally right but slightly incomplete still counts; do not penalize minor omissions, style, or verbosity. A concrete answer that addresses the real question and is independently verifiable as correct/standard is **correct** even if nobody confirmed it — including a thorough answer that flags its own uncertainties and matches standard practice.
-- **incorrect** — Wrong, misleading, misses the point, or only treats symptoms while missing a known root cause (e.g. an underlying bug) so following it would not resolve the problem. A substantive refusal or "I don't know" to a question that had a real answer is not correct. A clean "looks good / no blocker" review is **incorrect** if an expert then flags a real defect it missed or approves a different artifact instead. This means *actually* wrong — unverified specifics are not **incorrect** by themselves.
-- **unknown** — The transcript genuinely does not let you decide: the question is too ambiguous, or the bot's answer cannot be verified from the transcript or your own knowledge. Do **not** choose unknown merely because no expert confirmed the bot or an expert only redirected — a concrete answer you can independently verify as correct/standard is **correct**. Also use unknown when the bot only emitted a system/generation error (e.g. "Sorry, something went wrong, please retry") and produced no real answer to judge.
+- **correct** — The poster or an expert **confirms, agrees with, builds on, or acts on** the bot's answer. A procedural nudge that still matches the bot's advice (e.g. "work with the assigned reviewers directly") is agreement. An expert adding an orthogonal side-detail the bot couldn't know is not a correction. The poster thanking the bot, saying it answered their question, or adopting one of several valid paths it offered counts as confirmation.
+- **incorrect** — The poster or an expert **corrects or contradicts** the bot, or supplies a **materially different** resolution — including when a human shows the bot's concrete guidance was wrong, missed a real defect it called clean, or treated only a symptom while missing the actual root cause.
+- **unknown** — **No clear confirmation or correction signal.** Use this when nobody authoritative replied, the expert only **deferred or redirected** (pointed to another owner/thread, left it "being discussed") without endorsing or contradicting the bot, the human response is too ambiguous to read, or the bot only emitted a system/generation error (e.g. "Sorry, something went wrong, please retry") with no real answer to judge. A concrete answer that is probably right but that **no human confirmed** is **unknown**, not correct.
 
 ## Output
 
@@ -47,6 +30,6 @@ Reply with a JSON object containing exactly three fields:
 
 Example responses:
 
-{"verdict": "correct", "reasoning": "The bot correctly explained the TypeSpec versioning decorator and an expert later confirmed the same approach.", "confidence": 0.9}
-{"verdict": "incorrect", "reasoning": "The bot stated the right principle but endorsed a workaround, while the expert supplied the actual pattern and redirected away from it, which the user accepted.", "confidence": 0.85}
-{"verdict": "unknown", "reasoning": "The question lacks enough context to determine whether the bot's answer applies, and no expert weighed in.", "confidence": 0.4}
+{"verdict": "correct", "reasoning": "The bot explained the TypeSpec versioning decorator and both the expert and the poster confirmed it answered the question.", "confidence": 0.9}
+{"verdict": "incorrect", "reasoning": "The expert supplied a materially different root cause and redirected away from the bot's recommendation.", "confidence": 0.85}
+{"verdict": "unknown", "reasoning": "The bot gave a plausible answer but the only expert reply just redirected the discussion without confirming or correcting it.", "confidence": 0.4}

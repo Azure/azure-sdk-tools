@@ -109,7 +109,7 @@
   },
   {
     "conversation_id": "19:de3fce22c2994be18cac50502c55f717@thread.skype;messageid=1780941320839",
-    "verdict": "incorrect"
+    "verdict": "correct"
   },
   {
     "conversation_id": "19:de3fce22c2994be18cac50502c55f717@thread.skype;messageid=1781178239883",
@@ -337,7 +337,7 @@
   },
   {
     "conversation_id": "19:906c1efbbec54dc8949ac736633e6bdf@thread.skype;messageid=1781824394888",
-    "verdict": "incorrect"
+    "verdict": "correct"
   },
   {
     "conversation_id": "19:906c1efbbec54dc8949ac736633e6bdf@thread.skype;messageid=1782294461714",

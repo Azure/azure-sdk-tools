@@ -328,6 +328,6 @@ Set-Content -Path $OutputLocation -Value $outputYaml
 # in the PR that introduced it.
 & "$PSScriptRoot/Validate-DocsMsToc.ps1" -TocPath $OutputLocation
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "Validate-DocsMsToc reported violations; refusing to publish a corrupt ToC."
-    exit $LASTEXITCODE
+  Write-Error "Validate-DocsMsToc reported violations; refusing to publish a corrupt ToC."
+  exit $LASTEXITCODE
 }

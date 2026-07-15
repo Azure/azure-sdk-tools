@@ -109,16 +109,18 @@ if ([string]::IsNullOrWhiteSpace($rawYaml)) {
 # (the wrapper property). Reject any occurrence of that shape.
 
 $badChildPattern = '(?ms)^\s*children:\s*\r?\n(?:\s*-\s*(?:Length|Chars|value)\s*:|\s*-\s*!!?map\b)'
-if ($rawYaml -match $badChildPattern) {
+$badChildMatch  = [regex]::Match($rawYaml, $badChildPattern)
+if ($badChildMatch.Success) {
   Add-Violation 'TOC010' `
-    "`children` was serialized as a mapping (probable powershell-yaml regression). First match near offset $($Matches[0].Length)."
+    "`children` was serialized as a mapping (probable powershell-yaml regression). First match at offset $($badChildMatch.Index)."
 }
 
 # Also reject any `children:` entry whose first item is *not* a plain scalar.
 # We use a conservative scan: every `children:` block followed by a sequence
-# item that opens a mapping (`-` then a key/value on next indented line) is
-# flagged.
-$childBlockPattern = '(?ms)^( +)children:\s*\r?\n((?:\1 +- .*\r?\n)+)'
+# item is flagged if the item is a mapping.
+# YAML permits list items at the SAME indentation as their parent key, so the
+# leading indent of `-` may equal `children:` (not strictly greater).
+$childBlockPattern = '(?m)^( *)children:\s*\r?\n((?:\1 *-[^\r\n]*\r?\n)+)'
 foreach ($m in [regex]::Matches($rawYaml, $childBlockPattern)) {
   $block = $m.Groups[2].Value
   foreach ($line in $block -split "`r?`n") {

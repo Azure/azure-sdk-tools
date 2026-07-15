@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import semver from "semver";
 import { processItem } from "./process-items/processItem";
 import { CodeFile, TokenKind } from "./models/apiview-models";
 import { Crate, FORMAT_VERSION } from "../rustdoc-types/output/rustdoc-types";
@@ -9,8 +10,18 @@ import { setNavigationIds, ensureUniqueLineIds } from "./utils/lineIdUtils";
 let apiJson: Crate;
 export const processedItems = new Set<number>();
 export let PACKAGE_NAME: string;
+
 export function getAPIJson(): Crate {
   return apiJson;
+}
+
+function shouldPassthroughInput(parsedJson: unknown): boolean {
+  if (!parsedJson || typeof parsedJson !== "object") {
+    return false;
+  }
+
+  const parserVersion = (parsedJson as { ParserVersion?: unknown }).ParserVersion;
+  return typeof parserVersion === "string" && semver.gte(parserVersion, "2.0.0");
 }
 
 /**
@@ -96,11 +107,17 @@ function buildCodeFile(): CodeFile {
 /**
  * Reads and parses the API JSON from the input file
  * @param inputFilePath Path to the input file
- * @returns Whether there is a format mismatch
+ * @returns The original JSON when it should be passed through unchanged
  */
-function readApiJson(inputFilePath: string): void {
+function readApiJson(inputFilePath: string): string | undefined {
   const data = fs.readFileSync(inputFilePath, "utf8");
-  apiJson = JSON.parse(data);
+  const parsedJson = JSON.parse(data);
+
+  if (shouldPassthroughInput(parsedJson)) {
+    return data;
+  }
+
+  apiJson = parsedJson as Crate;
 
   if (apiJson.format_version === 45) {
     // `Path::name` in v37 changed to `Path::path` in v45 and we'll handle that with a separate utility.
@@ -110,6 +127,8 @@ function readApiJson(inputFilePath: string): void {
       `Warning: Different format version detected: ${apiJson.format_version}, parser supports ${FORMAT_VERSION}. This may cause errors or unexpected results.`,
     );
   }
+
+  return undefined;
 }
 
 /**
@@ -124,7 +143,12 @@ function main() {
   const inputFilePath = args[0];
   const outputFilePath = args[1];
 
-  readApiJson(inputFilePath);
+  const passthroughJson = readApiJson(inputFilePath);
+  if (passthroughJson !== undefined) {
+    fs.writeFileSync(outputFilePath, passthroughJson);
+    console.log(`The exported API surface has been successfully saved to '${outputFilePath}'`);
+    return;
+  }
 
   const codeFile = buildCodeFile();
   fs.writeFileSync(outputFilePath, JSON.stringify(codeFile, null, 2));

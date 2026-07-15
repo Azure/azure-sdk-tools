@@ -48,6 +48,8 @@ For details about the Rust aspects of this project:
 
 ## Usage
 
+This parser normally converts legacy rustdoc JSON input into APIView `CodeFile` JSON. If the input is already an APIView token file with `ParserVersion >= 2.0.0`, it writes that JSON through unchanged to the requested output file.
+
 ### Command Line Interface
 
 ```sh

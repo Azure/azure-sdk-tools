@@ -34,6 +34,7 @@ from models.conversation import (
     Role,
 )
 from services.conversation_service import ConversationService
+from utils.azure_credential import close_credential
 
 _CONVERSATION_ID = "conv-eval-test"
 _PARTITION = f"channel:{_CONVERSATION_ID}"
@@ -43,9 +44,10 @@ _BASE_TIME = datetime(2026, 7, 1, 12, 0, 0, tzinfo=timezone.utc)
 
 
 @pytest_asyncio.fixture(scope="module")
-async def service() -> ConversationService:
+async def service():
     await app_config.init()
-    return ConversationService()
+    yield ConversationService()
+    await close_credential()
 
 
 def _poster(content: str, order: int) -> ConversationMessageItem:

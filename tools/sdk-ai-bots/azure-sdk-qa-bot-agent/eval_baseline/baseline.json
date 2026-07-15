@@ -1,7 +1,7 @@
 [
   {
     "conversation_id": "19:0351f5f9404446e4b4fd4eaf2c27448d@thread.skype;messageid=1780426590961",
-    "verdict": "incorrect"
+    "verdict": "unknown"
   },
   {
     "conversation_id": "19:0351f5f9404446e4b4fd4eaf2c27448d@thread.skype;messageid=1780470407301",
@@ -9,11 +9,11 @@
   },
   {
     "conversation_id": "19:0351f5f9404446e4b4fd4eaf2c27448d@thread.skype;messageid=1780471500944",
-    "verdict": "correct"
+    "verdict": "unknown"
   },
   {
     "conversation_id": "19:0351f5f9404446e4b4fd4eaf2c27448d@thread.skype;messageid=1780485061868",
-    "verdict": "correct"
+    "verdict": "unknown"
   },
   {
     "conversation_id": "19:0351f5f9404446e4b4fd4eaf2c27448d@thread.skype;messageid=1780510625114",
@@ -45,7 +45,7 @@
   },
   {
     "conversation_id": "19:0351f5f9404446e4b4fd4eaf2c27448d@thread.skype;messageid=1781617022506",
-    "verdict": "correct"
+    "verdict": "unknown"
   },
   {
     "conversation_id": "19:0351f5f9404446e4b4fd4eaf2c27448d@thread.skype;messageid=1781733311905",
@@ -57,7 +57,7 @@
   },
   {
     "conversation_id": "19:0351f5f9404446e4b4fd4eaf2c27448d@thread.skype;messageid=1782137671222",
-    "verdict": "correct"
+    "verdict": "unknown"
   },
   {
     "conversation_id": "19:0351f5f9404446e4b4fd4eaf2c27448d@thread.skype;messageid=1782255925727",
@@ -69,7 +69,7 @@
   },
   {
     "conversation_id": "19:0351f5f9404446e4b4fd4eaf2c27448d@thread.skype;messageid=1782394860250",
-    "verdict": "correct"
+    "verdict": "unknown"
   },
   {
     "conversation_id": "19:0351f5f9404446e4b4fd4eaf2c27448d@thread.skype;messageid=1782844845844",
@@ -113,7 +113,7 @@
   },
   {
     "conversation_id": "19:de3fce22c2994be18cac50502c55f717@thread.skype;messageid=1781178239883",
-    "verdict": "correct"
+    "verdict": "unknown"
   },
   {
     "conversation_id": "19:de3fce22c2994be18cac50502c55f717@thread.skype;messageid=1782968845946",
@@ -121,7 +121,7 @@
   },
   {
     "conversation_id": "19:f6d52ac6465c40ea80dc86b8be3825aa@thread.skype;messageid=1780285387975",
-    "verdict": "correct"
+    "verdict": "unknown"
   },
   {
     "conversation_id": "19:f6d52ac6465c40ea80dc86b8be3825aa@thread.skype;messageid=1780472704371",
@@ -129,7 +129,7 @@
   },
   {
     "conversation_id": "19:f6d52ac6465c40ea80dc86b8be3825aa@thread.skype;messageid=1780902336607",
-    "verdict": "correct"
+    "verdict": "unknown"
   },
   {
     "conversation_id": "19:f6d52ac6465c40ea80dc86b8be3825aa@thread.skype;messageid=1781130824075",
@@ -137,7 +137,7 @@
   },
   {
     "conversation_id": "19:f6d52ac6465c40ea80dc86b8be3825aa@thread.skype;messageid=1781800309663",
-    "verdict": "correct"
+    "verdict": "unknown"
   },
   {
     "conversation_id": "19:f6d52ac6465c40ea80dc86b8be3825aa@thread.skype;messageid=1782125788955",
@@ -149,7 +149,7 @@
   },
   {
     "conversation_id": "19:f6d52ac6465c40ea80dc86b8be3825aa@thread.skype;messageid=1782484777961",
-    "verdict": "correct"
+    "verdict": "unknown"
   },
   {
     "conversation_id": "19:f6d52ac6465c40ea80dc86b8be3825aa@thread.skype;messageid=1782770508271",
@@ -165,7 +165,7 @@
   },
   {
     "conversation_id": "19:5e673e41085f4a7eaaf20823b85b2b53@thread.skype;messageid=1781031215828",
-    "verdict": "correct"
+    "verdict": "incorrect"
   },
   {
     "conversation_id": "19:5e673e41085f4a7eaaf20823b85b2b53@thread.skype;messageid=1781115195401",
@@ -201,15 +201,15 @@
   },
   {
     "conversation_id": "19:b97d98e6d22c41e0970a1150b484d935@thread.skype;messageid=1781092656432",
-    "verdict": "correct"
+    "verdict": "unknown"
   },
   {
     "conversation_id": "19:b97d98e6d22c41e0970a1150b484d935@thread.skype;messageid=1781247257061",
-    "verdict": "correct"
+    "verdict": "unknown"
   },
   {
     "conversation_id": "19:b97d98e6d22c41e0970a1150b484d935@thread.skype;messageid=1781247707139",
-    "verdict": "correct"
+    "verdict": "unknown"
   },
   {
     "conversation_id": "19:b97d98e6d22c41e0970a1150b484d935@thread.skype;messageid=1781772424536",
@@ -221,11 +221,11 @@
   },
   {
     "conversation_id": "19:b97d98e6d22c41e0970a1150b484d935@thread.skype;messageid=1781812987828",
-    "verdict": "incorrect"
+    "verdict": "unknown"
   },
   {
     "conversation_id": "19:b97d98e6d22c41e0970a1150b484d935@thread.skype;messageid=1781955320268",
-    "verdict": "correct"
+    "verdict": "unknown"
   },
   {
     "conversation_id": "19:b97d98e6d22c41e0970a1150b484d935@thread.skype;messageid=1782035463219",
@@ -233,7 +233,7 @@
   },
   {
     "conversation_id": "19:b97d98e6d22c41e0970a1150b484d935@thread.skype;messageid=1782196983804",
-    "verdict": "correct"
+    "verdict": "unknown"
   },
   {
     "conversation_id": "19:b97d98e6d22c41e0970a1150b484d935@thread.skype;messageid=1782261286121",
@@ -241,7 +241,7 @@
   },
   {
     "conversation_id": "19:b97d98e6d22c41e0970a1150b484d935@thread.skype;messageid=1782286960640",
-    "verdict": "correct"
+    "verdict": "unknown"
   },
   {
     "conversation_id": "19:b97d98e6d22c41e0970a1150b484d935@thread.skype;messageid=1782770078411",
@@ -261,7 +261,7 @@
   },
   {
     "conversation_id": "19:084875bb626242ed95f3ac8dddfaa12a@thread.skype;messageid=1780140087687",
-    "verdict": "correct"
+    "verdict": "incorrect"
   },
   {
     "conversation_id": "19:084875bb626242ed95f3ac8dddfaa12a@thread.skype;messageid=1780424827804",
@@ -269,15 +269,15 @@
   },
   {
     "conversation_id": "19:084875bb626242ed95f3ac8dddfaa12a@thread.skype;messageid=1780503315923",
-    "verdict": "correct"
+    "verdict": "unknown"
   },
   {
     "conversation_id": "19:084875bb626242ed95f3ac8dddfaa12a@thread.skype;messageid=1781006155555",
-    "verdict": "correct"
+    "verdict": "unknown"
   },
   {
     "conversation_id": "19:084875bb626242ed95f3ac8dddfaa12a@thread.skype;messageid=1781032332198",
-    "verdict": "correct"
+    "verdict": "unknown"
   },
   {
     "conversation_id": "19:084875bb626242ed95f3ac8dddfaa12a@thread.skype;messageid=1781080351459",
@@ -285,7 +285,7 @@
   },
   {
     "conversation_id": "19:084875bb626242ed95f3ac8dddfaa12a@thread.skype;messageid=1781090135798",
-    "verdict": "correct"
+    "verdict": "unknown"
   },
   {
     "conversation_id": "19:084875bb626242ed95f3ac8dddfaa12a@thread.skype;messageid=1781737402214",
@@ -297,7 +297,7 @@
   },
   {
     "conversation_id": "19:084875bb626242ed95f3ac8dddfaa12a@thread.skype;messageid=1782369317138",
-    "verdict": "correct"
+    "verdict": "incorrect"
   },
   {
     "conversation_id": "19:084875bb626242ed95f3ac8dddfaa12a@thread.skype;messageid=1782421562835",
@@ -305,7 +305,7 @@
   },
   {
     "conversation_id": "19:084875bb626242ed95f3ac8dddfaa12a@thread.skype;messageid=1782758226887",
-    "verdict": "correct"
+    "verdict": "unknown"
   },
   {
     "conversation_id": "19:084875bb626242ed95f3ac8dddfaa12a@thread.skype;messageid=1782930379753",
@@ -313,11 +313,11 @@
   },
   {
     "conversation_id": "19:906c1efbbec54dc8949ac736633e6bdf@thread.skype;messageid=1780286313008",
-    "verdict": "correct"
+    "verdict": "unknown"
   },
   {
     "conversation_id": "19:906c1efbbec54dc8949ac736633e6bdf@thread.skype;messageid=1780478293974",
-    "verdict": "correct"
+    "verdict": "incorrect"
   },
   {
     "conversation_id": "19:906c1efbbec54dc8949ac736633e6bdf@thread.skype;messageid=1781021825632",
@@ -341,7 +341,7 @@
   },
   {
     "conversation_id": "19:906c1efbbec54dc8949ac736633e6bdf@thread.skype;messageid=1782294461714",
-    "verdict": "correct"
+    "verdict": "unknown"
   },
   {
     "conversation_id": "19:906c1efbbec54dc8949ac736633e6bdf@thread.skype;messageid=1782300832469",
@@ -353,6 +353,6 @@
   },
   {
     "conversation_id": "19:906c1efbbec54dc8949ac736633e6bdf@thread.skype;messageid=1782983407628",
-    "verdict": "correct"
+    "verdict": "unknown"
   }
 ]

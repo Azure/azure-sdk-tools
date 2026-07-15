@@ -65,6 +65,7 @@
 # Azure SDK Tools MCP
 #####################
 /eng/common/instructions/azsdk-tools/   @maririos @praveenkuttappan @MrJustinB 
+/.github/extensions/rpi/   @JennyPng
 # PRLabel: %azsdk-cli
 /tools/ai-evals/azsdk-mcp/              @jeo02 @praveenkuttappan @maririos
 # PRLabel: %azsdk-cli

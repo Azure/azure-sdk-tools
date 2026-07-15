@@ -390,10 +390,20 @@ query($owner: String!, $repo: String!, $pr: Int!) {
     }
 
     /// <summary>
-    /// If the project looks like a GUID, resolve it to a human-readable name via the API.
+    /// Validates and resolves a project name to a recognized DevOps project. Known names (public/internal)
+    /// are trusted as-is; a project GUID is resolved to its real name via the build API, since a build id
+    /// uniquely identifies its project. Any other value (the org name "azure-sdk", a typo, etc.) is
+    /// unrecognized and rejected with an ArgumentException so callers fail early.
     /// </summary>
     private async Task<string> ResolveProjectNameAsync(int buildId, string project = null, CancellationToken ct = default)
     {
+        var normalized = NormalizeProjectName(project);
+
+        if (normalized == Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT || normalized == Constants.AZURE_SDK_DEVOPS_INTERNAL_PROJECT)
+        {
+            return normalized;
+        }
+
         if (Guid.TryParse(project, out _))
         {
             try
@@ -404,9 +414,14 @@ query($owner: String!, $repo: String!, $pr: Int!) {
             catch (Exception ex)
             {
                 logger.LogDebug(ex, "Could not resolve project GUID {project} for build {buildId}", project, buildId);
+                throw new ArgumentException(
+                    $"Project GUID {project} is valid but could not be resolved for build {buildId} " +
+                    "(network error, authentication issue, or the build does not exist under that project).", ex);
             }
         }
-        return NormalizeProjectName(project);
+
+        logger.LogDebug("Unrecognized project name {project} for build {buildId}. Expected a known project name (public, internal) or a valid project GUID.", project, buildId);
+        throw new ArgumentException($"Unrecognized project name: {project} for build {buildId}. Expected a known project name (public, internal) or a valid project GUID.");
     }
 
     /// <summary>

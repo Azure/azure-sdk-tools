@@ -27,7 +27,7 @@ stimuli:
   - name: fix-version-parser-bug
     environment:
       skills:
-        - ../../../../../../.github/skills/azsdk-common-pipeline-fixer
+        - ../../../../.github/skills/azsdk-common-pipeline-fixer
       files:
         - src: ../../../fixtures/analyze-pipeline/QueueClientOptionsTests/code/QueueClientOptions.cs
           dest: sdk/storage/Azure.Storage.Queues/src/QueueClientOptions.cs

@@ -154,7 +154,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
                 var npxOptions = new NpxOptions(
                     package: "@typespec/compiler",
-                    args: ["tsp", "compile", ".", "--emit", "@azure-tools/typespec-metadata"],
+                    args: ["tsp", "compile", ".", "--emit", "@azure-tools/typespec-metadata", "--output-dir", "./tsp-output"],
                     logOutputStream: true,
                     workingDirectory: project.ProjectRootPath,
                     timeout: TimeSpan.FromMinutes(5)

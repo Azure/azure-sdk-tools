@@ -7,6 +7,7 @@
         Net,
         Python,
         Cpp,
-        Rust
+        Rust,
+        Go
     }
 }

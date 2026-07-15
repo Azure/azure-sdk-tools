@@ -92,3 +92,18 @@ stimuli:
           disallowed:
             - name: "azsdk_verify_setup"
 
+  # ==== pipeline-failure routing (ported from the pipeline skill eval.yaml files) ====
+  - name: analyze-routing-pipeline-failed
+    prompt: "My Azure SDK generation pipeline failed for the Python language: https://dev.azure.com/azure-sdk/internal/_build/results?buildId=12345. Can you help me figure out what went wrong?"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_analyze_pipeline"
+  - name: analyze-routing-negative-typespec
+    prompt: "How do I define a new REST operation in my TypeSpec project?"
+    graders:
+      - type: tool-calls
+        config:
+          disallowed:
+            - name: "azsdk_analyze_pipeline"

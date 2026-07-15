@@ -15,7 +15,6 @@ from azure.cosmos.aio import ContainerProxy, CosmosClient
 
 from config.app_config import get as cfg
 from utils.azure_credential import get_credential
-from utils.azure_keyvault import get_secret
 
 logger = logging.getLogger(__name__)
 
@@ -55,19 +54,6 @@ def _get_endpoint() -> str:
     return endpoint
 
 
-async def _get_cosmos_credential():
-    """Return the Cosmos DB account key from Key Vault.
-
-    Falls back to the shared token credential when the key cannot be
-    fetched (e.g. local dev).
-    """
-    key = await get_secret("AZURE-COSMOSDB-KEY")
-    if key:
-        logger.info("Using Cosmos DB key-based auth (from Key Vault)")
-        return key
-    return get_credential()
-
-
 async def _get_client() -> CosmosClient:
     global _client
     if _client is not None:
@@ -77,7 +63,7 @@ async def _get_client() -> CosmosClient:
         if _client is None:
             client = CosmosClient(
                 url=_get_endpoint(),
-                credential=await _get_cosmos_credential(),
+                credential=get_credential(),
                 retry_total=int(
                     cfg("AZURE_COSMOSDB_RETRY_TOTAL", str(_DEFAULT_RETRY_TOTAL))
                 ),

@@ -279,16 +279,25 @@ az logic workflow update \
 
 ## 11. App Configuration seed values
 
-Populate the runtime config keys consumed by the backend. Stubbed today
-in [hooks/postprovision.ts](../hooks/postprovision.ts) `updateAppConfiguration()`.
+**Automated.** The runtime config keys consumed by the agent / backend /
+function-app are seeded by the postprovision hook
+([hooks/postprovision.ts](../hooks/postprovision.ts) `updateAppConfiguration()`
+→ [hooks/lib/seed-app-config.ts](../hooks/lib/seed-app-config.ts)). It writes
+two classes of values:
+
+- **Fixed** — model names, tuning params, feature flags, AI Search data-plane
+  names, GitHub App references, and blob container names. Sourced from the
+  design notes; each can be overridden per environment by exporting a
+  same-named environment variable before `azd provision`.
+- **Auto-injected** — resource names / endpoints (ACR, AI Foundry, AI Search,
+  AOAI, Cosmos, Key Vault, Storage) derived from the provision outputs.
+
+No manual `az appconfig kv set` calls are required. To override a fixed value
+for an environment, set it in the azd env (or shell) before provisioning, e.g.:
 
 ```bash
-APPCFG="azsdkqabot-config-<env>"
-
-az appconfig kv set --name "$APPCFG" --key BotSettings:TenantId        --value "<tenant-guid>" --yes
-az appconfig kv set --name "$APPCFG" --key BotSettings:ClientId        --value "<MI-client-id>" --yes
-az appconfig kv set --name "$APPCFG" --key AiServices:Endpoint         --value "https://<ai>.cognitiveservices.azure.com" --yes
-az appconfig kv set --name "$APPCFG" --key Search:Endpoint             --value "https://<search>.search.windows.net" --yes
+azd env set AI_SEARCH_INDEX my-custom-index
+azd provision --environment <env>
 ```
 
 ---

@@ -72,7 +72,11 @@ resource vault 'Microsoft.KeyVault/vaults@2026-03-01-preview' = {
       family: 'A'
       name: 'standard'
     }
-    tenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
+    // Must match the subscription's tenant — the managed identities and
+    // developer principals that access this vault live in the subscription's
+    // tenant, and a mismatched tenantId makes every data-plane token fail with
+    // 'AggregatedAuthenticationFailure' (S2S17001), crashing the backend.
+    tenantId: subscription().tenantId
     networkAcls: {
       bypass: 'None'
       defaultAction: 'Allow'
@@ -599,7 +603,9 @@ resource developerStorageBlobContributor 'Microsoft.Authorization/roleAssignment
   }
 }
 
-// Read configuration values from App Configuration.
+// Read configuration values from App Configuration. (Write access needed for
+// the postprovision seeding is granted to the actual deployer principal by the
+// seed-app-config hook, so developers keep read-only here.)
 resource developerAppConfigDataReader 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(developerGroupObjectId)) {
   name: guid(configurationStore.id, developerGroupObjectId, roleIds.appConfigurationDataReader)
   scope: configurationStore

@@ -15,6 +15,8 @@ import { execSync } from "child_process";
 import { INFRA_LAYERS } from "./lib/layers.js";
 import { runLayerPipeline } from "./lib/deploy-layer.js";
 import { uploadBotConfigs } from "./lib/upload-bot-configs.js";
+import { seedAppConfiguration } from "./lib/seed-app-config.js";
+import { seedKeyVaultSecrets } from "./lib/seed-key-vault.js";
 
 const ENV_NAME = process.env.AZURE_ENV_NAME ?? "";
 const SUBSCRIPTION_ID = process.env.AZURE_SUBSCRIPTION_ID ?? "";
@@ -105,14 +107,25 @@ function uploadPerEnvBotConfigs(): void {
   });
 }
 
-function seedKeyVaultSecrets(): void {
+function seedKeyVaultSecretsStep(): void {
   log("Seeding Key Vault secrets...");
-  // TODO: populate per-env Key Vault. See docs/runbook-deploy.md §"Seed secrets".
+  seedKeyVaultSecrets({
+    keyVaultName: process.env.KEY_VAULT_NAME ?? "",
+    resourceGroup: RESOURCE_GROUP,
+    searchServiceName: process.env.SEARCH_SERVICE_NAME ?? "",
+    aiResourceName: process.env.AI_RESOURCE_NAME ?? "",
+    env: process.env,
+    log: (m) => log(m),
+  });
 }
 
 function updateAppConfiguration(): void {
   log("Updating App Configuration store...");
-  // TODO: write Deployment:* and BotSettings:* keys consumed by the backend.
+  seedAppConfiguration({
+    appConfigName: process.env.APP_CONFIG_NAME ?? "",
+    env: process.env,
+    log: (m) => log(m),
+  });
 }
 
 function printSummary(): void {
@@ -130,7 +143,7 @@ function printSummary(): void {
   await persistBicepOutputs();
   await runInfraLayers();
   uploadPerEnvBotConfigs();
-  seedKeyVaultSecrets();
+  seedKeyVaultSecretsStep();
   updateAppConfiguration();
   printSummary();
   log("Postprovision complete.");

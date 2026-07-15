@@ -327,8 +327,7 @@ router.get("/api/release-plans", async (req, res) => {
         if (cachedPlan) {
           return res.json({
             plans: [cachedPlan],
-            fetchedAt:
-              cache.releasePlans.fetchedAt || new Date().toISOString(),
+            fetchedAt: cache.releasePlans.fetchedAt || new Date().toISOString(),
           });
         }
       }

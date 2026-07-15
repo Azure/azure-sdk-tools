@@ -734,7 +734,27 @@ main {
   color: #1e8449;
   font-size: 0.72rem;
 }
+.badge-sdk-ready-to-release {
+  background: #d4edda;
+  color: #155724;
+  font-size: 0.72rem;
+}
 .badge-missing-product {
+  background: #fff3cd;
+  color: #856404;
+  font-size: 0.72rem;
+}
+.badge-missing-emitter-config {
+  background: #fde7e9;
+  color: var(--red);
+  font-size: 0.72rem;
+}
+.badge-generated-by-automation {
+  background: #e8f0fe;
+  color: #6b46c1;
+  font-size: 0.72rem;
+}
+.badge-release-approval-required {
   background: #fff3cd;
   color: #856404;
   font-size: 0.72rem;
@@ -752,6 +772,12 @@ main {
   margin: 6px 0;
 }
 .global-tag-filter {
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+.global-language-filter {
   padding: 4px 8px;
   border-radius: 4px;
   border: 1px solid var(--border);
@@ -892,6 +918,12 @@ main {
   background: #fde7e9;
 }
 .sdk-table tr.row-exclusion-requested td {
+  color: var(--red);
+}
+.sdk-table tr.row-missing-emitter-config {
+  background: #fde7e9;
+}
+.sdk-table tr.row-missing-emitter-config td {
   color: var(--red);
 }
 

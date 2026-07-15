@@ -227,7 +227,6 @@ stimuli:
       specification/contosowidgetmanager/Contoso.WidgetManager and link the SDK
       pull requests to the release plan. Here is the context you need:
         - release plan work item ID: "29262"
-      My environment is already set up, so there's no need to re-verify it.
     constraints:
       max_turns: 8
       max_tokens: 12000
@@ -253,7 +252,6 @@ stimuli:
     prompt: |
       Generate SDK for all languages from my TypeSpec project
       specification/contosowidgetmanager/Contoso.WidgetManager.
-      My environment is already set up, so there's no need to re-verify it.
     constraints:
       max_turns: 6
       max_tokens: 10000
@@ -265,8 +263,158 @@ stimuli:
             - azsdk_get_pull_request
             - azsdk_verify_setup
 
+  # --- Scenario 7: Pipeline SDK generation skill routing (issue #16226)
+  # Regression for https://github.com/Azure/azure-sdk-tools/issues/16226. The prompt
+  # "Run SDK generation for all languages for release <id>" previously routed to the
+  # wrong tools (azsdk_release_sdk, azsdk_get_pipeline_llm_artifacts,
+  # azsdk_get_service_details_by_typespec_path) and never reached azsdk_run_generate_sdk.
+  # The dedicated azsdk-common-generate-sdk-pipeline skill routes such prompts to the
+  # pipeline path: azsdk_get_release_plan -> azsdk_run_generate_sdk (once per language).
+  # The competing generate-sdk-locally and sdk-release skills are loaded too so the
+  # routing choice is real; neither should be invoked and azsdk_release_sdk (which
+  # publishes, not generates) must never be called.
+  - name: run-sdk-generation-all-languages-for-release-pipeline-skill
+    environment: &bothGenerateSkills
+      skills:
+        - ../../../../../../.github/skills/azsdk-common-generate-sdk-pipeline
+        - ../../../../../../.github/skills/azsdk-common-generate-sdk-locally
+        - ../../../../../../.github/skills/azsdk-common-sdk-release
+      git:
+        type: worktree
+        source: ../../../../../../artifacts/specs-cache/azure-rest-api-specs
+        ref: main
+    prompt: |
+      Run SDK generation for all languages for release 29262. My TypeSpec project is
+      specification/contosowidgetmanager/Contoso.WidgetManager.
+    constraints:
+      max_turns: 8
+      max_tokens: 12000
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-generate-sdk-pipeline
+          disallowed:
+            - azsdk-common-generate-sdk-locally
+            - azsdk-common-sdk-release
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_get_release_plan
+            - azsdk_run_generate_sdk
+          disallowed:
+            - azsdk_release_sdk
+            - azsdk_get_pipeline_llm_artifacts
+            - azsdk_get_service_details_by_typespec_path
+            - azsdk_verify_setup
+
+  # --- Scenario 8: LOCAL routing must NOT cross to the pipeline (#16226)
+  # Counterpart to scenario 7: a clearly-local single-language request must route
+  # to the local skill and never call the pipeline tool. Both generate skills are
+  # loaded (via &bothGenerateSkills) so the local-vs-pipeline choice is contested.
+  - name: local-single-language-routes-to-local
+    environment: *bothGenerateSkills
+    prompt: |
+      I have the azure-rest-api-specs repo cloned locally. Generate the Python SDK
+      for the Contoso Widget Manager from
+      specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml, then
+      build it and run the checks locally.
+    constraints:
+      max_turns: 8
+      max_tokens: 12000
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-generate-sdk-locally
+          disallowed:
+            - azsdk-common-generate-sdk-pipeline
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_package_generate_code
+          disallowed:
+            - azsdk_run_generate_sdk
+            - azsdk_release_sdk
+
+  # --- Scenario 9: LOCAL routing on a build-failure / fix request (#16226)
+  - name: local-build-fix-routes-to-local
+    environment: *bothGenerateSkills
+    prompt: |
+      My local Java SDK build for the Contoso Widget Manager is failing after I
+      regenerated it. Regenerate and build it again from
+      specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml and
+      fix the build errors.
+    constraints:
+      max_turns: 8
+      max_tokens: 12000
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-generate-sdk-locally
+          disallowed:
+            - azsdk-common-generate-sdk-pipeline
+      - type: tool-calls
+        config:
+          disallowed:
+            - azsdk_run_generate_sdk
+            - azsdk_release_sdk
+
+  # --- Scenario 10: PIPELINE routing via "no clone / open the PRs" phrasing (#16226)
+  - name: pipeline-release-plan-open-prs-routes-to-pipeline
+    environment: *bothGenerateSkills
+    prompt: |
+      I don't have any SDK repos cloned. Generate the SDK for the Contoso Widget
+      Manager release plan (work item 29262) and open the SDK pull requests for me.
+    constraints:
+      max_turns: 8
+      max_tokens: 12000
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-generate-sdk-pipeline
+          disallowed:
+            - azsdk-common-generate-sdk-locally
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_run_generate_sdk
+          disallowed:
+            - azsdk_release_sdk
+            - azsdk_package_generate_code
+            - azsdk_verify_setup
+
+  # --- Scenario 11: PRIVATE PREVIEW release plans cannot generate via pipeline (#16226)
+  # The azsdk-common-generate-sdk-pipeline skill documents that private preview release
+  # plans cannot generate SDKs through the pipeline — only the API spec PR needs to merge
+  # (validation, if needed, is done via local generation). So an "all languages for my
+  # private preview release plan" request must route to the pipeline skill (where the rule
+  # lives) but must NOT actually invoke the pipeline generation tool azsdk_run_generate_sdk.
+  # Both generate skills are loaded so the routing choice is real.
+  - name: private-preview-release-plan-no-pipeline-generation
+    environment: *bothGenerateSkills
+    prompt: |
+      Generate the SDK for all languages for my private preview release plan
+      (work item 29262) for the Contoso Widget Manager.
+    constraints:
+      max_turns: 8
+      max_tokens: 12000
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-generate-sdk-pipeline
+      - type: tool-calls
+        config:
+          disallowed:
+            - azsdk_run_generate_sdk
+            - azsdk_release_sdk
+            - azsdk_verify_setup
+
 scoring:
   weights:
-    skill-invocation: 1
-    tool-calls: 1
+    skill-invocation: 0.5
+    tool-calls: 0.5
   threshold: 1.0

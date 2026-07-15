@@ -224,6 +224,12 @@
           "path": "/Engineering-System/Pipelines/Azure-DevOps-Pipeline-Guidance.md",
           "folder": "azure-sdk-internal-wiki",
           "relativeByRepoPath": true
+        },
+        {
+          "description": "My License-CLA check hung",
+          "path": "/Engineering-System/Pipelines/My-License%2DCLA-check-hung.md",
+          "folder": "azure-sdk-internal-wiki",
+          "relativeByRepoPath": true
         }
       ]
     },

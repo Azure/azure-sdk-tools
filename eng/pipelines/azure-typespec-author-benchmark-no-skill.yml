@@ -83,6 +83,14 @@ extends:
                   TimeoutMinutes: 25
                   LoadSkills: false
                   Runs: ${{ parameters.EvalRuns }}
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
+                parameters:
+                  Suite: dataplane-no-skill
+                  SuiteName: dataplane-no-skill
+                  DisplayName: Pure agent - dataplane
+                  TimeoutMinutes: 50
+                  LoadSkills: false
+                  Runs: ${{ parameters.EvalRuns }}
 
             templateContext:
               outputs:

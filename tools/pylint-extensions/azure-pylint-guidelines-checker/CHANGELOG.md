@@ -1,5 +1,10 @@
 # Release History
 
+## 0.5.9 (Unreleased)
+- Fix `no-cross-package-private-import` (C4776) to correctly handle relative imports
+- Fix `no-cross-package-private-import` (C4776) to skip modules whose first segment is already private
+- Fix `check-docstrings` (C4739) `is_overload_impl` never set for ClassDef path, making the overload-implementation escape hatch unreachable for class constructors with overloaded `__init__`
+
 ## 0.5.8 (2026-07-13)
 - Add `do-not-store-secrets-in-test-variables` check
 - Add `remove-deprecated-iscoroutinefunction` check

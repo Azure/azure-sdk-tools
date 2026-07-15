@@ -1,0 +1,123 @@
+name: azsdk-mcp-tool-scenarios
+description: |
+  Output-quality eval for the azsdk-common-pipeline-fixer skill. Given the
+  analyzed pipeline failure (the canonical fixture — the Storage
+  QueueClientOptions TryGetServiceVersion parser missing the two newest
+  service-version cases, "2026-10-06" and "2026-12-06"), the agent must apply
+  the correct code fix to the real overlaid source and verify it through the
+  Azure SDK package MCP tools. Because TryGetServiceVersion_ParsesAllServiceVersions
+  iterates every enum value, a complete fix has to add BOTH cases — a literal
+  one-case fix leaves the test red, so both `file-matches` graders (2026-10-06
+  and 2026-12-06) must pass.
+version: "1.0"
+type: capability
+
+environment: azsdk-mcp-mock
+
+tags:
+  area: pipeline
+
+config:
+  runs: 1
+  timeout: 5m
+  model: gpt-5.4
+  executor: copilot-sdk
+
+stimuli:
+  - name: fix-version-parser-bug
+    environment:
+      skills:
+        - ../../../../../../.github/skills/azsdk-common-pipeline-fixer
+      files:
+        - src: ../../../fixtures/analyze-pipeline/QueueClientOptionsTests/code/QueueClientOptions.cs
+          dest: sdk/storage/Azure.Storage.Queues/src/QueueClientOptions.cs
+        - src: ../../../fixtures/analyze-pipeline/QueueClientOptionsTests/code/QueueClientOptionsTests.cs
+          dest: sdk/storage/Azure.Storage.Queues/tests/QueueClientOptionsTests.cs
+      commands:
+        - git init -q && git add -A && git -c user.email=vally@local -c user.name=vally commit -qm "seed real pre-fix source"
+    prompt: |
+      My PR's pipeline failed and I need it fixed. Can you help?
+
+      "azsdk-analyze-pipeline" Analyzed Output:
+
+      ## Pipeline Analysis: 6455504
+
+      ### Root Cause
+      The TryGetServiceVersion method in QueueClientOptions and ShareClientOptions does not recognize the two newest service version strings, "2026-10-06" and "2026-12-06", because both are missing from the switch statement. The enum values V2026_10_06 and V2026_12_06 exist, but the parser cannot map "2026-10-06" or "2026-12-06" to them, so TryGetServiceVersion_ParsesAllServiceVersions — which iterates every enum value — fails. Both cases must be added; adding only one leaves the test red.
+
+      ### Failures
+
+      #### 1. TryGetServiceVersion Missing 2026-10-06 and 2026-12-06 Cases (QueueClientOptions)
+      - **Category:** code bug
+      - **File:** `sdk/storage/Azure.Storage.Queues/src/QueueClientOptions.cs`
+      - **Error:** TryGetServiceVersion failed to parse "2026-10-06" for V2026_10_06 (expected: true but was: false); "2026-12-06" (V2026_12_06) is missing the same way
+      - **Fix:** Add both `case "2026-10-06": serviceVersion = ServiceVersion.V2026_10_06; return true;` and `case "2026-12-06": serviceVersion = ServiceVersion.V2026_12_06; return true;` to the TryGetServiceVersion switch statement
+      - **Verify:** `dotnet test --filter "TryGetServiceVersion_ParsesAllServiceVersions"`
+
+      #### 2. TryGetServiceVersion Missing 2026-10-06 and 2026-12-06 Cases (ShareClientOptions)
+      - **Category:** code bug
+      - **File:** `sdk/storage/Azure.Storage.Files.Shares/tests/ShareClientOptionsTests.cs:24`
+      - **Error:** TryGetServiceVersion failed to parse "2026-10-06" for V2026_10_06; "2026-12-06" (V2026_12_06) fails the same way
+      - **Fix:** Same as above - add the missing 2026-10-06 and 2026-12-06 case statements to the switch
+      - **Verify:** `dotnet test --filter "TryGetServiceVersion_ParsesAllServiceVersions"`
+
+      ### Summary
+      - 1 fixable code failure with two missing service version cases (add both to the TryGetServiceVersion switch)
+      - 0 infrastructure issues
+      - **Recommended Action:** Add case "2026-10-06": and "2026-12-06": entries to TryGetServiceVersion method in QueueClientOptions.cs
+
+      Package path: sdk/storage/Azure.Storage.Queues
+    constraints:
+      max_turns: 15
+      max_tokens: 16000
+    graders:
+      - type: completed
+      - type: skill-invocation
+        config:
+          required: ["azsdk-common-pipeline-fixer"]
+          disallowed: ["azsdk-common-pipeline-analysis"]
+      - type: tool-calls
+        config:
+          required:
+            - name: azsdk_package_build_code
+            - name: azsdk_package_run_check
+            - name: azsdk_package_run_tests
+          disallowed:
+            - name: '^bash$'
+              command: '(?i)(^|[\s;&|])dotnet\s+(test|build|msbuild|run)\b'
+      # Both switch cases must be present in the real edited file. The test
+      # iterates every enum value, so a one-case fix (only 2026-10-06) leaves
+      # 2026-12-06 unparsed and the pipeline red — each version is its own grader.
+      - type: file-matches
+        config:
+          path: "sdk/storage/Azure.Storage.Queues/src/QueueClientOptions.cs"
+          pattern: '(?i)case\s+"2026-10-06"'
+      - type: file-matches
+        config:
+          path: "sdk/storage/Azure.Storage.Queues/src/QueueClientOptions.cs"
+          pattern: '(?i)case\s+"2026-12-06"'
+      - type: output-not-matches
+        config:
+          pattern: '(?i)(retry the pipeline|not fixable by (a )?code|unfixable|infrastructure issue)'
+      - type: prompt
+        config:
+          model: gpt-5.4
+          scoring: binary
+          threshold: 1.0
+          prompt: |
+            Does the response add BOTH the `"2026-10-06"` and `"2026-12-06"`
+            cases to the TryGetServiceVersion switch in QueueClientOptions.cs,
+            mapping them to V2026_10_06 and V2026_12_06 respectively? Both cases
+            are required; a fix that adds only one of the two is incomplete
+            (the test iterates every enum value and stays red) and must NOT pass.
+            Base the grade only on whether the response meets the criteria above; the agent is not required to output the literal words "pass" or "fail".
+
+scoring:
+  weights:
+    completed: 0.1
+    skill-invocation: 0.2
+    file-matches: 0.2
+    tool-calls: 0.2
+    output-not-matches: 0.2
+    prompt: 0.1
+  threshold: 1.0

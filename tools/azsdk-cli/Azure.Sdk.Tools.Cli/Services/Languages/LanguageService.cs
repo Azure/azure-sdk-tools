@@ -481,7 +481,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             return Task.FromResult(
                 new PackageOperationResponse
                 {
-                        ResponseError = "SDK Breaking Change Detection is not implemented for this language.",
+                        ResponseError = $"SDK Breaking Change Detection is not implemented for language {this.Language}.",
                         NextSteps = ["Manually detect the sdk breaking changes."],
                 });
         }

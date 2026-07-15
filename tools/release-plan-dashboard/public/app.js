@@ -1922,7 +1922,7 @@
             const isVersionPending =
               !isReleased && isPrMerged && !!displayVersion;
 
-            // Package labels: first preview/GA + namespace approval + API review (version now in its own column)
+            // Package labels: first preview/GA + namespace approval (version now in its own column)
             let pkgLabels = "";
             if (l.isFirstPreview) {
               pkgLabels +=

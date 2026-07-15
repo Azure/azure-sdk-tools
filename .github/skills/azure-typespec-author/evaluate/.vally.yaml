@@ -5,9 +5,9 @@
 # Local commands like `vally eval --suite versioning` continue to
 # behave as teammates expect.
 #
-# The pipeline parallel layout lives separately under suites/ and is invoked
-# explicitly from the pipeline with --eval-spec. That keeps local usage stable
-# without introducing a second Vally config file.
+# The benchmark pipelines invoke suite branches from this file directly with --suite.
+# Vally 0.6.0 supports parallel execution across multiple eval files, so pipeline
+# runs do not need consolidated suite eval files plus tag filtering.
 
 paths:
   evals: [evals/]
@@ -90,6 +90,9 @@ suites:
   warning-forced:
     evals: ["evals/*.eval.yaml"]
     filter: { suite: warning, mode: forced }
+  dataplane-forced:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: dataplane, mode: forced }
   versioning-trigger:
     evals: ["evals/*.eval.yaml"]
     filter: { suite: versioning, mode: trigger }
@@ -105,6 +108,9 @@ suites:
   warning-trigger:
     evals: ["evals/*.eval.yaml"]
     filter: { suite: warning, mode: trigger }
+  dataplane-trigger:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: dataplane, mode: trigger }
   versioning-no-skill:
     evals: ["evals/*.eval.yaml"]
     filter: { suite: versioning, mode: no-skill }
@@ -120,6 +126,9 @@ suites:
   warning-no-skill:
     evals: ["evals/*.eval.yaml"]
     filter: { suite: warning, mode: no-skill }
+  dataplane-no-skill:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: dataplane, mode: no-skill }
   forced:
     evals: ["evals/*.eval.yaml"]
     filter: { mode: forced }

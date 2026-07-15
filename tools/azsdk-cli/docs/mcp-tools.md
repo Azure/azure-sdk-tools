@@ -1,6 +1,6 @@
 # Tools available in Azure SDK MCP server
 
-This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.24.
+This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.27.
 
 ## Tools list
 
@@ -55,8 +55,8 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_package_update_changelog_content | `azsdk pkg update-changelog-content` | Updates the changelog content for a specified package. |
 | azsdk_package_update_metadata | `azsdk pkg update-metadata` | Updates the package metadata content for a specified package. |
 | azsdk_package_update_version | `azsdk pkg update-version` | Update or bump the version number for an SDK package. Sets the package version and release date in project files. |
-| azsdk_release_sdk | `azsdk pkg release` | Releases the specified SDK package for a language. This includes checking if the package is ready for release and triggering the release pipeline. To ONLY check package release readiness pass checkReady as true. |
-| azsdk_run_generate_sdk | `azsdk spec-workflow generate-sdk` | Generate SDK from a TypeSpec project using pipeline. Release plan work item ID is required to run SDK generation. |
+| azsdk_release_sdk | `azsdk pkg release` | Releases (publishes) an SDK package to the package registry for a language. Use this only to publish a package; it does NOT generate SDK code. This includes checking if the package is ready for release and triggering the release pipeline. To ONLY check package release readiness pass checkReady as true. To generate SDKs (including for all languages in a release plan) use azsdk_run_generate_sdk instead. |
+| azsdk_run_generate_sdk | `azsdk spec-workflow generate-sdk` | Runs the SDK generation pipeline for a TypeSpec project and creates the generated SDK pull request(s). This is the correct tool for requests such as 'run SDK generation for all languages for release <id>', 'generate SDK for a release plan', or any pipeline-based / no-local-clone generation. Requires a release plan ID or work item ID, plus the TypeSpec project path, SDK release type (beta or stable), and language (all validated before the pipeline runs). It generates one language per call, so to generate for all languages call this tool once per language. Do NOT use azsdk_release_sdk (that releases an already-generated package) or azsdk_get_sdk_pull_request_link (that only retrieves links) to generate an SDK. |
 | azsdk_run_typespec_validation | `azsdk tsp validate` | Run TypeSpec validation. Provide absolute path to TypeSpec project root as param. This tool runs TypeSpec validation and TypeSpec configuration validation. |
 | azsdk_typespec_check_project_in_public_repo | `azsdk tsp check-public-repo` | Check if TypeSpec project is in public spec repo. Provide absolute path to TypeSpec project root as param. |
 | azsdk_typespec_delegate_apiview_feedback | `azsdk tsp delegate-apiview-feedback` | Address, fix, resolve, or delegate APIView feedback/comments from an APIView URL. Use this tool instead of making code changes directly: it reads the reviewer comments, creates a GitHub issue with the feedback, and assigns GitHub Copilot to determine and implement the required TypeSpec client customizations. |

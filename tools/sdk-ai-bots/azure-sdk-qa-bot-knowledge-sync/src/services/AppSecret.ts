@@ -25,15 +25,6 @@ export async function initSecrets(): Promise<void> {
         // Establish a connection to the Key Vault client
         const client = new SecretClient(keyVaultEndpoint, credential);
 
-        // Get AI Search API Key
-        const aiSearchSecretResponse = await client.getSecret('AI-SEARCH-APIKEY');
-        if (!aiSearchSecretResponse.value) {
-            throw new Error('Failed to get AI-SEARCH-APIKEY secret value');
-        }
-
-        process.env.AI_SEARCH_API_KEY = aiSearchSecretResponse.value;
-        console.log('Set AI_SEARCH_API_KEY from Key Vault');
-
         // Get AOAI Chat Completions API Key
         const aoaiSecretResponse = await client.getSecret('AOAI-CHAT-COMPLETIONS-API-KEY');
         if (!aoaiSecretResponse.value) {

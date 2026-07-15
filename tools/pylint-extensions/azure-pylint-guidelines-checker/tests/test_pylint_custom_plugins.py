@@ -3142,6 +3142,152 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 
+    def test_docstring_overload_implementation_skips_args_kwargs(self):
+        """Overload implementation with *args/**kwargs should not report missing param errors."""
+        file = open(
+            os.path.join(
+                TEST_FOLDER,
+                "test_files",
+                "docstring_overload_args_kwargs.py",
+            )
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        # MyClient.do_thing implementation (3rd method in class body)
+        impl_node = node.body[1].body[2]
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(impl_node)
+
+    def test_docstring_no_overload_still_checks_args(self):
+        """Regular function with undocumented *args (not an overload impl) should still be flagged."""
+        file = open(
+            os.path.join(
+                TEST_FOLDER,
+                "test_files",
+                "docstring_overload_args_kwargs.py",
+            )
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        # regular_function is the last function in the module (body[3])
+        regular_node = node.body[3]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="docstring-missing-param",
+                line=59,
+                node=regular_node,
+                args="args",
+                col_offset=0,
+                end_line=59,
+                end_col_offset=20,
+            ),
+        ):
+            self.checker.check_parameters(regular_node)
+
+    def test_docstring_overload_implementation_async_skips_args_kwargs(self):
+        """Async overload implementation with *args/**kwargs should not report missing param errors."""
+        file = open(
+            os.path.join(
+                TEST_FOLDER,
+                "test_files",
+                "docstring_overload_args_kwargs.py",
+            )
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        # AsyncClient.do_thing implementation (3rd method in class body)
+        impl_node = node.body[4].body[2]
+        with self.assertNoMessages():
+            self.checker.visit_asyncfunctiondef(impl_node)
+
+    def test_docstring_kwargs_error(self):
+        # Test that using "kwargs" as keyword argument name triggers error
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "docstring_kwargs_test.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+
+        function_node = node.body[0]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="docstring-kwargs-keyword",
+                line=4,
+                node=function_node,
+                col_offset=0,
+                end_line=4,
+                end_col_offset=30,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="docstring-keyword-should-match-keyword-only",
+                line=4,
+                node=function_node,
+                args="kwargs",
+                col_offset=0,
+                end_line=4,
+                end_col_offset=30,
+            ),
+        ):
+            self.checker.visit_functiondef(function_node)
+
+    def test_docstring_kwargs_correct(self):
+        # Test that proper kwargs documentation does not trigger error
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "docstring_kwargs_test.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+
+        # function_with_kwargs_expanded - should not trigger error
+        function_node_expanded = node.body[1]
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(function_node_expanded)
+
+        # function_with_other_keyword - should not trigger error
+        function_node_other = node.body[2]
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(function_node_other)
+
+        # function_with_correct_kwargs_format - should not trigger error
+        function_node_correct_format = node.body[5]
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(function_node_correct_format)
+
+    def test_docstring_kwargs_classdef_error(self):
+        # Test that using "kwargs" as keyword argument name in a class docstring triggers error
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "docstring_kwargs_test.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+
+        class_node_error = node.body[3]  # ClassWithKwargsError
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="docstring-kwargs-keyword",
+                node=class_node_error,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="docstring-keyword-should-match-keyword-only",
+                node=class_node_error,
+                args="kwargs",
+            ),
+            ignore_position=True,
+        ):
+            self.checker.visit_classdef(class_node_error)
+
+    def test_docstring_kwargs_classdef_correct(self):
+        # Test that correct kwargs format in a class docstring does not trigger error
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "docstring_kwargs_test.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+
+        class_node_correct = node.body[4]  # ClassWithKwargsCorrect
+        with self.assertNoMessages():
+            self.checker.visit_classdef(class_node_correct)
+
 
 class TestDoNotImportLegacySix(pylint.testutils.CheckerTestCase):
     """Test that we are blocking disallowed imports and allowing allowed imports."""
@@ -3630,6 +3776,17 @@ class TestInvalidUseOfOverload(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_classdef(node.body[1])
 
+    def test_valid_use_overload_module_level(self):
+        file = open(
+            os.path.join(
+                TEST_FOLDER, "test_files", "invalid_use_of_overload_acceptable.py"
+            )
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        with self.assertNoMessages():
+            self.checker.visit_module(node)
+
     def test_invalid_use_overload(self):
         file = open(
             os.path.join(
@@ -3658,6 +3815,29 @@ class TestInvalidUseOfOverload(pylint.testutils.CheckerTestCase):
             ),
         ):
             self.checker.visit_classdef(node)
+
+    def test_invalid_use_overload_module_level(self):
+        file = open(
+            os.path.join(
+                TEST_FOLDER,
+                "test_files",
+                "invalid_use_of_overload_module_violation.py",
+            )
+        )
+        async_impl = astroid.extract_node(file.read())
+        file.close()
+
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="invalid-use-of-overload",
+                line=14,
+                node=async_impl,
+                col_offset=0,
+                end_line=14,
+                end_col_offset=22,
+            ),
+        ):
+            self.checker.visit_module(async_impl.parent)
 
 
 class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):

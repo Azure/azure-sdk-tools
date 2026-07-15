@@ -10,10 +10,11 @@ committed, curated locations:
     evaluation_datasets/perf/<scenario>.jsonl      (perf set; grows over time, no target size)
 
 Appending (not overwriting) gives incremental, time-ordered growth. Cases already
-present in the target (by scenario+query hash) are skipped. Promoted (``pass``)
-rows are removed from staging, and any rows still left as ``"todo"`` at promote
-time are finalized to ``"abandoned"`` (kept in staging as a deduped record so they
-are not re-curated). Already-``abandoned`` rows are left untouched.
+present in the target (by stable ``dedup_key``, falling back to scenario+query hash)
+are skipped. Promoted (``pass``) rows are removed from staging, and any rows still
+left as ``"todo"`` at promote time are finalized to ``"abandoned"`` (kept in staging
+as a deduped record so they are not re-curated). Already-``abandoned`` rows are left
+untouched.
 
 Usage:
     python -m dataset.review --target basic
@@ -28,13 +29,13 @@ import logging
 import sys
 from pathlib import Path
 
-from .curate import case_hash
 from .schema import (
     REVIEW_STATUS_ABANDONED,
     REVIEW_STATUS_PASS,
     REVIEW_STATUS_TODO,
     iter_jsonl,
     normalize_review_status,
+    resolve_dedup_key,
     validate_case,
 )
 
@@ -45,8 +46,8 @@ def _target_hashes(target_dir: Path) -> set[str]:
         return hashes
     for f in target_dir.glob("*.jsonl"):
         for _ln, obj in iter_jsonl(f):
-            if obj.get("query"):
-                hashes.add(case_hash(obj.get("scenario", f.stem), obj["query"]))
+            if obj.get("dedup_key") or obj.get("query"):
+                hashes.add(resolve_dedup_key(obj, obj.get("scenario", f.stem)))
     return hashes
 
 
@@ -79,11 +80,15 @@ def review(staging_dir: Path, target_dir: Path, scenario_filter: str | None) -> 
 
             if status == REVIEW_STATUS_PASS:
                 validate_case(obj, where=f"{sf}")
-                h = case_hash(obj.get("scenario", scenario), obj.get("query", ""))
+                sc = obj.get("scenario", scenario)
+                h = resolve_dedup_key(obj, sc)
                 if h in existing:
-                    mutated = True  # drop the reviewed duplicate (same normalized query)
+                    mutated = True  # drop the reviewed duplicate (same dedup identity)
                     continue
                 existing.add(h)
+                # Freeze the dedup identity so a later query edit keeps this case deduped.
+                if not obj.get("dedup_key"):
+                    obj["dedup_key"] = h
                 to_promote.append(obj)
                 mutated = True
                 continue

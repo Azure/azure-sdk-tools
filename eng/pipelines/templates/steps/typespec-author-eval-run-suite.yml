@@ -20,7 +20,7 @@ parameters:
 
 steps:
   - script: |
-      SKILL_ARG=""
+      SKILL_ARG="--skill-dir .."
       case "${{ parameters.LoadSkills }}" in
         false|False)
           mkdir -p /tmp/no-skills

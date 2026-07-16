@@ -299,8 +299,8 @@ def _log_summary(
         unknown,
     )
     if threads:
-        rate = 100.0 * correct / len(threads)
-        logger.info("Correct rate (of evaluated): %.1f%%", rate)
+        rate = 100.0 * incorrect / len(threads)
+        logger.info("Incorrect rate (of evaluated): %.1f%%", rate)
     logger.info("=" * 60)
 
     for c_index, (channel, items) in enumerate(channels.items(), 1):
@@ -309,7 +309,7 @@ def _log_summary(
             1 for t in items if t.verdict == BotAnswerVerdict.Incorrect
         )
         c_unknown = len(items) - c_correct - c_incorrect
-        c_rate = 100.0 * c_correct / len(items) if items else 0.0
+        c_rate = 100.0 * c_incorrect / len(items) if items else 0.0
         channel_label = channel_names.get(channel, channel)
         logger.info("=" * 60)
         logger.info(
@@ -320,7 +320,7 @@ def _log_summary(
             channel,
         )
         logger.info(
-            "  threads: %d | correct: %d | incorrect: %d | unknown: %d | correct rate: %.1f%%",
+            "  threads: %d | correct: %d | incorrect: %d | unknown: %d | incorrect rate: %.1f%%",
             len(items),
             c_correct,
             c_incorrect,
@@ -381,7 +381,7 @@ def _write_artifact(
             "correct": correct,
             "incorrect": incorrect,
             "unknown": unknown,
-            "correct_rate": round(100.0 * correct / len(items), 1)
+            "incorrect_rate": round(100.0 * incorrect / len(items), 1)
             if items
             else 0.0,
         }

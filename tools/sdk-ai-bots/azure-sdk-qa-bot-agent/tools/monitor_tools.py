@@ -13,14 +13,29 @@ from typing import Annotated, Any
 
 from pydantic import BaseModel, Field
 
+from config.app_config import get as cfg
 from tools import tool
-from utils.azure_monitor_query import query_spans_by_trace_id
+from utils.azure_monitor import query_spans_by_trace_id
 
 logger = logging.getLogger(__name__)
+
+# App Configuration key holding the ARM resource id of the chat agent's
+# Application Insights resource (the traces we reconstruct feedback from).
+_AGENT_APPINSIGHTS_RESOURCE_ID_KEY = "AGENT_APPLICATIONINSIGHTS_RESOURCE_ID"
 
 # Caps to keep tool output token-bounded.
 _MAX_TRACE_SPANS = 80
 _MAX_TRACE_FIELD_CHARS = 400
+
+
+def _get_agent_appinsights_resource_id() -> str:
+    rid = (cfg(_AGENT_APPINSIGHTS_RESOURCE_ID_KEY, "") or "").strip()
+    if not rid:
+        raise RuntimeError(
+            f"App Configuration key '{_AGENT_APPINSIGHTS_RESOURCE_ID_KEY}' is not set; "
+            "cannot query App Insights for chat-agent traces."
+        )
+    return rid
 
 
 def _truncate(s: str | None, limit: int) -> str | None:
@@ -80,7 +95,8 @@ class MonitorTools:
                 error="trace_id is empty",
             )
         try:
-            spans = await query_spans_by_trace_id(trace_id)
+            resource_id = _get_agent_appinsights_resource_id()
+            spans = await query_spans_by_trace_id(trace_id, resource_id=resource_id)
         except Exception as exc:  # defensive — query_spans already handles
             logger.exception("fetch_chat_trace failed for %s", trace_id)
             return ChatTraceView(

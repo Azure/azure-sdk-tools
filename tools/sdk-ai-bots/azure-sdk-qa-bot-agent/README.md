@@ -150,7 +150,7 @@ The agent will call `fetch_chat_trace` / `fetch_conversation` / `search_knowledg
 
 **2. Debug the worker end-to-end (server-side).**
 
-The worker (`FeedbackAgentService`) is what the server uses to enqueue and run jobs against the *deployed* hosted agent in Foundry. All worker settings (`AI_FOUNDRY_FEEDBACK_AGENT_NAME`, `AI_FOUNDRY_FEEDBACK_AGENT_VERSION`, `APPLICATIONINSIGHTS_RESOURCE_ID`) are read from Azure App Configuration and are already provisioned per environment — you do not need to set them locally.
+The worker (`FeedbackAgentService`) is what the server uses to enqueue and run jobs against the *deployed* hosted agent in Foundry. All worker settings (`AI_FOUNDRY_FEEDBACK_AGENT_NAME`, `AI_FOUNDRY_FEEDBACK_AGENT_VERSION`, `AGENT_APPLICATIONINSIGHTS_RESOURCE_ID`) are read from Azure App Configuration and are already provisioned per environment — you do not need to set them locally.
 
 To exercise the worker locally:
 

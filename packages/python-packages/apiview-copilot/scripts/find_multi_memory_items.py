@@ -34,15 +34,15 @@ def _query_all(container, language_filter=None):
     else:
         query = "SELECT * FROM c WHERE NOT IS_DEFINED(c.isDeleted) OR c.isDeleted = false"
         params = None
-    return list(
-        container.client.query_items(query=query, parameters=params, enable_cross_partition_query=True)
-    )
+    return list(container.client.query_items(query=query, parameters=params, enable_cross_partition_query=True))
 
 
 def main():
     parser = argparse.ArgumentParser(description="Find KB items with multiple related memories.")
     parser.add_argument("--language", type=str, default=None, help="Filter by language (e.g. python, dotnet).")
-    parser.add_argument("--min-memories", type=int, default=2, help="Minimum number of related memories to include (default: 2).")
+    parser.add_argument(
+        "--min-memories", type=int, default=2, help="Minimum number of related memories to include (default: 2)."
+    )
     args = parser.parse_args()
 
     db = DatabaseManager.get_instance()

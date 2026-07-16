@@ -452,6 +452,47 @@ main {
   opacity: 0.8;
 }
 
+.pm-section-group {
+  border: 1px solid #e1dfdd;
+  border-radius: var(--radius);
+  background: #faf9f8;
+  padding: 16px 18px 8px;
+  margin-bottom: 20px;
+}
+
+.pm-section-group-header {
+  margin-bottom: 8px;
+}
+
+.pm-section-group-header.section-header {
+  padding-top: 0;
+}
+
+.pm-section-group-header.section-header > div {
+  min-width: 0;
+}
+
+.pm-section-group-header.section-header:hover .pm-section-group-title {
+  color: var(--azure-blue);
+}
+
+.pm-section-group-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--azure-dark);
+}
+
+.pm-section-group-desc {
+  margin: 4px 0 0;
+  color: var(--gray);
+  font-size: 0.9rem;
+}
+
+.pm-section-group.collapsed > .pm-section-group-content {
+  display: none !important;
+}
+
 .section-header {
   cursor: pointer;
   user-select: none;
@@ -683,6 +724,67 @@ main {
   color: var(--green);
   font-size: 0.72rem;
 }
+.badge-first-preview {
+  background: #d6eaf8;
+  color: #1a5276;
+  font-size: 0.72rem;
+}
+.badge-first-ga {
+  background: #d5f5e3;
+  color: #1e8449;
+  font-size: 0.72rem;
+}
+.badge-sdk-ready-to-release {
+  background: #d4edda;
+  color: #155724;
+  font-size: 0.72rem;
+}
+.badge-missing-product {
+  background: #fff3cd;
+  color: #856404;
+  font-size: 0.72rem;
+}
+.badge-missing-emitter-config {
+  background: #fde7e9;
+  color: var(--red);
+  font-size: 0.72rem;
+}
+.badge-generated-by-automation {
+  background: #e8f0fe;
+  color: #6b46c1;
+  font-size: 0.72rem;
+}
+.badge-release-approval-required {
+  background: #ffe08a;
+  color: #6b4b00;
+  font-weight: 700;
+  border: 1px solid #e0a800;
+  font-size: 0.72rem;
+}
+.missing-product-highlight {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #664d03;
+}
+.missing-product-highlight p {
+  margin: 6px 0;
+}
+.global-tag-filter {
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+.global-language-filter {
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  font-size: 0.85rem;
+}
 
 /* Badge */
 .step-badge {
@@ -818,6 +920,12 @@ main {
   background: #fde7e9;
 }
 .sdk-table tr.row-exclusion-requested td {
+  color: var(--red);
+}
+.sdk-table tr.row-missing-emitter-config {
+  background: #fde7e9;
+}
+.sdk-table tr.row-missing-emitter-config td {
   color: var(--red);
 }
 
@@ -1059,6 +1167,14 @@ main {
   background: #e8daef;
   color: #6c3483;
 }
+.pr-label-first-preview {
+  background: #d6eaf8;
+  color: #1a5276;
+}
+.pr-label-first-ga {
+  background: #d5f5e3;
+  color: #1e8449;
+}
 .pr-label-version {
   background: var(--gray-bg);
   color: #323130;
@@ -1071,6 +1187,11 @@ main {
 .pr-label-api-pending {
   background: #fff4ce;
   color: var(--orange);
+}
+.pr-label-version-pending {
+  background: #fff4ce;
+  color: var(--orange);
+  cursor: help;
 }
 
 /* Spec PR labels (BreakingChange, ARM, API) shown on their own wrapping row */
@@ -1248,6 +1369,30 @@ main {
 }
 .lang-action-btn:hover {
   filter: brightness(0.9);
+}
+/* Approve Release action — links directly to the release pipeline */
+.action-btn-approve {
+  background: #cce5ff;
+  color: #004085;
+  border-color: #007bff;
+  text-decoration: none;
+  display: inline-block;
+}
+/* Prominent badge shown in the Release Status column when a release is
+   queued and awaiting approval in the release pipeline. */
+.release-approval-pending-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: #fff3cd;
+  color: #7a4f01;
+  border: 1px solid #ffb300;
+  white-space: nowrap;
+}
+.release-approval-pending-icon {
+  margin-right: 2px;
 }
 
 /* Feed link icons */

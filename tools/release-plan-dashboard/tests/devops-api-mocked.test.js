@@ -6,9 +6,11 @@ process.env.GITHUB_APP_NUMERIC_ID = "12345";
 process.env.GITHUB_INSTALL_OWNER = "TestOrg";
 
 vi.mock("@azure/identity", () => ({
-  DefaultAzureCredential: vi.fn().mockImplementation(() => ({
-    getToken: vi.fn().mockResolvedValue({ token: "mock-bearer-token" }),
-  })),
+  DefaultAzureCredential: vi.fn().mockImplementation(function () {
+    return {
+      getToken: vi.fn().mockResolvedValue({ token: "mock-bearer-token" }),
+    };
+  }),
 }));
 
 import {
@@ -16,7 +18,7 @@ import {
   runWiql,
   fetchWorkItemsBatch,
   fetchPackageWorkItems,
-  fetchAzureSdkPackageList,
+  fetchReleasedPackageCsvs,
   getAuthHeader,
 } from "../lib/devops-api.js";
 
@@ -293,11 +295,60 @@ describe("fetchPackageWorkItems", () => {
       { pkg: "azure-core", lang: "Python" },
     ]);
     expect(result).toBeInstanceOf(Map);
-    expect(result.has("azure-core|Python")).toBe(true);
-    const entry = result.get("azure-core|Python");
+    expect(result.has("azure-core|python")).toBe(true);
+    const entry = result.get("azure-core|python");
     expect(entry.version).toBe("1.2.0");
     expect(entry.apiReviewStatus).toBe("Approved");
     expect(entry.namespaceApproval).toBe("Approved");
+  });
+
+  test("normalizes language key to lowercase for Go packages stored as 'go' in ADO", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation((url) => {
+        if (url.includes("wiql")) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            text: () =>
+              Promise.resolve(JSON.stringify({ workItems: [{ id: 200 }] })),
+            headers: new Headers(),
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          text: () =>
+            Promise.resolve(
+              JSON.stringify({
+                value: [
+                  {
+                    id: 200,
+                    fields: {
+                      "Custom.Package": "azure-sdk-go",
+                      "Custom.Language": "go",
+                      "Custom.PackageVersion": "1.5.0",
+                      "Custom.APIReviewStatus": "Approved",
+                      "Custom.PackageNameApprovalStatus": "Approved",
+                      "System.ChangedDate": "2024-06-01T00:00:00Z",
+                    },
+                  },
+                ],
+              }),
+            ),
+          headers: new Headers(),
+        });
+      }),
+    );
+
+    const result = await fetchPackageWorkItems([
+      { pkg: "azure-sdk-go", lang: "Go" },
+    ]);
+    expect(result).toBeInstanceOf(Map);
+    // Key should be lowercase regardless of how ADO stores the language
+    expect(result.has("azure-sdk-go|go")).toBe(true);
+    const entry = result.get("azure-sdk-go|go");
+    expect(entry.version).toBe("1.5.0");
   });
 
   test("keeps most recent by changedDate when duplicates", async () => {
@@ -351,8 +402,35 @@ describe("fetchPackageWorkItems", () => {
     const result = await fetchPackageWorkItems([
       { pkg: "azure-core", lang: "Python" },
     ]);
-    const entry = result.get("azure-core|Python");
+    const entry = result.get("azure-core|python");
     expect(entry.version).toBe("2.0.0");
+  });
+
+  test("skips language when WIQL returns no work items", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation((url) => {
+        if (url.includes("wiql")) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            text: () => Promise.resolve(JSON.stringify({ workItems: [] })),
+            headers: new Headers(),
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          text: () => Promise.resolve(JSON.stringify({ value: [] })),
+          headers: new Headers(),
+        });
+      }),
+    );
+
+    const result = await fetchPackageWorkItems([
+      { pkg: "azure-core", lang: "Python" },
+    ]);
+    expect(result.size).toBe(0);
   });
 
   test("handles errors gracefully (logs warning)", async () => {
@@ -379,39 +457,132 @@ describe("fetchPackageWorkItems", () => {
     ]);
     expect(result.size).toBe(0);
   });
+
+  test("continues when WIQL returns no IDs for a batch", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation((url) => {
+        if (url.includes("wiql")) {
+          // Return empty workItems array
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            text: () => Promise.resolve(JSON.stringify({ workItems: [] })),
+            headers: new Headers(),
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          text: () => Promise.resolve(JSON.stringify({ value: [] })),
+          headers: new Headers(),
+        });
+      }),
+    );
+
+    const result = await fetchPackageWorkItems([
+      { pkg: "azure-core", lang: "Python" },
+    ]);
+    expect(result).toBeInstanceOf(Map);
+    expect(result.size).toBe(0);
+  });
 });
 
-describe("fetchAzureSdkPackageList", () => {
-  test("success returns HTML text", async () => {
+describe("fetchReleasedPackageCsvs", () => {
+  test("returns empty map when all fetches fail", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(new Error("Network error")),
+    );
+    const result = await fetchReleasedPackageCsvs();
+    expect(result.size).toBe(0);
+  });
+
+  test("returns empty map when response is not ok", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
+    const result = await fetchReleasedPackageCsvs();
+    expect(result.size).toBe(0);
+  });
+
+  test("parses CSV content and builds map", async () => {
+    const csvContent = `"Package","VersionGA","VersionPreview"
+"Azure.Core","1.0.0","2.0.0-beta.1"
+"Azure.Storage","","1.0.0-preview.3"`;
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
         ok: true,
-        text: () => Promise.resolve("<html>azure-core</html>"),
+        text: () => Promise.resolve(csvContent),
       }),
     );
-    const result = await fetchAzureSdkPackageList();
-    expect(result).toBe("<html>azure-core</html>");
+    const result = await fetchReleasedPackageCsvs();
+    // All 5 languages fetch the same CSV, so each lang contributes entries
+    expect(result.size).toBeGreaterThan(0);
+    // Check one language
+    const coreEntry = result.get(".net|azure.core");
+    expect(coreEntry).toEqual({ versionGA: "1.0.0" });
+    const storageEntry = result.get(".net|azure.storage");
+    expect(storageEntry).toEqual({ versionGA: "" });
   });
 
-  test("non-OK response returns empty string", async () => {
+  test("skips CSV without Package header", async () => {
+    const csvContent = `"Name","Version"
+"SomePkg","1.0.0"`;
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
-        ok: false,
-        status: 500,
+        ok: true,
+        text: () => Promise.resolve(csvContent),
       }),
     );
-    const result = await fetchAzureSdkPackageList();
-    expect(result).toBe("");
+    const result = await fetchReleasedPackageCsvs();
+    expect(result.size).toBe(0);
   });
 
-  test("fetch error returns empty string", async () => {
+  test("skips CSV with only header row", async () => {
+    const csvContent = `"Package","VersionGA"`;
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockRejectedValue(new Error("DNS resolution failed")),
+      vi.fn().mockResolvedValue({
+        ok: true,
+        text: () => Promise.resolve(csvContent),
+      }),
     );
-    const result = await fetchAzureSdkPackageList();
-    expect(result).toBe("");
+    const result = await fetchReleasedPackageCsvs();
+    expect(result.size).toBe(0);
+  });
+
+  test("skips rows with empty package name", async () => {
+    const csvContent = `"Package","VersionGA"
+"","1.0.0"
+"Azure.Valid","2.0.0"`;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        text: () => Promise.resolve(csvContent),
+      }),
+    );
+    const result = await fetchReleasedPackageCsvs();
+    // Only Azure.Valid should be in the map (for all 5 languages)
+    const validEntry = result.get(".net|azure.valid");
+    expect(validEntry).toEqual({ versionGA: "2.0.0" });
+    // Empty package should not create an entry
+    expect(result.has(".net|")).toBe(false);
+  });
+
+  test("handles missing VersionGA column gracefully", async () => {
+    const csvContent = `"Package","VersionPreview"
+"Azure.NoGA","1.0.0-beta.1"`;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        text: () => Promise.resolve(csvContent),
+      }),
+    );
+    const result = await fetchReleasedPackageCsvs();
+    const entry = result.get(".net|azure.noga");
+    expect(entry).toEqual({ versionGA: "" });
   });
 });

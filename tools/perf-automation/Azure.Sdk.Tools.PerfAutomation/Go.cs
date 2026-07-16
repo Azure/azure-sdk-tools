@@ -1,0 +1,307 @@
+using System.Globalization;
+using System.Text;
+using System.Text.RegularExpressions;
+using Azure.Sdk.Tools.PerfAutomation.Models;
+using Microsoft.Crank.Agent;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace Azure.Sdk.Tools.PerfAutomation
+{
+    public class Go : LanguageBase
+    {
+        protected override Language Language => Language.Go;
+
+        // Match a non-negative throughput value, e.g. "(24.033 ops/s". A leading '-' is
+        // intentionally not allowed so negative values are rejected.
+        private static readonly Regex _opsRegex =
+            new Regex(@"\(([\d][\d\.,]*)\s+ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft | RegexOptions.Compiled);
+
+        public override async Task<(string output, string error, object context)> SetupAsync(
+            string project,
+            string languageVersion,
+            string primaryPackage,
+            IDictionary<string, string> packageVersions,
+            bool debug)
+        {
+            var projectDirectory = Path.Combine(WorkingDirectory, project);
+
+            var outputBuilder = new StringBuilder();
+            var errorBuilder = new StringBuilder();
+
+            var goModPath = Path.Combine(projectDirectory, "go.mod");
+            var goSumPath = Path.Combine(projectDirectory, "go.sum");
+
+            BackupFile(goModPath);
+            BackupFile(goSumPath);
+
+            // Drop any existing replace directives for all requested packages to avoid stale state.
+            foreach (var pkg in packageVersions.Keys)
+            {
+                await DropReplaceAsync(projectDirectory, pkg, outputBuilder, errorBuilder);
+            }
+
+            foreach (var kvp in packageVersions)
+            {
+                var packageName = kvp.Key;
+                var packageVersion = kvp.Value;
+
+                if (string.Equals(packageVersion, Program.PackageVersionSource, StringComparison.OrdinalIgnoreCase))
+                {
+                    var localPath = ResolveSourcePath(packageName);
+                    await AddReplaceAsync(projectDirectory, packageName, localPath, outputBuilder, errorBuilder);
+                }
+                else
+                {
+                    // Ensure published version resolution for this package.
+                    await Util.RunAsync(
+                        "go",
+                        $"get {packageName}@{packageVersion}",
+                        projectDirectory,
+                        outputBuilder: outputBuilder,
+                        errorBuilder: errorBuilder);
+                }
+            }
+
+            await Util.RunAsync(
+                "go",
+                "mod tidy",
+                projectDirectory,
+                outputBuilder: outputBuilder,
+                errorBuilder: errorBuilder);
+
+            return (outputBuilder.ToString(), errorBuilder.ToString(), null);
+        }
+
+        public override async Task<IterationResult> RunAsync(
+            string project,
+            string languageVersion,
+            string primaryPackage,
+            IDictionary<string, string> packageVersions,
+            string testName,
+            string arguments,
+            bool profile,
+            string profilerOptions,
+            object context)
+        {
+            var projectDirectory = Path.Combine(WorkingDirectory, project);
+
+            var outputBuilder = new StringBuilder();
+            var errorBuilder = new StringBuilder();
+
+            // Go perf runners in this scenario are CLI test apps.
+            await Util.RunAsync(
+                "go",
+                $"run . {testName} {arguments}",
+                projectDirectory,
+                outputBuilder: outputBuilder,
+                errorBuilder: errorBuilder,
+                throwOnError: false);
+
+            // Use the builders (which Util.RunAsync always appends to) so parsing works
+            // regardless of how the underlying process result is populated.
+            var standardOutput = outputBuilder.ToString();
+            var standardError = errorBuilder.ToString();
+
+            // Prefer the throughput line from stdout. Only fall back to stderr if stdout
+            // has no match, so a spurious ops/s string in stderr cannot override the real result.
+            var opsPerSecond = ParseOpsPerSecond(standardOutput);
+            if (opsPerSecond < 0)
+            {
+                opsPerSecond = ParseOpsPerSecond(standardError);
+            }
+
+            var runtimePackageVersions = await GetRuntimePackageVersionsAsync(projectDirectory);
+
+            return new IterationResult
+            {
+                PackageVersions = runtimePackageVersions,
+                OperationsPerSecond = opsPerSecond,
+                StandardOutput = standardOutput,
+                StandardError = standardError
+            };
+        }
+
+        public override async Task CleanupAsync(string project)
+        {
+            var projectDirectory = Path.Combine(WorkingDirectory, project);
+
+            RestoreBackup(Path.Combine(projectDirectory, "go.mod"));
+            RestoreBackup(Path.Combine(projectDirectory, "go.sum"));
+
+            // Best-effort cleanup to ensure module graph is consistent after restore.
+            try
+            {
+                await Util.RunAsync(
+                    "go",
+                    "mod tidy",
+                    projectDirectory,
+                    throwOnError: false);
+            }
+            catch
+            {
+                // Ignore cleanup failures.
+            }
+        }
+
+        public override IDictionary<string, string> FilterRuntimePackageVersions(IDictionary<string, string> runtimePackageVersions)
+        {
+            if (runtimePackageVersions == null)
+            {
+                return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            }
+
+            // Keep Azure packages and a minimal runtime signal.
+            return runtimePackageVersions
+                .Where(kvp =>
+                    kvp.Key.StartsWith("github.com/Azure/", StringComparison.OrdinalIgnoreCase) ||
+                    kvp.Key.Equals("go", StringComparison.OrdinalIgnoreCase) ||
+                    kvp.Key.StartsWith("golang.org/x/", StringComparison.OrdinalIgnoreCase))
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        }
+
+        public static double ParseOpsPerSecond(string output)
+        {
+            if (string.IsNullOrWhiteSpace(output))
+            {
+                return -1d;
+            }
+
+            var match = _opsRegex.Match(output);
+            if (!match.Success)
+            {
+                return -1d;
+            }
+
+            var raw = match.Groups[1].Value.Replace(",", string.Empty).Trim();
+
+            if (double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var value))
+            {
+                return value;
+            }
+
+            return -1d;
+        }
+
+        private async Task<IDictionary<string, string>> GetRuntimePackageVersionsAsync(string projectDirectory)
+        {
+            var runtimePackageVersions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            try
+            {
+                var result = await Util.RunAsync(
+                    "go",
+                    "list -m all",
+                    projectDirectory,
+                    throwOnError: false);
+
+                var lines = (result.StandardOutput ?? string.Empty)
+                    .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+                foreach (var line in lines)
+                {
+                    // Formats:
+                    // module version
+                    // module version => replacement
+                    // module => replacement (workspace/local edge cases)
+                    var parts = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length < 2)
+                    {
+                        continue;
+                    }
+
+                    var module = parts[0];
+                    string version;
+
+                    if (parts[1] == "=>")
+                    {
+                        // module => replacement (no version)
+                        version = string.Join(" ", parts.Skip(1));
+                    }
+                    else if (parts.Length > 2 && parts[2] == "=>")
+                    {
+                        // module version => replacement
+                        version = string.Join(" ", parts.Skip(1));
+                    }
+                    else
+                    {
+                        version = parts[1];
+                    }
+
+                    runtimePackageVersions[module] = version;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Best effort: log a warning and return what we have so the run is not failed silently.
+                Log.WriteLine($"Warning: Failed to collect runtime package versions via 'go list -m all'. {ex.Message}");
+            }
+
+            return runtimePackageVersions;
+        }
+
+        public string ResolveSourcePath(string packageName)
+        {
+            const string repoPrefix = "github.com/Azure/azure-sdk-for-go/";
+            if (!packageName.StartsWith(repoPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    $"Cannot resolve source path for package '{packageName}'. Expected prefix '{repoPrefix}'.");
+            }
+
+            var relative = packageName.Substring(repoPrefix.Length).Replace('/', Path.DirectorySeparatorChar);
+            return Path.Combine(WorkingDirectory, relative);
+        }
+
+        private static async Task DropReplaceAsync(
+            string projectDirectory,
+            string packageName,
+            StringBuilder outputBuilder,
+            StringBuilder errorBuilder)
+        {
+            await Util.RunAsync(
+                "go",
+                $"mod edit -dropreplace={packageName}",
+                projectDirectory,
+                outputBuilder: outputBuilder,
+                errorBuilder: errorBuilder,
+                throwOnError: false);
+        }
+
+        private static async Task AddReplaceAsync(
+            string projectDirectory,
+            string packageName,
+            string localPath,
+            StringBuilder outputBuilder,
+            StringBuilder errorBuilder)
+        {
+            // Quote the local path so paths containing spaces (common on Windows) are passed as a single argument.
+            await Util.RunAsync(
+                "go",
+                $"mod edit -replace={packageName}=\"{localPath}\"",
+                projectDirectory,
+                outputBuilder: outputBuilder,
+                errorBuilder: errorBuilder);
+        }
+
+        private static void BackupFile(string path)
+        {
+            if (File.Exists(path))
+            {
+                File.Copy(path, path + ".bak", overwrite: true);
+            }
+        }
+
+        private static void RestoreBackup(string path)
+        {
+            var backup = path + ".bak";
+            if (File.Exists(backup))
+            {
+                File.Move(backup, path, overwrite: true);
+            }
+        }
+    }
+}

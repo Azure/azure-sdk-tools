@@ -826,9 +826,7 @@ def _get_implicit_bad_comments(
 
         rev_query = f"SELECT c.id, c.ChangeHistory FROM c WHERE ({' OR '.join(rev_clauses)})"
         rev_results = list(
-            revisions_container.query_items(
-                query=rev_query, parameters=rev_params, enable_cross_partition_query=True
-            )
+            revisions_container.query_items(query=rev_query, parameters=rev_params, enable_cross_partition_query=True)
         )
 
         for rev in rev_results:
@@ -1207,10 +1205,7 @@ def get_opened_revisions(
             date_filter = "WHERE "
 
         query = (
-            "SELECT c.ReviewId, c.APIRevisionType, c.Language "
-            "FROM c "
-            f"{date_filter}"
-            f"({' OR '.join(clauses)})"
+            "SELECT c.ReviewId, c.APIRevisionType, c.Language " "FROM c " f"{date_filter}" f"({' OR '.join(clauses)})"
         )
 
         revisions.extend(

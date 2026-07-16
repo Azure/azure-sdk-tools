@@ -75,13 +75,6 @@ function Generate-McpToolsMarkdown {
 
 This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version $version.
 
-<style>
-table td:nth-child(2),
-table th:nth-child(2) {
-  white-space: nowrap;
-}
-</style>
-
 ## Tools list
 
 | Name | Command | Description |
@@ -92,7 +85,10 @@ table th:nth-child(2) {
     foreach ($tool in $mcpTools) {
         $name = $tool.mcpToolName
         $command = [string]::IsNullOrEmpty($tool.commandLine) ? "" : "``$($tool.commandLine)``"
+        # Escape pipes so they don't break table columns, then collapse any line
+        # breaks into <br> so multi-line descriptions stay within a single table row.
         $description = $tool.description -replace '\|', '\|'
+        $description = $description -replace '\r\n', '<br>' -replace '\n', '<br>' -replace '\r', '<br>'
         
         $markdown += "| $name | $command | $description |`n"
     }

@@ -45,7 +45,8 @@ $devOpsBaseUrl = "https://dev.azure.com/azure-sdk/internal"
 
 $syncPipelineDefinitionIds = @(
   1372, # sync-eng-common.yml
-  6130  # sync-.github.yml
+  6130, # sync-.github.yml
+  8201  # sync-.github-skills.yml
 )
 
 $syncApprovalEnvironmentName = "githubmerges"
@@ -252,6 +253,7 @@ if (!$syncChecks) {
   Write-Error "No sync pipeline runs were linked to the PR! Ensure the pipelines were triggered and linked to the PR."
   Write-Host "eng/common sync - https://dev.azure.com/azure-sdk/internal/_build?definitionId=1372"
   Write-Host ".github/* sync - https://dev.azure.com/azure-sdk/internal/_build?definitionId=6130"
+  Write-Host ".github/skills sync - https://dev.azure.com/azure-sdk/internal/_build?definitionId=8201"
   exit 1
 }
 $prList = @()

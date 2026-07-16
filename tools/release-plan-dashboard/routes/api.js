@@ -29,8 +29,7 @@ import {
   getField,
   mapReleasePlan,
   fetchPackageWorkItems,
-  fetchAzureSdkPackageList,
-  isKnownPackage,
+  fetchReleasedPackageCsvs,
   isGAVersion,
 } from "../lib/devops-api.js";
 
@@ -166,9 +165,9 @@ async function enrichPackageData(plans) {
         });
     }
   }
-  const [pkgMap, azureSdkPage] = await Promise.all([
+  const [pkgMap, releasedCsvMap] = await Promise.all([
     fetchPackageWorkItems(pkgLangPairs),
-    fetchAzureSdkPackageList(),
+    fetchReleasedPackageCsvs(),
   ]);
   for (const plan of plans) {
     for (const [displayLang, langData] of Object.entries(
@@ -177,7 +176,7 @@ async function enrichPackageData(plans) {
       if (!langData.packageName) continue;
       const isReleased =
         (langData.releaseStatus || "").toLowerCase() === "released";
-      const key = `${langData.packageName}|${LANGUAGE_PACKAGE_WI[displayLang] || displayLang}`;
+      const key = `${langData.packageName}|${(LANGUAGE_PACKAGE_WI[displayLang] || displayLang).toLowerCase()}`;
       const pkgData = pkgMap.get(key);
       if (pkgData) {
         langData.pkgVersion = pkgData.version;
@@ -187,10 +186,20 @@ async function enrichPackageData(plans) {
             langData.apiReviewStatus = pkgData.apiReviewStatus;
         }
       }
-      langData.isNewPackage = !isKnownPackage(
-        langData.packageName,
-        azureSdkPage,
-      );
+
+      // CSV-based first preview / first GA classification
+      const csvKey = `${displayLang}|${langData.packageName}`.toLowerCase();
+      const csvEntry = releasedCsvMap.get(csvKey);
+      if (!csvEntry) {
+        langData.isFirstPreview = true;
+      } else {
+        const releaseType = (plan.releaseType || "").toLowerCase();
+        const isStable =
+          releaseType.includes("ga") || releaseType.includes("stable");
+        if (!csvEntry.versionGA && isStable) {
+          langData.isFirstGA = true;
+        }
+      }
     }
   }
 }
@@ -303,10 +312,23 @@ router.get("/api/release-plans", async (req, res) => {
           .status(400)
           .json({ error: "Invalid release plan ID format." });
       }
+      // Match by Custom.ReleasePlanID or by work item ID (numeric fallback)
+      const isNumeric = /^\d+$/.test(filterPlanId);
+      const environment = (
+        process.env.ENVIRONMENT || "production"
+      ).toLowerCase();
+      const tagCondition =
+        environment === "test"
+          ? "AND [System.Tags] CONTAINS 'Release Planner App Test'"
+          : "AND [System.Tags] NOT CONTAINS 'Release Planner App Test'";
+      const condition = isNumeric
+        ? `AND ([Custom.ReleasePlanID] = '${filterPlanId}' OR [System.Id] = ${filterPlanId})`
+        : `AND [Custom.ReleasePlanID] = '${filterPlanId}'`;
       const wiqlQuery = `SELECT [System.Id] FROM WorkItems
         WHERE [System.TeamProject] = 'Release'
           AND [System.WorkItemType] = 'Release Plan'
-          AND [Custom.ReleasePlanID] = '${filterPlanId}'`;
+          ${tagCondition}
+          ${condition}`;
       const ids = await runWiql(wiqlQuery);
       if (!ids.length)
         return res.json({

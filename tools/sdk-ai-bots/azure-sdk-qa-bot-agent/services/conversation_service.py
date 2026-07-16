@@ -154,6 +154,46 @@ class ConversationService:
         logger.info("Saved conversation message: %s", result["id"])
         return
 
+    async def record_should_reply(
+        self,
+        message_id: str,
+        conversation_id: str,
+        conversation_type: ConversationType,
+        should_reply: bool,
+    ) -> None:
+        """Record the ``should_reply`` flag on a previously saved message.
+
+        Marks whether a message passed intention recognition (i.e. was a
+        question within the bot's scope). This enables computing the bot
+        answering rate: (replied messages) / (questions in scope).
+        """
+        container = await get_conversation_message_container()
+        partition_key = f"{conversation_type.value}:{conversation_id}"
+
+        try:
+            raw = await container.read_item(
+                item=message_id,
+                partition_key=partition_key,
+            )
+        except Exception as exc:
+            if getattr(exc, "status_code", None) == 404:
+                logger.warning(
+                    "Cannot record should_reply: message %s not found in %s",
+                    message_id,
+                    partition_key,
+                )
+                return
+            raise
+
+        message_item = ConversationMessageItem.model_validate(raw)
+        message_item.should_reply = should_reply
+        await container.upsert_item(message_item.model_dump(mode="json"))
+        logger.info(
+            "Recorded should_reply=%s for message %s",
+            should_reply,
+            message_id,
+        )
+
     async def has_expert_reply(
         self,
         conversation_id: str,

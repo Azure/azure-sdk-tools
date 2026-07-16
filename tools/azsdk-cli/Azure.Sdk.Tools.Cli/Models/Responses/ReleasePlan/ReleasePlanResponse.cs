@@ -14,6 +14,11 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
         public ReleasePlanWorkItem? ReleasePlanDetails { get; set; }
         [JsonPropertyName("message")]
         public string Message { get; set; } = string.Empty;
+        [JsonPropertyName("warnings")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public List<string>? Warnings { get; set; }
+        [JsonPropertyName("release_plan_link")]
+        public string ReleasePlanLink => ReleasePlanDetails != null ? ReleasePlanDetails.ReleasePlanLink : string.Empty;
         protected override string Format()
         {
             var result = new StringBuilder();
@@ -24,10 +29,19 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
                 result.AppendLine($"Status: {ReleasePlanDetails.Status}");
                 result.AppendLine($"Owner: {ReleasePlanDetails.Owner}");
                 result.AppendLine($"SDK Release Month: {ReleasePlanDetails.SDKReleaseMonth}");
+                result.AppendLine($"Release Plan Link: {ReleasePlanLink}");
+                result.AppendLine($"Is API spec approved: {ReleasePlanDetails.IsSpecApproved}");
             }
             else
             {
                 result.AppendLine("No release plan details available.");
+            }
+            if (Warnings?.Count > 0)
+            {
+                foreach (var warning in Warnings)
+                {
+                    result.AppendLine($"[WARNING] {warning}");
+                }
             }
             return result.ToString();
         }

@@ -14,6 +14,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
+from urllib.parse import quote
 
 from models.knowledge import KnowledgeSource, _trim_file_format
 
@@ -43,12 +44,14 @@ class TenantID(str, Enum):
 # -- TypeSpec --
 SRC_TYPESPEC_DOCS = "typespec_docs"
 SRC_TYPESPEC_AZURE_DOCS = "typespec_azure_docs"
+SRC_TYPESPEC_AZURE_SAMPLES = "typespec_azure_samples"
 SRC_TYPESPEC_AZURE_HTTP_SPECS = "typespec_azure_http_specs"
 SRC_TYPESPEC_HTTP_SPECS = "typespec_http_specs"
 SRC_STATIC_TYPESPEC_QA = "static_typespec_qa"
 SRC_STATIC_TYPESPEC_MIGRATION_DOCS = "static_typespec_migration_docs"
 SRC_STATIC_TYPESPEC_TO_SWAGGER_MAPPING = "static_typespec_to_swagger_mapping"
 SRC_TYPESPEC_AZURE_RESOURCE_MANAGER_LIB = "typespec-azure-resource-manager-lib"
+SRC_TYPESPEC_AZURE_PROVIDERHUB_DOCS = "typespec_azure_providerhub_docs"
 
 # -- Azure Guidelines & Standards --
 SRC_AZURE_API_GUIDELINES = "azure_api_guidelines"
@@ -72,9 +75,13 @@ SRC_AZURE_SDK_GUIDELINES = "azure-sdk-guidelines"
 SRC_AZURE_SDK_DOCS_ENG = "azure-sdk-docs-eng"
 SRC_AZURE_SDK_INTERNAL_WIKI = "azure-sdk-internal-wiki"
 
+# -- SDK tools --
+SRC_AZURE_SDK_TOOLS_DOCS = "azure_sdk_tools_docs"
+
 # -- General Azure & review resources --
 SRC_STATIC_AZURE_DOCS = "static_azure_docs"
 SRC_STATIC_API_SPEC_VIEW_QA = "static_api_spec_view_qa"
+SRC_STATIC_ARM_DOCS = "static_arm_docs"
 
 
 # ---------------------------------------------------------------------------
@@ -103,6 +110,12 @@ _register(
         name=SRC_TYPESPEC_AZURE_DOCS,
         description="Azure-specific TypeSpec documentation, patterns, and templates for management and data-plane services.",
         base_url="https://azure.github.io/typespec-azure/docs/",
+        trim_format=True,
+    ),
+    KnowledgeSource(
+        name=SRC_TYPESPEC_AZURE_SAMPLES,
+        description="Azure TypeSpec samples covering common ARM and data-plane patterns, useful as references when building similar scenarios.",
+        base_url="https://azure.github.io/typespec-azure/docs/samples/",
         trim_format=True,
     ),
     KnowledgeSource(
@@ -138,6 +151,11 @@ _register(
         base_url="https://github.com/Azure/typespec-azure/blob/main/packages/typespec-azure-resource-manager/lib/",
         trim_format=True,
         suffix=".tsp",
+    ),
+    KnowledgeSource(
+        name=SRC_TYPESPEC_AZURE_PROVIDERHUB_DOCS,
+        description="Documentation for Azure TypeSpec ProviderHub.",
+        base_url="https://github.com/Azure/typespec-azure-pr/blob/providerhub/",
     ),
     # -- Azure Guidelines & Standards --
     KnowledgeSource(
@@ -231,7 +249,7 @@ _register(
         link_fn=lambda title: (
             "https://dev.azure.com/azure-sdk/internal/_wiki/wikis/internal.wiki"
             "?wikiVersion=GBwikiMaster&pagePath=/"
-            + _trim_file_format(title.replace("#", "/"))
+            + quote(_trim_file_format(title.replace("#", "/")), safe="/")
         ),
     ),
     # -- General Azure & review resources --
@@ -247,6 +265,19 @@ _register(
     KnowledgeSource(
         name=SRC_STATIC_API_SPEC_VIEW_QA,
         description="Historical Q&A for API specification review covering common validation errors and fixes.",
+    ),
+    KnowledgeSource(
+        name=SRC_STATIC_ARM_DOCS,
+        description="ARM Wiki (RPaaS) documentation for ARM resource modeling, OpenAPI/TypeSpec onboarding, and related RP platform guidance.",
+        base_url="https://armwiki.azurewebsites.net/rpaas/",
+        trim_format=True,
+        suffix=".html",
+    ),
+    # -- SDK tools --
+    KnowledgeSource(
+        name=SRC_AZURE_SDK_TOOLS_DOCS,
+        description="Azure SDK tools documentation covering js-sdk-release-tools and related JavaScript SDK tooling.",
+        base_url="https://github.com/Azure/azure-sdk-tools/blob/main/",
     ),
 )
 
@@ -309,6 +340,7 @@ _TYPESPEC_SOURCES = _sources(
     SRC_AZURE_RESOURCE_MANAGER_RPC,
     SRC_AZURE_API_GUIDELINES,
     SRC_TYPESPEC_AZURE_DOCS,
+    SRC_TYPESPEC_AZURE_SAMPLES,
     SRC_STATIC_TYPESPEC_QA,
     SRC_TYPESPEC_AZURE_HTTP_SPECS,
     SRC_TYPESPEC_DOCS,
@@ -317,12 +349,15 @@ _TYPESPEC_SOURCES = _sources(
     SRC_TYPESPEC_HTTP_SPECS,
     SRC_STATIC_AZURE_DOCS,
     SRC_STATIC_TYPESPEC_TO_SWAGGER_MAPPING,
+    SRC_TYPESPEC_AZURE_PROVIDERHUB_DOCS,
+    SRC_STATIC_ARM_DOCS,
 )
 
 _AZURE_TYPESPEC_AUTHORING_SOURCES = _sources(
     SRC_AZURE_API_GUIDELINES,
     SRC_AZURE_RESOURCE_MANAGER_RPC,
     SRC_TYPESPEC_AZURE_DOCS,
+    SRC_TYPESPEC_AZURE_SAMPLES,
     SRC_STATIC_TYPESPEC_QA,
     SRC_TYPESPEC_AZURE_HTTP_SPECS,
     SRC_TYPESPEC_DOCS,
@@ -449,6 +484,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_AZURE_SDK_DOCS_ENG,
             SRC_TYPESPEC_AZURE_DOCS,
             SRC_AZURE_REST_API_SPECS_WIKI,
+            SRC_AZURE_SDK_TOOLS_DOCS,
         ),
         source_filter={
             SRC_AZURE_SDK_GUIDELINES: "search.ismatch('typescript', 'title')",
@@ -527,6 +563,8 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_AZURE_REST_API_SPECS_DOCS,
             SRC_AZURE_OPENAPI_DIFF_DOCS,
             SRC_AZURE_SDK_DOCS_ENG,
+            SRC_STATIC_ARM_DOCS,
+            SRC_AZURE_SDK_INTERNAL_WIKI,
         ),
         source_filter={
             SRC_AZURE_SDK_DOCS_ENG: "search.ismatch('design*', 'title')",

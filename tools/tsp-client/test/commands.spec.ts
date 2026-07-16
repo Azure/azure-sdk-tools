@@ -21,7 +21,7 @@ import { writeTspLocationYaml } from "../src/utils.js";
 import { dirname, resolve } from "node:path";
 
 // The command integration tests below run real `npm` installs. tsp-client copies the
-// repository's eng/common/.npmrc into the temp directory, which in this repo repoints npm to
+// repository's eng/common/.npmrc into the temp directory, which the alternate feed might repoint npm to
 // a feed that can't resolve the test emitter packages. The copy behavior is covered directly
 // by test/npmrc.spec.ts, so neutralize it here to keep these tests on the default registry.
 vi.mock("../src/fs.js", async (importActual) => {

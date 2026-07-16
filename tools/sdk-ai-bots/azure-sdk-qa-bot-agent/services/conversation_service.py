@@ -552,7 +552,7 @@ class ConversationService:
         self, transcript: str
     ) -> tuple[BotAnswerVerdict, str, float]:
         """Call the LLM to judge the bot's answers across the whole thread."""
-        model = cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL")
+        model = cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL", "")
         reasoning_effort = cast(
             ReasoningEffort,
             cfg("AI_FOUNDRY_AGENT_REASONING_EFFORT"),

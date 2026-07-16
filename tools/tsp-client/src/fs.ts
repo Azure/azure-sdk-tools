@@ -41,10 +41,10 @@ export async function copyRepoNpmrcToTemp(repoRoot: string, tempRoot: string): P
       );
       return;
     }
-  } catch {
+  } catch (err) {
     // The file doesn't exist; nothing to copy.
     Logger.debug(
-      `No ${relativeRepoNpmrcPath} found in the repository. Skipping npmrc copy to ${tempRoot}.`,
+      `Unable to read ${npmrcPath}. Skipping npmrc copy to ${tempRoot}. Details: ${err}`,
     );
     return;
   }

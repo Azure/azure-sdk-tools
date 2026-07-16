@@ -42,10 +42,63 @@ stimuli:
             - azsdk_analyze_pipeline
       - type: output-contains
         config:
-          substring: WidgetClientLiveTests
+          substring: QueueClientOptions
+          
+  - name: analyze-version-parser-bug
+    environment:
+      skills:
+        - ../../../../../../.github/skills/azsdk-common-pipeline-analysis
+    prompt: |
+      My .NET SDK pipeline failed for Azure DevOps build 6455504 in the
+      internal project. Analyze the run.
+    constraints:
+      max_turns: 6
+      max_tokens: 8000
+    graders:
+      - type: completed
+      - type: skill-invocation
+        config:
+          required: ["azsdk-common-pipeline-analysis"]
+          disallowed: ["azsdk-common-pipeline-fixer"]
+      - type: tool-calls
+        config:
+          required:
+            - name: azsdk_analyze_pipeline
+      - type: output-contains
+        config:
+          substring: "QueueClientOptions"
+      - type: output-matches
+        config:
+          pattern: "(?i)(code bug|logic|test failure|parse|service version)"
+      - type: output-not-matches
+        config:
+          pattern: "(?i)(re-?record|missing recording|retry the pipeline|service outage)"
+      - type: prompt
+        config:
+          model: gpt-5.4
+          scoring: binary
+          threshold: 1.0
+          prompt: |
+            Build 6455504 failed
+            (TryGetServiceVersion_ParsesAllServiceVersions) because
+            TryGetServiceVersion failed to parse the two newest service
+            versions "2026-10-06" (V2026_10_06) and "2026-12-06"
+            (V2026_12_06) — newly added service versions that were not
+            wired into the parser. Does the response (a) identify this
+            as a code bug in the QueueClientOptions / ShareClientOptions
+            service-version parsing, and (b) recommend updating
+            TryGetServiceVersion rather than re-recording or retrying the
+            pipeline? Base the grade only on whether the response meets the
+            criteria above; the agent is not required to output the literal
+            words "pass" or "fail".
 
 scoring:
   weights:
-    tool-calls: 1
-    output-contains: 1
+    completed: 0.1
+    skill-invocation: 0.2
+    tool-calls: 0.2
+    output-contains: 0.1
+    output-matches: 0.2
+    output-not-matches: 0.1
+    prompt: 0.1
   threshold: 1.0

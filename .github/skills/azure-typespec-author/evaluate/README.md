@@ -86,26 +86,29 @@ Notes:
 
 Test suites are defined in `.vally.yaml` under the `suites` key. Available suites:
 
-| Suite                           | Description                                    |
-| ------------------------------- | ---------------------------------------------- |
-| `versioning-forced`             | Versioning cases (001xxx) — forced mode        |
-| `armtemplate-forced`            | ARM template cases (002xxx) — forced mode      |
-| `longrunningoperation-forced`   | Long-running operation cases (003xxx) — forced |
-| `decorators-forced`             | Decorator cases (004xxx) — forced mode         |
-| `warning-forced`                | Warning cases (005xxx) — forced mode           |
-| `versioning-trigger`            | Versioning cases — trigger mode                |
-| `armtemplate-trigger`           | ARM template cases — trigger mode              |
-| `longrunningoperation-trigger`  | LRO cases — trigger mode                       |
-| `decorators-trigger`            | Decorator cases — trigger mode                 |
-| `warning-trigger`               | Warning cases — trigger mode                   |
-| `versioning-no-skill`           | Versioning cases — no-skill baseline           |
-| `armtemplate-no-skill`          | ARM template cases — no-skill baseline         |
-| `longrunningoperation-no-skill` | LRO cases — no-skill baseline                  |
-| `decorators-no-skill`           | Decorator cases — no-skill baseline            |
-| `warning-no-skill`              | Warning cases — no-skill baseline              |
-| `forced`                        | All cases — forced mode                        |
-| `trigger`                       | All cases — trigger mode                       |
-| `no-skill`                      | All cases — no-skill baseline                  |
+| Suite                           | Description                                     |
+| ------------------------------- | ----------------------------------------------- |
+| `versioning-forced`             | Versioning cases (001xxx) — forced mode         |
+| `armtemplate-forced`            | ARM template cases (002xxx) — forced mode       |
+| `longrunningoperation-forced`   | Long-running operation cases (003xxx) — forced  |
+| `decorators-forced`             | Decorator cases (004xxx) — forced mode          |
+| `warning-forced`                | Warning cases (005xxx) — forced mode            |
+| `dataplane-forced`              | Data-plane cases (006xxx) — forced mode         |
+| `versioning-trigger`            | Versioning cases — trigger mode                 |
+| `armtemplate-trigger`           | ARM template cases — trigger mode               |
+| `longrunningoperation-trigger`  | LRO cases — trigger mode                        |
+| `decorators-trigger`            | Decorator cases — trigger mode                  |
+| `warning-trigger`               | Warning cases — trigger mode                    |
+| `dataplane-trigger`             | Data-plane cases — trigger mode                 |
+| `versioning-no-skill`           | Versioning cases — no-skill baseline            |
+| `armtemplate-no-skill`          | ARM template cases — no-skill baseline          |
+| `longrunningoperation-no-skill` | LRO cases — no-skill baseline                   |
+| `decorators-no-skill`           | Decorator cases — no-skill baseline             |
+| `warning-no-skill`              | Warning cases — no-skill baseline               |
+| `dataplane-no-skill`            | Data-plane cases — no-skill baseline            |
+| `forced`                        | All cases — forced mode                         |
+| `trigger`                       | All cases — trigger mode                        |
+| `no-skill`                      | All cases — no-skill baseline                   |
 
 Run a suite by name:
 

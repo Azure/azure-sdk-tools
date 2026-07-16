@@ -5,18 +5,21 @@ independent of the evaluation run: it scans storage, screens cases into curated
 per-scenario JSONL files, and uploads them as Foundry versioned Dataset assets.
 
 Modules:
-    schema   - canonical JSONL schema + validator
+    schema   - canonical JSONL schema + validator + stable dedup identity (dedup_key)
     curate   - scan all blob MD, normalize to schema, incremental dedup -> staging
     review   - promote reviewed=="pass" rows into evaluation_datasets/{basic,perf}/<scenario>.jsonl
     upload   - upload per-scenario JSONL as a Foundry versioned Dataset asset
     online_snapshot - download recent (rolling-window) MD -> per-scenario JSONL (online eval)
+    backfill_dedup_key - one-time freeze of dedup_key on existing cases (enables editing questions)
     validate - CLI entry for schema validation
 """
 
 from .schema import (
     CanonicalCase,
     ValidationError,
+    case_hash,
     iter_jsonl,
+    resolve_dedup_key,
     validate_case,
     validate_file,
 )
@@ -24,7 +27,9 @@ from .schema import (
 __all__ = [
     "CanonicalCase",
     "ValidationError",
+    "case_hash",
     "iter_jsonl",
+    "resolve_dedup_key",
     "validate_case",
     "validate_file",
 ]

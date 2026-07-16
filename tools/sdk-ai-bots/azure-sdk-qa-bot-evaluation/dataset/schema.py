@@ -5,7 +5,9 @@ A dataset file is JSONL: one JSON object (one ``CanonicalCase``) per line.
 
 from __future__ import annotations
 
+import hashlib
 import json
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterable, Iterator
@@ -19,6 +21,34 @@ REVIEW_STATUS_TODO = "todo"
 REVIEW_STATUS_PASS = "pass"
 REVIEW_STATUS_ABANDONED = "abandoned"
 REVIEW_STATUSES = (REVIEW_STATUS_TODO, REVIEW_STATUS_PASS, REVIEW_STATUS_ABANDONED)
+
+
+def normalize_query(query: str) -> str:
+    """Stable normalization for dedup: lowercase, collapse whitespace."""
+    return re.sub(r"\s+", " ", query.strip().lower())
+
+
+def case_hash(scenario: str, query: str) -> str:
+    """Content hash of a case, computed from its (normalized) scenario + query.
+
+    This is the *legacy* dedup identity. New cases also persist it as an explicit
+    ``dedup_key`` so the question text can later be edited (e.g. neutralising a PR
+    link) without changing the case's identity — see ``resolve_dedup_key``.
+    """
+    return hashlib.sha256(f"{scenario}\x00{normalize_query(query)}".encode("utf-8")).hexdigest()
+
+
+def resolve_dedup_key(obj: dict[str, Any], scenario: str | None = None) -> str:
+    """Return a case's stable dedup identity.
+
+    Prefers the persisted ``dedup_key`` (frozen at curation time from the original
+    query) so an edited ``query`` still dedups against the untouched source. Falls
+    back to ``case_hash(scenario, query)`` for legacy rows that predate the field.
+    """
+    key = obj.get("dedup_key")
+    if key:
+        return str(key)
+    return case_hash(scenario or obj.get("scenario", ""), obj.get("query", ""))
 
 
 def normalize_review_status(value: Any) -> str:
@@ -72,6 +102,7 @@ JSON_SCHEMA: dict[str, Any] = {
         "tenant": {"type": ["string", "null"]},
         "source": {"type": "string"},
         "reviewed": {"type": "string", "enum": list(REVIEW_STATUSES)},
+        "dedup_key": {"type": "string"},
     },
 }
 
@@ -97,6 +128,7 @@ class CanonicalCase:
     source: str = ""
     expected_references: list[dict[str, str]] = field(default_factory=list)
     expected_knowledges: list[dict[str, str]] = field(default_factory=list)
+    dedup_key: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -109,6 +141,7 @@ class CanonicalCase:
             "tenant": self.tenant,
             "source": self.source,
             "reviewed": self.reviewed,
+            "dedup_key": self.dedup_key or case_hash(self.scenario, self.query),
         }
 
     @classmethod
@@ -124,6 +157,7 @@ class CanonicalCase:
             source=obj.get("source", ""),
             expected_references=list(obj.get("expected_references", []) or []),
             expected_knowledges=list(obj.get("expected_knowledges", []) or []),
+            dedup_key=obj.get("dedup_key", "") or "",
         )
 
 
@@ -168,6 +202,9 @@ def validate_case(obj: Any, where: str = "case") -> None:
     if "source" in obj and not isinstance(obj["source"], str):
         raise ValidationError(f"{where}: 'source' must be a string")
 
+    if "dedup_key" in obj and not isinstance(obj["dedup_key"], str):
+        raise ValidationError(f"{where}: 'dedup_key' must be a string")
+
     for f in REFERENCE_LIST_FIELDS:
         if f in obj:
             _validate_reference_list(obj[f], f, where)
@@ -204,18 +241,19 @@ def validate_file(path: str | Path, *, require_reviewed: bool = False) -> int:
     """
     p = Path(path)
     count = 0
-    seen_queries: set[str] = set()
+    seen_keys: set[str] = set()
     for line_no, obj in iter_jsonl(p):
         where = f"{p}:{line_no}"
         validate_case(obj, where=where)
         if require_reviewed and normalize_review_status(obj.get("reviewed", REVIEW_STATUS_TODO)) != REVIEW_STATUS_PASS:
             raise ValidationError(f"{where}: case is not passed (reviewed != 'pass')")
-        # The canonical dedup key is the (normalized) query, applied at curation time;
+        # The canonical dedup identity is the persisted ``dedup_key`` (frozen at
+        # curation time), falling back to the normalized query for legacy rows.
         # testcase titles may legitimately repeat (e.g. the placeholder "Untitled").
-        q = " ".join(obj.get("query", "").split()).lower()
-        if q in seen_queries:
-            raise ValidationError(f"{where}: duplicate query within file")
-        seen_queries.add(q)
+        key = resolve_dedup_key(obj)
+        if key in seen_keys:
+            raise ValidationError(f"{where}: duplicate case (same dedup_key/query) within file")
+        seen_keys.add(key)
         count += 1
     return count
 

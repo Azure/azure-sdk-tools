@@ -504,3 +504,272 @@ async def test_thank_you_closure_after_bot_reply_should_not_respond(
     resp = await service.classify(req)
     assert resp.should_respond is False
 
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_pre_deployment_thread_reply_should_not_respond(
+    service: IntentionService, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A reply in a thread that started before deployment should not be answered.
+
+    Covers issue Azure/azure-sdk-pr#2676: the root message (id 1000) predates the
+    agent so it was never saved. Only the reply (id 2000) is in history. Since the
+    reply is not the thread root, the bot must not treat it as a new question.
+    """
+    conversation_id = "19:channel@thread.skype;messageid=1000"
+    conversation_type = ConversationType.teams_channel
+
+    reply = ConversationMessageItem(
+        id="2000",
+        sender_role=Role.User,
+        sender_id="user-222",
+        sender_name="Asker",
+        content="How do I generate a Python SDK from my TypeSpec definition?",
+        created_at=datetime.now(timezone.utc),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+        conversation_partition=f"channel:{conversation_id}",
+    )
+
+    async def fake_get_messages_by_conversation(*_args, **_kwargs):
+        return [reply]
+
+    monkeypatch.setattr(
+        service._conversation_service,
+        "get_messages_by_conversation",
+        fake_get_messages_by_conversation,
+    )
+
+    req = IntentionRequest(
+        message=Message(
+            id="2000",
+            role=Role.User,
+            user_id="user-222",
+            content="How do I generate a Python SDK from my TypeSpec definition?",
+        ),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+    )
+    resp = await service.classify(req)
+    assert resp.should_respond is False
+    assert resp.reason == "no_history_and_not_root_message"
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_human_assistance_plea_after_bot_reply_should_not_respond(
+    service: IntentionService, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A generic plea for a human to assist after the bot already answered should not trigger another reply.
+
+    Real case: the bot answered the technical question, then the asker posted a
+    generic "Can someone please assist on this request?" to escalate to a human.
+    That is a thread-bump directed at people, not a new question for the bot.
+    """
+    user_id = "user-333"
+    conversation_id = "conv-plea"
+    conversation_type = ConversationType.teams_channel
+
+    prior_user_msg = ConversationMessageItem(
+        id="msg-1",
+        sender_role=Role.User,
+        sender_id=user_id,
+        sender_name="Frank",
+        content="Why are my PRs stuck on the license/cla check and how do I unblock them?",
+        created_at=datetime.now(timezone.utc),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+        conversation_partition=f"channel:{conversation_id}",
+    )
+    prior_bot_reply = ConversationMessageItem(
+        id="msg-2",
+        sender_role=Role.Assistant,
+        sender_id="bot",
+        sender_name="Azure SDK QA Bot",
+        content=(
+            "The license/cla check blocks PRs until the CLA is signed. Ask the PR "
+            "author to sign the CLA, then re-run the check to unblock the PR."
+        ),
+        created_at=datetime.now(timezone.utc),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+        conversation_partition=f"channel:{conversation_id}",
+    )
+
+    async def fake_has_expert_reply(*_args, **_kwargs):
+        return False
+
+    async def fake_get_messages_by_conversation(*_args, **_kwargs):
+        return [prior_user_msg, prior_bot_reply]
+
+    monkeypatch.setattr(
+        service._conversation_service, "has_expert_reply", fake_has_expert_reply
+    )
+    monkeypatch.setattr(
+        service._conversation_service,
+        "get_messages_by_conversation",
+        fake_get_messages_by_conversation,
+    )
+
+    req = IntentionRequest(
+        message=Message(
+            role=Role.User,
+            user_id=user_id,
+            content="Can someone please assist on this request? Thanks!",
+        ),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+    )
+    resp = await service.classify(req)
+    assert resp.should_respond is False
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_cc_routing_addendum_should_not_respond(
+    service: IntentionService, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A pure cc/fyi routing addendum that only loops in a teammate should not be answered.
+
+    Real case: the bot already answered the technical question, then the asker
+    posts a "cc @Alice fyi" addendum to loop in a teammate. That is a routing
+    ping directed at people, not a new question for the bot.
+    """
+    user_id = "user-444"
+    conversation_id = "conv-cc"
+    conversation_type = ConversationType.teams_channel
+
+    prior_user_msg = ConversationMessageItem(
+        id="msg-1",
+        sender_role=Role.User,
+        sender_id=user_id,
+        sender_name="Grace",
+        content="How do I add a suppression for a breaking change in my spec PR?",
+        created_at=datetime.now(timezone.utc),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+        conversation_partition=f"channel:{conversation_id}",
+    )
+    prior_bot_reply = ConversationMessageItem(
+        id="msg-2",
+        sender_role=Role.Assistant,
+        sender_id="bot",
+        sender_name="Azure SDK QA Bot",
+        content=(
+            "Add a suppression entry under the `suppressions` section of your PR and "
+            "have an approver apply the breaking-change label."
+        ),
+        created_at=datetime.now(timezone.utc),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+        conversation_partition=f"channel:{conversation_id}",
+    )
+
+    async def fake_has_expert_reply(*_args, **_kwargs):
+        return False
+
+    async def fake_get_messages_by_conversation(*_args, **_kwargs):
+        return [prior_user_msg, prior_bot_reply]
+
+    monkeypatch.setattr(
+        service._conversation_service, "has_expert_reply", fake_has_expert_reply
+    )
+    monkeypatch.setattr(
+        service._conversation_service,
+        "get_messages_by_conversation",
+        fake_get_messages_by_conversation,
+    )
+
+    req = IntentionRequest(
+        message=Message(
+            role=Role.User,
+            user_id=user_id,
+            content="cc <at>Alice</at> /cc <at>SDK Team</at> fyi",
+        ),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+    )
+    resp = await service.classify(req)
+    assert resp.should_respond is False
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_assistance_plea_after_cc_ping_should_not_respond(
+    service: IntentionService, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A human-assistance plea that trails a cc routing ping should not be answered.
+
+    Real case (screenshot): the bot answered the PR merge-readiness question, the
+    asker then posted a ``cc @<account>`` ping followed by "Can someone please
+    assist on this request? Thanks!". The plea is a hand-off to a human, not a
+    follow-up for the bot, even though it trails the cc ping and the technical
+    thread. The bot must stay silent instead of offering to draft a nudge.
+    """
+    user_id = "user-555"
+    conversation_id = "conv-plea-cc"
+    conversation_type = ConversationType.teams_channel
+
+    prior_user_msg = ConversationMessageItem(
+        id="msg-1",
+        sender_role=Role.User,
+        sender_id=user_id,
+        sender_name="Heidi",
+        content="Is this PR ready to merge, or is something still blocking it?",
+        created_at=datetime.now(timezone.utc),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+        conversation_partition=f"channel:{conversation_id}",
+    )
+    prior_bot_reply = ConversationMessageItem(
+        id="msg-2",
+        sender_role=Role.Assistant,
+        sender_id="bot",
+        sender_name="Azure SDK QA Bot",
+        content=(
+            "This PR is not ready to merge yet: checks are green, but it is still "
+            "missing human approval (branch protection / CODEOWNERS). Get an "
+            "approving review from a requested reviewer to unblock the merge.\n\n"
+            "Not resolved? Please re-post in the Language - Python channel."
+        ),
+        created_at=datetime.now(timezone.utc),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+        conversation_partition=f"channel:{conversation_id}",
+    )
+    cc_ping_msg = ConversationMessageItem(
+        id="msg-3",
+        sender_role=Role.User,
+        sender_id=user_id,
+        sender_name="Heidi",
+        content="cc <at>non-people-account-for-chatbot</at>",
+        created_at=datetime.now(timezone.utc),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+        conversation_partition=f"channel:{conversation_id}",
+    )
+
+    async def fake_has_expert_reply(*_args, **_kwargs):
+        return False
+
+    async def fake_get_messages_by_conversation(*_args, **_kwargs):
+        return [prior_user_msg, prior_bot_reply, cc_ping_msg]
+
+    monkeypatch.setattr(
+        service._conversation_service, "has_expert_reply", fake_has_expert_reply
+    )
+    monkeypatch.setattr(
+        service._conversation_service,
+        "get_messages_by_conversation",
+        fake_get_messages_by_conversation,
+    )
+
+    req = IntentionRequest(
+        message=Message(
+            role=Role.User,
+            user_id=user_id,
+            content="Can someone please assist on this request? Thanks!",
+        ),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+    )
+    resp = await service.classify(req)
+    assert resp.should_respond is False
+
+

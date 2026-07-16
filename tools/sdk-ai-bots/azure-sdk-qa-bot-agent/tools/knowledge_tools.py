@@ -12,16 +12,30 @@ import logging
 from enum import Enum
 from typing import Annotated
 
+from pydantic import BaseModel
+
 from config.tenant_config import TenantID, get_tenant_config
 from models.knowledge import Reference, SearchKnowledgeBaseResult
 from tools import tool
 from utils.azure_ai_search import get_search_client
+from utils.knowledge_config import KbTarget, get_kb_target
 
 logger = logging.getLogger(__name__)
 
 
 # Expanded content beyond this limit is truncated to control context size.
 _MAX_CONTENT_CHARS_PER_RESULT = 3000
+
+
+class KbSourceView(BaseModel):
+    folder: str
+    resolved: bool
+    owner: str | None = None
+    repo: str | None = None
+    branch: str | None = None
+    path: str | None = None
+    scope: str | None = None
+    reason: str | None = None  # populated when resolved=False
 
 
 class SearchMode(str, Enum):
@@ -227,6 +241,45 @@ class KnowledgeTools:
         )
 
         return SearchKnowledgeBaseResult(results=refs)
+
+    @tool
+    async def resolve_kb_source(
+        self,
+        *,
+        folder: Annotated[
+            str,
+            "The chunk `source` value from a knowledge-base hit — used as "
+            "the join key into the upstream knowledge-config.json.",
+        ],
+    ) -> KbSourceView:
+        """Resolve a KB folder to its upstream source location.
+
+        Returns the owner/repo/branch/path where the KB content lives, to
+        cite in a KB-gap issue. ``resolved=False`` when the folder is not
+        mapped or points to a non-GitHub source (ADO, SSH, wiki).
+        """
+        target: KbTarget | None = None
+        try:
+            target = await get_kb_target(folder)
+        except Exception:
+            logger.exception("knowledge_config lookup failed for %s", folder)
+
+        if target is not None:
+            return KbSourceView(
+                folder=folder,
+                resolved=True,
+                owner=target.owner,
+                repo=target.repo,
+                branch=target.branch,
+                path=target.path,
+                scope=target.scope,
+            )
+
+        return KbSourceView(
+            folder=folder,
+            resolved=False,
+            reason="folder_unmapped_or_non_github",
+        )
 
 
 def _resolve_source_filters(

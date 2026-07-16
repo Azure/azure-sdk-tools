@@ -267,7 +267,44 @@ class ConversationService:
         )
         return items
 
-    async def get_messages_by_conversation(
+    async def get_message_by_trace_id(
+        self,
+        trace_id: str,
+    ) -> ConversationMessageItem | None:
+        """Look up a bot message by its OTel trace id (cross-partition).
+
+        Enables resolving a conversation from a user-supplied trace id when
+        neither the conversation id nor the bot response id is known. The
+        returned message carries ``conversation_id``/``conversation_type`` and
+        an id shaped ``bot-{response_id}``.
+        """
+        if not trace_id:
+            return None
+
+        container = await get_conversation_message_container()
+
+        query = (
+            "SELECT * FROM c "
+            "WHERE c.trace_id = @trace_id "
+            "AND c.document_type = @dtype "
+            "ORDER BY c.created_at DESC"
+        )
+        parameters: list[dict[str, object]] = [
+            {"name": "@trace_id", "value": trace_id},
+            {"name": "@dtype", "value": ConversationDocumentType.message.value},
+        ]
+
+        async for raw in container.query_items(
+            query=query,
+            parameters=parameters,
+            max_item_count=1,
+        ):
+            return ConversationMessageItem.model_validate(raw)
+
+        logger.info("No conversation message found for trace_id=%s", trace_id)
+        return None
+
+    async def get_messages_by_conversation_id(
         self,
         conversation_id: str,
         conversation_type: ConversationType,

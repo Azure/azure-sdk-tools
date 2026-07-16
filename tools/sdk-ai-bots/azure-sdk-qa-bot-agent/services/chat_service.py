@@ -202,7 +202,7 @@ class ChatService:
         BackgroundTaskTracker.instance().track(
             asyncio.create_task(
                 self._save_bot_answer_to_conversation(
-                    req, response.id, chat_response.answer
+                    req, response.id, chat_response.answer, trace_id
                 )
             )
         )
@@ -213,6 +213,7 @@ class ChatService:
         req: ChatRequest,
         response_id: str,
         answer: str,
+        trace_id: str | None = None,
     ) -> None:
         """Persist the final bot answer so intention uses the real reply, not placeholders."""
         if not req.conversation_id or not req.conversation_type:
@@ -232,6 +233,7 @@ class ChatService:
             created_at=datetime.now(timezone.utc),
             conversation_id=req.conversation_id,
             conversation_type=req.conversation_type,
+            trace_id=trace_id,
         )
 
         try:

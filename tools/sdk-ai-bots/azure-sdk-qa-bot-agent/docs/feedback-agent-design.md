@@ -95,9 +95,14 @@ A JSON payload with: `trigger`, `tenant_id`, `conversation_id`,
 
 ## Output
 
-Return JSON: `classification`, `user_intent` (one sentence),
-`suggested_fix` (one sentence), `corrected_answer` (grounded in the trace,
-conversation, and search results — cite source URLs), and `issue_url`.
+Return **only** a single fixed-schema JSON object (no prose, no fences):
+`status` (`completed` | `aborted`), `classification` (one taxonomy label
+or `null`), `user_question` (one sentence summarizing what the user
+asked), `root_cause` (one sentence with a file/URL citation),
+`suggested_fix` (one sentence), `ground_truth` (grounded in the trace,
+conversation, and search results — cite source URLs, or `null`), and
+`issue_url` (or `null`). Use real `null` for missing values; on abort set
+`status:"aborted"` with the reason in `root_cause`.
 
 ## Rules
 

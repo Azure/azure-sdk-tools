@@ -21,8 +21,25 @@ from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 
-# ``@decorator`` and ``@@augmentDecorator`` tokens.
-_DECORATOR_RE = re.compile(r"@@?[A-Za-z][A-Za-z0-9_]*")
+# A TypeSpec decorator token: ``@name`` or augment ``@@name``, NOT part of a
+# longer package path (``@typespec/compiler``) or scoped name (``@azure-tools``).
+# Real decorators are followed by ``(``, whitespace, ``;`` … never ``/``/``-``/word.
+_DECORATOR_RE = re.compile(r"@@?[A-Za-z][A-Za-z0-9_]*(?![A-Za-z0-9_/-])")
+
+# npm package scopes / doc-framework junk that look like decorators but are not.
+_NON_DECORATORS = {
+    "typespec",
+    "azure",
+    "astrojs",
+    "azure-tools",
+    "scope",
+    "param",
+    "returns",
+    "type",
+    "types",
+    "import",
+    "example",
+}
 
 # Core cross-document topics worth a concept page (seed list; a concept is only
 # emitted when >= min_docs documents mention it).
@@ -63,11 +80,15 @@ def discover_entities(
         secs = _sections(text)
         for tok in set(_DECORATOR_RE.findall(text)):
             key = tok.lstrip("@")
+            if key.lower() in _NON_DECORATORS:
+                continue
             doc_count[key].add(source_path)
         # attach the most relevant section per decorator (first mention)
         for sec in secs:
             for tok in set(_DECORATOR_RE.findall(sec)):
                 key = tok.lstrip("@")
+                if key.lower() in _NON_DECORATORS:
+                    continue
                 if len(excerpts[key]) < _MAX_EXCERPTS:
                     excerpts[key].append(sec[:_MAX_EXCERPT_CHARS])
 

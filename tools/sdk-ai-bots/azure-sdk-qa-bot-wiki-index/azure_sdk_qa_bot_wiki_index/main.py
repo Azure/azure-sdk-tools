@@ -75,12 +75,15 @@ async def _run(args: argparse.Namespace) -> int:
                     return 0
 
             container = _env("STORAGE_KNOWLEDGE_CONTAINER", "knowledge")
+            prefixes = [p.strip() for p in args.prefix.split(",") if p.strip()] or [""]
             blob_service = _make_blob_service_client(credential)
+            corpus: list[tuple[str, str]] = []
             async with blob_service:
                 container_client = blob_service.get_container_client(container)
-                corpus = await read_blob_container(container_client, prefix=args.prefix)
+                for pfx in prefixes:
+                    corpus += await read_blob_container(container_client, prefix=pfx)
             if not corpus:
-                logger.warning("no markdown found under prefix %r", args.prefix)
+                logger.warning("no markdown found under prefixes %r", prefixes)
                 return 0
             if args.limit and args.limit > 0:
                 corpus = corpus[: args.limit]
@@ -124,7 +127,7 @@ def main() -> None:
         default="summary",
         help="comma-separated page types to build: summary,entity,concept",
     )
-    parser.add_argument("--prefix", default="", help="blob name prefix filter (e.g. typespec_docs/)")
+    parser.add_argument("--prefix", default="", help="comma-separated blob name prefixes (e.g. typespec_docs/,typespec_azure_docs/)")
     parser.add_argument("--limit", type=int, default=0, help="cap number of source docs (0 = all)")
     parser.add_argument("--purge", action="store_true", help="delete all existing wiki docs first")
     parser.add_argument("--dry-run", action="store_true", help="generate + embed but do not push")

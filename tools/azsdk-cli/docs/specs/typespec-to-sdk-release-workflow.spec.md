@@ -64,7 +64,7 @@ flowchart TD
 
 4. **Spec PR merges → SDK generation is automatic**
    - Release plan work item created
-   - SDK code generated per language via emitters
+   - SDK code generated per language via emitters. SDK Pull request is generated automatically for management plane only. Service team needs to generate the SDK manually using azsdk agent for data plane.
    - Customizations applied (`client.tsp` + code customizations)
    - SDK PRs opened in each language repo and linked to release plan
    - ⚠️ Generation failures currently fail silently — [Gap #4](#gap-tracker)
@@ -81,7 +81,7 @@ flowchart TD
    - **ARM SDK PRs**: Reviewed by Haoling/Shanghai team with release plans attached
 
 6. 🧑‍💻 **Release** *(human gating)*
-   - Release pipeline triggered (becoming automatic — @raych1)
+   - The release pipeline is automatically triggered when an SDK pull request is merged, provided the auto-release label is applied to the pull request. (becoming automatic — @raych1)
    - Manual approval gate required for security (cannot be removed; ARM approval = Haoling/Shanghai team)
    - Release gate: API Review Hub verifies approved API hash
    - Packages published → release plan completes → Service Tree KPI updated
@@ -93,7 +93,7 @@ flowchart TD
 3. **SDK PR review** (Haoling/Shanghai team, management plane only) — Review generated SDK PRs that have a release plan attached; approve & merge
 4. **Breaking change review** — Spec-level: `BreakingChangeReviewRequired` label on spec PRs (review team defined for ARM; data-plane routing is Gap #9). SDK-level: `BreakingChange-{Language}-Sdk` label on management plane spec PRs only.
 5. **Namespace review** — Approve new package namespaces; apply `namespace-<lang>-approved` labels
-6. **Release approval** — Approve release pipeline runs (Haoling/Shanghai team for ARM)
+6. **Release approval** — Approve release pipeline runs (Shanghai SDK team for ARM)
 
 ### For EngSys / SDK Team
 

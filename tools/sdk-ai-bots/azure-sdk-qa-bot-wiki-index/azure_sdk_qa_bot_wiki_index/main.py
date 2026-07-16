@@ -34,8 +34,7 @@ from azure.search.documents.aio import SearchClient as AzureSearchClient
 from azure.storage.blob.aio import BlobServiceClient
 
 from .build import (
-    build_concept_pages,
-    build_entity_pages,
+    build_graph_pages,
     build_summary_cards,
     embed_docs,
 )
@@ -98,10 +97,13 @@ async def _run(args: argparse.Namespace) -> int:
             docs: list[WikiDoc] = []
             if "summary" in pages:
                 docs += build_summary_cards(corpus, synth)
-            if "entity" in pages:
-                docs += build_entity_pages(corpus, synth)
-            if "concept" in pages:
-                docs += build_concept_pages(corpus, synth)
+            if "entity" in pages or "concept" in pages:
+                docs += build_graph_pages(
+                    corpus,
+                    synth,
+                    want_entity="entity" in pages,
+                    want_concept="concept" in pages,
+                )
 
             if not docs:
                 logger.warning("no wiki docs generated")

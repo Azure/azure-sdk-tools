@@ -553,10 +553,10 @@ class ConversationService:
         self, transcript: str
     ) -> tuple[BotAnswerVerdict, str, float]:
         """Call the LLM to judge the bot's answers across the whole thread."""
-        model = cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL", "gpt-5.4")
+        model = cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL")
         reasoning_effort = cast(
             ReasoningEffort,
-            cfg("AI_FOUNDRY_EVALUATION_REASONING_EFFORT", _DEFAULT_EVAL_REASONING_EFFORT),
+            cfg("AI_FOUNDRY_AGENT_REASONING_EFFORT"),
         )
         openai_client = get_project_client().get_openai_client()
 

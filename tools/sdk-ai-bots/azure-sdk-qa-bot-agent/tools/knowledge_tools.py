@@ -14,7 +14,11 @@ from typing import Annotated
 
 from pydantic import BaseModel
 
-from config.tenant_config import TenantID, get_tenant_config
+from config.tenant_config import (
+    KNOWLEDGE_SOURCE_REGISTRY,
+    TenantID,
+    get_tenant_config,
+)
 from models.knowledge import Reference, SearchKnowledgeBaseResult
 from tools import tool
 from utils.azure_ai_search import get_search_client
@@ -36,6 +40,21 @@ class KbSourceView(BaseModel):
     path: str | None = None
     scope: str | None = None
     reason: str | None = None  # populated when resolved=False
+
+
+class KnowledgeSourceView(BaseModel):
+    """A single knowledge source advertised for a tenant."""
+
+    name: str
+    description: str
+
+
+class KnowledgeSourceCatalog(BaseModel):
+    """The full set of knowledge sources configured for a tenant."""
+
+    tenant_id: str | None = None
+    sources: list[KnowledgeSourceView]
+
 
 
 class SearchMode(str, Enum):
@@ -95,12 +114,19 @@ class KnowledgeTools:
             "OVER historical Q&A sources (e.g., 'static_typespec_qa'). "
             "Q&A sources often discuss workarounds and edge cases; for template selection, "
             "start with the official docs. "
-            "If not provided, all sources configured for the tenant will be used.",
+            "If not provided, falls back to the tenant's sources when a "
+            "`tenant_id` is given, otherwise every source in the whole "
+            "knowledge base.",
         ] = None,
         tenant_id: Annotated[
-            str,
-            "The active tenant ID for the current conversation.",
-        ],
+            str | None,
+            "Optional tenant ID for the current conversation. When set, the "
+            "search is scoped to that tenant's configured sources and its "
+            "source-filter overrides are applied. When omitted (None) AND no "
+            "explicit `sources` list is given, the search spans the ENTIRE "
+            "knowledge base across every tenant — use this to check whether the "
+            "required information exists anywhere in the KB.",
+        ] = None,
         service_type: Annotated[
             str | None,
             "Filter results by Azure service plane. ALMOST ALWAYS use None. "
@@ -136,10 +162,14 @@ class KnowledgeTools:
         different facets of the user's problem — the original question,
         related concepts, and potential solutions.
         """
-        # Fall back to tenant-configured sources when none are specified
+        # Resolve sources: explicit list wins; otherwise fall back to the
+        # tenant's configured sources, or the whole registry when no tenant.
         if not sources:
-            config = get_tenant_config(TenantID(tenant_id))
-            sources = [src.name for src in config.sources] if config else []
+            if tenant_id:
+                config = get_tenant_config(TenantID(tenant_id))
+                sources = [src.name for src in config.sources] if config else []
+            else:
+                sources = list(KNOWLEDGE_SOURCE_REGISTRY.keys())
 
         search_client = get_search_client()
 
@@ -243,6 +273,51 @@ class KnowledgeTools:
         return SearchKnowledgeBaseResult(results=refs)
 
     @tool
+    async def list_knowledge_sources(
+        self,
+        *,
+        tenant_id: Annotated[
+            str | None,
+            "Optional tenant ID. When provided, returns only the sources "
+            "configured for that tenant. When omitted (None), returns EVERY "
+            "source registered across the whole project — use this to check "
+            "whether information exists anywhere in the knowledge base.",
+        ] = None,
+    ) -> KnowledgeSourceCatalog:
+        """List knowledge sources for a tenant, or the whole project.
+
+        When *tenant_id* is given, returns only that tenant's sources. When
+        omitted, returns every source registered across the entire project.
+        Each source carries a ``name`` and ``description`` so the caller can
+        reason about which source *should* cover a given question, then
+        target ``search_knowledge_base`` with an explicit ``sources`` list.
+        A source whose topic matches the question but returns nothing on an
+        on-topic query is a strong signal of a knowledge gap in that source.
+        """
+        if tenant_id is None:
+            sources = [
+                KnowledgeSourceView(name=src.name, description=src.description)
+                for src in KNOWLEDGE_SOURCE_REGISTRY.values()
+            ]
+            return KnowledgeSourceCatalog(tenant_id=None, sources=sources)
+
+        try:
+            config = get_tenant_config(TenantID(tenant_id))
+        except ValueError:
+            logger.warning("Unknown tenant_id for source listing: %s", tenant_id)
+            return KnowledgeSourceCatalog(tenant_id=tenant_id, sources=[])
+
+        sources = (
+            [
+                KnowledgeSourceView(name=src.name, description=src.description)
+                for src in config.sources
+            ]
+            if config
+            else []
+        )
+        return KnowledgeSourceCatalog(tenant_id=tenant_id, sources=sources)
+
+    @tool
     async def resolve_kb_source(
         self,
         *,
@@ -284,16 +359,24 @@ class KnowledgeTools:
 
 def _resolve_source_filters(
     sources: list[str],
-    tenant_id: str,
+    tenant_id: str | None = None,
     service_type: str | None = None,
 ) -> dict[str, str]:
     """Build source-name → OData-filter mapping.
 
     Each source gets a base ``context_id`` filter.  Tenant-level overrides
-    and the service-type clause are layered on with ``and``.
+    (when a tenant is given) and the service-type clause are layered on with
+    ``and``.
     """
-    tenant_config = get_tenant_config(TenantID(tenant_id))
-    source_filter_overrides = tenant_config.source_filter if tenant_config else {}
+    source_filter_overrides: dict[str, str] = {}
+    if tenant_id:
+        try:
+            tenant_config = get_tenant_config(TenantID(tenant_id))
+        except ValueError:
+            tenant_config = None
+        source_filter_overrides = (
+            tenant_config.source_filter if tenant_config else {}
+        )
 
     valid_service_types = {t.value for t in ServiceType}
     service_type_filter = (

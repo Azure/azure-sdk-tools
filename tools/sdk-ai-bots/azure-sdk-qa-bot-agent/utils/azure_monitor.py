@@ -109,7 +109,7 @@ def record_chat_duration(tenant: str, elapsed: float, *, success: bool) -> None:
 # --------------------------------------------------------------------------- #
 
 # How far back to search for spans matching a trace_id.
-_DEFAULT_LOOKBACK_HOURS = 24 * 7
+_DEFAULT_LOOKBACK_HOURS = 24 * 30
 
 _logs_client: LogsQueryClient | None = None
 
@@ -156,20 +156,17 @@ async def query_spans_by_trace_id(
     client = _get_logs_client()
 
     # union dep / req / trace, filter by operation_Id (== OTel trace_id).
+    # Time window is applied via the `timespan` arg to query_resource.
     query = """
-let lookback = timespan;
 let target = '@trace_id';
 union
     (dependencies
-        | where timestamp > ago(lookback)
         | where operation_Id == target
         | extend _table = "dependencies"),
     (requests
-        | where timestamp > ago(lookback)
         | where operation_Id == target
         | extend _table = "requests"),
     (traces
-        | where timestamp > ago(lookback)
         | where operation_Id == target
         | extend _table = "traces")
 | order by timestamp asc

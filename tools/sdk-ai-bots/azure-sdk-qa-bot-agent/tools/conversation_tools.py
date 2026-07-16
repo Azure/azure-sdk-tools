@@ -48,6 +48,7 @@ class FeedbackMessage(BaseModel):
     sender_name: str
     content: str
     created_at: str
+    message_link: str | None = None
 
 
 class ConversationView(BaseModel):
@@ -56,6 +57,7 @@ class ConversationView(BaseModel):
     found: bool
     message_count: int
     truncated: bool = False
+    conversation_link: str | None = None
     messages: list[FeedbackMessage] = Field(default_factory=list)
 
 
@@ -112,15 +114,23 @@ class ConversationTools:
                 sender_name=m.sender_name,
                 content=_truncate(m.content, _MAX_MESSAGE_CHARS) or "",
                 created_at=m.created_at.isoformat() if m.created_at else "",
+                message_link=(
+                    m.extra_info.message_link if m.extra_info else None
+                ),
             )
             for m in clipped
         ]
+        conversation_link = next(
+            (msg.message_link for msg in messages if msg.message_link),
+            None,
+        )
         return ConversationView(
             conversation_id=conversation_id,
             conversation_type=conversation_type,
             found=bool(items),
             message_count=len(items),
             truncated=truncated,
+            conversation_link=conversation_link,
             messages=messages,
         )
 

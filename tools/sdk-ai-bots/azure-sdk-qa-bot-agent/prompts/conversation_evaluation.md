@@ -14,6 +14,9 @@ The poster asks a question and the bot auto-replies; the poster may follow up an
 
 Judge the **bot's answers across the whole thread** by the **human response to them**. The verdict is driven by whether a human — the poster or an expert — confirmed or corrected the bot, not by whether you personally think the answer is right. In a multi-turn thread, weight the bot's **final converged answer**.
 
+**Judge only what the bot could have known.** The bot stops replying once an expert joins and never sees later messages, so only mark it `incorrect` when a human refutes its advice based on information it already had — not when a different outcome came from new details or investigation that surfaced after its last answer.
+
+
 ## Verdicts
 
 - **correct** — The poster or an expert **confirms, agrees with, builds on, or acts on** the bot's answer. A procedural nudge that still matches the bot's advice (e.g. "work with the assigned reviewers directly") is agreement. An expert adding an orthogonal side-detail the bot couldn't know is not a correction. The poster thanking the bot, saying it answered their question, or adopting one of several valid paths it offered counts as confirmation.

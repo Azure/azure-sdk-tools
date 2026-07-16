@@ -26,7 +26,7 @@
 
 ## 2025-11-24 - 0.31.0
 
-- Add support for batch library generation. See [README](./README.md) for more information on how to configure.
+- Add support for batch library generation. See [README](https://github.com/Azure/azure-sdk-tools/blob/main/tools/tsp-client/README.md#batch-library-generation) for more information on how to configure.
 
 ## 2025-11-05 - 0.30.0
 

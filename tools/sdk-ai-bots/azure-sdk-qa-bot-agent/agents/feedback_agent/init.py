@@ -36,8 +36,10 @@ from opentelemetry import trace as otel_trace
 
 import config.app_config as app_config
 from config.app_config import get as cfg
-from tools.feedback_tools import FeedbackTools
+from tools.conversation_tools import ConversationTools
+from tools.github_mcp_tools import create_github_mcp_tool
 from tools.knowledge_tools import KnowledgeTools
+from tools.monitor_tools import MonitorTools
 from tools.web_tools import WebTools
 from utils.azure_ai_foundry import (
     FoundryAgentSpanEnricher,
@@ -81,18 +83,29 @@ async def main() -> None:
     agent_id = f"{agent_name}:{agent_version}" if agent_version else agent_name
 
     # Tools.
-    feedback_tools = FeedbackTools()
+    monitor_tools = MonitorTools()
+    conversation_tools = ConversationTools()
     knowledge_tools = KnowledgeTools()
     web_tools = WebTools()
 
     tools = [
-        feedback_tools.fetch_chat_trace,
-        feedback_tools.fetch_conversation,
-        feedback_tools.resolve_kb_target,
-        feedback_tools.create_kb_gap_issue,
+        monitor_tools.fetch_chat_trace,
+        conversation_tools.resolve_conversation_by_trace_id,
+        conversation_tools.fetch_conversation,
+        knowledge_tools.resolve_kb_source,
         knowledge_tools.search_knowledge_base,
         web_tools.web_fetch,
     ]
+
+    # GitHub MCP tool with write access so the agent can file KB-gap issues.
+    try:
+        github_mcp_tool = await create_github_mcp_tool(
+            readonly=False,
+            extra_allowed_tools=("create_issue",),
+        )
+        tools.append(github_mcp_tool)
+    except Exception:
+        logger.exception("create_github_mcp_tool failed to initialize, skipped")
 
     # Compaction provider — compact history before and after each turn.
     compaction_provider = CompactionProvider(

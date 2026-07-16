@@ -43,11 +43,11 @@ The agent classifies each case into exactly one root cause and acts accordingly:
 
 | Classification | Description | Category | Issue Repo |
 | --- | --- | --- | --- |
-| `missing_content` | No KB chunk covers the user's intent. | KB issue | KB source repo |
-| `outdated_content` | KB has stale information vs. the source URL. | KB issue | KB source repo |
-| `retrieval_mismatch` | Relevant chunks exist but were not retrieved. | Bot-quality issue | azure-sdk-pr |
-| `reasoning_gap` | Chunks were retrieved but the bot reasoned poorly. | Bot-quality issue | azure-sdk-pr |
-| `out_of_scope` | The intent is outside the tenant's scope. | Bot-quality issue | azure-sdk-pr |
+| `missing_content` | No KB chunk covers the user's intent. | KB issue | `Azure/azure-sdk-pr` (cite KB source) |
+| `outdated_content` | KB has stale information vs. the source URL. | KB issue | `Azure/azure-sdk-pr` (cite KB source) |
+| `retrieval_mismatch` | Relevant chunks exist but were not retrieved. | System issue | `Azure/azure-sdk-pr` |
+| `reasoning_gap` | Chunks were retrieved but the bot reasoned poorly. | System issue | `Azure/azure-sdk-pr` |
+| `out_of_scope` | The intent is outside the tenant's scope. | System issue | `Azure/azure-sdk-pr` |
 
 #### 2.2.3 Agent Instruction
 
@@ -79,21 +79,19 @@ A JSON payload with: `trigger`, `tenant_id`, `conversation_id`,
    intent to confirm what is indexed today. If a chunk looks stale, call
    `web_fetch` on its source URL to check for drift.
 3. **Classify** the case into exactly one root cause (see taxonomy below).
-4. **File the issue.** Call `resolve_kb_source` on the relevant chunk source
-   to pick the target repo (KB source repo for `missing_content` /
-   `outdated_content`; `azure-sdk-pr` for bot-quality classifications), then
-   `create_issue` with the structured body in §2.5.
+4. **File the issue.** Every case gets one issue in `Azure/azure-sdk-pr`
+   via `create_issue` (structured body in §2.5). For KB issues
+   (`missing_content` / `outdated_content`), first call `resolve_kb_source`
+   on the relevant chunk source and cite it in the body.
 5. **Return** the structured result.
 
 ## Classification
 
-- `missing_content` — no KB chunk covers the intent → KB source repo.
-- `outdated_content` — KB contradicts the source URL → KB source repo.
-- `retrieval_mismatch` — relevant chunks exist but weren't retrieved →
-  azure-sdk-pr.
-- `reasoning_gap` — chunks were retrieved but the bot reasoned poorly →
-  azure-sdk-pr.
-- `out_of_scope` — the intent is outside the tenant's scope → azure-sdk-pr.
+- `missing_content` — no KB chunk covers the intent (KB issue, cite source).
+- `outdated_content` — KB contradicts the source URL (KB issue, cite source).
+- `retrieval_mismatch` — relevant chunks exist but weren't retrieved.
+- `reasoning_gap` — chunks were retrieved but the bot reasoned poorly.
+- `out_of_scope` — the intent is outside the tenant's scope.
 
 ## Output
 
@@ -197,15 +195,18 @@ model FeedbackJob {
 }
 ```
 
-### 2.5 Create KB Issue
+### 2.5 Create Issue
 
-Issue creation reuses the existing **GitHub MCP tool** ([`tools/github_mcp_tools.py`](../tools/github_mcp_tools.py)), we will add `create_issue` tool into the allowlist.
+All issues — KB or system — are filed in **`Azure/azure-sdk-pr`** using the
+existing **GitHub MCP tool** ([`tools/github_mcp_tools.py`](../tools/github_mcp_tools.py)); the feedback agent enables the `create_issue` tool in its allowlist (`readonly=False`).
 
-For `missing_content` / `outdated_content` issues, the agent calls `resolve_kb_source` to map the chunk source to a target repo, then `create_issue`. Example:
+For KB issues (`missing_content` / `outdated_content`), the agent calls `resolve_kb_source` to resolve where the KB content originates and cites that source in the body. Example:
 
 > **Title:** [Doc] No guidance on the TypeSpec `@added` versioning decorator
 >
-> **Labels:** `doc`
+> **Labels:** `feedback-agent`, `classification:missing_content`
+>
+> **KB source:** `Azure/azure-rest-api-specs-pr` — `documentation/typespec/versioning.md`
 >
 > **Gap:** There is no documentation covering the `@added` decorator; the bot answered with a generic versioning explanation that did not address the question.
 >
@@ -213,4 +214,4 @@ For `missing_content` / `outdated_content` issues, the agent calls `resolve_kb_s
 >
 > **Evidence:** Bot Response ID: `resp_abc123`, Message Link: `https://xxxx`
 
-Folders mapped to non-issue-fileable targets (internal ADO, wikis) fall back to azure-sdk-pr repo.
+When the KB source folder is unmapped or points to a non-GitHub source (internal ADO, wikis), `resolve_kb_source` returns `resolved=false` and the agent records the raw folder name instead.

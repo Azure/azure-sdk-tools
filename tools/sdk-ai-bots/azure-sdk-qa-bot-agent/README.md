@@ -104,7 +104,7 @@ Ensure your Azure identity has:
 
 ## Running and Debugging Locally
 
-### Debugging the Chat Agent (F5 with AI Toolkit)
+### Debugging the Chat Agent
 
 Use this to develop and test the AI agent itself (prompt tuning, tool integration, etc.).
 
@@ -123,13 +123,17 @@ The Feedback Agent is a hosted Foundry agent like the chat agent, but invoked as
 
 **1. Iterate on the agent itself (Agent Inspector).**
 
-Reuse the same AI Toolkit setup as the chat agent, but point it at the feedback agent entrypoint. The simplest way is to swap the `Run Chat Agent HTTP Server` task command in `.vscode/tasks.json`:
+Same AI Toolkit workflow as the chat agent, just pointed at the feedback agent entrypoint.
 
-```text
-${command:python.interpreterPath} -m debugpy --listen 127.0.0.1:5679 -m agentdev run agents/feedback_agent/init.py --verbose --port 8088
-```
+1. Install the [AI Toolkit](https://marketplace.visualstudio.com/items?itemName=ms-windows-ai-studio.windows-ai-studio) extension for VS Code.
+2. Use this instruction to let your copilot set up local debugging with the AI Toolkit: `Help me configure the azure-sdk-qa-bot-agent/agents/feedback_agent to work with AI Toolkit Agent Inspector. 1) Ensure the agent is serverized as an HTTP server. 2) Install 'agent-dev-cli' and use 'agentdev' to launch the agent. 3) Add VS Code configuration (tasks.json and launch.json) for debugging.`
+3. Copilot will generate the debug configuration (`.vscode/launch.json` and `.vscode/tasks.json`) pointing at `agents/feedback_agent/init.py`. If you already have the chat agent config, just swap the task command to:
 
-Then press **F5** and use the Agent Inspector to send a JSON payload shaped like a `FeedbackAgentInput`:
+   ```text
+   ${command:python.interpreterPath} -m debugpy --listen 127.0.0.1:5679 -m agentdev run agents/feedback_agent/init.py --verbose --port 8088
+   ```
+
+4. Press **F5** to start debugging, then use the Agent Inspector to send a JSON payload shaped like a `FeedbackAgentInput`:
 
 ```json
 {

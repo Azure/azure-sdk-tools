@@ -1,10 +1,10 @@
-"""App Insights KQL helper for fetching chat-agent spans by ``response_id``.
+"""App Insights KQL helper for fetching chat-agent spans by ``trace_id``.
 
-The chat agent emits hosted-agent spans with ``response_id`` as a custom
-attribute (set by ``FoundryAgentSpanEnricher`` — see
-``utils/azure_ai_foundry.py``). To reconstruct what happened on a given
-turn, we query App Insights for all spans (``dependencies`` / ``requests``
-/ ``traces``) carrying that ``response_id``.
+The OTel ``trace_id`` of a chat turn maps to the App Insights
+``operation_Id`` column (set automatically by the Azure Monitor OpenTelemetry
+exporter). To reconstruct what happened on a given turn, we query App
+Insights for all spans (``dependencies`` / ``requests`` / ``traces``)
+carrying that ``operation_Id``.
 
 The Application Insights resource is selected via the
 ``APPLICATIONINSIGHTS_RESOURCE_ID`` setting in Azure App Configuration
@@ -28,7 +28,7 @@ from utils.azure_credential import get_credential
 logger = logging.getLogger(__name__)
 
 _RESOURCE_ID_KEY = "APPLICATIONINSIGHTS_RESOURCE_ID"
-# How far back to search for spans matching a response_id.
+# How far back to search for spans matching a trace_id.
 _DEFAULT_LOOKBACK_HOURS = 24
 
 _client: LogsQueryClient | None = None
@@ -66,39 +66,39 @@ class TraceSpan:
     custom_dimensions: dict[str, Any]
 
 
-async def query_spans_by_response_id(
-    response_id: str,
+async def query_spans_by_trace_id(
+    trace_id: str,
     *,
     lookback_hours: int = _DEFAULT_LOOKBACK_HOURS,
 ) -> list[TraceSpan]:
-    """Return all App Insights rows tagged with ``response_id``.
+    """Return all App Insights rows tagged with ``trace_id`` (``operation_Id``).
 
     Searches ``dependencies``, ``requests`` and ``traces`` so the caller can
     reconstruct tool calls, the inbound HTTP request, and any log records.
     Returns an empty list if nothing is found (e.g. ingestion lag).
     """
-    if not response_id:
+    if not trace_id:
         return []
 
     resource_id = _get_resource_id()
     client = _get_client()
 
-    # union dep / req / trace, filter by custom dim response_id.
+    # union dep / req / trace, filter by operation_Id (== OTel trace_id).
     query = """
 let lookback = timespan;
-let target = '@response_id';
+let target = '@trace_id';
 union
     (dependencies
         | where timestamp > ago(lookback)
-        | where tostring(customDimensions["response_id"]) == target
+        | where operation_Id == target
         | extend _table = "dependencies"),
     (requests
         | where timestamp > ago(lookback)
-        | where tostring(customDimensions["response_id"]) == target
+        | where operation_Id == target
         | extend _table = "requests"),
     (traces
         | where timestamp > ago(lookback)
-        | where tostring(customDimensions["response_id"]) == target
+        | where operation_Id == target
         | extend _table = "traces")
 | order by timestamp asc
 | project timestamp,
@@ -110,7 +110,7 @@ union
           result_code = tostring(resultCode),
           data = tostring(data),
           customDimensions
-""".replace("@response_id", response_id.replace("'", "''"))
+""".replace("@trace_id", trace_id.replace("'", "''"))
 
     try:
         result = await client.query_resource(
@@ -119,7 +119,7 @@ union
             timespan=timedelta(hours=lookback_hours),
         )
     except Exception:
-        logger.exception("App Insights query failed for response_id=%s", response_id)
+        logger.exception("App Insights query failed for trace_id=%s", trace_id)
         return []
 
     spans: list[TraceSpan] = []

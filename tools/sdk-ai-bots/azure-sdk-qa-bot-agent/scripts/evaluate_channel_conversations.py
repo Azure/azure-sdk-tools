@@ -62,14 +62,6 @@ logger = logging.getLogger("evaluate_channel_conversations")
 
 _DEFAULT_OUTPUT = _PROJECT_DIR / "channel_conversation_evaluation"
 
-# Fixed Microsoft tenant used when constructing Teams message deep links,
-# matching the Logic App's MessageLink formula.
-_TEAMS_TENANT_ID = "72f988bf-86f1-41af-91ab-2d7cd011db47"
-
-# Blob holding the channel_id -> friendly name mapping.
-_CHANNEL_CONFIG_CONTAINER = "bot-configs"
-_CHANNEL_CONFIG_BLOB = "channel.yaml"
-
 # Channels whose display name ends with this suffix (case-insensitive) are
 # treated as testing channels and excluded from evaluation.
 _TESTING_CHANNEL_SUFFIX = "testing"
@@ -82,7 +74,9 @@ async def _load_channel_names() -> dict[str, str]:
     malformed so the summary can still fall back to raw channel ids.
     """
     try:
-        data = await download_blob(_CHANNEL_CONFIG_CONTAINER, _CHANNEL_CONFIG_BLOB)
+        container = app_config.get("STORAGE_CONFIG_CONTAINER")
+        blob = app_config.get("STORAGE_CONFIG_BLOB")
+        data = await download_blob(container, blob)
     except Exception:
         logger.warning("Failed to download channel.yaml", exc_info=True)
         return {}
@@ -162,11 +156,12 @@ def _resolve_teams_link(
     if not channel_id or not parent_message_id:
         return None
 
+    tenant_id = app_config.get("TEAMS_TENANT_ID")
     channel_segment = quote(channel_id, safe="")
     return (
         "https://teams.microsoft.com/l/message/"
         f"{channel_segment}/{parent_message_id}"
-        f"?tenantId={_TEAMS_TENANT_ID}"
+        f"?tenantId={tenant_id}"
         f"&parentMessageId={parent_message_id}"
     )
 

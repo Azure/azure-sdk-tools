@@ -13,7 +13,9 @@ import json
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Sequence
+from typing import Sequence, cast
+
+from openai.types.shared_params.reasoning_effort import ReasoningEffort
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +39,7 @@ from utils.azure_cosmosdb import (
 _EVAL_PROMPT_PATH = (
     Path(__file__).resolve().parent.parent / "prompts" / "conversation_evaluation.md"
 )
-_EVAL_TEMPERATURE = 0.0
+_DEFAULT_EVAL_REASONING_EFFORT = "low"
 
 
 class ConversationService:
@@ -552,6 +554,10 @@ class ConversationService:
     ) -> tuple[BotAnswerVerdict, str, float]:
         """Call the LLM to judge the bot's answers across the whole thread."""
         model = cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL", "gpt-5.4")
+        reasoning_effort = cast(
+            ReasoningEffort,
+            cfg("AI_FOUNDRY_EVALUATION_REASONING_EFFORT", _DEFAULT_EVAL_REASONING_EFFORT),
+        )
         openai_client = get_project_client().get_openai_client()
 
         response = await openai_client.chat.completions.create(
@@ -561,7 +567,7 @@ class ConversationService:
                 {"role": "user", "content": transcript},
             ],
             response_format={"type": "json_object"},
-            temperature=_EVAL_TEMPERATURE,
+            reasoning_effort=reasoning_effort,
         )
         raw = (response.choices[0].message.content or "").strip()
         return self._parse_evaluation(raw)

@@ -505,9 +505,29 @@ function Remove-RecoveryServicesVaults() {
       Write-Warning "Non-terminal: could not relax immutability on vault '$($vault.Name)': $($_.Exception.Message)"
     }
 
-    # Disable soft delete + enhanced (hybrid) security together via the REST config endpoint.
-    # The Set-AzRecoveryServicesVaultProperty cmdlet frequently returns BadRequest against vaults with
-    # newer property shapes (enhanced/immutable states, MUA, etc.) so we PATCH directly to be resilient.
+    # Unregister storage account backup infrastructure first, as this must be done before
+    # attempting to disable soft delete or enhanced security on the vault.
+    try {
+      $storageContainers = @()
+      try {
+        $storageContainers = @(Get-AzRecoveryServicesBackupContainer -VaultId $vault.ID -ContainerType 'AzureStorage' -ErrorAction Stop)
+      } catch {
+        # Skip if vault doesn't support storage containers.
+      }
+      foreach ($container in $storageContainers) {
+        Write-Host "Unregistering storage account backup container '$($container.Name)' in vault '$($vault.Name)'"
+        try {
+          Unregister-AzRecoveryServicesBackupContainer -Container $container -VaultId $vault.ID -Confirm:$false -Force -ErrorAction Stop | Out-Null
+        } catch {
+          Write-Warning "Failed unregistering storage account container '$($container.Name)' in vault '$($vault.Name)': $($_.Exception.Message)"
+        }
+      }
+    } catch {
+      Write-Warning "Error during storage account backup infrastructure unregistration in vault '$($vault.Name)': $($_.Exception.Message)"
+    }
+
+    # Best-effort: attempt to disable soft delete + enhanced (hybrid) security.
+    # This is best-effort only and should not block vault deletion if it fails.
     try {
       $vaultConfigPath = "$($vault.ID)/backupconfig/vaultconfig?api-version=2024-04-01"
       $vaultConfigBody = @{
@@ -516,12 +536,9 @@ function Remove-RecoveryServicesVaults() {
           softDeleteFeatureState = 'Disabled'
         }
       } | ConvertTo-Json -Depth 5 -Compress
-      $vaultConfigResp = Invoke-AzRestMethod -Method PATCH -Path $vaultConfigPath -Payload $vaultConfigBody -ErrorAction Stop
-      if ($vaultConfigResp.StatusCode -ge 400) {
-        Write-Warning "Failed disabling soft delete / enhanced security on vault '$($vault.Name)' (status $($vaultConfigResp.StatusCode)): $($vaultConfigResp.Content)"
-      }
+      $null = Invoke-AzRestMethod -Method PATCH -Path $vaultConfigPath -Payload $vaultConfigBody -ErrorAction SilentlyContinue
     } catch {
-      Write-Warning "Failed disabling soft delete / enhanced security on vault '$($vault.Name)': $($_.Exception.Message)"
+      # Best-effort only; proceed regardless of success or failure
     }
 
     # Undelete any soft-deleted items and stop protection with recovery-point removal.

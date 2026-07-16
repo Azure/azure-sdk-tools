@@ -13,9 +13,10 @@ from enum import Enum
 from typing import Annotated
 
 from config.tenant_config import TenantID, get_tenant_config
+from config.app_config import get as cfg
 from models.knowledge import Reference, SearchKnowledgeBaseResult
 from tools import tool
-from utils.azure_ai_search import get_search_client
+from utils.azure_ai_search import get_search_client, fuse_with_rrf
 
 logger = logging.getLogger(__name__)
 
@@ -137,36 +138,67 @@ class KnowledgeTools:
         # Cap queries to avoid excessive parallel searches
         capped_queries = queries[:3]
 
-        # Build search tasks for all queries
-        tasks: list = []
-        for q in capped_queries:
+        # WeKnora-style hybrid retrieval: run a dense (vector) and a sparse
+        # (keyword/BM25) retriever per query and fuse their rankings with
+        # Reciprocal Rank Fusion. The sparse path precisely matches exact
+        # symbols (decorator/API names, labels) that dense recall misses.
+        # ``deep`` mode adds the agentic retriever as a third fused list.
+        enable_keyword = cfg("KB_ENABLE_KEYWORD", "true").lower() == "true"
+        rrf_k = int(cfg("KB_RRF_K", "60"))
+        vector_weight = float(cfg("KB_RRF_VECTOR_WEIGHT", "1.0"))
+        keyword_weight = float(cfg("KB_RRF_KEYWORD_WEIGHT", "1.0"))
+        agentic_weight = float(cfg("KB_RRF_AGENTIC_WEIGHT", "1.0"))
+
+        async def _fused_for_query(q: str) -> list:
+            retriever_coros: list = []
+            weights: list[float] = []
             if use_deep:
-                tasks.append(
-                    search_client.agentic_search(
-                        query=q,
-                        source_filters=source_filters,
-                    )
+                retriever_coros.append(
+                    search_client.agentic_search(query=q, source_filters=source_filters)
                 )
-            tasks.append(
-                search_client.vector_search(
-                    query=q,
-                    source_filters=source_filters,
-                )
+                weights.append(agentic_weight)
+            retriever_coros.append(
+                search_client.vector_search(query=q, source_filters=source_filters)
             )
+            weights.append(vector_weight)
+            if enable_keyword:
+                retriever_coros.append(
+                    search_client.keyword_search(query=q, source_filters=source_filters)
+                )
+                weights.append(keyword_weight)
 
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+            retriever_results = await asyncio.gather(
+                *retriever_coros, return_exceptions=True
+            )
+            ranked_lists: list = []
+            for res, weight in zip(retriever_results, weights):
+                if isinstance(res, BaseException):
+                    logger.warning("Retriever failed for query=%r: %s", q, res)
+                    continue
+                if res:
+                    ranked_lists.append((res, weight))
 
-        # Collect raw chunks, tolerating individual search failures
+            if not ranked_lists:
+                return []
+            # Fuse by RRF when more than one retriever contributed; otherwise
+            # keep the single retriever's own (semantic-reranker) ordering.
+            if len(ranked_lists) > 1:
+                return fuse_with_rrf(ranked_lists, k=rrf_k)
+            return list(ranked_lists[0][0])
+
+        per_query_results = await asyncio.gather(
+            *[_fused_for_query(q) for q in capped_queries]
+        )
+
+        # Collect fused chunks across all queries
         raw_chunks: list = []
-        for result in results:
-            if isinstance(result, BaseException):
-                logger.warning("Search failed: %s", result)
-            else:
-                raw_chunks.extend(result)
+        for chunk_list in per_query_results:
+            raw_chunks.extend(chunk_list)
 
         logger.info(
-            "Search completed: mode=%s, queries=%s, raw_chunks=%d",
+            "Search completed: mode=%s, keyword=%s, queries=%s, raw_chunks=%d",
             search_mode,
+            enable_keyword,
             capped_queries,
             len(raw_chunks),
         )

@@ -44,6 +44,51 @@ _HIERARCHY_EXPANSION_TOP = 20
 _RERANK_SCORE_LOW_RELEVANCE_THRESHOLD = 2.0
 
 
+def _chunk_key(chunk: "KnowledgeChunk") -> str:
+    """Stable identity for a chunk: its id, or a header-path fallback."""
+    if chunk.chunk_id:
+        return chunk.chunk_id
+    return f"{chunk.source}|{chunk.title}|{chunk.header1}|{chunk.header2}|{chunk.header3}"
+
+
+def fuse_with_rrf(
+    ranked_lists: "list[tuple[list[KnowledgeChunk], float]]",
+    k: int = 60,
+) -> "list[KnowledgeChunk]":
+    """Reciprocal Rank Fusion of several ranked retriever result lists.
+
+    Mirrors WeKnora's ``fuseWithRRF``:
+    ``score = sum_over_retrievers( weight / (k + rank) )`` where ``rank`` is the
+    1-indexed position of the chunk in that retriever's output. Fuses on
+    **rank**, so heterogeneous score scales (semantic reranker vs BM25) combine
+    cleanly. The fused score is written onto each chunk's ``rerank_score`` so the
+    existing downstream sort/cap works unchanged. Each chunk appears once; the
+    first retriever that surfaced it supplies its metadata.
+    """
+    info: dict[str, KnowledgeChunk] = {}
+    rank_maps: list[tuple[dict[str, int], float]] = []
+    for results, weight in ranked_lists:
+        rmap: dict[str, int] = {}
+        for i, chunk in enumerate(results):
+            key = _chunk_key(chunk)
+            if key not in rmap:
+                rmap[key] = i + 1  # 1-indexed rank
+            info.setdefault(key, chunk)
+        rank_maps.append((rmap, weight))
+
+    fused: list[KnowledgeChunk] = []
+    for key, chunk in info.items():
+        score = 0.0
+        for rmap, weight in rank_maps:
+            rank = rmap.get(key)
+            if rank:
+                score += weight / (k + rank)
+        chunk.rerank_score = score
+        fused.append(chunk)
+    fused.sort(key=lambda c: c.rerank_score, reverse=True)
+    return fused
+
+
 class SearchClient:
     """Search wrapper using Azure AI Search SDK clients."""
 
@@ -171,6 +216,49 @@ class SearchClient:
         # Sort by rerank score descending and limit to top-k
         scored_chunks.sort(key=lambda x: x[0], reverse=True)
         return [chunk for _, chunk in scored_chunks[:k]]
+
+    async def keyword_search(
+        self,
+        query: str,
+        source_filters: dict[str, str],
+        top_k: int | None = None,
+    ) -> list[KnowledgeChunk]:
+        """Sparse full-text (BM25) search — WeKnora-style keyword retriever.
+
+        Complements the dense ``vector_search`` for precise matching of exact
+        symbols (decorator/API names, labels, error text) that vector search
+        recalls unreliably. Returns chunks ordered by BM25 relevance; the
+        caller fuses this ranking with the vector ranking via
+        :func:`fuse_with_rrf`. No semantic reranker is applied here (the reranker
+        score lives on the vector path); RRF fuses on rank, not raw score.
+        """
+        k = top_k or self._top_k
+        select_fields = [
+            "chunk_id",
+            "title",
+            "chunk",
+            "context_id",
+            "header_1",
+            "header_2",
+            "header_3",
+            "ordinal_position",
+            "scope",
+            "service_type",
+        ]
+        combined_filter = " or ".join(f"({f})" for f in source_filters.values() if f)
+
+        results = await self._search_client.search(
+            search_text=query,
+            filter=combined_filter or None,
+            query_type=QueryType.SIMPLE,
+            top=k,
+            select=select_fields,
+        )
+
+        chunks: list[KnowledgeChunk] = []
+        async for doc in results:
+            chunks.append(KnowledgeChunk.model_validate(dict(doc)))
+        return chunks
 
     @staticmethod
     def deduplicate_chunks(chunks: list[KnowledgeChunk]) -> list[KnowledgeChunk]:

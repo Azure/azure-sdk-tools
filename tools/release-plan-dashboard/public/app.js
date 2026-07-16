@@ -67,7 +67,15 @@
       },
       prCount: "",
       user: { name: "", isPM: false },
-      filters: { search: "", plane: "", month: "", prLang: "", prStatus: "" },
+      filters: {
+        search: "",
+        plane: "",
+        month: "",
+        prLang: "",
+        prStatus: "",
+        tag: "",
+        language: "",
+      },
       prFilterVisible: false,
     },
     {
@@ -356,10 +364,33 @@
     }
   }
 
+  // The automation account used to auto-create release plans. When a plan is
+  // submitted by this account there is no real service-team member to act, so
+  // the submitter name is omitted from "Action required from" labels.
+  const AUTOMATION_SUBMITTER = "azure-sdk-1es-open-source-assistant";
+
+  function isAutomationSubmitter(submittedBy) {
+    return (submittedBy || "").toLowerCase().trim() === AUTOMATION_SUBMITTER;
+  }
+
+  // Builds the "Service Team" action label, including the submitter name unless
+  // the plan was submitted by the automation account.
+  function serviceTeamLabel(submittedBy) {
+    return submittedBy && !isAutomationSubmitter(submittedBy)
+      ? `Service Team (${submittedBy})`
+      : "Service Team";
+  }
+
   // A language is excluded only when ReleaseExclusionStatus is "Approved"
   function isLangExcluded(exclusionStatus) {
     const val = (exclusionStatus || "").toLowerCase().trim();
     return val === "approved";
+  }
+
+  // A language has missing emitter config when ReleaseExclusionStatus is "MissingEmitterConfig"
+  function isLangMissingEmitterConfig(exclusionStatus) {
+    const val = (exclusionStatus || "").toLowerCase().trim();
+    return val === "missingemitterconfig";
   }
 
   function exclusionLabel(exclusionStatus) {
@@ -368,6 +399,11 @@
       return { text: "Exclusion Approved", cls: "row-excluded" };
     if (val === "requested")
       return { text: "Exclusion Requested", cls: "row-exclusion-requested" };
+    if (val === "missingemitterconfig")
+      return {
+        text: "Missing emitter configuration",
+        cls: "row-missing-emitter-config",
+      };
     return null;
   }
 
@@ -403,9 +439,7 @@
     const apiReady = (p.apiReadiness || "").toLowerCase();
 
     // Step 1: API Spec checks
-    const serviceTeam = p.submittedBy
-      ? `Service Team (${p.submittedBy})`
-      : "Service Team";
+    const serviceTeam = serviceTeamLabel(p.submittedBy);
     if (!specPrUrl)
       return {
         status: "API Spec Not Available",
@@ -427,7 +461,9 @@
     const langs = p.languages || {};
     const langKeys = Object.keys(langs);
     const activeLangs = langKeys.filter(
-      (k) => !isLangExcluded(langs[k].exclusionStatus),
+      (k) =>
+        !isLangExcluded(langs[k].exclusionStatus) &&
+        !isLangMissingEmitterConfig(langs[k].exclusionStatus),
     );
     if (!activeLangs.length)
       return {
@@ -482,7 +518,7 @@
       return { status: "Released", action: "", statusClass: "step-released" };
     if (allMerged)
       return {
-        status: "SDK Ready To Be Released",
+        status: "SDK Ready To Release",
         action: serviceTeam,
         statusClass: "step-ready",
       };
@@ -535,12 +571,96 @@
     for (const lang of langKeys) {
       const l = langs[lang];
       const rel = (l.releaseStatus || "").toLowerCase();
-      if (isLangExcluded(l.exclusionStatus)) excludedCount++;
+      if (
+        isLangExcluded(l.exclusionStatus) ||
+        isLangMissingEmitterConfig(l.exclusionStatus)
+      )
+        excludedCount++;
       if (rel.includes("completed") || rel.includes("released"))
         releasedCount++;
     }
     const nonExcluded = langKeys.length - excludedCount;
     return releasedCount > 0 && releasedCount < nonExcluded;
+  }
+
+  function isSdkReadyToReleasePlan(p) {
+    const langs = p.languages || {};
+    return Object.keys(langs).some((k) => {
+      const l = langs[k];
+      if (isLangExcluded(l.exclusionStatus)) return false;
+
+      const st = (l.sdkPrGitHubStatus || l.prStatus || "").toLowerCase();
+      const rel = (l.releaseStatus || "").toLowerCase();
+
+      const isMergedOrCompleted = st === "merged" || st === "completed";
+      const isReleasedOrCompleted = rel === "released" || rel === "completed";
+
+      return isMergedOrCompleted && !isReleasedOrCompleted;
+    });
+  }
+
+  // A release plan was created by automation when Custom.CreatedUsing is "Automation".
+  function isGeneratedByAutomationPlan(p) {
+    return (p.createdUsing || "").toLowerCase() === "automation";
+  }
+
+  // A release plan needs release approval when any active language has a
+  // release status of "Approval pending" (approve the package release in the
+  // release pipeline).
+  function isReleaseApprovalRequiredPlan(p) {
+    const langs = p.languages || {};
+    return Object.keys(langs).some((k) => {
+      const l = langs[k];
+      if (isLangExcluded(l.exclusionStatus)) return false;
+      if (isLangMissingEmitterConfig(l.exclusionStatus)) return false;
+      return (l.releaseStatus || "").toLowerCase() === "approval pending";
+    });
+  }
+
+  // A release plan failed SDK generation when any active language has a
+  // generation failure (generation status failed/errored, or the SDK pull
+  // request status reports "Failed to generate SDK.").
+  function isSdkGenerationFailedPlan(p) {
+    const langs = p.languages || {};
+    return Object.keys(langs).some((k) => {
+      const l = langs[k];
+      if (isLangExcluded(l.exclusionStatus)) return false;
+      if (isLangMissingEmitterConfig(l.exclusionStatus)) return false;
+      const gen = (l.generationStatus || "").toLowerCase();
+      const prStatus = (l.prStatus || "").toLowerCase().trim();
+      if (gen.includes("failed") || gen.includes("error")) return true;
+      return !l.sdkPrUrl && prStatus === "failed to generate sdk.";
+    });
+  }
+
+  // ── Language filter helpers ─────────────────────────────────
+  function getLanguageFilter() {
+    return store().filters.language || "";
+  }
+
+  // Returns a shallow clone of the plan whose `languages` map is narrowed to a
+  // single language. Used so the release plan tab can display only the selected
+  // language's SDK details and action required guidance.
+  function narrowPlanToLanguage(p, lang) {
+    const langs = p.languages || {};
+    if (!lang || !langs[lang]) return p;
+    return { ...p, languages: { [lang]: langs[lang] } };
+  }
+
+  // Resolves the plan used for display. When a language filter is active on the
+  // release plan tab, the plan is narrowed to the selected language.
+  function displayPlan(p) {
+    const lang = getLanguageFilter();
+    if (lang && store().activeTab === "tab-release-plans") {
+      return narrowPlanToLanguage(p, lang);
+    }
+    return p;
+  }
+
+  // Action required from the service team (or a service team member) — used to
+  // decide which "Action required from" badges are surfaced on release plan tiles.
+  function isServiceTeamAction(action) {
+    return (action || "").toLowerCase().includes("service team");
   }
 
   // Parse "MMMM yyyy" into a sortable Date (or far future if unparseable)
@@ -724,6 +844,35 @@
         (p) =>
           (p.releaseMonth || "").toLowerCase() === monthFilter.toLowerCase(),
       );
+    const tagFilter = store().filters.tag;
+    const langFilter = store().filters.language;
+    if (tagFilter) {
+      filtered = filtered.filter((p) => {
+        const pt = langFilter ? narrowPlanToLanguage(p, langFilter) : p;
+        const langs = pt.languages || {};
+        if (tagFilter === "first-preview") {
+          return Object.values(langs).some(
+            (l) => l.isFirstPreview && l.packageName,
+          );
+        }
+        if (tagFilter === "first-ga") {
+          return Object.values(langs).some((l) => l.isFirstGA && l.packageName);
+        }
+        if (tagFilter === "sdk-ready-to-release") {
+          return isSdkReadyToReleasePlan(pt);
+        }
+        if (tagFilter === "generated-by-automation") {
+          return isGeneratedByAutomationPlan(pt);
+        }
+        if (tagFilter === "release-approval-required") {
+          return isReleaseApprovalRequiredPlan(pt);
+        }
+        if (tagFilter === "sdk-generation-failed") {
+          return isSdkGenerationFailedPlan(pt);
+        }
+        return true;
+      });
+    }
 
     const mgmt = filtered.filter((p) => classifyPlane(p) === "mgmt");
     const data = filtered.filter((p) => classifyPlane(p) === "data");
@@ -731,7 +880,13 @@
     // Detect if filtering is active (needed by splitByState)
     const params = new URLSearchParams(window.location.search);
     const singlePlan = params.get("releasePlan") || params.get("releaseplan");
-    const isFiltering = !!(filter || singlePlan || monthFilter);
+    const isFiltering = !!(
+      filter ||
+      singlePlan ||
+      monthFilter ||
+      tagFilter ||
+      langFilter
+    );
 
     function sortByReleaseMonth(a, b) {
       return (
@@ -808,22 +963,22 @@
     sec.dataFinished = dataSplit.finished;
     store().isFiltering = isFiltering;
 
-    // Hide plane columns based on global plane filter
+    // Hide plane columns based on global plane filter, and hide a plane group
+    // entirely when filtering yields no release plans for that plane.
     const mgmtCol = document.getElementById("plane-col-mgmt");
     const dataCol = document.getElementById("plane-col-data");
-    if (mgmtCol) mgmtCol.style.display = planeFilter === "data" ? "none" : "";
-    if (dataCol) dataCol.style.display = planeFilter === "mgmt" ? "none" : "";
+    const mgmtHidden =
+      planeFilter === "data" || (isFiltering && mgmt.length === 0);
+    const dataHidden =
+      planeFilter === "mgmt" || (isFiltering && data.length === 0);
+    if (mgmtCol) mgmtCol.style.display = mgmtHidden ? "none" : "";
+    if (dataCol) dataCol.style.display = dataHidden ? "none" : "";
 
-    // Hide plane headings when single releasePlan param or when plane has no items
+    // Show plane headings (a hidden column above already hides its heading).
     const mgmtHeading = $(".plane-heading-mgmt");
     const dataHeading = $(".plane-heading-data");
-    if (singlePlan) {
-      if (mgmtHeading) mgmtHeading.style.display = mgmt.length ? "" : "none";
-      if (dataHeading) dataHeading.style.display = data.length ? "" : "none";
-    } else {
-      if (mgmtHeading) mgmtHeading.style.display = "";
-      if (dataHeading) dataHeading.style.display = "";
-    }
+    if (mgmtHeading) mgmtHeading.style.display = "";
+    if (dataHeading) dataHeading.style.display = "";
 
     // Stats — update Alpine store
     const totalInProgress =
@@ -893,6 +1048,10 @@
 
   /** Generates the HTML for a release plan card (collapsed summary + expandable detail). */
   function cardHTML(p, options) {
+    const isPmCard = !!(options && options.showPmAction);
+    // The language filter only narrows cards on the Release Plans tab. PM view
+    // cards must keep all languages (their categorization uses the full plan).
+    if (!isPmCard) p = displayPlan(p);
     const showPmAction = !!(options && options.showPmAction && currentUserIsPM);
     const pastDue = isPastDue(p);
     const cardClass = pastDue ? "plan-card past-due" : "plan-card";
@@ -901,6 +1060,9 @@
       (p.createdUsing || "").toLowerCase() === "copilot"
         ? '<span class="badge badge-created-using">Copilot</span>'
         : "";
+    const automationBadge = isGeneratedByAutomationPlan(p)
+      ? '<span class="badge badge-generated-by-automation">Generated by automation</span>'
+      : "";
     const rt = (p.releaseType || "").toLowerCase();
     const sdkTypeBadge =
       rt.includes("beta") || rt.includes("preview")
@@ -919,12 +1081,49 @@
         ? `<span class="step-badge ${step.statusClass}">${esc(step.status)}</span>`
         : "";
     const actionHTML =
-      step.action && !isTerminal && !(showPmAction && p._pmAction)
+      step.action &&
+      !isTerminal &&
+      !(showPmAction && p._pmAction) &&
+      isServiceTeamAction(step.action)
         ? `<span class="action-badge">Action required from: ${esc(step.action)}</span>`
         : "";
     const dupHTML = p._duplicateOf
       ? `<span class="badge badge-duplicate">⚠️ Duplicate of ${esc(String(p._duplicateOf))}</span>`
       : "";
+    // First Preview / First GA badge on the card title (not for private preview plans)
+    let releaseTagBadge = "";
+    if (!isPrivatePreviewPlan(p)) {
+      const langs = p.languages || {};
+      const hasFirstPreview = Object.values(langs).some(
+        (l) => l.isFirstPreview && l.packageName,
+      );
+      const hasFirstGA = Object.values(langs).some(
+        (l) => l.isFirstGA && l.packageName,
+      );
+      if (hasFirstPreview)
+        releaseTagBadge +=
+          '<span class="badge badge-first-preview">First Preview</span>';
+      if (hasFirstGA)
+        releaseTagBadge += '<span class="badge badge-first-ga">First GA</span>';
+      if (isSdkReadyToReleasePlan(p) && step.status !== "SDK Ready To Release")
+        releaseTagBadge +=
+          '<span class="badge badge-sdk-ready-to-release">SDK Ready To Release</span>';
+      if (isReleaseApprovalRequiredPlan(p))
+        releaseTagBadge +=
+          '<span class="badge badge-release-approval-required">Release approval required</span>';
+    }
+    const missingProductBadge = !p.productId
+      ? '<span class="badge badge-missing-product">Missing product details</span>'
+      : "";
+    const missingEmitterConfigBadge = (() => {
+      const langs = p.languages || {};
+      const hasMissing = Object.values(langs).some((l) =>
+        isLangMissingEmitterConfig(l.exclusionStatus),
+      );
+      return hasMissing
+        ? '<span class="badge badge-missing-emitter-config">Missing emitter config</span>'
+        : "";
+    })();
     const isExpanded = !!store().ui.expandedPlans[p.id];
     const summaryClass = isExpanded ? "card-summary expanded" : "card-summary";
     const detailsClass = isExpanded ? "card-details open" : "card-details";
@@ -933,7 +1132,7 @@
       <div class="${summaryClass}"${isExpanded ? ' data-pr-loaded="1"' : ""}>
         <span class="card-chevron">&#9654;</span>
         <div class="card-title">
-          ${esc(p.title)} ${copilotBadge} ${sdkTypeBadge}
+          ${esc(p.title)} ${copilotBadge} ${automationBadge} ${sdkTypeBadge} ${releaseTagBadge} ${missingProductBadge} ${missingEmitterConfigBadge}
         </div>
         <div class="card-meta">
           ${p.releaseMonth ? `<span>${esc(p.releaseMonth)}</span>` : ""}
@@ -1031,7 +1230,7 @@
         body = `<p>The SDK pull request has not been generated for <strong>${esc(lang)}</strong> yet.</p>
           <p>Use the ${agentLink} to generate the SDK:</p>
           ${repoNote}
-          <div class="guide-prompt"><code>Generate ${esc(lang)} SDK${pkg ? ` for package ${esc(pkg)}` : ""}${specPath ? ` for TypeSpec project ${esc(specPath)}` : ""} for release plan ${esc(planId)}</code></div>
+          <div class="guide-prompt"><code>Run SDK generation for ${esc(lang)}${pkg ? ` for package ${esc(pkg)}` : ""}${specPath ? ` for TypeSpec project ${esc(specPath)}` : ""} for release plan ${esc(planId)}</code></div>
           ${specPath ? `<p style="font-size:.82rem;color:#605e5c;">TypeSpec path: <code>${esc(specPath)}</code></p>` : ""}`;
         break;
       case ACTION_TYPES.FIX_CHECKS:
@@ -1125,7 +1324,7 @@
           <li>Clone the <code>azure-rest-api-specs</code> repo</li>
           <li>Open <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">copilot-cli</a> from the cloned repo path, or open the cloned repo in VS Code and open GitHub Copilot chat</li>
           <li>Run the following prompt:
-            <div class="action-prompt"><code>Generate SDK for all languages from my TypeSpec project ${esc(specPath)} and link SDK pull requests to the release plan ${esc(planId)}</code></div>
+            <div class="action-prompt"><code>Run SDK generation for all languages from my TypeSpec project ${esc(specPath)} and link SDK pull requests to the release plan ${esc(planId)}</code></div>
           </li>
         </ol>
       </div>`;
@@ -1135,16 +1334,15 @@
         <p>One or more SDK pull requests are in <strong>draft</strong> status. Mark them as ready for review on GitHub so the SDK team can begin their review.</p>
       </div>`;
     } else if (step.status === "SDK Review In Progress") {
-      actionContent = `<div class="action-item">
-        <strong>SDK PRs Under Review:</strong>
-        <p>SDK pull requests are currently being reviewed. Please ensure all required reviews are addressed.</p>
-      </div>`;
+      // SDK pull requests are being reviewed by the SDK review team. No action
+      // is required from the service team, so nothing is surfaced here.
+      actionContent = "";
     } else if (step.status === "SDK To Be Merged") {
       actionContent = `<div class="action-item">
         <strong>Merge SDK PRs:</strong>
         <p>SDK pull requests are approved and ready to be merged.</p>
       </div>`;
-    } else if (step.status === "SDK Ready To Be Released") {
+    } else if (step.status === "SDK Ready To Release") {
       // Build list of languages with merged PRs but not yet released
       const langs = p.languages || {};
       const langKeys = Object.keys(langs);
@@ -1158,8 +1356,9 @@
         const rel = (langs[k].releaseStatus || "").toLowerCase();
         return (
           (st.includes("merged") || st.includes("completed")) &&
-          !rel.includes("completed") &&
-          !rel.includes("released")
+          rel !== "completed" &&
+          rel !== "released" &&
+          rel !== "approval pending"
         );
       });
       const langList = toRelease.length
@@ -1169,7 +1368,8 @@
         .map((k) => langs[k].packageName)
         .filter(Boolean)
         .join(", ");
-      actionContent = `<div class="action-item">
+      if (toRelease.length) {
+        actionContent = `<div class="action-item">
         <strong>Release SDKs (${esc(langList)}):</strong>
         <ol>
           <li>Open <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">copilot-cli</a> from the <code>azure-rest-api-specs</code> or SDK language repo path, or open the repo in VS Code and open GitHub Copilot chat</li>
@@ -1179,6 +1379,7 @@
           <li>After the build stage completes, approve the release stage in the release pipeline</li>
         </ol>
       </div>`;
+      }
     }
 
     // Check for SDK PRs with failed checks
@@ -1186,6 +1387,7 @@
       const langs = p.languages || {};
       const langsWithFailedChecks = Object.keys(langs).filter((k) => {
         if (isLangExcluded(langs[k].exclusionStatus)) return false;
+        if (isLangMissingEmitterConfig(langs[k].exclusionStatus)) return false;
         // Only show check failures for open/draft PRs, not merged
         const st = (
           langs[k].sdkPrGitHubStatus ||
@@ -1229,6 +1431,7 @@
       const langs = p.languages || {};
       const closedPrLangs = Object.keys(langs).filter((k) => {
         if (isLangExcluded(langs[k].exclusionStatus)) return false;
+        if (isLangMissingEmitterConfig(langs[k].exclusionStatus)) return false;
         if (!langs[k].sdkPrUrl) return false;
         const st = (
           langs[k].sdkPrGitHubStatus ||
@@ -1252,19 +1455,67 @@
       }
     }
 
+    // Release approval pending — the service team must approve the package
+    // release using the release pipeline.
+    {
+      const langs = p.languages || {};
+      const approvalLangs = Object.keys(langs).filter((k) => {
+        if (isLangExcluded(langs[k].exclusionStatus)) return false;
+        if (isLangMissingEmitterConfig(langs[k].exclusionStatus)) return false;
+        return (
+          (langs[k].releaseStatus || "").toLowerCase() === "approval pending"
+        );
+      });
+      for (const lang of approvalLangs) {
+        const l = langs[lang];
+        const pipeline = l.releasePipeline || "";
+        const pipelineLink = pipeline
+          ? ` <a href="${esc(pipeline)}" target="_blank" rel="noopener">Open release pipeline</a>`
+          : "";
+        actionContent += `<div class="action-item action-item-warning" style="margin-top:10px;">
+          <strong>Approve the package release using release pipeline (${esc(lang)}):</strong>
+          <p>The release for ${esc(l.packageName || lang)} is pending approval. Approve the package release using the release pipeline.${pipelineLink}</p>
+        </div>`;
+      }
+    }
+
     // Additional prompt: if package details are missing but spec info is available
     const hasSpecInfo = specPrUrl || specPath;
     if (hasSpecInfo) {
       const langs = p.languages || {};
       const missingPkgDetails = Object.keys(langs).some(
         (k) =>
-          !isLangExcluded(langs[k].exclusionStatus) && !langs[k].packageName,
+          !isLangExcluded(langs[k].exclusionStatus) &&
+          !isLangMissingEmitterConfig(langs[k].exclusionStatus) &&
+          !langs[k].packageName,
       );
       if (missingPkgDetails) {
         actionContent += `<div class="action-item" style="margin-top:10px;">
           <strong>Update SDK details in release plan:</strong>
           <p>Package details are missing for some languages. Run the following prompt using <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">copilot-cli</a> or VS Code GitHub Copilot chat:</p>
           <div class="action-prompt"><code>Update SDK details in release plan ${esc(planId)} using the TypeSpec project path ${esc(specPath)}</code></div>
+        </div>`;
+      }
+    }
+
+    // Namespace approval warning for management plane first-preview plans
+    {
+      const isMgmt = classifyPlane(p) === "mgmt";
+      const pLangs = p.languages || {};
+      const hasFirstPreviewPkg = Object.values(pLangs).some(
+        (l) => l.isFirstPreview && l.packageName,
+      );
+      if (isMgmt && hasFirstPreviewPkg && !p.namespaceApprovalIssue) {
+        const planId2 = p.releasePlanId || p.id;
+        actionContent += `<div class="action-item action-item-warning" style="margin-top:10px;">
+          <strong>⚠️ Missing namespace approval:</strong>
+          <p>This management plane release plan contains a first preview package but has no namespace approval issue linked.</p>
+          <ol>
+            <li>Get namespace approved by following the process at <a href="https://eng.ms/docs/products/azure-developer-experience/develop/namespace-review" target="_blank" rel="noopener">Namespace Review</a>.</li>
+            <li>Link the namespace approval issue to this release plan:<br>
+              <div class="action-prompt"><code>Link namespace approval issue &lt;url&gt; to the release plan ${esc(String(planId2))}</code></div>
+            </li>
+          </ol>
         </div>`;
       }
     }
@@ -1276,9 +1527,9 @@
     {
       const langs = p.languages || {};
       let needsServiceTeam = false;
-      let needsReviewTeam = false;
       for (const k of Object.keys(langs)) {
         if (isLangExcluded(langs[k].exclusionStatus)) continue;
+        if (isLangMissingEmitterConfig(langs[k].exclusionStatus)) continue;
         const st = (
           langs[k].sdkPrGitHubStatus ||
           langs[k].prStatus ||
@@ -1296,9 +1547,11 @@
         ) {
           needsServiceTeam = true;
         }
-        // Open PR → review team
-        if (st === "open") {
-          needsReviewTeam = true;
+        // Release approval pending → service team
+        if (
+          (langs[k].releaseStatus || "").toLowerCase() === "approval pending"
+        ) {
+          needsServiceTeam = true;
         }
       }
       // Non-PR actions (spec not ready, SDK not generated) → service team
@@ -1307,15 +1560,11 @@
         step.status === "API Spec In Progress" ||
         step.status === "SDK To Be Generated" ||
         step.status === "SDK Generation Failed" ||
-        step.status === "SDK Ready To Be Released"
+        step.status === "SDK Ready To Release"
       ) {
         needsServiceTeam = true;
       }
-      if (needsServiceTeam)
-        actionFrom.push(
-          p.submittedBy ? `Service Team (${p.submittedBy})` : "Service Team",
-        );
-      if (needsReviewTeam) actionFrom.push("SDK PR Reviewer");
+      if (needsServiceTeam) actionFrom.push(serviceTeamLabel(p.submittedBy));
     }
     const actionFromHTML = actionFrom.length
       ? `<div class="action-from-label">Action required from: <strong>${esc(actionFrom.join(" & "))}</strong></div>`
@@ -1336,7 +1585,9 @@
     const langs = p.languages || {};
     const langKeys = Object.keys(langs);
     const activeLangs = langKeys.filter(
-      (k) => !isLangExcluded(langs[k].exclusionStatus),
+      (k) =>
+        !isLangExcluded(langs[k].exclusionStatus) &&
+        !isLangMissingEmitterConfig(langs[k].exclusionStatus),
     );
     // A language counts as "SDK generated" if it has a PR URL, or release is completed, or PR status is merged
     function isLangGenerated(k) {
@@ -1507,7 +1758,10 @@
       html += `<div class="detail-row detail-step-highlight">
         <strong>Current stage:</strong> <span class="step-badge ${step.statusClass}">${esc(step.status)}</span>`;
       if (step.action) {
-        if (!(showPmAction && p._pmAction)) {
+        if (
+          !(showPmAction && p._pmAction) &&
+          isServiceTeamAction(step.action)
+        ) {
           html += ` <strong>Action required from:</strong> <span class="action-badge">${esc(step.action)}</span>`;
         }
       }
@@ -1515,13 +1769,17 @@
     }
     if (specPath)
       html += `<div class="detail-row"><strong>Spec Project Path:</strong> ${esc(specPath)}</div>`;
-    // Work item link — always show using work item id
+    // Work item link — show as link for PMs, plain text for others
     {
-      const wiUrl = `https://dev.azure.com/azure-sdk/Release/_workitems/edit/${p.id}`;
       const label = p.releasePlanId
         ? `#${esc(String(p.releasePlanId))}`
         : `WI ${esc(String(p.id))}`;
-      html += `<div class="detail-row"><strong>Release Plan:</strong> <a href="${esc(wiUrl)}" target="_blank" rel="noopener">${label}</a> <span class="wi-warning">⚠️ Do not modify directly — use the <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">azsdk agent</a></span></div>`;
+      if (currentUserIsPM) {
+        const wiUrl = `https://dev.azure.com/azure-sdk/Release/_workitems/edit/${p.id}`;
+        html += `<div class="detail-row"><strong>Release Plan:</strong> <a href="${esc(wiUrl)}" target="_blank" rel="noopener">${label}</a> <span class="wi-warning">⚠️ Do not modify directly — use the <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">azsdk agent</a></span></div>`;
+      } else {
+        html += `<div class="detail-row"><strong>Release Plan:</strong> ${label}</div>`;
+      }
     }
     if (
       p.typeSpecPath &&
@@ -1559,10 +1817,13 @@
     html += "</div>";
 
     // Expandable Product Details section
-    if (p.productName) {
+    if (p.productName || p.productId) {
+      const productHeading = p.productName
+        ? `Product: ${esc(p.productName)}`
+        : "Product";
       html += `<div class="detail-group product-collapsible">
         <h4 class="product-toggle" style="cursor:pointer;user-select:none;">
-          <span class="product-caret">&#9654;</span> Product: ${esc(p.productName)}
+          <span class="product-caret">&#9654;</span> ${productHeading}
         </h4>
         <div class="product-details" style="display:none;">`;
       if (p.serviceName)
@@ -1587,13 +1848,18 @@
         const langs = p.languages || {};
         const langKeys = Object.keys(langs);
         if (langKeys.length) {
-          // Determine if any SDK PR exists to decide expanded vs collapsed
+          // Determine if any SDK PR exists or any package name is present to decide expanded vs collapsed
           const hasAnyPr = langKeys.some(
             (k) =>
               langs[k].sdkPrUrl && !isLangExcluded(langs[k].exclusionStatus),
           );
-          const sdkDisplay = hasAnyPr ? "" : "display:none;";
-          const sdkCaret = hasAnyPr ? "&#9660;" : "&#9654;";
+          const hasAnyPackageName = langKeys.some(
+            (k) =>
+              langs[k].packageName && !isLangExcluded(langs[k].exclusionStatus),
+          );
+          const shouldExpand = hasAnyPr || hasAnyPackageName;
+          const sdkDisplay = shouldExpand ? "" : "display:none;";
+          const sdkCaret = shouldExpand ? "&#9660;" : "&#9654;";
           html += `<div class="detail-group sdk-collapsible">
         <h4 class="sdk-toggle" style="cursor:pointer;user-select:none;">
           <span class="sdk-caret">${sdkCaret}</span> SDK Details
@@ -1601,7 +1867,7 @@
         <div class="sdk-details-content" style="${sdkDisplay}">
         <table class="sdk-table"><thead><tr>
           <th>Language</th><th>Package</th><th>SDK PR</th><th>PR Status</th>
-          <th>APIView</th><th>Release Status</th><th>Version</th><th>Package Link</th><th>Action Required</th>
+          <th>Release Status</th><th>Version</th><th>Package Link</th><th>Action Required</th>
         </tr></thead><tbody>`;
           for (const lang of langKeys) {
             const l = langs[lang];
@@ -1615,24 +1881,42 @@
             let releaseDisplay = l.releaseStatus || "";
             if (exLabel) releaseDisplay = exLabel.text;
 
-            // Determine display version: use releasedVersion when released, pkgVersion otherwise
+            // Determine display version: use releasedVersion when released;
+            // when not released, show pkgVersion with "Pending" label only if PR is merged
             const isReleased =
               (l.releaseStatus || "").toLowerCase() === "released";
+            const prStForVersion = (
+              l.sdkPrGitHubStatus ||
+              l.prStatus ||
+              ""
+            ).toLowerCase();
+            const isPrMerged =
+              prStForVersion.includes("merged") ||
+              prStForVersion === "completed";
             const displayVersion = isReleased
               ? l.releasedVersion || ""
-              : l.pkgVersion || "";
+              : isPrMerged
+                ? l.pkgVersion || ""
+                : "";
+            const isVersionPending =
+              !isReleased && isPrMerged && !!displayVersion;
 
-            // Package labels: namespace approval + new package + API review (version now in its own column)
+            // Package labels: first preview/GA + namespace approval + API review (version now in its own column)
             let pkgLabels = "";
-            if (l.isNewPackage) {
-              pkgLabels += '<span class="pr-label pr-label-new">New</span>';
-              if (
-                classifyPlane(p) !== "mgmt" &&
-                l.namespaceApproval &&
-                l.namespaceApproval.toLowerCase() !== "approved"
-              ) {
-                pkgLabels += `<span class="pr-label pr-label-ns-pending" title="Namespace: ${esc(l.namespaceApproval)}">${esc(l.namespaceApproval)}</span>`;
-              }
+            if (l.isFirstPreview) {
+              pkgLabels +=
+                '<span class="pr-label pr-label-first-preview">First Preview</span>';
+            } else if (l.isFirstGA) {
+              pkgLabels +=
+                '<span class="pr-label pr-label-first-ga">First GA</span>';
+            }
+            if (
+              l.isFirstPreview &&
+              classifyPlane(p) !== "mgmt" &&
+              l.namespaceApproval &&
+              l.namespaceApproval.toLowerCase() !== "approved"
+            ) {
+              pkgLabels += `<span class="pr-label pr-label-ns-pending" title="Namespace: ${esc(l.namespaceApproval)}">${esc(l.namespaceApproval)}</span>`;
             }
             if (
               l.apiReviewStatus &&
@@ -1646,19 +1930,13 @@
               pkgLabels += `<span class="pr-label ${arClass}">API: ${esc(l.apiReviewStatus)}</span>`;
             }
 
-            // APIView column — loaded on-demand when card is expanded
-            let apiViewCell = "—";
-            if (l.sdkPrUrl) {
-              if (l.prDetails && l.prDetails.apiViewUrl) {
-                apiViewCell = `<a href="${esc(l.prDetails.apiViewUrl)}" target="_blank" rel="noopener">APIView</a>`;
-              } else {
-                apiViewCell = `<span class="apiview-placeholder">…</span>`;
-              }
-            }
-
             // Action column — determine per-language action
             let actionCell = "";
-            if (!excluded && p.state !== "Finished") {
+            if (
+              !excluded &&
+              !isLangMissingEmitterConfig(l.exclusionStatus) &&
+              p.state !== "Finished"
+            ) {
               const prSt = (
                 l.sdkPrGitHubStatus ||
                 l.prStatus ||
@@ -1683,6 +1961,10 @@
 
               if (isReleased) {
                 actionCell = "";
+              } else if (relSt === "approval pending" && l.releasePipeline) {
+                // Release is queued and waiting for the service team to approve
+                // the release stage in the release pipeline. Link directly to it.
+                actionCell = `<a class="lang-action-btn action-btn-approve" href="${esc(l.releasePipeline)}" target="_blank" rel="noopener" title="Approve the package release in the release pipeline">Approve Release</a>`;
               } else if (!hasPr) {
                 actionCell = langActionBtn(ACTION_TYPES.GENERATE, lang, p, l);
               } else if (isClosed && !isMerged) {
@@ -1708,14 +1990,47 @@
               feedLinkCell = `<a href="${esc(feedUrl)}" target="_blank" rel="noopener" title="View on ${feedInfo.name}">${feedInfo.icon} ${feedInfo.name}</a>`;
             }
 
+            // PR Status cell — when a PR exists, show its status. Otherwise
+            // surface SDK generation status/pipeline links so the service team
+            // can track generation progress or failures.
+            let prStatusCell = "";
+            if (l.sdkPrUrl) {
+              prStatusCell = statusSpan(l.sdkPrGitHubStatus || l.prStatus);
+            } else {
+              const prStatusText = (l.prStatus || "").toLowerCase().trim();
+              const genStatus = l.generationStatus || "";
+              const genLower = genStatus.toLowerCase();
+              const genPipeline = l.sdkGenerationPipeline || "";
+              if (prStatusText === "failed to generate sdk." && genPipeline) {
+                prStatusCell = `${statusSpan("Failed to generate SDK")} <a href="${esc(genPipeline)}" target="_blank" rel="noopener" title="View SDK generation pipeline">View pipeline</a>`;
+              } else if (
+                (genLower.includes("progress") ||
+                  genLower.includes("running") ||
+                  genLower.includes("inprogress")) &&
+                genPipeline
+              ) {
+                prStatusCell = `${statusSpan(genStatus)} <a href="${esc(genPipeline)}" target="_blank" rel="noopener" title="View SDK generation pipeline">View pipeline</a>`;
+              }
+            }
+
+            // Release Status cell — when release approval is pending, show a
+            // prominent badge. The pipeline approval link is surfaced as an
+            // "Approve Release" action in the Action Required column.
+            let releaseCell = statusSpan(releaseDisplay);
+            if (
+              !exLabel &&
+              (l.releaseStatus || "").toLowerCase() === "approval pending"
+            ) {
+              releaseCell = `<span class="release-approval-pending-badge" title="The package release is queued and pending approval in the release pipeline"><span class="release-approval-pending-icon" aria-hidden="true">⏳</span> Pending Release Approval</span>`;
+            }
+
             html += `<tr${rowClass}>
             <td><strong>${esc(lang)}</strong></td>
             <td>${esc(l.packageName) || "—"} ${pkgLabels}</td>
             <td>${prLink} ${prLabels}</td>
-            <td>${l.sdkPrUrl ? statusSpan(l.sdkPrGitHubStatus || l.prStatus) : ""}</td>
-            <td class="apiview-cell">${apiViewCell}</td>
-            <td>${statusSpan(releaseDisplay)}</td>
-            <td>${displayVersion ? esc(displayVersion) : isReleased ? '<span class="version-na">Not available</span>' : "—"}</td>
+            <td>${prStatusCell}</td>
+            <td>${releaseCell}</td>
+            <td>${displayVersion ? `<span title="${isVersionPending ? "This indicates current package version on the main branch in SDK repo" : ""}">${esc(displayVersion)}</span>${isVersionPending ? ' <span class="pr-label pr-label-version-pending" title="This indicates current package version on the main branch in SDK repo">Pending</span>' : ""}` : isReleased ? '<span class="version-na">Not available</span>' : "—"}</td>
             <td>${feedLinkCell}</td>
             <td class="action-cell">${actionCell}</td>
           </tr>`;
@@ -1800,6 +2115,25 @@
       html += `<div class="action-note">
         <strong>💡 Link a different SDK PR:</strong> Use the <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">Azure SDK Tools agent</a> in Copilot CLI or VS Code and run:
         <div class="action-prompt"><code>Link SDK pull request &lt;PR link&gt; to release plan ${esc(planId)}</code></div>
+      </div>`;
+    }
+
+    // Missing product details highlight
+    if (!p.productId) {
+      const releaseType = p.releasePlanType || p.releaseType || "GA";
+      const planId = p.releasePlanId || p.id;
+      html += `<div class="missing-product-highlight">
+        <strong>⚠️ Product details are missing in release plan</strong>
+        <p>Product and Service ID are required if KPI attestation is required for your product in S360.
+        You can ignore this if your product has already completed KPI attestation for <strong>${esc(releaseType)}</strong>.</p>
+        <div class="pm-action-steps">
+          <strong>How to update Service and Product ID:</strong>
+          <ol>
+            <li>Identify your service and product ID in Service Tree at <a href="https://aka.ms/st" target="_blank" rel="noopener">aka.ms/st</a>.</li>
+            <li>Copy the Service ID and Product ID, then use the <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">Azure SDK Tools agent</a> in Copilot CLI or VS Code and run:<br>
+              <code class="action-prompt-inline">Get release plan ${esc(String(planId))} and update release plan ${esc(String(planId))} to include product and service ID. Product ID: &lt;product id&gt;, Service ID: &lt;service id&gt;</code></li>
+          </ol>
+        </div>
       </div>`;
     }
 
@@ -1892,25 +2226,23 @@
             }
           }
         }
-
-        const apiViewTd = row.children[4];
-        if (apiViewTd && apiViewTd.classList.contains("apiview-cell")) {
-          const apiViewUrl = info.prDetails && info.prDetails.apiViewUrl;
-          apiViewTd.innerHTML = apiViewUrl
-            ? `<a href="${esc(apiViewUrl)}" target="_blank" rel="noopener">APIView</a>`
-            : "Not available";
-        }
       }
 
       if (plan && cardEl) {
-        const step = computeCurrentStep(plan);
+        // Don't narrow PM-view cards to a single language (see cardHTML).
+        const cardIsInPmTab = !!(cardEl && cardEl.closest("#tab-pm-view"));
+        const dPlan = cardIsInPmTab ? plan : displayPlan(plan);
+        const step = computeCurrentStep(dPlan);
+        const cardAction = isServiceTeamAction(step.action) ? step.action : "";
         cardEl.querySelectorAll(".card-meta .step-badge").forEach((el) => {
           el.className = `step-badge ${step.statusClass}`;
           el.textContent = step.status;
         });
         cardEl.querySelectorAll(".card-meta .action-badge").forEach((el) => {
-          el.textContent = step.action || "";
-          el.style.display = step.action ? "" : "none";
+          el.textContent = cardAction
+            ? `Action required from: ${cardAction}`
+            : "";
+          el.style.display = cardAction ? "" : "none";
         });
         detailsEl
           .querySelectorAll(".detail-step-highlight .step-badge")
@@ -1921,8 +2253,8 @@
         detailsEl
           .querySelectorAll(".detail-step-highlight .action-badge")
           .forEach((el) => {
-            el.textContent = step.action || "";
-            el.style.display = step.action ? "" : "none";
+            el.textContent = cardAction || "";
+            el.style.display = cardAction ? "" : "none";
           });
 
         const oldAction = detailsEl.querySelector(".action-required-section");
@@ -1931,7 +2263,7 @@
         if (isInPmTab && plan._pmAction) {
           if (oldAction) oldAction.remove();
         } else {
-          const newActionHTML = actionRequiredHTML(plan);
+          const newActionHTML = actionRequiredHTML(dPlan);
           if (oldAction) {
             if (newActionHTML) oldAction.outerHTML = newActionHTML;
             else oldAction.remove();
@@ -2237,6 +2569,8 @@
         store().filters.sort,
         store().filters.prLang,
         store().filters.prStatus,
+        store().filters.tag,
+        store().filters.language,
       ];
       // Skip re-render if plans not loaded yet
       if (!getPlans().length) return;
@@ -2334,9 +2668,40 @@
     return actDate < threeMonthsAgo;
   }
 
+  let pmSectionsInitialized = false;
+
   function renderPMView(plans) {
     // Server-verified PM check — prevents rendering even if tab is unhidden via DevTools
     if (!currentUserIsPM) return;
+
+    // Collapse all PM sections by default on first render so PMs can easily find the group they want
+    if (!pmSectionsInitialized) {
+      pmSectionsInitialized = true;
+      const pmSectionIds = [
+        "list-pm-pp-ready",
+        "list-pm-ns-missing",
+        "list-pm-approaching",
+        "list-pm-pastdue",
+        "list-pm-inactive",
+        "list-pm-tier1",
+        "list-pm-partial",
+        "list-pm-product-missing",
+        "list-pm-finished",
+      ];
+      const ui = store().ui;
+      for (const sectionId of pmSectionIds) {
+        if (ui.collapsedSections[sectionId] !== undefined) continue;
+        const listEl = document.getElementById(sectionId);
+        if (!listEl) continue;
+        listEl.style.display = "none";
+        listEl.setAttribute("hidden", "");
+        const section = listEl.parentElement;
+        if (section) section.classList.add("collapsed");
+        const caret = section && section.querySelector(".caret");
+        if (caret) caret.innerHTML = "&#9654;";
+        ui.collapsedSections[sectionId] = true;
+      }
+    }
 
     const planeFilter = getGlobalPlaneFilter();
     const monthFilter = getMonthFilter();
@@ -2348,6 +2713,33 @@
         (p) =>
           (p.releaseMonth || "").toLowerCase() === monthFilter.toLowerCase(),
       );
+    const tagFilter = store().filters.tag;
+    if (tagFilter) {
+      filtered = filtered.filter((p) => {
+        const langs = p.languages || {};
+        if (tagFilter === "first-preview") {
+          return Object.values(langs).some(
+            (l) => l.isFirstPreview && l.packageName,
+          );
+        }
+        if (tagFilter === "first-ga") {
+          return Object.values(langs).some((l) => l.isFirstGA && l.packageName);
+        }
+        if (tagFilter === "sdk-ready-to-release") {
+          return isSdkReadyToReleasePlan(p);
+        }
+        if (tagFilter === "generated-by-automation") {
+          return isGeneratedByAutomationPlan(p);
+        }
+        if (tagFilter === "release-approval-required") {
+          return isReleaseApprovalRequiredPlan(p);
+        }
+        if (tagFilter === "sdk-generation-failed") {
+          return isSdkGenerationFailedPlan(p);
+        }
+        return true;
+      });
+    }
 
     const inactive = [];
     const tier1Missing = [];
@@ -2355,6 +2747,9 @@
     const approaching = [];
     const pastDue = [];
     const recentlyFinished = [];
+    const ppReady = [];
+    const nsMissing = [];
+    const productMissing = [];
 
     const now = new Date();
     const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -2372,6 +2767,64 @@
           recentlyFinished.push(p);
         }
         continue;
+      }
+
+      // Ready to complete private preview — non-finished private preview with merged spec PR
+      if (isPrivatePreviewPlan(p)) {
+        const specStatus = (p.apiReadiness || "").toLowerCase();
+        if (specStatus === "completed" || specStatus === "merged") {
+          const planId = p.releasePlanId || p.id;
+          p._pmAction = `This private preview release plan has a merged API spec PR. It is ready to be marked as completed.
+          <div class="pm-action-steps">
+            <strong>To complete this release plan:</strong>
+            <ol>
+              <li>Clone an Azure SDK or <a href="https://github.com/Azure/azure-rest-api-specs" target="_blank" rel="noopener">azure-rest-api-specs</a> repo and open Copilot CLI or VS Code from the repo root.</li>
+              <li>Copy and run the following prompt:<br><code class="action-prompt-inline">Complete release plan ${esc(String(planId))}</code></li>
+            </ol>
+          </div>`;
+          ppReady.push(p);
+        }
+        continue; // Private preview plans skip other categories
+      }
+
+      // Missing namespace approval — mgmt plane with first preview packages and no namespace approval link
+      {
+        const isMgmt = classifyPlane(p) === "mgmt";
+        const langs = p.languages || {};
+        const hasFirstPreview = Object.values(langs).some(
+          (l) => l.isFirstPreview && l.packageName,
+        );
+        if (isMgmt && hasFirstPreview && !p.namespaceApprovalIssue) {
+          const planId = p.releasePlanId || p.id;
+          p._nsWarning = true;
+          p._nsAction = `This management plane release plan contains a first preview package but is missing a namespace approval issue link.
+          <div class="pm-action-steps">
+            <strong>Action required for service partner team:</strong>
+            <ol>
+              <li>Get namespace approved by following the process at <a href="https://eng.ms/docs/products/azure-developer-experience/develop/namespace-review" target="_blank" rel="noopener">Namespace Review</a>.</li>
+              <li>Once approved, link the namespace approval issue to this release plan using the prompt:<br><code class="action-prompt-inline">Link namespace approval issue &lt;url&gt; to the release plan ${esc(String(planId))}</code></li>
+            </ol>
+          </div>`;
+          nsMissing.push(p);
+        }
+      }
+
+      // Missing product details — no product ID in release plan
+      if (!p.productId) {
+        const planId = p.releasePlanId || p.id;
+        const releaseType = p.releasePlanType || p.releaseType || "GA";
+        p._productMissingAction = `Product details are missing in this release plan.
+          <p style="margin:4px 0;">Product and Service ID are required if KPI attestation is required for your product in S360.
+          You can ignore this if the product has already completed KPI attestation for <strong>${esc(releaseType)}</strong>.</p>
+          <div class="pm-action-steps">
+            <strong>How to update Service and Product ID:</strong>
+            <ol>
+              <li>Identify the service and product ID in Service Tree at <a href="https://aka.ms/st" target="_blank" rel="noopener">aka.ms/st</a>.</li>
+              <li>Copy the Service ID and Product ID, then run the following prompt:<br>
+                <code class="action-prompt-inline">Get release plan ${esc(String(planId))} and update release plan ${esc(String(planId))} to include product and service ID. Product ID: &lt;product id&gt;, Service ID: &lt;service id&gt;</code></li>
+            </ol>
+          </div>`;
+        productMissing.push(p);
       }
 
       // Approaching SDK release target (current month or next month, not yet finished)
@@ -2438,20 +2891,62 @@
         parseReleaseMonth(a.releaseMonth) - parseReleaseMonth(b.releaseMonth),
     );
 
+    renderPMSection("list-pm-pp-ready", ppReady);
+    // Render nsMissing section with namespace-specific action
+    {
+      const el = document.getElementById("list-pm-ns-missing");
+      if (el) {
+        if (!nsMissing.length) {
+          el.innerHTML = '<div class="empty-msg">None found ✓</div>';
+        } else {
+          el.innerHTML = nsMissing
+            .map((p) => {
+              const saved = p._pmAction;
+              p._pmAction = p._nsAction;
+              const html = cardHTML(p, { showPmAction: true });
+              p._pmAction = saved;
+              return html;
+            })
+            .join("");
+        }
+      }
+    }
     renderPMSection("list-pm-approaching", approaching);
     renderPMSection("list-pm-pastdue", pastDue);
     renderPMSection("list-pm-inactive", inactive);
     renderPMSection("list-pm-tier1", tier1Missing);
     renderPMSection("list-pm-partial", partial);
+    // Render productMissing section with product-specific action
+    {
+      const el = document.getElementById("list-pm-product-missing");
+      if (el) {
+        if (!productMissing.length) {
+          el.innerHTML = '<div class="empty-msg">None found ✓</div>';
+        } else {
+          el.innerHTML = productMissing
+            .map((p) => {
+              const saved = p._pmAction;
+              p._pmAction = p._productMissingAction;
+              const html = cardHTML(p, { showPmAction: true });
+              p._pmAction = saved;
+              return html;
+            })
+            .join("");
+        }
+      }
+    }
     renderPMSection("list-pm-finished", recentlyFinished);
 
     // Update section counts
     const sections = [
+      { id: "section-pm-pp-ready", count: ppReady.length },
+      { id: "section-pm-ns-missing", count: nsMissing.length },
       { id: "section-pm-approaching", count: approaching.length },
       { id: "section-pm-pastdue", count: pastDue.length },
       { id: "section-pm-inactive", count: inactive.length },
       { id: "section-pm-tier1", count: tier1Missing.length },
       { id: "section-pm-partial", count: partial.length },
+      { id: "section-pm-product-missing", count: productMissing.length },
       { id: "section-pm-finished", count: recentlyFinished.length },
     ];
     for (const s of sections) {
@@ -2713,7 +3208,10 @@
     }
 
     const wiUrl = `https://dev.azure.com/azure-sdk/Release/_workitems/edit/${pr.planId}`;
-    html += `<div class="pr-detail-row"><strong>Release Plan:</strong> <a href="/?releasePlan=${esc(String(pr.releasePlanId))}">#${esc(String(pr.releasePlanId))}</a> — ${esc(pr.planTitle)} <a href="${esc(wiUrl)}" target="_blank" rel="noopener" style="font-size:.78rem;color:#605e5c;">(DevOps)</a></div>`;
+    const devOpsLink = currentUserIsPM
+      ? ` <a href="${esc(wiUrl)}" target="_blank" rel="noopener" style="font-size:.78rem;color:#605e5c;">(DevOps)</a>`
+      : "";
+    html += `<div class="pr-detail-row"><strong>Release Plan:</strong> <a href="/?releasePlan=${esc(String(pr.releasePlanId))}">#${esc(String(pr.releasePlanId))}</a> — ${esc(pr.planTitle)}${devOpsLink}</div>`;
     if (pr.releaseMonth)
       html += `<div class="pr-detail-row"><strong>Target Release:</strong> ${esc(pr.releaseMonth)}</div>`;
     if (pr.releaseStatus)
@@ -2752,18 +3250,19 @@
         html += `<div class="pr-detail-row"><strong>APIView:</strong> <a href="${esc(d.apiViewUrl)}" target="_blank" rel="noopener">View API Changes</a></div>`;
       }
       // Action required — context-specific guidance for the PR tab
-      const serviceTeamLabel = pr.submittedBy
-        ? `Service Team (${esc(pr.submittedBy)})`
-        : "Service Team";
+      const serviceTeamLabelHTML =
+        pr.submittedBy && !isAutomationSubmitter(pr.submittedBy)
+          ? `Service Team (${esc(pr.submittedBy)})`
+          : "Service Team";
       if (!prIsMerged) {
         if (prIsOpenOrDraft && d.failedChecks && d.failedChecks.length) {
-          html += `<div class="action-required-section" style="margin-top:10px;"><h4>⚡ Action Required</h4><div class="action-from-label">Action required from: <strong>${serviceTeamLabel}</strong></div><div class="action-item action-item-warning"><strong>Fix check failures:</strong> Clone the repo, checkout the PR, and use the <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">Azure SDK Tools agent</a> to resolve build errors.</div></div>`;
+          html += `<div class="action-required-section" style="margin-top:10px;"><h4>⚡ Action Required</h4><div class="action-from-label">Action required from: <strong>${serviceTeamLabelHTML}</strong></div><div class="action-item action-item-warning"><strong>Fix check failures:</strong> Clone the repo, checkout the PR, and use the <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">Azure SDK Tools agent</a> to resolve build errors.</div></div>`;
         } else if (prIsClosed) {
-          html += `<div class="action-required-section" style="margin-top:10px;"><h4>⚡ Action Required</h4><div class="action-from-label">Action required from: <strong>${serviceTeamLabel}</strong></div><div class="action-item action-item-warning"><strong>PR Closed:</strong> Regenerate the SDK or link a different PR to the release plan.</div></div>`;
+          html += `<div class="action-required-section" style="margin-top:10px;"><h4>⚡ Action Required</h4><div class="action-from-label">Action required from: <strong>${serviceTeamLabelHTML}</strong></div><div class="action-item action-item-warning"><strong>PR Closed:</strong> Regenerate the SDK or link a different PR to the release plan.</div></div>`;
         } else if (st === "draft") {
-          html += `<div class="action-required-section" style="margin-top:10px;"><h4>⚡ Action Required</h4><div class="action-from-label">Action required from: <strong>${serviceTeamLabel}</strong></div><div class="action-item"><strong>Mark as ready for review:</strong> This PR is in draft status. Mark it as ready for review when the SDK changes are complete.</div></div>`;
+          html += `<div class="action-required-section" style="margin-top:10px;"><h4>⚡ Action Required</h4><div class="action-from-label">Action required from: <strong>${serviceTeamLabelHTML}</strong></div><div class="action-item"><strong>Mark as ready for review:</strong> This PR is in draft status. Mark it as ready for review when the SDK changes are complete.</div></div>`;
         } else if (d.isApproved && st === "open") {
-          html += `<div class="action-required-section" style="margin-top:10px;"><h4>⚡ Action Required</h4><div class="action-from-label">Action required from: <strong>${serviceTeamLabel}</strong></div><div class="action-item"><strong>Merge the SDK pull request:</strong> This PR has been approved by the SDK team. <a href="${esc(pr.prUrl)}" target="_blank" rel="noopener">Open the PR on GitHub</a> and merge it.</div></div>`;
+          html += `<div class="action-required-section" style="margin-top:10px;"><h4>⚡ Action Required</h4><div class="action-from-label">Action required from: <strong>${serviceTeamLabelHTML}</strong></div><div class="action-item"><strong>Merge the SDK pull request:</strong> This PR has been approved by the SDK team. <a href="${esc(pr.prUrl)}" target="_blank" rel="noopener">Open the PR on GitHub</a> and merge it.</div></div>`;
         }
       }
       // Latest comment

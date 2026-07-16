@@ -41,6 +41,7 @@ class AgentReferenceType(str, Enum):
 class Message(BaseModel):
     """A message in the conversation."""
 
+    id: str | None = None
     role: Role
     content: str
     user_name: str | None = None

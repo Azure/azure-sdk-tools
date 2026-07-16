@@ -26,14 +26,27 @@ from models.conversation import ConversationMessage
 from models.knowledge import DocumentContext, Reference, SearchKnowledgeBaseResult
 from services.conversation_service import ConversationService
 from tools import TOOL_REGISTRY
-from skills.tenant_skills import get_skill_to_tenant_map
-from utils.azure_ai_foundry import get_openai_client, get_project_client
+from skills.tenant_skills import (
+    build_skill_content,
+    get_skill_name_for_tenant,
+    get_skill_to_tenant_map,
+)
+from utils.azure_ai_foundry import (
+    get_openai_client,
+    get_project_client,
+    get_stateless_session_id,
+    set_stateless_session_id,
+)
+from utils.azure_ai_foundry_agent import HostedAgentClient
 from utils.teams_image import get_image_data_uri
 from utils.text_util import preprocess_message
 from utils.azure_memory_store import sanitize_scope
 from azure.ai.projects.aio import AIProjectClient
 from azure.ai.projects.models import AgentVersionDetails
-from openai import AsyncOpenAI, NotFoundError
+from openai import (
+    AsyncOpenAI,
+    NotFoundError,
+)
 from openai.types.responses import Response as OpenAIResponse
 from openai.types.responses import (
     ResponseFunctionToolCall,
@@ -42,17 +55,17 @@ from openai.types.responses import (
 )
 from openai.types.responses.response_input_item_param import ResponseInputItemParam
 from config.tenant_config import TenantID
-from typing import Any, cast
+from typing import cast
 from utils.background_tasks import BackgroundTaskTracker
 
 logger = logging.getLogger(__name__)
 
-# -- Polling constants for empty-response retry loop ----------------------
-POLL_MAX_RETRIES = 5
-POLL_RETRY_DELAY_SECS = 3.0
-
 COMPACT_THRESHOLD = 100000
 """Token count at which conversation history is compacted."""
+
+# -- Bot identity constants -----------------------------------------------
+BOT_SENDER_ID = "azure-sdk-qa-bot"
+BOT_SENDER_NAME = "Azure SDK Q&A Bot"
 
 _CITATION_RE = re.compile(r"[^\w\s]*cite[^\w\s]*turn\d+\S*")
 
@@ -70,9 +83,18 @@ class ChatService:
         agent = await self._get_agent(project_client)
         openai_client = get_openai_client()
 
-        agent_conversation_id, is_new = await self._resolve_conversation(
-            openai_client, req
-        )
+        # Stateless calls (no customer conversation_id) skip conversation
+        # threading and reuse a warm sandbox; threaded calls resolve history.
+        stateless = not req.conversation_id
+        if stateless:
+            agent_conversation_id, is_new = None, True
+            agent_session_id = get_stateless_session_id()
+            logger.info("Stateless request: reusing warm session=%s", agent_session_id)
+        else:
+            agent_conversation_id, is_new = await self._resolve_conversation(
+                openai_client, req
+            )
+            agent_session_id = None
         conversation_items: list[ResponseInputItemParam] = []
         if is_new:
             tenant_system_msg = self._build_tenant_system_message(req.tenant_id)
@@ -122,8 +144,10 @@ class ChatService:
         )
 
         # Process additional info (images, links, text) from the frontend.
-        image_items = await self._build_image_items(req.additional_infos or [])
-        conversation_items.extend(image_items)
+        additional_items = await self._build_additional_info_items(
+            req.additional_infos or []
+        )
+        conversation_items.extend(additional_items)
 
         agent_ref: dict = {
             "name": agent.name,
@@ -131,34 +155,26 @@ class ChatService:
             "type": AgentReferenceType.agent_reference.value,
         }
 
-        # Streaming is broken for hosted agents — text is lost entirely.
-        # See https://github.com/Azure/azure-sdk-for-python/issues/45282
-        # and https://github.com/Azure/azure-sdk-for-python/issues/46015
-        raw_response = await openai_client.responses.with_raw_response.create(
-            input=conversation_items,
-            conversation=agent_conversation_id,
-            store=True,
-            stream=False,
-            extra_body={
-                "agent_reference": agent_ref,
-            },
+        agent_client = HostedAgentClient(openai_client)
+        trace_id, response = await agent_client.invoke(
+            conversation_items=conversation_items,
+            agent_conversation_id=agent_conversation_id,
+            agent_session_id=agent_session_id,
+            agent_ref=agent_ref,
         )
-        response: OpenAIResponse = raw_response.parse()
+        # Cache the warm sandbox id so later stateless calls reuse it.
+        if stateless and not get_stateless_session_id():
+            extra = getattr(response, "model_extra", None) or {}
+            captured = extra.get("agent_session_id")
+            set_stateless_session_id(captured)
+            logger.info("Stateless request: captured warm session=%s", captured)
 
-        # Extract AI Foundry trace ID from x-request-id header.
-        # The header may contain duplicated values separated by comma.
-        x_request_id = raw_response.headers.get("x-request-id", "")
-        trace_id = x_request_id.split(",")[0].strip() if x_request_id else None
         logger.info(
             "Agent trace: trace_id=%s, response_id=%s, conversation=%s",
             trace_id,
             response.id,
             agent_conversation_id,
         )
-
-        # Poll if response completed with empty text (Foundry persistence delay).
-        if response.status == "completed" and not response.output_text:
-            response = await self._poll_response_text(openai_client, response)
 
         if response.status != "completed":
             logger.warning(
@@ -192,49 +208,6 @@ class ChatService:
         )
         return chat_response
 
-    @staticmethod
-    async def _poll_response_text(
-        openai_client: AsyncOpenAI,
-        response: OpenAIResponse,
-        max_retries: int = POLL_MAX_RETRIES,
-        retry_delay: float = POLL_RETRY_DELAY_SECS,
-    ) -> OpenAIResponse:
-        """Poll ``responses.retrieve()`` until output_text appears."""
-        for attempt in range(1, max_retries + 1):
-            await asyncio.sleep(retry_delay)
-            try:
-                refreshed = await openai_client.responses.retrieve(response.id)
-                if refreshed.output_text:
-                    logger.info(
-                        "Poll retrieved text on attempt %d/%d: response=%s, "
-                        "text_len=%d",
-                        attempt,
-                        max_retries,
-                        response.id,
-                        len(refreshed.output_text),
-                    )
-                    return refreshed
-                logger.info(
-                    "Poll attempt %d/%d: still no text, response=%s",
-                    attempt,
-                    max_retries,
-                    response.id,
-                )
-            except Exception:
-                logger.warning(
-                    "Poll attempt %d/%d failed: response=%s",
-                    attempt,
-                    max_retries,
-                    response.id,
-                    exc_info=True,
-                )
-        logger.warning(
-            "Poll exhausted %d retries without text: response=%s",
-            max_retries,
-            response.id,
-        )
-        return response
-
     async def _save_bot_answer_to_conversation(
         self,
         req: ChatRequest,
@@ -253,8 +226,8 @@ class ChatService:
             id=f"bot-{response_id}",
             tenant_id=req.tenant_id.value,
             sender_role=Role.System,
-            sender_id="azure-sdk-qa-bot",
-            sender_name="Azure SDK Q&A Bot",
+            sender_id=BOT_SENDER_ID,
+            sender_name=BOT_SENDER_NAME,
             content=content,
             created_at=datetime.now(timezone.utc),
             conversation_id=req.conversation_id,
@@ -326,43 +299,76 @@ class ChatService:
         return new_id, True
 
     @staticmethod
-    async def _build_image_items(
+    async def _build_additional_info_items(
         infos: list[AdditionalInfo],
     ) -> list[ResponseInputItemParam]:
-        """Convert image additional_infos into Responses API input items."""
+        """Convert additional_infos into Responses API input items.
+
+        Handles both text and image types:
+        - **Text**: injected as a user message so the LLM sees project context
+          (e.g. TypeSpec project state, intake analysis, .tsp code snippets).
+        - **Image**: fetched and converted to data-URI input_image items.
+        """
         items: list[ResponseInputItemParam] = []
         for info in infos:
-            if info.type != AdditionalInfoType.Image or not info.link:
-                continue
-            try:
-                data_uri = await get_image_data_uri(info.link)
-            except Exception:
-                logger.warning(
-                    "Failed to fetch Teams image: %s", info.link, exc_info=True
+            if info.type == AdditionalInfoType.Text and info.content:
+                content = info.content
+                max_chars = int(cfg("AOAI_CHAT_MAX_TOKENS", "100000"))
+                if len(content) > max_chars:
+                    logger.warning(
+                        "Text additional_info is large (%d chars, limit %d)",
+                        len(content),
+                        max_chars,
+                    )
+                items.append(
+                    cast(
+                        ResponseInputItemParam,
+                        ConversationItem(
+                            role=Role.User,
+                            content=info.content,
+                        ).model_dump(mode="json", exclude_none=True),
+                    )
                 )
-                continue
-            items.append(
-                {
-                    "type": "message",
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "input_image",
-                            "image_url": data_uri,
-                            "detail": "auto",
-                        },
-                    ],
-                }
-            )
+            elif info.type == AdditionalInfoType.Image and info.link:
+                try:
+                    data_uri = await get_image_data_uri(info.link)
+                except Exception:
+                    logger.warning(
+                        "Failed to fetch Teams image: %s",
+                        info.link,
+                        exc_info=True,
+                    )
+                    continue
+                items.append(
+                    {
+                        "type": "message",
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "input_image",
+                                "image_url": data_uri,
+                                "detail": "auto",
+                            },
+                        ],
+                    }
+                )
         return items
 
     def _build_tenant_system_message(self, tenant_id: TenantID) -> str:
-        """Inject tenant context so the agent knows the current domain."""
+        """Inject tenant context + the default skill so the agent can route itself."""
         parts: list[str] = [f"[tenant_context] original_tenant_id={tenant_id.value}"]
 
         scope_desc = get_tenant_scope_description(tenant_id)
         if scope_desc:
             parts.append(f"\n[tenant_scope]\n{scope_desc}")
+
+        skill_name = get_skill_name_for_tenant(tenant_id)
+        skill_content = build_skill_content(tenant_id) if skill_name else ""
+        if skill_content:
+            parts.append(
+                f"\n[skill] name={skill_name} "
+                f"{skill_content}"
+            )
 
         return "\n".join(parts)
 
@@ -384,7 +390,10 @@ class ChatService:
         return f"[memory_scope] value={memory_scope}"
 
     def _postprocess(
-        self, req: ChatRequest, response: OpenAIResponse, agent_conversation_id: str
+        self,
+        req: ChatRequest,
+        response: OpenAIResponse,
+        agent_conversation_id: str | None,
     ) -> ChatResponse:
         """Map hosted-agent response to `ChatResponse`."""
         tool_results = self._extract_tool_results(response.output)
@@ -395,16 +404,6 @@ class ChatService:
         tenant = self._extract_routed_tenant(response.output)
 
         output_text = response.output_text or ""
-        if not output_text:
-            output_text = (
-                "Sorry, something went wrong and I couldn't generate a response. "
-                "Please send your message again to retry."
-            )
-            logger.error(
-                "Empty output_text for response %s (status=%s), returning error message",
-                response.id,
-                response.status,
-            )
 
         # Strip model citation artifacts (e.g. "citeturn0search0").
         output_text = _CITATION_RE.sub("", output_text)

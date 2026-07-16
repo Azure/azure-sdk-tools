@@ -12,7 +12,6 @@ from agent_framework import TruncationStrategy
 from agent_framework.foundry import FoundryChatClient
 from azure.ai.projects.aio import AIProjectClient
 from openai import AsyncAzureOpenAI, AsyncOpenAI
-from opentelemetry.sdk.trace import SpanProcessor
 
 from config.app_config import get as cfg
 from utils.azure_credential import get_credential
@@ -115,105 +114,6 @@ def _get_token_provider():
     return _provider
 
 
-# App Insights rejects telemetry items > 65 536 bytes.  The agent
-# framework records full tool arguments/results as span attributes
-# (``gen_ai.content.prompt`` / ``tool.call.results`` etc.) which can
-# easily exceed this limit for knowledge-heavy tools.  This processor
-# truncates oversized string attributes in ``on_end`` *before* the
-# Azure Monitor exporter serialises them, so the span still gets
-# exported with a truncation marker instead of being silently dropped.
-_MAX_ATTR_VALUE_LEN = 8192  # 8 KB per attribute — well under the 65 KB item limit
-
-
-class SpanAttributeTruncator(SpanProcessor):
-    """Truncate large span attribute values so App Insights does not drop them."""
-
-    def __init__(self, max_len: int = _MAX_ATTR_VALUE_LEN) -> None:
-        self._max_len = max_len
-
-    def on_start(self, span, parent_context=None) -> None:  # noqa: D401
-        pass
-
-    def on_end(self, span) -> None:
-        raw_attrs = getattr(span, "_attributes", None)
-        if raw_attrs is None:
-            return
-        for key in list(raw_attrs.keys()):
-            val = raw_attrs.get(key)
-            if isinstance(val, str) and len(val) > self._max_len:
-                raw_attrs[key] = (
-                    val[: self._max_len] + f"... [truncated from {len(val)} chars]"
-                )
-
-    def shutdown(self) -> None:
-        pass
-
-    def force_flush(self, timeout_millis=None) -> bool:
-        return True
-
-
-class FoundryAgentSpanEnricher(SpanProcessor):
-    """Enriches the top-level ``HostedAgents-*`` span emitted by the platform.
-
-    The platform emits a root span named ``HostedAgents-<response_id>`` with
-    ``gen_ai.provider.name = "AzureAI Hosted Agents"`` and sets
-    ``azure.ai.agentserver.conversation_id`` — but **not**
-    ``gen_ai.conversation.id``.  Without the standard key the Foundry Traces
-    "Conversations" tab shows ``--``.
-
-    This processor copies the conversation id to the standard attribute in
-    ``on_end`` (after the platform has set it).  It does **not** touch child
-    ``chat`` or ``execute_tool`` spans — enriching those would create
-    duplicate rows in the Traces view because each carries a distinct
-    ``response_id``.
-    """
-
-    def __init__(self, project_id: str, agent_name: str, agent_id: str) -> None:
-        self._project_id = project_id
-        self._agent_name = agent_name
-        self._agent_id = agent_id
-
-    @staticmethod
-    def _is_hosted_agent_span(span) -> bool:
-        """Return True for the platform's top-level span."""
-        attrs = getattr(span, "attributes", None) or {}
-        return (
-            attrs.get("gen_ai.provider.name") == "AzureAI Hosted Agents"
-            or attrs.get("gen_ai.operation.name") == "invoke_agent"
-        )
-
-    def on_start(self, span, parent_context=None) -> None:
-        """Inject Foundry attributes on the top-level span."""
-        if not self._is_hosted_agent_span(span):
-            return
-        span.set_attribute("microsoft.foundry.project.id", self._project_id)
-        span.set_attribute("gen_ai.agent.name", self._agent_name)
-        span.set_attribute("gen_ai.agent.id", self._agent_id)
-
-    def on_end(self, span) -> None:
-        if not self._is_hosted_agent_span(span):
-            return
-        # Copy conversation id to the standard attribute if missing
-        raw_attrs = getattr(span, "_attributes", None)
-        if raw_attrs is None:
-            return
-        conv_id = raw_attrs.get("azure.ai.agentserver.conversation_id")
-        if conv_id and not raw_attrs.get("gen_ai.conversation.id"):
-            raw_attrs["gen_ai.conversation.id"] = conv_id
-        logger.debug(
-            "Span ended: name=%s conv=%s agent=%s",
-            span.name,
-            conv_id,
-            raw_attrs.get("gen_ai.agent.name"),
-        )
-
-    def shutdown(self) -> None:
-        pass
-
-    def force_flush(self, timeout_millis=None) -> bool:
-        return True
-
-
 async def close_clients() -> None:
     """Close all clients.  Safe to call even if never created."""
     global _agent_client, _project_client, _openai_client, _embedding_client
@@ -228,3 +128,21 @@ async def close_clients() -> None:
     if _project_client is not None:
         await _project_client.close()
         _project_client = None
+
+
+# -- Stateless warm-session cache ------------------------------------------
+# Stateless requests (no customer conversation_id) share one warm sandbox via a
+# stable agent_session_id captured from the first stateless response. No
+# `conversation` is threaded, so history is never shared across callers.
+_stateless_session_id: str | None = None
+
+
+def get_stateless_session_id() -> str | None:
+    """Return the cached warm sandbox id for stateless requests, if any."""
+    return _stateless_session_id
+
+
+def set_stateless_session_id(session_id: str | None) -> None:
+    """Cache (or clear) the warm sandbox id reused by stateless requests."""
+    global _stateless_session_id
+    _stateless_session_id = session_id

@@ -17,7 +17,11 @@ import { SDKType } from '../../common/types.js';
 import { join } from 'path';
 import { FunctionDeclaration, ModuleKind, Project, ScriptTarget, SourceFile, SyntaxKind } from 'ts-morph';
 import { logger } from '../../utils/logger.js';
-import ts from 'typescript';
+// Use the `ts` that ts-morph is built against, NOT the standalone `typescript` package.
+// The nodes inspected below come from ts-morph, and a hoisted/mismatched standalone
+// `typescript` (e.g. an old transitive copy) has different `SyntaxKind` numeric values,
+// which silently breaks `ts.SyntaxKind`/`ts.isIdentifier` checks against ts-morph nodes.
+import { ts } from 'ts-morph';
 
 const { JsxEmit } = ts;
 
@@ -159,18 +163,16 @@ export class DifferenceDetector {
     });
   }
 
-  // Filters out class property removals that are "by design" in HLC -> Modular migration.
-  // A removed property is considered non-breaking when it is still accessible via constructor
-  // signatures in the Modular client, either as:
+  // Filters out class property removals that are "by design" when a property is no longer
+  // a public class member but is still accessible via the current client's constructor
+  // signatures. This is applied to every SDK transition (not just HLC -> Modular), because
+  // the baseline SDK type detected from a downloaded npm package can be unreliable, and the
+  // constructor-based check below is sufficient on its own to decide whether the removal is
+  // non-breaking. A removed property is considered non-breaking when it is still accessible as:
   //   1. The constructor parameter name itself (e.g. subscriptionId)
   //   2. A property on the constructor parameter type (e.g. options?: XxxOptionalParams
   //      exposing apiVersion, cloudSetting, etc.)
   private filterClassPropertiesMovedToInternals(v: DiffPair[], className: string): DiffPair[] {
-    const isHlcToModular =
-      this.baselineApiViewOptions.sdkType === SDKType.HighLevelClient &&
-      this.currentApiViewOptions.sdkType === SDKType.ModularClient;
-    if (!isHlcToModular) return v;
-
     const currentClass = this.context!.current.getClass(className);
     if (!currentClass) return v;
 

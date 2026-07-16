@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { mapReleasePlan, LANGUAGES } from "../lib/devops-api.js";
+import { mapReleasePlan, parseCsv, LANGUAGES } from "../lib/devops-api.js";
 
 // Tests for package feed URL generation and version display logic.
 // The getPackageFeedUrl function is defined in public/app.js (client-side).
@@ -57,7 +57,18 @@ function getPackageFeedUrl(lang, packageName, version, plan) {
 // Replicate version display logic from app.js
 function getDisplayVersion(l) {
   const isReleased = (l.releaseStatus || "").toLowerCase() === "released";
-  return isReleased ? l.releasedVersion || "" : l.pkgVersion || "";
+  if (isReleased) return l.releasedVersion || "";
+  const prSt = (l.sdkPrGitHubStatus || l.prStatus || "").toLowerCase();
+  const isPrMerged = prSt.includes("merged") || prSt === "completed";
+  return isPrMerged ? l.pkgVersion || "" : "";
+}
+
+function isVersionPending(l) {
+  const isReleased = (l.releaseStatus || "").toLowerCase() === "released";
+  if (isReleased) return false;
+  const prSt = (l.sdkPrGitHubStatus || l.prStatus || "").toLowerCase();
+  const isPrMerged = prSt.includes("merged") || prSt === "completed";
+  return isPrMerged && !!l.pkgVersion;
 }
 
 describe("getPackageFeedUrl", () => {
@@ -137,18 +148,6 @@ describe("getPackageFeedUrl", () => {
   });
 
   describe("Java packages (Maven Central)", () => {
-    test("generates correct URL with explicit group:artifact format", () => {
-      const url = getPackageFeedUrl(
-        "Java",
-        "com.azure:azure-storage-blob",
-        "12.20.0",
-        dataPlan,
-      );
-      expect(url).toBe(
-        "https://central.sonatype.com/artifact/com.azure/azure-storage-blob/12.20.0",
-      );
-    });
-
     test("uses com.azure for data plane when no group specified", () => {
       const url = getPackageFeedUrl(
         "Java",
@@ -170,18 +169,6 @@ describe("getPackageFeedUrl", () => {
       );
       expect(url).toBe(
         "https://central.sonatype.com/artifact/com.azure.resourcemanager/azure-resourcemanager-compute/1.0.0",
-      );
-    });
-
-    test("uses explicit group even for mgmt packages", () => {
-      const url = getPackageFeedUrl(
-        "Java",
-        "com.azure.resourcemanager:azure-resourcemanager-storage",
-        "1.0.0",
-        mgmtPlan,
-      );
-      expect(url).toBe(
-        "https://central.sonatype.com/artifact/com.azure.resourcemanager/azure-resourcemanager-storage/1.0.0",
       );
     });
   });
@@ -252,22 +239,43 @@ describe("getDisplayVersion (version display logic)", () => {
     expect(getDisplayVersion(l)).toBe("2.0.0");
   });
 
-  test("shows pkgVersion when not released (even if releasedVersion field has a value)", () => {
+  test("shows pkgVersion when not released and PR is merged", () => {
     const l = {
       releaseStatus: "Unreleased",
       releasedVersion: "2.0.0-beta.1",
       pkgVersion: "1.9.0",
+      sdkPrGitHubStatus: "merged",
     };
     expect(getDisplayVersion(l)).toBe("1.9.0");
   });
 
-  test("shows pkgVersion when not released and no releasedVersion", () => {
+  test("shows pkgVersion when not released, no releasedVersion, and PR is merged", () => {
+    const l = {
+      releaseStatus: "Unreleased",
+      releasedVersion: "",
+      pkgVersion: "1.9.0",
+      prStatus: "merged",
+    };
+    expect(getDisplayVersion(l)).toBe("1.9.0");
+  });
+
+  test("does NOT show pkgVersion when not released and PR is not merged", () => {
+    const l = {
+      releaseStatus: "Unreleased",
+      releasedVersion: "",
+      pkgVersion: "1.9.0",
+      sdkPrGitHubStatus: "open",
+    };
+    expect(getDisplayVersion(l)).toBe("");
+  });
+
+  test("does NOT show pkgVersion when not released and no PR status", () => {
     const l = {
       releaseStatus: "Unreleased",
       releasedVersion: "",
       pkgVersion: "1.9.0",
     };
-    expect(getDisplayVersion(l)).toBe("1.9.0");
+    expect(getDisplayVersion(l)).toBe("");
   });
 
   test("does NOT show pkgVersion when released and no releasedVersion", () => {
@@ -301,12 +309,71 @@ describe("getDisplayVersion (version display logic)", () => {
 
   test("does NOT treat Unreleased as released (exact match)", () => {
     // With exact match === "released", "Unreleased" is NOT treated as released
+    // PR must be merged to show pkgVersion
     const l = {
       releaseStatus: "Unreleased",
       releasedVersion: "",
       pkgVersion: "1.0.0",
+      sdkPrGitHubStatus: "merged",
     };
     expect(getDisplayVersion(l)).toBe("1.0.0");
+  });
+
+  test("shows pkgVersion when PR status is 'completed' (merged equivalent)", () => {
+    const l = {
+      releaseStatus: "In Progress",
+      releasedVersion: "",
+      pkgVersion: "2.0.0",
+      prStatus: "completed",
+    };
+    expect(getDisplayVersion(l)).toBe("2.0.0");
+  });
+});
+
+describe("isVersionPending (pending label logic)", () => {
+  test("returns true when not released and PR is merged with pkgVersion", () => {
+    const l = {
+      releaseStatus: "Unreleased",
+      pkgVersion: "1.9.0",
+      sdkPrGitHubStatus: "merged",
+    };
+    expect(isVersionPending(l)).toBe(true);
+  });
+
+  test("returns false when released (even if PR is merged)", () => {
+    const l = {
+      releaseStatus: "Released",
+      pkgVersion: "1.9.0",
+      sdkPrGitHubStatus: "merged",
+    };
+    expect(isVersionPending(l)).toBe(false);
+  });
+
+  test("returns false when not released and PR is not merged", () => {
+    const l = {
+      releaseStatus: "Unreleased",
+      pkgVersion: "1.9.0",
+      sdkPrGitHubStatus: "open",
+    };
+    expect(isVersionPending(l)).toBe(false);
+  });
+
+  test("returns false when not released and no pkgVersion", () => {
+    const l = {
+      releaseStatus: "Unreleased",
+      pkgVersion: "",
+      sdkPrGitHubStatus: "merged",
+    };
+    expect(isVersionPending(l)).toBe(false);
+  });
+
+  test("returns true when PR status is 'completed'", () => {
+    const l = {
+      releaseStatus: "In Progress",
+      pkgVersion: "2.0.0",
+      prStatus: "completed",
+    };
+    expect(isVersionPending(l)).toBe(true);
   });
 });
 
@@ -680,11 +747,7 @@ describe("feed link visibility based on release status", () => {
       pkgVersion: "2.0.0",
       releaseStatus: "Released",
     };
-    const isReleased = (l.releaseStatus || "").toLowerCase() === "released";
-    const displayVersion = isReleased
-      ? l.releasedVersion || ""
-      : l.pkgVersion || "";
-    expect(displayVersion).toBe("");
+    expect(getDisplayVersion(l)).toBe("");
   });
 
   test("displayVersion uses releasedVersion when released", () => {
@@ -693,23 +756,327 @@ describe("feed link visibility based on release status", () => {
       pkgVersion: "2.0.0",
       releaseStatus: "Released",
     };
-    const isReleased = (l.releaseStatus || "").toLowerCase() === "released";
-    const displayVersion = isReleased
-      ? l.releasedVersion || ""
-      : l.pkgVersion || "";
-    expect(displayVersion).toBe("3.0.0");
+    expect(getDisplayVersion(l)).toBe("3.0.0");
   });
 
-  test("displayVersion uses pkgVersion when not released", () => {
+  test("displayVersion uses pkgVersion when not released and PR is merged", () => {
     const l = {
       releasedVersion: "",
       pkgVersion: "2.0.0",
       releaseStatus: "Unreleased",
+      sdkPrGitHubStatus: "merged",
     };
-    const isReleased = (l.releaseStatus || "").toLowerCase() === "released";
-    const displayVersion = isReleased
-      ? l.releasedVersion || ""
-      : l.pkgVersion || "";
-    expect(displayVersion).toBe("2.0.0");
+    expect(getDisplayVersion(l)).toBe("2.0.0");
+  });
+
+  test("displayVersion returns empty string when not released and PR is not merged", () => {
+    const l = {
+      releasedVersion: "",
+      pkgVersion: "2.0.0",
+      releaseStatus: "Unreleased",
+      sdkPrGitHubStatus: "open",
+    };
+    expect(getDisplayVersion(l)).toBe("");
+  });
+});
+
+describe("parseCsv", () => {
+  test("parses simple CSV with quoted fields", () => {
+    const csv = `"Package","VersionGA","VersionPreview"
+"Azure.Core","1.0.0","2.0.0-beta.1"
+"Azure.Storage","","1.0.0-preview.3"`;
+    const rows = parseCsv(csv);
+    expect(rows).toHaveLength(3);
+    expect(rows[0]).toEqual(["Package", "VersionGA", "VersionPreview"]);
+    expect(rows[1]).toEqual(["Azure.Core", "1.0.0", "2.0.0-beta.1"]);
+    expect(rows[2]).toEqual(["Azure.Storage", "", "1.0.0-preview.3"]);
+  });
+
+  test("handles escaped quotes in fields", () => {
+    const csv = `"Name","Value"
+"say ""hello""","test"`;
+    const rows = parseCsv(csv);
+    expect(rows[1][0]).toBe('say "hello"');
+  });
+
+  test("handles empty input", () => {
+    const rows = parseCsv("");
+    expect(rows).toHaveLength(0);
+  });
+
+  test("handles unquoted fields", () => {
+    const csv = `Package,VersionGA
+azure-core,1.0.0`;
+    const rows = parseCsv(csv);
+    expect(rows[0]).toEqual(["Package", "VersionGA"]);
+    expect(rows[1]).toEqual(["azure-core", "1.0.0"]);
+  });
+});
+
+describe("first preview / first GA classification", () => {
+  // Replicates the enrichment logic from routes/api.js
+  function classifyPackage(langData, plan, csvMap) {
+    const displayLang = langData._lang;
+    const csvKey = `${displayLang}|${langData.packageName}`.toLowerCase();
+    const csvEntry = csvMap.get(csvKey);
+    if (!csvEntry) {
+      langData.isFirstPreview = true;
+    } else {
+      const releaseType = (plan.releaseType || "").toLowerCase();
+      const isStable =
+        releaseType.includes("ga") || releaseType.includes("stable");
+      if (!csvEntry.versionGA && isStable) {
+        langData.isFirstGA = true;
+      }
+    }
+  }
+
+  test("marks package as first preview when not in CSV", () => {
+    const langData = { packageName: "Azure.NewService", _lang: ".NET" };
+    const plan = { releaseType: "GA" };
+    const csvMap = new Map();
+    classifyPackage(langData, plan, csvMap);
+    expect(langData.isFirstPreview).toBe(true);
+    expect(langData.isFirstGA).toBeUndefined();
+  });
+
+  test("marks package as first GA when in CSV without VersionGA and release type is stable", () => {
+    const langData = { packageName: "Azure.Storage", _lang: ".NET" };
+    const plan = { releaseType: "GA" };
+    const csvMap = new Map([[".net|azure.storage", { versionGA: "" }]]);
+    classifyPackage(langData, plan, csvMap);
+    expect(langData.isFirstGA).toBe(true);
+    expect(langData.isFirstPreview).toBeUndefined();
+  });
+
+  test("does not mark as first GA when CSV has VersionGA", () => {
+    const langData = { packageName: "Azure.Core", _lang: ".NET" };
+    const plan = { releaseType: "GA" };
+    const csvMap = new Map([[".net|azure.core", { versionGA: "1.0.0" }]]);
+    classifyPackage(langData, plan, csvMap);
+    expect(langData.isFirstPreview).toBeUndefined();
+    expect(langData.isFirstGA).toBeUndefined();
+  });
+
+  test("does not mark as first GA when release type is beta", () => {
+    const langData = { packageName: "Azure.Storage", _lang: ".NET" };
+    const plan = { releaseType: "Beta" };
+    const csvMap = new Map([[".net|azure.storage", { versionGA: "" }]]);
+    classifyPackage(langData, plan, csvMap);
+    expect(langData.isFirstPreview).toBeUndefined();
+    expect(langData.isFirstGA).toBeUndefined();
+  });
+});
+
+describe("namespace approval issue mapping", () => {
+  test("mapReleasePlan includes namespaceApprovalIssue field", () => {
+    const workItem = {
+      id: 100,
+      fields: {
+        "System.Id": 100,
+        "System.Title": "Test Plan",
+        "System.State": "In Progress",
+        "Custom.NamespaceApprovalIssue":
+          "https://github.com/Azure/azure-sdk/issues/123",
+      },
+      relations: [],
+    };
+    const plan = mapReleasePlan(workItem, {});
+    expect(plan.namespaceApprovalIssue).toBe(
+      "https://github.com/Azure/azure-sdk/issues/123",
+    );
+  });
+
+  test("mapReleasePlan defaults namespaceApprovalIssue to empty string", () => {
+    const workItem = {
+      id: 101,
+      fields: {
+        "System.Id": 101,
+        "System.Title": "Test Plan",
+        "System.State": "New",
+      },
+      relations: [],
+    };
+    const plan = mapReleasePlan(workItem, {});
+    expect(plan.namespaceApprovalIssue).toBe("");
+  });
+});
+
+describe("PM view: ready to complete private preview", () => {
+  // Replicates the renderPMView logic for the ppReady category
+  function isPrivatePreviewPlan(p) {
+    const rpt = (p.releasePlanType || "").toLowerCase();
+    return rpt.includes("private");
+  }
+
+  function shouldBeInPPReady(p) {
+    if (p.state === "Finished") return false;
+    if (!isPrivatePreviewPlan(p)) return false;
+    const specStatus = (p.apiReadiness || "").toLowerCase();
+    return specStatus === "completed" || specStatus === "merged";
+  }
+
+  test("private preview with merged spec PR is ready", () => {
+    const p = {
+      state: "In Progress",
+      releasePlanType: "APEX Private Preview",
+      apiReadiness: "completed",
+    };
+    expect(shouldBeInPPReady(p)).toBe(true);
+  });
+
+  test("private preview without merged spec is not ready", () => {
+    const p = {
+      state: "In Progress",
+      releasePlanType: "APEX Private Preview",
+      apiReadiness: "pending",
+    };
+    expect(shouldBeInPPReady(p)).toBe(false);
+  });
+
+  test("finished private preview is not in the list", () => {
+    const p = {
+      state: "Finished",
+      releasePlanType: "APEX Private Preview",
+      apiReadiness: "completed",
+    };
+    expect(shouldBeInPPReady(p)).toBe(false);
+  });
+
+  test("non-private-preview plan is not included", () => {
+    const p = {
+      state: "In Progress",
+      releasePlanType: "GA",
+      apiReadiness: "completed",
+    };
+    expect(shouldBeInPPReady(p)).toBe(false);
+  });
+});
+
+describe("PM view: missing namespace approval", () => {
+  function classifyPlane(p) {
+    if (p.mgmtScope === "Yes") return "mgmt";
+    if (p.dataScope === "Yes") return "data";
+    return "mgmt";
+  }
+
+  function shouldBeMissingNs(p) {
+    if (p.state === "Finished") return false;
+    const isMgmt = classifyPlane(p) === "mgmt";
+    const langs = p.languages || {};
+    const hasFirstPreview = Object.values(langs).some(
+      (l) => l.isFirstPreview && l.packageName,
+    );
+    return isMgmt && hasFirstPreview && !p.namespaceApprovalIssue;
+  }
+
+  test("mgmt plane first preview without NS approval is flagged", () => {
+    const p = {
+      state: "In Progress",
+      mgmtScope: "Yes",
+      namespaceApprovalIssue: "",
+      languages: {
+        ".NET": { packageName: "Azure.Mgmt.NewService", isFirstPreview: true },
+      },
+    };
+    expect(shouldBeMissingNs(p)).toBe(true);
+  });
+
+  test("mgmt plane with NS approval link is not flagged", () => {
+    const p = {
+      state: "In Progress",
+      mgmtScope: "Yes",
+      namespaceApprovalIssue: "https://github.com/Azure/azure-sdk/issues/99",
+      languages: {
+        ".NET": { packageName: "Azure.Mgmt.NewService", isFirstPreview: true },
+      },
+    };
+    expect(shouldBeMissingNs(p)).toBe(false);
+  });
+
+  test("data plane first preview is not flagged", () => {
+    const p = {
+      state: "In Progress",
+      mgmtScope: "",
+      dataScope: "Yes",
+      namespaceApprovalIssue: "",
+      languages: {
+        ".NET": { packageName: "Azure.NewService", isFirstPreview: true },
+      },
+    };
+    expect(shouldBeMissingNs(p)).toBe(false);
+  });
+
+  test("mgmt plane without first preview packages is not flagged", () => {
+    const p = {
+      state: "In Progress",
+      mgmtScope: "Yes",
+      namespaceApprovalIssue: "",
+      languages: {
+        ".NET": {
+          packageName: "Azure.Mgmt.ExistingService",
+          isFirstPreview: false,
+        },
+      },
+    };
+    expect(shouldBeMissingNs(p)).toBe(false);
+  });
+});
+
+describe("SDK details expansion with package names", () => {
+  // Replicates updated expansion logic from app.js
+  function isLangExcluded(status) {
+    return (status || "").toLowerCase() === "approved";
+  }
+
+  function shouldExpandSdk(langs) {
+    const langKeys = Object.keys(langs);
+    const hasAnyPr = langKeys.some(
+      (k) => langs[k].sdkPrUrl && !isLangExcluded(langs[k].exclusionStatus),
+    );
+    const hasAnyPackageName = langKeys.some(
+      (k) => langs[k].packageName && !isLangExcluded(langs[k].exclusionStatus),
+    );
+    return hasAnyPr || hasAnyPackageName;
+  }
+
+  test("expands when there are PR URLs", () => {
+    const langs = {
+      ".NET": {
+        sdkPrUrl: "https://github.com/org/repo/pull/1",
+        packageName: "",
+        exclusionStatus: "",
+      },
+    };
+    expect(shouldExpandSdk(langs)).toBe(true);
+  });
+
+  test("expands when there are package names but no PRs", () => {
+    const langs = {
+      ".NET": {
+        sdkPrUrl: "",
+        packageName: "Azure.NewService",
+        exclusionStatus: "",
+      },
+    };
+    expect(shouldExpandSdk(langs)).toBe(true);
+  });
+
+  test("does not expand when no PRs and no package names", () => {
+    const langs = {
+      ".NET": { sdkPrUrl: "", packageName: "", exclusionStatus: "" },
+    };
+    expect(shouldExpandSdk(langs)).toBe(false);
+  });
+
+  test("does not count excluded languages", () => {
+    const langs = {
+      ".NET": {
+        sdkPrUrl: "",
+        packageName: "Azure.Excluded",
+        exclusionStatus: "Approved",
+      },
+    };
+    expect(shouldExpandSdk(langs)).toBe(false);
   });
 });

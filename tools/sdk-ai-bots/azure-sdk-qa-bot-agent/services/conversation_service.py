@@ -39,7 +39,6 @@ from utils.azure_cosmosdb import (
 _EVAL_PROMPT_PATH = (
     Path(__file__).resolve().parent.parent / "prompts" / "conversation_evaluation.md"
 )
-_DEFAULT_EVAL_REASONING_EFFORT = "low"
 
 
 class ConversationService:

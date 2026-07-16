@@ -41,7 +41,7 @@ parameters:
           - $(sub-config-cosmos-azure-cloud-test-resources)
       - DisplayName: GithubCopilotForAzureTestingSubscription
         ServiceConnection: GithubCopilotForAzure-Testing
-        AdditionalParameters: "-DeleteNonCompliantGroups -DeleteArmDeployments"
+        AdditionalParameters: "-DeleteNonCompliantGroups -DeleteArmDeployments -CheckPrefix $false"
       - DisplayName: AzureCloud TME - Resource Cleanup
         ServiceConnection: azure-sdk-tests-public
         AdditionalParameters: "-DeleteNonCompliantGroups -DeleteArmDeployments"

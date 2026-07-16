@@ -32,7 +32,6 @@ from agent_framework import Agent
 from agent_framework import CompactionProvider
 from agent_framework import ToolResultCompactionStrategy
 from agent_framework_foundry_hosting import ResponsesHostServer
-from opentelemetry import trace as otel_trace
 
 import config.app_config as app_config
 from config.app_config import get as cfg
@@ -42,8 +41,6 @@ from tools.knowledge_tools import KnowledgeTools
 from tools.monitor_tools import MonitorTools
 from tools.web_tools import WebTools
 from utils.azure_ai_foundry import (
-    FoundryAgentSpanEnricher,
-    SpanAttributeTruncator,
     get_agent_client,
     get_project_client,
 )
@@ -128,16 +125,6 @@ async def main() -> None:
     )
 
     server = ResponsesHostServer(agent)
-
-    # OTel enrichment — mirror chat_agent so traces are filterable per agent.
-    foundry_project_id = os.environ.get("AI_FOUNDRY_PROJECT_RESOURCE_ID", "")
-    provider = otel_trace.get_tracer_provider()
-    if hasattr(provider, "add_span_processor"):
-        provider.add_span_processor(SpanAttributeTruncator())
-        if foundry_project_id:
-            provider.add_span_processor(
-                FoundryAgentSpanEnricher(foundry_project_id, agent_name, agent_id)
-            )
 
     await server.run_async()
 

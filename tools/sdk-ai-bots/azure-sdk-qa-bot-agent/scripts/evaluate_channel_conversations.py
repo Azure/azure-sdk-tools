@@ -75,7 +75,7 @@ async def _load_channel_names() -> dict[str, str]:
     """
     try:
         container = app_config.get("STORAGE_CONFIG_CONTAINER")
-        blob = app_config.get("STORAGE_CONFIG_BLOB")
+        blob = app_config.get("CHANNEL_CONFIG_BLOB")
         data = await download_blob(container, blob)
     except Exception:
         logger.warning("Failed to download channel.yaml", exc_info=True)

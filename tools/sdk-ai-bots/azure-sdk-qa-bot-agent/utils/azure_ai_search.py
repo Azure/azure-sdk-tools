@@ -57,7 +57,6 @@ def fuse_with_rrf(
 ) -> "list[KnowledgeChunk]":
     """Reciprocal Rank Fusion of several ranked retriever result lists.
 
-    Mirrors WeKnora's ``fuseWithRRF``:
     ``score = sum_over_retrievers( weight / (k + rank) )`` where ``rank`` is the
     1-indexed position of the chunk in that retriever's output. Fuses on
     **rank**, so heterogeneous score scales (semantic reranker vs BM25) combine
@@ -223,7 +222,7 @@ class SearchClient:
         source_filters: dict[str, str],
         top_k: int | None = None,
     ) -> list[KnowledgeChunk]:
-        """Sparse full-text (BM25) search — WeKnora-style keyword retriever.
+        """Sparse full-text (BM25) keyword search.
 
         Complements the dense ``vector_search`` for precise matching of exact
         symbols (decorator/API names, labels, error text) that vector search

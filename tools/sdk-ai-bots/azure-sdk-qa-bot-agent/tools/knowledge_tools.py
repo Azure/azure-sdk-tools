@@ -138,7 +138,7 @@ class KnowledgeTools:
         # Cap queries to avoid excessive parallel searches
         capped_queries = queries[:3]
 
-        # WeKnora-style hybrid retrieval: run a dense (vector) and a sparse
+        # Hybrid retrieval: run a dense (vector) and a sparse
         # (keyword/BM25) retriever per query and fuse their rankings with
         # Reciprocal Rank Fusion. The sparse path precisely matches exact
         # symbols (decorator/API names, labels) that dense recall misses.

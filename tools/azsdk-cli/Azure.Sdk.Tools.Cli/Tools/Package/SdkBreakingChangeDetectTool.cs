@@ -251,7 +251,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                         }
                         var result = new SdkBreakingChangeDetectResult
                         {
-                            HasBreakingChanges = true,
+                            HasBreakingChange = true,
                             BreakingChanges = sdkBreakingChanges,
                         };
                         return new PackageOperationResponse()
@@ -266,9 +266,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     {
                         var result = new SdkBreakingChangeDetectResult
                         {
-                            HasBreakingChanges = sdkChange.HasBreakingChange,
+                            HasBreakingChange = sdkChange.HasBreakingChange,
                             BreakingChanges = [],
-                            SdkChangesMd = sdkChange.ChangelogMD,
+                            ChangelogMD = sdkChange.ChangelogMD,
                         };
 
                         return new PackageOperationResponse()
@@ -323,9 +323,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     {
         [JsonPropertyName("breakingChanges")]
         public List<SdkBreakingChange> BreakingChanges { get; set; } = new List<SdkBreakingChange>();
-        [JsonPropertyName("hasBreakingChanges")]
-        public bool HasBreakingChanges { get; set; }
-        [JsonPropertyName("sdkChangesMd")]
-        public string? SdkChangesMd { get; set; } = null;
+        [JsonPropertyName("hasBreakingChange")]
+        public bool HasBreakingChange { get; set; }
+        [JsonPropertyName("changes")]
+        public string? ChangelogMD { get; set; } = null;
     }
 }

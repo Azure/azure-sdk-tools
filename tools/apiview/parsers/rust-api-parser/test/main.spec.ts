@@ -89,6 +89,22 @@ describe("main", () => {
     expect(outputJson.Language).toBe("Rust");
   });
 
+  it("falls back to legacy conversion when ParserVersion is invalid", () => {
+    const inputContents = JSON.stringify(
+      makeRustdocInput({
+        ParserVersion: "not-a-version",
+      }),
+      null,
+      2,
+    );
+
+    const { outputJson } = runCli("fallback-invalid-parser-version", inputContents);
+    expect(outputJson.PackageName).toBe("sample_crate");
+    expect(outputJson.PackageVersion).toBe("1.2.3");
+    expect(outputJson.ParserVersion).toBe("1.1.1");
+    expect(outputJson.Language).toBe("Rust");
+  });
+
   it("keeps converting legacy rustdoc JSON inputs", () => {
     const inputContents = JSON.stringify(makeRustdocInput(), null, 2);
 

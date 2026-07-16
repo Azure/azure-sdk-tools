@@ -30,6 +30,7 @@
     "clean": "rimraf dist/",
     "format": "prettier --write ./src ./*.{js,mjs,json} ./test/",
     "lint": "eslint src",
+    "pretest": "npm run build",
     "test": "vitest"
   },
   "keywords": [],

@@ -21,7 +21,12 @@ function shouldPassthroughInput(parsedJson: unknown): boolean {
   }
 
   const parserVersion = (parsedJson as { ParserVersion?: unknown }).ParserVersion;
-  return typeof parserVersion === "string" && semver.gte(parserVersion, "2.0.0");
+  if (typeof parserVersion !== "string") {
+    return false;
+  }
+
+  const normalizedVersion = semver.valid(parserVersion);
+  return normalizedVersion !== null && semver.gte(normalizedVersion, "2.0.0");
 }
 
 /**

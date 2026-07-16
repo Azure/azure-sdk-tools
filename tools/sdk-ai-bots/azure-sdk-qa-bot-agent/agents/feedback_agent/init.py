@@ -48,11 +48,13 @@ from utils.azure_ai_foundry import (
 logger = logging.getLogger(__name__)
 
 # -- Agent configuration constants ----------------------------------------
-# Feedback workflow is more deliberate than chat: allow a few more
-# tool-call iterations so the agent can fetch trace, fetch conversation,
-# re-search, fetch a source URL, and file an issue in one turn.
-MAX_TOOL_CALL_ITERATIONS = 6
-MAX_TOOL_CALLS_PER_TURN = 8
+# Feedback workflow is more deliberate than chat: allow more tool-call
+# iterations so the agent can fetch trace, fetch conversation, enumerate
+# sources, re-search (tenant-scoped and whole-KB), read chat-agent source
+# to diagnose system defects, fetch a source URL, and file an issue in one
+# turn.
+MAX_TOOL_CALL_ITERATIONS = 8
+MAX_TOOL_CALLS_PER_TURN = 12
 
 
 def _load_instructions(file_path: Path) -> str:
@@ -89,6 +91,7 @@ async def main() -> None:
         monitor_tools.fetch_chat_trace,
         conversation_tools.resolve_conversation_by_trace_id,
         conversation_tools.fetch_conversation,
+        knowledge_tools.list_knowledge_sources,
         knowledge_tools.resolve_kb_source,
         knowledge_tools.search_knowledge_base,
         web_tools.web_fetch,
@@ -98,7 +101,7 @@ async def main() -> None:
     try:
         github_mcp_tool = await create_github_mcp_tool(
             readonly=False,
-            extra_allowed_tools=("create_issue",),
+            extra_allowed_tools=("issue_write",),
         )
         tools.append(github_mcp_tool)
     except Exception:

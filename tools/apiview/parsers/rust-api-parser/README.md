@@ -25,7 +25,7 @@ npm i -g ts-node
 ```
 
 For details about the Rust aspects of this project:
-- See [rustdoc-types README](./rustdoc-types/README.md) for Rust project setup and usage
+- See the [rustdoc-types README](https://github.com/Azure/azure-sdk-tools/blob/main/tools/apiview/parsers/rust-api-parser/rustdoc-types/README.md) for Rust project setup and usage
 - The project uses [typeshare](https://github.com/1password/typeshare) to convert Rust models into TypeScript types
 
 ## Installation

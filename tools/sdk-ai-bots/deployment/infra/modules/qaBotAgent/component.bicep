@@ -118,13 +118,17 @@ resource gpt54Deployment 'Microsoft.CognitiveServices/accounts/deployments@2026-
       version: '2026-03-05'
     }
     versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
-    currentCapacity: 1
+    // 500 capacity units ≈ 500,000 TPM (GlobalStandard: 1 unit ≈ 1,000 TPM).
+    currentCapacity: 500
     serviceTier: 'Default'
     deploymentState: 'Running'
   }
   sku: {
     name: 'GlobalStandard'
-    capacity: 1
+    // 500 units ≈ 500,000 TPM. Bounded by the regional GlobalStandard gpt-5.4
+    // quota (eastus2 limit 3,000 units); raise the quota via portal/support to
+    // exceed that.
+    capacity: 500
   }
 }
 
@@ -274,23 +278,20 @@ resource openAiUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-
   }
 }
 
-// Azure AI User grant for qabot-identity, scoped to the AI account. The agent
-// server (server.py) reads/uses the hosted Foundry agent at runtime via
-// `project_client.agents.get(...)`, which requires the data action
-// `Microsoft.CognitiveServices/accounts/AIServices/agents/read`. "Cognitive
-// Services OpenAI User" (assigned above) only covers model-deployment calls and
-// lacks the agents action, so without this role every /agent/chat request fails
-// with HTTP 500 (UserError: identity does not have permissions for
-// .../AIServices/agents/read).
-resource aiUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  scope: account
-  name: guid(account.id, managedIdentityPrincipalId, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '53ca6127-db72-4b80-b1b0-d745d6d5456d'))
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '53ca6127-db72-4b80-b1b0-d745d6d5456d')
-    principalId: managedIdentityPrincipalId
-    principalType: 'ServicePrincipal'
-  }
-}
+// NOTE: the "Azure AI User" (Foundry User, 53ca6127-db72-4b80-b1b0-d745d6d5456d)
+// grant for qabot-identity on this AI account is NOT declared here. It is created
+// idempotently (create-if-not-exists) by the postprovision hook
+// (hooks/lib/ensure-role-assignment.ts, called from hooks/postprovision.ts).
+// A native bicep roleAssignments resource uses a deterministic name and fails
+// the whole deployment with RoleAssignmentExists if the same (principal, role,
+// scope) already exists under a different name — e.g. one created out-of-band via
+// `az role assignment create` in the lock-protected dev RG, which cannot be
+// deleted. The hook tolerates that case and still creates the grant on fresh
+// environments. qabot-identity needs this role because the agent server
+// (server.py) reads the hosted Foundry agent via `project_client.agents.get(...)`,
+// which requires the data action
+// `Microsoft.CognitiveServices/accounts/AIServices/agents/read` that
+// "Cognitive Services OpenAI User" (assigned above) does not cover.
 
 // AzureSDKChatBot_Developer Entra group object ID.
 // Passed as a parameter; empty means no developer role assignment.

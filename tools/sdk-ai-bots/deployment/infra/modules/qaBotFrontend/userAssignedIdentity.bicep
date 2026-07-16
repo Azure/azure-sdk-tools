@@ -438,3 +438,9 @@ module azureSdkQaBotModule './azureSdkQaBotModule.bicep' = {
 output botIdentityName string = userAssignedIdentity.name
 output botBaseUrl string = 'https://${site.properties.defaultHostName}'
 output botAudience string = userAssignedIdentity.properties.clientId
+// Consumed by hooks/lib/sync-teams-env.ts to populate the Teams Toolkit env
+// file (azure-sdk-qa-bot/env/.env.<env>) so `teamsapp` no longer needs its own
+// arm/deploy step — azd owns provisioning and feeds these values to Teams.
+output botSiteResourceId string = site.id
+output botDomain string = site.properties.defaultHostName
+output botTenantId string = userAssignedIdentity.properties.tenantId

@@ -18,6 +18,7 @@
 import { execSync } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
+import { getLatestTagWithPrefix, getNextVersionTag } from "./lib/acr-tags";
 
 /** Load azd env values into process.env if not already set. */
 function loadAzdEnv(): void {
@@ -44,7 +45,11 @@ loadAzdEnv();
 
 const REGISTRY_NAME = process.env.CONTAINER_REGISTRY_NAME ?? "";
 const ENV_NAME = process.env.AZURE_ENV_NAME ?? "dev";
-const TAG = process.env.AGENT_IMAGE_TAG ?? ENV_NAME;
+// When AGENT_IMAGE_TAG is set it is used verbatim. Otherwise the tag is
+// resolved dynamically: locally we build/tag with ENV_NAME, and in CI we look
+// up the newest tag in ACR that starts with the env prefix (see below).
+const EXPLICIT_TAG = process.env.AGENT_IMAGE_TAG;
+const TAG = EXPLICIT_TAG ?? ENV_NAME;
 const IMAGE_NAME = "azure-sdk-qa-bot-agent-server";
 // Only skip the build inside a real CI pipeline (TF_BUILD = Azure DevOps,
 // GITHUB_ACTIONS = GitHub Actions). AZD_SKIP_IMAGE_BUILD is intentionally
@@ -62,22 +67,33 @@ function run(cmd: string, opts?: { cwd?: string }): void {
 (async () => {
   if (!REGISTRY_NAME) throw new Error("CONTAINER_REGISTRY_NAME not set.");
 
-  const fullImage = `${REGISTRY_NAME}.azurecr.io/${IMAGE_NAME}:${TAG}`;
+  let resolvedTag = TAG;
 
   if (RUNNING_IN_PIPELINE) {
-    // CI already built and pushed the image — just verify it exists.
-    log(`CI pipeline detected — validating pre-built image ${fullImage}`);
-    const tags = execSync(
-      `az acr repository show-tags --name "${REGISTRY_NAME}" --repository "${IMAGE_NAME}" --output tsv`,
-      { encoding: "utf8" }
-    );
-    if (!tags.split(/\r?\n/).map((s) => s.trim()).includes(TAG)) {
-      throw new Error(
-        `Image tag '${TAG}' not found in ACR '${REGISTRY_NAME}'. ` +
-          `Ensure the agent CI pipeline ran successfully for this tag.`
-      );
+    // CI already built and pushed the image. When a specific tag was pinned via
+    // AGENT_IMAGE_TAG, validate that exact tag exists. Otherwise resolve the
+    // newest tag in ACR that starts with the env prefix (e.g. 'dev-<build>').
+    if (EXPLICIT_TAG) {
+      log(`CI pipeline detected — validating pinned image tag '${TAG}'`);
+      const latest = getLatestTagWithPrefix(REGISTRY_NAME, IMAGE_NAME, TAG);
+      if (latest !== TAG) {
+        throw new Error(
+          `Image tag '${TAG}' not found in ACR '${REGISTRY_NAME}'. ` +
+            `Ensure the agent CI pipeline ran successfully for this tag.`
+        );
+      }
+    } else {
+      log(`CI pipeline detected — resolving latest tag with env prefix '${ENV_NAME}'`);
+      const latest = getLatestTagWithPrefix(REGISTRY_NAME, IMAGE_NAME, ENV_NAME);
+      if (!latest) {
+        throw new Error(
+          `No image tag matching env prefix '${ENV_NAME}' found in ACR '${REGISTRY_NAME}'. ` +
+            `Ensure the agent CI pipeline ran successfully.`
+        );
+      }
+      resolvedTag = latest;
     }
-    log("  ✓ tag found");
+    log(`  ✓ using tag '${resolvedTag}'`);
   } else {
     // Local dev (or any non-CI context): build image in ACR cloud-side.
     // az acr build sends the context to ACR and builds there — no local
@@ -86,13 +102,21 @@ function run(cmd: string, opts?: { cwd?: string }): void {
     // context must be the azure-sdk-qa-bot-agent/ parent (requirements.txt,
     // config/, models/, prompts/, skills/, tools/, utils/ are all there).
     // process.cwd() is deployment/ because the hook runs: cd ../../../deployment && npx tsx ...
+
+    // Resolve the image tag. When AGENT_IMAGE_TAG is pinned it is used verbatim;
+    // otherwise auto-increment the major version against ACR so a fresh build
+    // gets 'dev-1.0.0' and subsequent builds get 'dev-2.0.0', 'dev-3.0.0', ...
+    if (!EXPLICIT_TAG) {
+      resolvedTag = getNextVersionTag(REGISTRY_NAME, IMAGE_NAME, ENV_NAME);
+      log(`Resolved next version tag '${resolvedTag}'`);
+    }
     const agentRoot = path.resolve(process.cwd(), "../azure-sdk-qa-bot-agent");
     const dockerfile = path.join(agentRoot, "agents/chat_agent/Dockerfile");
-    log(`Building image via az acr build → ${fullImage}`);
+    log(`Building image via az acr build → ${REGISTRY_NAME}.azurecr.io/${IMAGE_NAME}:${resolvedTag}`);
     log(`  context:    ${agentRoot}`);
     log(`  dockerfile: ${dockerfile}`);
     run(
-      `az acr build --registry "${REGISTRY_NAME}" --image "${IMAGE_NAME}:${TAG}" --file "${dockerfile}" "${agentRoot}"`,
+      `az acr build --registry "${REGISTRY_NAME}" --image "${IMAGE_NAME}:${resolvedTag}" --file "${dockerfile}" "${agentRoot}"`,
     );
     log("  ✓ build complete");
   }
@@ -100,10 +124,17 @@ function run(cmd: string, opts?: { cwd?: string }): void {
   // Register the pre-built image with azd via two env vars:
   //   AGENT_DEPLOYED_IMAGE — read by azure.yaml container.image (${AGENT_DEPLOYED_IMAGE})
   //   SERVICE_AGENT_IMAGE_NAME — azd standard override for container image
+  const fullImage = `${REGISTRY_NAME}.azurecr.io/${IMAGE_NAME}:${resolvedTag}`;
   log(`Setting AGENT_DEPLOYED_IMAGE=${fullImage}`);
   run(`azd env set AGENT_DEPLOYED_IMAGE "${fullImage}"`);
   log(`Setting SERVICE_AGENT_IMAGE_NAME=${fullImage}`);
   run(`azd env set SERVICE_AGENT_IMAGE_NAME "${fullImage}"`);
+
+  // NOTE: the App Service 'agent' slot (the /agent/chat server) is deployed
+  // separately by the `agent-server` service's predeploy hook
+  // (hooks/agent-server-predeploy.ts), which builds the server image from the
+  // top-level Dockerfile and repoints the slot. This hook only deploys the
+  // hosted Foundry agent (agents/chat_agent).
 
   // Install a docker shim so azd's own package step (which runs after this
   // prepackage hook) finds "docker" and succeeds without a real Docker daemon.

@@ -221,6 +221,7 @@ module functionApp './modules/qaBotFunctionApp/serverfarm.bicep' = {
     managedIdentityClientId: sharedResources.outputs.managedIdentityClientId
     managedIdentityResourceId: sharedResources.outputs.managedIdentityResourceId
     storageAccountName: sharedResources.outputs.storageAccountName
+    keyVaultName: sharedResources.outputs.keyVaultName
     functionAppServicePlanName: !empty(functionAppServicePlanName) ? functionAppServicePlanName : 'azuresdkqabot-functionserviceplan-${_suffix}'
     functionLogWorkspaceName:   !empty(functionLogWorkspaceName)   ? functionLogWorkspaceName   : 'azuresdkqabot-function-log-${_suffix}'
     functionAppName:            !empty(functionAppName)            ? functionAppName            : 'azuresdkqabot-function-${_suffix}'
@@ -280,6 +281,10 @@ output STORAGE_ACCOUNT_NAME string = sharedResources.outputs.storageAccountName
 output STORAGE_BLOB_ENDPOINT string = sharedResources.outputs.storageBlobEndpoint
 output KEY_VAULT_NAME string = sharedResources.outputs.keyVaultName
 output APP_CONFIG_NAME string = sharedResources.outputs.appConfigName
+// Full App Configuration endpoint URL. Consumed by the hosted agent manifest
+// (azure-sdk-qa-bot-agent/agent.yaml env) via ${AZURE_APPCONFIG_ENDPOINT} so the
+// hosted Foundry container can run app_config.init() on startup.
+output AZURE_APPCONFIG_ENDPOINT string = 'https://${sharedResources.outputs.appConfigName}.azconfig.io'
 output SEARCH_SERVICE_NAME string = sharedResources.outputs.searchServiceName
 output COSMOSDB_ACCOUNT_NAME string = sharedResources.outputs.cosmosDbAccountName
 output ACTION_GROUP_NAME string = sharedResources.outputs.actionGroupName
@@ -294,6 +299,15 @@ output FOUNDRY_PROJECT_ENDPOINT string = agent.outputs.aiProjectEndpoint
 output BOT_IDENTITY_NAME string = frontend.outputs.botIdentityName
 output BOT_BASE_URL string = frontend.outputs.botBaseUrl
 output BOT_AUDIENCE string = frontend.outputs.botAudience
+
+// Teams Toolkit contract — consumed by hooks/lib/sync-teams-env.ts to write the
+// azure-sdk-qa-bot/env/.env.<env> file so `teamsapp provision/deploy/publish`
+// no longer runs its own arm/deploy (azd provisions the frontend site, bot
+// identity, and bot service; Teams only owns the app manifest + registration).
+output BOT_AZURE_APP_SERVICE_RESOURCE_ID string = frontend.outputs.botSiteResourceId
+output BOT_DOMAIN string = frontend.outputs.botDomain
+output BOT_ID string = frontend.outputs.botAudience
+output BOT_TENANT_ID string = frontend.outputs.botTenantId
 
 // Backend outputs
 output SERVER_BASE_URL string = backend.outputs.serverBaseUrl

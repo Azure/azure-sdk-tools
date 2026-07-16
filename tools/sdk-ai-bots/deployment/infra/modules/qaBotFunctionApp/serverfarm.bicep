@@ -15,6 +15,9 @@ param storageAccountName string
 @description('Resource ID of the user-assigned managed identity the Function App runs as.')
 param managedIdentityResourceId string
 
+@description('Name of the Key Vault the AdoTokenRefresh function writes the ado-token secret to.')
+param keyVaultName string
+
 // Resource-name overrides — see qaBotSharedResources/sharedResources.bicep.
 @description('Name of the Function App service plan.')
 param functionAppServicePlanName string = 'azuresdkqabot-functionserviceplan-${substring(uniqueString(resourceGroup().id), 0, 6)}'
@@ -107,7 +110,24 @@ resource site 'Microsoft.Web/sites@2025-05-01' = {
         }
         {
           name: 'KEY_VAULT_NAME'
-          value: 'qabot-keyvalut-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+          value: keyVaultName
+        }
+        {
+          // Full Key Vault URL read by the AdoTokenRefresh function
+          // (src/functions/AdoTokenRefresh.ts → process.env.KEY_VAULT_URL) to
+          // write the 'ado-token' secret. Without it the function throws on every
+          // run and the secret is never created.
+          name: 'KEY_VAULT_URL'
+          value: 'https://${keyVaultName}${environment().suffixes.keyvaultDns}'
+        }
+        {
+          // Azure DevOps AAD resource scope the function mints a token for
+          // (well-known ADO app id 499b84ac-.../.default). Must match the
+          // ADO_RESOURCE_SCOPE seeded into App Configuration
+          // (deployment/hooks/lib/seed-app-config.ts). Read by
+          // AdoTokenRefresh.ts → credential.getToken(process.env.ADO_RESOURCE_SCOPE).
+          name: 'ADO_RESOURCE_SCOPE'
+          value: '499b84ac-1321-427f-aa17-267ca6975798/.default'
         }
         {
           name: 'APP_CONFIG_NAME'

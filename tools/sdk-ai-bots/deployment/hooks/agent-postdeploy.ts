@@ -8,17 +8,38 @@
  *    Configuration via that identity. Without at least "App Configuration Data
  *    Reader" the container crashes on boot, its /readiness never returns 200, and
  *    every session fails with 424 session_not_ready → /agent/chat returns 500.
- * 2. Ensure the server app registration (SERVER_AUDIENCE) is fully authorized
+ * 2. Pin the hosted agent to the freshly-built image and inject the
+ *    AZURE_APPCONFIG_ENDPOINT environment variable into its container.
+ *    app_config.init() reads this on startup and raises RuntimeError (→ container
+ *    crash → 424 session_not_ready) if it is missing. azd neither embeds
+ *    agent.yaml `environment_variables` into the version definition (its
+ *    "Registering agent environment variables" step is a no-op) nor can point
+ *    azure.yaml at the freshly-built immutable tag (${VAR} is resolved before the
+ *    predeploy build). So we create a follow-up agent version that pins the fresh
+ *    image (AGENT_DEPLOYED_IMAGE) and embeds environment_variables — the only
+ *    mechanism the Foundry runtime honours. Idempotent.
+ * 3. Ensure the server app registration (SERVER_AUDIENCE) is fully authorized
  *    so callers can obtain tokens EasyAuth accepts (service principal,
  *    identifier URI, delegated scope, application app-role, pre-authorized
  *    clients, and the managed-identity app-role assignment).
- * 3. Sanity-check the hosted agent by pinging its /ping endpoint.
+ * 4. Sanity-check the hosted agent by pinging its /ping endpoint.
  */
 
 import { execSync } from "child_process";
 import { ensureServerAppAuthorization } from "./lib/ensure-entra-app.js";
 
 const AGENT_BASE_URL = process.env.AGENT_BASE_URL ?? "";
+
+// Foundry data-plane api-version that returns/accepts environment_variables in
+// the hosted agent version definition.
+const AGENT_API_VERSION = "2025-11-15-preview";
+
+/** Subset of the hosted agent version `definition` we read/clone. */
+interface AgentDefinition {
+  container_configuration?: { image?: string };
+  environment_variables?: Record<string, string>;
+  [key: string]: unknown;
+}
 
 function log(msg: string): void {
   console.log(`[agent:postdeploy] ${msg}`);
@@ -202,8 +223,160 @@ async function ensureAgentIdentityRbac(): Promise<void> {
   log("Agent identity RBAC complete.");
 }
 
+/**
+ * Resolve the Foundry project endpoint (…/api/projects/<project>) used for the
+ * agent versions data-plane API.
+ */
+function getProjectEndpoint(): string | undefined {
+  const direct = process.env.FOUNDRY_PROJECT_ENDPOINT?.trim();
+  if (direct) return direct.replace(/\/+$/, "");
+  // Derive from the full agent-version endpoint if only that is set.
+  const agentEndpoint = process.env.AGENT_AGENT_ENDPOINT?.trim();
+  const m = agentEndpoint?.match(/^(.*\/api\/projects\/[^/]+)\/agents\//);
+  return m ? m[1] : undefined;
+}
+
+/** Acquire a Foundry data-plane bearer token via the Azure CLI. */
+function getFoundryToken(): string {
+  return execSync(
+    "az account get-access-token --resource https://ai.azure.com --query accessToken -o tsv",
+    { encoding: "utf8" }
+  ).trim();
+}
+
+/**
+ * Ensure the hosted agent's LATEST version runs the freshly-built image AND
+ * carries the AZURE_APPCONFIG_ENDPOINT environment variable in its container
+ * definition.
+ *
+ * Two azd limitations force this hook to own the final version:
+ *   1. azd's "Registering agent environment variables" step does NOT embed
+ *      agent.yaml `environment_variables` into the version definition, so the
+ *      container boots without AZURE_APPCONFIG_ENDPOINT and crashes in
+ *      app_config.init() (→ 424 session_not_ready).
+ *   2. azd resolves azure.yaml `${VAR}` at project-load time (before the
+ *      predeploy image build), so azure.yaml can only reference a static image
+ *      tag — it cannot point at the freshly-built immutable tag.
+ *
+ * So azd deploys a placeholder version from the static tag, and here we create a
+ * follow-up version that pins the freshly-built image (AGENT_DEPLOYED_IMAGE) and
+ * embeds environment_variables — the mechanism the Foundry hosted runtime
+ * honours — making it @latest.
+ *
+ * Idempotent: if the latest version already runs the target image with the
+ * correct AZURE_APPCONFIG_ENDPOINT we do nothing, so re-running postdeploy
+ * without a fresh `azd deploy` is a no-op.
+ */
+async function ensureAgentAppConfigEnv(): Promise<void> {
+  loadAzdEnv();
+
+  const appConfigEndpoint = process.env.AZURE_APPCONFIG_ENDPOINT?.trim();
+  if (!appConfigEndpoint) {
+    log("AZURE_APPCONFIG_ENDPOINT not set — skipping hosted agent env injection.");
+    return;
+  }
+  const projectEndpoint = getProjectEndpoint();
+  const agentName = process.env.AGENT_AGENT_NAME?.trim();
+  if (!projectEndpoint || !agentName) {
+    log("FOUNDRY_PROJECT_ENDPOINT / AGENT_AGENT_NAME not set — skipping hosted agent env injection.");
+    return;
+  }
+
+  const token = getFoundryToken();
+  const authHeader = { Authorization: `Bearer ${token}` };
+  const versionsUrl = `${projectEndpoint}/agents/${agentName}/versions?api-version=${AGENT_API_VERSION}`;
+
+  // Resolve the latest version (versions list is returned newest-first).
+  const listRes = await fetch(versionsUrl, { headers: authHeader });
+  if (!listRes.ok) {
+    log(`Failed to list agent versions (HTTP ${listRes.status}) — skipping env injection.`);
+    return;
+  }
+  const list = (await listRes.json()) as {
+    data?: Array<{ version?: string; definition?: AgentDefinition }>;
+  };
+  const versions = (list.data ?? [])
+    .map((v) => ({ n: Number(v.version), def: v.definition }))
+    .filter((v) => Number.isFinite(v.n))
+    .sort((a, b) => b.n - a.n);
+  if (versions.length === 0) {
+    log("No agent versions found — skipping env injection.");
+    return;
+  }
+  const latest = versions[0];
+  const def = latest.def;
+  const latestImage = def?.container_configuration?.image;
+  if (!def || !latestImage) {
+    log(`Latest agent version ${latest.n} has no container image — skipping env injection.`);
+    return;
+  }
+
+  // Prefer the freshly-built immutable tag from agent-predeploy.ts; fall back to
+  // whatever image the latest version already runs (e.g. env-only re-runs).
+  const targetImage = process.env.AGENT_DEPLOYED_IMAGE?.trim() || latestImage;
+
+  if (
+    latestImage === targetImage &&
+    def.environment_variables?.AZURE_APPCONFIG_ENDPOINT === appConfigEndpoint
+  ) {
+    log(
+      `Latest agent version ${latest.n} already runs ${targetImage} with ` +
+        `AZURE_APPCONFIG_ENDPOINT — no new version needed.`
+    );
+    return;
+  }
+
+  log(
+    `Creating hosted agent version: image ${targetImage} + AZURE_APPCONFIG_ENDPOINT ` +
+      `(latest v${latest.n} runs ${latestImage}, env=${def.environment_variables?.AZURE_APPCONFIG_ENDPOINT ?? "unset"}).`
+  );
+
+  const newDefinition: AgentDefinition = {
+    ...def,
+    container_configuration: { ...def.container_configuration, image: targetImage },
+    environment_variables: {
+      ...(def.environment_variables ?? {}),
+      AZURE_APPCONFIG_ENDPOINT: appConfigEndpoint,
+    },
+  };
+  const body = {
+    definition: newDefinition,
+    metadata: {
+      enableVnextExperience: "true",
+      appconfigEnvInjected: targetImage,
+    },
+  };
+
+  const createUrl = `${projectEndpoint}/agents/${agentName}/versions?api-version=${AGENT_API_VERSION}`;
+  const createRes = await fetch(createUrl, {
+    method: "POST",
+    headers: { ...authHeader, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!createRes.ok) {
+    const detail = await createRes.text().catch(() => "");
+    throw new Error(
+      `Failed to create hosted agent version with AZURE_APPCONFIG_ENDPOINT ` +
+        `(HTTP ${createRes.status}): ${detail.slice(0, 500)}`
+    );
+  }
+  const created = (await createRes.json()) as {
+    version?: string;
+    definition?: AgentDefinition;
+  };
+  const injected = created.definition?.environment_variables?.AZURE_APPCONFIG_ENDPOINT;
+  if (injected !== appConfigEndpoint) {
+    throw new Error(
+      `Created agent version ${created.version} but AZURE_APPCONFIG_ENDPOINT was not persisted.`
+    );
+  }
+  log(`  ✓ created agent version ${created.version} (image ${targetImage}, AZURE_APPCONFIG_ENDPOINT set, @latest).`);
+}
+
 (async () => {
   await ensureAgentIdentityRbac();
+
+  await ensureAgentAppConfigEnv();
 
   ensureAgentServerAuthorization();
 

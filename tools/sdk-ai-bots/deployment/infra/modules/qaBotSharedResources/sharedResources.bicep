@@ -531,6 +531,21 @@ resource identityKeyVaultSecretsUser 'Microsoft.Authorization/roleAssignments@20
   }
 }
 
+// Write secrets to Key Vault at runtime. The Function App's AdoTokenRefresh
+// timer runs as this identity and calls SecretClient.setSecret('ado-token'),
+// which requires write access. "Secrets User" above only grants read, so
+// without this the function fails with 403 and the 'ado-token' secret is never
+// created (the agent then logs "SecretNotFound: ado-token").
+resource identityKeyVaultSecretsOfficer 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(vault.id, userAssignedIdentity.id, roleIds.keyVaultSecretsOfficer)
+  scope: vault
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleIds.keyVaultSecretsOfficer)
+    principalId: userAssignedIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
 // Read configuration values from App Configuration.
 resource identityAppConfigDataReader 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(configurationStore.id, userAssignedIdentity.id, roleIds.appConfigurationDataReader)

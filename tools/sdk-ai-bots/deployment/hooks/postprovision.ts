@@ -17,6 +17,8 @@ import { runLayerPipeline } from "./lib/deploy-layer.js";
 import { uploadBotConfigs } from "./lib/upload-bot-configs.js";
 import { seedAppConfiguration } from "./lib/seed-app-config.js";
 import { seedKeyVaultSecrets } from "./lib/seed-key-vault.js";
+import { ensureRoleAssignment } from "./lib/ensure-role-assignment.js";
+import { syncTeamsEnv } from "./lib/sync-teams-env.js";
 
 const ENV_NAME = process.env.AZURE_ENV_NAME ?? "";
 const SUBSCRIPTION_ID = process.env.AZURE_SUBSCRIPTION_ID ?? "";
@@ -84,6 +86,10 @@ async function persistBicepOutputs(): Promise<void> {
     execSync(`azd env set "${name}" "${value.replace(/"/g, '\\"')}"`, {
       stdio: "inherit",
     });
+    // Also expose the value to the current process so later steps in this hook
+    // (e.g. ensureAgentAccountRoleAssignments) can read the freshly persisted
+    // outputs without re-loading the azd environment.
+    process.env[name] = value;
     log(`  set ${name}`);
   }
 
@@ -128,6 +134,64 @@ function updateAppConfiguration(): void {
   });
 }
 
+/**
+ * Generate the azd-owned Teams Toolkit env file (azure-sdk-qa-bot/env/.env.azd)
+ * from the frontend bicep outputs (bot site resource id, domain, id, tenant)
+ * that azd just persisted. azd decides the logical environment (AZURE_ENV_NAME =
+ * dev / preview / prod) and stamps its outputs onto the matching committed base
+ * env; `teamsapp <cmd> --env azd` then consumes the single generated file. This
+ * replaces the frontend teamsapp.yml's former `arm/deploy` step: azd provisions
+ * the resources and Teams only owns the app manifest + bot registration + publish.
+ *
+ * Skipped for targeted per-layer re-deploys (DEPLOY_LAYER set), which do not
+ * re-run main.bicep and therefore have no fresh outputs to propagate.
+ */
+function syncTeamsEnvStep(): void {
+  if (process.env.DEPLOY_LAYER) {
+    log(`DEPLOY_LAYER=${process.env.DEPLOY_LAYER} — skipping Teams env sync (main.bicep was not re-run).`);
+    return;
+  }
+  log("Generating the azd-owned Teams env file (.env.azd)...");
+  syncTeamsEnv({
+    azdEnvName: ENV_NAME,
+    env: process.env,
+    log: (m) => log(m),
+  });
+}
+
+/** "Azure AI User" (Foundry User) built-in role definition ID. */
+const FOUNDRY_USER_ROLE_ID = "53ca6127-db72-4b80-b1b0-d745d6d5456d";
+
+/**
+ * Ensure qabot-identity has the "Azure AI User" (Foundry User) role on the AI
+ * account, creating it only if it does not already exist. This grant lives here
+ * rather than in bicep because a native roleAssignments resource fails the whole
+ * deployment with RoleAssignmentExists when the same (principal, role, scope)
+ * already exists under a different name — e.g. one created out-of-band that
+ * cannot be deleted in the lock-protected dev RG. qabot-identity needs this role
+ * so the agent server (server.py) can read the hosted Foundry agent via
+ * `project_client.agents.get(...)` (data action AIServices/agents/read). See the
+ * note in infra/modules/qaBotAgent/component.bicep.
+ */
+function ensureAgentAccountRoleAssignments(): void {
+  const principalId = process.env.MANAGED_IDENTITY_PRINCIPAL_ID ?? "";
+  const aiResourceName = process.env.AI_RESOURCE_NAME ?? "";
+  if (!principalId || !aiResourceName || !SUBSCRIPTION_ID || !RESOURCE_GROUP) {
+    log(
+      "Skipping AI account role assignment (missing identity principal, AI account name, subscription, or resource group)."
+    );
+    return;
+  }
+  log("Ensuring qabot-identity has 'Azure AI User' (Foundry User) on the AI account...");
+  ensureRoleAssignment({
+    principalId,
+    roleDefinitionId: FOUNDRY_USER_ROLE_ID,
+    scope: `/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.CognitiveServices/accounts/${aiResourceName}`,
+    principalType: "ServicePrincipal",
+    log: (m) => log(m),
+  });
+}
+
 function printSummary(): void {
   log("─────────────────────────────────────────────────────");
   log(`Environment : ${ENV_NAME}`);
@@ -135,16 +199,20 @@ function printSummary(): void {
   log(`Resource grp: ${RESOURCE_GROUP}`);
   log("");
   log("Next: run `azd deploy` to push the frontend, function-app, and agent images.");
+  log("`azd deploy frontend` also runs `teamsapp provision --env azd` internally,");
+  log("using the env/.env.azd file generated from this azd environment.");
   log("─────────────────────────────────────────────────────");
 }
 
 (async () => {
   log(`Starting postprovision for environment '${ENV_NAME}'`);
   await persistBicepOutputs();
+  ensureAgentAccountRoleAssignments();
   await runInfraLayers();
   uploadPerEnvBotConfigs();
   seedKeyVaultSecretsStep();
   updateAppConfiguration();
+  syncTeamsEnvStep();
   printSummary();
   log("Postprovision complete.");
 })().catch((err) => {

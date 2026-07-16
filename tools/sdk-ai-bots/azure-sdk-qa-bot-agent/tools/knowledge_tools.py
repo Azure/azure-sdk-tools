@@ -223,8 +223,10 @@ class KnowledgeTools:
 
         # Lightweight 1-hop knowledge-graph expansion: pull the neighbours of any
         # retrieved wiki entity/concept node (via their related_slugs edges) into
-        # the deep-read set so linked knowledge is surfaced alongside the hit.
-        if cfg("KB_ENABLE_GRAPH_EXPANSION", "true").lower() == "true":
+        # the deep-read set. Disabled by default: measured to regress answer
+        # quality on the perf eval (~-5.5pp total / -6.2pp typespec) — appending
+        # tangential neighbour nodes dilutes answer completeness.
+        if cfg("KB_ENABLE_GRAPH_EXPANSION", "false").lower() == "true":
             max_neighbors = int(cfg("KB_GRAPH_MAX_NEIGHBORS", "4"))
             neighbours = await search_client.expand_by_graph(
                 unique_chunks, max_neighbors=max_neighbors

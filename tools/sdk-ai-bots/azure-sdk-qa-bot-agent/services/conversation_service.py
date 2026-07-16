@@ -335,6 +335,13 @@ class ConversationService:
         Returns:
             Messages of qualifying conversations, ordered by ``created_at``.
         """
+        # Normalize aware datetimes to UTC before flooring/comparison. Stored
+        # ``created_at`` values are UTC ISO strings, so a non-UTC bound would
+        # otherwise select the wrong window. Naive datetimes are assumed UTC.
+        if start.tzinfo is not None:
+            start = start.astimezone(timezone.utc)
+        if end.tzinfo is not None:
+            end = end.astimezone(timezone.utc)
         start = start.replace(hour=0, minute=0, second=0, microsecond=0)
         container = await get_conversation_message_container()
 
@@ -368,6 +375,7 @@ class ConversationService:
         async for row in container.query_items(
             query=window_query,
             parameters=window_params,
+            enable_cross_partition_query=True,
         ):
             partition = row.get("partition")
             if partition:
@@ -398,6 +406,7 @@ class ConversationService:
         async for raw in container.query_items(
             query=messages_query,
             parameters=messages_params,
+            enable_cross_partition_query=True,
         ):
             items.append(ConversationMessageItem.model_validate(raw))
 

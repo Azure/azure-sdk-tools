@@ -199,9 +199,12 @@ async def _run_evaluation(
     limit: int | None,
     excluded_channels: set[str] | None = None,
 ) -> list[ConversationEvaluationItem]:
-    """Evaluate every conversation that started in the window.
+    """Evaluate every conversation that was active in the window.
 
-    The channel-agnostic verdict comes from
+    A conversation qualifies when it had at least one bot message in
+    ``[start, end)`` (see
+    :meth:`ConversationService.get_messages_in_period`); the full thread is
+    then evaluated. The channel-agnostic verdict comes from
     :meth:`ConversationService.evaluate_conversation`; this function adds the
     Teams deep link and returns the evaluated threads.
     """

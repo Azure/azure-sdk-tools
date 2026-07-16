@@ -37,7 +37,7 @@ from services.conversation_service import ConversationService
 from utils.azure_credential import close_credential
 
 _CONVERSATION_ID = "conv-eval-test"
-_PARTITION = f"channel:{_CONVERSATION_ID}"
+_PARTITION = f"{ConversationType.teams_channel.value}:{_CONVERSATION_ID}"
 _POSTER_ID = "poster-1"
 _BOT_ID = "azure-sdk-qa-bot"
 _BASE_TIME = datetime(2026, 7, 1, 12, 0, 0, tzinfo=timezone.utc)

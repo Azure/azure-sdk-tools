@@ -136,6 +136,17 @@ function run(cmd: string, opts?: { cwd?: string }): void {
   log(`Setting SERVICE_AGENT_SERVER_IMAGE_NAME=${fullImage}`);
   run(`azd env set SERVICE_AGENT_SERVER_IMAGE_NAME "${fullImage}"`);
 
+  // Persist the repo:tag so a later `azd provision` re-pins the agent slot to
+  // THIS immutable image instead of resetting it to the mutable ':dev' tag.
+  // main.bicepparam reads AGENT_BASED_IMAGE_REPOSITORY → main.bicep
+  // agentBasedImageRepository → the slot's linuxFxVersion. Without this, running
+  // `azd provision` after a deploy reverts the slot to a stale/flaky ':dev'
+  // image and the container fails its 230s warm-up probe → 503 on /ping,
+  // /agent/chat.
+  const repoTag = `${IMAGE_NAME}:${resolvedTag}`;
+  log(`Setting AGENT_BASED_IMAGE_REPOSITORY=${repoTag}`);
+  run(`azd env set AGENT_BASED_IMAGE_REPOSITORY "${repoTag}"`);
+
   // Repoint the App Service `agent` slot at the freshly built immutable tag.
   // azd cannot deploy to a named slot, so the container image is set here.
   // Skipped in CI, where provisioning sets the slot image from the

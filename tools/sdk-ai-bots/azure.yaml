@@ -66,15 +66,6 @@ services:
                 interactive: true
     function-app:
         project: azure-sdk-qa-bot-function
-        # Container-based Function App (bicep sets linuxFxVersion DOCKER|<image>).
-        # Deploy it as an App Service container (like backend/agent-server), NOT
-        # host: `function`: azd's function host does a code/zip package deploy
-        # that never completes on a container function app — it hangs at
-        # "Uploading deployment package" for 20 min, fails, and thereby skips the
-        # postdeploy hooks (including the global one that PUTs the Logic App
-        # workflow). The predeploy hook builds the image and exports
-        # SERVICE_FUNCTION_APP_IMAGE_NAME so azd sets that pre-built image on the
-        # site instead of building/uploading its own.
         host: appservice
         language: docker
         docker:

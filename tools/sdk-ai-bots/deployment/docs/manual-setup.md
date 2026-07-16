@@ -461,3 +461,51 @@ preview:
 | 14 | Storage blob versioning | per env |
 | 15 | Operational readiness sign-off | before prod |
 | 16 | Retire old pipelines | once after cutover |
+| 17 | Re-run deploy after any `azd provision` (re-provision caveats) | every re-provision |
+
+---
+
+## 17. Re-provision caveats — imperative state `azd provision` resets
+
+Some resources are provisioned by Bicep as a **shell** (or pinned to a
+placeholder image) and then mutated imperatively by an azd **deploy** hook once
+the application code is live. This is deliberate: the final state depends on a
+runtime artifact (a deployed container / a runtime-discovered function) that does
+not exist at `azd provision` time, or on an ARM operation Bicep cannot express.
+
+The trade-off is that these mutations live **outside** Bicep's declarative model,
+so **re-running `azd provision` redeploys the Bicep declaration and overwrites
+them** — exactly like the Logic App workflow reverting to its empty shell.
+
+> **Rule of thumb:** after **any** `azd provision` on an existing environment,
+> run `azd deploy` (all services) to re-apply the state below. A bare re-provision
+> leaves the environment in a half-configured state.
+
+### 17.1 State that a re-provision resets (must re-run `azd deploy`)
+
+| Resource | Bicep provisions | Hook re-applies | Hook | Why Bicep can't own it | Recovery after re-provision |
+|---|---|---|---|---|---|
+| **Logic App workflow** definition + `$connections` | Empty **shell** workflow (identity, integration account, state, tags) | Real `properties.definition` + `parameters` via GET→mutate→PUT | [hooks/lib/patch-workflow.ts](../hooks/lib/patch-workflow.ts) (fired by [hooks/postdeploy.ts](../hooks/postdeploy.ts); also [scripts/deploy-logic-app.ts](../scripts/deploy-logic-app.ts)) | The definition's `function.id` points at `.../functions/convertActivity`, a runtime child resource that only exists after the function container is live and that ARM validates at **write time**; and `Microsoft.Logic/workflows` rejects PATCH on `properties` (`PatchWorkflowPropertiesNotSupported`) | `azd deploy logic-app` (or any `azd deploy` → global postdeploy), or `npm run deploy:logic-app` |
+| **Frontend App Service** container image | Site pinned to mutable `:dev` tag | Repoints site to immutable `dev-N.0.0` via `az webapp config container set` | [hooks/frontend-predeploy.ts](../hooks/frontend-predeploy.ts) | azd doesn't re-provision on deploy, and the immutable tag is auto-incremented against ACR at **deploy** time (unknown at provision); the resolved tag is **not** persisted to a Bicep param | `azd deploy frontend` |
+| **Function App** container image | App pinned to mutable `:dev` tag | Repoints app to immutable `dev-N.0.0` via `az functionapp config container set` | [hooks/function-predeploy.ts](../hooks/function-predeploy.ts) | Same as frontend — tag resolved at deploy time, not persisted to a Bicep param | `azd deploy function-app` |
+| **Backend `agent` slot** container image | Slot `linuxFxVersion` from `AGENT_BASED_IMAGE_REPOSITORY` param (defaults to `:dev`) | Builds immutable image, repoints the `agent` **slot** via `az webapp config container set --slot agent` | [hooks/agent-server-predeploy.ts](../hooks/agent-server-predeploy.ts) | azd's App Service target cannot deploy to a **named deployment slot** — only the production slot | **Mitigated:** the hook persists `AGENT_BASED_IMAGE_REPOSITORY=<repo:tag>` into the azd env, so a re-provision re-pins the **same** immutable image. Only reverts to `:dev` if that azd env var is lost (fresh/cleared env). Recovery: `azd deploy agent-server` |
+
+### 17.2 State that `azd deploy` (not provision) clobbers — self-healing
+
+Listed for completeness; **not** a re-provision concern (provision sets it
+correctly), but the same "Bicep value overwritten out-of-band" class:
+
+| Resource | What clobbers it | Hook that self-heals | Hook |
+|---|---|---|---|
+| **Backend ACR pull identity** (`acrUserManagedIdentityID` / `acrUseManagedIdentityCreds`) | Every `azd deploy backend` overwrites the site's container config and clears the user-assigned pull identity → image pull fails with 503 | Re-applies the identity and restarts the site (idempotent) | [hooks/backend-postdeploy.ts](../hooks/backend-postdeploy.ts) (`repinAcrPullIdentity`) |
+
+### 17.3 State that survives a re-provision — no action needed
+
+These are either not declared in Bicep (so provision cannot remove them) or are
+re-seeded by the postprovision hook on **every** provision, so they are safe:
+
+- **Key Vault secrets** — [hooks/lib/seed-key-vault.ts](../hooks/lib/seed-key-vault.ts) (values not declared in Bicep; re-seeded each provision)
+- **App Configuration values** — [hooks/lib/seed-app-config.ts](../hooks/lib/seed-app-config.ts) (re-seeded each provision)
+- **Role assignments** (e.g. agent identity → "Azure AI User") — [hooks/lib/ensure-role-assignment.ts](../hooks/lib/ensure-role-assignment.ts) (created only if absent; not declared in Bicep, so provision won't delete them)
+- **Bot config blobs** — [hooks/lib/upload-bot-configs.ts](../hooks/lib/upload-bot-configs.ts) (blob content, not a Bicep-owned property)
+- **Managed-API OAuth consent** (Teams / Blob / Cosmos connections) — see §10 (connection auth persists across provisions)

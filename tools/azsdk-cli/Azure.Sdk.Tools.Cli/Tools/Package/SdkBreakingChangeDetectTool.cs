@@ -167,8 +167,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
                         // Prepare script parameters
                         string tempDir = Path.GetTempPath();
-                        // The SDK change file path is constructed using the temporary directory, service name (or a new GUID if not available), and the SDK change JSON file name.
-                        string sdkChangeFileName = $"{packageInfo.ServiceName ?? Guid.NewGuid().ToString("N")}-{SdkChangeJsonFileName}";
+                        // The SDK change file path is constructed using the temporary directory, service name, a new GUID, language and the SDK change JSON file name.
+                        string sdkChangeFileName = $"{packageInfo.ServiceName ?? "unknownService"}-{Guid.NewGuid().ToString("N")}-{languageService.Language}-{SdkChangeJsonFileName}";
                         var sdkChangeFilePath = Path.Combine(tempDir, sdkChangeFileName);
                         var scriptParameters = new Dictionary<string, string>
                         {

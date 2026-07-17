@@ -15,7 +15,107 @@ We are introducing a **Feedback Agent** — a new hosted agent in the Foundry pr
 
 ### 2.1 Architecture
 
-![alt text](feedback_agent_architecture.png)
+The Feedback Agent is a closed-loop quality system layered on top of the
+Chat Agent. The diagram below shows both phases end to end: the **answer
+flow** (1–10) where a user question is answered in a Teams channel, and the
+**feedback loop** (A–F) where the daily scan detects wrong answers, diagnoses
+them, and drives fixes back into the knowledge base.
+
+```mermaid
+flowchart TB
+    User(["Azure SDK developers / experts<br/>(Teams channels)"])
+
+    subgraph TEAMS["Microsoft Teams"]
+        Channel["Channel thread<br/>(question - bot reply - up/down vote - expert reply)"]
+    end
+
+    subgraph ORCH["Ingestion & Orchestration"]
+        LogicApp["Logic App<br/>(watches all channel messages)"]
+        Bot["Teams Bot<br/>(Bot Service /api/messages)"]
+    end
+
+    subgraph BACKEND["Agent Backend"]
+        Server["Backend API<br/>(FastAPI server.py)"]
+        ChatAgent["Chat Agent<br/>(Foundry hosted agent)"]
+        Evaluator["Bot Answer Evaluator<br/>(LLM judge)"]
+        FeedbackAgent["Feedback Agent<br/>(Foundry hosted agent)"]
+        Scan["Daily Feedback Scan<br/>(scheduled pipeline)"]
+    end
+
+    subgraph STORE["Storage & Platform Services"]
+        Cosmos[("Cosmos DB<br/>conversation-messages - qa-records - memory")]
+        Blob[("Blob Storage<br/>channel.yaml - feedback")]
+        Search[("Azure AI Search<br/>Knowledge Base")]
+        AppIns[("App Insights<br/>Chat Agent traces")]
+    end
+
+    subgraph GH["Remediation"]
+        Issue["GitHub Issue<br/>(Azure/azure-sdk-pr)"]
+        Copilot["GitHub Copilot<br/>authors the fix"]
+        Sources["Source-of-truth repos<br/>(KB docs / agent code)"]
+    end
+
+    %% ---------- Answer flow (runtime) ----------
+    User -->|"1 posts message"| Channel
+    Channel -->|"2 new-message trigger"| LogicApp
+    LogicApp -->|"3 save message"| Server
+    Server -->|"3a persist"| Cosmos
+    LogicApp -->|"4 should reply?"| Server
+    LogicApp -.->|"reads tenant map"| Blob
+    LogicApp -->|"5 if yes, invoke"| Bot
+    Bot -->|"6 chat"| Server
+    Server --> ChatAgent
+    ChatAgent -->|"7 retrieve"| Search
+    ChatAgent -.->|"context / memory"| Cosmos
+    ChatAgent -.->|"emit trace"| AppIns
+    ChatAgent -->|"8 answer"| Server
+    Server -->|"8a save bot answer"| Cosmos
+    Bot -->|"9 post reply"| Channel
+    Channel -->|"10 up/down feedback"| Bot
+    Bot -->|"feedback"| Server
+    Server -.->|"store feedback"| Cosmos
+
+    %% ---------- Feedback loop (daily) ----------
+    Scan -->|"A Detect: read threads"| Cosmos
+    Scan -->|"B evaluate each thread"| Evaluator
+    Evaluator -->|"finished + correct: archive"| Cosmos
+    Evaluator -->|"finished + wrong: failed"| Scan
+    Scan -->|"C Diagnose: run on failed"| FeedbackAgent
+    FeedbackAgent -->|"fetch trace"| AppIns
+    FeedbackAgent -->|"fetch conversation"| Cosmos
+    FeedbackAgent -->|"reproduce retrieval"| Search
+    FeedbackAgent -->|"D classify KB vs system<br/>+ file issue"| Issue
+    Issue -->|"E"| Copilot
+    Copilot -->|"F PR"| Sources
+    Sources -.->|"KB re-indexed:<br/>closes the loop"| Search
+
+    classDef store fill:#eef,stroke:#88a
+    classDef agent fill:#efe,stroke:#8a8
+    class Cosmos,Blob,Search,AppIns store
+    class ChatAgent,FeedbackAgent,Evaluator agent
+```
+
+**Answer flow (1–10, runtime).** A user posts in a Teams channel; the **Logic
+App** — which watches *all* channel messages, since a Teams bot only sees
+@-mentions — saves the message and checks intention via the **Backend API**,
+resolving the channel-to-tenant map from **Blob**. If the bot should reply, it
+invokes the **Teams Bot**, which calls the backend's chat path; the **Chat
+Agent** (Foundry hosted) retrieves from **AI Search (KB)**, uses conversation
+context/memory in **Cosmos**, and emits a trace to **App Insights**. The answer
+is saved to `conversation-messages` and posted back to the channel. A user
+thumbs-up/down (or a later expert reply in the thread) becomes a failure
+signal.
+
+**Feedback loop (A–F, daily).** The scheduled **scan** reads conversation
+threads from Cosmos (Detect); the **Bot Answer Evaluator** judges each —
+*finished + correct* is archived, *finished + wrong/unconfirmed* becomes
+`failed`. Each failed thread goes to the **Feedback Agent** (Diagnose), which
+reconstructs the failed turn from **App Insights**, reads the full conversation
+from **Cosmos**, and reproduces retrieval against **AI Search** to classify a
+**KB defect vs. system defect**. It files one evidence-cited **GitHub issue**
+in `Azure/azure-sdk-pr` (Remediate), which **GitHub Copilot** turns into a fix
+in the source-of-truth repo — and once KB docs are re-indexed into AI Search,
+the improvement flows back into future answers, closing the loop.
 
 ### 2.2 Agent Design
 

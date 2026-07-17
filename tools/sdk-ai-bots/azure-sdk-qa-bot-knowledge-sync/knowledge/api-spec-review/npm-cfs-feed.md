@@ -26,7 +26,7 @@ Longer term, Microsoft Security is updating packagefeedproxy so first-party pack
 
 Microsoft is rolling out two automatic protections on company-managed devices:
 
-1. npm client minimum release age: `min-release-age=7`. `npm install` skips package versions published in the last 7 days and resolves to the newest version that is at least 7 days old. Versions already pinned in a committed `package-lock.json` are not affected.
+1. npm client minimum release age: `min-release-age=7`. `npm install` skips package versions published in the last 7 days and resolves to the newest version that is at least 7 days old. Versions already pinned in a committed `package-lock.json` are not affected by the minimum-release-age policy, although `npm ci` can still fail for unrelated lockfile consistency issues.
 2. Network protection blocks direct access to `registry.npmjs.org`, `registry.yarnpkg.com`, and `registry.npmmirror.com`, so npm, pnpm, and yarn cannot fetch packages from those public registries directly.
 
 Routing installs through the internal CFS feed ensures packages are Microsoft-published, have already passed the 7-day quarantine window, or were manually vetted before use.

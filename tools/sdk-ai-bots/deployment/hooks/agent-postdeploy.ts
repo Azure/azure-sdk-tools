@@ -81,8 +81,10 @@ function ensureAgentServerAuthorization(): void {
   // The frontend/bot calls the server via its user-assigned managed identity
   // (DefaultAzureCredential → app-only token), so grant it the app-role.
   const managedIdentityPrincipalId = process.env.MANAGED_IDENTITY_PRINCIPAL_ID?.trim() || undefined;
-  // Also pre-authorize the bot app for the delegated scope when present.
-  const botAppId = process.env.BOT_AUDIENCE?.trim();
+  // Also pre-authorize the bot's client id for the delegated scope when present.
+  // BOT_ID is the bot's MicrosoftAppId (UAMI clientId in UserAssignedMsi mode).
+  // BOT_AUDIENCE is a token audience (Bot Framework Service URL) — not a client id.
+  const botAppId = process.env.BOT_ID?.trim();
   ensureServerAppAuthorization({
     appId,
     managedIdentityPrincipalId,

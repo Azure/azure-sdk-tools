@@ -252,6 +252,54 @@ function ensureDeveloperPrincipal(): void {
   log("  ⚠ Could not detect principal ID — developer role assignments will be skipped.");
 }
 
+/**
+ * Probe the Teams `Microsoft.Web/connections` resource. When it exists AND its
+ * status is "Connected" (OAuth consent already completed), set
+ * CREATE_TEAMS_CONNECTION=false so bicep leaves it untouched — re-issuing the
+ * PUT on an authorized OAuth connection can invalidate the bound token.
+ * Otherwise (missing, not yet Connected, or unknown), set true so the
+ * connection shell is created / repaired on this provision.
+ *
+ * The connection name is either persisted from a previous provision
+ * (TEAMS_CONNECTION_NAME output of main.bicep) or, on a very first provision,
+ * absent — in which case we default to creating (true).
+ */
+function ensureTeamsConnectionFlag(): void {
+  const connectionName = process.env.TEAMS_CONNECTION_NAME?.trim();
+  const rg = RESOURCE_GROUP;
+  if (!connectionName || !rg || !SUBSCRIPTION_ID) {
+    log(
+      "  Teams connection name / RG / subscription not yet known — leaving " +
+        "CREATE_TEAMS_CONNECTION at its default (true; first provision).",
+    );
+    return;
+  }
+  log(`Checking Teams API connection '${connectionName}' status in '${rg}'...`);
+  let status = "";
+  try {
+    status = execSync(
+      `az resource show --resource-type Microsoft.Web/connections ` +
+        `--subscription "${SUBSCRIPTION_ID}" -g "${rg}" -n "${connectionName}" ` +
+        `--query "properties.statuses[0].status" -o tsv 2>/dev/null`,
+      { encoding: "utf8" },
+    ).trim();
+  } catch {
+    // Not found or transient error — fall through to default (create).
+  }
+  if (status === "Connected") {
+    execSync(`azd env set CREATE_TEAMS_CONNECTION false`, { stdio: "inherit" });
+    process.env.CREATE_TEAMS_CONNECTION = "false";
+    log(`  ✓ '${connectionName}' is Connected — CREATE_TEAMS_CONNECTION=false (skip PUT)`);
+    return;
+  }
+  execSync(`azd env set CREATE_TEAMS_CONNECTION true`, { stdio: "inherit" });
+  process.env.CREATE_TEAMS_CONNECTION = "true";
+  log(
+    `  Teams connection status='${status || "not-found"}' — ` +
+      `CREATE_TEAMS_CONNECTION=true (bicep will PUT the shell).`,
+  );
+}
+
 (async () => {
   log(`Starting preprovision for environment '${ENV_NAME}' in '${LOCATION}'`);
   log(`  Resource group: ${RESOURCE_GROUP || "(not set; will be created by main.bicep)"}`);
@@ -264,6 +312,7 @@ function ensureDeveloperPrincipal(): void {
   checkResourceQuotas();
   ensureServerAudience();
   ensureDeveloperPrincipal();
+  ensureTeamsConnectionFlag();
 
   log("Preprovision checks passed.");
 })().catch((err) => {

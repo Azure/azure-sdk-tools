@@ -113,6 +113,21 @@ param documentDbConnectionName string = ''
 param logicAppWorkflowName string = ''
 param logicAppAlertName string = ''
 
+@description('When false, skip PUT on the Teams `Microsoft.Web/connections` resource so an already-authorized OAuth connection is left untouched. hooks/preprovision.ts sets CREATE_TEAMS_CONNECTION=false when the connection status is "Connected"; otherwise it defaults to true so the first provision creates the connection shell.')
+param createTeamsConnection bool = true
+
+@description('Logical environment name (dev / preview / prod). Used to derive per-env defaults (Table Storage table name, RAG service scope, ...). Sourced from AZURE_ENV_NAME via main.bicepparam.')
+param envName string
+
+@description('Azure Table Storage table name that stores per-conversation Bot Framework state. Read by the frontend at startup — must be non-empty (Table Storage rejects blank names with 400 InvalidInput). Empty string means "compute default from envName" (e.g. TeamsChannelConversationsDev).')
+param azureTableNameForConversation string = ''
+
+@description('OAuth2 scope the frontend requests when calling the backend RAG service. Empty string means "compute default from envName" (e.g. api://azure-sdk-qa-bot-dev/.default).')
+param ragServiceScope string = ''
+
+@description('User-visible display name for the Teams bot. Empty string means "compute default from envName" (prod → "Azure SDK Q&A Bot"; else "Azure SDK Q&A Bot <env>").')
+param teamsBotFullDisplayName string = ''
+
 // ── Resource Group ─────────────────────────────────────────────────────────────
 resource rg 'Microsoft.Resources/resourceGroups@2024-03-01' = {
   name: resourceGroupName
@@ -123,6 +138,13 @@ resource rg 'Microsoft.Resources/resourceGroups@2024-03-01' = {
 // pattern so the default names main.bicep passes to modules match what modules
 // would generate on their own.
 var _suffix = substring(uniqueString(rg.id), 0, 6)
+
+// Per-env defaults for values whose bicep params can't self-reference. Callers
+// may override the param; empty → this default is used.
+var _envSuffixTitleCase = '${toUpper(substring(envName, 0, 1))}${substring(envName, 1)}'
+var _defaultAzureTableNameForConversation = 'TeamsChannelConversations${_envSuffixTitleCase}'
+var _defaultRagServiceScope = 'api://azure-sdk-qa-bot-${envName}/.default'
+var _defaultTeamsBotFullDisplayName = envName == 'prod' ? 'Azure SDK Q&A Bot' : 'Azure SDK Q&A Bot ${envName}'
 
 // ── Layer 1: Shared resources ──────────────────────────────────────────────────
 module sharedResources './modules/qaBotSharedResources/sharedResources.bicep' = {
@@ -179,6 +201,9 @@ module frontend './modules/qaBotFrontend/userAssignedIdentity.bicep' = {
     frontendServerErrorsAlertName:  !empty(frontendServerErrorsAlertName)  ? frontendServerErrorsAlertName  : 'azsdkqabot-server-errors-${_suffix}'
     frontendHealthCheckAlertName:   !empty(frontendHealthCheckAlertName)   ? frontendHealthCheckAlertName   : 'azsdkqabot-health-check-failure-${_suffix}'
     frontendDeleteLockName:         !empty(frontendDeleteLockName)         ? frontendDeleteLockName         : 'azsdkqabot-delete-lock-${_suffix}'
+    azureTableNameForConversation: !empty(azureTableNameForConversation) ? azureTableNameForConversation : _defaultAzureTableNameForConversation
+    ragServiceScope: !empty(ragServiceScope) ? ragServiceScope : _defaultRagServiceScope
+    teamsBotFullDisplayName: !empty(teamsBotFullDisplayName) ? teamsBotFullDisplayName : _defaultTeamsBotFullDisplayName
   }
 }
 
@@ -260,6 +285,7 @@ module logicApp './modules/qaBotLogicApp/logicAppResources.bicep' = {
     logicAppAlertName:       !empty(logicAppAlertName)       ? logicAppAlertName       : 'azuresdkqabot-logicapp-alert-${_suffix}'
     actionGroupName:         sharedResources.outputs.actionGroupName
     includeWorkflowDefinition: false
+    createTeamsConnection: createTeamsConnection
   }
 }
 
@@ -306,7 +332,10 @@ output BOT_AUDIENCE string = frontend.outputs.botAudience
 // identity, and bot service; Teams only owns the app manifest + registration).
 output BOT_AZURE_APP_SERVICE_RESOURCE_ID string = frontend.outputs.botSiteResourceId
 output BOT_DOMAIN string = frontend.outputs.botDomain
-output BOT_ID string = frontend.outputs.botAudience
+// BOT_ID is the bot's MicrosoftAppId (UAMI clientId in UserAssignedMsi mode) —
+// NOT the same as BOT_AUDIENCE, which is the Bot Framework Service audience
+// callers request when acquiring a token for /api/messages.
+output BOT_ID string = frontend.outputs.botClientId
 output BOT_TENANT_ID string = frontend.outputs.botTenantId
 
 // Backend outputs

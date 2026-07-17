@@ -36,6 +36,27 @@ param frontendHealthCheckAlertName string = 'azsdkqabot-health-check-failure-${s
 @description('Name of the delete lock guarding the frontend resource group.')
 param frontendDeleteLockName string = 'azsdkqabot-delete-lock-${substring(uniqueString(resourceGroup().id), 0, 6)}'
 
+@description('Azure Table Storage table name that stores per-conversation Bot Framework state. Read by the frontend at startup — MUST be non-empty or the container crashes on `ConversationHandler` initialization (Table Storage returns 400 InvalidInput for empty names).')
+param azureTableNameForConversation string
+
+@description('OAuth2 scope the frontend requests for calls to the backend RAG service. Format `api://<server-audience>/.default`. Read at startup by config.js validation — MUST be non-empty.')
+param ragServiceScope string
+
+@description('User-visible display name for the Teams bot (surfaced by the Bot Framework SDK). Per-env value; defaults to the prod name.')
+param teamsBotFullDisplayName string = 'Azure SDK Q&A Bot'
+
+@description('GitHub App ID the frontend uses when calling the Azure SDK automation app. Stable across envs (Azure org owns a single app).')
+param githubAppId string = '1086291'
+
+@description('Key Vault name that stores the GitHub App private-key secret consumed by the frontend.')
+param githubAppKeyVaultName string = 'azuresdkengkeyvault'
+
+@description('Name of the GitHub App private-key secret in `githubAppKeyVaultName`.')
+param githubAppKeyName string = 'azure-sdk-automation'
+
+@description('GitHub owner (org/user) the GitHub App is installed under.')
+param githubAppInstallOwner string = 'Azure'
+
 resource userAssignedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2025-05-31-preview' = {
   name: frontendBaseName
   location: 'westus2'
@@ -192,7 +213,7 @@ resource site 'Microsoft.Web/sites@2025-05-01' = {
         }
         {
           name: 'RAG_SERVICE_SCOPE'
-          value: ''
+          value: ragServiceScope
         }
         {
           name: 'STORAGE_ACCOUNT_NAME'
@@ -200,39 +221,39 @@ resource site 'Microsoft.Web/sites@2025-05-01' = {
         }
         {
           name: 'AZURE_TABLE_NAME_FOR_CONVERSATION'
-          value: ''
+          value: azureTableNameForConversation
         }
         {
           name: 'BLOB_CONTAINER_NAME'
-          value: ''
+          value: 'bot-configs'
         }
         {
           name: 'CHANNEL_CONFIG_BLOB_NAME'
-          value: ''
+          value: 'channel.yaml'
         }
         {
           name: 'TENANT_CONFIG_BLOB_NAME'
-          value: ''
+          value: 'tenant.yaml'
         }
         {
           name: 'GITHUB_APP_ID'
-          value: ''
+          value: githubAppId
         }
         {
           name: 'GITHUB_APP_KEY_VAULT_NAME'
-          value: ''
+          value: githubAppKeyVaultName
         }
         {
           name: 'GITHUB_APP_KEY_NAME'
-          value: ''
+          value: githubAppKeyName
         }
         {
           name: 'GITHUB_APP_INSTALL_OWNER'
-          value: ''
+          value: githubAppInstallOwner
         }
         {
           name: 'TEAMS_BOT_FULL_DISPLAY_NAME'
-          value: 'Azure SDK Q&A Bot'
+          value: teamsBotFullDisplayName
         }
       ]
     }
@@ -437,7 +458,18 @@ module azureSdkQaBotModule './azureSdkQaBotModule.bicep' = {
 // Outputs
 output botIdentityName string = userAssignedIdentity.name
 output botBaseUrl string = 'https://${site.properties.defaultHostName}'
-output botAudience string = userAssignedIdentity.properties.clientId
+// UAMI clientId used by the bot process itself (BOT_ID / MicrosoftAppId in
+// UserAssignedMsi mode) and by the server AAD app's pre-authorization list.
+// NOT a valid AAD token audience — AAD refuses to mint tokens for MSI SPs
+// (AADSTS100040), so callers (e.g. the Logic App HTTP action) must NOT use
+// this value as the `audience` for a ManagedServiceIdentity auth block.
+output botClientId string = userAssignedIdentity.properties.clientId
+// Token audience callers use when POSTing to the bot's /api/messages. For a
+// bot registered as `msaAppType: UserAssignedMSI`, the Bot Framework
+// CloudAdapter validates incoming JWTs against the Bot Framework Service
+// audience — not the UAMI clientId. Using anything else fails at AAD token
+// acquisition or at the adapter's inbound auth.
+output botAudience string = 'https://api.botframework.com'
 // Consumed by hooks/lib/sync-teams-env.ts to populate the Teams Toolkit env
 // file (azure-sdk-qa-bot/env/.env.<env>) so `teamsapp` no longer needs its own
 // arm/deploy step — azd owns provisioning and feeds these values to Teams.

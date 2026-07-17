@@ -19,6 +19,7 @@ import { seedAppConfiguration } from "./lib/seed-app-config.js";
 import { seedKeyVaultSecrets } from "./lib/seed-key-vault.js";
 import { ensureRoleAssignment } from "./lib/ensure-role-assignment.js";
 import { syncTeamsEnv } from "./lib/sync-teams-env.js";
+import { getEnvSuiteValue } from "./lib/env-suite.js";
 
 const ENV_NAME = process.env.AZURE_ENV_NAME ?? "";
 const SUBSCRIPTION_ID = process.env.AZURE_SUBSCRIPTION_ID ?? "";
@@ -152,9 +153,16 @@ function syncTeamsEnvStep(): void {
     return;
   }
   log("Generating the azd-owned Teams env file (.env.azd)...");
+  // Teams app registration id/tenant come from environment-suite.yaml
+  // (environments.<env>.teamsAppId / .teamsAppTenantId) — each env has its
+  // OWN Teams app, never inherited from the committed base .env.<env> file.
+  const teamsAppId = getEnvSuiteValue(ENV_NAME, "teamsAppId");
+  const teamsAppTenantId = getEnvSuiteValue(ENV_NAME, "teamsAppTenantId");
   syncTeamsEnv({
     azdEnvName: ENV_NAME,
     env: process.env,
+    teamsAppId,
+    teamsAppTenantId,
     log: (m) => log(m),
   });
 }

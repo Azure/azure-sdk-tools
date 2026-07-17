@@ -38,6 +38,20 @@ export interface SyncTeamsEnvOptions {
   /** Environment values — normally `process.env` after azd env is loaded. */
   env: NodeJS.ProcessEnv;
   /**
+   * Teams app registration for this environment. Sourced from
+   * `infra/environments/environment-suite.yaml`
+   * (environments.<env>.teamsAppId / .teamsAppTenantId) by the caller.
+   *
+   * Each env has its OWN Teams app; these MUST NOT be copied from the
+   * committed base file (e.g. .env.dev), which would repoint the azd env to a
+   * foreign app on every provision. When empty or set to a `REPLACE_WITH_*`
+   * placeholder, the keys are dropped from the seed so `teamsapp provision
+   * --env azd` mints a fresh registration on its first run — copy the
+   * resulting GUID back into environment-suite.yaml.
+   */
+  teamsAppId?: string;
+  teamsAppTenantId?: string;
+  /**
    * Optional override for the Teams project root (folder containing `env/`).
    * Defaults to `../azure-sdk-qa-bot` relative to the deployment/ cwd azd uses
    * when running the hook.
@@ -72,6 +86,22 @@ const AZD_OVERRIDES: { target: string; source: string; required: boolean }[] = [
   { target: "AZURE_RESOURCE_GROUP_NAME", source: "AZURE_RESOURCE_GROUP", required: false },
 ];
 
+/**
+ * Keys Teams Toolkit writes back into the per-env file when it registers the
+ * Teams app. Each Teams Toolkit environment has its OWN registration (different
+ * TEAMS_APP_ID per env), so these must never leak from the committed base file
+ * (e.g. .env.dev) into the azd-owned .env.azd — doing so would repoint the azd
+ * env to a foreign app on every provision. The authoritative value comes from
+ * environment-suite.yaml, passed in via SyncTeamsEnvOptions.
+ */
+const TEAMSAPP_OWNED_KEYS = ["TEAMS_APP_ID", "TEAMS_APP_TENANT_ID"] as const;
+
+/** Remove any lines assigning one of `keys`. */
+function stripEnvLines(lines: string[], keys: readonly string[]): string[] {
+  const patterns = keys.map((k) => new RegExp(`^\\s*${k}\\s*=`));
+  return lines.filter((line) => !patterns.some((p) => p.test(line)));
+}
+
 /** Upsert `KEY=value` into the lines of an env file, preserving everything else. */
 function upsertEnvLines(lines: string[], key: string, value: string): string[] {
   const assignment = `${key}=${value}`;
@@ -85,6 +115,12 @@ function upsertEnvLines(lines: string[], key: string, value: string): string[] {
   return next;
 }
 
+/** True for empty / whitespace / `REPLACE_WITH_*` placeholders from the suite file. */
+function isPlaceholder(value: string | undefined): boolean {
+  const v = value?.trim() ?? "";
+  return v === "" || v.startsWith("REPLACE_WITH_");
+}
+
 export function syncTeamsEnv(options: SyncTeamsEnvOptions): void {
   const log = options.log ?? defaultLog;
   const baseEnvName = toTeamsEnvName(options.azdEnvName);
@@ -94,10 +130,12 @@ export function syncTeamsEnv(options: SyncTeamsEnvOptions): void {
   const azdFile = resolve(projectRoot, "env", `.env.${AZD_TEAMS_ENV}`);
 
   // Seed from the committed per-env file so the generated .env.azd is
-  // self-contained (display names, GitHub App, storage, TEAMS_APP_ID, ...).
+  // self-contained (display names, GitHub App, storage, ...). Always strip
+  // teamsapp-owned keys — they come from environment-suite.yaml, not from
+  // the base file (see TEAMSAPP_OWNED_KEYS).
   let lines: string[];
   if (existsSync(baseFile)) {
-    lines = readFileSync(baseFile, "utf8").split("\n");
+    lines = stripEnvLines(readFileSync(baseFile, "utf8").split("\n"), TEAMSAPP_OWNED_KEYS);
     log(`Base Teams env: .env.${baseEnvName} (azd env '${options.azdEnvName}')`);
   } else {
     lines = [
@@ -130,6 +168,27 @@ export function syncTeamsEnv(options: SyncTeamsEnvOptions): void {
   // Teams Toolkit resolves the env from the file suffix; this file is `.env.azd`
   // so its TEAMSFX_ENV (used e.g. for the app-package zip name) must be `azd`.
   lines = upsertEnvLines(lines, "TEAMSFX_ENV", AZD_TEAMS_ENV);
+
+  // Apply the per-env Teams app registration from environment-suite.yaml.
+  // Skip when the value is missing / a placeholder so `teamsapp provision
+  // --env azd` mints a fresh registration on its first run; the resulting
+  // GUID should then be committed back to environment-suite.yaml.
+  const teamsappValues: Record<(typeof TEAMSAPP_OWNED_KEYS)[number], string | undefined> = {
+    TEAMS_APP_ID: options.teamsAppId,
+    TEAMS_APP_TENANT_ID: options.teamsAppTenantId,
+  };
+  for (const key of TEAMSAPP_OWNED_KEYS) {
+    const value = teamsappValues[key];
+    if (isPlaceholder(value)) {
+      log(
+        `  ${key} not set in environment-suite.yaml for '${options.azdEnvName}' — ` +
+          `omitting; teamsapp will create one on first provision.`,
+      );
+      continue;
+    }
+    lines = upsertEnvLines(lines, key, value!.trim());
+    log(`  set ${key} (from environment-suite.yaml)`);
+  }
 
   writeFileSync(azdFile, lines.join("\n"), "utf8");
   log(`Wrote ${azdFile} — run \`teamsapp <cmd> --env ${AZD_TEAMS_ENV}\`.`);

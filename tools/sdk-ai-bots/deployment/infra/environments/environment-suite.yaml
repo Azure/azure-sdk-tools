@@ -48,6 +48,13 @@ environments:
         frontendSiteName: 'azsdkqabot-dev'
         backendSiteName: 'azuresdkqabot-server-dev'
         functionAppName: 'azuresdkqabot-function-dev'
+        # Teams Toolkit app registration for this environment. Each env owns a
+        # DIFFERENT Teams app (created by `teamsapp provision`); the value is
+        # written into azure-sdk-qa-bot/env/.env.azd by the postprovision hook
+        # (deployment/hooks/lib/sync-teams-env.ts). If empty on first-ever
+        # provision, teamsapp will create one and you should copy its GUID here.
+        teamsAppId: '9d620152-6b1b-44f2-9635-b1f120c93c4a'
+        teamsAppTenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
         regions:
             - name: 'centralus'
               ring: 'single'
@@ -72,6 +79,9 @@ environments:
         frontendSiteName: 'azsdkqabot-preview'
         backendSiteName: 'azuresdkqabot-server-preview'
         functionAppName: 'azuresdkqabot-function-preview'
+        # See dev.teamsAppId for the contract.
+        teamsAppId: 'REPLACE_WITH_PREVIEW_TEAMS_APP_ID'
+        teamsAppTenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
         regions:
             - name: 'westus2'
               ring: 'single'
@@ -102,6 +112,9 @@ environments:
         frontendSiteName: 'azsdkqabot'
         backendSiteName: 'azuresdkqabot-server'
         functionAppName: 'azuresdkqabot-function'
+        # See dev.teamsAppId for the contract.
+        teamsAppId: 'REPLACE_WITH_PROD_TEAMS_APP_ID'
+        teamsAppTenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
         regions:
             - name: 'westus2'
               ring: 'canary'

@@ -19,6 +19,8 @@ param aiLocation = readEnvironmentVariable('AZURE_AI_DEPLOYMENTS_LOCATION', read
 
 var env = readEnvironmentVariable('AZURE_ENV_NAME', 'dev')
 
+param envName = env
+
 // ── Sourced from environment-suite.yaml via scripts/sync-env-suite.ps1 ───────
 // The sync script writes these into .azure/<env>/.env with `azd env set`.
 // Fallbacks are used only when a value is missing (e.g., first-run before sync).
@@ -56,3 +58,9 @@ param developerPrincipalType  = readEnvironmentVariable('DEVELOPER_PRINCIPAL_TYP
 param cosmosDbLocation        = readEnvironmentVariable('COSMOS_DB_LOCATION', readEnvironmentVariable('AZURE_LOCATION', 'westus2'))
 param teamsGroupId    = readEnvironmentVariable('TEAMS_GROUP_ID', '3e17dcb0-4257-4a30-b843-77f47f1d4121')
 param teamsChannelIds = split(readEnvironmentVariable('TEAMS_CHANNEL_IDS', '19:de3fce22c2994be18cac50502c55f717@thread.skype'), ',')
+
+// When the Teams managed API connection is already authorized (OAuth
+// "Connected"), hooks/preprovision.ts sets CREATE_TEAMS_CONNECTION=false so
+// this provision leaves the token binding untouched. Default true so the
+// first provision creates the connection shell.
+param createTeamsConnection = readEnvironmentVariable('CREATE_TEAMS_CONNECTION', 'true') == 'true'

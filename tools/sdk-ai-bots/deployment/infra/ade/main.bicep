@@ -40,6 +40,9 @@ param teamsGroupId string
 @description('Teams channel IDs the Logic App subscribes to.')
 param teamsChannelIds array
 
+@description('When false, skip PUT on the Teams `Microsoft.Web/connections` resource so an already-authorized OAuth connection is left untouched. See ../main.bicep for the full contract.')
+param createTeamsConnection bool = true
+
 @description('Frontend (Teams bot) container image repository and tag.')
 param frontendImageRepository string
 
@@ -169,6 +172,7 @@ module logicApp '../modules/qaBotLogicApp/logicAppResources.bicep' = {
     documentDbConnectionName: 'documentdb-${_suffix}'
     logicAppWorkflowName:     'azuresdkqabot-logicapp-${_suffix}'
     logicAppAlertName:        'azuresdkqabot-logicapp-alert-${_suffix}'
+    createTeamsConnection: createTeamsConnection
   }
 }
 

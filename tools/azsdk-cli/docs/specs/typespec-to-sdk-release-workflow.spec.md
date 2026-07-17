@@ -58,8 +58,8 @@ flowchart TD
 3. 🧑‍💻 **Wait for approvals** *(human gating)*
    - **`PublishToCustomers` label** — required on all PRs targeting `main` or `RPSaaSMaster`. Author self-applies to acknowledge APIs are shipped to customers. Enforced by CI (`summarize-checks`). **Candidate for removal** -- redundant once other gates pass; causes service team confusion.
    - **Namespace approval** — required for first preview of new packages (`namespace-<lang>-pending` → `namespace-<lang>-approved`)
-   - **ARM review** — required for ARM/management-plane specs (`ARM-Review-Required` → `ARMSignedOff`)
-   - **Breaking change review** — Spec-level: `BreakingChangeReviewRequired` label auto-applied by CI on any spec PR with breaking changes (review team defined for ARM, undefined for data-plane -- Gap #9). SDK-level: `BreakingChange-{Language}-Sdk` label currently applies to management plane spec PRs only.
+   - **ARM validation** (owned by ARM, non-exhaustive) -- includes ARM review board (`ARM-Review-Required` -> `ARMSignedOff`), breaking change review, and modeling/leasing review. ARM controls what checks apply to their specs.
+   - **Breaking change review** -- Spec-level: `BreakingChangeReviewRequired` label auto-applied by CI on any spec PR with breaking changes (review team defined for ARM, undefined for data-plane -- Gap #9). SDK-level: `BreakingChange-{Language}-Sdk` label currently applies to management plane spec PRs only.
    - > **Note**: There is no spec-level API review. API review happens only at the SDK level (Stage 4).
 
 4. **Spec PR merges → SDK generation is automatic (management plane)**
@@ -79,23 +79,24 @@ flowchart TD
      - `<lang>-api-approved` labels (current) are **informational** — source of truth is the ARH database (API hash)
      - ARH will assign `api-approved` label on SDK PRs automatically when architect approves (replacing per-language labels)
    - **Auto-repair**: `auto-sdk-build-fix` label triggers Copilot agent to fix custom code drift
-   - **ARM SDK PRs**: Reviewed by Shanghai SDK team with release plans attached
+   - **ARM SDK PRs**: Service team approves SDK PRs (Shanghai team may also review, to be verified)
 
 6. 🧑‍💻 **Release** *(human gating)*
-   - The release pipeline is automatically triggered when an SDK pull request is merged, provided the `auto-release` label is applied to the pull request.
-   - Manual approval gate required for security (cannot be removed; ARM approval = Shanghai SDK team)
+   - The release pipeline is automatically triggered when an SDK pull request is merged, provided the `auto-release` label is applied to the pull request. For ARM, `auto-release` is auto-applied.
+   - Manual approval gate required for security (cannot be removed; ARM approval = service team)
    - Release gate: API Review Hub verifies approved API hash
    - Packages published → release plan completes → Service Tree KPI updated
+   - **APEX/CPEX KPI auto-check** (ARM): SDK release auto-triggers KPI verification in the APEX/CPEX process. This is the service team's stamp that SDKs were shipped correctly. 7 KPIs cover onboarding (1), plus private/preview/GA milestones (3 ARM, 3 data-plane). Details: @justinprescott / @prkannap.
    - GitHub.io docs automation creates PR in azure-sdk repo to update package index (aka.ms/azsdk). Reviewed and merged by each language team.
 
 ### For Reviewers
 
-1. **ARM review** (ARM specs only) — Review resource model correctness on spec PRs; apply `ARMSignedOff` label
+1. **ARM validation** (ARM specs only) -- ARM owns their validation gates. Includes ARM review board (`ARMSignedOff`), breaking change review, and modeling/leasing review. Non-exhaustive -- ARM can add checks as needed.
 2. **SDK API review** — Review generated SDK API surface on SDK PRs via APIView (current) or API Review Hub review PRs (future). **There is no spec-level API review** — API review applies only to the generated SDK. **Current**: `<lang>-api-approved` labels applied manually by architects. **Future (ARH)**: `api-approved` label applied automatically via webhooks/GH App. Labels are **informational** — source of truth is the ARH database (API hash).
-3. **SDK PR review** (Shanghai SDK team, management plane only) — Review generated SDK PRs that have a release plan attached; approve & merge
+3. **SDK PR review** (management plane) -- Service team approves SDK PRs for ARM. Shanghai team may also review (to be verified).
 4. **Breaking change review** — Spec-level: `BreakingChangeReviewRequired` label on spec PRs (review team defined for ARM; data-plane routing is Gap #9). SDK-level: `BreakingChange-{Language}-Sdk` label on management plane spec PRs only.
 5. **Namespace review** — Approve new package namespaces; apply `namespace-<lang>-approved` labels
-6. **Release approval** — Approve release pipeline runs (Shanghai SDK team for ARM)
+6. **Release approval** -- Approve release pipeline runs (service team for ARM)
 
 ### For EngSys / SDK Team
 
@@ -185,7 +186,7 @@ flowchart TD
 | **Purpose** | Author/update TypeSpec locally, validate, prepare for spec PR |
 | **Entry signal** | Service team has API requirements |
 | **Exit signal** | `.tsp` files compile, lint passes, ready for PR |
-| **Owners** | TypeSpec team (compiler/linter), Haoling/Shanghai (authoring agent), @markcowl (breaking change) |
+| **Owners** | TypeSpec team (compiler/linter/breaking change), Shanghai (authoring agent) |
 | **Reviewer ask** | Confirm tool list and breaking change workflow |
 
 #### Happy path
@@ -438,11 +439,12 @@ Structured error reporting from generation pipeline + agent-assisted troubleshoo
 1. Release plan work item updated
 2. Changelog prepared (mgmt: auto-generated; data-plane: manual review needed)
 3. SDK PR approved and merged (changelog, metadata, tests all done *before* merge)
-4. Release pipeline auto-triggered on SDK PR merge (requires `auto-release` label on the PR)
+4. Release pipeline auto-triggered on SDK PR merge (requires `auto-release` label on the PR; auto-applied for ARM)
 5. Readiness checked per language (This happens in the release stage of release pipelines, and it would be expected to run earlier in SDK PR phase)
-6. **Release gate check** — Pipelines check both APIView and ARH for API approval (transitioning to ARH only)
-7. Packages published → release plan auto-completes → Service Tree KPI updated
-8. GitHub.io docs automation creates PR in azure-sdk repo to update package index data (aka.ms/azsdk). PR reviewed, approved, and merged by each language team.
+6. **Release gate check** -- Pipelines check both APIView and ARH for API approval (transitioning to ARH only)
+7. Packages published -> release plan auto-completes
+8. **APEX/CPEX KPI auto-check** (ARM) -- SDK release auto-triggers KPI verification. 7 KPIs cover: onboarding (1), plus private/preview/GA milestones (3 ARM, 3 data-plane). Service team's stamp that SDKs shipped correctly. Details: @justinprescott / @prkannap.
+9. GitHub.io docs automation creates PR in azure-sdk repo to update package index data (aka.ms/azsdk). PR reviewed, approved, and merged by each language team.
 
 #### The two release processes
 
@@ -492,7 +494,7 @@ Two processes, different maturity:
 1. **SDK PR readiness** (before merge) — Multiple gaps tracked in [#15705](https://github.com/Azure/azure-sdk-tools/issues/15705): linter failures (especially samples), recorded test failures, merge conflicts, .NET-specific gaps, pipeline provisioning delay. Changelog: mgmt auto-generated reliably, data-plane not reliable.
 2. **Release trigger** (after merge) — Auto-trigger on SDK PR merge being built by @raych1. Once merged, changelog/metadata are already done — just need to trigger release.
 
-Manual approval gate on release pipeline cannot be removed for security (ARM approval = Shanghai team).
+Manual approval gate on release pipeline cannot be removed for security (ARM approval = service team).
 
 #### Open questions
 
@@ -519,7 +521,7 @@ Manual approval gate on release pipeline cannot be removed for security (ARM app
 | `namespace-<lang>-pending` | CI | New namespace detected | Yes | ✅ Fully automated |
 | `namespace-<lang>-approved` | Architect | Namespace approved | Unblocks | ✅ Manual label, gate automated |
 | `namespace-approved-all` | Architect | Approves all languages (mgmt) | Unblocks | ✅ Manual label, gate automated |
-| `Approved-BreakingChange` | Review team | Breaking change approved | Unblocks | ⚠️ Manual label, gate works |
+| `Approved-BreakingChange*` | Review team | Breaking change approved (multiple labels exist per break category) | Unblocks | ⚠️ Manual label, gate works |
 | `BreakingChange-{Language}-Sdk` | CI | Sdk breaking change detected (management plane only) | Yes | ✅ Fully automated |
 | `BreakingChange-{Language}-Sdk-Approved` | Review team | Sdk breaking change approved | Yes | ⚠️ Manual label, validation automated |
 | `BreakingChange-{Language}-Sdk-Suppression` | Authors | SDK breaking change suppression updates | Yes | ✅ Fully automated |
@@ -532,8 +534,9 @@ Manual approval gate on release pipeline cannot be removed for security (ARM app
 | Label | Applied by | Meaning | Blocking? | Automation |
 |-------|-----------|---------|-----------|------------|
 | `auto-sdk-build-fix` | CI / human | Triggers Copilot auto-repair | No | ✅ Triggers cloud agent |
-| `<lang>-api-approved` (current) / `api-approved` (ARH future) | ARH (future) / Architect (current) | SDK API approved — **informational only**. Source of truth is ARH database (API hash). Current: architects apply `<lang>-api-approved` manually. Future: ARH assigns `api-approved` automatically. | Informational | ⚠️ Transitioning to ARH |
-| `release-plan-linked` | Automation | Marks PR for Shanghai SDK team review (ARM SDK PRs) | No | ✅ Auto-applied |
+| `auto-release` | CI (ARM) / human | Triggers release pipeline on SDK PR merge. Auto-applied for ARM management plane. | No | ✅ Auto-applied (ARM) |
+| `<lang>-api-approved` (current) / `api-approved` (ARH future) | ARH (future) / Architect (current) | SDK API approved -- **informational only**. Source of truth is ARH database (API hash). Current: architects apply `<lang>-api-approved` manually. Future: ARH assigns `api-approved` automatically. | Informational | ⚠️ Transitioning to ARH |
+| `release-plan-linked` | Automation | Marks PR as linked to release plan | No | ✅ Auto-applied |
 | `ready-for-review` | GitHub Form | Triggers architect review process | No | ✅ Applied via workflow |
 | `needs-info` | Reviewer | Needs more info from service team | No | ⚠️ Manual, no automation |
 | `review-out-of-date` | ARH | Review PR stale | No | 🔜 Part of ARH |
@@ -613,6 +616,7 @@ The system uses **prompt chaining**: independent sub-skills invoked sequentially
 | 11 | API review feedback agent needs ARH compatibility | 4 | azsdk-cli team | No | Open |
 | 12 | Release gate transition (APIView → ARH) | 5 | @tjprescott / EngSys | No | In progress — pipelines will check both APIView and ARH, then transition to ARH only |
 | 13 | No endpoint liveness verification before spec PR merge | 2 | TBD | No | Aspirational |
+| 14 | GitHub.io docs PR review is manual per language team -- should be automated | 5 | EngSys / Language teams | No | Open |
 
 > **See also**: [SDK PR Release Readiness tracking issue (#15705)](https://github.com/Azure/azure-sdk-tools/issues/15705)
 

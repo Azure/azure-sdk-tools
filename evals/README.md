@@ -1,4 +1,4 @@
-# azsdk-evals
+# evals
 
 MCP-tool / end-to-end scenario evaluations for the `azsdk` MCP server, run via
 [`@microsoft/vally-cli`](https://www.npmjs.com/package/@microsoft/vally-cli).
@@ -13,7 +13,7 @@ different folders. A full end-to-end gate runs *both*.
 |---|---|---|
 | **Question** | Given a user prompt, does the agent invoke the right MCP tool(s) with the right shape? | Given a user prompt, does the agent route to the right skill and follow its instructions? |
 | **Catches** | Tool name / description / parameter regressions; multi-tool ordering; tool-catalog conflicts | Skill frontmatter / `description` / instruction regressions; skill-routing collisions |
-| **Path** | [`azsdk-evals/evals/`](evals/) (`tools/` + `workflow-scenarios/`) | [`.github/skills/<skill-name>/evals/*.eval.yaml`](../.github/skills/) (and `evaluate/evals/` for capability suites) |
+| **Path** | [`evals/evals/`](evals/) (`tools/` + `workflow-scenarios/`) | [`.github/skills/<skill-name>/evals/*.eval.yaml`](../.github/skills/) (and `evaluate/evals/` for capability suites) |
 | **Loaded subject** | Production MCP server (`Azure.Sdk.Tools.Cli`) over stdio — real tools, real network calls | Skill's `SKILL.md` + frontmatter; the agent picks tools itself |
 | **Primary grader** | `tool-calls` — checks the recorded trajectory for required tool names | Trigger / routing graders + per-skill rubric |
 | **Run command** | `vally eval --eval-spec evals/tools/<name>.eval.yaml` *from this directory* | `vally eval --skill-dir .github/skills/<skill-name>` *from repo root* |
@@ -104,7 +104,7 @@ tracks the migration in
 ## Layout
 
 ```
-azsdk-evals/
+evals/
 ├── .vally.yaml                # Vally config (environments + suites)
 ├── evals/
 │   ├── tools/                 # tool-shape + per-skill trigger evals, hermetic
@@ -150,7 +150,7 @@ framework moniker (avoids `Debug/net8.0/...` drift).
 All commands below run from here:
 
 ```powershell
-cd azsdk-evals
+cd evals
 $vally  = '../eng/skill-eval/node_modules/.bin/vally.cmd'
 $skills = '../.github/skills'
 ```
@@ -212,7 +212,7 @@ plus Node 22+ and a .NET SDK matching `global.json`.
 Run a suite (recommended):
 
 ```powershell
-cd azsdk-evals
+cd evals
 $vally = '../eng/skill-eval/node_modules/.bin/vally.cmd'
 $skills = '../.github/skills'
 

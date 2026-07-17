@@ -1,4 +1,5 @@
 # Prevent changes to files synced from azure-sdk-tools by authors without repo access.
+# Temporary validation comment for Check Enforcer protected-files behavior.
 # This workflow is synced to target repos via eng/pipelines/sync-.github.yml.
 #
 # The paths filter exactly enumerates the synced files, so if this workflow

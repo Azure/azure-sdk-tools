@@ -37,7 +37,7 @@ parameters:
 variables:
   - template: /eng/pipelines/templates/variables/globals.yml
   - template: /eng/pipelines/templates/variables/image.yml
-  - group: 'Azure SDK QA Bot Prod Variables'
+  - group: 'Azure SDK QA Bot Dev Variables'
   - name: workingDirectory
     value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent'
   - name: PythonIndexUrl
@@ -49,7 +49,7 @@ extends:
     Use1ESOfficial: true
     stages:
       - stage: RunFeedbackJobs
-        displayName: 'Run Feedback Jobs (prod)'
+        displayName: 'Run Feedback Jobs (dev)'
         jobs:
           - job: RunFeedbackJobs
             displayName: 'Run Feedback Jobs'

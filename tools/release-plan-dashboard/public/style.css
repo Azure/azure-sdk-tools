@@ -1184,10 +1184,6 @@ main {
   background: #fff4ce;
   color: var(--orange);
 }
-.pr-label-api-pending {
-  background: #fff4ce;
-  color: var(--orange);
-}
 .pr-label-version-pending {
   background: #fff4ce;
   color: var(--orange);

@@ -24,6 +24,7 @@ class ConversationType(str, Enum):
 class ConversationDocumentType(str, Enum):
     mapping = "conversation_mapping"
     message = "conversation_message"
+    feedback = "conversation_feedback"
 
 
 class ConversationPartitionPrefix(str, Enum):
@@ -54,6 +55,21 @@ class ConversationMessageExtraInfo(BaseModel):
     message_link: str | None = None
 
 
+class UserFeedback(BaseModel):
+    """A user's explicit reaction to a bot answer (thumbs up/down + notes).
+
+    Captured from the Teams feedback card and attached to the bot message it
+    concerns so thread queries can surface it.
+    """
+
+    reaction: str  # good | bad | unknown
+    comment: str | None = None
+    reasons: list[str] = Field(default_factory=list)
+    user_name: str | None = None
+    link: str | None = None
+    created_at: datetime | None = None
+
+
 class ConversationMappingItem(BaseModel):
     id: str
     customer_conversation_id: str
@@ -72,6 +88,28 @@ class ConversationMessageItem(ConversationMessage):
     )
 
 
+class ConversationFeedbackItem(BaseModel):
+    """A stored user-feedback document in the conversation partition.
+
+    Lives in the ``conversation-messages`` container alongside message
+    documents (``document_type = conversation_feedback``) so it can be
+    queried by ``conversation_partition`` and attached to the bot message it
+    targets.
+    """
+
+    id: str
+    conversation_id: str
+    conversation_type: ConversationType
+    conversation_partition: str
+    document_type: ConversationDocumentType = Field(
+        default=ConversationDocumentType.feedback
+    )
+    # The bot message this feedback concerns. When absent, callers attach it
+    # to the most recent bot message at or before ``feedback.created_at``.
+    target_message_id: str | None = None
+    feedback: UserFeedback
+
+
 class SaveConversationMessageResponse(BaseModel):
     pass
 
@@ -82,6 +120,20 @@ class BotAnswerVerdict(str, Enum):
     Correct = "correct"
     Incorrect = "incorrect"
     Unknown = "unknown"
+
+
+class ConversationState(str, Enum):
+    """Whether a conversation thread has concluded.
+
+    The evaluator judges this **before** the correctness verdict: an
+    ``ongoing`` thread is still in flight (e.g. the poster just asked a
+    follow-up the bot has not answered, or a human is mid-discussion), so
+    its verdict is not yet final and it should stay ``ongoing`` in the QA
+    status table.
+    """
+
+    Ongoing = "ongoing"
+    Finished = "finished"
 
 
 class ConversationEvaluationItem(BaseModel):
@@ -96,6 +148,10 @@ class ConversationEvaluationItem(BaseModel):
     transcript: str
     message_count: int
     has_expert_reply: bool
+    state: ConversationState = Field(
+        default=ConversationState.Ongoing,
+        description="Whether the thread has concluded or is still ongoing.",
+    )
     verdict: BotAnswerVerdict
     reasoning: str = Field(
         description="Short explanation of why this verdict was chosen."

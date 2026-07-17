@@ -119,7 +119,7 @@ This launches the agent via `agentdev run` on `http://localhost:8088/` with `deb
 
 ### Debugging the Feedback Agent
 
-The Feedback Agent is a hosted Foundry agent like the chat agent, but invoked asynchronously by the server's worker (`services/feedback_agent_service.py`) instead of by Teams. There are two things you may want to debug — the agent's reasoning, or the end-to-end enqueue→run flow.
+The Feedback Agent is a hosted Foundry agent like the chat agent, but driven by the daily feedback-job scan (`scripts/run_feedback_jobs.py`), which runs it in-process via `services/feedback_agent_service.py`, instead of by Teams. There are two things you may want to debug — the agent's reasoning, or the end-to-end scan→feedback flow.
 
 **1. Iterate on the agent itself (Agent Inspector).**
 
@@ -137,28 +137,24 @@ Same AI Toolkit workflow as the chat agent, just pointed at the feedback agent e
 
 ```json
 {
-  "trigger": "bad_reaction",
   "tenant_id": "azure_sdk_onboarding",
   "conversation_id": "<a real conversation id from Cosmos>",
-  "conversation_type": "teams_channel",
-  "response_id": "<a real response_id from App Insights>",
-  "user_feedback": { "comment": "answer was wrong", "reasons": ["incorrect"] }
+  "conversation_type": "teams_channel"
 }
 ```
 
 The agent will call `fetch_chat_trace` / `fetch_conversation` / `search_knowledge_base` and may file a real GitHub issue — use a throwaway conversation when iterating.
 
-**2. Debug the worker end-to-end (server-side).**
+**2. Debug the feedback loop end-to-end.**
 
-The worker (`FeedbackAgentService`) is what the server uses to enqueue and run jobs against the *deployed* hosted agent in Foundry. All worker settings (`AI_FOUNDRY_FEEDBACK_AGENT_NAME`, `AI_FOUNDRY_FEEDBACK_AGENT_VERSION`, `AGENT_APPLICATIONINSIGHTS_RESOURCE_ID`) are read from Azure App Configuration and are already provisioned per environment — you do not need to set them locally.
+`FeedbackAgentService` runs the hosted feedback agent synchronously against the *deployed* Foundry agent. Its settings (`AI_FOUNDRY_FEEDBACK_AGENT_NAME`, `AI_FOUNDRY_FEEDBACK_AGENT_VERSION`, `FEEDBACK_AGENT_ENABLED`, `AGENT_APPLICATIONINSIGHTS_RESOURCE_ID`) are read from Azure App Configuration and are already provisioned per environment — you do not need to set them locally.
 
-To exercise the worker locally:
+To exercise the loop locally:
 
-1. Start the server with the `Debug Backend Server` launch (see below) so breakpoints in `services/feedback_agent_service.py` are hit.
-2. Trigger a job by POSTing to `/agent/feedback` with `reaction: "bad"` (see [tests/api_test.rest](tests/api_test.rest)). The server enqueues a `FeedbackJob` and the worker picks it up in the background.
-3. Inspect outcomes in:
-   - **Server logs** — the worker logs the agent's raw reply at INFO (4 KB preview) and DEBUG (full).
-   - **Cosmos `feedback-jobs` container** — partitioned by `/tenant_id`; rows transition `queued → running → done | skipped`.
+1. Run the daily scan against a small window: `python scripts/run_feedback_jobs.py --days 2` (evaluates ongoing threads, transitions the `qa-records` table, and runs the hosted feedback agent in-process for `failed` threads). Use `--dry-run` to update statuses without invoking the agent. Set breakpoints in `services/feedback_agent_service.py` to step through a run.
+2. Inspect outcomes in:
+   - **Script logs** — the service logs the agent's raw reply at INFO (4 KB preview) and DEBUG (full).
+   - **Cosmos `qa-records` container** — partitioned by `/tenant_id`; each thread row carries `qa_status` (`ongoing → finished | failed`) and, once `failed`, an embedded `feedback.status` (`created → running → done | failed`).
    - **Foundry tracing** — the hosted agent's tool calls are visible in the Foundry portal under the agent's run history.
 
 ### Debugging the Server

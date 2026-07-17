@@ -1,0 +1,112 @@
+# Scheduled daily feedback-job scan pipeline.
+# Runs scripts/run_feedback_jobs.py: ingests conversations into the qa-records
+# status table, evaluates ongoing threads, and drives the feedback loop by
+# calling the backend POST /feedback/session API for failed threads.
+
+name: Azure SDK QA Bot Feedback Jobs
+
+trigger: none
+pr: none
+
+schedules:
+  - cron: '0 2 * * *'
+    displayName: 'Daily (02:00 UTC)'
+    branches:
+      include:
+        - main
+    always: true
+
+parameters:
+  - name: days
+    displayName: 'Days to look back (used when Start is blank)'
+    type: number
+    default: 1
+  - name: startDate
+    displayName: 'Window start date (UTC, e.g. 2026-07-01). Blank = use Days'
+    type: string
+    default: ' '
+  - name: endDate
+    displayName: 'Window end date (UTC, e.g. 2026-07-02). Blank = now'
+    type: string
+    default: ' '
+  - name: dryRun
+    displayName: 'Dry run (evaluate + update statuses, do not trigger feedback)'
+    type: boolean
+    default: false
+
+variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+  - template: /eng/pipelines/templates/variables/image.yml
+  - group: 'Azure SDK QA Bot Prod Variables'
+  - name: workingDirectory
+    value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent'
+  - name: PythonIndexUrl
+    value: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/'
+
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    Use1ESOfficial: true
+    stages:
+      - stage: RunFeedbackJobs
+        displayName: 'Run Feedback Jobs (prod)'
+        jobs:
+          - job: RunFeedbackJobs
+            displayName: 'Run Feedback Jobs'
+            timeoutInMinutes: 120
+            pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
+            steps:
+              - checkout: self
+                displayName: 'Checkout repository'
+
+              - task: PipAuthenticate@1
+                displayName: 'Authenticate pip to Azure Artifacts'
+                inputs:
+                  artifactFeeds: 'public/azure-sdk-for-python'
+
+              - task: AzureCLI@2
+                displayName: 'Run Feedback Job Scan'
+                inputs:
+                  azureSubscription: $(SERVICE_CONNECTION)
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  workingDirectory: $(workingDirectory)
+                  inlineScript: |
+                    set -euo pipefail
+
+                    # Suppress Azure CLI welcome banner on fresh CI agents.
+                    export AZURE_CORE_WELCOME_MESSAGE=false
+                    az version > /dev/null 2>&1 || true
+                    az config set core.welcome_message=false 2>/dev/null || true
+
+                    python -m pip install --upgrade pip
+                    python -m pip install keyring artifacts-keyring --retries 5 --timeout 60
+
+                    python -m pip config set global.index-url "$PIP_INDEX_URL"
+
+                    pip install -r requirements.txt --retries 5 --timeout 60
+
+                    EVAL_ARGS=()
+                    START_DATE="$(echo '${{ parameters.startDate }}' | xargs)"
+                    END_DATE="$(echo '${{ parameters.endDate }}' | xargs)"
+                    if [ -n "$START_DATE" ]; then
+                      EVAL_ARGS+=(--start "$START_DATE")
+                    fi
+                    if [ -n "$END_DATE" ]; then
+                      EVAL_ARGS+=(--end "$END_DATE")
+                    fi
+                    if [ -z "$START_DATE" ]; then
+                      EVAL_ARGS+=(--days ${{ parameters.days }})
+                    fi
+                    if [ "${{ parameters.dryRun }}" = "True" ]; then
+                      EVAL_ARGS+=(--dry-run)
+                    fi
+
+                    python scripts/run_feedback_jobs.py "${EVAL_ARGS[@]}"
+                env:
+                  AZURE_CORE_WELCOME_MESSAGE: 'false'
+                  AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
+                  SYSTEM_ACCESSTOKEN: $(System.AccessToken)

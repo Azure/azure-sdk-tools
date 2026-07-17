@@ -212,9 +212,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                                 catch (JsonException jsonEx)
                                 {
                                     logger.LogError(jsonEx, "Failed to deserialize the SDK change script output.");
+                                    File.Delete(sdkChangeFilePath);
                                     return new PackageOperationResponse
                                     {
                                         ResponseError = "Failed to deserialize the SDK change script output.",
+                                        Language = languageService.Language,
+                                        PackageName = packageInfo?.PackageName,
+                                    };
+                                }
+                                catch (Exception ex)
+                                {
+                                    logger.LogError(ex, "An unexpected error occurred while reading and deserializing the SDK change script output.");
+                                    File.Delete(sdkChangeFilePath);
+                                    return new PackageOperationResponse
+                                    {
+                                        ResponseError = "An unexpected error occurred while reading and deserializing the SDK change script output.",
                                         Language = languageService.Language,
                                         PackageName = packageInfo?.PackageName,
                                     };

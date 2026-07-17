@@ -38,12 +38,12 @@ stimuli:
     # below. CI clones it via eng/common/scripts/eval/init-eval-git-fixtures.js before this suite.
     environment: &specsWorktree
       # Load the real release-planning skill so the executor can route to it.
-      # Path is relative to this eval file (6 levels up = repo root).
+      # Path is relative to this eval file (4 levels up = repo root).
       skills:
-        - ../../../../../../.github/skills/azsdk-common-prepare-release-plan
+        - ../../../../.github/skills/azsdk-common-prepare-release-plan
       git:
         type: worktree
-        source: ../../../../../../artifacts/specs-cache/azure-rest-api-specs
+        source: ../../../../artifacts/specs-cache/azure-rest-api-specs
         ref: main
     prompt: |
       Create a public preview
@@ -216,11 +216,11 @@ stimuli:
   - name: generate-sdk-all-languages-link-release-plan
     environment: &specsWorktreeWithGenerate
       skills:
-        - ../../../../../../.github/skills/azsdk-common-prepare-release-plan
-        - ../../../../../../.github/skills/azsdk-common-generate-sdk-locally
+        - ../../../../.github/skills/azsdk-common-prepare-release-plan
+        - ../../../../.github/skills/azsdk-common-generate-sdk-locally
       git:
         type: worktree
-        source: ../../../../../../artifacts/specs-cache/azure-rest-api-specs
+        source: ../../../../artifacts/specs-cache/azure-rest-api-specs
         ref: main
     prompt: |
       Generate SDK for all languages from my TypeSpec project
@@ -276,12 +276,12 @@ stimuli:
   - name: run-sdk-generation-all-languages-for-release-pipeline-skill
     environment: &bothGenerateSkills
       skills:
-        - ../../../../../../.github/skills/azsdk-common-generate-sdk-pipeline
-        - ../../../../../../.github/skills/azsdk-common-generate-sdk-locally
-        - ../../../../../../.github/skills/azsdk-common-sdk-release
+        - ../../../../.github/skills/azsdk-common-generate-sdk-pipeline
+        - ../../../../.github/skills/azsdk-common-generate-sdk-locally
+        - ../../../../.github/skills/azsdk-common-sdk-release
       git:
         type: worktree
-        source: ../../../../../../artifacts/specs-cache/azure-rest-api-specs
+        source: ../../../../artifacts/specs-cache/azure-rest-api-specs
         ref: main
     prompt: |
       Run SDK generation for all languages for release 29262. My TypeSpec project is

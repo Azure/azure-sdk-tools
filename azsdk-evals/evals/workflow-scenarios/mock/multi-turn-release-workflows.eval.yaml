@@ -53,15 +53,15 @@ stimuli:
     environment: &multiTurnEnv
       # Load all four candidate skills so the routing choice is genuinely
       # contested across turns. Paths are relative to this eval file
-      # (6 levels up = repo root).
+      # (4 levels up = repo root).
       skills:
-        - ../../../../../../.github/skills/azsdk-common-prepare-release-plan
-        - ../../../../../../.github/skills/azsdk-common-generate-sdk-pipeline
-        - ../../../../../../.github/skills/azsdk-common-generate-sdk-locally
-        - ../../../../../../.github/skills/azsdk-common-sdk-release
+        - ../../../../.github/skills/azsdk-common-prepare-release-plan
+        - ../../../../.github/skills/azsdk-common-generate-sdk-pipeline
+        - ../../../../.github/skills/azsdk-common-generate-sdk-locally
+        - ../../../../.github/skills/azsdk-common-sdk-release
       git:
         type: worktree
-        source: ../../../../../../artifacts/specs-cache/azure-rest-api-specs
+        source: ../../../../artifacts/specs-cache/azure-rest-api-specs
         ref: main
     turns:
       - |

@@ -9,6 +9,7 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
+using Azure.Sdk.Tools.Cli.Models.SdkBreakingChangeDetection;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tools.Core;
@@ -16,6 +17,7 @@ using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
+    [McpServerToolType, Description("This type contains the tool to detect sdk breaking changes for a package.")]
     public class SdkBreakingChangeDetectTool : LanguageMcpTool
     {
         private readonly ISpecGenSdkConfigHelper _specGenSdkConfigHelper;
@@ -24,9 +26,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private readonly ISdkBreakingChangeClassificationService _classifyService;
         // Command names
         private const string DetectSdkBreakingChangeCommandName = "detect-breaking-change";
-        private const string DetectSdkBreakingChangToolName = "azsdk_package_detect_breaking_change";
+        private const string DetectSdkBreakingChangeToolName = "azsdk_package_detect_breaking_change";
 
-        private const string SdkChangeJsonFileName = "SDKCHANGE.json";
+        private const string SdkChangeJsonFileName = "sdk-changes.json";
 
         // detect command options
         public static Option<string> PackagePathOpt = new("--package-path", "-p")
@@ -64,7 +66,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         }
 
         protected override Command GetCommand() =>
-            new McpCommand(DetectSdkBreakingChangeCommandName, "Detects breaking changes in the SDK.", DetectSdkBreakingChangToolName)
+            new McpCommand(DetectSdkBreakingChangeCommandName, "Detects breaking changes in the SDK.", DetectSdkBreakingChangeToolName)
             {
                 PackagePathOpt, tspConfigPathOpt, changesOnlyOpt, sdkChangeJsonFilePathOpt,
             };
@@ -80,7 +82,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         }
 
-        [McpServerTool(Name = DetectSdkBreakingChangToolName), Description("Detects breaking changes in the SDK.")]
+        [McpServerTool(Name = DetectSdkBreakingChangeToolName), Description("Detects breaking changes in the SDK.")]
         public async Task<PackageOperationResponse> DetectSDKBreakingChangesAsync(
             [Description("The absolute path to the package directory. REQUIRED. Example: 'path/to/azure-sdk-for-go/sdk/resourcemanager/webpubsub/armwebpubsub'")]
             string packagePath,
@@ -238,7 +240,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     {
                         var tspProjectPath = tspConfigPath != null ? Path.GetDirectoryName(tspConfigPath) : null;
                         var sdkBreakingPattern = await languageService.GetSdkBreakingPattern(sdkRepoRoot, ct);
-                        var sdkBreakingChanges = await _classifyService.ClassifySdkBreakingChangesAsync(sdkChange.ChangelogMD, sdkBreakingPattern, languageService.Language.ToString(), tspProjectPath, ct);
+                        var sdkBreakingChanges = await _classifyService.ClassifySdkBreakingChangesAsync(sdkChange.SdkChangeMD, sdkBreakingPattern, languageService.Language.ToString(), tspProjectPath, ct);
                         if (sdkBreakingChanges.Count == 0)
                         {
                             logger.LogError("Failed to classify SDK breaking changes.");
@@ -268,7 +270,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                         {
                             HasBreakingChange = sdkChange.HasBreakingChange,
                             BreakingChanges = [],
-                            ChangelogMD = sdkChange.ChangelogMD,
+                            SdkChangeMD = sdkChange.SdkChangeMD,
                         };
 
                         return new PackageOperationResponse()
@@ -300,32 +302,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     {
         [JsonPropertyName("changes")]
         [JsonRequired]
-        public string ChangelogMD { get; set; }
+        public string SdkChangeMD { get; set; }
         [JsonPropertyName("hasBreakingChange")]
         [JsonRequired]
         public bool HasBreakingChange { get; set; }
-    }
-
-    public class SdkBreakingChange
-    {
-        [JsonPropertyName("breakingChange")]
-        [JsonRequired]
-        public string BreakingChange { get; set; }
-        [JsonPropertyName("category")]
-        [JsonRequired]
-        public string Category { get; set; }
-        [JsonPropertyName("resolution")]
-        public string? Resolution { get; set; }
-        [JsonPropertyName("originBreaks")]
-        public List<string>? OriginBreaks { get; set; }
-    }
-    public class SdkBreakingChangeDetectResult
-    {
-        [JsonPropertyName("breakingChanges")]
-        public List<SdkBreakingChange> BreakingChanges { get; set; } = new List<SdkBreakingChange>();
-        [JsonPropertyName("hasBreakingChange")]
-        public bool HasBreakingChange { get; set; }
-        [JsonPropertyName("changes")]
-        public string? ChangelogMD { get; set; } = null;
     }
 }

@@ -3,8 +3,8 @@
 
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
+using Azure.Sdk.Tools.Cli.Models.SdkBreakingChangeDetection;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
-using Azure.Sdk.Tools.Cli.Tools.Package;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {   
@@ -15,6 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Services
     public class SdkBreakingChangeClassificationService: ISdkBreakingChangeClassificationService
     {
         private readonly ICopilotAgentRunner _agentRunner;
+        private readonly ILogger<SdkBreakingChangeClassificationService> _logger;
         private static readonly string _defaultCopilotAgentModel = "claude-opus-4.5";
         public const string SdkBreakingChangeClassifierModelVariable = "AZURE_SDK_BREAKING_CLASSIFIER_MODEL";
 
@@ -26,9 +27,10 @@ namespace Azure.Sdk.Tools.Cli.Services
         /// The model that this agent will use. Defaults to "claude-opus-4.5".
         /// </summary>
         public string CopilotAgentModel { get; set; } = Environment.GetEnvironmentVariable(SdkBreakingChangeClassifierModelVariable) ?? _defaultCopilotAgentModel;
-        public SdkBreakingChangeClassificationService(ICopilotAgentRunner agentRunner)
+        public SdkBreakingChangeClassificationService(ICopilotAgentRunner agentRunner, ILogger<SdkBreakingChangeClassificationService> logger)
         {
             _agentRunner = agentRunner;
+            _logger = logger;
         }
 
         public async Task<List<SdkBreakingChange>> ClassifySdkBreakingChangesAsync(string sdkchange, string sdkBreakingPattern, string language, string? tspProjectPath, CancellationToken ct)
@@ -104,8 +106,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                 }
                 return sdkBreakingChanges;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Failed to parse classification result.");
                 return new List<SdkBreakingChange>();
             }
         }

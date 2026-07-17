@@ -4,13 +4,12 @@
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.SdkBreakingChangeDetection;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
-using Azure.Sdk.Tools.Cli.Tools.Package;
 using GitHub.Copilot.SDK;
 using Microsoft.Extensions.Logging;
-using Microsoft.TeamFoundation.TestManagement.WebApi;
 using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Services
@@ -31,7 +30,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         private Mock<INpxHelper> _mockNpxHelper;
         private Mock<IPowershellHelper> _mockPowerShellHelper;
         private Mock<ISpecGenSdkConfigHelper> _mockSpecGenSdkConfigHelper;
-        private TestLogger<SdkBuildTool> logger;
+        private TestLogger<SdkBreakingChangeClassificationService> logger;
         private List<LanguageService> _languageServices;
         private Mock<ICommonValidationHelpers> _commonValidationHelpers;
         [OneTimeSetUp]
@@ -71,7 +70,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                                         .Returns<string, CancellationToken>((path, ct) => Task.FromResult("documentation/development/breaking-changes/sdk-breaking-changes-guide-migration.md"));
             _mockNpxHelper = new Mock<INpxHelper>();
             _mockPowerShellHelper = new Mock<IPowershellHelper>();
-            logger = new TestLogger<SdkBuildTool>();
+            logger = new TestLogger<SdkBreakingChangeClassificationService>();
             _commonValidationHelpers = new Mock<ICommonValidationHelpers>();
             _mockAgentRunner = new Mock<ICopilotAgentRunner>();
             _mockTypeSpecHelper = new Mock<ITypeSpecHelper>();
@@ -118,7 +117,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         private SdkBreakingChangeClassificationService CreateMockedService()
         {
             return new SdkBreakingChangeClassificationService(
-                _mockAgentRunner.Object);
+                _mockAgentRunner.Object, logger);
         }
         #endregion
 
@@ -138,7 +137,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 tokenUsageHelper,
                 new TestLogger<CopilotAgentRunner>());
             return new SdkBreakingChangeClassificationService(
-                copilotAgentRunner);
+                copilotAgentRunner, logger);
         }
         private static GitHelper CreateRealGitHelper()
         {

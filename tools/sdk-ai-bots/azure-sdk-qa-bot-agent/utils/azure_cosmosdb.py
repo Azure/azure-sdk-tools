@@ -24,7 +24,7 @@ _DEFAULT_DATABASE_NAME = "azure-sdk-qa-bot"
 _DEFAULT_MAPPING_CONTAINER_NAME = "conversation-mappings"
 _DEFAULT_MESSAGE_CONTAINER_NAME = "conversation-messages"
 _DEFAULT_EPISODE_CONTAINER_NAME = "experience-episodes"
-_DEFAULT_FEEDBACK_JOBS_CONTAINER_NAME = "feedback-jobs"
+_DEFAULT_QA_RECORDS_CONTAINER_NAME = "qa-records"
 
 # Retry defaults for the Cosmos DB client
 _DEFAULT_RETRY_TOTAL = 3  # Maximum number of total retry attempts
@@ -41,7 +41,7 @@ _client: CosmosClient | None = None
 _mapping_container: ContainerProxy | None = None
 _message_container: ContainerProxy | None = None
 _episode_container: ContainerProxy | None = None
-_feedback_jobs_container: ContainerProxy | None = None
+_qa_records_container: ContainerProxy | None = None
 _client_lock = asyncio.Lock()
 _container_lock = asyncio.Lock()
 
@@ -174,11 +174,11 @@ async def get_conversation_message_container() -> ContainerProxy:
 
 async def close_cosmos_client() -> None:
     """Close the shared Cosmos client and reset cached proxies."""
-    global _client, _mapping_container, _message_container, _episode_container, _feedback_jobs_container
+    global _client, _mapping_container, _message_container, _episode_container, _qa_records_container
     _mapping_container = None
     _message_container = None
     _episode_container = None
-    _feedback_jobs_container = None
+    _qa_records_container = None
     if _client is not None:
         await _client.__aexit__(None, None, None)
         _client = None
@@ -350,88 +350,91 @@ async def query_episodes(
 
 
 # ---------------------------------------------------------------------------
-# Feedback-jobs container (`feedback-jobs`)
+# QA-records container (`qa-records`)
 # ---------------------------------------------------------------------------
 
 
-async def ensure_feedback_jobs_container() -> ContainerProxy:
-    """Return the ``feedback-jobs`` container, creating it if needed.
+async def ensure_qa_records_container() -> ContainerProxy:
+    """Return the ``qa-records`` container, creating it if needed.
 
     Container is partitioned by ``/tenant_id`` (matches the episode and
-    conversation conventions). Indexing policy is the default — all fields
-    indexed; no vector index needed.
+    conversation conventions). Each row is a two-layer status marker for a
+    single QA thread (see :class:`models.qa_record.QARecord`). Default
+    indexing (all fields) is sufficient — no vector index needed.
     """
-    global _feedback_jobs_container
-    if _feedback_jobs_container is not None:
-        return _feedback_jobs_container
+    global _qa_records_container
+    if _qa_records_container is not None:
+        return _qa_records_container
 
     async with _container_lock:
-        if _feedback_jobs_container is not None:
-            return _feedback_jobs_container
+        if _qa_records_container is not None:
+            return _qa_records_container
 
-        container_name = _DEFAULT_FEEDBACK_JOBS_CONTAINER_NAME
+        container_name = _DEFAULT_QA_RECORDS_CONTAINER_NAME
 
         try:
-            _feedback_jobs_container = await _get_container(
+            _qa_records_container = await _get_container(
                 container_name=container_name,
             )
-            logger.info("Using Cosmos DB feedback-jobs container: %s", container_name)
+            logger.info("Using Cosmos DB qa-records container: %s", container_name)
         except RuntimeError:
             # Container doesn't exist — create it.
             client = await _get_client()
             database = client.get_database_client(_DEFAULT_DATABASE_NAME)
-            _feedback_jobs_container = await database.create_container(
+            _qa_records_container = await database.create_container(
                 id=container_name,
                 partition_key=PartitionKey(path="/tenant_id"),
             )
-            logger.info("Created feedback-jobs container: %s", container_name)
+            logger.info("Created qa-records container: %s", container_name)
 
-    return _feedback_jobs_container
-
-
-async def get_feedback_jobs_container() -> ContainerProxy:
-    """Return the feedback-jobs container, creating it if needed."""
-    if _feedback_jobs_container is not None:
-        return _feedback_jobs_container
-    return await ensure_feedback_jobs_container()
+    return _qa_records_container
 
 
-async def upsert_feedback_job(document: dict[str, Any]) -> dict[str, Any]:
-    """Upsert a feedback-job document into the feedback-jobs container."""
-    container = await get_feedback_jobs_container()
+async def get_qa_records_container() -> ContainerProxy:
+    """Return the qa-records container, creating it if needed."""
+    if _qa_records_container is not None:
+        return _qa_records_container
+    return await ensure_qa_records_container()
+
+
+async def upsert_qa_record(document: dict[str, Any]) -> dict[str, Any]:
+    """Upsert a QA-record document into the qa-records container."""
+    container = await get_qa_records_container()
     return await container.upsert_item(document)
 
 
-async def read_feedback_job(*, job_id: str, tenant_id: str) -> dict[str, Any] | None:
-    """Read a single feedback-job row by id within the tenant partition."""
-    container = await get_feedback_jobs_container()
+async def read_qa_record(*, record_id: str, tenant_id: str) -> dict[str, Any] | None:
+    """Read a single QA-record row by id within the tenant partition."""
+    container = await get_qa_records_container()
     try:
-        return await container.read_item(item=job_id, partition_key=tenant_id)
+        return await container.read_item(item=record_id, partition_key=tenant_id)
     except cosmos_exceptions.CosmosResourceNotFoundError:
         return None
 
 
-async def feedback_job_exists_for_response(
-    *, tenant_id: str, response_id: str, trigger: str
-) -> bool:
-    """Return True if a feedback-job already exists for (response_id, trigger).
+async def query_qa_records_by_qa_status(
+    *,
+    qa_status: str,
+    tenant_id: str | None = None,
+) -> list[dict[str, Any]]:
+    """Return QA records whose Layer-1 ``qa_status`` equals ``qa_status``.
 
-    Used by both bad-reaction and expert-reply dedup paths.
+    Scoped to ``tenant_id`` when given (single-partition query); otherwise a
+    cross-partition scan intended for the daily batch job.
     """
-    container = await get_feedback_jobs_container()
-    query = (
-        "SELECT TOP 1 c.id FROM c "
-        "WHERE c.tenant_id = @tenant_id "
-        "AND c.response_id = @response_id "
-        "AND c.trigger = @trigger"
-    )
-    parameters = [
-        {"name": "@tenant_id", "value": tenant_id},
-        {"name": "@response_id", "value": response_id},
-        {"name": "@trigger", "value": trigger},
-    ]
-    async for _ in container.query_items(
-        query=query, parameters=parameters, partition_key=tenant_id
+    container = await get_qa_records_container()
+    conditions = ["c.qa_status = @qa_status"]
+    parameters: list[dict[str, Any]] = [{"name": "@qa_status", "value": qa_status}]
+    kwargs: dict[str, Any] = {}
+    if tenant_id:
+        conditions.append("c.tenant_id = @tenant_id")
+        parameters.append({"name": "@tenant_id", "value": tenant_id})
+        kwargs["partition_key"] = tenant_id
+
+    query = f"SELECT * FROM c WHERE {' AND '.join(conditions)}"
+    items: list[dict[str, Any]] = []
+    async for raw in container.query_items(
+        query=query, parameters=parameters, **kwargs
     ):
-        return True
-    return False
+        items.append(raw)
+    return items

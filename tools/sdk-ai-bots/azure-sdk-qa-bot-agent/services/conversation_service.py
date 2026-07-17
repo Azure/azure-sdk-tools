@@ -24,9 +24,11 @@ from models.conversation import (
     BotAnswerVerdict,
     ConversationDocumentType,
     ConversationEvaluationItem,
+    ConversationFeedbackItem,
     ConversationMappingItem,
     ConversationMessage,
     ConversationMessageItem,
+    ConversationState,
     ConversationType,
     Role,
 )
@@ -348,6 +350,42 @@ class ConversationService:
 
         return items
 
+    async def get_feedback_by_conversation_id(
+        self,
+        conversation_id: str,
+        conversation_type: ConversationType,
+    ) -> list[ConversationFeedbackItem]:
+        """Retrieve all user-feedback documents for a conversation.
+
+        Read-only companion to :meth:`get_messages_by_conversation_id`: returns
+        the ``conversation_feedback`` documents stored in the same partition,
+        ordered by feedback ``created_at``. Callers (e.g. the feedback agent's
+        ``fetch_conversation``) attach these to the messages they concern.
+        """
+        container = await get_conversation_message_container()
+        partition_key = f"{conversation_type.value}:{conversation_id}"
+
+        query = (
+            "SELECT * FROM c "
+            "WHERE c.conversation_partition = @pk "
+            "AND c.document_type = @dtype "
+            "ORDER BY c.feedback.created_at ASC"
+        )
+        parameters: list[dict[str, object]] = [
+            {"name": "@pk", "value": partition_key},
+            {"name": "@dtype", "value": ConversationDocumentType.feedback.value},
+        ]
+
+        feedbacks: list[ConversationFeedbackItem] = []
+        async for raw in container.query_items(
+            query=query,
+            parameters=parameters,
+            partition_key=partition_key,
+        ):
+            feedbacks.append(ConversationFeedbackItem.model_validate(raw))
+
+        return feedbacks
+
     async def get_messages_in_period(
         self,
         start: datetime,
@@ -503,7 +541,9 @@ class ConversationService:
         ordered = sorted(messages, key=lambda m: m.created_at)
         first = ordered[0]
 
-        verdict, reasoning, confidence = await self._evaluate_transcript(transcript)
+        state, verdict, reasoning, confidence = await self._evaluate_transcript(
+            transcript
+        )
 
         return ConversationEvaluationItem(
             conversation_id=first.conversation_id or first.conversation_partition,
@@ -511,6 +551,7 @@ class ConversationService:
             transcript=transcript,
             message_count=len(ordered),
             has_expert_reply=has_expert_reply,
+            state=state,
             verdict=verdict,
             reasoning=reasoning,
             confidence=confidence,
@@ -587,8 +628,8 @@ class ConversationService:
 
     async def _evaluate_transcript(
         self, transcript: str
-    ) -> tuple[BotAnswerVerdict, str, float]:
-        """Call the LLM to judge the bot's answers across the whole thread."""
+    ) -> tuple[ConversationState, BotAnswerVerdict, str, float]:
+        """Call the LLM to judge whether the thread is finished and correct."""
         model = cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL", "")
         reasoning_effort = cast(
             ReasoningEffort,
@@ -609,12 +650,34 @@ class ConversationService:
         return self._parse_evaluation(raw)
 
     @staticmethod
-    def _parse_evaluation(raw: str) -> tuple[BotAnswerVerdict, str, float]:
+    def _parse_evaluation(
+        raw: str,
+    ) -> tuple[ConversationState, BotAnswerVerdict, str, float]:
         try:
             data = json.loads(raw)
         except json.JSONDecodeError:
             logger.warning("Evaluation returned invalid JSON: %s", raw[:200])
-            return BotAnswerVerdict.Unknown, "Model returned invalid JSON.", 0.0
+            return (
+                ConversationState.Ongoing,
+                BotAnswerVerdict.Unknown,
+                "Model returned invalid JSON.",
+                0.0,
+            )
+
+        # `finished` gate — accept a boolean, or fall back to a `state`
+        # string. Absent/ambiguous defaults to ongoing (do not conclude a
+        # thread we could not confidently judge as finished).
+        state = ConversationState.Ongoing
+        finished = data.get("finished", None)
+        if isinstance(finished, bool):
+            state = (
+                ConversationState.Finished if finished else ConversationState.Ongoing
+            )
+        else:
+            try:
+                state = ConversationState(str(data.get("state", "ongoing")).lower())
+            except ValueError:
+                state = ConversationState.Ongoing
 
         try:
             verdict = BotAnswerVerdict(str(data.get("verdict", "")).lower())
@@ -626,4 +689,4 @@ class ConversationService:
         except (TypeError, ValueError):
             confidence = 0.0
         confidence = min(1.0, max(0.0, confidence))
-        return verdict, reasoning, confidence
+        return state, verdict, reasoning, confidence

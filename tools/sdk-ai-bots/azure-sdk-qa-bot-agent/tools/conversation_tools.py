@@ -9,11 +9,16 @@ any expert correction that followed).
 from __future__ import annotations
 
 import logging
-from typing import Annotated
+from typing import Annotated, Sequence
 
 from pydantic import BaseModel, Field
 
-from models.conversation import ConversationType
+from models.conversation import (
+    ConversationFeedbackItem,
+    ConversationMessageItem,
+    ConversationType,
+    Role,
+)
 from services.conversation_service import ConversationService
 from tools import tool
 
@@ -42,6 +47,54 @@ def _resolve_conversation_type(value: str) -> ConversationType:
         ) from exc
 
 
+class UserFeedbackView(BaseModel):
+    reaction: str
+    comment: str | None = None
+    reasons: list[str] = Field(default_factory=list)
+    user_name: str | None = None
+
+
+def _feedback_by_message(
+    messages: Sequence[ConversationMessageItem],
+    feedbacks: Sequence[ConversationFeedbackItem],
+) -> dict[str, list[UserFeedbackView]]:
+    """Map each message id to the user feedback that targets it.
+
+    Prefers an explicit ``target_message_id``; otherwise attaches to the most
+    recent bot (system/assistant) message at or before the feedback's
+    ``created_at`` (the historical "most recent bot message" rule), and
+    finally the latest bot message overall.
+    """
+    by_id = {m.id: m for m in messages}
+    bot_messages = sorted(
+        (m for m in messages if m.sender_role in (Role.System, Role.Assistant)),
+        key=lambda m: m.created_at,
+    )
+    result: dict[str, list[UserFeedbackView]] = {}
+    for fb in feedbacks:
+        target: ConversationMessageItem | None = None
+        if fb.target_message_id:
+            target = by_id.get(fb.target_message_id)
+        if target is None and bot_messages:
+            fb_time = fb.feedback.created_at
+            if fb_time is not None:
+                candidates = [m for m in bot_messages if m.created_at <= fb_time]
+                target = candidates[-1] if candidates else bot_messages[-1]
+            else:
+                target = bot_messages[-1]
+        if target is None:
+            continue
+        result.setdefault(target.id, []).append(
+            UserFeedbackView(
+                reaction=fb.feedback.reaction,
+                comment=fb.feedback.comment,
+                reasons=list(fb.feedback.reasons),
+                user_name=fb.feedback.user_name,
+            )
+        )
+    return result
+
+
 class FeedbackMessage(BaseModel):
     id: str
     role: str
@@ -49,6 +102,11 @@ class FeedbackMessage(BaseModel):
     content: str
     created_at: str
     message_link: str | None = None
+    #: OTel trace id of this turn (bot messages only) — lets the agent call
+    #: ``fetch_chat_trace(trace_id)`` on the turn it wants to analyse.
+    trace_id: str | None = None
+    #: Explicit user feedback (thumbs up/down + notes) targeting this message.
+    user_feedback: list[UserFeedbackView] = Field(default_factory=list)
 
 
 class ConversationView(BaseModel):
@@ -104,9 +162,14 @@ class ConversationTools:
             conversation_id=conversation_id,
             conversation_type=ctype,
         )
+        feedbacks = await self._conversations.get_feedback_by_conversation_id(
+            conversation_id=conversation_id,
+            conversation_type=ctype,
+        )
 
         truncated = len(items) > _MAX_MESSAGES
         clipped = items[:_MAX_MESSAGES]
+        feedback_by_message = _feedback_by_message(clipped, feedbacks)
         messages = [
             FeedbackMessage(
                 id=m.id,
@@ -117,6 +180,8 @@ class ConversationTools:
                 message_link=(
                     m.extra_info.message_link if m.extra_info else None
                 ),
+                trace_id=m.trace_id,
+                user_feedback=feedback_by_message.get(m.id, []),
             )
             for m in clipped
         ]

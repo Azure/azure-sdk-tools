@@ -1,17 +1,15 @@
 """Service for running the hosted Feedback Agent jobs.
 
-Object-oriented service: ``FeedbackAgentService`` owns the lifecycle of a
-``FeedbackJob`` row in the Cosmos ``feedback-jobs`` container and the
-in-process worker that calls the hosted Foundry agent.
+Object-oriented service: ``FeedbackAgentService`` owns the feedback
+lifecycle embedded in a ``QARecord`` row in the Cosmos ``qa-records``
+container and the worker that calls the hosted Foundry agent.
 
-Two public entry points:
+One public entry point:
 
-* ``enqueue(job)`` — persist the job and spawn an in-process
-  fire-and-forget task that runs the agent. Push-based; no DB poller.
-* ``run_job(job_id, tenant_id)`` — read the persisted row, flip status
-  to ``running``, call the Foundry Responses API on the hosted feedback
-  agent, log the raw reply for triage, and write back a terminal
-  ``done`` (or ``skipped`` on invocation failure) status.
+* ``run_job(record_id, tenant_id)`` — read the persisted QA record, flip
+  its feedback status to ``running``, call the Foundry Responses API on the
+  hosted feedback agent, log the raw reply for triage, and write back a
+  terminal ``done`` (or ``failed`` on invocation failure) status.
 
 The hosted agent does the entire analysis end-to-end through its own
 tools (KB lookup, conversation/trace fetch, GitHub issue creation, ...).
@@ -23,7 +21,7 @@ inbound payload (``FeedbackAgentInput``) and the Foundry
 The only ``dict[str, Any]`` boundaries are the Cosmos SDK and the
 OpenAI Responses request payload — both are wrapped at the edge.
 
-See ``docs/feedback-agent-design.md`` §3.1 & §5.3.
+See ``docs/feedback-agent-design.md``.
 """
 
 from __future__ import annotations
@@ -37,18 +35,14 @@ from azure.ai.projects.aio import AIProjectClient
 from config.app_config import get as cfg
 from models.feedback import (
     FeedbackAgentInput,
-    FeedbackJob,
-    FeedbackJobStatus,
     FoundryAgentReference,
-    UserFeedbackInput,
 )
+from models.qa_record import FeedbackState, FeedbackStatus, QARecord
 from utils.azure_ai_foundry import get_project_client
 from utils.azure_cosmosdb import (
-    feedback_job_exists_for_response,
-    read_feedback_job,
-    upsert_feedback_job,
+    read_qa_record,
+    upsert_qa_record,
 )
-from utils.background_tasks import BackgroundTaskTracker
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +57,7 @@ _AGENT_REPLY_LOG_PREVIEW_CHARS = 4000
 
 
 class FeedbackAgentService:
-    """Owns enqueue + run lifecycle for hosted feedback-agent jobs."""
+    """Owns the run lifecycle for hosted feedback-agent jobs."""
 
     _FEEDBACK_AGENT_NAME_KEY = "AI_FOUNDRY_FEEDBACK_AGENT_NAME"
     _FEEDBACK_AGENT_VERSION_KEY = "AI_FOUNDRY_FEEDBACK_AGENT_VERSION"
@@ -73,10 +67,8 @@ class FeedbackAgentService:
         self,
         *,
         project_client: AIProjectClient | None = None,
-        task_tracker: BackgroundTaskTracker | None = None,
     ) -> None:
         self._project_client = project_client
-        self._task_tracker = task_tracker or BackgroundTaskTracker.instance()
 
     # -- Configuration helpers --------------------------------------------
 
@@ -92,89 +84,37 @@ class FeedbackAgentService:
             self._project_client = get_project_client()
         return self._project_client
 
-    # -- Public: enqueue ---------------------------------------------------
-
-    async def enqueue(self, job: FeedbackJob) -> bool:
-        """Persist ``job`` and spawn the background worker.
-
-        Dedup: if a job already exists for ``(tenant_id, response_id,
-        trigger)`` the new job is dropped (returns ``False``). The Cosmos
-        row id itself is timestamped so retries within the same trigger
-        do not collide on insertion.
-
-        Returns ``True`` when a new background analysis was scheduled.
-        """
-        if await self._already_enqueued(job):
-            logger.info(
-                "Skipping feedback enqueue — job already exists for "
-                "response_id=%s trigger=%s",
-                job.response_id,
-                job.trigger.value,
-            )
-            return False
-
-        try:
-            await upsert_feedback_job(job.to_cosmos())
-        except Exception:
-            logger.exception(
-                "Failed to persist feedback-job %s; skipping background analysis",
-                job.id,
-            )
-            return False
-
-        task = asyncio.create_task(
-            self._run_job_safe(job.id, job.tenant_id),
-            name=f"feedback-agent:{job.id}",
-        )
-        self._task_tracker.track(task)
-        logger.info(
-            "Enqueued feedback-job %s (trigger=%s, tenant=%s)",
-            job.id,
-            job.trigger.value,
-            job.tenant_id,
-        )
-        return True
-
-    async def _already_enqueued(self, job: FeedbackJob) -> bool:
-        try:
-            return await feedback_job_exists_for_response(
-                tenant_id=job.tenant_id,
-                response_id=job.response_id,
-                trigger=job.trigger.value,
-            )
-        except Exception:
-            logger.exception(
-                "Dedup check failed for response_id=%s; proceeding with enqueue",
-                job.response_id,
-            )
-            return False
-
     # -- Public: run -------------------------------------------------------
 
-    async def run_job(self, job_id: str, tenant_id: str) -> None:
-        """Execute a single persisted feedback-job."""
-        job = await self._load_job(job_id, tenant_id)
-        if job is None:
+    async def run_job(self, record_id: str, tenant_id: str) -> None:
+        """Execute the feedback analysis for a single persisted QA record."""
+        record = await self._load_job(record_id, tenant_id)
+        if record is None:
             return
 
-        # Idempotency: only run queued jobs.
-        if job.status != FeedbackJobStatus.queued:
+        # Idempotency: only run when feedback hasn't already started.
+        if record.feedback is not None and record.feedback.status in (
+            FeedbackStatus.running,
+            FeedbackStatus.done,
+        ):
             logger.info(
-                "Feedback job %s already in status=%s; skipping run",
-                job.id,
-                job.status.value,
+                "Feedback for QA record %s already in status=%s; skipping run",
+                record.id,
+                record.feedback.status.value,
             )
             return
 
-        await self._transition(job, FeedbackJobStatus.running)
+        await self._transition(record, FeedbackStatus.running)
 
-        payload = self._build_input(job)
+        payload = self._build_input(record)
         try:
-            agent_text = await self._invoke_agent(payload)
+            agent_text = await asyncio.wait_for(
+                self._invoke_agent(payload), timeout=_JOB_TIMEOUT_SECS
+            )
         except Exception as exc:
-            logger.exception("Feedback agent invocation failed for job %s", job.id)
-            self._finalize_skipped(job, error=f"agent_invocation_failed: {exc}")
-            await upsert_feedback_job(job.to_cosmos())
+            logger.exception("Feedback agent invocation failed for job %s", record.id)
+            self._finalize_failed(record, error=f"agent_invocation_failed: {exc}")
+            await upsert_qa_record(record.to_cosmos())
             return
 
         # Log the agent's reply verbatim — the agent owns the analysis
@@ -183,79 +123,61 @@ class FeedbackAgentService:
         preview = (agent_text or "").strip()
         if len(preview) > _AGENT_REPLY_LOG_PREVIEW_CHARS:
             preview = preview[:_AGENT_REPLY_LOG_PREVIEW_CHARS] + " …[truncated]"
-        logger.info("Feedback job %s agent reply (preview):\n%s", job.id, preview)
+        logger.info("Feedback job %s agent reply (preview):\n%s", record.id, preview)
         if agent_text:
-            logger.debug("Feedback job %s agent reply (full):\n%s", job.id, agent_text)
+            logger.debug("Feedback job %s agent reply (full):\n%s", record.id, agent_text)
 
-        self._finalize_done(job)
-        await upsert_feedback_job(job.to_cosmos())
-        logger.info("Feedback job %s completed status=%s", job.id, job.status.value)
-
-    async def _run_job_safe(self, job_id: str, tenant_id: str) -> None:
-        try:
-            await asyncio.wait_for(
-                self.run_job(job_id, tenant_id), timeout=_JOB_TIMEOUT_SECS
-            )
-        except asyncio.TimeoutError:
-            logger.error(
-                "Feedback job %s timed out after %ds", job_id, _JOB_TIMEOUT_SECS
-            )
-            await self._mark_skipped(job_id, tenant_id, error="timeout")
-        except Exception:
-            logger.exception("Feedback job %s crashed", job_id)
-            await self._mark_skipped(job_id, tenant_id, error="worker_crash")
+        self._finalize_done(record)
+        await upsert_qa_record(record.to_cosmos())
+        logger.info(
+            "Feedback job %s completed status=%s",
+            record.id,
+            record.feedback.status.value,
+        )
 
     # -- Cosmos helpers ----------------------------------------------------
 
-    async def _load_job(self, job_id: str, tenant_id: str) -> FeedbackJob | None:
-        doc = await read_feedback_job(job_id=job_id, tenant_id=tenant_id)
+    async def _load_job(self, record_id: str, tenant_id: str) -> QARecord | None:
+        doc = await read_qa_record(record_id=record_id, tenant_id=tenant_id)
         if doc is None:
-            logger.warning("Feedback job %s not found in tenant %s", job_id, tenant_id)
+            logger.warning(
+                "Feedback job %s not found in tenant %s", record_id, tenant_id
+            )
             return None
-        return FeedbackJob.from_cosmos(doc)
+        return QARecord.from_cosmos(doc)
 
-    async def _transition(self, job: FeedbackJob, status: FeedbackJobStatus) -> None:
-        job.status = status
-        job.updated_at = _now()
-        await upsert_feedback_job(job.to_cosmos())
-
-    async def _mark_skipped(self, job_id: str, tenant_id: str, *, error: str) -> None:
-        job = await self._load_job(job_id, tenant_id)
-        if job is None:
-            return
-        self._finalize_skipped(job, error=error)
-        try:
-            await upsert_feedback_job(job.to_cosmos())
-        except Exception:
-            logger.exception("Failed to mark feedback job %s skipped", job.id)
+    async def _transition(self, record: QARecord, status: FeedbackStatus) -> None:
+        if record.feedback is None:
+            record.feedback = FeedbackState(created_at=_now())
+        record.feedback.status = status
+        record.feedback.updated_at = _now()
+        record.updated_at = _now()
+        await upsert_qa_record(record.to_cosmos())
 
     # -- Status finalization (owned by the service) ----------------------
 
-    def _finalize_done(self, job: FeedbackJob) -> None:
-        job.status = FeedbackJobStatus.done
-        job.error = None
-        job.updated_at = _now()
+    def _finalize_done(self, record: QARecord) -> None:
+        assert record.feedback is not None
+        record.feedback.status = FeedbackStatus.done
+        record.feedback.error = None
+        record.feedback.updated_at = _now()
+        record.updated_at = _now()
 
-    def _finalize_skipped(self, job: FeedbackJob, *, error: str) -> None:
-        job.status = FeedbackJobStatus.skipped
-        job.error = error
-        job.updated_at = _now()
+    def _finalize_failed(self, record: QARecord, *, error: str) -> None:
+        if record.feedback is None:
+            record.feedback = FeedbackState(created_at=_now())
+        record.feedback.status = FeedbackStatus.failed
+        record.feedback.error = error
+        record.feedback.updated_at = _now()
+        record.updated_at = _now()
 
     # -- Foundry invocation -----------------------------------------------
 
-    def _build_input(self, job: FeedbackJob) -> FeedbackAgentInput:
-        user_feedback: UserFeedbackInput | None = None
-        if job.comment or job.reasons:
-            user_feedback = UserFeedbackInput(
-                comment=job.comment, reasons=list(job.reasons)
-            )
+    def _build_input(self, record: QARecord) -> FeedbackAgentInput:
         return FeedbackAgentInput(
-            trigger=job.trigger,
-            tenant_id=job.tenant_id,
-            conversation_id=job.conversation_id,
-            conversation_type=job.conversation_type,
-            response_id=job.response_id,
-            user_feedback=user_feedback,
+            tenant_id=record.tenant_id,
+            conversation_id=record.conversation_id,
+            conversation_type=record.conversation_type,
         )
 
     async def _resolve_agent_reference(self) -> FoundryAgentReference:

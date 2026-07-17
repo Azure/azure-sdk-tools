@@ -455,7 +455,29 @@ class StubGenerator:
         # agents, even though the install is healthy — the same install has been
         # observed to take 35s on one agent and 136s on another. Allow the timeout
         # to be tuned via APISTUB_INSTALL_TIMEOUT (seconds); default to 300.
-        install_timeout = int(os.environ.get("APISTUB_INSTALL_TIMEOUT", "300"))
+        _DEFAULT_INSTALL_TIMEOUT = 300
+        _raw_timeout = os.environ.get("APISTUB_INSTALL_TIMEOUT")
+        install_timeout = _DEFAULT_INSTALL_TIMEOUT
+        if _raw_timeout is not None:
+            try:
+                _parsed_timeout = int(_raw_timeout)
+            except ValueError:
+                logging.warning(
+                    "Ignoring invalid APISTUB_INSTALL_TIMEOUT=%r (not an integer); "
+                    "using default of %ds.",
+                    _raw_timeout,
+                    _DEFAULT_INSTALL_TIMEOUT,
+                )
+            else:
+                if _parsed_timeout > 0:
+                    install_timeout = _parsed_timeout
+                else:
+                    logging.warning(
+                        "Ignoring non-positive APISTUB_INSTALL_TIMEOUT=%r; "
+                        "using default of %ds.",
+                        _raw_timeout,
+                        _DEFAULT_INSTALL_TIMEOUT,
+                    )
         result = run(commands, timeout=install_timeout, stderr=PIPE, text=True)
         if result.stderr:
             logging.debug("pip stderr: %s", result.stderr.strip())

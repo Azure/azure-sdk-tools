@@ -51,7 +51,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         private readonly Option<string> sdkChangeJsonFilePathOpt = new("--sdk-change-json-file-path", "-s")
         {
-            Description = "Path to the SDK change json file. It is a local file path. Optional.",
+            Description = "Path to the SDK change json file. It is a local file path. It will be ignored if changes-only is set. Optional.",
             Required = false,
         };
         public SdkBreakingChangeDetectTool(
@@ -127,7 +127,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 }
                 var packageInfo = await languageService.GetPackageInfo(packagePath, ct);
                 SdkChange? sdkChange = null;
-                if (!string.IsNullOrEmpty(localSdkChangeJsonFilePath))
+                if (!string.IsNullOrEmpty(localSdkChangeJsonFilePath) && !changesOnly)
                 {
                     logger.LogInformation("Using local SDK change JSON file at: {FilePath}", localSdkChangeJsonFilePath);
 

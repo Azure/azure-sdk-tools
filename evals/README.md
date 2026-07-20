@@ -71,9 +71,41 @@ pipelines, runs nightly).
 | [`typespec-generation-step02`](workflows/mock/typespec-generation-step02.eval.yaml) | typespec | mock | Step in the spec-PR generation flow |
 | [`rename-client-property`](workflows/mock/rename-client-property.eval.yaml) | typespec | mock | Stub — needs `expected-diff` grader + sparse clone |
 | [`release-planner-workflows`](workflows/mock/release-planner-workflows.eval.yaml) | release-plan | mock | Create / re-fetch / link / update release-plan flows (5 stimuli) |
+| [`multi-turn-release-workflows`](workflows/mock/multi-turn-release-workflows.eval.yaml) | release-plan | mock | Multi-turn `turns:` conversations — create→generate, generate→get-PR-link, relink→regenerate, vague-then-clarify, vague-then-local, local-then-switch (6 stimuli) |
 | [`analyze-failed-pipeline`](workflows/mock/analyze-failed-pipeline.eval.yaml) | pipeline | mock | Two-tool path — pull pipeline status, then analyze the run to surface the failing test |
 | [`fix-pipeline`](workflows/mock/fix-pipeline.eval.yaml) | pipeline | mock | Given the analysis, apply the fix to the overlaid source and verify via the package `build`/`check`/`test` MCP tools |
+| [`multi-turn-pipeline-workflows`](workflows/mock/multi-turn-pipeline-workflows.eval.yaml) | pipeline | mock | Multi-turn `turns:` conversations — diagnose→confirm→fix, and diagnose→decline (fixer must not fire; 2 stimuli) |
 | [`release-planner`](workflows/live/release-planner.eval.yaml) | release-plan | **live** | Create + re-fetch a release plan, kick off SDK gen, link PR back — real DevOps test-area writes |
+
+### Multi-turn conversation coverage
+
+Tracks [#16404](https://github.com/Azure/azure-sdk-tools/issues/16404) (parent
+epic [#16344](https://github.com/Azure/azure-sdk-tools/issues/16344); earlier
+investigation [#13015](https://github.com/Azure/azure-sdk-tools/issues/13015)).
+Every stimulus below is bound to the mock MCP, so clarification/confirmation
+turns never trigger real destructive side effects.
+
+**Covered today** (8 conversation stimuli across 2 files):
+
+| Domain | File | Stimuli |
+|---|---|---|
+| Release plan / SDK generation | [`multi-turn-release-workflows`](workflows/mock/multi-turn-release-workflows.eval.yaml) | create→generate; generate→get-PR-link; relink→regenerate; vague→clarify (pipeline); vague→clarify (local); local→switch-to-pipeline |
+| Pipeline diagnosis / fixing | [`multi-turn-pipeline-workflows`](workflows/mock/multi-turn-pipeline-workflows.eval.yaml) | diagnose→confirm→fix (skill switch + real file fix verified); diagnose→decline (fixer must not fire, guards against incorrect early/eager tool-order) |
+
+Every scenario above pins `skill-invocation`/`tool-calls` graders to the
+specific `turn:` that owns the assertion (routing + tool-use are the most
+reliable signals to turn-scope). `output-contains`/`output-matches` graders
+are asserted session-wide rather than turn-pinned — turn-scoping for those
+grader types was not reliable in local testing (see the comment in
+`multi-turn-pipeline-workflows.eval.yaml`).
+
+**Remaining gaps** (not yet covered; tracked in [#16403](https://github.com/Azure/azure-sdk-tools/issues/16403)):
+
+- TypeSpec authoring multi-turn (e.g., validate → clarify a breaking-change question → apply the authoring plan).
+- APIView feedback resolution multi-turn (fetch comments → clarify scope → apply + re-request review).
+- SDK release readiness multi-turn (check readiness → clarify a blocking issue → trigger release).
+- Cross-skill handoff beyond release-plan/pipeline (e.g., pipeline fix → release readiness in the same session).
+
 
 Live scenarios need a primed `azure-rest-api-specs` clone — run
 [`sync-eval-git-repo.ts`](../eng/common/scripts/eval/sync-eval-git-repo.ts)

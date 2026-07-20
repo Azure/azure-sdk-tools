@@ -1,10 +1,12 @@
 name: azsdk-mcp-tool-scenarios
 description: |
-  Analyze-failed-pipeline: a two-tool mock workflow. The agent should pull a
-  pipeline's status, then analyze the run to surface the failing test. This is
-  a pure MCP-tool path — there is no local file the agent can read instead, so
-  the tool-calls grader is a faithful signal (no valid bypass). Good template
-  for "add a new mock-based workflow test".
+  Analyze-failed-pipeline: a two-turn, two-tool mock workflow. The agent
+  should pull a pipeline's status in turn 0, then analyze the run to surface
+  the failing test in turn 1 (Vally `turns:`, microsoft/vally#481) rather
+  than one compound "first X, then Y" prompt. This is a pure MCP-tool path —
+  there is no local file the agent can read instead, so the tool-calls
+  grader is a faithful signal (no valid bypass). Good template for "add a
+  new mock-based workflow test".
 version: "1.0"
 type: capability
 
@@ -22,23 +24,33 @@ config:
 
 stimuli:
   - name: status-then-analyze
-    prompt: |
-      For Azure DevOps build 90001 in the internal project, first pull its
-      current status, then analyze the run to identify any failing tests and
-      report exactly which test is failing.
+    turns:
+      - |
+        For Azure DevOps build 90001 in the internal project, pull its
+        current status.
+      - |
+        Now analyze the run to identify any failing tests and report exactly
+        which test is failing.
     constraints:
       max_turns: 10
       max_tokens: 16000
-    # Two graders, two grader types:
-    #   tool-calls    - process check: both MCP tools were invoked (robust here -
-    #                   pipeline data has no local-file shortcut).
-    #   output-contains - outcome check: the agent actually surfaced the failing
-    #                   test the mock returns.
+    # Three graders:
+    #   tool-calls (turn 0)    - the status pull happens before analysis.
+    #   tool-calls (turn 1)    - the analysis tool fires as the follow-up.
+    #   output-contains        - outcome check: the agent actually surfaced
+    #                            the failing test the mock returns.
     graders:
       - type: tool-calls
+        turn: 0
         config:
           required:
             - azsdk_get_pipeline_status
+          disallowed:
+            - azsdk_analyze_pipeline
+      - type: tool-calls
+        turn: 1
+        config:
+          required:
             - azsdk_analyze_pipeline
       - type: output-contains
         config:

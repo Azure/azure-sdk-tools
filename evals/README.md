@@ -109,6 +109,41 @@ graders before relying on it in a new scenario.
 - SDK release readiness multi-turn (check readiness → clarify a blocking issue → trigger release).
 - Cross-skill handoff beyond release-plan/pipeline (e.g., pipeline fix → release readiness in the same session).
 
+### Retrofitting older single-turn scenarios
+
+Before Vally supported `turns:`, a genuinely multi-step workflow could only be
+tested by cramming every step's context into one giant initial prompt (e.g.
+"do X, then do Y, then do Z" or a raw tool-output block pasted into the
+prompt). Now that multi-turn is supported, those compound single-turn
+prompts have been retrofitted into natural conversations — one turn per
+real decision point, mirroring how a user would actually follow up after
+seeing each step's result:
+
+- `workflows/live/release-planner.eval.yaml` — the single "do every step
+  below, in order" prompt is now 4 turns (create → fetch back → generate →
+  link), each with its own `turn:`-scoped graders.
+- `workflows/mock/analyze-failed-pipeline.eval.yaml`'s `status-then-analyze`
+  — "first pull status, then analyze" is now 2 turns.
+- `workflows/mock/release-planner-workflows.eval.yaml`'s
+  `create-release-plan-and-generate-sdk` — "create, then generate" is now 2
+  turns instead of one compound ask.
+- `workflows/mock/check-public-repo-then-validate.eval.yaml` and
+  `workflows/mock/typespec-generation-step02.eval.yaml` — "edit, validate,
+  then check public-repo status" is now 2 turns; the public-repo check is a
+  natural follow-up decision, not part of the original ask.
+- `workflows/mock/fix-pipeline.eval.yaml` — the prompt used to embed a raw,
+  synthetic `"azsdk-analyze-pipeline" Analyzed Output:` block; reworded to
+  read as an authentic message a teammate would actually relay, since this
+  scenario's premise (a diagnosis from *outside* this session) is distinct
+  from the in-session diagnose-then-fix flow already covered by
+  `multi-turn-pipeline-workflows.eval.yaml`.
+
+Regression-pinned stimuli reproducing an exact reported prompt (e.g. the
+`#16072` / `#16226` scenarios in `release-planner-workflows.eval.yaml`) were
+deliberately left as single-turn — their value is reproducing the literal
+wording that triggered a real bug, so restructuring them would weaken the
+regression.
+
 
 Live scenarios need a primed `azure-rest-api-specs` clone — run
 [`sync-eval-git-repo.ts`](../eng/common/scripts/eval/sync-eval-git-repo.ts)

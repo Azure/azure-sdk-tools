@@ -451,11 +451,12 @@ class StubGenerator:
     def _install_package(self):
         commands = [sys.executable, "-m", "pip", "install", self.pkg_path, "-q"]
         # Packages with large dependency trees (e.g. those pulling the Microsoft
-        # OpenTelemetry distro) can exceed a short install timeout on slower CI
+        # OpenTelemetry distro) can exceed the install timeout on slower CI
         # agents, even though the install is healthy — the same install has been
-        # observed to take 35s on one agent and 136s on another. Allow the timeout
-        # to be tuned via APISTUB_INSTALL_TIMEOUT (seconds); default to 300.
-        _DEFAULT_INSTALL_TIMEOUT = 300
+        # observed to take 35s on one agent and 136s on another. The default
+        # remains 120s; pipelines that need more can raise it via the
+        # APISTUB_INSTALL_TIMEOUT environment variable (seconds).
+        _DEFAULT_INSTALL_TIMEOUT = 120
         _raw_timeout = os.environ.get("APISTUB_INSTALL_TIMEOUT")
         install_timeout = _DEFAULT_INSTALL_TIMEOUT
         if _raw_timeout is not None:

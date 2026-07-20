@@ -2,7 +2,7 @@ name: azure-typespec-author-eval
 description: Evaluation suite for azure-typespec-author.
 version: "1.0"
 type: capability # capability | regression
-
+area: "longrunningoperation"
 # Root-level environment
 environment: azsdk-mcp
 

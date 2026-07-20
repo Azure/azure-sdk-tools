@@ -13,6 +13,12 @@ parameters:
   type: number
   default: 1
 
+variables:
+  - template: /eng/pipelines/templates/variables/image.yml
+  - group: AzSDK_Eval_Variable_group
+  - name: TypeSpecAuthorEvalExtraArgs
+    value: '--tag mode:no-skill --skill-dir /tmp/no-skills'
+
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
   parameters:
@@ -99,3 +105,17 @@ extends:
                   artifact: eval-results-no-skill-$(Build.BuildId)
                   displayName: Upload eval results
                   condition: always()
+
+      - template: /eng/common/pipelines/templates/stages/archetype-eval.yml
+        parameters:
+          mcpSetupTemplate: /eng/common/pipelines/templates/steps/eval-mcp-setup.yml
+          TestType: live
+          vallyRoot: .github/skills/azure-typespec-author/evaluate
+          evalGlobs:
+            - 'evals/*.eval.yaml'
+          evalInvokeTemplate: /eng/common/pipelines/templates/steps/eval-invoke.yml
+          preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
+          threshold: 1.0
+          failOnFailedTests: false
+          shardTimeoutInMinutes: 30
+

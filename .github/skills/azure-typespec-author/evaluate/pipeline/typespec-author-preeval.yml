@@ -1,0 +1,55 @@
+steps:
+  - script: |
+      set -e
+      BRANCH="$(SkillBranch)"
+      if [ -z "$BRANCH" ]; then
+        echo "SkillBranch not set; keep current checked-out skill files."
+        exit 0
+      fi
+
+      BRANCH_REF="$BRANCH"
+      case "$BRANCH_REF" in
+        refs/heads/*)
+          ;;
+        refs/remotes/origin/*)
+          BRANCH_REF="refs/heads/${BRANCH_REF#refs/remotes/origin/}"
+          ;;
+        origin/*)
+          BRANCH_REF="refs/heads/${BRANCH_REF#origin/}"
+          ;;
+        refs/*)
+          ;;
+        *)
+          BRANCH_REF="refs/heads/$BRANCH_REF"
+          ;;
+      esac
+
+      echo "Overlaying azure-typespec-author skill from: $BRANCH_REF"
+      git fetch origin "$BRANCH_REF"
+      rm -rf .github/skills/azure-typespec-author/SKILL.md \
+             .github/skills/azure-typespec-author/references
+      git checkout FETCH_HEAD -- \
+        .github/skills/azure-typespec-author/SKILL.md \
+        .github/skills/azure-typespec-author/references
+      echo "Skill source overlaid from $BRANCH_REF"
+    displayName: 'Overlay skill source from SkillBranch (if set)'
+
+  - script: |
+      set -e
+      node .github/skills/azure-typespec-author/evaluate/scripts/setup-fixture-files.js
+      FIXTURE_DIR=".github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget"
+      cd "$FIXTURE_DIR"
+      npm ci --userconfig $(Build.SourcesDirectory)/.npmrc
+      echo "##vso[task.setvariable variable=FIXTURE_NODE_MODULES]$(Build.SourcesDirectory)/$FIXTURE_DIR/node_modules"
+    displayName: 'Prepare fixture files and node_modules'
+
+  - script: |
+      set -e
+      EXTRA_ARGS="$(TypeSpecAuthorEvalExtraArgs)"
+      if [ -n "$EXTRA_ARGS" ]; then
+        echo "Applying extra eval args to shard: $EXTRA_ARGS"
+        echo "##vso[task.setvariable variable=evalArgs]$(evalArgs) $EXTRA_ARGS"
+      else
+        echo "No extra eval args injected."
+      fi
+    displayName: 'Inject optional extra args into evalArgs'

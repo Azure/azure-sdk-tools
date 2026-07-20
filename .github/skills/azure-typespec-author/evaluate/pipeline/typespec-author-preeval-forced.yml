@@ -1,0 +1,43 @@
+steps:
+  - script: |
+      set -e
+      echo "Installing Go 1.24.0..."
+      curl --fail --location --show-error -o go1.24.0.linux-amd64.tar.gz https://go.dev/dl/go1.24.0.linux-amd64.tar.gz
+      sudo rm -rf /usr/local/go
+      sudo tar -C /usr/local -xzf go1.24.0.linux-amd64.tar.gz
+      echo "##vso[task.prependpath]/usr/local/go/bin"
+      go version
+    displayName: Install Go
+
+  - task: AzureCLI@2
+    displayName: Start QA bot backend service
+    inputs:
+      azureSubscription: 'azuresdkqabot-dev'
+      scriptType: bash
+      scriptLocation: inlineScript
+      workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
+      inlineScript: |
+        export GOPROXY=https://proxy.golang.org,direct
+        LOG_DIR=$(Build.StagingDirectory)/qa-bot-log
+        mkdir -p "$LOG_DIR"
+        go build -o qa-bot-service
+        chmod +x qa-bot-service
+        nohup ./qa-bot-service > "$LOG_DIR/qa-bot-service.log" 2>&1 &
+        SERVICE_PID=$!
+        echo "Service started with PID: $SERVICE_PID"
+        sleep 20
+        cat "$LOG_DIR/qa-bot-service.log" || true
+        if ! kill -0 $SERVICE_PID 2>/dev/null; then
+          echo "ERROR: Service process has exited unexpectedly"
+          exit 1
+        fi
+        if ! lsof -ti:8088 > /dev/null 2>&1; then
+          echo "ERROR: No process listening on port 8088"
+          exit 1
+        fi
+        echo "Service is running on port 8088"
+    env:
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+      AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
+
+  - template: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml

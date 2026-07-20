@@ -34,6 +34,10 @@ parameters:
   type: number
   default: 1
 
+variables:
+- name: SkillBranch
+  value: ${{ parameters.SkillBranch }}
+
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
   parameters:
@@ -191,3 +195,75 @@ extends:
                   artifact: eval-results-skill-invocation-$(Build.BuildId)
                   displayName: Upload eval results
                   condition: always()
+
+      - stage: PrepareForced
+        displayName: Prepare forced track
+        jobs:
+          - template: /eng/common/pipelines/templates/jobs/build-mcp.yml
+            parameters:
+              mcpSetupTemplate: /eng/common/pipelines/templates/steps/eval-mcp-setup.yml
+              TestType: live
+          - template: /eng/common/pipelines/templates/jobs/generate-eval-matrix.yml
+            parameters:
+              vallyRoot: .github/skills/azure-typespec-author/evaluate
+              evalGlobs:
+                - 'evals/*.eval.yaml'
+
+      - stage: EvalForced
+        displayName: Eval forced track
+        dependsOn: PrepareForced
+        variables:
+          TypeSpecAuthorEvalExtraArgs: '--tag mode:forced'
+        jobs:
+          - template: /eng/common/pipelines/templates/jobs/eval-shard.yml
+            parameters:
+              vallyRoot: .github/skills/azure-typespec-author/evaluate
+              evalInvokeTemplate: /eng/common/pipelines/templates/steps/eval-invoke.yml
+              preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval-forced.yml
+              threshold: 1.0
+              shardTimeoutInMinutes: 50
+
+      - stage: SummaryForced
+        displayName: Summary forced track
+        dependsOn: EvalForced
+        condition: always()
+        jobs:
+          - template: /eng/common/pipelines/templates/jobs/eval-summarize.yml
+            parameters:
+              failOnFailedTests: false
+
+      - stage: PrepareTrigger
+        displayName: Prepare trigger track
+        jobs:
+          - template: /eng/common/pipelines/templates/jobs/build-mcp.yml
+            parameters:
+              mcpSetupTemplate: /eng/common/pipelines/templates/steps/eval-mcp-setup.yml
+              TestType: mock
+          - template: /eng/common/pipelines/templates/jobs/generate-eval-matrix.yml
+            parameters:
+              vallyRoot: .github/skills/azure-typespec-author/evaluate
+              evalGlobs:
+                - 'evals/*.eval.yaml'
+
+      - stage: EvalTrigger
+        displayName: Eval trigger track
+        dependsOn: PrepareTrigger
+        variables:
+          TypeSpecAuthorEvalExtraArgs: '--tag mode:trigger'
+        jobs:
+          - template: /eng/common/pipelines/templates/jobs/eval-shard.yml
+            parameters:
+              vallyRoot: .github/skills/azure-typespec-author/evaluate
+              evalInvokeTemplate: /eng/common/pipelines/templates/steps/eval-invoke.yml
+              preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
+              threshold: 1.0
+              shardTimeoutInMinutes: 30
+
+      - stage: SummaryTrigger
+        displayName: Summary trigger track
+        dependsOn: EvalTrigger
+        condition: always()
+        jobs:
+          - template: /eng/common/pipelines/templates/jobs/eval-summarize.yml
+            parameters:
+              failOnFailedTests: false

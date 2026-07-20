@@ -42,6 +42,16 @@ extends:
               os: linux
 
             steps:
+              - task: PipAuthenticate@1
+                displayName: 'Authenticate pip to feed'
+                inputs:
+                  # CI images no longer have direct public PyPI egress; route pip
+                  # through the authenticated Azure DevOps feed (proxies PyPI).
+                  # Must run before any pip install (including the tooling install
+                  # inside use-python-version.yml).
+                  artifactFeeds: 'public/azure-sdk-for-python'
+                  onlyAddExtraIndex: false
+
               - template: /eng/pipelines/templates/steps/use-python-version.yml
                 parameters:
                   versionSpec: '${{ parameters.PythonVersion }}'

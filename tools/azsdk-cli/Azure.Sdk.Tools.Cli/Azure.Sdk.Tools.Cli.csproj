@@ -26,8 +26,12 @@
   <ItemGroup>
     <PackageReference Include="GitHub.Copilot.SDK" Version="0.2.2" />
     <PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" Version="1.5.0" />
+    <PackageReference Include="MessagePack" Version="3.1.8" />
+    <PackageReference Include="Microsoft.Bcl.Memory" Version="10.0.10" />
     <PackageReference Include="Microsoft.Extensions.Azure" Version="1.12.0" />
-    <PackageReference Include="Microsoft.Graph" Version="5.79.0" />
+    <PackageReference Include="Microsoft.Graph" Version="5.105.0" />
+    <PackageReference Include="Microsoft.Kiota.Abstractions" Version="1.22.2" />
+    <PackageReference Include="Nerdbank.MessagePack" Version="1.2.36" />
     <PackageReference Include="OpenAI" Version="2.6.0" />
     <PackageReference Include="OpenTelemetry" Version="1.15.3" />
     <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.15.3" />

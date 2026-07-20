@@ -1,0 +1,10 @@
+# Microsoft Agent Framework + Foundry hosting (matches the sibling self-evolving agent)
+agent-framework-core==1.7.0
+agent-framework-foundry==1.7.0
+agent-framework-foundry-hosting==1.0.0a260528
+mcp==1.27.2
+azure-ai-projects==2.2.0
+azure-identity==1.26.0b2
+azure-monitor-opentelemetry
+python-dotenv>=1.2.2
+pyyaml>=6.0.3

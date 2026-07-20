@@ -106,16 +106,39 @@ extends:
                   displayName: Upload eval results
                   condition: always()
 
-      - template: /eng/common/pipelines/templates/stages/archetype-eval.yml
-        parameters:
-          mcpSetupTemplate: /eng/common/pipelines/templates/steps/eval-mcp-setup.yml
-          TestType: live
-          vallyRoot: .github/skills/azure-typespec-author/evaluate
-          evalGlobs:
-            - 'evals/*.eval.yaml'
-          evalInvokeTemplate: /eng/common/pipelines/templates/steps/eval-invoke.yml
-          preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
-          threshold: 1.0
-          failOnFailedTests: false
-          shardTimeoutInMinutes: 30
+      - stage: PrepareNoSkill
+        displayName: Prepare no-skill track
+        jobs:
+          - template: /eng/common/pipelines/templates/jobs/build-mcp.yml
+            parameters:
+              mcpSetupTemplate: /eng/common/pipelines/templates/steps/eval-mcp-setup.yml
+              TestType: live
+          - template: /eng/common/pipelines/templates/jobs/generate-eval-matrix.yml
+            parameters:
+              vallyRoot: .github/skills/azure-typespec-author/evaluate
+              evalGlobs:
+                - 'evals/*.eval.yaml'
+
+      - stage: EvalNoSkill
+        displayName: Eval no-skill track
+        dependsOn: PrepareNoSkill
+        variables:
+          TypeSpecAuthorEvalExtraArgs: '--tag mode:no-skill --skill-dir /tmp/no-skills'
+        jobs:
+          - template: /eng/common/pipelines/templates/jobs/eval-shard.yml
+            parameters:
+              vallyRoot: .github/skills/azure-typespec-author/evaluate
+              evalInvokeTemplate: /eng/common/pipelines/templates/steps/eval-invoke.yml
+              preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
+              threshold: 1.0
+              shardTimeoutInMinutes: 30
+
+      - stage: SummaryNoSkill
+        displayName: Summary no-skill track
+        dependsOn: EvalNoSkill
+        condition: always()
+        jobs:
+          - template: /eng/common/pipelines/templates/jobs/eval-summarize.yml
+            parameters:
+              failOnFailedTests: false
 

@@ -24,10 +24,10 @@ stimuli:
       # Real authoring skill + the Contoso spec on disk so the agent can edit.
       # Paths are relative to this eval file (4 levels up = repo root).
       skills:
-        - ../../../../.github/skills/azure-typespec-author
+        - ../../../.github/skills/azure-typespec-author
       git:
         type: worktree
-        source: ../../../../artifacts/specs-cache/azure-rest-api-specs
+        source: ../../../artifacts/specs-cache/azure-rest-api-specs
         ref: main
     prompt: |
       I'm on step 2 of the TypeSpec generation workflow for the Contoso Widget

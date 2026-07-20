@@ -13,10 +13,10 @@ different folders. A full end-to-end gate runs *both*.
 |---|---|---|
 | **Question** | Given a user prompt, does the agent invoke the right MCP tool(s) with the right shape? | Given a user prompt, does the agent route to the right skill and follow its instructions? |
 | **Catches** | Tool name / description / parameter regressions; multi-tool ordering; tool-catalog conflicts | Skill frontmatter / `description` / instruction regressions; skill-routing collisions |
-| **Path** | [`evals/evals/`](evals/) (`tools/` + `workflow-scenarios/`) | [`.github/skills/<skill-name>/evals/*.eval.yaml`](../.github/skills/) (and `evaluate/evals/` for capability suites) |
+| **Path** | [`evals/tools/`](tools/) + [`evals/workflows/`](workflows/) | [`.github/skills/<skill-name>/evals/*.eval.yaml`](../.github/skills/) (and `evaluate/evals/` for capability suites) |
 | **Loaded subject** | Production MCP server (`Azure.Sdk.Tools.Cli`) over stdio — real tools, real network calls | Skill's `SKILL.md` + frontmatter; the agent picks tools itself |
 | **Primary grader** | `tool-calls` — checks the recorded trajectory for required tool names | Trigger / routing graders + per-skill rubric |
-| **Run command** | `vally eval --eval-spec evals/tools/<name>.eval.yaml` *from this directory* | `vally eval --skill-dir .github/skills/<skill-name>` *from repo root* |
+| **Run command** | `vally eval --eval-spec tools/<name>.eval.yaml` *from this directory* | `vally eval --skill-dir .github/skills/<skill-name>` *from repo root* |
 | **CI status** | Mock vertical in [`eng/common/pipelines/workflow-eval.yml`](../eng/common/pipelines/workflow-eval.yml) (hermetic `unit` + mock tiers, detect→shard→summarize); live tier in [`eng/common/pipelines/live-eval.yml`](../eng/common/pipelines/live-eval.yml) | `vally lint` runs in [.github/workflows/skill-eval.yml](../.github/workflows/skill-eval.yml); full `eval` job pending |
 | **Cost profile** | Higher — each run spins up the MCP server, real LLM turns (~5–15), real tool calls | Variable — trigger evals are cheap; capability evals (e.g. `azure-typespec-author`) are expensive |
 
@@ -40,26 +40,26 @@ conditional branches, recovery), both matter independently.
 
 ### Scenarios checked in today
 
-**Tool-scenario evals (this project)** — organised by the standard test pyramid under [`evals/`](evals). The folder is the **cost tier** (and CI cadence); the feature **area** is a tag inside each YAML so cross-cuts work via `.vally.yaml` suite filters.
+**Tool-scenario evals (this project)** — organised by the standard test pyramid under [`tools/`](tools) and [`workflows/`](workflows). The folder is the **cost tier** (and CI cadence); the feature **area** is a tag inside each YAML so cross-cuts work via `.vally.yaml` suite filters.
 
-#### `evals/tools/` — hermetic single-tool evals (10 files)
+#### `tools/` — hermetic single-tool evals (10 files)
 
 One prompt → one expected MCP tool. No `environment.git`, no fixtures. Fast; safe to run on every PR. The per-namespace `prompt-to-tool-*.eval.yaml` files group every prompt→tool check by tool namespace (trigger coverage ported from [#15183](https://github.com/Azure/azure-sdk-tools/pull/15183)); `add-arm-resource` is the one file-producing exception.
 
 | Scenario | Area | Shape |
 |---|---|---|
-| [`add-arm-resource`](evals/tools/add-arm-resource.eval.yaml) | typespec | File-producing scenario — calls `azsdk_typespec_generate_authoring_plan` + `edit` for an ARM resource |
-| [`prompt-to-tool-apiview`](evals/tools/prompt-to-tool-apiview.eval.yaml) | apiview | `azsdk_apiview_*` |
-| [`prompt-to-tool-config`](evals/tools/prompt-to-tool-config.eval.yaml) | engsys | `azsdk_check_service_label`, `azsdk_create_service_label` |
-| [`prompt-to-tool-engsys`](evals/tools/prompt-to-tool-engsys.eval.yaml) | engsys | `azsdk_analyze_log_file`, failed-test tools, codeowner-cache |
-| [`prompt-to-tool-github`](evals/tools/prompt-to-tool-github.eval.yaml) | github | `azsdk_create_pull_request`, `azsdk_get_pull_request*`, `azsdk_get_github_user_details`, `azsdk_get_pull_request_link_for_current_branch` |
-| [`prompt-to-tool-package`](evals/tools/prompt-to-tool-package.eval.yaml) | package | `azsdk_package_*`, `azsdk_release_sdk` |
-| [`prompt-to-tool-pipeline`](evals/tools/prompt-to-tool-pipeline.eval.yaml) | pipeline | `azsdk_analyze_pipeline`, `azsdk_get_pipeline_*` — incl. analyze + fix routing (required) and an unrelated-request negative (disallowed), ported from the pipeline skill `eval.yaml` files |
-| [`prompt-to-tool-releaseplan`](evals/tools/prompt-to-tool-releaseplan.eval.yaml) | release-plan | `azsdk_*_release_plan*`, `azsdk_run_generate_sdk`, `azsdk_link_*` |
-| [`prompt-to-tool-typespec`](evals/tools/prompt-to-tool-typespec.eval.yaml) | typespec | `azsdk_typespec_*`, `azsdk_convert_swagger_to_typespec`, `azsdk_customized_code_update`, `azsdk_run_typespec_validation` |
-| [`prompt-to-tool-verify`](evals/tools/prompt-to-tool-verify.eval.yaml) | engsys | `azsdk_verify_setup` |
+| [`add-arm-resource`](tools/add-arm-resource.eval.yaml) | typespec | File-producing scenario — calls `azsdk_typespec_generate_authoring_plan` + `edit` for an ARM resource |
+| [`prompt-to-tool-apiview`](tools/prompt-to-tool-apiview.eval.yaml) | apiview | `azsdk_apiview_*` |
+| [`prompt-to-tool-config`](tools/prompt-to-tool-config.eval.yaml) | engsys | `azsdk_check_service_label`, `azsdk_create_service_label` |
+| [`prompt-to-tool-engsys`](tools/prompt-to-tool-engsys.eval.yaml) | engsys | `azsdk_analyze_log_file`, failed-test tools, codeowner-cache |
+| [`prompt-to-tool-github`](tools/prompt-to-tool-github.eval.yaml) | github | `azsdk_create_pull_request`, `azsdk_get_pull_request*`, `azsdk_get_github_user_details`, `azsdk_get_pull_request_link_for_current_branch` |
+| [`prompt-to-tool-package`](tools/prompt-to-tool-package.eval.yaml) | package | `azsdk_package_*`, `azsdk_release_sdk` |
+| [`prompt-to-tool-pipeline`](tools/prompt-to-tool-pipeline.eval.yaml) | pipeline | `azsdk_analyze_pipeline`, `azsdk_get_pipeline_*` — incl. analyze + fix routing (required) and an unrelated-request negative (disallowed), ported from the pipeline skill `eval.yaml` files |
+| [`prompt-to-tool-releaseplan`](tools/prompt-to-tool-releaseplan.eval.yaml) | release-plan | `azsdk_*_release_plan*`, `azsdk_run_generate_sdk`, `azsdk_link_*` |
+| [`prompt-to-tool-typespec`](tools/prompt-to-tool-typespec.eval.yaml) | typespec | `azsdk_typespec_*`, `azsdk_convert_swagger_to_typespec`, `azsdk_customized_code_update`, `azsdk_run_typespec_validation` |
+| [`prompt-to-tool-verify`](tools/prompt-to-tool-verify.eval.yaml) | engsys | `azsdk_verify_setup` |
 
-#### `evals/workflow-scenarios/` — multi-tool scenarios (6)
+#### `workflows/` — multi-tool scenarios
 
 Multi-step prompts that exercise 2+ MCP tools end-to-end. Split into
 `mock/` (hermetic, runs on PR gate) and `live/` (real DevOps / GitHub /
@@ -67,13 +67,13 @@ pipelines, runs nightly).
 
 | Scenario | Area | Mode | Shape |
 |---|---|---|---|
-| [`check-public-repo-then-validate`](evals/workflow-scenarios/mock/check-public-repo-then-validate.eval.yaml) | typespec | mock | Validate, then check public-repo presence |
-| [`typespec-generation-step02`](evals/workflow-scenarios/mock/typespec-generation-step02.eval.yaml) | typespec | mock | Step in the spec-PR generation flow |
-| [`rename-client-property`](evals/workflow-scenarios/mock/rename-client-property.eval.yaml) | typespec | mock | Stub — needs `expected-diff` grader + sparse clone |
-| [`release-planner-workflows`](evals/workflow-scenarios/mock/release-planner-workflows.eval.yaml) | release-plan | mock | Create / re-fetch / link / update release-plan flows (5 stimuli) |
-| [`analyze-failed-pipeline`](evals/workflow-scenarios/mock/analyze-failed-pipeline.eval.yaml) | pipeline | mock | Two-tool path — pull pipeline status, then analyze the run to surface the failing test |
-| [`fix-pipeline`](evals/workflow-scenarios/mock/fix-pipeline.eval.yaml) | pipeline | mock | Given the analysis, apply the fix to the overlaid source and verify via the package `build`/`check`/`test` MCP tools |
-| [`release-planner`](evals/workflow-scenarios/live/release-planner.eval.yaml) | release-plan | **live** | Create + re-fetch a release plan, kick off SDK gen, link PR back — real DevOps test-area writes |
+| [`check-public-repo-then-validate`](workflows/mock/check-public-repo-then-validate.eval.yaml) | typespec | mock | Validate, then check public-repo presence |
+| [`typespec-generation-step02`](workflows/mock/typespec-generation-step02.eval.yaml) | typespec | mock | Step in the spec-PR generation flow |
+| [`rename-client-property`](workflows/mock/rename-client-property.eval.yaml) | typespec | mock | Stub — needs `expected-diff` grader + sparse clone |
+| [`release-planner-workflows`](workflows/mock/release-planner-workflows.eval.yaml) | release-plan | mock | Create / re-fetch / link / update release-plan flows (5 stimuli) |
+| [`analyze-failed-pipeline`](workflows/mock/analyze-failed-pipeline.eval.yaml) | pipeline | mock | Two-tool path — pull pipeline status, then analyze the run to surface the failing test |
+| [`fix-pipeline`](workflows/mock/fix-pipeline.eval.yaml) | pipeline | mock | Given the analysis, apply the fix to the overlaid source and verify via the package `build`/`check`/`test` MCP tools |
+| [`release-planner`](workflows/live/release-planner.eval.yaml) | release-plan | **live** | Create + re-fetch a release plan, kick off SDK gen, link PR back — real DevOps test-area writes |
 
 Live scenarios need a primed `azure-rest-api-specs` clone — run
 [`sync-eval-git-repo.ts`](../eng/common/scripts/eval/sync-eval-git-repo.ts)
@@ -106,20 +106,19 @@ tracks the migration in
 ```
 evals/
 ├── .vally.yaml                # Vally config (environments + suites)
-├── evals/
-│   ├── tools/                 # tool-shape + per-skill trigger evals, hermetic
-│   └── workflow-scenarios/
-│       ├── mock/              # multi-tool scenarios, hermetic (PR gate)
-│       └── live/              # multi-tool scenarios, live MCP (nightly)
+├── tools/                     # tool-shape + per-skill trigger evals, hermetic
+├── workflows/
+│   ├── mock/                  # multi-tool scenarios, hermetic (PR gate)
+│   └── live/                  # multi-tool scenarios, live MCP (nightly)
 ├── fixtures/                  # Real failing source files overlaid into the agent workspace via env.files
 │   └── <scenario-name>/...
 └── Graders/                   # (future) Custom .NET graders
     └── AzsdkEvals.Graders.csproj  # added when first custom grader lands
 ```
 
-Folder = tier (cost / CI cadence): `evals/tools/` is hermetic + fast,
-`evals/workflow-scenarios/mock/` is multi-tool hermetic, and
-`evals/workflow-scenarios/live/` is multi-tool against real services and clones.
+Folder = tier (cost / CI cadence): `tools/` is hermetic + fast,
+`workflows/mock/` is multi-tool hermetic, and `workflows/live/` is
+multi-tool against real services and clones.
 Vally's suite filter is positive-match only, so the
 mock-vs-live split lives on disk rather than in tags. Feature **area** still
 lives as a `tags:` entry inside each YAML so cross-cuts (e.g. "all
@@ -160,13 +159,13 @@ $skills = '../.github/skills'
 **One namespace's trigger evals** (hermetic; a handful of prompt→tool checks):
 
 ```powershell
-& $vally eval -e evals/tools/prompt-to-tool-releaseplan.eval.yaml --skill-dir $skills
+& $vally eval -e tools/prompt-to-tool-releaseplan.eval.yaml --skill-dir $skills
 ```
 
 **The release-planner mock workflow** (~4 min, 5 stimuli, hermetic):
 
 ```powershell
-& $vally eval -e evals/workflow-scenarios/mock/release-planner-workflows.eval.yaml --skill-dir $skills
+& $vally eval -e workflows/mock/release-planner-workflows.eval.yaml --skill-dir $skills
 ```
 
 **The release-planner live workflow** (~15 min, real DevOps writes to the
@@ -174,22 +173,22 @@ test area; prime the spec clone once):
 
 ```powershell
 node ../eng/common/scripts/eval/sync-eval-git-repo.ts
-& $vally eval -e evals/workflow-scenarios/live/release-planner.eval.yaml --skill-dir $skills --workers 1
+& $vally eval -e workflows/live/release-planner.eval.yaml --skill-dir $skills --workers 1
 ```
 
 ### 4. Pick a different scenario
 
 ```powershell
 # List everything you can pass to -e
-Get-ChildItem evals -Recurse -Filter *.eval.yaml | ForEach-Object FullName
+Get-ChildItem tools,workflows -Recurse -Filter *.eval.yaml | ForEach-Object FullName
 ```
 
 Common swaps:
 
 | What you want | Replace `-e` value with |
 |---|---|
-| A different tool namespace | `evals/tools/prompt-to-tool-apiview.eval.yaml` |
-| A TypeSpec workflow | `evals/workflow-scenarios/mock/check-public-repo-then-validate.eval.yaml` |
+| A different tool namespace | `tools/prompt-to-tool-apiview.eval.yaml` |
+| A TypeSpec workflow | `workflows/mock/check-public-repo-then-validate.eval.yaml` |
 | All triggers for one feature | drop `-e` and use `--suite typespec` (or `release-plan`, `github`, …) |
 | Everything hermetic | drop `-e` and use `--suite pr-gate` |
 
@@ -242,7 +241,7 @@ $skills = '../.github/skills'
 Run a single eval:
 
 ```powershell
-& $vally eval --eval-spec evals/workflow-scenarios/mock/check-public-repo-then-validate.eval.yaml --skill-dir $skills
+& $vally eval --eval-spec workflows/mock/check-public-repo-then-validate.eval.yaml --skill-dir $skills
 ```
 
 Run the live scenarios tier (first, prime a per-user clone of
@@ -266,8 +265,8 @@ Run several eval files at once (repeat `-e`):
 
 ```powershell
 & $vally eval `
-  -e evals/tools/prompt-to-tool-apiview.eval.yaml `
-  -e evals/tools/prompt-to-tool-package.eval.yaml `
+  -e tools/prompt-to-tool-apiview.eval.yaml `
+  -e tools/prompt-to-tool-package.eval.yaml `
   --skill-dir $skills
 ```
 
@@ -275,7 +274,7 @@ Hunt for flaky stimuli by repeating each one (`--runs`) and writing
 machine-readable output:
 
 ```powershell
-& $vally eval -e evals/tools/prompt-to-tool-typespec.eval.yaml `
+& $vally eval -e tools/prompt-to-tool-typespec.eval.yaml `
   --runs 5 --workers 2 --model gpt-5.4 `
   --output jsonl --output-dir vally-results
 ```
@@ -289,7 +288,7 @@ machine-readable output:
 Run by tag or suite instead of listing files:
 
 ```powershell
-& $vally eval --suite pr-gate     --skill-dir $skills   # tools/* + workflow-scenarios/mock/*
+& $vally eval --suite pr-gate     --skill-dir $skills   # tools/* + workflows/mock/*
 & $vally eval --suite scenarios-mock --skill-dir $skills --workers 6
 ```
 
@@ -321,13 +320,13 @@ $rows | Group-Object { $_.gradeResult.stimulusName } | ForEach-Object {
 ## Adding a new scenario
 
 1. **Pick a tier** — the folder you drop the YAML into:
-   - `evals/tools/` — one prompt, one MCP tool, no environment hooks.
-   - `evals/workflow-scenarios/mock/` — multi-tool flow against
+  - `tools/` — one prompt, one MCP tool, no environment hooks.
+  - `workflows/mock/` — multi-tool flow against
      `azsdk-mcp-mock`. Hermetic; runs on PR gate.
-   - `evals/workflow-scenarios/live/` — needs real DevOps / GitHub /
+  - `workflows/live/` — needs real DevOps / GitHub /
      pipelines; bind `environment: azsdk-mcp-live`. Nightly only.
 2. Pick a short, kebab-case name (e.g. `create-release-plan`).
-3. Create `evals/<tier>/<name>.eval.yaml`. Start from a sibling in the same
+3. Create `<tier>/<name>.eval.yaml`. Start from a sibling in the same
    tier as a template.
 4. **Tag it** so suite filters pick it up:
    ```yaml

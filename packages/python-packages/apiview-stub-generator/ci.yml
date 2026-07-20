@@ -37,15 +37,7 @@ extends:
     ArtifactName: 'apiviewparserpython'
     PackageName: 'Python API View Parser'
     TestSteps:
-    - task: PipAuthenticate@1
-      displayName: 'Authenticate pip to feed'
-      inputs:
-        # The hosted CI agents no longer have direct public PyPI egress; route
-        # pip (and tox's nested pip) through the authenticated Azure DevOps feed,
-        # which proxies PyPI. Without this, "pip install tox" fails with
-        # "[Errno 1] Operation not permitted" / "No matching distribution found".
-        artifactFeeds: 'public/azure-sdk-for-python'
-        onlyAddExtraIndex: false
+    - template: /eng/common/pipelines/templates/steps/auth-dev-feed.yml
     - script: |
         python $(Build.SourcesDirectory)/eng/scripts/python_version_check.py
       displayName: 'Verify Python APIView version consistency'

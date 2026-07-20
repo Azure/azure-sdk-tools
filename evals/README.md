@@ -93,11 +93,14 @@ turns never trigger real destructive side effects.
 | Pipeline diagnosis / fixing | [`multi-turn-pipeline-workflows`](workflows/mock/multi-turn-pipeline-workflows.eval.yaml) | diagnose→confirm→fix (skill switch + real file fix verified); diagnose→decline (fixer must not fire, guards against incorrect early/eager tool-order) |
 
 Every scenario above pins `skill-invocation`/`tool-calls` graders to the
-specific `turn:` that owns the assertion (routing + tool-use are the most
-reliable signals to turn-scope). `output-contains`/`output-matches` graders
-are asserted session-wide rather than turn-pinned — turn-scoping for those
-grader types was not reliable in local testing (see the comment in
-`multi-turn-pipeline-workflows.eval.yaml`).
+specific `turn:` that owns the assertion. Per-turn grader scoping is designed
+to be generic across every built-in grader, 0-based to match the `turns:`
+array index ([microsoft/vally#481](https://github.com/microsoft/vally/issues/481));
+routing/tool-use graders turn-scope correctly here. `output-contains`/
+`output-matches` graders are asserted session-wide instead — in local testing
+they did not reliably isolate a single turn's content (see the comment in
+`multi-turn-pipeline-workflows.eval.yaml`), so re-verify turn-scoping for text
+graders before relying on it in a new scenario.
 
 **Remaining gaps** (not yet covered; tracked in [#16403](https://github.com/Azure/azure-sdk-tools/issues/16403)):
 

@@ -88,11 +88,19 @@ stimuli:
             - name: azsdk_package_run_check
             - name: azsdk_package_run_tests
       - type: output-contains
-        # Session-wide, not turn-pinned: `turn:` scoping is only exercised
-        # elsewhere in this repo for skill-invocation/tool-calls. The
-        # substring is present in both the turn-0 diagnosis and the final
-        # fix summary ("QueueClientOptions.cs"), so a session-wide check is
-        # both simpler and reliable here.
+        # Session-wide, not turn-pinned. Per-turn grader scoping is designed to
+        # be generic across every built-in grader, 0-based to match the
+        # `turns:` array index (microsoft/vally#481); skill-invocation and
+        # tool-calls above turn-scope correctly. In local testing, though,
+        # output-contains/output-matches did not reliably isolate turn 0's
+        # content here (empty/no-match despite the substring being present in
+        # that turn's real reply) -- possibly because skill-context loading
+        # injects an extra user-facing message between real turns, throwing
+        # off turn-boundary counting for this grader path. The substring is
+        # present in both the turn-0 diagnosis and the final fix summary
+        # ("QueueClientOptions.cs"), so a session-wide check is both simpler
+        # and reliable here; re-test turn-scoping for text graders before
+        # relying on it elsewhere.
         config:
           substring: "QueueClientOptions"
       # Turn 1 — confirmed continuation: switch to the fixer and apply the

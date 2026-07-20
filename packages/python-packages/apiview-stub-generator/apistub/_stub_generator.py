@@ -451,35 +451,11 @@ class StubGenerator:
     def _install_package(self):
         commands = [sys.executable, "-m", "pip", "install", self.pkg_path, "-q"]
         # Packages with large dependency trees (e.g. those pulling the Microsoft
-        # OpenTelemetry distro) can exceed the install timeout on slower CI
-        # agents, even though the install is healthy — the same install has been
-        # observed to take 35s on one agent and 136s on another. The default
-        # remains 120s; pipelines that need more can raise it via the
-        # APISTUB_INSTALL_TIMEOUT environment variable (seconds).
-        _DEFAULT_INSTALL_TIMEOUT = 120
-        _raw_timeout = os.environ.get("APISTUB_INSTALL_TIMEOUT")
-        install_timeout = _DEFAULT_INSTALL_TIMEOUT
-        if _raw_timeout is not None:
-            try:
-                _parsed_timeout = int(_raw_timeout)
-            except ValueError:
-                logging.warning(
-                    "Ignoring invalid APISTUB_INSTALL_TIMEOUT=%r (not an integer); "
-                    "using default of %ds.",
-                    _raw_timeout,
-                    _DEFAULT_INSTALL_TIMEOUT,
-                )
-            else:
-                if _parsed_timeout > 0:
-                    install_timeout = _parsed_timeout
-                else:
-                    logging.warning(
-                        "Ignoring non-positive APISTUB_INSTALL_TIMEOUT=%r; "
-                        "using default of %ds.",
-                        _raw_timeout,
-                        _DEFAULT_INSTALL_TIMEOUT,
-                    )
-        result = run(commands, timeout=install_timeout, stderr=PIPE, text=True)
+        # OpenTelemetry distro) can exceed a short install timeout on slower CI
+        # agents even though the install is healthy — the same install has been
+        # observed to take 35s on one agent and 136s on another. Use 300s to
+        # avoid spurious API Review failures.
+        result = run(commands, timeout=300, stderr=PIPE, text=True)
         if result.stderr:
             logging.debug("pip stderr: %s", result.stderr.strip())
         if result.returncode != 0:

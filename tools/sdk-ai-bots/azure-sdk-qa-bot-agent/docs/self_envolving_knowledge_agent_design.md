@@ -1,10 +1,10 @@
-# Feedback Agent Design
+# Self-Evolving Knowledge Agent Design
 
 ## 1 Background
 
 When the chatbot's answer is wrong, today there is no systematic way to understand what the correct answer is, identify whether the underlying knowledge base (KB) is missing or stale, or close the gap so future similar queries are answered correctly. All follow-up is done manually by vendors investigating explicit thumbs-down feedback. The much more common implicit failure mode: an expert had to step in and answer — is never captured.
 
-We are introducing a **Feedback Agent** — a new hosted agent in the Foundry project. It automatically analyzes wrong answers, classifies the root cause, and files KB-gap issues against the source-of-truth docs repo. Rather than firing in real time off an endpoint, the agent is driven by a **daily batch scan** (see §2.3): the Bot Answer Evaluator judges each concluded QA thread, and any thread whose bot answer was wrong or unconfirmed is handed to the agent. Two human signals in the thread inform that judgement and the agent's analysis:
+We are introducing a **Self-Evolving Knowledge Agent** — a new hosted agent in the Foundry project. It automatically analyzes wrong answers, classifies the root cause, and files KB-gap issues against the source-of-truth docs repo. Rather than firing in real time off an endpoint, the agent is driven by a **daily batch scan** (see §2.3): the Bot Answer Evaluator judges each concluded QA thread, and any thread whose bot answer was wrong or unconfirmed is handed to the agent. Two human signals in the thread inform that judgement and the agent's analysis:
 
 | Signal | Source | Description |
 | --- | --- | --- |
@@ -15,11 +15,14 @@ We are introducing a **Feedback Agent** — a new hosted agent in the Foundry pr
 
 ### 2.1 Architecture
 
-![alt text](feedback_agent_architecture.png)
+
+![alt text](self_envolving_workflow.png)
+![alt text](self_envolving_knowledge_agent_architecture.png)
+
 
 ### 2.2 Agent Design
 
-The Feedback Agent is built on the `agent_framework` library and deployed as a Foundry hosted agent alongside the Chat Agent.
+The Self-Evolving Knowledge Agent is built on the `agent_framework` library and deployed as a Foundry hosted agent alongside the Chat Agent.
 
 | Component | Purpose |
 | --- | --- |
@@ -144,7 +147,8 @@ record carries **two status layers**:
    - finished + correct → `finished` (archived);
    - finished + incorrect/unknown → `failed`.
 3. **Feedback** — for records that just turned `failed`, run the hosted
-   feedback agent in-process via `FeedbackAgentService.run_job` (§2.3.1).
+   Self-Evolving Knowledge Agent in-process via
+   `SelfEvolvingKnowledgeAgentService.run_job` (§2.3.1).
 
 The whole feature is gated by `FEEDBACK_AGENT_ENABLED` so it can be disabled
 without a code rollback.
@@ -153,9 +157,9 @@ without a code rollback.
 
 The daily batch job (`scripts/run_feedback_jobs.py`) owns the Layer-2
 lifecycle and drives the Foundry interaction **in-process** via
-:class:`FeedbackAgentService` — there is no backend HTTP API. For each thread
+:class:`SelfEvolvingKnowledgeAgentService` — there is no backend HTTP API. For each thread
 that just turned `failed`, the job calls `run_job(record_id, tenant_id)`, which
-marks `feedback.status = running`, runs the hosted feedback agent
+marks `feedback.status = running`, runs the hosted Self-Evolving Knowledge Agent
 **synchronously**, and writes back a terminal `done` / `failed` status.
 
 The agent is invoked through the Responses API (`store=True`); the call
@@ -262,7 +266,7 @@ lets a thread stay `ongoing` across runs until it actually concludes.
 ### 2.5 Create Issue
 
 All issues — KB or system — are filed in **`Azure/azure-sdk-pr`** using the
-existing **GitHub MCP tool** ([`tools/github_mcp_tools.py`](../tools/github_mcp_tools.py)); the feedback agent enables the `create_issue` tool in its allowlist (`readonly=False`).
+existing **GitHub MCP tool** ([`tools/github_mcp_tools.py`](../tools/github_mcp_tools.py)); the Self-Evolving Knowledge Agent enables the `create_issue` tool in its allowlist (`readonly=False`).
 
 For KB issues (`missing_content` / `outdated_content`), the agent calls `resolve_kb_source` to resolve where the KB content originates and cites that source in the body. Example:
 

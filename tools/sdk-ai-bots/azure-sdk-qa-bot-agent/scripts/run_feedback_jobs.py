@@ -13,8 +13,9 @@ drives the feedback loop:
      * finished + correct       -> ``finished`` (archived).
      * finished + incorrect/unknown -> ``failed`` (needs feedback).
 3. **Feedback** — for records that just turned ``failed``, run the hosted
-   feedback agent **in-process** via :class:`FeedbackAgentService` (a
-   synchronous Responses call per thread).
+   Self-Evolving Knowledge Agent **in-process** via
+   :class:`SelfEvolvingKnowledgeAgentService` (a synchronous Responses call
+   per thread).
 
 Usage::
 
@@ -46,7 +47,9 @@ if str(_PROJECT_DIR) not in sys.path:
 import config.app_config as app_config
 from models.qa_record import QAStatus
 from services.conversation_service import ConversationService
-from services.feedback_agent_service import FeedbackAgentService
+from services.self_evolving_knowledge_agent_service import (
+    SelfEvolvingKnowledgeAgentService,
+)
 from services.qa_record_service import QARecordService
 from utils.azure_ai_foundry import close_clients as close_ai_clients
 from utils.azure_cosmosdb import close_cosmos_client
@@ -111,7 +114,7 @@ def _resolve_window(args: argparse.Namespace) -> tuple[datetime, datetime]:
 async def _run(args: argparse.Namespace) -> None:
     conversation_service = ConversationService()
     qa_service = QARecordService(conversation_service)
-    feedback_service = FeedbackAgentService()
+    feedback_service = SelfEvolvingKnowledgeAgentService()
 
     start, end = _resolve_window(args)
     logger.info("Scanning conversations active in [%s, %s)", start.isoformat(), end.isoformat())
@@ -164,7 +167,8 @@ async def _run(args: argparse.Namespace) -> None:
             counts["ongoing"] += 1
             continue
 
-        # 3. qa_status == failed -> run the hosted feedback agent in-process.
+        # 3. qa_status == failed -> run the hosted Self-Evolving Knowledge Agent
+        #    in-process.
         counts["failed"] += 1
         if args.dry_run or not feedback_enabled:
             logger.info("Skipping feedback for %s (disabled or dry-run)", record.id)

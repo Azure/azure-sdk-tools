@@ -37,7 +37,7 @@ COPY tools/ ./tools/
 COPY utils/ ./utils/
 
 # Copy the specific agent
-ARG AGENT_DIR=agents/feedback_agent
+ARG AGENT_DIR=agents/self_evolving_knowledge_agent
 COPY ${AGENT_DIR}/ ./
 
 EXPOSE 8088

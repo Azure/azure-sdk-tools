@@ -28,7 +28,9 @@ from models.conversation import (
 )
 from models.qa_record import FeedbackState, FeedbackStatus, QARecord, QAStatus
 from services.conversation_service import ConversationService
-from services.feedback_agent_service import FeedbackAgentService
+from services.self_evolving_knowledge_agent_service import (
+    SelfEvolvingKnowledgeAgentService,
+)
 from services.qa_record_service import QARecordService
 
 _CONVERSATION_ID = "conv-qa-test"
@@ -277,7 +279,7 @@ def _record_with_feedback() -> QARecord:
 
 
 def test_finalize_failed_sets_error():
-    svc = FeedbackAgentService()
+    svc = SelfEvolvingKnowledgeAgentService()
     record = _record_with_feedback()
     svc._finalize_failed(record, error="timeout")
     assert record.feedback.status == FeedbackStatus.failed
@@ -285,7 +287,7 @@ def test_finalize_failed_sets_error():
 
 
 def test_build_input_shape():
-    svc = FeedbackAgentService()
+    svc = SelfEvolvingKnowledgeAgentService()
     record = _record_with_feedback()
     payload = svc._build_input(record)
     assert payload.tenant_id == "typespec"

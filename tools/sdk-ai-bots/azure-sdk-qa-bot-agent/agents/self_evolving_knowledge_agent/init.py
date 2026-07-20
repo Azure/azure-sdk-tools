@@ -1,12 +1,12 @@
-"""Azure SDK QA Bot — Hosted Feedback Agent.
+"""Azure SDK QA Bot — Hosted Self-Evolving Knowledge Agent.
 
-Self-contained entrypoint for the hosted feedback agent container.
-Runs as an HTTP server on port 8088 using the Responses protocol.
+Self-contained entrypoint for the hosted Self-Evolving Knowledge Agent
+container. Runs as an HTTP server on port 8088 using the Responses protocol.
 Deployed to Microsoft Foundry as a container agent.
 
-The Feedback Agent is a KB-quality analyst — it analyzes past chat turns
-that received negative feedback (explicit thumbs-down or implicit expert
-correction) and either files a KB-gap issue or records a structured
+The Self-Evolving Knowledge Agent is a KB-quality analyst — it analyzes past
+chat turns that received negative feedback (explicit thumbs-down or implicit
+expert correction) and either files a KB-gap issue or records a structured
 classification for downstream Agent Optimizer dataset curation.
 """
 
@@ -64,7 +64,7 @@ def _load_instructions(file_path: Path) -> str:
 
 
 async def main() -> None:
-    """Start the hosted Feedback Agent as an HTTP server."""
+    """Start the hosted Self-Evolving Knowledge Agent as an HTTP server."""
     await app_config.init()
 
     agent_client = get_agent_client()
@@ -151,5 +151,5 @@ if __name__ == "__main__":
     # before the server starts accepting traffic.
     _ = get_project_client
 
-    logger.info("Feedback agent container starting...")
+    logger.info("Self-Evolving Knowledge Agent container starting...")
     asyncio.run(main())

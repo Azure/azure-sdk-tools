@@ -10,9 +10,9 @@ A ``QARecord`` is the durable status row for **one conversation thread**
   answer (i.e. a case worth a feedback analysis).
 * **Layer 2 — Feedback lifecycle** (:class:`FeedbackStatus`, embedded in
   :class:`FeedbackState`): only populated once the QA reaches ``failed``.
-  ``created`` when the feedback agent session is requested, ``running``
-  once the hosted agent accepted and is processing, ``done`` when it
-  finished, ``failed`` when it errored/timed out.
+  ``created`` when the Self-Evolving Knowledge Agent session is requested,
+  ``running`` once the hosted agent accepted and is processing, ``done`` when
+  it finished, ``failed`` when it errored/timed out.
 
 Partition key is ``/tenant_id`` (matches the episode and conversation
 conventions). The ``id`` is the thread key
@@ -45,9 +45,9 @@ class QAStatus(str, Enum):
 
 
 class FeedbackStatus(str, Enum):
-    """Layer-2 lifecycle state of the feedback-agent analysis."""
+    """Layer-2 lifecycle state of the Self-Evolving Knowledge Agent analysis."""
 
-    #: A feedback-agent session has been requested/persisted.
+    #: A Self-Evolving Knowledge Agent session has been requested/persisted.
     created = "created"
     #: The hosted agent accepted the request and is processing.
     running = "running"

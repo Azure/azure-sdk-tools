@@ -1,9 +1,9 @@
 """Conversation retrieval tools for the Azure SDK QA Bot Agent.
 
 Provides ``fetch_conversation`` — an ordered, token-bounded view of a
-customer conversation, used by the feedback agent to reconstruct the
-dialogue surrounding a turn that received negative feedback (including
-any expert correction that followed).
+customer conversation, used by the Self-Evolving Knowledge Agent to
+reconstruct the dialogue surrounding a turn that received negative feedback
+(including any expert correction that followed).
 """
 
 from __future__ import annotations
@@ -127,7 +127,7 @@ class TraceConversationRef(BaseModel):
 
 
 class ConversationTools:
-    """Conversation history tools surfaced to the hosted feedback agent."""
+    """Conversation history tools surfaced to the hosted Self-Evolving Knowledge Agent."""
 
     def __init__(
         self,

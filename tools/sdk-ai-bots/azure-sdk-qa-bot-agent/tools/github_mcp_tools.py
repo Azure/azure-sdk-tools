@@ -349,7 +349,8 @@ async def create_github_mcp_tool(
     Args:
         readonly: When True (default) the ``X-MCP-Readonly`` header is
             sent so the server rejects every write tool. Pass False to
-            allow writes (e.g. the feedback agent filing KB-gap issues);
+            allow writes (e.g. the Self-Evolving Knowledge Agent filing
+            KB-gap issues);
             the GitHub App must have the matching scope (e.g.
             ``issues:write``) and the specific write tools must also be
             opted into via ``extra_allowed_tools``.

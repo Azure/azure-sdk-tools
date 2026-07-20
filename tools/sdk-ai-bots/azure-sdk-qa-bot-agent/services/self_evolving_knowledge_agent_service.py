@@ -1,6 +1,6 @@
-"""Service for running the hosted Feedback Agent jobs.
+"""Service for running the hosted Self-Evolving Knowledge Agent jobs.
 
-Object-oriented service: ``FeedbackAgentService`` owns the feedback
+Object-oriented service: ``SelfEvolvingKnowledgeAgentService`` owns the feedback
 lifecycle embedded in a ``QARecord`` row in the Cosmos ``qa-records``
 container and the worker that calls the hosted Foundry agent.
 
@@ -8,20 +8,20 @@ One public entry point:
 
 * ``run_job(record_id, tenant_id)`` — read the persisted QA record, flip
   its feedback status to ``running``, call the Foundry Responses API on the
-  hosted feedback agent, log the raw reply for triage, and write back a
-  terminal ``done`` (or ``failed`` on invocation failure) status.
+  hosted Self-Evolving Knowledge Agent, log the raw reply for triage, and write
+  back a terminal ``done`` (or ``failed`` on invocation failure) status.
 
 The hosted agent does the entire analysis end-to-end through its own
 tools (KB lookup, conversation/trace fetch, GitHub issue creation, ...).
 The service intentionally **does not parse** the agent reply — there is
 no structured output contract. Pydantic models are still used for the
-inbound payload (``FeedbackAgentInput``) and the Foundry
+inbound payload (``SelfEvolvingKnowledgeAgentInput``) and the Foundry
 ``agent_reference`` (``FoundryAgentReference``).
 
 The only ``dict[str, Any]`` boundaries are the Cosmos SDK and the
 OpenAI Responses request payload — both are wrapped at the edge.
 
-See ``docs/feedback-agent-design.md``.
+See ``docs/self_envolving_knowledge_agent_design.md``.
 """
 
 from __future__ import annotations
@@ -34,7 +34,7 @@ from azure.ai.projects.aio import AIProjectClient
 
 from config.app_config import get as cfg
 from models.feedback import (
-    FeedbackAgentInput,
+    SelfEvolvingKnowledgeAgentInput,
     FoundryAgentReference,
 )
 from models.qa_record import FeedbackState, FeedbackStatus, QARecord
@@ -56,8 +56,8 @@ _JOB_TIMEOUT_SECS = 600
 _AGENT_REPLY_LOG_PREVIEW_CHARS = 4000
 
 
-class FeedbackAgentService:
-    """Owns the run lifecycle for hosted feedback-agent jobs."""
+class SelfEvolvingKnowledgeAgentService:
+    """Owns the run lifecycle for hosted Self-Evolving Knowledge Agent jobs."""
 
     _FEEDBACK_AGENT_NAME_KEY = "AI_FOUNDRY_FEEDBACK_AGENT_NAME"
     _FEEDBACK_AGENT_VERSION_KEY = "AI_FOUNDRY_FEEDBACK_AGENT_VERSION"
@@ -112,7 +112,9 @@ class FeedbackAgentService:
                 self._invoke_agent(payload), timeout=_JOB_TIMEOUT_SECS
             )
         except Exception as exc:
-            logger.exception("Feedback agent invocation failed for job %s", record.id)
+            logger.exception(
+                "Self-Evolving Knowledge Agent invocation failed for job %s", record.id
+            )
             self._finalize_failed(record, error=f"agent_invocation_failed: {exc}")
             await upsert_qa_record(record.to_cosmos())
             return
@@ -173,8 +175,8 @@ class FeedbackAgentService:
 
     # -- Foundry invocation -----------------------------------------------
 
-    def _build_input(self, record: QARecord) -> FeedbackAgentInput:
-        return FeedbackAgentInput(
+    def _build_input(self, record: QARecord) -> SelfEvolvingKnowledgeAgentInput:
+        return SelfEvolvingKnowledgeAgentInput(
             tenant_id=record.tenant_id,
             conversation_id=record.conversation_id,
             conversation_type=record.conversation_type,
@@ -191,20 +193,20 @@ class FeedbackAgentService:
             agent = details.versions.latest if details else None
         if agent is None:
             raise RuntimeError(
-                f"Feedback agent '{agent_name}' (version={agent_version or 'latest'}) "
-                "not found in AI Foundry."
+                f"Self-Evolving Knowledge Agent '{agent_name}' "
+                f"(version={agent_version or 'latest'}) not found in AI Foundry."
             )
         return FoundryAgentReference(name=agent.name, version=agent.version)
 
-    async def _invoke_agent(self, payload: FeedbackAgentInput) -> str:
-        """Call the hosted Feedback Agent and return raw output text."""
+    async def _invoke_agent(self, payload: SelfEvolvingKnowledgeAgentInput) -> str:
+        """Call the hosted Self-Evolving Knowledge Agent and return raw output text."""
         project_client = self._get_project_client()
         openai_client = project_client.get_openai_client(agent_name=self._agent_name())
         agent_ref = await self._resolve_agent_reference()
 
         # OpenAI Responses request shape is contract-bound to the SDK and
         # accepts a dict here; everything *inside* the message is built
-        # from the typed `FeedbackAgentInput` payload.
+        # from the typed `SelfEvolvingKnowledgeAgentInput` payload.
         input_items = [
             {
                 "type": "message",
@@ -223,7 +225,8 @@ class FeedbackAgentService:
 
         if response.status != "completed":
             logger.warning(
-                "Feedback agent response not completed: id=%s status=%s error=%s",
+                "Self-Evolving Knowledge Agent response not completed: "
+                "id=%s status=%s error=%s",
                 response.id,
                 response.status,
                 response.error,
@@ -240,4 +243,4 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
-__all__ = ["FeedbackAgentService"]
+__all__ = ["SelfEvolvingKnowledgeAgentService"]

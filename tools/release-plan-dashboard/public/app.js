@@ -213,17 +213,16 @@
       // Populate month filter dropdown from available release months
       populateMonthFilter(getPlans());
 
-      // Apply URL filter param if present
-      const urlFilter = params.get("filter") || "";
-      if (urlFilter) {
-        store().filters.search = urlFilter;
+      // Apply sticky filter params from the URL (client-side only — these do
+      // not trigger any backend request).
+      for (const [param, { key }] of Object.entries(STICKY_FILTER_PARAMS)) {
+        const value = params.get(param);
+        if (value) store().filters[key] = value;
       }
 
-      // Apply URL month param if present
-      const urlMonth = params.get("month") || "";
-      if (urlMonth) {
-        store().filters.month = urlMonth;
-      }
+      // Restore the active tab if present in the URL.
+      const urlTab = params.get("tab");
+      if (urlTab) store().activeTab = urlTab;
 
       render(getPlans());
       if (currentUserIsPM) renderPMView(getPlans());
@@ -771,16 +770,38 @@
       select.value = currentValue;
   }
 
-  // Update URL parameters to reflect current filter state (for sharing)
+  // Update URL parameters to reflect current filter state (for sharing).
+  // These are sticky, client-side-only filters — restoring them from the URL
+  // never triggers a backend ADO/GitHub request.
+  const STICKY_FILTER_PARAMS = {
+    // urlParam: { key: filters key, default: value that should be omitted }
+    filter: { key: "search", default: "" },
+    plane: { key: "plane", default: "" },
+    month: { key: "month", default: "" },
+    sort: { key: "sort", default: "month" },
+    prLang: { key: "prLang", default: "" },
+    prStatus: { key: "prStatus", default: "" },
+    tag: { key: "tag", default: "" },
+    language: { key: "language", default: "" },
+  };
+
   function syncFiltersToUrl() {
     const params = new URLSearchParams(window.location.search);
-    const filter = store().filters.search.trim();
-    const month = store().filters.month;
+    const filters = store().filters;
 
-    if (filter) params.set("filter", filter);
-    else params.delete("filter");
-    if (month) params.set("month", month);
-    else params.delete("month");
+    for (const [param, { key, default: def }] of Object.entries(
+      STICKY_FILTER_PARAMS,
+    )) {
+      const raw = filters[key];
+      const value = typeof raw === "string" ? raw.trim() : raw;
+      if (value && value !== def) params.set(param, value);
+      else params.delete(param);
+    }
+
+    // Active tab is sticky too, but only when it's not the default view.
+    const tab = store().activeTab;
+    if (tab && tab !== "tab-release-plans") params.set("tab", tab);
+    else params.delete("tab");
 
     const newUrl = params.toString()
       ? `${window.location.pathname}?${params}`
@@ -1901,7 +1922,7 @@
             const isVersionPending =
               !isReleased && isPrMerged && !!displayVersion;
 
-            // Package labels: first preview/GA + namespace approval + API review (version now in its own column)
+            // Package labels: first preview/GA + namespace approval (version now in its own column)
             let pkgLabels = "";
             if (l.isFirstPreview) {
               pkgLabels +=
@@ -1918,18 +1939,6 @@
             ) {
               pkgLabels += `<span class="pr-label pr-label-ns-pending" title="Namespace: ${esc(l.namespaceApproval)}">${esc(l.namespaceApproval)}</span>`;
             }
-            if (
-              l.apiReviewStatus &&
-              l.apiReviewStatus.toLowerCase() !== "pending"
-            ) {
-              const arLower = l.apiReviewStatus.toLowerCase();
-              const arClass =
-                arLower === "approved"
-                  ? "pr-label-approved"
-                  : "pr-label-api-pending";
-              pkgLabels += `<span class="pr-label ${arClass}">API: ${esc(l.apiReviewStatus)}</span>`;
-            }
-
             // Action column — determine per-language action
             let actionCell = "";
             if (
@@ -2571,6 +2580,7 @@
         store().filters.prStatus,
         store().filters.tag,
         store().filters.language,
+        store().activeTab,
       ];
       // Skip re-render if plans not loaded yet
       if (!getPlans().length) return;
@@ -3047,6 +3057,28 @@
     return prs;
   }
 
+  // On-demand progressive loading (GitHub PR status/detail fetches) may only be
+  // triggered when the URL explicitly requests a single release plan via the
+  // `releasePlan` param. Sticky filters (tag, language, month, etc.) must never
+  // cause on-demand GitHub/ADO requests — doing so leads to rate limiting (429).
+  function isReleasePlanRequested() {
+    const params = new URLSearchParams(window.location.search);
+    return !!(params.get("releasePlan") || params.get("releaseplan"));
+  }
+
+  // Builds the PR list from statuses already embedded in the plan data
+  // (server-side enrichment), without making any GitHub requests.
+  function buildPRListFromEmbeddedStatuses(candidates) {
+    for (const c of candidates) {
+      const stLower = (c.prStatus || "").toLowerCase();
+      if (stLower === "open" || stLower === "draft") {
+        c._statusLoaded = true;
+        getPrs().push(c);
+      }
+    }
+    renderFilteredPRs();
+  }
+
   // Progressively fetch GitHub PR statuses and build the PR list.
   async function progressiveLoadPRStatuses(plans) {
     const gen = ++prLoadGeneration;
@@ -3055,12 +3087,21 @@
 
     const prLoading = document.getElementById("pr-loading");
     const prList = document.getElementById("pr-list");
+    if (prList) prList.innerHTML = "";
+
+    // Only the `releasePlan` URL param may trigger on-demand GitHub loading.
+    // Otherwise build the list from server-enriched statuses (no GitHub calls).
+    if (!isReleasePlanRequested()) {
+      if (prLoading) prLoading.style.display = "none";
+      buildPRListFromEmbeddedStatuses(candidates);
+      return;
+    }
+
     if (prLoading) {
       prLoading.style.display = "";
       prLoading.querySelector("p").textContent =
         `Fetching PR statuses (0/${candidates.length})…`;
     }
-    if (prList) prList.innerHTML = "";
 
     // Collect unique PR URLs to fetch
     const uniqueUrls = [...new Set(candidates.map((c) => c.prUrl))];

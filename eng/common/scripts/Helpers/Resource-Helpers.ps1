@@ -336,13 +336,18 @@ function Remove-StorageSyncServices() {
   [CmdletBinding(SupportsShouldProcess = $True)]
   param(
     [string]$GroupPrefix,
-    [switch]$CI
+    [switch]$CI,
+    [bool]$CheckPrefix = $true
   )
 
   $ErrorActionPreference = 'Stop'
 
-  if (!$groupPrefix -or ($CI -and (!$GroupPrefix.StartsWith('rg-') -and !$GroupPrefix.StartsWith('SSS3PT_rg-')))) {
-    throw "The -GroupPrefix parameter must not be empty, or must start with 'rg-' or 'SSS3PT_rg-' in CI contexts"
+  if (!$GroupPrefix) {
+    throw "The -GroupPrefix parameter must not be empty"
+  }
+
+  if ($CheckPrefix -and $CI -and (!$GroupPrefix.StartsWith('rg-') -and !$GroupPrefix.StartsWith('SSS3PT_rg-'))) {
+    throw "In CI contexts with -CheckPrefix enabled, -GroupPrefix must start with 'rg-' or 'SSS3PT_rg-'"
   }
 
   $groups = Get-AzResourceGroup | Where-Object { $_.ResourceGroupName.StartsWith($GroupPrefix) } | Where-Object { $_.ProvisioningState -ne 'Deleting' }

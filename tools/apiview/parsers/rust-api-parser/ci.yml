@@ -36,6 +36,8 @@ extends:
             value: 'tools/apiview/parsers/rust-api-parser'
         jobs:
           - job: 'Build'
+            variables:
+              npmrcPath: $(Agent.TempDirectory)/.npmrc
 
             pool:
               name: $(LINUXPOOL)
@@ -48,14 +50,20 @@ extends:
                   versionSpec: '$(NodeVersion)'
                 displayName: 'Use NodeJS $(NodeVersion)'
 
+              - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+                parameters:
+                  npmrcPath: $(npmrcPath)
+
               - script: |
-                        npm install -g npm@latest
+                  npm install -g npm@latest --userconfig $(npmrcPath)
                 displayName: "Install latest npm"
 
               - script: |
                   npm install
                 workingDirectory: $(RustGeneratorDirectory)
                 displayName: "Install npm packages Rust generator"
+                env:
+                  npm_config_userconfig: $(npmrcPath)
 
               - script: |
                   npm run-script build

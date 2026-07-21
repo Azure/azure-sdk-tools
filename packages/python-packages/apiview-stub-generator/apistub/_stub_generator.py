@@ -453,9 +453,9 @@ class StubGenerator:
         # Packages with large dependency trees (e.g. those pulling the Microsoft
         # OpenTelemetry distro) can exceed a short install timeout on slower CI
         # agents even though the install is healthy — the same install has been
-        # observed to take 35s on one agent and 136s on another. Use 1000s to
+        # observed to take 35s on one agent and 136s on another. Use 300s to
         # avoid spurious API Review failures.
-        result = run(commands, timeout=1000, stderr=PIPE, text=True)
+        result = run(commands, timeout=300, stderr=PIPE, text=True)
         if result.stderr:
             logging.debug("pip stderr: %s", result.stderr.strip())
         if result.returncode != 0:

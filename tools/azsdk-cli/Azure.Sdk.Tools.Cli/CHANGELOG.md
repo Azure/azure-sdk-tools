@@ -1,6 +1,6 @@
 # Release History
 
-## 0.6.28 (Unreleased)
+## 0.6.29 (Unreleased)
 
 ### Features Added
 
@@ -9,6 +9,16 @@
 ### Bugs Fixed
 
 ### Other Changes
+
+## 0.6.28 (2026-07-16)
+
+### Features Added
+
+- Added a new helper method to get user profile from a GitHub user name
+
+### Bugs Fixed
+
+- Hide logs for gh auth
 
 ## 0.6.27 (2026-07-13)
 

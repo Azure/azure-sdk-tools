@@ -864,6 +864,34 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             return match.Success ? int.Parse(match.Groups[1].Value) : 0;
         }
 
+        /// <summary>
+        /// Resolves the email address of the spec pull request author by mapping the PR author's
+        /// GitHub username to their user profile. Returns an empty string when the author or email
+        /// cannot be determined.
+        /// </summary>
+        private async Task<string> ResolveSpecPullRequestAuthorEmailAsync(string specPullRequestUrl, CancellationToken ct)
+        {
+            var prNumber = ParsePullRequestNumberFromUrl(specPullRequestUrl);
+            if (prNumber <= 0)
+            {
+                return string.Empty;
+            }
+
+            var isPrivateSpec = specPullRequestUrl.Contains(PRIVATE_SPECS_REPO, StringComparison.OrdinalIgnoreCase);
+            var specRepoName = isPrivateSpec ? PRIVATE_SPECS_REPO : PUBLIC_SPECS_REPO;
+            var specPr = await githubService.GetPullRequestAsync(REPO_OWNER, specRepoName, prNumber, ct);
+            var authorLogin = specPr?.User?.Login;
+            if (string.IsNullOrEmpty(authorLogin))
+            {
+                logger.LogWarning("Could not determine spec PR author for '{specPullRequestUrl}'.", specPullRequestUrl);
+                return string.Empty;
+            }
+
+            logger.LogInformation("Resolving email for spec PR author '{authorLogin}'.", authorLogin);
+            var userProfile = await userHelper.GetUserProfile(authorLogin, ct);
+            return userProfile?.Aad?.EmailAddress ?? string.Empty;
+        }
+
         private async Task ValidateCreateReleasePlanInputAsync(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, ApiReleaseType apiReleaseType, CancellationToken ct)
         {
             if (!string.IsNullOrEmpty(specPullRequestUrl))
@@ -1058,6 +1086,23 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var warning = "Failed to retrieve user email. Proceeding without user email for release plan submission.";
                     warnings.Add(warning);
                     logger.LogWarning(ex, "Failed to retrieve user email. Proceeding without user email for release plan submission.");
+                }
+
+                // Only run the GitHub user ID to email mapping when the current user's email could not be resolved.
+                if (string.IsNullOrEmpty(userEmail) && !string.IsNullOrEmpty(specPullRequestUrl))
+                {
+                    try
+                    {
+                        logger.LogInformation("User email not available. Attempting to resolve spec PR author email for release plan submission.");
+                        userEmail = await ResolveSpecPullRequestAuthorEmailAsync(specPullRequestUrl, ct);
+                        logger.LogInformation("Resolved spec PR author email for release plan submission: {userEmail}", userEmail);
+                    }
+                    catch (Exception ex)
+                    {
+                        var warning = "Failed to resolve spec PR author email. Proceeding without user email for release plan submission.";
+                        warnings.Add(warning);
+                        logger.LogWarning(ex, "Failed to resolve spec PR author email. Proceeding without user email for release plan submission.");
+                    }
                 }
 
                 var productDisplayName = productName;

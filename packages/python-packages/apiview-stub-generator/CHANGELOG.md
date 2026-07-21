@@ -1,5 +1,11 @@
 # Release History
 
+## Version 0.3.30 (2026-07-21)
+Use `uv pip install` (when `uv` is available) instead of `pip` to install the target package before generating the API view. `uv`'s dependency resolver is dramatically faster than pip's for large, beta-pinned dependency trees (e.g. the Microsoft OpenTelemetry distro), where pip could spend several minutes backtracking over candidate versions. This removes the need for the elevated install timeout, which is reverted to 120s. Falls back to `pip install` when `uv` is not on PATH.
+
+## Version 0.3.29 (2026-07-17)
+Raised the package-install timeout in the API-stub generator from 120s to 300s. Packages with large dependency trees (e.g. those pulling the Microsoft OpenTelemetry distro) could exceed the previous 120s limit on slower CI agents even though the install was healthy, causing spurious API Review failures.
+
 ## Version 0.3.28 (2026-04-14)
 Dropped 3.7/3.8/3.9 support and added 3.11/3.12/3.13/3.14.
 Added `crossLanguageVersion` to the `CrossLanguageMetadata` model.

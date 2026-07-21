@@ -449,7 +449,14 @@ class StubGenerator:
         return pkg_name
 
     def _install_package(self):
-        commands = [sys.executable, "-m", "pip", "install", self.pkg_path, "-q"]
+        # Prefer `uv pip install` when uv is available: its dependency resolver is
+        # dramatically faster than pip's for large, beta-pinned trees (e.g. the
+        # Microsoft OpenTelemetry distro), where pip can spend minutes backtracking
+        # over candidate versions. Fall back to `pip install` when uv is not on PATH.
+        if shutil.which("uv") is not None:
+            commands = ["uv", "pip", "install", "--python", sys.executable, self.pkg_path, "-q"]
+        else:
+            commands = [sys.executable, "-m", "pip", "install", self.pkg_path, "-q"]
         result = run(commands, timeout=120, stderr=PIPE, text=True)
         if result.stderr:
             logging.debug("pip stderr: %s", result.stderr.strip())

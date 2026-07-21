@@ -5,8 +5,8 @@ from __future__ import annotations
 from azure_sdk_qa_bot_wiki_index.pages import PAGE_ENTITY, PAGE_SUMMARY, WikiPage
 from azure_sdk_qa_bot_wiki_index.storage import (
     _ascii,
-    _index_title,
     content_hash,
+    index_title,
     render_markdown,
 )
 
@@ -24,9 +24,9 @@ def test_content_hash_stable():
 def test_index_title_summary_uses_orig():
     summ = WikiPage("summary/x", PAGE_SUMMARY, "Foo (knowledge)", "b", "typespec_docs",
                     source_refs=["a#b.md"], orig_title="a#b.md")
-    assert _index_title(summ) == "a#b.md"
+    assert index_title(summ) == "a#b.md"
     ent = WikiPage("entity/added", PAGE_ENTITY, "@added", "b", "wiki_entity")
-    assert _index_title(ent) == "@added"
+    assert index_title(ent) == "@added"
 
 
 def test_render_markdown_with_related():

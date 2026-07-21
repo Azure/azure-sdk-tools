@@ -26,7 +26,7 @@ from azure.storage.blob.aio import BlobServiceClient
 from .documents import delete_generated_docs
 from .llm import ChatLLM, build_azure_openai_client
 from .reader import read_blob_container
-from .storage import write_pages
+from .reconcile import reconcile
 from .wiki import build_wiki
 
 logger = logging.getLogger(__name__)
@@ -81,15 +81,12 @@ async def _run(args: argparse.Namespace) -> int:
         aoai = build_azure_openai_client(_env("AZURE_OPENAI_ENDPOINT"))
         llm = ChatLLM(aoai, _env("WIKI_SYNTHESIS_DEPLOYMENT", "gpt-5.4"))
 
-        pages = build_wiki(corpus, llm, min_docs=args.min_docs)
-        if not pages:
-            logger.warning("no wiki pages generated")
-            return 0
-
-        counts = Counter(p.page_type for p in pages)
-        logger.info("generated pages by type: %s", dict(counts))
-
         if args.dry_run:
+            pages = build_wiki(corpus, llm, min_docs=args.min_docs)
+            if not pages:
+                logger.warning("no wiki pages generated")
+                return 0
+            logger.info("generated pages by type: %s", dict(Counter(p.page_type for p in pages)))
             for pt in ("summary", "entity", "concept", "index"):
                 sample = next((p for p in pages if p.page_type == pt), None)
                 if sample:
@@ -100,7 +97,7 @@ async def _run(args: argparse.Namespace) -> int:
                     )
             return 0
 
-        # Persist to the wiki container (durable + rebuildable + debuggable).
+        # Incremental reconcile against the wiki container (durable + rebuildable).
         wiki_container = _env("STORAGE_WIKI_OUTPUT_CONTAINER", "wiki")
         blob_service = _make_blob_service_client(credential)
         async with blob_service:
@@ -109,9 +106,10 @@ async def _run(args: argparse.Namespace) -> int:
                 await cc.create_container()
             except Exception:
                 pass  # already exists
-            manifest = await write_pages(cc, pages)
+            stats = await reconcile(cc, corpus, llm, min_docs=args.min_docs)
         logger.info(
-            "done: persisted %d pages to container %r", len(manifest["pages"]), wiki_container
+            "done: %d pages written, %d soft-deleted (container %r)",
+            stats.pages_written, stats.pages_deleted, wiki_container,
         )
     return 0
 

@@ -8,10 +8,10 @@ from __future__ import annotations
 from azure_sdk_qa_bot_wiki_index.pages import make_slug, slugify
 from azure_sdk_qa_bot_wiki_index.wiki_extract import DocExtraction, ExtractedItem
 from azure_sdk_qa_bot_wiki_index.wiki_reduce import (
-    _build_index_page,
+    build_index_page,
     _concept_key,
     _entity_key,
-    _inject_cross_links,
+    inject_cross_links,
 )
 from azure_sdk_qa_bot_wiki_index.pages import PAGE_CONCEPT, PAGE_ENTITY, WikiPage
 
@@ -41,7 +41,7 @@ def test_cross_links_by_shared_docs():
         _page("concept/versioning", PAGE_CONCEPT, "versioning", ["d1"]),
         _page("entity/route", PAGE_ENTITY, "@route", ["d9"]),
     ]
-    _inject_cross_links(pages)
+    inject_cross_links(pages)
     added = next(p for p in pages if p.slug == "entity/added")
     # shares d1 with removed and versioning
     assert "entity/removed" in added.out_links
@@ -56,7 +56,7 @@ def test_index_page_lists_entities_and_concepts():
         _page("entity/added", PAGE_ENTITY, "@added", ["d1"]),
         _page("concept/versioning", PAGE_CONCEPT, "API versioning", ["d1"]),
     ]
-    idx = _build_index_page(pages)
+    idx = build_index_page(pages)
     assert idx is not None
     assert idx.page_type == "index"
     assert "@added" in idx.content
@@ -64,4 +64,4 @@ def test_index_page_lists_entities_and_concepts():
 
 
 def test_index_page_none_when_no_cross_pages():
-    assert _build_index_page([]) is None
+    assert build_index_page([]) is None

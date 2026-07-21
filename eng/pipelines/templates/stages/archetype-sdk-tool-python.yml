@@ -124,6 +124,12 @@ extends:
                 inputs:
                   versionSpec: '${{ parameters.PythonVersion}}'
 
+              - task: PipAuthenticate@1
+                displayName: 'Pip Authenticate to feed'
+                inputs:
+                  artifactFeeds: ${{ parameters.FeedName }}
+                  onlyAddExtraIndex: false
+
               - script: |
                   set -e
                   python -m pip install twine
@@ -133,12 +139,6 @@ extends:
                 displayName: 'Twine Authenticate to feed'
                 inputs:
                   artifactFeeds: ${{ parameters.FeedName }}
-
-              - task: PipAuthenticate@1
-                displayName: 'Pip Authenticate to feed'
-                inputs:
-                  artifactFeeds: ${{ parameters.FeedName }}
-                  onlyAddExtraIndex: false
 
               - pwsh: |
                   twine upload --repository ${{ parameters.FeedName }} --config-file $(PYPIRC_PATH) $(Pipeline.Workspace)/${{ parameters.ArtifactName }}/*.whl

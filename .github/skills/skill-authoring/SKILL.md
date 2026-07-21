@@ -1,6 +1,6 @@
 ---
 name: skill-authoring
-description: 'Write Agent Skills that comply with the agentskills.io specification. WHEN: "create a skill", "new skill", "write a skill", "skill template", "skill structure", "review skill", "skill PR", "skill compliance", "SKILL.md format", "skill frontmatter", "skill best practices". DO NOT USE FOR: improving existing skills (use sensei), general documentation. INVOKES: waza CLI.'
+description: 'Write Agent Skills that comply with the agentskills.io specification. WHEN: "create a skill", "new skill", "write a skill", "skill template", "skill structure", "review skill", "skill PR", "skill compliance", "SKILL.md format", "skill frontmatter", "skill best practices". DO NOT USE FOR: improving existing skills (use sensei), general documentation. INVOKES: vally CLI.'
 license: MIT
 metadata:
   author: Microsoft
@@ -10,7 +10,7 @@ compatibility: "copilot-chat"
 
 # Skill Authoring Guide
 
-This skill helps write Agent Skills that comply with the agentskills.io specification by defining valid frontmatter, structure, and routing patterns, while guiding authors toward compliant `SKILL.md` files, supporting references, and local validation with the waza CLI.
+This skill helps write Agent Skills that comply with the agentskills.io specification by defining valid frontmatter, structure, and routing patterns, while guiding authors toward compliant `SKILL.md` files, supporting references, and local validation with the vally CLI.
 
 ## Triggers
 
@@ -53,7 +53,7 @@ Metadata loads at startup. SKILL.md on activation. References load when linked v
 
 1. Create skill directory with `SKILL.md`
 2. Add frontmatter: `name`, `description`, `license`
-3. Run `waza check {skill-name}` to validate
+3. Run `vally lint {skill-name}` to validate
 
 ## Examples
 
@@ -62,7 +62,7 @@ Metadata loads at startup. SKILL.md on activation. References load when linked v
 
 ## Troubleshooting
 
-If `waza check` reports broken links, verify reference file paths match exactly.
+If `vally lint` reports broken links, verify reference file paths match exactly.
 
 ## References
 

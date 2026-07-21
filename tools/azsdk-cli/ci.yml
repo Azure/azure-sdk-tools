@@ -1,14 +1,4 @@
 # NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
-parameters:
-  # Deprecated 2026-05-21: the Azure.Sdk.Tools.Cli.Benchmarks project was
-  # removed in favor of Vally skill evals under .github/skills/. This
-  # parameter is kept as a no-op so any external pipeline definition or
-  # scheduled run still passing RunBenchmarks=true does not break.
-  # Safe to delete once we've confirmed no caller sets it.
-  - name: RunBenchmarks
-    displayName: Run Benchmarks (deprecated, no-op)
-    type: boolean
-    default: false
 
 trigger:
   branches:

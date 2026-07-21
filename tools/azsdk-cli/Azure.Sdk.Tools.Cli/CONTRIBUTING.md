@@ -43,7 +43,6 @@ The MCP server lives under `tools/azsdk-cli/` alongside its sibling projects:
 | [Azure.Sdk.Tools.Cli/](../Azure.Sdk.Tools.Cli) | The MCP server and CLI (this project). |
 | [Azure.Sdk.Tools.Cli.Tests/](../Azure.Sdk.Tools.Cli.Tests) | NUnit test project. |
 | [Azure.Sdk.Tools.Cli.Analyzer/](../Azure.Sdk.Tools.Cli.Analyzer) | Roslyn analyzers enforcing project conventions. |
-| [Azure.Sdk.Tools.Cli.Benchmarks/](../Azure.Sdk.Tools.Cli.Benchmarks) | Performance benchmarks. |
 | [Azure.Sdk.Tools.Cli.Evaluations/](../Azure.Sdk.Tools.Cli.Evaluations) | LLM-evaluation harness for tools. |
 | [Azure.Sdk.Tools.Mock/](../Azure.Sdk.Tools.Mock) | A mock MCP server that exposes the same tools as the real CLI but returns canned responses. Used for benchmarking, evaluation, and integration testing. |
 | [docs/](../docs) | Author-facing guides (new-tool, mcp-tools, per-language, etc.). |

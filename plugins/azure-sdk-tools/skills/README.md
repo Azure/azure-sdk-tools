@@ -40,9 +40,6 @@ Each skill lives in `<name>/` and contains:
 ├── SKILL.md           # Skill definition: YAML frontmatter + steps + related skills
 ├── references/        # Detailed reference docs (offloaded to keep SKILL.md under 500 tokens)
 │   └── *.md
-├── eval.yaml          # Evaluation config (graders, timeouts, model)
-├── tasks/             # Eval task definitions (4-5 per skill)
-│   └── *.yaml
 └── fixtures/          # Domain-specific test fixtures
     └── <files>
 ```
@@ -52,30 +49,15 @@ Each skill lives in `<name>/` and contains:
 
 ## Tooling
 
-| Tool | Purpose | Install |
-| ---- | ------- | ------- |
-| [**waza**](https://microsoft.github.io/waza/getting-started/) | Scaffold skills, run evals, check compliance | `go install github.com/microsoft/waza/cmd/waza@latest` |
-
-### Testing Skills
-
-```bash
-cd .github/skills
-
-# Check all skills
-waza check
-
-# Run evals
-waza run --discover
-```
+Skill evals for this repository are authored and run via [`@microsoft/vally-cli`](https://microsoft.github.io/vally/) against the canonical skill set in [`.github/skills/`](../../../.github/skills/README.md) — see that README for the current lint/eval commands. The `azd waza` extension and its per-skill `eval.yaml`/`tasks/*.yaml` files have been retired in favor of Vally.
 
 ---
 
 ## Project Configuration
 
-- **`.waza.yaml`** — Default engine (`copilot-sdk`) and model (`claude-sonnet-4.6`) for evals
 - **`.gitignore`** — Excludes waza output directories and temp files
 
 ## Further Reading
 
 - [agentskills.io spec](https://agentskills.io) — Skill frontmatter specification
-- [waza docs](https://microsoft.github.io/waza/getting-started/) — Scaffold, check, and eval skills
+- [vally docs](https://microsoft.github.io/vally/) — Skill eval runner and graders

@@ -449,13 +449,15 @@ class StubGenerator:
         return pkg_name
 
     def _install_package(self):
-        commands = [sys.executable, "-m", "pip", "install", self.pkg_path, "-q"]
-        # Packages with large dependency trees (e.g. those pulling the Microsoft
-        # OpenTelemetry distro) can exceed a short install timeout on slower CI
-        # agents even though the install is healthy — the same install has been
-        # observed to take 35s on one agent and 136s on another. Use 300s to
-        # avoid spurious API Review failures.
-        result = run(commands, timeout=300, stderr=PIPE, text=True)
+        # Prefer `uv pip install` when uv is available: its dependency resolver is
+        # dramatically faster than pip's for large, beta-pinned trees (e.g. the
+        # Microsoft OpenTelemetry distro), where pip can spend minutes backtracking
+        # over candidate versions. Fall back to `pip install` when uv is not on PATH.
+        if shutil.which("uv") is not None:
+            commands = ["uv", "pip", "install", "--python", sys.executable, self.pkg_path, "-q"]
+        else:
+            commands = [sys.executable, "-m", "pip", "install", self.pkg_path, "-q"]
+        result = run(commands, timeout=120, stderr=PIPE, text=True)
         if result.stderr:
             logging.debug("pip stderr: %s", result.stderr.strip())
         if result.returncode != 0:

@@ -490,7 +490,7 @@ class StubGenerator:
         )
         stderr = result.stderr or ""
         if stderr:
-            logging.debug("pip stderr:\n%s", stderr.strip())
+            print("apistubgen: pip stderr:\n{0}".format(stderr.strip()))
 
         if result.returncode != 0:
             # pip error format for Python version mismatch:
@@ -505,4 +505,3 @@ class StubGenerator:
                     f"Please install at least Python {required} to generate an APIView for this package."
                 )
             raise CalledProcessError(result.returncode, commands, stderr=stderr)
-

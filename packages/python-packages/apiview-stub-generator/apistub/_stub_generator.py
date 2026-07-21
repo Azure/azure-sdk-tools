@@ -449,10 +449,17 @@ class StubGenerator:
         return pkg_name
 
     def _install_package(self):
-        commands = [sys.executable, "-m", "pip", "install", self.pkg_path, "-v"]
-        # DIAGNOSTIC: verbose (-v) install + 1000s timeout to reveal what pip is
-        # doing during a slow install (network retries vs dependency resolution
-        # vs wheel builds). Revert to "-q" / 300s once the cause is identified.
+        # DIAGNOSTIC PROTOTYPE: prefer `uv pip install` (much faster dependency
+        # resolution than pip for large beta-pinned trees like the Microsoft
+        # OpenTelemetry distro). Fall back to `pip install` if uv is unavailable.
+        # Verbose + 1000s timeout retained while measuring. Revert to plain
+        # `pip install -q` / 300s once the approach is confirmed.
+        uv_available = shutil.which("uv") is not None
+        if uv_available:
+            commands = ["uv", "pip", "install", "--python", sys.executable, self.pkg_path, "-v"]
+        else:
+            commands = [sys.executable, "-m", "pip", "install", self.pkg_path, "-v"]
+        logging.info("Installing package via %s", "uv" if uv_available else "pip")
         result = run(commands, timeout=1000, stderr=PIPE, text=True)
         if result.stderr:
             logging.debug("pip stderr: %s", result.stderr.strip())

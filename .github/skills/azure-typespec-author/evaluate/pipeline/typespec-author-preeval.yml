@@ -1,7 +1,10 @@
 steps:
   - script: |
       set -e
-      BRANCH="$(SkillBranch)"
+      BRANCH="${SKILL_BRANCH:-}"
+      if [ "$BRANCH" = '$(SkillBranch)' ]; then
+        BRANCH=""
+      fi
       if [ -z "$BRANCH" ]; then
         echo "SkillBranch not set; keep current checked-out skill files."
         exit 0
@@ -33,6 +36,8 @@ steps:
         .github/skills/azure-typespec-author/references
       echo "Skill source overlaid from $BRANCH_REF"
     displayName: 'Overlay skill source from SkillBranch (if set)'
+    env:
+      SKILL_BRANCH: $(SkillBranch)
 
   - script: |
       set -e
@@ -45,7 +50,10 @@ steps:
 
   - script: |
       set -e
-      EXTRA_ARGS="$(TypeSpecAuthorEvalExtraArgs)"
+      EXTRA_ARGS="${TYPE_SPEC_AUTHOR_EVAL_EXTRA_ARGS:-}"
+      if [ "$EXTRA_ARGS" = '$(TypeSpecAuthorEvalExtraArgs)' ]; then
+        EXTRA_ARGS=""
+      fi
       if [ -n "$EXTRA_ARGS" ]; then
         echo "Applying extra eval args to shard: $EXTRA_ARGS"
         echo "##vso[task.setvariable variable=evalArgs]$(evalArgs) $EXTRA_ARGS"
@@ -53,3 +61,5 @@ steps:
         echo "No extra eval args injected."
       fi
     displayName: 'Inject optional extra args into evalArgs'
+    env:
+      TYPE_SPEC_AUTHOR_EVAL_EXTRA_ARGS: $(TypeSpecAuthorEvalExtraArgs)

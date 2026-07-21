@@ -6,7 +6,7 @@
 # .github/skills/. See README.md for context.
 
 paths:
-  evals: [evals/]
+  evals: [tools/, workflows/]
   evalFilenames: ["*.eval.yaml"]
   results: results/
 
@@ -49,45 +49,45 @@ suites:
     description: |
       Hermetic single-tool / trigger evals. No external I/O. Fast; the
       foundation of the PR gate.
-    evals: ["evals/tools/*.eval.yaml"]
+    evals: ["tools/*.eval.yaml"]
 
   scenarios-mock:
     description: |
       Multi-tool scenarios against the mock MCP environment. Hermetic; safe
       for PR gate.
-    evals: ["evals/workflow-scenarios/mock/*.eval.yaml"]
+    evals: ["workflows/mock/*.eval.yaml"]
 
   scenarios-live:
     description: |
       Scenarios against live MCP — real DevOps / GitHub / pipelines. Slow;
       nightly only. Prime any required clones first via
       `eng/common/scripts/eval/sync-eval-git-repo.js`.
-    evals: ["evals/workflow-scenarios/live/*.eval.yaml"]
+    evals: ["workflows/live/*.eval.yaml"]
 
   # ---- composite suites ----
   pr-gate:
     description: Hermetic tiers only (unit + scenarios-mock). Target for CI PR check.
     evals:
-      - "evals/tools/*.eval.yaml"
-      - "evals/workflow-scenarios/mock/*.eval.yaml"
+      - "tools/*.eval.yaml"
+      - "workflows/mock/*.eval.yaml"
   nightly:
     description: All tiers including live scenarios.
-    evals: ["evals/**/*.eval.yaml"]
+    evals: ["**/*.eval.yaml"]
 
   # ---- by feature area (tag-filtered) ----
   release-plan:
     description: All evals tagged area=release-plan.
     filter: { area: release-plan }
-    evals: ["evals/**/*.eval.yaml"]
+    evals: ["**/*.eval.yaml"]
   typespec:
     description: All evals tagged area=typespec.
     filter: { area: typespec }
-    evals: ["evals/**/*.eval.yaml"]
+    evals: ["**/*.eval.yaml"]
   pipeline:
     description: All evals tagged area=pipeline.
     filter: { area: pipeline }
-    evals: ["evals/**/*.eval.yaml"]
+    evals: ["**/*.eval.yaml"]
   github:
     description: All evals tagged area=github.
     filter: { area: github }
-    evals: ["evals/**/*.eval.yaml"]
+    evals: ["**/*.eval.yaml"]

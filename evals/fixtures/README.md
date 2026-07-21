@@ -10,9 +10,9 @@ Reference them from the eval via an `environment.files` block:
 ```yaml
 environment:
   files:
-    - src: ../../fixtures/<scenario-name>/<file>      # evals/tools/*.eval.yaml (2 levels up)
+    - src: ../fixtures/<scenario-name>/<file>         # tools/*.eval.yaml (1 level up)
       dest: <path inside the workspace>
-    - src: ../../../fixtures/<scenario-name>/<file>   # evals/workflow-scenarios/{mock,live}/* (3 levels up)
+    - src: ../../fixtures/<scenario-name>/<file>      # workflows/{mock,live}/* (2 levels up)
       dest: <path inside the workspace>
 ```
 

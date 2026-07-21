@@ -34,11 +34,11 @@ stimuli:
     # author anything.
     environment:
       files:
-        - src: ../../fixtures/Microsoft.Widget/Widget/main.tsp
+        - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/main.tsp
-        - src: ../../fixtures/Microsoft.Widget/Widget/employee.tsp
+        - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
-        - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
     constraints:
       max_turns: 20

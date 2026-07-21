@@ -83,11 +83,11 @@ SRC_STATIC_AZURE_DOCS = "static_azure_docs"
 SRC_STATIC_API_SPEC_VIEW_QA = "static_api_spec_view_qa"
 SRC_STATIC_ARM_DOCS = "static_arm_docs"
 
-# -- Synthesized knowledge pages (cross-document; built by azure-sdk-qa-bot-wiki-index) --
-# Per-document summary cards inherit their source's context_id, so they need no
-# dedicated source. Cross-document entity/concept pages carry these context_ids.
+# -- Synthesized knowledge pages (built by azure-sdk-qa-bot-wiki-index) --
+# Per-document wiki pages inherit their source's context_id, so they need no
+# dedicated source. The graph layer's entity/relationship pages carry these.
 SRC_WIKI_ENTITY = "wiki_entity"
-SRC_WIKI_CONCEPT = "wiki_concept"
+SRC_WIKI_RELATIONSHIP = "wiki_relationship"
 
 
 # ---------------------------------------------------------------------------
@@ -285,14 +285,14 @@ _register(
         description="Azure SDK tools documentation covering js-sdk-release-tools and related JavaScript SDK tooling.",
         base_url="https://github.com/Azure/azure-sdk-tools/blob/main/",
     ),
-    # -- Synthesized cross-document knowledge pages --
+    # -- Synthesized knowledge-graph pages --
     KnowledgeSource(
         name=SRC_WIKI_ENTITY,
-        description="Synthesized reference pages for individual TypeSpec/Azure SDK symbols (decorators, APIs, types such as `@added`, `TrackedResource`), aggregating what every document says about one symbol: exact usage, constraints, interactions, and common mistakes. Query when a question centers on a specific decorator, API, or type.",
+        description="Knowledge-graph ENTITY pages: one per TypeSpec/Azure SDK symbol (decorator, API, type such as `@added`, `TrackedResource`) describing what it is, its usage, constraints, and its links to related symbols. Query when a question centers on a specific decorator, API, or type.",
     ),
     KnowledgeSource(
-        name=SRC_WIKI_CONCEPT,
-        description="Synthesized topic pages for cross-cutting TypeSpec/Azure SDK concepts (e.g. API versioning, long-running operations, pagination, ARM resources), consolidating the core rules, the decorators/APIs involved, and the pitfalls across many documents. Query when a question is about an end-to-end concept or pattern rather than one symbol.",
+        name=SRC_WIKI_RELATIONSHIP,
+        description="Knowledge-graph RELATIONSHIP pages: one per extracted relationship between two symbols, describing how they relate or affect each other (e.g. how `@added` and `@removed` cooperate for versioning). Query when a question is about how two symbols or concepts interact.",
     ),
 )
 
@@ -367,7 +367,7 @@ _TYPESPEC_SOURCES = _sources(
     SRC_TYPESPEC_AZURE_PROVIDERHUB_DOCS,
     SRC_STATIC_ARM_DOCS,
     SRC_WIKI_ENTITY,
-    SRC_WIKI_CONCEPT,
+    SRC_WIKI_RELATIONSHIP,
 )
 
 _AZURE_TYPESPEC_AUTHORING_SOURCES = _sources(

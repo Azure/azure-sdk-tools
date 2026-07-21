@@ -62,7 +62,7 @@ _RETRIEVER_SELECT_FIELDS = [
 ]
 
 # Context ids that hold cross-document knowledge-graph nodes.
-_WIKI_NODE_CONTEXT_IDS = ("wiki_entity", "wiki_concept")
+_WIKI_NODE_CONTEXT_IDS = ("wiki_entity", "wiki_relationship")
 
 
 def _chunk_key(chunk: "KnowledgeChunk") -> str:
@@ -392,7 +392,7 @@ class SearchClient:
         seen_ids = {c.chunk_id for c in chunks if c.chunk_id}
         wanted: list[str] = []
         for c in chunks:
-            if c.page_type in ("entity", "concept"):
+            if c.page_type in ("entity", "relationship"):
                 for slug in c.related_slugs:
                     if slug and slug not in wanted:
                         wanted.append(slug)

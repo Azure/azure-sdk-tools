@@ -1,25 +1,24 @@
-"""Wiki-page document assembly + push into the shared Azure AI Search index.
+"""Index-document assembly + push into the shared Azure AI Search index.
 
-Turns synthesised pages into index documents whose field mapping is chosen so
-the existing KB retrieval path handles them unchanged:
+Both pipelines emit :class:`WikiDoc` objects whose field mapping lets the
+existing KB retrieval path handle them unchanged:
 
 * ``chunk_id``   — stable unique key ``wiki-<type>-<hash>`` (no leading underscore).
-* ``title``      — for **summary** pages, the source's ``#``-encoded rel path so
-  ``KnowledgeSource.get_link`` resolves the real doc URL; for entity/concept
-  pages, a slug (no external link).
-* ``header_1``   — a distinct heading (e.g. ``"<Doc> (knowledge)"``) that both
-  becomes the reference title and isolates the card in ``expand_by_hierarchy``
-  (no source chunk shares it), so the card stays a standalone unit.
-* ``chunk``      — the synthesised page text (embedded).
-* ``context_id`` — inherited source folder (summary) or ``wiki_entity`` /
-  ``wiki_concept`` (cross-document pages), driving tenant scoping.
-* ``chunk_refs`` — source rel paths this page was built from (deep-read anchor).
-* ``related_slugs`` — page-to-page links.
-* ``page_type``  — ``summary`` | ``entity`` | ``concept``.
+* ``title``      — for **wiki** pages, the source's ``#``-encoded rel path so
+  ``KnowledgeSource.get_link`` resolves the real doc URL; for **entity** /
+  **relationship** pages, a slug (no external link).
+* ``header_1``   — a distinct heading so the page is isolated in
+  ``expand_by_hierarchy`` and becomes its own reference title.
+* ``chunk``      — the page text (embedded).
+* ``context_id`` — ``<source folder>`` (wiki), ``wiki_entity`` or
+  ``wiki_relationship`` (graph) — drives tenant scoping.
+* ``chunk_refs`` — source rel paths this page was built from.
+* ``related_slugs`` — graph edges (neighbour entity slugs / endpoint slugs).
+* ``page_type``  — ``wiki`` | ``entity`` | ``relationship``.
 * ``text_vector``— ada-002 embedding (shared KB vector space).
 
-All string fields are set to ``""`` (never null) to satisfy the retrieval
-model's validation; every push is idempotent (``mergeOrUpload`` by key).
+All string fields are ``""`` (never null); every push is idempotent
+(``mergeOrUpload`` by key).
 """
 
 from __future__ import annotations
@@ -31,19 +30,33 @@ from dataclasses import dataclass, field
 logger = logging.getLogger(__name__)
 
 WIKI_ENTITY_CONTEXT = "wiki_entity"
-WIKI_CONCEPT_CONTEXT = "wiki_concept"
+WIKI_RELATIONSHIP_CONTEXT = "wiki_relationship"
 
-# All wiki docs carry this marker so they can be bulk-listed / cleaned up.
+# All generated docs carry this key marker so they can be bulk-listed / purged.
 WIKI_KEY_PREFIX = "wiki-"
+
+# page_type values this project writes (used by the purge filter). ``summary`` /
+# ``concept`` are legacy values retained only so old docs are still purgeable.
+PAGE_TYPES = ("wiki", "entity", "relationship", "summary", "concept")
+WIKI_PAGE_TYPES = ("wiki", "summary")
+GRAPH_PAGE_TYPES = ("entity", "relationship", "concept")
 
 
 def _hash(*parts: str) -> str:
     return hashlib.sha1("\u0000".join(parts).encode("utf-8")).hexdigest()[:20]
 
 
+def entity_slug(name: str) -> str:
+    return f"entity:{name}"
+
+
+def relationship_slug(source: str, target: str) -> str:
+    return f"rel:{source}->{target}"
+
+
 @dataclass
 class WikiDoc:
-    """An index document for one wiki page."""
+    """An index document for one generated page."""
 
     chunk_id: str
     title: str
@@ -80,69 +93,90 @@ class WikiDoc:
         return doc
 
 
-def make_summary_doc(source_folder: str, rel_title: str, doc_title: str, card_text: str) -> WikiDoc:
-    """Build a per-document summary knowledge-card doc (inherits source scope)."""
+def make_wiki_doc(source_folder: str, rel_title: str, doc_title: str, page_text: str) -> WikiDoc:
+    """Build a per-document wiki page (inherits source scope for tenant filtering)."""
     return WikiDoc(
-        chunk_id=f"{WIKI_KEY_PREFIX}summary-{_hash(source_folder, rel_title)}",
+        chunk_id=f"{WIKI_KEY_PREFIX}wiki-{_hash(source_folder, rel_title)}",
         title=rel_title,  # source rel path → link resolves via get_link
         header_1=f"{doc_title} (knowledge)",
-        chunk=card_text,
+        chunk=page_text,
         context_id=source_folder,
-        page_type="summary",
+        page_type="wiki",
         chunk_refs=[rel_title],
     )
 
 
-def make_entity_doc(entity: str, page_text: str, source_refs: list[str], related: list[str]) -> WikiDoc:
+def make_entity_doc(
+    name: str,
+    description: str,
+    *,
+    entity_type: str = "",
+    source_refs: list[str] | None = None,
+    related: list[str] | None = None,
+) -> WikiDoc:
+    """Build a graph ENTITY page (WeKnora ``ChunkTypeEntity``)."""
+    heading = f"{name} (entity)" if not entity_type else f"{name} ({entity_type})"
     return WikiDoc(
-        chunk_id=f"{WIKI_KEY_PREFIX}entity-{_hash(entity)}",
-        title=f"entity:{entity}",
-        header_1=f"{entity} (knowledge)",
-        chunk=page_text,
+        chunk_id=f"{WIKI_KEY_PREFIX}entity-{_hash(name)}",
+        title=entity_slug(name),
+        header_1=heading,
+        chunk=description or name,
         context_id=WIKI_ENTITY_CONTEXT,
         page_type="entity",
-        chunk_refs=source_refs,
-        related_slugs=related,
+        chunk_refs=sorted(source_refs or []),
+        related_slugs=related or [],
     )
 
 
-def make_concept_doc(concept: str, page_text: str, source_refs: list[str], related: list[str]) -> WikiDoc:
+def make_relationship_doc(
+    source: str,
+    target: str,
+    description: str,
+    *,
+    strength: int = 1,
+    weight: float = 0.0,
+    source_refs: list[str] | None = None,
+) -> WikiDoc:
+    """Build a graph RELATIONSHIP page (WeKnora ``ChunkTypeRelationship``)."""
+    body = (description or "").strip()
+    body = f"{source} \u2192 {target}: {body}" if body else f"{source} \u2192 {target}"
+    if strength:
+        body += f"\n\n(strength {strength}/10, weight {weight:.2f})"
     return WikiDoc(
-        chunk_id=f"{WIKI_KEY_PREFIX}concept-{_hash(concept)}",
-        title=f"concept:{concept}",
-        header_1=f"{concept} (knowledge)",
-        chunk=page_text,
-        context_id=WIKI_CONCEPT_CONTEXT,
-        page_type="concept",
-        chunk_refs=source_refs,
-        related_slugs=related,
+        chunk_id=f"{WIKI_KEY_PREFIX}rel-{_hash(source, target)}",
+        title=relationship_slug(source, target),
+        header_1=f"{source} \u2194 {target} (relationship)",
+        chunk=body,
+        context_id=WIKI_RELATIONSHIP_CONTEXT,
+        page_type="relationship",
+        chunk_refs=sorted(source_refs or []),
+        related_slugs=[entity_slug(source), entity_slug(target)],
     )
 
 
 async def push_docs(search_data_client, docs: list[WikiDoc], batch_size: int = 100) -> int:
-    """``mergeOrUpload`` wiki docs into the index in batches. Returns success count."""
+    """``mergeOrUpload`` docs into the index in batches. Returns success count."""
     ok = 0
     payload = [d.to_index_doc() for d in docs]
     for i in range(0, len(payload), batch_size):
         batch = payload[i : i + batch_size]
         results = await search_data_client.merge_or_upload_documents(documents=batch)
         ok += sum(1 for r in results if r.succeeded)
-    logger.info("push_docs: %d/%d wiki docs upserted", ok, len(docs))
+    logger.info("push_docs: %d/%d docs upserted", ok, len(docs))
     return ok
 
 
-async def delete_all_wiki_docs(search_data_client) -> int:
-    """Delete every previously-pushed wiki doc. Returns count.
+async def delete_docs_by_page_types(search_data_client, page_types: tuple[str, ...]) -> int:
+    """Delete previously-pushed docs whose ``page_type`` is in *page_types*.
 
-    Wiki docs are the only documents with ``page_type`` in
-    ``{summary, entity, concept}`` (raw chunks leave it null), so that filterable
-    field selects them server-side; the ``wiki-`` key prefix is re-checked
-    client-side as a safety net.
+    Only docs with the ``wiki-`` key prefix are removed (safety net); raw KB
+    chunks leave ``page_type`` null and are never matched.
     """
+    quoted = ",".join(page_types)
     to_delete: list[dict] = []
     results = await search_data_client.search(
         search_text="*",
-        filter="search.in(page_type, 'summary,entity,concept', ',')",
+        filter=f"search.in(page_type, '{quoted}', ',')",
         select=["chunk_id"],
         top=100000,
     )
@@ -157,5 +191,5 @@ async def delete_all_wiki_docs(search_data_client) -> int:
         batch = to_delete[i : i + 100]
         r = await search_data_client.delete_documents(documents=batch)
         deleted += sum(1 for x in r if x.succeeded)
-    logger.info("delete_all_wiki_docs: removed %d wiki docs", deleted)
+    logger.info("delete_docs_by_page_types(%s): removed %d docs", page_types, deleted)
     return deleted

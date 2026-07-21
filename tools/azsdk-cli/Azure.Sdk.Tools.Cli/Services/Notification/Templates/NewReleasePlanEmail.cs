@@ -22,8 +22,11 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification.Templates
         private const string AutomationCreatedUsing = "Automation";
 
         private const string KpiAttestationSection =
+            "<h3>Missing required information for KPI attestation</h3>" +
             "<p>This release plan is currently missing Product ID, Service ID, or Product Type.</p>" +
             "<p>Please use azsdk agent to update the release plan with Product ID, Service ID, and Product Type to complete KPI attestation when release plan is completed.</p>";
+
+        private const string AzSdkAgentDocumentationUrl = "https://aka.ms/azsdk/agent";
 
         private readonly ReleasePlanWorkItem releasePlan;
 
@@ -47,10 +50,12 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification.Templates
                     <li><strong>Release plan type:</strong> {releasePlan.ApiReleaseType.ToDisplayLabel()}</li>
                 </ul>
                 <br>
+                <h3>SDK pull requests</h3>
                 {PlaneSpecificMessage}
                 <br>
                 {KpiAttestationSectionContent}
                 <br>
+                <p>For more information about the azsdk agent, see <a href="{AzSdkAgentDocumentationUrl}">{AzSdkAgentDocumentationUrl}</a>.</p>
                 <p>If you need any assistance, please reach out to the AzSDK Agent team via the <a href="https://teams.microsoft.com/l/channel/19%3A6d2c19322c254a80bcc521675134da03%40thread.skype/AzSDK%20Tools%20Agent?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47">Teams channel</a>.</p>
                 <p>Best regards,</p>
                 <p>Azure SDK Team</p>

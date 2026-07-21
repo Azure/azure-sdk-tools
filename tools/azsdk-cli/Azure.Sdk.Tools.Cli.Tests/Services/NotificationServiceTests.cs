@@ -82,6 +82,8 @@ public class NotificationServiceTests
         Assert.That(body, Does.Contain("https://github.com/pr/1"));
         Assert.That(body, Does.Contain(releasePlan.ReleasePlanLink));
         Assert.That(body, Does.Contain("SDK pull requests will be auto generated"));
+        Assert.That(body, Does.Contain("<h3>SDK pull requests</h3>"));
+        Assert.That(body, Does.Contain("https://aka.ms/azsdk/agent"));
         Assert.That(body, Does.Not.Contain("{"));
     }
 
@@ -175,6 +177,7 @@ public class NotificationServiceTests
         var body = doc.RootElement.GetProperty("Body").GetString();
 
         Assert.That(body, Does.Contain("Please use azsdk agent to generate the SDK pull requests"));
+        Assert.That(body, Does.Contain("<h3>Missing required information for KPI attestation</h3>"));
         Assert.That(body, Does.Contain("complete KPI attestation"));
     }
 

@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using System.Text.Json.Serialization;
+
 namespace Azure.Sdk.Tools.Cli.Services.Notification
 {
     /// <summary>
@@ -11,13 +13,15 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification
     public abstract class EmailPayload
     {
         /// <summary>
-        /// Primary recipients of the email.
+        /// Primary recipients of the email. Serialized as a ';'-separated string.
         /// </summary>
+        [JsonConverter(typeof(SemicolonSeparatedStringConverter))]
         public List<string> EmailTo { get; set; } = [];
 
         /// <summary>
-        /// Carbon copy recipients of the email.
+        /// Carbon copy recipients of the email. Serialized as a ';'-separated string.
         /// </summary>
+        [JsonConverter(typeof(SemicolonSeparatedStringConverter))]
         public List<string> CC { get; set; } = [];
 
         /// <summary>

@@ -135,9 +135,8 @@ public class NotificationServiceTests
         using var doc = JsonDocument.Parse(captured[0]);
         var root = doc.RootElement;
 
-        var to = root.GetProperty("EmailTo").EnumerateArray().Select(e => e.GetString()).ToList();
-        Assert.That(to, Does.Contain("author@microsoft.com"));
-        Assert.That(to, Does.Contain("extra@microsoft.com"));
+        var to = root.GetProperty("EmailTo").GetString();
+        Assert.That(to, Is.EqualTo("author@microsoft.com;extra@microsoft.com"));
 
         var body = root.GetProperty("Body").GetString();
         Assert.That(body, Does.Contain("SDK pull requests will be auto generated"));

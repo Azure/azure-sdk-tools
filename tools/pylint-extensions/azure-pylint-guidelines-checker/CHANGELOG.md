@@ -1,6 +1,6 @@
 # Release History
 
-## 0.5.9 (2026-07-15)
+## 0.5.9 (2026-07-21)
 - Fix `no-cross-package-private-import` (C4776) to correctly handle relative imports
 - Fix `no-cross-package-private-import` (C4776) to skip modules whose first segment is already private
 - Fix `check-docstrings` (C4739) `is_overload_impl` never set for ClassDef path, making the overload-implementation escape hatch unreachable for class constructors with overloaded `__init__`

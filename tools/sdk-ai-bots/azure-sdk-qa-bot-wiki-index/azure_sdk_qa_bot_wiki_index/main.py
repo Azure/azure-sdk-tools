@@ -26,6 +26,7 @@ from azure.storage.blob.aio import BlobServiceClient
 from .documents import delete_generated_docs
 from .llm import ChatLLM, build_azure_openai_client
 from .reader import read_blob_container
+from .storage import write_pages
 from .wiki import build_wiki
 
 logger = logging.getLogger(__name__)
@@ -99,7 +100,19 @@ async def _run(args: argparse.Namespace) -> int:
                     )
             return 0
 
-        logger.warning("blob persistence not implemented yet (Phase 2); use --dry-run")
+        # Persist to the wiki container (durable + rebuildable + debuggable).
+        wiki_container = _env("STORAGE_WIKI_OUTPUT_CONTAINER", "wiki")
+        blob_service = _make_blob_service_client(credential)
+        async with blob_service:
+            cc = blob_service.get_container_client(wiki_container)
+            try:
+                await cc.create_container()
+            except Exception:
+                pass  # already exists
+            manifest = await write_pages(cc, pages)
+        logger.info(
+            "done: persisted %d pages to container %r", len(manifest["pages"]), wiki_container
+        )
     return 0
 
 

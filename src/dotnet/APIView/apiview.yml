@@ -89,7 +89,7 @@ extends:
                   enabled: true # Enable CG only on the build job
 
             steps:
-              - task: NodeTool@0
+              - task: UseNode@1
                 inputs:
                   versionSpec: '$(NodeVersion)'
                 displayName: 'Use NodeJS $(NodeVersion)'
@@ -182,7 +182,7 @@ extends:
               os: linux
 
             steps:
-              - task: NodeTool@0
+              - task: UseNode@1
                 inputs:
                   versionSpec: '$(NodeVersion)'
                 displayName: 'Use NodeJS $(NodeVersion)'

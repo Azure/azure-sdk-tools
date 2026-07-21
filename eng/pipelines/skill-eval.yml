@@ -30,7 +30,7 @@ jobs:
       - checkout: self
         fetchDepth: 2
 
-      - task: NodeTool@0
+      - task: UseNode@1
         displayName: 'Use Node.js 22'
         inputs:
           versionSpec: '22.x'

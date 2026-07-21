@@ -1,27 +1,25 @@
-"""Azure SDK QA Bot — Wiki + Graph Index.
+"""Azure SDK QA Bot — Wiki Index.
 
-Builds LLM-derived knowledge layers over the corpus and writes them into the
-*same* Azure AI Search index the KB path already uses, so a single
-``search_knowledge_base`` call retrieves ordinary chunks and generated pages
-together through one hybrid (vector + keyword) RRF + rerank pass.
+Builds an LLM-derived **wiki layer** over the corpus and writes it into the KB's
+Azure AI Search index, so a single ``search_knowledge_base`` call retrieves raw
+chunks and wiki pages together through one hybrid (vector + keyword) RRF +
+rerank pass.
 
-There are **two independent creation pipelines** (mirroring WeKnora's separate
-``WikiEnabled`` / ``GraphEnabled`` toggles):
+Faithful to WeKnora's wiki layer (``wiki_ingest.go``): a **MapReduce** produces
+four page types —
 
-* **wiki** (:mod:`wiki`) — per-document LLM synthesis into one dense knowledge
-  page each (``page_type="wiki"``). ``context_id`` inherits the source
-  document's, so existing tenant scoping applies unchanged.
-* **graph** (:mod:`graph`) — LLM entity extraction + LLM relationship extraction
-  (with strength), PMI + strength weighting, degree, and 1-hop/2-hop edges,
-  producing ``page_type="entity"`` (``context_id="wiki_entity"``) and
-  ``page_type="relationship"`` (``context_id="wiki_relationship"``) pages.
+* **summary**  — one dense page per source document (``context_id`` inherits the
+  source folder, so existing tenant scoping applies unchanged).
+* **entity**   — cross-document, one per recurring symbol (map extracts, reduce
+  aggregates + dedups + synthesises). ``context_id="wiki_entity"``.
+* **concept**  — cross-document, one per topic. ``context_id="wiki_concept"``.
+* **index**    — a navigation page.
 
-Each page keeps ``chunk_refs`` back to its source documents and ``related_slugs``
-to neighbouring graph nodes. Pages are embedded with the index's own embedding
-model so they share the KB vector space.
+Pages are **cross-linked** by shared source documents (WeKnora
+``injectCrossLinks``). The separate PMI relationship-graph layer was removed.
 """
 
 from __future__ import annotations
 
-__version__ = "2.0.0"
+__version__ = "3.0.0"
 

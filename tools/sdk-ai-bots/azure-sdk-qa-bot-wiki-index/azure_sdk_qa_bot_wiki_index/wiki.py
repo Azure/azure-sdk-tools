@@ -1,12 +1,15 @@
-"""Wiki creation pipeline — doc-level LLM synthesis (independent of graph).
+"""Wiki creation pipeline — WeKnora-faithful MapReduce over the corpus.
 
-Mirrors WeKnora's wiki layer (``wiki_ingest.go`` / ``ChunkTypeWikiPage``): each
-source document is synthesised by an LLM into one dense, self-contained
-"knowledge page" (``page_type="wiki"``) that is pushed into the shared index and
-retrieved like any other chunk (with a rerank-time boost on the agent side).
+Produces the four WeKnora wiki page types as :class:`WikiPage` objects:
 
-This pipeline knows **nothing** about entities, relationships, or the graph —
-that is the separate :mod:`graph` pipeline's job.
+* **summary**  — one dense page per source document (this module).
+* **entity**   — cross-document, per symbol (map+reduce, :mod:`wiki_reduce`).
+* **concept**  — cross-document, per topic (map+reduce).
+* **index**    — navigation page.
+
+Entities/concepts are extracted per document (:mod:`wiki_extract`, the *map*
+phase) then aggregated + synthesised + cross-linked (:mod:`wiki_reduce`, the
+*reduce* phase). Summary pages are produced per document here.
 """
 
 from __future__ import annotations
@@ -14,13 +17,17 @@ from __future__ import annotations
 import logging
 from concurrent.futures import ThreadPoolExecutor
 
-from .documents import WikiDoc, make_summary_doc
-from .llm import ChatLLM, Embedder
+from .llm import ChatLLM
+from .pages import PAGE_SUMMARY, WikiPage, make_slug
 from .reader import rel_title, source_folder
+from .wiki_extract import map_extract
+from .wiki_reduce import reduce_pages
 
 logger = logging.getLogger(__name__)
 
-_WIKI_SYS = (
+_MAX_PAGE_CHARS = 1800
+
+_SUMMARY_SYS = (
     "You are building an expert KNOWLEDGE PAGE from one Azure SDK / TypeSpec "
     "document, so an agent can answer questions FROM internalized knowledge "
     "rather than re-reading raw docs. Extract the concrete, reusable knowledge "
@@ -30,7 +37,7 @@ _WIKI_SYS = (
     "declarative facts an expert would remember, as tight bullet points. Include "
     "specific names and syntax. Do NOT use navigation phrases like 'this section "
     "covers' or 'refer to'. Only state knowledge grounded in the document; never "
-    "invent APIs or facts. Max ~250 words."
+    "invent APIs or facts. Max ~230 words."
 )
 
 
@@ -43,54 +50,66 @@ def _doc_title(rel: str) -> str:
     return last or rel
 
 
-def synthesize_wiki_page(llm: ChatLLM, doc_title: str, full_text: str) -> str:
-    """LLM-synthesise one wiki page from a document's full text."""
+def synthesize_summary(llm: ChatLLM, doc_title: str, full_text: str) -> str:
+    """LLM-synthesise one summary page from a document's full text."""
     full_text = (full_text or "").strip()
     if not full_text:
         return ""
     user = f"Document: {doc_title}\n\n{full_text[:9000]}"
     try:
-        out = llm.complete(_WIKI_SYS, user, max_tokens=600)
+        out = llm.complete(_SUMMARY_SYS, user, max_tokens=560)
         if not out:
-            out = llm.complete(_WIKI_SYS, user, max_tokens=1200)
-        return out
+            out = llm.complete(_SUMMARY_SYS, user, max_tokens=1100)
+        return (out or "")[:_MAX_PAGE_CHARS]
     except Exception:
-        logger.warning("synthesize_wiki_page failed for %s", doc_title, exc_info=True)
+        logger.warning("synthesize_summary failed for %s", doc_title, exc_info=True)
         return ""
 
 
-def build_wiki_pages(
+def build_summary_pages(
     corpus: list[tuple[str, str]],
     llm: ChatLLM,
     *,
     max_workers: int = 16,
-) -> list[WikiDoc]:
-    """One synthesised wiki page per source document (LLM, parallel)."""
+) -> list[WikiPage]:
+    """One summary page per source document (LLM, parallel)."""
 
-    def one(item: tuple[str, str]) -> WikiDoc | None:
+    def one(item: tuple[str, str]) -> WikiPage | None:
         source_path, text = item
         folder = source_folder(source_path)
         rel = rel_title(source_path)
         title = _doc_title(rel)
-        page = synthesize_wiki_page(llm, title, text)
-        if not page:
+        body = synthesize_summary(llm, title, text)
+        if not body:
             return None
-        return make_summary_doc(folder, rel, title, page)
+        return WikiPage(
+            slug=make_slug(PAGE_SUMMARY, rel),
+            page_type=PAGE_SUMMARY,
+            title=f"{title} (knowledge)",
+            content=body,
+            context_id=folder,  # inherits source scope → existing tenant filters
+            source_refs=[rel],
+            orig_title=rel,  # drives get_link back to the real doc
+        )
 
-    docs: list[WikiDoc] = []
+    pages: list[WikiPage] = []
     with ThreadPoolExecutor(max_workers=max_workers) as ex:
-        for d in ex.map(one, corpus):
-            if d is not None:
-                docs.append(d)
-    logger.info("build_wiki_pages: %d wiki pages from %d docs", len(docs), len(corpus))
-    return docs
+        for p in ex.map(one, corpus):
+            if p is not None:
+                pages.append(p)
+    logger.info("build_summary_pages: %d summary pages from %d docs", len(pages), len(corpus))
+    return pages
 
 
-def embed_docs(docs: list[WikiDoc], embedder: Embedder) -> None:
-    """Populate each doc's ``text_vector`` from its ``chunk`` (in place)."""
-    if not docs:
-        return
-    vectors = embedder.embed([d.chunk for d in docs])
-    for d, v in zip(docs, vectors):
-        d.text_vector = v
-    logger.info("embed_docs: embedded %d docs", len(docs))
+def build_wiki(
+    corpus: list[tuple[str, str]],
+    llm: ChatLLM,
+    *,
+    min_docs: int = 2,
+) -> list[WikiPage]:
+    """Full WeKnora-faithful wiki build: summary + (map→reduce) entity/concept/index."""
+    pages: list[WikiPage] = build_summary_pages(corpus, llm)
+    extractions = map_extract(corpus, llm)
+    pages += reduce_pages(extractions, llm, min_docs=min_docs)
+    logger.info("build_wiki: %d total wiki pages", len(pages))
+    return pages

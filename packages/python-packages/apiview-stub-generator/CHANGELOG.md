@@ -1,7 +1,7 @@
 # Release History
 
 ## Version 0.3.31 (2026-07-21)
-Reverted the package install back to `pip install`, removing the `uv pip install` path. The install timeout is restored to 300s to accommodate large dependency trees (e.g. the Microsoft OpenTelemetry distro) on slower CI agents.
+Reverted the package install back to `pip install`, removing the `uv pip install` path. The install now runs `pip install -v` so the full dependency-resolution process (including the resolver's "looking at multiple versions of ..." backtracking notices) is streamed to the logs, making slow installs caused by large dependency trees (e.g. the Microsoft OpenTelemetry distro) easy to diagnose. The install timeout is raised to 800s to accommodate that resolution on slower CI agents, and the total install time is printed.
 
 ## Version 0.3.30 (2026-07-21)
 Use `uv pip install` (when `uv` is available) instead of `pip` to install the target package before generating the API view. `uv`'s dependency resolver is dramatically faster than pip's for large, beta-pinned dependency trees (e.g. the Microsoft OpenTelemetry distro), where pip could spend several minutes backtracking over candidate versions. This removes the need for the elevated install timeout, which is reverted to 120s. Falls back to `pip install` when `uv` is not on PATH.

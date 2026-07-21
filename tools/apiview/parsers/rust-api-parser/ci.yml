@@ -38,6 +38,7 @@ extends:
           - job: 'Build'
             variables:
               npmrcPath: $(Agent.TempDirectory)/.npmrc
+              NPM_CONFIG_USERCONFIG: $(npmrcPath)
 
             pool:
               name: $(LINUXPOOL)
@@ -55,15 +56,13 @@ extends:
                   npmrcPath: $(npmrcPath)
 
               - script: |
-                  npm install -g npm@latest --userconfig $(npmrcPath)
+                  npm install -g npm@latest
                 displayName: "Install latest npm"
 
               - script: |
                   npm install
                 workingDirectory: $(RustGeneratorDirectory)
                 displayName: "Install npm packages Rust generator"
-                env:
-                  npm_config_userconfig: $(npmrcPath)
 
               - script: |
                   npm run-script build

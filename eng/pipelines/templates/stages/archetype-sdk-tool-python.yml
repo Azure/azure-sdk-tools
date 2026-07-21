@@ -42,6 +42,8 @@ extends:
               os: linux
 
             steps:
+              - template: /eng/common/pipelines/templates/steps/auth-dev-feed.yml
+
               - template: /eng/pipelines/templates/steps/use-python-version.yml
                 parameters:
                   versionSpec: '${{ parameters.PythonVersion }}'

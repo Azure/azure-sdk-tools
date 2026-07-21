@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.3.29 (2026-07-17)
+Raised the package-install timeout in the API-stub generator from 120s to 300s. Packages with large dependency trees (e.g. those pulling the Microsoft OpenTelemetry distro) could exceed the previous 120s limit on slower CI agents even though the install was healthy, causing spurious API Review failures.
+
 ## Version 0.3.28 (2026-04-14)
 Dropped 3.7/3.8/3.9 support and added 3.11/3.12/3.13/3.14.
 Added `crossLanguageVersion` to the `CrossLanguageMetadata` model.

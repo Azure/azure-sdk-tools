@@ -13,11 +13,13 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification.Templates
     /// </summary>
     public class NewReleasePlanEmail : EmailPayload
     {
-        private const string ManagementPlaneMessage =
+        private const string AutomatedSDKGenMessage =
             "<p>SDK pull requests will be auto generated and linked to the release plan.</p>";
 
-        private const string DataPlaneMessage =
+        private const string ManualSDKGenMessage =
             "<p>Please use azsdk agent to generate the SDK pull requests and link them to the release plan.</p>";
+
+        private const string AutomationCreatedUsing = "Automation";
 
         private const string KpiAttestationSection =
             "<p>This release plan is currently missing Product ID, Service ID, or Product Type.</p>" +
@@ -38,7 +40,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification.Templates
             <html>
             <body>
                 <p>Hello,</p>
-                <p>A release plan has been created successfully after merging <a href="{SpecPullRequest}">{SpecPullRequest}</a>, which added a new API version.</p>
+                {CreationSummary}
                 <p>The release plan dashboard contains the actions required to complete this release plan.</p>
                 <ul>
                     <li><strong>Release plan:</strong> <a href="{releasePlan.ReleasePlanLink}">{releasePlan.ReleasePlanLink}</a></li>
@@ -56,6 +58,20 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification.Templates
             </html>
             """;
 
+        private string CreationSummary
+        {
+            get
+            {
+                var specPullRequest = SpecPullRequest;
+                var isAutomationCreated =
+                    string.Equals(releasePlan.CreatedUsing, AutomationCreatedUsing, StringComparison.OrdinalIgnoreCase);
+
+                return isAutomationCreated && !string.IsNullOrWhiteSpace(specPullRequest)
+                    ? $"""<p>A release plan has been created successfully after merging <a href="{specPullRequest}">{specPullRequest}</a>, which added a new API version.</p>"""
+                    : "<p>A release plan has been created successfully.</p>";
+            }
+        }
+
         private string SpecPullRequest
         {
             get
@@ -65,7 +81,11 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification.Templates
             }
         }
 
-        private string PlaneSpecificMessage => releasePlan.IsManagementPlane ? ManagementPlaneMessage : DataPlaneMessage;
+        private string PlaneSpecificMessage =>
+            releasePlan.IsManagementPlane
+            && string.Equals(releasePlan.CreatedUsing, AutomationCreatedUsing, StringComparison.OrdinalIgnoreCase)
+                ? AutomatedSDKGenMessage
+                : ManualSDKGenMessage;
 
         private string KpiAttestationSectionContent => IsMissingProductInfo ? KpiAttestationSection : string.Empty;
 

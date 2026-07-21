@@ -120,6 +120,46 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
+        public async Task Test_Create_releasePlan_notification_excludes_owners_and_support_for_test_release_plan()
+        {
+            var notificationMock = new Mock<INotificationService>();
+            EmailPayload? captured = null;
+            notificationMock
+                .Setup(n => n.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()))
+                .Callback<EmailPayload, CancellationToken>((p, _) => captured = p)
+                .Returns(Task.CompletedTask);
+
+            var tool = CreateReleasePlanToolWithNotificationService(notificationMock.Object);
+
+            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            await tool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true);
+
+            Assert.IsNotNull(captured);
+            Assert.That(captured!.CC, Is.Empty, "Test release plans must not CC sdkowners or azsdk support.");
+            Assert.That(captured.EmailTo, Is.EqualTo(new List<string> { "test@example.com" }));
+        }
+
+        [Test]
+        public async Task Test_Create_releasePlan_notification_includes_owners_and_support_for_management_release_plan()
+        {
+            var notificationMock = new Mock<INotificationService>();
+            EmailPayload? captured = null;
+            notificationMock
+                .Setup(n => n.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()))
+                .Callback<EmailPayload, CancellationToken>((p, _) => captured = p)
+                .Returns(Task.CompletedTask);
+
+            var tool = CreateReleasePlanToolWithNotificationService(notificationMock.Object);
+
+            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            await tool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: false);
+
+            Assert.IsNotNull(captured);
+            Assert.That(captured!.CC, Does.Contain("sdkowners@microsoft.com"));
+            Assert.That(captured.CC, Does.Contain("azsdkexp@microsoft.com"));
+        }
+
+        [Test]
         public async Task Test_Create_releasePlan_with_invalid_api_release_type()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
@@ -1896,6 +1936,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockTypeSpecHelper.Setup(x => x.ParseTypeSpecProjectAsync(typeSpecPath, It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(typeSpecProject);
             return new ReleasePlanTool(devOpsService, gitHelper, mockTypeSpecHelper.Object, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+        }
+
+        private ReleasePlanTool CreateReleasePlanToolWithNotificationService(INotificationService notificationService)
+        {
+            return new ReleasePlanTool(devOpsService, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), notificationService);
         }
     }
 }

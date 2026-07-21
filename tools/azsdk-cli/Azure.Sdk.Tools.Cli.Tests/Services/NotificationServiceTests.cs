@@ -65,6 +65,7 @@ public class NotificationServiceTests
             ReleasePlanId = 1,
             ProductName = "Contoso",
             IsManagementPlane = true,
+            CreatedUsing = "Automation",
             ProductTreeId = "product-1",
             ServiceTreeId = "service-1",
             ProductType = "Offering",
@@ -115,6 +116,7 @@ public class NotificationServiceTests
             ReleasePlanId = 42,
             ProductName = "Contoso",
             IsManagementPlane = true,
+            CreatedUsing = "Automation",
             ProductTreeId = "product-1",
             ServiceTreeId = "service-1",
             ProductType = "Offering",
@@ -175,5 +177,27 @@ public class NotificationServiceTests
 
         Assert.That(body, Does.Contain("Please use azsdk agent to generate the SDK pull requests"));
         Assert.That(body, Does.Contain("complete KPI attestation"));
+    }
+
+    [Test]
+    public void EmailTemplate_ManagementPlane_NotAutomationCreated_UsesManualSdkGenMessage()
+    {
+        var releasePlan = new ReleasePlanWorkItem
+        {
+            ReleasePlanId = 99,
+            ProductName = "Contoso",
+            IsManagementPlane = true,
+            CreatedUsing = "Copilot",
+            ProductTreeId = "product-1",
+            ServiceTreeId = "service-1",
+            ProductType = "Offering",
+            SpecPullRequests = ["https://github.com/Azure/azure-rest-api-specs/pull/1"],
+            ApiReleaseType = ApiReleaseType.GA
+        };
+
+        var body = new NewReleasePlanEmail(releasePlan).Body;
+
+        Assert.That(body, Does.Contain("Please use azsdk agent to generate the SDK pull requests"));
+        Assert.That(body, Does.Not.Contain("SDK pull requests will be auto generated"));
     }
 }

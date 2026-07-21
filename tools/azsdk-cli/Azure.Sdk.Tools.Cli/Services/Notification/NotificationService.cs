@@ -25,7 +25,6 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification
         ILogger<NotificationService> logger) : INotificationService
     {
         private const string MICROSOFT_EMAIL = "@microsoft.com";
-        private const string AZSDK_SUPPORT_ALIAS = "azsdkexp@microsoft.com";
         private static readonly JsonSerializerOptions SerializerOptions = new()
         {
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
@@ -42,7 +41,6 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification
 
             payload.EmailTo = NormalizeRecipients(payload.EmailTo);
             payload.CC = NormalizeRecipients(payload.CC);
-            payload.CC.Add(AZSDK_SUPPORT_ALIAS);
 
             if (payload.EmailTo.Count == 0)
             {

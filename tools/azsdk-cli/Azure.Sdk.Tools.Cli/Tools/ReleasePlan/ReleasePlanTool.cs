@@ -283,6 +283,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         // Email address for managementplane notifications.
         private const string MANAGEMENT_SDK_OWNER_ALIAS = "sdkowners@microsoft.com";
 
+        // Azure SDK support alias CC'd on release plan notifications.
+        private const string AZSDK_SUPPORT_ALIAS = "azsdkexp@microsoft.com";
+
         [GeneratedRegex("https:\\/\\/github.com\\/Azure\\/azure-sdk\\/issues\\/([0-9]+)")]
         private static partial Regex NameSpaceIssueUrlRegex();
 
@@ -1212,10 +1215,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(releasePlan.WorkItemId, ct);
 
                     // Notify the release plan submitter (silently completes when notifications are disabled).
+                    // Test release plans are only sent to the submitter; sdkowners and azsdk support are
+                    // not CC'd on test release plans.
+                    var ccRecipients = new List<string>();
+                    if (!releasePlan.IsTestReleasePlan)
+                    {
+                        ccRecipients.Add(AZSDK_SUPPORT_ALIAS);
+                        if (releasePlan.IsManagementPlane)
+                        {
+                            ccRecipients.Add(MANAGEMENT_SDK_OWNER_ALIAS);
+                        }
+                    }
+
                     var releasePlanEmail = new NewReleasePlanEmail(releasePlan)
                     {
                         EmailTo = string.IsNullOrWhiteSpace(releasePlan.ReleasePlanSubmittedByEmail)? [] : [releasePlan.ReleasePlanSubmittedByEmail],
-                        CC = releasePlan.IsManagementPlane?[MANAGEMENT_SDK_OWNER_ALIAS] : []
+                        CC = ccRecipients
                     };
                     await notificationService.SendEmailNotificationAsync(releasePlanEmail, ct);
 

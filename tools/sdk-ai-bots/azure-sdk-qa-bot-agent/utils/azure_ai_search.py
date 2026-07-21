@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 from enum import Enum
 
 from azure.search.documents.aio import SearchClient as AzureSearchClient
@@ -102,6 +103,65 @@ def fuse_with_rrf(
         fused.append(chunk)
     fused.sort(key=lambda c: c.rerank_score, reverse=True)
     return fused
+
+
+_MMR_TOKEN_RE = re.compile(r"[a-z0-9@._]+")
+
+
+def _token_set(chunk: "KnowledgeChunk") -> set:
+    """Lower-cased token set of a chunk's text (for Jaccard diversity)."""
+    text = f"{chunk.title} {chunk.header1} {chunk.content}".lower()
+    return set(_MMR_TOKEN_RE.findall(text))
+
+
+def _jaccard(a: set, b: set) -> float:
+    if not a or not b:
+        return 0.0
+    inter = len(a & b)
+    if inter == 0:
+        return 0.0
+    return inter / len(a | b)
+
+
+def mmr_select(
+    chunks: "list[KnowledgeChunk]",
+    k: int,
+    lambda_: float = 0.7,
+) -> "list[KnowledgeChunk]":
+    """Maximal Marginal Relevance selection (WeKnora-style, Jaccard diversity).
+
+    Picks ``k`` chunks balancing relevance (normalized ``rerank_score``) against
+    redundancy (max Jaccard token overlap with the already-selected set):
+    ``mmr = lambda*rel - (1-lambda)*max_sim``. Diversifies the final result set so
+    a flood of similar pages (e.g. many short synthesized wiki pages) can't crowd
+    out substantive, complementary content. No embeddings needed.
+    """
+    if len(chunks) <= k:
+        return chunks
+    scores = [c.rerank_score for c in chunks]
+    lo, hi = min(scores), max(scores)
+    rng = (hi - lo) or 1.0
+    rel = {id(c): (c.rerank_score - lo) / rng for c in chunks}
+    toks = {id(c): _token_set(c) for c in chunks}
+
+    pool = list(chunks)
+    selected: list[KnowledgeChunk] = []
+    while pool and len(selected) < k:
+        best = None
+        best_score = float("-inf")
+        for c in pool:
+            max_sim = 0.0
+            for s in selected:
+                j = _jaccard(toks[id(c)], toks[id(s)])
+                if j > max_sim:
+                    max_sim = j
+            mmr = lambda_ * rel[id(c)] - (1.0 - lambda_) * max_sim
+            if mmr > best_score:
+                best_score = mmr
+                best = c
+        selected.append(best)
+        pool.remove(best)
+    return selected
 
 
 class SearchClient:

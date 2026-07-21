@@ -16,7 +16,7 @@ from config.tenant_config import TenantID, get_tenant_config
 from config.app_config import get as cfg
 from models.knowledge import Reference, SearchKnowledgeBaseResult
 from tools import tool
-from utils.azure_ai_search import get_search_client, fuse_with_rrf
+from utils.azure_ai_search import get_search_client, fuse_with_rrf, mmr_select
 
 logger = logging.getLogger(__name__)
 
@@ -148,6 +148,11 @@ class KnowledgeTools:
         vector_weight = float(cfg("KB_RRF_VECTOR_WEIGHT", "1.0"))
         keyword_weight = float(cfg("KB_RRF_KEYWORD_WEIGHT", "1.0"))
         agentic_weight = float(cfg("KB_RRF_AGENTIC_WEIGHT", "1.0"))
+        # Retrieve a WIDER candidate pool than the final top_k so the downstream
+        # rerank + MMR diversity have room to work (WeKnora retrieves EmbeddingTopK
+        # ~50 then narrows). 0 = use the client's own top_k (legacy behaviour).
+        retrieve_k = int(cfg("KB_RETRIEVE_K", "40"))
+        pool_k = retrieve_k if retrieve_k > 0 else None
 
         async def _fused_for_query(q: str) -> list:
             retriever_coros: list = []
@@ -158,12 +163,12 @@ class KnowledgeTools:
                 )
                 weights.append(agentic_weight)
             retriever_coros.append(
-                search_client.vector_search(query=q, source_filters=source_filters)
+                search_client.vector_search(query=q, source_filters=source_filters, top_k=pool_k)
             )
             weights.append(vector_weight)
             if enable_keyword:
                 retriever_coros.append(
-                    search_client.keyword_search(query=q, source_filters=source_filters)
+                    search_client.keyword_search(query=q, source_filters=source_filters, top_k=pool_k)
                 )
                 weights.append(keyword_weight)
 
@@ -220,14 +225,25 @@ class KnowledgeTools:
             if boosted:
                 logger.info("Wiki boost x%.2f applied to %d page(s)", wiki_boost, boosted)
 
-        # Reorder by rerank_score descending and cap at top_k
+        # Reorder by rerank_score, then select the final top_k. MMR diversity
+        # (WeKnora-style, Jaccard) balances relevance against redundancy so a
+        # flood of similar pages (e.g. many short synthesized wiki pages) cannot
+        # crowd out substantive, complementary content. Gated via config.
         unique_chunks.sort(key=lambda c: c.rerank_score, reverse=True)
         top_k = search_client.top_k
+        enable_mmr = cfg("KB_ENABLE_MMR", "true").lower() == "true"
         if len(unique_chunks) > top_k:
-            logger.info(
-                "Capping results from %d to %d (top_k)", len(unique_chunks), top_k
-            )
-            unique_chunks = unique_chunks[:top_k]
+            if enable_mmr:
+                mmr_lambda = float(cfg("KB_MMR_LAMBDA", "0.7"))
+                unique_chunks = mmr_select(unique_chunks, top_k, lambda_=mmr_lambda)
+                logger.info(
+                    "MMR (lambda=%.2f) selected %d of the candidate pool", mmr_lambda, top_k
+                )
+            else:
+                logger.info(
+                    "Capping results from %d to %d (top_k)", len(unique_chunks), top_k
+                )
+                unique_chunks = unique_chunks[:top_k]
 
         logger.info(
             "After deduplication + rerank: %d chunks (from %d raw)",

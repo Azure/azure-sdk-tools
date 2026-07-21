@@ -12,6 +12,7 @@ import {
   getEmitterFromRepoConfig,
   readTspLocation,
   removeDirectory,
+  copyRepoNpmrcToTemp,
 } from "./fs.js";
 import { cp, mkdir, readFile, stat, unlink, writeFile } from "fs/promises";
 import { npmCommand, npxCommand, npmViewPackageDevDependencies } from "./npm.js";
@@ -416,6 +417,10 @@ export async function syncCommand(argv: any) {
       `Ran into the following error: ${err}\nTo continue using tsp-client, please provide a valid emitter-package.json file in the eng/ directory of the repository.`,
     );
   }
+
+  // Copy the repository's eng/common/.npmrc (if present) into the temp directory so npm
+  // operations run from here honor the repo's npm registry configuration.
+  await copyRepoNpmrcToTemp(repoRoot, tempRoot);
 }
 
 export async function generateCommand(argv: any) {
@@ -469,6 +474,9 @@ export async function generateCommand(argv: any) {
     Logger.info("Skipping installation of dependencies");
   } else {
     Logger.info("Installing dependencies from npm...");
+    // Ensure the repository's eng/common/.npmrc (if present) is in the temp directory so npm
+    // honors the repo's npm registry configuration when installing dependencies.
+    await copyRepoNpmrcToTemp(repoRoot, tempRoot);
     const args: string[] = [];
     try {
       // Check if package-lock.json exists, if it does, we'll install dependencies through `npm ci`
@@ -764,6 +772,9 @@ export async function generateLockFileCommandCore(
   }
   const tempRoot = await createTempDirectory(outputDir);
   await cp(emitterPackageJsonPath, joinPaths(tempRoot, "package.json"));
+  // Copy the repository's eng/common/.npmrc (if present) into the temp directory so npm
+  // honors the repo's npm registry configuration when generating the lock file.
+  await copyRepoNpmrcToTemp(await getRepoRoot(outputDir), tempRoot);
   await npmCommand(tempRoot, args);
   const lockFile = await stat(joinPaths(tempRoot, "package-lock.json"));
   const emitterLockPath = getEmitterLockPath(emitterPackageJsonPath);

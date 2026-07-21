@@ -206,6 +206,20 @@ class KnowledgeTools:
         # Deduplicate across all search results
         unique_chunks = search_client.deduplicate_chunks(raw_chunks)
 
+        # Optional WeKnora-style wiki boost: LLM-synthesised wiki pages carry
+        # denser, cross-referenced knowledge than raw chunks, so preferring them
+        # when both surface for the same query can help. Gated + default off
+        # (1.0) so it is opt-in and A/B-testable via config.
+        wiki_boost = float(cfg("KB_WIKI_BOOST", "1.0"))
+        if wiki_boost != 1.0:
+            boosted = 0
+            for c in unique_chunks:
+                if c.page_type in ("summary", "entity", "concept", "synthesis"):
+                    c.rerank_score *= wiki_boost
+                    boosted += 1
+            if boosted:
+                logger.info("Wiki boost x%.2f applied to %d page(s)", wiki_boost, boosted)
+
         # Reorder by rerank_score descending and cap at top_k
         unique_chunks.sort(key=lambda c: c.rerank_score, reverse=True)
         top_k = search_client.top_k

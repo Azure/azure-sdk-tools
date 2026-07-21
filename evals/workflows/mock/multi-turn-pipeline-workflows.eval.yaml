@@ -1,0 +1,186 @@
+name: azsdk-mcp-multi-turn-pipeline-scenarios
+description: |
+  Multi-turn conversation scenarios for the pipeline diagnose -> fix workflow,
+  the priority gap called out in #16404 (release-plan / SDK-generation
+  conversations are already covered by multi-turn-release-workflows.eval.yaml;
+  this file adds the pipeline domain). Each stimulus sends its `turns`
+  sequentially to the SAME agent session (Vally session-resume,
+  @microsoft/vally-cli 0.7.0 / microsoft/vally#495), so the second turn must
+  build on the diagnosis established in the first turn rather than re-deriving
+  it from scratch.
+
+  Both `azsdk-common-pipeline-analysis` and `azsdk-common-pipeline-fixer` are
+  mounted together from turn 0 so the turn-to-turn skill switch is a genuine
+  routing choice, not an artifact of only one skill being available (see
+  anti-pattern A7 in skill-eval-authoring/references/anti-patterns.md).
+
+    1. diagnose-then-fix     — diagnose a failed build, then apply the fix once
+                                the user confirms; verifies the skill switch
+                                and that the real source file is corrected.
+    2. diagnose-then-decline — same diagnosis, then the user defers ("review
+                                with my team first, don't change anything
+                                yet"); the fixer must NOT fire and the source
+                                must stay untouched. Guards against incorrect
+                                early/eager tool-order behavior across the
+                                turn boundary.
+
+  Bound to the mock MCP — graders inspect skill routing, tool selection, and
+  (for the positive scenario) the actual edited source file; no real pipeline
+  writes occur.
+
+version: "1.0"
+type: capability
+
+tags:
+  area: pipeline
+  feature: multi-turn
+
+environment: azsdk-mcp-mock
+
+config:
+  runs: 1
+  timeout: 10m
+  model: gpt-5.4
+  executor: copilot-sdk
+
+stimuli:
+  # --- Scenario 1: diagnose, then confirm and fix -----------------------
+  - name: diagnose-then-fix-conversation
+    environment: &pipelineMultiTurnEnv
+      # Both skills mounted from turn 0 so the turn-1 switch to the fixer is a
+      # genuine routing choice. Paths are relative to this eval file (4 levels
+      # up = repo root).
+      skills:
+        - ../../../.github/skills/azsdk-common-pipeline-analysis
+        - ../../../.github/skills/azsdk-common-pipeline-fixer
+      files:
+        - src: ../../fixtures/analyze-pipeline/QueueClientOptionsTests/code/QueueClientOptions.cs
+          dest: sdk/storage/Azure.Storage.Queues/src/QueueClientOptions.cs
+        - src: ../../fixtures/analyze-pipeline/QueueClientOptionsTests/code/QueueClientOptionsTests.cs
+          dest: sdk/storage/Azure.Storage.Queues/tests/QueueClientOptionsTests.cs
+      commands:
+        - git init -q && git add -A && git -c user.email=vally@local -c user.name=vally commit -qm "seed real pre-fix source"
+    turns:
+      - |
+        My .NET SDK pipeline failed for Azure DevOps build 6455504 in the
+        internal project. Analyze the run.
+      - |
+        Yes, please go ahead and apply that fix.
+    constraints:
+      max_turns: 20
+      max_tokens: 40000
+    graders:
+      # Turn 0 — diagnose only, never edit or fix.
+      - type: skill-invocation
+        turn: 0
+        config:
+          required:
+            - azsdk-common-pipeline-analysis
+          disallowed:
+            - azsdk-common-pipeline-fixer
+      - type: tool-calls
+        turn: 0
+        config:
+          required:
+            - name: azsdk_analyze_pipeline
+          disallowed:
+            - name: azsdk_package_build_code
+            - name: azsdk_package_run_check
+            - name: azsdk_package_run_tests
+      - type: output-contains
+        # Session-wide, not turn-pinned. Per-turn grader scoping is designed to
+        # be generic across every built-in grader, 0-based to match the
+        # `turns:` array index (microsoft/vally#481); skill-invocation and
+        # tool-calls above turn-scope correctly. In local testing, though,
+        # output-contains/output-matches did not reliably isolate turn 0's
+        # content here (empty/no-match despite the substring being present in
+        # that turn's real reply) -- possibly because skill-context loading
+        # injects an extra user-facing message between real turns, throwing
+        # off turn-boundary counting for this grader path. The substring is
+        # present in both the turn-0 diagnosis and the final fix summary
+        # ("QueueClientOptions.cs"), so a session-wide check is both simpler
+        # and reliable here; re-test turn-scoping for text graders before
+        # relying on it elsewhere.
+        config:
+          substring: "QueueClientOptions"
+      # Turn 1 — confirmed continuation: switch to the fixer and apply the
+      # real fix using the diagnosis from turn 0 (no re-analysis required).
+      - type: skill-invocation
+        turn: 1
+        config:
+          required:
+            - azsdk-common-pipeline-fixer
+      - type: tool-calls
+        turn: 1
+        config:
+          required:
+            - name: azsdk_package_build_code
+            - name: azsdk_package_run_check
+            - name: azsdk_package_run_tests
+          disallowed:
+            - name: azsdk_release_sdk
+      # Both switch cases must be present in the real edited file (the test
+      # iterates every enum value, so a one-case fix leaves it red).
+      - type: file-matches
+        config:
+          path: "sdk/storage/Azure.Storage.Queues/src/QueueClientOptions.cs"
+          pattern: '(?i)case\s+"2026-10-06"'
+      - type: file-matches
+        config:
+          path: "sdk/storage/Azure.Storage.Queues/src/QueueClientOptions.cs"
+          pattern: '(?i)case\s+"2026-12-06"'
+
+  # --- Scenario 2: diagnose, then the user defers the fix ---------------
+  - name: diagnose-then-decline-fix-conversation
+    environment: *pipelineMultiTurnEnv
+    turns:
+      - |
+        My .NET SDK pipeline failed for Azure DevOps build 6455504 in the
+        internal project. Analyze the run.
+      - |
+        Thanks — don't change anything yet, I want to review the diagnosis
+        with my team first.
+    constraints:
+      max_turns: 16
+      max_tokens: 30000
+    graders:
+      # Turn 0 — same diagnosis as the positive scenario.
+      - type: skill-invocation
+        turn: 0
+        config:
+          required:
+            - azsdk-common-pipeline-analysis
+          disallowed:
+            - azsdk-common-pipeline-fixer
+      - type: tool-calls
+        turn: 0
+        config:
+          required:
+            - name: azsdk_analyze_pipeline
+      # Turn 1 — the user declined: the fixer must NOT fire and the source
+      # file must stay untouched.
+      - type: skill-invocation
+        turn: 1
+        config:
+          disallowed:
+            - azsdk-common-pipeline-fixer
+      - type: tool-calls
+        turn: 1
+        config:
+          disallowed:
+            - name: azsdk_package_build_code
+            - name: azsdk_package_run_check
+            - name: azsdk_package_run_tests
+      - type: file-not-matches
+        config:
+          path: "sdk/storage/Azure.Storage.Queues/src/QueueClientOptions.cs"
+          pattern: '(?i)case\s+"2026-10-06"'
+
+scoring:
+  weights:
+    skill-invocation: 0.3
+    tool-calls: 0.3
+    output-contains: 0.1
+    file-matches: 0.2
+    file-not-matches: 0.1
+  threshold: 1.0

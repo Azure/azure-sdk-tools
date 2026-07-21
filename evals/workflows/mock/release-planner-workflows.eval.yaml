@@ -15,7 +15,7 @@ description: |
 
   Bound to the mock MCP — these graders only inspect skill routing and tool
   selection, not real DevOps writes. The full live e2e flow lives in
-  evals/workflow-scenarios/live/release-planner.eval.yaml.
+  workflows/live/release-planner.eval.yaml.
 
 version: "1.0"
 type: capability
@@ -33,6 +33,12 @@ config:
 
 stimuli:
   # --- Scenario 1: Create release plan ---------------------------------
+  # Natural 2-turn flow (rewritten from a single "here is all the context
+  # you need" prompt — a pre-multi-turn workaround, see microsoft/vally#481):
+  # turn 0 states intent only; turn 1 supplies the structured details, as a
+  # real user follow-up would. Graders stay session-wide because the skill's
+  # own documented workflow may legitimately check for an existing plan
+  # (azsdk_get_release_plan) before all details arrive.
   - name: create-public-preview-release-plan
     # Spec-repo worktree fixture: defined once here and aliased by the stimuli
     # below. CI clones it via eng/common/scripts/eval/init-eval-git-fixtures.js before this suite.
@@ -40,26 +46,27 @@ stimuli:
       # Load the real release-planning skill so the executor can route to it.
       # Path is relative to this eval file (4 levels up = repo root).
       skills:
-        - ../../../../.github/skills/azsdk-common-prepare-release-plan
+        - ../../../.github/skills/azsdk-common-prepare-release-plan
       git:
         type: worktree
-        source: ../../../../artifacts/specs-cache/azure-rest-api-specs
+        source: ../../../artifacts/specs-cache/azure-rest-api-specs
         ref: main
-    prompt: |
-      Create a public preview
-      release plan for the Contoso Widget Manager. Here is all the context
-      you need:
-        - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
-        - service tree ID: "a7f2b8e4-9c1d-4a3e-b6f9-2d8e5a7c3b1f"
-        - product tree ID: "f1a8c5d2-6e4b-4f7a-9c2d-8b5e1f3a6c9e"
-        - target release timeline: "June 2026"
-        - API version: "2022-11-01-preview"
-        - SDK release type: "beta"
-        - spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38387"
-      My setup has already been verified, do not run azsdk_verify_setup.
+    turns:
+      - |
+        Create a public preview release plan for the Contoso Widget Manager.
+      - |
+        Here are the details:
+          - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
+          - service tree ID: "a7f2b8e4-9c1d-4a3e-b6f9-2d8e5a7c3b1f"
+          - product tree ID: "f1a8c5d2-6e4b-4f7a-9c2d-8b5e1f3a6c9e"
+          - target release timeline: "June 2026"
+          - API version: "2022-11-01-preview"
+          - SDK release type: "beta"
+          - spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38387"
+        My setup has already been verified, do not run azsdk_verify_setup.
     constraints:
-      max_turns: 6
-      max_tokens: 8000
+      max_turns: 10
+      max_tokens: 12000
     graders:
       - type: skill-invocation
         config:
@@ -73,46 +80,68 @@ stimuli:
           disallowed:
             - azsdk_verify_setup
 
-  # --- End-to-end demo prompt: create + generate -----------------------
+  # --- End-to-end demo: create, then (in a separate turn) generate -----
+  # Rewritten from a single "create X, then generate SDK" compound prompt
+  # into two turns: create is atomic (its structured data is a natural
+  # single paste), but "then generate" is a distinct follow-up decision a
+  # real user makes only after seeing the create result — so it gets its
+  # own turn. Turn-pinning also gives ordering coverage (create must not
+  # generate; generate must not re-create) without the sequence: grader
+  # this file's TODO wanted (still blocked upstream).
   - name: create-release-plan-and-generate-sdk
     environment: *specsWorktree
-    prompt: |
-      Walk me through creating
-      a release plan and then generating SDK for the Contoso Widget Manager:
-        - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
-        - API release type: "Public Preview"
-        - service tree ID: "a7f2b8e4-9c1d-4a3e-b6f9-2d8e5a7c3b1f"
-        - product tree ID: "f1a8c5d2-6e4b-4f7a-9c2d-8b5e1f3a6c9e"
-        - target release timeline: "June 2026"
-        - API version: "2022-11-01-preview"
-        - SDK release type: "beta"
-        - spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38387"
-      After the release plan is created, generate SDK for all languages
-      using the work-item ID from the created release plan.
-      My setup has already been verified, do not run azsdk_verify_setup.
+    turns:
+      - |
+        Create a public preview release plan for the Contoso Widget Manager:
+          - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
+          - service tree ID: "a7f2b8e4-9c1d-4a3e-b6f9-2d8e5a7c3b1f"
+          - product tree ID: "f1a8c5d2-6e4b-4f7a-9c2d-8b5e1f3a6c9e"
+          - target release timeline: "June 2026"
+          - API version: "2022-11-01-preview"
+          - SDK release type: "beta"
+          - spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38387"
+        My setup has already been verified, do not run azsdk_verify_setup.
+      - |
+        Now generate SDK for all languages using the work-item ID from the
+        release plan you just created.
     constraints:
-      max_turns: 12
-      max_tokens: 16000
-    # TODO: assert ordering create -> get -> generate
-    #   — blocked on Vally tool-calls grader sequence: support.
+      max_turns: 14
+      max_tokens: 18000
     graders:
+      # Turn 0 — create only, never generate yet.
       - type: skill-invocation
+        turn: 0
         config:
           required:
             - azsdk-common-prepare-release-plan
-          # generate half uses azsdk_run_generate_sdk (a release-planner pipeline
+      - type: tool-calls
+        turn: 0
+        config:
+          required:
+            - azsdk_get_release_plan
+            - azsdk_create_release_plan
+          disallowed:
+            - azsdk_verify_setup
+            - azsdk_run_generate_sdk
+      # Turn 1 — generate for the plan created in turn 0; never re-create.
+      - type: skill-invocation
+        turn: 1
+        config:
+          required:
+            - azsdk-common-prepare-release-plan
+          # generate uses azsdk_run_generate_sdk (a release-planner pipeline
           # tool); azsdk-common-generate-sdk-locally over-matches "generate" —
           # see https://github.com/Azure/azure-sdk-tools/issues/15950.
           disallowed:
             - azsdk-common-generate-sdk-locally
       - type: tool-calls
+        turn: 1
         config:
           required:
-            - azsdk_get_release_plan
-            - azsdk_create_release_plan
             - azsdk_run_generate_sdk
           disallowed:
             - azsdk_verify_setup
+            - azsdk_create_release_plan
 
   # --- Scenario 2: Generate SDK for an existing release plan -----------
   - name: generate-sdk-for-existing-release-plan
@@ -216,11 +245,11 @@ stimuli:
   - name: generate-sdk-all-languages-link-release-plan
     environment: &specsWorktreeWithGenerate
       skills:
-        - ../../../../.github/skills/azsdk-common-prepare-release-plan
-        - ../../../../.github/skills/azsdk-common-generate-sdk-locally
+        - ../../../.github/skills/azsdk-common-prepare-release-plan
+        - ../../../.github/skills/azsdk-common-generate-sdk-locally
       git:
         type: worktree
-        source: ../../../../artifacts/specs-cache/azure-rest-api-specs
+        source: ../../../artifacts/specs-cache/azure-rest-api-specs
         ref: main
     prompt: |
       Generate SDK for all languages from my TypeSpec project
@@ -276,12 +305,12 @@ stimuli:
   - name: run-sdk-generation-all-languages-for-release-pipeline-skill
     environment: &bothGenerateSkills
       skills:
-        - ../../../../.github/skills/azsdk-common-generate-sdk-pipeline
-        - ../../../../.github/skills/azsdk-common-generate-sdk-locally
-        - ../../../../.github/skills/azsdk-common-sdk-release
+        - ../../../.github/skills/azsdk-common-generate-sdk-pipeline
+        - ../../../.github/skills/azsdk-common-generate-sdk-locally
+        - ../../../.github/skills/azsdk-common-sdk-release
       git:
         type: worktree
-        source: ../../../../artifacts/specs-cache/azure-rest-api-specs
+        source: ../../../artifacts/specs-cache/azure-rest-api-specs
         ref: main
     prompt: |
       Run SDK generation for all languages for release 29262. My TypeSpec project is

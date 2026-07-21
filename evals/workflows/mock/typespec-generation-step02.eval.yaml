@@ -1,0 +1,73 @@
+name: azsdk-mcp-tool-scenarios
+description: |
+  TypeSpec generation workflow step 2: the agent authors a small TypeSpec
+  change (invoking the azure-typespec-author skill) and validates it in turn
+  0, then checks whether the project is in the public repo as a natural
+  follow-up in turn 1 (Vally `turns:`, microsoft/vally#481) rather than one
+  compound prompt.
+version: "1.0"
+type: capability
+
+
+tags:
+  area: typespec
+
+environment: azsdk-mcp-mock
+
+config:
+  runs: 1
+  timeout: 30m
+  model: gpt-5.4
+  executor: copilot-sdk
+
+stimuli:
+  - name: typespec-generation-step02-validation
+    environment:
+      # Real authoring skill + the Contoso spec on disk so the agent can edit.
+      # Paths are relative to this eval file (4 levels up = repo root).
+      skills:
+        - ../../../.github/skills/azure-typespec-author
+      git:
+        type: worktree
+        source: ../../../artifacts/specs-cache/azure-rest-api-specs
+        ref: main
+    turns:
+      - |
+        I'm on step 2 of the TypeSpec generation workflow for the Contoso
+        Widget Manager. Add an optional string property named "category" to
+        the WidgetSuite model, then validate the project. The project is at
+        specification/contosowidgetmanager/Contoso.WidgetManager.
+        My setup has already been verified, do not run azsdk_verify_setup.
+      - |
+        Now check whether this project is in the public azure-rest-api-specs
+        repo.
+    constraints:
+      max_turns: 14
+      max_tokens: 18000
+    graders:
+      # Turn 0 — author + validate only, never check public-repo status yet.
+      - type: tool-calls
+        turn: 0
+        config:
+          required:
+            - azsdk_run_typespec_validation
+          disallowed:
+            - azsdk_verify_setup
+            - azsdk_typespec_check_project_in_public_repo
+      # Turn 1 — the follow-up check, using the project from turn 0.
+      - type: tool-calls
+        turn: 1
+        config:
+          required:
+            - azsdk_typespec_check_project_in_public_repo
+      - type: skill-invocation
+        config:
+          required:
+            - azure-typespec-author
+
+scoring:
+  weights:
+    tool-calls: 0.5
+    skill-invocation: 0.5
+  threshold: 1.0
+

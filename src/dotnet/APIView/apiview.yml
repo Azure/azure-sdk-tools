@@ -91,6 +91,8 @@ extends:
             steps:
               - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
 
+              - template: /eng/common/pipelines/templates/steps/maven-authenticate.yml
+
               - task: NodeTool@0
                 inputs:
                   versionSpec: '$(NodeVersion)'
@@ -184,6 +186,8 @@ extends:
               os: linux
 
             steps:
+              - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+
               - task: NodeTool@0
                 inputs:
                   versionSpec: '$(NodeVersion)'

@@ -89,6 +89,8 @@ extends:
                   enabled: true # Enable CG only on the build job
 
             steps:
+              - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+
               - task: NodeTool@0
                 inputs:
                   versionSpec: '$(NodeVersion)'

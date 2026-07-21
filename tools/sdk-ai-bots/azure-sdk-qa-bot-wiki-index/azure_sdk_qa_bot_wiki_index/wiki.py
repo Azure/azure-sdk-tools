@@ -14,7 +14,7 @@ from __future__ import annotations
 import logging
 from concurrent.futures import ThreadPoolExecutor
 
-from .documents import WikiDoc, make_wiki_doc
+from .documents import WikiDoc, make_summary_doc
 from .llm import ChatLLM, Embedder
 from .reader import rel_title, source_folder
 
@@ -75,7 +75,7 @@ def build_wiki_pages(
         page = synthesize_wiki_page(llm, title, text)
         if not page:
             return None
-        return make_wiki_doc(folder, rel, title, page)
+        return make_summary_doc(folder, rel, title, page)
 
     docs: list[WikiDoc] = []
     with ThreadPoolExecutor(max_workers=max_workers) as ex:

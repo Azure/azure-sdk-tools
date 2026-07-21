@@ -85,7 +85,6 @@ class KnowledgeChunk(BaseModel):
     header2: str = Field(default="", validation_alias="header_2")
     header3: str = Field(default="", validation_alias="header_3")
     page_type: str = ""
-    related_slugs: list[str] = Field(default_factory=list)
     rerank_score: float = Field(default=0.0, validation_alias="@search.reranker_score")
 
     @field_validator("rerank_score", mode="before")
@@ -102,12 +101,6 @@ class KnowledgeChunk(BaseModel):
     def _coerce_page_type(cls, v: object) -> str:
         """Raw (non-wiki) chunks carry null for this added field."""
         return v or ""
-
-    @field_validator("related_slugs", mode="before")
-    @classmethod
-    def _coerce_related_slugs(cls, v: object) -> list:
-        """Raw (non-wiki) chunks carry null for this added collection field."""
-        return v or []
 
 
 class KnowledgeResult(BaseModel):

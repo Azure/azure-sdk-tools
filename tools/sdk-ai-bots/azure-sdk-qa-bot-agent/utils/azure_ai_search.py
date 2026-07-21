@@ -43,9 +43,8 @@ _HIERARCHY_EXPANSION_TOP = 20
 # Chunks below this rerank score are considered low-relevance and dropped.
 _RERANK_SCORE_LOW_RELEVANCE_THRESHOLD = 2.0
 
-# Fields selected by the dense/sparse retrievers. Includes the wiki-page fields
-# (``page_type``/``related_slugs``) so the caller can walk the lightweight
-# knowledge graph one hop from a retrieved entity/concept node.
+# Fields selected by the dense/sparse retrievers. ``page_type`` distinguishes
+# generated wiki pages from raw chunks (for link rendering / optional boosting).
 _RETRIEVER_SELECT_FIELDS = [
     "chunk_id",
     "title",
@@ -58,11 +57,7 @@ _RETRIEVER_SELECT_FIELDS = [
     "scope",
     "service_type",
     "page_type",
-    "related_slugs",
 ]
-
-# Context ids that hold cross-document knowledge-graph nodes.
-_WIKI_NODE_CONTEXT_IDS = ("wiki_entity", "wiki_relationship")
 
 
 def _chunk_key(chunk: "KnowledgeChunk") -> str:
@@ -375,56 +370,6 @@ class SearchClient:
             header2=chunk.header2,
             header3=chunk.header3,
         )
-
-    async def expand_by_graph(
-        self,
-        chunks: "list[KnowledgeChunk]",
-        max_neighbors: int = 4,
-    ) -> "list[KnowledgeChunk]":
-        """Walk one hop from retrieved wiki nodes to their linked neighbours.
-
-        For every entity/concept node among *chunks*, collect its
-        ``related_slugs`` (graph edges) and fetch those neighbour pages (capped
-        at *max_neighbors* total, de-duplicated against the input). Returns the
-        newly fetched neighbour chunks so the caller can add them to the
-        deep-read set — a lightweight 1-hop knowledge-graph expansion.
-        """
-        seen_ids = {c.chunk_id for c in chunks if c.chunk_id}
-        wanted: list[str] = []
-        for c in chunks:
-            if c.page_type in ("entity", "relationship"):
-                for slug in c.related_slugs:
-                    if slug and slug not in wanted:
-                        wanted.append(slug)
-        wanted = wanted[:max_neighbors]
-        if not wanted:
-            return []
-
-        title_clause = " or ".join(f"title eq '{_escape_odata(s)}'" for s in wanted)
-        context_clause = " or ".join(
-            f"context_id eq '{cid}'" for cid in _WIKI_NODE_CONTEXT_IDS
-        )
-        combined_filter = f"({title_clause}) and ({context_clause})"
-
-        results = await self._search_client.search(
-            search_text="*",
-            filter=combined_filter,
-            top=len(wanted) * 2,
-            select=_RETRIEVER_SELECT_FIELDS,
-        )
-
-        neighbours: list[KnowledgeChunk] = []
-        async for doc in results:
-            chunk = KnowledgeChunk.model_validate(dict(doc))
-            if chunk.chunk_id and chunk.chunk_id not in seen_ids:
-                seen_ids.add(chunk.chunk_id)
-                neighbours.append(chunk)
-        logger.info(
-            "expand_by_graph: %d neighbour node(s) from %d requested slug(s)",
-            len(neighbours),
-            len(wanted),
-        )
-        return neighbours
 
     async def close(self) -> None:
         await self._kb_client.close()

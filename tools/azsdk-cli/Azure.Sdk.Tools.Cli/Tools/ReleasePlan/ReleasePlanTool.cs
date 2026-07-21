@@ -12,6 +12,8 @@ using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan;
 using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.Notification;
+using Azure.Sdk.Tools.Cli.Services.Notification.Templates;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using ModelContextProtocol;
 using ModelContextProtocol.Server;
@@ -32,7 +34,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         IInputSanitizer inputSanitizer,
         HttpClient httpClient,
         INpxHelper npxHelper,
-        IRawOutputHelper outputHelper
+        IRawOutputHelper outputHelper,
+        INotificationService notificationService
     ) : MCPMultiCommandTool
     {
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.ReleasePlan];
@@ -276,6 +279,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         {
             ".NET", "Java", "Python", "JavaScript", "Go"
         };
+
+        // Email address for managementplane notifications.
+        private const string MANAGEMENT_SDK_OWNER_ALIAS = "sdkowners@microsoft.com";
 
         [GeneratedRegex("https:\\/\\/github.com\\/Azure\\/azure-sdk\\/issues\\/([0-9]+)")]
         private static partial Regex NameSpaceIssueUrlRegex();
@@ -1178,7 +1184,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                                     if (sdkDetailsResult.NextSteps?.Count > 0)
                                     {
                                         nextSteps.AddRange(sdkDetailsResult.NextSteps);
-                                    }
+                                    }                                    
                                 }
                             }                            
                         }
@@ -1201,6 +1207,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
 
                     reporter.NextStep(message.ToString());
+
+                    //Refresh release plan to get latest details
+                    releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(releasePlan.WorkItemId, ct);
+
+                    // Notify the release plan submitter (silently completes when notifications are disabled).
+                    var releasePlanEmail = new NewReleasePlanEmail(releasePlan)
+                    {
+                        EmailTo = string.IsNullOrWhiteSpace(releasePlan.ReleasePlanSubmittedByEmail)? [] : [releasePlan.ReleasePlanSubmittedByEmail],
+                        CC = releasePlan.IsManagementPlane?[MANAGEMENT_SDK_OWNER_ALIAS] : []
+                    };
+                    await notificationService.SendEmailNotificationAsync(releasePlanEmail, ct);
+
                     return new ReleasePlanResponse
                     {
                         Message = message.ToString(),

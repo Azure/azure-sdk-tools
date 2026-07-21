@@ -4,6 +4,8 @@
 
 ### Features Added
 
+- Added a notification service that sends an email notification when a release plan is created. Notifications are sent only when the notification service URL environment variable is configured.
+
 ### Breaking Changes
 
 ### Bugs Fixed

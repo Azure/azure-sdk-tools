@@ -200,14 +200,16 @@ extends:
                   displayName: Upload eval results
                   condition: always()
 
-      - stage: PrepareForced
-        displayName: Prepare forced track
+      - stage: PrepareShared
+        displayName: Prepare shared MCP artifact
         dependsOn: []
         jobs:
-          - template: /eng/common/pipelines/templates/jobs/build-mcp.yml
-            parameters:
-              mcpSetupTemplate: /eng/common/pipelines/templates/steps/eval-mcp-setup.yml
-              TestType: live
+          - template: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-build-mcp-job.yml
+
+      - stage: PrepareForced
+        displayName: Prepare forced track
+        dependsOn: PrepareShared
+        jobs:
           - template: /eng/common/pipelines/templates/jobs/generate-eval-matrix.yml
             parameters:
               vallyRoot: .github/skills/azure-typespec-author/evaluate
@@ -220,7 +222,7 @@ extends:
         variables:
           TypeSpecAuthorEvalExtraArgs: '--tag mode:forced --skill-dir ..'
         jobs:
-          - template: /eng/common/pipelines/templates/jobs/eval-shard.yml
+          - template: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-eval-shard.yml
             parameters:
               matrixStageName: PrepareForced
               vallyRoot: .github/skills/azure-typespec-author/evaluate
@@ -240,12 +242,8 @@ extends:
 
       - stage: PrepareTrigger
         displayName: Prepare trigger track
-        dependsOn: []
+        dependsOn: PrepareShared
         jobs:
-          - template: /eng/common/pipelines/templates/jobs/build-mcp.yml
-            parameters:
-              mcpSetupTemplate: /eng/common/pipelines/templates/steps/eval-mcp-setup.yml
-              TestType: mock
           - template: /eng/common/pipelines/templates/jobs/generate-eval-matrix.yml
             parameters:
               vallyRoot: .github/skills/azure-typespec-author/evaluate
@@ -258,7 +256,7 @@ extends:
         variables:
           TypeSpecAuthorEvalExtraArgs: '--tag mode:trigger --skill-dir ..'
         jobs:
-          - template: /eng/common/pipelines/templates/jobs/eval-shard.yml
+          - template: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-eval-shard.yml
             parameters:
               matrixStageName: PrepareTrigger
               vallyRoot: .github/skills/azure-typespec-author/evaluate

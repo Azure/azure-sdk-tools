@@ -15,13 +15,14 @@ pipeline to match and distribute them to all subscribed language SDK repos.
 
 ### Workflow & Utility Skills
 
-| Skill                                                                                         | Triggers                                               | Description                                                  |
-| --------------------------------------------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------ |
-| [azsdk-common-generate-sdk-locally](azsdk-common-generate-sdk-locally/SKILL.md)               | "generate SDK locally", "build SDK", "run SDK tests"   | Generate, build, and test Azure SDKs locally from TypeSpec   |
-| [azsdk-common-prepare-release-plan](azsdk-common-prepare-release-plan/SKILL.md)               | "create release plan", "link SDK PR to plan"           | Create and manage release plan work items                    |
-| [azsdk-common-apiview-feedback-resolution](azsdk-common-apiview-feedback-resolution/SKILL.md) | "APIView comments", "resolve API review feedback"      | Retrieve and resolve APIView review feedback                 |
-| [azsdk-common-pipeline-troubleshooting](azsdk-common-pipeline-troubleshooting/SKILL.md)       | "pipeline failed", "build failure", "CI check failing" | Diagnose and resolve SDK CI and generation pipeline failures |
-| [azsdk-common-sdk-release](azsdk-common-sdk-release/SKILL.md)                                 | "release SDK", "trigger release pipeline"              | Check release readiness and trigger SDK releases             |
+| Skill                                                                                         | Triggers                                               | Description                                                 |
+| --------------------------------------------------------------------------------------------- | ------------------------------------------------------ | ----------------------------------------------------------- |
+| [azsdk-common-generate-sdk-locally](azsdk-common-generate-sdk-locally/SKILL.md)               | "generate SDK locally", "build SDK", "run SDK tests"   | Generate, build, and test Azure SDKs locally from TypeSpec  |
+| [azsdk-common-prepare-release-plan](azsdk-common-prepare-release-plan/SKILL.md)               | "create release plan", "link SDK PR to plan"           | Create and manage release plan work items                   |
+| [azsdk-common-apiview-feedback-resolution](azsdk-common-apiview-feedback-resolution/SKILL.md) | "APIView comments", "resolve API review feedback"      | Retrieve and resolve APIView review feedback                |
+| [azsdk-common-pipeline-analysis](azsdk-common-pipeline-analysis/SKILL.md)                     | "pipeline failed", "build failure", "CI check failing" | Analyze SDK CI failures and prescribe fixes without editing |
+| [azsdk-common-pipeline-fixer](azsdk-common-pipeline-fixer/SKILL.md)                           | "fix pipeline", "fix CI", "fix failing tests"          | Apply and verify fixes from pipeline analysis               |
+| [azsdk-common-sdk-release](azsdk-common-sdk-release/SKILL.md)                                 | "release SDK", "trigger release pipeline"              | Check release readiness and trigger SDK releases            |
 
 ### Development & Meta Skills
 

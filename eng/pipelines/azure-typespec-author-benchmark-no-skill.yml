@@ -74,6 +74,13 @@ extends:
                   DisplayName: Pure agent - warning
                   TimeoutMinutes: 25
                   LoadSkills: false
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
+                parameters:
+                  Suite: dataplane-no-skill
+                  SuiteName: dataplane-no-skill
+                  DisplayName: Pure agent - dataplane
+                  TimeoutMinutes: 50
+                  LoadSkills: false
 
             templateContext:
               outputs:

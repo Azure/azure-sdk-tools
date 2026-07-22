@@ -16,8 +16,9 @@ import importlib
 import logging
 import shutil
 import tempfile
+import time
 import re
-from subprocess import check_call, CalledProcessError, run, PIPE
+from subprocess import check_call, CalledProcessError, run, PIPE, TimeoutExpired
 import zipfile
 import tarfile
 try:
@@ -34,6 +35,12 @@ from apistub._generated.treestyle.parser._model_base import (
 
 INIT_PY_FILE = "__init__.py"
 INIT_EXTENSION_SUBSTRING = ".extend_path(__path__, __name__)"
+
+# Maximum time (seconds) allowed for installing the target package. Packages with
+# large dependency trees (e.g. those pulling the Microsoft OpenTelemetry distro)
+# can make pip's backtracking resolver spend a long time evaluating candidate
+# versions on slower CI agents.
+PACKAGE_INSTALL_TIMEOUT_SECONDS = 800
 
 logging.getLogger().setLevel(logging.ERROR)
 
@@ -449,12 +456,43 @@ class StubGenerator:
         return pkg_name
 
     def _install_package(self):
-        commands = [sys.executable, "-m", "pip", "install", self.pkg_path, "-q"]
-        result = run(commands, timeout=120, stderr=PIPE, text=True)
-        if result.stderr:
-            logging.debug("pip stderr: %s", result.stderr.strip())
+        # Use "-v" so pip streams its full progress - "Collecting" / "Downloading",
+        # the resolver's "looking at multiple versions of <pkg> ..." backtracking
+        # notices, and the "This is taking longer than usual" warning - straight to
+        # the console. That makes a slow dependency resolve easy to diagnose in CI
+        # logs. stderr is captured so we can still raise a friendly error on a Python
+        # version mismatch; stdout is inherited so the verbose log appears live.
+        commands = [sys.executable, "-m", "pip", "install", self.pkg_path, "-v"]
+        print("apistubgen: installing package: {0}".format(" ".join(commands)))
+        start = time.monotonic()
+        try:
+            result = run(
+                commands,
+                timeout=PACKAGE_INSTALL_TIMEOUT_SECONDS,
+                stderr=PIPE,
+                text=True,
+            )
+        except TimeoutExpired:
+            elapsed = time.monotonic() - start
+            print(
+                "apistubgen: pip install of {0} TIMED OUT after {1:.1f}s "
+                "(limit {2}s).".format(
+                    self.pkg_path, elapsed, PACKAGE_INSTALL_TIMEOUT_SECONDS
+                )
+            )
+            raise
+
+        elapsed = time.monotonic() - start
+        print(
+            "apistubgen: pip install of {0} finished in {1:.1f}s.".format(
+                self.pkg_path, elapsed
+            )
+        )
+        stderr = result.stderr or ""
+        if stderr:
+            print("apistubgen: pip stderr:\n{0}".format(stderr.strip()))
+
         if result.returncode != 0:
-            stderr = result.stderr or ""
             # pip error format for Python version mismatch:
             # "ERROR: Package 'x' requires a different Python: 3.10.x not in '>=3.12'"
             match = re.search(r"requires a different Python[^']*'([^']+)'", stderr, re.IGNORECASE)

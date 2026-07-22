@@ -145,11 +145,11 @@ Inputs:
 
 - `--directory-path` (required): relative path from repo root to the package directory.
 - `--repo` (optional): `owner/repo` repository identity. If omitted, the command resolves the current git repo.
-- `--codeowners-cache` (optional): local filesystem path to a CODEOWNERS cache file. When specified, it overrides repo-derived cache lookup.
+- `--codeowners-cache` (optional): existing local filesystem path to a CODEOWNERS cache file. When specified, it overrides repo-derived cache lookup.
 
 Cache resolution:
 
-- If `--codeowners-cache` is provided, validation reads that local file directly. This is mostly useful for testing.
+- If `--codeowners-cache` is provided, validation requires an existing local file and reads that file directly. This is mostly useful for testing.
 - Otherwise, validation resolves the repo and reads:
   `https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/cache/<owner-lower>/<repo>/CODEOWNERS.cache`
 
@@ -169,6 +169,7 @@ Validation rules:
 4. Require at least 1 PR label on the matched path entry.
 5. Find the matching service-owner entry by scanning service-label entries from the end of the parsed file. Ignore `Service Attention` for label comparison, and require the matched service-label set to be fully contained within the package PR labels.
 6. Require at least 2 unique individual service owners on that service-owner entry. Unresolved team aliases do not count.
+7. Return structured issue details for failures, including stable issue codes, a human-readable message, and a copy/pasteable next-step prompt.
 
 ### Data Model
 
@@ -307,7 +308,7 @@ Sorting is implemented in `CodeownersEntrySorter.cs`.
 CodeownersTool
   -> resolves repo and arguments
   -> delegates view/add/remove/generate/export logic to helpers
-  -> for check-package, resolves cache source (local file or blob URL)
+  -> for check-package, resolves cache source (local file or repo-derived blob URL)
   -> parses CODEOWNERS cache with CodeownersParser
   -> validates package ownership via ICheckPackageHelper
   -> helpers query/update Azure DevOps via IDevOpsService
@@ -583,22 +584,66 @@ azsdk config codeowners check-package --directory-path sdk/storage/Azure.Storage
 
 - `--directory-path <relative-path>`: Relative path from repo root to the package directory.
 - `--repo <owner/name>`: Optional repository identity. If omitted, the current git repo is used to derive the cache URL.
-- `--codeowners-cache <path>`: Optional local cache file path. Overrides repo-derived cache lookup.
+- `--codeowners-cache <path>`: Optional existing local cache file path. Overrides repo-derived cache lookup.
 
-**Expected Output:**
+**Expected Output (plain):**
 
 ```text
 Path: sdk/storage/Azure.Storage.Blobs
+Package: Azure.Storage.Blobs
+Repo: Azure/azure-sdk-for-net
+Matched Path Expression: /sdk/storage/Azure.Storage.Blobs/
+Resolved Target: /sdk/storage/Azure.Storage.Blobs
+Resolved Target Type: package
 Owners: owner1, owner2
 PR Labels: Storage
 Service Labels: Storage
 Service Owners: owner3, owner4
 ```
 
-**Error Cases:**
+**Expected Output (`--output json`):**
+
+```json
+{
+  "directory_path": "sdk/storage/Azure.Storage.Blobs",
+  "package_name": "Azure.Storage.Blobs",
+  "repo": "Azure/azure-sdk-for-net",
+  "matched_path_expression": "/sdk/storage/Azure.Storage.Blobs/",
+  "resolved_target": "/sdk/storage/Azure.Storage.Blobs",
+  "resolved_target_type": "package",
+  "owners": ["owner1", "owner2"],
+  "pr_labels": ["Storage"],
+  "service_labels": ["Storage"],
+  "service_owners": ["owner3", "owner4"],
+  "issues": [],
+  "operation_status": "Succeeded"
+}
+```
+
+Failure responses use `issues[]` entries with:
+
+- `code`
+- `message`
+- `next_step`
+- optional `found_count`, `required_count`, and `current_values`
+
+Current issue codes include:
+
+- `invalid_directory_path`
+- `no_matching_path`
+- `insufficient_owners`
+- `missing_pr_label`
+- `insufficient_service_owners`
+- `invalid_cache_source`
+- `invalid_repo`
+- `unexpected_error`
+
+For a single issue, `response_error` matches the issue message. For multiple issues, `response_error` is an aggregate summary for the path.
+
+**Representative Failure Cases:**
 
 ```text
-Error: CODEOWNERS cache file not found: <path>
+Error: CODEOWNERS cache path must be an existing file: <path>
 Error: Invalid repo format '<repo>'. Expected '<owner>/<repo>'.
 Error: check-package failed: <validation failure>
 ```

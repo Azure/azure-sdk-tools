@@ -21,7 +21,7 @@ A single-page web dashboard for viewing Azure SDK Release Plan work items from A
   - Spec project / TypeSpec path
   - Release status, package version, and package feed link
   - Product details with Service Tree link
-- **Current stage tracking** — each release plan shows its progression stage (API Spec In Progress → SDK To Be Generated → SDK Review In Progress → SDK Ready To Be Released, etc.)
+- **Current stage tracking** — each release plan shows its progression stage (API Spec In Progress → SDK To Be Generated → SDK Review In Progress → SDK Ready To Release, etc.)
 - **Action required indicator** — shows who needs to act (Spec PR Reviewer, SDK PR Reviewer, or Service Team)
 - **Duplicate detection** — identifies potentially duplicate release plans and annotates them
 - **SDK type badges** — highlights Beta vs Stable releases
@@ -48,6 +48,7 @@ A single-page web dashboard for viewing Azure SDK Release Plan work items from A
 ### Search & Navigation
 
 - **Search & filter** — filter by title, product name, owner, or release plan ID
+- **Tag filter** — filter plans by First Preview, First GA, or SDK Ready To Release
 - **URL parameters** — `?releasePlan=<id>` to view a single plan, `?filter=<keyword>` to pre-filter
 - **Share** — share links to specific release plans
 

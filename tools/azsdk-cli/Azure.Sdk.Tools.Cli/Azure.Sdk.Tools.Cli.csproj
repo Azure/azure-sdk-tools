@@ -55,6 +55,8 @@
     <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
     <PackageReference Include="Microsoft.Identity.Client" Version="4.81.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.11.0" PrivateAssets="all" />
+    <!-- Pin transitive dependency to a newer version to address a security advisory -->
+    <PackageReference Include="Microsoft.Bcl.Memory" Version="9.0.18" />
   </ItemGroup>
 
   <ItemGroup>

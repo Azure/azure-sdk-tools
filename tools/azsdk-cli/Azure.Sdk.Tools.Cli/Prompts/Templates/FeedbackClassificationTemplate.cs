@@ -86,6 +86,10 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
     private string BuildTaskInstructions()
     {
         var sb = new StringBuilder();
+        var tspApplicabilityBasis = _specInspectionAvailable
+            ? "based on the reference documentation below"
+            : "based on known TypeSpec capabilities and the available feedback context";
+
         sb.AppendLine($"""
         **Current Context:**
         - Service: {_serviceName ?? "N/A"}
@@ -104,7 +108,7 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         **Task:**
         Classify ALL of the feedback items listed below. For each item, determine the appropriate classification: **TSP_APPLICABLE**, **CODE_CUSTOMIZATION**, **SUCCESS**, or **REQUIRES_MANUAL_INTERVENTION**.
         - If the feedback is non-actionable (discussion, informational, "keep as is", or about build/generation succeeding), classify as **SUCCESS**.
-        - If the feedback is actionable AND TypeSpec client customization decorators can address it (based on the reference documentation below), classify as **TSP_APPLICABLE**.
+        - If the feedback is actionable AND TypeSpec client customization decorators can address it ({tspApplicabilityBasis}), classify as **TSP_APPLICABLE**.
         - If the feedback is actionable, TypeSpec decorators CANNOT address it, but automated code patching could fix it (e.g., compile errors from method signature changes, parameter additions/removals, symbol renames in generated code), classify as **CODE_CUSTOMIZATION**. Include specific repair instructions in the Reason.
         - If the feedback is actionable but requires complex manual work that cannot be automated (e.g., new feature implementation, architectural changes, custom business logic), classify as **REQUIRES_MANUAL_INTERVENTION**.
         """);
@@ -240,6 +244,16 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
               """
             : "Local TypeSpec files are unavailable in this run; do not attempt to use spec-repo inspection tools.";
 
+        var tspApplicabilityGuidance = _specInspectionAvailable
+            ? """
+              Consult the reference documentation provided to determine if any supported
+              TypeSpec client customization decorator can address the feedback.
+              """
+            : """
+              Use known TypeSpec client customization capabilities and the available feedback context
+              to determine whether the change genuinely requires a spec-input edit.
+              """;
+
         return $$"""
         **Decision Logic (apply to EACH item independently):**
 
@@ -261,10 +275,9 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         - Informational: Explanations, questions, acknowledgments
         - Build/generation success with no errors
         - Discussion or questions without a clear directive
-
         **TypeSpec Decorator Applicability (TSP_APPLICABLE):**
-        Consult the reference documentation provided to determine if any supported
-        TypeSpec client customization decorator can address the feedback.
+        **TypeSpec Decorator Applicability (TSP_APPLICABLE):**
+        {{tspApplicabilityGuidance}}
         {{tspVerificationGuidance}}
 
         **Common feedback patterns that ARE TypeSpec-applicable:**

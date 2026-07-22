@@ -63,5 +63,7 @@ public class FeedbackClassificationTemplateTests
         Assert.That(prompt, Does.Contain("TypeSpec inspection unavailable"));
         Assert.That(prompt, Does.Not.Contain("**Available Tools:**"));
         Assert.That(prompt, Does.Not.Contain("Always search the TypeSpec files first"));
+        Assert.That(prompt, Does.Not.Contain("reference documentation below"));
+        Assert.That(prompt, Does.Not.Contain("Consult the reference documentation provided"));
     }
 }

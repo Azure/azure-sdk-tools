@@ -5,7 +5,6 @@ trigger: none
 pr: none
 
 variables:
-  - template: /eng/pipelines/templates/variables/image.yml
   - group: AzSDK_Eval_Variable_group
   - name: TypeSpecAuthorEvalExtraArgs
     value: '--tag mode:no-skill --skill-dir /tmp/no-skills'
@@ -18,7 +17,7 @@ extends:
       - 'evals/*.eval.yaml'
     mcpSetupTemplate: /eng/common/pipelines/templates/steps/eval-mcp-setup.yml
     TestType: live
-    evalInvokeTemplate: /eng/common/pipelines/templates/steps/eval-invoke.yml
+    evalInvokeTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-eval-invoke.yml
     threshold: 1.0
     preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
     failOnFailedTests: false

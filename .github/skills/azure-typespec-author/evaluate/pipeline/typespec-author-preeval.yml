@@ -60,24 +60,3 @@ steps:
       npm ci --userconfig $(Build.SourcesDirectory)/.npmrc
       echo "##vso[task.setvariable variable=FIXTURE_NODE_MODULES]$(Build.SourcesDirectory)/$FIXTURE_DIR/node_modules"
     displayName: 'Prepare fixture files and node_modules'
-
-  - script: |
-      set -e
-      BASE_ARGS="${EVAL_ARGS_BASE:-}"
-      EXTRA_ARGS="${TYPE_SPEC_AUTHOR_EVAL_EXTRA_ARGS:-}"
-      if [ "$EXTRA_ARGS" = '$(TypeSpecAuthorEvalExtraArgs)' ]; then
-        EXTRA_ARGS=""
-      fi
-      FINAL_ARGS="$BASE_ARGS"
-      if [ -n "$EXTRA_ARGS" ]; then
-        echo "Applying extra eval args to shard: $EXTRA_ARGS"
-        FINAL_ARGS="$FINAL_ARGS $EXTRA_ARGS"
-      else
-        echo "No extra eval args injected."
-      fi
-      echo "##vso[task.setvariable variable=evalArgs]$FINAL_ARGS"
-      echo "Final evalArgs: $FINAL_ARGS"
-    displayName: 'Inject optional extra args into evalArgs'
-    env:
-      EVAL_ARGS_BASE: $(evalArgs)
-      TYPE_SPEC_AUTHOR_EVAL_EXTRA_ARGS: $(TypeSpecAuthorEvalExtraArgs)

@@ -35,6 +35,7 @@ parameters:
   default: 1
 
 variables:
+- template: /eng/pipelines/templates/variables/image.yml
 - name: SkillBranch
   value: ${{ parameters.SkillBranch }}
 
@@ -223,7 +224,7 @@ extends:
             parameters:
               matrixStageName: PrepareForced
               vallyRoot: .github/skills/azure-typespec-author/evaluate
-              evalInvokeTemplate: /eng/common/pipelines/templates/steps/eval-invoke.yml
+              evalInvokeTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-eval-invoke.yml
               preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval-forced.yml
               threshold: 1.0
               shardTimeoutInMinutes: 50
@@ -261,7 +262,7 @@ extends:
             parameters:
               matrixStageName: PrepareTrigger
               vallyRoot: .github/skills/azure-typespec-author/evaluate
-              evalInvokeTemplate: /eng/common/pipelines/templates/steps/eval-invoke.yml
+              evalInvokeTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-eval-invoke.yml
               preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
               threshold: 1.0
               shardTimeoutInMinutes: 30

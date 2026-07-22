@@ -5,6 +5,7 @@ trigger: none
 pr: none
 
 variables:
+  - template: /eng/pipelines/templates/variables/image.yml
   - group: AzSDK_Eval_Variable_group
   - name: TypeSpecAuthorEvalExtraArgs
     value: '--tag mode:no-skill --skill-dir /tmp/no-skills'

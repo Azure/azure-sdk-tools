@@ -12,6 +12,8 @@ using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan;
 using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.Notification;
+using Azure.Sdk.Tools.Cli.Services.Notification.Templates;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using ModelContextProtocol;
 using ModelContextProtocol.Server;
@@ -32,7 +34,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         IInputSanitizer inputSanitizer,
         HttpClient httpClient,
         INpxHelper npxHelper,
-        IRawOutputHelper outputHelper
+        IRawOutputHelper outputHelper,
+        INotificationService notificationService
     ) : MCPMultiCommandTool
     {
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.ReleasePlan];
@@ -1180,7 +1183,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                                         nextSteps.AddRange(sdkDetailsResult.NextSteps);
                                     }
                                 }
-                            }                            
+                            }
                         }
                         catch (Exception sdkEx)
                         {
@@ -1201,6 +1204,24 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
 
                     reporter.NextStep(message.ToString());
+
+                    // Refresh the release plan and notify the submitter. Both are best-effort and must
+                    // never fail release plan creation, so any error here is logged and swallowed.
+                    try
+                    {
+                        //Refresh release plan to get latest details
+                        releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(releasePlan.WorkItemId, ct);
+
+                        // Recipient routing (To/CC) is owned by the email template.
+                        // Silently completes when notifications are disabled.
+                        var releasePlanEmail = new NewReleasePlanEmail(releasePlan);
+                        await notificationService.SendEmailNotificationAsync(releasePlanEmail, ct);
+                    }
+                    catch (Exception notifyEx)
+                    {
+                        logger.LogWarning(notifyEx, "Failed to refresh release plan or send release plan notification.");
+                    }
+
                     return new ReleasePlanResponse
                     {
                         Message = message.ToString(),

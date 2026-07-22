@@ -1075,7 +1075,11 @@
     if (!isPmCard) p = displayPlan(p);
     const showPmAction = !!(options && options.showPmAction && currentUserIsPM);
     const pastDue = isPastDue(p);
-    const cardClass = pastDue ? "plan-card past-due" : "plan-card";
+    const isAbandoned = p.state === "Abandoned";
+    const cardClass =
+      "plan-card" +
+      (pastDue ? " past-due" : "") +
+      (isAbandoned ? " abandoned" : "");
     const step = computeCurrentStep(p);
     const copilotBadge =
       (p.createdUsing || "").toLowerCase() === "copilot"
@@ -1097,13 +1101,17 @@
       p.state === "Finished"
         ? `<span class="badge badge-finished-indicator">✔ ${esc(step.status)}</span>`
         : "";
+    const abandonedBadge = isAbandoned
+      ? '<span class="badge badge-abandoned">Abandoned</span>'
+      : "";
     const stepHTML =
-      step.status && !isTerminal
+      step.status && !isTerminal && !isAbandoned
         ? `<span class="step-badge ${step.statusClass}">${esc(step.status)}</span>`
         : "";
     const actionHTML =
       step.action &&
       !isTerminal &&
+      !isAbandoned &&
       !(showPmAction && p._pmAction) &&
       isServiceTeamAction(step.action)
         ? `<span class="action-badge">Action required from: ${esc(step.action)}</span>`
@@ -1158,7 +1166,7 @@
         <div class="card-meta">
           ${p.releaseMonth ? `<span>${esc(p.releaseMonth)}</span>` : ""}
           ${p.submittedBy ? `<span class="card-submitter">${esc(p.submittedBy)}</span>` : ""}
-          ${stepHTML}${actionHTML}${finishedBadge}${dupHTML}
+          ${abandonedBadge}${stepHTML}${actionHTML}${finishedBadge}${dupHTML}
           ${apiReadinessBadge(p)}
           ${pastDue ? '<span class="badge badge-pastdue">Past Due</span>' : ""}
         </div>
@@ -1310,7 +1318,8 @@
     const step = computeCurrentStep(p);
     const isTerminal =
       step.status === "Released" || step.status === "Completed";
-    if (isTerminal || p.state === "Finished") return "";
+    if (isTerminal || p.state === "Finished" || p.state === "Abandoned")
+      return "";
 
     const specPath = p.specProjectPath || p.typeSpecPath || "";
     const specPrUrl = (p.apiSpec && p.apiSpec.specPrUrl) || "";

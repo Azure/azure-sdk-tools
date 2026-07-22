@@ -1265,6 +1265,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return new DefaultCommandResponse { ResponseError = $"Failed to parse TypeSpec project at {typeSpecProjectPath}." };
                 }
 
+                // Skip updating SDK details to avoid marking packages as missing emitter config when no SDK details are available.
+                if (resolvedPackages.Count == 0)
+                {
+                    logger.LogDebug("No package details were identified in the TypeSpec project path {typeSpecProjectPath}", typeSpecProjectPath);
+                    return new DefaultCommandResponse { Message = $"No package details were identified in the TypeSpec project path {typeSpecProjectPath}" };
+                }
+
                 // Get release plan. The resolver accepts either a Release Plan ID or a work item ID.
                 var releasePlan = await devOpsService.ResolveReleasePlanByIdAsync(releasePlanWorkItemId, ct);
                 if (releasePlan == null)

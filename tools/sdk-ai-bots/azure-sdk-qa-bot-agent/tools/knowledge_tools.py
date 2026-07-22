@@ -12,7 +12,7 @@ import logging
 from enum import Enum
 from typing import Annotated
 
-from config.tenant_config import TenantID, get_tenant_config
+from config.tenant_config import TenantID, get_knowledge_source, get_tenant_config
 from config.app_config import get as cfg
 from models.knowledge import Reference, SearchKnowledgeBaseResult
 from tools import tool
@@ -283,50 +283,84 @@ class KnowledgeTools:
         return SearchKnowledgeBaseResult(results=refs)
 
     @tool
-    async def search_wiki(
+    async def grep_chunks(
         self,
         *,
-        queries: Annotated[
-            list[str],
-            "1-3 search queries to run against the synthesized WIKI layer. "
-            "The wiki is a curated, cross-document knowledge layer built from the "
-            "corpus: per-document SUMMARY pages, per-symbol ENTITY pages "
-            "(decorators/APIs/types), and per-topic CONCEPT pages. Phrase queries "
-            "as complete natural-language questions or topic phrases (concept/"
-            "symbol names retrieve best). At least 1, at most 3.",
-        ],
-        tenant_id: Annotated[
+        query: Annotated[
             str,
-            "The active tenant ID for the current conversation.",
+            "A single literal/keyword query to match EXACTLY inside SOURCE "
+            "document chunks — the tool's strength is exact identifiers: "
+            "decorator names (`@added`), type/model names, error text, linter "
+            "rule IDs, property names. Pack a few synonyms into one query with "
+            "spaces (BM25 OR). Use this instead of `search_knowledge_base` when "
+            "you know the exact term/string to find.",
         ],
+        tenant_id: Annotated[str, "The active tenant ID for the current conversation."],
         sources: Annotated[
             list[str] | None,
-            "Optional list of knowledge source names to scope the wiki search. "
+            "Optional list of knowledge source names to scope the search. "
             "If omitted, all sources configured for the tenant are used.",
         ] = None,
     ) -> SearchKnowledgeBaseResult:
-        """Search the synthesized wiki layer and route to authoritative sources.
+        """Literal keyword search over SOURCE document chunks (WeKnora grep_chunks).
 
-        This is the WIKI track (kept separate from ``search_knowledge_base``):
-        it retrieves the LLM-synthesized wiki pages — which consolidate what the
-        whole corpus says about a symbol or concept — and, for each relevant
-        page, also pulls the specific SOURCE document chunks it was built from.
-        Use it to orient on a topic and get both the cross-document overview and
-        the grounded source detail in one call. Prefer ``search_knowledge_base``
-        for exact/literal lookups of specific wording.
+        The "Entity Anchoring" step of the retrieval sequence: BM25 keyword
+        matching that pins down exact named symbols / strings a semantic search
+        would blur. Searches ONLY raw source chunks (never wiki pages) and
+        returns their full section content.
         """
         if not sources:
             config = get_tenant_config(TenantID(tenant_id))
             sources = [src.name for src in config.sources] if config else []
-
         search_client = get_search_client()
         source_filters = _resolve_source_filters(sources, tenant_id, None)
+        hits = await search_client.keyword_search(
+            query=query, source_filters=source_filters, extra_filter=NON_WIKI_FILTER
+        )
+        unique = [c for c in search_client.deduplicate_chunks(hits) if not c.page_type]
+        unique = unique[: search_client.top_k]
+        if not unique:
+            return SearchKnowledgeBaseResult(results=[])
+        expanded = await asyncio.gather(
+            *[search_client.expand_by_hierarchy(c) for c in unique]
+        )
+        return SearchKnowledgeBaseResult(results=_refs_from_expanded(expanded, unique))
 
-        enable_keyword = cfg("KB_ENABLE_KEYWORD", "true").lower() == "true"
+    @tool
+    async def wiki_search(
+        self,
+        *,
+        queries: Annotated[
+            list[str],
+            "1-3 queries to find WIKI pages (entry points). The wiki is a curated "
+            "cross-document layer: per-document SUMMARY pages, per-symbol ENTITY "
+            "pages (decorators/APIs/types), per-topic CONCEPT pages. Use symbol/"
+            "concept names or short topic phrases. Returns page titles + short "
+            "summaries only — you MUST then call `wiki_read_page` to read a page.",
+        ],
+        tenant_id: Annotated[str, "The active tenant ID for the current conversation."],
+        sources: Annotated[
+            list[str] | None,
+            "Optional list of knowledge source names to scope the search. "
+            "If omitted, all sources configured for the tenant are used.",
+        ] = None,
+    ) -> SearchKnowledgeBaseResult:
+        """Find wiki pages (entry points) by query — returns summaries ONLY.
+
+        Step 1 of the wiki Search-Read-Expand cycle (WeKnora wiki_search). It
+        returns page titles + short summaries so you can choose which to open;
+        it is NOT enough to answer from. You MUST call `wiki_read_page` on the
+        relevant titles to get the full page content before answering.
+        """
+        if not sources:
+            config = get_tenant_config(TenantID(tenant_id))
+            sources = [src.name for src in config.sources] if config else []
+        search_client = get_search_client()
+        source_filters = _resolve_source_filters(sources, tenant_id, None)
         rrf_k = int(cfg("KB_RRF_K", "60"))
-        capped_queries = queries[:3]
+        enable_keyword = cfg("KB_ENABLE_KEYWORD", "true").lower() == "true"
 
-        async def _wiki_fused(q: str) -> list:
+        async def _fused(q: str) -> list:
             coros = [
                 search_client.vector_search(
                     query=q, source_filters=source_filters, extra_filter=WIKI_FILTER
@@ -341,72 +375,136 @@ class KnowledgeTools:
                 )
                 weights.append(1.0)
             res = await asyncio.gather(*coros, return_exceptions=True)
-            ranked = [
-                (r, w)
-                for r, w in zip(res, weights)
-                if not isinstance(r, BaseException) and r
-            ]
+            ranked = [(r, w) for r, w in zip(res, weights) if not isinstance(r, BaseException) and r]
             if not ranked:
                 return []
-            if len(ranked) > 1:
-                return fuse_with_rrf(ranked, k=rrf_k)
-            return list(ranked[0][0])
+            return fuse_with_rrf(ranked, k=rrf_k) if len(ranked) > 1 else list(ranked[0][0])
 
-        per_query = await asyncio.gather(*[_wiki_fused(q) for q in capped_queries])
+        per_query = await asyncio.gather(*[_fused(q) for q in queries[:3]])
         raw: list = []
         for lst in per_query:
             raw.extend(lst)
-
-        unique = search_client.deduplicate_chunks(raw)
-        # Defensive: this track serves wiki pages only.
         unique = [
-            c for c in unique if c.page_type in ("summary", "entity", "concept", "synthesis")
+            c for c in search_client.deduplicate_chunks(raw)
+            if c.page_type in ("summary", "entity", "concept", "synthesis")
         ]
         unique.sort(key=lambda c: c.rerank_score, reverse=True)
-        max_wiki = int(cfg("KB_WIKI_TOP", "6"))
-        wiki_pages = unique[:max_wiki]
-
-        # Route each wiki page to the SOURCE chunks it was built from, so the
-        # agent gets grounded detail alongside the synthesized overview.
-        routed = await search_client.backfill_wiki_sources(
-            wiki_pages,
-            per_page=int(cfg("KB_WIKI_ROUTE_PER_PAGE", "3")),
-            max_total=int(cfg("KB_WIKI_ROUTE_MAX_TOTAL", "12")),
-        )
-
-        combined = wiki_pages + routed
-        if not combined:
-            logger.info("search_wiki: no wiki pages matched queries=%s", capped_queries)
-            return SearchKnowledgeBaseResult(results=[])
-
-        expanded = await asyncio.gather(
-            *[search_client.expand_by_hierarchy(c) for c in combined]
-        )
-        logger.info(
-            "=========Wiki Search Result========= (%d pages + %d routed sources)",
-            len(wiki_pages), len(routed),
-        )
-        refs = [
+        max_wiki = int(cfg("KB_WIKI_SEARCH_TOP", "10"))
+        # Return summaries only (title + page_type + truncated snippet).
+        results = [
             Reference(
-                title=_build_reference_title(
-                    expanded[i].title,
-                    expanded[i].header1,
-                    expanded[i].header2,
-                    expanded[i].header3,
-                ),
-                source=expanded[i].source,
-                link=expanded[i].link,
-                content=_truncate_content(expanded[i].content),
-                score=combined[i].rerank_score,
+                title=c.title,
+                source=c.page_type,
+                link="",
+                content=_truncate_content((c.content or "")[:400]),
+                score=c.rerank_score,
             )
-            for i in range(len(expanded))
+            for c in unique[:max_wiki]
         ]
-        for i, ref in enumerate(refs):
-            logger.info(
-                "Wiki [%d] score=%.2f, source=%s, title=%s, content_len=%d",
-                i + 1, ref.score, ref.source, ref.title, len(ref.content or ""),
+        logger.info("wiki_search: %d entry pages for queries=%s", len(results), queries[:3])
+        return SearchKnowledgeBaseResult(results=results)
+
+    @tool
+    async def wiki_read_page(
+        self,
+        *,
+        titles: Annotated[
+            list[str],
+            "1-5 wiki page titles (exactly as returned by `wiki_search`) to read "
+            "in full. Read several related pages at once for broad coverage.",
+        ],
+        tenant_id: Annotated[str, "The active tenant ID for the current conversation."],
+        sources: Annotated[
+            list[str] | None,
+            "Optional list of knowledge source names to scope the lookup. "
+            "If omitted, all sources configured for the tenant are used.",
+        ] = None,
+    ) -> SearchKnowledgeBaseResult:
+        """Read full wiki page(s) + their SOURCE refs (WeKnora wiki_read_page).
+
+        Step 2 of the wiki cycle: returns each page's full synthesized content
+        plus a ``Sources`` list of the source documents it was built from. If a
+        page lacks a specific detail, drill into a listed source with
+        `wiki_read_source_doc`.
+        """
+        if not sources:
+            config = get_tenant_config(TenantID(tenant_id))
+            sources = [src.name for src in config.sources] if config else []
+        search_client = get_search_client()
+        chunks = await search_client.fetch_by_title(titles[:5], WIKI_FILTER)
+        if not chunks:
+            return SearchKnowledgeBaseResult(results=[])
+        # Group multi-chunk pages by title; concat body + collect source refs.
+        by_title: dict[str, list] = {}
+        for c in chunks:
+            by_title.setdefault(c.title, []).append(c)
+        results: list[Reference] = []
+        for title, parts in by_title.items():
+            body = "\n".join(p.content for p in parts if p.content)
+            refs: list[str] = []
+            for p in parts:
+                for r in p.chunk_refs:
+                    if r and r not in refs:
+                        refs.append(r)
+            page_type = parts[0].page_type
+            source_def = get_knowledge_source(parts[0].source)
+            link = source_def.get_link(title) if source_def else ""
+            if refs:
+                body += "\n\nSources (drill with wiki_read_source_doc(source_ref=...)):\n" + \
+                    "\n".join(f"- {r}" for r in refs[:10])
+            results.append(
+                Reference(
+                    title=title,
+                    source=page_type,
+                    link=link,
+                    content=_truncate_content(body),
+                    score=0.0,
+                )
             )
-        return SearchKnowledgeBaseResult(results=refs)
+        logger.info("wiki_read_page: read %d page(s) for titles=%s", len(results), titles[:5])
+        return SearchKnowledgeBaseResult(results=results)
+
+    @tool
+    async def wiki_read_source_doc(
+        self,
+        *,
+        source_ref: Annotated[
+            str,
+            "A source document reference exactly as listed in a wiki page's "
+            "`Sources` section (from `wiki_read_page`). Reads that original "
+            "source document to drill into details the wiki page omits.",
+        ],
+        tenant_id: Annotated[str, "The active tenant ID for the current conversation."],
+        query: Annotated[
+            str | None,
+            "Optional keyword(s) to focus the source doc on a specific detail "
+            "(BM25). Omit to read the document from the top.",
+        ] = None,
+    ) -> SearchKnowledgeBaseResult:
+        """Drill into an original SOURCE document behind a wiki page (WeKnora
+        wiki_read_source_doc). The fallback step when a wiki page lacks a
+        specific quote, value, or code snippet."""
+        search_client = get_search_client()
+        chunks = await search_client.fetch_by_title(
+            [source_ref], NON_WIKI_FILTER, top=60, keyword=query
+        )
+        chunks = [c for c in chunks if not c.page_type]
+        if not chunks:
+            return SearchKnowledgeBaseResult(results=[])
+        body = "\n".join(c.content for c in chunks if c.content)
+        source_def = get_knowledge_source(chunks[0].source)
+        link = source_def.get_link(source_ref) if source_def else ""
+        return SearchKnowledgeBaseResult(
+            results=[
+                Reference(
+                    title=source_ref,
+                    source=chunks[0].source,
+                    link=link,
+                    content=_truncate_content(body),
+                    score=0.0,
+                )
+            ]
+        )
 
 
 def _resolve_source_filters(
@@ -458,3 +556,22 @@ def _build_reference_title(
     """Build a reference title from the deepest available header path."""
     parts = [part for part in (header1, header2, header3) if part]
     return " | ".join(parts) if parts else document_title
+
+
+def _refs_from_expanded(expanded: list, scored: list) -> list[Reference]:
+    """Build References from expanded chunks, taking scores from *scored*."""
+    return [
+        Reference(
+            title=_build_reference_title(
+                expanded[i].title,
+                expanded[i].header1,
+                expanded[i].header2,
+                expanded[i].header3,
+            ),
+            source=expanded[i].source,
+            link=expanded[i].link,
+            content=_truncate_content(expanded[i].content),
+            score=scored[i].rerank_score,
+        )
+        for i in range(len(expanded))
+    ]

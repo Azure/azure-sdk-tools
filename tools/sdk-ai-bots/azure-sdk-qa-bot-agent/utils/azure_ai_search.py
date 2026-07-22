@@ -524,6 +524,39 @@ class SearchClient:
         )
         return backfilled
 
+    async def fetch_by_title(
+        self,
+        titles: "list[str]",
+        extra_filter: str,
+        top: int = 40,
+        keyword: str | None = None,
+    ) -> "list[KnowledgeChunk]":
+        """Fetch chunks/pages whose ``title`` is one of *titles*, gated by
+        *extra_filter* (WIKI_FILTER or NON_WIKI_FILTER).
+
+        With *keyword* set, ranks by BM25 over the matched docs (used by
+        ``wiki_read_source_doc``'s regex/keyword drill); otherwise returns them
+        in ``ordinal_position`` order so a document reads top-to-bottom.
+        """
+        titles = [t for t in (titles or []) if t]
+        if not titles:
+            return []
+        title_clause = " or ".join(f"title eq '{_escape_odata(t)}'" for t in titles)
+        combined = f"({title_clause}) and {extra_filter}"
+        search_kwargs: dict = {
+            "search_text": keyword or "*",
+            "filter": combined,
+            "top": top,
+            "select": _RETRIEVER_SELECT_FIELDS,
+        }
+        if not keyword:
+            search_kwargs["order_by"] = ["ordinal_position asc"]
+        results = await self._search_client.search(**search_kwargs)
+        chunks: list[KnowledgeChunk] = []
+        async for doc in results:
+            chunks.append(KnowledgeChunk.model_validate(dict(doc)))
+        return chunks
+
     async def close(self) -> None:
         await self._kb_client.close()
         await self._search_client.close()

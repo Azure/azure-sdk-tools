@@ -511,7 +511,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         sources=[*_TYPESPEC_SOURCES, *_sources(SRC_AZURE_SDK_DOCS_ENG, SRC_STATIC_CPEX_DOCS)],
         source_filter={
             SRC_AZURE_SDK_DOCS_ENG: "search.ismatch('design*', 'title')",
-            SRC_STATIC_CPEX_DOCS: "search.in(title, 'introducing_a_breaking_change.md,faq_breaking_changes.md,apibreakingchanges.md,azurebreakingchangeplaybook.md', ',')",
+            SRC_STATIC_CPEX_DOCS: "search.ismatch('/.*breaking.*/', 'title', 'full', 'any')",
         },
         qa_guideline_file="tenants/typespec.md",
         enable_routing=True,
@@ -575,7 +575,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         ),
         source_filter={
             SRC_AZURE_SDK_DOCS_ENG: "search.ismatch('design*', 'title')",
-            SRC_STATIC_CPEX_DOCS: "search.in(title, 'introducing_a_breaking_change.md,faq_breaking_changes.md,apibreakingchanges.md,azurebreakingchangeplaybook.md', ',')",
+            SRC_STATIC_CPEX_DOCS: "search.ismatch('/.*breaking.*/', 'title', 'full', 'any')",
         },
         qa_guideline_file="tenants/api_spec_review.md",
         enable_routing=True,

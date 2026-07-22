@@ -395,23 +395,6 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
-        /// ApproveReviewAsync
-        /// </summary>
-        /// <param name="user"></param>
-        /// <param name="reviewId"></param>
-        /// <param name="notes"></param>
-        /// <returns></returns>
-        public async Task ApproveReviewAsync(ClaimsPrincipal user, string reviewId, string notes = "")
-        {
-            ReviewListItemModel review = await _reviewsRepository.GetReviewAsync(reviewId);
-            if (review.IsApproved)
-            {
-                return;
-            }
-            await ToggleReviewApproval(user, review);
-        }
-
-        /// <summary>
         /// Request namespace review for TypeSpec and mark related SDK language reviews as namespace approval requested
         /// </summary>
         /// <param name="user"></param>
@@ -611,9 +594,7 @@ namespace APIViewWeb.Managers
                 _logger.LogInformation("Copilot job started successfully. JobId: {JobId}, ReviewId: {ReviewId}, APIRevisionId: {APIRevisionId}", 
                     jobStartedResponse.JobId, reviewId, activeApiRevision.Id);
                 
-                activeApiRevision.CopilotReviewJobId = jobStartedResponse.JobId;
-                activeApiRevision.CopilotReviewInProgress = true;
-                await _apiRevisionsManager.UpdateAPIRevisionAsync(activeApiRevision);
+                await _apiRevisionsManager.UpdateAPIRevisionCopilotDetailsAsync(activeApiRevision, copilotReviewInProgress: true, copilotReviewJobId: jobStartedResponse.JobId);
                 _pollingJobQueueManager.Enqueue(new AIReviewJobInfoModel()
                 {
                     JobId = jobStartedResponse.JobId,
@@ -626,8 +607,7 @@ namespace APIViewWeb.Managers
                 _logger.LogError(e, "Failed to start Copilot job for ReviewId: {ReviewId}, APIRevisionId: {APIRevisionId}", 
                     reviewId, activeApiRevision.Id);
                 
-                activeApiRevision.CopilotReviewInProgress = false;
-                await _apiRevisionsManager.UpdateAPIRevisionAsync(activeApiRevision);
+                await _apiRevisionsManager.UpdateAPIRevisionCopilotDetailsAsync(activeApiRevision, copilotReviewInProgress: false);
                 throw new Exception($"Copilot Failed: {e.Message}");
             }
         }

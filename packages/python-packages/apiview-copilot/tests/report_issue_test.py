@@ -101,6 +101,49 @@ class TestFormatCommentContextForPrompt:
     def test_none(self):
         assert _format_comment_context_for_prompt(None) == ""
 
+    def test_single_comment_thread_does_not_emit_transcript(self):
+        text = _format_comment_context_for_prompt(
+            {
+                "comment_text": "lone comment",
+                "thread_comments": [
+                    {"comment_text": "lone comment", "created_by": "alice", "created_on": "2026-05-01T00:00:00Z"},
+                ],
+            }
+        )
+        assert "Thread:" not in text
+        assert "Comment: lone comment" in text
+
+    def test_multi_comment_thread_emits_transcript(self):
+        text = _format_comment_context_for_prompt(
+            {
+                "comment_text": "first",
+                "thread_comments": [
+                    {"comment_text": "first", "created_by": "alice", "created_on": "2026-05-01T00:00:00Z"},
+                    {"comment_text": "second", "created_by": "bob", "created_on": "2026-05-02T00:00:00Z"},
+                ],
+            }
+        )
+        assert "Thread:" in text
+        assert "@alice (2026-05-01T00:00:00Z): first" in text
+        assert "@bob (2026-05-02T00:00:00Z): second" in text
+
+    def test_escape_mentions_wraps_authors_in_backticks(self):
+        text = _format_comment_context_for_prompt(
+            {
+                "comment_text": "first",
+                "thread_comments": [
+                    {"comment_text": "first", "created_by": "alice", "created_on": "2026-05-01T00:00:00Z"},
+                    {"comment_text": "second", "created_by": "bob", "created_on": "2026-05-02T00:00:00Z"},
+                ],
+            },
+            escape_mentions=True,
+        )
+        assert "`@alice` (2026-05-01T00:00:00Z): first" in text
+        assert "`@bob` (2026-05-02T00:00:00Z): second" in text
+        # No bare @author tokens that GitHub would turn into mentions.
+        assert "@alice" not in text.replace("`@alice`", "")
+        assert "@bob" not in text.replace("`@bob`", "")
+
 
 class TestBuildFallbackTitleSnippet:
     def test_short(self):
@@ -190,19 +233,13 @@ class TestGenerateIssueContent:
                 "body": "x",
             }
         )
-        result = _generate_issue_content(
-            description="x", review_link=None, language=None, comment_context=None
-        )
+        result = _generate_issue_content(description="x", review_link=None, language=None, comment_context=None)
         assert result["title"] == "[APIView] Tree fails to expand"
 
     @patch("src._report_issue.run_prompt")
     def test_unknown_category_defaults_to_apiview(self, mock_run_prompt):
-        mock_run_prompt.return_value = json.dumps(
-            {"category": "infra", "language": None, "title": "x", "body": "y"}
-        )
-        result = _generate_issue_content(
-            description="x", review_link=None, language=None, comment_context=None
-        )
+        mock_run_prompt.return_value = json.dumps({"category": "infra", "language": None, "title": "x", "body": "y"})
+        result = _generate_issue_content(description="x", review_link=None, language=None, comment_context=None)
         assert result["category"] == "apiview"
         assert result["title"] == "[APIView] x"
 
@@ -211,9 +248,7 @@ class TestGenerateIssueContent:
         mock_run_prompt.return_value = json.dumps(
             {"category": "avc", "language": None, "title": "Bad suggestion", "body": "details"}
         )
-        result = _generate_issue_content(
-            description="x", review_link=None, language=None, comment_context=None
-        )
+        result = _generate_issue_content(description="x", review_link=None, language=None, comment_context=None)
         assert result["category"] == "avc"
         assert result["language"] is None
         assert result["title"] == "[AVC] Bad suggestion"
@@ -235,9 +270,7 @@ class TestGenerateIssueContent:
     @patch("src._report_issue.run_prompt")
     def test_falls_back_on_invalid_json(self, mock_run_prompt):
         mock_run_prompt.return_value = "not json"
-        result = _generate_issue_content(
-            description="bad thing", review_link=None, language=None, comment_context=None
-        )
+        result = _generate_issue_content(description="bad thing", review_link=None, language=None, comment_context=None)
         assert result["category"] == "apiview"
         assert result["title"] == "[APIView] bad thing"
 
@@ -246,9 +279,7 @@ class TestGenerateIssueContent:
         mock_run_prompt.return_value = json.dumps(
             {"category": "apiview", "language": "python", "title": "Issue", "body": "body"}
         )
-        result = _generate_issue_content(
-            description="x", review_link=None, language=None, comment_context=None
-        )
+        result = _generate_issue_content(description="x", review_link=None, language=None, comment_context=None)
         assert result["language"] is None
         assert result["title"] == "[APIView] Issue"
 
@@ -280,6 +311,22 @@ class TestLookupCommentContext:
                 "ReviewId": "r-1",
                 "APIRevisionId": "rev-2",
             },
+            "thread_comments": [
+                {
+                    "id": "c1",
+                    "CommentText": "remove async",
+                    "CommentSource": "copilot",
+                    "CreatedBy": "azure-sdk",
+                    "CreatedOn": "2026-05-01T00:00:00Z",
+                },
+                {
+                    "id": "c2",
+                    "CommentText": "actually it should stay async",
+                    "CommentSource": "UserGenerated",
+                    "CreatedBy": "alice",
+                    "CreatedOn": "2026-05-02T00:00:00Z",
+                },
+            ],
             "code": "async def upload_blob(self, name: str, data: bytes) -> None: ...",
             "language": "Python",
             "package_name": "azure-storage-blob",
@@ -293,6 +340,22 @@ class TestLookupCommentContext:
             "element_id": "AsyncBlobClient.upload_blob",
             "review_id": "r-1",
             "revision_id": "rev-2",
+            "thread_comments": [
+                {
+                    "id": "c1",
+                    "comment_text": "remove async",
+                    "comment_source": "copilot",
+                    "created_by": "azure-sdk",
+                    "created_on": "2026-05-01T00:00:00Z",
+                },
+                {
+                    "id": "c2",
+                    "comment_text": "actually it should stay async",
+                    "comment_source": "UserGenerated",
+                    "created_by": "alice",
+                    "created_on": "2026-05-02T00:00:00Z",
+                },
+            ],
         }
 
     @patch("src._report_issue.os.getenv")
@@ -379,9 +442,7 @@ class TestHandleReportIssueRequestEndToEnd:
     @patch("src._report_issue.create_issue")
     @patch("src._report_issue.run_prompt")
     @patch("src._report_issue.get_comment_with_context")
-    def test_comment_id_path_fetches_context(
-        self, mock_get, mock_run_prompt, mock_create_issue, _mock_get_instance
-    ):
+    def test_comment_id_path_fetches_context(self, mock_get, mock_run_prompt, mock_create_issue, _mock_get_instance):
         mock_get.return_value = {
             "comment": {
                 "CommentText": "this is wrong",
@@ -430,9 +491,7 @@ class TestHandleReportIssueRequestEndToEnd:
             "code": None,
             "language": "Python",
         }
-        mock_run_prompt.return_value = json.dumps(
-            {"category": "avc", "language": None, "title": "t", "body": "b"}
-        )
+        mock_run_prompt.return_value = json.dumps({"category": "avc", "language": None, "title": "t", "body": "b"})
         mock_create_issue.return_value = {"html_url": "u", "number": 6}
 
         handle_report_issue_request(
@@ -459,8 +518,7 @@ class TestBuildReviewLink:
     def test_staging_host(self, mock_getenv):
         mock_getenv.side_effect = lambda key, default=None: {"ENVIRONMENT_NAME": "staging"}.get(key, default)
         assert (
-            _build_review_link("r1", "rev1")
-            == "https://spa.apiviewstagingtest.com/review/r1?activeApiRevisionId=rev1"
+            _build_review_link("r1", "rev1") == "https://spa.apiviewstagingtest.com/review/r1?activeApiRevisionId=rev1"
         )
 
     @patch("src._report_issue.os.getenv")

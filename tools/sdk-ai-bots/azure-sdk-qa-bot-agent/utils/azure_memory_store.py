@@ -1,0 +1,115 @@
+"""Azure SDK QA Bot Agent Memory Store helpers.
+
+Provides shared config accessors (store names, update delay, scope
+sanitisation), plus one-time store-creation helpers.
+"""
+
+from __future__ import annotations
+
+import logging
+import os
+import re
+
+from azure.ai.projects.aio import AIProjectClient
+from azure.ai.projects.models import (
+    MemoryStoreDefaultDefinition,
+    MemoryStoreDefaultOptions,
+)
+from azure.core.exceptions import ResourceNotFoundError
+
+from config.app_config import get as cfg
+
+logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Shared config accessors
+# ---------------------------------------------------------------------------
+
+_SANITIZE_RE = re.compile(r"[^A-Za-z0-9_-]")
+_MAX_SCOPE_LENGTH = 256
+
+
+def get_user_store_name() -> str | None:
+    """Return the user memory store name from App Config, or ``None``."""
+    return cfg("MEMORY_USER_STORE_NAME") or None
+
+
+def get_memory_update_delay() -> int:
+    """Return memory update delay in seconds.
+
+    Local env var overrides App Config for flexibility during development.
+    """
+    env_value = os.environ.get("MEMORY_UPDATE_DELAY")
+    return int(env_value) if env_value else int(cfg("MEMORY_UPDATE_DELAY", "300"))
+
+
+def sanitize_scope(raw: str) -> str:
+    """Keep only characters allowed by Foundry Memory Store: A-Z, a-z, 0-9, '-', '_'."""
+    return _SANITIZE_RE.sub("", raw)[:_MAX_SCOPE_LENGTH]
+
+
+# ---------------------------------------------------------------------------
+# User‑profile extraction instructions
+# ---------------------------------------------------------------------------
+
+_USER_PROFILE_DETAILS = (
+    "Extract personal preferences, the SDK and programming language the user "
+    "works with, their specific project context, and individual working patterns."
+)
+
+
+# ---------------------------------------------------------------------------
+# Ensure helpers
+# ---------------------------------------------------------------------------
+
+
+async def _ensure_memory_store(
+    project_client: AIProjectClient,
+    store_name: str,
+    *,
+    chat_summary_enabled: bool,
+    user_profile_details: str,
+    description: str,
+) -> str:
+    """Create a memory store if it doesn't already exist. Returns the name."""
+    chat_model = cfg("MEMORY_STORE_REASONING_MODEL", "gpt-5.4")
+    embedding_model = cfg("MEMORY_STORE_EMBEDDING_MODEL", "text-embedding-ada-002")
+
+    try:
+        await project_client.beta.memory_stores.get(store_name)
+        logger.info("Memory store already exists: %s", store_name)
+    except ResourceNotFoundError:
+        await project_client.beta.memory_stores.create(
+            name=store_name,
+            definition=MemoryStoreDefaultDefinition(
+                chat_model=chat_model,
+                embedding_model=embedding_model,
+                options=MemoryStoreDefaultOptions(
+                    user_profile_enabled=True,
+                    chat_summary_enabled=chat_summary_enabled,
+                    user_profile_details=user_profile_details,
+                ),
+            ),
+            description=description,
+        )
+        logger.info("Created memory store: %s", store_name)
+
+    return store_name
+
+
+async def ensure_user_memory_store(project_client: AIProjectClient) -> str | None:
+    """Create the **user** memory store if it doesn't exist yet.
+
+    Returns the store name, or ``None`` when ``MEMORY_USER_STORE_NAME`` is unset.
+    Call once at startup.
+    """
+    name = get_user_store_name()
+    if not name:
+        return None
+    return await _ensure_memory_store(
+        project_client,
+        name,
+        chat_summary_enabled=True,
+        user_profile_details=_USER_PROFILE_DETAILS,
+        description="User-scoped memory store for the Azure SDK QA bot agent.",
+    )

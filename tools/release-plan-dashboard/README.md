@@ -21,16 +21,17 @@ A single-page web dashboard for viewing Azure SDK Release Plan work items from A
   - Spec project / TypeSpec path
   - Release status, package version, and package feed link
   - Product details with Service Tree link
-- **Current stage tracking** — each release plan shows its progression stage (API Spec In Progress → SDK To Be Generated → SDK Review In Progress → SDK Ready To Be Released, etc.)
+- **Current stage tracking** — each release plan shows its progression stage (API Spec In Progress → SDK To Be Generated → SDK Review In Progress → SDK Ready To Release, etc.)
 - **Action required indicator** — shows who needs to act (Spec PR Reviewer, SDK PR Reviewer, or Service Team)
 - **Duplicate detection** — identifies potentially duplicate release plans and annotates them
 - **SDK type badges** — highlights Beta vs Stable releases
 
 ### SDK Details Table
 
-- **Per-language rows** — Language, Package, SDK PR, PR Status, APIView, Release Status, Version, Package Link, Action Required
+- **Per-language rows** — Language, Package, SDK PR, PR Status, Release Status, Version, Package Link, Action Required
 - **Package feed links** — direct links to NuGet, PyPI, npm, Maven Central, or GitHub (Go) with icons and labels; shown only for released packages
 - **Released version display** — shows version from `ReleasedVersionFor<Language>` field; shows "Not available" when released but version field is empty
+- **Pending version display** — when SDK is not yet released but the pull request is merged, shows the package version from the package work item with a "Pending" label and tooltip explaining it reflects the current version on the main branch in the SDK repo
 - **PR status labels** — Approved, Ready to merge, failed checks (with deduplication on lazy-load)
 - **Action buttons** — contextual actions per language:
   - ⚡ **Generate SDK** — when no PR exists
@@ -47,6 +48,7 @@ A single-page web dashboard for viewing Azure SDK Release Plan work items from A
 ### Search & Navigation
 
 - **Search & filter** — filter by title, product name, owner, or release plan ID
+- **Tag filter** — filter plans by First Preview, First GA, or SDK Ready To Release
 - **URL parameters** — `?releasePlan=<id>` to view a single plan, `?filter=<keyword>` to pre-filter
 - **Share** — share links to specific release plans
 
@@ -72,6 +74,7 @@ A single-page web dashboard for viewing Azure SDK Release Plan work items from A
 ```
 
 ### Data Flow
+
 1. **Startup:** Server validates env vars → mints GitHub App token via Key Vault → fetches release plans from ADO → caches data
 2. **Serving:** `/api/release-plans` returns cached data; `/api/pr-details` fetches GitHub PR details on demand
 3. **Token refresh:** GitHub App token re-minted every 50 minutes
@@ -79,6 +82,7 @@ A single-page web dashboard for viewing Azure SDK Release Plan work items from A
 5. **Authentication:** Azure App Service built-in authentication (Microsoft Entra ID)
 
 ### Security
+
 - Azure App Service Easy Auth with Microsoft Entra ID
 - Platform-level authentication when App Service is configured with "Require authentication" (unauthenticated requests are intercepted before reaching the app)
 - Server-side fail-closed check — returns 401 if identity headers are absent, even if Easy Auth is misconfigured
@@ -98,19 +102,19 @@ A single-page web dashboard for viewing Azure SDK Release Plan work items from A
 
 All environment variables required by the application:
 
-| Variable | Description | Required |
-|---|---|---|
-| `KEYVAULT_NAME` | Azure Key Vault name for GitHub App JWT signing | **Yes** |
-| `KEYVAULT_KEY_NAME` | Key name in the vault used for signing | **Yes** |
-| `GITHUB_APP_NUMERIC_ID` | GitHub App ID (numeric) for token minting | **Yes** |
-| `GITHUB_INSTALL_OWNER` | GitHub organization where the App is installed | **Yes** |
-| `GITHUB_PAT_RELEASE_PLAN` | GitHub PAT for PR enrichment (fallback if App token fails) | No |
-| `NODE_ENV` | Set to `production` for production deployments | No |
-| `RELEASE_PLAN_DASHBOARD_PM_USERS` | Comma-separated Microsoft Entra emails with PM view access | No |
-| `PORT` | HTTP port to listen on (default: 3000) | No |
-| `DEV_AUTH_USER` | Mock user email for local development (bypasses Easy Auth) | No |
-| `DEV_AUTH_NAME` | Mock user display name for local development | No |
-| `DEV_AUTH_OBJECT_ID` | Mock user object ID for local development | No |
+| Variable                          | Description                                                | Required |
+| --------------------------------- | ---------------------------------------------------------- | -------- |
+| `KEYVAULT_NAME`                   | Azure Key Vault name for GitHub App JWT signing            | **Yes**  |
+| `KEYVAULT_KEY_NAME`               | Key name in the vault used for signing                     | **Yes**  |
+| `GITHUB_APP_NUMERIC_ID`           | GitHub App ID (numeric) for token minting                  | **Yes**  |
+| `GITHUB_INSTALL_OWNER`            | GitHub organization where the App is installed             | **Yes**  |
+| `GITHUB_PAT_RELEASE_PLAN`         | GitHub PAT for PR enrichment (fallback if App token fails) | No       |
+| `NODE_ENV`                        | Set to `production` for production deployments             | No       |
+| `RELEASE_PLAN_DASHBOARD_PM_USERS` | Comma-separated Microsoft Entra emails with PM view access | No       |
+| `PORT`                            | HTTP port to listen on (default: 3000)                     | No       |
+| `DEV_AUTH_USER`                   | Mock user email for local development (bypasses Easy Auth) | No       |
+| `DEV_AUTH_NAME`                   | Mock user display name for local development               | No       |
+| `DEV_AUTH_OBJECT_ID`              | Mock user object ID for local development                  | No       |
 
 The server will **exit with an error** if any required variable is missing.
 
@@ -140,6 +144,7 @@ The server will **exit with an error** if any required variable is missing.
 ## Testing
 
 The project uses [Vitest](https://vitest.dev/) for unit testing with 161+ test cases covering:
+
 - Cache eviction and TTL logic
 - Rate limiter (sliding window)
 - Authentication helpers
@@ -168,17 +173,17 @@ npx vitest run --testPathPattern="github"
 
 ### Test Files
 
-| File | Coverage |
-|---|---|
-| `tests/cache.test.js` | Cache state, eviction, TTL |
-| `tests/rate-limit.test.js` | Sliding window rate limiter |
-| `tests/auth.test.js` | Token minting, Easy Auth parsing |
-| `tests/devops-api.test.js` | WIQL queries, work item mapping |
-| `tests/github-api.test.js` | PR status, details, retry logic |
-| `tests/github-api-extended.test.js` | PR status extraction, batch operations |
-| `tests/api-routes.test.js` | API route handlers, cache refresh |
-| `tests/server.test.js` | Express middleware, Easy Auth, static files |
-| `tests/package-feed.test.js` | Feed URLs, version display, actions |
+| File                                | Coverage                                    |
+| ----------------------------------- | ------------------------------------------- |
+| `tests/cache.test.js`               | Cache state, eviction, TTL                  |
+| `tests/rate-limit.test.js`          | Sliding window rate limiter                 |
+| `tests/auth.test.js`                | Token minting, Easy Auth parsing            |
+| `tests/devops-api.test.js`          | WIQL queries, work item mapping             |
+| `tests/github-api.test.js`          | PR status, details, retry logic             |
+| `tests/github-api-extended.test.js` | PR status extraction, batch operations      |
+| `tests/api-routes.test.js`          | API route handlers, cache refresh           |
+| `tests/server.test.js`              | Express middleware, Easy Auth, static files |
+| `tests/package-feed.test.js`        | Feed URLs, version display, actions         |
 
 ## Authentication
 
@@ -222,9 +227,9 @@ DEV_AUTH_NAME="Your Name"
 
 ## URL Parameters
 
-| Parameter | Description | Example |
-|---|---|---|
-| `releasePlan` | Show a single release plan by ID | `?releasePlan=2171` |
-| `filter` | Pre-fill the search box with a keyword | `?filter=storage` |
+| Parameter     | Description                            | Example             |
+| ------------- | -------------------------------------- | ------------------- |
+| `releasePlan` | Show a single release plan by ID       | `?releasePlan=2171` |
+| `filter`      | Pre-fill the search box with a keyword | `?filter=storage`   |
 
 Both can be combined: `?releasePlan=2171&filter=storage`

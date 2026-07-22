@@ -40,22 +40,6 @@ namespace Azure.ClientSdk.Analyzers
             "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-client-constructor-for-mocking"
         );
 
-        public static DiagnosticDescriptor AZC0006 = new DiagnosticDescriptor(
-            nameof(AZC0006),
-            "DO provide constructor overloads that allow specifying additional options.",
-            "A client type should have a public constructor with equivalent parameters that takes a Azure.Core.ClientOptions-derived type as the last argument",
-            DiagnosticCategory.Usage, DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null,
-            "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-client-constructor-overloads"
-        );
-
-        public static DiagnosticDescriptor AZC0007 = new DiagnosticDescriptor(
-            nameof(AZC0007),
-            "DO provide a minimal constructor that takes only the parameters required to connect to the service.",
-            "A client type should have a public constructor with equivalent parameters that doesn't take a Azure.Core.ClientOptions-derived type as the last argument",
-            DiagnosticCategory.Usage, DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null,
-            "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-client-constructor-minimal"
-        );
-
         public static DiagnosticDescriptor AZC0008 = new DiagnosticDescriptor(
             nameof(AZC0008), "ClientOptions should have a nested enum called ServiceVersion",
             "Client type should have a nested enum called ServiceVersion", DiagnosticCategory.Usage, DiagnosticSeverity.Warning, true);
@@ -125,15 +109,6 @@ namespace Azure.ClientSdk.Analyzers
             DiagnosticCategory.Usage,
             DiagnosticSeverity.Warning, true);
 
-        public static DiagnosticDescriptor AZC0021 = new DiagnosticDescriptor(
-            nameof(AZC0021),
-            "ClientSettings constructor parameters should not be combined with other parameters",
-            "A constructor with a ClientSettings-derived parameter should only take that single parameter",
-            DiagnosticCategory.Usage,
-            DiagnosticSeverity.Warning,
-            isEnabledByDefault: true
-        );
-
         public static readonly DiagnosticDescriptor AZC0030 = new DiagnosticDescriptor(
             nameof(AZC0030),
             "Improper model name suffix",
@@ -169,24 +144,6 @@ namespace Azure.ClientSdk.Analyzers
             DiagnosticSeverity.Warning,
             true,
             "Suffix is not recommended. Consider to remove or modify it.");
-
-        public static readonly DiagnosticDescriptor AZC0034 = new DiagnosticDescriptor(
-            nameof(AZC0034),
-            "Avoid duplicate type names",
-            "Type name '{0}' conflicts with '{1}'. {2}",
-            DiagnosticCategory.Naming,
-            DiagnosticSeverity.Error,
-            true,
-            "Type names should not conflict with other SDK and .NET platform types.");
-
-        public static readonly DiagnosticDescriptor AZC0035 = new DiagnosticDescriptor(
-            nameof(AZC0035),
-            "Output model type should have a corresponding model factory method",
-            "Output model type '{0}' should have a corresponding method in a model factory class. Add a static method that returns '{0}' to a class ending with 'ModelFactory'.",
-            DiagnosticCategory.Usage,
-            DiagnosticSeverity.Warning,
-            true,
-            "Output model types returned from client methods should have corresponding model factory methods for mocking support.");
 
         public static readonly DiagnosticDescriptor AZC0036 = new DiagnosticDescriptor(
             nameof(AZC0036),

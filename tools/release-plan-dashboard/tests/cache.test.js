@@ -1,5 +1,11 @@
 import { describe, test, expect } from "vitest";
-import { cache, evictOldest, CACHE_TTL_MS, PR_DETAIL_CACHE_TTL_MS, MAX_CACHE_ENTRIES } from "../lib/cache.js";
+import {
+  cache,
+  evictOldest,
+  CACHE_TTL_MS,
+  PR_DETAIL_CACHE_TTL_MS,
+  MAX_CACHE_ENTRIES,
+} from "../lib/cache.js";
 
 describe("cache module", () => {
   describe("constants", () => {
@@ -63,7 +69,9 @@ describe("cache module", () => {
       const map = new Map();
       for (let i = 0; i < MAX_CACHE_ENTRIES + 3; i++) {
         // Insert in random order by using reversed updatedAt for even keys
-        map.set(`k-${i}`, { updatedAt: i % 2 === 0 ? i : MAX_CACHE_ENTRIES * 2 - i });
+        map.set(`k-${i}`, {
+          updatedAt: i % 2 === 0 ? i : MAX_CACHE_ENTRIES * 2 - i,
+        });
       }
       evictOldest(map);
       expect(map.size).toBe(MAX_CACHE_ENTRIES);
@@ -78,6 +86,18 @@ describe("cache module", () => {
       expect(map.size).toBe(MAX_CACHE_ENTRIES);
       // Entry with updatedAt=0 should be evicted first
       expect(map.has("k-0")).toBe(false);
+    });
+
+    test("handles entries without updatedAt field", () => {
+      const map = new Map();
+      for (let i = 0; i < MAX_CACHE_ENTRIES + 2; i++) {
+        map.set(`k-${i}`, i < 2 ? {} : { updatedAt: i });
+      }
+      evictOldest(map);
+      expect(map.size).toBe(MAX_CACHE_ENTRIES);
+      // Entries without updatedAt (treated as 0) should be evicted first
+      expect(map.has("k-0")).toBe(false);
+      expect(map.has("k-1")).toBe(false);
     });
   });
 });

@@ -37,7 +37,10 @@ You receive these inputs:
 * **language** — optional language hint (e.g. `python`, `C#`). May be empty.
 * **comment_context** — optional structured snapshot of the comment thread
   the user was viewing (source, language, comment text, code snippet,
-  element id). Use it to infer what the user is talking about.
+  element id). When the thread has more than one comment, an additional
+  `Thread:` block lists every comment in chronological order as
+  `@author (timestamp): text` so you can see the full conversation, not
+  just the anchor comment. Use it to infer what the user is talking about.
 
 You must determine the **category** yourself. Allowed categories:
 

@@ -5,10 +5,11 @@ import { getAzureCredential } from '../common/shared.js';
 
 export interface Prompt {
   textWithoutMention: string;
-  links?: string[];
   images?: string[];
   userName: string;
+  userID: string;
   timestamp: Date;
+  conversationID: string;
 }
 
 export interface ContactCard {

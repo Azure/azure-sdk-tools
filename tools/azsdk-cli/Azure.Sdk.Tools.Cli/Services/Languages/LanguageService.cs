@@ -399,6 +399,20 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         }
 
         /// <summary>
+        /// Performs language-specific pre-generation steps (e.g., pre-building plugins).
+        /// Called before tools run code generation.
+        /// The default implementation is a no-op. Override in language-specific subclasses as needed.
+        /// As of now, only the .NET language service overrides this to pre-build its generator plugin.
+        /// Implementations should warn and continue on failure rather than throwing.
+        /// </summary>
+        /// <param name="repoRoot">Absolute path to the SDK repository root.</param>
+        /// <param name="ct">Cancellation token.</param>
+        public virtual Task PreGenerateAsync(string repoRoot, CancellationToken ct)
+        {
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
         /// Performs language-specific validation (build, compile, tests, lint, type-check, etc.).
         /// </summary>
         /// <param name="packagePath">Path to the package directory containing generated code.</param>
@@ -511,7 +525,8 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
 
             // releaseDate is already validated and defaulted by VersionUpdateTool
             // Determine whether to update just the date or replace the entire latest entry title
-            var changelogData = changelogHelper.ParseChangelog(changelogPath);
+            var languageHint = Language == Models.SdkLanguage.Python ? "python" : null;
+            var changelogData = changelogHelper.ParseChangelog(changelogPath, languageHint);
             if (changelogData == null)
             {
                 return PackageOperationResponse.CreateFailure(
@@ -541,13 +556,13 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             {
                 // Version matches - only update the release date
                 logger.LogInformation("Latest changelog entry version matches target version {Version}. Updating release date only.", targetVersion);
-                changelogResult = changelogHelper.UpdateReleaseDate(changelogPath, targetVersion, releaseDate);
+                changelogResult = changelogHelper.UpdateReleaseDate(changelogPath, targetVersion, releaseDate, languageHint);
             }
             else
             {
                 // Version doesn't match - replace the latest entry title with new version and date
                 logger.LogInformation("Latest changelog entry version {LatestVersion} differs from target version {TargetVersion}. Replacing latest entry title.", latestEntry.Version, targetVersion);
-                changelogResult = changelogHelper.UpdateLatestEntryTitle(changelogPath, targetVersion, releaseDate);
+                changelogResult = changelogHelper.UpdateLatestEntryTitle(changelogPath, targetVersion, releaseDate, languageHint);
             }
 
             if (!changelogResult.Success)

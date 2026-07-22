@@ -96,58 +96,42 @@ BOLD_GREEN = BOLD + GREEN
 BOLD_BLUE = BOLD + BLUE
 
 
-helps[
-    "review"
-] = """
+helps["review"] = """
     type: group
     short-summary: Commands for creating and managing APIView reviews.
 """
 
-helps[
-    "agent"
-] = """
+helps["agent"] = """
     type: group
     short-summary: Commands for interacting with the agent.
 """
 
-helps[
-    "apiview"
-] = """
+helps["apiview"] = """
     type: group
     short-summary: Commands for querying APIView data.
 """
 
-helps[
-    "test"
-] = """
+helps["test"] = """
     type: group
     short-summary: Commands for development and testing.
 """
 
-helps[
-    "ops"
-] = """
+helps["ops"] = """
     type: group
     short-summary: Commands for deployment and infrastructure.
 """
 
-helps[
-    "kb"
-] = """
+helps["kb"] = """
     type: group
     short-summary: Commands for interacting with the knowledge base.
 """
 
-helps[
-    "db"
-] = """
+helps["db"] = """
     type: group
     short-summary: Commands for managing the database.
 """
 
-helps[
-    "report"
-] = """
+helps["report"] = """
     type: group
     short-summary: Commands for analytics, auditing, and reporting.
 """
@@ -1443,62 +1427,9 @@ def db_delete(container_name: str, id: str):
         print(f"Error deleting item: {e}")
 
 
-# Mapping: (source_type) -> list of (field_on_source, target_type, field_on_target)
-_RELATION_MAP = {
-    "guideline": [
-        ("related_memories", "memory", "related_guidelines"),
-        ("related_examples", "example", "guideline_ids"),
-        ("related_guidelines", "guideline", "related_guidelines"),
-    ],
-    "memory": [
-        ("related_guidelines", "guideline", "related_memories"),
-        ("related_examples", "example", "memory_ids"),
-        ("related_memories", "memory", "related_memories"),
-    ],
-    "example": [
-        ("guideline_ids", "guideline", "related_examples"),
-        ("memory_ids", "memory", "related_examples"),
-    ],
-}
-
-_TYPE_CONTAINERS = {
-    "guideline": "guidelines",
-    "memory": "memories",
-    "example": "examples",
-}
-
-
-def _get_container(db, item_type: str):
-    return getattr(db, _TYPE_CONTAINERS[item_type])
-
-
 def _cascade_unlink(db, item: dict, item_type: str):
     """Remove back-links from all related items. Soft-delete orphaned examples."""
-    item_id = item["id"]
-
-    for source_field, target_type, target_field in _RELATION_MAP.get(item_type, []):
-        target_container = _get_container(db, target_type)
-
-        for target_id in item.get(source_field, []):
-            try:
-                raw_target = target_container.get(target_id)
-                refs = raw_target.get(target_field, [])
-                if item_id in refs:
-                    refs.remove(item_id)
-
-                # Check if the target is now orphaned and should be deleted
-                if (
-                    target_type == "example"
-                    and not raw_target.get("memory_ids", [])
-                    and not raw_target.get("guideline_ids", [])
-                ):
-                    target_container.delete(target_id, run_indexer=False)
-                    print(f"  Soft-deleted orphaned example {target_id}")
-                else:
-                    target_container.client.upsert_item(raw_target)
-                    print(f"  Unlinked {target_type} {target_id}")
-            except Exception as e:
-                print(f"  Warning: failed to clean {target_type} {target_id}: {e}")
+    db.cascade_unlink(item, item_type)
 
 
 def _try_run_indexers(containers: list[tuple[str, object]]):
@@ -1655,6 +1586,86 @@ def db_purge(containers: Optional[list[str]] = None, run_indexer: bool = False):
                 print(f"No soft-deleted items to purge from container {container_name}.")
         except Exception as e:
             print(f"Error purging container: {e}")
+
+
+def db_ingest_guidelines(
+    base_sha: str,
+    target_sha: str,
+    environment: str,
+    apply: bool = False,
+    details: bool = False,
+    languages: Optional[List[str]] = None,
+):
+    """
+    Ingest guidelines from the azure-sdk repository into the knowledge base.
+
+    Detects changes using git commit comparison and only updates guidelines
+    where content has actually changed. Runs in dry-run mode by default;
+    pass --apply to execute.
+    """
+    from src._guideline_ingestor import GuidelineIngestor
+
+    os.environ["ENVIRONMENT_NAME"] = environment
+    ingestor = GuidelineIngestor.get_instance(force_new=True)
+    dry_run = not apply
+    result = ingestor.sync_guidelines(
+        dry_run=dry_run,
+        details=details,
+        base_sha=base_sha,
+        target_sha=target_sha,
+        languages=languages,
+    )
+
+    # Print detailed results
+    if dry_run:
+        print(f"{BOLD}[DRY RUN] No changes were made to the database.{RESET}")
+        print(f"Run with {BOLD}--apply{RESET} to execute.\n")
+
+    print(
+        f"Guidelines: {GREEN}{len(result.guidelines_created)} to create{RESET}, "
+        f"{BLUE}{len(result.guidelines_updated)} to update{RESET}, "
+        f"{Fore.RED}{len(result.guidelines_deleted)} to delete{RESET}, "
+        f"{len(result.guidelines_unchanged)} unchanged"
+    )
+
+    if result.total_examples:
+        print(
+            f"Examples: {GREEN}{len(result.examples_created)} to create{RESET}, "
+            f"{BLUE}{len(result.examples_updated)} to update{RESET}, "
+            f"{Fore.RED}{len(result.examples_deleted)} to delete{RESET}, "
+            f"{len(result.examples_unchanged)} unchanged"
+        )
+
+    if result.total_memories:
+        print(f"Memories: {len(result.memories_absorbed)} to absorb, " f"{len(result.memories_retained)} to retain")
+
+    if result.errors:
+        print(f"{Fore.RED}Errors ({len(result.errors)}):{RESET}")
+        for err in result.errors:
+            print(f"  ! {err}")
+        print()
+
+    # Return counts and optional details for CLI output
+    output = {
+        "guidelines_created": len(result.guidelines_created),
+        "guidelines_updated": len(result.guidelines_updated),
+        "guidelines_deleted": len(result.guidelines_deleted),
+        "guidelines_unchanged": len(result.guidelines_unchanged),
+        "examples_created": len(result.examples_created),
+        "examples_updated": len(result.examples_updated),
+        "examples_deleted": len(result.examples_deleted),
+        "examples_unchanged": len(result.examples_unchanged),
+        "memories_absorbed": len(result.memories_absorbed),
+        "memories_retained": len(result.memories_retained),
+        "errors": len(result.errors),
+    }
+
+    if details and result.details:
+        from dataclasses import asdict
+
+        output["details"] = [asdict(d) for d in result.details]
+
+    return output
 
 
 def get_apiview_comments(revision_id: str, environment: str = "production") -> dict:
@@ -1876,7 +1887,9 @@ def list_opened_revisions(
     Queries Application Insights for reviews that had page views, then enriches
     with revision metadata from Cosmos DB.
     """
-    data = get_opened_revisions(start_date, end_date, environment=environment, exclude_languages=exclude, created_in_window=created_in_window)
+    data = get_opened_revisions(
+        start_date, end_date, environment=environment, exclude_languages=exclude, created_in_window=created_in_window
+    )
     _print_revision_table(data, empty_msg="No opened revisions found in the specified date range.")
 
 
@@ -2385,9 +2398,7 @@ def get_architect_comments(
             params.append({"name": param_name, "value": rid})
         review_query = f"SELECT c.id, c.Language FROM c WHERE ({' OR '.join(clauses)})"
         review_results = list(
-            reviews_container.query_items(
-                query=review_query, parameters=params, enable_cross_partition_query=True
-            )
+            reviews_container.query_items(query=review_query, parameters=params, enable_cross_partition_query=True)
         )
         review_lang_map = {r["id"]: get_language_pretty_name(r.get("Language", "")) for r in review_results}
 
@@ -2400,19 +2411,13 @@ def get_architect_comments(
     start_iso = to_iso8601(start_date)
     end_iso = to_iso8601(end_date, end_of_day=True)
     thread_starts = get_thread_start_dates(filtered, environment=environment)
-    started_in_window = {
-        key for key, min_created in thread_starts.items() if start_iso <= min_created <= end_iso
-    }
+    started_in_window = {key for key, min_created in thread_starts.items() if start_iso <= min_created <= end_iso}
 
     # By default, exclude replies — keep only the thread-starting comment for threads
     # that actually *started* in the date window (not merely replied to).
     if not include_replies:
         # Keep only comments belonging to threads that started in the window
-        filtered = [
-            c
-            for c in filtered
-            if (c.get("ThreadId") or c.get("ElementId")) in started_in_window
-        ]
+        filtered = [c for c in filtered if (c.get("ThreadId") or c.get("ElementId")) in started_in_window]
 
         # Keep only the first (earliest) comment per thread
         seen_threads = {}
@@ -2436,11 +2441,7 @@ def get_architect_comments(
         # When including replies, identify threads started by an approver and include
         # *all* comments in those threads (not just approver-authored ones).
         # First, restrict to threads that actually started in the date window.
-        filtered = [
-            c
-            for c in filtered
-            if (c.get("ThreadId") or c.get("ElementId")) in started_in_window
-        ]
+        filtered = [c for c in filtered if (c.get("ThreadId") or c.get("ElementId")) in started_in_window]
 
         if allowed_commenters is not None:
             # Find who authored the earliest comment per thread
@@ -2455,20 +2456,18 @@ def get_architect_comments(
                     thread_earliest_in_window[thread_key] = created
                     thread_starters[thread_key] = c.get("CreatedBy", "")
 
-            approver_threads = {
-                k for k, author in thread_starters.items() if author in allowed_commenters
-            }
-            filtered = [
-                c
-                for c in filtered
-                if (c.get("ThreadId") or c.get("ElementId")) in approver_threads
-            ]
+            approver_threads = {k for k, author in thread_starters.items() if author in allowed_commenters}
+            filtered = [c for c in filtered if (c.get("ThreadId") or c.get("ElementId")) in approver_threads]
 
     comments = [APIViewComment(**c) for c in filtered]
 
     results = [
         {
-            **{k: v for k, v in comment.model_dump(by_alias=True, mode="json").items() if k in _APIVIEW_COMMENT_SELECT_FIELDS},
+            **{
+                k: v
+                for k, v in comment.model_dump(by_alias=True, mode="json").items()
+                if k in _APIVIEW_COMMENT_SELECT_FIELDS
+            },
             "Language": review_lang_map.get(comment.review_id, ""),
         }
         for comment in comments
@@ -2683,6 +2682,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("purge", "db_purge")
             g.command("link", "db_link")
             g.command("unlink", "db_unlink")
+            g.command("ingest-guidelines", "db_ingest_guidelines")
         with CommandGroup(self, "report", "__main__#{}") as g:
             g.command("metrics", "report_metrics")
             g.command("quality-trends", "report_comment_bucket_trends")
@@ -3039,6 +3039,47 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="Whether to run the search indexer before purging.",
                 options_list=["--run-indexer"],
                 action="store_true",
+            )
+        with ArgumentsContext(self, "db ingest-guidelines") as ac:
+            ac.argument(
+                "apply",
+                action="store_true",
+                help="Apply changes to the database. Without this flag, runs in dry-run mode.",
+            )
+            ac.argument(
+                "base_sha",
+                type=str,
+                help="The baseline commit SHA to compare against.",
+                options_list=["--base-sha", "-b"],
+                required=True,
+            )
+            ac.argument(
+                "target_sha",
+                type=str,
+                help="The target commit SHA to sync to.",
+                options_list=["--target-sha", "-t"],
+                required=True,
+            )
+            ac.argument(
+                "details",
+                action="store_true",
+                help="Include before/after content for each changed guideline and example in the output.",
+                options_list=["--details"],
+            )
+            ac.argument(
+                "environment",
+                type=str,
+                help="The APIView environment to update (required).",
+                options_list=["--environment"],
+                required=True,
+                choices=["production", "staging"],
+            )
+            ac.argument(
+                "languages",
+                type=resolve_language_to_canonical,
+                nargs="*",
+                help="Limit ingestion to these languages (e.g. python java dotnet). If omitted, all languages are processed.",
+                options_list=["--language", "-l"],
             )
         with ArgumentsContext(self, "apiview") as ac:
             ac.argument(

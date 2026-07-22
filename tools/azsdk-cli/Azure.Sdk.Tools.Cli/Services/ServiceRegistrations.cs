@@ -59,7 +59,9 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IChangelogHelper, ChangelogHelper>();
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();
             services.AddSingleton<IGitHelper, GitHelper>();
-            services.AddSingleton<ITestHelper, TestHelper>();
+            services.AddSingleton<ITestHelper, TrxTestHelper>();
+            services.AddSingleton<ITestHelper, JUnitTestHelper>();
+            services.AddSingleton<ITestResultParserResolver, TestResultParserResolver>();
             services.AddSingleton<ITypeSpecHelper, TypeSpecHelper>();
             services.AddSingleton<ISpecPullRequestHelper, SpecPullRequestHelper>();
             services.AddSingleton<IUserHelper, UserHelper>();
@@ -108,12 +110,14 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IPythonHelper, PythonHelper>();
             services.AddSingleton<IGitCommandHelper, GitCommandHelper>();
 
+            // Pipeline helpers
+            services.AddSingleton<IPipelineIdentifierHelper, PipelineIdentifierHelper>();
+
             // Services that need to be scoped so we can track/update state across services per request
             services.AddScoped<TokenUsageHelper>();
             services.AddScoped<IOutputHelper>(_ => new OutputHelper(outputMode));
             services.AddScoped<ConversationLogger>();
             // Services depending on other scoped services
-            services.AddScoped<IAzureAgentServiceFactory, AzureAgentServiceFactory>();
             services.AddScoped<ICommonValidationHelpers, CommonValidationHelpers>();
             services.AddScoped<IVerifySetupService, VerifySetupService>();
 

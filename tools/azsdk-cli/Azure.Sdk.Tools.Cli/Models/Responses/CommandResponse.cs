@@ -29,9 +29,6 @@ public abstract class CommandResponse
         set => exitCode = value;
     }
 
-    [JsonIgnore]
-    public virtual bool WriteToStdoutOnFailure => false;
-
     /// <summary>
     /// ResponseError represents a single error message associated with the response.
     /// </summary>

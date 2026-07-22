@@ -225,9 +225,6 @@ public class ApiReviewReleaseStatusResponse : CommandResponse
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IReadOnlyList<string>? Details { get; set; }
 
-    [JsonIgnore]
-    public override bool WriteToStdoutOnFailure => true;
-
     protected override string Format()
     {
         return Details == null ? string.Empty : string.Join(Environment.NewLine, Details);

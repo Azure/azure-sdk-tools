@@ -31,7 +31,7 @@ public class APIViewReleaseStatusServiceTests
                 return (string.Empty, statusCode);
             });
 
-        var result = await service.GetReleaseStatusAsync("dotnet", "Azure.Test", "1.0.0", CancellationToken.None);
+        var result = await service.GetReleaseStatusAsync("csharp", "Azure.Test", "1.0.0", CancellationToken.None);
 
         Assert.That(result.StatusCode, Is.EqualTo(statusCode));
         Assert.That(result.IsApproved, Is.EqualTo(isApproved));

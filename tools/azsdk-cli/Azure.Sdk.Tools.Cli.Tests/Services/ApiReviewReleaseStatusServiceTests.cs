@@ -43,6 +43,37 @@ public class ApiReviewReleaseStatusServiceTests
     }
 
     [Test]
+    public async Task GetReleaseStatusAsync_QueriesApiView_WhenReviewHubResultIsNotApproved()
+    {
+        reviewHubServiceMock
+            .Setup(x => x.GetReleaseGateStatusAsync("https://endpoint", "python", "pkg", "1.0.0", "hash", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ApiReviewHubReleaseGateResult
+            {
+                Allowed = false,
+                Reason = "missingApproval"
+            });
+        apiViewServiceMock
+            .Setup(x => x.GetReleaseStatusAsync("python", "pkg", "1.0.0", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ApiViewReleaseStatusResult
+            {
+                IsApproved = false,
+                PackageNameApproved = true,
+                StatusCode = 201,
+                Reason = "packageNameApproved",
+                Details = ["APIView secondary result"]
+            });
+
+        var result = await service.GetReleaseStatusAsync("https://endpoint", "python", "pkg", "1.0.0", "hash", CancellationToken.None);
+
+        Assert.That(result.IsApproved, Is.False);
+        Assert.That(result.FinalSource, Is.EqualTo("ApiReviewHub"));
+        Assert.That(result.Reason, Is.EqualTo("missingApproval"));
+        Assert.That(result.ReviewHub.Succeeded, Is.True);
+        Assert.That(result.ApiView?.Succeeded, Is.True);
+        Assert.That(result.ApiView?.Result?.PackageNameApproved, Is.True);
+    }
+
+    [Test]
     public async Task GetReleaseStatusAsync_FallsBackToApiView_WhenReviewHubQueryFails()
     {
         reviewHubServiceMock

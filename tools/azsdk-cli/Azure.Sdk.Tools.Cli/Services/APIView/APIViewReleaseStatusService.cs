@@ -14,13 +14,13 @@ public class APIViewReleaseStatusService(
 {
     public async Task<ApiViewReleaseStatusResult> GetReleaseStatusAsync(string language, string packageName, string packageVersion, CancellationToken ct)
     {
-        var mappedLanguage = MapLanguage(language);
-        if (mappedLanguage == null)
+        var apiViewLanguage = MapApiViewLanguage(language);
+        if (apiViewLanguage == null)
         {
             throw new InvalidOperationException($"APIView release status does not support language '{language}'.");
         }
 
-        var endpoint = $"/AutoReview/GetReviewStatus?language={Uri.EscapeDataString(mappedLanguage)}&packageName={Uri.EscapeDataString(packageName)}&packageVersion={Uri.EscapeDataString(packageVersion)}";
+        var endpoint = $"/AutoReview/GetReviewStatus?language={Uri.EscapeDataString(apiViewLanguage)}&packageName={Uri.EscapeDataString(packageName)}&packageVersion={Uri.EscapeDataString(packageVersion)}";
         logger.LogInformation("Querying APIView release status for {packageName} {packageVersion}", packageName, packageVersion);
 
         var (_, statusCode) = await apiViewHttpService.GetAsync(endpoint, ct);
@@ -59,12 +59,12 @@ public class APIViewReleaseStatusService(
         };
     }
 
-    private static string? MapLanguage(string language)
+    private static string? MapApiViewLanguage(string language)
     {
         return language.ToLowerInvariant() switch
         {
-            "javascript" => "JavaScript",
-            "dotnet" => "C#",
+            "js" => "JavaScript",
+            "csharp" => "C#",
             "java" => "Java",
             "python" => "Python",
             _ => null

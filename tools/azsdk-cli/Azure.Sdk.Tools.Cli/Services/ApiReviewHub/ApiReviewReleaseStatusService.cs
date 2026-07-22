@@ -28,7 +28,10 @@ public class ApiReviewReleaseStatusService(
             result.IsApproved = reviewHubResult.Allowed;
             result.FinalSource = "ApiReviewHub";
             result.Reason = reviewHubResult.Reason ?? (reviewHubResult.Allowed ? "approved" : "notApproved");
-            return result;
+            if (reviewHubResult.Allowed)
+            {
+                return result;
+            }
         }
         catch (Exception ex)
         {
@@ -48,9 +51,14 @@ public class ApiReviewReleaseStatusService(
                 Succeeded = true,
                 Result = apiViewResult
             };
-            result.IsApproved = apiViewResult.IsApproved;
-            result.FinalSource = "APIView";
-            result.Reason = apiViewResult.Reason;
+
+            if (apiViewResult.IsApproved || !result.ReviewHub.Succeeded)
+            {
+                result.IsApproved = apiViewResult.IsApproved;
+                result.FinalSource = "APIView";
+                result.Reason = apiViewResult.Reason;
+            }
+
             return result;
         }
         catch (Exception ex)

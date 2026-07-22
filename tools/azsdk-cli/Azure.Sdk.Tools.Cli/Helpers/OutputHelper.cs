@@ -217,7 +217,7 @@ public class OutputHelper : IOutputHelper, IRawOutputHelper
 
     public void OutputCommandResponse(CommandResponse output)
     {
-        if (OutputMode != OutputModes.Mcp && output.ExitCode > 0 && !output.WriteToStdoutOnFailure)
+        if (OutputMode != OutputModes.Mcp && output.ExitCode > 0)
         {
             OutputError(Format(output));
         }

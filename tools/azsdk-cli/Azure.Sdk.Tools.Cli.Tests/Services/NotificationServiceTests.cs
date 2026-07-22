@@ -182,6 +182,112 @@ public class NotificationServiceTests
     }
 
     [Test]
+    public void EmailTemplate_ComputesRecipients_NonTestManagementPlane()
+    {
+        var releasePlan = new ReleasePlanWorkItem
+        {
+            ReleasePlanId = 1,
+            IsManagementPlane = true,
+            IsTestReleasePlan = false,
+            ReleasePlanSubmittedByEmail = "author@microsoft.com"
+        };
+
+        var template = new NewReleasePlanEmail(releasePlan);
+
+        Assert.That(template.EmailTo, Is.EqualTo(new[] { "author@microsoft.com" }));
+        Assert.That(template.CC, Is.EqualTo(new[] { "azsdkexp@microsoft.com", "sdkowners@microsoft.com" }));
+    }
+
+    [Test]
+    public void EmailTemplate_ComputesRecipients_NonTestDataPlane_NoSdkOwners()
+    {
+        var releasePlan = new ReleasePlanWorkItem
+        {
+            ReleasePlanId = 2,
+            IsManagementPlane = false,
+            IsTestReleasePlan = false,
+            ReleasePlanSubmittedByEmail = "author@microsoft.com"
+        };
+
+        var template = new NewReleasePlanEmail(releasePlan);
+
+        Assert.That(template.EmailTo, Is.EqualTo(new[] { "author@microsoft.com" }));
+        Assert.That(template.CC, Is.EqualTo(new[] { "azsdkexp@microsoft.com" }));
+    }
+
+    [Test]
+    public void EmailTemplate_TestReleasePlan_OnlyNotifiesSubmitter_NoCc()
+    {
+        var releasePlan = new ReleasePlanWorkItem
+        {
+            ReleasePlanId = 3,
+            IsManagementPlane = true,
+            IsTestReleasePlan = true,
+            ReleasePlanSubmittedByEmail = "author@microsoft.com"
+        };
+
+        var template = new NewReleasePlanEmail(releasePlan);
+
+        Assert.That(template.EmailTo, Is.EqualTo(new[] { "author@microsoft.com" }));
+        Assert.That(template.CC, Is.Empty);
+    }
+
+    [Test]
+    public void EmailTemplate_NoSubmitterEmail_EmailToIsEmpty()
+    {
+        var releasePlan = new ReleasePlanWorkItem
+        {
+            ReleasePlanId = 4,
+            IsManagementPlane = false,
+            IsTestReleasePlan = false,
+            ReleasePlanSubmittedByEmail = "   "
+        };
+
+        var template = new NewReleasePlanEmail(releasePlan);
+
+        Assert.That(template.EmailTo, Is.Empty);
+        Assert.That(template.CC, Is.EqualTo(new[] { "azsdkexp@microsoft.com" }));
+    }
+
+    [Test]
+    public async Task SendEmailNotification_NormalizesRecipients_CaseInsensitive_AndRejectsMalformedDomains()
+    {
+        var (service, captured) = CreateService(url: ServiceUrl);
+
+        var releasePlan = new ReleasePlanWorkItem
+        {
+            ReleasePlanId = 11,
+            ProductName = "Contoso",
+            IsManagementPlane = true,
+            CreatedUsing = "Automation",
+            ProductTreeId = "product-1",
+            ServiceTreeId = "service-1",
+            ProductType = "Offering",
+            SpecPullRequests = ["https://github.com/Azure/azure-rest-api-specs/pull/1"],
+            ApiReleaseType = ApiReleaseType.GA
+        };
+
+        var payload = new NewReleasePlanEmail(releasePlan)
+        {
+            EmailTo =
+            [
+                "  Author@Microsoft.COM  ",           // mixed case + whitespace, valid
+                "author@microsoft.com",                // duplicate (case-insensitive)
+                "attacker@microsoft.com.evil",         // malformed domain suffix, must be dropped
+                "external@contoso.com",                // non-microsoft, must be dropped
+                "   "                                  // whitespace only, must be dropped
+            ]
+        };
+
+        await service.SendEmailNotificationAsync(payload);
+
+        Assert.That(captured, Has.Count.EqualTo(1));
+        using var doc = JsonDocument.Parse(captured[0]);
+        var to = doc.RootElement.GetProperty("EmailTo").GetString();
+        Assert.That(to, Is.EqualTo("Author@Microsoft.COM"));
+    }
+
+    [Test]
     public void EmailTemplate_ManagementPlane_NotAutomationCreated_UsesManualSdkGenMessage()
     {
         var releasePlan = new ReleasePlanWorkItem

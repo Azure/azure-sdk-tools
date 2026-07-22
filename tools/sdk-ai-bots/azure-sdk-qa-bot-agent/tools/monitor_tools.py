@@ -1,10 +1,4 @@
-"""Azure Monitor / App Insights tools for the Azure SDK QA Bot Agent.
-
-Provides ``fetch_chat_trace`` — a normalized, token-bounded view of the
-chat agent's App Insights spans for a given ``trace_id``. Used by the
-feedback agent to reconstruct what the chat agent did on a turn that
-received negative feedback.
-"""
+"""Azure Monitor / App Insights tools for the Azure SDK QA Bot Agent."""
 
 from __future__ import annotations
 
@@ -68,7 +62,7 @@ class ChatTraceView(BaseModel):
 
 
 class MonitorTools:
-    """App Insights trace tools surfaced to the hosted feedback agent."""
+    """App Insights trace tools"""
 
     @tool
     async def fetch_chat_trace(

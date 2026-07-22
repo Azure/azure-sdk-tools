@@ -13,8 +13,9 @@ drives the feedback loop:
      * finished + correct       -> ``finished`` (archived).
      * finished + incorrect/unknown -> ``failed`` (needs feedback).
 3. **Feedback** — for records that just turned ``failed``, run the hosted
-   feedback agent **in-process** via :class:`FeedbackAgentService` (a
-   synchronous Responses call per thread).
+   chatbot evolution agent **in-process** via
+   :class:`ChatbotEvolutionAgentService` (a synchronous Responses call per
+   thread).
 
 Usage::
 
@@ -46,7 +47,7 @@ if str(_PROJECT_DIR) not in sys.path:
 import config.app_config as app_config
 from models.qa_record import QAStatus
 from services.conversation_service import ConversationService
-from services.feedback_agent_service import FeedbackAgentService
+from services.chatbot_evolution_agent_service import ChatbotEvolutionAgentService
 from services.qa_record_service import QARecordService
 from utils.azure_ai_foundry import close_clients as close_ai_clients
 from utils.azure_cosmosdb import close_cosmos_client
@@ -111,7 +112,7 @@ def _resolve_window(args: argparse.Namespace) -> tuple[datetime, datetime]:
 async def _run(args: argparse.Namespace) -> None:
     conversation_service = ConversationService()
     qa_service = QARecordService(conversation_service)
-    feedback_service = FeedbackAgentService()
+    evolution_service = ChatbotEvolutionAgentService()
 
     start, end = _resolve_window(args)
     logger.info("Scanning conversations active in [%s, %s)", start.isoformat(), end.isoformat())
@@ -135,10 +136,13 @@ async def _run(args: argparse.Namespace) -> None:
     # The feedback step (which files GitHub issues via the hosted agent) is
     # gated so it can be disabled via config without touching the pipeline.
     feedback_enabled = (
-        app_config.get("FEEDBACK_AGENT_ENABLED", "false").strip().lower() == "true"
+        app_config.get("CHATBOT_EVOLUTION_AGENT_ENABLED", "false").strip().lower()
+        == "true"
     )
     if not feedback_enabled and not args.dry_run:
-        logger.info("FEEDBACK_AGENT_ENABLED is not set; feedback analysis disabled")
+        logger.info(
+            "CHATBOT_EVOLUTION_AGENT_ENABLED is not set; feedback analysis disabled"
+        )
 
     counts = {"ongoing": 0, "finished": 0, "failed": 0, "skipped": 0, "triggered": 0}
 
@@ -164,13 +168,14 @@ async def _run(args: argparse.Namespace) -> None:
             counts["ongoing"] += 1
             continue
 
-        # 3. qa_status == failed -> run the hosted feedback agent in-process.
+        # 3. qa_status == failed -> run the hosted chatbot evolution agent
+        #    in-process.
         counts["failed"] += 1
         if args.dry_run or not feedback_enabled:
             logger.info("Skipping feedback for %s (disabled or dry-run)", record.id)
             continue
         try:
-            await feedback_service.run_job(record.id, record.tenant_id)
+            await evolution_service.run_job(record.id, record.tenant_id)
             counts["triggered"] += 1
         except Exception:
             logger.exception("Failed to trigger feedback for %s", record.id)

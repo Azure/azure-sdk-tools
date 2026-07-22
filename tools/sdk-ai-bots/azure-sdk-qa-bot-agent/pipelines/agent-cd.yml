@@ -20,7 +20,7 @@ parameters:
     default: chat_agent
     values:
       - chat_agent
-      - feedback_agent
+      - chatbot_evolution_agent
 
 variables:
   - template: /eng/pipelines/templates/variables/globals.yml

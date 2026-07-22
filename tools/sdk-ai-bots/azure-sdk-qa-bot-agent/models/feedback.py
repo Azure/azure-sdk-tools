@@ -28,8 +28,8 @@ class FeedbackRequest(BaseModel):
     reasons: list[str] = []
     link: str | None = None
     user_name: str | None = None
-    # NEW (required when reaction=bad for feedback-agent enqueue path).
-    # The API is conversation-scoped; the server resolves the matching
+    # NEW (required when reaction=bad for chatbot-evolution-agent enqueue
+    # path). The API is conversation-scoped; the server resolves the matching
     # bot response_id from the most recent assistant message.
     conversation_id: str | None = None
     conversation_type: ConversationType | None = None
@@ -43,12 +43,12 @@ class FeedbackResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Hosted feedback-agent I/O contract
+# Hosted chatbot-evolution-agent I/O contract
 # ---------------------------------------------------------------------------
 
 
-class FeedbackAgentInput(BaseModel):
-    """Structured input sent to the hosted feedback agent.
+class ChatbotEvolutionAgentInput(BaseModel):
+    """Structured input sent to the hosted chatbot evolution agent.
 
     Serialized as JSON in a single `user` message — the agent's
     instruction.md spec calls out this exact schema. Feedback is scoped to a

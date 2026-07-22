@@ -4,7 +4,6 @@ Source-of-truth is the upstream ``knowledge-config.json`` in the
 ``azure-sdk-qa-bot-knowledge-sync`` repo. We fetch it on first access,
 parse it into a folder-keyed dict, and cache in-process with a TTL.
 
-See ``docs/feedback-agent-design.md`` §6.4.
 """
 
 from __future__ import annotations

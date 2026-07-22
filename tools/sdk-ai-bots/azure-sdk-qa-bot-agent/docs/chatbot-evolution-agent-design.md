@@ -1,10 +1,10 @@
-# Feedback Agent Design
+# Chatbot Evolution Agent Design
 
 ## 1 Background
 
 When the chatbot's answer is wrong, today there is no systematic way to understand what the correct answer is, identify whether the underlying knowledge base (KB) is missing or stale, or close the gap so future similar queries are answered correctly. All follow-up is done manually by vendors investigating explicit thumbs-down feedback. The much more common implicit failure mode: an expert had to step in and answer — is never captured.
 
-We are introducing a **Feedback Agent** — a new hosted agent in the Foundry project. It automatically analyzes wrong answers, classifies the root cause, and files KB-gap issues against the source-of-truth docs repo. Rather than firing in real time off an endpoint, the agent is driven by a **daily batch scan** (see §2.3): the Bot Answer Evaluator judges each concluded QA thread, and any thread whose bot answer was wrong or unconfirmed is handed to the agent. Two human signals in the thread inform that judgement and the agent's analysis:
+We are introducing a **Chatbot Evolution Agent** — a new hosted agent in the Foundry project. It automatically analyzes wrong answers, classifies the root cause, and files KB-gap issues against the source-of-truth docs repo. Rather than firing in real time off an endpoint, the agent is driven by a **daily batch scan** (see §2.3): the Bot Answer Evaluator judges each concluded QA thread, and any thread whose bot answer was wrong or unconfirmed is handed to the agent. Two human signals in the thread inform that judgement and the agent's analysis:
 
 | Signal | Source | Description |
 | --- | --- | --- |
@@ -15,7 +15,7 @@ We are introducing a **Feedback Agent** — a new hosted agent in the Foundry pr
 
 ### 2.1 Architecture
 
-The Feedback Agent is a closed-loop quality system layered on top of the
+The Chatbot Evolution Agent is a closed-loop quality system layered on top of the
 Chat Agent. The diagram below shows both phases end to end: the **answer
 flow** (1–10) where a user question is answered in a Teams channel, and the
 **feedback loop** (A–F) where the daily scan detects wrong answers, diagnoses
@@ -38,7 +38,7 @@ flowchart TB
         Server["Backend API<br/>(FastAPI server.py)"]
         ChatAgent["Chat Agent<br/>(Foundry hosted agent)"]
         Evaluator["Bot Answer Evaluator<br/>(LLM judge)"]
-        FeedbackAgent["Feedback Agent<br/>(Foundry hosted agent)"]
+        EvolutionAgent["Chatbot Evolution Agent<br/>(Foundry hosted agent)"]
         Scan["Daily Feedback Scan<br/>(scheduled pipeline)"]
     end
 
@@ -80,11 +80,11 @@ flowchart TB
     Scan -->|"B evaluate each thread"| Evaluator
     Evaluator -->|"finished + correct: archive"| Cosmos
     Evaluator -->|"finished + wrong: failed"| Scan
-    Scan -->|"C Diagnose: run on failed"| FeedbackAgent
-    FeedbackAgent -->|"fetch trace"| AppIns
-    FeedbackAgent -->|"fetch conversation"| Cosmos
-    FeedbackAgent -->|"reproduce retrieval"| Search
-    FeedbackAgent -->|"D classify KB vs system<br/>+ file issue"| Issue
+    Scan -->|"C Diagnose: run on failed"| EvolutionAgent
+    EvolutionAgent -->|"fetch trace"| AppIns
+    EvolutionAgent -->|"fetch conversation"| Cosmos
+    EvolutionAgent -->|"reproduce retrieval"| Search
+    EvolutionAgent -->|"D classify KB vs system<br/>+ file issue"| Issue
     Issue -->|"E"| Copilot
     Copilot -->|"F PR"| Sources
     Sources -.->|"KB re-indexed:<br/>closes the loop"| Search
@@ -92,7 +92,7 @@ flowchart TB
     classDef store fill:#eef,stroke:#88a
     classDef agent fill:#efe,stroke:#8a8
     class Cosmos,Blob,Search,AppIns store
-    class ChatAgent,FeedbackAgent,Evaluator agent
+    class ChatAgent,EvolutionAgent,Evaluator agent
 ```
 
 **Answer flow (1–10, runtime).** A user posts in a Teams channel; the **Logic
@@ -109,7 +109,8 @@ signal.
 **Feedback loop (A–F, daily).** The scheduled **scan** reads conversation
 threads from Cosmos (Detect); the **Bot Answer Evaluator** judges each —
 *finished + correct* is archived, *finished + wrong/unconfirmed* becomes
-`failed`. Each failed thread goes to the **Feedback Agent** (Diagnose), which
+`failed`. Each failed thread goes to the **Chatbot Evolution Agent**
+(Diagnose), which
 reconstructs the failed turn from **App Insights**, reads the full conversation
 from **Cosmos**, and reproduces retrieval against **AI Search** to classify a
 **KB defect vs. system defect**. It files one evidence-cited **GitHub issue**
@@ -119,7 +120,7 @@ the improvement flows back into future answers, closing the loop.
 
 ### 2.2 Agent Design
 
-The Feedback Agent is built on the `agent_framework` library and deployed as a Foundry hosted agent alongside the Chat Agent.
+The Chatbot Evolution Agent is built on the `agent_framework` library and deployed as a Foundry hosted agent alongside the Chat Agent.
 
 | Component | Purpose |
 | --- | --- |
@@ -244,19 +245,20 @@ record carries **two status layers**:
    - finished + correct → `finished` (archived);
    - finished + incorrect/unknown → `failed`.
 3. **Feedback** — for records that just turned `failed`, run the hosted
-   feedback agent in-process via `FeedbackAgentService.run_job` (§2.3.1).
+   chatbot evolution agent in-process via
+   `ChatbotEvolutionAgentService.run_job` (§2.3.1).
 
-The whole feature is gated by `FEEDBACK_AGENT_ENABLED` so it can be disabled
-without a code rollback.
+The whole feature is gated by `CHATBOT_EVOLUTION_AGENT_ENABLED` so it can be
+disabled without a code rollback.
 
 #### 2.3.1 Feedback-session invocation
 
 The daily batch job (`scripts/run_feedback_jobs.py`) owns the Layer-2
 lifecycle and drives the Foundry interaction **in-process** via
-:class:`FeedbackAgentService` — there is no backend HTTP API. For each thread
-that just turned `failed`, the job calls `run_job(record_id, tenant_id)`, which
-marks `feedback.status = running`, runs the hosted feedback agent
-**synchronously**, and writes back a terminal `done` / `failed` status.
+:class:`ChatbotEvolutionAgentService` — there is no backend HTTP API. For each
+thread that just turned `failed`, the job calls `run_job(record_id, tenant_id)`,
+which marks `feedback.status = running`, runs the hosted chatbot evolution
+agent **synchronously**, and writes back a terminal `done` / `failed` status.
 
 The agent is invoked through the Responses API (`store=True`); the call
 **blocks** until the run finishes (bounded by a wall-clock timeout), so the
@@ -284,7 +286,7 @@ union QAStatus {
   Failed: "failed",
 }
 
-@doc("Layer-2 lifecycle state of the feedback-agent analysis")
+@doc("Layer-2 lifecycle state of the chatbot-evolution-agent analysis")
 union FeedbackStatus {
   @doc("A feedback session has been requested/persisted")
   Created: "created",
@@ -362,7 +364,7 @@ lets a thread stay `ongoing` across runs until it actually concludes.
 ### 2.5 Create Issue
 
 All issues — KB or system — are filed in **`Azure/azure-sdk-pr`** using the
-existing **GitHub MCP tool** ([`tools/github_mcp_tools.py`](../tools/github_mcp_tools.py)); the feedback agent enables the `create_issue` tool in its allowlist (`readonly=False`).
+existing **GitHub MCP tool** ([`tools/github_mcp_tools.py`](../tools/github_mcp_tools.py)); the chatbot evolution agent enables the `create_issue` tool in its allowlist (`readonly=False`).
 
 For KB issues (`missing_content` / `outdated_content`), the agent calls `resolve_kb_source` to resolve where the KB content originates and cites that source in the body. Example:
 

@@ -37,6 +37,10 @@ from tools.ado_mcp_tools import create_ado_mcp_tool
 from tools.github_mcp_tools import create_github_mcp_tool
 from tools.pipeline_tools import PipelineTools
 from skills.tenant_skills import create_tenant_skills
+from skills.remote_skills import (
+    AZURE_API_REVIEW_SKILL_URL,
+    load_remote_skills,
+)
 from utils.azure_ai_foundry import (
     get_agent_client,
     get_project_client,
@@ -145,6 +149,18 @@ async def main() -> None:
 
     # Init Skills
     skills = create_tenant_skills()
+    # Append remotely-hosted Agent Skills (e.g. azure-api-review from
+    # azure-rest-api-specs). Fetched at startup with graceful fallback so a
+    # network failure never blocks the agent from starting.
+    remote_enabled = cfg("REMOTE_SKILLS_ENABLED", "true").lower() != "false"
+    skills.extend(
+        await load_remote_skills(
+            enabled=remote_enabled,
+            azure_api_review_url=cfg(
+                "AZURE_API_REVIEW_SKILL_URL", AZURE_API_REVIEW_SKILL_URL
+            ),
+        )
+    )
     skills_provider = SkillsProvider(skills)
 
     reasoning_effort = cfg("AI_FOUNDRY_AGENT_REASONING_EFFORT")

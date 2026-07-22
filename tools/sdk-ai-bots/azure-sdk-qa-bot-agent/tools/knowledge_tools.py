@@ -332,11 +332,12 @@ class KnowledgeTools:
         *,
         queries: Annotated[
             list[str],
-            "1-3 queries to find WIKI pages (entry points). The wiki is a curated "
-            "cross-document layer: per-document SUMMARY pages, per-symbol ENTITY "
-            "pages (decorators/APIs/types), per-topic CONCEPT pages. Use symbol/"
-            "concept names or short topic phrases. Returns page titles + short "
-            "summaries only — you MUST then call `wiki_read_page` to read a page.",
+            "1-3 queries for the curated WIKI layer: per-document SUMMARY pages, "
+            "per-symbol ENTITY pages (decorators/APIs/types), per-topic CONCEPT "
+            "pages. Use symbol/concept names or short topic phrases. Returns the "
+            "top pages' full synthesized content PLUS the source-document chunks "
+            "they were built from — enough to answer most conceptual/overview "
+            "questions in one call.",
         ],
         tenant_id: Annotated[str, "The active tenant ID for the current conversation."],
         sources: Annotated[
@@ -345,12 +346,13 @@ class KnowledgeTools:
             "If omitted, all sources configured for the tenant are used.",
         ] = None,
     ) -> SearchKnowledgeBaseResult:
-        """Find wiki pages (entry points) by query — returns summaries ONLY.
+        """Search the wiki layer AND route to sources in one call (self-contained).
 
-        Step 1 of the wiki Search-Read-Expand cycle (WeKnora wiki_search). It
-        returns page titles + short summaries so you can choose which to open;
-        it is NOT enough to answer from. You MUST call `wiki_read_page` on the
-        relevant titles to get the full page content before answering.
+        Returns the top matching wiki pages' full synthesized content together
+        with the specific SOURCE document chunks they were built from, so a
+        single call gives both the cross-document overview and grounded detail.
+        Only when a *specific* page or source is still needed do you drill with
+        `wiki_read_page` (a page by title) or `wiki_read_source_doc` (a source).
         """
         if not sources:
             config = get_tenant_config(TenantID(tenant_id))
@@ -389,20 +391,25 @@ class KnowledgeTools:
             if c.page_type in ("summary", "entity", "concept", "synthesis")
         ]
         unique.sort(key=lambda c: c.rerank_score, reverse=True)
-        max_wiki = int(cfg("KB_WIKI_SEARCH_TOP", "10"))
-        # Return summaries only (title + page_type + truncated snippet).
-        results = [
-            Reference(
-                title=c.title,
-                source=c.page_type,
-                link="",
-                content=_truncate_content((c.content or "")[:400]),
-                score=c.rerank_score,
-            )
-            for c in unique[:max_wiki]
-        ]
-        logger.info("wiki_search: %d entry pages for queries=%s", len(results), queries[:3])
-        return SearchKnowledgeBaseResult(results=results)
+        wiki_pages = unique[: int(cfg("KB_WIKI_TOP", "6"))]
+        # Route each page to the SOURCE chunks it was built from (grounded detail).
+        routed = await search_client.backfill_wiki_sources(
+            wiki_pages,
+            per_page=int(cfg("KB_WIKI_ROUTE_PER_PAGE", "3")),
+            max_total=int(cfg("KB_WIKI_ROUTE_MAX_TOTAL", "12")),
+        )
+        combined = wiki_pages + routed
+        if not combined:
+            logger.info("wiki_search: no wiki pages for queries=%s", queries[:3])
+            return SearchKnowledgeBaseResult(results=[])
+        expanded = await asyncio.gather(
+            *[search_client.expand_by_hierarchy(c) for c in combined]
+        )
+        logger.info(
+            "wiki_search: %d page(s) + %d routed source(s) for queries=%s",
+            len(wiki_pages), len(routed), queries[:3],
+        )
+        return SearchKnowledgeBaseResult(results=_refs_from_expanded(expanded, combined))
 
     @tool
     async def wiki_read_page(

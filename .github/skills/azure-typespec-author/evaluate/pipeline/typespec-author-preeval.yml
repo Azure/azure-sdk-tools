@@ -43,10 +43,14 @@ steps:
       set -e
       npm ci --userconfig $(Build.SourcesDirectory)/.npmrc
       echo "##vso[task.prependpath]$(Build.SourcesDirectory)/eng/pipelines/azure-typespec-author-eval/node_modules/.bin"
-      echo "tsp version:"
-      tsp --version
     displayName: 'Install TypeSpec toolchain (pinned)'
     workingDirectory: $(Build.SourcesDirectory)/eng/pipelines/azure-typespec-author-eval
+
+  - script: |
+      set -e
+      echo "tsp version:"
+      tsp --version
+    displayName: 'Verify TypeSpec toolchain on PATH'
 
   - script: |
       set -e

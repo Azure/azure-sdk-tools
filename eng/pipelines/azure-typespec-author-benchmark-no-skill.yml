@@ -4,15 +4,6 @@
 trigger: none
 pr: none
 
-parameters:
-- name: PythonVersion
-  type: string
-  default: '3.10'
-- name: EvalRuns
-  displayName: Number of Vally runs per case. Runs greater than 1 automatically reduce workers to 1.
-  type: number
-  default: 1
-
 variables:
   - template: /eng/pipelines/templates/variables/image.yml
   - group: AzSDK_Eval_Variable_group
@@ -20,125 +11,16 @@ variables:
     value: '--tag mode:no-skill --skill-dir /tmp/no-skills'
 
 extends:
-  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  template: /eng/common/pipelines/templates/stages/archetype-eval.yml
   parameters:
-    Use1ESOfficial: true
-    stages:
-      - stage: EvalPureAgentWithoutSkill
-        displayName: Evaluate on pure agent without skill
-        variables:
-          - template: /eng/pipelines/templates/variables/globals.yml
-          - template: /eng/pipelines/templates/variables/image.yml
-        pool:
-          name: $(LINUXPOOL)
-          image: $(LINUXVMIMAGE)
-          os: linux
-        jobs:
-          # No-skill baseline: same .vally.yaml suite branch split for
-          # apples-to-apples error investigation.
-          - job: RunEvalsNoSkill
-            displayName: Evaluate on pure agent without skill
-            timeoutInMinutes: 360
-            steps:
-              - checkout: self
-                fetchDepth: 0
-
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-setup.yml
-                parameters:
-                  SkillBranch: ''
-                  StartQaBotBackend: false
-
-              # Run evaluations on pure agent without skill
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
-                parameters:
-                  Suite: versioning-no-skill
-                  SuiteName: versioning-no-skill
-                  DisplayName: Pure agent - versioning
-                  TimeoutMinutes: 50
-                  LoadSkills: false
-                  Runs: ${{ parameters.EvalRuns }}
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
-                parameters:
-                  Suite: armtemplate-no-skill
-                  SuiteName: armtemplate-no-skill
-                  DisplayName: Pure agent - armtemplate
-                  TimeoutMinutes: 40
-                  LoadSkills: false
-                  Runs: ${{ parameters.EvalRuns }}
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
-                parameters:
-                  Suite: longrunningoperation-no-skill
-                  SuiteName: longrunningoperation-no-skill
-                  DisplayName: Pure agent - longrunningoperation
-                  TimeoutMinutes: 25
-                  LoadSkills: false
-                  Runs: ${{ parameters.EvalRuns }}
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
-                parameters:
-                  Suite: decorators-no-skill
-                  SuiteName: decorators-no-skill
-                  DisplayName: Pure agent - decorators
-                  TimeoutMinutes: 15
-                  LoadSkills: false
-                  Runs: ${{ parameters.EvalRuns }}
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
-                parameters:
-                  Suite: warning-no-skill
-                  SuiteName: warning-no-skill
-                  DisplayName: Pure agent - warning
-                  TimeoutMinutes: 25
-                  LoadSkills: false
-                  Runs: ${{ parameters.EvalRuns }}
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
-                parameters:
-                  Suite: dataplane-no-skill
-                  SuiteName: dataplane-no-skill
-                  DisplayName: Pure agent - dataplane
-                  TimeoutMinutes: 50
-                  LoadSkills: false
-                  Runs: ${{ parameters.EvalRuns }}
-
-            templateContext:
-              outputs:
-                - output: pipelineArtifact
-                  path: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/results
-                  artifact: eval-results-no-skill-$(Build.BuildId)
-                  displayName: Upload eval results
-                  condition: always()
-
-      - stage: Prepare
-        displayName: Prepare no-skill track
-        jobs:
-          - template: /eng/common/pipelines/templates/jobs/build-mcp.yml
-            parameters:
-              mcpSetupTemplate: /eng/common/pipelines/templates/steps/eval-mcp-setup.yml
-              TestType: live
-          - template: /eng/common/pipelines/templates/jobs/generate-eval-matrix.yml
-            parameters:
-              vallyRoot: .github/skills/azure-typespec-author/evaluate
-              evalGlobs:
-                - 'evals/*.eval.yaml'
-
-      - stage: Eval
-        displayName: Eval no-skill track
-        dependsOn: Prepare
-        variables:
-          TypeSpecAuthorEvalExtraArgs: '--tag mode:no-skill --skill-dir /tmp/no-skills'
-        jobs:
-          - template: /eng/common/pipelines/templates/jobs/eval-shard.yml
-            parameters:
-              vallyRoot: .github/skills/azure-typespec-author/evaluate
-              evalInvokeTemplate: /eng/common/pipelines/templates/steps/eval-invoke.yml
-              preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
-              threshold: 1.0
-              shardTimeoutInMinutes: 30
-
-      - stage: Summary
-        displayName: Summary no-skill track
-        dependsOn: Eval
-        condition: always()
-        jobs:
-          - template: /eng/common/pipelines/templates/jobs/eval-summarize.yml
-            parameters:
-              failOnFailedTests: false
+    vallyRoot: .github/skills/azure-typespec-author/evaluate
+    evalGlobs:
+      - 'evals/*.eval.yaml'
+    mcpSetupTemplate: /eng/common/pipelines/templates/steps/eval-mcp-setup.yml
+    TestType: live
+    evalInvokeTemplate: /eng/common/pipelines/templates/steps/eval-invoke.yml
+    threshold: 1.0
+    preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
+    failOnFailedTests: false
+    shardTimeoutInMinutes: 30
 

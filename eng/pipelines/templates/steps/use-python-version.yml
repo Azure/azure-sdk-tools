@@ -2,11 +2,12 @@ parameters:
   versionSpec: ''
 
 steps:
-  # use python 3.8 for tooling. packaging. platform.
+  # use python 3.10 for tooling. packaging. platform.
+  # (3.8 is no longer present on the CI images, which ship 3.10+.)
   - task: UsePythonVersion@0
-    displayName: "Use Python 3.8"
+    displayName: "Use Python 3.10"
     inputs:
-      versionSpec: 3.8
+      versionSpec: '3.10'
 
   - pwsh: |
       python -m pip install packaging==20.4

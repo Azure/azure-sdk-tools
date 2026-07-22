@@ -364,3 +364,4 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         }
     }
 }
+

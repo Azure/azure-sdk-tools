@@ -106,7 +106,7 @@ extends:
                   displayName: Upload eval results
                   condition: always()
 
-      - stage: PrepareNoSkill
+      - stage: Prepare
         displayName: Prepare no-skill track
         jobs:
           - template: /eng/common/pipelines/templates/jobs/build-mcp.yml
@@ -119,9 +119,9 @@ extends:
               evalGlobs:
                 - 'evals/*.eval.yaml'
 
-      - stage: EvalNoSkill
+      - stage: Eval
         displayName: Eval no-skill track
-        dependsOn: PrepareNoSkill
+        dependsOn: Prepare
         variables:
           TypeSpecAuthorEvalExtraArgs: '--tag mode:no-skill --skill-dir /tmp/no-skills'
         jobs:
@@ -133,9 +133,9 @@ extends:
               threshold: 1.0
               shardTimeoutInMinutes: 30
 
-      - stage: SummaryNoSkill
+      - stage: Summary
         displayName: Summary no-skill track
-        dependsOn: EvalNoSkill
+        dependsOn: Eval
         condition: always()
         jobs:
           - template: /eng/common/pipelines/templates/jobs/eval-summarize.yml

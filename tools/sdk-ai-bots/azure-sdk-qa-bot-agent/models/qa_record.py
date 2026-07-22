@@ -10,7 +10,7 @@ A ``QARecord`` is the durable status row for **one conversation thread**
   answer (i.e. a case worth a feedback analysis).
 * **Layer 2 — Feedback lifecycle** (:class:`FeedbackStatus`, embedded in
   :class:`FeedbackState`): only populated once the QA reaches ``failed``.
-  ``created`` when the feedback agent session is requested, ``running``
+  ``created`` when the chatbot evolution agent session is requested, ``running``
   once the hosted agent accepted and is processing, ``done`` when it
   finished, ``failed`` when it errored/timed out.
 

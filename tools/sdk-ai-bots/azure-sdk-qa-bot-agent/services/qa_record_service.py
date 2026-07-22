@@ -11,7 +11,7 @@ Aggregates the per-message rows in ``conversation-messages`` into one
   ``ongoing`` for re-evaluation on a later run.
 
 The **Layer-2** feedback lifecycle is owned separately by
-:class:`services.feedback_agent_service.FeedbackAgentService`.
+:class:`services.chatbot_evolution_agent_service.ChatbotEvolutionAgentService`.
 """
 
 from __future__ import annotations

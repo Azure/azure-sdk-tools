@@ -24,7 +24,7 @@ The project has three independently runnable components:
 | Component | Description | Entrypoint | Port |
 |-----------|-------------|------------|------|
 | **Chat Agent** | AI chat agent (Microsoft Agent Framework, Responses protocol) | `agents/chat_agent/init.py` | 8088 |
-| **Feedback Agent** | KB-quality analyst that diagnoses negative-feedback turns and files KB-gap GitHub issues | `agents/feedback_agent/init.py` | 8088 |
+| **Chatbot Evolution Agent** | KB-quality analyst that diagnoses negative-feedback turns and files KB-gap GitHub issues | `agents/chatbot_evolution_agent/init.py` | 8088 |
 | **Server** | Backend API that the Teams App communicates with (FastAPI) | `server.py` | 8089 |
 
 > Both hosted agents bind port `8088`. Run **one at a time** locally.
@@ -117,23 +117,23 @@ This launches the agent via `agentdev run` on `http://localhost:8088/` with `deb
 
 ![Agent Playground](images/agent_playground.png)
 
-### Debugging the Feedback Agent
+### Debugging the Chatbot Evolution Agent
 
-The Feedback Agent is a hosted Foundry agent like the chat agent, but driven by the daily feedback-job scan (`scripts/run_feedback_jobs.py`), which runs it in-process via `services/feedback_agent_service.py`, instead of by Teams. There are two things you may want to debug — the agent's reasoning, or the end-to-end scan→feedback flow.
+The Chatbot Evolution Agent is a hosted Foundry agent like the chat agent, but driven by the daily feedback-job scan (`scripts/run_feedback_jobs.py`), which runs it in-process via `services/chatbot_evolution_agent_service.py`, instead of by Teams. There are two things you may want to debug — the agent's reasoning, or the end-to-end scan→feedback flow.
 
 **1. Iterate on the agent itself (Agent Inspector).**
 
-Same AI Toolkit workflow as the chat agent, just pointed at the feedback agent entrypoint.
+Same AI Toolkit workflow as the chat agent, just pointed at the chatbot evolution agent entrypoint.
 
 1. Install the [AI Toolkit](https://marketplace.visualstudio.com/items?itemName=ms-windows-ai-studio.windows-ai-studio) extension for VS Code.
-2. Use this instruction to let your copilot set up local debugging with the AI Toolkit: `Help me configure the azure-sdk-qa-bot-agent/agents/feedback_agent to work with AI Toolkit Agent Inspector. 1) Ensure the agent is serverized as an HTTP server. 2) Install 'agent-dev-cli' and use 'agentdev' to launch the agent. 3) Add VS Code configuration (tasks.json and launch.json) for debugging.`
-3. Copilot will generate the debug configuration (`.vscode/launch.json` and `.vscode/tasks.json`) pointing at `agents/feedback_agent/init.py`. If you already have the chat agent config, just swap the task command to:
+2. Use this instruction to let your copilot set up local debugging with the AI Toolkit: `Help me configure the azure-sdk-qa-bot-agent/agents/chatbot_evolution_agent to work with AI Toolkit Agent Inspector. 1) Ensure the agent is serverized as an HTTP server. 2) Install 'agent-dev-cli' and use 'agentdev' to launch the agent. 3) Add VS Code configuration (tasks.json and launch.json) for debugging.`
+3. Copilot will generate the debug configuration (`.vscode/launch.json` and `.vscode/tasks.json`) pointing at `agents/chatbot_evolution_agent/init.py`. If you already have the chat agent config, just swap the task command to:
 
    ```text
-   ${command:python.interpreterPath} -m debugpy --listen 127.0.0.1:5679 -m agentdev run agents/feedback_agent/init.py --verbose --port 8088
+   ${command:python.interpreterPath} -m debugpy --listen 127.0.0.1:5679 -m agentdev run agents/chatbot_evolution_agent/init.py --verbose --port 8088
    ```
 
-4. Press **F5** to start debugging, then use the Agent Inspector to send a JSON payload shaped like a `FeedbackAgentInput`:
+4. Press **F5** to start debugging, then use the Agent Inspector to send a JSON payload shaped like a `ChatbotEvolutionAgentInput`:
 
 ```json
 {
@@ -147,11 +147,11 @@ The agent will call `fetch_chat_trace` / `fetch_conversation` / `search_knowledg
 
 **2. Debug the feedback loop end-to-end.**
 
-`FeedbackAgentService` runs the hosted feedback agent synchronously against the *deployed* Foundry agent. Its settings (`AI_FOUNDRY_FEEDBACK_AGENT_NAME`, `AI_FOUNDRY_FEEDBACK_AGENT_VERSION`, `FEEDBACK_AGENT_ENABLED`, `AGENT_APPLICATIONINSIGHTS_RESOURCE_ID`) are read from Azure App Configuration and are already provisioned per environment — you do not need to set them locally.
+`ChatbotEvolutionAgentService` runs the hosted chatbot evolution agent synchronously against the *deployed* Foundry agent. Its settings (`AI_FOUNDRY_CHATBOT_EVOLUTION_AGENT_NAME`, `AI_FOUNDRY_CHATBOT_EVOLUTION_AGENT_VERSION`, `CHATBOT_EVOLUTION_AGENT_ENABLED`, `AGENT_APPLICATIONINSIGHTS_RESOURCE_ID`) are read from Azure App Configuration and are already provisioned per environment — you do not need to set them locally.
 
 To exercise the loop locally:
 
-1. Run the daily scan against a small window: `python scripts/run_feedback_jobs.py --days 2` (evaluates ongoing threads, transitions the `qa-records` table, and runs the hosted feedback agent in-process for `failed` threads). Use `--dry-run` to update statuses without invoking the agent. Set breakpoints in `services/feedback_agent_service.py` to step through a run.
+1. Run the daily scan against a small window: `python scripts/run_feedback_jobs.py --days 2` (evaluates ongoing threads, transitions the `qa-records` table, and runs the hosted chatbot evolution agent in-process for `failed` threads). Use `--dry-run` to update statuses without invoking the agent. Set breakpoints in `services/chatbot_evolution_agent_service.py` to step through a run.
 2. Inspect outcomes in:
    - **Script logs** — the service logs the agent's raw reply at INFO (4 KB preview) and DEBUG (full).
    - **Cosmos `qa-records` container** — partitioned by `/tenant_id`; each thread row carries `qa_status` (`ongoing → finished | failed`) and, once `failed`, an embedded `feedback.status` (`created → running → done | failed`).
@@ -219,7 +219,7 @@ Builds the agent container image, pushes to ACR, and deploys a new hosted agent 
 
 - **Pipeline**: [agent-cd.yml](pipelines/agent-cd.yml) | [Run in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8159)
 - **Deploy script**: [scripts/deploy_hosted_agent.py](scripts/deploy_hosted_agent.py)
-- **Parameters**: `environment` (dev/prod), `agentName` (`chat_agent` or `feedback_agent`)
+- **Parameters**: `environment` (dev/prod), `agentName` (`chat_agent` or `chatbot_evolution_agent`)
 - **What it does**:
   1. Builds the Docker image from `agents/<agentName>/Dockerfile`
   2. Pushes to `azuresdkqabotcontainer.azurecr.io`
@@ -229,7 +229,7 @@ Builds the agent container image, pushes to ACR, and deploys a new hosted agent 
 
 ```bash
 python scripts/deploy_hosted_agent.py chat_agent --tag <image-tag>
-python scripts/deploy_hosted_agent.py feedback_agent --tag <image-tag>
+python scripts/deploy_hosted_agent.py chatbot_evolution_agent --tag <image-tag>
 ```
 
 ### Server Deploy

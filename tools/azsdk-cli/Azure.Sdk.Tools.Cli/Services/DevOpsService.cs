@@ -151,6 +151,8 @@ namespace Azure.Sdk.Tools.Cli.Services
     {
         private static readonly string RELEASE_PLANNER_APP_TEST = "Release Planner App Test";
         private static readonly string MISSING_EMITTER_CONFIG = "MissingEmitterConfig";
+        private static readonly string NOT_APPLICABLE = "Not applicable";
+
         private List<WorkItemRelationType>? _cachedRelationTypes;
 
         private static readonly string[] SUPPORTED_SDK_LANGUAGES = { "Dotnet", "JavaScript", "Python", "Java", "Go" };
@@ -1128,7 +1130,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                                 {
                                     Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
                                     Path = $"/fields/Custom.ReleaseExclusionStatusFor{MapLanguageToId(sdk.Language)}",
-                                    Value = "Not applicable"
+                                    Value = NOT_APPLICABLE
                                 }
                             );
                         }

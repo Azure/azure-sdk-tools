@@ -14,6 +14,14 @@ public interface IApiReviewHubService
         bool waitForCompletion,
         TimeSpan pollInterval,
         CancellationToken ct);
+
+    Task<ApiReviewHubReleaseGateResult> GetReleaseGateStatusAsync(
+        string endpoint,
+        string language,
+        string packageName,
+        string packageVersion,
+        string apiHash,
+        CancellationToken ct);
 }
 
 public class ApiReviewHubService(
@@ -72,6 +80,35 @@ public class ApiReviewHubService(
 
             await Task.Delay(pollInterval, ct);
         }
+    }
+
+    public async Task<ApiReviewHubReleaseGateResult> GetReleaseGateStatusAsync(
+        string endpoint,
+        string language,
+        string packageName,
+        string packageVersion,
+        string apiHash,
+        CancellationToken ct)
+    {
+        endpoint = endpoint.TrimEnd('/');
+        var httpClient = httpClientFactory.CreateClient(nameof(ApiReviewHubService));
+        await ConfigureAuthorizationAsync(httpClient, endpoint, ct);
+
+        var uriBuilder = new UriBuilder($"{endpoint}/api/releases/check-gate");
+        var query = new List<string>
+        {
+            $"language={Uri.EscapeDataString(language)}",
+            $"packageName={Uri.EscapeDataString(packageName)}",
+            $"version={Uri.EscapeDataString(packageVersion)}"
+        };
+        if (!string.IsNullOrWhiteSpace(apiHash))
+        {
+            query.Add($"apiHash={Uri.EscapeDataString(apiHash)}");
+        }
+
+        uriBuilder.Query = string.Join("&", query);
+        logger.LogInformation("Querying API Review Hub release gate for {packageName} {packageVersion}", packageName, packageVersion);
+        return await GetJsonAsync<ApiReviewHubReleaseGateResult>(httpClient, uriBuilder.Uri.ToString(), ct);
     }
 
     private void LogOperationProgress(OperationStatus operation, DateTimeOffset startedAt, ref bool loggedPipelineUrl)

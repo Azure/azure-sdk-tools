@@ -48,8 +48,10 @@ namespace Azure.Sdk.Tools.Cli.Services
             // APIView Services
             services.AddSingleton<IAPIViewAuthenticationService, APIViewAuthenticationService>();
             services.AddSingleton<IAPIViewHttpService, APIViewHttpService>();
+            services.AddSingleton<IAPIViewReleaseStatusService, APIViewReleaseStatusService>();
             services.AddSingleton<IAPIViewService, APIViewService>();
             services.AddSingleton<IApiReviewHubService, ApiReviewHubService>();
+            services.AddSingleton<IApiReviewReleaseStatusService, ApiReviewReleaseStatusService>();
 
             services.AddScoped<LanguageService, DotnetLanguageService>();
             services.AddScoped<LanguageService, JavaLanguageService>();

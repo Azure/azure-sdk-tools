@@ -87,6 +87,98 @@ public class ApiReviewHubRequestReviewPullRequestResult
     public OperationStatus? Operation { get; set; }
 }
 
+public class ApiReviewHubReleaseGateApproval
+{
+    [JsonPropertyName("apiHash")]
+    public string ApiHash { get; set; } = string.Empty;
+
+    [JsonPropertyName("commitSha")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? CommitSha { get; set; }
+
+    [JsonPropertyName("status")]
+    public string Status { get; set; } = string.Empty;
+
+    [JsonPropertyName("pullRequestUrl")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? PullRequestUrl { get; set; }
+
+    [JsonPropertyName("lastUpdatedBy")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? LastUpdatedBy { get; set; }
+
+    [JsonPropertyName("lastUpdatedOn")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? LastUpdatedOn { get; set; }
+}
+
+public class ApiReviewHubReleaseGateResult
+{
+    [JsonPropertyName("allowed")]
+    public bool Allowed { get; set; }
+
+    [JsonPropertyName("reason")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Reason { get; set; }
+
+    [JsonPropertyName("details")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Details { get; set; }
+
+    [JsonPropertyName("approvals")]
+    public IReadOnlyList<ApiReviewHubReleaseGateApproval> Approvals { get; set; } = [];
+}
+
+public class ApiViewReleaseStatusResult
+{
+    [JsonPropertyName("isApproved")]
+    public bool IsApproved { get; set; }
+
+    [JsonPropertyName("packageNameApproved")]
+    public bool PackageNameApproved { get; set; }
+
+    [JsonPropertyName("statusCode")]
+    public int StatusCode { get; set; }
+
+    [JsonPropertyName("reason")]
+    public string Reason { get; set; } = string.Empty;
+
+    [JsonPropertyName("details")]
+    public IReadOnlyList<string> Details { get; set; } = [];
+}
+
+public class ApiReviewStatusSourceResult<T>
+{
+    [JsonPropertyName("succeeded")]
+    public bool Succeeded { get; set; }
+
+    [JsonPropertyName("result")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public T? Result { get; set; }
+
+    [JsonPropertyName("error")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Error { get; set; }
+}
+
+public class ApiReviewReleaseStatusResult
+{
+    [JsonPropertyName("isApproved")]
+    public bool IsApproved { get; set; }
+
+    [JsonPropertyName("finalSource")]
+    public string FinalSource { get; set; } = string.Empty;
+
+    [JsonPropertyName("reason")]
+    public string Reason { get; set; } = string.Empty;
+
+    [JsonPropertyName("reviewHub")]
+    public ApiReviewStatusSourceResult<ApiReviewHubReleaseGateResult> ReviewHub { get; set; } = new();
+
+    [JsonPropertyName("apiView")]
+    public ApiReviewStatusSourceResult<ApiViewReleaseStatusResult>? ApiView { get; set; }
+}
+
 public class ApiReviewHubResponse : CommandResponse
 {
     private static readonly JsonSerializerOptions serializerOptions = new()
@@ -124,6 +216,10 @@ public class ApiReviewReleaseStatusResponse : CommandResponse
     private const string Yellow = "\u001b[33m";
     private const string Red = "\u001b[31m";
     private const string Reset = "\u001b[0m";
+
+    [JsonPropertyName("result")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public ApiReviewReleaseStatusResult? Result { get; set; }
 
     [JsonPropertyName("details")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

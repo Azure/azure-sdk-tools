@@ -1,9 +1,6 @@
 using System.CommandLine;
 using System.ComponentModel;
-using System.Diagnostics;
-using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Commands;
-using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.ApiReviewHub;
 using Azure.Sdk.Tools.Cli.Services.ApiReviewHub;
@@ -16,6 +13,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ApiReviewHub;
 [Description("API Review Hub operations including review pull request creation")]
 public class ApiReviewHubTool(
     IApiReviewHubService apiReviewHubService,
+    IApiReviewReleaseStatusService apiReviewReleaseStatusService,
     ILogger<ApiReviewHubTool> logger) : MCPMultiCommandTool
 {
     private const string CreateCommandName = "create";
@@ -223,45 +221,19 @@ public class ApiReviewHubTool(
     {
         try
         {
-            var scriptPath = ResolveGetReleaseStatusScript();
-            var args = new List<string>
+            var result = await apiReviewReleaseStatusService.GetReleaseStatusAsync(DefaultEndpoint, language, packageName, packageVersion, apiHash, ct);
+            var response = new ApiReviewReleaseStatusResponse
             {
-                "-Language",
-                language,
-                "-PackageName",
-                packageName,
-                "-PackageVersion",
-                packageVersion,
-                "-APIViewUri",
-                DefaultApiViewReleaseStatusEndpoint
+                Result = result,
+                Details = BuildDetails(result, packageName, packageVersion)
             };
 
-            if (!string.IsNullOrWhiteSpace(apiHash))
+            if (!result.IsApproved)
             {
-                args.Add("-ApiHash");
-                args.Add(apiHash);
+                response.ResponseError = $"API review release gate is not approved for {packageName} {packageVersion}.";
             }
 
-            var result = await RunPowerShellScriptAsync(scriptPath, [.. args], ct);
-            if (result.ExitCode != 0)
-            {
-                var details = GetOutputLines(result.Output);
-                if (details.Count == 0)
-                {
-                    details.Add("No release gate details were returned.");
-                }
-
-                return new ApiReviewReleaseStatusResponse
-                {
-                    Details = details,
-                    ResponseError = $"API review release gate is not approved for {packageName} {packageVersion}."
-                };
-            }
-
-            return new ApiReviewReleaseStatusResponse
-            {
-                Details = GetOutputLines(result.Output)
-            };
+            return response;
         }
         catch (Exception ex)
         {
@@ -273,59 +245,58 @@ public class ApiReviewHubTool(
         }
     }
 
-    private static string ResolveGetReleaseStatusScript()
+    private static List<string> BuildDetails(ApiReviewReleaseStatusResult result, string packageName, string packageVersion)
     {
-        var scriptPath = Path.Combine(AppContext.BaseDirectory, "Scripts", "Get-ApiReviewReleaseStatus.ps1");
-        if (File.Exists(scriptPath))
+        var details = new List<string>
         {
-            return scriptPath;
-        }
-
-        throw new FileNotFoundException($"Could not find bundled API review release status script at {scriptPath}.");
-    }
-
-    private static async Task<(int ExitCode, string Output)> RunPowerShellScriptAsync(string scriptPath, string[] args, CancellationToken ct)
-    {
-        var startInfo = new ProcessStartInfo
-        {
-            FileName = "pwsh",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            WorkingDirectory = Path.GetDirectoryName(scriptPath) ?? Environment.CurrentDirectory
+            "== Final Result ==",
+            $"Primary Source: {result.FinalSource}",
+            $"Approved: {result.IsApproved}",
+            $"Reason: {result.Reason}"
         };
-        startInfo.ArgumentList.Add("-File");
-        startInfo.ArgumentList.Add(scriptPath);
-        foreach (var arg in args)
+
+        details.Add(string.Empty);
+        details.Add("== API Review Hub (Primary) ==");
+        if (result.ReviewHub.Succeeded && result.ReviewHub.Result != null)
         {
-            startInfo.ArgumentList.Add(arg);
+            details.Add($"Allowed: {result.ReviewHub.Result.Allowed}");
+            details.Add($"Reason: {result.ReviewHub.Result.Reason ?? "none"}");
+            if (!string.IsNullOrWhiteSpace(result.ReviewHub.Result.Details))
+            {
+                details.Add(result.ReviewHub.Result.Details);
+            }
         }
-        startInfo.Environment["NO_COLOR"] = "1";
+        else
+        {
+            details.Add($"WARNING: Primary query failed for {packageName} {packageVersion}.");
+            if (!string.IsNullOrWhiteSpace(result.ReviewHub.Error))
+            {
+                details.Add(result.ReviewHub.Error);
+            }
+        }
 
-        using var process = new Process { StartInfo = startInfo };
-        process.Start();
+        if (result.ApiView != null)
+        {
+            details.Add(string.Empty);
+            details.Add("== APIView (Fallback) ==");
+            if (result.ApiView.Succeeded && result.ApiView.Result != null)
+            {
+                details.Add("Used because the primary API Review Hub query failed.");
+                details.Add($"Approved: {result.ApiView.Result.IsApproved}");
+                details.Add($"Package Name Approved: {result.ApiView.Result.PackageNameApproved}");
+                details.Add($"Reason: {result.ApiView.Result.Reason}");
+                details.AddRange(result.ApiView.Result.Details);
+            }
+            else
+            {
+                details.Add($"WARNING: Fallback query failed for {packageName} {packageVersion}.");
+                if (!string.IsNullOrWhiteSpace(result.ApiView.Error))
+                {
+                    details.Add(result.ApiView.Error);
+                }
+            }
+        }
 
-        var outputTask = process.StandardOutput.ReadToEndAsync(ct);
-        var errorTask = process.StandardError.ReadToEndAsync(ct);
-        await process.WaitForExitAsync(ct);
-
-        var output = await outputTask;
-        var error = await errorTask;
-        return (process.ExitCode, string.Join(Environment.NewLine, new[] { output, error }.Where(value => !string.IsNullOrWhiteSpace(value))));
-    }
-
-    private static List<string> GetOutputLines(string output)
-    {
-        return StripAnsi(output)
-            .Split(["\r\n", "\n"], StringSplitOptions.None)
-            .Select(line => line.TrimEnd())
-            .Where(line => !string.IsNullOrWhiteSpace(line))
-            .ToList();
-    }
-
-    private static string StripAnsi(string value)
-    {
-        return Regex.Replace(value, "\u001b\\[[0-9;]*m", string.Empty);
+        return details;
     }
 }

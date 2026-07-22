@@ -73,9 +73,6 @@
     <!-- Include changelog and documentation files in the package -->
     <None Include="CHANGELOG.md" Pack="true" PackagePath="CHANGELOG.md" />
     <None Include="../README.md" Pack="true" PackagePath="README.md" />
-    <None Include="../../../eng/common/scripts/Helpers/ApiView-Helpers.ps1" Link="Scripts/Helpers/ApiView-Helpers.ps1" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Pack="true" PackagePath="tools/net8.0/any/Scripts/Helpers/ApiView-Helpers.ps1" />
-    <None Include="../../../eng/common/scripts/logging.ps1" Link="Scripts/logging.ps1" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Pack="true" PackagePath="tools/net8.0/any/Scripts/logging.ps1" />
-    <None Include="Scripts/Get-ApiReviewReleaseStatus.ps1" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Pack="true" PackagePath="tools/net8.0/any/Scripts/Get-ApiReviewReleaseStatus.ps1" />
   </ItemGroup>
 
   <!-- START Exclude asp net configs from release archives -->

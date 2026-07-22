@@ -16,7 +16,12 @@ from config.tenant_config import TenantID, get_tenant_config
 from config.app_config import get as cfg
 from models.knowledge import Reference, SearchKnowledgeBaseResult
 from tools import tool
-from utils.azure_ai_search import get_search_client, fuse_with_rrf, mmr_select
+from utils.azure_ai_search import (
+    NON_WIKI_FILTER,
+    WIKI_FILTER,
+    fuse_with_rrf,
+    get_search_client,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -164,12 +169,18 @@ class KnowledgeTools:
                 )
                 weights.append(agentic_weight)
             retriever_coros.append(
-                search_client.vector_search(query=q, source_filters=source_filters, top_k=pool_k)
+                search_client.vector_search(
+                    query=q, source_filters=source_filters, top_k=pool_k,
+                    extra_filter=NON_WIKI_FILTER,
+                )
             )
             weights.append(vector_weight)
             if enable_keyword:
                 retriever_coros.append(
-                    search_client.keyword_search(query=q, source_filters=source_filters, top_k=pool_k)
+                    search_client.keyword_search(
+                        query=q, source_filters=source_filters, top_k=pool_k,
+                        extra_filter=NON_WIKI_FILTER,
+                    )
                 )
                 weights.append(keyword_weight)
 
@@ -212,54 +223,19 @@ class KnowledgeTools:
         # Deduplicate across all search results
         unique_chunks = search_client.deduplicate_chunks(raw_chunks)
 
-        # Optional WeKnora-style wiki boost: LLM-synthesised wiki pages carry
-        # denser, cross-referenced knowledge than raw chunks, so preferring them
-        # when both surface for the same query can help. Gated + default off
-        # (1.0) so it is opt-in and A/B-testable via config.
-        wiki_boost = float(cfg("KB_WIKI_BOOST", "1.0"))
-        if wiki_boost != 1.0:
-            boosted = 0
-            for c in unique_chunks:
-                if c.page_type in ("summary", "entity", "concept", "synthesis"):
-                    c.rerank_score *= wiki_boost
-                    boosted += 1
-            if boosted:
-                logger.info("Wiki boost x%.2f applied to %d page(s)", wiki_boost, boosted)
+        # WeKnora-style two-track separation: this tool serves the SOURCE-CHUNK
+        # track only. Defensively drop any generated wiki page that slipped
+        # through (e.g. via the agentic retriever, which has no page-type
+        # filter) so wiki pages never displace authoritative source chunks —
+        # they are retrieved separately by ``search_wiki``.
+        unique_chunks = [c for c in unique_chunks if not c.page_type]
 
-        # Reorder by rerank_score, then select the final top_k. MMR diversity
-        # (WeKnora-style, Jaccard) balances relevance against redundancy so a
-        # flood of similar pages (e.g. many short synthesized wiki pages) cannot
-        # crowd out substantive, complementary content. Gated via config.
+        # Reorder by rerank_score, then select the final top_k.
         unique_chunks.sort(key=lambda c: c.rerank_score, reverse=True)
         top_k = search_client.top_k
-        enable_mmr = cfg("KB_ENABLE_MMR", "false").lower() == "true"
         if len(unique_chunks) > top_k:
-            if enable_mmr:
-                mmr_lambda = float(cfg("KB_MMR_LAMBDA", "0.7"))
-                unique_chunks = mmr_select(unique_chunks, top_k, lambda_=mmr_lambda)
-                logger.info(
-                    "MMR (lambda=%.2f) selected %d of the candidate pool", mmr_lambda, top_k
-                )
-            else:
-                logger.info(
-                    "Capping results from %d to %d (top_k)", len(unique_chunks), top_k
-                )
-                unique_chunks = unique_chunks[:top_k]
-
-        # Wiki→source backfill: a retrieved wiki page is a distilled *router* to
-        # its source documents, not a replacement. Pull the specific source
-        # chunks it points to (summary: by title; entity/concept: chunk_refs) into
-        # the deep-read set, so the wiki page's high-recall topic match surfaces
-        # the authoritative content it was built from instead of displacing it.
-        if cfg("KB_ENABLE_WIKI_BACKFILL", "true").lower() == "true":
-            per_page = int(cfg("KB_BACKFILL_PER_PAGE", "3"))
-            max_total = int(cfg("KB_BACKFILL_MAX_TOTAL", "12"))
-            sources = await search_client.backfill_wiki_sources(
-                unique_chunks, per_page=per_page, max_total=max_total
-            )
-            if sources:
-                logger.info("Wiki backfill added %d source chunk(s)", len(sources))
-                unique_chunks.extend(sources)
+            logger.info("Capping results from %d to %d (top_k)", len(unique_chunks), top_k)
+            unique_chunks = unique_chunks[:top_k]
 
         logger.info(
             "After deduplication + rerank: %d chunks (from %d raw)",
@@ -304,6 +280,132 @@ class KnowledgeTools:
             len(refs),
         )
 
+        return SearchKnowledgeBaseResult(results=refs)
+
+    @tool
+    async def search_wiki(
+        self,
+        *,
+        queries: Annotated[
+            list[str],
+            "1-3 search queries to run against the synthesized WIKI layer. "
+            "The wiki is a curated, cross-document knowledge layer built from the "
+            "corpus: per-document SUMMARY pages, per-symbol ENTITY pages "
+            "(decorators/APIs/types), and per-topic CONCEPT pages. Phrase queries "
+            "as complete natural-language questions or topic phrases (concept/"
+            "symbol names retrieve best). At least 1, at most 3.",
+        ],
+        tenant_id: Annotated[
+            str,
+            "The active tenant ID for the current conversation.",
+        ],
+        sources: Annotated[
+            list[str] | None,
+            "Optional list of knowledge source names to scope the wiki search. "
+            "If omitted, all sources configured for the tenant are used.",
+        ] = None,
+    ) -> SearchKnowledgeBaseResult:
+        """Search the synthesized wiki layer and route to authoritative sources.
+
+        This is the WIKI track (kept separate from ``search_knowledge_base``):
+        it retrieves the LLM-synthesized wiki pages — which consolidate what the
+        whole corpus says about a symbol or concept — and, for each relevant
+        page, also pulls the specific SOURCE document chunks it was built from.
+        Use it to orient on a topic and get both the cross-document overview and
+        the grounded source detail in one call. Prefer ``search_knowledge_base``
+        for exact/literal lookups of specific wording.
+        """
+        if not sources:
+            config = get_tenant_config(TenantID(tenant_id))
+            sources = [src.name for src in config.sources] if config else []
+
+        search_client = get_search_client()
+        source_filters = _resolve_source_filters(sources, tenant_id, None)
+
+        enable_keyword = cfg("KB_ENABLE_KEYWORD", "true").lower() == "true"
+        rrf_k = int(cfg("KB_RRF_K", "60"))
+        capped_queries = queries[:3]
+
+        async def _wiki_fused(q: str) -> list:
+            coros = [
+                search_client.vector_search(
+                    query=q, source_filters=source_filters, extra_filter=WIKI_FILTER
+                )
+            ]
+            weights = [1.0]
+            if enable_keyword:
+                coros.append(
+                    search_client.keyword_search(
+                        query=q, source_filters=source_filters, extra_filter=WIKI_FILTER
+                    )
+                )
+                weights.append(1.0)
+            res = await asyncio.gather(*coros, return_exceptions=True)
+            ranked = [
+                (r, w)
+                for r, w in zip(res, weights)
+                if not isinstance(r, BaseException) and r
+            ]
+            if not ranked:
+                return []
+            if len(ranked) > 1:
+                return fuse_with_rrf(ranked, k=rrf_k)
+            return list(ranked[0][0])
+
+        per_query = await asyncio.gather(*[_wiki_fused(q) for q in capped_queries])
+        raw: list = []
+        for lst in per_query:
+            raw.extend(lst)
+
+        unique = search_client.deduplicate_chunks(raw)
+        # Defensive: this track serves wiki pages only.
+        unique = [
+            c for c in unique if c.page_type in ("summary", "entity", "concept", "synthesis")
+        ]
+        unique.sort(key=lambda c: c.rerank_score, reverse=True)
+        max_wiki = int(cfg("KB_WIKI_TOP", "6"))
+        wiki_pages = unique[:max_wiki]
+
+        # Route each wiki page to the SOURCE chunks it was built from, so the
+        # agent gets grounded detail alongside the synthesized overview.
+        routed = await search_client.backfill_wiki_sources(
+            wiki_pages,
+            per_page=int(cfg("KB_WIKI_ROUTE_PER_PAGE", "3")),
+            max_total=int(cfg("KB_WIKI_ROUTE_MAX_TOTAL", "12")),
+        )
+
+        combined = wiki_pages + routed
+        if not combined:
+            logger.info("search_wiki: no wiki pages matched queries=%s", capped_queries)
+            return SearchKnowledgeBaseResult(results=[])
+
+        expanded = await asyncio.gather(
+            *[search_client.expand_by_hierarchy(c) for c in combined]
+        )
+        logger.info(
+            "=========Wiki Search Result========= (%d pages + %d routed sources)",
+            len(wiki_pages), len(routed),
+        )
+        refs = [
+            Reference(
+                title=_build_reference_title(
+                    expanded[i].title,
+                    expanded[i].header1,
+                    expanded[i].header2,
+                    expanded[i].header3,
+                ),
+                source=expanded[i].source,
+                link=expanded[i].link,
+                content=_truncate_content(expanded[i].content),
+                score=combined[i].rerank_score,
+            )
+            for i in range(len(expanded))
+        ]
+        for i, ref in enumerate(refs):
+            logger.info(
+                "Wiki [%d] score=%.2f, source=%s, title=%s, content_len=%d",
+                i + 1, ref.score, ref.source, ref.title, len(ref.content or ""),
+            )
         return SearchKnowledgeBaseResult(results=refs)
 
 

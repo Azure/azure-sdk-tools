@@ -44,6 +44,13 @@ _HIERARCHY_EXPANSION_TOP = 20
 # Chunks below this rerank score are considered low-relevance and dropped.
 _RERANK_SCORE_LOW_RELEVANCE_THRESHOLD = 2.0
 
+# WeKnora-style two-track separation: the chunk retrievers search ONLY raw
+# source chunks (``page_type`` null/empty); the wiki retriever searches ONLY
+# generated wiki pages. Wiki pages never enter the source-chunk ranked pool, so
+# they can no longer displace authoritative source chunks.
+NON_WIKI_FILTER = "(page_type eq null or page_type eq '')"
+WIKI_FILTER = "(page_type eq 'summary' or page_type eq 'entity' or page_type eq 'concept' or page_type eq 'synthesis')"
+
 # Fields selected by the dense/sparse retrievers. ``page_type`` distinguishes
 # generated wiki pages from raw chunks (for link rendering / optional boosting).
 _RETRIEVER_SELECT_FIELDS = [
@@ -60,6 +67,15 @@ _RETRIEVER_SELECT_FIELDS = [
     "page_type",
     "chunk_refs_str",
 ]
+
+
+def _and_extra(combined_filter: str, extra_filter: str | None) -> str:
+    """AND an extra OData clause onto an OR-combined source filter."""
+    if not extra_filter:
+        return combined_filter
+    if not combined_filter:
+        return extra_filter
+    return f"({combined_filter}) and {extra_filter}"
 
 
 def _chunk_key(chunk: "KnowledgeChunk") -> str:
@@ -242,12 +258,14 @@ class SearchClient:
         query: str,
         source_filters: dict[str, str],
         top_k: int | None = None,
+        extra_filter: str | None = None,
     ) -> list[KnowledgeChunk]:
         """Hybrid semantic + vector search mirroring the Go backend's SearchTopKRelatedDocuments.
 
         Combines all source filters into a single query for efficiency,
         filters by rerank score, and returns the top-k results sorted by
-        relevance.
+        relevance. ``extra_filter`` (e.g. the wiki/non-wiki page-type gate) is
+        AND-ed onto the OR-combined source filter.
         """
         k = top_k or self._top_k
 
@@ -261,6 +279,7 @@ class SearchClient:
 
         # Combine per-source filters into a single OData expression with OR
         combined_filter = " or ".join(f"({f})" for f in source_filters.values() if f)
+        combined_filter = _and_extra(combined_filter, extra_filter)
 
         results = await self._search_client.search(
             search_text=query,
@@ -287,6 +306,7 @@ class SearchClient:
         query: str,
         source_filters: dict[str, str],
         top_k: int | None = None,
+        extra_filter: str | None = None,
     ) -> list[KnowledgeChunk]:
         """Sparse full-text (BM25) keyword search.
 
@@ -300,6 +320,7 @@ class SearchClient:
         k = top_k or self._top_k
         select_fields = _RETRIEVER_SELECT_FIELDS
         combined_filter = " or ".join(f"({f})" for f in source_filters.values() if f)
+        combined_filter = _and_extra(combined_filter, extra_filter)
 
         results = await self._search_client.search(
             search_text=query,

@@ -142,6 +142,7 @@ def skillset_body() -> dict:
                         {"name": "context_id", "source": "/document/context_id"},
                         {"name": "header_1", "source": "/document/title"},
                         {"name": "page_type", "source": "/document/page_type"},
+                        {"name": "chunk_refs_str", "source": "/document/chunk_refs"},
                     ],
                 }
             ],

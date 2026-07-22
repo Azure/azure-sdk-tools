@@ -85,6 +85,7 @@ class KnowledgeChunk(BaseModel):
     header2: str = Field(default="", validation_alias="header_2")
     header3: str = Field(default="", validation_alias="header_3")
     page_type: str = ""
+    chunk_refs: list[str] = Field(default_factory=list, validation_alias="chunk_refs_str")
     rerank_score: float = Field(default=0.0, validation_alias="@search.reranker_score")
 
     @field_validator("rerank_score", mode="before")
@@ -101,6 +102,30 @@ class KnowledgeChunk(BaseModel):
     def _coerce_page_type(cls, v: object) -> str:
         """Raw (non-wiki) chunks carry null for this added field."""
         return v or ""
+
+    @field_validator("chunk_refs", mode="before")
+    @classmethod
+    def _coerce_chunk_refs(cls, v: object) -> list:
+        """Coerce chunk_refs to a list of source rel-paths.
+
+        Raw (non-wiki) chunks carry null. Wiki chunks store their source refs as
+        a JSON array **string** in the index field ``chunk_refs_str`` (a plain
+        ``Edm.String`` — index projections cannot populate a collection from a
+        scalar), so parse that here. Also tolerate an already-list value.
+        """
+        import json
+
+        if not v:
+            return []
+        if isinstance(v, str):
+            try:
+                parsed = json.loads(v)
+                return parsed if isinstance(parsed, list) else [v]
+            except (ValueError, TypeError):
+                return [v]
+        if isinstance(v, list):
+            return v
+        return []
 
 
 class KnowledgeResult(BaseModel):

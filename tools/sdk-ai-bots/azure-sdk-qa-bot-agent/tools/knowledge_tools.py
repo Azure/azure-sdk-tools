@@ -149,9 +149,10 @@ class KnowledgeTools:
         keyword_weight = float(cfg("KB_RRF_KEYWORD_WEIGHT", "1.0"))
         agentic_weight = float(cfg("KB_RRF_AGENTIC_WEIGHT", "1.0"))
         # Retrieve a WIDER candidate pool than the final top_k so the downstream
-        # rerank + MMR diversity have room to work (WeKnora retrieves EmbeddingTopK
-        # ~50 then narrows). 0 = use the client's own top_k (legacy behaviour).
-        retrieve_k = int(cfg("KB_RETRIEVE_K", "40"))
+        # rerank + MMR diversity have room to work. Default 0 (legacy per-retriever
+        # top_k): the wider pool + MMR were measured to regress, so they are off by
+        # default; the wiki→source backfill below is the query-side fix instead.
+        retrieve_k = int(cfg("KB_RETRIEVE_K", "0"))
         pool_k = retrieve_k if retrieve_k > 0 else None
 
         async def _fused_for_query(q: str) -> list:
@@ -231,7 +232,7 @@ class KnowledgeTools:
         # crowd out substantive, complementary content. Gated via config.
         unique_chunks.sort(key=lambda c: c.rerank_score, reverse=True)
         top_k = search_client.top_k
-        enable_mmr = cfg("KB_ENABLE_MMR", "true").lower() == "true"
+        enable_mmr = cfg("KB_ENABLE_MMR", "false").lower() == "true"
         if len(unique_chunks) > top_k:
             if enable_mmr:
                 mmr_lambda = float(cfg("KB_MMR_LAMBDA", "0.7"))
@@ -244,6 +245,21 @@ class KnowledgeTools:
                     "Capping results from %d to %d (top_k)", len(unique_chunks), top_k
                 )
                 unique_chunks = unique_chunks[:top_k]
+
+        # Wiki→source backfill: a retrieved wiki page is a distilled *router* to
+        # its source documents, not a replacement. Pull the specific source
+        # chunks it points to (summary: by title; entity/concept: chunk_refs) into
+        # the deep-read set, so the wiki page's high-recall topic match surfaces
+        # the authoritative content it was built from instead of displacing it.
+        if cfg("KB_ENABLE_WIKI_BACKFILL", "true").lower() == "true":
+            per_page = int(cfg("KB_BACKFILL_PER_PAGE", "3"))
+            max_total = int(cfg("KB_BACKFILL_MAX_TOTAL", "12"))
+            sources = await search_client.backfill_wiki_sources(
+                unique_chunks, per_page=per_page, max_total=max_total
+            )
+            if sources:
+                logger.info("Wiki backfill added %d source chunk(s)", len(sources))
+                unique_chunks.extend(sources)
 
         logger.info(
             "After deduplication + rerank: %d chunks (from %d raw)",

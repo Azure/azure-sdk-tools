@@ -39,6 +39,10 @@ logger = logging.getLogger(__name__)
 MANIFEST_BLOB = "_manifest.json"
 MANIFEST_VERSION = 2
 
+# Cap on source refs stored in blob metadata (bounds metadata size; backfill
+# only needs a few of the most relevant source docs per page anyway).
+_MAX_CHUNK_REFS_META = 8
+
 
 def _ascii(s: str, limit: int = 1024) -> str:
     """Blob metadata values must be ASCII; strip the rest and cap length."""
@@ -50,6 +54,8 @@ def blob_path(slug: str) -> str:
 
 
 def content_hash(text: str) -> str:
+    """Content-only change-detection digest (schema-independent, so a metadata
+    schema change never masquerades as a source/page content change)."""
     return hashlib.sha1(text.encode("utf-8")).hexdigest()[:16]
 
 
@@ -77,10 +83,15 @@ async def upload_page(container_client, page: WikiPage, title_by_slug: dict[str,
     body = render_markdown(page, title_by_slug)
     chash = content_hash(body)
     path = blob_path(page.slug)
+    # chunk_refs = the source docs this page routes to, for query-time backfill.
+    # Stored as a JSON-array string; the indexer projects it verbatim into the
+    # index's ``chunk_refs_str`` (Edm.String) field, which the agent parses.
+    refs = [_ascii(r) for r in (page.source_refs or [])[:_MAX_CHUNK_REFS_META] if r]
     metadata = {
         "page_type": _ascii(page.page_type),
         "context_id": _ascii(page.context_id),
         "title": _ascii(index_title(page)),
+        "chunk_refs": _ascii(json.dumps(refs), limit=7000),
         "content_hash": chash,
         "is_deleted": "false",
     }
@@ -92,6 +103,40 @@ async def upload_page(container_client, page: WikiPage, title_by_slug: dict[str,
         content_type="text/markdown; charset=utf-8",
     )
     return path, chash, body
+
+
+async def backfill_chunk_refs_metadata(container_client) -> tuple[int, int]:
+    """One-time migration: stamp ``chunk_refs`` blob metadata onto existing pages.
+
+    Reads the manifest and, for every live page blob, writes the JSON-array
+    ``chunk_refs`` metadata derived from the page's stored ``source_refs`` —
+    preserving all other metadata and **without** re-rendering bodies or calling
+    the LLM. Lets already-built wikis pick up the query-time backfill field with
+    a metadata-only rewrite; a subsequent indexer run projects it into the index.
+
+    Returns ``(updated, skipped)``.
+    """
+    manifest = await read_manifest(container_client)
+    pages = manifest.get("pages", {})
+    updated = skipped = 0
+    for slug, entry in pages.items():
+        if entry.get("is_deleted") == "true":
+            skipped += 1
+            continue
+        path = entry.get("blob_path") or blob_path(slug)
+        refs = [_ascii(r) for r in (entry.get("source_refs") or [])[:_MAX_CHUNK_REFS_META] if r]
+        blob = container_client.get_blob_client(path)
+        try:
+            props = await blob.get_blob_properties()
+        except Exception:
+            skipped += 1
+            continue
+        metadata = dict(props.metadata or {})
+        metadata["chunk_refs"] = _ascii(json.dumps(refs), limit=7000)
+        await blob.set_blob_metadata(metadata)
+        updated += 1
+    logger.info("backfill_chunk_refs_metadata: %d updated, %d skipped", updated, skipped)
+    return updated, skipped
 
 
 async def soft_delete_blob(container_client, path: str) -> bool:

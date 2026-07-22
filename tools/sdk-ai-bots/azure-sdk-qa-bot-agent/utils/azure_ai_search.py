@@ -58,6 +58,7 @@ _RETRIEVER_SELECT_FIELDS = [
     "scope",
     "service_type",
     "page_type",
+    "chunk_refs_str",
 ]
 
 
@@ -430,6 +431,77 @@ class SearchClient:
             header2=chunk.header2,
             header3=chunk.header3,
         )
+
+    async def backfill_wiki_sources(
+        self,
+        chunks: "list[KnowledgeChunk]",
+        per_page: int = 3,
+        max_total: int = 12,
+    ) -> "list[KnowledgeChunk]":
+        """Backfill the SOURCE document chunks behind retrieved wiki pages.
+
+        A wiki page (summary/entity/concept/synthesis) is a distilled *router* to
+        the documents it was built from — retrieving it should surface, not
+        replace, that specific source content. For each wiki page in *chunks*,
+        this fetches the raw source chunks it points to:
+
+        * **summary** — its ``title`` IS the source doc's rel path, so the source
+          is fetched by ``title`` match.
+        * **entity / concept / synthesis** — its ``chunk_refs`` list the source
+          docs it aggregates.
+
+        Returns the newly-fetched raw chunks (de-duplicated against *chunks*),
+        capped at *max_total*, so the caller can add them to the deep-read set.
+        """
+        seen_ids = {c.chunk_id for c in chunks if c.chunk_id}
+        wanted_titles: list[str] = []
+        for c in chunks:
+            if c.page_type == "summary" and c.title:
+                refs = [c.title]
+            elif c.page_type in ("entity", "concept", "synthesis"):
+                refs = list(c.chunk_refs)[:per_page]
+            else:
+                continue
+            for r in refs:
+                if r and r not in wanted_titles:
+                    wanted_titles.append(r)
+        wanted_titles = wanted_titles[:max_total]
+        if not wanted_titles:
+            return []
+
+        title_clause = " or ".join(
+            f"title eq '{_escape_odata(t)}'" for t in wanted_titles
+        )
+        # Only backfill RAW source chunks (never other wiki pages).
+        combined_filter = f"({title_clause}) and (page_type eq null or page_type eq '')"
+
+        results = await self._search_client.search(
+            search_text="*",
+            filter=combined_filter,
+            top=max_total * 3,
+            select=_RETRIEVER_SELECT_FIELDS,
+        )
+
+        backfilled: list[KnowledgeChunk] = []
+        per_title_count: dict[str, int] = {}
+        async for doc in results:
+            chunk = KnowledgeChunk.model_validate(dict(doc))
+            if not chunk.chunk_id or chunk.chunk_id in seen_ids:
+                continue
+            # keep at most 2 chunks per source doc to avoid one doc dominating
+            if per_title_count.get(chunk.title, 0) >= 2:
+                continue
+            seen_ids.add(chunk.chunk_id)
+            per_title_count[chunk.title] = per_title_count.get(chunk.title, 0) + 1
+            backfilled.append(chunk)
+            if len(backfilled) >= max_total:
+                break
+        logger.info(
+            "backfill_wiki_sources: %d source chunk(s) from %d wiki ref(s)",
+            len(backfilled),
+            len(wanted_titles),
+        )
+        return backfilled
 
     async def close(self) -> None:
         await self._kb_client.close()

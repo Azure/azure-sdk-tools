@@ -1377,40 +1377,40 @@
             ]
         },
         "actual": {
-            "answer": "Model the change as a versioned operation: keep the old no-body action for old versions and introduce a new action with an optional body for the new version, sharing the same route.\n\nAssuming you already have a `Versions` enum and `@versioned(Versions)` on your namespace, you can do:\n\n```typespec\n@armResourceOperations\ninterface ManagedResources {\n  // Old operation (no body) – present in old versions only\n  @renamedFrom(Versions.`2025-10-01-preview`, \"post\")\n  @removed(Versions.`2025-10-01-preview`)\n  @sharedRoute\n  postNoBody is ArmResourceActionSync;\n\n  // New operation – available in the new version, with optional body\n  @sharedRoute\n  post is ArmResourceActionSync<\n    /* Resource */    ManagedResource,\n    /* Request */     ApplyMaintenanceWindowRequest?, // optional body\n    /* Response */    ApplyMaintenanceWindowResponse\n  >;\n}\n```\n\nKey points:\n- Use `@sharedRoute` on both operations so they share the same path and method.\n- Use `@renamedFrom` and `@removed` on the old op so it only appears in older api-versions.\n- Define the new `post` as `ArmResourceActionSync<Resource, Request?, Response>` with the request model marked optional (`?`).\n\nAdjust `Versions.<...>`, `ManagedResource`, and the request/response models to match your RP. Keep `@action(\"applyMaintenanceWindow\")` and `@operationId(\"managedApplyMaintenanceWindow_Post\")` on the new `post` if those are still correct for the latest version.",
+            "answer": "Use a **new versioned operation**, not an in-place change to the old one.\n\n- Keep the old bodyless action for existing API versions.\n- Add a **request model** for the new version.\n- Make the new action use `ArmResourceActionSync<..., Request, ..., OptionalRequestBody = true>`.\n- If both versions live in the same TypeSpec, mark both ops `@sharedRoute` so they can share the same ARM POST route. See [Interfaces and Operations | Azure.ResourceManager | `ArmResourceActionSync`](https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces) and [Resolving OpenAPI Breaking Change Violations](https://azure.github.io/typespec-azure/docs/migrate-swagger/faq/breakingchange).\n\n```typespec\nmodel ApplyMaintenanceWindowRequest {\n  maintenanceWindowId?: string;\n}\n\n@removed(Versions.`2025-01-01`)\n@sharedRoute\n#suppress \"@azure-tools/typespec-azure-core/no-openapi\" \"Backwards compatibility with non-standard operation id\"\n@action(\"applyMaintenanceWindow\")\n@operationId(\"managedApplyMaintenanceWindow_Post\")\nop post is ArmResourceActionSync<MyResource, void, void>;\n\n@added(Versions.`2025-01-01`)\n@sharedRoute\n#suppress \"@azure-tools/typespec-azure-core/no-openapi\" \"Backwards compatibility with non-standard operation id\"\n@action(\"applyMaintenanceWindow\")\n@operationId(\"managedApplyMaintenanceWindow_Post\")\nop postWithBody is ArmResourceActionSync<\n  MyResource,\n  ApplyMaintenanceWindowRequest,\n  void,\n  OptionalRequestBody = true\n>;\n```\n\n**Key point:** `OptionalRequestBody = true` is the right ARM template knob here. Do **not** retrofit the old version to require or expose the body.",
             "references": [
                 {
                     "title": "Interfaces and Operations | Azure.ResourceManager | `ArmResourceActionSync`",
                     "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces"
                 },
                 {
-                    "title": "Versioning",
-                    "link": "https://azure.github.io/typespec-azure/docs/howtos/arm/versioning"
+                    "title": "Resolving OpenAPI Breaking Change Violations",
+                    "link": "https://azure.github.io/typespec-azure/docs/migrate-swagger/faq/breakingchange"
                 },
                 {
-                    "title": "Versioning the LRO headers | answer",
-                    "link": ""
+                    "title": "Proxy Resource sample",
+                    "link": "https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/proxy"
                 }
             ]
         },
-        "similarity": -1.0,
-        "gpt_similarity": -1.0,
-        "similarity_result": "N/A",
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
         "similarity_threshold": 4,
-        "groundedness": -1.0,
-        "gpt_groundedness": -1.0,
-        "groundedness_reason": "N/A",
-        "groundedness_result": "N/A",
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "Let's think step by step: The query asks how to update a TypeSpec for an ARM action that currently takes no body, to add an optional request body in a new API version. The context provides a detailed, step-by-step approach for this: (1) use a new versioned operation, not an in-place change; (2) keep the old bodyless action for existing versions; (3) add a request model for the new version; (4) use ArmResourceActionSync with OptionalRequestBody = true for the new action; (5) use @sharedRoute if both ops are in the same TypeSpec. The response repeats these steps, provides a correct code example, and highlights the key point about OptionalRequestBody = true. All relevant details from the context are included, and the answer is accurate, complete, and directly addresses the query without extraneous information.",
+        "groundedness_result": "pass",
         "groundedness_threshold": 3.0,
-        "response_completeness": -1.0,
-        "response_completeness_result": "N/A",
+        "response_completeness": 4.0,
+        "response_completeness_result": "pass",
         "response_completeness_threshold": 4,
-        "response_completeness_reason": "N/A",
-        "reference_match": 0.33,
+        "response_completeness_reason": "Let's think step by step: The ground truth specifies that to add an optional request body, you should not change the existing stable version in place, but instead add a new API version with the body, keep the same action/operationId, define a request model, and set OptionalRequestBody = true. The response correctly instructs to use a new versioned operation (not in-place), keep the old bodyless action for existing versions, add a request model for the new version, and set OptionalRequestBody = true. It also mentions marking both ops @sharedRoute if both versions are in the same TypeSpec, which is an implementation detail consistent with the ground truth. The response does not mention the specific fields in the request model (durationInSeconds, force), but the ground truth's example is illustrative, not prescriptive, and the response's model (maintenanceWindowId?) is a plausible example. The response also notes not to retrofit the old version to require or expose the body, which matches the ground truth. The only minor omission is the explicit mention of using the no-content POST template if the action returns no body, but the response's context and code suggest this is understood. Overall, the response contains all major and most minor points from the ground truth.",
+        "reference_match": 0.0,
         "reference_match_result": "fail",
         "knowledge_match": 0.0,
         "knowledge_match_result": "fail",
-        "overall_score": 0.33
+        "overall_score": 6.6
     },
     {
         "average_score": NaN,

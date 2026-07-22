@@ -8,9 +8,9 @@ parameters:
   - name: imageOverride
     type: string
     default: 'ubuntu-24.04'
-  - name: repositoryFullName
+  - name: repositoryOwner
     type: string
-    default: 'tjprescott/azure-sdk-for-python'
+    default: 'Azure'
   - name: toolRef
     type: string
     default: 'main'
@@ -28,13 +28,13 @@ jobs:
     displayName: 'Create Python API review artifacts'
     poolName: ${{ parameters.poolName }}
     imageOverride: ${{ parameters.imageOverride }}
-    sourceRepositoryFullName: ${{ parameters.repositoryFullName }}
+    sourceRepositoryFullName: ${{ format('{0}/azure-sdk-for-python', parameters.repositoryOwner) }}
     sourceCheckoutDir: $(Pipeline.Workspace)/apireview/source
     variables:
       # Share the selected Python SDK repository with artifact-generation steps so
       # tooling install and source checkout cannot accidentally use different repos.
       - name: PythonApiReviewRepositoryFullName
-        value: ${{ parameters.repositoryFullName }}
+        value: ${{ format('{0}/azure-sdk-for-python', parameters.repositoryOwner) }}
       - name: PythonApiReviewSourceDir
         value: $(Pipeline.Workspace)/apireview/source
       - name: PythonApiReviewToolingDir

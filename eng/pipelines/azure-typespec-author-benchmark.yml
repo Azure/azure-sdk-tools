@@ -45,6 +45,9 @@ extends:
     stages:
       - stage: EvalTypeSpecAuthor
         displayName: Azure TypeSpec Author Skill Evaluation
+        dependsOn:
+          - SummaryForced
+          - SummaryTrigger
         variables:
           - template: /eng/pipelines/templates/variables/globals.yml
           - template: /eng/pipelines/templates/variables/image.yml
@@ -198,6 +201,7 @@ extends:
 
       - stage: PrepareForced
         displayName: Prepare forced track
+        dependsOn: []
         jobs:
           - template: /eng/common/pipelines/templates/jobs/build-mcp.yml
             parameters:
@@ -213,10 +217,11 @@ extends:
         displayName: Eval forced track
         dependsOn: PrepareForced
         variables:
-          TypeSpecAuthorEvalExtraArgs: '--tag mode:forced'
+          TypeSpecAuthorEvalExtraArgs: '--tag mode:forced --skill-dir ..'
         jobs:
           - template: /eng/common/pipelines/templates/jobs/eval-shard.yml
             parameters:
+              matrixStageName: PrepareForced
               vallyRoot: .github/skills/azure-typespec-author/evaluate
               evalInvokeTemplate: /eng/common/pipelines/templates/steps/eval-invoke.yml
               preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval-forced.yml
@@ -234,6 +239,7 @@ extends:
 
       - stage: PrepareTrigger
         displayName: Prepare trigger track
+        dependsOn: []
         jobs:
           - template: /eng/common/pipelines/templates/jobs/build-mcp.yml
             parameters:
@@ -249,10 +255,11 @@ extends:
         displayName: Eval trigger track
         dependsOn: PrepareTrigger
         variables:
-          TypeSpecAuthorEvalExtraArgs: '--tag mode:trigger'
+          TypeSpecAuthorEvalExtraArgs: '--tag mode:trigger --skill-dir ..'
         jobs:
           - template: /eng/common/pipelines/templates/jobs/eval-shard.yml
             parameters:
+              matrixStageName: PrepareTrigger
               vallyRoot: .github/skills/azure-typespec-author/evaluate
               evalInvokeTemplate: /eng/common/pipelines/templates/steps/eval-invoke.yml
               preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml

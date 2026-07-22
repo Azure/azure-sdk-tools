@@ -41,6 +41,15 @@ steps:
 
   - script: |
       set -e
+      npm ci --userconfig $(Build.SourcesDirectory)/.npmrc
+      echo "##vso[task.prependpath]$(Build.SourcesDirectory)/eng/pipelines/azure-typespec-author-eval/node_modules/.bin"
+      echo "tsp version:"
+      tsp --version
+    displayName: 'Install TypeSpec toolchain (pinned)'
+    workingDirectory: $(Build.SourcesDirectory)/eng/pipelines/azure-typespec-author-eval
+
+  - script: |
+      set -e
       node .github/skills/azure-typespec-author/evaluate/scripts/setup-fixture-files.js
       FIXTURE_DIR=".github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget"
       cd "$FIXTURE_DIR"
@@ -50,16 +59,21 @@ steps:
 
   - script: |
       set -e
+      BASE_ARGS="${EVAL_ARGS_BASE:-}"
       EXTRA_ARGS="${TYPE_SPEC_AUTHOR_EVAL_EXTRA_ARGS:-}"
       if [ "$EXTRA_ARGS" = '$(TypeSpecAuthorEvalExtraArgs)' ]; then
         EXTRA_ARGS=""
       fi
+      FINAL_ARGS="$BASE_ARGS"
       if [ -n "$EXTRA_ARGS" ]; then
         echo "Applying extra eval args to shard: $EXTRA_ARGS"
-        echo "##vso[task.setvariable variable=evalArgs]$(evalArgs) $EXTRA_ARGS"
+        FINAL_ARGS="$FINAL_ARGS $EXTRA_ARGS"
       else
         echo "No extra eval args injected."
       fi
+      echo "##vso[task.setvariable variable=evalArgs]$FINAL_ARGS"
+      echo "Final evalArgs: $FINAL_ARGS"
     displayName: 'Inject optional extra args into evalArgs'
     env:
+      EVAL_ARGS_BASE: $(evalArgs)
       TYPE_SPEC_AUTHOR_EVAL_EXTRA_ARGS: $(TypeSpecAuthorEvalExtraArgs)

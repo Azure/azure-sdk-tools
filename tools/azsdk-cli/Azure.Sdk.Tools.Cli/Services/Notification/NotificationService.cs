@@ -88,11 +88,11 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification
             return true;
         }
 
-        private static List<string> NormalizeRecipients(IEnumerable<string>? recipients) =>
-            recipients?
-                .Where(r => !string.IsNullOrWhiteSpace(r) && r.Contains(MICROSOFT_EMAIL))
-                .Select(r => r.Trim())
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList() ?? [];
+private static List<string> NormalizeRecipients(IEnumerable<string>? recipients) =>
+    recipients?
+        .Select(r => r?.Trim())
+        .Where(r => !string.IsNullOrWhiteSpace(r) && r.EndsWith(MICROSOFT_EMAIL, StringComparison.OrdinalIgnoreCase))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToList() ?? [];
     }
 }

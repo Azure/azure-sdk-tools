@@ -30,7 +30,7 @@ describe("Abandoned release plan status", () => {
 
   test("suppresses step and action badges for abandoned plans", () => {
     expect(appJs).toContain("step.status && !isTerminal && !isAbandoned");
-    expect(appJs).toContain("!isTerminal &&\n      !isAbandoned &&");
+    expect(appJs).toMatch(/!isTerminal\s*&&\s*!isAbandoned\s*&&/);
   });
 
   test("defines abandoned badge and card CSS", () => {

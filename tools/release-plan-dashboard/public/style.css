@@ -710,10 +710,10 @@ main {
   color: var(--red);
 }
 .badge-abandoned {
-  background: #f3f2f1;
-  color: #605e5c;
+  background: var(--gray-bg);
+  color: var(--gray);
   font-weight: 600;
-  border: 1px solid #c8c6c4;
+  border: 1px solid var(--border);
 }
 .badge-created-using {
   background: #e8f0fe;

@@ -20,7 +20,7 @@ from concurrent.futures import ThreadPoolExecutor
 from .llm import ChatLLM
 from .pages import PAGE_SUMMARY, WikiPage, make_slug
 from .reader import rel_title, source_folder
-from .wiki_extract import map_extract
+from .wiki_extract import GRAN_STANDARD, map_extract
 from .wiki_reduce import reduce_pages
 
 logger = logging.getLogger(__name__)
@@ -106,10 +106,11 @@ def build_wiki(
     llm: ChatLLM,
     *,
     min_docs: int = 2,
+    granularity: str = GRAN_STANDARD,
 ) -> list[WikiPage]:
     """Full WeKnora-faithful wiki build: summary + (map→reduce) entity/concept/index."""
     pages: list[WikiPage] = build_summary_pages(corpus, llm)
-    extractions = map_extract(corpus, llm)
+    extractions = map_extract(corpus, llm, granularity=granularity)
     pages += reduce_pages(extractions, llm, min_docs=min_docs)
     logger.info("build_wiki: %d total wiki pages", len(pages))
     return pages

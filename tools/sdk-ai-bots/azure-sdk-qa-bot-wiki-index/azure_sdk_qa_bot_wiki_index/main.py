@@ -93,7 +93,7 @@ async def _run(args: argparse.Namespace) -> int:
         llm = ChatLLM(aoai, _env("WIKI_SYNTHESIS_DEPLOYMENT", "gpt-5.4"))
 
         if args.dry_run:
-            pages = build_wiki(corpus, llm, min_docs=args.min_docs)
+            pages = build_wiki(corpus, llm, min_docs=args.min_docs, granularity=args.granularity)
             if not pages:
                 logger.warning("no wiki pages generated")
                 return 0
@@ -117,7 +117,7 @@ async def _run(args: argparse.Namespace) -> int:
                 await cc.create_container()
             except Exception:
                 pass  # already exists
-            stats = await reconcile(cc, corpus, llm, min_docs=args.min_docs)
+            stats = await reconcile(cc, corpus, llm, min_docs=args.min_docs, granularity=args.granularity)
         logger.info(
             "done: %d pages written, %d soft-deleted (container %r)",
             stats.pages_written, stats.pages_deleted, wiki_container,
@@ -130,6 +130,12 @@ def main() -> None:
     parser.add_argument("--prefix", default="", help="comma-separated blob name prefixes")
     parser.add_argument("--limit", type=int, default=0, help="cap number of source docs (0 = all)")
     parser.add_argument("--min-docs", type=int, default=2, help="min source docs for an entity/concept page")
+    parser.add_argument(
+        "--granularity",
+        default=_env("WIKI_EXTRACTION_GRANULARITY", "standard"),
+        choices=["focused", "standard", "exhaustive"],
+        help="WeKnora extraction granularity (default standard = tight, curated)",
+    )
     parser.add_argument("--purge", action="store_true", help="delete all generated docs from the index first")
     parser.add_argument("--no-generate", action="store_true", help="with --purge: only purge")
     parser.add_argument("--dry-run", action="store_true", help="build + inspect, do not persist")

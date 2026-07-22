@@ -8,6 +8,7 @@ from __future__ import annotations
 from azure_sdk_qa_bot_wiki_index.pages import make_slug, slugify
 from azure_sdk_qa_bot_wiki_index.wiki_extract import DocExtraction, ExtractedItem
 from azure_sdk_qa_bot_wiki_index.wiki_reduce import (
+    aggregate_groups,
     build_index_page,
     _concept_key,
     _entity_key,
@@ -65,3 +66,55 @@ def test_index_page_lists_entities_and_concepts():
 
 def test_index_page_none_when_no_cross_pages():
     assert build_index_page([]) is None
+
+
+def _ext(ref, entities=(), concepts=()):
+    d = DocExtraction(ref)
+    for name, aliases in entities:
+        d.entities.append(ExtractedItem("entity", name, "type", "desc of " + name, ref, list(aliases)))
+    for name, aliases in concepts:
+        d.concepts.append(ExtractedItem("concept", name, "", "desc of " + name, ref, list(aliases)))
+    return d
+
+
+def test_alias_merges_synonyms_across_docs():
+    # doc1 calls it "pagination", doc2 calls it "paging" but lists it as an alias
+    exts = [
+        _ext("d1", concepts=[("pagination", ["paging"])]),
+        _ext("d2", concepts=[("paging", ["pagination"])]),
+    ]
+    groups = aggregate_groups(exts, min_docs=2, fuzzy=False)
+    concept_groups = [g for g in groups if g.page_type == PAGE_CONCEPT]
+    # the two surface forms collapse into ONE group spanning both docs
+    assert len(concept_groups) == 1
+    assert set(concept_groups[0].source_refs) == {"d1", "d2"}
+
+
+def test_entity_at_sign_and_alias_merge():
+    exts = [
+        _ext("d1", entities=[("@added", [])]),
+        _ext("d2", entities=[("added", ["@added"])]),
+    ]
+    groups = aggregate_groups(exts, min_docs=2, fuzzy=False)
+    ent = [g for g in groups if g.page_type == PAGE_ENTITY]
+    assert len(ent) == 1 and set(ent[0].source_refs) == {"d1", "d2"}
+
+
+def test_min_docs_filters_single_doc_items():
+    exts = [_ext("d1", concepts=[("versioning", [])])]
+    assert aggregate_groups(exts, min_docs=2) == []
+    assert len(aggregate_groups(exts, min_docs=1)) == 1
+
+
+def test_fuzzy_merges_near_identical_concepts():
+    # distinct surface forms, no shared alias, but near-identical keys
+    exts = [
+        _ext("d1", concepts=[("api versioning", [])]),
+        _ext("d2", concepts=[("api versionings", [])]),
+        _ext("d3", concepts=[("api versioning", [])]),
+    ]
+    no_fuzzy = aggregate_groups(exts, min_docs=1, fuzzy=False)
+    with_fuzzy = aggregate_groups(exts, min_docs=1, fuzzy=True)
+    assert len([g for g in with_fuzzy if g.page_type == PAGE_CONCEPT]) < len(
+        [g for g in no_fuzzy if g.page_type == PAGE_CONCEPT]
+    )

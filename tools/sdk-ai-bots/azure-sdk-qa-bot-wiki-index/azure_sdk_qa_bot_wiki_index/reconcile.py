@@ -73,9 +73,15 @@ class ReconcileStats:
 def _extraction_to_json(ext: DocExtraction) -> dict:
     return {
         "entities": [
-            {"name": e.name, "type": e.type, "description": e.description} for e in ext.entities
+            {"name": e.name, "type": e.type, "description": e.description,
+             "aliases": e.aliases, "details": e.details}
+            for e in ext.entities
         ],
-        "concepts": [{"name": c.name, "description": c.description} for c in ext.concepts],
+        "concepts": [
+            {"name": c.name, "description": c.description,
+             "aliases": c.aliases, "details": c.details}
+            for c in ext.concepts
+        ],
     }
 
 
@@ -83,11 +89,19 @@ def _extraction_from_json(source_ref: str, data: dict) -> DocExtraction:
     ext = DocExtraction(source_ref=source_ref)
     for e in data.get("entities", []) or []:
         ext.entities.append(
-            ExtractedItem("entity", e.get("name", ""), e.get("type", ""), e.get("description", ""), source_ref)
+            ExtractedItem(
+                kind="entity", name=e.get("name", ""), type=e.get("type", ""),
+                description=e.get("description", ""), source_ref=source_ref,
+                aliases=list(e.get("aliases", []) or []), details=e.get("details", ""),
+            )
         )
     for c in data.get("concepts", []) or []:
         ext.concepts.append(
-            ExtractedItem("concept", c.get("name", ""), "", c.get("description", ""), source_ref)
+            ExtractedItem(
+                kind="concept", name=c.get("name", ""), description=c.get("description", ""),
+                source_ref=source_ref, aliases=list(c.get("aliases", []) or []),
+                details=c.get("details", ""),
+            )
         )
     return ext
 
@@ -111,6 +125,7 @@ async def reconcile(
     llm: ChatLLM,
     *,
     min_docs: int = 2,
+    granularity: str = "standard",
 ) -> ReconcileStats:
     """Run the incremental reconcile and apply blob + manifest changes."""
     manifest = await read_manifest(container_client)
@@ -137,7 +152,7 @@ async def reconcile(
 
     def _extract(item: tuple[str, str]) -> tuple[str, DocExtraction]:
         rel, text = item
-        return rel, extract_doc(llm, rel, text)
+        return rel, extract_doc(llm, rel, text, granularity=granularity)
 
     fresh: dict[str, DocExtraction] = {}
     if to_extract:

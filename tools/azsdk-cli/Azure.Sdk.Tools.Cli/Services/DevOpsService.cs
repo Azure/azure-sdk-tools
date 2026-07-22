@@ -150,6 +150,7 @@ namespace Azure.Sdk.Tools.Cli.Services
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
     {
         private static readonly string RELEASE_PLANNER_APP_TEST = "Release Planner App Test";
+        private static readonly string MISSING_EMITTER_CONFIG = "MissingEmitterConfig";
         private List<WorkItemRelationType>? _cachedRelationTypes;
 
         private static readonly string[] SUPPORTED_SDK_LANGUAGES = { "Dotnet", "JavaScript", "Python", "Java", "Go" };
@@ -1109,6 +1110,28 @@ namespace Azure.Sdk.Tools.Cli.Services
                                 Value = sdk.PackageName
                             }
                         );
+
+                        // A package name is now detected for this language, so only reset the exclusion
+                        // status if it was previously auto-set to MissingEmitterConfig. This avoids leaving a
+                        // language marked as missing emitter config when the TypeSpec parser did not detect a
+                        // package name in an earlier run, while preserving intentional exclusions
+                        // (e.g. Requested/Approved).
+                        var normalizedLanguage = MapLanguageIdToName(MapLanguageToId(sdk.Language));
+                        var currentExclusionStatus = releasePlan?.SDKInfo?
+                            .FirstOrDefault(s => string.Equals(s.Language, normalizedLanguage, StringComparison.OrdinalIgnoreCase))?
+                            .ReleaseExclusionStatus;
+                        if (string.Equals(currentExclusionStatus, MISSING_EMITTER_CONFIG, StringComparison.OrdinalIgnoreCase))
+                        {
+                            // Reset exclusion status as not applicable
+                            jsonLinkDocument.Add(
+                                new JsonPatchOperation
+                                {
+                                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                                    Path = $"/fields/Custom.ReleaseExclusionStatusFor{MapLanguageToId(sdk.Language)}",
+                                    Value = "Not applicable"
+                                }
+                            );
+                        }
                     }
                 }
                 await connection.GetWorkItemClient(ct).UpdateWorkItemAsync(jsonLinkDocument, workItemId, cancellationToken: ct);

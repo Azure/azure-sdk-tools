@@ -977,6 +977,33 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var updateStatus = await tool.UpdateSDKDetailsInReleasePlan(100, testCodeFilePath, CancellationToken.None);
             Assert.That(updateStatus.ResponseError, Does.Contain("Failed to parse TypeSpec project"));
         }
+
+        [Test]
+        public async Task Test_Update_SDK_Details_skips_update_when_no_packages_resolved()
+        {
+            // When the TypeSpec project resolves zero packages, the tool must skip the update entirely
+            // to avoid incorrectly marking languages as having missing emitter configuration. It should
+            // return an informational message and never touch the release plan work item.
+            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            var project = TypeSpecProject.ParseTypeSpecConfig(testCodeFilePath);
+            project.Packages = new List<PackageInfo>();
+
+            var mockDevOps = new Mock<IDevOpsService>();
+            var mockTypeSpecHelper = new Mock<ITypeSpecHelper>();
+            mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(testCodeFilePath)).Returns(true);
+            mockTypeSpecHelper.Setup(x => x.ParseTypeSpecProjectAsync(testCodeFilePath, It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(project);
+
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, mockTypeSpecHelper.Object, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+            var updateStatus = await tool.UpdateSDKDetailsInReleasePlan(100, testCodeFilePath, CancellationToken.None);
+
+            Assert.That(updateStatus.ResponseError, Is.Null);
+            Assert.That(updateStatus.Message, Does.Contain("No package details were identified"));
+            // No release plan reads or writes should happen when there are no packages to update.
+            mockDevOps.Verify(x => x.ResolveReleasePlanByIdAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+            mockDevOps.Verify(x => x.UpdateReleasePlanSDKDetailsAsync(It.IsAny<int>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>()), Times.Never);
+            mockDevOps.Verify(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
         
         [Test]
         public async Task Test_update_language_exclusion_justification()

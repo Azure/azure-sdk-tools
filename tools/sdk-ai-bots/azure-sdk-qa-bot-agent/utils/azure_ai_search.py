@@ -39,7 +39,7 @@ from models.knowledge import KnowledgeChunk
 logger = logging.getLogger(__name__)
 
 _KB_MAX_OUTPUT_SIZE = 20000
-_HIERARCHY_EXPANSION_TOP = 20
+_HIERARCHY_EXPANSION_TOP = 40
 
 # Chunks below this rerank score are considered low-relevance and dropped.
 _RERANK_SCORE_LOW_RELEVANCE_THRESHOLD = 2.0
@@ -389,20 +389,50 @@ class SearchClient:
 
         return unique
 
+    @staticmethod
+    def deduplicate_by_document(chunks: list[KnowledgeChunk]) -> list[KnowledgeChunk]:
+        """Collapse to one hit per source document (title+context), keeping the
+        highest-ranked. Used with full-document deep read so each of the final
+        top_k slots is a *distinct* document read in full, not the same doc twice."""
+        seen: set = set()
+        out: list[KnowledgeChunk] = []
+        for c in chunks:
+            key = (c.title, c.source)
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append(c)
+        return out
+
     async def expand_by_hierarchy(self, chunk: KnowledgeChunk) -> KnowledgeChunk:
-        """Fetch sibling chunks for a single ref and assemble content."""
-        hierarchy_filter = _build_hierarchy_filter(
-            title=chunk.title,
-            context_id=chunk.source,
-            header1=chunk.header1,
-            header2=chunk.header2,
-            header3=chunk.header3,
-        )
+        """Fetch sibling chunks for a single ref and assemble content.
+
+        WeKnora-style **deep read**: by default expand to the WHOLE document
+        (all sections, ``KB_FULL_DOC_READ``) rather than only the matched
+        header-1 section, so a fact that lives in another section of the same
+        (correctly-retrieved) document is not missed. Set ``KB_FULL_DOC_READ``
+        false to restore the narrower section-scoped expansion.
+        """
+        full_doc = cfg("KB_FULL_DOC_READ", "true").lower() == "true"
+        # Wiki pages are standalone (their own title) — always read them whole.
+        if full_doc:
+            hierarchy_filter = _build_hierarchy_filter(
+                title=chunk.title, context_id=chunk.source,
+                header1="", header2="", header3="",
+            )
+        else:
+            hierarchy_filter = _build_hierarchy_filter(
+                title=chunk.title,
+                context_id=chunk.source,
+                header1=chunk.header1,
+                header2=chunk.header2,
+                header3=chunk.header3,
+            )
 
         sibling_results = await self._search_client.search(
             search_text="*",
             filter=hierarchy_filter,
-            top=_HIERARCHY_EXPANSION_TOP,
+            top=int(cfg("KB_EXPANSION_TOP", str(_HIERARCHY_EXPANSION_TOP))),
             order_by=["ordinal_position asc"],
             select=[
                 "chunk_id",

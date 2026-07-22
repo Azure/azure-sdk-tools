@@ -28,11 +28,32 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification.Templates
 
         private const string AzSdkAgentDocumentationUrl = "https://aka.ms/azsdk/agent";
 
+        private const string ManagementSdkOwnerAlias = "sdkowners@microsoft.com";
+
+        private const string AzSdkSupportAlias = "azsdkexp@microsoft.com";
+
         private readonly ReleasePlanWorkItem releasePlan;
 
         public NewReleasePlanEmail(ReleasePlanWorkItem releasePlan)
         {
             this.releasePlan = releasePlan ?? throw new ArgumentNullException(nameof(releasePlan));
+
+            // Notify the release plan submitter. Test release plans are only sent to the submitter;
+            // azsdk support and (for management plane) sdkowners are CC'd on non-test release plans.
+            EmailTo = string.IsNullOrWhiteSpace(releasePlan.ReleasePlanSubmittedByEmail)
+                ? []
+                : [releasePlan.ReleasePlanSubmittedByEmail];
+
+            var ccRecipients = new List<string>();
+            if (!releasePlan.IsTestReleasePlan)
+            {
+                ccRecipients.Add(AzSdkSupportAlias);
+                if (releasePlan.IsManagementPlane)
+                {
+                    ccRecipients.Add(ManagementSdkOwnerAlias);
+                }
+            }
+            CC = ccRecipients;
         }
 
         public override string Subject =>

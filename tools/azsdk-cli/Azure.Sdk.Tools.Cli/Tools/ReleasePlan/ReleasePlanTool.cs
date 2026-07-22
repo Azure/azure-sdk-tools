@@ -280,12 +280,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             ".NET", "Java", "Python", "JavaScript", "Go"
         };
 
-        // Email address for managementplane notifications.
-        private const string MANAGEMENT_SDK_OWNER_ALIAS = "sdkowners@microsoft.com";
-
-        // Azure SDK support alias CC'd on release plan notifications.
-        private const string AZSDK_SUPPORT_ALIAS = "azsdkexp@microsoft.com";
-
         [GeneratedRegex("https:\\/\\/github.com\\/Azure\\/azure-sdk\\/issues\\/([0-9]+)")]
         private static partial Regex NameSpaceIssueUrlRegex();
 
@@ -1187,9 +1181,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                                     if (sdkDetailsResult.NextSteps?.Count > 0)
                                     {
                                         nextSteps.AddRange(sdkDetailsResult.NextSteps);
-                                    }                                    
+                                    }
                                 }
-                            }                            
+                            }
                         }
                         catch (Exception sdkEx)
                         {
@@ -1211,28 +1205,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                     reporter.NextStep(message.ToString());
 
-                    //Refresh release plan to get latest details
-                    releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(releasePlan.WorkItemId, ct);
-
-                    // Notify the release plan submitter (silently completes when notifications are disabled).
-                    // Test release plans are only sent to the submitter; sdkowners and azsdk support are
-                    // not CC'd on test release plans.
-                    var ccRecipients = new List<string>();
-                    if (!releasePlan.IsTestReleasePlan)
+                    // Refresh the release plan and notify the submitter. Both are best-effort and must
+                    // never fail release plan creation, so any error here is logged and swallowed.
+                    try
                     {
-                        ccRecipients.Add(AZSDK_SUPPORT_ALIAS);
-                        if (releasePlan.IsManagementPlane)
-                        {
-                            ccRecipients.Add(MANAGEMENT_SDK_OWNER_ALIAS);
-                        }
+                        //Refresh release plan to get latest details
+                        releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(releasePlan.WorkItemId, ct);
+
+                        // Recipient routing (To/CC) is owned by the email template.
+                        // Silently completes when notifications are disabled.
+                        var releasePlanEmail = new NewReleasePlanEmail(releasePlan);
+                        await notificationService.SendEmailNotificationAsync(releasePlanEmail, ct);
                     }
-
-                    var releasePlanEmail = new NewReleasePlanEmail(releasePlan)
+                    catch (Exception notifyEx)
                     {
-                        EmailTo = string.IsNullOrWhiteSpace(releasePlan.ReleasePlanSubmittedByEmail)? [] : [releasePlan.ReleasePlanSubmittedByEmail],
-                        CC = ccRecipients
-                    };
-                    await notificationService.SendEmailNotificationAsync(releasePlanEmail, ct);
+                        logger.LogWarning(notifyEx, "Failed to refresh release plan or send release plan notification.");
+                    }
 
                     return new ReleasePlanResponse
                     {

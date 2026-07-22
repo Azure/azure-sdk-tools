@@ -27,9 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 # Expanded content beyond this limit is truncated to control context size.
-# Sized for full-document deep reads (WeKnora-style) — larger than a single
-# section so a fact in a later section of a retrieved doc still reaches the LLM.
-_MAX_CONTENT_CHARS_PER_RESULT = 4500
+_MAX_CONTENT_CHARS_PER_RESULT = 3000
 
 
 class SearchMode(str, Enum):
@@ -234,11 +232,6 @@ class KnowledgeTools:
 
         # Reorder by rerank_score, then select the final top_k.
         unique_chunks.sort(key=lambda c: c.rerank_score, reverse=True)
-        # With full-document deep read, collapse to distinct documents first so
-        # each top_k slot is a different doc read in full (not the same doc's
-        # sections repeated).
-        if cfg("KB_FULL_DOC_READ", "true").lower() == "true":
-            unique_chunks = search_client.deduplicate_by_document(unique_chunks)
         top_k = search_client.top_k
         if len(unique_chunks) > top_k:
             logger.info("Capping results from %d to %d (top_k)", len(unique_chunks), top_k)

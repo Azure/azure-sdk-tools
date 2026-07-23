@@ -109,6 +109,14 @@ Results appear on the Evaluation tab of the Azure AI Foundry portal (each run pr
 its `report_url`). `--cache_result full` writes per-case JSON + failed-cases JSON
 under `cache/`.
 
+> **Disable memory for evaluation.** The agent injects historical Q&A from the
+> tenant/user memory stores (`MemoryContextProvider`). Because the eval datasets are
+> built from previously-collected Q&A, that memory leaks ground-truth answers and
+> inflates scores (measured ~+3.6pp on KB-only). Always start the bot with
+> `ENABLE_MEMORY=false` when running evaluations. Note also that single-run pass
+> rates carry ~±2.5pp run-to-run noise (answers come from an LLM at temperature > 0),
+> so validate any config change by averaging ≥3 runs per arm.
+
 ### Evaluators
 
 All evaluators are builtin LLM evaluators that read the collected bot answer via

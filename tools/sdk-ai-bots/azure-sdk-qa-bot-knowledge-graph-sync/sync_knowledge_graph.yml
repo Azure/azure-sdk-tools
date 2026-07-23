@@ -1,0 +1,121 @@
+name: Sync Knowledge Graph
+
+trigger: none
+pr: none
+
+schedules:
+- cron: "0 3 1 * *"  # Monthly on the 1st at 3 AM UTC (after the doc sync that maintains the knowledge container)
+  displayName: Monthly knowledge graph build
+  branches:
+    include:
+    - main
+
+resources:
+  repositories:
+    - repository: 1ESPipelineTemplates
+      type: git
+      name: 1ESPipelineTemplates/1ESPipelineTemplates
+      ref: refs/tags/release
+
+extends:
+  template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
+  parameters:
+    settings:
+      skipBuildTagsForGitHubPullRequests: true
+      networkIsolationPolicy: Permissive
+    sdl:
+      # Turn off the build warnings caused by disabling some sdl checks
+      createAdoIssuesForJustificationsForDisablement: false
+      sourceAnalysisPool:
+        name: azsdk-pool
+        image: windows-2022
+        os: windows
+      eslint:
+        enabled: false
+        justificationForDisabling: 'ESLint injected task has failures because it uses an old version of mkdirp. We should not fail for tools not controlled by the repo. See: https://dev.azure.com/azure-sdk/internal/_build/results?buildId=3499746'
+      codeql:
+        compiled:
+          enabled: false
+          justificationForDisabling: CodeQL times our pipelines out by running for 2+ hours before being force canceled.
+      componentgovernance:
+        enabled: false
+        justificationForDisabling: Manually enabling only on the main build job instead of running it on every job.
+      psscriptanalyzer:
+        compiled: true
+        break: true
+      policy: M365
+    stages:
+      - stage: SyncKnowledgeGraph
+        displayName: 'Sync Knowledge Graph'
+        jobs:
+          - job: BuildAndSync
+            displayName: 'Build and Execute Knowledge Graph Build'
+            # GraphRAG indexing can take significantly longer than a plain
+            # doc sync — bump the per-job timeout well above the default 60m.
+            timeoutInMinutes: 240
+
+            variables:
+              - template: /eng/pipelines/templates/variables/image.yml@self
+              - template: /eng/pipelines/templates/variables/globals.yml@self
+              - name: workingDirectory
+                value: '$(Agent.BuildDirectory)/s/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-graph-sync'
+
+            pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
+
+            steps:
+              - checkout: self
+                displayName: 'Checkout current repository'
+
+              - task: AzureCLI@2
+                displayName: 'Resolve federated credentials'
+                inputs:
+                  azureSubscription: $(SERVICE_CONNECTION)
+                  addSpnToEnvironment: true
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    echo "##vso[task.setvariable variable=AZURE_CLIENT_ID]$servicePrincipalId"
+                    echo "##vso[task.setvariable variable=AZURE_TENANT_ID]$tenantId"
+                    echo "##vso[task.setvariable variable=AZURE_SUBSCRIPTION_ID]$(az account show --query id -o tsv)"
+                    echo "$idToken" > "$(Agent.BuildDirectory)/id_token"
+                    echo "##vso[task.setvariable variable=AZURE_FEDERATED_TOKEN_FILE]$(Agent.BuildDirectory)/id_token"
+
+              - task: UsePythonVersion@0
+                displayName: 'Use Python 3.12'
+                inputs:
+                  versionSpec: '3.12'
+
+              - script: |
+                  python --version
+                  pip --version
+                displayName: 'Show Python version'
+
+              # 1ES agents don't have outbound access to public PyPI; route
+              # pip through the internal mirror feed. PipAuthenticate sets
+              # PIP_INDEX_URL for the rest of the job.
+              - task: PipAuthenticate@1
+                displayName: 'Pip Authenticate to internal feed'
+                inputs:
+                  artifactFeeds: 'public/azure-sdk-for-python'
+                  onlyAddExtraIndex: false
+
+              - script: |
+                  pip install -e .
+                displayName: 'Install Python dependencies'
+                workingDirectory: $(workingDirectory)
+
+              - script: |
+                  echo "Running: sync-knowledge-graph"
+                  sync-knowledge-graph
+                displayName: 'Execute knowledge graph build'
+                workingDirectory: $(workingDirectory)
+                env:
+                  # Azure App Configuration — everything else is sourced from here.
+                  AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
+
+                  # Set working directory for temporary files.
+                  TMPDIR: $(Agent.TempDirectory)
+                  HOME: $(Agent.HomeDirectory)

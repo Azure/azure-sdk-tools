@@ -1,25 +1,4 @@
-"""Index-document assembly + push/purge helpers for the shared Azure AI Search index.
-
-Wiki pages are emitted as :class:`WikiDoc` objects whose field mapping lets the
-existing KB retrieval path handle them unchanged:
-
-* ``chunk_id``   — stable unique key ``wiki-<type>-<hash>`` (no leading underscore).
-* ``title``      — for **summary** pages, the source's ``#``-encoded rel path so
-  ``KnowledgeSource.get_link`` resolves the real doc URL; for cross-document
-  pages, a slug (no external link).
-* ``header_1``   — a distinct heading so the page is isolated in
-  ``expand_by_hierarchy`` and becomes its own reference title.
-* ``chunk``      — the page text (embedded).
-* ``context_id`` — ``<source folder>`` (summary) or ``wiki_entity`` /
-  ``wiki_concept`` / ``wiki_synthesis`` (cross-document) — drives tenant scoping.
-* ``chunk_refs`` — source rel paths this page was built from.
-* ``page_type``  — ``summary`` | ``entity`` | ``concept`` | ``synthesis``.
-* ``text_vector``— ada-002 embedding (shared KB vector space).
-
-All string fields are ``""`` (never null); every push is idempotent
-(``mergeOrUpload`` by key). This module is used by the push-based path; the
-storage/indexer path writes markdown blobs instead (see the build pipeline).
-"""
+"""Index-document assembly and push/purge helpers for generated wiki pages."""
 
 from __future__ import annotations
 
@@ -32,8 +11,7 @@ logger = logging.getLogger(__name__)
 # All generated docs carry this key marker so they can be bulk-listed / purged.
 WIKI_KEY_PREFIX = "wiki-"
 
-# Every page_type this project has ever written — used by the purge filter so a
-# cleanup removes all generated docs regardless of which scheme produced them.
+# Page types eligible for generated-doc purge.
 PAGE_TYPES = ("wiki", "summary", "entity", "concept", "synthesis", "relationship")
 
 

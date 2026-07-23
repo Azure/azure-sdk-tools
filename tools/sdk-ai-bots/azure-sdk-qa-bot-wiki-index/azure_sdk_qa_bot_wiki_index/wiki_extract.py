@@ -1,18 +1,4 @@
-"""Map phase — per-document entity + concept extraction (WeKnora-faithful).
-
-Mirrors WeKnora's candidate-slug extraction (``WikiCandidateSlugPrompt`` in
-``prompts_wiki.go``): one LLM call per document returns the salient **entities**
-(named symbols) and **concepts** (cross-cutting topics) it discusses, each with
-aliases + a grounded 15-40 word description + a short details fallback.
-
-The single most important knob is **granularity** (WeKnora
-``WikiExtractionGranularity``): ``standard`` (default) extracts only the
-document's main subjects plus items that are *substantively discussed*, so the
-resulting wiki index stays tight instead of exploding into keyword-dense pages;
-``focused`` is stricter (3-7 items total), ``exhaustive`` grabs everything.
-
-The per-document **summary** page is produced separately by :mod:`wiki`.
-"""
+"""Map phase for per-document entity and concept extraction."""
 
 from __future__ import annotations
 
@@ -25,12 +11,10 @@ from .reader import rel_title
 
 logger = logging.getLogger(__name__)
 
-# WeKnora concurrency for the map phase.
+# Map-phase extraction concurrency.
 MAX_CONCURRENT_EXTRACTIONS = 4
 
-# Document truncation before the extraction LLM call (WeKnora maxContentForWiki
-# is 32768 runes; the extraction only needs the salient subjects so this budget
-# is ample and keeps token cost bounded).
+# Maximum document characters sent to the extraction LLM call.
 _MAX_EXTRACT_CHARS = 12000
 
 GRAN_FOCUSED = "focused"
@@ -38,9 +22,7 @@ GRAN_STANDARD = "standard"
 GRAN_EXHAUSTIVE = "exhaustive"
 _VALID_GRANULARITIES = (GRAN_FOCUSED, GRAN_STANDARD, GRAN_EXHAUSTIVE)
 
-# WeKnora's granularity guidance, adapted for the Azure SDK / TypeSpec domain but
-# keeping WeKnora's pruning discipline (prompts_wiki.go
-# WikiGranularityGuidance{Focused,Standard,Exhaustive}).
+# Granularity guidance used by the extraction prompt.
 _GRAN_GUIDANCE = {
     GRAN_FOCUSED: (
         "FOCUSED mode - aggressive pruning. Extract ONLY the document's primary "

@@ -1,21 +1,9 @@
-"""Azure AI Search SDK client helpers for knowledge retrieval.
-
-This module uses the Azure AI Search Python SDK (not raw REST).  Each search
-result is automatically expanded by its header hierarchy so the agent gets
-full section context in a single call.  Sibling queries run concurrently
-via ``asyncio.gather`` for fast response times.
-
-Two search strategies are provided and run in parallel:
-  - **Agentic search** – uses the KnowledgeBaseRetrievalClient for
-    intent-aware multi-step retrieval.
-  - **Vector search** – hybrid semantic + vector query.
-"""
+"""Azure AI Search SDK client helpers for knowledge retrieval."""
 
 from __future__ import annotations
 
 import asyncio
 import logging
-import re
 from enum import Enum
 
 from azure.search.documents.aio import SearchClient as AzureSearchClient
@@ -44,10 +32,7 @@ _HIERARCHY_EXPANSION_TOP = 20
 # Chunks below this rerank score are considered low-relevance and dropped.
 _RERANK_SCORE_LOW_RELEVANCE_THRESHOLD = 2.0
 
-# WeKnora-style two-track separation: the chunk retrievers search ONLY raw
-# source chunks (``page_type`` null/empty); the wiki retriever searches ONLY
-# generated wiki pages. Wiki pages never enter the source-chunk ranked pool, so
-# they can no longer displace authoritative source chunks.
+# Page-type filters for raw source chunks and generated wiki pages.
 NON_WIKI_FILTER = "(page_type eq null or page_type eq '')"
 WIKI_FILTER = "(page_type eq 'summary' or page_type eq 'entity' or page_type eq 'concept' or page_type eq 'synthesis')"
 
@@ -89,15 +74,7 @@ def fuse_with_rrf(
     ranked_lists: "list[tuple[list[KnowledgeChunk], float]]",
     k: int = 60,
 ) -> "list[KnowledgeChunk]":
-    """Reciprocal Rank Fusion of several ranked retriever result lists.
-
-    ``score = sum_over_retrievers( weight / (k + rank) )`` where ``rank`` is the
-    1-indexed position of the chunk in that retriever's output. Fuses on
-    **rank**, so heterogeneous score scales (semantic reranker vs BM25) combine
-    cleanly. The fused score is written onto each chunk's ``rerank_score`` so the
-    existing downstream sort/cap works unchanged. Each chunk appears once; the
-    first retriever that surfaced it supplies its metadata.
-    """
+    """Fuse ranked retriever lists using Reciprocal Rank Fusion."""
     info: dict[str, KnowledgeChunk] = {}
     rank_maps: list[tuple[dict[str, int], float]] = []
     for results, weight in ranked_lists:
@@ -120,65 +97,6 @@ def fuse_with_rrf(
         fused.append(chunk)
     fused.sort(key=lambda c: c.rerank_score, reverse=True)
     return fused
-
-
-_MMR_TOKEN_RE = re.compile(r"[a-z0-9@._]+")
-
-
-def _token_set(chunk: "KnowledgeChunk") -> set:
-    """Lower-cased token set of a chunk's text (for Jaccard diversity)."""
-    text = f"{chunk.title} {chunk.header1} {chunk.content}".lower()
-    return set(_MMR_TOKEN_RE.findall(text))
-
-
-def _jaccard(a: set, b: set) -> float:
-    if not a or not b:
-        return 0.0
-    inter = len(a & b)
-    if inter == 0:
-        return 0.0
-    return inter / len(a | b)
-
-
-def mmr_select(
-    chunks: "list[KnowledgeChunk]",
-    k: int,
-    lambda_: float = 0.7,
-) -> "list[KnowledgeChunk]":
-    """Maximal Marginal Relevance selection (WeKnora-style, Jaccard diversity).
-
-    Picks ``k`` chunks balancing relevance (normalized ``rerank_score``) against
-    redundancy (max Jaccard token overlap with the already-selected set):
-    ``mmr = lambda*rel - (1-lambda)*max_sim``. Diversifies the final result set so
-    a flood of similar pages (e.g. many short synthesized wiki pages) can't crowd
-    out substantive, complementary content. No embeddings needed.
-    """
-    if len(chunks) <= k:
-        return chunks
-    scores = [c.rerank_score for c in chunks]
-    lo, hi = min(scores), max(scores)
-    rng = (hi - lo) or 1.0
-    rel = {id(c): (c.rerank_score - lo) / rng for c in chunks}
-    toks = {id(c): _token_set(c) for c in chunks}
-
-    pool = list(chunks)
-    selected: list[KnowledgeChunk] = []
-    while pool and len(selected) < k:
-        best = None
-        best_score = float("-inf")
-        for c in pool:
-            max_sim = 0.0
-            for s in selected:
-                j = _jaccard(toks[id(c)], toks[id(s)])
-                if j > max_sim:
-                    max_sim = j
-            mmr = lambda_ * rel[id(c)] - (1.0 - lambda_) * max_sim
-            if mmr > best_score:
-                best_score = mmr
-                best = c
-        selected.append(best)
-        pool.remove(best)
-    return selected
 
 
 class SearchClient:
@@ -212,17 +130,8 @@ class SearchClient:
         query: str,
         source_filters: dict[str, str],
     ) -> list[KnowledgeChunk]:
-        """Retrieve raw chunks via agentic (intent-aware) search.
-
-        Returns un-expanded chunks.  The caller is responsible for
-        deduplication and hierarchy expansion so that work is done once
-        after all search strategies complete.
-
-        The per-source filters are combined into a single OData expression
-        so the KB retrieval client executes one sub-search instead of N.
-        """
-        # Combine per-source filters into a single filter_add_on with OR
-        # so the KB client performs one retrieval pass instead of N.
+        """Retrieve unexpanded raw chunks via agentic search."""
+        # Combine per-source filters into one OR expression.
         combined_filter = " or ".join(f"({f})" for f in source_filters.values() if f)
 
         kb_params: list[KnowledgeSourceParams] = [
@@ -260,13 +169,7 @@ class SearchClient:
         top_k: int | None = None,
         extra_filter: str | None = None,
     ) -> list[KnowledgeChunk]:
-        """Hybrid semantic + vector search mirroring the Go backend's SearchTopKRelatedDocuments.
-
-        Combines all source filters into a single query for efficiency,
-        filters by rerank score, and returns the top-k results sorted by
-        relevance. ``extra_filter`` (e.g. the wiki/non-wiki page-type gate) is
-        AND-ed onto the OR-combined source filter.
-        """
+        """Run hybrid semantic and vector search with optional OData filtering."""
         k = top_k or self._top_k
 
         vector_query = VectorizableTextQuery(
@@ -308,15 +211,7 @@ class SearchClient:
         top_k: int | None = None,
         extra_filter: str | None = None,
     ) -> list[KnowledgeChunk]:
-        """Sparse full-text (BM25) keyword search.
-
-        Complements the dense ``vector_search`` for precise matching of exact
-        symbols (decorator/API names, labels, error text) that vector search
-        recalls unreliably. Returns chunks ordered by BM25 relevance; the
-        caller fuses this ranking with the vector ranking via
-        :func:`fuse_with_rrf`. No semantic reranker is applied here (the reranker
-        score lives on the vector path); RRF fuses on rank, not raw score.
-        """
+        """Run sparse full-text keyword search and return BM25-ranked chunks."""
         k = top_k or self._top_k
         select_fields = _RETRIEVER_SELECT_FIELDS
         combined_filter = " or ".join(f"({f})" for f in source_filters.values() if f)
@@ -459,21 +354,7 @@ class SearchClient:
         per_page: int = 3,
         max_total: int = 12,
     ) -> "list[KnowledgeChunk]":
-        """Backfill the SOURCE document chunks behind retrieved wiki pages.
-
-        A wiki page (summary/entity/concept/synthesis) is a distilled *router* to
-        the documents it was built from — retrieving it should surface, not
-        replace, that specific source content. For each wiki page in *chunks*,
-        this fetches the raw source chunks it points to:
-
-        * **summary** — its ``title`` IS the source doc's rel path, so the source
-          is fetched by ``title`` match.
-        * **entity / concept / synthesis** — its ``chunk_refs`` list the source
-          docs it aggregates.
-
-        Returns the newly-fetched raw chunks (de-duplicated against *chunks*),
-        capped at *max_total*, so the caller can add them to the deep-read set.
-        """
+        """Fetch raw source chunks referenced by retrieved wiki pages."""
         seen_ids = {c.chunk_id for c in chunks if c.chunk_id}
         wanted_titles: list[str] = []
         for c in chunks:
@@ -509,7 +390,7 @@ class SearchClient:
             chunk = KnowledgeChunk.model_validate(dict(doc))
             if not chunk.chunk_id or chunk.chunk_id in seen_ids:
                 continue
-            # keep at most 2 chunks per source doc to avoid one doc dominating
+            # Limit to 2 chunks per source doc.
             if per_title_count.get(chunk.title, 0) >= 2:
                 continue
             seen_ids.add(chunk.chunk_id)
@@ -581,7 +462,7 @@ class HierarchyLevel(str, Enum):
 
 
 def _detect_hierarchy(header1: str, header2: str, header3: str) -> HierarchyLevel:
-    """Determine the hierarchy level of a chunk (mirrors Go DetectChunkHierarchy)."""
+    """Determine the hierarchy level of a chunk."""
     if header3:
         return HierarchyLevel.header3
     if header2 and header1:
@@ -599,7 +480,7 @@ def _build_hierarchy_filter(
     header2: str,
     header3: str,
 ) -> str:
-    """Build hierarchy-scoped filter (mirrors Go CompleteChunkByHierarchy behavior)."""
+    """Build a hierarchy-scoped filter."""
     filters = [
         f"title eq '{_escape_odata(title)}'",
         f"context_id eq '{_escape_odata(context_id)}'",

@@ -1,19 +1,4 @@
-"""Reduce phase — aggregate extractions into wiki pages (WeKnora-faithful).
-
-Building blocks shared by the full build and the incremental reconcile:
-
-* :func:`aggregate_groups` — deterministic **alias-aware** merge: entity/concept
-  mentions are unioned across documents by canonical name **and aliases** (a
-  lightweight stand-in for WeKnora's trigram + LLM dedup), plus a conservative
-  fuzzy pass for concepts, so synonyms collapse into one page instead of
-  fragmenting. Only groups recurring across ``min_docs`` documents are kept.
-* :func:`synthesize_group` — LLM: **compile** (not rewrite) one page body from a
-  group's grounded, near-verbatim descriptions (WeKnora ``WikiPageModifyPrompt``
-  "you are a COMPILER, not a writer").
-* :func:`inject_cross_links` — deterministic: link pages sharing source docs.
-* :func:`build_index_page` — deterministic navigation page.
-* :func:`reduce_pages` — convenience full-build wrapper.
-"""
+"""Reduce phase for aggregating extractions into generated wiki pages."""
 
 from __future__ import annotations
 
@@ -39,14 +24,10 @@ logger = logging.getLogger(__name__)
 _MAX_PAGE_CHARS = 3500
 _MAX_OUT_LINKS = 8
 _MAX_REDUCE_INPUT = 12000
-# Conservative fuzzy-merge threshold for concept canonical keys (entities/
-# decorators are never fuzzy-merged — exact symbols must stay distinct).
+# Fuzzy-merge threshold for concept canonical keys; entity/decorator symbols are exact-only.
 _CONCEPT_FUZZY_RATIO = 0.9
 
-# WeKnora "COMPILER, not a writer" page-body synthesis (prompts_wiki.go
-# WikiPageModifyPrompt): reuse the source's own wording; do not rephrase,
-# expand, over-structure, or add rhetorical filler. This keeps aggregated pages
-# grounded excerpts rather than keyword-dense generic summaries.
+# Page-body synthesis prompt for compiling grounded source facts.
 _COMPILE_SYS = (
     "You are a COMPILER, not a writer. You are given grounded facts about ONE "
     "Azure SDK / TypeSpec {kind} ('{name}'), collected verbatim from multiple "
@@ -169,7 +150,7 @@ def _fuzzy_merge_concepts(groups: list[Group]) -> list[Group]:
             tj = set(keys[j].split())
             if not ti or not tj:
                 continue
-            # require token overlap before the (cheap) ratio check to stay safe
+            # Require token overlap before the ratio check.
             if not (ti & tj):
                 continue
             if SequenceMatcher(None, keys[i], keys[j]).ratio() >= _CONCEPT_FUZZY_RATIO:
@@ -257,7 +238,7 @@ def group_to_page(group: Group, body: str) -> WikiPage:
 
 
 def inject_cross_links(pages: list[WikiPage]) -> None:
-    """Link pages that share source documents (WeKnora injectCrossLinks)."""
+    """Link pages that share source documents."""
     by_doc: dict[str, list[str]] = defaultdict(list)
     for p in pages:
         for ref in p.source_refs:

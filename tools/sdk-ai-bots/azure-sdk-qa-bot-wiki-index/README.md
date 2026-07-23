@@ -1,107 +1,67 @@
 # azure-sdk-qa-bot-wiki-index
 
-Builds LLM-derived **knowledge layers** and pushes them into the same Azure AI
-Search index that backs the Azure SDK QA bot's knowledge base, so the agent can
-answer from *internalized knowledge* instead of re-reading raw documentation
+Builds LLM-derived wiki pages and pushes them into the Azure SDK QA bot's
+knowledge base.
+
+Generated pages are written as markdown blobs and projected into the shared
+Azure AI Search index with the same vector and keyword fields as raw knowledge
 chunks.
 
-Everything fuses at the **index** level: generated pages become ordinary
-documents in the shared index (same vector + keyword fields), so the existing
-retrieval path (hybrid search → RRF → rerank → hierarchy expansion) surfaces and
-ranks them alongside raw chunks with no query-time changes.
+## Wiki pipeline
 
-## Two independent pipelines
+The pipeline creates these generated page types:
 
-Mirroring WeKnora's separate `WikiEnabled` / `GraphEnabled` toggles, wiki and
-graph creation are **fully decoupled** — different inputs, different artifacts,
-run independently:
+| Page type | What it contains | `context_id` |
+| --------- | ---------------- | ------------ |
+| `summary` | one synthesized knowledge page per source document | inherited source folder |
+| `entity` | cross-document page for a recurring symbol | `wiki_entity` |
+| `concept` | cross-document page for a recurring topic | `wiki_concept` |
+| `index` | navigation page for generated entity and concept pages | `wiki_index` |
 
-| Pipeline | What it does | Artifacts (`page_type`) | `context_id` |
-| -------- | ------------ | ----------------------- | ------------ |
-| **wiki** | per-document LLM synthesis of one dense knowledge page per source doc | `wiki` | inherited source folder → resolves to the source doc |
-| **graph** | LLM entity extraction + LLM relationship extraction (strength), PMI+strength weights, degree, 1-hop/2-hop edges | `entity`, `relationship` | `wiki_entity`, `wiki_relationship` |
-
-### Wiki pipeline (`wiki.py`)
-One synthesised page per document — dense, declarative expert facts (definitions,
-exact decorator/API names, rules, defaults, gotchas), no navigation phrases,
-nothing invented. Equivalent to WeKnora's `ChunkTypeWikiPage`.
-
-### Graph pipeline (`graph.py`, faithful to WeKnora `graph.go`)
-1. **Entity extraction** (`graph_extract.extract_entities`) — per-document LLM
-   call → `{title, type, description}`; deduped by title, `chunk_ids`/frequency
-   accumulate. (Concurrency 4.)
-2. **Relationship extraction** (`graph_extract.extract_relationships`) — docs in
-   batches of 5 → LLM `{source, target, description, strength 1-10}`; duplicates
-   merge via strength weighted-average. (Concurrency 4.)
-3. **Weights** (`graph_weights.compute_weights`) —
-   `PMI = max(log2(P(x,y)/(P(x)·P(y))), 0)`;
-   `weight = 1 + 9·(0.6·normPMI + 0.4·normStrength)` → range `[1, 10]`.
-4. **Degrees** (`graph_weights.compute_degrees`) — entity in+out degree;
-   relationship combined degree.
-5. **Edges** (`graph_weights.build_entity_edges`) — 1-hop direct + 2-hop indirect
-   (decay `0.5`), ranked by weight then degree → each entity's `related_slugs`.
-6. Emits `entity` and `relationship` pages (WeKnora `ChunkTypeEntity` /
-   `ChunkTypeRelationship`).
-
-Extraction is intentionally **LLM-based** (not regex) to match WeKnora exactly.
+The full build extracts entities and concepts per document, aggregates recurring
+items, synthesizes generated pages, adds cross-links between pages with shared
+source documents, and writes the manifest.
 
 ## Usage
 
 ```bash
 pip install -r requirements.txt
 
-# wiki layer only, one folder
-python -m azure_sdk_qa_bot_wiki_index.main --build wiki  --prefix typespec_docs/
+# generate and persist wiki pages for one folder
+python -m azure_sdk_qa_bot_wiki_index.main --prefix typespec_docs/
 
-# graph layer only
-python -m azure_sdk_qa_bot_wiki_index.main --build graph --prefix typespec_docs/
+# inspect generated pages without persisting
+python -m azure_sdk_qa_bot_wiki_index.main --prefix typespec_docs/ --dry-run
 
-# both layers, whole corpus
-python -m azure_sdk_qa_bot_wiki_index.main --build all
+# purge generated docs from the index
+python -m azure_sdk_qa_bot_wiki_index.main --purge --no-generate
 
-# generate + embed but do not push (inspect output)
-python -m azure_sdk_qa_bot_wiki_index.main --build graph --prefix typespec_docs/ --dry-run
-
-# purge just the graph layer, leaving wiki intact
-python -m azure_sdk_qa_bot_wiki_index.main --build graph --purge --no-generate
+# backfill chunk_refs metadata on existing page blobs
+python -m azure_sdk_qa_bot_wiki_index.main --backfill-metadata
 ```
 
-## Configuration (environment variables)
+## Configuration
 
 | Variable | Default | Purpose |
 | -------- | ------- | ------- |
 | `AI_SEARCH_BASE_URL` | — | Azure AI Search endpoint |
-| `AI_SEARCH_INDEX` | — | target index (shared with the KB) |
+| `AI_SEARCH_INDEX` | — | target index shared with the KB |
 | `STORAGE_BLOB_ENDPOINT` | — | blob account endpoint |
-| `STORAGE_KNOWLEDGE_CONTAINER` | `knowledge` | knowledge container name |
+| `STORAGE_KNOWLEDGE_CONTAINER` | `knowledge` | source knowledge container |
+| `STORAGE_WIKI_OUTPUT_CONTAINER` | `wiki` | generated wiki container |
 | `AZURE_OPENAI_ENDPOINT` | — | Azure OpenAI endpoint |
-| `WIKI_SYNTHESIS_DEPLOYMENT` | `gpt-5.4` | chat deployment (synthesis + extraction) |
-| `WIKI_EMBEDDING_DEPLOYMENT` | `text-embedding-ada-002` | embedding deployment (must match the index) |
+| `WIKI_SYNTHESIS_DEPLOYMENT` | `gpt-5.4` | chat deployment |
+| `WIKI_EMBEDDING_DEPLOYMENT` | `text-embedding-ada-002` | embedding deployment |
+| `WIKI_EXTRACTION_GRANULARITY` | `standard` | extraction granularity |
 
-Authentication is AAD via `DefaultAzureCredential`; an `AZURE_OPENAI_API_KEY` is
-used for Azure OpenAI if present.
+Authentication uses `DefaultAzureCredential`; `AZURE_OPENAI_API_KEY` is used for
+Azure OpenAI when set.
 
-## Index field mapping
+## Index fields
 
-Chosen so the existing retrieval code treats generated pages as first-class chunks:
+Generated pages use these additive fields in the shared index:
 
-* `chunk_id` — `wiki-<type>-<hash>` (unique key, no leading underscore).
-* `title` — for `wiki`, the source's `#`-encoded rel path (link resolution finds
-  the real doc); for `entity`/`relationship`, a slug.
-* `header_1` — a distinct `"… (knowledge/entity/relationship)"` heading so the
-  page is isolated in hierarchy expansion and becomes its own reference title.
-* `chunk` — the page text (embedded into `text_vector`).
-* `context_id` — drives tenant scoping.
-* `chunk_refs` — source rel paths the page was built from.
-* `related_slugs` — graph edges (neighbour entity slugs / endpoint slugs).
-* `page_type` — `wiki` | `entity` | `relationship`.
+* `chunk_refs_str` — JSON array string of source document refs.
+* `page_type` — `summary` | `entity` | `concept` | `synthesis`.
 
-All string fields are written as `""` (never null).
-
-## Prerequisites
-
-The target index must carry the additive fields `chunk_refs`, `related_slugs`
-(both `Collection(Edm.String)`) and `page_type` (`String`), and the tenant
-configuration must register the `wiki_entity` / `wiki_relationship` knowledge
-sources for graph pages to be in scope. (Wiki pages need no config — they inherit
-their source's `context_id`.)
+Blob metadata values must be ASCII.

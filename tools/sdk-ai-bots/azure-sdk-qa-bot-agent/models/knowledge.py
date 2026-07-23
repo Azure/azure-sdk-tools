@@ -106,12 +106,10 @@ class KnowledgeChunk(BaseModel):
     @field_validator("chunk_refs", mode="before")
     @classmethod
     def _coerce_chunk_refs(cls, v: object) -> list:
-        """Coerce chunk_refs to a list of source rel-paths.
+        """Parse source refs from null, list, or JSON-string index values.
 
-        Raw (non-wiki) chunks carry null. Wiki chunks store their source refs as
-        a JSON array **string** in the index field ``chunk_refs_str`` (a plain
-        ``Edm.String`` — index projections cannot populate a collection from a
-        scalar), so parse that here. Also tolerate an already-list value.
+        Wiki refs use scalar ``chunk_refs_str`` because index projections cannot
+        populate a collection field from scalar blob metadata.
         """
         import json
 

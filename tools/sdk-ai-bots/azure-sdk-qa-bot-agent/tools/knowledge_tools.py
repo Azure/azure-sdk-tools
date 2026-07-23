@@ -1,9 +1,4 @@
-"""Knowledge retrieval tools for the Azure SDK QA Bot Agent.
-
-Provides a single search tool that queries the Azure SDK knowledge base
-via Azure AI Search and automatically expands each result by its header
-hierarchy, returning full section context to the agent.
-"""
+"""Knowledge retrieval tools for the Azure SDK QA Bot Agent."""
 
 from __future__ import annotations
 
@@ -143,22 +138,12 @@ class KnowledgeTools:
         # Cap queries to avoid excessive parallel searches
         capped_queries = queries[:3]
 
-        # Hybrid retrieval: run a dense (vector) and a sparse
-        # (keyword/BM25) retriever per query and fuse their rankings with
-        # Reciprocal Rank Fusion. The sparse path precisely matches exact
-        # symbols (decorator/API names, labels) that dense recall misses.
-        # ``deep`` mode adds the agentic retriever as a third fused list.
+        # Run configured retrievers per query and fuse their rankings with RRF.
         enable_keyword = cfg("KB_ENABLE_KEYWORD", "true").lower() == "true"
         rrf_k = int(cfg("KB_RRF_K", "60"))
         vector_weight = float(cfg("KB_RRF_VECTOR_WEIGHT", "1.0"))
         keyword_weight = float(cfg("KB_RRF_KEYWORD_WEIGHT", "1.0"))
         agentic_weight = float(cfg("KB_RRF_AGENTIC_WEIGHT", "1.0"))
-        # Retrieve a WIDER candidate pool than the final top_k so the downstream
-        # rerank + MMR diversity have room to work. Default 0 (legacy per-retriever
-        # top_k): the wider pool + MMR were measured to regress, so they are off by
-        # default; the wiki→source backfill below is the query-side fix instead.
-        retrieve_k = int(cfg("KB_RETRIEVE_K", "0"))
-        pool_k = retrieve_k if retrieve_k > 0 else None
 
         async def _fused_for_query(q: str) -> list:
             retriever_coros: list = []
@@ -170,16 +155,14 @@ class KnowledgeTools:
                 weights.append(agentic_weight)
             retriever_coros.append(
                 search_client.vector_search(
-                    query=q, source_filters=source_filters, top_k=pool_k,
-                    extra_filter=NON_WIKI_FILTER,
+                    query=q, source_filters=source_filters, extra_filter=NON_WIKI_FILTER,
                 )
             )
             weights.append(vector_weight)
             if enable_keyword:
                 retriever_coros.append(
                     search_client.keyword_search(
-                        query=q, source_filters=source_filters, top_k=pool_k,
-                        extra_filter=NON_WIKI_FILTER,
+                        query=q, source_filters=source_filters, extra_filter=NON_WIKI_FILTER,
                     )
                 )
                 weights.append(keyword_weight)
@@ -223,11 +206,7 @@ class KnowledgeTools:
         # Deduplicate across all search results
         unique_chunks = search_client.deduplicate_chunks(raw_chunks)
 
-        # WeKnora-style two-track separation: this tool serves the SOURCE-CHUNK
-        # track only. Defensively drop any generated wiki page that slipped
-        # through (e.g. via the agentic retriever, which has no page-type
-        # filter) so wiki pages never displace authoritative source chunks —
-        # they are retrieved separately by ``search_wiki``.
+        # This tool returns raw source chunks only; wiki pages are retrieved separately.
         unique_chunks = [c for c in unique_chunks if not c.page_type]
 
         # Reorder by rerank_score, then select the final top_k.
@@ -248,7 +227,7 @@ class KnowledgeTools:
         ]
         expanded = await asyncio.gather(*expand_tasks)
 
-        # Log final search results (mirrors Go backend's "Final Search Result" log)
+        # Log final search results.
         logger.info("=========Final Search Result=========")
         refs = [
             Reference(
@@ -302,13 +281,7 @@ class KnowledgeTools:
             "If omitted, all sources configured for the tenant are used.",
         ] = None,
     ) -> SearchKnowledgeBaseResult:
-        """Literal keyword search over SOURCE document chunks (WeKnora grep_chunks).
-
-        The "Entity Anchoring" step of the retrieval sequence: BM25 keyword
-        matching that pins down exact named symbols / strings a semantic search
-        would blur. Searches ONLY raw source chunks (never wiki pages) and
-        returns their full section content.
-        """
+        """Literal keyword search over raw source document chunks."""
         if not sources:
             config = get_tenant_config(TenantID(tenant_id))
             sources = [src.name for src in config.sources] if config else []
@@ -346,14 +319,7 @@ class KnowledgeTools:
             "If omitted, all sources configured for the tenant are used.",
         ] = None,
     ) -> SearchKnowledgeBaseResult:
-        """Search the wiki layer AND route to sources in one call (self-contained).
-
-        Returns the top matching wiki pages' full synthesized content together
-        with the specific SOURCE document chunks they were built from, so a
-        single call gives both the cross-document overview and grounded detail.
-        Only when a *specific* page or source is still needed do you drill with
-        `wiki_read_page` (a page by title) or `wiki_read_source_doc` (a source).
-        """
+        """Search wiki pages and return their routed source chunks."""
         if not sources:
             config = get_tenant_config(TenantID(tenant_id))
             sources = [src.name for src in config.sources] if config else []
@@ -427,13 +393,7 @@ class KnowledgeTools:
             "If omitted, all sources configured for the tenant are used.",
         ] = None,
     ) -> SearchKnowledgeBaseResult:
-        """Read full wiki page(s) + their SOURCE refs (WeKnora wiki_read_page).
-
-        Step 2 of the wiki cycle: returns each page's full synthesized content
-        plus a ``Sources`` list of the source documents it was built from. If a
-        page lacks a specific detail, drill into a listed source with
-        `wiki_read_source_doc`.
-        """
+        """Read full wiki pages and list their source document refs."""
         if not sources:
             config = get_tenant_config(TenantID(tenant_id))
             sources = [src.name for src in config.sources] if config else []
@@ -488,9 +448,7 @@ class KnowledgeTools:
             "(BM25). Omit to read the document from the top.",
         ] = None,
     ) -> SearchKnowledgeBaseResult:
-        """Drill into an original SOURCE document behind a wiki page (WeKnora
-        wiki_read_source_doc). The fallback step when a wiki page lacks a
-        specific quote, value, or code snippet."""
+        """Read an original source document referenced by a wiki page."""
         search_client = get_search_client()
         chunks = await search_client.fetch_by_title(
             [source_ref], NON_WIKI_FILTER, top=60, keyword=query

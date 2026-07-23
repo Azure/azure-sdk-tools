@@ -1,31 +1,4 @@
-"""One-time / idempotent setup of the dedicated wiki indexer resources.
-
-Creates (or updates) the Azure AI Search **datasource + skillset + indexer** that
-pull the LLM wiki pages from the wiki blob container and project them into the
-*shared* KB index (``azure-sdk-knowledge``) — so the agent retrieves wiki pages
-and raw chunks from one index with no query-path change.
-
-This mirrors the main KB indexer but:
-* reads the ``wiki`` container (markdown blobs written by the build/reconcile),
-* uses **default parsing** (whole page → one chunk; pages are kept < 1800 chars),
-* maps blob metadata ``page_type`` / ``context_id`` / ``title`` into the index,
-* isolates wiki pages in hierarchy expansion via ``header_1 = title``,
-* honours soft-delete: blobs with metadata ``is_deleted=true`` are removed via a
-  ``SoftDeleteColumnDeletionDetectionPolicy`` (mirrors the main datasource).
-
-Auth: the datasource + embedding skill both use the search service's
-**user-assigned** managed identity (``azuresdkqabot-dev-identity``), which holds
-Storage Blob Data + Cognitive Services OpenAI User roles.
-
-Run::
-
-    python -m azure_sdk_qa_bot_wiki_index.setup_indexer
-
-Env (all have dev defaults):
-    AI_SEARCH_BASE_URL, AI_SEARCH_INDEX, STORAGE_ACCOUNT_RESOURCE_ID,
-    STORAGE_WIKI_OUTPUT_CONTAINER, AZURE_OPENAI_ENDPOINT,
-    WIKI_EMBEDDING_DEPLOYMENT, SEARCH_USER_ASSIGNED_IDENTITY_RESOURCE_ID
-"""
+"""Set up the dedicated Azure AI Search datasource, skillset, and indexer."""
 
 from __future__ import annotations
 

@@ -1,14 +1,4 @@
-"""Shared LLM + embedding backends (Azure OpenAI), used by both pipelines.
-
-* :class:`ChatLLM` — a thin chat-completions wrapper that transparently handles
-  reasoning models (gpt-5.x / o-series need ``max_completion_tokens`` and reject
-  a custom temperature) and offers a ``complete_json`` helper that tolerates
-  prose-wrapped JSON (mirrors WeKnora's ``ParseLLMJsonResponse``).
-* :class:`Embedder` — the index's own embedding model (text-embedding-ada-002)
-  so generated pages share the KB vector space.
-
-Auth is AAD (``DefaultAzureCredential``) unless ``AZURE_OPENAI_API_KEY`` is set.
-"""
+"""Azure OpenAI chat backend with JSON parsing support."""
 
 from __future__ import annotations
 
@@ -16,7 +6,6 @@ import json
 import logging
 import os
 import re
-from typing import Sequence
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +73,7 @@ class ChatLLM:
 
 
 def _parse_json_response(raw: str):
-    """Parse JSON that may be fenced or wrapped in prose (WeKnora-style)."""
+    """Parse JSON that may be fenced or wrapped in prose."""
     raw = raw.strip()
     for candidate in _json_candidates(raw):
         try:
@@ -107,25 +96,3 @@ def _json_candidates(raw: str):
         j = raw.rfind(closer)
         if 0 <= i < j:
             yield raw[i : j + 1]
-
-
-class Embedder:
-    """Azure OpenAI embeddings using the index's own model (shared vector space)."""
-
-    def __init__(self, client, deployment: str, batch_size: int = 16):
-        self._client = client
-        self._deployment = deployment
-        self._batch = batch_size
-
-    def embed(self, texts: Sequence[str]) -> list[list[float]]:
-        out: list[list[float]] = []
-        items = [t[:8000] or " " for t in texts]
-        for i in range(0, len(items), self._batch):
-            resp = self._client.embeddings.create(
-                model=self._deployment, input=items[i : i + self._batch]
-            )
-            out.extend(d.embedding for d in resp.data)
-        return out
-
-    def embed_one(self, text: str) -> list[float]:
-        return self.embed([text])[0]

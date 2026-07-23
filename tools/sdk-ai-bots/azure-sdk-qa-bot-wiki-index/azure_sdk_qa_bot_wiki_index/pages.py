@@ -1,10 +1,4 @@
-"""In-memory wiki page model + slug helpers (shared by map/reduce phases).
-
-A :class:`WikiPage` is the pipeline's intermediate artifact — produced by the
-reduce phase, then either persisted to blob (storage path) or converted to an
-index document (push path). Slugs mirror WeKnora's ``<type>/<name>`` scheme so
-cross-links and dedup can address pages by a stable id.
-"""
+"""In-memory wiki page model and slug helpers."""
 
 from __future__ import annotations
 
@@ -12,7 +6,7 @@ import hashlib
 import re
 from dataclasses import dataclass, field
 
-# WeKnora wiki page types.
+# Generated wiki page types.
 PAGE_SUMMARY = "summary"
 PAGE_ENTITY = "entity"
 PAGE_CONCEPT = "concept"

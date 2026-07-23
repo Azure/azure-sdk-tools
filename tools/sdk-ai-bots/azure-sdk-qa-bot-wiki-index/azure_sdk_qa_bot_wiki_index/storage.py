@@ -1,29 +1,4 @@
-"""Blob persistence + manifest for wiki pages (durable, rebuildable, debuggable).
-
-Each :class:`WikiPage` is a markdown blob under its slug in the wiki container,
-carrying the fields the dedicated indexer needs as **blob metadata** (so Azure
-Search can field-map them with no custom skill):
-
-* ``page_type``    — summary | entity | concept | index
-* ``context_id``   — source folder (summary) or ``wiki_*`` bucket → tenant scope
-* ``title``        — index title (summary: source rel path so ``get_link``
-  resolves the real doc; others: display title)
-* ``content_hash`` — change-detection digest of the rendered body
-* ``is_deleted``   — soft-delete tombstone (``"true"`` when retracted)
-
-``_manifest.json`` (v2) is the reconcile state + provenance record:
-
-    {
-      "version": 2,
-      "sources": { "<rel>": {"hash", "entities":[...], "concepts":[...]} },
-      "pages":   { "<slug>": {page_type,title,context_id,orig_title,source_refs,
-                              out_links,content,content_hash,blob_path,updated_at} }
-    }
-
-Storing per-document extractions + page bodies lets the incremental reconcile
-(:mod:`reconcile`) rebuild without re-running the LLM on unchanged docs/groups.
-Deletion is **soft** (metadata ``is_deleted=true``; blob kept for audit).
-"""
+"""Persist generated wiki pages as blobs and maintain the reconcile manifest."""
 
 from __future__ import annotations
 
@@ -39,8 +14,7 @@ logger = logging.getLogger(__name__)
 MANIFEST_BLOB = "_manifest.json"
 MANIFEST_VERSION = 2
 
-# Cap on source refs stored in blob metadata (bounds metadata size; backfill
-# only needs a few of the most relevant source docs per page anyway).
+# Maximum source refs stored in blob metadata.
 _MAX_CHUNK_REFS_META = 8
 
 
@@ -54,8 +28,7 @@ def blob_path(slug: str) -> str:
 
 
 def content_hash(text: str) -> str:
-    """Content-only change-detection digest (schema-independent, so a metadata
-    schema change never masquerades as a source/page content change)."""
+    """Return a content-only change-detection digest."""
     return hashlib.sha1(text.encode("utf-8")).hexdigest()[:16]
 
 
@@ -106,16 +79,7 @@ async def upload_page(container_client, page: WikiPage, title_by_slug: dict[str,
 
 
 async def backfill_chunk_refs_metadata(container_client) -> tuple[int, int]:
-    """One-time migration: stamp ``chunk_refs`` blob metadata onto existing pages.
-
-    Reads the manifest and, for every live page blob, writes the JSON-array
-    ``chunk_refs`` metadata derived from the page's stored ``source_refs`` —
-    preserving all other metadata and **without** re-rendering bodies or calling
-    the LLM. Lets already-built wikis pick up the query-time backfill field with
-    a metadata-only rewrite; a subsequent indexer run projects it into the index.
-
-    Returns ``(updated, skipped)``.
-    """
+    """Stamp ``chunk_refs`` blob metadata onto existing live pages."""
     manifest = await read_manifest(container_client)
     pages = manifest.get("pages", {})
     updated = skipped = 0
@@ -140,7 +104,7 @@ async def backfill_chunk_refs_metadata(container_client) -> tuple[int, int]:
 
 
 async def soft_delete_blob(container_client, path: str) -> bool:
-    """Tombstone a page blob: metadata ``is_deleted=true`` (keeps blob for audit)."""
+    """Tombstone a page blob by setting metadata ``is_deleted=true``."""
     blob = container_client.get_blob_client(path)
     try:
         props = await blob.get_blob_properties()

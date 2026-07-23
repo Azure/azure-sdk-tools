@@ -1,16 +1,4 @@
-"""Wiki creation pipeline — WeKnora-faithful MapReduce over the corpus.
-
-Produces the four WeKnora wiki page types as :class:`WikiPage` objects:
-
-* **summary**  — one dense page per source document (this module).
-* **entity**   — cross-document, per symbol (map+reduce, :mod:`wiki_reduce`).
-* **concept**  — cross-document, per topic (map+reduce).
-* **index**    — navigation page.
-
-Entities/concepts are extracted per document (:mod:`wiki_extract`, the *map*
-phase) then aggregated + synthesised + cross-linked (:mod:`wiki_reduce`, the
-*reduce* phase). Summary pages are produced per document here.
-"""
+"""Wiki creation pipeline for summary, entity, concept, and index pages."""
 
 from __future__ import annotations
 
@@ -117,7 +105,7 @@ def build_wiki(
     min_docs: int = 2,
     granularity: str = GRAN_STANDARD,
 ) -> list[WikiPage]:
-    """Full WeKnora-faithful wiki build: summary + (map→reduce) entity/concept/index."""
+    """Build summary, entity, concept, and index pages."""
     pages: list[WikiPage] = build_summary_pages(corpus, llm)
     extractions = map_extract(corpus, llm, granularity=granularity)
     pages += reduce_pages(extractions, llm, min_docs=min_docs)

@@ -1,10 +1,4 @@
-"""Corpus reader — stream ``(source_path, text)`` from the knowledge blob container.
-
-Reads the same markdown the KB indexer ingests, in memory (avoids Windows path
-issues with quoted blob names). ``source_path`` is the container-relative blob
-name (e.g. ``"typespec_docs/getting-started#...#06-versioning.mdx"``); the first
-path segment is the source folder = the KB ``context_id``.
-"""
+"""Read markdown blobs from the knowledge container as ``(source_path, text)``."""
 
 from __future__ import annotations
 
@@ -23,12 +17,7 @@ def source_folder(source_path: str) -> str:
 
 
 def rel_title(source_path: str) -> str:
-    """Folder-relative ``#``-encoded path — the KB ``title`` (drives link resolution).
-
-    ``typespec_docs/getting-started#...#06-versioning.mdx`` →
-    ``getting-started#...#06-versioning.mdx`` (drop the leading folder segment;
-    keep the rest verbatim, since blob names already ``#``-encode subpaths).
-    """
+    """Return the folder-relative ``#``-encoded KB title."""
     path = source_path.strip().lstrip("/")
     folder = source_folder(source_path)
     if folder and path.startswith(folder + "/"):

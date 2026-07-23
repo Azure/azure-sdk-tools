@@ -1,24 +1,4 @@
-"""Incremental update/delete reconcile (WeKnora-faithful).
-
-Given the current source corpus and the prior ``_manifest.json``, this computes a
-minimal set of changes and applies them — mirroring WeKnora's wiki re-ingest /
-finalize (retract stale doc contributions, re-aggregate affected entity/concept
-pages, re-inject cross-links, archive orphaned pages):
-
-1. **Diff sources** by content hash → ``changed_or_new`` / ``deleted`` docs.
-2. **Extractions**: re-run the map (LLM) only on changed/new docs; reuse stored
-   extractions for unchanged docs; drop deleted docs.
-3. **Summary pages**: regenerate (LLM) only for changed/new docs; reuse bodies
-   for unchanged docs; soft-delete summaries of deleted docs.
-4. **Entity/concept pages**: aggregate all current extractions into groups;
-   synthesise (LLM) only groups whose source set changed vs the manifest; reuse
-   unchanged bodies; soft-delete groups that fell below ``min_docs`` / vanished.
-5. **Cross-links + index**: recompute deterministically over the full page set.
-6. **Write**: upload only pages whose rendered content hash changed; soft-delete
-   removed pages; write the new manifest.
-
-The first run (empty manifest) naturally degenerates to a full build.
-"""
+"""Incrementally rebuild wiki blobs and manifest entries from source changes."""
 
 from __future__ import annotations
 

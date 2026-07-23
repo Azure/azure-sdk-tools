@@ -1,9 +1,4 @@
-"""CLI — WeKnora-faithful wiki MapReduce build.
-
-Phase 1 state: generates the wiki page set (summary + entity/concept/index) as
-in-memory :class:`WikiPage` objects. ``--dry-run`` inspects them; blob
-persistence + the dedicated indexer are added in later phases. ``--purge``
-removes previously-pushed generated docs from the index.
+"""CLI for building and maintaining the generated wiki page set.
 
 Usage::
 
@@ -126,7 +121,7 @@ async def _run(args: argparse.Namespace) -> int:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Build the WeKnora-style wiki page set.")
+    parser = argparse.ArgumentParser(description="Build the wiki page set.")
     parser.add_argument("--prefix", default="", help="comma-separated blob name prefixes")
     parser.add_argument("--limit", type=int, default=0, help="cap number of source docs (0 = all)")
     parser.add_argument("--min-docs", type=int, default=2, help="min source docs for an entity/concept page")
@@ -134,7 +129,7 @@ def main() -> None:
         "--granularity",
         default=_env("WIKI_EXTRACTION_GRANULARITY", "standard"),
         choices=["focused", "standard", "exhaustive"],
-        help="WeKnora extraction granularity (default standard = tight, curated)",
+        help="extraction granularity (default standard = tight, curated)",
     )
     parser.add_argument("--purge", action="store_true", help="delete all generated docs from the index first")
     parser.add_argument("--no-generate", action="store_true", help="with --purge: only purge")

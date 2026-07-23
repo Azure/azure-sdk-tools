@@ -25,3 +25,15 @@ extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
     ToolDirectory: src/dotnet/Azure.ClientSdk.Analyzers
+    # nuget.org is blocked on the CI agents; the Roslyn analyzer test framework
+    # (Microsoft.CodeAnalysis.Testing.ReferenceAssemblies) downloads reference packages at test
+    # runtime and does not honor the repo's CFS-only NuGet.Config, so pre-restore those packages
+    # from CFS into the global-packages folder before 'dotnet test' runs.
+    TestPreSteps:
+      - script: |
+          dotnet restore "$(Build.SourcesDirectory)/src/dotnet/Azure.ClientSdk.Analyzers/ReferenceWarmup/ReferenceWarmup.New.csproj"
+          dotnet restore "$(Build.SourcesDirectory)/src/dotnet/Azure.ClientSdk.Analyzers/ReferenceWarmup/ReferenceWarmup.Old.csproj"
+        displayName: 'Pre-restore analyzer test reference packages from CFS (nuget.org blocked on agents)'
+        env:
+          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+          DOTNET_CLI_TELEMETRY_OPTOUT: 1

@@ -138,7 +138,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     else
                     {
                         // Read and deserialize the local SDK change JSON file
-                        sdkChange = await ReadSdkChangesFromFile(localSdkChangeJsonFilePath, ct);
+                        sdkChange = await ReadSdkChangesFromFileAsync(localSdkChangeJsonFilePath, ct);
                     }
                 }
                 // If sdkChange is still null, attempt to retrieve it using the configured script
@@ -146,14 +146,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 {
                     try
                     {
-                        string? errorMessage = null;
-                        (sdkChange, errorMessage) = await RetrieveSdkChangeFromScript(sdkRepoRoot, packagePath, packageInfo, languageService, ct);
-                        if (sdkChange == null && !string.IsNullOrEmpty(errorMessage))
+                        sdkChange = await RetrieveSdkChangeFromScript(sdkRepoRoot, packagePath, packageInfo, languageService, ct);
+                        if (sdkChange == null)
                         {
-                            logger.LogError("Failed to retrieve SDK changes using the configured script. Error: {ErrorMessage}", errorMessage);
+                            logger.LogError("Failed to retrieve SDK changes using the configured script.");
                             return new PackageOperationResponse
                             {
-                                ResponseError = errorMessage,
+                                ResponseError = "Failed to retrieve SDK changes using the configured script.",
                                 Language = languageService.Language,
                                 PackageName = packageInfo?.PackageName,
                             };
@@ -205,7 +204,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
         }
 
-        private async Task<SdkChange?> ReadSdkChangesFromFile(string sdkChangeFilePath, CancellationToken ct)
+        private async Task<SdkChange?> ReadSdkChangesFromFileAsync(string sdkChangeFilePath, CancellationToken ct)
         {
             SdkChange? sdkChange = null;
             try
@@ -229,11 +228,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return sdkChange;
         }
 
-        private async Task<(SdkChange? sdkChange, string? err)> RetrieveSdkChangeFromScript(string sdkRepoRoot, string packagePath, PackageInfo packageInfo, LanguageService languageService, CancellationToken ct)
+        private async Task<SdkChange?> RetrieveSdkChangeFromScript(string sdkRepoRoot, string packagePath, PackageInfo packageInfo, LanguageService languageService, CancellationToken ct)
         {
             logger.LogInformation("Retrieve SDK changes using the configured script.");
             SdkChange? sdkChange = null;
-            string? message = null;
             // execute configured sdk change retrieve script
             var (configContentType, configValue) = await _specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.GetSdkChanges, ct);
             if (configContentType != SpecGenSdkConfigContentType.Unknown && !string.IsNullOrEmpty(configValue))
@@ -263,30 +261,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     {
                         if (!File.Exists(sdkChangeFilePath))
                         {
-                            logger.LogWarning("SDK change file not found at: {FilePath}", sdkChangeFilePath);
-                            message = $"SDK change file not found at: {sdkChangeFilePath}. Please check the script output for details.";
+                            logger.LogError("SDK change file not found at: {FilePath}. Please check the script output for details.", sdkChangeFilePath);
                         }
                         else
                         {
-                            sdkChange = await ReadSdkChangesFromFile(sdkChangeFilePath, ct);
-                            if (sdkChange == null)
-                            {
-                                logger.LogError("Failed to read SDK changes from the file: {FilePath}", sdkChangeFilePath);
-                                message = $"Failed to read SDK changes from the file: {sdkChangeFilePath}. Please check the script output for details.";
-                            }
+                            sdkChange = await ReadSdkChangesFromFileAsync(sdkChangeFilePath, ct);
                             File.Delete(sdkChangeFilePath);
                         }
                     }
                     else
                     {
                         logger.LogError("Failed to retrieve SDK changes using the configured script. Errors: {Errors}", sdkChangeResponse?.ResponseErrors);
-                        message = "Failed to retrieve SDK changes using the configured script.";
                     }
                 }
                 else
                 {
                     logger.LogError("Failed to create process options for the configured script.");
-                    message = "Failed to create process options for the configured script.";
                 }
             }
             else
@@ -295,7 +285,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 throw new NotImplementedException();
             }
 
-            return (sdkChange, message);
+            return sdkChange;
         }
 
         private async Task<PackageOperationResponse> ClassifySdkBreakingChanges(SdkChange sdkChange, string sdkRepoRoot, LanguageService languageService, PackageInfo? packageInfo, string? tspConfigPath, CancellationToken ct)

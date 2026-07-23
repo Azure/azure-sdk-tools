@@ -19,6 +19,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public Build? ConfiguredRunSDKGenerationPipeline { get; set; }
         public string ConfiguredAPIViewStatus { get; set; } = "Approved";
 
+        // Captures the release plan passed to CreateReleasePlanWorkItemAsync so that a subsequent
+        // GetReleasePlanForWorkItemAsync (used to refresh the plan) returns the same details.
+        private ReleasePlanWorkItem? createdReleasePlan;
+
         public Task<List<PackageWorkitemResponse>> ListPartialPackageWorkItemAsync(string packageName, string language, CancellationToken ct)
         {
             throw new NotImplementedException();
@@ -91,6 +95,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 
         Task<WorkItem> IDevOpsService.CreateReleasePlanWorkItemAsync(ReleasePlanWorkItem releasePlan, CancellationToken ct)
         {
+            createdReleasePlan = releasePlan;
             var workItem = new WorkItem
             {
                 Id = 1,
@@ -156,6 +161,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             if (ConfiguredReleasePlanForWorkItem != null)
             {
                 return Task.FromResult(ConfiguredReleasePlanForWorkItem);
+            }
+
+            // When a release plan was created earlier in the same test, a refresh should return
+            // the same plan (with its populated details) rather than a bare placeholder.
+            if (createdReleasePlan != null)
+            {
+                createdReleasePlan.WorkItemId = workItemId;
+                return Task.FromResult(createdReleasePlan);
             }
 
             var releasePlan = new ReleasePlanWorkItem

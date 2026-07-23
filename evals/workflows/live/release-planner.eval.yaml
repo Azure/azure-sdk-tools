@@ -58,7 +58,7 @@ stimuli:
       # "Skills used 0" and the skill-invocation grader can never pass.
       # Path is relative to this eval file (4 levels up = repo root).
       skills:
-        - ../../../../.github/skills/azsdk-common-prepare-release-plan
+        - ../../../.github/skills/azsdk-common-prepare-release-plan
       # Repo-relative azure-rest-api-specs worktree. Vally resolves a
       # non-absolute source relative to THIS eval file's directory (no
       # repo-root/env token yet — microsoft/vally#562), so the ../ depth is
@@ -68,7 +68,7 @@ stimuli:
       # locally run eng/common/scripts/eval/sync-eval-git-repo.js once (auto-refresh 24h).
       git:
         type: worktree
-        source: ../../../../artifacts/specs-cache/azure-rest-api-specs
+        source: ../../../artifacts/specs-cache/azure-rest-api-specs
         ref: main
     prompt: |
       Walk me through the full

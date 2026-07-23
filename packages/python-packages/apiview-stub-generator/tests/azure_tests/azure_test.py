@@ -128,6 +128,56 @@ def _download_file(dest_folder, url):
         print(f"Error downloading {url}: {e}")
         return None
 
+def _download_package_from_index(temp_dir, package_name, version, pkg_type):
+    """
+    Download a wheel/sdist from the configured pip index.
+
+    In CI, PIP_INDEX_URL is set by PipAuthenticate to the authenticated
+    Azure DevOps feed URL.
+    """
+    index_url = os.environ.get(
+        "PIP_INDEX_URL",
+        "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/",
+    )
+    package_spec = f"{package_name}=={version}"
+
+    download_cmd = [
+        "python",
+        "-m",
+        "pip",
+        "download",
+        package_spec,
+        "--no-deps",
+        "--dest",
+        temp_dir,
+        "--index-url",
+        index_url,
+    ]
+
+    if pkg_type == "whl":
+        download_cmd.append("--only-binary=:all:")
+    elif pkg_type == "sdist":
+        download_cmd.append("--no-binary=:all:")
+    else:
+        raise ValueError(f"Unsupported package type: {pkg_type}")
+
+    existing_files = set(os.listdir(temp_dir))
+    check_call(download_cmd)
+    downloaded_files = set(os.listdir(temp_dir)) - existing_files
+
+    if pkg_type == "whl":
+        candidates = [f for f in downloaded_files if f.endswith(".whl")]
+    else:
+        candidates = [f for f in downloaded_files if f.endswith(".tar.gz") or f.endswith(".zip")]
+
+    if not candidates:
+        raise RuntimeError(
+            f"Could not find downloaded {pkg_type} artifact for {package_spec} from {index_url}"
+        )
+
+    candidates.sort()
+    return os.path.join(temp_dir, candidates[0])
+
 def _get_pypi_files(temp_dir, package_name, version, pkg_type, subdirectory):
     """
     Get the wheel and tar.gz files from PyPI for a specific version of a package.
@@ -136,25 +186,7 @@ def _get_pypi_files(temp_dir, package_name, version, pkg_type, subdirectory):
     :param version: Version of the package
     :return: Paths to the downloaded wheel and tar.gz files
     """
-    pypi_url = f"https://pypi.org/pypi/{package_name}/{version}/json"
-    response = requests.get(pypi_url)
-    response.raise_for_status()
-    data = response.json()
-    
-    url = None
-    
-    for file_info in data['urls']:
-        if pkg_type == "whl" and file_info['packagetype'] == 'bdist_wheel':
-            url = file_info['url']
-            break
-        elif pkg_type == "sdist" and file_info['packagetype'] == 'sdist':
-            url = file_info['url']
-            break
-    
-    if not url:
-        raise ValueError(f"Could not find {pkg_type} file for the specified version.")
-    
-    pkg_path = _download_file(temp_dir, url)
+    pkg_path = _download_package_from_index(temp_dir, package_name, version, pkg_type)
     # Copy apiview-properties.json to pkg_path from github repo if it exists
     mapping_file = _get_mapping_file(temp_dir, subdirectory, package_name, version)
 

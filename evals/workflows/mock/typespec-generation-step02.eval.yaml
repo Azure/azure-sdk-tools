@@ -22,7 +22,7 @@ stimuli:
   - name: typespec-generation-step02-validation
     environment:
       # Real authoring skill + the Contoso spec on disk so the agent can edit.
-      # Paths are relative to this eval file (4 levels up = repo root).
+      # Paths are relative to this eval file (3 levels up = repo root).
       skills:
         - ../../../.github/skills/azure-typespec-author
       git:

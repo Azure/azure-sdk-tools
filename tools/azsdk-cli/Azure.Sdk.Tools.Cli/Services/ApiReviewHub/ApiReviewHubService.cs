@@ -185,6 +185,11 @@ public class ApiReviewHubService(
     private static string GetAppIdUri(string endpoint)
     {
         var host = new Uri(endpoint).Host;
+        if (!host.EndsWith(".azurewebsites.net", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException($"API Review Hub endpoint host is not allowed: {host}.");
+        }
+
         var siteName = host.Split('.', 2)[0];
         const string prefix = "api-review-hub";
 

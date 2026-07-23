@@ -106,4 +106,13 @@ public class ApiReviewHubServiceTests
 
         Assert.That(result.StatusCode, Is.EqualTo(202));
     }
+
+    [Test]
+    public void GetReleaseGateStatusAsync_WithDisallowedHost_ThrowsInvalidOperationException()
+    {
+        var exception = Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await service.GetReleaseGateStatusAsync("https://api-review-hub.evil.example", "python", "pkg", "1.0.0", "hash", CancellationToken.None));
+
+        Assert.That(exception!.Message, Does.Contain("endpoint host is not allowed"));
+    }
 }

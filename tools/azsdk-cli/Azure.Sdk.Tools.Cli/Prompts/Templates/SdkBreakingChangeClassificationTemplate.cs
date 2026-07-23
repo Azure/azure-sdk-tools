@@ -110,10 +110,9 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
             }
             return $$"""
             **CRITICAL: Required Output Format**
-        
+
             You MUST output one block per classified SDK breaking change item (one merged root-cause item per block).
-            Structure your response as a JSON object following this exact format:
-            ```json
+            Return exactly one valid JSON object following this exact format:
             {
                 "hasBreakingChange": true, //if any breaking changes are detected, otherwise false
                 "breakingChanges": //classified SDK breaking changes
@@ -129,7 +128,11 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
                     }
                 ]
             }
-            ```
+            Output must be raw JSON only.
+            Do not wrap the JSON in markdown code fences.
+            Do not include any text before or after the JSON object.
+            The first character must be `{` and the last character must be `}`.
+            The JSON must be parseable by a standard JSON parser (RFC 8259): no comments, no trailing commas.
             **Rules:**
             **General Requirements**
             {{breakingReferenceInstruction}}
@@ -163,7 +166,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
             - originBreaks is required.
             - It must contain all original breaking items that contribute to the classified breaking.
             - Requirements:
-                - Use a bullet list (- item).
+                - Use a JSON array of strings.
                 - Preserve the exact original text from sdk changes ### Breaking Changes.
                 - Do not paraphrase.
                 - Do not modify wording.
@@ -171,8 +174,8 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
                 - Do not duplicate entries.
             **Mandatory Merge Coverage Requirement**
             - If a merged item is caused by N original breaking items:
-                - originBreaks must contain exactly N bullets
-                - Every contributing input breaking must appear as a separate bullet.
+                - originBreaks must contain exactly N entries.
+                - Every contributing input breaking must appear as a separate array entry.
             **Consistency Validation (MANDATORY)**
             Before producing the final answer:
             - Classify every original breaking item.
@@ -180,7 +183,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
             - Verify no original breaking is omitted.
             - Verify no original breaking is duplicated.
             - Verify every merged block includes all contributing original breakings.
-            - Verify the total number of bullets across all originBreaks equals the total number of original breaking items from the input.
+            - Verify the total number of entries across all originBreaks equals the total number of original breaking items from the input.
             **Forbidden Pattern**
             A merged block absorbs multiple original breakings but lists only one entry in originBreaks.
             **Required Pattern**

@@ -31,6 +31,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 Instructions = template.BuildPrompt(),
             };
             var result = await _agentRunner.RunAsync(agent, ct);
+            _logger.LogDebug("Use SdkBreakingChangeClassificationTemplate version {Version}, Classification result: {Result}", template.Version, result);
             try
             {
                 return JsonSerializer.Deserialize<SdkBreakingChangeDetectResult>(result);

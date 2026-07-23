@@ -285,7 +285,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
             else
             {
-                logger.LogInformation("No valid SDK change retrieval configuration was found. Unable to retrieve SDK changes.");
+                logger.LogInformation("No valid SDK change retrieval configuration was found. It is not implemented.");
                 throw new NotImplementedException();
             }
 

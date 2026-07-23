@@ -8,7 +8,7 @@ variables:
   - template: /eng/pipelines/templates/variables/image.yml
   - group: AzSDK_Eval_Variable_group
   - name: TypeSpecAuthorEvalExtraArgs
-    value: '--tag mode:no-skill --skill-dir /tmp/no-skills'
+    value: '--tag mode=no-skill --skill-dir /tmp/no-skills'
 
 extends:
   template: /eng/common/pipelines/templates/stages/archetype-eval.yml
@@ -20,7 +20,7 @@ extends:
     TestType: live
     evalInvokeTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-eval-invoke.yml
     threshold: 1.0
-    preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
+    preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval-no-skill.yml
     failOnFailedTests: false
     shardTimeoutInMinutes: 30
 

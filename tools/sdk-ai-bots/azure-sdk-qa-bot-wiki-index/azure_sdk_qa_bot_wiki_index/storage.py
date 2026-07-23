@@ -78,31 +78,6 @@ async def upload_page(container_client, page: WikiPage, title_by_slug: dict[str,
     return path, chash, body
 
 
-async def backfill_chunk_refs_metadata(container_client) -> tuple[int, int]:
-    """Stamp ``chunk_refs`` blob metadata onto existing live pages."""
-    manifest = await read_manifest(container_client)
-    pages = manifest.get("pages", {})
-    updated = skipped = 0
-    for slug, entry in pages.items():
-        if entry.get("is_deleted") == "true":
-            skipped += 1
-            continue
-        path = entry.get("blob_path") or blob_path(slug)
-        refs = [_ascii(r) for r in (entry.get("source_refs") or [])[:_MAX_CHUNK_REFS_META] if r]
-        blob = container_client.get_blob_client(path)
-        try:
-            props = await blob.get_blob_properties()
-        except Exception:
-            skipped += 1
-            continue
-        metadata = dict(props.metadata or {})
-        metadata["chunk_refs"] = _ascii(json.dumps(refs), limit=7000)
-        await blob.set_blob_metadata(metadata)
-        updated += 1
-    logger.info("backfill_chunk_refs_metadata: %d updated, %d skipped", updated, skipped)
-    return updated, skipped
-
-
 async def soft_delete_blob(container_client, path: str) -> bool:
     """Tombstone a page blob by setting metadata ``is_deleted=true``."""
     blob = container_client.get_blob_client(path)

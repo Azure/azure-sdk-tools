@@ -32,12 +32,6 @@ python -m azure_sdk_qa_bot_wiki_index.main --prefix typespec_docs/
 
 # inspect generated pages without persisting
 python -m azure_sdk_qa_bot_wiki_index.main --prefix typespec_docs/ --dry-run
-
-# purge generated docs from the index
-python -m azure_sdk_qa_bot_wiki_index.main --purge --no-generate
-
-# backfill chunk_refs metadata on existing page blobs
-python -m azure_sdk_qa_bot_wiki_index.main --backfill-metadata
 ```
 
 ## Configuration

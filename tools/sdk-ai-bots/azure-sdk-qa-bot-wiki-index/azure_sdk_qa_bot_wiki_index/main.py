@@ -3,7 +3,7 @@
 Usage::
 
     python -m azure_sdk_qa_bot_wiki_index.main --prefix typespec_docs/ --dry-run
-    python -m azure_sdk_qa_bot_wiki_index.main --purge --no-generate
+    python -m azure_sdk_qa_bot_wiki_index.main --prefix typespec_docs/
 """
 
 from __future__ import annotations
@@ -15,14 +15,11 @@ import os
 from collections import Counter
 
 from azure.identity.aio import DefaultAzureCredential as AsyncDefaultAzureCredential
-from azure.search.documents.aio import SearchClient as AzureSearchClient
 from azure.storage.blob.aio import BlobServiceClient
 
-from .documents import delete_generated_docs
 from .llm import ChatLLM, build_azure_openai_client
 from .reader import read_blob_container
 from .reconcile import reconcile
-from .storage import backfill_chunk_refs_metadata
 from .wiki import build_wiki
 
 logger = logging.getLogger(__name__)
@@ -30,14 +27,6 @@ logger = logging.getLogger(__name__)
 
 def _env(name: str, default: str = "") -> str:
     return os.environ.get(name, default)
-
-
-def _make_search_client(credential) -> AzureSearchClient:
-    return AzureSearchClient(
-        endpoint=_env("AI_SEARCH_BASE_URL").rstrip("/"),
-        index_name=_env("AI_SEARCH_INDEX"),
-        credential=credential,
-    )
 
 
 def _make_blob_service_client(credential) -> BlobServiceClient:
@@ -61,24 +50,6 @@ async def _read_corpus(credential, prefixes: list[str], limit: int) -> list[tupl
 async def _run(args: argparse.Namespace) -> int:
     prefixes = [p.strip() for p in args.prefix.split(",") if p.strip()] or [""]
     async with AsyncDefaultAzureCredential() as credential:
-        if args.backfill_metadata:
-            wiki_container = _env("STORAGE_WIKI_OUTPUT_CONTAINER", "wiki")
-            blob_service = _make_blob_service_client(credential)
-            async with blob_service:
-                cc = blob_service.get_container_client(wiki_container)
-                updated, skipped = await backfill_chunk_refs_metadata(cc)
-            logger.info("backfill-metadata: %d updated, %d skipped (container %r)",
-                        updated, skipped, wiki_container)
-            return 0
-
-        if args.purge:
-            search_client = _make_search_client(credential)
-            async with search_client:
-                removed = await delete_generated_docs(search_client)
-            logger.info("purged %d generated docs", removed)
-            if args.no_generate:
-                return 0
-
         corpus = await _read_corpus(credential, prefixes, args.limit)
         if not corpus:
             logger.warning("no markdown found under prefixes %r", prefixes)
@@ -131,14 +102,7 @@ def main() -> None:
         choices=["focused", "standard", "exhaustive"],
         help="extraction granularity (default standard = tight, curated)",
     )
-    parser.add_argument("--purge", action="store_true", help="delete all generated docs from the index first")
-    parser.add_argument("--no-generate", action="store_true", help="with --purge: only purge")
     parser.add_argument("--dry-run", action="store_true", help="build + inspect, do not persist")
-    parser.add_argument(
-        "--backfill-metadata",
-        action="store_true",
-        help="one-time: stamp chunk_refs metadata onto existing page blobs from the manifest (no LLM)",
-    )
     parser.add_argument("--log-level", default="INFO")
     args = parser.parse_args()
 

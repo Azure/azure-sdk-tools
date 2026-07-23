@@ -24,7 +24,6 @@ Use **both** tools to build an authoring plan, if the retrieved results have con
 ### Case 3 — API Version Evolution (ARM / Data-plane)
 
 > **Use Agentic Search (option 2 above) ONLY.** For version-evolution requests you **must not** call the MCP tool `azsdk_typespec_generate_authoring_plan` at all — it does not cover the example-file migration and version-rebase steps this case requires. This exclusive rule overrides the "use both tools" guidance in [3.1 General](#31-general-all-cases).
->
 
 1. Copy `.json` files from latest version's `examples/` into new version's `examples/`. Update `api-version` in each file. Delete old version's example folder if old version is no longer existed.
 2. Update `readme.md`.

@@ -25,20 +25,28 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         public async Task<SdkBreakingChangeDetectResult?> ClassifySdkBreakingChangesAsync(string sdkchange, string sdkBreakingPattern, string language, string? tspProjectPath, CancellationToken ct)
         {
-            var template = new SdkBreakingChangeClassificationTemplate(sdkBreakingPattern, sdkchange, language, tspProjectPath);
-            var agent = new CopilotAgent<string>
-            {
-                Instructions = template.BuildPrompt(),
-            };
-            var result = await _agentRunner.RunAsync(agent, ct);
-            _logger.LogDebug("Use SdkBreakingChangeClassificationTemplate version {Version}, Classification result: {Result}", template.Version, result);
             try
             {
-                return JsonSerializer.Deserialize<SdkBreakingChangeDetectResult>(result);
+                var template = new SdkBreakingChangeClassificationTemplate(sdkBreakingPattern, sdkchange, language, tspProjectPath);
+                var agent = new CopilotAgent<string>
+                {
+                    Instructions = template.BuildPrompt(),
+                };
+                var result = await _agentRunner.RunAsync(agent, ct);
+                _logger.LogDebug("Use SdkBreakingChangeClassificationTemplate version {Version}, Classification result: {Result}", template.Version, result);
+                try
+                {
+                    return JsonSerializer.Deserialize<SdkBreakingChangeDetectResult>(result);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to deserialize classification result: {Result}, SdkBreakingChangeClassificationTemplate version: {Version}", result, template.Version);
+                    return null;
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to deserialize classification result: {Result}, SdkBreakingChangeClassificationTemplate version: {Version}", result, template.Version);
+                _logger.LogError(ex, "Exception occur when run copilot agent");
                 return null;
             }
         }

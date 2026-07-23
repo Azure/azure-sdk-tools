@@ -264,10 +264,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                         if (!File.Exists(sdkChangeFilePath))
                         {
                             logger.LogWarning("SDK change file not found at: {FilePath}", sdkChangeFilePath);
+                            message = $"SDK change file not found at: {sdkChangeFilePath}. Please check the script output for details.";
                         }
                         else
                         {
                             sdkChange = await ReadSdkChangesFromFile(sdkChangeFilePath, ct);
+                            if (sdkChange == null)
+                            {
+                                logger.LogError("Failed to read SDK changes from the file: {FilePath}", sdkChangeFilePath);
+                                message = $"Failed to read SDK changes from the file: {sdkChangeFilePath}. Please check the script output for details.";
+                            }
                             File.Delete(sdkChangeFilePath);
                         }
                     }

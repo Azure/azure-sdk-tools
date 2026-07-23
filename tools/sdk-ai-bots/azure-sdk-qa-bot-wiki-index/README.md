@@ -62,6 +62,6 @@ Azure OpenAI when set.
 Generated pages use these additive fields in the shared index:
 
 * `chunk_refs_str` — JSON array string of source document refs.
-* `page_type` — `summary` | `entity` | `concept` | `synthesis`.
+* `page_type` — `summary` | `entity` | `concept` | `index`.
 
 Blob metadata values must be ASCII.

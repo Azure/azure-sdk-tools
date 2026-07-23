@@ -101,7 +101,7 @@ class KnowledgeChunk(BaseModel):
     @classmethod
     def _coerce_page_type(cls, v: object) -> str:
         """Raw (non-wiki) chunks carry null for this added field."""
-        return v or ""
+        return str(v) if v else ""
 
     @field_validator("chunk_refs", mode="before")
     @classmethod

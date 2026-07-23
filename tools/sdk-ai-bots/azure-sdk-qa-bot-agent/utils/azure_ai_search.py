@@ -353,8 +353,13 @@ class SearchClient:
         chunks: "list[KnowledgeChunk]",
         per_page: int = 3,
         max_total: int = 12,
+        source_filter: str | None = None,
     ) -> "list[KnowledgeChunk]":
-        """Fetch raw source chunks referenced by retrieved wiki pages."""
+        """Fetch raw source chunks referenced by retrieved wiki pages.
+
+        *source_filter* (the tenant's combined ``context_id`` OR clause) scopes
+        the routing to the tenant's sources.
+        """
         seen_ids = {c.chunk_id for c in chunks if c.chunk_id}
         wanted_titles: list[str] = []
         for c in chunks:
@@ -376,6 +381,7 @@ class SearchClient:
         )
         # Only backfill RAW source chunks (never other wiki pages).
         combined_filter = f"({title_clause}) and (page_type eq null or page_type eq '')"
+        combined_filter = _and_extra(combined_filter, source_filter)
 
         results = await self._search_client.search(
             search_text="*",
@@ -411,19 +417,21 @@ class SearchClient:
         extra_filter: str,
         top: int = 40,
         keyword: str | None = None,
+        source_filter: str | None = None,
     ) -> "list[KnowledgeChunk]":
         """Fetch chunks/pages whose ``title`` is one of *titles*, gated by
-        *extra_filter* (WIKI_FILTER or NON_WIKI_FILTER).
+        *extra_filter* (WIKI_FILTER or NON_WIKI_FILTER) and, when given, the
+        tenant's combined ``context_id`` *source_filter*.
 
-        With *keyword* set, ranks by BM25 over the matched docs (used by
-        ``wiki_read_source_doc``'s regex/keyword drill); otherwise returns them
-        in ``ordinal_position`` order so a document reads top-to-bottom.
+        With *keyword* set, ranks by BM25 over the matched docs; otherwise
+        returns them in ``ordinal_position`` order.
         """
         titles = [t for t in (titles or []) if t]
         if not titles:
             return []
         title_clause = " or ".join(f"title eq '{_escape_odata(t)}'" for t in titles)
         combined = f"({title_clause}) and {extra_filter}"
+        combined = _and_extra(combined, source_filter)
         search_kwargs: dict = {
             "search_text": keyword or "*",
             "filter": combined,

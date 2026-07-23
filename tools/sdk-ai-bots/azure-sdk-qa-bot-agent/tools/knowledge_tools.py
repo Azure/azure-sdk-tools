@@ -363,6 +363,7 @@ class KnowledgeTools:
             wiki_pages,
             per_page=int(cfg("KB_WIKI_ROUTE_PER_PAGE", "3")),
             max_total=int(cfg("KB_WIKI_ROUTE_MAX_TOTAL", "12")),
+            source_filter=_combined_source_filter(source_filters),
         )
         combined = wiki_pages + routed
         if not combined:
@@ -394,11 +395,11 @@ class KnowledgeTools:
         ] = None,
     ) -> SearchKnowledgeBaseResult:
         """Read full wiki pages and list their source document refs."""
-        if not sources:
-            config = get_tenant_config(TenantID(tenant_id))
-            sources = [src.name for src in config.sources] if config else []
+        source_filter = _tenant_source_filter(tenant_id, sources)
         search_client = get_search_client()
-        chunks = await search_client.fetch_by_title(titles[:5], WIKI_FILTER)
+        chunks = await search_client.fetch_by_title(
+            titles[:5], WIKI_FILTER, source_filter=source_filter
+        )
         if not chunks:
             return SearchKnowledgeBaseResult(results=[])
         # Group multi-chunk pages by title; concat body + collect source refs.
@@ -451,7 +452,8 @@ class KnowledgeTools:
         """Read an original source document referenced by a wiki page."""
         search_client = get_search_client()
         chunks = await search_client.fetch_by_title(
-            [source_ref], NON_WIKI_FILTER, top=60, keyword=query
+            [source_ref], NON_WIKI_FILTER, top=60, keyword=query,
+            source_filter=_tenant_source_filter(tenant_id, None),
         )
         chunks = [c for c in chunks if not c.page_type]
         if not chunks:
@@ -501,6 +503,22 @@ def _resolve_source_filters(
             filter_clauses.append(service_type_filter)
         source_filters[source_name] = " and ".join(filter_clauses)
     return source_filters
+
+
+def _combined_source_filter(source_filters: dict[str, str]) -> str | None:
+    """Combine per-source filters into one parenthesized OR clause (or None)."""
+    clauses = [f"({f})" for f in source_filters.values() if f]
+    if not clauses:
+        return None
+    return "(" + " or ".join(clauses) + ")"
+
+
+def _tenant_source_filter(tenant_id: str, sources: list[str] | None) -> str | None:
+    """Resolve the tenant's combined ``context_id`` OR clause for title lookups."""
+    if not sources:
+        config = get_tenant_config(TenantID(tenant_id))
+        sources = [src.name for src in config.sources] if config else []
+    return _combined_source_filter(_resolve_source_filters(sources, tenant_id, None))
 
 
 def _truncate_content(content: str | None) -> str:

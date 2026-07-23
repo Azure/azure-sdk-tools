@@ -21,7 +21,9 @@ Use **both** tools to build an authoring plan, if the retrieved results have con
 
 ### Case 3 — API Version Evolution (ARM / Data-plane)
 
-> **Must** use Agentic Search (option 2 above) to build the plan — do not call the MCP tool.
+> **Must** use Agentic Search (option 2 above) as the primary source to build the plan; do **not** call the MCP tool while agentic search succeeds.
+>
+> **Fallback**: If agentic search fails (all URLs unreachable or timeout exceeded), fall back to the MCP tool result per the [General Fallback](#31-general-all-cases) rather than dead-ending the workflow. The concrete Case 3 steps below are **mandatory regardless of which grounding path was used**.
 
 1. Copy `.json` files from latest version's `examples/` into new version's `examples/`. Update `api-version` in each file. Delete old version's example folder if old version is no longer existed.
 2. Update `readme.md`.

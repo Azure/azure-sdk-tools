@@ -6,6 +6,8 @@
 
 Use **both** tools to build an authoring plan, if the retrieved results have conflict, rely on agentic search.
 
+> **Case-specific overrides take precedence.** Some cases in [3.2 Case-Specific Authoring Plan](#32-case-specific-authoring-plan) restrict which tools may be used — e.g. **Case 3 (API Version Evolution) uses Agentic Search ONLY and forbids the MCP tool**. When a case-specific rule applies, follow it instead of the general "use both tools" guidance below.
+
 1. **MCP Tool** — call `azsdk_typespec_generate_authoring_plan` with:
    - `request`: user request (verbatim)
    - `additionalInformation`: all context from Steps 1–2

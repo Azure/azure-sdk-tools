@@ -170,6 +170,16 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
+        public async Task Test_Create_releasePlan_with_invalid_api_version()
+        {
+            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            var releaseplan = await releasePlanTool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "GA", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", isTestReleasePlan: true, apiVersion: "2025/01/01");
+            Assert.IsNotNull(releaseplan);
+            Assert.IsNotNull(releaseplan.ResponseError);
+            Assert.True(releaseplan.ResponseError.Contains("Invalid API version"));
+        }
+
+        [Test]
         public async Task Test_Create_releasePlan_with_invalid_service_tree_id()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
@@ -557,7 +567,144 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(releaseplan.ReleasePlanDetails?.WorkItemId, Is.EqualTo(42));
         }
 
-        
+        [Test]
+        public async Task Test_Create_releasePlan_allows_different_api_version_for_same_spec_pr()
+        {
+            // Arrange: existing GA release plan for the spec PR with a specific API version
+            var mockDevOpsService = new MockDevOpsService
+            {
+                ConfiguredReleasePlanForSpecPrUrl = new ReleasePlanWorkItem
+                {
+                    WorkItemId = 42,
+                    ReleasePlanId = 10,
+                    Title = "Existing GA Release Plan",
+                    ReleasePlanType = "GA",
+                    SpecAPIVersion = "2025-01-01"
+                }
+            };
+
+            var tool = new ReleasePlanTool(
+                mockDevOpsService,
+                gitHelper,
+                typeSpecHelper,
+                logger,
+                userHelper,
+                gitHubService,
+                environmentHelper,
+                inputSanitizer,
+                httpClient,
+                Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+
+            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            var specPrUrl = "https://github.com/Azure/azure-rest-api-specs/pull/35446";
+
+            // Act: create a GA plan for the same spec PR but with a different API version (should succeed)
+            var releaseplan = await tool.CreateReleasePlan(null,
+                testCodeFilePath,
+                "July 2025",
+                "GA",
+                specPullRequestUrl: specPrUrl,
+                isTestReleasePlan: true,
+                apiVersion: "2025-06-01");
+
+            Assert.IsNotNull(releaseplan);
+            Assert.IsNull(releaseplan.ResponseError, $"Unexpected error: {releaseplan.ResponseError}");
+            Assert.IsNotNull(releaseplan.ReleasePlanDetails);
+            Assert.Greater(releaseplan.ReleasePlanDetails.WorkItemId, 0);
+        }
+
+        [Test]
+        public async Task Test_Create_releasePlan_blocks_same_api_version_for_same_spec_pr()
+        {
+            // Arrange: existing GA release plan for the spec PR with a specific API version
+            var mockDevOpsService = new MockDevOpsService
+            {
+                ConfiguredReleasePlanForSpecPrUrl = new ReleasePlanWorkItem
+                {
+                    WorkItemId = 42,
+                    ReleasePlanId = 10,
+                    Title = "Existing GA Release Plan",
+                    ReleasePlanType = "GA",
+                    SpecAPIVersion = "2025-01-01"
+                }
+            };
+
+            var tool = new ReleasePlanTool(
+                mockDevOpsService,
+                gitHelper,
+                typeSpecHelper,
+                logger,
+                userHelper,
+                gitHubService,
+                environmentHelper,
+                inputSanitizer,
+                httpClient,
+                Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+
+            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            var specPrUrl = "https://github.com/Azure/azure-rest-api-specs/pull/35446";
+
+            // Act: create a GA plan for the same spec PR with the same API version (should be blocked)
+            var releaseplan = await tool.CreateReleasePlan(null,
+                testCodeFilePath,
+                "July 2025",
+                "GA",
+                specPullRequestUrl: specPrUrl,
+                isTestReleasePlan: true,
+                apiVersion: "2025-01-01");
+
+            Assert.IsNotNull(releaseplan);
+            Assert.IsNull(releaseplan.ResponseError);
+            Assert.That(releaseplan.Message, Does.Contain("release plan already exists"));
+            Assert.That(releaseplan.ReleasePlanDetails?.WorkItemId, Is.EqualTo(42));
+        }
+
+        [Test]
+        public async Task Test_Create_releasePlan_blocks_when_existing_plan_has_no_api_version()
+        {
+            // Arrange: existing GA release plan for the spec PR with no API version available
+            var mockDevOpsService = new MockDevOpsService
+            {
+                ConfiguredReleasePlanForSpecPrUrl = new ReleasePlanWorkItem
+                {
+                    WorkItemId = 42,
+                    ReleasePlanId = 10,
+                    Title = "Existing GA Release Plan",
+                    ReleasePlanType = "GA"
+                    // SpecAPIVersion intentionally not set (not available)
+                }
+            };
+
+            var tool = new ReleasePlanTool(
+                mockDevOpsService,
+                gitHelper,
+                typeSpecHelper,
+                logger,
+                userHelper,
+                gitHubService,
+                environmentHelper,
+                inputSanitizer,
+                httpClient,
+                Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+
+            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            var specPrUrl = "https://github.com/Azure/azure-rest-api-specs/pull/35446";
+
+            // Act: create a GA plan with an API version, but existing plan has none (should be blocked by release type)
+            var releaseplan = await tool.CreateReleasePlan(null,
+                testCodeFilePath,
+                "July 2025",
+                "GA",
+                specPullRequestUrl: specPrUrl,
+                isTestReleasePlan: true,
+                apiVersion: "2025-06-01");
+
+            Assert.IsNotNull(releaseplan);
+            Assert.IsNull(releaseplan.ResponseError);
+            Assert.That(releaseplan.Message, Does.Contain("release plan already exists"));
+            Assert.That(releaseplan.ReleasePlanDetails?.WorkItemId, Is.EqualTo(42));
+        }
+
         [Test]
         public async Task Test_Get_Release_Plan_by_spec_pull_request_url()
         {

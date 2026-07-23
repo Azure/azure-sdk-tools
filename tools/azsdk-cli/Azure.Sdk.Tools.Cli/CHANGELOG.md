@@ -1,5 +1,12 @@
 # Release History
 
+## 0.6.30 (Unreleased)
+
+### Features Added
+
+- Added an optional `apiVersion` parameter to the create release plan tool (`--api-version` CLI option). When provided, the value is validated to follow the `YYYY-MM-DD` or `YYYY-MM-DD-preview` format and is stored on the release plan.
+- Allowed creating a new release plan for the same TypeSpec project or spec PR when the requested API version differs from an existing release plan's API version. When the existing release plan has no API version, creation is still blocked based on a matching API release type.
+
 ## 0.6.29 (2026-07-22)
 
 ### Features Added

@@ -146,7 +146,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 {
                     try
                     {
-                        sdkChange = await RetrieveSdkChangeFromScript(sdkRepoRoot, packagePath, packageInfo, languageService, ct);
+                        sdkChange = await RetrieveSdkChangeFromScriptAsync(sdkRepoRoot, packagePath, packageInfo, languageService, ct);
                         if (sdkChange == null)
                         {
                             logger.LogError("Failed to retrieve SDK changes using the configured script.");
@@ -169,7 +169,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     if (sdkChange.HasBreakingChange && !changesOnly)
                     {
                         // analyze and classify the breaking changes
-                        return await ClassifySdkBreakingChanges(sdkChange, sdkRepoRoot, languageService, packageInfo, tspConfigPath, ct);
+                        return await ClassifySdkBreakingChangesAsync(sdkChange, sdkRepoRoot, languageService, packageInfo, tspConfigPath, ct);
                     }
                     else
                     {
@@ -228,7 +228,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return sdkChange;
         }
 
-        private async Task<SdkChange?> RetrieveSdkChangeFromScript(string sdkRepoRoot, string packagePath, PackageInfo packageInfo, LanguageService languageService, CancellationToken ct)
+        private async Task<SdkChange?> RetrieveSdkChangeFromScriptAsync(string sdkRepoRoot, string packagePath, PackageInfo packageInfo, LanguageService languageService, CancellationToken ct)
         {
             logger.LogInformation("Retrieve SDK changes using the configured script.");
             SdkChange? sdkChange = null;
@@ -288,7 +288,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return sdkChange;
         }
 
-        private async Task<PackageOperationResponse> ClassifySdkBreakingChanges(SdkChange sdkChange, string sdkRepoRoot, LanguageService languageService, PackageInfo? packageInfo, string? tspConfigPath, CancellationToken ct)
+        private async Task<PackageOperationResponse> ClassifySdkBreakingChangesAsync(SdkChange sdkChange, string sdkRepoRoot, LanguageService languageService, PackageInfo? packageInfo, string? tspConfigPath, CancellationToken ct)
         {
             // analyze and classify the breaking changes
             var tspProjectPath = tspConfigPath != null ? Path.GetDirectoryName(tspConfigPath) : null;

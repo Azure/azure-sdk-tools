@@ -62,11 +62,11 @@ public class CodeownersGenerateHelper(
         var packageLookup = repoPackages.ToDictionary(p => p.Name, p => p, StringComparer.OrdinalIgnoreCase);
 
         logger.LogInformation("Fetching work items from Azure DevOps...");
-        var workItemData = await FetchAllWorkItemsAsync(repoName, language, packageTypes, ct);
+        var workItemData = await FetchAllWorkItemsAsync(repoName, language, packageTypes, sectionName, ct);
 
         logger.LogInformation("Building CODEOWNERS entries...");
         var invalidOwnerCutoff = DateTime.UtcNow.AddDays(-invalidOwnerLookbackDays);
-        var entries = BuildCodeownersEntries(workItemData, packageLookup, repoRoot, invalidOwnerCutoff);
+        var entries = BuildCodeownersEntries(workItemData, packageLookup, repoRoot, sectionName, invalidOwnerCutoff);
         logger.LogInformation("Total entries: {Count}", entries.Count);
 
         logger.LogInformation("Sorting entries...");
@@ -125,7 +125,7 @@ public class CodeownersGenerateHelper(
         }
     }
 
-    private async Task<WorkItemData> FetchAllWorkItemsAsync(string repoName, SdkLanguage language, string[] packageTypes, CancellationToken ct)
+    private async Task<WorkItemData> FetchAllWorkItemsAsync(string repoName, SdkLanguage language, string[] packageTypes, string sectionName, CancellationToken ct)
     {
         // Build package type filter using IN clause
         var packageTypeList = string.Join(", ", packageTypes.Select(pt => $"'{pt}'"));
@@ -156,9 +156,12 @@ public class CodeownersGenerateHelper(
             ct);
         logger.LogInformation("Labels: {Count}", labels.Count);
 
-        // Fetch Label Owners by repository
+        // Fetch Label Owners by repository and section.
+        // Scoping by section prevents Label Owner entries from other sections
+        // (e.g. client/data-plane services) from leaking into the section being generated.
+        var escapedSection = sectionName.Replace("'", "''");
         var labelOwners = await FetchWorkItemsAsync<LabelOwnerWorkItem>(
-            $"[System.WorkItemType] = 'Label Owner' AND [Custom.Repository] = '{repoName}'",
+            $"[System.WorkItemType] = 'Label Owner' AND [Custom.Repository] = '{repoName}' AND [Custom.Section] = '{escapedSection}'",
             WorkItemMappers.MapToLabelOwnerWorkItem,
             ct);
         logger.LogInformation("Label Owners: {Count}", labelOwners.Count);
@@ -189,6 +192,7 @@ public class CodeownersGenerateHelper(
         WorkItemData data,
         Dictionary<string, RepoPackage> packageLookup,
         string repoRoot,
+        string sectionName,
         DateTime invalidOwnerCutoff)
     {
         var entries = new List<CodeownersEntry>();
@@ -240,7 +244,7 @@ public class CodeownersGenerateHelper(
 
         // Service-level path entries: Label Owners with RepoPath
         var serviceLevelPathEntries = new Dictionary<string, CodeownersEntry>(StringComparer.OrdinalIgnoreCase);
-        foreach (var lo in unlinkedLabelOwners.Where(lo => !string.IsNullOrEmpty(lo.RepoPath)))
+        foreach (var lo in unlinkedLabelOwners.Where(lo => !string.IsNullOrEmpty(lo.RepoPath) && MatchesSection(lo, sectionName)))
         {
             string pathExpression = "/" + lo.RepoPath.TrimStart('/');
 
@@ -286,7 +290,7 @@ public class CodeownersGenerateHelper(
 
         // Pathless entries: Label Owners without RepoPath (Service Owner / Azure SDK Owner types for triage)
         var pathlessEntriesByLabel = new Dictionary<string, CodeownersEntry>(StringComparer.OrdinalIgnoreCase);
-        foreach (var lo in unlinkedLabelOwners.Where(lo => string.IsNullOrEmpty(lo.RepoPath)))
+        foreach (var lo in unlinkedLabelOwners.Where(lo => string.IsNullOrEmpty(lo.RepoPath) && MatchesSection(lo, sectionName)))
         {
             var labels = lo.Labels
                 .Select(l => l.LabelName)
@@ -316,6 +320,17 @@ public class CodeownersGenerateHelper(
         }
 
         return entries;
+    }
+
+    /// <summary>
+    /// Returns true if the Label Owner belongs to the requested section (case-insensitive, trimmed).
+    /// Label Owners with an empty/missing section are excluded from a specific-section generate to
+    /// prevent cross-section bleed. This mirrors the WIQL section filter in <see cref="FetchAllWorkItemsAsync"/>
+    /// and keeps generation correct even if that query is later changed.
+    /// </summary>
+    private static bool MatchesSection(LabelOwnerWorkItem lo, string sectionName)
+    {
+        return string.Equals(lo.Section?.Trim(), sectionName?.Trim(), StringComparison.OrdinalIgnoreCase);
     }
 
     private static void AddLabelOwnerMetadata(CodeownersEntry entry, LabelOwnerWorkItem lo, DateTime invalidOwnerCutoff)

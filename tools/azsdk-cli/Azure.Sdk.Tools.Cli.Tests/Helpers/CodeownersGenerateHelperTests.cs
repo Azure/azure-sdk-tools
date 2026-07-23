@@ -343,10 +343,116 @@ public class CodeownersGenerateHelperTests
         });
     }
 
+    [Test]
+    public void BuildCodeownersEntries_ExcludesServiceLevelPathEntryFromDifferentSection()
+    {
+        // Arrange: a service-level (RepoPath) Label Owner in the Client Libraries section
+        var data = new WorkItemDataBuilder()
+            .AddOwner("clientdev", out var ownerId)
+            .AddLabel("Agent Server", out var labelId)
+            .AddPRLabelOwner(out _, repoPath: "sdk/agentserver/", section: "Client Libraries", relatedTo: [ownerId, labelId])
+            .Build();
+
+        var packageLookup = new Dictionary<string, RepoPackage>(StringComparer.OrdinalIgnoreCase);
+
+        // Act: generate the Management Libraries section
+        var entries = InvokeBuildCodeownersEntries(data, packageLookup, sectionName: "Management Libraries");
+
+        // Assert: the client-section entry does not leak into the mgmt section
+        Assert.That(entries, Has.Count.EqualTo(0));
+    }
+
+    [Test]
+    public void BuildCodeownersEntries_IncludesServiceLevelPathEntryFromMatchingSection()
+    {
+        // Arrange: a service-level Label Owner in the Management Libraries section
+        var data = new WorkItemDataBuilder()
+            .AddOwner("mgmtdev", out var ownerId)
+            .AddLabel("Compute", out var labelId)
+            .AddPRLabelOwner(out _, repoPath: "sdk/compute/", section: "Management Libraries", relatedTo: [ownerId, labelId])
+            .Build();
+
+        var packageLookup = new Dictionary<string, RepoPackage>(StringComparer.OrdinalIgnoreCase);
+
+        // Act: generate the Management Libraries section (case-insensitive match)
+        var entries = InvokeBuildCodeownersEntries(data, packageLookup, sectionName: "management libraries");
+
+        // Assert
+        Assert.That(entries, Has.Count.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(entries[0].PathExpression, Is.EqualTo("/sdk/compute/"));
+            Assert.That(entries[0].SourceOwners, Does.Contain("mgmtdev"));
+        });
+    }
+
+    [Test]
+    public void BuildCodeownersEntries_ExcludesUnsectionedServiceLevelPathEntry()
+    {
+        // Arrange: a service-level Label Owner with no section set
+        var data = new WorkItemDataBuilder()
+            .AddOwner("orphandev", out var ownerId)
+            .AddLabel("Orphan", out var labelId)
+            .AddPRLabelOwner(out _, repoPath: "sdk/orphan/", section: "", relatedTo: [ownerId, labelId])
+            .Build();
+
+        var packageLookup = new Dictionary<string, RepoPackage>(StringComparer.OrdinalIgnoreCase);
+
+        // Act
+        var entries = InvokeBuildCodeownersEntries(data, packageLookup, sectionName: "Management Libraries");
+
+        // Assert: unsectioned entries are excluded from a specific-section generate
+        Assert.That(entries, Has.Count.EqualTo(0));
+    }
+
+    [Test]
+    public void BuildCodeownersEntries_ExcludesPathlessEntryFromDifferentSection()
+    {
+        // Arrange: a pathless (triage) Label Owner in the Client Libraries section
+        var data = new WorkItemDataBuilder()
+            .AddOwner("triagedev", out var ownerId)
+            .AddLabel("TriageService", out var labelId)
+            .AddServiceOwner(out _, section: "Client Libraries", relatedTo: [ownerId, labelId])
+            .Build();
+
+        var packageLookup = new Dictionary<string, RepoPackage>(StringComparer.OrdinalIgnoreCase);
+
+        // Act: generate the Management Libraries section
+        var entries = InvokeBuildCodeownersEntries(data, packageLookup, sectionName: "Management Libraries");
+
+        // Assert
+        Assert.That(entries, Has.Count.EqualTo(0));
+    }
+
+    [Test]
+    public void BuildCodeownersEntries_IncludesPathlessEntryFromMatchingSection()
+    {
+        // Arrange: a pathless (triage) Label Owner in the Management Libraries section
+        var data = new WorkItemDataBuilder()
+            .AddOwner("triagedev", out var ownerId)
+            .AddLabel("TriageService", out var labelId)
+            .AddServiceOwner(out _, section: "Management Libraries", relatedTo: [ownerId, labelId])
+            .Build();
+
+        var packageLookup = new Dictionary<string, RepoPackage>(StringComparer.OrdinalIgnoreCase);
+
+        // Act
+        var entries = InvokeBuildCodeownersEntries(data, packageLookup, sectionName: "Management Libraries");
+
+        // Assert
+        Assert.That(entries, Has.Count.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(entries[0].ServiceLabels, Does.Contain("TriageService"));
+            Assert.That(entries[0].ServiceOwners, Does.Contain("triagedev"));
+        });
+    }
+
     private List<CodeownersEntry> InvokeBuildCodeownersEntries(
         WorkItemData data,
         Dictionary<string, RepoPackage> packageLookup,
-        DateTime? invalidOwnerCutoff = null)
+        DateTime? invalidOwnerCutoff = null,
+        string sectionName = "Client Libraries")
     {
         var method = typeof(CodeownersGenerateHelper).GetMethod(
             "BuildCodeownersEntries",
@@ -358,7 +464,7 @@ public class CodeownersGenerateHelperTests
             _logger
         );
 
-        return method?.Invoke(helper, [data, packageLookup, _repoRoot, invalidOwnerCutoff ?? DateTime.MinValue]) as List<CodeownersEntry> ?? [];
+        return method?.Invoke(helper, [data, packageLookup, _repoRoot, sectionName, invalidOwnerCutoff ?? DateTime.MinValue]) as List<CodeownersEntry> ?? [];
     }
 
     #endregion

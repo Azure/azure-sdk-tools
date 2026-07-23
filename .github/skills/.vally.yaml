@@ -9,6 +9,9 @@ paths:
     - azsdk-common-sdk-release/evals/
     - azsdk-common-apiview-feedback-resolution/evals/
     - azsdk-common-prepare-release-plan/evals/
+    - azsdk-common-eval-authoring-skill/evals/
+    - azsdk-common-eval-authoring-tool/evals/
+    - azsdk-common-eval-authoring-workflow/evals/
   results: results/
   evalFilenames: ["eval.yaml", "*.eval.yaml"]
 

@@ -56,7 +56,7 @@ stimuli:
       # Load the real release-planning skill so the executor can route to it
       # (matches the mock suite). Without this the live executor reports
       # "Skills used 0" and the skill-invocation grader can never pass.
-      # Path is relative to this eval file (4 levels up = repo root).
+      # Path is relative to this eval file (3 levels up = repo root).
       skills:
         - ../../../.github/skills/azsdk-common-prepare-release-plan
       # Repo-relative azure-rest-api-specs worktree. Vally resolves a

@@ -6,7 +6,7 @@ The Azure SDK QA Bot answers developer questions by grounding a chat agent on a 
 
 This design adds a **wiki knowledge layer**: an offline, LLM-generated set of pages that distil the corpus into per-document **summaries**, per-symbol **entity** pages (decorators / APIs / types), and per-topic **concept** pages. The wiki is retrieved on a **second track that is kept strictly separate from the source-chunk track** and consulted through its own tools.
 
-> This document describes the design of the wiki update and how it is used, and contrasts it with the source-chunk KB path. It complements [`agent_framework_and_memory_design.md`](agent_framework_and_memory_design.md) and [`graphrag_retrieval_design.md`](graphrag_retrieval_design.md).
+> This document describes the design of the wiki update and how it is used, and contrasts it with the source-chunk KB path. It complements [`agent_framework_and_memory_design.md`](agent_framework_and_memory_design.md).
 
 ### 1.1 Goals / non-goals
 
@@ -130,7 +130,7 @@ For most domain questions the agent issues `search_knowledge_base` and `wiki_sea
 
 ## 5 Evaluation
 
-- **Evaluations run with memory disabled**, for the reasons in the [GraphRAG design](graphrag_retrieval_design.md#5-evaluation); the `main` KB-only baseline is run with the same memory gate so both arms are memory-off.
+- **Evaluations run with memory disabled.** The agent can inject historical Q&A from its memory store, and the eval datasets are built from prior Q&A, so leaving memory on leaks ground-truth answers; all evaluation is run with memory off, and the `main` KB-only baseline is run with the same gate so both arms are memory-off.
 - **Two-track separation is the load-bearing decision.** Retrieving wiki pages in the *same* ranked pool as source chunks lets the generic wiki pages displace specific source docs and regresses the score sharply; moving the wiki to its own `wiki_search` track — source chunks filtered clean, wiki consulted separately and routed back to its sources — removes that displacement and restores the source-chunk quality while adding the wiki's cross-document recall.
 - **Richer wiki content improves completeness.** Comprehensive summary pages (versus terse ones) raise `response_completeness` — the sole gating metric — and lift conceptual, general, and process categories.
 - **Result (219-case perf set, memory off, gpt-5.4 grader, same-day).** The wiki two-track configuration scores **64.8 %** versus **60.3 %** for the memory-off KB-only baseline (**+4.5 pp**), with the best `response_completeness` of the runs and the largest gains on the general and conceptual categories; groundedness / relevance / coherence / fluency stay at ~100 %.

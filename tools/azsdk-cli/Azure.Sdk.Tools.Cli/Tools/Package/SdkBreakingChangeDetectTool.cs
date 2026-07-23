@@ -313,14 +313,4 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
         }
     }
-
-    internal class SdkChange
-    {
-        [JsonPropertyName("changes")]
-        [JsonRequired]
-        public string SdkChangeMD { get; set; }
-        [JsonPropertyName("hasBreakingChange")]
-        [JsonRequired]
-        public bool HasBreakingChange { get; set; }
-    }
 }

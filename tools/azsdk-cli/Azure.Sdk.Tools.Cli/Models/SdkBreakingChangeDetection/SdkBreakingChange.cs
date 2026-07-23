@@ -22,7 +22,7 @@ namespace Azure.Sdk.Tools.Cli.Models.SdkBreakingChangeDetection
         /// </summary>
         [JsonPropertyName("category")]
         [JsonRequired]
-        public string Category { get; set; }
+        public SdkBreakingChangeCategory Category { get; set; }
 
         /// <summary>
         /// The resolution for the breaking change, if available.

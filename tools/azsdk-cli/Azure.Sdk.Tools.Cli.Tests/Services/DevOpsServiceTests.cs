@@ -257,6 +257,125 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
         #endregion
 
+        #region UpdateReleasePlanSDKDetailsAsync Tests
+
+        [Test]
+        public async Task UpdateReleasePlanSDKDetailsAsync_WhenCurrentStatusIsMissingEmitterConfig_ResetsExclusionStatusToNotApplicable()
+        {
+            // Arrange: the language was previously auto-marked MissingEmitterConfig because the parser did
+            // not detect a package name. Now a package name is detected, so the status must be reset.
+            var plan = CreateReleasePlanWorkItemWithExclusionStatus(35000, "Python", "MissingEmitterConfig");
+            _connection.AddWorkItem(plan);
+            var sdkLanguages = new List<SDKInfo>
+            {
+                new() { Language = "Python", PackageName = "azure-mgmt-contoso" }
+            };
+
+            // Act
+            var result = await _devOpsService.UpdateReleasePlanSDKDetailsAsync(35000, sdkLanguages, CancellationToken.None);
+
+            // Assert
+            Assert.That(result, Is.True);
+            var patch = _connection.LastCapturedPatchDocument;
+            Assert.IsNotNull(patch, "UpdateWorkItemAsync should have been called with a patch document");
+            var resetOp = patch!.FirstOrDefault(op => op.Path == "/fields/Custom.ReleaseExclusionStatusForPython");
+            Assert.IsNotNull(resetOp, "Exclusion status should be reset when the current status is MissingEmitterConfig");
+            Assert.That(resetOp!.Value, Is.EqualTo("Not applicable"));
+        }
+
+        [Test]
+        public async Task UpdateReleasePlanSDKDetailsAsync_WhenCurrentStatusIsRequested_DoesNotResetExclusionStatus()
+        {
+            // Arrange: an intentional exclusion (Requested) must be preserved even when a package name is detected.
+            var plan = CreateReleasePlanWorkItemWithExclusionStatus(35000, "Java", "Requested");
+            _connection.AddWorkItem(plan);
+            var sdkLanguages = new List<SDKInfo>
+            {
+                new() { Language = "Java", PackageName = "com.azure.contoso" }
+            };
+
+            // Act
+            var result = await _devOpsService.UpdateReleasePlanSDKDetailsAsync(35000, sdkLanguages, CancellationToken.None);
+
+            // Assert
+            Assert.That(result, Is.True);
+            var patch = _connection.LastCapturedPatchDocument;
+            Assert.IsNotNull(patch);
+            // The package name is still updated, but an intentional exclusion must not be reset.
+            Assert.That(patch!.Any(op => op.Path == "/fields/Custom.JavaPackageName"), Is.True);
+            Assert.That(patch.Any(op => op.Path == "/fields/Custom.ReleaseExclusionStatusForJava"), Is.False,
+                "Requested exclusion status must not be reset");
+        }
+
+        [Test]
+        public async Task UpdateReleasePlanSDKDetailsAsync_WhenCurrentStatusIsApproved_DoesNotResetExclusionStatus()
+        {
+            // Arrange: an approved exclusion must be preserved.
+            var plan = CreateReleasePlanWorkItemWithExclusionStatus(35000, "Go", "Approved");
+            _connection.AddWorkItem(plan);
+            var sdkLanguages = new List<SDKInfo>
+            {
+                new() { Language = "Go", PackageName = "sdk/contoso/armcontoso" }
+            };
+
+            // Act
+            var result = await _devOpsService.UpdateReleasePlanSDKDetailsAsync(35000, sdkLanguages, CancellationToken.None);
+
+            // Assert
+            Assert.That(result, Is.True);
+            var patch = _connection.LastCapturedPatchDocument;
+            Assert.IsNotNull(patch);
+            Assert.That(patch!.Any(op => op.Path == "/fields/Custom.ReleaseExclusionStatusForGo"), Is.False,
+                "Approved exclusion status must not be reset");
+        }
+
+        [Test]
+        public async Task UpdateReleasePlanSDKDetailsAsync_WhenCurrentStatusIsEmpty_DoesNotResetExclusionStatus()
+        {
+            // Arrange: no prior exclusion status, so there is nothing to reset.
+            var plan = CreateReleasePlanWorkItem(35000, "In Progress");
+            _connection.AddWorkItem(plan);
+            var sdkLanguages = new List<SDKInfo>
+            {
+                new() { Language = "Python", PackageName = "azure-mgmt-contoso" }
+            };
+
+            // Act
+            var result = await _devOpsService.UpdateReleasePlanSDKDetailsAsync(35000, sdkLanguages, CancellationToken.None);
+
+            // Assert
+            Assert.That(result, Is.True);
+            var patch = _connection.LastCapturedPatchDocument;
+            Assert.IsNotNull(patch);
+            Assert.That(patch!.Any(op => op.Path == "/fields/Custom.ReleaseExclusionStatusForPython"), Is.False,
+                "An empty exclusion status must not be reset");
+        }
+
+        [Test]
+        public async Task UpdateReleasePlanSDKDetailsAsync_MissingEmitterConfigComparisonIsCaseInsensitive()
+        {
+            // Arrange: the current status comparison must be case-insensitive.
+            var plan = CreateReleasePlanWorkItemWithExclusionStatus(35000, "Python", "missingemitterconfig");
+            _connection.AddWorkItem(plan);
+            var sdkLanguages = new List<SDKInfo>
+            {
+                new() { Language = "Python", PackageName = "azure-mgmt-contoso" }
+            };
+
+            // Act
+            var result = await _devOpsService.UpdateReleasePlanSDKDetailsAsync(35000, sdkLanguages, CancellationToken.None);
+
+            // Assert
+            Assert.That(result, Is.True);
+            var patch = _connection.LastCapturedPatchDocument;
+            Assert.IsNotNull(patch);
+            var resetOp = patch!.FirstOrDefault(op => op.Path == "/fields/Custom.ReleaseExclusionStatusForPython");
+            Assert.IsNotNull(resetOp, "MissingEmitterConfig comparison must be case-insensitive");
+            Assert.That(resetOp!.Value, Is.EqualTo("Not applicable"));
+        }
+
+        #endregion
+
         #region Helper Methods
 
         private WorkItem CreateReleasePlanWorkItemWithReleasePlanId(int workItemId, int releasePlanId, string state)
@@ -315,6 +434,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 },
                 Relations = new List<WorkItemRelation>()
             };
+            return workItem;
+        }
+
+        private WorkItem CreateReleasePlanWorkItemWithExclusionStatus(int id, string languageId, string exclusionStatus)
+        {
+            var workItem = CreateReleasePlanWorkItem(id, "In Progress");
+            workItem.Fields[$"Custom.ReleaseExclusionStatusFor{languageId}"] = exclusionStatus;
             return workItem;
         }
 
@@ -528,6 +654,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             public string? LastCapturedQuery => _workItemClient.LastCapturedQuery;
 
+            public Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument? LastCapturedPatchDocument => _workItemClient.LastCapturedPatchDocument;
+
             public BuildHttpClient GetBuildClient(CancellationToken ct = default)
             {
                 throw new NotImplementedException();
@@ -560,6 +688,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             private readonly Dictionary<int, WorkItem> _workItems = new();
 
             public string? LastCapturedQuery { get; private set; }
+
+            public Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument? LastCapturedPatchDocument { get; private set; }
 
             public TestWorkItemClient() : base(new Uri("https://dev.azure.com/test"), null)
             {
@@ -640,6 +770,21 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                     return Task.FromResult(workItem);
                 }
                 throw new InvalidOperationException($"Work item {id} not found");
+            }
+
+            public override Task<WorkItem> UpdateWorkItemAsync(
+                Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument document,
+                int id,
+                bool? validateOnly = null,
+                bool? bypassRules = null,
+                bool? suppressNotifications = null,
+                WorkItemExpand? expand = null,
+                object? userState = null,
+                CancellationToken cancellationToken = default)
+            {
+                LastCapturedPatchDocument = document;
+                _workItems.TryGetValue(id, out var workItem);
+                return Task.FromResult(workItem ?? new WorkItem { Id = id });
             }
 
         }

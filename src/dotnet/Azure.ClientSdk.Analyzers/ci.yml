@@ -25,3 +25,34 @@ extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
     ToolDirectory: src/dotnet/Azure.ClientSdk.Analyzers
+    # nuget.org is blocked on the CI agents (network isolation). The Roslyn analyzer test framework
+    # (Microsoft.CodeAnalysis.Testing.ReferenceAssemblies) resolves reference-package dependencies at
+    # test runtime by querying each configured NuGet source's service index, loading sources from the
+    # user/machine NuGet config (it does NOT honor the repo's CFS-only NuGet.Config). It therefore
+    # queries api.nuget.org and fails. Point the user-level NuGet config at CFS-only, and pre-restore
+    # the reference packages from CFS, before 'dotnet test' runs.
+    TestPreSteps:
+      - script: |
+          dotnet restore "$(Build.SourcesDirectory)/src/dotnet/Azure.ClientSdk.Analyzers/ReferenceWarmup/ReferenceWarmup.New.csproj"
+          dotnet restore "$(Build.SourcesDirectory)/src/dotnet/Azure.ClientSdk.Analyzers/ReferenceWarmup/ReferenceWarmup.Old.csproj"
+        displayName: 'Pre-restore analyzer test reference packages from CFS (nuget.org blocked on agents)'
+        env:
+          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+          DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      - pwsh: |
+          # Overwrite the user-level NuGet config (read by Settings.LoadDefaultSettings) with the
+          # repo's CFS-only config (clear + only the azure-sdk public feed) so the testing framework
+          # resolves reference-package dependencies from CFS instead of the blocked api.nuget.org.
+          $cfg = Get-Content "$(Build.SourcesDirectory)/NuGet.Config" -Raw
+          $targets = @()
+          if ($env:APPDATA) { $targets += (Join-Path $env:APPDATA 'NuGet/NuGet.Config') }
+          if ($env:HOME) {
+            $targets += (Join-Path $env:HOME '.nuget/NuGet/NuGet.Config')
+            $targets += (Join-Path $env:HOME '.config/NuGet/NuGet.Config')
+          }
+          foreach ($t in $targets) {
+            New-Item -ItemType Directory -Force -Path (Split-Path -Parent $t) | Out-Null
+            Set-Content -Path $t -Value $cfg
+            Write-Host "Wrote CFS-only NuGet config to $t"
+          }
+        displayName: 'Point user NuGet config at CFS for analyzer test reference resolution'

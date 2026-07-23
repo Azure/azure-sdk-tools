@@ -27,7 +27,6 @@ namespace RandomNamespace
     }
 }";
             await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }
 
@@ -53,7 +52,6 @@ namespace RandomNamespace
     }
 }";
             await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }
 
@@ -84,7 +82,6 @@ namespace RandomNamespace
     }
 }";
             await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }
 
@@ -120,7 +117,6 @@ namespace RandomNamespace
     }
 }";
             await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }
 
@@ -151,7 +147,6 @@ namespace RandomNamespace
     }
 }";
             await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }
 
@@ -187,7 +182,6 @@ namespace RandomNamespace
     }
 }";
             await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }
 
@@ -213,7 +207,6 @@ namespace RandomNamespace
     }
 }";
             await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }
 
@@ -241,7 +234,6 @@ namespace RandomNamespace
     }
 }";
             await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }
 
@@ -269,7 +261,6 @@ namespace RandomNamespace
     }
 }";
             await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }
 
@@ -302,7 +293,6 @@ namespace RandomNamespace
     }
 }";
             await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }
 
@@ -335,7 +325,6 @@ namespace RandomNamespace
     }
 }";
             await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }
 
@@ -361,7 +350,6 @@ namespace RandomNamespace
     }
 }";
             await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }
 

@@ -1,14 +1,24 @@
 # Release History
 
-## 0.6.28 (Unreleased)
+## 0.6.29 (2026-07-22)
 
 ### Features Added
 
-### Breaking Changes
+- Added a notification service that sends an email notification when a release plan is created. Notifications are sent only when the notification service URL environment variable is configured.
 
 ### Bugs Fixed
 
-### Other Changes
+- Fixed release plan SDK details update to avoid marking a language as missing emitter config when the TypeSpec parser did not detect any package name.
+
+## 0.6.28 (2026-07-16)
+
+### Features Added
+
+- Added a new helper method to get user profile from a GitHub user name
+
+### Bugs Fixed
+
+- Hide logs for gh auth
 
 ## 0.6.27 (2026-07-13)
 

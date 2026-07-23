@@ -1,0 +1,93 @@
+# Vally configuration for Azure SDK Tools MCP tool / scenario evaluations.
+# See: https://vally.dev/reference/vally-config
+#
+# These are scenario evals (does the agent invoke the right MCP tool(s) for a
+# given prompt?) and are intentionally separate from the per-skill evals under
+# .github/skills/. See README.md for context.
+
+paths:
+  evals: [tools/, workflows/]
+  evalFilenames: ["*.eval.yaml"]
+  results: results/
+
+environments:
+  # Launch the pre-built DLL via `dotnet <dll>`, NOT `dotnet run` — avoids the
+  # MSBuild boot race under parallel workers. See issue #15947.
+  # Output path is TFM-agnostic via `dotnet build -o`. Run once before vally:
+  #   dotnet build ../tools/azsdk-cli/Azure.Sdk.Tools.Mock -c Debug -o ../artifacts/mcp/mock
+  azsdk-mcp-mock:
+    mcpServers:
+      azure-sdk-mcp:
+        type: stdio
+        command: dotnet
+        args: ["../artifacts/mcp/mock/azsdk-mock.dll"]
+        timeout: "30s"
+
+  # Live MCP. AZSDKTOOLS_AGENT_TESTING=true keeps write tools inside the test
+  # area. Pre-built DLL pattern — see issue #15947. Run once before vally:
+  #   dotnet build ../tools/azsdk-cli/Azure.Sdk.Tools.Cli -c Debug -o ../artifacts/mcp/cli
+  azsdk-mcp-live:
+    mcpServers:
+      azure-sdk-mcp:
+        type: stdio
+        command: dotnet
+        args: ["../artifacts/mcp/cli/azsdk.dll", "start"]
+        timeout: "5m"
+        env:
+          AZSDKTOOLS_AGENT_TESTING: "true"
+          AZSDKTOOLS_COLLECT_TELEMETRY: "false"
+
+# Suites group evals for selective execution.
+#
+# Layout maps directly to suites — no tag-based mock/live filtering. Vally's
+# suite filter is positive-match only (AND across keys, OR within values),
+# so subfolders are the cleanest way to split mock vs live. See
+# https://github.com/microsoft/vally suite-filter source.
+suites:
+  # ---- by tier ----
+  unit:
+    description: |
+      Hermetic single-tool / trigger evals. No external I/O. Fast; the
+      foundation of the PR gate.
+    evals: ["tools/*.eval.yaml"]
+
+  scenarios-mock:
+    description: |
+      Multi-tool scenarios against the mock MCP environment. Hermetic; safe
+      for PR gate.
+    evals: ["workflows/mock/*.eval.yaml"]
+
+  scenarios-live:
+    description: |
+      Scenarios against live MCP — real DevOps / GitHub / pipelines. Slow;
+      nightly only. Prime any required clones first via
+      `eng/common/scripts/eval/sync-eval-git-repo.js`.
+    evals: ["workflows/live/*.eval.yaml"]
+
+  # ---- composite suites ----
+  pr-gate:
+    description: Hermetic tiers only (unit + scenarios-mock). Target for CI PR check.
+    evals:
+      - "tools/*.eval.yaml"
+      - "workflows/mock/*.eval.yaml"
+  nightly:
+    description: All tiers including live scenarios.
+    evals: ["**/*.eval.yaml"]
+
+  # ---- by feature area (tag-filtered) ----
+  release-plan:
+    description: All evals tagged area=release-plan.
+    filter: { area: release-plan }
+    evals: ["**/*.eval.yaml"]
+  typespec:
+    description: All evals tagged area=typespec.
+    filter: { area: typespec }
+    evals: ["**/*.eval.yaml"]
+  pipeline:
+    description: All evals tagged area=pipeline.
+    filter: { area: pipeline }
+    evals: ["**/*.eval.yaml"]
+  github:
+    description: All evals tagged area=github.
+    filter: { area: github }
+    evals: ["**/*.eval.yaml"]

@@ -59,6 +59,7 @@ SRC_AZURE_RESOURCE_MANAGER_RPC = "azure_resource_manager_rpc"
 SRC_AZURE_REST_API_SPECS_WIKI = "azure_rest_api_specs_wiki"
 SRC_AZURE_REST_API_SPECS_DOCS = "azure_rest_api_specs_docs"
 SRC_AZURE_OPENAPI_DIFF_DOCS = "azure_openapi_diff_docs"
+SRC_STATIC_CPEX_DOCS = "static_cpex_docs"
 
 # -- SDK language docs --
 SRC_AZURE_SDK_FOR_PYTHON_DOCS = "azure_sdk_for_python_docs"
@@ -184,6 +185,12 @@ _register(
         description="OpenAPI diff documentation for detecting and managing breaking changes in API specifications.",
         base_url="https://github.com/Azure/openapi-diff/blob/main/",
     ),
+    KnowledgeSource(
+        name=SRC_STATIC_CPEX_DOCS,
+        description="Cloud Product Excellence (CPEX) documentation covering Azure-branded product lifecycle management, breaking change policy and process guidance, API breaking changes, S360 KPI requirements, preview/GA readiness, and retirement guidance.",
+        base_url="https://eng.ms/docs/cloud-ai-platform/azure-core/azure-core-product/azure-product-lifecycle-management-plm/azure-product-lifecycle-management/cpex/media/",
+        trim_format=True,
+    ),
     # -- SDK language docs --
     KnowledgeSource(
         name=SRC_AZURE_SDK_FOR_PYTHON_DOCS,
@@ -256,11 +263,6 @@ _register(
     KnowledgeSource(
         name=SRC_STATIC_AZURE_DOCS,
         description="Static Azure documentation and reference materials for general Azure services.",
-        link_fn=lambda title: (
-            "http://aka.ms/azbreakingchangespolicy"
-            if title == "Azure Versioning and Breaking Changes Policy V1.3.2"
-            else ""
-        ),
     ),
     KnowledgeSource(
         name=SRC_STATIC_API_SPEC_VIEW_QA,
@@ -506,9 +508,10 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             "Client customization for SDKs (even if a specific language is mentioned, if the core topic is TypeSpec authoring)",
             "API design guidelines and best practices",
         ],
-        sources=[*_TYPESPEC_SOURCES, *_sources(SRC_AZURE_SDK_DOCS_ENG)],
+        sources=[*_TYPESPEC_SOURCES, *_sources(SRC_AZURE_SDK_DOCS_ENG, SRC_STATIC_CPEX_DOCS)],
         source_filter={
             SRC_AZURE_SDK_DOCS_ENG: "search.ismatch('design*', 'title')",
+            SRC_STATIC_CPEX_DOCS: "search.ismatch('/.*breaking.*/', 'title', 'full', 'any')",
         },
         qa_guideline_file="tenants/typespec.md",
         enable_routing=True,
@@ -526,7 +529,10 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             "AzSDK agent, Azure MCP tool usage guidance",
             "Creating new service based on TypeSpec or OpenAPI (Swagger)",
         ],
-        sources=_sources(SRC_AZURE_SDK_DOCS_ENG),
+        sources=_sources(
+            SRC_AZURE_SDK_DOCS_ENG,
+            SRC_STATIC_CPEX_DOCS,
+        ),
         qa_guideline_file="tenants/azure_sdk_onboarding.md",
     ),
     TenantID.AZURE_TYPESPEC_AUTHORING: TenantConfig(
@@ -564,10 +570,12 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_AZURE_OPENAPI_DIFF_DOCS,
             SRC_AZURE_SDK_DOCS_ENG,
             SRC_STATIC_ARM_DOCS,
+            SRC_STATIC_CPEX_DOCS,
             SRC_AZURE_SDK_INTERNAL_WIKI,
         ),
         source_filter={
             SRC_AZURE_SDK_DOCS_ENG: "search.ismatch('design*', 'title')",
+            SRC_STATIC_CPEX_DOCS: "search.ismatch('/.*breaking.*/', 'title', 'full', 'any')",
         },
         qa_guideline_file="tenants/api_spec_review.md",
         enable_routing=True,

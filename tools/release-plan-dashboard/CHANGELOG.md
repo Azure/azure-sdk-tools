@@ -1,5 +1,11 @@
 # Release History
 
+## 1.0.0-dev.2
+
+### Features Added
+
+- **Sticky filters** — Filter and month selections now persist across page reloads and navigation, so the dashboard restores your previous filter state automatically
+
 ## 1.0.0-dev.1
 
 ### Features Added

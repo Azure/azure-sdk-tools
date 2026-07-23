@@ -150,6 +150,9 @@ namespace Azure.Sdk.Tools.Cli.Services
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
     {
         private static readonly string RELEASE_PLANNER_APP_TEST = "Release Planner App Test";
+        private static readonly string MISSING_EMITTER_CONFIG = "MissingEmitterConfig";
+        private static readonly string NOT_APPLICABLE = "Not applicable";
+
         private List<WorkItemRelationType>? _cachedRelationTypes;
 
         private static readonly string[] SUPPORTED_SDK_LANGUAGES = { "Dotnet", "JavaScript", "Python", "Java", "Go" };
@@ -360,6 +363,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 SDKReleaseMonth = workItem.Fields.TryGetValue("Custom.SDKReleasemonth", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 IsManagementPlane = workItem.Fields.TryGetValue("Custom.MgmtScope", out value) ? value?.ToString() == "Yes" : false,
                 IsDataPlane = workItem.Fields.TryGetValue("Custom.DataScope", out value) ? value?.ToString() == "Yes" : false,
+                CreatedUsing = workItem.Fields.TryGetValue("Custom.CreatedUsing", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 ReleasePlanId = workItem.Fields.TryGetValue("Custom.ReleasePlanID", out value) ? int.Parse(value?.ToString() ?? "0") : 0,
                 SDKReleaseType = workItem.Fields.TryGetValue("Custom.SDKtypetobereleased", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 IsCreatedByAgent = workItem.Fields.TryGetValue("Custom.IsCreatedByAgent", out value) && "Copilot".Equals(value?.ToString()),
@@ -1108,6 +1112,28 @@ namespace Azure.Sdk.Tools.Cli.Services
                                 Value = sdk.PackageName
                             }
                         );
+
+                        // A package name is now detected for this language, so only reset the exclusion
+                        // status if it was previously auto-set to MissingEmitterConfig. This avoids leaving a
+                        // language marked as missing emitter config when the TypeSpec parser did not detect a
+                        // package name in an earlier run, while preserving intentional exclusions
+                        // (e.g. Requested/Approved).
+                        var normalizedLanguage = MapLanguageIdToName(MapLanguageToId(sdk.Language));
+                        var currentExclusionStatus = releasePlan?.SDKInfo?
+                            .FirstOrDefault(s => string.Equals(s.Language, normalizedLanguage, StringComparison.OrdinalIgnoreCase))?
+                            .ReleaseExclusionStatus;
+                        if (string.Equals(currentExclusionStatus, MISSING_EMITTER_CONFIG, StringComparison.OrdinalIgnoreCase))
+                        {
+                            // Reset exclusion status as not applicable
+                            jsonLinkDocument.Add(
+                                new JsonPatchOperation
+                                {
+                                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                                    Path = $"/fields/Custom.ReleaseExclusionStatusFor{MapLanguageToId(sdk.Language)}",
+                                    Value = NOT_APPLICABLE
+                                }
+                            );
+                        }
                     }
                 }
                 await connection.GetWorkItemClient(ct).UpdateWorkItemAsync(jsonLinkDocument, workItemId, cancellationToken: ct);

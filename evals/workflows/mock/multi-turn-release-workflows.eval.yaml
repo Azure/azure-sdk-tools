@@ -1,0 +1,323 @@
+name: azsdk-mcp-multi-turn-scenarios
+description: |
+  Multi-turn conversation scenarios that exercise Vally's session-resume
+  support (microsoft/vally#495, shipped in @microsoft/vally-cli 0.7.0). Each
+  stimulus sends its `turns` sequentially to the SAME agent session, so later
+  turns must build on context established by earlier turns (e.g. the release
+  plan work item ID created in turn 0 is reused in turn 1).
+
+  These complement the single-turn routing scenarios in
+  release-planner-workflows.eval.yaml. Where a turn's routing is unambiguous the
+  graders pin to that turn via the `turn:` field; scenarios whose intent is a
+  whole-conversation property (e.g. a vague opener the agent may act on
+  immediately, or a required tool the agent may call during either step) assert
+  session-wide (no `turn:`), so front-loading or spreading work across turns does
+  not cause a false failure:
+
+    1. create-then-generate       — create a release plan, then generate SDKs
+                                     for the plan created in the previous turn.
+    2. generate-then-get-pr-link  — generate SDKs, then fetch the generated SDK
+                                     pull request link.
+    3. link-spec-pr-then-regenerate — relink the spec PR, then regenerate SDKs.
+    4. vague-then-clarify-generate — a vague first turn must not jump to the
+                                     wrong tool; the clarifying turn routes to
+                                     pipeline generation.
+    5. vague-then-local           — a vague first turn whose clarification reveals
+                                     a local clone must route to LOCAL generation.
+    6. local-then-switch-pipeline — a local request, then the user switches to
+                                     all-languages pipeline generation mid-session.
+
+  Bound to the mock MCP — graders only inspect skill routing and tool
+  selection, not real DevOps writes.
+
+version: "1.0"
+type: capability
+
+tags:
+  area: release-plan
+  feature: multi-turn
+
+environment: azsdk-mcp-mock
+
+config:
+  runs: 1
+  timeout: 30m
+  model: gpt-5.4
+  executor: copilot-sdk
+
+stimuli:
+  # --- Scenario 1: Create a release plan, then generate SDKs for it ----
+  # Turn 1 creates the plan; turn 2 must reuse the work item ID from turn 1's
+  # result (session context) and route to the pipeline generation skill.
+  - name: create-then-generate-conversation
+    environment: &multiTurnEnv
+      # Load all four candidate skills so the routing choice is genuinely
+      # contested across turns. Paths are relative to this eval file
+      # (4 levels up = repo root).
+      skills:
+        - ../../../.github/skills/azsdk-common-prepare-release-plan
+        - ../../../.github/skills/azsdk-common-generate-sdk-pipeline
+        - ../../../.github/skills/azsdk-common-generate-sdk-locally
+        - ../../../.github/skills/azsdk-common-sdk-release
+      git:
+        type: worktree
+        source: ../../../artifacts/specs-cache/azure-rest-api-specs
+        ref: main
+    turns:
+      - |
+        Create a public preview release plan for the Contoso Widget Manager.
+        Here is all the context you need:
+          - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
+          - service tree ID: "a7f2b8e4-9c1d-4a3e-b6f9-2d8e5a7c3b1f"
+          - product tree ID: "f1a8c5d2-6e4b-4f7a-9c2d-8b5e1f3a6c9e"
+          - target release timeline: "June 2026"
+          - API version: "2022-11-01-preview"
+          - SDK release type: "beta"
+          - spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38387"
+        My setup has already been verified, do not run azsdk_verify_setup.
+      - |
+        Now run SDK generation for all languages for the release plan you just
+        created.
+    constraints:
+      max_turns: 16
+      max_tokens: 22000
+    graders:
+      # Turn 0 — create the release plan.
+      - type: skill-invocation
+        turn: 0
+        config:
+          required:
+            - azsdk-common-prepare-release-plan
+      - type: tool-calls
+        turn: 0
+        config:
+          required:
+            - azsdk_get_release_plan
+            - azsdk_create_release_plan
+          disallowed:
+            - azsdk_verify_setup
+      # Turn 1 — generate for the plan created in turn 0 (session context).
+      - type: skill-invocation
+        turn: 1
+        config:
+          required:
+            - azsdk-common-generate-sdk-pipeline
+          disallowed:
+            - azsdk-common-generate-sdk-locally
+      - type: tool-calls
+        turn: 1
+        config:
+          required:
+            - azsdk_run_generate_sdk
+          disallowed:
+            - azsdk_release_sdk
+            - azsdk_verify_setup
+            - azsdk_create_release_plan
+
+  # --- Scenario 2: Generate SDKs, then fetch the SDK pull request link -
+  - name: generate-then-get-pr-link-conversation
+    environment: *multiTurnEnv
+    turns:
+      - |
+        Run SDK generation for all languages for release 29262. My TypeSpec
+        project is specification/contosowidgetmanager/Contoso.WidgetManager.
+      - |
+        Now get me the generated SDK pull request link for the Python SDK.
+    constraints:
+      max_turns: 14
+      max_tokens: 20000
+    graders:
+      # Turn 0 — pipeline generation.
+      - type: skill-invocation
+        turn: 0
+        config:
+          required:
+            - azsdk-common-generate-sdk-pipeline
+          disallowed:
+            - azsdk-common-generate-sdk-locally
+      - type: tool-calls
+        turn: 0
+        config:
+          required:
+            - azsdk_get_release_plan
+            - azsdk_run_generate_sdk
+          disallowed:
+            - azsdk_release_sdk
+            - azsdk_verify_setup
+      # Turn 1 — retrieve the generated PR link (legitimate here, unlike as a
+      # substitute for generation).
+      - type: tool-calls
+        turn: 1
+        config:
+          required:
+            - azsdk_get_sdk_pull_request_link
+
+  # --- Scenario 3: Relink the spec PR, then regenerate SDKs -----------
+  - name: link-spec-pr-then-regenerate-conversation
+    environment: *multiTurnEnv
+    turns:
+      - |
+        Update the API spec pull request on the Contoso Widget Manager release
+        plan (work item 29262) to
+        https://github.com/Azure/azure-rest-api-specs/pull/38500.
+      - |
+        Now regenerate the SDKs for all languages for that release plan.
+    constraints:
+      max_turns: 14
+      max_tokens: 20000
+    graders:
+      # Session-scoped: the conversation must update the spec PR on the plan and
+      # regenerate via the pipeline, never publishing, re-verifying, creating a
+      # new plan, or generating locally. Turn-pinning is avoided because the agent
+      # may call `azsdk_get_release_plan` during either the update or the
+      # regenerate step.
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-prepare-release-plan
+            - azsdk-common-generate-sdk-pipeline
+          disallowed:
+            - azsdk-common-generate-sdk-locally
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_get_release_plan
+            - azsdk_update_api_spec_pull_request_in_release_plan
+            - azsdk_run_generate_sdk
+          disallowed:
+            - azsdk_release_sdk
+            - azsdk_verify_setup
+            - azsdk_create_release_plan
+            - azsdk_package_generate_code
+
+  # --- Scenario 4: Vague first turn, then clarify with the release plan
+  # A vague opening must not jump to azsdk_release_sdk (or re-verify setup);
+  # the clarifying turn carries the release plan and must route to pipeline
+  # generation.
+  - name: vague-then-clarify-generate-conversation
+    environment: *multiTurnEnv
+    turns:
+      - |
+        I need to get the SDKs generated for my service.
+      - |
+        Use the Contoso Widget Manager release plan, work item 29262, and
+        generate for all languages using the pipeline. My TypeSpec project is
+        specification/contosowidgetmanager/Contoso.WidgetManager.
+    constraints:
+      max_turns: 14
+      max_tokens: 20000
+    graders:
+      # Session-scoped: the conversation must route to pipeline generation and
+      # must never publish (release_sdk), re-verify, or generate locally
+      # (package_generate_code). The vague opener may trigger brief local
+      # exploration, so the local *skill* is not disallowed at session scope; the
+      # tool-level guard (no package_generate_code) is what enforces correct
+      # routing.
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-generate-sdk-pipeline
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_get_release_plan
+            - azsdk_run_generate_sdk
+          disallowed:
+            - azsdk_release_sdk
+            - azsdk_verify_setup
+            - azsdk_package_generate_code
+
+  # --- Scenario 5: vague opening, then reveals LOCAL intent (#16226) ---
+  # Counterpart to scenario 4 (which clarifies toward the pipeline): here the
+  # clarifying turn reveals a local clone + one language and must route to the
+  # local skill, not the pipeline. Turn 0 stays vague, so it only asserts the
+  # agent does not jump to a wrong tool.
+  - name: vague-then-local-conversation
+    environment: *multiTurnEnv
+    turns:
+      - |
+        I need to get the SDK generated for the Contoso Widget Manager.
+      - |
+        I've already got the azure-rest-api-specs repo cloned and I just want the
+        Python SDK built locally. The tspconfig is at
+        specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml.
+    constraints:
+      max_turns: 16
+      max_tokens: 22000
+    graders:
+      # Session-scoped: the conversation must route to LOCAL generation (local
+      # skill + package_generate_code) and never touch the pipeline/publish path
+      # or re-verify. The agent commonly acts on the first, already-actionable
+      # turn rather than waiting for the clarifying turn, so these are asserted
+      # session-wide rather than pinned to a single turn.
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-generate-sdk-locally
+          disallowed:
+            - azsdk-common-generate-sdk-pipeline
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_package_generate_code
+          disallowed:
+            - azsdk_run_generate_sdk
+            - azsdk_release_sdk
+            - azsdk_verify_setup
+
+  # --- Scenario 6: local first, then the user switches to pipeline (#16226)
+  # A self-contained local request, then the user changes their mind mid-session
+  # and asks for all languages via the pipeline. The session must switch skills.
+  - name: local-then-switch-pipeline-conversation
+    environment: *multiTurnEnv
+    turns:
+      - |
+        I've got the azure-rest-api-specs repo cloned locally — generate and build
+        just the Python SDK for the Contoso Widget Manager from
+        specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml.
+      - |
+        Actually, I need this for every language now. Kick off SDK generation for
+        all languages using release plan 29262 and open the SDK pull requests.
+    constraints:
+      max_turns: 16
+      max_tokens: 22000
+    graders:
+      # Turn 0 — LOCAL: local skill + local codegen, never the pipeline tool.
+      - type: skill-invocation
+        turn: 0
+        config:
+          required:
+            - azsdk-common-generate-sdk-locally
+          disallowed:
+            - azsdk-common-generate-sdk-pipeline
+      - type: tool-calls
+        turn: 0
+        config:
+          required:
+            - azsdk_package_generate_code
+          disallowed:
+            - azsdk_run_generate_sdk
+            - azsdk_release_sdk
+      # Turn 1 — switched to PIPELINE: pipeline skill + pipeline tool, never local
+      # codegen.
+      - type: skill-invocation
+        turn: 1
+        config:
+          required:
+            - azsdk-common-generate-sdk-pipeline
+          disallowed:
+            - azsdk-common-generate-sdk-locally
+      - type: tool-calls
+        turn: 1
+        config:
+          required:
+            - azsdk_run_generate_sdk
+          disallowed:
+            - azsdk_package_generate_code
+            - azsdk_release_sdk
+
+scoring:
+  weights:
+    skill-invocation: 0.5
+    tool-calls: 0.5
+  threshold: 1.0

@@ -91,7 +91,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             ProcessResult result;
             try
             {
-                var options = new ProcessOptions("gh", ["auth", "token"], timeout: TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs));
+                var options = new ProcessOptions("gh", ["auth", "token"], timeout: TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs), logOutputStream:false);
                 using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs));
                 result = processHelper.Run(options, timeoutCts.Token).GetAwaiter().GetResult();
             }

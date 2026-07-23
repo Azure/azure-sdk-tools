@@ -1708,6 +1708,7 @@ class CheckDocstringParameters(BaseChecker):
                     ]
                     vararg_name = constructor.args.vararg
                     kwarg_name = constructor.args.kwarg
+                    is_overload_impl = self._is_overload_implementation(constructor)
                     break
 
         if isinstance(node, astroid.FunctionDef):
@@ -3774,11 +3775,16 @@ class NoCrossPackagePrivateImport(BaseChecker):
           'azure.storage.blob._generated.models' -> 'azure.storage.blob'
           'azure.core._pipeline_client' -> 'azure.core'
 
-        Returns None if there is no private segment.
+        Returns None if there is no private segment, or if the first segment itself is
+        private (no meaningful public prefix to compare against).
         """
         parts = module_name.split(".")
         for i, part in enumerate(parts):
             if part.startswith("_"):
+                # If the very first segment is private there is no public prefix,
+                # so we cannot reliably determine the owning package. Skip.
+                if i == 0:
+                    return None
                 return ".".join(parts[:i])
         return None
 
@@ -3805,8 +3811,35 @@ class NoCrossPackagePrivateImport(BaseChecker):
         """Check 'from x.y._z import foo' style imports."""
         if node.modname is None:
             return
-        current_module = node.root().name
-        if self._is_cross_package_private_import(node.modname, current_module):
+        root = node.root()
+        current_module = root.name
+
+        if node.level and node.level > 0:
+            # Relative import: resolve node.modname to an absolute module name before
+            # checking.  A level-1 import anchors at the current package; level-2 at
+            # the parent; and so on.
+            #
+            # Example (regular module): from azure.storage.file.datalake._some_module,
+            #   "from ...blob._generated.models import …"  (level=3, modname="blob._generated.models")
+            # resolves to azure.storage.blob._generated.models.
+            #
+            # For __init__.py, astroid marks the module as a package and current_module
+            # is already the package name (no leaf module to drop).
+            parts = current_module.split(".")
+            if getattr(root, "package", False):
+                package_parts = parts
+            else:
+                package_parts = parts[:-1]
+            ups = node.level - 1  # level=1 → current package (0 ups); level=2 → 1 up; etc.
+            if ups >= len(package_parts):
+                # Import would escape above the top-level package — invalid Python; skip.
+                return
+            base_parts = package_parts[:-ups] if ups > 0 else package_parts
+            resolved = ".".join(base_parts + [node.modname]) if node.modname else ".".join(base_parts)
+        else:
+            resolved = node.modname
+
+        if self._is_cross_package_private_import(resolved, current_module):
             self.add_message(
                 msgid="no-cross-package-private-import",
                 node=node,

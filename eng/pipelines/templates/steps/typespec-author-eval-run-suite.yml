@@ -17,10 +17,23 @@ parameters:
   - name: Tag
     type: string
     default: ''
+  - name: Runs
+    type: number
+    default: 1
+  - name: Workers
+    type: number
+    default: 5
 
 steps:
   - script: |
       SKILL_ARG="--skill-dir .."
+      RUNS=${{ parameters.Runs }}
+      WORKERS=${{ parameters.Workers }}
+      RUNS_ARG=""
+      if [ "$RUNS" -gt 1 ]; then
+        RUNS_ARG="--runs $RUNS"
+      fi
+      WORKERS_ARG="--workers $WORKERS"
       case "${{ parameters.LoadSkills }}" in
         false|False)
           mkdir -p /tmp/no-skills
@@ -35,9 +48,11 @@ steps:
         if [ -n "${{ parameters.Tag }}" ]; then
           echo "Ignoring Tag parameter in suite mode to avoid unsupported --suite + --tag combination"
         fi
-        vally eval --suite "${{ parameters.Suite }}" --output-dir results --workspace ./debug --verbose $SKILL_ARG
+        echo "Running Vally suite '${{ parameters.Suite }}' with runs=$RUNS workers=$WORKERS"
+        vally eval --suite "${{ parameters.Suite }}" --output-dir results --workspace ./debug --verbose $SKILL_ARG $RUNS_ARG $WORKERS_ARG
       else
-        vally eval --eval-spec "suites/${{ parameters.EvalFile }}" --output-dir results --verbose $SKILL_ARG $TAG_ARG
+        echo "Running Vally eval file '${{ parameters.EvalFile }}' with runs=$RUNS workers=$WORKERS"
+        vally eval --eval-spec "suites/${{ parameters.EvalFile }}" --output-dir results --verbose $SKILL_ARG $TAG_ARG $RUNS_ARG $WORKERS_ARG
       fi
     displayName: ${{ parameters.DisplayName }}
     workingDirectory: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate

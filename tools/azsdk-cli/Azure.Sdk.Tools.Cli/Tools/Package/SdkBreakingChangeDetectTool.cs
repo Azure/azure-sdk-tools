@@ -138,23 +138,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     else
                     {
                         // Read and deserialize the local SDK change JSON file
-                        try
-                        {
-                            await using (var fileStream = File.OpenRead(localSdkChangeJsonFilePath))
-                            {
-                                sdkChange = await JsonSerializer.DeserializeAsync<SdkChange>(
-                                    fileStream,
-                                    cancellationToken: ct);
-                            }
-                        }
-                        catch (JsonException jsonEx)
-                        {
-                            logger.LogError(jsonEx, "Failed to deserialize the local SDK change JSON file {FilePath}. Proceeding to retrieve SDK changes using the configured script.", localSdkChangeJsonFilePath);
-                        }
-                        catch (Exception ex)
-                        {
-                            logger.LogError(ex, "An unexpected error occurred while reading the local SDK change JSON file {FilePath}. Proceeding to retrieve SDK changes using the configured script.", localSdkChangeJsonFilePath);
-                        }
+                        sdkChange = await readSdkChangesFromFile(localSdkChangeJsonFilePath, ct);
                     }
                 }
 
@@ -196,37 +180,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                                         ResponseError = $"SDK change file not found: {sdkChangeFilePath}"
                                     };
                                 }
-                                try
+                                sdkChange = await readSdkChangesFromFile(sdkChangeFilePath, ct);
+                                File.Delete(sdkChangeFilePath);
+                                if (sdkChange == null)
                                 {
-                                    // Read and deserialize the JSON file with proper disposal
-                                    await using (var fileStream = File.OpenRead(sdkChangeFilePath))
-                                    {
-                                        sdkChange = await JsonSerializer.DeserializeAsync<SdkChange>(
-                                            fileStream,
-                                            cancellationToken: ct);
-                                    }
-
-                                    // clean up the SDK change file after reading
-                                    File.Delete(sdkChangeFilePath);
-                                }
-                                catch (JsonException jsonEx)
-                                {
-                                    logger.LogError(jsonEx, "Failed to deserialize the SDK change script output.");
-                                    File.Delete(sdkChangeFilePath);
+                                    logger.LogError("Failed to deserialize SDK changes from the script output file: {FilePath}", sdkChangeFilePath);
                                     return new PackageOperationResponse
                                     {
-                                        ResponseError = "Failed to deserialize the SDK change script output.",
-                                        Language = languageService.Language,
-                                        PackageName = packageInfo?.PackageName,
-                                    };
-                                }
-                                catch (Exception ex)
-                                {
-                                    logger.LogError(ex, "An unexpected error occurred while reading and deserializing the SDK change script output.");
-                                    File.Delete(sdkChangeFilePath);
-                                    return new PackageOperationResponse
-                                    {
-                                        ResponseError = "An unexpected error occurred while reading and deserializing the SDK change script output.",
+                                        ResponseError = "Failed to deserialize SDK changes from the script output file.",
                                         Language = languageService.Language,
                                         PackageName = packageInfo?.PackageName,
                                     };
@@ -311,6 +272,33 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     ResponseError = $"An error occurred while detecting SDK breaking changes: {ex.Message}"
                 };
             }
+        }
+
+        private async Task<SdkChange?> readSdkChangesFromFile(string sdkChangeFilePath, CancellationToken ct)
+        {
+            SdkChange? sdkChange = null;
+            try
+            {
+                // Read and deserialize the JSON file with proper disposal
+                await using (var fileStream = File.OpenRead(sdkChangeFilePath))
+                {
+                    sdkChange = await JsonSerializer.DeserializeAsync<SdkChange>(
+                        fileStream,
+                        cancellationToken: ct);
+                }
+
+                // clean up the SDK change file after reading
+                File.Delete(sdkChangeFilePath);
+            }
+            catch (JsonException jsonEx)
+            {
+                logger.LogError(jsonEx, "Failed to deserialize the SDK change script output.");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "An unexpected error occurred while reading and deserializing the SDK change script output.");
+            }
+            return sdkChange;
         }
     }
 }

@@ -48,7 +48,9 @@ Each skill lives in `<name>/` and contains:
 │   └── *.md
 └── evals/             # Evaluation definitions
     └── eval.yaml       # Routing (trigger/anti-trigger) + capability stimuli together;
-                        # split into <behavior>.eval.yaml only once coverage grows large
+                        # split into additional *.eval.yaml files (e.g. <behavior>.eval.yaml,
+                        # or the older trigger.eval.yaml naming some existing skills still use)
+                        # once coverage grows large
 ```
 
 ---

@@ -33,10 +33,8 @@ stimuli:
         config:
           required: [azsdk-common-eval-authoring-tool]
           disallowed:
-            [
-              azsdk-common-eval-authoring-skill,
-              azsdk-common-eval-authoring-workflow,
-            ]
+              - azsdk-common-eval-authoring-skill
+              - azsdk-common-eval-authoring-workflow
 
   - name: trigger-add-prompt-to-tool-coverage
     environment: *siblingSkills
@@ -46,10 +44,8 @@ stimuli:
         config:
           required: [azsdk-common-eval-authoring-tool]
           disallowed:
-            [
-              azsdk-common-eval-authoring-skill,
-              azsdk-common-eval-authoring-workflow,
-            ]
+              - azsdk-common-eval-authoring-skill
+              - azsdk-common-eval-authoring-workflow
 
   - name: trigger-test-mcp-tool-selection
     environment: *siblingSkills
@@ -59,10 +55,8 @@ stimuli:
         config:
           required: [azsdk-common-eval-authoring-tool]
           disallowed:
-            [
-              azsdk-common-eval-authoring-skill,
-              azsdk-common-eval-authoring-workflow,
-            ]
+              - azsdk-common-eval-authoring-skill
+              - azsdk-common-eval-authoring-workflow
 
   - name: trigger-harden-tool-call-grader
     environment: *siblingSkills
@@ -72,10 +66,8 @@ stimuli:
         config:
           required: [azsdk-common-eval-authoring-tool]
           disallowed:
-            [
-              azsdk-common-eval-authoring-skill,
-              azsdk-common-eval-authoring-workflow,
-            ]
+              - azsdk-common-eval-authoring-skill
+              - azsdk-common-eval-authoring-workflow
 
   - name: anti-trigger-skill-routing
     environment: *siblingSkills
@@ -85,10 +77,8 @@ stimuli:
         config:
           required: [azsdk-common-eval-authoring-skill]
           disallowed:
-            [
-              azsdk-common-eval-authoring-tool,
-              azsdk-common-eval-authoring-workflow,
-            ]
+              - azsdk-common-eval-authoring-tool
+              - azsdk-common-eval-authoring-workflow
 
   - name: anti-trigger-multi-tool-workflow
     environment: *siblingSkills
@@ -98,10 +88,8 @@ stimuli:
         config:
           required: [azsdk-common-eval-authoring-workflow]
           disallowed:
-            [
-              azsdk-common-eval-authoring-skill,
-              azsdk-common-eval-authoring-tool,
-            ]
+              - azsdk-common-eval-authoring-skill
+              - azsdk-common-eval-authoring-tool
 
   - name: anti-trigger-live-scenario
     environment: *siblingSkills
@@ -111,7 +99,6 @@ stimuli:
         config:
           required: [azsdk-common-eval-authoring-workflow]
           disallowed:
-            [
-              azsdk-common-eval-authoring-skill,
-              azsdk-common-eval-authoring-tool,
-            ]
+              - azsdk-common-eval-authoring-skill
+              - azsdk-common-eval-authoring-tool
+

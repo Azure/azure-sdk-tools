@@ -1,0 +1,27 @@
+# ToolCoverageCheck job: optional pre-flight check that fails fast if new MCP tools lack eval
+# coverage, before the (expensive) Eval stage runs. No-op unless a repo opts in via
+# toolCoverageCheckTemplate -- most repos have no such check, so this stays blank by default.
+
+parameters:
+  - name: toolCoverageCheckTemplate
+    type: string
+    default: ''
+  - name: toolsRepo
+    type: string
+    default: ''
+
+jobs:
+  - ${{ if ne(parameters.toolCoverageCheckTemplate, '') }}:
+    - job: ToolCoverageCheck
+      displayName: 'Tool eval coverage check'
+      pool:
+        name: $(LINUXPOOL)
+        image: $(LINUXVMIMAGE)
+        os: linux
+      steps:
+        - checkout: self
+          fetchDepth: 1
+
+        - template: ${{ parameters.toolCoverageCheckTemplate }}
+          parameters:
+            toolsRepo: ${{ parameters.toolsRepo }}

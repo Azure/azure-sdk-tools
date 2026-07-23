@@ -35,6 +35,13 @@ parameters:
     # outside the tools repo). Blank in azure-sdk-tools. The consuming pipeline declares the resource.
     type: string
     default: ''
+  - name: toolCoverageCheckTemplate
+    # SWAP POINT: optional step template that runs a fast, static "every MCP tool has eval coverage"
+    # check before the (expensive) Eval stage. Blank by default (no-op) -- this depends on how a
+    # given repo's tool catalog/eval suite is structured. azure-sdk-tools points this at its own
+    # tool-coverage-check.yml (runs the AllToolsHaveEvalCoverage NUnit test).
+    type: string
+    default: ''
   - name: evalInvokeTemplate
     # SWAP POINT: runs `vally eval` per shard. Default = the conditional common invoke template.
     type: string
@@ -81,6 +88,11 @@ extends:
             parameters:
               vallyRoot: ${{ parameters.vallyRoot }}
               evalGlobs: ${{ parameters.evalGlobs }}
+
+          - template: /eng/common/pipelines/templates/jobs/tool-coverage-check.yml
+            parameters:
+              toolCoverageCheckTemplate: ${{ parameters.toolCoverageCheckTemplate }}
+              toolsRepo: ${{ parameters.toolsRepo }}
 
       - stage: Eval
         displayName: 'Run eval shards'

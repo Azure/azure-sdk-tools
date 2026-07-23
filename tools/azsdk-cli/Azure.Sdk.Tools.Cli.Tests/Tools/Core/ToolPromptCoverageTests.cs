@@ -95,60 +95,60 @@ internal class ToolPromptCoverageTests
         using var reader = new StreamReader(evalFilePath);
         var yaml = new YamlStream();
         yaml.Load(reader);
-        if (yaml.Documents.Count == 0 || yaml.Documents[0].RootNode is not YamlMappingNode root)
+
+        if (yaml.Documents.Count == 0 ||
+            yaml.Documents[0].RootNode is not YamlMappingNode root ||
+            !TryGetSequence(root, "stimuli", out var stimuli))
         {
             yield break;
         }
 
-        if (!root.Children.TryGetValue(new YamlScalarNode("stimuli"), out var stimuliNode) || stimuliNode is not YamlSequenceNode stimuli)
+        foreach (var stimulusNode in stimuli!.Children)
         {
-            yield break;
-        }
-
-        foreach (var stimulusNode in stimuli.Children)
-        {
-            if (stimulusNode is not YamlMappingNode stimulus)
-            {
-                continue;
-            }
-            if (!stimulus.Children.TryGetValue(new YamlScalarNode("graders"), out var gradersNode) || gradersNode is not YamlSequenceNode graders)
+            if (stimulusNode is not YamlMappingNode stimulus || !TryGetSequence(stimulus, "graders", out var graders))
             {
                 continue;
             }
 
-            foreach (var graderNode in graders.Children)
+            foreach (var graderNode in graders!.Children)
             {
-                if (graderNode is not YamlMappingNode grader)
-                {
-                    continue;
-                }
-                if (!grader.Children.TryGetValue(new YamlScalarNode("type"), out var typeNode) ||
-                    typeNode is not YamlScalarNode typeScalar ||
-                    typeScalar.Value != "tool-calls")
-                {
-                    continue;
-                }
-                if (!grader.Children.TryGetValue(new YamlScalarNode("config"), out var configNode) || configNode is not YamlMappingNode config)
-                {
-                    continue;
-                }
-                if (!config.Children.TryGetValue(new YamlScalarNode("required"), out var requiredNode) || requiredNode is not YamlSequenceNode required)
+                if (graderNode is not YamlMappingNode grader ||
+                    !TryGetScalar(grader, "type", out var type) || type != "tool-calls" ||
+                    !TryGetMapping(grader, "config", out var config) ||
+                    !TryGetSequence(config!, "required", out var required))
                 {
                     continue;
                 }
 
-                foreach (var requiredItem in required.Children)
+                foreach (var requiredItem in required!.Children)
                 {
-                    if (requiredItem is YamlMappingNode requiredMapping &&
-                        requiredMapping.Children.TryGetValue(new YamlScalarNode("name"), out var nameNode) &&
-                        nameNode is YamlScalarNode nameScalar &&
-                        !string.IsNullOrEmpty(nameScalar.Value))
+                    if (requiredItem is YamlMappingNode requiredMapping && TryGetScalar(requiredMapping, "name", out var name))
                     {
-                        yield return nameScalar.Value;
+                        yield return name!;
                     }
                 }
             }
         }
+    }
+
+    private static bool TryGetMapping(YamlMappingNode parent, string key, out YamlMappingNode? value)
+    {
+        value = parent.Children.TryGetValue(new YamlScalarNode(key), out var node) ? node as YamlMappingNode : null;
+        return value is not null;
+    }
+
+    private static bool TryGetSequence(YamlMappingNode parent, string key, out YamlSequenceNode? value)
+    {
+        value = parent.Children.TryGetValue(new YamlScalarNode(key), out var node) ? node as YamlSequenceNode : null;
+        return value is not null;
+    }
+
+    private static bool TryGetScalar(YamlMappingNode parent, string key, out string? value)
+    {
+        value = parent.Children.TryGetValue(new YamlScalarNode(key), out var node) && node is YamlScalarNode scalar
+            ? scalar.Value
+            : null;
+        return !string.IsNullOrEmpty(value);
     }
 
     private static string FindRepoRoot()

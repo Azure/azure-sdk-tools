@@ -19,20 +19,19 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         private Mock<ICopilotAgentRunner> _mockAgentRunner = null!;
         private Mock<ITypeSpecHelper> _mockTypeSpecHelper = null!;
         private Mock<ILoggerFactory> _mockLoggerFactory = null!;
-        private Mock<IAPIViewFeedbackService> _mockFeedbackService = null!;
         private string _testTspPath = null!;
         private string _specRepoRoot = null!;
         private string _typeSpecProjectPath = null!;
 
-        private Mock<IGitHelper> _mockGitHelper;
-        private Mock<IProcessHelper> _mockProcessHelper;
-        private Mock<IPythonHelper> _mockPythonHelper;
-        private Mock<INpxHelper> _mockNpxHelper;
-        private Mock<IPowershellHelper> _mockPowerShellHelper;
-        private Mock<ISpecGenSdkConfigHelper> _mockSpecGenSdkConfigHelper;
-        private TestLogger<SdkBreakingChangeClassificationService> logger;
-        private List<LanguageService> _languageServices;
-        private Mock<ICommonValidationHelpers> _commonValidationHelpers;
+        private Mock<IGitHelper> _mockGitHelper = null!;
+        private Mock<IProcessHelper> _mockProcessHelper = null!;
+        private Mock<IPythonHelper> _mockPythonHelper = null!;
+        private Mock<INpxHelper> _mockNpxHelper = null!;
+        private Mock<IPowershellHelper> _mockPowerShellHelper = null!;
+        private Mock<ISpecGenSdkConfigHelper> _mockSpecGenSdkConfigHelper = null!;
+        private TestLogger<SdkBreakingChangeClassificationService> logger = null!;
+        private List<LanguageService> _languageServices = null!;
+        private Mock<ICommonValidationHelpers> _commonValidationHelpers = null!;
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
@@ -75,7 +74,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _mockAgentRunner = new Mock<ICopilotAgentRunner>();
             _mockTypeSpecHelper = new Mock<ITypeSpecHelper>();
             _mockLoggerFactory = new Mock<ILoggerFactory>();
-            _mockFeedbackService = new Mock<IAPIViewFeedbackService>();
             _mockLoggerFactory.Setup(f => f.CreateLogger(It.IsAny<string>()))
                 .Returns(new TestLogger<SdkBreakingChangeClassificationService>());
 

@@ -170,7 +170,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     if (sdkChange.HasBreakingChange && !changesOnly)
                     {
                         // analyze and classify the breaking changes
-                        return await ClassifySdkBreakingChanges(sdkChange.SdkChangeMD, sdkRepoRoot, languageService, packageInfo, tspConfigPath, ct);
+                        return await ClassifySdkBreakingChanges(sdkChange, sdkRepoRoot, languageService, packageInfo, tspConfigPath, ct);
                     }
                     else
                     {
@@ -292,12 +292,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return (sdkChange, message);
         }
 
-        private async Task<PackageOperationResponse> ClassifySdkBreakingChanges(string sdkChange, string sdkRepoRoot, LanguageService languageService, PackageInfo? packageInfo, string? tspConfigPath, CancellationToken ct)
+        private async Task<PackageOperationResponse> ClassifySdkBreakingChanges(SdkChange sdkChange, string sdkRepoRoot, LanguageService languageService, PackageInfo? packageInfo, string? tspConfigPath, CancellationToken ct)
         {
             // analyze and classify the breaking changes
             var tspProjectPath = tspConfigPath != null ? Path.GetDirectoryName(tspConfigPath) : null;
             var sdkBreakingPattern = await languageService.GetSdkBreakingPattern(sdkRepoRoot, ct);
-            var sdkBreakingChangeResult = await _classifyService.ClassifySdkBreakingChangesAsync(sdkChange, sdkBreakingPattern, languageService.Language.ToString(), tspProjectPath, ct);
+            var sdkBreakingChangeResult = await _classifyService.ClassifySdkBreakingChangesAsync(sdkChange.SdkChangeMD, sdkBreakingPattern, languageService.Language.ToString(), tspProjectPath, ct);
             if (sdkBreakingChangeResult == null)
             {
                 logger.LogError("Failed to classify SDK breaking changes.");
@@ -308,11 +308,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     PackageName = packageInfo?.PackageName,
                 };
             }
-            if (!sdkBreakingChangeResult.HasBreakingChange)
+            if (!sdkBreakingChangeResult.HasBreakingChange && sdkChange.HasBreakingChange)
             {
                 return new PackageOperationResponse
                 {
-                    ResponseError = "No SDK breaking changes detected and classified.",
+                    ResponseError = "No SDK breaking changes were classified from the detected SDK changes.",
                     Language = languageService.Language,
                     PackageName = packageInfo?.PackageName,
                 };

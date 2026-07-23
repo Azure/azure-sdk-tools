@@ -38,7 +38,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to deserialize classification result: {Result}", result);
+                _logger.LogError(ex, "Failed to deserialize classification result: {Result}, SdkBreakingChangeClassificationTemplate version: {Version}", result, template.Version);
                 return null;
             }
         }

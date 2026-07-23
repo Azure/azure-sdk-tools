@@ -36,9 +36,9 @@ from .wiki_extract import DocExtraction, ExtractedItem
 
 logger = logging.getLogger(__name__)
 
-_MAX_PAGE_CHARS = 1800
+_MAX_PAGE_CHARS = 3500
 _MAX_OUT_LINKS = 8
-_MAX_REDUCE_INPUT = 9000
+_MAX_REDUCE_INPUT = 12000
 # Conservative fuzzy-merge threshold for concept canonical keys (entities/
 # decorators are never fuzzy-merged — exact symbols must stay distinct).
 _CONCEPT_FUZZY_RATIO = 0.9
@@ -61,7 +61,11 @@ _COMPILE_SYS = (
     "- Do NOT add rhetorical filler (phrases like 'designed to', 'aims to', "
     "'is a powerful') unless literally present in the source.\n"
     "- Keep exact names, signatures, decorators (with @), and syntax verbatim.\n"
-    "- Drop duplicates; keep the most specific facts. Max ~200 words."
+    "- Be COMPREHENSIVE: include every distinct grounded fact — what it is, exact "
+    "usage/signature, when to use it, rules/constraints/defaults, interactions "
+    "with related symbols, and common mistakes. Group related facts under short "
+    "headings when there are several distinct aspects.\n"
+    "- Drop duplicates; keep the most specific facts. Up to ~450 words."
 )
 
 _ENTITY_STRIP_AT = re.compile(r"^@+")
@@ -234,7 +238,7 @@ def synthesize_group(llm: ChatLLM, group: Group) -> str:
     system = _COMPILE_SYS.format(kind=kind, name=group.name)
     user = f"Name: {group.name}\n\nGrounded facts from documents:\n{body[:_MAX_REDUCE_INPUT]}"
     try:
-        out = llm.complete(system, user, max_tokens=520)
+        out = llm.complete(system, user, max_tokens=1000)
         return (out or "")[:_MAX_PAGE_CHARS]
     except Exception:
         logger.warning("synthesize_group failed for %s", group.name, exc_info=True)

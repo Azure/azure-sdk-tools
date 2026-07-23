@@ -25,19 +25,28 @@ from .wiki_reduce import reduce_pages
 
 logger = logging.getLogger(__name__)
 
-_MAX_PAGE_CHARS = 1800
+_MAX_PAGE_CHARS = 5000
 
 _SUMMARY_SYS = (
-    "You are building an expert KNOWLEDGE PAGE from one Azure SDK / TypeSpec "
-    "document, so an agent can answer questions FROM internalized knowledge "
-    "rather than re-reading raw docs. Extract the concrete, reusable knowledge "
-    "the document teaches: definitions, rules, exact decorator / API / property "
-    "names and their effects, required steps and their order, constraints, "
-    "defaults, valid values, and common gotchas or error causes. Write dense, "
-    "declarative facts an expert would remember, as tight bullet points. Include "
-    "specific names and syntax. Do NOT use navigation phrases like 'this section "
-    "covers' or 'refer to'. Only state knowledge grounded in the document; never "
-    "invent APIs or facts. Max ~230 words."
+    "You are building a comprehensive expert KNOWLEDGE PAGE from one Azure SDK / "
+    "TypeSpec document, so an agent can answer questions FROM internalized "
+    "knowledge rather than re-reading raw docs. Capture ALL the concrete, "
+    "reusable knowledge the document teaches — be thorough, not terse:\n"
+    "- Definitions and purpose of each concept/decorator/API/type it covers.\n"
+    "- Exact names and signatures (decorators with @, operations, models, "
+    "properties) and their precise effects.\n"
+    "- Rules, requirements, constraints, defaults, valid/invalid values, and the "
+    "EXACT conditions and exceptions (e.g. 'X cannot be suppressed', 'requires "
+    "PUBLIC visibility', 'beta may ship alongside GA').\n"
+    "- Required steps and their order; how pieces interact.\n"
+    "- Short code/usage examples when the document shows them.\n"
+    "- Common gotchas, error causes, and their fixes.\n"
+    "Organize under clear markdown headings that follow the document's own "
+    "structure. Write dense, declarative facts an expert would remember. Keep "
+    "every specific name, value, and syntax verbatim. Do NOT use navigation "
+    "phrases like 'this section covers' or 'refer to'. Only state knowledge "
+    "grounded in the document; never invent APIs or facts. Aim for 400-800 words "
+    "(shorter only if the document is genuinely small)."
 )
 
 
@@ -55,11 +64,11 @@ def synthesize_summary(llm: ChatLLM, doc_title: str, full_text: str) -> str:
     full_text = (full_text or "").strip()
     if not full_text:
         return ""
-    user = f"Document: {doc_title}\n\n{full_text[:9000]}"
+    user = f"Document: {doc_title}\n\n{full_text[:16000]}"
     try:
-        out = llm.complete(_SUMMARY_SYS, user, max_tokens=560)
+        out = llm.complete(_SUMMARY_SYS, user, max_tokens=1400)
         if not out:
-            out = llm.complete(_SUMMARY_SYS, user, max_tokens=1100)
+            out = llm.complete(_SUMMARY_SYS, user, max_tokens=1800)
         return (out or "")[:_MAX_PAGE_CHARS]
     except Exception:
         logger.warning("synthesize_summary failed for %s", doc_title, exc_info=True)

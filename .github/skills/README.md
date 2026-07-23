@@ -28,24 +28,29 @@ pipeline to match and distribute them to all subscribed language SDK repos.
 
 These skills help with skill development itself:
 
-| Skill                                                         | Triggers                                            | Description                                                           |
-| ------------------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------------------------- |
-| [sensei](sensei/SKILL.md)                                     | "run sensei", "improve skill", "fix frontmatter"    | Iteratively improve skill frontmatter compliance using the Ralph loop |
-| [skill-authoring](skill-authoring/SKILL.md)                   | "create a skill", "new skill", "skill template"     | Guidelines for writing Agent Skills per agentskills.io spec           |
-| [markdown-token-optimizer](markdown-token-optimizer/SKILL.md) | "optimize markdown", "reduce tokens", "token count" | Analyze markdown files for token efficiency                           |
+| Skill                                                                                 | Triggers                                            | Description                                                           |
+| ------------------------------------------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------------------------- |
+| [sensei](sensei/SKILL.md)                                                             | "run sensei", "improve skill", "fix frontmatter"    | Iteratively improve skill frontmatter compliance using the Ralph loop |
+| [skill-authoring](skill-authoring/SKILL.md)                                           | "create a skill", "new skill", "skill template"     | Guidelines for writing Agent Skills per agentskills.io spec           |
+| [azsdk-common-eval-authoring-skill](azsdk-common-eval-authoring-skill/SKILL.md)       | "write a skill eval", "test skill routing"          | Author shared routing and capability evals for Agent Skills           |
+| [azsdk-common-eval-authoring-tool](azsdk-common-eval-authoring-tool/SKILL.md)         | "write a tool eval", "add prompt-to-tool coverage"  | Author shared hermetic single-tool MCP selection evals                |
+| [azsdk-common-eval-authoring-workflow](azsdk-common-eval-authoring-workflow/SKILL.md) | "write a workflow eval", "create multi-turn eval"   | Author shared multi-tool, multi-turn, mock, and live workflow evals   |
+| [markdown-token-optimizer](markdown-token-optimizer/SKILL.md)                         | "optimize markdown", "reduce tokens", "token count" | Analyze markdown files for token efficiency                           |
 
 ### Skill Anatomy
 
 Each skill lives in `<name>/` and contains:
 
-```
+```text
 <name>/
 ├── SKILL.md           # Skill definition: YAML frontmatter + steps + related skills
 ├── references/        # Detailed reference docs (offloaded to keep SKILL.md under 500 tokens)
 │   └── *.md
 └── evals/             # Evaluation definitions
-    ├── eval.yaml          # Capability evals (graders, stimuli, tool-call checks)
-    └── trigger.eval.yaml  # Trigger & anti-trigger evals (skill-invocation checks)
+    └── eval.yaml       # Routing (trigger/anti-trigger) + capability stimuli together;
+                        # split into additional *.eval.yaml files (e.g. <behavior>.eval.yaml,
+                        # or the older trigger.eval.yaml naming some existing skills still use)
+                        # once coverage grows large
 ```
 
 ---

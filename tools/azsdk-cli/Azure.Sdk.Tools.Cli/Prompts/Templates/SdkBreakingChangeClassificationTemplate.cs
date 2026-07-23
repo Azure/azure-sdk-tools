@@ -108,36 +108,31 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
                     5. **When the element cannot be found** in any `.tsp` file, fall back to the SDK-level name from the breaking change and note it as unresolved.
                     """;
             }
-            return $"""
+            return $$"""
             **CRITICAL: Required Output Format**
         
             You MUST output one block per classified SDK breaking change item (one merged root-cause item per block).
-
+            Structure your response as a JSON object following this exact format:
+            ```json
+            {
+                "hasBreakingChange": true, //if any breaking changes are detected, otherwise false
+                "breakingChanges": //classified SDK breaking changes
+                [
+                    {
+                        "breakingChange": "<one-line sdk breaking change>",
+                        "category": "<emitter change | conversion-by design | conversion-need resolve | spec change | unknown>",
+                        "resolution": "<one-line mitigation resolution for this sdk breaking change, optional>",
+                        "originBreaks": [
+                            "<exact original breaking change #1 from sdk changes ### Breaking Changes>",
+                            "<exact original breaking change #2 from sdk changes ### Breaking Changes>"
+                        ]
+                    }
+                ]
+            }
             ```
-            [<item-id>]
-            breaking: <one-line sdk breaking change>
-            category: [emitter change | conversion-by design | conversion-need resolve | spec change | unknown]
-            resolution: <one-line mitigation resolution for this sdk breaking change, optional>
-            originBreaks:
-            - <exact original breaking change #1 from sdk changes ### Breaking Changes>
-            - <exact original breaking change #2 from sdk changes ### Breaking Changes>
-            - ...
-            ```
-
-            [<next-item-id>]
-            breaking: <one-line sdk breaking change>
-            category: [emitter change | conversion-by design | conversion-need resolve | spec change | unknown]
-            resolution: <one-line mitigation resolution for this sdk breaking change, optional>
-            originBreaks:
-            - <exact original breaking change #1 from sdk changes ### Breaking Changes>
-            - <exact original breaking change #2 from sdk changes ### Breaking Changes>
-            - ...
-            ```
-
             **Rules:**
             **General Requirements**
-            - The `[<item-id>]` header refers to the SDK breaking change type.
-            {breakingReferenceInstruction}
+            {{breakingReferenceInstruction}}
             - Output exactly one block per classified SDK breaking change.
             - Every original breaking item from sdk changes ### Breaking Changes must be processed.
             - No original breaking item may be skipped.

@@ -252,8 +252,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     {
                         var tspProjectPath = tspConfigPath != null ? Path.GetDirectoryName(tspConfigPath) : null;
                         var sdkBreakingPattern = await languageService.GetSdkBreakingPattern(sdkRepoRoot, ct);
-                        var sdkBreakingChanges = await _classifyService.ClassifySdkBreakingChangesAsync(sdkChange.SdkChangeMD, sdkBreakingPattern, languageService.Language.ToString(), tspProjectPath, ct);
-                        if (sdkBreakingChanges.Count == 0)
+                        var sdkBreakingChangeResult = await _classifyService.ClassifySdkBreakingChangesAsync(sdkChange.SdkChangeMD, sdkBreakingPattern, languageService.Language.ToString(), tspProjectPath, ct);
+                        if(sdkBreakingChangeResult == null)
                         {
                             logger.LogError("Failed to classify SDK breaking changes.");
                             return new PackageOperationResponse
@@ -263,14 +263,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                                 PackageName = packageInfo?.PackageName,
                             };
                         }
-                        var result = new SdkBreakingChangeDetectResult
+                        if (!sdkBreakingChangeResult.HasBreakingChange)
                         {
-                            HasBreakingChange = true,
-                            BreakingChanges = sdkBreakingChanges,
-                        };
+                            return new PackageOperationResponse
+                            {
+                                ResponseError = "No SDK breaking changes detected and classified.",
+                                Language = languageService.Language,
+                                PackageName = packageInfo?.PackageName,
+                            };
+                        }
                         return new PackageOperationResponse()
                         {
-                            Result = result,
+                            Result = sdkBreakingChangeResult,
                             Message = "SDK breaking changes detected and classified.",
                             Language = languageService.Language,
                             PackageName = packageInfo?.PackageName,

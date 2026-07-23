@@ -25,7 +25,6 @@ steps:
             --eval-args "$(evalArgs)" \
             --shard-name "$(shardName)" \
             --output-dir "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)" \
-            --threshold ${{ parameters.threshold }} \
             --extra-args "$(TypeSpecAuthorEvalExtraArgs)"
       env:
         GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
@@ -36,7 +35,6 @@ steps:
           --eval-args "$(evalArgs)" \
           --shard-name "$(shardName)" \
           --output-dir "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)" \
-          --threshold ${{ parameters.threshold }} \
           --extra-args "$(TypeSpecAuthorEvalExtraArgs)"
       displayName: 'vally eval $(shardName)'
       workingDirectory: ${{ parameters.vallyRoot }}

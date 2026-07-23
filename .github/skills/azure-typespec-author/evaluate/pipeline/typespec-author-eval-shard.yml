@@ -14,9 +14,6 @@ parameters:
   - name: UseAzSdkAuthentication
     type: boolean
     default: false
-  - name: threshold
-    type: number
-    default: 0.8
   - name: preEvalTemplate
     type: string
     default: ''
@@ -100,7 +97,6 @@ jobs:
         parameters:
           vallyRoot: ${{ parameters.vallyRoot }}
           UseAzSdkAuthentication: ${{ parameters.UseAzSdkAuthentication }}
-          threshold: ${{ parameters.threshold }}
 
       - ${{ if parameters.postEvalTemplate }}:
         - template: ${{ parameters.postEvalTemplate }}

@@ -19,7 +19,6 @@ extends:
     mcpSetupTemplate: /eng/common/pipelines/templates/steps/eval-mcp-setup.yml
     TestType: live
     evalInvokeTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-eval-invoke.yml
-    threshold: 1.0
     preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval-no-skill.yml
     failOnFailedTests: false
     shardTimeoutInMinutes: 30

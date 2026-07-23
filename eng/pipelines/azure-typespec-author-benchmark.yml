@@ -228,7 +228,6 @@ extends:
               vallyRoot: .github/skills/azure-typespec-author/evaluate
               evalInvokeTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-eval-invoke.yml
               preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval-forced.yml
-              threshold: 1.0
               shardTimeoutInMinutes: 50
 
       - stage: SummaryForced
@@ -262,7 +261,6 @@ extends:
               vallyRoot: .github/skills/azure-typespec-author/evaluate
               evalInvokeTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-eval-invoke.yml
               preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
-              threshold: 1.0
               shardTimeoutInMinutes: 30
 
       - stage: SummaryTrigger

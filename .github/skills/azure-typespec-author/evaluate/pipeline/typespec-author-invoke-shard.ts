@@ -7,7 +7,14 @@ import { getVallyShardVerdict } from "../../../../../eng/common/scripts/eval/lib
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const SHARED_EVAL_SCRIPT_DIR = path.resolve(SCRIPT_DIR, "../../../../../eng/common/scripts/eval");
 
-function normalizeExtraArgs(extraArgs) {
+type ShardRunOptions = {
+  evalArgs: string;
+  shardName: string;
+  outputDir: string;
+  extraArgs?: string;
+};
+
+function normalizeExtraArgs(extraArgs: string): string[] {
   if (!extraArgs || extraArgs === "$(TypeSpecAuthorEvalExtraArgs)") {
     return [];
   }
@@ -15,38 +22,36 @@ function normalizeExtraArgs(extraArgs) {
   return extraArgs.split(/\s+/).filter(Boolean);
 }
 
-export function runShard({ evalArgs, shardName, outputDir, threshold = 0.8, extraArgs = "" }) {
+export function runShard({ evalArgs, shardName, outputDir, extraArgs = "" }: ShardRunOptions) {
   const evalArgList = evalArgs.split(/\s+/).filter(Boolean);
-  const thresholdArg = String(threshold);
   const extraArgList = normalizeExtraArgs(extraArgs);
 
   console.log(
-    `Running: vally eval ${evalArgs} --junit --threshold ${thresholdArg} --output-dir "${outputDir}" ${extraArgList.join(" ")}`
+    `Running: vally eval ${evalArgs} --junit --output-dir "${outputDir}" ${extraArgList.join(" ")}`
   );
+
+  const vallyArgs = [
+    "exec",
+    "--no",
+    "--prefix",
+    SHARED_EVAL_SCRIPT_DIR,
+    "--",
+    "vally",
+    "eval",
+    ...evalArgList,
+    "--junit",
+  ];
+
+  vallyArgs.push("--output-dir", outputDir, ...extraArgList);
 
   const proc = spawnSync(
     "npm",
-    [
-      "exec",
-      "--no",
-      "--prefix",
-      SHARED_EVAL_SCRIPT_DIR,
-      "--",
-      "vally",
-      "eval",
-      ...evalArgList,
-      "--junit",
-      "--threshold",
-      thresholdArg,
-      "--output-dir",
-      outputDir,
-      ...extraArgList,
-    ],
+    vallyArgs,
     { stdio: "inherit", shell: process.platform === "win32" }
   );
   const vallyExit = proc.status ?? 1;
 
-  const verdict = getVallyShardVerdict({ resultsDir: outputDir, threshold });
+  const verdict = (getVallyShardVerdict as any)({ resultsDir: outputDir });
   for (const line of verdict.lines) {
     console.log(`  ${line}`);
   }
@@ -79,8 +84,8 @@ export function runShard({ evalArgs, shardName, outputDir, threshold = 0.8, extr
   return 1;
 }
 
-function parseArgs(argv) {
-  const options = { threshold: 0.8, extraArgs: "" };
+function parseArgs(argv: string[]): ShardRunOptions {
+  const options: Partial<ShardRunOptions> = { extraArgs: "" };
   for (let i = 0; i < argv.length; i++) {
     const next = () => argv[++i];
     switch (argv[i]) {
@@ -93,9 +98,6 @@ function parseArgs(argv) {
       case "--output-dir":
         options.outputDir = next();
         break;
-      case "--threshold":
-        options.threshold = Number(next());
-        break;
       case "--extra-args":
         options.extraArgs = next();
         break;
@@ -104,20 +106,20 @@ function parseArgs(argv) {
     }
   }
 
-  for (const required of ["evalArgs", "shardName", "outputDir"]) {
+  for (const required of ["evalArgs", "shardName", "outputDir"] as const) {
     if (!options[required]) {
       throw new Error(`Missing required argument for ${required}.`);
     }
   }
 
-  return options;
+  return options as ShardRunOptions;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
     process.exit(runShard(parseArgs(process.argv.slice(2))));
   } catch (error) {
-    console.error(error.message);
+    console.error(error instanceof Error ? error.message : String(error));
     process.exit(1);
   }
 }

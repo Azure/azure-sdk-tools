@@ -28,6 +28,8 @@ parameters:
   - name: operationId
     type: string
     default: ''
+  - name: callbackProofToken
+    type: string
   - name: packageName
     type: string
     default: ''
@@ -60,6 +62,12 @@ jobs:
     steps:
       - pwsh: |
           $ErrorActionPreference = 'Stop'
+
+          $ingressCallbackProofToken = '${{ parameters.callbackProofToken }}'
+          if ([string]::IsNullOrWhiteSpace($ingressCallbackProofToken)) {
+            throw 'callbackProofToken is required.'
+          }
+          Write-Host "##vso[task.setvariable variable=ARH_CALLBACK_PROOF_TOKEN;issecret=true]$ingressCallbackProofToken"
 
           if ([string]::IsNullOrWhiteSpace('${{ parameters.operationId }}')) {
             throw 'operationId is required.'
@@ -230,6 +238,11 @@ jobs:
               throw 'Acquired API Review Hub callback token was empty after unwrap'
             }
 
+            $callbackProofToken = $env:ARH_CALLBACK_PROOF_TOKEN
+            if ([string]::IsNullOrWhiteSpace($callbackProofToken)) {
+              throw 'callbackProofToken is required.'
+            }
+
             $body = [ordered]@{
               operationId = '${{ parameters.operationId }}'
               mode = '${{ parameters.requestMode }}'
@@ -263,9 +276,16 @@ jobs:
             $headers = @{
               Authorization = "Bearer $token"
               'Content-Type' = 'application/json'
+              'x-arh-callback-proof' = $callbackProofToken
+            }
+
+            if (-not $headers.ContainsKey('x-arh-callback-proof') -or [string]::IsNullOrWhiteSpace($headers['x-arh-callback-proof'])) {
+              throw 'x-arh-callback-proof header is required for API Review Hub callback.'
             }
             $jsonBody = $body | ConvertTo-Json -Depth 10 -Compress
 
             Write-Host "Completion callback URL: $completionCallbackUrl"
             Write-Host "Completion callback body: $jsonBody"
             Invoke-WebRequest -Method POST -Uri $completionCallbackUri -Headers $headers -Body $jsonBody -MaximumRetryCount 3 | Out-Null
+        env:
+          ARH_CALLBACK_PROOF_TOKEN: $(ARH_CALLBACK_PROOF_TOKEN)

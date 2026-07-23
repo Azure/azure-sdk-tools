@@ -1,5 +1,5 @@
 import { logger } from './logger.js';
-import { inc as semverInc } from 'semver';
+import { inc as semverInc, rcompare, valid as semverValid } from 'semver';
 import { ApiVersionType } from '../common/types.js';
 
 function getDistTags(npmViewResult: Record<string, unknown>): Record<string, string> | undefined {
@@ -42,6 +42,42 @@ export function getversionDate(npmViewResult: Record<string, unknown>, version: 
 }
 
 /**
+ * Determine whether a specific published version is marked as deprecated in the npm packument.
+ * `npm deprecate` records a non-empty message on the version manifest but does NOT move the
+ * `latest`/`beta`/`next` dist-tags, so a dist-tag can still point to a deprecated version
+ * (see Azure/azure-sdk-tools#15981).
+ */
+function isVersionDeprecated(npmViewResult: Record<string, unknown>, version: string): boolean {
+  const versions = npmViewResult['versions'];
+  if (typeof versions !== 'object' || versions === null) return false;
+  const manifest = (versions as Record<string, unknown>)[version];
+  if (typeof manifest !== 'object' || manifest === null) return false;
+  const deprecated = (manifest as Record<string, unknown>)['deprecated'];
+  return typeof deprecated === 'string' && deprecated.trim().length > 0;
+}
+
+/**
+ * Find the most recent (by semver) non-deprecated published version that matches the predicate.
+ * Used as a fallback when a dist-tag points to a deprecated version (see
+ * Azure/azure-sdk-tools#15981). Returns undefined when the packument has no `versions` map
+ * or no matching non-deprecated version exists.
+ */
+function getLatestNonDeprecatedVersion(
+  npmViewResult: Record<string, unknown>,
+  predicate: (version: string) => boolean
+): string | undefined {
+  const versions = npmViewResult['versions'];
+  if (typeof versions !== 'object' || versions === null) return undefined;
+  const candidates = Object.keys(versions as Record<string, unknown>)
+    .filter((version) => semverValid(version) !== null)
+    .filter(predicate)
+    .filter((version) => !isVersionDeprecated(npmViewResult, version));
+  if (candidates.length === 0) return undefined;
+  candidates.sort(rcompare);
+  return candidates[0];
+}
+
+/**
  * Get the latest preview version from both "beta" and "next" distribution tags
  * @param npmViewResult The result from npm view command
  * @returns The latest preview version or undefined if no preview version exists
@@ -54,20 +90,34 @@ export function getNextBetaVersion(npmViewResult: Record<string, unknown> | unde
   const betaVersion = getVersion(npmViewResult, 'beta');
   const nextVersion = getVersion(npmViewResult, 'next');
 
-  // If only one version exists, return it
-  if (!betaVersion) return nextVersion;
-  if (!nextVersion) return betaVersion;
-
-  // If both versions exist, compare their dates and return the more recent one
-  const betaDate = getversionDate(npmViewResult, betaVersion);
-  const nextDate = getversionDate(npmViewResult, nextVersion);
-
-  if (betaDate && nextDate) {
-    return betaDate > nextDate ? betaVersion : nextVersion;
+  // Select the candidate from the beta/next dist-tags (the more recent one wins).
+  let candidate: string | undefined;
+  if (!betaVersion) {
+    candidate = nextVersion;
+  } else if (!nextVersion) {
+    candidate = betaVersion;
+  } else {
+    const betaDate = getversionDate(npmViewResult, betaVersion);
+    const nextDate = getversionDate(npmViewResult, nextVersion);
+    // If both dates are available compare them, otherwise prefer betaVersion as default.
+    candidate = betaDate && nextDate ? (betaDate > nextDate ? betaVersion : nextVersion) : betaVersion;
   }
 
-  // If dates can't be compared, prefer betaVersion as default
-  return betaVersion;
+  // issue #15981: the beta/next dist-tag may still point to an accidentally published,
+  // now-deprecated version that has no matching changelog. Fall back to the most recent
+  // non-deprecated beta so downstream changelog/breaking-change logic has a valid baseline.
+  if (candidate && isVersionDeprecated(npmViewResult, candidate)) {
+    logger.warn(
+      `Next preview version '${candidate}' is deprecated; falling back to the latest non-deprecated preview.`
+    );
+    const fallback = getLatestNonDeprecatedVersion(
+      npmViewResult,
+      (version) => version.includes('beta') || version.includes('next')
+    );
+    if (fallback) return fallback;
+    logger.warn(`No non-deprecated preview version found; unable to replace deprecated '${candidate}'.`);
+  }
+  return candidate;
 }
 
 // NOTE: The latest tag used to contains beta version when there's the sdk is not GA.
@@ -81,6 +131,28 @@ export function getLatestStableVersion(npmViewResult: Record<string, unknown>) {
   // A latestVersion with a non-beta prerelease identifier (e.g. alpha) is not
   // suitable as a comparison baseline.  Prefer a published beta in that case.
   const isLatestComparable = latestVersion && (!latestVersion.includes('-') || latestVersion.includes('beta'));
+
+  // Prefer the dist-tag targets, but only when they are not deprecated. issue #15981:
+  // `npm deprecate` does not move dist-tags, so `latest`/`beta` may still point to an
+  // accidentally published, now-deprecated version that has no matching changelog.
+  const latestDeprecated = !!latestVersion && !!isLatestComparable && isVersionDeprecated(npmViewResult, latestVersion);
+  const betaDeprecated = !!betaVersion && !isLatestComparable && isVersionDeprecated(npmViewResult, betaVersion);
+
+  if (isLatestComparable && !latestDeprecated) return latestVersion;
+  if (!isLatestComparable && betaVersion && !betaDeprecated) return betaVersion;
+
+  // Only fall back to scanning the versions map when the preferred dist-tag target is actually deprecated.
+  if (latestDeprecated || betaDeprecated) {
+    // The preferred dist-tag target is deprecated: fall back to the most recent
+    // non-deprecated version, preferring a pure stable GA over a beta.
+    const nonDeprecatedStable = getLatestNonDeprecatedVersion(npmViewResult, (version) => !version.includes('-'));
+    if (nonDeprecatedStable) return nonDeprecatedStable;
+    const nonDeprecatedBeta = getLatestNonDeprecatedVersion(npmViewResult, (version) => version.includes('beta'));
+    if (nonDeprecatedBeta) return nonDeprecatedBeta;
+  }
+
+  // Last resort: every candidate is deprecated (or no `versions` map is available).
+  // Preserve the original dist-tag based behavior.
   if (isLatestComparable) return latestVersion;
   if (betaVersion) return betaVersion;
   if (latestVersion) return latestVersion;

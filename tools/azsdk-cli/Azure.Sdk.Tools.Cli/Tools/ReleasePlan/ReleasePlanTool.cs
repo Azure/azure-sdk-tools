@@ -985,7 +985,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 // Validate API version format if provided
                 if (!string.IsNullOrEmpty(apiVersion) && !ApiVersionRegex().IsMatch(apiVersion))
                 {
-                    return new ReleasePlanResponse { ResponseError = $"Invalid API version '{apiVersion}'. API version must be in YYYY-MM-DD or YYYY-MM-DD-preview format." };
+                    return new ReleasePlanResponse { ResponseError = $"Invalid API version '{apiVersion}'. API version must be an existing API version in YYYY-MM-DD or YYYY-MM-DD-preview format." };
                 }
 
                 // SDK release type is always derived from the API release type to prevent

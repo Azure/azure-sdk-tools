@@ -21,7 +21,7 @@ parameters:
   # can obtain a bearer token for the remote knowledge base.
   - name: AzureSubscription
     type: string
-
+    default: 'azuresdkqabot-dev'
 steps:
   - task: AzureCLI@2
     displayName: ${{ parameters.DisplayName }}

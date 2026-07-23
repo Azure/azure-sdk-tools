@@ -180,11 +180,6 @@ public class ApiReviewReleaseStatusResult
 
 public class ApiReviewHubResponse : CommandResponse
 {
-    private static readonly JsonSerializerOptions serializerOptions = new()
-    {
-        WriteIndented = true
-    };
-
     [JsonPropertyName("message")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Message { get; set; }
@@ -203,10 +198,30 @@ public class ApiReviewHubResponse : CommandResponse
 
         if (Result != null)
         {
-            output.AppendLine(JsonSerializer.Serialize(Result, serializerOptions));
+            var prUrl = TryGetReviewPullRequestUrl(Result.Operation?.ReviewPullRequest);
+            if (!string.IsNullOrWhiteSpace(prUrl))
+            {
+                output.AppendLine($"Review PR: {prUrl}");
+            }
         }
 
         return output.ToString();
+    }
+
+    private static string? TryGetReviewPullRequestUrl(JsonElement? reviewPullRequest)
+    {
+        if (reviewPullRequest is null || reviewPullRequest.Value.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        if (reviewPullRequest.Value.TryGetProperty("url", out var urlElement) &&
+            urlElement.ValueKind == JsonValueKind.String)
+        {
+            return urlElement.GetString();
+        }
+
+        return null;
     }
 }
 

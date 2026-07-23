@@ -200,9 +200,6 @@ public class ApiReviewHubTool(
 
             return new ApiReviewHubResponse
             {
-                Message = waitForCompletion
-                    ? $"API Review Hub operation {result.OperationId} completed with status {result.Status}."
-                    : $"API Review Hub accepted operation {result.OperationId}.",
                 Result = result
             };
         }

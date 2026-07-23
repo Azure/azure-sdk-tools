@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis.CodeRefactorings;
 using Microsoft.CodeAnalysis.CSharp.Testing;
@@ -17,12 +18,21 @@ namespace Azure.ClientSdk.Analyzers.Tests
                 new PackageIdentity("System.Threading.Tasks.Extensions", "4.5.3")));
 
         public static CSharpCodeRefactoringTest<TRefactoring, XUnitVerifier> CreateRefactoring(string source, string fixedCode)
-            => new CSharpCodeRefactoringTest<TRefactoring, XUnitVerifier>()
+        {
+#if NET6_0_OR_GREATER
+            var normalizedSource = source.ReplaceLineEndings();
+            var normalizedFixedCode = fixedCode.ReplaceLineEndings();
+#else
+            var normalizedSource = source.Replace("\r\n", "\n").Replace("\n", Environment.NewLine);
+            var normalizedFixedCode = fixedCode.Replace("\r\n", "\n").Replace("\n", Environment.NewLine);
+#endif
+            return new CSharpCodeRefactoringTest<TRefactoring, XUnitVerifier>()
             {
                 ReferenceAssemblies = DefaultReferenceAssemblies,
-                TestCode = source,
-                FixedCode = fixedCode,
+                TestCode = normalizedSource,
+                FixedCode = normalizedFixedCode,
                 TestBehaviors = TestBehaviors.SkipGeneratedCodeCheck
             };
+        }
     }
 }

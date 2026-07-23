@@ -22,6 +22,26 @@ public class TelemetryIngestionResponse : CommandResponse
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? SkillName { get; set; }
 
+    [JsonPropertyName("prompt_category")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? PromptCategory { get; set; }
+
+    [JsonPropertyName("prompt_details")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? PromptDetails { get; set; }
+
+    [JsonPropertyName("language")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Language { get; set; }
+
+    [JsonPropertyName("typespec_project")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? TypeSpecProject { get; set; }
+
+    [JsonPropertyName("package_name")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? PackageName { get; set; }
+
     protected override string Format()
     {
         if (string.IsNullOrEmpty(EventType))

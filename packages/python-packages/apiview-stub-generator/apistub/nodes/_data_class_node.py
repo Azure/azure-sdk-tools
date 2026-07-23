@@ -71,6 +71,9 @@ class DataClassNode(ClassNode):
                 if not x.argname.startswith("_") and x.argname not in allow_list
             ]
             filtered = [x for x in filtered if x.default != dataclasses.MISSING]
+            # PEP 727 (Python 3.14+): dataclasses.Field gained a 'doc' attribute.
+            # Exclude it when unset (stored as the string "None" by ArgType).
+            filtered = [x for x in filtered if not (x.argname == "doc" and x.default == "None")]
             return filtered
         else:
             return all_props

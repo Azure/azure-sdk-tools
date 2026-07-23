@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { take, forkJoin } from 'rxjs';
 import { USER_NAME_ROUTE_PARAM } from 'src/app/_helpers/router-helpers';
@@ -34,7 +34,7 @@ export class ProfilePageComponent {
   readonly ROLE_DISPLAY_NAMES = ROLE_DISPLAY_NAMES;
 
   constructor(private route: ActivatedRoute, private userProfileService: UserProfileService,
-    private permissionsService: PermissionsService) {}
+    private permissionsService: PermissionsService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
     this.userName = this.route.snapshot.paramMap.get(USER_NAME_ROUTE_PARAM);
@@ -77,6 +77,7 @@ export class ProfilePageComponent {
       next: (result) => {
         this.userGroups = result.groups;
         this.adminUsernames = result.admins;
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Failed to load permissions info', error);

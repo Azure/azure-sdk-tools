@@ -1,0 +1,12 @@
+testcase: no_duplicates_all_distinct
+parent_type: guideline
+parent_title: "DO design for testability"
+memories: |
+  [
+    {"id": "mem-010", "title": "Use dependency injection for HTTP clients", "content": "Allow users to inject their own HTTP client or transport for unit testing. Do not hard-code HTTP dependencies."},
+    {"id": "mem-011", "title": "Provide mock-friendly interfaces", "content": "Public client types should be designed so users can mock them in tests. Use abstract base classes or protocols where appropriate."},
+    {"id": "mem-012", "title": "Include test utilities in the package", "content": "Ship test utilities (fakes, recorders) as part of the SDK to help users write integration tests without live service calls."}
+  ]
+response:
+  action: ""
+  rationale: ""

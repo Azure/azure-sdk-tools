@@ -419,4 +419,281 @@ public class ApiViewReviewToolTests
 
         Assert.That(response.ResponseError, Does.Contain("owner/repo"));
     }
+
+    // get-review-url tests
+
+    [Test]
+    public async Task GetReviewUrlByPackage_WithValidPackageAndLanguage_ReturnsUrl()
+    {
+        string expectedUrl = "https://apiview.dev/review/abc123?activeApiRevisionId=rev456";
+        _mockApiViewService
+            .Setup(x => x.GetReviewUrlByPackageAsync("Azure.Storage.Blobs", "C#", null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedUrl);
+
+        APIViewResponse response = await apiViewReviewTool.GetReviewUrlByPackage("Azure.Storage.Blobs", "C#", null, CancellationToken.None);
+
+        Assert.That(response.Result, Is.EqualTo(expectedUrl));
+        Assert.That(response.ResponseError, Is.Null);
+    }
+
+    [Test]
+    public async Task GetReviewUrlByPackage_WithVersion_PassesVersionToService()
+    {
+        string expectedUrl = "https://apiview.dev/review/abc123?activeApiRevisionId=rev456";
+        _mockApiViewService
+            .Setup(x => x.GetReviewUrlByPackageAsync("azure-storage-blob", "Python", "12.0.0", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedUrl);
+
+        APIViewResponse response = await apiViewReviewTool.GetReviewUrlByPackage("azure-storage-blob", "Python", "12.0.0", CancellationToken.None);
+
+        Assert.That(response.Result, Is.EqualTo(expectedUrl));
+        Assert.That(response.ResponseError, Is.Null);
+        _mockApiViewService.Verify(x => x.GetReviewUrlByPackageAsync("azure-storage-blob", "Python", "12.0.0", It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task GetReviewUrlByPackage_WhenServiceReturnsNull_ReturnsError()
+    {
+        _mockApiViewService
+            .Setup(x => x.GetReviewUrlByPackageAsync("Unknown.Package", "C#", null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        APIViewResponse response = await apiViewReviewTool.GetReviewUrlByPackage("Unknown.Package", "C#", null, CancellationToken.None);
+
+        Assert.That(response.ResponseError, Does.Contain("Could not find an APIView review"));
+        Assert.That(response.ResponseError, Does.Contain("Unknown.Package"));
+        Assert.That(response.ResponseError, Does.Contain("C#"));
+    }
+
+    [Test]
+    public async Task GetReviewUrlByPackage_WhenServiceReturnsNullWithVersion_IncludesVersionInError()
+    {
+        _mockApiViewService
+            .Setup(x => x.GetReviewUrlByPackageAsync("Unknown.Package", "C#", "1.0.0", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        APIViewResponse response = await apiViewReviewTool.GetReviewUrlByPackage("Unknown.Package", "C#", "1.0.0", CancellationToken.None);
+
+        Assert.That(response.ResponseError, Does.Contain("1.0.0"));
+    }
+
+    [TestCase(null, "C#")]
+    [TestCase("", "C#")]
+    [TestCase("Azure.Storage.Blobs", null)]
+    [TestCase("Azure.Storage.Blobs", "")]
+    public async Task GetReviewUrlByPackage_WithMissingRequiredParams_ReturnsValidationError(string? package, string? language)
+    {
+        APIViewResponse response = await apiViewReviewTool.GetReviewUrlByPackage(package!, language!, null, CancellationToken.None);
+
+        Assert.That(response.ResponseError, Does.Contain("required"));
+    }
+
+    [Test]
+    public async Task GetReviewUrlByPackage_WithUnsupportedLanguage_ReturnsValidationError()
+    {
+        APIViewResponse response = await apiViewReviewTool.GetReviewUrlByPackage("Azure.Storage.Blobs", "COBOL", null, CancellationToken.None);
+
+        Assert.That(response.ResponseError, Does.Contain("Unsupported language 'COBOL'"));
+        Assert.That(response.ResponseError, Does.Contain("Supported languages are:"));
+        Assert.That(response.ResponseError, Does.Contain("C#"));
+        Assert.That(response.ResponseError, Does.Contain("Python"));
+        _mockApiViewService.Verify(x => x.GetReviewUrlByPackageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [TestCase("csharp", "C#")]
+    [TestCase("dotnet", "C#")]
+    [TestCase("net", "C#")]
+    [TestCase(".net", "C#")]
+    [TestCase("js", "JavaScript")]
+    [TestCase("typescript", "JavaScript")]
+    [TestCase("cpp", "C++")]
+    [TestCase("golang", "Go")]
+    [TestCase("py", "Python")]
+    [TestCase("PYTHON", "Python")]
+    [TestCase("java", "Java")]
+    public async Task GetReviewUrlByPackage_WithLanguageAlias_ResolvesAndCallsService(string alias, string expectedCanonical)
+    {
+        string expectedUrl = "https://apiview.dev/review/abc123?activeApiRevisionId=rev456";
+        _mockApiViewService
+            .Setup(x => x.GetReviewUrlByPackageAsync("Azure.Core", expectedCanonical, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedUrl);
+
+        APIViewResponse response = await apiViewReviewTool.GetReviewUrlByPackage("Azure.Core", alias, null, CancellationToken.None);
+
+        Assert.That(response.Result, Is.EqualTo(expectedUrl));
+        Assert.That(response.ResponseError, Is.Null);
+        _mockApiViewService.Verify(x => x.GetReviewUrlByPackageAsync("Azure.Core", expectedCanonical, null, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [TestCase("csharp", "C#")]
+    [TestCase("dotnet", "C#")]
+    [TestCase("net", "C#")]
+    [TestCase(".net", "C#")]
+    [TestCase("js", "JavaScript")]
+    [TestCase("typescript", "JavaScript")]
+    [TestCase("cpp", "C++")]
+    [TestCase("golang", "Go")]
+    [TestCase("py", "Python")]
+    public void ResolveLanguage_WithAlias_ReturnsCanonicalName(string alias, string expectedCanonical)
+    {
+        string? result = APIViewReviewTool.ResolveLanguage(alias);
+        Assert.That(result, Is.EqualTo(expectedCanonical));
+    }
+
+    [TestCase("COBOL")]
+    [TestCase("Ruby")]
+    [TestCase("unknown")]
+    public void ResolveLanguage_WithUnknownLanguage_ReturnsNull(string language)
+    {
+        string? result = APIViewReviewTool.ResolveLanguage(language);
+        Assert.That(result, Is.Null);
+    }
+
+    [Test]
+    public async Task GetReviewUrlByPackage_WhenServiceThrowsException_ReturnsError()
+    {
+        _mockApiViewService
+            .Setup(x => x.GetReviewUrlByPackageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("Connection refused"));
+
+        APIViewResponse response = await apiViewReviewTool.GetReviewUrlByPackage("Azure.Storage.Blobs", "C#", null, CancellationToken.None);
+
+        Assert.That(response.ResponseError, Does.Contain("Failed to get review URL"));
+        Assert.That(response.ResponseError, Does.Contain("Azure.Storage.Blobs"));
+        Assert.That(response.ResponseError, Does.Contain("Connection refused"));
+    }
+
+    [Test]
+    public async Task GetReviewUrl_ViaCliCommand_CallsServiceWithCorrectParams()
+    {
+        string expectedUrl = "https://apiview.dev/review/abc?activeApiRevisionId=rev";
+        _mockApiViewService
+            .Setup(x => x.GetReviewUrlByPackageAsync("Azure.Core", "C#", null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedUrl);
+
+        var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "get-review-url");
+        var parseResult = command.Parse("get-review-url --package-name Azure.Core --language C#");
+        var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
+
+        Assert.That(response.Result, Is.EqualTo(expectedUrl));
+        Assert.That(response.ResponseError, Is.Null);
+    }
+
+    // request-copilot-review tests
+
+    [Test]
+    public async Task RequestCopilotReview_WithApiText_StartsReviewAndReturnsContent()
+    {
+        string apiText = "public class Foo { }";
+        string expectedContent = "{\"jobId\":\"job-123\"}";
+        _mockApiViewService
+            .Setup(x => x.StartCopilotReviewAsync(apiText, null, null, null, null, default))
+            .ReturnsAsync((expectedContent, 200));
+
+        APIViewResponse response = await apiViewReviewTool.RequestCopilotReview(apiText: apiText);
+
+        Assert.That(response.ResponseError, Is.Null);
+        Assert.That(response.Result, Is.EqualTo(expectedContent));
+        Assert.That(response.Message, Does.Contain("get-copilot-review"));
+    }
+
+    [Test]
+    public async Task RequestCopilotReview_WithApiViewUrl_FetchesContentAndStartsReview()
+    {
+        string revisionId = "rev-abc";
+        string reviewId = "review-xyz";
+        string apiViewUrl = $"https://apiview.dev/review/{reviewId}?activeApiRevisionId={revisionId}";
+        string fetchedText = "public class Bar { }";
+        string expectedContent = "{\"jobId\":\"job-456\"}";
+        _mockApiViewService
+            .Setup(x => x.GetRevisionContent(revisionId, reviewId, "text", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(fetchedText);
+        _mockApiViewService
+            .Setup(x => x.StartCopilotReviewAsync(fetchedText, null, null, null, null, default))
+            .ReturnsAsync((expectedContent, 200));
+
+        APIViewResponse response = await apiViewReviewTool.RequestCopilotReview(apiViewUrl: apiViewUrl);
+
+        Assert.That(response.ResponseError, Is.Null);
+        Assert.That(response.Result, Is.EqualTo(expectedContent));
+        _mockApiViewService.Verify(x => x.GetRevisionContent(revisionId, reviewId, "text", It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task RequestCopilotReview_WithNeitherUrlNorApiText_ReturnsError()
+    {
+        APIViewResponse response = await apiViewReviewTool.RequestCopilotReview();
+
+        Assert.That(response.ResponseError, Does.Contain("--url or --api-text"));
+    }
+
+    [Test]
+    public async Task RequestCopilotReview_WhenServiceReturnsEmpty_ReturnsError()
+    {
+        _mockApiViewService
+            .Setup(x => x.StartCopilotReviewAsync(It.IsAny<string>(), null, null, null, null, default))
+            .ReturnsAsync(((string?)null, 500));
+
+        APIViewResponse response = await apiViewReviewTool.RequestCopilotReview(apiText: "some text");
+
+        Assert.That(response.ResponseError, Does.Contain("Failed to start Copilot review job"));
+        Assert.That(response.ResponseError, Does.Contain("500"));
+    }
+
+    [Test]
+    public async Task RequestCopilotReview_WhenServiceThrowsException_ReturnsError()
+    {
+        _mockApiViewService
+            .Setup(x => x.StartCopilotReviewAsync(It.IsAny<string>(), null, null, null, null, default))
+            .ThrowsAsync(new Exception("Upstream error"));
+
+        APIViewResponse response = await apiViewReviewTool.RequestCopilotReview(apiText: "some text");
+
+        Assert.That(response.ResponseError, Does.Contain("Failed to submit Copilot review"));
+        Assert.That(response.ResponseError, Does.Contain("Upstream error"));
+    }
+
+    // get-copilot-review tests
+
+    [Test]
+    public async Task GetCopilotReview_WithValidJobId_ReturnsContent()
+    {
+        string jobId = "job-789";
+        string expectedContent = "{\"status\":\"completed\",\"comments\":[]}";
+        _mockApiViewService
+            .Setup(x => x.GetCopilotReviewAsync(jobId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((expectedContent, 200));
+
+        APIViewResponse response = await apiViewReviewTool.GetCopilotReview(jobId);
+
+        Assert.That(response.ResponseError, Is.Null);
+        Assert.That(response.Result, Is.EqualTo(expectedContent));
+    }
+
+    [Test]
+    public async Task GetCopilotReview_WhenServiceReturnsNull_ReturnsError()
+    {
+        string jobId = "job-missing";
+        _mockApiViewService
+            .Setup(x => x.GetCopilotReviewAsync(jobId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((string?)null, 404));
+
+        APIViewResponse response = await apiViewReviewTool.GetCopilotReview(jobId);
+
+        Assert.That(response.ResponseError, Does.Contain(jobId));
+    }
+
+    [Test]
+    public async Task GetCopilotReview_WhenServiceThrowsException_ReturnsError()
+    {
+        string jobId = "job-error";
+        _mockApiViewService
+            .Setup(x => x.GetCopilotReviewAsync(jobId, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("Timeout"));
+
+        APIViewResponse response = await apiViewReviewTool.GetCopilotReview(jobId);
+
+        Assert.That(response.ResponseError, Does.Contain("Failed to get Copilot review results"));
+        Assert.That(response.ResponseError, Does.Contain("Timeout"));
+    }
 }

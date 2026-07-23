@@ -7,14 +7,15 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace ApiView
+namespace APIView
 {
     public static class CompilationFactory
     {
         private static HashSet<string> AllowedAssemblies = new HashSet<string>(new[]
         {
             "Microsoft.Bcl.AsyncInterfaces",
-            "System.ClientModel"
+            "System.ClientModel",
+            "System.Memory.Data"
 
         }, StringComparer.InvariantCultureIgnoreCase);
 

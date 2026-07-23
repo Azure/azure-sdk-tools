@@ -1,0 +1,14 @@
+testcase: multiple_merge_groups
+parent_type: guideline
+parent_title: "DO follow naming conventions"
+memories: |
+  [
+    {"id": "mem-020", "title": "Use snake_case for Python method names", "content": "All public methods in Python SDKs must use snake_case naming. Do not use camelCase."},
+    {"id": "mem-021", "title": "Python methods should be snake_case", "content": "Method names in Python must follow snake_case convention per PEP 8 and Azure SDK guidelines."},
+    {"id": "mem-022", "title": "Async methods should have _async suffix", "content": "Asynchronous client methods should not have an _async suffix. The async client class itself distinguishes sync from async."},
+    {"id": "mem-023", "title": "Do not add _async to async method names", "content": "Async methods should have the same name as their sync counterparts. The class name (e.g. BlobAsyncClient vs BlobClient) distinguishes them."},
+    {"id": "mem-024", "title": "Use PascalCase for class names", "content": "All public class names in Python SDKs should use PascalCase naming convention."}
+  ]
+response:
+  action: "(mem-020,mem-021);(mem-022,mem-023)"
+  rationale: "Both memories make the same core recommendation that Python method names should use snake_case rather than camelCase. Both memories say async methods should not be suffixed with _async and should share the same name as sync counterparts, with the class name providing the distinction."

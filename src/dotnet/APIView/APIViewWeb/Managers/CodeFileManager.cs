@@ -7,7 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using ApiView;
+using APIView;
 using APIView.Model.V2;
 using APIViewWeb.Helpers;
 using APIViewWeb.Managers.Interfaces;
@@ -194,6 +194,7 @@ namespace APIViewWeb.Managers
                 memoryStream,
                 runAnalysis);
             }
+            codeFile?.SanitizeTokenValues();
             return codeFile;
         }
 
@@ -217,9 +218,41 @@ namespace APIViewWeb.Managers
                 memoryStream.Position = 0;
                 await _originalsRepository.UploadOriginalAsync(reviewCodeFileModel.FileId, memoryStream);
             }
+            
             await _codeFileRepository.UpsertCodeFileAsync(apiRevisionId, reviewCodeFileModel.FileId, codeFile);
             reviewCodeFileModel.ContentHash = await ComputeAPIContentHashAsync(codeFile);
             return reviewCodeFileModel;
+        }
+
+        public async Task TryDeleteCodeFileModelAsync(string apiRevisionId, APICodeFileModel codeFileModel)
+        {
+            if (codeFileModel == null)
+            {
+                return;
+            }
+
+            try
+            {
+                await _codeFileRepository.DeleteCodeFileAsync(apiRevisionId, codeFileModel.FileId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to delete code file blob for revision {ApiRevisionId} and file {FileId}", apiRevisionId, codeFileModel.FileId);
+            }
+
+            if (!codeFileModel.HasOriginal)
+            {
+                return;
+            }
+
+            try
+            {
+                await _originalsRepository.DeleteOriginalAsync(codeFileModel.FileId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to delete original blob for file {FileId}", codeFileModel.FileId);
+            }
         }
 
         /// <summary>

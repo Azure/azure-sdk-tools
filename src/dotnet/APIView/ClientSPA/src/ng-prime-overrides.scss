@@ -130,6 +130,10 @@ p-contextmenusub {
 
     .p-dialog-footer {
         padding: 0.5rem 1rem;
+
+        .p-button {
+            padding: 0.25rem 0.75rem;
+        }
     }
 }
 
@@ -793,6 +797,20 @@ html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-option:not(.
     border: 1px solid var(--border-color);
     background: var(--base-fg-color);
     color: var(--base-text-color);
+}
+
+.p-tree .p-tree-node-content {
+    color: var(--base-text-color);
+}
+
+.p-tree .p-tree-node-content a {
+    color: var(--link-color);
+    text-decoration: none;
+}
+
+.p-tree .p-tree-node-content a:hover {
+    color: var(--link-active);
+    text-decoration: underline;
 }
 
 .p-tree .p-tree-node-toggle-button {

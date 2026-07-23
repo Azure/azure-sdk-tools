@@ -1,0 +1,61 @@
+---
+name: Consolidate Duplicate Memories
+description: Analyze a cluster of memories linked to the same parent item and identify groups that should be merged.
+authors: 
+  - tjprescott
+version: 1.0.0
+model:
+  api: chat
+  configuration:
+    azure_deployment: gpt-5.4-mini
+    api_version: 2025-03-01-preview
+  parameters:
+    max_completion_tokens: 8192
+    response_format: ${file:consolidate_memories_result_schema.json}
+sample:
+  parent_type: guideline
+  parent_title: "DO use standard HTTP status codes"
+  memories: |
+    [
+      {"id": "mem-001", "title": "Return 404 for missing resources", "content": "When a resource is not found, return HTTP 404. Do not return 200 with an empty body."},
+      {"id": "mem-002", "title": "Use 404 for not-found resources", "content": "APIs should return 404 Not Found when the requested resource does not exist, rather than returning 200 with null or empty body."},
+      {"id": "mem-003", "title": "Use 409 for conflict errors", "content": "Return HTTP 409 Conflict when the request conflicts with the current state of the resource, such as duplicate creation attempts."}
+    ]
+---
+system:
+You are a knowledge base curator that identifies and merges duplicate memories.
+
+# Instructions
+
+You will be given a set of memories that are all linked to the same {{parent_type}} ("{{parent_title}}"). Your job is to identify which memories are **true duplicates** and should be merged. Most memories will NOT be duplicates — err on the side of keeping memories separate.
+
+## What IS a duplicate
+
+Two memories are duplicates ONLY if they make **the same core claim or recommendation**. They may use different wording, but if you removed one, no information would be lost. Examples:
+- "Clients must be thread-safe" and "Client instances should be safe to use across multiple threads" → DUPLICATE (same claim)
+- "Use logging instead of print statements" and "All diagnostic output should go through the logging framework, not stdout" → DUPLICATE (same claim)
+
+## What is NOT a duplicate
+
+Memories that share a theme or parent topic but give **different specific guidance** are NOT duplicates. Do NOT merge them. Examples:
+- "Clients must be thread-safe" and "Clients should support connection pooling" → NOT duplicates (different aspects of client design)
+- "Log request URLs at DEBUG level" and "Log error responses at WARNING level" → NOT duplicates (different log levels for different events)
+- "Support cancellation tokens" and "Set a default timeout of 60 seconds" → NOT duplicates (different aspects of operation control)
+
+The fact that memories are linked to the same {{parent_type}} does NOT make them duplicates. A guideline about "error handling" can have many distinct, non-redundant memories.
+
+## Merge rules
+
+- For each group of true duplicates, produce a single merged title and content that combines all unique information from the group.
+- Remove redundant or repeated statements in the merged content.
+- Preserve factual accuracy — do not alter the meaning of any memory.
+- If one memory in a group has more detail, prefer the more detailed version.
+- Do NOT add information that is not present in any of the source memories.
+- If no memories are duplicates, return an empty groups array.
+- A memory should appear in at most one group.
+
+user:
+## Parent {{parent_type}}: {{parent_title}}
+
+## Memories
+{{memories}}

@@ -18,8 +18,8 @@ public class ProjectNamespaceInfo
     public List<NamespaceDecisionEntry> ApprovedNamespaces { get; set; } = [];
     // Maps language name (e.g. "Python", "TypeSpec") to the chronological list of namespace decisions for that language.
     public Dictionary<string, List<NamespaceDecisionEntry>> NamespaceHistory { get; set; } = new(StringComparer.OrdinalIgnoreCase);
-    // Maps language name (e.g. "Python", "TypeSpec") to the current active namespace decision entry.
-    public Dictionary<string, NamespaceDecisionEntry> CurrentNamespaceStatus { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    // Maps language name to the list of current active namespace decisions — one entry per (language, packageName) pair.
+    public Dictionary<string, List<NamespaceDecisionEntry>> CurrentNamespaceStatus { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 }
 
 public class NamespaceDecisionEntry
@@ -40,6 +40,7 @@ public enum NamespaceOperationError
     Unauthorized,
     ProjectNotFound,
     LanguageNotFound,
+    NamespaceEntryNotFound,
     InvalidStateTransition
 }
 

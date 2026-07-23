@@ -182,7 +182,14 @@ button {
   font-size: clamp(9px, 0.75vw, 12px);
   font-weight: 500;
   margin-right: 0.3vw;
+  margin-bottom: 0.2vh;
   border: 1px solid;
+
+  &.unselected {
+    background-color: transparent;
+    color: var(--base-text-color);
+    border-color: var(--border-color);
+  }
 
   &.question {
     background-color: var(--severity-question-bg);
@@ -207,6 +214,51 @@ button {
     color: var(--severity-must-fix-text);
     border-color: var(--severity-must-fix-border);
   }
+
+  &.unknown {
+    background-color: var(--severity-unknown-bg);
+    color: var(--severity-unknown-text);
+    border-color: var(--severity-unknown-border);
+  }
+}
+
+.severity-state-group {
+  margin-bottom: 0.3vh;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.severity-state-label {
+  font-size: clamp(8px, 0.7vw, 11px);
+  color: var(--text-muted-color);
+  margin-bottom: 0.2vh;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.quality-score-icon-list {
+  font-size: clamp(10px, 0.85vw, 14px);
+}
+
+.quality-score-icon-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.2vh;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.quality-question-icon {
+  color: var(--severity-question-text);
+}
+
+.quality-unknown-icon {
+  color: var(--severity-unknown-text);
 }
 
 /* Diff Colors */

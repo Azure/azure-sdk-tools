@@ -1,6 +1,9 @@
 {
     "$schema": "https://raw.githubusercontent.com/azure/azure-sdk-tools/main/tools/secret-management/schema/1.0.0/access.json",
-    "appDisplayName": "access-manager-test",
+    "identityName": "access-manager-test",
+    "subscriptionId": "00000000-0000-0000-0000-000000000000",
+    "resourceGroup": "rg-testfoobaraccessmanager",
+    "location": "eastus",
     "roleBasedAccessControls": [
         {
           "role": "Contributor",

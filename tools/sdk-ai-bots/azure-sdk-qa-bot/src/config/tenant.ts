@@ -4,6 +4,19 @@ import { logger } from '../logging/logger.js';
 import { BlobClientManager } from './blobClient.js';
 import config from './config.js';
 
+export enum KnownTenants {
+  TypeSpec = 'typespec_channel_qa_bot',
+  Python = 'python_channel_qa_bot',
+  DotNet = 'dotnet_channel_qa_bot',
+  Go = 'golang_channel_qa_bot',
+  Java = 'java_channel_qa_bot',
+  JavaScript = 'javascript_channel_qa_bot',
+  Onboarding = 'azure_sdk_onboarding',
+  General = 'general_qa_bot',
+  ApiSpecReview = 'api_spec_review_bot',
+  Default = 'azure_sdk_qa_bot',
+}
+
 export interface TenantItem {
   tenant: string;
   channel_name: string;

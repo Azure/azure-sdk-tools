@@ -125,3 +125,24 @@ If the current date is outside of the valid date range of the certificate, then 
   - `linux/mac` use `ps aux | grep TestProxy`. Kill any processes that match.
 - Delete any local copies of the certificate.
 - Follow any specific `import` directions in [trusting-cert-per-language](trusting-cert-per-language.md) for your current `language`.
+
+### Why does the dev cert expire, and how do I regenerate it?
+
+The dev certificate that secures the test-proxy's HTTPS endpoint is a **self-signed, localhost-rooted certificate**. Certificates rooted to `localhost` are capped at a **maximum lifetime of 365 days** by modern browsers and operating systems. This means the certificate checked into `eng/common/testproxy/` will periodically need to be regenerated.
+
+To regenerate the certificate, use the [`rotate.sh`](../../../../eng/common/testproxy/rotate.sh) script. The script uses `openssl` to produce a new `dotnet-devcert.crt` and `dotnet-devcert.pfx` that are valid for 365 days.
+
+```bash
+# From WSL, Linux, or macOS — standing in the repo root:
+cd eng/common/testproxy
+bash rotate.sh
+```
+
+The script is equally compatible with **WSL**, **Ubuntu/Linux**, and **macOS** — any environment that has `openssl` installed.
+
+After running the script:
+
+1. Verify the new certificate: `openssl x509 -in dotnet-devcert.crt -noout -dates -subject`
+2. Commit both `dotnet-devcert.crt` and `dotnet-devcert.pfx` and open a PR against `azure-sdk-tools`.
+3. Verify on submitted eng/common PRs that `Rust`, `.NET`, and `Go` pullrequest pipelines succeed. These languages all use https by default in their test infra, so any issues with the certificate should surface immediately.
+4. Once merged, each language repo will pick up the updated certificate through their `eng/common` sync.

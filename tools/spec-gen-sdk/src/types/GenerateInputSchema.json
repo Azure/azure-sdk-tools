@@ -55,5 +55,5 @@
       "type": "string"
     }
   },
-  "required": ["specFolder", "headSha", "repoHttpsUrl", "changedFiles", "runMode", "sdkReleaseType"]
+  "required": ["specFolder", "headSha", "repoHttpsUrl", "changedFiles", "runMode", "installInstructionInput"]
 }

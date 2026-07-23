@@ -135,7 +135,6 @@ export const getIntegrationBranchName = (context: WorkflowContext, packageName: 
   return `${context.config.branchPrefix}/${packageName.replace('/', '_')}`;
 };
 
-// tslint:disable-next-line: max-line-length
 export const getPackageData = (context: WorkflowContext, result: PackageResult, suppressionContentList?: SDKSuppressionContentList): PackageData => {
   const relativeFolderPath = result.path?.filter(p => p).find(p => p.split(path.sep).includes('sdk')) || '';
   if (!relativeFolderPath) {

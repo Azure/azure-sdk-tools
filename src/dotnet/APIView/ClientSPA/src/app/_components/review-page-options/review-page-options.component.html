@@ -28,6 +28,13 @@
                     </div>
                 </ng-template>
             </ng-container>
+            <ng-container *ngIf="userProfile?.permissions && !canApproveForReviewLanguage && activeAPIRevision && activeAPIRevision!.approvers.length > 0">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-approved-pill" type="button" disabled aria-label="API revision approved">
+                        <i class="bi bi-check-circle-fill me-2"></i>Approved
+                    </button>
+                </div>
+            </ng-container>
             <span *ngIf="activeAPIRevision && activeAPIRevision!.approvers.length > 0; else noAPIRevisionApprovers" class="small text-muted mt-1">
                 Approved by: <a *ngFor="let approver of activeAPIRevision!.approvers" href="{{webAppUrl}}Assemblies/Profile/{{approver}}">{{approver}},&nbsp;</a>
             </span>
@@ -37,6 +44,13 @@
         </div>
         <div class="text-center py-2" *ngIf="review?.language !== 'TypeSpec' && review?.language !== 'Swagger'">
             <ng-container *ngIf="reviewIsApproved; else reviewIsNotApproved">
+                <ng-container *ngIf="userProfile?.permissions && !canApproveForReviewLanguage">
+                    <div class="d-grid gap-2 mb-1">
+                        <button class="btn btn-approved-pill" type="button" disabled aria-label="First release approved">
+                            <i class="bi bi-check-circle-fill me-2"></i>First Release Approved
+                        </button>
+                    </div>
+                </ng-container>
                 <span class="small text-muted mt-1" id="first-release-approval-message">Approved for first release by: <a href="{{webAppUrl}}Assemblies/Profile/{{reviewApprover}}">{{reviewApprover}}</a></span>
             </ng-container>
             <ng-template #reviewIsNotApproved>
@@ -98,11 +112,11 @@
                     <span>{{qualityScore.unresolvedSuggestionCount}}</span>
                 </div>
                 <div *ngIf="qualityScore.unresolvedQuestionCount > 0" class="d-flex justify-content-between">
-                    <span><i class="bi bi-question-circle-fill text-secondary me-1"></i>Question</span>
+                    <span><i class="bi bi-question-circle-fill quality-question-icon me-1"></i>Question</span>
                     <span>{{qualityScore.unresolvedQuestionCount}}</span>
                 </div>
                 <div *ngIf="qualityScore.unresolvedUnknownCount > 0" class="d-flex justify-content-between">
-                    <span><i class="bi bi-dash-circle-fill text-secondary me-1"></i>Unknown</span>
+                    <span><i class="bi bi-dash-circle-fill quality-unknown-icon me-1"></i>Unknown</span>
                     <span>{{qualityScore.unresolvedUnknownCount}}</span>
                 </div>
             </div>
@@ -267,21 +281,17 @@
     [style]="{ width: '40dvw' }">
     <ul class="list-group">
         <li class="list-group-item" *ngIf="hasActiveConversation">
-            <div class="float-start">
-                <p class="mb-0">There are still active conversations. Would you like to review these first?</p>
-            </div>
-            <div class="float-end">
+            <p class="mb-0">There are still active conversations. Would you like to review these first?</p>
+            <div class="d-flex align-items-center mt-2">
                 <p-toggleswitch [(ngModel)]="overrideActiveConversationforApproval"/>
-                <label class="ms-2">Override</label>
+                <label class="ms-2 mb-0">Override</label>
             </div>
         </li>
         <li class="list-group-item" *ngIf="hasFatalDiagnostics">
-            <div class="float-start">
-                <p class="mb-0">This API has fatal diagnostics.</p>
-            </div>
-            <div class="float-end">
+            <p class="mb-0">This API has fatal diagnostics.</p>
+            <div class="d-flex align-items-center mt-2">
                 <p-toggleswitch [(ngModel)]="overrideFatalDiagnosticsforApproval"/>
-                <label class="ms-2">Override</label>
+                <label class="ms-2 mb-0">Override</label>
             </div>
         </li>
       </ul>

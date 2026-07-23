@@ -16,10 +16,11 @@ import importlib
 import logging
 import shutil
 import tempfile
-from subprocess import check_call
+import time
+import re
+from subprocess import check_call, CalledProcessError, run, PIPE, TimeoutExpired
 import zipfile
 import tarfile
-import re
 try:
     import tomllib
 except ModuleNotFoundError:
@@ -34,6 +35,12 @@ from apistub._generated.treestyle.parser._model_base import (
 
 INIT_PY_FILE = "__init__.py"
 INIT_EXTENSION_SUBSTRING = ".extend_path(__path__, __name__)"
+
+# Maximum time (seconds) allowed for installing the target package. Packages with
+# large dependency trees (e.g. those pulling the Microsoft OpenTelemetry distro)
+# can make pip's backtracking resolver spend a long time evaluating candidate
+# versions on slower CI agents.
+PACKAGE_INSTALL_TIMEOUT_SECONDS = 800
 
 logging.getLogger().setLevel(logging.ERROR)
 
@@ -326,6 +333,13 @@ class StubGenerator:
         # Importing it globally can cause circular dependency since it needs NodeIndex that is defined in this file
         from apistub.nodes._module_node import ModuleNode
         from apistub.nodes import PylintParser
+        from apistub.nodes._class_node import clear_caches
+        from apistub.nodes._function_node import clear_func_caches
+
+        # Reset per-file source and astroid caches so multiple packages processed
+        # in the same Python process (e.g. the test suite) start with a clean slate.
+        clear_caches()
+        clear_func_caches()
 
         self.module_dict = {}
         mapping = MetadataMap(pkg_root_path, mapping_path=self.mapping_path)
@@ -442,5 +456,52 @@ class StubGenerator:
         return pkg_name
 
     def _install_package(self):
-        commands = [sys.executable, "-m", "pip", "install", self.pkg_path, "-q"]
-        check_call(commands, timeout=120)
+        # Use "-v" so pip streams its full progress - "Collecting" / "Downloading",
+        # the resolver's "looking at multiple versions of <pkg> ..." backtracking
+        # notices, and the "This is taking longer than usual" warning - straight to
+        # the console. That makes a slow dependency resolve easy to diagnose in CI
+        # logs. stderr is captured so we can still raise a friendly error on a Python
+        # version mismatch; stdout is inherited so the verbose log appears live.
+        commands = [sys.executable, "-m", "pip", "install", self.pkg_path, "-v"]
+        print("apistubgen: installing package: {0}".format(" ".join(commands)))
+        start = time.monotonic()
+        try:
+            result = run(
+                commands,
+                timeout=PACKAGE_INSTALL_TIMEOUT_SECONDS,
+                stderr=PIPE,
+                text=True,
+            )
+        except TimeoutExpired:
+            elapsed = time.monotonic() - start
+            print(
+                "apistubgen: pip install of {0} TIMED OUT after {1:.1f}s "
+                "(limit {2}s).".format(
+                    self.pkg_path, elapsed, PACKAGE_INSTALL_TIMEOUT_SECONDS
+                )
+            )
+            raise
+
+        elapsed = time.monotonic() - start
+        print(
+            "apistubgen: pip install of {0} finished in {1:.1f}s.".format(
+                self.pkg_path, elapsed
+            )
+        )
+        stderr = result.stderr or ""
+        if stderr:
+            print("apistubgen: pip stderr:\n{0}".format(stderr.strip()))
+
+        if result.returncode != 0:
+            # pip error format for Python version mismatch:
+            # "ERROR: Package 'x' requires a different Python: 3.10.x not in '>=3.12'"
+            match = re.search(r"requires a different Python[^']*'([^']+)'", stderr, re.IGNORECASE)
+            if match:
+                constraint = match.group(1)  # e.g. ">=3.12" or ">=3.12,<4"
+                ver_match = re.search(r">=?\s*([\d.]+)", constraint)
+                required = ver_match.group(1) if ver_match else constraint
+                raise RuntimeError(
+                    f"This package requires Python >={required}. "
+                    f"Please install at least Python {required} to generate an APIView for this package."
+                )
+            raise CalledProcessError(result.returncode, commands, stderr=stderr)

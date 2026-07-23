@@ -1,0 +1,23 @@
+testcase: absorb_all_redundant_memories
+guideline: |
+  {
+    "id": "python_design=html=python-client-naming",
+    "title": "Use consistent client naming with 'Client' suffix",
+    "content": "DO use a consistent naming convention for client classes. The client class should be named after the service it wraps, with a 'Client' suffix. For example, use BlobClient, not BlobServiceHelper or BlobManager. Never use 'Helper', 'Manager', or 'Service' as a suffix for client classes."
+  }
+memories: |
+  [
+    {
+      "id": "mem-001",
+      "title": "Client naming must use 'Client' suffix",
+      "content": "Feedback from review: All client classes should end with 'Client', not 'Helper' or 'Service'."
+    },
+    {
+      "id": "mem-002",
+      "title": "Avoid 'Manager' suffix for clients",
+      "content": "Review feedback: Do not use 'Manager' as a suffix for client classes. Use 'Client' instead."
+    }
+  ]
+response:
+  action: mem-001,mem-002
+  rationale: Both memories restate what the guideline now explicitly covers — that client classes must use 'Client' suffix and must not use 'Helper', 'Manager', or 'Service'.

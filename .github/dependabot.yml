@@ -11,13 +11,13 @@ updates:
   - package-ecosystem: "npm"
     directory: "/eng/common/tsp-client"
     schedule:
-      interval: weekly
+      interval: daily
     versioning-strategy: increase
 
   - package-ecosystem: "npm"
     directory: "/eng/common/spelling"
     schedule:
-      interval: weekly
+      interval: daily
 
   - package-ecosystem: "github-actions"
     directory: "/"

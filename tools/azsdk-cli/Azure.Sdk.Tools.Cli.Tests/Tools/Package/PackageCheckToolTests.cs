@@ -256,5 +256,34 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
             // The fix result should contain details about what was fixed
             Assert.That(fixResult.CheckStatusDetails, Does.Contain("Successfully fixed"));
         }
+
+        [Test]
+        public async Task RunPackageCheck_WithSpellingCheck_WhenFails_ReturnsNextSteps()
+        {
+            // Arrange - Setup mock to simulate spelling check failure
+            _mockGitHelper.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(_testProjectPath.DirectoryPath);
+
+            var cspellErrorResult = new ProcessResult { ExitCode = 1 };
+            cspellErrorResult.AppendStdout("test.md:1:5 - Unknown word (teh)");
+
+            _mockCommonValidationHelpers.Setup(x => x.CheckSpelling(It.IsAny<string>(), false, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new PackageCheckResponse(cspellErrorResult.ExitCode, cspellErrorResult.Output, "Spelling check failed."));
+
+            // Act
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath.DirectoryPath, PackageCheckType.Cspell, false);
+
+            // Assert - wrapper should add NextSteps for consistency with Changelog/README wrappers
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ExitCode, Is.Not.EqualTo(0));
+                Assert.That(result.NextSteps, Is.Not.Null);
+                Assert.That(result.NextSteps, Has.Count.GreaterThan(0));
+                Assert.That(result.NextSteps!.Any(s => s.Contains("--fix")), Is.True,
+                    "NextSteps should suggest using --fix flag");
+                Assert.That(result.NextSteps!.Any(s => s.Contains("cspell.json")), Is.True,
+                    "NextSteps should mention cspell.json dictionary");
+            });
+        }
     }
 }

@@ -1,9 +1,9 @@
-import { ApiVersionType } from "./types.js";
+import { ApiVersionType } from './types.js';
 
 export interface IApiVersionTypeExtractor {
-    (packageRoot: string, apiVersion?: string): Promise<ApiVersionType>;
+  (packageRoot: string, apiVersion?: string): Promise<ApiVersionType>;
 }
 
 export interface IModelOnlyChecker {
-    (packageRoot: string): Promise<boolean>;
+  (packageRoot: string, isBetaRelease?: boolean): Promise<boolean>;
 }

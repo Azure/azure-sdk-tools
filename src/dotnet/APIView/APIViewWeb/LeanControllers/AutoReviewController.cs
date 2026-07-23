@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using ApiView;
+using APIView;
 using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
@@ -68,10 +68,20 @@ public class AutoReviewController : ControllerBase
                 var codeFile = await _codeFileManager.CreateCodeFileAsync(originalName: file.FileName, fileStream: openReadStream,
                     runAnalysis: false, memoryStream: memoryStream);
 
+                string submittedPackageVersion = packageVersion;
+                string parsedArtifactPackageVersion = codeFile.PackageVersion;
+                bool shouldOverrideCodeFileVersion = string.IsNullOrWhiteSpace(parsedArtifactPackageVersion) || new AzureEngSemanticVersion(parsedArtifactPackageVersion).IsDailyDevBuild;
+                packageVersion = !string.IsNullOrWhiteSpace(submittedPackageVersion) && shouldOverrideCodeFileVersion
+                    ? packageVersion
+                    : parsedArtifactPackageVersion;
+
+                TrackPackageVersionNormalization("UploadAutoReview", codeFile.PackageName, submittedPackageVersion, parsedArtifactPackageVersion, packageVersion, shouldOverrideCodeFileVersion);
+
+                codeFile.PackageVersion = packageVersion;
                 (ReviewListItemModel review, APIRevisionListItemModel apiRevision) = await _autoReviewService.CreateAutomaticRevisionAsync(user: User, codeFile: codeFile, label: label, originalName: file.FileName, memoryStream: memoryStream, packageType: packageType, compareAllRevisions: compareAllRevisions);
                 if (apiRevision != null)
                 {
-                    apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label, setReleaseTag);
+                    apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion, label, setReleaseTag);
                     var reviewUrl = ManagerHelpers.ResolveReviewUrl(reviewId: apiRevision.ReviewId, apiRevisionId: apiRevision.Id, language: apiRevision.Language, configuration: _configuration, languageServices: _languageServices);
 
                     if (apiRevision.IsApproved)
@@ -146,13 +156,24 @@ public class AutoReviewController : ControllerBase
                 return StatusCode(statusCode: StatusCodes.Status204NoContent, $"API review code file for package {packageName} is not found in DevOps pipeline artifacts.");
             }
 
+            string submittedPackageVersion = packageVersion;
+            string parsedArtifactPackageVersion = codeFile.PackageVersion;
+            bool shouldOverrideCodeFileVersion = string.IsNullOrWhiteSpace(parsedArtifactPackageVersion) || new AzureEngSemanticVersion(parsedArtifactPackageVersion).IsDailyDevBuild;
+            packageVersion = !string.IsNullOrWhiteSpace(submittedPackageVersion) && shouldOverrideCodeFileVersion
+                ? packageVersion
+                : parsedArtifactPackageVersion;
+
+            TrackPackageVersionNormalization("CreateApiReview", codeFile.PackageName, submittedPackageVersion, parsedArtifactPackageVersion, packageVersion, shouldOverrideCodeFileVersion);
+
+            codeFile.PackageVersion = packageVersion;
+
             (ReviewListItemModel review, APIRevisionListItemModel apiRevision) = await _autoReviewService.CreateAutomaticRevisionAsync(user: User, codeFile: codeFile, label: label, originalName: originalFilePath, memoryStream: memoryStream, packageType: packageType, compareAllRevisions: compareAllRevisions, sourceBranch: sourceBranch);
             if (apiRevision == null)
             {
                 return StatusCode(statusCode: StatusCodes.Status500InternalServerError, "API revision creation returned null. This may indicate an issue with the code file parsing or revision creation process.");
             }
 
-            apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label, setReleaseTag);
+            apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion, label, setReleaseTag);
             var reviewUrl = ManagerHelpers.ResolveReviewUrl(reviewId: apiRevision.ReviewId, apiRevisionId: apiRevision.Id, language: apiRevision.Language, configuration: _configuration, languageServices: _languageServices);
 
             if (apiRevision.IsApproved)
@@ -198,5 +219,21 @@ public class AutoReviewController : ControllerBase
             });
         }
     }
+
+    private void TrackPackageVersionNormalization(string operation, string packageName, string submittedPackageVersion, string parsedArtifactPackageVersion, string normalizedPackageVersion, bool parsedVersionCanBeOverridden)
+    {
+        _telemetryClient.TrackEvent("APIViewAutomaticRevisionPackageVersionNormalization", new Dictionary<string, string>
+        {
+            { "operation", operation },
+            { "packageName", packageName ?? "null" },
+            { "submittedPackageVersion", submittedPackageVersion ?? "null" },
+            { "parsedArtifactPackageVersion", parsedArtifactPackageVersion ?? "null" },
+            { "normalizedPackageVersion", normalizedPackageVersion ?? "null" },
+            { "packageVersionSubmitted", (!string.IsNullOrWhiteSpace(submittedPackageVersion)).ToString() },
+            { "parsedVersionCanBeOverridden", parsedVersionCanBeOverridden.ToString() },
+            { "submittedPackageVersionUsed", (!string.IsNullOrWhiteSpace(submittedPackageVersion) && parsedVersionCanBeOverridden).ToString() }
+        });
+    }
+
 
 }

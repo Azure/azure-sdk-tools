@@ -1,3 +1,4 @@
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Models;
@@ -31,6 +32,7 @@ internal class JavaScriptLanguageSpecificChecksTests
         _languageChecks = new JavaScriptLanguageService(
             _processHelperMock.Object,
             _npxHelperMock.Object,
+            Mock.Of<ICopilotAgentRunner>(),
             _gitHelperMock.Object,
             NullLogger<JavaScriptLanguageService>.Instance,
             _commonValidationHelpersMock.Object,
@@ -188,6 +190,133 @@ internal class JavaScriptLanguageSpecificChecksTests
 
     #endregion
 
+    #region ApplyPatchesAsync Tests
+
+    [Test]
+    public async Task ApplyPatchesAsync_ReturnsEmpty_WhenSrcDirectoryDoesNotExist()
+    {
+        using var tempDir = TempDirectory.Create("js-apply-patches-no-src-test");
+
+        var copilotRunnerMock = new Mock<ICopilotAgentRunner>();
+        var service = CreateServiceWithCopilotRunner(copilotRunnerMock.Object);
+
+        var result = await service.ApplyPatchesAsync(
+            customizationRoot: Path.Combine(tempDir.DirectoryPath, "src"),
+            packagePath: tempDir.DirectoryPath,
+            buildContext: "some build error",
+            ct: CancellationToken.None);
+
+        Assert.That(result, Is.Empty);
+        copilotRunnerMock.Verify(r => r.RunAsync(It.IsAny<CopilotAgent<string>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task ApplyPatchesAsync_ReturnsEmpty_WhenNoJsOrTsFilesInSrc()
+    {
+        using var tempDir = TempDirectory.Create("js-apply-patches-no-files-test");
+        var srcDir = Path.Combine(tempDir.DirectoryPath, "src");
+        Directory.CreateDirectory(srcDir);
+        // Only a non-JS/TS file in src/
+        await File.WriteAllTextAsync(Path.Combine(srcDir, "readme.md"), "# readme");
+
+        var copilotRunnerMock = new Mock<ICopilotAgentRunner>();
+        var service = CreateServiceWithCopilotRunner(copilotRunnerMock.Object);
+
+        var result = await service.ApplyPatchesAsync(
+            customizationRoot: srcDir,
+            packagePath: tempDir.DirectoryPath,
+            buildContext: "some build error",
+            ct: CancellationToken.None);
+
+        Assert.That(result, Is.Empty);
+        copilotRunnerMock.Verify(r => r.RunAsync(It.IsAny<CopilotAgent<string>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task ApplyPatchesAsync_OnlyPassesSrcFiles_ToAgent_NotGeneratedFiles()
+    {
+        using var tempDir = TempDirectory.Create("js-apply-patches-src-only-test");
+        var srcDir = Path.Combine(tempDir.DirectoryPath, "src");
+        var generatedDir = Path.Combine(tempDir.DirectoryPath, "generated");
+        Directory.CreateDirectory(srcDir);
+        Directory.CreateDirectory(generatedDir);
+
+        await File.WriteAllTextAsync(Path.Combine(srcDir, "customization.ts"), "export class MyClient {}");
+        await File.WriteAllTextAsync(Path.Combine(generatedDir, "generated.ts"), "// generated code");
+
+        CopilotAgent<string>? capturedAgent = null;
+        var copilotRunnerMock = new Mock<ICopilotAgentRunner>();
+        copilotRunnerMock
+            .Setup(r => r.RunAsync(It.IsAny<CopilotAgent<string>>(), It.IsAny<CancellationToken>()))
+            .Callback<CopilotAgent<string>, CancellationToken>((agent, _) => capturedAgent = agent)
+            .ReturnsAsync(string.Empty);
+
+        var service = CreateServiceWithCopilotRunner(copilotRunnerMock.Object);
+
+        await service.ApplyPatchesAsync(
+            customizationRoot: srcDir,
+            packagePath: tempDir.DirectoryPath,
+            buildContext: "some build error",
+            ct: CancellationToken.None);
+
+        Assert.That(capturedAgent, Is.Not.Null);
+        Assert.That(capturedAgent!.Instructions, Does.Contain(Path.Combine("src", "customization.ts")));
+        Assert.That(capturedAgent.Instructions, Does.Not.Contain(Path.Combine("generated", "generated.ts")));
+        Assert.That(capturedAgent.Instructions, Does.Not.Contain("generated.ts"));
+    }
+
+    [Test]
+    public async Task ApplyPatchesAsync_CollectsAllJsAndTsExtensions()
+    {
+        using var tempDir = TempDirectory.Create("js-apply-patches-extensions-test");
+        var srcDir = Path.Combine(tempDir.DirectoryPath, "src");
+        Directory.CreateDirectory(srcDir);
+
+        // Create a file for each supported extension
+        string[] extensions = ["ts", "tsx", "mts", "cts", "js", "jsx", "mjs", "cjs"];
+        foreach (var ext in extensions)
+        {
+            await File.WriteAllTextAsync(Path.Combine(srcDir, $"file.{ext}"), $"// {ext} file");
+        }
+
+        CopilotAgent<string>? capturedAgent = null;
+        var copilotRunnerMock = new Mock<ICopilotAgentRunner>();
+        copilotRunnerMock
+            .Setup(r => r.RunAsync(It.IsAny<CopilotAgent<string>>(), It.IsAny<CancellationToken>()))
+            .Callback<CopilotAgent<string>, CancellationToken>((agent, _) => capturedAgent = agent)
+            .ReturnsAsync(string.Empty);
+
+        var service = CreateServiceWithCopilotRunner(copilotRunnerMock.Object);
+
+        await service.ApplyPatchesAsync(
+            customizationRoot: srcDir,
+            packagePath: tempDir.DirectoryPath,
+            buildContext: "some build error",
+            ct: CancellationToken.None);
+
+        Assert.That(capturedAgent, Is.Not.Null);
+        foreach (var ext in extensions)
+        {
+            Assert.That(capturedAgent!.Instructions, Does.Contain($"file.{ext}"),
+                $"Expected file.{ext} to be included in agent instructions");
+        }
+    }
+
+    private JavaScriptLanguageService CreateServiceWithCopilotRunner(ICopilotAgentRunner copilotRunner)
+        => new(
+            _processHelperMock.Object,
+            _npxHelperMock.Object,
+            copilotRunner,
+            _gitHelperMock.Object,
+            NullLogger<JavaScriptLanguageService>.Instance,
+            _commonValidationHelpersMock.Object,
+            Mock.Of<IPackageInfoHelper>(),
+            Mock.Of<IFileHelper>(),
+            Mock.Of<ISpecGenSdkConfigHelper>(),
+            Mock.Of<IChangelogHelper>());
+    
+    #endregion
+  
     #region RunAllTests Tests
 
     [Test]

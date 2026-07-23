@@ -1,16 +1,13 @@
-# Stage 1: Build the .NET CLI tool
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS dotnet-builder
+# Stage 1: Download the azsdk CLI release
+FROM mcr.microsoft.com/mirror/docker/library/debian:bookworm-slim AS cli-downloader
 
-WORKDIR /build
-
-# Copy the CLI project and its dependencies
-COPY tools/azsdk-cli ./tools/azsdk-cli
-COPY tools/codeowners-utils ./tools/codeowners-utils
-
-# Restore and build the CLI tool
-WORKDIR /build/tools/azsdk-cli
-RUN dotnet restore Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj
-RUN dotnet publish Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj -c Release -o /azsdk-cli/publish --self-contained true
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
+    && curl -fsSL -o /tmp/azsdk-cli.tar.gz \
+       https://github.com/Azure/azure-sdk-tools/releases/download/azsdk_0.6.7/Azure.Sdk.Tools.Cli-standalone-linux-x64.tar.gz \
+    && mkdir -p /azsdk-cli \
+    && tar -xzf /tmp/azsdk-cli.tar.gz -C /azsdk-cli \
+    && rm /tmp/azsdk-cli.tar.gz \
+    && rm -rf /var/lib/apt/lists/*
 
 # Stage 2: Build the Go backend
 FROM mcr.microsoft.com/devcontainers/go:1.24 as go-builder
@@ -37,8 +34,8 @@ WORKDIR /app
 # Copy the Go backend binary and all runtime files
 COPY --from=go-builder /app /app
 
-# Copy the .NET CLI tool
-COPY --from=dotnet-builder /azsdk-cli/publish /usr/local/bin/azsdk-cli
+# Copy the azsdk CLI tool
+COPY --from=cli-downloader /azsdk-cli /usr/local/bin/azsdk-cli
 
 # Configure environment for CLI tool
 ENV PATH="/usr/local/bin/azsdk-cli:${PATH}"

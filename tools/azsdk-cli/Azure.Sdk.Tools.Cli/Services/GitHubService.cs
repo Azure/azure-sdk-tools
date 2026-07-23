@@ -23,6 +23,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         private const int GitHubCliAuthTokenTimeoutMs = 120000;
         private readonly IProcessHelper processHelper;
         private GitHubClient? _gitHubClient; // Backing field for the property
+        private GitHubClient? _anonymousGitHubClient; // Backing field for the anonymous client
 
         protected GitConnection(IProcessHelper processHelper)
         {
@@ -45,7 +46,34 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        private string GetGitHubAuthToken()
+        /// <summary>
+        /// An unauthenticated GitHub client suitable for read-only access to public repositories.
+        /// </summary>
+        protected GitHubClient anonymousGitHubClient =>
+            _anonymousGitHubClient ??= new GitHubClient(new ProductHeaderValue("AzureSDKDevToolsMCP"));
+
+        /// <summary>
+        /// Runs a read-only GitHub operation anonymously first so that public data (for example, the status
+        /// or labels of a public spec pull request during SDK generation) can be read without authentication.
+        /// If the anonymous request fails (the resource is private, access is forbidden, or the rate limit is
+        /// exhausted), it is retried with an authenticated client, which prompts the user to run `gh auth login`
+        /// when no token is available.
+        /// </summary>
+        protected async Task<T> ReadWithAnonymousFallbackAsync<T>(Func<GitHubClient, Task<T>> operation, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+            try
+            {
+                return await operation(anonymousGitHubClient);
+            }
+            catch (Octokit.ApiException)
+            {
+                ct.ThrowIfCancellationRequested();
+                return await operation(gitHubClient);
+            }
+        }
+
+        protected string GetGitHubAuthToken()
         {
             var token = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
             if (!string.IsNullOrEmpty(token))
@@ -63,7 +91,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             ProcessResult result;
             try
             {
-                var options = new ProcessOptions("gh", ["auth", "token"], timeout: TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs));
+                var options = new ProcessOptions("gh", ["auth", "token"], timeout: TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs), logOutputStream:false);
                 using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs));
                 result = processHelper.Run(options, timeoutCts.Token).GetAwaiter().GetResult();
             }
@@ -99,6 +127,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
     public interface IGitHubService
     {
+        public string GetAuthToken();
         public Task<User> GetGitUserDetailsAsync(CancellationToken ct);
         public Task<List<String>> GetPullRequestChecksAsync(int pullRequestNumber, string repoName, string repoOwner, CancellationToken ct);
         public Task<PullRequest> GetPullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
@@ -123,6 +152,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<bool> HasWritePermission(string owner, string repo, string username, CancellationToken ct);
         public Task<Octokit.SearchCodeResult> SearchFilesAsync(string searchQuery, CancellationToken ct);
         public Task<Team> GetTeamByNameAsync(string org, string teamSlug, CancellationToken ct);
+        public Task<HashSet<string>> GetRepoLabels(string owner, string repo, CancellationToken ct);
     }
 
     // We enforce cancellation token usage broadly via an analyzer across this codebase,
@@ -137,6 +167,8 @@ namespace Azure.Sdk.Tools.Cli.Services
             logger = _logger;
         }
 
+        public string GetAuthToken() => GetGitHubAuthToken();
+
         public async Task<User> GetGitUserDetailsAsync(CancellationToken ct)
         {
             var user = await gitHubClient.User.Current();
@@ -145,7 +177,9 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         public async Task<PullRequest> GetPullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
         {
-            var pullRequest = await gitHubClient.PullRequest.Get(repoOwner, repoName, pullRequestNumber);
+            // Reading a pull request (including its status and labels) is a read-only operation that works
+            // anonymously for public repositories, so try anonymously first and only prompt for auth if needed.
+            var pullRequest = await ReadWithAnonymousFallbackAsync(client => client.PullRequest.Get(repoOwner, repoName, pullRequestNumber), ct);
             return pullRequest;
         }
 
@@ -185,7 +219,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             try
             {
                 logger.LogInformation("Getting head SHA for PR #{PullRequestNumber} in {Owner}/{Repo}", pullRequestNumber, repoOwner, repoName);
-                var pr = await gitHubClient.PullRequest.Get(repoOwner, repoName, pullRequestNumber);
+                var pr = await ReadWithAnonymousFallbackAsync(client => client.PullRequest.Get(repoOwner, repoName, pullRequestNumber), ct);
                 return pr?.Head?.Sha;
             }
             catch (Exception ex)
@@ -490,7 +524,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                     throw new NotFoundException($"Pull request {pullRequestNumber} not found.", System.Net.HttpStatusCode.NotFound);
                 }
 
-                var checkResponse = await gitHubClient.Check.Run.GetAllForReference(repoOwner, repoName, pr.Head.Sha);
+                var checkResponse = await ReadWithAnonymousFallbackAsync(client => client.Check.Run.GetAllForReference(repoOwner, repoName, pr.Head.Sha), ct);
                 if (checkResponse == null || checkResponse.TotalCount == 0)
                 {
                     logger.LogError("No checkruns found for pull request.");
@@ -706,6 +740,12 @@ namespace Azure.Sdk.Tools.Cli.Services
         public async Task<Team> GetTeamByNameAsync(string org, string teamSlug, CancellationToken ct)
         {
             return await gitHubClient.Organization.Team.GetByName(org, teamSlug);
+        }
+
+        public async Task<HashSet<string>> GetRepoLabels(string owner, string repo, CancellationToken ct)
+        {
+            var labels = await gitHubClient.Issue.Labels.GetAllForRepository(owner, repo);
+            return labels.Select(l => l.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
         }
     }
 }

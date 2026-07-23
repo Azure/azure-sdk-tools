@@ -4,7 +4,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using ApiView;
+using APIView;
 using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Configuration;
 
@@ -17,7 +17,7 @@ namespace APIViewWeb
         private readonly TelemetryClient _telemetryClient;
         public override string Name { get; } = "Python";
         public override string[] Extensions { get; } = { ".whl" };
-        public override string VersionString { get; } = "0.3.27";
+        public override string VersionString { get; } = "0.3.28";
         public override string ProcessName => _pythonExecutablePath;
         public override string ReviewGenerationPipelineUrl => _reviewGenerationPipelineUrl;
 

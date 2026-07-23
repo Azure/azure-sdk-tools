@@ -1,0 +1,51 @@
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "consolidate_memories_result",
+    "strict": true,
+    "schema": {
+      "type": "object",
+      "properties": {
+        "groups": {
+          "type": "array",
+          "description": "Each group represents a set of memories that should be merged into one. Only include groups of 2+ memories. Memories that are unique should NOT appear in any group.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "memory_ids": {
+                "type": "array",
+                "description": "IDs of the memories in this merge group.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "merged_title": {
+                "type": "string",
+                "description": "The consolidated title for the merged memory."
+              },
+              "merged_content": {
+                "type": "string",
+                "description": "The consolidated content for the merged memory, combining all unique information."
+              },
+              "reason": {
+                "type": "string",
+                "description": "Brief explanation of why these memories are duplicates or near-duplicates."
+              }
+            },
+            "required": [
+              "memory_ids",
+              "merged_title",
+              "merged_content",
+              "reason"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "groups"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

@@ -4,8 +4,8 @@ import { describe, it } from "vitest";
 import { writeTspLocationYaml } from "../src/utils.js";
 import { stat } from "node:fs/promises";
 
-describe("Verify tsp-location.yaml", function () {
-  it("Normalize tsp-location.yaml directories", async function () {
+describe("Verify tsp-location.yaml", () => {
+  it("Normalize tsp-location.yaml directories", async () => {
     const tspLocation = await readTspLocation("./test/examples/sdk/badtsplocation");
     const directory = normalizeDirectory(tspLocation.directory);
     assert.equal(directory, "specification/contosowidgetmanager/Contoso.WidgetManager");
@@ -23,7 +23,7 @@ describe("Verify tsp-location.yaml", function () {
     }
   });
 
-  it("Write tsp-location.yaml", async function () {
+  it("Write tsp-location.yaml", async () => {
     const tspLocation = {
       directory: "specification/contosowidgetmanager/Contoso.WidgetManager",
       commit: "1234567",
@@ -36,7 +36,7 @@ describe("Verify tsp-location.yaml", function () {
     assert.isTrue(tspLocationFile.isFile());
   });
 
-  it("Verify read tsp-location.yaml", async function () {
+  it("Verify read tsp-location.yaml", async () => {
     const tspLocation = await readTspLocation("./test/examples/");
     assert.equal(tspLocation.directory, "specification/contosowidgetmanager/Contoso.WidgetManager");
     assert.equal(tspLocation.commit, "1234567");

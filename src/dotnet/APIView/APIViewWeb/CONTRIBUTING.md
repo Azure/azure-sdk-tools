@@ -73,6 +73,7 @@ Create following Azure resources in your Azure subscription.
    | PullRequests        | /ReviewId          |
    | SamplesRevisions    | /ReviewId          |
    | Profiles            | /id                |
+   | APIVersions         | /ReviewId          |
 
 #### Azure App Configuration
 

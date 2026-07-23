@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Subject } from 'rxjs';
+import { switchMap, finalize, takeUntil } from 'rxjs/operators';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { 
     EffectivePermissions, 
@@ -30,10 +32,12 @@ interface GroupFormData {
     styleUrls: ['./admin-permissions-page.component.scss'],
     standalone: false
 })
-export class AdminPermissionsPageComponent implements OnInit {
+export class AdminPermissionsPageComponent implements OnInit, OnDestroy {
     currentUserPermissions: EffectivePermissions | null = null;
     isAdmin: boolean = false;
     isLoading: boolean = true;
+
+    private destroy$ = new Subject<void>();
 
     groups: GroupPermissions[] = [];
     selectedGroup: GroupPermissions | null = null;
@@ -62,27 +66,43 @@ export class AdminPermissionsPageComponent implements OnInit {
         private permissionsService: PermissionsService,
         private userProfileService: UserProfileService,
         private messageService: MessageService,
-        private confirmationService: ConfirmationService
+        private confirmationService: ConfirmationService,
+        private cdr: ChangeDetectorRef
     ) {}
 
     ngOnInit(): void {
         this.loadCurrentUserPermissions();
     }
 
+    ngOnDestroy(): void {
+        this.destroy$.next();
+        this.destroy$.complete();
+    }
+
     private loadCurrentUserPermissions(): void {
-        this.userProfileService.getUserProfile().subscribe({
+        this.userProfileService.getUserProfile().pipe(
+            takeUntil(this.destroy$),
+            finalize(() => {
+                if (this.isLoading && !this.isAdmin) {
+                    this.isLoading = false;
+                    this.cdr.detectChanges();
+                }
+            })
+        ).subscribe({
             next: (userProfile: UserProfile) => {
                 this.currentUserPermissions = userProfile.permissions;
                 this.isAdmin = this.permissionsService.isAdmin(this.currentUserPermissions);
-                
+
                 if (this.isAdmin) {
                     this.loadGroups();
                 } else {
                     this.isLoading = false;
+                    this.cdr.detectChanges();
                 }
             },
-            error: (err) => {
+            error: () => {
                 this.isLoading = false;
+                this.cdr.detectChanges();
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Error',
@@ -94,39 +114,33 @@ export class AdminPermissionsPageComponent implements OnInit {
 
     private loadGroups(): void {
         this.isLoading = true;
-        this.permissionsService.getAllGroups().subscribe({
-            next: (groups) => {
+        this.permissionsService.getAllGroups().pipe(
+            takeUntil(this.destroy$),
+            switchMap(groups => {
                 this.groups = groups;
-                
                 if (!this.selectedGroup) {
                     const defaultGroup = groups.find(g => g.groupId === this.defaultGroupId);
                     if (defaultGroup) {
                         this.selectedGroup = defaultGroup;
                     }
                 }
-                
-                this.loadAllUsers();
-            },
-            error: (err) => {
+                return this.permissionsService.getAllUsernames();
+            }),
+            finalize(() => {
                 this.isLoading = false;
+                this.cdr.detectChanges();
+            })
+        ).subscribe({
+            next: (users) => {
+                this.allUsers = users;
+            },
+            error: () => {
+                this.allUsers = [];
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Error',
                     detail: 'Failed to load groups'
                 });
-            }
-        });
-    }
-
-    private loadAllUsers(): void {
-        this.permissionsService.getAllUsernames().subscribe({
-            next: (users) => {
-                this.allUsers = users;
-                this.isLoading = false;
-            },
-            error: (err) => {
-                this.allUsers = [];
-                this.isLoading = false;
             }
         });
     }
@@ -392,12 +406,14 @@ export class AdminPermissionsPageComponent implements OnInit {
     }
 
     private refreshGroupsAndReselect(groupId: string): void {
-        this.permissionsService.getAllGroups().subscribe({
+        this.permissionsService.getAllGroups().pipe(
+            takeUntil(this.destroy$)
+        ).subscribe({
             next: (groups) => {
                 this.groups = groups;
                 this.selectedGroup = groups.find(g => g.groupId === groupId) || null;
             },
-            error: (err) => {
+            error: () => {
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Error',

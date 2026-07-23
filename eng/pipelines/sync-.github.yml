@@ -1,29 +1,24 @@
-# Mirror selected files and sub-directories in the .github directory to all subscribed repos
+# Mirror selected workflow files in the .github directory to all subscribed repos
 #
 # For more information on this file, please see:
-# doc/common/common_engsys.md
+# doc/engsys_workflows_and_skills.md
 parameters:
 - name: DirectoryToSync
   type: string
-  default: .github
-  # Remember to update the path includes below as well as the eng-common-workflow-enforcer.yml file if you update this list
+  default: .github/workflows
+  # Remember to update the path includes below as well as the eng-common-workflow-enforcer.yml
+  # and .github/workflows/protected-files.yml files if you update this list.
 - name: FilePatterns
   type: object
   default:
-    # Workflows
-    - 'workflows/*event*'
-    - 'workflows/post-apiview.yml'
-    # Skills
-    # Shared skills use an azsdk-common- directory prefix and live in .github/skills/
-    # in azure-sdk-tools. Only azsdk-common-* directories are synced to target repos.
-    # Repo-specific skills in .github/skills/<name>/ are not affected by this sync.
-    - 'skills/azsdk-common-*'
+    - '*event*'
+    - 'post-apiview.yml'
+    - 'protected-files.yml'
+    - 'verify-links.yml'
 - name: Repos
   type: object
   default:
     - azure-sdk
-    - azure-sdk-for-android
-    - azure-sdk-for-c
     - azure-sdk-for-cpp
     - azure-sdk-for-go
     - azure-sdk-for-ios
@@ -32,6 +27,8 @@ parameters:
     - azure-sdk-for-net
     - azure-sdk-for-python
     - azure-sdk-for-rust
+    # TODO: Re-enable syncing to specs repo after we standardize on workflow linting/naming
+    # - azure-rest-api-specs
 
 trigger: none
 
@@ -44,9 +41,8 @@ pr:
       # Workflows
       - .github/workflows/*event*
       - .github/workflows/post-apiview.yml
-      # Skills
-      - .github/skills/azsdk-common-*/**
-
+      - .github/workflows/protected-files.yml
+      - .github/workflows/verify-links.yml
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-repo-sync.yml
   parameters:

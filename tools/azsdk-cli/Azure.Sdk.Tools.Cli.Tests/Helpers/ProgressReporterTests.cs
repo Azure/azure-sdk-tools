@@ -147,7 +147,7 @@ public class ProgressReporterTests
 
     private static async Task DelayWithRetry<T>(List<T> counter, int maxRetries)
     {
-        var timeout = TimeSpan.FromMilliseconds(100);
+        var timeout = TimeSpan.FromMilliseconds(500);
         var sw = Stopwatch.StartNew();
         while (counter.Count < maxRetries && sw.Elapsed < timeout)
         {

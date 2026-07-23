@@ -1,3 +1,4 @@
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -34,7 +35,9 @@ public class CustomizedCodeUpdateToolAutoTests
         Action<Mock<IGitHelper>>? configureGit = null,
         Action<Mock<IFeedbackClassifierService>>? configureClassifier = null,
         Action<Mock<ITypeSpecCustomizationService>>? configureTspCustomization = null,
-        ITspClientHelper? tspHelper = null)
+        Action<Mock<ITypeSpecHelper>>? configureTypeSpecHelper = null,
+        ITspClientHelper? tspHelper = null,
+        INpxHelper? npxHelper = null)
     {
         var gitHelper = new Mock<IGitHelper>();
         gitHelper.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-java");
@@ -56,9 +59,10 @@ public class CustomizedCodeUpdateToolAutoTests
                 It.IsAny<string?>(),
                 It.IsAny<string?>(),
                 It.IsAny<int?>(),
+                It.IsAny<EditScope>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                (items, _, _, _, plainText, _, _, _, _) =>
+            .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                (items, _, _, _, plainText, _, _, _, _, _) =>
                 {
                     if (items.Count == 0)
                     {
@@ -116,6 +120,7 @@ public class CustomizedCodeUpdateToolAutoTests
 
         var typeSpecHelper = new Mock<ITypeSpecHelper>();
         typeSpecHelper.Setup(t => t.IsValidTypeSpecProjectPath(It.IsAny<string>())).Returns(true);
+        configureTypeSpecHelper?.Invoke(typeSpecHelper);
 
         var svc = languageService ?? new ConfigurableLanguageService();
         var tsp = tspHelper ?? new MockTspHelper();
@@ -128,7 +133,8 @@ public class CustomizedCodeUpdateToolAutoTests
             feedbackService.Object,
             classifierService.Object,
             typeSpecCustomization.Object,
-            typeSpecHelper.Object);
+            typeSpecHelper.Object,
+            npxHelper ?? new Mock<INpxHelper>().Object);
 
         return (tool, new ToolMocks(gitHelper, feedbackService, classifierService, typeSpecCustomization, typeSpecHelper));
     }
@@ -139,6 +145,46 @@ public class CustomizedCodeUpdateToolAutoTests
         Mock<IFeedbackClassifierService> ClassifierService,
         Mock<ITypeSpecCustomizationService> TypeSpecCustomization,
         Mock<ITypeSpecHelper> TypeSpecHelper);
+
+    /// <summary>
+    /// Builds a classifier configuration whose first pass returns a single CODE_CUSTOMIZATION item, so the
+    /// flow proceeds into the custom-code patch/regen pipeline (used by the optional-tspProjectPath tests).
+    /// </summary>
+    private static Action<Mock<IFeedbackClassifierService>> CodeCustomizationClassifier(string text) =>
+        c => c.Setup(x => x.ClassifyItemsAsync(
+                It.IsAny<List<FeedbackItem>>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
+                It.IsAny<int?>(),
+                It.IsAny<EditScope>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                (items, _, _, _, _, _, _, _, _, _) =>
+                {
+                    if (items.Count == 0)
+                    {
+                        var item = new FeedbackItem { Text = text };
+                        items.Add(item);
+                        return Task.FromResult(new FeedbackClassificationResponse
+                        {
+                            Classifications =
+                            [
+                                new FeedbackClassificationResponse.ItemClassificationDetails
+                                {
+                                    ItemId = item.Id,
+                                    Classification = "CODE_CUSTOMIZATION",
+                                    Reason = "Fix in customization file",
+                                    Text = text
+                                }
+                            ]
+                        });
+                    }
+                    return Task.FromResult(new FeedbackClassificationResponse { Classifications = [] });
+                });
 
     // ========================================================================
     // Happy-path: TSP fix + build succeeds
@@ -236,6 +282,7 @@ public class CustomizedCodeUpdateToolAutoTests
                     It.IsAny<string?>(),
                     It.IsAny<string?>(),
                     It.IsAny<int?>(),
+                    It.IsAny<EditScope>(),
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new FeedbackClassificationResponse { Classifications = [] }));
 
@@ -262,6 +309,7 @@ public class CustomizedCodeUpdateToolAutoTests
                     It.IsAny<string?>(),
                     It.IsAny<string?>(),
                     It.IsAny<int?>(),
+                    It.IsAny<EditScope>(),
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new FeedbackClassificationResponse { Classifications = null }));
 
@@ -272,6 +320,67 @@ public class CustomizedCodeUpdateToolAutoTests
 
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput));
+    }
+
+    [Test]
+    public async Task Classification_CopilotCliNotFound_ReturnsCopilotError()
+    {
+        var innerEx = new InvalidOperationException(
+            "Copilot CLI not found at 'runtimes/win-x64/native/copilot.exe'. Ensure the SDK NuGet package was restored correctly.");
+        var copilotEx = new CopilotCliUnavailableException(
+            "The GitHub Copilot CLI could not be found or failed to start.", innerEx);
+
+        var (tool, _) = CreateTool(configureClassifier: c =>
+            c.Setup(x => x.ClassifyItemsAsync(
+                    It.IsAny<List<FeedbackItem>>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<int?>(),
+                    It.IsAny<EditScope>(),
+                    It.IsAny<CancellationToken>()))
+                .ThrowsAsync(copilotEx));
+
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError));
+        Assert.That(result.Message, Does.Contain("Copilot CLI"));
+    }
+
+    [Test]
+    public async Task Classification_UnexpectedException_SurfacesActualError()
+    {
+        var unexpectedEx = new HttpRequestException("Network timeout connecting to AI service");
+
+        var (tool, _) = CreateTool(configureClassifier: c =>
+            c.Setup(x => x.ClassifyItemsAsync(
+                    It.IsAny<List<FeedbackItem>>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<int?>(),
+                    It.IsAny<EditScope>(),
+                    It.IsAny<CancellationToken>()))
+                .ThrowsAsync(unexpectedEx));
+
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError));
+        Assert.That(result.Message, Does.Contain("Network timeout"));
     }
 
     [Test]
@@ -289,9 +398,10 @@ public class CustomizedCodeUpdateToolAutoTests
                     It.IsAny<string?>(),
                     It.IsAny<string?>(),
                     It.IsAny<int?>(),
+                    It.IsAny<EditScope>(),
                     It.IsAny<CancellationToken>()))
-                .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                    (items, _, _, _, _, _, _, _, _) =>
+                .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                    (items, _, _, _, _, _, _, _, _, _) =>
                     {
                         var item1 = new FeedbackItem { Text = "Restructure hierarchy" };
                         var item2 = new FeedbackItem { Text = "Looks good" };
@@ -348,9 +458,10 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
                         {
                             classifyCalls++;
                             if (items.Count == 0)
@@ -416,9 +527,10 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
                         {
                             classifyCalls++;
                             if (items.Count == 0)
@@ -479,9 +591,10 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
                         {
                             if (items.Count == 0)
                             {
@@ -554,9 +667,10 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
                         {
                             classifyCalls++;
                             if (items.Count == 0)
@@ -631,9 +745,10 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
                         {
                             classifyCalls++;
                             if (items.Count == 0)
@@ -840,9 +955,10 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
                         {
                             classifyCalls++;
                             if (items.Count == 0)
@@ -927,9 +1043,10 @@ public class CustomizedCodeUpdateToolAutoTests
                     It.IsAny<string?>(),
                     It.IsAny<string?>(),
                     It.IsAny<int?>(),
+                    It.IsAny<EditScope>(),
                     It.IsAny<CancellationToken>()))
-                .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                    (items, _, _, _, plainText, _, _, _, _) =>
+                .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                    (items, _, _, _, plainText, _, _, _, _, _) =>
                     {
                         capturedFeedbackText = plainText;
                         var item = new FeedbackItem { Text = plainText ?? "" };
@@ -977,9 +1094,10 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
                         {
                             classifyCalls++;
                             if (items.Count == 0)
@@ -1055,9 +1173,10 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
                         {
                             classifyCalls++;
                             if (items.Count == 0)
@@ -1102,10 +1221,10 @@ public class CustomizedCodeUpdateToolAutoTests
         Assert.That(buildCalls, Is.EqualTo(1), "Should build exactly once after regen");
     }
 
-    [Test]
-    public async Task Regeneration_UsesTspProjectPath()
+    public async Task Regeneration_PassesTspProjectPathAsLocalSpecRepo()
     {
-        // Verify that UpdateGenerationAsync receives the tspProjectPath as localSpecRepoPath
+        // Verify that UpdateGenerationAsync receives tspProjectPath (absolute) as localSpecRepoPath.
+        // tsp-client syncCommand expects the TypeSpec project directory, not the repo root.
         string? capturedLocalSpecRepo = null;
         var tsp = new Mock<ITspClientHelper>();
         tsp.Setup(t => t.UpdateGenerationAsync(
@@ -1119,13 +1238,805 @@ public class CustomizedCodeUpdateToolAutoTests
             .ReturnsAsync(new TspToolResponse { IsSuccessful = true, TypeSpecProject = "/pkg" });
 
         var (tool, _) = CreateTool(tspHelper: tsp.Object);
+
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
         await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
-        Assert.That(capturedLocalSpecRepo, Is.EqualTo(tspDir),
-            "Should pass the tspProjectPath as localSpecRepoPath");
+        var expectedLocalSpec = Path.GetFullPath(tspDir);
+        Assert.That(capturedLocalSpecRepo, Is.EqualTo(expectedLocalSpec),
+            "Should pass the local TypeSpec project path as localSpecRepoPath");
+    }
+
+    [Test]
+    public async Task Java_RegenAfterPatches_PassesTspProjectPathAsLocalSpecRepo()
+    {
+        // Verify that the Java post-patch regeneration path also uses the local TypeSpec project path.
+        var tspDir = CreateTempDir();
+
+        string? capturedLocalSpecRepo = null;
+        var captureOnCall = 2; // Java regen is the 2nd UpdateGenerationAsync call
+        var callCount = 0;
+
+        var tsp = new Mock<ITspClientHelper>();
+        tsp.Setup(t => t.UpdateGenerationAsync(
+                It.IsAny<string>(),
+                It.IsAny<string?>(),
+                It.IsAny<bool>(),
+                It.IsAny<string?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string?, bool, string?, CancellationToken>(
+                (_, _, _, localSpec, _) =>
+                {
+                    callCount++;
+                    if (callCount == captureOnCall)
+                        capturedLocalSpecRepo = localSpec;
+                })
+            .ReturnsAsync(new TspToolResponse { IsSuccessful = true, TypeSpecProject = "/pkg" });
+
+        var svc = new ConfigurableLanguageService(
+            buildFunc: () => (false, "build error", null),
+            hasCustomizations: true,
+            patchesFunc: () => [new AppliedPatch("test.java", "patch", 1)],
+            language: SdkLanguage.Java);
+
+        var (tool, _) = CreateTool(
+            languageService: svc,
+            tspHelper: tsp.Object);
+
+        var pkg = CreateTempDir();
+        await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
+
+        var expectedLocalSpec = Path.GetFullPath(tspDir);
+        Assert.That(callCount, Is.GreaterThanOrEqualTo(2), "Should call UpdateGenerationAsync at least twice for Java");
+        Assert.That(capturedLocalSpecRepo, Is.EqualTo(expectedLocalSpec),
+            "Java post-patch regen should also receive the local TypeSpec project path");
+    }
+
+    // ========================================================================
+    // JavaScript-specific: customization apply after regeneration
+    // ========================================================================
+
+    [Test]
+    public async Task JavaScript_CustomizationApply_CalledAfterRegen()
+    {
+        var npxHelperMock = new Mock<INpxHelper>();
+        npxHelperMock.Setup(p => p.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 0 });
+
+        var svc = new ConfigurableLanguageService(
+            language: SdkLanguage.JavaScript,
+            hasCustomizations: true);
+
+        var (tool, _) = CreateTool(
+            languageService: svc,
+            npxHelper: npxHelperMock.Object,
+            configureGit: g => g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-js"));
+
+        var pkg = CreateTempDir();
+        Directory.CreateDirectory(Path.Combine(pkg, "src"));
+        var tspDir = CreateTempDir();
+
+        await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
+
+        npxHelperMock.Verify(p => p.Run(
+            It.Is<NpxOptions>(o =>
+                o.Args.Contains("dev-tool") &&
+                o.Args.Contains("customization") &&
+                o.Args.Contains("apply")),
+            It.IsAny<CancellationToken>()), Times.AtLeastOnce,
+            "Should run 'npx dev-tool customization apply' for JavaScript packages with customizations");
+    }
+
+    [Test]
+    public async Task JavaScript_NoCustomizations_SkipsCustomizationApply()
+    {
+        var npxHelperMock = new Mock<INpxHelper>();
+        npxHelperMock.Setup(p => p.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 0 });
+
+        var svc = new ConfigurableLanguageService(
+            language: SdkLanguage.JavaScript,
+            hasCustomizations: false);
+
+        var (tool, _) = CreateTool(
+            languageService: svc,
+            npxHelper: npxHelperMock.Object,
+            configureGit: g => g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-js"));
+
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
+
+        npxHelperMock.Verify(p => p.Run(
+            It.Is<NpxOptions>(o =>
+                o.Args.Contains("dev-tool") &&
+                o.Args.Contains("customization") &&
+                o.Args.Contains("apply")),
+            It.IsAny<CancellationToken>()), Times.Never,
+            "Should NOT run 'npx dev-tool customization apply' when no customizations exist");
+    }
+
+    [Test]
+    public async Task JavaScript_BuildFailsAfterCustomizationApply_FallsThroughToPatching()
+    {
+        var buildCalls = 0;
+        var npxHelperMock = new Mock<INpxHelper>();
+        npxHelperMock.Setup(p => p.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 0 });
+
+        var svc = new ConfigurableLanguageService(
+            language: SdkLanguage.JavaScript,
+            hasCustomizations: true,
+            isCustomizedCodeUpdateSupported: true,
+            buildFunc: () =>
+            {
+                buildCalls++;
+                // First build fails (after regen + customization apply), second succeeds (after patches)
+                return buildCalls <= 1
+                    ? (false, "error TS2345: Argument of type 'string' is not assignable", null)
+                    : (true, null, null);
+            },
+            patchesFunc: () => [new AppliedPatch("src/client.ts", "Fixed type mismatch", 1)]);
+
+        var (tool, _) = CreateTool(
+            languageService: svc,
+            npxHelper: npxHelperMock.Object,
+            configureGit: g => g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-js"));
+
+        var pkg = CreateTempDir();
+        Directory.CreateDirectory(Path.Combine(pkg, "src"));
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.AppliedPatches, Has.Count.EqualTo(1));
+        Assert.That(result.Message, Does.Contain("Build passed after code customization patches."));
+    }
+
+    [Test]
+    public async Task NonJavaScript_SkipsCustomizationApply()
+    {
+        var npxHelperMock = new Mock<INpxHelper>();
+        npxHelperMock.Setup(p => p.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 0 });
+
+        var svc = new ConfigurableLanguageService(
+            language: SdkLanguage.Java,
+            hasCustomizations: true);
+
+        var (tool, _) = CreateTool(languageService: svc, npxHelper: npxHelperMock.Object);
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
+
+        npxHelperMock.Verify(p => p.Run(
+            It.Is<NpxOptions>(o =>
+                o.Args.Contains("dev-tool") &&
+                o.Args.Contains("customization") &&
+                o.Args.Contains("apply")),
+            It.IsAny<CancellationToken>()), Times.Never,
+            "Should NOT run 'npx dev-tool customization apply' for non-JavaScript languages");
+    }
+
+    // ========================================================================
+    // EditScope.CustomCode (custom-code-only; never edits spec inputs)
+    // ========================================================================
+
+    [Test]
+    public async Task CustomCodeScope_TspApplicableOnly_ReturnsSpecChangeRequired_DoesNotApplyTsp()
+    {
+        // The default classifier returns a single TSP_APPLICABLE item with no code customizations.
+        // With CustomCode scope this must NOT be applied (no spec-input edits); instead it is reported
+        // as out of scope with errorCode 'SpecChangeRequired'.
+        var (tool, mocks) = CreateTool();
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            tspProjectPath: tspDir,
+            customizationRequest: "Rename FooClient to BarClient",
+            editScope: EditScope.CustomCode,
+            ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.SpecChangeRequired));
+        Assert.That(result.SpecChangeRequired, Is.Not.Null.And.Count.EqualTo(1));
+
+        // Critically, CustomCode scope must never apply spec-input (client.tsp) customizations.
+        mocks.TypeSpecCustomization.Verify(t => t.ApplyCustomizationAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string?>(),
+            It.IsAny<int>(),
+            It.IsAny<CancellationToken>()), Times.Never,
+            "CustomCode scope must not apply TypeSpec (spec-input) customizations.");
+    }
+
+    [Test]
+    public async Task CustomCodeScope_CodeCustomization_PatchesApplied_BuildSucceeds()
+    {
+        // CustomCode scope still performs custom-code patching: a CODE_CUSTOMIZATION item flows through
+        // the patch pipeline exactly like update mode, and no spec-input edits are made.
+        var buildCalls = 0;
+        var svc = new ConfigurableLanguageService(
+            buildFunc: () =>
+            {
+                buildCalls++;
+                return buildCalls <= 1
+                    ? (false, "error: cannot find symbol maxSpeakers", null)
+                    : (true, null, null);
+            },
+            hasCustomizations: true,
+            patchesFunc: () =>
+            [
+                new AppliedPatch("SpeechTranscriptionCustomization.java", "Renamed maxSpeakers to maxSpeakerCount", 2)
+            ],
+            language: SdkLanguage.Java);
+
+        var (tool, mocks) = CreateTool(
+            languageService: svc,
+            configureClassifier: c =>
+                c.Setup(x => x.ClassifyItemsAsync(
+                        It.IsAny<List<FeedbackItem>>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
+                        It.IsAny<CancellationToken>()))
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
+                        {
+                            if (items.Count == 0)
+                            {
+                                var item = new FeedbackItem { Text = "Rename maxSpeakers to maxSpeakerCount in customization code" };
+                                items.Add(item);
+                                return Task.FromResult(new FeedbackClassificationResponse
+                                {
+                                    Classifications =
+                                    [
+                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        {
+                                            ItemId = item.Id,
+                                            Classification = "CODE_CUSTOMIZATION",
+                                            Reason = "Fix is in the customization file",
+                                            Text = "Rename maxSpeakers to maxSpeakerCount in customization code"
+                                        }
+                                    ]
+                                });
+                            }
+                            return Task.FromResult(new FeedbackClassificationResponse { Classifications = [] });
+                        }));
+
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            tspProjectPath: tspDir,
+            customizationRequest: "Rename maxSpeakers to maxSpeakerCount",
+            editScope: EditScope.CustomCode,
+            ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.Message, Does.Contain("Build passed after code customization patches."));
+        Assert.That(result.AppliedPatches, Is.Not.Null.And.Count.EqualTo(1));
+        Assert.That(result.ErrorCode, Is.Null);
+
+        mocks.TypeSpecCustomization.Verify(t => t.ApplyCustomizationAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string?>(),
+            It.IsAny<int>(),
+            It.IsAny<CancellationToken>()), Times.Never,
+            "CustomCode scope must not apply TypeSpec (spec-input) customizations even when patching code.");
+    }
+
+    [Test]
+    public async Task CustomCodeScope_MixedSpecAndCode_PatchesCode_SurfacesSpecChangeRequired()
+    {
+        // Mixed feedback: one TSP_APPLICABLE (out of scope) + one CODE_CUSTOMIZATION (in scope).
+        // CustomCode scope patches the code, reports the spec item as out of scope, and never edits client.tsp.
+        var buildCalls = 0;
+        var svc = new ConfigurableLanguageService(
+            buildFunc: () =>
+            {
+                buildCalls++;
+                return buildCalls <= 1
+                    ? (false, "error: cannot find symbol foo", null)
+                    : (true, null, null);
+            },
+            hasCustomizations: true,
+            patchesFunc: () => [new AppliedPatch("Customization.java", "Fixed reference", 1)],
+            language: SdkLanguage.Java);
+
+        var (tool, mocks) = CreateTool(
+            languageService: svc,
+            configureClassifier: c =>
+                c.Setup(x => x.ClassifyItemsAsync(
+                        It.IsAny<List<FeedbackItem>>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
+                        It.IsAny<CancellationToken>()))
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
+                        {
+                            if (items.Count == 0)
+                            {
+                                var specItem = new FeedbackItem { Text = "Rename client (spec change)" };
+                                var codeItem = new FeedbackItem { Text = "Fix customization reference" };
+                                items.Add(specItem);
+                                items.Add(codeItem);
+                                return Task.FromResult(new FeedbackClassificationResponse
+                                {
+                                    Classifications =
+                                    [
+                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        {
+                                            ItemId = specItem.Id, Classification = "TSP_APPLICABLE",
+                                            Reason = "Needs spec edit", Text = "Rename client (spec change)"
+                                        },
+                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        {
+                                            ItemId = codeItem.Id, Classification = "CODE_CUSTOMIZATION",
+                                            Reason = "Fix in customization file", Text = "Fix customization reference"
+                                        }
+                                    ]
+                                });
+                            }
+                            return Task.FromResult(new FeedbackClassificationResponse { Classifications = [] });
+                        }));
+
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            tspProjectPath: tspDir,
+            customizationRequest: "mixed feedback",
+            editScope: EditScope.CustomCode,
+            ct: CancellationToken.None);
+
+        // Code path succeeds; the spec item is surfaced as out of scope rather than applied.
+        Assert.That(result.SpecChangeRequired, Is.Not.Null.And.Count.EqualTo(1));
+        Assert.That(result.AppliedPatches, Is.Not.Null.And.Count.EqualTo(1));
+
+        mocks.TypeSpecCustomization.Verify(t => t.ApplyCustomizationAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string?>(),
+            It.IsAny<int>(),
+            It.IsAny<CancellationToken>()), Times.Never,
+            "CustomCode scope must not apply spec-input customizations even in mixed feedback.");
+    }
+
+    [Test]
+    public async Task DefaultScope_TspApplicable_AppliesCustomization_BackwardCompatible()
+    {
+        // Default (Update) mode is unchanged: TSP_APPLICABLE items are applied via the
+        // TypeSpec customization service. Guards backward compatibility of the new mode param.
+        var (tool, mocks) = CreateTool();
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            tspProjectPath: tspDir,
+            customizationRequest: "Rename FooClient to BarClient",
+            ct: CancellationToken.None);
+
+        Assert.That(result.SpecChangeRequired, Is.Null);
+        mocks.TypeSpecCustomization.Verify(t => t.ApplyCustomizationAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string?>(),
+            It.IsAny<int>(),
+            It.IsAny<CancellationToken>()), Times.AtLeastOnce,
+            "Update mode must still apply TypeSpec customizations for TSP_APPLICABLE items.");
+    }
+
+    // ========================================================================
+    // EditScope.All (default: both spec inputs and custom code in scope)
+    // ========================================================================
+
+    [Test]
+    public async Task AllScope_MixedSpecAndCode_AppliesSpec_AndPatchesCode()
+    {
+        // Explicit EditScope.All: both axes are in scope. A mixed feedback set (one TSP_APPLICABLE +
+        // one CODE_CUSTOMIZATION) must apply the spec-input customization AND patch the custom code,
+        // and surface neither out-of-scope list.
+        var buildCalls = 0;
+        var svc = new ConfigurableLanguageService(
+            buildFunc: () =>
+            {
+                buildCalls++;
+                return buildCalls <= 1
+                    ? (false, "error: cannot find symbol foo", null)
+                    : (true, null, null);
+            },
+            hasCustomizations: true,
+            patchesFunc: () => [new AppliedPatch("Customization.java", "Fixed reference", 1)],
+            language: SdkLanguage.Java);
+
+        var (tool, mocks) = CreateTool(
+            languageService: svc,
+            configureClassifier: c =>
+                c.Setup(x => x.ClassifyItemsAsync(
+                        It.IsAny<List<FeedbackItem>>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
+                        It.IsAny<CancellationToken>()))
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
+                        {
+                            if (items.Count == 0)
+                            {
+                                var specItem = new FeedbackItem { Text = "Rename client (spec change)" };
+                                var codeItem = new FeedbackItem { Text = "Fix customization reference" };
+                                items.Add(specItem);
+                                items.Add(codeItem);
+                                return Task.FromResult(new FeedbackClassificationResponse
+                                {
+                                    Classifications =
+                                    [
+                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        {
+                                            ItemId = specItem.Id, Classification = "TSP_APPLICABLE",
+                                            Reason = "Needs spec edit", Text = "Rename client (spec change)"
+                                        },
+                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        {
+                                            ItemId = codeItem.Id, Classification = "CODE_CUSTOMIZATION",
+                                            Reason = "Fix in customization file", Text = "Fix customization reference"
+                                        }
+                                    ]
+                                });
+                            }
+                            return Task.FromResult(new FeedbackClassificationResponse { Classifications = [] });
+                        }));
+
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            tspProjectPath: tspDir,
+            customizationRequest: "mixed feedback",
+            editScope: EditScope.All,
+            ct: CancellationToken.None);
+
+        // Both axes applied: spec via the TypeSpec customization service, code via patches.
+        Assert.That(result.AppliedPatches, Is.Not.Null.And.Count.EqualTo(1));
+        Assert.That(result.SpecChangeRequired, Is.Null, "All scope edits spec inputs, so nothing is out of scope.");
+        Assert.That(result.CustomCodeChangeRequired, Is.Null, "All scope patches custom code, so nothing is out of scope.");
+
+        mocks.TypeSpecCustomization.Verify(t => t.ApplyCustomizationAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string?>(),
+            It.IsAny<int>(),
+            It.IsAny<CancellationToken>()), Times.AtLeastOnce,
+            "All scope must apply TypeSpec (spec-input) customizations for TSP_APPLICABLE items.");
+    }
+
+    // ========================================================================
+    // EditScope.SpecInputs (spec-inputs-only; never patches custom code)
+    // ========================================================================
+
+    [Test]
+    public async Task SpecInputsScope_MixedSpecAndCode_AppliesSpec_DoesNotPatchCode()
+    {
+        // EditScope.SpecInputs: spec inputs are in scope but custom code is NOT. A mixed feedback set must
+        // apply the spec-input customization, report the CODE_CUSTOMIZATION item as out of scope, and never
+        // invoke custom-code patching.
+        var patchCalls = 0;
+        var svc = new ConfigurableLanguageService(
+            buildFunc: () => (false, "error: cannot find symbol foo", null),
+            hasCustomizations: true,
+            patchesFunc: () =>
+            {
+                patchCalls++;
+                return [new AppliedPatch("Customization.java", "Fixed reference", 1)];
+            },
+            language: SdkLanguage.Java);
+
+        var (tool, mocks) = CreateTool(
+            languageService: svc,
+            configureClassifier: c =>
+                c.Setup(x => x.ClassifyItemsAsync(
+                        It.IsAny<List<FeedbackItem>>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<int?>(),
+                        It.IsAny<EditScope>(),
+                        It.IsAny<CancellationToken>()))
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, EditScope, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _, _) =>
+                        {
+                            if (items.Count == 0)
+                            {
+                                var specItem = new FeedbackItem { Text = "Rename client (spec change)" };
+                                var codeItem = new FeedbackItem { Text = "Fix customization reference" };
+                                items.Add(specItem);
+                                items.Add(codeItem);
+                                return Task.FromResult(new FeedbackClassificationResponse
+                                {
+                                    Classifications =
+                                    [
+                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        {
+                                            ItemId = specItem.Id, Classification = "TSP_APPLICABLE",
+                                            Reason = "Needs spec edit", Text = "Rename client (spec change)"
+                                        },
+                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        {
+                                            ItemId = codeItem.Id, Classification = "CODE_CUSTOMIZATION",
+                                            Reason = "Fix in customization file", Text = "Fix customization reference"
+                                        }
+                                    ]
+                                });
+                            }
+                            return Task.FromResult(new FeedbackClassificationResponse { Classifications = [] });
+                        }));
+
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            tspProjectPath: tspDir,
+            customizationRequest: "mixed feedback",
+            editScope: EditScope.SpecInputs,
+            ct: CancellationToken.None);
+
+        // Spec was applied; the code item is reported as out of scope and never patched.
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.CustomCodeChangeRequired));
+        Assert.That(result.CustomCodeChangeRequired, Is.Not.Null.And.Count.EqualTo(1));
+        Assert.That(result.SpecChangeRequired, Is.Null, "SpecInputs scope edits spec inputs, so spec items are not out of scope.");
+        Assert.That(result.AppliedPatches, Is.Null.Or.Empty, "SpecInputs scope must not patch custom code.");
+        Assert.That(patchCalls, Is.EqualTo(0), "SpecInputs scope must never invoke ApplyPatchesAsync.");
+
+        mocks.TypeSpecCustomization.Verify(t => t.ApplyCustomizationAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string?>(),
+            It.IsAny<int>(),
+            It.IsAny<CancellationToken>()), Times.AtLeastOnce,
+            "SpecInputs scope must apply TypeSpec (spec-input) customizations for TSP_APPLICABLE items.");
+    }
+
+    [Test]
+    public async Task InvalidEditScope_ReturnsInvalidInput()
+    {
+        // editScope is a non-nullable flags enum; an undefined value (e.g. a stray bit outside the All
+        // mask) is rejected up front with InvalidInput rather than silently treated as no-scope.
+        var (tool, _) = CreateTool();
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            tspProjectPath: tspDir,
+            customizationRequest: "Rename FooClient to BarClient",
+            editScope: (EditScope)99,
+            ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput));
+    }
+
+    // ========================================================================
+    // Optional tspProjectPath (auto-resolve regen from pinned tsp-location.yaml)
+    // ========================================================================
+
+    [Test]
+    public async Task CustomCodeScope_NoTspProjectPath_Java_RegeneratesFromPinnedCommit()
+    {
+        // CustomCode scope does not edit spec inputs, so a local TypeSpec checkout is optional. When
+        // tspProjectPath is omitted, the Java post-patch regeneration must pass localSpecRepoPath == null,
+        // causing tsp-client to regenerate from the commit pinned in the package's tsp-location.yaml.
+        string? capturedLocalSpecRepo = "SENTINEL";
+        var callCount = 0;
+
+        var tsp = new Mock<ITspClientHelper>();
+        tsp.Setup(t => t.UpdateGenerationAsync(
+                It.IsAny<string>(),
+                It.IsAny<string?>(),
+                It.IsAny<bool>(),
+                It.IsAny<string?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string?, bool, string?, CancellationToken>(
+                (_, _, _, localSpec, _) =>
+                {
+                    callCount++;
+                    // CODE_CUSTOMIZATION only (no TSP_APPLICABLE), so the Java post-patch regen is the
+                    // first and only UpdateGenerationAsync call.
+                    if (callCount == 1)
+                        capturedLocalSpecRepo = localSpec;
+                })
+            .ReturnsAsync(new TspToolResponse { IsSuccessful = true, TypeSpecProject = "/pkg" });
+
+        var buildCalls = 0;
+        var svc = new ConfigurableLanguageService(
+            buildFunc: () =>
+            {
+                buildCalls++;
+                return buildCalls <= 1 ? (false, "error: cannot find symbol foo", null) : (true, null, null);
+            },
+            hasCustomizations: true,
+            patchesFunc: () => [new AppliedPatch("Customization.java", "Fixed reference", 1)],
+            language: SdkLanguage.Java);
+
+        var (tool, _) = CreateTool(
+            languageService: svc,
+            tspHelper: tsp.Object,
+            configureClassifier: CodeCustomizationClassifier("Fix customization reference"));
+
+        var pkg = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            customizationRequest: "Fix customization reference",
+            editScope: EditScope.CustomCode,
+            ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.ErrorCode, Is.Null);
+        Assert.That(callCount, Is.GreaterThanOrEqualTo(1), "Java regen should run even without a local spec path.");
+        Assert.That(capturedLocalSpecRepo, Is.Null,
+            "With tspProjectPath omitted, Java regen must pass localSpecRepoPath == null so tsp-client uses the pinned tsp-location.yaml commit.");
+    }
+
+    [Test]
+    public async Task CustomCodeScope_NoTspProjectPath_NonJava_SucceedsWithoutValidatingSpecPath()
+    {
+        // For a non-Java language the custom-code flow never regenerates, so tspProjectPath is unnecessary.
+        // When omitted, the tool must not attempt to validate a (non-existent) spec path and must succeed.
+        var buildCalls = 0;
+        var svc = new ConfigurableLanguageService(
+            buildFunc: () =>
+            {
+                buildCalls++;
+                return buildCalls <= 1 ? (false, "error CS0103: name does not exist", null) : (true, null, null);
+            },
+            hasCustomizations: true,
+            patchesFunc: () => [new AppliedPatch("Customization.cs", "Fixed reference", 1)],
+            language: SdkLanguage.DotNet);
+
+        var (tool, mocks) = CreateTool(
+            languageService: svc,
+            configureClassifier: CodeCustomizationClassifier("Fix customization reference"),
+            configureGit: g => g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net"));
+
+        var pkg = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            customizationRequest: "Fix customization reference",
+            editScope: EditScope.CustomCode,
+            ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.ErrorCode, Is.Null);
+        mocks.TypeSpecHelper.Verify(t => t.IsValidTypeSpecProjectPath(It.IsAny<string>()), Times.Never,
+            "When tspProjectPath is omitted in CustomCode scope, the tool must not validate a spec path.");
+    }
+
+    [Test]
+    public async Task CustomCodeScope_WithTspProjectPath_Java_UsesLocalSpecRepo()
+    {
+        // When a local TypeSpec project path IS provided in CustomCode scope, the Java post-patch regen
+        // should use it as localSpecRepoPath (regenerate from the local checkout).
+        string? capturedLocalSpecRepo = null;
+        var callCount = 0;
+
+        var tsp = new Mock<ITspClientHelper>();
+        tsp.Setup(t => t.UpdateGenerationAsync(
+                It.IsAny<string>(),
+                It.IsAny<string?>(),
+                It.IsAny<bool>(),
+                It.IsAny<string?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string?, bool, string?, CancellationToken>(
+                (_, _, _, localSpec, _) =>
+                {
+                    callCount++;
+                    if (callCount == 1)
+                        capturedLocalSpecRepo = localSpec;
+                })
+            .ReturnsAsync(new TspToolResponse { IsSuccessful = true, TypeSpecProject = "/pkg" });
+
+        var buildCalls = 0;
+        var svc = new ConfigurableLanguageService(
+            buildFunc: () =>
+            {
+                buildCalls++;
+                return buildCalls <= 1 ? (false, "error: cannot find symbol foo", null) : (true, null, null);
+            },
+            hasCustomizations: true,
+            patchesFunc: () => [new AppliedPatch("Customization.java", "Fixed reference", 1)],
+            language: SdkLanguage.Java);
+
+        var (tool, _) = CreateTool(
+            languageService: svc,
+            tspHelper: tsp.Object,
+            configureClassifier: CodeCustomizationClassifier("Fix customization reference"));
+
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            customizationRequest: "Fix customization reference",
+            tspProjectPath: tspDir,
+            editScope: EditScope.CustomCode,
+            ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.True);
+        Assert.That(capturedLocalSpecRepo, Is.EqualTo(Path.GetFullPath(tspDir)),
+            "When provided, the local TypeSpec project path should be passed to the Java regen as localSpecRepoPath.");
+    }
+
+    [Test]
+    public async Task SpecInputsScope_NoTspProjectPath_ReturnsInvalidInput()
+    {
+        // SpecInputs scope edits local spec inputs (client.tsp), which requires a local TypeSpec project
+        // path. Omitting it must fail fast with InvalidInput rather than proceeding.
+        var (tool, _) = CreateTool();
+        var pkg = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            customizationRequest: "Rename FooClient to BarClient",
+            editScope: EditScope.SpecInputs,
+            ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput));
+        Assert.That(result.ResponseError, Does.Contain("TypeSpec project path").IgnoreCase);
+    }
+
+    [Test]
+    public async Task AllScope_NoTspProjectPath_ReturnsInvalidInput()
+    {
+        // The default scope (All) includes spec inputs, so omitting tspProjectPath must fail fast with
+        // InvalidInput just like SpecInputs scope.
+        var (tool, _) = CreateTool();
+        var pkg = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            packagePath: pkg,
+            customizationRequest: "Rename FooClient to BarClient",
+            ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput));
     }
 
     // ========================================================================
@@ -1208,7 +2119,7 @@ internal class MockTspHelper : ITspClientHelper
         => Task.FromResult(new TspToolResponse { IsSuccessful = _updateSuccess, TypeSpecProject = tspLocationDirectory, ResponseError = _updateError });
 
     public Task<TspToolResponse> InitializeGenerationAsync(string workingDirectory, string tspConfigPath, string[]? additionalArgs = null, CancellationToken ct = default)
-        => Task.FromResult(new TspToolResponse { IsSuccessful = true, TypeSpecProject = workingDirectory });
+        => Task.FromResult(new TspToolResponse { IsSuccessful = _updateSuccess, TypeSpecProject = workingDirectory, ResponseError = _updateError });
 }
 
 /// <summary>
@@ -1241,3 +2152,5 @@ internal class CallCountMockTspHelper : ITspClientHelper
     public Task<TspToolResponse> InitializeGenerationAsync(string workingDirectory, string tspConfigPath, string[]? additionalArgs = null, CancellationToken ct = default)
         => Task.FromResult(new TspToolResponse { IsSuccessful = true, TypeSpecProject = workingDirectory });
 }
+
+

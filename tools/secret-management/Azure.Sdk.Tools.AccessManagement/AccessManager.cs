@@ -1,11 +1,11 @@
-﻿using Azure.Core;
+using Azure.Core;
 using Azure.Identity;
 
 namespace Azure.Sdk.Tools.AccessManagement;
 
 public class AccessManager
 {
-    public static async Task Run(ILogger logger, List<string> configFiles)
+    public static async Task Run(ILogger logger, List<string> configFiles, ReconcileOptions options)
     {
         AccessConfig accessConfig;
         TokenCredential credential;
@@ -14,8 +14,11 @@ public class AccessManager
         try
         {
             accessConfig = new AccessConfig(logger, configFiles);
-            credential = new ChainedTokenCredential(new AzurePowerShellCredential(), new AzureCliCredential());
-            reconciler = new Reconciler(logger, new GraphClient(logger, credential), new RbacClient(logger, credential), new GitHubClient(logger));
+            credential = new ChainedTokenCredential(new AzureCliCredential(), new AzurePowerShellCredential());
+            reconciler = new Reconciler(
+                logger,
+                new ManagedIdentityClient(logger, credential),
+                new RbacClient(logger, credential));
         }
         catch (Exception ex)
         {
@@ -26,6 +29,6 @@ public class AccessManager
         logger.LogInformation(accessConfig.ToString());
         logger.LogInformation("---");
         logger.LogInformation("Reconciling...");
-        await reconciler.Reconcile(accessConfig);
+        await reconciler.Reconcile(accessConfig, options);
     }
 }

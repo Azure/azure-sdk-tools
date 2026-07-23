@@ -40,7 +40,7 @@
             color: var(--alert-warn-color);
             border: 1px solid var(--alert-warn-border-color);
         }
-        
+
         &.success {
             background-color: var(--alert-success-bg);
             color: var(--alert-success-color);
@@ -203,6 +203,13 @@
         border-color: var(--severity-must-fix-border);
         box-shadow: inset 0 0 0 1px var(--severity-must-fix-border);
     }
+
+    &.sev-unknown.sev-on {
+        background: var(--severity-unknown-bg);
+        color: var(--severity-unknown-text);
+        border-color: var(--severity-unknown-border);
+        box-shadow: inset 0 0 0 1px var(--severity-unknown-border);
+    }
 }
 
 /* --- Source buttons --- */
@@ -229,24 +236,24 @@
     i { font-size: 0.72rem; }
 
     &.src-human.src-on {
-        background: var(--alert-info-bg);
-        color: var(--alert-info-color);
-        border-color: var(--alert-info-border-color);
-        box-shadow: inset 0 0 0 1px var(--alert-info-border-color);
+        background: color-mix(in srgb, var(--human-source-color) 14%, transparent);
+        color: var(--human-source-color);
+        border-color: color-mix(in srgb, var(--human-source-color) 52%, var(--border-color));
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--human-source-color) 52%, var(--border-color));
     }
 
     &.src-ai.src-on {
         background: var(--alert-success-bg);
         color: var(--alert-success-color);
-        border-color: var(--alert-success-border-color);
-        box-shadow: inset 0 0 0 1px var(--alert-success-border-color);
+        border-color: color-mix(in srgb, var(--alert-success-border-color) 70%, #000);
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--alert-success-border-color) 70%, #000);
     }
 
     &.src-diag.src-on {
-        background: var(--alert-warn-bg);
-        color: var(--alert-warn-color);
-        border-color: var(--alert-warn-border-color);
-        box-shadow: inset 0 0 0 1px var(--alert-warn-border-color);
+        background: color-mix(in srgb, var(--diagnostic-accent-color) 16%, transparent);
+        color: var(--diagnostic-accent-color);
+        border-color: color-mix(in srgb, var(--diagnostic-accent-color) 54%, var(--border-color));
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--diagnostic-accent-color) 54%, var(--border-color));
     }
 }
 

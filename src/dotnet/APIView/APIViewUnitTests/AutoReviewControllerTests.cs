@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using ApiView;
+using APIView;
 using APIViewWeb;
 using APIViewWeb.LeanControllers;
 using APIViewWeb.LeanModels;
@@ -12,6 +13,9 @@ using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using FluentAssertions;
 using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Channel;
+using Microsoft.ApplicationInsights.DataContracts;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -29,6 +33,7 @@ namespace APIViewUnitTests
         private readonly Mock<IConfiguration> _mockConfiguration;
         private readonly Mock<INamespaceManager> _mockNamespaceManager;
         private readonly List<LanguageService> _languageServices;
+        private readonly CapturingTelemetryChannel _telemetryChannel;
         private readonly TelemetryClient _telemetryClient;
         private readonly AutoReviewController _controller;
 
@@ -44,7 +49,11 @@ namespace APIViewUnitTests
             {
                 new MockLanguageService("C#", false)
             };
-            _telemetryClient = new TelemetryClient();
+            _telemetryChannel = new CapturingTelemetryChannel();
+            _telemetryClient = new TelemetryClient(new TelemetryConfiguration
+            {
+                TelemetryChannel = _telemetryChannel
+            });
 
             _controller = new AutoReviewController(
                 _mockCodeFileManager.Object,
@@ -238,9 +247,9 @@ namespace APIViewUnitTests
         public async Task UploadAutoReview_WhenFormParamsAreProvided_IgnoresQueryString()
         {
             _controller.ControllerContext.HttpContext.Request.QueryString = new QueryString(
-                "?label=qs-label&packageVersion=1.0.0&setReleaseTag=false");
+                "?label=qs-label&packageVersion=1.0.0-alpha.20260101.1&setReleaseTag=false");
             var mockFile = CreateMockFormFile("test.json", "dummy content");
-            SetupStandardMocks();
+            SetupStandardMocks(codeFilePackageVersion: "1.0.0-alpha.20260101.1");
 
             await _controller.UploadAutoReview(mockFile.Object, label: "form-label", packageVersion: "2.0.0", setReleaseTag: true);
 
@@ -570,7 +579,7 @@ namespace APIViewUnitTests
         }
 
         [Fact]
-        public async Task UploadAutoReview_UpdatesRevisionMetadataWithProvidedVersion()
+        public async Task UploadAutoReview_UpdatesRevisionMetadataWithProvidedAlphaVersion()
         {
             // Arrange
             var mockFile = CreateMockFormFile("test.json", "dummy content");
@@ -579,7 +588,7 @@ namespace APIViewUnitTests
                 Name = "test",
                 Language = "C#",
                 PackageName = "TestPackage",
-                PackageVersion = "1.0.0"
+                PackageVersion = "1.2.0-alpha.20240305.1"
             };
 
             var mockReview = new ReviewListItemModel()
@@ -627,61 +636,190 @@ namespace APIViewUnitTests
                 Times.Once);
         }
 
-        [Fact]
-        public async Task UploadAutoReview_UsesCodeFileVersionWhenVersionNotProvided()
+        [Theory]
+        [InlineData("2.4.0-alpha.20260407.4", "2.4.0",  "2.4.0",            "2.4.0")] // CI daily-build version → overridden by caller-supplied version
+        [InlineData("2.4.0-beta.1",           "2.4.0",  "2.4.0-beta.1", "2.4.0-beta.1")] // intentional beta prerelease → code file preserved
+        [InlineData("2.4.0",                  null,     "2.4.0",            "2.4.0")] // null caller: code file version used unchanged
+        [InlineData("2.4.0",                  "",       "2.4.0",            "2.4.0")] // empty caller: code file version used
+        [InlineData("2.4.0",                  "   ",    "2.4.0",            "2.4.0")] // whitespace-only caller: code file version used
+        public async Task UploadAutoReview_NormalizesPackageVersionOnCodeFileBeforeCallingService(
+            string codeFileVersion, string callerSuppliedVersion, string expectedCodeFileVersion, string expectedMetadataVersion)
         {
-            var mockFile = CreateMockFormFile("test.json", "dummy content");
+            var mockFile = CreateMockFormFile("azure-core-http-compat.json", "dummy content");
             var mockCodeFile = new CodeFile()
             {
-                Name = "test",
-                Language = "C#",
-                PackageName = "TestPackage",
-                PackageVersion = "1.0.0"
+                Name = "azure-core-http-compat",
+                Language = "TypeScript",
+                PackageName = "azure-core-http-compat",
+                PackageVersion = codeFileVersion
             };
 
             var mockReview = new ReviewListItemModel()
             {
-                Id = "test-review-id",
-                PackageName = "TestPackage",
-                Language = "C#",
-                IsApproved = false
+                Id = "review-id",
+                PackageName = "azure-core-http-compat",
+                Language = "TypeScript",
+                IsApproved = true
             };
 
             var mockApiRevision = new APIRevisionListItemModel()
             {
-                Id = "test-revision-id",
-                ReviewId = "test-review-id",
-                Language = "C#",
-                IsApproved = false
+                Id = "revision-id",
+                ReviewId = "review-id",
+                Language = "TypeScript",
+                IsApproved = true
             };
 
-            _mockCodeFileManager.Setup(m => m.CreateCodeFileAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<MemoryStream>(), It.IsAny<Stream>(), It.IsAny<string>()))
+            _mockCodeFileManager.Setup(m => m.CreateCodeFileAsync(
+                    It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<MemoryStream>(), It.IsAny<Stream>(), It.IsAny<string>()))
                 .ReturnsAsync(mockCodeFile);
 
             _mockAutoReviewService.Setup(m => m.CreateAutomaticRevisionAsync(
-                    It.IsAny<ClaimsPrincipal>(),
-                    It.IsAny<CodeFile>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<MemoryStream>(),
-                    It.IsAny<string>(),
-                    It.IsAny<bool>(),
-                    It.IsAny<string>()))
+                    It.IsAny<ClaimsPrincipal>(), It.IsAny<CodeFile>(), It.IsAny<string>(), It.IsAny<string>(),
+                    It.IsAny<MemoryStream>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>()))
                 .ReturnsAsync((mockReview, mockApiRevision));
 
-            _mockApiRevisionsManager.Setup(m => m.UpdateRevisionMetadataAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
+            _mockApiRevisionsManager.Setup(m => m.UpdateRevisionMetadataAsync(
+                    It.IsAny<APIRevisionListItemModel>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
                 .ReturnsAsync(mockApiRevision);
 
             _mockConfiguration.Setup(c => c["ReviewUrl"]).Returns("https://test.com");
 
-            await _controller.UploadAutoReview(mockFile.Object, "test-label");
+            await _controller.UploadAutoReview(mockFile.Object, "test-label", packageVersion: callerSuppliedVersion);
+
+            _mockAutoReviewService.Verify(m => m.CreateAutomaticRevisionAsync(
+                It.IsAny<ClaimsPrincipal>(),
+                It.Is<CodeFile>(cf => cf.PackageVersion == expectedCodeFileVersion),
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<MemoryStream>(),
+                It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>()),
+                Times.Once,
+                $"Expected CodeFile.PackageVersion == \"{expectedCodeFileVersion}\" but the service received a different value");
 
             _mockApiRevisionsManager.Verify(m => m.UpdateRevisionMetadataAsync(
-                mockApiRevision,
-                "1.0.0", // Should use the code file's version
-                "test-label",
-                false), // setReleaseTag = false by default
+                mockApiRevision, expectedMetadataVersion, "test-label", false),
                 Times.Once);
+
+            EventTelemetry telemetry = GetPackageVersionNormalizationEvent("UploadAutoReview");
+            telemetry.Properties["packageName"].Should().Be("azure-core-http-compat");
+            telemetry.Properties["submittedPackageVersion"].Should().Be(callerSuppliedVersion ?? "null");
+            telemetry.Properties["parsedArtifactPackageVersion"].Should().Be(codeFileVersion);
+            telemetry.Properties["normalizedPackageVersion"].Should().Be(expectedCodeFileVersion);
+            telemetry.Properties["packageVersionSubmitted"].Should().Be((!string.IsNullOrWhiteSpace(callerSuppliedVersion)).ToString());
+            telemetry.Properties["submittedPackageVersionUsed"].Should().Be((expectedCodeFileVersion == callerSuppliedVersion).ToString());
+        }
+
+        [Theory]
+        [InlineData("2.4.0-alpha.20260407.4", "2.4.0",  "2.4.0",            "2.4.0")] // CI daily-build version → overridden by caller-supplied version
+        [InlineData("2.4.0-beta.1",           "2.4.0",  "2.4.0-beta.1", "2.4.0-beta.1")] // intentional beta prerelease → code file preserved
+        [InlineData("2.4.0",                  null,     "2.4.0",            "2.4.0")] // null caller: code file version used unchanged
+        [InlineData("2.4.0",                  "",       "2.4.0",            "2.4.0")] // empty caller: code file version used
+        [InlineData("2.4.0",                  "   ",    "2.4.0",            "2.4.0")] // whitespace-only caller: code file version used
+        public async Task CreateApiReview_NormalizesPackageVersionOnCodeFileBeforeCallingService(
+            string codeFileVersion, string callerSuppliedVersion, string expectedCodeFileVersion, string expectedMetadataVersion)
+        {
+            const string packageName = "azure-core-http-compat";
+            const string language = "TypeScript";
+
+            CodeFile codeFile = new()
+            {
+                Name = packageName,
+                Language = language,
+                PackageName = packageName,
+                PackageVersion = codeFileVersion
+            };
+
+            _mockCodeFileManager.Setup(m => m.GetCodeFileAsync(
+                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                    It.IsAny<MemoryStream>(), It.IsAny<string>(), null, It.IsAny<string>(), null, null))
+                .ReturnsAsync(new CodeFileResult() { CodeFile = codeFile });
+
+            var mockReview = new ReviewListItemModel()
+            {
+                Id = "review-id",
+                PackageName = packageName,
+                Language = language,
+                IsApproved = true
+            };
+
+            var mockApiRevision = new APIRevisionListItemModel()
+            {
+                Id = "revision-id",
+                ReviewId = "review-id",
+                Language = language,
+                IsApproved = true
+            };
+
+            _mockAutoReviewService.Setup(m => m.CreateAutomaticRevisionAsync(
+                    It.IsAny<ClaimsPrincipal>(), It.IsAny<CodeFile>(), It.IsAny<string>(), It.IsAny<string>(),
+                    It.IsAny<MemoryStream>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>()))
+                .ReturnsAsync((mockReview, mockApiRevision));
+
+            _mockApiRevisionsManager.Setup(m => m.UpdateRevisionMetadataAsync(
+                    It.IsAny<APIRevisionListItemModel>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
+                .ReturnsAsync(mockApiRevision);
+
+            _mockConfiguration.Setup(c => c["ReviewUrl"]).Returns("https://test.com");
+
+            await _controller.CreateApiReview(
+                buildId: "12345",
+                artifactName: "packages",
+                originalFilePath: $"{packageName}.whl",
+                reviewFilePath: $"{packageName}_typescript.json",
+                label: "CI Build",
+                repoName: "Azure/azure-sdk-for-js",
+                packageName: packageName,
+                compareAllRevisions: true,
+                project: "internal",
+                packageVersion: callerSuppliedVersion);
+
+            _mockAutoReviewService.Verify(m => m.CreateAutomaticRevisionAsync(
+                It.IsAny<ClaimsPrincipal>(),
+                It.Is<CodeFile>(cf => cf.PackageVersion == expectedCodeFileVersion),
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<MemoryStream>(),
+                It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>()),
+                Times.Once,
+                $"Expected CodeFile.PackageVersion == \"{expectedCodeFileVersion}\" but the service received a different value");
+
+            _mockApiRevisionsManager.Verify(m => m.UpdateRevisionMetadataAsync(
+                mockApiRevision, expectedMetadataVersion, "CI Build", false),
+                Times.Once);
+
+            EventTelemetry telemetry = GetPackageVersionNormalizationEvent("CreateApiReview");
+            telemetry.Properties["packageName"].Should().Be(packageName);
+            telemetry.Properties["submittedPackageVersion"].Should().Be(callerSuppliedVersion ?? "null");
+            telemetry.Properties["parsedArtifactPackageVersion"].Should().Be(codeFileVersion);
+            telemetry.Properties["normalizedPackageVersion"].Should().Be(expectedCodeFileVersion);
+            telemetry.Properties["packageVersionSubmitted"].Should().Be((!string.IsNullOrWhiteSpace(callerSuppliedVersion)).ToString());
+            telemetry.Properties["submittedPackageVersionUsed"].Should().Be((expectedCodeFileVersion == callerSuppliedVersion).ToString());
+        }
+
+        private EventTelemetry GetPackageVersionNormalizationEvent(string operation)
+        {
+            return _telemetryChannel.Telemetries
+                .OfType<EventTelemetry>()
+                .Single(t => t.Name == "APIViewAutomaticRevisionPackageVersionNormalization" && t.Properties["operation"] == operation);
+        }
+
+        private class CapturingTelemetryChannel : ITelemetryChannel
+        {
+            public List<ITelemetry> Telemetries { get; } = new();
+
+            public bool? DeveloperMode { get; set; }
+            public string EndpointAddress { get; set; }
+
+            public void Send(ITelemetry item)
+            {
+                Telemetries.Add(item);
+            }
+
+            public void Flush()
+            {
+            }
+
+            public void Dispose()
+            {
+            }
         }
 
         [Theory]

@@ -17,15 +17,19 @@ from src._apiview import (
 from src._database_manager import DatabaseManager
 
 # Minimal fields needed from the Comments container for metrics computation.
-# Omits large payload fields like CommentText, CreatedBy, CreatedOn, ElementId, etc.
 METRICS_COMMENT_FIELDS = [
     "ReviewId",
     "APIRevisionId",
     "CommentSource",
     "IsDeleted",
+    "IsGeneric",
     "IsResolved",
     "Upvotes",
     "Downvotes",
+    "ConfidenceScore",
+    "ThreadId",
+    "ElementId",
+    "CreatedOn",
 ]
 
 
@@ -56,6 +60,13 @@ class MetricsSegment:
     implicit_good_ai_comment_count: Optional[int] = None
     implicit_bad_ai_comment_count: Optional[int] = None
     neutral_ai_comment_count: Optional[int] = None
+
+    # Average confidence scores per category (None when no confidence scores available)
+    avg_confidence_upvoted: Optional[float] = None
+    avg_confidence_downvoted: Optional[float] = None
+    avg_confidence_deleted: Optional[float] = None
+    avg_confidence_implicit_good: Optional[float] = None
+    avg_confidence_implicit_bad: Optional[float] = None
 
     # Dimension (e.g., {"language": "python"}) or {} for "All"
     dimension: Dict[str, str] = field(default_factory=dict)
@@ -139,6 +150,59 @@ def get_metrics_report(
     return report
 
 
+def _thread_started_in_window(
+    comment: dict, thread_start_index: dict, window_start_iso: str, window_end_iso: str
+) -> bool:
+    """Return True if the thread containing *comment* started within the window.
+
+    *thread_start_index* is produced by :func:`src._apiview.get_thread_start_dates` and
+    maps ThreadId (or ElementId for unthreaded comments) to earliest CreatedOn.
+    """
+    thread_id = comment.get("ThreadId")
+    if thread_id:
+        thread_start = thread_start_index.get(thread_id)
+    else:
+        thread_start = thread_start_index.get(comment.get("ElementId"))
+    if not thread_start:
+        return True
+    return window_start_iso <= thread_start <= window_end_iso
+
+
+def _filter_to_root_comments(comments: list[dict]) -> list[dict]:
+    """Reduce comments to thread roots only.
+
+    For comments that share a ``ThreadId``, only the earliest comment (by
+    ``CreatedOn``) is kept.  For comments without a ``ThreadId``, only the
+    earliest comment per ``(ReviewId, ElementId)`` is kept.  This matches the
+    key scheme used by :func:`get_thread_start_dates` which scopes unthreaded
+    lookups by ReviewId.
+    """
+    from collections import defaultdict
+
+    threaded: dict[str, list[dict]] = defaultdict(list)
+    unthreaded: dict[tuple, list[dict]] = defaultdict(list)
+
+    for c in comments:
+        thread_id = c.get("ThreadId")
+        if thread_id:
+            threaded[thread_id].append(c)
+        else:
+            key = (c.get("ReviewId"), c.get("ElementId"))
+            unthreaded[key].append(c)
+
+    roots: list[dict] = []
+
+    for group in threaded.values():
+        group.sort(key=lambda x: x.get("CreatedOn") or "\uffff")
+        roots.append(group[0])
+
+    for group in unthreaded.values():
+        group.sort(key=lambda x: x.get("CreatedOn") or "\uffff")
+        roots.append(group[0])
+
+    return roots
+
+
 def _build_metrics_segment(
     *,
     start_date: str,
@@ -146,6 +210,7 @@ def _build_metrics_segment(
     reviews: list[ActiveReviewMetadata],
     comments: list[dict],
     language: Optional[str] = None,
+    thread_start_index: Optional[dict] = None,
 ) -> MetricsSegment:
     """Build a MetricsSegment from reviews and raw comment dicts.
 
@@ -201,19 +266,34 @@ def _build_metrics_segment(
     approved_revision_ids = set()
     revision_has_copilot = {}
 
-    for rev in all_revisions:
-        for revision_id in rev.revision_ids:
-            all_revision_ids.add(revision_id)
-            revision_has_copilot[revision_id] = rev.has_copilot_review
-            if rev.approval is not None:
-                approved_revision_ids.add(revision_id)
+    for review in reviews:
+        for rev in review.revisions:
+            for revision_id in rev.revision_ids:
+                all_revision_ids.add(revision_id)
+                revision_has_copilot[revision_id] = rev.has_copilot_review
+                if rev.approval is not None:
+                    approved_revision_ids.add(revision_id)
 
-    # Filter comments to only those belonging to approved revisions, excluding Diagnostic
+    # Reduce to root comments only (one per thread/line) so replies are not counted separately.
+    root_comments = _filter_to_root_comments([c for c in comments if c.get("CommentSource") != "Diagnostic"])
+
+    # When a thread start index is provided, only count threads
+    # that originated within the current window (applies to both human and AI).
+    if thread_start_index is not None:
+        from src._utils import to_iso8601
+
+        window_start_iso = to_iso8601(start_date)
+        window_end_iso = to_iso8601(end_date, end_of_day=True)
+
+        root_comments = [
+            c
+            for c in root_comments
+            if _thread_started_in_window(c, thread_start_index, window_start_iso, window_end_iso)
+        ]
+
+    # Filter root comments to only those belonging to approved revisions
     # (for human comment counts - comment_makeup metrics)
-    approved_revision_comments = [
-        c for c in comments
-        if c.get("APIRevisionId") in approved_revision_ids and c.get("CommentSource") != "Diagnostic"
-    ]
+    approved_revision_comments = [c for c in root_comments if c.get("APIRevisionId") in approved_revision_ids]
 
     # Categorize comments based on whether the revision has Copilot (for comment_makeup)
     human_comments_with_copilot_count = 0
@@ -224,20 +304,21 @@ def _build_metrics_segment(
         has_copilot = revision_has_copilot.get(rev_id, False)
         source = comment.get("CommentSource")
 
+        if source == "AIGenerated":
+            continue
+
         if has_copilot:
-            if source != "AIGenerated":
-                human_comments_with_copilot_count += 1
+            human_comments_with_copilot_count += 1
         else:
-            # For revisions without Copilot, all comments should be human
-            if source != "AIGenerated":
-                human_comments_without_copilot_count += 1
+            human_comments_without_copilot_count += 1
 
     metrics.human_comment_count_with_ai = human_comments_with_copilot_count
     metrics.human_comment_count_without_ai = human_comments_without_copilot_count
 
     # For comment_quality: count ALL AI comments across ALL active revisions (approved + unapproved)
     all_ai_comments = [
-        c for c in comments
+        c
+        for c in root_comments
         if c.get("APIRevisionId") in all_revision_ids and c.get("CommentSource") == "AIGenerated"
     ]
 
@@ -249,22 +330,43 @@ def _build_metrics_segment(
     implicit_bad_count = 0
     neutral_count = 0
 
+    # Accumulate confidence scores per category
+    scores_upvoted: list[float] = []
+    scores_downvoted: list[float] = []
+    scores_deleted: list[float] = []
+    scores_implicit_good: list[float] = []
+    scores_implicit_bad: list[float] = []
+
     for c in all_ai_comments:
+        score = c.get("ConfidenceScore")
         if c.get("IsDeleted"):
             deleted_count += 1
+            if score is not None:
+                scores_deleted.append(score)
         elif c.get("Downvotes"):
             # Any downvote trumps upvotes
             downvoted_count += 1
+            if score is not None:
+                scores_downvoted.append(score)
         elif c.get("Upvotes"):
             upvoted_count += 1
+            if score is not None:
+                scores_upvoted.append(score)
         elif c.get("IsResolved"):
             implicit_good_count += 1
+            if score is not None:
+                scores_implicit_good.append(score)
         elif c.get("APIRevisionId") in approved_revision_ids:
             # In approved revision, not resolved, no votes = implicit bad
             implicit_bad_count += 1
+            if score is not None:
+                scores_implicit_bad.append(score)
         else:
             # In unapproved revision, not resolved, no votes = neutral
             neutral_count += 1
+
+    def _avg(scores: list[float]) -> Optional[float]:
+        return sum(scores) / len(scores) if scores else None
 
     metrics.total_ai_comment_count = len(all_ai_comments)
     metrics.deleted_ai_comment_count = deleted_count
@@ -273,6 +375,12 @@ def _build_metrics_segment(
     metrics.implicit_good_ai_comment_count = implicit_good_count
     metrics.implicit_bad_ai_comment_count = implicit_bad_count
     metrics.neutral_ai_comment_count = neutral_count
+
+    metrics.avg_confidence_upvoted = _avg(scores_upvoted)
+    metrics.avg_confidence_downvoted = _avg(scores_downvoted)
+    metrics.avg_confidence_deleted = _avg(scores_deleted)
+    metrics.avg_confidence_implicit_good = _avg(scores_implicit_good)
+    metrics.avg_confidence_implicit_bad = _avg(scores_implicit_bad)
 
     return metrics
 
@@ -344,6 +452,26 @@ def _build_metrics_report(data: Dict[str, MetricsSegment]) -> dict:
                     _calculate_rate(segment.implicit_bad_ai_comment_count, segment.total_ai_comment_count)
                 ),
                 "neutral_count": segment.neutral_ai_comment_count,
+                # Average confidence scores per category
+                "avg_confidence_good": (
+                    fmt(segment.avg_confidence_upvoted) if segment.avg_confidence_upvoted is not None else None
+                ),
+                "avg_confidence_bad": (
+                    fmt(segment.avg_confidence_downvoted) if segment.avg_confidence_downvoted is not None else None
+                ),
+                "avg_confidence_deleted": (
+                    fmt(segment.avg_confidence_deleted) if segment.avg_confidence_deleted is not None else None
+                ),
+                "avg_confidence_implicit_good": (
+                    fmt(segment.avg_confidence_implicit_good)
+                    if segment.avg_confidence_implicit_good is not None
+                    else None
+                ),
+                "avg_confidence_implicit_bad": (
+                    fmt(segment.avg_confidence_implicit_bad)
+                    if segment.avg_confidence_implicit_bad is not None
+                    else None
+                ),
             },
             "comment_makeup": {
                 "human_comment_count_without_copilot": segment.human_comment_count_without_ai,
@@ -373,7 +501,10 @@ def _build_metrics_data(
         pretty_languages_to_omit.extend([lang.lower() for lang in exclude])
 
     active_reviews, raw_comments = get_active_reviews(
-        start_date, end_date, environment=environment, omit_languages=pretty_languages_to_omit,
+        start_date,
+        end_date,
+        environment=environment,
+        omit_languages=pretty_languages_to_omit,
         select_fields=METRICS_COMMENT_FIELDS,
     )
 

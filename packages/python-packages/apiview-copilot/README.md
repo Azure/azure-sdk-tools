@@ -18,11 +18,12 @@ ENVIRONMENT_NAME="staging"
 
 ## Review Process and Stages
 
-For each section of the APIView, the review process now consists of three distinct stages:
+For each section of the APIView, the review process consists of two prompt stages:
 
 - **Guideline Stage:** Reviews the section against language-specific guidelines.
 - **Context Stage:** Reviews the section using the full context (guidelines, examples, and memories) retrieved for that section.
-- **Generic Stage:** Applies generic review rules and best practices.
+
+> **Note:** A generic review stage previously existed but is now **disabled** for all languages.
 
 ## Creating Reviews
 
@@ -179,4 +180,10 @@ On Windows CMD.exe, use `avc.bat` in lieu of `avc` for all CLI commands.
 
 ## Documentation
 
-For more information, visit the [API Documentation](https://apiviewuat.azurewebsites.net/swagger/index.html).
+- [Overview](./docs/overview.md) — Architecture overview and Azure resource dependencies
+- [API Review Algorithm](./docs/api-review.md) — Detailed description of the review pipeline stages
+- [Knowledge Base](./docs/kb.md) — Knowledge base structure and how it is used at review time
+- [Metrics](./docs/metrics.md) — Metrics collected, why, and how to access them
+- [CLI Reference](./docs/cli.md) — All `avc` CLI commands for local development
+
+For the REST API documentation, visit the [API Documentation](https://apiviewuat.azurewebsites.net/swagger/index.html).

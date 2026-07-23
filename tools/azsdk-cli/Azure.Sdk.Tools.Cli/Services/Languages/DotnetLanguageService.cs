@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.CopilotAgents.Tools;
 using Azure.Sdk.Tools.Cli.Helpers;
@@ -47,6 +48,49 @@ public sealed partial class DotnetLanguageService: LanguageService
 
     public override SdkLanguage Language { get; } = SdkLanguage.DotNet;
     public override bool IsCustomizedCodeUpdateSupported => true;
+
+    private const string PluginRelativePath = "eng/packages/plugins/client/Client.Plugin";
+    private static readonly TimeSpan PluginBuildTimeout = TimeSpan.FromMinutes(5);
+
+    /// <summary>
+    /// Pre-builds the .NET emitter plugin so that pre-compiled DLLs are available in dist/
+    /// before tsp-client runs. This prevents GeneratorHandler from attempting to build the
+    /// plugin .csproj from a copied location where relative paths are broken.
+    /// </summary>
+    public override async Task PreGenerateAsync(string repoRoot, CancellationToken ct)
+    {
+        var pluginDir = Path.Combine(repoRoot, PluginRelativePath);
+        if (!Directory.Exists(pluginDir))
+        {
+            logger.LogWarning("Plugin directory not found at {PluginDir}, skipping pre-build", pluginDir);
+            return;
+        }
+
+        logger.LogInformation("Pre-building .NET plugin at {PluginDir}", pluginDir);
+        var options = new ProcessOptions(
+            DotNetCommand, ["build"],
+            workingDirectory: pluginDir,
+            timeout: PluginBuildTimeout);
+
+        try
+        {
+            var result = await processHelper.Run(options, ct);
+            if (result.ExitCode != 0)
+            {
+                logger.LogWarning(
+                    "Plugin pre-build failed (exit code {ExitCode}). Continuing — GeneratorHandler may attempt its own build.\n{Output}",
+                    result.ExitCode, result.Output);
+            }
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Plugin pre-build failed. Continuing — GeneratorHandler may attempt its own build.");
+        }
+    }
 
     // .NET packages have their main csproj in a src/ subdirectory
     protected override string[] PackageManifestPatterns => ["*.csproj"];
@@ -254,6 +298,44 @@ public sealed partial class DotnetLanguageService: LanguageService
 
     public override async Task<TestRunResponse> RunAllTests(string packagePath, TestMode testMode = TestMode.Playback, IDictionary<string, string>? liveTestEnvironment = null, TimeSpan? timeout = null, CancellationToken ct = default)
     {
+        var testModeValue = testMode.ToString().ToLowerInvariant();
+        var testFramework = DetectTestFramework(packagePath);
+
+        var envVars = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        // Merge caller-provided environment first so that mode variables set below
+        // always take precedence and cannot be silently overridden by a .env file.
+        if (liveTestEnvironment != null)
+        {
+            foreach (var (key, value) in liveTestEnvironment)
+            {
+                envVars[key] = value;
+            }
+        }
+
+        switch (testFramework)
+        {
+            case DotnetTestFramework.AzureCoreTestFramework:
+                logger.LogInformation("Detected Azure.Core.TestFramework, setting AZURE_TEST_MODE={testMode}", testModeValue);
+                envVars["AZURE_TEST_MODE"] = testModeValue;
+                break;
+            case DotnetTestFramework.ClientModelTestFramework:
+                logger.LogInformation("Detected Microsoft.ClientModel.TestFramework, setting CLIENTMODEL_TEST_MODE={testMode}", testModeValue);
+                envVars["CLIENTMODEL_TEST_MODE"] = testModeValue;
+                break;
+            default:
+                // Could not determine — set both to be safe
+                logger.LogInformation("Could not detect test framework, setting both AZURE_TEST_MODE and CLIENTMODEL_TEST_MODE={testMode}", testModeValue);
+                envVars["AZURE_TEST_MODE"] = testModeValue;
+                envVars["CLIENTMODEL_TEST_MODE"] = testModeValue;
+                break;
+        }
+
+        // Use caller-provided timeout if specified, otherwise use mode-based defaults
+        timeout ??= testMode == TestMode.Playback
+            ? ProcessOptions.DEFAULT_PROCESS_TIMEOUT
+            : TimeSpan.FromMinutes(10);
+
         var testsPath = Path.Combine(packagePath, "tests");
         var workingDirectory = Directory.Exists(testsPath) ? testsPath : packagePath;
 
@@ -261,13 +343,108 @@ public sealed partial class DotnetLanguageService: LanguageService
                 command: "dotnet",
                 args: ["test"],
                 workingDirectory: workingDirectory,
-                timeout: timeout
+                timeout: timeout,
+                environmentVariables: envVars
             ),
             ct
         );
 
-        return new TestRunResponse(result);
+        var response = new TestRunResponse(result);
+
+        // After successful record mode, push test assets to the assets repo
+        if (testMode == TestMode.Record && result.ExitCode == 0)
+        {
+            await PushTestAssets(packagePath, response, ct);
+        }
+
+        return response;
     }
+
+    /// <summary>
+    /// Detects which test framework a .NET test project uses by examining .csproj references.
+    /// </summary>
+    /// <remarks>
+    /// Azure.Core.TestFramework is not a released NuGet package — it's referenced via ProjectReference
+    /// in azure-sdk-for-net. The reference may be a direct path (e.g. ..\..\Azure.Core.TestFramework.csproj)
+    /// or an MSBuild variable (e.g. $(AzureCoreTestFramework)).
+    ///
+    /// Microsoft.ClientModel.TestFramework is a released NuGet package referenced via PackageReference.
+    /// </remarks>
+    internal DotnetTestFramework DetectTestFramework(string packagePath)
+    {
+        try
+        {
+            var testsPath = Path.Combine(packagePath, "tests");
+            var searchDir = Directory.Exists(testsPath) ? testsPath : packagePath;
+
+            if (!Directory.Exists(searchDir))
+            {
+                logger.LogDebug("Directory {searchDir} does not exist, cannot detect test framework", searchDir);
+                return DotnetTestFramework.Unknown;
+            }
+
+            var csprojFiles = Directory.GetFiles(searchDir, "*.csproj", SearchOption.AllDirectories);
+            if (csprojFiles.Length == 0)
+            {
+                logger.LogDebug("No .csproj files found in {searchDir}, cannot detect test framework", searchDir);
+                return DotnetTestFramework.Unknown;
+            }
+
+            foreach (var csprojFile in csprojFiles)
+            {
+                var doc = XDocument.Load(csprojFile);
+
+                // Check ProjectReferences for Azure.Core.TestFramework
+                // Handles both direct paths and MSBuild variables:
+                //   <ProjectReference Include="..\..\Azure.Core.TestFramework\Azure.Core.TestFramework.csproj" />
+                //   <ProjectReference Include="$(AzureCoreTestFramework)" />
+                var projectRefs = doc.Descendants()
+                    .Where(e => e.Name.LocalName == "ProjectReference")
+                    .Select(e => e.Attribute("Include")?.Value ?? "");
+
+                foreach (var refValue in projectRefs)
+                {
+                    if (refValue.Contains("Azure.Core.TestFramework", StringComparison.OrdinalIgnoreCase) ||
+                        refValue.Contains("AzureCoreTestFramework", StringComparison.OrdinalIgnoreCase))
+                    {
+                        logger.LogDebug("Found Azure.Core.TestFramework reference in {csproj}: {ref}", csprojFile, refValue);
+                        return DotnetTestFramework.AzureCoreTestFramework;
+                    }
+                }
+
+                // Check PackageReferences for Microsoft.ClientModel.TestFramework
+                //   <PackageReference Include="Microsoft.ClientModel.TestFramework" />
+                var packageRefs = doc.Descendants()
+                    .Where(e => e.Name.LocalName == "PackageReference")
+                    .Select(e => e.Attribute("Include")?.Value ?? "");
+
+                foreach (var refValue in packageRefs)
+                {
+                    if (refValue.Equals("Microsoft.ClientModel.TestFramework", StringComparison.OrdinalIgnoreCase))
+                    {
+                        logger.LogDebug("Found Microsoft.ClientModel.TestFramework reference in {csproj}: {ref}", csprojFile, refValue);
+                        return DotnetTestFramework.ClientModelTestFramework;
+                    }
+                }
+            }
+
+            logger.LogDebug("No known test framework reference found in {searchDir}", searchDir);
+            return DotnetTestFramework.Unknown;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to detect test framework from .csproj files in {packagePath}", packagePath);
+            return DotnetTestFramework.Unknown;
+        }
+    }
+
+    internal enum DotnetTestFramework
+    {
+        Unknown,
+        AzureCoreTestFramework,
+        ClientModelTestFramework
+    }
+
 
     public override async Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo, string? ArtifactPath)> PackAsync(
         string packagePath, string? outputPath = null, int timeoutMinutes = 30, CancellationToken ct = default)

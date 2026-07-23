@@ -8,6 +8,7 @@ export class SamplesRevision {
     createdOn: Date
     title: string
     isDeleted: boolean
+    apiVersionId?: string | null
 
     constructor() {
         this.id = ''

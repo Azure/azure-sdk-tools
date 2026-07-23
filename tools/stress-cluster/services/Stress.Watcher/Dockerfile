@@ -8,6 +8,8 @@ RUN cd /src && dotnet publish -c Release -o /stresswatcher -r linux-x64 -f net8.
 
 FROM mcr.microsoft.com/azure-cli:azurelinux3.0
 
+RUN tdnf upgrade -y
+
 COPY --from=build /stresswatcher /stresswatcher
 
 WORKDIR /stresswatcher

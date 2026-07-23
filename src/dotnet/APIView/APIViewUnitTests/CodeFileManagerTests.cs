@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using ApiView;
+using APIView;
 using APIView.Model.V2;
 using APIViewWeb;
 using APIViewWeb.Managers;
@@ -92,12 +92,12 @@ public class CodeFileManagerTests
         TypeSpecMetadata metadata = new()
         {
             TypeSpec = new TypeSpecInfo { Namespace = "Azure.Core", Documentation = "Azure Core TypeSpec" },
-            Languages = new Dictionary<string, LanguageConfig>
+            Languages = new Dictionary<string, List<LanguageConfig>>
             {
-                ["Python"] = new() { PackageName = "azure-core", Namespace = "azure.core" },
-                ["JavaScript"] = new() { PackageName = "@azure/core", Namespace = "@azure/core" },
-                ["Java"] = new() { PackageName = "com.azure.core", Namespace = "com.azure.core" },
-                ["DotNet"] = new() { PackageName = "Azure.Core", Namespace = "Azure.Core" }
+                ["Python"] = [new() { PackageName = "azure-core", Namespace = "azure.core" }],
+                ["JavaScript"] = [new() { PackageName = "@azure/core", Namespace = "@azure/core" }],
+                ["Java"] = [new() { PackageName = "com.azure.core", Namespace = "com.azure.core" }],
+                ["DotNet"] = [new() { PackageName = "Azure.Core", Namespace = "Azure.Core" }]
             }
         };
 
@@ -128,10 +128,10 @@ public class CodeFileManagerTests
         Assert.NotNull(result.Metadata);
         Assert.NotNull(result.Metadata.Languages);
         Assert.Equal(4, result.Metadata.Languages.Count);
-        Assert.Equal("azure-core", result.Metadata.Languages["Python"].PackageName);
-        Assert.Equal("@azure/core", result.Metadata.Languages["JavaScript"].PackageName);
-        Assert.Equal("com.azure.core", result.Metadata.Languages["Java"].PackageName);
-        Assert.Equal("Azure.Core", result.Metadata.Languages["DotNet"].PackageName);
+        Assert.Equal("azure-core", result.Metadata.Languages["Python"][0].PackageName);
+        Assert.Equal("@azure/core", result.Metadata.Languages["JavaScript"][0].PackageName);
+        Assert.Equal("com.azure.core", result.Metadata.Languages["Java"][0].PackageName);
+        Assert.Equal("Azure.Core", result.Metadata.Languages["DotNet"][0].PackageName);
     }
 
     [Fact]
@@ -247,13 +247,13 @@ public class CodeFileManagerTests
             EmitterVersion = "0.7.2",
             TypeSpec =
                 new TypeSpecInfo { Namespace = typeSpecNamespace, Documentation = documentation, Type = "client" },
-            Languages = new Dictionary<string, LanguageConfig>
+            Languages = new Dictionary<string, List<LanguageConfig>>
             {
-                ["Python"] = new()
+                ["Python"] = [new()
                 {
                     PackageName = packageName.ToLower().Replace(".", "-"),
                     Namespace = packageName.ToLower().Replace(".", ".")
-                }
+                }]
             }
         };
 
@@ -414,5 +414,195 @@ public class CodeFileManagerTests
         Assert.False(_codeFileManager.AreAPICodeFilesTheSame(new RenderedCodeFile(fileA), new RenderedCodeFile(fileB)));
     }
 
+    [Fact]
+    public async Task ComputeAPIContentHashAsync_ProducesSameHash_AfterDeserializeAsync_AsPreCleanTokens()
+    {
+        // DeserializeAsync must sanitize tokens before returning so that any caller who
+        // immediately calls ComputeAPIContentHashAsync sees the same hash as the stored hash
+        // on existing revisions (which were computed from sanitized data).
+        var original = new CodeFile
+        {
+            Language = "C#",
+            ReviewLines =
+            [
+                new ReviewLine
+                {
+                    LineId = "L1",
+                    Tokens = [new ReviewToken("public\r\nclass Foo", TokenKind.Text)]
+                }
+            ]
+        };
+
+        // Simulate the pipeline: parser emits CodeFile → serialized to blob → loaded back
+        using var stream = new MemoryStream();
+        await original.SerializeAsync(stream);
+        stream.Position = 0;
+        var deserialized = await CodeFile.DeserializeAsync(stream); // must sanitize
+
+        string hashDeserialized = await _codeFileManager.ComputeAPIContentHashAsync(deserialized);
+
+        // Same logical content but authored with already-clean tokens (\r\n → single space)
+        var clean = new CodeFile
+        {
+            Language = "C#",
+            ReviewLines =
+            [
+                new ReviewLine
+                {
+                    LineId = "L1",
+                    Tokens = [new ReviewToken("public class Foo", TokenKind.Text)]
+                }
+            ]
+        };
+        string hashClean = await _codeFileManager.ComputeAPIContentHashAsync(clean);
+
+        Assert.Equal(hashClean, hashDeserialized);
+    }
+
     #endregion
+
+    #region Token Sanitization Tests
+
+    [Fact]
+    public void SanitizeTokenValues_NormalizesNewlinesInTextTokens()
+    {
+        var codeFile = new CodeFile
+        {
+            Language = "Java",
+            PackageName = "com.azure.storage",
+            ReviewLines =
+            [
+                new ReviewLine
+                {
+                    LineId = "doc-1",
+                    Tokens =
+                    [
+                        new ReviewToken
+                        {
+                            Value = "\n    This package contains clients.\n    For details see README.md\n  ",
+                            Kind = TokenKind.Text,
+                            IsDocumentation = true
+                        }
+                    ]
+                }
+            ]
+        };
+
+        codeFile.SanitizeTokenValues();
+
+        string value = codeFile.ReviewLines[0].Tokens[0].Value;
+        Assert.Equal("     This package contains clients.     For details see README.md   ", value);
+        Assert.DoesNotContain('\n', value);
+        Assert.DoesNotContain('\r', value);
+    }
+
+    [Fact]
+    public void SanitizeTokenValues_OnlyNormalizesTextKindTokens()
+    {
+        var codeFile = new CodeFile
+        {
+            Language = "C#",
+            ReviewLines =
+            [
+                new ReviewLine
+                {
+                    LineId = "parent",
+                    Tokens = [new ReviewToken("Parent\ntoken", TokenKind.Keyword)],
+                    Children =
+                    [
+                        new ReviewLine
+                        {
+                            LineId = "child",
+                            Tokens = [new ReviewToken("Child\ntoken\nvalue", TokenKind.Text)]
+                        }
+                    ]
+                }
+            ]
+        };
+
+        codeFile.SanitizeTokenValues();
+
+        Assert.Equal("Parent\ntoken", codeFile.ReviewLines[0].Tokens[0].Value);
+        Assert.Equal("Child token value", codeFile.ReviewLines[0].Children[0].Tokens[0].Value);
+    }
+
+    [Fact]
+    public void SanitizeTokenValues_DoesNotModifyTokensWithoutNewlines()
+    {
+        var codeFile = new CodeFile
+        {
+            Language = "Java",
+            ReviewLines =
+            [
+                new ReviewLine
+                {
+                    LineId = "tree-1",
+                    Tokens =
+                    [
+                        new ReviewToken("    ", TokenKind.Text),
+                        new ReviewToken("NoNewlines", TokenKind.Text)
+                    ]
+                }
+            ]
+        };
+
+        codeFile.SanitizeTokenValues();
+
+        Assert.Equal("    ", codeFile.ReviewLines[0].Tokens[0].Value);
+        Assert.Equal("NoNewlines", codeFile.ReviewLines[0].Tokens[1].Value);
+    }
+
+    [Fact]
+    public async Task CreateCodeFileAsync_SanitizesTokenValues_ReturnedFromLanguageService()
+    {
+        // Verifies that CreateCodeFileAsync calls SanitizeTokenValues on the CodeFile produced
+        // by the language service, so callers receive clean data regardless of parser output.
+        var dirtyCodeFile = new CodeFile
+        {
+            Language = "C#",
+            ReviewLines =
+            [
+                new ReviewLine
+                {
+                    LineId = "L1",
+                    Tokens = [new ReviewToken { Value = "public\r\nclass Foo", Kind = TokenKind.Text }]
+                }
+            ]
+        };
+
+        var manager = new CodeFileManager(
+            new List<LanguageService> { new DirtyCodeFileLanguageService(dirtyCodeFile) },
+            _mockCodeFileRepository.Object,
+            _mockOriginalsRepository.Object,
+            _mockDevopsArtifactRepository.Object,
+            new Mock<ILogger<CodeFileManager>>().Object);
+
+        using var memoryStream = new MemoryStream();
+        var result = await manager.CreateCodeFileAsync("test.cs", runAnalysis: false, memoryStream: memoryStream);
+
+        Assert.NotNull(result);
+        Assert.DoesNotContain('\r', result.ReviewLines[0].Tokens[0].Value);
+        Assert.DoesNotContain('\n', result.ReviewLines[0].Tokens[0].Value);
+        Assert.Equal("public class Foo", result.ReviewLines[0].Tokens[0].Value);
+    }
+
+    #endregion
+
+}
+
+internal class DirtyCodeFileLanguageService : LanguageService
+{
+    private readonly CodeFile _codeFile;
+
+    public DirtyCodeFileLanguageService(CodeFile codeFile) => _codeFile = codeFile;
+
+    public override string Name => "C#";
+    public override string[] Extensions => [".cs"];
+    public override string VersionString => "1.0";
+    public override bool CanUpdate(string versionString) => false;
+    public override bool CanConvert(string versionString) => false;
+    public override bool GeneratePipelineRunParams(APIRevisionGenerationPipelineParamModel param) => false;
+    public override CodeFile GetReviewGenPendingCodeFile(string fileName) => null;
+    public override Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis, string crossLanguageMetadata = null)
+        => Task.FromResult(_codeFile);
 }

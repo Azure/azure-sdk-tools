@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using Azure.Sdk.Tools.Cli.Configuration;
 
 namespace Azure.Sdk.Tools.Cli.Services.APIView;
@@ -6,6 +8,7 @@ public interface IAPIViewHttpService
 {
     Task<(string? content, int statusCode)> GetAsync(string endpoint, CancellationToken ct);
     Task<(string? content, int statusCode)> PostAsync(string endpoint, CancellationToken ct);
+    Task<(string? content, int statusCode)> PostAsync(string endpoint, string? jsonBody, CancellationToken ct);
 }
 
 public class APIViewHttpService : IAPIViewHttpService
@@ -42,41 +45,36 @@ public class APIViewHttpService : IAPIViewHttpService
 
         string content = await response.Content.ReadAsStringAsync(ct);
 
-        if (response.IsSuccessStatusCode)
+        if (!response.IsSuccessStatusCode)
         {
-            return (content, (int)response.StatusCode);
+            HandleErrorResponse("GET", endpoint, response, content);
         }
 
-        string truncated = content.Length > 500 ? content[..500] + "...[truncated]" : content;
-        _logger.LogError("API call failed: GET {Endpoint} returned {StatusCode}: {Content}",
-            endpoint, response.StatusCode, truncated);
-        throw new HttpRequestException(
-            $"GET {endpoint} failed with status code {(int)response.StatusCode}",
-            null, response.StatusCode);
-
+        return (content, (int)response.StatusCode);
     }
 
     public async Task<(string? content, int statusCode)> PostAsync(string endpoint, CancellationToken ct)
     {
+        return await PostAsync(endpoint, string.Empty, ct);
+    }
+
+    public async Task<(string? content, int statusCode)> PostAsync(string endpoint, string? jsonBody, CancellationToken ct)
+    {
         HttpClient httpClient = await GetOrCreateAuthenticatedClientAsync(ct);
 
         string requestUrl = $"{_baseUrl}{endpoint}";
-        using HttpResponseMessage response = await httpClient.PostAsync(requestUrl, new StringContent(string.Empty), ct);
+
+        using StringContent requestContent = new(jsonBody ?? string.Empty, Encoding.UTF8, "application/json");
+        using HttpResponseMessage response = await httpClient.PostAsync(requestUrl, requestContent, ct);
 
         string content = await response.Content.ReadAsStringAsync(ct);
 
-        if (response.IsSuccessStatusCode)
+        if (!response.IsSuccessStatusCode)
         {
-            return (content, (int)response.StatusCode);
+            HandleErrorResponse("POST", endpoint, response, content);
         }
 
-        string truncated = content.Length > 500 ? content[..500] + "...[truncated]" : content;
-        _logger.LogError("API call failed: POST {Endpoint} returned {StatusCode}: {Content}",
-            endpoint, response.StatusCode, truncated);
-        throw new HttpRequestException(
-            $"POST {endpoint} failed with status code {(int)response.StatusCode}",
-            null, response.StatusCode);
-
+        return (content, (int)response.StatusCode);
     }
 
     private async Task<HttpClient> GetOrCreateAuthenticatedClientAsync(CancellationToken ct)
@@ -108,5 +106,20 @@ public class APIViewHttpService : IAPIViewHttpService
         {
             _cacheLock.Release();
         }
+    }
+
+    [DoesNotReturn]
+    private void HandleErrorResponse(
+        string method,
+        string endpoint,
+        HttpResponseMessage response,
+        string content)
+    {
+        string truncated = content.Length > 500 ? content[..500] + "...[truncated]" : content;
+        _logger.LogError("API call failed: {Method} {Endpoint} returned {StatusCode}: {Content}",
+            method, endpoint, response.StatusCode, truncated);
+        throw new HttpRequestException(
+            $"{method} {endpoint} failed with status code {(int)response.StatusCode}",
+            null, response.StatusCode);
     }
 }

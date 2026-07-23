@@ -5,7 +5,7 @@ import { CodePanelData, CodePanelNodeMetaData, CodePanelRowData, CodePanelRowDat
 import { InsertCodePanelRowDataMessage, ReviewPageWorkerMessageDirective } from '../_models/insertCodePanelRowDataMessage';
 import { NavigationTreeNode } from '../_models/navigationTreeModels';
 import { DIFF_ADDED, DIFF_REMOVED, FULL_DIFF_STYLE, TREE_DIFF_STYLE } from '../_helpers/common-helpers';
-import { CommentSource } from '../_models/commentItemModel';
+import { applyNavNodeToTree } from './nav-node-helpers';
 
 let codePanelData: CodePanelData | null = null;
 let codePanelRowData: CodePanelRowData[] = [];
@@ -167,10 +167,6 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
       const threads: CodePanelRowData[] = node.commentThread[key];
       if (Array.isArray(threads)) {
         threads.forEach((thread) => {
-          const isDiagnosticThread = thread.comments?.some(c => c.commentSource === CommentSource.Diagnostic);
-          if (isDiagnosticThread && !apiTreeBuilderData?.showSystemComments) {
-            return;
-          }
           if (shouldAppendIfRowIsHiddenAPI(thread)) {
             thread.rowClasses = new Set<string>(thread.rowClasses);
             codePanelRowData.push(thread);
@@ -191,8 +187,8 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
   }
 
   if (buildNode && node.navigationTreeNode && !isNavigationTreeCreated) {
-    navigationTree.push(node.navigationTreeNode);
-  }  
+    applyNavNodeToTree(navigationTree, node.navigationTreeNode, (node.codeLines || []).map(l => l.diffKind));
+  }
 
   if (node.bottomTokenNodeIdHash) {
     codePanelRowData.push(...diffBuffer);

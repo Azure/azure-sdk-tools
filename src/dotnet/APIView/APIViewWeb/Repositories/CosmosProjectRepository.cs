@@ -58,10 +58,11 @@ namespace APIViewWeb.Repositories
 
         public async Task<Project> GetProjectByExpectedPackageAsync(string language, string packageName)
         {
+            // Token format matches BuildExpectedPackages in ProjectsManager: "language::packagename" (lowercase).
+            var token = $"{language.ToLowerInvariant()}::{packageName.ToLowerInvariant()}";
             var queryDefinition = new QueryDefinition(
-                    "SELECT * FROM Projects p WHERE IS_DEFINED(p.ExpectedPackages[@language]) AND LOWER(p.ExpectedPackages[@language].PackageName) = LOWER(@packageName) AND p.IsDeleted = false")
-                .WithParameter("@language", language)
-                .WithParameter("@packageName", packageName);
+                    "SELECT * FROM Projects p WHERE ARRAY_CONTAINS(p.ExpectedPackages, @token) AND p.IsDeleted = false")
+                .WithParameter("@token", token);
 
             var itemQueryIterator = _projectsContainer.GetItemQueryIterator<Project>(queryDefinition);
             if (itemQueryIterator.HasMoreResults)

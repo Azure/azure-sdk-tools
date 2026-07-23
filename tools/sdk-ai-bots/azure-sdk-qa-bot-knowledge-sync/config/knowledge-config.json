@@ -99,6 +99,16 @@
             "scope": "branded",
             "service_type": "management-plane"
           }
+        },
+        {
+          "description": "TypeSpec Azure samples",
+          "path": "/packages/samples/specs",
+          "folder": "typespec_azure_samples",
+          "ignoredPaths": ["README.md"],
+          "isGenerated": true,
+          "metadata": {
+            "scope": "branded"
+          }
         }
       ]
     },
@@ -129,23 +139,6 @@
           "description": "Documentation for Azure SDK for Python",
           "path": "/doc",
           "folder": "azure_sdk_for_python_docs",
-          "metadata": {
-            "scope": "branded"
-          }
-        }
-      ]
-    },
-    {
-      "repository": {
-        "url": "https://github.com/Azure/azure-sdk-for-python.wiki.git",
-        "path": "azure-sdk-for-python.wiki",
-        "branch": "master",
-        "authType": "public"
-      },
-      "paths": [
-        {
-          "description": "Wiki documentation for Azure SDK for Python",
-          "folder": "azure_sdk_for_python_wiki",
           "metadata": {
             "scope": "branded"
           }
@@ -229,6 +222,12 @@
         {
           "description": "Azure DevOps Pipeline Guidance - main page",
           "path": "/Engineering-System/Pipelines/Azure-DevOps-Pipeline-Guidance.md",
+          "folder": "azure-sdk-internal-wiki",
+          "relativeByRepoPath": true
+        },
+        {
+          "description": "My License-CLA check hung",
+          "path": "/Engineering-System/Pipelines/My-License%2DCLA-check-hung.md",
           "folder": "azure-sdk-internal-wiki",
           "relativeByRepoPath": true
         }
@@ -639,6 +638,43 @@
           "description": "OpenAPI Diff (OAD) rules documentation",
           "path": "/docs",
           "folder": "azure_openapi_diff_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        }
+      ]
+    },
+    {
+      "repository": {
+        "url": "https://github.com/Azure/azure-sdk-tools.git",
+        "branch": "main",
+        "authType": "public"
+      },
+      "paths": [
+        {
+          "description": "Documentation for Azure SDK Tools",
+          "path": "/tools/js-sdk-release-tools/docs/automation-pipeline.md",
+          "folder": "azure_sdk_tools_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        }
+      ]
+    },
+    {
+      "repository": {
+        "url": "https://github.com/Azure/typespec-azure-pr.git",
+        "branch": "providerhub",
+        "authType": "token",
+        "tokenEnvVar": "AZURE_SDK_GITHUB_PAT"
+      },
+      "paths": [
+        {
+          "description": "Documentation for Azure TypeSpec ProviderHub",
+          "path": "/docs",
+          "folder": "typespec_azure_providerhub_docs",
           "relativeByRepoPath": true,
           "metadata": {
             "scope": "branded"

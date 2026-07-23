@@ -101,7 +101,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     errorMessage ?? "Build failed with an unknown error.",
                     packageInfo,
                     nextSteps: [
-                        "Ensure the SDK repository has a valid 'buildScript' configuration in eng/swagger_to_sdk_config.json",
+                        "Ensure the SDK repository has a valid build script defined for the language",
                         "Check the build logs for details about the error",
                         "Resolve any issues reported in the build log",
                         "Re-run the tool",

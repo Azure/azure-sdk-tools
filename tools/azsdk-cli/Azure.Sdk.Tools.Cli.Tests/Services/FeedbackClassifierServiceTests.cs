@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using System.Reflection;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
@@ -10,8 +11,6 @@ using GitHub.Copilot.SDK;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
-using System.Reflection;
-
 using static Azure.Sdk.Tools.Cli.Tests.TestHelpers.TestCategories;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Services;
@@ -62,14 +61,14 @@ public class FeedbackClassifierServiceTests
         _mockFeedbackService = new Mock<IAPIViewFeedbackService>();
         _mockLoggerFactory.Setup(f => f.CreateLogger(It.IsAny<string>()))
             .Returns(new TestLogger<FeedbackClassifierService>());
-        
+
         // Set up a fake tsp project path for mocked tests
         _specRepoRoot = Path.Combine(Path.GetTempPath(), "test-spec-repo-" + Guid.NewGuid().ToString("N")[..8]);
         _testTspPath = Path.Combine(_specRepoRoot, "specification", "widget", "Widget.Management");
-        
+
         // Mock the spec repo root detection
         _mockTypeSpecHelper.Setup(x => x.GetSpecRepoRootPath(_testTspPath)).Returns(_specRepoRoot);
-        
+
         // Create the customization guide file that the service expects
         var guidePath = Path.Combine(_specRepoRoot, "eng", "common", "knowledge", "customizing-client-tsp.md");
         Directory.CreateDirectory(Path.GetDirectoryName(guidePath)!);
@@ -100,7 +99,10 @@ public class FeedbackClassifierServiceTests
     private static FeedbackItem CreateTestItem(string text, string? id = null)
     {
         var item = new FeedbackItem { Text = text };
-        if (id != null) item.Id = id;
+        if (id != null)
+        {
+            item.Id = id;
+        }
         return item;
     }
 
@@ -124,7 +126,8 @@ public class FeedbackClassifierServiceTests
     {
         var rawOutputHelper = Mock.Of<IRawOutputHelper>();
         var gitHelper = CreateRealGitHelper();
-        var typeSpecHelper = new TypeSpecHelper(gitHelper);
+        var processHelper = new ProcessHelper(new TestLogger<ProcessHelper>(), rawOutputHelper);
+        var typeSpecHelper = new TypeSpecHelper(gitHelper, processHelper);
 
         var copilotClient = new CopilotClient(new CopilotClientOptions
         {
@@ -250,6 +253,57 @@ public class FeedbackClassifierServiceTests
 
         // Assert
         Assert.That(item1.Status, Is.EqualTo(FeedbackStatus.TSP_APPLICABLE));
+    }
+
+    [Test]
+    public async Task ClassifyAsync_CustomCodeScopeWithoutTspPath_DoesNotAccessSpecRepo()
+    {
+        var service = CreateMockedService();
+        var item = CreateTestItem("error CS0103: The name 'BlobUriForRepairTest' does not exist", "item-1");
+        var items = new List<FeedbackItem> { item };
+        var batchResponse = """
+            [item-1]
+            Classification: CODE_CUSTOMIZATION
+            Reason: The failure is in a custom partial class and can be fixed without changing TypeSpec inputs
+            """;
+
+        _mockAgentRunner
+            .Setup(x => x.RunAsync(It.IsAny<CopilotAgent<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(batchResponse);
+
+        await service.ClassifyItemsAsync(
+            items,
+            globalContext: "Custom-code build repair",
+            tspProjectPath: null,
+            language: "csharp",
+            serviceName: "ContentSafety",
+            editScope: EditScope.CustomCode);
+
+        Assert.That(item.Status, Is.EqualTo(FeedbackStatus.CODE_CUSTOMIZATION));
+        _mockTypeSpecHelper.Verify(
+            x => x.GetSpecRepoRootPath(It.IsAny<string>()),
+            Times.Never);
+        _mockAgentRunner.Verify(
+            x => x.RunAsync(It.IsAny<CopilotAgent<string>>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [TestCase(EditScope.SpecInputs)]
+    [TestCase(EditScope.All)]
+    public void ClassifyAsync_SpecInputScopeWithoutTspPath_ThrowsArgumentException(EditScope editScope)
+    {
+        var service = CreateMockedService();
+        var items = new List<FeedbackItem> { CreateTestItem("Rename FooClient", "item-1") };
+
+        Assert.ThrowsAsync<ArgumentException>(() => service.ClassifyItemsAsync(
+            items,
+            globalContext: string.Empty,
+            tspProjectPath: null,
+            editScope: editScope));
+
+        _mockAgentRunner.Verify(
+            x => x.RunAsync(It.IsAny<CopilotAgent<string>>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     /// <summary>

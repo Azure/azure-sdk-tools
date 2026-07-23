@@ -1,0 +1,55 @@
+###########
+# Client Libraries
+###########
+
+# ServiceLabel: %ZeroOwners
+# ServiceOwners:
+
+# ServiceLabel: %OneOwner
+# ServiceOwners: @serviceOwnerAlice
+
+# ServiceLabel: %TwoOwners
+# ServiceOwners: @serviceOwnerAlice @serviceOwnerBob
+
+# ServiceLabel: %ThreeOwners
+# ServiceOwners: @serviceOwnerAlice @serviceOwnerBob @serviceOwnerCarol
+
+# ServiceLabel: %MultiLabel1 %MultiLabel2
+# ServiceOwners: @serviceOwnerAlice @serviceOwnerBob
+
+# ServiceLabel: %UnmatchedLabel
+# ServiceOwners: @serviceOwnerAlice @serviceOwnerBob
+
+# PRLabel: %TwoOwners
+/sdk/two-owners/Azure.TwoOwners/    @ownerAlice @ownerBob
+
+# PRLabel: %ThreeOwners
+/sdk/three-owners/Azure.ThreeOwners/    @ownerAlice @ownerBob @ownerCarol
+
+# PRLabel: %OneOwner
+/sdk/one-owner/Azure.OneOwner/    @ownerAlice
+
+/sdk/no-labels/Azure.NoLabels/    @ownerAlice @ownerBob
+
+# PRLabel: %ZeroOwners
+/sdk/zero-svc-owners/Azure.ZeroSvcOwners/    @ownerAlice @ownerBob
+
+# PRLabel: %NoMatchingSvcLabel
+/sdk/no-svc-match/Azure.NoSvcMatch/    @ownerAlice @ownerBob
+
+# PRLabel: %OneOwner
+/sdk/insufficient-svc/Azure.InsufficientSvc/    @ownerAlice @ownerBob
+
+# PRLabel: %MultiLabel1 %MultiLabel2
+/sdk/multi-label/Azure.MultiLabel/    @ownerAlice @ownerBob
+
+# PRLabel: %MultiLabel1
+/sdk/superset-match/Azure.SupersetMatch/    @ownerAlice @ownerBob
+
+# Entry that will be overridden by a later entry for reverse-order testing
+# PRLabel: %TwoOwners
+/sdk/reverse-test/Azure.ReverseTest/    @ownerOverridden1 @ownerOverridden2
+
+# Later entry for the same path — this one should win in reverse-order matching
+# PRLabel: %ThreeOwners
+/sdk/reverse-test/Azure.ReverseTest/    @ownerAlice @ownerBob @ownerCarol

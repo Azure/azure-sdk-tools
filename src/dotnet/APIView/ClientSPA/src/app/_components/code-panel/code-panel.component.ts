@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, Output, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, NgZone, OnChanges, Output, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
 import { filter, take, takeUntil } from 'rxjs/operators';
 import { Datasource, IDatasource, SizeStrategy } from 'ngx-ui-scroll';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
@@ -8,11 +8,11 @@ import { CodeLineRowNavigationDirection, convertRowOfTokensToString, isDiffRow, 
 import { SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/router-helpers';
 import { CodePanelData, CodePanelRowData, CodePanelRowDatatype, CrossLanguageContentDto, CrossLanguageRowDto } from 'src/app/_models/codePanelModels';
 import { StructuredToken } from 'src/app/_models/structuredToken';
-import { CommentItemModel, CommentSeverity, CommentSource, CommentType } from 'src/app/_models/commentItemModel';
+import { CommentItemModel, CommentSeverity, CommentType } from 'src/app/_models/commentItemModel';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { MenuItem, MenuItemCommandEvent, MessageService, ToastMessageOptions } from 'primeng/api';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
-import { fromEvent, Observable, Subject } from 'rxjs';
+import { fromEvent, Observable, Subject, Subscription } from 'rxjs';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
 import { Menu } from 'primeng/menu';
 import { CodeLineSearchInfo, CodeLineSearchMatch } from 'src/app/_models/codeLineSearchInfo';
@@ -47,6 +47,7 @@ export class CodePanelComponent implements OnChanges {
 
   @Output() hasActiveConversationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() codeLineSearchInfoEmitter : EventEmitter<CodeLineSearchInfo> = new EventEmitter<CodeLineSearchInfo>();
+  @Output() isLoadingChanged: EventEmitter<boolean> = new EventEmitter<boolean>();
 
   @ViewChildren(Menu) menus!: QueryList<Menu>;
 
@@ -63,6 +64,7 @@ export class CodePanelComponent implements OnChanges {
   codeLineSearchMatchInfo: DoublyLinkedList<CodeLineSearchMatch> | undefined = undefined;
 
   destroy$ = new Subject<void>();
+  private viewportScrollSub?: Subscription;
 
   commentThreadNavigationPointer: number | undefined = undefined;
   diffNodeNavigationPointer: number | undefined = undefined;
@@ -71,7 +73,7 @@ export class CodePanelComponent implements OnChanges {
 
   constructor(private changeDetectorRef: ChangeDetectorRef, private commentsService: CommentsService,
     private signalRService: SignalRService, private route: ActivatedRoute, private router: Router,
-    private messageService: MessageService, private elementRef: ElementRef<HTMLElement>) { }
+    private messageService: MessageService, private elementRef: ElementRef<HTMLElement>, private ngZone: NgZone) { }
 
   ngOnInit() {
     this.codeWindowHeight = `${window.innerHeight - 80}`;
@@ -333,10 +335,11 @@ export class CodePanelComponent implements OnChanges {
       }
     }
     this.isLoading = true;
-    this.codePanelRowSource = undefined
+    this.codePanelRowSource = undefined;
     this.codePanelRowData = updatedCodeLinesData;
     this.changeDetectorRef.detectChanges();
     this.loadCodePanelViewPort();
+    this.changeDetectorRef.markForCheck();
   }
 
   async insertItemsIntoScroller(itemsToInsert: CodePanelRowData[], nodeIdhashed: string, targetRowType: string,
@@ -409,60 +412,7 @@ export class CodePanelComponent implements OnChanges {
     await this.codePanelRowSource?.adapter?.remove({
       indexes: indexesToRemove
     });
-  }
-
-  /**
-   * Removes diagnostic comment threads from the scroller in real-time.
-   */
-  async removeDiagnosticCommentThreads() {
-    await this.codePanelRowSource?.adapter?.relax();
-
-    const indexesToRemove: number[] = [];
-    const filteredData: CodePanelRowData[] = [];
-
-    for (let i = 0; i < this.codePanelRowData.length; i++) {
-      if (this.isDiagnosticCommentThread(this.codePanelRowData[i])) {
-        indexesToRemove.push(i);
-      } else {
-        filteredData.push(this.codePanelRowData[i]);
-      }
-    }
-
-    this.codePanelRowData = filteredData;
-    await this.codePanelRowSource?.adapter?.remove({ indexes: indexesToRemove });
-  }
-
-  /**
-   * Inserts diagnostic comment threads back into the scroller from codePanelData.
-   */
-  async insertDiagnosticCommentThreads() {
-    if (!this.codePanelData?.nodeMetaData) return;
-    await this.codePanelRowSource?.adapter?.relax();
-
-    for (const [nodeIdHashed, nodeMetaData] of Object.entries(this.codePanelData.nodeMetaData)) {
-      if (!nodeMetaData.commentThread) continue;
-
-      for (const [rowPosition, threads] of Object.entries(nodeMetaData.commentThread)) {
-        if (!Array.isArray(threads)) continue;
-
-        for (const thread of threads) {
-          if (!this.isDiagnosticCommentThread(thread)) continue;
-
-          thread.rowClasses = new Set<string>(thread.rowClasses as any);
-          const insertIndex = this.findInsertIndexForThread(nodeIdHashed, parseInt(rowPosition));
-
-          if (insertIndex >= 0) {
-            this.codePanelRowData.splice(insertIndex, 0, thread);
-            await this.codePanelRowSource?.adapter?.insert({ beforeIndex: insertIndex, items: [thread] });
-          }
-        }
-      }
-    }
-  }
-
-  private isDiagnosticCommentThread(row: CodePanelRowData): boolean {
-    return row.type === CodePanelRowDatatype.CommentThread &&
-      row.comments?.some(c => c.commentSource === CommentSource.Diagnostic) === true;
+    this.changeDetectorRef.markForCheck();
   }
 
   private findInsertIndexForThread(nodeIdHashed: string, rowPosition: number): number {
@@ -588,6 +538,28 @@ export class CodePanelComponent implements OnChanges {
       });
 
       if (this.codePanelRowSource) {
+        this.codePanelRowSource.adapter?.init$.pipe(take(1)).subscribe(() => {
+          this.ngZone.run(() => {
+            this.isLoading = false;
+            this.isLoadingChanged.emit(false);
+          });
+          setTimeout(async () => {
+            await this.scrollToNode(undefined, this.scrollToNodeId);
+            this.highlightCommentFromFragment();
+            const viewport = this.elementRef.nativeElement.ownerDocument.getElementById('viewport');
+            if (viewport) {
+              this.viewportScrollSub?.unsubscribe();
+              this.viewportScrollSub = fromEvent(viewport, 'scroll').pipe(
+                takeUntil(this.destroy$)
+              ).subscribe(() => {
+                if (this.codeLineSearchInfo?.currentMatch) {
+                  this.highlightSearchMatches();
+                  this.highlightActiveSearchMatch(false);
+                }
+              });
+            }
+          }, 500);
+        });
         resolve();
       } else {
         reject('Failed to Initialize Datasource');
@@ -1355,24 +1327,7 @@ export class CodePanelComponent implements OnChanges {
 
   private loadCodePanelViewPort() {
     this.setMaxLineNumberWidth();
-    this.initializeDataSource().then(() => {
-      this.codePanelRowSource?.adapter?.init$.pipe(take(1)).subscribe(() => {
-        this.isLoading = false;
-        setTimeout(async () => {
-          await this.scrollToNode(undefined, this.scrollToNodeId);
-          this.highlightCommentFromFragment();
-          const viewport = this.elementRef.nativeElement.ownerDocument.getElementById('viewport');
-          if (viewport) {
-            viewport.addEventListener('scroll', (event) => {
-              if (this.codeLineSearchInfo?.currentMatch) {
-                this.highlightSearchMatches();
-                this.highlightActiveSearchMatch(false);
-              }
-            });
-          }
-        }, 500);
-      });
-    }).catch((error) => {
+    this.initializeDataSource().catch((error) => {
       console.error(error);
     });
   }

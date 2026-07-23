@@ -217,9 +217,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                         fileStream,
                         cancellationToken: ct);
                 }
-
-                // clean up the SDK change file after reading
-                File.Delete(sdkChangeFilePath);
             }
             catch (JsonException jsonEx)
             {
@@ -268,8 +265,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                         {
                             logger.LogWarning("SDK change file not found at: {FilePath}", sdkChangeFilePath);
                         }
-                        sdkChange = await ReadSdkChangesFromFile(sdkChangeFilePath, ct);
-                        File.Delete(sdkChangeFilePath);
+                        else
+                        {
+                            sdkChange = await ReadSdkChangesFromFile(sdkChangeFilePath, ct);
+                            File.Delete(sdkChangeFilePath);
+                        }
                     }
                     else
                     {

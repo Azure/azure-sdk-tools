@@ -295,20 +295,25 @@ public class ApiReviewHubTool(
         var details = new List<string>();
 
         details.Add("== API Review Hub (Primary) ==");
-        if (result.ReviewHub.Succeeded && result.ReviewHub.Result != null)
+        if (result.ReviewHub.StatusCode is >= 200 and < 300)
         {
-            details.Add($"Allowed: {result.ReviewHub.Result.Allowed}");
-            details.Add($"Reason: {result.ReviewHub.Result.Reason ?? "none"}");
-            if (!string.IsNullOrWhiteSpace(result.ReviewHub.Result.Details))
+            details.Add($"Status Code: {result.ReviewHub.StatusCode}");
+            details.Add($"Approved: {result.ReviewHub.IsApproved}");
+            details.Add($"Reason: {result.ReviewHub.Reason ?? "none"}");
+            if (result.ReviewHub.Details?.Count > 0)
             {
-                details.Add(result.ReviewHub.Result.Details);
+                details.AddRange(result.ReviewHub.Details);
             }
 
-            AddApprovalDetails(details, result.ReviewHub.Result.Approvals, apiHash);
+            AddApprovalDetails(details, result.ReviewHub.Approvals, apiHash);
         }
         else
         {
             details.Add($"WARNING: Primary query failed for {packageName} {packageVersion}.");
+            if (result.ReviewHub.StatusCode is not null)
+            {
+                details.Add($"Status Code: {result.ReviewHub.StatusCode}");
+            }
             if (!string.IsNullOrWhiteSpace(result.ReviewHub.Error))
             {
                 details.Add(result.ReviewHub.Error);
@@ -319,17 +324,22 @@ public class ApiReviewHubTool(
         {
             details.Add(string.Empty);
             details.Add("== APIView (Legacy) ==");
-            if (result.ApiView.Succeeded && result.ApiView.Result != null)
+            if (result.ApiView.StatusCode is >= 200 and < 300)
             {
                 details.Add("Queried because the primary API Review Hub result was not approved or could not be retrieved.");
-                details.Add($"Approved: {result.ApiView.Result.IsApproved}");
-                details.Add($"Package Name Approved: {result.ApiView.Result.PackageNameApproved}");
-                details.Add($"Reason: {result.ApiView.Result.Reason}");
-                details.AddRange(result.ApiView.Result.Details);
+                details.Add($"Status Code: {result.ApiView.StatusCode}");
+                details.Add($"Approved: {result.ApiView.IsApproved}");
+                details.Add($"Package Name Approved: {result.ApiView.PackageNameApproved}");
+                details.Add($"Reason: {result.ApiView.Reason}");
+                details.AddRange(result.ApiView.Details);
             }
             else
             {
                 details.Add($"WARNING: Fallback query failed for {packageName} {packageVersion}.");
+                if (result.ApiView.StatusCode is not null)
+                {
+                    details.Add($"Status Code: {result.ApiView.StatusCode}");
+                }
                 if (!string.IsNullOrWhiteSpace(result.ApiView.Error))
                 {
                     details.Add(result.ApiView.Error);
@@ -357,7 +367,9 @@ public class ApiReviewHubTool(
         return result.Reason switch
         {
             "rejected" => $"API review release gate is rejected for {packageName} {packageVersion}.",
+            "staleArtifact" => $"API review release gate cannot be approved for {packageName} {packageVersion} because the release candidate artifact is not the one that was approved.",
             "missingApiHash" => $"API review release gate cannot be approved for {packageName} {packageVersion} because no API hash was provided.",
+            "queryFailed" => $"API review release gate status could not be determined for {packageName} {packageVersion} because both API Review Hub and APIView status queries failed.",
             _ => $"API review release gate is not approved for {packageName} {packageVersion}."
         };
     }

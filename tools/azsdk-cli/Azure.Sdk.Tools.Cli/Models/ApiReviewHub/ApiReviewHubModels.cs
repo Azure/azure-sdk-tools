@@ -114,8 +114,12 @@ public class ApiReviewHubReleaseGateApproval
 
 public class ApiReviewHubReleaseGateResult
 {
-    [JsonPropertyName("allowed")]
-    public bool Allowed { get; set; }
+    [JsonPropertyName("statusCode")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? StatusCode { get; set; }
+
+    [JsonPropertyName("isApproved")]
+    public bool IsApproved { get; set; }
 
     [JsonPropertyName("reason")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -123,7 +127,11 @@ public class ApiReviewHubReleaseGateResult
 
     [JsonPropertyName("details")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? Details { get; set; }
+    public IReadOnlyList<string>? Details { get; set; }
+
+    [JsonPropertyName("error")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Error { get; set; }
 
     [JsonPropertyName("approvals")]
     public IReadOnlyList<ApiReviewHubReleaseGateApproval> Approvals { get; set; } = [];
@@ -131,30 +139,21 @@ public class ApiReviewHubReleaseGateResult
 
 public class ApiViewReleaseStatusResult
 {
+    [JsonPropertyName("statusCode")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? StatusCode { get; set; }
+
     [JsonPropertyName("isApproved")]
     public bool IsApproved { get; set; }
 
     [JsonPropertyName("packageNameApproved")]
     public bool PackageNameApproved { get; set; }
 
-    [JsonPropertyName("statusCode")]
-    public int StatusCode { get; set; }
-
     [JsonPropertyName("reason")]
     public string Reason { get; set; } = string.Empty;
 
     [JsonPropertyName("details")]
     public IReadOnlyList<string> Details { get; set; } = [];
-}
-
-public class ApiReviewStatusSourceResult<T>
-{
-    [JsonPropertyName("succeeded")]
-    public bool Succeeded { get; set; }
-
-    [JsonPropertyName("result")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public T? Result { get; set; }
 
     [JsonPropertyName("error")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -173,10 +172,10 @@ public class ApiReviewReleaseStatusResult
     public string Reason { get; set; } = string.Empty;
 
     [JsonPropertyName("reviewHub")]
-    public ApiReviewStatusSourceResult<ApiReviewHubReleaseGateResult> ReviewHub { get; set; } = new();
+    public ApiReviewHubReleaseGateResult ReviewHub { get; set; } = new();
 
     [JsonPropertyName("apiView")]
-    public ApiReviewStatusSourceResult<ApiViewReleaseStatusResult>? ApiView { get; set; }
+    public ApiViewReleaseStatusResult? ApiView { get; set; }
 }
 
 public class ApiReviewHubResponse : CommandResponse

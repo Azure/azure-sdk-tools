@@ -108,7 +108,8 @@ public class ApiReviewHubService(
 
         uriBuilder.Query = string.Join("&", query);
         logger.LogInformation("Querying API Review Hub release gate for {packageName} {packageVersion}", packageName, packageVersion);
-        return await GetJsonAsync<ApiReviewHubReleaseGateResult>(httpClient, uriBuilder.Uri.ToString(), ct);
+        var result = await GetJsonAsync<ApiReviewHubReleaseGateResult>(httpClient, uriBuilder.Uri.ToString(), ct);
+        return result;
     }
 
     private void LogOperationProgress(OperationStatus operation, DateTimeOffset startedAt, ref bool loggedPipelineUrl)
@@ -148,10 +149,17 @@ public class ApiReviewHubService(
         return await ReadResponseAsync<T>(response, ct);
     }
 
-    private static async Task<T> GetJsonAsync<T>(HttpClient httpClient, string url, CancellationToken ct)
+    private static async Task<T> GetJsonAsync<T>(HttpClient httpClient, string url, CancellationToken ct) where T : class
     {
         using var response = await httpClient.GetAsync(url, ct);
-        return await ReadResponseAsync<T>(response, ct);
+        var value = await ReadResponseAsync<T>(response, ct);
+
+        if (value is ApiReviewHubReleaseGateResult releaseGateResult)
+        {
+            releaseGateResult.StatusCode = (int)response.StatusCode;
+        }
+
+        return value;
     }
 
     private static async Task<T> ReadResponseAsync<T>(HttpResponseMessage response, CancellationToken ct)
@@ -159,7 +167,10 @@ public class ApiReviewHubService(
         var content = await response.Content.ReadAsStringAsync(ct);
         if (!response.IsSuccessStatusCode)
         {
-            throw new InvalidOperationException($"API Review Hub request failed with status {(int)response.StatusCode}: {content}");
+            throw new HttpRequestException(
+                $"API Review Hub request failed with status {(int)response.StatusCode}: {content}",
+                null,
+                response.StatusCode);
         }
 
         var value = JsonSerializer.Deserialize<T>(content, serializerOptions);

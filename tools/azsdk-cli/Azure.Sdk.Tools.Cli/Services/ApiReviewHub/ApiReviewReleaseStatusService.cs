@@ -1,5 +1,6 @@
 using Azure.Sdk.Tools.Cli.Models.ApiReviewHub;
 using Azure.Sdk.Tools.Cli.Services.APIView;
+using System.Net;
 
 namespace Azure.Sdk.Tools.Cli.Services.ApiReviewHub;
 
@@ -20,15 +21,12 @@ public class ApiReviewReleaseStatusService(
         try
         {
             var reviewHubResult = await apiReviewHubService.GetReleaseGateStatusAsync(endpoint, language, packageName, packageVersion, apiHash, ct);
-            result.ReviewHub = new ApiReviewStatusSourceResult<ApiReviewHubReleaseGateResult>
-            {
-                Succeeded = true,
-                Result = reviewHubResult
-            };
-            result.IsApproved = reviewHubResult.Allowed;
+            reviewHubResult.StatusCode ??= (int)HttpStatusCode.OK;
+            result.ReviewHub = reviewHubResult;
+            result.IsApproved = reviewHubResult.IsApproved;
             result.FinalSource = "ApiReviewHub";
-            result.Reason = reviewHubResult.Reason ?? (reviewHubResult.Allowed ? "approved" : "notApproved");
-            if (reviewHubResult.Allowed)
+            result.Reason = reviewHubResult.Reason ?? (reviewHubResult.IsApproved ? "approved" : "notApproved");
+            if (reviewHubResult.IsApproved)
             {
                 return result;
             }
@@ -36,9 +34,10 @@ public class ApiReviewReleaseStatusService(
         catch (Exception ex)
         {
             logger.LogWarning(ex, "API Review Hub release status lookup failed for {packageName} {packageVersion}", packageName, packageVersion);
-            result.ReviewHub = new ApiReviewStatusSourceResult<ApiReviewHubReleaseGateResult>
+            result.ReviewHub = new ApiReviewHubReleaseGateResult
             {
-                Succeeded = false,
+                StatusCode = GetStatusCode(ex),
+                Reason = "queryFailed",
                 Error = ex.Message
             };
         }
@@ -46,13 +45,9 @@ public class ApiReviewReleaseStatusService(
         try
         {
             var apiViewResult = await apiViewReleaseStatusService.GetReleaseStatusAsync(language, packageName, packageVersion, ct);
-            result.ApiView = new ApiReviewStatusSourceResult<ApiViewReleaseStatusResult>
-            {
-                Succeeded = true,
-                Result = apiViewResult
-            };
+            result.ApiView = apiViewResult;
 
-            if (apiViewResult.IsApproved || !result.ReviewHub.Succeeded)
+            if (apiViewResult.IsApproved || !IsSuccessfulStatusCode(result.ReviewHub.StatusCode))
             {
                 result.IsApproved = apiViewResult.IsApproved;
                 result.FinalSource = "APIView";
@@ -64,9 +59,10 @@ public class ApiReviewReleaseStatusService(
         catch (Exception ex)
         {
             logger.LogWarning(ex, "APIView release status fallback failed for {packageName} {packageVersion}", packageName, packageVersion);
-            result.ApiView = new ApiReviewStatusSourceResult<ApiViewReleaseStatusResult>
+            result.ApiView = new ApiViewReleaseStatusResult
             {
-                Succeeded = false,
+                StatusCode = GetStatusCode(ex),
+                Reason = "queryFailed",
                 Error = ex.Message
             };
             result.IsApproved = false;
@@ -75,4 +71,12 @@ public class ApiReviewReleaseStatusService(
             return result;
         }
     }
+
+    private static int? GetStatusCode(Exception ex) =>
+        ex is HttpRequestException httpRequestException && httpRequestException.StatusCode.HasValue
+            ? (int)httpRequestException.StatusCode.Value
+            : null;
+
+    private static bool IsSuccessfulStatusCode(int? statusCode) =>
+        statusCode is >= 200 and < 300;
 }

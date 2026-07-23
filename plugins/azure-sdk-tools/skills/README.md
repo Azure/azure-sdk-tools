@@ -55,7 +55,7 @@ Skill evals for this repository are authored and run via [`@microsoft/vally-cli`
 
 ## Project Configuration
 
-- **`.gitignore`** — Excludes waza output directories and temp files
+- **`.gitignore`** — Excludes eval output directories and temp files
 
 ## Further Reading
 

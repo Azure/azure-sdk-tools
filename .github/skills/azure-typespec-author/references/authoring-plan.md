@@ -4,18 +4,16 @@
 
 ## 3.1 General (All Cases)
 
-Use **both** tools to build an authoring plan, if the retrieved results have conflict, rely on agentic search.
+Use the following tools **in order**:
 
-> **Case-specific overrides take precedence.** Some cases in [3.2 Case-Specific Authoring Plan](#32-case-specific-authoring-plan) restrict which tools may be used — e.g. **Case 3 (API Version Evolution) uses Agentic Search ONLY and forbids the MCP tool**. When a case-specific rule applies, follow it instead of the general "use both tools" guidance below.
+1. **Agentic Search** (primary) — run [agentic search](agentic-search.md) with URLs from [reference-document-links.md](reference-document-links.md) and a query from the user's request. Synthesize extracted content into a concrete plan.
 
-1. **MCP Tool** — call `azsdk_typespec_generate_authoring_plan` with:
+2. **MCP Tool** (fallback) — call `azsdk_typespec_generate_authoring_plan` **only if** agentic search fails (all URLs unreachable or timeout exceeded):
    - `request`: user request (verbatim)
    - `additionalInformation`: all context from Steps 1–2
    - `typeSpecProjectRootPath`: project root path
 
-2. **Agentic Search** — run [agentic search](agentic-search.md) with URLs from [reference-document-links.md](reference-document-links.md) and a query from the user's request. Synthesize extracted content into a concrete plan.
-
-> **Fallback**: If agentic search fails (all URLs unreachable or timeout exceeded), proceed with the MCP tool result alone. Do not block the workflow on unreachable external documentation.
+> Do not call the MCP tool when agentic search succeeds. Do not block the workflow on unreachable external documentation — proceed with the MCP tool result if agentic search fails.
 
 ---
 
@@ -23,7 +21,7 @@ Use **both** tools to build an authoring plan, if the retrieved results have con
 
 ### Case 3 — API Version Evolution (ARM / Data-plane)
 
-> **Use Agentic Search (option 2 above) ONLY.** For version-evolution requests you **must not** call the MCP tool `azsdk_typespec_generate_authoring_plan` at all — it does not cover the example-file migration and version-rebase steps this case requires. This exclusive rule overrides the "use both tools" guidance in [3.1 General](#31-general-all-cases).
+> For version-evolution requests, try **Agentic Search first** (per [3.1 General](#31-general-all-cases)). If agentic search fails (all URLs unreachable or timeout), fall back to the MCP tool `azsdk_typespec_generate_authoring_plan`. The concrete file-migration steps below are **mandatory regardless of which source was used**.
 
 1. Copy `.json` files from latest version's `examples/` into new version's `examples/`. Update `api-version` in each file. Delete old version's example folder if old version is no longer existed.
 2. Update `readme.md`.

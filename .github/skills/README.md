@@ -28,6 +28,8 @@ pipeline to match and distribute them to all subscribed language SDK repos.
 
 These skills help with skill development itself:
 
+The three eval-authoring skills share the repository-local [eval authoring guide](eval-authoring/README.md).
+
 | Skill                                                                                 | Triggers                                            | Description                                                           |
 | ------------------------------------------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------------------------- |
 | [sensei](sensei/SKILL.md)                                                             | "run sensei", "improve skill", "fix frontmatter"    | Iteratively improve skill frontmatter compliance using the Ralph loop |

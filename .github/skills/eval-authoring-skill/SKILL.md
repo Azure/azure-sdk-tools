@@ -10,7 +10,7 @@ compatibility: "copilot-chat, @microsoft/vally-cli 0.7.0"
 
 # Skill Eval Authoring
 
-Author Vally evals that verify **one Agent Skill's** routing and behavior in isolation, under `.github/skills/<skill>/evals/`. All the actual guidance — naming convention, placement, per-category requirements, glossary, grading patterns, grader catalog, anti-patterns, and worked examples — lives in one shared place so it never drifts across the three eval-authoring skills: the eval authoring guide at `eng/common/knowledge/eval-authoring/README.md`. This skill exists to route you there with skill-eval context already loaded, not to duplicate it.
+Author Vally evals that verify **one Agent Skill's** routing and behavior in isolation, under `.github/skills/<skill>/evals/`. All the actual guidance — naming convention, placement, per-category requirements, glossary, grading patterns, grader catalog, anti-patterns, and worked examples — lives in one shared place so it never drifts across the three eval-authoring skills: the repository-local eval authoring guide at `.github/skills/eval-authoring/README.md`. This skill exists to route you there with skill-eval context already loaded, not to duplicate it.
 
 ## Triggers
 
@@ -20,7 +20,7 @@ DO NOT USE FOR: single MCP tool prompt-to-tool coverage (use eval-authoring-tool
 
 ## Steps
 
-1. Read the eval authoring guide (`eng/common/knowledge/eval-authoring/README.md`) Step 0 to find this repo's `vallyRoot`/`evalGlobs` for the skill tier, then the guide's "Skill" column throughout (naming, requirements, worked example).
+1. Read the eval authoring guide (`.github/skills/eval-authoring/README.md`) Step 0 to find this repo's `vallyRoot`/`evalGlobs` for the skill tier, then the guide's "Skill" column throughout (naming, requirements, worked example).
 2. Read the target `SKILL.md` — its `WHEN`/`DO NOT USE FOR` boundaries, invoked tools — and its existing `evals/`.
 3. Write `eval.yaml` with routing stimuli (trigger + anti-trigger, `skill-invocation` grader) and capability stimuli together in the same file per the guide's naming convention and four-layer pattern. Split into additional `<behavior>.eval.yaml` files only once a skill's coverage genuinely grows large. For a boundary prompt, mount and **require** the intended competing skill while disallowing the skill under test — an anti-trigger with no competing skill mounted trivially "passes" (guide anti-pattern A7).
 4. Supply concrete identifiers (repo path, package name, anything needed to reach the call) in every stimulus prompt — a vague prompt fails `tool-calls` with zero recorded calls, which looks like a routing bug but is really a missing-context prompt bug.
@@ -35,5 +35,5 @@ DO NOT USE FOR: single MCP tool prompt-to-tool coverage (use eval-authoring-tool
 
 ## References
 
-- Eval authoring guide: `eng/common/knowledge/eval-authoring/README.md` — naming, placement, requirements, glossary, graders, anti-patterns, worked examples, local commands. Shared with `eval-authoring-tool`/`eval-authoring-workflow` — update it there, not per-skill.
+- Eval authoring guide: `.github/skills/eval-authoring/README.md` — naming, placement, requirements, glossary, graders, anti-patterns, worked examples, local commands. Shared with `eval-authoring-tool`/`eval-authoring-workflow` — update it there, not per-skill.
 - Repository-local eval README/configuration discovered in Step 0 (if present)

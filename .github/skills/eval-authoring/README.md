@@ -2,7 +2,7 @@
 
 One guide for writing Vally evals in this repo, whatever you're testing: a single MCP **tool**, an Agent **skill**'s routing/behavior, or a multi-step **workflow**. Read this once. The three `eval-authoring-*` skills exist only to route you here with the right category already identified — they don't duplicate this content.
 
-This doc lives under `eng/common/knowledge/` because it's synced as-is to every repo that consumes the shared eval pipeline. Everything here is grader- and process-level, not tied to one repo's file layout — where **your** repo's evals actually live is one lookup away (Step 0 below), not hardcoded in this guide.
+This repository-local guide lives under `.github/skills/eval-authoring/` alongside the eval-authoring meta-skills. It documents Azure SDK Tools conventions. If you adapt an eval in another repository, inspect that repository's own pipeline and configuration first; its paths and tooling may differ.
 
 ## Contents
 
@@ -17,16 +17,16 @@ This doc lives under `eng/common/knowledge/` because it's synced as-is to every 
 9. [Worked examples](#9-worked-examples)
 10. [Running evals locally](#10-running-evals-locally)
 
-## Step 0: find out where evals live in *your* repo
+## Step 0: find out where evals live in this repository
 
-Before anything else: find the pipeline file that extends `eng/common/pipelines/templates/stages/archetype-eval.yml` for the category you're authoring, and read its `vallyRoot`/`evalGlobs`. Do not assume this repo's paths are universal.
+Before anything else: find the pipeline file that extends `eng/common/pipelines/templates/stages/archetype-eval.yml` for the category you're authoring, and read its `vallyRoot`/`evalGlobs`. Do not assume this repository's paths are universal.
 
 | Category | Azure SDK Tools example pipeline | Azure SDK Tools example `vallyRoot` |
 | --- | --- | --- |
 | Skill | `eng/common/pipelines/skill-eval.yml` | `.github/skills` |
 | Tool / Workflow | `eng/common/pipelines/workflow-eval.yml`, `eng/common/pipelines/live-eval.yml` | `evals` |
 
-These are source-repository examples, not a contract for consuming repos. A repo that scopes skill evals under `.github/skills` may equally scope tool/workflow evals under `.github/skills/evals/{tools,workflows}` instead of a root-level `evals/` — always confirm against that repo's own pipeline file, never assume.
+These are Azure SDK Tools examples. If you apply this guidance in another repository, confirm that repository's own pipeline file before adding an eval.
 
 ## 1. Which category is this?
 

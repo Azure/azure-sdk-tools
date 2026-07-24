@@ -101,4 +101,58 @@ public class ApiReviewReleaseStatusServiceTests
         Assert.That(result.ApiView?.StatusCode, Is.EqualTo(201));
         Assert.That(result.ApiView?.PackageNameApproved, Is.True);
     }
+
+    [Test]
+    public async Task GetReleaseStatusAsync_UsesApiViewResult_WhenReviewHubRepositoryIsNotSupported()
+    {
+        reviewHubServiceMock
+            .Setup(x => x.GetReleaseGateStatusAsync("https://endpoint", "python", "pkg", "1.0.0", "hash", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ApiReviewHubReleaseGateResult
+            {
+                IsApproved = false,
+                Reason = "repositoryNotSupported"
+            });
+        apiViewServiceMock
+            .Setup(x => x.GetReleaseStatusAsync("python", "pkg", "1.0.0", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ApiViewReleaseStatusResult
+            {
+                IsApproved = false,
+                PackageNameApproved = false,
+                StatusCode = 200,
+                Reason = "packageNamePending",
+                Details = ["APIView fallback result"]
+            });
+
+        var result = await service.GetReleaseStatusAsync("https://endpoint", "python", "pkg", "1.0.0", "hash", CancellationToken.None);
+
+        Assert.That(result.IsApproved, Is.False);
+        Assert.That(result.FinalSource, Is.EqualTo("APIView"));
+        Assert.That(result.Reason, Is.EqualTo("packageNamePending"));
+        Assert.That(result.ReviewHub.StatusCode, Is.EqualTo(200));
+        Assert.That(result.ApiView?.StatusCode, Is.EqualTo(200));
+    }
+
+    [Test]
+    public async Task GetReleaseStatusAsync_ReturnsReviewNotFound_WhenReviewHubRepositoryIsNotSupported_AndApiViewReturns404()
+    {
+        reviewHubServiceMock
+            .Setup(x => x.GetReleaseGateStatusAsync("https://endpoint", "java", "azure-keyvault-keys", "4.12.0b3", "hash", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ApiReviewHubReleaseGateResult
+            {
+                IsApproved = false,
+                Reason = "repositoryNotSupported"
+            });
+        apiViewServiceMock
+            .Setup(x => x.GetReleaseStatusAsync("java", "azure-keyvault-keys", "4.12.0b3", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("review not found", null, HttpStatusCode.NotFound));
+
+        var result = await service.GetReleaseStatusAsync("https://endpoint", "java", "azure-keyvault-keys", "4.12.0b3", "hash", CancellationToken.None);
+
+        Assert.That(result.IsApproved, Is.False);
+        Assert.That(result.FinalSource, Is.EqualTo("APIView"));
+        Assert.That(result.Reason, Is.EqualTo("reviewNotFound"));
+        Assert.That(result.ReviewHub.StatusCode, Is.EqualTo(200));
+        Assert.That(result.ApiView?.StatusCode, Is.EqualTo(404));
+        Assert.That(result.ApiView?.Reason, Is.EqualTo("reviewNotFound"));
+    }
 }

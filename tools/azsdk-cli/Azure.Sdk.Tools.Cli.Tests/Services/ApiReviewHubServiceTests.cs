@@ -108,6 +108,42 @@ public class ApiReviewHubServiceTests
     }
 
     [Test]
+    public async Task GetReleaseGateStatusAsync_HandlesMissingApprovalsProperty()
+    {
+        var mockHandler = new Mock<HttpMessageHandler>();
+        mockHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    """
+                    {
+                      "isApproved": false,
+                      "reason": "repositoryNotSupported",
+                      "details": ["Repository is not onboarded in API Review Hub."]
+                    }
+                    """,
+                    Encoding.UTF8,
+                    "application/json")
+            });
+
+        httpClientFactoryMock
+            .Setup(x => x.CreateClient(It.IsAny<string>()))
+            .Returns(new HttpClient(mockHandler.Object));
+
+        var result = await service.GetReleaseGateStatusAsync("https://api-review-hub-test.azurewebsites.net", "python", "pkg", "1.0.0", "hash", CancellationToken.None);
+
+        Assert.That(result.StatusCode, Is.EqualTo(200));
+        Assert.That(result.Reason, Is.EqualTo("repositoryNotSupported"));
+        Assert.That(result.Approvals, Is.Not.Null);
+        Assert.That(result.Approvals, Is.Empty);
+    }
+
+    [Test]
     public void GetReleaseGateStatusAsync_WithDisallowedHost_ThrowsInvalidOperationException()
     {
         var exception = Assert.ThrowsAsync<InvalidOperationException>(async () =>

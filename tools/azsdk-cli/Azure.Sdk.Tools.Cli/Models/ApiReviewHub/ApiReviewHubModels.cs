@@ -134,7 +134,8 @@ public class ApiReviewHubReleaseGateResult
     public string? Error { get; set; }
 
     [JsonPropertyName("approvals")]
-    public IReadOnlyList<ApiReviewHubReleaseGateApproval> Approvals { get; set; } = [];
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<ApiReviewHubReleaseGateApproval>? Approvals { get; set; } = [];
 }
 
 public class ApiViewReleaseStatusResult

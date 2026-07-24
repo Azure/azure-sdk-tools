@@ -47,7 +47,7 @@ public class ApiReviewReleaseStatusService(
             var apiViewResult = await apiViewReleaseStatusService.GetReleaseStatusAsync(language, packageName, packageVersion, ct);
             result.ApiView = apiViewResult;
 
-            if (apiViewResult.IsApproved || !IsSuccessfulStatusCode(result.ReviewHub.StatusCode))
+            if (apiViewResult.IsApproved || !IsSuccessfulStatusCode(result.ReviewHub.StatusCode) || IsReviewHubNotApplicable(result.ReviewHub))
             {
                 result.IsApproved = apiViewResult.IsApproved;
                 result.FinalSource = "APIView";
@@ -58,10 +58,28 @@ public class ApiReviewReleaseStatusService(
         }
         catch (Exception ex)
         {
+            var apiViewStatusCode = GetStatusCode(ex);
+            if (IsReviewHubNotApplicable(result.ReviewHub) && apiViewStatusCode == (int)HttpStatusCode.NotFound)
+            {
+                logger.LogInformation("APIView review not found for {packageName} {packageVersion} when Review Hub is not applicable.", packageName, packageVersion);
+                result.ApiView = new ApiViewReleaseStatusResult
+                {
+                    StatusCode = apiViewStatusCode,
+                    IsApproved = false,
+                    PackageNameApproved = false,
+                    Reason = "reviewNotFound",
+                    Details = [$"APIView review is not found for {packageName} {packageVersion}."]
+                };
+                result.IsApproved = false;
+                result.FinalSource = "APIView";
+                result.Reason = "reviewNotFound";
+                return result;
+            }
+
             logger.LogWarning(ex, "APIView release status fallback failed for {packageName} {packageVersion}", packageName, packageVersion);
             result.ApiView = new ApiViewReleaseStatusResult
             {
-                StatusCode = GetStatusCode(ex),
+                StatusCode = apiViewStatusCode,
                 Reason = "queryFailed",
                 Error = ex.Message
             };
@@ -79,4 +97,7 @@ public class ApiReviewReleaseStatusService(
 
     private static bool IsSuccessfulStatusCode(int? statusCode) =>
         statusCode is >= 200 and < 300;
+
+    private static bool IsReviewHubNotApplicable(ApiReviewHubReleaseGateResult reviewHubResult) =>
+        string.Equals(reviewHubResult.Reason, "repositoryNotSupported", StringComparison.OrdinalIgnoreCase);
 }

@@ -321,7 +321,7 @@ public class ApiReviewHubTool(
         {
             details.Add(string.Empty);
             details.Add("== APIView (Legacy) ==");
-            if (result.ApiView.StatusCode is >= 200 and < 300)
+            if (result.ApiView.StatusCode is >= 200 and < 300 || string.Equals(result.ApiView.Reason, "reviewNotFound", StringComparison.OrdinalIgnoreCase))
             {
                 details.Add("Queried because the primary API Review Hub result was not approved or could not be retrieved.");
                 details.Add($"Status Code: {result.ApiView.StatusCode}");
@@ -366,14 +366,16 @@ public class ApiReviewHubTool(
             "rejected" => $"API review release gate is rejected for {packageName} {packageVersion}.",
             "staleArtifact" => $"API review release gate cannot be approved for {packageName} {packageVersion} because the release candidate artifact is not the one that was approved.",
             "missingApiHash" => $"API review release gate cannot be approved for {packageName} {packageVersion} because no API hash was provided.",
+            "repositoryNotSupported" => $"API review release gate cannot be evaluated by API Review Hub for {packageName} {packageVersion} because this repository is not currently supported.",
+            "reviewNotFound" => $"API review release gate is not approved for {packageName} {packageVersion} because no APIView review was found.",
             "queryFailed" => $"API review release gate status could not be determined for {packageName} {packageVersion} because both API Review Hub and APIView status queries failed.",
             _ => $"API review release gate is not approved for {packageName} {packageVersion}."
         };
     }
 
-    private static void AddApprovalDetails(List<string> details, IReadOnlyList<ApiReviewHubReleaseGateApproval> approvals, string apiHash)
+    private static void AddApprovalDetails(List<string> details, IReadOnlyList<ApiReviewHubReleaseGateApproval>? approvals, string apiHash)
     {
-        if (approvals.Count == 0)
+        if (approvals?.Count is not > 0)
         {
             details.Add("Approval records returned by service: none");
             return;

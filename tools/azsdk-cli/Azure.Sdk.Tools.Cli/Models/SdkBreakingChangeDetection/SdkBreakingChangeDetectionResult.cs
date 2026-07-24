@@ -8,7 +8,7 @@ namespace Azure.Sdk.Tools.Cli.Models.SdkBreakingChangeDetection
     /// <summary>
     /// Represents the result of detecting breaking changes in an SDK.
     /// </summary>
-    public class SdkBreakingChangeDetectResult
+    public class SdkBreakingChangeDetectionResult
     {
         /// <summary>
         /// A list of breaking changes detected in the SDK.

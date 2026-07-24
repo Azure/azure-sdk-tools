@@ -1,16 +1,19 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using System.Linq;
 using System.Text.Json;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
+using Azure.Sdk.Tools.Cli.CopilotAgents.Tools;
 using Azure.Sdk.Tools.Cli.Models.SdkBreakingChangeDetection;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
+using Microsoft.Extensions.AI;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {   
     public interface ISdkBreakingChangeClassificationService
     {
-        Task<SdkBreakingChangeDetectResult?> ClassifySdkBreakingChangesAsync(string sdkchange, string sdkBreakingPattern, string language, string? tspProjectPath, CancellationToken ct);
+        Task<SdkBreakingChangeDetectionResult?> ClassifySdkBreakingChangesAsync(string sdkchange, string sdkBreakingPattern, string language, string? tspProjectPath, CancellationToken ct);
     }
     public class SdkBreakingChangeClassificationService: ISdkBreakingChangeClassificationService
     {
@@ -23,20 +26,33 @@ namespace Azure.Sdk.Tools.Cli.Services
             _logger = logger;
         }
 
-        public async Task<SdkBreakingChangeDetectResult?> ClassifySdkBreakingChangesAsync(string sdkchange, string sdkBreakingPattern, string language, string? tspProjectPath, CancellationToken ct)
+        public async Task<SdkBreakingChangeDetectionResult?> ClassifySdkBreakingChangesAsync(string sdkchange, string sdkBreakingPattern, string language, string? tspProjectPath, CancellationToken ct)
         {
             try
             {
                 var template = new SdkBreakingChangeClassificationTemplate(sdkBreakingPattern, sdkchange, language, tspProjectPath);
+                List<AIFunction>? specTools = null;
+                if (!string.IsNullOrEmpty(tspProjectPath) && Directory.Exists(tspProjectPath))
+                {
+                    // Tools scoped to spec repo for TypeSpec project inspection
+                    specTools = new List<AIFunction>
+                    {
+                        FileTools.CreateReadFileTool(tspProjectPath),
+                        FileTools.CreateListFilesTool(tspProjectPath),
+                        FileTools.CreateGrepSearchTool(tspProjectPath)
+                    };
+                }
                 var agent = new CopilotAgent<string>
                 {
                     Instructions = template.BuildPrompt(),
+                    Tools = specTools ?? new List<AIFunction>(),
                 };
+                
                 var result = await _agentRunner.RunAsync(agent, ct);
                 _logger.LogDebug("Use SdkBreakingChangeClassificationTemplate version {Version}, Classification result: {Result}", template.Version, result);
                 try
                 {
-                    return JsonSerializer.Deserialize<SdkBreakingChangeDetectResult>(result);
+                    return JsonSerializer.Deserialize<SdkBreakingChangeDetectionResult>(result);
                 }
                 catch (Exception ex)
                 {

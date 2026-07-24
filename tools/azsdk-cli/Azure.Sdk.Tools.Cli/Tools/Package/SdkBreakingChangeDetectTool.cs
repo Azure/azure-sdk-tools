@@ -144,24 +144,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 // If sdkChange is still null, attempt to retrieve it using the configured script
                 if (sdkChange == null)
                 {
-                    try
+                   
+                    var isSupported = true;
+                    (isSupported, sdkChange) = await RetrieveSdkChangeFromScriptAsync(sdkRepoRoot, packagePath, packageInfo, languageService, ct);
+                    if (isSupported && sdkChange == null)
                     {
-                        sdkChange = await RetrieveSdkChangeFromScriptAsync(sdkRepoRoot, packagePath, packageInfo, languageService, ct);
-                        if (sdkChange == null)
+                        logger.LogError("Failed to retrieve SDK changes using the configured script.");
+                        return new PackageOperationResponse
                         {
-                            logger.LogError("Failed to retrieve SDK changes using the configured script.");
-                            return new PackageOperationResponse
-                            {
-                                ResponseError = "Failed to retrieve SDK changes using the configured script.",
-                                Language = languageService.Language,
-                                PackageName = packageInfo?.PackageName,
-                            };
-                        }
+                            ResponseError = "Failed to retrieve SDK changes using the configured script.",
+                            Language = languageService.Language,
+                            PackageName = packageInfo?.PackageName,
+                        };
                     }
-                    catch (NotImplementedException ex)
-                    {
-                        logger.LogWarning(ex, "SDK change retrieval is not implemented for language: {Language}", languageService.Language);
-                    }
+                    
                 }
 
                 if (sdkChange != null)
@@ -173,7 +169,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     }
                     else
                     {
-                        var result = new SdkBreakingChangeDetectResult
+                        var result = new SdkBreakingChangeDetectionResult
                         {
                             HasBreakingChange = sdkChange.HasBreakingChange,
                             BreakingChanges = [],
@@ -228,10 +224,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return sdkChange;
         }
 
-        private async Task<SdkChange?> RetrieveSdkChangeFromScriptAsync(string sdkRepoRoot, string packagePath, PackageInfo packageInfo, LanguageService languageService, CancellationToken ct)
+        private async Task<(bool isSupported, SdkChange? sdkChange)> RetrieveSdkChangeFromScriptAsync(string sdkRepoRoot, string packagePath, PackageInfo packageInfo, LanguageService languageService, CancellationToken ct)
         {
             logger.LogInformation("Retrieve SDK changes using the configured script.");
             SdkChange? sdkChange = null;
+            bool isSupported = true;
             // execute configured sdk change retrieve script
             var (configContentType, configValue) = await _specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.GetSdkChanges, ct);
             if (configContentType != SpecGenSdkConfigContentType.Unknown && !string.IsNullOrEmpty(configValue))
@@ -282,10 +279,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             else
             {
                 logger.LogInformation("No valid SDK change retrieval configuration was found. It is not implemented.");
-                throw new NotImplementedException();
+                isSupported = false;
             }
 
-            return sdkChange;
+            return (isSupported, sdkChange);
         }
 
         private async Task<PackageOperationResponse> ClassifySdkBreakingChangesAsync(SdkChange sdkChange, string sdkRepoRoot, LanguageService languageService, PackageInfo? packageInfo, string? tspConfigPath, CancellationToken ct)

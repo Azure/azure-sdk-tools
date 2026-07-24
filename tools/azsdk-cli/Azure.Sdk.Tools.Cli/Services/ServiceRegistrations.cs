@@ -7,7 +7,7 @@ using System.ClientModel;
 using Microsoft.Extensions.Azure;
 using ModelContextProtocol.Server;
 using OpenAI;
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
@@ -130,22 +130,17 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<CopilotClient>(sp =>
             {
                 var logger = sp.GetService<ILogger<CopilotClient>>();
+                var cliPath = Environment.GetEnvironmentVariable("AZSDK_COPILOT_CLI_PATH");
                 var options = new CopilotClientOptions
                 {
-                    UseStdio = true,
-                    AutoStart = true,
+                    Connection = RuntimeConnection.ForStdio(
+                        string.IsNullOrWhiteSpace(cliPath) ? null : cliPath.Trim()),
                     Logger = logger
                 };
 
                 // Allow overriding the bundled Copilot CLI path via environment variable.
                 // This is useful when the standalone azsdk.exe doesn't include the Copilot CLI executable
                 // but the user has it installed elsewhere (e.g. via npm).
-                var cliPath = Environment.GetEnvironmentVariable("AZSDK_COPILOT_CLI_PATH");
-                if (!string.IsNullOrWhiteSpace(cliPath))
-                {
-                    options.CliPath = cliPath.Trim();
-                }
-
                 return new CopilotClient(options);
             });
             services.AddSingleton<ICopilotClientWrapper, CopilotClientWrapper>();

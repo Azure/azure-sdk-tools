@@ -1,0 +1,119 @@
+parameters:
+  - name: startQaBotBackend
+    type: boolean
+    default: false
+  - name: prepareNoSkill
+    type: boolean
+    default: false
+
+steps:
+  - ${{ if eq(parameters.startQaBotBackend, true) }}:
+    - script: |
+        set -e
+        echo "Installing Go 1.24.0..."
+        curl --fail --location --show-error -o go1.24.0.linux-amd64.tar.gz https://go.dev/dl/go1.24.0.linux-amd64.tar.gz
+        sudo rm -rf /usr/local/go
+        sudo tar -C /usr/local -xzf go1.24.0.linux-amd64.tar.gz
+        echo "##vso[task.prependpath]/usr/local/go/bin"
+        go version
+      displayName: Install Go
+
+    - task: AzureCLI@2
+      displayName: Start QA bot backend service
+      inputs:
+        azureSubscription: 'azuresdkqabot-dev'
+        scriptType: bash
+        scriptLocation: inlineScript
+        workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
+        inlineScript: |
+          export GOPROXY=https://proxy.golang.org,direct
+          LOG_DIR=$(Build.StagingDirectory)/qa-bot-log
+          mkdir -p "$LOG_DIR"
+          go build -o qa-bot-service
+          chmod +x qa-bot-service
+          nohup ./qa-bot-service > "$LOG_DIR/qa-bot-service.log" 2>&1 &
+          SERVICE_PID=$!
+          echo "Service started with PID: $SERVICE_PID"
+          sleep 20
+          cat "$LOG_DIR/qa-bot-service.log" || true
+          if ! kill -0 $SERVICE_PID 2>/dev/null; then
+            echo "ERROR: Service process has exited unexpectedly"
+            exit 1
+          fi
+          if ! lsof -ti:8088 > /dev/null 2>&1; then
+            echo "ERROR: No process listening on port 8088"
+            exit 1
+          fi
+          echo "Service is running on port 8088"
+      env:
+        SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+        AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
+
+  - ${{ if eq(parameters.prepareNoSkill, true) }}:
+    - script: |
+        set -e
+        mkdir -p /tmp/no-skills
+        rm -rf /tmp/no-skills/*
+      displayName: 'Prepare empty no-skill directory'
+
+  - script: |
+      set -e
+      BRANCH="${SKILL_BRANCH:-}"
+      if [ "$BRANCH" = '$(SkillBranch)' ]; then
+        BRANCH=""
+      fi
+      if [ -z "$BRANCH" ]; then
+        echo "SkillBranch not set; keep current checked-out skill files."
+        exit 0
+      fi
+
+      BRANCH_REF="$BRANCH"
+      case "$BRANCH_REF" in
+        refs/heads/*)
+          ;;
+        refs/remotes/origin/*)
+          BRANCH_REF="refs/heads/${BRANCH_REF#refs/remotes/origin/}"
+          ;;
+        origin/*)
+          BRANCH_REF="refs/heads/${BRANCH_REF#origin/}"
+          ;;
+        refs/*)
+          ;;
+        *)
+          BRANCH_REF="refs/heads/$BRANCH_REF"
+          ;;
+      esac
+
+      echo "Overlaying azure-typespec-author skill from: $BRANCH_REF"
+      git fetch origin "$BRANCH_REF"
+      rm -rf .github/skills/azure-typespec-author/SKILL.md \
+             .github/skills/azure-typespec-author/references
+      git checkout FETCH_HEAD -- \
+        .github/skills/azure-typespec-author/SKILL.md \
+        .github/skills/azure-typespec-author/references
+      echo "Skill source overlaid from $BRANCH_REF"
+    displayName: 'Overlay skill source from SkillBranch (if set)'
+    env:
+      SKILL_BRANCH: $(SkillBranch)
+
+  - script: |
+      set -e
+      npm ci --userconfig $(Build.SourcesDirectory)/.npmrc
+      echo "##vso[task.prependpath]$(Build.SourcesDirectory)/eng/pipelines/azure-typespec-author-eval/node_modules/.bin"
+    displayName: 'Install TypeSpec toolchain (pinned)'
+    workingDirectory: $(Build.SourcesDirectory)/eng/pipelines/azure-typespec-author-eval
+
+  - script: |
+      set -e
+      echo "tsp version:"
+      tsp --version
+    displayName: 'Verify TypeSpec toolchain on PATH'
+
+  - script: |
+      set -e
+      node .github/skills/azure-typespec-author/evaluate/scripts/setup-fixture-files.js
+      FIXTURE_DIR=".github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget"
+      cd "$FIXTURE_DIR"
+      npm ci --userconfig $(Build.SourcesDirectory)/.npmrc
+      echo "##vso[task.setvariable variable=FIXTURE_NODE_MODULES]$(Build.SourcesDirectory)/$FIXTURE_DIR/node_modules"
+    displayName: 'Prepare fixture files and node_modules'

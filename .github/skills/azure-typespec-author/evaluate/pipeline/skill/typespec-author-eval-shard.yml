@@ -1,0 +1,214 @@
+# Repo-local eval shard template for azure-typespec-author with-skill benchmark.
+# It prefixes artifact names per track and binds azsdk-mcp to the staged
+# live/mock MCP binary before invoking Vally.
+
+parameters:
+  - name: vallyRoot
+    type: string
+  - name: matrixStageName
+    type: string
+    default: Prepare
+  - name: UseAzSdkAuthentication
+    type: boolean
+    default: false
+  - name: azureSubscription
+    type: string
+    default: opensource-api-connection
+  - name: mcpEnvironment
+    type: string
+    default: none
+    values:
+      - none
+      - live
+      - mock
+  - name: startQaBotBackend
+    type: boolean
+    default: false
+  - name: prepareNoSkill
+    type: boolean
+    default: false
+  - name: threshold
+    type: number
+    default: 0.8
+  - name: postEvalTemplate
+    type: string
+    default: ''
+  - name: shardTimeoutInMinutes
+    type: number
+    default: 20
+
+jobs:
+  - job: RunShard
+    displayName: 'Eval'
+    pool:
+      name: $(LINUXPOOL)
+      image: $(LINUXVMIMAGE)
+      os: linux
+    continueOnError: true
+    timeoutInMinutes: ${{ parameters.shardTimeoutInMinutes }}
+    strategy:
+      matrix: $[ stageDependencies.${{ parameters.matrixStageName }}.generate_eval_matrix.outputs['detect.matrix'] ]
+      maxParallel: 10
+    templateContext:
+      outputs:
+        - output: pipelineArtifact
+          displayName: 'Publish $(shardName) eval results'
+          artifactName: '${{ parameters.matrixStageName }}-eval-result-$(shardName)-$(System.JobAttempt)'
+          targetPath: $(Build.ArtifactStagingDirectory)/results
+          condition: always()
+        - output: pipelineArtifact
+          displayName: 'Publish $(shardName) transcripts (on failure)'
+          artifactName: '${{ parameters.matrixStageName }}-eval-debug-$(shardName)-$(System.JobAttempt)'
+          targetPath: $(Build.ArtifactStagingDirectory)/debug
+          condition: failed()
+    steps:
+      - checkout: self
+        fetchDepth: 1
+
+      - task: UseNode@1
+        displayName: 'Use Node.js 22.x'
+        inputs:
+          version: 22.x
+
+      - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+        parameters:
+          npmrcPath: $(Build.SourcesDirectory)/.npmrc
+          registryUrl: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
+
+      - script: npm ci --userconfig $(Build.SourcesDirectory)/.npmrc
+        displayName: 'Install Vally CLI + copilot-sdk (pinned)'
+        workingDirectory: eng/common/scripts/eval
+
+      - download: current
+        artifact: mcp-servers
+        displayName: 'Download MCP server(s)'
+
+      - script: |
+          mkdir -p "$(Build.SourcesDirectory)/artifacts/mcp"
+          cp -r "$(Pipeline.Workspace)/mcp-servers/." "$(Build.SourcesDirectory)/artifacts/mcp/"
+        displayName: 'Stage MCP binaries for Vally'
+
+      - script: |
+          set -e
+          if [ "$MCP_ENVIRONMENT" = "none" ]; then
+            echo "Leaving Vally MCP environment unchanged."
+            exit 0
+          fi
+
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+
+          const mode = process.env.MCP_ENVIRONMENT;
+          const configPath = path.join(process.env.BUILD_SOURCESDIRECTORY, process.env.VALLY_ROOT, '.vally.yaml');
+          let text = fs.readFileSync(configPath, 'utf8');
+          const start = text.indexOf('  azsdk-mcp:\n');
+          const end = text.indexOf('\n  azsdk-mcp-remote-kb:', start);
+          if (start < 0 || end < 0) {
+            throw new Error('Could not find azsdk-mcp environment block in .vally.yaml');
+          }
+
+          const current = text.slice(start, end);
+          const endpoint = current.match(/AZURE_SDK_KB_ENDPOINT: "([^"]+)"/)?.[1];
+          const endpointLine = endpoint ? `          AZURE_SDK_KB_ENDPOINT: "${endpoint}"\n` : '';
+          const binary = mode === 'mock'
+            ? '../../../../artifacts/mcp/mock/azsdk-mock.dll'
+            : '../../../../artifacts/mcp/cli/azsdk.dll';
+          const timeout = mode === 'mock' ? '"60s"' : '5m';
+          const args = mode === 'mock'
+            ? `            "${binary}",`
+            : `            "${binary}",\n            "start",`;
+          const env = mode === 'mock'
+            ? ''
+            : `        env:\n          AZSDKTOOLS_AGENT_TESTING: "false"\n          AZSDKTOOLS_COLLECT_TELEMETRY: "false"\n${endpointLine}`;
+
+          const replacement = `  azsdk-mcp:\n    files:\n      - src: ../fixtures/instructions-test/copilot-instructions.md\n        dest: .github/copilot-instructions.md\n    mcpServers:\n      azure-sdk-mcp:\n        type: stdio\n        command: dotnet\n        args:\n          [\n${args}\n          ]\n        timeout: ${timeout}\n${env}`;
+
+          text = text.slice(0, start) + replacement + text.slice(end);
+          fs.writeFileSync(configPath, text);
+          console.log(`Rebound azsdk-mcp to ${mode} MCP binary in ${configPath}`);
+          NODE
+        displayName: 'Bind azsdk-mcp to ${{ parameters.mcpEnvironment }} MCP binary'
+        env:
+          MCP_ENVIRONMENT: ${{ parameters.mcpEnvironment }}
+          VALLY_ROOT: ${{ parameters.vallyRoot }}
+
+      - template: /.github/skills/azure-typespec-author/evaluate/pipeline/skill/typespec-author-preeval.yml
+        parameters:
+          startQaBotBackend: ${{ parameters.startQaBotBackend }}
+          prepareNoSkill: ${{ parameters.prepareNoSkill }}
+
+      - script: |
+          patterns=()
+          set -f
+          for tok in $EVAL_ARGS; do
+            [ "$tok" = "-e" ] && continue
+            patterns+=(--pattern "$tok")
+          done
+          set +f
+          node --experimental-strip-types "$(Build.SourcesDirectory)/eng/common/scripts/eval/init-eval-git-fixtures.ts" \
+            --eval-root "$(Build.SourcesDirectory)/${{ parameters.vallyRoot }}" \
+            "${patterns[@]}"
+        displayName: 'Prime eval git fixtures'
+        env:
+          EVAL_ARGS: $(evalArgs)
+
+      - ${{ if parameters.UseAzSdkAuthentication }}:
+        - task: AzureCLI@2
+          displayName: 'vally eval $(shardName) (authenticated)'
+          inputs:
+            azureSubscription: ${{ parameters.azureSubscription }}
+            scriptType: bash
+            scriptLocation: inlineScript
+            workingDirectory: ${{ parameters.vallyRoot }}
+            inlineScript: |
+              node --experimental-strip-types "$(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/pipeline/skill/typespec-author-invoke-shard.ts" \
+                --eval-args "$(evalArgs)" \
+                --shard-name "$(shardName)" \
+                --output-dir "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)" \
+                --extra-args "$(TypeSpecAuthorEvalExtraArgs)" \
+                --threshold ${{ parameters.threshold }}
+          env:
+            GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+
+      - ${{ else }}:
+        - script: |
+            node --experimental-strip-types "$(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/pipeline/skill/typespec-author-invoke-shard.ts" \
+              --eval-args "$(evalArgs)" \
+              --shard-name "$(shardName)" \
+              --output-dir "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)" \
+              --extra-args "$(TypeSpecAuthorEvalExtraArgs)" \
+              --threshold ${{ parameters.threshold }}
+          displayName: 'vally eval $(shardName)'
+          workingDirectory: ${{ parameters.vallyRoot }}
+          env:
+            GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+
+      - ${{ if parameters.postEvalTemplate }}:
+        - template: ${{ parameters.postEvalTemplate }}
+
+      - script: |
+          src="$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)"
+          dest="$(Build.ArtifactStagingDirectory)/results"
+          mkdir -p "$dest" "$(Build.ArtifactStagingDirectory)/debug"
+          if [ -d "$src" ]; then
+            cd "$src"
+            find . -type f \( \
+              -name '*.junit.xml' -o \
+              -name 'results.jsonl' -o \
+              -name 'eval-results.md' \
+            \) -exec cp --parents {} "$dest" \;
+          fi
+        displayName: 'Collect $(shardName) eval results'
+        condition: always()
+
+      - script: |
+          src="$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)"
+          dest="$(Build.ArtifactStagingDirectory)/debug"
+          mkdir -p "$dest"
+          if [ -d "$src" ]; then
+            cd "$src"
+            find . -type f ! -name '*.junit.xml' ! -name '*.tmp' -exec cp --parents {} "$dest" \;
+          fi
+        displayName: 'Collect $(shardName) transcripts (on failure)'
+        condition: failed()

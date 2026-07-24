@@ -2,7 +2,7 @@ name: azure-typespec-author-eval
 description: Evaluation suite for azure-typespec-author.
 version: "1.0"
 type: capability # capability | regression
-
+area: "armtemplate"
 # Root-level environment
 environment: azsdk-mcp
 
@@ -31,6 +31,8 @@ stimuli:
           dest: package-lock.json
         - src: ../fixtures/Microsoft.Widget/Widget/package.json
           dest: package.json
+        - src: ../scripts/check-node-dependencies.js
+          dest: check-node-dependencies.js
         - src: ../fixtures/Microsoft.Widget/Widget/readme.md
           dest: readme.md
         - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -71,11 +73,20 @@ stimuli:
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "run-command"
         config:
+          command: "node check-node-dependencies.js node_modules"
+          expected_exit_code: 0
+      - type: "run-command"
+        config:
+          command: "node check-node-dependencies.js packages"
+          expected_exit_code: 0
+      - type: "run-command"
+        config:
           command: "tsp compile ."
           expected_exit_code: 0
       - type: "file-matches"
         config:
-          pattern: 'listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(Parameters\s*=\s*)?\{\s*\.\.\.(Azure\.Core\.)?TopQueryParameter;\s*\.\.\.(Azure\.Core\.)?SkipQueryParameter;\s*\}\s*>|listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(Parameters\s*=\s*)?\{\s*\.\.\.(Azure\.ResourceManager\.)?ArmTopParameter;\s*\.\.\.(Azure\.ResourceManager\.)?ArmSkipParameter;\s*\}\s*>|model\s+\w+\s+(is|extends)\s+(Azure\.Core\.)?StandardListQueryParameters\s*;[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(Parameters\s*=\s*)?\w+\s*>'
+          # Accept only ARM top/skip params as inline spreads, intersection, or wrapper model.
+          pattern: '(?:model\s+(\w+)\s*\{\s*(?=[^}]*\.\.\.(?:Azure\.ResourceManager\.)?ArmTopParameter\s*;)(?=[^}]*\.\.\.(?:Azure\.ResourceManager\.)?ArmSkipParameter\s*;)[^}]*\}\s*[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*Parameters\s*=\s*\1\s*>|listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(?:(?:Parameters\s*=\s*)?\{\s*(?=[^}]*\.\.\.(?:Azure\.ResourceManager\.)?ArmTopParameter\s*;)(?=[^}]*\.\.\.(?:Azure\.ResourceManager\.)?ArmSkipParameter\s*;)[^}]*\}|Parameters\s*=\s*(?:(?:Azure\.ResourceManager\.)?ArmTopParameter\s*&\s*(?:Azure\.ResourceManager\.)?ArmSkipParameter|(?:Azure\.ResourceManager\.)?ArmSkipParameter\s*&\s*(?:Azure\.ResourceManager\.)?ArmTopParameter))\s*>)'
           path: "*.tsp"
       - type: "file-not-matches"
         config:
@@ -98,7 +109,8 @@ stimuli:
       - type: "file-matches"
         config:
           path: "*.tsp"
-          pattern: 'listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(Parameters\s*=\s*)?\{\s*\.\.\.(Azure\.Core\.)?TopQueryParameter;\s*\.\.\.(Azure\.Core\.)?SkipQueryParameter;\s*\}\s*>|listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(Parameters\s*=\s*)?\{\s*\.\.\.(Azure\.ResourceManager\.)?ArmTopParameter;\s*\.\.\.(Azure\.ResourceManager\.)?ArmSkipParameter;\s*\}\s*>|model\s+\w+\s+(is|extends)\s+(Azure\.Core\.)?StandardListQueryParameters\s*;[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(Parameters\s*=\s*)?\w+\s*>'
+          # Accept only ARM top/skip params as inline spreads, intersection, or wrapper model.
+          pattern: '(?:model\s+(\w+)\s*\{\s*(?=[^}]*\.\.\.(?:Azure\.ResourceManager\.)?ArmTopParameter\s*;)(?=[^}]*\.\.\.(?:Azure\.ResourceManager\.)?ArmSkipParameter\s*;)[^}]*\}\s*[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*Parameters\s*=\s*\1\s*>|listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(?:(?:Parameters\s*=\s*)?\{\s*(?=[^}]*\.\.\.(?:Azure\.ResourceManager\.)?ArmTopParameter\s*;)(?=[^}]*\.\.\.(?:Azure\.ResourceManager\.)?ArmSkipParameter\s*;)[^}]*\}|Parameters\s*=\s*(?:(?:Azure\.ResourceManager\.)?ArmTopParameter\s*&\s*(?:Azure\.ResourceManager\.)?ArmSkipParameter|(?:Azure\.ResourceManager\.)?ArmSkipParameter\s*&\s*(?:Azure\.ResourceManager\.)?ArmTopParameter))\s*>)'
       - type: "file-not-matches"
         config:
           path: "*.tsp"

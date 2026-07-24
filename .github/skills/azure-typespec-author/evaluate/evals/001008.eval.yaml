@@ -2,7 +2,7 @@ name: azure-typespec-author-eval
 description: Evaluation suite for azure-typespec-author.
 version: "1.0"
 type: capability # capability | regression
-
+area: "versioning"
 # Root-level environment
 environment: azsdk-mcp
 
@@ -31,6 +31,8 @@ stimuli:
           dest: package-lock.json
         - src: ../fixtures/Microsoft.Widget/Widget/package.json
           dest: package.json
+        - src: ../scripts/check-node-dependencies.js
+          dest: check-node-dependencies.js
         - src: ../fixtures/001008-version-add-stable-after-stable/readme.md
           dest: readme.md
         - src: ../fixtures/001008-version-add-stable-after-stable/shared.tsp
@@ -84,7 +86,7 @@ stimuli:
         config:
           required:
             - "edit"
-            - "web_fetch"
+            - "^(web_fetch|azure-sdk-mcp-azsdk_typespec_generate_authoring_plan)$"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "skill-invocation"
         config:
@@ -105,8 +107,16 @@ stimuli:
         config:
           required:
             - "edit"
-            - "web_fetch"
+            - "^(web_fetch|azure-sdk-mcp-azsdk_typespec_generate_authoring_plan)$"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
+      - type: "run-command"
+        config:
+          command: "node check-node-dependencies.js node_modules"
+          expected_exit_code: 0
+      - type: "run-command"
+        config:
+          command: "node check-node-dependencies.js packages"
+          expected_exit_code: 0
       - type: "run-command"
         config:
           command: "tsp compile ."

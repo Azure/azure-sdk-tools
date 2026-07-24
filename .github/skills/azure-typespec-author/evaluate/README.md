@@ -174,6 +174,7 @@ vally eval --suite trigger --skill-dir ..
 | Flag                           | Purpose                                                        |
 | ------------------------------ | -------------------------------------------------------------- |
 | `--keep-executor-session-logs` | Preserve agent session logs under `--output-dir` for debugging |
+| `--runs <n>`                   | Override the number of trials per stimulus                     |
 | `--verbose`                    | Show full agent output during the run                          |
 | `--workers <n>`                | Run multiple stimuli in parallel (default: 5)                  |
 
@@ -210,6 +211,9 @@ evaluate/
 │   ├── 001-share-version-new-feature/
 │   ├── Microsoft.Widget/
 │   └── ...
+├── pipeline/            # Repo-owned Azure Pipelines templates
+│   ├── skill/           # Forced/trigger benchmark templates
+│   └── no-skill/        # no-skill archetype-eval wrappers
 ├── scripts/             # Setup and utility scripts
 ├── results/             # Eval run output
 └── debug/               # Eval run workspace
@@ -217,18 +221,37 @@ evaluate/
 
 ## Pipeline Architecture
 
-The CI runs in three mode groups (forced, trigger, no-skill), and each group is split into
-five suite steps. Each step runs the corresponding `.vally.yaml` suite branch directly,
-for example `--suite versioning-forced`, `--suite versioning-trigger`, or
-`--suite versioning-no-skill`. Vally 0.6.0 supports parallel execution across multiple
-eval files, so the pipelines no longer need consolidated suite eval files plus
-`--tag suite=...` filtering.
+The CI uses the merged eval files in `evals/*.eval.yaml` and selects each mode with tag filters.
+Each stimulus has dual tags, for example `{ suite: versioning, mode: forced }`. The pipeline matrix
+is generated from the eval files, then each track passes its mode through `TypeSpecAuthorEvalExtraArgs`.
 
-| Pipeline           | Command/source              | Purpose                                                               |
-| ------------------ | --------------------------- | --------------------------------------------------------------------- |
-| benchmark          | `--suite *-forced`          | Forced skill invocation + code-quality graders (real MCP environment) |
-| benchmark          | `--suite *-trigger`         | Skill trigger detection (mock MCP environment)                        |
-| benchmark-no-skill | `--suite *-no-skill`        | Baseline run without loading the skill (`--skill-dir /tmp/no-skills`) |
+| Pipeline           | Template shape                              | Extra args                                     | MCP binding                                                    | Purpose                                                               |
+| ------------------ | ------------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------- |
+| benchmark          | Manual two-track stages with `pipeline/skill` | `--tag mode=forced --skill-dir ..`             | `azsdk-mcp` rebound to staged live `azsdk.dll`                 | Forced skill invocation + code-quality graders                        |
+| benchmark          | Manual two-track stages with `pipeline/skill` | `--tag mode=trigger --skill-dir ..`            | `azsdk-mcp` rebound to staged mock `azsdk-mock.dll`            | Skill trigger detection                                               |
+| benchmark-no-skill | Common `archetype-eval.yml` + `pipeline/no-skill` wrappers | `--tag mode=no-skill --skill-dir /tmp/no-skills` | `azsdk-mcp` rebound to staged live `azsdk.dll` | Baseline run without loading the skill                                 |
 
-Each stimulus has dual tags: `suite` and `mode`, for example
-`{ suite: versioning, mode: forced }`.
+The forced and trigger tracks are composed manually because they need different MCP environments in
+one pipeline run. The no-skill pipeline stays on the common `archetype-eval.yml` entry point and only
+uses repo-owned wrappers for pre-eval setup and Vally invocation.
+
+### Pipeline Parameters and Extensions
+
+`TypeSpecAuthorEvalExtraArgs` is the primary extension point for Vally CLI options. The repo-local
+invoke wrapper appends it to the final `vally eval` command, so run-level options such as `--runs`,
+`--workers`, `--verbose`, and additional tag filters can be added without changing the templates.
+
+Examples:
+
+```yaml
+variables:
+  TypeSpecAuthorEvalExtraArgs: '--tag mode=trigger --skill-dir .. --runs 3 --workers 3'
+```
+
+```yaml
+variables:
+  TypeSpecAuthorEvalExtraArgs: '--tag mode=no-skill --skill-dir /tmp/no-skills --runs 2 --workers 2'
+```
+
+Keep mode selection in the extra args (`--tag mode=...`) because all three tracks consume the same
+merged eval files.

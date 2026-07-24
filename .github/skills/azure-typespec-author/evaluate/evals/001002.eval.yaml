@@ -2,7 +2,7 @@ name: azure-typespec-author-eval
 description: Evaluation suite for azure-typespec-author.
 version: "1.0"
 type: capability # capability | regression
-
+area: "versioning"
 # Root-level environment
 environment: azsdk-mcp
 
@@ -31,6 +31,8 @@ stimuli:
           dest: package-lock.json
         - src: ../fixtures/Microsoft.Widget/Widget/package.json
           dest: package.json
+        - src: ../scripts/check-node-dependencies.js
+          dest: check-node-dependencies.js
         - src: ../fixtures/001002-version-default-value/readme.md
           dest: readme.md
         - src: ../fixtures/001002-version-default-value/shared.tsp
@@ -67,19 +69,27 @@ stimuli:
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "run-command"
         config:
+          command: "node check-node-dependencies.js node_modules"
+          expected_exit_code: 0
+      - type: "run-command"
+        config:
+          command: "node check-node-dependencies.js packages"
+          expected_exit_code: 0
+      - type: "run-command"
+        config:
           command: "tsp compile ."
           expected_exit_code: 0
       - type: "file-matches"
         config:
-          pattern: '@removed\(Versions\.v2025_11_01\)'
+          pattern: '@removed\((?:Microsoft\.Widget\.)?Versions\.v2025_11_01\)'
           path: "employee.tsp"
       - type: "file-matches"
         config:
-          pattern: '@renamedFrom\(Versions\.v2025_11_01, "age"\)'
+          pattern: '@renamedFrom\((?:Microsoft\.Widget\.)?Versions\.v2025_11_01, "age"\)'
           path: "employee.tsp"
       - type: "file-matches"
         config:
-          pattern: '@added\(Versions\.v2025_11_01\)'
+          pattern: '@added\((?:Microsoft\.Widget\.)?Versions\.v2025_11_01\)'
           path: "employee.tsp"
       - type: "file-matches"
         config:
@@ -102,15 +112,15 @@ stimuli:
       - type: "file-matches"
         config:
           path: "employee.tsp"
-          pattern: '@removed\(Versions\.v2025_11_01\)'
+          pattern: '@removed\((?:Microsoft\.Widget\.)?Versions\.v2025_11_01\)'
       - type: "file-matches"
         config:
           path: "employee.tsp"
-          pattern: '@renamedFrom\(Versions\.v2025_11_01, "age"\)'
+          pattern: '@renamedFrom\((?:Microsoft\.Widget\.)?Versions\.v2025_11_01, "age"\)'
       - type: "file-matches"
         config:
           path: "employee.tsp"
-          pattern: '@added\(Versions\.v2025_11_01\)'
+          pattern: '@added\((?:Microsoft\.Widget\.)?Versions\.v2025_11_01\)'
       - type: "file-matches"
         config:
           path: "employee.tsp"

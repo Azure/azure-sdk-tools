@@ -6,13 +6,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.CopilotAgents;
 [TestFixture]
 internal class CopilotSdkCompatibilityTests
 {
-    [Test]
-    public void PingResponse_DeserializesIso8601Timestamp()
+    [TestCase("2026-05-21T08:29:54.042Z", "2026-05-21T08:29:54.042+00:00")]
+    [TestCase("2026-05-21T01:29:54.042-07:00", "2026-05-21T01:29:54.042-07:00")]
+    public void PingResponse_DeserializesIso8601Timestamp(string timestamp, string expectedTimestamp)
     {
-        const string json = """
+        var json = $$"""
             {
               "message": "pong",
-              "timestamp": "2026-05-21T08:29:54.042Z",
+              "timestamp": "{{timestamp}}",
               "protocolVersion": 3
             }
             """;
@@ -22,6 +23,11 @@ internal class CopilotSdkCompatibilityTests
             new JsonSerializerOptions(JsonSerializerDefaults.Web));
 
         Assert.That(response, Is.Not.Null);
-        Assert.That(response.Timestamp, Is.EqualTo(DateTimeOffset.Parse("2026-05-21T08:29:54.042Z")));
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.Message, Is.EqualTo("pong"));
+            Assert.That(response.Timestamp, Is.EqualTo(DateTimeOffset.Parse(expectedTimestamp)));
+            Assert.That(response.ProtocolVersion, Is.EqualTo(3));
+        });
     }
 }

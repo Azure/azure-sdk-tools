@@ -123,6 +123,7 @@ jobs:
     permissions:
       actions: read
       contents: read
+      copilot-requests: write
       issues: write
       pull-requests: read
     strategy:

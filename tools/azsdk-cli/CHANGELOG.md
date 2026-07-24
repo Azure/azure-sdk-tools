@@ -9,5 +9,6 @@
 
 ### Bugs Fixed
 
+- Fixed Copilot-backed commands to accept ISO-8601 `ping` timestamps returned by current Copilot CLI versions.
 - Fixed release plan SDK details update to avoid marking a language as missing emitter config when the TypeSpec parser did not detect any package name.
 - Fixed custom-code-only SDK repair to classify feedback without requiring a local TypeSpec project path.

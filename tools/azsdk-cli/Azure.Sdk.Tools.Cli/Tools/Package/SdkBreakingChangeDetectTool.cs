@@ -101,29 +101,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
                 if (string.IsNullOrEmpty(packagePath) || !Directory.Exists(packagePath))
                 {
-                    return new PackageOperationResponse
-                    {
-                        ResponseError = $"The directory for the local sdk does not provide or exist at the specified path: {packagePath}. Prompt user to clone the matched SDK repository users want to generate SDK against."
-                    };
+                    return PackageOperationResponse.CreateFailure($"The directory for the local sdk does not provide or exist at the specified path: {packagePath}. Prompt user to clone the matched SDK repository users want to generate SDK against.");
                 }
 
                 LanguageService languageService = await GetLanguageServiceAsync(packagePath, ct);
 
                 if (languageService == null)
                 {
-                    return new PackageOperationResponse
-                    {
-                        ResponseError = "Tooling error: unable to determine language service for the specified package path.",
-                    };
+                    return PackageOperationResponse.CreateFailure("Tooling error: unable to determine language service for the specified package path.");
                 }
                 // Discover the repository root
                 var sdkRepoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
                 if (sdkRepoRoot == null)
                 {
-                    return new PackageOperationResponse
-                    {
-                        ResponseError = "Unable to find git repository root from the provided package path."
-                    };
+                    return PackageOperationResponse.CreateFailure($"Unable to find git repository root from the provided package path: {packagePath}. Please ensure the package path is within a valid git repository.");
                 }
                 var packageInfo = await languageService.GetPackageInfo(packagePath, ct);
                 SdkChange? sdkChange = null;
@@ -145,17 +136,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 if (sdkChange == null)
                 {
                    
-                    var isSupported = true;
+                    bool isSupported;
                     (isSupported, sdkChange) = await RetrieveSdkChangeFromScriptAsync(sdkRepoRoot, packagePath, packageInfo, languageService, ct);
                     if (isSupported && sdkChange == null)
                     {
                         logger.LogError("Failed to retrieve SDK changes using the configured script.");
-                        return new PackageOperationResponse
-                        {
-                            ResponseError = "Failed to retrieve SDK changes using the configured script.",
-                            Language = languageService.Language,
-                            PackageName = packageInfo?.PackageName,
-                        };
+                        return PackageOperationResponse.CreateFailure("Failed to retrieve SDK changes using the configured script.", packageInfo);
                     }
                     
                 }
@@ -193,10 +179,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             catch (Exception ex)
             {
                 logger.LogError(ex, "An error occurred while detecting SDK breaking changes.");
-                return new PackageOperationResponse
-                {
-                    ResponseError = $"An error occurred while detecting SDK breaking changes: {ex.Message}"
-                };
+                return PackageOperationResponse.CreateFailure($"An error occurred while detecting SDK breaking changes: {ex.Message}", null);
             }
         }
 
@@ -285,6 +268,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return (isSupported, sdkChange);
         }
 
+        /// <summary>
+        /// Analyzes and classifies the SDK breaking changes from SDK change data.
+        /// </summary>
         private async Task<PackageOperationResponse> ClassifySdkBreakingChangesAsync(SdkChange sdkChange, string sdkRepoRoot, LanguageService languageService, PackageInfo? packageInfo, string? tspConfigPath, CancellationToken ct)
         {
             // analyze and classify the breaking changes

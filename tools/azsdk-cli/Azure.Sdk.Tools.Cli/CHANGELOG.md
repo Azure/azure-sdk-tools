@@ -1,5 +1,11 @@
 # Release History
 
+## 0.6.31 (Unreleased)
+
+### Features Added
+
+- Added `detect-breaking-change` CLI command and `azsdk_package_detect_breaking_change` MCP tool to detect SDK breaking changes for a package. Accepts the sdk package via `--package-path`. Optional parameters: `--tsp-config-path`, `--changes-only`.
+
 ## 0.6.30 (2026-07-23)
 
 ### Features Added

@@ -30,6 +30,10 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             try
             {
+                if (string.IsNullOrEmpty(sdkBreakingPattern))
+                {
+                    _logger.LogWarning("SDK breaking pattern is null or empty. The agent will classify breaking changes without using breaking patterns, which may reduce classification accuracy.");
+                }
                 var template = new SdkBreakingChangeClassificationTemplate(sdkBreakingPattern, sdkchange, language, tspProjectPath);
                 List<AIFunction>? fileTools = null;
                 if (!string.IsNullOrEmpty(tspProjectPath) && Directory.Exists(tspProjectPath))

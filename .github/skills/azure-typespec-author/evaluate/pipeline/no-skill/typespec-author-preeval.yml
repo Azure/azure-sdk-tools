@@ -1,0 +1,32 @@
+steps:
+  - script: |
+      set -e
+      node <<'NODE'
+      const fs = require('fs');
+      const path = require('path');
+
+      const configPath = path.join(
+        process.env.BUILD_SOURCESDIRECTORY,
+        '.github/skills/azure-typespec-author/evaluate/.vally.yaml'
+      );
+      let text = fs.readFileSync(configPath, 'utf8');
+      const start = text.indexOf('  azsdk-mcp:\n');
+      const end = text.indexOf('\n  azsdk-mcp-remote-kb:', start);
+      if (start < 0 || end < 0) {
+        throw new Error('Could not find azsdk-mcp environment block in .vally.yaml');
+      }
+
+      const current = text.slice(start, end);
+      const endpoint = current.match(/AZURE_SDK_KB_ENDPOINT: "([^"]+)"/)?.[1];
+      const endpointLine = endpoint ? `          AZURE_SDK_KB_ENDPOINT: "${endpoint}"\n` : '';
+      const replacement = `  azsdk-mcp:\n    files:\n      - src: ../fixtures/instructions-test/copilot-instructions.md\n        dest: .github/copilot-instructions.md\n    mcpServers:\n      azure-sdk-mcp:\n        type: stdio\n        command: dotnet\n        args:\n          [\n            "../../../../artifacts/mcp/cli/Azure.Sdk.Tools.Cli.dll",\n            "start",\n          ]\n        timeout: 5m\n        env:\n          AZSDKTOOLS_AGENT_TESTING: "false"\n          AZSDKTOOLS_COLLECT_TELEMETRY: "false"\n${endpointLine}`;
+
+      text = text.slice(0, start) + replacement + text.slice(end);
+      fs.writeFileSync(configPath, text);
+      console.log(`Rebound azsdk-mcp to staged live MCP binary in ${configPath}`);
+      NODE
+    displayName: 'Bind azsdk-mcp to staged live MCP binary'
+
+  - template: /.github/skills/azure-typespec-author/evaluate/pipeline/skill/typespec-author-preeval.yml
+    parameters:
+      prepareNoSkill: true

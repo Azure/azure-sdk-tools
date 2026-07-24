@@ -8,34 +8,22 @@
 #   - SkillBranch set: overlay SKILL.md + references from that branch before evaluation.
 #
 # Structure:
-# - Stage: EvalTypeSpecAuthor
-# - Job A: RunEvalsForCodeQuality   -> uses forced suite branches
-# - Job B: RunEvalsForSkillInvocation -> uses trigger suite branches
-# - Each job executes 6 suite branches (versioning, armtemplate, longrunningoperation,
-#   decorators, warning, dataplane) as separate steps and uploads artifacts.
-#
-# Why split by suite:
-# - Faster fault isolation: failures are scoped to a small case group.
-# - Easier log querying and triage: each suite has a dedicated step name and timeout.
-# - Better resiliency: continueOnError at step level keeps later suites running.
+# - PrepareShared builds MCP binaries once and publishes them as the mcp-servers artifact.
+# - PrepareForced / PrepareTrigger generate area-based shard matrices from eval file metadata.
+# - EvalForced / EvalTrigger run one matrix job per area.
+# - SummaryForced / SummaryTrigger roll up JUnit results.
 trigger: none
 pr: none
 
 parameters:
-- name: PythonVersion
-  type: string
-  default: '3.10'
 - name: SkillBranch
   displayName: Branch containing the azure-typespec-author skill source (SKILL.md + references/) to evaluate. Defaults to the full source branch ref.
   type: string
   default: $(Build.SourceBranch)
-- name: EvalRuns
-  displayName: Number of Vally runs per case. Runs greater than 1 automatically reduce workers to 1.
-  type: number
-  default: 1
 
 variables:
 - template: /eng/pipelines/templates/variables/image.yml
+- group: AzSDK_Eval_Variable_group
 - name: SkillBranch
   value: ${{ parameters.SkillBranch }}
 
@@ -44,167 +32,11 @@ extends:
   parameters:
     Use1ESOfficial: true
     stages:
-      - stage: EvalTypeSpecAuthor
-        displayName: Azure TypeSpec Author Skill Evaluation
-        dependsOn:
-          - SummaryForced
-          - SummaryTrigger
-        variables:
-          - template: /eng/pipelines/templates/variables/globals.yml
-          - template: /eng/pipelines/templates/variables/image.yml
-        pool:
-          name: $(LINUXPOOL)
-          image: $(LINUXVMIMAGE)
-          os: linux
-        jobs:
-          # Forced mode: each .vally.yaml suite branch runs in an independent step.
-          # Vally 0.6.0 supports parallel execution across multiple eval files, so
-          # this no longer needs suites/forced.eval.yaml plus tag filtering.
-          - job: RunEvalsForCodeQuality
-            displayName: Run Vally Evaluations for Code Quality
-            timeoutInMinutes: 360
-            steps:
-              - checkout: self
-                fetchDepth: 0
-
-              - template: /eng/common/pipelines/templates/steps/login-to-github.yml
-
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-setup.yml
-                parameters:
-                  SkillBranch: ${{ parameters.SkillBranch }}
-
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
-                parameters:
-                  Suite: versioning-forced
-                  SuiteName: versioning-forced
-                  DisplayName: Run force invokation suite - versioning
-                  TimeoutMinutes: 50
-                  Runs: ${{ parameters.EvalRuns }}
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
-                parameters:
-                  Suite: armtemplate-forced
-                  SuiteName: armtemplate-forced
-                  DisplayName: Run force invokation suite - armtemplate
-                  TimeoutMinutes: 40
-                  Runs: ${{ parameters.EvalRuns }}
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
-                parameters:
-                  Suite: longrunningoperation-forced
-                  SuiteName: longrunningoperation-forced
-                  DisplayName: Run force invokation suite - longrunningoperation
-                  TimeoutMinutes: 25
-                  Runs: ${{ parameters.EvalRuns }}
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
-                parameters:
-                  Suite: decorators-forced
-                  SuiteName: decorators-forced
-                  DisplayName: Run force invokation suite - decorators
-                  TimeoutMinutes: 15
-                  Runs: ${{ parameters.EvalRuns }}
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
-                parameters:
-                  Suite: warning-forced
-                  SuiteName: warning-forced
-                  DisplayName: Run force invokation suite - warning
-                  TimeoutMinutes: 25
-                  Runs: ${{ parameters.EvalRuns }}
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
-                parameters:
-                  Suite: dataplane-forced
-                  SuiteName: dataplane-forced
-                  DisplayName: Run force invocation suite - dataplane
-                  TimeoutMinutes: 50
-                  Runs: ${{ parameters.EvalRuns }}
-
-            templateContext:
-              outputs:
-                - output: pipelineArtifact
-                  path: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/results
-                  artifact: eval-results-code-quality-$(Build.BuildId)
-                  displayName: Upload eval results
-                  condition: always()
-
-                - output: pipelineArtifact
-                  path: $(Build.StagingDirectory)/qa-bot-log
-                  artifact: qa-bot-service-log-code-quality
-                  displayName: Upload QA bot backend log
-                  condition: always()
-
-          # Trigger mode: same .vally.yaml suite branch strategy for comparable
-          # diagnostics and easier cross-mode failure analysis.
-          - job: RunEvalsForSkillInvocation
-            displayName: Run Vally Evaluations for Skill Invocation
-            timeoutInMinutes: 360
-            steps:
-              - checkout: self
-                fetchDepth: 0
-
-              - template: /eng/common/pipelines/templates/steps/login-to-github.yml
-
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-setup.yml
-                parameters:
-                  SkillBranch: ${{ parameters.SkillBranch }}
-                  StartQaBotBackend: false
-                  BuildMockMcpServer: true
-
-              # Run evaluations — each suite gets its own step with timeout
-              # and continueOnError so failures don't block subsequent suites.
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
-                parameters:
-                  Suite: versioning-trigger
-                  SuiteName: versioning-trigger
-                  DisplayName: Run suite - versioning
-                  TimeoutMinutes: 50
-                  Runs: ${{ parameters.EvalRuns }}
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
-                parameters:
-                  Suite: armtemplate-trigger
-                  SuiteName: armtemplate-trigger
-                  DisplayName: Run suite - armtemplate
-                  TimeoutMinutes: 40
-                  Runs: ${{ parameters.EvalRuns }}
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
-                parameters:
-                  Suite: longrunningoperation-trigger
-                  SuiteName: longrunningoperation-trigger
-                  DisplayName: Run suite - longrunningoperation
-                  TimeoutMinutes: 25
-                  Runs: ${{ parameters.EvalRuns }}
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
-                parameters:
-                  Suite: decorators-trigger
-                  SuiteName: decorators-trigger
-                  DisplayName: Run suite - decorators
-                  TimeoutMinutes: 15
-                  Runs: ${{ parameters.EvalRuns }}
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
-                parameters:
-                  Suite: warning-trigger
-                  SuiteName: warning-trigger
-                  DisplayName: Run suite - warning
-                  TimeoutMinutes: 25
-                  Runs: ${{ parameters.EvalRuns }}
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
-                parameters:
-                  Suite: dataplane-trigger
-                  SuiteName: dataplane-trigger
-                  DisplayName: Run suite - dataplane
-                  TimeoutMinutes: 50
-                  Runs: ${{ parameters.EvalRuns }}
-
-            templateContext:
-              outputs:
-                - output: pipelineArtifact
-                  path: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/results
-                  artifact: eval-results-skill-invocation-$(Build.BuildId)
-                  displayName: Upload eval results
-                  condition: always()
-
       - stage: PrepareShared
         displayName: Prepare shared MCP artifact
         dependsOn: []
         jobs:
-          - template: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-build-mcp-job.yml
+          - template: /.github/skills/azure-typespec-author/evaluate/pipeline/skill/typespec-author-build-mcp-job.yml
 
       - stage: PrepareForced
         displayName: Prepare forced track
@@ -222,12 +54,12 @@ extends:
         variables:
           TypeSpecAuthorEvalExtraArgs: '--tag mode=forced --skill-dir ..'
         jobs:
-          - template: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-eval-shard.yml
+          - template: /.github/skills/azure-typespec-author/evaluate/pipeline/skill/typespec-author-eval-shard.yml
             parameters:
               matrixStageName: PrepareForced
               vallyRoot: .github/skills/azure-typespec-author/evaluate
-              evalInvokeTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-eval-invoke.yml
-              preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval-forced.yml
+              mcpEnvironment: live
+              startQaBotBackend: true
               shardTimeoutInMinutes: 50
 
       - stage: SummaryForced
@@ -255,12 +87,11 @@ extends:
         variables:
           TypeSpecAuthorEvalExtraArgs: '--tag mode=trigger --skill-dir ..'
         jobs:
-          - template: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-eval-shard.yml
+          - template: /.github/skills/azure-typespec-author/evaluate/pipeline/skill/typespec-author-eval-shard.yml
             parameters:
               matrixStageName: PrepareTrigger
               vallyRoot: .github/skills/azure-typespec-author/evaluate
-              evalInvokeTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-eval-invoke.yml
-              preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
+              mcpEnvironment: mock
               shardTimeoutInMinutes: 30
 
       - stage: SummaryTrigger

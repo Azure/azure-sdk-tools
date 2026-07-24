@@ -21,21 +21,23 @@ steps:
         scriptLocation: inlineScript
         workingDirectory: ${{ parameters.vallyRoot }}
         inlineScript: |
-          node --experimental-strip-types "$(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-invoke-shard.ts" \
+          node --experimental-strip-types "$(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/pipeline/skill/typespec-author-invoke-shard.ts" \
             --eval-args "$(evalArgs)" \
             --shard-name "$(shardName)" \
             --output-dir "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)" \
-            --extra-args "$(TypeSpecAuthorEvalExtraArgs)"
+            --extra-args "$(TypeSpecAuthorEvalExtraArgs)" \
+            --threshold ${{ parameters.threshold }}
       env:
         GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
 
   - ${{ else }}:
     - script: |
-        node --experimental-strip-types "$(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-invoke-shard.ts" \
+        node --experimental-strip-types "$(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/pipeline/skill/typespec-author-invoke-shard.ts" \
           --eval-args "$(evalArgs)" \
           --shard-name "$(shardName)" \
           --output-dir "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)" \
-          --extra-args "$(TypeSpecAuthorEvalExtraArgs)"
+          --extra-args "$(TypeSpecAuthorEvalExtraArgs)" \
+          --threshold ${{ parameters.threshold }}
       displayName: 'vally eval $(shardName)'
       workingDirectory: ${{ parameters.vallyRoot }}
       env:

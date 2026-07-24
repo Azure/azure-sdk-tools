@@ -1,9 +1,0 @@
-steps:
-  - script: |
-      set -e
-      mkdir -p /tmp/no-skills
-      # Keep it empty intentionally so no skill instructions are loaded.
-      rm -rf /tmp/no-skills/*
-    displayName: 'Prepare empty no-skill directory'
-
-  - template: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml

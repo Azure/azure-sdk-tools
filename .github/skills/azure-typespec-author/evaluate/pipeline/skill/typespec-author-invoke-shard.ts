@@ -2,16 +2,17 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { getVallyShardVerdict } from "../../../../../eng/common/scripts/eval/lib/verdict.ts";
+import { getVallyShardVerdict } from "../../../../../../eng/common/scripts/eval/lib/verdict.ts";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
-const SHARED_EVAL_SCRIPT_DIR = path.resolve(SCRIPT_DIR, "../../../../../eng/common/scripts/eval");
+const SHARED_EVAL_SCRIPT_DIR = path.resolve(SCRIPT_DIR, "../../../../../../eng/common/scripts/eval");
 
 type ShardRunOptions = {
   evalArgs: string;
   shardName: string;
   outputDir: string;
   extraArgs?: string;
+  threshold?: number;
 };
 
 function normalizeExtraArgs(extraArgs: string): string[] {
@@ -22,7 +23,7 @@ function normalizeExtraArgs(extraArgs: string): string[] {
   return extraArgs.split(/\s+/).filter(Boolean);
 }
 
-export function runShard({ evalArgs, shardName, outputDir, extraArgs = "" }: ShardRunOptions) {
+export function runShard({ evalArgs, shardName, outputDir, extraArgs = "", threshold = 0.8 }: ShardRunOptions) {
   const evalArgList = evalArgs.split(/\s+/).filter(Boolean);
   const extraArgList = normalizeExtraArgs(extraArgs);
 
@@ -51,7 +52,7 @@ export function runShard({ evalArgs, shardName, outputDir, extraArgs = "" }: Sha
   );
   const vallyExit = proc.status ?? 1;
 
-  const verdict = (getVallyShardVerdict as any)({ resultsDir: outputDir });
+  const verdict = (getVallyShardVerdict as any)({ resultsDir: outputDir, threshold });
   for (const line of verdict.lines) {
     console.log(`  ${line}`);
   }
@@ -100,6 +101,9 @@ function parseArgs(argv: string[]): ShardRunOptions {
         break;
       case "--extra-args":
         options.extraArgs = next();
+        break;
+      case "--threshold":
+        options.threshold = Number(next());
         break;
       default:
         throw new Error(`Unknown argument: ${argv[i]}`);

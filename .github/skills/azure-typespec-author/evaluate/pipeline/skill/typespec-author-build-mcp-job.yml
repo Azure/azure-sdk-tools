@@ -1,5 +1,6 @@
 # Repo-local MCP build job for azure-typespec-author benchmark.
-# Always builds both binaries once (cli + mock) for forced/trigger reuse.
+# Builds and publishes both MCP server binaries once; shard jobs bind
+# azsdk-mcp to the live or mock binary for each track.
 
 jobs:
   - job: BuildMcp

@@ -4,16 +4,14 @@
 
 ## 3.1 General (All Cases)
 
-Use the following tools **in order**:
+Choose the grounding source based on whether the request's case is covered by [reference-document-links.md](reference-document-links.md):
 
-1. **Agentic Search** (primary) — run [agentic search](agentic-search.md) with URLs from [reference-document-links.md](reference-document-links.md) and a query from the user's request. Synthesize extracted content into a concrete plan.
+1. **Case found in the reference doc → Agentic Search.** Run [agentic search](agentic-search.md) — you **MUST** call `web_fetch` on the matching URLs and follow their steps. Synthesize the extracted content into a concrete plan. Do **not** call the MCP tool.
 
-2. **MCP Tool** (fallback) — call `azsdk_typespec_generate_authoring_plan` if agentic search fails (all URLs unreachable or timeout exceeded) **or** if the case is not covered by [reference-document-links.md](reference-document-links.md):
+2. **Case not found in the reference doc → MCP Tool.** Call `azsdk_typespec_generate_authoring_plan` and build the plan from its result:
    - `request`: user request (verbatim)
    - `additionalInformation`: all context from Steps 1–2
    - `typeSpecProjectRootPath`: project root path
-
-> Do not call the MCP tool when agentic search already covers the case. Do not block the workflow on unreachable external documentation — proceed with the MCP tool result if agentic search fails or the case is not covered.
 
 ---
 
@@ -21,7 +19,7 @@ Use the following tools **in order**:
 
 ### Case 3 — API Version Evolution (ARM / Data-plane)
 
-> For version-evolution requests, use **Agentic Search only** (per [3.1 General](#31-general-all-cases)) — you **MUST** call `web_fetch` on the matching versioning docs in [reference-document-links.md](reference-document-links.md) and follow their steps. Do **not** call the MCP tool `azsdk_typespec_generate_authoring_plan` for this case; the versioning docs fully cover it. The concrete file-migration steps below are **mandatory**.
+> Version evolution **is covered** by [reference-document-links.md](reference-document-links.md), so use **Agentic Search** (per [3.1 General](#31-general-all-cases)) — you **MUST** call `web_fetch` on the matching versioning docs and follow their steps. Do **not** call the MCP tool `azsdk_typespec_generate_authoring_plan` for this case. The concrete file-migration steps below are **mandatory**.
 
 1. Copy `.json` files from latest version's `examples/` into new version's `examples/`. Update `api-version` in each file. Delete old version's example folder if old version is no longer existed.
 2. Update `readme.md`.

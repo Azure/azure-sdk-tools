@@ -3,6 +3,10 @@
 MCP-tool / end-to-end scenario evaluations for the `azsdk` MCP server, run via
 [`@microsoft/vally-cli`](https://www.npmjs.com/package/@microsoft/vally-cli).
 
+> Looking for the coverage inventory instead of the how-to guide? See
+> [`coverage-and-gaps.md`](coverage-and-gaps.md) for what's covered today
+> across skills, MCP tools, mock handlers, and repos — and the known gaps.
+
 ## Tool-scenario evals vs. skill evals
 
 The repo runs **two complementary eval surfaces**, both via the same

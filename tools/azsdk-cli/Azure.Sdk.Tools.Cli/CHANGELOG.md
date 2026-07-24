@@ -2,15 +2,9 @@
 
 ## 0.6.31 (2026-07-27)
 
-### Features Added
-
-### Breaking Changes
-
 ### Bugs Fixed
 
 - Updated `GitHub.Copilot.SDK` to 1.0.8 so Copilot-backed commands accept ISO-8601 `ping` timestamps returned by current Copilot CLI versions.
-
-### Other Changes
 
 ## 0.6.30 (2026-07-23)
 

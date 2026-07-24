@@ -16,6 +16,7 @@ from utils.azure_ai_search import (
     WIKI_FILTER,
     fuse_with_rrf,
     get_search_client,
+    split_source_ref,
 )
 
 logger = logging.getLogger(__name__)
@@ -150,7 +151,9 @@ class KnowledgeTools:
             weights: list[float] = []
             if use_deep:
                 retriever_coros.append(
-                    search_client.agentic_search(query=q, source_filters=source_filters)
+                    search_client.agentic_search(
+                        query=q, source_filters=source_filters, extra_filter=NON_WIKI_FILTER,
+                    )
                 )
                 weights.append(agentic_weight)
             retriever_coros.append(
@@ -451,16 +454,18 @@ class KnowledgeTools:
     ) -> SearchKnowledgeBaseResult:
         """Read an original source document referenced by a wiki page."""
         search_client = get_search_client()
+        context_id, rel = split_source_ref(source_ref)
         chunks = await search_client.fetch_by_title(
-            [source_ref], NON_WIKI_FILTER, top=60, keyword=query,
+            [rel], NON_WIKI_FILTER, top=60, keyword=query,
             source_filter=_tenant_source_filter(tenant_id, None),
+            context_id=context_id,
         )
         chunks = [c for c in chunks if not c.page_type]
         if not chunks:
             return SearchKnowledgeBaseResult(results=[])
         body = "\n".join(c.content for c in chunks if c.content)
         source_def = get_knowledge_source(chunks[0].source)
-        link = source_def.get_link(source_ref) if source_def else ""
+        link = source_def.get_link(rel) if source_def else ""
         return SearchKnowledgeBaseResult(
             results=[
                 Reference(

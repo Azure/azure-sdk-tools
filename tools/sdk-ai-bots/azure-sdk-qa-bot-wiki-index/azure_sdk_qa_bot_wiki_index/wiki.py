@@ -53,14 +53,10 @@ def synthesize_summary(llm: ChatLLM, doc_title: str, full_text: str) -> str:
     if not full_text:
         return ""
     user = f"Document: {doc_title}\n\n{full_text[:16000]}"
-    try:
-        out = llm.complete(_SUMMARY_SYS, user, max_tokens=1400)
-        if not out:
-            out = llm.complete(_SUMMARY_SYS, user, max_tokens=1800)
-        return (out or "")[:_MAX_PAGE_CHARS]
-    except Exception:
-        logger.warning("synthesize_summary failed for %s", doc_title, exc_info=True)
-        return ""
+    out = llm.complete(_SUMMARY_SYS, user, max_tokens=1400)
+    if not out:
+        out = llm.complete(_SUMMARY_SYS, user, max_tokens=1800)
+    return (out or "")[:_MAX_PAGE_CHARS]
 
 
 def build_summary_pages(
@@ -76,16 +72,20 @@ def build_summary_pages(
         folder = source_folder(source_path)
         rel = rel_title(source_path)
         title = _doc_title(rel)
-        body = synthesize_summary(llm, title, text)
+        try:
+            body = synthesize_summary(llm, title, text)
+        except Exception:
+            logger.warning("synthesize_summary failed for %s", source_path, exc_info=True)
+            return None
         if not body:
             return None
         return WikiPage(
-            slug=make_slug(PAGE_SUMMARY, rel),
+            slug=make_slug(PAGE_SUMMARY, source_path),
             page_type=PAGE_SUMMARY,
             title=f"{title} (knowledge)",
             content=body,
             context_id=folder,  # inherits source scope → existing tenant filters
-            source_refs=[rel],
+            source_refs=[source_path],
             orig_title=rel,  # drives get_link back to the real doc
         )
 

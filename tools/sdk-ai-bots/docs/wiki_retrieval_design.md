@@ -136,3 +136,10 @@ For most domain questions the agent issues `search_knowledge_base` and `wiki_sea
 - **Result (219-case perf set, memory off, gpt-5.4 grader, same-day).** The wiki two-track configuration scores **64.8 %** versus **60.3 %** for the memory-off KB-only baseline (**+4.5 pp**), with the best `response_completeness` of the runs and the largest gains on the general and conceptual categories; groundedness / relevance / coherence / fluency stay at ~100 %.
 - **Answer-length trade-off.** Richer retrieved evidence pushes the model to write longer answers even under a concise-answer instruction; keeping answers short and keeping them complete are in tension, and the concise-answer instruction is retained as the product constraint.
 - **Remaining failures are dominated by corpus gaps and specific-fact precision** on process / language-specific questions — not addressable by further retrieval-shape tuning. The next lever is curated corpus expansion.
+
+---
+
+## 6 Known limitations
+
+- **Cross-document page scoping.** Entity and concept pages aggregate several source documents and carry a shared `wiki_entity` / `wiki_concept` context rather than any single source's `context_id`. A tenant able to read those pages can therefore see synthesised facts drawn from documents outside its own sources. This is acceptable because the corpus is public documentation and tenants map to topic channels, not access boundaries; summary pages and raw source chunks remain scoped to their source `context_id`.
+- **Multi-chunk wiki page ordering.** A synthesised page larger than the indexer's chunk size is split into several index chunks. Wiki reads reassemble a page by `ordinal_position`, which the current projection does not set on wiki chunks, so a page split across chunks can be concatenated out of order. It is mitigated by keeping synthesised pages within the single-chunk size budget; a projected ordinal is the durable fix and requires a reindex.

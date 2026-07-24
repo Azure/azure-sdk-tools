@@ -137,7 +137,7 @@ def test_doc_delete_soft_deletes_summary_and_shrinks_groups():
     assert s.pages_deleted >= 3
     man = json.loads(cc.store["_manifest.json"]["data"].decode("utf-8"))
     # only doc a remains as a source
-    assert list(man["sources"].keys()) == ["a.md"]
+    assert list(man["sources"].keys()) == ["typespec_docs/a.md"]
 
 
 def test_doc_change_regenerates_summary_only():
@@ -154,3 +154,37 @@ def test_doc_change_regenerates_summary_only():
     assert s.changed_docs == 1
     assert s.summaries_regenerated == 1
     assert s.groups_synthesized == 0
+
+
+def test_same_name_docs_across_folders_do_not_collide():
+    cc = _FakeContainer()
+    llm = _FakeLLM(_EXTRACTION)
+    corpus = [
+        ("typespec_docs/README.md", "text one @added versioning"),
+        ("python_docs/README.md", "text two @added versioning"),
+    ]
+    asyncio.run(reconcile(cc, corpus, llm, min_docs=2))
+    man = json.loads(cc.store["_manifest.json"]["data"].decode("utf-8"))
+    assert set(man["sources"].keys()) == {"typespec_docs/README.md", "python_docs/README.md"}
+    summary_refs = sorted(
+        e["source_refs"][0] for e in man["pages"].values() if e["page_type"] == "summary"
+    )
+    assert summary_refs == ["python_docs/README.md", "typespec_docs/README.md"]
+
+
+def test_scoped_build_preserves_out_of_scope_pages():
+    cc = _FakeContainer()
+    llm = _FakeLLM(_EXTRACTION)
+    asyncio.run(reconcile(cc, _corpus(), llm, min_docs=2, prefixes=[""]))
+
+    # rebuild only the python_docs scope: typespec pages must survive untouched
+    s = asyncio.run(reconcile(
+        cc,
+        [("python_docs/a.md", "text a @added versioning"),
+         ("python_docs/b.md", "text b @added versioning")],
+        llm, min_docs=2, prefixes=["python_docs/"],
+    ))
+    assert s.pages_deleted == 0
+    man = json.loads(cc.store["_manifest.json"]["data"].decode("utf-8"))
+    assert "typespec_docs/a.md" in man["sources"]
+    assert "python_docs/a.md" in man["sources"]

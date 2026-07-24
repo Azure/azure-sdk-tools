@@ -7,7 +7,6 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 
 from .llm import ChatLLM
-from .reader import rel_title
 
 logger = logging.getLogger(__name__)
 
@@ -97,6 +96,7 @@ class DocExtraction:
     source_ref: str
     entities: list[ExtractedItem] = field(default_factory=list)
     concepts: list[ExtractedItem] = field(default_factory=list)
+    failed: bool = False
 
 
 def _norm(s: object) -> str:
@@ -127,7 +127,8 @@ def extract_doc(
         parsed = llm.complete_json(_extract_sys(granularity), user, max_tokens=1200)
     except Exception:
         logger.warning("extract_doc failed for %s", source_ref, exc_info=True)
-        parsed = None
+        out.failed = True
+        return out
     if not isinstance(parsed, dict):
         return out
     for e in parsed.get("entities", []) or []:
@@ -170,7 +171,7 @@ def map_extract(
 
     def one(item: tuple[str, str]) -> DocExtraction:
         source_path, text = item
-        return extract_doc(llm, rel_title(source_path), text, granularity=granularity)
+        return extract_doc(llm, source_path, text, granularity=granularity)
 
     results: list[DocExtraction] = []
     with ThreadPoolExecutor(max_workers=max_workers) as ex:

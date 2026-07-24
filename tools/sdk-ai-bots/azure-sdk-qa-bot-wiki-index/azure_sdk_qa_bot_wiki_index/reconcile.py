@@ -99,6 +99,11 @@ def _page_from_manifest(entry: dict) -> WikiPage:
     )
 
 
+def _group_digest(g: Group) -> str:
+    """Content fingerprint of a group's synthesis inputs (name + descriptions)."""
+    return content_hash("\u0000".join([g.name, *sorted(g.descriptions)]))
+
+
 async def reconcile(
     container_client,
     corpus: list[tuple[str, str]],
@@ -106,90 +111,111 @@ async def reconcile(
     *,
     min_docs: int = 2,
     granularity: str = "standard",
+    prefixes: list[str] | None = None,
 ) -> ReconcileStats:
     """Run the incremental reconcile and apply blob + manifest changes."""
     manifest = await read_manifest(container_client)
     prior_sources: dict[str, dict] = manifest.get("sources", {})
     prior_pages: dict[str, dict] = {slug: {**e, "slug": slug} for slug, e in manifest.get("pages", {}).items()}
 
-    # --- 1. diff sources by content hash ---
-    current: dict[str, tuple[str, str]] = {}  # rel -> (text, hash)
+    full_build = not prefixes or any(p == "" for p in prefixes)
+
+    def _in_scope(source_path: str) -> bool:
+        return full_build or any(source_path.startswith(p) for p in prefixes or [])
+
+    # --- 1. diff sources by content hash (identity = full source_path) ---
+    current: dict[str, tuple[str, str]] = {}
     for source_path, text in corpus:
-        rel = rel_title(source_path)
-        current[rel] = (text, content_hash(text or ""))
-    changed = {rel for rel, (_t, h) in current.items() if prior_sources.get(rel, {}).get("hash") != h}
-    deleted = {rel for rel in prior_sources if rel not in current}
+        current[source_path] = (text, content_hash(text or ""))
+    changed = {sp for sp, (_t, h) in current.items() if prior_sources.get(sp, {}).get("hash") != h}
+    deleted = {sp for sp in prior_sources if _in_scope(sp) and sp not in current}
     stats = ReconcileStats(changed_docs=len(changed), deleted_docs=len(deleted))
     logger.info("reconcile: %d changed/new, %d deleted, %d unchanged",
                 len(changed), len(deleted), len(current) - len(changed))
 
-    # source folder (context_id) per rel, computed once
-    folder_by_rel = {rel_title(sp): source_folder(sp) for sp, _t in corpus}
+    folder_by_sp = {sp: source_folder(sp) for sp, _t in corpus}
+    failed_docs: set[str] = set()
 
     # --- 2. extractions: re-extract changed docs, reuse the rest ---
     new_sources: dict[str, dict] = {}
-    to_extract = [(rel, current[rel][0]) for rel in changed]
+    to_extract = [(sp, current[sp][0]) for sp in changed]
 
     def _extract(item: tuple[str, str]) -> tuple[str, DocExtraction]:
-        rel, text = item
-        return rel, extract_doc(llm, rel, text, granularity=granularity)
+        sp, text = item
+        return sp, extract_doc(llm, sp, text, granularity=granularity)
 
     fresh: dict[str, DocExtraction] = {}
     if to_extract:
         with ThreadPoolExecutor(max_workers=MAX_EXTRACT_WORKERS) as ex:
-            for rel, extn in ex.map(_extract, to_extract):
-                fresh[rel] = extn
+            for sp, extn in ex.map(_extract, to_extract):
+                fresh[sp] = extn
 
     extractions: list[DocExtraction] = []
-    for rel, (_text, h) in current.items():
-        if rel in fresh:
-            extn = fresh[rel]
+    for sp, (_text, h) in current.items():
+        if sp in fresh and not fresh[sp].failed:
+            extn = fresh[sp]
+            stored_hash = h
+        elif sp in fresh:
+            failed_docs.add(sp)
+            extn = _extraction_from_json(sp, prior_sources.get(sp, {}))
+            stored_hash = ""
         else:
-            extn = _extraction_from_json(rel, prior_sources.get(rel, {}))
+            extn = _extraction_from_json(sp, prior_sources.get(sp, {}))
+            stored_hash = h
         extractions.append(extn)
-        new_sources[rel] = {"hash": h, **_extraction_to_json(extn)}
+        new_sources[sp] = {"hash": stored_hash, **_extraction_to_json(extn)}
 
     # --- 3. summary pages ---
     summary_pages: dict[str, WikiPage] = {}
 
-    def _summary(item: tuple[str, str]) -> WikiPage | None:
-        rel, text = item
-        folder = folder_by_rel.get(rel, "")
+    def _summary(item: tuple[str, str]) -> tuple[str, WikiPage | None, bool]:
+        sp, text = item
+        folder = folder_by_sp.get(sp, "")
+        rel = rel_title(sp)
         title = _doc_title(rel)
-        body = synthesize_summary(llm, title, text)
+        try:
+            body = synthesize_summary(llm, title, text)
+        except Exception:
+            logger.warning("summary failed for %s", sp, exc_info=True)
+            return sp, None, True
         if not body:
-            return None
-        return WikiPage(
-            slug=make_slug(PAGE_SUMMARY, rel),
+            return sp, None, False
+        return sp, WikiPage(
+            slug=make_slug(PAGE_SUMMARY, sp),
             page_type=PAGE_SUMMARY,
             title=f"{title} (knowledge)",
             content=body,
             context_id=folder,
-            source_refs=[rel],
+            source_refs=[sp],
             orig_title=rel,
-        )
+        ), False
 
-    changed_summary_items = [(rel, current[rel][0]) for rel in changed]
+    changed_summary_items = [(sp, current[sp][0]) for sp in changed]
     if changed_summary_items:
         with ThreadPoolExecutor(max_workers=MAX_SUMMARY_WORKERS) as ex:
-            for p in ex.map(_summary, changed_summary_items):
+            for sp, p, failed in ex.map(_summary, changed_summary_items):
+                if failed:
+                    failed_docs.add(sp)
                 if p is not None:
                     summary_pages[p.slug] = p
                     stats.summaries_regenerated += 1
     # reuse unchanged summaries from the manifest
-    for rel in current:
-        slug = make_slug(PAGE_SUMMARY, rel)
+    for sp in current:
+        slug = make_slug(PAGE_SUMMARY, sp)
         if slug not in summary_pages and slug in prior_pages:
             summary_pages[slug] = _page_from_manifest(prior_pages[slug])
 
     # --- 4. entity/concept pages: synth only changed groups ---
     groups = aggregate_groups(extractions, min_docs=min_docs)
+    digest_by_slug = {g.slug(): _group_digest(g) for g in groups}
     ec_pages: dict[str, WikiPage] = {}
     to_synth: list[Group] = []
     for g in groups:
         slug = g.slug()
         prior = prior_pages.get(slug)
-        if prior and set(prior.get("source_refs", [])) == set(g.source_refs) and prior.get("content"):
+        if (prior and prior.get("content")
+                and set(prior.get("source_refs", [])) == set(g.source_refs)
+                and prior.get("input_hash") == digest_by_slug[slug]):
             ec_pages[slug] = _page_from_manifest(prior)
         else:
             to_synth.append(g)
@@ -233,18 +259,35 @@ async def reconcile(
             "content": page.content,
             "content_hash": chash,
             "blob_path": path,
+            "input_hash": digest_by_slug.get(page.slug, ""),
             "is_deleted": "false",
             "updated_at": ts,
         }
 
-    # soft-delete pages that no longer exist
+    # soft-delete pages that no longer exist; preserve out-of-scope pages verbatim
     for slug, entry in prior_pages.items():
-        if slug not in current_slugs and entry.get("is_deleted") != "true":
-            if await soft_delete_blob(container_client, entry.get("blob_path", blob_path(slug))):
-                stats.pages_deleted += 1
-            entry["is_deleted"] = "true"
-            entry.pop("slug", None)
+        if slug in current_slugs or entry.get("is_deleted") == "true":
+            continue
+        refs = entry.get("source_refs", [])
+        in_scope_page = full_build or (bool(refs) and all(_in_scope(r) for r in refs))
+        entry.pop("slug", None)
+        if not in_scope_page:
             new_pages_manifest[slug] = entry
+            continue
+        if await soft_delete_blob(container_client, entry.get("blob_path", blob_path(slug))):
+            stats.pages_deleted += 1
+        entry["is_deleted"] = "true"
+        new_pages_manifest[slug] = entry
+
+    # keep failed docs unadvanced so the next run retries them
+    for sp in failed_docs:
+        if sp in new_sources:
+            new_sources[sp]["hash"] = ""
+    # preserve prior sources outside this build's scope
+    if not full_build:
+        for sp, entry in prior_sources.items():
+            if sp not in new_sources and not _in_scope(sp):
+                new_sources[sp] = entry
 
     manifest = {"sources": new_sources, "pages": new_pages_manifest}
     await write_manifest(container_client, manifest)

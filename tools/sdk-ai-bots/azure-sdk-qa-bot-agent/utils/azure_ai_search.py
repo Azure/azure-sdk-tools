@@ -62,6 +62,27 @@ def _and_extra(combined_filter: str, extra_filter: str | None) -> str:
     return f"({combined_filter}) and {extra_filter}"
 
 
+def split_source_ref(source_path: str) -> tuple[str, str]:
+    """Split a source path into ``(context_id, title)`` matching raw chunks.
+
+    Mirrors the wiki reader identity split: the first segment is the source
+    scope (``context_id``); the remainder is the folder-relative ``title``.
+    """
+    path = (source_path or "").strip().lstrip("/")
+    parts = path.split("/")
+    folder = parts[0] if len(parts) > 1 else ""
+    rel = path[len(folder) + 1:] if folder and path.startswith(folder + "/") else path
+    return folder, rel
+
+
+def _title_context_clause(title: str, context_id: str) -> str:
+    """OData clause matching a raw chunk by ``title`` scoped to ``context_id``."""
+    t = f"title eq '{_escape_odata(title)}'"
+    if context_id:
+        return f"({t} and context_id eq '{_escape_odata(context_id)}')"
+    return f"({t} and (context_id eq null or context_id eq ''))"
+
+
 def _chunk_key(chunk: "KnowledgeChunk") -> str:
     """Stable identity for a chunk: its id, or a header-path fallback."""
     if chunk.chunk_id:
@@ -128,10 +149,12 @@ class SearchClient:
         self,
         query: str,
         source_filters: dict[str, str],
+        extra_filter: str | None = None,
     ) -> list[KnowledgeChunk]:
         """Retrieve unexpanded raw chunks via agentic search."""
         # Combine per-source filters into one OR expression.
         combined_filter = " or ".join(f"({f})" for f in source_filters.values() if f)
+        combined_filter = _and_extra(combined_filter, extra_filter)
 
         kb_params: list[KnowledgeSourceParams] = [
             SearchIndexKnowledgeSourceParams(
@@ -360,26 +383,28 @@ class SearchClient:
         the routing to the tenant's sources.
         """
         seen_ids = {c.chunk_id for c in chunks if c.chunk_id}
-        wanted_titles: list[str] = []
+        wanted: list[tuple[str, str]] = []  # (title, context_id) of raw source chunks
         for c in chunks:
             if c.page_type == "summary" and c.title:
-                refs = [c.title]
+                pairs = [(c.title, c.source or "")]
             elif c.page_type in ("entity", "concept", "synthesis"):
-                refs = list(c.chunk_refs)[:per_page]
+                pairs = []
+                for r in list(c.chunk_refs)[:per_page]:
+                    folder, rel = split_source_ref(r)
+                    if rel:
+                        pairs.append((rel, folder))
             else:
                 continue
-            for r in refs:
-                if r and r not in wanted_titles:
-                    wanted_titles.append(r)
-        wanted_titles = wanted_titles[:max_total]
-        if not wanted_titles:
+            for p in pairs:
+                if p not in wanted:
+                    wanted.append(p)
+        wanted = wanted[:max_total]
+        if not wanted:
             return []
 
-        title_clause = " or ".join(
-            f"title eq '{_escape_odata(t)}'" for t in wanted_titles
-        )
+        pair_clause = " or ".join(_title_context_clause(t, ctx) for t, ctx in wanted)
         # Only backfill RAW source chunks (never other wiki pages).
-        combined_filter = f"({title_clause}) and (page_type eq null or page_type eq '')"
+        combined_filter = f"({pair_clause}) and (page_type eq null or page_type eq '')"
         combined_filter = _and_extra(combined_filter, source_filter)
 
         results = await self._search_client.search(
@@ -390,23 +415,24 @@ class SearchClient:
         )
 
         backfilled: list[KnowledgeChunk] = []
-        per_title_count: dict[str, int] = {}
+        per_doc_count: dict[tuple[str, str], int] = {}
         async for doc in results:
             chunk = KnowledgeChunk.model_validate(dict(doc))
             if not chunk.chunk_id or chunk.chunk_id in seen_ids:
                 continue
+            key = (chunk.title, chunk.source)
             # Limit to 2 chunks per source doc.
-            if per_title_count.get(chunk.title, 0) >= 2:
+            if per_doc_count.get(key, 0) >= 2:
                 continue
             seen_ids.add(chunk.chunk_id)
-            per_title_count[chunk.title] = per_title_count.get(chunk.title, 0) + 1
+            per_doc_count[key] = per_doc_count.get(key, 0) + 1
             backfilled.append(chunk)
             if len(backfilled) >= max_total:
                 break
         logger.info(
             "backfill_wiki_sources: %d source chunk(s) from %d wiki ref(s)",
             len(backfilled),
-            len(wanted_titles),
+            len(wanted),
         )
         return backfilled
 
@@ -417,10 +443,14 @@ class SearchClient:
         top: int = 40,
         keyword: str | None = None,
         source_filter: str | None = None,
+        context_id: str | None = None,
     ) -> "list[KnowledgeChunk]":
         """Fetch chunks/pages whose ``title`` is one of *titles*, gated by
         *extra_filter* (WIKI_FILTER or NON_WIKI_FILTER) and, when given, the
         tenant's combined ``context_id`` *source_filter*.
+
+        When *context_id* is set, results are further scoped to that exact
+        source, disambiguating same-named files across folders.
 
         With *keyword* set, ranks by BM25 over the matched docs; otherwise
         returns them in ``ordinal_position`` order.
@@ -430,6 +460,11 @@ class SearchClient:
             return []
         title_clause = " or ".join(f"title eq '{_escape_odata(t)}'" for t in titles)
         combined = f"({title_clause}) and {extra_filter}"
+        if context_id is not None:
+            if context_id:
+                combined = f"{combined} and (context_id eq '{_escape_odata(context_id)}')"
+            else:
+                combined = f"{combined} and (context_id eq null or context_id eq '')"
         combined = _and_extra(combined, source_filter)
         search_kwargs: dict = {
             "search_text": keyword or "*",

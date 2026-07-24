@@ -83,7 +83,10 @@ async def _run(args: argparse.Namespace) -> int:
                 await cc.create_container()
             except Exception:
                 pass  # already exists
-            stats = await reconcile(cc, corpus, llm, min_docs=args.min_docs, granularity=args.granularity)
+            stats = await reconcile(
+                cc, corpus, llm,
+                min_docs=args.min_docs, granularity=args.granularity, prefixes=prefixes,
+            )
         logger.info(
             "done: %d pages written, %d soft-deleted (container %r)",
             stats.pages_written, stats.pages_deleted, wiki_container,

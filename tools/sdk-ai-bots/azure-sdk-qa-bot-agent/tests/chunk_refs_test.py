@@ -7,6 +7,15 @@ Wiki pages store their source refs as a JSON-array string in ``chunk_refs_str``;
 from __future__ import annotations
 
 from models.knowledge import KnowledgeChunk
+from utils.azure_ai_search import split_source_ref
+
+
+def test_split_source_ref_separates_context_and_title():
+    assert split_source_ref("typespec_docs/foo/README.md") == ("typespec_docs", "foo/README.md")
+    assert split_source_ref("python_docs/README.md") == ("python_docs", "README.md")
+    # A ref with no folder keeps an empty context and the whole path as title.
+    assert split_source_ref("README.md") == ("", "README.md")
+    assert split_source_ref("") == ("", "")
 
 
 def test_chunk_refs_parsed_from_json_string():

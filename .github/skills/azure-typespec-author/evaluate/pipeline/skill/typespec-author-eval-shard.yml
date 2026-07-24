@@ -112,8 +112,8 @@ jobs:
           const endpoint = current.match(/AZURE_SDK_KB_ENDPOINT: "([^"]+)"/)?.[1];
           const endpointLine = endpoint ? `          AZURE_SDK_KB_ENDPOINT: "${endpoint}"\n` : '';
           const binary = mode === 'mock'
-            ? '../../../../artifacts/mcp/mock/Azure.Sdk.Tools.Mock.dll'
-            : '../../../../artifacts/mcp/cli/Azure.Sdk.Tools.Cli.dll';
+            ? '../../../../artifacts/mcp/mock/azsdk-mock.dll'
+            : '../../../../artifacts/mcp/cli/azsdk.dll';
           const timeout = mode === 'mock' ? '"60s"' : '5m';
           const args = mode === 'mock'
             ? `            "${binary}",`

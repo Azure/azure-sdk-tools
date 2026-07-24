@@ -19,7 +19,7 @@ steps:
       const current = text.slice(start, end);
       const endpoint = current.match(/AZURE_SDK_KB_ENDPOINT: "([^"]+)"/)?.[1];
       const endpointLine = endpoint ? `          AZURE_SDK_KB_ENDPOINT: "${endpoint}"\n` : '';
-      const replacement = `  azsdk-mcp:\n    files:\n      - src: ../fixtures/instructions-test/copilot-instructions.md\n        dest: .github/copilot-instructions.md\n    mcpServers:\n      azure-sdk-mcp:\n        type: stdio\n        command: dotnet\n        args:\n          [\n            "../../../../artifacts/mcp/cli/Azure.Sdk.Tools.Cli.dll",\n            "start",\n          ]\n        timeout: 5m\n        env:\n          AZSDKTOOLS_AGENT_TESTING: "false"\n          AZSDKTOOLS_COLLECT_TELEMETRY: "false"\n${endpointLine}`;
+      const replacement = `  azsdk-mcp:\n    files:\n      - src: ../fixtures/instructions-test/copilot-instructions.md\n        dest: .github/copilot-instructions.md\n    mcpServers:\n      azure-sdk-mcp:\n        type: stdio\n        command: dotnet\n        args:\n          [\n            "../../../../artifacts/mcp/cli/azsdk.dll",\n            "start",\n          ]\n        timeout: 5m\n        env:\n          AZSDKTOOLS_AGENT_TESTING: "false"\n          AZSDKTOOLS_COLLECT_TELEMETRY: "false"\n${endpointLine}`;
 
       text = text.slice(0, start) + replacement + text.slice(end);
       fs.writeFileSync(configPath, text);

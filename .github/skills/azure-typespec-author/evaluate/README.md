@@ -227,9 +227,9 @@ is generated from the eval files, then each track passes its mode through `TypeS
 
 | Pipeline           | Template shape                              | Extra args                                     | MCP binding                                                    | Purpose                                                               |
 | ------------------ | ------------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------- |
-| benchmark          | Manual two-track stages with `pipeline/skill` | `--tag mode=forced --skill-dir ..`             | `azsdk-mcp` rebound to staged live `Azure.Sdk.Tools.Cli.dll`   | Forced skill invocation + code-quality graders                        |
-| benchmark          | Manual two-track stages with `pipeline/skill` | `--tag mode=trigger --skill-dir ..`            | `azsdk-mcp` rebound to staged mock `Azure.Sdk.Tools.Mock.dll`  | Skill trigger detection                                               |
-| benchmark-no-skill | Common `archetype-eval.yml` + `pipeline/no-skill` wrappers | `--tag mode=no-skill --skill-dir /tmp/no-skills` | `azsdk-mcp` rebound to staged live `Azure.Sdk.Tools.Cli.dll` | Baseline run without loading the skill                                 |
+| benchmark          | Manual two-track stages with `pipeline/skill` | `--tag mode=forced --skill-dir ..`             | `azsdk-mcp` rebound to staged live `azsdk.dll`                 | Forced skill invocation + code-quality graders                        |
+| benchmark          | Manual two-track stages with `pipeline/skill` | `--tag mode=trigger --skill-dir ..`            | `azsdk-mcp` rebound to staged mock `azsdk-mock.dll`            | Skill trigger detection                                               |
+| benchmark-no-skill | Common `archetype-eval.yml` + `pipeline/no-skill` wrappers | `--tag mode=no-skill --skill-dir /tmp/no-skills` | `azsdk-mcp` rebound to staged live `azsdk.dll` | Baseline run without loading the skill                                 |
 
 The forced and trigger tracks are composed manually because they need different MCP environments in
 one pipeline run. The no-skill pipeline stays on the common `archetype-eval.yml` entry point and only

@@ -76,8 +76,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification.Templates
                 </ul>
                 <br>
                 <h3>SDK pull requests</h3>
-                {PlaneSpecificMessage}
-                {MissingSdkDetailsSectionContent}
+                {SdkPullRequestSectionContent}
                 <br>
                 {KpiAttestationSectionContent}
                 <br>
@@ -120,7 +119,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification.Templates
 
         private string KpiAttestationSectionContent => IsMissingProductInfo ? KpiAttestationSection : string.Empty;
 
-        private string MissingSdkDetailsSectionContent => IsMissingSdkDetails ? MissingSdkDetailsSection : string.Empty;
+        private string SdkPullRequestSectionContent => IsMissingSdkDetails ? MissingSdkDetailsSection : PlaneSpecificMessage;
 
         private bool IsMissingSdkDetails =>
             releasePlan.SDKInfo is null

@@ -70,7 +70,8 @@ public class NotificationServiceTests
             ServiceTreeId = "service-1",
             ProductType = "Offering",
             SpecPullRequests = ["https://github.com/pr/1"],
-            ApiReleaseType = ApiReleaseType.GA
+            ApiReleaseType = ApiReleaseType.GA,
+            SDKInfo = [new SDKInfo { Language = ".NET", PackageName = "Azure.ResourceManager.Contoso" }]
         };
 
         var template = new NewReleasePlanEmail(releasePlan);
@@ -124,7 +125,8 @@ public class NotificationServiceTests
             ProductType = "Offering",
             SpecPullRequests = ["https://github.com/Azure/azure-rest-api-specs/pull/1"],
             ReleasePlanSubmittedByEmail = "author@microsoft.com",
-            ApiReleaseType = ApiReleaseType.GA
+            ApiReleaseType = ApiReleaseType.GA,
+            SDKInfo = [new SDKInfo { Language = ".NET", PackageName = "Azure.ResourceManager.Contoso" }]
         };
 
         var payload = new NewReleasePlanEmail(releasePlan)
@@ -327,6 +329,8 @@ public class NotificationServiceTests
         var body = new NewReleasePlanEmail(releasePlan).Body;
 
         Assert.That(body, Does.Contain("SDK details are currently missing from the release plan"));
+        Assert.That(body, Does.Not.Contain("SDK pull requests will be auto generated"));
+        Assert.That(body, Does.Not.Contain("Please use azsdk agent to generate the SDK pull requests"));
     }
 
     [Test]
@@ -352,6 +356,8 @@ public class NotificationServiceTests
         var body = new NewReleasePlanEmail(releasePlan).Body;
 
         Assert.That(body, Does.Contain("SDK details are currently missing from the release plan"));
+        Assert.That(body, Does.Not.Contain("SDK pull requests will be auto generated"));
+        Assert.That(body, Does.Not.Contain("Please use azsdk agent to generate the SDK pull requests"));
     }
 
     [Test]

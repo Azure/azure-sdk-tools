@@ -23,33 +23,12 @@ Build the authoring plan by grounding it in authoritative guidance. **Always run
 
 ### Case 3 — API Version Evolution (ARM / Data-plane)
 
-> **Grounding (mandatory):** Build the plan with **agentic search only**. You **MUST** call `web_fetch` over the versioning URLs in [reference-document-links.md](reference-document-links.md) (`02-preview-after-preview`, `03-stable-after-preview`, `04-preview-after-stable`, `05-stable-after-stable`, `06-evolving-apis`) — never skip it. You **MUST NOT** call the MCP tool `azsdk_typespec_generate_authoring_plan` for this case; the versioning docs fully cover it. Never author version changes from model knowledge without first fetching the matching doc.
+> **Grounding:** Build the plan with **agentic search only**. You **MUST** call `web_fetch` over the versioning URLs in [reference-document-links.md](reference-document-links.md) and follow the steps in the fetched docs. You **MUST NOT** call the MCP tool `azsdk_typespec_generate_authoring_plan` for this case — the versioning docs fully cover it.
 
-**Step A — Classify the transition.** Find the latest existing version in the `Versions` enum and whether it is `preview` or `stable`, and whether the new version is `preview` or `stable`. Pick the operation:
+1. Copy `.json` files from latest version's `examples/` into new version's `examples/`. Update `api-version` in each file. Delete old version's example folder if old version is no longer existed.
+2. Update `readme.md`.
 
-| Latest existing | New version | Operation | Doc |
-| --------------- | ----------- | --------- | --- |
-| preview | preview | **RENAME** the latest preview to the new preview (do **not** keep the old preview) | `02-preview-after-preview` |
-| stable | preview | **ADD** a new preview version; keep the stable version | `04-preview-after-stable` |
-| preview | stable | **RENAME** the latest preview to the new stable (promote; drop `@previewVersion`) | `03-stable-after-preview` |
-| stable | stable | **ADD** a new stable version; keep prior versions | `05-stable-after-stable` |
-
-**Step B — Apply the version-enum change.**
-- **RENAME operations** (preview→preview, preview→stable): change the enum member **name and value** from the old version to the new version. Then update **every** decorator across all `.tsp` files that references the old version — `@added`, `@removed`, `@renamedFrom`, `@typeChangedFrom`, `@returnTypeChangedFrom`, `@madeOptional`, `@madeRequired` — to reference the new version. For preview→stable, also remove the `@previewVersion` decorator from the promoted member.
-- **ADD operations** (stable→preview, stable→stable): add a **new** enum member after the latest one (keep all existing members). Add `@previewVersion` to the new member only for a preview version. Gate newly added features with `@added(<newVersion>)`.
-
-**Step C — Apply requested feature exclusions / reversals** (per `06-evolving-apis`, retrieved via `web_fetch`). When the intake step identified features to exclude, or when renaming forward means a preview-only change should not carry into the new version, **reverse** the decorator pattern:
-- Type added with `@added(oldVersion)` that should not appear → delete the type.
-- `@typeChangedFrom(oldVersion, T)` that does not apply → set the property type back to `T` and remove the decorator.
-- `@renamedFrom(oldVersion, "name")` that does not apply → restore the original `name` and remove the decorator.
-- `@madeOptional` / `@madeRequired` that does not apply → reverse the optionality and remove the decorator.
-- A property using the `@removed`/`@renamedFrom` (old) + `@added` (new) pattern to change a **default value or decoration** (e.g. an `oldAge`/`age` pair) that should not carry forward → **remove both the old and new properties and restore the single original property** without the change.
-
-**Step D — Migrate examples and metadata.**
-1. For **RENAME** operations, rename the latest version's `examples/<oldVersion>/` folder to `examples/<newVersion>/` and update `api-version` in every `.json` file (the old folder must no longer exist). For **ADD** operations, copy the latest version's `examples/` into a new `examples/<newVersion>/` folder and update `api-version` in each file (keep the old folder).
-2. Update `readme.md` (and any `tspconfig`/service metadata) to reference the new version.
-
-> These steps apply to both ARM and data-plane services. The same versioning decorators apply regardless of service type.
+> These steps apply to both ARM and data-plane services. The same versioning decorators (`@added`, `@removed`, `@renamedFrom`, `@typeChangedFrom`) apply regardless of service type.
 
 ### Case 4 — Add Data-Plane Operations
 

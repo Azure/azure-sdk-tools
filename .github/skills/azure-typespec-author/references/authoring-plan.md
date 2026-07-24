@@ -8,12 +8,12 @@ Use the following tools **in order**:
 
 1. **Agentic Search** (primary) — run [agentic search](agentic-search.md) with URLs from [reference-document-links.md](reference-document-links.md) and a query from the user's request. Synthesize extracted content into a concrete plan.
 
-2. **MCP Tool** (fallback) — call `azsdk_typespec_generate_authoring_plan` **only if** agentic search fails (all URLs unreachable or timeout exceeded):
+2. **MCP Tool** (fallback) — call `azsdk_typespec_generate_authoring_plan` if agentic search fails (all URLs unreachable or timeout exceeded) **or** if the case is not covered by [reference-document-links.md](reference-document-links.md):
    - `request`: user request (verbatim)
    - `additionalInformation`: all context from Steps 1–2
    - `typeSpecProjectRootPath`: project root path
 
-> Do not call the MCP tool when agentic search succeeds. Do not block the workflow on unreachable external documentation — proceed with the MCP tool result if agentic search fails.
+> Do not call the MCP tool when agentic search already covers the case. Do not block the workflow on unreachable external documentation — proceed with the MCP tool result if agentic search fails or the case is not covered.
 
 ---
 

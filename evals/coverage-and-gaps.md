@@ -92,12 +92,12 @@ prompt" and "has a real Vally eval."
 
 ## 4. Cross-repository coverage
 
-| Repo | `eng/common` eval templates synced | Repo-local pipeline entrypoint | Status |
-|---|---|---|---|
-| `azure-sdk-tools` (source) | n/a — native | `eng/common/pipelines/{skill-eval,workflow-eval,live-eval}.yml` used directly | Fully wired: `vally lint` on every skill PR, `unit`/`scenarios-mock` tiers via `workflow-eval.yml`, `scenarios-live` nightly |
-| `azure-rest-api-specs` | ✅ | `eng/pipelines/skill-eval.yml` (extends `archetype-eval.yml`) | **Piloted and live** — [#16347](https://github.com/Azure/azure-sdk-tools/issues/16347) closed all acceptance criteria; scheduled runs confirmed working via [Azure/azure-rest-api-specs#44696](https://github.com/Azure/azure-rest-api-specs/pull/44696). Fast-follow gaps (explicitly non-blocking): eval-coverage backfill for the `azure-api-review`, `openai-typespec-update`, `generate-sdk-locally`, `pipeline-analysis`, `pipeline-fixer` skills in that repo, and an `arm-api-reviewer` suite model-availability issue (`claude-opus-4.6-1m`) |
-| `azure-sdk-for-python` | ✅ (confirmed directly — `eng/common/pipelines/skill-eval.yml` present) | ❌ none | Not started |
-| `azure-sdk-for-net` / `-java` / `-js` / `-go` | ✅ (same sync mechanism; not individually re-verified) | ❌ none | Not started |
+| Repo | `eng/common` eval templates synced | Repo-local pipeline entrypoint | Eval files today | Status |
+|---|---|---|---|---|
+| `azure-sdk-tools` (source) | n/a — native | `eng/common/pipelines/{skill-eval,workflow-eval,live-eval}.yml` used directly | 65 (10 tool-scenario + 7 mock-workflow + 1 live-workflow + 9 per-skill trigger + 38 `azure-typespec-author` capability) | Fully wired: `vally lint` on every skill PR, `unit`/`scenarios-mock` tiers via `workflow-eval.yml`, `scenarios-live` nightly |
+| `azure-rest-api-specs` | ✅ | `eng/pipelines/skill-eval.yml` (extends `archetype-eval.yml`) | 25 (8 per-skill trigger + 17 `arm-api-reviewer`); **0 workflow-scenario evals** | **Piloted and live** — [#16347](https://github.com/Azure/azure-sdk-tools/issues/16347) closed all acceptance criteria; scheduled runs confirmed working via [Azure/azure-rest-api-specs#44696](https://github.com/Azure/azure-rest-api-specs/pull/44696). Fast-follow gaps (explicitly non-blocking): eval-coverage backfill for the `azure-api-review`, `openai-typespec-update`, `generate-sdk-locally`, `pipeline-analysis`, `pipeline-fixer` skills in that repo, and an `arm-api-reviewer` suite model-availability issue (`claude-opus-4.6-1m`) |
+| `azure-sdk-for-python` | ✅ (confirmed directly — `eng/common/pipelines/skill-eval.yml` present) | ❌ none | 0 | Not started |
+| `azure-sdk-for-net` / `-java` / `-js` / `-go` | ✅ (same sync mechanism; not individually re-verified) | ❌ none | 0 | Not started |
 
 Language-repo rollout is tracked as a whole in
 [#16348](https://github.com/Azure/azure-sdk-tools/issues/16348) — every
@@ -114,3 +114,4 @@ one pilot language repo first, scheduled/report-only before any PR-gating.
 | Per-skill eval CI runs `vally lint` only — no real behavioral execution in CI yet | [#15126](https://github.com/Azure/azure-sdk-tools/issues/15126), [#15127](https://github.com/Azure/azure-sdk-tools/issues/15127) | cited as follow-ups in `evals/README.md` |
 | `tool-calls` grader can't assert argument values, forbidden tools, or call order (only tool *names*) | tracked inline in `evals/README.md` → "Known gaps vs. the original benchmark" | needs upstream `@microsoft/vally-cli` support or a custom `.NET` grader under `evals/Graders/` |
 | Multi-turn conversation coverage is thin — only release-plan flows are in `main`; pipeline diagnose→fix is pending; TypeSpec authoring, APIView feedback, SDK release readiness, and cross-skill handoff are still open | this doc + PR [#16418](https://github.com/Azure/azure-sdk-tools/pull/16418) (open) | |
+| Workflow/multi-tool scenario evals (`evals/workflows/mock`, `evals/workflows/live`) exist only in `azure-sdk-tools` — zero in `azure-rest-api-specs` or any language repo | [#16347](https://github.com/Azure/azure-sdk-tools/issues/16347) | The specs-repo pilot only proved out the tool-selection tier; multi-tool workflow scenarios were never extended cross-repo |

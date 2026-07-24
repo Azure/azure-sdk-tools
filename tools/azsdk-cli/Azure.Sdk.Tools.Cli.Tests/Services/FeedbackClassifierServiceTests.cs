@@ -7,7 +7,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
@@ -131,8 +131,7 @@ public class FeedbackClassifierServiceTests
 
         var copilotClient = new CopilotClient(new CopilotClientOptions
         {
-            UseStdio = true,
-            AutoStart = true
+            Connection = RuntimeConnection.ForStdio()
         });
         var copilotClientWrapper = new CopilotClientWrapper(copilotClient);
         var tokenUsageHelper = new TokenUsageHelper(rawOutputHelper);

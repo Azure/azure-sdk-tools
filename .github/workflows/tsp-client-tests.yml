@@ -12,6 +12,9 @@ on:
       - .github/workflows/tsp-client-tests.yml
       - tools/tsp-client/**
 
+permissions:
+  contents: read
+
 jobs:
   tsp-client:
     strategy:

@@ -21,9 +21,7 @@ describe("Semaphore", () => {
             active--;
         };
 
-        await Promise.all(
-            Array.from({ length: 30 }, () => sem.run(task)),
-        );
+        await Promise.all(Array.from({ length: 30 }, () => sem.run(task)));
 
         expect(peak).toBeLessThanOrEqual(max);
         expect(active).toBe(0);
@@ -55,7 +53,9 @@ describe("parseRetryAfterMs", () => {
 
     it("reads a 'retry after N seconds' phrase", () => {
         expect(
-            parseRetryAfterMs("You have exceeded a secondary rate limit. Please retry after 12 seconds."),
+            parseRetryAfterMs(
+                "You have exceeded a secondary rate limit. Please retry after 12 seconds.",
+            ),
         ).toBe(12_000);
     });
 

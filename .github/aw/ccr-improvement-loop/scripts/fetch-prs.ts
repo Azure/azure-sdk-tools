@@ -34,13 +34,9 @@ import type {
     User,
 } from "./types.ts";
 import { RAW_SCHEMA_VERSION } from "./run-schema.ts";
-import {
-    ghApiGraphqlAsync,
-    ghApiJsonAsync,
-    ghJsonSync,
-    makeLogger,
-    runWithConcurrency,
-} from "./utils.ts";
+import { ghJsonSync, makeLogger, runWithConcurrency } from "./utils.ts";
+import { defaultGhClient, type GhClient } from "./gh-client.ts";
+import { assembleViaGraphql } from "./pr-graphql.ts";
 
 const log = makeLogger("fetch-prs");
 
@@ -136,7 +132,7 @@ function parseArgs(argv: string[]): Options {
     };
 }
 
-interface RawUser {
+export interface RawUser {
     login: string;
     type: "User" | "Bot";
 }
@@ -242,7 +238,7 @@ function mapReactions(
     return out;
 }
 
-interface RawReview {
+export interface RawReview {
     id: number;
     state: string;
     body: string;
@@ -250,7 +246,7 @@ interface RawReview {
     user: RawUser | null;
     author_association?: string;
 }
-interface RawInline {
+export interface RawInline {
     id: number;
     path?: string;
     line?: number;
@@ -266,7 +262,7 @@ interface RawInline {
     reactions?:
         { content: string; user: RawUser | null }[] | Record<string, unknown>;
 }
-interface RawIssue {
+export interface RawIssue {
     id: number;
     body: string;
     created_at: string;
@@ -282,7 +278,7 @@ interface RawCommit {
 interface RawCommitFiles {
     files?: { filename: string; patch?: string }[];
 }
-interface RawPrFull {
+export interface RawPrFull {
     number: number;
     title: string;
     user: RawUser | null;
@@ -319,6 +315,7 @@ interface ThreadGraphQl {
 }
 
 async function fetchThreadResolution(
+    client: GhClient,
     repo: string,
     number: number,
 ): Promise<{
@@ -330,7 +327,7 @@ async function fetchThreadResolution(
     const resolvedByCommentId = new Map<number, boolean>();
     const linkedIssues: { number: number; labels: string[] }[] = [];
     try {
-        const res = await ghApiGraphqlAsync<ThreadGraphQl>([
+        const res = await client.graphql<ThreadGraphQl>([
             "-f",
             `query=${query}`,
             "-F",
@@ -364,6 +361,7 @@ async function fetchPrToCache(
     cacheDir: string,
     refresh: boolean,
     number: number,
+    client: GhClient = defaultGhClient,
 ): Promise<{ number: number; file: string; cacheHit: boolean }> {
     const outFile = path.join(cacheDir, `pr-${number}.json`);
     if (fs.existsSync(outFile) && !refresh) {
@@ -372,26 +370,82 @@ async function fetchPrToCache(
     }
     fs.mkdirSync(cacheDir, { recursive: true });
 
+    // #4: the five fixed reads + thread resolution/linked issues are now a single
+    // per-PR GraphQL query on the separate pool; commit patch detail stays REST.
+    // assembleViaRest is retained as the equivalence reference (Gate 2.1) and can
+    // be reinstated per-PR if a live divergence is ever found.
+    const payload = await assembleViaGraphql(client, repo, number);
+    fs.writeFileSync(outFile, JSON.stringify(payload, null, 2));
+    log.info(
+        `wrote ${outFile} (reviews=${payload.reviews.length} inline=${payload.inline.length} issue=${payload.issue.length} commits=${payload.commits.length})`,
+    );
+    return { number, file: outFile, cacheHit: false };
+}
+
+/**
+ * Assemble one PR's normalized {@link PullRequestData} from the five fixed REST
+ * reads (`pulls/{n}`, `.../reviews`, `.../comments`, `issues/{n}/comments`,
+ * `pulls/{n}/commits`) plus the GraphQL thread-resolution/linked-issues read and
+ * the per-commit detail reads. Pure over the injected {@link GhClient} (no IO of
+ * its own), so it is the REST reference the Phase 2 GraphQL path must reproduce.
+ */
+async function assembleViaRest(
+    client: GhClient,
+    repo: string,
+    number: number,
+): Promise<PullRequestData> {
     const base = `repos/${repo}`;
     // Independent per-PR reads run concurrently; the shared ghRequestLimiter
     // (utils.ts) bounds total in-flight requests so parallel workers × this
     // fan-out never exceed GitHub's secondary-rate-limit concurrency ceiling.
     const [prRaw, reviewsRaw, inlineRaw, issueRaw, commitsRaw, threadRes] =
         await Promise.all([
-            ghApiJsonAsync<RawPrFull>(`${base}/pulls/${number}`),
-            ghApiJsonAsync<RawReview[]>(`${base}/pulls/${number}/reviews`),
-            ghApiJsonAsync<RawInline[]>(`${base}/pulls/${number}/comments`),
-            ghApiJsonAsync<RawIssue[]>(`${base}/issues/${number}/comments`),
-            ghApiJsonAsync<RawCommit[]>(`${base}/pulls/${number}/commits`),
-            fetchThreadResolution(repo, number),
+            client.restJson<RawPrFull>(`${base}/pulls/${number}`),
+            client.restJson<RawReview[]>(`${base}/pulls/${number}/reviews`),
+            client.restJson<RawInline[]>(`${base}/pulls/${number}/comments`),
+            client.restJson<RawIssue[]>(`${base}/issues/${number}/comments`),
+            client.restJson<RawCommit[]>(`${base}/pulls/${number}/commits`),
+            fetchThreadResolution(client, repo, number),
         ]);
     const { resolvedByCommentId, linkedIssues } = threadRes;
 
-    // Per-commit detail (files/patches) is fetched concurrently too; Promise.all
-    // preserves commit order and the limiter keeps the burst bounded.
-    const commits: TimelineCommit[] = await Promise.all(
-        commitsRaw.map(async (c): Promise<TimelineCommit> => {
-            const filesRes = await ghApiJsonAsync<RawCommitFiles>(
+    const commits = await fetchCommitDetail(
+        client,
+        repo,
+        commitsRaw.map((c) => ({
+            sha: c.sha,
+            committedAt:
+                c.commit.committer?.date ?? c.commit.author?.date ?? null,
+        })),
+    );
+
+    return buildPrPayload({
+        prRaw,
+        reviewsRaw,
+        inlineRaw,
+        issueRaw,
+        commits,
+        resolvedByCommentId,
+        linkedIssues,
+    });
+}
+
+/**
+ * Per-commit detail (files + patches) — kept on REST (`commits/{sha}`) even after
+ * the fixed reads move to GraphQL (#4): removing this `N` term is #6/T3, deferred.
+ * Takes the commit SHAs + timeline dates (from either the REST commits list or
+ * the GraphQL commits connection) so both assemblers share one detail fetch.
+ * Promise.all preserves commit order; the shared limiter bounds the burst.
+ */
+export async function fetchCommitDetail(
+    client: GhClient,
+    repo: string,
+    commits: { sha: string; committedAt: string | null }[],
+): Promise<TimelineCommit[]> {
+    const base = `repos/${repo}`;
+    return Promise.all(
+        commits.map(async (c): Promise<TimelineCommit> => {
+            const filesRes = await client.restJson<RawCommitFiles>(
                 `${base}/commits/${c.sha}`,
             );
             const files = filesRes.files ?? [];
@@ -402,13 +456,26 @@ async function fetchPrToCache(
             );
             return {
                 sha: c.sha,
-                committedAt:
-                    c.commit.committer?.date ?? c.commit.author?.date ?? null,
+                committedAt: c.committedAt,
                 files: files.map((f) => f.filename),
                 ...(Object.keys(patches).length > 0 ? { patches } : {}),
             };
         }),
     );
+}
+
+/** Normalize the raw REST payloads into the cached {@link PullRequestData}. */
+function buildPrPayload(input: {
+    prRaw: RawPrFull;
+    reviewsRaw: RawReview[];
+    inlineRaw: RawInline[];
+    issueRaw: RawIssue[];
+    commits: TimelineCommit[];
+    resolvedByCommentId: Map<number, boolean>;
+    linkedIssues: { number: number; labels: string[] }[];
+}): PullRequestData {
+    const { prRaw, reviewsRaw, inlineRaw, issueRaw, commits } = input;
+    const { resolvedByCommentId, linkedIssues } = input;
 
     const meta: PullRequestMetadata = {
         number: prRaw.number,
@@ -425,7 +492,7 @@ async function fetchPrToCache(
         linkedIssues,
     };
 
-    const payload: PullRequestData = {
+    return {
         rawSchemaVersion: RAW_SCHEMA_VERSION,
         pr: meta,
         reviews: reviewsRaw.map((r): ReviewSummary => ({
@@ -463,12 +530,6 @@ async function fetchPrToCache(
         })),
         commits,
     };
-
-    fs.writeFileSync(outFile, JSON.stringify(payload, null, 2));
-    log.info(
-        `wrote ${outFile} (reviews=${payload.reviews.length} inline=${payload.inline.length} issue=${payload.issue.length} commits=${payload.commits.length})`,
-    );
-    return { number, file: outFile, cacheHit: false };
 }
 
 function listFromSearch(opts: Options): ListedPr[] {
@@ -534,4 +595,10 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     });
 }
 
-export { buildSearch, mapReactions, resolveCacheDir };
+export {
+    assembleViaRest,
+    buildPrPayload,
+    buildSearch,
+    mapReactions,
+    resolveCacheDir,
+};

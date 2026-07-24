@@ -41,7 +41,7 @@
  */
 
 /** Schema version this dashboard understands; mirrors `SCHEMA_VERSION`. */
-export const SCHEMA_VERSION = "1.0";
+export const SCHEMA_VERSION = "1.1";
 
 /**
  * Ordered list of the rate keys shown in the per-run headline table and in the
@@ -76,6 +76,9 @@ export const PR_TYPE_ORDER = [
 
 /** Fixed display order for severity slice categories. */
 export const SEVERITY_ORDER = ["critical", "substantive", "nit"];
+
+/** Fixed display order for PR-size-bucket slice categories (smallest → largest). */
+export const SIZE_ORDER = ["S", "M", "L", "XL"];
 
 /**
  * Pool a rate's per-slice numerators/denominators across many runs, grouped by
@@ -124,7 +127,7 @@ export function poolSlices(runs, rateKey, dim, order) {
 
 /**
  * Light validity guard mirroring `loadRun`'s skip logic: accept only objects with
- * `schemaVersion === "1.0"` and the required top-level shape (run.id / run.repo /
+ * `schemaVersion === "1.1"` and the required top-level shape (run.id / run.repo /
  * run.generatedAt strings and a metrics.rates object). Anything else is skipped.
  *
  * @param {unknown} obj

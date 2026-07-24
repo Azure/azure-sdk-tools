@@ -15,7 +15,9 @@ describe("run-schema", () => {
     it("accepts a valid sample run", () => {
         const parsed = parseRun(sample);
         expect(parsed.schemaVersion).toBe(SCHEMA_VERSION);
-        expect(parsed.run.id).toBe("2026-06-18_Azure_azure-sdk-for-go");
+        expect(parsed.run.id).toBe(
+            "Azure_azure-sdk-for-go__2026-06-11__2026-06-18__uncapped__raw1.0",
+        );
     });
 
     it("rejects an unknown top-level field", () => {

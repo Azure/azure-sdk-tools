@@ -6,8 +6,8 @@ companion to the [`aggregate-runs`](../scripts/aggregate-runs.ts) trend view.
 
 It reads the same reading rules the metrics are built on: **`null` means "not
 measured" and renders as a gap, never zero**, and **low-confidence values (small
-sample) are flagged, not headlined** (see the package
-[README](../README.md#reading-rules-apply-to-every-metric)).
+sample) are flagged, not headlined** (see the
+[metrics reference](../metrics.md#reading-rules-apply-to-every-metric)).
 
 ## What it shows
 

@@ -1,0 +1,230 @@
+# CCR Pacer — the Track B (Phase 4) backfill pacer.
+#
+# A thin HOURLY cron over the tested planner in
+# .github/aw/ccr-improvement-loop/scripts/pace.ts. This is HAND-WRITTEN plain
+# GitHub Actions YAML on purpose: it runs NO agent, so it has no gh-aw source and
+# no `.lock.yml`. Do NOT run `gh aw compile` on it.
+#
+# Each tick:
+#   plan     — fetch the durable `ccr-pacer-state` branch, derive the settled
+#              pending backlog (gen-backlog − ledger − skipped), assert every
+#              pending window fits a fresh hour (starvation guard, fails loudly),
+#              and admit the windows that fit THIS tick's budget (≤ 1/repo,
+#              ≤ max_windows_per_tick). Emits the admission matrix.
+#   backfill — a matrix that `uses:` the loop's reusable `.lock.yml` once per
+#              admitted window. The loop's per-repo child concurrency group plus
+#              the ≤ 1-window/repo admission rule keep same-repo work serialized.
+#   ledger   — (if: always) download every window's outcome artifact, reconcile
+#              (missing artifact ⇒ failed; retry cap ⇒ skipped.json), and push the
+#              updated records back to `ccr-pacer-state`.
+#
+# `concurrency: ccr-pacer` (cancel-in-progress: false) serializes ticks so two
+# never race the state branch. Scope guards (B4): no in-job `sleep`; pace.ts
+# imports no judge/metric modules.
+name: CCR Pacer
+
+on:
+  schedule:
+    - cron: "17 * * * *" # hourly, offset off the top of the hour
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Print the admission plan and exit without dispatching or mutating state."
+        required: false
+        default: false
+        type: boolean
+
+# Serialize ticks: a running tick blocks the next rather than cancelling it, so
+# the state-branch push is never interrupted mid-reconcile.
+concurrency:
+  group: ccr-pacer
+  cancel-in-progress: false
+
+permissions: {}
+
+env:
+  STATE_BRANCH: ccr-pacer-state
+  WORKDIR: .github/aw/ccr-improvement-loop
+  STATE_DIR: ${{ github.workspace }}/state
+
+jobs:
+  plan:
+    name: Plan admission
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      admitted: ${{ steps.plan.outputs.admitted }}
+      count: ${{ steps.plan.outputs.count }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6.4.0
+        with:
+          node-version: "24"
+          package-manager-cache: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.12.4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: ${{ env.WORKDIR }}
+
+      - name: Fetch durable state branch (read-only)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          REMOTE="https://x-access-token:${GH_TOKEN}@${GITHUB_SERVER_URL#https://}/${GITHUB_REPOSITORY}.git"
+          if git ls-remote --heads "$REMOTE" "$STATE_BRANCH" | grep -q "$STATE_BRANCH"; then
+            git clone --quiet --branch "$STATE_BRANCH" --single-branch "$REMOTE" "$STATE_DIR"
+            echo "Fetched existing $STATE_BRANCH"
+          else
+            mkdir -p "$STATE_DIR"
+            echo "No $STATE_BRANCH yet; treating backlog as empty"
+          fi
+
+      - name: Plan (derive + assert-fittable + admit)
+        id: plan
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: ${{ env.WORKDIR }}
+        run: |
+          set -euo pipefail
+          # assertFittable runs inside `plan`; an unfittable-forever window makes
+          # this exit non-zero and fails the tick LOUDLY (never a silent starve).
+          ADMITTED="$(node ./scripts/pace.ts plan --config pacer/config.json --state "$STATE_DIR")"
+          COUNT="$(node -e 'process.stdout.write(String(JSON.parse(process.argv[1]).length))' "$ADMITTED")"
+          echo "Admitted $COUNT window(s): $ADMITTED"
+          {
+            echo "admitted=$ADMITTED"
+            echo "count=$COUNT"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Dry-run plan (manual only)
+        if: ${{ inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: ${{ env.WORKDIR }}
+        run: node ./scripts/pace.ts plan --config pacer/config.json --state "$STATE_DIR" --dry-run
+
+  backfill:
+    name: Backfill admitted window
+    needs: plan
+    # Skip the whole matrix on an empty backlog or a manual dry-run.
+    if: ${{ needs.plan.outputs.count != '0' && !inputs.dry_run }}
+    permissions:
+      actions: read
+      contents: read
+      issues: write
+      pull-requests: read
+    strategy:
+      fail-fast: false
+      matrix:
+        window: ${{ fromJSON(needs.plan.outputs.admitted) }}
+    # Call the loop's compiled reusable workflow once per admitted window.
+    uses: ./.github/workflows/ccr-improvement-loop.lock.yml
+    with:
+      repo: ${{ matrix.window.repo }}
+      window_start: ${{ matrix.window.window_start }}
+      window_end: ${{ matrix.window.window_end }}
+      max_prs: ${{ matrix.window.max_prs }}
+    secrets: inherit
+
+  ledger:
+    name: Reconcile + persist ledger
+    needs: [plan, backfill]
+    # Run even when a backfill leg failed: a missing outcome artifact must still
+    # be reconciled to `failed` (retryable). Skip only on empty backlog / dry-run.
+    if: ${{ always() && needs.plan.outputs.count != '0' && !inputs.dry_run }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6.4.0
+        with:
+          node-version: "24"
+          package-manager-cache: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.12.4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: ${{ env.WORKDIR }}
+
+      - name: Fetch or initialize durable state branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          REMOTE="https://x-access-token:${GH_TOKEN}@${GITHUB_SERVER_URL#https://}/${GITHUB_REPOSITORY}.git"
+          if git ls-remote --heads "$REMOTE" "$STATE_BRANCH" | grep -q "$STATE_BRANCH"; then
+            git clone --quiet --branch "$STATE_BRANCH" --single-branch "$REMOTE" "$STATE_DIR"
+          else
+            # First tick: an empty orphan branch (independent history, no repo tree).
+            git init --quiet "$STATE_DIR"
+            git -C "$STATE_DIR" checkout --quiet -b "$STATE_BRANCH"
+            git -C "$STATE_DIR" remote add origin "$REMOTE"
+          fi
+          git -C "$STATE_DIR" config user.name "github-actions[bot]"
+          git -C "$STATE_DIR" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Download this tick's outcome artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: outcome-*
+          merge-multiple: true
+          path: ${{ github.workspace }}/outcomes
+
+      - name: Reconcile outcomes into the ledger
+        working-directory: ${{ env.WORKDIR }}
+        run: |
+          set -euo pipefail
+          printf '%s' '${{ needs.plan.outputs.admitted }}' > "${{ github.workspace }}/admitted.json"
+          mkdir -p "${{ github.workspace }}/outcomes"
+          node ./scripts/pace.ts reconcile \
+            --config pacer/config.json \
+            --state "$STATE_DIR" \
+            --out-state "$STATE_DIR" \
+            --admitted "${{ github.workspace }}/admitted.json" \
+            --outcomes "${{ github.workspace }}/outcomes" \
+            --pacer-run-id "${GITHUB_RUN_ID}"
+
+      - name: Commit + push ledger to the state branch
+        run: |
+          set -euo pipefail
+          cd "$STATE_DIR"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No ledger changes this tick."
+            exit 0
+          fi
+          git commit --quiet -m "pacer: reconcile tick ${GITHUB_RUN_ID}"
+          # Normal (non-force) push with fetch/rebase retry on a racing tick.
+          # No `sleep` (scope guard B4) — retries are immediate.
+          pushed=0
+          for _ in 1 2 3 4 5; do
+            if git push origin "HEAD:${STATE_BRANCH}"; then pushed=1; break; fi
+            git fetch --quiet origin "$STATE_BRANCH" || true
+            git rebase "origin/${STATE_BRANCH}" || { git rebase --abort || true; }
+          done
+          if [ "$pushed" -ne 1 ]; then
+            echo "::error::failed to push $STATE_BRANCH after retries"
+            exit 1
+          fi

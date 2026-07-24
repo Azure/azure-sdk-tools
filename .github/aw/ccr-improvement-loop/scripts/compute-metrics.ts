@@ -23,7 +23,8 @@ import type {
     PrType,
     Severity,
 } from "./types.ts";
-import type { Metric, Metrics } from "./run-schema.ts";
+import type { Metric, Metrics, SizeBucketT } from "./run-schema.ts";
+import { sizeBucketOf } from "./run-schema.ts";
 import type { PrRowOut } from "./pr-metrics.ts";
 
 export interface ComputeMetricsOpts {
@@ -281,6 +282,42 @@ export function computeCcrRecallRate(
     );
 }
 
+/** Fixed display order for PR-size buckets. */
+const SIZE_ORDER: SizeBucketT[] = ["S", "M", "L", "XL"];
+
+/**
+ * Build PR-size-bucket slice cells for a PR-level rate: group the given PRs by
+ * {@link sizeBucketOf} and count `inNum(pr)` over each bucket. Cells carry
+ * `sizeBucket` (with `prType`/`severity` null) so they slot into a rate's
+ * `slices` array as a distinct dimension. PRs whose size is unknown (either count
+ * null) are skipped, never mislabelled.
+ */
+function sizeSlices(
+    prs: PrRowOut[],
+    inNum: (pr: PrRowOut) => boolean,
+): NonNullable<Metric["slices"]> {
+    const acc = new Map<SizeBucketT, { num: number; den: number }>();
+    for (const p of prs) {
+        const bucket = sizeBucketOf(p.additions, p.deletions);
+        if (bucket == null) continue;
+        const cur = acc.get(bucket) ?? { num: 0, den: 0 };
+        cur.den += 1;
+        if (inNum(p)) cur.num += 1;
+        acc.set(bucket, cur);
+    }
+    return SIZE_ORDER.filter((b) => acc.has(b)).map((b) => {
+        const { num, den } = acc.get(b) ?? { num: 0, den: 0 };
+        return {
+            prType: null,
+            severity: null,
+            sizeBucket: b,
+            numerator: num,
+            denominator: den,
+            value: ratio(num, den),
+        };
+    });
+}
+
 export function computeMetrics(
     prs: PrRowOut[],
     comments: AttributedComment[],
@@ -435,18 +472,17 @@ export function computeMetrics(
     const eligibleAsks = diffDetectableAsks.filter((c) => c.ccrSawCode);
     rates.ccrRecallRate = computeCcrRecallRate(prs, comments, warnings);
 
-    const coverageItems: RateItem[] = prs
-        .filter(
-            (p) =>
-                !isBotAuthor(p.author, opts.automationLogins) &&
-                isPostEnablement(p, opts.ccrEnabledSince),
-        )
-        .map((p) => ({
-            prType: p.prType,
-            severity: null,
-            inDen: true,
-            inNum: p.ccrReviewed,
-        }));
+    const eligibleCoveragePrs = prs.filter(
+        (p) =>
+            !isBotAuthor(p.author, opts.automationLogins) &&
+            isPostEnablement(p, opts.ccrEnabledSince),
+    );
+    const coverageItems: RateItem[] = eligibleCoveragePrs.map((p) => ({
+        prType: p.prType,
+        severity: null,
+        inDen: true,
+        inNum: p.ccrReviewed,
+    }));
     rates.ccrCoverage = buildRate(
         coverageItems,
         "PRs that received a CCR review ÷ eligible PRs (post-enablement, non-bot)",
@@ -455,6 +491,14 @@ export function computeMetrics(
         warnings,
         "ccrCoverage",
     );
+    // Additive PR-size (S/M/L/XL) slices over the same eligible PRs, from the
+    // already-captured additions/deletions. Appended alongside the prType cells
+    // (a distinct `sizeBucket` dimension); the dashboard pools them by dimension,
+    // so the two cell families never mix. Deterministic — no agent re-run.
+    rates.ccrCoverage.slices = [
+        ...(rates.ccrCoverage.slices ?? []),
+        ...sizeSlices(eligibleCoveragePrs, (p) => p.ccrReviewed),
+    ];
 
     // ---- Q3 — bug track --------------------------------------------------
     // bugFixPrRate is the deterministic merged-bug signal (PR-based). Blame-based

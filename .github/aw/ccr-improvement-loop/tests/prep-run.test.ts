@@ -214,6 +214,7 @@ describe("buildMeta", () => {
             windowEnd: "2026-07-07",
             windowLagDays: 14,
             prState: "merged",
+            cohort: "uncapped",
             matchedCcrLogin: "copilot-pull-request-reviewer[bot]",
             ccrEnabledSince: null,
             promptHashes: { judge: "sha256:abc" },
@@ -222,6 +223,7 @@ describe("buildMeta", () => {
         expect(meta.repo).toBe("Acme/widget");
         expect(meta.windowEnd).toBe("2026-07-07");
         expect(meta.windowStart).toBe("2026-06-01");
+        expect(meta.cohort).toBe("uncapped");
         expect(meta.matchedCcrLogin).toBe("copilot-pull-request-reviewer[bot]");
         expect(meta.vocabularyHash).toBe("sha256:def");
         expect(meta.toolVersion).toBe("1.0");

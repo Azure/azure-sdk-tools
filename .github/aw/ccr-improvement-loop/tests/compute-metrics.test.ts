@@ -358,6 +358,45 @@ describe("compute-metrics", () => {
         expect(m.counts.eligibleForCoverage).toBe(1);
     });
 
+    it("ccrCoverage carries additive sizeBucket slices over eligible PRs", () => {
+        const prs = [
+            // S bucket (total 10): one reviewed, one not -> 1/2.
+            pr({ number: 1, additions: 6, deletions: 4, ccrReviewed: true }),
+            pr({ number: 2, additions: 5, deletions: 5, ccrReviewed: false }),
+            // XL bucket (total 800): reviewed -> 1/1.
+            pr({
+                number: 3,
+                additions: 500,
+                deletions: 300,
+                ccrReviewed: true,
+            }),
+            // Unknown size (deletions null): excluded from size slices entirely.
+            pr({
+                number: 4,
+                additions: 10,
+                deletions: null,
+                ccrReviewed: true,
+            }),
+        ];
+        const m = computeMetrics(prs, [], OPTS);
+        const cov = rate(m, "ccrCoverage");
+        const sizeCells = (cov.slices ?? []).filter(
+            (s) => s.sizeBucket != null,
+        );
+        expect(sizeCells.map((s) => s.sizeBucket)).toEqual(["S", "XL"]);
+        const s = sizeCells.find((c) => c.sizeBucket === "S");
+        expect(s?.numerator).toBe(1);
+        expect(s?.denominator).toBe(2);
+        expect(s?.value).toBeCloseTo(0.5);
+        const xl = sizeCells.find((c) => c.sizeBucket === "XL");
+        expect(xl?.numerator).toBe(1);
+        expect(xl?.denominator).toBe(1);
+        // The unknown-size PR (number 4) is counted in the prType/overall
+        // coverage but never appears in a size cell.
+        const sizeDen = sizeCells.reduce((a, c) => a + (c.denominator ?? 0), 0);
+        expect(sizeDen).toBe(3);
+    });
+
     it("computes bugFixPrRate from merged bug-fix PRs", () => {
         const prs = [
             pr({ number: 1, prType: "bug-fix" }),

@@ -111,6 +111,20 @@
         </p>
       </section>
 
+      <section class="card">
+        <h2>CCR coverage by PR size</h2>
+        <p class="hint">Pooled across the shown runs. Higher is better.</p>
+        <div class="chart-box">
+          <canvas id="chart-coverage-size"></canvas>
+        </div>
+        <p class="chart-note">
+          Share of eligible PRs that received a CCR review, bucketed by total
+          changed lines (S &lt; 50, M &lt; 200, L &lt; 500, XL ≥ 500). Surfaces
+          whether large PRs — where a missed review costs most — are covered as
+          well as small ones.
+        </p>
+      </section>
+
       <section class="card wide">
         <h2>Per-run headline metrics</h2>
         <p class="hint">

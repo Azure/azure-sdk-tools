@@ -14,7 +14,7 @@ Per PR, `fetchPrToCache` (`scripts/fetch-prs.ts`) issues:
 - **2 REST per commit** (the multiplier): `commits/{sha}` (files/patches) and
   `commits/{sha}/pulls` (commit→PR mapping)
 
-Total ≈ **6 + 2N** *endpoint invocations* for a PR with *N* commits. The
+Total ≈ **6 + 2N** _endpoint invocations_ for a PR with _N_ commits. The
 per-commit loop dominates on large PRs.
 
 > ⚠️ These are **lower bounds, not request counts.** Every async call uses
@@ -31,12 +31,12 @@ per-commit loop dominates on large PRs.
 only in `fetch-prs.ts`, the optional `types.ts` field, and test fixtures).
 
 **Deletion is safe because the field is unread — full stop.** (Do not justify
-it via squash-merge: squash controls base-branch *integration*, not whether a
-contributor merged/rebased `main` *into* a PR branch, and the workflow can be
+it via squash-merge: squash controls base-branch _integration_, not whether a
+contributor merged/rebased `main` _into_ a PR branch, and the workflow can be
 dispatched against any repo per the README. Any merge-sync timeline pollution
 already exists today and is unaffected by removing an unused field.)
 
-The one *hypothetical* use would be filtering base-branch/merge commits out of
+The one _hypothetical_ use would be filtering base-branch/merge commits out of
 the attribution timeline (`attribute-comments.ts`, `build-judge-input.ts`). If a
 merge-commit repo is ever targeted and attribution accuracy matters, the fix is
 to **wire `commitPrs` in** (keep a commit only if its introducing PR == this
@@ -46,6 +46,7 @@ gap.**
 Effect: per-PR cost `6 + 2N` → **`6 + N`** (halves the dominant term).
 
 Changes:
+
 - `scripts/fetch-prs.ts`: remove the `commitPrs` accumulator, the
   `commits/{sha}/pulls` fetch (the `try/catch` block), and `commitPrs` from the
   written payload. Drop the "commit→PR mapping" line from the header comment.
@@ -64,13 +65,14 @@ simply omit an unused field.
 
 ## 2. Parallelize the fan-out — IMPLEMENTED ✅
 
-Naive `Promise.all` is **not safe here**: `runWithConcurrency` caps PR *workers*
+Naive `Promise.all` is **not safe here**: `runWithConcurrency` caps PR _workers_
 (default 6), not requests. Fanning out all fixed calls + every commit means a
 65-commit PR × 6 workers ≈ ~390 concurrent `gh` processes → **worse**
 secondary-rate-limit risk, the opposite of the goal. Also `fetchThreadResolution`
 was synchronous (`ghJsonSync`) and couldn't join `Promise.all`.
 
 **Done (depends on #5's limiter):**
+
 - `fetchThreadResolution` converted to async via `ghApiGraphqlAsync` so the
   GraphQL call is bounded by the same limiter.
 - In `fetchPrToCache`, the 5 independent per-PR reads + thread resolution now run
@@ -79,7 +81,7 @@ was synchronous (`ghJsonSync`) and couldn't join `Promise.all`.
 - All requests flow through the shared `ghRequestLimiter`, so total in-flight is
   capped regardless of `workers × per-worker fan-out`.
 
-Result: lower wall-clock per PR at a *controlled* request rate; identical payload
+Result: lower wall-clock per PR at a _controlled_ request rate; identical payload
 (same calls, order-preserving assembly). Verified by `Semaphore` ceiling test +
 typecheck + full suite (97 tests green).
 
@@ -93,14 +95,14 @@ candidate comments, removing much of the `N` term.
 **Investigation result — not safely doable at the fetch layer today.** Two
 blockers found:
 
-1. **`distinctFiles` couples to *every* commit's file list.**
+1. **`distinctFiles` couples to _every_ commit's file list.**
    `prep-summary.ts:78-82` builds `distinctFiles` by iterating `commit.files`
    across **all** PRs (not just commented ones). Skipping commit-detail for
    no-comment PRs would silently shrink that emitted stat — a behavior
    regression, not a free optimization.
-2. **Per-commit *timing* attribution needs per-commit files.**
+2. **Per-commit _timing_ attribution needs per-commit files.**
    `attribute-comments.ts:118-127` and `build-judge-input.ts:43-55` pick the
-   latest commit that touched a path *before* the comment. `GET /pulls/{n}/files`
+   latest commit that touched a path _before_ the comment. `GET /pulls/{n}/files`
    (one aggregate call) gives the union of changed files but **loses per-commit
    `committedAt`**, so it cannot replace the per-commit fetch for attribution.
 
@@ -109,38 +111,33 @@ inline comments** (the only consumer of commit files/patches) — is still block
 by (1): those PRs' files would vanish from `distinctFiles`.
 
 **Correct fix (out of scope here):** move commit-detail fetching into a later
-stage that runs *after* comment filtering, and source `distinctFiles` from a
+stage that runs _after_ comment filtering, and source `distinctFiles` from a
 PR-level `pulls/{n}/files` count (1 call/PR) decoupled from the attribution
 timeline. That is a cross-stage refactor touching `fetch-prs` → `filter` →
 `prep-summary`; deferred to keep this change low-risk. #1 + #2 + #5 already
 address the acute rate-limit pressure.
 
-## 4. Collapse REST fan-out into GraphQL (larger change) — DEFERRED 🕐
+## 4. Collapse REST fan-out into GraphQL (larger change) — IMPLEMENTED ✅
 
-A GraphQL query per PR *can* return reviews, inline comments (+ thread
-`isResolved`), issue comments, and commits together. **Caveats confirmed during
-#2/#5 work:**
-- These are paginated connections — the existing thread query already truncates
-  threads@100 and linked issues/labels@20 — so a "single query" claim is false
-  for large PRs; it needs cursor loops + field-equivalence tests vs. the
-  fully-paginated REST path.
-- Per-commit **file patches** (`build-judge-input`) are not cleanly available in
-  GraphQL, so the dominant `N` term stays on REST regardless.
-
-Given #1 (`6+2N`→`6+N`) + #2 (bounded parallelism) + #5 (limiter/backoff) already
-relieve the acute pressure, and the migration is high-effort for a partial win,
-this is deferred unless real runs still hit the ceiling. The new
-`ghApiGraphqlAsync` helper (added in #2) is the building block if revisited.
+**Shipped** (Phase 2): the per-PR fixed reads (reviews, inline comments + thread
+`isResolved`, issue comments, commit metadata) now come from a single paginated
+GraphQL query per PR batch, riding the **separate point pool**. Per-PR primary
+REST drops `6 + N` → `1 + N`; the migration carries cursor loops + a
+field-equivalence golden-output test vs. the fully-paginated REST path
+(`tests/pr-equivalence.test.ts`). Per-commit **file patches**
+(`build-judge-input`) remain on REST — the dominant `N` term is unaffected here
+and is #6's job. The `ghApiGraphqlAsync` helper (from #2) is the transport.
 
 ---
 
 ## 5. Centralized limiter + honor rate-limit headers — IMPLEMENTED ✅
 
-`ghApiJsonAsync` previously only backed off *after* a 403/secondary error, with
+`ghApiJsonAsync` previously only backed off _after_ a 403/secondary error, with
 fixed exponential backoff that ignored GitHub's `Retry-After` header, and nothing
 bounded cross-call concurrency.
 
 **Done (in `scripts/utils.ts`):**
+
 - `Semaphore` class — a counting semaphore bounding concurrent async ops.
 - `ghRequestLimiter` — a process-wide `Semaphore` (default 8, override via
   `CCR_GH_MAX_CONCURRENCY`), kept well under GitHub's ~100-concurrent guidance.
@@ -151,7 +148,7 @@ bounded cross-call concurrency.
   `Retry-After` / "retry after N seconds" delay, falling back to exponential.
 
 Note: `GET /rate_limit` preflight was intentionally **not** added — it covers
-only the *primary* budget and cannot prevent secondary (burst) limits, which the
+only the _primary_ budget and cannot prevent secondary (burst) limits, which the
 limiter now handles directly. It remains a possible coarse primary-budget
 admission control if ever needed.
 
@@ -168,23 +165,24 @@ one `GET /commits/{sha}` REST call per commit, purely to obtain files + patches 
 commit time. **Every field it writes is a native git concept**, so it can be
 sourced from a local clone with **zero GitHub API calls**:
 
-| Written field (`fetch-prs.ts`, ~L403–L409) | Local-git source (no API) |
-|---|---|
-| `sha` | `git rev-list` / `git log` |
-| `committedAt` | `git log --format=%cI <sha>` (committer date, matching the current `c.commit.committer?.date` preference) |
-| `files` (filenames) | `git diff-tree --no-commit-id --name-only -r <sha>` |
-| `patches` (per-file diff text) | `git show <sha>` / `git diff` |
+| Written field (`fetch-prs.ts`, ~L403–L409) | Local-git source (no API)                                                                                 |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| `sha`                                      | `git rev-list` / `git log`                                                                                |
+| `committedAt`                              | `git log --format=%cI <sha>` (committer date, matching the current `c.commit.committer?.date` preference) |
+| `files` (filenames)                        | `git diff-tree --no-commit-id --name-only -r <sha>`                                                       |
+| `patches` (per-file diff text)             | `git show <sha>` / `git diff`                                                                             |
 
 **Why this is different from #3/#4 (and stronger).** Both prior items failed
-*specifically on patches*: #3 is blocked by the `distinctFiles` coupling, and #4
+_specifically on patches_: #3 is blocked by the `distinctFiles` coupling, and #4
 notes per-commit file patches "are not cleanly available in GraphQL, so the
 dominant `N` term stays on REST regardless." Git yields patches natively. Crucially,
 **git-protocol operations do not draw from the REST or GraphQL rate-limit pools** —
 they use the separate, far more generous git transport budget. So this does not
-*shrink* `N`; it **removes `N` from the rate-limited path entirely**, leaving the
+_shrink_ `N`; it **removes `N` from the rate-limited path entirely**, leaving the
 per-PR API cost at ≈ `6 + 0` (the fixed calls only).
 
 **Feasibility / caveats:**
+
 - The workflow can be dispatched against any repo (per the README), including very
   large ones (`azure-sdk-for-python`). Use a **blobless partial clone**
   (`git clone --filter=blob:none`) so history is cheap and blobs are fetched on
@@ -217,6 +215,7 @@ PRs (or commits) in a single HTTP request**:
 ```
 
 **Two wins beyond plain #4:**
+
 - **Separate budget pool** — GraphQL is point-metered (~5,000 points/hr)
   independent of the REST hourly budget (already noted in
   `api-rate-limit.md §4, Lever 2`); the fixed calls move off the REST ceiling.
@@ -225,6 +224,7 @@ PRs (or commits) in a single HTTP request**:
   `Semaphore` fights. This reduces burst pressure rather than merely throttling it.
 
 **Hard limits (unchanged from #4):**
+
 - Connections still paginate (threads@100, linked issues/labels@20); a batched
   query needs cursor loops + field-equivalence tests vs. the fully-paginated REST
   path. Batching multiplies pagination complexity across aliases.
@@ -235,21 +235,26 @@ PRs (or commits) in a single HTTP request**:
   admitted through `ghRequestLimiter`.
 
 **Effect:** the fixed `6` moves onto the separate GraphQL pool in batched requests.
-Composed with **#6** (which removes `N`), per-PR consumption on the *primary REST*
+Composed with **#6** (which removes `N`), per-PR consumption on the _primary REST_
 budget — the ceiling that actually fails runs — drops toward **near zero**. That
 is a qualitative shift beyond #1–#5, which all left the primary REST path loaded.
 
-## 8. Cloud pacer — spread dispatches under the hourly refill — PROPOSED (Lever 3 + Lever 4) 🔬
+## 8. Cloud pacer — spread dispatches under the hourly refill — IMPLEMENTED ✅ (Lever 3 + Lever 4)
 
-#1–#7 reduce cost *per PR*; #8 is orthogonal — it bounds cost *per hour* by
+**Shipped** as `scripts/pace.ts` + `.github/workflows/ccr-pacer.yml` (Phase 4).
+#1–#7 reduce cost _per PR_; #8 is orthogonal — it bounds cost _per hour_ by
 spacing whole runs across GitHub's hourly budget refill, so an arbitrarily large
 backlog (`repos × windows`) drains without any single hour exceeding the ceiling.
 Fully async in the cloud: a `cron` **is** the pacing clock — no always-on process,
 no in-run waiting. This is the concrete build of `api-rate-limit.md §4` Levers 3
-(spread) and 4 (orchestrate).
+(spread) and 4 (orchestrate). Admits `≤ 1 window/repo` per tick against a static
+`core`/`graphql`(/search) budget, reconciles outcomes into the durable
+`ccr-pacer-state` ledger, and a plan-time `assertFittable` invariant rules out
+permanent starvation. See `decisions.md` D15.
 
 **What already supports it (verified in
 `.github/workflows/ccr-improvement-loop.md`):**
+
 - The workflow is `workflow_dispatch`-able with `repo`, `window_start`,
   `window_end`, `max_prs` inputs — an orchestrator can hand it precisely-sized
   chunks.
@@ -261,6 +266,7 @@ no in-run waiting. This is the concrete build of `api-rate-limit.md §4` Levers 
 
 **Design — a second workflow `ccr-pacer.yml`** (`schedule: cron` hourly +
 `workflow_dispatch`):
+
 1. Read a **backlog** of `(repo, window)` jobs — a `repos × months` matrix stored
    as a committed JSON file, an Actions artifact, or a repo variable.
 2. `gh api rate_limit` → read remaining **primary** budget for the dispatching
@@ -274,12 +280,13 @@ no in-run waiting. This is the concrete build of `api-rate-limit.md §4` Levers 
 4. Mark those jobs dispatched (update the state file/variable).
 5. Exit. Next hour, `cron` fires again and drains the next chunk.
 
-The cron cadence *is* the throttle: one window of ~70 PRs ≈ ~1,000 calls fits one
+The cron cadence _is_ the throttle: one window of ~70 PRs ≈ ~1,000 calls fits one
 hour under the 1,000/hr `GITHUB_TOKEN` ceiling (§3), so ~1 window/hour stays under
 budget with zero in-run waiting. On an App/PAT (5,000/hr) the pacer can release
 ~4–5 windows/hour, or one uncapped monthly window.
 
 **Three GitHub-specific blockers (must be designed around):**
+
 1. **The default `GITHUB_TOKEN` cannot trigger another workflow** — events it
    dispatches are suppressed to prevent recursion. The pacer must dispatch the
    child with a **PAT or GitHub App token** (`secrets.PACER_TOKEN`). This aligns
@@ -287,7 +294,7 @@ budget with zero in-run waiting. On an App/PAT (5,000/hr) the pacer can release
 2. **Cross-run cache persistence is NOT currently wired** — today `CCR_CACHE` is
    `${{ github.workspace }}/.ccr-cache`, written fresh each run with **no**
    `actions/cache` restore or artifact download. So the "resume with zero rework"
-   benefit is only *potential*: it requires adding `actions/cache` (keyed by
+   benefit is only _potential_: it requires adding `actions/cache` (keyed by
    `repo` + window) or artifact upload/download of the `pr-*.json` cache. Until
    that is added, each dispatch re-fetches its window from scratch — the pacer
    still bounds calls/hour, but resume/idempotency across runs does not yet hold.
@@ -298,8 +305,8 @@ budget with zero in-run waiting. On an App/PAT (5,000/hr) the pacer can release
 **Budget note.** If pacer and children share one token they share one budget;
 **separate credentials per repo → separate budgets** (Lever 1), so repos stop
 competing. Regardless of tier the in-process `Semaphore`/`ghRequestLimiter` (#5)
-stays essential — the pacer spaces the *primary* budget across hours, but only the
-limiter guards the *secondary* (burst) limits, which dispatch-level pacing can't
+stays essential — the pacer spaces the _primary_ budget across hours, but only the
+limiter guards the _secondary_ (burst) limits, which dispatch-level pacing can't
 see.
 
 **Variant — self-re-dispatch.** The child, on low `/rate_limit` remaining or
@@ -321,25 +328,30 @@ Lever 1 (higher ceiling) rather than replacing them.
 4. **#3 selective commit-detail fetching** — ⛔ DEFERRED: blocked by
    `distinctFiles` coupling + per-commit timing needs; requires a cross-stage
    refactor.
-5. **#4 GraphQL migration** — 🕐 DEFERRED: partial win, high effort; revisit only
-   if real runs still hit the ceiling.
-6. **#6 local-git commit detail** — 🔬 PROPOSED: moves the dominant `N` term off
-   the rate-limited path entirely (git transport budget); the structural fix #3/#4
-   couldn't reach because both were blocked on patches. Needs partial-clone +
-   `fetch-depth: 0` and field-equivalence golden tests.
-7. **#7 GraphQL-batched fixed calls** — 🔬 PROPOSED: aliases multiple PRs into
-   batched GraphQL requests on the separate point pool; relieves secondary limits.
-   Composes with #6 to drive primary-REST cost toward zero. Blocked on the same
-   pagination/field-equivalence work as #4; cannot touch `N` (patches).
-8. **#8 cloud pacer** — 🔬 PROPOSED: hourly `cron` orchestrator drains a
-   `repos × windows` backlog, one chunk/hour under a `rate_limit` check — fully
-   async in the cloud. Orthogonal to #1–#7 (bounds cost *per hour*, not per PR).
-   Prereqs: a PAT/App token (default `GITHUB_TOKEN` can't trigger workflows) and
-   cross-run cache persistence (not currently wired).
+5. **#4 GraphQL migration** — ✅ DONE (Phase 2): per-PR fixed reads moved to the
+   separate point pool; primary REST `6 + N` → `1 + N`. Field-equivalence golden
+   test vs. the paginated REST path.
+6. **#6 local-git commit detail** — 🕐 DEFERRED (evidence-gated): moves the
+   dominant `N` term off the rate-limited path entirely (git transport budget);
+   the structural fix #3/#4 couldn't reach because both were blocked on patches.
+   Needs partial-clone + `fetch-depth: 0` and field-equivalence golden tests.
+   Highest-maintenance; revived only on a binding-REST reading (D16).
+7. **#7 GraphQL-batched fixed calls** — 🕐 DEFERRED (evidence-gated): aliases
+   multiple PRs into batched GraphQL requests on the separate point pool. Its
+   failure-isolation cost outweighs the secondary-limit win the #5 limiter already
+   covers; cannot touch `N` (patches). Revived only on a real saturation reading
+   (D16).
+8. **#8 cloud pacer** — ✅ DONE (Phase 4): hourly `cron` orchestrator drains a
+   `repos × windows` backlog, `≤ 1 window/repo/tick` under a static
+   `core`/`graphql`(/search) budget check, reconciling into the durable
+   `ccr-pacer-state` ledger. Fully async in the cloud. The remaining live-run
+   prereq is a PAT/App token (T1, D17); cross-run cache persistence is wired.
 
-Net shipped: fewer requests per PR (#1) **and** those requests now issued
-concurrently under a hard, header-aware secondary-rate-limit ceiling (#2 + #5).
-Remaining follow-ups (#3, #4) are documented with concrete blockers.
+Net shipped: fewer requests per PR (#1) issued concurrently under a hard,
+header-aware secondary-rate-limit ceiling (#2 + #5), the fixed reads moved to the
+GraphQL point pool (#4), and an unattended hourly pacer (#8) draining large
+backfills within budget. Remaining follow-ups (#3, #6, #7, T1) are documented,
+tiered decision points revived only on a real saturation / binding-REST reading.
 
 ---
 
@@ -352,6 +364,7 @@ fixtures under `tests/fixtures/` — no live `gh` calls (see
 `npm run typecheck`, and `npm run lint` green.
 
 ### Prerequisite for testability
+
 The fetch layer currently calls `gh` via module-level `ghApiJsonAsync` /
 `ghJsonSync`, which unit tests cannot observe. Items #2/#3/#5 require making the
 request function **injectable** (pass a `fetchFn`/`gh` client into
@@ -360,20 +373,22 @@ that records call order, arguments, and concurrency. Do this refactor first; it
 is behavior-preserving.
 
 ### Item #1 — delete `commitPrs` + `commits/{sha}/pulls`
+
 - **Regression (no dead field):** given a mocked PR with commits, assert the
   written payload has **no `commitPrs` key** and that the mock recorded **zero**
   `commits/{sha}/pulls` requests.
-- **Call-count guard:** for a PR with *N* commits, assert exactly *N*
+- **Call-count guard:** for a PR with _N_ commits, assert exactly _N_
   `commits/{sha}` requests and **no** `.../pulls` requests (locks in `6+N`).
 - **Fixture cleanup:** remove `commitPrs` from `tests/fixtures/pr-sample.json`,
   `tests/build-judge-input.test.ts`, `tests/attribute-comments.test.ts`; those
   suites must still pass unchanged (proves consumers never read it).
 - **Type guard:** `npm run typecheck` fails if any code still references
-  `commitPrs` after the `types.ts` field is removed — that *is* the test.
+  `commitPrs` after the `types.ts` field is removed — that _is_ the test.
 - **Schema:** if `RAW_SCHEMA_VERSION` is bumped, extend `tests/run-schema.test.ts`
   to pin the new value.
 
 ### Item #3 — selective commit-detail fetching
+
 - **Fetch-only-what-matters:** mock a PR with 3 commits touching files A/B/C but
   candidate comments only on A; assert `commits/{sha}` details are fetched only
   for commits touching A, and skipped commits incur **zero** detail requests.
@@ -385,6 +400,7 @@ is behavior-preserving.
   optimization is behavior-preserving.
 
 ### Item #5 — global request limiter + header-aware backoff
+
 - **Concurrency ceiling:** drive many requests through the limiter with a mock
   that records max simultaneous in-flight; assert it never exceeds `K`.
 - **`Retry-After` honored:** mock a `403` secondary-limit response carrying
@@ -396,6 +412,7 @@ is behavior-preserving.
   matching covered (rate limit / secondary / abuse / 5xx / timeout).
 
 ### Item #2 — parallelize the fan-out
+
 - **Cap respected:** with the injected limiter and a mock recording peak
   concurrency, fan out the fixed + per-commit calls and assert peak in-flight
   ≤ `K` (guards against the `workers × per-worker fan-out` explosion).
@@ -406,6 +423,7 @@ is behavior-preserving.
   enabled unless the limiter is present (fail-safe wiring).
 
 ### Cross-cutting / manual validation
+
 - **Full suite + coverage:** `npm test` and `npm run test:coverage` after each
   item; no coverage regression on `fetch-prs.ts`.
 - **Live smoke (manual, capped):** one real `--max-prs 5` run against a target

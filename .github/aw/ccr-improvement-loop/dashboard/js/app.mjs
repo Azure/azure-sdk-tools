@@ -14,6 +14,7 @@ import {
   poolSlices,
   PR_TYPE_ORDER,
   SEVERITY_ORDER,
+  SIZE_ORDER,
 } from "./aggregate.mjs";
 import {
   lineChart,
@@ -424,6 +425,23 @@ function renderSliceCharts(runs) {
       pooled.map((r) => r.category),
       [{ label: "CCR catch rate", data: pooled.map((r) => r.value) }],
       { yLabel: "catch rate", yMax: 1 },
+    );
+  }
+
+  // 5. CCR coverage by PR-size bucket (S/M/L/XL). Surfaces whether large PRs —
+  // where a missed review costs most — are being covered as well as small ones.
+  {
+    const pooled = poolSlices(
+      runs,
+      "ccrCoverage",
+      "sizeBucket",
+      SIZE_ORDER,
+    ).filter((r) => r.denominator > 0);
+    groupedBar(
+      /** @type {HTMLCanvasElement} */ (el("chart-coverage-size")),
+      pooled.map((r) => r.category),
+      [{ label: "CCR coverage", data: pooled.map((r) => r.value) }],
+      { yLabel: "coverage", yMax: 1 },
     );
   }
 }

@@ -4,6 +4,9 @@ import {
     buildRunJson,
     runIdOf,
     ownerRepoOf,
+    computeWindowId,
+    canonicalizeRun,
+    CANONICAL_GENERATED_AT,
 } from "../scripts/emit-run-json.ts";
 import type { BuildRunInput, RunMetaInput } from "../scripts/emit-run-json.ts";
 import type { PrRowOut } from "../scripts/pr-metrics.ts";
@@ -92,10 +95,38 @@ function baseInput(generatedAt: string): BuildRunInput {
 }
 
 describe("emit-run-json buildRunJson", () => {
-    it("derives run.id from <window-end>_<owner>_<repo>", () => {
-        expect(runIdOf("2026-06-18", "Azure/azure-sdk-for-go")).toBe(
-            "2026-06-18_Azure_azure-sdk-for-go",
+    it("derives run.id as the canonical window identity", () => {
+        const run = buildRunJson(baseInput("2026-06-18T00:00:00Z"));
+        expect(run.run.id).toBe(
+            "Azure_azure-sdk-for-go__2026-06-01__2026-06-18__uncapped__raw1.0",
         );
+        expect(run.run.id).toBe(
+            runIdOf({
+                repo: META.repo,
+                windowStart: META.windowStart,
+                windowEnd: META.windowEnd,
+            }),
+        );
+        expect(run.run.id).toBe(
+            computeWindowId({
+                repo: META.repo,
+                windowStart: META.windowStart,
+                windowEnd: META.windowEnd,
+                cohort: "uncapped",
+            }),
+        );
+    });
+
+    it("a capped cohort gets a distinct run.id from uncapped", () => {
+        const uncapped = buildRunJson(baseInput("2026-06-18T00:00:00Z"));
+        const capped = buildRunJson({
+            ...baseInput("2026-06-18T00:00:00Z"),
+            meta: { ...META, cohort: "cap-100" },
+        });
+        expect(capped.run.id).toBe(
+            "Azure_azure-sdk-for-go__2026-06-01__2026-06-18__cap-100__raw1.0",
+        );
+        expect(capped.run.id).not.toBe(uncapped.run.id);
     });
 
     it("rejects a malformed repo", () => {
@@ -119,16 +150,20 @@ describe("emit-run-json buildRunJson", () => {
         expect(row.rowId).toBe("1:inline:1");
     });
 
-    it("re-emission is content-stable except generatedAt", () => {
+    it("re-emission is content-stable except generatedAt (canonicalizeRun)", () => {
         const a = buildRunJson(baseInput("2026-06-18T00:00:00Z"));
         const b = buildRunJson(baseInput("2026-06-19T11:22:33Z"));
+        // canonicalizeRun normalizes the sole volatile field for equality.
+        expect(canonicalizeRun(a)).toEqual(canonicalizeRun(b));
+        expect(canonicalizeRun(a).run.generatedAt).toBe(CANONICAL_GENERATED_AT);
+        // The raw outputs differ ONLY in generatedAt.
+        expect(a.run.generatedAt).not.toBe(b.run.generatedAt);
         const strip = (r: typeof a): unknown => {
             const copy = structuredClone(r);
             copy.run.generatedAt = "<volatile>";
             return copy;
         };
         expect(strip(a)).toEqual(strip(b));
-        expect(a.run.generatedAt).not.toBe(b.run.generatedAt);
     });
 
     it("emits a valid run for an empty (no-PR) window", () => {

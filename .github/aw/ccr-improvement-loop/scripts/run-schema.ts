@@ -8,7 +8,12 @@
  */
 import { z } from "zod";
 
-export const SCHEMA_VERSION = "1.0";
+// 1.1: `run.id` is now the canonical window identity (see window-id.ts) —
+// `${owner}_${repo}__${windowStart}__${windowEnd}__${cohort}__raw${RAW_SCHEMA_VERSION}` —
+// instead of the old `${windowEnd}_${owner}_${repo}`. The bump forces old-format
+// run files to be migrated (scripts/migrate-run-schema.ts) rather than silently
+// mixed with new-format ids under the dedupe/supersede rule.
+export const SCHEMA_VERSION = "1.1";
 export const RAW_SCHEMA_VERSION = "1.0";
 
 const PrType = z.enum([
@@ -23,6 +28,30 @@ const PrTypeSource = z.enum(["label", "title", "issue", "agent", "unknown"]);
 const ClassificationStatus = z.enum(["complete", "needs-agent", "failed"]);
 const Severity = z.enum(["critical", "substantive", "nit"]);
 const JudgeStatus = z.enum(["ok", "failed", "lowConfidence"]);
+/**
+ * PR-size bucket by total changed lines (additions + deletions). A deterministic
+ * slice dimension over already-captured raw fields — no agent re-run. Used to
+ * facet CCR coverage by PR size on the dashboard (D-scale polish).
+ */
+export const SizeBucket = z.enum(["S", "M", "L", "XL"]);
+export type SizeBucketT = z.infer<typeof SizeBucket>;
+
+/**
+ * Bucket a PR by total changed lines. Returns `null` when the size is unknown
+ * (either count null), so an unbucketable PR is excluded rather than mislabelled.
+ * Thresholds: S &lt; 50, M &lt; 200, L &lt; 500, XL ≥ 500.
+ */
+export function sizeBucketOf(
+    additions: number | null,
+    deletions: number | null,
+): SizeBucketT | null {
+    if (additions == null || deletions == null) return null;
+    const total = additions + deletions;
+    if (total < 50) return "S";
+    if (total < 200) return "M";
+    if (total < 500) return "L";
+    return "XL";
+}
 const CommentKind = z.enum(["ask", "reply", "summary"]);
 const CommentSource = z.enum(["review", "inline", "issue"]);
 const AuthorKind = z.enum(["human", "ccr", "bot"]);
@@ -162,6 +191,12 @@ export const MetricSchema = z
                     .object({
                         prType: PrType.nullable(),
                         severity: Severity.nullable(),
+                        /**
+                         * Optional third slice dimension (PR-size bucket). Present
+                         * only on size-sliced cells; absent on prType/severity
+                         * cells. Additive + optional so existing run files parse.
+                         */
+                        sizeBucket: SizeBucket.optional(),
                         numerator: z.number().nullable(),
                         denominator: z.number().nullable(),
                         value: z.number().nullable(),

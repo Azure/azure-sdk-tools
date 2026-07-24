@@ -1,0 +1,71 @@
+{
+  "processed": 4,
+  "items": [
+    {
+      "id": "100:inline:1",
+      "body": "Please add a null check here to avoid a nil deref on the response.",
+      "diffHunk": "@@ -38,6 +38,8 @@\n+  const v = resp.value;",
+      "path": "src/foo.ts",
+      "lineStart": 41,
+      "lineEnd": 41,
+      "lineStale": false,
+      "purpose": "gap-candidate",
+      "ccrComments": [
+        {
+          "path": "src/foo.ts",
+          "lineStart": 42,
+          "lineEnd": 42,
+          "body": "Consider guarding against a nil response before dereferencing."
+        }
+      ]
+    },
+    {
+      "id": "100:inline:2",
+      "body": "Consider guarding against a nil response before dereferencing.",
+      "diffHunk": "@@ -38,6 +38,8 @@\n+  const v = resp.value;",
+      "path": "src/foo.ts",
+      "lineStart": 42,
+      "lineEnd": 42,
+      "lineStale": false,
+      "purpose": "ccr-comment",
+      "postCommentDiff": "",
+      "authorReplies": []
+    },
+    {
+      "id": "100:inline:3",
+      "body": "Wrap this returned error with %w so callers can use errors.Is/errors.As.",
+      "diffHunk": "@@ -8,3 +8,3 @@\n-  return err\n+  return fmt.Errorf(...)",
+      "path": "src/bar.ts",
+      "lineStart": 10,
+      "lineEnd": 10,
+      "lineStale": false,
+      "purpose": "gap-candidate",
+      "ccrComments": [
+        {
+          "path": "src/foo.ts",
+          "lineStart": 42,
+          "lineEnd": 42,
+          "body": "Consider guarding against a nil response before dereferencing."
+        }
+      ]
+    },
+    {
+      "id": "100:inline:5",
+      "body": "This is working as intended, won't fix.",
+      "diffHunk": "",
+      "path": "src/baz.ts",
+      "lineStart": 5,
+      "lineEnd": 5,
+      "lineStale": false,
+      "purpose": "gap-candidate",
+      "ccrComments": [
+        {
+          "path": "src/foo.ts",
+          "lineStart": 42,
+          "lineEnd": 42,
+          "body": "Consider guarding against a nil response before dereferencing."
+        }
+      ]
+    }
+  ]
+}

@@ -70,20 +70,27 @@ window pays full price again.
 
 **Do (pick the lower-maintenance option — `actions/cache`).**
 
-- Add an `actions/cache` step keyed by the immutable window identity:
-  `ccr-cache-${repo}-${window_start}-${window_end}`, restoring `.ccr-cache/pr-*.json`
-  before prep and saving after. The key is content-stable (windows are immutable),
-  so a resumed run hits the cache and re-fetches nothing.
+- Extract deterministic window + cohort resolution from `prep-run.ts` into a
+  standalone resolver available before cache restore. Schedule, dispatch, and
+  workflow-call inputs all normalize through it, including rolling
+  `today − settleDays` windows and `max_prs` default `0`/uncapped.
+- Add an `actions/cache` step keyed by the immutable canonical window identity:
+  restore by prefix `ccr-cache-${window_id}-` before prep, but save under a unique
+  completion key only after a successful full raw-fetch. Because Actions caches are
+  immutable, a mid-fetch failure must never freeze an incomplete cache under the
+  final key.
 - **Scope the cache key to the raw PR cache only**, not the judged/emitted
   artifacts — those are cheap to recompute and coupling them invites staleness
   bugs (mirrors the D12 "don't couple test data to live data" instinct).
-- Add a `RAW_SCHEMA_VERSION` component to the cache key so a fetch-schema change
-  invalidates stale caches automatically instead of silently resuming on an
+- Include `RAW_SCHEMA_VERSION` in the canonical `window_id` so a fetch-schema
+  change invalidates stale caches automatically instead of silently resuming on an
   incompatible shape.
 
-**Acceptance.** Run the same `(repo, window)` twice; the second run's prep logs
-show **zero** `gh api` PR fetches (all cache hits) and finishes in a fraction of
-the wall-clock time. A `RAW_SCHEMA_VERSION` bump forces a clean re-fetch.
+**Acceptance.** Run the same `(repo, window, cohort)` twice; the second run's
+prep logs show **zero** `gh api` PR fetches (all cache hits) and finishes in a
+fraction of the wall-clock time. A failed-mid-fetch run does not poison the cache:
+retry completes, and the following run is zero-refetch. A `RAW_SCHEMA_VERSION` bump
+forces a clean re-fetch.
 
 **Why `actions/cache` over artifact up/download.** Cache is one declarative step
 pair with automatic key-based restore; artifacts need explicit
@@ -109,74 +116,136 @@ workflow (which would hit GitHub's "the default `GITHUB_TOKEN` can't trigger
 another workflow" recursion guard and force a PAT). Instead, the loop is exposed
 as a **reusable workflow** (`on: workflow_call`) and the pacer **`uses:`** it as a
 job in its own cron-triggered run. A reusable-workflow call is not an event
-trigger, so it needs no PAT and no elevated token — the plain `GITHUB_TOKEN`
-(15,000/hr on GHEC) does everything. One tick = one run that processes its
-admitted window(s) inline via the reusable loop.
+trigger, so it needs no PAT/App token; the plain `GITHUB_TOKEN` (15,000/hr on
+GHEC) does the API work, and only the ledger job requests repo-wide
+`contents: write` to update the protected state branch. One tick = one run that
+processes its admitted window(s) inline via the reusable loop.
 
-### B1 — Backlog model
+### B1 — Backlog model (derived, over a durable canonical ledger)
 
-- Represent the backlog as a committed `pacer/backlog.json`: a flat list of
-  `{ repo, window_start, window_end, max_prs, status }` jobs (`status ∈
-pending | running | done | skipped`).
-- Generate it from a `repos × months` matrix with a tiny helper
-  `scripts/gen-backlog.ts` (`--repos a,b --from 2026-01 --to 2026-07 --granularity
-month|week`). **Monthly** granularity by default (busy repos → ~180–300 PRs,
-  large comparable denominators; `README.md` "Backfilling", D13); **weekly** as an
-  opt-in only when you want more trend points at smaller per-point `n`. At
-  15,000/hr an uncapped month fits a single tick, so capping is rarely needed.
-- Committing the backlog (vs. an artifact/variable) makes progress **auditable in
-  git** and trivially resumable — the lowest-maintenance state store.
+The backlog is **computed each tick** from config + today's date + a **durable
+completion ledger** — not a hand-seeded, status-tracked file. This deletes both
+manual steps (seeding, committing status flips) while keeping completion state
+durable, canonical, and atomic (the three properties a review flagged as
+mandatory for a derived model to be sound).
+
+- **Config, not a job list.** A tiny committed `pacer/config.json`:
+  `{ repos, start_date, granularity, max_prs? }` (`granularity ∈
+month | biweekly | week`, monthly default). The only human-authored input.
+- **Canonical window identity.** Every window has a stable
+  `window_id = ${owner}_${repo}__${start}__${end}__${cohort}__raw<RAW_SCHEMA_VERSION>`
+  (`cohort = uncapped | cap-<N>`), and `emit-run-json` sets **`run.id = window_id`**
+  end-to-end, making the file `run-<window_id>.json`. Existing dedupe logic keeps
+  keying on `run.id`, so this is a data migration: bump `SCHEMA_VERSION`, recompute
+  or migrate existing `run-*.json`, and test `aggregate-runs.ts`,
+  `dashboard/js/aggregate.mjs`, the dashboard manifest, and
+  `ccr-dashboard-publish.yml` copy-by-basename behavior. The semantics
+  deliberately change: a capped run no longer supersedes an uncapped run of the
+  same dates. One encoding is reused for run records, ledger records, skips, and
+  cache keys.
+- **Desired windows = settled only.** `scripts/gen-backlog.ts` expands
+  `start_date … (today − settleDays)` at the granularity into candidate windows,
+  emitting **only closed, settled** windows (`window_end ≤ today − settleDays`) —
+  never a trailing partial/unsettled window (matches the child's rolling
+  methodology; a daily re-clamp to "today" would re-mine unsettled PRs). Monthly
+  default; biweekly = fixed 14-day windows anchored on `start_date`; weekly for
+  more trend points. `max_prs` defaults `0`/uncapped.
+- **Durable store = a `ccr-pacer-state` branch.** One orphan branch holds
+  `ledger/<window_id>.json` (one typed record per terminal window),
+  `skipped.json` (poison windows), and `estimates.json` (actual cost/cardinality
+  observations from completed children). The pacer reads it (`git fetch`), creates
+  the empty orphan branch if absent, and only the ledger job writes updated records
+  with the plain `GITHUB_TOKEN`. Its `contents: write` permission is repo-wide, not
+  branch-scoped, so non-state branches are protected by a branch ruleset and the
+  script uses normal non-force fetch/rebase/retry pushes only to `ccr-pacer-state`.
+  A `GITHUB_TOKEN` push does not trigger another push-triggered workflow. Records
+  are keyed by `window_id`, so writes are idempotent and collision-free — **not**
+  read from the checkout (the child uploads `run-*.json` and outcome JSON as
+  artifacts, and reusable-workflow jobs don't share a workspace).
+- **Pending = desired − ledger-done − skipped**, matched by `window_id`. A
+  re-derived-but-done window is skipped by the ledger (or, if re-run, is all cache
+  hits via A1 + near-zero REST via C1).
 
 ### B2 — The pacer loop (`ccr-pacer.yml`)
 
-`on: schedule: cron (hourly)` + `workflow_dispatch`. Each tick:
+`ccr-pacer.yml` is a **hand-written, plain, deterministic GitHub Actions YAML**
+workflow: no agent execution, no gh-aw compilation, and **no second lock file**.
+`ccr-improvement-loop` remains the only gh-aw workflow with a `.lock.yml`. The
+pacer uses `on: schedule: cron (hourly)` + `workflow_dispatch`, **serialized** with
+`concurrency: { group: ccr-pacer, cancel-in-progress: false }` so two ticks never
+race. Each tick:
 
-1. **Read budget** — `gh api rate_limit`, take remaining **primary** REST (free,
-   read-only). (`rate_limit` sees only the primary pool — the secondary/burst
-   limits are still handled in-process by the #5 `Semaphore`, which stays
-   essential regardless of tier; the pacer cannot see or pace them.)
-2. **Estimate & admit** — using the `~(6 + N) × PRs` cost model
-   (`api-rate-limit.md §8`), pick the next 1–N `pending` jobs whose estimated cost
-   fits `remaining − safetyMargin`. At 15,000/hr that is ~3 uncapped month-repos
-   per tick; admit conservatively and let the next tick take the rest.
-3. **Run the window inline** — invoke the reusable loop as a job per admitted
-   window (no cross-workflow dispatch, no token):
+1. **Read budget** — `gh api rate_limit`, take remaining across the resources the
+   fetch actually uses **after C1**: `graphql` points (the new binding constraint),
+   `core` REST (now near-zero use), and `search` (30/min). Admission is
+   multi-resource, not REST-only. (Secondary/burst limits stay handled in-process
+   by the #5 `Semaphore`, which the pacer cannot see or pace.)
+2. **Estimate, derive & admit** — derive `pending = settled-desired − ledger-done −
+skipped` by `window_id`, then count-probe only as Search remaining allows. Each
+   admitted window reserves **both** its count probe and later PR-list Search.
+   `estimates.json` is updated from completed children's outcome artifacts with
+   actual GraphQL `rateLimit.cost`, search/core use, and per-connection
+   cardinalities; on cold start, use a conservative upper bound that covers
+   high-comment / low-PR windows rather than trusting PR count alone. Admit windows
+   whose multi-resource estimate fits `remaining − safetyMargin`; a single
+   over-budget window is split/deferred, never silently admitted. Preserve **≤ 1
+   concurrent window per repo**, but do not equate that with ≤1 per tick: when
+   budget and runner runtime permit, same-repo windows may be admitted as a serial
+   lane inside the same serialized tick, or the plan must meet a documented maximum
+   drain-time threshold.
+3. **Run the window inline** — invoke the reusable loop for admitted windows (no
+   cross-workflow dispatch, no PAT; `uses:` the **compiled `.lock.yml`**):
    ```yaml
    jobs:
      backfill:
        strategy:
          matrix: { window: ${{ fromJSON(needs.plan.outputs.admitted) }} }
-       uses: ./.github/workflows/ccr-improvement-loop.yml
+       uses: ./.github/workflows/ccr-improvement-loop.lock.yml
        with:
          repo: ${{ matrix.window.repo }}
          window_start: ${{ matrix.window.window_start }}
          window_end: ${{ matrix.window.window_end }}
          max_prs: ${{ matrix.window.max_prs }}
    ```
-4. **Mark done** — flip those jobs' `status` in `backlog.json` and commit via
-   safe-output, keeping the pacer proposal-clean like the child.
-5. **Exit.** Next hour, `cron` drains the next chunk.
+   The child writes a deterministic **outcome artifact** named
+   `outcome-<window_id>.json` via safe-output/upload. `produced` is declared only
+   after the run JSON artifact upload is confirmed; upload/safe-output failure is
+   `failed`. `artifact_name` is derived from `window_id`, not unstable upload temp
+   IDs.
+4. **Ledger the outcome** — because matrix reusable-workflow outputs do not
+   aggregate reliably, the `ledger` job runs with `if: always()`, downloads all
+   `outcome-<window_id>.json` artifacts from the tick, and reconciles every
+   admitted window. Any admitted window with no outcome artifact is treated as
+   `failed`. It writes/updates `ledger/<window_id>.json` and `estimates.json` on
+   the `ccr-pacer-state` branch, then fetches/rebases/retries a normal non-force
+   `GITHUB_TOKEN` push.
+5. **Exit.** Next hour, `cron` re-derives and drains the next chunk.
 
-**The per-repo `concurrency` group already guards overlap.** `ccr-improvement-loop`
-uses `group: ccr-loop-${repo}`, `cancel-in-progress: false` — 1 running + 1
-pending per repo. Even if two ticks overlap on the same repo, the group serializes
-them, so the pacer needs no locking of its own (`optimize-api-call-plan.md §8`).
+**Overlap safety comes from pacer serialization + explicit per-repo lanes.** The
+pacer's own `concurrency: ccr-pacer` serializes ticks, and because a tick runs its
+admitted work to completion (the `ledger` job waits with `if: always()`), the next
+tick can't start until this one exits — so a running window is never re-admitted,
+no lease required. The child's `group: ccr-loop-${repo}` (1 running + 1 pending) is
+_not_ a queue, so the pacer must not rely on it for throughput; same-repo
+throughput is either serial inside one tick or bounded by an explicit drain-time
+acceptance threshold.
 
 ### B3 — Self-healing & termination
 
-- **Resume for free** — because A1 persists the cache, a retried or resumed window
-  re-processes nothing. A pacer restart just re-reads `backlog.json` and continues
-  from `pending`.
-- **No-op tolerance** — a window under 50 settled PRs emits no artifact by design
-  (`config.json:minPrs`, `README.md`); the pacer marks it `done` (not `failed`) so
-  thin windows don't wedge the queue.
-- **Termination** — when no `pending` jobs remain, the tick is a no-op. Optionally
-  stop the schedule once the backlog is fully `done` (manual, low-maintenance — a
-  full backfill is a finite campaign).
-- **Failure isolation** — an inline window job failing (e.g. transient 403) leaves
-  its job `running`; a reconciliation step at tick start flips genuinely-failed
-  windows back to `pending` for one retry, then `skipped` with a logged reason.
-  Cap retries at 1 to avoid a poison window looping forever.
+- **Resume for free** — the backlog is re-derived every tick from today's date +
+  config + the durable ledger, and A1 persists the cache, so a pacer restart just
+  recomputes `pending`; a done window is skipped by its `window_id` ledger record
+  (or, if re-run, is all cache hits).
+- **No-op tolerance** — the child returns `thin-noop` (`< minPrs`) or `signal-noop`
+  (≥ `minPrs`, agent called `noop`) as an explicit typed outcome; the pacer
+  ledgers it as done (not failed) so thin windows never wedge or re-derive.
+- **Termination** — when derived `pending` is empty (all settled windows ledgered
+  done or skipped), the tick is a no-op; the hourly cron idles once caught up.
+- **Failure isolation** — a `failed` outcome is _not_ done: the ledger keeps a
+  durable `attempt` count; reconciliation retries **once**, then moves the window to
+  `skipped.json` with a logged reason (retry cap = 1, no poison loop). A missing
+  outcome artifact for an admitted window is reconciled as `failed` and retried;
+  only confirmed run-artifact upload can produce `produced`.
 
 ### B4 — What the pacer must **not** do (scope guards)
 
@@ -187,19 +256,23 @@ them, so the pacer needs no locking of its own (`optimize-api-call-plan.md §8`)
 - **No judgment / metric logic** — the pacer only admits and runs windows; all
   measurement stays in the reusable loop (D2 separation preserved).
 
-**Acceptance.** A 7-month × 1-repo backlog (`gen-backlog.ts`) drains over a few
-hourly ticks on the 15,000/hr GHEC token (roughly ~3 uncapped months/tick) with
-**no primary-limit 403** and **no PAT**, each window's run-JSON landing in
-`dashboard/data/`, and `backlog.json` ending all-`done`. Re-running the pacer
-after completion is a clean no-op.
+**Acceptance.** A 7-month × 1-repo campaign (`pacer/config.json`, `start_date` 7
+months back) drains within the documented maximum drain-time threshold on the
+15,000/hr GHEC token with **no 403** and **no PAT**, each window's typed outcome
+recorded as a `ledger/<window_id>.json` on the `ccr-pacer-state` branch (thin/no-op
+windows recorded `thin-noop`/`signal-noop`, not failed), and the derived `pending`
+set ending **empty**. A mid-campaign restart re-derives and resumes with zero
+rework; re-running after completion is a clean no-op.
 
 ---
 
-## Track C — Polish (parallel, non-blocking)
+## Track C — Polish
 
-Makes the package elegant, cheap, and handoff-ready. None of these block the
-pacer (the GHEC budget already covers backfill), but C1 drives per-PR REST cost to
-near-zero and the rest turn "it runs" into "it's a product."
+Makes the package elegant, cheap, and handoff-ready. **C1 is sequenced _before_
+the pacer** (not parallel): it changes which resource is the binding constraint
+(REST → GraphQL points + git bandwidth), so the pacer's admission model must be
+built against the post-C1 cost, not a REST ceiling C1 has vacated. C2–C4 remain
+parallel/non-blocking.
 
 ### C1 — API-call optimization program (fold in all deferred items)
 
@@ -207,9 +280,14 @@ An agent implements this, so **implementation effort is not a reason to defer
 anything** — the earlier "deferred / high-effort / partial-win" labels in
 [`optimize-api-call-plan.md`](./optimize-api-call-plan.md) (#3, #4, #6, #7) are
 dropped. The **only** gate is information-preservation: every optimization must
-produce output **byte-identical** to today's, proven by a golden equivalence test
-_written and passing before_ the optimization is wired in. If a change cannot be
-shown equivalent, it does not ship — full stop.
+produce **byte-identical _normalized downstream evidence_** (the fields consumers
+read — `committedAt` ordering, `files`/`distinctFiles`, and the patch text feeding
+`ccrSawCode`/diff-detectability), proven by a golden test _written and passing
+before_ the optimization is wired in. Note the bar is the **normalized evidence
+contract, not raw REST payload bytes** — git cannot reproduce REST's exact patch
+serialization (headers, binary-omit, truncation), and volatile fields
+(`generatedAt`, wall-clock) are frozen/stripped before compare. If a change cannot
+be shown equivalent at this contract, it does not ship — full stop.
 
 The pacer bounds cost _per hour_; this program cuts cost _per PR_ toward **near
 zero on the rate-limited path**, so an uncapped month fits a single tick with
@@ -228,20 +306,29 @@ per-commit `GET /commits/{sha}` loop is the multiplier. Every field it writes �
 (`optimize-api-call-plan.md §6`), so source them from a local clone at **zero
 GitHub API cost** (git-transport budget is a separate, generous pool):
 
-- `committedAt` ← `git log --format=%cI <sha>` (committer date, matching the
-  current `c.commit.committer?.date` preference).
-- `files` ← `git diff-tree --no-commit-id --name-only -r <sha>`.
-- `patches` ← `git show <sha>` / `git diff`.
+- `committedAt` ← `git log --format=%cI <sha>`, **offset-normalized** to match the
+  current `c.commit.committer?.date` REST representation.
+- `files` ← `git diff-tree` with rename detection (`-M`); for **merge** commits use
+  an explicit `-m --first-parent` rule (a bare `diff-tree -r` emits nothing for
+  merges), and handle **root** commits (diff vs. the empty tree).
+- `patches` ← `git show <sha>` **normalized** to GitHub's per-file `patch` shape:
+  strip commit headers, split per file, and reproduce GitHub's binary-omit /
+  oversized-truncation behavior.
 - Use a **blobless partial clone** (`git clone --filter=blob:none`) of the
-  **target** repo (not the workflow repo `actions/checkout` already has) with
-  `fetch-depth: 0` (or targeted `git fetch origin <sha>` for exactly the mined
-  commits) so even `azure-sdk-for-python` stays cheap — never full-clone up front.
-  Add this clone as a prep step in `ccr-improvement-loop.md`, keyed off
-  `TARGET_REPO`, and pass its path into `fetch-prs.ts`.
+  **target** repo, fetching `refs/pull/<n>/head` (and `.../merge` where relevant)
+  or targeted `git fetch origin <sha>` for exactly the mined commits — **fork-PR
+  commits are not reachable from the base branch**, so never assume default-branch
+  reachability, and never full-clone up front. Add the clone as a prep step keyed
+  off `TARGET_REPO`, and **cache the target git object store across ticks**
+  (separate from the raw PR cache). **Benchmark a representative month first** — a
+  blobless clone lazily refetches blobs on `git show`, which at
+  `azure-sdk-for-python` scale can be many large fetches; record the decision.
 - **Equivalence gate:** a golden test runs `attribute-comments` +
-  `build-judge-input` over a fixture with REST-derived vs git-derived commit
-  detail and asserts **byte-identical** output (patches, `committedAt` ordering,
-  `distinctFiles`, and the `ccrSawCode` gate all unchanged). Ship only when green.
+  `build-judge-input` over fixtures covering **merge, rename, binary, oversized,
+  root, and fork-PR** commits and asserts the **normalized downstream evidence**
+  (`files`, `distinctFiles`, `committedAt` ordering, `ccrSawCode`) is
+  byte-identical REST-derived vs git-derived — **not** raw REST payload bytes
+  (git can't reproduce those). Ship only when green.
 
 Effect: per-PR API cost `6 + N` → **`6`**. This **supersedes #3** (selective
 commit-detail): #6 removes `N` rather than shrinking it, and dissolves #3's
@@ -257,14 +344,18 @@ primary-REST load:
 
 - Reviews, inline comments (+ thread `isResolved`), issue comments, commit shas,
   and linked issues all come back in one aliased query per batch of PRs.
-- **Pagination correctness is mandatory, not optional:** these are paginated
-  connections (threads@100, linked issues/labels@20). The GraphQL path must
-  **cursor-loop to exhaustion**, matching the fully-paginated REST result exactly
-  — no silent truncation. This is precisely what the equivalence test pins.
+- **Pagination is per-alias, per-connection — not one batch-wide loop.** Every PR
+  alias and every nested connection (reviews, inline comments, issue comments,
+  commit shas, threads@100, linked issues/labels@20) carries its **own cursor**;
+  cursor-loop each to exhaustion with deterministic ordering matching REST — no
+  silent truncation. Handle **partial GraphQL responses** (data + errors)
+  explicitly, inspect `rateLimit { cost remaining }`, and **split an over-wide
+  batch** before it trips the point/CPU guard.
 - **Equivalence gate:** a golden test compares the assembled per-PR record from
-  the GraphQL/batched path against the current REST path over a fixture that
-  **includes a PR exceeding one page** of threads/comments; assert byte-identical
-  normalized output. Ship only when green.
+  the GraphQL/batched path against the current REST path over fixtures that
+  **exceed one page on _every_ connection** (reviews, inline, issue comments,
+  commits, threads, linked issues, labels — not just threads/comments); assert
+  byte-identical normalized output. Ship only when green.
 - Batch width is tuned and still admitted through `ghRequestLimiter` (#5), so an
   over-wide batch can't exhaust the GraphQL point pool or trip its CPU-cost guard.
 - Commit **patch text** stays out of GraphQL (it isn't cleanly exposed) — but
@@ -275,20 +366,22 @@ fewer HTTP requests. Composed with Step 1, per-PR **primary-REST** consumption
 drops toward **near zero** — the qualitative shift beyond the shipped #1/#2/#5.
 
 **Net after C1:** per-PR primary-REST cost ≈ **0** (patches on git, fixed reads on
-the GraphQL pool), every byte identical to today, each step locked by a
-fixture-driven golden test (`tests/`, vitest, no live `gh`). The GHEC hourly
-budget then effectively bounds only GraphQL points + git bandwidth, not the REST
-ceiling that historically failed runs.
+the GraphQL pool), **normalized downstream evidence** identical to today, each step
+locked by a fixture-driven golden test (`tests/`, vitest, no live `gh`). The GHEC
+hourly budget then effectively bounds only GraphQL points + git bandwidth, not the
+REST ceiling that historically failed runs — which is exactly why the pacer's
+admission (Track B) meters those resources, not REST.
 
 ### C2 — Preflight budget guard in the child (defense in depth)
 
 Add an **optional** `gh api rate_limit` preflight at the top of `prep-run.ts`
-(behind a `--check-budget` flag, default on in CI): if remaining primary REST <
-the estimated window cost, **abort early with a clear message and non-zero exit**
-rather than dying mid-fetch with a partial cache. This complements — does not
-replace — the pacer (which spaces at admission time) and the #5 limiter (which
-guards secondary limits). Coarse primary-budget admission control, explicitly left
-as a hook in `optimize-api-call-plan.md §5`.
+(behind a `--check-budget` flag, default on in CI): if the **metered resources the
+fetch actually uses after C1** (GraphQL points, plus search) are below the
+estimated window cost, **abort early with a clear message and non-zero exit**
+rather than dying mid-fetch with a partial cache. Meters the same resources as the
+pacer's admission (not REST-only, which C1 has vacated). Complements — does not
+replace — the pacer (spaces at admission time) and the #5 limiter (secondary
+limits).
 
 ### C3 — Dashboard scale & polish
 
@@ -326,8 +419,11 @@ The static, zero-backend, manifest-driven dashboard (D11) already pools slices
   a short **"Backfilling at scale"** section in `README.md` pointing at the pacer.
   Add a `decisions.md` **D15 — backfill pacer** entry (decision / why / rejected
   alternatives [always-on runner, in-job sleep, cross-workflow dispatch requiring a
-  PAT, per-run cap only] / consequences) and a **D16 — API cost reduced to
-  near-zero REST (git patches + GraphQL fixed reads), gated on byte-equivalence**
+  PAT, per-run cap only, **committed status-tracked backlog** — replaced by a
+  derived backlog computed from config + today + a durable canonical-`window_id`
+  ledger on the `ccr-pacer-state` branch, with typed child outcomes] /
+  consequences) and a **D16 — API cost reduced to near-zero REST (git patches +
+  GraphQL fixed reads), gated on normalized-evidence equivalence (not raw bytes)**
   entry, both matching the existing D-series format.
 - **`handoff.md` update** — new session entry summarizing pacer + Track A/C
   outcomes (and the reusable-workflow / GHEC-budget assumptions), git state, and
@@ -337,56 +433,89 @@ The static, zero-backend, manifest-driven dashboard (D11) already pools slices
 
 ## Sequencing & milestones
 
+Reordered after review so the pacer is built against the real post-optimization
+cost model (C1 lands before B):
+
 ```
-A1 (cross-run cache) ─▶ B1 (backlog) ─▶ B2/B3 (pacer loop) ─▶ B4 guards ─▶ ✅ unattended backfill
-                                                           │
-C1 (Step 0 inject ─▶ #6 git ─▶ #4/#7 GraphQL, each equivalence-gated)
-C2 (preflight) ─ C3 (dashboard) ─ C4 (hygiene)             ── parallel, merge continuously
+Phase 0 (determinism + canonical window_id)
+  ─▶ A1 (resolver + cross-run cache, keyed by run.id/window_id)
+  ─▶ C1 (Step 0 inject ─▶ #6 git ─▶ #4/#7 GraphQL, each equivalence-gated)
+  ─▶ B1 (derived backlog + durable ccr-pacer-state ledger + typed child outcomes)
+  ─▶ B2/B3 (plain-YAML pacer: artifacts, multi-resource admission, ≤1 concurrent/repo, serialized) ─▶ B4 guards
+  ─▶ ✅ unattended backfill
+C2 (preflight) ─ C3 (dashboard) ─ C4 (hygiene)   ── parallel, merge continuously
 ```
 
-1. **Milestone 1 — Foundation.** A1 lands (cross-run cache), plus expose the loop
-   as `workflow_call`; recompile lock. _Proof:_ one uncapped month completes
-   without a 403 on the 15,000/hr token; a repeated window is all cache hits.
-2. **Milestone 2 — Pacer MVP.** B1 + B2 drain a 3-window backlog under budget.
-   _Proof:_ 3 run-JSONs appear; `backlog.json` all-`done`; no 403; no PAT used.
-3. **Milestone 3 — Robust pacer.** B3 + B4 (resume, no-op tolerance, failure
-   isolation, scope guards). _Proof:_ a poison/thin window doesn't wedge the queue;
-   a mid-backfill restart resumes cleanly.
-4. **Milestone 4 — Near-zero REST + scale polish.** C1 (Step 0 → #6 → #4/#7), C3,
-   C4 merged; docs converged. _Proof:_ each C1 step's golden test asserts
-   byte-identical output; the cost-model regression test asserts **zero** per-PR
-   REST invocations; a 50-window backfill needs no manual manifest edits.
+1. **Milestone 1 — Foundation + near-zero REST.** Phase 0 (frozen clock, canonical
+   `run.id = window_id` and data migration), A1 (resolver + cross-run cache), and
+   C1 (Step 0 → #6 → #4/#7) land; `ccr-improvement-loop` lock recompiled. _Proof:_
+   each C1 step's golden test asserts **byte-identical
+   normalized evidence** over merge/rename/binary/root/fork-PR fixtures; the
+   cost-model regression test asserts **zero** per-PR REST; a repeated window is all
+   cache hits. _Deferred (GHEC):_ uncapped month, no 403.
+2. **Milestone 2 — Reusable loop + derived backlog.** B1: durable
+   `ccr-pacer-state` ledger, settled-only `gen-backlog`, derive-pending by
+   `window_id`. _Proof:_ typed-outcome artifact + derive-pending tests;
+   settled-only expansion excludes unsettled trailing windows.
+3. **Milestone 3 — Pacer.** B2/B3/B4: plain YAML pacer, outcome-artifact ledgering,
+   multi-resource admission, ≤1 concurrent/repo, serialized ticks, reconciliation,
+   and drain-time threshold. _Proof (offline):_ a workflow-boundary test with two
+   successes + one failing leg ledgers all outcomes; the two-tick integration test
+   (tick 1 records outcomes → tick 2 derives the remainder), retry-cap, and
+   concurrency/throughput tests pass; a poison/thin window doesn't wedge; a restart
+   resumes cleanly.
+4. **Milestone 4 — Scale polish.** C2 (multi-resource preflight), C3 (manifest
+   auto-gen, `sizeBucket`, repo faceting), C4 (docs converged). _Proof:_ a
+   50-window backfill needs no manual manifest edits.
 
 ---
 
 ## Definition of done
 
 - A `repos × months` backfill drains **unattended** under `cron`, never exceeding
-  the hourly ceiling, with **zero rework** on resume.
-- Per-PR **primary-REST cost is ~0** (commit patches sourced from local git, fixed
-  reads batched onto the GraphQL pool), with **every emitted byte identical** to
-  the pre-optimization output — proven by a golden equivalence test per C1 step.
+  the metered ceilings, with **zero rework** on resume — completion state durable
+  in the `ccr-pacer-state` ledger, matched by canonical `run.id`/`window_id`, and
+  same-repo throughput either uses serial lanes or meets the documented maximum
+  drain-time threshold.
+- Backlog windows are **settled-only** (end ≤ today − settleDays); no unsettled
+  trailing window is ever mined or ledgered.
+- Per-PR **primary-REST cost is ~0** (commit patches from local git, fixed reads
+  batched onto the GraphQL pool), with the **normalized downstream evidence
+  identical** to the pre-optimization output (not raw REST bytes) — proven by a
+  golden test per C1 step over merge/rename/binary/root/fork-PR fixtures.
+- Admission meters the **real post-C1 constraints** (GraphQL points, bounded Search
+  count/list calls, high-cardinality GraphQL pagination, and concurrency), not the
+  vacated REST ceiling or a PR-count-only proxy.
 - The child loop is unchanged in what it _measures_ — proposal-only,
-  deterministic-prep / agent-judgment / deterministic-math intact (D2, D9).
+  deterministic-prep / agent-judgment / deterministic-math intact (D2, D9); the
+  pacer is the only durable writer. Its ledger job has repo-wide `contents: write`,
+  protected by branch rulesets and scripted to write only the state branch.
 - Dashboard ingests a large backfill without hand-editing, facets by repo, and
   reads honestly (`n/a` over false precision).
-- All gates green: `npm test`, `npm run typecheck`, `npm run lint`,
-  `npm run format:check`; lock recompiled and committed; docs converged; `D15`,
+- All gates green: `pnpm test`, `pnpm run typecheck`, `pnpm run lint`,
+  `pnpm run format:check`; `ccr-improvement-loop.lock.yml` recompiled and
+  committed; `ccr-pacer.yml` is plain YAML (no lock); docs converged; `D15`,
   `D16`, and a `handoff.md` entry recorded.
 
 ## Explicit non-goals
 
 - **No information loss for API savings.** Every call-reduction ships only after a
-  byte-equivalence golden test passes; a change that can't be proven equivalent is
-  rejected regardless of how much budget it would save.
+  golden test proves the **normalized downstream evidence** unchanged; a change
+  that can't be proven equivalent at that contract is rejected regardless of budget
+  saved.
 - **No always-on orchestrator / external scheduler.** The `cron` cadence is the
   pacer (`design tradeoffs` — low maintenance).
 - **No custom PAT / GitHub App token.** The GHEC `GITHUB_TOKEN` (15,000/hr) plus a
   reusable-workflow (`workflow_call`) invocation cover both budget and triggering —
   no elevated credential is introduced.
+- **No second gh-aw workflow / lock for the pacer.** `ccr-pacer.yml` is plain,
+  deterministic Actions YAML; only `ccr-improvement-loop` is compiled to a lock.
+- **No branch-scoped write-token claim.** `contents: write` is repo-wide; safety
+  comes from branch rulesets plus normal non-force state-branch pushes, not YAML
+  token scoping.
 - **No new reliability/enforcement layer.** Lean on `concurrency`, the immutable
-  cache, and the `Semaphore`; add code only where the harness genuinely can't
-  cover the gap.
+  cache, branch protection, and the `Semaphore`; add code only where the harness
+  genuinely can't cover the gap.
 - **No metric or judgment changes** driven by scale — the pacer is orchestration
   only. Metric evolution (e.g. reframing the headline) stays a separate, deliberate
   decision (`handoff.md`).

@@ -18,14 +18,23 @@ import { fileURLToPath } from "node:url";
 import { parseArgs as nodeParseArgs } from "node:util";
 
 import { loadConfig } from "./config.ts";
+import { readBudget, preflightShortfalls } from "./pace.ts";
+import {
+    DEFAULT_EST_REST_CALLS_PER_WINDOW,
+    DEFAULT_EST_GRAPHQL_POINTS_PER_WINDOW,
+    DEFAULT_EST_SEARCH_CALLS_PER_WINDOW,
+    DEFAULT_SAFETY_MARGIN,
+} from "./pacer-schema.ts";
 import { buildPrepSummary } from "./prep-summary.ts";
 import type { PrepSummary } from "./prep-summary.ts";
+import { resolveWindow } from "./resolve-window.ts";
 import type {
     AttributedComment,
     JudgeInputItem,
     PullRequestData,
 } from "./types.ts";
 import { makeLogger, sha256 } from "./utils.ts";
+import { type Cohort } from "./window-id.ts";
 
 const log = makeLogger("prep-run");
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -41,12 +50,61 @@ function runStage(script: string, args: string[]): void {
     });
 }
 
+/**
+ * C2 preflight budget guard. Before the loop spends a single call it fetches the
+ * live `rate_limit` and asserts the current `remaining` on every pool (core REST,
+ * graphql, search) can cover one window's static cost plus the safety margin. On a
+ * shortfall it throws — the caller exits non-zero BEFORE any fetch/cache write —
+ * so a depleted shared pool aborts the window cleanly instead of half-filling the
+ * cache. Skipped entirely under `--skip-fetch` (offline runs spend nothing).
+ */
+function runPreflightGuard(): void {
+    let body: unknown;
+    try {
+        const raw = execFileSync("gh", ["api", "rate_limit"], {
+            encoding: "utf8",
+            stdio: ["ignore", "pipe", "inherit"],
+        });
+        body = JSON.parse(raw) as unknown;
+    } catch (err) {
+        throw new Error(
+            `budget preflight: could not fetch \`gh api rate_limit\` (${
+                err instanceof Error ? err.message : String(err)
+            }). Pass --no-check-budget to skip this guard.`,
+        );
+    }
+    const budget = readBudget(body);
+    const shortfalls = preflightShortfalls(budget, {
+        rest: DEFAULT_EST_REST_CALLS_PER_WINDOW,
+        graphql: DEFAULT_EST_GRAPHQL_POINTS_PER_WINDOW,
+        search: DEFAULT_EST_SEARCH_CALLS_PER_WINDOW,
+        safetyMargin: DEFAULT_SAFETY_MARGIN,
+    });
+    if (shortfalls.length > 0) {
+        const detail = shortfalls
+            .map(
+                (s) =>
+                    `${s.pool}: remaining ${String(s.remaining)} < need ${String(
+                        s.need,
+                    )}`,
+            )
+            .join("; ");
+        throw new Error(
+            `budget preflight failed — insufficient API budget to run a window ` +
+                `safely (${detail}). The window was NOT started (no calls spent). ` +
+                `Wait for the pool(s) to refill, or pass --no-check-budget to override.`,
+        );
+    }
+    log.error("budget preflight: ok");
+}
+
 interface MetaInput {
     repo: string;
     windowStart: string;
     windowEnd: string;
     windowLagDays: number;
     prState: string;
+    cohort: Cohort;
     matchedCcrLogin: string | null;
     ccrEnabledSince: string | null;
     promptHashes: Record<string, string>;
@@ -61,6 +119,7 @@ export function buildMeta(input: MetaInput): Record<string, unknown> {
         windowEnd: input.windowEnd,
         windowLagDays: input.windowLagDays,
         prState: input.prState,
+        cohort: input.cohort,
         model: "agentic-workflow",
         modelTool: "gh-aw",
         temperature: 0,
@@ -138,8 +197,6 @@ export function summarizeCache(cacheDir: string, glob: string): PrepSummary {
     });
 }
 
-const DAY_MS = 86_400_000;
-
 /** UTC calendar date (YYYY-MM-DD) for an epoch-millisecond instant. */
 export function isoDate(ms: number): string {
     return new Date(ms).toISOString().slice(0, 10);
@@ -180,6 +237,7 @@ function usage(): string {
         "  --max-prs <N>            Cap PRs per window; 0 = uncapped full cohort (default: 0)",
         "  --config <path>          Override config.json",
         "  --skip-fetch             Reuse existing pr-*.json in cache-dir (offline)",
+        "  --no-check-budget        Skip the C2 preflight API-budget guard (default: on)",
         "  -h, --help",
     ].join("\n");
 }
@@ -199,6 +257,8 @@ function main(): void {
             "max-prs": { type: "string", default: "0" },
             config: { type: "string" },
             "skip-fetch": { type: "boolean", default: false },
+            "check-budget": { type: "boolean", default: true },
+            "no-check-budget": { type: "boolean", default: false },
             help: { type: "boolean", short: "h", default: false },
         },
         allowPositionals: false,
@@ -219,20 +279,26 @@ function main(): void {
     const glob = path.join(cacheDir, "pr-*.json");
 
     const settleDays = Number.parseInt(v["settle-days"], 10);
-    const windowDays = Number.parseInt(v["window-days"], 10);
-    // Resolve the measurement window. Explicit --window-end/--window-start drive
-    // a historical backfill; otherwise fall back to a rolling settled window:
-    // end = today - settleDays (the settle cutoff), start = end - windowDays.
-    // Passing both bounds explicitly means the fetch is bounded by TIME, so it
-    // stays safe even when uncapped.
-    const windowEnd =
-        v["window-end"] ?? isoDate(Date.now() - settleDays * DAY_MS);
-    const windowStart =
-        v["window-start"] ??
-        isoDate(Date.parse(windowEnd) - windowDays * DAY_MS);
+    // Identity resolution is owned by resolve-window (the same pure resolver the
+    // workflow calls to key actions/cache), so prep and the cache key can never
+    // disagree about the window/cohort/windowId.
+    const resolved = resolveWindow({
+        repo,
+        windowStart: v["window-start"],
+        windowEnd: v["window-end"],
+        maxPrs: v["max-prs"],
+        settleDays: v["settle-days"],
+        windowDays: v["window-days"],
+    });
+    const { windowStart, windowEnd, cohort, maxPrs } = resolved;
 
     if (!v["skip-fetch"]) {
-        const maxPrs = Number.parseInt(v["max-prs"], 10);
+        // C2 preflight guard: verify the live budget before spending anything.
+        // Disabled by --skip-fetch (offline, no spend) or explicit
+        // --no-check-budget. `check-budget` defaults on so CI is guarded.
+        if (v["check-budget"] && !v["no-check-budget"]) {
+            runPreflightGuard();
+        }
         const fetchArgs = [
             "--repo",
             repo,
@@ -283,6 +349,7 @@ function main(): void {
         windowEnd,
         windowLagDays: settleDays,
         prState: v.state,
+        cohort,
         matchedCcrLogin: cfg.ccrLogins[0] ?? null,
         ccrEnabledSince: cfg.ccrEnabledSince,
         promptHashes: provenance.promptHashes,

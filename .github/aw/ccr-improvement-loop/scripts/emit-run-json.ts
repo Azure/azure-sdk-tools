@@ -3,11 +3,13 @@
  * emit-run-json.ts — assemble the run JSON (the system of record) and
  * validate it against run-schema.ts on write.
  *
- * `run.id = <window-end>_<owner>_<repo>` is the idempotency key: re-emitting a
- * window overwrites `run-<id>.json` and is **content-stable** — every field is
- * byte-identical except `generatedAt` (the only wall-clock value). That keeps
- * the Step 6 supersede rule ("newest generatedAt wins for a duplicate run.id")
- * well-defined.
+ * `run.id` is the canonical window identity (see window-id.ts) — it encodes repo,
+ * window bounds, cohort, and raw schema version — and is the idempotency key:
+ * re-emitting the same window overwrites `run-<id>.json` and is **content-stable**
+ * — every field is byte-identical except `generatedAt` (the only wall-clock
+ * value). `canonicalizeRun` strips that one volatile field so golden/equivalence
+ * tests can byte-compare two emits; the Step 6 supersede rule ("newest
+ * generatedAt wins for a duplicate run.id") stays well-defined.
  *
  * `buildRunJson` is a pure function (no IO) so it can be unit-tested for
  * schema-validity and content-stability; `main` wires file IO around it.
@@ -36,6 +38,15 @@ import type {
     Theme,
 } from "./types.ts";
 import { makeLogger } from "./utils.ts";
+import {
+    computeWindowId,
+    ownerRepoOf,
+    runArtifactBase,
+    type Cohort,
+} from "./window-id.ts";
+
+// Re-exported for callers/tests that resolve identity helpers via this module.
+export { ownerRepoOf, computeWindowId, type Cohort };
 
 const log = makeLogger("emit-run-json");
 
@@ -55,6 +66,12 @@ export interface RunMetaInput {
     vocabularyHash: string | null;
     toolVersion: string;
     ccrEnabledSince: string | null;
+    /**
+     * PR-selection cohort for this window. Absent ⇒ uncapped (the default full
+     * cohort). Feeds `run.id` (window identity) but is NOT persisted as its own
+     * run-meta field — the cohort is recoverable from `run.id`.
+     */
+    cohort?: Cohort;
 }
 
 export interface BuildRunInput {
@@ -102,17 +119,18 @@ function toCommentRow(c: AttributedComment): CommentRow {
     };
 }
 
-export function ownerRepoOf(repo: string): { owner: string; repo: string } {
-    const [owner, name] = repo.split("/");
-    if (!owner || !name) {
-        throw new Error(`--repo must be "owner/repo", got "${repo}"`);
-    }
-    return { owner, repo: name };
-}
-
-export function runIdOf(windowEnd: string, repo: string): string {
-    const { owner, repo: name } = ownerRepoOf(repo);
-    return `${windowEnd}_${owner}_${name}`;
+export function runIdOf(meta: {
+    repo: string;
+    windowStart: string;
+    windowEnd: string;
+    cohort?: Cohort;
+}): string {
+    return computeWindowId({
+        repo: meta.repo,
+        windowStart: meta.windowStart,
+        windowEnd: meta.windowEnd,
+        cohort: meta.cohort ?? "uncapped",
+    });
 }
 
 /** Pure assembly + validation. Throws if the result violates run-schema. */
@@ -126,7 +144,7 @@ export function buildRunJson(input: BuildRunInput): RunJson {
     const run: RunJson = {
         schemaVersion: SCHEMA_VERSION,
         run: {
-            id: runIdOf(meta.windowEnd, meta.repo),
+            id: runIdOf(meta),
             repo: meta.repo,
             windowStart: meta.windowStart,
             windowEnd: meta.windowEnd,
@@ -153,6 +171,31 @@ export function buildRunJson(input: BuildRunInput): RunJson {
 
     // Validate on write — the schema is load-bearing.
     return parseRun(run);
+}
+
+/** Sentinel used in place of the wall-clock `generatedAt` in canonical form. */
+export const CANONICAL_GENERATED_AT = "<canonical>";
+
+/**
+ * Return a deep copy of a run with volatile fields normalized, for deterministic
+ * equality/golden assertions. `generatedAt` (the sole wall-clock value) is the
+ * only volatile field today; canonicalization is the equality contract two emits
+ * of the same window must satisfy.
+ */
+export function canonicalizeRun(run: RunJson): RunJson {
+    const copy = structuredClone(run);
+    copy.run.generatedAt = CANONICAL_GENERATED_AT;
+    return copy;
+}
+
+/**
+ * Resolve the emit timestamp. Injectable via `CCR_GENERATED_AT` so runs are
+ * reproducible/deterministic in CI and tests; defaults to wall-clock.
+ */
+export function resolveGeneratedAt(
+    env: NodeJS.ProcessEnv = process.env,
+): string {
+    return env.CCR_GENERATED_AT ?? new Date().toISOString();
 }
 
 // ---------------------------------------------------------------------------
@@ -291,7 +334,7 @@ function main(): void {
                   .experiment
             : null,
         automationLogins: cfg.automationLogins,
-        generatedAt: new Date().toISOString(),
+        generatedAt: resolveGeneratedAt(),
     });
 
     if (v["print-summary"]) printSummary(run);
@@ -299,7 +342,7 @@ function main(): void {
     const text = JSON.stringify(run, null, 2);
     if (v["out-dir"]) {
         fs.mkdirSync(v["out-dir"], { recursive: true });
-        const out = `${v["out-dir"]}/run-${run.run.id}.json`;
+        const out = `${v["out-dir"]}/${runArtifactBase(run.run.id)}.json`;
         fs.writeFileSync(out, text);
         log.error(`wrote ${out} (${String(run.run.prCount)} PRs)`);
     } else {

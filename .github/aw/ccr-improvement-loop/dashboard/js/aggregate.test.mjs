@@ -17,6 +17,7 @@ import {
   isValidRun,
   perRunHeadline,
   poolSlices,
+  SIZE_ORDER,
 } from "./aggregate.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -51,7 +52,7 @@ test("isValidRun rejects malformed / wrong-version objects", () => {
   );
   assert.equal(
     isValidRun({
-      schemaVersion: "1.0",
+      schemaVersion: "1.1",
       run: { id: "x", repo: "a/b", generatedAt: "t" },
       metrics: { rates: {} },
     }),
@@ -71,6 +72,27 @@ test("dedupeRuns keeps the newest generatedAt per run.id", () => {
   const out = dedupeRuns([older, newer]);
   assert.equal(out.length, 1);
   assert.equal(out[0].metrics.rates.ccrRecallRate.value, 0.1);
+});
+
+test("dedupeRuns keeps both runs when ids differ only by cohort", () => {
+  const uncapped = {
+    run: {
+      id: "Azure_go__2026-06-01__2026-06-18__uncapped__raw1.0",
+      repo: "Azure/go",
+      generatedAt: "2026-06-18T00:00:00Z",
+    },
+    metrics: { rates: {} },
+  };
+  const capped = {
+    run: {
+      id: "Azure_go__2026-06-01__2026-06-18__cap-100__raw1.0",
+      repo: "Azure/go",
+      generatedAt: "2026-06-18T00:00:00Z",
+    },
+    metrics: { rates: {} },
+  };
+  const out = dedupeRuns([uncapped, capped]);
+  assert.equal(out.length, 2);
 });
 
 test("a broken object is skipped by isValidRun (aggregate consumes only valid)", () => {
@@ -179,6 +201,77 @@ test("poolSlices sums slice counts across runs (denominator-weighted)", () => {
   );
   assert.equal(byType[0].value, 0.3);
   assert.equal(byType[1].value, 0);
+});
+
+test("poolSlices pools ccrCoverage by the sizeBucket dimension in SIZE_ORDER", () => {
+  const runs = [
+    {
+      metrics: {
+        rates: {
+          ccrCoverage: {
+            slices: [
+              {
+                prType: "bug-fix",
+                severity: null,
+                numerator: 3,
+                denominator: 4,
+              },
+              {
+                prType: null,
+                severity: null,
+                sizeBucket: "XL",
+                numerator: 1,
+                denominator: 5,
+              },
+              {
+                prType: null,
+                severity: null,
+                sizeBucket: "S",
+                numerator: 4,
+                denominator: 4,
+              },
+            ],
+          },
+        },
+      },
+    },
+    {
+      metrics: {
+        rates: {
+          ccrCoverage: {
+            slices: [
+              {
+                prType: null,
+                severity: null,
+                sizeBucket: "S",
+                numerator: 2,
+                denominator: 6,
+              },
+            ],
+          },
+        },
+      },
+    },
+  ];
+  const pooled = poolSlices(runs, "ccrCoverage", "sizeBucket", SIZE_ORDER);
+  // prType-only cells are ignored when pooling by sizeBucket; S sorts before XL.
+  assert.deepEqual(
+    pooled.map((r) => r.category),
+    ["S", "XL"],
+  );
+  // S = (4+2)/(4+6) = 6/10; XL = 1/5.
+  assert.deepEqual(pooled[0], {
+    category: "S",
+    numerator: 6,
+    denominator: 10,
+    value: 0.6,
+  });
+  assert.deepEqual(pooled[1], {
+    category: "XL",
+    numerator: 1,
+    denominator: 5,
+    value: 0.2,
+  });
 });
 
 test("poolSlices yields null value when the pooled denominator is 0", () => {

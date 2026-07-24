@@ -1,7 +1,8 @@
 # CCR Improvement Loop — Session Handoff
 
-_Last updated: 2026-07-22. Branch: `experiments/harvest-pull-request-comments`.
-Newest session first; the 2026-07-13 dashboard/metrics session follows below._
+_Last updated: 2026-07-24. Branch: `experiments/harvest-pull-request-comments`.
+Newest session first; the 2026-07-22 rate-limit session and the 2026-07-13
+dashboard/metrics session follow below._
 
 This document summarizes the work done in this working session on the
 `ccr-improvement-loop` agentic workflow and its dashboard. It is a handoff for
@@ -22,12 +23,65 @@ breakdown charts. All work is committed (see [Git state](#git-state)).
 
 ---
 
+## Session 2026-07-24 — CCR improvement-loop rebuild (Phases 0–5)
+
+Implemented the 6-phase `implementation-plan.md` rebuild on the canonical
+`ccr-improvement-loop/` copy (the pre-rebuild version is frozen at
+`.github/aw/ccr-improvement-loop-legacy/` — **do not modify**). Every phase gate
+was proven green before the next started; the full per-action record is in
+[`execution-log.md`](execution-log.md).
+
+**Shipped by phase.**
+
+- **P0–P1 (foundation + cache):** deterministic prep orchestration, warm-cache
+  persistence (a second run over a warm cache issues zero PR fetches).
+- **P2 (GraphQL migration, opt-plan #4):** per-PR fixed reads moved to the separate
+  GraphQL **point pool**, primary REST `6 + N` → `1 + N`, guarded by a
+  field-equivalence golden test (`tests/pr-equivalence.test.ts`).
+- **P3 (backlog + outcomes + `workflow_call`):** settled-only window expansion
+  (`gen-backlog.ts`), the outcome artifact contract, and the loop made
+  reusable-callable.
+- **P4 (the pacer):** `scripts/pace.ts` (planner: `readBudget` / `estimateCost` /
+  `assertFittable` / `admit` / `reconcile`) + `.github/workflows/ccr-pacer.yml`
+  (plain hand-written YAML: plan → backfill matrix over the loop lock → ledger).
+  Admits `≤ 1 window/repo/tick` against a static `core`/`graphql`(/search) budget,
+  reconciles into the durable `ccr-pacer-state` ledger; `assertFittable` rules out
+  permanent starvation. `actionlint`-clean.
+- **P5 (scale polish, Track C):**
+  - **C2 preflight guard** — `prep-run.ts --check-budget` (default on; skipped
+    under `--skip-fetch`) fetches live `rate_limit` and aborts **before any fetch/
+    cache write** if a pool can't cover one window (`preflightShortfalls` in
+    `pace.ts`; the safety margin applies to core/graphql only, never the tiny
+    30/min search pool).
+  - **C3 dashboard** — `scripts/gen-manifest.ts` regenerates `data/manifest.json`
+    from the run files on disk (browser can't glob); a **PR-size bucket**
+    (`sizeBucket` S/M/L/XL) coverage slice derived from already-captured
+    `additions`/`deletions` (`run-schema.ts` + `compute-metrics.ts` + a
+    `chart-coverage-size` chart); repo faceting already present.
+  - **C4 docs** — converged `api-rate-limit.md` §5/§7, `optimize-api-call-plan.md`
+    §4/§8/sequencing, `README.md` "Backfilling at scale" (T1/T2/T3 tiers),
+    `decisions.md` **D15** (pacer), **D16** (tiered REST minimization), **D17**
+    (per-repo App tokens), and this entry.
+
+**Gates (all green):** `typecheck` + `lint` + `format:check` clean; **187** vitest
+tests (`pnpm test`); **13** dashboard tests (`node --test
+dashboard/js/aggregate.test.mjs`); `actionlint .github/workflows/ccr-pacer.yml`
+exit 0; `ccr-improvement-loop.lock.yml` recompiled via `gh aw compile`. The
+`-legacy` copy was never touched.
+
+**Deferred (documented decision points, not gaps):** the live no-403 GHEC pacer
+run awaits a PAT/App token (T1/D17); opt-plan **#6** (git-patch `N`-removal) and
+**#7** (cross-PR batching) stay evidence-gated (D16).
+
+---
+
 ## Session 2026-07-22 — GitHub API rate-limit optimization
 
 **Goal.** Reduce GitHub API pressure in the PR-fetch path so backfills stop
 hitting the rate limit, and map out how to scale backfill across many repos.
 
 ### Code shipped (`scripts/`, all tests green)
+
 - **#1 — Deleted the unused `commits/{sha}/pulls` call + `commitPrs` field.**
   Verified written-but-never-read (only consumers were test fixtures). Per-PR
   cost `6 + 2N` → `6 + N` (N = commits). `fetch-prs.ts`, `types.ts`, fixtures.
@@ -46,11 +100,13 @@ hitting the rate limit, and map out how to scale backfill across many repos.
   connections still paginate). Rationale in `optimize-api-call-plan.md`.
 
 ### New docs
+
 - **`optimize-api-call-plan.md`** — the #1–#5 items, status, and test plan.
 - **`api-rate-limit.md`** — ground-up reference: cost model, primary vs secondary
   limits, the token finding, scaling levers, enterprise (GHEC/GHES) implications.
 
 ### Key findings
+
 - **Auth is the real ceiling.** Prep steps run with
   `GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}` (workflow `.md`). On the personal
   `gh-aw-trial` repo that's **~1,000 req/hr** — consistent with runs dying at
@@ -65,6 +121,7 @@ hitting the rate limit, and map out how to scale backfill across many repos.
   invocations — over a 1,000/hr budget, at/near a 5,000/hr one.
 
 ### Dispatch experiments (`JennyPng/gh-aw-trial`)
+
 - Pushed the code changes to `trial/main` (commit `f01e85f21`, fast-forward).
 - Dispatched a **capped** June 2026 run (`max_prs=75`) → cancelled at user
   request.
@@ -73,6 +130,7 @@ hitting the rate limit, and map out how to scale backfill across many repos.
   constraint for full-cohort months on this (personal) repo.
 
 ### Recommended next steps
+
 1. **Upgrade auth** — App installation token, or host the workflow on a
    GHEC-owned repo (→ 15,000/hr). Highest-leverage change for scale.
 2. **Keep the limiter** (#5) regardless of tier — the only guard vs secondary
@@ -85,11 +143,12 @@ hitting the rate limit, and map out how to scale backfill across many repos.
    point budget, and **#3** to shrink the `N` term.
 
 ### Validation (from `.github/aw/ccr-improvement-loop`)
-| Gate | Command | Result |
-|------|---------|--------|
-| Typecheck | `npm run typecheck` | pass |
+
+| Gate       | Command             | Result                              |
+| ---------- | ------------------- | ----------------------------------- |
+| Typecheck  | `npm run typecheck` | pass                                |
 | Full suite | `npm test` (vitest) | 97/97 (added `tests/utils.test.ts`) |
-| Lint | `npm run lint` | clean |
+| Lint       | `npm run lint`      | clean                               |
 
 ---
 
@@ -99,6 +158,7 @@ hitting the rate limit, and map out how to scale backfill across many repos.
 trends have real history.
 
 **What was done.**
+
 - Added dispatch inputs `window_start`, `window_end`, and `max_prs` to the
   workflow (`.github/workflows/ccr-improvement-loop.md`), recompiled the lock
   (`gh aw compile ccr-improvement-loop`, v0.80.9).
@@ -109,6 +169,7 @@ trends have real history.
   pre-existing 2026-07-09 Python & Tools runs).
 
 **Reproducible dispatch playbook (for future backfills).**
+
 - Workflow `concurrency: cancel-in-progress: false` allows only **1 running + 1
   pending per repo** → dispatch **sequentially**, one to completion before the
   next.
@@ -146,6 +207,7 @@ raised on **CCR-reviewed** PRs (and that were judged), the share CCR independent
 raised the same concern (`ccrAddressedConcern === true`)._ Eligibility is gated at
 the **PR level** (`ccrReviewed`), not the fragile per-comment timing gate. Unjudged
 asks (`ccrAddressedConcern == null`) abstain from the denominator.
+
 - Named `ccrRecallRate` (not `ccrCatchRate`) to avoid confusion with the
   pre-existing, **unrelated** `criticalCatchRate` metric.
 - Exported a pure helper `computeCcrRecallRate(prs, comments, warnings?)` reused
@@ -184,6 +246,7 @@ keep `ccrRecallRate` as a headline, not to reframe).
 
 **Charts added** (all in `dashboard/index.html` + rendered by
 `app.mjs:renderSliceCharts`):
+
 1. **CCR comment outcomes by severity** — addressed / rejected / ignored, grouped
    by critical / substantive / nit.
 2. **Addressed vs ignored by PR type** — where CCR's comments land vs go
@@ -200,6 +263,7 @@ averaging per-run rates. This fixes the small-sample problem: per-run cells were
 (0.09/PR).
 
 **Implementation.**
+
 - `charts.mjs` — new `groupedBar()` helper + `OUTCOME_COLORS`.
 - `aggregate.mjs` — new `poolSlices(runs, rateKey, dim, order)` helper +
   `PR_TYPE_ORDER` / `SEVERITY_ORDER` constants. This is **presentation-only** (used
@@ -223,14 +287,14 @@ down by PR type. **PR-size buckets (S/M/L/XL) were considered but NOT added** �
 All green after every change (run from the tool dir
 `.github/aw/ccr-improvement-loop`):
 
-| Gate | Command | Result |
-|------|---------|--------|
-| Typecheck | `npx tsc --noEmit` | pass |
-| Dashboard unit tests | `node --test 'dashboard/js/**/*.test.mjs'` | 11/11 |
-| Full suite | `npm test` (vitest) | 88/88 |
-| Lint | `npx eslint .` | clean |
-| Format | `npm run format:check` (`--write` to fix) | clean |
-| Render check | `node scripts/aggregate-runs.ts dashboard/data/run-*.json` | renders `ccrRecallRateOverTime` |
+| Gate                 | Command                                                    | Result                          |
+| -------------------- | ---------------------------------------------------------- | ------------------------------- |
+| Typecheck            | `npx tsc --noEmit`                                         | pass                            |
+| Dashboard unit tests | `node --test 'dashboard/js/**/*.test.mjs'`                 | 11/11                           |
+| Full suite           | `npm test` (vitest)                                        | 88/88                           |
+| Lint                 | `npx eslint .`                                             | clean                           |
+| Format               | `npm run format:check` (`--write` to fix)                  | clean                           |
+| Render check         | `node scripts/aggregate-runs.ts dashboard/data/run-*.json` | renders `ccrRecallRateOverTime` |
 
 Notes: run scripts via `node scripts/foo.ts` (Node v25, TS via native strip). The
 shell wrapper blocks `kill $VAR` (use literal PIDs). `gh aw compile` = v0.80.9.
@@ -271,19 +335,19 @@ shell wrapper blocks `kill $VAR` (use literal PIDs). `gh aw compile` = v0.80.9.
 
 ## Key files
 
-| File | Role |
-|------|------|
-| `scripts/compute-metrics.ts` | Source of truth for all metrics; `computeCcrRecallRate` helper. |
-| `scripts/attribute-comments.ts` | `computeCcrSawCode` — the strict gate behind `isGap` (kept). |
-| `scripts/aggregate-runs.ts` | CLI aggregation mirror (trend core). |
-| `dashboard/js/aggregate.mjs` | Browser aggregation + `poolSlices` (dashboard-only). |
-| `dashboard/js/app.mjs` | Dashboard orchestration + chart rendering. |
-| `dashboard/js/charts.mjs` | Chart.js wrappers (`lineChart`, `barChart`, `groupedBar`). |
-| `dashboard/index.html` | Chart sections + copy. |
-| `dashboard/data/*.json` + `manifest.json` | The 8 live runs the dashboard reads. |
-| `decisions.md` | Design-decision log (see **D14** for the metric redesign). |
-| `README.md` | Metric definitions and rationale (Q1–Q4). |
-| `scripts/utils.ts` | `Semaphore` + `ghRequestLimiter` (concurrency cap), `ghApiJsonAsync`/`ghApiGraphqlAsync`, header-aware backoff. |
-| `scripts/fetch-prs.ts` | PR fetch/cache; bounded parallel fan-out (`fetchPrToCache`). |
-| `optimize-api-call-plan.md` | API-call optimization items #1–#5, status, test plan. |
-| `api-rate-limit.md` | Rate-limit reference: cost model, primary/secondary limits, token/enterprise, scaling levers. |
+| File                                      | Role                                                                                                            |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `scripts/compute-metrics.ts`              | Source of truth for all metrics; `computeCcrRecallRate` helper.                                                 |
+| `scripts/attribute-comments.ts`           | `computeCcrSawCode` — the strict gate behind `isGap` (kept).                                                    |
+| `scripts/aggregate-runs.ts`               | CLI aggregation mirror (trend core).                                                                            |
+| `dashboard/js/aggregate.mjs`              | Browser aggregation + `poolSlices` (dashboard-only).                                                            |
+| `dashboard/js/app.mjs`                    | Dashboard orchestration + chart rendering.                                                                      |
+| `dashboard/js/charts.mjs`                 | Chart.js wrappers (`lineChart`, `barChart`, `groupedBar`).                                                      |
+| `dashboard/index.html`                    | Chart sections + copy.                                                                                          |
+| `dashboard/data/*.json` + `manifest.json` | The 8 live runs the dashboard reads.                                                                            |
+| `decisions.md`                            | Design-decision log (see **D14** for the metric redesign).                                                      |
+| `README.md`                               | Metric definitions and rationale (Q1–Q4).                                                                       |
+| `scripts/utils.ts`                        | `Semaphore` + `ghRequestLimiter` (concurrency cap), `ghApiJsonAsync`/`ghApiGraphqlAsync`, header-aware backoff. |
+| `scripts/fetch-prs.ts`                    | PR fetch/cache; bounded parallel fan-out (`fetchPrToCache`).                                                    |
+| `optimize-api-call-plan.md`               | API-call optimization items #1–#5, status, test plan.                                                           |
+| `api-rate-limit.md`                       | Rate-limit reference: cost model, primary/secondary limits, token/enterprise, scaling levers.                   |

@@ -78,6 +78,10 @@ jobs:
           node -e '
             const fs = require("node:fs");
             const dir = process.env.DATA_DIR;
+            // run.id is the canonical window identity, so filenames look like
+            // run-<owner>_<repo>__<start>__<end>__<cohort>__raw<ver>.json (with
+            // "__" separators and a dot in the version). The run-*.json glob and
+            // this regex match those basenames unchanged.
             const runs = fs.readdirSync(dir)
               .filter((f) => /^run-.*\.json$/.test(f))
               .sort();

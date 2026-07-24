@@ -1,7 +1,7 @@
 {
-  "schemaVersion": "1.0",
+  "schemaVersion": "1.1",
   "run": {
-    "id": "2026-06-18_Azure_azure-sdk-for-go",
+    "id": "Azure_azure-sdk-for-go__2026-06-11__2026-06-18__uncapped__raw1.0",
     "repo": "Azure/azure-sdk-for-go",
     "windowStart": "2026-06-11",
     "windowEnd": "2026-06-18",
@@ -79,8 +79,12 @@
       "distinctReviewers": 4,
       "promoted": true,
       "promotedVia": "opinion",
-      "priorityScore": 132.0,
-      "sourcePrs": [7012, 7034, 7045]
+      "priorityScore": 132,
+      "sourcePrs": [
+        7012,
+        7034,
+        7045
+      ]
     }
   ],
   "metrics": {
@@ -102,7 +106,9 @@
         ]
       }
     },
-    "coverageWarnings": ["bug-fix/critical cell denominator < 5 (n=4)"],
+    "coverageWarnings": [
+      "bug-fix/critical cell denominator < 5 (n=4)"
+    ],
     "counts": {
       "prsFetched": 1,
       "judgeCalls": 1
@@ -115,7 +121,11 @@
       "theme": "error-handling",
       "rule": "Wrap returned errors with %w so callers can use errors.Is/errors.As.",
       "redundantWith": null,
-      "sourcePrs": [7012, 7034, 7045],
+      "sourcePrs": [
+        7012,
+        7034,
+        7045
+      ],
       "provenance": "<!-- run-id=2026-06-18_Azure_azure-sdk-for-go; source-prs=7012,7034,7045 -->",
       "status": "proposed"
     }

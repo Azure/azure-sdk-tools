@@ -149,6 +149,23 @@ describe("dedupeRuns", () => {
         expect(deduped).toHaveLength(1);
         expect(deduped[0]?.run.generatedAt).toBe("2026-06-19T00:00:00Z");
     });
+
+    it("keeps both runs when they differ only by cohort (distinct run.id)", () => {
+        const uncapped = run({ generatedAt: "2026-06-18T00:00:00Z" });
+        const capped = buildRunJson({
+            meta: { ...meta("Azure/go"), cohort: "cap-100" },
+            prs: [prRow(1, true)],
+            comments: [],
+            themes: [],
+            proposedEdits: [],
+            experiment: null,
+            automationLogins: [],
+            generatedAt: "2026-06-18T00:00:00Z",
+        });
+        expect(capped.run.id).not.toBe(uncapped.run.id);
+        const deduped = dedupeRuns([uncapped, capped]);
+        expect(deduped).toHaveLength(2);
+    });
 });
 
 describe("aggregate — fixture math", () => {

@@ -19,9 +19,31 @@ on:
       max_prs:
         description: "Cap PRs per window (empty/0 = uncapped full cohort). Use to stay under the API rate limit on high-volume repos."
         required: false
+  # Reusable entrypoint: the Phase 4 pacer dispatches settled windows by calling
+  # this workflow. Inputs mirror workflow_dispatch exactly; both feed the SAME
+  # Phase 1 resolver, so a scheduled run, a manual dispatch, and a pacer call
+  # over the same (repo, window, cohort) resolve to one identical windowId.
+  workflow_call:
+    inputs:
+      repo:
+        description: "Target repo (owner/name); defaults to this repository"
+        required: false
+        type: string
+      window_start:
+        description: "Backfill window start YYYY-MM-DD (empty = rolling weekly window)"
+        required: false
+        type: string
+      window_end:
+        description: "Backfill window end YYYY-MM-DD (empty = settle cutoff, today - settle-days)"
+        required: false
+        type: string
+      max_prs:
+        description: "Cap PRs per window (empty/0 = uncapped full cohort)."
+        required: false
+        type: string
 # One run per (repo, ref) — no schedule/dispatch races.
 concurrency:
-  group: ccr-loop-${{ github.event.inputs.repo || github.repository }}
+  group: ccr-loop-${{ inputs.repo || github.repository }}
   cancel-in-progress: false
 # Read-only agent job. Every write (the tracking issue, the run-JSON artifact)
 # is routed through safe-outputs; copilot-requests:write lets the default
@@ -50,15 +72,18 @@ safe-outputs:
     allowed-paths:
       - ".ccr-runs/run-*.json"
 env:
-  TARGET_REPO: ${{ github.event.inputs.repo || github.repository }}
+  # `inputs.*` is populated for workflow_dispatch AND workflow_call, and is empty
+  # on the weekly schedule — so one expression serves all three trigger shapes
+  # (no `github.event.inputs`, which a workflow_call never sets).
+  TARGET_REPO: ${{ inputs.repo || github.repository }}
   # Optional explicit backfill window; empty on the weekly schedule so prep-run
   # falls back to its rolling settled window.
-  WINDOW_START: ${{ github.event.inputs.window_start }}
-  WINDOW_END: ${{ github.event.inputs.window_end }}
+  WINDOW_START: ${{ inputs.window_start }}
+  WINDOW_END: ${{ inputs.window_end }}
   # Optional per-window PR cap; empty on the weekly schedule so prep-run stays
   # uncapped (full cohort). Set on manual backfills of high-volume repos to
   # bound API calls under the App installation rate limit.
-  MAX_PRS: ${{ github.event.inputs.max_prs }}
+  MAX_PRS: ${{ inputs.max_prs }}
   CCR_CACHE: ${{ github.workspace }}/.ccr-cache
   CCR_RUNS: ${{ github.workspace }}/.ccr-runs
 # Deterministic data prep runs as custom steps (outside the agent sandbox, with
@@ -89,6 +114,32 @@ steps:
         echo "::error::Target $TARGET_REPO is a fork; refusing to mine. See references/upstream-fork-check.md."
         exit 1
       fi
+  - name: Resolve window identity
+    id: window
+    working-directory: .github/aw/ccr-improvement-loop
+    run: |
+      set -euo pipefail
+      # The canonical windowId is resolved by the SAME pure resolver prep uses,
+      # so the cross-run cache key below and prep's window can never disagree.
+      # It must be known BEFORE prep so actions/cache can restore first.
+      node ./scripts/resolve-window.ts --repo "$TARGET_REPO" \
+        ${WINDOW_START:+--window-start "$WINDOW_START"} \
+        ${WINDOW_END:+--window-end "$WINDOW_END"} \
+        ${MAX_PRS:+--max-prs "$MAX_PRS"} > "$RUNNER_TEMP/window.json"
+      node -e 'const d=require(process.env.RUNNER_TEMP+"/window.json");const fs=require("fs");fs.appendFileSync(process.env.GITHUB_OUTPUT,`window_id=${d.windowId}\nraw_schema_version=${d.rawSchemaVersion}\n`)'
+      echo "Resolved windowId: $(node -e 'console.log(require(process.env.RUNNER_TEMP+"/window.json").windowId)')"
+  - name: Restore PR cache
+    uses: actions/cache/restore@v5
+    with:
+      # Restore ONLY the raw PR cache — never judged/emitted artifacts (cheap to
+      # recompute; coupling invites staleness, D12).
+      path: .ccr-cache/pr-*.json
+      # Miss on the unique completion key, then fall back to the newest completed
+      # cache for this exact windowId. A different repo/window/cohort/raw-schema
+      # yields a different windowId and thus a clean re-fetch.
+      key: ccr-cache-${{ steps.window.outputs.window_id }}-${{ github.run_id }}-${{ github.run_attempt }}
+      restore-keys: |
+        ccr-cache-${{ steps.window.outputs.window_id }}-
   - name: Deterministic prep (fetch → classify → filter → attribute → audit)
     working-directory: .github/aw/ccr-improvement-loop
     env:
@@ -105,6 +156,62 @@ steps:
         ${WINDOW_START:+--window-start "$WINDOW_START"} \
         ${WINDOW_END:+--window-end "$WINDOW_END"} \
         ${MAX_PRS:+--max-prs "$MAX_PRS"}
+  - name: Save PR cache
+    # Save ONLY after a successful full raw-fetch, under a unique completion key
+    # (run_id + attempt). An immutable mid-fetch cache can therefore never poison
+    # a retry: a failed prep skips this step and no completed key is written.
+    if: success()
+    uses: actions/cache/save@v5
+    with:
+      path: .ccr-cache/pr-*.json
+      key: ccr-cache-${{ steps.window.outputs.window_id }}-${{ github.run_id }}-${{ github.run_attempt }}
+# Deterministic terminal-outcome classification runs AFTER the agent (post-steps
+# run once the engine finishes, regardless of success/failure). It derives the
+# single terminal outcome from observable signals — settled PR count, whether the
+# agent called `noop`, whether the run-JSON was produced, and the job status —
+# then writes and uploads outcome-<window_id>.json. The pacer (Phase 4) consumes
+# this as the window's completion signal; `artifact_name` is derived from the
+# windowId so it correlates offline without inspecting the upload.
+post-steps:
+  - name: Classify and emit terminal outcome
+    if: always()
+    working-directory: .github/aw/ccr-improvement-loop
+    env:
+      # job.status is the agent job's status so far (success on a clean run,
+      # failure if any prior step failed) — the hard-failure signal.
+      JOB_STATUS: ${{ job.status }}
+      WINDOW_ID: ${{ steps.window.outputs.window_id }}
+    run: |
+      set -uo pipefail
+      # Settled PR count prep selected (0 if prep never wrote its summary).
+      PR_COUNT=$(node -e 'try{process.stdout.write(String(require(process.env.CCR_CACHE+"/prep-summary.json").prCount))}catch{process.stdout.write("0")}')
+      MIN_PRS=$(node -e 'process.stdout.write(String(require("./config.json").minPrs))')
+      # Agent explicitly short-circuited with noop → a done "signal-noop".
+      NOOP=""
+      if [ -n "${GH_AW_SAFE_OUTPUTS:-}" ] && [ -f "${GH_AW_SAFE_OUTPUTS:-}" ] && grep -q '"noop"' "$GH_AW_SAFE_OUTPUTS"; then
+        NOOP="--agent-noop"
+      fi
+      # Run-JSON present on disk → the produce evidence (upload is confirmed by
+      # the downstream safe_outputs job; presence + emission is the strongest
+      # signal available inside the agent job).
+      UPLOAD=""
+      if ls "$CCR_RUNS"/run-*.json >/dev/null 2>&1; then UPLOAD="--upload-confirmed"; fi
+      # Any failed step in the agent job ⇒ failed (retryable), overriding all.
+      HARD=""
+      if [ "$JOB_STATUS" != "success" ]; then HARD="--hard-failure"; fi
+      node ./scripts/emit-outcome.ts \
+        --window-id "$WINDOW_ID" \
+        --pr-count "$PR_COUNT" --min-prs "$MIN_PRS" \
+        --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" \
+        --out-dir "$CCR_RUNS" $NOOP $UPLOAD $HARD
+  - name: Upload terminal outcome
+    if: always()
+    uses: actions/upload-artifact@v4
+    with:
+      name: outcome-${{ steps.window.outputs.window_id }}
+      path: .ccr-runs/outcome-*.json
+      if-no-files-found: warn
+      retention-days: 90
 ---
 
 # CCR Improvement Loop

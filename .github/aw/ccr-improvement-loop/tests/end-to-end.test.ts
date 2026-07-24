@@ -167,7 +167,7 @@ describe("end-to-end deterministic pipeline (offline fixture)", () => {
             );
             // parseRun throws on any schema/naming drift across stages.
             const run = parseRun(JSON.parse(runText));
-            expect(run.schemaVersion).toBe("1.0");
+            expect(run.schemaVersion).toBe("1.1");
             expect(run.metrics.rates.ccrRecallRate).toBeDefined();
             // CommentRow has no body field — emit must strip it.
             for (const c of run.comments) {

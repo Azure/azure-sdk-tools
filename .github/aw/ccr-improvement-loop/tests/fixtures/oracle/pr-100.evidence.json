@@ -1,0 +1,148 @@
+{
+  "number": 100,
+  "labels": [
+    "bug"
+  ],
+  "linkedIssues": [
+    {
+      "number": 90,
+      "labels": [
+        "regression"
+      ]
+    }
+  ],
+  "reviews": [
+    {
+      "id": 50,
+      "state": "COMMENTED",
+      "body": "Looks good overall, a couple of asks below.",
+      "submittedAt": "2026-06-01T10:05:00Z",
+      "author": "bob",
+      "authorAssociation": "MEMBER"
+    }
+  ],
+  "inline": [
+    {
+      "id": 1,
+      "path": "src/foo.ts",
+      "line": 41,
+      "startLine": null,
+      "originalLine": 41,
+      "body": "Please add a null check here to avoid a nil deref on the response.",
+      "diffHunk": "@@ -38,6 +38,8 @@\n+  const v = resp.value;",
+      "inReplyToId": null,
+      "pullRequestReviewId": 50,
+      "createdAt": "2026-06-01T10:00:00Z",
+      "author": "bob",
+      "authorAssociation": "MEMBER",
+      "lineStale": false,
+      "threadResolved": true
+    },
+    {
+      "id": 2,
+      "path": "src/foo.ts",
+      "line": 42,
+      "startLine": null,
+      "originalLine": 42,
+      "body": "Consider guarding against a nil response before dereferencing.",
+      "diffHunk": "@@ -38,6 +38,8 @@\n+  const v = resp.value;",
+      "inReplyToId": null,
+      "pullRequestReviewId": 51,
+      "createdAt": "2026-06-01T09:00:00Z",
+      "author": "copilot-pull-request-reviewer[bot]",
+      "authorAssociation": "NONE",
+      "lineStale": false,
+      "threadResolved": false
+    },
+    {
+      "id": 3,
+      "path": "src/bar.ts",
+      "line": 10,
+      "startLine": null,
+      "originalLine": 10,
+      "body": "Wrap this returned error with %w so callers can use errors.Is/errors.As.",
+      "diffHunk": "@@ -8,3 +8,3 @@\n-  return err\n+  return fmt.Errorf(...)",
+      "inReplyToId": null,
+      "pullRequestReviewId": 50,
+      "createdAt": "2026-06-01T10:01:00Z",
+      "author": "carol",
+      "authorAssociation": "COLLABORATOR",
+      "lineStale": false,
+      "threadResolved": false
+    },
+    {
+      "id": 4,
+      "path": "src/bar.ts",
+      "line": 10,
+      "startLine": null,
+      "originalLine": 10,
+      "body": "Fixed in a later commit, thanks.",
+      "diffHunk": null,
+      "inReplyToId": 3,
+      "pullRequestReviewId": 52,
+      "createdAt": "2026-06-01T11:30:00Z",
+      "author": "alice",
+      "authorAssociation": "OWNER",
+      "lineStale": false,
+      "threadResolved": false
+    },
+    {
+      "id": 5,
+      "path": "src/baz.ts",
+      "line": 5,
+      "startLine": null,
+      "originalLine": 5,
+      "body": "This is working as intended, won't fix.",
+      "diffHunk": null,
+      "inReplyToId": null,
+      "pullRequestReviewId": 50,
+      "createdAt": "2026-06-01T10:02:00Z",
+      "author": "dave",
+      "authorAssociation": "MEMBER",
+      "lineStale": false,
+      "threadResolved": false
+    },
+    {
+      "id": 6,
+      "path": "src/generated/api.ts",
+      "line": 200,
+      "startLine": null,
+      "originalLine": 200,
+      "body": "This generated file has an inconsistent style, please adjust the template.",
+      "diffHunk": null,
+      "inReplyToId": null,
+      "pullRequestReviewId": 50,
+      "createdAt": "2026-06-01T10:03:00Z",
+      "author": "bob",
+      "authorAssociation": "MEMBER",
+      "lineStale": false,
+      "threadResolved": false
+    }
+  ],
+  "issue": [
+    {
+      "id": 60,
+      "body": "+1",
+      "createdAt": "2026-06-01T10:10:00Z",
+      "author": "bob",
+      "authorAssociation": "MEMBER"
+    },
+    {
+      "id": 61,
+      "body": "Bumps lodash from 1 to 2.",
+      "createdAt": "2026-06-01T10:11:00Z",
+      "author": "dependabot[bot]",
+      "authorAssociation": "NONE"
+    }
+  ],
+  "commitOrder": [
+    {
+      "sha": "c1",
+      "committedAt": "2026-06-01T11:00:00Z"
+    },
+    {
+      "sha": "c2",
+      "committedAt": "2026-06-01T12:00:00Z"
+    }
+  ]
+}

@@ -328,6 +328,72 @@ are left as-is pending that feature's revisit.
 
 ---
 
+## D15 — Backfill pacer: a `cron` orchestrator over a derived backlog + durable ledger
+
+**Decision.** Drain a `repos × months` backfill with a second workflow
+(`.github/workflows/ccr-pacer.yml`, planner `scripts/pace.ts`): an hourly `cron`
+(a) derives the pending backlog from the settled-only window expansion + the
+durable ledger, (b) admits `≤ 1 window/repo` and `≤ max_windows_per_tick` that fit
+a static `core`/`graphql`(/search) budget check, (c) dispatches the **unchanged**
+child loop per admitted window via a reusable-workflow matrix, and (d) reconciles
+outcomes into a `ccr-pacer-state` branch (ledger + `skipped.json`). A plan-time
+`assertFittable` invariant proves every pending window can fit a fresh hour, so a
+defer is resume-next-tick, never permanent starvation.
+
+**Why.** At 6+ repos over many months the backlog vastly exceeds one hour's budget.
+The pacer bounds spend _per hour_ (orthogonal to the per-PR cuts D16), self-throttles
+instead of relying on a cap, and — because the `pr-*.json` cache makes re-dispatch
+free — resumes with zero rework after any interruption.
+
+**Rejected alternatives.** (1) _Always-on runner / in-job `sleep`_ — burns minutes
+idling and dies with the job; a `cron` **is** the pacing clock, fully async. (2)
+_Cross-workflow `repository_dispatch`_ — needs a PAT/App token to trigger and adds
+a coupling surface; a reusable-workflow matrix keeps dispatch in-repo under
+`GITHUB_TOKEN`. (3) _Per-run cap only_ (no budget check) — can't see the shared,
+depleting hourly budget and would blow the ceiling under concurrency. (4) _A
+committed, status-tracked backlog file_ — a mutable checked-in queue invites merge
+races and drift; **replaced by a derived backlog** (pure function of config +
+today) **over a durable canonical ledger** keyed by `run.id`/`window_id`, which
+can't disagree with what was actually produced.
+
+---
+
+## D16 — REST minimization is tiered and evidence-gated, not maximal
+
+**Decision.** Ship only the REST cuts justified by the shared, 6+-repo budget and
+stop there: **#1** dead-call deletion and **#4** per-PR fixed reads migrated to the
+**separate GraphQL point pool** (primary REST `6 + N` → `1 + N`) are **shipped**;
+**#7** cross-PR GraphQL batching and **#6** git-patch `N`-removal are **deferred
+decision points**, revived only on a real saturation / binding-REST reading.
+
+**Why.** #4 already moves the fixed reads off the binding pool onto points (which
+don't bind — a month is a few hundred), so the acute pressure is relieved. #7's
+**failure-isolation cost** (one bad PR fails a whole batch; retries re-do the
+batch) **outweighs the secondary-limit win the #5 limiter already covers**, and it
+cannot touch the dominant `N` term (patches). #6 removes `N` but is the
+**highest-maintenance** option (partial-clone, git transport, field-equivalence
+golden tests). Neither earns its complexity until a live reading shows primary REST
+actually binding.
+
+---
+
+## D17 — Per-repo App-installation credentials are the primary N-repo scale lever
+
+**Decision.** Treat **per-repo GitHub App-installation token budgets (T1)** — each
+target repo authenticating with its own installation, so each gets its own hourly
+ceiling instead of sharing one — as the primary lever for scaling to many repos.
+It is **config, not code**; the decision to turn it on is deferred pending a
+saturation reading from real pacer runs.
+
+**Why.** Raising the ceiling per repo scales linearly with repo count without any
+per-PR cleverness, and composes with the pacer (D15) and the point-pool migration
+(D16). It's held rather than pre-built because it carries operational setup (App
+registration, per-repo installation, secret plumbing) that isn't worth paying until
+the shared budget is observably the bottleneck — the same evidence-gated discipline
+as D16.
+
+---
+
 ## Cross-cutting principle
 
 Where judgment is irreducible, use the agent — on bounded evidence, with a pinned

@@ -31,11 +31,10 @@ namespace Azure.Sdk.Tools.Cli.Services
             try
             {
                 var template = new SdkBreakingChangeClassificationTemplate(sdkBreakingPattern, sdkchange, language, tspProjectPath);
-                List<AIFunction>? specTools = null;
+                List<AIFunction>? fileTools = null;
                 if (!string.IsNullOrEmpty(tspProjectPath) && Directory.Exists(tspProjectPath))
                 {
-                    // Tools scoped to spec repo for TypeSpec project inspection
-                    specTools = new List<AIFunction>
+                    fileTools = new List<AIFunction>
                     {
                         FileTools.CreateReadFileTool(tspProjectPath),
                         FileTools.CreateListFilesTool(tspProjectPath),
@@ -45,7 +44,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 var agent = new CopilotAgent<string>
                 {
                     Instructions = template.BuildPrompt(),
-                    Tools = specTools ?? new List<AIFunction>(),
+                    Tools = fileTools ?? [],
                 };
                 
                 var result = await _agentRunner.RunAsync(agent, ct);

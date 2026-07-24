@@ -1,0 +1,108 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# PR ephemeral-environment orchestrator.
+#
+# For every PR against `main`, provisions an isolated ADE environment
+# (`pr-<number>` in the `pr-sandbox` pool), deploys the three azd services into
+# it, and posts the environment resource group back to the PR. The matching
+# teardown runs from `pr-reaper.yml` (scheduled) when the PR closes.
+#
+# Wiring:
+#   - Provision  → templates/pr-environment.yml   (az devcenter dev environment create)
+#   - Deploy     → templates/azd-deploy.yml        (azd deploy <service>, build-once)
+#   - Auth       → templates/azd-auth.yml          (federated token for az + azd)
+#
+# Pipeline variables required (set on the pipeline or a variable group):
+#   SERVICE_CONNECTION, DEVCENTER_NAME, DEVCENTER_PROJECT, ADE_CATALOG_NAME,
+#   ADE_ENV_DEFINITION, ACR_NAME, SERVER_AUDIENCE, TEAMS_GROUP_ID,
+#   TEAMS_CHANNEL_IDS, FRONTEND_IMAGE_TAG, FUNCTION_IMAGE_TAG, AGENT_IMAGE_TAG
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: sdk-ai-bots — pr-ephemeral
+
+trigger: none
+
+# Build validation: attach this pipeline as a branch-policy build validation on
+# `main` so it runs on PR open/update. (ADO PR triggers come from branch policy,
+# not `pr:` for YAML pipelines in Azure Repos.)
+pr: none
+
+variables:
+    - template: /eng/pipelines/templates/variables/globals.yml
+    - name: prNumber
+      value: $(System.PullRequest.PullRequestId)
+    - name: environmentName
+      value: 'pr-$(System.PullRequest.PullRequestId)'
+
+extends:
+    template: /eng/pipelines/templates/stages/1es-redirect.yml
+    parameters:
+        Use1ESOfficial: true
+        stages:
+            - stage: ProvisionAndDeploy
+              displayName: 'PR env → deploy ($(environmentName))'
+              jobs:
+                  - job: Provision
+                    displayName: 'Provision ADE environment'
+                    pool:
+                        name: $(LINUXPOOL)
+                        image: $(LINUXVMIMAGE)
+                        os: linux
+                    steps:
+                        - checkout: self
+                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+
+                        # Build the environment-definition parameters JSON from
+                        # pipeline variables (image tags produced by CI).
+                        - bash: |
+                              set -euo pipefail
+                              cat > params.json <<JSON
+                              {
+                                "serverAudience": "$(SERVER_AUDIENCE)",
+                                "teamsGroupId": "$(TEAMS_GROUP_ID)",
+                                "teamsChannelIds": $(TEAMS_CHANNEL_IDS),
+                                "frontendImageRepository": "azure-sdk-qa-bot:$(FRONTEND_IMAGE_TAG)",
+                                "ragBasedBackendImageRepository": "azure-sdk-qa-bot-backend:$(FRONTEND_IMAGE_TAG)",
+                                "agentBasedImageRepository": "azure-sdk-qa-bot-agent-server:$(AGENT_IMAGE_TAG)",
+                                "functionImageRepository": "azure-sdk-qa-bot-function:$(FUNCTION_IMAGE_TAG)"
+                              }
+                              JSON
+                              echo "##vso[task.setvariable variable=paramsJson]$(cat params.json | tr -d '\n')"
+                          displayName: 'Build ADE parameters JSON'
+
+                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/pr-environment.yml
+                          parameters:
+                              action: create
+                              environmentName: $(environmentName)
+                              environmentType: pr-sandbox
+                              parametersJson: $(paramsJson)
+
+                  - job: Deploy
+                    displayName: 'Deploy services'
+                    dependsOn: Provision
+                    variables:
+                        adeResourceGroup: $[ dependencies.Provision.outputs['ade.adeResourceGroup'] ]
+                    pool:
+                        name: $(LINUXPOOL)
+                        image: $(LINUXVMIMAGE)
+                        os: linux
+                    steps:
+                        - checkout: self
+                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+
+                        - bash: |
+                              echo "Deploying into ADE resource group: $(adeResourceGroup)"
+                              echo "##vso[task.setvariable variable=AZURE_ENV_NAME]$(environmentName)"
+                              echo "##vso[task.setvariable variable=AZURE_RESOURCE_GROUP]$(adeResourceGroup)"
+                          displayName: 'Resolve deploy target'
+
+                        - ${{ each svc in split('frontend,function-app,agent', ',') }}:
+                              - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-deploy.yml
+                                parameters:
+                                    service: ${{ svc }}
+                                    imageTag: $(FRONTEND_IMAGE_TAG)
+
+                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/smoke-test.yml
+                          parameters:
+                              appName: $(adeResourceGroup)
+                              slot: default
+                              healthPath: /ping

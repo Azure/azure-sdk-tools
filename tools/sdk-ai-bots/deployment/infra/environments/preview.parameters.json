@@ -1,0 +1,21 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location":            { "value": "westus2" },
+    "resourceGroupName":   { "value": "rg-azuresdkqabot-preview" },
+    "teamsGroupId":        { "value": "3e17dcb0-4257-4a30-b843-77f47f1d4121" },
+    "teamsChannelIds":     { "value": [
+      "19:de3fce22c2994be18cac50502c55f717@thread.skype",
+      "19:906c1efbbec54dc8949ac736633e6bdf@thread.skype"
+    ]},
+    "serverAudience":              { "value": "REPLACE_WITH_PREVIEW_AAD_APP_AUDIENCE" },
+    "functionImageRepository":     { "value": "azure-sdk-qa-bot-function:preview" },
+    "ragBasedBackendImageRepository": { "value": "azure-sdk-qa-bot-backend:preview" },
+    "agentBasedImageRepository":   { "value": "azure-sdk-qa-bot-agent-server:preview" },
+    "frontendImageRepository":     { "value": "azure-sdk-qa-bot:preview" },
+    "frontendBaseName":            { "value": "azsdkqabot-preview" },
+    "backendSiteName":             { "value": "azuresdkqabot-server-preview" },
+    "functionAppName":             { "value": "azuresdkqabot-function-preview" }
+  }
+}

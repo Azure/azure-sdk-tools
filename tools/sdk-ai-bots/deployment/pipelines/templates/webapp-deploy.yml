@@ -1,0 +1,50 @@
+# Pipeline template — direct `az webapp config container set` for slot-based
+# deploys (used by the backend, which is not an azd service).
+#
+# Required pipeline variables: SERVICE_CONNECTION, ACR_NAME, AZURE_RESOURCE_GROUP.
+
+parameters:
+    - name: appName
+      type: string
+    - name: imageName
+      type: string
+    - name: imageTag
+      type: string
+    - name: slot
+      type: string
+      default: 'default' # 'default' means production slot (no --slot)
+
+steps:
+    - task: AzureCLI@2
+      displayName: 'Update ${{ parameters.appName }} (${{ parameters.slot }}) → ${{ parameters.imageName }}:${{ parameters.imageTag }}'
+      inputs:
+          azureSubscription: $(SERVICE_CONNECTION)
+          scriptType: bash
+          scriptLocation: inlineScript
+          inlineScript: |
+              set -euo pipefail
+              SLOT_ARG=""
+              TARGET="${{ parameters.appName }}"
+              if [ "${{ parameters.slot }}" != "default" ]; then
+                SLOT_ARG="--slot ${{ parameters.slot }}"
+                TARGET="${{ parameters.appName }}/${{ parameters.slot }}"
+              fi
+
+              ACR_LOGIN_SERVER=$(az acr show --name "$ACR_NAME" --query loginServer -o tsv)
+              echo "Updating $TARGET → $ACR_LOGIN_SERVER/${{ parameters.imageName }}:${{ parameters.imageTag }}"
+
+              # Validate the image tag exists before re-pointing the app.
+              TAGS=$(az acr repository show-tags --name "$ACR_NAME" --repository "${{ parameters.imageName }}" -o tsv || echo "")
+              echo "$TAGS" | grep -Fxq "${{ parameters.imageTag }}" || {
+                echo "##[error]Image ${{ parameters.imageName }}:${{ parameters.imageTag }} not found in $ACR_NAME"
+                exit 1
+              }
+
+              az webapp config container set \
+                --name "${{ parameters.appName }}" \
+                --resource-group "$AZURE_RESOURCE_GROUP" \
+                $SLOT_ARG \
+                --container-image-name "$ACR_LOGIN_SERVER/${{ parameters.imageName }}:${{ parameters.imageTag }}" \
+                --container-registry-url "https://$ACR_LOGIN_SERVER"
+              az webapp restart --name "${{ parameters.appName }}" --resource-group "$AZURE_RESOURCE_GROUP" $SLOT_ARG
+              echo "✓ deployed to $TARGET"

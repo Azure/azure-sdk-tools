@@ -1,0 +1,419 @@
+targetScope = 'resourceGroup'
+
+@description('Azure region for all resources.')
+param location string
+
+@description('Full container image reference for the backend service (registry/repository:tag).')
+param ragBasedBackendImage string
+
+@description('Full container image reference for the agent server slot (registry/repository:tag).')
+param agentBasedBackendImage string
+
+@description('Client ID of the qabot-identity managed identity; used by DefaultAzureCredential to select the identity.')
+param managedIdentityClientId string
+
+@description('Client ID (audience) of the Entra app registration that fronts the backend, used by App Service authentication (Easy Auth).')
+param serverAudience string
+
+@description('Name of the shared user-assigned managed identity attached to the site and slot.')
+param sharedIdentityName string
+
+@description('Name of the frontend/bot user-assigned managed identity also attached to the site and slot.')
+param frontendIdentityName string
+
+@description('Azure AI Services account name the backend talks to.')
+param aiResourceName string
+
+@description('Azure AI project name.')
+param aiProjectName string
+
+@description('Azure AI Search service name.')
+param searchServiceName string
+
+@description('Cosmos DB account name.')
+param cosmosDbAccountName string
+
+@description('Storage account name.')
+param storageAccountName string
+
+@description('Key Vault name.')
+param keyVaultName string
+
+@description('App Configuration store name.')
+param appConfigName string
+
+@description('Name of the shared action group notified by the metric alerts.')
+param actionGroupName string
+
+// Resource-name overrides — see qaBotSharedResources/sharedResources.bicep for
+// the rationale (prod's manually-built RG has different naming).
+@description('Name of the backend App Service plan.')
+param backendAppServicePlanName string = 'azuresdkqabot-appserviceplan-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the Log Analytics workspace backing backend Application Insights.')
+param backendLogWorkspaceName string = 'azuresdkqabot-log-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the backend web app. Also used as the name of its matching Application Insights component.')
+param backendSiteName string = 'azuresdkqabot-server-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the Application Insights component paired with the agent slot (prod uses a timestamped legacy name).')
+param backendSlotAppInsightsName string = 'azuresdkqabot-server202510300250-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the metric alert on the backend site.')
+param backendAlertName string = 'azuresdkqabot-alert-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+@description('Name of the metric alert on the agent slot.')
+param backendAgentAlertName string = 'azuresdkqabot-agent-alert-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+
+// User-assigned identities attached to both the site and the agent slot.
+var siteUserAssignedIdentities = {
+  '${resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', sharedIdentityName)}': {}
+  '${resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', frontendIdentityName)}': {}
+}
+
+resource serverfarm 'Microsoft.Web/serverfarms@2025-05-01' = {
+  name: backendAppServicePlanName
+  location: location
+  properties: {
+    reserved: true
+  }
+  sku: {
+    name: 'P0v3'
+    tier: 'Premium0V3'
+    size: 'P0v3'
+    family: 'Pv3'
+    capacity: 1
+  }
+  kind: 'linux'
+}
+
+// Log Analytics workspace backing the backend Application Insights components.
+resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
+  name: backendLogWorkspaceName
+  location: location
+  properties: {
+    sku: {
+      name: 'PerGB2018'
+    }
+    publicNetworkAccessForIngestion: 'Enabled'
+    publicNetworkAccessForQuery: 'Enabled'
+  }
+}
+
+resource serverAppInsights 'Microsoft.Insights/components@2020-02-02' = {
+  name: backendSiteName
+  location: location
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+    RetentionInDays: 90
+    WorkspaceResourceId: workspace.id
+  }
+}
+
+resource slotAppInsights 'Microsoft.Insights/components@2020-02-02' = {
+  name: backendSlotAppInsightsName
+  location: location
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+    RetentionInDays: 90
+    WorkspaceResourceId: workspace.id
+  }
+}
+
+resource site 'Microsoft.Web/sites@2025-05-01' = {
+  name: backendSiteName
+  tags: {
+    'hidden-link: /app-insights-resource-id': slotAppInsights.id
+    'azd-service-name': 'backend'
+  }
+  location: location
+  properties: {
+    httpsOnly: true
+    publicNetworkAccess: 'Enabled'
+    serverFarmId: serverfarm.id
+    siteConfig: {
+      linuxFxVersion: 'DOCKER|${ragBasedBackendImage}'
+      alwaysOn: true
+      acrUseManagedIdentityCreds: true
+      // Which user-assigned identity to use for the ACR pull. Required because
+      // the site has multiple user-assigned identities — without this the
+      // platform falls back to the (nonexistent) system-assigned identity and
+      // the container image pull fails, leaving the site returning 503.
+      acrUserManagedIdentityID: managedIdentityClientId
+      ftpsState: 'FtpsOnly'
+      httpLoggingEnabled: false
+      minTlsVersion: '1.2'
+      appSettings: [
+        {
+          // The Go backend listens on :8088 (see main.go `r.Run(":8088")`).
+          // App Service must be told this port or it probes the default 8080
+          // and the site returns 503.
+          name: 'WEBSITES_PORT'
+          value: '8088'
+        }
+        {
+          name: 'AZURE_CLIENT_ID'
+          value: managedIdentityClientId
+        }
+        {
+          name: 'AZURE_TENANT_ID'
+          value: tenant().tenantId
+        }
+        {
+          name: 'AZURE_SUBSCRIPTION_ID'
+          value: subscription().subscriptionId
+        }
+        {
+          name: 'AZURE_RESOURCE_GROUP'
+          value: resourceGroup().name
+        }
+        {
+          name: 'AI_PROJECT_NAME'
+          value: aiProjectName
+        }
+        {
+          name: 'AZURE_AI_RESOURCE_NAME'
+          value: aiResourceName
+        }
+        {
+          name: 'APP_INSIGHTS_CONNECTION_STRING'
+          value: slotAppInsights.properties.ConnectionString
+        }
+        {
+          name: 'AZURE_SEARCH_SERVICE_NAME'
+          value: searchServiceName
+        }
+        {
+          name: 'COSMOS_DB_ACCOUNT_NAME'
+          value: cosmosDbAccountName
+        }
+        {
+          name: 'STORAGE_ACCOUNT_NAME'
+          value: storageAccountName
+        }
+        {
+          name: 'KEY_VAULT_NAME'
+          value: keyVaultName
+        }
+        {
+          name: 'APP_CONFIG_NAME'
+          value: appConfigName
+        }
+        {
+          // The Go backend reads AZURE_APPCONFIG_ENDPOINT (a full URL) in
+          // config.InitConfiguration(); without it the App Configuration load
+          // fails with log.Fatalf and the container exits (503).
+          name: 'AZURE_APPCONFIG_ENDPOINT'
+          value: 'https://${appConfigName}.azconfig.io'
+        }
+      ]
+    }
+  }
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: siteUserAssignedIdentities
+  }
+  kind: 'app,linux,container'
+}
+
+resource config 'Microsoft.Web/sites/config@2025-05-01' = {
+  name: 'authsettingsV2'
+  parent: site
+  properties: {
+    platform: {
+      enabled: true
+      runtimeVersion: '~1'
+    }
+    globalValidation: {
+      requireAuthentication: true
+      unauthenticatedClientAction: 'RedirectToLoginPage'
+    }
+    identityProviders: {
+      azureActiveDirectory: {
+        enabled: true
+        registration: {
+          clientId: serverAudience
+          openIdIssuer: '${environment().authentication.loginEndpoint}${tenant().tenantId}/v2.0'
+        }
+        login: {
+          loginParameters: []
+        }
+      }
+    }
+    login: {
+      tokenStore: {
+        enabled: true
+      }
+    }
+  }
+}
+
+resource slot 'Microsoft.Web/sites/slots@2025-05-01' = {
+  name: 'agent'
+  parent: site
+  tags: {
+    'hidden-link: /app-insights-resource-id': slotAppInsights.id
+    // Lets `azd deploy agent-server` resolve this slot (not the production
+    // site) as its target. The actual image is set by the agent-server
+    // predeploy hook via `az webapp config container set --slot agent`.
+    'azd-service-name': 'agent-server'
+  }
+  location: location
+  properties: {
+    serverFarmId: serverfarm.id
+    httpsOnly: true
+    publicNetworkAccess: 'Enabled'
+    siteConfig: {
+      linuxFxVersion: 'DOCKER|${agentBasedBackendImage}'
+      alwaysOn: true
+      acrUseManagedIdentityCreds: true
+      // See the main site above — required so the ACR pull uses a real
+      // user-assigned identity rather than the nonexistent system-assigned one.
+      acrUserManagedIdentityID: managedIdentityClientId
+      ftpsState: 'FtpsOnly'
+      httpLoggingEnabled: false
+      appSettings: [
+        {
+          // The agent-server container (FastAPI server.py) listens on :8089
+          // (its Dockerfile: `EXPOSE 8089` / `uvicorn server:app --port 8089`);
+          // tell App Service so it routes to the right port instead of the
+          // default 8080 (else the warm-up probe fails and the slot returns 503).
+          name: 'WEBSITES_PORT'
+          value: '8089'
+        }
+        {
+          name: 'AZURE_CLIENT_ID'
+          value: managedIdentityClientId
+        }
+        {
+          name: 'AZURE_TENANT_ID'
+          value: tenant().tenantId
+        }
+        {
+          name: 'AZURE_SUBSCRIPTION_ID'
+          value: subscription().subscriptionId
+        }
+        {
+          name: 'AZURE_RESOURCE_GROUP'
+          value: resourceGroup().name
+        }
+        {
+          name: 'AI_PROJECT_NAME'
+          value: aiProjectName
+        }
+        {
+          name: 'AZURE_AI_RESOURCE_NAME'
+          value: aiResourceName
+        }
+        {
+          name: 'APP_INSIGHTS_CONNECTION_STRING'
+          value: slotAppInsights.properties.ConnectionString
+        }
+        {
+          name: 'COSMOS_DB_ACCOUNT_NAME'
+          value: cosmosDbAccountName
+        }
+        {
+          name: 'STORAGE_ACCOUNT_NAME'
+          value: storageAccountName
+        }
+        {
+          // The Python agent server reads AZURE_APPCONFIG_ENDPOINT in
+          // config/app_config.py `init()` and raises RuntimeError (container
+          // exits 1 → 503) if it is missing. All other settings are loaded
+          // from the App Configuration store at this endpoint.
+          name: 'AZURE_APPCONFIG_ENDPOINT'
+          value: 'https://${appConfigName}.azconfig.io'
+        }
+      ]
+    }
+  }
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: siteUserAssignedIdentities
+  }
+  kind: 'app,linux,container'
+}
+
+resource serverMetricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
+  name: backendAlertName
+  location: 'global'
+  properties: {
+    severity: 3
+    enabled: true
+    scopes: [
+      site.id
+    ]
+    evaluationFrequency: 'PT1M'
+    autoMitigate: true
+    targetResourceType: 'Microsoft.Web/sites'
+    targetResourceRegion: location
+    actions: [
+      {
+        actionGroupId: resourceId('Microsoft.Insights/actionGroups', actionGroupName)
+        webHookProperties: {}
+      }
+    ]
+    windowSize: 'PT5M'
+    criteria: {
+      allOf: [
+        {
+          operator: 'GreaterThan'
+          threshold: 0
+          name: 'Metric1'
+          metricNamespace: 'Microsoft.Web/sites'
+          metricName: 'Http5xx'
+          dimensions: []
+          timeAggregation: 'Total'
+          skipMetricValidation: false
+          criterionType: 'StaticThresholdCriterion'
+        }
+      ]
+      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
+    }
+  }
+}
+
+resource slotMetricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
+  name: backendAgentAlertName
+  location: 'global'
+  properties: {
+    severity: 3
+    enabled: true
+    scopes: [
+      slot.id
+    ]
+    evaluationFrequency: 'PT1M'
+    autoMitigate: true
+    targetResourceType: 'Microsoft.Web/sites/slots'
+    targetResourceRegion: location
+    actions: [
+      {
+        actionGroupId: resourceId('Microsoft.Insights/actionGroups', actionGroupName)
+        webHookProperties: {}
+      }
+    ]
+    windowSize: 'PT5M'
+    criteria: {
+      allOf: [
+        {
+          operator: 'GreaterThan'
+          threshold: 0
+          name: 'Metric1'
+          metricNamespace: 'Microsoft.Web/sites/slots'
+          metricName: 'Http5xx'
+          dimensions: []
+          timeAggregation: 'Total'
+          skipMetricValidation: false
+          criterionType: 'StaticThresholdCriterion'
+        }
+      ]
+      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
+    }
+  }
+}
+
+// Output
+output serverBaseUrl string = 'https://${slot.properties.defaultHostName}'

@@ -1,0 +1,112 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+
+name: sdk-ai-bots
+metadata:
+    template: sdk-ai-bots@1.0.0
+services:
+    agent:
+        project: azure-sdk-qa-bot-agent/agents/chat_agent
+        host: azure.ai.agent
+        language: python
+        image: qabotcontainervb64x5.azurecr.io/azure-sdk-qa-bot-agent-server:dev
+        config:
+            container:
+                resources:
+                    cpu: "0.5"
+                    memory: 1Gi
+        container:
+            resources:
+                cpu: "0.5"
+                memory: 1Gi
+        kind: hosted
+        name: azure-sdk-chat-agent
+        protocols:
+            - protocol: responses
+              version: 2.0.0
+        startupCommand: python init.py
+    agent-server:
+        project: azure-sdk-qa-bot-agent
+        host: appservice
+        language: docker
+        docker:
+            path: Dockerfile
+            context: ../../../
+            remoteBuild: true
+        hooks:
+            predeploy:
+                shell: sh
+                run: cd ../deployment && npx tsx hooks/agent-server-predeploy.ts
+                interactive: true
+    backend:
+        project: azure-sdk-qa-bot-backend
+        host: appservice
+        language: docker
+        docker:
+            path: Dockerfile
+            context: .
+            remoteBuild: true
+        hooks:
+            postdeploy:
+                shell: sh
+                run: cd ../deployment && npx tsx hooks/backend-postdeploy.ts
+                interactive: true
+    frontend:
+        project: azure-sdk-qa-bot
+        host: appservice
+        language: ts
+        dist: lib
+        hooks:
+            postdeploy:
+                shell: sh
+                run: cd ../deployment && npx tsx hooks/frontend-postdeploy.ts
+                interactive: true
+            predeploy:
+                shell: sh
+                run: cd ../deployment && npx tsx hooks/frontend-predeploy.ts
+                interactive: true
+    function-app:
+        project: azure-sdk-qa-bot-function
+        host: appservice
+        language: docker
+        docker:
+            path: Dockerfile
+            context: .
+            remoteBuild: true
+        hooks:
+            postdeploy:
+                shell: sh
+                run: cd ../deployment && npx tsx hooks/function-postdeploy.ts
+                interactive: true
+            predeploy:
+                shell: sh
+                run: cd ../deployment && npx tsx hooks/function-predeploy.ts
+                interactive: true
+infra:
+    provider: bicep
+    path: deployment/infra
+    module: main
+hooks:
+    postdeploy:
+        shell: sh
+        run: npx --yes tsx deployment/hooks/postdeploy.ts
+        interactive: true
+    postdown:
+        shell: sh
+        run: npx --yes tsx deployment/hooks/postdown.ts
+        interactive: true
+    postprovision:
+        shell: sh
+        run: npx --yes tsx deployment/hooks/postprovision.ts
+        interactive: true
+    predeploy:
+        shell: sh
+        run: npx --yes tsx deployment/hooks/predeploy.ts
+        interactive: true
+    predown:
+        shell: sh
+        run: npx --yes tsx deployment/hooks/predown.ts
+        interactive: true
+    preprovision:
+        shell: sh
+        run: npx --yes tsx deployment/hooks/preprovision.ts
+        interactive: true

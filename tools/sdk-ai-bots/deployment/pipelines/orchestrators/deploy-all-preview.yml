@@ -1,0 +1,40 @@
+# Orchestrator pipeline — full preview deploy.
+# Deploys all component images (backend → function-app → agent → frontend) to
+# preview in dependency order. Assumes infra is already provisioned via
+# provision-all-preview.yml. Each component's cd.yml gates on the
+# 'sdk-ai-bots-preview' ADO environment approval.
+#
+# Shape delegated to templates/deploy-stage.yml.
+
+name: tools - sdk-ai-bots - deploy-all-preview
+
+trigger: none
+pr: none
+
+variables:
+    - template: /eng/pipelines/templates/variables/globals.yml
+    - template: /eng/pipelines/templates/variables/image.yml
+
+parameters:
+    - name: imageTagFrontend
+      type: string
+    - name: imageTagBackend
+      type: string
+    - name: imageTagFunctionApp
+      type: string
+    - name: imageTagAgent
+      type: string
+
+extends:
+    template: /eng/pipelines/templates/stages/1es-redirect.yml
+    parameters:
+        Use1ESOfficial: true
+        stages:
+            - template: /tools/sdk-ai-bots/deployment/pipelines/templates/deploy-stage.yml
+              parameters:
+                  environment: preview
+                  imageTagBackend: '${{ parameters.imageTagBackend }}'
+                  imageTagFunctionApp: '${{ parameters.imageTagFunctionApp }}'
+                  imageTagAgent: '${{ parameters.imageTagAgent }}'
+                  imageTagFrontend: '${{ parameters.imageTagFrontend }}'
+

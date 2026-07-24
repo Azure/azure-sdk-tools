@@ -110,9 +110,8 @@ This section describes how to update bot service logic in Azure web app
 >   - azure sdk backend service
 
 1. Run `az login`
-2. Run `./scripts/setup-docker-image.ps1 -Tag <env>-<version> -Push -AcrName <acr-name-for-env>` to build and push docker image
-3. Update `DOCKER_IMAGE_TAG` in `.env.<env>`
-4. Click `Provision` button in the extension to update the docker tag.
+2. Run `azd deploy frontend` to build and push the image (cloud-side via `az acr build`) and deploy it. Local Docker is not required.
+3. Click `Provision` button in the extension to update the docker tag.
 
 ## Troubleshooting
 

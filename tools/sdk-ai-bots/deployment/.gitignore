@@ -1,0 +1,14 @@
+# Node hook dependencies (installed by `npm install` in this folder)
+node_modules/
+
+# Local azd environment state — managed per-developer, never committed
+.azure/
+
+# Build artifacts from bicep build / what-if
+*.bicep.json
+*.what-if.json
+
+# Re-include hooks/lib/ — the root .gitignore has a broad `lib/` rule
+# (from the Python template) that would otherwise ignore our TS hook helpers.
+!hooks/lib/
+!hooks/lib/**

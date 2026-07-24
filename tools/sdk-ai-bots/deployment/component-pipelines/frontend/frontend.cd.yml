@@ -1,0 +1,195 @@
+# CD pipeline — frontend (Teams bot).
+# Infrastructure provisioning (qaBotFrontend layer) is an integrated first
+# stage that only runs when the relevant infra files have changed since the
+# previous commit, or when runProvision is forced to true.
+#
+# Rollout: (optional provision) → deploy to staging slot → smoke test → swap to production.
+
+name: tools - sdk-ai-bots-frontend - cd
+
+trigger: none
+pr: none
+
+parameters:
+    - name: environment
+      type: string
+      default: dev
+      values: [dev, preview, prod]
+    - name: imageTag
+      type: string # must already exist in ACR
+    - name: rollbackOnFailure
+      type: boolean
+      default: true
+    - name: runProvision
+      type: boolean
+      default: false
+      displayName: 'Force provision (skip infra-diff check)'
+    - name: deployLayer
+      type: string
+      default: frontend
+      values:
+          - '' # empty = full azd provision graph, no scoping
+          - shared-resources
+          - agent-platform
+          - backend
+          - logic-app
+          - frontend
+          - function-app
+
+variables:
+    - template: /eng/pipelines/templates/variables/globals.yml
+    - template: /eng/pipelines/templates/variables/image.yml
+    # `appName` comes from FRONTEND_SITE_NAME (exported by load-environment-suite.yml).
+    # Downstream templates read $(FRONTEND_SITE_NAME) directly.
+    - name: imageName
+      value: 'azure-sdk-qa-bot'
+
+extends:
+    template: /eng/pipelines/templates/stages/1es-redirect.yml
+    parameters:
+        Use1ESOfficial: true
+        stages:
+            # ── Stage 1: Provision ────────────────────────────────────────────────
+            # InfraDiff detects whether qaBotFrontend infra files changed.
+            # Apply only runs when a diff is found or runProvision is forced.
+            - stage: ProvisionFrontend
+              displayName: 'Provision frontend infra (${{ parameters.environment }})'
+              jobs:
+                  - job: InfraDiff
+                    displayName: 'Detect infra diff'
+                    pool:
+                        name: $(LINUXPOOL)
+                        image: $(LINUXVMIMAGE)
+                        os: linux
+                    steps:
+                        - checkout: self
+                        - bash: |
+                              CHANGED=$(git diff HEAD~1 --name-only 2>/dev/null \
+                                | grep -E "^tools/sdk-ai-bots/deployment/infra/modules/qaBotFrontend/|^tools/sdk-ai-bots/deployment/infra/main\.bicep$" \
+                                || true)
+                              if [ -n "$CHANGED" ]; then
+                                echo "Infra changes detected:"
+                                echo "$CHANGED"
+                                echo "##vso[task.setvariable variable=INFRA_CHANGED;isOutput=true]true"
+                              else
+                                echo "No infra changes detected."
+                                echo "##vso[task.setvariable variable=INFRA_CHANGED;isOutput=true]false"
+                              fi
+                          name: diffCheck
+                          displayName: 'Check infra diff (HEAD~1)'
+
+                  - deployment: Apply
+                    displayName: 'Apply infra changes'
+                    dependsOn: InfraDiff
+                    condition: and(succeeded('InfraDiff'), or(${{ parameters.runProvision }}, eq(dependencies.InfraDiff.outputs['diffCheck.INFRA_CHANGED'], 'true')))
+                    environment: 'sdk-ai-bots-${{ parameters.environment }}'
+                    pool:
+                        name: $(LINUXPOOL)
+                        image: $(LINUXVMIMAGE)
+                        os: linux
+                    strategy:
+                        runOnce:
+                            deploy:
+                                steps:
+                                    - checkout: self
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+                                      parameters:
+                                          environment: '${{ parameters.environment }}'
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-validate.yml
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-what-if.yml
+                                      parameters:
+                                          parametersFile: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment/infra/environments/${{ parameters.environment }}.parameters.json'
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
+                                      parameters:
+                                          deployLayer: '${{ parameters.deployLayer }}'
+
+            # ── Stage 2: Deploy ───────────────────────────────────────────────────
+            - stage: DeployFrontend
+              displayName: 'Deploy frontend → ${{ parameters.environment }}'
+              dependsOn: ProvisionFrontend
+              condition: in(dependencies.ProvisionFrontend.result, 'Succeeded', 'SucceededWithIssues')
+              jobs:
+                  - deployment: Deploy
+                    environment: 'sdk-ai-bots-${{ parameters.environment }}'
+                    pool:
+                        name: $(LINUXPOOL)
+                        image: $(LINUXVMIMAGE)
+                        os: linux
+                    strategy:
+                        runOnce:
+                            deploy:
+                                steps:
+                                    - checkout: self
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+                                      parameters:
+                                          environment: '${{ parameters.environment }}'
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+
+                                    # 1. Deploy image to staging slot.
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/webapp-deploy.yml
+                                      parameters:
+                                          appName: $(FRONTEND_SITE_NAME)
+                                          imageName: $(imageName)
+                                          imageTag: '${{ parameters.imageTag }}'
+                                          slot: staging
+
+                                    # 2. Smoke test the staging slot.
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/smoke-test.yml
+                                      parameters:
+                                          appName: $(FRONTEND_SITE_NAME)
+                                          slot: staging
+                                          healthPath: /health
+
+                                    # 3. Swap staging → production (skip for dev: direct-deploy).
+                                    - ${{ if ne(parameters.environment, 'dev') }}:
+                                          - template: /tools/sdk-ai-bots/deployment/pipelines/templates/swap-slot.yml
+                                            parameters:
+                                                appName: $(FRONTEND_SITE_NAME)
+                                                sourceSlot: staging
+                                                targetSlot: production
+
+                                    # 4. Verify production slot post-swap.
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/smoke-test.yml
+                                      parameters:
+                                          appName: $(FRONTEND_SITE_NAME)
+                                          slot: default
+                                          healthPath: /health
+
+                                    # 5. Record LastKnownGoodTag.
+                                    - task: AzureCLI@2
+                                      displayName: 'Record LastKnownGoodTag'
+                                      inputs:
+                                          azureSubscription: $(SERVICE_CONNECTION)
+                                          scriptType: bash
+                                          scriptLocation: inlineScript
+                                          inlineScript: |
+                                              set -euo pipefail
+                                              az appconfig kv set \
+                                                --name "$APP_CONFIG_NAME" \
+                                                --key "Deployment:frontend:LastKnownGoodTag" \
+                                                --value "${{ parameters.imageTag }}" --yes
+
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/notify.yml
+                                      parameters:
+                                          component: frontend
+                                          environment: '${{ parameters.environment }}'
+                                          status: success
+                                          details: 'tag=${{ parameters.imageTag }}'
+
+                            on:
+                                failure:
+                                    steps:
+                                        - ${{ if eq(parameters.rollbackOnFailure, true) }}:
+                                              - template: /tools/sdk-ai-bots/deployment/pipelines/templates/rollback.yml
+                                                parameters:
+                                                    component: frontend
+                                                    appName: $(FRONTEND_SITE_NAME)
+                                                    imageName: $(imageName)
+                                                    slot: default
+                                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/notify.yml
+                                          parameters:
+                                              component: frontend
+                                              environment: '${{ parameters.environment }}'
+                                              status: failure
+                                              details: 'failed deploying tag=${{ parameters.imageTag }}'

@@ -1,0 +1,21 @@
+{
+  "name": "sdk-ai-bots-deployment",
+  "version": "1.0.0",
+  "description": "azd lifecycle hooks and deployment scaffolding for the sdk-ai-bots tool",
+  "private": true,
+  "scripts": {
+    "preprovision": "tsx hooks/preprovision.ts",
+    "postprovision": "tsx hooks/postprovision.ts",
+    "predeploy": "tsx hooks/predeploy.ts",
+    "postdeploy": "tsx hooks/postdeploy.ts",
+    "predown": "tsx hooks/predown.ts",
+    "postdown": "tsx hooks/postdown.ts",
+    "check-quotas": "tsx scripts/check-quotas.ts",
+    "deploy:logic-app": "tsx scripts/deploy-logic-app.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

@@ -43,7 +43,11 @@ async function refreshAdoToken(_timer: Timer, context: InvocationContext): Promi
 }
 
 // Run every 6 hours so the token (~24 hour validity) stays fresh.
+// runOnStartup seeds the secret immediately when the Functions host starts
+// (e.g. right after a deploy) so a fresh environment isn't missing 'ado-token'
+// for up to 6 hours until the first scheduled run.
 app.timer("adoTokenRefresh", {
     schedule: "0 0 */6 * * *",
+    runOnStartup: true,
     handler: refreshAdoToken,
 });

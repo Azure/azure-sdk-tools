@@ -1,0 +1,158 @@
+# "CD" pipeline — knowledge-sync.
+# Shared-resources infrastructure provisioning is an integrated first stage
+# that only runs when the relevant infra files have changed since the previous
+# commit, or when runProvision is forced to true.
+#
+# The sync stage runs on a daily schedule and refreshes the Search index.
+
+name: tools - sdk-ai-bots-knowledge-sync - cd
+
+trigger: none
+pr: none
+
+schedules:
+    - cron: '0 2 * * *'
+      displayName: Daily knowledge sync (02:00 UTC)
+      branches:
+          include:
+              - main
+      always: true
+
+parameters:
+    - name: environment
+      type: string
+      default: prod
+      values: [dev, preview, prod]
+    - name: runProvision
+      type: boolean
+      default: false
+      displayName: 'Force provision (skip infra-diff check)'
+    - name: deployLayer
+      type: string
+      default: shared-resources
+      values:
+          - '' # empty = full azd provision graph, no scoping
+          - shared-resources
+          - agent-platform
+          - backend
+          - logic-app
+          - frontend
+          - function-app
+
+variables:
+    - template: /eng/pipelines/templates/variables/globals.yml
+    - template: /eng/pipelines/templates/variables/image.yml
+    - name: workingDirectory
+      value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync'
+
+resources:
+    repositories:
+        - repository: 1ESPipelineTemplates
+          type: git
+          name: 1ESPipelineTemplates/1ESPipelineTemplates
+          ref: refs/tags/release
+        - repository: azure-sdk-docs-eng.ms
+          type: git
+          name: internal/azure-sdk-docs-eng.ms
+          ref: main
+        - repository: internal-wiki
+          type: git
+          name: internal/internal.wiki
+          ref: wikiMaster
+
+extends:
+    template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
+    parameters:
+        settings:
+            skipBuildTagsForGitHubPullRequests: true
+            networkIsolationPolicy: Permissive
+        stages:
+            # ── Stage 1: Provision ────────────────────────────────────────────────
+            # InfraDiff detects whether qaBotSharedResources infra files changed.
+            # Apply only runs when a diff is found or runProvision is forced.
+            - stage: ProvisionSharedResources
+              displayName: 'Provision shared-resources infra (${{ parameters.environment }})'
+              jobs:
+                  - job: InfraDiff
+                    displayName: 'Detect infra diff'
+                    pool:
+                        name: $(LINUXPOOL)
+                        image: $(LINUXVMIMAGE)
+                        os: linux
+                    steps:
+                        - checkout: self
+                        - bash: |
+                              CHANGED=$(git diff HEAD~1 --name-only 2>/dev/null \
+                                | grep -E "^tools/sdk-ai-bots/deployment/infra/modules/qaBotSharedResources/" \
+                                || true)
+                              if [ -n "$CHANGED" ]; then
+                                echo "Infra changes detected:"
+                                echo "$CHANGED"
+                                echo "##vso[task.setvariable variable=INFRA_CHANGED;isOutput=true]true"
+                              else
+                                echo "No infra changes detected."
+                                echo "##vso[task.setvariable variable=INFRA_CHANGED;isOutput=true]false"
+                              fi
+                          name: diffCheck
+                          displayName: 'Check infra diff (HEAD~1)'
+
+                  - deployment: Apply
+                    displayName: 'Apply infra changes'
+                    dependsOn: InfraDiff
+                    condition: and(succeeded('InfraDiff'), or(${{ parameters.runProvision }}, eq(dependencies.InfraDiff.outputs['diffCheck.INFRA_CHANGED'], 'true')))
+                    environment: 'sdk-ai-bots-${{ parameters.environment }}'
+                    pool:
+                        name: $(LINUXPOOL)
+                        image: $(LINUXVMIMAGE)
+                        os: linux
+                    strategy:
+                        runOnce:
+                            deploy:
+                                steps:
+                                    - checkout: self
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+                                      parameters:
+                                          environment: '${{ parameters.environment }}'
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
+                                      parameters:
+                                          deployLayer: '${{ parameters.deployLayer }}'
+
+            # ── Stage 2: Sync knowledge ───────────────────────────────────────────
+            - stage: SyncKnowledge
+              displayName: 'Sync knowledge'
+              dependsOn: ProvisionSharedResources
+              condition: in(dependencies.ProvisionSharedResources.result, 'Succeeded', 'SucceededWithIssues')
+              jobs:
+                  - job: Sync
+                    pool:
+                        name: $(LINUXPOOL)
+                        image: $(LINUXVMIMAGE)
+                        os: linux
+                    steps:
+                        - checkout: self
+                        - checkout: azure-sdk-docs-eng.ms
+                        - checkout: internal-wiki
+                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+                          parameters:
+                              environment: '${{ parameters.environment }}'
+                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+                        - task: NodeTool@0
+                          inputs: { versionSpec: '24.x' }
+                        - script: npm ci
+                          workingDirectory: $(workingDirectory)
+                        - script: npm start
+                          workingDirectory: $(workingDirectory)
+                          displayName: 'Run knowledge sync'
+                        # Post-run guard: fail if Search index doc count regressed > 10 %.
+                        - task: AzureCLI@2
+                          displayName: 'Validate Search index doc count'
+                          inputs:
+                              azureSubscription: $(SERVICE_CONNECTION)
+                              scriptType: bash
+                              scriptLocation: inlineScript
+                              inlineScript: |
+                                  set -euo pipefail
+                                  # TODO: call Search admin API to compare current vs previous doc count;
+                                  # fail if delta < -10%. Stub for now.
+                                  echo "TODO: implement index regression guard"

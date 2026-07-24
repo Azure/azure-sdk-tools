@@ -1,0 +1,50 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "centralus"
+    },
+    "aiLocation": {
+      "value": "eastus2"
+    },
+    "cosmosDbLocation": {
+      "value": "eastus2"
+    },
+    "resourceGroupName": {
+      "value": "azure-sdk-qa-bot-dev"
+    },
+    "teamsGroupId": {
+      "value": "e33c7fe9-84fa-47c8-a288-1a23b7b92ea5"
+    },
+    "teamsChannelIds": {
+      "value": [
+        "19:ZK2wSwDjcdWUr_0jR1njUWFbnTCzKJ8QnyyDkNURqUE1@thread.tacv2"
+      ]
+    },
+    "serverAudience": {
+      "value": "REPLACE_WITH_DEV_AAD_APP_AUDIENCE"
+    },
+    "functionImageRepository": {
+      "value": "azure-sdk-qa-bot-function:dev"
+    },
+    "ragBasedBackendImageRepository": {
+      "value": "azure-sdk-qa-bot-backend:dev"
+    },
+    "agentBasedImageRepository": {
+      "value": "azure-sdk-qa-bot-agent-server:dev"
+    },
+    "frontendImageRepository": {
+      "value": "azure-sdk-qa-bot:dev"
+    },
+    "frontendBaseName": {
+      "value": "azsdkqabot-dev"
+    },
+    "backendSiteName": {
+      "value": "azuresdkqabot-server-dev"
+    },
+    "functionAppName": {
+      "value": "azuresdkqabot-function-dev"
+    }
+  }
+}

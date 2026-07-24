@@ -1,0 +1,45 @@
+# Orchestrator pipeline — full prod deploy.
+# Deploys all component images (backend → function-app → agent → frontend) to
+# prod with a 10-minute stabilization window after the backend rolls out.
+#
+# Prerequisites: run provision-all-prod.yml first to review the what-if and
+# sign off the operational-readiness checklist. Infra deploys for prod are
+# executed manually via the per-component <component>.provision.yml pipelines
+# — see provision-all-prod.yml for details.
+#
+# Shape delegated to templates/deploy-stage.yml.
+
+name: tools - sdk-ai-bots - deploy-all-prod
+
+trigger: none
+pr: none
+
+variables:
+    - template: /eng/pipelines/templates/variables/globals.yml
+    - template: /eng/pipelines/templates/variables/image.yml
+
+parameters:
+    - name: imageTagFrontend
+      type: string
+    - name: imageTagBackend
+      type: string
+    - name: imageTagFunctionApp
+      type: string
+    - name: imageTagAgent
+      type: string
+
+extends:
+    template: /eng/pipelines/templates/stages/1es-redirect.yml
+    parameters:
+        Use1ESOfficial: true
+        stages:
+            - template: /tools/sdk-ai-bots/deployment/pipelines/templates/deploy-stage.yml
+              parameters:
+                  environment: prod
+                  stageSuffix: Prod
+                  stabilizationSeconds: 600
+                  imageTagBackend: '${{ parameters.imageTagBackend }}'
+                  imageTagFunctionApp: '${{ parameters.imageTagFunctionApp }}'
+                  imageTagAgent: '${{ parameters.imageTagAgent }}'
+                  imageTagFrontend: '${{ parameters.imageTagFrontend }}'
+

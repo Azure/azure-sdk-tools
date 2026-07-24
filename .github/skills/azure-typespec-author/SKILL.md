@@ -31,7 +31,7 @@ This includes but is not limited to:
 
 | Tool                                                   | Purpose                                                   |
 | ------------------------------------------------------ | --------------------------------------------------------- |
-| `azure-sdk-mcp:azsdk_typespec_generate_authoring_plan` | Generate grounded authoring plan (fallback when agentic search does not cover the case) |
+| `azure-sdk-mcp:azsdk_typespec_generate_authoring_plan` | Generate grounded authoring plan (fallback when agentic search does not cover the case; **never used for Case 3 — API Version Evolution**) |
 | `azure-sdk-mcp:azsdk_run_typespec_validation`          | Validate TypeSpec                                         |
 
 **Prerequisite:** `azure-sdk-mcp` server must be running.
@@ -87,7 +87,7 @@ Output all referenced document URLs from Step 3. This gives the user direct link
 | --------------------------------------------------------------------- | ------------------------------------------- |
 | [analyze-project.md](references/analyze-project.md)                   | Step 1: project analysis                    |
 | [intake.md](references/intake.md)                                     | Step 2: general + case-specific intake      |
-| [authoring-plan.md](references/authoring-plan.md)                     | Step 3: build authoring plan (Option A + B) |
+| [authoring-plan.md](references/authoring-plan.md)                     | Step 3: build authoring plan (agentic search primary; MCP fallback, never for Case 3) |
 | [agentic-search.md](references/agentic-search.md)                     | Procedure: fetch URLs → extract guidance    |
 | [reference-document-links.md](references/reference-document-links.md) | Catalog of external guide URLs              |
 | [validation.md](references/validation.md)                             | Step 5: validate → compile → verify         |

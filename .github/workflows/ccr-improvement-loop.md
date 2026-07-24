@@ -210,6 +210,10 @@ post-steps:
     with:
       name: outcome-${{ steps.window.outputs.window_id }}
       path: .ccr-runs/outcome-*.json
+      # .ccr-runs is a dot-directory; upload-artifact@v4 excludes hidden files by
+      # default, which silently dropped this artifact — the pacer ledger then read
+      # every window as `failed` (no outcome ⇒ failed). Keep this true.
+      include-hidden-files: true
       if-no-files-found: warn
       retention-days: 90
 ---

@@ -2,5 +2,6 @@
   "repos": ["Azure/azure-sdk-for-go", "Azure/azure-sdk-for-python"],
   "start_date": "2026-06-01",
   "granularity": "month",
-  "max_prs": 0
+  "max_prs": 0,
+  "max_windows_per_tick": 1
 }

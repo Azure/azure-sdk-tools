@@ -688,3 +688,75 @@ how to onboard (pacer for backfill is the suggested method)."
   fixed the one internal anchor that pointed at a removed README section.
 - `format:check` clean; internal links (`README.md#onboarding`,
   `metrics.md#reading-rules-...`) resolve.
+
+---
+
+## Trial deployment — pacer run from June 1 (`JennyPng/gh-aw-trial`)
+
+User: "do a test run in the gh-aw-trial repo. push changes there and trigger the
+pacer just starting from june 1."
+
+- Set `pacer/config.json` `start_date` → **2026-06-01** (repos, monthly
+  granularity, uncapped `max_prs:0` left as-is — "just" the date). July is unsettled
+  (`end ≤ today−14d`), so the backlog is exactly **June per repo**.
+- Local branch HEAD `== trial/main` (`9539a4272`), so the full Phase 0–5 build was a
+  clean fast-forward. Committed the build (`6ec29d135`) — **legacy dir excluded**
+  (untracked, never staged) — and pushed to `trial/main`.
+- First dry-run dispatch → **startup_failure**: the reusable loop's `agent`/`detection`
+  jobs request `copilot-requests: write`, but the pacer's `backfill` caller job didn't
+  grant it (a caller's permissions must be a superset of every nested job's). Fixed by
+  adding `copilot-requests: write` to the backfill job (`279677156`). actionlint flags
+  the scope as "unknown" (its list is stale) — GitHub requires it; non-fatal.
+- Re-dispatched `dry_run=true` → **plan passed**. In-Actions `GITHUB_TOKEN` budget is
+  **core 5000 / graphql 5000** (not the ~1,000 the old handoff feared), so the
+  starvation guard clears (est 1200 rest / 2000 graphql per window). Admitted **2**
+  windows (go June, python June), deferred 0.
+- Real dispatch (run `30124922457`): plan ✓ → both backfill legs cleared
+  pre-activation/activation ✓ → both in the **agent** phase (live loop). Ledger will
+  reconcile into `ccr-pacer-state`.
+
+---
+
+## Doc — `how-it-works.html` (ground-up system walkthrough)
+
+User: "generate an html page that walks through ground up how this system works."
+
+- Created **`how-it-works.html`** — a self-contained (no external deps),
+  dark-themed walkthrough reusing `rate-limit-walkthrough.html`'s design language
+  (CSS variables, `section.step`, `.callout`, `details.check`, `table.limits`, an
+  interactive quiz). Added pipeline-flow diagrams and provenance-tagged metric
+  cards.
+- 12 sections, ground-up: the question → big-picture flow → the three-phase
+  architecture (D2) → Phase 1 deterministic prep (window identity, fetch/classify/
+  filter/attribute, the raw-only cache) → Phase 2 agent judgment (closed vocabulary,
+  no `judge.ts`) → the five metrics + reading rules (each tagged deterministic vs
+  judged) → the two eligibility guards + the `missRate`→`ccrRecallRate` cautionary
+  tale (D14) → Phase 3 terminal outcome → the pacer (plan/backfill/ledger +
+  starvation guard) → the static dashboard → anti-Goodhart/proposal-only → a
+  5-question self-check quiz.
+- Validated: all tags balanced, every TOC anchor resolves, footer links exist,
+  `format:check` clean.
+
+---
+
+## Trial fix — outcome artifact upload + serialize the pacer
+
+First trial pacer run (`30124922457`) surfaced two issues; user: "fix, serialize."
+
+- **Bug: the pacer ledger marked every window `failed`, even the successful python
+  one.** `emit-outcome.ts` wrote `outcome-<id>.json` fine, but the "Upload terminal
+  outcome" step logged `No files were found with the provided path:
+.ccr-runs/outcome-*.json`. Cause: `.ccr-runs` is a **dot/hidden directory** and
+  `actions/upload-artifact@v4` excludes hidden files by default
+  (`include-hidden-files: false`), so the artifact never uploaded; the ledger reads
+  a missing outcome as `failed`. This silently broke the entire pacer success path
+  (standalone dispatch was unaffected — only the pacer consumes the outcome
+  artifact). **Fix:** added `include-hidden-files: true` to that step in
+  `ccr-improvement-loop.md`; recompiled the lock (`gh aw compile`, 0 err/0 warn).
+- **Rate-limit race:** both uncapped June cohorts ran concurrently and share one
+  installation budget; go hit `403 rate limit exceeded for installation` mid-fetch.
+  **Fix:** set `max_windows_per_tick: 1` in `pacer/config.json` to serialize legs
+  (verified locally: plan admits go, defers python).
+- Committed + pushed the fix to `trial/main`; re-triggered the pacer. The prior
+  `failed` ledger records are attempt-1 and retryable (retry_cap 1), so both windows
+  re-run — go fresh (its failed fetch saved no cache), python off its saved pr-cache.

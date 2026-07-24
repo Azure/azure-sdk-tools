@@ -26,6 +26,20 @@ coverage map; the README is the user guide.
 | ARM API reviewer suite | ARM OpenAPI-spec review quality (specs-repo only) | Model-graded | `azure-rest-api-specs` `.github/skills/evals/arm-api-reviewer/` (own `.vally.yaml`, own `run-evals.ps1` runner) | Own pipeline; not on the shared `vallyRoot`/`evalGlobs` model used elsewhere |
 | Vally lint | Eval YAML is well-formed / schema-valid (not a behavioral check) | Deterministic | applies to every file above | Runs in every repo that has synced `.github/workflows/skill-eval.yml` |
 
+Itemized, since "(N files)" above hides which scenarios actually exist —
+every file in `evals/workflows/` today, all in `azure-sdk-tools`:
+
+| File | Area | Tier | What it covers |
+|---|---|---|---|
+| [`analyze-failed-pipeline.eval.yaml`](workflows/mock/analyze-failed-pipeline.eval.yaml) | pipeline | mock | Two-tool path — pull pipeline status, then analyze the run to surface the failing test |
+| [`check-public-repo-then-validate.eval.yaml`](workflows/mock/check-public-repo-then-validate.eval.yaml) | typespec | mock | Validate, then check public-repo presence |
+| [`fix-pipeline.eval.yaml`](workflows/mock/fix-pipeline.eval.yaml) | pipeline | mock | Given the analysis, apply the fix to the overlaid source and verify via the package `build`/`check`/`test` MCP tools |
+| [`multi-turn-release-workflows.eval.yaml`](workflows/mock/multi-turn-release-workflows.eval.yaml) | release-plan | mock | Multi-turn (`turns:`) release-plan conversation coverage |
+| [`release-planner-workflows.eval.yaml`](workflows/mock/release-planner-workflows.eval.yaml) | release-plan | mock | Create / re-fetch / link / update release-plan flows (5 stimuli) |
+| [`rename-client-property.eval.yaml`](workflows/mock/rename-client-property.eval.yaml) | typespec | mock | Stub — needs an `expected-diff` grader + sparse clone |
+| [`typespec-generation-step02.eval.yaml`](workflows/mock/typespec-generation-step02.eval.yaml) | typespec | mock | Step in the spec-PR generation flow |
+| [`release-planner.eval.yaml`](workflows/live/release-planner.eval.yaml) | release-plan | **live** | Create + re-fetch a release plan, kick off SDK gen, link PR back — real DevOps test-area writes |
+
 ## 2. Skills and scenario coverage
 
 13 skill directories exist under `.github/skills/` today (`distribution:

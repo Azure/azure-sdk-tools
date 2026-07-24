@@ -26,6 +26,10 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification.Templates
             "<p>This release plan is currently missing Product ID, Service ID, or Product Type.</p>" +
             "<p>Please use azsdk agent to update the release plan with Product ID, Service ID, and Product Type to complete KPI attestation when release plan is completed.</p>";
 
+        private const string MissingSdkDetailsSection =
+            "<p>SDK details are currently missing from the release plan, likely because the emitter configuration is not defined in tspconfig.yaml. " +
+            "As a result, the SDK pull request cannot be generated until the emitter configuration is added to tspconfig.yaml and the release plan is updated with the SDK details.</p>";
+
         private const string AzSdkAgentDocumentationUrl = "https://aka.ms/azsdk/agent";
 
         private const string ManagementSdkOwnerAlias = "sdkowners@microsoft.com";
@@ -73,6 +77,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification.Templates
                 <br>
                 <h3>SDK pull requests</h3>
                 {PlaneSpecificMessage}
+                {MissingSdkDetailsSectionContent}
                 <br>
                 {KpiAttestationSectionContent}
                 <br>
@@ -114,6 +119,13 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification.Templates
                 : ManualSDKGenMessage;
 
         private string KpiAttestationSectionContent => IsMissingProductInfo ? KpiAttestationSection : string.Empty;
+
+        private string MissingSdkDetailsSectionContent => IsMissingSdkDetails ? MissingSdkDetailsSection : string.Empty;
+
+        private bool IsMissingSdkDetails =>
+            releasePlan.SDKInfo is null
+            || releasePlan.SDKInfo.Count == 0
+            || releasePlan.SDKInfo.All(sdkInfo => string.IsNullOrWhiteSpace(sdkInfo.PackageName));
 
         private bool IsMissingProductInfo =>
             string.IsNullOrWhiteSpace(releasePlan.ProductTreeId)

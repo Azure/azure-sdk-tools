@@ -686,11 +686,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         /// (exactly three segments, e.g. sdk/&lt;service&gt;/&lt;package&gt;), as opposed to a
         /// service-level path. Such entries should be attached to the package by name rather
         /// than a raw path. The final path segment is returned as the suggested package name.
+        /// Paths containing a wildcard ('*') are never treated as package directories.
         /// </summary>
         public static bool LooksLikePackageDirectory(string? path, out string packageName)
         {
             packageName = string.Empty;
-            if (string.IsNullOrWhiteSpace(path))
+            if (string.IsNullOrWhiteSpace(path) || path.Contains('*'))
             {
                 return false;
             }

@@ -170,6 +170,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
         [TestCase("sdk/storage/")]
         [TestCase("/sdk/storage")]
         [TestCase("sdk/storage/Azure.Storage.Blobs/extra")]
+        [TestCase("sdk/storage/*")]
+        [TestCase("sdk/*/Azure.Storage.Blobs")]
+        [TestCase("/sdk/storage/Azure.Storage.*")]
         public void LooksLikePackageDirectory_NonPackageDirectory_ReturnsFalse(string? path)
         {
             Assert.That(CodeownersTool.LooksLikePackageDirectory(path, out _), Is.False);

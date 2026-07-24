@@ -165,7 +165,8 @@ public class NotificationServiceTests
             ProductType = string.Empty,
             SpecPullRequests = ["https://github.com/Azure/azure-rest-api-specs/pull/9"],
             ReleasePlanSubmittedByEmail = "author@microsoft.com",
-            ApiReleaseType = ApiReleaseType.PublicPreview
+            ApiReleaseType = ApiReleaseType.PublicPreview,
+            SDKInfo = [new SDKInfo { Language = "Java", PackageName = "Azure.Fabrikam" }]
         };
 
         var payload = new NewReleasePlanEmail(releasePlan)
@@ -302,7 +303,8 @@ public class NotificationServiceTests
             ServiceTreeId = "service-1",
             ProductType = "Offering",
             SpecPullRequests = ["https://github.com/Azure/azure-rest-api-specs/pull/1"],
-            ApiReleaseType = ApiReleaseType.GA
+            ApiReleaseType = ApiReleaseType.GA,
+            SDKInfo = [new SDKInfo { Language = ".NET", PackageName = "Azure.ResourceManager.Contoso" }]
         };
 
         var body = new NewReleasePlanEmail(releasePlan).Body;

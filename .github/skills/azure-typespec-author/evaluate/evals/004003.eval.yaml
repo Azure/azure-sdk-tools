@@ -59,6 +59,8 @@ stimuli:
           dest: package-lock.json
         - src: ../fixtures/Microsoft.Widget/Widget/package.json
           dest: package.json
+        - src: ../scripts/check-node-dependencies.js
+          dest: check-node-dependencies.js
         - src: ../fixtures/004003-delete-and-restore-operationId-decorator/tspconfig.yaml
           dest: tspconfig.yaml
       commands:
@@ -67,7 +69,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "edit"
+            - "^(edit|bash)$"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "skill-invocation"
         config:
@@ -87,8 +89,16 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "edit"
+            - "^(edit|bash)$"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
+      - type: "run-command"
+        config:
+          command: "node check-node-dependencies.js node_modules"
+          expected_exit_code: 0
+      - type: "run-command"
+        config:
+          command: "node check-node-dependencies.js packages"
+          expected_exit_code: 0
       - type: "run-command"
         config:
           command: "tsp compile ."

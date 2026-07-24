@@ -67,7 +67,7 @@ See [intake.md](references/intake.md).
 
 ### Step 3: Build Authoring Plan
 
-See [authoring-plan.md](references/authoring-plan.md).
+**You MUST call `web_fetch` to ground the plan in the reference docs before writing the plan whenever the case is covered by [reference-document-links.md](references/reference-document-links.md) (this includes all API version evolution). Never author the plan from memory, and do not call the MCP tool for a covered case.** See [authoring-plan.md](references/authoring-plan.md).
 
 ### Step 4: Apply Changes
 

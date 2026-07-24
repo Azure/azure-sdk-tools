@@ -84,6 +84,14 @@ SRC_STATIC_AZURE_DOCS = "static_azure_docs"
 SRC_STATIC_API_SPEC_VIEW_QA = "static_api_spec_view_qa"
 SRC_STATIC_ARM_DOCS = "static_arm_docs"
 
+# -- Synthesized knowledge pages (built by azure-sdk-qa-bot-wiki-index) --
+# Wiki summary pages inherit their source's context_id, so they need no
+# dedicated source. The cross-document wiki pages (entity/concept/synthesis)
+# carry these context_ids.
+SRC_WIKI_ENTITY = "wiki_entity"
+SRC_WIKI_CONCEPT = "wiki_concept"
+SRC_WIKI_SYNTHESIS = "wiki_synthesis"
+
 
 # ---------------------------------------------------------------------------
 # Global knowledge source registry
@@ -281,6 +289,19 @@ _register(
         description="Azure SDK tools documentation covering js-sdk-release-tools and related JavaScript SDK tooling.",
         base_url="https://github.com/Azure/azure-sdk-tools/blob/main/",
     ),
+    # -- Synthesized wiki pages (cross-document) --
+    KnowledgeSource(
+        name=SRC_WIKI_ENTITY,
+        description="Wiki ENTITY pages: one per TypeSpec/Azure SDK symbol (decorator, API, type such as `@added`, `TrackedResource`), aggregating what the corpus says about that symbol: what it is, its usage, constraints, and common mistakes. Query when a question centers on a specific decorator, API, or type.",
+    ),
+    KnowledgeSource(
+        name=SRC_WIKI_CONCEPT,
+        description="Wiki CONCEPT pages: one per cross-cutting TypeSpec/Azure SDK topic (e.g. API versioning, long-running operations, pagination), consolidating the core rules, the decorators/APIs involved, and the pitfalls across many documents. Query when a question is about an end-to-end concept or pattern rather than one symbol.",
+    ),
+    KnowledgeSource(
+        name=SRC_WIKI_SYNTHESIS,
+        description="Wiki SYNTHESIS pages: cross-document syntheses/comparisons that tie several related symbols or concepts together into one coherent explanation. Query for higher-level 'how do these fit together' questions.",
+    ),
 )
 
 
@@ -353,6 +374,9 @@ _TYPESPEC_SOURCES = _sources(
     SRC_STATIC_TYPESPEC_TO_SWAGGER_MAPPING,
     SRC_TYPESPEC_AZURE_PROVIDERHUB_DOCS,
     SRC_STATIC_ARM_DOCS,
+    SRC_WIKI_ENTITY,
+    SRC_WIKI_CONCEPT,
+    SRC_WIKI_SYNTHESIS,
 )
 
 _AZURE_TYPESPEC_AUTHORING_SOURCES = _sources(

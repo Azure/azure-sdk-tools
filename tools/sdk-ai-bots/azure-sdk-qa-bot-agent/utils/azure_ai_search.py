@@ -1,19 +1,7 @@
-"""Azure AI Search SDK client helpers for knowledge retrieval.
-
-This module uses the Azure AI Search Python SDK (not raw REST).  Each search
-result is automatically expanded by its header hierarchy so the agent gets
-full section context in a single call.  Sibling queries run concurrently
-via ``asyncio.gather`` for fast response times.
-
-Two search strategies are provided and run in parallel:
-  - **Agentic search** – uses the KnowledgeBaseRetrievalClient for
-    intent-aware multi-step retrieval.
-  - **Vector search** – hybrid semantic + vector query.
-"""
+"""Azure AI Search SDK client helpers for knowledge retrieval."""
 
 from __future__ import annotations
 
-import asyncio
 import logging
 from enum import Enum
 
@@ -42,6 +30,93 @@ _HIERARCHY_EXPANSION_TOP = 20
 
 # Chunks below this rerank score are considered low-relevance and dropped.
 _RERANK_SCORE_LOW_RELEVANCE_THRESHOLD = 2.0
+
+# Page-type filters for raw source chunks and generated wiki pages.
+NON_WIKI_FILTER = "(page_type eq null or page_type eq '')"
+WIKI_FILTER = "(page_type eq 'summary' or page_type eq 'entity' or page_type eq 'concept' or page_type eq 'synthesis')"
+
+# Fields selected by the dense/sparse retrievers. ``page_type`` distinguishes
+# generated wiki pages from raw chunks (for link rendering / optional boosting).
+_RETRIEVER_SELECT_FIELDS = [
+    "chunk_id",
+    "title",
+    "chunk",
+    "context_id",
+    "header_1",
+    "header_2",
+    "header_3",
+    "ordinal_position",
+    "scope",
+    "service_type",
+    "page_type",
+    "chunk_refs_str",
+]
+
+
+def _and_extra(combined_filter: str, extra_filter: str | None) -> str:
+    """AND an extra OData clause onto an OR-combined source filter."""
+    if not extra_filter:
+        return combined_filter
+    if not combined_filter:
+        return extra_filter
+    return f"({combined_filter}) and {extra_filter}"
+
+
+def split_source_ref(source_path: str) -> tuple[str, str]:
+    """Split a source path into ``(context_id, title)`` matching raw chunks.
+
+    Mirrors the wiki reader identity split: the first segment is the source
+    scope (``context_id``); the remainder is the folder-relative ``title``.
+    """
+    path = (source_path or "").strip().lstrip("/")
+    parts = path.split("/")
+    folder = parts[0] if len(parts) > 1 else ""
+    rel = path[len(folder) + 1:] if folder and path.startswith(folder + "/") else path
+    return folder, rel
+
+
+def _title_context_clause(title: str, context_id: str) -> str:
+    """OData clause matching a raw chunk by ``title`` scoped to ``context_id``."""
+    t = f"title eq '{_escape_odata(title)}'"
+    if context_id:
+        return f"({t} and context_id eq '{_escape_odata(context_id)}')"
+    return f"({t} and (context_id eq null or context_id eq ''))"
+
+
+def _chunk_key(chunk: "KnowledgeChunk") -> str:
+    """Stable identity for a chunk: its id, or a header-path fallback."""
+    if chunk.chunk_id:
+        return chunk.chunk_id
+    return f"{chunk.source}|{chunk.title}|{chunk.header1}|{chunk.header2}|{chunk.header3}"
+
+
+def fuse_with_rrf(
+    ranked_lists: "list[tuple[list[KnowledgeChunk], float]]",
+    k: int = 60,
+) -> "list[KnowledgeChunk]":
+    """Fuse ranked retriever lists using Reciprocal Rank Fusion."""
+    info: dict[str, KnowledgeChunk] = {}
+    rank_maps: list[tuple[dict[str, int], float]] = []
+    for results, weight in ranked_lists:
+        rmap: dict[str, int] = {}
+        for i, chunk in enumerate(results):
+            key = _chunk_key(chunk)
+            if key not in rmap:
+                rmap[key] = i + 1  # 1-indexed rank
+            info.setdefault(key, chunk)
+        rank_maps.append((rmap, weight))
+
+    fused: list[KnowledgeChunk] = []
+    for key, chunk in info.items():
+        score = 0.0
+        for rmap, weight in rank_maps:
+            rank = rmap.get(key)
+            if rank:
+                score += weight / (k + rank)
+        chunk.rerank_score = score
+        fused.append(chunk)
+    fused.sort(key=lambda c: c.rerank_score, reverse=True)
+    return fused
 
 
 class SearchClient:
@@ -74,19 +149,12 @@ class SearchClient:
         self,
         query: str,
         source_filters: dict[str, str],
+        extra_filter: str | None = None,
     ) -> list[KnowledgeChunk]:
-        """Retrieve raw chunks via agentic (intent-aware) search.
-
-        Returns un-expanded chunks.  The caller is responsible for
-        deduplication and hierarchy expansion so that work is done once
-        after all search strategies complete.
-
-        The per-source filters are combined into a single OData expression
-        so the KB retrieval client executes one sub-search instead of N.
-        """
-        # Combine per-source filters into a single filter_add_on with OR
-        # so the KB client performs one retrieval pass instead of N.
+        """Retrieve unexpanded raw chunks via agentic search."""
+        # Combine per-source filters into one OR expression.
         combined_filter = " or ".join(f"({f})" for f in source_filters.values() if f)
+        combined_filter = _and_extra(combined_filter, extra_filter)
 
         kb_params: list[KnowledgeSourceParams] = [
             SearchIndexKnowledgeSourceParams(
@@ -121,13 +189,9 @@ class SearchClient:
         query: str,
         source_filters: dict[str, str],
         top_k: int | None = None,
+        extra_filter: str | None = None,
     ) -> list[KnowledgeChunk]:
-        """Hybrid semantic + vector search mirroring the Go backend's SearchTopKRelatedDocuments.
-
-        Combines all source filters into a single query for efficiency,
-        filters by rerank score, and returns the top-k results sorted by
-        relevance.
-        """
+        """Run hybrid semantic and vector search with optional OData filtering."""
         k = top_k or self._top_k
 
         vector_query = VectorizableTextQuery(
@@ -136,21 +200,11 @@ class SearchClient:
             fields="text_vector",
         )
 
-        select_fields = [
-            "chunk_id",
-            "title",
-            "chunk",
-            "context_id",
-            "header_1",
-            "header_2",
-            "header_3",
-            "ordinal_position",
-            "scope",
-            "service_type",
-        ]
+        select_fields = _RETRIEVER_SELECT_FIELDS
 
         # Combine per-source filters into a single OData expression with OR
         combined_filter = " or ".join(f"({f})" for f in source_filters.values() if f)
+        combined_filter = _and_extra(combined_filter, extra_filter)
 
         results = await self._search_client.search(
             search_text=query,
@@ -171,6 +225,32 @@ class SearchClient:
         # Sort by rerank score descending and limit to top-k
         scored_chunks.sort(key=lambda x: x[0], reverse=True)
         return [chunk for _, chunk in scored_chunks[:k]]
+
+    async def keyword_search(
+        self,
+        query: str,
+        source_filters: dict[str, str],
+        top_k: int | None = None,
+        extra_filter: str | None = None,
+    ) -> list[KnowledgeChunk]:
+        """Run sparse full-text keyword search and return BM25-ranked chunks."""
+        k = top_k or self._top_k
+        select_fields = _RETRIEVER_SELECT_FIELDS
+        combined_filter = " or ".join(f"({f})" for f in source_filters.values() if f)
+        combined_filter = _and_extra(combined_filter, extra_filter)
+
+        results = await self._search_client.search(
+            search_text=query,
+            filter=combined_filter or None,
+            query_type=QueryType.SIMPLE,
+            top=k,
+            select=select_fields,
+        )
+
+        chunks: list[KnowledgeChunk] = []
+        async for doc in results:
+            chunks.append(KnowledgeChunk.model_validate(dict(doc)))
+        return chunks
 
     @staticmethod
     def deduplicate_chunks(chunks: list[KnowledgeChunk]) -> list[KnowledgeChunk]:
@@ -290,6 +370,116 @@ class SearchClient:
             header3=chunk.header3,
         )
 
+    async def backfill_wiki_sources(
+        self,
+        chunks: "list[KnowledgeChunk]",
+        per_page: int = 3,
+        max_total: int = 12,
+        source_filter: str | None = None,
+    ) -> "list[KnowledgeChunk]":
+        """Fetch raw source chunks referenced by retrieved wiki pages.
+
+        *source_filter* (the tenant's combined ``context_id`` OR clause) scopes
+        the routing to the tenant's sources.
+        """
+        seen_ids = {c.chunk_id for c in chunks if c.chunk_id}
+        wanted: list[tuple[str, str]] = []  # (title, context_id) of raw source chunks
+        for c in chunks:
+            if c.page_type == "summary" and c.title:
+                pairs = [(c.title, c.source or "")]
+            elif c.page_type in ("entity", "concept", "synthesis"):
+                pairs = []
+                for r in list(c.chunk_refs)[:per_page]:
+                    folder, rel = split_source_ref(r)
+                    if rel:
+                        pairs.append((rel, folder))
+            else:
+                continue
+            for p in pairs:
+                if p not in wanted:
+                    wanted.append(p)
+        wanted = wanted[:max_total]
+        if not wanted:
+            return []
+
+        pair_clause = " or ".join(_title_context_clause(t, ctx) for t, ctx in wanted)
+        # Only backfill RAW source chunks (never other wiki pages).
+        combined_filter = f"({pair_clause}) and (page_type eq null or page_type eq '')"
+        combined_filter = _and_extra(combined_filter, source_filter)
+
+        results = await self._search_client.search(
+            search_text="*",
+            filter=combined_filter,
+            top=max_total * 3,
+            select=_RETRIEVER_SELECT_FIELDS,
+        )
+
+        backfilled: list[KnowledgeChunk] = []
+        per_doc_count: dict[tuple[str, str], int] = {}
+        async for doc in results:
+            chunk = KnowledgeChunk.model_validate(dict(doc))
+            if not chunk.chunk_id or chunk.chunk_id in seen_ids:
+                continue
+            key = (chunk.title, chunk.source)
+            # Limit to 2 chunks per source doc.
+            if per_doc_count.get(key, 0) >= 2:
+                continue
+            seen_ids.add(chunk.chunk_id)
+            per_doc_count[key] = per_doc_count.get(key, 0) + 1
+            backfilled.append(chunk)
+            if len(backfilled) >= max_total:
+                break
+        logger.info(
+            "backfill_wiki_sources: %d source chunk(s) from %d wiki ref(s)",
+            len(backfilled),
+            len(wanted),
+        )
+        return backfilled
+
+    async def fetch_by_title(
+        self,
+        titles: "list[str]",
+        extra_filter: str,
+        top: int = 40,
+        keyword: str | None = None,
+        source_filter: str | None = None,
+        context_id: str | None = None,
+    ) -> "list[KnowledgeChunk]":
+        """Fetch chunks/pages whose ``title`` is one of *titles*, gated by
+        *extra_filter* (WIKI_FILTER or NON_WIKI_FILTER) and, when given, the
+        tenant's combined ``context_id`` *source_filter*.
+
+        When *context_id* is set, results are further scoped to that exact
+        source, disambiguating same-named files across folders.
+
+        With *keyword* set, ranks by BM25 over the matched docs; otherwise
+        returns them in ``ordinal_position`` order.
+        """
+        titles = [t for t in (titles or []) if t]
+        if not titles:
+            return []
+        title_clause = " or ".join(f"title eq '{_escape_odata(t)}'" for t in titles)
+        combined = f"({title_clause}) and {extra_filter}"
+        if context_id is not None:
+            if context_id:
+                combined = f"{combined} and (context_id eq '{_escape_odata(context_id)}')"
+            else:
+                combined = f"{combined} and (context_id eq null or context_id eq '')"
+        combined = _and_extra(combined, source_filter)
+        search_kwargs: dict = {
+            "search_text": keyword or "*",
+            "filter": combined,
+            "top": top,
+            "select": _RETRIEVER_SELECT_FIELDS,
+        }
+        if not keyword:
+            search_kwargs["order_by"] = ["ordinal_position asc"]
+        results = await self._search_client.search(**search_kwargs)
+        chunks: list[KnowledgeChunk] = []
+        async for doc in results:
+            chunks.append(KnowledgeChunk.model_validate(dict(doc)))
+        return chunks
+
     async def close(self) -> None:
         await self._kb_client.close()
         await self._search_client.close()
@@ -314,7 +504,7 @@ class HierarchyLevel(str, Enum):
 
 
 def _detect_hierarchy(header1: str, header2: str, header3: str) -> HierarchyLevel:
-    """Determine the hierarchy level of a chunk (mirrors Go DetectChunkHierarchy)."""
+    """Determine the hierarchy level of a chunk."""
     if header3:
         return HierarchyLevel.header3
     if header2 and header1:
@@ -332,7 +522,7 @@ def _build_hierarchy_filter(
     header2: str,
     header3: str,
 ) -> str:
-    """Build hierarchy-scoped filter (mirrors Go CompleteChunkByHierarchy behavior)."""
+    """Build a hierarchy-scoped filter."""
     filters = [
         f"title eq '{_escape_odata(title)}'",
         f"context_id eq '{_escape_odata(context_id)}'",

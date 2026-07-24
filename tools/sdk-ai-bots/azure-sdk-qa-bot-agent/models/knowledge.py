@@ -84,6 +84,8 @@ class KnowledgeChunk(BaseModel):
     header1: str = Field(default="", validation_alias="header_1")
     header2: str = Field(default="", validation_alias="header_2")
     header3: str = Field(default="", validation_alias="header_3")
+    page_type: str = ""
+    chunk_refs: list[str] = Field(default_factory=list, validation_alias="chunk_refs_str")
     rerank_score: float = Field(default=0.0, validation_alias="@search.reranker_score")
 
     @field_validator("rerank_score", mode="before")
@@ -94,6 +96,34 @@ class KnowledgeChunk(BaseModel):
         if isinstance(v, (int, float)):
             return float(v)
         return float(str(v))
+
+    @field_validator("page_type", mode="before")
+    @classmethod
+    def _coerce_page_type(cls, v: object) -> str:
+        """Raw (non-wiki) chunks carry null for this added field."""
+        return str(v) if v else ""
+
+    @field_validator("chunk_refs", mode="before")
+    @classmethod
+    def _coerce_chunk_refs(cls, v: object) -> list:
+        """Parse source refs from null, list, or JSON-string index values.
+
+        Wiki refs use scalar ``chunk_refs_str`` because index projections cannot
+        populate a collection field from scalar blob metadata.
+        """
+        import json
+
+        if not v:
+            return []
+        if isinstance(v, str):
+            try:
+                parsed = json.loads(v)
+                return parsed if isinstance(parsed, list) else [v]
+            except (ValueError, TypeError):
+                return [v]
+        if isinstance(v, list):
+            return v
+        return []
 
 
 class KnowledgeResult(BaseModel):

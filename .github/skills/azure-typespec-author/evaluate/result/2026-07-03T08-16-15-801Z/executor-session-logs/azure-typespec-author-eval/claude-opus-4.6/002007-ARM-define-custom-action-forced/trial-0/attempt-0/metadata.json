@@ -1,0 +1,15 @@
+{
+  "evalName": "azure-typespec-author-eval",
+  "evalFilePath": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-author\\evaluate\\evals\\002007.eval.yaml",
+  "stimulusName": "002007-ARM-define-custom-action-forced",
+  "executorName": "copilot-sdk",
+  "model": "claude-opus-4.6",
+  "attemptIndex": 0,
+  "startedAt": "2026-07-03T08:21:07.189Z",
+  "status": "success",
+  "trajectoryId": "cf46e80b-072d-4b72-8eab-916f3870a7c5",
+  "executorSessionId": "59e9c947-3a2e-4d1f-bc29-b920b77d9b1d",
+  "completedAt": "2026-07-03T08:22:35.786Z",
+  "logSource": "native",
+  "eventsPath": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-author\\evaluate\\result\\2026-07-03T08-16-15-801Z\\executor-session-logs\\azure-typespec-author-eval\\claude-opus-4.6\\002007-ARM-define-custom-action-forced\\trial-0\\attempt-0\\events.jsonl"
+}

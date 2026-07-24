@@ -1,0 +1,15 @@
+{
+  "evalName": "azure-typespec-author-eval",
+  "evalFilePath": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-author\\evaluate\\evals\\004001.eval.yaml",
+  "stimulusName": "004001-decorate-mgmt-resource-name-parameter-forced",
+  "executorName": "copilot-sdk",
+  "model": "claude-opus-4.6",
+  "attemptIndex": 0,
+  "startedAt": "2026-07-03T08:23:30.851Z",
+  "status": "success",
+  "trajectoryId": "a48b0899-20b5-4136-a7be-25ef58ef5857",
+  "executorSessionId": "c3bec0f0-6987-427f-a7e7-9de0072f8c78",
+  "completedAt": "2026-07-03T08:23:46.420Z",
+  "logSource": "native",
+  "eventsPath": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-author\\evaluate\\result\\2026-07-03T08-16-15-801Z\\executor-session-logs\\azure-typespec-author-eval\\claude-opus-4.6\\004001-decorate-mgmt-resource-name-parameter-forced\\trial-0\\attempt-0\\events.jsonl"
+}

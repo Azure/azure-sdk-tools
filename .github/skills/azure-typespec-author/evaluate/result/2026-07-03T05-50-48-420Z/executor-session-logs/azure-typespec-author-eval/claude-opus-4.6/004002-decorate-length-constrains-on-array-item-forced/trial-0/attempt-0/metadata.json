@@ -1,0 +1,15 @@
+{
+  "evalName": "azure-typespec-author-eval",
+  "evalFilePath": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-author\\evaluate\\evals\\004002.eval.yaml",
+  "stimulusName": "004002-decorate-length-constrains-on-array-item-forced",
+  "executorName": "copilot-sdk",
+  "model": "claude-opus-4.6",
+  "attemptIndex": 0,
+  "startedAt": "2026-07-03T05:57:16.008Z",
+  "status": "success",
+  "trajectoryId": "d4ade34b-6d39-4c50-ba23-c0d3d76d9e4c",
+  "executorSessionId": "71bbd21d-214f-4ac1-8ca3-bbe0e44a2066",
+  "completedAt": "2026-07-03T05:58:38.545Z",
+  "logSource": "native",
+  "eventsPath": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-author\\evaluate\\result\\2026-07-03T05-50-48-420Z\\executor-session-logs\\azure-typespec-author-eval\\claude-opus-4.6\\004002-decorate-length-constrains-on-array-item-forced\\trial-0\\attempt-0\\events.jsonl"
+}

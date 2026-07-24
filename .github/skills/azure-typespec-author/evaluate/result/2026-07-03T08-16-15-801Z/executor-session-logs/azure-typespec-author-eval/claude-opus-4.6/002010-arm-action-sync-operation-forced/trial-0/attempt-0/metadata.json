@@ -1,0 +1,15 @@
+{
+  "evalName": "azure-typespec-author-eval",
+  "evalFilePath": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-author\\evaluate\\evals\\002010.eval.yaml",
+  "stimulusName": "002010-arm-action-sync-operation-forced",
+  "executorName": "copilot-sdk",
+  "model": "claude-opus-4.6",
+  "attemptIndex": 0,
+  "startedAt": "2026-07-03T08:21:58.889Z",
+  "status": "success",
+  "trajectoryId": "e59b973f-5bef-4937-9806-c4d7bfb067a7",
+  "executorSessionId": "ad4cd208-2d31-4c3c-8bef-4d64b2b85272",
+  "completedAt": "2026-07-03T08:23:30.786Z",
+  "logSource": "native",
+  "eventsPath": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-author\\evaluate\\result\\2026-07-03T08-16-15-801Z\\executor-session-logs\\azure-typespec-author-eval\\claude-opus-4.6\\002010-arm-action-sync-operation-forced\\trial-0\\attempt-0\\events.jsonl"
+}

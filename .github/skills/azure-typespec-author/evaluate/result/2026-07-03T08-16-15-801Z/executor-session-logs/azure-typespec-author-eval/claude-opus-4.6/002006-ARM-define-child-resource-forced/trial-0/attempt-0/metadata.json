@@ -1,0 +1,15 @@
+{
+  "evalName": "azure-typespec-author-eval",
+  "evalFilePath": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-author\\evaluate\\evals\\002006.eval.yaml",
+  "stimulusName": "002006-ARM-define-child-resource-forced",
+  "executorName": "copilot-sdk",
+  "model": "claude-opus-4.6",
+  "attemptIndex": 0,
+  "startedAt": "2026-07-03T08:20:56.028Z",
+  "status": "success",
+  "trajectoryId": "015aab15-9ff3-44a5-98fd-24e5765e6f1f",
+  "executorSessionId": "57552ea9-3ac0-4b49-899a-7b3b7eb313f1",
+  "completedAt": "2026-07-03T08:22:35.819Z",
+  "logSource": "native",
+  "eventsPath": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-author\\evaluate\\result\\2026-07-03T08-16-15-801Z\\executor-session-logs\\azure-typespec-author-eval\\claude-opus-4.6\\002006-ARM-define-child-resource-forced\\trial-0\\attempt-0\\events.jsonl"
+}

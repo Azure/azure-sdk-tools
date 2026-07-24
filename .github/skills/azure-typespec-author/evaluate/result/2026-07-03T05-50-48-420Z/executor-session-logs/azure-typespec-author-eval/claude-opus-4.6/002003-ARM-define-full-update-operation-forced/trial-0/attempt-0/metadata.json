@@ -1,0 +1,15 @@
+{
+  "evalName": "azure-typespec-author-eval",
+  "evalFilePath": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-author\\evaluate\\evals\\002003.eval.yaml",
+  "stimulusName": "002003-ARM-define-full-update-operation-forced",
+  "executorName": "copilot-sdk",
+  "model": "claude-opus-4.6",
+  "attemptIndex": 0,
+  "startedAt": "2026-07-03T05:54:04.414Z",
+  "status": "success",
+  "trajectoryId": "16d1da75-ec00-4b33-bef1-d99b209c1cd1",
+  "executorSessionId": "b37a085a-8e3a-4bf9-b9cf-5156174e25dd",
+  "completedAt": "2026-07-03T05:55:07.687Z",
+  "logSource": "native",
+  "eventsPath": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-author\\evaluate\\result\\2026-07-03T05-50-48-420Z\\executor-session-logs\\azure-typespec-author-eval\\claude-opus-4.6\\002003-ARM-define-full-update-operation-forced\\trial-0\\attempt-0\\events.jsonl"
+}

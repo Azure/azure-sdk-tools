@@ -1,0 +1,15 @@
+{
+  "evalName": "azure-typespec-author-eval",
+  "evalFilePath": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-author\\evaluate\\evals\\002008.eval.yaml",
+  "stimulusName": "002008-ARM-add-parameters-forced",
+  "executorName": "copilot-sdk",
+  "model": "claude-opus-4.6",
+  "attemptIndex": 0,
+  "startedAt": "2026-07-03T08:21:25.138Z",
+  "status": "success",
+  "trajectoryId": "f3668a92-2d91-4ff0-bc35-ccb427622369",
+  "executorSessionId": "3f2f7660-3548-428f-9746-a22fda544dd8",
+  "completedAt": "2026-07-03T08:24:11.462Z",
+  "logSource": "native",
+  "eventsPath": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-author\\evaluate\\result\\2026-07-03T08-16-15-801Z\\executor-session-logs\\azure-typespec-author-eval\\claude-opus-4.6\\002008-ARM-add-parameters-forced\\trial-0\\attempt-0\\events.jsonl"
+}

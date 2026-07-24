@@ -1,0 +1,15 @@
+{
+  "evalName": "azure-typespec-author-eval",
+  "evalFilePath": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-author\\evaluate\\evals\\002001.eval.yaml",
+  "stimulusName": "002001-ARM-change-resource-type-forced",
+  "executorName": "copilot-sdk",
+  "model": "claude-opus-4.6",
+  "attemptIndex": 0,
+  "startedAt": "2026-07-03T05:53:33.207Z",
+  "status": "success",
+  "trajectoryId": "c3fcb0c3-4469-4ba7-96ec-bea85043d57d",
+  "executorSessionId": "0124350b-bb32-4101-9c7f-18e6c2f04659",
+  "completedAt": "2026-07-03T05:55:17.163Z",
+  "logSource": "native",
+  "eventsPath": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-author\\evaluate\\result\\2026-07-03T05-50-48-420Z\\executor-session-logs\\azure-typespec-author-eval\\claude-opus-4.6\\002001-ARM-change-resource-type-forced\\trial-0\\attempt-0\\events.jsonl"
+}

@@ -1,0 +1,15 @@
+{
+  "evalName": "azure-typespec-author-eval",
+  "evalFilePath": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-author\\evaluate\\evals\\004003.eval.yaml",
+  "stimulusName": "004003-delete-and-restore-operationId-decorator-forced",
+  "executorName": "copilot-sdk",
+  "model": "claude-opus-4.6",
+  "attemptIndex": 0,
+  "startedAt": "2026-07-03T08:23:44.766Z",
+  "status": "success",
+  "trajectoryId": "1da2d486-8141-405d-a929-237fc3699416",
+  "executorSessionId": "be30da72-5907-4214-be97-121aa16548ae",
+  "completedAt": "2026-07-03T08:26:22.656Z",
+  "logSource": "native",
+  "eventsPath": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-author\\evaluate\\result\\2026-07-03T08-16-15-801Z\\executor-session-logs\\azure-typespec-author-eval\\claude-opus-4.6\\004003-delete-and-restore-operationId-decorator-forced\\trial-0\\attempt-0\\events.jsonl"
+}

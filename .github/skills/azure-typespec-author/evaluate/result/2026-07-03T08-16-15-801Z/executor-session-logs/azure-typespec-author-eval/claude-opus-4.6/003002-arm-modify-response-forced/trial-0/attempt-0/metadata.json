@@ -1,0 +1,15 @@
+{
+  "evalName": "azure-typespec-author-eval",
+  "evalFilePath": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-author\\evaluate\\evals\\003002.eval.yaml",
+  "stimulusName": "003002-arm-modify-response-forced",
+  "executorName": "copilot-sdk",
+  "model": "claude-opus-4.6",
+  "attemptIndex": 0,
+  "startedAt": "2026-07-03T08:23:03.928Z",
+  "status": "success",
+  "trajectoryId": "836e1369-8b9c-44d3-b376-8c530d352f3f",
+  "executorSessionId": "3e0f42b5-27be-440f-89d0-eb605b2ff748",
+  "completedAt": "2026-07-03T08:26:11.384Z",
+  "logSource": "native",
+  "eventsPath": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-author\\evaluate\\result\\2026-07-03T08-16-15-801Z\\executor-session-logs\\azure-typespec-author-eval\\claude-opus-4.6\\003002-arm-modify-response-forced\\trial-0\\attempt-0\\events.jsonl"
+}

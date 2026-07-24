@@ -1,0 +1,15 @@
+{
+  "evalName": "azure-typespec-author-eval",
+  "evalFilePath": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-author\\evaluate\\evals\\002011.eval.yaml",
+  "stimulusName": "002011-arm-add-check-existence-operation-forced",
+  "executorName": "copilot-sdk",
+  "model": "claude-opus-4.6",
+  "attemptIndex": 0,
+  "startedAt": "2026-07-03T08:22:35.980Z",
+  "status": "success",
+  "trajectoryId": "c660b4ac-942f-4185-ac75-c65f712ba956",
+  "executorSessionId": "0de9e239-bf49-41d0-a277-f467447b95d7",
+  "completedAt": "2026-07-03T08:23:36.101Z",
+  "logSource": "native",
+  "eventsPath": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-author\\evaluate\\result\\2026-07-03T08-16-15-801Z\\executor-session-logs\\azure-typespec-author-eval\\claude-opus-4.6\\002011-arm-add-check-existence-operation-forced\\trial-0\\attempt-0\\events.jsonl"
+}

@@ -1,0 +1,15 @@
+{
+  "evalName": "azure-typespec-author-eval",
+  "evalFilePath": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-author\\evaluate\\evals\\001002.eval.yaml",
+  "stimulusName": "001002-version-default-value-forced",
+  "executorName": "copilot-sdk",
+  "model": "claude-opus-4.6",
+  "attemptIndex": 0,
+  "startedAt": "2026-07-03T08:16:18.429Z",
+  "status": "success",
+  "trajectoryId": "3ccb073b-fa11-45ee-a4d8-aa281e41b9e7",
+  "executorSessionId": "3fc59c3e-8057-4956-bdc0-2b980a274ade",
+  "completedAt": "2026-07-03T08:18:54.560Z",
+  "logSource": "native",
+  "eventsPath": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-author\\evaluate\\result\\2026-07-03T08-16-15-801Z\\executor-session-logs\\azure-typespec-author-eval\\claude-opus-4.6\\001002-version-default-value-forced\\trial-0\\attempt-0\\events.jsonl"
+}

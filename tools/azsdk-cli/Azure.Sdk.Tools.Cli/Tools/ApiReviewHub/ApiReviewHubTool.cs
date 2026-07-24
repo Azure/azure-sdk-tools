@@ -321,10 +321,15 @@ public class ApiReviewHubTool(
         {
             details.Add(string.Empty);
             details.Add("== APIView (Legacy) ==");
-            if (result.ApiView.StatusCode is >= 200 and < 300 || string.Equals(result.ApiView.Reason, "reviewNotFound", StringComparison.OrdinalIgnoreCase))
+            if (result.ApiView.StatusCode is >= 200 and < 300
+                || string.Equals(result.ApiView.Reason, "reviewNotFound", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(result.ApiView.Reason, "languageNotSupported", StringComparison.OrdinalIgnoreCase))
             {
                 details.Add("Queried because the primary API Review Hub result was not approved or could not be retrieved.");
-                details.Add($"Status Code: {result.ApiView.StatusCode}");
+                if (result.ApiView.StatusCode is not null)
+                {
+                    details.Add($"Status Code: {result.ApiView.StatusCode}");
+                }
                 details.Add($"Approved: {result.ApiView.IsApproved}");
                 details.Add($"Package Name Approved: {result.ApiView.PackageNameApproved}");
                 details.Add($"Reason: {result.ApiView.Reason}");
@@ -368,6 +373,7 @@ public class ApiReviewHubTool(
             "missingApiHash" => $"API review release gate cannot be approved for {packageName} {packageVersion} because no API hash was provided.",
             "repositoryNotSupported" => $"API review release gate cannot be evaluated by API Review Hub for {packageName} {packageVersion} because this repository is not currently supported.",
             "reviewNotFound" => $"API review release gate is not approved for {packageName} {packageVersion} because no APIView review was found.",
+            "apiViewLanguageNotSupported" => $"API review release gate is not approved for {packageName} {packageVersion} because APIView does not support this language for release gating.",
             "queryFailed" => $"API review release gate status could not be determined for {packageName} {packageVersion} because both API Review Hub and APIView status queries failed.",
             _ => $"API review release gate is not approved for {packageName} {packageVersion}."
         };

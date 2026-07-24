@@ -27,13 +27,20 @@ public interface IApiReviewHubService
 public class ApiReviewHubService(
     IHttpClientFactory httpClientFactory,
     IAzureService azureService,
-    ILogger<ApiReviewHubService> logger) : IApiReviewHubService
+    ILogger<ApiReviewHubService> logger,
+    TimeProvider? timeProvider = null,
+    TimeSpan? operationTimeout = null) : IApiReviewHubService
 {
+    private static readonly TimeSpan DefaultOperationTimeout = TimeSpan.FromMinutes(30);
+
     private static readonly JsonSerializerOptions serializerOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         PropertyNameCaseInsensitive = true
     };
+
+    private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
+    private readonly TimeSpan _operationTimeout = operationTimeout ?? DefaultOperationTimeout;
 
     public async Task<ApiReviewHubRequestReviewPullRequestResult> RequestReviewPullRequestAsync(
         ReviewPullRequestCreationRequest request,
@@ -44,10 +51,10 @@ public class ApiReviewHubService(
     {
         endpoint = endpoint.TrimEnd('/');
         var httpClient = httpClientFactory.CreateClient(nameof(ApiReviewHubService));
-        await ConfigureAuthorizationAsync(httpClient, endpoint, ct);
+        var authorization = await GetAuthorizationAsync(endpoint, ct);
 
         logger.LogInformation("Requesting API Review Hub review PR for {packageName} from {endpoint}", request.PackageName, endpoint);
-        var accepted = await PostJsonAsync<ReviewPullRequestCreationAcceptedResponse>(httpClient, $"{endpoint}/api/review-prs", request, ct);
+        var accepted = await PostJsonAsync<ReviewPullRequestCreationAcceptedResponse>(httpClient, $"{endpoint}/api/review-prs", request, authorization, ct);
         var result = new ApiReviewHubRequestReviewPullRequestResult
         {
             OperationId = accepted.OperationId,
@@ -59,11 +66,11 @@ public class ApiReviewHubService(
             return result;
         }
 
-        var startedAt = DateTimeOffset.UtcNow;
+        var startedAt = _timeProvider.GetUtcNow();
         var loggedPipelineUrl = false;
         while (true)
         {
-            var operation = await GetJsonAsync<OperationStatus>(httpClient, $"{endpoint}/api/operations/{accepted.OperationId}", ct);
+            var operation = await GetJsonAsync<OperationStatus>(httpClient, $"{endpoint}/api/operations/{accepted.OperationId}", authorization, ct);
             result.Status = operation.Status;
             result.Operation = operation;
             LogOperationProgress(operation, startedAt, ref loggedPipelineUrl);
@@ -76,6 +83,11 @@ public class ApiReviewHubService(
             if (string.Equals(operation.Status, "failed", StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidOperationException(operation.FailureReason ?? $"API Review Hub operation {operation.OperationId} failed.");
+            }
+
+            if (_timeProvider.GetUtcNow() - startedAt >= _operationTimeout)
+            {
+                throw new TimeoutException($"API Review Hub operation {operation.OperationId} timed out after {FormatElapsed(_timeProvider.GetUtcNow() - startedAt)} with status '{operation.Status}'.");
             }
 
             await Task.Delay(pollInterval, ct);
@@ -92,7 +104,7 @@ public class ApiReviewHubService(
     {
         endpoint = endpoint.TrimEnd('/');
         var httpClient = httpClientFactory.CreateClient(nameof(ApiReviewHubService));
-        await ConfigureAuthorizationAsync(httpClient, endpoint, ct);
+        var authorization = await GetAuthorizationAsync(endpoint, ct);
 
         var uriBuilder = new UriBuilder($"{endpoint}/api/releases/check-gate");
         var query = new List<string>
@@ -108,7 +120,7 @@ public class ApiReviewHubService(
 
         uriBuilder.Query = string.Join("&", query);
         logger.LogInformation("Querying API Review Hub release gate for {packageName} {packageVersion}", packageName, packageVersion);
-        var result = await GetJsonAsync<ApiReviewHubReleaseGateResult>(httpClient, uriBuilder.Uri.ToString(), ct);
+        var result = await GetJsonAsync<ApiReviewHubReleaseGateResult>(httpClient, uriBuilder.Uri.ToString(), authorization, ct);
         return result;
     }
 
@@ -124,7 +136,7 @@ public class ApiReviewHubService(
             "API Review Hub operation {operationId} status: {status} (elapsed {elapsed}).",
             operation.OperationId,
             operation.Status,
-            FormatElapsed(DateTimeOffset.UtcNow - startedAt));
+            FormatElapsed(_timeProvider.GetUtcNow() - startedAt));
     }
 
     private static string FormatElapsed(TimeSpan elapsed)
@@ -134,24 +146,34 @@ public class ApiReviewHubService(
             : elapsed.ToString(@"m\:ss");
     }
 
-    private async Task ConfigureAuthorizationAsync(HttpClient httpClient, string endpoint, CancellationToken ct)
+    private async Task<AuthenticationHeaderValue> GetAuthorizationAsync(string endpoint, CancellationToken ct)
     {
         var tokenScope = $"{GetAppIdUri(endpoint)}/.default";
         var token = await azureService.GetCredential().GetTokenAsync(new TokenRequestContext([tokenScope]), ct);
-        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Token);
-        httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        return new AuthenticationHeaderValue("Bearer", token.Token);
     }
 
-    private static async Task<T> PostJsonAsync<T>(HttpClient httpClient, string url, object body, CancellationToken ct)
+    private static async Task<T> PostJsonAsync<T>(HttpClient httpClient, string url, object body, AuthenticationHeaderValue authorization, CancellationToken ct)
     {
         var content = new StringContent(JsonSerializer.Serialize(body, serializerOptions), Encoding.UTF8, "application/json");
-        using var response = await httpClient.PostAsync(url, content, ct);
+        using var request = new HttpRequestMessage(HttpMethod.Post, url)
+        {
+            Content = content
+        };
+        request.Headers.Authorization = authorization;
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        using var response = await httpClient.SendAsync(request, ct);
         return await ReadResponseAsync<T>(response, ct);
     }
 
-    private static async Task<T> GetJsonAsync<T>(HttpClient httpClient, string url, CancellationToken ct) where T : class
+    private static async Task<T> GetJsonAsync<T>(HttpClient httpClient, string url, AuthenticationHeaderValue authorization, CancellationToken ct) where T : class
     {
-        using var response = await httpClient.GetAsync(url, ct);
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.Authorization = authorization;
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        using var response = await httpClient.SendAsync(request, ct);
         var value = await ReadResponseAsync<T>(response, ct);
 
         if (value is ApiReviewHubReleaseGateResult releaseGateResult)

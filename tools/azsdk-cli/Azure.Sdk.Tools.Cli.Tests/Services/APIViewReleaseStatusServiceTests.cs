@@ -41,4 +41,23 @@ public class APIViewReleaseStatusServiceTests
         Assert.That(capturedEndpoint, Does.Contain("packageName=Azure.Test"));
         Assert.That(capturedEndpoint, Does.Contain("packageVersion=1.0.0"));
     }
+
+    [TestCase("go", "language=Go")]
+    [TestCase("rust", "language=Rust")]
+    public async Task GetReleaseStatusAsync_MapsSupportedGoAndRustLanguages(string language, string expectedLanguageQuery)
+    {
+        string? capturedEndpoint = null;
+        apiViewHttpServiceMock
+            .Setup(x => x.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string endpoint, CancellationToken _) =>
+            {
+                capturedEndpoint = endpoint;
+                return (string.Empty, 202);
+            });
+
+        var result = await service.GetReleaseStatusAsync(language, "Azure.Test", "1.0.0", CancellationToken.None);
+
+        Assert.That(result.StatusCode, Is.EqualTo(202));
+        Assert.That(capturedEndpoint, Does.Contain(expectedLanguageQuery));
+    }
 }

@@ -155,4 +155,26 @@ public class ApiReviewReleaseStatusServiceTests
         Assert.That(result.ApiView?.StatusCode, Is.EqualTo(404));
         Assert.That(result.ApiView?.Reason, Is.EqualTo("reviewNotFound"));
     }
+
+    [Test]
+    public async Task GetReleaseStatusAsync_SkipsApiViewFallback_WhenLanguageIsNotSupportedByApiView()
+    {
+        reviewHubServiceMock
+            .Setup(x => x.GetReleaseGateStatusAsync("https://endpoint", "cpp", "pkg", "1.0.0", "hash", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ApiReviewHubReleaseGateResult
+            {
+                IsApproved = false,
+                Reason = "repositoryNotSupported"
+            });
+
+        var result = await service.GetReleaseStatusAsync("https://endpoint", "cpp", "pkg", "1.0.0", "hash", CancellationToken.None);
+
+        Assert.That(result.IsApproved, Is.False);
+        Assert.That(result.FinalSource, Is.EqualTo("None"));
+        Assert.That(result.Reason, Is.EqualTo("apiViewLanguageNotSupported"));
+        Assert.That(result.ReviewHub.StatusCode, Is.EqualTo(200));
+        Assert.That(result.ApiView?.Reason, Is.EqualTo("languageNotSupported"));
+        Assert.That(result.ApiView?.Details, Is.EqualTo(new[] { "APIView does not support cpp for release gating." }));
+        apiViewServiceMock.Verify(x => x.GetReleaseStatusAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
 }

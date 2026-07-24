@@ -42,6 +42,26 @@ public class ApiReviewReleaseStatusService(
             };
         }
 
+        if (!IsApiViewLanguageSupported(language))
+        {
+            result.ApiView = new ApiViewReleaseStatusResult
+            {
+                IsApproved = false,
+                PackageNameApproved = false,
+                Reason = "languageNotSupported",
+                Details = [$"APIView does not support {language} for release gating."]
+            };
+
+            if (!IsSuccessfulStatusCode(result.ReviewHub.StatusCode) || IsReviewHubNotApplicable(result.ReviewHub))
+            {
+                result.IsApproved = false;
+                result.FinalSource = "None";
+                result.Reason = "apiViewLanguageNotSupported";
+            }
+
+            return result;
+        }
+
         try
         {
             var apiViewResult = await apiViewReleaseStatusService.GetReleaseStatusAsync(language, packageName, packageVersion, ct);
@@ -97,6 +117,14 @@ public class ApiReviewReleaseStatusService(
 
     private static bool IsSuccessfulStatusCode(int? statusCode) =>
         statusCode is >= 200 and < 300;
+
+    private static bool IsApiViewLanguageSupported(string language) =>
+        language.Equals("js", StringComparison.OrdinalIgnoreCase)
+        || language.Equals("csharp", StringComparison.OrdinalIgnoreCase)
+        || language.Equals("java", StringComparison.OrdinalIgnoreCase)
+        || language.Equals("python", StringComparison.OrdinalIgnoreCase)
+        || language.Equals("go", StringComparison.OrdinalIgnoreCase)
+        || language.Equals("rust", StringComparison.OrdinalIgnoreCase);
 
     private static bool IsReviewHubNotApplicable(ApiReviewHubReleaseGateResult reviewHubResult) =>
         string.Equals(reviewHubResult.Reason, "repositoryNotSupported", StringComparison.OrdinalIgnoreCase);

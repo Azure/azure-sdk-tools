@@ -67,6 +67,8 @@ public class APIViewReleaseStatusService(
             "csharp" => "C#",
             "java" => "Java",
             "python" => "Python",
+            "go" => "Go",
+            "rust" => "Rust",
             _ => null
         };
     }

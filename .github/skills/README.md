@@ -32,9 +32,9 @@ These skills help with skill development itself:
 | ------------------------------------------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------------------------- |
 | [sensei](sensei/SKILL.md)                                                             | "run sensei", "improve skill", "fix frontmatter"    | Iteratively improve skill frontmatter compliance using the Ralph loop |
 | [skill-authoring](skill-authoring/SKILL.md)                                           | "create a skill", "new skill", "skill template"     | Guidelines for writing Agent Skills per agentskills.io spec           |
-| [azsdk-common-eval-authoring-skill](azsdk-common-eval-authoring-skill/SKILL.md)       | "write a skill eval", "test skill routing"          | Author shared routing and capability evals for Agent Skills           |
-| [azsdk-common-eval-authoring-tool](azsdk-common-eval-authoring-tool/SKILL.md)         | "write a tool eval", "add prompt-to-tool coverage"  | Author shared hermetic single-tool MCP selection evals                |
-| [azsdk-common-eval-authoring-workflow](azsdk-common-eval-authoring-workflow/SKILL.md) | "write a workflow eval", "create multi-turn eval"   | Author shared multi-tool, multi-turn, mock, and live workflow evals   |
+| [eval-authoring-skill](eval-authoring-skill/SKILL.md)                                 | "write a skill eval", "test skill routing"          | Author repository-local routing and capability evals for Agent Skills |
+| [eval-authoring-tool](eval-authoring-tool/SKILL.md)                                   | "write a tool eval", "add prompt-to-tool coverage"  | Author repository-local hermetic single-tool MCP selection evals      |
+| [eval-authoring-workflow](eval-authoring-workflow/SKILL.md)                           | "write a workflow eval", "create multi-turn eval"   | Author repository-local multi-tool, multi-turn, mock, and live evals  |
 | [markdown-token-optimizer](markdown-token-optimizer/SKILL.md)                         | "optimize markdown", "reduce tokens", "token count" | Analyze markdown files for token efficiency                           |
 
 ### Skill Anatomy

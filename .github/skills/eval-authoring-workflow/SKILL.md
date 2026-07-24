@@ -1,11 +1,10 @@
 ---
-name: azsdk-common-eval-authoring-workflow
-description: 'Author and validate multi-tool, multi-turn, mock, and live Vally scenarios under evals/workflows. WHEN: "write a workflow eval", "add end-to-end eval", "test tool sequence", "create multi-turn eval", "add mock workflow scenario", "add live eval". DO NOT USE FOR: per-skill routing/capability evals (use azsdk-common-eval-authoring-skill), isolated prompt-to-tool tests (use azsdk-common-eval-authoring-tool).'
+name: eval-authoring-workflow
+description: 'Author and validate multi-tool, multi-turn, mock, and live Vally scenarios under evals/workflows. WHEN: "write a workflow eval", "add end-to-end eval", "test tool sequence", "create multi-turn eval", "add mock workflow scenario", "add live eval". DO NOT USE FOR: per-skill routing/capability evals (use eval-authoring-skill), isolated prompt-to-tool tests (use eval-authoring-tool).'
 license: MIT
 metadata:
   author: Microsoft
   version: "1.0.0"
-  distribution: shared
 compatibility: "copilot-chat, @microsoft/vally-cli 0.7.0"
 ---
 
@@ -17,7 +16,7 @@ Author Vally evals that verify **multi-skill, multi-tool, or multi-turn** orches
 
 USE FOR: write a workflow eval, add end-to-end eval, test tool sequence, create multi-turn eval, add mock workflow scenario, add live eval
 WHEN: "write a workflow eval", "add end-to-end eval", "test tool sequence", "create multi-turn eval", "add mock workflow scenario", "add live eval"
-DO NOT USE FOR: per-skill routing/capability evals (use azsdk-common-eval-authoring-skill), isolated prompt-to-tool tests (use azsdk-common-eval-authoring-tool)
+DO NOT USE FOR: per-skill routing/capability evals (use eval-authoring-skill), isolated prompt-to-tool tests (use eval-authoring-tool)
 
 ## Steps
 
@@ -37,5 +36,5 @@ DO NOT USE FOR: per-skill routing/capability evals (use azsdk-common-eval-author
 
 ## References
 
-- Eval authoring guide: `eng/common/knowledge/eval-authoring/README.md` — naming, placement, requirements, glossary, graders, anti-patterns, worked examples, local commands. Shared with `azsdk-common-eval-authoring-skill`/`azsdk-common-eval-authoring-tool` — update it there, not per-skill.
+- Eval authoring guide: `eng/common/knowledge/eval-authoring/README.md` — naming, placement, requirements, glossary, graders, anti-patterns, worked examples, local commands. Shared with `eval-authoring-skill`/`eval-authoring-tool` — update it there, not per-skill.
 - Repository-local eval README/configuration discovered in Step 0 (if present)

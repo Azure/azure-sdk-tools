@@ -1,11 +1,11 @@
-name: azsdk-common-eval-authoring-tool-eval
-description: Routing and boundary tests for the azsdk-common-eval-authoring-tool skill
+name: eval-authoring-tool-eval
+description: Routing and boundary tests for the eval-authoring-tool skill
 type: capability
 
 environment: azsdk-mcp-mock
 
 tags:
-  area: azsdk-common-eval-authoring-tool
+  area: eval-authoring-tool
   type: ci-gate
 
 defaults:
@@ -25,16 +25,16 @@ stimuli:
     environment: &siblingSkills
       skills:
         - ..
-        - ../../azsdk-common-eval-authoring-skill
-        - ../../azsdk-common-eval-authoring-workflow
+        - ../../eval-authoring-skill
+        - ../../eval-authoring-workflow
     prompt: "write a Vally eval for a single Azure SDK MCP tool"
     graders:
       - type: skill-invocation
         config:
-          required: [azsdk-common-eval-authoring-tool]
+          required: [eval-authoring-tool]
           disallowed:
-              - azsdk-common-eval-authoring-skill
-              - azsdk-common-eval-authoring-workflow
+              - eval-authoring-skill
+              - eval-authoring-workflow
 
   - name: trigger-add-prompt-to-tool-coverage
     environment: *siblingSkills
@@ -42,10 +42,10 @@ stimuli:
     graders:
       - type: skill-invocation
         config:
-          required: [azsdk-common-eval-authoring-tool]
+          required: [eval-authoring-tool]
           disallowed:
-              - azsdk-common-eval-authoring-skill
-              - azsdk-common-eval-authoring-workflow
+              - eval-authoring-skill
+              - eval-authoring-workflow
 
   - name: trigger-test-mcp-tool-selection
     environment: *siblingSkills
@@ -53,10 +53,10 @@ stimuli:
     graders:
       - type: skill-invocation
         config:
-          required: [azsdk-common-eval-authoring-tool]
+          required: [eval-authoring-tool]
           disallowed:
-              - azsdk-common-eval-authoring-skill
-              - azsdk-common-eval-authoring-workflow
+              - eval-authoring-skill
+              - eval-authoring-workflow
 
   - name: trigger-harden-tool-call-grader
     environment: *siblingSkills
@@ -64,10 +64,10 @@ stimuli:
     graders:
       - type: skill-invocation
         config:
-          required: [azsdk-common-eval-authoring-tool]
+          required: [eval-authoring-tool]
           disallowed:
-              - azsdk-common-eval-authoring-skill
-              - azsdk-common-eval-authoring-workflow
+              - eval-authoring-skill
+              - eval-authoring-workflow
 
   - name: anti-trigger-skill-routing
     environment: *siblingSkills
@@ -75,10 +75,10 @@ stimuli:
     graders:
       - type: skill-invocation
         config:
-          required: [azsdk-common-eval-authoring-skill]
+          required: [eval-authoring-skill]
           disallowed:
-              - azsdk-common-eval-authoring-tool
-              - azsdk-common-eval-authoring-workflow
+              - eval-authoring-tool
+              - eval-authoring-workflow
 
   - name: anti-trigger-multi-tool-workflow
     environment: *siblingSkills
@@ -86,10 +86,10 @@ stimuli:
     graders:
       - type: skill-invocation
         config:
-          required: [azsdk-common-eval-authoring-workflow]
+          required: [eval-authoring-workflow]
           disallowed:
-              - azsdk-common-eval-authoring-skill
-              - azsdk-common-eval-authoring-tool
+              - eval-authoring-skill
+              - eval-authoring-tool
 
   - name: anti-trigger-live-scenario
     environment: *siblingSkills
@@ -97,8 +97,7 @@ stimuli:
     graders:
       - type: skill-invocation
         config:
-          required: [azsdk-common-eval-authoring-workflow]
+          required: [eval-authoring-workflow]
           disallowed:
-              - azsdk-common-eval-authoring-skill
-              - azsdk-common-eval-authoring-tool
-
+              - eval-authoring-skill
+              - eval-authoring-tool

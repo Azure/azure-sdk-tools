@@ -1,11 +1,10 @@
 ---
-name: azsdk-common-eval-authoring-skill
-description: 'Author and validate Vally evals for Agent Skills under .github/skills. WHEN: "write a skill eval", "add trigger eval", "test skill routing", "add anti-trigger tests", "create skill capability eval", "harden skill graders". DO NOT USE FOR: single MCP tool prompt-to-tool coverage (use azsdk-common-eval-authoring-tool), multi-tool or multi-turn scenarios (use azsdk-common-eval-authoring-workflow), authoring SKILL.md itself (use skill-authoring).'
+name: eval-authoring-skill
+description: 'Author and validate Vally evals for Agent Skills under .github/skills. WHEN: "write a skill eval", "add trigger eval", "test skill routing", "add anti-trigger tests", "create skill capability eval", "harden skill graders". DO NOT USE FOR: single MCP tool prompt-to-tool coverage (use eval-authoring-tool), multi-tool or multi-turn scenarios (use eval-authoring-workflow), authoring SKILL.md itself (use skill-authoring).'
 license: MIT
 metadata:
   author: Microsoft
   version: "1.0.0"
-  distribution: shared
 compatibility: "copilot-chat, @microsoft/vally-cli 0.7.0"
 ---
 
@@ -17,7 +16,7 @@ Author Vally evals that verify **one Agent Skill's** routing and behavior in iso
 
 USE FOR: write a skill eval, add trigger eval, test skill routing, add anti-trigger tests, create skill capability eval, harden skill graders
 WHEN: "write a skill eval", "add trigger eval", "test skill routing", "add anti-trigger tests", "create skill capability eval", "harden skill graders"
-DO NOT USE FOR: single MCP tool prompt-to-tool coverage (use azsdk-common-eval-authoring-tool), multi-tool or multi-turn scenarios (use azsdk-common-eval-authoring-workflow), authoring SKILL.md itself (use skill-authoring)
+DO NOT USE FOR: single MCP tool prompt-to-tool coverage (use eval-authoring-tool), multi-tool or multi-turn scenarios (use eval-authoring-workflow), authoring SKILL.md itself (use skill-authoring)
 
 ## Steps
 
@@ -36,5 +35,5 @@ DO NOT USE FOR: single MCP tool prompt-to-tool coverage (use azsdk-common-eval-a
 
 ## References
 
-- Eval authoring guide: `eng/common/knowledge/eval-authoring/README.md` — naming, placement, requirements, glossary, graders, anti-patterns, worked examples, local commands. Shared with `azsdk-common-eval-authoring-tool`/`azsdk-common-eval-authoring-workflow` — update it there, not per-skill.
+- Eval authoring guide: `eng/common/knowledge/eval-authoring/README.md` — naming, placement, requirements, glossary, graders, anti-patterns, worked examples, local commands. Shared with `eval-authoring-tool`/`eval-authoring-workflow` — update it there, not per-skill.
 - Repository-local eval README/configuration discovered in Step 0 (if present)

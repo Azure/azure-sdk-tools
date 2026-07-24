@@ -31,6 +31,8 @@ stimuli:
           dest: Microsoft.Widget/Widget/package-lock.json
         - src: ../fixtures/Microsoft.Widget/Widget/package.json
           dest: Microsoft.Widget/Widget/package.json
+        - src: ../scripts/check-node-dependencies.js
+          dest: check-node-dependencies.js
         - src: ../fixtures/001-share-version-new-feature/readme.md
           dest: Microsoft.Widget/Widget/readme.md
         - src: ../fixtures/001-share-version-new-feature/shared.tsp
@@ -67,6 +69,14 @@ stimuli:
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "run-command"
         config:
+          command: "node check-node-dependencies.js node_modules"
+          expected_exit_code: 0
+      - type: "run-command"
+        config:
+          command: "node check-node-dependencies.js packages"
+          expected_exit_code: 0
+      - type: "run-command"
+        config:
           command: "tsp compile ."
           sub_path: "Microsoft.Widget/Widget"
           expected_exit_code: 0
@@ -76,7 +86,7 @@ stimuli:
           path: "Microsoft.Widget/Widget/main.tsp"
       - type: "file-matches"
         config:
-          pattern: '@madeRequired\(Versions\.v2025_05_04_preview\)'
+          pattern: '@madeRequired\((?:Microsoft\.Widget\.)?Versions\.v2025_05_04_preview\)'
           path: "Microsoft.Widget/Widget/employee.tsp"
       - type: "file-matches"
         config:
@@ -109,7 +119,7 @@ stimuli:
       - type: "file-matches"
         config:
           path: "Microsoft.Widget/Widget/employee.tsp"
-          pattern: '@madeRequired\(Versions\.v2025_05_04_preview\)'
+          pattern: '@madeRequired\((?:Microsoft\.Widget\.)?Versions\.v2025_05_04_preview\)'
       - type: "file-matches"
         config:
           path: "Microsoft.Widget/Widget/employee.tsp"

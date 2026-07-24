@@ -133,7 +133,6 @@ async def reconcile(
     logger.info("reconcile: %d changed/new, %d deleted, %d unchanged",
                 len(changed), len(deleted), len(current) - len(changed))
 
-    folder_by_sp = {sp: source_folder(sp) for sp, _t in corpus}
     failed_docs: set[str] = set()
 
     # --- 2. extractions: re-extract changed docs, reuse the rest ---
@@ -170,7 +169,7 @@ async def reconcile(
 
     def _summary(item: tuple[str, str]) -> tuple[str, WikiPage | None, bool]:
         sp, text = item
-        folder = folder_by_sp.get(sp, "")
+        folder = source_folder(sp)
         rel = rel_title(sp)
         title = _doc_title(rel)
         try:

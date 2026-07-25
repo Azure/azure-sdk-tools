@@ -2,6 +2,8 @@
 
 > Prerequisite: Steps 1 (Analyze Project) and 2 (Intake) must be complete.
 
+> **MANDATE — read before doing anything in Step 3:** When the request's case is covered by [reference-document-links.md](reference-document-links.md) (this includes **all API version evolution**, cases 001004–001008 and similar), you **MUST** call `web_fetch` on the matching reference URLs and build the plan from the fetched content **before** writing or applying any change. **Never** author the plan from memory, and **do not** call the MCP tool `azsdk_typespec_generate_authoring_plan` for a covered case.
+
 ## 3.1 General (All Cases)
 
 Choose the grounding source based on whether the request's case is covered by [reference-document-links.md](reference-document-links.md):

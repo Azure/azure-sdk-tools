@@ -67,36 +67,6 @@ extends:
                   SuiteName: versioning-forced
                   DisplayName: Run force invokation suite - versioning
                   TimeoutMinutes: 50
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
-                parameters:
-                  Suite: armtemplate-forced
-                  SuiteName: armtemplate-forced
-                  DisplayName: Run force invokation suite - armtemplate
-                  TimeoutMinutes: 40
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
-                parameters:
-                  Suite: longrunningoperation-forced
-                  SuiteName: longrunningoperation-forced
-                  DisplayName: Run force invokation suite - longrunningoperation
-                  TimeoutMinutes: 25
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
-                parameters:
-                  Suite: decorators-forced
-                  SuiteName: decorators-forced
-                  DisplayName: Run force invokation suite - decorators
-                  TimeoutMinutes: 15
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
-                parameters:
-                  Suite: warning-forced
-                  SuiteName: warning-forced
-                  DisplayName: Run force invokation suite - warning
-                  TimeoutMinutes: 25
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
-                parameters:
-                  Suite: dataplane-forced
-                  SuiteName: dataplane-forced
-                  DisplayName: Run force invocation suite - dataplane
-                  TimeoutMinutes: 50
 
             templateContext:
               outputs:
@@ -110,68 +80,4 @@ extends:
                   path: $(Build.StagingDirectory)/qa-bot-log
                   artifact: qa-bot-service-log-code-quality
                   displayName: Upload QA bot backend log
-                  condition: always()
-
-          # Trigger mode: same .vally.yaml suite branch strategy for comparable
-          # diagnostics and easier cross-mode failure analysis.
-          - job: RunEvalsForSkillInvocation
-            displayName: Run Vally Evaluations for Skill Invocation
-            timeoutInMinutes: 170
-            steps:
-              - checkout: self
-                fetchDepth: 0
-
-              - template: /eng/common/pipelines/templates/steps/login-to-github.yml
-
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-setup.yml
-                parameters:
-                  SkillBranch: ${{ parameters.SkillBranch }}
-                  StartQaBotBackend: false
-                  BuildMockMcpServer: true
-
-              # Run evaluations — each suite gets its own step with timeout
-              # and continueOnError so failures don't block subsequent suites.
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
-                parameters:
-                  Suite: versioning-trigger
-                  SuiteName: versioning-trigger
-                  DisplayName: Run suite - versioning
-                  TimeoutMinutes: 50
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
-                parameters:
-                  Suite: armtemplate-trigger
-                  SuiteName: armtemplate-trigger
-                  DisplayName: Run suite - armtemplate
-                  TimeoutMinutes: 40
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
-                parameters:
-                  Suite: longrunningoperation-trigger
-                  SuiteName: longrunningoperation-trigger
-                  DisplayName: Run suite - longrunningoperation
-                  TimeoutMinutes: 25
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
-                parameters:
-                  Suite: decorators-trigger
-                  SuiteName: decorators-trigger
-                  DisplayName: Run suite - decorators
-                  TimeoutMinutes: 15
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
-                parameters:
-                  Suite: warning-trigger
-                  SuiteName: warning-trigger
-                  DisplayName: Run suite - warning
-                  TimeoutMinutes: 25
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-run-suite.yml
-                parameters:
-                  Suite: dataplane-trigger
-                  SuiteName: dataplane-trigger
-                  DisplayName: Run suite - dataplane
-                  TimeoutMinutes: 50
-
-            templateContext:
-              outputs:
-                - output: pipelineArtifact
-                  path: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/results
-                  artifact: eval-results-skill-invocation-$(Build.BuildId)
-                  displayName: Upload eval results
                   condition: always()

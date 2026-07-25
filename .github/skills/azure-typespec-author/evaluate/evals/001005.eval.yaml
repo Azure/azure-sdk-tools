@@ -20,7 +20,7 @@ stimuli:
       suite: "versioning"
       mode: "trigger"
     prompt: |
-      Add a new preview version `2025-05-04-preview` to my service widget resource manager. Exclude Feature: the default value from the 'age' property. Carry other features.
+      Add a new preview version `2025-05-04-preview` to my service widget resource manager, superseding the previous unreleased preview `2024-10-01-preview` (do not keep it). Exclude Feature: the default value from the 'age' property. Carry other features.
     environment: &shared_environment
       files:
         - src: ../fixtures/001005-version-add-preview-after-preview/employee.tsp
@@ -92,7 +92,7 @@ stimuli:
       suite: "versioning"
       mode: "forced"
     prompt: |
-      @azure-typespec-author Add a new preview version `2025-05-04-preview` to my service widget resource manager. Exclude Feature: the default value from the 'age' property. Carry other features.
+      @azure-typespec-author Add a new preview version `2025-05-04-preview` to my service widget resource manager, superseding the previous unreleased preview `2024-10-01-preview` (do not keep it). Exclude Feature: the default value from the 'age' property. Carry other features.
     environment: *shared_environment
     graders:
       - type: "tool-calls"
@@ -146,7 +146,7 @@ stimuli:
     tags:
       suite: "versioning"
       mode: "no-skill"
-    prompt: "Add a new preview version `2025-05-04-preview` to my service widget resource manager. Exclude Feature: the default value from the 'age' property. Carry other features."
+    prompt: "Add a new preview version `2025-05-04-preview` to my service widget resource manager, superseding the previous unreleased preview `2024-10-01-preview` (do not keep it). Exclude Feature: the default value from the 'age' property. Carry other features."
     environment: *shared_environment
     graders:
       - type: "tool-calls"

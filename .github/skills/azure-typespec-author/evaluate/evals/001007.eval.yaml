@@ -20,7 +20,7 @@ stimuli:
       suite: "versioning"
       mode: "trigger"
     prompt: |
-      I want to add a new stable version `2025-01-01`. Exclude `workLocation` property and `WorkLocation` model. Carry other features.
+      I want to add a new stable version `2025-01-01`, promoting the previous unreleased preview `2024-10-01-preview` into this stable version (do not keep the preview). Exclude `workLocation` property and `WorkLocation` model. Carry other features.
     environment: &shared_environment
       files:
         - src: ../fixtures/001007-version-add-stable-after-preview/employee.tsp
@@ -98,7 +98,7 @@ stimuli:
       suite: "versioning"
       mode: "forced"
     prompt: |
-      @azure-typespec-author I want to add a new stable version `2025-01-01`. Exclude `workLocation` property and `WorkLocation` model. Carry other features.
+      @azure-typespec-author I want to add a new stable version `2025-01-01`, promoting the previous unreleased preview `2024-10-01-preview` into this stable version (do not keep the preview). Exclude `workLocation` property and `WorkLocation` model. Carry other features.
     environment: *shared_environment
     graders:
       - type: "tool-calls"
@@ -148,7 +148,7 @@ stimuli:
     tags:
       suite: "versioning"
       mode: "no-skill"
-    prompt: "I want to add a new stable version `2025-01-01`. Exclude `workLocation` property and `WorkLocation` model. Carry other features."
+    prompt: "I want to add a new stable version `2025-01-01`, promoting the previous unreleased preview `2024-10-01-preview` into this stable version (do not keep the preview). Exclude `workLocation` property and `WorkLocation` model. Carry other features."
     environment: *shared_environment
     graders:
       - type: "tool-calls"

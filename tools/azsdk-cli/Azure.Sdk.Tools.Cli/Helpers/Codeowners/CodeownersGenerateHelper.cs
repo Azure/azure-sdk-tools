@@ -66,7 +66,7 @@ public class CodeownersGenerateHelper(
 
         logger.LogInformation("Building CODEOWNERS entries...");
         var invalidOwnerCutoff = DateTime.UtcNow.AddDays(-invalidOwnerLookbackDays);
-        var entries = BuildCodeownersEntries(workItemData, packageLookup, repoRoot, sectionName, invalidOwnerCutoff);
+        var entries = BuildCodeownersEntries(workItemData, packageLookup, repoRoot, invalidOwnerCutoff);
         logger.LogInformation("Total entries: {Count}", entries.Count);
 
         logger.LogInformation("Sorting entries...");
@@ -188,11 +188,12 @@ public class CodeownersGenerateHelper(
         return workItems.Select(factory).ToList();
     }
 
+    // Assumes the data passed in has already been filtered to the target section
+    // by the WIQL query in FetchAllWorkItemsAsync. No additional section filtering is applied here.
     private List<CodeownersEntry> BuildCodeownersEntries(
         WorkItemData data,
         Dictionary<string, RepoPackage> packageLookup,
         string repoRoot,
-        string sectionName,
         DateTime invalidOwnerCutoff)
     {
         var entries = new List<CodeownersEntry>();
@@ -244,7 +245,7 @@ public class CodeownersGenerateHelper(
 
         // Service-level path entries: Label Owners with RepoPath
         var serviceLevelPathEntries = new Dictionary<string, CodeownersEntry>(StringComparer.OrdinalIgnoreCase);
-        foreach (var lo in unlinkedLabelOwners.Where(lo => !string.IsNullOrEmpty(lo.RepoPath) && MatchesSection(lo, sectionName)))
+        foreach (var lo in unlinkedLabelOwners.Where(lo => !string.IsNullOrEmpty(lo.RepoPath)))
         {
             string pathExpression = "/" + lo.RepoPath.TrimStart('/');
 
@@ -290,7 +291,7 @@ public class CodeownersGenerateHelper(
 
         // Pathless entries: Label Owners without RepoPath (Service Owner / Azure SDK Owner types for triage)
         var pathlessEntriesByLabel = new Dictionary<string, CodeownersEntry>(StringComparer.OrdinalIgnoreCase);
-        foreach (var lo in unlinkedLabelOwners.Where(lo => string.IsNullOrEmpty(lo.RepoPath) && MatchesSection(lo, sectionName)))
+        foreach (var lo in unlinkedLabelOwners.Where(lo => string.IsNullOrEmpty(lo.RepoPath)))
         {
             var labels = lo.Labels
                 .Select(l => l.LabelName)
@@ -320,17 +321,6 @@ public class CodeownersGenerateHelper(
         }
 
         return entries;
-    }
-
-    /// <summary>
-    /// Returns true if the Label Owner belongs to the requested section (case-insensitive, trimmed).
-    /// Label Owners with an empty/missing section are excluded from a specific-section generate to
-    /// prevent cross-section bleed. This mirrors the WIQL section filter in <see cref="FetchAllWorkItemsAsync"/>
-    /// and keeps generation correct even if that query is later changed.
-    /// </summary>
-    private static bool MatchesSection(LabelOwnerWorkItem lo, string sectionName)
-    {
-        return string.Equals(lo.Section?.Trim(), sectionName?.Trim(), StringComparison.OrdinalIgnoreCase);
     }
 
     private static void AddLabelOwnerMetadata(CodeownersEntry entry, LabelOwnerWorkItem lo, DateTime invalidOwnerCutoff)

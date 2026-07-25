@@ -344,22 +344,38 @@ public class CodeownersGenerateHelperTests
     }
 
     [Test]
-    public void BuildCodeownersEntries_ExcludesServiceLevelPathEntryFromDifferentSection()
+    public void BuildCodeownersEntries_IncludesMgmtSectionEntryAndExcludesClientEntry()
     {
-        // Arrange: a service-level (RepoPath) Label Owner in the Client Libraries section
-        var data = new WorkItemDataBuilder()
-            .AddOwner("clientdev", out var ownerId)
-            .AddLabel("Agent Server", out var labelId)
-            .AddPRLabelOwner(out _, repoPath: "sdk/agentserver/", section: "Client Libraries", relatedTo: [ownerId, labelId])
+        // Arrange: service-level entries in both sections, as they exist across the DevOps database
+        var allData = new WorkItemDataBuilder()
+            .AddOwner("clientdev", out var clientOwnerId)
+            .AddLabel("Agent Server", out var clientLabelId)
+            .AddPRLabelOwner(out _, repoPath: "sdk/agentserver/", section: "Client Libraries", relatedTo: [clientOwnerId, clientLabelId])
+            .AddOwner("mgmtdev", out var mgmtOwnerId)
+            .AddLabel("Compute", out var mgmtLabelId)
+            .AddPRLabelOwner(out _, repoPath: "sdk/compute/", section: "Management Libraries", relatedTo: [mgmtOwnerId, mgmtLabelId])
             .Build();
 
         var packageLookup = new Dictionary<string, RepoPackage>(StringComparer.OrdinalIgnoreCase);
 
-        // Act: generate the Management Libraries section
-        var entries = InvokeBuildCodeownersEntries(data, packageLookup, sectionName: "Management Libraries");
+        // Simulate WIQL pre-filter: FetchAllWorkItemsAsync queries by section before calling BuildCodeownersEntries
+        var mgmtData = new WorkItemData(
+            allData.Packages,
+            allData.Owners,
+            allData.Labels,
+            allData.LabelOwners.Where(lo => lo.Section == "Management Libraries").ToList());
 
-        // Assert: the client-section entry does not leak into the mgmt section
-        Assert.That(entries, Has.Count.EqualTo(0));
+        // Act
+        var entries = InvokeBuildCodeownersEntries(mgmtData, packageLookup);
+
+        // Assert: management entry is present; client entry is not
+        Assert.That(entries, Has.Count.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(entries[0].PathExpression, Is.EqualTo("/sdk/compute/"));
+            Assert.That(entries[0].SourceOwners, Does.Contain("mgmtdev"));
+            Assert.That(entries[0].SourceOwners, Does.Not.Contain("clientdev"));
+        });
     }
 
     [Test]
@@ -374,8 +390,8 @@ public class CodeownersGenerateHelperTests
 
         var packageLookup = new Dictionary<string, RepoPackage>(StringComparer.OrdinalIgnoreCase);
 
-        // Act: generate the Management Libraries section (case-insensitive match)
-        var entries = InvokeBuildCodeownersEntries(data, packageLookup, sectionName: "management libraries");
+        // Act: data is already pre-filtered to Management Libraries by the WIQL query
+        var entries = InvokeBuildCodeownersEntries(data, packageLookup);
 
         // Assert
         Assert.That(entries, Has.Count.EqualTo(1));
@@ -387,41 +403,38 @@ public class CodeownersGenerateHelperTests
     }
 
     [Test]
-    public void BuildCodeownersEntries_ExcludesUnsectionedServiceLevelPathEntry()
+    public void BuildCodeownersEntries_IncludesMgmtPathlessEntryAndExcludesClientEntry()
     {
-        // Arrange: a service-level Label Owner with no section set
-        var data = new WorkItemDataBuilder()
-            .AddOwner("orphandev", out var ownerId)
-            .AddLabel("Orphan", out var labelId)
-            .AddPRLabelOwner(out _, repoPath: "sdk/orphan/", section: "", relatedTo: [ownerId, labelId])
+        // Arrange: pathless entries in both sections, as they exist across the DevOps database
+        var allData = new WorkItemDataBuilder()
+            .AddOwner("triagedev", out var clientOwnerId)
+            .AddLabel("TriageService", out var clientLabelId)
+            .AddServiceOwner(out _, section: "Client Libraries", relatedTo: [clientOwnerId, clientLabelId])
+            .AddOwner("mgmttriagedev", out var mgmtOwnerId)
+            .AddLabel("MgmtTriageService", out var mgmtLabelId)
+            .AddServiceOwner(out _, section: "Management Libraries", relatedTo: [mgmtOwnerId, mgmtLabelId])
             .Build();
 
         var packageLookup = new Dictionary<string, RepoPackage>(StringComparer.OrdinalIgnoreCase);
+
+        // Simulate WIQL pre-filter: FetchAllWorkItemsAsync queries by section before calling BuildCodeownersEntries
+        var mgmtData = new WorkItemData(
+            allData.Packages,
+            allData.Owners,
+            allData.Labels,
+            allData.LabelOwners.Where(lo => lo.Section == "Management Libraries").ToList());
 
         // Act
-        var entries = InvokeBuildCodeownersEntries(data, packageLookup, sectionName: "Management Libraries");
+        var entries = InvokeBuildCodeownersEntries(mgmtData, packageLookup);
 
-        // Assert: unsectioned entries are excluded from a specific-section generate
-        Assert.That(entries, Has.Count.EqualTo(0));
-    }
-
-    [Test]
-    public void BuildCodeownersEntries_ExcludesPathlessEntryFromDifferentSection()
-    {
-        // Arrange: a pathless (triage) Label Owner in the Client Libraries section
-        var data = new WorkItemDataBuilder()
-            .AddOwner("triagedev", out var ownerId)
-            .AddLabel("TriageService", out var labelId)
-            .AddServiceOwner(out _, section: "Client Libraries", relatedTo: [ownerId, labelId])
-            .Build();
-
-        var packageLookup = new Dictionary<string, RepoPackage>(StringComparer.OrdinalIgnoreCase);
-
-        // Act: generate the Management Libraries section
-        var entries = InvokeBuildCodeownersEntries(data, packageLookup, sectionName: "Management Libraries");
-
-        // Assert
-        Assert.That(entries, Has.Count.EqualTo(0));
+        // Assert: management entry is present; client entry is not
+        Assert.That(entries, Has.Count.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(entries[0].ServiceLabels, Does.Contain("MgmtTriageService"));
+            Assert.That(entries[0].ServiceOwners, Does.Contain("mgmttriagedev"));
+            Assert.That(entries[0].ServiceLabels, Does.Not.Contain("TriageService"));
+        });
     }
 
     [Test]
@@ -436,8 +449,8 @@ public class CodeownersGenerateHelperTests
 
         var packageLookup = new Dictionary<string, RepoPackage>(StringComparer.OrdinalIgnoreCase);
 
-        // Act
-        var entries = InvokeBuildCodeownersEntries(data, packageLookup, sectionName: "Management Libraries");
+        // Act: data is already pre-filtered to Management Libraries by the WIQL query
+        var entries = InvokeBuildCodeownersEntries(data, packageLookup);
 
         // Assert
         Assert.That(entries, Has.Count.EqualTo(1));
@@ -451,8 +464,7 @@ public class CodeownersGenerateHelperTests
     private List<CodeownersEntry> InvokeBuildCodeownersEntries(
         WorkItemData data,
         Dictionary<string, RepoPackage> packageLookup,
-        DateTime? invalidOwnerCutoff = null,
-        string sectionName = "Client Libraries")
+        DateTime? invalidOwnerCutoff = null)
     {
         var method = typeof(CodeownersGenerateHelper).GetMethod(
             "BuildCodeownersEntries",
@@ -464,7 +476,7 @@ public class CodeownersGenerateHelperTests
             _logger
         );
 
-        return method?.Invoke(helper, [data, packageLookup, _repoRoot, sectionName, invalidOwnerCutoff ?? DateTime.MinValue]) as List<CodeownersEntry> ?? [];
+        return method?.Invoke(helper, [data, packageLookup, _repoRoot, invalidOwnerCutoff ?? DateTime.MinValue]) as List<CodeownersEntry> ?? [];
     }
 
     #endregion

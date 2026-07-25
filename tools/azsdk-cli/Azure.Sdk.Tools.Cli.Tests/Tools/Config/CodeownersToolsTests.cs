@@ -91,14 +91,17 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
             _mockCodeownersManagement.Verify(m => m.AddOwnersToPackage(It.IsAny<OwnerWorkItem[]>(), "pkg1", "Azure/azure-sdk-for-net", It.IsAny<CancellationToken>()), Times.Once);
         }
 
-        [Test]
-        public async Task AddLabelOwner_WithPackageDirectoryPath_ReturnsErrorAndDoesNotCallHelper()
+        [TestCase("/sdk/storage/Azure.Storage.Blobs")]
+        [TestCase("/sdk/storage/Azure.Storage.Blobs/")]
+        [TestCase("sdk/storage/Azure.Storage.Blobs")]
+        [TestCase("sdk/storage/Azure.Storage.Blobs/")]
+        public async Task AddLabelOwner_WithPackageDirectoryPath_ReturnsErrorAndDoesNotCallHelper(string path)
         {
             var result = await _tool.AddLabelOwner(
                 githubUsers: [],
                 labels: [],
                 ownerType: OwnerType.ServiceOwner,
-                path: "/sdk/storage/Azure.Storage.Blobs",
+                path: path,
                 repo: "Azure/azure-sdk-for-net");
 
             Assert.That(result, Is.TypeOf<DefaultCommandResponse>());

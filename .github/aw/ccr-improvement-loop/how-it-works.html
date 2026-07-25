@@ -1,0 +1,1416 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>How it works — CCR Improvement Loop</title>
+    <style>
+      :root {
+        --bg: #0f1117;
+        --panel: #171a23;
+        --panel-2: #1e222d;
+        --border: #2a2f3a;
+        --text: #d7dae0;
+        --muted: #8b93a3;
+        --accent: #4f9cf9;
+        --accent-2: #7ee0a3;
+        --warn: #f0b357;
+        --pink: #e28ad0;
+        --code-bg: #12141c;
+        --mono:
+          ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+        line-height: 1.6;
+      }
+      .wrap {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 24px 120px;
+      }
+      header.hero {
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 24px;
+        margin-bottom: 8px;
+      }
+      h1 {
+        font-size: 2rem;
+        margin: 0 0 8px;
+        letter-spacing: -0.02em;
+      }
+      .subtitle {
+        color: var(--muted);
+        font-size: 1.05rem;
+        margin: 0;
+      }
+      .spine {
+        margin-top: 20px;
+        background: var(--panel-2);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        padding: 14px 18px;
+        border-radius: 6px;
+        font-size: 0.97rem;
+      }
+      .spine strong {
+        color: var(--accent);
+      }
+      nav.toc {
+        margin: 28px 0;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 16px 20px;
+      }
+      nav.toc h2 {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        margin: 0 0 10px;
+      }
+      nav.toc ol {
+        margin: 0;
+        padding-left: 20px;
+        columns: 2;
+        column-gap: 32px;
+      }
+      nav.toc a {
+        color: var(--text);
+        text-decoration: none;
+        font-size: 0.92rem;
+      }
+      nav.toc a:hover {
+        color: var(--accent);
+        text-decoration: underline;
+      }
+      h2.sec {
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+        margin: 44px 0 4px;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 6px;
+      }
+      section.step {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 22px 26px;
+        margin: 20px 0;
+      }
+      section.step h3 {
+        margin: 0 0 4px;
+        font-size: 1.15rem;
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+      }
+      .step-num {
+        font-family: var(--mono);
+        font-size: 0.75rem;
+        color: var(--bg);
+        background: var(--accent);
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .step-num.p2 {
+        background: var(--pink);
+      }
+      .step-num.p3 {
+        background: var(--accent-2);
+      }
+      .why {
+        color: var(--muted);
+        font-style: italic;
+        font-size: 0.92rem;
+        margin: 6px 0 14px;
+      }
+      p {
+        margin: 12px 0;
+      }
+      code {
+        font-family: var(--mono);
+        background: var(--code-bg);
+        padding: 1px 6px;
+        border-radius: 4px;
+        font-size: 0.86em;
+        color: #e6d9a8;
+      }
+      pre {
+        background: var(--code-bg);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 14px 16px;
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 0.82rem;
+        color: #cdd3dd;
+        line-height: 1.5;
+      }
+      .file {
+        font-family: var(--mono);
+        color: var(--accent-2);
+        font-size: 0.86em;
+      }
+      table.limits {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 12px 0;
+        font-size: 0.88rem;
+      }
+      table.limits th,
+      table.limits td {
+        border: 1px solid var(--border);
+        padding: 8px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+      table.limits th {
+        background: var(--panel-2);
+        color: var(--muted);
+        font-weight: 600;
+      }
+      table.limits td.num {
+        font-family: var(--mono);
+        text-align: right;
+      }
+      table.limits td code {
+        white-space: nowrap;
+      }
+      .callout {
+        border-left: 3px solid var(--warn);
+        background: rgba(240, 179, 87, 0.08);
+        padding: 10px 16px;
+        border-radius: 4px;
+        margin: 14px 0;
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        color: var(--warn);
+      }
+      .callout.good {
+        border-left-color: var(--accent-2);
+        background: rgba(126, 224, 163, 0.08);
+      }
+      .callout.good strong {
+        color: var(--accent-2);
+      }
+      details.check {
+        margin-top: 12px;
+        background: var(--panel-2);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 4px 14px;
+      }
+      details.check summary {
+        cursor: pointer;
+        color: var(--accent);
+        font-size: 0.9rem;
+        padding: 8px 0;
+        user-select: none;
+      }
+      details.check[open] summary {
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 8px;
+      }
+      details.check p {
+        font-size: 0.9rem;
+        color: var(--text);
+        margin: 8px 0;
+      }
+      ul.tight {
+        margin: 8px 0;
+        padding-left: 22px;
+      }
+      ul.tight li {
+        margin: 5px 0;
+      }
+
+      /* Pipeline flow diagram */
+      .flow {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: stretch;
+        gap: 0;
+        margin: 20px 0 6px;
+      }
+      .flow .box {
+        flex: 1 1 0;
+        min-width: 120px;
+        background: var(--panel-2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 12px 12px;
+        text-align: center;
+        position: relative;
+      }
+      .flow .box .lbl {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        margin-bottom: 4px;
+      }
+      .flow .box .ttl {
+        font-weight: 700;
+        font-size: 0.94rem;
+      }
+      .flow .box .sub {
+        font-size: 0.76rem;
+        color: var(--muted);
+        margin-top: 4px;
+        font-family: var(--mono);
+      }
+      .flow .arrow {
+        align-self: center;
+        color: var(--muted);
+        font-size: 1.3rem;
+        padding: 0 6px;
+        flex: 0 0 auto;
+      }
+      .flow .box.det {
+        border-top: 3px solid var(--accent);
+      }
+      .flow .box.agent {
+        border-top: 3px solid var(--pink);
+      }
+      .flow .box.out {
+        border-top: 3px solid var(--accent-2);
+      }
+      .legend {
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+        font-size: 0.82rem;
+        color: var(--muted);
+        margin: 6px 2px 0;
+      }
+      .legend span::before {
+        content: "";
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        margin-right: 6px;
+        vertical-align: baseline;
+      }
+      .legend .l-det::before {
+        background: var(--accent);
+      }
+      .legend .l-agent::before {
+        background: var(--pink);
+      }
+      .legend .l-out::before {
+        background: var(--accent-2);
+      }
+
+      /* Metric cards */
+      .metric {
+        background: var(--panel-2);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        border-radius: 6px;
+        padding: 12px 16px;
+        margin: 12px 0;
+      }
+      .metric h4 {
+        margin: 0 0 4px;
+        font-size: 0.98rem;
+        font-family: var(--mono);
+        color: var(--accent);
+      }
+      .metric .q {
+        color: var(--accent-2);
+        font-size: 0.88rem;
+        font-weight: 600;
+      }
+      .metric p {
+        margin: 6px 0 0;
+        font-size: 0.9rem;
+      }
+      .metric.proxy {
+        border-left-color: var(--warn);
+      }
+      .metric.proxy h4 {
+        color: var(--warn);
+      }
+      .tag {
+        display: inline-block;
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 1px 7px;
+        border-radius: 20px;
+        margin-left: 8px;
+        vertical-align: middle;
+        font-family: var(--mono);
+      }
+      .tag.det {
+        background: rgba(79, 156, 249, 0.16);
+        color: var(--accent);
+      }
+      .tag.judged {
+        background: rgba(226, 138, 208, 0.16);
+        color: var(--pink);
+      }
+      .tag.proxy {
+        background: rgba(240, 179, 87, 0.16);
+        color: var(--warn);
+      }
+
+      /* Quiz */
+      section.quiz {
+        background: linear-gradient(
+          180deg,
+          var(--panel) 0%,
+          var(--panel-2) 100%
+        );
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 24px 26px;
+        margin: 36px 0;
+      }
+      section.quiz h2 {
+        margin: 0 0 4px;
+      }
+      .quiz-sub {
+        color: var(--muted);
+        font-size: 0.92rem;
+        margin: 0 0 20px;
+      }
+      .q-block {
+        margin: 18px 0;
+        padding: 16px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+      }
+      .q-text {
+        font-weight: 600;
+        margin-bottom: 10px;
+      }
+      .q-block label {
+        display: block;
+        padding: 8px 12px;
+        margin: 6px 0;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.92rem;
+        transition:
+          background 0.12s,
+          border-color 0.12s;
+      }
+      .q-block label:hover {
+        border-color: var(--accent);
+      }
+      .q-block input {
+        margin-right: 10px;
+      }
+      .q-block label.correct {
+        border-color: var(--accent-2);
+        background: rgba(126, 224, 163, 0.12);
+      }
+      .q-block label.wrong {
+        border-color: #f07b7b;
+        background: rgba(240, 123, 123, 0.12);
+      }
+      .explain {
+        display: none;
+        margin-top: 10px;
+        font-size: 0.88rem;
+        color: var(--muted);
+        border-top: 1px dashed var(--border);
+        padding-top: 10px;
+      }
+      .explain.show {
+        display: block;
+      }
+      button.submit {
+        background: var(--accent);
+        color: #08101d;
+        border: none;
+        padding: 11px 22px;
+        border-radius: 6px;
+        font-size: 0.95rem;
+        font-weight: 700;
+        cursor: pointer;
+        margin-top: 8px;
+      }
+      button.submit:hover {
+        filter: brightness(1.08);
+      }
+      .score {
+        margin-top: 16px;
+        font-size: 1.05rem;
+        font-weight: 700;
+        display: none;
+      }
+      .score.show {
+        display: block;
+      }
+      footer {
+        color: var(--muted);
+        font-size: 0.82rem;
+        text-align: center;
+        margin-top: 40px;
+        border-top: 1px solid var(--border);
+        padding-top: 20px;
+      }
+      footer a {
+        color: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="hero">
+        <h1>CCR Improvement Loop — how it works</h1>
+        <p class="subtitle">
+          A ground-up walkthrough: from a repo's merged pull requests to a few
+          defensible numbers and human-approved review-rule proposals.
+        </p>
+        <div class="spine">
+          <strong>The one-sentence version.</strong> Each run mines a settled
+          window of merged PRs, splits the work so that
+          <strong>scripts produce reproducible facts</strong> and
+          <strong>an LLM agent supplies judgment</strong>, and emits a
+          <code>run-*.json</code> of trend metrics plus proposed
+          instruction-file rules — never touching the target repo except through
+          one tracking issue.
+        </div>
+      </header>
+
+      <nav class="toc">
+        <h2>Contents</h2>
+        <ol>
+          <li><a href="#why">1. The question it answers</a></li>
+          <li><a href="#bigpicture">2. The big picture</a></li>
+          <li><a href="#threephase">3. Why three phases</a></li>
+          <li><a href="#prep">4. Phase 1 — deterministic prep</a></li>
+          <li><a href="#agent">5. Phase 2 — agent judgment</a></li>
+          <li><a href="#metrics">6. The metrics</a></li>
+          <li><a href="#guards">7. The two eligibility guards</a></li>
+          <li><a href="#outcome">8. Phase 3 — terminal outcome</a></li>
+          <li><a href="#pacer">9. The pacer (backfill at scale)</a></li>
+          <li><a href="#dashboard">10. The dashboard</a></li>
+          <li><a href="#antigoodhart">11. Anti-Goodhart & output</a></li>
+          <li><a href="#quiz">12. Check your understanding</a></li>
+        </ol>
+      </nav>
+
+      <!-- ============================================================ -->
+      <h2 class="sec" id="why">1 · The question it answers</h2>
+      <section class="step">
+        <h3>Is Copilot Code Review actually helping this repo?</h3>
+        <p class="why">
+          Not "does CCR post comments" — whether those comments reduce human
+          review work, get acted on, and catch what humans catch.
+        </p>
+        <p>
+          Turning that vague question into numbers is easy to do badly. The
+          tempting shortcuts — line-range overlap to say "CCR caught the same
+          thing", "a later commit touched the file" to say "the comment was
+          addressed", regex sentiment on replies — are all noisy proxies, and
+          <em>no downstream schema rigor fixes a bad proxy.</em>
+        </p>
+        <p>
+          So the design is deliberately <strong>subtractive</strong>: a few
+          numbers we can defend, each derived from either a
+          <span class="tag det">deterministic fact</span> or an
+          <span class="tag judged"
+            >explicit LLM judgment over the real diff</span
+          >, never from co-location or keyword guessing. Better three honest
+          numbers than a dozen that look rigorous and rest on sand.
+        </p>
+      </section>
+
+      <!-- ============================================================ -->
+      <h2 class="sec" id="bigpicture">2 · The big picture</h2>
+      <section class="step">
+        <h3>One run, four movements</h3>
+        <p>
+          A single run targets <strong>one repo, one time window</strong>. It
+          flows left to right; the color tells you what kind of computation runs
+          at each stage.
+        </p>
+        <div class="flow">
+          <div class="box det">
+            <div class="lbl">Phase 1 · steps</div>
+            <div class="ttl">Prep</div>
+            <div class="sub">fetch → classify<br />→ filter → attribute</div>
+          </div>
+          <div class="arrow">→</div>
+          <div class="box agent">
+            <div class="lbl">Phase 2 · agent</div>
+            <div class="ttl">Judge</div>
+            <div class="sub">classify · judge<br />· cluster · emit</div>
+          </div>
+          <div class="arrow">→</div>
+          <div class="box out">
+            <div class="lbl">Phase 2 · math</div>
+            <div class="ttl">Metrics</div>
+            <div class="sub">run-*.json</div>
+          </div>
+          <div class="arrow">→</div>
+          <div class="box out">
+            <div class="lbl">safe outputs</div>
+            <div class="ttl">Report</div>
+            <div class="sub">1 issue +<br />artifact</div>
+          </div>
+        </div>
+        <div class="legend">
+          <span class="l-det">Deterministic script (reproducible fact)</span>
+          <span class="l-agent">LLM agent (judgment)</span>
+          <span class="l-out">Deterministic emit / write</span>
+        </div>
+        <p style="margin-top: 18px">
+          Two more systems wrap this single run:
+          <strong>the pacer</strong> dispatches many windows over time without
+          blowing the API budget (§9), and
+          <strong>the dashboard</strong> aggregates every window's
+          <code>run-*.json</code> into trend charts (§10).
+        </p>
+      </section>
+
+      <!-- ============================================================ -->
+      <h2 class="sec" id="threephase">3 · Why three phases</h2>
+      <section class="step">
+        <h3>Deterministic prep → agent judgment → deterministic math</h3>
+        <p class="why">
+          The split is the core architectural decision (D2). It exists so the
+          agent only ever does the one thing it's uniquely good at — judgment —
+          and everything reproducible stays in code.
+        </p>
+        <table class="limits">
+          <thead>
+            <tr>
+              <th>Phase</th>
+              <th>Runs as</th>
+              <th>Does</th>
+              <th>Why here</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b style="color: var(--accent)">1 · Prep</b></td>
+              <td>
+                workflow <code>steps</code> (normal network, GITHUB_TOKEN)
+              </td>
+              <td>
+                Fetch settled PRs, deterministically classify &amp; filter,
+                attribute each comment to CCR vs. human, assemble bounded
+                evidence, audit integrity.
+              </td>
+              <td>
+                Facts that must be identical every run: no model, no variance.
+                Produces the normalized cache the agent reads.
+              </td>
+            </tr>
+            <tr>
+              <td><b style="color: var(--pink)">2 · Judge</b></td>
+              <td>the <code>agent</code> job (Copilot engine)</td>
+              <td>
+                Type the PRs rules couldn't; judge each comment against the
+                actual diff; cluster gaps into themes; then call the emit
+                script.
+              </td>
+              <td>
+                Only judgment — "is this ask substantive?", "did they address
+                it?" — needs a model. Bounded, pre-assembled evidence only (D3).
+              </td>
+            </tr>
+            <tr>
+              <td><b style="color: var(--accent-2)">3 · Math</b></td>
+              <td><code>emit-run-json.ts</code> + post-steps</td>
+              <td>
+                Compute every rate from the judged rows; validate labels against
+                a closed schema; classify the run's terminal outcome.
+              </td>
+              <td>
+                Arithmetic is deterministic. A hallucinated label is
+                <em>rejected at emit</em>, so it fails the run instead of
+                skewing a metric.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="callout good">
+          <strong>The invariant:</strong> scripts produce reproducible facts;
+          the agent supplies judgment. Every number's provenance is one or the
+          other — you can always point at which.
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <h2 class="sec" id="prep">4 · Phase 1 — deterministic prep</h2>
+      <section class="step">
+        <h3><span class="step-num">P1</span> Resolve the window identity</h3>
+        <p class="why">
+          Everything keys off a single canonical <code>windowId</code> —
+          resolved <em>before</em> anything is fetched.
+        </p>
+        <p>
+          <span class="file">resolve-window.ts</span> is a pure function of
+          <code>(repo, window_start, window_end, max_prs, raw-schema)</code>. On
+          the weekly schedule it computes a rolling settled window (<code
+            >end = today − 14d</code
+          >, <code>start = end − 14d</code>); a backfill passes the dates
+          explicitly. A scheduled run, a manual dispatch, and a pacer call over
+          the same cohort all resolve to <em>one identical</em>
+          <code>windowId</code> — which is also the cache key, so prep and the
+          cache can never disagree.
+        </p>
+        <div class="callout">
+          <strong>Settle lag.</strong> We only read PRs merged at least
+          <code>windowLagDays</code> (14) ago, so threads are resolved and
+          follow-up commits have landed before we judge anything.
+        </div>
+      </section>
+
+      <section class="step">
+        <h3>
+          <span class="step-num">P1</span> Fetch → classify → filter → attribute
+        </h3>
+        <p class="why">
+          <span class="file">prep-run.ts</span> orchestrates the stages with
+          explicit-arg subprocess calls, then writes a summary and audits it.
+        </p>
+        <ul class="tight">
+          <li>
+            <b>Fetch</b> (<span class="file">fetch-prs.ts</span> /
+            <span class="file">pr-graphql.ts</span>) — list every PR
+            <code>merged:&gt;=start merged:&lt;=end</code> and pull its reviews,
+            review comments, and diff hunks. GraphQL is used to tap a separate
+            point budget and cut REST pressure. The raw result is cached as
+            <code>pr-*.json</code>.
+          </li>
+          <li>
+            <b>Classify</b> (<span class="file">classify-pr.ts</span>) — type
+            each PR (<code
+              >bug-fix · feature · refactor · docs · test · chore</code
+            >) <em>only</em> when a label, Conventional-Commit prefix, or linked
+            issue makes it unambiguous. Everything else is left
+            <code>prType: null · needs-agent</code> for Phase 2.
+          </li>
+          <li>
+            <b>Filter</b> (<span class="file">filter-comments.ts</span>) — drop
+            <code>excludedPaths</code> (lockfiles, generated, vendored,
+            minified) so the judge never spends a call on noise.
+          </li>
+          <li>
+            <b>Attribute</b> (<span class="file">attribute-comments.ts</span>) —
+            deterministically split every comment into <em>CCR</em> (from the
+            configured bot logins) vs. <em>human</em> vs. <em>automation</em>.
+            This is a fact, not a guess.
+          </li>
+          <li>
+            <b>Build evidence</b> (<span class="file">build-judge-input.ts</span
+            >) — assemble the <em>bounded</em> evidence the agent may see: each
+            comment plus the line-level diff of what changed after it, and any
+            author replies. Never full files, never excluded paths.
+          </li>
+          <li>
+            <b>Audit</b> — <span class="file">prep-summary.ts</span> writes
+            counts by author kind and identity-integrity checks; prep exits
+            non-zero on a fatal check (e.g. duplicate row ids), failing loudly
+            rather than feeding the agent bad data.
+          </li>
+        </ul>
+        <p>
+          Output: a normalized cache —
+          <code>classified.json</code>, <code>filtered.json</code>,
+          <code>attributed.json</code>, <code>judge-input.json</code>,
+          <code>meta.json</code>, <code>prep-summary.json</code> — that the
+          agent reads but the raw <code>pr-*.json</code> stays the only thing
+          cached across runs (judged artifacts are cheap to recompute; coupling
+          invites staleness, D12).
+        </p>
+        <details class="check">
+          <summary>
+            Why cache only the raw PRs, keyed by windowId + a completion key?
+          </summary>
+          <p>
+            The <code>pr-*.json</code> raw fetch is the expensive part and is
+            immutable for a settled window, so re-dispatching a window is free —
+            the pacer relies on this for zero-rework retries. It's saved
+            <em>only</em> after a successful full fetch under a unique
+            <code>run_id + attempt</code> key, so a half-finished fetch can
+            never poison a later retry. Judged/emitted artifacts are never
+            cached: they recompute in seconds and stale coupling is a bug
+            factory.
+          </p>
+        </details>
+      </section>
+
+      <!-- ============================================================ -->
+      <h2 class="sec" id="agent">5 · Phase 2 — agent judgment</h2>
+      <section class="step">
+        <h3>
+          <span class="step-num p2">P2</span> Four jobs, closed vocabulary
+        </h3>
+        <p class="why">
+          The agent works only from <code>judge-input.json</code>'s bounded
+          evidence, and every label it may emit comes from a frozen controlled
+          vocabulary.
+        </p>
+        <ol class="tight">
+          <li>
+            <b>Classify the leftovers.</b> For every
+            <code>needs-agent</code> PR, pick exactly one
+            <code>prType</code> from the title/labels — so
+            <code>bugFixPrRate</code> reflects the real bug-fix count, not just
+            the machine-typeable subset.
+          </li>
+          <li>
+            <b>Judge the comments.</b> For each <em>human ask</em>:
+            <code>isSubstantive</code>, <code>diffDetectable</code>,
+            <code>category</code>, and — against that PR's CCR comments —
+            <code>ccrAddressedConcern</code>. For each <em>CCR comment</em>:
+            <code>severity</code>, <code>category</code>, and an
+            <code>outcome</code> of
+            <code>addressed / rejected / ignored / unclear</code> read from the
+            change at those lines plus replies. Results land in
+            <code>judged.json</code>.
+          </li>
+          <li>
+            <b>Cluster themes.</b> The strict, twice-gated miss flag
+            <code
+              >isGap = ask &amp;&amp; isSubstantive &amp;&amp; diffDetectable
+              &amp;&amp; ccrSawCode &amp;&amp; !ccrAddressedConcern</code
+            >
+            is clustered into recurring themes (<code>themes.json</code>) that
+            drive the rule proposals.
+          </li>
+          <li>
+            <b>Emit &amp; report.</b> Call the deterministic emit script (next
+            section), then route both writes through <em>safe outputs</em>.
+          </li>
+        </ol>
+        <div class="callout">
+          <strong
+            >There is deliberately no <code>judge.ts</code> model
+            client.</strong
+          >
+          The agentic workflow already has model access, so judging in-loop
+          costs zero client code (no endpoint/auth/retry/parsing to rot). What
+          protects the numbers isn't the call mechanism — it's the
+          <strong>closed vocabulary enforced at emit</strong>: an invalid
+          <code>severity</code>/<code>category</code>/<code>outcome</code> is
+          rejected by the schema, so a hallucinated label fails the run instead
+          of silently skewing a metric.
+        </div>
+      </section>
+
+      <section class="step">
+        <h3>
+          <span class="step-num p3">P3</span> Compute metrics — the system of
+          record
+        </h3>
+        <p>
+          <span class="file">emit-run-json.ts</span> takes the judged rows and
+          computes every rate deterministically, validating each label through a
+          zod schema before writing:
+        </p>
+        <pre>
+node scripts/emit-run-json.ts \
+  --meta       $CCR_CACHE/meta.json \
+  --classified $CCR_CACHE/classified.json \
+  --attributed $CCR_CACHE/judged.json \
+  --themes     $CCR_CACHE/themes.json \
+  --glob       "$CCR_CACHE/pr-*.json" \
+  --out-dir    $CCR_RUNS --print-summary</pre>
+        <p>
+          The resulting <code>run-*.json</code> is the durable record every
+          downstream consumer (the dashboard, the pacer's outcome check) reads.
+          Its schema records the <em>instrument</em> too — judge model, pinned
+          prompt hashes, vocabulary hash — so a trend line can never silently
+          mix two different rulers.
+        </p>
+      </section>
+
+      <!-- ============================================================ -->
+      <h2 class="sec" id="metrics">6 · The metrics</h2>
+      <section class="step">
+        <h3>Five headline numbers, grouped by question</h3>
+        <p class="why">
+          Each is tagged by provenance:
+          <span class="tag det">deterministic</span> or
+          <span class="tag judged">LLM-judged</span>.
+        </p>
+
+        <p style="color: var(--accent-2); font-weight: 600; margin-top: 18px">
+          Q1 — Are humans doing less review work?
+        </p>
+        <div class="metric">
+          <h4>humanReviewBurden <span class="tag judged">judged</span></h4>
+          <div class="q">Are reviewers carrying less?</div>
+          <p>
+            Average <em>distinct, substantive</em> human asks per PR, sliced by
+            PR type. Counts only asks the judge marked substantive (no LGTM/nit
+            noise) and de-dupes by finding, so chatty threads can't inflate it.
+            Read the trend <em>within one repo</em> — reviewer culture confounds
+            the absolute value.
+          </p>
+        </div>
+
+        <p style="color: var(--accent-2); font-weight: 600; margin-top: 18px">
+          Q2 — Are CCR's comments useful?
+        </p>
+        <div class="metric">
+          <h4>
+            addressedRate / rejectedRate / ignoredRate
+            <span class="tag judged">judged</span>
+          </h4>
+          <div class="q">Do people act on what CCR says? — by severity</div>
+          <p>
+            For each CCR comment the judge assigns one outcome from a closed set
+            (<code>addressed / rejected / ignored / unclear</code>) read from
+            the <em>actual change at the commented lines</em> plus replies. The
+            three headline rates are the mutually-exclusive shares, sliced by
+            severity — a high <code>ignoredRate</code> on
+            <code>critical</code> comments is a real problem a single "useful
+            rate" would hide. <code>unclear</code>
+            abstains from the denominator.
+          </p>
+        </div>
+
+        <p style="color: var(--accent-2); font-weight: 600; margin-top: 18px">
+          Q3 — Is CCR catching what humans catch?
+        </p>
+        <div class="metric">
+          <h4>ccrRecallRate <span class="tag judged">judged</span></h4>
+          <div class="q">Of issues humans caught, how many did CCR catch?</div>
+          <p>
+            Of the substantive, diff-detectable issues human reviewers raised
+            <em>on PRs CCR reviewed</em>, the fraction where CCR independently
+            raised the <strong>same concern</strong> — an LLM judgment
+            (<code>ccrAddressedConcern</code>), not line-range proximity. Scoped
+            to locally-detectable issues, because the judge sees a truncated
+            hunk; that framing is stated, not hidden.
+          </p>
+        </div>
+        <div class="metric">
+          <h4>ccrCoverage <span class="tag det">deterministic</span></h4>
+          <div class="q">What share of eligible PRs did CCR review?</div>
+          <p>
+            Pure fact from review attribution: eligible (post-enablement,
+            non-bot) PRs that got any CCR review. It <em>frames</em> every other
+            Q3 number — a great recall on 30% coverage is a different story than
+            on 95%. Never read alone.
+          </p>
+        </div>
+
+        <p style="color: var(--warn); font-weight: 600; margin-top: 18px">
+          Q4 — Merged-bug signal
+        </p>
+        <div class="metric proxy">
+          <h4>bugFixPrRate <span class="tag proxy">proxy</span></h4>
+          <div class="q">Is the merged-bug rate trending?</div>
+          <p>
+            Share of PRs classified <code>bug-fix</code>. Labeled a
+            <em>proxy</em>, not proof — it counts merged bugs but doesn't
+            attribute them to a review CCR could have caught (causal
+            <code>git blame</code> tracing was tried and removed as too
+            fragile). Watch it <em>alongside</em> recall, never as a headline.
+          </p>
+        </div>
+        <p style="font-size: 0.86rem; color: var(--muted)">
+          <code>prCycleTime</code> and <code>iterationsPerPr</code> are kept as
+          <em>contextual, low-confidence</em> corroboration only — noisy and
+          multiply-confounded; if they disagree with the burden metric, believe
+          the burden metric.
+        </p>
+
+        <h3 style="margin-top: 24px">The five reading rules</h3>
+        <p class="why">
+          These make the difference between a number that means something and
+          one that doesn't. They apply to <em>every</em> metric above.
+        </p>
+        <table class="limits">
+          <tbody>
+            <tr>
+              <td><b>Trend, not snapshot</b></td>
+              <td>
+                One window is a data point; a week's PR mix is noise. Read
+                across runs.
+              </td>
+            </tr>
+            <tr>
+              <td><b>n ≥ 5 or suppressed</b></td>
+              <td>
+                Any figure or slice under 5 is low-confidence and never
+                headlined.
+              </td>
+            </tr>
+            <tr>
+              <td><b>Normalized &amp; sliced</b></td>
+              <td>
+                Every rate carries <code>prType</code> slices (and severity
+                where it applies), so a heavier bug-fix week can't masquerade as
+                a real move.
+              </td>
+            </tr>
+            <tr>
+              <td><b>Null, never zero</b></td>
+              <td>
+                "Couldn't measure it" and "it was zero" are different facts,
+                reported differently.
+              </td>
+            </tr>
+            <tr>
+              <td><b>Stable instrument</b></td>
+              <td>
+                Model + prompt + vocabulary hashes are recorded per run; a shift
+                breaks comparability <em>by design</em>.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ============================================================ -->
+      <h2 class="sec" id="guards">7 · The two eligibility guards</h2>
+      <section class="step">
+        <h3>Why we don't just say "a human commented, so CCR missed it"</h3>
+        <p class="why">
+          That inference is only ever made under two guards — and getting the
+          first one wrong is what sank the previous design.
+        </p>
+        <ul class="tight">
+          <li>
+            <b>Same concern, not same line</b>
+            (<code>ccrAddressedConcern</code>). Whether CCR "also caught it" is
+            an LLM judgment that a CCR comment addresses the
+            <em>same concern</em> as the human ask — not overlap of line ranges.
+            Overlap counted two unrelated comments three lines apart as a catch,
+            and missed CCR flagging the same issue class at a different
+            location. Undecidable asks abstain from the denominator.
+          </li>
+          <li>
+            <b>PR-level review gate</b> (<code>ccrReviewed</code>). An ask only
+            enters the recall denominator if CCR reviewed the PR at all.
+          </li>
+        </ul>
+        <div class="callout">
+          <strong
+            >The cautionary tale: the retired <code>missRate</code>.</strong
+          >
+          It used a per-comment <code>ccrSawCode</code> commit-timing gate that
+          flipped to <code>false</code> exactly when a fix commit landed
+          <em>after</em> CCR's review — i.e. precisely when CCR had
+          <em>succeeded</em>. That self-excluded every CCR success and pinned
+          <code>missRate</code> at <strong>1.0 in every run</strong>. It was
+          replaced by the PR-level-gated <code>ccrRecallRate</code> (D14). The
+          strict twice-gated <code>isGap</code> flag survives, but only
+          internally to drive theme clustering — never as a headline rate.
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <h2 class="sec" id="outcome">8 · Phase 3 — terminal outcome</h2>
+      <section class="step">
+        <h3>
+          <span class="step-num p3">P3</span> A machine-readable completion
+          signal
+        </h3>
+        <p class="why">
+          Runs as <code>post-steps</code> (<code>if: always()</code>), so it
+          fires whether the agent succeeded, no-op'd, or failed.
+        </p>
+        <p>
+          <span class="file">emit-outcome.ts</span> derives one terminal outcome
+          from observable signals — the settled PR count vs.
+          <code>minPrs</code> (50), whether the agent called <code>noop</code>,
+          whether a <code>run-*.json</code> exists on disk, and the job status —
+          and writes <code>outcome-&lt;windowId&gt;.json</code>. The pacer (§9)
+          consumes this as the window's completion signal; the artifact name is
+          derived from the <code>windowId</code> so it correlates offline
+          without inspecting the payload.
+        </p>
+        <table class="limits">
+          <thead>
+            <tr>
+              <th>Signal</th>
+              <th>Terminal outcome</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Any step failed (<code>job.status != success</code>)</td>
+              <td><code>failed</code> — retryable</td>
+            </tr>
+            <tr>
+              <td>&lt; 50 settled PRs, or agent called <code>noop</code></td>
+              <td><code>signal-noop</code> — nothing worth reporting</td>
+            </tr>
+            <tr>
+              <td><code>run-*.json</code> produced</td>
+              <td><code>success</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ============================================================ -->
+      <h2 class="sec" id="pacer">9 · The pacer — backfill at scale</h2>
+      <section class="step">
+        <h3>Draining months of history without tripping the rate limit</h3>
+        <p class="why">
+          One run covers one window. To build a trend over many months and repos
+          you need an orchestrator that self-throttles and never loses work.
+        </p>
+        <p>
+          <span class="file">ccr-pacer.yml</span> is a hand-written hourly
+          <code>cron</code> over the tested planner
+          <span class="file">pace.ts</span>. It runs <em>no agent</em>. Each
+          tick has three jobs:
+        </p>
+        <div class="flow">
+          <div class="box det">
+            <div class="lbl">job 1</div>
+            <div class="ttl">plan</div>
+            <div class="sub">
+              backlog − ledger<br />assertFittable<br />admit
+            </div>
+          </div>
+          <div class="arrow">→</div>
+          <div class="box det">
+            <div class="lbl">job 2 · matrix</div>
+            <div class="ttl">backfill</div>
+            <div class="sub">uses: loop<br />.lock.yml</div>
+          </div>
+          <div class="arrow">→</div>
+          <div class="box det">
+            <div class="lbl">job 3 · always()</div>
+            <div class="ttl">ledger</div>
+            <div class="sub">reconcile →<br />state branch</div>
+          </div>
+        </div>
+        <ul class="tight" style="margin-top: 16px">
+          <li>
+            <b>plan</b> — fetch the durable <code>ccr-pacer-state</code> branch,
+            derive the pending backlog (<code>generated − ledger − skipped</code
+            >), assert every pending window fits a fresh hour's budget, then
+            admit those that fit this tick — <code>≤ 1 window/repo</code>,
+            <code>≤ max_windows_per_tick</code>.
+          </li>
+          <li>
+            <b>backfill</b> — a matrix that <code>uses:</code> the loop's
+            reusable <code>.lock.yml</code> once per admitted window. Per-repo
+            child concurrency plus the ≤1/repo rule keep same-repo work
+            serialized.
+          </li>
+          <li>
+            <b>ledger</b> — download every window's outcome artifact, reconcile
+            (missing artifact ⇒ <code>failed</code>; retry cap hit ⇒
+            <code>skipped.json</code>), and push the updated records back to the
+            state branch.
+          </li>
+        </ul>
+
+        <h3 style="margin-top: 22px">
+          The starvation guard — a global config property
+        </h3>
+        <p>
+          Each window has a <em>fixed</em> cost estimate from config (<code
+            >est_rest_calls_per_window</code
+          >
+          = 1200, <code>est_graphql_points_per_window</code> = 2000). Because
+          it's a constant, <code>assertFittable</code> checks it against a
+          <em>fresh full hour's</em> usable budget (<code
+            >pool.limit − safety_margin</code
+          >) on <em>every</em> metered pool:
+        </p>
+        <pre>
+fresh-hour usable = pool.limit − safety_margin      (e.g. 5000 − 500 = 4500)
+if est_rest (1200)    > usable → throw   ← whole config is unfittable
+if est_graphql (2000) > usable → throw   ← fails LOUDLY, nothing dispatched</pre>
+        <div class="callout good">
+          <strong>Why loud, not silent.</strong> A window that can never fit
+          would otherwise defer <em>forever</em> — no outcome, never reconciled,
+          an invisible leak. So the pacer fails the whole tick with the
+          offending pool and the fix (lower the estimate, raise the ceiling with
+          a per-repo token, or use finer granularity). A window that fits a
+          fresh hour but not <em>this</em> depleted tick is merely deferred,
+          which is fine.
+        </div>
+        <p>
+          A separate <strong>preflight guard</strong> inside the loop
+          (<code>--check-budget</code>, on by default) estimates the concrete
+          run against the live budget and aborts <em>before</em> any fetch or
+          cache write if it wouldn't fit — the child-run backstop to the pacer's
+          admission-time check. And a request <strong>limiter</strong> is the
+          only guard against GitHub's <em>secondary</em> limits, which no tier
+          relaxes.
+        </p>
+      </section>
+
+      <!-- ============================================================ -->
+      <h2 class="sec" id="dashboard">10 · The dashboard</h2>
+      <section class="step">
+        <h3>Static, zero-backend, manifest-driven</h3>
+        <p class="why">
+          The whole point is a trend, so the UI is built to read many
+          <code>run-*.json</code> files and plot them over time.
+        </p>
+        <p>
+          Every run's <code>run-*.json</code> is dropped in
+          <code>dashboard/data/</code>. A browser can't list a directory, so
+          <span class="file">gen-manifest.ts</span> writes a
+          <code>manifest.json</code> index;
+          <span class="file">aggregate.mjs</span> folds the runs into series and
+          <span class="file">app.mjs</span> draws the charts — no server, no
+          build step. Points key on <code>windowEnd</code>, so same-day
+          backfills still spread across their real windows. Charts slice by
+          <code>prType</code>, severity, PR
+          <strong>size bucket</strong> (S/M/L/XL by lines changed), and repo. An
+          unmeasured value renders as a <em>gap, never a zero</em>, and
+          low-confidence points are flagged, not headlined.
+        </p>
+        <pre>
+# regenerate the index, then serve
+node scripts/gen-manifest.ts --data-dir dashboard/data
+python3 -m http.server --directory dashboard</pre>
+      </section>
+
+      <!-- ============================================================ -->
+      <h2 class="sec" id="antigoodhart">11 · Anti-Goodhart & the output</h2>
+      <section class="step">
+        <h3>The loop proposes; a human disposes</h3>
+        <p>
+          Every metric here can be gamed if it becomes a target — the fix for
+          "CCR misses things" must never be "tell humans to comment less." So
+          the loop's output is not a repo edit and not a KPI. It is:
+        </p>
+        <ul class="tight">
+          <li>
+            <b>One tracking issue</b> per run (via a <em>safe output</em>,
+            closing older ones), containing the sliced headline metrics as a
+            trend, the ranked promoted themes with source-PR citations, and —
+            for each theme — one <em>generalized</em> proposed
+            <code>.github/</code> instruction rule for human approval.
+          </li>
+          <li>
+            <b>One <code>run-*.json</code> artifact</b> — the durable trend
+            record the dashboard reads.
+          </li>
+        </ul>
+        <div class="callout good">
+          <strong>Proposal-only, by construction.</strong> The agent job is
+          read-only; <em>every</em> write is routed through safe outputs. It
+          never edits repository files or opens PRs. The metrics are framed as a
+          diagnostic trend gated on a frozen benchmark — if you find yourself
+          tuning the repo to move a number, that's the smell the design is built
+          to resist.
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <h2 class="sec" id="quiz">12 · Check your understanding</h2>
+      <section class="quiz">
+        <h2>Five questions</h2>
+        <p class="quiz-sub">
+          Pick an answer to reveal why it's right or wrong. Then hit
+          <em>Score</em>.
+        </p>
+
+        <div class="q-block" data-answer="b">
+          <div class="q-text">
+            1. Why is the pipeline split into deterministic prep, agent
+            judgment, and deterministic math?
+          </div>
+          <label
+            ><input type="radio" name="q1" value="a" />To run the three parts on
+            different machines for speed.</label
+          >
+          <label
+            ><input type="radio" name="q1" value="b" />So the agent only does
+            judgment; every reproducible fact stays in code, and labels are
+            validated (rejected) at emit.</label
+          >
+          <label
+            ><input type="radio" name="q1" value="c" />Because the LLM can't
+            read JSON, so scripts must pre-digest everything.</label
+          >
+          <div class="explain">
+            The split (D2) keeps facts reproducible and confines the model to
+            "was this ask substantive? did they address it?" — judgment. A bad
+            label fails the run at emit rather than skewing a metric.
+          </div>
+        </div>
+
+        <div class="q-block" data-answer="c">
+          <div class="q-text">
+            2. Why was <code>missRate</code> retired in favor of
+            <code>ccrRecallRate</code>?
+          </div>
+          <label
+            ><input type="radio" name="q2" value="a" />It was too expensive to
+            compute every week.</label
+          >
+          <label
+            ><input type="radio" name="q2" value="b" />Humans found it confusing
+            to read on the dashboard.</label
+          >
+          <label
+            ><input type="radio" name="q2" value="c" />Its per-comment
+            <code>ccrSawCode</code> gate flipped false exactly when CCR
+            succeeded, pinning it at 1.0 every run.</label
+          >
+          <div class="explain">
+            The commit-timing gate closed precisely when a fix commit landed
+            after CCR's review — i.e. when CCR had succeeded — so it excluded
+            every success. <code>ccrRecallRate</code> uses a PR-level review
+            gate instead (D14).
+          </div>
+        </div>
+
+        <div class="q-block" data-answer="b">
+          <div class="q-text">
+            3. How does the system decide CCR "also caught" a human-raised
+            issue?
+          </div>
+          <label
+            ><input type="radio" name="q3" value="a" />CCR's comment line range
+            overlaps the human comment's line range.</label
+          >
+          <label
+            ><input type="radio" name="q3" value="b" />An LLM judges that a CCR
+            comment addresses the same concern; undecidable asks abstain.</label
+          >
+          <label
+            ><input type="radio" name="q3" value="c" />A later commit touched
+            the same file both comments are on.</label
+          >
+          <label
+            ><input type="radio" name="q3" value="d" />Keyword overlap between
+            the two comment bodies.</label
+          >
+          <div class="explain">
+            Same-concern judgment (<code>ccrAddressedConcern</code>) removes the
+            co-location fallacy in both directions — overlap counted unrelated
+            nearby comments as catches and missed same-issue flags elsewhere.
+          </div>
+        </div>
+
+        <div class="q-block" data-answer="d">
+          <div class="q-text">
+            4. On a fresh-hour budget of 5000 with a 500 safety margin, an
+            estimate of 1200 REST calls per window means the pacer will…
+          </div>
+          <label
+            ><input type="radio" name="q4" value="a" />refuse the window and
+            fail the tick loudly.</label
+          >
+          <label
+            ><input type="radio" name="q4" value="b" />silently defer the window
+            forever.</label
+          >
+          <label
+            ><input type="radio" name="q4" value="c" />cap the window at 500
+            PRs.</label
+          >
+          <label
+            ><input type="radio" name="q4" value="d" />admit it — 1200 ≤ 5000 −
+            500 = 4500.</label
+          >
+          <div class="explain">
+            <code>assertFittable</code> compares the fixed estimate to
+            <code>limit − margin</code>. 1200 &lt; 4500, so it fits a fresh hour
+            and is admissible (subject to ≤1/repo and max-windows-per-tick). It
+            would only throw if the estimate <em>exceeded</em> 4500.
+          </div>
+        </div>
+
+        <div class="q-block" data-answer="a">
+          <div class="q-text">
+            5. What is a run's actual output — what does it change?
+          </div>
+          <label
+            ><input type="radio" name="q5" value="a" />One tracking issue with
+            sliced trend metrics + proposed rules, plus a run-*.json artifact —
+            all via safe outputs. No repo edits.</label
+          >
+          <label
+            ><input type="radio" name="q5" value="b" />It commits new
+            <code>.github/</code> instruction files directly.</label
+          >
+          <label
+            ><input type="radio" name="q5" value="c" />It opens a PR that turns
+            off review nits.</label
+          >
+          <label
+            ><input type="radio" name="q5" value="d" />It sets a KPI target for
+            CCR's catch rate.</label
+          >
+          <div class="explain">
+            The agent job is read-only and proposal-only: it proposes
+            generalized rules for human approval and records the trend. Framing
+            it as a diagnostic (not a KPI) is the anti-Goodhart guard.
+          </div>
+        </div>
+
+        <button class="submit" onclick="scoreQuiz()">Score</button>
+        <div class="score" id="score"></div>
+      </section>
+
+      <footer>
+        CCR Improvement Loop · a ground-up walkthrough. See
+        <a href="README.md">README</a>, <a href="metrics.md">metrics.md</a>,
+        <a href="decisions.md">decisions.md</a>, and
+        <a href="rate-limit-walkthrough.html">the rate-limit walkthrough</a> for
+        the details behind each section.
+      </footer>
+    </div>
+
+    <script>
+      function scoreQuiz() {
+        const blocks = document.querySelectorAll(".q-block");
+        let correct = 0;
+        blocks.forEach((block) => {
+          const answer = block.dataset.answer;
+          const picked = block.querySelector("input:checked");
+          block.querySelectorAll("label").forEach((l) => {
+            l.classList.remove("correct", "wrong");
+          });
+          const explain = block.querySelector(".explain");
+          if (explain) explain.classList.add("show");
+          if (!picked) return;
+          const chosenLabel = picked.closest("label");
+          if (picked.value === answer) {
+            correct++;
+            chosenLabel.classList.add("correct");
+          } else {
+            chosenLabel.classList.add("wrong");
+            const correctInput = block.querySelector(
+              'input[value="' + answer + '"]',
+            );
+            if (correctInput)
+              correctInput.closest("label").classList.add("correct");
+          }
+        });
+        const score = document.getElementById("score");
+        score.textContent =
+          "You scored " + correct + " / " + blocks.length + ".";
+        score.classList.add("show");
+      }
+    </script>
+  </body>
+</html>

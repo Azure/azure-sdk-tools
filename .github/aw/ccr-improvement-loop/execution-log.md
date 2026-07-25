@@ -760,3 +760,53 @@ First trial pacer run (`30124922457`) surfaced two issues; user: "fix, serialize
 - Committed + pushed the fix to `trial/main`; re-triggered the pacer. The prior
   `failed` ledger records are attempt-1 and retryable (retry_cap 1), so both windows
   re-run — go fresh (its failed fetch saved no cache), python off its saved pr-cache.
+
+### Re-trigger #1 (run 30127018825) — blocked by installation rate-limit
+
+- Committed fix (`b5f189c11`), pushed to `trial/main`, re-dispatched pacer.
+- **Serialization confirmed:** plan admitted only the go window; python deferred.
+- **But the agent phase never ran.** `pre_activation` hit
+  `API rate limit exceeded for installation` during its repository-permission
+  check, so it set `activated=false` and all downstream jobs
+  (activation/agent/detection/safe_outputs/conclusion) were **skipped**. The
+  overall run still reports `success` because skipped-by-design isn't a failure.
+- **Cause:** the shared GitHub App installation budget was drained by the earlier
+  full agent run (30124922457 at ~20:56, which judged all of python's June PRs and
+  fetched go until the 403). `pre_activation`'s permission check fails **closed**
+  when it can't reach the API → no leg can activate until the budget resets.
+- Reconcile then recorded go as `failed` **attempt 2** (one more fail → permanent
+  `skipped`). This is an infrastructure failure, not an analysis failure.
+- **Ledger reset:** deleted both window records on `ccr-pacer-state` so the
+  rate-limit-caused failures don't cost us the go cohort. Both windows now re-plan
+  as fresh attempt 1.
+- **The hidden-files fix is still unvalidated** — the agent phase must actually run
+  to produce/upload an `outcome-*.json`. Next: wait for the installation budget to
+  reset (~hourly), then re-dispatch once and confirm go activates → agent runs →
+  outcome artifact uploads → ledger records `success`.
+
+### Added AGENTS.md (package agent-context doc)
+
+- Wrote `.github/aw/ccr-improvement-loop/AGENTS.md` capturing the contextual
+  knowledge an AI agent needs: non-negotiable rules (frozen legacy dir, execution
+  log, compile discipline, keep local), the two workflows + where their source
+  lives, the run pipeline stages, gates/commands (incl. the separate dashboard
+  test + prettier-ignores-json), pacer/ledger/state-branch model, config files,
+  the hard-won gotchas (hidden-files artifact default, pre_activation fails closed
+  under installation rate-limit, shared-budget parallelism, reusable caller-perms
+  superset, emit-step `set -uo pipefail`), trial-repo commands, dashboard, a key-
+  scripts table, and the doc index. Prettier-clean.
+
+### VALIDATED — hidden-files fix works end-to-end (run 30129518458)
+
+- Re-dispatched the pacer after the installation budget recovered. This tick the
+  agent phase **ran fully**: activation ✓, agent ✓ (5m55s), detection ✓,
+  safe_outputs ✓, conclusion ✓. Serialization held — only one window (python)
+  admitted.
+- **Fix confirmed live:** the "Upload terminal outcome" step logged
+  `include-hidden-files: true` with `path: .ccr-runs/outcome-*.json`; the outcome
+  file wrote `(produced)`; **no** "No files were found" warning.
+- **Ledger now records `outcome: "produced"` (attempt 1)** for the python window —
+  reconcile could only read that by downloading the uploaded outcome-*.json. Under
+  the old bug it read `failed` from a missing artifact. Fix validated.
+- Stopped the 40-min retry schedule; no further automated ticks. go window remains
+  pending (fresh, will be admitted on a subsequent tick/dispatch).

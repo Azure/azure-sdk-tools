@@ -1,0 +1,11 @@
+# Dependencies
+node_modules/
+
+# Generated run artifacts (regenerated from gh; never source of truth in-tree)
+.cache/
+pr-cache/
+runs/
+trends.json
+
+# Test/coverage output
+coverage/

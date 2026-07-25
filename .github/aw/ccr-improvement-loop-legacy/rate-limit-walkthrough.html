@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Rate Limits &amp; Scaling — CCR Improvement Loop</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --panel: #171a23;
+    --panel-2: #1e222d;
+    --border: #2a2f3a;
+    --text: #d7dae0;
+    --muted: #8b93a3;
+    --accent: #4f9cf9;
+    --accent-2: #7ee0a3;
+    --warn: #f0b357;
+    --code-bg: #12141c;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 40px 24px 120px; }
+  header.hero {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 24px;
+    margin-bottom: 8px;
+  }
+  h1 { font-size: 2rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+  .subtitle { color: var(--muted); font-size: 1.05rem; margin: 0; }
+  .spine {
+    margin-top: 20px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 14px 18px;
+    border-radius: 6px;
+    font-size: 0.97rem;
+  }
+  .spine strong { color: var(--accent); }
+  nav.toc {
+    margin: 28px 0;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+  }
+  nav.toc h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 10px; }
+  nav.toc ol { margin: 0; padding-left: 20px; columns: 2; column-gap: 32px; }
+  nav.toc a { color: var(--text); text-decoration: none; font-size: 0.92rem; }
+  nav.toc a:hover { color: var(--accent); text-decoration: underline; }
+  section.step {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 22px 26px;
+    margin: 20px 0;
+  }
+  section.step h3 {
+    margin: 0 0 4px;
+    font-size: 1.15rem;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .step-num {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--bg);
+    background: var(--accent);
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .why { color: var(--muted); font-style: italic; font-size: 0.92rem; margin: 6px 0 14px; }
+  code { font-family: var(--mono); background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-size: 0.86em; color: #e6d9a8; }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    color: #cdd3dd;
+  }
+  .file { font-family: var(--mono); color: var(--accent-2); font-size: 0.86em; }
+  table.limits { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.88rem; }
+  table.limits th, table.limits td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
+  table.limits th { background: var(--panel-2); color: var(--muted); font-weight: 600; }
+  table.limits td.num { font-family: var(--mono); text-align: right; }
+  .callout {
+    border-left: 3px solid var(--warn);
+    background: rgba(240,179,87,0.08);
+    padding: 10px 16px;
+    border-radius: 4px;
+    margin: 14px 0;
+    font-size: 0.9rem;
+  }
+  .callout strong { color: var(--warn); }
+  details.check {
+    margin-top: 12px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 14px;
+  }
+  details.check summary { cursor: pointer; color: var(--accent); font-size: 0.9rem; padding: 8px 0; user-select: none; }
+  details.check[open] summary { border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+  details.check p { font-size: 0.9rem; color: var(--text); margin: 8px 0; }
+  ul.tight { margin: 8px 0; padding-left: 22px; }
+  ul.tight li { margin: 4px 0; }
+  .phase { margin: 6px 0; padding-left: 4px; }
+  .phase b { color: var(--accent-2); }
+
+  /* Quiz */
+  section.quiz {
+    background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px 26px;
+    margin: 36px 0;
+  }
+  section.quiz h2 { margin: 0 0 4px; }
+  .quiz-sub { color: var(--muted); font-size: 0.92rem; margin: 0 0 20px; }
+  .q { margin: 18px 0; padding: 16px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; }
+  .q-text { font-weight: 600; margin-bottom: 10px; }
+  .q label {
+    display: block;
+    padding: 8px 12px;
+    margin: 6px 0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.92rem;
+    transition: background 0.12s, border-color 0.12s;
+  }
+  .q label:hover { border-color: var(--accent); }
+  .q input { margin-right: 10px; }
+  .q label.correct { border-color: var(--accent-2); background: rgba(126,224,163,0.12); }
+  .q label.wrong { border-color: #f07b7b; background: rgba(240,123,123,0.12); }
+  .explain { display: none; margin-top: 10px; font-size: 0.88rem; color: var(--muted); border-top: 1px dashed var(--border); padding-top: 10px; }
+  .explain.show { display: block; }
+  button.submit {
+    background: var(--accent);
+    color: #08101d;
+    border: none;
+    padding: 11px 22px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  button.submit:hover { filter: brightness(1.08); }
+  .score { margin-top: 16px; font-size: 1.05rem; font-weight: 700; display: none; }
+  .score.show { display: block; }
+  footer { color: var(--muted); font-size: 0.82rem; text-align: center; margin-top: 40px; border-top: 1px solid var(--border); padding-top: 20px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>Rate Limits &amp; Scaling in the CCR Improvement Loop</h1>
+  <p class="subtitle">A ground-up walkthrough of where GitHub API pressure comes from, how you get throttled, and the levers to scale.</p>
+  <div class="spine">
+    <strong>The one spine:</strong> a deterministic <em>prep</em> stage fetches every merged PR before any AI agent runs. That fetch path is what burns GitHub API budget — so every scaling question reduces to: where do its calls come from, how is it throttled, and how do you raise or spread the load?
+  </div>
+</header>
+
+<nav class="toc">
+  <h2>The 11 steps</h2>
+  <ol>
+    <li><a href="#s1">What this is &amp; why limits bite</a></li>
+    <li><a href="#s2">The 4 domain nouns</a></li>
+    <li><a href="#s3">The external contract</a></li>
+    <li><a href="#s4">The function that does the work</a></li>
+    <li><a href="#s5">Walking <code>fetchPrToCache</code></a></li>
+    <li><a href="#s6">The concurrency guard</a></li>
+    <li><a href="#s7">The invariant everything relies on</a></li>
+    <li><a href="#s8">The four scaling levers</a></li>
+    <li><a href="#s9">Shipped vs deferred</a></li>
+    <li><a href="#s9a">Two proposed wins (#6 &amp; #7)</a></li>
+    <li><a href="#s10">Verify against the live system</a></li>
+    <li><a href="#s11">Where a change would land</a></li>
+  </ol>
+</nav>
+
+<section class="step" id="s1">
+  <h3><span class="step-num">STEP 1</span> What this thing is &amp; why rate limits bite</h3>
+  <p class="why">If you don't know where the load lives, you'll tune the wrong knob.</p>
+  <p>The CCR (Copilot Code Review) improvement loop mines <em>merged</em> pull requests to learn review patterns. Before any AI agent runs, a <strong>deterministic prep stage</strong> calls the GitHub REST + GraphQL APIs — one burst of calls per PR. At real volume (about <strong>280–330 PRs/month</strong> for a single busy repo), it is this prep stage — not the agent — that hits GitHub's ceiling and fails the run. Everything in this guide is about that one stage.</p>
+</section>
+
+<section class="step" id="s2">
+  <h3><span class="step-num">STEP 2</span> Internalize the 4 domain nouns</h3>
+  <p class="why">These four words explain every 403 you'll ever see here.</p>
+  <p><span class="file">Read: api-rate-limit.md §2–§3</span></p>
+  <ul class="tight">
+    <li><b>Primary limit</b> — an hourly budget that refills each hour. Exceed it → <code>403</code> with <code>X-RateLimit-Remaining: 0</code>. REST and GraphQL have <em>separate</em> pools.</li>
+    <li><b>Secondary limit</b> — an anti-abuse governor on <em>how</em> you call (too many concurrent, too many per minute). Independent of the budget; often returns a <code>Retry-After</code> header.</li>
+    <li><b>The authenticating token</b> — which token you use sets the primary ceiling (see table in Step 8).</li>
+    <li><b>Endpoint invocation vs HTTP request</b> — every call uses <code>gh api --paginate</code>, so one "call" can be many HTTP requests. Cost estimates are <em>lower bounds</em>.</li>
+  </ul>
+  <div class="callout"><strong>Key trap:</strong> <code>GET /rate_limit</code> only reports the <em>primary</em> budget. It can read "plenty remaining" while a <em>secondary</em> limit is actively throttling you.</div>
+  <details class="check">
+    <summary>Mental check: why can <code>/rate_limit</code> say "plenty left" while you still get 403s?</summary>
+    <p>Because it only reports the primary hourly budget. A secondary (burst/concurrency) governor throttles you independently and is never shown by that endpoint.</p>
+  </details>
+</section>
+
+<section class="step" id="s3">
+  <h3><span class="step-num">STEP 3</span> The external contract — how load is triggered</h3>
+  <p class="why">These flags are the only human-facing knobs that control how much budget a run spends.</p>
+  <p><span class="file">Open: scripts/fetch-prs.ts — the <code>usage()</code> block (~L44–L66)</span></p>
+  <p>The CLI flags <code>--min-prs</code>, <code>--limit</code>, <code>--concurrency</code>, and <code>--refresh</code>, plus the workflow dispatch input <code>max_prs</code>, are the entire surface for controlling API load. A run with <code>max_prs = 0</code> (uncapped) fetches the full cohort — that's the mode that blows the budget.</p>
+</section>
+
+<section class="step" id="s4">
+  <h3><span class="step-num">STEP 4</span> The one function that does the real work</h3>
+  <p class="why">Every rate-limited call in the whole system originates in this one function.</p>
+  <p><span class="file">scripts/fetch-prs.ts → <code>fetchPrToCache</code> (~L362–L410)</span></p>
+  <p>Its job in one sentence: fetch every REST + GraphQL payload for a single PR and write an <em>immutable</em> cache file <code>pr-{n}.json</code>.</p>
+</section>
+
+<section class="step" id="s5">
+  <h3><span class="step-num">STEP 5</span> Walking <code>fetchPrToCache</code> in 3 phases</h3>
+  <p class="why">Seeing the phases tells you exactly which term you can shrink.</p>
+  <div class="phase"><b>Phase 1 — Cache gate</b> (~L367–L372): if <code>pr-{n}.json</code> exists and no <code>--refresh</code>, return immediately. <em>Zero API cost.</em></div>
+  <div class="phase"><b>Phase 2 — Fixed per-PR fan-out</b> (~L379–L387): 5 REST calls (<code>pulls/{n}</code>, <code>reviews</code>, <code>comments</code>, <code>issues/{n}/comments</code>, <code>commits</code>) + 1 GraphQL thread call, under one <code>Promise.all</code>.</div>
+  <div class="phase"><b>Phase 3 — Per-commit fan-out</b> (~L392–L411): one <code>commits/{sha}</code> call per commit, parallel and order-preserving. This <code>N</code> term dominates large PRs.</div>
+  <pre>cost ≈ 6 + N   endpoint invocations per PR   (N = number of commits)</pre>
+  <details class="check">
+    <summary>Mental check: which phase costs nothing, and why does that matter later?</summary>
+    <p>Phase 1 (the cache gate). Because a re-run reuses cached PRs for free, backfill can be paused and resumed with zero rework — this is the foundation of Step 7 &amp; Step 8's Lever 3.</p>
+  </details>
+</section>
+
+<section class="step" id="s6">
+  <h3><span class="step-num">STEP 6</span> The concurrency guard that tames secondary limits</h3>
+  <p class="why">Without it, parallel fan-out would make secondary throttling <em>worse</em>, not better.</p>
+  <p><span class="file">scripts/utils.ts → <code>Semaphore</code> class + <code>ghRequestLimiter</code> (~L195–L269)</span></p>
+  <p>Every async <code>gh</code> call in Step 5 is admitted through a single shared counting semaphore (default <strong>8</strong>, override with <code>CCR_GH_MAX_CONCURRENCY</code>). So <code>workers × per-PR fan-out</code> can never exceed the ceiling, keeping bursts well under GitHub's ~100-concurrent guidance. Retries also honor the server's <code>Retry-After</code> header via <code>parseRetryAfterMs</code>.</p>
+</section>
+
+<section class="step" id="s7">
+  <h3><span class="step-num">STEP 7</span> The non-obvious invariant everything relies on</h3>
+  <p class="why">This single property is what makes scaling to any repo count possible.</p>
+  <p><span class="file">Read: api-rate-limit.md §4, "Lever 3"</span></p>
+  <p>The <strong>cache file is immutable and fetch is idempotent</strong> (Step 5, Phase 1). A run can check <code>GET /rate_limit</code>, work until the budget is low, re-dispatch itself next hour, and <em>resume from cache with zero rework</em>. The cache is the enabler beneath every "spread the work" strategy.</p>
+</section>
+
+<section class="step" id="s8">
+  <h3><span class="step-num">STEP 8</span> The four scaling levers</h3>
+  <p class="why">In leverage order — auth first, orchestration last.</p>
+  <p><span class="file">Read: api-rate-limit.md §3 (auth table) + §4 (levers)</span></p>
+  <table class="limits">
+    <tr><th>Auth method</th><th>Primary REST limit</th></tr>
+    <tr><td><code>GITHUB_TOKEN</code> (default Actions, personal repo)</td><td class="num">1,000 / hr</td></tr>
+    <tr><td><code>GITHUB_TOKEN</code> on GitHub Enterprise Cloud</td><td class="num">15,000 / hr</td></tr>
+    <tr><td>GitHub App installation</td><td class="num">5,000 / hr</td></tr>
+    <tr><td>Personal Access Token</td><td class="num">5,000 / hr</td></tr>
+  </table>
+  <ul class="tight">
+    <li><b>Lever 1 — Raise the ceiling (auth):</b> swap <code>GITHUB_TOKEN</code> for an App token / PAT. 5–15× budget, no fetch-logic change. <em>Highest leverage.</em></li>
+    <li><b>Lever 2 — Cut calls/PR:</b> shrink the <code>N</code> term (deferred #3) or move reads onto GraphQL's separate pool (deferred #4). <em>Two proposed structural wins — see Step 9a — go further:</em> source per-commit detail from <b>local git</b> (removes <code>N</code> from the budget entirely) and <b>batch fixed calls via GraphQL aliasing</b> (moves them to the separate point pool).</li>
+    <li><b>Lever 3 — Spread the work:</b> weekly windows + a <code>/rate_limit</code>-aware resumable loop riding the cache.</li>
+    <li><b>Lever 4 — Orchestrate:</b> a central pacer draining a <code>repos × months</code> matrix, one window/hour.</li>
+  </ul>
+  <div class="callout"><strong>Why auth is #1:</strong> on a personal workflow repo the 1,000/hr ceiling is the binding constraint — runs fail around 70 PRs (~1,000 calls). Nothing else you do matters until that ceiling moves.</div>
+  <details class="check">
+    <summary>Mental check: why doesn't raising the auth tier fix <em>burst</em> 403s?</summary>
+    <p>Auth only raises the <em>primary</em> budget. Secondary (burst/concurrency) limits are never relaxed by a higher tier — that's why the semaphore in Step 6 stays essential at every tier.</p>
+  </details>
+</section>
+
+<section class="step" id="s9">
+  <h3><span class="step-num">STEP 9</span> What's shipped vs deferred</h3>
+  <p class="why">Tells you what's safe to build on and what still has open design questions.</p>
+  <p><span class="file">Read: optimize-api-call-plan.md — "Sequencing — STATUS"</span></p>
+  <ul class="tight">
+    <li><b>Shipped #1:</b> deleted dead <code>commits/{sha}/pulls</code> call → cost <code>6+2N</code> → <code>6+N</code>.</li>
+    <li><b>Shipped #5:</b> the limiter + <code>Retry-After</code>-aware backoff.</li>
+    <li><b>Shipped #2:</b> bounded parallel fan-out (built on #5's limiter).</li>
+    <li><b>Deferred #3:</b> selective commit-detail — blocked by a <code>distinctFiles</code> coupling.</li>
+    <li><b>Deferred #4:</b> full GraphQL migration — partial win, pagination caveats.</li>
+  </ul>
+</section>
+
+<section class="step" id="s9a">
+  <h3><span class="step-num">STEP 9a</span> Two proposed structural wins (#6 &amp; #7)</h3>
+  <p class="why">These attack the primary-REST ceiling that #1–#5 all left loaded — the one that actually fails runs.</p>
+  <p><span class="file">Read: optimize-api-call-plan.md §6 &amp; §7</span></p>
+  <div class="phase"><b>#6 — Local-git commit detail.</b> Every field the per-commit <code>commits/{sha}</code> call writes (<code>sha</code>, <code>committedAt</code>, <code>files</code>, <code>patches</code>) is a native git concept, obtainable from a local clone. <b>Git-protocol operations don't draw from the REST or GraphQL pools</b>, so this doesn't shrink <code>N</code> — it removes <code>N</code> from the rate-limited path entirely, leaving ≈ <code>6 + 0</code>. This is the fix #3/#4 couldn't reach: both were blocked specifically on patches, which git yields natively.</div>
+  <div class="phase"><b>#7 — GraphQL-batched fixed calls.</b> GraphQL <em>aliasing</em> puts multiple PRs in one HTTP request (<code>p0: …, p1: …</code>), moving the fixed 6 onto GraphQL's separate ~5,000-point/hr pool and cutting HTTP request count — direct secondary-limit relief. It still can't touch <code>N</code> (no patch text in GraphQL); that's #6's job.</div>
+  <div class="callout"><strong>Composed:</strong> #6 removes <code>N</code>, #7 moves the fixed 6 off REST → per-PR cost on the <em>primary REST</em> budget drops toward <b>near zero</b>. A qualitative shift beyond #1–#5.</div>
+  <div class="callout" style="border-left-color:var(--muted);background:rgba(139,147,163,0.08);"><strong style="color:var(--muted);">Caveats:</strong> #6 needs a blobless partial clone + <code>fetch-depth: 0</code> and git-vs-REST field-equivalence tests; #7 still paginates connections and must stay under <code>ghRequestLimiter</code>. Neither replaces the thread <code>isResolved</code> / linked-issues GraphQL call — that's review-model state, absent from git.</div>
+  <details class="check">
+    <summary>Mental check: why can local git succeed where the deferred GraphQL migration (#4) could not?</summary>
+    <p>Both #3 and #4 were blocked on per-commit <em>patch text</em>. GraphQL doesn't expose patches; git produces them natively — and git traffic is metered on a separate, generous transport budget, not the REST/GraphQL pools.</p>
+  </details>
+</section>
+
+<section class="step" id="s10">
+  <h3><span class="step-num">STEP 10</span> Verify the model against the live system</h3>
+  <p class="why">A read-only measurement proves whether the <code>6+N</code> model matches reality.</p>
+  <p>The <code>rate_limit</code> endpoint is free and read-only. Sample it before and after a small capped fetch:</p>
+  <pre>gh api rate_limit | jq '.resources.core'
+# then a capped run:
+node scripts/fetch-prs.ts --repo Azure/azure-sdk-for-python --min-prs 5
+# then re-run the first line</pre>
+  <p><b>Matches my model:</b> <code>core.remaining</code> drops by roughly <code>5 × (6 + avg N)</code>, scaled up by the pagination factor. If it drops far more, pagination/retries are inflating the count — exactly why the docs call <code>6+N</code> a lower bound.</p>
+</section>
+
+<section class="step" id="s11">
+  <h3><span class="step-num">STEP 11</span> Where a scaling change would land</h3>
+  <p class="why">Two concrete spots, depending on which lever you pull.</p>
+  <ul class="tight">
+    <li><b>Raise the ceiling:</b> swap <code>GH_TOKEN</code> in <code>.github/workflows/ccr-improvement-loop.md</code> — no code change.</li>
+    <li><b>Shrink <code>N</code> / add resumability:</b> the per-commit loop in <code>scripts/fetch-prs.ts</code> (~L392–L411), plus a new <code>/rate_limit</code>-aware dispatch wrapper around the run.</li>
+  </ul>
+</section>
+
+<section class="quiz" id="quiz">
+  <h2>Check your model</h2>
+  <p class="quiz-sub">Pick an answer for each question, then submit. Correct answers and explanations reveal automatically.</p>
+
+  <div class="q" data-answer="b">
+    <div class="q-text">1. At real volume, which part of the loop actually hits GitHub's rate limit?</div>
+    <label><input type="radio" name="q1" value="a" /> The AI agent generating review suggestions</label>
+    <label><input type="radio" name="q1" value="b" /> The deterministic prep stage that fetches every PR</label>
+    <label><input type="radio" name="q1" value="c" /> The dashboard aggregation step</label>
+    <div class="explain">The prep stage (<code>fetchPrToCache</code>) issues all the API calls; the agent runs afterward on cached data. (Step 1 &amp; 4)</div>
+  </div>
+
+  <div class="q" data-answer="c">
+    <div class="q-text">2. Why can <code>GET /rate_limit</code> show budget remaining while you're still being throttled?</div>
+    <label><input type="radio" name="q2" value="a" /> The endpoint is cached for an hour</label>
+    <label><input type="radio" name="q2" value="b" /> REST and GraphQL share one pool</label>
+    <label><input type="radio" name="q2" value="c" /> It only reports the primary budget, not secondary (burst) limits</label>
+    <div class="explain">Secondary limits govern <em>how</em> you call (concurrency/bursts) and are invisible to <code>/rate_limit</code>. (Step 2)</div>
+  </div>
+
+  <div class="q" data-answer="a">
+    <div class="q-text">3. In the cost model <code>6 + N</code>, what is <code>N</code>?</div>
+    <label><input type="radio" name="q3" value="a" /> The number of commits in the PR</label>
+    <label><input type="radio" name="q3" value="b" /> The number of reviewers</label>
+    <label><input type="radio" name="q3" value="c" /> The number of inline comments</label>
+    <div class="explain">Phase 3 issues one <code>commits/{sha}</code> call per commit — the dominant term on large PRs. (Step 5)</div>
+  </div>
+
+  <div class="q" data-answer="b">
+    <div class="q-text">4. What lets a killed backfill resume without re-spending budget?</div>
+    <label><input type="radio" name="q4" value="a" /> A retry queue in the workflow</label>
+    <label><input type="radio" name="q4" value="b" /> The immutable, idempotent PR cache (Phase 1 gate)</label>
+    <label><input type="radio" name="q4" value="c" /> The GraphQL point budget</label>
+    <div class="explain">Cached <code>pr-{n}.json</code> files are reused for free, so re-dispatch resumes with zero rework. (Step 7)</div>
+  </div>
+
+  <div class="q" data-answer="c">
+    <div class="q-text">5. Which lever gives the biggest immediate gain, and why isn't it enough alone?</div>
+    <label><input type="radio" name="q5" value="a" /> GraphQL migration; but pagination is hard</label>
+    <label><input type="radio" name="q5" value="b" /> Weekly windows; but they need a pacer</label>
+    <label><input type="radio" name="q5" value="c" /> Raising the auth ceiling; but it never relaxes secondary limits</label>
+    <div class="explain">Auth (Lever 1) is a 5–15× jump on the primary budget, but the semaphore stays essential because secondary limits are unchanged at any tier. (Steps 6 &amp; 8)</div>
+  </div>
+
+  <div class="q" data-answer="b">
+    <div class="q-text">6. Why can proposed item #6 (local git) remove the <code>N</code> term when deferred #3 and #4 could not?</div>
+    <label><input type="radio" name="q6" value="a" /> Git responses are cached longer by GitHub</label>
+    <label><input type="radio" name="q6" value="b" /> Git yields per-commit patches natively, and git traffic isn't on the REST/GraphQL budget</label>
+    <label><input type="radio" name="q6" value="c" /> Git batches multiple commits into one REST call</label>
+    <div class="explain">#3/#4 were both blocked on per-commit patch text; GraphQL can't expose it, but git produces it locally on a separate transport budget. (Step 9a)</div>
+  </div>
+
+  <button class="submit" onclick="gradeQuiz()">Submit answers</button>
+  <div class="score" id="score"></div>
+</section>
+
+<footer>
+  Sources in this folder: <code>api-rate-limit.md</code>, <code>optimize-api-call-plan.md</code>, <code>scripts/fetch-prs.ts</code>, <code>scripts/utils.ts</code>.
+</footer>
+
+</div>
+
+<script>
+function gradeQuiz() {
+  const questions = document.querySelectorAll('.q');
+  let correct = 0;
+  questions.forEach((q) => {
+    const answer = q.dataset.answer;
+    const chosen = q.querySelector('input:checked');
+    const explain = q.querySelector('.explain');
+    q.querySelectorAll('label').forEach((l) => l.classList.remove('correct', 'wrong'));
+    // mark the correct option
+    const correctLabel = q.querySelector('input[value="' + answer + '"]').closest('label');
+    correctLabel.classList.add('correct');
+    if (chosen) {
+      if (chosen.value === answer) {
+        correct++;
+      } else {
+        chosen.closest('label').classList.add('wrong');
+      }
+    }
+    explain.classList.add('show');
+  });
+  const score = document.getElementById('score');
+  score.textContent = 'You scored ' + correct + ' / ' + questions.length +
+    (correct === questions.length ? ' — model confirmed.' : ' — revisit the hinted steps above.');
+  score.classList.add('show');
+  score.style.color = correct === questions.length ? 'var(--accent-2)' : 'var(--warn)';
+}
+</script>
+</body>
+</html>

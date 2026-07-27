@@ -64,6 +64,8 @@
         "README.md"
     ],
     "overrides": {
-        "js-yaml": "^4.2.0"
+        "js-yaml": "^4.2.0",
+        "minimatch": "^10.2.4",
+        "test-exclude": "^8.0.0"
     }
 }

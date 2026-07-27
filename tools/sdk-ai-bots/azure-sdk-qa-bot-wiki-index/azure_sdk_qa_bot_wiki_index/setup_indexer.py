@@ -11,7 +11,7 @@ from .config import get as cfg, load_sync as load_config, require
 
 logger = logging.getLogger(__name__)
 
-API_VERSION = "2024-07-01"
+API_VERSION = "2024-11-01-preview"  # user-assigned identity fields need a preview version
 DATASOURCE = "azure-sdk-knowledge-wiki-datasource"
 SKILLSET = "azure-sdk-knowledge-wiki-skillset"
 INDEXER = "azure-sdk-knowledge-wiki-indexer"
@@ -36,7 +36,9 @@ def _put(base: str, token: str, kind: str, name: str, body: dict) -> None:
         json=body,
         timeout=60,
     )
-    resp.raise_for_status()
+    if not resp.ok:
+        # The status alone says nothing about which property was rejected.
+        raise RuntimeError(f"{kind} {name!r} failed ({resp.status_code}): {resp.text}")
     logger.info("%s %r upserted", kind, name)
 
 

@@ -169,9 +169,10 @@ stimuli:
 
 scoring:
   weights:
-    prompt: 1
-    file-exists: 2
-    run-command: 1
-    skill-invocation: 1
-    file-matches: 2
-  threshold: 0.97
+    tool-calls: 0.125
+    prompt: 0.125
+    file-exists: 0.25
+    run-command: 0.125
+    skill-invocation: 0.125
+    file-matches: 0.25
+  threshold: 0.985

@@ -86,8 +86,8 @@ stimuli:
     max_tokens: 100000
 scoring:
   weights:
-    tool-calls: 1
-    skill-invocation: 1
-    run-command: 1
-    file-matches: 3
+    tool-calls: 0.2
+    skill-invocation: 0.15
+    run-command: 0.15
+    file-matches: 0.5
   threshold: 0.95

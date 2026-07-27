@@ -48,7 +48,8 @@ For most questions the agent issues `search_knowledge_base` + `wiki_search` in o
 
 ## Freshness and tenant scoping
 
-- **Incremental reconcile.** The build diffs the corpus against the manifest by content hash: only changed/new documents are re-extracted and their summaries regenerated; entity/concept pages are re-synthesised only when a group's source set or content changed; removed documents have their pages soft-deleted (`IsDeleted` blob metadata, matching the KB sync pipeline, so the shared indexer drops them). The first run against an empty manifest is a full build.
+- **Incremental reconcile.** The build diffs the corpus against the manifest by content hash: only changed/new documents are re-extracted and their summaries regenerated; entity/concept pages are re-synthesised only when a group's source set or content changed; removed documents have their pages soft-deleted (`IsDeleted` blob metadata, matching the KB sync pipeline, so the shared indexer drops them). The first run against an empty manifest is a full build. Documents whose summary generation fails keep an empty hash so the next run retries them, and a run that would drop more than half of the known sources aborts rather than tombstone the wiki over an incomplete upstream corpus.
+- **Scheduling.** `azure-sdk-qa-bot-wiki-index/build_wiki.yml` runs the build daily at 04:00 UTC, two hours after the knowledge sync that writes its input. Configuration comes from Azure App Configuration, so the pipeline itself only carries an endpoint and a service connection.
 - **Tenant scoping** reuses the KB tool's source scoping. Summary pages inherit their source document's `context_id`; cross-document entity/concept pages carry dedicated `wiki_entity` / `wiki_concept` contexts registered as tenant sources.
 
 ## Evaluation

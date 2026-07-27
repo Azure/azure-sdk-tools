@@ -128,7 +128,7 @@ Logic App callers.
 
 ---
 
-## 6. Register the 18 pipelines
+## 6. Register the 16 pipelines
 
 In Azure DevOps → Pipelines → "New pipeline" → "Existing Azure Pipelines
 YAML file", create the following. **Name them exactly** per the repo
@@ -150,15 +150,13 @@ convention (`tools - <tool-name> - <action>`).
 - [ ] `tools - sdk-ai-bots-agent - cd` → [agent.cd.yml](../component-pipelines/agent/agent.cd.yml)
 - [ ] `tools - sdk-ai-bots-knowledge-sync - cd` → [knowledge-sync.cd.yml](../component-pipelines/knowledge-sync/knowledge-sync.cd.yml) (scheduled)
 
-### Component provision (5)
+### Provision orchestrators (3)
 
-- [ ] `tools - sdk-ai-bots-frontend - provision` → [frontend.provision.yml](../component-pipelines/frontend/frontend.provision.yml)
-- [ ] `tools - sdk-ai-bots-backend - provision` → [backend.provision.yml](../component-pipelines/backend/backend.provision.yml)
-- [ ] `tools - sdk-ai-bots-function-app - provision` → [function-app.provision.yml](../component-pipelines/function-app/function-app.provision.yml)
-- [ ] `tools - sdk-ai-bots-agent - provision` → [agent.provision.yml](../component-pipelines/agent/agent.provision.yml)
-- [ ] `tools - sdk-ai-bots-knowledge-sync - provision` → [knowledge-sync.provision.yml](../component-pipelines/knowledge-sync/knowledge-sync.provision.yml)
+- [ ] `tools - sdk-ai-bots - provision-all-dev` → [provision-all-dev.yml](../pipelines/orchestrators/provision-all-dev.yml)
+- [ ] `tools - sdk-ai-bots - provision-all-preview` → [provision-all-preview.yml](../pipelines/orchestrators/provision-all-preview.yml)
+- [ ] `tools - sdk-ai-bots - provision-all-prod` → [provision-all-prod.yml](../pipelines/orchestrators/provision-all-prod.yml)
 
-### Orchestrators (3, optional)
+### Deploy orchestrators (3, optional)
 
 - [ ] `tools - sdk-ai-bots - deploy-all-dev` → [deploy-all-dev.yml](../pipelines/orchestrators/deploy-all-dev.yml)
 - [ ] `tools - sdk-ai-bots - deploy-all-preview` → [deploy-all-preview.yml](../pipelines/orchestrators/deploy-all-preview.yml)

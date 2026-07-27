@@ -53,8 +53,7 @@ graph TD
 
 ## Deploy order
 
-Encoded by `dependsOn` in `infra/main.bicep` and by `INFRA_LAYERS` in
-`hooks/lib/layers.ts`:
+Encoded by `dependsOn` in `infra/main.bicep`:
 
 1. `shared-resources` — every other layer references its outputs.
 2. `agent-platform` — depends on managed identity + storage from layer 1.

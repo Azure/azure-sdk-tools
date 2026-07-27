@@ -2,10 +2,9 @@
 # Deploys all component images (backend → function-app → agent → frontend) to
 # prod with a 10-minute stabilization window after the backend rolls out.
 #
-# Prerequisites: run provision-all-prod.yml first to review the what-if and
-# sign off the operational-readiness checklist. Infra deploys for prod are
-# executed manually via the per-component <component>.provision.yml pipelines
-# — see provision-all-prod.yml for details.
+# Prerequisites: run provision-all-prod.yml first — it reviews the what-if,
+# blocks on the operational-readiness checklist, and applies the infra with
+# `azd provision` (see provision-all-prod.yml for details).
 #
 # Shape delegated to templates/deploy-stage.yml.
 

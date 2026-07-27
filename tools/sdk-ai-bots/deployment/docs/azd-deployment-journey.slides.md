@@ -369,7 +369,6 @@ Idempotent RBAC, conditional OAuth resources, deferred/two-phase workflows, "ens
 ## Short term
 
 - Move remaining `az` CLI calls in hooks behind small, tested helper libs (some already: `ensure-role-assignment`, `ensure-entra-app`, `env-suite`, `acr-tags`).
-- Bring the currently-skipped layer pipeline (`DEPLOY_LAYER=<name>`) back for targeted incremental provisions.
 - Cover hooks with unit + integration tests (fake `az` / Foundry via nock).
 - Kill remaining `value: ''` App Service settings; require explicit params or omit.
 

@@ -3,17 +3,13 @@
  *
  * Ported from ../../azd-experiments/hooks/postprovision.ts.
  *
- * Drives the infra-only layer pipeline (shared-resources → agent-platform →
- * backend → logic-app) via hooks/lib/deploy-layer.ts. Application services
- * (frontend, function-app, agent) are azd services and are handled by
- * `azd deploy` with their own per-service hooks.
- *
- *   DEPLOY_LAYER=agent-platform azd provision   — deploy only one layer
+ * Persists the bicep outputs into the azd environment, ensures role
+ * assignments, seeds Key Vault / App Configuration, and generates the Teams
+ * env file. Application services (frontend, function-app, agent) are azd
+ * services and are handled by `azd deploy` with their own per-service hooks.
  */
 
 import { execSync } from "child_process";
-import { INFRA_LAYERS } from "./lib/layers.js";
-import { runLayerPipeline } from "./lib/deploy-layer.js";
 import { uploadBotConfigs } from "./lib/upload-bot-configs.js";
 import { seedAppConfiguration } from "./lib/seed-app-config.js";
 import { seedKeyVaultSecrets } from "./lib/seed-key-vault.js";
@@ -24,7 +20,6 @@ import { getEnvSuiteValue } from "./lib/env-suite.js";
 const ENV_NAME = process.env.AZURE_ENV_NAME ?? "";
 const SUBSCRIPTION_ID = process.env.AZURE_SUBSCRIPTION_ID ?? "";
 const RESOURCE_GROUP = process.env.AZURE_RESOURCE_GROUP ?? "";
-const LOCATION = process.env.AZURE_LOCATION ?? "westus2";
 const STORAGE_ACCOUNT_NAME = process.env.STORAGE_ACCOUNT_NAME ?? "";
 
 function log(msg: string): void {
@@ -38,18 +33,8 @@ function log(msg: string): void {
  * azd names the subscription-level deployment `<ENV_NAME>-<timestamp>` (e.g.
  * `dev-1783668832`), so we resolve the most recent succeeded deployment whose
  * name starts with `<ENV_NAME>-` rather than assuming an exact `<ENV_NAME>`.
- *
- * Only runs when triggered by a full `azd provision` (i.e. DEPLOY_LAYER is not
- * set). When DEPLOY_LAYER is set the caller is doing a targeted per-layer
- * re-deploy and the top-level main.bicep was not re-run, so its outputs have
- * not changed and there is nothing new to persist.
  */
 async function persistBicepOutputs(): Promise<void> {
-  if (process.env.DEPLOY_LAYER) {
-    log(`DEPLOY_LAYER=${process.env.DEPLOY_LAYER} — skipping bicep output persistence (main.bicep was not re-run).`);
-    return;
-  }
-
   log("Persisting bicep outputs into azd environment...");
 
   // Resolve azd's actual deployment name: the most recent succeeded
@@ -97,15 +82,6 @@ async function persistBicepOutputs(): Promise<void> {
   log(`Persisted ${Object.keys(outputs).length} outputs.`);
 }
 
-async function runInfraLayers(): Promise<void> {
-  log("Starting infra layer pipeline...");
-  await runLayerPipeline(INFRA_LAYERS, {
-    resourceGroup: RESOURCE_GROUP,
-    subscriptionId: SUBSCRIPTION_ID,
-    location: LOCATION,
-  });
-}
-
 function uploadPerEnvBotConfigs(): void {
   uploadBotConfigs({
     envName: ENV_NAME,
@@ -143,15 +119,8 @@ function updateAppConfiguration(): void {
  * env; `teamsapp <cmd> --env azd` then consumes the single generated file. This
  * replaces the frontend teamsapp.yml's former `arm/deploy` step: azd provisions
  * the resources and Teams only owns the app manifest + bot registration + publish.
- *
- * Skipped for targeted per-layer re-deploys (DEPLOY_LAYER set), which do not
- * re-run main.bicep and therefore have no fresh outputs to propagate.
  */
 function syncTeamsEnvStep(): void {
-  if (process.env.DEPLOY_LAYER) {
-    log(`DEPLOY_LAYER=${process.env.DEPLOY_LAYER} — skipping Teams env sync (main.bicep was not re-run).`);
-    return;
-  }
   log("Generating the azd-owned Teams env file (.env.azd)...");
   // Teams app registration id/tenant come from environment-suite.yaml
   // (environments.<env>.teamsAppId / .teamsAppTenantId) — each env has its
@@ -216,7 +185,6 @@ function printSummary(): void {
   log(`Starting postprovision for environment '${ENV_NAME}'`);
   await persistBicepOutputs();
   ensureAgentAccountRoleAssignments();
-  await runInfraLayers();
   uploadPerEnvBotConfigs();
   seedKeyVaultSecretsStep();
   updateAppConfiguration();

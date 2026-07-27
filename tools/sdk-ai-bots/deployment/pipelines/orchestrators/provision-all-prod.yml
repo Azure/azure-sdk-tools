@@ -1,13 +1,12 @@
-# Orchestrator pipeline — prod provision preflight.
+# Orchestrator pipeline — full prod provision.
 #
-# NOTE: this pipeline does NOT auto-run `azd provision`. Prod provisioning is
-# intentionally left as a manual operator step performed via the per-component
-# <component>.provision.yml pipelines after the preflight what-if is reviewed
-# and the operational-readiness checklist is signed off.
+# Two stages, each gated by the `sdk-ai-bots-prod` ADO environment approval:
+#   1. PreflightProd — bicep what-if + readiness reminder. Review the what-if
+#      output and sign off the operational-readiness checklist before approving.
+#   2. ProvisionProd — applies with `azd provision`. Runs only after the
+#      preflight stage succeeds (stages run sequentially by default).
 #
-# Flow: Preflight (what-if + readiness reminder, blocks on ADO approval)
-#         → operator triggers component provisions manually
-#         → deploy-all-prod
+# Flow: PreflightProd (approval) → ProvisionProd (approval) → deploy-all-prod
 
 name: tools - sdk-ai-bots - provision-all-prod
 
@@ -31,4 +30,11 @@ extends:
                   runValidateAndWhatIf: true
                   runProvision: false
                   showReadinessReminder: true
+            - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-stage.yml
+              parameters:
+                  environment: prod
+                  stageName: ProvisionProd
+                  stageDisplayName: 'Provision (apply)'
+                  runValidateAndWhatIf: false
+                  runProvision: true
 

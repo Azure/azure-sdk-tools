@@ -130,8 +130,7 @@ Ported wholesale from `azd-experiments/infra/`:
 ### 3.3 azd usage model
 
 - `azd provision --environment <env> --no-prompt` applies `main.bicep` and
-  runs `hooks/postprovision.ts` (the infra-layer pipeline from
-  `azd-experiments/hooks/lib/layers.ts`).
+  runs `hooks/postprovision.ts`.
 - `azd deploy <service> --environment <env> --no-prompt` deploys frontend
   / function-app / agent (the three azd-services in `azure.yaml`). Backend
   is deployed with `az webapp config container set` from CD because it
@@ -237,8 +236,16 @@ tools/sdk-ai-bots/
 │  │  ├─ agent-predeploy.ts
 │  │  ├─ agent-postdeploy.ts
 │  │  └─ lib/
-│  │     ├─ layers.ts
-│  │     └─ deploy-layer.ts
+│  │     ├─ acr-tags.ts
+│  │     ├─ ensure-entra-app.ts
+│  │     ├─ ensure-role-assignment.ts
+│  │     ├─ env-suite.ts
+│  │     ├─ patch-workflow.ts
+│  │     ├─ quota-check.ts
+│  │     ├─ seed-app-config.ts
+│  │     ├─ seed-key-vault.ts
+│  │     ├─ sync-teams-env.ts
+│  │     └─ upload-bot-configs.ts
 │  ├─ pipelines/
 │  │  ├─ templates/
 │  │  │  ├─ load-environment-suite.yml
@@ -257,25 +264,20 @@ tools/sdk-ai-bots/
 │  │     ├─ deploy-all-dev.yml
 │  │     ├─ deploy-all-preview.yml
 │  │     └─ deploy-all-prod.yml
-│  ├─ component-pipelines/                ← standardized per-component
+│  ├─ component-pipelines/                ← standardized per-component (image-only)
 │  │  ├─ frontend/
-│  │  │  ├─ frontend.provision.yml
 │  │  │  ├─ frontend.ci.yml
 │  │  │  └─ frontend.cd.yml
 │  │  ├─ backend/
-│  │  │  ├─ backend.provision.yml
 │  │  │  ├─ backend.ci.yml
 │  │  │  └─ backend.cd.yml
 │  │  ├─ function-app/
-│  │  │  ├─ function-app.provision.yml
 │  │  │  ├─ function-app.ci.yml
 │  │  │  └─ function-app.cd.yml
 │  │  ├─ agent/
-│  │  │  ├─ agent.provision.yml
 │  │  │  ├─ agent.ci.yml
 │  │  │  └─ agent.cd.yml
 │  │  └─ knowledge-sync/
-│  │     ├─ knowledge-sync.provision.yml
 │  │     ├─ knowledge-sync.ci.yml
 │  │     └─ knowledge-sync.cd.yml
 │  ├─ scripts/
@@ -585,7 +587,7 @@ live in [`infra/modules/`](infra/modules/) and are consumed by
 
 | Existing manual step                        | Replaced by                                                                                                 |
 | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Portal-created backend App Service + slots  | `infra/modules/qaBotBackend/serverfarm.bicep` applied by `frontend.provision.yml` / `backend.provision.yml` |
+| Portal-created backend App Service + slots  | `infra/modules/qaBotBackend/serverfarm.bicep` applied by the centralized `provision-all-<env>` pipeline (`azd provision`)      |
 | Portal-created Cosmos DB, Key Vault, Search | `infra/modules/qaBotSharedResources/sharedResources.bicep`                                                  |
 | Manual Key Vault secret seeding             | `hooks/postprovision.ts` `seedKeyVaultSecrets()` step (currently TODO — flagged)                            |
 | Manual App Configuration key seeding        | `hooks/postprovision.ts` `updateAppConfiguration()` step                                                    |

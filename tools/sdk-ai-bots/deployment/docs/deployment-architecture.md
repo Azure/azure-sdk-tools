@@ -26,20 +26,17 @@ graph LR
 
 ## Layers
 
-| #   | Layer             | Bicep module                                         | Provision via                                                   |
-| --- | ----------------- | ---------------------------------------------------- | --------------------------------------------------------------- |
-| 1   | shared-resources  | `modules/qaBotSharedResources/sharedResources.bicep` | `azd provision` (full graph) or `DEPLOY_LAYER=shared-resources` |
-| 2   | agent-platform    | `modules/qaBotAgent/component.bicep`                 | `DEPLOY_LAYER=agent-platform`                                   |
-| 3   | frontend identity | `modules/qaBotFrontend/userAssignedIdentity.bicep`   | always in full graph                                            |
-| 4   | backend           | `modules/qaBotBackend/serverfarm.bicep`              | `DEPLOY_LAYER=backend`                                          |
-| 5   | function-app      | `modules/qaBotFunctionApp/serverfarm.bicep`          | full graph                                                      |
-| 6   | logic-app         | `modules/qaBotLogicApp/logicAppResources.bicep`      | `DEPLOY_LAYER=logic-app`                                        |
+`main.bicep` composes the infrastructure from these Bicep modules, wired
+together by `dependsOn`. `azd provision` always applies the full graph.
 
-`azd provision` always runs the full Bicep graph via `main.bicep`. The
-`DEPLOY_LAYER` env var only affects which layers `hooks/postprovision.ts`
-re-applies via `az deployment group create` for partial-update workflows
-(useful when only one Bicep module changed and a full `what-if` isn't
-needed).
+| #   | Layer             | Bicep module                                         |
+| --- | ----------------- | ---------------------------------------------------- |
+| 1   | shared-resources  | `modules/qaBotSharedResources/sharedResources.bicep` |
+| 2   | agent-platform    | `modules/qaBotAgent/component.bicep`                 |
+| 3   | frontend identity | `modules/qaBotFrontend/userAssignedIdentity.bicep`   |
+| 4   | backend           | `modules/qaBotBackend/serverfarm.bicep`              |
+| 5   | function-app      | `modules/qaBotFunctionApp/serverfarm.bicep`          |
+| 6   | logic-app         | `modules/qaBotLogicApp/logicAppResources.bicep`      |
 
 ## Rollout pattern matrix
 

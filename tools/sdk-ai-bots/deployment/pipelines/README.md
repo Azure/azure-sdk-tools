@@ -34,13 +34,17 @@ parameters:
 
 ## Component → pipeline map
 
-| Component      | Provision                                                         | CI                      | CD                                  |
-| -------------- | ----------------------------------------------------------------- | ----------------------- | ----------------------------------- |
-| frontend       | `component-pipelines/frontend/frontend.provision.yml`             | `frontend.ci.yml`       | `frontend.cd.yml`                   |
-| backend        | `component-pipelines/backend/backend.provision.yml`               | `backend.ci.yml`        | `backend.cd.yml`                    |
-| function-app   | `component-pipelines/function-app/function-app.provision.yml`     | `function-app.ci.yml`   | `function-app.cd.yml`               |
-| agent          | `component-pipelines/agent/agent.provision.yml`                   | `agent.ci.yml`          | `agent.cd.yml`                      |
-| knowledge-sync | `component-pipelines/knowledge-sync/knowledge-sync.provision.yml` | `knowledge-sync.ci.yml` | `knowledge-sync.cd.yml` (scheduled) |
+Infrastructure is provisioned centrally per environment by the
+`pipelines/orchestrators/provision-all-{dev,preview,prod}.yml` pipelines. The
+component pipelines below are image-only (CI builds, CD deploys).
+
+| Component      | CI                      | CD                                  |
+| -------------- | ----------------------- | ----------------------------------- |
+| frontend       | `frontend.ci.yml`       | `frontend.cd.yml`                   |
+| backend        | `backend.ci.yml`        | `backend.cd.yml`                    |
+| function-app   | `function-app.ci.yml`   | `function-app.cd.yml`               |
+| agent          | `agent.ci.yml`          | `agent.cd.yml`                      |
+| knowledge-sync | `knowledge-sync.ci.yml` | `knowledge-sync.cd.yml` (scheduled) |
 
 ## Existing pipelines (phase 1 coexistence)
 
@@ -50,5 +54,5 @@ over to the new structure in phase 2, after dev has been validated:
 - `tools/sdk-ai-bots/azure-sdk-qa-bot-backend/pipeline/{ci,cd}.yml`
 - `tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/{server-ci,server-cd,agent-cd,logicapp-cd}.yml`
 - `tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync/{ci,sync_knowledge}.yml`
-- `tools/sdk-ai-bots/azure-sdk-qa-bot/teamsapp.yml` (Teams manifest publish only — the ARM step is replaced by `frontend.provision.yml`)
+- `tools/sdk-ai-bots/azure-sdk-qa-bot/teamsapp.yml` (Teams manifest publish only — the ARM step is replaced by the centralized `provision-all-<env>` pipeline)
 - `tools/sdk-ai-bots/{online,offline}-evaluation.yml` (evaluation framework; not in scope)

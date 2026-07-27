@@ -4,20 +4,16 @@
 # AZURE_LOCATION, AZURE_SUBSCRIPTION_ID, AZURE_TENANT_ID,
 # AZURE_FEDERATED_TOKEN_FILE.
 #
-# Runs the postprovision hook (infra-layer pipeline) automatically.
-# Set DEPLOY_LAYER to scope to a single layer.
+# Runs the postprovision hook automatically.
 
 parameters:
-    - name: deployLayer
-      type: string
-      default: '' # empty = run all layers
     - name: workingDirectory
       type: string
       default: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment'
 
 steps:
     - task: AzureCLI@2
-      displayName: 'azd provision (${{ parameters.deployLayer }})'
+      displayName: 'azd provision'
       inputs:
           azureSubscription: $(SERVICE_CONNECTION)
           scriptType: bash
@@ -26,10 +22,6 @@ steps:
           inlineScript: |
               set -euo pipefail
               export AZD_AUTH_USE_FEDERATED_TOKEN=true
-              if [ -n "${{ parameters.deployLayer }}" ]; then
-                export DEPLOY_LAYER="${{ parameters.deployLayer }}"
-                echo "Running partial provision for DEPLOY_LAYER=$DEPLOY_LAYER"
-              fi
               npm ci
               azd env new "$AZURE_ENV_NAME" --location "$AZURE_LOCATION" --subscription "$AZURE_SUBSCRIPTION_ID" --no-prompt || true
               azd env select "$AZURE_ENV_NAME"

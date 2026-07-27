@@ -74,20 +74,7 @@ public class OperationStatus
     public string? FailureReason { get; set; }
 }
 
-public class ApiReviewHubRequestReviewPullRequestResult
-{
-    [JsonPropertyName("operationId")]
-    public string OperationId { get; set; } = string.Empty;
-
-    [JsonPropertyName("status")]
-    public string Status { get; set; } = string.Empty;
-
-    [JsonPropertyName("operation")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public OperationStatus? Operation { get; set; }
-}
-
-public class ApiReviewHubReleaseGateApproval
+public class ApiReviewHubApprovalRecord
 {
     [JsonPropertyName("apiHash")]
     public string ApiHash { get; set; } = string.Empty;
@@ -135,7 +122,7 @@ public class ApiReviewHubReleaseGateResult
 
     [JsonPropertyName("approvals")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public IReadOnlyList<ApiReviewHubReleaseGateApproval>? Approvals { get; set; } = [];
+    public IReadOnlyList<ApiReviewHubApprovalRecord>? Approvals { get; set; } = [];
 }
 
 public class ApiViewReleaseStatusResult
@@ -187,7 +174,7 @@ public class ApiReviewHubResponse : CommandResponse
 
     [JsonPropertyName("result")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public ApiReviewHubRequestReviewPullRequestResult? Result { get; set; }
+    public OperationStatus? Result { get; set; }
 
     protected override string Format()
     {
@@ -199,7 +186,7 @@ public class ApiReviewHubResponse : CommandResponse
 
         if (Result != null)
         {
-            var prUrl = TryGetReviewPullRequestUrl(Result.Operation?.ReviewPullRequest);
+            var prUrl = TryGetReviewPullRequestUrl(Result.ReviewPullRequest);
             if (!string.IsNullOrWhiteSpace(prUrl))
             {
                 output.AppendLine($"Review PR: {prUrl}");

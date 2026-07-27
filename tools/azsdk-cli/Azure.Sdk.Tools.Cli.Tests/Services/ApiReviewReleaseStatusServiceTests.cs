@@ -23,7 +23,7 @@ public class ApiReviewReleaseStatusServiceTests
     }
 
     [Test]
-    public async Task GetReleaseStatusAsync_UsesReviewHubResult_WhenReviewHubQuerySucceeds()
+    public async Task GetApprovalStatusAsync_UsesReviewHubResult_WhenReviewHubQuerySucceeds()
     {
         reviewHubServiceMock
             .Setup(x => x.GetReleaseGateStatusAsync("https://endpoint", "python", "pkg", "1.0.0", "hash", It.IsAny<CancellationToken>()))
@@ -33,18 +33,18 @@ public class ApiReviewReleaseStatusServiceTests
                 Reason = "approved"
             });
 
-        var result = await service.GetReleaseStatusAsync("https://endpoint", "python", "pkg", "1.0.0", "hash", CancellationToken.None);
+        var result = await service.GetApprovalStatusAsync("https://endpoint", "python", "pkg", "1.0.0", "hash", CancellationToken.None);
 
         Assert.That(result.IsApproved, Is.True);
         Assert.That(result.FinalSource, Is.EqualTo("ApiReviewHub"));
         Assert.That(result.Reason, Is.EqualTo("approved"));
         Assert.That(result.ReviewHub.StatusCode, Is.EqualTo(200));
         Assert.That(result.ApiView, Is.Null);
-        apiViewServiceMock.Verify(x => x.GetReleaseStatusAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        apiViewServiceMock.Verify(x => x.GetApprovalStatusAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]
-    public async Task GetReleaseStatusAsync_QueriesApiView_WhenReviewHubResultIsNotApproved()
+    public async Task GetApprovalStatusAsync_QueriesApiView_WhenReviewHubResultIsNotApproved()
     {
         reviewHubServiceMock
             .Setup(x => x.GetReleaseGateStatusAsync("https://endpoint", "python", "pkg", "1.0.0", "hash", It.IsAny<CancellationToken>()))
@@ -54,7 +54,7 @@ public class ApiReviewReleaseStatusServiceTests
                 Reason = "missingApproval"
             });
         apiViewServiceMock
-            .Setup(x => x.GetReleaseStatusAsync("python", "pkg", "1.0.0", It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetApprovalStatusAsync("python", "pkg", "1.0.0", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ApiViewReleaseStatusResult
             {
                 IsApproved = false,
@@ -64,7 +64,7 @@ public class ApiReviewReleaseStatusServiceTests
                 Details = ["APIView secondary result"]
             });
 
-        var result = await service.GetReleaseStatusAsync("https://endpoint", "python", "pkg", "1.0.0", "hash", CancellationToken.None);
+        var result = await service.GetApprovalStatusAsync("https://endpoint", "python", "pkg", "1.0.0", "hash", CancellationToken.None);
 
         Assert.That(result.IsApproved, Is.False);
         Assert.That(result.FinalSource, Is.EqualTo("ApiReviewHub"));
@@ -75,13 +75,13 @@ public class ApiReviewReleaseStatusServiceTests
     }
 
     [Test]
-    public async Task GetReleaseStatusAsync_FallsBackToApiView_WhenReviewHubQueryFails()
+    public async Task GetApprovalStatusAsync_FallsBackToApiView_WhenReviewHubQueryFails()
     {
         reviewHubServiceMock
             .Setup(x => x.GetReleaseGateStatusAsync("https://endpoint", "python", "pkg", "1.0.0", "hash", It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("hub failed", null, HttpStatusCode.InternalServerError));
         apiViewServiceMock
-            .Setup(x => x.GetReleaseStatusAsync("python", "pkg", "1.0.0", It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetApprovalStatusAsync("python", "pkg", "1.0.0", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ApiViewReleaseStatusResult
             {
                 IsApproved = false,
@@ -91,7 +91,7 @@ public class ApiReviewReleaseStatusServiceTests
                 Details = ["APIView fallback result"]
             });
 
-        var result = await service.GetReleaseStatusAsync("https://endpoint", "python", "pkg", "1.0.0", "hash", CancellationToken.None);
+        var result = await service.GetApprovalStatusAsync("https://endpoint", "python", "pkg", "1.0.0", "hash", CancellationToken.None);
 
         Assert.That(result.IsApproved, Is.False);
         Assert.That(result.FinalSource, Is.EqualTo("APIView"));
@@ -103,7 +103,7 @@ public class ApiReviewReleaseStatusServiceTests
     }
 
     [Test]
-    public async Task GetReleaseStatusAsync_UsesApiViewResult_WhenReviewHubRepositoryIsNotSupported()
+    public async Task GetApprovalStatusAsync_UsesApiViewResult_WhenReviewHubRepositoryIsNotSupported()
     {
         reviewHubServiceMock
             .Setup(x => x.GetReleaseGateStatusAsync("https://endpoint", "python", "pkg", "1.0.0", "hash", It.IsAny<CancellationToken>()))
@@ -113,7 +113,7 @@ public class ApiReviewReleaseStatusServiceTests
                 Reason = "repositoryNotSupported"
             });
         apiViewServiceMock
-            .Setup(x => x.GetReleaseStatusAsync("python", "pkg", "1.0.0", It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetApprovalStatusAsync("python", "pkg", "1.0.0", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ApiViewReleaseStatusResult
             {
                 IsApproved = false,
@@ -123,7 +123,7 @@ public class ApiReviewReleaseStatusServiceTests
                 Details = ["APIView fallback result"]
             });
 
-        var result = await service.GetReleaseStatusAsync("https://endpoint", "python", "pkg", "1.0.0", "hash", CancellationToken.None);
+        var result = await service.GetApprovalStatusAsync("https://endpoint", "python", "pkg", "1.0.0", "hash", CancellationToken.None);
 
         Assert.That(result.IsApproved, Is.False);
         Assert.That(result.FinalSource, Is.EqualTo("APIView"));
@@ -133,7 +133,7 @@ public class ApiReviewReleaseStatusServiceTests
     }
 
     [Test]
-    public async Task GetReleaseStatusAsync_ReturnsReviewNotFound_WhenReviewHubRepositoryIsNotSupported_AndApiViewReturns404()
+    public async Task GetApprovalStatusAsync_ReturnsReviewNotFound_WhenReviewHubRepositoryIsNotSupported_AndApiViewReturns404()
     {
         reviewHubServiceMock
             .Setup(x => x.GetReleaseGateStatusAsync("https://endpoint", "java", "azure-keyvault-keys", "4.12.0b3", "hash", It.IsAny<CancellationToken>()))
@@ -143,10 +143,10 @@ public class ApiReviewReleaseStatusServiceTests
                 Reason = "repositoryNotSupported"
             });
         apiViewServiceMock
-            .Setup(x => x.GetReleaseStatusAsync("java", "azure-keyvault-keys", "4.12.0b3", It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetApprovalStatusAsync("java", "azure-keyvault-keys", "4.12.0b3", It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("review not found", null, HttpStatusCode.NotFound));
 
-        var result = await service.GetReleaseStatusAsync("https://endpoint", "java", "azure-keyvault-keys", "4.12.0b3", "hash", CancellationToken.None);
+        var result = await service.GetApprovalStatusAsync("https://endpoint", "java", "azure-keyvault-keys", "4.12.0b3", "hash", CancellationToken.None);
 
         Assert.That(result.IsApproved, Is.False);
         Assert.That(result.FinalSource, Is.EqualTo("APIView"));
@@ -157,7 +157,7 @@ public class ApiReviewReleaseStatusServiceTests
     }
 
     [Test]
-    public async Task GetReleaseStatusAsync_SkipsApiViewFallback_WhenLanguageIsNotSupportedByApiView()
+    public async Task GetApprovalStatusAsync_SkipsApiViewFallback_WhenLanguageIsNotSupportedByApiView()
     {
         reviewHubServiceMock
             .Setup(x => x.GetReleaseGateStatusAsync("https://endpoint", "cpp", "pkg", "1.0.0", "hash", It.IsAny<CancellationToken>()))
@@ -167,7 +167,7 @@ public class ApiReviewReleaseStatusServiceTests
                 Reason = "repositoryNotSupported"
             });
 
-        var result = await service.GetReleaseStatusAsync("https://endpoint", "cpp", "pkg", "1.0.0", "hash", CancellationToken.None);
+        var result = await service.GetApprovalStatusAsync("https://endpoint", "cpp", "pkg", "1.0.0", "hash", CancellationToken.None);
 
         Assert.That(result.IsApproved, Is.False);
         Assert.That(result.FinalSource, Is.EqualTo("None"));
@@ -175,6 +175,6 @@ public class ApiReviewReleaseStatusServiceTests
         Assert.That(result.ReviewHub.StatusCode, Is.EqualTo(200));
         Assert.That(result.ApiView?.Reason, Is.EqualTo("languageNotSupported"));
         Assert.That(result.ApiView?.Details, Is.EqualTo(new[] { "APIView does not support cpp for release gating." }));
-        apiViewServiceMock.Verify(x => x.GetReleaseStatusAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        apiViewServiceMock.Verify(x => x.GetApprovalStatusAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }

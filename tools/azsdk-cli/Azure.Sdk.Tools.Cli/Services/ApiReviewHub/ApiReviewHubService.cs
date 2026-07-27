@@ -8,7 +8,7 @@ namespace Azure.Sdk.Tools.Cli.Services.ApiReviewHub;
 
 public interface IApiReviewHubService
 {
-    Task<ApiReviewHubRequestReviewPullRequestResult> RequestReviewPullRequestAsync(
+    Task<OperationStatus> RequestReviewPullRequestAsync(
         ReviewPullRequestCreationRequest request,
         string endpoint,
         bool waitForCompletion,
@@ -42,7 +42,7 @@ public class ApiReviewHubService(
     private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
     private readonly TimeSpan _operationTimeout = operationTimeout ?? DefaultOperationTimeout;
 
-    public async Task<ApiReviewHubRequestReviewPullRequestResult> RequestReviewPullRequestAsync(
+    public async Task<OperationStatus> RequestReviewPullRequestAsync(
         ReviewPullRequestCreationRequest request,
         string endpoint,
         bool waitForCompletion,
@@ -55,15 +55,10 @@ public class ApiReviewHubService(
 
         logger.LogInformation("Requesting API Review Hub review PR for {packageName} from {endpoint}", request.PackageName, endpoint);
         var accepted = await PostJsonAsync<ReviewPullRequestCreationAcceptedResponse>(httpClient, $"{endpoint}/api/review-prs", request, authorization, ct);
-        var result = new ApiReviewHubRequestReviewPullRequestResult
-        {
-            OperationId = accepted.OperationId,
-            Status = accepted.Status
-        };
 
         if (!waitForCompletion)
         {
-            return result;
+            return new OperationStatus { OperationId = accepted.OperationId, Status = accepted.Status };
         }
 
         var startedAt = _timeProvider.GetUtcNow();
@@ -71,13 +66,11 @@ public class ApiReviewHubService(
         while (true)
         {
             var operation = await GetJsonAsync<OperationStatus>(httpClient, $"{endpoint}/api/operations/{accepted.OperationId}", authorization, ct);
-            result.Status = operation.Status;
-            result.Operation = operation;
             LogOperationProgress(operation, startedAt, ref loggedPipelineUrl);
 
             if (string.Equals(operation.Status, "succeeded", StringComparison.OrdinalIgnoreCase))
             {
-                return result;
+                return operation;
             }
 
             if (string.Equals(operation.Status, "failed", StringComparison.OrdinalIgnoreCase))

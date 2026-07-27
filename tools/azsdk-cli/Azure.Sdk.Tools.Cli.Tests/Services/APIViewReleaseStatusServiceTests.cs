@@ -20,7 +20,7 @@ public class APIViewReleaseStatusServiceTests
     [TestCase(200, true, true, "approved")]
     [TestCase(201, false, true, "packageNameApproved")]
     [TestCase(202, false, false, "packageNamePending")]
-    public async Task GetReleaseStatusAsync_MapsAPIViewStatusCodes(int statusCode, bool isApproved, bool packageNameApproved, string reason)
+    public async Task GetApprovalStatusAsync_MapsAPIViewStatusCodes(int statusCode, bool isApproved, bool packageNameApproved, string reason)
     {
         string? capturedEndpoint = null;
         apiViewHttpServiceMock
@@ -31,7 +31,7 @@ public class APIViewReleaseStatusServiceTests
                 return (string.Empty, statusCode);
             });
 
-        var result = await service.GetReleaseStatusAsync("csharp", "Azure.Test", "1.0.0", CancellationToken.None);
+        var result = await service.GetApprovalStatusAsync("csharp", "Azure.Test", "1.0.0", CancellationToken.None);
 
         Assert.That(result.StatusCode, Is.EqualTo(statusCode));
         Assert.That(result.IsApproved, Is.EqualTo(isApproved));
@@ -44,7 +44,7 @@ public class APIViewReleaseStatusServiceTests
 
     [TestCase("go", "language=Go")]
     [TestCase("rust", "language=Rust")]
-    public async Task GetReleaseStatusAsync_MapsSupportedGoAndRustLanguages(string language, string expectedLanguageQuery)
+    public async Task GetApprovalStatusAsync_MapsSupportedGoAndRustLanguages(string language, string expectedLanguageQuery)
     {
         string? capturedEndpoint = null;
         apiViewHttpServiceMock
@@ -55,7 +55,7 @@ public class APIViewReleaseStatusServiceTests
                 return (string.Empty, 202);
             });
 
-        var result = await service.GetReleaseStatusAsync(language, "Azure.Test", "1.0.0", CancellationToken.None);
+        var result = await service.GetApprovalStatusAsync(language, "Azure.Test", "1.0.0", CancellationToken.None);
 
         Assert.That(result.StatusCode, Is.EqualTo(202));
         Assert.That(capturedEndpoint, Does.Contain(expectedLanguageQuery));

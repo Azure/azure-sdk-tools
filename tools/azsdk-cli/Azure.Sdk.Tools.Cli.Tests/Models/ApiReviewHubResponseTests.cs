@@ -13,18 +13,15 @@ public class ApiReviewHubResponseTests
     {
         var response = new ApiReviewHubResponse
         {
-            Result = new ApiReviewHubRequestReviewPullRequestResult
+            Result = new OperationStatus
             {
                 OperationId = "op-123",
                 Status = "succeeded",
-                Operation = new OperationStatus
-                {
-                    ReviewPullRequest = ParseJsonElement("""
-                        {
-                          "url": "https://github.com/Azure/azure-sdk-for-python/pull/13"
-                        }
-                        """)
-                }
+                ReviewPullRequest = ParseJsonElement("""
+                    {
+                      "url": "https://github.com/Azure/azure-sdk-for-python/pull/13"
+                    }
+                    """)
             }
         };
 
@@ -39,18 +36,15 @@ public class ApiReviewHubResponseTests
     {
         var response = new ApiReviewHubResponse
         {
-            Result = new ApiReviewHubRequestReviewPullRequestResult
+            Result = new OperationStatus
             {
                 OperationId = "op-123",
                 Status = "succeeded",
-                Operation = new OperationStatus
-                {
-                    ReviewPullRequest = ParseJsonElement("""
-                        {
-                          "number": 13
-                        }
-                        """)
-                }
+                ReviewPullRequest = ParseJsonElement("""
+                    {
+                      "number": 13
+                    }
+                    """)
             }
         };
 

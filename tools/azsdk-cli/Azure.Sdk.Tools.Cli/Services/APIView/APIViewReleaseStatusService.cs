@@ -5,14 +5,14 @@ namespace Azure.Sdk.Tools.Cli.Services.APIView;
 
 public interface IAPIViewReleaseStatusService
 {
-    Task<ApiViewReleaseStatusResult> GetReleaseStatusAsync(string language, string packageName, string packageVersion, CancellationToken ct);
+    Task<ApiViewReleaseStatusResult> GetApprovalStatusAsync(string language, string packageName, string packageVersion, CancellationToken ct);
 }
 
 public class APIViewReleaseStatusService(
     IAPIViewHttpService apiViewHttpService,
     ILogger<APIViewReleaseStatusService> logger) : IAPIViewReleaseStatusService
 {
-    public async Task<ApiViewReleaseStatusResult> GetReleaseStatusAsync(string language, string packageName, string packageVersion, CancellationToken ct)
+    public async Task<ApiViewReleaseStatusResult> GetApprovalStatusAsync(string language, string packageName, string packageVersion, CancellationToken ct)
     {
         var apiViewLanguage = MapApiViewLanguage(language);
         if (apiViewLanguage == null)

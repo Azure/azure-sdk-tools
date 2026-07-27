@@ -32,9 +32,9 @@ public class ApiReviewHubTool(
     private static readonly string SupportedLanguagesDescription = string.Join(", ", SupportedLanguages);
 
     private const string CreateCommandName = "create";
-    private const string GetReleaseStatusCommandName = "get-release-status";
+    private const string GetApprovalStatusCommandName = "get-approval-status";
     private const string RequestReviewPullRequestToolName = "azsdk_apireviewhub_request_review_pr";
-    private const string GetReleaseStatusToolName = "azsdk_apireview_get_release_status";
+    private const string GetApprovalStatusToolName = "azsdk_apireview_get_approval_status";
     private const string DefaultEndpoint = "https://api-review-hub.azurewebsites.net";
     private const string DefaultTargetOwner = "Azure";
     private const string DefaultApiViewReleaseStatusEndpoint = "https://apiview.dev/AutoReview/GetReviewStatus";
@@ -108,7 +108,7 @@ public class ApiReviewHubTool(
             noWaitOption,
             pollIntervalSecondsOption
         },
-        new McpCommand(GetReleaseStatusCommandName, "Check API review release status using APIView and API Review Hub", GetReleaseStatusToolName)
+        new McpCommand(GetApprovalStatusCommandName, "Check API review release approval status using APIView and API Review Hub", GetApprovalStatusToolName)
         {
             languageOption,
             packageNameOption,
@@ -122,7 +122,7 @@ public class ApiReviewHubTool(
         return parseResult.CommandResult.Command.Name switch
         {
             CreateCommandName => await HandleCreateCommand(parseResult, ct),
-            GetReleaseStatusCommandName => await HandleGetReleaseStatusCommand(parseResult, ct),
+            GetApprovalStatusCommandName => await HandleGetApprovalStatusCommand(parseResult, ct),
             _ => new DefaultCommandResponse { ResponseError = $"Unknown command: {parseResult.CommandResult.Command.Name}" }
         };
     }
@@ -141,9 +141,9 @@ public class ApiReviewHubTool(
             ct);
     }
 
-    private async Task<CommandResponse> HandleGetReleaseStatusCommand(ParseResult parseResult, CancellationToken ct)
+    private async Task<CommandResponse> HandleGetApprovalStatusCommand(ParseResult parseResult, CancellationToken ct)
     {
-        var response = await GetReleaseStatus(
+        var response = await GetApprovalStatus(
             parseResult.GetValue(languageOption) ?? string.Empty,
             parseResult.GetValue(packageNameOption) ?? string.Empty,
             parseResult.GetValue(packageVersionOption) ?? string.Empty,
@@ -253,8 +253,8 @@ public class ApiReviewHubTool(
         return option;
     }
 
-    [McpServerTool(Name = GetReleaseStatusToolName), Description("Check API review release status using APIView and API Review Hub.")]
-    public async Task<ApiReviewReleaseStatusResponse> GetReleaseStatus(
+    [McpServerTool(Name = GetApprovalStatusToolName), Description("Check API review release approval status using APIView and API Review Hub.")]
+    public async Task<ApiReviewReleaseStatusResponse> GetApprovalStatus(
         [Description("The SDK language.")] string language,
         [Description("The package name.")] string packageName,
         [Description("The package version to check.")] string packageVersion,
@@ -263,7 +263,7 @@ public class ApiReviewHubTool(
     {
         try
         {
-            var result = await apiReviewReleaseStatusService.GetReleaseStatusAsync(DefaultEndpoint, language, packageName, packageVersion, apiHash, ct);
+            var result = await apiReviewReleaseStatusService.GetApprovalStatusAsync(DefaultEndpoint, language, packageName, packageVersion, apiHash, ct);
             var response = new ApiReviewReleaseStatusResponse
             {
                 Result = result,
@@ -279,10 +279,10 @@ public class ApiReviewHubTool(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to get API review release status for {packageName}", packageName);
+            logger.LogError(ex, "Failed to get API review release approval status for {packageName}", packageName);
             return new ApiReviewReleaseStatusResponse
             {
-                ResponseError = $"Failed to get API review release status for {packageName}: {ex.Message}"
+                ResponseError = $"Failed to get API review release approval status for {packageName}: {ex.Message}"
             };
         }
     }
@@ -379,7 +379,7 @@ public class ApiReviewHubTool(
         };
     }
 
-    private static void AddApprovalDetails(List<string> details, IReadOnlyList<ApiReviewHubReleaseGateApproval>? approvals, string apiHash)
+    private static void AddApprovalDetails(List<string> details, IReadOnlyList<ApiReviewHubApprovalRecord>? approvals, string apiHash)
     {
         if (approvals?.Count is not > 0)
         {

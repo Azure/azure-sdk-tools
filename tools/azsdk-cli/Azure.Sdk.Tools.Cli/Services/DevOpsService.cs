@@ -1,19 +1,25 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
 using System.Globalization;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Azure.Core;
 using Azure.Identity;
+using Azure.Sdk.Tools.Cli.Attributes;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
+using Microsoft.CodeAnalysis;
 using Microsoft.TeamFoundation.Build.WebApi;
+using Microsoft.TeamFoundation.Common;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
+using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.OAuth;
 using Microsoft.VisualStudio.Services.WebApi;
 using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
@@ -145,6 +151,9 @@ namespace Azure.Sdk.Tools.Cli.Services
         Task<WorkItem> CreateWorkItemRelationAsync(int id, string relationType, int? targetId = null, string? targetUrl = null, CancellationToken ct = default);
         Task RemoveWorkItemRelationAsync(int id, string relationType, int targetId, CancellationToken ct);
         Task DeleteWorkItemAsync(int workItemId, CancellationToken ct);
+        public Task<ProductOnboardingWorkItem?> GetProductOnboardingAsync(Guid productId, Guid serviceId, CancellationToken ct, bool isTest = true);
+        public Task<ProductOnboardingWorkItem> CreateProductOnboardingAsync(ProductOnboardingStatus status, CancellationToken ct, bool isTest = true);
+        public Task<ProductOnboardingWorkItem> UpdateProductOnboardingAsync(int workItemId, ProductOnboardingStatus status, CancellationToken ct, bool isTest = true);
     }
 
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
@@ -2022,6 +2031,143 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             var workItemClient = connection.GetWorkItemClient(ct);
             await workItemClient.DeleteWorkItemAsync(workItemId, destroy: false, cancellationToken: ct);
+        }
+
+        private ProductOnboardingWorkItem ToProductOnboardingWorkItem(WorkItem wi)
+        {
+            if (wi.Id == null)
+            {
+                logger.LogError("Work item ID is null.");
+                throw new ($"Work item ID is null");
+            }
+
+            var result = new ProductOnboardingWorkItem
+            {
+                WorkItemId = wi.Id ?? 0,
+                IsTestProductOnboarding
+                    = (wi.Fields.TryGetValue(ProductOnboardingWorkItem.TestFieldName, out var id)
+                        ? id?.ToString() ?? string.Empty : string.Empty).Contains(ProductOnboardingWorkItem.TestFieldTestValue),
+            };
+
+            foreach (var property in result.GetType().GetProperties(BindingFlags.DeclaredOnly).Where(p => p.CanWrite))
+            {
+                var fieldName = property.GetCustomAttribute<FieldNameAttribute>()?.Name;
+                if (!fieldName.IsNullOrEmpty())
+                {
+                    var stringValue = wi.Fields.TryGetValue(fieldName, out var pv) ? pv?.ToString() ?? string.Empty : string.Empty;
+                    if (property.PropertyType == typeof(string))
+                    {
+                        property.SetValue(result, stringValue);
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        public async Task<ProductOnboardingWorkItem?> GetProductOnboardingAsync(Guid productId, Guid serviceId, CancellationToken ct, bool isTest)
+        {
+            var productIdPropertyName
+                = typeof(ProductOnboardingWorkItem).GetProperty(nameof(ProductOnboardingWorkItem.ProductId))?
+                .GetCustomAttribute<FieldNameAttribute>()?.Name;
+
+            var serviceIdPropertyName
+                = typeof(ProductOnboardingWorkItem).GetProperty(nameof(ProductOnboardingWorkItem.ServiceId))?
+                .GetCustomAttribute<FieldNameAttribute>()?.Name;
+
+            var serviceCondition = new StringBuilder();
+            serviceCondition.Append($"[{productIdPropertyName}] = '{productId.ToString()}' AND [{serviceId}] = '{serviceId.ToString()}'");
+            serviceCondition.Append(
+                $" AND [{ProductOnboardingWorkItem.TestFieldName}] {(isTest ? "" : "NOT ")}CONTAINS '{ProductOnboardingWorkItem.TestFieldTestValue}'");
+            
+            var query
+                = $"SELECT [System.Id] "
+                + $"FROM WorkItems "
+                + $"WHERE "
+                + /**/ $"[System.State] <> 'Duplicate' "
+                + /**/ $"AND [{ProductOnboardingWorkItem.WorkItemTypeFieldName}] = '{ProductOnboardingWorkItem.WorkItemTypeValue}' "
+                + /**/ $"AND {serviceCondition}";
+
+            logger.LogDebug("Finding work items with query: '{query}'", query);
+
+            var workItems = await FetchWorkItemsAsync(query, ct);
+
+            if (workItems.Count > 0)
+            {
+                if (workItems.Count > 1)
+                {
+                    logger.LogError("Found multiple work items matching criteria.");
+                    throw new ($"Found multiple work items matching criteria. Query: '{query}'");
+                }
+                return ToProductOnboardingWorkItem(workItems[0]);
+            }
+
+            return null;
+        }
+
+        private string GetProductOnboardingWorkItemTitle(ProductOnboardingStatus status) => $"Onboarding {status.ServiceName} - {status.ProductName}";
+
+        private void SetTestValue(ProductOnboardingWorkItem wi)
+            => wi.GetType().GetProperties().Where(p => p.CanWrite).ForEach(
+                property => {
+                    string? fieldName = property.GetCustomAttribute<FieldNameAttribute>()?.Name;
+                    if (fieldName == ProductOnboardingWorkItem.TestFieldName)
+                    {
+                        string testValue = ProductOnboardingWorkItem.TestFieldTestValue;
+                        if (property.PropertyType == typeof(string))
+                        {
+                            property.SetValue(wi, testValue);
+                        }
+                    }
+                });
+
+        public async Task<ProductOnboardingWorkItem> CreateProductOnboardingAsync(ProductOnboardingStatus status, CancellationToken ct, bool isTest)
+        {
+            var wi = new ProductOnboardingWorkItem { };
+            wi.SetFromProductOnboardingStatus(status);
+            if (isTest)
+            {
+                SetTestValue(wi);
+            }
+
+            return ToProductOnboardingWorkItem(
+                await CreateWorkItemAsync(wi, ProductOnboardingWorkItem.WorkItemTypeValue, GetProductOnboardingWorkItemTitle(status), ct: ct));
+        }
+
+        public async Task<ProductOnboardingWorkItem> UpdateProductOnboardingAsync(int workItemId, ProductOnboardingStatus status, CancellationToken ct, bool isTest)
+        {
+            var wi = new ProductOnboardingWorkItem
+            {
+                WorkItemId = workItemId,
+                Title = GetProductOnboardingWorkItemTitle(status),
+            };
+            wi.SetFromProductOnboardingStatus(status);
+
+            var properties
+                = wi.GetType().GetProperties(BindingFlags.DeclaredOnly).Where(p => p.CanRead)
+                    .Concat([wi.GetType().GetProperty(nameof(wi.Title))]).ToList();
+
+            if (isTest)
+            {
+                SetTestValue(wi);
+                properties.Add(wi.GetType().GetProperty(ProductOnboardingWorkItem.TestFieldName));
+            }
+
+            var fields = new Dictionary<string, string>();
+            foreach (var property in properties)
+            {
+                var fieldName = property.GetCustomAttribute<FieldNameAttribute>()?.Name;
+                if (!fieldName.IsNullOrEmpty())
+                {
+                    var value = property.GetValue(wi);
+                    if (property.PropertyType == typeof(string))
+                    {
+                        fields[fieldName] = value != null ? (string)value : string.Empty;
+                    }
+                }
+            }
+
+            return ToProductOnboardingWorkItem(await UpdateWorkItemAsync(wi.WorkItemId, fields, ct));
         }
     }
 }

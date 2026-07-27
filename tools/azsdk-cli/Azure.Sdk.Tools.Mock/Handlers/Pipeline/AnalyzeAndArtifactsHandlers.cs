@@ -33,15 +33,12 @@ public class AnalyzePipelineHandler : IMockToolHandler
                 new BuildAnalysis
                 {
                     Build = new ResolvedBuild(buildIdValue, "internal", pipelineUrl, "completed", "failed"),
-                    FailedBuildTests = new List<FailedTestRunResponse>
+                    FailedBuildTests = new Dictionary<string, List<string>>
                     {
-                        new FailedTestRunResponse
-                        {
-                            TestCaseTitle = "WidgetClientLiveTests.GetWidget",
-                            Outcome = "Failed",
-                            Uri = "sdk/widgets/Azure.Widgets/tests/WidgetClientLiveTests.cs",
-                            ErrorMessage = "expected 200 got 404"
-                        }
+                        ["Ubuntu2404_NET80_PackageRef_Debug"] =
+                        [
+                            "WidgetClientLiveTests.GetWidget"
+                        ]
                     },
                     FailedBuildTasks = new LogAnalysisResponse
                     {

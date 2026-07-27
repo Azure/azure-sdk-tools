@@ -8,9 +8,13 @@ public class BuildAnalysis
     [JsonPropertyName("build")]
     public required ResolvedBuild Build { get; set; }
 
+    /// <summary>
+    /// Failed tests recovered from the build's test artifacts, keyed by the platform the artifact was
+    /// published for (for example "Ubuntu2404_NET80_PackageRef_Debug").
+    /// </summary>
     [JsonPropertyName("failed_build_tests")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public List<FailedTestRunResponse> FailedBuildTests { get; set; } = [];
+    public Dictionary<string, List<string>> FailedBuildTests { get; set; } = [];
 
     [JsonPropertyName("failed_build_tasks")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
@@ -32,7 +36,6 @@ public record ResolvedBuild(
     [property: JsonPropertyName("status")] string? Status,
     [property: JsonPropertyName("result")] string? Result)
 {
-    /// <summary>Sentinel used when the run status could not be read from DevOps.</summary>
     public const string StatusUnavailable = "Not available";
 
     /// <summary>

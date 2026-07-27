@@ -26,6 +26,7 @@ public class PipelineAnalysisHelperTests
     private const int BuildId = 5209385;
     private const string Project = "public";
     private const string PipelineUrl = "https://dev.azure.com/azure-sdk/public/_build/results?buildId=5209385";
+    private const string Platform = "Ubuntu2404_NET80_PackageRef_Debug";
     private const int FailedTaskLogId = 42;
 
     private static readonly ResolvedBuild Build = new(BuildId, Project, PipelineUrl, "completed", "failed");
@@ -277,7 +278,7 @@ public class PipelineAnalysisHelperTests
         Assert.Multiple(() =>
         {
             Assert.That(
-                analyses.Single().FailedBuildTests.Select(t => t.TestCaseTitle),
+                analyses.Single().FailedBuildTests[Platform],
                 Is.EqualTo(new[] { "Azure.Core.Tests.PipelineTests.CanRetry" }));
             Assert.That(warnings, Is.Empty);
         });
@@ -312,8 +313,49 @@ public class PipelineAnalysisHelperTests
         var (analyses, _) = await helper.AnalyzePipelineAsync([Build]);
 
         Assert.That(
-            analyses.Single().FailedBuildTests.Select(t => t.TestCaseTitle),
+            analyses.Single().FailedBuildTests[Platform],
             Is.EqualTo(new[] { "Azure.Core.Tests.PipelineTests.CanRetry" }));
+    }
+
+    [Test]
+    public async Task AnalyzePipelineAsync_ArtifactsFromManyPlatforms_KeepsEachPlatformsFailuresSeparate()
+    {
+        GivenTestArtifacts(new Dictionary<string, List<string>>
+        {
+            ["Ubuntu2404_NET80"] = ["linux.trx"],
+            ["Windows2022_NET80"] = ["windows.trx"],
+        });
+        GivenParsedFailures("linux.trx", "Azure.Core.Tests.PipelineTests.CanRetry");
+        GivenParsedFailures("windows.trx", "Azure.Core.Tests.PipelineTests.HonorsTimeout");
+
+        var (analyses, _) = await helper.AnalyzePipelineAsync([Build]);
+
+        var failedTests = analyses.Single().FailedBuildTests;
+        Assert.Multiple(() =>
+        {
+            Assert.That(
+                failedTests["Ubuntu2404_NET80"],
+                Is.EqualTo(new[] { "Azure.Core.Tests.PipelineTests.CanRetry" }));
+            Assert.That(
+                failedTests["Windows2022_NET80"],
+                Is.EqualTo(new[] { "Azure.Core.Tests.PipelineTests.HonorsTimeout" }));
+        });
+    }
+
+    [Test]
+    public async Task AnalyzePipelineAsync_PlatformWithNoFailures_IsNotGivenAnEntry()
+    {
+        GivenTestArtifacts(new Dictionary<string, List<string>>
+        {
+            ["Ubuntu2404_NET80"] = ["linux.trx"],
+            ["Windows2022_NET80"] = ["windows.trx"],
+        });
+        GivenParsedFailures("linux.trx", "Azure.Core.Tests.PipelineTests.CanRetry");
+        GivenParsedFailures("windows.trx");
+
+        var (analyses, _) = await helper.AnalyzePipelineAsync([Build]);
+
+        Assert.That(analyses.Single().FailedBuildTests.Keys, Is.EqualTo(new[] { "Ubuntu2404_NET80" }));
     }
 
     [Test]
@@ -396,9 +438,12 @@ public class PipelineAnalysisHelperTests
             .ReturnsAsync(TimelineOf(records));
 
     private void GivenTestArtifacts(params string[] files) =>
+        GivenTestArtifacts(new Dictionary<string, List<string>> { [Platform] = [.. files] });
+
+    private void GivenTestArtifacts(Dictionary<string, List<string>> artifactsByPlatform) =>
         devOpsService
             .Setup(d => d.GetPipelineLlmArtifacts(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Dictionary<string, List<string>> { ["failed-test-results"] = [.. files] });
+            .ReturnsAsync(artifactsByPlatform);
 
     private void GivenParsedFailures(string file, params string[] testCaseTitles)
     {

@@ -7,11 +7,6 @@ using Octokit;
 
 namespace Azure.Sdk.Tools.Cli.Helpers.Pipeline;
 
-/// <summary>
-/// Analyzes the GitHub Actions runs for an already-resolved commit. Deliberately knows nothing about Azure
-/// Pipelines: the runs share only a commit with any build, so the two analyses are produced independently
-/// and composed by the caller.
-/// </summary>
 public interface IGitHubWorkflowAnalysisHelper
 {
     /// <summary>
@@ -84,8 +79,6 @@ public class GitHubWorkflowAnalysisHelper(
 
         try
         {
-            // A run's archive holds every line every job printed, so only the error lines and their context
-            // are kept: the raw text is far too large to report or to hand to an agent.
             var logs = await gitHubService.GetWorkflowRunLogsAsync(source.Owner, source.Repo, run.Id, ct);
             if (!string.IsNullOrEmpty(logs))
             {

@@ -293,11 +293,10 @@ public class PipelineIdentifierHelper(
         try
         {
             // One fetch resolves the owning project (public/internal probe + GUID → name) and the run
-            // status/result. Public runs read anonymously; internal runs fall back to the authed client.
+            // status/result.
             var details = await devOpsService.GetBuildDetailsAsync(build.BuildId, build.Project, ct);
             var buildProject = NormalizeProjectName(details.Project?.Name ?? build.Project ?? string.Empty);
 
-            // Convert the DevOps SDK status/result enums to snake_case for the wire contract.
             var status = details.Status != null ? JsonNamingPolicy.SnakeCaseLower.ConvertName(details.Status.Value.ToString()) : null;
             var result = details.Result != null ? JsonNamingPolicy.SnakeCaseLower.ConvertName(details.Result.Value.ToString()) : null;
 

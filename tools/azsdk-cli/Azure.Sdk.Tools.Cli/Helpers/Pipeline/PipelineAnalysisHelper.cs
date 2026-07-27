@@ -11,9 +11,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers.Pipeline;
 
 /// <summary>
 /// Analyzes already-resolved Azure Pipelines runs: downloads and analyzes failure logs and failed test
-/// results. Resolution of identifiers to builds and commits is the identifier helper's job, and GitHub
-/// Actions runs are the workflow helper's; this type only consumes what it is handed and returns its own
-/// findings, so the caller decides how they are presented.
+/// results.
 /// </summary>
 public interface IPipelineAnalysisHelper
 {
@@ -57,12 +55,11 @@ public class PipelineAnalysisHelper(
             };
             buildAnalyses.Add(buildAnalysis);
 
-            // Step 1: Analyze failed-test artifacts for the whole build.
             var recoveredFailedTests = false;
             try
             {
                 var (failedTests, skippedArtifacts) = await AnalyzeBuildTestArtifactsAsync(build, ct);
-                buildAnalysis.FailedBuildTests.AddRange(failedTests);
+                buildAnalysis.FailedBuildTests = failedTests;
                 recoveredFailedTests = failedTests.Count > 0;
 
                 if (skippedArtifacts.Count > 0)
@@ -81,7 +78,6 @@ public class PipelineAnalysisHelper(
                 // Leaving recoveredFailedTests false widens the log search below.
             }
 
-            // Step 2: Analyze failure logs (either the caller-specified log or every failed task's log).
             try
             {
                 var logIds = logId.HasValue && logId.Value != 0
@@ -108,13 +104,13 @@ public class PipelineAnalysisHelper(
     }
 
     /// <summary>
-    /// Parses the failed-test artifacts published by a build. Artifacts that cannot be read or parsed are
-    /// returned to the caller rather than reported here, so the decision of how to surface a partial result
-    /// stays with the code that owns the response.
+    /// Parses the failed-test artifacts published by a build, keyed by the platform each artifact was
+    /// published for. Artifacts that cannot be read or parsed are returned to the caller rather than
+    /// reported here.
     /// </summary>
-    private async Task<(List<FailedTestRunResponse> FailedTests, List<string> SkippedArtifacts)> AnalyzeBuildTestArtifactsAsync(ResolvedBuild build, CancellationToken ct)
+    private async Task<(Dictionary<string, List<string>> FailedTests, List<string> SkippedArtifacts)> AnalyzeBuildTestArtifactsAsync(ResolvedBuild build, CancellationToken ct)
     {
-        var failedTests = new FailedTestRunListResponse();
+        var failedTests = new Dictionary<string, List<string>>();
         var failedTestArtifacts = await devopsService.GetPipelineLlmArtifacts(build.Project, build.BuildId, ct);
         var skippedArtifacts = new List<string>();
 
@@ -126,7 +122,16 @@ public class PipelineAnalysisHelper(
                 {
                     var parser = await parserResolver.ResolveAsync(file, ct);
                     var failed = await parser.GetFailedTestCases(file, ct: ct);
-                    failedTests.Items.AddRange(failed.Items);
+                    if (failed.Items.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    if (!failedTests.TryGetValue(testFiles.Key, out var platformTests))
+                    {
+                        failedTests[testFiles.Key] = platformTests = [];
+                    }
+                    platformTests.AddRange(failed.Items.Select(t => t.TestCaseTitle));
                 }
                 catch (Exception ex)
                 {
@@ -136,14 +141,12 @@ public class PipelineAnalysisHelper(
             }
         }
 
-        return (failedTests.Items, skippedArtifacts);
+        return (failedTests, skippedArtifacts);
     }
 
     /// <summary>
     /// Collects the log ids of the build's failed tasks. Test steps are excluded only when the build's test
-    /// results were recovered from its artifacts, because those describe a test failure far better than
-    /// scraping the step's log does. When no test results were recovered the step's log is kept: a test step
-    /// also restores and compiles, and when it fails at those stages its log is the only record of why.
+    /// results were recovered from its artifacts.
     /// </summary>
     private async Task<List<int>> getPipelineFailureLogIds(ResolvedBuild build, bool excludeTestSteps, CancellationToken ct = default)
     {

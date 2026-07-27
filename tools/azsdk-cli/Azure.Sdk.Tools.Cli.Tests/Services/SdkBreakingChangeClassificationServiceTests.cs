@@ -8,7 +8,7 @@ using Azure.Sdk.Tools.Cli.Models.SdkBreakingChangeDetection;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -125,8 +125,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             var rawOutputHelper = Mock.Of<IRawOutputHelper>();
             var copilotClient = new CopilotClient(new CopilotClientOptions
             {
-                UseStdio = true,
-                AutoStart = true
+                Connection = RuntimeConnection.ForStdio()
             });
             var copilotClientWrapper = new CopilotClientWrapper(copilotClient);
             var tokenUsageHelper = new TokenUsageHelper(rawOutputHelper);

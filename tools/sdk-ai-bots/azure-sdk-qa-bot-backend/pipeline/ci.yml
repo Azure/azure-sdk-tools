@@ -1,18 +1,4 @@
-trigger:
-  branches:
-    include:
-      - main
-  paths:
-    include:
-      - tools/sdk-ai-bots/azure-sdk-qa-bot-backend/
-
-pr:
-  branches:
-    include:
-      - main
-  paths:
-    include:
-      - tools/sdk-ai-bots/azure-sdk-qa-bot-backend/
+trigger: none
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml

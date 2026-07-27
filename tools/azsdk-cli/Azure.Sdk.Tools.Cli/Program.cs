@@ -63,7 +63,7 @@ public class Program
 
             // Suppress noisy third-party/framework categories
             if (category.StartsWith("System.Net.Http.HttpClient", StringComparison.Ordinal)
-                || category.StartsWith("GitHub.Copilot.SDK", StringComparison.Ordinal)
+                || category.StartsWith("GitHub.Copilot", StringComparison.Ordinal)
                 || category.StartsWith("Microsoft.AspNetCore", StringComparison.Ordinal))
             {
                 return level >= LogLevel.Warning;

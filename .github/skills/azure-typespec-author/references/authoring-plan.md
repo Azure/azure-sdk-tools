@@ -23,7 +23,7 @@ Choose the grounding source based on whether the request's case is covered by [r
 
 1. Copy `.json` files from the latest version's `examples/` into the new version's `examples/`. Update `api-version` in each file. Delete the old version's example folder if the old version no longer exists.
 2. Update `readme.md`.
-3. **A new version that supersedes a prior one (e.g. stable after preview) collapses it:** remove the superseded version from the `Versions` enum, delete its `examples/` folder, and rebase every decorator that referenced it onto the new version using the fetched doc's reversal rules. A type/property `@added` only in the collapsed preview becomes part of the new baseline (drop the decorator) — or, if the user excludes it, delete it outright rather than marking it `@removed`.
+3. **Promoting an unreleased preview to stable (stable-after-preview) collapses the preview:** remove the preview version from the `Versions` enum, delete its `examples/` folder, and **rebase every decorator that referenced the preview to the new stable version** (keep the decorator) so history relative to still-retained earlier versions is preserved. A feature introduced solely in that preview becomes plain baseline if carried, or is deleted outright (not `@removed`) if excluded. This collapse applies **only** when a version is being removed/replaced; when every prior version is retained (a normal add or bump), do **not** collapse — express changes with decorators that reference the new version.
 
 > These steps apply to both ARM and data-plane services. The same versioning decorators (`@added`, `@removed`, `@renamedFrom`, `@typeChangedFrom`) apply regardless of service type.
 

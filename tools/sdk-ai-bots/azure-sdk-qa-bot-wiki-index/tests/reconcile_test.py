@@ -137,6 +137,8 @@ def test_doc_delete_soft_deletes_summary_and_shrinks_groups():
     man = json.loads(cc.store["_manifest.json"]["data"].decode("utf-8"))
     # only doc a remains as a source
     assert list(man["sources"].keys()) == ["typespec_docs/a.md"]
+    # removed pages are tombstoned (kept in the manifest, flagged is_deleted)
+    assert any(e.get("is_deleted") == "true" for e in man["pages"].values())
     # the decorator entity page survives even with a single source
     assert any(
         e["page_type"] == "entity" and e.get("is_deleted") != "true"
@@ -174,21 +176,3 @@ def test_same_name_docs_across_folders_do_not_collide():
         e["source_refs"][0] for e in man["pages"].values() if e["page_type"] == "summary"
     )
     assert summary_refs == ["python_docs/README.md", "typespec_docs/README.md"]
-
-
-def test_scoped_build_preserves_out_of_scope_pages():
-    cc = _FakeContainer()
-    llm = _FakeLLM(_EXTRACTION)
-    asyncio.run(reconcile(cc, _corpus(), llm, min_docs=2, prefixes=[""]))
-
-    # rebuild only the python_docs scope: typespec pages must survive untouched
-    s = asyncio.run(reconcile(
-        cc,
-        [("python_docs/a.md", "text a @added versioning"),
-         ("python_docs/b.md", "text b @added versioning")],
-        llm, min_docs=2, prefixes=["python_docs/"],
-    ))
-    assert s.pages_deleted == 0
-    man = json.loads(cc.store["_manifest.json"]["data"].decode("utf-8"))
-    assert "typespec_docs/a.md" in man["sources"]
-    assert "python_docs/a.md" in man["sources"]

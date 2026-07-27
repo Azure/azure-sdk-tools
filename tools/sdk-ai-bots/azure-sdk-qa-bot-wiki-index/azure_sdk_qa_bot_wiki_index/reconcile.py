@@ -110,25 +110,18 @@ async def reconcile(
     llm: ChatLLM,
     *,
     min_docs: int = 2,
-    granularity: str = "standard",
-    prefixes: list[str] | None = None,
 ) -> ReconcileStats:
     """Run the incremental reconcile and apply blob + manifest changes."""
     manifest = await read_manifest(container_client)
     prior_sources: dict[str, dict] = manifest.get("sources", {})
     prior_pages: dict[str, dict] = {slug: {**e, "slug": slug} for slug, e in manifest.get("pages", {}).items()}
 
-    full_build = not prefixes or any(p == "" for p in prefixes)
-
-    def _in_scope(source_path: str) -> bool:
-        return full_build or any(source_path.startswith(p) for p in prefixes or [])
-
     # --- 1. diff sources by content hash (identity = full source_path) ---
     current: dict[str, tuple[str, str]] = {}
     for source_path, text in corpus:
         current[source_path] = (text, content_hash(text or ""))
     changed = {sp for sp, (_t, h) in current.items() if prior_sources.get(sp, {}).get("hash") != h}
-    deleted = {sp for sp in prior_sources if _in_scope(sp) and sp not in current}
+    deleted = {sp for sp in prior_sources if sp not in current}
     stats = ReconcileStats(changed_docs=len(changed), deleted_docs=len(deleted))
     logger.info("reconcile: %d changed/new, %d deleted, %d unchanged",
                 len(changed), len(deleted), len(current) - len(changed))
@@ -141,7 +134,7 @@ async def reconcile(
 
     def _extract(item: tuple[str, str]) -> tuple[str, DocExtraction]:
         sp, text = item
-        return sp, extract_doc(llm, sp, text, granularity=granularity)
+        return sp, extract_doc(llm, sp, text)
 
     fresh: dict[str, DocExtraction] = {}
     if to_extract:
@@ -263,18 +256,13 @@ async def reconcile(
             "updated_at": ts,
         }
 
-    # soft-delete pages that no longer exist; preserve out-of-scope pages verbatim
+    # soft-delete pages that no longer exist (matching the KB sync pipeline)
     for slug, entry in prior_pages.items():
         if slug in current_slugs or entry.get("is_deleted") == "true":
             continue
-        refs = entry.get("source_refs", [])
-        in_scope_page = full_build or (bool(refs) and all(_in_scope(r) for r in refs))
-        entry.pop("slug", None)
-        if not in_scope_page:
-            new_pages_manifest[slug] = entry
-            continue
         if await soft_delete_blob(container_client, entry.get("blob_path", blob_path(slug))):
             stats.pages_deleted += 1
+        entry.pop("slug", None)
         entry["is_deleted"] = "true"
         new_pages_manifest[slug] = entry
 
@@ -282,11 +270,6 @@ async def reconcile(
     for sp in failed_docs:
         if sp in new_sources:
             new_sources[sp]["hash"] = ""
-    # preserve prior sources outside this build's scope
-    if not full_build:
-        for sp, entry in prior_sources.items():
-            if sp not in new_sources and not _in_scope(sp):
-                new_sources[sp] = entry
 
     manifest = {"sources": new_sources, "pages": new_pages_manifest}
     await write_manifest(container_client, manifest)

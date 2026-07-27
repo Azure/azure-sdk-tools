@@ -2,8 +2,7 @@
 
 Usage::
 
-    python -m azure_sdk_qa_bot_wiki_index.main --prefix typespec_docs/ --dry-run
-    python -m azure_sdk_qa_bot_wiki_index.main --prefix typespec_docs/
+    python -m azure_sdk_qa_bot_wiki_index.main
 """
 
 from __future__ import annotations
@@ -12,7 +11,6 @@ import argparse
 import asyncio
 import logging
 import os
-from collections import Counter
 
 from azure.identity.aio import DefaultAzureCredential as AsyncDefaultAzureCredential
 from azure.storage.blob.aio import BlobServiceClient
@@ -20,7 +18,6 @@ from azure.storage.blob.aio import BlobServiceClient
 from .llm import ChatLLM, build_azure_openai_client
 from .reader import read_blob_container
 from .reconcile import reconcile
-from .wiki import build_wiki
 
 logger = logging.getLogger(__name__)
 
@@ -33,46 +30,23 @@ def _make_blob_service_client(credential) -> BlobServiceClient:
     return BlobServiceClient(account_url=_env("STORAGE_BLOB_ENDPOINT"), credential=credential)
 
 
-async def _read_corpus(credential, prefixes: list[str], limit: int) -> list[tuple[str, str]]:
+async def _read_corpus(credential) -> list[tuple[str, str]]:
     container = _env("STORAGE_KNOWLEDGE_CONTAINER", "knowledge")
     blob_service = _make_blob_service_client(credential)
-    corpus: list[tuple[str, str]] = []
     async with blob_service:
         cc = blob_service.get_container_client(container)
-        for pfx in prefixes:
-            corpus += await read_blob_container(cc, prefix=pfx)
-    if limit and limit > 0:
-        corpus = corpus[:limit]
-        logger.info("limited corpus to first %d docs", len(corpus))
-    return corpus
+        return await read_blob_container(cc)
 
 
 async def _run(args: argparse.Namespace) -> int:
-    prefixes = [p.strip() for p in args.prefix.split(",") if p.strip()] or [""]
     async with AsyncDefaultAzureCredential() as credential:
-        corpus = await _read_corpus(credential, prefixes, args.limit)
+        corpus = await _read_corpus(credential)
         if not corpus:
-            logger.warning("no markdown found under prefixes %r", prefixes)
+            logger.warning("no markdown found in knowledge container")
             return 0
 
         aoai = build_azure_openai_client(_env("AZURE_OPENAI_ENDPOINT"))
         llm = ChatLLM(aoai, _env("WIKI_SYNTHESIS_DEPLOYMENT", "gpt-5.4"))
-
-        if args.dry_run:
-            pages = build_wiki(corpus, llm, min_docs=args.min_docs, granularity=args.granularity)
-            if not pages:
-                logger.warning("no wiki pages generated")
-                return 0
-            logger.info("generated pages by type: %s", dict(Counter(p.page_type for p in pages)))
-            for pt in ("summary", "entity", "concept", "index"):
-                sample = next((p for p in pages if p.page_type == pt), None)
-                if sample:
-                    logger.info(
-                        "sample [%s] slug=%s title=%s links=%s\n%s",
-                        pt, sample.slug, sample.title, sample.out_links[:4],
-                        sample.content[:400],
-                    )
-            return 0
 
         # Incremental reconcile against the wiki container (durable + rebuildable).
         wiki_container = _env("STORAGE_WIKI_OUTPUT_CONTAINER", "wiki")
@@ -83,10 +57,7 @@ async def _run(args: argparse.Namespace) -> int:
                 await cc.create_container()
             except Exception:
                 pass  # already exists
-            stats = await reconcile(
-                cc, corpus, llm,
-                min_docs=args.min_docs, granularity=args.granularity, prefixes=prefixes,
-            )
+            stats = await reconcile(cc, corpus, llm, min_docs=args.min_docs)
         logger.info(
             "done: %d pages written, %d soft-deleted (container %r)",
             stats.pages_written, stats.pages_deleted, wiki_container,
@@ -96,16 +67,7 @@ async def _run(args: argparse.Namespace) -> int:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build the wiki page set.")
-    parser.add_argument("--prefix", default="", help="comma-separated blob name prefixes")
-    parser.add_argument("--limit", type=int, default=0, help="cap number of source docs (0 = all)")
     parser.add_argument("--min-docs", type=int, default=2, help="min source docs for an entity/concept page")
-    parser.add_argument(
-        "--granularity",
-        default=_env("WIKI_EXTRACTION_GRANULARITY", "standard"),
-        choices=["focused", "standard", "exhaustive"],
-        help="extraction granularity (default standard = tight, curated)",
-    )
-    parser.add_argument("--dry-run", action="store_true", help="build + inspect, do not persist")
     parser.add_argument("--log-level", default="INFO")
     args = parser.parse_args()
 

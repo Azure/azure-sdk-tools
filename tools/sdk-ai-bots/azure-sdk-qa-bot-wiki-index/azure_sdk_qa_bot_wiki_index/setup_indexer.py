@@ -66,7 +66,7 @@ def datasource_body() -> dict:
         "identity": _ua_identity(),
         "dataDeletionDetectionPolicy": {
             "@odata.type": "#Microsoft.Azure.Search.SoftDeleteColumnDeletionDetectionPolicy",
-            "softDeleteColumnName": "is_deleted",
+            "softDeleteColumnName": "IsDeleted",
             "softDeleteMarkerValue": "true",
         },
     }

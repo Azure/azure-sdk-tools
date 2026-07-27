@@ -31,7 +31,7 @@ flowchart LR
     idx --> wikitool --> ans
 ```
 
-- **Build (offline).** A map-reduce over the markdown corpus produces four page types: `summary` (one per document, from its full text), `entity` (one per recurring named symbol), `concept` (one per cross-cutting topic), and an `index` navigation page. Entity/concept pages aggregate mentions across documents with alias/near-duplicate merging and record the source docs they were built from (`chunk_refs`) for query-time routing. Named decorators and framework templates (`@`-prefixed names, `Azure.ResourceManager.Legacy.*`) are always extracted — even from a single document — and their constraints and anti-patterns captured, so symbol-specific questions route to a consolidated page. Granularity is tunable (`focused` / `standard` / `exhaustive`). Pages are written as markdown blobs plus a reconcile manifest.
+- **Build (offline).** A map-reduce over the markdown corpus produces four page types: `summary` (one per document, from its full text), `entity` (one per recurring named symbol), `concept` (one per cross-cutting topic), and an `index` navigation page. Entity/concept pages aggregate mentions across documents with alias/near-duplicate merging and record the source docs they were built from (`chunk_refs`) for query-time routing. Named decorators and framework templates (`@`-prefixed names, `Azure.ResourceManager.Legacy.*`) are always extracted — even from a single document — and their constraints and anti-patterns captured, so symbol-specific questions route to a consolidated page. Pages are written as markdown blobs plus a reconcile manifest.
 - **Indexer (blobs → index).** A dedicated indexer projects the wiki blobs into the **shared** KB index, so one index serves both layers. Raw chunks leave `page_type` null; wiki pages set it. `chunk_refs` are carried as a JSON-array string (index projections cannot populate a collection from a scalar) and parsed back at query time. Soft-deletes propagate to the index. `setup_indexer.py` (re)creates the datasource / skillset / indexer.
 
 ## Two-track retrieval
@@ -46,7 +46,7 @@ For most questions the agent issues `search_knowledge_base` + `wiki_search` in o
 
 ## Freshness and tenant scoping
 
-- **Incremental reconcile.** The build diffs the corpus against the manifest by content hash: only changed/new documents are re-extracted and their summaries regenerated; entity/concept pages are re-synthesised only when a group's source set or content changed; removed documents have their pages soft-deleted. A scoped (`--prefix`) build preserves out-of-scope pages and sources. The first run against an empty manifest is a full build.
+- **Incremental reconcile.** The build diffs the corpus against the manifest by content hash: only changed/new documents are re-extracted and their summaries regenerated; entity/concept pages are re-synthesised only when a group's source set or content changed; removed documents have their pages soft-deleted (`IsDeleted` blob metadata, matching the KB sync pipeline, so the shared indexer drops them). The first run against an empty manifest is a full build.
 - **Tenant scoping** reuses the KB tool's source scoping. Summary pages inherit their source document's `context_id`; cross-document entity/concept pages carry dedicated `wiki_entity` / `wiki_concept` contexts registered as tenant sources.
 
 ## Evaluation

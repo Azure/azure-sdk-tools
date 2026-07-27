@@ -27,11 +27,8 @@ source documents, and writes the manifest.
 ```bash
 pip install -r requirements.txt
 
-# generate and persist wiki pages for one folder
-python -m azure_sdk_qa_bot_wiki_index.main --prefix typespec_docs/
-
-# inspect generated pages without persisting
-python -m azure_sdk_qa_bot_wiki_index.main --prefix typespec_docs/ --dry-run
+# generate and persist wiki pages for the whole knowledge corpus
+python -m azure_sdk_qa_bot_wiki_index.main
 ```
 
 ## Configuration
@@ -46,7 +43,6 @@ python -m azure_sdk_qa_bot_wiki_index.main --prefix typespec_docs/ --dry-run
 | `AZURE_OPENAI_ENDPOINT` | — | Azure OpenAI endpoint |
 | `WIKI_SYNTHESIS_DEPLOYMENT` | `gpt-5.4` | chat deployment |
 | `WIKI_EMBEDDING_DEPLOYMENT` | `text-embedding-ada-002` | embedding deployment |
-| `WIKI_EXTRACTION_GRANULARITY` | `standard` | extraction granularity |
 
 Authentication uses `DefaultAzureCredential`; `AZURE_OPENAI_API_KEY` is used for
 Azure OpenAI when set.

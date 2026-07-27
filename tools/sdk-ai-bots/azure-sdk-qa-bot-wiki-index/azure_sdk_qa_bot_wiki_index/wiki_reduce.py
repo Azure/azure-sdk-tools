@@ -30,7 +30,7 @@ _CONCEPT_FUZZY_RATIO = 0.9
 # Page-body synthesis prompt for compiling grounded source facts.
 _COMPILE_SYS = (
     "You are a COMPILER, not a writer. You are given grounded facts about ONE "
-    "Azure SDK / TypeSpec {kind} ('{name}'), collected verbatim from multiple "
+    "Azure SDK {kind} ('{name}'), collected verbatim from multiple "
     "documents. Compile them into one wiki page.\n"
     "Rules:\n"
     "- Stay close to the source wording. Reuse the source's own sentences; you "
@@ -283,23 +283,3 @@ def build_index_page(pages: list[WikiPage]) -> WikiPage | None:
         context_id=CONTEXT_BY_TYPE[PAGE_INDEX],
         out_links=[p.slug for p in pages if p.page_type in (PAGE_ENTITY, PAGE_CONCEPT)][:_MAX_OUT_LINKS],
     )
-
-
-def reduce_pages(
-    extractions: list[DocExtraction],
-    llm: ChatLLM,
-    *,
-    min_docs: int = 2,
-) -> list[WikiPage]:
-    """Full-build convenience: aggregate -> compile all -> cross-link -> index."""
-    pages: list[WikiPage] = []
-    for group in aggregate_groups(extractions, min_docs=min_docs):
-        body = synthesize_group(llm, group)
-        if body:
-            pages.append(group_to_page(group, body))
-    inject_cross_links(pages)
-    index = build_index_page(pages)
-    if index is not None:
-        pages.append(index)
-    logger.info("reduce_pages: %d cross-document pages", len(pages))
-    return pages

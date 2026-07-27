@@ -66,7 +66,7 @@ async def upload_page(container_client, page: WikiPage, title_by_slug: dict[str,
         "title": _ascii(index_title(page)),
         "chunk_refs": _ascii(json.dumps(refs), limit=7000),
         "content_hash": chash,
-        "is_deleted": "false",
+        "IsDeleted": "false",
     }
     blob = container_client.get_blob_client(path)
     await blob.upload_blob(
@@ -79,16 +79,17 @@ async def upload_page(container_client, page: WikiPage, title_by_slug: dict[str,
 
 
 async def soft_delete_blob(container_client, path: str) -> bool:
-    """Tombstone a page blob by setting metadata ``is_deleted=true``."""
+    """Tombstone a page blob by setting ``IsDeleted=true`` metadata, matching the
+    KB sync pipeline; the shared indexer drops it via its soft-delete policy."""
     blob = container_client.get_blob_client(path)
     try:
         props = await blob.get_blob_properties()
     except Exception:
         return False
     metadata = dict(props.metadata or {})
-    if metadata.get("is_deleted") == "true":
+    if metadata.get("IsDeleted") == "true":
         return False
-    metadata["is_deleted"] = "true"
+    metadata["IsDeleted"] = "true"
     await blob.set_blob_metadata(metadata)
     logger.info("soft_delete_blob: tombstoned %s", path)
     return True

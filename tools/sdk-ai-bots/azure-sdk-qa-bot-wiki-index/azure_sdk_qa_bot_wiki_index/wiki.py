@@ -1,25 +1,21 @@
-"""Wiki creation pipeline for summary, entity, concept, and index pages."""
+"""Summary-page synthesis for the wiki build."""
 
 from __future__ import annotations
 
 import logging
-from concurrent.futures import ThreadPoolExecutor
 
 from .llm import ChatLLM
-from .pages import PAGE_SUMMARY, WikiPage, make_slug
-from .reader import rel_title, source_folder
-from .wiki_extract import GRAN_STANDARD, map_extract
-from .wiki_reduce import reduce_pages
 
 logger = logging.getLogger(__name__)
 
 _MAX_PAGE_CHARS = 5000
 
 _SUMMARY_SYS = (
-    "You are building a comprehensive expert KNOWLEDGE PAGE from one Azure SDK / "
-    "TypeSpec document, so an agent can answer questions FROM internalized "
-    "knowledge rather than re-reading raw docs. Capture ALL the concrete, "
-    "reusable knowledge the document teaches — be thorough, not terse:\n"
+    "You are building a comprehensive expert KNOWLEDGE PAGE from one Azure SDK "
+    "document (TypeSpec, a per-language SDK, ARM/data-plane guidance, a release/"
+    "onboarding process, or tooling), so an agent can answer questions FROM "
+    "internalized knowledge rather than re-reading raw docs. Capture ALL the "
+    "concrete, reusable knowledge the document teaches — be thorough, not terse:\n"
     "- Definitions and purpose of each concept/decorator/API/type it covers.\n"
     "- Exact names and signatures (decorators with @, operations, models, "
     "properties) and their precise effects.\n"
@@ -59,55 +55,4 @@ def synthesize_summary(llm: ChatLLM, doc_title: str, full_text: str) -> str:
     return (out or "")[:_MAX_PAGE_CHARS]
 
 
-def build_summary_pages(
-    corpus: list[tuple[str, str]],
-    llm: ChatLLM,
-    *,
-    max_workers: int = 16,
-) -> list[WikiPage]:
-    """One summary page per source document (LLM, parallel)."""
 
-    def one(item: tuple[str, str]) -> WikiPage | None:
-        source_path, text = item
-        folder = source_folder(source_path)
-        rel = rel_title(source_path)
-        title = _doc_title(rel)
-        try:
-            body = synthesize_summary(llm, title, text)
-        except Exception:
-            logger.warning("synthesize_summary failed for %s", source_path, exc_info=True)
-            return None
-        if not body:
-            return None
-        return WikiPage(
-            slug=make_slug(PAGE_SUMMARY, source_path),
-            page_type=PAGE_SUMMARY,
-            title=f"{title} (knowledge)",
-            content=body,
-            context_id=folder,  # inherits source scope → existing tenant filters
-            source_refs=[source_path],
-            orig_title=rel,  # drives get_link back to the real doc
-        )
-
-    pages: list[WikiPage] = []
-    with ThreadPoolExecutor(max_workers=max_workers) as ex:
-        for p in ex.map(one, corpus):
-            if p is not None:
-                pages.append(p)
-    logger.info("build_summary_pages: %d summary pages from %d docs", len(pages), len(corpus))
-    return pages
-
-
-def build_wiki(
-    corpus: list[tuple[str, str]],
-    llm: ChatLLM,
-    *,
-    min_docs: int = 2,
-    granularity: str = GRAN_STANDARD,
-) -> list[WikiPage]:
-    """Build summary, entity, concept, and index pages."""
-    pages: list[WikiPage] = build_summary_pages(corpus, llm)
-    extractions = map_extract(corpus, llm, granularity=granularity)
-    pages += reduce_pages(extractions, llm, min_docs=min_docs)
-    logger.info("build_wiki: %d total wiki pages", len(pages))
-    return pages

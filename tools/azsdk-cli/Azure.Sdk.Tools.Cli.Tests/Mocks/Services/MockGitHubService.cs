@@ -370,11 +370,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             throw new NotImplementedException();
         }
 
-        public Task<IReadOnlyList<PullRequestCommit>> GetPullRequestCommitsAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
-        {
-            throw new NotImplementedException();
-        }
-
         public Task<IReadOnlyList<WorkflowRun>> GetFailedWorkflowRunsForCommitAsync(string owner, string repo, string commitSha, CancellationToken ct)
         {
             return Task.FromResult<IReadOnlyList<WorkflowRun>>([]);

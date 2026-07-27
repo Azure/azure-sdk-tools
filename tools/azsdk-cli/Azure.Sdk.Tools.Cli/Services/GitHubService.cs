@@ -138,7 +138,6 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<string> GetGitHubParentRepoUrlAsync(string owner, string repoName, CancellationToken ct);
         public Task<PullRequestResult> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body, bool draft = true, CancellationToken ct = default);
         public Task<List<string>> GetPullRequestCommentsAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
-        public Task<IReadOnlyList<PullRequestCommit>> GetPullRequestCommitsAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
         public Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch, CancellationToken ct);
         public Task<IReadOnlyList<PullRequest?>> SearchPullRequestsByTitleAsync(string repoOwner, string repoName, string titleSearchTerm, ItemState? state = ItemState.Open, CancellationToken ct = default);
         public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber, CancellationToken ct);
@@ -522,11 +521,6 @@ namespace Azure.Sdk.Tools.Cli.Services
                 responseList.Add($"Failed to get comments for pull request {pullRequestNumber}. Error: {ex.Message}");
                 return responseList;
             }
-        }
-
-        public async Task<IReadOnlyList<PullRequestCommit>> GetPullRequestCommitsAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
-        {
-            return await gitHubClient.PullRequest.Commits(repoOwner, repoName, pullRequestNumber);
         }
 
         public async Task<List<String>> GetPullRequestChecksAsync(int pullRequestNumber, string repoName, string repoOwner, CancellationToken ct)

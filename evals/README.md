@@ -368,10 +368,10 @@ eval file:
 - [x] `check-sdk-generation-status`
 - [x] `rename-client-property` **(stub — needs `expected-diff` grader + sparse-clone of `azure-rest-api-specs`)**
 
-### Known gaps vs. the original benchmark
+### Known gaps in current tool-eval coverage
 
-The current `tool-calls` grader only checks tool *names*. The deleted
-benchmark's `ToolCallValidator` additionally asserted:
+The current `tool-calls` grader only checks tool *names*. Additional coverage
+could assert:
 
 1. **Argument values** (e.g. `serviceTreeId`, `buildId`, `typeSpecProjectPath`).
 2. **Forbidden tools** (e.g. "must NOT call `azsdk_verify_setup`").
@@ -384,8 +384,8 @@ those constraints are captured in prompt text and inline `TODO:` comments.
 
 ### Follow-ups
 
-- [ ] Port `Evaluate_PromptToToolMatch` + `Evaluate_ToolDescriptionSimilarity`
-      from `Azure.Sdk.Tools.Cli.Evaluations` (still uses Copilot-SDK evaluator).
+- [ ] Add a deterministic Vally coverage strategy for tool-description
+  similarity only if it proves necessary.
 - [ ] File upstream issue against `@microsoft/vally-cli` to add `forbidden`,
       `optional`, argument-matching, and ordering to the built-in `tool-calls`
       grader (or accept that those gaps need custom graders).

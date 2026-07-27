@@ -1085,7 +1085,7 @@ describe("API routes", () => {
       mockFetchWorkItemsBatch.mockResolvedValueOnce([]);
       const pkgMap = new Map([
         [
-          "Azure.Storage.Blobs|.NET",
+          "Azure.Storage.Blobs|.net",
           {
             version: "13.0.0",
             apiReviewStatus: "Approved",

@@ -65,6 +65,20 @@ parameters:
 - name: CppServiceDirectory
   type: string
   default: 'storage/azure-storage-blobs'
+- name: IncludeGo
+  displayName: Include Go
+  type: boolean
+  default: true
+- name: GoRepoCommitish
+  type: string
+  default: 'main'
+- name: GoLanguageVersion
+  displayName: GoLanguageVersion (1.22, 1.23, 1.24, 1.25, 1.26)
+  type: string
+  default: '1.26'
+- name: GoServiceDirectory
+  type: string
+  default: 'storage/azblob'
 - name: PackageVersions
   type: string
   default: '12|source'
@@ -130,6 +144,11 @@ resources:
     type: github
     endpoint: Azure
     name: Azure/azure-sdk-for-cpp
+    ref: main
+  - repository: azure-sdk-for-go
+    type: github
+    endpoint: Azure
+    name: Azure/azure-sdk-for-go
     ref: main
 
 variables:
@@ -307,6 +326,38 @@ stages:
         Profile: ${{ parameters.Profile }}
         AdditionalArguments: ${{ parameters.AdditionalArguments }}
 
+  - ${{ if parameters.IncludeGo }}:
+    - template: /eng/common/pipelines/templates/jobs/perf.yml
+      parameters:
+        JobName: 'Perf_Go'
+        TimeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
+        LinuxPool: ${{ parameters.LinuxPool }}
+        LinuxVmImage: ${{ parameters.LinuxVmImage }}
+        WindowsPool: ${{ parameters.WindowsPool }}
+        WindowsVmImage: ${{ parameters.WindowsVmImage }}
+        Language: 'Go'
+        LanguageVersion: ${{ parameters.GoLanguageVersion }}
+        LanguageRepoName: 'Azure/azure-sdk-for-go'
+        LanguageRepoCommitish: ${{ parameters.GoRepoCommitish }}
+        ToolsRepoCommitish: $(ToolsRepoCommitish)
+        OperatingSystems: ${{ parameters.OperatingSystems }}
+        InstallLanguageSteps:
+        - task: GoTool@0
+          displayName: 'Use Go ${{ parameters.GoLanguageVersion }}'
+          inputs:
+            version: ${{ parameters.GoLanguageVersion }}
+        - script: |
+            go version
+            go env
+          displayName: Print Go Versions
+        ServiceDirectory: ${{ parameters.GoServiceDirectory }}
+        PackageVersions: ${{ parameters.PackageVersions }}
+        Tests: ${{ parameters.Tests }}
+        Arguments: ${{ parameters.Arguments }}
+        Iterations: ${{ parameters.Iterations }}
+        Profile: ${{ parameters.Profile }}
+        AdditionalArguments: ${{ parameters.AdditionalArguments }}
+
 - stage: Print_Results
   displayName: Print Results
   pool:
@@ -373,4 +424,12 @@ stages:
           get-content results-Cpp-Linux/results.txt
         workingDirectory: $(Pipeline.Workspace)
         displayName: Cpp
+        condition: succeededOrFailed()
+
+    - ${{ if parameters.IncludeGo }}:
+      - pwsh: |
+          write-host results-Go-Linux/results.txt
+          get-content results-Go-Linux/results.txt
+        workingDirectory: $(Pipeline.Workspace)
+        displayName: Go
         condition: succeededOrFailed()

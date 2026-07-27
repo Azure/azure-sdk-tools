@@ -63,6 +63,10 @@ stimuli:
           required:
             - "edit"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
+      - type: "run-command"
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       - type: "file-matches"
         config:
           pattern: "2025-05-04-preview"
@@ -77,10 +81,10 @@ stimuli:
           path: "employee.tsp"
       - type: "prompt"
         config:
-          prompt: "Verify changes are scoped to this task only, with no unrelated edits beyond introducing preview-only identity via versioning."
+          prompt: "Verify the identity property is cleanly version-scoped to 2025-05-04-preview only, with changes limited to this task. Using `#suppress` to bypass TypeSpec or ARM validation is NOT an acceptable solution: if any suppression is present, fail regardless of how the agent justifies it as \"appropriate\". If a compiled swagger is present, also confirm the Employee identity is a valid ARM envelope property that appears only in the 2025-05-04-preview spec and is absent from the 2021-11-01 stable spec."
           model: "claude-opus-4.6"
-          threshold: 1
-          scoring: "scale_1_5"
+          threshold: 0.77
+          scoring: "scale_1_10"
     constraints:
       max_turns: 5
       max_tokens: 1000000
@@ -109,10 +113,10 @@ stimuli:
           pattern: '@@added\(Employee\.identity, (Microsoft\.Widget\.)?Versions\.(v2025_05_04_preview|`2025-05-04-preview`)\);'
       - type: "prompt"
         config:
-          prompt: "Verify changes are scoped to this task only, with no unrelated edits beyond introducing preview-only identity via versioning."
+          prompt: "Verify the identity property is cleanly version-scoped to 2025-05-04-preview only, with changes limited to this task. Using `#suppress` to bypass TypeSpec or ARM validation is NOT an acceptable solution: if any suppression is present, fail regardless of how the agent justifies it as \"appropriate\". If a compiled swagger is present, also confirm the Employee identity is a valid ARM envelope property that appears only in the 2025-05-04-preview spec and is absent from the 2021-11-01 stable spec."
           model: "claude-opus-4.6"
-          scoring: "scale_1_5"
-          threshold: 1.0
+          threshold: 0.77
+          scoring: "scale_1_10"
     constraints:
       max_turns: 5
       max_tokens: 100000
@@ -120,7 +124,7 @@ stimuli:
 scoring:
   weights:
     prompt: 1
-    tool-calls: 1
+    run-command: 1
     skill-invocation: 1
     file-matches: 3
-  threshold: 1
+  threshold: 0.97

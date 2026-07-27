@@ -1529,6 +1529,12 @@ class CheckDocstringParameters(BaseChecker):
             "docstring-type-do-not-use-class",
             "Docstring type is formatted incorrectly. Do not use `:class` in docstring type.",
         ),
+        "C4753": (
+            'Do not use "kwargs" as a keyword argument in docstring. Either expand kwargs into individual arguments or use ":keyword Dict[str, Any] ``**kwargs``:" format. See details: '
+            "https://azure.github.io/azure-sdk/python_documentation.html#docstrings",
+            "docstring-kwargs-keyword",
+            "Docstring should not use 'kwargs' as a keyword argument.",
+        ),
     }
     options = (
         (
@@ -1585,15 +1591,15 @@ class CheckDocstringParameters(BaseChecker):
         keyword_args = {}
         # this param has its type on a separate line
         if line.startswith("keyword") and line.count(" ") == 1:
-            param = line.split("keyword ")[1]
+            param = line.split("keyword ")[1].strip("`")
             keyword_args[param] = None
         # this param has its type on the same line
         if line.startswith("keyword") and line.count(" ") == 2:
             _, param_type, param = line.split(" ")
-            keyword_args[param] = param_type
+            keyword_args[param.strip("`")] = param_type
         # if the param has its type on the same line with additional spaces
         if line.startswith("keyword") and line.count(" ") > 2:
-            param = line.split(" ")[-1]
+            param = line.split(" ")[-1].strip("`")
             param_type = ("").join(line.split(" ")[1:-1])
             keyword_args[param] = param_type
         if line.startswith("paramtype"):
@@ -1624,6 +1630,51 @@ class CheckDocstringParameters(BaseChecker):
 
         return docparams
 
+    def _is_overload_implementation(self, node):
+        """Check if a function is the implementation of an overloaded function.
+        Returns True if the function has same-name siblings with @overload decorators
+        and the function itself is NOT @overload-decorated.
+
+        :param node: ast.FunctionDef
+        :return: bool
+        """
+        if not isinstance(node, astroid.FunctionDef):
+            return False
+
+        # Check if this function itself has @overload
+        try:
+            decorators = node.decoratornames()
+            overload_names = {
+                "typing.overload",
+                "typing_extensions.overload",
+                "builtins.overload",
+            }
+            if decorators & overload_names:
+                return False
+        except Exception:
+            return False
+
+        # Check if there are same-name siblings with @overload
+        parent = node.parent
+        if parent is None:
+            return False
+
+        for sibling in parent.body:
+            if not isinstance(sibling, (astroid.FunctionDef, astroid.AsyncFunctionDef)):
+                continue
+            if sibling is node:
+                continue
+            if sibling.name != node.name:
+                continue
+            try:
+                sibling_decorators = sibling.decoratornames()
+                if sibling_decorators & overload_names:
+                    return True
+            except Exception:
+                continue
+
+        return False
+
     def check_parameters(self, node):
         """Parse the docstring for any params and types
         and compares it to the function's parameters.
@@ -1642,6 +1693,8 @@ class CheckDocstringParameters(BaseChecker):
         arg_names = []
         method_keyword_only_args = []
         vararg_name = None
+        kwarg_name = None
+        is_overload_impl = False
         # specific case for constructor where docstring found in class def
         if isinstance(node, astroid.ClassDef):
             for constructor in node.body:
@@ -1653,13 +1706,16 @@ class CheckDocstringParameters(BaseChecker):
                     method_keyword_only_args = [
                         arg.name for arg in constructor.args.kwonlyargs
                     ]
-                    vararg_name = node.args.vararg
+                    vararg_name = constructor.args.vararg
+                    kwarg_name = constructor.args.kwarg
                     break
 
         if isinstance(node, astroid.FunctionDef):
             arg_names = [arg.name for arg in node.args.args]
             method_keyword_only_args = [arg.name for arg in node.args.kwonlyargs]
             vararg_name = node.args.vararg
+            kwarg_name = node.args.kwarg
+            is_overload_impl = self._is_overload_implementation(node)
 
         try:
             # check for incorrect type :class to prevent splitting
@@ -1669,8 +1725,8 @@ class CheckDocstringParameters(BaseChecker):
         except AttributeError:
             return
 
-        # If there is a vararg, treat it as a param
-        if vararg_name:
+        # If there is a vararg, treat it as a param (unless this is an overload implementation)
+        if vararg_name and not is_overload_impl:
             arg_names.append(vararg_name)
 
         docparams = {}
@@ -1684,6 +1740,14 @@ class CheckDocstringParameters(BaseChecker):
             # check for params in docstring
             docparams.update(self._find_param(line, docstring, idx, docparams))
 
+        # check for incorrect use of "kwargs" as keyword argument
+        if "kwargs" in docstring_keyword_args and "kwargs" not in method_keyword_only_args:
+            self.add_message(
+                msgid="docstring-kwargs-keyword",
+                node=node,
+                confidence=None,
+            )
+
         # check that all params are documented
         missing_params = []
         for param in arg_names:
@@ -1693,9 +1757,18 @@ class CheckDocstringParameters(BaseChecker):
                 missing_params.append(param)
 
         # check that all keyword-only args are documented
-        missing_kwonly_args = list(
-            set(docstring_keyword_args) ^ set(method_keyword_only_args)
-        )
+        # Exclude **kwargs from mismatch check if method has variable keyword arg
+        docstring_kwargs_to_check = dict(docstring_keyword_args)
+        if kwarg_name and f"**{kwarg_name}" in docstring_kwargs_to_check:
+            del docstring_kwargs_to_check[f"**{kwarg_name}"]
+
+        # For overload implementations, skip this check since the overloads document the params
+        if is_overload_impl:
+            missing_kwonly_args = []
+        else:
+            missing_kwonly_args = list(
+                set(docstring_kwargs_to_check) ^ set(method_keyword_only_args)
+            )
 
         if missing_params:
             self.add_message(
@@ -1746,7 +1819,8 @@ class CheckDocstringParameters(BaseChecker):
         for param in docparams:
             if docparams[param] is None:
                 missing_types.append(param)
-            if param not in arg_names:
+            # For overload implementations, don't flag params that come from overload signatures
+            if param not in arg_names and not is_overload_impl:
                 should_be_keywords.append(param)
 
         if missing_types:
@@ -3045,51 +3119,63 @@ class InvalidUseOfOverload(BaseChecker):
         ),
     }
 
-    def visit_classdef(self, node):
-        """Check that use of the @overload decorator matches the async/sync nature of the underlying function"""
+    _OVERLOAD_NAMES = {
+        "typing.overload",
+        "typing_extensions.overload",
+        "builtins.overload",
+    }
+
+    def _has_overload_decorator(self, node):
+        """Check if a function node has the @overload decorator."""
         try:
-            # Obtain a list of all functions and function names
-            functions = []
-            node.body
-            for item in node.body:
-                if hasattr(item, "name"):
-                    functions.append(item)
+            return bool(node.decoratornames() & self._OVERLOAD_NAMES)
+        except Exception:
+            return False
 
-            # Dictionary of lists of all functions by name
-            overloadedfunctions = {}
-            for item in functions:
-                if item.name in overloadedfunctions:
-                    overloadedfunctions[item.name].append(item)
-                else:
-                    overloadedfunctions[item.name] = [item]
+    def _check_overloads_in_body(self, body):
+        """Check a list of body nodes for mixed async/sync overloads."""
+        # Group functions by name
+        functions_by_name = {}
+        for item in body:
+            if isinstance(item, (astroid.FunctionDef, astroid.AsyncFunctionDef)):
+                functions_by_name.setdefault(item.name, []).append(item)
 
-            # Loop through the overloaded functions and check they are the same type
-            for funct in overloadedfunctions.values():
-                if (
-                    len(funct) > 1
-                ):  # only need to check if there is more than 1 function with the same name
-                    function_is_async = None
+        for funct_group in functions_by_name.values():
+            if len(funct_group) <= 1:
+                continue
 
-                    for item in funct:
-                        if function_is_async is None:
-                            function_is_async = self.is_function_async(item)
+            # Only check groups where at least one member has @overload
+            has_overload = any(
+                self._has_overload_decorator(f) for f in funct_group
+            )
+            if not has_overload:
+                continue
 
-                        else:
-                            if function_is_async != self.is_function_async(item):
-                                self.add_message(
-                                    msgid=f"invalid-use-of-overload",
-                                    node=item,
-                                    confidence=None,
-                                )
-        except:
+            function_is_async = None
+            for item in funct_group:
+                item_is_async = isinstance(item, astroid.AsyncFunctionDef)
+                if function_is_async is None:
+                    function_is_async = item_is_async
+                elif function_is_async != item_is_async:
+                    self.add_message(
+                        msgid="invalid-use-of-overload",
+                        node=item,
+                        confidence=None,
+                    )
+
+    def visit_classdef(self, node):
+        """Check overloads within a class."""
+        try:
+            self._check_overloads_in_body(node.body)
+        except Exception:
             pass
 
-    def is_function_async(self, node):
+    def visit_module(self, node):
+        """Check overloads at module level."""
         try:
-            str(node.__class__).index("Async")
-            return True
-        except:
-            return False
+            self._check_overloads_in_body(node.body)
+        except Exception:
+            pass
 
 
 class DoNotUseDeprecatedAsyncioIscoroutinefunction(BaseChecker):

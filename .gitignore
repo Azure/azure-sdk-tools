@@ -23,6 +23,10 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+
+# The Vally eval harness ships hand-written ES modules under a lib/ folder. The re-include
+# lives in eng/common/scripts/eval/.gitignore (not here) so the fix travels with the
+# eng/common sync to every language SDK repo instead of only working in this repo.
 MANIFEST
 *.pyc
 

@@ -65,16 +65,14 @@ stimuli:
           required:
             - "edit"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
+      - type: "run-command"
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       - type: "file-matches"
         config:
           pattern: 'exportData\s+is\s+ArmResourceActionSync'
           path: "employee.tsp"
-      - type: "prompt"
-        config:
-          threshold: 1
-          model: "claude-opus-4.6"
-          scoring: "scale_1_5"
-          prompt: "Verify the exportData operation is correctly defined: (1) uses ArmResourceActionSync template, (2) has a response model that represents exported data with appropriate properties, (3) operation name is exportData. Do not penalize for specific model naming choices. Verify change scope and quality: no unrelated edits, and the result is semantically consistent with the task intent."
     constraints:
       max_turns: 5
       max_tokens: 1000000
@@ -97,8 +95,8 @@ stimuli:
         config:
           prompt: "Verify the exportData operation is correctly defined: (1) uses ArmResourceActionSync template, (2) has a response model that represents exported data with appropriate properties, (3) operation name is exportData. Do not penalize for specific model naming choices. Verify change scope and quality: no unrelated edits, and the result is semantically consistent with the task intent."
           model: "claude-opus-4.6"
-          scoring: "scale_1_5"
-          threshold: 1
+          scoring: "scale_1_10"
+          threshold: 0.88
     constraints:
       max_turns: 6
       max_tokens: 100000
@@ -106,7 +104,7 @@ stimuli:
 scoring:
   weights:
     prompt: 1
-    tool-calls: 1
+    run-command: 1
     skill-invocation: 1
     file-matches: 2
-  threshold: 1
+  threshold: 0.96

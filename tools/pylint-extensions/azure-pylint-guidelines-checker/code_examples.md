@@ -59,6 +59,7 @@ This document contains code examples showing how to fix violations of the Azure 
 - [missing-distributed-tracing-policy](#missing-distributed-tracing-policy)
 - [do-not-use-logging-exception](#do-not-use-logging-exception)
 - [remove-deprecated-iscoroutinefunction](#remove-deprecated-iscoroutinefunction)
+- [docstring-kwargs-keyword](#docstring-kwargs-keyword)
 
 ## client-method-should-not-use-static-method
 
@@ -726,6 +727,36 @@ def create_blob(self, name, data, *, content_type=None, **kwargs):
     :type data: bytes
     :keyword content_type: The content type of the blob.
     :paramtype content_type: str
+    """
+```
+
+## docstring-kwargs-keyword
+
+❌ **Incorrect**:
+```python
+def process_data(**kwargs):
+    """Process data with various options.
+
+    :keyword kwargs: Additional arguments.  # Should not use "kwargs" as keyword name
+    """
+```
+
+✅ **Correct** (expand kwargs into individual arguments):
+```python
+def process_data(*, option1=None, option2=None, **kwargs):
+    """Process data with various options.
+
+    :keyword str option1: First processing option.
+    :keyword int option2: Second processing option.
+    """
+```
+
+✅ **Also Correct** (document kwargs with inline-literal backticks to avoid RST markup conflicts):
+```python
+def process_data(**kwargs):
+    """Process data with various options.
+
+    :keyword Dict[str, Any] ``**kwargs``: Additional keyword arguments.
     """
 ```
 

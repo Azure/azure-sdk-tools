@@ -37,17 +37,14 @@ from utils.azure_ai_foundry import (
     get_stateless_session_id,
     set_stateless_session_id,
 )
+from utils.azure_ai_foundry_agent import HostedAgentClient
 from utils.teams_image import get_image_data_uri
 from utils.text_util import preprocess_message
 from utils.azure_memory_store import sanitize_scope
 from azure.ai.projects.aio import AIProjectClient
 from azure.ai.projects.models import AgentVersionDetails
 from openai import (
-    APIConnectionError,
-    APIStatusError,
-    APITimeoutError,
     AsyncOpenAI,
-    BadRequestError,
     NotFoundError,
 )
 from openai.types.responses import Response as OpenAIResponse
@@ -58,16 +55,10 @@ from openai.types.responses import (
 )
 from openai.types.responses.response_input_item_param import ResponseInputItemParam
 from config.tenant_config import TenantID
-from typing import Any, cast
+from typing import cast
 from utils.background_tasks import BackgroundTaskTracker
 
 logger = logging.getLogger(__name__)
-
-# -- Polling constants for empty-response retry loop ----------------------
-POLL_MAX_RETRIES = 5
-POLL_RETRY_DELAY_SECS = 3.0
-STREAM_CREATE_MAX_RETRIES = 3
-STREAM_CREATE_RETRY_DELAY_SECS = 1.5
 
 COMPACT_THRESHOLD = 100000
 """Token count at which conversation history is compacted."""
@@ -75,17 +66,6 @@ COMPACT_THRESHOLD = 100000
 # -- Bot identity constants -----------------------------------------------
 BOT_SENDER_ID = "azure-sdk-qa-bot"
 BOT_SENDER_NAME = "Azure SDK Q&A Bot"
-
-# -- Fallback error message when agent returns empty text -----------------
-EMPTY_RESPONSE_MESSAGE = (
-    "Sorry, something went wrong and I couldn't generate a response. "
-    "Please send your message again to retry."
-)
-
-# -- Stream event types ---------------------------------------------------
-STREAM_EVENT_RESPONSE_COMPLETED = "response.completed"
-STREAM_EVENT_RESPONSE_FAILED = "response.failed"
-STREAM_EVENT_RESPONSE_INCOMPLETE = "response.incomplete"
 
 _CITATION_RE = re.compile(r"[^\w\s]*cite[^\w\s]*turn\d+\S*")
 
@@ -175,43 +155,13 @@ class ChatService:
             "type": AgentReferenceType.agent_reference.value,
         }
 
-        stream = await self._invoke_agent_with_retry(
-            openai_client=openai_client,
+        agent_client = HostedAgentClient(openai_client)
+        trace_id, response = await agent_client.invoke(
             conversation_items=conversation_items,
             agent_conversation_id=agent_conversation_id,
             agent_session_id=agent_session_id,
             agent_ref=agent_ref,
         )
-
-        response: OpenAIResponse | None = None
-        last_event_type: str | None = None
-        async for event in stream:
-            logger.debug("Stream event: type=%s, content=%s", event.type, event)
-            last_event_type = event.type
-            if event.type == STREAM_EVENT_RESPONSE_COMPLETED:
-                response = event.response
-                break
-            if event.type in (
-                STREAM_EVENT_RESPONSE_FAILED,
-                STREAM_EVENT_RESPONSE_INCOMPLETE,
-            ):
-                failed = getattr(event, "response", None)
-                logger.error(
-                    "Agent stream %s: error=%s, incomplete_details=%s, status=%s, "
-                    "conversation=%s",
-                    event.type,
-                    getattr(failed, "error", None),
-                    getattr(failed, "incomplete_details", None),
-                    getattr(failed, "status", None),
-                    agent_conversation_id,
-                )
-
-        if response is None:
-            raise RuntimeError(
-                "Agent stream ended without a response.completed event "
-                f"(last_event={last_event_type})"
-            )
-
         # Cache the warm sandbox id so later stateless calls reuse it.
         if stateless and not get_stateless_session_id():
             extra = getattr(response, "model_extra", None) or {}
@@ -219,22 +169,12 @@ class ChatService:
             set_stateless_session_id(captured)
             logger.info("Stateless request: captured warm session=%s", captured)
 
-        # Extract AI Foundry trace ID from x-request-id header.
-        # The header may contain duplicated values separated by comma.
-        x_request_id = ""
-        if hasattr(stream, "response") and stream.response:
-            x_request_id = stream.response.headers.get("x-request-id", "")
-        trace_id = x_request_id.split(",")[0].strip() if x_request_id else None
         logger.info(
             "Agent trace: trace_id=%s, response_id=%s, conversation=%s",
             trace_id,
             response.id,
             agent_conversation_id,
         )
-
-        # Poll if response completed with empty text (Foundry persistence delay).
-        if response.status == "completed" and not response.output_text:
-            response = await self._poll_response_text(openai_client, response)
 
         if response.status != "completed":
             logger.warning(
@@ -267,121 +207,6 @@ class ChatService:
             )
         )
         return chat_response
-
-    @staticmethod
-    async def _invoke_agent_with_retry(
-        openai_client: AsyncOpenAI,
-        conversation_items: list[ResponseInputItemParam],
-        agent_ref: dict[str, str],
-        agent_conversation_id: str | None = None,
-        agent_session_id: str | None = None,
-        max_retries: int = STREAM_CREATE_MAX_RETRIES,
-        retry_delay: float = STREAM_CREATE_RETRY_DELAY_SECS,
-    ):
-        """Create a responses stream with bounded retries for transient failures.
-
-        Threaded calls pass ``conversation``; stateless calls pass a reused
-        ``agent_session_id``. A cached session that the platform rejects
-        (404/400 — deleted or expired) is dropped so the next attempt creates a
-        fresh one. Other ``APIStatusError`` / connection / timeout errors retry
-        with the same parameters.
-        """
-        last_error: Exception | None = None
-
-        for attempt in range(1, max_retries + 1):
-            extra_body: dict[str, Any] = {"agent_reference": agent_ref}
-            kwargs: dict[str, Any] = {}
-            if agent_conversation_id:
-                kwargs["conversation"] = agent_conversation_id
-            if agent_session_id:
-                extra_body["agent_session_id"] = agent_session_id
-            try:
-                return await openai_client.responses.create(
-                    input=conversation_items,
-                    store=True,
-                    stream=True,
-                    extra_body=extra_body,
-                    **kwargs,
-                )
-            except (NotFoundError, BadRequestError) as ex:
-                last_error = ex
-                # A rejected cached session: drop it and retry without one so
-                # the platform provisions a fresh sandbox.
-                if agent_session_id:
-                    set_stateless_session_id(None)
-                    agent_session_id = None
-                    continue
-                logger.warning(
-                    "Failed to create agent stream (attempt %d/%d): "
-                    "conversation=%s, error=%s",
-                    attempt,
-                    max_retries,
-                    agent_conversation_id,
-                    ex,
-                    exc_info=True,
-                )
-            except (APIConnectionError, APITimeoutError, APIStatusError) as ex:
-                last_error = ex
-                logger.warning(
-                    "Failed to create agent stream (attempt %d/%d): "
-                    "conversation=%s, error=%s",
-                    attempt,
-                    max_retries,
-                    agent_conversation_id,
-                    ex,
-                    exc_info=True,
-                )
-
-            if attempt >= max_retries:
-                break
-            await asyncio.sleep(retry_delay * attempt)
-
-        raise RuntimeError(
-            f"Failed to create agent stream after {max_retries} attempts"
-        ) from last_error
-
-    @staticmethod
-    async def _poll_response_text(
-        openai_client: AsyncOpenAI,
-        response: OpenAIResponse,
-        max_retries: int = POLL_MAX_RETRIES,
-        retry_delay: float = POLL_RETRY_DELAY_SECS,
-    ) -> OpenAIResponse:
-        """Poll ``responses.retrieve()`` until output_text appears."""
-        for attempt in range(1, max_retries + 1):
-            await asyncio.sleep(retry_delay)
-            try:
-                refreshed = await openai_client.responses.retrieve(response.id)
-                if refreshed.output_text:
-                    logger.info(
-                        "Poll retrieved text on attempt %d/%d: response=%s, "
-                        "text_len=%d",
-                        attempt,
-                        max_retries,
-                        response.id,
-                        len(refreshed.output_text),
-                    )
-                    return refreshed
-                logger.info(
-                    "Poll attempt %d/%d: still no text, response=%s",
-                    attempt,
-                    max_retries,
-                    response.id,
-                )
-            except Exception:
-                logger.warning(
-                    "Poll attempt %d/%d failed: response=%s",
-                    attempt,
-                    max_retries,
-                    response.id,
-                    exc_info=True,
-                )
-        logger.warning(
-            "Poll exhausted %d retries without text: response=%s",
-            max_retries,
-            response.id,
-        )
-        return response
 
     async def _save_bot_answer_to_conversation(
         self,
@@ -579,13 +404,6 @@ class ChatService:
         tenant = self._extract_routed_tenant(response.output)
 
         output_text = response.output_text or ""
-        if not output_text:
-            output_text = EMPTY_RESPONSE_MESSAGE
-            logger.error(
-                "Empty output_text for response %s (status=%s), returning error message",
-                response.id,
-                response.status,
-            )
 
         # Strip model citation artifacts (e.g. "citeturn0search0").
         output_text = _CITATION_RE.sub("", output_text)

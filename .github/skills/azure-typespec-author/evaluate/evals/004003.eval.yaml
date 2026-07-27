@@ -39,10 +39,22 @@ stimuli:
           dest: P2SVpnGateway.tsp
         - src: ../fixtures/004003-delete-and-restore-operationId-decorator/Route.tsp
           dest: Route.tsp
+        - src: ../fixtures/004003-delete-and-restore-operationId-decorator/RouteTable.tsp
+          dest: RouteTable.tsp
+        - src: ../fixtures/004003-delete-and-restore-operationId-decorator/VirtualHub.tsp
+          dest: VirtualHub.tsp
+        - src: ../fixtures/004003-delete-and-restore-operationId-decorator/VpnGateway.tsp
+          dest: VpnGateway.tsp
+        - src: ../fixtures/004003-delete-and-restore-operationId-decorator/VpnServerConfiguration.tsp
+          dest: VpnServerConfiguration.tsp
         - src: ../fixtures/004003-delete-and-restore-operationId-decorator/VpnServerConfigurationPolicyGroup.tsp
           dest: VpnServerConfigurationPolicyGroup.tsp
         - src: ../fixtures/004003-delete-and-restore-operationId-decorator/VpnSiteLinkConnection.tsp
           dest: VpnSiteLinkConnection.tsp
+        - src: ../fixtures/004003-delete-and-restore-operationId-decorator/main.tsp
+          dest: main.tsp
+        - src: ../fixtures/004003-delete-and-restore-operationId-decorator/models.tsp
+          dest: models.tsp
         - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
           dest: package-lock.json
         - src: ../fixtures/Microsoft.Widget/Widget/package.json
@@ -77,6 +89,10 @@ stimuli:
           required:
             - "edit"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
+      - type: "run-command"
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       - type: "file-not-matches"
         config:
           pattern: '@operationId\('
@@ -197,6 +213,7 @@ stimuli:
 
 scoring:
   weights:
+    run-command: 1
     file-not-matches: 3
     skill-invocation: 1
     file-matches: 4

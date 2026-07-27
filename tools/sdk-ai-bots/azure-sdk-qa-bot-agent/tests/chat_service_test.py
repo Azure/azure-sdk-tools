@@ -1,18 +1,19 @@
-"""Tests for ChatService memory scope resolution."""
+"""Unit tests for ChatService memory scope resolution."""
 
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 
-from models.chat import ChatRequest, Message as ChatMessage
-
-# Ensure the project root is on sys.path so ``services`` resolves.
 _PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
+from models.chat import ChatRequest, Message as ChatMessage
 from services.chat_service import ChatService
+
+
+# -- Memory scope handling ------------
 
 
 def test_chat_service_resolves_memory_scope() -> None:

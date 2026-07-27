@@ -71,8 +71,8 @@ extends:
         workingDirectory: .github
         displayName: Install Prettier
 
-      - script: npm run format:check
+      - script: npm exec -- prettier --check "skills/azsdk-common-*/**"
         workingDirectory: .github
-        displayName: Check .github/skills formatting with Prettier
+        displayName: Check shared .github/skills formatting with Prettier
     Repos: ${{ parameters.Repos }}
     PRValidationPipelines: ${{ parameters.PRValidationPipelines }}

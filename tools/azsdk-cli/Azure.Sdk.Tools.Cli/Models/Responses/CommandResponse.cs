@@ -34,7 +34,7 @@ public abstract class CommandResponse
     /// </summary>
     [JsonPropertyName("response_error")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? ResponseError { get; set; }
+    public virtual string? ResponseError { get; set; }
 
     /// <summary>
     /// ResponseErrors represents a list of error messages associated with the response.
@@ -70,7 +70,7 @@ public abstract class CommandResponse
     /// </summary>
     [JsonPropertyName("support_channel")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? SupportChannel => OperationStatus == Status.Failed ? SupportChannelMessage : null;
+    public virtual string? SupportChannel => OperationStatus == Status.Failed ? SupportChannelMessage : null;
     
 
     protected abstract string Format();

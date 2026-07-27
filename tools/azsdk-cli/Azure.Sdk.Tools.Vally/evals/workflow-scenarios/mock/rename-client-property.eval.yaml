@@ -56,7 +56,7 @@ stimuli:
 
 scoring:
   weights:
-    tool-calls: 1
-    skill-invocation: 1
+    tool-calls: 0.5
+    skill-invocation: 0.5
   threshold: 1.0
 

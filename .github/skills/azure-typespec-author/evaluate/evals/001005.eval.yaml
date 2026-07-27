@@ -101,6 +101,10 @@ stimuli:
             - "edit"
             - "web_fetch"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
+      - type: "run-command"
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       - type: "file-exists"
         config:
           path: "examples/2025-05-04-preview/Employees_Get_MaximumSet_Gen.json"
@@ -193,6 +197,6 @@ scoring:
     skill-invocation: 1
     file-exists: 1
     file-matches: 4
-    tool-calls: 1
+    run-command: 1
     file-not-exists: 1
   threshold: 1

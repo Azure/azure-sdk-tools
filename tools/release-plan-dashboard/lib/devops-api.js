@@ -71,6 +71,7 @@ for (const lang of LANGUAGES) {
     `Custom.SDKPullRequestStatusFor${lang}`,
     `Custom.ReleaseExclusionStatusFor${lang}`,
     `Custom.ReleasedVersionFor${lang}`,
+    `Custom.ReleasePipelineFor${lang}`,
   );
 }
 
@@ -227,6 +228,14 @@ function mapReleasePlan(workItem, apiSpecMap) {
       exclusionStatus: fields[`Custom.ReleaseExclusionStatusFor${lang}`] || "",
       generationStatus: fields[`Custom.GenerationStatusFor${lang}`] || "",
       releasedVersion: fields[`Custom.ReleasedVersionFor${lang}`] || "",
+      sdkGenerationPipeline: (
+        fields[`Custom.SDKGenerationPipelineFor${lang}`] || ""
+      )
+        .trim()
+        .replace(/\/+$/, ""),
+      releasePipeline: (fields[`Custom.ReleasePipelineFor${lang}`] || "")
+        .trim()
+        .replace(/\/+$/, ""),
     };
   }
   const childIds = extractChildIds(workItem);
@@ -312,7 +321,7 @@ async function fetchPackageWorkItems(pkgLangPairs) {
       const items = await fetchWorkItemsBatch(ids, PACKAGE_FIELDS);
       for (const item of items) {
         const itemFields = item.fields || {};
-        const key = `${itemFields["Custom.Package"] || ""}|${itemFields["Custom.Language"] || ""}`;
+        const key = `${itemFields["Custom.Package"] || ""}|${(itemFields["Custom.Language"] || "").toLowerCase()}`;
         const existing = resultMap.get(key);
         const changedDate = new Date(itemFields["System.ChangedDate"] || 0);
         if (!existing || changedDate > existing._changedDate) {

@@ -504,3 +504,53 @@ async def test_thank_you_closure_after_bot_reply_should_not_respond(
     resp = await service.classify(req)
     assert resp.should_respond is False
 
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_pre_deployment_thread_reply_should_not_respond(
+    service: IntentionService, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A reply in a thread that started before deployment should not be answered.
+
+    Covers issue Azure/azure-sdk-pr#2676: the root message (id 1000) predates the
+    agent so it was never saved. Only the reply (id 2000) is in history. Since the
+    reply is not the thread root, the bot must not treat it as a new question.
+    """
+    conversation_id = "19:channel@thread.skype;messageid=1000"
+    conversation_type = ConversationType.teams_channel
+
+    reply = ConversationMessageItem(
+        id="2000",
+        sender_role=Role.User,
+        sender_id="user-222",
+        sender_name="Asker",
+        content="How do I generate a Python SDK from my TypeSpec definition?",
+        created_at=datetime.now(timezone.utc),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+        conversation_partition=f"channel:{conversation_id}",
+    )
+
+    async def fake_get_messages_by_conversation(*_args, **_kwargs):
+        return [reply]
+
+    monkeypatch.setattr(
+        service._conversation_service,
+        "get_messages_by_conversation",
+        fake_get_messages_by_conversation,
+    )
+
+    req = IntentionRequest(
+        message=Message(
+            id="2000",
+            role=Role.User,
+            user_id="user-222",
+            content="How do I generate a Python SDK from my TypeSpec definition?",
+        ),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+    )
+    resp = await service.classify(req)
+    assert resp.should_respond is False
+    assert resp.reason == "no_history_and_not_root_message"
+
+

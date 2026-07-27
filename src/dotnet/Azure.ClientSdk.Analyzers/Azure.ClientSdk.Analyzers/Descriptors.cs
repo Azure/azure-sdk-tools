@@ -40,22 +40,6 @@ namespace Azure.ClientSdk.Analyzers
             "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-client-constructor-for-mocking"
         );
 
-        public static DiagnosticDescriptor AZC0006 = new DiagnosticDescriptor(
-            nameof(AZC0006),
-            "DO provide constructor overloads that allow specifying additional options.",
-            "A client type should have a public constructor with equivalent parameters that takes a Azure.Core.ClientOptions-derived type as the last argument",
-            DiagnosticCategory.Usage, DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null,
-            "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-client-constructor-overloads"
-        );
-
-        public static DiagnosticDescriptor AZC0007 = new DiagnosticDescriptor(
-            nameof(AZC0007),
-            "DO provide a minimal constructor that takes only the parameters required to connect to the service.",
-            "A client type should have a public constructor with equivalent parameters that doesn't take a Azure.Core.ClientOptions-derived type as the last argument",
-            DiagnosticCategory.Usage, DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null,
-            "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-client-constructor-minimal"
-        );
-
         public static DiagnosticDescriptor AZC0008 = new DiagnosticDescriptor(
             nameof(AZC0008), "ClientOptions should have a nested enum called ServiceVersion",
             "Client type should have a nested enum called ServiceVersion", DiagnosticCategory.Usage, DiagnosticSeverity.Warning, true);
@@ -124,15 +108,6 @@ namespace Azure.ClientSdk.Analyzers
             "The Azure.Core internal shared source types {0} should not be used outside of the Azure.Core library.",
             DiagnosticCategory.Usage,
             DiagnosticSeverity.Warning, true);
-
-        public static DiagnosticDescriptor AZC0021 = new DiagnosticDescriptor(
-            nameof(AZC0021),
-            "ClientSettings constructor parameters should not be combined with other parameters",
-            "A constructor with a ClientSettings-derived parameter should only take that single parameter",
-            DiagnosticCategory.Usage,
-            DiagnosticSeverity.Warning,
-            isEnabledByDefault: true
-        );
 
         public static readonly DiagnosticDescriptor AZC0030 = new DiagnosticDescriptor(
             nameof(AZC0030),

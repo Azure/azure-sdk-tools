@@ -524,43 +524,58 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             string? repo = null,
             CancellationToken ct = default)
         {
+            var packageName = CheckPackageHelper.ResolvePackageName(directoryPath);
+
             try
             {
+                string? resolvedRepo = repo;
                 string cacheSource;
                 if (!string.IsNullOrEmpty(codeownersCachePath))
                 {
                     if (!File.Exists(codeownersCachePath))
                     {
-                        return new DefaultCommandResponse
-                        {
-                            ResponseError = $"CODEOWNERS cache file not found: {codeownersCachePath}"
-                        };
+                        return CreateCheckPackageFailureResponse(
+                            directoryPath,
+                            packageName,
+                            resolvedRepo,
+                            CheckPackageIssue.Codes.InvalidCacheSource,
+                            $"CODEOWNERS cache path must be an existing file: {codeownersCachePath}",
+                            "Run check-package again with a valid --codeowners-cache file path, or omit --codeowners-cache to use the repo cache.");
                     }
+
                     cacheSource = codeownersCachePath;
                 }
                 else
                 {
-                    repo = await ResolveRepo(repo, ct);
+                    resolvedRepo = await ResolveRepo(repo, ct);
                     // repo is "Azure/azure-sdk-for-net" → split to build URL
-                    var parts = repo.Split('/');
+                    var parts = resolvedRepo.Split('/');
                     if (parts.Length != 2)
                     {
-                        return new DefaultCommandResponse
-                        {
-                            ResponseError = $"Invalid repo format '{repo}'. Expected '<owner>/<repo>'."
-                        };
+                        return CreateCheckPackageFailureResponse(
+                            directoryPath,
+                            packageName,
+                            resolvedRepo,
+                            CheckPackageIssue.Codes.InvalidRepo,
+                            $"Invalid repo format '{resolvedRepo}'. Expected '<owner>/<repo>'.",
+                            "Run check-package again with a repo of the form 'Azure/<repo>', or omit --repo to let azsdk infer it.");
                     }
                     cacheSource = $"{CacheBaseUrl}/{parts[0].ToLowerInvariant()}/{parts[1]}/CODEOWNERS.cache";
                 }
 
                 var entries = CodeownersParser.ParseCodeownersFile(cacheSource);
-
-                return checkPackageHelper.CheckPackage(directoryPath, entries);
+                return checkPackageHelper.CheckPackage(directoryPath, resolvedRepo, entries);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "check-package failed");
-                return new DefaultCommandResponse { ResponseError = ex.Message };
+                logger.LogDebug(ex, "check-package failed unexpectedly");
+                return CreateCheckPackageFailureResponse(
+                    directoryPath,
+                    packageName,
+                    repo,
+                    CheckPackageIssue.Codes.UnexpectedError,
+                    ex.Message,
+                    "Retry the command. If the failure persists, use the support channel returned in this response.");
             }
         }
 
@@ -799,6 +814,32 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 }
             }
             return repo;
+        }
+
+        private static CheckPackageResponse CreateCheckPackageFailureResponse(
+            string directoryPath,
+            string packageName,
+            string? repo,
+            string issueCode,
+            string message,
+            string nextStep)
+        {
+            var response = new CheckPackageResponse
+            {
+                DirectoryPath = directoryPath,
+                PackageName = packageName,
+                Repo = repo,
+                ResponseError = message,
+            };
+
+            response.Issues.Add(new CheckPackageIssue
+            {
+                Code = issueCode,
+                Message = message,
+                NextStep = nextStep,
+            });
+
+            return response;
         }
 
         private async Task<OwnerWorkItem[]> GetOwnerWorkItems(string[] ownerAliases, CancellationToken ct)

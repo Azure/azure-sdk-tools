@@ -46,24 +46,46 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 _token = credential.GetToken(new TokenRequestContext([Constants.AZURE_DEVOPS_TOKEN_SCOPE]), ct);
             }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
             catch
             {
-                credential = new InteractiveBrowserCredential(new InteractiveBrowserCredentialOptions { TenantId = null });
-                // Retry with interactive browser credential if the initial credential fails
-                _token = credential.GetToken(new TokenRequestContext([Constants.AZURE_DEVOPS_TOKEN_SCOPE]), ct);
+                try
+                {
+                    credential = new InteractiveBrowserCredential(new InteractiveBrowserCredentialOptions { TenantId = null });
+                    // Retry with interactive browser credential if the initial credential fails
+                    _token = credential.GetToken(new TokenRequestContext([Constants.AZURE_DEVOPS_TOKEN_SCOPE]), ct);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception(GetAuthenticationFailureMessage(), ex);
+                }
             }
             // If we still don't have a token, throw an exception
             if (_token == null)
             {
-                throw new Exception("Failed to get devops access token. " +
-                                    "Ensure you have access to the azure-sdk devops project (http://aka.ms/azsdk/access)" +
-                                    "and are logged in via az cli, az powershell, vs/vscode or interactive browser sign-in.");
+                throw new Exception(GetAuthenticationFailureMessage());
             }
 
             var connection = new VssConnection(new Uri(Constants.AZURE_SDK_DEVOPS_BASE_URL), new VssOAuthAccessTokenCredential(_token?.Token));
             _buildClient = connection.GetClient<BuildHttpClient>();
             _workItemClient = connection.GetClient<WorkItemTrackingHttpClient>();
             _projectClient = connection.GetClient<ProjectHttpClient>();
+        }
+
+        private static string GetAuthenticationFailureMessage()
+        {
+            return "Failed to authenticate with Azure DevOps. " +
+                   "The azsdk tool can only access Azure DevOps work items and Azure resources when you are signed in with the default Microsoft tenant (microsoft.onmicrosoft.com). " +
+                   "If you are signed in with a different tenant, sign in again with the Azure CLI using the default tenant: " +
+                   "`az login --tenant microsoft.onmicrosoft.com`. " +
+                   "Also ensure you have access to the azure-sdk DevOps project (https://aka.ms/azsdk/access).";
         }
 
         public BuildHttpClient GetBuildClient(CancellationToken ct)
@@ -1358,7 +1380,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                 throw new ArgumentException("Invalid data in one of the parameters.");
             }
 
-            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [System.WorkItemType] = 'Package' AND [Custom.Package] = '{packageName}' AND [Custom.PackageVersionMajorMinor] = '{packageVersionMajorMinor}' AND [Custom.Language] = '{language}' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned') AND [System.Tags] NOT CONTAINS '{RELEASE_PLANNER_APP_TEST}'";
+            var languageLower = language.ToLower();
+            var languageCondition = languageLower == language ? $"[Custom.Language] = '{language}'" : $"[Custom.Language] IN ('{language}', '{languageLower}')";
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [System.WorkItemType] = 'Package' AND [Custom.Package] = '{packageName}' AND [Custom.PackageVersionMajorMinor] = '{packageVersionMajorMinor}' AND {languageCondition} AND [System.State] NOT IN ('Closed','Duplicate','Abandoned') AND [System.Tags] NOT CONTAINS '{RELEASE_PLANNER_APP_TEST}'";
             logger.LogDebug("Executing package work item ID lookup query: {query}", query);
 
             return await FetchWorkItemIdsAsync(query, ct);
@@ -1375,7 +1399,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                 throw new ArgumentException("Invalid data in one of the parameters.");
             }
 
-            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [Custom.Package] CONTAINS '{packageName}' AND [Custom.Language] = '{language}' AND [System.WorkItemType] = 'Package' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned') AND [System.Tags] NOT CONTAINS '{RELEASE_PLANNER_APP_TEST}'";
+            var languageLower = language.ToLower();
+            var languageCondition = languageLower == language ? $"[Custom.Language] = '{language}'" : $"[Custom.Language] IN ('{language}', '{languageLower}')";
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [Custom.Package] CONTAINS '{packageName}' AND {languageCondition} AND [System.WorkItemType] = 'Package' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned') AND [System.Tags] NOT CONTAINS '{RELEASE_PLANNER_APP_TEST}'";
             query += "  ORDER BY [System.Id] DESC"; // Order by package work item to find the most recently created
 
             logger.LogInformation("Fetching package work item with package name {packageName} and language {language}.", packageName, language);

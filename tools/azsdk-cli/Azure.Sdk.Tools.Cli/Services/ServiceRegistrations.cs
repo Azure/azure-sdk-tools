@@ -101,6 +101,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ITspClientHelper, TspClientHelper>();
             services.AddSingleton<IAPIViewFeedbackService, APIViewFeedbackService>();
             services.AddScoped<IFeedbackClassifierService, FeedbackClassifierService>();
+            services.AddScoped<ISdkBreakingChangeClassificationService, SdkBreakingChangeClassificationService>();
             services.AddScoped<IUserPromptProcessor, UserPromptProcessor>();
 
             // Process Helper Classes

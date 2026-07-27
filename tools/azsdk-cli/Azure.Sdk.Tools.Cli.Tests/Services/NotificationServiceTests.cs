@@ -70,7 +70,8 @@ public class NotificationServiceTests
             ServiceTreeId = "service-1",
             ProductType = "Offering",
             SpecPullRequests = ["https://github.com/pr/1"],
-            ApiReleaseType = ApiReleaseType.GA
+            ApiReleaseType = ApiReleaseType.GA,
+            SDKInfo = [new SDKInfo { Language = ".NET", PackageName = "Azure.ResourceManager.Contoso" }]
         };
 
         var template = new NewReleasePlanEmail(releasePlan);
@@ -124,7 +125,8 @@ public class NotificationServiceTests
             ProductType = "Offering",
             SpecPullRequests = ["https://github.com/Azure/azure-rest-api-specs/pull/1"],
             ReleasePlanSubmittedByEmail = "author@microsoft.com",
-            ApiReleaseType = ApiReleaseType.GA
+            ApiReleaseType = ApiReleaseType.GA,
+            SDKInfo = [new SDKInfo { Language = ".NET", PackageName = "Azure.ResourceManager.Contoso" }]
         };
 
         var payload = new NewReleasePlanEmail(releasePlan)
@@ -163,7 +165,8 @@ public class NotificationServiceTests
             ProductType = string.Empty,
             SpecPullRequests = ["https://github.com/Azure/azure-rest-api-specs/pull/9"],
             ReleasePlanSubmittedByEmail = "author@microsoft.com",
-            ApiReleaseType = ApiReleaseType.PublicPreview
+            ApiReleaseType = ApiReleaseType.PublicPreview,
+            SDKInfo = [new SDKInfo { Language = "Java", PackageName = "Azure.Fabrikam" }]
         };
 
         var payload = new NewReleasePlanEmail(releasePlan)
@@ -300,12 +303,87 @@ public class NotificationServiceTests
             ServiceTreeId = "service-1",
             ProductType = "Offering",
             SpecPullRequests = ["https://github.com/Azure/azure-rest-api-specs/pull/1"],
-            ApiReleaseType = ApiReleaseType.GA
+            ApiReleaseType = ApiReleaseType.GA,
+            SDKInfo = [new SDKInfo { Language = ".NET", PackageName = "Azure.ResourceManager.Contoso" }]
         };
 
         var body = new NewReleasePlanEmail(releasePlan).Body;
 
         Assert.That(body, Does.Contain("Please use azsdk agent to generate the SDK pull requests"));
         Assert.That(body, Does.Not.Contain("SDK pull requests will be auto generated"));
+    }
+
+    [Test]
+    public void EmailTemplate_MissingSdkInfo_IncludesMissingSdkDetailsMessage()
+    {
+        var releasePlan = new ReleasePlanWorkItem
+        {
+            ReleasePlanId = 21,
+            ProductName = "Contoso",
+            IsManagementPlane = true,
+            CreatedUsing = "Automation",
+            ProductTreeId = "product-1",
+            ServiceTreeId = "service-1",
+            ProductType = "Offering",
+            ApiReleaseType = ApiReleaseType.GA
+        };
+
+        var body = new NewReleasePlanEmail(releasePlan).Body;
+
+        Assert.That(body, Does.Contain("SDK details are currently missing from the release plan"));
+        Assert.That(body, Does.Not.Contain("SDK pull requests will be auto generated"));
+        Assert.That(body, Does.Not.Contain("Please use azsdk agent to generate the SDK pull requests"));
+    }
+
+    [Test]
+    public void EmailTemplate_AllSdkPackageNamesMissing_IncludesMissingSdkDetailsMessage()
+    {
+        var releasePlan = new ReleasePlanWorkItem
+        {
+            ReleasePlanId = 23,
+            ProductName = "Contoso",
+            IsManagementPlane = true,
+            CreatedUsing = "Automation",
+            ProductTreeId = "product-1",
+            ServiceTreeId = "service-1",
+            ProductType = "Offering",
+            ApiReleaseType = ApiReleaseType.GA,
+            SDKInfo =
+            [
+                new SDKInfo { Language = ".NET", PackageName = string.Empty },
+                new SDKInfo { Language = "Java", PackageName = " " }
+            ]
+        };
+
+        var body = new NewReleasePlanEmail(releasePlan).Body;
+
+        Assert.That(body, Does.Contain("SDK details are currently missing from the release plan"));
+        Assert.That(body, Does.Not.Contain("SDK pull requests will be auto generated"));
+        Assert.That(body, Does.Not.Contain("Please use azsdk agent to generate the SDK pull requests"));
+    }
+
+    [Test]
+    public void EmailTemplate_WhenAnySdkPackageNameExists_DoesNotIncludeMissingSdkDetailsMessage()
+    {
+        var releasePlan = new ReleasePlanWorkItem
+        {
+            ReleasePlanId = 24,
+            ProductName = "Contoso",
+            IsManagementPlane = true,
+            CreatedUsing = "Automation",
+            ProductTreeId = "product-1",
+            ServiceTreeId = "service-1",
+            ProductType = "Offering",
+            ApiReleaseType = ApiReleaseType.GA,
+            SDKInfo =
+            [
+                new SDKInfo { Language = ".NET", PackageName = "Azure.ResourceManager.Contoso" },
+                new SDKInfo { Language = "Java", PackageName = string.Empty }
+            ]
+        };
+
+        var body = new NewReleasePlanEmail(releasePlan).Body;
+
+        Assert.That(body, Does.Not.Contain("SDK details are currently missing from the release plan"));
     }
 }

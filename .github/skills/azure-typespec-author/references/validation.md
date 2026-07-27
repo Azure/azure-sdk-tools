@@ -1,6 +1,8 @@
 # Validation
 
-Run all sub-steps in order after applying changes. Run **5.1 General Validation** for every case; run **5.2 Case-Specific Validation** only when the case matches.
+> Prerequisite: Step 4 (Apply Changes) must be complete.
+
+Run **5.1 General Validation** for every case; run **5.2 Case-Specific Validation** only when the case identified in [intake.md](intake.md) §2.1 matches.
 
 | Sub-step | Action                                        | When                    |
 | -------- | --------------------------------------------- | ----------------------- |
@@ -30,22 +32,11 @@ Run the sub-section matching the case identified in [intake.md](intake.md) §2.1
 
 ### Case 3 — API Version Evolution (ARM / Data-plane)
 
-Run 5.2.1 and 5.2.2 after 5.1, in order.
+Run after 5.1. Perform each check below; if any fails, fix the code and re-run 5.1, then continue.
 
-#### 5.2.1: Example Verification
-
-Verify `{project-root}/{version-status}/{target-version}/examples/` exists with `.json` files using the correct `api-version`. If missing, copy from the previous version's examples and update `api-version`. Skip example verification for XML-based specs, as the tooling does not support examples for XML specifications.
-
-Verify that any example folder for an API version that no longer exists in the `Versions` enum has been deleted. For each folder under `{project-root}/{version-status}/`, check that the folder name matches an entry in the `Versions` enum. If a folder exists for a removed version, delete it.
-
-#### 5.2.2: Version-Evolution Consistency Loop
-
-It is a loop: run all checks, and if any fails, fix the code and re-run from 5.1. Repeat until every check passes (max 3 iterations; if still failing, stop and report).
-
-1. **Enumerate versions.** List every entry in the `Versions` enum (e.g. `v2025_05_04_preview`).
-2. **No dangling version references.** Every version identifier used in a versioning decorator argument (`@added`, `@removed`, `@renamedFrom`, `@typeChangedFrom`, `@madeOptional`, `@returnTypeChangedFrom`, etc.) across all `.tsp` files **must** exist in the `Versions` enum. If a decorator references a version that is no longer in the enum (because a previous version was superseded/renamed rather than kept), rebase that decorator to the correct current version or remove it — do not leave the stale reference.
-3. **Superseded version fully removed.** If a previous version was superseded/renamed (its enum entry no longer present), confirm there are **no** remaining occurrences of that old version identifier anywhere in the `.tsp` files, and that its example folder has been deleted (per 5.2.1).
-4. **Carried-over vs. excluded features.** Confirm every feature the user chose to carry over is present in the new version, and every feature the user chose to exclude is not reintroduced (including any transitional decorator scaffolding — e.g. a property whose added default value was excluded must end up as a plain optional property, not a decorator-bridged rename).
-5. **Re-validate.** Re-run 5.1.1 and 5.1.2 and confirm both pass.
-
-If any check fails, apply the fix and re-run the loop from 5.1.
+1. **Example verification.** Verify `{project-root}/{version-status}/{target-version}/examples/` exists with `.json` files using the correct `api-version`. If missing, copy from the previous version's examples and update `api-version`. Skip for XML-based specs, as the tooling does not support examples for XML specifications. Also verify that any example folder for an API version that no longer exists in the `Versions` enum has been deleted: for each folder under `{project-root}/{version-status}/`, check that the folder name matches an entry in the `Versions` enum, and delete any folder for a removed version.
+2. **Enumerate versions.** List every entry in the `Versions` enum (e.g. `v2025_05_04_preview`).
+3. **No dangling version references.** Every version identifier used in a versioning decorator argument (`@added`, `@removed`, `@renamedFrom`, `@typeChangedFrom`, `@madeOptional`, `@returnTypeChangedFrom`, etc.) across all `.tsp` files **must** exist in the `Versions` enum. If a decorator references a version that is no longer in the enum (because a previous version was superseded/renamed rather than kept), rebase that decorator to the correct current version or remove it — do not leave the stale reference.
+4. **Superseded version fully removed.** If a previous version was superseded/renamed (its enum entry no longer present), confirm there are **no** remaining occurrences of that old version identifier anywhere in the `.tsp` files, and that its example folder has been deleted (per check 1).
+5. **Carried-over vs. excluded features.** Confirm every feature the user chose to carry over is present in the new version, and every feature the user chose to exclude is not reintroduced (including any transitional decorator scaffolding — e.g. a property whose added default value was excluded must end up as a plain optional property, not a decorator-bridged rename).
+6. **Re-validate.** Re-run 5.1.1 and 5.1.2 and confirm both pass.

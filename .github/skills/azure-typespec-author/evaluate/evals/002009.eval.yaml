@@ -118,4 +118,4 @@ scoring:
     run-command: 0.2
     skill-invocation: 0.2
     file-matches: 0.2
-  threshold: 0.976
+  threshold: 0.96

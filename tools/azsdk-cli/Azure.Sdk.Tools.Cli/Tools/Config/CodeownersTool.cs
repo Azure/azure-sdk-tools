@@ -683,7 +683,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
         /// <summary>
         /// Returns true when a CODEOWNERS path targets a specific package directory
-        /// (exactly three segments, e.g. sdk/&lt;service&gt;/&lt;package&gt;), as opposed to a
+        /// (exactly three segments, e.g. sdk/<service>/<package>), as opposed to a
         /// service-level path. Such entries should be attached to the package by name rather
         /// than a raw path. The final path segment is returned as the suggested package name.
         /// Paths containing a wildcard ('*') are never treated as package directories.

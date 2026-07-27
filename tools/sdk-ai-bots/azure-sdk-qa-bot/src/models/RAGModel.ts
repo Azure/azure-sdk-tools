@@ -74,8 +74,13 @@ export class RAGModel implements PromptCompletionModel {
         references: undefined,
       };
     }
-    // TODO: try merge cancelTimer and stop into one method
-    await thinkingHandler.safeCancelTimer();
+    // Best-effort cancel: if the thinking loop is stuck, safeCancelTimer logs a warning
+    // and returns rather than throwing, so stop() is always reached.
+    try {
+      await thinkingHandler.safeCancelTimer();
+    } catch (error: any) {
+      logger.warn('safeCancelTimer failed unexpectedly, proceeding to deliver reply', { error: error?.message, meta });
+    }
     await thinkingHandler.stop(replyStartTimestamp, ragReply, currentPrompt, ragTenantId);
 
     return { status: 'success' };

@@ -1,131 +1,150 @@
 # Eval coverage and gaps
 
 A stakeholder-readable inventory of Azure SDK Agent eval coverage: what is
-tested today, where the gaps are, and who is tracking each one. This is the
-deliverable for [#16403](https://github.com/Azure/azure-sdk-tools/issues/16403)
+tested today, where the gaps are, and the issue or PR that tracks each one.
+This is the deliverable for [#16403](https://github.com/Azure/azure-sdk-tools/issues/16403)
 (part of the eval-framework epic, [#16344](https://github.com/Azure/azure-sdk-tools/issues/16344)).
 
-For the operational how-to (running evals locally, adding a new scenario,
+For the operational how-to (running evals locally, adding a new scenario, and
 suite/tag reference), see [`README.md`](README.md). This document is the
 coverage map; the README is the user guide.
 
-> Snapshot date: 2026-07-24, taken directly from `main` plus the open PRs
-> noted inline. Tables here will drift as skills/tools/scenarios are added —
-> see [Keeping this current](#keeping-this-current) below.
+> Snapshot date: 2026-07-27. Counts were verified from current source and the
+> downstream repositories noted inline. This is an inventory, not a coverage
+> gate; update it as described in [Keeping this current](#6-keeping-this-current).
 
 ## 1. Eval types and tiers
 
-| Type | Question it answers | Determinism | Where it lives | Runs today |
-|---|---|---|---|---|
-| Skill trigger/routing eval | Does the right skill load for a prompt? | Deterministic (`skill-invocation` grader) | `.github/skills/<skill>/evals/trigger.eval.yaml` (or `evals/eval.yaml` when trigger+capability are combined in one file) | `vally lint` (schema only) in [`.github/workflows/skill-eval.yml`](../.github/workflows/skill-eval.yml) — real execution not wired yet |
-| Skill capability eval | Does the skill follow its instructions correctly end-to-end? | Model-graded — four-layer pattern (`skill-invocation` + `tool-calls` + `output-matches` + `prompt` LLM-judge), per [#15871](https://github.com/Azure/azure-sdk-tools/issues/15871) | `.github/skills/<skill>/evals/eval.yaml`; `azure-typespec-author` uses `evaluate/evals/*.eval.yaml` instead (38 cases) | Same as above |
-| MCP tool-selection eval | Given a prompt, does the agent call the right tool(s)? | Deterministic (`tool-calls` grader) | [`evals/tools/*.eval.yaml`](tools/) (10 files, hermetic) | `unit` suite — PR-gate candidate in [`eng/common/pipelines/workflow-eval.yml`](../eng/common/pipelines/workflow-eval.yml) |
-| Workflow scenario eval — mock | Multi-tool orchestration against a mocked MCP server | Mixed (tool-calls + output/file graders) | [`evals/workflows/mock/*.eval.yaml`](workflows/mock/) (7 files) | `scenarios-mock` suite — hermetic, PR-gate candidate |
-| Workflow scenario eval — live | Same, against real DevOps/GitHub services | Mixed | [`evals/workflows/live/*.eval.yaml`](workflows/live/) (1 file today) | `scenarios-live` suite — nightly only |
-| Multi-turn conversation eval | Cross-turn skill hand-off, clarification, deferred-action flows | Mixed | `turns:`-based stimuli inside [`multi-turn-release-workflows.eval.yaml`](workflows/mock/multi-turn-release-workflows.eval.yaml) today | Release-plan flows land today; pipeline diagnose→fix is pending in open PR [#16418](https://github.com/Azure/azure-sdk-tools/pull/16418) |
-| ARM API reviewer suite | ARM OpenAPI-spec review quality (specs-repo only) | Model-graded | `azure-rest-api-specs` `.github/skills/evals/arm-api-reviewer/` (own `.vally.yaml`, own `run-evals.ps1` runner) | Own pipeline; not on the shared `vallyRoot`/`evalGlobs` model used elsewhere |
-| Vally lint | Eval YAML is well-formed / schema-valid (not a behavioral check) | Deterministic | applies to every file above | Runs in every repo that has synced `.github/workflows/skill-eval.yml` |
+The agent execution in every behavioral tier is model-driven. “Deterministic”
+below means the grader evaluates a recorded trajectory or static input without
+asking another model to judge it.
 
-Itemized, since "(N files)" above hides which scenarios actually exist —
-every file in `evals/workflows/` today, all in `azure-sdk-tools`:
+| Type | Question it answers | Grading | Where it lives | Runs today |
+| --- | --- | --- | --- | --- |
+| Skill trigger/routing eval | Does the right skill load for a prompt? | Deterministic `skill-invocation` trajectory grade | `.github/skills/<skill>/evals/trigger.eval.yaml` (or `evals/eval.yaml` when combined) | PR: [`skill-eval.yml`](../.github/workflows/skill-eval.yml) runs `vally lint`. Post-main: [`eng/pipelines/skill-eval.yml`](../eng/pipelines/skill-eval.yml) runs behavioral evals report-only; no PR behavioral gate. |
+| Skill behavioral/capability eval | Does the skill follow its instructions end-to-end? | Deterministic trajectory/output graders; optional LLM judge. The four-layer pattern is the target, not the current minimum. | `.github/skills/<skill>/evals/eval.yaml`; `azure-typespec-author` uses `evaluate/evals/*.eval.yaml` (38 cases). | Same as above. |
+| MCP tool-selection eval | Given a prompt, does the agent call the right tool(s)? | Deterministic `tool-calls` trajectory grade | [`evals/tools/*.eval.yaml`](tools/) (10 hermetic files) | `unit` is main-triggered/report-only in [`workflow-eval.yml`](../eng/common/pipelines/workflow-eval.yml), not a PR gate. |
+| Workflow scenario eval — mock | Does a multi-tool flow reach the expected result against mock MCP responses? | Deterministic tool/output/file graders, with optional model judge | [`evals/workflows/mock/*.eval.yaml`](workflows/mock/) (7 files) | `scenarios-mock` is main-triggered/report-only, not a PR gate. |
+| Workflow scenario eval — live | Does a flow work against real DevOps/GitHub services? | Mixed | [`evals/workflows/live/*.eval.yaml`](workflows/live/) (1 file) | `scenarios-live` runs nightly and gates on its threshold in [`live-eval.yml`](../eng/common/pipelines/live-eval.yml). |
+| Multi-turn conversation eval | Can a later turn reuse prior context and hand off correctly? | Mixed | `turns:` stimuli in [`multi-turn-release-workflows.eval.yaml`](workflows/mock/multi-turn-release-workflows.eval.yaml) | Release-plan flows are present; pipeline diagnose→fix is pending in [#16418](https://github.com/Azure/azure-sdk-tools/pull/16418). |
+| ARM API reviewer suite | Does an ARM OpenAPI spec meet review expectations? | Model-graded | `azure-rest-api-specs` `.github/skills/evals/arm-api-reviewer/` with its own configuration and runner | Own specs-repo pipeline; not on the root `evals/` suite model. |
+| Vally lint | Are skill definitions and their eval configuration statically valid? | Deterministic static check | Skill directories | Runs in [`.github/workflows/skill-eval.yml`](../.github/workflows/skill-eval.yml). It is not behavioral execution and does not validate root `evals/` scenario coverage. |
+
+Every current root workflow scenario in `azure-sdk-tools`:
 
 | File | Area | Tier | What it covers |
-|---|---|---|---|
-| [`analyze-failed-pipeline.eval.yaml`](workflows/mock/analyze-failed-pipeline.eval.yaml) | pipeline | mock | Two-tool path — pull pipeline status, then analyze the run to surface the failing test |
-| [`check-public-repo-then-validate.eval.yaml`](workflows/mock/check-public-repo-then-validate.eval.yaml) | typespec | mock | Validate, then check public-repo presence |
-| [`fix-pipeline.eval.yaml`](workflows/mock/fix-pipeline.eval.yaml) | pipeline | mock | Given the analysis, apply the fix to the overlaid source and verify via the package `build`/`check`/`test` MCP tools |
-| [`multi-turn-release-workflows.eval.yaml`](workflows/mock/multi-turn-release-workflows.eval.yaml) | release-plan | mock | Multi-turn (`turns:`) release-plan conversation coverage |
-| [`release-planner-workflows.eval.yaml`](workflows/mock/release-planner-workflows.eval.yaml) | release-plan | mock | Create / re-fetch / link / update release-plan flows (5 stimuli) |
-| [`rename-client-property.eval.yaml`](workflows/mock/rename-client-property.eval.yaml) | typespec | mock | Stub — needs an `expected-diff` grader + sparse clone |
-| [`typespec-generation-step02.eval.yaml`](workflows/mock/typespec-generation-step02.eval.yaml) | typespec | mock | Step in the spec-PR generation flow |
-| [`release-planner.eval.yaml`](workflows/live/release-planner.eval.yaml) | release-plan | **live** | Create + re-fetch a release plan, kick off SDK gen, link PR back — real DevOps test-area writes |
+| --- | --- | --- | --- |
+| [`analyze-failed-pipeline.eval.yaml`](workflows/mock/analyze-failed-pipeline.eval.yaml) | pipeline | mock | Pull pipeline status, then analyze the run to surface the failing test. |
+| [`check-public-repo-then-validate.eval.yaml`](workflows/mock/check-public-repo-then-validate.eval.yaml) | typespec | mock | Validate, then check public-repo presence. |
+| [`fix-pipeline.eval.yaml`](workflows/mock/fix-pipeline.eval.yaml) | pipeline | mock | Apply a fix to overlaid source and verify with package build/check/test tools. |
+| [`multi-turn-release-workflows.eval.yaml`](workflows/mock/multi-turn-release-workflows.eval.yaml) | release-plan | mock | Multi-turn (`turns:`) release-plan conversation coverage. |
+| [`release-planner-workflows.eval.yaml`](workflows/mock/release-planner-workflows.eval.yaml) | release-plan | mock | Create, re-fetch, link, and update release-plan flows. |
+| [`rename-client-property.eval.yaml`](workflows/mock/rename-client-property.eval.yaml) | typespec | mock | Stub; still needs an `expected-diff` grader and sparse clone. |
+| [`typespec-generation-step02.eval.yaml`](workflows/mock/typespec-generation-step02.eval.yaml) | typespec | mock | Step in the spec-PR generation flow. |
+| [`release-planner.eval.yaml`](workflows/live/release-planner.eval.yaml) | release-plan | **live** | Create and re-fetch a plan, kick off SDK generation, and link its PR using real DevOps test-area writes. |
 
 ## 2. Skills and scenario coverage
 
-13 skill directories exist under `.github/skills/` today (`distribution:
-shared` = cross-repo synced; `distribution: local` = azure-sdk-tools only;
-some skills have no `distribution` field set at all, marked "unspecified"
-below).
+Thirteen skill directories exist under `.github/skills/` today. In this table,
+**routing** means at least one file contains a `skill-invocation` grader;
+**behavioral** means the file has a tool-call or outcome contract. File
+existence alone does not establish strong four-layer coverage.
 
-| Skill | Distribution | Trigger/routing | Capability | Notes |
-|---|---|---|---|---|
-| `azsdk-common-apiview-feedback-resolution` | shared | ✅ `evals/trigger.eval.yaml` | — | |
-| `azsdk-common-generate-sdk-locally` | shared | ✅ `evals/eval.yaml` | ✅ (same file) | Newer unified naming — see [#15871](https://github.com/Azure/azure-sdk-tools/issues/15871) direction |
-| `azsdk-common-generate-sdk-pipeline` | shared | ❌ | ❌ | **Gap** — no `evals/` folder at all despite `shared` distribution |
+`distribution: shared` means cross-repository sync; `local` means Azure SDK
+Tools only; `unspecified` means the frontmatter has no `distribution` field.
+
+| Skill | Distribution | Routing coverage | Behavioral/capability coverage | Notes |
+| --- | --- | --- | --- | --- |
+| `azsdk-common-apiview-feedback-resolution` | shared | ✅ `evals/trigger.eval.yaml` | ✅ `evals/eval.yaml` (9 stimuli, tool calls) | Behavioral file has legacy mixed graders. |
+| `azsdk-common-generate-sdk-locally` | shared | — | ✅ `evals/eval.yaml` (33 stimuli, tool calls) | No `skill-invocation` routing grader yet. |
+| `azsdk-common-generate-sdk-pipeline` | shared | ❌ | ❌ | **Gap** — no `evals/` folder despite shared distribution. |
 | `azsdk-common-pipeline-analysis` | shared | ✅ `evals/trigger.eval.yaml` | — | |
 | `azsdk-common-pipeline-fixer` | shared | ✅ `evals/trigger.eval.yaml` | — | |
-| `azsdk-common-prepare-release-plan` | shared | ✅ `evals/trigger.eval.yaml` | — | |
-| `azsdk-common-sdk-release` | shared | ✅ `evals/trigger.eval.yaml` | — | |
-| `azure-typespec-author` | unspecified | — | ✅ 38 cases under `evaluate/evals/` | No dedicated trigger file — flagged in [#15871](https://github.com/Azure/azure-sdk-tools/issues/15871) ("ships capability tests without a trigger file"); frontmatter has no `distribution:` field |
-| `markdown-token-optimizer` | unspecified | ✅ `evals/trigger.eval.yaml` | — | No MCP tool invocations — `tool-calls` grader doesn't apply here; frontmatter has no `distribution:` field |
-| `sensei` | unspecified | ✅ `evals/trigger.eval.yaml` | — | Flagged in [#15871](https://github.com/Azure/azure-sdk-tools/issues/15871): missing `scoring.threshold`, passes vacuously today; frontmatter has no `distribution:` field |
-| `skill-authoring` | unspecified | ✅ `evals/trigger.eval.yaml` | — | frontmatter has no `distribution:` field |
-| `sdk-ai-bot-eval-dataset` | local | ❌ | ❌ | **Gap** — lower priority; local-only QA-bot tooling, a different system from the MCP agent framework this doc otherwise covers |
-| `sdk-ai-bot-run-evaluation` | local | ❌ | ❌ | **Gap** — same as above |
-| `skill-eval-authoring` | shared (pending) | pending | pending | Open, duplicate PRs [#16412](https://github.com/Azure/azure-sdk-tools/pull/16412) / [#16476](https://github.com/Azure/azure-sdk-tools/pull/16476) — a skill to help authors write correct eval coverage; only one of the two PRs is expected to land |
-| `tool-eval-authoring` | shared (pending) | pending | pending | Same PRs |
-| `workflow-eval-authoring` | shared (pending) | pending | pending | Same PRs |
+| `azsdk-common-prepare-release-plan` | shared | ✅ `evals/trigger.eval.yaml` | ✅ `evals/eval.yaml` (9 stimuli, tool calls) | |
+| `azsdk-common-sdk-release` | shared | ✅ `evals/trigger.eval.yaml` | ✅ `evals/eval.yaml` (9 stimuli, tool calls) | |
+| `azure-typespec-author` | unspecified | Partial — 9 data-plane cases include `skill-invocation` | ✅ 38 cases in `evaluate/evals/` | No dedicated trigger suite; frontmatter has no `distribution` field. |
+| `markdown-token-optimizer` | unspecified | ✅ `evals/trigger.eval.yaml` | — | `evals/eval.yaml` contains only two trigger-shaped outcome checks; no MCP tool contract applies. |
+| `sensei` | unspecified | ✅ `evals/trigger.eval.yaml` | — | `evals/eval.yaml` exists but is two trigger-shaped checks and lacks `scoring.threshold`. |
+| `skill-authoring` | unspecified | ✅ `evals/trigger.eval.yaml` | ⚠️ `evals/eval.yaml` (3 output-only stimuli) | Needs stronger behavioral contracts. |
+| `sdk-ai-bot-eval-dataset` | local | ❌ | ❌ | **Gap** — local QA-bot tooling, outside the MCP-agent focus of most rows here. |
+| `sdk-ai-bot-run-evaluation` | local | ❌ | ❌ | **Gap** — same as above. |
 
-Note: an earlier audit in [#15871](https://github.com/Azure/azure-sdk-tools/issues/15871)
-listed `azsdk-common-api-review` as having no eval file — that skill name no
-longer exists in `.github/skills/`. Whoever owns that sub-issue should
-confirm whether it was renamed/superseded (e.g. by
-`azsdk-common-apiview-feedback-resolution`, which does have a trigger eval
-today) or the audit line is simply stale.
+Not counted above: [#16412](https://github.com/Azure/azure-sdk-tools/pull/16412)
+is closed. Open [#16476](https://github.com/Azure/azure-sdk-tools/pull/16476)
+proposes three repository-local meta-skills — `eval-authoring-skill`,
+`eval-authoring-tool`, and `eval-authoring-workflow` — which are pending and
+not yet part of this inventory.
 
 ## 3. MCP tool and mock-handler coverage
 
-106 `[McpServerTool]`-attributed tools across 11 namespaces in
-`tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools/`. Mock handlers in
-[`Azure.Sdk.Tools.Mock/Handlers/`](../tools/azsdk-cli/Azure.Sdk.Tools.Mock/Handlers/)
-mirror the same namespaces 1:1, except `Example` (sample/template tools,
-intentionally excluded — see `ExemptTools` below).
+Current source contains 74 `[McpServerTool]` method attributes across 11
+namespaces under `tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools/`. The mock server
+reflects every such tool in
+[`MockToolRegistrations.cs`](../tools/azsdk-cli/Azure.Sdk.Tools.Mock/MockToolRegistrations.cs).
+Custom handlers are discovered separately by
+[`MockToolFactory.cs`](../tools/azsdk-cli/Azure.Sdk.Tools.Mock/Handlers/MockToolFactory.cs),
+and its default response covers a tool with no custom handler. Therefore,
+handler folder/counts are not a one-to-one proof of production-namespace
+coverage.
 
-| Namespace | Tools | Tool-scenario eval | Mock handler |
-|---|---|---|---|
-| APIView | 5 | [`prompt-to-tool-apiview.eval.yaml`](tools/prompt-to-tool-apiview.eval.yaml) | ✅ |
-| Config | 13 | [`prompt-to-tool-config.eval.yaml`](tools/prompt-to-tool-config.eval.yaml) | ✅ |
-| Core | 3 | — | ✅ |
-| EngSys | 6 | [`prompt-to-tool-engsys.eval.yaml`](tools/prompt-to-tool-engsys.eval.yaml) | ✅ |
-| Example | 12 | — | ❌ (intentionally — sample/template tools) |
-| GitHub | 5 | [`prompt-to-tool-github.eval.yaml`](tools/prompt-to-tool-github.eval.yaml) | ✅ |
-| Package | 19 | [`prompt-to-tool-package.eval.yaml`](tools/prompt-to-tool-package.eval.yaml) | ✅ |
-| Pipeline | 8 | [`prompt-to-tool-pipeline.eval.yaml`](tools/prompt-to-tool-pipeline.eval.yaml) | ✅ |
-| ReleasePlan | 18 | [`prompt-to-tool-releaseplan.eval.yaml`](tools/prompt-to-tool-releaseplan.eval.yaml) | ✅ |
-| TypeSpec | 15 | [`prompt-to-tool-typespec.eval.yaml`](tools/prompt-to-tool-typespec.eval.yaml), [`add-arm-resource.eval.yaml`](tools/add-arm-resource.eval.yaml) | ✅ |
-| Verify | 2 | [`prompt-to-tool-verify.eval.yaml`](tools/prompt-to-tool-verify.eval.yaml) | ✅ |
+| Production source namespace | Tools | Tool-selection eval | Custom mock handlers |
+| --- | ---: | --- | ---: |
+| APIView | 4 | [`prompt-to-tool-apiview.eval.yaml`](tools/prompt-to-tool-apiview.eval.yaml) | 4 |
+| Config | 11 | [`prompt-to-tool-config.eval.yaml`](tools/prompt-to-tool-config.eval.yaml) | 11 |
+| Core | 1 | — | 1 |
+| EngSys | 4 | [`prompt-to-tool-engsys.eval.yaml`](tools/prompt-to-tool-engsys.eval.yaml) | 5 |
+| Example | 10 | — | 10 |
+| GitHub | 4 | [`prompt-to-tool-github.eval.yaml`](tools/prompt-to-tool-github.eval.yaml) | 4 |
+| Package | 12 | [`prompt-to-tool-package.eval.yaml`](tools/prompt-to-tool-package.eval.yaml) | 11 |
+| Pipeline | 4 | [`prompt-to-tool-pipeline.eval.yaml`](tools/prompt-to-tool-pipeline.eval.yaml) | 3 |
+| ReleasePlan | 15 | [`prompt-to-tool-releaseplan.eval.yaml`](tools/prompt-to-tool-releaseplan.eval.yaml) | 16 |
+| TypeSpec | 8 | [`prompt-to-tool-typespec.eval.yaml`](tools/prompt-to-tool-typespec.eval.yaml), [`add-arm-resource.eval.yaml`](tools/add-arm-resource.eval.yaml) | 8 |
+| Verify | 1 | [`prompt-to-tool-verify.eval.yaml`](tools/prompt-to-tool-verify.eval.yaml) | 1 |
 
-`Azure.Sdk.Tools.Cli.Tests`' `ToolPromptCoverageTests.AllToolsHaveTestPrompts`
-enforces (deterministically, in PR CI) that every non-exempt tool has at
-least one legacy test prompt; a handful of `Example`/debug-only tools and a
-few `EngSys` codeowner tools are in its `ExemptTools` allowlist. A pending
-draft PR ([#16461](https://github.com/Azure/azure-sdk-tools/pull/16461))
-would repoint that same test at the `evals/tools/*.eval.yaml` corpus instead
-of the legacy `TestPrompts.json`, closing the gap between "has a test
-prompt" and "has a real Vally eval."
+`ToolPromptCoverageTests.AllToolsHaveTestPrompts` deterministically requires
+each non-exempt tool to have at least one legacy test prompt in PR CI. Draft
+[#16461](https://github.com/Azure/azure-sdk-tools/pull/16461) would instead
+validate the `evals/tools/*.eval.yaml` corpus, closing the gap between “has a
+prompt” and “has a Vally tool-selection eval.”
 
 ## 4. Cross-repository coverage
 
-| Repo | `eng/common` eval templates synced | Repo-local pipeline entrypoint | Eval files today | Status |
-|---|---|---|---|---|
-| `azure-sdk-tools` (source) | n/a — native | `eng/common/pipelines/{skill-eval,workflow-eval,live-eval}.yml` used directly | 65 (10 tool-scenario + 7 mock-workflow + 1 live-workflow + 9 per-skill trigger + 38 `azure-typespec-author` capability) | Fully wired: `vally lint` on every skill PR, `unit`/`scenarios-mock` tiers via `workflow-eval.yml`, `scenarios-live` nightly |
-| `azure-rest-api-specs` | ✅ | `eng/pipelines/skill-eval.yml` (extends `archetype-eval.yml`) | 25 (8 per-skill trigger + 17 `arm-api-reviewer`); **0 workflow-scenario evals** | **Piloted and live** — [#16347](https://github.com/Azure/azure-sdk-tools/issues/16347) closed all acceptance criteria; scheduled runs confirmed working via [Azure/azure-rest-api-specs#44696](https://github.com/Azure/azure-rest-api-specs/pull/44696). Fast-follow gaps (explicitly non-blocking): eval-coverage backfill for the `azure-api-review`, `openai-typespec-update`, `generate-sdk-locally`, `pipeline-analysis`, `pipeline-fixer` skills in that repo, and an `arm-api-reviewer` suite model-availability issue (`claude-opus-4.6-1m`) |
-| `azure-sdk-for-python` | ✅ (confirmed directly — `eng/common/pipelines/skill-eval.yml` present) | ❌ none | 0 | Not started |
-| `azure-sdk-for-net` / `-java` / `-js` / `-go` | ✅ (same sync mechanism; not individually re-verified) | ❌ none | 0 | Not started |
+| Repo | Eval wiring | Eval files today | Status |
+| --- | --- | --- | --- |
+| `azure-sdk-tools` (source) | PR lint: [`.github/workflows/skill-eval.yml`](../.github/workflows/skill-eval.yml). Behavioral runs: post-main/report-only skill and mock workflow pipelines; live tier nightly. | 71 YAML files: 53 skill files (15 across standard skill directories + 38 TypeSpec-author cases), 10 tool-selection, 7 mock workflow, 1 live workflow. | Native implementation. Behavioral coverage is not PR-gated. |
+| `azure-rest-api-specs` | `eng/pipelines/skill-eval.yml` and `.github/skills/.vally.yaml` are present. | 32 YAML files: 15 skill eval files + 17 ARM API reviewer evals; no root `evals/` workflow-scenario layout. | Pilot is live; [#16347](https://github.com/Azure/azure-sdk-tools/issues/16347) is closed. |
+| `azure-sdk-for-python` | Shared `eng/common` template present; no repo-local entrypoint or `.github/skills/.vally.yaml`. | 9 skill eval YAML files. | Language-repo rollout not started. |
+| `azure-sdk-for-net` | Shared `eng/common` template present; no repo-local entrypoint or `.github/skills/.vally.yaml`. | 11 skill eval YAML files. | Language-repo rollout not started. |
+| `azure-sdk-for-java` | Shared `eng/common` template present; no repo-local entrypoint or `.github/skills/.vally.yaml`. | 9 skill eval YAML files. | Language-repo rollout not started. |
+| `azure-sdk-for-js` | Shared `eng/common` template present; no repo-local entrypoint or `.github/skills/.vally.yaml`. | 9 skill eval YAML files. | Language-repo rollout not started. |
+| `azure-sdk-for-go` | Shared `eng/common` template present; no repo-local entrypoint or `.github/skills/.vally.yaml`. | 0 skill eval YAML files. | Language-repo rollout not started. |
 
-Language-repo rollout is tracked as a whole in
-[#16348](https://github.com/Azure/azure-sdk-tools/issues/16348) — every
-acceptance criterion there is still unchecked. The plan is sync-PR rollout
-(reusing the same `eng/common` mirror already used for `azure-rest-api-specs`),
-one pilot language repo first, scheduled/report-only before any PR-gating.
+Language-repo rollout is tracked in
+[#16348](https://github.com/Azure/azure-sdk-tools/issues/16348). The shared
+template and individual eval files alone do not make a language-repository
+suite executable; each repository still needs its own configuration and
+pipeline entrypoint.
 
-## 5. Known gaps and follow-up issues
+## 5. Known gaps and status
 
-| Gap | Tracking | Notes |
-|---|---|---|
-| 3 skills with zero eval coverage | [#16345](https://github.com/Azure/azure-sdk-tools/issues/16345) | `azsdk-common-generate-sdk-pipeline` (shared, higher priority), `sdk-ai-bot-eval-dataset` + `sdk-ai-bot-run-evaluation` (local-only) |
-| Vacuous/low-quality capability grading (single `output-contains`, missing `scoring.threshold`) | [#15871](https://github.com/Azure/azure-sdk-tools/issues/15871) | `sensei` named explicitly; four-layer pattern is the target shape for every capability stimulus |
-| Per-skill eval CI runs `vally lint` only — no real behavioral execution in CI yet | [#15126](https://github.com/Azure/azure-sdk-tools/issues/15126), [#15127](https://github.com/Azure/azure-sdk-tools/issues/15127) | cited as follow-ups in `evals/README.md` |
-| `tool-calls` grader can't assert argument values, forbidden tools, or call order (only tool *names*) | tracked inline in `evals/README.md` → "Known gaps vs. the original benchmark" | needs upstream `@microsoft/vally-cli` support or a custom `.NET` grader under `evals/Graders/` |
-| Multi-turn conversation coverage is thin — only release-plan flows are in `main`; pipeline diagnose→fix is pending; TypeSpec authoring, APIView feedback, SDK release readiness, and cross-skill handoff are still open | this doc + PR [#16418](https://github.com/Azure/azure-sdk-tools/pull/16418) (open) | |
-| Workflow/multi-tool scenario evals (`evals/workflows/mock`, `evals/workflows/live`) exist only in `azure-sdk-tools` — zero in `azure-rest-api-specs` or any language repo | [#16347](https://github.com/Azure/azure-sdk-tools/issues/16347) | The specs-repo pilot only proved out the tool-selection tier; multi-tool workflow scenarios were never extended cross-repo |
+| Gap | Status / tracking | Notes |
+| --- | --- | --- |
+| Three skill directories have zero eval coverage. | [#16345](https://github.com/Azure/azure-sdk-tools/issues/16345) — open | `azsdk-common-generate-sdk-pipeline` is shared and higher priority; the two SDK AI bot skills are local-only. |
+| Existing skill files vary in behavioral quality. | Historical [#15871](https://github.com/Azure/azure-sdk-tools/issues/15871) — closed | Several legacy files rely only on output matching; `sensei/evals/eval.yaml` also lacks a threshold. The table above identifies the current cases. |
+| Behavioral skill and mock-workflow runs are not PR-gated. | [#15126](https://github.com/Azure/azure-sdk-tools/issues/15126) and [#15127](https://github.com/Azure/azure-sdk-tools/issues/15127) — closed implementation history | Runs exist after main, but current post-main/report-only execution does not protect a PR before merge. |
+| Tool-selection corpus is not mechanically enforced against every tool. | Draft [#16461](https://github.com/Azure/azure-sdk-tools/pull/16461) | Current static test checks legacy prompt presence, not Vally scenario coverage. |
+| Generic tool arguments and tool-call ordering cannot be asserted. | [microsoft/vally#453](https://github.com/microsoft/vally/issues/453), [microsoft/vally#454](https://github.com/microsoft/vally/issues/454) | `tool-calls` already supports required and disallowed tool names; generic arguments and sequence remain gaps. |
+| Multi-turn coverage is thin. | [#16418](https://github.com/Azure/azure-sdk-tools/pull/16418) — open | Only release-plan flows are on `main`; pipeline diagnose→fix, TypeSpec authoring, APIView feedback, SDK release readiness, and cross-skill handoff need coverage. |
+| Root workflow-scenario evals are only in `azure-sdk-tools`. | [#16348](https://github.com/Azure/azure-sdk-tools/issues/16348) — open | The specs-repo pilot added skills and ARM review coverage, not root `evals/workflows/{mock,live}` scenarios. |
+
+## 6. Keeping this current
+
+The Azure SDK Tools eval owner maintains this inventory. A PR that adds,
+removes, or materially changes an eval surface must update the affected table
+and snapshot date in the same change:
+
+1. Skill changes: update the file, routing, and behavioral columns in table 2.
+2. MCP tool or mock changes: recount `[McpServerTool]` method attributes and custom `IMockToolHandler` implementations for table 3.
+3. Scenario or pipeline changes: update table 1, the itemized workflow list, and the source-repo row in table 4.
+4. Downstream rollout: recheck the target repository’s pipeline entrypoint, `.vally.yaml`, and eval-file count before changing table 4.
+5. New gaps or resolved gaps: update table 5 with the active issue, PR, or a clearly labelled closed historical item.

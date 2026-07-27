@@ -16,11 +16,15 @@ The pipeline creates these generated page types:
 | `summary` | one synthesized knowledge page per source document | inherited source folder |
 | `entity` | cross-document page for a recurring symbol | `wiki_entity` |
 | `concept` | cross-document page for a recurring topic | `wiki_concept` |
-| `index` | navigation page for generated entity and concept pages | `wiki_index` |
 
 The full build extracts entities and concepts per document, aggregates recurring
 items, synthesizes generated pages, adds cross-links between pages with shared
 source documents, and writes the manifest.
+
+Every LLM system prompt lives in `azure_sdk_qa_bot_wiki_index/prompts/` as
+markdown (`extract.md` for the map phase, `summary.md` for per-document summary
+pages, `compile.md` for entity/concept pages) and is loaded by
+`llm.load_prompt`, so prompts can be tuned without touching code.
 
 ## Usage
 
@@ -52,6 +56,6 @@ Azure OpenAI when set.
 Generated pages use these additive fields in the shared index:
 
 * `chunk_refs_str` — JSON array string of source document refs.
-* `page_type` — `summary` | `entity` | `concept` | `index`.
+* `page_type` — `summary` | `entity` | `concept`.
 
 Blob metadata values must be ASCII.

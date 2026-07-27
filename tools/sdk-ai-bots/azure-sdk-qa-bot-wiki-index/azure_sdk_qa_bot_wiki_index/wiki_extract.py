@@ -4,22 +4,13 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from functools import lru_cache
-from pathlib import Path
 
-from .llm import ChatLLM
+from .llm import ChatLLM, load_prompt
 
 logger = logging.getLogger(__name__)
 
 # Maximum document characters sent to the extraction LLM call.
 _MAX_EXTRACT_CHARS = 12000
-
-_PROMPT_PATH = Path(__file__).parent / "prompts" / "extract.md"
-
-
-@lru_cache(maxsize=1)
-def _extract_sys() -> str:
-    return _PROMPT_PATH.read_text(encoding="utf-8").strip()
 
 
 @dataclass
@@ -68,7 +59,7 @@ def extract_doc(llm: ChatLLM, source_ref: str, text: str) -> DocExtraction:
         return out
     user = f"Document: {source_ref}\n\n{text[:_MAX_EXTRACT_CHARS]}"
     try:
-        parsed = llm.complete_json(_extract_sys(), user, max_tokens=1200)
+        parsed = llm.complete_json(load_prompt("extract"), user, max_tokens=1200)
     except Exception:
         logger.warning("extract_doc failed for %s", source_ref, exc_info=True)
         out.failed = True

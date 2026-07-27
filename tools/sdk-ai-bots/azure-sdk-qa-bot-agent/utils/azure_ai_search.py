@@ -1,4 +1,17 @@
-"""Azure AI Search SDK client helpers for knowledge retrieval."""
+"""Azure AI Search SDK client helpers for knowledge retrieval.
+
+This module uses the Azure AI Search Python SDK (not raw REST).  Each search
+result is automatically expanded by its header hierarchy so the agent gets
+full section context in a single call.  Sibling queries run concurrently
+via ``asyncio.gather`` for fast response times.
+
+Three retrieval strategies are available and combined by ``fused_search``:
+  - **Agentic search** – uses the KnowledgeBaseRetrievalClient for
+    intent-aware multi-step retrieval (opt-in, ``deep`` mode only).
+  - **Vector search** – hybrid semantic + vector query (always on).
+  - **Keyword search** – sparse BM25 full-text query (on by default, gated
+    by ``KB_ENABLE_KEYWORD``).
+"""
 
 from __future__ import annotations
 
@@ -34,7 +47,7 @@ _RERANK_SCORE_LOW_RELEVANCE_THRESHOLD = 2.0
 
 # Page-type filters for raw source chunks and generated wiki pages.
 NON_WIKI_FILTER = "(page_type eq null or page_type eq '')"
-WIKI_FILTER = "(page_type eq 'summary' or page_type eq 'entity' or page_type eq 'concept' or page_type eq 'synthesis')"
+WIKI_FILTER = "(page_type eq 'summary' or page_type eq 'entity' or page_type eq 'concept')"
 
 # Fields selected by the dense/sparse retrievers. ``page_type`` distinguishes
 # generated wiki pages from raw chunks (for link rendering / optional boosting).
@@ -152,8 +165,14 @@ class SearchClient:
         source_filters: dict[str, str],
         extra_filter: str | None = None,
     ) -> list[KnowledgeChunk]:
-        """Retrieve unexpanded raw chunks via agentic search."""
-        # Combine per-source filters into one OR expression.
+        """Retrieve raw chunks via agentic (intent-aware) search.
+
+        Returns un-expanded chunks.  The caller is responsible for
+        deduplication and hierarchy expansion so that work is done once
+        after all search strategies complete.
+        """
+        # Combine per-source filters into a single filter_add_on with OR so the
+        # KB retrieval client executes one sub-search instead of N.
         combined_filter = " or ".join(f"({f})" for f in source_filters.values() if f)
         combined_filter = _and_extra(combined_filter, extra_filter)
 
@@ -192,7 +211,12 @@ class SearchClient:
         top_k: int | None = None,
         extra_filter: str | None = None,
     ) -> list[KnowledgeChunk]:
-        """Run hybrid semantic and vector search with optional OData filtering."""
+        """Hybrid semantic + vector search mirroring the Go backend's SearchTopKRelatedDocuments.
+
+        Combines all source filters into a single query for efficiency,
+        filters by rerank score, and returns the top-k results sorted by
+        relevance.
+        """
         k = top_k or self._top_k
 
         vector_query = VectorizableTextQuery(
@@ -466,7 +490,7 @@ class SearchClient:
         for c in chunks:
             if c.page_type == "summary" and c.title:
                 pairs = [(c.title, c.source or "")]
-            elif c.page_type in ("entity", "concept", "synthesis"):
+            elif c.page_type in ("entity", "concept"):
                 pairs = []
                 for r in list(c.chunk_refs)[:per_page]:
                     folder, rel = split_source_ref(r)
@@ -583,7 +607,7 @@ class HierarchyLevel(str, Enum):
 
 
 def _detect_hierarchy(header1: str, header2: str, header3: str) -> HierarchyLevel:
-    """Determine the hierarchy level of a chunk."""
+    """Determine the hierarchy level of a chunk (mirrors Go DetectChunkHierarchy)."""
     if header3:
         return HierarchyLevel.header3
     if header2 and header1:
@@ -601,7 +625,7 @@ def _build_hierarchy_filter(
     header2: str,
     header3: str,
 ) -> str:
-    """Build a hierarchy-scoped filter."""
+    """Build hierarchy-scoped filter (mirrors Go CompleteChunkByHierarchy behavior)."""
     filters = [
         f"title eq '{_escape_odata(title)}'",
         f"context_id eq '{_escape_odata(context_id)}'",

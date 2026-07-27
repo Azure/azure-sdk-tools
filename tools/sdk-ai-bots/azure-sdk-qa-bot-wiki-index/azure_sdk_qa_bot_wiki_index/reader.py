@@ -25,10 +25,10 @@ def rel_title(source_path: str) -> str:
     return path
 
 
-async def read_blob_container(container_client, prefix: str = "") -> list[tuple[str, str]]:
-    """Read every markdown blob under *prefix* as ``(source_path, text)``."""
+async def read_blob_container(container_client) -> list[tuple[str, str]]:
+    """Read every markdown blob in the container as ``(source_path, text)``."""
     out: list[tuple[str, str]] = []
-    async for blob in container_client.list_blobs(name_starts_with=prefix or None):
+    async for blob in container_client.list_blobs():
         name = blob.name
         if PurePosixPath(name).suffix.lower() not in _MD_SUFFIXES:
             continue
@@ -39,5 +39,5 @@ async def read_blob_container(container_client, prefix: str = "") -> list[tuple[
         except UnicodeDecodeError:
             text = data.decode("utf-8", errors="replace")
         out.append((name, text))
-    logger.info("read_blob_container: %d markdown blobs under %r", len(out), prefix)
+    logger.info("read_blob_container: %d markdown blobs", len(out))
     return out

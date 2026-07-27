@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from collections.abc import Callable
 from pydantic import BaseModel, Field, field_validator
@@ -111,8 +112,6 @@ class KnowledgeChunk(BaseModel):
         Wiki refs use scalar ``chunk_refs_str`` because index projections cannot
         populate a collection field from scalar blob metadata.
         """
-        import json
-
         if not v:
             return []
         if isinstance(v, str):

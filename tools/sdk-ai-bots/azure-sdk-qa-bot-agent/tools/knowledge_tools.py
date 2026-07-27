@@ -27,12 +27,13 @@ _MAX_CONTENT_CHARS_PER_RESULT = 3000
 # Shared by both retrieval tracks so the agent picks a strategy the same way.
 _SEARCH_MODE_DESC = (
     "Search strategy to use. "
-    "'quick' — vector search only, fast, good for straightforward "
+    "'quick' — dense + keyword retrieval, fast, good for straightforward "
     "factual lookups about a single feature, symbol, or process step "
     "(e.g., 'Which decorator marks an operation as long-running?'). "
     "Use 'quick' by default. "
-    "'deep' — runs both agentic and vector search in parallel, "
-    "better for complex questions that need cross-referencing multiple topics "
+    "'deep' — additionally runs agentic (intent-aware, multi-step) retrieval "
+    "in parallel, better for complex questions that need cross-referencing "
+    "multiple topics "
     "(e.g., 'How does adding a new API version interact with the SDK release "
     "and breaking-change review process?'). "
     "Use 'deep' only when the question genuinely spans multiple unrelated concepts. "
@@ -44,10 +45,10 @@ class SearchMode(str, Enum):
     """Search strategy for knowledge retrieval."""
 
     quick = "quick"
-    """Vector search only — fast, good for straightforward factual lookups."""
+    """Dense + keyword retrieval — fast, good for straightforward factual lookups."""
 
     deep = "deep"
-    """Agentic + vector search in parallel — better for complex or multi-faceted questions."""
+    """Adds agentic retrieval in parallel — better for complex or multi-faceted questions."""
 
 
 class ServiceType(str, Enum):
@@ -288,7 +289,7 @@ class KnowledgeTools:
         )
         unique = [
             c for c in search_client.deduplicate_chunks(raw)
-            if c.page_type in ("summary", "entity", "concept", "synthesis")
+            if c.page_type in ("summary", "entity", "concept")
         ]
         unique.sort(key=lambda c: c.rerank_score, reverse=True)
         wiki_pages = unique[: int(cfg("KB_WIKI_TOP", "6"))]

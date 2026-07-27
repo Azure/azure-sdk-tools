@@ -12,6 +12,7 @@ from .reader import rel_title, source_folder
 from .storage import (
     blob_path,
     content_hash,
+    now_iso,
     read_manifest,
     render_markdown,
     soft_delete_blob,
@@ -23,7 +24,6 @@ from .wiki_extract import DocExtraction, ExtractedItem, extract_doc
 from .wiki_reduce import (
     Group,
     aggregate_groups,
-    build_index_page,
     group_to_page,
     inject_cross_links,
     synthesize_group,
@@ -150,7 +150,7 @@ async def reconcile(
         elif sp in fresh:
             failed_docs.add(sp)
             extn = _extraction_from_json(sp, prior_sources.get(sp, {}))
-            stored_hash = ""
+            stored_hash = h
         else:
             extn = _extraction_from_json(sp, prior_sources.get(sp, {}))
             stored_hash = h
@@ -218,16 +218,12 @@ async def reconcile(
                     ec_pages[g.slug()] = group_to_page(g, body)
                     stats.groups_synthesized += 1
 
-    # --- 5. cross-links + index over the full current page set ---
+    # --- 5. cross-links over the full current page set ---
     all_pages = list(summary_pages.values()) + list(ec_pages.values())
     inject_cross_links(all_pages)
-    index = build_index_page(all_pages)
-    if index is not None:
-        all_pages.append(index)
     stats.total_pages = len(all_pages)
 
     # --- 6. apply: upload changed, soft-delete removed, write manifest ---
-    from .storage import now_iso
     ts = now_iso()
     title_by_slug = {p.slug: p.title for p in all_pages}
     current_slugs = {p.slug for p in all_pages}
@@ -239,7 +235,7 @@ async def reconcile(
         prior = prior_pages.get(page.slug)
         path = blob_path(page.slug)
         if not prior or prior.get("content_hash") != chash or prior.get("is_deleted") == "true":
-            path, chash, _ = await upload_page(container_client, page, title_by_slug)
+            path, chash = await upload_page(container_client, page, title_by_slug)
             stats.pages_written += 1
         new_pages_manifest[page.slug] = {
             "page_type": page.page_type,

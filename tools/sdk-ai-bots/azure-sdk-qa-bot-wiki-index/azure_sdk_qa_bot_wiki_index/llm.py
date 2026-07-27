@@ -1,12 +1,22 @@
-"""Azure OpenAI chat backend."""
+"""Azure OpenAI chat backend and prompt loading."""
 
 from __future__ import annotations
 
 import json
 import logging
 import os
+from functools import lru_cache
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+_PROMPT_DIR = Path(__file__).parent / "prompts"
+
+
+@lru_cache(maxsize=None)
+def load_prompt(name: str) -> str:
+    """Read the system prompt stored in ``prompts/<name>.md``."""
+    return (_PROMPT_DIR / f"{name}.md").read_text(encoding="utf-8").strip()
 
 
 def build_azure_openai_client(endpoint: str, api_version: str = "2024-12-01-preview"):

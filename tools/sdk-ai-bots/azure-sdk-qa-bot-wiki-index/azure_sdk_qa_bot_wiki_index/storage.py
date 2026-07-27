@@ -12,7 +12,7 @@ from .pages import WikiPage
 logger = logging.getLogger(__name__)
 
 MANIFEST_BLOB = "_manifest.json"
-MANIFEST_VERSION = 2
+MANIFEST_VERSION = 1
 
 # Maximum source refs stored in blob metadata.
 _MAX_CHUNK_REFS_META = 8
@@ -51,8 +51,8 @@ def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-async def upload_page(container_client, page: WikiPage, title_by_slug: dict[str, str]) -> tuple[str, str, str]:
-    """Upload one page blob (+ metadata). Returns (blob_path, content_hash, body)."""
+async def upload_page(container_client, page: WikiPage, title_by_slug: dict[str, str]) -> tuple[str, str]:
+    """Upload one page blob (+ metadata). Returns ``(blob_path, content_hash)``."""
     body = render_markdown(page, title_by_slug)
     chash = content_hash(body)
     path = blob_path(page.slug)
@@ -75,7 +75,7 @@ async def upload_page(container_client, page: WikiPage, title_by_slug: dict[str,
         metadata=metadata,
         content_type="text/markdown; charset=utf-8",
     )
-    return path, chash, body
+    return path, chash
 
 
 async def soft_delete_blob(container_client, path: str) -> bool:
@@ -96,7 +96,7 @@ async def soft_delete_blob(container_client, path: str) -> bool:
 
 
 async def read_manifest(container_client) -> dict:
-    """Load the manifest, or an empty v2 skeleton if none exists yet."""
+    """Load the manifest, or an empty skeleton if none exists yet."""
     blob = container_client.get_blob_client(MANIFEST_BLOB)
     try:
         exists = await blob.exists()

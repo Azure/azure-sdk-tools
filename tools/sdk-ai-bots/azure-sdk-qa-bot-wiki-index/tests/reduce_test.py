@@ -14,7 +14,6 @@ from azure_sdk_qa_bot_wiki_index.wiki_reduce import (
     _concept_key,
     _entity_key,
     aggregate_groups,
-    build_index_page,
     inject_cross_links,
 )
 
@@ -53,17 +52,6 @@ def test_cross_links_by_shared_docs():
     assert "concept/versioning" in added.out_links
     # shares no docs → no links
     assert next(p for p in pages if p.slug == "entity/route").out_links == []
-
-
-def test_build_index_page():
-    pages = [
-        _page("entity/added", PAGE_ENTITY, "@added", ["d1"]),
-        _page("concept/versioning", PAGE_CONCEPT, "API versioning", ["d1"]),
-    ]
-    idx = build_index_page(pages)
-    assert idx is not None and idx.page_type == "index"
-    assert "@added" in idx.content and "API versioning" in idx.content
-    assert build_index_page([]) is None
 
 
 def test_alias_merges_surface_forms_across_docs():

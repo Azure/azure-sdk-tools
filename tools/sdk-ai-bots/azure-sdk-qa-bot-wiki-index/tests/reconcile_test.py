@@ -105,9 +105,9 @@ def test_first_run_full_build_then_noop():
     corpus = _corpus()
 
     s1 = asyncio.run(reconcile(cc, corpus, llm, min_docs=2))
-    # 2 summaries + 1 entity + 1 concept + 1 index
-    assert s1.total_pages == 5
-    assert s1.pages_written == 5
+    # 2 summaries + 1 entity + 1 concept
+    assert s1.total_pages == 4
+    assert s1.pages_written == 4
     assert s1.summaries_regenerated == 2
     assert s1.groups_synthesized == 2
     # manifest persisted
@@ -117,7 +117,7 @@ def test_first_run_full_build_then_noop():
 
     # second run, no source change → nothing rewritten, no LLM regen
     s2 = asyncio.run(reconcile(cc, corpus, llm, min_docs=2))
-    assert s2.total_pages == 5
+    assert s2.total_pages == 4
     assert s2.pages_written == 0
     assert s2.summaries_regenerated == 0
     assert s2.groups_synthesized == 0

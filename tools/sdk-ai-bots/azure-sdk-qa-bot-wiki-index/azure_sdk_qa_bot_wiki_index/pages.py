@@ -10,15 +10,11 @@ from dataclasses import dataclass, field
 PAGE_SUMMARY = "summary"
 PAGE_ENTITY = "entity"
 PAGE_CONCEPT = "concept"
-PAGE_SYNTHESIS = "synthesis"
-PAGE_INDEX = "index"
 
 # context_id buckets for cross-document pages (summary inherits its source folder).
 CONTEXT_BY_TYPE = {
     PAGE_ENTITY: "wiki_entity",
     PAGE_CONCEPT: "wiki_concept",
-    PAGE_SYNTHESIS: "wiki_synthesis",
-    PAGE_INDEX: "wiki_index",
 }
 
 _SLUG_RE = re.compile(r"[^a-z0-9]+")

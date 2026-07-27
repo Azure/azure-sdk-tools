@@ -86,11 +86,10 @@ SRC_STATIC_ARM_DOCS = "static_arm_docs"
 
 # -- Synthesized knowledge pages (built by azure-sdk-qa-bot-wiki-index) --
 # Wiki summary pages inherit their source's context_id, so they need no
-# dedicated source. The cross-document wiki pages (entity/concept/synthesis)
-# carry these context_ids.
+# dedicated source. The cross-document wiki pages (entity/concept) carry
+# these context_ids.
 SRC_WIKI_ENTITY = "wiki_entity"
 SRC_WIKI_CONCEPT = "wiki_concept"
-SRC_WIKI_SYNTHESIS = "wiki_synthesis"
 
 
 # ---------------------------------------------------------------------------
@@ -298,10 +297,6 @@ _register(
         name=SRC_WIKI_CONCEPT,
         description="Wiki CONCEPT pages: one per cross-cutting TypeSpec/Azure SDK topic (e.g. API versioning, long-running operations, pagination), consolidating the core rules, the decorators/APIs involved, and the pitfalls across many documents. Query when a question is about an end-to-end concept or pattern rather than one symbol.",
     ),
-    KnowledgeSource(
-        name=SRC_WIKI_SYNTHESIS,
-        description="Wiki SYNTHESIS pages: cross-document syntheses/comparisons that tie several related symbols or concepts together into one coherent explanation. Query for higher-level 'how do these fit together' questions.",
-    ),
 )
 
 
@@ -376,7 +371,6 @@ _TYPESPEC_SOURCES = _sources(
     SRC_STATIC_ARM_DOCS,
     SRC_WIKI_ENTITY,
     SRC_WIKI_CONCEPT,
-    SRC_WIKI_SYNTHESIS,
 )
 
 _AZURE_TYPESPEC_AUTHORING_SOURCES = _sources(

@@ -8,12 +8,11 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from difflib import SequenceMatcher
 
-from .llm import ChatLLM
+from .llm import ChatLLM, load_prompt
 from .pages import (
     CONTEXT_BY_TYPE,
     PAGE_CONCEPT,
     PAGE_ENTITY,
-    PAGE_INDEX,
     WikiPage,
     make_slug,
 )
@@ -26,28 +25,6 @@ _MAX_OUT_LINKS = 8
 _MAX_REDUCE_INPUT = 12000
 # Fuzzy-merge threshold for concept canonical keys; entity/decorator symbols are exact-only.
 _CONCEPT_FUZZY_RATIO = 0.9
-
-# Page-body synthesis prompt for compiling grounded source facts.
-_COMPILE_SYS = (
-    "You are a COMPILER, not a writer. You are given grounded facts about ONE "
-    "Azure SDK {kind} ('{name}'), collected verbatim from multiple "
-    "documents. Compile them into one wiki page.\n"
-    "Rules:\n"
-    "- Stay close to the source wording. Reuse the source's own sentences; you "
-    "MAY lightly reorder, deduplicate, and join related sentences, but do NOT "
-    "rephrase for style, do NOT expand short statements into longer ones, and do "
-    "NOT invent transitional sentences.\n"
-    "- Do NOT over-structure. Only introduce a heading if the facts clearly form "
-    "distinct groups; prefer a flat list of tight declarative bullets.\n"
-    "- Do NOT add rhetorical filler (phrases like 'designed to', 'aims to', "
-    "'is a powerful') unless literally present in the source.\n"
-    "- Keep exact names, signatures, decorators (with @), and syntax verbatim.\n"
-    "- Be COMPREHENSIVE: include every distinct grounded fact — what it is, exact "
-    "usage/signature, when to use it, rules/constraints/defaults, interactions "
-    "with related symbols, and common mistakes. Group related facts under short "
-    "headings when there are several distinct aspects.\n"
-    "- Drop duplicates; keep the most specific facts. Up to ~450 words."
-)
 
 _ENTITY_STRIP_AT = re.compile(r"^@+")
 _NONALNUM = re.compile(r"[^a-z0-9]+")
@@ -225,7 +202,7 @@ def synthesize_group(llm: ChatLLM, group: Group) -> str:
     if not body:
         return ""
     kind = "concept" if group.page_type == PAGE_CONCEPT else "entity/symbol"
-    system = _COMPILE_SYS.format(kind=kind, name=group.name)
+    system = load_prompt("compile").format(kind=kind, name=group.name)
     user = f"Name: {group.name}\n\nGrounded facts from documents:\n{body[:_MAX_REDUCE_INPUT]}"
     try:
         out = llm.complete(system, user, max_tokens=1000)
@@ -261,25 +238,3 @@ def inject_cross_links(pages: list[WikiPage]) -> None:
                     weighted[other] += 1
         ranked = sorted(weighted.items(), key=lambda kv: kv[1], reverse=True)
         p.out_links = [slug for slug, _w in ranked[:_MAX_OUT_LINKS]]
-
-
-def build_index_page(pages: list[WikiPage]) -> WikiPage | None:
-    """A navigation page listing generated entity/concept pages."""
-    entities = sorted(p.title for p in pages if p.page_type == PAGE_ENTITY)
-    concepts = sorted(p.title for p in pages if p.page_type == PAGE_CONCEPT)
-    if not entities and not concepts:
-        return None
-    lines = ["# Knowledge wiki index", ""]
-    if concepts:
-        lines += ["## Concepts", *[f"- {c}" for c in concepts], ""]
-    if entities:
-        lines += ["## Entities", *[f"- {e}" for e in entities]]
-    content = "\n".join(lines)[:_MAX_PAGE_CHARS]
-    return WikiPage(
-        slug=f"{PAGE_INDEX}/knowledge-wiki",
-        page_type=PAGE_INDEX,
-        title="Knowledge wiki index",
-        content=content,
-        context_id=CONTEXT_BY_TYPE[PAGE_INDEX],
-        out_links=[p.slug for p in pages if p.page_type in (PAGE_ENTITY, PAGE_CONCEPT)][:_MAX_OUT_LINKS],
-    )

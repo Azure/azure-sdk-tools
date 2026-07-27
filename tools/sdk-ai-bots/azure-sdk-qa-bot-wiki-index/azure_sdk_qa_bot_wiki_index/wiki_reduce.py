@@ -54,6 +54,12 @@ _NONALNUM = re.compile(r"[^a-z0-9]+")
 _WS = re.compile(r"\s+")
 
 
+def _is_symbol_name(name: str) -> bool:
+    """True for decorators / framework templates (kept even from a single doc)."""
+    n = (name or "").strip()
+    return n.startswith("@") or "legacy." in n.lower()
+
+
 @dataclass
 class Group:
     """An aggregated entity/concept group (pre-synthesis)."""
@@ -187,7 +193,10 @@ def aggregate_groups(
             items.extend(getattr(d, kind))
         for cluster in _merge_by_alias(items, key_fn):
             refs = sorted({it.source_ref for it in cluster if it.source_ref})
-            if len(refs) < min_docs:
+            name = _canonical_name(cluster)
+            # Decorators/framework templates are high-signal even from one doc.
+            min_needed = 1 if (page_type == PAGE_ENTITY and _is_symbol_name(name)) else min_docs
+            if len(refs) < min_needed:
                 continue
             aliases: list[str] = []
             for it in cluster:
@@ -197,7 +206,7 @@ def aggregate_groups(
             groups.append(
                 Group(
                     page_type=page_type,
-                    name=_canonical_name(cluster),
+                    name=name,
                     source_refs=refs,
                     descriptions=_grounded_texts(cluster),
                     aliases=aliases,

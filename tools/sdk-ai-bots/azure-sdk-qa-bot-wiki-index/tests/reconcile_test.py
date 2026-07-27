@@ -129,15 +129,19 @@ def test_doc_delete_soft_deletes_summary_and_shrinks_groups():
     llm = _FakeLLM(_EXTRACTION)
     asyncio.run(reconcile(cc, _corpus(), llm, min_docs=2))
 
-    # remove doc b → entity/concept now have only 1 source (< min_docs) → gone;
-    # b's summary soft-deleted
+    # remove doc b → concept 'versioning' drops below min_docs and is soft-deleted
+    # with b's summary; the decorator entity '@added' is kept (symbol singleton)
     s = asyncio.run(reconcile(cc, [("typespec_docs/a.md", "text a @added versioning")], llm, min_docs=2))
     assert s.deleted_docs == 1
-    # summary/b + entity + concept soft-deleted (index may drop too)
-    assert s.pages_deleted >= 3
+    assert s.pages_deleted >= 2
     man = json.loads(cc.store["_manifest.json"]["data"].decode("utf-8"))
     # only doc a remains as a source
     assert list(man["sources"].keys()) == ["typespec_docs/a.md"]
+    # the decorator entity page survives even with a single source
+    assert any(
+        e["page_type"] == "entity" and e.get("is_deleted") != "true"
+        for e in man["pages"].values()
+    )
 
 
 def test_doc_change_regenerates_summary_only():

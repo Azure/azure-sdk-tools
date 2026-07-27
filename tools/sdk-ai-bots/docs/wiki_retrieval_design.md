@@ -31,7 +31,7 @@ flowchart LR
     idx --> wikitool --> ans
 ```
 
-- **Build (offline).** A map-reduce over the markdown corpus produces four page types: `summary` (one per document, from its full text), `entity` (one per recurring named symbol), `concept` (one per cross-cutting topic), and an `index` navigation page. Entity/concept pages aggregate mentions across documents with alias/near-duplicate merging and record the source docs they were built from (`chunk_refs`) for query-time routing. Granularity is tunable (`focused` / `standard` / `exhaustive`). Pages are written as markdown blobs plus a reconcile manifest.
+- **Build (offline).** A map-reduce over the markdown corpus produces four page types: `summary` (one per document, from its full text), `entity` (one per recurring named symbol), `concept` (one per cross-cutting topic), and an `index` navigation page. Entity/concept pages aggregate mentions across documents with alias/near-duplicate merging and record the source docs they were built from (`chunk_refs`) for query-time routing. Named decorators and framework templates (`@`-prefixed names, `Azure.ResourceManager.Legacy.*`) are always extracted — even from a single document — and their constraints and anti-patterns captured, so symbol-specific questions route to a consolidated page. Granularity is tunable (`focused` / `standard` / `exhaustive`). Pages are written as markdown blobs plus a reconcile manifest.
 - **Indexer (blobs → index).** A dedicated indexer projects the wiki blobs into the **shared** KB index, so one index serves both layers. Raw chunks leave `page_type` null; wiki pages set it. `chunk_refs` are carried as a JSON-array string (index projections cannot populate a collection from a scalar) and parsed back at query time. Soft-deletes propagate to the index. `setup_indexer.py` (re)creates the datasource / skillset / indexer.
 
 ## Two-track retrieval
@@ -55,6 +55,7 @@ For most questions the agent issues `search_knowledge_base` + `wiki_search` in o
 
 - Wiki two-track scores **64.8 %** vs **60.3 %** for the memory-off KB-only baseline (**+4.5 pp**), with the best `response_completeness` and the largest gains on general/conceptual categories; groundedness / relevance / coherence / fluency stay ~100 %.
 - The separation is essential — retrieving wiki pages in the same pool as source chunks regresses the score. Richer summary pages drive the completeness gain, in tension with the concise-answer cap.
+- Full symbol coverage (always extracting named decorators/templates, including single-doc symbols, plus their constraints) lifts symbol-specific and completeness scores — in a same-day A/B it moved typespec **+4.6 pp** and `response_completeness` **+5 pp** by giving symbol questions a consolidated page to route to.
 
 ## Known limitations
 

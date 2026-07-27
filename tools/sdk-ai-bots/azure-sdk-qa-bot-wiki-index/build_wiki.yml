@@ -66,11 +66,22 @@ extends:
                 displayName: 'Build wiki pages'
                 inputs:
                   azureSubscription: $(SERVICE_CONNECTION)
+                  # DefaultAzureCredential would otherwise pick up the build
+                  # agent's own managed identity, which has no access to the
+                  # bot's resources; exporting the service connection's
+                  # federated token pins it to the right principal.
+                  addSpnToEnvironment: true
                   scriptType: bash
                   scriptLocation: inlineScript
                   workingDirectory: $(workingDirectory)
                   inlineScript: |
                     set -euo pipefail
+
+                    echo "$idToken" > "$(Agent.TempDirectory)/id_token"
+                    export AZURE_CLIENT_ID="$servicePrincipalId"
+                    export AZURE_TENANT_ID="$tenantId"
+                    export AZURE_FEDERATED_TOKEN_FILE="$(Agent.TempDirectory)/id_token"
+                    echo "authenticating as client id $servicePrincipalId"
 
                     python -m pip install --upgrade pip
                     python -m pip install keyring artifacts-keyring --retries 5 --timeout 60

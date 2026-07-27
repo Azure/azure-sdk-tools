@@ -34,6 +34,7 @@ class TenantID(str, Enum):
     AZURE_SDK_ONBOARDING = "azure_sdk_onboarding"
     AZURE_TYPESPEC_AUTHORING = "azure_typespec_authoring"
     API_SPEC_REVIEW_BOT = "api_spec_review_bot"
+    AZSDK_TOOLS_AGENT_QA_BOT = "azsdk_tools_agent_qa_bot"
     AZURE_SDK_QA_BOT = "azure_sdk_qa_bot"
 
 
@@ -78,6 +79,7 @@ SRC_AZURE_SDK_INTERNAL_WIKI = "azure-sdk-internal-wiki"
 
 # -- SDK tools --
 SRC_AZURE_SDK_TOOLS_DOCS = "azure_sdk_tools_docs"
+SRC_AZSDK_CLI_DOCS = "azsdk_cli_docs"
 
 # -- General Azure & review resources --
 SRC_STATIC_AZURE_DOCS = "static_azure_docs"
@@ -280,6 +282,12 @@ _register(
         name=SRC_AZURE_SDK_TOOLS_DOCS,
         description="Azure SDK tools documentation covering js-sdk-release-tools and related JavaScript SDK tooling.",
         base_url="https://github.com/Azure/azure-sdk-tools/blob/main/",
+    ),
+    KnowledgeSource(
+        name=SRC_AZSDK_CLI_DOCS,
+        description="Azure SDK CLI (azsdk) agent documentation: CLI command guidelines, MCP tools reference, design specs, and custom-agent and skills authoring guidelines for the Azure SDK Tools Agent. Use for questions about what the agent/CLI can do, MCP tool behavior, design/architecture, and agent/skill development.",
+        base_url="https://github.com/Azure/azure-sdk-tools/blob/main/",
+        trim_format=True,
     ),
 )
 
@@ -579,6 +587,28 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         },
         qa_guideline_file="tenants/api_spec_review.md",
         enable_routing=True,
+    ),
+    TenantID.AZSDK_TOOLS_AGENT_QA_BOT: TenantConfig(
+        display_name="AzSDK Tools Agent",
+        skill_name="azsdk-tools-agent",
+        scope=(
+            "Azure SDK Tools Agent (azsdk CLI/MCP) usage and troubleshooting: agent/MCP "
+            "setup and reliability, tool capabilities, release plan status and readiness "
+            "lifecycle, and authoring azsdk CLI tools and skills."
+        ),
+        topics=[
+            "azsdk CLI / MCP server setup, connection, and reliability (mcp.json, VS Code / Copilot CLI, cold-start/timeout)",
+            "Azure SDK Tools Agent capabilities and tool usage (generation, validation, review, release)",
+            "Release plan and readiness lifecycle status, errors, and troubleshooting",
+            "SDK generation from TypeSpec failures triggered via the agent",
+            "Authoring azsdk CLI tools and skills (custom agents, CLI command and skill guidelines)",
+        ],
+        sources=_sources(
+            SRC_AZSDK_CLI_DOCS,
+            SRC_AZURE_SDK_DOCS_ENG,
+            SRC_AZURE_SDK_INTERNAL_WIKI,
+        ),
+        qa_guideline_file="tenants/azsdk_tools_agent.md",
     ),
     TenantID.GENERAL_QA_BOT: TenantConfig(
         display_name="General",

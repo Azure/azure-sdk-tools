@@ -1,5 +1,37 @@
 # Release History
 
+## 0.6.31 (2026-07-27)
+
+### Bugs Fixed
+
+- Updated `GitHub.Copilot.SDK` to 1.0.8 so Copilot-backed commands accept ISO-8601 `ping` timestamps returned by current Copilot CLI versions.
+
+## 0.6.30 (2026-07-23)
+
+### Features Added
+
+- Added a notification service that sends an email notification when a release plan is created. Notifications are sent only when the notification service URL environment variable is configured.
+
+### Bugs Fixed
+
+- Fixed release plan SDK details update to avoid marking a language as missing emitter config when the TypeSpec parser did not detect any package name.
+
+## 0.6.28 (2026-07-16)
+
+### Features Added
+
+- Added a new helper method to get user profile from a GitHub user name
+
+### Bugs Fixed
+
+- Hide logs for gh auth
+
+## 0.6.27 (2026-07-13)
+
+### Features Added
+
+- Update release status CLI command to take release pipeline URL as a parameter to update it in the release plan. Also updated this tool to accept SDK release type and SDK pull request to lookup the release plan using pull request/release type.
+
 ## 0.6.26 (2026-07-09)
 
 ### Breaking Changes
@@ -24,6 +56,9 @@
 
 - The create and update release plan tools now give clear guidance when run from a language SDK repository (or any directory that is not the `azure-rest-api-specs`/`azure-rest-api-specs-pr` repo). Instead of incorrectly reporting that the spec is in a private repository, they now ask the user to provide the absolute path to the TypeSpec project or to run the command from within the `Azure/azure-rest-api-specs` repository.
 - Authentication failures against Azure DevOps now return a clearer error message that instructs the user to sign in with the Azure CLI using the default Microsoft tenant (`az login --tenant microsoft.onmicrosoft.com`), which resolves failures caused by being signed in with a different tenant.
+
+- Requests such as "run SDK generation for all languages for release <id>" are now routed to the correct SDK generation pipeline tool (`azsdk_run_generate_sdk`) instead of the release/publish tool.
+- The `azsdk_run_generate_sdk` and `azsdk_release_sdk` tool descriptions were clarified to disambiguate generating an SDK from releasing an already-generated package, and a dedicated `azsdk-common-generate-sdk-pipeline` skill was added to route release-plan / all-language / pipeline generation prompts to `azsdk_run_generate_sdk` (called once per language).
 
 ## 0.6.24 (2026-06-30)
 

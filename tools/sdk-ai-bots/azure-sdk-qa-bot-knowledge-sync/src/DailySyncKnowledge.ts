@@ -150,6 +150,10 @@ export async function processDailySyncKnowledge(): Promise<void> {
         
         // Clean up expired blobs
         await cleanupExpiredBlobs(allChangedFiles.concat(allUnchangedFiles).concat(allMetadataChangedFiles));
+
+        // Trigger AI Search to reindex the knowledge base so the updated blobs are picked up
+        await searchService.runIndexer();
+
         console.log('Daily sync knowledge processing completed');
 
     } finally {

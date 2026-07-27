@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Helpers;
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 
@@ -85,7 +85,7 @@ public class CopilotAgentRunner(
         var sessionConfig = new SessionConfig
         {
             Model = agent.Model,
-            Tools = tools,
+            Tools = [.. tools.Cast<AIFunctionDeclaration>()],
             SystemMessage = new SystemMessageConfig
             {
                 Mode = SystemMessageMode.Append,
@@ -100,7 +100,7 @@ public class CopilotAgentRunner(
             OnPermissionRequest = (request, invocation) =>
             {
                 logger.LogDebug("Auto-approving permission request for tool execution");
-                return Task.FromResult(new PermissionRequestResult { Kind = PermissionRequestResultKind.Approved });
+                return PermissionHandler.ApproveAll(request, invocation);
             }
         };
 

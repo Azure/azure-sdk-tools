@@ -14,14 +14,15 @@ public class FeedbackClassificationTemplateTests
         new FeedbackItem { Text = "Rename FooClient to BarClient" }
     ];
 
-    private static FeedbackClassificationTemplate CreateTemplate(EditScope editScope) =>
+    private static FeedbackClassificationTemplate CreateTemplate(EditScope editScope, bool specInspectionAvailable = true) =>
         new(
             serviceName: "Widget",
             language: "csharp",
             referenceDocContent: "reference",
             items: SampleItems(),
             globalContext: "ctx",
-            editScope: editScope);
+            editScope: editScope,
+            specInspectionAvailable: specInspectionAvailable);
 
     [Test]
     public void AllScope_EmitsNoEditScopeBias()
@@ -52,5 +53,17 @@ public class FeedbackClassificationTemplateTests
         Assert.That(prompt, Does.Contain("EDIT SCOPE — SPEC INPUTS ONLY"));
         Assert.That(prompt, Does.Contain("classify it as **TSP_APPLICABLE**"));
         Assert.That(prompt, Does.Not.Contain("EDIT SCOPE — CUSTOM CODE ONLY"));
+    }
+
+    [Test]
+    public void CustomCodeScopeWithoutSpecInspection_DoesNotAdvertiseSpecTools()
+    {
+        var prompt = CreateTemplate(EditScope.CustomCode, specInspectionAvailable: false).BuildPrompt();
+
+        Assert.That(prompt, Does.Contain("TypeSpec inspection unavailable"));
+        Assert.That(prompt, Does.Not.Contain("**Available Tools:**"));
+        Assert.That(prompt, Does.Not.Contain("Always search the TypeSpec files first"));
+        Assert.That(prompt, Does.Not.Contain("reference documentation below"));
+        Assert.That(prompt, Does.Not.Contain("Consult the reference documentation provided"));
     }
 }

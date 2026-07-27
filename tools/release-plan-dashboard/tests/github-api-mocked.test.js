@@ -498,6 +498,7 @@ describe("batchFetchSpecPrLabels (mocked Octokit)", () => {
         { name: "ARM review", color: "0075ca" },
         { name: "API", color: "e4e669" },
         { name: "enhancement", color: "a2eeef" },
+        { name: "namespace-approved", color: "0e8a16" },
       ],
     });
 
@@ -505,9 +506,14 @@ describe("batchFetchSpecPrLabels (mocked Octokit)", () => {
     const result = await batchFetchSpecPrLabels(urls);
     expect(result).toBeInstanceOf(Map);
     const labels = result.get(urls[0]);
-    expect(labels).toHaveLength(3);
+    expect(labels).toHaveLength(4);
     expect(labels.map((l) => l.name)).toEqual(
-      expect.arrayContaining(["BreakingChange", "ARM review", "API"]),
+      expect.arrayContaining([
+        "BreakingChange",
+        "ARM review",
+        "API",
+        "namespace-approved",
+      ]),
     );
   });
 

@@ -9,6 +9,11 @@
 - [stable → stable](https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/): How to add a new stable version after an existing stable version.
 - [Evolving APIs](https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/): How to evolve your API across versions by adding, removing, or modifying resources, operations, and properties using versioning decorators.
 
+## ARM (Resource-Manager) Operations
+
+- [ARM resource operations](https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/): Standard ARM operation templates — GET (`ArmResourceRead`), PUT (`ArmResourceCreateOrReplaceSync/Async`), PATCH (`ArmCustomPatchSync/Async`), DELETE (`ArmResourceDeleteSync/DeleteWithoutOkAsync`), check-existence (`ArmResourceCheckExistence`), list (`ArmResourceListByParent`, `ArmListBySubscription`), custom actions (`ArmResourceActionSync/Async`, `ArmResourceActionNoContentSync`), and provider actions. Also shows how to add standard list query parameters (e.g. `$top`/`$skip`) by spreading parameter models into the list template.
+- [Extension resource sample](https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/): How to define an extension resource (`model X is ExtensionResource<XProperties>`) and its operations via the `Extension.*` templates (`Extension.Read`, `Extension.CreateOrReplaceAsync`, `Extension.CustomPatchSync`, `Extension.DeleteWithoutOkAsync`, `Extension.ListByTarget`, `Extension.ActionSync`).
+
 ## Data-Plane Operations
 
 - [Azure.Core reference](https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference): Full reference for Azure.Core decorators, interfaces, operations, and models.

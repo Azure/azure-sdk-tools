@@ -60,6 +60,8 @@ extends:
               vallyRoot: .github/skills/azure-typespec-author/evaluate
               mcpEnvironment: live
               startQaBotBackend: true
+              UseAzSdkAuthentication: true
+              azureSubscription: azuresdkqabot-dev
               shardTimeoutInMinutes: 50
 
       - stage: SummaryForced

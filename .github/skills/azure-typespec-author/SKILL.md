@@ -75,7 +75,7 @@ Make minimal `.tsp` edits following the plan from Step 3. Confirm uncertainties 
 
 ### Step 5: Validate
 
-See [validation.md](references/validation.md). Run 5.1 (TypeSpec validation) and 5.2 (`tsp compile .`) always; 5.3 (example verification) for API version evolution only.
+See [validation.md](references/validation.md). Run 5.1 general validation (5.1.1 TypeSpec validation and 5.1.2 `tsp compile .`) always; run 5.2 case-specific validation (e.g. Case 3 example verification + version-evolution consistency loop) when the case matches.
 
 ### Step 6: Output Reference Links
 

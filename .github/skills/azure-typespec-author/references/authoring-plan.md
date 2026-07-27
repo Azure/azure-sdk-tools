@@ -4,7 +4,9 @@
 
 ## 3.1 General (All Cases)
 
-Choose the grounding source based on whether the request's case is covered by [reference-document-links.md](reference-document-links.md):
+**Gate first — API version evolution:** if the request adds, bumps, or promotes an API version (Case 3), stop here and ground via **Agentic Search only** — call `web_fetch` on the matching versioning doc in [reference-document-links.md](reference-document-links.md). Do **not** call `azsdk_typespec_generate_authoring_plan` for these requests; skip the branch below.
+
+Otherwise, choose the grounding source based on whether the request's case is covered by [reference-document-links.md](reference-document-links.md):
 
 1. **Case found in the reference doc → Agentic Search.** Run [agentic search](agentic-search.md) — you **MUST** call `web_fetch` on the matching URLs and follow their steps. Synthesize the extracted content into a concrete plan. Do **not** call the MCP tool.
 

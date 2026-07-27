@@ -38,6 +38,7 @@ const {
   batchFetchPrDetails,
   batchFetchSpecProjectPaths,
   batchFetchSpecPrLabels,
+  batchFetchSdkPrLabels,
 } = await import("../lib/github-api.js");
 
 const VALID_PR_URL = "https://github.com/Azure/azure-sdk-for-net/pull/100";
@@ -544,5 +545,50 @@ describe("batchFetchSpecPrLabels (mocked Octokit)", () => {
     const urls = ["https://github.com/org/repo/pull/1"];
     const result = await batchFetchSpecPrLabels(urls);
     expect(result.get(urls[0])).toEqual([]);
+  });
+});
+
+describe("batchFetchSdkPrLabels (mocked Octokit)", () => {
+  test("keeps only the auto-release label (case-insensitive)", async () => {
+    mockOctokit.issues.listLabelsOnIssue.mockResolvedValue({
+      data: [
+        { name: "auto-release", color: "0e8a16" },
+        { name: "bug", color: "fc0303" },
+        { name: "enhancement", color: "a2eeef" },
+      ],
+    });
+
+    const urls = ["https://github.com/Azure/azure-sdk-for-net/pull/7"];
+    const result = await batchFetchSdkPrLabels(urls);
+    expect(result).toBeInstanceOf(Map);
+    const labels = result.get(urls[0]);
+    expect(labels).toHaveLength(1);
+    expect(labels[0]).toEqual({ name: "auto-release", color: "0e8a16" });
+  });
+
+  test("returns empty array when the auto-release label is absent", async () => {
+    mockOctokit.issues.listLabelsOnIssue.mockResolvedValue({
+      data: [{ name: "bug", color: "fc0303" }],
+    });
+
+    const urls = ["https://github.com/org/repo/pull/1"];
+    const result = await batchFetchSdkPrLabels(urls);
+    expect(result.get(urls[0])).toEqual([]);
+  });
+
+  test("handles errors by setting empty array", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    mockOctokit.issues.listLabelsOnIssue.mockRejectedValue(new Error("fail"));
+
+    const result = await batchFetchSdkPrLabels([
+      "https://github.com/org/repo/pull/1",
+    ]);
+    expect(result.get("https://github.com/org/repo/pull/1")).toEqual([]);
+    warnSpy.mockRestore();
+  });
+
+  test("returns empty map for empty urls", async () => {
+    const result = await batchFetchSdkPrLabels([]);
+    expect(result.size).toBe(0);
   });
 });

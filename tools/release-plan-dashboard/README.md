@@ -48,7 +48,7 @@ A single-page web dashboard for viewing Azure SDK Release Plan work items from A
 ### Search & Navigation
 
 - **Search & filter** — filter by title, product name, owner, or release plan ID
-- **Tag filter** — filter plans by First Preview, First GA, or SDK Ready To Release
+- **Tag filter** — filter plans by First Preview, First GA, SDK Ready To Release, or Auto Release
 - **URL parameters** — `?releasePlan=<id>` to view a single plan, `?filter=<keyword>` to pre-filter
 - **Share** — share links to specific release plans
 

@@ -632,6 +632,20 @@
     });
   }
 
+  // A release plan is an auto-release plan when any active, not-yet-released
+  // language's SDK PR carries the "auto-release" GitHub label (fetched during
+  // enrichment). Languages already released are excluded.
+  function isAutoReleasePlan(p) {
+    const langs = p.languages || {};
+    return Object.keys(langs).some((k) => {
+      const l = langs[k];
+      if (isLangExcluded(l.exclusionStatus)) return false;
+      const rel = (l.releaseStatus || "").toLowerCase();
+      if (rel === "released" || rel === "completed") return false;
+      return !!l.autoRelease;
+    });
+  }
+
   // ── Language filter helpers ─────────────────────────────────
   function getLanguageFilter() {
     return store().filters.language || "";
@@ -881,6 +895,9 @@
         }
         if (tagFilter === "sdk-ready-to-release") {
           return isSdkReadyToReleasePlan(pt);
+        }
+        if (tagFilter === "auto-release") {
+          return isAutoReleasePlan(pt);
         }
         if (tagFilter === "generated-by-automation") {
           return isGeneratedByAutomationPlan(pt);
@@ -1140,6 +1157,9 @@
       if (isReleaseApprovalRequiredPlan(p))
         releaseTagBadge +=
           '<span class="badge badge-release-approval-required">Release approval required</span>';
+      if (isAutoReleasePlan(p))
+        releaseTagBadge +=
+          '<span class="badge badge-auto-release" title="SDK will be auto released when the SDK PR gets merged to main">Auto Release</span>';
     }
     const missingProductBadge = !p.productId
       ? '<span class="badge badge-missing-product">Missing product details</span>'
@@ -1907,7 +1927,20 @@
             const prLink = l.sdkPrUrl
               ? `<a href="${esc(l.sdkPrUrl)}" target="_blank" rel="noopener">PR</a>`
               : "—";
-            const prLabels = l.sdkPrUrl ? prDetailLabels(l) : "";
+            let prLabels = l.sdkPrUrl ? prDetailLabels(l) : "";
+            const langReleaseStatus = (l.releaseStatus || "").toLowerCase();
+            const langReleased =
+              langReleaseStatus === "released" ||
+              langReleaseStatus === "completed";
+            if (l.sdkPrUrl && !langReleased && Array.isArray(l.sdkPrLabels)) {
+              for (const label of l.sdkPrLabels) {
+                const bg = label.color ? `#${esc(label.color)}` : "#0e8a16";
+                const textColor = label.color
+                  ? contrastTextColor(label.color)
+                  : "#ffffff";
+                prLabels += `<span class="pr-label pr-label-auto-release" style="background:${bg};color:${textColor}" title="SDK will be auto released when this SDK PR gets merged to main">${esc(label.name)}</span>`;
+              }
+            }
             let releaseDisplay = l.releaseStatus || "";
             if (exLabel) releaseDisplay = exLabel.text;
 
@@ -2746,6 +2779,9 @@
         }
         if (tagFilter === "sdk-ready-to-release") {
           return isSdkReadyToReleasePlan(p);
+        }
+        if (tagFilter === "auto-release") {
+          return isAutoReleasePlan(p);
         }
         if (tagFilter === "generated-by-automation") {
           return isGeneratedByAutomationPlan(p);

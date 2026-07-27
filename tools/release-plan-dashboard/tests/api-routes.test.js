@@ -34,6 +34,7 @@ const mockBatchFetchPrStatuses = vi.fn().mockResolvedValue(new Map());
 const mockBatchFetchPrDetails = vi.fn().mockResolvedValue(new Map());
 const mockBatchFetchSpecProjectPaths = vi.fn().mockResolvedValue(new Map());
 const mockBatchFetchSpecPrLabels = vi.fn().mockResolvedValue(new Map());
+const mockBatchFetchSdkPrLabels = vi.fn().mockResolvedValue(new Map());
 
 // Mock external API calls
 vi.mock("../lib/devops-api.js", async () => {
@@ -60,6 +61,7 @@ vi.mock("../lib/github-api.js", () => ({
   batchFetchSpecProjectPaths: (...args) =>
     mockBatchFetchSpecProjectPaths(...args),
   batchFetchSpecPrLabels: (...args) => mockBatchFetchSpecPrLabels(...args),
+  batchFetchSdkPrLabels: (...args) => mockBatchFetchSdkPrLabels(...args),
 }));
 
 import express from "express";
@@ -113,6 +115,7 @@ beforeEach(() => {
   mockBatchFetchPrDetails.mockReset().mockResolvedValue(new Map());
   mockBatchFetchSpecProjectPaths.mockReset().mockResolvedValue(new Map());
   mockBatchFetchSpecPrLabels.mockReset().mockResolvedValue(new Map());
+  mockBatchFetchSdkPrLabels.mockReset().mockResolvedValue(new Map());
 
   // Reset cache state
   cache.releasePlans.data = null;

@@ -1,5 +1,11 @@
 # Release History
 
+## 1.0.0-dev.3
+
+### Features Added
+
+- **Auto-release tag** — SDK pull requests carrying the GitHub `auto-release` label are surfaced with an "Auto Release" badge/label next to the PR (with a hint that the SDK will be auto released when the PR is merged to main), the release plan is tagged `auto-release`, and a new "Auto Release" option is available in the tag filter dropdown. The tag is hidden for languages already released.
+
 ## 1.0.0-dev.2
 
 ### Features Added

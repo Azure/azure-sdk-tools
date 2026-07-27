@@ -387,6 +387,43 @@ async function getGitHubPrLabels(prUrl) {
   }
 }
 
+/** Matches the SDK PR label that marks a package for automated release. */
+const AUTO_RELEASE_LABEL_PATTERN = /^auto-release$/i;
+
+/**
+ * Fetches labels for a batch of SDK PR URLs and filters to only the
+ * "auto-release" label. Used to flag release plans/languages whose SDK PR
+ * is marked for automated release.
+ * @returns {Map<string, Array<{name: string, color: string}>>} URL → array of matching labels
+ */
+async function batchFetchSdkPrLabels(urls) {
+  const unique = [...new Set(urls.filter(Boolean))];
+  const labelMap = new Map();
+  if (
+    !unique.length ||
+    !(process.env.GITHUB_PAT_RELEASE_PLAN || process.env.GH_TOKEN)
+  )
+    return labelMap;
+  await throttledMap(
+    unique,
+    async (url) => {
+      try {
+        const allLabels = await getGitHubPrLabels(url);
+        const matching = allLabels.filter((label) =>
+          AUTO_RELEASE_LABEL_PATTERN.test(label.name),
+        );
+        labelMap.set(url, matching);
+        /* v8 ignore start — inner function catches all errors */
+      } catch {
+        labelMap.set(url, []);
+      }
+      /* v8 ignore stop */
+    },
+    { concurrency: 10, delayMs: 50 },
+  );
+  return labelMap;
+}
+
 /**
  * Fetches labels for a batch of spec PR URLs and filters to only labels matching
  * known patterns (BreakingChange, ARM, API).
@@ -428,6 +465,7 @@ export {
   batchFetchPrDetails,
   batchFetchSpecProjectPaths,
   batchFetchSpecPrLabels,
+  batchFetchSdkPrLabels,
   getGitHubPrLabels,
   getGitHubPrFiles,
   throttledMap,

@@ -48,3 +48,35 @@ describe("SDK ready-to-release tag and status", () => {
     expect(styleCss).toContain(".badge-sdk-ready-to-release");
   });
 });
+
+describe("Auto-release tag and label", () => {
+  test("includes auto-release tag in global tag filter", () => {
+    expect(indexHtml).toContain('value="auto-release"');
+    expect(indexHtml).toContain("Auto Release");
+    expect(appJs).toContain('tagFilter === "auto-release"');
+  });
+
+  test("defines isAutoReleasePlan helper based on langData.autoRelease", () => {
+    expect(appJs).toContain("function isAutoReleasePlan(p)");
+    expect(appJs).toContain("l.autoRelease");
+  });
+
+  test("shows Auto Release badge in card title using isAutoReleasePlan", () => {
+    const releaseTagBadgeBlock = appJs.slice(
+      appJs.indexOf("releaseTagBadge"),
+      appJs.indexOf("missingProductBadge"),
+    );
+    expect(releaseTagBadgeBlock).toContain("badge-auto-release");
+    expect(releaseTagBadgeBlock).toContain("isAutoReleasePlan(p)");
+  });
+
+  test("renders auto-release PR label pills from sdkPrLabels", () => {
+    expect(appJs).toContain("l.sdkPrLabels");
+    expect(appJs).toContain("pr-label-auto-release");
+  });
+
+  test("auto-release CSS classes are defined in style.css", () => {
+    expect(styleCss).toContain(".badge-auto-release");
+    expect(styleCss).toContain(".pr-label-auto-release");
+  });
+});

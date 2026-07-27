@@ -13,6 +13,7 @@ import {
   batchFetchPrDetails,
   batchFetchSpecProjectPaths,
   batchFetchSpecPrLabels,
+  batchFetchSdkPrLabels,
 } from "../lib/github-api.js";
 import {
   DEVOPS_ORG,
@@ -219,7 +220,10 @@ async function enrichSdkPrStatuses(plans) {
   console.log(
     `Fetching SDK PR statuses for ${uniqueSdkPrUrls.length} unique PRs...`,
   );
-  const statusMap = await batchFetchPrStatuses(uniqueSdkPrUrls);
+  const [statusMap, labelMap] = await Promise.all([
+    batchFetchPrStatuses(uniqueSdkPrUrls),
+    batchFetchSdkPrLabels(uniqueSdkPrUrls),
+  ]);
   const now = Date.now();
   for (const plan of plans) {
     for (const [, langData] of Object.entries(plan.languages || {})) {
@@ -232,6 +236,9 @@ async function enrichSdkPrStatuses(plans) {
           updatedAt: now,
         });
       }
+      const labels = labelMap.get(langData.sdkPrUrl) || [];
+      langData.sdkPrLabels = labels;
+      langData.autoRelease = labels.length > 0;
     }
   }
   evictOldest(cache.prStatuses);

@@ -34,8 +34,6 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification.Templates
 
         private const string ManagementSdkOwnerAlias = "sdkowners@microsoft.com";
 
-        private const string AzSdkSupportAlias = "azsdkexp@microsoft.com";
-
         private readonly ReleasePlanWorkItem releasePlan;
 
         public NewReleasePlanEmail(ReleasePlanWorkItem releasePlan)

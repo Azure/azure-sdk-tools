@@ -646,6 +646,103 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         }
 
         #endregion
+        #region ListReleasePlansWithFailedSDKGenerationAsync Tests
+
+        private static WorkItemUpdate CreateFieldUpdate(string fieldName, string? newValue, DateTime revisedDate)
+        {
+            return new WorkItemUpdate
+            {
+                RevisedDate = revisedDate,
+                Fields = new Dictionary<string, WorkItemFieldUpdate>
+                {
+                    { "System.ChangedDate", new WorkItemFieldUpdate { NewValue = revisedDate } },
+                    { fieldName, new WorkItemFieldUpdate { NewValue = newValue } }
+                }
+            };
+        }
+
+        [Test]
+        public async Task ListReleasePlansWithFailedSDKGenerationAsync_IncludesPlanWithRecentFailure()
+        {
+            // Arrange
+            var workItem = CreateReleasePlanWorkItem(500, "In Progress");
+            _connection.AddWorkItemToQuery(workItem);
+            _connection.AddWorkItem(workItem);
+            _connection.AddWorkItemUpdates(500,
+            [
+                CreateFieldUpdate("Custom.SDKPullRequestStatusForDotnet", "Failed to generate SDK.", DateTime.UtcNow.AddHours(-2))
+            ]);
+
+            // Act
+            var result = await _devOpsService.ListReleasePlansWithFailedSDKGenerationAsync(CancellationToken.None);
+
+            // Assert
+            Assert.That(result, Has.Count.EqualTo(1));
+            Assert.That(result[0].ReleasePlan.WorkItemId, Is.EqualTo(500));
+            Assert.That(result[0].FailedLanguages, Is.EqualTo(new List<string> { ".NET" }));
+        }
+
+        [Test]
+        public async Task ListReleasePlansWithFailedSDKGenerationAsync_ExcludesPlanWithOldFailure()
+        {
+            // Arrange - failure transition happened more than 24 hours ago
+            var workItem = CreateReleasePlanWorkItem(501, "In Progress");
+            _connection.AddWorkItemToQuery(workItem);
+            _connection.AddWorkItem(workItem);
+            _connection.AddWorkItemUpdates(501,
+            [
+                CreateFieldUpdate("Custom.SDKPullRequestStatusForPython", "Failed to generate SDK.", DateTime.UtcNow.AddHours(-30))
+            ]);
+
+            // Act
+            var result = await _devOpsService.ListReleasePlansWithFailedSDKGenerationAsync(CancellationToken.None);
+
+            // Assert
+            Assert.That(result, Is.Empty);
+        }
+
+        [Test]
+        public async Task ListReleasePlansWithFailedSDKGenerationAsync_ExcludesPlanWithNonFailureUpdate()
+        {
+            // Arrange - status updated to a non-failure value in the window
+            var workItem = CreateReleasePlanWorkItem(502, "In Progress");
+            _connection.AddWorkItemToQuery(workItem);
+            _connection.AddWorkItem(workItem);
+            _connection.AddWorkItemUpdates(502,
+            [
+                CreateFieldUpdate("Custom.SDKPullRequestStatusForJava", "Merged", DateTime.UtcNow.AddHours(-1))
+            ]);
+
+            // Act
+            var result = await _devOpsService.ListReleasePlansWithFailedSDKGenerationAsync(CancellationToken.None);
+
+            // Assert
+            Assert.That(result, Is.Empty);
+        }
+
+        [Test]
+        public async Task ListReleasePlansWithFailedSDKGenerationAsync_QueryFiltersInProgressAndRecent()
+        {
+            // Arrange
+            var workItem = CreateReleasePlanWorkItem(503, "In Progress");
+            _connection.AddWorkItemToQuery(workItem);
+            _connection.AddWorkItem(workItem);
+
+            // Act
+            await _devOpsService.ListReleasePlansWithFailedSDKGenerationAsync(CancellationToken.None);
+
+            // Assert
+            var capturedQuery = _connection.LastCapturedQuery;
+            Assert.That(capturedQuery, Is.Not.Null);
+            Assert.That(capturedQuery, Does.Contain("[System.State] = 'In Progress'"));
+            Assert.That(capturedQuery, Does.Contain("[System.ChangedDate] >= @Today - 1"));
+            Assert.That(capturedQuery, Does.Contain("[System.Tags] NOT CONTAINS 'Release Planner App Test'"));
+            Assert.That(capturedQuery, Does.Contain("[Custom.SDKPullRequestStatusForDotnet] = 'Failed to generate SDK.'"));
+            Assert.That(capturedQuery, Does.Contain("[Custom.SDKPullRequestStatusForGo] = 'Failed to generate SDK.'"));
+            Assert.That(capturedQuery, Does.Contain("([Custom.SDKPullRequestStatusForDotnet] = 'Failed to generate SDK.' AND [Custom.ReleaseStatusForDotnet] <> 'Released')"));
+        }
+
+        #endregion
         #region TestDevOpsConnection
 
         private class TestDevOpsConnection : IDevOpsConnection
@@ -680,12 +777,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             {
                 _workItemClient.AddWorkItem(workItem);
             }
+
+            public void AddWorkItemUpdates(int workItemId, List<WorkItemUpdate> updates)
+            {
+                _workItemClient.AddWorkItemUpdates(workItemId, updates);
+            }
         }
 
         private class TestWorkItemClient : WorkItemTrackingHttpClient
         {
             private readonly List<WorkItem> _queryWorkItems = new();
             private readonly Dictionary<int, WorkItem> _workItems = new();
+            private readonly Dictionary<int, List<WorkItemUpdate>> _workItemUpdates = new();
 
             public string? LastCapturedQuery { get; private set; }
 
@@ -706,6 +809,21 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 {
                     _workItems[workItem.Id.Value] = workItem;
                 }
+            }
+
+            public void AddWorkItemUpdates(int workItemId, List<WorkItemUpdate> updates)
+            {
+                _workItemUpdates[workItemId] = updates;
+            }
+
+            public override Task<List<WorkItemUpdate>> GetUpdatesAsync(
+                int id,
+                int? top = null,
+                int? skip = null,
+                object? userState = null,
+                CancellationToken cancellationToken = default)
+            {
+                return Task.FromResult(_workItemUpdates.TryGetValue(id, out var updates) ? updates : new List<WorkItemUpdate>());
             }
 
             public override Task<WorkItemQueryResult> QueryByWiqlAsync(

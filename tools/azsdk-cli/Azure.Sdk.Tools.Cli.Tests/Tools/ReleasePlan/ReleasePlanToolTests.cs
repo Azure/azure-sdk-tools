@@ -1,13 +1,12 @@
 using Moq;
-using Moq.Protected;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Notification;
 using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
-using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol;
@@ -25,7 +24,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         private IEnvironmentHelper environmentHelper;
         private ReleasePlanTool releasePlanTool;
         private IInputSanitizer inputSanitizer;
-        private HttpClient httpClient;
 
         [SetUp]
         public void Setup()
@@ -35,7 +33,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             devOpsService = new MockDevOpsService();
             gitHubService = new MockGitHubService();
             inputSanitizer = new InputSanitizer();
-            httpClient = new Mock<HttpClient>().Object;
 
             var userHelperMock = new Mock<IUserHelper>();
             userHelperMock.Setup(x => x.GetUserEmail(It.IsAny<CancellationToken>())).ReturnsAsync("test@example.com");
@@ -65,7 +62,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 gitHubService,
                 environmentHelper,
                 inputSanitizer,
-                httpClient,
                 Mock.Of<INpxHelper>(),
                 Mock.Of<IRawOutputHelper>(),
                 Mock.Of<INotificationService>());
@@ -224,7 +220,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 gitHubService,
                 environmentHelper,
                 inputSanitizer,
-                httpClient,
                 Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
 
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
@@ -275,7 +270,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 gitHubService,
                 environmentHelperMock.Object,
                 inputSanitizer,
-                httpClient,
                 Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
 
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
@@ -315,7 +309,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 gitHubService,
                 environmentHelperMock.Object,
                 inputSanitizer,
-                httpClient,
                 Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
 
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
@@ -491,7 +484,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 gitHubService,
                 environmentHelper,
                 inputSanitizer,
-                httpClient,
                 Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
 
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
@@ -536,7 +528,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 gitHubService,
                 environmentHelper,
                 inputSanitizer,
-                httpClient,
                 Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
 
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
@@ -581,7 +572,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAsync("specification/testcontoso/Contoso.Management", It.IsAny<bool>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(expectedReleasePlan);
 
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
 
             var releaseplan = await tool.GetReleasePlan(typeSpecProjectPath: "specification/testcontoso/Contoso.Management");
             Assert.IsNotNull(releaseplan);
@@ -603,7 +594,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAsync("specification/testcontoso/Contoso.Management", It.IsAny<bool>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(expectedReleasePlan);
 
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
 
             var absolutePath = Path.GetFullPath("TypeSpecTestData/specification/testcontoso/Contoso.Management");
             var releaseplan = await tool.GetReleasePlan(typeSpecProjectPath: absolutePath);
@@ -716,7 +707,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockTypeSpecHelper.Setup(x => x.ParseTypeSpecProjectAsync(testCodeFilePath, It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(project);
 
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, mockTypeSpecHelper.Object, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, mockTypeSpecHelper.Object, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
             var updateStatus = await tool.UpdateSDKDetailsInReleasePlan(100, testCodeFilePath, CancellationToken.None);
 
             Assert.That(updateStatus.ResponseError, Is.Null);
@@ -763,7 +754,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockTypeSpecHelper.Setup(x => x.ParseTypeSpecProjectAsync(testCodeFilePath, It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(project);
 
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, mockTypeSpecHelper.Object, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, mockTypeSpecHelper.Object, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
             var updateStatus = await tool.UpdateSDKDetailsInReleasePlan(100, testCodeFilePath, CancellationToken.None);
 
             Assert.That(updateStatus.ResponseError, Is.Null);
@@ -812,7 +803,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockTypeSpecHelper.Setup(x => x.ParseTypeSpecProjectAsync(testCodeFilePath, It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(project);
 
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, mockTypeSpecHelper.Object, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, mockTypeSpecHelper.Object, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
             var updateStatus = await tool.UpdateSDKDetailsInReleasePlan(100, testCodeFilePath, CancellationToken.None);
 
             Assert.That(updateStatus.ResponseError, Is.Null);
@@ -858,7 +849,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockTypeSpecHelper.Setup(x => x.ParseTypeSpecProjectAsync(testCodeFilePath, It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(project);
 
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, mockTypeSpecHelper.Object, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, mockTypeSpecHelper.Object, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
             var updateStatus = await tool.UpdateSDKDetailsInReleasePlan(100, testCodeFilePath, CancellationToken.None);
 
             Assert.That(updateStatus.ResponseError, Is.Null);
@@ -960,7 +951,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         {
             var mockTypeSpecHelper = new Mock<ITypeSpecHelper>();
             mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>())).Returns(false);
-            var tool = new ReleasePlanTool(devOpsService, gitHelper, mockTypeSpecHelper.Object, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+            var tool = new ReleasePlanTool(devOpsService, gitHelper, mockTypeSpecHelper.Object, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
             var updateStatus = await tool.UpdateSDKDetailsInReleasePlan(100, "/nonexistent/path", CancellationToken.None);
             Assert.That(updateStatus.ResponseError, Does.Contain("invalid"));
         }
@@ -973,7 +964,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>())).Returns(true);
             mockTypeSpecHelper.Setup(x => x.ParseTypeSpecProjectAsync(It.IsAny<string>(), It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync((TypeSpecProject?)null);
-            var tool = new ReleasePlanTool(devOpsService, gitHelper, mockTypeSpecHelper.Object, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+            var tool = new ReleasePlanTool(devOpsService, gitHelper, mockTypeSpecHelper.Object, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
             var updateStatus = await tool.UpdateSDKDetailsInReleasePlan(100, testCodeFilePath, CancellationToken.None);
             Assert.That(updateStatus.ResponseError, Does.Contain("Failed to parse TypeSpec project"));
         }
@@ -994,7 +985,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockTypeSpecHelper.Setup(x => x.ParseTypeSpecProjectAsync(testCodeFilePath, It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(project);
 
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, mockTypeSpecHelper.Object, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, mockTypeSpecHelper.Object, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
             var updateStatus = await tool.UpdateSDKDetailsInReleasePlan(100, testCodeFilePath, CancellationToken.None);
 
             Assert.That(updateStatus.ResponseError, Is.Null);
@@ -1115,19 +1106,51 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(response.ResponseError, Does.Contain("azure-rest-api-specs"));
         }
 
-        [Test]
-        public async Task Test_list_overdue_release_plans_notify_without_emailer_uri()
+        private async Task<EmailPayload?> RunOverdueNotifyAndCaptureEmail(ReleasePlanWorkItem plan)
         {
-            var response = await releasePlanTool.ListOverdueReleasePlans(notifyOwners: true, emailerUri: "");
-            Assert.IsNotNull(response);
-            Assert.IsNotNull(response.ResponseError);
-            Assert.That(response.ResponseError, Does.Contain("Emailer URI is required"));
+            var mockDevOps = new Mock<IDevOpsService>();
+            mockDevOps.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([plan]);
+
+            EmailPayload? captured = null;
+            var notificationMock = new Mock<INotificationService>();
+            notificationMock
+                .Setup(n => n.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()))
+                .Callback<EmailPayload, CancellationToken>((p, _) => captured = p)
+                .Returns(Task.CompletedTask);
+
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), notificationMock.Object);
+
+            await tool.ListOverdueReleasePlans(notify: true);
+            return captured;
+        }
+
+        [Test]
+        public async Task Test_overdue_notification_sets_recipients()
+        {
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 199,
+                Owner = "Test Owner",
+                ReleasePlanSubmittedByEmail = "owner@microsoft.com",
+                IsManagementPlane = true,
+                SDKReleaseMonth = "January 2026",
+                ReleasePlanId = 199,
+                SDKInfo =
+                [
+                    new SDKInfo { Language = "Java", ReleaseStatus = "", ReleaseExclusionStatus = "Not applicable" }
+                ]
+            };
+
+            var captured = await RunOverdueNotifyAndCaptureEmail(plan);
+
+            Assert.IsNotNull(captured);
+            Assert.That(captured!.EmailTo, Is.EqualTo(new List<string> { "owner@microsoft.com" }));
+            Assert.That(captured.CC, Does.Contain("azsdkapex@microsoft.com"));
         }
 
         [Test]
         public async Task Test_notification_includes_correct_missing_sdks()
         {
-            var mockDevOps = new Mock<IDevOpsService>();
             var plan = new ReleasePlanWorkItem
             {
                 WorkItemId = 200,
@@ -1144,37 +1167,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                     new SDKInfo { Language = ".NET", ReleaseStatus = "", ReleaseExclusionStatus = "Not applicable" }
                 ]
             };
-            mockDevOps.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([plan]);
 
-            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
-            var capturedBody = "";
-            mockHttpMessageHandler.Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync((HttpRequestMessage request, CancellationToken token) =>
-                {
-                    var content = request.Content?.ReadAsStringAsync(token).Result ?? "";
-                    var payload = JsonSerializer.Deserialize<JsonElement>(content);
-                    capturedBody = payload.GetProperty("Body").GetString() ?? "";
-                    return new HttpResponseMessage(System.Net.HttpStatusCode.OK);
-                });
+            var captured = await RunOverdueNotifyAndCaptureEmail(plan);
 
-            var testHttpClient = new HttpClient(mockHttpMessageHandler.Object);
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, testHttpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
-
-            await tool.ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://test.com/email");
-
-            Assert.That(capturedBody, Does.Contain("Java"));
-            Assert.That(capturedBody, Does.Contain(".NET"));
-            Assert.That(capturedBody, Does.Not.Contain("Python")); // Released, should not be in missing list
+            Assert.IsNotNull(captured);
+            Assert.That(captured!.Body, Does.Contain("Java"));
+            Assert.That(captured.Body, Does.Contain(".NET"));
+            Assert.That(captured.Body, Does.Not.Contain("Python")); // Released, should not be in missing list
         }
 
         [Test]
         public async Task Test_notification_excludes_approved_and_requested_languages()
         {
-            var mockDevOps = new Mock<IDevOpsService>();
             var plan = new ReleasePlanWorkItem
             {
                 WorkItemId = 201,
@@ -1191,31 +1195,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                     new SDKInfo { Language = ".NET", ReleaseStatus = "", ReleaseExclusionStatus = "Requested" }
                 ]
             };
-            mockDevOps.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([plan]);
 
-            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
-            var capturedBody = "";
-            mockHttpMessageHandler.Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync((HttpRequestMessage request, CancellationToken token) =>
-                {
-                    var content = request.Content?.ReadAsStringAsync(token).Result ?? "";
-                    var payload = JsonSerializer.Deserialize<JsonElement>(content);
-                    capturedBody = payload.GetProperty("Body").GetString() ?? "";
-                    return new HttpResponseMessage(System.Net.HttpStatusCode.OK);
-                });
+            var captured = await RunOverdueNotifyAndCaptureEmail(plan);
 
-            var testHttpClient = new HttpClient(mockHttpMessageHandler.Object);
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, testHttpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
-
-            await tool.ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://test.com/email");
-
-            Assert.That(capturedBody, Does.Contain("Java"));
-            Assert.That(capturedBody, Does.Not.Contain("Python")); // Approved exclusion
-            Assert.That(capturedBody, Does.Not.Contain(".NET")); // Requested exclusion
+            Assert.IsNotNull(captured);
+            Assert.That(captured!.Body, Does.Contain("Java"));
+            Assert.That(captured.Body, Does.Not.Contain("Python")); // Approved exclusion
+            Assert.That(captured.Body, Does.Not.Contain(".NET")); // Requested exclusion
         }
 
         [Test]
@@ -1223,7 +1209,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         {
             // Languages marked "MissingEmitterConfig" by the auto-update tool must not appear
             // in the overdue SDK notification, since the emitter configuration has not been set up.
-            var mockDevOps = new Mock<IDevOpsService>();
             var plan = new ReleasePlanWorkItem
             {
                 WorkItemId = 203,
@@ -1240,39 +1225,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                     new SDKInfo { Language = ".NET", ReleaseStatus = "", ReleaseExclusionStatus = "MissingEmitterConfig" }
                 ]
             };
-            mockDevOps.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([plan]);
 
-            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
-            var capturedBody = "";
-            mockHttpMessageHandler.Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<CancellationToken>())
-                .Returns(async (HttpRequestMessage request, CancellationToken token) =>
-                {
-                    var content = request.Content is not null
-                        ? await request.Content.ReadAsStringAsync(token).ConfigureAwait(false)
-                        : "";
-                    var payload = JsonSerializer.Deserialize<JsonElement>(content);
-                    capturedBody = payload.GetProperty("Body").GetString() ?? "";
-                    return new HttpResponseMessage(System.Net.HttpStatusCode.OK);
-                });
+            var captured = await RunOverdueNotifyAndCaptureEmail(plan);
 
-            var testHttpClient = new HttpClient(mockHttpMessageHandler.Object);
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, testHttpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
-
-            await tool.ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://test.com/email");
-
-            Assert.That(capturedBody, Does.Contain("Java"));
-            Assert.That(capturedBody, Does.Not.Contain("Python")); // MissingEmitterConfig
-            Assert.That(capturedBody, Does.Not.Contain(".NET")); // MissingEmitterConfig
+            Assert.IsNotNull(captured);
+            Assert.That(captured!.Body, Does.Contain("Java"));
+            Assert.That(captured.Body, Does.Not.Contain("Python")); // MissingEmitterConfig
+            Assert.That(captured.Body, Does.Not.Contain(".NET")); // MissingEmitterConfig
         }
 
         [Test]
         public async Task Test_notification_excludes_go_for_dataplane()
         {
-            var mockDevOps = new Mock<IDevOpsService>();
             var plan = new ReleasePlanWorkItem
             {
                 WorkItemId = 202,
@@ -1288,37 +1252,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                     new SDKInfo { Language = "Go", ReleaseStatus = "", ReleaseExclusionStatus = "Not applicable" }
                 ]
             };
-            mockDevOps.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([plan]);
 
-            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
-            var capturedBody = "";
-            mockHttpMessageHandler.Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync((HttpRequestMessage request, CancellationToken token) =>
-                {
-                    var content = request.Content?.ReadAsStringAsync(token).Result ?? "";
-                    var payload = JsonSerializer.Deserialize<JsonElement>(content);
-                    capturedBody = payload.GetProperty("Body").GetString() ?? "";
-                    return new HttpResponseMessage(System.Net.HttpStatusCode.OK);
-                });
+            var captured = await RunOverdueNotifyAndCaptureEmail(plan);
 
-            var testHttpClient = new HttpClient(mockHttpMessageHandler.Object);
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, testHttpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
-
-            await tool.ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://test.com/email");
-
-            Assert.That(capturedBody, Does.Contain("Java"));
-            Assert.That(capturedBody, Does.Not.Contain("Go")); // Filtered for Data Plane
-            Assert.That(capturedBody, Does.Contain("Data Plane"));
+            Assert.IsNotNull(captured);
+            Assert.That(captured!.Body, Does.Contain("Java"));
+            Assert.That(captured.Body, Does.Not.Contain("Go")); // Filtered for Data Plane
+            Assert.That(captured.Body, Does.Contain("Data Plane"));
         }
 
         [Test]
         public async Task Test_notification_includes_go_for_management_plane()
         {
-            var mockDevOps = new Mock<IDevOpsService>();
             var plan = new ReleasePlanWorkItem
             {
                 WorkItemId = 203,
@@ -1334,31 +1279,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                     new SDKInfo { Language = "Go", ReleaseStatus = "", ReleaseExclusionStatus = "Not applicable" }
                 ]
             };
-            mockDevOps.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([plan]);
 
-            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
-            var capturedBody = "";
-            mockHttpMessageHandler.Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync((HttpRequestMessage request, CancellationToken token) =>
-                {
-                    var content = request.Content?.ReadAsStringAsync(token).Result ?? "";
-                    var payload = JsonSerializer.Deserialize<JsonElement>(content);
-                    capturedBody = payload.GetProperty("Body").GetString() ?? "";
-                    return new HttpResponseMessage(System.Net.HttpStatusCode.OK);
-                });
+            var captured = await RunOverdueNotifyAndCaptureEmail(plan);
 
-            var testHttpClient = new HttpClient(mockHttpMessageHandler.Object);
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, testHttpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
-
-            await tool.ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://test.com/email");
-
-            Assert.That(capturedBody, Does.Contain("Java"));
-            Assert.That(capturedBody, Does.Contain("Go")); // Included for Management Plane
-            Assert.That(capturedBody, Does.Contain("Management Plane"));
+            Assert.IsNotNull(captured);
+            Assert.That(captured!.Body, Does.Contain("Java"));
+            Assert.That(captured.Body, Does.Contain("Go")); // Included for Management Plane
+            Assert.That(captured.Body, Does.Contain("Management Plane"));
         }
 
         [Test]
@@ -1635,7 +1562,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOps.Setup(x => x.GetProductInfoFromTriageWorkItemAsync("22222222-2222-2222-2222-222222222222", It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProductInfo { ProductServiceTreeId = "22222222-2222-2222-2222-222222222222", ProductName = "Contoso Product", ProductType = "Offering", ProductLifecycle = "GA" });
 
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
 
             var result = await tool.UpdateReleasePlan(
                 typeSpecProjectPath: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
@@ -1669,7 +1596,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOps.Setup(x => x.GetProductInfoFromTriageWorkItemAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync((ProductInfo?)null);
 
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
 
             var result = await tool.UpdateReleasePlan(
                 typeSpecProjectPath: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
@@ -1707,7 +1634,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 220 });
             mockDevOps.Setup(x => x.UpdateReleasePlanSDKDetailsAsync(It.IsAny<int>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
 
             var result = await tool.UpdateReleasePlan(
                 typeSpecProjectPath: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
@@ -1744,7 +1671,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOps.Setup(x => x.UpdateApiSpecVersionAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
             mockDevOps.Setup(x => x.UpdateReleasePlanSDKDetailsAsync(It.IsAny<int>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
 
             var result = await tool.UpdateReleasePlan(
                 typeSpecProjectPath: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
@@ -1779,7 +1706,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockNpxHelper.Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 0 });
 
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, mockNpxHelper.Object, Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, mockNpxHelper.Object, Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
 
             var result = await tool.UpdateReleasePlan(
                 typeSpecProjectPath: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
@@ -1848,7 +1775,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             var tool = new ReleasePlanTool(
                 mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper,
-                gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+                gitHubService, environmentHelper, inputSanitizer, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
 
             var result = await tool.UpdateReleasePlanTarget(workItemId: 999, targetReleaseMonthYear: "January 2026");
 
@@ -1878,7 +1805,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOps.Setup(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
             mockDevOps.Setup(x => x.UpdateApiSpecVersionAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
 
             var result = await tool.UpdateReleasePlan(
                 typeSpecProjectPath: "https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contoso/Contoso.Management",
@@ -1913,7 +1840,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOps.Setup(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
             mockDevOps.Setup(x => x.UpdateApiSpecVersionAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, mockNpxHelper.Object, Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, mockNpxHelper.Object, Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
 
             var result = await tool.UpdateReleasePlan(
                 typeSpecProjectPath: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
@@ -1962,12 +1889,115 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(typeSpecPath)).Returns(true);
             mockTypeSpecHelper.Setup(x => x.ParseTypeSpecProjectAsync(typeSpecPath, It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(typeSpecProject);
-            return new ReleasePlanTool(devOpsService, gitHelper, mockTypeSpecHelper.Object, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+            return new ReleasePlanTool(devOpsService, gitHelper, mockTypeSpecHelper.Object, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
         }
 
         private ReleasePlanTool CreateReleasePlanToolWithNotificationService(INotificationService notificationService)
         {
-            return new ReleasePlanTool(devOpsService, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), notificationService);
+            return new ReleasePlanTool(devOpsService, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), notificationService);
+        }
+
+        [Test]
+        public async Task Test_ListReleasePlansWithFailedSDKGeneration_sends_email_to_azsdkexp()
+        {
+            var mockDevOps = new Mock<IDevOpsService>();
+            var failed = new List<FailedSDKGenerationReleasePlan>
+            {
+                new()
+                {
+                    ReleasePlan = new ReleasePlanWorkItem { WorkItemId = 300, ReleasePlanId = 300 },
+                    FailedLanguages = [".NET", "Python"]
+                },
+                new()
+                {
+                    ReleasePlan = new ReleasePlanWorkItem { WorkItemId = 301, ReleasePlanId = 301 },
+                    FailedLanguages = [".NET"]
+                }
+            };
+            mockDevOps.Setup(x => x.ListReleasePlansWithFailedSDKGenerationAsync(It.IsAny<CancellationToken>())).ReturnsAsync(failed);
+
+            var notificationMock = new Mock<INotificationService>();
+            EmailPayload? captured = null;
+            notificationMock
+                .Setup(n => n.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()))
+                .Callback<EmailPayload, CancellationToken>((p, _) => captured = p)
+                .Returns(Task.CompletedTask);
+
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), notificationMock.Object);
+
+            var response = await tool.ListReleasePlansWithFailedSDKGeneration(notify: true);
+
+            Assert.IsNotNull(response);
+            Assert.IsNull(response.ResponseError);
+            Assert.That(response.FailedReleasePlans, Has.Count.EqualTo(2));
+
+            Assert.IsNotNull(captured);
+            Assert.That(captured!.EmailTo, Is.EqualTo(new List<string> { "azsdkexp@microsoft.com" }));
+            Assert.That(captured.CC, Is.Empty);
+            Assert.That(captured.Body, Does.Contain("No. of release plans with failed SDK generation:</strong> 2"));
+            Assert.That(captured.Body, Does.Contain("No. of SDK gen failed for .NET:</strong> 2"));
+            Assert.That(captured.Body, Does.Contain("No. of SDK gen failed for Python:</strong> 1"));
+            Assert.That(captured.Body, Does.Contain("<table"));
+        }
+
+        [Test]
+        public async Task Test_ListReleasePlansWithFailedSDKGeneration_no_failures_does_not_send_email()
+        {
+            var mockDevOps = new Mock<IDevOpsService>();
+            mockDevOps.Setup(x => x.ListReleasePlansWithFailedSDKGenerationAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync([]);
+
+            var notificationMock = new Mock<INotificationService>();
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), notificationMock.Object);
+
+            var response = await tool.ListReleasePlansWithFailedSDKGeneration(notify: true);
+
+            Assert.IsNotNull(response);
+            Assert.IsNull(response.ResponseError);
+            Assert.That(response.FailedReleasePlans, Is.Empty);
+            notificationMock.Verify(n => n.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Test]
+        public async Task Test_ListReleasePlans_routes_overdue_filter()
+        {
+            var mockDevOps = new Mock<IDevOpsService>();
+            mockDevOps.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([]);
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+
+            var response = await tool.ListReleasePlans("overdue-release");
+
+            Assert.IsInstanceOf<ReleasePlanListResponse>(response);
+            Assert.IsNull(response.ResponseError);
+            mockDevOps.Verify(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Test]
+        public async Task Test_ListReleasePlans_routes_failed_sdk_gen_filter()
+        {
+            var mockDevOps = new Mock<IDevOpsService>();
+            mockDevOps.Setup(x => x.ListReleasePlansWithFailedSDKGenerationAsync(It.IsAny<CancellationToken>())).ReturnsAsync([]);
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+
+            var response = await tool.ListReleasePlans("failed-sdk-gen");
+
+            Assert.IsInstanceOf<FailedSDKGenerationListResponse>(response);
+            Assert.IsNull(response.ResponseError);
+            mockDevOps.Verify(x => x.ListReleasePlansWithFailedSDKGenerationAsync(It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Test]
+        public async Task Test_ListReleasePlans_unknown_filter_returns_error()
+        {
+            var mockDevOps = new Mock<IDevOpsService>();
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+
+            var response = await tool.ListReleasePlans("bogus-filter");
+
+            Assert.IsNotNull(response.ResponseError);
+            Assert.That(response.ResponseError, Does.Contain("Unknown filter"));
+            Assert.That(response.ResponseError, Does.Contain("overdue-release"));
+            Assert.That(response.ResponseError, Does.Contain("failed-sdk-gen"));
         }
     }
 }

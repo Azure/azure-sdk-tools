@@ -28,4 +28,4 @@ jobs:
           scriptType: pscore
           scriptLocation: inlineScript
           inlineScript: |
-            & "$(System.DefaultWorkingDirectory)/azsdk" release-plan list-overdue --notify-owners true --emailer-uri "$(AzureSDKEmailerSasURL)"
+            & "$(System.DefaultWorkingDirectory)/azsdk" release-plan list --filter overdue-release --notify"

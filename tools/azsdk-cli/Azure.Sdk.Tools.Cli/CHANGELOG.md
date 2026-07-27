@@ -28,6 +28,12 @@
 
 - Added `detect-breaking-change` CLI command and `azsdk_package_detect_breaking_change` MCP tool to detect SDK breaking changes for a package. Accepts the sdk package via `--package-path`. Optional parameters: `--tsp-config-path`, `--changes-only`.
 - `codeowners add-label-owner` rejects a package-directory path (e.g. `sdk/<service>/<package>`) in favor of the package name; use `--force` to override, and wildcard (`*`) paths are always allowed.
+- Added a `list` release plan command with a `--filter` option supporting `overdue-release` (release plans past their target release date) and `failed-sdk-gen` (in-progress release plans whose SDK pull request status was updated to "Failed to generate SDK." for any language in the last 24 hours). With `--notify`, `overdue-release` emails plan owners and `failed-sdk-gen` emails a summary to azsdkexp@microsoft.com; both are sent via the notification service.
+
+### Other Changes
+
+- Configured the Copilot CLI download to use the Azure SDK public npm mirror (`CopilotNpmRegistryUrl`) instead of the default npm registry.
+- Updated automated release plan email to include information about missing SDK details in tspconfig.yaml
 
 ### Bugs Fixed
 

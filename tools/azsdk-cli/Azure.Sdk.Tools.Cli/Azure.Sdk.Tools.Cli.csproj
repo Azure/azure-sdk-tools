@@ -24,8 +24,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="GitHub.Copilot.SDK" Version="1.0.8" />
     <PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" Version="1.5.0" />
+    <PackageReference Include="GitHub.Copilot.SDK" Version="1.0.8" />
     <PackageReference Include="MessagePack" Version="3.1.8" />
     <PackageReference Include="Microsoft.Bcl.Memory" Version="10.0.10" />
     <PackageReference Include="Microsoft.Extensions.Azure" Version="1.12.0" />
@@ -94,6 +94,11 @@
   <!-- See https://github.com/github/copilot-sdk/pull/494 -->
   <PropertyGroup Condition="'$(TF_BUILD)' == 'True'">
     <CopilotSkipCliDownload>true</CopilotSkipCliDownload>
+  </PropertyGroup>
+
+  <!-- Download the Copilot CLI from the Azure SDK public npm mirror -->
+  <PropertyGroup>
+    <CopilotNpmRegistryUrl>https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/</CopilotNpmRegistryUrl>
   </PropertyGroup>
 
 </Project>

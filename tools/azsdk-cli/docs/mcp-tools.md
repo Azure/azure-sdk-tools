@@ -76,7 +76,7 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 |  | `azsdk apiview get-content` | Get content by APIView URL |
 |  | `azsdk tsp generate-authoring-plan` | Generate a solution or execution plan for defining and updating a TypeSpec-based API specification for an Azure service. |
 |  | `azsdk release-plan update-release-status` |  |
-|  | `azsdk release-plan list-overdue` |  |
+|  | `azsdk release-plan list` |  |
 |  | `azsdk quokka` |  |
 |  | `azsdk pkg samples translate` | Translates sample files from source language to target package language |
 |  | `azsdk pkg samples generate` | Generates sample files |

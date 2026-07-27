@@ -42,31 +42,22 @@ public static class ProductLifecycleExtensions
     /// Converts a user-supplied string to an ProductLifecycle enum value (case-insensitive).
     /// </summary>
     public static bool TryParseFromUserInput(string? input, out ProductLifecycle result)
-    {
-        return userInputToProductLifecycle.TryGetValue(input?.Trim(), out result);
-    }
+     => userInputToProductLifecycle.TryGetValue(input?.Trim(), out result);
 
     /// <summary>
     /// Converts an ADO work item field value to an ProductLifecycle enum value.
     /// </summary>
     public static ProductLifecycle FromAdoFieldValue(string? adoValue)
-    {
-        return adoFieldValueToProductLifecycle.TryGetValue(adoValue, out var result) ? result : ProductLifecycle.Unknown;
-    }
+        => adoFieldValueToProductLifecycle.TryGetValue(adoValue, out var result) ? result : ProductLifecycle.Unknown;
 
     /// <summary>
     /// Returns the ADO work item field value for this product lifecycle.
     /// </summary>
     public static string ToAdoFieldValue(this ProductLifecycle productLifecycle)
-    {
-        return productLifecycleToAdoFieldValue.TryGetValue(productLifecycle, out var result) ? result : string.Empty;
-    }
+        => productLifecycleToAdoFieldValue.TryGetValue(productLifecycle, out var result) ? result : string.Empty;
 
     /// <summary>
     /// Gets the list of valid user input values for product lifecycle.
     /// </summary>
-    public static IEnumerable<string> ListValidUserInputs()
-    {
-        return userInputToProductLifecycle.Keys;
-    }
+    public static IEnumerable<string> ListValidUserInputs() => userInputToProductLifecycle.Keys;
 }

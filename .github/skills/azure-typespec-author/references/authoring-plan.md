@@ -21,6 +21,8 @@ Choose the grounding source based on whether the request's case is covered by [r
 
 > Version evolution **is covered** by [reference-document-links.md](reference-document-links.md), so use **Agentic Search** (per [3.1 General](#31-general-all-cases)) — you **MUST** call `web_fetch` on the matching versioning doc and follow its steps. Do **not** call the MCP tool `azsdk_typespec_generate_authoring_plan` for this case.
 
+**Decide the path first:** if the current latest version is an **unreleased preview**, you **collapse** it into the new version (do step 3). If the current latest version is a **released stable**, add the new version **incrementally** with no collapse (skip step 3).
+
 1. Create the new version's `examples/<new-version>/` folder by copying the latest retained version's `examples/` into it, and update `api-version` in each `.json` file.
 2. Update `readme.md`.
 3. **Unreleased preview versions are never retained.** When you add a newer version (preview **or** stable), collapse the previous unreleased preview into it: remove that preview from the `Versions` enum, **rename its `examples/<old-preview>/` folder to `examples/<new-version>/`** (move the files, update `api-version`, so no `examples/<old-preview>/` remains), and **rebase every decorator that referenced the preview to the new version** (keep the decorator) so history relative to retained released versions is preserved. A feature introduced solely in the collapsed preview becomes plain baseline if carried, or is deleted outright (not `@removed`) if excluded. Released **stable** versions are always retained — never collapse a stable; add the new version incrementally with decorators that reference it.

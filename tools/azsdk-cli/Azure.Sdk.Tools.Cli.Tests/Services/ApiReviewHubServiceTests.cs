@@ -38,8 +38,12 @@ public class ApiReviewHubServiceTests
     }
 
     [Test]
-    public async Task GetReleaseGateStatusAsync_DeserializesArrayDetails()
+    [TestCase("python", "1.0.0")]
+    [TestCase("python", "4.12.0b3")]
+    [TestCase("csharp", "4.12.0-beta.3")]
+    public async Task GetReleaseGateStatusAsync_UsesExactPackageVersionInQuery(string language, string packageVersion)
     {
+        HttpRequestMessage? capturedRequest = null;
         var mockHandler = new Mock<HttpMessageHandler>();
         mockHandler
             .Protected()
@@ -47,6 +51,7 @@ public class ApiReviewHubServiceTests
                 "SendAsync",
                 ItExpr.IsAny<HttpRequestMessage>(),
                 ItExpr.IsAny<CancellationToken>())
+            .Callback<HttpRequestMessage, CancellationToken>((request, _) => capturedRequest = request)
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent(
@@ -66,12 +71,62 @@ public class ApiReviewHubServiceTests
             .Setup(x => x.CreateClient(It.IsAny<string>()))
             .Returns(new HttpClient(mockHandler.Object));
 
-        var result = await service.GetReleaseGateStatusAsync("https://api-review-hub-test.azurewebsites.net", "python", "pkg", "1.0.0", "hash", CancellationToken.None);
+        var result = await service.GetReleaseGateStatusAsync("https://api-review-hub-test.azurewebsites.net", language, "pkg", packageVersion, "hash", CancellationToken.None);
 
         Assert.That(result.IsApproved, Is.False);
         Assert.That(result.StatusCode, Is.EqualTo(200));
         Assert.That(result.Reason, Is.EqualTo("rejected"));
         Assert.That(result.Details, Is.EqualTo(new[] { "At least one architect has requested changes for this API." }));
+        Assert.That(capturedRequest, Is.Not.Null);
+        Assert.That(capturedRequest!.RequestUri, Is.Not.Null);
+        Assert.That(capturedRequest.RequestUri!.Query, Does.Contain($"version={Uri.EscapeDataString(packageVersion)}"));
+    }
+
+    [Test]
+    public async Task GetReleaseGateStatusAsync_DeserializesAppliedInheritanceRuleAndApprovalVersion()
+    {
+        var mockHandler = new Mock<HttpMessageHandler>();
+        mockHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    """
+                    {
+                      "isApproved": true,
+                      "reason": "approved",
+                      "appliedInheritanceRule": "prereleaseToStable",
+                      "details": [],
+                      "approvals": [
+                        {
+                          "apiHash": "hash-1",
+                          "version": "4.12.0b3",
+                          "status": "approved",
+                          "pullRequestUrl": "https://github.com/Azure/azure-sdk-for-python/pull/1",
+                          "lastUpdatedBy": "octocat",
+                          "lastUpdatedOn": "2026-07-27T00:00:00Z"
+                        }
+                      ]
+                    }
+                    """,
+                    Encoding.UTF8,
+                    "application/json")
+            });
+
+        httpClientFactoryMock
+            .Setup(x => x.CreateClient(It.IsAny<string>()))
+            .Returns(new HttpClient(mockHandler.Object));
+
+        var result = await service.GetReleaseGateStatusAsync("https://api-review-hub-test.azurewebsites.net", "python", "pkg", "4.12.0b3", "hash", CancellationToken.None);
+
+        Assert.That(result.AppliedInheritanceRule, Is.EqualTo("prereleaseToStable"));
+        Assert.That(result.Approvals, Is.Not.Null);
+        Assert.That(result.Approvals!.Count, Is.EqualTo(1));
+        Assert.That(result.Approvals[0].Version, Is.EqualTo("4.12.0b3"));
     }
 
     [Test]

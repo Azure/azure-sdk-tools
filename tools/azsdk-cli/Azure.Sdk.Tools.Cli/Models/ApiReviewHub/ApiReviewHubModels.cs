@@ -79,6 +79,9 @@ public class ApiReviewHubApprovalRecord
     [JsonPropertyName("apiHash")]
     public string ApiHash { get; set; } = string.Empty;
 
+    [JsonPropertyName("version")]
+    public string Version { get; set; } = string.Empty;
+
     [JsonPropertyName("commitSha")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? CommitSha { get; set; }
@@ -111,6 +114,10 @@ public class ApiReviewHubReleaseGateResult
     [JsonPropertyName("reason")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Reason { get; set; }
+
+    [JsonPropertyName("appliedInheritanceRule")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? AppliedInheritanceRule { get; set; }
 
     [JsonPropertyName("details")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

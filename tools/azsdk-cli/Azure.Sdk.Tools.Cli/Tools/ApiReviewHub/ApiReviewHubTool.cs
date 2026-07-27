@@ -297,6 +297,10 @@ public class ApiReviewHubTool(
             details.Add($"Status Code: {result.ReviewHub.StatusCode}");
             details.Add($"Approved: {result.ReviewHub.IsApproved}");
             details.Add($"Reason: {result.ReviewHub.Reason ?? "none"}");
+            if (!string.IsNullOrWhiteSpace(result.ReviewHub.AppliedInheritanceRule))
+            {
+                details.Add($"Applied Inheritance Rule: {result.ReviewHub.AppliedInheritanceRule}");
+            }
             if (result.ReviewHub.Details?.Count > 0)
             {
                 details.AddRange(result.ReviewHub.Details);
@@ -400,7 +404,8 @@ public class ApiReviewHubTool(
         foreach (var approval in approvals.OrderByDescending(approval => ApiHashMatches(approval.ApiHash, apiHash)).ThenByDescending(approval => approval.LastUpdatedOn, StringComparer.Ordinal))
         {
             var matchText = ApiHashMatches(approval.ApiHash, apiHash) ? " [provided hash]" : string.Empty;
-            details.Add($"- {approval.Status}: {approval.ApiHash}{matchText}");
+            var versionText = string.IsNullOrWhiteSpace(approval.Version) ? string.Empty : $" (version {approval.Version})";
+            details.Add($"- {approval.Status}: {approval.ApiHash}{matchText}{versionText}");
 
             if (!string.IsNullOrWhiteSpace(approval.LastUpdatedBy) || !string.IsNullOrWhiteSpace(approval.LastUpdatedOn))
             {

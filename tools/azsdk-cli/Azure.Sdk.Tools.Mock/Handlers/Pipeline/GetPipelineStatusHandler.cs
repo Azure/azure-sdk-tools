@@ -7,7 +7,7 @@ namespace Azure.Sdk.Tools.Mock.Handlers.Pipeline;
 
 /// <summary>
 /// Mock handler for azsdk_get_pipeline_status.
-/// Switches on buildId — returns a succeeded pipeline status for known IDs, default otherwise.
+/// Switches on buildId — returns a completed pipeline status for known IDs, default otherwise.
 /// </summary>
 public class GetPipelineStatusHandler : IMockToolHandler
 {
@@ -19,20 +19,24 @@ public class GetPipelineStatusHandler : IMockToolHandler
 
         return buildId switch
         {
-            "90001" => SucceededPipelineResponse(buildId),
+            "90001" => CompletedPipelineResponse(buildId),
             _ => MockToolFactory.GetDefaultResponse()
         };
     }
 
-    private static DefaultCommandResponse SucceededPipelineResponse(string buildId) => new()
+    private static DefaultCommandResponse CompletedPipelineResponse(string buildId) => new()
     {
-        Message = "Pipeline completed successfully",
-        Result = new
+        Message = "Pipeline completed with failures",
+        Result = new[]
         {
-            buildId,
-            status = "Succeeded",
-            result = "succeeded",
-            url = $"https://dev.azure.com/azure-sdk/internal/_build/results?buildId={buildId}"
+            new
+            {
+                build_id = int.TryParse(buildId, out var id) ? id : 0,
+                project = "internal",
+                pipeline_url = $"https://dev.azure.com/azure-sdk/internal/_build/results?buildId={buildId}",
+                status = "completed",
+                result = "failed"
+            }
         }
     };
 }

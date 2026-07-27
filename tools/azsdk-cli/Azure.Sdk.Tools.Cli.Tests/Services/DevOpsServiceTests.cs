@@ -661,6 +661,16 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 throw new NotImplementedException();
             }
 
+            public Azure.Core.AccessToken GetToken(CancellationToken ct)
+            {
+                throw new NotImplementedException();
+            }
+
+            public Task<T> ReadBuildWithAnonymousFallbackAsync<T>(Func<BuildHttpClient, Task<T>> operation, CancellationToken ct)
+            {
+                throw new NotImplementedException();
+            }
+
             public WorkItemTrackingHttpClient GetWorkItemClient(CancellationToken ct = default)
             {
                 return _workItemClient;

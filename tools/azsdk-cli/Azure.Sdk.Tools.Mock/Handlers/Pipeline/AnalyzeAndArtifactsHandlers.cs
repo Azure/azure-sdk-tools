@@ -2,6 +2,8 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Pipeline;
+using Azure.Sdk.Tools.Cli.Models.Responses;
 
 namespace Azure.Sdk.Tools.Mock.Handlers.Pipeline;
 
@@ -21,40 +23,41 @@ public class AnalyzePipelineHandler : IMockToolHandler
 
     public CommandResponse Handle(Dictionary<string, object?>? arguments)
     {
-        var buildId = arguments?.GetValueOrDefault("buildId")?.ToString() ?? "6455504";
-        const string versionParseError =
-            "TryGetServiceVersion failed to parse the new service versions \"2026-10-06\" (V2026_10_06) and \"2026-12-06\" (V2026_12_06): both cases are missing from the parser switch. Expected: True But was: False";
+        var buildId = arguments?.GetValueOrDefault("buildId")?.ToString() ?? "90001";
+        var buildIdValue = int.TryParse(buildId, out var parsed) ? parsed : 90001;
+        var pipelineUrl = $"https://dev.azure.com/azure-sdk/internal/_build/results?buildId={buildId}";
         return new AnalyzePipelineResponse
         {
-            FailedTests = new Dictionary<string, List<string>>
+            BuildAnalyses = new List<BuildAnalysis>
             {
-                ["azure.storage.queues.tests.dll"] =
-                    ["Azure.Storage.Queues.Test.QueueClientOptionsTests.TryGetServiceVersion_ParsesAllServiceVersions"],
-                ["azure.storage.files.shares.tests.dll"] =
-                    ["Azure.Storage.Files.Shares.Tests.ShareClientOptionsTests.TryGetServiceVersion_ParsesAllServiceVersions"]
-            },
-            FailedTasks =
-            [
-                new LogAnalysisResponse
+                new BuildAnalysis
                 {
-                    PipelineUrl = $"https://dev.azure.com/azure-sdk/public/_build/results?buildId={buildId}",
-                    Errors =
-                    [
-                        new LogEntry
+                    Build = new ResolvedBuild(buildIdValue, "internal", pipelineUrl, "completed", "failed"),
+                    FailedBuildTests = new List<FailedTestRunResponse>
+                    {
+                        new FailedTestRunResponse
                         {
-                            File = "sdk/storage/Azure.Storage.Queues/tests/QueueClientOptionsTests.cs",
-                            Line = 24,
-                            Message = versionParseError
-                        },
-                        new LogEntry
-                        {
-                            File = "sdk/storage/Azure.Storage.Files.Shares/tests/ShareClientOptionsTests.cs",
-                            Line = 24,
-                            Message = versionParseError
+                            TestCaseTitle = "WidgetClientLiveTests.GetWidget",
+                            Outcome = "Failed",
+                            Uri = "sdk/widgets/Azure.Widgets/tests/WidgetClientLiveTests.cs",
+                            ErrorMessage = "expected 200 got 404"
                         }
-                    ]
+                    },
+                    FailedBuildTasks = new LogAnalysisResponse
+                    {
+                        PipelineUrl = pipelineUrl,
+                        Errors =
+                        [
+                            new LogEntry
+                            {
+                                File = "logs/test.log",
+                                Line = 128,
+                                Message = "Test WidgetClientLiveTests.GetWidget failed: expected 200 got 404"
+                            }
+                        ]
+                    }
                 }
-            ]
+            }
         };
     }
 }

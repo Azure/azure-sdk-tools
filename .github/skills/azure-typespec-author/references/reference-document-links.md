@@ -3,10 +3,10 @@
 ## API Version Evolution
 
 - [Versioning overview](https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/): Overview of how API versioning works in TypeSpec Azure.
-- [preview → preview](https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/): How to add a new preview version after an existing preview version.
-- [preview → stable](https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/): How to promote a preview version to stable.
-- [stable → preview](https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/): How to add a new preview version after a stable version.
-- [stable → stable](https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/): How to add a new stable version after an existing stable version.
+- [Add preview after preview](https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/): Add a new **preview** version when the latest existing version is a **preview** version.
+- [Add stable after preview](https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/): Add a new **stable** version when the latest existing version is a **preview** version — i.e. promote/collapse the preview into the new stable.
+- [Add preview after stable](https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/): Add a new **preview** version when the latest existing version is a **stable** version.
+- [Add stable after stable](https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/): Add a new **stable** version when the latest existing version is a **stable** version.
 - [Evolving APIs](https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/): How to evolve your API across versions by adding, removing, or modifying resources, operations, and properties using versioning decorators.
 
 ## ARM (Resource-Manager) Operations

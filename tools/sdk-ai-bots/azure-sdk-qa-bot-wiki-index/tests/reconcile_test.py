@@ -5,7 +5,10 @@ from __future__ import annotations
 import asyncio
 import json
 
+import pytest
+
 from azure_sdk_qa_bot_wiki_index.reconcile import (
+    CorpusShrankError,
     _extraction_from_json,
     _extraction_to_json,
     _page_from_manifest,
@@ -176,3 +179,67 @@ def test_same_name_docs_across_folders_do_not_collide():
         e["source_refs"][0] for e in man["pages"].values() if e["page_type"] == "summary"
     )
     assert summary_refs == ["python_docs/README.md", "typespec_docs/README.md"]
+
+
+class _EmptySummaryLLM(_FakeLLM):
+    """Returns an empty summary body while group synthesis still works."""
+
+    def complete(self, system, user, max_tokens=600):
+        if user.startswith("Document: "):
+            return ""
+        return super().complete(system, user, max_tokens=max_tokens)
+
+
+def test_empty_summary_is_retried_on_the_next_run():
+    cc = _FakeContainer()
+    corpus = _corpus()
+
+    # both attempts inside synthesize_summary come back empty
+    s1 = asyncio.run(reconcile(cc, corpus, _EmptySummaryLLM(_EXTRACTION), min_docs=2))
+    assert s1.summaries_regenerated == 0
+    man = json.loads(cc.store["_manifest.json"]["data"].decode("utf-8"))
+    # the source hash is reset so the doc is not mistaken for up to date
+    assert all(e["hash"] == "" for e in man["sources"].values())
+
+    # a healthy run over the same corpus regenerates the summaries
+    s2 = asyncio.run(reconcile(cc, corpus, _FakeLLM(_EXTRACTION), min_docs=2))
+    assert s2.summaries_regenerated == 2
+
+
+def test_tombstoned_pages_drop_their_body():
+    cc = _FakeContainer()
+    llm = _FakeLLM(_EXTRACTION)
+    asyncio.run(reconcile(cc, _corpus(), llm, min_docs=2))
+
+    asyncio.run(reconcile(cc, [("typespec_docs/a.md", "text a @added versioning")], llm, min_docs=2))
+    man = json.loads(cc.store["_manifest.json"]["data"].decode("utf-8"))
+    tombstones = [e for e in man["pages"].values() if e.get("is_deleted") == "true"]
+    assert tombstones
+    assert all(not e.get("content") for e in tombstones)
+
+
+def test_deleted_page_is_resynthesized_when_its_sources_return():
+    cc = _FakeContainer()
+    llm = _FakeLLM(_EXTRACTION)
+    asyncio.run(reconcile(cc, _corpus(), llm, min_docs=2))
+    asyncio.run(reconcile(cc, [("typespec_docs/a.md", "text a @added versioning")], llm, min_docs=2))
+
+    s = asyncio.run(reconcile(cc, _corpus(), llm, min_docs=2))
+    man = json.loads(cc.store["_manifest.json"]["data"].decode("utf-8"))
+    assert s.total_pages == 4
+    assert all(e.get("is_deleted") != "true" for e in man["pages"].values())
+    assert all(e.get("content") for e in man["pages"].values())
+
+
+def test_mass_deletion_is_refused():
+    cc = _FakeContainer()
+    llm = _FakeLLM(_EXTRACTION)
+    corpus = [(f"typespec_docs/{i}.md", f"text {i} @added versioning") for i in range(10)]
+    asyncio.run(reconcile(cc, corpus, llm, min_docs=2))
+
+    with pytest.raises(CorpusShrankError):
+        asyncio.run(reconcile(cc, corpus[:2], llm, min_docs=2))
+
+    # the manifest is untouched, so the next healthy run is still a no-op
+    s = asyncio.run(reconcile(cc, corpus, llm, min_docs=2))
+    assert s.pages_written == 0 and s.pages_deleted == 0

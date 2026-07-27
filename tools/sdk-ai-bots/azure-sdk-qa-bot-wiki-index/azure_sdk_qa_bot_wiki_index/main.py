@@ -10,11 +10,11 @@ from __future__ import annotations
 import argparse
 import asyncio
 import logging
-import os
 
 from azure.identity.aio import DefaultAzureCredential as AsyncDefaultAzureCredential
 from azure.storage.blob.aio import BlobServiceClient
 
+from .config import get as cfg, load as load_config
 from .llm import ChatLLM, build_azure_openai_client
 from .reader import read_blob_container
 from .reconcile import reconcile
@@ -22,16 +22,12 @@ from .reconcile import reconcile
 logger = logging.getLogger(__name__)
 
 
-def _env(name: str, default: str = "") -> str:
-    return os.environ.get(name, default)
-
-
 def _make_blob_service_client(credential) -> BlobServiceClient:
-    return BlobServiceClient(account_url=_env("STORAGE_BLOB_ENDPOINT"), credential=credential)
+    return BlobServiceClient(account_url=cfg("STORAGE_BLOB_ENDPOINT") or cfg("STORAGE_BASE_URL"), credential=credential)
 
 
 async def _read_corpus(credential) -> list[tuple[str, str]]:
-    container = _env("STORAGE_KNOWLEDGE_CONTAINER", "knowledge")
+    container = cfg("STORAGE_KNOWLEDGE_CONTAINER", "knowledge")
     blob_service = _make_blob_service_client(credential)
     async with blob_service:
         cc = blob_service.get_container_client(container)
@@ -40,16 +36,17 @@ async def _read_corpus(credential) -> list[tuple[str, str]]:
 
 async def _run(args: argparse.Namespace) -> int:
     async with AsyncDefaultAzureCredential() as credential:
+        await load_config(credential)
         corpus = await _read_corpus(credential)
         if not corpus:
             logger.warning("no markdown found in knowledge container")
             return 0
 
-        aoai = build_azure_openai_client(_env("AZURE_OPENAI_ENDPOINT"))
-        llm = ChatLLM(aoai, _env("WIKI_SYNTHESIS_DEPLOYMENT", "gpt-5.4"))
+        aoai = build_azure_openai_client(cfg("AZURE_OPENAI_ENDPOINT"))
+        llm = ChatLLM(aoai, cfg("WIKI_SYNTHESIS_DEPLOYMENT", "gpt-5.4"))
 
         # Incremental reconcile against the wiki container (durable + rebuildable).
-        wiki_container = _env("STORAGE_WIKI_OUTPUT_CONTAINER", "wiki")
+        wiki_container = cfg("STORAGE_WIKI_OUTPUT_CONTAINER", "wiki")
         blob_service = _make_blob_service_client(credential)
         async with blob_service:
             cc = blob_service.get_container_client(wiki_container)

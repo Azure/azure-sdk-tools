@@ -35,21 +35,34 @@ pip install -r requirements.txt
 python -m azure_sdk_qa_bot_wiki_index.main
 ```
 
+`build_wiki.yml` runs this daily at 04:00 UTC, two hours after the knowledge
+sync that produces its input. Runs are incremental: only documents whose content
+hash changed are re-summarised, and only entity/concept groups whose membership
+changed are recompiled. Pages whose sources disappear are soft-deleted, and a
+run that would remove more than half of the known sources aborts instead, on the
+assumption that the upstream corpus is incomplete rather than genuinely emptied.
+
 ## Configuration
+
+Settings are read from the environment first and then from Azure App
+Configuration (`AZURE_APPCONFIG_ENDPOINT`), which is how the pipeline supplies
+them.
 
 | Variable | Default | Purpose |
 | -------- | ------- | ------- |
 | `AI_SEARCH_BASE_URL` | — | Azure AI Search endpoint |
-| `AI_SEARCH_INDEX` | — | target index shared with the KB |
-| `STORAGE_BLOB_ENDPOINT` | — | blob account endpoint |
+| `AI_SEARCH_INDEX` | `azure-sdk-knowledge` | target index shared with the KB |
+| `STORAGE_BLOB_ENDPOINT` | `STORAGE_BASE_URL` | blob account endpoint |
 | `STORAGE_KNOWLEDGE_CONTAINER` | `knowledge` | source knowledge container |
 | `STORAGE_WIKI_OUTPUT_CONTAINER` | `wiki` | generated wiki container |
 | `AZURE_OPENAI_ENDPOINT` | — | Azure OpenAI endpoint |
 | `WIKI_SYNTHESIS_DEPLOYMENT` | `gpt-5.4` | chat deployment |
-| `WIKI_EMBEDDING_DEPLOYMENT` | `text-embedding-ada-002` | embedding deployment |
+| `STORAGE_ACCOUNT_RESOURCE_ID` | — | storage account the indexer reads (setup only) |
+| `SEARCH_USER_ASSIGNED_IDENTITY_RESOURCE_ID` | — | identity the indexer runs as (setup only) |
 
 Authentication uses `DefaultAzureCredential`; `AZURE_OPENAI_API_KEY` is used for
-Azure OpenAI when set.
+Azure OpenAI when set. The skillset always embeds with `text-embedding-ada-002`
+to match the vectors already in the shared index.
 
 ## Index fields
 

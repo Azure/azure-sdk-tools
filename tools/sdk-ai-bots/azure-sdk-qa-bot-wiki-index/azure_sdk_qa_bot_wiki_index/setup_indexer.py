@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import logging
-import os
 
 import requests
 from azure.identity import DefaultAzureCredential
+
+from .config import get as cfg, load_sync as load_config, require
 
 logger = logging.getLogger(__name__)
 
@@ -15,33 +16,15 @@ DATASOURCE = "azure-sdk-knowledge-wiki-datasource"
 SKILLSET = "azure-sdk-knowledge-wiki-skillset"
 INDEXER = "azure-sdk-knowledge-wiki-indexer"
 
-_DEFAULTS = {
-    "AI_SEARCH_BASE_URL": "https://azuresdkqabot-dev-search.search.windows.net",
-    "AI_SEARCH_INDEX": "azure-sdk-knowledge",
-    "STORAGE_ACCOUNT_RESOURCE_ID": (
-        "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/"
-        "azure-sdk-qa-bot-dev/providers/Microsoft.Storage/storageAccounts/"
-        "azuresdkqabotdevstorage"
-    ),
-    "STORAGE_WIKI_OUTPUT_CONTAINER": "wiki",
-    "AZURE_OPENAI_ENDPOINT": "https://azuresdkqabot-dev-ai-resource.openai.azure.com",
-    "WIKI_EMBEDDING_DEPLOYMENT": "text-embedding-ada-002",
-    "SEARCH_USER_ASSIGNED_IDENTITY_RESOURCE_ID": (
-        "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourcegroups/"
-        "azure-sdk-qa-bot-dev/providers/Microsoft.ManagedIdentity/"
-        "userAssignedIdentities/azuresdkqabot-dev-identity"
-    ),
-}
-
-
-def _env(name: str) -> str:
-    return os.environ.get(name, _DEFAULTS[name])
+# The shared index was created with ada-002 vectors, so the wiki skillset must
+# embed with the same model regardless of what the build pipeline uses.
+EMBEDDING_DEPLOYMENT = "text-embedding-ada-002"
 
 
 def _ua_identity() -> dict:
     return {
         "@odata.type": "#Microsoft.Azure.Search.DataUserAssignedIdentity",
-        "userAssignedIdentity": _env("SEARCH_USER_ASSIGNED_IDENTITY_RESOURCE_ID"),
+        "userAssignedIdentity": require("SEARCH_USER_ASSIGNED_IDENTITY_RESOURCE_ID"),
     }
 
 
@@ -61,8 +44,8 @@ def datasource_body() -> dict:
     return {
         "name": DATASOURCE,
         "type": "azureblob",
-        "credentials": {"connectionString": f"ResourceId={_env('STORAGE_ACCOUNT_RESOURCE_ID')};"},
-        "container": {"name": _env("STORAGE_WIKI_OUTPUT_CONTAINER")},
+        "credentials": {"connectionString": f"ResourceId={require('STORAGE_ACCOUNT_RESOURCE_ID')};"},
+        "container": {"name": cfg("STORAGE_WIKI_OUTPUT_CONTAINER", "wiki")},
         "identity": _ua_identity(),
         "dataDeletionDetectionPolicy": {
             "@odata.type": "#Microsoft.Azure.Search.SoftDeleteColumnDeletionDetectionPolicy",
@@ -73,7 +56,7 @@ def datasource_body() -> dict:
 
 
 def skillset_body() -> dict:
-    index = _env("AI_SEARCH_INDEX")
+    index = cfg("AI_SEARCH_INDEX", "azure-sdk-knowledge")
     return {
         "name": SKILLSET,
         "description": "Chunk + embed LLM wiki pages; project into the shared KB index with page_type.",
@@ -93,10 +76,10 @@ def skillset_body() -> dict:
                 "@odata.type": "#Microsoft.Skills.Text.AzureOpenAIEmbeddingSkill",
                 "name": "#2",
                 "context": "/document/pages/*",
-                "resourceUri": _env("AZURE_OPENAI_ENDPOINT"),
-                "deploymentId": _env("WIKI_EMBEDDING_DEPLOYMENT"),
+                "resourceUri": require("AZURE_OPENAI_ENDPOINT"),
+                "deploymentId": EMBEDDING_DEPLOYMENT,
                 "dimensions": 1536,
-                "modelName": _env("WIKI_EMBEDDING_DEPLOYMENT"),
+                "modelName": EMBEDDING_DEPLOYMENT,
                 "authIdentity": _ua_identity(),
                 "inputs": [{"name": "text", "source": "/document/pages/*"}],
                 "outputs": [{"name": "embedding", "targetName": "text_vector"}],
@@ -129,7 +112,7 @@ def indexer_body() -> dict:
         "name": INDEXER,
         "dataSourceName": DATASOURCE,
         "skillsetName": SKILLSET,
-        "targetIndexName": _env("AI_SEARCH_INDEX"),
+        "targetIndexName": cfg("AI_SEARCH_INDEX", "azure-sdk-knowledge"),
         "schedule": {"interval": "P1D"},
         "parameters": {
             "configuration": {
@@ -148,8 +131,10 @@ def indexer_body() -> dict:
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-    base = _env("AI_SEARCH_BASE_URL").rstrip("/")
-    token = DefaultAzureCredential().get_token("https://search.azure.com/.default").token
+    credential = DefaultAzureCredential()
+    load_config(credential)
+    base = require("AI_SEARCH_BASE_URL").rstrip("/")
+    token = credential.get_token("https://search.azure.com/.default").token
     _put(base, token, "datasources", DATASOURCE, datasource_body())
     _put(base, token, "skillsets", SKILLSET, skillset_body())
     _put(base, token, "indexers", INDEXER, indexer_body())

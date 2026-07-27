@@ -356,7 +356,12 @@ async function batchFetchSpecProjectPaths(urls) {
 }
 
 /** Regex patterns for spec PR labels worth highlighting on cards. */
-const SPEC_LABEL_PATTERNS = [/breakingchange/i, /\bARM\b/i, /\bAPI\b/i];
+const SPEC_LABEL_PATTERNS = [
+  /breakingchange/i,
+  /\bARM\b/i,
+  /\bAPI\b/i,
+  /^namespace-/i,
+];
 
 /** Fetches labels for a single GitHub PR URL. Returns an array of { name, color } objects. */
 async function getGitHubPrLabels(prUrl) {

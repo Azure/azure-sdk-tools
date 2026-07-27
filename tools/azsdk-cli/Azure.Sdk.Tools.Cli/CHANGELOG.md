@@ -1,14 +1,36 @@
 # Release History
 
-## 0.6.27 (Unreleased)
-
-### Features Added
-
-### Breaking Changes
+## 0.6.31 (2026-07-27)
 
 ### Bugs Fixed
 
-### Other Changes
+- Updated `GitHub.Copilot.SDK` to 1.0.8 so Copilot-backed commands accept ISO-8601 `ping` timestamps returned by current Copilot CLI versions.
+
+## 0.6.30 (2026-07-23)
+
+### Features Added
+
+- Added a notification service that sends an email notification when a release plan is created. Notifications are sent only when the notification service URL environment variable is configured.
+
+### Bugs Fixed
+
+- Fixed release plan SDK details update to avoid marking a language as missing emitter config when the TypeSpec parser did not detect any package name.
+
+## 0.6.28 (2026-07-16)
+
+### Features Added
+
+- Added a new helper method to get user profile from a GitHub user name
+
+### Bugs Fixed
+
+- Hide logs for gh auth
+
+## 0.6.27 (2026-07-13)
+
+### Features Added
+
+- Update release status CLI command to take release pipeline URL as a parameter to update it in the release plan. Also updated this tool to accept SDK release type and SDK pull request to lookup the release plan using pull request/release type.
 
 ## 0.6.26 (2026-07-09)
 

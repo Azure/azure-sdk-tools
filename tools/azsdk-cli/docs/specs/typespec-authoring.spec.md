@@ -24,7 +24,7 @@
 
 - **ARM API Best Practices**: Design patterns and recommendations for creating consistent, high-quality ARM APIs, including guidance on resource modeling, operation patterns, and API versioning. See [ARM API Best Practices](https://armwiki.azurewebsites.net/api_contracts/best_practices.html)
 
-- **Azure TypeSpec Style Guide**: Style conventions and coding standards specific to writing TypeSpec for Azure services, ensuring consistency across Azure service definitions. See [Azure TypeSpec Style Guide](https://azure.github.io/typespec-azure/docs/style-guide)
+- **Azure TypeSpec Style Guide**: Style conventions and coding standards specific to writing TypeSpec for Azure services, ensuring consistency across Azure service definitions. See [Azure TypeSpec Style Guide](https://azure.github.io/typespec-azure/docs/reference/azure-style-guide)
 
 - **ARM TypeSpec Best Practices**: Recommended patterns for using TypeSpec operation templates and interface templates when defining ARM resource types and operations. See [ARM Resource Operations](https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type)
 
@@ -234,67 +234,44 @@ According to the ARM versioning guideline and best practices, the expected behav
 
 ## Design Proposal
 
-This spec proposes two approaches for providing AI-powered TypeSpec authoring assistance. Each approach has different tradeoffs in terms of implementation complexity, maintenance overhead, and specialization capability.
+This spec provides AI-powered TypeSpec authoring assistance through a **GitHub Copilot Skill** named `azure-typespec-author`, rather than a standalone custom agent. The skill lives under `.github/skills/azure-typespec-author/` and is loaded by any Copilot-compatible host agent. It encodes a deterministic authoring workflow and grounds every change in authoritative Azure guidance retrieved from two complementary sources: the Azure SDK Knowledge Base (via an MCP tool) and agentic web search over a curated documentation catalog.
 
-### Approach 1: Custom Agent-Based Design
+### Skill: `azure-typespec-author`
 
-Build a custom agent `azure-typespec-author-agent` that assists users in defining or updating TypeSpec API specifications and handling other TypeSpec‑related tasks.
-The agent adopts Azure KB to provide solution for user request:
+The skill is a Markdown-defined capability (`SKILL.md` plus a set of `references/` files) that the host agent invokes automatically whenever a task involves creating or modifying TypeSpec (`.tsp`) files (except `client.tsp`). Declarative triggers replace bespoke agent-routing logic, and a fixed step-by-step procedure keeps behavior reproducible across sessions and models.
 
-Based on the request, the agent will invoke an Azure KB tool to retrieve the solution for user request and then apply the solution to edit TypeSpec files.
+**Triggers** — the skill activates for any TypeSpec change: adding, bumping, or promoting API versions (preview, stable); adding or modifying resources, operations, models, properties, or decorators; changing visibility, constraints, LRO patterns, or suppressions; defining `operationId`, spread models, or extension resources; and post-Swagger-conversion edits. It does **not** activate for SDK generation, package release, or single MCP tool calls.
 
-- Leverage the existing APIs for Azure SDK knowledge base to deliver solutions aligned with Azure guidelines and best practices. 
-- Implement a TypeSpec solution MCP tool that consults the Azure SDK RAG service to generate these solutions.
+**Prerequisite** — the `azure-sdk-mcp` server (provided by `azsdk-cli`) must be running to serve the skill's MCP tools.
 
-#### Overview
+#### Architecture
 
-```code
-┌──────┐          ┌─────────────┐          ┌───────────┐          ┌───────────┐
-│ User │          │ custom agent│          │ azsdk     │          │ Knowledge │
-│      │          │ Copilot     │          │ MCP       │          │ base      │
-└──┬───┘          └──────┬──────┘          └─────┬─────┘          └─────┬─────┘
-   │                     │                       │                      │
-   │ "Add new preview    │                       │                      │
-   │  version 2025-12-09 │                       │                      │
-   │  to project widget" │                       │                      │
-   │────────────────────>│                       │                      │
-   │                     │────┐                  │                      │
-   │                     │    │ retrieve required│                      │
-   │                     │<───┘ information      │                      │
-   │                     │                       │                      │
-   │                     │ Request versioning    │                      │
-   │                     │ info                  │                      │
-   │                     │──────────────────────>│                      │
-   │                     │                       │                      │
-   │                     │                       │ Search request       │
-   │                     │                       │─────────────────────>│
-   │                     │                       │                      │
-   │                     │                       │ Versioning solution  │
-   │                     │                       │<─────────────────────│
-   │                     │                       │                      │
-   │                     │ Versioning solution   │                      │
-   │                     │<──────────────────────│                      │
-   │                     │────┐                  │                      │
-   │                     │    │ Make edits       │                      │
-   │                     │<───┘                  │                      │
-   │                     │                       │                      │
-   │ "Changes made"      │                       │                      │
-   │<────────────────────│                       │                      │
-   │                     │                       │                      │
-```
+![Azure TypeSpec author skill architecture diagram](azure-typespec-author-architecture.png)
 
-#### Detailed Design
+#### Skill Workflow
 
-The TypeSpec authoring workflow follows a streamlined process where the user interacts with Custom agent `azure-typespec-author-agent` using natural language, and agent leverages the TypeSpec Solution Tool (MCP) to generate standards-compliant solutions. The architecture diagram above illustrates this end-to-end flow:
+The skill enforces a fixed six-step workflow defined in `SKILL.md`. Every `.tsp` edit runs the full workflow — even a seemingly trivial change (for example, making a property optional with `?`) can be breaking — and steps are never skipped. All edits are minimal and scoped to the request, and the plan produced in Step 3 is the single source of truth for Step 4.
 
-1. **User prompts GitHub Copilot** with a TypeSpec task (e.g., "Add new preview version 2025-12-09 to project widget")
-1. **Agent collect required information** for this task (e.g. the namespace, version, current project structure)
-1. **Agent invokes the TypeSpec Solution Tool** (MCP: `azsdk_typespec_generate_authoring_plan`) with the user's request and any additional context
-1. The `azsdk_typespec_generate_authoring_plan` Tool queries the Azure SDK Knowledge Base with a structured request containing the user's intent and project context
-1. The Knowledge Base returns a RAG-powered solution with step-by-step guidance and documentation references
-1. **Agent applies the solution** to update TypeSpec files and presents the changes to the user with explanations and reference links
+| Step | Name | Reference | Summary |
+|------|------|-----------|---------|
+| 1 | Analyze Project | `references/analyze-project.md` | Collect project root, `tspconfig.yaml`, service type (ARM / data-plane), existing and latest API versions, intent, target resource/interface, and constraints. |
+| 2 | Intake | `references/intake.md` | Run agentic search, then identify the case (Add Resource Type, Add Resource Operations, API Version Evolution) and gather case-specific inputs; confirm with the user. |
+| 3 | Build Authoring Plan | `references/authoring-plan.md` | Produce a grounded plan from the two plan sources below. |
+| 4 | Apply Changes | — | Make minimal `.tsp` edits that follow the Step 3 plan exactly; confirm uncertainties with the user first. |
+| 5 | Validate | `references/validation.md` | Run `azsdk_run_typespec_validation` and `tsp compile .` (always), plus example verification for API-version evolution. |
+| 6 | Output Reference Links | — | Emit all documentation URLs referenced in Step 3 so the user can trace the guidance behind each change. |
 
-This design ensures that generated TypeSpec code adheres to Azure Resource Manager (ARM) patterns, Data Plane (DP) standards, SDK guidelines, and TypeSpec best practices by grounding every solution in authoritative Azure documentation.
+#### Plan Sources (Step 3)
+
+Step 3 builds the authoring plan from two grounding sources; when their guidance conflicts, agentic search wins:
+
+1. **MCP tool** — call `azsdk_typespec_generate_authoring_plan` with the verbatim user request, the Step 1–2 context, and the project root. The tool returns a RAG-grounded plan from the Azure SDK Knowledge Base.
+2. **Agentic search** — follow `references/agentic-search.md`: select the relevant URLs from `references/reference-document-links.md`, `web_fetch` each into Markdown, search for content matching a query derived from the request and Step 1 result, iterate until sufficient, and synthesize the extracted guidance into a concrete plan.
+
+
+#### MCP Tools and Knowledge Base
+
+The skill relies on two MCP tools exposed by the `azure-sdk-mcp` server (`azsdk-cli`). The authoring-plan tool is backed by the Azure SDK Knowledge Base; the validation tool wraps the repository's TypeSpec validation.
 
 ##### Component 1: TypeSpec Solution Tool
 
@@ -420,157 +397,37 @@ This design ensures that generated TypeSpec code adheres to Azure Resource Manag
 - Knowledge base returns contextual solutions with references
 - Tool formats and presents results to the user
 
----
+##### Component 3: TypeSpec Validation Tool
 
-#### Future Enhancement for Approach 1
+**Name (MCP)**: `azsdk_run_typespec_validation`
 
-##### Multiple Skills
+**Purpose**: Validate a TypeSpec project and surface errors and warnings so the skill can fix issues before completing a task.
 
-**Description:**
+**Usage in the skill (Step 5)**:
 
-Enhance Custom agent `azure-typespec-author-agent` capability with multiple Skills. Agent will choose skill according to the request scenario.
+1. Invoke `azsdk_run_typespec_validation` with the project root. On failure, fix the reported issues and re-run; limit to 3 retry attempts, then stop and report the remaining errors to the user.
+1. Run `tsp compile .` from the project root and verify the OpenAPI `.json` output under the path configured by the `@azure-tools/typespec-autorest` entry in `tspconfig.yaml`.
+1. For API-version evolution only, verify that `examples/` exists for the target version with the correct `api-version`, and that example folders for removed versions are deleted.
 
-```code
-┌──────┐          ┌─────────────┐          ┌───────────┐          ┌───────────┐          ┌────────────────┐
-│ User │          │ custom agent│          │ azsdk     │          │ Knowledge │          │ llms.txt       │ 
-│      │          │ Copilot     │          │ MCP       │          │ base (bot)│          │ web fetch tool │
-└──┬───┘          └──────┬──────┘          └─────┬─────┘          └─────┬─────┘          └──────┬─────────┘
-   │                     │                       │                      │                        │
-   │ "Add new preview    │                       │                      │                        │
-   │  version 2025-12-09 │                       │                      │                        │
-   │  to my project"     │                       │                      │                        │
-   │────────────────────>│                       │                      │                        │
-   │                     │────┐                  │                      │
-   │                     │    │ retrieve required│                      │
-   │                     │<───┘ information      │                      │
-   │                     │                       │                      │                        │
-   │                     │────┐                  │                      │                        │
-   │                     │    │ detect scenario  │                      │                        │
-   │                     │<───┘                  │                      │                        │
-   │                     │                       │                      │                        │
-   │                     │ (if: normal authoring)│                      │                        │
-   │                     │ Request versioning    │                      │                        │
-   │                     │ info                  │                      │                        │
-   │                     │──────────────────────>│                      │                        │
-   │                     │                       │                      │                        │
-   │                     │                       │ Search request       │                        │
-   │                     │                       │─────────────────────>│                        │
-   │                     │                       │                      │                        │
-   │                     │                       │ Versioning solution  │                        │
-   │                     │                       │<─────────────────────│                        │
-   │                     │                       │                      │                        │
-   │                     │ Versioning solution   │                      │                        │
-   │                     │<──────────────────────│                      │                        │
-   │                     │────┐                  │                      │                        │
-   │                     │    │ Make edits       │                      │                        │
-   │                     │<───┘                  │                      │                        │
-   │                     │                       │                      │                        │
-   │ "Changes made"      │                       │                      │                        │
-   │<────────────────────│                       │                      │                        │
-   │                     │                       │                      │                        │
-   │                     │                       │                      │                        │
-   │ "rename model name  │                       │                      │                        │
-   │  for dotnet sdk"    │                       │                      │                        │
-   │────────────────────>│                       │                      │                        │
-   │                     │                       │                      │                        │
-   │                     │────┐                  │                      │
-   │                     │    │ retrieve required│                      │
-   │                     │<───┘ information      │                      │
-   │                     │────┐                  │                      │                        │
-   │                     │    │ detect scenario  │                      │                        │
-   │                     │<───┘                  │                      │                        │
-   │                     │                       │                      │                        │
-   │                     │ (if: customization)   │                      │                        │
-   │                     │ Request customization │                      │                        │
-   │                     │ request               │                      │                        │
-   │                     │───────────────────────│──────────────────────│───────────────────────>│
-   │                     │                       │                      │                        │
-   │                     │ customization context │                      │                        │
-   │                     │<──────────────────────│──────────────────────│────────────────────────│
-   │                     │                       │                      │                        │
-   │                     │────┐                  │                      │                        │
-   │                     │    │generate solution │                      │                        │
-   │                     │<───┘  (llm call)      │                      │                        │
-   │                     │────┐                  │                      │                        │
-   │                     │    │ Make edits       │                      │                        │
-   │                     │<───┘                  │                      │                        │
+#### Reference Files
 
-```
+`SKILL.md` delegates step detail to the following reference files, keeping the entry point small and each concern independently maintainable:
 
-##### Call AI Search instead of Azure Knowledge Base
+| File | Purpose |
+|------|---------|
+| `references/analyze-project.md` | Step 1: project analysis inputs and output template |
+| `references/intake.md` | Step 2: general + case-specific intake and confirmation |
+| `references/authoring-plan.md` | Step 3: build the authoring plan (MCP tool + agentic search) |
+| `references/agentic-search.md` | Procedure: select URLs → fetch → extract guidance |
+| `references/reference-document-links.md` | Catalog of external Azure / TypeSpec guide URLs |
+| `references/validation.md` | Step 5: validate → compile → verify examples |
 
-The custom agent will invoke an AI search to retrieve the relevant TypeSpec information, then use that knowledge as context to generate the final response.
+#### Why a Skill (Design Rationale)
 
-This approach cleanly decouples knowledge retrieval from final responses, enabling the custom agent to leverage the VS Code model to generate solutions. The custom agent can also craft tailored prompts to produce responses that are well‑suited for authoring tasks.
-
----
-
-### Approach 2: Skills-Only Approach (Without Custom Agent)
-
-Instead of building a custom agent, leverage GitHub Copilot's Skills framework to provide TypeSpec authoring assistance directly through MCP tools. This approach allows the existing Copilot agent to intelligently invoke specialized TypeSpec skills based on user context and requests.
-
-#### Overview
-
-```code
-┌──────┐          ┌─────────────┐          ┌───────────┐          ┌───────────┐
-│ User │          │ TypeSpec    │          │ azsdk     │          │ Knowledge │
-│      │          │ Authoring   │          │ MCP       │          │ base      │
-│      │          │ Skills      │          │           │          │           │
-└──┬───┘          └──────┬──────┘          └─────┬─────┘          └─────┬─────┘
-   │                     │                       │                      │
-   │ "Add new preview    │                       │                      │
-   │  version 2025-12-09 │                       │                      │
-   │  to project widget" │                       │                      │
-   │────────────────────>│                       │                      │
-   │                     │────┐                  │                      │
-   │                     │    │ detect TypeSpec  │                      │
-   │                     │    │ context & choose │                      │
-   │                     │<───┘ appropriate skill│                      │
-   │                     │                       │                      │
-   │                     │ Request versioning    │                      │
-   │                     │ info                  │                      │
-   │                     │──────────────────────>│                      │
-   │                     │                       │                      │
-   │                     │                       │ Search request       │
-   │                     │                       │─────────────────────>│
-   │                     │                       │                      │
-   │                     │                       │ Versioning solution  │
-   │                     │                       │<─────────────────────│
-   │                     │                       │                      │
-   │                     │ Versioning solution   │                      │
-   │                     │<──────────────────────│                      │
-   │                     │────┐                  │                      │
-   │                     │    │ Make edits       │                      │
-   │                     │<───┘                  │                      │
-   │                     │                       │                      │
-   │ "Changes made"      │                       │                      │
-   │<────────────────────│                       │                      │
-   │                     │                       │                      │
-```
-
-#### Detailed Design
-
-1. **User prompts** with a TypeSpec task (e.g., "Add new preview version 2025-12-09 to project widget")
-1. **Skill detects TypeSpec context** based on:
-   - User's query and case to resolve
-   - File extensions (`.tsp`)
-   - Project structure (presence of `tspconfig.yaml`, `package.json` with TypeSpec dependencies)
-   - Active file content and imports
-   - Workspace-indexed TypeSpec files
-1. **Skill automatically invokes the appropriate MCP tool** (`azsdk_typespec_generate_authoring_plan`) without requiring custom agent routing logic
-1. The MCP tool queries the Azure SDK Knowledge Base with the user's request and project context
-1. The Knowledge Base returns a RAG-powered solution with step-by-step guidance
-1. **Agent processes the solution** and applies appropriate file edits, presenting changes to the user with explanations
-
----
-
-### Approach Comparison Summary
-
-Both approaches leverage the same Azure SDK Knowledge Base backend and provide similar core functionality. The key differences are:
-
-- **Approach 1 (Custom Agent)**: Does NOT redirect every TypeSpec question to the Azure SDK Knowledge Base backend, making it more lightweight. However, customers need to explicitly know when to switch to use the custom agent. 
-
-- **Approach 2 (Skills-Only)**: Redirects every TypeSpec question to the Azure SDK Knowledge Base backend, which acts like a proxy and may be heavier in processing. And calling Azure SDK Knowledge Base backend multiple times may potentially have performance issue. However, it's transparent to customers who by default use the TypeSpec Authoring tool without needing to explicitly switch context. 
+- **Transparent activation** — the host agent selects the skill from declarative triggers, so users do not need to know when to switch to a dedicated agent.
+- **Reproducible behavior** — the fixed workflow and the plan-as-single-source-of-truth rule reduce model-to-model variance and hallucinated decorators.
+- **Dual grounding** — combining the Knowledge Base MCP tool with agentic search over a curated URL catalog keeps guidance current and lets the skill fall back to primary documentation when the two disagree.
+- **Maintainability** — a Markdown `SKILL.md` plus `references/` requires no compiled agent host and can be reviewed and evolved like documentation.
 
 ---
 ## Cross-Language Considerations

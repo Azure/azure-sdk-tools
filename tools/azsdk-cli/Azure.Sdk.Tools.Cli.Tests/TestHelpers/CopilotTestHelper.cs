@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.Cli.CopilotAgents;
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
 
 namespace Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 
@@ -21,8 +21,7 @@ public static class CopilotTestHelper
         {
             var copilotClient = new CopilotClient(new CopilotClientOptions
             {
-                UseStdio = true,
-                AutoStart = true
+                Connection = RuntimeConnection.ForStdio()
             });
             var wrapper = new CopilotClientWrapper(copilotClient);
             var authStatus = await wrapper.GetAuthStatusAsync(ct);

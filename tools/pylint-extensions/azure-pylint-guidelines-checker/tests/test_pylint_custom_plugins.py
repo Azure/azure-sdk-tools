@@ -3159,7 +3159,7 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
             self.checker.visit_functiondef(impl_node)
 
     def test_docstring_no_overload_still_checks_args(self):
-        """Regular function with undocumented *args (not an overload impl) should still be flagged."""
+        """Regular function with undocumented *args (not an overload impl) should be flagged."""
         file = open(
             os.path.join(
                 TEST_FOLDER,
@@ -3169,7 +3169,7 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
         )
         node = astroid.parse(file.read())
         file.close()
-        # regular_function is the last function in the module (body[3])
+        # regular_function is body[3]
         regular_node = node.body[3]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
@@ -3183,6 +3183,32 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
             ),
         ):
             self.checker.check_parameters(regular_node)
+
+    def test_docstring_class_vararg_documented_ok(self):
+        """Class __init__ that documents *args in the docstring should NOT be flagged."""
+        with open(
+            os.path.join(TEST_FOLDER, "test_files", "docstring_parameters.py")
+        ) as file:
+            node = astroid.parse(file.read())
+        # ClassWithDocumentedVararg is body[14]
+        class_node = node.body[14]
+        with self.assertNoMessages():
+            self.checker.visit_classdef(class_node)
+
+    def test_docstring_class_overload_init_skips_args(self):
+        """Class with overloaded __init__ implementation should not flag *args/**kwargs."""
+        with open(
+            os.path.join(
+                TEST_FOLDER,
+                "test_files",
+                "docstring_overload_args_kwargs.py",
+            )
+        ) as file:
+            node = astroid.parse(file.read())
+        # ClientWithOverloadedInit is body[5]
+        class_node = node.body[5]
+        with self.assertNoMessages():
+            self.checker.visit_classdef(class_node)
 
     def test_docstring_overload_implementation_async_skips_args_kwargs(self):
         """Async overload implementation with *args/**kwargs should not report missing param errors."""
@@ -4843,5 +4869,101 @@ class TestNoCrossPackagePrivateImport(pylint.testutils.CheckerTestCase):
     def test_allows_non_azure_importfrom(self, setup):
         """from collections import OrderedDict should NOT be flagged."""
         importfrom_node = setup.body[10]
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)
+
+    def test_allows_relative_import_with_private_segment(self, setup):
+        """from ._operations import SomeMixin should NOT be flagged.
+
+        level=1 resolves to azure.storage.file.datalake._operations — same package
+        as the current module, so the check correctly passes.
+        """
+        importfrom_node = setup.body[11]
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)
+
+    def test_allows_relative_import_leading_private(self, setup):
+        """from ._utils import helper should NOT be flagged.
+
+        level=1 resolves to azure.storage.file.datalake._utils — the public prefix
+        is azure.storage.file.datalake, which matches the current module.
+        """
+        importfrom_node = setup.body[12]
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)
+
+    def test_flags_cross_package_relative_importfrom(self, setup):
+        """from ...blob._generated.models import BlobItem should be flagged.
+
+        level=3 from azure.storage.file.datalake._some_module resolves to
+        azure.storage.blob._generated.models — a genuine cross-package private import.
+        """
+        importfrom_node = setup.body[13]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="no-cross-package-private-import",
+                node=importfrom_node,
+            ),
+            ignore_position=True,
+        ):
+            self.checker.visit_importfrom(importfrom_node)
+
+    def test_allows_absolute_leading_private_importfrom(self, setup):
+        """from _utils import something_absolute should NOT be flagged.
+
+        The modname starts with '_' at position 0; _get_private_prefix returns None
+        because there is no public prefix to compare against, so the check is skipped.
+        """
+        importfrom_node = setup.body[14]
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)
+
+    def test_allows_relative_import_in_package_init(self):
+        """Relative imports in __init__.py resolve against the package itself.
+
+        For azure.storage.file.datalake/__init__.py, "from ._models import X" resolves
+        to azure.storage.file.datalake._models — same-package, not flagged.
+        """
+        source = "from ._models import DataLakeFileClient\n"
+        module = astroid.parse(source)
+        # Simulate this being __init__.py for the azure.storage.file.datalake package.
+        module.name = "azure.storage.file.datalake"
+        module.package = True
+        importfrom_node = module.body[0]
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)
+
+    def test_flags_cross_package_relative_import_in_package_init(self):
+        """Cross-package relative imports in __init__.py should still be flagged.
+
+        For azure.storage.file.datalake/__init__.py, "from ..blob._generated.models import X"
+        resolves to azure.storage.blob._generated.models — cross-package, must be flagged.
+        """
+        source = "from ..blob._generated.models import BlobItem\n"
+        module = astroid.parse(source)
+        module.name = "azure.storage.file.datalake"
+        module.package = True
+        importfrom_node = module.body[0]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="no-cross-package-private-import",
+                node=importfrom_node,
+            ),
+            ignore_position=True,
+        ):
+            self.checker.visit_importfrom(importfrom_node)
+
+    def test_relative_import_escaping_top_level_package_is_skipped(self):
+        """A relative import that escapes above the top-level package is invalid Python.
+
+        For the top-level "azure" package __init__.py, "from .. import x" (level=2)
+        would resolve above "azure"; ups == len(package_parts), so it must be skipped
+        rather than resolved to a bare module name.
+        """
+        source = "from .. import something\n"
+        module = astroid.parse(source)
+        module.name = "azure"
+        module.package = True
+        importfrom_node = module.body[0]
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)

@@ -17,12 +17,16 @@ parameters:
   - name: Tag
     type: string
     default: ''
-
+  # Service connection used to authenticate `az`, so azsdk-cli (via AzureCliCredential)
+  # can obtain a bearer token for the remote knowledge base.
+  - name: AzureSubscription
+    type: string
+    default: 'azuresdkqabot-dev'
 steps:
   - task: AzureCLI@2
     displayName: ${{ parameters.DisplayName }}
     inputs:
-      azureSubscription: azuresdkqabot-dev
+      azureSubscription: ${{ parameters.AzureSubscription }}
       scriptType: bash
       scriptLocation: inlineScript
       workingDirectory: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate

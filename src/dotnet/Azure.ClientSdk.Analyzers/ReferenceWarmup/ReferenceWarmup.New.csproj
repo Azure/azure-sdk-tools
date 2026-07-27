@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Restore-only "warmup" project. It is intentionally NOT part of Azure.ClientSdk.Analyzers.sln,
+    so it is never built, tested, or packed by CI. Its sole purpose is to be `dotnet restore`d
+    from the CFS feed (via TestPreSteps in ci.yml) to pre-populate the NuGet global-packages
+    folder with the reference packages used by the analyzer tests' AzureAnalyzerVerifier.
+
+    nuget.org is blocked on the Linux/Windows CI agents, and Microsoft.CodeAnalysis.Testing's
+    ReferenceAssemblies downloads these packages at test runtime using its own NuGet resolution
+    (which does not honor the repo's CFS-only NuGet.Config). Pre-restoring them from CFS means the
+    testing framework finds them already extracted in the global-packages folder and never calls
+    api.nuget.org. Keep the versions in sync with AzureAnalyzerVerifier.cs.
+  -->
+  <PropertyGroup>
+    <TargetFrameworks>net472;net8.0</TargetFrameworks>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>false</IsTestProject>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- PackageReference pulls each package's transitive closure; PackageDownload caches the exact
+       test-referenced versions independently (so the exact versions are present even when they
+       differ from a transitive requirement). -->
+  <ItemGroup>
+    <PackageReference Include="Azure.Core" Version="1.35.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageDownload Include="Microsoft.Bcl.AsyncInterfaces" Version="[1.1.1]" />
+    <PackageDownload Include="System.Text.Json" Version="[4.7.2]" />
+    <PackageDownload Include="System.Threading.Tasks.Extensions" Version="[4.5.4]" />
+  </ItemGroup>
+
+</Project>

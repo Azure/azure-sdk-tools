@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Restore-only "warmup" project (see ReferenceWarmup.New.csproj for the full rationale). This one
+    pre-restores the older reference-package versions used by AzureAnalyzerTest.cs from the CFS feed.
+    Keep the versions in sync with AzureAnalyzerTest.cs.
+  -->
+  <PropertyGroup>
+    <TargetFrameworks>net472;net8.0</TargetFrameworks>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>false</IsTestProject>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- PackageReference pulls each package's transitive closure; PackageDownload caches the exact
+       test-referenced versions independently (Azure.Core 1.26.0 requires a newer
+       System.Threading.Tasks.Extensions than the test pins, so the pinned version can only be
+       cached via PackageDownload). -->
+  <ItemGroup>
+    <PackageReference Include="Azure.Core" Version="1.26.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageDownload Include="Microsoft.Bcl.AsyncInterfaces" Version="[1.1.0]" />
+    <PackageDownload Include="System.Text.Json" Version="[4.6.0]" />
+    <PackageDownload Include="System.Threading.Tasks.Extensions" Version="[4.5.3]" />
+  </ItemGroup>
+
+</Project>

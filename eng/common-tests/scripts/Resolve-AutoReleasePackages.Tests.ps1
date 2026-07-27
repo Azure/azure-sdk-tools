@@ -40,9 +40,44 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
             return $global:AutoReleaseStubChangedPackages
         }
 
+        function global:Invoke-AzsdkStub {
+            param([Parameter(ValueFromRemainingArguments = $true)][string[]]$CliArgs)
+            $global:AutoReleaseAzsdkCalls += ,$CliArgs
+            $global:LASTEXITCODE = 0
+        }
+
         function Invoke-ResolveScript {
-            param([string]$Artifacts, [string]$CommitSha = 'abc123', [string]$RepoId = 'Azure/azure-sdk-for-net')
-            & $script:scriptPath -CommitSha $CommitSha -RepoId $RepoId -Artifacts $Artifacts -AuthToken 'fake-token' | Out-Null
+            param(
+                [string]$Artifacts,
+                [string]$CommitSha = 'abc123',
+                [string]$RepoId = 'Azure/azure-sdk-for-net',
+                [string]$AutoReleaseLabel,
+                [string]$BaseBranch,
+                [string]$PipelineUrl,
+                [string]$AzsdkExePath
+            )
+
+            $invokeArgs = @{
+                CommitSha = $CommitSha
+                RepoId = $RepoId
+                Artifacts = $Artifacts
+                AuthToken = 'fake-token'
+            }
+
+            if ($PSBoundParameters.ContainsKey('AutoReleaseLabel')) {
+                $invokeArgs['AutoReleaseLabel'] = $AutoReleaseLabel
+            }
+            if ($PSBoundParameters.ContainsKey('BaseBranch')) {
+                $invokeArgs['BaseBranch'] = $BaseBranch
+            }
+            if ($PSBoundParameters.ContainsKey('PipelineUrl')) {
+                $invokeArgs['PipelineUrl'] = $PipelineUrl
+            }
+            if ($PSBoundParameters.ContainsKey('AzsdkExePath')) {
+                $invokeArgs['AzsdkExePath'] = $AzsdkExePath
+            }
+
+            & $script:scriptPath @invokeArgs | Out-Null
             return $global:AutoReleaseEmittedVars
         }
     }
@@ -54,9 +89,11 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
         Remove-Item function:global:Get-GitHubPullRequestFiles -ErrorAction SilentlyContinue
         Remove-Item function:global:New-GitHubPullRequestDiffObject -ErrorAction SilentlyContinue
         Remove-Item function:global:Get-PrPkgProperties -ErrorAction SilentlyContinue
+        Remove-Item function:global:Invoke-AzsdkStub -ErrorAction SilentlyContinue
         Remove-Variable -Scope Global -ErrorAction SilentlyContinue -Name `
             AutoReleaseEmittedVars, AutoReleaseStubRelease, AutoReleaseStubFiles, AutoReleaseStubChangedPackages, `
-            AutoReleaseGetPrPkgCalled, AutoReleaseResolveArgs, AutoReleaseThrowOnResolve, AutoReleaseThrowOnGetPrPkg
+            AutoReleaseGetPrPkgCalled, AutoReleaseResolveArgs, AutoReleaseThrowOnResolve, AutoReleaseThrowOnGetPrPkg, `
+            AutoReleaseAzsdkCalls
     }
 
     BeforeEach {
@@ -68,6 +105,7 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
         $global:AutoReleaseResolveArgs = $null
         $global:AutoReleaseThrowOnResolve = $false
         $global:AutoReleaseThrowOnGetPrPkg = $false
+        $global:AutoReleaseAzsdkCalls = @()
     }
 
     Context "when no eligible pull request is found" {
@@ -100,6 +138,13 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
             $global:AutoReleaseResolveArgs.RepoId | Should -Be 'Azure/azure-sdk-for-java'
             $global:AutoReleaseResolveArgs.TargetBranch | Should -Be 'main'
             $global:AutoReleaseResolveArgs.RequiredLabel | Should -Be 'auto-release'
+        }
+
+        It "forwards overridden branch and label parameters to the resolver" {
+            Invoke-ResolveScript -Artifacts '[]' -BaseBranch 'release/2026' -AutoReleaseLabel 'ship-it' | Out-Null
+
+            $global:AutoReleaseResolveArgs.TargetBranch | Should -Be 'release/2026'
+            $global:AutoReleaseResolveArgs.RequiredLabel | Should -Be 'ship-it'
         }
     }
 
@@ -173,6 +218,37 @@ Describe "Resolve-AutoReleasePackages" -Tag "UnitTest", "Resolve-AutoReleasePack
             $payload = @($vars['AutoReleaseArtifactsJson'] | ConvertFrom-Json)
             $payload.Count | Should -Be 1
             $payload[0].name | Should -Be 'Pkg.A'
+        }
+
+        It "updates release plan status to approval pending for releasable artifacts" {
+            $global:AutoReleaseStubRelease = [pscustomobject]@{
+                PullRequestNumber = 123
+                IsEligible = $true
+                SkipReason = ''
+                PullRequest = [pscustomobject]@{ number = 123; html_url = 'https://github.com/Azure/azure-sdk-for-net/pull/123' }
+            }
+            $global:AutoReleaseStubChangedPackages = @(
+                [pscustomobject]@{ Name = 'Azure.Storage.Blobs'; ArtifactName = 'Azure.Storage.Blobs'; Group = $null; IncludedForValidation = $false }
+            )
+
+            Invoke-ResolveScript `
+                -Artifacts '[{"name":"Azure.Storage.Blobs","safeName":"AzureStorageBlobs"}]' `
+                -PipelineUrl 'https://dev.azure.com/fabrikam/project/_build/results?buildId=12345' `
+                -AzsdkExePath 'Invoke-AzsdkStub' | Out-Null
+
+            $global:AutoReleaseAzsdkCalls.Count | Should -Be 1
+
+            $callArgs = $global:AutoReleaseAzsdkCalls[0]
+            $callArgs[0] | Should -Be 'release-plan'
+            $callArgs[1] | Should -Be 'update-release-status'
+            $callArgs | Should -Contain '--package-name'
+            $callArgs | Should -Contain 'Azure.Storage.Blobs'
+            $callArgs | Should -Contain '--status'
+            $callArgs | Should -Contain 'Approval Pending'
+            $callArgs | Should -Contain '--sdk-pull-request'
+            $callArgs | Should -Contain 'https://github.com/Azure/azure-sdk-for-net/pull/123'
+            $callArgs | Should -Contain '--release-pipeline'
+            $callArgs | Should -Contain 'https://dev.azure.com/fabrikam/project/_build/results?buildId=12345'
         }
     }
 

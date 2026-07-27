@@ -5,16 +5,17 @@ release / onboarding / support processes, and engineering tooling. List the
 significant ENTITIES and key CONCEPTS the document teaches.
 
 - ENTITY = a concrete named symbol: a decorator (keep the leading @, e.g.
-  `@added`), an API/operation, a type/model (e.g. `TrackedResource`), a CLI or
-  tool command, a pipeline/check, or a config key.
+  `@added`), an API/operation, a type/model (e.g. `TrackedResource`), a client
+  or method name, a CLI or tool command (e.g. `tsp-client`), a pipeline/check
+  (e.g. `TypeSpec Validation`), or a config key (e.g. `tspconfig.yaml`).
 - CONCEPT = a cross-cutting topic or methodology (e.g. `API versioning`,
   `long-running operations`, `pagination`, `SDK release cadence`,
   `breaking-change review`).
 - ALWAYS extract every named decorator or framework template that appears (any
-  `@`-prefixed name, or an `Azure.ResourceManager.Legacy.*` template) as an
-  ENTITY, even if secondary or mentioned briefly. For each, capture its
-  constraints and any guidance that it is discouraged, deprecated, or must NOT
-  be used in a situation.
+  `@`-prefixed name, or a namespace-qualified template such as
+  `Azure.ResourceManager.Legacy.*`) as an ENTITY, even if secondary or
+  mentioned briefly. For each, capture its constraints and any guidance that it
+  is discouraged, deprecated, or must NOT be used in a situation.
 
 Extraction scope: extract only the document's primary subjects (what it is
 fundamentally about) plus items that are SUBSTANTIVELY discussed, at most about

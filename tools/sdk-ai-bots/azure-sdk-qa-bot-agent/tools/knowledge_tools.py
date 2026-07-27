@@ -14,7 +14,6 @@ from tools import tool
 from utils.azure_ai_search import (
     NON_WIKI_FILTER,
     WIKI_FILTER,
-    fuse_with_rrf,
     get_search_client,
     split_source_ref,
 )
@@ -24,6 +23,21 @@ logger = logging.getLogger(__name__)
 
 # Expanded content beyond this limit is truncated to control context size.
 _MAX_CONTENT_CHARS_PER_RESULT = 3000
+
+# Shared by both retrieval tracks so the agent picks a strategy the same way.
+_SEARCH_MODE_DESC = (
+    "Search strategy to use. "
+    "'quick' — vector search only, fast, good for straightforward "
+    "factual lookups about a single feature, symbol, or process step "
+    "(e.g., 'Which decorator marks an operation as long-running?'). "
+    "Use 'quick' by default. "
+    "'deep' — runs both agentic and vector search in parallel, "
+    "better for complex questions that need cross-referencing multiple topics "
+    "(e.g., 'How does adding a new API version interact with the SDK release "
+    "and breaking-change review process?'). "
+    "Use 'deep' only when the question genuinely spans multiple unrelated concepts. "
+    "Default: 'quick'."
+)
 
 
 class SearchMode(str, Enum):
@@ -104,18 +118,7 @@ class KnowledgeTools:
             "general questions, anything ambiguous). "
             "When in doubt, use None.",
         ] = None,
-        search_mode: Annotated[
-            str,
-            "Search strategy to use. "
-            "'quick' — vector search only, fast, good for straightforward "
-            "factual lookups (e.g., 'What template emits x-ms-pageable?'). "
-            "Use 'quick' by default. "
-            "'deep' — runs both agentic and vector search in parallel, "
-            "better for complex questions that need cross-referencing multiple topics "
-            "(e.g., 'How do I use SDK versioning with spread properties AND deprecation policies?'). "
-            "Use 'deep' only when the question genuinely spans multiple unrelated concepts. "
-            "Default: 'quick'.",
-        ] = "quick",
+        search_mode: Annotated[str, _SEARCH_MODE_DESC] = "quick",
     ) -> SearchKnowledgeBaseResult:
         """Search the knowledge base with one or more queries and return results with full section context.
 
@@ -135,73 +138,18 @@ class KnowledgeTools:
         source_filters = _resolve_source_filters(sources, tenant_id, service_type)
 
         use_deep = search_mode == SearchMode.deep.value
-
-        # Cap queries to avoid excessive parallel searches
         capped_queries = queries[:3]
 
-        # Run configured retrievers per query and fuse their rankings with RRF.
-        enable_keyword = cfg("KB_ENABLE_KEYWORD", "true").lower() == "true"
-        rrf_k = int(cfg("KB_RRF_K", "60"))
-        vector_weight = float(cfg("KB_RRF_VECTOR_WEIGHT", "1.0"))
-        keyword_weight = float(cfg("KB_RRF_KEYWORD_WEIGHT", "1.0"))
-        agentic_weight = float(cfg("KB_RRF_AGENTIC_WEIGHT", "1.0"))
-
-        async def _fused_for_query(q: str) -> list:
-            retriever_coros: list = []
-            weights: list[float] = []
-            if use_deep:
-                retriever_coros.append(
-                    search_client.agentic_search(
-                        query=q, source_filters=source_filters, extra_filter=NON_WIKI_FILTER,
-                    )
-                )
-                weights.append(agentic_weight)
-            retriever_coros.append(
-                search_client.vector_search(
-                    query=q, source_filters=source_filters, extra_filter=NON_WIKI_FILTER,
-                )
-            )
-            weights.append(vector_weight)
-            if enable_keyword:
-                retriever_coros.append(
-                    search_client.keyword_search(
-                        query=q, source_filters=source_filters, extra_filter=NON_WIKI_FILTER,
-                    )
-                )
-                weights.append(keyword_weight)
-
-            retriever_results = await asyncio.gather(
-                *retriever_coros, return_exceptions=True
-            )
-            ranked_lists: list = []
-            for res, weight in zip(retriever_results, weights):
-                if isinstance(res, BaseException):
-                    logger.warning("Retriever failed for query=%r: %s", q, res)
-                    continue
-                if res:
-                    ranked_lists.append((res, weight))
-
-            if not ranked_lists:
-                return []
-            # Fuse by RRF when more than one retriever contributed; otherwise
-            # keep the single retriever's own (semantic-reranker) ordering.
-            if len(ranked_lists) > 1:
-                return fuse_with_rrf(ranked_lists, k=rrf_k)
-            return list(ranked_lists[0][0])
-
-        per_query_results = await asyncio.gather(
-            *[_fused_for_query(q) for q in capped_queries]
+        raw_chunks = await search_client.fused_search(
+            capped_queries,
+            source_filters,
+            extra_filter=NON_WIKI_FILTER,
+            use_agentic=use_deep,
         )
 
-        # Collect fused chunks across all queries
-        raw_chunks: list = []
-        for chunk_list in per_query_results:
-            raw_chunks.extend(chunk_list)
-
         logger.info(
-            "Search completed: mode=%s, keyword=%s, queries=%s, raw_chunks=%d",
+            "Search completed: mode=%s, queries=%s, raw_chunks=%d",
             search_mode,
-            enable_keyword,
             capped_queries,
             len(raw_chunks),
         )
@@ -272,8 +220,9 @@ class KnowledgeTools:
             str,
             "A single literal/keyword query to match EXACTLY inside SOURCE "
             "document chunks — the tool's strength is exact identifiers: "
-            "decorator names (`@added`), type/model names, error text, linter "
-            "rule IDs, property names. Pack a few synonyms into one query with "
+            "decorator names (`@added`), type/model/client names, error text, "
+            "linter or validation rule IDs, pipeline check names, config keys. "
+            "Pack a few synonyms into one query with "
             "spaces (BM25 OR). Use this instead of `search_knowledge_base` when "
             "you know the exact term/string to find.",
         ],
@@ -321,6 +270,7 @@ class KnowledgeTools:
             "Optional list of knowledge source names to scope the search. "
             "If omitted, all sources configured for the tenant are used.",
         ] = None,
+        search_mode: Annotated[str, _SEARCH_MODE_DESC] = "quick",
     ) -> SearchKnowledgeBaseResult:
         """Search wiki pages and return their routed source chunks."""
         if not sources:
@@ -328,33 +278,14 @@ class KnowledgeTools:
             sources = [src.name for src in config.sources] if config else []
         search_client = get_search_client()
         source_filters = _resolve_source_filters(sources, tenant_id, None)
-        rrf_k = int(cfg("KB_RRF_K", "60"))
-        enable_keyword = cfg("KB_ENABLE_KEYWORD", "true").lower() == "true"
+        capped_queries = queries[:3]
 
-        async def _fused(q: str) -> list:
-            coros = [
-                search_client.vector_search(
-                    query=q, source_filters=source_filters, extra_filter=WIKI_FILTER
-                )
-            ]
-            weights = [1.0]
-            if enable_keyword:
-                coros.append(
-                    search_client.keyword_search(
-                        query=q, source_filters=source_filters, extra_filter=WIKI_FILTER
-                    )
-                )
-                weights.append(1.0)
-            res = await asyncio.gather(*coros, return_exceptions=True)
-            ranked = [(r, w) for r, w in zip(res, weights) if not isinstance(r, BaseException) and r]
-            if not ranked:
-                return []
-            return fuse_with_rrf(ranked, k=rrf_k) if len(ranked) > 1 else list(ranked[0][0])
-
-        per_query = await asyncio.gather(*[_fused(q) for q in queries[:3]])
-        raw: list = []
-        for lst in per_query:
-            raw.extend(lst)
+        raw = await search_client.fused_search(
+            capped_queries,
+            source_filters,
+            extra_filter=WIKI_FILTER,
+            use_agentic=search_mode == SearchMode.deep.value,
+        )
         unique = [
             c for c in search_client.deduplicate_chunks(raw)
             if c.page_type in ("summary", "entity", "concept", "synthesis")
@@ -370,14 +301,14 @@ class KnowledgeTools:
         )
         combined = wiki_pages + routed
         if not combined:
-            logger.info("wiki_search: no wiki pages for queries=%s", queries[:3])
+            logger.info("wiki_search: no wiki pages for queries=%s", capped_queries)
             return SearchKnowledgeBaseResult(results=[])
         expanded = await asyncio.gather(
             *[search_client.expand_by_hierarchy(c) for c in combined]
         )
         logger.info(
-            "wiki_search: %d page(s) + %d routed source(s) for queries=%s",
-            len(wiki_pages), len(routed), queries[:3],
+            "wiki_search: mode=%s, %d page(s) + %d routed source(s) for queries=%s",
+            search_mode, len(wiki_pages), len(routed), capped_queries,
         )
         return SearchKnowledgeBaseResult(results=_refs_from_expanded(expanded, combined))
 

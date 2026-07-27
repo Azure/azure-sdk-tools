@@ -21,6 +21,7 @@ _PROMPT_PATH = Path(__file__).parent / "prompts" / "extract.md"
 def _extract_sys() -> str:
     return _PROMPT_PATH.read_text(encoding="utf-8").strip()
 
+
 @dataclass
 class ExtractedItem:
     """One entity or concept mention from a single document."""

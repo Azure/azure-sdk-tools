@@ -38,9 +38,11 @@ flowchart LR
 
 The load-bearing decision: **wiki pages and source chunks never fuse into one ranked list** — fusing lets generic wiki pages displace specific source docs and regresses the score. They are retrieved on separate tracks and combined only in the answer.
 
-- **`search_knowledge_base`** — source chunks only (`page_type` null); dense + BM25 with RRF fusion and semantic rerank.
+- **`search_knowledge_base`** — source chunks only (`page_type` null).
 - **`wiki_search`** — wiki pages only, **self-contained**: for the top pages it returns their full content **plus** the source chunks each was built from (routed via `chunk_refs`).
 - **`grep_chunks`** (literal symbol/error-string match), **`wiki_read_page`**, **`wiki_read_source_doc`** — optional targeted drills.
+
+Both tracks run the same retrieval pipeline (`SearchClient.fused_search`) and differ only by page-type filter: per query, dense + BM25 (+ agentic in `deep` mode) run in parallel and are fused with weighted RRF, then the caller dedupes and caps.
 
 For most questions the agent issues `search_knowledge_base` + `wiki_search` in one parallel batch and answers on the next turn.
 

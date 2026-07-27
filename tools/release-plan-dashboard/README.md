@@ -139,7 +139,7 @@ The server will **exit with an error** if any required variable is missing.
    npm start
    ```
 
-4. Open <http://localhost:3000> in your browser.
+4. Open localhost in your browser.
 
 ## Testing
 

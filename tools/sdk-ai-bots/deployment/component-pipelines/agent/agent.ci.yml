@@ -66,7 +66,7 @@ extends:
                         - template: /tools/sdk-ai-bots/deployment/pipelines/templates/container-build.yml
                           parameters:
                               imageName: 'azure-sdk-qa-bot-agent-server'
-                              dockerContext: '$(System.DefaultWorkingDirectory)'
+                              dockerContext: '$(workingDirectory)'
                               dockerfile: '$(workingDirectory)/Dockerfile'
                               buildMode: 'acr-build'
                               tagStrategy: 'semver'

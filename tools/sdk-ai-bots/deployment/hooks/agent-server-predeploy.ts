@@ -2,15 +2,19 @@
  * agent-server — predeploy hook
  *
  * Builds the agent SERVER image (FastAPI `server.py`, the container that serves
- * /agent/chat) from the top-level Dockerfile and repoints the App Service
- * `agent` deployment slot at it.
+ * /agent/chat) from the top-level Dockerfile and registers it with azd
+ * (SERVICE_AGENT_SERVER_IMAGE_NAME) so azd can deploy it to the App Service
+ * `agent` slot.
  *
- * Why a hook (and not azd's native App Service deploy): the agent server runs
- * in the `agent` deployment SLOT of the backend web app, and azd does not model
- * named deployment slots — its App Service target only deploys a site's
- * production slot. So the slot image is set here with
- * `az webapp config container set --slot agent`, and SERVICE_AGENT_SERVER_IMAGE_NAME
- * is exported so azd reuses this pre-built image instead of building its own.
+ * Why a hook: this repo builds every service image cloud-side with `az acr build`
+ * (immutable version tags, no local Docker) rather than azd's native remote
+ * build, so this hook builds the agent SERVER image and exports
+ * SERVICE_AGENT_SERVER_IMAGE_NAME so azd reuses it. azd then deploys that image
+ * to the backend web app's `agent` deployment SLOT natively — the service is
+ * resolved to the backend site via `resourceName: ${BACKEND_SITE_NAME}` in
+ * azure.yaml and targeted at the slot via AZD_DEPLOY_AGENT_SERVER_SLOT_NAME=agent
+ * (see https://github.com/Azure/azure-dev/issues/9246). The previous
+ * `az webapp config container set --slot agent` workaround is no longer needed.
  *
  * Two modes:
  *   - Pipeline (TF_BUILD / GITHUB_ACTIONS): CI already built and pushed the
@@ -18,9 +22,10 @@
  *   - Local dev: builds the image cloud-side via `az acr build` — no local
  *     Docker installation required.
  *
- * NOTE: the server Dockerfile COPYs paths like
- * `tools/sdk-ai-bots/azure-sdk-qa-bot-agent/...`, so its build context must be
- * the repository root (not the project directory).
+ * NOTE: the server Dockerfile COPYs project-relative paths (e.g. `requirements.txt`,
+ * `config/`, `server.py`), so its build context is the project directory
+ * (azure-sdk-qa-bot-agent) — not the repository root. Keeping the context scoped
+ * to the project keeps the `az acr build` upload small and fast.
  */
 
 import { execSync } from "child_process";
@@ -57,10 +62,6 @@ const ENV_NAME = process.env.AZURE_ENV_NAME ?? "dev";
 // look up the newest tag that starts with the env prefix (see below).
 const EXPLICIT_TAG = process.env.AGENT_SERVER_IMAGE_TAG;
 const IMAGE_NAME = "azure-sdk-qa-bot-agent-server";
-// The server runs in the App Service `agent` slot of the backend web app.
-const BACKEND_SITE_NAME = process.env.BACKEND_SITE_NAME ?? "";
-const AGENT_SLOT_NAME = process.env.AGENT_SLOT_NAME ?? "agent";
-const RESOURCE_GROUP = process.env.AZURE_RESOURCE_GROUP ?? "";
 // Only skip the build inside a real CI pipeline (TF_BUILD = Azure DevOps,
 // GITHUB_ACTIONS = GitHub Actions). Locally we always rebuild.
 const RUNNING_IN_PIPELINE = !!process.env.TF_BUILD || !!process.env.GITHUB_ACTIONS;
@@ -108,64 +109,33 @@ function run(cmd: string, opts?: { cwd?: string }): void {
     // az acr build sends the context to ACR and builds there — no local Docker
     // installation required.
     //
-    // The Dockerfile lives at azure-sdk-qa-bot-agent/Dockerfile but its build
-    // context must be the repository ROOT because it COPYs paths like
-    // tools/sdk-ai-bots/azure-sdk-qa-bot-agent/... process.cwd() is deployment/
-    // because the hook runs: cd ../deployment && npx tsx hooks/agent-server-predeploy.ts
+    // The Dockerfile lives at azure-sdk-qa-bot-agent/Dockerfile and COPYs
+    // project-relative paths, so the build context is the project directory.
+    // process.cwd() is deployment/ because the hook runs:
+    //   cd ../deployment && npx tsx hooks/agent-server-predeploy.ts
     if (!EXPLICIT_TAG) {
       resolvedTag = getNextVersionTag(REGISTRY_NAME, IMAGE_NAME, ENV_NAME);
       log(`Resolved next version tag '${resolvedTag}'`);
     }
-    const repoRoot = path.resolve(process.cwd(), "../../../");
-    const dockerfile = path.resolve(process.cwd(), "../azure-sdk-qa-bot-agent/Dockerfile");
+    const contextDir = path.resolve(process.cwd(), "../azure-sdk-qa-bot-agent");
+    const dockerfile = path.resolve(contextDir, "Dockerfile");
     log(`Building image via az acr build → ${REGISTRY_NAME}.azurecr.io/${IMAGE_NAME}:${resolvedTag}`);
-    log(`  context:    ${repoRoot}`);
+    log(`  context:    ${contextDir}`);
     log(`  dockerfile: ${dockerfile}`);
     run(
-      `az acr build --registry "${REGISTRY_NAME}" --image "${IMAGE_NAME}:${resolvedTag}" --file "${dockerfile}" "${repoRoot}"`,
+      `az acr build --registry "${REGISTRY_NAME}" --image "${IMAGE_NAME}:${resolvedTag}" --file "${dockerfile}" "${contextDir}"`,
     );
     log("  ✓ build complete");
   }
 
-  // Register the pre-built image with azd so it reuses it instead of building
-  // its own container: SERVICE_AGENT_SERVER_IMAGE_NAME is azd's standard
-  // per-service image override.
+  // Register the pre-built image with azd so its App Service container deploy
+  // reuses this exact immutable tag instead of remote-building its own. azd then
+  // applies it to the backend site's `agent` slot (the service is resolved to
+  // the backend site via `resourceName: ${BACKEND_SITE_NAME}` in azure.yaml and
+  // targeted at the slot via AZD_DEPLOY_AGENT_SERVER_SLOT_NAME=agent).
   const fullImage = `${REGISTRY_NAME}.azurecr.io/${IMAGE_NAME}:${resolvedTag}`;
-  log(`Setting AGENT_SERVER_DEPLOYED_IMAGE=${fullImage}`);
-  run(`azd env set AGENT_SERVER_DEPLOYED_IMAGE "${fullImage}"`);
   log(`Setting SERVICE_AGENT_SERVER_IMAGE_NAME=${fullImage}`);
   run(`azd env set SERVICE_AGENT_SERVER_IMAGE_NAME "${fullImage}"`);
-
-  // Persist the repo:tag so a later `azd provision` re-pins the agent slot to
-  // THIS immutable image instead of resetting it to the mutable ':dev' tag.
-  // main.bicepparam reads AGENT_BASED_IMAGE_REPOSITORY → main.bicep
-  // agentBasedImageRepository → the slot's linuxFxVersion. Without this, running
-  // `azd provision` after a deploy reverts the slot to a stale/flaky ':dev'
-  // image and the container fails its 230s warm-up probe → 503 on /ping,
-  // /agent/chat.
-  const repoTag = `${IMAGE_NAME}:${resolvedTag}`;
-  log(`Setting AGENT_BASED_IMAGE_REPOSITORY=${repoTag}`);
-  run(`azd env set AGENT_BASED_IMAGE_REPOSITORY "${repoTag}"`);
-
-  // Repoint the App Service `agent` slot at the freshly built immutable tag.
-  // azd cannot deploy to a named slot, so the container image is set here.
-  // Skipped in CI, where provisioning sets the slot image from the
-  // AGENT_BASED_IMAGE_REPOSITORY parameter.
-  if (!RUNNING_IN_PIPELINE) {
-    if (BACKEND_SITE_NAME && RESOURCE_GROUP) {
-      log(`Repointing App Service slot '${BACKEND_SITE_NAME}/${AGENT_SLOT_NAME}' → ${fullImage}`);
-      run(
-        `az webapp config container set --name "${BACKEND_SITE_NAME}" --slot "${AGENT_SLOT_NAME}" ` +
-          `--resource-group "${RESOURCE_GROUP}" --container-image-name "${fullImage}"`
-      );
-      log("  ✓ agent slot image updated");
-    } else {
-      log(
-        "WARNING: BACKEND_SITE_NAME / AZURE_RESOURCE_GROUP not set — cannot repoint " +
-          "the agent slot. It will keep serving its previously configured image."
-      );
-    }
-  }
 
   log("agent-server predeploy complete.");
 })().catch((err) => {

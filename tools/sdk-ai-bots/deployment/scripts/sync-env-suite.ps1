@@ -124,6 +124,19 @@ if ($failed.Count -gt 0) {
     exit 1
 }
 
+# ── Fixed azd deployment-slot targeting ─────────────────────────────────────────
+# The backend App Service hosts two azd services: `backend` (the production/main
+# app) and `agent-server` (the `agent` deployment slot). azd's App Service slot
+# detection requires an explicit AZD_DEPLOY_<SERVICE>_SLOT_NAME per service to
+# pick a target non-interactively (see
+# https://github.com/Azure/azure-dev/issues/9246), so pin them here:
+#   - backend      → production (the main app)
+#   - agent-server → agent      (the deployment slot)
+& azd env set AZD_DEPLOY_BACKEND_SLOT_NAME production | Out-Null
+Write-Host "  AZD_DEPLOY_BACKEND_SLOT_NAME = production"
+& azd env set AZD_DEPLOY_AGENT_SERVER_SLOT_NAME agent | Out-Null
+Write-Host "  AZD_DEPLOY_AGENT_SERVER_SLOT_NAME = agent"
+
 # ── Sync into <env>.parameters.json ────────────────────────────────────────────
 # Fields owned by the suite are overwritten; unmanaged fields are preserved.
 if (-not (Test-Path $ParametersFile)) {

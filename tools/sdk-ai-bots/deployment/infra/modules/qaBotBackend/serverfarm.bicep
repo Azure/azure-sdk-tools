@@ -100,17 +100,6 @@ resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' = {
   }
 }
 
-resource serverAppInsights 'Microsoft.Insights/components@2020-02-02' = {
-  name: backendSiteName
-  location: location
-  kind: 'web'
-  properties: {
-    Application_Type: 'web'
-    RetentionInDays: 90
-    WorkspaceResourceId: workspace.id
-  }
-}
-
 resource slotAppInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: backendSlotAppInsightsName
   location: location
@@ -255,10 +244,9 @@ resource slot 'Microsoft.Web/sites/slots@2025-05-01' = {
   parent: site
   tags: {
     'hidden-link: /app-insights-resource-id': slotAppInsights.id
-    // Lets `azd deploy agent-server` resolve this slot (not the production
-    // site) as its target. The actual image is set by the agent-server
-    // predeploy hook via `az webapp config container set --slot agent`.
-    'azd-service-name': 'agent-server'
+    // No `azd-service-name` tag here: `azd deploy agent-server` resolves to the
+    // parent site by name (`resourceName: ${BACKEND_SITE_NAME}` in azure.yaml)
+    // and deploys to this slot natively via AZD_DEPLOY_AGENT_SERVER_SLOT_NAME=agent.
   }
   location: location
   properties: {

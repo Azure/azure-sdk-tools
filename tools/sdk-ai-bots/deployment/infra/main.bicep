@@ -340,6 +340,10 @@ output BOT_TENANT_ID string = frontend.outputs.botTenantId
 
 // Backend outputs
 output SERVER_BASE_URL string = backend.outputs.serverBaseUrl
+// Effective backend App Service name. Re-exported so azd persists it into
+// .azure/<env>/.env, letting `agent-server`'s `resourceName: ${BACKEND_SITE_NAME}`
+// resolve to this site (which owns the `agent` deployment slot).
+output BACKEND_SITE_NAME string = !empty(backendSiteName) ? backendSiteName : 'azuresdkqabot-server-${_suffix}'
 
 // Function-app outputs
 output FUNCTION_APP_NAME string = functionApp.outputs.functionAppName

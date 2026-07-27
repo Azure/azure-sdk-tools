@@ -1,6 +1,6 @@
 ---
 name: skill-authoring
-description: 'Write Agent Skills that comply with the agentskills.io specification. WHEN: "create a skill", "new skill", "write a skill", "skill template", "skill structure", "review skill", "skill PR", "skill compliance", "SKILL.md format", "skill frontmatter", "skill best practices". DO NOT USE FOR: improving existing skills (use sensei), general documentation. INVOKES: vally CLI.'
+description: 'Write Agent Skills that comply with the agentskills.io specification. WHEN: "create a skill", "new skill", "write a skill", "skill template", "skill structure", "review skill", "skill PR", "skill compliance", "SKILL.md format", "skill frontmatter", "skill best practices". DO NOT USE FOR: general documentation. INVOKES: vally CLI.'
 license: MIT
 metadata:
   author: Microsoft
@@ -16,7 +16,7 @@ This skill helps write Agent Skills that comply with the agentskills.io specific
 
 USE FOR: write Agent Skills that comply with the agentskills.io specification; skill template; skill structure; review skill; skill PR; skill compliance; SKILL.md format; skill frontmatter; skill best practices
 WHEN: "create a skill", "new skill", "write a skill", "skill template", "skill structure", "review skill", "skill PR", "skill compliance", "SKILL.md format", "skill frontmatter", "skill best practices"
-DO NOT USE FOR: improving existing skills (use sensei), general documentation
+DO NOT USE FOR: general documentation
 
 ## Rules
 

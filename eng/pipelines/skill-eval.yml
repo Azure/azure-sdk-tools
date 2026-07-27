@@ -14,7 +14,7 @@ parameters:
     type: boolean
     default: false
   - name: areas
-    displayName: 'Skill areas to eval (comma-separated, e.g. sensei,skill-authoring)'
+    displayName: 'Skill areas to eval (comma-separated, e.g. skill-authoring,markdown-token-optimizer)'
     type: string
     default: ' '
 

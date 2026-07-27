@@ -4,7 +4,6 @@ paths:
     - azsdk-common-pipeline-analysis/evals/
     - azsdk-common-pipeline-fixer/evals/
     - markdown-token-optimizer/evals/
-    - sensei/evals/
     - azsdk-common-generate-sdk-locally/evals/
     - azsdk-common-sdk-release/evals/
     - azsdk-common-apiview-feedback-resolution/evals/

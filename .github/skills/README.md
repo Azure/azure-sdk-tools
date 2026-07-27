@@ -30,7 +30,6 @@ These skills help with skill development itself:
 
 | Skill                                                         | Triggers                                            | Description                                                           |
 | ------------------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------------------------- |
-| [sensei](sensei/SKILL.md)                                     | "run sensei", "improve skill", "fix frontmatter"    | Iteratively improve skill frontmatter compliance using the Ralph loop |
 | [skill-authoring](skill-authoring/SKILL.md)                   | "create a skill", "new skill", "skill template"     | Guidelines for writing Agent Skills per agentskills.io spec           |
 | [markdown-token-optimizer](markdown-token-optimizer/SKILL.md) | "optimize markdown", "reduce tokens", "token count" | Analyze markdown files for token efficiency                           |
 
@@ -76,8 +75,8 @@ vally eval --tag "type=ci-gate"
 # Run evals for a specific skill
 vally eval --tag area="skill-authoring"
 
-# Run with output directory for logs
-vally eval --tag area="sensei" --output-dir ./results
+# Run with an output directory for logs
+vally eval --tag area="markdown-token-optimizer" --output-dir ./results
 ```
 
 The [skill-eval pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8165&_a=summary) runs ci-gate evals automatically after PRs are merged. It can also be triggered manually from the same page.

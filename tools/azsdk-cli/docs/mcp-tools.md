@@ -1,6 +1,6 @@
 # Tools available in Azure SDK MCP server
 
-This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.27.
+This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.28.
 
 ## Tools list
 
@@ -8,7 +8,7 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 |------|---------|-------------|
 | azsdk_abandon_release_plan | `azsdk release-plan abandon` | Abandon a release plan by work item ID or release plan ID. Updates the release plan status to 'Abandoned'. |
 | azsdk_analyze_log_file | `azsdk ci log analyze` | Analyzes a log file for errors and issues |
-| azsdk_analyze_pipeline | `azsdk ci analyze` | Analyze what happened in an Azure pipeline build. Investigates pipeline runs, identifies failures, and explains build issues. Accepts an Azure Pipeline link, Build ID, GitHub Pull Request link, or Pull Request number. |
+| azsdk_analyze_pipeline | `azsdk ci analyze` | Analyzes and returns structured failure data and logs from an Azure Pipeline build. Accepts an Azure Pipeline link, Build ID, GitHub Pull Request link, or PR number. |
 | azsdk_apiview_get_comments | `azsdk apiview get-comments` | Get API review comments and feedback from APIView for a package. Retrieves all reviewer comments left on the API review. |
 | azsdk_apiview_get_copilot_review | `azsdk apiview get-copilot-review` | Get the status and results of a Copilot review job. When complete, the response includes all generated review comments. |
 | azsdk_apiview_get_review_url | `azsdk apiview get-review-url` | Get the APIView review URL for a package by name and language. Returns the direct link to the API review page for the specified package. |

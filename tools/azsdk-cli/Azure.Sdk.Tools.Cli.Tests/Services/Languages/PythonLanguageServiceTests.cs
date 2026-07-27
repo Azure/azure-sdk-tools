@@ -7,7 +7,7 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -75,8 +75,7 @@ public class PythonLanguageServiceTests
 
         var copilotClient = new CopilotClient(new CopilotClientOptions
         {
-            UseStdio = true,
-            AutoStart = true
+            Connection = RuntimeConnection.ForStdio()
         });
         var wrapper = new CopilotClientWrapper(copilotClient);
         var tokenUsage = new TokenUsageHelper(rawOutput);

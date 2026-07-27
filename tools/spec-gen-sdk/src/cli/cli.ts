@@ -52,7 +52,6 @@ const initCliConfig = (argv) : SpecGenSdkCliConfig => {
   };
 };
 
-// tslint:disable-next-line: no-floating-promises
 const generateSdk = async (config: SpecGenSdkCliConfig) => {
   const start = process.hrtime();
 

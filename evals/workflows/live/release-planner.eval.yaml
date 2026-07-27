@@ -1,0 +1,162 @@
+name: azsdk-mcp-tool-scenarios
+description: |
+  Live end-to-end demo for the full release-planner -> generate-SDK flow.
+
+  Drives the *real* azsdk-cli MCP server against real DevOps APIs, inside a
+  real git worktree of azure-rest-api-specs. The MCP server runs with
+  AZSDKTOOLS_AGENT_TESTING=true (set globally in .vally.yaml), so work items
+  route to the DevOps test area path and are safe to leave around / re-run.
+
+  This scenario walks the agent through a multi-step chain that exercises
+  multiple skills back-to-back in a single conversation:
+
+    1. Release-plan skill   -> azsdk_create_release_plan, azsdk_get_release_plan
+    2. Generate-SDK skill   -> azsdk_run_generate_sdk
+    3. Release-plan skill   -> azsdk_link_sdk_pull_request_to_release_plan
+
+  The goal is to verify Vally end-to-end (live agent + live MCP + live DevOps)
+  can:
+    - route each turn to the correct skill,
+    - call the correct tool on that skill,
+    - and do so in the expected order across multiple steps.
+
+  Demonstrates Vally's environment.git fixture hook + live MCP + Copilot SDK
+  executor + real DevOps in one shot.
+
+  Prerequisite: a clone of Azure/azure-rest-api-specs at the path referenced
+  by environment.git.source below. Locally, run
+  eng/common/scripts/eval/sync-eval-git-repo.js to prime the cache (auto-refresh every
+  24h) at the repo-relative path this source points at. CI should run the
+  same script (or clone into the same artifacts/specs-cache path) before the
+  scenarios-live suite.
+
+version: "1.0"
+type: capability
+
+tags:
+  area: release-plan
+metadata:
+  repos:
+    - name: Azure/azure-rest-api-specs
+
+# Bound to the live env because the scenario asserts real DevOps writes
+# (test-area path) + real generation pipeline. Mock can't satisfy those
+# graders. Picked up by the `scenarios-live` / `nightly` suite via folder.
+environment: azsdk-mcp-live
+
+config:
+  runs: 1
+  timeout: 30m
+  model: gpt-5.4
+  executor: copilot-sdk
+
+stimuli:
+  - name: release-planner-e2e
+    environment:
+      # Load the real release-planning skill so the executor can route to it
+      # (matches the mock suite). Without this the live executor reports
+      # "Skills used 0" and the skill-invocation grader can never pass.
+      # Path is relative to this eval file (4 levels up = repo root).
+      skills:
+        - ../../../.github/skills/azsdk-common-prepare-release-plan
+      # Repo-relative azure-rest-api-specs worktree. Vally resolves a
+      # non-absolute source relative to THIS eval file's directory (no
+      # repo-root/env token yet — microsoft/vally#562), so the ../ depth is
+      # fixed by the file's location and must match the mock suite's depth.
+      # Prime it before the scenarios-live suite: CI runs
+      # eng/common/scripts/eval/init-eval-git-fixtures.js (scans this path + clones it);
+      # locally run eng/common/scripts/eval/sync-eval-git-repo.js once (auto-refresh 24h).
+      git:
+        type: worktree
+        source: ../../../artifacts/specs-cache/azure-rest-api-specs
+        ref: main
+    prompt: |
+      Walk me through the full
+      release-plan + SDK-generation flow for the Contoso Widget Manager
+      end-to-end. Do every step below, in order, and use real tools (no
+      dry-run, no simulation):
+
+        1. Create a release plan using:
+             - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
+             - service tree ID: "a7f2b8e4-9c1d-4a3e-b6f9-2d8e5a7c3b1f"
+             - product tree ID: "f1a8c5d2-6e4b-4f7a-9c2d-8b5e1f3a6c9e"
+             - target release timeline: "December 2026"
+             - API version: "2022-11-01-preview"
+             - SDK release type: "beta"
+             - spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38387"
+
+        2. Fetch the release plan you just created back from DevOps to confirm
+           it was saved, and tell me its work-item ID.
+
+        3. Kick off SDK generation for that same TypeSpec project via the
+           generation pipeline (Python SDK is fine). Use the work-item ID
+           from step 2.
+
+        4. Once the generation pipeline reports a pull request URL, link
+           that SDK pull request back to the release plan from step 2.
+
+      My setup has already been verified, do not run azsdk_verify_setup.
+    constraints:
+      max_turns: 20
+      max_tokens: 30000
+    # TODO: assert strict ordering create -> get -> generate -> link
+    #   — blocked on https://github.com/microsoft/vally/issues/453 (tool-calls grader sequence:).
+    # TODO: assert args (serviceTreeId / productTreeId / typeSpecProjectPath / workItemId)
+    #   — blocked on https://github.com/microsoft/vally/issues/454 (tool-calls grader generic args:).
+    graders:
+      # 1. Skill-routing check (FIRST — fast, deterministic, free): did the
+      #    agent dispatch to the right skill at all? If this fails, the
+      #    tool-calls grader below is meaningless.
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-prepare-release-plan
+          # azsdk_run_generate_sdk is a release-planner pipeline kickoff, not
+          # a local TypeSpec build. azsdk-common-generate-sdk-locally over-
+          # matches on the word "generate" and pulls in the wrong workflow.
+          # See https://github.com/Azure/azure-sdk-tools/issues/15950.
+          disallowed:
+            - azsdk-common-generate-sdk-locally
+      # 2. Tool-call check: given the right skill was loaded, did it call
+      #    the right MCP tools?
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_create_release_plan
+            - azsdk_get_release_plan
+            - azsdk_run_generate_sdk
+            - azsdk_link_sdk_pull_request_to_release_plan
+          disallowed:
+            - azsdk_verify_setup
+      # 3. Final-answer correctness (LLM-judged): the deterministic graders
+      #    above only verify the agent *did* the right things, not that it
+      #    *reported* them back to the user correctly. Tools can fire
+      #    successfully while the final message hallucinates IDs / URLs.
+      #    This grader uses gpt-5.4 as judge against a free-form rubric so
+      #    minor wording variants (`WI 29262`, `work-item #29262`) all pass.
+      - type: prompt
+        config:
+          model: gpt-5.4
+          scoring: binary
+          threshold: 1.0
+          prompt: |
+            Did the final assistant message clearly state BOTH of the
+            following, consistent with the tools that were actually called?
+
+              1. A numeric DevOps work-item ID for the release plan that was
+                 created (or confirmed). Any unambiguous format is fine
+                 (e.g. "work item 29262", "WI #29262", "/_workitems/edit/29262").
+
+              2. A GitHub pull request URL on
+                 github.com/Azure/azure-sdk-for-* that was linked back to
+                 that release plan.
+
+            Answer "pass" only if BOTH are present. Otherwise answer "fail"
+            and briefly say which one is missing.
+
+scoring:
+  weights:
+    skill-invocation: 0.34
+    tool-calls: 0.33
+    prompt: 0.33
+  threshold: 1.0

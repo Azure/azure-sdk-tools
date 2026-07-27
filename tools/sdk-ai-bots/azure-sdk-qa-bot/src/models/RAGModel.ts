@@ -74,8 +74,8 @@ export class RAGModel implements PromptCompletionModel {
         references: undefined,
       };
     }
-    // Best-effort cancel: if the thinking loop is stuck, safeCancelTimer logs a warning
-    // and returns rather than throwing, so stop() is always reached.
+    // Best-effort cancel: safeCancelTimer can throw if the thinking loop can't be stopped.
+    // Swallow the error so stop() still updates the activity with the final reply.
     try {
       await thinkingHandler.safeCancelTimer();
     } catch (error: any) {

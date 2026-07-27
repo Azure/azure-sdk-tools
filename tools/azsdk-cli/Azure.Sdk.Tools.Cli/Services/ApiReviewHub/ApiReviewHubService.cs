@@ -99,7 +99,7 @@ public class ApiReviewHubService(
         var httpClient = httpClientFactory.CreateClient(nameof(ApiReviewHubService));
         var authorization = await GetAuthorizationAsync(endpoint, ct);
 
-        var uriBuilder = new UriBuilder($"{endpoint}/api/releases/check-gate");
+        var uriBuilder = new UriBuilder($"{endpoint}/api/releases/check-approval");
         var query = new List<string>
         {
             $"language={Uri.EscapeDataString(language)}",

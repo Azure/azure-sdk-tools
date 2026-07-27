@@ -79,7 +79,7 @@ vally eval --tag area="skill-authoring"
 vally eval --tag area="markdown-token-optimizer" --output-dir ./results
 ```
 
-The [skill-eval pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8165&_a=summary) runs ci-gate evals automatically after PRs are merged. It can also be triggered manually from the same page.
+The [Skill Evaluations workflow](../workflows/skill-eval.yml) runs Vally lint when skill files or the pinned Vally dependency change.
 
 ---
 

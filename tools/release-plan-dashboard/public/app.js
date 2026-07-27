@@ -1932,7 +1932,7 @@
             const langReleased =
               langReleaseStatus === "released" ||
               langReleaseStatus === "completed";
-            if (l.sdkPrUrl && !langReleased && Array.isArray(l.sdkPrLabels)) {
+            if (l.sdkPrUrl && !excluded && !langReleased && Array.isArray(l.sdkPrLabels)) {
               for (const label of l.sdkPrLabels) {
                 const bg = label.color ? `#${esc(label.color)}` : "#0e8a16";
                 const textColor = label.color

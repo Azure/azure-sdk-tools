@@ -44,7 +44,6 @@ This includes but is not limited to:
 - **Minimal, scoped edits** — only change what the request requires.
 - **Always validate** — run every steps in [validation](references/validation.md) after every edit.
 - **Always cite references** — provide links that justify the approach.
-- **API version evolution grounds via agentic search only** — for any add/bump/promote of an API version (Case 3), ground the plan by calling `web_fetch` on the matching versioning doc in [reference-document-links.md](references/reference-document-links.md). Never call `azsdk_typespec_generate_authoring_plan` for these cases.
 - **Follow the authoring plan exactly** — code changes in Step 4 MUST follow the authoring plan generated in Step 3. Do not deviate by referring to existing code patterns in the TypeSpec project; the authoring plan is the single source of truth for what to change.
 
 ## Steps

@@ -92,8 +92,18 @@ stages:
             # This script is different from the azure-sdk-tools repo in that it A) doesn't need the eng/common $Language variable set
             # AND it sets an output variable for all the release names that were created. The output variable should be added to the eng/common
             # version and a basic override of $Language should be supported before we can remove this build-tools repo script.
+            #
+            # -forceCreate makes this step idempotent and retry-safe:
+            #   * Without it the script computes "Deployable" by querying https://api.nuget.org for the package version. These tools publish to
+            #     the private public/azure-sdk-for-net Azure Artifacts feed (never nuget.org), so that check targets the wrong repository. On a
+            #     network-isolated release agent (nuget.org is not reachable) the request throws with no HTTP response and the script exit(1)s
+            #     (observed failure: "Nuget Invocation failed: StatusCode:"). Even when reachable, once a version is published the script treats
+            #     it as "already deployed" and exit(1)s, so any retry after a successful publish is guaranteed to fail.
+            #   * -forceCreate short-circuits that check (Deployable = $forceCreate -or ...), so api.nuget.org is never contacted. Duplicate
+            #     releases are still prevented by the tag-vs-SHA check (CheckArtifactShaAgainstTagsList), which skips a tag that already exists at
+            #     the same release SHA. This lets a failed Post Package Publish job be retried after the package has already been published.
             filePath: '$(BuildToolScripts)/create-tags-and-git-release.ps1'
-            arguments: '-artifactLocation $(Artifacts) -workingDirectory $(System.DefaultWorkingDirectory) -packageRepository Nuget -releaseSha $(Build.SourceVersion) -repoId $(Build.Repository.Id)'
+            arguments: '-artifactLocation $(Artifacts) -workingDirectory $(System.DefaultWorkingDirectory) -packageRepository Nuget -releaseSha $(Build.SourceVersion) -repoId $(Build.Repository.Id) -forceCreate'
           env:
             GH_TOKEN: $(GH_TOKEN_Azure)
 

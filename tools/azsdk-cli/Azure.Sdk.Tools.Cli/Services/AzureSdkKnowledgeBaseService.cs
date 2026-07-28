@@ -139,10 +139,10 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             ArgumentNullException.ThrowIfNull(request);
 
-            //if (!ValidateRequest(request))
-            //{
-            //    throw new ArgumentException("Request validation failed", nameof(request));
-            //}
+            if (!ValidateRequest(request))
+            {
+                throw new ArgumentException("Request validation failed", nameof(request));
+            }
 
             await Initialize(cancellationToken);
 
@@ -313,6 +313,32 @@ namespace Azure.Sdk.Tools.Cli.Services
         /// <returns>True if valid, false otherwise</returns>
         private bool ValidateRequest(CompletionRequest request)
         {
+            return ValidateRequestCore(request, r =>
+            {
+                if (string.IsNullOrWhiteSpace(r.Message.Content))
+                {
+                    _logger.LogWarning("Request validation failed: Message content cannot be empty");
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        private bool ValidateRequest(KnowledgeRetrieveRequest request)
+        {
+            return ValidateRequestCore(request, r =>
+            {
+                if (string.IsNullOrWhiteSpace(r.Query))
+                {
+                    _logger.LogWarning("Request validation failed: Query cannot be empty or whitespace");
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        private bool ValidateRequestCore<T>(T request, Func<T, bool>? additionalValidation = null) where T : class
+        {
             if (request == null)
             {
                 return false;
@@ -332,9 +358,8 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
 
             // Additional business logic validation
-            if (string.IsNullOrWhiteSpace(request.Message.Content))
+            if (additionalValidation != null && !additionalValidation(request))
             {
-                _logger.LogWarning("Request validation failed: Message content cannot be empty");
                 return false;
             }
 

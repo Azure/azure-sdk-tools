@@ -2152,5 +2152,3 @@ internal class CallCountMockTspHelper : ITspClientHelper
     public Task<TspToolResponse> InitializeGenerationAsync(string workingDirectory, string tspConfigPath, string[]? additionalArgs = null, CancellationToken ct = default)
         => Task.FromResult(new TspToolResponse { IsSuccessful = true, TypeSpecProject = workingDirectory });
 }
-
-

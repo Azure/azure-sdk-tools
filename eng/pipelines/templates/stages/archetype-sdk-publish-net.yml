@@ -140,12 +140,25 @@ stages:
             AuthToken: '$(GH_TOKEN_Azure)'
             PushAuthToken: '$(GH_TOKEN_azure-sdk)'
 
+      # Publish the processed files so they are available for inspection/consumption by
+      # later jobs and stages. On success we use the stable "processed-files" name that
+      # downstream consumers expect. On failure we publish under a pipeline-unique,
+      # per-attempt name so that re-running the failed job does not collide with the
+      # artifact already published by a previous attempt (which would fail with
+      # "Artifact processed-files already exists for build <id>") and block retries.
       - task: 1ES.PublishPipelineArtifact@1
         displayName: 'Publish processed files'
+        condition: succeeded()
         inputs:
           artifactName: processed-files
           targetPath: $(Artifacts)
-        condition: always()
+
+      - task: 1ES.PublishPipelineArtifact@1
+        displayName: 'Publish processed files (failed attempt $(System.JobAttempt))'
+        condition: failed()
+        inputs:
+          artifactName: processed-files_$(System.JobAttempt)
+          targetPath: $(Artifacts)
 
   - ${{ each job in parameters.CustomReleaseJobs }}:
     - ${{ job }}

@@ -12,6 +12,10 @@
 - Removed `package get-work-item` CLI command - the intended use case is no longer relevant.
 - Removed `package update-work-item` CLI command - the intended use case is no longer relevant.
 
+### Other Changes
+
+- The 0.6.31 package was successfully published, but the release pipeline failed in a post-publish step, so no automated version-increment PR was opened at the time; the increment to 0.6.32 completes that release.
+
 ## 0.6.31 (2026-07-27)
 
 ### Features Added

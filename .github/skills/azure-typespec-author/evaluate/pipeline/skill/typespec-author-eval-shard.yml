@@ -1,6 +1,5 @@
 # Repo-local eval shard template for azure-typespec-author with-skill benchmark.
-# It prefixes artifact names per track and binds azsdk-mcp to the staged
-# live/mock MCP binary before invoking Vally.
+# It prefixes artifact names per track before invoking Vally.
 
 parameters:
   - name: vallyRoot
@@ -88,55 +87,34 @@ jobs:
           cp -r "$(Pipeline.Workspace)/mcp-servers/." "$(Build.SourcesDirectory)/artifacts/mcp/"
         displayName: 'Stage MCP binaries for Vally'
 
-      - script: |
-          set -e
-          if [ "$MCP_ENVIRONMENT" = "none" ]; then
-            echo "Leaving Vally MCP environment unchanged."
-            exit 0
-          fi
-
-          node <<'NODE'
-          const fs = require('fs');
-          const path = require('path');
-
-          const mode = process.env.MCP_ENVIRONMENT;
-          const configPath = path.join(process.env.BUILD_SOURCESDIRECTORY, process.env.VALLY_ROOT, '.vally.yaml');
-          let text = fs.readFileSync(configPath, 'utf8');
-          const start = text.indexOf('  azsdk-mcp:\n');
-          const end = text.indexOf('\n  azsdk-mcp-remote-kb:', start);
-          if (start < 0 || end < 0) {
-            throw new Error('Could not find azsdk-mcp environment block in .vally.yaml');
-          }
-
-          const current = text.slice(start, end);
-          const endpoint = current.match(/AZURE_SDK_KB_ENDPOINT: "([^"]+)"/)?.[1];
-          const endpointLine = endpoint ? `          AZURE_SDK_KB_ENDPOINT: "${endpoint}"\n` : '';
-          const binary = mode === 'mock'
-            ? '../../../../artifacts/mcp/mock/azsdk-mock.dll'
-            : '../../../../artifacts/mcp/cli/azsdk.dll';
-          const timeout = mode === 'mock' ? '"60s"' : '5m';
-          const args = mode === 'mock'
-            ? `            "${binary}",`
-            : `            "${binary}",\n            "start",`;
-          const env = mode === 'mock'
-            ? ''
-            : `        env:\n          AZSDKTOOLS_AGENT_TESTING: "false"\n          AZSDKTOOLS_COLLECT_TELEMETRY: "false"\n${endpointLine}`;
-
-          const replacement = `  azsdk-mcp:\n    files:\n      - src: ../fixtures/instructions-test/copilot-instructions.md\n        dest: .github/copilot-instructions.md\n    mcpServers:\n      azure-sdk-mcp:\n        type: stdio\n        command: dotnet\n        args:\n          [\n${args}\n          ]\n        timeout: ${timeout}\n${env}`;
-
-          text = text.slice(0, start) + replacement + text.slice(end);
-          fs.writeFileSync(configPath, text);
-          console.log(`Rebound azsdk-mcp to ${mode} MCP binary in ${configPath}`);
-          NODE
-        displayName: 'Bind azsdk-mcp to ${{ parameters.mcpEnvironment }} MCP binary'
-        env:
-          MCP_ENVIRONMENT: ${{ parameters.mcpEnvironment }}
-          VALLY_ROOT: ${{ parameters.vallyRoot }}
-
       - template: /.github/skills/azure-typespec-author/evaluate/pipeline/skill/typespec-author-preeval.yml
         parameters:
           startQaBotBackend: ${{ parameters.startQaBotBackend }}
           prepareNoSkill: ${{ parameters.prepareNoSkill }}
+
+      - ${{ if eq(parameters.mcpEnvironment, 'mock') }}:
+        - script: |
+            set -e
+            node <<'NODE'
+            const fs = require('fs');
+
+            const evalArgs = process.env.EVAL_ARGS ?? '';
+            const tokens = evalArgs.split(/\s+/).filter(Boolean);
+            const evalFiles = tokens.filter((token, index) => tokens[index - 1] === '-e');
+            for (const evalFile of evalFiles) {
+              const text = fs.readFileSync(evalFile, 'utf8');
+              const updated = text.replace(/^environment: azsdk-mcp$/m, 'environment: azsdk-mcp-mock');
+              if (updated === text) {
+                throw new Error(`Could not update environment in ${evalFile}`);
+              }
+              fs.writeFileSync(evalFile, updated);
+            }
+            console.log(`Using azsdk-mcp-mock from .vally.yaml for ${evalFiles.length} eval file(s).`);
+            NODE
+          displayName: 'Use azsdk-mcp-mock environment'
+          workingDirectory: ${{ parameters.vallyRoot }}
+          env:
+            EVAL_ARGS: $(evalArgs)
 
       - script: |
           patterns=()

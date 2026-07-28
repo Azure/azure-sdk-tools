@@ -13,9 +13,9 @@ variables:
 extends:
   template: /eng/common/pipelines/templates/stages/archetype-eval.yml
   parameters:
-    vallyRoot: .github/skills/azure-typespec-author/evaluate
+    vallyRoot: .github/skills
     evalGlobs:
-      - 'evals/*.eval.yaml'
+      - 'azure-typespec-author/evaluate/evals/*.eval.yaml'
     mcpSetupTemplate: /eng/common/pipelines/templates/steps/eval-mcp-setup.yml
     TestType: live
     evalInvokeTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/no-skill/typespec-author-eval-invoke.yml

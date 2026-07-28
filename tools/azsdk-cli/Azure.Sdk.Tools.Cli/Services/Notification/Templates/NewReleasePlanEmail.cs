@@ -22,7 +22,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification.Templates
             "Each release plan is scoped to <strong>one release type</strong> (Private Preview, Public Preview, or GA) " +
             "<strong>and one plane</strong> (data plane or management (ARM) plane). " +
             "A release plan is required before any Azure SDK-related Cloud Lifecycle (CPEX) KPIs can be approved for this release. " +
-            $"<a href=\"{ReleasePlanDocumentationUrl}\">Learn more about release plans.</a></p>";
+            "<a href=\"" + ReleasePlanDocumentationUrl + "\">Learn more about release plans.</a></p>";
 
         private const string AutomatedSdkPullRequestNextStep =
             "<li>SDK pull requests: One SDK pull request per language (.NET, Java, JavaScript/TypeScript, Python, and Go (optional for data plane)) will be generated and linked to this plan. " +

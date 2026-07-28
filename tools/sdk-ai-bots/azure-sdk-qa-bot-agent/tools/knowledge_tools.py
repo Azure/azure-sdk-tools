@@ -7,13 +7,20 @@ import logging
 from enum import Enum
 from typing import Annotated
 
-from config.tenant_config import TenantID, get_knowledge_source, get_tenant_config
+from config.tenant_config import (
+    SRC_WIKI_CONCEPT,
+    SRC_WIKI_ENTITY,
+    TenantID,
+    get_knowledge_source,
+    get_tenant_config,
+)
 from config.app_config import get as cfg
 from models.knowledge import Reference, SearchKnowledgeBaseResult
 from tools import tool
 from utils.azure_ai_search import (
     NON_WIKI_FILTER,
     WIKI_FILTER,
+    _escape_odata,
     get_search_client,
     split_source_ref,
 )
@@ -23,6 +30,9 @@ logger = logging.getLogger(__name__)
 
 # Expanded content beyond this limit is truncated to control context size.
 _MAX_CONTENT_CHARS_PER_RESULT = 3000
+
+# Cross-document wiki pages; reachable only through wiki_search.
+_WIKI_ONLY_SOURCES = (SRC_WIKI_ENTITY, SRC_WIKI_CONCEPT)
 
 # Wiki pages kept as full evidence, and the next-ranked pages surfaced as
 # titles only so the agent can see the neighbourhood it just missed.
@@ -137,9 +147,7 @@ class KnowledgeTools:
         related concepts, and potential solutions.
         """
         # Fall back to tenant-configured sources when none are specified
-        if not sources:
-            config = get_tenant_config(TenantID(tenant_id))
-            sources = [src.name for src in config.sources] if config else []
+        sources = _raw_source_names(tenant_id, sources)
 
         search_client = get_search_client()
 
@@ -243,9 +251,7 @@ class KnowledgeTools:
         ] = None,
     ) -> SearchKnowledgeBaseResult:
         """Literal keyword search over raw source document chunks."""
-        if not sources:
-            config = get_tenant_config(TenantID(tenant_id))
-            sources = [src.name for src in config.sources] if config else []
+        sources = _raw_source_names(tenant_id, sources)
         search_client = get_search_client()
         source_filters = _resolve_source_filters(sources, tenant_id, None)
         hits = await search_client.keyword_search(
@@ -282,9 +288,7 @@ class KnowledgeTools:
         search_mode: Annotated[str, _SEARCH_MODE_DESC] = "quick",
     ) -> SearchKnowledgeBaseResult:
         """Search wiki pages, their routed source chunks, and adjacent page titles."""
-        if not sources:
-            config = get_tenant_config(TenantID(tenant_id))
-            sources = [src.name for src in config.sources] if config else []
+        sources = _wiki_source_names(tenant_id, sources)
         search_client = get_search_client()
         source_filters = _resolve_source_filters(sources, tenant_id, None)
         capped_queries = queries[:3]
@@ -344,7 +348,9 @@ class KnowledgeTools:
         ] = None,
     ) -> SearchKnowledgeBaseResult:
         """Read full wiki pages and list their source document refs."""
-        source_filter = _tenant_source_filter(tenant_id, sources)
+        source_filter = _tenant_source_filter(
+            tenant_id, _wiki_source_names(tenant_id, sources)
+        )
         search_client = get_search_client()
         chunks = await search_client.fetch_by_title(
             titles[:5], WIKI_FILTER, source_filter=source_filter
@@ -403,7 +409,9 @@ class KnowledgeTools:
         context_id, rel = split_source_ref(source_ref)
         chunks = await search_client.fetch_by_title(
             [rel], NON_WIKI_FILTER, top=60, keyword=query,
-            source_filter=_tenant_source_filter(tenant_id, None),
+            source_filter=_tenant_source_filter(
+                tenant_id, _raw_source_names(tenant_id, None)
+            ),
             context_id=context_id,
         )
         chunks = [c for c in chunks if not c.page_type]
@@ -423,6 +431,40 @@ class KnowledgeTools:
                 )
             ]
         )
+
+
+def _tenant_source_names(tenant_id: str) -> list[str]:
+    """All source names the tenant is configured for."""
+    config = get_tenant_config(TenantID(tenant_id))
+    return [src.name for src in config.sources] if config else []
+
+
+def _raw_source_names(tenant_id: str, sources: list[str] | None) -> list[str]:
+    """Source names for the raw-chunk tools.
+
+    Wiki page sources carry their own ``context_id`` and never match a raw
+    chunk, so they are dropped — unless that would empty the list, which would
+    leave the search unfiltered.
+    """
+    names = sources or _tenant_source_names(tenant_id)
+    kept = [n for n in names if n not in _WIKI_ONLY_SOURCES]
+    return kept or names
+
+
+def _wiki_source_names(tenant_id: str, sources: list[str] | None) -> list[str]:
+    """Source names for ``wiki_search``.
+
+    Topical scoping from the caller must not drop the tenant's cross-document
+    wiki sources, which is what reduces wiki retrieval to summary pages only.
+    """
+    if not sources:
+        return _tenant_source_names(tenant_id)
+    extra = [
+        n
+        for n in _tenant_source_names(tenant_id)
+        if n in _WIKI_ONLY_SOURCES and n not in sources
+    ]
+    return list(sources) + extra
 
 
 def _resolve_source_filters(
@@ -447,7 +489,13 @@ def _resolve_source_filters(
 
     source_filters: dict[str, str] = {}
     for source_name in sources:
-        filter_clauses = [f"context_id eq '{source_name}'"]
+        # ``sources`` reaches here straight from a model-authored tool call, so
+        # the value is escaped before it goes into the filter.  Unregistered
+        # names are kept rather than dropped: an escaped unknown name matches
+        # nothing, whereas dropping every name would leave the search unfiltered.
+        if not get_knowledge_source(source_name):
+            logger.warning("Unknown knowledge source %r requested", source_name)
+        filter_clauses = [f"context_id eq '{_escape_odata(source_name)}'"]
         if source_filter_overrides.get(source_name):
             filter_clauses.append(f"({source_filter_overrides[source_name]})")
         if service_type_filter:
@@ -464,11 +512,8 @@ def _combined_source_filter(source_filters: dict[str, str]) -> str | None:
     return "(" + " or ".join(clauses) + ")"
 
 
-def _tenant_source_filter(tenant_id: str, sources: list[str] | None) -> str | None:
-    """Resolve the tenant's combined ``context_id`` OR clause for title lookups."""
-    if not sources:
-        config = get_tenant_config(TenantID(tenant_id))
-        sources = [src.name for src in config.sources] if config else []
+def _tenant_source_filter(tenant_id: str, sources: list[str]) -> str | None:
+    """Resolve a combined ``context_id`` OR clause for title lookups."""
     return _combined_source_filter(_resolve_source_filters(sources, tenant_id, None))
 
 

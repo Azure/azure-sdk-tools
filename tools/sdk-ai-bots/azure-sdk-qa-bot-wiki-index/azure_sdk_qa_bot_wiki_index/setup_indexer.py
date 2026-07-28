@@ -69,7 +69,10 @@ def skillset_body() -> dict:
                 "context": "/document",
                 "defaultLanguageCode": "en",
                 "textSplitMode": "pages",
-                "maximumPageLength": 2000,
+                # Keeps every page in one chunk: page bodies are capped at 5000
+                # chars plus the title and Related block, and wiki projections
+                # carry no ordinal_position to reassemble split chunks with.
+                "maximumPageLength": 8000,
                 "pageOverlapLength": 500,
                 "inputs": [{"name": "text", "source": "/document/content"}],
                 "outputs": [{"name": "textItems", "targetName": "pages"}],

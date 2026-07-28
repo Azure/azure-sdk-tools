@@ -28,9 +28,15 @@ def rel_title(source_path: str) -> str:
 async def read_blob_container(container_client) -> list[tuple[str, str]]:
     """Read every markdown blob in the container as ``(source_path, text)``."""
     out: list[tuple[str, str]] = []
-    async for blob in container_client.list_blobs():
+    tombstoned = 0
+    # The knowledge sync retires a document by setting IsDeleted metadata and
+    # leaving the content in place, so metadata has to be requested and checked.
+    async for blob in container_client.list_blobs(include=["metadata"]):
         name = blob.name
         if PurePosixPath(name).suffix.lower() not in _MD_SUFFIXES:
+            continue
+        if (blob.metadata or {}).get("IsDeleted") == "true":
+            tombstoned += 1
             continue
         downloader = await container_client.download_blob(name)
         data = await downloader.readall()
@@ -39,5 +45,7 @@ async def read_blob_container(container_client) -> list[tuple[str, str]]:
         except UnicodeDecodeError:
             text = data.decode("utf-8", errors="replace")
         out.append((name, text))
-    logger.info("read_blob_container: %d markdown blobs", len(out))
+    logger.info(
+        "read_blob_container: %d markdown blobs (%d tombstoned)", len(out), tombstoned
+    )
     return out

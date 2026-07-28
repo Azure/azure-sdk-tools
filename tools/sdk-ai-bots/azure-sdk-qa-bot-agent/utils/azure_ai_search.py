@@ -333,11 +333,9 @@ class SearchClient:
 
             if not ranked_lists:
                 return []
-            # Fuse when more than one retriever contributed; otherwise keep the
-            # single retriever's own (semantic-reranker) ordering.
-            if len(ranked_lists) > 1:
-                return fuse_with_rrf(ranked_lists)
-            return list(ranked_lists[0])
+            # Always fuse: RRF scores stay comparable across queries, whereas a
+            # retriever's native score does not.
+            return fuse_with_rrf(ranked_lists)
 
         per_query = await asyncio.gather(
             *[_fused_for_query(q) for q in queries[:max_queries]]

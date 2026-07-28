@@ -287,7 +287,6 @@ _register(
         name=SRC_AZSDK_CLI_DOCS,
         description="Azure SDK CLI (azsdk) agent documentation: CLI command guidelines, MCP tools reference, design specs, and custom-agent and skills authoring guidelines for the Azure SDK Tools Agent. Use for questions about what the agent/CLI can do, MCP tool behavior, design/architecture, and agent/skill development.",
         base_url="https://github.com/Azure/azure-sdk-tools/blob/main/",
-        trim_format=True,
     ),
 )
 

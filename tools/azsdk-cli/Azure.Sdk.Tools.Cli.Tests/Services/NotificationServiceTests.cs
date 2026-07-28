@@ -199,6 +199,29 @@ public class NotificationServiceTests
         Assert.That(body, Does.Not.Contain("<h3>Missing required information for KPI attestation</h3>"));
     }
 
+    [Test]
+    public void EmailTemplate_ManagementPlane_MissingProductType_IncludesAutoSdkAndActionRequired()
+    {
+        var releasePlan = new ReleasePlanWorkItem
+        {
+            ReleasePlanId = 9,
+            ProductName = "Fabrikam Relay",
+            IsManagementPlane = true,
+            CreatedUsing = "Automation",
+            ProductTreeId = "product-1",
+            ServiceTreeId = "service-1",
+            ProductType = string.Empty,
+            ApiReleaseType = ApiReleaseType.GA,
+            SDKInfo = [new SDKInfo { Language = ".NET", PackageName = "Azure.ResourceManager.FabrikamRelay" }]
+        };
+
+        var body = new NewReleasePlanEmail(releasePlan).Body;
+
+        Assert.That(body, Does.Contain(AutomatedSdkPullRequestText));
+        Assert.That(body, Does.Contain("<strong>Action required:</strong>"));
+        Assert.That(body, Does.Not.Contain("<strong>SDK pull requests:</strong>"));
+    }
+
     [TestCase(true, false, false)]
     [TestCase(false, true, false)]
     [TestCase(false, false, true)]

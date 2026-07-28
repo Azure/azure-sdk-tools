@@ -1,6 +1,6 @@
 # Orchestrator pipeline — full prod deploy.
-# Deploys all component images (backend → function-app → agent → frontend) to
-# prod with a 10-minute stabilization window after the backend rolls out.
+# Deploys all component images (agent-server → function-app → agent → frontend) to
+# prod with a 10-minute stabilization window after the agent-server rolls out.
 #
 # Prerequisites: run provision-all-prod.yml first — it reviews the what-if,
 # blocks on the operational-readiness checklist, and applies the infra with
@@ -20,7 +20,7 @@ variables:
 parameters:
     - name: imageTagFrontend
       type: string
-    - name: imageTagBackend
+    - name: imageTagAgentServer
       type: string
     - name: imageTagFunctionApp
       type: string
@@ -37,7 +37,7 @@ extends:
                   environment: prod
                   stageSuffix: Prod
                   stabilizationSeconds: 600
-                  imageTagBackend: '${{ parameters.imageTagBackend }}'
+                  imageTagAgentServer: '${{ parameters.imageTagAgentServer }}'
                   imageTagFunctionApp: '${{ parameters.imageTagFunctionApp }}'
                   imageTagAgent: '${{ parameters.imageTagAgent }}'
                   imageTagFrontend: '${{ parameters.imageTagFrontend }}'

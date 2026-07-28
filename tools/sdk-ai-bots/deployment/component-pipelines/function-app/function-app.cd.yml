@@ -19,8 +19,6 @@ variables:
     - template: /eng/pipelines/templates/variables/image.yml
     # `appName` comes from FUNCTION_APP_NAME (exported by load-environment-suite.yml).
     # Downstream templates read $(FUNCTION_APP_NAME) directly.
-    - name: imageName
-      value: 'azure-sdk-qa-bot-function'
 
 extends:
     template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -46,26 +44,10 @@ extends:
                                           environment: '${{ parameters.environment }}'
                                     - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
 
-                                    # Deploy to staging slot.
-                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/webapp-deploy.yml
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-deploy.yml
                                       parameters:
-                                          appName: $(FUNCTION_APP_NAME)
-                                          imageName: $(imageName)
+                                          service: function-app
                                           imageTag: '${{ parameters.imageTag }}'
-                                          slot: staging
-
-                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/smoke-test.yml
-                                      parameters:
-                                          appName: $(FUNCTION_APP_NAME)
-                                          slot: staging
-                                          healthPath: /api/health
-
-                                    - ${{ if ne(parameters.environment, 'dev') }}:
-                                          - template: /tools/sdk-ai-bots/deployment/pipelines/templates/swap-slot.yml
-                                            parameters:
-                                                appName: $(FUNCTION_APP_NAME)
-                                                sourceSlot: staging
-                                                targetSlot: production
 
                                     - task: AzureCLI@2
                                       displayName: 'Record LastKnownGoodTag'

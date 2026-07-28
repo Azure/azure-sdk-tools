@@ -4,7 +4,7 @@
 
 parameters:
     - name: service
-      type: string # frontend | function-app | agent
+      type: string # frontend | function-app | agent | agent-server
     - name: imageTag
       type: string # tag produced by container-build.yml in CI
     - name: workingDirectory
@@ -29,6 +29,7 @@ steps:
                 frontend)        export FRONTEND_IMAGE_TAG="${{ parameters.imageTag }}" ;;
                 function-app)    export FUNCTION_IMAGE_TAG="${{ parameters.imageTag }}" ;;
                 agent)           export AGENT_IMAGE_TAG="${{ parameters.imageTag }}" ;;
+                agent-server)    export AGENT_SERVER_IMAGE_TAG="${{ parameters.imageTag }}" ;;
               esac
               npm ci
               azd env select "$AZURE_ENV_NAME"

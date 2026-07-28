@@ -52,35 +52,10 @@ extends:
                                           environment: '${{ parameters.environment }}'
                                     - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
 
-                                    # 1. Deploy image to staging slot.
-                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/webapp-deploy.yml
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-deploy.yml
                                       parameters:
-                                          appName: $(FRONTEND_SITE_NAME)
-                                          imageName: $(imageName)
+                                          service: frontend
                                           imageTag: '${{ parameters.imageTag }}'
-                                          slot: staging
-
-                                    # 2. Smoke test the staging slot.
-                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/smoke-test.yml
-                                      parameters:
-                                          appName: $(FRONTEND_SITE_NAME)
-                                          slot: staging
-                                          healthPath: /health
-
-                                    # 3. Swap staging → production (skip for dev: direct-deploy).
-                                    - ${{ if ne(parameters.environment, 'dev') }}:
-                                          - template: /tools/sdk-ai-bots/deployment/pipelines/templates/swap-slot.yml
-                                            parameters:
-                                                appName: $(FRONTEND_SITE_NAME)
-                                                sourceSlot: staging
-                                                targetSlot: production
-
-                                    # 4. Verify production slot post-swap.
-                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/smoke-test.yml
-                                      parameters:
-                                          appName: $(FRONTEND_SITE_NAME)
-                                          slot: default
-                                          healthPath: /health
 
                                     # 5. Record LastKnownGoodTag.
                                     - task: AzureCLI@2

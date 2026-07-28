@@ -1,7 +1,7 @@
 # Reusable stage template for deploy-all-* orchestrators.
 #
 # Encapsulates the shared dependency chain
-#   Backend → [optional stabilization watch] → FunctionApp → Agent → Frontend
+#   AgentServer → [optional stabilization watch] → FunctionApp → Agent → Frontend
 # so the three deploy-all-<env>.yml orchestrators only supply parameters.
 #
 # Approval gating still lives on the ADO environment `sdk-ai-bots-<env>` used
@@ -11,7 +11,7 @@ parameters:
     - name: environment
       type: string
       values: [dev, preview, prod]
-    - name: imageTagBackend
+    - name: imageTagAgentServer
       type: string
     - name: imageTagFunctionApp
       type: string
@@ -19,12 +19,6 @@ parameters:
       type: string
     - name: imageTagFrontend
       type: string
-    - name: backendSlot
-      type: string
-      default: authoring
-    - name: agentDeployTarget
-      type: string
-      default: both
     - name: stabilizationSeconds
       type: number
       default: 0
@@ -36,17 +30,16 @@ parameters:
       default: ''
 
 stages:
-    - stage: DeployBackend${{ parameters.stageSuffix }}
+    - stage: DeployAgentServer${{ parameters.stageSuffix }}
       jobs:
-          - template: /tools/sdk-ai-bots/deployment/component-pipelines/backend/backend.cd.yml@self
+          - template: /tools/sdk-ai-bots/deployment/component-pipelines/agent-server/agent-server.cd.yml@self
             parameters:
                 environment: ${{ parameters.environment }}
-                imageTag: '${{ parameters.imageTagBackend }}'
-                slot: ${{ parameters.backendSlot }}
+                imageTag: '${{ parameters.imageTagAgentServer }}'
 
     - ${{ if gt(parameters.stabilizationSeconds, 0) }}:
-          - stage: WatchBackend${{ parameters.stageSuffix }}
-            dependsOn: DeployBackend${{ parameters.stageSuffix }}
+          - stage: WatchAgentServer${{ parameters.stageSuffix }}
+            dependsOn: DeployAgentServer${{ parameters.stageSuffix }}
             jobs:
                 - job: Watch
                   pool:
@@ -62,9 +55,9 @@ stages:
     - stage: DeployFunctionApp${{ parameters.stageSuffix }}
       dependsOn:
           - ${{ if gt(parameters.stabilizationSeconds, 0) }}:
-                - WatchBackend${{ parameters.stageSuffix }}
+                - WatchAgentServer${{ parameters.stageSuffix }}
           - ${{ if not(gt(parameters.stabilizationSeconds, 0)) }}:
-                - DeployBackend${{ parameters.stageSuffix }}
+                - DeployAgentServer${{ parameters.stageSuffix }}
       jobs:
           - template: /tools/sdk-ai-bots/deployment/component-pipelines/function-app/function-app.cd.yml@self
             parameters:
@@ -78,7 +71,6 @@ stages:
             parameters:
                 environment: ${{ parameters.environment }}
                 imageTag: '${{ parameters.imageTagAgent }}'
-                deployTarget: ${{ parameters.agentDeployTarget }}
 
     - stage: DeployFrontend${{ parameters.stageSuffix }}
       dependsOn: DeployAgent${{ parameters.stageSuffix }}

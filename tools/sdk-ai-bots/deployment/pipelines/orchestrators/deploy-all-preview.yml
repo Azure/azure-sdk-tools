@@ -1,5 +1,5 @@
 # Orchestrator pipeline — full preview deploy.
-# Deploys all component images (backend → function-app → agent → frontend) to
+# Deploys all component images (agent-server → function-app → agent → frontend) to
 # preview in dependency order. Assumes infra is already provisioned via
 # provision-all-preview.yml. Each component's cd.yml gates on the
 # 'sdk-ai-bots-preview' ADO environment approval.
@@ -18,7 +18,7 @@ variables:
 parameters:
     - name: imageTagFrontend
       type: string
-    - name: imageTagBackend
+    - name: imageTagAgentServer
       type: string
     - name: imageTagFunctionApp
       type: string
@@ -33,7 +33,7 @@ extends:
             - template: /tools/sdk-ai-bots/deployment/pipelines/templates/deploy-stage.yml
               parameters:
                   environment: preview
-                  imageTagBackend: '${{ parameters.imageTagBackend }}'
+                  imageTagAgentServer: '${{ parameters.imageTagAgentServer }}'
                   imageTagFunctionApp: '${{ parameters.imageTagFunctionApp }}'
                   imageTagAgent: '${{ parameters.imageTagAgent }}'
                   imageTagFrontend: '${{ parameters.imageTagFrontend }}'

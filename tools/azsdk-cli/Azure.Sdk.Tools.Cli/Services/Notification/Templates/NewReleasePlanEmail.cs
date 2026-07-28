@@ -25,12 +25,12 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification.Templates
             $"<a href=\"{ReleasePlanDocumentationUrl}\">Learn more about release plans.</a></p>";
 
         private const string AutomatedSdkPullRequestNextStep =
-            "<li><strong>SDK pull requests:</strong> SDK pull requests for supported languages will be automatically generated and linked to this plan. " +
-            "When each pull request is ready, review and approve it, then follow the release plan dashboard to merge and release it. " +
+            "<li>SDK pull requests: One SDK pull request per language (.NET, Java, JavaScript/TypeScript, Python, and Go (optional for data plane)) will be generated and linked to this plan. " +
+            "When each PR is ready, review and approve it, then complete the merge and release by following your release plan dashboard. " +
             "The Azure SDK Tools Agent can walk you through these steps. You will be reminded automatically if an SDK is not published by the target date.</li>";
 
         private const string ManualSdkPullRequestNextStep =
-            "<li><strong>SDK pull requests:</strong> Use the azsdk agent to generate SDK pull requests and link them to this plan. " +
+            "<li>SDK pull requests: Use the azsdk agent to generate SDK pull requests and link them to this plan. " +
             "When each pull request is ready, review and approve it, then follow the release plan dashboard to merge and release it.</li>";
 
         private const string KpiAttestationActionRequiredSection =
@@ -40,7 +40,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification.Templates
             "Use the azsdk agent to add them.</li>";
 
         private const string MissingSdkDetailsNextStep =
-            "<li><strong>SDK pull requests:</strong> SDK details are currently missing from the release plan, likely because the emitter configuration is not defined in tspconfig.yaml. " +
+            "<li>SDK pull requests: SDK details are currently missing from the release plan, likely because the emitter configuration is not defined in tspconfig.yaml. " +
             "As a result, SDK pull requests cannot be generated until the emitter configuration is added to tspconfig.yaml and the release plan is updated with the SDK details.</li>";
 
         private const string AzSdkAgentDocumentationUrl = "https://aka.ms/azsdk/agent";

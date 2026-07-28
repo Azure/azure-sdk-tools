@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
 
-namespace Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion
+namespace Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledge
 {
     /// <summary>
     /// Represents a message in the AI chat conversation.

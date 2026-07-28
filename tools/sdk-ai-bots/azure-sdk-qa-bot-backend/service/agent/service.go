@@ -64,6 +64,89 @@ func (s *CompletionService) CheckArgs(req *model.CompletionReq) error {
 	return nil
 }
 
+func (s *CompletionService) SearchContext(ctx context.Context, req *model.CompletionReq) (*model.ContextSearchResp, error) {
+	requestID := uuid.New().String()
+	var routed bool
+	var routedTenantID model.TenantID
+
+	log.SetPrefix(fmt.Sprintf("[RequestID: %s] ", requestID))
+
+	jsonReq, err := json.Marshal(req)
+	if err != nil {
+		log.Printf("Failed to marshal request: %v\n", err)
+	} else {
+		log.Printf("Request: %s", utils.SanitizeForLog(string(jsonReq)))
+	}
+
+	if err = s.CheckArgs(req); err != nil {
+		log.Printf("Request validation failed: %v", err)
+		return nil, err
+	}
+
+	tenantConfig, _ := config.GetTenantConfig(req.TenantID)
+
+	// 1. Build messages from the openai request
+	llmMessages := s.buildMessages(req)
+
+	// 2. Handle tenant routing if enabled
+	if tenantConfig.EnableRouting {
+		routedTenantID, routed = s.RouteTenant(req.TenantID, req.ModelConfig, llmMessages)
+		if routed {
+			tenantConfig, _ = config.GetTenantConfig(routedTenantID)
+			req.Sources = tenantConfig.Sources
+			req.TenantID = routedTenantID
+		}
+	}
+
+	// 3. Recognize intention
+	query := req.Message.Content
+
+	intention, err := s.RecognizeIntention(req.TenantID, tenantConfig.IntentionPromptTemplate, req.ModelConfig, llmMessages)
+	if err != nil {
+		log.Printf("Intention recognize failed with error: %s", err)
+		return nil, err
+	}
+	if intention.QuestionScope == nil {
+		intention.QuestionScope = to.Ptr(model.QuestionScope_Branded) // default to branded scope
+	}
+	if len(intention.Question) > 0 {
+		query = fmt.Sprintf("category:%s question:%s", intention.Category, intention.Question)
+	}
+	// Apply intention override if provided
+	if req.Intention != nil {
+		if req.Intention.QuestionScope != nil {
+			intention.QuestionScope = req.Intention.QuestionScope
+		}
+		if req.Intention.ServiceType != nil {
+			intention.ServiceType = req.Intention.ServiceType
+		}
+	}
+	jsonReq, _ = json.Marshal(intention)
+	log.Printf("Intent Result: %s", utils.SanitizeForLog(string(jsonReq)))
+	query = preprocess.NewPreprocessService().PreprocessInput(req.TenantID, query)
+
+	var knowledges []model.Knowledge
+
+	if !intention.NeedsRagProcessing {
+		// Skip RAG workflow for non-technical messages
+		log.Printf("Skipping RAG workflow - non-technical message detected")
+		knowledges = []model.Knowledge{}
+	} else {
+		// Run agentic search and vector search in parallel, then merge results
+		knowledges, err = s.runParallelSearchAndMergeResults(ctx, req, query, intention, *req.WithAgenticSearch)
+		if err != nil {
+			log.Printf("Parallel search failed: %v", err)
+			return nil, model.NewSearchFailureError(err)
+		}
+	}
+
+	return &model.ContextSearchResp{
+		HasResult:  true,
+		Knowledges: knowledges,
+		Intention:  intention,
+	}, nil
+}
+
 func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.CompletionReq) (*model.CompletionResp, error) {
 	startTime := time.Now()
 	requestID := uuid.New().String()

@@ -2,16 +2,30 @@
 
 > Prerequisite: Steps 1 (Analyze Project) and 2 (Intake) must be complete.
 
-## 3.1 General (All Cases)
+## 3.1 Retrieve knowledge
 
-Use **both** tools to build an authoring plan, if the retrieved results have conflict, rely on agentic search.
+Select and execute the appropriate step based on the case identified in Step 2:
 
-1. **MCP Tool** — call `azsdk_typespec_generate_authoring_plan` with:
-   - `request`: user request (verbatim)
-   - `additionalInformation`: all context from Steps 1–2
-   - `typeSpecProjectRootPath`: project root path
+- **Case 3 (API Version Evolution):** Execute **Step B** — use reference documentation via agentic search.
+- **Other cases:** Execute **Step A** — use `azsdk_typespec_retrieve_knowledge` for AI-guided guidance.
 
-2. **Agentic Search** — run [agentic search](agentic-search.md) with URLs from [reference-document-links.md](reference-document-links.md) and a query from the user's request. Synthesize extracted content into a concrete plan.
+### Step A: Retrieve AI-Guided Knowledge (All cases except Case 3)
+
+Call `azsdk_typespec_retrieve_knowledge` with:
+- `request`: the user's request (verbatim)
+- `typeSpecProjectRootPath`: the project root path
+
+Extract the `context` field from the tool response. This provides AI-generated authoring guidance based on the TypeSpec project.
+
+### Step B: Fetch Reference Documentation (Case 3 — API Version Evolution)
+
+Run [agentic search](agentic-search.md) using URLs from [reference-document-links.md](reference-document-links.md) relevant to your case (identified in Step 2). Extract specific guidance for your scenario.
+
+## 3.2 Generate Authoring Plan
+
+synthesize the result into a concrete plan derived from the retrieved context in step 3.1.
+
+Document your final plan with references to supporting documents, and ensure the plan follows the retrieved context above.
 
 > **Fallback**: If agentic search fails (all URLs unreachable or timeout exceeded), proceed with the MCP tool result alone. Do not block the workflow on unreachable external documentation.
 
@@ -21,7 +35,7 @@ Use **both** tools to build an authoring plan, if the retrieved results have con
 
 ### Case 3 — API Version Evolution (ARM / Data-plane)
 
-> **Must** use Agentic Search (option 2 above) to build the plan — do not call the MCP tool.
+**Tools:** Use agentic search (Step 3.1.B). Reference docs: [Resource modeling guide](https://azure.github.io/typespec-azure/docs/howtos/resource-manager/01-resource-modeling/), [Resource lifecycle patterns](https://azure.github.io/typespec-azure/docs/howtos/resource-manager/02-resource-lifecycle/).
 
 1. Copy `.json` files from latest version's `examples/` into new version's `examples/`. Update `api-version` in each file. Delete old version's example folder if old version is no longer existed.
 2. Update `readme.md`.

@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion
+namespace Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledge
 {
     /// <summary>
     /// Represents a response received from the Azure Knowledge Service AI completion API.

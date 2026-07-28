@@ -24,6 +24,14 @@ logger = logging.getLogger(__name__)
 # Expanded content beyond this limit is truncated to control context size.
 _MAX_CONTENT_CHARS_PER_RESULT = 3000
 
+# Wiki pages kept as full evidence, and the next-ranked pages surfaced as
+# titles only so the agent can see the neighbourhood it just missed.
+_WIKI_TOP = 6
+_WIKI_NEIGHBORS = 8
+# Source chunks each kept page is routed back to, for grounded detail.
+_WIKI_ROUTE_PER_PAGE = 3
+_WIKI_ROUTE_MAX_TOTAL = 12
+
 # Shared by both retrieval tracks so the agent picks a strategy the same way.
 _SEARCH_MODE_DESC = (
     "Search strategy to use. "
@@ -292,14 +300,13 @@ class KnowledgeTools:
             if c.page_type in ("summary", "entity", "concept")
         ]
         unique.sort(key=lambda c: c.rerank_score, reverse=True)
-        top_n = int(cfg("KB_WIKI_TOP", "6"))
-        wiki_pages = unique[:top_n]
-        neighbors = unique[top_n : top_n + int(cfg("KB_WIKI_NEIGHBORS", "8"))]
+        wiki_pages = unique[:_WIKI_TOP]
+        neighbors = unique[_WIKI_TOP : _WIKI_TOP + _WIKI_NEIGHBORS]
         # Route each page to the SOURCE chunks it was built from (grounded detail).
         routed = await search_client.backfill_wiki_sources(
             wiki_pages,
-            per_page=int(cfg("KB_WIKI_ROUTE_PER_PAGE", "3")),
-            max_total=int(cfg("KB_WIKI_ROUTE_MAX_TOTAL", "12")),
+            per_page=_WIKI_ROUTE_PER_PAGE,
+            max_total=_WIKI_ROUTE_MAX_TOTAL,
             source_filter=_combined_source_filter(source_filters),
         )
         combined = wiki_pages + routed

@@ -42,6 +42,23 @@ changed are recompiled. Pages whose sources disappear are soft-deleted, and a
 run that would remove more than half of the known sources aborts instead, on the
 assumption that the upstream corpus is incomplete rather than genuinely emptied.
 
+The build only writes blobs; `azure-sdk-knowledge-wiki-indexer` projects them
+into the search index on its own daily schedule.
+
+### Full rebuild
+
+Reconcile diffs by **source** content hash, so editing a prompt in `prompts/`
+does not invalidate any existing page. To make prompt changes take effect,
+force a full rebuild:
+
+1. Delete every blob in the wiki container (this removes the manifest, so the
+   next run treats the corpus as new).
+2. Delete the wiki documents from the shared index — everything matching
+   `page_type ne null`; raw knowledge chunks have a null `page_type` and must be
+   left alone.
+3. Run the pipeline, then run the indexer manually rather than waiting for its
+   daily schedule.
+
 ## Configuration
 
 Settings are read from the environment first and then from Azure App
@@ -70,5 +87,8 @@ Generated pages use these additive fields in the shared index:
 
 * `chunk_refs_str` — JSON array string of source document refs.
 * `page_type` — `summary` | `entity` | `concept`.
+
+A page's `header_1` is its title; `header_2` and `header_3` are null, since
+generated pages carry no header hierarchy. Consumers must accept null headers.
 
 Blob metadata values must be ASCII.

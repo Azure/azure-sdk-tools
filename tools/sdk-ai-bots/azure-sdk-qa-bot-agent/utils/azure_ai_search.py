@@ -9,8 +9,7 @@ Three retrieval strategies are available and combined by ``fused_search``:
   - **Agentic search** – uses the KnowledgeBaseRetrievalClient for
     intent-aware multi-step retrieval (opt-in, ``deep`` mode only).
   - **Vector search** – hybrid semantic + vector query (always on).
-  - **Keyword search** – sparse BM25 full-text query (on by default, gated
-    by ``KB_ENABLE_KEYWORD``).
+  - **Keyword search** – sparse BM25 full-text query (always on).
 """
 
 from __future__ import annotations
@@ -44,6 +43,9 @@ _HIERARCHY_EXPANSION_TOP = 20
 
 # Chunks below this rerank score are considered low-relevance and dropped.
 _RERANK_SCORE_LOW_RELEVANCE_THRESHOLD = 2.0
+
+# Rank-smoothing constant for Reciprocal Rank Fusion.
+_RRF_K = 60
 
 # Page-type filters for raw source chunks and generated wiki pages.
 NON_WIKI_FILTER = "(page_type eq null or page_type eq '')"
@@ -105,28 +107,28 @@ def _chunk_key(chunk: "KnowledgeChunk") -> str:
 
 
 def fuse_with_rrf(
-    ranked_lists: "list[tuple[list[KnowledgeChunk], float]]",
-    k: int = 60,
+    ranked_lists: "list[list[KnowledgeChunk]]",
+    k: int = _RRF_K,
 ) -> "list[KnowledgeChunk]":
     """Fuse ranked retriever lists using Reciprocal Rank Fusion."""
     info: dict[str, KnowledgeChunk] = {}
-    rank_maps: list[tuple[dict[str, int], float]] = []
-    for results, weight in ranked_lists:
+    rank_maps: list[dict[str, int]] = []
+    for results in ranked_lists:
         rmap: dict[str, int] = {}
         for i, chunk in enumerate(results):
             key = _chunk_key(chunk)
             if key not in rmap:
                 rmap[key] = i + 1  # 1-indexed rank
             info.setdefault(key, chunk)
-        rank_maps.append((rmap, weight))
+        rank_maps.append(rmap)
 
     fused: list[KnowledgeChunk] = []
     for key, chunk in info.items():
         score = 0.0
-        for rmap, weight in rank_maps:
+        for rmap in rank_maps:
             rank = rmap.get(key)
             if rank:
-                score += weight / (k + rank)
+                score += 1.0 / (k + rank)
         chunk.rerank_score = score
         fused.append(chunk)
     fused.sort(key=lambda c: c.rerank_score, reverse=True)
@@ -289,20 +291,14 @@ class SearchClient:
         """Run every enabled retriever for each query and fuse them with RRF.
 
         Shared by both retrieval tracks — ``extra_filter`` selects raw source
-        chunks or wiki pages. Vector search always runs; keyword and agentic
-        search are opt-in. Each query is fused independently so a query never
+        chunks or wiki pages. Vector and keyword search always run; agentic
+        search is opt-in. Each query is fused independently so a query never
         loses its own best hits to a stronger sibling query; the per-query
         rankings are then concatenated for the caller to dedupe and cap.
         """
-        enable_keyword = cfg("KB_ENABLE_KEYWORD", "true").lower() == "true"
-        rrf_k = int(cfg("KB_RRF_K", "60"))
-        vector_weight = float(cfg("KB_RRF_VECTOR_WEIGHT", "1.0"))
-        keyword_weight = float(cfg("KB_RRF_KEYWORD_WEIGHT", "1.0"))
-        agentic_weight = float(cfg("KB_RRF_AGENTIC_WEIGHT", "1.0"))
 
         async def _fused_for_query(query: str) -> list[KnowledgeChunk]:
             coros: list = []
-            weights: list[float] = []
             if use_agentic:
                 coros.append(
                     self.agentic_search(
@@ -311,7 +307,6 @@ class SearchClient:
                         extra_filter=extra_filter,
                     )
                 )
-                weights.append(agentic_weight)
             coros.append(
                 self.vector_search(
                     query=query,
@@ -319,33 +314,30 @@ class SearchClient:
                     extra_filter=extra_filter,
                 )
             )
-            weights.append(vector_weight)
-            if enable_keyword:
-                coros.append(
-                    self.keyword_search(
-                        query=query,
-                        source_filters=source_filters,
-                        extra_filter=extra_filter,
-                    )
+            coros.append(
+                self.keyword_search(
+                    query=query,
+                    source_filters=source_filters,
+                    extra_filter=extra_filter,
                 )
-                weights.append(keyword_weight)
+            )
 
             results = await asyncio.gather(*coros, return_exceptions=True)
-            ranked_lists: list[tuple[list[KnowledgeChunk], float]] = []
-            for res, weight in zip(results, weights):
+            ranked_lists: list[list[KnowledgeChunk]] = []
+            for res in results:
                 if isinstance(res, BaseException):
                     logger.warning("Retriever failed for query=%r: %s", query, res)
                     continue
                 if res:
-                    ranked_lists.append((res, weight))
+                    ranked_lists.append(res)
 
             if not ranked_lists:
                 return []
             # Fuse when more than one retriever contributed; otherwise keep the
             # single retriever's own (semantic-reranker) ordering.
             if len(ranked_lists) > 1:
-                return fuse_with_rrf(ranked_lists, k=rrf_k)
-            return list(ranked_lists[0][0])
+                return fuse_with_rrf(ranked_lists)
+            return list(ranked_lists[0])
 
         per_query = await asyncio.gather(
             *[_fused_for_query(q) for q in queries[:max_queries]]

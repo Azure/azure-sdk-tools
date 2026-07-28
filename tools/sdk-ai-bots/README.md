@@ -4,7 +4,7 @@ This folder contains AI-powered components that work together to provide intelli
 
 ## Architecture Overview
 
-The system consists of six main components that work together to provide support for Azure SDK domain knowledge. Each component operates independently with well-defined interfaces:
+The system consists of five main components that work together to provide support for Azure SDK domain knowledge. Each component operates independently with well-defined interfaces:
 
 ```text
 ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -15,11 +15,11 @@ The system consists of six main components that work together to provide support
 │ azure-sdk-qa-bot/   │ azure-sdk-qa-bot-backend/ │ azure-sdk-qa-bot-function/ │ azure-sdk-qa-bot-knowledge-sync/│
 │                     │                           │                            │                                 │
 ├─────────────────────┴───────────────────────────┴────────────────────────────┴─────────────────────────────────┤
-│                  Shared Library                 │                        Evaluation Framework                  │
-│                   (TypeScript)                  │                              (Python)                        │
-│           azure-sdk-qa-bot-backend-shared/      │                     azure-sdk-qa-bot-evaluation/             │
-│                                                 │                                                              │
-└─────────────────────────────────────────────────┴──────────────────────────────────────────────────────────────┘
+│                                            Evaluation Framework                                                 │
+│                                                 (Python)                                                        │
+│                                       azure-sdk-qa-bot-evaluation/                                              │
+│                                                                                                                │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Components
@@ -36,15 +36,11 @@ The core processing engine responsible for generating AI-powered responses for t
 
 A serverless component that handles bot analytics and activity conversion. It processes Teams bot interactions and provides monitoring capabilities for the system.
 
-### 4. Shared Library (`azure-sdk-qa-bot-backend-shared/`)
-
-A common code library that provides consistent data structures, utility functions, and interface definitions used across all other components. It ensures standardization and reduces code duplication throughout the system.
-
-### 5. Evaluation Framework (`azure-sdk-qa-bot-evaluation/`)
+### 4. Evaluation Framework (`azure-sdk-qa-bot-evaluation/`)
 
 A quality assurance system that continuously monitors and evaluates the performance of the AI bot's responses. It runs automated tests to measure response accuracy, relevance, and quality to ensure the bot maintains high standards of assistance.
 
-### 6. Knowledge Sync Service (`azure-sdk-qa-bot-knowledge-sync/`)
+### 5. Knowledge Sync Service (`azure-sdk-qa-bot-knowledge-sync/`)
 
 A standalone TypeScript application that processes documentation from various repositories and maintains the knowledge base. It clones repositories, processes markdown files and TypeSpec Spector test files, uploads processed content to Azure Blob Storage, and updates the Azure AI Search index. This service maintains change detection for efficient processing and serves as the primary knowledge management component for the system.
 
@@ -99,14 +95,6 @@ npm start
 cd azure-sdk-qa-bot-knowledge-sync
 npm install
 npm start
-```
-
-#### Shared Library
-
-```bash
-cd azure-sdk-qa-bot-backend-shared
-npm install
-npm run dev:local
 ```
 
 #### Evaluation Framework

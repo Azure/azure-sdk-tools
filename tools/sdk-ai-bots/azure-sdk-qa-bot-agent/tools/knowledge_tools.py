@@ -294,7 +294,7 @@ class KnowledgeTools:
         unique.sort(key=lambda c: c.rerank_score, reverse=True)
         top_n = int(cfg("KB_WIKI_TOP", "6"))
         wiki_pages = unique[:top_n]
-        neighbors = unique[top_n : top_n + int(cfg("KB_WIKI_NEIGHBORS", "0"))]
+        neighbors = unique[top_n : top_n + int(cfg("KB_WIKI_NEIGHBORS", "8"))]
         # Route each page to the SOURCE chunks it was built from (grounded detail).
         routed = await search_client.backfill_wiki_sources(
             wiki_pages,

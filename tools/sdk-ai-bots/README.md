@@ -96,7 +96,7 @@ source .venv/bin/activate  # Windows: .venv\Scripts\Activate.ps1
 pip install -r requirements-dev.txt
 ```
 
-See [azure-sdk-qa-bot-agent/README.md](azure-sdk-qa-bot-agent/README.md) for full setup instructions, including VS Code debugging with AI Toolkit.
+See [azure-sdk-qa-bot-agent/README.md](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/README.md) for full setup instructions, including VS Code debugging with AI Toolkit.
 
 #### Azure Function
 
@@ -124,13 +124,13 @@ python evals_run.py --help
 
 **NOTE**: Running Evaluations
 
-To run evaluations, see: [azure-sdk-qa-bot-evaluation/README.md](azure-sdk-qa-bot-evaluation/README.md)
+To run evaluations, see: [azure-sdk-qa-bot-evaluation/README.md](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/README.md)
 
 ## Configuration
 
 ### Documentation Sources
 
-Add new documentation sources by updating the knowledge configuration. The Knowledge Sync Service uses `azure-sdk-qa-bot-knowledge-sync/config/knowledge-config.json`. See [Self-Serve Knowledge Sources Guide](docs/SELF_SERVE_ADD_KNOWLEDGE_SOURCES.md) for detailed instructions.
+Add new documentation sources by updating the knowledge configuration. The Knowledge Sync Service uses `azure-sdk-qa-bot-knowledge-sync/config/knowledge-config.json`. See [Self-Serve Knowledge Sources Guide](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/docs/SELF_SERVE_ADD_KNOWLEDGE_SOURCES.md) for detailed instructions.
 
 ### Environment Variables
 
@@ -141,6 +141,6 @@ Each component requires specific environment variables for Azure service connect
 For questions and support related to Azure SDK AI tools:
 
 - Review component-specific READMEs for detailed documentation
-- Check the [Chat Agent troubleshooting guide](azure-sdk-qa-bot-agent/TROUBLESHOOTING.md)
-- Check the [Backend Service troubleshooting guide](azure-sdk-qa-bot-backend/TROUBLE_SHOOTING.md) (deprecated Go backend)
-- Refer to the [self-serve knowledge sources guide](docs/SELF_SERVE_ADD_KNOWLEDGE_SOURCES.md)
+- Check the [Chat Agent troubleshooting guide](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/TROUBLESHOOTING.md)
+- Check the [Backend Service troubleshooting guide](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/TROUBLE_SHOOTING.md) (deprecated Go backend)
+- Refer to the [self-serve knowledge sources guide](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/docs/SELF_SERVE_ADD_KNOWLEDGE_SOURCES.md)

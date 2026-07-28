@@ -36,14 +36,36 @@ python -m azure_sdk_qa_bot_wiki_index.main
 ```
 
 `build_wiki.yml` runs this daily at 04:00 UTC, two hours after the knowledge
-sync that produces its input. Runs are incremental: only documents whose content
-hash changed are re-summarised, and only entity/concept groups whose membership
-changed are recompiled. Pages whose sources disappear are soft-deleted, and a
-run that would remove more than half of the known sources aborts instead, on the
-assumption that the upstream corpus is incomplete rather than genuinely emptied.
+sync that produces its input.
+
+### Incremental reconcile
+
+State lives in a manifest blob in the wiki container, holding a content hash
+plus the extracted entities/concepts per source document, and the content hash,
+input hash, and source refs per page. Each run:
+
+1. **Diffs sources by content hash.** A run where more than half of the known
+   sources have disappeared aborts with `CorpusShrankError` instead of
+   tombstoning the wiki, on the assumption that the upstream corpus is
+   incomplete rather than genuinely emptied.
+2. **Re-extracts only changed documents**; the rest are read back from the
+   manifest.
+3. **Re-summarises only changed documents.**
+4. **Re-synthesises an entity/concept page** only when its group gained or lost
+   a source document, or when its members' descriptions changed. One changed
+   document therefore touches only the groups that reference it.
+5. **Recomputes cross-links** over the whole current page set.
+6. **Uploads a page only when its rendered content changed.** Pages whose
+   sources are gone are soft-deleted via `IsDeleted` blob metadata — the same
+   convention the knowledge sync uses, so the shared indexer drops them.
+   Documents whose summary generation failed have their stored hash cleared so
+   the next run retries them.
+
+The first run against an empty manifest is a full build.
 
 The build only writes blobs; `azure-sdk-knowledge-wiki-indexer` projects them
-into the search index on its own daily schedule.
+into the search index on its own daily schedule, so a fresh build is not
+queryable until the indexer runs.
 
 ### Full rebuild
 
@@ -58,6 +80,24 @@ force a full rebuild:
    left alone.
 3. Run the pipeline, then run the indexer manually rather than waiting for its
    daily schedule.
+
+## Tenant scoping
+
+The agent scopes retrieval with an OData filter on `context_id`, using the
+source names each tenant is configured with. Pages join that scheme through the
+`context_id` written at build time:
+
+* `summary` pages take the **first path segment of their source blob**
+  (`typespec_docs/x.md` → `typespec_docs`), so they inherit their source
+  document's tenant scope with no configuration.
+* `entity` / `concept` pages are synthesized from many documents and cannot
+  inherit one scope, so they carry the fixed `wiki_entity` / `wiki_concept`
+  contexts. A tenant opts into them by listing those sources in its config.
+
+Because the cross-document contexts are shared, a tenant reading them can see
+facts synthesized from documents outside its own source list. This is accepted:
+the corpus is public documentation and tenants map to topic channels, not access
+boundaries.
 
 ## Configuration
 

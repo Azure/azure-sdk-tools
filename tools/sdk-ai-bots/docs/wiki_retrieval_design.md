@@ -50,11 +50,54 @@ For most questions the agent issues `search_knowledge_base` + `wiki_search` in o
 
 Summarisation naturally drops qualifiers, and a wiki page that states a conditional fact as an unconditional rule is worse than no page at all: at query time a confident general principle can override the case-specific answer the user needs. The build prompts therefore require each fact to keep the scope its source gives it — conditions, exceptions, and tolerated deviations are recorded next to the rule they qualify, and a verdict given for one situation never becomes general guidance. The answer rules mirror this from the other side: a source that answers the exact situation wins over a source stating a broad rule.
 
-## Freshness and tenant scoping
+## Tenant scoping
 
-- **Incremental reconcile.** The build diffs the corpus against the manifest by content hash: only changed/new documents are re-extracted and their summaries regenerated; entity/concept pages are re-synthesised only when a group's source set or content changed; removed documents have their pages soft-deleted (`IsDeleted` blob metadata, matching the KB sync pipeline, so the shared indexer drops them). The first run against an empty manifest is a full build. Documents whose summary generation fails keep an empty hash so the next run retries them, and a run that would drop more than half of the known sources aborts rather than tombstone the wiki over an incomplete upstream corpus.
-- **Scheduling.** `azure-sdk-qa-bot-wiki-index/build_wiki.yml` runs the build daily at 04:00 UTC, two hours after the knowledge sync that writes its input. Configuration comes from Azure App Configuration, so the pipeline itself only carries an endpoint and a service connection.
-- **Tenant scoping** reuses the KB tool's source scoping. Summary pages inherit their source document's `context_id`; cross-document entity/concept pages carry dedicated `wiki_entity` / `wiki_concept` contexts registered as tenant sources.
+There is no access-control layer: tenant scoping is **retrieval-scope selection**, expressed as an OData filter on the index's `context_id` field. Three layers:
+
+1. **A global source registry** (`config/tenant_config.py`). Every knowledge source is registered once as a `KnowledgeSource`, whose `name` is also the `context_id` value carried by its documents in the index. The source's description is surfaced in the retrieval tools' parameter docs, so the model picks sources itself.
+2. **Tenants reference sources by name.** A `TenantConfig` holds an ordered source list, and may override an individual source's filter via `source_filter`.
+3. **Query time expands them into one filter** (`_resolve_source_filters`). Each source becomes `context_id eq '<name>'`, optionally `and`-ed with the tenant's override and a service-type clause; the per-source clauses are then OR-ed into the single `filter` passed to Azure AI Search.
+
+Wiki pages join this scheme through the `context_id` written at build time:
+
+| Page type | `context_id` | Source |
+| --------- | ------------ | ------ |
+| `summary` | the source document's first path segment | `reader.source_folder` — blob `typespec_docs/x.md` → `typespec_docs` |
+| `entity` | `wiki_entity` | fixed, `wiki_reduce.CONTEXT_BY_TYPE` |
+| `concept` | `wiki_concept` | fixed |
+
+Summary pages therefore inherit their source document's tenant scope automatically and need no configuration. Cross-document entity/concept pages cannot — they are synthesised from many documents — so they carry two dedicated contexts that a tenant opts into by listing `SRC_WIKI_ENTITY` / `SRC_WIKI_CONCEPT` among its sources.
+
+The consequence is the cross-document scoping limitation below: a tenant reading `wiki_entity` can see facts synthesised from documents outside its own source list.
+
+## Update model
+
+`reconcile()` is the single entry point. State lives in one manifest blob in the wiki container:
+
+```
+{"sources": {source_path: {hash, entities, concepts}},
+ "pages":   {slug: {content_hash, input_hash, source_refs, is_deleted, ...}}}
+```
+
+Six phases:
+
+1. **Diff sources by content hash.** `changed` = hash differs from the manifest; `deleted` = in the manifest but absent from the corpus. A run where `deleted` exceeds half of the known sources raises `CorpusShrankError` instead of proceeding — the wiki reads the container the KB sync writes, so a truncated upstream sync would otherwise tombstone the wiki and force an expensive full LLM rebuild.
+2. **Extraction.** Only changed documents are re-extracted; every other document's entities/concepts are deserialised from the manifest.
+3. **Summary pages.** Only changed documents are re-summarised; the rest are reused from the manifest.
+4. **Entity/concept pages.** A group's page is reused only when it already has content **and** its `source_refs` set is unchanged **and** its `input_hash` (a digest of the group name plus all member descriptions) is unchanged. So a single changed document re-synthesises only the groups that reference it.
+5. **Cross-links** are recomputed over the whole current page set.
+6. **Apply.** A page is uploaded only when its rendered content hash changed. Pages that no longer exist are **soft-deleted** via `IsDeleted` blob metadata — the same convention the KB sync pipeline uses, so the shared indexer drops them — and their manifest entry is reduced to a tombstone. Documents whose summary generation failed have their stored hash cleared, so the next run retries them.
+
+The first run against an empty manifest is a full build.
+
+Two properties of this design are easy to trip over:
+
+- **The build only writes blobs.** `azure-sdk-knowledge-wiki-indexer` projects them into the shared index on its own daily schedule, so a fresh build is not queryable until the indexer runs. Trigger it explicitly when the new pages are needed immediately.
+- **Prompt edits invalidate nothing.** The diff is over *source document* content, so changing a build prompt leaves every page cache-hit and unchanged. Making prompt changes take effect requires the full-rebuild procedure in the package README: clear the wiki container (including the manifest), delete the index documents matching `page_type ne null`, rebuild, then run the indexer.
+
+## Scheduling
+
+`azure-sdk-qa-bot-wiki-index/build_wiki.yml` runs the build daily at 04:00 UTC, two hours after the knowledge sync that writes its input. Configuration comes from Azure App Configuration, so the pipeline itself only carries an endpoint and a service connection.
 
 ## Evaluation
 

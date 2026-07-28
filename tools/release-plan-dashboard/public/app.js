@@ -1926,7 +1926,19 @@
               ? `<a href="${esc(l.sdkPrUrl)}" target="_blank" rel="noopener">PR</a>`
               : "—";
             let prLabels = l.sdkPrUrl ? prDetailLabels(l) : "";
-            if (l.sdkPrUrl) prLabels += autoReleaseLabelPills(l);
+            const langReleaseStatus = (l.releaseStatus || "").toLowerCase();
+            const langReleased =
+              langReleaseStatus === "released" ||
+              langReleaseStatus === "completed";
+            if (l.sdkPrUrl && !excluded && !langReleased && Array.isArray(l.sdkPrLabels)) {
+              for (const label of l.sdkPrLabels) {
+                const bg = label.color ? `#${esc(label.color)}` : "#0e8a16";
+                const textColor = label.color
+                  ? contrastTextColor(label.color)
+                  : "#ffffff";
+                prLabels += `<span class="pr-label pr-label-auto-release" style="background:${bg};color:${textColor}" title="SDK will be auto released when this SDK PR gets merged to main">${esc(label.name)}</span>`;
+              }
+            }
             let releaseDisplay = l.releaseStatus || "";
             if (exLabel) releaseDisplay = exLabel.text;
 

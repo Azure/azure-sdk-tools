@@ -10,7 +10,7 @@ The system consists of six main components that work together to provide support
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
 │                                                    Azure SDK AI Bot System                                                  │
 ├──────────────────┬────────────────────────────┬──────────────────────────────┬─────────────────────┬────────────────────────┤
-│    Teams Bot     │     Backend Service        │     Chat Agent (Preview)     │   Azure Function    │    Knowledge Sync      │
+│    Teams Bot     │  Backend Service (Deprecated)│       Chat Agent             │   Azure Function    │    Knowledge Sync      │
 │   (TypeScript)   │          (Go)              │          (Python)            │    (TypeScript)     │     (TypeScript)       │
 │ azure-sdk-qa-bot/│ azure-sdk-qa-bot-backend/  │  azure-sdk-qa-bot-agent/    │ azure-sdk-qa-bot-   │ azure-sdk-qa-bot-      │
 │                  │                            │                              │    function/        │   knowledge-sync/      │
@@ -28,15 +28,15 @@ The system consists of six main components that work together to provide support
 
 An intelligent assistant that operates within Microsoft Teams to help developers with Azure SDK related questions. It provides real-time guidance on TypeSpec authoring, Azure SDK onboarding, and best practices by leveraging AI-powered responses.
 
-### 2. Backend API Service (`azure-sdk-qa-bot-backend/`)
+### 2. Backend API Service — Deprecated (`azure-sdk-qa-bot-backend/`)
 
-The core processing engine responsible for generating AI-powered responses for the bot. It receives user questions, processes them through AI models, manages user feedback, and logs interactions for analytics and improvement purposes.
+> **Status:** Deprecated — superseded by `azure-sdk-qa-bot-agent/`. New development should target the Chat Agent.
 
-### 3. Chat Agent — Preview (`azure-sdk-qa-bot-agent/`)
+The original Go-based processing engine responsible for generating AI-powered responses for the bot. It receives user questions, processes them through AI models, manages user feedback, and logs interactions for analytics and improvement purposes.
 
-> **Status:** In active development — a Python replacement for the Go Backend API Service.
+### 3. Chat Agent (`azure-sdk-qa-bot-agent/`)
 
-A next-generation AI chat agent built on the [Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/overview/agent-framework-overview) with Azure AI Foundry. It provides the same `/completion` endpoint as the Go backend while introducing richer retrieval, Foundry Memory for conversation context, and a two-component architecture (agent + FastAPI server). Once stable, this component will supersede `azure-sdk-qa-bot-backend/`.
+A next-generation AI chat agent built on the [Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/overview/agent-framework-overview) with Azure AI Foundry. It supersedes the Go Backend API Service, introducing richer retrieval, Foundry Memory for conversation context, and a two-component architecture (agent + FastAPI server).
 
 ### 4. Azure Function (`azure-sdk-qa-bot-function/`)
 
@@ -87,7 +87,7 @@ go mod download
 go run main.go
 ```
 
-#### Chat Agent (Preview)
+#### Chat Agent
 
 ```bash
 cd azure-sdk-qa-bot-agent
@@ -141,6 +141,6 @@ Each component requires specific environment variables for Azure service connect
 For questions and support related to Azure SDK AI tools:
 
 - Review component-specific READMEs for detailed documentation
-- Check the [Chat Agent troubleshooting guide](azure-sdk-qa-bot-agent/TROUBLESHOOTING.md) (new Python backend)
-- Check the [Backend Service troubleshooting guide](azure-sdk-qa-bot-backend/TROUBLE_SHOOTING.md) (Go backend)
+- Check the [Chat Agent troubleshooting guide](azure-sdk-qa-bot-agent/TROUBLESHOOTING.md)
+- Check the [Backend Service troubleshooting guide](azure-sdk-qa-bot-backend/TROUBLE_SHOOTING.md) (deprecated Go backend)
 - Refer to the [self-serve knowledge sources guide](docs/SELF_SERVE_ADD_KNOWLEDGE_SOURCES.md)

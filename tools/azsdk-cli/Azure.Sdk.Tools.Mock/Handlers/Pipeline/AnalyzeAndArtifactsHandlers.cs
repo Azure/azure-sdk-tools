@@ -23,7 +23,7 @@ public class AnalyzePipelineHandler : IMockToolHandler
 
     public CommandResponse Handle(Dictionary<string, object?>? arguments)
     {
-        var buildId = arguments?.GetValueOrDefault("buildId")?.ToString() ?? "90001";
+        var buildId = MockPipelineIdentifier.GetBuildId(arguments) ?? "90001";
         var buildIdValue = int.TryParse(buildId, out var parsed) ? parsed : 90001;
         var pipelineUrl = $"https://dev.azure.com/azure-sdk/internal/_build/results?buildId={buildId}";
         return new AnalyzePipelineResponse
@@ -66,7 +66,7 @@ public class GetPipelineLlmArtifactsHandler : IMockToolHandler
 
     public CommandResponse Handle(Dictionary<string, object?>? arguments)
     {
-        var buildId = arguments?.GetValueOrDefault("buildId")?.ToString() ?? "90001";
+        var buildId = MockPipelineIdentifier.GetBuildId(arguments) ?? "90001";
         return new ObjectCommandResponse
         {
             Message = $"Retrieved LLM artifacts for build {buildId} (mock)",

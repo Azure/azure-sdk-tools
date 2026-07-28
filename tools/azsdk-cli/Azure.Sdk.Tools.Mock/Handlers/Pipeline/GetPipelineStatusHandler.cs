@@ -15,7 +15,7 @@ public class GetPipelineStatusHandler : IMockToolHandler
 
     public CommandResponse Handle(Dictionary<string, object?>? arguments)
     {
-        var buildId = arguments?.GetValueOrDefault("buildId")?.ToString() ?? "0";
+        var buildId = MockPipelineIdentifier.GetBuildId(arguments) ?? "0";
 
         return buildId switch
         {

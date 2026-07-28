@@ -7,19 +7,19 @@ This folder contains AI-powered components that work together to provide intelli
 The system consists of six main components that work together to provide support for Azure SDK domain knowledge. Each component operates independently with well-defined interfaces:
 
 ```text
-┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                            Azure SDK AI Bot System                                             │
-├─────────────────────┬───────────────────────────┬────────────────────────────┬─────────────────────────────────┤
-│     Teams Bot       │      Backend Service      │        Azure Function      │          Knowledge Sync         │
-│    (TypeScript)     │           (Go)            │         (TypeScript)       │           (TypeScript)          │
-│ azure-sdk-qa-bot/   │ azure-sdk-qa-bot-backend/ │ azure-sdk-qa-bot-function/ │ azure-sdk-qa-bot-knowledge-sync/│
-│                     │                           │                            │                                 │
-├─────────────────────┴───────────────────────────┴────────────────────────────┴─────────────────────────────────┤
-│                  Shared Library                 │                        Evaluation Framework                  │
-│                   (TypeScript)                  │                              (Python)                        │
-│           azure-sdk-qa-bot-backend-shared/      │                     azure-sdk-qa-bot-evaluation/             │
-│                                                 │                                                              │
-└─────────────────────────────────────────────────┴──────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                                    Azure SDK AI Bot System                                                  │
+├──────────────────┬────────────────────────────┬──────────────────────────────┬─────────────────────┬────────────────────────┤
+│    Teams Bot     │  Backend Service (Deprecated)│       Chat Agent             │   Azure Function    │    Knowledge Sync      │
+│   (TypeScript)   │          (Go)              │          (Python)            │    (TypeScript)     │     (TypeScript)       │
+│ azure-sdk-qa-bot/│ azure-sdk-qa-bot-backend/  │  azure-sdk-qa-bot-agent/    │ azure-sdk-qa-bot-   │ azure-sdk-qa-bot-      │
+│                  │                            │                              │    function/        │   knowledge-sync/      │
+├──────────────────┴────────────────────────────┴──────────────────────────────┴─────────────────────┴────────────────────────┤
+│                                                     Evaluation Framework                                                    │
+│                                                           (Python)                                                          │
+│                                                  azure-sdk-qa-bot-evaluation/                                               │
+│                                                                                                                             │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Components
@@ -28,17 +28,19 @@ The system consists of six main components that work together to provide support
 
 An intelligent assistant that operates within Microsoft Teams to help developers with Azure SDK related questions. It provides real-time guidance on TypeSpec authoring, Azure SDK onboarding, and best practices by leveraging AI-powered responses.
 
-### 2. Backend API Service (`azure-sdk-qa-bot-backend/`)
+### 2. Backend API Service — Deprecated (`azure-sdk-qa-bot-backend/`)
 
-The core processing engine responsible for generating AI-powered responses for the bot. It receives user questions, processes them through AI models, manages user feedback, and logs interactions for analytics and improvement purposes.
+> **Status:** Deprecated — superseded by `azure-sdk-qa-bot-agent/`. New development should target the Chat Agent.
 
-### 3. Azure Function (`azure-sdk-qa-bot-function/`)
+The original Go-based processing engine responsible for generating AI-powered responses for the bot. It receives user questions, processes them through AI models, manages user feedback, and logs interactions for analytics and improvement purposes.
+
+### 3. Chat Agent (`azure-sdk-qa-bot-agent/`)
+
+A next-generation AI chat agent built on the Microsoft Agent Framework with Azure AI Foundry. It supersedes the Go Backend API Service, introducing richer retrieval, Foundry Memory for conversation context, and a two-component architecture (agent + FastAPI server).
+
+### 4. Azure Function (`azure-sdk-qa-bot-function/`)
 
 A serverless component that handles bot analytics and activity conversion. It processes Teams bot interactions and provides monitoring capabilities for the system.
-
-### 4. Shared Library (`azure-sdk-qa-bot-backend-shared/`)
-
-A common code library that provides consistent data structures, utility functions, and interface definitions used across all other components. It ensures standardization and reduces code duplication throughout the system.
 
 ### 5. Evaluation Framework (`azure-sdk-qa-bot-evaluation/`)
 
@@ -63,7 +65,7 @@ The bot provides intelligent responses by searching through comprehensive knowle
 
 - **Node.js**: Version 20+
 - **Go**: Version 1.23+ (for backend service)
-- **Python**: Version 3.10+ (for evaluation framework)
+- **Python**: Version 3.10+ (for chat agent and evaluation framework)
 - **Azure Subscription**: For deploying cloud resources
 - **Teams Toolkit**: For Teams app development and deployment
 
@@ -85,6 +87,17 @@ go mod download
 go run main.go
 ```
 
+#### Chat Agent
+
+```bash
+cd azure-sdk-qa-bot-agent
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\Activate.ps1
+pip install -r requirements-dev.txt
+```
+
+See [azure-sdk-qa-bot-agent/README.md](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/README.md) for full setup instructions, including VS Code debugging with AI Toolkit.
+
 #### Azure Function
 
 ```bash
@@ -101,31 +114,23 @@ npm install
 npm start
 ```
 
-#### Shared Library
-
-```bash
-cd azure-sdk-qa-bot-backend-shared
-npm install
-npm run dev:local
-```
-
 #### Evaluation Framework
 
 ```bash
 cd azure-sdk-qa-bot-evaluation
 pip install -r requirements.txt
-python run.py
+python evals_run.py --help
 ```
 
 **NOTE**: Running Evaluations
 
-To run evaluations, see: [azure-sdk-qa-bot-evaluation/README.md](./azure-sdk-qa-bot-evaluation/README.md)
+To run evaluations, see: [azure-sdk-qa-bot-evaluation/README.md](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/README.md)
 
 ## Configuration
 
 ### Documentation Sources
 
-Add new documentation sources by updating the knowledge configuration. The Knowledge Sync Service uses `azure-sdk-qa-bot-knowledge-sync/config/knowledge-config.json`. See [Self-Serve Knowledge Sources Guide](docs/SELF_SERVE_ADD_KNOWLEDGE_SOURCES.md) for detailed instructions.
+Add new documentation sources by updating the knowledge configuration. The Knowledge Sync Service uses `azure-sdk-qa-bot-knowledge-sync/config/knowledge-config.json`. See [Self-Serve Knowledge Sources Guide](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/docs/SELF_SERVE_ADD_KNOWLEDGE_SOURCES.md) for detailed instructions.
 
 ### Environment Variables
 
@@ -136,5 +141,6 @@ Each component requires specific environment variables for Azure service connect
 For questions and support related to Azure SDK AI tools:
 
 - Review component-specific READMEs for detailed documentation
-- Check the [troubleshooting guide](azure-sdk-qa-bot-backend/TROUBLE_SHOOTING.md)
-- Refer to the [self-serve knowledge sources guide](docs/SELF_SERVE_ADD_KNOWLEDGE_SOURCES.md)
+- Check the [Chat Agent troubleshooting guide](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/TROUBLESHOOTING.md)
+- Check the [Backend Service troubleshooting guide](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/TROUBLE_SHOOTING.md) (deprecated Go backend)
+- Refer to the [self-serve knowledge sources guide](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/docs/SELF_SERVE_ADD_KNOWLEDGE_SOURCES.md)

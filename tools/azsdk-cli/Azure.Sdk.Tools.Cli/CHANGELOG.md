@@ -2,8 +2,14 @@
 
 ## 0.6.31 (2026-07-27)
 
+### Features Added
+
+- Added `detect-breaking-change` CLI command and `azsdk_package_detect_breaking_change` MCP tool to detect SDK breaking changes for a package. Accepts the sdk package via `--package-path`. Optional parameters: `--tsp-config-path`, `--changes-only`.
+- `codeowners add-label-owner` rejects a package-directory path (e.g. `sdk/<service>/<package>`) in favor of the package name; use `--force` to override, and wildcard (`*`) paths are always allowed.
+
 ### Bugs Fixed
 
+- `codeowners generate --section` now scopes Label Owner entries to the requested section, so entries from other sections no longer leak into the generated block.
 - Updated `GitHub.Copilot.SDK` to 1.0.8 so Copilot-backed commands accept ISO-8601 `ping` timestamps returned by current Copilot CLI versions.
 
 ## 0.6.30 (2026-07-23)

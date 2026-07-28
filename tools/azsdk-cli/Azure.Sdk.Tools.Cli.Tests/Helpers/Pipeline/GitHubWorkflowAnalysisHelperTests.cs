@@ -94,13 +94,27 @@ public class GitHubWorkflowAnalysisHelperTests
         Assert.That(analyses.Select(a => a.Name), Is.EqualTo(new[] { "analyze", "prepare-pipelines", "event-processor" }));
     }
 
+    // A commit routinely carries more than one failed run of the same workflow, and their logs are the same
+    // failure reported twice.
+    [Test]
+    public async Task AnalyzeWorkflowsAsync_ManyRunsOfOneWorkflow_AnalyzesOnlyTheLatest()
+    {
+        GivenWorkflowRuns(
+            WorkflowRunFor(1, "analyze", workflowId: 42, createdAt: new DateTimeOffset(2026, 7, 28, 18, 0, 0, TimeSpan.Zero)),
+            WorkflowRunFor(2, "analyze", workflowId: 42, createdAt: new DateTimeOffset(2026, 7, 28, 19, 0, 0, TimeSpan.Zero)));
+
+        var analyses = await helper.AnalyzeWorkflowsAsync(PrSource, CancellationToken.None);
+
+        Assert.That(analyses.Select(a => a.Url), Is.EqualTo(new[] { HtmlUrlFor(2) }));
+    }
+
     [Test]
     public async Task AnalyzeWorkflowsAsync_RunWithLogs_ReturnsExtractedErrorLines()
     {
         GivenWorkflowRuns(WorkflowRunFor(12345678, "analyze"));
         GivenLogs(12345678, "##[error]Process completed with exit code 1.");
         logAnalysisHelper
-            .Setup(l => l.AnalyzeLogContent(It.IsAny<TextReader>(), null, null, null, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(l => l.AnalyzeLogContent(It.IsAny<TextReader>(), It.IsAny<List<string>?>(), null, null, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([new LogEntry { Message = "Process completed with exit code 1." }]);
 
         var analysis = (await helper.AnalyzeWorkflowsAsync(PrSource, CancellationToken.None)).Single();
@@ -128,7 +142,7 @@ public class GitHubWorkflowAnalysisHelperTests
     {
         GivenWorkflowRuns(WorkflowRunFor(12345678, "analyze"));
         gitHubService
-            .Setup(g => g.GetWorkflowRunLogsAsync(Owner, Repo, 12345678, It.IsAny<CancellationToken>()))
+            .Setup(g => g.GetFailedWorkflowRunLogsAsync(Owner, Repo, 12345678, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new NotFoundException("log archive expired", System.Net.HttpStatusCode.Gone));
         GivenJobs(12345678, WorkflowJobFor("build", WorkflowJobConclusion.Failure));
 
@@ -142,24 +156,38 @@ public class GitHubWorkflowAnalysisHelperTests
     }
 
     [Test]
-    public async Task AnalyzeWorkflowsAsync_JobReadFails_ReportsErrorAndStillReportsLogs()
+    public async Task AnalyzeWorkflowsAsync_RunWithLogs_DoesNotListJobs()
     {
         GivenWorkflowRuns(WorkflowRunFor(12345678, "analyze"));
         GivenLogs(12345678, "##[error]boom");
         logAnalysisHelper
-            .Setup(l => l.AnalyzeLogContent(It.IsAny<TextReader>(), null, null, null, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(l => l.AnalyzeLogContent(It.IsAny<TextReader>(), It.IsAny<List<string>?>(), null, null, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([new LogEntry { Message = "boom" }]);
+
+        var analysis = (await helper.AnalyzeWorkflowsAsync(PrSource, CancellationToken.None)).Single();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(analysis.Logs.Select(l => l.Message), Is.EqualTo(new[] { "boom" }));
+            Assert.That(analysis.Jobs, Is.Empty);
+        });
+        gitHubService.Verify(
+            g => g.GetWorkflowRunJobsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<long>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
+    public async Task AnalyzeWorkflowsAsync_JobReadFailsWithoutLogs_ReportsError()
+    {
+        GivenWorkflowRuns(WorkflowRunFor(12345678, "analyze"));
+        GivenLogs(12345678, null);
         gitHubService
             .Setup(g => g.GetWorkflowRunJobsAsync(Owner, Repo, 12345678, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new ApiException("jobs unavailable", System.Net.HttpStatusCode.ServiceUnavailable));
 
         var analysis = (await helper.AnalyzeWorkflowsAsync(PrSource, CancellationToken.None)).Single();
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(analysis.Errors, Has.Exactly(1).Contains("Failed to read workflow run jobs"));
-            Assert.That(analysis.Logs.Select(l => l.Message), Is.EqualTo(new[] { "boom" }));
-        });
+        Assert.That(analysis.Errors, Has.Exactly(1).Contains("Failed to read workflow run jobs"));
     }
 
     [Test]
@@ -227,7 +255,7 @@ public class GitHubWorkflowAnalysisHelperTests
 
     private void GivenLogs(long runId, string? logs) =>
         gitHubService
-            .Setup(g => g.GetWorkflowRunLogsAsync(Owner, Repo, runId, It.IsAny<CancellationToken>()))
+            .Setup(g => g.GetFailedWorkflowRunLogsAsync(Owner, Repo, runId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(logs);
 
     private void GivenJobs(long runId, params WorkflowJob[] jobs) =>
@@ -253,9 +281,11 @@ public class GitHubWorkflowAnalysisHelperTests
         long id,
         string name,
         WorkflowRunStatus status = WorkflowRunStatus.Completed,
-        WorkflowRunConclusion? conclusion = WorkflowRunConclusion.Failure) =>
+        WorkflowRunConclusion? conclusion = WorkflowRunConclusion.Failure,
+        long? workflowId = null,
+        DateTimeOffset createdAt = default) =>
         new(id, name, null!, 0, null!, "main", HeadSha, ".github/workflows/analyze.yml", 1, "pull_request",
-            name, status, conclusion, 0, null!, HtmlUrlFor(id), null!, default, default, null!, 1, null!,
+            name, status, conclusion, workflowId ?? id, null!, HtmlUrlFor(id), null!, createdAt, default, null!, 1, null!,
             default, null!, null!, null!, null!, null!, null!, null!, null!, null!, null!, null!, null!, 0);
 
     private static WorkflowJob WorkflowJobFor(

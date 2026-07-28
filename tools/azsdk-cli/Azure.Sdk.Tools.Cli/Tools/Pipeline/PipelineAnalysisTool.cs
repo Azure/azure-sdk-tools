@@ -80,24 +80,30 @@ public class PipelineAnalysisTool(
             AnalyzePipelineResponse response = new AnalyzePipelineResponse();
 
             var builds = await pipelineIdentifierHelper.ResolveBuildsAsync(pipelineIdentifier, project, ct);
-            if (builds.Count == 0)
+
+            // A pull request can be red on GitHub Actions alone, so when no build backs the identifier the
+            // source is resolved from the pull request itself rather than reporting nothing to analyze.
+            var gitHubSource = builds.Count > 0
+                ? await pipelineIdentifierHelper.ResolveGitHubSourceAsync(builds, ct)
+                : await pipelineIdentifierHelper.ResolveGitHubSourceFromPrAsync(pipelineIdentifier, ct);
+
+            if (builds.Count == 0 && gitHubSource == null)
             {
-                return new AnalyzePipelineResponse
-                {
-                    ResponseError = $"No failed Azure Pipeline builds found for {pipelineIdentifier}"
-                };
+                response.ResponseError = $"No failed Azure Pipeline builds found for {pipelineIdentifier}";
+                return response;
             }
 
             logger.LogInformation("Analyzing pipeline {pipelineIdentifier}...", pipelineIdentifier);
 
-            var (buildAnalyses, warnings) = await pipelineAnalysisHelper.AnalyzePipelineAsync(builds, logId, ct);
-            response.BuildAnalyses = buildAnalyses;
-            if (warnings.Count > 0)
+            if (builds.Count > 0)
             {
-                (response.NextSteps ??= []).AddRange(warnings);
+                var (buildAnalyses, warnings) = await pipelineAnalysisHelper.AnalyzePipelineAsync(builds, logId, ct);
+                response.BuildAnalyses = buildAnalyses;
+                if (warnings.Count > 0)
+                {
+                    (response.NextSteps ??= []).AddRange(warnings);
+                }
             }
-
-            var gitHubSource = await pipelineIdentifierHelper.ResolveGitHubSourceAsync(builds, ct);
 
             if (gitHubSource != null && !string.IsNullOrEmpty(gitHubSource.HeadSha))
             {

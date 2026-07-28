@@ -3,6 +3,7 @@
 using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
@@ -158,7 +159,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<Team> GetTeamByNameAsync(string org, string teamSlug, CancellationToken ct);
         public Task<HashSet<string>> GetRepoLabels(string owner, string repo, CancellationToken ct);
         public Task<IReadOnlyList<WorkflowRun>> GetFailedWorkflowRunsForCommitAsync(string owner, string repo, string commitSha, CancellationToken ct);
-        public Task<string?> GetWorkflowRunLogsAsync(string owner, string repo, long runId, CancellationToken ct);
+        public Task<string?> GetFailedWorkflowRunLogsAsync(string owner, string repo, long runId, CancellationToken ct);
         public Task<IReadOnlyList<WorkflowJob>> GetWorkflowRunJobsAsync(string owner, string repo, long runId, CancellationToken ct);
         public Task<List<PrCheckRun>> GetPrCheckRunsAsync(string owner, string repo, int prNumber, CancellationToken ct);
     }
@@ -778,13 +779,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             return response?.WorkflowRuns ?? [];
         }
 
-        /// <summary>
-        /// Downloads the log archive for a workflow run and flattens it to text. GitHub returns a zip whose
-        /// root entries are the complete per-job logs and whose subfolder entries are the same content split
-        /// per step, so only the root entries are read to avoid emitting every line twice. Returns null when
-        /// the run has no logs (they expire, and in-progress runs may not have published any yet).
-        /// </summary>
-        public async Task<string?> GetWorkflowRunLogsAsync(string owner, string repo, long runId, CancellationToken ct)
+        public async Task<string?> GetFailedWorkflowRunLogsAsync(string owner, string repo, long runId, CancellationToken ct)
         {
             logger.LogInformation("Getting logs for workflow run {RunId} in {Owner}/{Repo}", runId, owner, repo);
             var archive = await ReadWithAnonymousFallbackAsync(client => client.Actions.Workflows.Runs.GetLogs(owner, repo, runId), ct);
@@ -793,11 +788,29 @@ namespace Azure.Sdk.Tools.Cli.Services
                 return null;
             }
 
+            // A failure to list the jobs costs the step filtering, not the logs, so the whole run is reported.
+            IReadOnlyList<WorkflowJob> jobs = [];
+            try
+            {
+                jobs = await GetWorkflowRunJobsAsync(owner, repo, runId, ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Could not list the jobs of workflow run {RunId}; reporting its full logs", runId);
+            }
+
             using var stream = new MemoryStream(archive);
             using var zip = new ZipArchive(stream, ZipArchiveMode.Read);
 
+            var entries = SelectFailedStepLogEntries(zip, jobs);
+            if (entries.Count == 0)
+            {
+                logger.LogDebug("No failed step logs matched for workflow run {RunId}; falling back to the full job logs", runId);
+                entries = [.. zip.Entries.Where(e => JobLogNameOf(e) != null && e.Length > 0)];
+            }
+
             var builder = new StringBuilder();
-            foreach (var entry in zip.Entries.Where(e => !e.FullName.Contains('/') && e.Length > 0))
+            foreach (var entry in entries)
             {
                 using var reader = new StreamReader(entry.Open());
                 builder.AppendLine($"===== {entry.FullName} =====");
@@ -806,6 +819,59 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             return builder.Length == 0 ? null : builder.ToString();
         }
+
+        /// <summary>
+        /// Picks the archive entries that explain each failed job: the logs of the steps it reports as failed,
+        /// or its full job log when the archive carries no matching step entry.
+        /// </summary>
+        private static List<ZipArchiveEntry> SelectFailedStepLogEntries(ZipArchive zip, IReadOnlyList<WorkflowJob> jobs)
+        {
+            List<ZipArchiveEntry> selected = [];
+
+            foreach (var job in jobs.Where(j => j.Conclusion == WorkflowJobConclusion.Failure))
+            {
+                var failedSteps = (job.Steps ?? [])
+                    .Where(s => s.Conclusion == WorkflowJobConclusion.Failure)
+                    .Select(s => s.Number)
+                    .ToHashSet();
+
+                var stepEntries = zip.Entries
+                    .Where(e => e.Length > 0 && StepLogRegex.Match(e.FullName) is { Success: true } m
+                        && string.Equals(m.Groups["job"].Value, job.Name, StringComparison.OrdinalIgnoreCase)
+                        && int.TryParse(m.Groups["step"].Value, out var step)
+                        && failedSteps.Contains(step))
+                    .ToList();
+
+                if (stepEntries.Count > 0)
+                {
+                    selected.AddRange(stepEntries);
+                    continue;
+                }
+
+                var jobEntry = zip.Entries.FirstOrDefault(e =>
+                    e.Length > 0 && string.Equals(JobLogNameOf(e), job.Name, StringComparison.OrdinalIgnoreCase));
+                if (jobEntry != null)
+                {
+                    selected.Add(jobEntry);
+                }
+            }
+
+            return selected;
+        }
+
+        /// <summary>
+        /// Returns the job a root-level archive entry holds the full log for, or null if the entry is not one.
+        /// </summary>
+        private static string? JobLogNameOf(ZipArchiveEntry entry)
+        {
+            var match = JobLogRegex.Match(entry.FullName);
+            return match.Success ? match.Groups["job"].Value : null;
+        }
+
+        // A run's log archive names each job's full log "<index>_<job>.txt" at the root, and each step's log
+        // "<job>/<step>_<name>.txt", where the step number is the one the jobs API reports.
+        private static readonly Regex JobLogRegex = new(@"^\d+_(?<job>[^/]+)\.txt$", RegexOptions.Compiled);
+        private static readonly Regex StepLogRegex = new(@"^(?<job>.+)/(?<step>\d+)_[^/]+\.txt$", RegexOptions.Compiled);
 
         public async Task<IReadOnlyList<WorkflowJob>> GetWorkflowRunJobsAsync(string owner, string repo, long runId, CancellationToken ct)
         {

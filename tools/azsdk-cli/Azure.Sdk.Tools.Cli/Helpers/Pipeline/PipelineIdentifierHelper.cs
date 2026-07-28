@@ -50,6 +50,14 @@ public interface IPipelineIdentifierHelper
     /// are backed by a GitHub repository.
     /// </summary>
     Task<BuildGitHubSource?> ResolveGitHubSourceAsync(IEnumerable<ResolvedBuild> builds, CancellationToken ct);
+
+    /// <summary>
+    /// Resolves the GitHub repository and commit directly from an identifier that names a pull request, for
+    /// the case where no build correlates it: a pull request can fail on GitHub Actions alone. The commit is
+    /// the pull request's current head. Returns null when the identifier is not a pull request or its head
+    /// cannot be read.
+    /// </summary>
+    Task<BuildGitHubSource?> ResolveGitHubSourceFromPrAsync(string identifier, CancellationToken ct);
 }
 
 public record GitHubPrLink(string Owner, string Repo, int PrNumber);
@@ -251,6 +259,34 @@ public class PipelineIdentifierHelper(
 
         logger.LogDebug("None of the resolved builds are backed by a GitHub repository and commit");
         return null;
+    }
+
+    public async Task<BuildGitHubSource?> ResolveGitHubSourceFromPrAsync(string identifier, CancellationToken ct)
+    {
+        var prLink = await TryResolveGitHubPrAsync(identifier, ct);
+        if (prLink == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var pullRequest = await gitHubService.GetPullRequestAsync(prLink.Owner, prLink.Repo, prLink.PrNumber, ct);
+            var headSha = pullRequest?.Head?.Sha;
+            if (string.IsNullOrEmpty(headSha))
+            {
+                logger.LogDebug("No head commit reported for {owner}/{repo}#{pr}", prLink.Owner, prLink.Repo, prLink.PrNumber);
+                return null;
+            }
+
+            logger.LogDebug("Resolved {owner}/{repo}#{pr} to commit {sha}", prLink.Owner, prLink.Repo, prLink.PrNumber, headSha);
+            return new BuildGitHubSource(prLink.Owner, prLink.Repo, headSha, prLink.PrNumber);
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "Could not read {owner}/{repo}#{pr} to resolve its head commit", prLink.Owner, prLink.Repo, prLink.PrNumber);
+            return null;
+        }
     }
 
     /// <summary>

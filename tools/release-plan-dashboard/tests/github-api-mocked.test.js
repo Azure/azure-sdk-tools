@@ -38,7 +38,7 @@ const {
   batchFetchPrDetails,
   batchFetchSpecProjectPaths,
   batchFetchSpecPrLabels,
-  batchFetchSdkPrLabels,
+  extractAutoReleaseLabels,
 } = await import("../lib/github-api.js");
 
 const VALID_PR_URL = "https://github.com/Azure/azure-sdk-for-net/pull/100";
@@ -548,47 +548,70 @@ describe("batchFetchSpecPrLabels (mocked Octokit)", () => {
   });
 });
 
-describe("batchFetchSdkPrLabels (mocked Octokit)", () => {
-  test("keeps only the auto-release label (case-insensitive)", async () => {
-    mockOctokit.issues.listLabelsOnIssue.mockResolvedValue({
-      data: [
-        { name: "auto-release", color: "0e8a16" },
-        { name: "bug", color: "fc0303" },
-        { name: "enhancement", color: "a2eeef" },
-      ],
-    });
-
-    const urls = ["https://github.com/Azure/azure-sdk-for-net/pull/7"];
-    const result = await batchFetchSdkPrLabels(urls);
-    expect(result).toBeInstanceOf(Map);
-    const labels = result.get(urls[0]);
-    expect(labels).toHaveLength(1);
-    expect(labels[0]).toEqual({ name: "auto-release", color: "0e8a16" });
-  });
-
-  test("returns empty array when the auto-release label is absent", async () => {
-    mockOctokit.issues.listLabelsOnIssue.mockResolvedValue({
-      data: [{ name: "bug", color: "fc0303" }],
-    });
-
-    const urls = ["https://github.com/org/repo/pull/1"];
-    const result = await batchFetchSdkPrLabels(urls);
-    expect(result.get(urls[0])).toEqual([]);
-  });
-
-  test("handles errors by setting empty array", async () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    mockOctokit.issues.listLabelsOnIssue.mockRejectedValue(new Error("fail"));
-
-    const result = await batchFetchSdkPrLabels([
-      "https://github.com/org/repo/pull/1",
+describe("extractAutoReleaseLabels", () => {
+  test("keeps only the auto-release label (case-insensitive)", () => {
+    const labels = extractAutoReleaseLabels([
+      { name: "Auto-Release", color: "0e8a16" },
+      { name: "bug", color: "fc0303" },
+      { name: "enhancement", color: "a2eeef" },
     ]);
-    expect(result.get("https://github.com/org/repo/pull/1")).toEqual([]);
-    warnSpy.mockRestore();
+    expect(labels).toHaveLength(1);
+    expect(labels[0]).toEqual({ name: "Auto-Release", color: "0e8a16" });
   });
 
-  test("returns empty map for empty urls", async () => {
-    const result = await batchFetchSdkPrLabels([]);
-    expect(result.size).toBe(0);
+  test("returns empty array when the auto-release label is absent", () => {
+    expect(extractAutoReleaseLabels([{ name: "bug", color: "fc0303" }])).toEqual(
+      [],
+    );
+  });
+
+  test("returns empty array for non-array input", () => {
+    expect(extractAutoReleaseLabels(undefined)).toEqual([]);
+    expect(extractAutoReleaseLabels(null)).toEqual([]);
+  });
+});
+
+describe("getGitHubPrDetails auto-release labels (mocked Octokit)", () => {
+  test("surfaces the auto-release label from the PR's labels array", async () => {
+    mockOctokit.pulls.get.mockResolvedValue({
+      data: {
+        state: "open",
+        mergeable: true,
+        mergeable_state: "clean",
+        head: { sha: "abc" },
+        labels: [
+          { name: "auto-release", color: "0e8a16" },
+          { name: "bug", color: "fc0303" },
+        ],
+      },
+    });
+    mockOctokit.pulls.listReviews.mockResolvedValue({ data: [] });
+    mockOctokit.checks.listForRef.mockResolvedValue({
+      data: { check_runs: [] },
+    });
+    mockOctokit.issues.listComments.mockResolvedValue({ data: [] });
+
+    const details = await getGitHubPrDetails(VALID_PR_URL);
+    expect(details.autoReleaseLabels).toEqual([
+      { name: "auto-release", color: "0e8a16" },
+    ]);
+  });
+
+  test("returns empty auto-release labels when none present", async () => {
+    mockOctokit.pulls.get.mockResolvedValue({
+      data: {
+        state: "open",
+        head: { sha: "abc" },
+        labels: [{ name: "bug", color: "fc0303" }],
+      },
+    });
+    mockOctokit.pulls.listReviews.mockResolvedValue({ data: [] });
+    mockOctokit.checks.listForRef.mockResolvedValue({
+      data: { check_runs: [] },
+    });
+    mockOctokit.issues.listComments.mockResolvedValue({ data: [] });
+
+    const details = await getGitHubPrDetails(VALID_PR_URL);
+    expect(details.autoReleaseLabels).toEqual([]);
   });
 });

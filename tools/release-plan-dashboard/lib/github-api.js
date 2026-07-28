@@ -12,6 +12,8 @@ const GITHUB_PR_URL_REGEX =
 const TSPCONFIG_MARKERS = ["tspconfig.yaml", "main.tsp", "client.tsp"];
 // Check run conclusions that are considered non-failures
 const PASSING_CONCLUSIONS = ["success", "skipped", "neutral", "cancelled"];
+// Matches the SDK PR label that marks a package for automated release.
+const AUTO_RELEASE_LABEL_PATTERN = /^auto-release$/i;
 
 function getOctokit(token) {
   const auth =
@@ -157,6 +159,14 @@ function extractCommentData(comments) {
   return { latestComment, apiViewUrl };
 }
 
+/** Extracts the auto-release label(s) from a PR's labels array. */
+function extractAutoReleaseLabels(labels) {
+  if (!Array.isArray(labels)) return [];
+  return labels
+    .filter((label) => label && AUTO_RELEASE_LABEL_PATTERN.test(label.name))
+    .map((label) => ({ name: label.name, color: label.color || "" }));
+}
+
 /** Builds a normalized PR details result from GitHub API data. */
 async function _buildPrDetailsResult(prData, reviews, pr, octokit) {
   const approvers = extractApprovers(reviews);
@@ -171,6 +181,7 @@ async function _buildPrDetailsResult(prData, reviews, pr, octokit) {
     requestedReviewers: [],
     latestComment: null,
     updatedAt: prData.updated_at || "",
+    autoReleaseLabels: extractAutoReleaseLabels(prData.labels),
   };
   if (Array.isArray(prData.requested_reviewers)) {
     result.requestedReviewers = prData.requested_reviewers
@@ -387,43 +398,6 @@ async function getGitHubPrLabels(prUrl) {
   }
 }
 
-/** Matches the SDK PR label that marks a package for automated release. */
-const AUTO_RELEASE_LABEL_PATTERN = /^auto-release$/i;
-
-/**
- * Fetches labels for a batch of SDK PR URLs and filters to only the
- * "auto-release" label. Used to flag release plans/languages whose SDK PR
- * is marked for automated release.
- * @returns {Map<string, Array<{name: string, color: string}>>} URL → array of matching labels
- */
-async function batchFetchSdkPrLabels(urls) {
-  const unique = [...new Set(urls.filter(Boolean))];
-  const labelMap = new Map();
-  if (
-    !unique.length ||
-    !(process.env.GITHUB_PAT_RELEASE_PLAN || process.env.GH_TOKEN)
-  )
-    return labelMap;
-  await throttledMap(
-    unique,
-    async (url) => {
-      try {
-        const allLabels = await getGitHubPrLabels(url);
-        const matching = allLabels.filter((label) =>
-          AUTO_RELEASE_LABEL_PATTERN.test(label.name),
-        );
-        labelMap.set(url, matching);
-        /* v8 ignore start — inner function catches all errors */
-      } catch {
-        labelMap.set(url, []);
-      }
-      /* v8 ignore stop */
-    },
-    { concurrency: 10, delayMs: 50 },
-  );
-  return labelMap;
-}
-
 /**
  * Fetches labels for a batch of spec PR URLs and filters to only labels matching
  * known patterns (BreakingChange, ARM, API).
@@ -465,7 +439,6 @@ export {
   batchFetchPrDetails,
   batchFetchSpecProjectPaths,
   batchFetchSpecPrLabels,
-  batchFetchSdkPrLabels,
   getGitHubPrLabels,
   getGitHubPrFiles,
   throttledMap,
@@ -474,5 +447,6 @@ export {
   extractFailedChecks,
   extractApprovers,
   extractCommentData,
+  extractAutoReleaseLabels,
   deriveSpecProjectPath,
 };

@@ -49,34 +49,30 @@ describe("SDK ready-to-release tag and status", () => {
   });
 });
 
-describe("Auto-release tag and label", () => {
-  test("includes auto-release tag in global tag filter", () => {
-    expect(indexHtml).toContain('value="auto-release"');
-    expect(indexHtml).toContain("Auto Release");
-    expect(appJs).toContain('tagFilter === "auto-release"');
+describe("Auto-release label (lazy, from PR details)", () => {
+  test("does not offer an auto-release option in the tag filter", () => {
+    expect(indexHtml).not.toContain('value="auto-release"');
+    expect(appJs).not.toContain('tagFilter === "auto-release"');
+    expect(appJs).not.toContain("isAutoReleasePlan");
   });
 
-  test("defines isAutoReleasePlan helper based on langData.autoRelease", () => {
-    expect(appJs).toContain("function isAutoReleasePlan(p)");
-    expect(appJs).toContain("l.autoRelease");
-  });
-
-  test("shows Auto Release badge in card title using isAutoReleasePlan", () => {
-    const releaseTagBadgeBlock = appJs.slice(
-      appJs.indexOf("releaseTagBadge"),
-      appJs.indexOf("missingProductBadge"),
-    );
-    expect(releaseTagBadgeBlock).toContain("badge-auto-release");
-    expect(releaseTagBadgeBlock).toContain("isAutoReleasePlan(p)");
-  });
-
-  test("renders auto-release PR label pills from sdkPrLabels", () => {
-    expect(appJs).toContain("l.sdkPrLabels");
+  test("renders auto-release label pills from lazily-loaded PR details", () => {
+    expect(appJs).toContain("function autoReleaseLabelPills(");
+    expect(appJs).toContain("autoReleaseLabels");
     expect(appJs).toContain("pr-label-auto-release");
   });
 
-  test("auto-release CSS classes are defined in style.css", () => {
-    expect(styleCss).toContain(".badge-auto-release");
+  test("hides the auto-release pill once the language is released", () => {
+    const fn = appJs.slice(
+      appJs.indexOf("function autoReleaseLabelPills("),
+      appJs.indexOf("function prDetailLabels("),
+    );
+    expect(fn).toContain('rel === "released"');
+    expect(fn).toContain('rel === "completed"');
+  });
+
+  test("auto-release pill CSS class is defined but the badge class is not", () => {
     expect(styleCss).toContain(".pr-label-auto-release");
+    expect(styleCss).not.toContain(".badge-auto-release");
   });
 });

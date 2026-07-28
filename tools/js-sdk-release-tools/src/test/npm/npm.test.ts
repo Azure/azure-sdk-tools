@@ -1,8 +1,20 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import { updatePackageVersion } from '../../mlc/clientGenerator/utils/typeSpecUtils.js';
 import { join } from 'path';
 import { load } from '@npmcli/package-json';
 import { tryGetNpmView } from '../../common/npmUtils.js';
+
+vi.mock('npm-registry-fetch', () => ({
+  json: vi.fn((url: string) => {
+    if (url === '/connect') {
+      return Promise.resolve({ name: 'connect', version: '3.7.0' });
+    }
+    if (url === '/non-exist') {
+      return Promise.reject(new Error('404 Not Found'));
+    }
+    return Promise.reject(new Error('Not found'));
+  }),
+}));
 
 describe('Npm package json', () => {
   test('Replace package version', async () => {

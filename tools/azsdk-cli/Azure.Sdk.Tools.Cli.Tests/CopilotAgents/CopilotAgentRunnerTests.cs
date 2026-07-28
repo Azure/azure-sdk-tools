@@ -521,6 +521,62 @@ internal class CopilotAgentRunnerTests
     }
 
     [Test]
+    public async Task RunAsync_WithoutModel_LetsCopilotSelectDefault()
+    {
+        SessionConfig? capturedConfig = null;
+        clientMock.Setup(c => c.CreateSessionAsync(
+                It.IsAny<SessionConfig>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<SessionConfig?, CancellationToken>((config, _) =>
+            {
+                capturedConfig = config;
+                capturedTools = config?.Tools?.OfType<AIFunction>().ToList();
+            })
+            .ReturnsAsync(sessionMock.Object);
+        sessionMock.Setup(s => s.SendAsync(It.IsAny<MessageOptions>(), It.IsAny<CancellationToken>()))
+            .Callback(() => SimulateExitToolCall("Success"))
+            .ReturnsAsync("msg-id");
+
+        var runner = new CopilotAgentRunner(clientMock.Object, tokenUsageHelper, loggerMock.Object);
+
+        await runner.RunAsync(new CopilotAgent<string> { Instructions = "Test" });
+
+        Assert.That(capturedConfig?.Model, Is.Null);
+    }
+
+    [Test]
+    public async Task RunAsync_WithModelOverride_UsesOverride()
+    {
+        SessionConfig? capturedConfig = null;
+        clientMock.Setup(c => c.CreateSessionAsync(
+                It.IsAny<SessionConfig>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<SessionConfig?, CancellationToken>((config, _) =>
+            {
+                capturedConfig = config;
+                capturedTools = config?.Tools?.OfType<AIFunction>().ToList();
+            })
+            .ReturnsAsync(sessionMock.Object);
+        sessionMock.Setup(s => s.SendAsync(It.IsAny<MessageOptions>(), It.IsAny<CancellationToken>()))
+            .Callback(() => SimulateExitToolCall("Success"))
+            .ReturnsAsync("msg-id");
+
+        var runner = new CopilotAgentRunner(
+            clientMock.Object,
+            tokenUsageHelper,
+            loggerMock.Object,
+            new CopilotAgentOptions { Model = "override-model" });
+
+        await runner.RunAsync(new CopilotAgent<string>
+        {
+            Instructions = "Test",
+            Model = "agent-model"
+        });
+
+        Assert.That(capturedConfig?.Model, Is.EqualTo("override-model"));
+    }
+
+    [Test]
     public async Task RunAsync_ValidationWithStringReason_PassesReasonToPrompt()
     {
         var sendCallCount = 0;

@@ -4,11 +4,12 @@
 
 ### Features Added
 
-### Breaking Changes
+- Added an optional `--model` parameter to `tsp client customized-update`. When omitted, Copilot CLI selects its default model.
 
 ### Bugs Fixed
 
-### Other Changes
+- Added `AZSDK_COPILOT_GITHUB_TOKEN` support for authenticating Copilot-backed commands in non-interactive environments.
+- Removed the unavailable `claude-sonnet-4.5` default from Copilot-backed commands.
 
 ## 0.6.32 (2026-07-28)
 

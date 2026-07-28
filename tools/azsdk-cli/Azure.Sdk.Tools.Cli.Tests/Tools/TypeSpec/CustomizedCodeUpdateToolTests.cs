@@ -37,7 +37,8 @@ public class CustomizedCodeUpdateToolAutoTests
         Action<Mock<ITypeSpecCustomizationService>>? configureTspCustomization = null,
         Action<Mock<ITypeSpecHelper>>? configureTypeSpecHelper = null,
         ITspClientHelper? tspHelper = null,
-        INpxHelper? npxHelper = null)
+        INpxHelper? npxHelper = null,
+        CopilotAgentOptions? copilotAgentOptions = null)
     {
         var gitHelper = new Mock<IGitHelper>();
         gitHelper.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-java");
@@ -134,7 +135,8 @@ public class CustomizedCodeUpdateToolAutoTests
             classifierService.Object,
             typeSpecCustomization.Object,
             typeSpecHelper.Object,
-            npxHelper ?? new Mock<INpxHelper>().Object);
+            npxHelper ?? new Mock<INpxHelper>().Object,
+            copilotAgentOptions ?? new CopilotAgentOptions());
 
         return (tool, new ToolMocks(gitHelper, feedbackService, classifierService, typeSpecCustomization, typeSpecHelper));
     }
@@ -145,6 +147,21 @@ public class CustomizedCodeUpdateToolAutoTests
         Mock<IFeedbackClassifierService> ClassifierService,
         Mock<ITypeSpecCustomizationService> TypeSpecCustomization,
         Mock<ITypeSpecHelper> TypeSpecHelper);
+
+    [Test]
+    public async Task UpdateAsync_WithModel_SetsScopedModelOverride()
+    {
+        var options = new CopilotAgentOptions();
+        var (tool, _) = CreateTool(copilotAgentOptions: options);
+
+        await tool.UpdateAsync(
+            packagePath: Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("n")),
+            customizationRequest: "test",
+            editScope: EditScope.CustomCode,
+            model: "  gpt-5.4  ");
+
+        Assert.That(options.Model, Is.EqualTo("gpt-5.4"));
+    }
 
     /// <summary>
     /// Builds a classifier configuration whose first pass returns a single CODE_CUSTOMIZATION item, so the
@@ -2152,5 +2169,3 @@ internal class CallCountMockTspHelper : ITspClientHelper
     public Task<TspToolResponse> InitializeGenerationAsync(string workingDirectory, string tspConfigPath, string[]? additionalArgs = null, CancellationToken ct = default)
         => Task.FromResult(new TspToolResponse { IsSuccessful = true, TypeSpecProject = workingDirectory });
 }
-
-

@@ -104,6 +104,12 @@ class KnowledgeChunk(BaseModel):
         """Raw (non-wiki) chunks carry null for this added field."""
         return str(v) if v else ""
 
+    @field_validator("header1", "header2", "header3", mode="before")
+    @classmethod
+    def _coerce_header(cls, v: object) -> str:
+        """Wiki pages carry null for the deeper header levels."""
+        return str(v) if v else ""
+
     @field_validator("chunk_refs", mode="before")
     @classmethod
     def _coerce_chunk_refs(cls, v: object) -> list:

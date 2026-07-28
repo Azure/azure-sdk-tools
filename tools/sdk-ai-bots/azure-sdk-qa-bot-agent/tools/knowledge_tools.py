@@ -273,7 +273,7 @@ class KnowledgeTools:
         ] = None,
         search_mode: Annotated[str, _SEARCH_MODE_DESC] = "quick",
     ) -> SearchKnowledgeBaseResult:
-        """Search wiki pages and return their routed source chunks."""
+        """Search wiki pages, their routed source chunks, and adjacent page titles."""
         if not sources:
             config = get_tenant_config(TenantID(tenant_id))
             sources = [src.name for src in config.sources] if config else []
@@ -292,7 +292,9 @@ class KnowledgeTools:
             if c.page_type in ("summary", "entity", "concept")
         ]
         unique.sort(key=lambda c: c.rerank_score, reverse=True)
-        wiki_pages = unique[: int(cfg("KB_WIKI_TOP", "6"))]
+        top_n = int(cfg("KB_WIKI_TOP", "6"))
+        wiki_pages = unique[:top_n]
+        neighbors = unique[top_n : top_n + int(cfg("KB_WIKI_NEIGHBORS", "8"))]
         # Route each page to the SOURCE chunks it was built from (grounded detail).
         routed = await search_client.backfill_wiki_sources(
             wiki_pages,
@@ -307,11 +309,16 @@ class KnowledgeTools:
         expanded = await asyncio.gather(
             *[search_client.expand_by_hierarchy(c) for c in combined]
         )
+        results = _refs_from_expanded(expanded, combined)
+        neighbor_ref = _neighbor_reference(neighbors)
+        if neighbor_ref:
+            results.append(neighbor_ref)
         logger.info(
-            "wiki_search: mode=%s, %d page(s) + %d routed source(s) for queries=%s",
-            search_mode, len(wiki_pages), len(routed), capped_queries,
+            "wiki_search: mode=%s, %d page(s) + %d routed source(s) + %d neighbor(s) "
+            "for queries=%s",
+            search_mode, len(wiki_pages), len(routed), len(neighbors), capped_queries,
         )
-        return SearchKnowledgeBaseResult(results=_refs_from_expanded(expanded, combined))
+        return SearchKnowledgeBaseResult(results=results)
 
     @tool
     async def wiki_read_page(
@@ -476,6 +483,32 @@ def _build_reference_title(
     """Build a reference title from the deepest available header path."""
     parts = [part for part in (header1, header2, header3) if part]
     return " | ".join(parts) if parts else document_title
+
+
+def _neighbor_reference(neighbors: list) -> Reference | None:
+    """List adjacent wiki page titles so the agent can mention related topics.
+
+    These pages ranked just below the returned ones. Titles only — the agent
+    reads any that matter via ``wiki_read_page``.
+    """
+    seen: list[str] = []
+    for c in neighbors:
+        label = f"{c.title} ({c.page_type})"
+        if c.title and label not in seen:
+            seen.append(label)
+    if not seen:
+        return None
+    return Reference(
+        title="Related wiki pages",
+        source="wiki",
+        link="",
+        content=(
+            "Adjacent pages for this question. Cover the ones the answer should "
+            "also mention; call wiki_read_page(titles=[...]) to read any of them.\n"
+            + "\n".join(f"- {s}" for s in seen)
+        ),
+        score=0.0,
+    )
 
 
 def _refs_from_expanded(expanded: list, scored: list) -> list[Reference]:

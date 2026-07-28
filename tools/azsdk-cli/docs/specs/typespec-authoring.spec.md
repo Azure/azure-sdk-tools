@@ -302,9 +302,9 @@ If Agentic Search cannot locate matching references in the store, or if the user
 
 #### Why Agentic Search Takes Precedence
 
-When both Tier 1 (Agentic Search) and Tier 2 (KB MCP Tool) return guidance, **Tier 1 guidance takes precedence** for four key reasons:
+When both Tier 1 (Agentic Search) and Tier 2 (KB MCP Tool) return guidance, **Tier 1 guidance takes precedence** for six key reasons:
 
-**Summary**: Agentic Search provides superior execution efficiency, token economy, solution quality, and access control compared to KB MCP Tool. It enables iterative refinement locally without costly tool calls, controls context by selecting only relevant snippets, empirically achieves higher code pass rates, and respects user permission boundaries by only accessing authorized reference links.
+**Summary**: Agentic Search provides superior execution efficiency, token economy, solution quality, traceability, local context access, and security compared to KB MCP Tool. It enables iterative refinement locally without costly tool calls, directly accesses workspace context without serialization overhead, controls context by selecting only relevant snippets, empirically achieves higher code pass rates, provides auditable reference URLs, and respects user permission boundaries by only accessing authorized reference links.
 
 **Detailed Comparison**:
 
@@ -315,8 +315,9 @@ When both Tier 1 (Agentic Search) and Tier 2 (KB MCP Tool) return guidance, **Ti
 | **Solution Quality** | Sourced from canonical, human-curated reference URLs in the Reference Knowledge Store. URLs are vetted before addition. | RAG hallucinations remain possible: during KB migration, we observed cases where KB returned incorrect solutions despite having the correct doc link in references. Experimental pass rates show Agentic Search consistently outperforms KB. (See [PR #16264](https://github.com/Azure/azure-sdk-tools/pull/16264#issuecomment-5044129741) and ongoing [PR #16460](https://github.com/Azure/azure-sdk-tools/pull/16460).) |
 | **Traceability** | Each reference URL is visible and user-reviewable; supports direct links to live documentation | Full reasoning opaque to end user; harder to audit why a solution was generated |
 | **Access Control & Security** | Agent can only access links in the Reference Knowledge Store that the user has permission to view; no exposure to restricted content. | KB backend has global visibility of all indexed docs; risk of exposing materials the user should not have access to, even if user lacks permissions. |
+| **Local Context Access** | Agent directly accesses local workspace files, `.tsp` files, `tspconfig.yaml`, existing patterns, and project structure without serialization overhead; immediate, contextual decisions based on live project state | KB MCP Tool requires serializing and transmitting workspace context over the network to the remote backend; slower context propagation and potential loss of detail in serialization; latency and bandwidth overhead |
 
-**Conflict Resolution Rule**: If both tiers return conflicting guidance, **apply Tier 1 guidance** because it is faster, cheaper, and empirically more reliable.
+**Conflict Resolution Rule**: If both tiers return conflicting guidance, **apply Tier 1 guidance** because it is faster, cheaper, has better context access, and is empirically more reliable.
 
 #### Execution Tooling
 

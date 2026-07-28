@@ -938,19 +938,25 @@ namespace Azure.Sdk.Tools.Cli.Services
                 throw new Exception($"Failed to get SDK generation pipeline for {language}.");
             }
 
+            var isRunningInPipeline = Environment.GetEnvironmentVariable("SYSTEM_TEAMPROJECTID") != null;
+
             var templateParams = new Dictionary<string, string>
             {
                  { "ConfigType", "TypeSpec"},
                  { "ConfigPath", $"{typespecProjectRoot}/tspconfig.yaml" },
-                 { "SdkReleaseType", sdkReleaseType },
                  { "CreatePullRequest", "true" },
                  { "ReleasePlanWorkItemId", $"{workItemId}"},
                  { "TriggerSource", "sdk-release" }
             };
 
-            if (!string.IsNullOrEmpty(apiVersion))
+            if (!isRunningInPipeline)
             {
-                templateParams["ApiVersion"] = apiVersion;
+                templateParams["SdkReleaseType"] = sdkReleaseType;
+
+                if (!string.IsNullOrEmpty(apiVersion))
+                {
+                    templateParams["ApiVersion"] = apiVersion;
+                }
             }
 
             if (!string.IsNullOrEmpty(sdkRepoBranch))

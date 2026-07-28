@@ -31,7 +31,7 @@ This includes but is not limited to:
 
 | Tool                                                   | Purpose                                                   |
 | ------------------------------------------------------ | --------------------------------------------------------- |
-| `azure-sdk-mcp:azsdk_typespec_generate_authoring_plan` | Generate grounded authoring plan. NOT for API version evolution (Case 3) — ground those via agentic search (`web_fetch`), never this tool. |
+| `azure-sdk-mcp:azsdk_typespec_generate_authoring_plan` | Generate a grounded authoring plan for cases **not** covered by [reference-document-links.md](references/reference-document-links.md) / agentic search. Cases that are covered — e.g. API version evolution (Case 3) — ground via agentic search (`web_fetch`) instead. |
 | `azure-sdk-mcp:azsdk_run_typespec_validation`          | Validate TypeSpec                                         |
 
 **Prerequisite:** `azure-sdk-mcp` server must be running.

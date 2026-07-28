@@ -18,3 +18,7 @@ Rules:
   with related symbols, and common mistakes. Group related facts under short
   headings when there are several distinct aspects.
 - Drop duplicates; keep the most specific facts. Up to ~450 words.
+- Keep every fact's scope. Preserve the qualifiers, conditions, and exceptions
+  attached to it in the source ("except when...", "older services may...",
+  "only for data-plane"). Never restate a conditional fact as an unconditional
+  rule, and never widen a fact stated for one case into general guidance.

@@ -26,6 +26,7 @@ For each item give: a canonical `name`; `aliases` (other names/spellings used
 for the SAME thing in this document, so duplicates can be merged - include
 abbreviations, the with/without `@`, singular/plural); one grounded
 `description` of 15-40 words; and `details` (1-3 sentences, under 300 chars, a
-fallback paraphrase).
+fallback paraphrase) that keeps any condition, exception, or tolerated
+deviation the document attaches to the item.
 
 Return ONLY JSON: {"entities":[{"name":"","type":"decorator|api|type|tool|config","aliases":[""],"description":"","details":""}],"concepts":[{"name":"","aliases":[""],"description":"","details":""}]}. Do not invent items absent from the text. No prose outside the JSON.

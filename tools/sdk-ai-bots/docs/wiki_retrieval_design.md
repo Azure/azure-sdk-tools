@@ -101,7 +101,7 @@ Two properties of this design are easy to trip over:
 
 ## Evaluation
 
-226-case perf set (7 scenarios), memory off, gpt-5.4 grader, same-day runs. A case passes only when all six core metrics score ≥ 4. Same-config reruns move by up to ~4.6 pp, so only larger deltas are treated as signal.
+226-case perf set (7 scenarios), memory off, gpt-5.4 grader, same-day runs. A case passes only when all six core metrics score ≥ 4. Same-config reruns move by up to ~4.6 pp, so only larger deltas are treated as signal, and `typespec` (N = 126) is the most stable single scenario.
 
 | | TOTAL | apispec | python | authoring | typespec |
 | --- | --- | --- | --- | --- | --- |
@@ -115,6 +115,7 @@ What each design decision is worth, measured by same-day A/B:
 - **Track separation is essential** — retrieving wiki pages in the same ranked pool as source chunks regresses the score, because generic pages displace the specific source doc.
 - **Full symbol coverage** (always extracting named decorators/templates, including single-doc symbols, plus their constraints) moved typespec **+4.6 pp** and `response_completeness` **+5 pp** by giving symbol questions a consolidated page to route to.
 - **Faithfulness rules** (scope/exception preservation in the build prompts, specific-verdict preference in the answer rules) recovered the cases where a wiki-grounded answer had been *more confident and less correct* than the KB-only one.
+- **Chunk granularity beats page integrity** — raising the indexer split budget so every page indexes as one chunk cost typespec **−5.6 pp**. Retrieval matches on sections and expands to the page afterwards, so one vector per page retrieves measurably worse than one per section.
 
 The wiki layer is only measurable when it actually returns results. A silent retrieval outage (see below) cost the entire lead for several days while every tool call still appeared to fire, so any evaluation of this feature should first assert that `wiki_search` returns a non-empty result.
 
@@ -122,5 +123,5 @@ The wiki layer is only measurable when it actually returns results. A silent ret
 
 - **Wiki pages have no header hierarchy.** The indexer maps `header_1` from the page title and leaves `header_2` / `header_3` null, unlike raw chunks. `KnowledgeChunk` coerces null headers to `""`, without which every wiki chunk fails validation and `wiki_search` silently returns empty. Any new index-backed field must tolerate an explicit `null`.
 - **Cross-document page scoping.** Entity/concept pages carry a shared `wiki_entity` / `wiki_concept` context, so a tenant reading them can see facts synthesised from documents outside its own sources. Acceptable because the corpus is public docs and tenants map to topic channels, not access boundaries; summary pages and raw chunks stay scoped to their source `context_id`.
-- **Multi-chunk page ordering.** Wiki reads reassemble a split page by `ordinal_position`, which is not projected onto wiki chunks, so a split page would concatenate out of order. The indexer's split budget is therefore set above the page-body cap, keeping every page in a single chunk; a projected ordinal is the durable fix and needs a reindex.
+- **Multi-chunk page ordering.** A synthesised page larger than the indexer chunk size is split into several chunks; wiki reads reassemble by `ordinal_position`, which is not projected onto wiki chunks, so a split page can concatenate out of order. Raising the split budget so pages stay single-chunk removes the disorder but costs more than it saves — one vector per whole page retrieves measurably worse than one per section, and reassembly runs on the retrieved hit anyway. A projected ordinal is the durable fix and needs a reindex.
 - **Prompt changes need a manual full rebuild.** Reconcile diffs by source content hash, so editing a build prompt does not invalidate any page. Changing what pages should contain requires clearing the wiki container and the wiki documents in the index, then a full build.

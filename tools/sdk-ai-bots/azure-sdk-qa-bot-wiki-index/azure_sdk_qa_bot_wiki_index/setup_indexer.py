@@ -69,10 +69,11 @@ def skillset_body() -> dict:
                 "context": "/document",
                 "defaultLanguageCode": "en",
                 "textSplitMode": "pages",
-                # Keeps every page in one chunk: page bodies are capped at 5000
-                # chars plus the title and Related block, and wiki projections
-                # carry no ordinal_position to reassemble split chunks with.
-                "maximumPageLength": 8000,
+                # Small chunks are what the vector search matches on; wiki reads
+                # then expand the hit back to the whole page.  Raising this to
+                # keep pages single-chunk was measured to cost 5.6pp on the
+                # largest evaluation scenario.
+                "maximumPageLength": 2000,
                 "pageOverlapLength": 500,
                 "inputs": [{"name": "text", "source": "/document/content"}],
                 "outputs": [{"name": "textItems", "targetName": "pages"}],

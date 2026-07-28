@@ -30,7 +30,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     private readonly ITypeSpecCustomizationService typeSpecCustomizationService;
     private readonly ITypeSpecHelper typeSpecHelper;
     private readonly INpxHelper npxHelper;
-    private readonly CopilotAgentOptions copilotAgentOptions;
 
     private const string CustomizedCodeUpdateToolName = "azsdk_customized_code_update";
     private const int CommandTimeoutInMinutes = 30;
@@ -61,8 +60,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         IFeedbackClassifierService classifierService,
         ITypeSpecCustomizationService typeSpecCustomizationService,
         ITypeSpecHelper typeSpecHelper,
-        INpxHelper npxHelper,
-        CopilotAgentOptions copilotAgentOptions
+        INpxHelper npxHelper
     ) : base(languageServices, gitHelper, logger)
     {
         this.tspClientHelper = tspClientHelper ?? throw new ArgumentNullException(nameof(tspClientHelper));
@@ -71,7 +69,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         this.typeSpecCustomizationService = typeSpecCustomizationService ?? throw new ArgumentNullException(nameof(typeSpecCustomizationService));
         this.typeSpecHelper = typeSpecHelper ?? throw new ArgumentNullException(nameof(typeSpecHelper));
         this.npxHelper = npxHelper ?? throw new ArgumentNullException(nameof(npxHelper));
-        this.copilotAgentOptions = copilotAgentOptions ?? throw new ArgumentNullException(nameof(copilotAgentOptions));
     }
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec, SharedCommandGroups.TypeSpecClient];
@@ -107,13 +104,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         DefaultValueFactory = _ => EditScope.All
     };
 
-    private readonly Option<string> modelOption = new("--model")
-    {
-        Description = "Copilot model to use. When omitted, the Copilot CLI selects its default model.",
-        Arity = ArgumentArity.ZeroOrOne,
-        Required = false
-    };
-
     protected override Command GetCommand() =>
         new McpCommand("customized-update", "Apply TypeSpec and SDK code customizations with AI-assisted analysis.", CustomizedCodeUpdateToolName)
         {
@@ -121,7 +111,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             typespecProjectPath,
             customizationRequestOption,
             editScopeOption,
-            modelOption,
         };
 
     /// <inheritdoc />
@@ -136,11 +125,10 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         ArgumentException.ThrowIfNullOrWhiteSpace(customizationRequest, nameof(customizationRequest));
 
         var editScope = parseResult.GetValue(editScopeOption);
-        var model = parseResult.GetValue(modelOption);
         try
         {
             logger.LogInformation("Starting customized code update for {PackagePath} (editScope: {EditScope})", packagePath, editScope);
-            return await RunUpdateAsync(packagePath, tspProjectPath, customizationRequest, editScope, model, ct);
+            return await RunUpdateAsync(packagePath, tspProjectPath, customizationRequest, editScope, ct);
         }
         catch (Exception ex)
         {
@@ -164,7 +152,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// <param name="customizationRequest">Description of the requested customization to apply to the TypeSpec, used for guiding the update process.</param>
     /// <param name="tspProjectPath">Absolute path to the local TypeSpec project directory. Optional for custom-code-only scope.</param>
     /// <param name="editScope">Which source categories the tool may edit (custom code, spec inputs, or both).</param>
-    /// <param name="model">Optional Copilot model override.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A <see cref="CustomizedCodeUpdateResponse"/> indicating the outcome.</returns>
     [McpServerTool(Name = CustomizedCodeUpdateToolName), Description("Applies patches to customization files based on build errors, regenerates code if needed (Java), builds, and returns success/failure with build result.")]
@@ -177,10 +164,8 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         string? tspProjectPath = null,
         [Description("Which source categories the tool may edit (flags: CustomCode, SpecInputs, or All). All (default): both custom code and spec inputs may be edited, regenerate, and patch custom code. CustomCode: custom-code-only — never edits spec inputs (client.tsp/tspconfig.yaml) or moves the pinned spec commit; failures that would require a spec change are reported as out of scope (errorCode 'SpecChangeRequired') instead of applied. Regenerating Generated/ from the unchanged pinned commit is always allowed.")]
         EditScope editScope = EditScope.All,
-        [Description("Copilot model to use. When omitted, the Copilot CLI selects its default model.")]
-        string? model = null,
         CancellationToken ct = default)
-        => RunUpdateAsync(packagePath, tspProjectPath, customizationRequest, editScope, model, ct);
+        => RunUpdateAsync(packagePath, tspProjectPath, customizationRequest, editScope, ct);
 
     /// <summary>
     /// Executes the update pipeline: classify → patch customizations → regen → build.
@@ -189,15 +174,10 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// <param name="tspProjectPath">Absolute path to the local TypeSpec project directory.</param>
     /// <param name="customizationRequest">Description of the requested customization to apply to the TypeSpec, used for guiding the update process.</param>
     /// <param name="editScope">Which source categories the tool may edit (custom code, spec inputs, or both).</param>
-    /// <param name="model">Optional Copilot model override.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A <see cref="CustomizedCodeUpdateResponse"/> with the pipeline result.</returns>
-    private async Task<CustomizedCodeUpdateResponse> RunUpdateAsync(string packagePath, string? tspProjectPath, string customizationRequest, EditScope editScope, string? model, CancellationToken ct)
+    private async Task<CustomizedCodeUpdateResponse> RunUpdateAsync(string packagePath, string? tspProjectPath, string customizationRequest, EditScope editScope, CancellationToken ct)
     {
-        // The tool and runner are scoped services, so this applies the override to every
-        // Copilot agent used by this command without leaking it to concurrent requests.
-        copilotAgentOptions.Model = string.IsNullOrWhiteSpace(model) ? null : model.Trim();
-
         // editScope is a non-nullable [Flags] enum bound from a named option (default All), so the
         // empty/whitespace validation used for the string inputs does not apply. Guard only against an
         // undefined value (a stray flag bit outside the All mask, or an empty 0 combination) so every

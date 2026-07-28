@@ -10,8 +10,7 @@ namespace Azure.Sdk.Tools.Cli.CopilotAgents;
 public class CopilotAgentRunner(
     ICopilotClientWrapper client,
     TokenUsageHelper tokenUsageHelper,
-    ILogger<CopilotAgentRunner> logger,
-    CopilotAgentOptions? options = null) : ICopilotAgentRunner
+    ILogger<CopilotAgentRunner> logger) : ICopilotAgentRunner
 {
     /// <summary>
     /// Ensures the GitHub Copilot CLI is installed and authenticated.
@@ -82,12 +81,10 @@ public class CopilotAgentRunner(
             "Exit",
             "Call this tool when you are finished with the work or are otherwise unable to continue."));
 
-        var model = options?.Model ?? agent.Model;
-
         // Create session config with tools
         var sessionConfig = new SessionConfig
         {
-            Model = model,
+            Model = agent.Model,
             Tools = [.. tools.Cast<AIFunctionDeclaration>()],
             SystemMessage = new SystemMessageConfig
             {
@@ -123,7 +120,7 @@ public class CopilotAgentRunner(
             {
                 case AssistantUsageEvent usage:
                     tokenUsageHelper.AddCumulative(
-                        usage.Data.Model ?? model ?? "default",
+                        usage.Data.Model ?? agent.Model ?? "auto",
                         usage.Data.InputTokens ?? 0,
                         usage.Data.OutputTokens ?? 0);
                     break;

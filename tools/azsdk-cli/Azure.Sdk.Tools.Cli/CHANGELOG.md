@@ -2,10 +2,6 @@
 
 ## 0.6.33 (Unreleased)
 
-### Features Added
-
-- Added an optional `--model` parameter to `tsp client customized-update`. When omitted, Copilot CLI selects its default model.
-
 ### Bugs Fixed
 
 - Added `AZSDK_COPILOT_GITHUB_TOKEN` support for authenticating Copilot-backed commands in non-interactive environments.

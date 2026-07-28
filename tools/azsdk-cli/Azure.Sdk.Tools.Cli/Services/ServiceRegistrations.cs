@@ -127,7 +127,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             // Services depending on other scoped services
             services.AddScoped<ICommonValidationHelpers, CommonValidationHelpers>();
             services.AddScoped<IVerifySetupService, VerifySetupService>();
-            services.AddScoped<CopilotAgentOptions>();
 
             // Copilot SDK services for new agents (CopilotAgent<T> pattern)
             // CopilotClient is a singleton because it manages the CLI process connection.

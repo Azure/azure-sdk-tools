@@ -6,6 +6,9 @@
 - [Background / Problem Statement](#background--problem-statement)
 - [Goals](#goals)
 - [Design Proposal](#design-proposal)
+  - [Skill: azure-typespec-author](#skill-azure-typespec-author)
+  - [Skill Self-Evolve Agent](#skill-self-evolve-agent)
+  - [MCP Tools and Knowledge Base](#mcp-tools-and-knowledge-base)
 - [Success Criteria](#success-criteria)
 - [Agent Prompts](#agent-prompts)
 - [CLI Commands](#cli-commands)
@@ -33,6 +36,10 @@
 - **Azure SDK Knowledge Base**: A backend service that provides RAG-powered solutions for Azure SDK and TypeSpec authoring tasks. It indexes and retrieves relevant information from Azure SDK documentation, guidelines, and best practices to generate context-aware recommendations
 
 - **AI Hallucination**: When an AI model generates plausible-sounding but incorrect or fabricated information, such as inventing non-existent decorators or APIs
+
+- **Reference Knowledge Store**: A curated catalog of authoritative Azure and TypeSpec documentation URLs maintained in `references/reference-document-links.md`. It is the primary index for Agentic Search and is continuously updated by the Skill Self-Evolve Agent.
+
+- **Skill Self-Evolve Agent**: An Azure AI Foundry Agent that continuously analyzes telemetry and benchmark results to improve the `azure-typespec-author` skill — updating prompts, reference links, and tooling — and submits changes as pull requests.
 
 
 ---
@@ -234,46 +241,170 @@ According to the ARM versioning guideline and best practices, the expected behav
 
 ## Design Proposal
 
-This spec provides AI-powered TypeSpec authoring assistance through a **GitHub Copilot Skill** named `azure-typespec-author`, rather than a standalone custom agent. The skill lives under `.github/skills/azure-typespec-author/` and is loaded by any Copilot-compatible host agent. It encodes a deterministic authoring workflow and grounds every change in authoritative Azure guidance retrieved from two complementary sources: the Azure SDK Knowledge Base (via an MCP tool) and agentic web search over a curated documentation catalog.
+This spec delivers AI-powered TypeSpec authoring assistance through two tightly integrated components:
+
+1. **Skill `azure-typespec-author`** — a Markdown-defined, deterministic skill loaded by GitHub Copilot that encodes a six-step authoring workflow grounded in a **hybrid search strategy** (Agentic Search as primary; KB MCP Tool as fallback). Copilot leverages the skill to generate, validate, and improve TypeSpec code in response to natural language requests.
+2. **Skill Self-Evolve Agent** — an Azure AI Foundry Agent that runs on a continuous schedule, analyzing production telemetry and benchmark results to improve the skill's prompts, reference knowledge, and tooling. It submits all improvements as pull requests, ensuring the skill adapts to new Azure guidelines and real-world usage patterns without manual intervention.
+
+The two components form a **closed-loop system**: users interact with Copilot + Skill, generating telemetry that feeds the Self-Evolve Agent, which iteratively improves the skill's effectiveness.
 
 ### Skill: `azure-typespec-author`
 
-The skill is a Markdown-defined capability (`SKILL.md` plus a set of `references/` files) that the host agent invokes automatically whenever a task involves creating or modifying TypeSpec (`.tsp`) files (except `client.tsp`). Declarative triggers replace bespoke agent-routing logic, and a fixed step-by-step procedure keeps behavior reproducible across sessions and models.
+The skill lives under `.github/skills/azure-typespec-author/` and is loaded by GitHub Copilot whenever a user invokes a TypeSpec authoring task. It encodes a deterministic, repeatable workflow that grounds every change in authoritative Azure guidance via the hybrid search tooling (see [Search Tooling (Hybrid)](#search-tooling-hybrid) below).
 
-**Triggers** — the skill activates for any TypeSpec change: adding, bumping, or promoting API versions (preview, stable); adding or modifying resources, operations, models, properties, or decorators; changing visibility, constraints, LRO patterns, or suppressions; defining `operationId`, spread models, or extension resources; and post-Swagger-conversion edits. It does **not** activate for SDK generation, package release, or single MCP tool calls.
+**Prerequisites**:
+- The `azure-sdk-mcp` server (provided by `azsdk-cli`) must be running to serve the skill's MCP tools.
+- GitHub Copilot must have access to the skill under `.github/skills/azure-typespec-author/SKILL.md`.
 
-**Prerequisite** — the `azure-sdk-mcp` server (provided by `azsdk-cli`) must be running to serve the skill's MCP tools.
+#### Architecture Overview
 
-#### Architecture
-
-![Azure TypeSpec author skill architecture diagram](azure-typespec-author-architecture.png)
+![azure-typespec-author-architecture](azure-typespec-author-architecture.png)
+The architecture shows the full system:
+- **Azure TypeSpec Author Skill**: GitHub Copilot invokes the skill with a user request; the skill executes a six-step workflow grounded in hybrid search and execution tooling.
+- **Search Tooling**: Two-tier search strategy — Agentic Search (primary) searches the Reference Knowledge Store; KB MCP Tool (fallback) queries the Knowledge Base.
+- **Execution Tooling**: Edit Tool, Validation MCP, and Compile Tool apply changes and verify correctness.
+- **Self-Evolve Agent**: Continuously analyzes telemetry and benchmarks, updates the skill and reference knowledge, and submits PRs.
 
 #### Skill Workflow
 
-The skill enforces a fixed six-step workflow defined in `SKILL.md`. Every `.tsp` edit runs the full workflow — even a seemingly trivial change (for example, making a property optional with `?`) can be breaking — and steps are never skipped. All edits are minimal and scoped to the request, and the plan produced in Step 3 is the single source of truth for Step 4.
-
-| Step | Name | Reference | Summary |
-|------|------|-----------|---------|
-| 1 | Analyze Project | `references/analyze-project.md` | Collect project root, `tspconfig.yaml`, service type (ARM / data-plane), existing and latest API versions, intent, target resource/interface, and constraints. |
-| 2 | Intake | `references/intake.md` | Run agentic search, then identify the case (Add Resource Type, Add Resource Operations, API Version Evolution) and gather case-specific inputs; confirm with the user. |
-| 3 | Build Authoring Plan | `references/authoring-plan.md` | Produce a grounded plan from the two plan sources below. |
-| 4 | Apply Changes | — | Make minimal `.tsp` edits that follow the Step 3 plan exactly; confirm uncertainties with the user first. |
-| 5 | Validate | `references/validation.md` | Run `azsdk_run_typespec_validation` and `tsp compile .` (always), plus example verification for API-version evolution. |
-| 6 | Output Reference Links | — | Emit all documentation URLs referenced in Step 3 so the user can trace the guidance behind each change. |
-
-#### Plan Sources (Step 3)
-
-Step 3 builds the authoring plan from two grounding sources; when their guidance conflicts, agentic search wins:
-
-1. **MCP tool** — call `azsdk_typespec_generate_authoring_plan` with the verbatim user request, the Step 1–2 context, and the project root. The tool returns a RAG-grounded plan from the Azure SDK Knowledge Base.
-2. **Agentic search** — follow `references/agentic-search.md`: select the relevant URLs from `references/reference-document-links.md`, `web_fetch` each into Markdown, search for content matching a query derived from the request and Step 1 result, iterate until sufficient, and synthesize the extracted guidance into a concrete plan.
+The skill enforces a **fixed six-step workflow** defined in `SKILL.md`. Every `.tsp` edit runs the full workflow — even a seemingly trivial change (for example, making a property optional with `?`) can be breaking — and steps are never skipped. All edits are minimal and scoped to the request, and the plan produced in Step 3 is the single source of truth for Step 4.
 
 
-#### MCP Tools and Knowledge Base
+| Step | Name | Reference | Tooling & Details |
+|------|------|-----------|-------------------|
+| 1 | Analyze Project | `references/analyze-project.md` | Collect project root, `tspconfig.yaml`, service type (ARM / data-plane), existing and latest API versions, intent, target resource/interface, and constraints. **No external tools used.** |
+| 2 | Intake | `references/intake.md` | Identify the case (Add Resource Type, Add Resource Operations, API Version Evolution), gather case-specific inputs using **Agentic Search** over the Reference Knowledge Store, and confirm with the user before proceeding. |
+| 3 | Build Authoring Plan | `references/authoring-plan.md` | Produce a grounded plan using **Hybrid Search Tooling**: (1) Try Agentic Search first; (2) if no match, fall back to **KB MCP Tool** (`azsdk_typespec_generate_authoring_plan`). Plan is the single source of truth for Step 4. |
+| 4 | Apply Changes | — | Use **Edit Tool** to make minimal `.tsp` edits exactly as directed by the Step 3 plan. Confirm any uncertainties with the user before applying. |
+| 5 | Validate Changes | `references/validation.md` | Run **Validation MCP** (`azsdk_run_typespec_validation`) for static checks, and **Compile Tool** (`tsp compile .`) to verify OpenAPI output. For API-version evolution, also verify examples. If validation fails, **loop back to Step 4** (or Step 2 if major rework needed). Limit retries to 3 attempts. |
+| 6 | Output References | — | Emit all documentation URLs from Step 3 plan so users can review the authoritative guidance behind each change. |
 
-The skill relies on two MCP tools exposed by the `azure-sdk-mcp` server (`azsdk-cli`). The authoring-plan tool is backed by the Azure SDK Knowledge Base; the validation tool wraps the repository's TypeSpec validation.
+#### Search Tooling (Hybrid)
 
-##### Component 1: TypeSpec Solution Tool
+Step 3 grounds the authoring plan in authoritative Azure guidance through a **two-tier hybrid search strategy**. Agentic Search is the **primary** path; the KB MCP Tool is the **fallback** path invoked only on a reference miss.
+
+**Tier 1 — Agentic Search (Primary, Reference-Store Hit)**
+
+Agentic Search runs first, using the curated **Reference Knowledge Store** (`references/reference-document-links.md`) as its index:
+
+- **Agentic Search** (via host agent): Decomposes the user request and Step 1–2 context, searches the Reference Knowledge Store catalog, and ranks the most relevant Azure / TypeSpec documentation URLs for the authoring task.
+- **Web Fetch**: For each matched reference URL, fetches the live documentation (Azure TypeSpec docs, ARM guidelines, style guides, etc.) and extracts relevant guidance snippets.
+- **Reference Knowledge Store** (`references/reference-document-links.md`): A curated catalog of authoritative Azure / TypeSpec documentation URLs maintained in the skill and continuously updated by the Skill Self-Evolve Agent. This is the **single source of truth** for what Agentic Search can reach.
+
+**When Tier 1 Succeeds**: If Agentic Search returns sufficient, high-confidence guidance (typically > 80% coverage of the user request), the authoring plan is built directly from the fetched documentation and the KB MCP Tool is **not** called. This path is fast, traceable, and avoids RAG hallucinations.
+
+**Tier 2 — KB MCP Tool (Fallback, Reference-Store Miss)**
+
+If Agentic Search cannot locate matching references in the store, or if the user request involves edge cases not yet in the catalog, the skill falls back to:
+
+- **KB MCP Tool** (`azsdk_typespec_generate_authoring_plan`): Calls the Azure SDK Knowledge Base backend via MCP, which retrieves context indexed from docs, specs, samples, and patterns beyond the local reference catalog.
+- **Azure SDK Knowledge Base**: Backend RAG service that covers the full breadth of Azure SDK and TypeSpec authoring documentation, returning a grounded plan with references and reasoning.
+
+#### Why Agentic Search Takes Precedence
+
+When both Tier 1 (Agentic Search) and Tier 2 (KB MCP Tool) return guidance, **Tier 1 guidance takes precedence** for four key reasons:
+
+**Summary**: Agentic Search provides superior execution efficiency, token economy, solution quality, and access control compared to KB MCP Tool. It enables iterative refinement locally without costly tool calls, controls context by selecting only relevant snippets, empirically achieves higher code pass rates, and respects user permission boundaries by only accessing authorized reference links.
+
+**Detailed Comparison**:
+
+| Aspect | Agentic Search (Tier 1) | KB MCP Tool (Tier 2) |
+|--------|------------------------|---------------------|
+| **Execution Model** | Iterative local refinement: if initial search misses, agent refines query and re-searches Reference Store locally without tool calls | Single remote call: each iteration requires a new MCP tool invocation to the Knowledge Base backend, incurring latency and coordination overhead |
+| **Token Efficiency** | Agent explicitly selects 2–3 most relevant docs and extracts only the guidance snippets needed; tight context window | Full knowledge base response (often 500–2000 tokens) flows into LLM context, bloating prompt even if only a fraction is useful |
+| **Solution Quality** | Sourced from canonical, human-curated reference URLs in the Reference Knowledge Store. URLs are vetted before addition. | RAG hallucinations remain possible: during KB migration, we observed cases where KB returned incorrect solutions despite having the correct doc link in references. Experimental pass rates show Agentic Search consistently outperforms KB. (See [PR #16264](https://github.com/Azure/azure-sdk-tools/pull/16264#issuecomment-5044129741) and ongoing [PR #16460](https://github.com/Azure/azure-sdk-tools/pull/16460).) |
+| **Traceability** | Each reference URL is visible and user-reviewable; supports direct links to live documentation | Full reasoning opaque to end user; harder to audit why a solution was generated |
+| **Access Control & Security** | Agent can only access links in the Reference Knowledge Store that the user has permission to view; no exposure to restricted content. | KB backend has global visibility of all indexed docs; risk of exposing materials the user should not have access to, even if user lacks permissions. |
+
+**Conflict Resolution Rule**: If both tiers return conflicting guidance, **apply Tier 1 guidance** because it is faster, cheaper, and empirically more reliable.
+
+#### Execution Tooling
+
+After the authoring plan is established in Step 3, the skill uses the following execution tools to apply and verify changes:
+
+| Tool | Component | Purpose |
+|------|-----------|---------|
+| **Edit Tool** | Authoring | Apply minimal, scoped `.tsp` code changes as directed by the Step 3 plan exactly; no deviations. |
+| **Validation MCP** | Validation | `azsdk_run_typespec_validation`: Static analysis, style, and best-practice checks; surfaces errors and warnings that drive the engineering loop (Step 5). |
+| **Compile Tool** | Validation | `tsp compile .`: Compiles the TypeSpec project and verifies the OpenAPI output under the path specified in `tspconfig.yaml`. For API-version evolution, also verifies example folders match the target version. |
+
+#### Reference Files
+
+`SKILL.md` delegates step detail to the following reference files, keeping the entry point small and each concern independently maintainable:
+
+| File | Purpose |
+|------|---------|
+| `references/analyze-project.md` | Step 1: Collect project context, TypeSpec version info, service type, intent, and constraints. |
+| `references/intake.md` | Step 2: Use Agentic Search to identify the authoring case and gather case-specific inputs; confirm intent with user. |
+| `references/authoring-plan.md` | Step 3: Execute hybrid search (Agentic Search primary, KB MCP Tool fallback), synthesize guidance, and produce the authoring plan. |
+| `references/agentic-search.md` | Procedure: Execute Tier 1 of hybrid search — query Reference Knowledge Store, fetch URLs, extract guidance. |
+| `references/reference-document-links.md` | **Reference Knowledge Store**: Curated catalog of authoritative Azure / TypeSpec documentation URLs. Continuously updated by Skill Self-Evolve Agent. This is the single source of truth for Agentic Search. |
+| `references/validation.md` | Step 5: Validate changes using Validation MCP and Compile Tool; define retry/escalation logic for the engineering loop. |
+
+#### Why a Skill (Design Rationale)
+
+- **Transparent activation via Copilot** — GitHub Copilot automatically selects the skill based on declarative triggers when users request TypeSpec authoring help. Users do not need to know when to switch to a specialized agent.
+- **Deterministic, reproducible workflow** — the fixed six-step procedure and the "plan-as-single-source-of-truth" rule reduce model-to-model variance and prevent hallucinated decorators or incorrect Azure patterns across sessions.
+- **Hybrid grounding with clear priority** — Agentic Search over the curated Reference Knowledge Store is fast, traceable, and conflict-free because it retrieves live documentation directly. The KB MCP Tool fallback ensures coverage for edge cases not yet in the catalog, providing graceful degradation.
+- **Closed-loop continuous improvement** — the Skill Self-Evolve Agent (decoupled from the authoring workflow) analyzes production telemetry and benchmark results to automatically improve the skill's prompts, reference knowledge, and tooling. No manual intervention required.
+- **Maintainability and transparency** — a Markdown `SKILL.md` plus `references/` files require no compiled agent host and can be reviewed, audited, and evolved like documentation. All changes go through PR review, ensuring quality and traceability.
+
+---
+
+### Skill Self-Evolve Agent
+
+The **Skill Self-Evolve Agent** is an **Azure AI Foundry Agent** that runs on a scheduled cadence (e.g., weekly or after reaching a threshold of telemetry events) to continuously learn from production signals and evolve both the skill and its reference knowledge. It is **decoupled from the authoring workflow** and operates asynchronously, submitting all improvements as pull requests for review and merging.
+
+#### Inputs & Feedback Loop
+
+The Self-Evolve Agent consumes two types of signals:
+
+1. **Telemetry & Benchmark Results**: Collect invocation logs, user satisfaction signals, error rates, and benchmark scores from the skill in production.
+2. **Production Patterns**: Analyze which TypeSpec authoring cases are most common, which guidance causes rework, which reference links are stale or outdated.
+
+These signals feed the closed-loop improvement cycle described below.
+
+#### Purpose
+
+- Automatically keep `references/reference-document-links.md` (the Reference Knowledge Store) current with new and updated Azure / TypeSpec documentation, and remove outdated or incorrect links.
+- Improve skill prompts in `SKILL.md` and `references/*.md` files to reduce hallucinations, clarify ambiguous guidance, and handle edge cases.
+- Refine the authoring workflow (e.g., adjust retry logic, add new case patterns, enhance validation criteria) based on real-world usage.
+- Ensure benchmark scores remain high and avoid regressions as the TypeSpec ecosystem and Azure guidelines evolve.
+- Monitor the reference store's Agentic Search coverage; if fallback to KB MCP Tool exceeds a threshold, trigger a reference expansion initiative.
+
+#### Self-Evolve Workflow
+
+The agent executes a continuous cycle with the following steps:
+
+| Step | Name | Inputs | Outputs |
+|------|------|--------|---------|
+| 1 | **Analyze Telemetry & Benchmarks** | Skill invocation logs, user feedback, benchmark suite results | Failure patterns, reference misses, prompt regressions |
+| 2 | **Generate Summary & Insights** | Analyzed patterns from Step 1 | Actionable recommendations: which reference links are stale, which prompt patterns cause rework, which case patterns are underserved |
+| 3 | **Update Skill Artifacts** | Insights from Step 2 | Improved `SKILL.md`, updated `references/*.md` prompts, refined validation logic, new case documentation |
+| 4 | **Expand Reference Knowledge** | Insights about gaps; new Azure / TypeSpec docs | Updated `references/reference-document-links.md`, new reference URLs, improved URL annotations for better Agentic Search ranking |
+| 5 | **Validate & Test** | Updated skill files, updated reference store | Run full benchmark suite against updated skill; verify no regressions, all tests pass |
+| 6 | **Create Draft PR** | All changes from Steps 3–4 | GitHub PR with updated skill files and reference catalog; link to benchmark results in PR description |
+| 7 | **Review & Merge** | PR feedback from maintainers | Merged changes; automatically deployed to production on next scheduled agent run |
+
+#### Integration with the Skill
+
+The Self-Evolve Agent's outputs directly improve the skill's performance:
+
+- **Updated Reference Knowledge Store** (`references/reference-document-links.md`): When new reference URLs are added, Agentic Search coverage increases immediately, reducing fallback to KB MCP Tool. When stale URLs are removed, search quality improves.
+- **Improved Prompts** (`SKILL.md` and `references/*.md`): Prompt refinements flow directly into the next skill invocation after the PR is merged; no restart required.
+- **Enhanced Validation Logic** (`references/validation.md`): Tighter validation criteria catch more issues earlier in the engineering loop.
+
+**Non-Scope**: The Self-Evolve Agent does **not** modify TypeSpec files in user projects. It only modifies files under `.github/skills/azure-typespec-author/` and creates PRs for human review. User project TypeSpec remains under full user control.
+
+---
+
+### MCP Tools and Knowledge Base
+
+The skill relies on MCP tools exposed by the `azure-sdk-mcp` server (`azsdk-cli`): the KB MCP Tool for fallback plan generation, and the Validation MCP for static analysis.
+
+##### Component 1: TypeSpec Solution Tool (KB MCP Tool)
+
+**Role in hybrid search**: Fallback — invoked by the skill only when Agentic Search fails to find a matching reference in the Reference Knowledge Store.
 
 **Name (CLI)**: `azsdk typespec generate-authoring-plan`
 
@@ -408,26 +539,6 @@ The skill relies on two MCP tools exposed by the `azure-sdk-mcp` server (`azsdk-
 1. Invoke `azsdk_run_typespec_validation` with the project root. On failure, fix the reported issues and re-run; limit to 3 retry attempts, then stop and report the remaining errors to the user.
 1. Run `tsp compile .` from the project root and verify the OpenAPI `.json` output under the path configured by the `@azure-tools/typespec-autorest` entry in `tspconfig.yaml`.
 1. For API-version evolution only, verify that `examples/` exists for the target version with the correct `api-version`, and that example folders for removed versions are deleted.
-
-#### Reference Files
-
-`SKILL.md` delegates step detail to the following reference files, keeping the entry point small and each concern independently maintainable:
-
-| File | Purpose |
-|------|---------|
-| `references/analyze-project.md` | Step 1: project analysis inputs and output template |
-| `references/intake.md` | Step 2: general + case-specific intake and confirmation |
-| `references/authoring-plan.md` | Step 3: build the authoring plan (MCP tool + agentic search) |
-| `references/agentic-search.md` | Procedure: select URLs → fetch → extract guidance |
-| `references/reference-document-links.md` | Catalog of external Azure / TypeSpec guide URLs |
-| `references/validation.md` | Step 5: validate → compile → verify examples |
-
-#### Why a Skill (Design Rationale)
-
-- **Transparent activation** — the host agent selects the skill from declarative triggers, so users do not need to know when to switch to a dedicated agent.
-- **Reproducible behavior** — the fixed workflow and the plan-as-single-source-of-truth rule reduce model-to-model variance and hallucinated decorators.
-- **Dual grounding** — combining the Knowledge Base MCP tool with agentic search over a curated URL catalog keeps guidance current and lets the skill fall back to primary documentation when the two disagree.
-- **Maintainability** — a Markdown `SKILL.md` plus `references/` requires no compiled agent host and can be reviewed and evolved like documentation.
 
 ---
 ## Cross-Language Considerations

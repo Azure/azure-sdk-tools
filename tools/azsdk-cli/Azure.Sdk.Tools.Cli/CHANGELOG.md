@@ -4,8 +4,11 @@
 
 ### Bugs Fixed
 
-- Added `AZSDK_COPILOT_GITHUB_TOKEN` support for authenticating Copilot-backed commands in non-interactive environments.
 - Removed the unavailable `claude-sonnet-4.5` default from Copilot-backed commands.
+
+### Other Changes
+
+- Added `AZSDK_COPILOT_GITHUB_TOKEN` support for authenticating Copilot-backed commands in non-interactive environments.
 
 ## 0.6.32 (2026-07-28)
 

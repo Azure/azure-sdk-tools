@@ -27,7 +27,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification.Templates
         private const string AutomatedSdkPullRequestNextStep =
             "<li>SDK pull requests: One SDK pull request per language (.NET, Java, JavaScript/TypeScript, Python, and Go (optional for data plane)) will be generated and linked to this plan. " +
             "When each PR is ready, review and approve it, then complete the merge and release by following your release plan dashboard. " +
-            "The Azure SDK Tools Agent can walk you through these steps. You will be reminded automatically if an SDK is not published by the target date.</li>";
+            "The Azure SDK Tools Agent can walk you through these steps.</li>";
 
         private const string ManualSdkPullRequestNextStep =
             "<li>SDK pull requests: Use the azsdk agent to generate SDK pull requests and link them to this plan. " +
@@ -74,7 +74,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification.Templates
         }
 
         public override string Subject =>
-            $"Release plan created for {releasePlan.ProductName} ({releasePlan.ApiReleaseType.ToDisplayLabel()})";
+            $"Azure SDK Release plan created for {releasePlan.ProductName} ({releasePlan.ApiReleaseType.ToDisplayLabel()})";
 
         public override string Body =>
             $"""

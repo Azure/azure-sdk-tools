@@ -22,7 +22,7 @@ public class NotificationServiceTests
     private const string AutomatedSdkPullRequestText =
         "SDK pull requests: One SDK pull request per language (.NET, Java, JavaScript/TypeScript, Python, and Go (optional for data plane)) will be generated and linked to this plan. " +
         "When each PR is ready, review and approve it, then complete the merge and release by following your release plan dashboard. " +
-        "The Azure SDK Tools Agent can walk you through these steps. You will be reminded automatically if an SDK is not published by the target date.";
+        "The Azure SDK Tools Agent can walk you through these steps.";
 
     private TestLogger<NotificationService> logger;
     private Mock<IHttpClientFactory> mockHttpClientFactory;
@@ -84,7 +84,7 @@ public class NotificationServiceTests
         var subject = template.Subject;
         var body = template.Body;
 
-        Assert.That(subject, Is.EqualTo("Release plan created for Contoso (GA)"));
+        Assert.That(subject, Is.EqualTo("Azure SDK Release plan created for Contoso (GA)"));
         Assert.That(body, Does.Contain("https://github.com/pr/1"));
         Assert.That(body, Does.Contain(releasePlan.ReleasePlanLink));
         Assert.That(body, Does.Contain("An Azure SDK release plan has been automatically created after merging"));
@@ -93,6 +93,7 @@ public class NotificationServiceTests
         Assert.That(body, Does.Contain("https://aka.ms/azsdkdocs/release-plans"));
         Assert.That(body, Does.Contain("<h3>What happens next</h3>"));
         Assert.That(body, Does.Contain(AutomatedSdkPullRequestText));
+        Assert.That(body, Does.Not.Contain("You will be reminded automatically if an SDK is not published by the target date."));
         Assert.That(body, Does.Not.Contain("<strong>SDK pull requests:</strong>"));
         Assert.That(body, Does.Not.Contain("<h3>SDK pull requests</h3>"));
         Assert.That(body, Does.Not.Contain("<strong>Action required:</strong>"));
@@ -160,7 +161,7 @@ public class NotificationServiceTests
         Assert.That(body, Does.Not.Contain("<strong>Action required:</strong>"));
 
         var subject = root.GetProperty("Subject").GetString();
-        Assert.That(subject, Is.EqualTo("Release plan created for Contoso (GA)"));
+        Assert.That(subject, Is.EqualTo("Azure SDK Release plan created for Contoso (GA)"));
     }
 
     [Test]

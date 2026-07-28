@@ -92,6 +92,7 @@ Ensure your Azure identity has:
    |----------|---------|---------|
    | `GITHUB_TOKEN` | [GitHub PAT](https://github.com/settings/tokens) for local GitHub MCP tool testing. Without it, the agent uses GitHub App JWT via Key Vault (production only). | — |
    | `MEMORY_UPDATE_DELAY` | Seconds before processing memory updates. Set to `0` for immediate updates during development. | `300` |
+   | `ENABLE_MEMORY` | Set to `false` to disable the memory context provider entirely (no reading historical Q&A from the tenant/user memory stores and no writing the turn back). **Must be `false` for evaluation runs** — otherwise memorized Q&A leaks ground-truth answers and inflates scores. | `true` |
 
 5. Log in to Azure:
 

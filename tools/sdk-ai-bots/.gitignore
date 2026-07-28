@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+logs/
+.pytest_cache/
+.env
+**/graphrag_config/input/
+**/graphrag_config/output/
+**/graphrag_config/cache/

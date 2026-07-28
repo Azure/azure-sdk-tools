@@ -127,6 +127,50 @@ class SearchKnowledgeBaseResult(BaseModel):
     results: list[Reference] = []
 
 
+class GraphSearchResult(BaseModel):
+    """Output of the search_knowledge_graph tool call.
+
+    Mirrors ``SearchKnowledgeBaseResult`` in spirit: a flat list of
+    :class:`Reference` objects plus the echoed query. Graph hits reuse
+    the same ``Reference`` shape as KB hits so the merged reference list
+    is uniform — ``content`` carries one representative text-unit chunk
+    per source document and ``source`` carries the originating
+    ``KnowledgeSource.name`` (e.g. ``"typespec_docs"``). The graph tool
+    is a *retrieval* tool — like the KB tool — and the chat agent's own
+    LLM synthesises the final answer over both sets of references.
+    """
+
+    references: list[Reference] = []
+    query: str = ""
+
+
+class GraphQueryRequest(BaseModel):
+    """Request body for the ``POST /graph/query`` endpoint.
+
+    The chat agent posts here to delegate graph retrieval to the
+    long-running backend server, which keeps a warm
+    :class:`KnowledgeGraphService` singleton. Avoids paying the ~40s
+    GraphRAG cold-start cost on every fresh chat-agent sandbox.
+
+    When ``tenant_id`` is provided and resolves to a known
+    :class:`TenantConfig`, the backend restricts graph retrieval to
+    entities whose source documents belong to that tenant's
+    ``KnowledgeSource`` set. Unknown / empty ``tenant_id`` falls
+    back to unscoped retrieval (current behavior) so legacy callers
+    keep working.
+    """
+
+    query: str = Field(..., description="Natural-language query to retrieve graph-grounded references for.")
+    tenant_id: str | None = Field(
+        default=None,
+        description=(
+            "Optional tenant identifier; when set to a known TenantID, "
+            "graph retrieval is restricted to entities sourced from that "
+            "tenant's knowledge sources."
+        ),
+    )
+
+
 class DocumentContext(BaseModel):
     """A knowledge document in the eval-pipeline format (document_* keys)."""
 

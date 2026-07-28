@@ -71,6 +71,7 @@ for (const lang of LANGUAGES) {
     `Custom.SDKPullRequestStatusFor${lang}`,
     `Custom.ReleaseExclusionStatusFor${lang}`,
     `Custom.ReleasedVersionFor${lang}`,
+    `Custom.ReleasePipelineFor${lang}`,
   );
 }
 
@@ -227,6 +228,14 @@ function mapReleasePlan(workItem, apiSpecMap) {
       exclusionStatus: fields[`Custom.ReleaseExclusionStatusFor${lang}`] || "",
       generationStatus: fields[`Custom.GenerationStatusFor${lang}`] || "",
       releasedVersion: fields[`Custom.ReleasedVersionFor${lang}`] || "",
+      sdkGenerationPipeline: (
+        fields[`Custom.SDKGenerationPipelineFor${lang}`] || ""
+      )
+        .trim()
+        .replace(/\/+$/, ""),
+      releasePipeline: (fields[`Custom.ReleasePipelineFor${lang}`] || "")
+        .trim()
+        .replace(/\/+$/, ""),
     };
   }
   const childIds = extractChildIds(workItem);

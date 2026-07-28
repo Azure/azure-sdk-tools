@@ -98,7 +98,6 @@ export const runSdkAutoCustomScript = async (
     listenOnStream(context, result, prefix, vsoLogErrorsArray, child.stderr, runOptions.stderr, 'cmderr');
 
     cmdRet = await new Promise((resolve) => {
-      // tslint:disable-next-line: no-shadowed-variable
       child.on('exit', (code, signal) => {
         resolve({ code, signal });
       });

@@ -1,6 +1,8 @@
 import { InvocationContext } from '@azure/functions';
-import { SearchClient, AzureKeyCredential } from '@azure/search-documents';
+import { SearchClient, SearchIndexerClient } from '@azure/search-documents';
+import { RestError } from '@azure/core-rest-pipeline';
 import { ChainedTokenCredential, AzureCliCredential, ManagedIdentityCredential, WorkloadIdentityCredential} from '@azure/identity';
+import { StatusCodes } from 'http-status-codes';
 
 /**
  * Document interface for AI Search operations
@@ -15,11 +17,13 @@ export interface SearchDocument {
  */
 export class SearchService {
     private searchClient: SearchClient<SearchDocument>;
+    private indexerClient: SearchIndexerClient;
+    private readonly indexerName?: string;
     
     constructor() {
         const searchServiceName = process.env.AI_SEARCH_SERVICE_NAME;
         const searchIndexName = process.env.AI_SEARCH_INDEX;
-        const searchApiKey = process.env.AI_SEARCH_API_KEY;
+        this.indexerName = process.env.AI_SEARCH_INDEXER;
         
         if (!searchServiceName || !searchIndexName) {
             throw new Error('AI_SEARCH_SERVICE_NAME and AI_SEARCH_INDEX environment variables are required');
@@ -27,27 +31,19 @@ export class SearchService {
 
         const endpoint = `https://${searchServiceName}.search.windows.net`;
 
-        if (searchApiKey) {
-            // Use API key authentication
-            this.searchClient = new SearchClient(
-                endpoint,
-                searchIndexName,
-                new AzureKeyCredential(searchApiKey)
-            );
-        } else {
-            // Use managed identity authentication
-            const credential = new ChainedTokenCredential(
-                new ManagedIdentityCredential(),
-                new AzureCliCredential(),
-                new WorkloadIdentityCredential()
-            );
-            
-            this.searchClient = new SearchClient(
-                endpoint,
-                searchIndexName,
-                credential
-            );
-        }
+        // Use managed identity authentication
+        const credential = new ChainedTokenCredential(
+            new ManagedIdentityCredential(),
+            new AzureCliCredential(),
+            new WorkloadIdentityCredential()
+        );
+
+        this.searchClient = new SearchClient(
+            endpoint,
+            searchIndexName,
+            credential
+        );
+        this.indexerClient = new SearchIndexerClient(endpoint, credential);
     }
 
     /**
@@ -148,6 +144,32 @@ export class SearchService {
         } catch (error) {
             console.error(`Error deleting chunks for "${fileName}":`, error);
             throw error;
+        }
+    }
+
+    /**
+     * Trigger the Azure AI Search indexer to reindex the knowledge base.
+     * This should be called after blob storage has been updated so that the
+     * indexer picks up newly added/changed documents and refreshes the index.
+     */
+    async runIndexer(): Promise<void> {
+        if (!this.indexerName) {
+            console.warn('AI_SEARCH_INDEXER environment variable is not set; skipping reindex trigger');
+            return;
+        }
+
+        try {
+            console.log(`Triggering AI Search indexer to reindex the knowledge base: ${this.indexerName}`);
+            await this.indexerClient.runIndexer(this.indexerName);
+            console.log(`Successfully triggered AI Search indexer: ${this.indexerName}`);
+        } catch (error) {
+            // A conflict means the indexer is already running; treat as non-fatal.
+            if (error instanceof RestError && error.statusCode === StatusCodes.CONFLICT) {
+                console.warn(`AI Search indexer "${this.indexerName}" is already running; a new run will pick up the latest changes`);
+                return;
+            }
+            console.error(`Error triggering AI Search indexer "${this.indexerName}":`, error);
+            throw new Error(`Failed to trigger AI Search indexer: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
 }

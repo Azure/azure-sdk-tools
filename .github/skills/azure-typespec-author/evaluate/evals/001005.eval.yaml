@@ -31,6 +31,8 @@ stimuli:
           dest: package-lock.json
         - src: ../fixtures/Microsoft.Widget/Widget/package.json
           dest: package.json
+        - src: ../scripts/check-node-dependencies.js
+          dest: check-node-dependencies.js
         - src: ../fixtures/001005-version-add-preview-after-preview/shared.tsp
           dest: shared.tsp
         - src: ../fixtures/001005-version-add-preview-after-preview/tspconfig.yaml
@@ -78,7 +80,7 @@ stimuli:
         config:
           required:
             - "edit"
-            - "web_fetch"
+            - "^(web_fetch|azure-sdk-mcp-azsdk_typespec_generate_authoring_plan)$"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "skill-invocation"
         config:
@@ -99,8 +101,16 @@ stimuli:
         config:
           required:
             - "edit"
-            - "web_fetch"
+            - "^(web_fetch|azure-sdk-mcp-azsdk_typespec_generate_authoring_plan)$"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
+      - type: "run-command"
+        config:
+          command: "node check-node-dependencies.js node_modules"
+          expected_exit_code: 0
+      - type: "run-command"
+        config:
+          command: "node check-node-dependencies.js packages"
+          expected_exit_code: 0
       - type: "run-command"
         config:
           command: "tsp compile ."
@@ -125,7 +135,7 @@ stimuli:
           path: "employee.tsp"
       - type: "file-matches"
         config:
-          pattern: '@added\(Versions\.v2025_05_04_preview\)\s+workLocation\?: WorkLocation;'
+          pattern: '@added\((?:Microsoft\.Widget\.)?Versions\.v2025_05_04_preview\)\s+workLocation\?: WorkLocation;'
           path: "employee.tsp"
       - type: "file-not-matches"
         config:
@@ -137,7 +147,7 @@ stimuli:
           path: "employee.tsp"
       - type: "file-matches"
         config:
-          pattern: '@typeChangedFrom\(Versions\.v2025_05_04_preview, string\[\]\)'
+          pattern: '@typeChangedFrom\((?:Microsoft\.Widget\.)?Versions\.v2025_05_04_preview, string\[\]\)'
           path: "employee.tsp"
     constraints:
       max_turns: 5
@@ -174,7 +184,7 @@ stimuli:
       - type: "file-matches"
         config:
           path: "employee.tsp"
-          pattern: '@added\(Versions\.v2025_05_04_preview\)\s+workLocation\?: WorkLocation;'
+          pattern: '@added\((?:Microsoft\.Widget\.)?Versions\.v2025_05_04_preview\)\s+workLocation\?: WorkLocation;'
       - type: "file-not-matches"
         config:
           path: "employee.tsp"
@@ -186,7 +196,7 @@ stimuli:
       - type: "file-matches"
         config:
           path: "employee.tsp"
-          pattern: '@typeChangedFrom\(Versions\.v2025_05_04_preview, string\[\]\)'
+          pattern: '@typeChangedFrom\((?:Microsoft\.Widget\.)?Versions\.v2025_05_04_preview, string\[\]\)'
     constraints:
       max_turns: 6
       max_tokens: 100000

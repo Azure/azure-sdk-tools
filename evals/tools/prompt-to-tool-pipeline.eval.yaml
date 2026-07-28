@@ -1,0 +1,109 @@
+name: azsdk-mcp-tool-invocation-eval
+description: |
+  Verify that prompts correctly invoke the expected Azure SDK MCP tools.
+  Each stimulus is a single user prompt that should trigger a specific tool.
+version: "1.0"
+type: capability
+
+environment: azsdk-mcp-mock
+
+tags:
+  tier: unit
+  area: pipeline
+  priority: p0
+
+config:
+  runs: 3
+  timeout: "120s"
+  executor: copilot-sdk
+  model: gpt-5.4
+
+stimuli:
+
+  # ==== azsdk_analyze_pipeline triggers ====
+  - name: invoke-azsdk-analyze-pipeline-1
+    prompt: "Analyze the pipeline run for build 4212345 in the azure-sdk/internal project. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_analyze_pipeline"
+  - name: invoke-azsdk-analyze-pipeline-2
+    prompt: "What happened in pipeline build 4212345 in the azure-sdk/internal project? Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_analyze_pipeline"
+
+  # ==== azsdk_get_pipeline_llm_artifacts triggers ====
+  - name: invoke-azsdk-get-pipeline-llm-artifacts-1
+    prompt: "Get the LLM artifacts from pipeline build 4212345 in the azure-sdk/internal project. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_get_pipeline_llm_artifacts"
+  - name: invoke-azsdk-get-pipeline-llm-artifacts-2
+    prompt: "Download the analysis artifacts from pipeline build 4212345 in the azure-sdk/internal project. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_get_pipeline_llm_artifacts"
+
+  # ==== azsdk_get_pipeline_status triggers ====
+  - name: invoke-azsdk-get-pipeline-status-1
+    prompt: "Check the status of my Azure pipeline build 12345678. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_get_pipeline_status"
+  - name: invoke-azsdk-get-pipeline-status-2
+    prompt: "Get the pipeline build status for run 9876543. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_get_pipeline_status"
+  - name: invoke-azsdk-get-pipeline-status-3
+    prompt: "Get the pipeline build status for my CI run, build 4212345 in the azure-sdk/internal project. Invoke the appropriate Azure SDK MCP tool directly to do this — do not inspect or edit the workspace files yourself."
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_get_pipeline_status"
+
+  # ==== full-context single-tool checks (ported from standalone scenario evals) ====
+  - name: check-sdk-generation-status
+    prompt: |
+      Check the SDK generation pipeline status for build ID 5513110.
+      My setup has already been verified, do not run azsdk_verify_setup.
+    constraints:
+      max_turns: 5
+      max_tokens: 5000
+    # TODO: assert buildId=5513110 — blocked on https://github.com/Azure/azure-sdk-tools/issues/15833 (Vally tool-calls grader needs generic args matcher).
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_get_pipeline_status"
+          disallowed:
+            - name: "azsdk_verify_setup"
+
+  # ==== pipeline-failure routing (ported from the pipeline skill eval.yaml files) ====
+  - name: analyze-routing-pipeline-failed
+    prompt: "My Azure SDK generation pipeline failed for the Python language: https://dev.azure.com/azure-sdk/internal/_build/results?buildId=12345. Can you help me figure out what went wrong?"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_analyze_pipeline"
+  - name: analyze-routing-negative-typespec
+    prompt: "How do I define a new REST operation in my TypeSpec project?"
+    graders:
+      - type: tool-calls
+        config:
+          disallowed:
+            - name: "azsdk_analyze_pipeline"

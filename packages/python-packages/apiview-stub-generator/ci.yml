@@ -37,6 +37,7 @@ extends:
     ArtifactName: 'apiviewparserpython'
     PackageName: 'Python API View Parser'
     TestSteps:
+    - template: /eng/common/pipelines/templates/steps/auth-dev-feed.yml
     - script: |
         python $(Build.SourcesDirectory)/eng/scripts/python_version_check.py
       displayName: 'Verify Python APIView version consistency'

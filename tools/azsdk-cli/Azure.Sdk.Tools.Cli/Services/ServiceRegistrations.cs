@@ -7,7 +7,7 @@ using System.ClientModel;
 using Microsoft.Extensions.Azure;
 using ModelContextProtocol.Server;
 using OpenAI;
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
@@ -16,6 +16,7 @@ using Azure.Sdk.Tools.Cli.Helpers.Codeowners.Rules;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Services.Languages;
+using Azure.Sdk.Tools.Cli.Services.Notification;
 using Azure.Sdk.Tools.Cli.Services.SetupRequirements;
 using Azure.Sdk.Tools.Cli.Services.TypeSpec;
 using Azure.Sdk.Tools.Cli.Services.Upgrade;
@@ -41,6 +42,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IGitHubService, GitHubService>();
             services.AddSingleton<IAzureSdkKnowledgeBaseService, AzureSdkKnowledgeBaseService>();
             services.AddSingleton<IUpgradeService, UpgradeService>();
+            services.AddSingleton<INotificationService, NotificationService>();
 
             // APIView Services
             services.AddSingleton<IAPIViewAuthenticationService, APIViewAuthenticationService>();
@@ -99,6 +101,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ITspClientHelper, TspClientHelper>();
             services.AddSingleton<IAPIViewFeedbackService, APIViewFeedbackService>();
             services.AddScoped<IFeedbackClassifierService, FeedbackClassifierService>();
+            services.AddScoped<ISdkBreakingChangeClassificationService, SdkBreakingChangeClassificationService>();
             services.AddScoped<IUserPromptProcessor, UserPromptProcessor>();
 
             // Process Helper Classes
@@ -127,22 +130,17 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<CopilotClient>(sp =>
             {
                 var logger = sp.GetService<ILogger<CopilotClient>>();
+                var cliPath = Environment.GetEnvironmentVariable("AZSDK_COPILOT_CLI_PATH");
                 var options = new CopilotClientOptions
                 {
-                    UseStdio = true,
-                    AutoStart = true,
+                    Connection = RuntimeConnection.ForStdio(
+                        string.IsNullOrWhiteSpace(cliPath) ? null : cliPath.Trim()),
                     Logger = logger
                 };
 
                 // Allow overriding the bundled Copilot CLI path via environment variable.
                 // This is useful when the standalone azsdk.exe doesn't include the Copilot CLI executable
                 // but the user has it installed elsewhere (e.g. via npm).
-                var cliPath = Environment.GetEnvironmentVariable("AZSDK_COPILOT_CLI_PATH");
-                if (!string.IsNullOrWhiteSpace(cliPath))
-                {
-                    options.CliPath = cliPath.Trim();
-                }
-
                 return new CopilotClient(options);
             });
             services.AddSingleton<ICopilotClientWrapper, CopilotClientWrapper>();

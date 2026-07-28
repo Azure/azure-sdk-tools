@@ -1,10 +1,18 @@
 # Release History
 
-## 0.5.8 (Unreleased)
+## 0.5.9 (2026-07-21)
+- Fix `no-cross-package-private-import` (C4776) to correctly handle relative imports
+- Fix `no-cross-package-private-import` (C4776) to skip modules whose first segment is already private
+- Fix `check-docstrings` (C4739) `is_overload_impl` never set for ClassDef path, making the overload-implementation escape hatch unreachable for class constructors with overloaded `__init__`
+
+## 0.5.8 (2026-07-13)
 - Add `do-not-store-secrets-in-test-variables` check
 - Add `remove-deprecated-iscoroutinefunction` check
 - Add `do-not-use-logging-directly` check
 - Add `no-cross-package-private-import` check
+- Enhance `invalid-use-of-overload` to support module-level overloads and verify @overload decorator
+- Fix `check-docstrings` to skip `*args`/`**kwargs` linting for overload implementations
+- Add `docstring-kwargs-keyword` check (C4753): flags use of `kwargs` (without `**`) as a keyword argument name in docstrings
 
 ## 0.5.7 (2025-07-15)
 - Bug fix for `do-not-use-logging-exception` checker

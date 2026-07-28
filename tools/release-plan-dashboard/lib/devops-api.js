@@ -92,7 +92,6 @@ const PACKAGE_FIELDS = [
   "Custom.Language",
   "Custom.PackageVersion",
   "Custom.APIReviewStatus",
-  "Custom.PackageNameApprovalStatus",
 ];
 
 /** Fetches an Azure DevOps auth header using Managed Identity (DefaultAzureCredential). */
@@ -329,8 +328,6 @@ async function fetchPackageWorkItems(pkgLangPairs) {
             _changedDate: changedDate,
             version: itemFields["Custom.PackageVersion"] || "",
             apiReviewStatus: itemFields["Custom.APIReviewStatus"] || "",
-            namespaceApproval:
-              itemFields["Custom.PackageNameApprovalStatus"] || "",
           });
         }
       }

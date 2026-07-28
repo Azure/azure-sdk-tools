@@ -1190,10 +1190,6 @@ main {
   color: #323130;
   font-weight: 500;
 }
-.pr-label-ns-pending {
-  background: #fff4ce;
-  color: var(--orange);
-}
 .pr-label-version-pending {
   background: #fff4ce;
   color: var(--orange);

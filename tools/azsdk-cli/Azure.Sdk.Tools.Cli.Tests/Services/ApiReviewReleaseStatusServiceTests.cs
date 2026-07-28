@@ -58,9 +58,8 @@ public class ApiReviewReleaseStatusServiceTests
             .ReturnsAsync(new ApiViewReleaseStatusResult
             {
                 IsApproved = false,
-                PackageNameApproved = true,
                 StatusCode = 201,
-                Reason = "packageNameApproved",
+                Reason = "apiApprovalPending",
                 Details = ["APIView secondary result"]
             });
 
@@ -71,7 +70,6 @@ public class ApiReviewReleaseStatusServiceTests
         Assert.That(result.Reason, Is.EqualTo("missingApproval"));
         Assert.That(result.ReviewHub.StatusCode, Is.EqualTo(200));
         Assert.That(result.ApiView?.StatusCode, Is.EqualTo(201));
-        Assert.That(result.ApiView?.PackageNameApproved, Is.True);
     }
 
     [Test]
@@ -85,9 +83,8 @@ public class ApiReviewReleaseStatusServiceTests
             .ReturnsAsync(new ApiViewReleaseStatusResult
             {
                 IsApproved = false,
-                PackageNameApproved = true,
                 StatusCode = 201,
-                Reason = "packageNameApproved",
+                Reason = "apiApprovalPending",
                 Details = ["APIView fallback result"]
             });
 
@@ -95,11 +92,10 @@ public class ApiReviewReleaseStatusServiceTests
 
         Assert.That(result.IsApproved, Is.False);
         Assert.That(result.FinalSource, Is.EqualTo("APIView"));
-        Assert.That(result.Reason, Is.EqualTo("packageNameApproved"));
+        Assert.That(result.Reason, Is.EqualTo("apiApprovalPending"));
         Assert.That(result.ReviewHub.StatusCode, Is.EqualTo(500));
         Assert.That(result.ReviewHub.Error, Does.Contain("hub failed"));
         Assert.That(result.ApiView?.StatusCode, Is.EqualTo(201));
-        Assert.That(result.ApiView?.PackageNameApproved, Is.True);
     }
 
     [Test]
@@ -117,9 +113,8 @@ public class ApiReviewReleaseStatusServiceTests
             .ReturnsAsync(new ApiViewReleaseStatusResult
             {
                 IsApproved = false,
-                PackageNameApproved = false,
                 StatusCode = 200,
-                Reason = "packageNamePending",
+                Reason = "apiApprovalPending",
                 Details = ["APIView fallback result"]
             });
 
@@ -127,7 +122,7 @@ public class ApiReviewReleaseStatusServiceTests
 
         Assert.That(result.IsApproved, Is.False);
         Assert.That(result.FinalSource, Is.EqualTo("APIView"));
-        Assert.That(result.Reason, Is.EqualTo("packageNamePending"));
+        Assert.That(result.Reason, Is.EqualTo("apiApprovalPending"));
         Assert.That(result.ReviewHub.StatusCode, Is.EqualTo(200));
         Assert.That(result.ApiView?.StatusCode, Is.EqualTo(200));
     }

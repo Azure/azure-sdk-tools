@@ -259,21 +259,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 var releaseType = plannedRelease?.ReleaseType ?? "Unknown";
                 bool isPreviewRelease = releaseType.Equals("Beta");
                 bool isDataPlanePackage = package.PackageType == SdkType.Dataplane;
-                // Check for namespace approval if preview release for data plane
-                if (isDataPlanePackage && isPreviewRelease)
-                {
-                    if (!package.IsPackageNameApproved)
-                    {
-                        package.IsPackageReady = false;
-                        package.PackageReadinessDetails += $"Package name '{packageName}' is not approved for preview release. ";
-                    }
-                    // no need to add extra package name approval status if package name is approved or has at least one version already released
-                }
-                else
-                {
-                    package.PackageNameStatus = "Not required";
-                    package.PackageNameApprovalDetails = "Package name approval is not required for GA releases of data plane packages or for non-data plane packages.";
-                }
 
                 // Check if API view is approved if stable version for data plane or .NET
                 if ((isDataPlanePackage || language.Equals(".NET")) && !isPreviewRelease)

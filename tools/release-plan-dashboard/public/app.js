@@ -1940,14 +1940,6 @@
               pkgLabels +=
                 '<span class="pr-label pr-label-first-ga">First GA</span>';
             }
-            if (
-              l.isFirstPreview &&
-              classifyPlane(p) !== "mgmt" &&
-              l.namespaceApproval &&
-              l.namespaceApproval.toLowerCase() !== "approved"
-            ) {
-              pkgLabels += `<span class="pr-label pr-label-ns-pending" title="Namespace: ${esc(l.namespaceApproval)}">${esc(l.namespaceApproval)}</span>`;
-            }
             // Action column — determine per-language action
             let actionCell = "";
             if (

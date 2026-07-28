@@ -83,7 +83,7 @@ internal class CopilotAgentRunnerTests
         DispatchEvent(idleEvent);
     }
 
-    private void SimulateUsageEvent(int inputTokens, int outputTokens, string model)
+    private void SimulateUsageEvent(int inputTokens, int outputTokens, string? model)
     {
         var usageEvent = new AssistantUsageEvent
         {
@@ -91,7 +91,7 @@ internal class CopilotAgentRunnerTests
             Timestamp = DateTimeOffset.UtcNow,
             Data = new AssistantUsageData
             {
-                Model = model,
+                Model = model!,
                 InputTokens = inputTokens,
                 OutputTokens = outputTokens
             }
@@ -347,6 +347,38 @@ internal class CopilotAgentRunnerTests
         await runner.RunAsync(agent);
 
         Assert.That(tokenUsageHelper.TotalTokens, Is.EqualTo(150));
+    }
+
+    [Test]
+    public async Task RunAsync_TokenUsageWithoutModel_AddsTokensWithoutModelLabel()
+    {
+        var outputHelper = new Mock<IRawOutputHelper>();
+        var tokenUsageHelper = new TokenUsageHelper(outputHelper.Object);
+
+        sessionMock.Setup(s => s.SendAsync(It.IsAny<MessageOptions>(), It.IsAny<CancellationToken>()))
+            .Callback(() =>
+            {
+                SimulateUsageEvent(100, 50, null);
+                SimulateExitToolCall("Success");
+            })
+            .ReturnsAsync("msg-id");
+
+        var runner = new CopilotAgentRunner(
+            clientMock.Object,
+            tokenUsageHelper,
+            loggerMock.Object);
+
+        var agent = new CopilotAgent<string>
+        {
+            Instructions = "Test agent"
+        };
+
+        await runner.RunAsync(agent);
+
+        Assert.That(tokenUsageHelper.TotalTokens, Is.EqualTo(150));
+        outputHelper.Verify(
+            helper => helper.OutputConsole("[token usage] input: 100, output: 50, total: 150"),
+            Times.Once);
     }
 
     [Test]

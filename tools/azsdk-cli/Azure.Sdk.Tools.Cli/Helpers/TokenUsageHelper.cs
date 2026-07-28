@@ -12,9 +12,12 @@ public class TokenUsageHelper(IRawOutputHelper outputHelper)
     public double TotalTokens => PromptTokens + CompletionTokens;
     private IEnumerable<string> ModelsUsed { get; set; } = [];
 
-    public void Add(string model, double inputTokens, double outputTokens)
+    public void Add(string? model, double inputTokens, double outputTokens)
     {
-        ModelsUsed = ModelsUsed.Union([model]);
+        if (model is not null)
+        {
+            ModelsUsed = ModelsUsed.Union([model]);
+        }
         promptTokens += inputTokens;
         CompletionTokens += outputTokens;
 
@@ -37,7 +40,7 @@ public class TokenUsageHelper(IRawOutputHelper outputHelper)
     /// <param name="model">The model used for this turn.</param>
     /// <param name="inputTokens">Cumulative context size (not incremental).</param>
     /// <param name="outputTokens">Output tokens for this turn (incremental — added to total).</param>
-    public void AddCumulative(string model, double inputTokens, double outputTokens)
+    public void AddCumulative(string? model, double inputTokens, double outputTokens)
     {
         Add(model, inputTokens - promptTokens, outputTokens);
     }
@@ -47,15 +50,19 @@ public class TokenUsageHelper(IRawOutputHelper outputHelper)
         Activity.Current?.SetCustomProperty(TagName.PromptTokens, PromptTokens.ToString("F0"));
         Activity.Current?.SetCustomProperty(TagName.CompletionTokens, CompletionTokens.ToString("F0"));
         Activity.Current?.SetCustomProperty(TagName.TotalTokens, TotalTokens.ToString("F0"));
-        Activity.Current?.SetCustomProperty(TagName.ModelsUsed, string.Join(",", ModelsUsed.OrderBy(m => m)));
+        if (ModelsUsed.Any())
+        {
+            Activity.Current?.SetCustomProperty(TagName.ModelsUsed, string.Join(",", ModelsUsed.OrderBy(m => m)));
+        }
     }
 
     public void LogUsage()
     {
         var models = string.Join(", ", ModelsUsed);
+        var modelLabel = models.Length > 0 ? $"[{models}]" : string.Empty;
 
         outputHelper.OutputConsole("--------------------------------------------------------------------------------");
-        outputHelper.OutputConsole($"[token usage][{models}] input: {PromptTokens}, output: {CompletionTokens}, total: {TotalTokens}");
+        outputHelper.OutputConsole($"[token usage]{modelLabel} input: {PromptTokens}, output: {CompletionTokens}, total: {TotalTokens}");
         outputHelper.OutputConsole("--------------------------------------------------------------------------------");
     }
 }

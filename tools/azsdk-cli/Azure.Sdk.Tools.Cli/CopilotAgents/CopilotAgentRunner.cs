@@ -120,7 +120,7 @@ public class CopilotAgentRunner(
             {
                 case AssistantUsageEvent usage:
                     tokenUsageHelper.AddCumulative(
-                        usage.Data.Model ?? agent.Model ?? "auto",
+                        usage.Data.Model ?? agent.Model,
                         usage.Data.InputTokens ?? 0,
                         usage.Data.OutputTokens ?? 0);
                     break;

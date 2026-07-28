@@ -4,9 +4,8 @@
 using System.Text;
 using System.Text.Json.Serialization;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
-using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan;
 
-namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList
+namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
 {
     /// <summary>
     /// Represents a response containing release plans that had an SDK generation failure in the last 24 hours.

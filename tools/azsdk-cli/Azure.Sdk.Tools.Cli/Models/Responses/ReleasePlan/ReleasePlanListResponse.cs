@@ -1,9 +1,8 @@
 using System.Text;
 using System.Text.Json.Serialization;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
-using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan;
 
-namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList
+namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
 {
     /// <summary>
     /// Represents a response containing multiple release plans and the result of a release plan operation

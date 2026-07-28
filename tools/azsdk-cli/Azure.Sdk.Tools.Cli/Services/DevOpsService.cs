@@ -222,8 +222,8 @@ namespace Azure.Sdk.Tools.Cli.Services
 
                 var releasePlanWorkItems = await FetchWorkItemsPagedAsync(query, ct: ct);
 
-                // Precise cutoff: only consider status transitions that happened within the last 24 hours.
-                var cutoff = DateTime.UtcNow.AddHours(-24);
+                // Precise cutoff: only consider status transitions that happened within the last 24 hours + 1 hour overlap from previous report avoid dropping any changes during the scheduled run.
+                var cutoff = DateTime.UtcNow.AddHours(-25);
                 var workItemClient = connection.GetWorkItemClient(ct);
                 var failedReleasePlans = new List<FailedSDKGenerationReleasePlan>();
 
@@ -266,7 +266,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             var failedLanguages = new List<string>();
             try
             {
-                var updates = await workItemClient.GetUpdatesAsync(workItemId, cancellationToken: ct);
+                var updates = await workItemClient.GetUpdatesAsync(workItemId, top:20, cancellationToken: ct);
                 foreach (var lang in SUPPORTED_SDK_LANGUAGES)
                 {
                     var fieldName = $"Custom.SDKPullRequestStatusFor{lang}";
@@ -305,11 +305,17 @@ namespace Azure.Sdk.Tools.Cli.Services
             // Prefer the System.ChangedDate captured on the revision; fall back to RevisedDate.
             if (update.Fields != null
                 && update.Fields.TryGetValue("System.ChangedDate", out var changedDateUpdate)
-                && changedDateUpdate.NewValue != null
-                && DateTime.TryParse(changedDateUpdate.NewValue.ToString(), CultureInfo.InvariantCulture,
-                    DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var changedDate))
+                && changedDateUpdate.NewValue != null)
             {
-                return changedDate;
+                if (changedDateUpdate.NewValue is DateTime dt)
+                {
+                    return dt.Kind == DateTimeKind.Utc ? dt : dt.ToUniversalTime();
+                }
+                if (DateTime.TryParse(changedDateUpdate.NewValue.ToString(), CultureInfo.InvariantCulture,
+                    DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var changedDate))
+                {
+                    return changedDate;
+                }
             }
 
             return update.RevisedDate.ToUniversalTime();

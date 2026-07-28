@@ -36,7 +36,7 @@ The original Go-based processing engine responsible for generating AI-powered re
 
 ### 3. Chat Agent (`azure-sdk-qa-bot-agent/`)
 
-A next-generation AI chat agent built on the [Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/overview/agent-framework-overview) with Azure AI Foundry. It supersedes the Go Backend API Service, introducing richer retrieval, Foundry Memory for conversation context, and a two-component architecture (agent + FastAPI server).
+A next-generation AI chat agent built on the [Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/overview/?pivots=programming-language-python) with Azure AI Foundry. It supersedes the Go Backend API Service, introducing richer retrieval, Foundry Memory for conversation context, and a two-component architecture (agent + FastAPI server).
 
 ### 4. Azure Function (`azure-sdk-qa-bot-function/`)
 

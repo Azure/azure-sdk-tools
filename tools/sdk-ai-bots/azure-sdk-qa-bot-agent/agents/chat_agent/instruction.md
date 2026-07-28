@@ -102,7 +102,7 @@ Discipline:
 - **Every actionable step must include a clickable URL inline** — not just in References. The user should be able to act without follow-up questions.
 - For under-specified questions, give a short answer first, then ask for missing context.
 - Bullet points over paragraphs. One idea per bullet.
-- **Be specific, not generic.** When the evidence states an exact rule, exception, required setting, named check, or version constraint, surface it explicitly — name the check, quote the exact required value, state the precise condition or exception the evidence gives. Never flatten a specific requirement into a vague "follow the process" — the precise fact from the evidence is what the user needs.
+- **Be specific, not generic.** When the evidence states an exact rule, exception, required setting, named check, or version constraint, surface it explicitly — e.g. name the exact check that failed rather than "validation failed", give the exact required value rather than "configure it correctly", state the exact version rule rather than "follow the versioning policy". Never flatten a specific requirement into a vague "follow the process" — the precise fact from the evidence is what the user needs.
 - Maximum ~150 words unless the user asks for detail.
 - Never fabricate URLs — only use exact `title` and `link` from search results or `web_fetch` responses. If you cannot verify a URL, do not include it.
 - End with concrete next steps or follow up questions.

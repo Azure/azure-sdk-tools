@@ -1190,7 +1190,9 @@
     let out = "";
     for (const label of labels) {
       const bg = label.color ? `#${esc(label.color)}` : "#0e8a16";
-      const textColor = label.color ? contrastTextColor(label.color) : "#ffffff";
+      const textColor = label.color
+        ? contrastTextColor(label.color)
+        : "#ffffff";
       out += `<span class="pr-label pr-label-auto-release" style="background:${bg};color:${textColor}" title="SDK will be auto released when this SDK PR gets merged to main">${esc(label.name)}</span>`;
     }
     return out;
@@ -1930,7 +1932,12 @@
             const langReleased =
               langReleaseStatus === "released" ||
               langReleaseStatus === "completed";
-            if (l.sdkPrUrl && !excluded && !langReleased && Array.isArray(l.sdkPrLabels)) {
+            if (
+              l.sdkPrUrl &&
+              !excluded &&
+              !langReleased &&
+              Array.isArray(l.sdkPrLabels)
+            ) {
               for (const label of l.sdkPrLabels) {
                 const bg = label.color ? `#${esc(label.color)}` : "#0e8a16";
                 const textColor = label.color

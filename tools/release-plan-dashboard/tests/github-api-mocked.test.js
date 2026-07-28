@@ -560,9 +560,9 @@ describe("extractAutoReleaseLabels", () => {
   });
 
   test("returns empty array when the auto-release label is absent", () => {
-    expect(extractAutoReleaseLabels([{ name: "bug", color: "fc0303" }])).toEqual(
-      [],
-    );
+    expect(
+      extractAutoReleaseLabels([{ name: "bug", color: "fc0303" }]),
+    ).toEqual([]);
   });
 
   test("returns empty array for non-array input", () => {

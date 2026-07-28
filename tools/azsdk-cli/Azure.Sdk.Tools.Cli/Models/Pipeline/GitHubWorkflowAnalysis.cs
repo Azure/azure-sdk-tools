@@ -4,13 +4,6 @@ using Azure.Sdk.Tools.Cli.Models.Responses;
 namespace Azure.Sdk.Tools.Cli.Models.Pipeline;
 
 /// <summary>
-/// The GitHub repository, commit, and pull request a DevOps build ran against. Only resolvable for pipelines
-/// whose source is a GitHub repository; <see cref="HeadSha"/> is null when the build reports no source version,
-/// and <see cref="PullRequestNumber"/> is null for builds that were not triggered by a pull request.
-/// </summary>
-public record BuildGitHubSource(string Owner, string Repo, string? HeadSha, int? PullRequestNumber);
-
-/// <summary>
 /// A single failed GitHub Actions workflow run along with its logs and jobs. Logs and jobs are fetched
 /// best-effort, so either may be missing while the rest of the run detail is still reported.
 /// </summary>
@@ -43,3 +36,10 @@ public class GitHubWorkflowRunAnalysis
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<string>? Errors { get; set; }
 }
+
+/// <summary>
+/// The GitHub repository, commit, and pull request a DevOps build ran against. Only resolvable for pipelines
+/// whose source is a GitHub repository; <see cref="HeadSha"/> is null when the build reports no source version,
+/// and <see cref="PullRequestNumber"/> is null for builds that were not triggered by a pull request.
+/// </summary>
+public record BuildGitHubSource(string Owner, string Repo, string? HeadSha, int? PullRequestNumber);

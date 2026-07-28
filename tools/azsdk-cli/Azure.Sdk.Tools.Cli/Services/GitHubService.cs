@@ -868,10 +868,23 @@ query($owner: String!, $repo: String!, $pr: Int!, $after: String) {
             {
                 using var doc = await PostGraphQLAsync(CheckRunsGraphQLQuery, new { owner, repo, pr = prNumber, after }, ct);
 
-                var nodes = doc.RootElement
-                    .GetProperty("data")
-                    .GetProperty("repository")
-                    .GetProperty("pullRequest")
+                // A missing repository or a null pullRequest (wrong name, private, or
+                // deleted) otherwise surfaces as an opaque KeyNotFound/InvalidOperation deep in the chain.
+                if (!doc.RootElement.TryGetProperty("data", out var data)
+                    || data.ValueKind != JsonValueKind.Object
+                    || !data.TryGetProperty("repository", out var repository)
+                    || repository.ValueKind != JsonValueKind.Object)
+                {
+                    throw new Exception($"GitHub GraphQL response did not contain repository data for {owner}/{repo}.");
+                }
+
+                if (!repository.TryGetProperty("pullRequest", out var pullRequest)
+                    || pullRequest.ValueKind == JsonValueKind.Null)
+                {
+                    throw new Exception($"Pull request #{prNumber} was not found in {owner}/{repo}.");
+                }
+
+                var nodes = pullRequest
                     .GetProperty("commits")
                     .GetProperty("nodes");
 
@@ -963,11 +976,17 @@ query($owner: String!, $repo: String!, $pr: Int!, $after: String) {
             var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct));
 
             // GraphQL reports failures in the body with a 200 status, so this has to be checked explicitly.
-            if (doc.RootElement.TryGetProperty("errors", out var errors))
+            if (doc.RootElement.TryGetProperty("errors", out var errors)
+                && errors.ValueKind == JsonValueKind.Array
+                && errors.GetArrayLength() > 0)
             {
-                var errorMsg = errors.EnumerateArray().FirstOrDefault().GetProperty("message").GetString();
+                var firstError = errors[0];
+                var errorMsg = firstError.ValueKind == JsonValueKind.Object
+                    && firstError.TryGetProperty("message", out var messageElement)
+                        ? messageElement.GetString()
+                        : null;
                 doc.Dispose();
-                throw new Exception($"GitHub GraphQL error: {errorMsg}");
+                throw new Exception($"GitHub GraphQL error: {errorMsg ?? "unknown error"}");
             }
 
             return doc;

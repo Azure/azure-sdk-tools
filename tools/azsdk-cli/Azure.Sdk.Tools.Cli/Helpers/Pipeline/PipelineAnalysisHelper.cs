@@ -59,8 +59,8 @@ public class PipelineAnalysisHelper(
             try
             {
                 var (failedTests, skippedArtifacts) = await AnalyzeBuildTestArtifactsAsync(build, ct);
-                buildAnalysis.FailedBuildTests = failedTests;
                 recoveredFailedTests = failedTests.Count > 0;
+                buildAnalysis.FailedBuildTests = recoveredFailedTests ? failedTests : null;
 
                 if (skippedArtifacts.Count > 0)
                 {

@@ -58,20 +58,20 @@ public class AnalyzePipelineResponse : CommandResponse
                 sb.AppendLine();
             }
 
-            if (buildAnalysis.FailedBuildTests.Count > 0)
+            if (buildAnalysis.FailedBuildTests is { Count: > 0 } failedTests)
             {
                 sb.AppendLine("--------------------------------------------------------------------------------");
                 sb.AppendLine("Failed Tests");
                 sb.AppendLine("--------------------------------------------------------------------------------");
-                sb.AppendLine(JsonSerializer.Serialize(buildAnalysis.FailedBuildTests, jsonOptions));
+                sb.AppendLine(JsonSerializer.Serialize(failedTests, jsonOptions));
             }
 
-            if (buildAnalysis.FailedBuildTasks.HasErrors)
+            if (buildAnalysis.FailedBuildTasks is { HasErrors: true } failedTasks)
             {
                 sb.AppendLine("--------------------------------------------------------------------------------");
                 sb.AppendLine("Failed Tasks");
                 sb.AppendLine("--------------------------------------------------------------------------------");
-                sb.AppendLine(buildAnalysis.FailedBuildTasks.ToString());
+                sb.AppendLine(failedTasks.ToString());
                 sb.AppendLine("--------------------------------------------------------------------------------");
             }
 
@@ -87,7 +87,7 @@ public class AnalyzePipelineResponse : CommandResponse
                 sb.AppendLine("--------------------------------------------------------------------------------");
             }
 
-            if (buildAnalysis.FailedBuildTests.Count == 0 && !buildAnalysis.FailedBuildTasks.HasErrors && (buildAnalysis.Errors?.Count ?? 0) == 0)
+            if ((buildAnalysis.FailedBuildTests?.Count ?? 0) == 0 && buildAnalysis.FailedBuildTasks?.HasErrors != true && (buildAnalysis.Errors?.Count ?? 0) == 0)
             {
                 sb.AppendLine("");
                 sb.AppendLine(buildAnalysis.Build.IsInProgress

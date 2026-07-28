@@ -43,15 +43,6 @@ public class GitHubWorkflowAnalysisHelper(
         return runAnalyses;
     }
 
-    /// <summary>
-    /// Conclusions that mean a check did not pass. Anything else - success, skipped, neutral, or a check that
-    /// is still running and has no conclusion yet - is not a failure to report.
-    /// </summary>
-    private static readonly HashSet<string> FailedCheckConclusions = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED", "STARTUP_FAILURE",
-    };
-
     public async Task<List<PrCheckRun>> GetFailingChecksAsync(BuildGitHubSource source, CancellationToken ct)
     {
         if (source.PullRequestNumber == null)
@@ -60,7 +51,7 @@ public class GitHubWorkflowAnalysisHelper(
         }
 
         var checks = await gitHubService.GetPrCheckRunsAsync(source.Owner, source.Repo, source.PullRequestNumber.Value, ct);
-        return checks.Where(check => check.Conclusion != null && FailedCheckConclusions.Contains(check.Conclusion)).ToList();
+        return checks.Where(check => check.IsFailed).ToList();
     }
 
     /// <summary>

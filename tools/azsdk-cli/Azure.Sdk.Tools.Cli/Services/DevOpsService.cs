@@ -143,7 +143,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 return await operation(AnonymousBuildClient);
             }
-            catch (VssUnauthorizedException)
+            catch (VssException ex) when (ex is not BuildException)
             {
                 ct.ThrowIfCancellationRequested();
                 return await operation(GetBuildClient(ct));
@@ -197,8 +197,8 @@ namespace Azure.Sdk.Tools.Cli.Services
 
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
     {
-        private readonly HttpClient _noRedirectClient = new(new HttpClientHandler { AllowAutoRedirect = false });
-        private readonly HttpClient _downloadClient = new();
+        private static readonly HttpClient _noRedirectClient = new(new HttpClientHandler { AllowAutoRedirect = false });
+        private static readonly HttpClient _downloadClient = new();
 
         private static readonly string RELEASE_PLANNER_APP_TEST = "Release Planner App Test";
         private static readonly string MISSING_EMITTER_CONFIG = "MissingEmitterConfig";

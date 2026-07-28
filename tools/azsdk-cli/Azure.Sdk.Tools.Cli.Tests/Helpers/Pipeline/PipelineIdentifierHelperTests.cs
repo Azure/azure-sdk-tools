@@ -350,6 +350,21 @@ public class PipelineIdentifierHelperTests
     }
 
     [Test]
+    public async Task ResolveBuildsAsync_PullRequestWithNonFailureFailedConclusion_StillResolvesTheBuild()
+    {
+        // A cancelled or timed-out Azure Pipelines check is still a failure worth analyzing, so it must
+        // resolve to a build even though its conclusion is not the literal "FAILURE".
+        GivenBuildDetails(BuildFor("public", BuildStatus.Completed, BuildResult.Failed));
+        GivenPrChecks(
+            AzurePipelinesCheck("net - core - ci", "TIMED_OUT", DetailsUrlFor(5209385)),
+            AzurePipelinesCheck("net - template - ci", "SUCCESS", DetailsUrlFor(5209386)));
+
+        var builds = await helper.ResolveBuildsAsync(PrUrl, ct: CancellationToken.None);
+
+        Assert.That(builds.Select(b => b.BuildId), Is.EqualTo(new[] { 5209385 }));
+    }
+
+    [Test]
     public async Task ResolveBuildsAsync_PullRequestWithSeveralChecksOnOneBuild_ReturnsThatBuildOnce()
     {
         GivenBuildDetails(BuildFor("public", BuildStatus.Completed, BuildResult.Failed));

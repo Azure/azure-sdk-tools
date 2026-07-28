@@ -10,15 +10,19 @@ public class BuildAnalysis
 
     /// <summary>
     /// Failed tests recovered from the build's test artifacts, keyed by the platform the artifact was
-    /// published for (for example "Ubuntu2404_NET80_PackageRef_Debug").
+    /// published for (for example "Ubuntu2404_NET80_PackageRef_Debug"). Null when no failed tests were
+    /// recovered.
     /// </summary>
     [JsonPropertyName("failed_build_tests")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public Dictionary<string, List<string>> FailedBuildTests { get; set; } = [];
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string, List<string>>? FailedBuildTests { get; set; }
 
+    /// <summary>
+    /// Task-level failures recovered from the build's logs. Null when no failing tasks were found.
+    /// </summary>
     [JsonPropertyName("failed_build_tasks")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public LogAnalysisResponse FailedBuildTasks { get; set; } = new LogAnalysisResponse();
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public LogAnalysisResponse? FailedBuildTasks { get; set; }
 
     /// <summary>
     /// Non-fatal errors encountered while analyzing this specific build (for example a log or test-artifact

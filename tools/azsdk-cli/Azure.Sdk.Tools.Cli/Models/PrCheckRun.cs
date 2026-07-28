@@ -11,6 +11,16 @@ namespace Azure.Sdk.Tools.Cli.Models;
 /// </summary>
 public class PrCheckRun
 {
+    /// <summary>
+    /// Conclusions that mean a check did not pass. Anything else - success, skipped, neutral, or a check
+    /// that is still running and has no conclusion yet - is not a failure to report. Compared case-insensitively
+    /// because the REST and GraphQL APIs disagree on the casing they return.
+    /// </summary>
+    private static readonly HashSet<string> FailedConclusions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED", "STARTUP_FAILURE",
+    };
+
     [JsonPropertyName("name")]
     public string Name { get; set; } = "";
 
@@ -25,4 +35,11 @@ public class PrCheckRun
 
     [JsonPropertyName("type")]
     public string Type { get; set; } = "";
+
+    /// <summary>
+    /// True when this check's conclusion means it did not pass. See <see cref="FailedConclusions"/> for the
+    /// exact set. A null conclusion (still running) is not treated as a failure.
+    /// </summary>
+    [JsonIgnore]
+    public bool IsFailed => Conclusion != null && FailedConclusions.Contains(Conclusion);
 }

@@ -185,11 +185,11 @@ public class PipelineIdentifierHelper(
     {
         var checkRuns = await gitHubService.GetPrCheckRunsAsync(prLink.Owner, prLink.Repo, prLink.PrNumber, ct);
 
-        // Filter to Azure Pipelines check runs with FAILURE conclusion, de-dup by buildId
+        // Filter to failed Azure Pipelines check runs (any non-passing conclusion, not just FAILURE), de-dup by buildId
         var builds = new Dictionary<int, ResolvedBuild>();
         var projectNameCache = new Dictionary<string, string>();
 
-        foreach (var run in checkRuns.Where(r => r.AppName == "Azure Pipelines" && r.Conclusion == "FAILURE"))
+        foreach (var run in checkRuns.Where(r => r.AppName == "Azure Pipelines" && r.IsFailed))
         {
             if (string.IsNullOrEmpty(run.DetailsUrl))
             {
@@ -259,7 +259,7 @@ public class PipelineIdentifierHelper(
     /// uniquely identifies its project. Any other value (the org name "azure-sdk", a typo, etc.) is
     /// unrecognized and rejected with an ArgumentException so callers fail early.
     /// </summary>
-    private async Task<string> ResolveProjectNameAsync(int buildId, string project = null, CancellationToken ct = default)
+    private async Task<string> ResolveProjectNameAsync(int buildId, string? project = null, CancellationToken ct = default)
     {
         var normalized = NormalizeProjectName(project);
 

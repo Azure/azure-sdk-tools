@@ -220,7 +220,7 @@ public class PipelineAnalysisHelperTests
         var (analyses, _) = await helper.AnalyzePipelineAsync([Build]);
 
         Assert.That(
-            analyses.Single().FailedBuildTasks.Errors.Select(e => e.Message),
+            analyses.Single().FailedBuildTasks!.Errors.Select(e => e.Message),
             Is.EqualTo(logAnalyzerResult.Select(e => e.Message)));
     }
 
@@ -233,7 +233,7 @@ public class PipelineAnalysisHelperTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(analyses.Single().FailedBuildTasks.HasErrors, Is.False);
+            Assert.That(analyses.Single().FailedBuildTasks, Is.Null);
             Assert.That(analyses.Single().Errors, Is.Null);
         });
     }
@@ -278,7 +278,7 @@ public class PipelineAnalysisHelperTests
         Assert.Multiple(() =>
         {
             Assert.That(
-                analyses.Single().FailedBuildTests[Platform],
+                analyses.Single().FailedBuildTests![Platform],
                 Is.EqualTo(new[] { "Azure.Core.Tests.PipelineTests.CanRetry" }));
             Assert.That(warnings, Is.Empty);
         });
@@ -297,7 +297,7 @@ public class PipelineAnalysisHelperTests
         Assert.Multiple(() =>
         {
             Assert.That(warnings, Has.Exactly(1).Contains("test-results.trx"));
-            Assert.That(analyses.Single().FailedBuildTests, Is.Empty);
+            Assert.That(analyses.Single().FailedBuildTests, Is.Null);
         });
     }
 
@@ -313,7 +313,7 @@ public class PipelineAnalysisHelperTests
         var (analyses, _) = await helper.AnalyzePipelineAsync([Build]);
 
         Assert.That(
-            analyses.Single().FailedBuildTests[Platform],
+            analyses.Single().FailedBuildTests![Platform],
             Is.EqualTo(new[] { "Azure.Core.Tests.PipelineTests.CanRetry" }));
     }
 
@@ -330,7 +330,7 @@ public class PipelineAnalysisHelperTests
 
         var (analyses, _) = await helper.AnalyzePipelineAsync([Build]);
 
-        var failedTests = analyses.Single().FailedBuildTests;
+        var failedTests = analyses.Single().FailedBuildTests!;
         Assert.Multiple(() =>
         {
             Assert.That(
@@ -355,7 +355,7 @@ public class PipelineAnalysisHelperTests
 
         var (analyses, _) = await helper.AnalyzePipelineAsync([Build]);
 
-        Assert.That(analyses.Single().FailedBuildTests.Keys, Is.EqualTo(new[] { "Ubuntu2404_NET80" }));
+        Assert.That(analyses.Single().FailedBuildTests!.Keys, Is.EqualTo(new[] { "Ubuntu2404_NET80" }));
     }
 
     [Test]

@@ -9,6 +9,8 @@ steps:
       versionSpec: '$(NodeVersion)'
     displayName: 'Install Node.js'
 
+  - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+
   - bash: |
       npm ci
     displayName: 'npm ci'

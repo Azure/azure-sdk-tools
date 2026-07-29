@@ -938,8 +938,23 @@ namespace Azure.Sdk.Tools.Cli.Services
                 throw new Exception($"Failed to get SDK generation pipeline for {language}.");
             }
 
-            var isRunningInPipeline = Environment.GetEnvironmentVariable("SYSTEM_TEAMPROJECTID") != null;
+            var isRunningInAzurePipelines = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("SYSTEM_TEAMPROJECTID"));
+            var templateParams = BuildSdkGenerationTemplateParams(typespecProjectRoot, workItemId, sdkReleaseType, apiVersion, sdkRepoBranch, isRunningInAzurePipelines);
 
+            var build = await RunPipelineAsync(pipelineDefinitionId, templateParams, apiSpecBranchRef, ct: ct);
+            var pipelineRunUrl = GetPipelineUrl(build.Id);
+            logger.LogInformation("Started pipeline run {pipelineRunUrl} to generate SDK.", pipelineRunUrl);
+            if (workItemId != 0)
+            {
+                logger.LogInformation("Adding SDK generation pipeline link to release plan");
+                await AddSdkInfoInReleasePlanAsync(workItemId, MapLanguageToId(language), pipelineRunUrl, "", "In progress", ct: ct);
+            }
+
+            return build;
+        }
+
+        private static Dictionary<string, string> BuildSdkGenerationTemplateParams(string typespecProjectRoot, int workItemId, string sdkReleaseType, string apiVersion, string sdkRepoBranch, bool isRunningInAzurePipelines)
+        {
             var templateParams = new Dictionary<string, string>
             {
                  { "ConfigType", "TypeSpec"},
@@ -949,7 +964,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                  { "TriggerSource", "sdk-release" }
             };
 
-            if (!isRunningInPipeline)
+            if (!isRunningInAzurePipelines)
             {
                 templateParams["SdkReleaseType"] = sdkReleaseType;
 
@@ -964,16 +979,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 templateParams["SdkRepoBranch"] = sdkRepoBranch;
             }
 
-            var build = await RunPipelineAsync(pipelineDefinitionId, templateParams, apiSpecBranchRef, ct: ct);
-            var pipelineRunUrl = GetPipelineUrl(build.Id);
-            logger.LogInformation("Started pipeline run {pipelineRunUrl} to generate SDK.", pipelineRunUrl);
-            if (workItemId != 0)
-            {
-                logger.LogInformation("Adding SDK generation pipeline link to release plan");
-                await AddSdkInfoInReleasePlanAsync(workItemId, MapLanguageToId(language), pipelineRunUrl, "", "In progress", ct: ct);
-            }
-
-            return build;
+            return templateParams;
         }
 
         public async Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string apiSpecBranchRef = "main", CancellationToken ct = default)

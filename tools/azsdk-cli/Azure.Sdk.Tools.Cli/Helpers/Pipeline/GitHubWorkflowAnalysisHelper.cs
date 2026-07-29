@@ -11,18 +11,18 @@ namespace Azure.Sdk.Tools.Cli.Helpers.Pipeline;
 public interface IGitHubWorkflowAnalysisHelper
 {
     /// <summary>
-    /// Collects the failed workflow runs for the source's commit, with the logs and jobs of each. Successful
+    /// Collects the failed workflow runs for the referenced commit, with the logs and jobs of each. Successful
     /// runs are skipped: their logs carry no failure to explain and would otherwise dominate the analysis.
     /// </summary>
-    Task<List<GitHubWorkflowRunAnalysis>> AnalyzeWorkflowsAsync(BuildGitHubSource source, CancellationToken ct);
+    Task<List<GitHubWorkflowRunAnalysis>> AnalyzeWorkflowsAsync(GitHubCommitRef commitRef, CancellationToken ct);
 
     /// <summary>
-    /// Lists the checks reported as failing on the source's pull request. This covers the red checks that no
-    /// workflow run accounts for: results published by Azure Pipelines, and commit statuses posted by
+    /// Lists the checks reported as failing on the referenced commit's pull request. This covers the red checks
+    /// that no workflow run accounts for: results published by Azure Pipelines, and commit statuses posted by
     /// aggregating workflows that succeed while reporting a failure. Returns an empty list when the build was
     /// not triggered by a pull request.
     /// </summary>
-    Task<List<PrCheckRun>> GetFailingChecksAsync(BuildGitHubSource source, CancellationToken ct);
+    Task<List<PrCheckRun>> GetFailingChecksAsync(GitHubCommitRef commitRef, CancellationToken ct);
 }
 
 public class GitHubWorkflowAnalysisHelper(
@@ -34,14 +34,14 @@ public class GitHubWorkflowAnalysisHelper(
     // The GitHub Actions runner marks the failure that ends a step with this prefix.
     private static readonly List<string> RunnerErrorAnnotations = ["##[error]"];
 
-    public async Task<List<GitHubWorkflowRunAnalysis>> AnalyzeWorkflowsAsync(BuildGitHubSource source, CancellationToken ct)
+    public async Task<List<GitHubWorkflowRunAnalysis>> AnalyzeWorkflowsAsync(GitHubCommitRef commitRef, CancellationToken ct)
     {
-        var workflowRuns = await gitHubService.GetFailedWorkflowRunsForCommitAsync(source.Owner, source.Repo, source.HeadSha!, ct);
+        var workflowRuns = await gitHubService.GetFailedWorkflowRunsForCommitAsync(commitRef.Owner, commitRef.Repo, commitRef.HeadSha, ct);
 
         List<GitHubWorkflowRunAnalysis> runAnalyses = [];
         foreach (var run in MostRecentRunPerWorkflow(workflowRuns))
         {
-            runAnalyses.Add(await AnalyzeWorkflowRunAsync(source, run, ct));
+            runAnalyses.Add(await AnalyzeWorkflowRunAsync(commitRef, run, ct));
         }
 
         return runAnalyses;
@@ -62,14 +62,14 @@ public class GitHubWorkflowAnalysisHelper(
         return latest;
     }
 
-    public async Task<List<PrCheckRun>> GetFailingChecksAsync(BuildGitHubSource source, CancellationToken ct)
+    public async Task<List<PrCheckRun>> GetFailingChecksAsync(GitHubCommitRef commitRef, CancellationToken ct)
     {
-        if (source.PullRequestNumber == null)
+        if (commitRef.PullRequestNumber == null)
         {
             return [];
         }
 
-        var checks = await gitHubService.GetPrCheckRunsAsync(source.Owner, source.Repo, source.PullRequestNumber.Value, ct);
+        var checks = await gitHubService.GetPrCheckRunsAsync(commitRef.Owner, commitRef.Repo, commitRef.PullRequestNumber.Value, ct);
         return checks.Where(check => check.IsFailed).ToList();
     }
 
@@ -78,7 +78,7 @@ public class GitHubWorkflowAnalysisHelper(
     /// the run published none, the job list so the failure is at least named. Each read is attempted
     /// independently so a run whose logs have expired is still reported with whatever was available.
     /// </summary>
-    private async Task<GitHubWorkflowRunAnalysis> AnalyzeWorkflowRunAsync(BuildGitHubSource source, WorkflowRun run, CancellationToken ct)
+    private async Task<GitHubWorkflowRunAnalysis> AnalyzeWorkflowRunAsync(GitHubCommitRef commitRef, WorkflowRun run, CancellationToken ct)
     {
         var runAnalysis = new GitHubWorkflowRunAnalysis
         {
@@ -91,7 +91,7 @@ public class GitHubWorkflowAnalysisHelper(
         string? logs = null;
         try
         {
-            logs = await gitHubService.GetFailedWorkflowRunLogsAsync(source.Owner, source.Repo, run.Id, ct);
+            logs = await gitHubService.GetFailedWorkflowRunLogsAsync(commitRef.Owner, commitRef.Repo, run.Id, ct);
             if (!string.IsNullOrEmpty(logs))
             {
                 runAnalysis.Logs = await AnalyzeLogsAsync(logs, run.HtmlUrl, ct);
@@ -107,7 +107,7 @@ public class GitHubWorkflowAnalysisHelper(
         {
             try
             {
-                var jobs = await gitHubService.GetWorkflowRunJobsAsync(source.Owner, source.Repo, run.Id, ct);
+                var jobs = await gitHubService.GetWorkflowRunJobsAsync(commitRef.Owner, commitRef.Repo, run.Id, ct);
                 runAnalysis.Jobs.AddRange(jobs.Select(job => $"{job.Name}: {job.Conclusion?.StringValue ?? job.Status.StringValue}"));
             }
             catch (Exception ex)

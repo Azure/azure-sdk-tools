@@ -38,8 +38,14 @@ public class GitHubWorkflowRunAnalysis
 }
 
 /// <summary>
-/// The GitHub repository, commit, and pull request a DevOps build ran against. Only resolvable for pipelines
-/// whose source is a GitHub repository; <see cref="HeadSha"/> is null when the build reports no source version,
-/// and <see cref="PullRequestNumber"/> is null for builds that were not triggered by a pull request.
+/// Points at the GitHub commit an analysis runs against: the repository that owns it, the commit itself, and
+/// the pull request it belongs to when there is one. Resolved either from a DevOps build's source version or
+/// directly from a pull request; resolution returns null rather than a ref with no commit, so a ref always
+/// names one. <see cref="PullRequestNumber"/> is null for commits not associated with a pull request.
 /// </summary>
-public record BuildGitHubSource(string Owner, string Repo, string? HeadSha, int? PullRequestNumber);
+public record GitHubCommitRef(string Owner, string Repo, string HeadSha, int? PullRequestNumber)
+{
+    public string HeadSha { get; init; } = string.IsNullOrEmpty(HeadSha)
+        ? throw new ArgumentException("A GitHub commit ref must name a commit.", nameof(HeadSha))
+        : HeadSha;
+}

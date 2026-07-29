@@ -7,7 +7,7 @@ namespace Azure.Sdk.Tools.Mock.Handlers.Pipeline;
 
 /// <summary>
 /// Mock handler for azsdk_get_pipeline_status.
-/// Switches on buildId — returns a completed pipeline status for known IDs, default otherwise.
+/// Switches on buildId, returning a completed pipeline status for known IDs and a default otherwise.
 /// </summary>
 public class GetPipelineStatusHandler : IMockToolHandler
 {

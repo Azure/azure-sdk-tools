@@ -19,14 +19,14 @@ public interface IPipelineAnalysisHelper
     /// Analyzes the given builds, returning one analysis per build plus any warnings that apply to the
     /// overall result (for example test artifacts that could not be parsed).
     /// </summary>
-    Task<(List<BuildAnalysis> BuildAnalyses, List<string> Warnings)> AnalyzePipelineAsync(
-        List<ResolvedBuild> builds,
+    Task<(List<AzurePipelineAnalysis> AzurePipelineAnalyses, List<string> Warnings)> AnalyzePipelineAsync(
+        List<AzurePipelineBuild> builds,
         int? logId = null,
         CancellationToken ct = default);
 
     /// <summary>Downloads and analyzes the specific failure logs for a build.</summary>
     Task<LogAnalysisResponse> AnalyzePipelineFailureLogsAsync(
-        ResolvedBuild build,
+        AzurePipelineBuild build,
         List<int> logIds,
         CancellationToken ct);
 }
@@ -38,29 +38,29 @@ public class PipelineAnalysisHelper(
     ILogger<PipelineAnalysisHelper> logger
 ) : IPipelineAnalysisHelper
 {
-    public async Task<(List<BuildAnalysis> BuildAnalyses, List<string> Warnings)> AnalyzePipelineAsync(
-        List<ResolvedBuild> builds,
+    public async Task<(List<AzurePipelineAnalysis> AzurePipelineAnalyses, List<string> Warnings)> AnalyzePipelineAsync(
+        List<AzurePipelineBuild> builds,
         int? logId = null,
         CancellationToken ct = default)
     {
-        List<BuildAnalysis> buildAnalyses = [];
+        List<AzurePipelineAnalysis> pipelineAnalyses = [];
         List<string> warnings = [];
 
         foreach (var build in builds)
         {
             // Each build is analyzed independently so a failure reading one run does not abort the batch.
-            var buildAnalysis = new BuildAnalysis
+            var pipelineAnalysis = new AzurePipelineAnalysis
             {
-                Build = build
+                PipelineBuild = build
             };
-            buildAnalyses.Add(buildAnalysis);
+            pipelineAnalyses.Add(pipelineAnalysis);
 
             var recoveredFailedTests = false;
             try
             {
                 var (failedTests, skippedArtifacts) = await AnalyzeBuildTestArtifactsAsync(build, ct);
                 recoveredFailedTests = failedTests.Count > 0;
-                buildAnalysis.FailedBuildTests = recoveredFailedTests ? failedTests : null;
+                pipelineAnalysis.FailedPipelineTests = recoveredFailedTests ? failedTests : null;
 
                 if (skippedArtifacts.Count > 0)
                 {
@@ -74,7 +74,7 @@ public class PipelineAnalysisHelper(
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to analyze failed-test artifacts for build {buildId}", build.BuildId);
-                (buildAnalysis.Errors ??= []).Add($"Failed to analyze test artifacts: {ex.Message}");
+                (pipelineAnalysis.Errors ??= []).Add($"Failed to analyze test artifacts: {ex.Message}");
                 // Leaving recoveredFailedTests false widens the log search below.
             }
 
@@ -86,21 +86,21 @@ public class PipelineAnalysisHelper(
                 var pipelineFailureLogs = await AnalyzePipelineFailureLogsAsync(build, logIds, ct);
                 if (pipelineFailureLogs.HasErrors)
                 {
-                    buildAnalysis.FailedBuildTasks = pipelineFailureLogs;
+                    pipelineAnalysis.FailedPipelineTasks = pipelineFailureLogs;
                 }
                 else if (!string.IsNullOrEmpty(pipelineFailureLogs.ResponseError))
                 {
-                    (buildAnalysis.Errors ??= []).Add(pipelineFailureLogs.ResponseError);
+                    (pipelineAnalysis.Errors ??= []).Add(pipelineFailureLogs.ResponseError);
                 }
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to analyze pipeline failure logs for build {buildId}", build.BuildId);
-                (buildAnalysis.Errors ??= []).Add($"Failed to analyze failure logs: {ex.Message}");
+                (pipelineAnalysis.Errors ??= []).Add($"Failed to analyze failure logs: {ex.Message}");
             }
         }
 
-        return (buildAnalyses, warnings);
+        return (pipelineAnalyses, warnings);
     }
 
     /// <summary>
@@ -108,7 +108,7 @@ public class PipelineAnalysisHelper(
     /// published for. Artifacts that cannot be read or parsed are returned to the caller rather than
     /// reported here.
     /// </summary>
-    private async Task<(Dictionary<string, List<string>> FailedTests, List<string> SkippedArtifacts)> AnalyzeBuildTestArtifactsAsync(ResolvedBuild build, CancellationToken ct)
+    private async Task<(Dictionary<string, List<string>> FailedTests, List<string> SkippedArtifacts)> AnalyzeBuildTestArtifactsAsync(AzurePipelineBuild build, CancellationToken ct)
     {
         var failedTests = new Dictionary<string, List<string>>();
         var failedTestArtifacts = await devopsService.GetPipelineLlmArtifacts(build.Project, build.BuildId, ct);
@@ -148,7 +148,7 @@ public class PipelineAnalysisHelper(
     /// Collects the log ids of the build's failed tasks. Test steps are excluded only when the build's test
     /// results were recovered from its artifacts.
     /// </summary>
-    private async Task<List<int>> getPipelineFailureLogIds(ResolvedBuild build, bool excludeTestSteps, CancellationToken ct = default)
+    private async Task<List<int>> getPipelineFailureLogIds(AzurePipelineBuild build, bool excludeTestSteps, CancellationToken ct = default)
     {
         logger.LogDebug("Getting pipeline task failures for {project} {buildId}", build.Project, build.BuildId);
 
@@ -162,7 +162,7 @@ public class PipelineAnalysisHelper(
         return failedTasks.Select(t => t.Log?.Id ?? 0).Where(id => id != 0).Distinct().ToList();
     }
 
-    public async Task<LogAnalysisResponse> AnalyzePipelineFailureLogsAsync(ResolvedBuild build, List<int> logIds, CancellationToken ct)
+    public async Task<LogAnalysisResponse> AnalyzePipelineFailureLogsAsync(AzurePipelineBuild build, List<int> logIds, CancellationToken ct)
     {
         try
         {
@@ -178,7 +178,7 @@ public class PipelineAnalysisHelper(
         }
     }
 
-    private async Task<LogAnalysisResponse> analyzePipelineFailureLogsAsync(ResolvedBuild resolvedBuild, List<int> logIds, CancellationToken ct)
+    private async Task<LogAnalysisResponse> analyzePipelineFailureLogsAsync(AzurePipelineBuild build, List<int> logIds, CancellationToken ct)
     {
         List<string> logFilePaths = [];
 
@@ -186,8 +186,8 @@ public class PipelineAnalysisHelper(
         {
             foreach (var logId in logIds)
             {
-                logger.LogDebug("Downloading pipeline failure log for {project} {buildId} {logId}", resolvedBuild.Project, resolvedBuild.BuildId, logId);
-                var logContent = await devopsService.GetBuildLogLinesAsync(resolvedBuild.Project, resolvedBuild.BuildId, logId, ct);
+                logger.LogDebug("Downloading pipeline failure log for {project} {buildId} {logId}", build.Project, build.BuildId, logId);
+                var logContent = await devopsService.GetBuildLogLinesAsync(build.Project, build.BuildId, logId, ct);
                 var logText = string.Join("\n", logContent);
 
                 var tempPath = Path.Combine(Path.GetTempPath(), $"log-analysis-{Guid.NewGuid():N}.txt");
@@ -198,7 +198,7 @@ public class PipelineAnalysisHelper(
 
             LogAnalysisResponse response = new()
             {
-                PipelineUrl = resolvedBuild.PipelineUrl,
+                PipelineUrl = build.PipelineUrl,
                 Errors = []
             };
 

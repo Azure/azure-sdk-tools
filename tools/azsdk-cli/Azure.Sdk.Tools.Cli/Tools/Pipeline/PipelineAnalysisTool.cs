@@ -83,11 +83,11 @@ public class PipelineAnalysisTool(
 
             // A pull request can be red on GitHub Actions alone, so when no build backs the identifier the
             // source is resolved from the pull request itself rather than reporting nothing to analyze.
-            var gitHubSource = builds.Count > 0
-                ? await pipelineIdentifierHelper.ResolveGitHubSourceAsync(builds, ct)
-                : await pipelineIdentifierHelper.ResolveGitHubSourceFromPrAsync(pipelineIdentifier, ct);
+            var commitRef = builds.Count > 0
+                ? await pipelineIdentifierHelper.ResolveCommitRefFromBuildsAsync(builds, ct)
+                : await pipelineIdentifierHelper.ResolveCommitRefFromPrAsync(pipelineIdentifier, ct);
 
-            if (builds.Count == 0 && gitHubSource == null)
+            if (builds.Count == 0 && commitRef == null)
             {
                 response.ResponseError = $"No failed Azure Pipeline builds found for {pipelineIdentifier}";
                 return response;
@@ -97,40 +97,40 @@ public class PipelineAnalysisTool(
 
             if (builds.Count > 0)
             {
-                var (buildAnalyses, warnings) = await pipelineAnalysisHelper.AnalyzePipelineAsync(builds, logId, ct);
-                response.BuildAnalyses = buildAnalyses;
+                var (pipelineAnalyses, warnings) = await pipelineAnalysisHelper.AnalyzePipelineAsync(builds, logId, ct);
+                response.AzurePipelineAnalyses = pipelineAnalyses;
                 if (warnings.Count > 0)
                 {
                     (response.NextSteps ??= []).AddRange(warnings);
                 }
             }
 
-            if (gitHubSource != null && !string.IsNullOrEmpty(gitHubSource.HeadSha))
+            if (commitRef != null)
             {
                 try
                 {
-                    response.GitHubWorkflowAnalyses = await workflowAnalysisHelper.AnalyzeWorkflowsAsync(gitHubSource, ct);
+                    response.GitHubWorkflowAnalyses = await workflowAnalysisHelper.AnalyzeWorkflowsAsync(commitRef, ct);
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "Failed to analyze GitHub workflow runs for {owner}/{repo} @ {sha}", gitHubSource.Owner, gitHubSource.Repo, gitHubSource.HeadSha);
+                    logger.LogError(ex, "Failed to analyze GitHub workflow runs for {owner}/{repo} @ {sha}", commitRef.Owner, commitRef.Repo, commitRef.HeadSha);
                     (response.NextSteps ??= []).Add(
-                        $"GitHub Actions runs for {gitHubSource.Owner}/{gitHubSource.Repo} @ {gitHubSource.HeadSha} could not be listed " +
+                        $"GitHub Actions runs for {commitRef.Owner}/{commitRef.Repo} @ {commitRef.HeadSha} could not be listed " +
                         $"({ex.Message}); the pipeline results are unaffected.");
                 }
             }
 
-            if (gitHubSource?.PullRequestNumber != null)
+            if (commitRef?.PullRequestNumber != null)
             {
                 try
                 {
-                    response.FailingChecks = await workflowAnalysisHelper.GetFailingChecksAsync(gitHubSource, ct);
+                    response.FailingPullRequestChecks = await workflowAnalysisHelper.GetFailingChecksAsync(commitRef, ct);
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "Failed to list failing checks for {owner}/{repo}#{pr}", gitHubSource.Owner, gitHubSource.Repo, gitHubSource.PullRequestNumber);
+                    logger.LogError(ex, "Failed to list failing checks for {owner}/{repo}#{pr}", commitRef.Owner, commitRef.Repo, commitRef.PullRequestNumber);
                     (response.NextSteps ??= []).Add(
-                        $"Failing checks for {gitHubSource.Owner}/{gitHubSource.Repo}#{gitHubSource.PullRequestNumber} could not be listed " +
+                        $"Failing checks for {commitRef.Owner}/{commitRef.Repo}#{commitRef.PullRequestNumber} could not be listed " +
                         $"({ex.Message}); the results above may not cover every red check on the pull request.");
                 }
             }
@@ -158,7 +158,7 @@ public class PipelineAnalysisTool(
     {
         try
         {
-            // Serialize as JSON to ensure Copilot gets the full context (FailedTasks, FailedTests)
+            // Serialize as JSON to ensure Copilot gets the full context (FailedPipelineTasks, FailedPipelineTests)
             // even when ResponseErrors is set, since ToString() suppresses Format() output on errors.
             var pipelineData = JsonSerializer.Serialize(pipelineResult, new JsonSerializerOptions { WriteIndented = true });
 
@@ -169,8 +169,9 @@ public class PipelineAnalysisTool(
 
             var instructions = $"""
                 You are a pipeline failure analyst. You have been given the output of a CI/CD pipeline analysis.
-                Your job is to examine the failed tasks and failed tests, identify root causes, and provide
-                a clear, actionable summary for a developer.
+                Your job is to examine the `failed_pipeline_tasks` and `failed_pipeline_tests` of each entry in
+                `azure_pipeline_analyses`, identify root causes, and provide a clear, actionable summary for a
+                developer.
 
                 Respond in markdown format. Structure your response as:
                 1. **Root Cause Analysis** - What likely caused each failure
@@ -179,15 +180,20 @@ public class PipelineAnalysisTool(
 
                 If there are no failures, state that the pipeline appears healthy.
 
-                If any build in `build_analyses` has a `build.status` that is present and is neither
-                "completed" nor "Not available", that build is still running: note that its failure
+                If any build in `azure_pipeline_analyses` has a `pipeline_build.status` that is present and is
+                neither "completed" nor "Not available", that build is still running: note that its failure
                 logs and test artifacts may not be published yet, so the analysis may be incomplete
                 and the developer should re-run it once the build finishes. In that case do not
                 describe that build as healthy just because no failures were found.
 
-                `github_workflow_analyses`, if present, holds GitHub Actions runs for the same commit.
+                `github_workflow_analyses`, if present, holds GitHub Actions runs for the same commit, with
+                their failures in `logs` and `jobs` rather than the `failed_pipeline_*` fields above.
                 These are independent of the pipeline builds: report them separately and do not treat an
                 Actions failure as a pipeline failure (or vice versa).
+
+                `failing_pull_request_checks`, if present, lists every check GitHub reports as red on the pull
+                request. This can be a duplicate of a pipeline or Actions failure. But it is a catch all for
+                anything that failed.
 
                 Here is the pipeline analysis data:
 

@@ -28,19 +28,19 @@ public class AnalyzePipelineHandler : IMockToolHandler
         var pipelineUrl = $"https://dev.azure.com/azure-sdk/internal/_build/results?buildId={buildId}";
         return new AnalyzePipelineResponse
         {
-            BuildAnalyses = new List<BuildAnalysis>
+            AzurePipelineAnalyses = new List<AzurePipelineAnalysis>
             {
-                new BuildAnalysis
+                new AzurePipelineAnalysis
                 {
-                    Build = new ResolvedBuild(buildIdValue, "internal", pipelineUrl, "completed", "failed"),
-                    FailedBuildTests = new Dictionary<string, List<string>>
+                    PipelineBuild = new AzurePipelineBuild(buildIdValue, "internal", pipelineUrl, "completed", "failed"),
+                    FailedPipelineTests = new Dictionary<string, List<string>>
                     {
                         ["Ubuntu2404_NET80_PackageRef_Debug"] =
                         [
                             "WidgetClientLiveTests.GetWidget"
                         ]
                     },
-                    FailedBuildTasks = new LogAnalysisResponse
+                    FailedPipelineTasks = new LogAnalysisResponse
                     {
                         PipelineUrl = pipelineUrl,
                         Errors =

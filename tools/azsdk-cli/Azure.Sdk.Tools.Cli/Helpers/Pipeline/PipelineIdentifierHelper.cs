@@ -41,7 +41,7 @@ public interface IPipelineIdentifierHelper
     /// Resolves any identifier (build ID, Azure Pipeline link, GitHub PR link, or bare PR number)
     /// to a list of Azure Pipeline builds. For PR identifiers, returns the failed AZP builds from check runs.
     /// </summary>
-    Task<List<ResolvedBuild>> ResolveBuildsAsync(string identifier, string? project = null, CancellationToken ct = default);
+    Task<List<AzurePipelineBuild>> ResolveBuildsAsync(string identifier, string? project = null, CancellationToken ct = default);
 
     /// <summary>
     /// Resolves the GitHub repository and commit the given builds ran against. The commit always comes from
@@ -49,7 +49,7 @@ public interface IPipelineIdentifierHelper
     /// rather than to whatever the branch or pull request points at now. Returns null when none of the builds
     /// are backed by a GitHub repository.
     /// </summary>
-    Task<BuildGitHubSource?> ResolveGitHubSourceAsync(IEnumerable<ResolvedBuild> builds, CancellationToken ct);
+    Task<GitHubCommitRef?> ResolveCommitRefFromBuildsAsync(IEnumerable<AzurePipelineBuild> builds, CancellationToken ct);
 
     /// <summary>
     /// Resolves the GitHub repository and commit directly from an identifier that names a pull request, for
@@ -57,7 +57,7 @@ public interface IPipelineIdentifierHelper
     /// the pull request's current head. Returns null when the identifier is not a pull request or its head
     /// cannot be read.
     /// </summary>
-    Task<BuildGitHubSource?> ResolveGitHubSourceFromPrAsync(string identifier, CancellationToken ct);
+    Task<GitHubCommitRef?> ResolveCommitRefFromPrAsync(string identifier, CancellationToken ct);
 }
 
 public record GitHubPrLink(string Owner, string Repo, int PrNumber);
@@ -166,7 +166,7 @@ public class PipelineIdentifierHelper(
         return null;
     }
 
-    public async Task<List<ResolvedBuild>> ResolveBuildsAsync(string identifier, string? project = null, CancellationToken ct = default)
+    public async Task<List<AzurePipelineBuild>> ResolveBuildsAsync(string identifier, string? project = null, CancellationToken ct = default)
     {
         // Check if this is a GitHub PR identifier (URL or bare PR number)
         var prLink = await TryResolveGitHubPrAsync(identifier, ct);
@@ -185,16 +185,16 @@ public class PipelineIdentifierHelper(
             resolvedProject = await ResolveProjectNameAsync(singleBuildId, resolvedProject, ct);
         }
 
-        var resolvedBuild = new ResolvedBuild(singleBuildId, resolvedProject, null, null, null);
-        return new List<ResolvedBuild> { await GetBuildStatusesAsync(resolvedBuild, ct) };
+        var build = new AzurePipelineBuild(singleBuildId, resolvedProject, null, null, null);
+        return new List<AzurePipelineBuild> { await GetBuildStatusesAsync(build, ct) };
     }
 
-    private async Task<List<ResolvedBuild>> ResolveBuildsFromPrAsync(GitHubPrLink prLink, string? project = null, CancellationToken ct = default)
+    private async Task<List<AzurePipelineBuild>> ResolveBuildsFromPrAsync(GitHubPrLink prLink, string? project = null, CancellationToken ct = default)
     {
         var checkRuns = await gitHubService.GetPrCheckRunsAsync(prLink.Owner, prLink.Repo, prLink.PrNumber, ct);
 
         // Filter to failed Azure Pipelines check runs (any non-passing conclusion, not just FAILURE), de-dup by buildId
-        var builds = new Dictionary<int, ResolvedBuild>();
+        var builds = new Dictionary<int, AzurePipelineBuild>();
         var projectNameCache = new Dictionary<string, string>();
 
         foreach (var run in checkRuns.Where(r => r.AppName == "Azure Pipelines" && r.IsFailed))
@@ -223,8 +223,8 @@ public class PipelineIdentifierHelper(
                     ? GetPipelineUrl(resolvedProject, buildId)
                     : run.DetailsUrl;
 
-                ResolvedBuild resolvedBuild = new ResolvedBuild(buildId, resolvedProject, pipelineUrl, null, null);
-                builds[buildId] = await GetBuildStatusesAsync(resolvedBuild, ct);
+                AzurePipelineBuild build = new AzurePipelineBuild(buildId, resolvedProject, pipelineUrl, null, null);
+                builds[buildId] = await GetBuildStatusesAsync(build, ct);
             }
             catch (ArgumentException)
             {
@@ -235,25 +235,25 @@ public class PipelineIdentifierHelper(
         return [.. builds.Values];
     }
 
-    public async Task<BuildGitHubSource?> ResolveGitHubSourceAsync(IEnumerable<ResolvedBuild> builds, CancellationToken ct)
+    public async Task<GitHubCommitRef?> ResolveCommitRefFromBuildsAsync(IEnumerable<AzurePipelineBuild> builds, CancellationToken ct)
     {
         foreach (var build in builds)
         {
             try
             {
-                var source = await devOpsService.ResolveBuildGitHubSourceAsync(build.BuildId, build.Project, ct);
-                if (source != null && !string.IsNullOrEmpty(source.HeadSha))
+                var commitRef = await devOpsService.ResolveBuildCommitRefAsync(build.BuildId, build.Project, ct);
+                if (commitRef != null)
                 {
                     logger.LogDebug(
                         "Correlated build {buildId} to {owner}/{repo} @ {sha}",
-                        build.BuildId, source.Owner, source.Repo, source.HeadSha);
-                    return source;
+                        build.BuildId, commitRef.Owner, commitRef.Repo, commitRef.HeadSha);
+                    return commitRef;
                 }
             }
             catch (Exception ex)
             {
                 // Resolution is best effort: a build that cannot be read just means the next one is tried.
-                logger.LogDebug(ex, "Could not resolve a GitHub source for build {buildId}", build.BuildId);
+                logger.LogDebug(ex, "Could not resolve a GitHub commit for build {buildId}", build.BuildId);
             }
         }
 
@@ -261,7 +261,7 @@ public class PipelineIdentifierHelper(
         return null;
     }
 
-    public async Task<BuildGitHubSource?> ResolveGitHubSourceFromPrAsync(string identifier, CancellationToken ct)
+    public async Task<GitHubCommitRef?> ResolveCommitRefFromPrAsync(string identifier, CancellationToken ct)
     {
         var prLink = await TryResolveGitHubPrAsync(identifier, ct);
         if (prLink == null)
@@ -280,7 +280,7 @@ public class PipelineIdentifierHelper(
             }
 
             logger.LogDebug("Resolved {owner}/{repo}#{pr} to commit {sha}", prLink.Owner, prLink.Repo, prLink.PrNumber, headSha);
-            return new BuildGitHubSource(prLink.Owner, prLink.Repo, headSha, prLink.PrNumber);
+            return new GitHubCommitRef(prLink.Owner, prLink.Repo, headSha, prLink.PrNumber);
         }
         catch (Exception ex)
         {
@@ -324,7 +324,7 @@ public class PipelineIdentifierHelper(
         throw new ArgumentException($"Unrecognized project name: {project} for build {buildId}. Expected a known project name (public, internal) or a valid project GUID.");
     }
 
-    private async Task<ResolvedBuild> GetBuildStatusesAsync(ResolvedBuild build, CancellationToken ct)
+    private async Task<AzurePipelineBuild> GetBuildStatusesAsync(AzurePipelineBuild build, CancellationToken ct)
     {
         try
         {
@@ -336,24 +336,24 @@ public class PipelineIdentifierHelper(
             var status = details.Status != null ? JsonNamingPolicy.SnakeCaseLower.ConvertName(details.Status.Value.ToString()) : null;
             var result = details.Result != null ? JsonNamingPolicy.SnakeCaseLower.ConvertName(details.Result.Value.ToString()) : null;
 
-            return new ResolvedBuild(
+            return new AzurePipelineBuild(
                 build.BuildId,
                 buildProject,
                 build.PipelineUrl ?? GetPipelineUrl(buildProject, build.BuildId),
-                status ?? ResolvedBuild.StatusUnavailable,
-                result ?? ResolvedBuild.StatusUnavailable);
+                status ?? AzurePipelineBuild.StatusUnavailable,
+                result ?? AzurePipelineBuild.StatusUnavailable);
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Failed to read status for build {buildId}; marking status unavailable", build.BuildId);
 
             var fallbackProject = build.Project ?? string.Empty;
-            return new ResolvedBuild(
+            return new AzurePipelineBuild(
                 build.BuildId,
                 fallbackProject,
                 build.PipelineUrl ?? GetPipelineUrl(fallbackProject, build.BuildId),
-                ResolvedBuild.StatusUnavailable,
-                ResolvedBuild.StatusUnavailable);
+                AzurePipelineBuild.StatusUnavailable,
+                AzurePipelineBuild.StatusUnavailable);
         }
     }
 

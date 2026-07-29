@@ -14,7 +14,7 @@ using Octokit;
 namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Pipeline;
 
 /// <summary>
-/// Seam: <see cref="GitHubWorkflowAnalysisHelper"/> turns a resolved <see cref="BuildGitHubSource"/> into
+/// Seam: <see cref="GitHubWorkflowAnalysisHelper"/> turns a resolved <see cref="GitHubCommitRef"/> into
 /// workflow-run analyses and failing PR checks, given <see cref="IGitHubService"/> and
 /// <see cref="ILogAnalysisHelper"/>.
 /// </summary>
@@ -27,8 +27,8 @@ public class GitHubWorkflowAnalysisHelperTests
     private const string HeadSha = "0f1a2b3c4d5e6f708192a3b4c5d6e7f809a1b2c3";
     private const int PrNumber = 44941;
 
-    private static readonly BuildGitHubSource PrSource = new(Owner, Repo, HeadSha, PrNumber);
-    private static readonly BuildGitHubSource BranchSource = new(Owner, Repo, HeadSha, null);
+    private static readonly GitHubCommitRef PrCommitRef = new(Owner, Repo, HeadSha, PrNumber);
+    private static readonly GitHubCommitRef BranchCommitRef = new(Owner, Repo, HeadSha, null);
 
     private Mock<IGitHubService> gitHubService;
     private Mock<ILogAnalysisHelper> logAnalysisHelper;
@@ -54,7 +54,7 @@ public class GitHubWorkflowAnalysisHelperTests
             .Setup(g => g.GetFailedWorkflowRunsForCommitAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Array.Empty<WorkflowRun>());
 
-        await helper.AnalyzeWorkflowsAsync(PrSource, CancellationToken.None);
+        await helper.AnalyzeWorkflowsAsync(PrCommitRef, CancellationToken.None);
 
         gitHubService.Verify(
             g => g.GetFailedWorkflowRunsForCommitAsync(Owner, Repo, HeadSha, It.IsAny<CancellationToken>()),
@@ -70,7 +70,7 @@ public class GitHubWorkflowAnalysisHelperTests
             status: WorkflowRunStatus.Completed,
             conclusion: WorkflowRunConclusion.Failure));
 
-        var analysis = (await helper.AnalyzeWorkflowsAsync(PrSource, CancellationToken.None)).Single();
+        var analysis = (await helper.AnalyzeWorkflowsAsync(PrCommitRef, CancellationToken.None)).Single();
 
         Assert.Multiple(() =>
         {
@@ -89,7 +89,7 @@ public class GitHubWorkflowAnalysisHelperTests
             WorkflowRunFor(2, "prepare-pipelines"),
             WorkflowRunFor(3, "event-processor"));
 
-        var analyses = await helper.AnalyzeWorkflowsAsync(PrSource, CancellationToken.None);
+        var analyses = await helper.AnalyzeWorkflowsAsync(PrCommitRef, CancellationToken.None);
 
         Assert.That(analyses.Select(a => a.Name), Is.EqualTo(new[] { "analyze", "prepare-pipelines", "event-processor" }));
     }
@@ -103,7 +103,7 @@ public class GitHubWorkflowAnalysisHelperTests
             WorkflowRunFor(1, "analyze", workflowId: 42, createdAt: new DateTimeOffset(2026, 7, 28, 18, 0, 0, TimeSpan.Zero)),
             WorkflowRunFor(2, "analyze", workflowId: 42, createdAt: new DateTimeOffset(2026, 7, 28, 19, 0, 0, TimeSpan.Zero)));
 
-        var analyses = await helper.AnalyzeWorkflowsAsync(PrSource, CancellationToken.None);
+        var analyses = await helper.AnalyzeWorkflowsAsync(PrCommitRef, CancellationToken.None);
 
         Assert.That(analyses.Select(a => a.Url), Is.EqualTo(new[] { HtmlUrlFor(2) }));
     }
@@ -117,7 +117,7 @@ public class GitHubWorkflowAnalysisHelperTests
             .Setup(l => l.AnalyzeLogContent(It.IsAny<TextReader>(), It.IsAny<List<string>?>(), null, null, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([new LogEntry { Message = "Process completed with exit code 1." }]);
 
-        var analysis = (await helper.AnalyzeWorkflowsAsync(PrSource, CancellationToken.None)).Single();
+        var analysis = (await helper.AnalyzeWorkflowsAsync(PrCommitRef, CancellationToken.None)).Single();
 
         Assert.That(analysis.Logs.Select(l => l.Message), Is.EqualTo(new[] { "Process completed with exit code 1." }));
     }
@@ -129,7 +129,7 @@ public class GitHubWorkflowAnalysisHelperTests
         GivenWorkflowRuns(WorkflowRunFor(12345678, "analyze"));
         GivenLogs(12345678, logs);
 
-        var analysis = (await helper.AnalyzeWorkflowsAsync(PrSource, CancellationToken.None)).Single();
+        var analysis = (await helper.AnalyzeWorkflowsAsync(PrCommitRef, CancellationToken.None)).Single();
 
         Assert.That(analysis.Logs, Is.Empty);
         logAnalysisHelper.Verify(
@@ -146,7 +146,7 @@ public class GitHubWorkflowAnalysisHelperTests
             .ThrowsAsync(new NotFoundException("log archive expired", System.Net.HttpStatusCode.Gone));
         GivenJobs(12345678, WorkflowJobFor("build", WorkflowJobConclusion.Failure));
 
-        var analysis = (await helper.AnalyzeWorkflowsAsync(PrSource, CancellationToken.None)).Single();
+        var analysis = (await helper.AnalyzeWorkflowsAsync(PrCommitRef, CancellationToken.None)).Single();
 
         Assert.Multiple(() =>
         {
@@ -164,7 +164,7 @@ public class GitHubWorkflowAnalysisHelperTests
             .Setup(l => l.AnalyzeLogContent(It.IsAny<TextReader>(), It.IsAny<List<string>?>(), null, null, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([new LogEntry { Message = "boom" }]);
 
-        var analysis = (await helper.AnalyzeWorkflowsAsync(PrSource, CancellationToken.None)).Single();
+        var analysis = (await helper.AnalyzeWorkflowsAsync(PrCommitRef, CancellationToken.None)).Single();
 
         Assert.Multiple(() =>
         {
@@ -185,7 +185,7 @@ public class GitHubWorkflowAnalysisHelperTests
             .Setup(g => g.GetWorkflowRunJobsAsync(Owner, Repo, 12345678, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new ApiException("jobs unavailable", System.Net.HttpStatusCode.ServiceUnavailable));
 
-        var analysis = (await helper.AnalyzeWorkflowsAsync(PrSource, CancellationToken.None)).Single();
+        var analysis = (await helper.AnalyzeWorkflowsAsync(PrCommitRef, CancellationToken.None)).Single();
 
         Assert.That(analysis.Errors, Has.Exactly(1).Contains("Failed to read workflow run jobs"));
     }
@@ -196,7 +196,7 @@ public class GitHubWorkflowAnalysisHelperTests
         GivenWorkflowRuns(WorkflowRunFor(12345678, "analyze"));
         GivenJobs(12345678, WorkflowJobFor("build", conclusion: null, status: WorkflowJobStatus.InProgress));
 
-        var analysis = (await helper.AnalyzeWorkflowsAsync(PrSource, CancellationToken.None)).Single();
+        var analysis = (await helper.AnalyzeWorkflowsAsync(PrCommitRef, CancellationToken.None)).Single();
 
         Assert.That(analysis.Jobs, Is.EqualTo(new[] { "build: in_progress" }));
     }
@@ -206,9 +206,9 @@ public class GitHubWorkflowAnalysisHelperTests
     #region GetFailingChecksAsync
 
     [Test]
-    public async Task GetFailingChecksAsync_SourceWithoutPullRequest_ReturnsEmptyWithoutQueryingChecks()
+    public async Task GetFailingChecksAsync_CommitRefWithoutPullRequest_ReturnsEmptyWithoutQueryingChecks()
     {
-        var checks = await helper.GetFailingChecksAsync(BranchSource, CancellationToken.None);
+        var checks = await helper.GetFailingChecksAsync(BranchCommitRef, CancellationToken.None);
 
         Assert.That(checks, Is.Empty);
         gitHubService.Verify(
@@ -225,7 +225,7 @@ public class GitHubWorkflowAnalysisHelperTests
     {
         GivenChecks(CheckRun("net - core - ci", conclusion));
 
-        var checks = await helper.GetFailingChecksAsync(PrSource, CancellationToken.None);
+        var checks = await helper.GetFailingChecksAsync(PrCommitRef, CancellationToken.None);
 
         Assert.That(checks.Select(c => c.Name), Is.EqualTo(new[] { "net - core - ci" }));
     }
@@ -239,7 +239,7 @@ public class GitHubWorkflowAnalysisHelperTests
             CheckRun("net - template - ci", null),
             CheckRun("Publish Artifacts", "TIMED_OUT"));
 
-        var checks = await helper.GetFailingChecksAsync(PrSource, CancellationToken.None);
+        var checks = await helper.GetFailingChecksAsync(PrCommitRef, CancellationToken.None);
 
         Assert.That(checks.Select(c => c.Name), Is.EqualTo(new[] { "net - core - ci", "Publish Artifacts" }));
     }

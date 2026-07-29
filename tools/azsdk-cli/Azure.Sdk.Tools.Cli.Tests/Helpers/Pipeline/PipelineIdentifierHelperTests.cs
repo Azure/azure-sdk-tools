@@ -259,7 +259,7 @@ public class PipelineIdentifierHelperTests
         Assert.Multiple(() =>
         {
             Assert.That(build.Status, Is.EqualTo("in_progress"));
-            Assert.That(build.Result, Is.EqualTo(ResolvedBuild.StatusUnavailable));
+            Assert.That(build.Result, Is.EqualTo(AzurePipelineBuild.StatusUnavailable));
         });
     }
 
@@ -274,8 +274,8 @@ public class PipelineIdentifierHelperTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(build.Status, Is.EqualTo(ResolvedBuild.StatusUnavailable));
-            Assert.That(build.Result, Is.EqualTo(ResolvedBuild.StatusUnavailable));
+            Assert.That(build.Status, Is.EqualTo(AzurePipelineBuild.StatusUnavailable));
+            Assert.That(build.Result, Is.EqualTo(AzurePipelineBuild.StatusUnavailable));
         });
     }
 
@@ -428,55 +428,55 @@ public class PipelineIdentifierHelperTests
 
     #endregion
 
-    #region ResolveGitHubSourceAsync
+    #region ResolveCommitRefFromBuildsAsync
 
     [Test]
-    public async Task ResolveGitHubSourceAsync_BuildBackedByGitHub_ReturnsItsSource()
+    public async Task ResolveCommitRefFromBuildsAsync_BuildBackedByGitHub_ReturnsItsCommitRef()
     {
-        var expected = new BuildGitHubSource("Azure", "azure-sdk-for-net", "0f1a2b3c", 44941);
-        GivenGitHubSource(BuildId, expected);
+        var expected = new GitHubCommitRef("Azure", "azure-sdk-for-net", "0f1a2b3c", 44941);
+        GivenBuildCommitRef(BuildId, expected);
 
-        var source = await helper.ResolveGitHubSourceAsync([Resolved(BuildId)], CancellationToken.None);
+        var commitRef = await helper.ResolveCommitRefFromBuildsAsync([Resolved(BuildId)], CancellationToken.None);
 
-        Assert.That(source, Is.EqualTo(expected));
+        Assert.That(commitRef, Is.EqualTo(expected));
     }
 
     [Test]
-    public async Task ResolveGitHubSourceAsync_FirstBuildCannotBeRead_FallsBackToTheNextBuild()
+    public async Task ResolveCommitRefFromBuildsAsync_FirstBuildCannotBeRead_FallsBackToTheNextBuild()
     {
-        var expected = new BuildGitHubSource("Azure", "azure-sdk-for-net", "0f1a2b3c", 44941);
+        var expected = new GitHubCommitRef("Azure", "azure-sdk-for-net", "0f1a2b3c", 44941);
         devOpsService
-            .Setup(d => d.ResolveBuildGitHubSourceAsync(5209385, It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .Setup(d => d.ResolveBuildCommitRefAsync(5209385, It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new UnauthorizedAccessException("no access"));
-        GivenGitHubSource(5209386, expected);
+        GivenBuildCommitRef(5209386, expected);
 
-        var source = await helper.ResolveGitHubSourceAsync(
+        var commitRef = await helper.ResolveCommitRefFromBuildsAsync(
             [Resolved(5209385), Resolved(5209386)], CancellationToken.None);
 
-        Assert.That(source, Is.EqualTo(expected));
+        Assert.That(commitRef, Is.EqualTo(expected));
     }
 
     [Test]
-    public async Task ResolveGitHubSourceAsync_FirstBuildHasNoCommit_FallsBackToTheNextBuild()
+    public async Task ResolveCommitRefFromBuildsAsync_FirstBuildHasNoCommit_FallsBackToTheNextBuild()
     {
-        var expected = new BuildGitHubSource("Azure", "azure-sdk-for-net", "0f1a2b3c", 44941);
-        GivenGitHubSource(5209385, new BuildGitHubSource("Azure", "azure-sdk-for-net", null, null));
-        GivenGitHubSource(5209386, expected);
+        var expected = new GitHubCommitRef("Azure", "azure-sdk-for-net", "0f1a2b3c", 44941);
+        GivenBuildCommitRef(5209385, null);
+        GivenBuildCommitRef(5209386, expected);
 
-        var source = await helper.ResolveGitHubSourceAsync(
+        var commitRef = await helper.ResolveCommitRefFromBuildsAsync(
             [Resolved(5209385), Resolved(5209386)], CancellationToken.None);
 
-        Assert.That(source, Is.EqualTo(expected));
+        Assert.That(commitRef, Is.EqualTo(expected));
     }
 
     [Test]
-    public async Task ResolveGitHubSourceAsync_NoBuildBackedByGitHub_ReturnsNull()
+    public async Task ResolveCommitRefFromBuildsAsync_NoBuildBackedByGitHub_ReturnsNull()
     {
-        GivenGitHubSource(BuildId, null);
+        GivenBuildCommitRef(BuildId, null);
 
-        var source = await helper.ResolveGitHubSourceAsync([Resolved(BuildId)], CancellationToken.None);
+        var commitRef = await helper.ResolveCommitRefFromBuildsAsync([Resolved(BuildId)], CancellationToken.None);
 
-        Assert.That(source, Is.Null);
+        Assert.That(commitRef, Is.Null);
     }
 
     #endregion
@@ -498,10 +498,10 @@ public class PipelineIdentifierHelperTests
             .Setup(g => g.GetPrCheckRunsAsync("Azure", "azure-sdk-for-net", 44941, It.IsAny<CancellationToken>()))
             .ReturnsAsync(checks.ToList());
 
-    private void GivenGitHubSource(int buildId, BuildGitHubSource? source) =>
+    private void GivenBuildCommitRef(int buildId, GitHubCommitRef? commitRef) =>
         devOpsService
-            .Setup(d => d.ResolveBuildGitHubSourceAsync(buildId, It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(source);
+            .Setup(d => d.ResolveBuildCommitRefAsync(buildId, It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(commitRef);
 
     private static Build BuildFor(string project, BuildStatus? status = null, BuildResult? result = null) =>
         new()
@@ -511,7 +511,7 @@ public class PipelineIdentifierHelperTests
             Result = result,
         };
 
-    private static ResolvedBuild Resolved(int buildId) => new(buildId, "public", null, null, null);
+    private static AzurePipelineBuild Resolved(int buildId) => new(buildId, "public", null, null, null);
 
     private static string DetailsUrlFor(int buildId, string project = "public") =>
         $"https://dev.azure.com/azure-sdk/{project}/_build/results?buildId={buildId}";

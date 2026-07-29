@@ -7,11 +7,11 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses;
 
 public class AnalyzePipelineResponse : CommandResponse
 {
-    [JsonPropertyName("build_analyses")]
-    public List<BuildAnalysis> BuildAnalyses { get; set; } = [];
+    [JsonPropertyName("azure_pipeline_analyses")]
+    public List<AzurePipelineAnalysis> AzurePipelineAnalyses { get; set; } = [];
 
     /// <summary>
-    /// Failed GitHub Actions runs for the commit the builds were queued against. Independent of the build
+    /// Failed GitHub Actions runs for the commit the builds were queued against. Independent of the pipeline
     /// analyses: a red workflow run does not mean a pipeline failed, and vice versa. Null when the pipeline's
     /// source is not a GitHub repository or no commit could be resolved.
     /// </summary>
@@ -25,9 +25,9 @@ public class AnalyzePipelineResponse : CommandResponse
     /// diagnostics: it is either a view of a build or workflow run detailed above, or a status posted by an
     /// aggregating workflow that restates another failure. Null when no pull request could be resolved.
     /// </summary>
-    [JsonPropertyName("failing_checks")]
+    [JsonPropertyName("failing_pull_request_checks")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<PrCheckRun>? FailingChecks { get; set; }
+    public List<PrCheckRun>? FailingPullRequestChecks { get; set; }
 
     private static readonly JsonSerializerOptions jsonOptions = new()
     {
@@ -38,27 +38,27 @@ public class AnalyzePipelineResponse : CommandResponse
     {
         var sb = new StringBuilder();
 
-        if (BuildAnalyses.Count == 0)
+        if (AzurePipelineAnalyses.Count == 0)
         {
             sb.AppendLine("No failed Azure Pipeline builds found.");
         }
 
-        foreach (var buildAnalysis in BuildAnalyses)
+        foreach (var pipelineAnalysis in AzurePipelineAnalyses)
         {
-            sb.AppendLine($"Build: {buildAnalysis.Build.BuildId} Project: {buildAnalysis.Build.Project} PipelineUrl: {buildAnalysis.Build.PipelineUrl}");
+            sb.AppendLine($"Build: {pipelineAnalysis.PipelineBuild.BuildId} Project: {pipelineAnalysis.PipelineBuild.Project} PipelineUrl: {pipelineAnalysis.PipelineBuild.PipelineUrl}");
 
-            if (buildAnalysis.Build.IsInProgress)
+            if (pipelineAnalysis.PipelineBuild.IsInProgress)
             {
                 sb.AppendLine("--------------------------------------------------------------------------------");
-                sb.AppendLine($"Build not complete (status: {buildAnalysis.Build.Status})");
+                sb.AppendLine($"Azure Pipeline not complete (status: {pipelineAnalysis.PipelineBuild.Status})");
                 sb.AppendLine("--------------------------------------------------------------------------------");
-                sb.AppendLine("The build has not finished running, so failure logs and test result artifacts");
-                sb.AppendLine("may not be published yet. Any results below are partial \u2014 re-run the analysis");
-                sb.AppendLine("once the build completes for the full picture.");
+                sb.AppendLine("The azure pipeline has not finished running, so failure logs and test result artifacts");
+                sb.AppendLine("may not be published yet. Any results below are partial, re-run the analysis");
+                sb.AppendLine("once the pipeline completes for the full picture.");
                 sb.AppendLine();
             }
 
-            if (buildAnalysis.FailedBuildTests is { Count: > 0 } failedTests)
+            if (pipelineAnalysis.FailedPipelineTests is { Count: > 0 } failedTests)
             {
                 sb.AppendLine("--------------------------------------------------------------------------------");
                 sb.AppendLine("Failed Tests");
@@ -66,7 +66,7 @@ public class AnalyzePipelineResponse : CommandResponse
                 sb.AppendLine(JsonSerializer.Serialize(failedTests, jsonOptions));
             }
 
-            if (buildAnalysis.FailedBuildTasks is { HasErrors: true } failedTasks)
+            if (pipelineAnalysis.FailedPipelineTasks is { HasErrors: true } failedTasks)
             {
                 sb.AppendLine("--------------------------------------------------------------------------------");
                 sb.AppendLine("Failed Tasks");
@@ -75,23 +75,23 @@ public class AnalyzePipelineResponse : CommandResponse
                 sb.AppendLine("--------------------------------------------------------------------------------");
             }
 
-            if (buildAnalysis.Errors?.Count > 0)
+            if (pipelineAnalysis.Errors?.Count > 0)
             {
                 sb.AppendLine("--------------------------------------------------------------------------------");
                 sb.AppendLine("Analysis could not be completed for this build:");
                 sb.AppendLine("--------------------------------------------------------------------------------");
-                foreach (var error in buildAnalysis.Errors)
+                foreach (var error in pipelineAnalysis.Errors)
                 {
                     sb.AppendLine($"- {error}");
                 }
                 sb.AppendLine("--------------------------------------------------------------------------------");
             }
 
-            if ((buildAnalysis.FailedBuildTests?.Count ?? 0) == 0 && buildAnalysis.FailedBuildTasks?.HasErrors != true && (buildAnalysis.Errors?.Count ?? 0) == 0)
+            if ((pipelineAnalysis.FailedPipelineTests?.Count ?? 0) == 0 && pipelineAnalysis.FailedPipelineTasks?.HasErrors != true && (pipelineAnalysis.Errors?.Count ?? 0) == 0)
             {
                 sb.AppendLine("");
-                sb.AppendLine(buildAnalysis.Build.IsInProgress
-                    ? "No failures found yet \u2014 the build is still running."
+                sb.AppendLine(pipelineAnalysis.PipelineBuild.IsInProgress
+                    ? "No failures found yet, the azure pipeline is still running."
                     : "No failures found");
             }
         }
@@ -143,7 +143,7 @@ public class AnalyzePipelineResponse : CommandResponse
     /// </summary>
     private void AppendFailingChecks(StringBuilder sb)
     {
-        if (FailingChecks == null || FailingChecks.Count == 0)
+        if (FailingPullRequestChecks == null || FailingPullRequestChecks.Count == 0)
         {
             return;
         }
@@ -154,7 +154,7 @@ public class AnalyzePipelineResponse : CommandResponse
         sb.AppendLine("Every check GitHub reports as red. Those backed by a build or workflow run are detailed");
         sb.AppendLine("above; the remainder are statuses that aggregate or restate one of those failures.");
 
-        foreach (var check in FailingChecks)
+        foreach (var check in FailingPullRequestChecks)
         {
             sb.AppendLine($"  {check.Name} [{check.Conclusion}] Reported by: {check.AppName} Url: {check.DetailsUrl}");
         }

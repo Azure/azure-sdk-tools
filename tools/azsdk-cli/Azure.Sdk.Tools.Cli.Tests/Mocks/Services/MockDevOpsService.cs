@@ -397,9 +397,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             throw new NotImplementedException();
         }
 
-        public Task<BuildGitHubSource?> ResolveBuildGitHubSourceAsync(int buildId, string? project, CancellationToken ct)
+        public Task<GitHubCommitRef?> ResolveBuildCommitRefAsync(int buildId, string? project, CancellationToken ct)
         {
-            return Task.FromResult<BuildGitHubSource?>(null);
+            return Task.FromResult<GitHubCommitRef?>(null);
         }
     }
 }

@@ -29,7 +29,7 @@ public class PipelineAnalysisHelperTests
     private const string Platform = "Ubuntu2404_NET80_PackageRef_Debug";
     private const int FailedTaskLogId = 42;
 
-    private static readonly ResolvedBuild Build = new(BuildId, Project, PipelineUrl, "completed", "failed");
+    private static readonly AzurePipelineBuild Build = new(BuildId, Project, PipelineUrl, "completed", "failed");
 
     private Mock<IDevOpsService> devOpsService;
     private Mock<ILogAnalysisHelper> logAnalysisHelper;
@@ -77,7 +77,7 @@ public class PipelineAnalysisHelperTests
         var (analyses, _) = await helper.AnalyzePipelineAsync(
             [Build, Build with { BuildId = 5209386 }, Build with { BuildId = 5209387 }]);
 
-        Assert.That(analyses.Select(a => a.Build.BuildId), Is.EqualTo(new[] { 5209385, 5209386, 5209387 }));
+        Assert.That(analyses.Select(a => a.PipelineBuild.BuildId), Is.EqualTo(new[] { 5209385, 5209386, 5209387 }));
     }
 
     [Test]
@@ -212,7 +212,7 @@ public class PipelineAnalysisHelperTests
     #region AnalyzePipelineAsync - how findings are reported
 
     [Test]
-    public async Task AnalyzePipelineAsync_LogsContainErrors_ReportsThemAsFailedBuildTasks()
+    public async Task AnalyzePipelineAsync_LogsContainErrors_ReportsThemAsFailedPipelineTasks()
     {
         GivenTimeline(FailedTask("Build", FailedTaskLogId));
         logAnalyzerResult = [new LogEntry { Message = "error CS0246: The type or namespace name 'Foo' could not be found" }];
@@ -220,12 +220,12 @@ public class PipelineAnalysisHelperTests
         var (analyses, _) = await helper.AnalyzePipelineAsync([Build]);
 
         Assert.That(
-            analyses.Single().FailedBuildTasks!.Errors.Select(e => e.Message),
+            analyses.Single().FailedPipelineTasks!.Errors.Select(e => e.Message),
             Is.EqualTo(logAnalyzerResult.Select(e => e.Message)));
     }
 
     [Test]
-    public async Task AnalyzePipelineAsync_LogsContainNoErrors_LeavesFailedBuildTasksEmpty()
+    public async Task AnalyzePipelineAsync_LogsContainNoErrors_LeavesFailedPipelineTasksEmpty()
     {
         GivenTimeline(FailedTask("Build", FailedTaskLogId));
 
@@ -233,7 +233,7 @@ public class PipelineAnalysisHelperTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(analyses.Single().FailedBuildTasks, Is.Null);
+            Assert.That(analyses.Single().FailedPipelineTasks, Is.Null);
             Assert.That(analyses.Single().Errors, Is.Null);
         });
     }
@@ -278,7 +278,7 @@ public class PipelineAnalysisHelperTests
         Assert.Multiple(() =>
         {
             Assert.That(
-                analyses.Single().FailedBuildTests![Platform],
+                analyses.Single().FailedPipelineTests![Platform],
                 Is.EqualTo(new[] { "Azure.Core.Tests.PipelineTests.CanRetry" }));
             Assert.That(warnings, Is.Empty);
         });
@@ -297,7 +297,7 @@ public class PipelineAnalysisHelperTests
         Assert.Multiple(() =>
         {
             Assert.That(warnings, Has.Exactly(1).Contains("test-results.trx"));
-            Assert.That(analyses.Single().FailedBuildTests, Is.Null);
+            Assert.That(analyses.Single().FailedPipelineTests, Is.Null);
         });
     }
 
@@ -313,7 +313,7 @@ public class PipelineAnalysisHelperTests
         var (analyses, _) = await helper.AnalyzePipelineAsync([Build]);
 
         Assert.That(
-            analyses.Single().FailedBuildTests![Platform],
+            analyses.Single().FailedPipelineTests![Platform],
             Is.EqualTo(new[] { "Azure.Core.Tests.PipelineTests.CanRetry" }));
     }
 
@@ -330,7 +330,7 @@ public class PipelineAnalysisHelperTests
 
         var (analyses, _) = await helper.AnalyzePipelineAsync([Build]);
 
-        var failedTests = analyses.Single().FailedBuildTests!;
+        var failedTests = analyses.Single().FailedPipelineTests!;
         Assert.Multiple(() =>
         {
             Assert.That(
@@ -355,7 +355,7 @@ public class PipelineAnalysisHelperTests
 
         var (analyses, _) = await helper.AnalyzePipelineAsync([Build]);
 
-        Assert.That(analyses.Single().FailedBuildTests!.Keys, Is.EqualTo(new[] { "Ubuntu2404_NET80" }));
+        Assert.That(analyses.Single().FailedPipelineTests!.Keys, Is.EqualTo(new[] { "Ubuntu2404_NET80" }));
     }
 
     [Test]
@@ -385,7 +385,7 @@ public class PipelineAnalysisHelperTests
         {
             Assert.That(analyses[0].Errors, Is.Not.Null);
             Assert.That(analyses[1].Errors, Is.Null);
-            Assert.That(analyses[1].FailedBuildTests, Has.Count.EqualTo(1));
+            Assert.That(analyses[1].FailedPipelineTests, Has.Count.EqualTo(1));
         });
     }
 

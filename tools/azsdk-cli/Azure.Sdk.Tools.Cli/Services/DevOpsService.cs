@@ -192,7 +192,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         Task<WorkItem> CreateWorkItemRelationAsync(int id, string relationType, int? targetId = null, string? targetUrl = null, CancellationToken ct = default);
         Task RemoveWorkItemRelationAsync(int id, string relationType, int targetId, CancellationToken ct);
         Task DeleteWorkItemAsync(int workItemId, CancellationToken ct);
-        Task<BuildGitHubSource?> ResolveBuildGitHubSourceAsync(int buildId, string? project, CancellationToken ct);
+        Task<GitHubCommitRef?> ResolveBuildCommitRefAsync(int buildId, string? project, CancellationToken ct);
     }
 
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
@@ -2159,9 +2159,10 @@ namespace Azure.Sdk.Tools.Cli.Services
         /// <summary>
         /// Best-effort resolution of the GitHub repository and commit a build ran against. Returns null when the
         /// pipeline's source is not a GitHub repository (for example an Azure Repos run, whose repository id is a
-        /// GUID rather than "owner/repo"), so callers can skip GitHub lookups instead of failing.
+        /// GUID rather than "owner/repo") or when the build reports no source version, so callers can skip GitHub
+        /// lookups instead of failing.
         /// </summary>
-        public async Task<BuildGitHubSource?> ResolveBuildGitHubSourceAsync(int buildId, string? project, CancellationToken ct)
+        public async Task<GitHubCommitRef?> ResolveBuildCommitRefAsync(int buildId, string? project, CancellationToken ct)
         {
             var build = await GetBuildDetailsAsync(buildId, project, ct);
 
@@ -2180,7 +2181,14 @@ namespace Azure.Sdk.Tools.Cli.Services
                 return null;
             }
 
-            return new BuildGitHubSource(parts[0], parts[1], ResolveHeadSha(build), ResolvePullRequestNumber(build));
+            var headSha = ResolveHeadSha(build);
+            if (string.IsNullOrEmpty(headSha))
+            {
+                logger.LogDebug("Build {buildId} reports no source version, so it cannot be correlated to a commit", buildId);
+                return null;
+            }
+
+            return new GitHubCommitRef(parts[0], parts[1], headSha, ResolvePullRequestNumber(build));
         }
 
         /// <summary>

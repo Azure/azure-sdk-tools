@@ -151,8 +151,6 @@ public class AnalyzePipelineResponse : CommandResponse
         sb.AppendLine("--------------------------------------------------------------------------------");
         sb.AppendLine("Failing checks on the pull request");
         sb.AppendLine("--------------------------------------------------------------------------------");
-        sb.AppendLine("Every check GitHub reports as red. Those backed by a build or workflow run are detailed");
-        sb.AppendLine("above; the remainder are statuses that aggregate or restate one of those failures.");
 
         foreach (var check in FailingPullRequestChecks)
         {

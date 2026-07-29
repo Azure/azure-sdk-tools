@@ -1,16 +1,17 @@
 # Release History
 
-## 0.6.33 (Unreleased)
+## 0.6.33 (2026-07-29)
 
 ### Features Added
 
 - Added a `list` release plan command with a `--filter` option supporting `overdue-release` (release plans past their target release date) and `failed-sdk-gen` (in-progress release plans whose SDK pull request status was updated to "Failed to generate SDK." for any language in the last 24 hours). With `--notify`, `overdue-release` emails plan owners and `failed-sdk-gen` emails a summary to azsdkexp@microsoft.com; both are sent via the notification service.
 
 ### Breaking Changes
+- Added `AZSDK_COPILOT_GITHUB_TOKEN` support for authenticating Copilot-backed commands in non-interactive environments.
 
 ### Bugs Fixed
 
-### Other Changes
+- Removed the unavailable `claude-sonnet-4.5` default from Copilot-backed commands.
 
 - Configured the Copilot CLI download to use the Azure SDK public npm mirror (`CopilotNpmRegistryUrl`) instead of the default npm registry.
 

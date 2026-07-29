@@ -44,20 +44,20 @@ extends:
         jobs:
           - template: /eng/common/pipelines/templates/jobs/generate-eval-matrix.yml
             parameters:
-              vallyRoot: .github/skills
+              vallyRoot: .github/skills/azure-typespec-author/evaluate
               evalGlobs:
-                - 'azure-typespec-author/evaluate/evals/*.eval.yaml'
+                - 'evals/*.eval.yaml'
 
       - stage: EvalForced
         displayName: Eval forced track
         dependsOn: PrepareForced
         variables:
-          TypeSpecAuthorEvalExtraArgs: '--tag mode=forced --skill-dir azure-typespec-author'
+          TypeSpecAuthorEvalExtraArgs: '--tag mode=forced --skill-dir ..'
         jobs:
           - template: /.github/skills/azure-typespec-author/evaluate/pipeline/skill/typespec-author-eval-shard.yml
             parameters:
               matrixStageName: PrepareForced
-              vallyRoot: .github/skills
+              vallyRoot: .github/skills/azure-typespec-author/evaluate
               mcpEnvironment: live
               startQaBotBackend: true
               UseAzSdkAuthentication: true
@@ -80,20 +80,20 @@ extends:
         jobs:
           - template: /eng/common/pipelines/templates/jobs/generate-eval-matrix.yml
             parameters:
-              vallyRoot: .github/skills
+              vallyRoot: .github/skills/azure-typespec-author/evaluate
               evalGlobs:
-                - 'azure-typespec-author/evaluate/evals/*.eval.yaml'
+                - 'evals/*.eval.yaml'
 
       - stage: EvalTrigger
         displayName: Eval trigger track
         dependsOn: PrepareTrigger
         variables:
-          TypeSpecAuthorEvalExtraArgs: '--tag mode=trigger --skill-dir azure-typespec-author'
+          TypeSpecAuthorEvalExtraArgs: '--tag mode=trigger --skill-dir ..'
         jobs:
           - template: /.github/skills/azure-typespec-author/evaluate/pipeline/skill/typespec-author-eval-shard.yml
             parameters:
               matrixStageName: PrepareTrigger
-              vallyRoot: .github/skills
+              vallyRoot: .github/skills/azure-typespec-author/evaluate
               mcpEnvironment: mock
               shardTimeoutInMinutes: 30
 

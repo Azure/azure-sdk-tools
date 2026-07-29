@@ -3,9 +3,9 @@
 MCP-tool / end-to-end scenario evaluations for the `azsdk` MCP server, run via
 [`@microsoft/vally-cli`](https://www.npmjs.com/package/@microsoft/vally-cli).
 
-> Looking for the coverage inventory instead of the how-to guide? See
-> [`coverage-and-gaps.md`](coverage-and-gaps.md) for what's covered today
-> across skills, MCP tools, mock handlers, and repos — and the known gaps.
+> Looking for the coverage inventory instead of the how-to guide? Download the
+> [Azure SDK Agent eval coverage workbook](azure-sdk-agent-eval-coverage.xlsx)
+> for stakeholder sharing, current coverage, and known gaps.
 
 ## Tool-scenario evals vs. skill evals
 

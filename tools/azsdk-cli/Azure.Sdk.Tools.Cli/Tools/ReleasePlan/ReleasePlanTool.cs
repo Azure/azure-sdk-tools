@@ -140,12 +140,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             Required = true,
         };
 
-        private readonly Option<bool> forceCreateReleasePlanOpt = new("--force")
-        {
-            Description = "Force creation of release plan even if one already exists",
-            Required = true,
-        };
-
         private readonly Option<string> languageOpt = new("--language")
         {
             Description = "SDK language, Options[.NET, Java, JavaScript, Go, Python]",
@@ -301,7 +295,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 productTreeIdOpt,
                 optionalPullRequestOpt,
                 isTestReleasePlanOpt,
-                forceCreateReleasePlanOpt,
             },
             new McpCommand(linkNamespaceApprovalIssueCommandName, "Link namespace approval issue to release plan", LinkNamespaceApprovalToolName) { workItemIdOpt, namespaceApprovalIssueOpt, },
             new McpCommand(checkApiReadinessCommandName, "Check if API spec is ready to generate SDK", CheckApiSpecReadyToolName) { typeSpecProjectPathOpt, pullRequestNumberOpt, workItemIdOpt, },
@@ -346,7 +339,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var specPullRequestUrl = commandParser.GetValue(optionalPullRequestOpt);
                     var apiReleaseType = commandParser.GetValue(apiReleaseTypeOpt);
                     var isTestReleasePlan = commandParser.GetValue(isTestReleasePlanOpt);
-                    var forceCreateReleasePlan = commandParser.GetValue(forceCreateReleasePlanOpt);
                     return await CreateReleasePlan(
                         null,
                         typeSpecProjectPath,
@@ -356,7 +348,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         serviceTreeId: serviceTreeId,
                         productTreeId: productTreeId,
                         isTestReleasePlan: isTestReleasePlan,
-                        forceCreateReleasePlan: forceCreateReleasePlan,
                         ct: ct
                     );
 
@@ -962,7 +953,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         }
 
         [McpServerTool(Name = CreateReleasePlanToolName), Description("Create Release Plan for a TypeSpec project and API release type. API release types support Private Preview, Public Preview, and GA. Service ID and product ID are optional and will be resolved from existing release plans when available.")]
-        public async Task<ReleasePlanResponse> CreateReleasePlan(IProgress<ProgressNotificationValue>? progress, string typeSpecProjectPath, string targetReleaseMonthYear, string apiReleaseType, string specPullRequestUrl = "", string serviceTreeId = "", string productTreeId = "", bool isTestReleasePlan = false, bool forceCreateReleasePlan = false, CancellationToken ct = default)
+        public async Task<ReleasePlanResponse> CreateReleasePlan(IProgress<ProgressNotificationValue>? progress, string typeSpecProjectPath, string targetReleaseMonthYear, string apiReleaseType, string specPullRequestUrl = "", string serviceTreeId = "", string productTreeId = "", bool isTestReleasePlan = false, CancellationToken ct = default)
         {
             try
             {         
@@ -1038,38 +1029,35 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                 }
 
-                if (!forceCreateReleasePlan)
-                { 
-                    if (isValidTypeSpec && !string.IsNullOrEmpty(specProject))
+                if (isValidTypeSpec && !string.IsNullOrEmpty(specProject))
+                {
+                    logger.LogInformation("Checking for existing in-progress release plan for TypeSpec project: {specProject} with API release type: {apiReleaseType}", specProject, parsedApiReleaseType.ToDisplayLabel());
+                    var existingReleasePlan = await devOpsService.GetReleasePlanByTypeSpecProjectPathAsync(specProject, apiReleaseType: parsedApiReleaseType, ct: ct);
+                    if (existingReleasePlan != null)
                     {
-                        logger.LogInformation("Checking for existing in-progress release plan for TypeSpec project: {specProject} with API release type: {apiReleaseType}", specProject, parsedApiReleaseType.ToDisplayLabel());
-                        var existingReleasePlan = await devOpsService.GetReleasePlanByTypeSpecProjectPathAsync(specProject, apiReleaseType: parsedApiReleaseType, ct: ct);
-                        if (existingReleasePlan != null)
+                        return new ReleasePlanResponse
                         {
-                            return new ReleasePlanResponse
-                            {
-                                Message = $"An active release plan already exists for the TypeSpec project: {specProject}. "
-                                +  $"Release plan link: {existingReleasePlan.ReleasePlanLink}",
-                                ReleasePlanDetails = existingReleasePlan,
-                                NextSteps = ["Prompt user to confirm whether to use existing release plan or force create a new release plan."]
-                            };
-                        }
+                            Message = $"An active release plan already exists for the TypeSpec project: {specProject}. "
+                            +  $"Release plan link: {existingReleasePlan.ReleasePlanLink}",
+                            ReleasePlanDetails = existingReleasePlan,
+                            NextSteps = ["Prompt user to confirm whether to use existing release plan or force create a new release plan."]
+                        };
                     }
+                }
 
-                    // Check for existing release plan for the given pull request URL (only if spec PR is provided).
-                    if (!string.IsNullOrEmpty(specPullRequestUrl))
+                // Check for existing release plan for the given pull request URL (only if spec PR is provided).
+                if (!string.IsNullOrEmpty(specPullRequestUrl))
+                {
+                    logger.LogInformation("Checking for existing release plan for pull request URL: {specPullRequestUrl}", specPullRequestUrl);
+                    var existingReleasePlan = await devOpsService.GetReleasePlanAsync(specPullRequestUrl, parsedApiReleaseType, ct);
+                    if (existingReleasePlan != null && existingReleasePlan.WorkItemId > 0)
                     {
-                        logger.LogInformation("Checking for existing release plan for pull request URL: {specPullRequestUrl}", specPullRequestUrl);
-                        var existingReleasePlan = await devOpsService.GetReleasePlanAsync(specPullRequestUrl, parsedApiReleaseType, ct);
-                        if (existingReleasePlan != null && existingReleasePlan.WorkItemId > 0)
+                        return new ReleasePlanResponse
                         {
-                            return new ReleasePlanResponse
-                            {
-                                Message = $"A {parsedApiReleaseType.ToDisplayLabel()} release plan already exists for the pull request: {specPullRequestUrl}. Release plan link: {existingReleasePlan.ReleasePlanLink}",
-                                ReleasePlanDetails = existingReleasePlan,
-                                NextSteps = ["Prompt user to confirm whether to use existing release plan or force create a new release plan."]
-                            };
-                        }
+                            Message = $"A {parsedApiReleaseType.ToDisplayLabel()} release plan already exists for the pull request: {specPullRequestUrl}. Release plan link: {existingReleasePlan.ReleasePlanLink}",
+                            ReleasePlanDetails = existingReleasePlan,
+                            NextSteps = ["Prompt user to confirm whether to use existing release plan or force create a new release plan."]
+                        };
                     }
                 }
 
@@ -1108,6 +1096,42 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                 }
 
+                //Run TypeSpecMetadata parser to get API version
+                var typeSpecMetadata = await typeSpecHelper.ParseTypeSpecMetadataAsync(typeSpecProjectPath, npxHelper, logger, ct);
+                string apiVersion  = "";
+                if (typeSpecMetadata == null)
+                {
+                    var error = $"Failed to parse TypeSpec metadata for project path '{typeSpecProjectPath}'. Ensure the TypeSpec project is valid, contains a tspconfig.yaml and compile using tsp compile.";
+                    return new ReleasePlanResponse 
+                    {
+                        ResponseError = error,
+                        NextSteps = ["Ensure the TypeSpec project is valid, contains a tspconfig.yaml and compile using tsp compile."],
+                        TypeSpecProject = typeSpecProjectPath,
+                    };
+                }
+
+                // Extract API version from the parsed metadata
+                apiVersion = ExtractApiVersionFromMetadata(typeSpecMetadata.Packages);
+
+                // Check if a release plan already exists with the same TypeSpec project path and API version
+                if (!string.IsNullOrEmpty(apiVersion))
+                {
+                    var existingReleasePlanWithSameVersion = await devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(specProject, apiVersion, ct);
+                    if (existingReleasePlanWithSameVersion != null)
+                    {
+                        logger.LogInformation("Found existing release plan {ReleasePlanId} (work item {WorkItemId}) with the same TypeSpec project path and API version. Returning existing plan instead of creating a new one.",
+                            existingReleasePlanWithSameVersion.ReleasePlanId, existingReleasePlanWithSameVersion.WorkItemId);
+                        
+                        return new ReleasePlanResponse
+                        {
+                            ReleasePlanDetails = existingReleasePlanWithSameVersion,
+                            Message = $"An existing release plan (ID: {existingReleasePlanWithSameVersion.ReleasePlanId}) was found for TypeSpec project '{specProject}' with API version '{apiVersion}'. No new release plan was created.",
+                            TypeSpecProject = specProject,
+                            NextSteps = ["Review the existing release plan and use it for your SDK release."]
+                        };
+                    }
+                }
+
                 var productDisplayName = productName;
                 var releasePlan = new ReleasePlanWorkItem
                 {
@@ -1126,7 +1150,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     ProductName = productDisplayName,
                     ProductType = productType,
                     ProductLifecycle = productLifecycle,
-                    ApiReleaseType = parsedApiReleaseType
+                    ApiReleaseType = parsedApiReleaseType,
+                    SpecAPIVersion = apiVersion
                 };
 
                 var reporter = new ProgressReporter(progress, logger, totalSteps: 2, outputHelper);
@@ -2200,5 +2225,59 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 };
             }
         }
+
+        /// <summary>
+        /// Extracts the API version from TypeSpec metadata by examining all languages.
+        /// 
+        /// Rules:
+        /// - If any language has "all" or "multiple-versions" as the apiVersion, returns empty string.
+        /// - If all languages have the same apiVersion (and it's not empty), returns that version.
+        /// - If apiVersions differ across languages, returns the first non-empty version found.
+        /// - If apiVersion is undefined or empty for all languages, returns empty string.
+        /// </summary>
+        /// <param name="packages">List of PackageInfo objects containing parsed metadata</param>
+        /// <returns>The extracted API version, or empty string if unable to determine a single version</returns>
+        private string ExtractApiVersionFromMetadata(List<PackageInfo>? packages)
+        {
+            if (packages == null || packages.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var apiVersions = packages
+                .Select(p => p.ApiVersion)
+                .Where(v => !string.IsNullOrEmpty(v))
+                .Distinct()
+                .ToList();
+
+            // Check if any language has "all" or "multiple-versions"
+            if (apiVersions.Any(v => v.Equals("all", StringComparison.OrdinalIgnoreCase) || 
+                                      v.Equals("multiple-versions", StringComparison.OrdinalIgnoreCase)))
+            {
+                logger.LogWarning("Found 'all' or 'multiple-versions' in API versions from TypeSpec metadata. Cannot determine a single API version.");
+                return string.Empty;
+            }
+
+            // If no versions found, return empty
+            if (apiVersions.Count == 0)
+            {
+                logger.LogInformation("No API versions found in TypeSpec metadata.");
+                return string.Empty;
+            }
+
+            // If all languages have the same API version, return it
+            if (apiVersions.Count == 1)
+            {
+                var version = apiVersions[0];
+                logger.LogInformation("Extracted API version from TypeSpec metadata: {apiVersion}", version);
+                return version;
+            }
+
+            // If versions differ, log warning and return the first one
+            logger.LogWarning("Multiple different API versions found in TypeSpec metadata: {versions}. Using the first one: {firstVersion}", 
+                string.Join(", ", apiVersions), apiVersions[0]);
+            return apiVersions[0];
+        }
     }
 }
+

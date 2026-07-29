@@ -450,6 +450,51 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
+        public async Task Test_Create_releasePlan_returns_existing_plan_with_same_api_version()
+        {
+            // Arrange: configure the mock to return an existing release plan with matching API version
+            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            var existingReleasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 999,
+                ReleasePlanId = 50001,
+                Title = "Existing Release Plan",
+                ProductName = "Contoso Management Product Name",
+                ProductType = "Offering",
+                ProductLifecycle = "GA",
+                ServiceTreeId = "87654321-4321-8765-1234-210987654321",
+                ProductTreeId = "12345678-1234-5678-9012-123456789012",
+                APISpecProjectPath = "specification/testcontoso/Contoso.Management",
+                SpecAPIVersion = "2024-01-01",
+                ApiReleaseType = ApiReleaseType.GA,
+                Status = "In Progress"
+            };
+
+            ((MockDevOpsService)devOpsService).ConfiguredReleasePlanForTypeSpecPathAndApiVersion = existingReleasePlan;
+            ((MockDevOpsService)devOpsService).ConfiguredReleasePlanForTypeSpecPathAndApiVersionKey = "specification/testcontoso/Contoso.Management";
+            ((MockDevOpsService)devOpsService).ConfiguredApiVersionForTypeSpecPathAndApiVersion = "2024-01-01";
+
+            // Act
+            var releaseplan = await releasePlanTool.CreateReleasePlan(null, 
+                testCodeFilePath, 
+                "July 2025", 
+                "GA", 
+                specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446", 
+                isTestReleasePlan: true);
+
+            // Assert
+            Assert.IsNotNull(releaseplan);
+            Assert.IsNull(releaseplan.ResponseError, $"Unexpected error: {releaseplan.ResponseError}");
+            var releasePlanDetails = releaseplan.ReleasePlanDetails as ReleasePlanWorkItem;
+            Assert.IsNotNull(releasePlanDetails);
+            Assert.That(releasePlanDetails.WorkItemId, Is.EqualTo(999), "Should return existing release plan");
+            Assert.That(releasePlanDetails.ReleasePlanId, Is.EqualTo(50001));
+            Assert.That(releasePlanDetails.SpecAPIVersion, Is.EqualTo("2024-01-01"));
+            Assert.IsNotNull(releaseplan.Message, "Response should contain a message about existing plan");
+            Assert.That(releaseplan.Message, Does.Contain("existing release plan"), "Message should indicate plan already exists");
+        }
+
+        [Test]
         public async Task Test_Create_releasePlan_without_spec_pr_sets_empty_spec_pull_requests()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";

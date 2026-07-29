@@ -587,6 +587,69 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
         #endregion
 
+        #region RunSDKGenerationPipelineAsync Tests
+
+        [Test]
+        [NonParallelizable]
+        public async Task RunSDKGenerationPipelineAsync_WhenRunningInAzurePipelines_DoesNotIncludeSdkReleaseTypeOrApiVersionTemplateParams()
+        {
+            // Arrange
+            var previousTeamProjectId = Environment.GetEnvironmentVariable("SYSTEM_TEAMPROJECTID");
+            Environment.SetEnvironmentVariable("SYSTEM_TEAMPROJECTID", "test-project");
+
+            try
+            {
+                Build? queuedBuild = null;
+                var buildClient = new Mock<BuildHttpClient>(new Uri("https://dev.azure.com/test"), null);
+                buildClient
+                    .Setup(c => c.GetDefinitionAsync(It.IsAny<string>(), It.IsAny<int>(), null, null, It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(new BuildDefinition { Id = 7412, Name = "tools - dotnet - ci" });
+                buildClient
+                    .Setup(c => c.QueueBuildAsync(It.IsAny<Build>(), null, false, false, null, It.IsAny<CancellationToken>()))
+                    .Callback<Build, string, bool, bool, object, CancellationToken>((build, _, _, _, _, _) => queuedBuild = build)
+                    .ReturnsAsync(new Build { Id = 12345 });
+
+                var projectClient = new Mock<ProjectHttpClient>(new Uri("https://dev.azure.com/test"), null);
+                projectClient
+                    .Setup(c => c.GetProject(It.IsAny<string>(), null, false, null))
+                    .ReturnsAsync(new TeamProject { Name = "internal" });
+
+                var connection = new Mock<IDevOpsConnection>();
+                connection.Setup(c => c.GetBuildClient(It.IsAny<CancellationToken>())).Returns(buildClient.Object);
+                connection.Setup(c => c.GetProjectClient(It.IsAny<CancellationToken>())).Returns(projectClient.Object);
+                var devOpsService = new DevOpsService(_logger, connection.Object);
+
+                // Act
+                await devOpsService.RunSDKGenerationPipelineAsync(
+                    "main",
+                    "specification/test/service",
+                    "v1",
+                    "stable",
+                    "dotnet",
+                    0,
+                    "feature/sdk-branch",
+                    CancellationToken.None);
+
+                // Assert
+                Assert.That(queuedBuild, Is.Not.Null);
+                Assert.That(queuedBuild!.TemplateParameters, Contains.Key("ConfigType"));
+                Assert.That(queuedBuild.TemplateParameters, Contains.Key("ConfigPath"));
+                Assert.That(queuedBuild.TemplateParameters, Contains.Key("CreatePullRequest"));
+                Assert.That(queuedBuild.TemplateParameters, Contains.Key("ReleasePlanWorkItemId"));
+                Assert.That(queuedBuild.TemplateParameters, Contains.Key("TriggerSource"));
+                Assert.That(queuedBuild.TemplateParameters, Contains.Key("SdkRepoBranch"));
+                Assert.That(queuedBuild.TemplateParameters["SdkRepoBranch"], Is.EqualTo("feature/sdk-branch"));
+                Assert.That(queuedBuild.TemplateParameters, Does.Not.ContainKey("SdkReleaseType"));
+                Assert.That(queuedBuild.TemplateParameters, Does.Not.ContainKey("ApiVersion"));
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("SYSTEM_TEAMPROJECTID", previousTeamProjectId);
+            }
+        }
+
+        #endregion
+
         #region FindPackageWorkItemIdsAsync Tests
 
         [Test]
@@ -792,4 +855,3 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         #endregion
     }
 }
-

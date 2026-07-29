@@ -19,6 +19,11 @@ public class NotificationServiceTests
 {
     private const string ServiceUrl = "https://notifications.example.com/send";
 
+    private const string AutomatedSdkPullRequestText =
+        "SDK pull requests: One SDK pull request per language (.NET, Java, JavaScript/TypeScript, Python, and Go (optional for data plane)) will be generated and linked to this plan. " +
+        "When each PR is ready, review and approve it, then complete the merge and release by following your release plan dashboard. " +
+        "The Azure SDK Tools Agent can walk you through these steps.";
+
     private TestLogger<NotificationService> logger;
     private Mock<IHttpClientFactory> mockHttpClientFactory;
     private Mock<IEnvironmentHelper> mockEnvironmentHelper;
@@ -79,11 +84,19 @@ public class NotificationServiceTests
         var subject = template.Subject;
         var body = template.Body;
 
-        Assert.That(subject, Is.EqualTo("Release plan created for Contoso (GA)"));
+        Assert.That(subject, Is.EqualTo("Azure SDK Release plan created for Contoso (GA)"));
         Assert.That(body, Does.Contain("https://github.com/pr/1"));
         Assert.That(body, Does.Contain(releasePlan.ReleasePlanLink));
-        Assert.That(body, Does.Contain("SDK pull requests will be auto generated"));
-        Assert.That(body, Does.Contain("<h3>SDK pull requests</h3>"));
+        Assert.That(body, Does.Contain("An Azure SDK release plan has been automatically created after merging"));
+        Assert.That(body, Does.Not.Contain("created successfully"));
+        Assert.That(body, Does.Contain("A release plan is a guided workflow"));
+        Assert.That(body, Does.Contain("https://aka.ms/azsdkdocs/release-plans"));
+        Assert.That(body, Does.Contain("<h3>What happens next</h3>"));
+        Assert.That(body, Does.Contain(AutomatedSdkPullRequestText));
+        Assert.That(body, Does.Not.Contain("You will be reminded automatically if an SDK is not published by the target date."));
+        Assert.That(body, Does.Not.Contain("<strong>SDK pull requests:</strong>"));
+        Assert.That(body, Does.Not.Contain("<h3>SDK pull requests</h3>"));
+        Assert.That(body, Does.Not.Contain("<strong>Action required:</strong>"));
         Assert.That(body, Does.Contain("https://aka.ms/azsdk/agent"));
         Assert.That(body, Does.Not.Contain("{"));
     }
@@ -143,11 +156,12 @@ public class NotificationServiceTests
         Assert.That(to, Is.EqualTo("author@microsoft.com;extra@microsoft.com"));
 
         var body = root.GetProperty("Body").GetString();
-        Assert.That(body, Does.Contain("SDK pull requests will be auto generated"));
-        Assert.That(body, Does.Not.Contain("KPI attestation"));
+        Assert.That(body, Does.Contain(AutomatedSdkPullRequestText));
+        Assert.That(body, Does.Not.Contain("<strong>SDK pull requests:</strong>"));
+        Assert.That(body, Does.Not.Contain("<strong>Action required:</strong>"));
 
         var subject = root.GetProperty("Subject").GetString();
-        Assert.That(subject, Is.EqualTo("Release plan created for Contoso (GA)"));
+        Assert.That(subject, Is.EqualTo("Azure SDK Release plan created for Contoso (GA)"));
     }
 
     [Test]
@@ -179,9 +193,58 @@ public class NotificationServiceTests
         using var doc = JsonDocument.Parse(captured[0]);
         var body = doc.RootElement.GetProperty("Body").GetString();
 
-        Assert.That(body, Does.Contain("Please use azsdk agent to generate the SDK pull requests"));
-        Assert.That(body, Does.Contain("<h3>Missing required information for KPI attestation</h3>"));
-        Assert.That(body, Does.Contain("complete KPI attestation"));
+        Assert.That(body, Does.Contain("Use the azsdk agent to generate SDK pull requests"));
+        Assert.That(body, Does.Not.Contain("<strong>SDK pull requests:</strong>"));
+        Assert.That(body, Does.Contain("<strong>Action required:</strong>"));
+        Assert.That(body, Does.Contain("This release plan is missing its Service Tree Product ID, Service ID, or Product Type"));
+        Assert.That(body, Does.Not.Contain("<h3>Missing required information for KPI attestation</h3>"));
+    }
+
+    [Test]
+    public void EmailTemplate_ManagementPlane_MissingProductType_IncludesAutoSdkAndActionRequired()
+    {
+        var releasePlan = new ReleasePlanWorkItem
+        {
+            ReleasePlanId = 9,
+            ProductName = "Fabrikam Relay",
+            IsManagementPlane = true,
+            CreatedUsing = "Automation",
+            ProductTreeId = "product-1",
+            ServiceTreeId = "service-1",
+            ProductType = string.Empty,
+            ApiReleaseType = ApiReleaseType.GA,
+            SDKInfo = [new SDKInfo { Language = ".NET", PackageName = "Azure.ResourceManager.FabrikamRelay" }]
+        };
+
+        var body = new NewReleasePlanEmail(releasePlan).Body;
+
+        Assert.That(body, Does.Contain(AutomatedSdkPullRequestText));
+        Assert.That(body, Does.Contain("<strong>Action required:</strong>"));
+        Assert.That(body, Does.Not.Contain("<strong>SDK pull requests:</strong>"));
+    }
+
+    [TestCase(true, false, false)]
+    [TestCase(false, true, false)]
+    [TestCase(false, false, true)]
+    public void EmailTemplate_MissingAnyProductDetail_IncludesActionRequired(
+        bool missingProductTreeId,
+        bool missingServiceTreeId,
+        bool missingProductType)
+    {
+        var releasePlan = new ReleasePlanWorkItem
+        {
+            ReleasePlanId = 8,
+            ProductName = "Fabrikam",
+            ProductTreeId = missingProductTreeId ? string.Empty : "product-1",
+            ServiceTreeId = missingServiceTreeId ? string.Empty : "service-1",
+            ProductType = missingProductType ? string.Empty : "Offering",
+            SDKInfo = [new SDKInfo { Language = "Python", PackageName = "azure-mgmt-fabrikam" }]
+        };
+
+        var body = new NewReleasePlanEmail(releasePlan).Body;
+
+        Assert.That(body, Does.Contain("<strong>Action required:</strong>"));
+        Assert.That(body, Does.Contain("This release plan is missing its Service Tree Product ID, Service ID, or Product Type"));
     }
 
     [Test]
@@ -309,8 +372,9 @@ public class NotificationServiceTests
 
         var body = new NewReleasePlanEmail(releasePlan).Body;
 
-        Assert.That(body, Does.Contain("Please use azsdk agent to generate the SDK pull requests"));
-        Assert.That(body, Does.Not.Contain("SDK pull requests will be auto generated"));
+        Assert.That(body, Does.Contain("Use the azsdk agent to generate SDK pull requests"));
+        Assert.That(body, Does.Not.Contain("<strong>SDK pull requests:</strong>"));
+        Assert.That(body, Does.Not.Contain("One SDK pull request per language"));
     }
 
     [Test]
@@ -331,8 +395,9 @@ public class NotificationServiceTests
         var body = new NewReleasePlanEmail(releasePlan).Body;
 
         Assert.That(body, Does.Contain("SDK details are currently missing from the release plan"));
-        Assert.That(body, Does.Not.Contain("SDK pull requests will be auto generated"));
-        Assert.That(body, Does.Not.Contain("Please use azsdk agent to generate the SDK pull requests"));
+        Assert.That(body, Does.Not.Contain("<strong>SDK pull requests:</strong>"));
+        Assert.That(body, Does.Not.Contain("One SDK pull request per language"));
+        Assert.That(body, Does.Not.Contain("Use the azsdk agent to generate SDK pull requests"));
     }
 
     [Test]
@@ -358,8 +423,9 @@ public class NotificationServiceTests
         var body = new NewReleasePlanEmail(releasePlan).Body;
 
         Assert.That(body, Does.Contain("SDK details are currently missing from the release plan"));
-        Assert.That(body, Does.Not.Contain("SDK pull requests will be auto generated"));
-        Assert.That(body, Does.Not.Contain("Please use azsdk agent to generate the SDK pull requests"));
+        Assert.That(body, Does.Not.Contain("<strong>SDK pull requests:</strong>"));
+        Assert.That(body, Does.Not.Contain("One SDK pull request per language"));
+        Assert.That(body, Does.Not.Contain("Use the azsdk agent to generate SDK pull requests"));
     }
 
     [Test]

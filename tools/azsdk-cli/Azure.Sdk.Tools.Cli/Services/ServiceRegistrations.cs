@@ -134,18 +134,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<CopilotClient>(sp =>
             {
                 var logger = sp.GetService<ILogger<CopilotClient>>();
-                var cliPath = Environment.GetEnvironmentVariable("AZSDK_COPILOT_CLI_PATH");
-                var options = new CopilotClientOptions
-                {
-                    Connection = RuntimeConnection.ForStdio(
-                        string.IsNullOrWhiteSpace(cliPath) ? null : cliPath.Trim()),
-                    Logger = logger
-                };
-
-                // Allow overriding the bundled Copilot CLI path via environment variable.
-                // This is useful when the standalone azsdk.exe doesn't include the Copilot CLI executable
-                // but the user has it installed elsewhere (e.g. via npm).
-                return new CopilotClient(options);
+                return new CopilotClient(CreateCopilotClientOptions(logger));
             });
             services.AddSingleton<ICopilotClientWrapper, CopilotClientWrapper>();
             services.AddScoped<ICopilotAgentRunner, CopilotAgentRunner>();
@@ -179,6 +168,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 {
                     endpoint = new Uri(openAiBaseUrl);
                 }
+
                 // Priority 2: Use AZURE_OPENAI_ENDPOINT with /openai/v1 postfix if it exists
                 else if (!string.IsNullOrWhiteSpace(azureOpenAiEndpoint))
                 {
@@ -201,6 +191,19 @@ namespace Azure.Sdk.Tools.Cli.Services
                 // For standard OpenAI (OPENAI_API_KEY exists, no Azure endpoint)
                 return new OpenAIClient(new ApiKeyCredential(openAiApiKey!));
             });
+        }
+
+        public static CopilotClientOptions CreateCopilotClientOptions(ILogger<CopilotClient>? logger)
+        {
+            var cliPath = Environment.GetEnvironmentVariable("AZSDK_COPILOT_CLI_PATH");
+            var githubToken = Environment.GetEnvironmentVariable("AZSDK_COPILOT_GITHUB_TOKEN");
+            return new CopilotClientOptions
+            {
+                Connection = RuntimeConnection.ForStdio(
+                    string.IsNullOrWhiteSpace(cliPath) ? null : cliPath.Trim()),
+                GitHubToken = string.IsNullOrWhiteSpace(githubToken) ? null : githubToken.Trim(),
+                Logger = logger
+            };
         }
 
         // Update checking and upgrade management in MCP server mode

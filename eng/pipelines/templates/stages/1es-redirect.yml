@@ -28,7 +28,7 @@ extends:
   parameters:
     settings:
       skipBuildTagsForGitHubPullRequests: true
-      ${{ if or(eq(variables['Build.DefinitionName'], 'net - partner-release'), eq(variables['Build.DefinitionName'], 'tools - azsdk-cli')) }}:
+      ${{ if eq(variables['Build.DefinitionName'], 'net - partner-release') }}:
         networkIsolationPolicy: Permissive
       ${{ else }}:
         networkIsolationPolicy: Permissive, CFSClean

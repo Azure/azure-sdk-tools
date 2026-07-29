@@ -4,7 +4,11 @@
 
 ### Features Added
 
+- Create release plan tool parses TypeSpec project using metadata emitter to get API version and update it in release plan.
+
 ### Breaking Changes
+
+- Removed the option to force create a release plan to avoid duplicate release plan.
 
 ### Bugs Fixed
 

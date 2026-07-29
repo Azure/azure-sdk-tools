@@ -7,77 +7,85 @@ Before and after examples of frontmatter improvements, including token counts.
 ### Before (Low Adherence)
 
 **SKILL.md frontmatter:**
+
 ```yaml
 ---
 name: appinsights-instrumentation
-description: 'Instrument a webapp to send useful telemetry data to Azure App Insights'
+description: "Instrument a webapp to send useful telemetry data to Azure App Insights"
 ---
 ```
 
 **Metrics:**
+
 - Score: Low
 - Tokens: ~142
 - Triggers: 0
 - Anti-triggers: 0
 
 **Problems:**
+
 - ❌ Only 71 characters - too brief
 - ❌ No trigger phrases
 - ❌ No anti-triggers
 - ❌ Agent doesn't know when to activate
 
 **triggers.test.ts:**
+
 ```javascript
 const shouldTriggerPrompts = [
   // Empty - no test coverage
 ];
 
 const shouldNotTriggerPrompts = [
-  'What is the weather today?',
-  'Help me write a poem',
+  "What is the weather today?",
+  "Help me write a poem",
 ];
 ```
 
 ### After (Medium-High Adherence)
 
 **SKILL.md frontmatter:**
+
 ```yaml
 ---
 name: appinsights-instrumentation
-description: "Instrument web applications to send telemetry to Azure Application Insights for monitoring and diagnostics. WHEN: \"add App Insights\", \"instrument my app\", \"set up application monitoring\", \"add telemetry\", \"track requests and dependencies\", \"ASP.NET Core telemetry\", \"Node.js Application Insights\"."
+description: 'Instrument web applications to send telemetry to Azure Application Insights for monitoring and diagnostics. WHEN: "add App Insights", "instrument my app", "set up application monitoring", "add telemetry", "track requests and dependencies", "ASP.NET Core telemetry", "Node.js Application Insights".'
 ---
 ```
 
 **Metrics:**
+
 - Score: Medium-High ✅
 - Tokens: ~385 (under 500 budget ✅)
 - Triggers: 7 (WHEN: format)
 
 **Improvements:**
+
 - ✅ Informative but concise (under 60 words)
 - ✅ Uses inline double-quoted string (skills.sh compatible)
 - ✅ Explicit "WHEN:" trigger phrases with quoted keywords
 - ✅ No "DO NOT USE FOR:" (avoids keyword contamination)
 
 **triggers.test.ts:**
+
 ```javascript
 const shouldTriggerPrompts = [
-  'Add Application Insights to my web app',
-  'Instrument my ASP.NET Core application for monitoring',
-  'Set up telemetry for my Node.js app',
-  'How do I track requests in App Insights?',
-  'Add Application Insights monitoring to my project',
-  'Configure App Insights for my Azure web app',
+  "Add Application Insights to my web app",
+  "Instrument my ASP.NET Core application for monitoring",
+  "Set up telemetry for my Node.js app",
+  "How do I track requests in App Insights?",
+  "Add Application Insights monitoring to my project",
+  "Configure App Insights for my Azure web app",
 ];
 
 const shouldNotTriggerPrompts = [
-  'What is the weather today?',
-  'Help me write a poem',
-  'Query my Application Insights logs',  // → azure-observability
-  'Create an alert in Azure Monitor',     // → azure-observability
-  'Show me my App Insights dashboard',    // → azure-observability
-  'How much does App Insights cost?',     // → azure-cost
-  'Help me with AWS CloudWatch',          // Wrong cloud provider
+  "What is the weather today?",
+  "Help me write a poem",
+  "Query my Application Insights logs", // → azure-observability
+  "Create an alert in Azure Monitor", // → azure-observability
+  "Show me my App Insights dashboard", // → azure-observability
+  "How much does App Insights cost?", // → azure-cost
+  "Help me with AWS CloudWatch", // Wrong cloud provider
 ];
 ```
 
@@ -88,14 +96,16 @@ const shouldNotTriggerPrompts = [
 ### Before (Low Adherence)
 
 **SKILL.md frontmatter:**
+
 ```yaml
 ---
 name: azure-security
-description: 'Azure Security Services including Key Vault, Managed Identity, RBAC, Entra ID, and Defender. Provides secrets management, credential-free authentication, role-based access control, and threat protection.'
+description: "Azure Security Services including Key Vault, Managed Identity, RBAC, Entra ID, and Defender. Provides secrets management, credential-free authentication, role-based access control, and threat protection."
 ---
 ```
 
 **Problems:**
+
 - ❌ Catalog-style description (lists services, not actions)
 - ❌ No trigger phrases
 - ❌ No anti-triggers
@@ -104,14 +114,16 @@ description: 'Azure Security Services including Key Vault, Managed Identity, RBA
 ### After (Medium-High Adherence)
 
 **SKILL.md frontmatter:**
+
 ```yaml
 ---
 name: azure-security
-description: "Overview of Azure security services and concepts including Key Vault, Managed Identity, RBAC, Entra ID, and Defender for Cloud. WHEN: \"Azure security overview\", \"what security services are available\", \"explain managed identity\", \"RBAC basics\", \"Key Vault concepts\", \"Entra ID overview\", \"Defender for Cloud features\"."
+description: 'Overview of Azure security services and concepts including Key Vault, Managed Identity, RBAC, Entra ID, and Defender for Cloud. WHEN: "Azure security overview", "what security services are available", "explain managed identity", "RBAC basics", "Key Vault concepts", "Entra ID overview", "Defender for Cloud features".'
 ---
 ```
 
 **Improvements:**
+
 - ✅ Reframed as "overview/concepts" skill
 - ✅ Explicit WHEN: triggers for educational queries
 - ✅ No "DO NOT USE FOR:" (avoids keyword contamination with azure-security-hardening, entra-app-registration)
@@ -123,6 +135,7 @@ description: "Overview of Azure security services and concepts including Key Vau
 ### Before (Medium Adherence)
 
 **SKILL.md frontmatter:**
+
 ```yaml
 ---
 name: azure-deploy
@@ -135,20 +148,23 @@ description: >-
 ```
 
 **Status:**
+
 - ✅ Good trigger phrases
 - ❌ Missing anti-triggers (collision with azure-create-app, azure-deployment-preflight)
 
 ### After (Medium-High Adherence)
 
 **SKILL.md frontmatter:**
+
 ```yaml
 ---
 name: azure-deploy
-description: "Deploy applications to Azure App Service, Azure Functions, and Static Web Apps. WHEN: \"deploy to Azure\", \"host on Azure\", \"publish to Azure\", \"run on Azure\", \"azd up\", \"deploy my app\", \"push to Azure\", \"get this running in the cloud\"."
+description: 'Deploy applications to Azure App Service, Azure Functions, and Static Web Apps. WHEN: "deploy to Azure", "host on Azure", "publish to Azure", "run on Azure", "azd up", "deploy my app", "push to Azure", "get this running in the cloud".'
 ---
 ```
 
 **Improvements:**
+
 - ✅ Uses WHEN: with distinctive quoted trigger phrases
 - ✅ No "DO NOT USE FOR:" — previously mentioned "azure-create-app" and "azure-deployment-preflight" which caused keyword contamination
 - ✅ Concise and cross-model optimized
@@ -161,17 +177,17 @@ description: "Deploy applications to Azure App Service, Azure Functions, and Sta
 
 ```javascript
 // Specific and actionable
-'Deploy my Node.js app to Azure App Service'
-'How do I publish a React app to Azure Static Web Apps?'
-'Set up Azure Functions for my Python project'
+"Deploy my Node.js app to Azure App Service";
+"How do I publish a React app to Azure Static Web Apps?";
+"Set up Azure Functions for my Python project";
 
 // Uses skill keywords
-'Run azd up to deploy my application'
-'Host my web app on Azure'
+"Run azd up to deploy my application";
+"Host my web app on Azure";
 
 // Natural variations
-'I need to get my app running on Azure'
-'Can you help me deploy to the cloud?'
+"I need to get my app running on Azure";
+"Can you help me deploy to the cloud?";
 ```
 
 ### Good Anti-Trigger Prompts
@@ -199,6 +215,7 @@ description: "Deploy applications to Azure App Service, Azure Functions, and Sta
 ## Example 5: Commit Message
 
 **Good commit message:**
+
 ```
 sensei: improve appinsights-instrumentation frontmatter
 
@@ -210,6 +227,7 @@ sensei: improve appinsights-instrumentation frontmatter
 ```
 
 **Minimal commit message (also acceptable):**
+
 ```
 sensei: improve appinsights-instrumentation frontmatter
 ```
@@ -221,7 +239,7 @@ sensei: improve appinsights-instrumentation frontmatter
 ### ❌ Don't Do This: Anti-Trigger Keyword Contamination
 
 ```yaml
-description: "Deploy to Azure. USE FOR: \"deploy app\", \"push to production\". DO NOT USE FOR: Function apps (use azure-functions), storage accounts (use azure-storage), Kubernetes (use azure-aks)."
+description: 'Deploy to Azure. USE FOR: "deploy app", "push to production". DO NOT USE FOR: Function apps (use azure-functions), storage accounts (use azure-storage), Kubernetes (use azure-aks).'
 ```
 
 **Problem:** The "DO NOT USE FOR" clause introduces "Function apps", "storage", "Kubernetes" — on Claude Sonnet these keywords cause this skill to activate for Functions, Storage, and AKS tasks. Remove anti-triggers and use positive routing with distinctive `WHEN:` phrases instead.
@@ -283,8 +301,8 @@ USE FOR: "deploy to Azure", "host on Azure"
 ```javascript
 // But triggers.test.ts has:
 const shouldTriggerPrompts = [
-  'Create a new Azure project',  // Wrong! This is azure-create-app
-  'Validate my Bicep file',      // Wrong! This is azure-deployment-preflight
+  "Create a new Azure project", // Wrong! This is azure-create-app
+  "Validate my Bicep file", // Wrong! This is azure-deployment-preflight
 ];
 ```
 
@@ -352,33 +370,34 @@ When token optimizations are available:
 **If user chooses [I] Create issue:**
 
 Creates GitHub issue:
+
 - **Title:** `[sensei] Token optimization suggestions for azure-deploy`
 - **Labels:** `enhancement`, `skill-quality`
 - **Body:**
+
   ```markdown
   ## Summary
-  
+
   Sensei improved `azure-deploy` frontmatter but identified token optimization opportunities.
-  
-  | Metric | Before | After |
-  |--------|--------|-------|
-  | Score | Medium | Medium-High |
-  | Tokens | 623 | 589 |
-  | Status | ⚠️ Above soft limit | |
-  
+
+  | Metric | Before              | After       |
+  | ------ | ------------------- | ----------- |
+  | Score  | Medium              | Medium-High |
+  | Tokens | 623                 | 589         |
+  | Status | ⚠️ Above soft limit |             |
+
   ## Suggestions
-  
+
   - [ ] Remove bullet point decorators (-8 tokens)
   - [ ] Shorten "In order to deploy" → "To deploy" (-12 tokens)
   - [ ] Consolidate example list into paragraph (-18 tokens)
-  
+
   **Potential savings:** ~38 tokens → 551 tokens (under 500 soft limit)
-  
+
   ## References
-  
+
   - [OPTIMIZATION-PATTERNS.md](/.github/skills/markdown-token-optimizer/references/OPTIMIZATION-PATTERNS.md)
   ```
-
 
 ---
 
@@ -387,16 +406,21 @@ Creates GitHub issue:
 Templates for structuring the SKILL.md body content, adapted from Anthropic's [Complete Guide to Building Skills](https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf).
 
 ### Pattern 1: Sequential Workflow
+
 Use when users need multi-step processes in a specific order. Key techniques: explicit step ordering, dependencies between steps, validation at each stage.
 
 ### Pattern 2: Multi-MCP Coordination
+
 Use when workflows span multiple services or MCP servers. Key techniques: clear phase separation, data passing between MCPs, validation before next phase.
 
 ### Pattern 3: Iterative Refinement
+
 Use when output quality improves with iteration. Generate draft, run validation, address issues, re-validate, repeat until quality threshold met.
 
 ### Pattern 4: Context-Aware Tool Selection
+
 Use when the same outcome requires different tools depending on context. Build a decision tree with clear criteria, fallback options, and transparency about choices.
 
 ### Pattern 5: Domain-Specific Intelligence
+
 Use when the skill adds specialized knowledge beyond tool access. Apply domain rules before processing, document compliance decisions, maintain audit trail.

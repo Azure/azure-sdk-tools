@@ -260,6 +260,59 @@ describe("API routes", () => {
       expect(res.body.plans[0].releasePlanId).toBe("VALID-123");
     });
 
+    test("serves plan from cache without on-demand ADO/GitHub calls when already cached", async () => {
+      cache.releasePlans.data = {
+        plans: [{ id: 100, releasePlanId: "CACHED-1", title: "Cached Plan" }],
+        fetchedAt: "2024-01-01T00:00:00Z",
+      };
+      cache.releasePlans.fetchedAt = "2024-01-01T00:00:00Z";
+      cache.releasePlans.updatedAt = Date.now();
+      const res = await httpRequest(
+        "GET",
+        "/api/release-plans?releasePlan=CACHED-1",
+      );
+      expect(res.status).toBe(200);
+      expect(res.body.plans.length).toBe(1);
+      expect(res.body.plans[0].releasePlanId).toBe("CACHED-1");
+      expect(res.body.fetchedAt).toBe("2024-01-01T00:00:00Z");
+      // No on-demand backend calls should have been made
+      expect(mockRunWiql).not.toHaveBeenCalled();
+      expect(mockFetchWorkItemsBatch).not.toHaveBeenCalled();
+    });
+
+    test("serves plan from cache by numeric work item ID", async () => {
+      cache.releasePlans.data = {
+        plans: [{ id: 100, releasePlanId: "CACHED-1", title: "Cached Plan" }],
+        fetchedAt: "2024-01-01T00:00:00Z",
+      };
+      cache.releasePlans.updatedAt = Date.now();
+      const res = await httpRequest(
+        "GET",
+        "/api/release-plans?releasePlan=100",
+      );
+      expect(res.status).toBe(200);
+      expect(res.body.plans[0].id).toBe(100);
+      expect(mockRunWiql).not.toHaveBeenCalled();
+    });
+
+    test("falls back to on-demand fetch when plan not in cache", async () => {
+      cache.releasePlans.data = {
+        plans: [{ id: 100, releasePlanId: "CACHED-1", title: "Cached Plan" }],
+        fetchedAt: "2024-01-01T00:00:00Z",
+      };
+      cache.releasePlans.updatedAt = Date.now();
+      const wi = buildWorkItem(200, { planId: "OTHER-2" });
+      mockRunWiql.mockResolvedValueOnce([200]);
+      mockFetchWorkItemsBatch.mockResolvedValueOnce([wi]);
+      const res = await httpRequest(
+        "GET",
+        "/api/release-plans?releasePlan=OTHER-2",
+      );
+      expect(res.status).toBe(200);
+      expect(res.body.plans[0].releasePlanId).toBe("OTHER-2");
+      expect(mockRunWiql).toHaveBeenCalled();
+    });
+
     test("returns cached data when available", async () => {
       cache.releasePlans.data = {
         plans: [{ id: 1, title: "Cached" }],
@@ -1085,7 +1138,7 @@ describe("API routes", () => {
       mockFetchWorkItemsBatch.mockResolvedValueOnce([]);
       const pkgMap = new Map([
         [
-          "Azure.Storage.Blobs|.NET",
+          "Azure.Storage.Blobs|.net",
           {
             version: "13.0.0",
             apiReviewStatus: "Approved",

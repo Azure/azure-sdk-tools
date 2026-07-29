@@ -100,9 +100,8 @@ class SearchClient:
         request = KnowledgeBaseRetrievalRequest(
             intents=[KnowledgeRetrievalSemanticIntent(search=query)],
             include_activity=True,
-            output_mode="extractiveData",
             knowledge_source_params=kb_params,
-            max_output_size=_KB_MAX_OUTPUT_SIZE,
+            max_output_size_in_tokens=_KB_MAX_OUTPUT_SIZE,
         )
 
         result = await self._kb_client.retrieve(
@@ -133,7 +132,7 @@ class SearchClient:
 
         vector_query = VectorizableTextQuery(
             text=query,
-            k=k,
+            k_nearest_neighbors=k,
             fields="text_vector",
         )
 
@@ -157,7 +156,6 @@ class SearchClient:
             search_text=query,
             filter=combined_filter or None,
             query_type=QueryType.SEMANTIC,
-            query_language="en-us",
             top=k,
             select=select_fields,
             vector_queries=[vector_query],

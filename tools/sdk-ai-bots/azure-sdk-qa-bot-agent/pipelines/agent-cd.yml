@@ -78,12 +78,6 @@ extends:
 
                     pip install -r requirements.txt --retries 5 --timeout 60
 
-                    export AI_FOUNDRY_PROJECT_RESOURCE_ID=$(az resource list \
-                      --name "$AI_FOUNDRY_ACCOUNT_NAME/$AI_FOUNDRY_PROJECT_NAME" \
-                      --resource-type Microsoft.CognitiveServices/accounts/projects \
-                      --query "[0].id" -o tsv)
-                    echo "Project resource ID: $AI_FOUNDRY_PROJECT_RESOURCE_ID"
-
                     python scripts/deploy_hosted_agent.py \
                       ${{ parameters.agentName }} \
                       --tag "$(Build.BuildId)" \
@@ -94,5 +88,4 @@ extends:
                   AI_FOUNDRY_PROJECT_NAME: $(AI_FOUNDRY_PROJECT_NAME)
                   ACR_NAME: $(ACR_NAME)
                   ACR_RESOURCE_GROUP: $(ACR_RESOURCE_GROUP)
-                  AI_FOUNDRY_PROJECT_RESOURCE_ID: $(AI_FOUNDRY_PROJECT_RESOURCE_ID)
                   SYSTEM_ACCESSTOKEN: $(System.AccessToken)

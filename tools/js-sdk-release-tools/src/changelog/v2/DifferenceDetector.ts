@@ -17,7 +17,11 @@ import { SDKType } from '../../common/types.js';
 import { join } from 'path';
 import { FunctionDeclaration, ModuleKind, Project, ScriptTarget, SourceFile, SyntaxKind } from 'ts-morph';
 import { logger } from '../../utils/logger.js';
-import ts from 'typescript';
+// Use the `ts` that ts-morph is built against, NOT the standalone `typescript` package.
+// The nodes inspected below come from ts-morph, and a hoisted/mismatched standalone
+// `typescript` (e.g. an old transitive copy) has different `SyntaxKind` numeric values,
+// which silently breaks `ts.SyntaxKind`/`ts.isIdentifier` checks against ts-morph nodes.
+import { ts } from 'ts-morph';
 
 const { JsxEmit } = ts;
 

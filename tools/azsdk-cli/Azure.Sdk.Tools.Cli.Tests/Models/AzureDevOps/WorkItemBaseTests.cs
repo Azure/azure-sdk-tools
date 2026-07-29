@@ -10,6 +10,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Models.AzureDevOps;
 [TestFixture]
 public class WorkItemBaseTests
 {
+    private const string SystemTeamProjectIdEnvironmentVariableName = "SYSTEM_TEAMPROJECTID";
+
     [Test]
     public void GetPatchDocument_WithNullableDateTimeValue_RoundTripsDateFieldToJson()
     {
@@ -33,6 +35,51 @@ public class WorkItemBaseTests
         var operation = GetFieldOperation(workItem, "Custom.InvalidSince");
 
         Assert.That(operation["Value"]?.GetValue<string>(), Is.EqualTo(string.Empty));
+    }
+
+    [TestCase(null)]
+    [TestCase("")]
+    public void GetPatchDocument_WhenAgentCreatedOutsidePipeline_SetsCreatedUsingToCopilot(string? teamProjectId)
+    {
+        var originalValue = Environment.GetEnvironmentVariable(SystemTeamProjectIdEnvironmentVariableName);
+        try
+        {
+            Environment.SetEnvironmentVariable(SystemTeamProjectIdEnvironmentVariableName, teamProjectId);
+            var workItem = new WorkItemBase
+            {
+                IsCreatedByAgent = true
+            };
+
+            var operation = GetFieldOperation(workItem, "Custom.CreatedUsing");
+
+            Assert.That(operation["Value"]?.GetValue<string>(), Is.EqualTo("Copilot"));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(SystemTeamProjectIdEnvironmentVariableName, originalValue);
+        }
+    }
+
+    [Test]
+    public void GetPatchDocument_WhenAgentCreatedInPipeline_SetsCreatedUsingToAutomation()
+    {
+        var originalValue = Environment.GetEnvironmentVariable(SystemTeamProjectIdEnvironmentVariableName);
+        try
+        {
+            Environment.SetEnvironmentVariable(SystemTeamProjectIdEnvironmentVariableName, Guid.NewGuid().ToString());
+            var workItem = new WorkItemBase
+            {
+                IsCreatedByAgent = true
+            };
+
+            var operation = GetFieldOperation(workItem, "Custom.CreatedUsing");
+
+            Assert.That(operation["Value"]?.GetValue<string>(), Is.EqualTo("Automation"));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(SystemTeamProjectIdEnvironmentVariableName, originalValue);
+        }
     }
 
     private static JsonObject GetFieldOperation(WorkItemBase workItem, string fieldName)

@@ -152,9 +152,26 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
                 logger.LogInformation("Running TypeSpec metadata emitter in {ProjectRootPath}", project.ProjectRootPath);
 
+                // Determine the TypeSpec entrypoint. 'tsp compile .' requires main.tsp in the working directory.
+                // If main.tsp is missing but client.tsp is present, compile client.tsp explicitly.
+                string entrypoint;
+                if (File.Exists(Path.Combine(project.ProjectRootPath, "main.tsp")))
+                {
+                    entrypoint = ".";
+                }
+                else if (File.Exists(Path.Combine(project.ProjectRootPath, "client.tsp")))
+                {
+                    entrypoint = "./client.tsp";
+                }
+                else
+                {
+                    logger.LogError("Neither main.tsp nor client.tsp found in {ProjectRootPath}. Cannot run TypeSpec metadata emitter.", project.ProjectRootPath);
+                    return null;
+                }
+
                 var npxOptions = new NpxOptions(
                     package: "@typespec/compiler",
-                    args: ["tsp", "compile", ".", "--emit", "@azure-tools/typespec-metadata"],
+                    args: ["tsp", "compile", entrypoint, "--emit", "@azure-tools/typespec-metadata", "--output-dir", "./tsp-output"],
                     logOutputStream: true,
                     workingDirectory: project.ProjectRootPath,
                     timeout: TimeSpan.FromMinutes(5)
@@ -352,7 +369,13 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             // Parse URL to get the path component (automatically strips query params and fragments)
             var uri = new Uri(url);
             var path = uri.AbsolutePath;
-            
+
+            // Strip tspconfig.yaml from the end of the path if present
+            if (path.EndsWith($"/{TypeSpecProject.TSPCONFIG_FILENAME}", StringComparison.OrdinalIgnoreCase))
+            {
+                path = path[..^(TypeSpecProject.TSPCONFIG_FILENAME.Length + 1)];
+            }
+
             int specIndex = path.IndexOf("specification", StringComparison.OrdinalIgnoreCase);
             return specIndex >= 0 ? path[specIndex..] : string.Empty;
         }

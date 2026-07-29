@@ -9,6 +9,8 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 {
     public class WorkItemBase
     {
+        private const string SystemTeamProjectIdEnvironmentVariableName = "SYSTEM_TEAMPROJECTID";
+
         public int WorkItemId { get; set; }
 
         public string WorkItemUrl { get; set; } = string.Empty;
@@ -79,7 +81,7 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
                 {
                     Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
                     Path = "/fields/Custom.CreatedUsing",
-                    Value = "Copilot"
+                    Value = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(SystemTeamProjectIdEnvironmentVariableName)) ? "Copilot" : "Automation"
                 });
             }
 
@@ -87,4 +89,3 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         }
     }
 }
-

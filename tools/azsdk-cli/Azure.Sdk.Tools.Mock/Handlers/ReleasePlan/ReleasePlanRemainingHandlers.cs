@@ -64,12 +64,15 @@ public class UpdateReleasePlanHandler : IMockToolHandler
 public class GetReleasePlanForSpecPrHandler : IMockToolHandler
 {
     public string ToolName => "azsdk_get_release_plan_for_spec_pr";
+    // Deterministic "not found" — keeps the create-release-plan flow honest in
+    // eval scenarios. Stimuli that target an existing plan pass the work-item
+    // ID directly and call azsdk_get_release_plan instead.
     public CommandResponse Handle(Dictionary<string, object?>? arguments) => new ReleasePlanResponse
     {
         TypeSpecProject = "specification/contosowidgetmanager/Contoso.WidgetManager",
         PackageType = SdkType.Dataplane,
-        Message = "Release plan found for spec PR (mock)",
-        ReleasePlanDetails = ReleasePlanMockResponses.ContosoWorkItem()
+        Message = "No release plan found for the given spec PR (mock)",
+        ReleasePlanDetails = null
     };
 }
 

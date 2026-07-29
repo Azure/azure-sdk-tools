@@ -49,7 +49,11 @@ if ($PSCmdlet.ParameterSetName -eq 'Languages') {
 }
 
 if ($PSCmdlet.ParameterSetName -eq 'RepositoryFile') {
-    $Repositories = Get-Content $RepositoryFilePath
+    $Repositories = @(
+        Get-Content $RepositoryFilePath |
+            ForEach-Object { ([string]$_).Trim() } |
+            Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and -not $_.EndsWith('-pr', [StringComparison]::OrdinalIgnoreCase) }
+    )
 }
 
 if ($Fields) {
@@ -93,6 +97,9 @@ foreach ($repo in $Repositories) {
 .SYNOPSIS
 Adds issues from Azure SDK language repositories to a project given labels.
 
+.DESCRIPTION
+Adds issues from Azure SDK repositories to a project given labels. When repositories are loaded from RepositoryFilePath, entries ending in "-pr" are skipped before any issues are queried or reported.
+
 .PARAMETER ProjectNumber
 The project (beta) number in the Azure organization. This project (beta) should be referenced within the language repository.
 
@@ -106,7 +113,7 @@ The GitHub repositories to query for issues e.g., "Azure/azure-sdk-for-net".
 The Azure SDK languages to query for issues e.g., "net" for "Azure/azure-sdk-for-net".
 
 .PARAMETER RepositoryFilePath
-The fully-qualified path (including filename) to a new line-delmited file of respositories to update.
+The fully-qualified path (including filename) to a new line-delmited file of respositories to update. Entries ending in "-pr" are skipped.
 
 .PARAMETER Fields
 Custom fields defined by the project to set when adding issues.

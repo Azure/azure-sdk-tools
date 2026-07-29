@@ -134,7 +134,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return response;
                 }
 
-                var releasePlan = await devopsService.GetReleasePlanForWorkItemAsync(workItemId, ct);
+                var releasePlan = await devopsService.ResolveReleasePlanByIdAsync(workItemId, ct);
 
                 var sdkInfoList = releasePlan?.SDKInfo;
 
@@ -178,7 +178,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        [McpServerTool(Name = RunGenerateSdkToolName), Description("Generate SDK from a TypeSpec project using pipeline. Release plan work item ID is required to run SDK generation.")]
+        [McpServerTool(Name = RunGenerateSdkToolName), Description("Runs the SDK generation pipeline for a TypeSpec project and creates the generated SDK pull request(s). This is the correct tool for requests such as 'run SDK generation for all languages for release <id>', 'generate SDK for a release plan', or any pipeline-based / no-local-clone generation. Requires a release plan ID or work item ID, plus the TypeSpec project path, SDK release type (beta or stable), and language (all validated before the pipeline runs). It generates one language per call, so to generate for all languages call this tool once per language. Do NOT use azsdk_release_sdk (that releases an already-generated package) or azsdk_get_sdk_pull_request_link (that only retrieves links) to generate an SDK.")]
         public async Task<ReleaseWorkflowResponse> RunGenerateSdkAsync(string typespecProjectRoot, string sdkReleaseType, string language, int pullRequestNumber = 0, int workItemId = 0, string apiVersion = "", CancellationToken ct = default)
         {
             try
@@ -196,13 +196,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     response.NextSteps = ["Create a release plan if you don't have one or get existing release plan and re-run SDK generation."];
                     return response;
                 }
-                var releasePlan = await devopsService.GetReleasePlanForWorkItemAsync(workItemId, ct);
+                // The resolver accepts either a Release Plan ID or a work item ID.
+                var releasePlan = await devopsService.ResolveReleasePlanByIdAsync(workItemId, ct);
                 if (releasePlan == null)
                 {
                     response.ResponseErrors.Add($"No release plan found for work item ID {workItemId}. Please check the work item ID and try again.");
                     response.Status = "Failed";
                     return response;
                 }
+
+                // The input may have been a Release Plan ID; use the resolved work item ID for subsequent calls.
+                workItemId = releasePlan.WorkItemId;
 
                 if (releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview)
                 {
@@ -338,7 +342,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 if (buildId == 0)
                 {
                     response.Details.Add("Build Id is not available. Checking for SDK pull request details in release plan work item.");
-                    var releasePlan = await devopsService.GetReleasePlanForWorkItemAsync(workItemId, ct);
+                    var releasePlan = await devopsService.ResolveReleasePlanByIdAsync(workItemId, ct);
                     var sdkInfo = releasePlan?.SDKInfo.FirstOrDefault(s => string.Equals(s.Language, language, StringComparison.OrdinalIgnoreCase));
                     if (sdkInfo != null && !string.IsNullOrEmpty(sdkInfo.SdkPullRequestUrl))
                     {

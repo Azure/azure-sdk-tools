@@ -32,7 +32,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         private static readonly ServiceInfo DefaultAzureSdkKnowledgeService = new()
         {
-            Endpoint = "https://azuresdkqabot-server-c8czabhzhweadwgu.westus2-01.azurewebsites.net",
+            Endpoint = "https://azuresdkqabot-server-agent-btg3c4hpa7faapen.westus2-01.azurewebsites.net",
             ClientId = "899da762-d510-48f2-911a-db9ea0cc41fd",
             AuthScope = "api://azure-sdk-qa-bot/token"
         };

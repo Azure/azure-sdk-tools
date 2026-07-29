@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -6,16 +7,12 @@ namespace Azure.Sdk.Tools.Cli.Models;
 public class AnalyzePipelineResponse : CommandResponse
 {
     [JsonPropertyName("failed_test_titles")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public Dictionary<string, List<string>> FailedTests { get; set; } = [];
 
     [JsonPropertyName("failed_tasks")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<LogAnalysisResponse> FailedTasks { get; set; } = [];
-
-    [JsonPropertyName("pipeline_url")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public string PipelineUrl { get; set; }
+    public List<LogAnalysisResponse> FailedTasks { get; set; } = [];
 
     private readonly JsonSerializerOptions jsonOptions = new()
     {
@@ -24,24 +21,34 @@ public class AnalyzePipelineResponse : CommandResponse
 
     protected override string Format()
     {
-        var output = "";
+        var sb = new StringBuilder();
 
         if (FailedTests.Count > 0)
         {
-            output += "--------------------------------------------------------------------------------" + Environment.NewLine +
-                      $"Failed Tests" + Environment.NewLine +
-                      "--------------------------------------------------------------------------------" + Environment.NewLine;
-            output += JsonSerializer.Serialize(FailedTests, jsonOptions) + Environment.NewLine;
+            sb.AppendLine("--------------------------------------------------------------------------------");
+            sb.AppendLine("Failed Tests");
+            sb.AppendLine("--------------------------------------------------------------------------------");
+            sb.AppendLine(JsonSerializer.Serialize(FailedTests, jsonOptions));
         }
 
         if (FailedTasks.Count > 0)
         {
-            output += "--------------------------------------------------------------------------------" + Environment.NewLine +
-                      $"Failed Tasks" + Environment.NewLine +
-                      "--------------------------------------------------------------------------------" + Environment.NewLine;
-            output += string.Join(Environment.NewLine, FailedTasks.Select(t => t.ToString())) + Environment.NewLine;
+            sb.AppendLine("--------------------------------------------------------------------------------");
+            sb.AppendLine("Failed Tasks");
+            sb.AppendLine("--------------------------------------------------------------------------------");
+            foreach (var task in FailedTasks)
+            {
+                sb.AppendLine(task.ToString());
+                sb.AppendLine("--------------------------------------------------------------------------------");
+            }
         }
 
-        return output;
+        if (FailedTests.Count == 0 && FailedTasks.Count == 0)
+        {
+            sb.AppendLine("");
+            sb.AppendLine("No failures found");
+        }
+
+        return sb.ToString();
     }
 }

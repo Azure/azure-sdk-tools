@@ -19,12 +19,12 @@ namespace APIView.Analysis
         {
             // Analyzers from Azure.ClientSdk.Analyzers (uses ISymbolAnalysisContext)
             _analyzers.Add(new ClientMethodsAnalyzer());
-            _analyzers.Add(new ClientConstructorAnalyzer());
             _analyzers.Add(new ClientOptionsAnalyzer());
             _analyzers.Add(new BannedAssembliesAnalyzer());
 
             // Analyzers from Azure.SdkAnalyzers (uses SymbolAnalysisContext)
             _sdkAnalyzers.Add(new SdkAnalyzerAdapter(new Azure.SdkAnalyzers.TypeNameAnalyzer()));
+            _sdkAnalyzers.Add(new SdkAnalyzerAdapter(new Azure.SdkAnalyzers.ClientConstructorAnalyzer()));
         }
 
         public override void VisitAssembly(IAssemblySymbol symbol)

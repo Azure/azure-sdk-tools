@@ -34,7 +34,7 @@ public abstract class CommandResponse
     /// </summary>
     [JsonPropertyName("response_error")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? ResponseError { get; set; }
+    public virtual string? ResponseError { get; set; }
 
     /// <summary>
     /// ResponseErrors represents a list of error messages associated with the response.
@@ -61,6 +61,17 @@ public abstract class CommandResponse
             return string.IsNullOrEmpty(ResponseError) && (ResponseErrors == null || ResponseErrors.Count == 0) ? Status.Succeeded : Status.Failed;
         }
     }
+
+    public static readonly string SupportChannelMessage =
+        "If you need any assistance, please reach out to the AzSDK Agent team via the Teams channel: https://teams.microsoft.com/l/channel/19%3A6d2c19322c254a80bcc521675134da03%40thread.skype/AzSDK%20Tools%20Agent?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47";
+
+    /// <summary>
+    /// Support channel details.
+    /// </summary>
+    [JsonPropertyName("support_channel")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public virtual string? SupportChannel => OperationStatus == Status.Failed ? SupportChannelMessage : null;
+    
 
     protected abstract string Format();
 
@@ -90,6 +101,11 @@ public abstract class CommandResponse
             {
                 messages.Add(step);
             }
+        }
+
+        if (SupportChannel != null)
+        {
+            messages.Add(SupportChannel);
         }
 
         if (messages.Count > 0)

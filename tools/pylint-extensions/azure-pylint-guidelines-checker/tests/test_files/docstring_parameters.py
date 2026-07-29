@@ -128,3 +128,14 @@ def function_foo() -> NoReturn:
     This function never returns.
     """
     raise ValueError("This function never returns")
+
+
+# test_docstring_class_vararg_documented_ok - documenting *args explicitly is fine
+class ClassWithDocumentedVararg:
+    """A class that explicitly documents its vararg.
+
+    :param str url: The service endpoint.
+    :param tuple args: Extra positional arguments passed to the base class.
+    """
+    def __init__(self, url, *args):
+        pass

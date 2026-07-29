@@ -4,7 +4,6 @@ using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Tools.Pipeline;
 using Azure.Sdk.Tools.Cli.Services;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
@@ -12,8 +11,8 @@ using Azure.Sdk.Tools.Cli.Tools.Core;
 
 namespace Azure.Sdk.Tools.Cli.Tools.EngSys;
 
-[McpServerToolType, Description("Processes and analyzes test results from TRX files")]
-public class TestAnalysisTool(ITestHelper testHelper, ILogger<PipelineAnalysisTool> logger) : MCPTool()
+[McpServerToolType, Description("Processes and analyzes test results from test result files (TRX, JUnit XML, etc.)")]
+public class TestAnalysisTool(ITestResultParserResolver parserResolver, ILogger<TestAnalysisTool> logger) : MCPTool()
 {
     // MCP Tool Names
     private const string GetFailedTestCasesToolName = "azsdk_get_failed_test_cases";
@@ -23,9 +22,9 @@ public class TestAnalysisTool(ITestHelper testHelper, ILogger<PipelineAnalysisTo
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package, SharedCommandGroups.PackageTest];
 
     // Options
-    private readonly Option<string> trxPathOpt = new("--trx-file")
+    private readonly Option<string> testResultsPathOpt = new("--test-results-file")
     {
-        Description = "Path to the TRX file for failed test runs",
+        Description = "Path to the test results file (TRX, JUnit XML, etc.)",
         Required = true,
     };
 
@@ -44,7 +43,7 @@ public class TestAnalysisTool(ITestHelper testHelper, ILogger<PipelineAnalysisTo
     protected override Command GetCommand() =>
         new McpCommand("results", "Analyze test results", GetFailedTestCasesToolName)
         {
-            trxPathOpt,
+            testResultsPathOpt,
             filterOpt,
             titlesOpt,
         };
@@ -52,44 +51,46 @@ public class TestAnalysisTool(ITestHelper testHelper, ILogger<PipelineAnalysisTo
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
         var cmd = parseResult.CommandResult.Command.Name;
-        var trxPath = parseResult.GetValue(trxPathOpt);
+        var testResultsPath = parseResult.GetValue(testResultsPathOpt);
         var filterTitle = parseResult.GetValue(filterOpt);
         var titlesOnly = parseResult.GetValue(titlesOpt);
 
         if (titlesOnly)
         {
-            var failed = await GetFailedTestCases(trxPath, ct);
+            var failed = await GetFailedTestCases(testResultsPath, ct);
             return new ObjectCommandResponse() { Result = failed };
         }
 
         if (!string.IsNullOrEmpty(filterTitle))
         {
-            return await GetFailedTestCaseData(trxPath, filterTitle, ct);
+            return await GetFailedTestCaseData(testResultsPath, filterTitle, ct);
         }
 
-        return await GetFailedTestRunDataFromTrx(trxPath, ct);
+        return await GetFailedTestResults(testResultsPath, ct);
     }
 
-    [McpServerTool(Name = GetFailedTestCasesToolName), Description("Get list of all failed test case titles (names only) from a TRX file. Use this to quickly see which tests failed without details.")]
-    public async Task<FailedTestRunListResponse> GetFailedTestCases(string trxFilePath, CancellationToken ct = default)
+    [McpServerTool(Name = GetFailedTestCasesToolName), Description("Get list of all failed test case titles (names only) from a test result file. Use this to quickly see which tests failed without details.")]
+    public async Task<FailedTestRunListResponse> GetFailedTestCases(string failedTestRunsPath, CancellationToken ct = default)
     {
         try
         {
-            return await testHelper.GetFailedTestCases(trxFilePath, ct: ct);
+            var parser = await parserResolver.ResolveAsync(failedTestRunsPath, ct);
+            return await parser.GetFailedTestCases(failedTestRunsPath, ct: ct);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to process TRX file {TrxFilePath}", trxFilePath);
-            return new();
+            logger.LogError(ex, "Failed to process test result file {FilePath}", failedTestRunsPath);
+            return new() { ResponseError = ex.Message };
         }
     }
 
-    [McpServerTool(Name = GetFailedTestCaseDataToolName), Description("Get detailed information (error messages, stack traces, output) for a specific failed test case by title from a TRX file. Use this to debug a particular test failure.")]
-    public async Task<FailedTestRunResponse> GetFailedTestCaseData(string trxFilePath, string testCaseTitle, CancellationToken ct = default)
+    [McpServerTool(Name = GetFailedTestCaseDataToolName), Description("Get detailed information (error messages, stack traces, output) for a specific failed test case by title from a test result file. Use this to debug a particular test failure.")]
+    public async Task<FailedTestRunResponse> GetFailedTestCaseData(string failedTestRunsPath, string testCaseTitle, CancellationToken ct = default)
     {
         try
         {
-            var failedTestRuns = await testHelper.GetFailedTestRunDataFromTrx(trxFilePath, ct);
+            var parser = await parserResolver.ResolveAsync(failedTestRunsPath, ct);
+            var failedTestRuns = await parser.GetFailedTestResults(failedTestRunsPath, ct);
             var testRun = failedTestRuns.Items.FirstOrDefault(run => run.TestCaseTitle.Equals(testCaseTitle, StringComparison.OrdinalIgnoreCase));
             if (testRun == null)
             {
@@ -102,25 +103,23 @@ public class TestAnalysisTool(ITestHelper testHelper, ILogger<PipelineAnalysisTo
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to process TRX file {TrxFilePath}", trxFilePath);
-            return new FailedTestRunResponse
-            {
-                ResponseError = $"Failed to process TRX file {trxFilePath}: {ex.Message}"
-            };
+            logger.LogError(ex, "Failed to process test result file {FilePath}", failedTestRunsPath);
+            return new FailedTestRunResponse { ResponseError = ex.Message };
         }
     }
 
-    [McpServerTool(Name = GetFailedTestRunDataToolName), Description("Get complete details for all failed test cases from a TRX file. Returns full data including error messages, stack traces, and output for every failed test. Use this for comprehensive analysis.")]
-    public async Task<FailedTestRunListResponse> GetFailedTestRunDataFromTrx(string trxFilePath, CancellationToken ct = default)
+    [McpServerTool(Name = GetFailedTestRunDataToolName), Description("Get complete details for all failed test cases from a test result file. Returns full data including error messages, stack traces, and output for every failed test. Use this for comprehensive analysis.")]
+    public async Task<FailedTestRunListResponse> GetFailedTestResults(string failedTestRunsPath, CancellationToken ct = default)
     {
         try
         {
-            return await testHelper.GetFailedTestRunDataFromTrx(trxFilePath, ct);
+            var parser = await parserResolver.ResolveAsync(failedTestRunsPath, ct);
+            return await parser.GetFailedTestResults(failedTestRunsPath, ct);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to process TRX file {TrxFilePath}", trxFilePath);
-            return new() { ResponseError = $"Failed to process TRX file {trxFilePath}: {ex.Message}" };
+            logger.LogError(ex, "Failed to process test result file {FilePath}", failedTestRunsPath);
+            return new() { ResponseError = ex.Message };
         }
     }
 }

@@ -34,6 +34,7 @@ if str(_PROJECT_DIR) not in sys.path:
 from azure.ai.projects import AIProjectClient
 from azure.ai.projects.models import (
     AgentProtocol,
+    ContainerConfiguration,
     HostedAgentDefinition,
     ProtocolVersionRecord,
 )
@@ -204,9 +205,6 @@ def main() -> None:
     image = f"{registry}/{image_name}:{tag}"
     dockerfile = _PROJECT_DIR / "agents" / args.agent_name / "Dockerfile"
 
-    # Project resource ID is used as an env var inside the container for telemetry.
-    project_resource_id = os.environ.get("AI_FOUNDRY_PROJECT_RESOURCE_ID", "").strip()
-
     acr_name = registry.split(".")[0]
 
     # Check if the image tag already exists in ACR
@@ -269,19 +267,18 @@ def main() -> None:
             "AZURE_APPCONFIG_ENDPOINT": appconfig_endpoint,
             "ENABLE_INSTRUMENTATION": "true",
             "APP_VERSION": next_version,
-            "AI_FOUNDRY_PROJECT_RESOURCE_ID": project_resource_id,
         }
         agent = project.agents.create_version(
             agent_name=image_name,
             definition=HostedAgentDefinition(
-                container_protocol_versions=[
+                cpu="2",
+                memory="4Gi",
+                container_configuration=ContainerConfiguration(image=image),
+                protocol_versions=[
                     ProtocolVersionRecord(
                         protocol=AgentProtocol.RESPONSES, version="1.0.0"
                     )
                 ],
-                cpu="2",
-                memory="4Gi",
-                image=image,
                 environment_variables=env_vars,
             ),
             metadata={"enableVnextExperience": "true"},

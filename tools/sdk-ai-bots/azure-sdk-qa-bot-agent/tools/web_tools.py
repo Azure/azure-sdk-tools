@@ -12,7 +12,7 @@ import re
 import socket
 from html.parser import HTMLParser
 from typing import Annotated
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 
 import httpx
 
@@ -26,6 +26,7 @@ _DEFAULT_MAX_CHARS = 4000
 _MAX_ALLOWED_CHARS = 12000
 _MAX_HEADINGS = 50
 _MIN_ALLOWED_CHARS = 1000
+_MAX_REDIRECTS = 5
 
 
 class _HtmlOutlineParser(HTMLParser):
@@ -151,31 +152,56 @@ async def _fetch_async(url: str, max_chars: int) -> FetchWebpageResult:
     }
 
     try:
-        # Disable redirect following: _is_public_url only validates the URL we
-        # pass in, so allowing httpx to follow redirects would let an attacker
-        # bypass SSRF protection by pointing a public URL at an internal
-        # address (CWE-918).
+        # Follow redirects manually so every hop is re-validated against the
+        # SSRF allow-list (_is_public_url). httpx's built-in redirect handling
+        # would only validate the original URL, letting an attacker bounce a
+        # public URL to an internal address (CWE-918).
         async with httpx.AsyncClient(
             headers=headers,
             follow_redirects=False,
             timeout=httpx.Timeout(_DEFAULT_TIMEOUT_SECONDS),
             http2=True,
         ) as client:
-            response = await client.get(url)
+            current_url = url
+            redirects = 0
+            while True:
+                response = await client.get(current_url)
+                if not (300 <= response.status_code < 400):
+                    break
+
+                location = response.headers.get("location")
+                if not location:
+                    break
+
+                if redirects >= _MAX_REDIRECTS:
+                    return FetchWebpageResult(
+                        success=False,
+                        url=url,
+                        resolved_url=current_url,
+                        status_code=response.status_code,
+                        content_type=response.headers.get("content-type", ""),
+                        content_excerpt="",
+                        error=f"Too many redirects (>{_MAX_REDIRECTS}).",
+                    )
+
+                next_url = urljoin(current_url, location)
+                if not _is_public_url(next_url):
+                    return FetchWebpageResult(
+                        success=False,
+                        url=url,
+                        resolved_url=next_url,
+                        status_code=response.status_code,
+                        content_type=response.headers.get("content-type", ""),
+                        content_excerpt="",
+                        error="Redirect target is not a public http/https URL.",
+                    )
+
+                redirects += 1
+                current_url = next_url
+
             final_url = str(response.url)
             status_code = response.status_code
             content_type = response.headers.get("content-type", "")
-
-            if 300 <= status_code < 400:
-                return FetchWebpageResult(
-                    success=False,
-                    url=url,
-                    resolved_url=final_url,
-                    status_code=status_code,
-                    content_type=content_type,
-                    content_excerpt="",
-                    error="Redirects are not followed; provide the final URL directly.",
-                )
 
             if status_code >= 400:
                 return FetchWebpageResult(

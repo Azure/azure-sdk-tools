@@ -20,7 +20,7 @@
       ]
     },
     "serverBaseUrl": {
-      "value": "https://azuresdkqabot-server-c8czabhzhweadwgu.westus2-01.azurewebsites.net"
+      "value": "https://azuresdkqabot-server-agent-btg3c4hpa7faapen.westus2-01.azurewebsites.net"
     },
     "serverAudience": {
       "value": "899da762-d510-48f2-911a-db9ea0cc41fd"

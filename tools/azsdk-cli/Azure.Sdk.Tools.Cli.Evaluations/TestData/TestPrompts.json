@@ -18,6 +18,14 @@
     { "toolName": "azsdk_apiview_get_copilot_review", "prompt": "Get the results of my automated API review job", "category": "all" },
     { "toolName": "azsdk_apiview_get_copilot_review", "prompt": "What comments did the Copilot generate for my API review?", "category": "all" },
 
+    { "toolName": "azsdk_apireviewhub_request_review_pr", "prompt": "Request an API review for my package API change", "category": "all" },
+    { "toolName": "azsdk_apireviewhub_request_review_pr", "prompt": "Create an API review through API Review Hub", "category": "all" },
+    { "toolName": "azsdk_apireviewhub_request_review_pr", "prompt": "Open a review PR from for this SDK package", "category": "all" },
+
+    { "toolName": "azsdk_apireview_get_approval_status", "prompt": "Check release status for my package version", "category": "all" },
+    { "toolName": "azsdk_apireview_get_approval_status", "prompt": "Is this package version approved for release?", "category": "all" },
+    { "toolName": "azsdk_apireview_get_approval_status", "prompt": "Get release-gate status for this package", "category": "all" },
+
     { "toolName": "azsdk_check_service_label", "prompt": "Check if a service label exists for my service", "category": "all" },
     { "toolName": "azsdk_check_service_label", "prompt": "Does the service label for Contoso already exist?", "category": "all" },
     { "toolName": "azsdk_create_service_label", "prompt": "Create a new service label for my service", "category": "all" },
@@ -46,6 +54,10 @@
     { "toolName": "azsdk_get_pull_request", "prompt": "Show me the status and comments on PR #1234", "category": "all" },
     { "toolName": "azsdk_get_pull_request_link_for_current_branch", "prompt": "Get the PR link for my current branch", "category": "all" },
     { "toolName": "azsdk_get_pull_request_link_for_current_branch", "prompt": "What's the pull request URL for this branch?", "category": "all" },
+
+    { "toolName": "azsdk_get_pr_checks", "prompt": "Get the pipeline checks for my pull request", "category": "all" },
+    { "toolName": "azsdk_get_pr_checks", "prompt": "Show me the failed CI checks for PR #1234", "category": "all" },
+    { "toolName": "azsdk_get_pr_checks", "prompt": "What checks are blocking the merge for this PR?", "category": "all" },
 
     { "toolName": "azsdk_package_build_code", "prompt": "Build my SDK package", "category": "all" },
     { "toolName": "azsdk_package_build_code", "prompt": "Compile the code for my package", "category": "all" },
@@ -163,6 +175,7 @@
 
     { "toolName": "azsdk_get_kpi_attestation_status", "prompt": "What is the status of my KPI attestation.", "category": "all" },
     { "toolName": "azsdk_get_kpi_attestation_status", "prompt": "Check KPI attestation for my TypeSpec project", "category": "all" },
-    { "toolName": "azsdk_get_kpi_attestation_status", "prompt": "Is KPI attestation completed for product ID 12345 in GA?", "category": "all" }
+    { "toolName": "azsdk_get_kpi_attestation_status", "prompt": "Is KPI attestation completed for product ID 12345 in GA?", "category": "all" },
+    { "toolName": "azsdk_package_detect_breaking_change", "prompt": "Detect SDK breaking changes for my package.", "category": "all" }
   ]
 }

@@ -5,7 +5,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers;
 
 internal class OutputHelperTests
 {
-    private readonly string summary = "a test summary";
     private readonly List<LogEntry> errors =
     [
         new LogEntry
@@ -21,13 +20,11 @@ internal class OutputHelperTests
             Message = "message2"
         }
     ];
-    private readonly string suggestedFix = "a test suggested fix";
 
     [Test]
     public void TestTypedJsonOutput()
     {
         var json = @"{
-  ""summary"": ""a test summary"",
   ""errors"": [
     {
       ""file"": ""file1"",
@@ -40,7 +37,6 @@ internal class OutputHelperTests
       ""message"": ""message2""
     }
   ],
-  ""suggested_fix"": ""a test suggested fix"",
   ""operation_status"": ""Succeeded""
 }";
 
@@ -58,18 +54,10 @@ internal class OutputHelperTests
     {
         var response = new LogAnalysisResponse
         {
-            Summary = summary,
             Errors = errors,
-            SuggestedFix = suggestedFix
         };
 
         var expectedStr = @"
-### Summary:
-a test summary
-
-### Suggested Fix:
-a test suggested fix
-
 ### Errors:
 --> file1:1
 message1

@@ -4,9 +4,9 @@ namespace Azure.Sdk.Tools.Cli.Commands
     {
 
         public static readonly CommandGroup AzurePipelines = new(
-            Verb: "azp",
-            Description: "Azure Pipelines commands",
-            Aliases: ["pipeline"]
+            Verb: "ci",
+            Description: "Get pipeline/checks information for pull requests and azure pipelines",
+            Aliases: ["azp", "pipeline"]
         );
 
         public static readonly CommandGroup EngSys = new(
@@ -57,7 +57,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
 
         public static readonly CommandGroup TypeSpec = new(
             Verb: "tsp",
-            Description: "Commands for setting up or working with TypeSpec projects",
+            Description: "Set up and work with TypeSpec projects",
             Aliases: ["typespec"]
         );
 
@@ -73,7 +73,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
 
         public static readonly CommandGroup Verify = new(
             Verb: "verify",
-            Description: "Tools for verifying project environments.",
+            Description: "Verify project environments",
             Options: []
         );
 
@@ -84,7 +84,14 @@ namespace Azure.Sdk.Tools.Cli.Commands
 
         public static readonly CommandGroup APIView = new(
             Verb: "apiview",
-            Description: "Commands for interacting with APIView services and functionality",
+            Description: "Interact with APIView services and functionality",
+            Options: []
+        );
+
+        public static readonly CommandGroup ApiReviewHub = new(
+            Verb: "api-review",
+            Description: "Interact with API Review Hub services and functionality",
+            Aliases: [],
             Options: []
         );
 

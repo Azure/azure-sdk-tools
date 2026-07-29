@@ -42,6 +42,15 @@ jobs:
       - script: npm install -g @github/copilot-sdk
         displayName: 'Install Copilot SDK'
 
+      # Pre-build the MCP servers so vally launches `dotnet <dll>` instead of
+      # `dotnet run` — avoids the MSBuild boot race under parallel workers.
+      # See issue #15947. `-o` pins the output path so .vally.yaml doesn't
+      # have to hardcode the target framework (Debug/net8.0/...).
+      - script: |
+          dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli  -c Release -o artifacts/mcp/cli  --nologo
+          dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Mock -c Release -o artifacts/mcp/mock --nologo
+        displayName: 'Build MCP servers'
+
       - script: |
           input_areas=$(echo "${{ parameters.areas }}" | xargs)
           if [ -n "$input_areas" ]; then

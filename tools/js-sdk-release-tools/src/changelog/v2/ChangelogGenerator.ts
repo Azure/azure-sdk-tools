@@ -344,17 +344,28 @@ export class ChangelogGenerator {
         const message = template(this.classRemovedTemplate, { className });
         this.addChangelogItem(ChangelogItemCategory.ClassRemoved, message);
       }
-      // class signature added
+      // class signature added: only report when it is truly a constructor declaration,
+      // not a regular method (which also uses DiffLocation.Signature)
       if (p.location === DiffLocation.Signature && this.hasReasons(p.reasons, DiffReasons.Added)) {
-        const constructorSignature = p.source!.node.getText();
-        const message = template(this.classConstructorAddedTemplate, { className, constructorSignature });
-        this.addChangelogItem(ChangelogItemCategory.ClassConstructorAdded, message);
+        if (p.source!.node.getKind() === SyntaxKind.Constructor) {
+          const constructorSignature = p.source!.node.getText();
+          const message = template(this.classConstructorAddedTemplate, { className, constructorSignature });
+          this.addChangelogItem(ChangelogItemCategory.ClassConstructorAdded, message);
+        } else {
+          // new method added to the class (e.g. newly introduced operation on the client)
+          const signatureName = p.source!.name;
+          const message = template(this.operationAddedTemplate, { interfaceName: className, signatureName });
+          this.addChangelogItem(ChangelogItemCategory.OperationAdded, message);
+        }
       }
-      // class type changed
+      // class type changed (constructor removed / signature incompatible)
       // NOTE: not detected in v1 except constructor and it's parameters
       if (p.location === DiffLocation.Signature && this.hasReasons(p.reasons, DiffReasons.Removed)) {
-        const message = template(this.classChangedTemplate, { className });
-        this.addChangelogItem(ChangelogItemCategory.ClassChanged, message);
+        if (p.target!.node.getKind() === SyntaxKind.Constructor) {
+          const message = template(this.classChangedTemplate, { className });
+          this.addChangelogItem(ChangelogItemCategory.ClassChanged, message);
+        }
+        // method removal on the class is handled as ClassPropertyRemoved via DiffLocation.Property
       }
       // class property removed
       if (p.location === DiffLocation.Property && this.hasReasons(p.reasons, DiffReasons.Removed)) {

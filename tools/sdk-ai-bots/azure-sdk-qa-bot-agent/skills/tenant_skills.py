@@ -10,8 +10,9 @@ Each tenant becomes a Skill with:
 from __future__ import annotations
 
 import logging
+from functools import lru_cache
 
-from agent_framework import Skill
+from agent_framework import InlineSkill, Skill, SkillFrontmatter
 
 from config.tenant_config import (
     TenantID,
@@ -70,7 +71,8 @@ _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
 }
 
 
-def _build_skill_content(tenant_id: TenantID) -> str:
+@lru_cache(maxsize=None)
+def build_skill_content(tenant_id: TenantID) -> str:
     """Build skill content combining tenant_id, knowledge sources, and guideline."""
     config = get_tenant_config(tenant_id)
     if config is None:
@@ -100,15 +102,17 @@ def create_tenant_skills() -> list[Skill]:
     skills: list[Skill] = []
     for tenant_id, skill_name in _TENANT_SKILL_MAP.items():
         description = _SKILL_DESCRIPTIONS.get(tenant_id, "")
-        content = _build_skill_content(tenant_id)
+        content = build_skill_content(tenant_id)
         if not content:
             logger.warning("Skipping skill %s: no content", skill_name)
             continue
         skills.append(
-            Skill(
-                name=skill_name,
-                description=description,
-                content=content,
+            InlineSkill(
+                frontmatter=SkillFrontmatter(
+                    name=skill_name,
+                    description=description,
+                ),
+                instructions=content,
             )
         )
         logger.info("Created skill: %s (tenant=%s)", skill_name, tenant_id.value)
@@ -120,3 +124,8 @@ def get_skill_to_tenant_map() -> dict[str, TenantID]:
     return {
         skill_name: tenant_id for tenant_id, skill_name in _TENANT_SKILL_MAP.items()
     }
+
+
+def get_skill_name_for_tenant(tenant_id: TenantID) -> str | None:
+    """Return the skill name registered for *tenant_id*, or ``None``."""
+    return _TENANT_SKILL_MAP.get(tenant_id)

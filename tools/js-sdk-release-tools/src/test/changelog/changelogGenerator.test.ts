@@ -1213,6 +1213,63 @@ export class DataProductClient {
       expect(items[0]).toBe('Parameter version of class DataProductClient is now required');
     });
 
+    test('New method added to class should be reported as OperationAdded, not ClassConstructorAdded', async () => {
+      // Regression test: HLC->Modular migration adds new methods (e.g. getAdooAuthInfo) directly
+      // on the client class. These must NOT appear as "has a new constructor" messages.
+      const baselineApiView = `
+\`\`\`ts
+// @public
+export class DeveloperHubServiceClient {
+    constructor(credentials: TokenCredential, subscriptionId: string, options?: DeveloperHubServiceClientOptionalParams);
+    gitHubOAuth(location: string, options?: GitHubOAuthOptionalParams): Promise<GitHubOAuthInfoResponse>;
+}
+
+// @public
+export interface DeveloperHubServiceClientOptionalParams {
+    $host?: string;
+    apiVersion?: string;
+    endpoint?: string;
+}
+\`\`\`
+`;
+      const currentApiView = `
+\`\`\`ts
+// @public
+export class DeveloperHubServiceClient {
+    constructor(credential: TokenCredential, options?: DeveloperHubServiceClientOptionalParams);
+    constructor(credential: TokenCredential, subscriptionId: string, options?: DeveloperHubServiceClientOptionalParams);
+    gitHubOAuth(location: string, options?: GitHubOAuthOptionalParams): Promise<GitHubOAuthInfoResponse>;
+    getAdooAuthInfo(location: string, options?: GetAdooAuthInfoOptionalParams): Promise<AdooAuthInfoResponse>;
+}
+
+// @public
+export interface DeveloperHubServiceClientOptionalParams {
+    apiVersion?: string;
+    endpoint?: string;
+}
+\`\`\`
+`;
+      const changelogItems = await generateChangelogItems(
+        {
+          apiView: baselineApiView,
+          sdkType: SDKType.HighLevelClient,
+        },
+        {
+          apiView: currentApiView,
+          sdkType: SDKType.ModularClient,
+        }
+      );
+
+      // The new method must appear as a feature (OperationAdded), not a constructor
+      const constructorAddedItems = getItemsByCategory(changelogItems, ChangelogItemCategory.ClassConstructorAdded);
+      const operationAddedItems = getItemsByCategory(changelogItems, ChangelogItemCategory.OperationAdded);
+
+      // Must not produce any "has a new constructor" entry for getAdooAuthInfo
+      expect(constructorAddedItems.some((msg) => msg.includes('getAdooAuthInfo'))).toBe(false);
+      // Must produce an OperationAdded entry for getAdooAuthInfo
+      expect(operationAddedItems.some((msg) => msg.includes('getAdooAuthInfo'))).toBe(true);
+    });
+
     test('Type Alias Added', async () => {
       const baselineApiView = `
 \`\`\`ts

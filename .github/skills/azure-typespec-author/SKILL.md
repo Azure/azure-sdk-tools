@@ -45,6 +45,7 @@ This includes but is not limited to:
 - **Always validate** — run every steps in [validation](references/validation.md) after every edit.
 - **Always cite references** — provide links that justify the approach.
 - **Ground API version evolution via agentic search only** — call `web_fetch` on the matching versioning doc in [reference-document-links.md](references/reference-document-links.md); never call `azsdk_typespec_generate_authoring_plan` for a version add, bump, or promote.
+- **Version evolution always needs examples + collapse handling** — for any API version add/bump/promote you MUST create the new version's `examples/<new-version>/` folder and collapse any unreleased preview per [authoring-plan.md](references/authoring-plan.md) §3.2 Case 3. The fetched versioning doc does NOT describe examples folders or preview collapse, so these skill rules apply on top of it and override it when it omits or contradicts them.
 - **Follow the authoring plan exactly** — code changes in Step 4 MUST follow the authoring plan generated in Step 3. Do not deviate by referring to existing code patterns in the TypeSpec project; the authoring plan is the single source of truth for what to change.
 
 ## Steps
@@ -74,9 +75,14 @@ See [authoring-plan.md](references/authoring-plan.md).
 
 Make minimal `.tsp` edits following the plan from Step 3. Confirm uncertainties with the user first.
 
+**API version evolution (Case 3) requires more than `.tsp` edits.** The fetched versioning doc covers only decorators, so apply the following from the skill even when the doc omits them (see [authoring-plan.md](references/authoring-plan.md) §3.2 Case 3):
+
+1. **Create the new version's examples.** Add an `examples/<new-version>/` folder that mirrors the existing versions' examples layout you observed in Step 1 — copy the latest retained version's example `.json` files into it (e.g. recursively copy the whole folder via a shell command) and update `api-version` in each. Never leave the new version without an examples folder.
+2. **Collapse unreleased previews.** If the latest existing version is an **unreleased preview**, collapse it into the new version: remove it from the `Versions` enum, rebase **every** decorator argument that referenced the preview onto the new version (keep the decorator), rename its `examples/<old-preview>/` folder to `examples/<new-version>/` (no `examples/<old-preview>/` may remain), and for a feature that existed only in the collapsed preview keep it as plain baseline if carried or **delete it outright (no `@removed`)** if excluded. If the latest existing version is a **released stable**, add the new version incrementally and keep the stable (do not collapse).
+
 ### Step 5: Validate
 
-See [validation.md](references/validation.md). Run 5.1 general validation (5.1.1 TypeSpec validation and 5.1.2 `tsp compile .`) always; run 5.2 case-specific validation (e.g. Case 3 API version evolution checks) when the case matches.
+See [validation.md](references/validation.md). Run 5.1 general validation (5.1.1 TypeSpec validation and 5.1.2 `tsp compile .`) always; for API version evolution (Case 3) you **MUST** also run 5.2 case-specific validation — in particular confirm the new version's `examples/<new-version>/` folder exists, any removed (collapsed) version's example folder is gone, and no decorator references a version absent from the `Versions` enum.
 
 ### Step 6: Output Reference Links
 

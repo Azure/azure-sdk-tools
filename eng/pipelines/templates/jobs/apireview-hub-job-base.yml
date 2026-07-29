@@ -22,6 +22,9 @@ parameters:
   - name: sourceCheckoutDir
     type: string
     default: ''
+  - name: toolingDir
+    type: string
+    default: '$(Pipeline.Workspace)/apireview/tooling'
   - name: setupSteps
     type: stepList
     default: []
@@ -39,6 +42,12 @@ jobs:
 
   variables:
   - template: /eng/pipelines/templates/variables/globals.yml
+  - name: ApiReviewRepositoryFullName
+    value: ${{ parameters.sourceRepositoryFullName }}
+  - name: ApiReviewSourceDir
+    value: ${{ parameters.sourceCheckoutDir }}
+  - name: ApiReviewToolingDir
+    value: ${{ parameters.toolingDir }}
   - ${{ each variable in parameters.variables }}:
     - ${{ variable }}
 

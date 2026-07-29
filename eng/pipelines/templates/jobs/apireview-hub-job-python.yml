@@ -30,15 +30,6 @@ jobs:
     imageOverride: ${{ parameters.imageOverride }}
     sourceRepositoryFullName: ${{ format('{0}/azure-sdk-for-python', parameters.repositoryOwner) }}
     sourceCheckoutDir: $(Pipeline.Workspace)/apireview/source
-    variables:
-      # Share the selected Python SDK repository with artifact-generation steps so
-      # tooling install and source checkout cannot accidentally use different repos.
-      - name: PythonApiReviewRepositoryFullName
-        value: ${{ format('{0}/azure-sdk-for-python', parameters.repositoryOwner) }}
-      - name: PythonApiReviewSourceDir
-        value: $(Pipeline.Workspace)/apireview/source
-      - name: PythonApiReviewToolingDir
-        value: $(Pipeline.Workspace)/apireview/tooling
     setupSteps:
       - task: UsePythonVersion@0
         displayName: 'Use Python ${{ parameters.pythonVersion }}'
@@ -50,8 +41,8 @@ jobs:
       - bash: |
           set -Eeuo pipefail
 
-          source_repo="$(PythonApiReviewSourceDir)"
-          tooling_dir="$(PythonApiReviewToolingDir)"
+          source_repo="$(ApiReviewSourceDir)"
+          tooling_dir="$(ApiReviewToolingDir)"
           requirements_file="$source_repo/eng/apiview_reqs.txt"
           azpysdk_package="$source_repo/eng/tools/azure-sdk-tools[build]"
 

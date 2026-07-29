@@ -26,15 +26,15 @@ steps:
       kind: ${{ parameters.kind }}
       outputDir: ${{ parameters.outputDir }}
       workingDir: ${{ parameters.workingDir }}
-      sourceDir: $(PythonApiReviewSourceDir)
+      sourceDir: $(ApiReviewSourceDir)
       language: python
-      repositoryFullName: $(PythonApiReviewRepositoryFullName)
+      repositoryFullName: $(ApiReviewRepositoryFullName)
       generationSteps:
         - bash: |
             set -Eeuo pipefail
 
-            source_repo="$(PythonApiReviewSourceDir)"
-            tooling_dir="$(PythonApiReviewToolingDir)"
+            source_repo="$(ApiReviewSourceDir)"
+            tooling_dir="$(ApiReviewToolingDir)"
             output_dir="${{ parameters.outputDir }}"
             state_dir="${{ parameters.workingDir }}/state"
 

@@ -18,7 +18,6 @@ using Azure.Sdk.Tools.Cli.Tools.Core;
 using ModelContextProtocol;
 using ModelContextProtocol.Server;
 using Octokit;
-using OpenTelemetry;
 
 namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 {
@@ -1041,7 +1040,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                             Message = $"An active release plan already exists for the TypeSpec project: {specProject}. "
                             +  $"Release plan link: {existingReleasePlan.ReleasePlanLink}",
                             ReleasePlanDetails = existingReleasePlan,
-                            NextSteps = ["Prompt user to confirm whether to use existing release plan or force create a new release plan."]
+                            NextSteps = ["Use the existing release plan returned in this response."]
                         };
                     }
                 }
@@ -1097,14 +1096,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                 }
 
-                //Run TypeSpecMetadata parser to get API version
-                var typeSpecMetadata = await typeSpecHelper.ParseTypeSpecProjectAsync(typeSpecProjectPath, npxHelper, logger, ct);
-                string apiVersion  = "";
-                // Fail create release plan for public preview and GA is TypeSpec metadata is not available. Private preview spec may not have emitter config.
-                if (typeSpecMetadata == null && parsedApiReleaseType != ApiReleaseType.PrivatePreview)
+                // Run TypeSpec metadata emitter to get API version (local paths only)
+                TypeSpecProject? typeSpecMetadata = null;
+                if (!typeSpecHelper.IsUrl(typeSpecProjectPath))
+                {
+                    typeSpecMetadata = await typeSpecHelper.ParseTypeSpecProjectAsync(typeSpecProjectPath, npxHelper, logger, ct);
+                }
+                else
+                {
+                    logger.LogWarning("Cannot run TypeSpec metadata emitter for URL-based TypeSpec project paths. Skipping API version extraction.");
+                }
+
+                // Fail create release plan for public preview and GA if TypeSpec metadata is not available. Private preview spec may not have emitter config.
+                if (typeSpecMetadata == null && parsedApiReleaseType != ApiReleaseType.PrivatePreview && !typeSpecHelper.IsUrl(typeSpecProjectPath))
                 {
                     var error = $"Failed to parse TypeSpec metadata for project path '{typeSpecProjectPath}'. Ensure the TypeSpec project is valid, contains a tspconfig.yaml and compile using tsp compile.";
-                    return new ReleasePlanResponse 
+                    return new ReleasePlanResponse
                     {
                         ResponseError = error,
                         NextSteps = ["Ensure the TypeSpec project is valid, contains a tspconfig.yaml and compile using tsp compile."],
@@ -1113,8 +1120,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
 
                 // Extract API version from the parsed metadata
-                apiVersion = ExtractApiVersionFromMetadata(typeSpecMetadata?.Packages);
-
+                var apiVersion = ExtractApiVersionFromMetadata(typeSpecMetadata?.Packages);
                 // Check if a release plan already exists with the same TypeSpec project path and API version
                 if (!string.IsNullOrEmpty(apiVersion))
                 {

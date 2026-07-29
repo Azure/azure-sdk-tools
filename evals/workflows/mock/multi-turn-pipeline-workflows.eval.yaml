@@ -175,6 +175,10 @@ stimuli:
         config:
           path: "sdk/storage/Azure.Storage.Queues/src/QueueClientOptions.cs"
           pattern: '(?i)case\s+"2026-10-06"'
+      - type: file-not-matches
+        config:
+          path: "sdk/storage/Azure.Storage.Queues/src/QueueClientOptions.cs"
+          pattern: '(?i)case\s+"2026-12-06"'
 
 scoring:
   weights:

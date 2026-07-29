@@ -30,7 +30,7 @@ public class WorkItemDataBuilder
     private record PackageData(int Id, string Name, string Version, HashSet<int> RelatedIds);
     private record OwnerData(int Id, string GitHubAlias);
     private record LabelData(int Id, string LabelName);
-    private record LabelOwnerData(int Id, string LabelType, string Repository, string RepoPath, HashSet<int> RelatedIds);
+    private record LabelOwnerData(int Id, string LabelType, string Repository, string RepoPath, string Section, HashSet<int> RelatedIds);
 
     /// <summary>
     /// Adds an Owner work item.
@@ -80,32 +80,33 @@ public class WorkItemDataBuilder
     /// <param name="id">Output parameter receiving the auto-generated ID</param>
     /// <param name="repository">Repository name (e.g., "Azure/azure-sdk-for-net")</param>
     /// <param name="repoPath">Optional repo path for service-level entries</param>
+    /// <param name="section">CODEOWNERS section the Label Owner belongs to</param>
     /// <param name="relatedTo">IDs of related work items (owners, labels)</param>
     /// <returns>This builder for chaining</returns>
-    public WorkItemDataBuilder AddLabelOwner(string labelType, out int id, string repository = "Azure/azure-sdk-for-net", string repoPath = "", params int[] relatedTo)
+    public WorkItemDataBuilder AddLabelOwner(string labelType, out int id, string repository = "Azure/azure-sdk-for-net", string repoPath = "", string section = "Client Libraries", params int[] relatedTo)
     {
         id = _nextId++;
-        _labelOwners.Add(new LabelOwnerData(id, labelType, repository, repoPath, [.. relatedTo]));
+        _labelOwners.Add(new LabelOwnerData(id, labelType, repository, repoPath, section, [.. relatedTo]));
         return this;
     }
 
     /// <summary>
     /// Adds a Service Owner type Label Owner.
     /// </summary>
-    public WorkItemDataBuilder AddServiceOwner(out int id, string repository = "Azure/azure-sdk-for-net", string repoPath = "", params int[] relatedTo)
-        => AddLabelOwner("Service Owner", out id, repository, repoPath, relatedTo);
+    public WorkItemDataBuilder AddServiceOwner(out int id, string repository = "Azure/azure-sdk-for-net", string repoPath = "", string section = "Client Libraries", params int[] relatedTo)
+        => AddLabelOwner("Service Owner", out id, repository, repoPath, section, relatedTo);
 
     /// <summary>
     /// Adds an Azure SDK Owner type Label Owner.
     /// </summary>
-    public WorkItemDataBuilder AddAzureSdkOwner(out int id, string repository = "Azure/azure-sdk-for-net", string repoPath = "", params int[] relatedTo)
-        => AddLabelOwner("Azure SDK Owner", out id, repository, repoPath, relatedTo);
+    public WorkItemDataBuilder AddAzureSdkOwner(out int id, string repository = "Azure/azure-sdk-for-net", string repoPath = "", string section = "Client Libraries", params int[] relatedTo)
+        => AddLabelOwner("Azure SDK Owner", out id, repository, repoPath, section, relatedTo);
 
     /// <summary>
     /// Adds a PR Label type Label Owner (used for service-level path entries).
     /// </summary>
-    public WorkItemDataBuilder AddPRLabelOwner(out int id, string repoPath, string repository = "Azure/azure-sdk-for-net", params int[] relatedTo)
-        => AddLabelOwner("PR Label", out id, repository, repoPath, relatedTo);
+    public WorkItemDataBuilder AddPRLabelOwner(out int id, string repoPath, string repository = "Azure/azure-sdk-for-net", string section = "Client Libraries", params int[] relatedTo)
+        => AddLabelOwner("PR Label", out id, repository, repoPath, section, relatedTo);
 
     /// <summary>
     /// Builds the WorkItemData with all relationships hydrated.
@@ -126,7 +127,7 @@ public class WorkItemDataBuilder
             l => MapToLabelWorkItem(CreateLabelWorkItem(l.Id, l.LabelName)));
 
         var labelOwners = _labelOwners
-            .Select(lo => MapToLabelOwnerWorkItem(CreateLabelOwnerWorkItem(lo.Id, lo.LabelType, lo.Repository, lo.RepoPath, lo.RelatedIds)))
+            .Select(lo => MapToLabelOwnerWorkItem(CreateLabelOwnerWorkItem(lo.Id, lo.LabelType, lo.Repository, lo.RepoPath, lo.Section, lo.RelatedIds)))
             .ToList();
 
         var data = new WorkItemData(packages, owners, labels, labelOwners);
@@ -178,7 +179,7 @@ public class WorkItemDataBuilder
         };
     }
 
-    private static WorkItem CreateLabelOwnerWorkItem(int id, string labelType, string repository, string repoPath, HashSet<int> relatedIds)
+    private static WorkItem CreateLabelOwnerWorkItem(int id, string labelType, string repository, string repoPath, string section, HashSet<int> relatedIds)
     {
         return new WorkItem
         {
@@ -187,7 +188,8 @@ public class WorkItemDataBuilder
             {
                 { "Custom.LabelType", labelType },
                 { "Custom.Repository", repository },
-                { "Custom.RepoPath", repoPath }
+                { "Custom.RepoPath", repoPath },
+                { "Custom.Section", section }
             },
             Relations = relatedIds.Select(relId => new WorkItemRelation
             {
@@ -238,6 +240,7 @@ public class WorkItemDataBuilder
             LabelType = GetFieldValue(wi, "Custom.LabelType"),
             Repository = GetFieldValue(wi, "Custom.Repository"),
             RepoPath = GetFieldValue(wi, "Custom.RepoPath"),
+            Section = GetFieldValue(wi, "Custom.Section"),
             RelatedIds = wi.ExtractRelatedIds()
         };
     }

@@ -709,6 +709,12 @@ main {
   background: #fde7e9;
   color: var(--red);
 }
+.badge-abandoned {
+  background: var(--gray-bg);
+  color: var(--gray);
+  font-weight: 600;
+  border: 1px solid var(--border);
+}
 .badge-created-using {
   background: #e8f0fe;
   color: #1a56db;
@@ -851,6 +857,10 @@ main {
 /* Past due card highlight */
 .plan-card.past-due {
   border-left: 4px solid var(--red);
+}
+.plan-card.abandoned {
+  border-left: 4px solid #a19f9d;
+  opacity: 0.75;
 }
 
 /* Duplicate warning */

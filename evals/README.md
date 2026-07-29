@@ -145,6 +145,7 @@ wording that triggered a real bug, so restructuring them would weaken the
 regression.
 
 
+
 Live scenarios need a primed `azure-rest-api-specs` clone — run
 [`sync-eval-git-repo.ts`](../eng/common/scripts/eval/sync-eval-git-repo.ts)
 (`node ../eng/common/scripts/eval/sync-eval-git-repo.ts`; local-only
@@ -158,13 +159,13 @@ helper, auto-refreshes every 24h) before invoking the
   plus `azsdk-common-sdk-release`, `azsdk-common-pipeline-analysis`,
   `azsdk-common-apiview-feedback-resolution`, `sensei`,
   `skill-authoring`, `markdown-token-optimizer`.
-- **Capability suite** for [`azure-typespec-author`](../.github/skills/azure-typespec-author/) —
-  29 numbered cases under
-  [`.github/skills/azure-typespec-author/evaluate/evals/`](../.github/skills/azure-typespec-author/evaluate/evals/)
-  (`001001.eval.yaml` … `005001.eval.yaml`). These are the data-driven
-  TypeSpec authoring scenarios that *would* have been our follow-up #1
-  here — they're already covered as skill evals, so this project doesn't
-  re-port them.
+- **Specialized benchmark suite** for [`azure-typespec-author`](../.github/skills/azure-typespec-author/) —
+  data-driven TypeSpec authoring scenarios under
+  [`.github/skills/azure-typespec-author/evaluate/evals/`](../.github/skills/azure-typespec-author/evaluate/evals/).
+  Its numbered filenames are a legacy, suite-specific format — **do not copy
+  them for new evals**. New suites should use the descriptive names documented
+  in the shared eval-authoring guide. These scenarios would otherwise have
+  been our follow-up #1 here, so this project does not re-port them.
 
 This project supersedes the deleted `Azure.Sdk.Tools.Cli.Benchmarks` project
 (removed in [#15697](https://github.com/Azure/azure-sdk-tools/pull/15697)) and
@@ -464,10 +465,11 @@ those constraints are captured in prompt text and inline `TODO:` comments.
       runs `vally lint` only and is scoped to skills). See
       [#15126](https://github.com/Azure/azure-sdk-tools/issues/15126) and
       [#15127](https://github.com/Azure/azure-sdk-tools/issues/15127).
-- [ ] Decide on `AuthoringScenario` parity: the 29 TypeSpec authoring cases
-      are already covered as **skill evals** under
-      [`.github/skills/azure-typespec-author/evaluate/evals/`](../.github/skills/azure-typespec-author/evaluate/evals/).
-      Tracked as [#15767](https://github.com/Azure/azure-sdk-tools/issues/15767) —
-      likely close as duplicate unless we also want tool-level coverage of the
-      same prompts (catches catalog regressions even when the skill isn't
-      triggered).
+- [ ] Decide on `AuthoringScenario` parity: specialized TypeSpec authoring
+  cases are already covered as **skill evals** under
+  [`.github/skills/azure-typespec-author/evaluate/evals/`](../.github/skills/azure-typespec-author/evaluate/evals/).
+  That legacy suite's numeric filenames are not a naming example for new
+  work. Tracked as [#15767](https://github.com/Azure/azure-sdk-tools/issues/15767) —
+  likely close as duplicate unless we also want tool-level coverage of the
+  same prompts (catches catalog regressions even when the skill isn't
+  triggered).

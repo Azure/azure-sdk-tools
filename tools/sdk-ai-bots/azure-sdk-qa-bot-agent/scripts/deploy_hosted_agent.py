@@ -79,17 +79,17 @@ def _git_short_sha() -> str:
         return "latest"
 
 
-# Base policy the guardrail inherits from (provides core harm filters).
+# Base polic
 _BASE_POLICY_NAME = "Microsoft.DefaultV2"
 
-# Sources to block each discovered filter at, keyed by its native source.
+# Native sources
 _NATIVE_BLOCKING_SOURCES = (
-    RaiPolicyContentSource.PROMPT,
-    RaiPolicyContentSource.COMPLETION,
+    RaiPolicyContentSource.PROMPT.value,
+    RaiPolicyContentSource.COMPLETION.value,
     "PreToolCall",
 )
 
-# Extra sources to also block specific risks at (name -> sources).
+# Extra sources
 _EXTRA_BLOCKING_SOURCES: dict[str, tuple[str, ...]] = {
     "Indirect Attack": ("PostToolCall",),
 }

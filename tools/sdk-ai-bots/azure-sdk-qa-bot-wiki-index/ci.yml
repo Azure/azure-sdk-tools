@@ -1,6 +1,6 @@
 # CI pipeline for the Azure SDK QA Bot wiki index builder.
-# Runs the offline unit tests on PRs that touch this package. The tests need no
-# Azure resources, so this job needs no service connection.
+# Runs type checking and the offline unit tests on PRs that touch this package.
+# The tests need no Azure resources, so this job needs no service connection.
 
 name: CI - Azure SDK QA Bot Wiki Index
 
@@ -36,10 +36,10 @@ extends:
     Use1ESOfficial: true
     stages:
       - stage: CI
-        displayName: 'Test'
+        displayName: 'Lint & Test'
         jobs:
-          - job: Test
-            displayName: 'Unit Tests'
+          - job: LintAndTest
+            displayName: 'Lint & Unit Tests'
             pool:
               name: $(LINUXPOOL)
               image: $(LINUXVMIMAGE)
@@ -64,13 +64,26 @@ extends:
                   python -m pip install keyring artifacts-keyring --retries 5 --timeout 60
                   python -m pip config set global.index-url "$PIP_INDEX_URL"
                   pip install -r requirements.txt --retries 5 --timeout 60
-                  pip install pytest --retries 5 --timeout 60
+                  pip install pytest pytest-cov pyright --retries 5 --timeout 60
                 displayName: 'Install dependencies'
                 workingDirectory: $(workingDirectory)
 
               - bash: |
                   set -euo pipefail
-                  python -m pytest tests/ -v --tb=short \
+                  echo "Running pyright type check..."
+                  pyright --pythonversion $(pythonVersion) azure_sdk_qa_bot_wiki_index/
+                displayName: 'Type Check (pyright)'
+                workingDirectory: $(workingDirectory)
+
+              - bash: |
+                  set -euo pipefail
+                  echo "Running unit tests..."
+                  python -m pytest tests/ \
+                    --cov=azure_sdk_qa_bot_wiki_index \
+                    --cov-report=term-missing \
+                    --cov-report=xml:$(workingDirectory)/coverage.xml \
+                    -v \
+                    --tb=short \
                     --junitxml=$(workingDirectory)/test-results.xml
                 displayName: 'Run Unit Tests'
                 workingDirectory: $(workingDirectory)
@@ -83,3 +96,11 @@ extends:
                   testResultsFiles: '$(workingDirectory)/test-results.xml'
                   testRunTitle: 'QA Bot Wiki Index Unit Tests'
                   failTaskOnFailedTests: true
+
+              - task: PublishCodeCoverageResults@2
+                displayName: 'Publish Code Coverage'
+                condition: always()
+                inputs:
+                  codeCoverageTool: 'Cobertura'
+                  summaryFileLocation: '$(workingDirectory)/coverage.xml'
+                  failIfCoverageEmpty: false

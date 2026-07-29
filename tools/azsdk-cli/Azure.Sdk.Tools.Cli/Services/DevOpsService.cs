@@ -579,7 +579,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             logger.LogDebug("Input work item json: {releasePlanJson}", workItemsFieldJson);
             var specDocument = workItem.GetPatchDocument();
 
-            logger.LogInformation("Creating {workItemType} work item", workItemType);
+            logger.LogDebug("Creating {workItemType} work item", workItemType);
             logger.LogDebug("Sending work item request to DevOps: {@specDocument}", specDocument);
             var createdWorkItem = await connection.GetWorkItemClient(ct).CreateWorkItemAsync(specDocument, Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT, workItemType, cancellationToken: ct);
             if (createdWorkItem == null)
@@ -836,7 +836,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 var workItemClient = connection.GetWorkItemClient(ct);
                 var result = await workItemClient.QueryByWiqlAsync(new Wiql { Query = query }, cancellationToken: ct);
-                logger.LogInformation("Work item query result: {result}", result);
                 if (result != null && result.WorkItems != null && result.WorkItems.Any())
                 {
                     var ids = result.WorkItems.Select(wi => wi.Id).ToList();

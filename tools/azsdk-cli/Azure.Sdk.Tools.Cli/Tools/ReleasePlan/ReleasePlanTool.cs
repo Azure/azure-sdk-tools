@@ -18,6 +18,7 @@ using Azure.Sdk.Tools.Cli.Tools.Core;
 using ModelContextProtocol;
 using ModelContextProtocol.Server;
 using Octokit;
+using OpenTelemetry;
 
 namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 {
@@ -1097,9 +1098,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
 
                 //Run TypeSpecMetadata parser to get API version
-                var typeSpecMetadata = await typeSpecHelper.ParseTypeSpecMetadataAsync(typeSpecProjectPath, npxHelper, logger, ct);
+                var typeSpecMetadata = await typeSpecHelper.ParseTypeSpecProjectAsync(typeSpecProjectPath, npxHelper, logger, ct);
                 string apiVersion  = "";
-                if (typeSpecMetadata == null)
+                // Fail create release plan for public preview and GA is TypeSpec metadata is not available. Private preview spec may not have emitter config.
+                if (typeSpecMetadata == null && parsedApiReleaseType != ApiReleaseType.PrivatePreview)
                 {
                     var error = $"Failed to parse TypeSpec metadata for project path '{typeSpecProjectPath}'. Ensure the TypeSpec project is valid, contains a tspconfig.yaml and compile using tsp compile.";
                     return new ReleasePlanResponse 
@@ -1111,7 +1113,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
 
                 // Extract API version from the parsed metadata
-                apiVersion = ExtractApiVersionFromMetadata(typeSpecMetadata.Packages);
+                apiVersion = ExtractApiVersionFromMetadata(typeSpecMetadata?.Packages);
 
                 // Check if a release plan already exists with the same TypeSpec project path and API version
                 if (!string.IsNullOrEmpty(apiVersion))
@@ -1183,52 +1185,33 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         releasePlan.ReleasePlanId = releasePlan.WorkItemId;
                     }
                     
-                    // Attempt to update SDK details if the TypeSpec path is a valid local path                    
+                    // Attempt to update SDK details                   
                     string sdkDetailsMessage = string.Empty;
-                    bool isLocalValidTypeSpec = !typeSpecHelper.IsUrl(typeSpecProjectPath) && isValidTypeSpec && Directory.Exists(typeSpecProjectPath);
+                    var supportedLanguages = releasePlan.IsManagementPlane ? languagesforMgmtplane : supportedLanguagesforDataplane;
 
-                    if (isLocalValidTypeSpec && releasePlan.WorkItemId > 0 && parsedApiReleaseType != ApiReleaseType.PrivatePreview)
+                    // Update SDK details in release plan for non private preview release plans.
+                    if (parsedApiReleaseType != ApiReleaseType.PrivatePreview && typeSpecMetadata?.Packages != null)
                     {
-                        try
-                        {
-                            await using (reporter.StartHeartbeat("Parsing TypeSpec project to add SDK details in release plan.", ct))
+                        // Convert resolved packages to SDKInfo list.
+                        List<SDKInfo> sdkInfos = [.. typeSpecMetadata.Packages
+                            .Where(p => !string.IsNullOrEmpty(p.PackageName) && supportedLanguages.Contains(p.Language.ToString()))
+                            .Select(p => new SDKInfo
                             {
-                                var sdkDetailsResult = await UpdateSDKDetailsInReleasePlan(releasePlan.WorkItemId, typeSpecProjectPath, ct);
-                                if (!string.IsNullOrEmpty(sdkDetailsResult.ResponseError))
-                                {
-                                    logger.LogWarning("Failed to update SDK details in release plan: {Error}", sdkDetailsResult.ResponseError);
-                                    warnings.Add($"Failed to update SDK details in the release plan: {sdkDetailsResult.ResponseError}");
-                                    nextSteps.Add("Update SDK details in the release plan.");
-                                }
-                                else
-                                {
-                                    sdkDetailsMessage = sdkDetailsResult.Message ?? string.Empty;
-                                    if (sdkDetailsResult.NextSteps?.Count > 0)
-                                    {
-                                        nextSteps.AddRange(sdkDetailsResult.NextSteps);
-                                    }
-                                }
-                            }
-                        }
-                        catch (Exception sdkEx)
+                                Language = p.Language.ToWorkItemString(),
+                                PackageName = p.PackageName!
+                            })];
+
+                        var updated = await devOpsService.UpdateReleasePlanSDKDetailsAsync(releasePlan.WorkItemId, sdkInfos, ct);
+                        if (!updated)
                         {
-                            logger.LogWarning(sdkEx, "Failed to update SDK details in release plan");
-                            warnings.Add($"Failed to update SDK details in the release plan: {sdkEx.Message}");
+                            logger.LogWarning("Failed to update SDK details in release plan");
+                            warnings.Add("Failed to update SDK details in the release plan");
                             nextSteps.Add("Update SDK details in the release plan.");
                         }
                     }
-                    else
-                    {
-                        nextSteps.Add("Update SDK details in the release plan.");
-                    }
 
-                    var message = new StringBuilder("Created release plan.");
-                    if (!string.IsNullOrEmpty(sdkDetailsMessage))
-                    {
-                        message.AppendLine().Append(sdkDetailsMessage);
-                    }
-
-                    reporter.NextStep(message.ToString());
+                    var message = "Created release plan.";
+                    reporter.NextStep(message);
 
                     // Refresh the release plan and notify the submitter. Both are best-effort and must
                     // never fail release plan creation, so any error here is logged and swallowed.
@@ -1249,7 +1232,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                     return new ReleasePlanResponse
                     {
-                        Message = message.ToString(),
+                        Message = message,
                         ReleasePlanDetails = releasePlan,
                         Warnings = warnings.Count > 0 ? warnings : null,
                         NextSteps = nextSteps.Count > 0 ? nextSteps : null,
@@ -2251,8 +2234,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 .ToList();
 
             // Check if any language has "all" or "multiple-versions"
-            if (apiVersions.Any(v => v.Equals("all", StringComparison.OrdinalIgnoreCase) || 
-                                      v.Equals("multiple-versions", StringComparison.OrdinalIgnoreCase)))
+            if (apiVersions.Any(v => !string.IsNullOrEmpty(v) && (v.Equals("all", StringComparison.OrdinalIgnoreCase) || 
+                                      v.Equals("multiple-versions", StringComparison.OrdinalIgnoreCase))))
             {
                 logger.LogWarning("Found 'all' or 'multiple-versions' in API versions from TypeSpec metadata. Cannot determine a single API version.");
                 return string.Empty;

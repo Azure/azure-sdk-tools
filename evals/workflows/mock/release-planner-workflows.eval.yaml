@@ -38,7 +38,7 @@ stimuli:
     # below. CI clones it via eng/common/scripts/eval/init-eval-git-fixtures.js before this suite.
     environment: &specsWorktree
       # Load the real release-planning skill so the executor can route to it.
-      # Path is relative to this eval file (4 levels up = repo root).
+      # Path is relative to this eval file (3 levels up = repo root).
       skills:
         - ../../../.github/skills/azsdk-common-prepare-release-plan
       git:

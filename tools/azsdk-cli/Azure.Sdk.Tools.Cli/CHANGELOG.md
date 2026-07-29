@@ -1,5 +1,27 @@
 # Release History
 
+## 0.6.33 (2026-07-29)
+
+### Features Added
+
+- Added `AZSDK_COPILOT_GITHUB_TOKEN` support for authenticating Copilot-backed commands in non-interactive environments.
+
+### Bugs Fixed
+
+- Removed the unavailable `claude-sonnet-4.5` default from Copilot-backed commands.
+
+## 0.6.32 (2026-07-28)
+
+### Features Added
+
+- Added `api-review create` CLI command and `azsdk_apireviewhub_request_review_pr` MCP tool to request creation of an API Review Hub review pull request for a package API change. Accepts language, package name, base tag, target owner, target repo, and target branch parameters.
+- Added `api-review get-approval-status` CLI command and `azsdk_apireview_get_approval_status` MCP tool to check API review release approval status using APIView and API Review Hub services. Accepts language, package name, package version, and optional API hash parameters.
+
+### Breaking Changes
+
+- Removed `package get-work-item` CLI command - the intended use case is no longer relevant.
+- Removed `package update-work-item` CLI command - the intended use case is no longer relevant.
+
 ## 0.6.31 (2026-07-27)
 
 ### Features Added

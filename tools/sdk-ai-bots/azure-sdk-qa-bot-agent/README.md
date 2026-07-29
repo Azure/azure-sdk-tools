@@ -1,6 +1,6 @@
 # Azure SDK Chat Agent
 
-The Azure SDK Chat Agent helps developers with Azure SDK questions. It is built on the [Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/overview/agent-framework-overview) with Azure AI Foundry. It leverages Azure AI Search for knowledge retrieval and Foundry Memory for conversation context.
+The Azure SDK Chat Agent helps developers with Azure SDK questions. It is built on the [Microsoft Agent Framework](https://learn.microsoft.com/agent-framework/overview/agent-framework-overview) with Azure AI Foundry. It leverages Azure AI Search for knowledge retrieval and Foundry Memory for conversation context.
 
 > **Note:** This project is currently in draft / active development.
 
@@ -135,7 +135,7 @@ This launches the agent via `agentdev run` on `http://localhost:8088/` with `deb
 
 ## Testing Remote Endpoints
 
-The main endpoint for querying the bot is `/agent/chat`. See [tests/api_test.rest](tests/api_test.rest) for example requests.
+The main endpoint for querying the bot is `/agent/chat`. See [tests/api_test.rest](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tests/api_test.rest) for example requests.
 
 ### Remote Endpoints
 
@@ -174,8 +174,8 @@ The project has three independently deployable components, each with its own CD 
 
 Builds the agent container image, pushes to ACR, and deploys a new hosted agent version to Azure AI Foundry.
 
-- **Pipeline**: [agent-cd.yml](pipelines/agent-cd.yml) | [Run in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8159)
-- **Deploy script**: [scripts/deploy_hosted_agent.py](scripts/deploy_hosted_agent.py)
+- **Pipeline**: [agent-cd.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/agent-cd.yml) | [Run in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8159)
+- **Deploy script**: [scripts/deploy_hosted_agent.py](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/scripts/deploy_hosted_agent.py)
 - **Parameters**: `environment` (dev/prod), `agentName` (chat_agent)
 - **What it does**:
   1. Builds the Docker image from `agents/chat_agent/Dockerfile`
@@ -192,7 +192,7 @@ python scripts/deploy_hosted_agent.py chat_agent --tag <image-tag>
 
 Builds the backend API (FastAPI) container image and deploys to Azure App Service.
 
-- **Pipeline**: [server-cd.yml](pipelines/server-cd.yml) | [Run in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8128)
+- **Pipeline**: [server-cd.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/server-cd.yml) | [Run in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8128)
 - **Parameters**: `environment` (dev/preview/prod), `slot` (default/agent)
 - **What it does**:
   1. Resolves image tag from `_version.py` (prod) or git short SHA (dev)
@@ -203,7 +203,7 @@ Builds the backend API (FastAPI) container image and deploys to Azure App Servic
 
 Deploys the Logic App ARM template for Teams channel message mirroring.
 
-- **Pipeline**: [logicapp-cd.yml](pipelines/logicapp-cd.yml) | [Run in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8177)
+- **Pipeline**: [logicapp-cd.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/logicapp-cd.yml) | [Run in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8177)
 - **Parameters**: `environment` (dev/test/prod)
 - **What it does**:
   1. Runs `az deployment group create` with environment-specific ARM template parameters
@@ -213,12 +213,12 @@ Deploys the Logic App ARM template for Teams channel message mirroring.
 
 Runs linting (pyright) and unit tests on PRs that touch the bot agent code.
 
-- **Pipeline**: [server-ci.yml](pipelines/server-ci.yml) | [View in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8156)
+- **Pipeline**: [server-ci.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/server-ci.yml) | [View in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8156)
 - **Triggers**: PRs to `main` touching `tools/sdk-ai-bots/azure-sdk-qa-bot-agent`
 
 ## Troubleshooting
 
-For incident response, agent tracing, and server log analysis, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+For incident response, agent tracing, and server log analysis, see [TROUBLESHOOTING.md](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/TROUBLESHOOTING.md).
 
 ## Contributing
 

@@ -62,7 +62,7 @@ we can debug/test the bot frontend locally.
 
 ### Start Backend Server
 
-This project (`azure-sdk-qa-bot`) is the Teams bot frontend. The backend server it talks to lives in the agent project (`azure-sdk-qa-bot-agent`, the FastAPI `server.py` entrypoint). To run the backend server locally, follow the setup and "Running and Debugging Locally" instructions in the [agent project README](../azure-sdk-qa-bot-agent/README.md).
+This project (`azure-sdk-qa-bot`) is the Teams bot frontend. The backend server it talks to lives in the agent project (`azure-sdk-qa-bot-agent`, the FastAPI `server.py` entrypoint). To run the backend server locally, follow the setup and "Running and Debugging Locally" instructions in the [agent project README](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/README.md).
 
 ### Start Bot app
 
@@ -146,7 +146,7 @@ _Example: The `azure-sdk-qa-bot-prod-eastasia` resource group showing the App Se
 
 ![KQL Overview](./doc/images/troubleshooting/kql.png)
 
-> **Note:** For more information about working with logs and KQL queries, please refer to the [Log Analytics workspace documentation](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/log-analytics-workspace-overview). For KQL syntax reference, see [Keyword Query Language (KQL) syntax reference](https://learn.microsoft.com/en-us/sharepoint/dev/general-development/keyword-query-language-kql-syntax-reference).
+> **Note:** For more information about working with logs and KQL queries, please refer to the [Log Analytics workspace documentation](https://learn.microsoft.com/azure/azure-monitor/logs/log-analytics-workspace-overview). For KQL syntax reference, see [Keyword Query Language (KQL) syntax reference](https://learn.microsoft.com/sharepoint/dev/general-development/keyword-query-language-kql-syntax-reference).
 
 #### Step 4: Analyze the Logs
 
@@ -169,7 +169,7 @@ _Example: The `azure-sdk-qa-bot-prod-eastasia` resource group showing the App Se
 ![Teams Copy Links](./doc/images/troubleshooting/teams-copy-links.png)
 ![Search by ID](./doc/images/troubleshooting/search-by-id.png)
 
-> **Note:** For more information about working with logs and KQL queries, please refer to the [Log Analytics workspace documentation](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/log-analytics-workspace-overview). For KQL syntax reference, see [Keyword Query Language (KQL) syntax reference](https://learn.microsoft.com/en-us/sharepoint/dev/general-development/keyword-query-language-kql-syntax-reference).
+> **Note:** For more information about working with logs and KQL queries, please refer to the [Log Analytics workspace documentation](https://learn.microsoft.com/azure/azure-monitor/logs/log-analytics-workspace-overview). For KQL syntax reference, see [Keyword Query Language (KQL) syntax reference](https://learn.microsoft.com/sharepoint/dev/general-development/keyword-query-language-kql-syntax-reference).
 
 ## Additional information and references
 

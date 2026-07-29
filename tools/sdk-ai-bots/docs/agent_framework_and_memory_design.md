@@ -2,11 +2,11 @@
 
 ## 1 Background
 
-We are building a new agent service (`azure-sdk-qa-bot-agent`) based on the Azure AI Foundry Agent framework to replace the existing Go backend (`azure-sdk-qa-bot-backend`) built on a custom RAG framework. The motivations for this migration are:
+We are building an agent service (`azure-sdk-qa-bot-agent`) based on the Azure AI Foundry Agent framework, replacing an earlier RAG-based implementation. The motivations for this design are:
 
-- **Rigid workflow** — The Go backend uses a hard-coded workflow that is difficult to extend. Adding new capabilities requires modifying core code rather than configuration.
-- **No tool abstraction** — Search, analysis, prompt building, and LLM calls are all inline with no separation of concerns.
-- **Ecosystem mismatch** — Go is misaligned with the Python-first AI/LLM ecosystem (Azure AI Agents SDK, prompt frameworks, evaluation tooling).
+- **Flexible workflow** — The agent framework favors configuration over hard-coded workflows, so new capabilities can be added without modifying core code.
+- **Tool abstraction** — Search, analysis, prompt building, and LLM calls are separated into discrete tools with clear separation of concerns.
+- **Ecosystem alignment** — Python aligns with the AI/LLM ecosystem (Azure AI Agents SDK, prompt frameworks, evaluation tooling).
 
 ### 1.1 Agent Framework — GitHub Copilot SDK vs Azure AI Foundry Agent SDK
 

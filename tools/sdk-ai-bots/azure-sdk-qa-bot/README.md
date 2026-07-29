@@ -55,18 +55,14 @@ This naming convention ensures consistency and makes it easy to identify which e
 
 ## Debug in local
 
-we can debug/test bot frontend and backend service locally.
+we can debug/test the bot frontend locally.
 > **Prerequisites**
 >
 > - Install [Teams Toolkit VS Code Extension](https://marketplace.visualstudio.com/items?itemName=TeamsDevApp.ms-teams-vscode-extension)
 
-### Start Backend Service
+### Start Backend Server
 
-```bash
-cd ../azure-sdk-qa-bot-backend
-go mod download
-go run main.go
-```
+This project (`azure-sdk-qa-bot`) is the Teams bot frontend. The backend server it talks to lives in the agent project (`azure-sdk-qa-bot-agent`, the FastAPI `server.py` entrypoint). To run the backend server locally, follow the setup and "Running and Debugging Locally" instructions in the [agent project README](../azure-sdk-qa-bot-agent/README.md).
 
 ### Start Bot app
 
@@ -107,7 +103,6 @@ This section describes how to update bot service logic in Azure web app
 >   - resource group
 >   - storage account: store the conversation and feedback
 >   - ACR: Azure container register for docker image
->   - azure sdk backend service
 
 1. Run `az login`
 2. Run `./scripts/setup-docker-image.ps1 -Tag <env>-<version> -Push -AcrName <acr-name-for-env>` to build and push docker image

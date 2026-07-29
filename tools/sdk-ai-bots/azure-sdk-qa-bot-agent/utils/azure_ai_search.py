@@ -40,6 +40,9 @@ logger = logging.getLogger(__name__)
 _KB_MAX_OUTPUT_SIZE = 20000
 _HIERARCHY_EXPANSION_TOP = 20
 
+# eval-only: the shared index also holds wiki pages this branch cannot interpret.
+_KB_ONLY_FILTER = "(page_type eq null or page_type eq '')"
+
 # Chunks below this rerank score are considered low-relevance and dropped.
 _RERANK_SCORE_LOW_RELEVANCE_THRESHOLD = 2.0
 
@@ -87,6 +90,7 @@ class SearchClient:
         # Combine per-source filters into a single filter_add_on with OR
         # so the KB client performs one retrieval pass instead of N.
         combined_filter = " or ".join(f"({f})" for f in source_filters.values() if f)
+        combined_filter = f"({combined_filter}) and {_KB_ONLY_FILTER}" if combined_filter else _KB_ONLY_FILTER
 
         kb_params: list[KnowledgeSourceParams] = [
             SearchIndexKnowledgeSourceParams(
@@ -151,6 +155,7 @@ class SearchClient:
 
         # Combine per-source filters into a single OData expression with OR
         combined_filter = " or ".join(f"({f})" for f in source_filters.values() if f)
+        combined_filter = f"({combined_filter}) and {_KB_ONLY_FILTER}" if combined_filter else _KB_ONLY_FILTER
 
         results = await self._search_client.search(
             search_text=query,
@@ -348,7 +353,7 @@ def _build_hierarchy_filter(
     elif header1:
         filters.append(f"header_1 eq '{_escape_odata(header1)}'")
 
-    return " and ".join(filters)
+    return " and ".join(filters) + f" and {_KB_ONLY_FILTER}"
 
 
 _client: SearchClient | None = None

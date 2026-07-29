@@ -1200,13 +1200,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     {
                         // Convert resolved packages to SDKInfo list.
                         List<SDKInfo> sdkInfos = [.. typeSpecMetadata.Packages
-                            .Where(p => !string.IsNullOrEmpty(p.PackageName) && supportedLanguages.Contains(p.Language.ToString()))
+                            .Where(p => !string.IsNullOrEmpty(p.PackageName))
                             .Select(p => new SDKInfo
                             {
                                 Language = p.Language.ToWorkItemString(),
                                 PackageName = p.PackageName!
                             })];
 
+                        sdkInfos = [.. sdkInfos.Where(sdk => supportedLanguages.Contains(sdk.Language))];
                         var updated = await devOpsService.UpdateReleasePlanSDKDetailsAsync(releasePlan.WorkItemId, sdkInfos, ct);
                         if (!updated)
                         {

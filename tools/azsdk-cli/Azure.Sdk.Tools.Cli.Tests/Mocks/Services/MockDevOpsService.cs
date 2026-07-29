@@ -346,7 +346,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult<ReleasePlanWorkItem?>(null);
         }
 
-        Task<ReleasePlanWorkItem?> IDevOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(string typeSpecProjectPath, string apiVersion, CancellationToken ct = default)
+        Task<ReleasePlanWorkItem?> IDevOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(string typeSpecProjectPath, string apiVersion, CancellationToken ct)
         {
             if (ConfiguredReleasePlanForTypeSpecPathAndApiVersion != null 
                 && typeSpecProjectPath == ConfiguredReleasePlanForTypeSpecPathAndApiVersionKey

@@ -210,7 +210,7 @@ jobs:
         displayName: 'Notify API Review Hub of artifact completion'
         condition: succeededOrFailed()
         inputs:
-          azureSubscription: 'API Review Hub'
+          azureSubscription: 'ADO to ARH Service Connection'
           azurePowerShellVersion: latestVersion
           pwsh: true
           ScriptType: InlineScript

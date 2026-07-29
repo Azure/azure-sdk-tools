@@ -18,7 +18,6 @@ extends:
       - 'evals/*.eval.yaml'
     mcpSetupTemplate: /eng/common/pipelines/templates/steps/eval-mcp-setup.yml
     TestType: live
-    UseAzSdkAuthentication: true
     evalInvokeTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/no-skill/typespec-author-eval-invoke.yml
     preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/no-skill/typespec-author-preeval.yml
     failOnFailedTests: false

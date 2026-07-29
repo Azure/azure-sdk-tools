@@ -9,7 +9,7 @@ parameters:
     default: 0.8
   - name: azureSubscription
     type: string
-    default: azuresdkqabot-dev
+    default: opensource-api-connection
 
 steps:
   - ${{ if parameters.UseAzSdkAuthentication }}:

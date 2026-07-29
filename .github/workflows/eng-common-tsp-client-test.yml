@@ -27,7 +27,7 @@ jobs:
 
     steps:
       - name: Checkout self
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           path: tools
           sparse-checkout: |
@@ -70,7 +70,7 @@ jobs:
         run: npm run format:check:ci
 
       - name: Checkout specs
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: Azure/azure-rest-api-specs
           path: specs
@@ -78,7 +78,7 @@ jobs:
             specification/widget
 
       - name: Checkout go
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: Azure/azure-sdk-for-go
           path: go
@@ -87,7 +87,7 @@ jobs:
             sdk/template
 
       - name: Checkout java
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: Azure/azure-sdk-for-java
           path: java
@@ -96,7 +96,7 @@ jobs:
             sdk/template
 
       - name: Checkout js
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: Azure/azure-sdk-for-js
           path: js
@@ -105,7 +105,7 @@ jobs:
             sdk/template
 
       - name: Checkout net
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: Azure/azure-sdk-for-net
           path: net
@@ -114,7 +114,7 @@ jobs:
             sdk/template
 
       - name: Checkout python
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: Azure/azure-sdk-for-python
           path: python

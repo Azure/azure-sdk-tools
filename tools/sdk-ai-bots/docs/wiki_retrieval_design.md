@@ -101,14 +101,17 @@ Two properties of this design are easy to trip over:
 
 ## Evaluation
 
-226-case perf set (7 scenarios), memory off, gpt-5.4 grader, same-day runs. A case passes only when all six core metrics score ≥ 4. Same-config reruns move by up to ~4.6 pp, so only larger deltas are treated as signal, and `typespec` (N = 126) is the most stable single scenario.
+227-case perf set (7 scenarios), memory off, gpt-5.4 grader, same-day back-to-back runs. A case passes only when all six core metrics score ≥ 4. The baseline is `main` with memory disabled and wiki pages filtered out of retrieval, so it measures the knowledge base alone.
 
-| | TOTAL | apispec | python | authoring | typespec |
-| --- | --- | --- | --- | --- | --- |
-| KB-only baseline (`main`, memory off) | 67.6 % | 44.0 | 52.2 | 76.9 | 77.4 |
-| Wiki two-track | **73.3 %** | 64.0 | 60.9 | 84.6 | 79.8 |
+| | TOTAL | typespec | apispec | python | authoring | general |
+| --- | --- | --- | --- | --- | --- | --- |
+| N | 227 | 125 | 26 | 24 | 26 | 20 |
+| KB-only baseline (`main`, memory off) | 69.2 % | 76.8 | 57.7 | 50.0 | 76.9 | 55.0 |
+| Wiki two-track | **74.9 %** | **81.6** | **65.4** | **62.5** | **80.8** | **60.0** |
 
-Every scenario is at or above the baseline (**+5.7 pp** overall). Groundedness / relevance / coherence / fluency stay ~100 %; the gain is carried by `similarity` and `response_completeness`.
+Every scenario is at or above the baseline (**+5.7 pp** overall, net **+12** cases: 27 fixed, 15 regressed). Groundedness / relevance / coherence / fluency stay ~100 %, and median answer length is flat (165 → 173 words), so the gain is not bought with longer or less grounded answers — it is carried by `similarity` (79.3 → 83.7 %) and `response_completeness` (70.0 → 76.2 %).
+
+Reading the numbers: same-config reruns churn ~16 % of cases and move the total by up to ±5 pp, so a single run cannot resolve a smaller delta. `typespec` (N = 125) is the only single scenario large enough to trust on its own; `onboarding` and `releasesupport` (N = 3) swing 33 pp on one case and are reported for completeness only.
 
 What each design decision is worth, measured by same-day A/B:
 
@@ -118,6 +121,8 @@ What each design decision is worth, measured by same-day A/B:
 - **Chunk granularity beats page integrity** — raising the indexer split budget so every page indexes as one chunk cost typespec **−5.6 pp**. Retrieval matches on sections and expands to the page afterwards, so one vector per page retrieves measurably worse than one per section.
 
 The wiki layer is only measurable when it actually returns results. A silent retrieval outage (see below) cost the entire lead for several days while every tool call still appeared to fire, so any evaluation of this feature should first assert that `wiki_search` returns a non-empty result.
+
+Roughly 60 % of the remaining failures ask for knowledge that is absent from the indexed corpus, so they are not reachable by retrieval or prompt changes; closing them is a corpus-curation problem.
 
 ## Known limitations
 

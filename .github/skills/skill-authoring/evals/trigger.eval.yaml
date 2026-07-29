@@ -8,7 +8,7 @@ tags:
   area: skill-authoring
   type: ci-gate
 
-config:
+defaults:
   runs: 1
   timeout: "90s"
   model: claude-opus-4.6
@@ -21,6 +21,9 @@ stimuli:
   # Should trigger
   - name: trigger-create-a-new-skill
     prompt: "create a new skill"
+    environment:
+      skills:
+        - ..
     graders:
       - type: skill-invocation
         config:
@@ -28,6 +31,9 @@ stimuli:
 
   - name: trigger-write-a-skill-for-api-review
     prompt: "write a skill for API review"
+    environment:
+      skills:
+        - ..
     graders:
       - type: skill-invocation
         config:
@@ -35,6 +41,9 @@ stimuli:
 
   - name: trigger-what-is-the-skill-md-format
     prompt: "what is the SKILL.md format"
+    environment:
+      skills:
+        - ..
     graders:
       - type: skill-invocation
         config:
@@ -42,6 +51,9 @@ stimuli:
 
   - name: trigger-skill-template-structure
     prompt: "skill template structure"
+    environment:
+      skills:
+        - ..
     graders:
       - type: skill-invocation
         config:
@@ -49,6 +61,9 @@ stimuli:
 
   - name: trigger-review-my-skill-pr-for-compliance
     prompt: "review my skill PR for compliance"
+    environment:
+      skills:
+        - ..
     graders:
       - type: skill-invocation
         config:
@@ -56,6 +71,9 @@ stimuli:
 
   - name: trigger-skill-best-practices-and-token-budgets
     prompt: "skill best practices and token budgets"
+    environment:
+      skills:
+        - ..
     graders:
       - type: skill-invocation
         config:
@@ -64,6 +82,9 @@ stimuli:
   # Should NOT trigger
   - name: anti-trigger-deploy-my-azure-function
     prompt: "deploy my Azure Function"
+    environment:
+      skills:
+        - ..
     graders:
       - type: skill-invocation
         config:
@@ -71,13 +92,21 @@ stimuli:
 
   - name: anti-trigger-fix-my-pipeline-build-error
     prompt: "fix my pipeline build error"
+    environment:
+      skills:
+        - ..
+        - ../../azsdk-common-pipeline-fixer
     graders:
       - type: skill-invocation
         config:
+          required: ["azsdk-common-pipeline-fixer"]
           disallowed: ["skill-authoring"]
 
   - name: anti-trigger-authenticate-with-azure-ad
-    prompt: "authenticate with Azure AD"
+    prompt: "What is Azure AD authentication?"
+    environment:
+      skills:
+        - ..
     graders:
       - type: skill-invocation
         config:
@@ -85,13 +114,21 @@ stimuli:
 
   - name: anti-trigger-how-do-i-release-an-sdk-package
     prompt: "how do I release an SDK package"
+    environment:
+      skills:
+        - ..
+        - ../../azsdk-common-sdk-release
     graders:
       - type: skill-invocation
         config:
+          required: ["azsdk-common-sdk-release"]
           disallowed: ["skill-authoring"]
 
   - name: anti-trigger-configure-azure-storage-geo-redundancy
     prompt: "configure Azure Storage geo-redundancy"
+    environment:
+      skills:
+        - ..
     graders:
       - type: skill-invocation
         config:

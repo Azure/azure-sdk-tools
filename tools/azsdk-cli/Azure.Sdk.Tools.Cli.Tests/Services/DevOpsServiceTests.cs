@@ -426,6 +426,21 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             return workItem;
         }
 
+        /// <summary>
+        /// Creates a release plan work item with a Hierarchy-Forward relation pointing to a child API Spec work item.
+        /// Required so GetApiSpecWorkItemAsync can traverse the parent→child link to read the API version.
+        /// </summary>
+        private WorkItem CreateReleasePlanWorkItemWithApiSpecChild(int id, string state, int apiSpecChildId)
+        {
+            var workItem = CreateReleasePlanWorkItem(id, state);
+            workItem.Relations.Add(new WorkItemRelation
+            {
+                Rel = "System.LinkTypes.Hierarchy-Forward",
+                Url = $"https://dev.azure.com/azure-sdk/internal/_apis/wit/workItems/{apiSpecChildId}"
+            });
+            return workItem;
+        }
+
         private WorkItem CreateReleasePlanWorkItem(int id, string state)
         {
             var workItem = new WorkItem
@@ -678,7 +693,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             var requestedApiVersion = "2024-01-01";
             var existingApiVersion = "2023-06-01";
             
-            var releasePlan = CreateReleasePlanWorkItem(100, "In Progress");
+            var releasePlan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
             var apiSpec = CreateApiSpecWorkItemWithVersion(200, "https://github.com/Azure/azure-rest-api-specs/pull/12345", "Active", 
                 existingApiVersion, parentId: 100);
             
@@ -700,7 +715,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             var typeSpecPath = "specification/contoso/Contoso.Management";
             var apiVersion = "2024-01-01";
             
-            var releasePlan = CreateReleasePlanWorkItem(100, "In Progress");
+            var releasePlan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
             var apiSpec = CreateApiSpecWorkItemWithVersion(200, "https://github.com/Azure/azure-rest-api-specs/pull/12345", "Active", 
                 apiVersion, parentId: 100);
             releasePlan.Fields["Custom.ApiSpecProjectPath"] = typeSpecPath;
@@ -725,12 +740,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             var typeSpecPath = "specification/contoso/Contoso.Management";
             var requestedApiVersion = "2024-01-01";
             
-            var releasePlan1 = CreateReleasePlanWorkItem(100, "In Progress");
+            var releasePlan1 = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
             releasePlan1.Fields["Custom.ApiSpecProjectPath"] = typeSpecPath;
             var apiSpec1 = CreateApiSpecWorkItemWithVersion(200, "https://github.com/Azure/azure-rest-api-specs/pull/12345", "Active", 
                 "2023-06-01", parentId: 100);
             
-            var releasePlan2 = CreateReleasePlanWorkItem(101, "In Progress");
+            var releasePlan2 = CreateReleasePlanWorkItemWithApiSpecChild(101, "In Progress", 201);
             releasePlan2.Fields["Custom.ApiSpecProjectPath"] = typeSpecPath;
             var apiSpec2 = CreateApiSpecWorkItemWithVersion(201, "https://github.com/Azure/azure-rest-api-specs/pull/12346", "Active", 
                 requestedApiVersion, parentId: 101);
@@ -759,7 +774,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             var requestedApiVersion = "2024-01-01";
             var existingApiVersion = "2024-01-01"; // same version
             
-            var releasePlan = CreateReleasePlanWorkItem(100, "In Progress");
+            var releasePlan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
             releasePlan.Fields["Custom.ApiSpecProjectPath"] = typeSpecPath;
             var apiSpec = CreateApiSpecWorkItemWithVersion(200, "https://github.com/Azure/azure-rest-api-specs/pull/12345", "Active", 
                 existingApiVersion, parentId: 100);

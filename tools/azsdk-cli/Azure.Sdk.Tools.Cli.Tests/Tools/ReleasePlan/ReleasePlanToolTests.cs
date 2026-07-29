@@ -54,7 +54,24 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             gitHelper = gitHelperMock.Object;
 
             var processHelper = new ProcessHelper(new TestLogger<ProcessHelper>(), Mock.Of<IRawOutputHelper>());
-            typeSpecHelper = new TypeSpecHelper(gitHelper, processHelper);
+            var realTypeSpecHelper = new TypeSpecHelper(gitHelper, processHelper);
+
+            // Wrap the real TypeSpecHelper in a mock so ParseTypeSpecProjectAsync returns dummy metadata
+            // without requiring the npx emitter to be installed and runnable in CI/test environments.
+            var typeSpecHelperMock = new Mock<ITypeSpecHelper>();
+            typeSpecHelperMock.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>())).Returns((string p) => realTypeSpecHelper.IsValidTypeSpecProjectPath(p));
+            typeSpecHelperMock.Setup(x => x.IsTypeSpecProjectForMgmtPlane(It.IsAny<string>())).Returns((string p) => realTypeSpecHelper.IsTypeSpecProjectForMgmtPlane(p));
+            typeSpecHelperMock.Setup(x => x.IsUrl(It.IsAny<string>())).Returns((string p) => realTypeSpecHelper.IsUrl(p));
+            typeSpecHelperMock.Setup(x => x.IsValidTypeSpecProjectUrl(It.IsAny<string>())).Returns((string p) => realTypeSpecHelper.IsValidTypeSpecProjectUrl(p));
+            typeSpecHelperMock.Setup(x => x.IsTypeSpecUrlForMgmtPlane(It.IsAny<string>())).Returns((string p) => realTypeSpecHelper.IsTypeSpecUrlForMgmtPlane(p));
+            typeSpecHelperMock.Setup(x => x.GetTypeSpecProjectRelativePath(It.IsAny<string>())).Returns((string p) => realTypeSpecHelper.GetTypeSpecProjectRelativePath(p));
+            typeSpecHelperMock.Setup(x => x.GetTypeSpecProjectRelativePathFromUrl(It.IsAny<string>())).Returns((string p) => realTypeSpecHelper.GetTypeSpecProjectRelativePathFromUrl(p));
+            typeSpecHelperMock.Setup(x => x.GetSpecRepoRootPath(It.IsAny<string>())).Returns((string p) => realTypeSpecHelper.GetSpecRepoRootPath(p));
+            typeSpecHelperMock.Setup(x => x.IsRepoPathForPublicSpecRepoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns((string p, CancellationToken ct) => realTypeSpecHelper.IsRepoPathForPublicSpecRepoAsync(p, ct));
+            typeSpecHelperMock.Setup(x => x.IsRepoPathForSpecRepoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns((string p, CancellationToken ct) => realTypeSpecHelper.IsRepoPathForSpecRepoAsync(p, ct));
+            typeSpecHelperMock.Setup(x => x.ParseTypeSpecProjectAsync(It.IsAny<string>(), It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreateDummyTypeSpecProject());
+            typeSpecHelper = typeSpecHelperMock.Object;
 
             releasePlanTool = new ReleasePlanTool(
                 devOpsService,
@@ -470,9 +487,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 Status = "In Progress"
             };
 
+            // The API version must match what CreateDummyTypeSpecProject returns ("2026-05-02-preview")
+            existingReleasePlan.SpecAPIVersion = "2026-05-02-preview";
             ((MockDevOpsService)devOpsService).ConfiguredReleasePlanForTypeSpecPathAndApiVersion = existingReleasePlan;
             ((MockDevOpsService)devOpsService).ConfiguredReleasePlanForTypeSpecPathAndApiVersionKey = "specification/testcontoso/Contoso.Management";
-            ((MockDevOpsService)devOpsService).ConfiguredApiVersionForTypeSpecPathAndApiVersion = "2024-01-01";
+            ((MockDevOpsService)devOpsService).ConfiguredApiVersionForTypeSpecPathAndApiVersion = "2026-05-02-preview";
 
             // Act
             var releaseplan = await releasePlanTool.CreateReleasePlan(null, 
@@ -489,7 +508,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.IsNotNull(releasePlanDetails);
             Assert.That(releasePlanDetails.WorkItemId, Is.EqualTo(999), "Should return existing release plan");
             Assert.That(releasePlanDetails.ReleasePlanId, Is.EqualTo(50001));
-            Assert.That(releasePlanDetails.SpecAPIVersion, Is.EqualTo("2024-01-01"));
+            Assert.That(releasePlanDetails.SpecAPIVersion, Is.EqualTo("2026-05-02-preview"));
             Assert.IsNotNull(releaseplan.Message, "Response should contain a message about existing plan");
             Assert.That(releaseplan.Message, Does.Contain("existing release plan"), "Message should indicate plan already exists");
         }
@@ -1939,10 +1958,24 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [Test]
         public async Task Test_UpdateReleasePlan_emitter_failure_still_succeeds()
         {
-            // When the emitter fails (exit code != 0), the update should still succeed
+            // When the emitter fails (ParseTypeSpecProjectAsync returns null), the update should still
+            // succeed but UpdateReleasePlanSDKDetailsAsync must not be called (no packages to update).
             var mockNpxHelper = new Mock<INpxHelper>();
             mockNpxHelper.Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 1 });
+
+            // Override the Setup() mock: return null to simulate emitter failure for this test only.
+            var failingTypeSpecHelper = new Mock<ITypeSpecHelper>();
+            failingTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>())).Returns(true);
+            failingTypeSpecHelper.Setup(x => x.IsTypeSpecProjectForMgmtPlane(It.IsAny<string>())).Returns(false);
+            failingTypeSpecHelper.Setup(x => x.IsUrl(It.IsAny<string>())).Returns(false);
+            failingTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectUrl(It.IsAny<string>())).Returns(false);
+            failingTypeSpecHelper.Setup(x => x.GetTypeSpecProjectRelativePath(It.IsAny<string>()))
+                .Returns((string p) => p.Contains("specification") ? p.Substring(p.IndexOf("specification")) : p);
+            failingTypeSpecHelper.Setup(x => x.IsRepoPathForSpecRepoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+            failingTypeSpecHelper.Setup(x => x.GetSpecRepoRootPath(It.IsAny<string>())).Returns(string.Empty);
+            failingTypeSpecHelper.Setup(x => x.ParseTypeSpecProjectAsync(It.IsAny<string>(), It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((TypeSpecProject?)null);
 
             var mockDevOps = new Mock<IDevOpsService>();
             var releasePlan = new ReleasePlanWorkItem
@@ -1958,7 +1991,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOps.Setup(x => x.UpdateSpecPullRequestAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
             mockDevOps.Setup(x => x.UpdateApiSpecVersionAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, mockNpxHelper.Object, Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, failingTypeSpecHelper.Object, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, mockNpxHelper.Object, Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
 
             var result = await tool.UpdateReleasePlan(
                 typeSpecProjectPath: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
@@ -2013,6 +2046,24 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         private ReleasePlanTool CreateReleasePlanToolWithNotificationService(INotificationService notificationService)
         {
             return new ReleasePlanTool(devOpsService, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), notificationService);
+        }
+
+        /// <summary>
+        /// Creates a dummy TypeSpecProject with widget service metadata to stand in for the real
+        /// npx emitter output in tests that do not need accurate per-package data.
+        /// </summary>
+        private static TypeSpecProject CreateDummyTypeSpecProject()
+        {
+            var project = TypeSpecProject.ParseTypeSpecConfig("TypeSpecTestData/specification/testcontoso/Contoso.Management");
+            project.Packages =
+            [
+                new PackageInfo { PackageName = "azure-mgmt-widgetservice", Language = SdkLanguage.Python, ApiVersion = "2026-05-02-preview", TypeSpecSdkType = "preview" },
+                new PackageInfo { PackageName = "com.azure.resourcemanager:azure-resourcemanager-widgetservice", Language = SdkLanguage.Java, ApiVersion = "2026-05-02-preview", TypeSpecSdkType = "preview" },
+                new PackageInfo { PackageName = "sdk/resourcemanager/widgetservice/armwidgetservice", Language = SdkLanguage.Go, ApiVersion = "2026-05-02-preview", TypeSpecSdkType = "preview" },
+                new PackageInfo { PackageName = "@azure/arm-widgetservice", Language = SdkLanguage.JavaScript, ApiVersion = "2026-05-02-preview", TypeSpecSdkType = "preview" },
+                new PackageInfo { PackageName = "Azure.ResourceManager.WidgetService", Language = SdkLanguage.DotNet, ApiVersion = "2026-05-02-preview", TypeSpecSdkType = "preview" },
+            ];
+            return project;
         }
     }
 }

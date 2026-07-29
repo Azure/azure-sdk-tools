@@ -85,10 +85,10 @@ Six phases:
 2. **Extraction.** Only changed documents are re-extracted; every other document's entities/concepts are deserialised from the manifest.
 3. **Summary pages.** Only changed documents are re-summarised; the rest are reused from the manifest.
 4. **Entity/concept pages.** A group's page is reused only when it already has content **and** its `source_refs` set is unchanged **and** its `input_hash` (a digest of the group name plus all member descriptions) is unchanged. So a single changed document re-synthesises only the groups that reference it.
-5. **Cross-links** are recomputed over the whole current page set.
+5. **Cross-links** are recomputed over the whole current page set. Links are ordered by shared-document weight then slug — a deterministic order matters, because links are rendered into the page body, so an order that depended on which pages happened to be rebuilt would change every page's content hash and rewrite the whole wiki on every run.
 6. **Apply.** A page is uploaded only when its rendered content hash changed. Pages that no longer exist are **soft-deleted** via `IsDeleted` blob metadata — the same convention the KB sync pipeline uses, so the shared indexer drops them — and their manifest entry is reduced to a tombstone. Documents whose summary generation failed have their stored hash cleared, so the next run retries them.
 
-The first run against an empty manifest is a full build.
+The first run against an empty manifest is a full build. A run over an unchanged corpus writes nothing and makes no LLM calls: measured end to end, ~14 minutes for a 72-document delta over 1029 sources, ~1 second of reconcile for no delta, against ~80 minutes for a full rebuild.
 
 Two properties of this design are easy to trip over:
 

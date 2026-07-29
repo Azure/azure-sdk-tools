@@ -295,6 +295,8 @@ Agentic Search runs first, using the curated **Reference Knowledge Store** (`ref
 
 **Tier 2 — KB MCP Tool (Fallback, Reference-Store Miss)**
 
+> **TODO (future update):** The precise criteria for when the skill falls back from Agentic Search to the KB MCP Tool are not yet finalized. Since Agentic Search is expected to cover ~80% of scenarios, we need to clearly define the fallback trigger (e.g., what constitutes an insufficient/low-confidence Agentic Search result, coverage thresholds, and edge cases not in the Reference Knowledge Store). This placeholder will be replaced with the concrete fallback logic in a future update — see the follow-up discussion on [PR #16595](https://github.com/Azure/azure-sdk-tools/pull/16595).
+
 If Agentic Search cannot locate matching references in the store, or if the user request involves edge cases not yet in the catalog, the skill falls back to:
 
 - **KB MCP Tool** (`azsdk_typespec_generate_authoring_plan`): Calls the Azure SDK Knowledge Base backend via MCP, which retrieves context indexed from docs, specs, samples, and patterns beyond the local reference catalog.

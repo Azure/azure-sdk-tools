@@ -23,6 +23,7 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
     private readonly List<FeedbackItem> _items;
     private readonly string _globalContext;
     private readonly EditScope _editScope;
+    private readonly bool _specInspectionAvailable;
 
     /// <summary>
     /// Initializes a new batch classification template.
@@ -37,13 +38,15 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
     /// is asked to prefer the in-scope axis for items that could be addressed either way (e.g. a rename
     /// achievable in spec inputs OR custom code), so fixable items are not reported as out of scope.
     /// </param>
+    /// <param name="specInspectionAvailable">Whether tools and reference content for a local TypeSpec project are available.</param>
     public FeedbackClassificationTemplate(
         string? serviceName,
         string language,
         string referenceDocContent,
         List<FeedbackItem> items,
         string globalContext,
-        EditScope editScope = EditScope.All)
+        EditScope editScope = EditScope.All,
+        bool specInspectionAvailable = true)
     {
         _serviceName = serviceName;
         _language = language;
@@ -51,6 +54,7 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         _items = items;
         _globalContext = globalContext;
         _editScope = editScope;
+        _specInspectionAvailable = specInspectionAvailable;
     }
 
     public override string BuildPrompt()
@@ -59,7 +63,7 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         var constraints = BuildClassificationConditions();
         var examples = BuildExamples();
         var outputRequirements = BuildOutputRequirements();
-        
+
         return BuildStructuredPrompt(taskInstructions, constraints, examples, outputRequirements);
     }
 
@@ -82,6 +86,10 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
     private string BuildTaskInstructions()
     {
         var sb = new StringBuilder();
+        var tspApplicabilityBasis = _specInspectionAvailable
+            ? "based on the reference documentation below"
+            : "based on known TypeSpec capabilities and the available feedback context";
+
         sb.AppendLine($"""
         **Current Context:**
         - Service: {_serviceName ?? "N/A"}
@@ -95,19 +103,36 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
             sb.AppendLine(scopeGuidance);
         }
 
-        sb.AppendLine($"""
+        sb.AppendLine("""
 
         **Task:**
         Classify ALL of the feedback items listed below. For each item, determine the appropriate classification: **TSP_APPLICABLE**, **CODE_CUSTOMIZATION**, **SUCCESS**, or **REQUIRES_MANUAL_INTERVENTION**.
         - If the feedback is non-actionable (discussion, informational, "keep as is", or about build/generation succeeding), classify as **SUCCESS**.
-        - If the feedback is actionable AND TypeSpec client customization decorators can address it (based on the reference documentation below), classify as **TSP_APPLICABLE**.
+        - If the feedback is actionable AND TypeSpec client customization decorators can address it ({tspApplicabilityBasis}), classify as **TSP_APPLICABLE**.
         - If the feedback is actionable, TypeSpec decorators CANNOT address it, but automated code patching could fix it (e.g., compile errors from method signature changes, parameter additions/removals, symbol renames in generated code), classify as **CODE_CUSTOMIZATION**. Include specific repair instructions in the Reason.
         - If the feedback is actionable but requires complex manual work that cannot be automated (e.g., new feature implementation, architectural changes, custom business logic), classify as **REQUIRES_MANUAL_INTERVENTION**.
+        """);
 
-        **IMPORTANT — Check for already-applied customizations:**
-        Before classifying any item as TSP_APPLICABLE, use the available tools to search the TypeSpec project files (e.g., `client.tsp`, `customizations.tsp`) for the decorator or customization that would address the feedback. If the customization is already present in the TypeSpec files, classify the item as **SUCCESS** (the change has already been applied). Use `grep_search` or `read_file` to verify.
+        if (_specInspectionAvailable)
+        {
+            sb.AppendLine("""
 
-        Use the available tools to inspect the TypeSpec project files when needed to determine if decorators are applicable.
+            **IMPORTANT — Check for already-applied customizations:**
+            Before classifying any item as TSP_APPLICABLE, use the available tools to search the TypeSpec project files (e.g., `client.tsp`, `customizations.tsp`) for the decorator or customization that would address the feedback. If the customization is already present in the TypeSpec files, classify the item as **SUCCESS** (the change has already been applied). Use `grep_search` or `read_file` to verify.
+
+            Use the available tools to inspect the TypeSpec project files when needed to determine if decorators are applicable.
+            """);
+        }
+        else
+        {
+            sb.AppendLine("""
+
+            **TypeSpec inspection unavailable:**
+            No local TypeSpec checkout or spec-repo tools are available in this custom-code-only run. Do not attempt to inspect TypeSpec files. Classify using the feedback, build context, and edit-scope guidance.
+            """);
+        }
+
+        sb.AppendLine($"""
 
         **Global Context:**
         {_globalContext}
@@ -129,20 +154,23 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
             """);
         }
 
-        sb.AppendLine($"""
+        if (_specInspectionAvailable)
+        {
+            sb.AppendLine($"""
 
-        ---
+            ---
 
-        **TypeSpec Client Customizations Reference:**
-        <reference_doc>
-        {_referenceDocContent}
-        </reference_doc>
+            **TypeSpec Client Customizations Reference:**
+            <reference_doc>
+            {_referenceDocContent}
+            </reference_doc>
 
-        **Available Tools:**
-        - `read_file`: Read contents of specific files in the spec repo
-        - `list_dir`: List files and directories
-        - `grep_search`: Search for patterns within files
-        """);
+            **Available Tools:**
+            - `read_file`: Read contents of specific files in the spec repo
+            - `list_dir`: List files and directories
+            - `grep_search`: Search for patterns within files
+            """);
+        }
 
         return sb.ToString();
     }
@@ -199,7 +227,34 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
 
     private string BuildClassificationConditions()
     {
-        return """
+        var specInspectionGuidance = _specInspectionAvailable
+            ? """
+              - Actionable AND a TypeSpec decorator from the reference doc could address it → **check the TypeSpec files first** using `grep_search` or `read_file`
+                - If the decorator/customization is already present in the TypeSpec files → **SUCCESS** (already applied)
+                - If not present → **TSP_APPLICABLE**
+              """
+            : """
+              - Actionable AND a TypeSpec decorator could address it → apply the edit-scope guidance without attempting to inspect unavailable TypeSpec files
+              """;
+
+        var tspVerificationGuidance = _specInspectionAvailable
+            ? """
+              **Always search the TypeSpec files first** (using `grep_search` or `read_file`) to confirm the decorator
+              is NOT already present before classifying as TSP_APPLICABLE. If it is already present, classify as SUCCESS.
+              """
+            : "Local TypeSpec files are unavailable in this run; do not attempt to use spec-repo inspection tools.";
+
+        var tspApplicabilityGuidance = _specInspectionAvailable
+            ? """
+              Consult the reference documentation provided to determine if any supported
+              TypeSpec client customization decorator can address the feedback.
+              """
+            : """
+              Use known TypeSpec client customization capabilities and the available feedback context
+              to determine whether the change genuinely requires a spec-input edit.
+              """;
+
+        return $$"""
         **Decision Logic (apply to EACH item independently):**
 
         **If Context is NON-EMPTY** (check first):
@@ -209,9 +264,7 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
 
         **If Context is EMPTY** (first attempt):
         - Non-actionable (informational, "keep as is", past tense, build success, discussion, question) → **SUCCESS**
-        - Actionable AND a TypeSpec decorator from the reference doc could address it → **check the TypeSpec files first** using `grep_search` or `read_file`
-          - If the decorator/customization is already present in the TypeSpec files → **SUCCESS** (already applied)
-          - If not present → **TSP_APPLICABLE**
+        {{specInspectionGuidance}}
         - Actionable, no TypeSpec decorator applies, but automated patching can fix (compile errors, signature changes, parameter additions/removals, symbol renames, linting or typing errors) → **CODE_CUSTOMIZATION**
         - Actionable BUT requires complex manual implementation → **REQUIRES_MANUAL_INTERVENTION**
 
@@ -222,12 +275,10 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         - Informational: Explanations, questions, acknowledgments
         - Build/generation success with no errors
         - Discussion or questions without a clear directive
-
         **TypeSpec Decorator Applicability (TSP_APPLICABLE):**
-        Consult the reference documentation provided to determine if any supported
-        TypeSpec client customization decorator can address the feedback.
-        **Always search the TypeSpec files first** (using `grep_search` or `read_file`) to confirm the decorator
-        is NOT already present before classifying as TSP_APPLICABLE. If it is already present, classify as SUCCESS.
+        **TypeSpec Decorator Applicability (TSP_APPLICABLE):**
+        {{tspApplicabilityGuidance}}
+        {{tspVerificationGuidance}}
 
         **Common feedback patterns that ARE TypeSpec-applicable:**
         - Renaming (client, operation, model, property, enum value) → `@@clientName` or `@clientName`

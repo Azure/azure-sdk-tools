@@ -30,7 +30,6 @@ namespace Azure.ClientSdk.Analyzers
             Descriptors.AZC0002,
             Descriptors.AZC0003,
             Descriptors.AZC0004,
-            Descriptors.AZC0015,
             Descriptors.AZC0017,
             Descriptors.AZC0018,
             Descriptors.AZC0019,
@@ -223,8 +222,6 @@ namespace Azure.ClientSdk.Analyzers
 
         private static void CheckClientMethod(ISymbolAnalysisContext context, IMethodSymbol member)
         {
-            CheckClientMethodReturnType(context, member);
-
             if (!member.IsVirtual && !member.IsOverride)
             {
                 context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0003, member.Locations.First()), member);
@@ -246,12 +243,7 @@ namespace Azure.ClientSdk.Analyzers
             return false;
         }
 
-        private static void CheckClientMethodReturnType(ISymbolAnalysisContext context, IMethodSymbol method)
-        {
-            IsClientMethodReturnType(context, method, true);
-        }
-
-        private static bool IsClientMethodReturnType(ISymbolAnalysisContext context, IMethodSymbol method, bool throwError = false)
+        private static bool IsClientMethodReturnType(IMethodSymbol method)
         {
             ITypeSymbol originalType = method.ReturnType;
             ITypeSymbol unwrappedType = method.ReturnType;
@@ -263,20 +255,11 @@ namespace Azure.ClientSdk.Analyzers
                 unwrappedType = namedTypeSymbol.TypeArguments.Single();
             }
 
-            if (IsOrImplements(unwrappedType, ResponseTypeName, AzureNamespace) ||
+            return IsOrImplements(unwrappedType, ResponseTypeName, AzureNamespace) ||
                 IsOrImplements(unwrappedType, NullableResponseTypeName, AzureNamespace) ||
                 IsOrImplements(unwrappedType, OperationTypeName, AzureNamespace) ||
                 IsOrImplements(originalType, PageableTypeName, AzureNamespace) ||
-                IsOrImplements(originalType, AsyncPageableTypeName, AzureNamespace))
-            {
-                return true;
-            }
-
-            if (throwError)
-            {
-                context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0015, method.Locations.FirstOrDefault(), originalType.ToDisplayString()), method);
-            }
-            return false;
+                IsOrImplements(originalType, AsyncPageableTypeName, AzureNamespace);
         }
 
         public override void AnalyzeCore(ISymbolAnalysisContext context)
@@ -314,7 +297,7 @@ namespace Azure.ClientSdk.Analyzers
                     }
                 }
 
-                if (IsClientMethodReturnType(context, methodSymbol, false))
+                if (IsClientMethodReturnType(methodSymbol))
                 {
                     CheckServiceMethod(context, methodSymbol);
                 }

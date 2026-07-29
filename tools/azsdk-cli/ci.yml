@@ -30,6 +30,9 @@ extends:
     ToolDirectory: $(ToolDir)
     TestDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Tests
     VerifyChangelog: true
+    # Force-create git tags/releases to work around the CFSClean network isolation
+    # policy bypass for this pipeline. Tracked by https://github.com/Azure/azure-sdk-tools/issues/16602
+    ForceCreate: true
     # GitHub.Copilot.SDK dependency is not strong name signed. Skip validation in order to sign azsdk cli.
     RequireStrongNames: false
     # Install copilot-cli separately from the copilot agent sdk.

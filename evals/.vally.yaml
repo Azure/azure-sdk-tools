@@ -72,22 +72,22 @@ suites:
       - "workflows/mock/*.eval.yaml"
   nightly:
     description: All tiers including live scenarios.
-    evals: ["**/*.eval.yaml"]
+    evals: ["tools/**/*.eval.yaml", "workflows/**/*.eval.yaml"]
 
   # ---- by feature area (tag-filtered) ----
   release-plan:
     description: All evals tagged area=release-plan.
     filter: { area: release-plan }
-    evals: ["**/*.eval.yaml"]
+    evals: ["tools/**/*.eval.yaml", "workflows/**/*.eval.yaml"]
   typespec:
     description: All evals tagged area=typespec.
     filter: { area: typespec }
-    evals: ["**/*.eval.yaml"]
+    evals: ["tools/**/*.eval.yaml", "workflows/**/*.eval.yaml"]
   pipeline:
     description: All evals tagged area=pipeline.
     filter: { area: pipeline }
-    evals: ["**/*.eval.yaml"]
+    evals: ["tools/**/*.eval.yaml", "workflows/**/*.eval.yaml"]
   github:
     description: All evals tagged area=github.
     filter: { area: github }
-    evals: ["**/*.eval.yaml"]
+    evals: ["tools/**/*.eval.yaml", "workflows/**/*.eval.yaml"]

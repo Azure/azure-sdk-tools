@@ -70,13 +70,6 @@ namespace Azure.ClientSdk.Analyzers
             DiagnosticCategory.Usage,
             DiagnosticSeverity.Warning, true);
 
-        public static DiagnosticDescriptor AZC0015 = new DiagnosticDescriptor(
-            nameof(AZC0015),
-            "Unexpected client method return type.",
-            "Client methods should return Pageable<T>/AsyncPageable<T>/Operation<T>/Task<Operation<T>>/Response/Response<T>/Task<Response>/Task<Response<T>> or other client class found {0} instead.",
-            DiagnosticCategory.Usage,
-            DiagnosticSeverity.Warning, true);
-
         public static DiagnosticDescriptor AZC0016 = new DiagnosticDescriptor(
             nameof(AZC0016),
             "Invalid ServiceVersion member name.",

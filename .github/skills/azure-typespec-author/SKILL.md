@@ -69,7 +69,7 @@ See [intake.md](references/intake.md).
 
 ### Step 3: Build Authoring Plan
 
-See [authoring-plan.md](references/authoring-plan.md).
+See [authoring-plan.md](references/authoring-plan.md). For API version evolution (Case 3), the plan you build **must** include the examples-folder step and the preview-collapse decision from Step 4 below (and [authoring-plan.md](references/authoring-plan.md) §3.2 Case 3), not just the decorator changes from the fetched doc.
 
 ### Step 4: Apply Changes
 
@@ -78,7 +78,7 @@ Make minimal `.tsp` edits following the plan from Step 3. Confirm uncertainties 
 **API version evolution (Case 3) requires more than `.tsp` edits.** The fetched versioning doc covers only decorators, so apply the following from the skill even when the doc omits them (see [authoring-plan.md](references/authoring-plan.md) §3.2 Case 3):
 
 1. **Create the new version's examples.** Add an `examples/<new-version>/` folder that mirrors the existing versions' examples layout you observed in Step 1 — copy the latest retained version's example `.json` files into it (e.g. recursively copy the whole folder via a shell command) and update `api-version` in each. Never leave the new version without an examples folder.
-2. **Collapse unreleased previews.** If the latest existing version is an **unreleased preview**, collapse it into the new version: remove it from the `Versions` enum, rebase **every** decorator argument that referenced the preview onto the new version (keep the decorator), rename its `examples/<old-preview>/` folder to `examples/<new-version>/` (no `examples/<old-preview>/` may remain), and for a feature that existed only in the collapsed preview keep it as plain baseline if carried or **delete it outright (no `@removed`)** if excluded. If the latest existing version is a **released stable**, add the new version incrementally and keep the stable (do not collapse).
+2. **Collapse unreleased previews.** Treat the latest existing **preview** version as unreleased (collapse it) unless the user explicitly says that preview already shipped. If the latest existing version is an **unreleased preview**, collapse it into the new version: remove it from the `Versions` enum, rebase **every** decorator argument that referenced the preview onto the new version (keep the decorator), rename its `examples/<old-preview>/` folder to `examples/<new-version>/` (no `examples/<old-preview>/` may remain), and for a feature that existed only in the collapsed preview keep it as plain baseline if carried or **delete it outright (no `@removed`)** if excluded. If the latest existing version is a **released stable**, add the new version incrementally and keep the stable (do not collapse). This collapse behavior applies even when the fetched versioning doc shows an incremental (keep-the-preview) approach.
 
 ### Step 5: Validate
 

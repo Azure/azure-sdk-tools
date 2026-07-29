@@ -1,20 +1,14 @@
-trigger:
-  branches:
-    include:
-      - main
-  paths:
-    include:
-      - tools/sdk-ai-bots/azure-sdk-qa-bot-agent/**/*.py
+schedules:
+  - cron: "0 3 * * *"  # Runs nightly at 03:00 UTC
+    displayName: "Nightly Offline Evaluation"
+    branches:
+      include:
+        - main
+    always: true
 
-pr:
-  branches:
-    include:
-      - main
-  paths:
-    include:
-      - tools/sdk-ai-bots/azure-sdk-qa-bot-agent/**/*.py
+trigger: none
+pr: none
 
-# Offline (PR-gate) evaluation.
 #
 # Starts the agent server.py locally, then evaluates via completion mode:
 # evals_run.py calls the local /completion endpoint concurrently, collects answers,

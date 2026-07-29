@@ -2,8 +2,9 @@
 # See: https://vally.dev/reference/vally-config
 # This file is the local/default entrypoint for developers.
 #
-# Local commands like `vally eval --suite versioning` continue to
-# behave as teammates expect.
+# Pipeline runs use staged MCP DLL environments (`azsdk-mcp` / `azsdk-mcp-mock`).
+# Source-based local environments are kept as `azsdk-mcp-local` /
+# `azsdk-mcp-mock-local` for local debugging.
 #
 # The benchmark pipelines invoke suite branches from this file directly with --suite.
 # Vally 0.6.0 supports parallel execution across multiple eval files, so pipeline
@@ -16,7 +17,7 @@ paths:
   results: results/
 
 environments:
-  azsdk-mcp:
+  azsdk-mcp-local:
     files:
       - src: ../fixtures/instructions-test/copilot-instructions.md
         dest: .github/copilot-instructions.md
@@ -45,6 +46,26 @@ environments:
           AZURE_SDK_KB_ENDPOINT: "https://azuresdkqabot-test-serv-agent-dydweeaxaah6g3b4.westus2-01.azurewebsites.net"
           AZURE_SDK_KB_CLIENT_ID: "674414e1-152b-41ac-b0d2-763535edea6c"
           AZURE_SDK_KB_SCOPE: "api://azure-sdk-qa-bot-test/user_impersonation"
+  azsdk-mcp:
+    files:
+      - src: ../fixtures/instructions-test/copilot-instructions.md
+        dest: .github/copilot-instructions.md
+    mcpServers:
+      azure-sdk-mcp:
+        type: stdio
+        command: dotnet
+        args:
+          [
+            "../../../../artifacts/mcp/cli/azsdk.dll",
+            "start",
+          ]
+        timeout: 5m
+        env:
+          AZSDKTOOLS_AGENT_TESTING: "false"
+          AZSDKTOOLS_COLLECT_TELEMETRY: "false"
+          AZURE_SDK_KB_ENDPOINT: "https://azuresdkqabot-test-serv-agent-dydweeaxaah6g3b4.westus2-01.azurewebsites.net"
+          AZURE_SDK_KB_CLIENT_ID: "674414e1-152b-41ac-b0d2-763535edea6c"
+          AZURE_SDK_KB_SCOPE: "api://azure-sdk-qa-bot-test/user_impersonation"
   azsdk-mcp-remote-kb:
     files:
       - src: ../fixtures/instructions-test/copilot-instructions.md
@@ -69,7 +90,7 @@ environments:
   # Mock MCP environment for skill-invocation / trigger tests.
   # Uses Azure.Sdk.Tools.Mock to avoid spinning up the real azure-sdk-mcp
   # server when we only care about whether the skill is invoked.
-  azsdk-mcp-mock:
+  azsdk-mcp-mock-local:
     mcpServers:
       azure-sdk-mcp:
         type: stdio
@@ -79,6 +100,16 @@ environments:
             "run",
             "--project",
             "../../../../tools/azsdk-cli/Azure.Sdk.Tools.Mock",
+          ]
+        timeout: "60s"
+  azsdk-mcp-mock:
+    mcpServers:
+      azure-sdk-mcp:
+        type: stdio
+        command: dotnet
+        args:
+          [
+            "../../../../artifacts/mcp/mock/azsdk-mock.dll",
           ]
         timeout: "60s"
 

@@ -95,43 +95,48 @@ jobs:
             exit 0
           fi
 
+          if [ "$MCP_ENVIRONMENT" = "live" ]; then
+            node .github/skills/azure-typespec-author/evaluate/scripts/smoke-test-mcp.js -- \
+              dotnet artifacts/mcp/cli/azsdk.dll start
+            exit 0
+          fi
+
           node <<'NODE'
           const fs = require('fs');
           const path = require('path');
 
-          const mode = process.env.MCP_ENVIRONMENT;
-          const configPath = path.join(process.env.BUILD_SOURCESDIRECTORY, process.env.VALLY_ROOT, '.vally.yaml');
-          let text = fs.readFileSync(configPath, 'utf8');
-          const start = text.indexOf('  azsdk-mcp:\n');
-          const end = text.indexOf('\n  azsdk-mcp-remote-kb:', start);
-          if (start < 0 || end < 0) {
-            throw new Error('Could not find azsdk-mcp environment block in .vally.yaml');
+          const evalRoot = path.join(process.env.BUILD_SOURCESDIRECTORY, process.env.VALLY_ROOT, 'evals');
+          const evalFiles = fs.readdirSync(evalRoot)
+            .filter((name) => name.endsWith('.eval.yaml'))
+            .map((name) => path.join(evalRoot, name));
+
+          if (evalFiles.length === 0) {
+            throw new Error(`No eval files found under ${evalRoot}`);
           }
 
-          const current = text.slice(start, end);
-          const endpoint = current.match(/AZURE_SDK_KB_ENDPOINT: "([^"]+)"/)?.[1];
-          const endpointLine = endpoint ? `          AZURE_SDK_KB_ENDPOINT: "${endpoint}"\n` : '';
-          const binary = mode === 'mock'
-            ? '../../../../artifacts/mcp/mock/azsdk-mock.dll'
-            : '../../../../artifacts/mcp/cli/azsdk.dll';
-          const timeout = mode === 'mock' ? '"60s"' : '5m';
-          const args = mode === 'mock'
-            ? `            "${binary}",`
-            : `            "${binary}",\n            "start",`;
-          const env = mode === 'mock'
-            ? ''
-            : `        env:\n          AZSDKTOOLS_AGENT_TESTING: "false"\n          AZSDKTOOLS_COLLECT_TELEMETRY: "false"\n${endpointLine}`;
+          for (const evalFile of evalFiles) {
+            const text = fs.readFileSync(evalFile, 'utf8');
+            const updated = text.replace(/^environment: azsdk-mcp$/m, 'environment: azsdk-mcp-mock');
+            if (updated === text && !/^environment: azsdk-mcp-mock$/m.test(text)) {
+              throw new Error(`Could not update environment in ${evalFile}`);
+            }
 
-          const replacement = `  azsdk-mcp:\n    files:\n      - src: ../fixtures/instructions-test/copilot-instructions.md\n        dest: .github/copilot-instructions.md\n    mcpServers:\n      azure-sdk-mcp:\n        type: stdio\n        command: dotnet\n        args:\n          [\n${args}\n          ]\n        timeout: ${timeout}\n${env}`;
+            fs.writeFileSync(evalFile, updated);
+          }
 
-          text = text.slice(0, start) + replacement + text.slice(end);
-          fs.writeFileSync(configPath, text);
-          console.log(`Rebound azsdk-mcp to ${mode} MCP binary in ${configPath}`);
+          console.log(`Using azsdk-mcp-mock for ${evalFiles.length} eval file(s).`);
           NODE
-        displayName: 'Bind azsdk-mcp to ${{ parameters.mcpEnvironment }} MCP binary'
+          node .github/skills/azure-typespec-author/evaluate/scripts/smoke-test-mcp.js -- \
+            dotnet artifacts/mcp/mock/azsdk-mock.dll
+        displayName: 'Prepare ${{ parameters.mcpEnvironment }} MCP environment'
         env:
           MCP_ENVIRONMENT: ${{ parameters.mcpEnvironment }}
           VALLY_ROOT: ${{ parameters.vallyRoot }}
+          AZSDKTOOLS_AGENT_TESTING: "false"
+          AZSDKTOOLS_COLLECT_TELEMETRY: "false"
+          AZURE_SDK_KB_ENDPOINT: "https://azuresdkqabot-test-serv-agent-dydweeaxaah6g3b4.westus2-01.azurewebsites.net"
+          AZURE_SDK_KB_CLIENT_ID: "674414e1-152b-41ac-b0d2-763535edea6c"
+          AZURE_SDK_KB_SCOPE: "api://azure-sdk-qa-bot-test/user_impersonation"
 
       - template: /.github/skills/azure-typespec-author/evaluate/pipeline/skill/typespec-author-preeval.yml
         parameters:

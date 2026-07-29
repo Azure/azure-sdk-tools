@@ -231,7 +231,7 @@ each track passes its mode through `TypeSpecAuthorEvalExtraArgs`.
 | ------------------ | ------------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------- |
 | benchmark          | Manual two-track stages with `pipeline/skill` | `--tag mode=forced --skill-dir azure-typespec-author` | Uses `azsdk-mcp` from `.github/skills/.vally.yaml` | Forced skill invocation + code-quality graders                        |
 | benchmark          | Manual two-track stages with `pipeline/skill` | `--tag mode=trigger --skill-dir azure-typespec-author` | Uses `azsdk-mcp-mock` from `.github/skills/.vally.yaml` | Skill trigger detection                                               |
-| benchmark-no-skill | Common `archetype-eval.yml` + `pipeline/no-skill` wrappers | `--tag mode=no-skill --skill-dir /tmp/no-skills` | Uses `azsdk-mcp` from `.github/skills/.vally.yaml` | Baseline run without loading the skill                                 |
+| benchmark-no-skill | Common `archetype-eval.yml` + `pipeline/no-skill` wrappers | `--tag mode=no-skill --skill-dir /tmp/no-skills` | Uses authenticated `azsdk-mcp` from `.github/skills/.vally.yaml` | Baseline run without loading the skill                                 |
 
 The forced and trigger tracks are composed manually because they need different MCP environments in
 one pipeline run. The no-skill pipeline stays on the common `archetype-eval.yml` entry point and only

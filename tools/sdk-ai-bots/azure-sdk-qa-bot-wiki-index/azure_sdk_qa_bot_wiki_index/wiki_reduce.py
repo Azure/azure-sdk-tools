@@ -224,7 +224,13 @@ def group_to_page(group: Group, body: str) -> WikiPage:
 
 
 def inject_cross_links(pages: list[WikiPage]) -> None:
-    """Link pages that share source documents."""
+    """Link pages that share source documents.
+
+    Links are ordered by weight then slug, so the result depends only on the page
+    set and not on the order pages arrive in. Ties broken by arrival order would
+    reshuffle the rendered ``Related`` list on every incremental run and rewrite
+    the whole wiki.
+    """
     by_doc: dict[str, list[str]] = defaultdict(list)
     for p in pages:
         for ref in p.source_refs:
@@ -236,5 +242,5 @@ def inject_cross_links(pages: list[WikiPage]) -> None:
             for other in by_doc.get(ref, []):
                 if other != p.slug and other in valid:
                     weighted[other] += 1
-        ranked = sorted(weighted.items(), key=lambda kv: kv[1], reverse=True)
+        ranked = sorted(weighted.items(), key=lambda kv: (-kv[1], kv[0]))
         p.out_links = [slug for slug, _w in ranked[:_MAX_OUT_LINKS]]

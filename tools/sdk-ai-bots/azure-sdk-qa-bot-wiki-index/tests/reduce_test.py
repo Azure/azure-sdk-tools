@@ -54,6 +54,25 @@ def test_cross_links_by_shared_docs():
     assert next(p for p in pages if p.slug == "entity/route").out_links == []
 
 
+def test_cross_links_are_independent_of_page_order():
+    """Ties must break on slug, not arrival order.
+
+    Incremental runs hand pages over in a different order every time (rebuilt
+    pages land after reused ones), so order-dependent links would rewrite every
+    blob on every run.
+    """
+    def build(order):
+        pages = [_page(f"entity/e{i}", PAGE_ENTITY, f"e{i}", ["d1"]) for i in order]
+        inject_cross_links(pages)
+        return {p.slug: list(p.out_links) for p in pages}
+
+    forward = build(range(12))
+    reverse = build(reversed(range(12)))
+    shuffled = build([7, 2, 11, 0, 5, 9, 1, 8, 3, 10, 4, 6])
+    assert forward == reverse == shuffled
+    assert forward["entity/e0"] == sorted(forward["entity/e0"])
+
+
 def test_alias_merges_surface_forms_across_docs():
     # concept synonyms declared as aliases collapse into one group
     concept_exts = [

@@ -1,5 +1,15 @@
 # Release History
 
+## 0.6.34 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
 ## 0.6.33 (2026-07-29)
 
 ### Features Added

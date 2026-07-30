@@ -312,7 +312,7 @@ Parsers live in various locations across the `azure-sdk-tools` repo.
 | JavaScript/TypeScript | `tools/apiview/parsers/js-api-parser` | `.api.json` | Tree | Yes |
 | Go | `src/go` | `.gosource` (zip) | Tree | Yes |
 | TypeSpec | `tools/apiview/emitters/typespec-apiview` | `.tsp`, `.cadl` | Tree | No  |
-| Rust | `tools/apiview/parsers/rust-api-parser` | `_rust.json` | Tree | Yes |
+| Rust | `tools/apiview/parsers/rust-api-parser` | `.rust.json` | Tree | Yes |
 | Swift | `src/swift/SwiftAPIView` | `.json` | Tree | No |
 | Swagger/OpenAPI | `tools/apiview/parsers/swagger-api-parser` | `.swagger` | Flat (legacy) | No  |
 | C++ | `tools/apiview/parsers/cpp-api-parser` | `.cppast` | Flat (legacy) | Yes |
@@ -333,9 +333,9 @@ There are three ways API revisions reach APIView: **CI Automatic** (the persiste
 A key variable across all workflows is **where the language parser runs**. This is determined by whether the CI build produces a pre-parsed token file (`{packageName}_{languageShort}.json`) alongside the build artifact. The shared scripts (`Create-APIReview.ps1`, `Detect-Api-Changes.ps1`) check for this file and branch accordingly:
 
 - **No token file present** (C#, Java, Go): The build artifact (`.nupkg`, `sources.jar`, `.gosource`) is sent to APIView. APIView invokes the language parser as an external process on the server.
-- **Token file present** (Python, JavaScript, Rust): The CI pipeline runs the parser or generator to produce a `_python.json`, `_js.json`, or `_rust.json` token file. Both the token file and the original artifact are sent to APIView, which stores the token file directly without running a parser. See [sandboxing.md](sandboxing.md) for rationale.
+- **Token file present** (Python, JavaScript, Rust): The CI pipeline runs the parser or generator to produce a `_python.json`, `_js.json`, or Rust token file. Both the token file and the original artifact are sent to APIView, which stores the token file directly without running a parser. See [sandboxing.md](sandboxing.md) for rationale.
 
-> **Note:** Go still uses CI-side preprocessing by zipping source into `.gosource` archives, and APIView runs the Go parser on the server. Rust now uses `generate_api` to produce `apiview.json`, stages that file as `_rust.json`, and uploads the token file directly.
+> **Note:** Go still uses CI-side preprocessing by zipping source into `.gosource` archives, and APIView runs the Go parser on the server. Rust now uses `generate_api` to produce `apiview.json`, then uploads a pre-generated Rust token file instead of invoking the parser on the server.
 
 ### Workflow A — CI Automatic (non-PR internal builds)
 
@@ -385,7 +385,7 @@ Query approval status
 | Python | `.whl` + `_python.json` | **Yes** (mandatory) | `/autoreview/create` |
 | JavaScript | `.api.json` + `_js.json` | **Yes** | `/autoreview/create` |
 | Go | `.gosource` | No | `/autoreview/upload` |
-| Rust | `_rust.json` | **Yes** | `/autoreview/create` |
+| Rust | `.rust.json` | **Yes** | `/autoreview/create` |
 
 ### Workflow B — CI Pull Request
 

@@ -45,7 +45,7 @@ Run `dotnet pack` for the required package to generate Nuget file. Upload the re
 
 ### Rust
 1. In the root of your azure-sdk-for-rust clone, run: `cargo run --manifest-path eng/tools/Cargo.toml -p generate_api -- --manifest-path sdk/{service-name}/{package-name}/Cargo.toml --format apiview --output target/generate_api/{package-name}`
-2. Rename `target/generate_api/{package-name}/apiview.json` to `{package-name}_rust.json`, then upload the renamed file using the `Create Review` link.
+2. Rename `target/generate_api/{package-name}/apiview.json` to `{package-name}.rust.json`, then upload the renamed file using the `Create Review` link.
 
 ### Swagger
 Swagger API revisions can be generated manually by uploading swagger file to APIView if you are trying to generate API revision for a single swagger file. Swagger API revision is automatically generated when swagger files are modified in a pull request and pull request comment shows a link to generated APIView. Automatically generated API revision from pull request creates a diff using existing swagger files in the target branch as baseline to show API level changes in pull request.

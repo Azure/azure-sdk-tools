@@ -7,9 +7,8 @@ Compatibility parser for Rust APIView inputs.
 The **current** Rust APIView design lives in `Azure/azure-sdk-for-rust` under
 `eng/tools/generate_api`. That tool now generates the complete APIView tree-style
 `CodeFile` JSON itself and sets `ParserVersion` from the tool version
-(`2.0.0` or newer). The resulting token file is staged as
-`<package>/<package>_rust.json` and uploaded straight to APIView, which treats it
-as an already-generated review token file.
+(`2.0.0` or newer). The resulting token file is uploaded to APIView as an
+already-generated review token file.
 
 This repository's TypeScript parser is now primarily a **compatibility bridge**:
 
@@ -30,16 +29,12 @@ cargo run --manifest-path eng/tools/Cargo.toml -p generate_api -- \
 
 That writes `apiview.json`, whose top-level shape already matches APIView's
 tree-style schema (`PackageName`, `PackageVersion`, `ParserVersion`, `Language`,
-`ReviewLines`). In the Rust repo's pack flow, the file is then copied to the
-artifact layout expected by `create-apireview` as `<package>_rust.json`.
+`ReviewLines`).
 
-For manual website uploads, rename `apiview.json` to `<package>_rust.json` so it
-matches the shared APIView artifact convention.
+For manual website uploads, rename `apiview.json` to `<package>.rust.json`.
 
 For the new design, this parser does not transform the file; it only preserves
-pass-through behavior if APIView still invokes it. APIView still accepts older
-`<package>.rust.json` names for compatibility, but `_rust.json` is the canonical
-suffix for current flows.
+pass-through behavior if APIView still invokes it.
 
 ## Legacy compatibility
 

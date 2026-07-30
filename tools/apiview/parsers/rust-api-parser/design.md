@@ -59,12 +59,12 @@ The Rust repo's current API review caller chain remains:
 5. `eng/scripts/Pack-Crates.ps1`
 
 `Pack-Crates.ps1` runs `generate_api --format apiview`, copies the produced
-`apiview.json` into the staged artifact as `<package>_rust.json`, and the shared
-`create-apireview` step uploads that token file directly. `Create-APIReview.ps1`
-already has a separate upload path for pre-generated review token files.
+`apiview.json` into the staged artifact for the shared `create-apireview` step,
+which uploads that token file directly. `Create-APIReview.ps1` already has a
+separate upload path for pre-generated review token files.
 
-For consistency with that shared artifact contract, manual uploads should also
-rename `apiview.json` to `<package>_rust.json` before sending it to APIView.
+For manual uploads, rename `apiview.json` to `<package>.rust.json` before
+sending it to APIView.
 
 ## Role of this parser now
 

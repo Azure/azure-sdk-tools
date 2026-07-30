@@ -1,6 +1,6 @@
 # NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
 # This pipeline runs evaluations WITHOUT loading the azure-typespec-author skill,
-# testing the agent's baseline capability with only MCP tools.
+# testing the agent's baseline capability with the live MCP tool surface.
 trigger: none
 pr: none
 
@@ -18,8 +18,9 @@ extends:
       - 'evals/*.eval.yaml'
     mcpSetupTemplate: /eng/common/pipelines/templates/steps/eval-mcp-setup.yml
     TestType: live
-    evalInvokeTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/no-skill/typespec-author-eval-invoke.yml
-    preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/no-skill/typespec-author-preeval.yml
+    UseAzSdkAuthentication: true
+    evalInvokeTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-noskill-eval-invoke.yml
+    preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-noskill-preeval.yml
     failOnFailedTests: false
     shardTimeoutInMinutes: 30
 

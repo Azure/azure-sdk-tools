@@ -88,57 +88,30 @@ jobs:
           cp -r "$(Pipeline.Workspace)/mcp-servers/." "$(Build.SourcesDirectory)/artifacts/mcp/"
         displayName: 'Stage MCP binaries for Vally'
 
+      # Eval specs keep using one Vally environment name, `azsdk-mcp`.
+      # The wrapper picks live vs mock from AZSDK_EVAL_MCP_KIND, so the pipeline
+      # does not need to rewrite eval YAML files per track.
       - script: |
           set -e
-          if [ "$MCP_ENVIRONMENT" = "none" ]; then
-            echo "Leaving Vally MCP environment unchanged."
-            exit 0
-          fi
-
-          if [ "$MCP_ENVIRONMENT" = "live" ]; then
-            node .github/skills/azure-typespec-author/evaluate/scripts/smoke-test-mcp.js -- \
-              dotnet artifacts/mcp/cli/azsdk.dll start
-            exit 0
-          fi
-
-          node <<'NODE'
-          const fs = require('fs');
-          const path = require('path');
-
-          const evalRoot = path.join(process.env.BUILD_SOURCESDIRECTORY, process.env.VALLY_ROOT, 'evals');
-          const evalFiles = fs.readdirSync(evalRoot)
-            .filter((name) => name.endsWith('.eval.yaml'))
-            .map((name) => path.join(evalRoot, name));
-
-          if (evalFiles.length === 0) {
-            throw new Error(`No eval files found under ${evalRoot}`);
-          }
-
-          for (const evalFile of evalFiles) {
-            const text = fs.readFileSync(evalFile, 'utf8');
-            const updated = text.replace(/^environment: azsdk-mcp$/m, 'environment: azsdk-mcp-mock');
-            if (updated === text && !/^environment: azsdk-mcp-mock$/m.test(text)) {
-              throw new Error(`Could not update environment in ${evalFile}`);
-            }
-
-            fs.writeFileSync(evalFile, updated);
-          }
-
-          console.log(`Using azsdk-mcp-mock for ${evalFiles.length} eval file(s).`);
-          NODE
-          node .github/skills/azure-typespec-author/evaluate/scripts/smoke-test-mcp.js -- \
-            dotnet artifacts/mcp/mock/azsdk-mock.dll
+          case "$MCP_ENVIRONMENT" in
+            none)
+              echo "##vso[task.setvariable variable=AZSDK_EVAL_MCP_KIND]live"
+              echo "Leaving Vally MCP environment unchanged."
+              ;;
+            live|mock)
+              echo "##vso[task.setvariable variable=AZSDK_EVAL_MCP_KIND]$MCP_ENVIRONMENT"
+              echo "Using azsdk-mcp $MCP_ENVIRONMENT prebuilt MCP binary environment from .vally.yaml."
+              ;;
+            *)
+              echo "Unknown MCP environment: $MCP_ENVIRONMENT" >&2
+              exit 1
+              ;;
+          esac
         displayName: 'Prepare ${{ parameters.mcpEnvironment }} MCP environment'
         env:
           MCP_ENVIRONMENT: ${{ parameters.mcpEnvironment }}
-          VALLY_ROOT: ${{ parameters.vallyRoot }}
-          AZSDKTOOLS_AGENT_TESTING: "false"
-          AZSDKTOOLS_COLLECT_TELEMETRY: "false"
-          AZURE_SDK_KB_ENDPOINT: "https://azuresdkqabot-test-serv-agent-dydweeaxaah6g3b4.westus2-01.azurewebsites.net"
-          AZURE_SDK_KB_CLIENT_ID: "674414e1-152b-41ac-b0d2-763535edea6c"
-          AZURE_SDK_KB_SCOPE: "api://azure-sdk-qa-bot-test/user_impersonation"
 
-      - template: /.github/skills/azure-typespec-author/evaluate/pipeline/skill/typespec-author-preeval.yml
+      - template: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
         parameters:
           startQaBotBackend: ${{ parameters.startQaBotBackend }}
           prepareNoSkill: ${{ parameters.prepareNoSkill }}
@@ -158,6 +131,8 @@ jobs:
         env:
           EVAL_ARGS: $(evalArgs)
 
+      # Pass AZSDK_EVAL_MCP_KIND explicitly because AzureCLI@2 has its own task
+      # environment; the Vally wrapper reads this value when it starts the MCP.
       - ${{ if parameters.UseAzSdkAuthentication }}:
         - task: AzureCLI@2
           displayName: 'vally eval $(shardName) (authenticated)'
@@ -167,7 +142,7 @@ jobs:
             scriptLocation: inlineScript
             workingDirectory: ${{ parameters.vallyRoot }}
             inlineScript: |
-              node --experimental-strip-types "$(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/pipeline/skill/typespec-author-invoke-shard.ts" \
+              node --experimental-strip-types "$(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-invoke-shard.ts" \
                 --eval-args "$(evalArgs)" \
                 --shard-name "$(shardName)" \
                 --output-dir "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)" \
@@ -175,10 +150,11 @@ jobs:
                 --threshold ${{ parameters.threshold }}
           env:
             GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+            AZSDK_EVAL_MCP_KIND: $(AZSDK_EVAL_MCP_KIND)
 
       - ${{ else }}:
         - script: |
-            node --experimental-strip-types "$(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/pipeline/skill/typespec-author-invoke-shard.ts" \
+            node --experimental-strip-types "$(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-invoke-shard.ts" \
               --eval-args "$(evalArgs)" \
               --shard-name "$(shardName)" \
               --output-dir "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)" \
@@ -188,6 +164,7 @@ jobs:
           workingDirectory: ${{ parameters.vallyRoot }}
           env:
             GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+            AZSDK_EVAL_MCP_KIND: $(AZSDK_EVAL_MCP_KIND)
 
       - ${{ if parameters.postEvalTemplate }}:
         - template: ${{ parameters.postEvalTemplate }}

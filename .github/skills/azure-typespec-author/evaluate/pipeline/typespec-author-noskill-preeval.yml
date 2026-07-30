@@ -1,0 +1,6 @@
+# No-skill evals use the same pre-eval setup as the skill pipeline, plus an
+# empty skill directory so Vally does not load azure-typespec-author.
+steps:
+  - template: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
+    parameters:
+      prepareNoSkill: true

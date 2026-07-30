@@ -2,9 +2,11 @@
 # See: https://vally.dev/reference/vally-config
 # This file is the local/default entrypoint for developers.
 #
-# Pipeline runs use staged MCP DLL environments (`azsdk-mcp` / `azsdk-mcp-mock`).
-# Source-based local environments are kept as `azsdk-mcp-local` /
-# `azsdk-mcp-mock-local` for local debugging.
+# `azsdk-mcp` / `azsdk-mcp-mock` use prebuilt MCP binaries under artifacts/mcp so
+# local runs can exercise the same startup shape as pipeline runs. The wrapper
+# resolves those binaries from AZSDK_EVAL_REPO_ROOT because Vally starts MCP
+# servers from per-trial workspaces. `*-local` aliases keep the source-based
+# `dotnet run` startup for local debugging.
 #
 # The benchmark pipelines invoke suite branches from this file directly with --suite.
 # Vally 0.6.0 supports parallel execution across multiple eval files, so pipeline
@@ -53,11 +55,12 @@ environments:
     mcpServers:
       azure-sdk-mcp:
         type: stdio
-        command: dotnet
+        command: node
         args:
           [
-            "../../../../artifacts/mcp/cli/azsdk.dll",
-            "start",
+            "-e",
+            "const path = require('node:path'); require(path.resolve(process.env.AZSDK_EVAL_REPO_ROOT, '.github/skills/azure-typespec-author/evaluate/scripts/run-prebuilt-mcp.js'));",
+            "azsdk-mcp",
           ]
         timeout: 5m
         env:
@@ -106,10 +109,12 @@ environments:
     mcpServers:
       azure-sdk-mcp:
         type: stdio
-        command: dotnet
+        command: node
         args:
           [
-            "../../../../artifacts/mcp/mock/azsdk-mock.dll",
+            "-e",
+            "const path = require('node:path'); require(path.resolve(process.env.AZSDK_EVAL_REPO_ROOT, '.github/skills/azure-typespec-author/evaluate/scripts/run-prebuilt-mcp.js'));",
+            "artifacts/mcp/mock/azsdk-mock.dll",
           ]
         timeout: "60s"
 

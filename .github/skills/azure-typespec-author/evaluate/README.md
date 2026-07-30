@@ -10,6 +10,33 @@ This directory contains [Vally](https://aka.ms/vally) evaluation cases for the `
 
 ## Environment Setup
 
+### Prepare prebuilt MCP binaries
+
+The default `azsdk-mcp` and `azsdk-mcp-mock` Vally environments use prebuilt MCP binaries under
+`artifacts/mcp`, matching the pipeline startup shape. Build both servers from the repository root
+before running Vally locally:
+
+```powershell
+dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli -c Release -o artifacts/mcp/cli --nologo
+dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Mock -c Release -o artifacts/mcp/mock --nologo
+```
+
+The source-based environments are still available as `azsdk-mcp-local` and `azsdk-mcp-mock-local`
+for debugging the server from projects instead of DLLs.
+
+Set `AZSDK_EVAL_REPO_ROOT` before local Vally runs so the prebuilt MCP wrapper can resolve the DLLs
+from Vally's per-trial workspace:
+
+```powershell
+$env:AZSDK_EVAL_REPO_ROOT="D:\GitHub\azure-sdk-tools"
+```
+
+Set `AZSDK_EVAL_MCP_KIND=mock` when you want the default `azsdk-mcp` environment to start the mock DLL instead of the live DLL.
+
+Pipeline shard invocation sets `AZSDK_EVAL_REPO_ROOT` automatically.
+
+### Prepare Vally and fixtures
+
 Before running any evals, prime the fixtures from the live
 [azure-rest-api-specs](https://github.com/Azure/azure-rest-api-specs) `main` branch:
 
@@ -213,8 +240,7 @@ evaluate/
 │   ├── Microsoft.Widget/
 │   └── ...
 ├── pipeline/            # Repo-owned Azure Pipelines templates
-│   ├── skill/           # Forced/trigger benchmark templates
-│   └── no-skill/        # no-skill archetype-eval wrappers
+│   └── skill/           # Forced/trigger/no-skill benchmark templates
 ├── scripts/             # Setup and utility scripts
 ├── results/             # Eval run output
 └── debug/               # Eval run workspace
@@ -229,9 +255,9 @@ each track passes its mode through `TypeSpecAuthorEvalExtraArgs`.
 
 | Pipeline           | Template shape                              | Extra args                                     | MCP binding                                                    | Purpose                                                               |
 | ------------------ | ------------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------- |
-| benchmark          | Manual two-track stages with `pipeline/skill` | `--tag mode=forced --skill-dir azure-typespec-author` | Uses `azsdk-mcp` from `.github/skills/.vally.yaml` | Forced skill invocation + code-quality graders                        |
-| benchmark          | Manual two-track stages with `pipeline/skill` | `--tag mode=trigger --skill-dir azure-typespec-author` | Uses `azsdk-mcp-mock` from `.github/skills/.vally.yaml` | Skill trigger detection                                               |
-| benchmark-no-skill | Common `archetype-eval.yml` + `pipeline/no-skill` wrappers | `--tag mode=no-skill --skill-dir /tmp/no-skills` | Uses `azsdk-mcp` from `.github/skills/.vally.yaml` | Baseline run without loading the skill                                 |
+| benchmark          | Manual two-track stages with `pipeline` templates | `--tag mode=forced --skill-dir azure-typespec-author` | Uses `azsdk-mcp` with `AZSDK_EVAL_MCP_KIND=live` | Forced skill invocation + code-quality graders                        |
+| benchmark          | Manual two-track stages with `pipeline` templates | `--tag mode=trigger --skill-dir azure-typespec-author` | Uses `azsdk-mcp` with `AZSDK_EVAL_MCP_KIND=mock` | Skill trigger detection                                               |
+| benchmark-no-skill | Common `archetype-eval.yml` + `pipeline` no-skill wrappers | `--tag mode=no-skill --skill-dir /tmp/no-skills` | Uses `azsdk-mcp` from `.github/skills/.vally.yaml` | Baseline run without loading the skill                                 |
 
 The forced and trigger tracks are composed manually because they need different MCP environments in
 one pipeline run. The no-skill pipeline stays on the common `archetype-eval.yml` entry point and only

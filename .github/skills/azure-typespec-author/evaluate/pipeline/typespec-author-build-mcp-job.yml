@@ -11,6 +11,7 @@ jobs:
       os: linux
     templateContext:
       outputs:
+        # Keep this artifact layout in sync with run-prebuilt-mcp.js.
         - output: pipelineArtifact
           displayName: 'Publish MCP server artifact'
           artifactName: mcp-servers

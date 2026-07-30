@@ -2,10 +2,11 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { getVallyShardVerdict } from "../../../../../../eng/common/scripts/eval/lib/verdict.ts";
+import { getVallyShardVerdict } from "../../../../../eng/common/scripts/eval/lib/verdict.ts";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
-const SHARED_EVAL_SCRIPT_DIR = path.resolve(SCRIPT_DIR, "../../../../../../eng/common/scripts/eval");
+const SHARED_EVAL_SCRIPT_DIR = path.resolve(SCRIPT_DIR, "../../../../../eng/common/scripts/eval");
+const REPO_ROOT = path.resolve(SCRIPT_DIR, "../../../../../");
 
 type ShardRunOptions = {
   evalArgs: string;
@@ -45,13 +46,24 @@ export function runShard({ evalArgs, shardName, outputDir, extraArgs = "", thres
 
   vallyArgs.push("--output-dir", outputDir, ...extraArgList);
 
+  // run-prebuilt-mcp.js needs the repo root because Vally launches MCP servers
+  // from per-trial temp workspaces, where relative artifact paths do not work.
   const proc = spawnSync(
     "npm",
     vallyArgs,
-    { stdio: "inherit", shell: process.platform === "win32" }
+    {
+      stdio: "inherit",
+      shell: process.platform === "win32",
+      env: {
+        ...process.env,
+        AZSDK_EVAL_REPO_ROOT: process.env.AZSDK_EVAL_REPO_ROOT || REPO_ROOT,
+      },
+    }
   );
   const vallyExit = proc.status ?? 1;
 
+  // Vally can return a non-zero exit during shutdown after writing results.
+  // Gate the shard on results.jsonl so teardown noise does not hide real grades.
   const verdict = (getVallyShardVerdict as any)({ resultsDir: outputDir, threshold });
   for (const line of verdict.lines) {
     console.log(`  ${line}`);

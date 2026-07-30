@@ -110,6 +110,7 @@ namespace Azure.Sdk.Tools.Cli.Services
     public interface IDevOpsService
     {
         public Task<List<ReleasePlanWorkItem>> ListOverdueReleasePlansAsync(CancellationToken ct);
+        public Task<List<FailedSDKGenerationReleasePlan>> ListReleasePlansWithFailedSDKGenerationAsync(CancellationToken ct);
         public Task<ReleasePlanWorkItem> GetReleasePlanAsync(int releasePlanId, CancellationToken ct);
         public Task<ReleasePlanWorkItem> GetReleasePlanForWorkItemAsync(int workItemId, CancellationToken ct);
         public Task<ReleasePlanWorkItem> GetReleasePlanAsync(string pullRequestUrl, ApiReleaseType apiReleaseType = ApiReleaseType.Unknown, CancellationToken ct = default);
@@ -152,6 +153,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         private static readonly string RELEASE_PLANNER_APP_TEST = "Release Planner App Test";
         private static readonly string MISSING_EMITTER_CONFIG = "MissingEmitterConfig";
         private static readonly string NOT_APPLICABLE = "Not applicable";
+        private static readonly string FAILED_TO_GENERATE_SDK_STATUS = "Failed to generate SDK.";
 
         private List<WorkItemRelationType>? _cachedRelationTypes;
 
@@ -197,6 +199,126 @@ namespace Azure.Sdk.Tools.Cli.Services
                 logger.LogError(ex, "Failed to list overdue release plans");
                 throw new Exception("Failed to list overdue release plans. Error: {ex}", ex);
             }
+        }
+
+        public async Task<List<FailedSDKGenerationReleasePlan>> ListReleasePlansWithFailedSDKGenerationAsync(CancellationToken ct)
+        {
+            try
+            {
+                // Coarse WIQL filter: in-progress release plans updated within the last day. Test release
+                // plans are included or excluded based on the current environment (agent testing vs prod).
+                var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
+                query += $" AND [System.Tags] {(IsAgentTesting ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
+                query += " AND [System.WorkItemType] = 'Release Plan'";
+                query += " AND [System.State] = 'In Progress'";
+                query += " AND [System.ChangedDate] >= @Today - 1";
+
+                // Reduce the work items to inspect by only fetching plans where at least one language's
+                // SDK pull request status is currently "Failed to generate SDK." and that language has not
+                // already been released.
+                var failedStatusConditions = SUPPORTED_SDK_LANGUAGES
+                    .Select(lang => $"([Custom.SDKPullRequestStatusFor{lang}] = '{FAILED_TO_GENERATE_SDK_STATUS}' AND [Custom.ReleaseStatusFor{lang}] <> 'Released')");
+                query += $" AND ({string.Join(" OR ", failedStatusConditions)})";
+
+                var releasePlanWorkItems = await FetchWorkItemsPagedAsync(query, ct: ct);
+
+                // Precise cutoff: only consider status transitions that happened within the last 24 hours + 1 hour overlap from previous report avoid dropping any changes during the scheduled run.
+                var cutoff = DateTime.UtcNow.AddHours(-25);
+                var workItemClient = connection.GetWorkItemClient(ct);
+                var failedReleasePlans = new List<FailedSDKGenerationReleasePlan>();
+
+                foreach (var workItem in releasePlanWorkItems)
+                {
+                    if (workItem.Id is not int workItemId)
+                    {
+                        continue;
+                    }
+
+                    var failedLanguages = await GetLanguagesWithRecentFailedSDKGenerationAsync(workItemClient, workItemId, cutoff, ct);
+                    if (failedLanguages.Count == 0)
+                    {
+                        // Ignore release plans where no language transitioned to a failed status in the last 24 hours.
+                        continue;
+                    }
+
+                    var releasePlan = await MapWorkItemToReleasePlanAsync(workItem, ct);
+                    failedReleasePlans.Add(new FailedSDKGenerationReleasePlan
+                    {
+                        ReleasePlan = releasePlan,
+                        FailedLanguages = failedLanguages
+                    });
+                }
+
+                return failedReleasePlans;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to list release plans with failed SDK generation");
+                throw new Exception("Failed to list release plans with failed SDK generation.", ex);
+            }
+        }
+
+        // Inspects the work item change history and returns the SDK display names whose pull request
+        // status field was updated to "Failed to generate SDK." at or after the supplied cutoff time.
+        private async Task<List<string>> GetLanguagesWithRecentFailedSDKGenerationAsync(
+            WorkItemTrackingHttpClient workItemClient, int workItemId, DateTime cutoff, CancellationToken ct)
+        {
+            var failedLanguages = new List<string>();
+            try
+            {
+                var updates = await workItemClient.GetUpdatesAsync(workItemId, top:20, cancellationToken: ct);
+                foreach (var lang in SUPPORTED_SDK_LANGUAGES)
+                {
+                    var fieldName = $"Custom.SDKPullRequestStatusFor{lang}";
+                    var failedInWindow = updates.Any(update =>
+                    {
+                        if (update.Fields == null || !update.Fields.TryGetValue(fieldName, out var fieldUpdate))
+                        {
+                            return false;
+                        }
+
+                        var newValue = fieldUpdate.NewValue?.ToString();
+                        if (!string.Equals(newValue, FAILED_TO_GENERATE_SDK_STATUS, StringComparison.OrdinalIgnoreCase))
+                        {
+                            return false;
+                        }
+
+                        return GetUpdateRevisedDate(update) >= cutoff;
+                    });
+
+                    if (failedInWindow)
+                    {
+                        failedLanguages.Add(MapLanguageIdToName(lang));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to retrieve change history for release plan work item {WorkItemId}", workItemId);
+            }
+
+            return failedLanguages;
+        }
+
+        private static DateTime GetUpdateRevisedDate(WorkItemUpdate update)
+        {
+            // Prefer the System.ChangedDate captured on the revision; fall back to RevisedDate.
+            if (update.Fields != null
+                && update.Fields.TryGetValue("System.ChangedDate", out var changedDateUpdate)
+                && changedDateUpdate.NewValue != null)
+            {
+                if (changedDateUpdate.NewValue is DateTime dt)
+                {
+                    return dt.Kind == DateTimeKind.Utc ? dt : dt.ToUniversalTime();
+                }
+                if (DateTime.TryParse(changedDateUpdate.NewValue.ToString(), CultureInfo.InvariantCulture,
+                    DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var changedDate))
+                {
+                    return changedDate;
+                }
+            }
+
+            return update.RevisedDate.ToUniversalTime();
         }
 
         public async Task<ReleasePlanWorkItem> GetReleasePlanForWorkItemAsync(int workItemId, CancellationToken ct)

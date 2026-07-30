@@ -13,6 +13,11 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification
     public abstract class EmailPayload
     {
         /// <summary>
+        /// The Azure SDK experience support alias, shared by all templates.
+        /// </summary>
+        protected const string AzSdkSupportAlias = "azsdkexp@microsoft.com";
+
+        /// <summary>
         /// Primary recipients of the email. Serialized as a ';'-separated string.
         /// </summary>
         [JsonConverter(typeof(SemicolonSeparatedStringConverter))]

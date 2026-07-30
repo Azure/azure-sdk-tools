@@ -38,6 +38,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(new List<ReleasePlanWorkItem>());
         }
 
+        Task<List<FailedSDKGenerationReleasePlan>> IDevOpsService.ListReleasePlansWithFailedSDKGenerationAsync(CancellationToken ct)
+        {
+            return Task.FromResult(new List<FailedSDKGenerationReleasePlan>());
+        }
+
         public Task<PackageWorkitemResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "", CancellationToken ct = default)
         {
             var sdkLanguage = SdkLanguageHelpers.GetSdkLanguage(language);

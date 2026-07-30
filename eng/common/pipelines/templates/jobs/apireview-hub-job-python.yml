@@ -22,7 +22,7 @@ parameters:
     default: []
 
 jobs:
-- template: /eng/pipelines/templates/jobs/apireview-hub-job-base.yml
+- template: /eng/common/pipelines/templates/jobs/apireview-hub-job-base.yml
   parameters:
     jobName: CreatePythonApiReviewArtifacts
     displayName: 'Create Python API review artifacts'

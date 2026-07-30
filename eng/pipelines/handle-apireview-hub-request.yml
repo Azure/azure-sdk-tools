@@ -54,9 +54,9 @@ parameters:
 
 jobs:
 # The language value is validated above. Each supported language must provide:
-# - /eng/pipelines/templates/jobs/apireview-hub-job-{language}.yml
-# - /eng/pipelines/templates/steps/create-apireview-hub-artifacts-{language}.yml
-- template: ${{ format('/eng/pipelines/templates/jobs/apireview-hub-job-{0}.yml', parameters.language) }}
+# - /eng/common/pipelines/templates/jobs/apireview-hub-job-{language}.yml
+# - /eng/common/pipelines/templates/steps/create-apireview-hub-artifacts-{language}.yml
+- template: ${{ format('/eng/common/pipelines/templates/jobs/apireview-hub-job-{0}.yml', parameters.language) }}
   parameters:
     repositoryOwner: ${{ parameters.owner }}
     steps:
@@ -90,7 +90,7 @@ jobs:
       # Create requests need the baseline bundle first. The job uses one source
       # checkout and switches it from the tooling ref to base, then target.
       - ${{ if eq(parameters.requestMode, 'create') }}:
-        - template: ${{ format('/eng/pipelines/templates/steps/create-apireview-hub-artifacts-{0}.yml', parameters.language) }}
+        - template: ${{ format('/eng/common/pipelines/templates/steps/create-apireview-hub-artifacts-{0}.yml', parameters.language) }}
           parameters:
             requestMode: ${{ parameters.requestMode }}
             operationId: ${{ parameters.operationId }}
@@ -102,7 +102,7 @@ jobs:
 
       # Always generate the target bundle. Update requests only generate this
       # artifact; create requests generate it after the base bundle above.
-      - template: ${{ format('/eng/pipelines/templates/steps/create-apireview-hub-artifacts-{0}.yml', parameters.language) }}
+      - template: ${{ format('/eng/common/pipelines/templates/steps/create-apireview-hub-artifacts-{0}.yml', parameters.language) }}
         parameters:
           requestMode: ${{ parameters.requestMode }}
           operationId: ${{ parameters.operationId }}

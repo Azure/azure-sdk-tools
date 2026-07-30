@@ -17,7 +17,7 @@ parameters:
   - name: workingDir
     type: string
 steps:
-  - template: /eng/pipelines/templates/steps/create-apireview-hub-artifacts-base.yml
+  - template: /eng/common/pipelines/templates/steps/create-apireview-hub-artifacts-base.yml
     parameters:
       requestMode: ${{ parameters.requestMode }}
       operationId: ${{ parameters.operationId }}

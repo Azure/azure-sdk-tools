@@ -5,40 +5,18 @@ This directory contains [Vally](https://aka.ms/vally) evaluation cases for the `
 ## Prerequisites
 
 - [Vally CLI](https://aka.ms/vally) installed globally: `npm install -g @microsoft/vally-cli@0.7.0`
-- The `azsdk-cli` MCP server built: `dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli`
+- Node.js/npm available on `PATH`; the MCP build restores Copilot SDK native npm assets.
+- The `azsdk-cli` MCP server built as described below.
 - An API key for the model configured (e.g., Anthropic or OpenAI key via environment variable)
 
 ## Environment Setup
 
-### Prepare prebuilt MCP binaries
+### Prepare Vally, fixtures, and MCP binaries
 
-The default `azsdk-mcp` and `azsdk-mcp-mock` Vally environments use prebuilt MCP binaries under
-`artifacts/mcp`, matching the pipeline startup shape. Build both servers from the repository root
-before running Vally locally:
-
-```powershell
-dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli -c Release -o artifacts/mcp/cli --nologo
-dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Mock -c Release -o artifacts/mcp/mock --nologo
-```
-
-The source-based environments are still available as `azsdk-mcp-local` and `azsdk-mcp-mock-local`
-for debugging the server from projects instead of DLLs.
-
-Set `AZSDK_EVAL_REPO_ROOT` before local Vally runs so the prebuilt MCP wrapper can resolve the DLLs
-from Vally's per-trial workspace:
-
-```powershell
-$env:AZSDK_EVAL_REPO_ROOT="D:\GitHub\azure-sdk-tools"
-```
-
-Set `AZSDK_EVAL_MCP_KIND=mock` when you want the default `azsdk-mcp` environment to start the mock DLL instead of the live DLL.
-
-Pipeline shard invocation sets `AZSDK_EVAL_REPO_ROOT` automatically.
-
-### Prepare Vally and fixtures
-
-Before running any evals, prime the fixtures from the live
-[azure-rest-api-specs](https://github.com/Azure/azure-rest-api-specs) `main` branch:
+Before running any evals, run the setup script from this directory. It builds the live and mock MCP
+servers into `artifacts/mcp`, primes fixtures from the live
+[azure-rest-api-specs](https://github.com/Azure/azure-rest-api-specs) `main` branch, runs fixture
+`npm ci`, and prints the environment variables needed by local Vally runs:
 
 ```powershell
 # PowerShell
@@ -50,12 +28,24 @@ node scripts/setup-environment.js | Invoke-Expression
 eval $(node scripts/setup-environment.js)
 ```
 
-`setup-environment.js` calls `setup-fixture-files.js` and then runs `npm ci`. Together they:
+`setup-environment.js` does the following:
 
-1. Download `package.json` / `package-lock.json` into `fixtures/Microsoft.Widget/Widget/` and run
+1. Build the live MCP server into `artifacts/mcp/cli` and the mock MCP server into
+  `artifacts/mcp/mock`.
+2. Download `package.json` / `package-lock.json` into `fixtures/Microsoft.Widget/Widget/` and run
    `npm ci` there.
-2. Download `.github/copilot-instructions.md` into `fixtures/instructions-test/copilot-instructions.md`.
-3. Print the shell command that exports `FIXTURE_NODE_MODULES`.
+3. Download `.github/copilot-instructions.md` into `fixtures/instructions-test/copilot-instructions.md`.
+4. Print shell commands that export `AZSDK_EVAL_REPO_ROOT` and `FIXTURE_NODE_MODULES`.
+
+The MCP build uses `GitHub.Copilot.SDK`, which downloads platform-specific `@github/copilot-*`
+assets through MSBuild. The setup script passes
+`/p:CopilotNpmRegistryUrl=https://packagefeedproxy.microsoft.io/npm/` so the download URL uses the
+Microsoft package feed proxy instead of `registry.npmjs.org`. To use a different registry, set
+`COPILOT_NPM_REGISTRY_URL` before running the setup script.
+
+The source-based environments are still available as `azsdk-mcp-local` and `azsdk-mcp-mock-local`
+for debugging the server from projects instead of DLLs. Set `AZSDK_EVAL_MCP_KIND=mock` when you want
+the default `azsdk-mcp` environment to start the mock DLL instead of the live DLL.
 
 Why each piece matters:
 
@@ -66,7 +56,8 @@ Why each piece matters:
   **not** checked in (it is git-ignored) and always refreshed from `main`, so the eval reflects what
   authors actually see today.
 
-CI runs `setup-fixture-files.js` during setup, so these fixtures are always present in pipeline runs.
+CI builds MCP binaries in a shared build job and runs `setup-fixture-files.js` during pre-eval setup,
+so the binaries and fixtures are always present in pipeline runs.
 
 ## Running Evaluations Locally
 
@@ -257,11 +248,11 @@ each track passes its mode through `TypeSpecAuthorEvalExtraArgs`.
 | ------------------ | ------------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------- |
 | benchmark          | Manual two-track stages with `pipeline` templates | `--tag mode=forced --skill-dir azure-typespec-author` | Uses `azsdk-mcp` with `AZSDK_EVAL_MCP_KIND=live` | Forced skill invocation + code-quality graders                        |
 | benchmark          | Manual two-track stages with `pipeline` templates | `--tag mode=trigger --skill-dir azure-typespec-author` | Uses `azsdk-mcp` with `AZSDK_EVAL_MCP_KIND=mock` | Skill trigger detection                                               |
-| benchmark-no-skill | Common `archetype-eval.yml` + `pipeline` no-skill wrappers | `--tag mode=no-skill --skill-dir /tmp/no-skills` | Uses `azsdk-mcp` from `.github/skills/.vally.yaml` | Baseline run without loading the skill                                 |
+| benchmark-no-skill | Common `archetype-eval.yml` + `pipeline` no-skill invoke wrapper | `--tag mode=no-skill --skill-dir /tmp/no-skills` | Uses `azsdk-mcp` from `.github/skills/.vally.yaml` | Baseline run without loading the skill                                 |
 
 The forced and trigger tracks are composed manually because they need different MCP environments in
 one pipeline run. The no-skill pipeline stays on the common `archetype-eval.yml` entry point and only
-uses repo-owned wrappers for pre-eval setup and Vally invocation.
+uses a repo-owned wrapper for Vally invocation.
 
 ### Pipeline Parameters and Extensions
 

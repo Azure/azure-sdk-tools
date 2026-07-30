@@ -104,12 +104,11 @@
   </PropertyGroup>
 
   <Target Name="_GetNpmRegistryUrl" BeforeTargets="_DownloadCopilotCli"
-          Condition="'$(CopilotNpmRegistryUrl)' == '' And '$(CopilotSkipCliDownload)' != 'true' And '$(TF_BUILD)' != 'True'">
-    <Exec Command="npm config get registry" ConsoleToMSBuild="true" StandardOutputImportance="low" IgnoreExitCode="true" EchoOff="true">
+          Condition="'$(CopilotSkipCliDownload)' != 'true' And '$(TF_BUILD)' != 'True'">
+    <Exec Command="npm config get registry" ConsoleToMSBuild="true" StandardOutputImportance="low" IgnoreExitCode="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="_NpmConfigRegistry" />
-      <Output TaskParameter="ExitCode" PropertyName="_NpmExitCode" />
     </Exec>
-    <PropertyGroup Condition="'$(_NpmExitCode)' == '0' And '$(_NpmConfigRegistry)' != '' And !$(_NpmConfigRegistry.Contains('registry.npmjs.org'))">
+    <PropertyGroup Condition="'$(_NpmConfigRegistry)' != '' And !$(_NpmConfigRegistry.Contains('registry.npmjs.org'))">
       <CopilotNpmRegistryUrl>$(_NpmConfigRegistry.Trim())</CopilotNpmRegistryUrl>
     </PropertyGroup>
   </Target>

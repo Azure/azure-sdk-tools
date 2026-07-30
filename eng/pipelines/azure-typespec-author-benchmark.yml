@@ -36,7 +36,33 @@ extends:
         displayName: Prepare shared MCP artifact
         dependsOn: []
         jobs:
-          - template: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-build-mcp-job.yml
+          - job: BuildMcp
+            displayName: 'Build + publish MCP server(s)'
+            pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
+            templateContext:
+              outputs:
+                # Shard jobs stage this artifact back to artifacts/mcp; run-prebuilt-mcp.js
+                # expects cli/azsdk.dll and mock/azsdk-mock.dll under that directory.
+                - output: pipelineArtifact
+                  displayName: 'Publish MCP server artifact'
+                  artifactName: mcp-servers
+                  targetPath: $(Build.SourcesDirectory)/artifacts/mcp
+            steps:
+              - checkout: self
+                fetchDepth: 1
+
+              - script: |
+                  set -e
+                  dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli -c Release -o "$(Build.SourcesDirectory)/artifacts/mcp/cli" --nologo
+                displayName: 'Build MCP: Cli (live) server'
+
+              - script: |
+                  set -e
+                  dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Mock -c Release -o "$(Build.SourcesDirectory)/artifacts/mcp/mock" --nologo
+                displayName: 'Build MCP: Mock server'
 
       - stage: PrepareForced
         displayName: Prepare forced track
@@ -59,8 +85,6 @@ extends:
               matrixStageName: PrepareForced
               vallyRoot: .github/skills/azure-typespec-author/evaluate
               mcpEnvironment: live
-              startQaBotBackend: true
-              UseAzSdkAuthentication: true
               azureSubscription: azuresdkqabot-dev
               shardTimeoutInMinutes: 50
 
@@ -95,6 +119,7 @@ extends:
               matrixStageName: PrepareTrigger
               vallyRoot: .github/skills/azure-typespec-author/evaluate
               mcpEnvironment: mock
+              azureSubscription: azuresdkqabot-dev
               shardTimeoutInMinutes: 30
 
       - stage: SummaryTrigger

@@ -20,7 +20,7 @@ extends:
     TestType: live
     UseAzSdkAuthentication: true
     evalInvokeTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-noskill-eval-invoke.yml
-    preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-noskill-preeval.yml
+    preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
     failOnFailedTests: false
     shardTimeoutInMinutes: 30
 

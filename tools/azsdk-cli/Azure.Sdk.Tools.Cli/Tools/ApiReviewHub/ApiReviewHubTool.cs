@@ -200,6 +200,7 @@ public class ApiReviewHubTool(
 
             return new ApiReviewHubResponse
             {
+                Message = result.Message,
                 Result = result
             };
         }

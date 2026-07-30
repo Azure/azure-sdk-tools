@@ -340,7 +340,10 @@ public class ApiReviewHubServiceTests
                     {
                       "error": {
                         "code": "reviewPullRequestAlreadyExists",
-                        "message": "Open API review PR already exists."
+                                                "message": "An API Review Hub review PR already exists for pkg.",
+                                                "reviewPullRequest": {
+                                                    "url": "https://github.com/Azure/azure-sdk-for-python/pull/13"
+                                                }
                       }
                     }
                     """,
@@ -372,8 +375,11 @@ public class ApiReviewHubServiceTests
             pollInterval: TimeSpan.Zero,
             CancellationToken.None);
 
-        Assert.That(result.Status, Is.EqualTo("alreadyExists"));
+        Assert.That(result.Status, Is.EqualTo("succeeded"));
         Assert.That(result.PackageName, Is.EqualTo("pkg"));
+        Assert.That(result.Message, Is.EqualTo("An API Review Hub review PR already exists for pkg."));
+        Assert.That(result.ReviewPullRequest, Is.Not.Null);
+        Assert.That(result.ReviewPullRequest!.Value.GetProperty("url").GetString(), Is.EqualTo("https://github.com/Azure/azure-sdk-for-python/pull/13"));
     }
 
     [Test]

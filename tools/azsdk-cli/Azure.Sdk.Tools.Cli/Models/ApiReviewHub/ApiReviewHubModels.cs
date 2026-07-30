@@ -61,6 +61,10 @@ public class OperationStatus
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? PackageName { get; set; }
 
+    [JsonPropertyName("message")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Message { get; set; }
+
     [JsonPropertyName("pipelineUrl")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? PipelineUrl { get; set; }
@@ -186,9 +190,10 @@ public class ApiReviewHubResponse : CommandResponse
     protected override string Format()
     {
         var output = new StringBuilder();
-        if (!string.IsNullOrEmpty(Message))
+        var message = Message ?? Result?.Message;
+        if (!string.IsNullOrWhiteSpace(message))
         {
-            output.AppendLine(Message);
+            output.AppendLine(message);
         }
 
         if (Result != null)
@@ -207,7 +212,12 @@ public class ApiReviewHubResponse : CommandResponse
     {
         if (reviewPullRequest is null || reviewPullRequest.Value.ValueKind != JsonValueKind.Object)
         {
-            return null;
+            if (reviewPullRequest is null || reviewPullRequest.Value.ValueKind != JsonValueKind.String)
+            {
+                return null;
+            }
+
+            return reviewPullRequest.Value.GetString();
         }
 
         if (reviewPullRequest.Value.TryGetProperty("url", out var urlElement) &&

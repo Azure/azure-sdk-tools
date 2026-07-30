@@ -2,7 +2,7 @@
 
 This document is intended for security review. It describes the agent, lists
 common risks for AI agent applications (classified by
-[Azure AI Content Safety](https://learn.microsoft.com/en-us/azure/ai-services/content-safety/overview)
+[Azure AI Content Safety](https://learn.microsoft.com/azure/ai-services/content-safety/overview)
 categories), analyzes which risks apply to this agent, and details the
 defense-in-depth controls we have taken.
 
@@ -59,21 +59,21 @@ describe the controls we added to address them.
 
 Any tool-using AI agent is exposed to the risks below. We combine two Microsoft
 frameworks: the first six risks map to the detection features of
-[Azure AI Content Safety](https://learn.microsoft.com/en-us/azure/ai-services/content-safety/overview)
+[Azure AI Content Safety](https://learn.microsoft.com/azure/ai-services/content-safety/overview)
 (Prompt Shields, Groundedness, Protected material, Task adherence, etc.), and the
 last two map to the systemic agentic risks in
-[Reduce autonomous agentic AI risk](https://learn.microsoft.com/en-us/security/zero-trust/sfi/manage-agentic-risk).
+[Reduce autonomous agentic AI risk](https://learn.microsoft.com/security/zero-trust/sfi/manage-agentic-risk).
 
 | ID | Risk | Description |
 |----|------|-------------|
-| R1 | [**Harmful content**](https://learn.microsoft.com/en-us/azure/ai-services/content-safety/concepts/harm-categories) | The agent generates or relays content in the four harm categories: **Hate & Fairness**, **Sexual**, **Violence**, **Self-Harm**. |
-| R2 | [**User prompt attack**](https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/content-filter-prompt-shields#prompt-shields-for-user-prompts) (jailbreak) | A user deliberately crafts input to bypass the system prompt and safety training — altering the model's intended behavior to perform restricted actions. |
-| R3 | [**Document attack**](https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/content-filter-prompt-shields#prompt-shields-for-documents) (indirect prompt injection) | A third party embeds hidden instructions in tool-supplied content (a GitHub comment, a web page) to hijack the session and make the model execute unintended commands. |
-| R4 | [**Ungrounded content / hallucination**](https://learn.microsoft.com/en-us/azure/ai-services/content-safety/concepts/groundedness) | The agent fabricates facts, URLs, version numbers, or handles not present in its tool results. |
-| R5 | [**Protected material reproduction**](https://learn.microsoft.com/en-us/azure/ai-services/content-safety/concepts/protected-material) | The agent reproduces copyrighted text or code verbatim from its tool results. |
-| R6 | [**Task adherence**](https://learn.microsoft.com/en-us/azure/ai-services/content-safety/concepts/task-adherence) | The agent's tool use is misaligned, unintended, or premature relative to the user's intent — e.g. invoking the wrong tool, passing incorrect parameters, or acting on a misinterpreted objective. |
-| R7 | [**Agent hijacking**](https://learn.microsoft.com/en-us/security/zero-trust/sfi/manage-agentic-risk#agent-hijacking) | A successful **user prompt (R2)** or **document (R3)** attack escalates into tool misuse: the model invokes destructive tools (write/delete/merge/approve) or reaches internal network endpoints via SSRF ([CWE-918](https://cwe.mitre.org/data/definitions/918.html), [Foundry tool best practices](https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/tool-best-practice)). |
-| R8 | [**Sensitive data leakage**](https://learn.microsoft.com/en-us/security/zero-trust/sfi/manage-agentic-risk#sensitive-data-leakage) | Long-lived tokens or signing keys are leaked from the container or extracted via prompt injection — exposing confidential data through outputs or downstream actions. |
+| R1 | [**Harmful content**](https://learn.microsoft.com/azure/ai-services/content-safety/concepts/harm-categories) | The agent generates or relays content in the four harm categories: **Hate & Fairness**, **Sexual**, **Violence**, **Self-Harm**. |
+| R2 | [**User prompt attack**](https://learn.microsoft.com/azure/foundry/openai/concepts/content-filter-prompt-shields#prompt-shields-for-user-prompts) (jailbreak) | A user deliberately crafts input to bypass the system prompt and safety training — altering the model's intended behavior to perform restricted actions. |
+| R3 | [**Document attack**](https://learn.microsoft.com/azure/foundry/openai/concepts/content-filter-prompt-shields#prompt-shields-for-documents) (indirect prompt injection) | A third party embeds hidden instructions in tool-supplied content (a GitHub comment, a web page) to hijack the session and make the model execute unintended commands. |
+| R4 | [**Ungrounded content / hallucination**](https://learn.microsoft.com/azure/ai-services/content-safety/concepts/groundedness) | The agent fabricates facts, URLs, version numbers, or handles not present in its tool results. |
+| R5 | [**Protected material reproduction**](https://learn.microsoft.com/azure/ai-services/content-safety/concepts/protected-material) | The agent reproduces copyrighted text or code verbatim from its tool results. |
+| R6 | [**Task adherence**](https://learn.microsoft.com/azure/ai-services/content-safety/concepts/task-adherence) | The agent's tool use is misaligned, unintended, or premature relative to the user's intent — e.g. invoking the wrong tool, passing incorrect parameters, or acting on a misinterpreted objective. |
+| R7 | [**Agent hijacking**](https://learn.microsoft.com/security/zero-trust/sfi/manage-agentic-risk#agent-hijacking) | A successful **user prompt (R2)** or **document (R3)** attack escalates into tool misuse: the model invokes destructive tools (write/delete/merge/approve) or reaches internal network endpoints via SSRF ([CWE-918](https://cwe.mitre.org/data/definitions/918.html), [Foundry tool best practices](https://learn.microsoft.com/azure/foundry/agents/concepts/tool-best-practice)). |
+| R8 | [**Sensitive data leakage**](https://learn.microsoft.com/security/zero-trust/sfi/manage-agentic-risk#sensitive-data-leakage) | Long-lived tokens or signing keys are leaked from the container or extracted via prompt injection — exposing confidential data through outputs or downstream actions. |
 
 ---
 
@@ -116,7 +116,7 @@ Controls are layered so that no single bypass is sufficient.
     issues, actions, and pull requests.
   - Client-side: an explicit allow-list of ~15 **read-only** tool names —
     restricts what the model may invoke
-    (per [Foundry agent tool best practices](https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/tool-best-practice)).
+    (per [Foundry agent tool best practices](https://learn.microsoft.com/azure/foundry/agents/concepts/tool-best-practice)).
   - Tool approval is disabled because no write tool is reachable.
 - **Azure DevOps MCP** is similarly constrained with a client-side allow-list
   limited to **read-only** operations: project listing, pipeline/build
@@ -169,7 +169,7 @@ JSON-escaped block:
 - This is the
   [**spotlighting / delimiting** technique](https://arxiv.org/abs/2403.14720)
   (Hines et al., Microsoft, 2024) — the in-container equivalent of Foundry's
-  [**Spotlighting**](https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/content-filter-prompt-shields#spotlighting-preview)
+  [**Spotlighting**](https://learn.microsoft.com/azure/foundry/openai/concepts/content-filter-prompt-shields#spotlighting-preview)
   control: it gives the model a reliable signal of provenance so it treats the
   content as *data, not instructions*.
 - JSON-escaping neutralizes forged closing delimiters and control characters
@@ -181,13 +181,13 @@ JSON-escaped block:
 
 ### C5 — Platform content-safety guardrail
 Guardrails leverage classification models from
-[Azure AI Content Safety](https://learn.microsoft.com/en-us/azure/ai-services/content-safety/overview)
+[Azure AI Content Safety](https://learn.microsoft.com/azure/ai-services/content-safety/overview)
 to detect harmful content across supported risk categories.
 The deployment script provisions a **blocking**
-[RAI policy](https://learn.microsoft.com/en-us/azure/ai-foundry/responsible-ai/openai/overview)
+[RAI policy](https://learn.microsoft.com/azure/ai-foundry/responsible-ai/openai/overview)
 (over the base `Microsoft.DefaultV2` policy) and attaches it to the agent:
 - Blocking enabled on user prompt, model completion, and pre-tool-call sources.
-- [**Prompt Shields for Documents**](https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/content-filter-prompt-shields#prompt-shields-for-documents)
+- [**Prompt Shields for Documents**](https://learn.microsoft.com/azure/foundry/openai/concepts/content-filter-prompt-shields#prompt-shields-for-documents)
   (indirect-attack) classifier enabled on post-tool-call source.
 - Screens user input and the final response for harmful content, jailbreak,
   indirect-injection, and protected material signals.
@@ -204,8 +204,8 @@ The deployment script provisions a **blocking**
 ### C6 — Safety system prompt
 The agent's system prompt includes a **Safety** section (highest precedence)
 authored per Microsoft's
-[safety system message templates](https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/safety-system-message-templates)
-and [system message guidance](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/concepts/system-message):
+[safety system message templates](https://learn.microsoft.com/azure/foundry/openai/concepts/safety-system-message-templates)
+and [system message guidance](https://learn.microsoft.com/azure/ai-foundry/openai/concepts/system-message):
 - Refuse harmful content (physical/emotional harm; hateful, racist, sexist,
   lewd, violent).
 - No verbatim reproduction of copyrighted text.
@@ -230,17 +230,17 @@ calls per turn, bounding the per-turn blast radius and preventing runaway loops.
 
 ## 5. References
 
-- **Azure AI Content Safety (overview)** — https://learn.microsoft.com/en-us/azure/ai-services/content-safety/overview
-- **Content Safety harm categories** — https://learn.microsoft.com/en-us/azure/ai-services/content-safety/concepts/harm-categories
-- **Prompt Shields (user prompt & document attacks) + Spotlighting** — https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/content-filter-prompt-shields
-- **Groundedness detection** — https://learn.microsoft.com/en-us/azure/ai-services/content-safety/concepts/groundedness
-- **Protected material detection** — https://learn.microsoft.com/en-us/azure/ai-services/content-safety/concepts/protected-material
-- **Task adherence** — https://learn.microsoft.com/en-us/azure/ai-services/content-safety/concepts/task-adherence
+- **Azure AI Content Safety (overview)** — https://learn.microsoft.com/azure/ai-services/content-safety/overview
+- **Content Safety harm categories** — https://learn.microsoft.com/azure/ai-services/content-safety/concepts/harm-categories
+- **Prompt Shields (user prompt & document attacks) + Spotlighting** — https://learn.microsoft.com/azure/foundry/openai/concepts/content-filter-prompt-shields
+- **Groundedness detection** — https://learn.microsoft.com/azure/ai-services/content-safety/concepts/groundedness
+- **Protected material detection** — https://learn.microsoft.com/azure/ai-services/content-safety/concepts/protected-material
+- **Task adherence** — https://learn.microsoft.com/azure/ai-services/content-safety/concepts/task-adherence
 - **Spotlighting (delimiting/datamarking) technique** — Hines et al., Microsoft, 2024. *Defending Against Indirect Prompt Injection Attacks With Spotlighting.* https://arxiv.org/abs/2403.14720
-- **Safety system messages** — https://learn.microsoft.com/en-us/azure/ai-foundry/openai/concepts/system-message
-- **Safety system message templates** — https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/safety-system-message-templates
-- **Responsible AI for Azure OpenAI** — https://learn.microsoft.com/en-us/azure/ai-foundry/responsible-ai/openai/overview
-- **Reduce autonomous agentic AI risk** — https://learn.microsoft.com/en-us/security/zero-trust/sfi/manage-agentic-risk
-- **Foundry agent tool best practices** — https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/tool-best-practice
+- **Safety system messages** — https://learn.microsoft.com/azure/ai-foundry/openai/concepts/system-message
+- **Safety system message templates** — https://learn.microsoft.com/azure/foundry/openai/concepts/safety-system-message-templates
+- **Responsible AI for Azure OpenAI** — https://learn.microsoft.com/azure/ai-foundry/responsible-ai/openai/overview
+- **Reduce autonomous agentic AI risk** — https://learn.microsoft.com/security/zero-trust/sfi/manage-agentic-risk
+- **Foundry agent tool best practices** — https://learn.microsoft.com/azure/foundry/agents/concepts/tool-best-practice
 - **GitHub MCP server (toolsets, read-only mode)** — https://github.com/github/github-mcp-server
 - **CWE-918: Server-Side Request Forgery** — https://cwe.mitre.org/data/definitions/918.html

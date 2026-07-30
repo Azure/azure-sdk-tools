@@ -383,7 +383,7 @@ public class ApiReviewHubServiceTests
     }
 
     [Test]
-    public void RequestReviewPullRequestAsync_WhenConflictIsNotExpected_Throws()
+    public async Task RequestReviewPullRequestAsync_WhenConflictIsNotExpected_Throws()
     {
         var mockHandler = new Mock<HttpMessageHandler>();
         mockHandler
@@ -424,13 +424,21 @@ public class ApiReviewHubServiceTests
             }
         };
 
-        var exception = Assert.ThrowsAsync<HttpRequestException>(async () =>
+        HttpRequestException? exception = null;
+        try
+        {
             await service.RequestReviewPullRequestAsync(
                 request,
                 "https://api-review-hub-test.azurewebsites.net",
                 waitForCompletion: true,
                 pollInterval: TimeSpan.Zero,
-                CancellationToken.None));
+                CancellationToken.None);
+            Assert.Fail("Expected HttpRequestException was not thrown.");
+        }
+        catch (HttpRequestException ex)
+        {
+            exception = ex;
+        }
 
         Assert.That(exception!.StatusCode, Is.EqualTo(HttpStatusCode.Conflict));
         Assert.That(exception.Message, Does.Contain("operationConflict"));

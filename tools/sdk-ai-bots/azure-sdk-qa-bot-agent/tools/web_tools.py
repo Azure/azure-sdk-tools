@@ -16,6 +16,7 @@ from urllib.parse import urljoin, urlparse
 
 import httpx
 
+from config.app_config import get as cfg
 from models.web import FetchWebpageResult
 from tools import tool
 
@@ -132,6 +133,33 @@ def _is_public_url(url: str) -> bool:
     return True
 
 
+def _get_allowed_domains() -> set[str] | None:
+    """Return the configured domain allow-list, or ``None`` if unrestricted.
+
+    Reads the ``WEB_FETCH_ALLOWED_DOMAINS`` key from App Configuration.
+    The value is a comma-separated list of domain suffixes (e.g.
+    ``learn.microsoft.com,aka.ms,pypi.org``).  When set, only URLs whose
+    hostname matches one of these suffixes are permitted.
+    """
+    raw = cfg("WEB_FETCH_ALLOWED_DOMAINS")
+    if not raw:
+        return None
+    return {d.strip().lower() for d in raw.split(",") if d.strip()}
+
+
+def _is_domain_allowed(url: str) -> bool:
+    """Return ``True`` if the URL's domain passes the allow-list check.
+
+    If no allow-list is configured, all domains are accepted (deny-list
+    mode via ``_is_public_url`` still applies).
+    """
+    allowed = _get_allowed_domains()
+    if allowed is None:
+        return True
+    hostname = (urlparse(url).hostname or "").strip().lower()
+    return any(hostname == d or hostname.endswith("." + d) for d in allowed)
+
+
 def _trim_excerpt(text: str, max_chars: int) -> str:
     cleaned = re.sub(r"\s+", " ", text).strip()
     return cleaned[:max_chars]
@@ -185,7 +213,7 @@ async def _fetch_async(url: str, max_chars: int) -> FetchWebpageResult:
                     )
 
                 next_url = urljoin(current_url, location)
-                if not _is_public_url(next_url):
+                if not _is_public_url(next_url) or not _is_domain_allowed(next_url):
                     return FetchWebpageResult(
                         success=False,
                         url=url,
@@ -283,6 +311,11 @@ class WebTools:
         normalized_url = (url or "").strip()
         if not _is_public_url(normalized_url):
             raise ValueError("Only public http/https URLs are allowed.")
+        if not _is_domain_allowed(normalized_url):
+            raise ValueError(
+                "Domain not in the allowed list for web_fetch. "
+                "Use web_search to find information on other domains."
+            )
 
         bounded_max_chars = max(
             _MIN_ALLOWED_CHARS, min(int(max_chars), _MAX_ALLOWED_CHARS)

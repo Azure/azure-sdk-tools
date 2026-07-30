@@ -141,7 +141,7 @@ def _get_allowed_domains() -> set[str] | None:
     ``learn.microsoft.com,aka.ms,pypi.org``).  When set, only URLs whose
     hostname matches one of these suffixes are permitted.
     """
-    raw = cfg("WEB_FETCH_ALLOWED_DOMAINS")
+    raw = cfg("WEB_FETCH_ALLOWED_DOMAINS", "")
     if not raw:
         return None
     return {d.strip().lower() for d in raw.split(",") if d.strip()}

@@ -33,12 +33,8 @@ _SPOTLIGHT_CLOSE = "</untrusted_tool_output>"
 
 
 def spotlight(text: str) -> str:
-    """Wrap opaque tool output as a labelled, JSON-escaped untrusted block.
-
-    JSON-escaping neutralises any embedded delimiter forgery and control
-    characters without destroying the content — the model can still read it.
-    """
-    escaped = json.dumps(text, ensure_ascii=False)
+    """Wrap opaque tool output as a labelled, JSON-escaped untrusted block."""
+    escaped = json.dumps(text, ensure_ascii=False).replace("/", "\\/")
     return f"{_SPOTLIGHT_OPEN}\n{escaped}\n{_SPOTLIGHT_CLOSE}"
 
 

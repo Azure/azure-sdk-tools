@@ -82,6 +82,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
   // Review Upload Instructions
   createRevisionInstruction : string[] | undefined;
   acceptedFilesForReviewUpload : string | undefined;
+  acceptedFilesForReviewUploadLabel : string | undefined;
 
   // Filters
   details: any[] = [];
@@ -473,7 +474,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
         severity: 'error',
         icon: 'bi bi-exclamation-triangle',
         summary: 'Invalid file type',
-        detail: `Only ${this.acceptedFilesForReviewUpload} files are accepted.`,
+        detail: `Only ${this.acceptedFilesForReviewUploadLabel ?? this.acceptedFilesForReviewUpload} files are accepted.`,
         key: 'bc',
         life: 3000
       });
@@ -493,7 +494,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
         severity: 'error',
         icon: 'bi bi-exclamation-triangle',
         summary: 'Invalid file type',
-        detail: `Only ${this.acceptedFilesForReviewUpload} files are accepted.`,
+        detail: `Only ${this.acceptedFilesForReviewUploadLabel ?? this.acceptedFilesForReviewUpload} files are accepted.`,
         key: 'bc',
         life: 3000
       });
@@ -502,8 +503,12 @@ export class RevisionsListComponent implements OnInit, OnChanges {
 
   private isAcceptedRevisionFile(fileName: string): boolean {
     if (!this.acceptedFilesForReviewUpload) return true;
-    const extensions = this.acceptedFilesForReviewUpload.split(',').map(ext => ext.trim().toLowerCase());
     const lowerName = fileName.toLowerCase();
+    if (this.createRevisionForm.get('selectedCRLanguage')?.value?.data === "Rust") {
+      return lowerName.endsWith(".rust.json") || lowerName.endsWith("_rust.json");
+    }
+
+    const extensions = this.acceptedFilesForReviewUpload.split(',').map(ext => ext.trim().toLowerCase());
     return extensions.some(ext => lowerName.endsWith(ext));
   }
 
@@ -554,6 +559,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
   }
 
   onCRLanguageSelectChange() {
+    this.acceptedFilesForReviewUploadLabel = undefined;
     switch(this.createRevisionForm.get('selectedCRLanguage')?.value?.data){
       case "C":
         this.createRevisionInstruction = [
@@ -622,10 +628,11 @@ export class RevisionsListComponent implements OnInit, OnChanges {
         break;
       case "Rust":
         this.createRevisionInstruction = [
-          `In the root of your azure-sdk-for-rust clone, run: <code>cargo run --manifest-path eng/tools/generate_api_report/Cargo.toml -- --package {package-name}</code>`,
-          `Upload <code>sdk/{service-name}/{package-name}/review/{package-name}.rust.json</code> using the file picker in this drawer.`
+          `In the root of your azure-sdk-for-rust clone, run: <code>cargo run --manifest-path eng/tools/Cargo.toml -p generate_api -- --manifest-path sdk/{service-name}/{package-name}/Cargo.toml --format apiview --output target/generate_api/{package-name}</code>`,
+          `Rename <code>target/generate_api/{package-name}/apiview.json</code> to <code>{package-name}_rust.json</code> and upload the renamed file using the file picker in this drawer.`
         ];
-        this.acceptedFilesForReviewUpload = ".rust.json";
+        this.acceptedFilesForReviewUpload = ".json";
+        this.acceptedFilesForReviewUploadLabel = "_rust.json";
         this.createRevisionForm.get('selectedFile')?.enable();
         this.createRevisionForm.get('filePath')?.disable();
         break;
@@ -667,7 +674,10 @@ export class RevisionsListComponent implements OnInit, OnChanges {
       default:
         this.createRevisionInstruction = [];
         this.acceptedFilesForReviewUpload = undefined;
+        this.acceptedFilesForReviewUploadLabel = undefined;
     }
+
+    this.acceptedFilesForReviewUploadLabel ??= this.acceptedFilesForReviewUpload;
 
     this.revisionUploadFile = undefined;
 

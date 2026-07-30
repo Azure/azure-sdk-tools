@@ -20,7 +20,10 @@ namespace APIViewWeb
         public override bool IsSupportedFile(string name)
         {
             // Skip JS uploads
-            return base.IsSupportedFile(name) && !name.EndsWith(".api.json", StringComparison.OrdinalIgnoreCase) && !name.EndsWith(".rust.json", StringComparison.OrdinalIgnoreCase);
+            return base.IsSupportedFile(name)
+                && !name.EndsWith(".api.json", StringComparison.OrdinalIgnoreCase)
+                && !name.EndsWith(".rust.json", StringComparison.OrdinalIgnoreCase)
+                && !name.EndsWith("_rust.json", StringComparison.OrdinalIgnoreCase);
         }
 
         public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis, string croscrossLanguageMetada = null)

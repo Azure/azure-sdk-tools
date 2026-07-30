@@ -33,8 +33,13 @@ tree-style schema (`PackageName`, `PackageVersion`, `ParserVersion`, `Language`,
 `ReviewLines`). In the Rust repo's pack flow, the file is then copied to the
 artifact layout expected by `create-apireview` as `<package>_rust.json`.
 
+For manual website uploads, rename `apiview.json` to `<package>_rust.json` so it
+matches the shared APIView artifact convention.
+
 For the new design, this parser does not transform the file; it only preserves
-pass-through behavior if APIView still invokes it.
+pass-through behavior if APIView still invokes it. APIView still accepts older
+`<package>.rust.json` names for compatibility, but `_rust.json` is the canonical
+suffix for current flows.
 
 ## Legacy compatibility
 

@@ -63,6 +63,9 @@ The Rust repo's current API review caller chain remains:
 `create-apireview` step uploads that token file directly. `Create-APIReview.ps1`
 already has a separate upload path for pre-generated review token files.
 
+For consistency with that shared artifact contract, manual uploads should also
+rename `apiview.json` to `<package>_rust.json` before sending it to APIView.
+
 ## Role of this parser now
 
 This repository is no longer the primary renderer for current Rust SDK APIView

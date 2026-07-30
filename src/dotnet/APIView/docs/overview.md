@@ -312,7 +312,7 @@ Parsers live in various locations across the `azure-sdk-tools` repo.
 | JavaScript/TypeScript | `tools/apiview/parsers/js-api-parser` | `.api.json` | Tree | Yes |
 | Go | `src/go` | `.gosource` (zip) | Tree | Yes |
 | TypeSpec | `tools/apiview/emitters/typespec-apiview` | `.tsp`, `.cadl` | Tree | No  |
-| Rust | `tools/apiview/parsers/rust-api-parser` | `.rust.json` | Tree | Yes |
+| Rust | `tools/apiview/parsers/rust-api-parser` | `_rust.json` | Tree | Yes |
 | Swift | `src/swift/SwiftAPIView` | `.json` | Tree | No |
 | Swagger/OpenAPI | `tools/apiview/parsers/swagger-api-parser` | `.swagger` | Flat (legacy) | No  |
 | C++ | `tools/apiview/parsers/cpp-api-parser` | `.cppast` | Flat (legacy) | Yes |
@@ -332,10 +332,10 @@ There are three ways API revisions reach APIView: **CI Automatic** (the persiste
 
 A key variable across all workflows is **where the language parser runs**. This is determined by whether the CI build produces a pre-parsed token file (`{packageName}_{languageShort}.json`) alongside the build artifact. The shared scripts (`Create-APIReview.ps1`, `Detect-Api-Changes.ps1`) check for this file and branch accordingly:
 
-- **No token file present** (C#, Java, Go, Rust): The build artifact (`.nupkg`, `sources.jar`, `.gosource`, `.rust.json`) is sent to APIView. APIView invokes the language parser as an external process on the server.
-- **Token file present** (Python, JavaScript): The CI pipeline runs the parser to produce a `_python.json` or `_js.json` token file. Both the token file and the original artifact are sent to APIView, which stores them directly without running a parser. See [sandboxing.md](sandboxing.md) for rationale.
+- **No token file present** (C#, Java, Go): The build artifact (`.nupkg`, `sources.jar`, `.gosource`) is sent to APIView. APIView invokes the language parser as an external process on the server.
+- **Token file present** (Python, JavaScript, Rust): The CI pipeline runs the parser or generator to produce a `_python.json`, `_js.json`, or `_rust.json` token file. Both the token file and the original artifact are sent to APIView, which stores the token file directly without running a parser. See [sandboxing.md](sandboxing.md) for rationale.
 
-> **Note:** Go and Rust do CI-side *preprocessing* (zipping source into `.gosource` archives, generating `.rust.json` intermediate files), but the APIView server still runs the actual parser on those intermediate artifacts. Python and JavaScript are the only languages where the full APIView parser runs in CI.
+> **Note:** Go still uses CI-side preprocessing by zipping source into `.gosource` archives, and APIView runs the Go parser on the server. Rust now uses `generate_api` to produce `apiview.json`, stages that file as `_rust.json`, and uploads the token file directly.
 
 ### Workflow A — CI Automatic (non-PR internal builds)
 
@@ -352,12 +352,12 @@ Build artifact + (optionally) run parser
         │
         ├── Token file exists?
         │       │
-        │       ├── YES (Python, JS)
+        │       ├── YES (Python, JS, Rust)
         │       │   POST /autoreview/create ─────────► Download token file + original
         │       │   (build coordinates only)           artifact from DevOps
         │       │                                      Store both in Blob Storage
         │       │
-        │       └── NO (C#, Java, Go, Rust)
+        │       └── NO (C#, Java, Go)
         │           POST /autoreview/upload ─────────► Save original artifact to
         │           (multipart, binary artifact)       Blob Storage
         │                                              Invoke language parser on server
@@ -385,7 +385,7 @@ Query approval status
 | Python | `.whl` + `_python.json` | **Yes** (mandatory) | `/autoreview/create` |
 | JavaScript | `.api.json` + `_js.json` | **Yes** | `/autoreview/create` |
 | Go | `.gosource` | No | `/autoreview/upload` |
-| Rust | `.rust.json` | No | `/autoreview/upload` |
+| Rust | `_rust.json` | **Yes** | `/autoreview/create` |
 
 ### Workflow B — CI Pull Request
 
@@ -423,8 +423,8 @@ GET /api/PullRequests/                    ───────────► D
 
 1. The CI pipeline builds the artifact and publishes it (and optionally a token file) as a pipeline artifact — the same steps as Workflow A.
 2. `Detect-Api-Changes.ps1` iterates packages that have changes in the PR. For each, it calls `GET /api/PullRequests/CreateAPIRevisionIfAPIHasChanges` with DevOps build coordinates (`buildId`, `artifactName`, `filePath`), PR metadata (`pullRequestNumber`, `commitSha`, `repoName`), and package info (`packageName`, `language`).
-   - **If a token file exists** (Python, JS): The `codeFile` query param is added. APIView downloads the parent directory as a zip, extracting both the token file and original artifact.
-   - **If no token file** (C#, Java, Go, Rust): APIView downloads only the artifact file and runs the language parser on the server.
+   - **If a token file exists** (Python, JS, Rust): The `codeFile` query param is added. APIView downloads the parent directory as a zip, extracting both the token file and original artifact.
+   - **If no token file** (C#, Java, Go): APIView downloads only the artifact file and runs the language parser on the server.
 3. APIView creates a **PullRequest-type** API revision linked to the PR. It asynchronously posts a comment on the GitHub PR with a link to the review.
 
 > **Key difference from Workflow A:** The PR flow always uses DevOps build coordinates for artifact retrieval — even for languages like C# where Workflow A does a direct multipart upload. There is no direct file upload in the PR flow.

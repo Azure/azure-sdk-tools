@@ -96,4 +96,21 @@
     <CopilotSkipCliDownload>true</CopilotSkipCliDownload>
   </PropertyGroup>
 
+  <!-- On managed devices where npmjs.org is blocked (e.g. 1ES policy), redirect
+       the Copilot CLI download to whatever registry npm is configured to use.
+       NPM_CONFIG_REGISTRY env var takes priority; if not set, we read from npm config. -->
+  <PropertyGroup Condition="'$(NPM_CONFIG_REGISTRY)' != ''">
+    <CopilotNpmRegistryUrl>$(NPM_CONFIG_REGISTRY)</CopilotNpmRegistryUrl>
+  </PropertyGroup>
+
+  <Target Name="_GetNpmRegistryUrl" BeforeTargets="_DownloadCopilotCli"
+          Condition="'$(CopilotSkipCliDownload)' != 'true' And '$(TF_BUILD)' != 'True'">
+    <Exec Command="npm config get registry" ConsoleToMSBuild="true" StandardOutputImportance="low" IgnoreExitCode="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_NpmConfigRegistry" />
+    </Exec>
+    <PropertyGroup Condition="'$(_NpmConfigRegistry)' != '' And !$(_NpmConfigRegistry.Contains('registry.npmjs.org'))">
+      <CopilotNpmRegistryUrl>$(_NpmConfigRegistry.Trim())</CopilotNpmRegistryUrl>
+    </PropertyGroup>
+  </Target>
+
 </Project>

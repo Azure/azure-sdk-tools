@@ -55,7 +55,7 @@ public class ApiReviewHubResponseTests
     }
 
     [Test]
-    public void ToString_IncludesNestedMessage_WhenTopLevelMessageIsMissing()
+    public void ToString_IncludesResultMessage_WhenPresent()
     {
         var response = new ApiReviewHubResponse
         {

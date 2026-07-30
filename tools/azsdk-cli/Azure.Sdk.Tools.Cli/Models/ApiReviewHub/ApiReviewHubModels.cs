@@ -179,10 +179,6 @@ public class ApiReviewReleaseStatusResult
 
 public class ApiReviewHubResponse : CommandResponse
 {
-    [JsonPropertyName("message")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? Message { get; set; }
-
     [JsonPropertyName("result")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public OperationStatus? Result { get; set; }
@@ -190,10 +186,9 @@ public class ApiReviewHubResponse : CommandResponse
     protected override string Format()
     {
         var output = new StringBuilder();
-        var message = Message ?? Result?.Message;
-        if (!string.IsNullOrWhiteSpace(message))
+        if (!string.IsNullOrWhiteSpace(Result?.Message))
         {
-            output.AppendLine(message);
+            output.AppendLine(Result.Message);
         }
 
         if (Result != null)

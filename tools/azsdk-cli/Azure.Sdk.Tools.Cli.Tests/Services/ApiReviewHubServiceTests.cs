@@ -323,6 +323,113 @@ public class ApiReviewHubServiceTests
         Assert.That(exception.Message, Does.Contain("timed out"));
     }
 
+    [Test]
+    public async Task RequestReviewPullRequestAsync_WhenReviewPullRequestAlreadyExists_ReturnsExpectedStatus()
+    {
+        var mockHandler = new Mock<HttpMessageHandler>();
+        mockHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(request => request.Method == HttpMethod.Post),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Conflict)
+            {
+                Content = new StringContent(
+                    """
+                    {
+                      "error": {
+                        "code": "reviewPullRequestAlreadyExists",
+                        "message": "Open API review PR already exists."
+                      }
+                    }
+                    """,
+                    Encoding.UTF8,
+                    "application/json")
+            });
+
+        httpClientFactoryMock
+            .Setup(x => x.CreateClient(It.IsAny<string>()))
+            .Returns(new HttpClient(mockHandler.Object));
+
+        var request = new ReviewPullRequestCreationRequest
+        {
+            Language = "python",
+            PackageName = "pkg",
+            BaseTag = "v1.0.0",
+            TargetBranch = new GitBranchReference
+            {
+                Owner = "Azure",
+                Repo = "azure-sdk-for-python",
+                Name = "main"
+            }
+        };
+
+        var result = await service.RequestReviewPullRequestAsync(
+            request,
+            "https://api-review-hub-test.azurewebsites.net",
+            waitForCompletion: true,
+            pollInterval: TimeSpan.Zero,
+            CancellationToken.None);
+
+        Assert.That(result.Status, Is.EqualTo("alreadyExists"));
+        Assert.That(result.PackageName, Is.EqualTo("pkg"));
+    }
+
+    [Test]
+    public void RequestReviewPullRequestAsync_WhenConflictIsNotExpected_Throws()
+    {
+        var mockHandler = new Mock<HttpMessageHandler>();
+        mockHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(request => request.Method == HttpMethod.Post),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Conflict)
+            {
+                Content = new StringContent(
+                    """
+                    {
+                      "error": {
+                        "code": "operationConflict",
+                        "message": "Another operation is in progress."
+                      }
+                    }
+                    """,
+                    Encoding.UTF8,
+                    "application/json")
+            });
+
+        httpClientFactoryMock
+            .Setup(x => x.CreateClient(It.IsAny<string>()))
+            .Returns(new HttpClient(mockHandler.Object));
+
+        var request = new ReviewPullRequestCreationRequest
+        {
+            Language = "python",
+            PackageName = "pkg",
+            BaseTag = "v1.0.0",
+            TargetBranch = new GitBranchReference
+            {
+                Owner = "Azure",
+                Repo = "azure-sdk-for-python",
+                Name = "main"
+            }
+        };
+
+        var exception = Assert.ThrowsAsync<HttpRequestException>(async () =>
+            await service.RequestReviewPullRequestAsync(
+                request,
+                "https://api-review-hub-test.azurewebsites.net",
+                waitForCompletion: true,
+                pollInterval: TimeSpan.Zero,
+                CancellationToken.None));
+
+        Assert.That(exception!.StatusCode, Is.EqualTo(HttpStatusCode.Conflict));
+        Assert.That(exception.Message, Does.Contain("operationConflict"));
+    }
+
     private sealed class SteppingTimeProvider(DateTimeOffset initial, TimeSpan step) : TimeProvider
     {
         private DateTimeOffset _current = initial;

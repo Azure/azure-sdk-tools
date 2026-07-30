@@ -68,18 +68,27 @@ public class AzureService : IAzureService
     /// </summary>
     private static DefaultAzureCredential CreateManagedIdentityCredential()
     {
-        return new DefaultAzureCredential(new DefaultAzureCredentialOptions
-        {
-            ExcludeEnvironmentCredential = true,
-            ExcludeWorkloadIdentityCredential = true,
-            ExcludeManagedIdentityCredential = false,
-            ExcludeVisualStudioCredential = true,
-            ExcludeAzureCliCredential = true,
-            ExcludeAzurePowerShellCredential = true,
-            ExcludeAzureDeveloperCliCredential = true,
-            ExcludeInteractiveBrowserCredential = true,
-        });
+        return new DefaultAzureCredential(ManagedIdentityCredentialOptions);
     }
+
+    /// <summary>
+    /// The options used to build the managed-identity-only <see cref="DefaultAzureCredential"/>. Every credential
+    /// type that DefaultAzureCredential can probe must be excluded except ManagedIdentity, otherwise the wrapper
+    /// could silently pick up an unwanted identity from the environment.
+    /// </summary>
+    public static DefaultAzureCredentialOptions ManagedIdentityCredentialOptions => new()
+    {
+        ExcludeEnvironmentCredential = true,
+        ExcludeWorkloadIdentityCredential = true,
+        ExcludeManagedIdentityCredential = false,
+        ExcludeVisualStudioCredential = true,
+        ExcludeVisualStudioCodeCredential = true,
+        ExcludeAzureCliCredential = true,
+        ExcludeAzurePowerShellCredential = true,
+        ExcludeAzureDeveloperCliCredential = true,
+        ExcludeInteractiveBrowserCredential = true,
+        ExcludeBrokerCredential = true,
+    };
 
     private static bool IsGitHubAction()
     {

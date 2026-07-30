@@ -27,12 +27,11 @@ namespace Azure.Sdk.Tools.Cli.Services
     public interface IDevOpsConnection
     {
         public BuildHttpClient GetBuildClient(CancellationToken ct);
+        public BuildHttpClient GetAnonymousBuildClient();
         public WorkItemTrackingHttpClient GetWorkItemClient(CancellationToken ct);
         public ProjectHttpClient GetProjectClient(CancellationToken ct);
 
         public AccessToken GetToken(CancellationToken ct);
-
-        public Task<T> ReadBuildWithAnonymousFallbackAsync<T>(Func<BuildHttpClient, Task<T>> operation, CancellationToken ct);
     }
 
     public class DevOpsConnection(IAzureService azureService) : IDevOpsConnection
@@ -107,6 +106,15 @@ namespace Azure.Sdk.Tools.Cli.Services
             return _buildClient;
         }
 
+        /// <summary>
+        /// An unauthenticated Build client suitable for read-only access to public Azure SDK pipeline runs.
+        /// </summary>
+        public BuildHttpClient GetAnonymousBuildClient() =>
+            _anonymousBuildClient ??= new VssConnection(
+                new Uri(Constants.AZURE_SDK_DEVOPS_BASE_URL),
+                new VssBasicCredential())
+                .GetClient<BuildHttpClient>();
+
         public WorkItemTrackingHttpClient GetWorkItemClient(CancellationToken ct)
         {
             RefreshConnection(ct);
@@ -123,31 +131,6 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             RefreshConnection(ct);
             return _token!.Value;
-        }
-
-        private BuildHttpClient AnonymousBuildClient =>
-            _anonymousBuildClient ??= new VssConnection(
-                new Uri(Constants.AZURE_SDK_DEVOPS_BASE_URL),
-                new VssBasicCredential())
-                .GetClient<BuildHttpClient>();
-
-        /// <summary>
-        /// Runs a read-only Build operation anonymously first so that public build data (for example the
-        /// status, artifacts, timeline, or logs of a public Azure SDK pipeline run) can be read without
-        /// authentication.
-        /// </summary>
-        public async Task<T> ReadBuildWithAnonymousFallbackAsync<T>(Func<BuildHttpClient, Task<T>> operation, CancellationToken ct)
-        {
-            ct.ThrowIfCancellationRequested();
-            try
-            {
-                return await operation(AnonymousBuildClient);
-            }
-            catch (VssException ex) when (ex is not BuildException)
-            {
-                ct.ThrowIfCancellationRequested();
-                return await operation(GetBuildClient(ct));
-            }
         }
     }
 
@@ -1062,7 +1045,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         /// Reads build details (project, status, result) for a single run. When project is
         /// null or empty the build is probed in the public project first and then the internal project, so a bare
         /// build id resolves without the caller knowing which project owns it. Public runs are read anonymously
-        /// (no sign-in required) via the anonymous-first fallback; internal runs fall back to the authenticated client.
+        /// (no sign-in required); internal runs fall back to the authenticated client.
         /// </summary>
         public async Task<Build> GetBuildDetailsAsync(int buildId, string? project, CancellationToken ct)
         {
@@ -1074,8 +1057,15 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 try
                 {
-                    return await connection.ReadBuildWithAnonymousFallbackAsync(
-                        c => c.GetBuildAsync(candidate, buildId, cancellationToken: ct), ct);
+                    try
+                    {
+                        return await connection.GetAnonymousBuildClient().GetBuildAsync(candidate, buildId, cancellationToken: ct);
+                    }
+                    catch (VssException ex) when (ex is not BuildException)
+                    {
+                        ct.ThrowIfCancellationRequested();
+                        return await connection.GetBuildClient(ct).GetBuildAsync(candidate, buildId, cancellationToken: ct);
+                    }
                 }
                 catch (BuildNotFoundException)
                 {
@@ -1088,13 +1078,20 @@ namespace Azure.Sdk.Tools.Cli.Services
         }
 
         /// <summary>
-        /// Reads the timeline (task and job records) for a build. Public runs are read anonymously via the
-        /// anonymous-first fallback; internal runs fall back to the authenticated client.
+        /// Reads the timeline (task and job records) for a build. Public runs are read anonymously
+        /// (no sign-in required); internal runs fall back to the authenticated client.
         /// </summary>
         public async Task<Timeline> GetBuildTimelineAsync(string project, int buildId, CancellationToken ct)
         {
-            return await connection.ReadBuildWithAnonymousFallbackAsync(
-                c => c.GetBuildTimelineAsync(project, buildId, cancellationToken: ct), ct);
+            try
+            {
+                return await connection.GetAnonymousBuildClient().GetBuildTimelineAsync(project, buildId, cancellationToken: ct);
+            }
+            catch (VssException ex) when (ex is not BuildException)
+            {
+                ct.ThrowIfCancellationRequested();
+                return await connection.GetBuildClient(ct).GetBuildTimelineAsync(project, buildId, cancellationToken: ct);
+            }
         }
 
         /// <summary>

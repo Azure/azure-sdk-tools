@@ -666,7 +666,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 throw new NotImplementedException();
             }
 
-            public Task<T> ReadBuildWithAnonymousFallbackAsync<T>(Func<BuildHttpClient, Task<T>> operation, CancellationToken ct)
+            public BuildHttpClient GetAnonymousBuildClient()
             {
                 throw new NotImplementedException();
             }

@@ -1,15 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using System.Net.Http.Headers;
-using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Web;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Models.Pipeline;
 
-namespace Azure.Sdk.Tools.Cli.Helpers;
+namespace Azure.Sdk.Tools.Cli.Helpers.Pipeline;
 
 public interface IPipelineIdentifierHelper
 {
@@ -40,41 +38,32 @@ public interface IPipelineIdentifierHelper
     Task<GitHubPrLink?> TryResolveGitHubPrAsync(string identifier, CancellationToken ct);
 
     /// <summary>
-    /// Queries GitHub's GraphQL API for check runs on a PR's latest commit.
-    /// </summary>
-    Task<List<PrCheckRun>> GetPrCheckRunsAsync(string owner, string repo, int prNumber, CancellationToken ct);
-
-    /// <summary>
     /// Resolves any identifier (build ID, Azure Pipeline link, GitHub PR link, or bare PR number)
     /// to a list of Azure Pipeline builds. For PR identifiers, returns the failed AZP builds from check runs.
     /// </summary>
-    Task<List<ResolvedBuild>> ResolveBuildsAsync(string identifier, string? project = null, CancellationToken ct = default);
+    Task<List<AzurePipelineBuild>> ResolveBuildsAsync(string identifier, string? project = null, CancellationToken ct = default);
+
+    /// <summary>
+    /// Resolves the GitHub repository and commit the given builds ran against. The commit always comes from
+    /// the builds themselves, so an identifier naming an old run correlates to the commit that run tested
+    /// rather than to whatever the branch or pull request points at now. Returns null when none of the builds
+    /// are backed by a GitHub repository.
+    /// </summary>
+    Task<GitHubCommitRef?> ResolveCommitRefFromBuildsAsync(IEnumerable<AzurePipelineBuild> builds, CancellationToken ct);
+
+    /// <summary>
+    /// Resolves the GitHub repository and commit directly from an identifier that names a pull request, for
+    /// the case where no build correlates it: a pull request can fail on GitHub Actions alone. The commit is
+    /// the pull request's current head. Returns null when the identifier is not a pull request or its head
+    /// cannot be read.
+    /// </summary>
+    Task<GitHubCommitRef?> ResolveCommitRefFromPrAsync(string identifier, CancellationToken ct);
 }
 
 public record GitHubPrLink(string Owner, string Repo, int PrNumber);
 
-public record ResolvedBuild(int BuildId, string? Project, string? PipelineUrl);
-
-public class PrCheckRun
-{
-    [JsonPropertyName("name")]
-    public string Name { get; set; } = "";
-
-    [JsonPropertyName("conclusion")]
-    public string? Conclusion { get; set; }
-
-    [JsonPropertyName("details_url")]
-    public string? DetailsUrl { get; set; }
-
-    [JsonPropertyName("app_name")]
-    public string? AppName { get; set; }
-
-    [JsonPropertyName("type")]
-    public string Type { get; set; } = "";
-}
-
 public class PipelineIdentifierHelper(
-    IHttpClientFactory httpClientFactory,
+    IDevOpsService devOpsService,
     IGitHubService gitHubService,
     IGitHelper gitHelper,
     ILogger<PipelineIdentifierHelper> logger
@@ -86,38 +75,6 @@ public class PipelineIdentifierHelper(
 
     // AZP build IDs are 7+ digits; GitHub PR numbers are typically ≤ 6 digits
     private const int MaxGitHubPrNumber = 999_999;
-
-    private const string CheckRunsGraphQLQuery = @"
-query($owner: String!, $repo: String!, $pr: Int!) {
-  repository(owner: $owner, name: $repo) {
-    pullRequest(number: $pr) {
-      commits(last: 1) {
-        nodes {
-          commit {
-            statusCheckRollup {
-              contexts(first: 100) {
-                nodes {
-                  __typename
-                  ... on CheckRun {
-                    name
-                    conclusion
-                    detailsUrl
-                    checkSuite { app { name } }
-                  }
-                  ... on StatusContext {
-                    context
-                    state
-                    targetUrl
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}";
 
     public (int BuildId, string? Project) Parse(string pipelineIdentifier)
     {
@@ -149,46 +106,13 @@ query($owner: String!, $repo: String!, $pr: Int!) {
 
     public async Task<string> GetPipelineProjectAsync(int buildId, string? project, CancellationToken ct)
     {
-        var httpClient = httpClientFactory.CreateClient();
-
-        if (project == Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT || string.IsNullOrEmpty(project))
+        var build = await devOpsService.GetBuildDetailsAsync(buildId, project, ct);
+        var projectName = build.Project?.Name;
+        if (string.IsNullOrEmpty(projectName))
         {
-            var pipelineUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT}/_apis/build/builds/{buildId}?api-version=7.1";
-            logger.LogDebug("Getting pipeline details from {url} via http", pipelineUrl);
-            var response = await httpClient.GetAsync(pipelineUrl, ct);
-
-            if (string.IsNullOrEmpty(project) && !response.IsSuccessStatusCode)
-            {
-                return await GetPipelineProjectAsync(buildId, Constants.AZURE_SDK_DEVOPS_INTERNAL_PROJECT, ct);
-            }
-
-            if (response.StatusCode == System.Net.HttpStatusCode.NonAuthoritativeInformation)
-            {
-                throw new Exception($"Not authorized to get pipeline details from {pipelineUrl}");
-            }
-            response.EnsureSuccessStatusCode();
-            var json = await response.Content.ReadAsStringAsync(ct);
-            using var doc = JsonDocument.Parse(json);
-            var projectName = doc.RootElement.GetProperty("project").GetProperty("name").GetString();
-            if (string.IsNullOrEmpty(projectName))
-            {
-                throw new Exception($"Failed to parse project name from build details for build {buildId}");
-            }
-            return projectName;
+            throw new Exception($"Failed to parse project name from build details for build {buildId}");
         }
-
-        var internalUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{project}/_apis/build/builds/{buildId}?api-version=7.1";
-        logger.LogDebug("Getting pipeline details from {url} via http", internalUrl);
-        var internalResponse = await httpClient.GetAsync(internalUrl, ct);
-        if (internalResponse.StatusCode == System.Net.HttpStatusCode.NonAuthoritativeInformation)
-        {
-            throw new Exception($"Not authorized to get pipeline details from {internalUrl}");
-        }
-        internalResponse.EnsureSuccessStatusCode();
-        var internalJson = await internalResponse.Content.ReadAsStringAsync(ct);
-        using var internalDoc = JsonDocument.Parse(internalJson);
-        var internalProjectName = internalDoc.RootElement.GetProperty("project").GetProperty("name").GetString();
-        return internalProjectName ?? project;
+        return projectName;
     }
 
     public string GetPipelineUrl(string project, int buildId)
@@ -242,87 +166,7 @@ query($owner: String!, $repo: String!, $pr: Int!) {
         return null;
     }
 
-    public async Task<List<PrCheckRun>> GetPrCheckRunsAsync(string owner, string repo, int prNumber, CancellationToken ct)
-    {
-        var httpClient = httpClientFactory.CreateClient();
-
-        var token = gitHubService.GetAuthToken();
-        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("AzureSDKDevToolsMCP", "1.0"));
-
-        var requestBody = JsonSerializer.Serialize(new
-        {
-            query = CheckRunsGraphQLQuery,
-            variables = new { owner, repo, pr = prNumber }
-        });
-
-        logger.LogDebug("Querying GitHub GraphQL for PR check runs: {owner}/{repo}#{prNumber}", owner, repo, prNumber);
-        var response = await httpClient.PostAsync(
-            "https://api.github.com/graphql",
-            new StringContent(requestBody, Encoding.UTF8, "application/json"),
-            ct);
-        response.EnsureSuccessStatusCode();
-
-        var json = await response.Content.ReadAsStringAsync(ct);
-        using var doc = JsonDocument.Parse(json);
-
-        if (doc.RootElement.TryGetProperty("errors", out var errors))
-        {
-            var errorMsg = errors.EnumerateArray().FirstOrDefault().GetProperty("message").GetString();
-            throw new Exception($"GitHub GraphQL error: {errorMsg}");
-        }
-
-        var checkRuns = new List<PrCheckRun>();
-        var nodes = doc.RootElement
-            .GetProperty("data")
-            .GetProperty("repository")
-            .GetProperty("pullRequest")
-            .GetProperty("commits")
-            .GetProperty("nodes");
-
-        foreach (var commitNode in nodes.EnumerateArray())
-        {
-            var rollup = commitNode.GetProperty("commit").GetProperty("statusCheckRollup");
-            if (rollup.ValueKind == JsonValueKind.Null)
-            {
-                continue;
-            }
-
-            foreach (var contextNode in rollup.GetProperty("contexts").GetProperty("nodes").EnumerateArray())
-            {
-                var typeName = contextNode.GetProperty("__typename").GetString();
-
-                if (typeName == "CheckRun")
-                {
-                    checkRuns.Add(new PrCheckRun
-                    {
-                        Type = "CheckRun",
-                        Name = contextNode.GetProperty("name").GetString() ?? "",
-                        Conclusion = contextNode.GetProperty("conclusion").GetString(),
-                        DetailsUrl = contextNode.GetProperty("detailsUrl").GetString(),
-                        AppName = contextNode.GetProperty("checkSuite")
-                            .GetProperty("app")
-                            .GetProperty("name").GetString(),
-                    });
-                }
-                else if (typeName == "StatusContext")
-                {
-                    checkRuns.Add(new PrCheckRun
-                    {
-                        Type = "StatusContext",
-                        Name = contextNode.GetProperty("context").GetString() ?? "",
-                        Conclusion = contextNode.GetProperty("state").GetString(),
-                        DetailsUrl = contextNode.GetProperty("targetUrl").GetString(),
-                        AppName = "StatusContext",
-                    });
-                }
-            }
-        }
-
-        return checkRuns;
-    }
-
-    public async Task<List<ResolvedBuild>> ResolveBuildsAsync(string identifier, string? project = null, CancellationToken ct = default)
+    public async Task<List<AzurePipelineBuild>> ResolveBuildsAsync(string identifier, string? project = null, CancellationToken ct = default)
     {
         // Check if this is a GitHub PR identifier (URL or bare PR number)
         var prLink = await TryResolveGitHubPrAsync(identifier, ct);
@@ -341,18 +185,19 @@ query($owner: String!, $repo: String!, $pr: Int!) {
             resolvedProject = await ResolveProjectNameAsync(singleBuildId, resolvedProject, ct);
         }
 
-        return [new ResolvedBuild(singleBuildId, resolvedProject, null)];
+        var build = new AzurePipelineBuild(singleBuildId, resolvedProject, null, null, null);
+        return new List<AzurePipelineBuild> { await GetBuildStatusesAsync(build, ct) };
     }
 
-    private async Task<List<ResolvedBuild>> ResolveBuildsFromPrAsync(GitHubPrLink prLink, string? project = null, CancellationToken ct = default)
+    private async Task<List<AzurePipelineBuild>> ResolveBuildsFromPrAsync(GitHubPrLink prLink, string? project = null, CancellationToken ct = default)
     {
-        var checkRuns = await GetPrCheckRunsAsync(prLink.Owner, prLink.Repo, prLink.PrNumber, ct);
+        var checkRuns = await gitHubService.GetPrCheckRunsAsync(prLink.Owner, prLink.Repo, prLink.PrNumber, ct);
 
-        // Filter to Azure Pipelines check runs with FAILURE conclusion, de-dup by buildId
-        var builds = new Dictionary<int, ResolvedBuild>();
+        // Filter to failed Azure Pipelines check runs (any non-passing conclusion, not just FAILURE), de-dup by buildId
+        var builds = new Dictionary<int, AzurePipelineBuild>();
         var projectNameCache = new Dictionary<string, string>();
 
-        foreach (var run in checkRuns.Where(r => r.AppName == "Azure Pipelines" && r.Conclusion == "FAILURE"))
+        foreach (var run in checkRuns.Where(r => r.AppName == "Azure Pipelines" && r.IsFailed))
         {
             if (string.IsNullOrEmpty(run.DetailsUrl))
             {
@@ -378,7 +223,8 @@ query($owner: String!, $repo: String!, $pr: Int!) {
                     ? GetPipelineUrl(resolvedProject, buildId)
                     : run.DetailsUrl;
 
-                builds[buildId] = new ResolvedBuild(buildId, resolvedProject, pipelineUrl);
+                AzurePipelineBuild build = new AzurePipelineBuild(buildId, resolvedProject, pipelineUrl, null, null);
+                builds[buildId] = await GetBuildStatusesAsync(build, ct);
             }
             catch (ArgumentException)
             {
@@ -389,13 +235,67 @@ query($owner: String!, $repo: String!, $pr: Int!) {
         return [.. builds.Values];
     }
 
+    public async Task<GitHubCommitRef?> ResolveCommitRefFromBuildsAsync(IEnumerable<AzurePipelineBuild> builds, CancellationToken ct)
+    {
+        foreach (var build in builds)
+        {
+            try
+            {
+                var commitRef = await devOpsService.ResolveBuildCommitRefAsync(build.BuildId, build.Project, ct);
+                if (commitRef != null)
+                {
+                    logger.LogDebug(
+                        "Correlated build {buildId} to {owner}/{repo} @ {sha}",
+                        build.BuildId, commitRef.Owner, commitRef.Repo, commitRef.HeadSha);
+                    return commitRef;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Resolution is best effort: a build that cannot be read just means the next one is tried.
+                logger.LogDebug(ex, "Could not resolve a GitHub commit for build {buildId}", build.BuildId);
+            }
+        }
+
+        logger.LogDebug("None of the resolved builds are backed by a GitHub repository and commit");
+        return null;
+    }
+
+    public async Task<GitHubCommitRef?> ResolveCommitRefFromPrAsync(string identifier, CancellationToken ct)
+    {
+        var prLink = await TryResolveGitHubPrAsync(identifier, ct);
+        if (prLink == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var pullRequest = await gitHubService.GetPullRequestAsync(prLink.Owner, prLink.Repo, prLink.PrNumber, ct);
+            var headSha = pullRequest?.Head?.Sha;
+            if (string.IsNullOrEmpty(headSha))
+            {
+                logger.LogDebug("No head commit reported for {owner}/{repo}#{pr}", prLink.Owner, prLink.Repo, prLink.PrNumber);
+                return null;
+            }
+
+            logger.LogDebug("Resolved {owner}/{repo}#{pr} to commit {sha}", prLink.Owner, prLink.Repo, prLink.PrNumber, headSha);
+            return new GitHubCommitRef(prLink.Owner, prLink.Repo, headSha, prLink.PrNumber);
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "Could not read {owner}/{repo}#{pr} to resolve its head commit", prLink.Owner, prLink.Repo, prLink.PrNumber);
+            return null;
+        }
+    }
+
     /// <summary>
     /// Validates and resolves a project name to a recognized DevOps project. Known names (public/internal)
     /// are trusted as-is; a project GUID is resolved to its real name via the build API, since a build id
     /// uniquely identifies its project. Any other value (the org name "azure-sdk", a typo, etc.) is
     /// unrecognized and rejected with an ArgumentException so callers fail early.
     /// </summary>
-    private async Task<string> ResolveProjectNameAsync(int buildId, string project = null, CancellationToken ct = default)
+    private async Task<string> ResolveProjectNameAsync(int buildId, string? project = null, CancellationToken ct = default)
     {
         var normalized = NormalizeProjectName(project);
 
@@ -422,6 +322,39 @@ query($owner: String!, $repo: String!, $pr: Int!) {
 
         logger.LogDebug("Unrecognized project name {project} for build {buildId}. Expected a known project name (public, internal) or a valid project GUID.", project, buildId);
         throw new ArgumentException($"Unrecognized project name: {project} for build {buildId}. Expected a known project name (public, internal) or a valid project GUID.");
+    }
+
+    private async Task<AzurePipelineBuild> GetBuildStatusesAsync(AzurePipelineBuild build, CancellationToken ct)
+    {
+        try
+        {
+            // One fetch resolves the owning project (public/internal probe + GUID → name) and the run
+            // status/result.
+            var details = await devOpsService.GetBuildDetailsAsync(build.BuildId, build.Project, ct);
+            var buildProject = NormalizeProjectName(details.Project?.Name ?? build.Project ?? string.Empty);
+
+            var status = details.Status != null ? JsonNamingPolicy.SnakeCaseLower.ConvertName(details.Status.Value.ToString()) : null;
+            var result = details.Result != null ? JsonNamingPolicy.SnakeCaseLower.ConvertName(details.Result.Value.ToString()) : null;
+
+            return new AzurePipelineBuild(
+                build.BuildId,
+                buildProject,
+                build.PipelineUrl ?? GetPipelineUrl(buildProject, build.BuildId),
+                status ?? AzurePipelineBuild.StatusUnavailable,
+                result ?? AzurePipelineBuild.StatusUnavailable);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to read status for build {buildId}; marking status unavailable", build.BuildId);
+
+            var fallbackProject = build.Project ?? string.Empty;
+            return new AzurePipelineBuild(
+                build.BuildId,
+                fallbackProject,
+                build.PipelineUrl ?? GetPipelineUrl(fallbackProject, build.BuildId),
+                AzurePipelineBuild.StatusUnavailable,
+                AzurePipelineBuild.StatusUnavailable);
+        }
     }
 
     /// <summary>

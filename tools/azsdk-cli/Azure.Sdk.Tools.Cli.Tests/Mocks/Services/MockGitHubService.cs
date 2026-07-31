@@ -1,4 +1,5 @@
 using Octokit;
+using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
@@ -367,6 +368,26 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public Task<HashSet<string>> GetRepoLabels(string owner, string repo, CancellationToken ct)
         {
             throw new NotImplementedException();
+        }
+
+        public Task<IReadOnlyList<WorkflowRun>> GetFailedWorkflowRunsForCommitAsync(string owner, string repo, string commitSha, CancellationToken ct)
+        {
+            return Task.FromResult<IReadOnlyList<WorkflowRun>>([]);
+        }
+
+        public Task<IReadOnlyList<(string Name, string Content)>> GetFailedWorkflowRunLogsAsync(string owner, string repo, long runId, CancellationToken ct)
+        {
+            return Task.FromResult<IReadOnlyList<(string Name, string Content)>>([]);
+        }
+
+        public Task<IReadOnlyList<WorkflowJob>> GetWorkflowRunJobsAsync(string owner, string repo, long runId, CancellationToken ct)
+        {
+            return Task.FromResult<IReadOnlyList<WorkflowJob>>([]);
+        }
+
+        public Task<List<PrCheckRun>> GetPrCheckRunsAsync(string owner, string repo, int prNumber, CancellationToken ct)
+        {
+            return Task.FromResult(new List<PrCheckRun>());
         }
     }
 }

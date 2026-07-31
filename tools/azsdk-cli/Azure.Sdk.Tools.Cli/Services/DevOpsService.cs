@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.Globalization;
+using System.Net;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -9,11 +11,13 @@ using Azure.Identity;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
+using Azure.Sdk.Tools.Cli.Models.Pipeline;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
+using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.OAuth;
 using Microsoft.VisualStudio.Services.WebApi;
 using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
@@ -23,16 +27,22 @@ namespace Azure.Sdk.Tools.Cli.Services
     public interface IDevOpsConnection
     {
         public BuildHttpClient GetBuildClient(CancellationToken ct);
+        public BuildHttpClient GetAnonymousBuildClient();
         public WorkItemTrackingHttpClient GetWorkItemClient(CancellationToken ct);
         public ProjectHttpClient GetProjectClient(CancellationToken ct);
+
+        public AccessToken GetToken(CancellationToken ct);
     }
 
     public class DevOpsConnection(IAzureService azureService) : IDevOpsConnection
     {
         private BuildHttpClient _buildClient;
+        private BuildHttpClient _anonymousBuildClient;
         private WorkItemTrackingHttpClient _workItemClient;
         private ProjectHttpClient _projectClient;
         private AccessToken? _token;
+
+        private static readonly TimeSpan InteractiveLoginTimeout = TimeSpan.FromMinutes(3);
 
         private void RefreshConnection(CancellationToken ct)
         {
@@ -56,9 +66,11 @@ namespace Azure.Sdk.Tools.Cli.Services
                 {
                     credential = new InteractiveBrowserCredential(new InteractiveBrowserCredentialOptions { TenantId = null });
                     // Retry with interactive browser credential if the initial credential fails
-                    _token = credential.GetToken(new TokenRequestContext([Constants.AZURE_DEVOPS_TOKEN_SCOPE]), ct);
+                    using var interactiveLoginCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                    interactiveLoginCts.CancelAfter(InteractiveLoginTimeout);
+                    _token = credential.GetToken(new TokenRequestContext([Constants.AZURE_DEVOPS_TOKEN_SCOPE]), interactiveLoginCts.Token);
                 }
-                catch (OperationCanceledException)
+                catch (OperationCanceledException) when (ct.IsCancellationRequested)
                 {
                     throw;
                 }
@@ -94,6 +106,15 @@ namespace Azure.Sdk.Tools.Cli.Services
             return _buildClient;
         }
 
+        /// <summary>
+        /// An unauthenticated Build client suitable for read-only access to public Azure SDK pipeline runs.
+        /// </summary>
+        public BuildHttpClient GetAnonymousBuildClient() =>
+            _anonymousBuildClient ??= new VssConnection(
+                new Uri(Constants.AZURE_SDK_DEVOPS_BASE_URL),
+                new VssBasicCredential())
+                .GetClient<BuildHttpClient>();
+
         public WorkItemTrackingHttpClient GetWorkItemClient(CancellationToken ct)
         {
             RefreshConnection(ct);
@@ -104,6 +125,12 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             RefreshConnection(ct);
             return _projectClient;
+        }
+
+        public AccessToken GetToken(CancellationToken ct)
+        {
+            RefreshConnection(ct);
+            return _token!.Value;
         }
     }
 
@@ -131,6 +158,9 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<List<PackageWorkitemResponse>> ListPartialPackageWorkItemAsync(string packageName, string language, CancellationToken ct);
         public Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string apiSpecBranchRef = "main", CancellationToken ct = default);
         public Task<Dictionary<string, List<string>>> GetPipelineLlmArtifacts(string project, int buildId, CancellationToken ct);
+        public Task<Build> GetBuildDetailsAsync(int buildId, string? project, CancellationToken ct);
+        public Task<Timeline> GetBuildTimelineAsync(string project, int buildId, CancellationToken ct);
+        public Task<List<string>> GetBuildLogLinesAsync(string project, int buildId, int logId, CancellationToken ct);
         public Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, CancellationToken ct);
         public Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, Dictionary<string, string> multilineFieldFormats, CancellationToken ct);
         public Task<List<GitHubLableWorkItem>> GetGitHubLableWorkItemsAsync(CancellationToken ct);
@@ -145,10 +175,14 @@ namespace Azure.Sdk.Tools.Cli.Services
         Task<WorkItem> CreateWorkItemRelationAsync(int id, string relationType, int? targetId = null, string? targetUrl = null, CancellationToken ct = default);
         Task RemoveWorkItemRelationAsync(int id, string relationType, int targetId, CancellationToken ct);
         Task DeleteWorkItemAsync(int workItemId, CancellationToken ct);
+        Task<GitHubCommitRef?> ResolveBuildCommitRefAsync(int buildId, string? project, CancellationToken ct);
     }
 
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
     {
+        private static readonly HttpClient _noRedirectClient = new(new HttpClientHandler { AllowAutoRedirect = false });
+        private static readonly HttpClient _downloadClient = new();
+
         private static readonly string RELEASE_PLANNER_APP_TEST = "Release Planner App Test";
         private static readonly string MISSING_EMITTER_CONFIG = "MissingEmitterConfig";
         private static readonly string NOT_APPLICABLE = "Not applicable";
@@ -156,6 +190,12 @@ namespace Azure.Sdk.Tools.Cli.Services
         private List<WorkItemRelationType>? _cachedRelationTypes;
 
         private static readonly string[] SUPPORTED_SDK_LANGUAGES = { "Dotnet", "JavaScript", "Python", "Java", "Go" };
+
+        private static bool IsAuthException(HttpStatusCode status) =>
+            status is HttpStatusCode.Unauthorized            // 401
+                   or HttpStatusCode.Forbidden               // 403
+                   or HttpStatusCode.Found                    // 302 (sign-in redirect)
+                   or HttpStatusCode.NonAuthoritativeInformation; // 203 (DevOps anonymous-needs-auth)
 
         [GeneratedRegex("\\|\\s(Beta|Stable|GA)\\s\\|\\s([\\S]+)\\s\\|\\s([\\S]+)\\s\\|")]
         private static partial Regex SdkReleaseDetailsRegex();
@@ -373,7 +413,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 LanguageExclusionRequesterNote = workItem.Fields.TryGetValue("Custom.ReleaseExclusionRequestNote", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 LanguageExclusionApproverNote = workItem.Fields.TryGetValue("Custom.ReleaseExclusionApprovalNote", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 APISpecProjectPath = workItem.Fields.TryGetValue("Custom.ApiSpecProjectPath", out value) ? value?.ToString() ?? string.Empty : string.Empty,
-                AttestationStatus = workItem.Fields.TryGetValue("Custom.AttestationStatus", out value) ? value?.ToString() ?? string.Empty : string.Empty,                
+                AttestationStatus = workItem.Fields.TryGetValue("Custom.AttestationStatus", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 ReleasePlanType = workItem.Fields.TryGetValue("Custom.ReleasePlanType", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 Owner = workItem.Fields.TryGetValue("Custom.PrimaryPM", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 IsTestReleasePlan = workItem.Fields.TryGetValue("System.Tags", out value) && value is String tags && tags.Contains(RELEASE_PLANNER_APP_TEST)
@@ -1001,6 +1041,101 @@ namespace Azure.Sdk.Tools.Cli.Services
             return await buildClient.GetBuildAsync(Constants.AZURE_SDK_DEVOPS_INTERNAL_PROJECT, buildId, cancellationToken: ct);
         }
 
+        /// <summary>
+        /// Reads build details (project, status, result) for a single run. When project is
+        /// null or empty the build is probed in the public project first and then the internal project, so a bare
+        /// build id resolves without the caller knowing which project owns it. Public runs are read anonymously
+        /// (no sign-in required); internal runs fall back to the authenticated client.
+        /// </summary>
+        public async Task<Build> GetBuildDetailsAsync(int buildId, string? project, CancellationToken ct)
+        {
+            string[] candidates = string.IsNullOrEmpty(project)
+                ? [Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT, Constants.AZURE_SDK_DEVOPS_INTERNAL_PROJECT]
+                : [project];
+
+            foreach (var candidate in candidates)
+            {
+                try
+                {
+                    try
+                    {
+                        return await connection.GetAnonymousBuildClient().GetBuildAsync(candidate, buildId, cancellationToken: ct);
+                    }
+                    catch (VssException ex) when (ex is not BuildException)
+                    {
+                        ct.ThrowIfCancellationRequested();
+                        return await connection.GetBuildClient(ct).GetBuildAsync(candidate, buildId, cancellationToken: ct);
+                    }
+                }
+                catch (BuildNotFoundException)
+                {
+                    // The build does not live in this project; try the next candidate.
+                }
+            }
+
+            throw new BuildNotFoundException(
+                $"Build {buildId} was not found in any of the following projects: {string.Join(", ", candidates)}.");
+        }
+
+        /// <summary>
+        /// Reads the timeline (task and job records) for a build. Public runs are read anonymously
+        /// (no sign-in required); internal runs fall back to the authenticated client.
+        /// </summary>
+        public async Task<Timeline> GetBuildTimelineAsync(string project, int buildId, CancellationToken ct)
+        {
+            try
+            {
+                return await connection.GetAnonymousBuildClient().GetBuildTimelineAsync(project, buildId, cancellationToken: ct);
+            }
+            catch (VssException ex) when (ex is not BuildException)
+            {
+                ct.ThrowIfCancellationRequested();
+                return await connection.GetBuildClient(ct).GetBuildTimelineAsync(project, buildId, cancellationToken: ct);
+            }
+        }
+
+        /// <summary>
+        /// Reads the lines of a single build log. A public run is fetched anonymously; a private or internal run
+        /// answers the anonymous request with a redirect to a sign-in page, so it is retried once with a bearer
+        /// token.
+        /// </summary>
+        public async Task<List<string>> GetBuildLogLinesAsync(string project, int buildId, int logId, CancellationToken ct)
+        {
+            var logUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{project}/_apis/build/builds/{buildId}/logs/{logId}?api-version=7.1";
+
+            using var anonymousResponse = await _noRedirectClient.GetAsync(logUrl, ct);
+
+            string content;
+            // Check the auth-challenge statuses before IsSuccessStatusCode: a needs-auth 203 is itself a 2xx,
+            // so a success-first check would read the sign-in page as content instead of retrying with a token.
+            if (IsAuthException(anonymousResponse.StatusCode))
+            {
+                var request = new HttpRequestMessage(HttpMethod.Get, logUrl);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", connection.GetToken(ct).Token);
+                using var authenticatedResponse = await _noRedirectClient.SendAsync(request, ct);
+                if (IsAuthException(authenticatedResponse.StatusCode))
+                {
+                    var body = await authenticatedResponse.Content.ReadAsStringAsync(ct);
+                    throw new HttpRequestException(
+                        $"Authenticated request to {logUrl} still returned an authentication status {(int)authenticatedResponse.StatusCode} ({authenticatedResponse.StatusCode}) after a bearer token was supplied; the token may be expired, lack the required scope, or target the wrong tenant: {body}");
+                }
+                authenticatedResponse.EnsureSuccessStatusCode();
+                content = await authenticatedResponse.Content.ReadAsStringAsync(ct);
+            }
+            else if (anonymousResponse.IsSuccessStatusCode)
+            {
+                content = await anonymousResponse.Content.ReadAsStringAsync(ct);
+            }
+            else
+            {
+                var body = await anonymousResponse.Content.ReadAsStringAsync(ct);
+                throw new HttpRequestException(
+                    $"Anonymous request to {logUrl} failed with status {(int)anonymousResponse.StatusCode} ({anonymousResponse.StatusCode}): {body}");
+            }
+
+            return string.IsNullOrEmpty(content) ? [] : content.Replace("\r\n", "\n").TrimEnd('\n').Split('\n').ToList();
+        }
+
         public async Task<string> GetSDKPullRequestFromPipelineRunAsync(int buildId, string language, int workItemId, CancellationToken ct)
         {
             var buildClient = connection.GetBuildClient(ct);
@@ -1499,139 +1634,133 @@ namespace Azure.Sdk.Tools.Cli.Services
             return sdkReleaseInfo;
         }
 
-        private async Task<Dictionary<string, List<string>>> GetLlmArtifactsAuthenticated(string project, int buildId, CancellationToken ct)
+        public async Task<Dictionary<string, List<string>>> GetPipelineLlmArtifacts(string project, int buildId, CancellationToken ct)
         {
-            var buildClient = connection.GetBuildClient(ct);
             var result = new Dictionary<string, List<string>>();
-            var artifacts = await buildClient.GetArtifactsAsync(project, buildId, cancellationToken: ct);
-            foreach (var artifact in artifacts)
+
+            var artifactsUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{project}/_apis/build/builds/{buildId}/artifacts?api-version=7.1-preview.5";
+
+            // Read the artifact list anonymously; a private/internal build's anonymous read fails (its sign-in
+            // redirect surfaces as a non-success status because redirects are disabled), so it is retried with a
+            // bearer token that is then reused for the content downloads below.
+            using var anonymousResponse = await _noRedirectClient.GetAsync(artifactsUrl, ct);
+
+            string artifactsJson;
+            string? bearerToken = null;
+            // Check the auth-challenge statuses before IsSuccessStatusCode: a needs-auth 203 is itself a 2xx,
+            // so a success-first check would read the sign-in page as content instead of retrying with a token.
+            if (IsAuthException(anonymousResponse.StatusCode))
             {
-                if (artifact.Name.StartsWith("LLM Artifacts", StringComparison.OrdinalIgnoreCase))
+                bearerToken = connection.GetToken(ct).Token;
+                var request = new HttpRequestMessage(HttpMethod.Get, artifactsUrl);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
+                using var authenticatedResponse = await _noRedirectClient.SendAsync(request, ct);
+                if (IsAuthException(authenticatedResponse.StatusCode))
                 {
-                    var tempDir = Path.Combine(Path.GetTempPath(), $"{artifact.Name}_{Guid.NewGuid()}");
-                    Directory.CreateDirectory(tempDir);
-
-                    logger.LogDebug("Downloading artifact '{artifactName}' to '{tempDir}'", artifact.Name, tempDir);
-
-                    using var stream = await buildClient.GetArtifactContentZipAsync(project, buildId, artifact.Name, cancellationToken: ct);
-                    var zipPath = Path.Combine(tempDir, "artifact.zip");
-                    using (var fileStream = File.Create(zipPath))
-                    {
-                        await stream.CopyToAsync(fileStream, ct);
-                    }
-
-                    await Task.Factory.StartNew(() =>
-                    {
-                        System.IO.Compression.ZipFile.ExtractToDirectory(zipPath, tempDir);
-                        File.Delete(zipPath);
-                    }, ct);
-
-                    var files = Directory.GetFiles(tempDir, "*", SearchOption.AllDirectories).ToList();
-                    result[artifact.Name] = files;
+                    var body = await authenticatedResponse.Content.ReadAsStringAsync(ct);
+                    throw new HttpRequestException(
+                        $"Authenticated request to {artifactsUrl} still returned an authentication status {(int)authenticatedResponse.StatusCode} ({authenticatedResponse.StatusCode}) after a bearer token was supplied; the token may be expired, lack the required scope, or target the wrong tenant: {body}");
                 }
+                authenticatedResponse.EnsureSuccessStatusCode();
+                artifactsJson = await authenticatedResponse.Content.ReadAsStringAsync(ct);
             }
+            else if (anonymousResponse.IsSuccessStatusCode)
+            {
+                artifactsJson = await anonymousResponse.Content.ReadAsStringAsync(ct);
+            }
+            else
+            {
+                var body = await anonymousResponse.Content.ReadAsStringAsync(ct);
+                throw new HttpRequestException(
+                    $"Anonymous request to {artifactsUrl} failed with status {(int)anonymousResponse.StatusCode} ({anonymousResponse.StatusCode}): {body}");
+            }
+
+            // Given an artifact name like "LLM Artifacts - Ubuntu2404_NET80_PackageRef_Debug - 1"
+            // where '1' == the job attempt number, only keep artifacts from the most recent attempt.
+            using var doc = JsonDocument.Parse(artifactsJson);
+            var llmArtifacts = doc.RootElement.GetProperty("value").EnumerateArray()
+                .Select(a => (
+                    Name: a.GetProperty("name").GetString() ?? string.Empty,
+                    DownloadUrl: a.TryGetProperty("resource", out var resource) && resource.TryGetProperty("downloadUrl", out var url)
+                        ? url.GetString()
+                        : null))
+                .Where(a => a.Name.StartsWith("LLM Artifacts", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(a.DownloadUrl))
+                .ToList();
+            if (llmArtifacts.Count == 0)
+            {
+                return result;
+            }
+            var mostRecentJobAttempt = llmArtifacts.Max(a => ParseLlmArtifactJobAttempt(a.Name));
+            if (mostRecentJobAttempt == 0)
+            {
+                // No artifact has a parseable job-attempt suffix; skip rather than treating attempt 0 as newest.
+                return result;
+            }
+            var mostRecentJobAttempts = llmArtifacts.Where(a => ParseLlmArtifactJobAttempt(a.Name) == mostRecentJobAttempt).ToList();
+
+            var tempDir = await PrepareArtifactTempDirAsync(buildId, ct);
+            var seenFiles = new HashSet<string>();
+            foreach (var artifact in mostRecentJobAttempts)
+            {
+                logger.LogDebug("Downloading artifact '{artifactName}' to '{tempDir}'", artifact.Name, tempDir);
+
+                var request = new HttpRequestMessage(HttpMethod.Get, artifact.DownloadUrl!);
+                if (!string.IsNullOrEmpty(bearerToken))
+                {
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
+                }
+
+                var zipPath = Path.Combine(tempDir, "artifact.zip");
+                using (var response = await _downloadClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct))
+                {
+                    response.EnsureSuccessStatusCode();
+                    using var stream = await response.Content.ReadAsStreamAsync(ct);
+                    using var fileStream = File.Create(zipPath);
+                    await stream.CopyToAsync(fileStream, ct);
+                }
+
+                await ExtractArtifactZipAsync(zipPath, tempDir, artifact.Name, seenFiles, result, ct);
+            }
+
             return result;
         }
 
-        private async Task<Dictionary<string, List<string>>> GetLlmArtifactsUnauthenticated(string project, int buildId, CancellationToken ct)
+        private static async Task<string> PrepareArtifactTempDirAsync(int buildId, CancellationToken ct)
         {
-            var result = new Dictionary<string, List<string>>();
-            using var httpClient = new HttpClient();
-            var artifactsUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{project}/_apis/build/builds/{buildId}/artifacts?api-version=7.1-preview.5";
-            var artifactsResponse = await httpClient.GetAsync(artifactsUrl, ct);
-            // Devops will return a sign-in html page if the user is not authorized
-            if (artifactsResponse.StatusCode == System.Net.HttpStatusCode.NonAuthoritativeInformation)
-            {
-                throw new Exception($"Not authorized to get artifacts from {artifactsUrl}");
-            }
-            artifactsResponse.EnsureSuccessStatusCode();
-            var artifactsJson = await artifactsResponse.Content.ReadAsStringAsync(ct);
-            using var doc = JsonDocument.Parse(artifactsJson);
-            var artifacts = doc.RootElement.GetProperty("value").EnumerateArray();
-
-            var seenFiles = new HashSet<string>();
             var tempDir = Path.Combine(Path.GetTempPath(), buildId.ToString());
             if (Directory.Exists(tempDir))
             {
-                await Task.Factory.StartNew(() =>
-                {
-                    Directory.Delete(tempDir, true);
-                }, ct);
+                await Task.Factory.StartNew(() => Directory.Delete(tempDir, true), ct);
             }
             Directory.CreateDirectory(tempDir);
-
-            List<JsonElement> mostRecentArtifacts = [];
-            var mostRecentJobAttempt = 1;
-            // Given an artifact name like "LLM Artifacts - Ubuntu2404_NET80_PackageRef_Debug - 1"
-            // where '1' == the job attempt number
-            // only find artifacts from the most recent job attempt.
-            foreach (var artifact in artifacts)
-            {
-                var name = artifact.GetProperty("name").GetString();
-                var jobAttempt = name?.Split('-').LastOrDefault()?.Trim();
-                var jobAttemptNumber = int.TryParse(jobAttempt, out var attempt) ? attempt : 0;
-                if (jobAttemptNumber == mostRecentJobAttempt)
-                {
-                    mostRecentArtifacts.Add(artifact);
-                }
-                else if (jobAttemptNumber > mostRecentJobAttempt)
-                {
-                    mostRecentArtifacts.Clear();
-                    mostRecentArtifacts.Add(artifact);
-                }
-            }
-
-            foreach (var artifact in mostRecentArtifacts)
-            {
-                var name = artifact.GetProperty("name").GetString();
-                if (name == null || name.StartsWith("LLM Artifacts", StringComparison.OrdinalIgnoreCase) == false)
-                {
-                    continue;
-                }
-
-                var downloadUrl = artifact.GetProperty("resource").GetProperty("downloadUrl").GetString();
-                if (string.IsNullOrEmpty(downloadUrl))
-                {
-                    continue;
-                }
-
-                logger.LogDebug("Downloading artifact '{artifactName}' to '{tempDir}'", name, tempDir);
-
-                var zipPath = Path.Combine(tempDir, "artifact.zip");
-
-                using (var zipStream = await httpClient.GetStreamAsync(downloadUrl, ct))
-                using (var fileStream = File.Create(zipPath))
-                {
-                    await zipStream.CopyToAsync(fileStream, ct);
-                }
-
-                await Task.Factory.StartNew(() =>
-                {
-                    System.IO.Compression.ZipFile.ExtractToDirectory(zipPath, tempDir);
-                    File.Delete(zipPath);
-                }, ct);
-
-                var files = Directory.GetFiles(tempDir, "*", SearchOption.AllDirectories).ToList();
-                var newFiles = files.Where(f => !seenFiles.Contains(f)).ToList();
-                seenFiles.UnionWith(newFiles);
-
-                // Given an artifact name like "LLM Artifacts - Ubuntu2404_NET80_PackageRef_Debug - 1"
-                // create a key/platform name like "Ubuntu2404_NET80_PackageRef_Debug"
-                var parts = name.Split(" - ", StringSplitOptions.RemoveEmptyEntries);
-                var testPlatform = string.Join(" - ", parts[1..^1]);
-                result[testPlatform] = newFiles;
-            }
-
-            return result;
+            return tempDir;
         }
 
-        public async Task<Dictionary<string, List<string>>> GetPipelineLlmArtifacts(string project, int buildId, CancellationToken ct)
+        private static async Task ExtractArtifactZipAsync(string zipPath, string tempDir, string artifactName, HashSet<string> seenFiles, Dictionary<string, List<string>> result, CancellationToken ct)
         {
-            if (project == Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT)
+            await Task.Factory.StartNew(() =>
             {
-                return await GetLlmArtifactsUnauthenticated(project, buildId, ct);
-            }
-            return await GetLlmArtifactsAuthenticated(project, buildId, ct);
+                System.IO.Compression.ZipFile.ExtractToDirectory(zipPath, tempDir, overwriteFiles: true);
+                File.Delete(zipPath);
+            }, ct);
+
+            var files = Directory.GetFiles(tempDir, "*", SearchOption.AllDirectories).ToList();
+            var newFiles = files.Where(f => !seenFiles.Contains(f)).ToList();
+            seenFiles.UnionWith(newFiles);
+
+            // Given an artifact name like "LLM Artifacts - Ubuntu2404_NET80_PackageRef_Debug - 1"
+            // create a key/platform name like "Ubuntu2404_NET80_PackageRef_Debug"
+            var parts = artifactName.Split(" - ", StringSplitOptions.RemoveEmptyEntries);
+            var testPlatform = string.Join(" - ", parts[1..^1]);
+            result[testPlatform] = newFiles;
+        }
+
+        private static int ParseLlmArtifactJobAttempt(string artifactName)
+        {
+            // Artifact names look like "LLM Artifacts - <platform> - <jobAttempt>"; split on the same " - "
+            // delimiter used to extract the platform name so the trailing job-attempt number is isolated.
+            var jobAttempt = artifactName.Split(" - ", StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?.Trim();
+            return int.TryParse(jobAttempt, out var attempt) ? attempt : 0;
         }
 
         public async Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, CancellationToken ct)
@@ -2023,5 +2152,82 @@ namespace Azure.Sdk.Tools.Cli.Services
             var workItemClient = connection.GetWorkItemClient(ct);
             await workItemClient.DeleteWorkItemAsync(workItemId, destroy: false, cancellationToken: ct);
         }
+
+        /// <summary>
+        /// Best-effort resolution of the GitHub repository and commit a build ran against. Returns null when the
+        /// pipeline's source is not a GitHub repository (for example an Azure Repos run, whose repository id is a
+        /// GUID rather than "owner/repo") or when the build reports no source version, so callers can skip GitHub
+        /// lookups instead of failing.
+        /// </summary>
+        public async Task<GitHubCommitRef?> ResolveBuildCommitRefAsync(int buildId, string? project, CancellationToken ct)
+        {
+            var build = await GetBuildDetailsAsync(buildId, project, ct);
+
+            // GitHub-backed pipelines report the repository as type "GitHub" with an id of "owner/repo".
+            var repository = build.Repository;
+            if (repository == null || !string.Equals(repository.Type, "GitHub", StringComparison.OrdinalIgnoreCase))
+            {
+                logger.LogDebug("Build {buildId} does not have a GitHub repository (type '{repositoryType}')", buildId, repository?.Type ?? "unknown");
+                return null;
+            }
+
+            var parts = repository.Id?.Split('/');
+            if (parts == null || parts.Length != 2 || string.IsNullOrEmpty(parts[0]) || string.IsNullOrEmpty(parts[1]))
+            {
+                logger.LogDebug("Build {buildId} has a GitHub repository id '{repositoryId}' that is not in 'owner/repo' form", buildId, repository.Id ?? "unknown");
+                return null;
+            }
+
+            var headSha = ResolveHeadSha(build);
+            if (string.IsNullOrEmpty(headSha))
+            {
+                logger.LogDebug("Build {buildId} reports no source version, so it cannot be correlated to a commit", buildId);
+                return null;
+            }
+
+            return new GitHubCommitRef(parts[0], parts[1], headSha, ResolvePullRequestNumber(build));
+        }
+
+        /// <summary>
+        /// Resolves the commit SHA that a build actually ran against. For a PR validation run the source branch is
+        /// a `refs/pull/&lt;n&gt;/merge` ref and <see cref="Build.SourceVersion"/> is the ephemeral merge commit, which
+        /// does not exist in the GitHub repository; in that case the PR head SHA reported by the trigger info is
+        /// used instead. Both values are recorded on the build, so an old build resolves to the commit it tested
+        /// rather than to the current head of the branch or pull request. Returns null when the build reports no
+        /// source version.
+        /// </summary>
+        private static string? ResolveHeadSha(Build build)
+        {
+            var sourceVersion = build.SourceVersion;
+            if (string.IsNullOrEmpty(sourceVersion))
+            {
+                return null;
+            }
+
+            var isMerge = build.SourceBranch?.EndsWith("/merge", StringComparison.OrdinalIgnoreCase) == true;
+            if (!isMerge)
+            {
+                return sourceVersion;
+            }
+
+            return build.TriggerInfo != null
+                && build.TriggerInfo.TryGetValue("pr.sourceSha", out var prSourceSha)
+                && !string.IsNullOrEmpty(prSourceSha)
+                    ? prSourceSha
+                    : sourceVersion;
+        }
+
+        /// <summary>
+        /// Resolves the pull request a build validated, from its `refs/pull/&lt;n&gt;/merge` source branch. Returns
+        /// null for builds triggered by a branch push rather than a pull request.
+        /// </summary>
+        private static int? ResolvePullRequestNumber(Build build)
+        {
+            var match = PullRequestBranchRegex().Match(build.SourceBranch ?? "");
+            return match.Success && int.TryParse(match.Groups[1].Value, out var prNumber) ? prNumber : null;
+        }
+
+        [GeneratedRegex(@"^refs/pull/(\d+)/", RegexOptions.IgnoreCase)]
+        private static partial Regex PullRequestBranchRegex();
     }
 }

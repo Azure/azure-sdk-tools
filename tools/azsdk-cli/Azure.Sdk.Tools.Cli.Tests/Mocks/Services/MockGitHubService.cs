@@ -389,5 +389,35 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         {
             return Task.FromResult(new List<PrCheckRun>());
         }
+
+        public Task<IReadOnlyList<PullRequest>> GetMergedPullRequestByTimeFrameAsync(string repoOwner, string repoName, DateTimeOffset since, DateTimeOffset until, CancellationToken ct = default)
+        {
+            return Task.FromResult<IReadOnlyList<PullRequest>>(new List<PullRequest>().AsReadOnly());
+        }
+
+        public Task<IReadOnlyList<PullRequestCommit>> GetPullRequestCommitsAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
+        {
+            return Task.FromResult<IReadOnlyList<PullRequestCommit>>([]);
+        }
+
+        public Task<IReadOnlyList<IssueComment>> GetPullRequestIssueCommentsAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
+        {
+            return Task.FromResult<IReadOnlyList<IssueComment>>([]);
+        }
+
+        public Task<IReadOnlyList<PullRequestFile>> GetPullRequestFilesAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
+        {
+            return Task.FromResult<IReadOnlyList<PullRequestFile>>([]);
+        }
+
+        public Task<IReadOnlyList<GitHubCommitFile>> GetCommitFilesAsync(string repoOwner, string repoName, string sha, CancellationToken ct)
+        {
+            return Task.FromResult<IReadOnlyList<GitHubCommitFile>>([]);
+        }
+
+        public Task<List<PrCheckRun>> GetCommitCheckRunsAsync(string owner, string repo, string sha, CancellationToken ct)
+        {
+            return Task.FromResult(new List<PrCheckRun>());
+        }
     }
 }

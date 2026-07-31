@@ -1,0 +1,206 @@
+# Nightly evaluation of whether GitHub Copilot's fixes for failing Azure SDK pipelines took
+# the pipeline from failure to success and survived into the merged PR.
+#
+# For each repository the azsdk CLI evaluator is run for a one-day window and its JSON
+# response is written to Azure Blob Storage using the layout the pipeline-analysis-dashboard
+# reads (tools/pipeline-analysis-dashboard):
+#
+#     <container>/pipeline-fix/<repo>/<YYYY-MM-DD>.json
+#
+# One blob per repo per day is what gives the dashboard its trend lines: it lists the
+# "pipeline-fix/" prefix and reads N days back, with no database in between. The dashboard
+# derives each run's date from the report's own "until" field, falling back to the date in
+# the blob name.
+#
+# The same files are also published as a pipeline artifact so a run can be inspected
+# without reaching for storage.
+
+trigger: none
+pr: none
+
+schedules:
+  - cron: "0 8 * * *"
+    displayName: Nightly Copilot pipeline-fix evaluation (08:00 UTC)
+    branches:
+      include:
+        - main
+    always: true
+
+parameters:
+  - name: owner
+    displayName: GitHub repository owner
+    type: string
+    default: Azure
+  - name: repos
+    displayName: Repositories to evaluate
+    type: object
+    default:
+      - azure-sdk-for-net
+      - azure-sdk-for-python
+      - azure-sdk-for-java
+      - azure-sdk-for-js
+      - azure-sdk-for-go
+  - name: sinceDays
+    displayName: Look back this many days for merged PRs
+    type: number
+    default: 1
+  - name: publishToBlob
+    displayName: Publish results to Azure Blob Storage
+    type: boolean
+    default: true
+
+variables:
+  # Provides azuresdk-copilot-github-pat (GitHub token for the evaluator's Octokit client).
+  - group: 'AzSDK_Eval_Variable_group'
+  - name: CliDir
+    value: tools/azsdk-cli/Azure.Sdk.Tools.Cli
+  - name: OutDir
+    value: $(Build.ArtifactStagingDirectory)/azsdk-cli
+  # Root of the tree uploaded to the container; its layout IS the blob key layout.
+  - name: EvalArtifactDir
+    value: $(Build.ArtifactStagingDirectory)/pipeline-fix-eval
+  - name: MetricsStorageAccount
+    value: azsdkpipelinemetrics
+  - name: MetricsContainer
+    value: metrics
+
+jobs:
+  - job: Evaluate
+    displayName: 'Evaluate Copilot pipeline fixes'
+    timeoutInMinutes: 120
+    pool:
+      name: azsdk-pool
+      demands: ImageOverride -equals ubuntu-24.04
+    steps:
+      - checkout: self
+        fetchDepth: 1
+
+      - task: UseDotNet@2
+        displayName: 'Install .NET SDK (global.json)'
+        inputs:
+          useGlobalJson: true
+
+      # The CLI is a Microsoft.NET.Sdk.Web app targeting net8.0, so running it needs
+      # the ASP.NET Core 8 shared framework. Installing the 8.0 SDK provides it (the
+      # 9.0 SDK from global.json only ships the 9.0 shared frameworks). global.json
+      # still pins the build to the 9.0 SDK.
+      - task: UseDotNet@2
+        displayName: 'Install .NET 8 SDK (ASP.NET Core 8 runtime to run the CLI)'
+        inputs:
+          packageType: sdk
+          version: '8.0.x'
+
+      - script: dotnet build $(CliDir) -c Release -o $(OutDir) --nologo
+        displayName: 'Build azsdk CLI'
+
+      # Note: the Copilot CLI (used only by the model-judge tier) is
+      # downloaded and copied into $(OutDir)/runtimes/<rid>/native by the
+      # GitHub.Copilot.SDK NuGet build targets during the 'dotnet build' above, so
+      # no separate Copilot CLI / Node install step is required here.
+      - task: AzureCLI@2
+        displayName: 'Evaluate each repository'
+        inputs:
+          # Service connection whose SP can read azure-sdk DevOps builds. The AzureCLI@2
+          # task exports AZURESUBSCRIPTION_* + SYSTEM_ACCESSTOKEN, which the tool's
+          # AzurePipelinesCredential uses to get an Azure DevOps-scoped AAD token.
+          azureSubscription: 'opensource-api-connection'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            $ErrorActionPreference = 'Stop'
+
+            # The blob name must agree with the window the report covers, and the dashboard
+            # prefers the report's own "until" (set to UtcNow by the tool) over the name.
+            $reportDate = (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd')
+            $repos = $env:REPOS | ConvertFrom-Json
+            $failed = @()
+
+            foreach ($repo in $repos) {
+                Write-Host "##[group]Evaluating $env:OWNER/$repo"
+
+                # Mirrors the dashboard's key layout: pipeline-fix/<repo>/<YYYY-MM-DD>.json
+                $repoDir = Join-Path '$(EvalArtifactDir)' "pipeline-fix/$repo"
+                New-Item -ItemType Directory -Force -Path $repoDir | Out-Null
+                $reportPath = Join-Path $repoDir "$reportDate.json"
+
+                # Build the args as an array so owner/repo (from env) are passed as single
+                # args without shell re-parsing.
+                $evalArgs = @('azp', 'evaluate', $env:OWNER, $repo,
+                              '--since-days', '${{ parameters.sinceDays }}',
+                              '--output', 'json')
+
+                # --output json puts the structured response on stdout and progress on stderr,
+                # so redirecting stdout alone yields a clean report.
+                dotnet "$(OutDir)/azsdk.dll" @evalArgs > $reportPath
+
+                if ($LASTEXITCODE -ne 0) {
+                    # One unhealthy repo must not cost the night's data for the others; record
+                    # it, drop the partial file, and keep going.
+                    Write-Host "##vso[task.logissue type=error]azp evaluate failed for $repo with exit code $LASTEXITCODE"
+                    Remove-Item -Path $reportPath -Force -ErrorAction SilentlyContinue
+                    $failed += $repo
+                    Write-Host '##[endgroup]'
+                    continue
+                }
+
+                # A malformed report would poison the dashboard silently, so parse before publishing.
+                try {
+                    $report = Get-Content -Raw -Path $reportPath | ConvertFrom-Json
+                } catch {
+                    Write-Host "##vso[task.logissue type=error]azp evaluate produced invalid JSON for ${repo}: $_"
+                    Remove-Item -Path $reportPath -Force -ErrorAction SilentlyContinue
+                    $failed += $repo
+                    Write-Host '##[endgroup]'
+                    continue
+                }
+
+                $count = if ($report.results) { @($report.results).Count } else { 0 }
+                Write-Host "$repo -> $reportPath ($count evaluation(s))"
+                Write-Host '##[endgroup]'
+            }
+
+            if ($failed.Count -gt 0) {
+                # Surfaced after the loop so the successful repos are still uploaded below.
+                Write-Host "##vso[task.complete result=SucceededWithIssues;]Evaluation failed for: $($failed -join ', ')"
+            }
+
+            if ($failed.Count -eq @($repos).Count) {
+                throw 'Evaluation failed for every repository; nothing to publish.'
+            }
+        env:
+          OWNER: ${{ parameters.owner }}
+          REPOS: ${{ convertToJson(parameters.repos) }}
+          GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+
+      - task: AzureCLI@2
+        displayName: 'Publish results to Azure Blob Storage'
+        condition: and(succeeded(), ${{ parameters.publishToBlob }})
+        inputs:
+          # The service connection's identity needs 'Storage Blob Data Contributor' on the
+          # account; --auth-mode login uses it instead of an account key.
+          azureSubscription: 'opensource-api-connection'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            $ErrorActionPreference = 'Stop'
+
+            # Uploading the staged tree as-is preserves pipeline-fix/<repo>/<date>.json as the
+            # blob key. --overwrite lets a re-run correct the same day's report in place.
+            az storage blob upload-batch `
+                --account-name '$(MetricsStorageAccount)' `
+                --destination '$(MetricsContainer)' `
+                --source '$(EvalArtifactDir)' `
+                --pattern '*.json' `
+                --auth-mode login `
+                --overwrite
+
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to upload evaluation reports with exit code $LASTEXITCODE"
+            }
+
+      - task: PublishPipelineArtifact@1
+        displayName: 'Publish evaluation JSON artifact'
+        condition: always()
+        inputs:
+          targetPath: '$(EvalArtifactDir)'
+          artifactName: 'pipeline-fix-evaluation'

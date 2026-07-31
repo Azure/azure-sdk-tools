@@ -43,6 +43,12 @@ public class GitHubWorkflowAnalysisHelperTests
             gitHubService.Object,
             logAnalysisHelper.Object,
             new TestLogger<GitHubWorkflowAnalysisHelper>());
+
+        // A run that published no logs is the common case in these tests, and a loose mock would otherwise
+        // hand back a null list where the service contract promises an empty one.
+        gitHubService
+            .Setup(g => g.GetFailedWorkflowRunLogsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<long>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<(string Name, string Content)>());
     }
 
     #region AnalyzeWorkflowsAsync
@@ -112,7 +118,7 @@ public class GitHubWorkflowAnalysisHelperTests
     public async Task AnalyzeWorkflowsAsync_RunWithLogs_ReturnsExtractedErrorLines()
     {
         GivenWorkflowRuns(WorkflowRunFor(12345678, "analyze"));
-        GivenLogs(12345678, "##[error]Process completed with exit code 1.");
+        GivenLogs(12345678, ("analyze/3_Build.txt", "##[error]Process completed with exit code 1."));
         logAnalysisHelper
             .Setup(l => l.AnalyzeLogContent(It.IsAny<TextReader>(), It.IsAny<List<string>?>(), null, null, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([new LogEntry { Message = "Process completed with exit code 1." }]);
@@ -122,12 +128,31 @@ public class GitHubWorkflowAnalysisHelperTests
         Assert.That(analysis.Logs.Select(l => l.Message), Is.EqualTo(new[] { "Process completed with exit code 1." }));
     }
 
-    [TestCase(null)]
-    [TestCase("")]
-    public async Task AnalyzeWorkflowsAsync_RunWithoutLogContent_SkipsLogAnalysis(string? logs)
+    // Each log file is analyzed on its own, so the name of the file an error came from is available to the
+    // analysis rather than being folded into one concatenated blob.
+    [Test]
+    public async Task AnalyzeWorkflowsAsync_ManyLogFiles_AnalyzesEachOneByName()
     {
         GivenWorkflowRuns(WorkflowRunFor(12345678, "analyze"));
-        GivenLogs(12345678, logs);
+        GivenLogs(
+            12345678,
+            ("analyze/3_Build.txt", "##[error]build failed"),
+            ("analyze/4_Test.txt", "##[error]test failed"));
+        logAnalysisHelper
+            .Setup(l => l.AnalyzeLogContent(It.IsAny<TextReader>(), It.IsAny<List<string>?>(), null, null, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((TextReader _, List<string>? _, int? _, int? _, string _, string filePath, CancellationToken _) =>
+                [new LogEntry { File = filePath }]);
+
+        var analysis = (await helper.AnalyzeWorkflowsAsync(PrCommitRef, CancellationToken.None)).Single();
+
+        Assert.That(analysis.Logs.Select(l => l.File), Is.EqualTo(new[] { "analyze/3_Build.txt", "analyze/4_Test.txt" }));
+    }
+
+    [Test]
+    public async Task AnalyzeWorkflowsAsync_RunWithoutLogContent_SkipsLogAnalysis()
+    {
+        GivenWorkflowRuns(WorkflowRunFor(12345678, "analyze"));
+        GivenLogs(12345678);
 
         var analysis = (await helper.AnalyzeWorkflowsAsync(PrCommitRef, CancellationToken.None)).Single();
 
@@ -159,7 +184,7 @@ public class GitHubWorkflowAnalysisHelperTests
     public async Task AnalyzeWorkflowsAsync_RunWithLogs_DoesNotListJobs()
     {
         GivenWorkflowRuns(WorkflowRunFor(12345678, "analyze"));
-        GivenLogs(12345678, "##[error]boom");
+        GivenLogs(12345678, ("analyze/3_Build.txt", "##[error]boom"));
         logAnalysisHelper
             .Setup(l => l.AnalyzeLogContent(It.IsAny<TextReader>(), It.IsAny<List<string>?>(), null, null, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([new LogEntry { Message = "boom" }]);
@@ -180,7 +205,7 @@ public class GitHubWorkflowAnalysisHelperTests
     public async Task AnalyzeWorkflowsAsync_JobReadFailsWithoutLogs_ReportsError()
     {
         GivenWorkflowRuns(WorkflowRunFor(12345678, "analyze"));
-        GivenLogs(12345678, null);
+        GivenLogs(12345678);
         gitHubService
             .Setup(g => g.GetWorkflowRunJobsAsync(Owner, Repo, 12345678, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new ApiException("jobs unavailable", System.Net.HttpStatusCode.ServiceUnavailable));
@@ -253,7 +278,7 @@ public class GitHubWorkflowAnalysisHelperTests
             .Setup(g => g.GetFailedWorkflowRunsForCommitAsync(Owner, Repo, HeadSha, It.IsAny<CancellationToken>()))
             .ReturnsAsync(runs);
 
-    private void GivenLogs(long runId, string? logs) =>
+    private void GivenLogs(long runId, params (string Name, string Content)[] logs) =>
         gitHubService
             .Setup(g => g.GetFailedWorkflowRunLogsAsync(Owner, Repo, runId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(logs);

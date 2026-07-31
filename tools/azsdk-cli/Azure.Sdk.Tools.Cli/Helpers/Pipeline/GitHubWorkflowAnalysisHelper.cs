@@ -88,11 +88,11 @@ public class GitHubWorkflowAnalysisHelper(
             Url = run.HtmlUrl,
         };
 
-        string? logs = null;
+        IReadOnlyList<(string Name, string Content)> logs = [];
         try
         {
             logs = await gitHubService.GetFailedWorkflowRunLogsAsync(commitRef.Owner, commitRef.Repo, run.Id, ct);
-            if (!string.IsNullOrEmpty(logs))
+            if (logs.Count > 0)
             {
                 runAnalysis.Logs = await AnalyzeLogsAsync(logs, run.HtmlUrl, ct);
             }
@@ -103,7 +103,7 @@ public class GitHubWorkflowAnalysisHelper(
             (runAnalysis.Errors ??= []).Add($"Failed to read workflow run logs: {ex.Message}");
         }
 
-        if (string.IsNullOrEmpty(logs))
+        if (logs.Count == 0)
         {
             try
             {
@@ -123,21 +123,33 @@ public class GitHubWorkflowAnalysisHelper(
     /// <summary>
     /// Extracts the failure from a run's logs, keyed on the annotation the runner writes for it. The general
     /// keywords anchor on any line containing "error", which picks up benign "ERROR:" notices from tools that
-    /// went on to succeed, so they are only used as a fallback when no annotation is present.
+    /// went on to succeed, so they are only used as a fallback when no log file carries an annotation.
     /// </summary>
-    private async Task<List<LogEntry>> AnalyzeLogsAsync(string logs, string url, CancellationToken ct)
+    private async Task<List<LogEntry>> AnalyzeLogsAsync(IReadOnlyList<(string Name, string Content)> logs, string url, CancellationToken ct)
     {
-        using (var annotatedReader = new StringReader(logs))
+        var annotated = await AnalyzeLogsAsync(logs, RunnerErrorAnnotations, url, ct);
+        if (annotated.Count > 0)
         {
-            var annotated = await logAnalysisHelper.AnalyzeLogContent(annotatedReader, RunnerErrorAnnotations, null, null, url: url, ct: ct);
-            if (annotated?.Count > 0)
-            {
-                return annotated;
-            }
+            return annotated;
         }
 
         logger.LogDebug("No runner error annotation found in the logs for {url}; falling back to the general error keywords", url);
-        using var reader = new StringReader(logs);
-        return await logAnalysisHelper.AnalyzeLogContent(reader, null, null, null, url: url, ct: ct);
+        return await AnalyzeLogsAsync(logs, null, url, ct);
+    }
+
+    private async Task<List<LogEntry>> AnalyzeLogsAsync(IReadOnlyList<(string Name, string Content)> logs, List<string>? keywords, string url, CancellationToken ct)
+    {
+        List<LogEntry> entries = [];
+        foreach (var log in logs)
+        {
+            using var reader = new StringReader(log.Content);
+            var matches = await logAnalysisHelper.AnalyzeLogContent(reader, keywords, null, null, url: url, filePath: log.Name, ct: ct);
+            if (matches?.Count > 0)
+            {
+                entries.AddRange(matches);
+            }
+        }
+
+        return entries;
     }
 }

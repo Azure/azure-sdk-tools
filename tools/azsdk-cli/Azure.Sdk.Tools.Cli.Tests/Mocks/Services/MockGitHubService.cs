@@ -375,9 +375,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult<IReadOnlyList<WorkflowRun>>([]);
         }
 
-        public Task<string?> GetFailedWorkflowRunLogsAsync(string owner, string repo, long runId, CancellationToken ct)
+        public Task<IReadOnlyList<(string Name, string Content)>> GetFailedWorkflowRunLogsAsync(string owner, string repo, long runId, CancellationToken ct)
         {
-            return Task.FromResult<string?>(null);
+            return Task.FromResult<IReadOnlyList<(string Name, string Content)>>([]);
         }
 
         public Task<IReadOnlyList<WorkflowJob>> GetWorkflowRunJobsAsync(string owner, string repo, long runId, CancellationToken ct)

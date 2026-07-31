@@ -2,7 +2,11 @@
 // Licensed under the MIT License.
 using System.CommandLine;
 using System.ComponentModel;
+using System.Net;
 using System.Text.Json;
+using Microsoft.TeamFoundation.Build.WebApi;
+using Microsoft.VisualStudio.Services.Common;
+using Microsoft.VisualStudio.Services.WebApi;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
@@ -143,13 +147,41 @@ public class PipelineAnalysisTool(
             return new AnalyzePipelineResponse()
             {
                 ResponseError = $"Failed to analyze pipeline {pipelineIdentifier}: {ex.Message}",
-                NextSteps =
-                [
-                    "Make sure you're authenticated with the Azure CLI (`az login --tenant microsoft.onmicrosoft.com`) and have access to the azure-sdk DevOps project (https://aka.ms/azsdk/access).",
-                ],
+                NextSteps = NextStepsForFailure(ex),
             };
         }
     }
+
+    /// <summary>
+    /// Picks next steps that match how the analysis failed. Public builds and public pull requests are read
+    /// without credentials, so telling the user to sign in is misleading for the failures signing in would not
+    /// fix: a malformed identifier, or a run or pull request that does not exist. Failures that already carry
+    /// their own instructions - the DevOps and GitHub CLI sign-in errors - are left to speak for themselves.
+    /// </summary>
+    private static List<string>? NextStepsForFailure(Exception ex) => ex switch
+    {
+        ArgumentException =>
+        [
+            "Pass an Azure Pipelines run link, a build ID, a GitHub pull request link, or a pull request number.",
+        ],
+        BuildNotFoundException =>
+        [
+            "Check that the identifier names a run that still exists, and that any project in its link is correct.",
+        ],
+        VssUnauthorizedException or VssServiceResponseException { HttpStatusCode: HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden } =>
+        [
+            "Make sure you're authenticated with the Azure CLI (`az login --tenant microsoft.onmicrosoft.com`) and have access to the azure-sdk DevOps project (https://aka.ms/azsdk/access).",
+        ],
+        Octokit.NotFoundException =>
+        [
+            "Check that the repository and pull request named by the identifier exist.",
+        ],
+        Octokit.ApiException =>
+        [
+            "If the repository is private, or the request was rate limited, authenticate the GitHub CLI (`gh auth login`) and try again.",
+        ],
+        _ => null,
+    };
 
     /// <summary>
     /// Summarizes a completed pipeline analysis with the Copilot agent as a markdown root-cause report.

@@ -159,7 +159,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<Team> GetTeamByNameAsync(string org, string teamSlug, CancellationToken ct);
         public Task<HashSet<string>> GetRepoLabels(string owner, string repo, CancellationToken ct);
         public Task<IReadOnlyList<WorkflowRun>> GetFailedWorkflowRunsForCommitAsync(string owner, string repo, string commitSha, CancellationToken ct);
-        public Task<string?> GetFailedWorkflowRunLogsAsync(string owner, string repo, long runId, CancellationToken ct);
+        public Task<IReadOnlyList<(string Name, string Content)>> GetFailedWorkflowRunLogsAsync(string owner, string repo, long runId, CancellationToken ct);
         public Task<IReadOnlyList<WorkflowJob>> GetWorkflowRunJobsAsync(string owner, string repo, long runId, CancellationToken ct);
         public Task<List<PrCheckRun>> GetPrCheckRunsAsync(string owner, string repo, int prNumber, CancellationToken ct);
     }
@@ -778,14 +778,14 @@ namespace Azure.Sdk.Tools.Cli.Services
             var response = await ReadWithAnonymousFallbackAsync(client => client.Actions.Workflows.Runs.List(owner, repo, request), ct);
             return response?.WorkflowRuns ?? [];
         }
-
-        public async Task<string?> GetFailedWorkflowRunLogsAsync(string owner, string repo, long runId, CancellationToken ct)
+        
+        public async Task<IReadOnlyList<(string Name, string Content)>> GetFailedWorkflowRunLogsAsync(string owner, string repo, long runId, CancellationToken ct)
         {
             logger.LogInformation("Getting logs for workflow run {RunId} in {Owner}/{Repo}", runId, owner, repo);
             var archive = await ReadWithAnonymousFallbackAsync(client => client.Actions.Workflows.Runs.GetLogs(owner, repo, runId), ct);
             if (archive == null || archive.Length == 0)
             {
-                return null;
+                return [];
             }
 
             // A failure to list the jobs costs the step filtering, not the logs, so the whole run is reported.
@@ -809,15 +809,14 @@ namespace Azure.Sdk.Tools.Cli.Services
                 entries = [.. zip.Entries.Where(e => JobLogNameOf(e) != null && e.Length > 0)];
             }
 
-            var builder = new StringBuilder();
+            List<(string Name, string Content)> logs = [];
             foreach (var entry in entries)
             {
                 using var reader = new StreamReader(entry.Open());
-                builder.AppendLine($"===== {entry.FullName} =====");
-                builder.AppendLine(await reader.ReadToEndAsync(ct));
+                logs.Add((entry.FullName, await reader.ReadToEndAsync(ct)));
             }
 
-            return builder.Length == 0 ? null : builder.ToString();
+            return logs;
         }
 
         /// <summary>

@@ -978,25 +978,8 @@ namespace Azure.Sdk.Tools.Cli.Services
                 throw new Exception($"Failed to get SDK generation pipeline for {language}.");
             }
 
-            var templateParams = new Dictionary<string, string>
-            {
-                 { "ConfigType", "TypeSpec"},
-                 { "ConfigPath", $"{typespecProjectRoot}/tspconfig.yaml" },
-                 { "SdkReleaseType", sdkReleaseType },
-                 { "CreatePullRequest", "true" },
-                 { "ReleasePlanWorkItemId", $"{workItemId}"},
-                 { "TriggerSource", "sdk-release" }
-            };
-
-            if (!string.IsNullOrEmpty(apiVersion))
-            {
-                templateParams["ApiVersion"] = apiVersion;
-            }
-
-            if (!string.IsNullOrEmpty(sdkRepoBranch))
-            {
-                templateParams["SdkRepoBranch"] = sdkRepoBranch;
-            }
+            var isRunningInAzurePipelines = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("SYSTEM_TEAMPROJECTID"));
+            var templateParams = BuildSdkGenerationTemplateParams(typespecProjectRoot, workItemId, sdkReleaseType, apiVersion, sdkRepoBranch, isRunningInAzurePipelines);
 
             var build = await RunPipelineAsync(pipelineDefinitionId, templateParams, apiSpecBranchRef, ct: ct);
             var pipelineRunUrl = GetPipelineUrl(build.Id);
@@ -1008,6 +991,35 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
 
             return build;
+        }
+
+        private static Dictionary<string, string> BuildSdkGenerationTemplateParams(string typespecProjectRoot, int workItemId, string sdkReleaseType, string apiVersion, string sdkRepoBranch, bool isRunningInAzurePipelines)
+        {
+            var templateParams = new Dictionary<string, string>
+            {
+                 { "ConfigType", "TypeSpec"},
+                 { "ConfigPath", $"{typespecProjectRoot}/tspconfig.yaml" },
+                 { "CreatePullRequest", "true" },
+                 { "ReleasePlanWorkItemId", $"{workItemId}"},
+                 { "TriggerSource", "sdk-release" }
+            };
+
+            if (!isRunningInAzurePipelines)
+            {
+                templateParams["SdkReleaseType"] = sdkReleaseType;
+
+                if (!string.IsNullOrEmpty(apiVersion))
+                {
+                    templateParams["ApiVersion"] = apiVersion;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(sdkRepoBranch))
+            {
+                templateParams["SdkRepoBranch"] = sdkRepoBranch;
+            }
+
+            return templateParams;
         }
 
         public async Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string apiSpecBranchRef = "main", CancellationToken ct = default)

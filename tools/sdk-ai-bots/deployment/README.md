@@ -62,20 +62,13 @@ AZD_SKIP_IMAGE_BUILD=1 azd deploy frontend     --environment dev --no-prompt
 AZD_SKIP_IMAGE_BUILD=1 azd deploy function-app --environment dev --no-prompt
 AZD_SKIP_IMAGE_BUILD=1 azd deploy agent        --environment dev --no-prompt
 
-# To rebuild + push the agent image as part of the deploy, target the agent
-# explicitly so the global predeploy hook runs the agent build:
-AZD_DEPLOY_SERVICE=agent azd deploy agent      --environment dev --no-prompt
+# Native remote build publishes the hosted agent image during deploy:
+azd deploy agent --environment dev --no-prompt
 ```
 
-> The `agent` service can't use per-service azd `hooks` — the `azure.ai.agent`
-> host strips the `hooks` block from `azure.yaml` on deploy
-> ([Azure/azure-dev#9152](https://github.com/Azure/azure-dev/issues/9152)). Its
-> image build (predeploy) and identity RBAC + Entra authorization (postdeploy)
-> therefore run from the **global** command hooks in `hooks/predeploy.ts` /
-> `hooks/postdeploy.ts`. The RBAC step is idempotent and runs on every deploy
-> (so `azd deploy agent` grants the agent identity its roles automatically); the
-> image build is gated on `AZD_DEPLOY_SERVICE=agent` to avoid rebuilding on
-> unrelated deploys.
+> `azd` 1.29.0 preserves and executes service-level hooks on `azure.ai.agent`.
+> The agent uses native ACR remote builds, and its postdeploy hook reconciles
+> runtime RBAC, environment variables, and Entra authorization.
 
 For preview / prod, use the Azure DevOps pipelines under
 `component-pipelines/<component>/<component>.cd.yml` (gated by the

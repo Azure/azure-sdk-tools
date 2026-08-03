@@ -184,11 +184,11 @@ function printSummary(): void {
 (async () => {
   log(`Starting postprovision for environment '${ENV_NAME}'`);
   await persistBicepOutputs();
+  syncTeamsEnvStep();
   ensureAgentAccountRoleAssignments();
   uploadPerEnvBotConfigs();
   seedKeyVaultSecretsStep();
   updateAppConfiguration();
-  syncTeamsEnvStep();
   printSummary();
   log("Postprovision complete.");
 })().catch((err) => {

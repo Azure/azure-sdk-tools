@@ -81,8 +81,8 @@ Before `azd`, standing this up meant:
     ─────────────                                    ──────────────────────
  preprovision.ts (global)                         predeploy.ts (global)
    • env-suite validation                            • prod guardrail
-   • quota check                                     • if agent: agent-predeploy
-   • Entra app for SERVER_AUDIENCE                       az acr build
+  • quota check
+  • Entra app for SERVER_AUDIENCE
    • developer principal                          <service>-predeploy.ts
    • Teams-connection probe                            • az acr build → dev-N.0.0
            │                                           • repoint slot / app
@@ -92,12 +92,11 @@ Before `azd`, standing this up meant:
    qaBotFrontend → qaBotFunctionApp →                          │
    qaBotLogicApp                                               ▼
            │                                          <service>-postdeploy.ts
-           ▼                                            • re-pin ACR identity
- postprovision.ts (global)                              • re-seed KV / health
+           ▼                                            • re-seed KV secrets
+ postprovision.ts (global)                              • agent RBAC + env (agent)
    • outputs → env, RBAC, KV seed,                           │
      App Config, Teams env sync                              ▼
                                                      postdeploy.ts (global)
-                                                       • agent RBAC + Foundry ver
                                                        • patchWorkflow (Logic App)
 ```
 
@@ -144,7 +143,7 @@ Eight gaps, each closed by **one workaround**:
 | 4 | Container **Function App** deploy hangs | `host: function` did a zip deploy | switched to `host: appservice, docker` |
 | 5 | Teams **OAuth connection** re-authorized | Bicep re-`PUT`s the connection each run | conditional create + preprovision probe |
 | 6 | Teams **`.env` clobbered** | base-env sync overwrites per-env Teams app | env-suite is the source of truth |
-| 7 | `azd deploy` **wipes App Service settings** | deploy re-serializes container config | `repinAcrPullIdentity()` postdeploy |
+| 7 | `azd deploy` **wipes App Service settings** | fixed in `azd` 1.29.0 | workaround removed |
 | 8 | Logic App references a **not-yet-existing Function** | workflow validated on create | two-phase shell + `patchWorkflow` |
 
 > **≈ 1000 lines of TypeScript hooks** exist purely to bridge these gaps.
@@ -330,7 +329,7 @@ The friction isn't one missing feature. **The mental model `azd` forces on us do
 
 - **Order is convention, not declaration** — `preprovision → main.bicep → postprovision`, `predeploy → <svc>-predeploy → core → <svc>-postdeploy → postdeploy`. Nothing in `azure.yaml` states this; you learn it by reading every hook.
 - **Hooks don't run in preview** — `azd provision --preview` skips them entirely, so the preview never reflects reality (RBAC, KV seeding, env injection, Logic App patch are all invisible).
-- **State passes through `.env` strings** — `AGENT_DEPLOYED_IMAGE`, `CREATE_TEAMS_CONNECTION`, `AGENT_BASED_IMAGE_REPOSITORY`. Untyped, order-dependent, silently broken by a typo.
+- **State passes through `.env` strings** — `CREATE_TEAMS_CONNECTION` and `AGENT_BASED_IMAGE_REPOSITORY`. Untyped, order-dependent, silently broken by a typo.
 - **"Single source of truth" is maintained by hooks** — the _real_ desired state is Bicep **+ ~1000 lines that re-read and re-mutate live Azure**. A truth reconstructed imperatively on every run isn't a source of truth — it's a recipe.
 
 > The tool splits the problem where _it_ is easy to build, not where _our service_ naturally divides.
@@ -404,7 +403,6 @@ Every hook we own is a **temporary bridge**. The end state:
 | `ensure-role-assignment.ts`                     | Typed `ensure*` RBAC primitive with idempotency built in                       |
 | `agent-postdeploy` → new Foundry version w/ env | Host injects `agent.yaml environment_variables` natively                        |
 | `agent-server-predeploy` (slot deploy)          | First-class named-slot support                                                 |
-| `repinAcrPullIdentity`                          | Deploy preserves site container config                                         |
 | `patch-workflow` (Logic App PUT)                | Deferred / two-phase resource is a first-class construct                       |
 | `sync-teams-env` (rewrite `.env.azd`)           | Shared env schema across tools; no cross-tool copying                          |
 | `preprovision.ensureEntraApp`                   | Microsoft Graph provider for Entra apps                                        |
@@ -510,9 +508,9 @@ stack.outputs.add('AZURE_APPCONFIG_ENDPOINT', 'string', appCfg.properties.endpoi
 | Feature | [azure-dev#9252](https://github.com/Azure/azure-dev/issues/9252) | `azd provision --preview` omits hook effects |
 | Feature | [azure-dev#9253](https://github.com/Azure/azure-dev/issues/9253) | First-class **idempotent RBAC** semantics |
 | Bug | [azure-dev#9247](https://github.com/Azure/azure-dev/issues/9247) | `azure.ai.agent` doesn't persist `agent.yaml` env vars |
-| Bug | [azure-dev#9249](https://github.com/Azure/azure-dev/issues/9249) | `azd deploy` wipes unknown App Service settings |
+| Fixed in 1.29.0 | [azure-dev#9249](https://github.com/Azure/azure-dev/issues/9249) | Preserve unknown App Service settings during deploy |
 | Bug | [azure-dev#9250](https://github.com/Azure/azure-dev/issues/9250) | Container Function App on `host: function` hangs |
-| Bug | [azure-dev#9152](https://github.com/Azure/azure-dev/issues/9152) | `azure.ai.agent` strips service-level hooks |
+| Fixed in 1.29.0 | [azure-dev#9152](https://github.com/Azure/azure-dev/issues/9152) | Preserve service-level hooks during deploy |
 | Related | [Azure/js-provisioning-lib](https://github.com/Azure/js-provisioning-lib) | Infra as TypeScript, compiled to Bicep |
 | Related | [azure-sdk-tools#16357](https://github.com/Azure/azure-sdk-tools/pull/16357) | Chatbot deployment PoC |
 

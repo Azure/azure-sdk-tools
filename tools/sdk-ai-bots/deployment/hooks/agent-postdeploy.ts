@@ -8,15 +8,13 @@
  *    Configuration via that identity. Without at least "App Configuration Data
  *    Reader" the container crashes on boot, its /readiness never returns 200, and
  *    every session fails with 424 session_not_ready → /agent/chat returns 500.
- * 2. Pin the hosted agent to the freshly-built image and inject the
- *    AZURE_APPCONFIG_ENDPOINT environment variable into its container.
+ * 2. Inject the AZURE_APPCONFIG_ENDPOINT environment variable into the newly
+ *    deployed agent version while retaining its image.
  *    app_config.init() reads this on startup and raises RuntimeError (→ container
  *    crash → 424 session_not_ready) if it is missing. azd neither embeds
  *    agent.yaml `environment_variables` into the version definition (its
- *    "Registering agent environment variables" step is a no-op) nor can point
- *    azure.yaml at the freshly-built immutable tag (${VAR} is resolved before the
- *    predeploy build). So we create a follow-up agent version that pins the fresh
- *    image (AGENT_DEPLOYED_IMAGE) and embeds environment_variables — the only
+ *    "Registering agent environment variables" step is a no-op). So we clone
+ *    the deployed version with environment_variables embedded — the only
  *    mechanism the Foundry runtime honours. Idempotent.
  * 3. Ensure the server app registration (SERVER_AUDIENCE) is fully authorized
  *    so callers can obtain tokens EasyAuth accepts (service principal,
@@ -247,23 +245,14 @@ function getFoundryToken(): string {
 }
 
 /**
- * Ensure the hosted agent's LATEST version runs the freshly-built image AND
- * carries the AZURE_APPCONFIG_ENDPOINT environment variable in its container
- * definition.
+ * Ensure the hosted agent's LATEST version carries the AZURE_APPCONFIG_ENDPOINT
+ * environment variable in its container definition.
  *
- * Two azd limitations force this hook to own the final version:
- *   1. azd's "Registering agent environment variables" step does NOT embed
- *      agent.yaml `environment_variables` into the version definition, so the
- *      container boots without AZURE_APPCONFIG_ENDPOINT and crashes in
- *      app_config.init() (→ 424 session_not_ready).
- *   2. azd resolves azure.yaml `${VAR}` at project-load time (before the
- *      predeploy image build), so azure.yaml can only reference a static image
- *      tag — it cannot point at the freshly-built immutable tag.
- *
- * So azd deploys a placeholder version from the static tag, and here we create a
- * follow-up version that pins the freshly-built image (AGENT_DEPLOYED_IMAGE) and
- * embeds environment_variables — the mechanism the Foundry hosted runtime
- * honours — making it @latest.
+ * azd's "Registering agent environment variables" step does NOT embed
+ * agent.yaml `environment_variables` into the version definition, so the
+ * container boots without AZURE_APPCONFIG_ENDPOINT and crashes in
+ * app_config.init() (→ 424 session_not_ready). We clone the newly deployed
+ * version with environment_variables embedded and make it @latest.
  *
  * Idempotent: if the latest version already runs the target image with the
  * correct AZURE_APPCONFIG_ENDPOINT we do nothing, so re-running postdeploy
@@ -313,9 +302,7 @@ async function ensureAgentAppConfigEnv(): Promise<void> {
     return;
   }
 
-  // Prefer the freshly-built immutable tag from agent-predeploy.ts; fall back to
-  // whatever image the latest version already runs (e.g. env-only re-runs).
-  const targetImage = process.env.AGENT_DEPLOYED_IMAGE?.trim() || latestImage;
+  const targetImage = latestImage;
 
   if (
     latestImage === targetImage &&

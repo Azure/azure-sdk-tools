@@ -60,6 +60,7 @@ environments:
               ring: 'single'
               enabled: true
         aiLocation: 'eastus2'
+                cosmosDbLocation: 'eastus2'
         approvalRequired: false
         prodDeployOnlyFromPipeline: false
         localDeployAllowed: true
@@ -87,6 +88,7 @@ environments:
               ring: 'single'
               enabled: true
         aiLocation: 'westus2'
+                cosmosDbLocation: 'westus2'
         approvalRequired: true
         prodDeployOnlyFromPipeline: false
         localDeployAllowed: false
@@ -124,6 +126,7 @@ environments:
             #   ring: "broad"
             #   enabled: false
         aiLocation: 'swedencentral'
+        cosmosDbLocation: 'westus2'
         approvalRequired: true
         prodDeployOnlyFromPipeline: true
         localDeployAllowed: false

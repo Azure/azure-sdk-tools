@@ -84,7 +84,7 @@ The goal: **make provisioning a solved problem, and make the interesting work be
         └──────────────────────────────────────────┘
 ```
 
-Every service converges on the **same global hooks**, so agent RBAC + Logic App update happen no matter which service you deployed.
+Every service converges on the global Logic App update; hosted-agent RBAC and environment reconciliation run only after agent deploys.
 
 ---
 
@@ -111,12 +111,11 @@ Every service converges on the **same global hooks**, so agent RBAC + Logic App 
 **Root cause:**
 
 - `azd` (`azure.ai.agents` beta.5) has a _“Registering agent environment variables”_ step — it’s effectively a **no-op**: env from `agent.yaml` is not embedded into the deployed version’s definition.
-- `azure.yaml` `${VAR}` interpolation is resolved at project-load — _before_ predeploy — so we can’t point `image:` at the freshly-built immutable tag either.
 
 **Resolution:** `hooks/agent-postdeploy.ts` → `ensureAgentAppConfigEnv()`
 
 1. `GET .../agents/<name>/versions/@latest`.
-2. If image ≠ `AGENT_DEPLOYED_IMAGE` **or** `environment_variables.AZURE_APPCONFIG_ENDPOINT` missing → `POST` a new version cloning definition, pinning image, embedding env.
+2. If `environment_variables.AZURE_APPCONFIG_ENDPOINT` is missing → `POST` a new version cloning its definition and image, embedding env.
 3. Idempotent — no-op when already correct.
 
 **Lesson:** `azd` cannot inject hosted-agent env vars; the only working path is the Foundry data-plane API.
@@ -186,13 +185,9 @@ The `azd deploy agent-server` core step is essentially a no-op we tolerate — t
 
 **Symptom:** `azd deploy backend` overwrote the site container config → `acrUserManagedIdentityID` cleared → platform fell back to a nonexistent system-assigned identity → 503 on image pull.
 
-**Resolution:** `backend-postdeploy.ts` → `repinAcrPullIdentity()`
+**Resolution:** fixed in `azd` 1.29.0. App Service container deploys now update only `linuxFxVersion`, preserving the ACR pull identity configured by Bicep.
 
-- Re-applies `acrUseManagedIdentityCreds=true`, `acrUserManagedIdentityID=<MI clientId>`.
-- Restarts the site.
-- Idempotent; runs on every `azd deploy backend`.
-
-**Meta-lesson:** any App Service setting `azd` doesn’t know about must be **re-applied in a postdeploy hook**, because `azd deploy` re-serializes the container config.
+The `repinAcrPullIdentity()` postdeploy workaround and the deleted legacy backend service were removed.
 
 ---
 
@@ -252,8 +247,8 @@ Each hook had to be authored from scratch against that service's own API dialect
     ─────────────                                    ──────────────────────
  preprovision.ts (global)                         predeploy.ts (global)
    • env-suite validation                            • prod guardrail
-   • quota check                                     • if agent: agent-predeploy
-   • Entra app for SERVER_AUDIENCE                       az acr build
+    • quota check
+    • Entra app for SERVER_AUDIENCE
    • developer principal                          <service>-predeploy.ts
    • Teams-connection probe                            • az acr build → dev-N.0.0
            │                                           • repoint slot / app
@@ -264,14 +259,14 @@ Each hook had to be authored from scratch against that service's own API dialect
    qaBotFunctionApp → qaBotLogicApp                         │
            │                                                ▼
            ▼                                        <service>-postdeploy.ts
- postprovision.ts (global)                            • re-pin ACR identity
-   • persistBicepOutputs → azd env                    • re-seed KV secrets
-   • ensureRole (Foundry User)                        • Teams provision (frontend)
+ postprovision.ts (global)                            • re-seed KV secrets
+    • persistBicepOutputs → azd env                    • Teams provision (frontend)
+    • ensureRole (Foundry User)                        • agent RBAC + env (agent)
    • uploadBotConfigs → storage                       • health check
    • seedKeyVault / seedAppConfig                            │
    • syncTeamsEnv → env/.env.azd                             ▼
                                                     postdeploy.ts (global)
-                                                       • agent-postdeploy
+                                                                         • patchWorkflow (Logic App)
                                                           (RBAC + new Foundry ver)
                                                        • patchWorkflow (Logic App)
 ```
@@ -344,7 +339,7 @@ With **`azd` + Bicep**, we spend our effort describing _how `azd` should orchest
 
 - **Order is convention, not declaration** — `preprovision → main.bicep → postprovision`, and `predeploy → <svc>-predeploy → core → <svc>-postdeploy → postdeploy`. Nothing in `azure.yaml` states this ordering; you learn it by reading every hook.
 - **Hooks don't run in preview** — `azd provision --preview` (what-if) skips hooks entirely. So the _preview never reflects reality_: the RBAC, KV seeding, env injection, and Logic App patch that hooks perform are invisible to the one command whose whole job is "show me what will happen."
-- **State passes through `.env` strings** — `AGENT_DEPLOYED_IMAGE`, `CREATE_TEAMS_CONNECTION`, `AGENT_BASED_IMAGE_REPOSITORY` are the glue between phases. Untyped, order-dependent, silently broken by a typo.
+- **State passes through `.env` strings** — `CREATE_TEAMS_CONNECTION` and `AGENT_BASED_IMAGE_REPOSITORY` are glue between phases. Untyped, order-dependent, silently broken by a typo.
 
 ### "Single source of truth" is maintained by hooks — and that's too weak
 
@@ -357,7 +352,7 @@ Idempotent RBAC, conditional OAuth resources, deferred/two-phase workflows, "ens
 ### Provision vs. deploy boundaries are blurred
 
 - `azd` splits the world into **provision** (infra) and **deploy** (code) — but real services don't cleave there. Pinning a container image, wiring an ACR-pull identity, seeding config a running app needs — is that infra or code?
-- Because the boundary is arbitrary, **people mutate resources in deploy hooks** (`repinAcrPullIdentity`, slot container config, Logic App workflow PUT). Deploy-time code is now editing infrastructure that provision "owned."
+- Because the boundary is arbitrary, **people mutate resources in deploy hooks** (slot container config, Logic App workflow PUT). Deploy-time code is now editing infrastructure that provision "owned."
 - `azd` split these two phases apart; our service needed them intertwined. We spend hooks stitching back together what the tool insisted on separating.
 
 > The tool splits the problem where _it_ is easy to build, not where _our service_ naturally divides.
@@ -386,9 +381,9 @@ Concrete feature asks / RFCs to open with the `azd` team:
 
 1. **Native slot deploys** for `host: appservice` — model the `agent` slot; kill `agent-server-predeploy.ts`.
 2. **Hosted agent env injection** (`azure.ai.agent`) — actually persist `agent.yaml environment_variables` into the deployed version (would kill `ensureAgentAppConfigEnv`).
-3. **Per-service hooks not stripped by `azure.ai.agent`** — GitHub issue [azure-dev#9152](https://github.com/Azure/azure-dev/issues/9152) is the tracker; today we route agent hooks through the global `pre/postdeploy`.
+3. **Per-service hooks on `azure.ai.agent`** — fixed in `azd` 1.29.0 ([azure-dev#9152](https://github.com/Azure/azure-dev/issues/9152)); agent postdeploy reconciliation is service-scoped again.
 4. **Late-resolved `${VAR}` in `azure.yaml`** for `image:` — resolve _after_ predeploy so we can point at the freshly built immutable tag.
-5. **Preserve unknown App Service settings** on `azd deploy` (or expose a “merge, don’t replace” option) — would kill `repinAcrPullIdentity`.
+5. **Preserve unknown App Service settings** on `azd deploy` — fixed in `azd` 1.29.0; the `repinAcrPullIdentity` workaround is gone.
 6. **Conditional / idempotent RBAC** — first-class “ensure” semantics for role assignments; today Bicep has none.
 7. **Standard `--service <name>` env var** everywhere so the global `predeploy` can branch without our `AZD_DEPLOY_SERVICE` convention.
 
@@ -403,7 +398,6 @@ Every hook we own is a **temporary bridge**. The end state is:
 | `ensure-role-assignment.ts`                     | Typed `ensure*` primitives in the provisioning lib — declarative RBAC with idempotency built in |
 | `agent-postdeploy` → new Foundry version w/ env | `azd`’s `azure.ai.agent` host injects `agent.yaml environment_variables` natively               |
 | `agent-server-predeploy` (slot deploy)          | `azd` first-class named-slot support in `appservice` host                                       |
-| `repinAcrPullIdentity`                          | `azd` preserves site container config on deploy                                                 |
 | `patch-workflow` (Logic App PUT)                | Deferred / two-phase resources are a first-class construct in the provisioning lib              |
 | `sync-teams-env` (rewrite `.env.azd`)           | `azd` × Teams Toolkit share an env schema; no cross-tool env copying                            |
 | `preprovision.ensureEntraApp`                   | Microsoft Graph provider for Entra apps, called from the provisioning lib                       |
@@ -518,9 +512,9 @@ Every hook we keep is measured against that goal.
 | Feature | [azure-dev#9253](https://github.com/Azure/azure-dev/issues/9253) | First-class **idempotent RBAC** ("ensure") semantics |
 | Feature | [azure-dev#5345](https://github.com/Azure/azure-dev/issues/5345) | App Service deployment-slot strategy — staging/prod slot swap, traffic shifting, custom slot config |
 | Bug | [azure-dev#9247](https://github.com/Azure/azure-dev/issues/9247) | `azure.ai.agent` doesn’t persist `agent.yaml` **env vars** |
-| Bug | [azure-dev#9249](https://github.com/Azure/azure-dev/issues/9249) | `azd deploy` **wipes** unknown App Service container settings |
+| Fixed in 1.29.0 | [azure-dev#9249](https://github.com/Azure/azure-dev/issues/9249) | Preserve unknown App Service container settings during deploy |
 | Bug | [azure-dev#9250](https://github.com/Azure/azure-dev/issues/9250) | Container-based Function App on `host: function` **hangs** |
-| Bug | [azure-dev#9152](https://github.com/Azure/azure-dev/issues/9152) | `azure.ai.agent` host **strips** service-level `hooks` (and `${ENV}` `image` templating) from `azure.yaml` on deploy |
+| Fixed in 1.29.0 | [azure-dev#9152](https://github.com/Azure/azure-dev/issues/9152) | Preserve service-level hooks and `${ENV}` image templates |
 | Related work | [azure-sdk-tools#16357](https://github.com/Azure/azure-sdk-tools/pull/16357) | Chatbot deployment PoC |
 | Related work | [Azure/js-provisioning-lib](https://github.com/Azure/js-provisioning-lib) | JS provisioning libraries |
 

@@ -233,7 +233,6 @@ tools/sdk-ai-bots/
 │  │  ├─ frontend-postdeploy.ts
 │  │  ├─ function-predeploy.ts
 │  │  ├─ function-postdeploy.ts
-│  │  ├─ agent-predeploy.ts
 │  │  ├─ agent-postdeploy.ts
 │  │  └─ lib/
 │  │     ├─ acr-tags.ts

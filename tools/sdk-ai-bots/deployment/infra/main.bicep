@@ -293,7 +293,7 @@ module logicApp './modules/qaBotLogicApp/logicAppResources.bicep' = {
 // Everything the postprovision hook needs (role assignments, Key Vault / App
 // Configuration seeding, Teams env sync) is exposed here so azd persists it
 // into .azure/<env>/.env after `azd provision`.
-output CONTAINER_REGISTRY_LOGIN_SERVER string = sharedResources.outputs.containerRegistryLoginServer
+output AZURE_CONTAINER_REGISTRY_ENDPOINT string = sharedResources.outputs.containerRegistryLoginServer
 output CONTAINER_REGISTRY_NAME string = sharedResources.outputs.containerRegistryName
 output AZURE_RESOURCE_GROUP string = rg.name
 output AZURE_LOCATION string = location

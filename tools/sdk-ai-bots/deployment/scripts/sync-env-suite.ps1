@@ -87,6 +87,7 @@ $Mapping = @(
     @{ Path = ".environments.$Environment.regions[0].name";      Key = 'AZURE_LOCATION' }
     @{ Path = ".environments.$Environment.aiLocation";           Key = 'AZURE_AI_LOCATION' }
     @{ Path = ".environments.$Environment.aiLocation";           Key = 'AZURE_AI_DEPLOYMENTS_LOCATION' }
+    @{ Path = ".environments.$Environment.cosmosDbLocation";    Key = 'COSMOS_DB_LOCATION' }
     @{ Path = ".environments.$Environment.frontendSiteName";     Key = 'FRONTEND_SITE_NAME' }
     @{ Path = ".environments.$Environment.backendSiteName";      Key = 'BACKEND_SITE_NAME' }
     @{ Path = ".environments.$Environment.functionAppName";      Key = 'FUNCTION_APP_NAME' }
@@ -124,16 +125,11 @@ if ($failed.Count -gt 0) {
     exit 1
 }
 
-# ── Fixed azd deployment-slot targeting ─────────────────────────────────────────
-# The backend App Service hosts two azd services: `backend` (the production/main
-# app) and `agent-server` (the `agent` deployment slot). azd's App Service slot
-# detection requires an explicit AZD_DEPLOY_<SERVICE>_SLOT_NAME per service to
-# pick a target non-interactively (see
-# https://github.com/Azure/azure-dev/issues/9246), so pin them here:
-#   - backend      → production (the main app)
-#   - agent-server → agent      (the deployment slot)
-& azd env set AZD_DEPLOY_BACKEND_SLOT_NAME production | Out-Null
-Write-Host "  AZD_DEPLOY_BACKEND_SLOT_NAME = production"
+# ── Fixed azd deployment-slot targeting ──────────────────────────────────────
+# The agent-server service targets the backend App Service's `agent` slot.
+# azd's App Service slot detection requires an explicit
+# AZD_DEPLOY_<SERVICE>_SLOT_NAME to pick a target non-interactively (see
+# https://github.com/Azure/azure-dev/issues/9246).
 & azd env set AZD_DEPLOY_AGENT_SERVER_SLOT_NAME agent | Out-Null
 Write-Host "  AZD_DEPLOY_AGENT_SERVER_SLOT_NAME = agent"
 
@@ -150,6 +146,7 @@ Write-Host "Syncing environment-suite.yaml → $([System.IO.Path]::GetFileName($
 # Values pulled from the suite. Image repositories are <componentImageName>:<env>.
 $location                       = (& yq -r ".environments.$Environment.regions[0].name" $SuitePath).Trim()
 $aiLocation                     = (& yq -r ".environments.$Environment.aiLocation" $SuitePath).Trim()
+$cosmosDbLocation               = (& yq -r ".environments.$Environment.cosmosDbLocation" $SuitePath).Trim()
 $resourceGroupName              = (& yq -r ".environments.$Environment.resourceGroupPrefix" $SuitePath).Trim()
 $functionImageName              = (& yq -r '.components."function-app".imageName' $SuitePath).Trim()
 $backendImageName               = (& yq -r '.components.backend.imageName' $SuitePath).Trim()
@@ -158,6 +155,7 @@ $agentImageName                 = (& yq -r '.components."agent-server".imageName
 foreach ($pair in @(
     @{ Name = 'location';               Value = $location },
     @{ Name = 'aiLocation';             Value = $aiLocation },
+    @{ Name = 'cosmosDbLocation';       Value = $cosmosDbLocation },
     @{ Name = 'resourceGroupName';      Value = $resourceGroupName },
     @{ Name = 'function-app imageName'; Value = $functionImageName },
     @{ Name = 'backend imageName';      Value = $backendImageName },
@@ -182,6 +180,7 @@ function Set-ParamValue {
 
 Set-ParamValue $paramsJson.parameters 'location'                       $location
 Set-ParamValue $paramsJson.parameters 'aiLocation'                     $aiLocation
+Set-ParamValue $paramsJson.parameters 'cosmosDbLocation'               $cosmosDbLocation
 Set-ParamValue $paramsJson.parameters 'resourceGroupName'              $resourceGroupName
 Set-ParamValue $paramsJson.parameters 'functionImageRepository'        "${functionImageName}:${Environment}"
 Set-ParamValue $paramsJson.parameters 'ragBasedBackendImageRepository' "${backendImageName}:${Environment}"
@@ -194,6 +193,7 @@ Add-Content -Path $ParametersFile -Value "" -Encoding utf8
 
 Write-Host "  location                       = $location"
 Write-Host "  aiLocation                     = $aiLocation"
+Write-Host "  cosmosDbLocation               = $cosmosDbLocation"
 Write-Host "  resourceGroupName              = $resourceGroupName"
 Write-Host "  functionImageRepository        = ${functionImageName}:${Environment}"
 Write-Host "  ragBasedBackendImageRepository = ${backendImageName}:${Environment}"

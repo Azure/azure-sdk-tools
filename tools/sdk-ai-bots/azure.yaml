@@ -8,7 +8,16 @@ services:
         project: azure-sdk-qa-bot-agent/agents/chat_agent
         host: azure.ai.agent
         language: python
-        image: qabotcontainervb64x5.azurecr.io/azure-sdk-qa-bot-agent-server:dev
+        docker:
+            path: Dockerfile
+            context: ../..
+            registry: ${AZURE_CONTAINER_REGISTRY_ENDPOINT}
+            remoteBuild: true
+        hooks:
+            postdeploy:
+                shell: sh
+                run: cd ../../../deployment && npx tsx hooks/agent-postdeploy.ts
+                interactive: true
         config:
             container:
                 resources:
@@ -37,19 +46,6 @@ services:
             predeploy:
                 shell: sh
                 run: cd ../deployment && npx tsx hooks/agent-server-predeploy.ts
-                interactive: true
-    backend:
-        project: azure-sdk-qa-bot-backend
-        host: appservice
-        language: docker
-        docker:
-            path: Dockerfile
-            context: .
-            remoteBuild: true
-        hooks:
-            postdeploy:
-                shell: sh
-                run: cd ../deployment && npx tsx hooks/backend-postdeploy.ts
                 interactive: true
     frontend:
         project: azure-sdk-qa-bot

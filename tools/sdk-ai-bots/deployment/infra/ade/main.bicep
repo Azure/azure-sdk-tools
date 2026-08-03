@@ -177,7 +177,7 @@ module logicApp '../modules/qaBotLogicApp/logicAppResources.bicep' = {
 }
 
 // ── Outputs consumed by azd / hooks (mirror ../main.bicep) ─────────────────────
-output CONTAINER_REGISTRY_LOGIN_SERVER string = sharedResources.outputs.containerRegistryLoginServer
+output AZURE_CONTAINER_REGISTRY_ENDPOINT string = sharedResources.outputs.containerRegistryLoginServer
 output CONTAINER_REGISTRY_NAME string = sharedResources.outputs.containerRegistryName
 output AZURE_RESOURCE_GROUP string = resourceGroup().name
 output AZURE_LOCATION string = location

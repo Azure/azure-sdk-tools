@@ -488,16 +488,7 @@ them** — exactly like the Logic App workflow reverting to its empty shell.
 | **Function App** container image | App pinned to mutable `:dev` tag | Repoints app to immutable `dev-N.0.0` via `az functionapp config container set` | [hooks/function-predeploy.ts](../hooks/function-predeploy.ts) | Same as frontend — tag resolved at deploy time, not persisted to a Bicep param | `azd deploy function-app` |
 | **Backend `agent` slot** container image | Slot `linuxFxVersion` from `AGENT_BASED_IMAGE_REPOSITORY` param (defaults to `:dev`) | Builds immutable `dev-N.0.0` image and registers it (`SERVICE_AGENT_SERVER_IMAGE_NAME`); azd then deploys it to the `agent` **slot** natively (`resourceName: ${BACKEND_SITE_NAME}` + `AZD_DEPLOY_AGENT_SERVER_SLOT_NAME=agent`) | [hooks/agent-server-predeploy.ts](../hooks/agent-server-predeploy.ts) | Same as frontend/function — the immutable tag is resolved at deploy time, not persisted to a Bicep param | `azd deploy agent-server` |
 
-### 17.2 State that `azd deploy` (not provision) clobbers — self-healing
-
-Listed for completeness; **not** a re-provision concern (provision sets it
-correctly), but the same "Bicep value overwritten out-of-band" class:
-
-| Resource | What clobbers it | Hook that self-heals | Hook |
-|---|---|---|---|
-| **Backend ACR pull identity** (`acrUserManagedIdentityID` / `acrUseManagedIdentityCreds`) | Every `azd deploy backend` overwrites the site's container config and clears the user-assigned pull identity → image pull fails with 503 | Re-applies the identity and restarts the site (idempotent) | [hooks/backend-postdeploy.ts](../hooks/backend-postdeploy.ts) (`repinAcrPullIdentity`) |
-
-### 17.3 State that survives a re-provision — no action needed
+### 17.2 State that survives a re-provision — no action needed
 
 These are either not declared in Bicep (so provision cannot remove them) or are
 re-seeded by the postprovision hook on **every** provision, so they are safe:

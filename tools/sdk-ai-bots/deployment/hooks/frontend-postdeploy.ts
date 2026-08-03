@@ -113,16 +113,15 @@ function provisionTeamsApp(): void {
     return;
   }
 
-  const envFile = resolve(TEAMS_PROJECT_ROOT, "env", `.env.${TEAMS_ENV}`);
-  if (!existsSync(envFile)) {
-    throw new Error(
-      `Teams env file '${envFile}' not found. Run \`azd provision\` first so its ` +
-        `postprovision hook generates env/.env.${TEAMS_ENV}.`,
-    );
-  }
-
   const strict = process.env.TEAMS_PROVISION_STRICT === "1";
   try {
+    const envFile = resolve(TEAMS_PROJECT_ROOT, "env", `.env.${TEAMS_ENV}`);
+    if (!existsSync(envFile)) {
+      throw new Error(
+        `Teams env file '${envFile}' not found. Run \`azd provision\` first so its ` +
+          `postprovision hook generates env/.env.${TEAMS_ENV}.`,
+      );
+    }
     runTeamsapp("provision");
     // Publishing to the Teams Admin Center is a separate, higher-impact step;
     // opt in with TEAMS_PUBLISH=1 (e.g. for prod rollouts).

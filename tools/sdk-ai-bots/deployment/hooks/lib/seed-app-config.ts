@@ -187,7 +187,7 @@ export function derivedAppConfigValues(env: NodeJS.ProcessEnv): Record<string, s
 
   return {
     ACR_LOGIN_SERVER:
-      env.CONTAINER_REGISTRY_LOGIN_SERVER?.trim() ||
+      env.AZURE_CONTAINER_REGISTRY_ENDPOINT?.trim() ||
       `${required("CONTAINER_REGISTRY_NAME")}.azurecr.io`,
     AI_FOUNDRY_PROJECT_ENDPOINT: required("FOUNDRY_PROJECT_ENDPOINT").replace(/\/+$/, ""),
     AI_SEARCH_SERVICE_NAME: searchServiceName,

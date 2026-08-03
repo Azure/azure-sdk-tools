@@ -108,12 +108,17 @@ def _fetch_content_filters(
     """Return the account's content-filter catalog as (name, source, multi_level)."""
     try:
         location = client.accounts.get(resource_group, account_name).location or ""
+        if not location:
+            print(f"  WARNING: Account '{account_name}' has no Azure location.")
+            return None
         catalog: list[tuple[str, str, bool]] = []
         for item in client.rai_content_filters.list(location):
             props = getattr(item, "properties", None)
             if props and props.name and props.source is not None:
                 source = getattr(props.source, "value", props.source)
                 catalog.append((props.name, str(source), bool(props.is_multi_level_filter)))
+        if not catalog:
+            print(f"  WARNING: No usable RAI content filters found in '{location}'.")
         return catalog or None
     except Exception as exc:
         print(f"  WARNING: Could not list RAI content filters ({exc}).")
@@ -160,8 +165,20 @@ def _resolve_account_resource_id(account_name: str) -> str | None:
             "tsv",
         ]
     )
-    if res.returncode == 0 and res.stdout.strip():
+    if res.returncode != 0:
+        detail = res.stderr.strip() or res.stdout.strip() or "no Azure CLI error output"
+        print(
+            "  WARNING: Guardrail account lookup command failed "
+            f"with exit code {res.returncode}: {detail}"
+        )
+        return None
+    if res.stdout.strip():
         return res.stdout.strip().splitlines()[0].strip()
+    print(
+        f"  WARNING: No Cognitive Services account named '{account_name}' was found "
+        "in the current Azure CLI subscription. Verify the account name, subscription, "
+        "and service-connection access."
+    )
     return None
 
 
@@ -406,8 +423,7 @@ def main() -> None:
         else:
             print(
                 "  WARNING: Deploying WITHOUT a content safety guardrail "
-                f"(account '{account_name or '(unknown)'}' unresolved or no "
-                "filters available). Set AI_FOUNDRY_ACCOUNT_NAME to enable it."
+                "because account resolution or filter discovery failed."
             )
 
         agent = project.agents.create_version(

@@ -197,6 +197,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                         response.PipelineBuildId = releasePipelineRun.Id;
                         response.ReleasePipelineStatus = releasePipelineRun.Status?.ToString() ?? "";
                         response.ReleaseStatusDetails = $"Release pipeline triggered successfully for package '{packageName}' in language '{language}'. Check the status of the pipeline after some time and approve the SDK release using the link to the pipeline run. You can find more information about release approval in https://aka.ms/azsdk/publishsdk";
+                        response.NextSteps = ["Approve the release stage in the pipeline run", "After release completes, verify package is published to the registry"];
                         logger.LogInformation("{details}", response.ReleaseStatusDetails);
                     }
                     else

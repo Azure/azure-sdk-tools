@@ -197,16 +197,35 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         var specInputsInScope = editScope.HasFlag(EditScope.SpecInputs);
         var customCodeInScope = editScope.HasFlag(EditScope.CustomCode);
         // Validate input
-        if (!Directory.Exists(packagePath))
+        if (customCodeInScope)
         {
-            return new CustomizedCodeUpdateResponse
+            if (string.IsNullOrWhiteSpace(packagePath))
             {
-                Success = false,
-                ResponseError = $"Package path does not exist: {packagePath}",
-                Message = $"Package path does not exist: {packagePath}",
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
-                BuildResult = $"Package path does not exist: {packagePath}"
-            };
+                string packagePathMessage = "A package path is required when custom code is in scope " +
+               "(editScope includes CustomCode/All), because the tool must edit SDK source code locally. " +
+               "Provide --package-path, or use editScope specInputs to repair typespec only.";
+                return new CustomizedCodeUpdateResponse
+                {
+                    Success = false,
+                    ResponseError = packagePathMessage,
+                    Message = packagePathMessage,
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+                    BuildResult = packagePathMessage
+                };
+            }
+
+            if (!Directory.Exists(packagePath))
+            {
+                return new CustomizedCodeUpdateResponse
+                {
+                    Success = false,
+                    ResponseError = $"package path does not exist: {packagePath}",
+                    Message = $"package path does not exist: {packagePath}",
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+                    BuildResult = $"package path does not exist: {packagePath}"
+                };
+            }
+
         }
 
         // tspProjectPath is only required when spec inputs are in scope (the tool must edit a local
@@ -262,6 +281,17 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         string? apiViewUrl = IsApiViewUrl(customizationRequest) ? customizationRequest : null;
 
         var languageService = await ResolveLanguageServiceAsync(packagePath, apiViewUrl, ct);
+        if (languageService == null && customCodeInScope)
+        {
+            return new CustomizedCodeUpdateResponse
+            {
+                Success = false,
+                ResponseError = $"No language service available for package path: {packagePath}",
+                Message = $"No language service available for package path: {packagePath}",
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.NoLanguageService,
+                BuildResult = $"No language service available for package path: {packagePath}"
+            };
+        }
         PackageInfo? packageInfo = null;
 
         try

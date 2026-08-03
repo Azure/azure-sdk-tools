@@ -114,9 +114,19 @@ def _fetch_content_filters(
         catalog: list[tuple[str, str, bool]] = []
         for item in client.rai_content_filters.list(location):
             props = getattr(item, "properties", None)
-            if props and props.name and props.source is not None:
+            if not props or not props.name:
+                continue
+            if props.source is not None:
                 source = getattr(props.source, "value", props.source)
                 catalog.append((props.name, str(source), bool(props.is_multi_level_filter)))
+            elif props.is_multi_level_filter:
+                catalog.extend(
+                    (props.name, source, True)
+                    for source in (
+                        RaiPolicyContentSource.PROMPT.value,
+                        RaiPolicyContentSource.COMPLETION.value,
+                    )
+                )
         if not catalog:
             print(f"  WARNING: No usable RAI content filters found in '{location}'.")
         return catalog or None

@@ -522,6 +522,7 @@ Manual approval gate on release pipeline cannot be removed for security (ARM app
 | `package-name-<lang>-pending` | CI | Per-language package name pending review | Yes | ✅ Fully automated |
 | `package-name-<lang>-approved` | Architect | Package name approved for language | Unblocks | ✅ Manual label, gate automated |
 | `package-name-approved-all` | Architect | Approves all languages (mgmt) | Unblocks | ✅ Manual label, gate automated |
+| `package-name-approved` | CI (bot) | All required languages approved, merge unblocked | Unblocks | ✅ Fully automated |
 | `Approved-BreakingChange*` | Review team | Breaking change approved (multiple labels exist per break category) | Unblocks | ⚠️ Manual label, gate works |
 | `BreakingChange-{Language}-Sdk` | CI | Sdk breaking change detected (management plane only) | Yes | ✅ Fully automated |
 | `BreakingChange-{Language}-Sdk-Approved` | Review team | Sdk breaking change approved | Yes | ⚠️ Manual label, validation automated |
@@ -549,9 +550,9 @@ Manual approval gate on release pipeline cannot be removed for security (ARM app
 
 | Workstream | Status | Scope | Long-term fate |
 |-----------|--------|-------|----------------|
-| **GitHub Forms + Actions** (PR #10037, shipped) | ✅ Live | Review intake via `azure-sdk` repo. `arch-board-review.yml` = bridge. `namespace-review.yml` = long-term. | `arch-board-review.yml` retires when ARH ships |
+| **GitHub Forms + Actions** (PR #10037, shipped) | ✅ Live | Review intake via `azure-sdk` repo. `arch-board-triage.yml` handles architect board triage. | Retires when ARH ships |
 | **API Review Hub** (@tjprescott, in progress) | 🔜 Prototype | SDK-level review via synthetic GitHub PRs. Does NOT operate at spec level. | Replaces APIView for SDK review |
-| **Spec PR-based package name approval** ([process doc](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/workflows/src/package-name-approval/PACKAGE-NAME-REVIEW-PROCESS.md), live) | ✅ Live | Package name approval on spec PR merge. | Retires `namespace-review.yml` |
+| **Spec PR-based package name approval** ([process doc](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/workflows/src/package-name-approval/PACKAGE-NAME-REVIEW-PROCESS.md), live) | ✅ Live | Package name approval on spec PR merge. Replaces the previous `azure-sdk` repo issue-based namespace review. | Primary mechanism for package name approval |
 
 ### Orchestration architecture: skill chaining
 
@@ -650,7 +651,7 @@ The system uses **prompt chaining**: independent sub-skills invoked sequentially
 **Impact**: Cannot fully automate GA approval or first preview package name approval. New package releases blocked until naming approved.
 
 **Status**: Three workstreams converging:
-1. **GitHub Forms + Actions (shipped)** — `arch-board-review.yml` is bridge until ARH. `namespace-review.yml` stays long-term.
+1. **GitHub Forms + Actions (shipped)** — `arch-board-triage.yml` in `azure-sdk` repo handles architect review triage. Retires when ARH ships.
 2. **API Review Hub (in progress)** — Replaces APIView for SDK review. Package name approval out of scope.
 3. **Spec PR-based package name approval ([process doc](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/workflows/src/package-name-approval/PACKAGE-NAME-REVIEW-PROCESS.md), live)** — Package name approval on spec PR merge. CI extracts package names, applies `package-name-review-required` + `package-name-<lang>-pending` labels, blocks merge until approved.
 

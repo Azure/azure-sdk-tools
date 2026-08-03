@@ -18,8 +18,7 @@ The pipeline creates these generated page types:
 | `concept` | cross-document page for a recurring topic | `wiki_concept` |
 
 The full build extracts entities and concepts per document, aggregates recurring
-items, synthesizes generated pages, adds cross-links between pages with shared
-source documents, and writes the manifest.
+items, synthesizes generated pages, and writes the manifest.
 
 Every LLM system prompt lives in `azure_sdk_qa_bot_wiki_index/prompts/` as
 markdown (`extract.md` for the map phase, `summary.md` for per-document summary
@@ -56,8 +55,7 @@ input hash, and source refs per page. Each run:
 4. **Re-synthesises an entity/concept page** only when its group gained or lost
    a source document, or when its members' descriptions changed. One changed
    document therefore touches only the groups that reference it.
-5. **Recomputes cross-links** over the whole current page set.
-6. **Uploads a page only when its rendered content changed.** Pages whose
+5. **Uploads a page only when its rendered content changed.** Pages whose
    sources are gone are soft-deleted via `IsDeleted` blob metadata — the same
    convention the knowledge sync uses, so the shared indexer drops them.
    Documents whose summary generation failed have their stored hash cleared so

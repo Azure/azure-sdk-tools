@@ -25,7 +25,6 @@ from .wiki_reduce import (
     Group,
     aggregate_groups,
     group_to_page,
-    inject_cross_links,
     synthesize_group,
 )
 
@@ -104,7 +103,6 @@ def _page_from_manifest(entry: dict) -> WikiPage:
         content=entry.get("content", ""),
         context_id=entry["context_id"],
         source_refs=list(entry.get("source_refs", [])),
-        out_links=list(entry.get("out_links", [])),
         orig_title=entry.get("orig_title", ""),
     )
 
@@ -237,24 +235,22 @@ async def reconcile(
                     ec_pages[g.slug()] = group_to_page(g, body)
                     stats.groups_synthesized += 1
 
-    # --- 5. cross-links over the full current page set ---
+    # Collect the full current page set before applying the diff.
     all_pages = list(summary_pages.values()) + list(ec_pages.values())
-    inject_cross_links(all_pages)
     stats.total_pages = len(all_pages)
 
-    # --- 6. apply: upload changed, soft-delete removed, write manifest ---
+    # --- 5. apply: upload changed, soft-delete removed, write manifest ---
     ts = now_iso()
-    title_by_slug = {p.slug: p.title for p in all_pages}
     current_slugs = {p.slug for p in all_pages}
     new_pages_manifest: dict[str, dict] = {}
 
     for page in all_pages:
-        rendered = render_markdown(page, title_by_slug)
+        rendered = render_markdown(page)
         chash = content_hash(rendered)
         prior = prior_pages.get(page.slug)
         path = blob_path(page.slug)
         if not prior or prior.get("content_hash") != chash or prior.get("is_deleted") == "true":
-            path, chash = await upload_page(container_client, page, title_by_slug)
+            path, chash = await upload_page(container_client, page)
             stats.pages_written += 1
         new_pages_manifest[page.slug] = {
             "page_type": page.page_type,
@@ -262,7 +258,6 @@ async def reconcile(
             "context_id": page.context_id,
             "orig_title": page.orig_title,
             "source_refs": page.source_refs,
-            "out_links": page.out_links,
             "content": page.content,
             "content_hash": chash,
             "blob_path": path,
@@ -281,6 +276,7 @@ async def reconcile(
         # Drop the body: a tombstone only needs enough to detect resurrection,
         # and retaining it would grow the manifest without bound.
         entry.pop("content", None)
+        entry.pop("out_links", None)
         entry["is_deleted"] = "true"
         entry["updated_at"] = ts
         new_pages_manifest[slug] = entry

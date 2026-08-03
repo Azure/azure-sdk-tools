@@ -29,23 +29,9 @@ def test_index_title_summary_uses_orig():
     assert index_title(ent) == "@added"
 
 
-def test_render_markdown_with_related():
-    pages = {
-        "entity/added": "@added",
-        "concept/versioning": "API versioning",
-    }
-    p = WikiPage("entity/added", PAGE_ENTITY, "@added", "Marks a member added.",
-                 "wiki_entity", out_links=["concept/versioning", "entity/missing"])
-    md = render_markdown(p, pages)
+def test_render_markdown():
+    p = WikiPage("entity/added", PAGE_ENTITY, "@added", "Marks a member added.", "wiki_entity")
+    md = render_markdown(p)
     assert md.startswith("# @added")
     assert "Marks a member added." in md
-    assert "## Related" in md
-    assert "- API versioning" in md
-    # dead link (missing title) is dropped
-    assert "entity/missing" not in md
-
-
-def test_render_markdown_no_related_section_when_empty():
-    p = WikiPage("summary/x", PAGE_SUMMARY, "Foo", "body", "typespec_docs")
-    md = render_markdown(p, {})
     assert "## Related" not in md

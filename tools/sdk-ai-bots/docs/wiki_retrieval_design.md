@@ -79,14 +79,13 @@ The consequence is the cross-document scoping limitation below: a tenant reading
  "pages":   {slug: {content_hash, input_hash, source_refs, is_deleted, ...}}}
 ```
 
-Six phases:
+Five phases:
 
 1. **Diff sources by content hash.** The corpus reader skips blobs the KB sync has tombstoned (`IsDeleted` metadata), so a retired document reaches the diff as a deletion rather than as live content. `changed` = hash differs from the manifest; `deleted` = in the manifest but absent from the corpus. A run where `deleted` exceeds half of the known sources raises `CorpusShrankError` instead of proceeding — the wiki reads the container the KB sync writes, so a truncated upstream sync would otherwise tombstone the wiki and force an expensive full LLM rebuild.
 2. **Extraction.** Only changed documents are re-extracted; every other document's entities/concepts are deserialised from the manifest.
 3. **Summary pages.** Only changed documents are re-summarised; the rest are reused from the manifest.
 4. **Entity/concept pages.** A group's page is reused only when it already has content **and** its `source_refs` set is unchanged **and** its `input_hash` (a digest of the group name plus all member descriptions) is unchanged. So a single changed document re-synthesises only the groups that reference it.
-5. **Cross-links** are recomputed over the whole current page set. Links are ordered by shared-document weight then slug — a deterministic order matters, because links are rendered into the page body, so an order that depended on which pages happened to be rebuilt would change every page's content hash and rewrite the whole wiki on every run.
-6. **Apply.** A page is uploaded only when its rendered content hash changed. Pages that no longer exist are **soft-deleted** via `IsDeleted` blob metadata — the same convention the KB sync pipeline uses, so the shared indexer drops them — and their manifest entry is reduced to a tombstone. Documents whose summary generation failed have their stored hash cleared, so the next run retries them.
+5. **Apply.** A page is uploaded only when its rendered content hash changed. Pages that no longer exist are **soft-deleted** via `IsDeleted` blob metadata — the same convention the KB sync pipeline uses, so the shared indexer drops them — and their manifest entry is reduced to a tombstone. Documents whose summary generation failed have their stored hash cleared, so the next run retries them.
 
 The first run against an empty manifest is a full build. A run over an unchanged corpus writes nothing and makes no LLM calls: measured end to end, ~14 minutes for a 72-document delta over 1029 sources, ~1 second of reconcile for no delta, against ~80 minutes for a full rebuild.
 

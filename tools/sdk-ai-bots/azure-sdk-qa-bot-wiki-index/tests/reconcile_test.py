@@ -95,6 +95,7 @@ def test_extraction_roundtrip():
 
 
 def test_page_from_manifest():
+    # Old manifests may still contain the removed static cross-link field.
     entry = {"slug": "entity/added", "page_type": "entity", "title": "@added",
              "content": "b", "context_id": "wiki_entity", "source_refs": ["a.md"],
              "out_links": ["concept/v"], "orig_title": ""}

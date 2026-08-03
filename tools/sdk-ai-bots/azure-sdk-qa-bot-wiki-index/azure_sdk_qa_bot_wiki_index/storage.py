@@ -32,14 +32,9 @@ def content_hash(text: str) -> str:
     return hashlib.sha1(text.encode("utf-8")).hexdigest()[:16]
 
 
-def render_markdown(page: WikiPage, title_by_slug: dict[str, str]) -> str:
-    """Markdown body = title + content + a Related section embedding cross-links."""
-    parts = [f"# {page.title}", "", page.content.strip()]
-    related = [title_by_slug.get(s) for s in page.out_links]
-    related = [r for r in related if r]
-    if related:
-        parts += ["", "## Related", *[f"- {r}" for r in related]]
-    return "\n".join(parts).strip() + "\n"
+def render_markdown(page: WikiPage) -> str:
+    """Render a generated page as a title and synthesized body."""
+    return "\n".join([f"# {page.title}", "", page.content.strip()]).strip() + "\n"
 
 
 def index_title(page: WikiPage) -> str:
@@ -51,9 +46,9 @@ def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-async def upload_page(container_client, page: WikiPage, title_by_slug: dict[str, str]) -> tuple[str, str]:
+async def upload_page(container_client, page: WikiPage) -> tuple[str, str]:
     """Upload one page blob (+ metadata). Returns ``(blob_path, content_hash)``."""
-    body = render_markdown(page, title_by_slug)
+    body = render_markdown(page)
     chash = content_hash(body)
     path = blob_path(page.slug)
     # chunk_refs = the source docs this page routes to, for query-time backfill.

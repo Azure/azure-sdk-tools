@@ -44,7 +44,6 @@ class WikiPage:
     content: str
     context_id: str
     source_refs: list[str] = field(default_factory=list)
-    out_links: list[str] = field(default_factory=list)
     orig_title: str = ""  # summary pages: the source rel path (drives get_link)
 
     def key_hash(self) -> str:

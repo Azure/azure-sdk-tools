@@ -5,7 +5,6 @@ from __future__ import annotations
 from azure_sdk_qa_bot_wiki_index.pages import (
     PAGE_CONCEPT,
     PAGE_ENTITY,
-    WikiPage,
     make_slug,
     slugify,
 )
@@ -14,13 +13,7 @@ from azure_sdk_qa_bot_wiki_index.wiki_reduce import (
     _concept_key,
     _entity_key,
     aggregate_groups,
-    inject_cross_links,
 )
-
-
-def _page(slug, ptype, title, refs):
-    return WikiPage(slug=slug, page_type=ptype, title=title, content="x",
-                    context_id="wiki_entity", source_refs=refs)
 
 
 def _ext(ref, entities=(), concepts=()):
@@ -37,40 +30,6 @@ def test_slug_and_key_normalization():
     assert make_slug("entity", "@added").startswith("entity/")
     assert _entity_key("@Added") == _entity_key("@added")
     assert _concept_key("API Versioning!") == _concept_key("api versioning")
-
-
-def test_cross_links_by_shared_docs():
-    pages = [
-        _page("entity/added", PAGE_ENTITY, "@added", ["d1", "d2"]),
-        _page("entity/removed", PAGE_ENTITY, "@removed", ["d1", "d3"]),
-        _page("concept/versioning", PAGE_CONCEPT, "versioning", ["d1"]),
-        _page("entity/route", PAGE_ENTITY, "@route", ["d9"]),
-    ]
-    inject_cross_links(pages)
-    added = next(p for p in pages if p.slug == "entity/added")
-    assert "entity/removed" in added.out_links
-    assert "concept/versioning" in added.out_links
-    # shares no docs → no links
-    assert next(p for p in pages if p.slug == "entity/route").out_links == []
-
-
-def test_cross_links_are_independent_of_page_order():
-    """Ties must break on slug, not arrival order.
-
-    Incremental runs hand pages over in a different order every time (rebuilt
-    pages land after reused ones), so order-dependent links would rewrite every
-    blob on every run.
-    """
-    def build(order):
-        pages = [_page(f"entity/e{i}", PAGE_ENTITY, f"e{i}", ["d1"]) for i in order]
-        inject_cross_links(pages)
-        return {p.slug: list(p.out_links) for p in pages}
-
-    forward = build(range(12))
-    reverse = build(reversed(range(12)))
-    shuffled = build([7, 2, 11, 0, 5, 9, 1, 8, 3, 10, 4, 6])
-    assert forward == reverse == shuffled
-    assert forward["entity/e0"] == sorted(forward["entity/e0"])
 
 
 def test_alias_merges_surface_forms_across_docs():

@@ -85,7 +85,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "edit"
+            - "^(edit|bash)$"
             - "^(web_fetch|azure-sdk-mcp-azsdk_typespec_generate_authoring_plan)$"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "skill-invocation"

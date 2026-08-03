@@ -45,7 +45,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "edit"
+            - "^(edit|bash)$"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "skill-invocation"
         config:
@@ -96,7 +96,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "edit"
+              - "^(edit|bash)$"
       - type: "file-matches"
         config:
           path: "employee.tsp"

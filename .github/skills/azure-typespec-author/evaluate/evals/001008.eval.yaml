@@ -152,7 +152,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "edit"
+              - "^(edit|bash)$"
       - type: "file-exists"
         config:
           path: "examples/2024-10-01/Employees_Get_MaximumSet_Gen.json"

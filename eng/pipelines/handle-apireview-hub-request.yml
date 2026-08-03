@@ -38,7 +38,7 @@ parameters:
     default: 'Azure'
   - name: baseRef
     type: string
-    default: 'unused-for-update'
+    default: ''
   - name: targetRef
     type: string
     default: ''
@@ -75,9 +75,6 @@ jobs:
           if ([string]::IsNullOrWhiteSpace('${{ parameters.packageName }}')) {
             throw 'packageName is required.'
           }
-          if ('${{ parameters.requestMode }}' -eq 'create' -and ([string]::IsNullOrWhiteSpace('${{ parameters.baseRef }}') -or '${{ parameters.baseRef }}' -eq 'unused-for-update')) {
-            throw 'baseRef is required for create requests.'
-          }
           if ([string]::IsNullOrWhiteSpace('${{ parameters.targetRef }}')) {
             throw 'targetRef is required.'
           }
@@ -87,9 +84,9 @@ jobs:
           New-Item -ItemType Directory -Force -Path '$(Build.ArtifactStagingDirectory)/result' | Out-Null
         displayName: 'Validate request parameters'
 
-      # Create requests need the baseline bundle first. The job uses one source
-      # checkout and switches it from the tooling ref to base, then target.
-      - ${{ if eq(parameters.requestMode, 'create') }}:
+      # Create requests with a baseline need the baseline bundle first. Empty
+      # baseRef values intentionally generate a target-only review.
+      - ${{ if and(eq(parameters.requestMode, 'create'), ne(trim(parameters.baseRef), '')) }}:
         - template: ${{ format('/eng/common/pipelines/templates/steps/create-apireview-hub-artifacts-{0}.yml', parameters.language) }}
           parameters:
             requestMode: ${{ parameters.requestMode }}
@@ -125,9 +122,15 @@ jobs:
             result = '${{ parameters.resultArtifactName }}'
           }
 
+          $baseRef = '${{ parameters.baseRef }}'
+          if ([string]::IsNullOrWhiteSpace($baseRef)) {
+            $baseRef = ''
+          }
+
+          $hasBaseline = '${{ parameters.requestMode }}' -eq 'create' -and -not [string]::IsNullOrWhiteSpace($baseRef)
           $baseVersion = ''
           $changed = $null
-          if ('${{ parameters.requestMode }}' -eq 'create') {
+          if ($hasBaseline) {
             $baseMetadataPath = '$(Build.ArtifactStagingDirectory)/base/artifact-metadata.json'
             $baseMetadata = Get-Content -Raw -Path $baseMetadataPath | ConvertFrom-Json
             $baseVersion = $baseMetadata.version
@@ -144,7 +147,7 @@ jobs:
             language = '${{ parameters.language }}'
             repositoryFullName = $targetMetadata.repositoryFullName
             packageName = '${{ parameters.packageName }}'
-            baseRef = '${{ parameters.baseRef }}'
+            baseRef = $baseRef
             targetRef = '${{ parameters.targetRef }}'
             status = 'succeeded'
             changed = $changed
@@ -164,12 +167,17 @@ jobs:
           $ErrorActionPreference = 'Stop'
 
           New-Item -ItemType Directory -Force -Path '$(Build.ArtifactStagingDirectory)/result' | Out-Null
+          $baseRef = '${{ parameters.baseRef }}'
+          if ([string]::IsNullOrWhiteSpace($baseRef)) {
+            $baseRef = ''
+          }
+
           $summary = [ordered]@{
             operationId = '${{ parameters.operationId }}'
             mode = '${{ parameters.requestMode }}'
             language = '${{ parameters.language }}'
             packageName = '${{ parameters.packageName }}'
-            baseRef = '${{ parameters.baseRef }}'
+            baseRef = $baseRef
             targetRef = '${{ parameters.targetRef }}'
             status = 'failed'
             artifacts = [ordered]@{
@@ -182,12 +190,13 @@ jobs:
         displayName: 'Write failure result summary'
         condition: failed()
 
-      - task: PublishBuildArtifacts@1
-        displayName: 'Publish base API review bundle'
-        condition: and(succeeded(), eq('${{ parameters.requestMode }}', 'create'))
-        inputs:
-          pathtoPublish: '$(Build.ArtifactStagingDirectory)/base'
-          artifactName: '${{ parameters.baseArtifactName }}'
+      - ${{ if and(eq(parameters.requestMode, 'create'), ne(trim(parameters.baseRef), '')) }}:
+        - task: PublishBuildArtifacts@1
+          displayName: 'Publish base API review bundle'
+          condition: succeeded()
+          inputs:
+            pathtoPublish: '$(Build.ArtifactStagingDirectory)/base'
+            artifactName: '${{ parameters.baseArtifactName }}'
 
       - task: PublishBuildArtifacts@1
         displayName: 'Publish target API review bundle'
@@ -259,7 +268,9 @@ jobs:
               $body.artifacts.target = '${{ parameters.targetArtifactName }}'
             }
 
-            if (('${{ parameters.requestMode }}' -eq 'create') -and ('$(Agent.JobStatus)' -eq 'Succeeded' -or '$(Agent.JobStatus)' -eq 'SucceededWithIssues')) {
+            $baseRef = '${{ parameters.baseRef }}'
+            $hasBaseline = '${{ parameters.requestMode }}' -eq 'create' -and -not [string]::IsNullOrWhiteSpace($baseRef)
+            if ($hasBaseline -and ('$(Agent.JobStatus)' -eq 'Succeeded' -or '$(Agent.JobStatus)' -eq 'SucceededWithIssues')) {
               $body.artifacts.base = '${{ parameters.baseArtifactName }}'
             }
 

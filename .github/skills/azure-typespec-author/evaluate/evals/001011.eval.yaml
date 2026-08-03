@@ -31,6 +31,8 @@ stimuli:
           dest: Microsoft.Widget/Widget/package-lock.json
         - src: ../fixtures/Microsoft.Widget/Widget/package.json
           dest: Microsoft.Widget/Widget/package.json
+        - src: ../fixtures/Microsoft.Widget/Widget/node_modules
+          dest: node_modules
         - src: ../scripts/check-node-dependencies.js
           dest: check-node-dependencies.js
         - src: ../fixtures/001-share-version-new-feature/readme.md
@@ -39,8 +41,6 @@ stimuli:
           dest: Microsoft.Widget/Widget/shared.tsp
         - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
           dest: Microsoft.Widget/Widget/tspconfig.yaml
-      commands:
-        - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
     graders:
       - type: "tool-calls"
         config:

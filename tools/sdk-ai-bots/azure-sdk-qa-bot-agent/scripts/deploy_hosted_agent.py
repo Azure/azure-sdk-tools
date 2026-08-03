@@ -42,14 +42,6 @@ from azure.ai.projects.models import (
 )
 from azure.identity import AzureCliCredential
 from azure.mgmt.cognitiveservices import CognitiveServicesManagementClient
-from azure.mgmt.cognitiveservices.models import (
-    ContentLevel,
-    RaiPolicy,
-    RaiPolicyContentFilter,
-    RaiPolicyContentSource,
-    RaiPolicyMode,
-    RaiPolicyProperties,
-)
 
 import config.app_config as app_config
 from config.app_config import get as cfg
@@ -79,86 +71,12 @@ def _git_short_sha() -> str:
         return "latest"
 
 
-# Base polic
-_BASE_POLICY_NAME = "Microsoft.DefaultV2"
-
-# Native sources
-_NATIVE_BLOCKING_SOURCES = (
-    RaiPolicyContentSource.PROMPT.value,
-    RaiPolicyContentSource.COMPLETION.value,
-    "PreToolCall",
-)
-
-# Extra sources
-_EXTRA_BLOCKING_SOURCES: dict[str, tuple[str, ...]] = {
-    "Indirect Attack": ("PostToolCall",),
-}
-
 # ARM ID: /subscriptions/{sub}/resourceGroups/{rg}/providers/.../accounts/{name}
 _ACCOUNT_ID_RE = re.compile(
     r"/subscriptions/(?P<sub>[^/]+)/resourceGroups/(?P<rg>[^/]+)"
     r"/providers/Microsoft\.CognitiveServices/accounts/(?P<account>[^/]+)",
     re.IGNORECASE,
 )
-
-
-def _fetch_content_filters(
-    client: CognitiveServicesManagementClient, resource_group: str, account_name: str
-) -> list[tuple[str, str, bool]] | None:
-    """Return the account's content-filter catalog as (name, source, multi_level)."""
-    try:
-        location = client.accounts.get(resource_group, account_name).location or ""
-        if not location:
-            print(f"  WARNING: Account '{account_name}' has no Azure location.")
-            return None
-        catalog: list[tuple[str, str, bool]] = []
-        for item in client.rai_content_filters.list(location):
-            props = getattr(item, "properties", None)
-            if not props or not props.name:
-                continue
-            if props.source is not None:
-                source = getattr(props.source, "value", props.source)
-                catalog.append((props.name, str(source), bool(props.is_multi_level_filter)))
-            elif props.is_multi_level_filter:
-                catalog.extend(
-                    (props.name, source, True)
-                    for source in (
-                        RaiPolicyContentSource.PROMPT.value,
-                        RaiPolicyContentSource.COMPLETION.value,
-                    )
-                )
-        if not catalog:
-            print(f"  WARNING: No usable RAI content filters found in '{location}'.")
-        return catalog or None
-    except Exception as exc:
-        print(f"  WARNING: Could not list RAI content filters ({exc}).")
-        return None
-
-
-def _build_rai_policy(catalog: list[tuple[str, str, bool]]) -> RaiPolicy:
-    """Build a blocking guardrail over the account's discovered filters."""
-    filters: list[RaiPolicyContentFilter] = []
-    for name, native_source, multi_level in catalog:
-        sources = list(_EXTRA_BLOCKING_SOURCES.get(name, ()))
-        if native_source in _NATIVE_BLOCKING_SOURCES:
-            sources.insert(0, native_source)
-        filters.extend(
-            RaiPolicyContentFilter(
-                name=name,
-                enabled=True,
-                blocking=True,
-                source=source,
-                severity_threshold=ContentLevel.MEDIUM if multi_level else None,
-            )
-            for source in sources
-        )
-    return RaiPolicy(
-        properties=RaiPolicyProperties(
-            mode=RaiPolicyMode.BLOCKING,
-            base_policy_name=_BASE_POLICY_NAME,
-            content_filters=filters,
-        )
-    )
 
 
 def _resolve_account_resource_id(account_name: str) -> str | None:
@@ -192,21 +110,20 @@ def _resolve_account_resource_id(account_name: str) -> str | None:
     return None
 
 
-def _ensure_rai_policy(
+def _resolve_rai_policy_id(
     credential: AzureCliCredential, account_resource_id: str, policy_name: str
-) -> str | None:
-    """Create/update the guardrail policy via the mgmt SDK; return its ARM ID."""
+) -> str:
+    """Resolve an existing guardrail policy and return its ARM ID."""
     m = _ACCOUNT_ID_RE.match(account_resource_id)
     if not m:
         raise ValueError(f"Unrecognized account resource ID: {account_resource_id}")
     client = CognitiveServicesManagementClient(credential, m.group("sub"))
-    catalog = _fetch_content_filters(client, m.group("rg"), m.group("account"))
-    if not catalog:
-        return None
-    policy = client.rai_policies.create_or_update(
-        m.group("rg"), m.group("account"), policy_name, _build_rai_policy(catalog)
+    for policy in client.rai_policies.list(m.group("rg"), m.group("account")):
+        if policy.name == policy_name:
+            return policy.id or f"{account_resource_id}/raiPolicies/{policy_name}"
+    raise RuntimeError(
+        f"RAI policy '{policy_name}' was not found on account '{m.group('account')}'."
     )
-    return policy.id or f"{account_resource_id}/raiPolicies/{policy_name}"
 
 
 def _wait_for_version_active(
@@ -418,23 +335,18 @@ def main() -> None:
             account_name = host.split(".")[0]
         policy_name = cfg("AI_FOUNDRY_RAI_POLICY_NAME", "azure-sdk-qa-bot-guardrail")
 
-        rai_config = None
         account_resource_id = (
             _resolve_account_resource_id(account_name) if account_name else None
         )
-        rai_policy_id = (
-            _ensure_rai_policy(credential, account_resource_id, policy_name)
-            if account_resource_id
-            else None
-        )
-        if rai_policy_id:
-            rai_config = RaiConfig(rai_policy_name=rai_policy_id)
-            print(f"  Guardrail: {rai_policy_id}")
-        else:
-            print(
-                "  WARNING: Deploying WITHOUT a content safety guardrail "
-                "because account resolution or filter discovery failed."
+        if not account_resource_id:
+            raise RuntimeError(
+                f"Cannot apply guardrail because account '{account_name}' was not found."
             )
+        rai_policy_id = _resolve_rai_policy_id(
+            credential, account_resource_id, policy_name
+        )
+        rai_config = RaiConfig(rai_policy_name=rai_policy_id)
+        print(f"  Guardrail: {rai_policy_id}")
 
         agent = project.agents.create_version(
             agent_name=image_name,

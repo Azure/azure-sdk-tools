@@ -5,6 +5,7 @@
 ### Features Added
 
 - Added `AZSDK_COPILOT_GITHUB_TOKEN` support for authenticating Copilot-backed commands in non-interactive environments.
+- Added optional `--repo-owner` support to `api-review get-approval-status` (and `azsdk_apireview_get_approval_status`) so approval checks can target a specific repository owner when needed.
 
 ### Bugs Fixed
 

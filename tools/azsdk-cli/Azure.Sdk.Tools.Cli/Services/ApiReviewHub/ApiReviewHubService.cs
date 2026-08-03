@@ -21,6 +21,7 @@ public interface IApiReviewHubService
         string packageName,
         string packageVersion,
         string apiHash,
+        string repoOwner,
         CancellationToken ct);
 }
 
@@ -111,6 +112,7 @@ public class ApiReviewHubService(
         string packageName,
         string packageVersion,
         string apiHash,
+        string repoOwner,
         CancellationToken ct)
     {
         endpoint = endpoint.TrimEnd('/');
@@ -127,6 +129,11 @@ public class ApiReviewHubService(
         if (!string.IsNullOrWhiteSpace(apiHash))
         {
             query.Add($"apiHash={Uri.EscapeDataString(apiHash)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(repoOwner))
+        {
+            query.Add($"repoOwner={Uri.EscapeDataString(repoOwner)}");
         }
 
         uriBuilder.Query = string.Join("&", query);

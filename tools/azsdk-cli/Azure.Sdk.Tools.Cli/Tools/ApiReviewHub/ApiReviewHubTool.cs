@@ -60,6 +60,11 @@ public class ApiReviewHubTool(
         Description = "The API Review Hub API hash to check. When omitted, the release gate cannot be approved but current approval status is returned."
     };
 
+    private readonly Option<string> repoOwnerOption = new("--repo-owner")
+    {
+        Description = "The GitHub repository owner to query in API Review Hub. Optional; when omitted, the service default is used."
+    };
+
     private readonly Option<string> baseTagOption = new("--base-tag")
     {
         Description = "The release tag or ref used as the base API surface.",
@@ -113,7 +118,8 @@ public class ApiReviewHubTool(
             languageOption,
             packageNameOption,
             packageVersionOption,
-            apiHashOption
+            apiHashOption,
+            repoOwnerOption
         }
     ];
 
@@ -148,6 +154,7 @@ public class ApiReviewHubTool(
             parseResult.GetValue(packageNameOption) ?? string.Empty,
             parseResult.GetValue(packageVersionOption) ?? string.Empty,
             parseResult.GetValue(apiHashOption) ?? string.Empty,
+            parseResult.GetValue(repoOwnerOption) ?? string.Empty,
             ct);
 
         if (IsJsonOutput(parseResult))
@@ -259,11 +266,12 @@ public class ApiReviewHubTool(
         [Description("The package name.")] string packageName,
         [Description("The package version to check.")] string packageVersion,
         [Description("The API Review Hub API hash to check. When omitted, the release gate cannot be approved but current approval status is returned.")] string apiHash = "",
+        [Description("The GitHub repository owner to query in API Review Hub. Optional; when omitted, the service default is used.")] string repoOwner = "",
         CancellationToken ct = default)
     {
         try
         {
-            var result = await apiReviewReleaseStatusService.GetApprovalStatusAsync(DefaultEndpoint, language, packageName, packageVersion, apiHash, ct);
+            var result = await apiReviewReleaseStatusService.GetApprovalStatusAsync(DefaultEndpoint, language, packageName, packageVersion, apiHash, repoOwner, ct);
             var response = new ApiReviewReleaseStatusResponse
             {
                 Result = result,

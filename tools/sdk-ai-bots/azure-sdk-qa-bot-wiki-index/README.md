@@ -45,10 +45,7 @@ input hash, and source refs per page. Each run:
 
 1. **Diffs sources by content hash.** The corpus read skips blobs the knowledge
    sync has tombstoned (`IsDeleted` metadata rather than an actual delete), so a
-   retired document arrives as a deletion instead of as live content. A run where
-   more than half of the known sources have disappeared aborts with
-   `CorpusShrankError` instead of tombstoning the wiki, on the assumption that
-   the upstream corpus is incomplete rather than genuinely emptied.
+   retired document arrives as a deletion instead of as live content.
 2. **Re-extracts only changed documents**; the rest are read back from the
    manifest.
 3. **Re-summarises only changed documents.**

@@ -81,7 +81,7 @@ The consequence is the cross-document scoping limitation below: a tenant reading
 
 Five phases:
 
-1. **Diff sources by content hash.** The corpus reader skips blobs the KB sync has tombstoned (`IsDeleted` metadata), so a retired document reaches the diff as a deletion rather than as live content. `changed` = hash differs from the manifest; `deleted` = in the manifest but absent from the corpus. A run where `deleted` exceeds half of the known sources raises `CorpusShrankError` instead of proceeding — the wiki reads the container the KB sync writes, so a truncated upstream sync would otherwise tombstone the wiki and force an expensive full LLM rebuild.
+1. **Diff sources by content hash.** The corpus reader skips blobs the KB sync has tombstoned (`IsDeleted` metadata), so a retired document reaches the diff as a deletion rather than as live content. `changed` = hash differs from the manifest; `deleted` = in the manifest but absent from the corpus.
 2. **Extraction.** Only changed documents are re-extracted; every other document's entities/concepts are deserialised from the manifest.
 3. **Summary pages.** Only changed documents are re-summarised; the rest are reused from the manifest.
 4. **Entity/concept pages.** A group's page is reused only when it already has content **and** its `source_refs` set is unchanged **and** its `input_hash` (a digest of the group name plus all member descriptions) is unchanged. So a single changed document re-synthesises only the groups that reference it.

@@ -5,10 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 
-import pytest
-
 from azure_sdk_qa_bot_wiki_index.reconcile import (
-    CorpusShrankError,
     _extraction_from_json,
     _extraction_to_json,
     _page_from_manifest,
@@ -232,15 +229,15 @@ def test_deleted_page_is_resynthesized_when_its_sources_return():
     assert all(e.get("content") for e in man["pages"].values())
 
 
-def test_mass_deletion_is_refused():
+def test_large_deletion_is_applied():
     cc = _FakeContainer()
     llm = _FakeLLM(_EXTRACTION)
     corpus = [(f"typespec_docs/{i}.md", f"text {i} @added versioning") for i in range(10)]
     asyncio.run(reconcile(cc, corpus, llm, min_docs=2))
 
-    with pytest.raises(CorpusShrankError):
-        asyncio.run(reconcile(cc, corpus[:2], llm, min_docs=2))
-
-    # the manifest is untouched, so the next healthy run is still a no-op
-    s = asyncio.run(reconcile(cc, corpus, llm, min_docs=2))
-    assert s.pages_written == 0 and s.pages_deleted == 0
+    s = asyncio.run(reconcile(cc, corpus[:2], llm, min_docs=2))
+    man = json.loads(cc.store["_manifest.json"]["data"].decode("utf-8"))
+    tombstones = [e for e in man["pages"].values() if e.get("is_deleted") == "true"]
+    assert s.deleted_docs == 8
+    assert s.pages_deleted == 8
+    assert len(tombstones) == 8

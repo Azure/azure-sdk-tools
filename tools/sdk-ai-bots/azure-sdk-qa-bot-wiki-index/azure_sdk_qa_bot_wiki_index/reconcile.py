@@ -34,16 +34,6 @@ MAX_EXTRACT_WORKERS = 4
 MAX_SUMMARY_WORKERS = 16
 MAX_REDUCE_WORKERS = 8
 
-# Abort rather than tombstone the corpus when this fraction of known sources
-# disappears in one run: the wiki reads the container the KB sync writes, so a
-# truncated or misconfigured upstream sync would otherwise delete the wiki and
-# force a full (expensive) LLM rebuild on the next run.
-MAX_DELETE_RATIO = 0.5
-
-
-class CorpusShrankError(RuntimeError):
-    """The source corpus lost too large a fraction of its documents."""
-
 
 @dataclass
 class ReconcileStats:
@@ -130,12 +120,6 @@ async def reconcile(
         current[source_path] = (text, content_hash(text or ""))
     changed = {sp for sp, (_t, h) in current.items() if prior_sources.get(sp, {}).get("hash") != h}
     deleted = {sp for sp in prior_sources if sp not in current}
-    if prior_sources and len(deleted) > len(prior_sources) * MAX_DELETE_RATIO:
-        raise CorpusShrankError(
-            f"{len(deleted)} of {len(prior_sources)} known sources are missing "
-            f"(limit {MAX_DELETE_RATIO:.0%}); refusing to tombstone the wiki. "
-            "Check the knowledge container and re-run."
-        )
     stats = ReconcileStats(changed_docs=len(changed), deleted_docs=len(deleted))
     logger.info("reconcile: %d changed/new, %d deleted, %d unchanged",
                 len(changed), len(deleted), len(current) - len(changed))

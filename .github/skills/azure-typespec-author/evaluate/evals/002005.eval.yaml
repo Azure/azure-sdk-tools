@@ -122,7 +122,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "edit"
+            - "^(edit|bash)$"
       - type: "file-matches"
         config:
           path: "*.tsp"

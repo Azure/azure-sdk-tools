@@ -85,7 +85,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "edit"
+            - "^(edit|bash)$"
             - "^(web_fetch|azure-sdk-mcp-azsdk_typespec_generate_authoring_plan)$"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "skill-invocation"
@@ -106,7 +106,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "edit"
+            - "^(edit|bash)$"
             - "^(web_fetch|azure-sdk-mcp-azsdk_typespec_generate_authoring_plan)$"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "run-command"
@@ -152,7 +152,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-              - "^(edit|bash)$"
+            - "^(edit|bash)$"
       - type: "file-exists"
         config:
           path: "examples/2024-10-01/Employees_Get_MaximumSet_Gen.json"

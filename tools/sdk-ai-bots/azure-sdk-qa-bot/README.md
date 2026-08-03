@@ -55,18 +55,14 @@ This naming convention ensures consistency and makes it easy to identify which e
 
 ## Debug in local
 
-we can debug/test bot frontend and backend service locally.
+we can debug/test the bot frontend locally.
 > **Prerequisites**
 >
 > - Install [Teams Toolkit VS Code Extension](https://marketplace.visualstudio.com/items?itemName=TeamsDevApp.ms-teams-vscode-extension)
 
-### Start Backend Service
+### Start Backend Server
 
-```bash
-cd ../azure-sdk-qa-bot-backend
-go mod download
-go run main.go
-```
+This project (`azure-sdk-qa-bot`) is the Teams bot frontend. The backend server it talks to lives in the agent project (`azure-sdk-qa-bot-agent`, the FastAPI `server.py` entrypoint). To run the backend server locally, follow the setup and "Running and Debugging Locally" instructions in the [agent project README](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/README.md).
 
 ### Start Bot app
 
@@ -107,7 +103,6 @@ This section describes how to update bot service logic in Azure web app
 >   - resource group
 >   - storage account: store the conversation and feedback
 >   - ACR: Azure container register for docker image
->   - azure sdk backend service
 
 1. Run `az login`
 2. Run `azd deploy frontend` to build and push the image (cloud-side via `az acr build`) and deploy it. Local Docker is not required.
@@ -150,7 +145,7 @@ _Example: The `azure-sdk-qa-bot-prod-eastasia` resource group showing the App Se
 
 ![KQL Overview](./doc/images/troubleshooting/kql.png)
 
-> **Note:** For more information about working with logs and KQL queries, please refer to the [Log Analytics workspace documentation](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/log-analytics-workspace-overview). For KQL syntax reference, see [Keyword Query Language (KQL) syntax reference](https://learn.microsoft.com/en-us/sharepoint/dev/general-development/keyword-query-language-kql-syntax-reference).
+> **Note:** For more information about working with logs and KQL queries, please refer to the [Log Analytics workspace documentation](https://learn.microsoft.com/azure/azure-monitor/logs/log-analytics-workspace-overview). For KQL syntax reference, see [Keyword Query Language (KQL) syntax reference](https://learn.microsoft.com/sharepoint/dev/general-development/keyword-query-language-kql-syntax-reference).
 
 #### Step 4: Analyze the Logs
 
@@ -173,7 +168,7 @@ _Example: The `azure-sdk-qa-bot-prod-eastasia` resource group showing the App Se
 ![Teams Copy Links](./doc/images/troubleshooting/teams-copy-links.png)
 ![Search by ID](./doc/images/troubleshooting/search-by-id.png)
 
-> **Note:** For more information about working with logs and KQL queries, please refer to the [Log Analytics workspace documentation](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/log-analytics-workspace-overview). For KQL syntax reference, see [Keyword Query Language (KQL) syntax reference](https://learn.microsoft.com/en-us/sharepoint/dev/general-development/keyword-query-language-kql-syntax-reference).
+> **Note:** For more information about working with logs and KQL queries, please refer to the [Log Analytics workspace documentation](https://learn.microsoft.com/azure/azure-monitor/logs/log-analytics-workspace-overview). For KQL syntax reference, see [Keyword Query Language (KQL) syntax reference](https://learn.microsoft.com/sharepoint/dev/general-development/keyword-query-language-kql-syntax-reference).
 
 ## Additional information and references
 

@@ -9,6 +9,7 @@ using Azure.Sdk.Tools.Cli.Tools.Example;
 using Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 using Azure.Sdk.Tools.Cli.Tools.Verify;
 using Azure.Sdk.Tools.Cli.Tools.APIView;
+using Azure.Sdk.Tools.Cli.Tools.ApiReviewHub;
 using Azure.Sdk.Tools.Cli.Tools.Package.Samples;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Azure.Sdk.Tools.Cli.Tools.Config;
@@ -41,6 +42,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(SdkGenerationTool),
             typeof(MetadataUpdateTool),
             typeof(ChangelogContentUpdateTool),
+            typeof(SdkBreakingChangeDetectTool),
             typeof(VersionUpdateTool),
             typeof(SdkReleaseTool),
             typeof(SpecCommonTools),
@@ -53,6 +55,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(TypeSpecPublicRepoValidationTool),
             typeof(TypeSpecAuthoringTool),
             typeof(APIViewReviewTool),
+            typeof(ApiReviewHubTool),
             typeof(DelegateAPIViewFeedbackTool),
             typeof(VerifySetupTool),
             typeof(VerifySetupInstallTool),

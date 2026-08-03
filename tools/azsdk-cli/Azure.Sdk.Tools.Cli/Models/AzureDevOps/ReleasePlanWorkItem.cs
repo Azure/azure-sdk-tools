@@ -31,6 +31,10 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         [FieldName("Custom.DataScope")]
         public bool IsDataPlane { get; set; } = false;
 
+        // Populated from ADO field "Custom.CreatedUsing" (e.g. "Copilot" or "Automation").
+        // Not decorated with FieldName because WorkItemBase writes this field explicitly.
+        public string CreatedUsing { get; set; } = string.Empty;
+
         [FieldName("Custom.APISpecversion")]
         public string SpecAPIVersion { get; set; } = string.Empty;
 

@@ -3,6 +3,12 @@
 const { spawn } = require('node:child_process');
 const path = require('node:path');
 
+// Vally starts each MCP process from a temporary trial workspace, while the
+// prebuilt live and mock servers are staged under the checkout's artifacts/mcp
+// directory. This launcher resolves those artifacts from AZSDK_EVAL_REPO_ROOT.
+// It also keeps eval specs independent of artifact paths and startup arguments:
+// the stable azsdk-mcp name selects either the live CLI server or the mock server
+// through AZSDK_EVAL_MCP_KIND.
 const PREBUILT_SERVERS = {
     'azsdk-mcp': {
         live: ['artifacts/mcp/cli/azsdk.dll', 'start'],

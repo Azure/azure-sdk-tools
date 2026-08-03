@@ -107,6 +107,9 @@ resource gpt41Deployment 'Microsoft.CognitiveServices/accounts/deployments@2026-
   }
 }
 
+// Cognitive Services rejects concurrent writes to deployment children of the
+// same account with RequestConflict. Keep model deployments serialized even
+// though they are otherwise independent resources.
 resource gpt54Deployment 'Microsoft.CognitiveServices/accounts/deployments@2026-05-01' = {
   name: 'gpt-5.4'
   parent: account

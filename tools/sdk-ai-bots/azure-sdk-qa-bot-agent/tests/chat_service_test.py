@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 _PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
 if _PROJECT_ROOT not in sys.path:
@@ -72,3 +73,21 @@ def test_chat_service_returns_none_when_user_id_empty() -> None:
         message=ChatMessage(role="user", content="hello", user_id="  "),
     )
     assert service._resolve_memory_scope(whitespace_id) is None
+
+
+def test_extract_tool_call_names() -> None:
+    items = [
+        SimpleNamespace(type="function_call", name="search_knowledge_base"),
+        SimpleNamespace(type="function_call", name="wiki_search"),
+        SimpleNamespace(type="web_search_call"),
+        SimpleNamespace(type="mcp_call", name="pull_request_read"),
+        SimpleNamespace(type="reasoning"),
+        SimpleNamespace(type="function_call_output", name="ignored"),
+    ]
+
+    assert ChatService._extract_tool_call_names(items) == [
+        "search_knowledge_base",
+        "wiki_search",
+        "web_search",
+        "pull_request_read",
+    ]

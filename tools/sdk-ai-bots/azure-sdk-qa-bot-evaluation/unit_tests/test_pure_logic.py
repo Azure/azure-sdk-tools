@@ -322,6 +322,7 @@ def test_output_items_to_rows_completion_item_response():
                 "testcase": "t", "ground_truth": "gt", "response": "collected answer",
                 "references": [{"title": "R", "link": "http://r"}],
                 "knowledges": [{"title": "K", "link": "http://k"}],
+                "tool_calls": ["search_knowledge_base", "wiki_search", "wiki_search"],
             },
             "results": [{"name": "similarity", "score": 5.0, "passed": True}],
             "sample": None,
@@ -331,6 +332,21 @@ def test_output_items_to_rows_completion_item_response():
     assert rows[0]["inputs.response"] == "collected answer"
     assert rows[0]["inputs.references"] == [{"title": "R", "link": "http://r"}]
     assert rows[0]["inputs.knowledges"] == [{"title": "K", "link": "http://k"}]
+    assert rows[0]["inputs.tool_calls"] == [
+        "search_knowledge_base", "wiki_search", "wiki_search"
+    ]
+
+    from _evals_result import EvalsResult
+
+    er = EvalsResult(metrics={"similarity": None}, suppressions=None)
+    recorded = er.record_run_result({"rows": rows})
+    assert recorded[0]["actual"]["tool_calls"] == [
+        "search_knowledge_base", "wiki_search", "wiki_search"
+    ]
+    assert recorded[-1]["tool_call_counts"] == {
+        "search_knowledge_base": 1,
+        "wiki_search": 2,
+    }
 
 
 def test_failed_row_counts_as_failure_in_gate():

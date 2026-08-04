@@ -18,15 +18,31 @@ parameters:
 - name: Repos
   type: object
   default:
-    - azure-sdk
-    - azure-sdk-for-java
-    - azure-sdk-for-js
-    - azure-sdk-for-net
-    - azure-sdk-for-python
-    - azure-rest-api-specs
+    - RepoOwner: Azure
+      RepoName: azure-sdk
+      BranchOwner: azure-sdk
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-java
+      BranchOwner: azure-sdk
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-js
+      BranchOwner: azure-sdk
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-net
+      BranchOwner: azure-sdk
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-python
+      BranchOwner: azure-sdk
+    - RepoOwner: Azure
+      RepoName: azure-rest-api-specs
+      BranchOwner: azure-sdk
     # TODO: Onboard rust and go repos
-    # - azure-sdk-for-go
-    # - azure-sdk-for-rust
+    # - RepoOwner: Azure
+    #   RepoName: azure-sdk-for-go
+    #   BranchOwner: azure-sdk
+    # - RepoOwner: Azure
+    #   RepoName: azure-sdk-for-rust
+    #   BranchOwner: azure-sdk
 - name: PRValidationPipelines
   type: object
   default:

@@ -85,7 +85,7 @@ export async function processDailySyncKnowledge(): Promise<void> {
         processSamples(docsDir, "typespec-azure/packages/samples/specs");
 
         console.log(`processing alloy framework samples`);
-        processCodeSamples(docsDir, "alloy/samples");
+        processAlloySamples(docsDir, "alloy/samples");
 
         console.log('Processing documentation sources...');
         
@@ -913,7 +913,7 @@ function processTypeSpec(docsDir: string, relativeLibDir: string) : void {
 /**
  * Process Alloy framework samples into generated markdown
  */
-function processCodeSamples(docsDir: string, relativeSamplesDir: string) : void {
+function processAlloySamples(docsDir: string, relativeSamplesDir: string) : void {
     try {
         new AlloySampleProcessor(docsDir, relativeSamplesDir).processSamples();
     } catch (error) {

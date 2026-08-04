@@ -26,11 +26,16 @@
 
 ### Features Added
 
+- `azp analyze` and `azsdk_analyze_pipeline` now also report the failed GitHub Actions runs for the commit under analysis (`github_workflow_analyses`, with the error lines extracted from each failed step's logs) and every check GitHub reports as red on the pull request (`failing_pull_request_checks`), so a pull request that is only failing outside Azure Pipelines is no longer reported as having nothing to analyze.
+- `azp analyze` and `azsdk_analyze_pipeline` flag a build that is still running, so partial results are not mistaken for a clean run.
+- `azsdk_get_pipeline_status` accepts the pipeline project, matching the `--project` option the command already exposed.
 - Added `detect-breaking-change` CLI command and `azsdk_package_detect_breaking_change` MCP tool to detect SDK breaking changes for a package. Accepts the sdk package via `--package-path`. Optional parameters: `--tsp-config-path`, `--changes-only`.
 - `codeowners add-label-owner` rejects a package-directory path (e.g. `sdk/<service>/<package>`) in favor of the package name; use `--force` to override, and wildcard (`*`) paths are always allowed.
 
 ### Bugs Fixed
 
+- Public Azure Pipelines runs and public GitHub repositories are now read anonymously, so analyzing a public build or pull request no longer prompts for an Azure or GitHub CLI sign-in it does not need.
+- Pipeline analysis failures now return next steps that match the failure (a malformed identifier, a run or pull request that does not exist, or an access error) instead of always advising an Azure CLI sign-in.
 - `codeowners generate --section` now scopes Label Owner entries to the requested section, so entries from other sections no longer leak into the generated block.
 - Updated `GitHub.Copilot.SDK` to 1.0.8 so Copilot-backed commands accept ISO-8601 `ping` timestamps returned by current Copilot CLI versions.
 

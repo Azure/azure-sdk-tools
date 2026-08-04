@@ -113,7 +113,7 @@ A tool-agnostic middleware wraps **every MCP tool result** in a labelled, JSON-e
 Guardrails leverage classification models from [Azure AI Content Safety](https://learn.microsoft.com/azure/ai-services/content-safety/overview) to detect harmful content across supported risk categories. The deployment script provisions a **blocking** [RAI policy](https://learn.microsoft.com/azure/ai-foundry/responsible-ai/openai/overview) (over the base `Microsoft.DefaultV2` policy) and attaches it to the agent:
 
 - Blocking enabled on user prompt, model completion, and pre-tool-call sources.
-- [**Prompt Shields for Documents**](https://learn.microsoft.com/azure/foundry/openai/concepts content-filter-prompt-shields#prompt-shields-for-documents) (indirect-attack) classifier enabled on post-tool-call source.
+- [**Prompt Shields for Documents**](https://learn.microsoft.com/azure/foundry/openai/concepts/content-filter-prompt-shields#prompt-shields-for-documents) (indirect-attack) classifier enabled on post-tool-call source.
 - Screens user input and the final response for harmful content, jailbreak, indirect-injection, and protected material signals.
 
 ### C6 — Safety system prompt
@@ -139,7 +139,7 @@ The agent limits both the number of tool-call iterations and the number of tool 
 
 - **Azure AI Content Safety (overview)** — https://learn.microsoft.com/azure/ai-services/content-safety/overview
 - **Content Safety harm categories** — https://learn.microsoft.com/azure/ai-services/content-safety/concepts/harm-categories
-- **Prompt Shields (user prompt & document attacks) + Spotlighting** — https://learn.microsoft.com/azure/foundry/openai/concepts/content-filter-prompt-shields
+- **Prompt Shields (user prompt & document attacks) + Spotlighting** — https://learn.microsoft.com/azure/foundry/openai/concepts content-filter-prompt-shields
 - **Groundedness detection** — https://learn.microsoft.com/azure/ai-services/content-safety/concepts/groundedness
 - **Protected material detection** — https://learn.microsoft.com/azure/ai-services/content-safety/concepts/protected-material
 - **Task adherence** — https://learn.microsoft.com/azure/ai-services/content-safety/concepts/task-adherence

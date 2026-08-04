@@ -3,54 +3,18 @@
 const { spawn } = require('node:child_process');
 const path = require('node:path');
 
-// .vally.yaml starts this launcher with the repository root as cwd. The stable
-// azsdk-mcp name selects either prebuilt server through AZSDK_EVAL_MCP_KIND.
-const PREBUILT_SERVERS = {
-    'azsdk-mcp': {
-        live: ['artifacts/mcp/cli/azsdk.dll', 'start'],
-        mock: ['artifacts/mcp/mock/azsdk-mock.dll'],
-    },
-};
-
-const root = process.cwd();
-
-function getArgsStart() {
-    const invokedAsScript = process.argv[1] && path.resolve(process.argv[1]) === __filename;
-    return invokedAsScript ? 2 : 1;
-}
-
-function resolveServerCommand(serverNameOrRelativeDllPath) {
-    const server = PREBUILT_SERVERS[serverNameOrRelativeDllPath];
-    if (!server) {
-        return [serverNameOrRelativeDllPath];
-    }
-
-    const mcpKind = process.env.AZSDK_EVAL_MCP_KIND;
-    if (!mcpKind) {
-        console.error('AZSDK_EVAL_MCP_KIND is required (live or mock).');
-        process.exit(1);
-    }
-    const serverCommand = server[mcpKind];
-    if (!serverCommand) {
-        console.error(`Unknown prebuilt MCP kind '${mcpKind}' for '${serverNameOrRelativeDllPath}'.`);
-        process.exit(1);
-    }
-
-    return serverCommand;
-}
-
-const argsStart = getArgsStart();
-const [serverNameOrRelativeDllPath, ...serverArgs] = process.argv.slice(argsStart);
-if (!serverNameOrRelativeDllPath) {
-    console.error('Usage: run-prebuilt-mcp.js <server-name|relative-dll-path> [args...]');
+const mcpKind = process.env.AZSDK_EVAL_MCP_KIND;
+if (!['live', 'mock'].includes(mcpKind)) {
+    console.error('AZSDK_EVAL_MCP_KIND must be live or mock.');
     process.exit(1);
 }
 
-// Vally starts MCP servers from per-trial temp directories, so resolve staged
-// DLL paths from the checked-out repo root instead of from process.cwd().
-const [relativeDllPath, ...defaultServerArgs] = resolveServerCommand(serverNameOrRelativeDllPath);
-const dllPath = path.resolve(root, relativeDllPath);
-const child = spawn('dotnet', [dllPath, ...(serverArgs.length > 0 ? serverArgs : defaultServerArgs)], {
+const serverCommand = mcpKind === 'live'
+    ? ['artifacts/mcp/cli/azsdk.dll', 'start']
+    : ['artifacts/mcp/mock/azsdk-mock.dll'];
+const [relativeDllPath, ...serverArgs] = serverCommand;
+const dllPath = path.resolve(process.cwd(), relativeDllPath);
+const child = spawn('dotnet', [dllPath, ...serverArgs], {
     stdio: 'inherit',
     env: process.env,
 });

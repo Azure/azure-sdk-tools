@@ -8,7 +8,7 @@
 #   - SkillBranch set: overlay SKILL.md + references from that branch before evaluation.
 #
 # Structure:
-# - PrepareShared builds MCP binaries once and publishes them as the mcp-servers artifact.
+# - PrepareShared builds the selected MCP binary once and publishes it as the mcp-servers artifact.
 # - PrepareForced / PrepareTrigger generate area-based shard matrices from eval file metadata.
 # - EvalForced / EvalTrigger run one matrix job per area.
 # - SummaryForced / SummaryTrigger roll up JUnit results.
@@ -20,6 +20,13 @@ parameters:
   displayName: Branch containing the azure-typespec-author skill source (SKILL.md + references/) to evaluate. Defaults to the full source branch ref.
   type: string
   default: $(Build.SourceBranch)
+- name: McpKind
+  displayName: MCP implementation
+  type: string
+  default: live
+  values:
+    - live
+    - mock
 
 variables:
 - template: /eng/pipelines/templates/variables/image.yml
@@ -36,33 +43,10 @@ extends:
         displayName: Prepare shared MCP artifact
         dependsOn: []
         jobs:
-          - job: BuildMcp
-            displayName: 'Build + publish MCP server(s)'
-            pool:
-              name: $(LINUXPOOL)
-              image: $(LINUXVMIMAGE)
-              os: linux
-            templateContext:
-              outputs:
-                # Shard jobs stage this artifact back to artifacts/mcp; run-prebuilt-mcp.js
-                # expects cli/azsdk.dll and mock/azsdk-mock.dll under that directory.
-                - output: pipelineArtifact
-                  displayName: 'Publish MCP server artifact'
-                  artifactName: mcp-servers
-                  targetPath: $(Build.SourcesDirectory)/artifacts/mcp
-            steps:
-              - checkout: self
-                fetchDepth: 1
-
-              - script: |
-                  set -e
-                  dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli -c Release -o "$(Build.SourcesDirectory)/artifacts/mcp/cli" --nologo
-                displayName: 'Build MCP: Cli (live) server'
-
-              - script: |
-                  set -e
-                  dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Mock -c Release -o "$(Build.SourcesDirectory)/artifacts/mcp/mock" --nologo
-                displayName: 'Build MCP: Mock server'
+          - template: /eng/common/pipelines/templates/jobs/build-mcp.yml
+            parameters:
+              mcpSetupTemplate: /eng/common/pipelines/templates/steps/eval-mcp-setup.yml
+              TestType: ${{ parameters.McpKind }}
 
       - stage: PrepareForced
         displayName: Prepare forced track
@@ -84,7 +68,7 @@ extends:
             parameters:
               matrixStageName: PrepareForced
               vallyRoot: .github/skills/azure-typespec-author/evaluate
-              mcpEnvironment: live
+              mcpEnvironment: ${{ parameters.McpKind }}
               azureSubscription: azuresdkqabot-dev
               shardTimeoutInMinutes: 50
 
@@ -118,7 +102,7 @@ extends:
             parameters:
               matrixStageName: PrepareTrigger
               vallyRoot: .github/skills/azure-typespec-author/evaluate
-              mcpEnvironment: mock
+              mcpEnvironment: ${{ parameters.McpKind }}
               azureSubscription: azuresdkqabot-dev
               shardTimeoutInMinutes: 30
 

@@ -2,11 +2,10 @@
 # See: https://vally.dev/reference/vally-config
 # This file is the local/default entrypoint for developers.
 #
-# `azsdk-mcp` / `azsdk-mcp-mock` use prebuilt MCP binaries under artifacts/mcp so
-# local runs can exercise the same startup shape as pipeline runs. The wrapper
-# resolves those binaries from AZSDK_EVAL_REPO_ROOT because Vally starts MCP
-# servers from per-trial workspaces. `*-local` aliases keep the source-based
-# `dotnet run` startup for local debugging.
+# `azsdk-mcp` uses the prebuilt live or mock binary selected explicitly through
+# AZSDK_EVAL_MCP_KIND. Its repository-root cwd keeps artifact paths stable when
+# Vally creates per-trial workspaces. `*-local` environments remain available
+# for source-based debugging.
 #
 # The benchmark pipelines invoke suite branches from this file directly with --suite.
 # Vally 0.6.0 supports parallel execution across multiple eval files, so pipeline
@@ -19,21 +18,19 @@ paths:
   results: results/
 
 environments:
-  azsdk-mcp-local:
+  azsdk-mcp:
     files:
       - src: ../fixtures/instructions-test/copilot-instructions.md
         dest: .github/copilot-instructions.md
     mcpServers:
       azure-sdk-mcp:
         type: stdio
-        command: dotnet
+        command: node
+        cwd: ../../../..
         args:
           [
-            "run",
-            "--project",
-            "../../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli",
-            "--",
-            "start",
+            ".github/skills/azure-typespec-author/evaluate/scripts/run-prebuilt-mcp.js",
+            "azsdk-mcp",
           ]
         timeout: 5m
         env:
@@ -45,27 +42,6 @@ environments:
           # explicitly (values validated in issue #15675). The access token is requested
           # as "{AZURE_SDK_KB_CLIENT_ID}/.default"; the ambient Azure credential is provided
           # by the pipeline (AzureCLI@2 / azuresdkqabot-dev) or `az login` locally.
-          AZURE_SDK_KB_ENDPOINT: "https://azuresdkqabot-test-serv-agent-dydweeaxaah6g3b4.westus2-01.azurewebsites.net"
-          AZURE_SDK_KB_CLIENT_ID: "674414e1-152b-41ac-b0d2-763535edea6c"
-          AZURE_SDK_KB_SCOPE: "api://azure-sdk-qa-bot-test/user_impersonation"
-  azsdk-mcp:
-    files:
-      - src: ../fixtures/instructions-test/copilot-instructions.md
-        dest: .github/copilot-instructions.md
-    mcpServers:
-      azure-sdk-mcp:
-        type: stdio
-        command: node
-        args:
-          [
-            "-e",
-            "const path = require('node:path'); require(path.resolve(process.env.AZSDK_EVAL_REPO_ROOT, '.github/skills/azure-typespec-author/evaluate/scripts/run-prebuilt-mcp.js'));",
-            "azsdk-mcp",
-          ]
-        timeout: 5m
-        env:
-          AZSDKTOOLS_AGENT_TESTING: "false"
-          AZSDKTOOLS_COLLECT_TELEMETRY: "false"
           AZURE_SDK_KB_ENDPOINT: "https://azuresdkqabot-test-serv-agent-dydweeaxaah6g3b4.westus2-01.azurewebsites.net"
           AZURE_SDK_KB_CLIENT_ID: "674414e1-152b-41ac-b0d2-763535edea6c"
           AZURE_SDK_KB_SCOPE: "api://azure-sdk-qa-bot-test/user_impersonation"
@@ -89,6 +65,29 @@ environments:
         env:
           AZSDKTOOLS_AGENT_TESTING: "false"
           AZSDKTOOLS_COLLECT_TELEMETRY: "false"
+  azsdk-mcp-local:
+    files:
+      - src: ../fixtures/instructions-test/copilot-instructions.md
+        dest: .github/copilot-instructions.md
+    mcpServers:
+      azure-sdk-mcp:
+        type: stdio
+        command: dotnet
+        args:
+          [
+            "run",
+            "--project",
+            "../../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli",
+            "--",
+            "start",
+          ]
+        timeout: 5m
+        env:
+          AZSDKTOOLS_AGENT_TESTING: "false"
+          AZSDKTOOLS_COLLECT_TELEMETRY: "false"
+          AZURE_SDK_KB_ENDPOINT: "https://azuresdkqabot-test-serv-agent-dydweeaxaah6g3b4.westus2-01.azurewebsites.net"
+          AZURE_SDK_KB_CLIENT_ID: "674414e1-152b-41ac-b0d2-763535edea6c"
+          AZURE_SDK_KB_SCOPE: "api://azure-sdk-qa-bot-test/user_impersonation"
 
   # Mock MCP environment for skill-invocation / trigger tests.
   # Uses Azure.Sdk.Tools.Mock to avoid spinning up the real azure-sdk-mcp
@@ -103,18 +102,6 @@ environments:
             "run",
             "--project",
             "../../../../tools/azsdk-cli/Azure.Sdk.Tools.Mock",
-          ]
-        timeout: "60s"
-  azsdk-mcp-mock:
-    mcpServers:
-      azure-sdk-mcp:
-        type: stdio
-        command: node
-        args:
-          [
-            "-e",
-            "const path = require('node:path'); require(path.resolve(process.env.AZSDK_EVAL_REPO_ROOT, '.github/skills/azure-typespec-author/evaluate/scripts/run-prebuilt-mcp.js'));",
-            "artifacts/mcp/mock/azsdk-mock.dll",
           ]
         timeout: "60s"
 

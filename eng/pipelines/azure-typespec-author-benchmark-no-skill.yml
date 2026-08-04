@@ -4,11 +4,22 @@
 trigger: none
 pr: none
 
+parameters:
+  - name: McpKind
+    displayName: MCP implementation
+    type: string
+    default: live
+    values:
+      - live
+      - mock
+
 variables:
   - template: /eng/pipelines/templates/variables/image.yml
   - group: AzSDK_Eval_Variable_group
   - name: TypeSpecAuthorEvalExtraArgs
     value: '--tag mode=no-skill --skill-dir /tmp/no-skills'
+  - name: AZSDK_EVAL_MCP_KIND
+    value: ${{ parameters.McpKind }}
 
 extends:
   template: /eng/common/pipelines/templates/stages/archetype-eval.yml
@@ -17,9 +28,9 @@ extends:
     evalGlobs:
       - 'evals/*.eval.yaml'
     mcpSetupTemplate: /eng/common/pipelines/templates/steps/eval-mcp-setup.yml
-    TestType: live
-    UseAzSdkAuthentication: true
+    TestType: ${{ parameters.McpKind }}
     evalInvokeTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-noskill-eval-invoke.yml
+    UseAzSdkAuthentication: true
     preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
     failOnFailedTests: false
     shardTimeoutInMinutes: 30

@@ -3,12 +3,8 @@
 const { spawn } = require('node:child_process');
 const path = require('node:path');
 
-// Vally starts each MCP process from a temporary trial workspace, while the
-// prebuilt live and mock servers are staged under the checkout's artifacts/mcp
-// directory. This launcher resolves those artifacts from AZSDK_EVAL_REPO_ROOT.
-// It also keeps eval specs independent of artifact paths and startup arguments:
-// the stable azsdk-mcp name selects either the live CLI server or the mock server
-// through AZSDK_EVAL_MCP_KIND.
+// .vally.yaml starts this launcher with the repository root as cwd. The stable
+// azsdk-mcp name selects either prebuilt server through AZSDK_EVAL_MCP_KIND.
 const PREBUILT_SERVERS = {
     'azsdk-mcp': {
         live: ['artifacts/mcp/cli/azsdk.dll', 'start'],
@@ -16,11 +12,7 @@ const PREBUILT_SERVERS = {
     },
 };
 
-const root = process.env.AZSDK_EVAL_REPO_ROOT;
-if (!root) {
-    console.error('AZSDK_EVAL_REPO_ROOT is required for prebuilt MCP environments.');
-    process.exit(1);
-}
+const root = process.cwd();
 
 function getArgsStart() {
     const invokedAsScript = process.argv[1] && path.resolve(process.argv[1]) === __filename;
@@ -33,7 +25,11 @@ function resolveServerCommand(serverNameOrRelativeDllPath) {
         return [serverNameOrRelativeDllPath];
     }
 
-    const mcpKind = process.env.AZSDK_EVAL_MCP_KIND || 'live';
+    const mcpKind = process.env.AZSDK_EVAL_MCP_KIND;
+    if (!mcpKind) {
+        console.error('AZSDK_EVAL_MCP_KIND is required (live or mock).');
+        process.exit(1);
+    }
     const serverCommand = server[mcpKind];
     if (!serverCommand) {
         console.error(`Unknown prebuilt MCP kind '${mcpKind}' for '${serverNameOrRelativeDllPath}'.`);

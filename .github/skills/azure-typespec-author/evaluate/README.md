@@ -16,7 +16,8 @@ This directory contains [Vally](https://aka.ms/vally) evaluation cases for the `
 Before running any evals, run the setup script from this directory. It builds the live and mock MCP
 servers into `artifacts/mcp`, primes fixtures from the live
 [azure-rest-api-specs](https://github.com/Azure/azure-rest-api-specs) `main` branch, runs fixture
-`npm ci`, and prints the environment variables needed by local Vally runs:
+`npm ci`, and prints the environment variables needed by local Vally runs. The default `pipeline`
+mode uses the same prebuilt MCP startup as CI and sets every eval spec to `environment: azsdk-mcp`:
 
 ```powershell
 # PowerShell
@@ -28,14 +29,26 @@ node scripts/setup-environment.js | Invoke-Expression
 eval $(node scripts/setup-environment.js)
 ```
 
+To debug the legacy source-based MCP startup, select `local` mode. This skips the prebuilt MCP build
+and changes every `evals/*.eval.yaml` file to `environment: azsdk-mcp-local`:
+
+```powershell
+node scripts/setup-environment.js --mcp-mode local | Invoke-Expression
+```
+
+Run the script again with `--mcp-mode pipeline` (or without `--mcp-mode`) to restore the eval files
+to the pipeline environment.
+
 `setup-environment.js` does the following:
 
-1. Build the live MCP server into `artifacts/mcp/cli` and the mock MCP server into
-  `artifacts/mcp/mock`.
-2. Download `package.json` / `package-lock.json` into `fixtures/Microsoft.Widget/Widget/` and run
+1. Set every eval file's root environment to `azsdk-mcp` in `pipeline` mode or
+  `azsdk-mcp-local` in `local` mode.
+2. In `pipeline` mode, build the live MCP server into `artifacts/mcp/cli` and the mock MCP server
+  into `artifacts/mcp/mock`.
+3. Download `package.json` / `package-lock.json` into `fixtures/Microsoft.Widget/Widget/` and run
    `npm ci` there.
-3. Download `.github/copilot-instructions.md` into `fixtures/instructions-test/copilot-instructions.md`.
-4. Print shell commands that export `AZSDK_EVAL_REPO_ROOT` and `FIXTURE_NODE_MODULES`.
+4. Download `.github/copilot-instructions.md` into `fixtures/instructions-test/copilot-instructions.md`.
+5. Print shell commands that export `AZSDK_EVAL_REPO_ROOT` and `FIXTURE_NODE_MODULES`.
 
 The MCP build uses `GitHub.Copilot.SDK`, which downloads platform-specific `@github/copilot-*`
 assets through MSBuild. The setup script passes
@@ -43,9 +56,9 @@ assets through MSBuild. The setup script passes
 Microsoft package feed proxy instead of `registry.npmjs.org`. To use a different registry, set
 `COPILOT_NPM_REGISTRY_URL` before running the setup script.
 
-The source-based environments are still available as `azsdk-mcp-local` and `azsdk-mcp-mock-local`
-for debugging the server from projects instead of DLLs. Set `AZSDK_EVAL_MCP_KIND=mock` when you want
-the default `azsdk-mcp` environment to start the mock DLL instead of the live DLL.
+The source-based environments remain available as `azsdk-mcp-local` and `azsdk-mcp-mock-local` for
+debugging the server from projects instead of DLLs. Pipeline mode requires `AZSDK_EVAL_MCP_KIND` to
+be explicitly set to `live` or `mock`; no default is assumed.
 
 Why each piece matters:
 

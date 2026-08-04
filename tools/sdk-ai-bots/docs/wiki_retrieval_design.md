@@ -110,15 +110,7 @@ Two properties of this design are easy to trip over:
 
 Every scenario is at or above the baseline (**+5.7 pp** overall, net **+12** cases: 27 fixed, 15 regressed). Groundedness / relevance / coherence / fluency stay ~100 %, and median answer length is flat (165 → 173 words), so the gain is not bought with longer or less grounded answers — it is carried by `similarity` (79.3 → 83.7 %) and `response_completeness` (70.0 → 76.2 %).
 
-A same-day tool ablation then compared three wiki configurations. `search_knowledge_base` remained available in all three:
-
-| | TOTAL | typespec | apispec | python | authoring | general |
-| --- | --- | --- | --- | --- | --- | --- |
-| Full tool set | 72.2 % | 80.0 | 53.8 | 54.2 | 88.5 | 55.0 |
-| `wiki_search` + `grep_chunks` | **73.1 %** | 77.6 | **69.2** | **58.3** | 84.6 | **60.0** |
-| `wiki_search` only | 67.8 % | 76.8 | 53.8 | **58.3** | 73.1 | 45.0 |
-
-Adding `grep_chunks` to the wiki-search-only configuration gained **5.3 pp** overall (26 fixed, 14 regressed, net +12) and raised response completeness by 4.8 pp, so exact-term retrieval remains part of the final path. Removing `wiki_read_page` and `wiki_read_source_doc` from the full configuration changed the total by only **+0.9 pp** (19 fixed, 17 regressed), which is inside the measured run-to-run noise and shows no benefit for retaining either drill tool. The final tool set therefore keeps `search_knowledge_base`, `wiki_search`, and `grep_chunks`; `wiki_search` already returns full page content and bounded source backfill.
+The final online tool set is `search_knowledge_base`, `wiki_search`, and `grep_chunks`. `wiki_search` is self-contained because it returns full page content and bounded source backfill, so separate page and source-document read tools are unnecessary.
 
 Reading the numbers: same-config reruns churn ~16 % of cases and move the total by up to ±5 pp, so a single run cannot resolve a smaller delta. `typespec` (N = 125) is the only single scenario large enough to trust on its own; `onboarding` and `releasesupport` (N = 3) swing 33 pp on one case and are reported for completeness only.
 

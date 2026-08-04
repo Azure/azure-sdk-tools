@@ -88,118 +88,115 @@ resource account 'Microsoft.CognitiveServices/accounts@2026-05-01' = {
   }
 }
 
-resource gpt41Deployment 'Microsoft.CognitiveServices/accounts/deployments@2026-05-01' = {
-  name: 'gpt-4.1'
-  parent: account
-  properties: {
-    model: {
-      format: 'OpenAI'
-      name: 'gpt-4.1'
-      version: '2025-04-14'
+var modelDeploymentConfigs = [
+  {
+    name: 'gpt-4.1'
+    properties: {
+      model: {
+        format: 'OpenAI'
+        name: 'gpt-4.1'
+        version: '2025-04-14'
+      }
+      versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
+      currentCapacity: 1
+      deploymentState: 'Running'
     }
-    versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
-    currentCapacity: 1
-    deploymentState: 'Running'
+    sku: {
+      name: 'GlobalStandard'
+      capacity: 1
+    }
   }
-  sku: {
-    name: 'GlobalStandard'
-    capacity: 1
+  {
+    name: 'gpt-5.4'
+    properties: {
+      model: {
+        format: 'OpenAI'
+        name: 'gpt-5.4'
+        version: '2026-03-05'
+      }
+      versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
+      // 500 capacity units ≈ 500,000 TPM (GlobalStandard: 1 unit ≈ 1,000 TPM).
+      currentCapacity: 500
+      serviceTier: 'Default'
+      deploymentState: 'Running'
+    }
+    sku: {
+      name: 'GlobalStandard'
+      // 500 units ≈ 500,000 TPM. Bounded by the regional GlobalStandard gpt-5.4
+      // quota (eastus2 limit 3,000 units); raise the quota via portal/support to
+      // exceed that.
+      capacity: 500
+    }
   }
-}
+  {
+    name: 'gpt-5.1'
+    properties: {
+      model: {
+        format: 'OpenAI'
+        name: 'gpt-5.1'
+        version: '2025-11-13'
+      }
+      versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
+      currentCapacity: 1
+      serviceTier: 'Default'
+      deploymentState: 'Running'
+    }
+    sku: {
+      name: 'GlobalStandard'
+      capacity: 1
+    }
+  }
+  {
+    name: 'gpt-5-mini'
+    properties: {
+      model: {
+        format: 'OpenAI'
+        name: 'gpt-5-mini'
+        version: '2025-08-07'
+      }
+      versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
+      currentCapacity: 1
+      deploymentState: 'Running'
+    }
+    sku: {
+      name: 'GlobalStandard'
+      capacity: 1
+    }
+  }
+  {
+    name: 'text-embedding-ada-002'
+    properties: {
+      model: {
+        format: 'OpenAI'
+        name: 'text-embedding-ada-002'
+        version: '2'
+      }
+      versionUpgradeOption: 'NoAutoUpgrade'
+      currentCapacity: 1
+      deploymentState: 'Running'
+    }
+    sku: {
+      name: 'GlobalStandard'
+      capacity: 1
+    }
+  }
+]
 
 // Cognitive Services rejects concurrent writes to deployment children of the
-// same account with RequestConflict. Keep model deployments serialized even
-// though they are otherwise independent resources.
-resource gpt54Deployment 'Microsoft.CognitiveServices/accounts/deployments@2026-05-01' = {
-  name: 'gpt-5.4'
+// same account with RequestConflict. A batch size of one deploys each model in
+// modelDeploymentConfigs order.
+@batchSize(1)
+resource modelDeployments 'Microsoft.CognitiveServices/accounts/deployments@2026-05-01' = [for deployment in modelDeploymentConfigs: {
+  name: deployment.name
   parent: account
-  dependsOn: [gpt41Deployment]
-  properties: {
-    model: {
-      format: 'OpenAI'
-      name: 'gpt-5.4'
-      version: '2026-03-05'
-    }
-    versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
-    // 500 capacity units ≈ 500,000 TPM (GlobalStandard: 1 unit ≈ 1,000 TPM).
-    currentCapacity: 500
-    serviceTier: 'Default'
-    deploymentState: 'Running'
-  }
-  sku: {
-    name: 'GlobalStandard'
-    // 500 units ≈ 500,000 TPM. Bounded by the regional GlobalStandard gpt-5.4
-    // quota (eastus2 limit 3,000 units); raise the quota via portal/support to
-    // exceed that.
-    capacity: 500
-  }
-}
-
-resource gpt51Deployment 'Microsoft.CognitiveServices/accounts/deployments@2026-05-01' = {
-  name: 'gpt-5.1'
-  parent: account
-  dependsOn: [gpt54Deployment]
-  properties: {
-    model: {
-      format: 'OpenAI'
-      name: 'gpt-5.1'
-      version: '2025-11-13'
-    }
-    versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
-    currentCapacity: 1
-    serviceTier: 'Default'
-    deploymentState: 'Running'
-  }
-  sku: {
-    name: 'GlobalStandard'
-    capacity: 1
-  }
-}
-
-resource gpt5MiniDeployment 'Microsoft.CognitiveServices/accounts/deployments@2026-05-01' = {
-  name: 'gpt-5-mini'
-  parent: account
-  dependsOn: [gpt51Deployment]
-  properties: {
-    model: {
-      format: 'OpenAI'
-      name: 'gpt-5-mini'
-      version: '2025-08-07'
-    }
-    versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
-    currentCapacity: 1
-    deploymentState: 'Running'
-  }
-  sku: {
-    name: 'GlobalStandard'
-    capacity: 1
-  }
-}
-
-resource adaEmbeddingDeployment 'Microsoft.CognitiveServices/accounts/deployments@2026-05-01' = {
-  name: 'text-embedding-ada-002'
-  parent: account
-  dependsOn: [gpt5MiniDeployment]
-  properties: {
-    model: {
-      format: 'OpenAI'
-      name: 'text-embedding-ada-002'
-      version: '2'
-    }
-    versionUpgradeOption: 'NoAutoUpgrade'
-    currentCapacity: 1
-    deploymentState: 'Running'
-  }
-  sku: {
-    name: 'GlobalStandard'
-    capacity: 1
-  }
-}
+  properties: deployment.properties
+  sku: deployment.sku
+}]
 
 resource accountStorageConnection 'Microsoft.CognitiveServices/accounts/connections@2026-05-01' = {
   name: storageAccountName
   parent: account
-  dependsOn: [adaEmbeddingDeployment]
+  dependsOn: [modelDeployments]
   properties: {
     authType: 'AAD'
     category: 'AzureStorageAccount'

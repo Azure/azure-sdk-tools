@@ -1,16 +1,21 @@
-# Repo-local eval shard template for azure-typespec-author with-skill benchmark.
-# It prefixes artifact names per track and binds azsdk-mcp to the staged
-# live/mock MCP binary before invoking Vally.
+# Repo-local extension of eng/common/pipelines/templates/jobs/eval-shard.yml
+# for the azure-typespec-author with-skill benchmark. The common shard pattern
+# downloads and stages mcp-servers; this template adds per-track artifact names,
+# TypeSpec pre-eval setup, and live/mock MCP selection for the TypeSpec runner.
 
 parameters:
   - name: vallyRoot
     type: string
+  # F/T and no-skill runs use different matrix-producing stages; this also
+  # namespaces their published artifacts so Summary can consume both tracks.
   - name: matrixStageName
     type: string
     default: Prepare
   - name: azureSubscription
     type: string
     default: azuresdkqabot-dev
+  # Selects the prebuilt live or mock MCP DLL without changing eval specs,
+  # which always reference the single azsdk-mcp Vally environment.
   - name: mcpEnvironment
     type: string
     default: none
@@ -42,6 +47,8 @@ jobs:
       maxParallel: 10
     templateContext:
       outputs:
+        # TypeSpec Summary evaluates results.jsonl in addition to JUnit, so
+        # publish the results directory rather than the common junit-only path.
         - output: pipelineArtifact
           displayName: 'Publish $(shardName) eval results'
           artifactName: '${{ parameters.matrixStageName }}-eval-result-$(shardName)-$(System.JobAttempt)'
@@ -70,6 +77,8 @@ jobs:
         displayName: 'Install Vally CLI + copilot-sdk (pinned)'
         workingDirectory: eng/common/scripts/eval
 
+      # Kept aligned with the common eval shard: the wrapper resolves MCP DLLs
+      # from artifacts/mcp under the checked-out repository.
       - download: current
         artifact: mcp-servers
         displayName: 'Download MCP server(s)'
@@ -79,6 +88,8 @@ jobs:
           cp -r "$(Pipeline.Workspace)/mcp-servers/." "$(Build.SourcesDirectory)/artifacts/mcp/"
         displayName: 'Stage MCP binaries for Vally'
 
+      # Materializes the TypeSpec project dependencies required by these evals
+      # before Vally copies each fixture into its trial workspace.
       - template: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
 
       - script: |
@@ -96,8 +107,8 @@ jobs:
         env:
           EVAL_ARGS: $(evalArgs)
 
-      # Eval specs keep using one Vally environment name, `azsdk-mcp`; the
-      # wrapper reads AZSDK_EVAL_MCP_KIND to pick the live or mock DLL.
+      # This runner keeps the pipeline threshold out of `vally eval`: TypeSpec
+      # gates the completed results.jsonl without overriding eval scoring.
       - task: AzureCLI@2
         displayName: 'vally eval $(shardName)'
         inputs:
@@ -132,6 +143,8 @@ jobs:
               -name 'eval-results.md' \
             \) -exec cp --parents {} "$dest" \;
           fi
+        # Preserve relative paths: multiple evals in one shard can emit files
+        # with the same name, and Summary needs each results.jsonl separately.
         displayName: 'Collect $(shardName) eval results'
         condition: always()
 

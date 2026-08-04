@@ -13,6 +13,8 @@ type ShardRunOptions = {
   shardName: string;
   outputDir: string;
   extraArgs?: string;
+  // Pipeline pass-rate gate for results.jsonl. It intentionally does not
+  // override Vally's per-eval scoring threshold.
   threshold?: number;
 };
 
@@ -42,28 +44,25 @@ export function runShard({ evalArgs, shardName, outputDir, extraArgs = "", thres
     "eval",
     ...evalArgList,
     "--junit",
+    "--output-dir",
+    outputDir,
+    ...extraArgList,
   ];
 
-  vallyArgs.push("--output-dir", outputDir, ...extraArgList);
-
-  // run-prebuilt-mcp.js needs the repo root because Vally launches MCP servers
-  // from per-trial temp workspaces, where relative artifact paths do not work.
-  const proc = spawnSync(
-    "npm",
-    vallyArgs,
-    {
-      stdio: "inherit",
-      shell: process.platform === "win32",
-      env: {
-        ...process.env,
-        AZSDK_EVAL_REPO_ROOT: process.env.AZSDK_EVAL_REPO_ROOT || REPO_ROOT,
-      },
-    }
-  );
+  // Vally starts MCP servers from trial workspaces, so the launcher needs the
+  // checkout root to locate the staged artifacts/mcp binaries.
+  const proc = spawnSync("npm", vallyArgs, {
+    stdio: "inherit",
+    shell: process.platform === "win32",
+    env: {
+      ...process.env,
+      AZSDK_EVAL_REPO_ROOT: process.env.AZSDK_EVAL_REPO_ROOT || REPO_ROOT,
+    },
+  });
   const vallyExit = proc.status ?? 1;
 
-  // Vally can return a non-zero exit during shutdown after writing results.
-  // Gate the shard on results.jsonl so teardown noise does not hide real grades.
+  // Do not pass threshold to Vally. It is the pipeline pass-rate gate applied
+  // to completed results, not an override for each eval's scoring threshold.
   const verdict = (getVallyShardVerdict as any)({ resultsDir: outputDir, threshold });
   for (const line of verdict.lines) {
     console.log(`  ${line}`);
@@ -99,9 +98,9 @@ export function runShard({ evalArgs, shardName, outputDir, extraArgs = "", thres
 
 function parseArgs(argv: string[]): ShardRunOptions {
   const options: Partial<ShardRunOptions> = { extraArgs: "" };
-  for (let i = 0; i < argv.length; i++) {
-    const next = () => argv[++i];
-    switch (argv[i]) {
+  for (let index = 0; index < argv.length; index++) {
+    const next = () => argv[++index];
+    switch (argv[index]) {
       case "--eval-args":
         options.evalArgs = next();
         break;
@@ -118,7 +117,7 @@ function parseArgs(argv: string[]): ShardRunOptions {
         options.threshold = Number(next());
         break;
       default:
-        throw new Error(`Unknown argument: ${argv[i]}`);
+        throw new Error(`Unknown argument: ${argv[index]}`);
     }
   }
 

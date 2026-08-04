@@ -139,7 +139,7 @@ Eight gaps, each closed by **one workaround**:
 | - | --------- | --------------- | ----------------- |
 | 1 | Role assignments **not idempotent** | ARM allows one tuple; Bicep can't "create-if-not-exists" | `ensure-role-assignment.ts` |
 | 2 | Hosted agent **env vars not injected** | `azure.ai.agents` step is a no-op | `agent-postdeploy` → Foundry data-plane API |
-| 3 | Can't deploy to a **named slot** | `azd` only models the prod slot | `agent-server-predeploy.ts` does the deploy |
+| 3 | Named-slot deployment complexity | The old design used a dedicated `agent` slot | Agent server now deploys directly to production |
 | 4 | Container **Function App** deploy hangs | `host: function` did a zip deploy | switched to `host: appservice, docker` |
 | 5 | Teams **OAuth connection** re-authorized | Bicep re-`PUT`s the connection each run | conditional create + preprovision probe |
 | 6 | Teams **`.env` clobbered** | base-env sync overwrites per-env Teams app | env-suite is the source of truth |
@@ -329,7 +329,7 @@ The friction isn't one missing feature. **The mental model `azd` forces on us do
 
 - **Order is convention, not declaration** — `preprovision → main.bicep → postprovision`, `predeploy → <svc>-predeploy → core → <svc>-postdeploy → postdeploy`. Nothing in `azure.yaml` states this; you learn it by reading every hook.
 - **Hooks don't run in preview** — `azd provision --preview` skips them entirely, so the preview never reflects reality (RBAC, KV seeding, env injection, Logic App patch are all invisible).
-- **State passes through `.env` strings** — `CREATE_TEAMS_CONNECTION` and `AGENT_BASED_IMAGE_REPOSITORY`. Untyped, order-dependent, silently broken by a typo.
+- **State passes through `.env` strings** — values such as `CREATE_TEAMS_CONNECTION` remain untyped and order-dependent.
 - **"Single source of truth" is maintained by hooks** — the _real_ desired state is Bicep **+ ~1000 lines that re-read and re-mutate live Azure**. A truth reconstructed imperatively on every run isn't a source of truth — it's a recipe.
 
 > The tool splits the problem where _it_ is easy to build, not where _our service_ naturally divides.
@@ -371,7 +371,7 @@ The whole service is **one readable workflow** — dependencies expressed as pla
 // deploy the whole service, in order
 await shared();       // platform: ACR, Key Vault, App Config
 await agent();        // hosted Foundry agent
-await agentServer();  // FastAPI on the agent slot
+await agentServer();  // FastAPI on the production App Service
 await functionApp();  // TS Function App
 await logicApp();     // Teams workflow
 await frontend();     // Teams bot
@@ -402,7 +402,7 @@ Every hook we own is a **temporary bridge**. The end state:
 | ----------------------------------------------- | ------------------------------------------------------------------------------ |
 | `ensure-role-assignment.ts`                     | Typed `ensure*` RBAC primitive with idempotency built in                       |
 | `agent-postdeploy` → new Foundry version w/ env | Host injects `agent.yaml environment_variables` natively                        |
-| `agent-server-predeploy` (slot deploy)          | First-class named-slot support                                                 |
+| Agent-server container deployment               | Native direct-production App Service deployment                               |
 | `patch-workflow` (Logic App PUT)                | Deferred / two-phase resource is a first-class construct                       |
 | `sync-teams-env` (rewrite `.env.azd`)           | Shared env schema across tools; no cross-tool copying                          |
 | `preprovision.ensureEntraApp`                   | Microsoft Graph provider for Entra apps                                        |

@@ -11,11 +11,10 @@
     ]},
     "serverAudience":              { "value": "REPLACE_WITH_PREVIEW_AAD_APP_AUDIENCE" },
     "functionImageRepository":     { "value": "azure-sdk-qa-bot-function:preview" },
-    "ragBasedBackendImageRepository": { "value": "azure-sdk-qa-bot-backend:preview" },
-    "agentBasedImageRepository":   { "value": "azure-sdk-qa-bot-agent-server:preview" },
+    "agentServerImageRepository":  { "value": "azure-sdk-qa-bot-agent-server:preview" },
     "frontendImageRepository":     { "value": "azure-sdk-qa-bot:preview" },
     "frontendBaseName":            { "value": "azsdkqabot-preview" },
-    "backendSiteName":             { "value": "azuresdkqabot-server-preview" },
+    "agentServerSiteName":         { "value": "azuresdkqabot-server-preview" },
     "functionAppName":             { "value": "azuresdkqabot-function-preview" }
   }
 }

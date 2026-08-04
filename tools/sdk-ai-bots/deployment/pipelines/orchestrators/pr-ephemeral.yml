@@ -61,8 +61,7 @@ extends:
                                 "teamsGroupId": "$(TEAMS_GROUP_ID)",
                                 "teamsChannelIds": $(TEAMS_CHANNEL_IDS),
                                 "frontendImageRepository": "azure-sdk-qa-bot:$(FRONTEND_IMAGE_TAG)",
-                                "ragBasedBackendImageRepository": "azure-sdk-qa-bot-backend:$(FRONTEND_IMAGE_TAG)",
-                                "agentBasedImageRepository": "azure-sdk-qa-bot-agent-server:$(AGENT_IMAGE_TAG)",
+                                "agentServerImageRepository": "azure-sdk-qa-bot-agent-server:$(AGENT_IMAGE_TAG)",
                                 "functionImageRepository": "azure-sdk-qa-bot-function:$(FUNCTION_IMAGE_TAG)"
                               }
                               JSON

@@ -1,5 +1,5 @@
 # Orchestrator pipeline — full dev deploy.
-# Deploys all component images (backend → function-app → agent → frontend) to
+# Deploys all component images (agent-server → function-app → agent → frontend) to
 # dev in dependency order. Assumes infra is already provisioned; run
 # provision-all-dev.yml first for a greenfield environment.
 #

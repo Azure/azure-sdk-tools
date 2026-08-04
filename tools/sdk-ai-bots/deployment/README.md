@@ -28,7 +28,7 @@ deployment/
 │  ├─ templates/                 ← reusable provision/CI/CD/rollout steps
 │  └─ orchestrators/             ← end-to-end rollout per env
 ├─ component-pipelines/          ← standardized per-component provision/CI/CD
-│  ├─ frontend/, backend/, function-app/, agent/, knowledge-sync/
+│  ├─ frontend/, agent-server/, function-app/, agent/, knowledge-sync/
 ├─ scripts/                      ← validate / drift / smoke / rollback helpers
 └─ docs/                         ← runbooks + environment-contract + readiness checklist
 ```

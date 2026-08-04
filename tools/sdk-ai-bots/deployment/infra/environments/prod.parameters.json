@@ -37,10 +37,7 @@
     "functionImageRepository": {
       "value": "azure-sdk-qa-bot-function:prod"
     },
-    "ragBasedBackendImageRepository": {
-      "value": "azure-sdk-qa-bot-backend:prod"
-    },
-    "agentBasedImageRepository": {
+    "agentServerImageRepository": {
       "value": "azure-sdk-qa-bot-agent-server:prod"
     },
     "frontendImageRepository": {
@@ -106,23 +103,20 @@
     "frontendDeleteLockName": {
       "value": "azsdkqabot-delete-lock"
     },
-    "backendAppServicePlanName": {
+    "agentServerAppServicePlanName": {
       "value": "azuresdkqabot-appserviceplan"
     },
-    "backendLogWorkspaceName": {
+    "agentServerLogWorkspaceName": {
       "value": "azuresdkqabot-log"
     },
-    "backendSiteName": {
+    "agentServerSiteName": {
       "value": "azuresdkqabot-server"
     },
-    "backendSlotAppInsightsName": {
+    "agentServerAppInsightsName": {
       "value": "azuresdkqabot-server202510300250"
     },
-    "backendAlertName": {
+    "agentServerAlertName": {
       "value": "azuresdkqabot-alert"
-    },
-    "backendAgentAlertName": {
-      "value": "azuresdkqabot-agent-alert"
     },
     "functionAppServicePlanName": {
       "value": "azuresdkqabot-functionserviceplan"

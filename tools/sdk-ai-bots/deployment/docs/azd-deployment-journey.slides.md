@@ -122,19 +122,19 @@ Every service converges on the global Logic App update; hosted-agent RBAC and en
 
 ---
 
-# Challenge 3 — `azd` can’t deploy to a named App Service **slot**
+# Former challenge 3 — named App Service slot deployment
 
 **Symptom:** `azd deploy agent-server` failed at core step: _“unable to find a resource tagged with `azd-service-name: agent-server`”_.
 
-**Why:** the agent server (`server.py`) runs in the `agent` **deployment slot** of the backend site. `azd` only models the production slot.
+**Why:** the original design ran the agent server in an `agent` deployment slot.
 
-**Resolution:** `hooks/agent-server-predeploy.ts` **does the deploy**:
+**Current resolution:** the agent server now runs directly on the production site:
 
 - `az acr build` → immutable tag `dev-N.0.0`.
-- `az webapp config container set --slot agent`.
-- Writes `AGENT_BASED_IMAGE_REPOSITORY` back to `.env` so the next `azd provision` re-pins the slot to that immutable tag (Bicep default was `:dev` which drifted).
+- azd remotely builds and records the immutable image.
+- `azd deploy agent-server` updates the production site's image natively.
 
-The `azd deploy agent-server` core step is essentially a no-op we tolerate — the hook is where the work happens.
+The slot and its targeting environment variable were removed.
 
 ---
 
@@ -255,7 +255,7 @@ Each hook had to be authored from scratch against that service's own API dialect
            ▼                                           • azd env set immutable tag
  main.bicep (6 modules)                                     │
    sharedResources → qaBotAgent →                           ▼
-   qaBotBackend → qaBotFrontend →                    azd core deploy
+    qaBotAgentServer → qaBotFrontend →                azd core deploy
    qaBotFunctionApp → qaBotLogicApp                         │
            │                                                ▼
            ▼                                        <service>-postdeploy.ts
@@ -318,7 +318,7 @@ Each ⚡ is a hidden concern:
 - **No plan / no diff / no dry-run** — the hook mutates live Azure with `az` CLI.
 - **Language sprawl** — TypeScript hooks shell out to Bash-quoted `az` invocations that mutate the same resources Bicep declared.
 - **Silent contract** — nothing in `azure.yaml` tells a reader that `azd deploy frontend` actually runs 4 hook files.
-- **Un-typed** — `process.env.AGENT_BASED_IMAGE_REPOSITORY` is a string; a typo becomes a silent break at run time.
+- **Un-typed** — deployment values passed through environment strings can fail silently when misspelled.
 - **Cross-cutting failure modes** — a hook throw fails the whole `azd deploy`, even when the container image already deployed successfully (we hit this repeatedly — see the Function App timeout / Teams provision cases).
 
 > Every hook is a place where `azd`’s two-command story stops being true.
@@ -339,7 +339,7 @@ With **`azd` + Bicep**, we spend our effort describing _how `azd` should orchest
 
 - **Order is convention, not declaration** — `preprovision → main.bicep → postprovision`, and `predeploy → <svc>-predeploy → core → <svc>-postdeploy → postdeploy`. Nothing in `azure.yaml` states this ordering; you learn it by reading every hook.
 - **Hooks don't run in preview** — `azd provision --preview` (what-if) skips hooks entirely. So the _preview never reflects reality_: the RBAC, KV seeding, env injection, and Logic App patch that hooks perform are invisible to the one command whose whole job is "show me what will happen."
-- **State passes through `.env` strings** — `CREATE_TEAMS_CONNECTION` and `AGENT_BASED_IMAGE_REPOSITORY` are glue between phases. Untyped, order-dependent, silently broken by a typo.
+- **State passes through `.env` strings** — values such as `CREATE_TEAMS_CONNECTION` remain untyped and order-dependent.
 
 ### "Single source of truth" is maintained by hooks — and that's too weak
 
@@ -379,7 +379,7 @@ Idempotent RBAC, conditional OAuth resources, deferred/two-phase workflows, "ens
 
 Concrete feature asks / RFCs to open with the `azd` team:
 
-1. **Native slot deploys** for `host: appservice` — model the `agent` slot; kill `agent-server-predeploy.ts`.
+1. **Direct production deploys** for `host: appservice` — the agent server now uses azd's native container path.
 2. **Hosted agent env injection** (`azure.ai.agent`) — actually persist `agent.yaml environment_variables` into the deployed version (would kill `ensureAgentAppConfigEnv`).
 3. **Per-service hooks on `azure.ai.agent`** — fixed in `azd` 1.29.0 ([azure-dev#9152](https://github.com/Azure/azure-dev/issues/9152)); agent postdeploy reconciliation is service-scoped again.
 4. **Late-resolved `${VAR}` in `azure.yaml`** for `image:` — resolve _after_ predeploy so we can point at the freshly built immutable tag.
@@ -397,7 +397,7 @@ Every hook we own is a **temporary bridge**. The end state is:
 | ----------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | `ensure-role-assignment.ts`                     | Typed `ensure*` primitives in the provisioning lib — declarative RBAC with idempotency built in |
 | `agent-postdeploy` → new Foundry version w/ env | `azd`’s `azure.ai.agent` host injects `agent.yaml environment_variables` natively               |
-| `agent-server-predeploy` (slot deploy)          | `azd` first-class named-slot support in `appservice` host                                       |
+| Agent-server image build and production deploy | Native `azd deploy agent-server` App Service container support                                  |
 | `patch-workflow` (Logic App PUT)                | Deferred / two-phase resources are a first-class construct in the provisioning lib              |
 | `sync-teams-env` (rewrite `.env.azd`)           | `azd` × Teams Toolkit share an env schema; no cross-tool env copying                            |
 | `preprovision.ensureEntraApp`                   | Microsoft Graph provider for Entra apps, called from the provisioning lib                       |

@@ -5,7 +5,7 @@ unchecked must be filed as a follow-up issue with a date and owner.
 
 ## Per-component
 
-For each of `frontend`, `backend`, `function-app`, `agent-server`,
+For each of `frontend`, `function-app`, `agent-server`,
 `hosted-agent`, `logic-app`, `knowledge-sync`:
 
 - [ ] DRI named (and a backup)
@@ -31,7 +31,7 @@ For each of `frontend`, `backend`, `function-app`, `agent-server`,
 - [ ] Pipeline service-connection `azuresdkqabot-prod` has only
       `Contributor` on the prod RG (no broader scope)
 - [ ] Developers have NO Contributor on prod RG
-- [ ] Bot Service production endpoint requires AAD (EasyAuth on agent-server slot)
+- [ ] Bot Service production endpoint requires AAD (EasyAuth on the agent-server site)
 
 ## Secrets
 

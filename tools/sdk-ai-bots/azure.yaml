@@ -34,19 +34,16 @@ services:
               version: 2.0.0
         startupCommand: python init.py
     agent-server:
-        resourceName: ${BACKEND_SITE_NAME}
+        resourceName: ${AGENT_SERVER_SITE_NAME}
         project: azure-sdk-qa-bot-agent
         host: appservice
         language: docker
         docker:
             path: Dockerfile
             context: .
+            image: azure-sdk-qa-bot-agent-server
+            tag: ${AGENT_SERVER_IMAGE_TAG}
             remoteBuild: true
-        hooks:
-            predeploy:
-                shell: sh
-                run: cd ../deployment && npx tsx hooks/agent-server-predeploy.ts
-                interactive: true
     frontend:
         project: azure-sdk-qa-bot
         host: appservice

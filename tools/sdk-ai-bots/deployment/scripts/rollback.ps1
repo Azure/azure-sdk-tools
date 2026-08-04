@@ -15,7 +15,7 @@
 [CmdletBinding(SupportsShouldProcess=$true)]
 param(
     [Parameter(Mandatory=$true)]
-    [ValidateSet('frontend', 'backend', 'function-app', 'agent-server')]
+    [ValidateSet('frontend', 'function-app', 'agent-server')]
     [string]$Component,
 
     [Parameter(Mandatory=$true)]
@@ -57,20 +57,17 @@ $rg        = Read-EnvSuite ".environments.$Environment.resourceGroupPrefix"
 $appConfig = Read-EnvSuite ".environments.$Environment.appConfigName"
 $acr       = Read-EnvSuite ".environments.$Environment.containerRegistryName"
 
-# Site name and image name per component. Frontend / backend / function-app
-# have their names in env-suite; agent-server shares the backend site (it runs
-# in the `agent` deployment slot of the backend web app).
+# Site name and image name per component. The agent server runs directly on the
+# production backend-named App Service retained for resource-name compatibility.
 $imageNames = @{
     'frontend'     = 'azure-sdk-qa-bot'
-    'backend'      = 'azure-sdk-qa-bot-backend'
     'function-app' = 'azure-sdk-qa-bot-function'
     'agent-server' = 'azure-sdk-qa-bot-agent-server'
 }
 switch ($Component) {
     'frontend'     { $appName = Read-EnvSuite ".environments.$Environment.frontendSiteName" }
-    'backend'      { $appName = Read-EnvSuite ".environments.$Environment.backendSiteName" }
     'function-app' { $appName = Read-EnvSuite ".environments.$Environment.functionAppName" }
-    'agent-server' { $appName = Read-EnvSuite ".environments.$Environment.backendSiteName" }
+    'agent-server' { $appName = Read-EnvSuite ".environments.$Environment.agentServerSiteName" }
 }
 $imageName = $imageNames[$Component]
 $key       = "Deployment:${Component}:LastKnownGoodTag"

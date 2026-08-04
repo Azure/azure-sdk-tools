@@ -39,7 +39,7 @@ param frontendDeleteLockName string = 'azsdkqabot-delete-lock-${substring(unique
 @description('Azure Table Storage table name that stores per-conversation Bot Framework state. Read by the frontend at startup — MUST be non-empty or the container crashes on `ConversationHandler` initialization (Table Storage returns 400 InvalidInput for empty names).')
 param azureTableNameForConversation string
 
-@description('OAuth2 scope the frontend requests for calls to the backend RAG service. Format `api://<server-audience>/.default`. Read at startup by config.js validation — MUST be non-empty.')
+@description('OAuth2 scope the frontend requests for calls to the agent server. Format `api://<server-audience>/.default`. Read at startup by config.js validation — MUST be non-empty.')
 param ragServiceScope string
 
 @description('User-visible display name for the Teams bot (surfaced by the Bot Framework SDK). Per-env value; defaults to the prod name.')

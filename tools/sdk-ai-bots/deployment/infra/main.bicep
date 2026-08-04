@@ -6,7 +6,7 @@
 // `azd provision` or `az deployment sub create`.
 //
 // Layer order (encoded by module dependsOn):
-//   1. shared-resources  →  2. agent  →  3. frontend  →  4. backend
+//   1. shared-resources  →  2. agent  →  3. frontend  →  4. agent-server
 //                                                ↓
 //                                       5. function-app  →  6. logic-app
 //
@@ -46,11 +46,8 @@ param serverAudience string
 @description('Function App container image repository and tag.')
 param functionImageRepository string
 
-@description('Backend container image repository and tag.')
-param ragBasedBackendImageRepository string
-
-@description('Agent server (slot) container image repository and tag.')
-param agentBasedImageRepository string
+@description('Agent server container image repository and tag.')
+param agentServerImageRepository string
 
 @description('Frontend (Teams bot) container image repository and tag.')
 param frontendImageRepository string
@@ -90,13 +87,12 @@ param frontendServerErrorsAlertName string = ''
 param frontendHealthCheckAlertName string = ''
 param frontendDeleteLockName string = ''
 
-// Backend
-param backendAppServicePlanName string = ''
-param backendLogWorkspaceName string = ''
-param backendSiteName string = ''
-param backendSlotAppInsightsName string = ''
-param backendAlertName string = ''
-param backendAgentAlertName string = ''
+// Agent server
+param agentServerAppServicePlanName string = ''
+param agentServerLogWorkspaceName string = ''
+param agentServerSiteName string = ''
+param agentServerAppInsightsName string = ''
+param agentServerAlertName string = ''
 
 // Function App
 param functionAppServicePlanName string = ''
@@ -122,7 +118,7 @@ param envName string
 @description('Azure Table Storage table name that stores per-conversation Bot Framework state. Read by the frontend at startup — must be non-empty (Table Storage rejects blank names with 400 InvalidInput). Empty string means "compute default from envName" (e.g. TeamsChannelConversationsDev).')
 param azureTableNameForConversation string = ''
 
-@description('OAuth2 scope the frontend requests when calling the backend RAG service. Empty string means "compute default from envName" (e.g. api://azure-sdk-qa-bot-dev/.default).')
+@description('OAuth2 scope the frontend requests when calling the agent server. Empty string means "compute default from envName" (e.g. api://azure-sdk-qa-bot-dev/.default).')
 param ragServiceScope string = ''
 
 @description('User-visible display name for the Teams bot. Empty string means "compute default from envName" (prod → "Azure SDK Q&A Bot"; else "Azure SDK Q&A Bot <env>").')
@@ -207,32 +203,28 @@ module frontend './modules/qaBotFrontend/userAssignedIdentity.bicep' = {
   }
 }
 
-// ── Layer 4: Backend ───────────────────────────────────────────────────────────
-module backend './modules/qaBotBackend/serverfarm.bicep' = {
-  name: 'backend'
+// ── Layer 4: Agent server ──────────────────────────────────────────────────────
+module agentServer './modules/qaBotAgentServer/serverfarm.bicep' = {
+  name: 'agent-server'
   scope: rg
   params: {
     location: location
-    ragBasedBackendImage: '${sharedResources.outputs.containerRegistryLoginServer}/${ragBasedBackendImageRepository}'
-    agentBasedBackendImage: '${sharedResources.outputs.containerRegistryLoginServer}/${agentBasedImageRepository}'
+    containerImage: '${sharedResources.outputs.containerRegistryLoginServer}/${agentServerImageRepository}'
     managedIdentityClientId: sharedResources.outputs.managedIdentityClientId
     serverAudience: serverAudience
     sharedIdentityName: sharedResources.outputs.managedIdentityName
     frontendIdentityName: frontend.outputs.botIdentityName
     aiResourceName: agent.outputs.aiResourceName
     aiProjectName: agent.outputs.aiProjectName
-    searchServiceName: sharedResources.outputs.searchServiceName
     cosmosDbAccountName: sharedResources.outputs.cosmosDbAccountName
     storageAccountName: sharedResources.outputs.storageAccountName
-    keyVaultName: sharedResources.outputs.keyVaultName
     appConfigName: sharedResources.outputs.appConfigName
     actionGroupName: sharedResources.outputs.actionGroupName
-    backendAppServicePlanName:  !empty(backendAppServicePlanName)  ? backendAppServicePlanName  : 'azuresdkqabot-appserviceplan-${_suffix}'
-    backendLogWorkspaceName:    !empty(backendLogWorkspaceName)    ? backendLogWorkspaceName    : 'azuresdkqabot-log-${_suffix}'
-    backendSiteName:            !empty(backendSiteName)            ? backendSiteName            : 'azuresdkqabot-server-${_suffix}'
-    backendSlotAppInsightsName: !empty(backendSlotAppInsightsName) ? backendSlotAppInsightsName : 'azuresdkqabot-server202510300250-${_suffix}'
-    backendAlertName:           !empty(backendAlertName)           ? backendAlertName           : 'azuresdkqabot-alert-${_suffix}'
-    backendAgentAlertName:      !empty(backendAgentAlertName)      ? backendAgentAlertName      : 'azuresdkqabot-agent-alert-${_suffix}'
+    agentServerAppServicePlanName: !empty(agentServerAppServicePlanName) ? agentServerAppServicePlanName : 'azuresdkqabot-appserviceplan-${_suffix}'
+    agentServerLogWorkspaceName:   !empty(agentServerLogWorkspaceName)   ? agentServerLogWorkspaceName   : 'azuresdkqabot-log-${_suffix}'
+    agentServerSiteName:           !empty(agentServerSiteName)           ? agentServerSiteName           : 'azuresdkqabot-server-${_suffix}'
+    agentServerAppInsightsName:    !empty(agentServerAppInsightsName)    ? agentServerAppInsightsName    : 'azuresdkqabot-server202510300250-${_suffix}'
+    agentServerAlertName:          !empty(agentServerAlertName)          ? agentServerAlertName          : 'azuresdkqabot-alert-${_suffix}'
   }
 }
 
@@ -270,7 +262,7 @@ module logicApp './modules/qaBotLogicApp/logicAppResources.bicep' = {
     teamsGroupId: teamsGroupId
     teamsChannelIds: teamsChannelIds
     serverAudience: serverAudience
-    serverBaseUrl: backend.outputs.serverBaseUrl
+    serverBaseUrl: agentServer.outputs.serverBaseUrl
     botBaseUrl: frontend.outputs.botBaseUrl
     botAudience: frontend.outputs.botAudience
     blobStorageAccountName: sharedResources.outputs.storageAccountName
@@ -338,12 +330,11 @@ output BOT_DOMAIN string = frontend.outputs.botDomain
 output BOT_ID string = frontend.outputs.botClientId
 output BOT_TENANT_ID string = frontend.outputs.botTenantId
 
-// Backend outputs
-output SERVER_BASE_URL string = backend.outputs.serverBaseUrl
-// Effective backend App Service name. Re-exported so azd persists it into
-// .azure/<env>/.env, letting `agent-server`'s `resourceName: ${BACKEND_SITE_NAME}`
-// resolve to this site (which owns the `agent` deployment slot).
-output BACKEND_SITE_NAME string = !empty(backendSiteName) ? backendSiteName : 'azuresdkqabot-server-${_suffix}'
+// Agent-server outputs
+output SERVER_BASE_URL string = agentServer.outputs.serverBaseUrl
+// Effective agent-server App Service name. Re-exported so azd persists it into
+// .azure/<env>/.env and `agent-server`'s `resourceName` resolves to this site.
+output AGENT_SERVER_SITE_NAME string = !empty(agentServerSiteName) ? agentServerSiteName : 'azuresdkqabot-server-${_suffix}'
 
 // Function-app outputs
 output FUNCTION_APP_NAME string = functionApp.outputs.functionAppName
@@ -363,6 +354,5 @@ output LOGIC_APP_ALERT_NAME string = !empty(logicAppAlertName) ? logicAppAlertNa
 output SERVER_AUDIENCE string = serverAudience
 output TEAMS_GROUP_ID string = teamsGroupId
 output TEAMS_CHANNEL_IDS string = join(teamsChannelIds, ',')
-output RAG_BASED_BACKEND_IMAGE string = '${sharedResources.outputs.containerRegistryLoginServer}/${ragBasedBackendImageRepository}'
-output AGENT_BASED_BACKEND_IMAGE string = '${sharedResources.outputs.containerRegistryLoginServer}/${agentBasedImageRepository}'
+output AGENT_SERVER_IMAGE string = '${sharedResources.outputs.containerRegistryLoginServer}/${agentServerImageRepository}'
 output FUNCTION_CONTAINER_IMAGE string = '${sharedResources.outputs.containerRegistryLoginServer}/${functionImageRepository}'

@@ -28,10 +28,7 @@
     "functionImageRepository": {
       "value": "azure-sdk-qa-bot-function:dev"
     },
-    "ragBasedBackendImageRepository": {
-      "value": "azure-sdk-qa-bot-backend:dev"
-    },
-    "agentBasedImageRepository": {
+    "agentServerImageRepository": {
       "value": "azure-sdk-qa-bot-agent-server:dev"
     },
     "frontendImageRepository": {
@@ -40,7 +37,7 @@
     "frontendBaseName": {
       "value": "azsdkqabot-dev"
     },
-    "backendSiteName": {
+    "agentServerSiteName": {
       "value": "azuresdkqabot-server-dev"
     },
     "functionAppName": {

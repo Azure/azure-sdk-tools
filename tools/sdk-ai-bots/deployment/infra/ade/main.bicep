@@ -18,7 +18,7 @@
 // └───────────────────────────────────────────────────────────────────────────┘
 //
 // Layer order (encoded by module references):
-//   1. shared-resources → 2. agent → 3. frontend → 4. backend
+//   1. shared-resources → 2. agent → 3. frontend → 4. agent-server
 //                                          ↓
 //                                 5. function-app → 6. logic-app
 // ─────────────────────────────────────────────────────────────────────────────
@@ -46,11 +46,8 @@ param createTeamsConnection bool = true
 @description('Frontend (Teams bot) container image repository and tag.')
 param frontendImageRepository string
 
-@description('Backend (RAG) container image repository and tag.')
-param ragBasedBackendImageRepository string
-
-@description('Agent server (slot) container image repository and tag.')
-param agentBasedImageRepository string
+@description('Agent server container image repository and tag.')
+param agentServerImageRepository string
 
 @description('Function App container image repository and tag.')
 param functionImageRepository string
@@ -83,6 +80,7 @@ module agent '../modules/qaBotAgent/component.bicep' = {
     managedIdentityPrincipalId: sharedResources.outputs.managedIdentityPrincipalId
     storageAccountName: sharedResources.outputs.storageAccountName
     storageBlobEndpoint: sharedResources.outputs.storageBlobEndpoint
+    containerRegistryName: sharedResources.outputs.containerRegistryName
     aiResourceName:        'qabot-ai-resource-${_suffix}'
     aiProjectName:         'qabot-ai'
     agentLogWorkspaceName: 'qabot-agent-log-${_suffix}'
@@ -105,34 +103,32 @@ module frontend '../modules/qaBotFrontend/userAssignedIdentity.bicep' = {
     frontendServerErrorsAlertName: 'azsdkqabot-server-errors-${_suffix}'
     frontendHealthCheckAlertName:  'azsdkqabot-health-check-failure-${_suffix}'
     frontendDeleteLockName:        'azsdkqabot-delete-lock-${_suffix}'
+    azureTableNameForConversation: 'TeamsChannelConversationsDev'
+    ragServiceScope:               'api://${serverAudience}/.default'
   }
 }
 
-// ── Layer 4: Backend ───────────────────────────────────────────────────────────
-module backend '../modules/qaBotBackend/serverfarm.bicep' = {
-  name: 'backend'
+// ── Layer 4: Agent server ──────────────────────────────────────────────────────
+module agentServer '../modules/qaBotAgentServer/serverfarm.bicep' = {
+  name: 'agent-server'
   params: {
     location: location
-    ragBasedBackendImage: '${sharedResources.outputs.containerRegistryLoginServer}/${ragBasedBackendImageRepository}'
-    agentBasedBackendImage: '${sharedResources.outputs.containerRegistryLoginServer}/${agentBasedImageRepository}'
+    containerImage: '${sharedResources.outputs.containerRegistryLoginServer}/${agentServerImageRepository}'
     managedIdentityClientId: sharedResources.outputs.managedIdentityClientId
     serverAudience: serverAudience
     sharedIdentityName: sharedResources.outputs.managedIdentityName
     frontendIdentityName: frontend.outputs.botIdentityName
     aiResourceName: agent.outputs.aiResourceName
     aiProjectName: agent.outputs.aiProjectName
-    searchServiceName: sharedResources.outputs.searchServiceName
     cosmosDbAccountName: sharedResources.outputs.cosmosDbAccountName
     storageAccountName: sharedResources.outputs.storageAccountName
-    keyVaultName: sharedResources.outputs.keyVaultName
     appConfigName: sharedResources.outputs.appConfigName
     actionGroupName: sharedResources.outputs.actionGroupName
-    backendAppServicePlanName:  'azuresdkqabot-appserviceplan-${_suffix}'
-    backendLogWorkspaceName:    'azuresdkqabot-log-${_suffix}'
-    backendSiteName:            'azuresdkqabot-server-${_suffix}'
-    backendSlotAppInsightsName: 'azuresdkqabot-server202510300250-${_suffix}'
-    backendAlertName:           'azuresdkqabot-alert-${_suffix}'
-    backendAgentAlertName:      'azuresdkqabot-agent-alert-${_suffix}'
+    agentServerAppServicePlanName: 'azuresdkqabot-appserviceplan-${_suffix}'
+    agentServerLogWorkspaceName:   'azuresdkqabot-log-${_suffix}'
+    agentServerSiteName:           'azuresdkqabot-server-${_suffix}'
+    agentServerAppInsightsName:    'azuresdkqabot-server202510300250-${_suffix}'
+    agentServerAlertName:          'azuresdkqabot-alert-${_suffix}'
   }
 }
 
@@ -145,6 +141,7 @@ module functionApp '../modules/qaBotFunctionApp/serverfarm.bicep' = {
     managedIdentityClientId: sharedResources.outputs.managedIdentityClientId
     managedIdentityResourceId: sharedResources.outputs.managedIdentityResourceId
     storageAccountName: sharedResources.outputs.storageAccountName
+    keyVaultName: sharedResources.outputs.keyVaultName
     functionAppServicePlanName: 'azuresdkqabot-functionserviceplan-${_suffix}'
     functionLogWorkspaceName:   'azuresdkqabot-function-log-${_suffix}'
     functionAppName:            'azuresdkqabot-function-${_suffix}'
@@ -159,7 +156,7 @@ module logicApp '../modules/qaBotLogicApp/logicAppResources.bicep' = {
     teamsGroupId: teamsGroupId
     teamsChannelIds: teamsChannelIds
     serverAudience: serverAudience
-    serverBaseUrl: backend.outputs.serverBaseUrl
+    serverBaseUrl: agentServer.outputs.serverBaseUrl
     botBaseUrl: frontend.outputs.botBaseUrl
     botAudience: frontend.outputs.botAudience
     blobStorageAccountName: sharedResources.outputs.storageAccountName
@@ -201,13 +198,12 @@ output BOT_IDENTITY_NAME string = frontend.outputs.botIdentityName
 output BOT_BASE_URL string = frontend.outputs.botBaseUrl
 output BOT_AUDIENCE string = frontend.outputs.botAudience
 
-output SERVER_BASE_URL string = backend.outputs.serverBaseUrl
+output SERVER_BASE_URL string = agentServer.outputs.serverBaseUrl
 
 output FUNCTION_APP_NAME string = functionApp.outputs.functionAppName
 
 output SERVER_AUDIENCE string = serverAudience
 output TEAMS_GROUP_ID string = teamsGroupId
 output TEAMS_CHANNEL_IDS string = join(teamsChannelIds, ',')
-output RAG_BASED_BACKEND_IMAGE string = '${sharedResources.outputs.containerRegistryLoginServer}/${ragBasedBackendImageRepository}'
-output AGENT_BASED_BACKEND_IMAGE string = '${sharedResources.outputs.containerRegistryLoginServer}/${agentBasedImageRepository}'
+output AGENT_SERVER_IMAGE string = '${sharedResources.outputs.containerRegistryLoginServer}/${agentServerImageRepository}'
 output FUNCTION_CONTAINER_IMAGE string = '${sharedResources.outputs.containerRegistryLoginServer}/${functionImageRepository}'

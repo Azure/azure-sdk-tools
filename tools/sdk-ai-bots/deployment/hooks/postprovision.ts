@@ -175,7 +175,7 @@ function printSummary(): void {
   log(`Subscription: ${SUBSCRIPTION_ID}`);
   log(`Resource grp: ${RESOURCE_GROUP}`);
   log("");
-  log("Next: run `azd deploy` to push the frontend, function-app, and agent images.");
+  log("Next: run `azd deploy` to push the frontend, agent-server, function-app, and agent images.");
   log("`azd deploy frontend` also runs `teamsapp provision --env azd` internally,");
   log("using the env/.env.azd file generated from this azd environment.");
   log("─────────────────────────────────────────────────────");

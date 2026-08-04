@@ -29,7 +29,7 @@ Preview / Prod Variables`) and environment list. There is no shared
 - No `azure.yaml`, no `azd` workflow, no `what-if` / drift detection, no
   rollback runbook, no rollout strategy beyond `az webapp restart`.
 - The companion `azd-experiments` repo already contains a complete Bicep
-  module set (`qaBotSharedResources`, `qaBotAgent`, `qaBotBackend`,
+  module set (`qaBotSharedResources`, `qaBotAgent`, `qaBotAgentServer`,
   `qaBotFrontend`, `qaBotFunctionApp`, `qaBotLogicApp`), a working
   `azure.yaml`, and a TypeScript hook pipeline driving the infra-only layers.
 
@@ -87,9 +87,8 @@ deployment path that cannot be triggered from a developer laptop.
 | Component                        | Folder                                       | Runtime                                                      | Current Provisioning                                                            | Current CI                                                              | Current CD                                                                                                                                      | Manual Steps                                                                 | Risks                                                                   |
 | -------------------------------- | -------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | Teams bot (frontend)             | `azure-sdk-qa-bot/`                          | Node 20, container on App Service                            | `teamsapp.yml` → `arm/deploy` against `infra/azure.bicep` (subset of resources) | None dedicated; `npm install && npm run build` inside `teamsapp deploy` | `teamsapp deploy` zip-deploys; ACR push via `scripts/setup-docker-image.ps1`                                                                    | Teams app manifest publish (`teamsapp publish`); Bot Service channel binding | ARM template overlaps with shared infra; CD rebuilds at deploy time     |
-| Backend                          | `azure-sdk-qa-bot-backend/`                  | Go 1.24, container on App Service                            | None in repo (assumed portal-created)                                           | `pipeline/ci.yml` (Go build/test/lint)                                  | `pipeline/cd.yml` — builds + pushes image **inside CD**, then `az webapp config container set`                                                  | Variable groups per env; Key Vault / App Config seeded manually              | Build mixed with deploy; no slot swap, just restart; no rollback path   |
 | Azure Function                   | `azure-sdk-qa-bot-function/`                 | Node, container on Function App                              | None in repo (assumed portal-created)                                           | None in repo                                                            | None in repo; deploy script `scripts/setup-docker-image.ts` is local                                                                            | Storage account binding; queue creation                                      | No automated CI/CD; build script lives in CD-style file                 |
-| Agent server                     | `azure-sdk-qa-bot-agent/`                    | Python, container on App Service slot + hosted Foundry agent | None in repo                                                                    | `pipelines/server-ci.yml`                                               | `pipelines/server-cd.yml` — `az acr build` (CI-in-CD) + `az webapp config container set`; `pipelines/agent-cd.yml` for the hosted Foundry agent | EasyAuth audience configuration; Foundry model deployments                   | Foundry agent and App Service slot are coupled but deploy independently |
+| Agent server                     | `azure-sdk-qa-bot-agent/`                    | Python, container on production App Service + hosted Foundry agent | None in repo                                                               | `pipelines/server-ci.yml`                                               | `pipelines/server-cd.yml` — `az acr build` (CI-in-CD) + direct production deploy; `pipelines/agent-cd.yml` for the hosted Foundry agent          | EasyAuth audience configuration; Foundry model deployments                   | Foundry agent and App Service deploy independently                      |
 | Logic App                        | `azure-sdk-qa-bot-agent/pipelines/logicapp/` | Logic App workflow                                           | `logicapp-cd.yml` ARM-deploys `template.json`                                   | None                                                                    | `pipelines/logicapp-cd.yml`                                                                                                                     | Teams / Blob managed-API OAuth consent                                       | Connection consent cannot be automated in Bicep                         |
 | Knowledge sync                   | `azure-sdk-qa-bot-knowledge-sync/`           | Node, scheduled Azure DevOps job                             | None (runs on hosted agent, writes to Storage + Search)                         | `ci.yml`                                                                | `sync_knowledge.yml` (scheduled daily 02:00 UTC)                                                                                                | None                                                                         | Long-running; no health check on resulting index                        |
 | Evaluation                       | `azure-sdk-qa-bot-evaluation/`               | Python                                                       | None                                                                            | None                                                                    | `online-evaluation.yml`, `offline-evaluation.yml` (scheduled)                                                                                   | None                                                                         | Out of deployment scope; included for completeness                      |
@@ -120,7 +119,7 @@ Ported wholesale from `azd-experiments/infra/`:
 - `infra/modules/qaBotAgent/component.bicep`
 - `infra/modules/qaBotFrontend/userAssignedIdentity.bicep` (+ existing
   `azureSdkQaBotModule.bicep`)
-- `infra/modules/qaBotBackend/serverfarm.bicep`
+- `infra/modules/qaBotAgentServer/serverfarm.bicep`
 - `infra/modules/qaBotFunctionApp/serverfarm.bicep`
 - `infra/modules/qaBotLogicApp/logicAppResources.bicep` (+
   `workflowDefinition.json`)
@@ -214,7 +213,7 @@ tools/sdk-ai-bots/
 │  │  │  ├─ qaBotSharedResources/
 │  │  │  ├─ qaBotAgent/
 │  │  │  ├─ qaBotFrontend/
-│  │  │  ├─ qaBotBackend/
+│  │  │  ├─ qaBotAgentServer/
 │  │  │  ├─ qaBotFunctionApp/
 │  │  │  └─ qaBotLogicApp/
 │  │  └─ environments/
@@ -349,37 +348,34 @@ CD pipeline:
 - Rollback:  swap back; update App Config Deployment:frontend:LastKnownGoodTag
 ```
 
-### 6.2 Backend (Go)
+### 6.2 Agent server
 
 ```text
-Component: backend (azure-sdk-qa-bot-backend/)
+Component: agent-server (azure-sdk-qa-bot-agent/)
 
 Provision pipeline:
-- Purpose:   Apply backend module + agent slot
-- Trigger:   Manual; PR-paths on infra/modules/qaBotBackend/**
+- Purpose:   Apply the production agent-server App Service
+- Trigger:   Manual; PR-paths on infra/modules/qaBotAgentServer/**
 - azd cmd:   azd provision --environment <env> --no-prompt (full graph)
-- Bicep:     infra/modules/qaBotBackend/serverfarm.bicep
-- Validate:  bicep what-if; confirm backend identity + slot exist
+- Bicep:     infra/modules/qaBotAgentServer/serverfarm.bicep
+- Validate:  bicep what-if; confirm site identity and EasyAuth exist
 - Approval:  preview/prod
 
 CI pipeline:
-- Purpose:   Build Go binary + container, lint, test, publish to ACR
-- Trigger:   PR + main push on azure-sdk-qa-bot-backend/**
-- Steps:     go mod tidy → go build → go vet → shadow → golangci-lint
-             → go test -race -coverprofile → docker build → docker push
-- Artifact:  ACR image `<acr>/azure-sdk-qa-bot-backend:<moduleVer>_<sha>`
+- Purpose:   Build and test the Python agent-server container, publish to ACR
+- Trigger:   PR + main push on azure-sdk-qa-bot-agent/**
+- Steps:     pytest → ruff/mypy → docker build → docker push
+- Artifact:  ACR image `<acr>/azure-sdk-qa-bot-agent-server:<tag>`
 - Tags:      `<moduleVersion>_<commit-sha>`
 
 CD pipeline:
-- Purpose:   Promote existing ACR image to App Service production slot
-             OR to the 'authoring' slot
-- Trigger:   Manual selection of (env, slot, image tag)
+- Purpose:   Promote an existing ACR image directly to the production site
+- Trigger:   Manual selection of (env, image tag)
 - Artifact:  Must already exist in ACR (build-once enforcement: prod CD
              never builds)
-- Cmd:       az webapp config container set [--slot <slot>]
-             → smoke GET /ping → swap if slot != default
-- Rollout:   slot (authoring) → smoke → swap
-- Rollback:  swap back; revert App Config tag
+- Cmd:       azd deploy agent-server → smoke GET /ping
+- Rollout:   direct production image update
+- Rollback:  redeploy LastKnownGoodTag
 ```
 
 ### 6.3 Function App
@@ -406,14 +402,13 @@ CD pipeline:
 - Rollback:  slot swap back
 ```
 
-### 6.4 Agent (Foundry hosted + agent server slot)
+### 6.4 Hosted Foundry agent
 
 ```text
 Component: agent (azure-sdk-qa-bot-agent/)
 
 Provision pipeline:
-- Purpose:   Provision Foundry project, model deployments, agent slot on
-             backend App Service
+- Purpose:   Provision Foundry project and model deployments
 - azd cmd:   azd provision --environment <env> --no-prompt
 - Bicep:     infra/modules/qaBotAgent/component.bicep
 
@@ -425,14 +420,9 @@ CI pipeline:
 - Tags:      <appVersion> from `_version.py`; <commit-sha> for dev
 
 CD pipeline:
-- Two flows:
-  (a) Agent server (App Service slot 'agent')
-      az webapp config container set --slot agent
-      smoke /ping with EasyAuth bearer token
-      no swap — the 'agent' slot IS the production endpoint
-  (b) Hosted Foundry agent app
-      azd deploy agent --environment <env>
-      smoke via Responses /v1/responses ping
+- Hosted Foundry agent app:
+  azd deploy agent --environment <env>
+  smoke via Responses /v1/responses ping
 - Rollout:   tag-based; new tag deployed in place
 - Rollback:  re-deploy LastKnownGoodTag via same path
 ```
@@ -469,8 +459,8 @@ CD pipeline:
 1. shared-resources    (managed identity, ACR, Storage, Cosmos, Key Vault,
                         App Config, Search, Log Analytics, action group)
 2. agent platform      (App Insights, AI Services, Foundry project, models)
-3. frontend identity   (bot user-assigned identity — needed by backend slot)
-4. backend             (App Service plan, backend slot, agent slot)
+3. frontend identity   (bot user-assigned identity — attached to agent server)
+4. agent-server        (App Service plan + production site)
 5. function-app        (Elastic Premium, function site + slot)
 6. logic-app           (integration account, connections, workflow)
 7. hosted agent app    (azd deploy agent — runs on the Foundry project)
@@ -503,9 +493,8 @@ in the environment-suite under `regions[].ring`.
 | Component      | Primary                                                         | Fallback                                       | Blocked by                                                     |
 | -------------- | --------------------------------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------- |
 | frontend       | `az webapp deployment slot swap` (back to previous prod)        | redeploy `LastKnownGoodTag` to production slot | none                                                           |
-| backend        | slot swap back                                                  | redeploy `LastKnownGoodTag`                    | breaking Cosmos schema change → must use schema rollback first |
 | function-app   | slot swap back                                                  | redeploy previous tag                          | queue schema change → drain then roll                          |
-| agent-server   | redeploy previous tag (slot is production)                      | n/a                                            | none                                                           |
+| agent-server   | redeploy previous tag to production                             | n/a                                            | none                                                           |
 | hosted agent   | redeploy previous tag via azd                                   | n/a                                            | model deprecation in Foundry project                           |
 | logic-app      | re-apply previous ARM template revision                         | manually disable workflow                      | OAuth re-consent if connection was rotated                     |
 | knowledge-sync | restore previous Storage blob snapshot + re-run sync against it | None — no traffic exposure                     | Search index schema migration                                  |
@@ -576,7 +565,7 @@ The following files are generated by this transformation:
 ### Bicep modules
 
 The six Bicep modules (`qaBotSharedResources`, `qaBotAgent`,
-`qaBotBackend`, `qaBotFrontend`, `qaBotFunctionApp`, `qaBotLogicApp`)
+`qaBotAgentServer`, `qaBotFrontend`, `qaBotFunctionApp`, `qaBotLogicApp`)
 live in [`infra/modules/`](infra/modules/) and are consumed by
 [`infra/main.bicep`](infra/main.bicep) via relative module paths.
 
@@ -586,7 +575,7 @@ live in [`infra/modules/`](infra/modules/) and are consumed by
 
 | Existing manual step                        | Replaced by                                                                                                 |
 | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Portal-created backend App Service + slots  | `infra/modules/qaBotBackend/serverfarm.bicep` applied by the centralized `provision-all-<env>` pipeline (`azd provision`)      |
+| Portal-created agent-server App Service | `infra/modules/qaBotAgentServer/serverfarm.bicep` applied by the centralized `provision-all-<env>` pipeline (`azd provision`) |
 | Portal-created Cosmos DB, Key Vault, Search | `infra/modules/qaBotSharedResources/sharedResources.bicep`                                                  |
 | Manual Key Vault secret seeding             | `hooks/postprovision.ts` `seedKeyVaultSecrets()` step (currently TODO — flagged)                            |
 | Manual App Configuration key seeding        | `hooks/postprovision.ts` `updateAppConfiguration()` step                                                    |

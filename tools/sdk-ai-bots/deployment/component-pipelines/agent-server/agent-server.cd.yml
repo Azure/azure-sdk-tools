@@ -1,4 +1,4 @@
-# CD pipeline — agent-server (FastAPI server in the `agent` slot of the backend App Service).
+# CD pipeline — agent-server (FastAPI server in the production App Service).
 # Image-only deploy. Infrastructure is provisioned separately by the
 # provision-all-<env> pipeline.
 
@@ -21,7 +21,7 @@ parameters:
 variables:
     - template: /eng/pipelines/templates/variables/globals.yml
     - template: /eng/pipelines/templates/variables/image.yml
-    # BACKEND_SITE_NAME is exported by load-environment-suite.yml.
+    # AGENT_SERVER_SITE_NAME is exported by load-environment-suite.yml.
     - name: imageName
       value: 'azure-sdk-qa-bot-agent-server'
 
@@ -79,9 +79,8 @@ extends:
                                               - template: /tools/sdk-ai-bots/deployment/pipelines/templates/rollback.yml
                                                 parameters:
                                                     component: agent-server
-                                                    appName: $(BACKEND_SITE_NAME)
+                                                    appName: $(AGENT_SERVER_SITE_NAME)
                                                     imageName: $(imageName)
-                                                    slot: agent
                                         - template: /tools/sdk-ai-bots/deployment/pipelines/templates/notify.yml
                                           parameters:
                                               component: agent-server

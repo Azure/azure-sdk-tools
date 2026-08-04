@@ -43,10 +43,10 @@ environments:
         appConfigName: 'azsdkqabot-config-dev'
         containerRegistryName: 'azsdkqabotacrdev'
         # Site names for CD pipelines. These are passed as bicep params
-        # (frontendBaseName / backendSiteName / functionAppName) so the
+        # (frontendBaseName / agentServerSiteName / functionAppName) so the
         # deployed resources match — no post-provision discovery required.
         frontendSiteName: 'azsdkqabot-dev'
-        backendSiteName: 'azuresdkqabot-server-dev'
+        agentServerSiteName: 'azuresdkqabot-server-dev'
         functionAppName: 'azuresdkqabot-function-dev'
         # Teams Toolkit app registration for this environment. Each env owns a
         # DIFFERENT Teams app (created by `teamsapp provision`); the value is
@@ -78,7 +78,7 @@ environments:
         appConfigName: 'azsdkqabot-config-preview'
         containerRegistryName: 'azsdkqabotacrpreview'
         frontendSiteName: 'azsdkqabot-preview'
-        backendSiteName: 'azuresdkqabot-server-preview'
+        agentServerSiteName: 'azuresdkqabot-server-preview'
         functionAppName: 'azuresdkqabot-function-preview'
         # See dev.teamsAppId for the contract.
         teamsAppId: 'REPLACE_WITH_PREVIEW_TEAMS_APP_ID'
@@ -112,7 +112,7 @@ environments:
         # Site names for CD pipelines (must match the resources currently
         # deployed to the `azure-sdk-qa-bot` RG).
         frontendSiteName: 'azsdkqabot'
-        backendSiteName: 'azuresdkqabot-server'
+        agentServerSiteName: 'azuresdkqabot-server'
         functionAppName: 'azuresdkqabot-function'
         # See dev.teamsAppId for the contract.
         teamsAppId: 'REPLACE_WITH_PROD_TEAMS_APP_ID'
@@ -147,11 +147,6 @@ components:
         serviceName: 'frontend'
         healthPath: '/health'
         slot: 'staging'
-    backend:
-        imageName: 'azure-sdk-qa-bot-backend'
-        serviceName: 'backend'
-        healthPath: '/ping'
-        slot: 'authoring'
     function-app:
         imageName: 'azure-sdk-qa-bot-function'
         serviceName: 'function-app'
@@ -159,9 +154,8 @@ components:
         slot: 'staging'
     agent-server:
         imageName: 'azure-sdk-qa-bot-agent-server'
-        serviceName: 'agent'
+        serviceName: 'agent-server'
         healthPath: '/ping'
-        slot: 'agent'
         easyAuthRequired: true
     knowledge-sync:
         schedule: '0 2 * * *' # daily 02:00 UTC

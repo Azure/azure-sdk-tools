@@ -28,7 +28,7 @@
 2. Trigger `pipelines/orchestrators/deploy-all-prod.yml` with all four image
    tags. The orchestrator runs:
     - Preflight (`bicep what-if` + readiness reminder), waits for approval.
-    - Backend CD → 10-min watch → function-app → agent → frontend.
+   - Agent-server CD → 10-min watch → function-app → agent → frontend.
 3. Each stage records `Deployment:<component>:LastKnownGoodTag` in App
    Configuration on success.
 

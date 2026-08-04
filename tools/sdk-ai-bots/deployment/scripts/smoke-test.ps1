@@ -7,7 +7,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
-    [ValidateSet('frontend', 'backend', 'function-app', 'agent-server')]
+    [ValidateSet('frontend', 'function-app', 'agent-server')]
     [string]$Component,
 
     [Parameter(Mandatory=$true)]
@@ -28,9 +28,8 @@ $ErrorActionPreference = 'Stop'
 # Defaults per component (mirrors environment-suite.yaml components map).
 $defaults = @{
     'frontend'     = @{ AppName='azsdkqabot';            Path='/health' }
-    'backend'      = @{ AppName='azuresdkqabot-backend'; Path='/ping' }
     'function-app' = @{ AppName='azuresdkqabot-function';Path='/api/health' }
-    'agent-server' = @{ AppName='azuresdkqabot-backend'; Path='/ping' }
+    'agent-server' = @{ AppName='azuresdkqabot-server';  Path='/ping' }
 }
 if (-not $AppName)    { $AppName    = $defaults[$Component].AppName }
 if (-not $HealthPath) { $HealthPath = $defaults[$Component].Path }

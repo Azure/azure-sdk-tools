@@ -41,7 +41,6 @@ component pipelines below are image-only (CI builds, CD deploys).
 | Component      | CI                      | CD                                  |
 | -------------- | ----------------------- | ----------------------------------- |
 | frontend       | `frontend.ci.yml`       | `frontend.cd.yml`                   |
-| backend        | `backend.ci.yml`        | `backend.cd.yml`                    |
 | function-app   | `function-app.ci.yml`   | `function-app.cd.yml`               |
 | agent          | `agent.ci.yml`          | `agent.cd.yml`                      |
 | knowledge-sync | `knowledge-sync.ci.yml` | `knowledge-sync.cd.yml` (scheduled) |
@@ -51,7 +50,6 @@ component pipelines below are image-only (CI builds, CD deploys).
 The following pipelines are **not** removed by this transformation. Cut them
 over to the new structure in phase 2, after dev has been validated:
 
-- `tools/sdk-ai-bots/azure-sdk-qa-bot-backend/pipeline/{ci,cd}.yml`
 - `tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/{server-ci,server-cd,agent-cd,logicapp-cd}.yml`
 - `tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync/{ci,sync_knowledge}.yml`
 - `tools/sdk-ai-bots/azure-sdk-qa-bot/teamsapp.yml` (Teams manifest publish only — the ARM step is replaced by the centralized `provision-all-<env>` pipeline)

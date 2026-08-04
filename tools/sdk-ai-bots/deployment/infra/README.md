@@ -14,7 +14,7 @@ infra/
 │  ├─ qaBotSharedResources/
 │  ├─ qaBotAgent/
 │  ├─ qaBotFrontend/
-│  ├─ qaBotBackend/
+│  ├─ qaBotAgentServer/
 │  ├─ qaBotFunctionApp/
 │  └─ qaBotLogicApp/
 └─ environments/

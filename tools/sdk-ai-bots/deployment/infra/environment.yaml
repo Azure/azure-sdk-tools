@@ -23,10 +23,10 @@
 
 name: sdk-ai-bots
 version: 1.0.0
-summary: Azure SDK QA Bot — full stack (frontend, function-app, agent, backend, logic-app).
+summary: Azure SDK QA Bot — full stack (frontend, function-app, agent, agent-server, logic-app).
 description: >-
   Provisions one isolated Azure SDK QA Bot environment (shared-resources,
-  agent/AI, frontend, backend, function-app, logic-app). Used for ephemeral
+  agent/AI, frontend, agent-server, function-app, logic-app). Used for ephemeral
   per-PR environments drawn from the `pr-sandbox` environment type.
 
 # ADE runner that executes the template. The ARM runner compiles and deploys
@@ -68,15 +68,9 @@ parameters:
     type: string
     required: true
 
-  - id: ragBasedBackendImageRepository
-    name: Backend image repository
-    description: RAG-based backend container image repository and tag.
-    type: string
-    required: true
-
-  - id: agentBasedImageRepository
+  - id: agentServerImageRepository
     name: Agent server image repository
-    description: Agent server (slot) container image repository and tag.
+    description: Agent server container image repository and tag.
     type: string
     required: true
 

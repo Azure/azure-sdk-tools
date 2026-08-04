@@ -8,7 +8,7 @@
 
 parameters:
     - name: component
-      type: string # frontend | backend | function-app | agent-server
+      type: string # frontend | function-app | agent-server
     - name: appName
       type: string
     - name: imageName

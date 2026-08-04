@@ -18,6 +18,7 @@ param location   = readEnvironmentVariable('AZURE_LOCATION', 'westus2')
 param aiLocation = readEnvironmentVariable('AZURE_AI_DEPLOYMENTS_LOCATION', readEnvironmentVariable('AZURE_AI_LOCATION', readEnvironmentVariable('AZURE_LOCATION', 'westus2')))
 
 var env = readEnvironmentVariable('AZURE_ENV_NAME', 'dev')
+var deployedAgentServerImage = readEnvironmentVariable('SERVICE_AGENT_SERVER_IMAGE_NAME', '')
 
 param envName = env
 
@@ -26,15 +27,17 @@ param envName = env
 // Fallbacks are used only when a value is missing (e.g., first-run before sync).
 param resourceGroupName              = readEnvironmentVariable('AZURE_RESOURCE_GROUP',              'rg-azuresdkqabot-${env}')
 param functionImageRepository        = readEnvironmentVariable('FUNCTION_IMAGE_REPOSITORY',        'azure-sdk-qa-bot-function:${env}')
-param ragBasedBackendImageRepository = readEnvironmentVariable('RAG_BASED_BACKEND_IMAGE_REPOSITORY', 'azure-sdk-qa-bot-backend:${env}')
-param agentBasedImageRepository      = readEnvironmentVariable('AGENT_BASED_IMAGE_REPOSITORY',      'azure-sdk-qa-bot-agent-server:${env}')
+// Preserve the last immutable image recorded by azd deploy. This prevents a
+// later provision from replacing a working image with a mutable environment
+// tag that may not exist in ACR.
+param agentServerImageRepository     = !empty(deployedAgentServerImage) ? last(split(deployedAgentServerImage, '/')) : readEnvironmentVariable('AGENT_SERVER_IMAGE_REPOSITORY', 'azure-sdk-qa-bot-agent-server:${env}')
 param frontendImageRepository        = readEnvironmentVariable('FRONTEND_IMAGE_REPOSITORY',        'azure-sdk-qa-bot:${env}')
 
 // Resource names for the primary web apps. Kept in sync with env-suite so the
 // CD pipelines (which read the same values as FRONTEND_SITE_NAME / etc.) and
 // the bicep templates agree on the site names.
 param frontendBaseName               = readEnvironmentVariable('FRONTEND_SITE_NAME',               '')
-param backendSiteName                = readEnvironmentVariable('BACKEND_SITE_NAME',                '')
+param agentServerSiteName            = readEnvironmentVariable('AGENT_SERVER_SITE_NAME',           '')
 param functionAppName                = readEnvironmentVariable('FUNCTION_APP_NAME',                '')
 
 // ── Per-env values (read from .azure/<env>/.env; pipelines override via JSON) ─

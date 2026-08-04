@@ -89,7 +89,7 @@ $Mapping = @(
     @{ Path = ".environments.$Environment.aiLocation";           Key = 'AZURE_AI_DEPLOYMENTS_LOCATION' }
     @{ Path = ".environments.$Environment.cosmosDbLocation";    Key = 'COSMOS_DB_LOCATION' }
     @{ Path = ".environments.$Environment.frontendSiteName";     Key = 'FRONTEND_SITE_NAME' }
-    @{ Path = ".environments.$Environment.backendSiteName";      Key = 'BACKEND_SITE_NAME' }
+    @{ Path = ".environments.$Environment.agentServerSiteName";  Key = 'AGENT_SERVER_SITE_NAME' }
     @{ Path = ".environments.$Environment.functionAppName";      Key = 'FUNCTION_APP_NAME' }
     @{ Path = ".environments.$Environment.containerRegistryName";Key = 'CONTAINER_REGISTRY_NAME' }
     @{ Path = ".environments.$Environment.keyVaultName";         Key = 'KEY_VAULT_NAME' }
@@ -97,12 +97,12 @@ $Mapping = @(
     # Image repositories are <componentImageName>:<env>; consumed by main.bicepparam
     # so `azd provision` uses the same values as pipelines' <env>.parameters.json.
     @{ Path = ".components.`"function-app`".imageName + `":$Environment`"";  Key = 'FUNCTION_IMAGE_REPOSITORY' }
-    @{ Path = ".components.backend.imageName + `":$Environment`"";           Key = 'RAG_BASED_BACKEND_IMAGE_REPOSITORY' }
-    @{ Path = ".components.`"agent-server`".imageName + `":$Environment`"";  Key = 'AGENT_BASED_IMAGE_REPOSITORY' }
+    @{ Path = ".components.`"agent-server`".imageName + `":$Environment`"";  Key = 'AGENT_SERVER_IMAGE_REPOSITORY' }
     @{ Path = ".components.frontend.imageName + `":$Environment`"";          Key = 'FRONTEND_IMAGE_REPOSITORY' }
 )
 
 Write-Host "Syncing environment-suite.yaml → azd env '$Environment'..." -ForegroundColor Cyan
+
 $failed = @()
 foreach ($entry in $Mapping) {
     $value = (& yq -r $entry.Path $SuitePath).Trim()
@@ -125,14 +125,6 @@ if ($failed.Count -gt 0) {
     exit 1
 }
 
-# ── Fixed azd deployment-slot targeting ──────────────────────────────────────
-# The agent-server service targets the backend App Service's `agent` slot.
-# azd's App Service slot detection requires an explicit
-# AZD_DEPLOY_<SERVICE>_SLOT_NAME to pick a target non-interactively (see
-# https://github.com/Azure/azure-dev/issues/9246).
-& azd env set AZD_DEPLOY_AGENT_SERVER_SLOT_NAME agent | Out-Null
-Write-Host "  AZD_DEPLOY_AGENT_SERVER_SLOT_NAME = agent"
-
 # ── Sync into <env>.parameters.json ────────────────────────────────────────────
 # Fields owned by the suite are overwritten; unmanaged fields are preserved.
 if (-not (Test-Path $ParametersFile)) {
@@ -149,7 +141,6 @@ $aiLocation                     = (& yq -r ".environments.$Environment.aiLocatio
 $cosmosDbLocation               = (& yq -r ".environments.$Environment.cosmosDbLocation" $SuitePath).Trim()
 $resourceGroupName              = (& yq -r ".environments.$Environment.resourceGroupPrefix" $SuitePath).Trim()
 $functionImageName              = (& yq -r '.components."function-app".imageName' $SuitePath).Trim()
-$backendImageName               = (& yq -r '.components.backend.imageName' $SuitePath).Trim()
 $agentImageName                 = (& yq -r '.components."agent-server".imageName' $SuitePath).Trim()
 
 foreach ($pair in @(
@@ -158,7 +149,6 @@ foreach ($pair in @(
     @{ Name = 'cosmosDbLocation';       Value = $cosmosDbLocation },
     @{ Name = 'resourceGroupName';      Value = $resourceGroupName },
     @{ Name = 'function-app imageName'; Value = $functionImageName },
-    @{ Name = 'backend imageName';      Value = $backendImageName },
     @{ Name = 'agent-server imageName'; Value = $agentImageName }
 )) {
     if ([string]::IsNullOrEmpty($pair.Value) -or $pair.Value -eq 'null') {
@@ -183,8 +173,7 @@ Set-ParamValue $paramsJson.parameters 'aiLocation'                     $aiLocati
 Set-ParamValue $paramsJson.parameters 'cosmosDbLocation'               $cosmosDbLocation
 Set-ParamValue $paramsJson.parameters 'resourceGroupName'              $resourceGroupName
 Set-ParamValue $paramsJson.parameters 'functionImageRepository'        "${functionImageName}:${Environment}"
-Set-ParamValue $paramsJson.parameters 'ragBasedBackendImageRepository' "${backendImageName}:${Environment}"
-Set-ParamValue $paramsJson.parameters 'agentBasedImageRepository'      "${agentImageName}:${Environment}"
+Set-ParamValue $paramsJson.parameters 'agentServerImageRepository'     "${agentImageName}:${Environment}"
 
 # Preserve trailing newline; ConvertTo-Json reformats but the file is now derived.
 $json = $paramsJson | ConvertTo-Json -Depth 20
@@ -196,8 +185,7 @@ Write-Host "  aiLocation                     = $aiLocation"
 Write-Host "  cosmosDbLocation               = $cosmosDbLocation"
 Write-Host "  resourceGroupName              = $resourceGroupName"
 Write-Host "  functionImageRepository        = ${functionImageName}:${Environment}"
-Write-Host "  ragBasedBackendImageRepository = ${backendImageName}:${Environment}"
-Write-Host "  agentBasedImageRepository      = ${agentImageName}:${Environment}"
+Write-Host "  agentServerImageRepository     = ${agentImageName}:${Environment}"
 
 # Warn on unmanaged placeholders that pipelines still need.
 foreach ($key in @('serverAudience', 'teamsGroupId')) {

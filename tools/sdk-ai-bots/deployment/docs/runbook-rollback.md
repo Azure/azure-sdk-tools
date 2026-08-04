@@ -19,9 +19,8 @@
 | Component      | Primary path                                                                   | Manual fallback                                                                     |
 | -------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
 | frontend       | run `frontend.cd.yml` with the failure block (auto on CD failure)              | `pwsh deployment/scripts/rollback.ps1 -Component frontend -Environment prod`        |
-| backend        | slot swap back to previous prod via `swap-slot.yml`                            | `pwsh ./scripts/rollback.ps1 -Component backend -Environment prod`                  |
 | function-app   | slot swap back via `swap-slot.yml`                                             | `pwsh ./scripts/rollback.ps1 -Component function-app -Environment prod`             |
-| agent-server   | redeploy LastKnownGoodTag                                                      | `pwsh ./scripts/rollback.ps1 -Component agent-server -Environment prod -Slot agent` |
+| agent-server   | redeploy LastKnownGoodTag to production                                        | `pwsh ./scripts/rollback.ps1 -Component agent-server -Environment prod`             |
 | hosted agent   | redeploy LastKnownGoodTag via `azd deploy agent` (azd records previous deploy) | open Foundry portal → revert revision                                               |
 | logic-app      | re-apply previous ARM template (Bicep history in git)                          | `az deployment group create --template-file <prev.json>`                            |
 | knowledge-sync | restore previous Storage blob snapshot, re-run sync                            | manual: re-run sync from previous knowledge manifest                                |

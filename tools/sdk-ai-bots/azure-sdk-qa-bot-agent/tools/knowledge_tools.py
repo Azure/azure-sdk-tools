@@ -88,13 +88,16 @@ class KnowledgeTools:
             "The knowledge base contains both documentation and historical "
             "Q&A; the index embeds the full body text, so complete natural "
             "sentences retrieve far better than stripped keyword fragments. "
+            "The search combines semantic/vector and BM25 keyword retrieval. "
             "Provide the queries as a **progressive abstraction ladder** — "
             "start concrete and get more abstract with each query, so the set "
             "covers both exact-wording recall and conceptual-topic recall. "
             "QUERY 1 (REQUIRED) — the **most concrete** version: a full, "
             "standalone restatement of the user's question that KEEPS their "
             "concrete nouns (decorator names, model/property names, version "
-            "numbers, error text). Resolve follow-up context (replace "
+            "numbers, error text, rule IDs, check names, config keys) verbatim. "
+            "This is also the exact-term lookup path; do not issue a separate "
+            "keyword-only search. Resolve follow-up context (replace "
             "'it'/'this' with the real subject) and normalize obvious synonyms "
             "(e.g. 'CI failure' → 'validation failure'). "
             "QUERY 2 (optional) — **more abstract**: drop the conversation-"
@@ -140,10 +143,10 @@ class KnowledgeTools:
     ) -> SearchKnowledgeBaseResult:
         """Search the knowledge base with one or more queries and return results with full section context.
 
-        Each query runs agentic and/or vector search in parallel, then all
-        results are merged and deduplicated. Use multiple queries to cover
-        different facets of the user's problem — the original question,
-        related concepts, and potential solutions.
+        Each query runs vector and keyword search in parallel, plus agentic
+        search in deep mode, then all results are merged and deduplicated. Use
+        multiple queries to cover different facets of the user's problem —
+        the original question, related concepts, and potential solutions.
         """
         # Fall back to tenant-configured sources when none are specified
         sources = _raw_source_names(tenant_id, sources)
@@ -227,43 +230,6 @@ class KnowledgeTools:
         )
 
         return SearchKnowledgeBaseResult(results=refs)
-
-    @tool
-    async def grep_chunks(
-        self,
-        *,
-        query: Annotated[
-            str,
-            "A single literal/keyword query to match EXACTLY inside SOURCE "
-            "document chunks — the tool's strength is exact identifiers: "
-            "decorator names (`@added`), type/model/client names, error text, "
-            "linter or validation rule IDs, pipeline check names, config keys. "
-            "Pack a few synonyms into one query with "
-            "spaces (BM25 OR). Use this instead of `search_knowledge_base` when "
-            "you know the exact term/string to find.",
-        ],
-        tenant_id: Annotated[str, "The active tenant ID for the current conversation."],
-        sources: Annotated[
-            list[str] | None,
-            "Optional list of knowledge source names to scope the search. "
-            "If omitted, all sources configured for the tenant are used.",
-        ] = None,
-    ) -> SearchKnowledgeBaseResult:
-        """Literal keyword search over raw source document chunks."""
-        sources = _raw_source_names(tenant_id, sources)
-        search_client = get_search_client()
-        source_filters = _resolve_source_filters(sources, tenant_id, None)
-        hits = await search_client.keyword_search(
-            query=query, source_filters=source_filters, extra_filter=NON_WIKI_FILTER
-        )
-        unique = [c for c in search_client.deduplicate_chunks(hits) if not c.page_type]
-        unique = unique[: search_client.top_k]
-        if not unique:
-            return SearchKnowledgeBaseResult(results=[])
-        expanded = await asyncio.gather(
-            *[search_client.expand_by_hierarchy(c) for c in unique]
-        )
-        return SearchKnowledgeBaseResult(results=_refs_from_expanded(expanded, unique))
 
     @tool
     async def wiki_search(

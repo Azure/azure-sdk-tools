@@ -40,7 +40,6 @@ The load-bearing decision: **wiki pages and source chunks never fuse into one ra
 
 - **`search_knowledge_base`** — source chunks only (`page_type` null).
 - **`wiki_search`** — wiki pages only, **self-contained**: for the top pages it returns their full content **plus** the source chunks each was built from (routed via `chunk_refs`). The next-ranked pages that did not make the cut are appended as a titles-only "Related wiki pages" reference for orientation; those titles are not answer evidence.
-- **`grep_chunks`** — literal symbol/error-string matching over source chunks, used when semantic retrieval blurs an exact decorator, model, diagnostic, or configuration key.
 
 Both tracks run the same retrieval pipeline (`SearchClient.fused_search`) and differ only by page-type filter: per query, dense + BM25 (+ agentic in `deep` mode) run in parallel and are fused with RRF, then the caller dedupes and caps.
 
@@ -110,7 +109,7 @@ Two properties of this design are easy to trip over:
 
 Every scenario is at or above the baseline (**+5.7 pp** overall, net **+12** cases: 27 fixed, 15 regressed). Groundedness / relevance / coherence / fluency stay ~100 %, and median answer length is flat (165 → 173 words), so the gain is not bought with longer or less grounded answers — it is carried by `similarity` (79.3 → 83.7 %) and `response_completeness` (70.0 → 76.2 %).
 
-The final online tool set is `search_knowledge_base`, `wiki_search`, and `grep_chunks`. `wiki_search` is self-contained because it returns full page content and bounded source backfill, so separate page and source-document read tools are unnecessary.
+The final online tool set is `search_knowledge_base` and `wiki_search`. Exact terms remain verbatim in the first `search_knowledge_base` query, whose fused retrieval already includes BM25. `wiki_search` is self-contained because it returns full page content and bounded source backfill, so separate keyword, page, and source-document read tools are unnecessary.
 
 Reading the numbers: same-config reruns churn ~16 % of cases and move the total by up to ±5 pp, so a single run cannot resolve a smaller delta. `typespec` (N = 125) is the only single scenario large enough to trust on its own; `onboarding` and `releasesupport` (N = 3) swing 33 pp on one case and are reported for completeness only.
 

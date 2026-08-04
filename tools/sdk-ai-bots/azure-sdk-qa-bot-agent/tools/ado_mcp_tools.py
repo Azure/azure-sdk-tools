@@ -101,6 +101,7 @@ async def create_ado_mcp_tool() -> MCPStdioTool:
         env=env,
         load_prompts=False,
         allowed_tools=_ADO_ALLOWED_TOOLS,
+        approval_mode="never_require",
         parse_tool_results=truncating_mcp_parser,
         description=(
             "Read-only Azure DevOps MCP tools. Use to (1) find release/CI "

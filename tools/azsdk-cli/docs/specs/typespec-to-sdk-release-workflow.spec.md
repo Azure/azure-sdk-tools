@@ -484,7 +484,7 @@ Structured error reporting from generation pipeline + agent-assisted troubleshoo
 | Release plan tooling (`azsdk_create_release_plan`, etc.) | Create/update/link Azure DevOps work items | azsdk-cli team |
 | Changelog/versioning tool | Automates changelog updates. **Mgmt plane**: auto-generated reliably (compare with latest GA). **Data-plane**: not reliable, may need manual curation ([discussion](https://github.com/Azure/azure-sdk-tools/pull/15248#discussion_r3353097483)). | @jsquire |
 | Release pipeline (`azsdk_release_sdk`) | Check readiness, trigger release | azsdk-cli team |
-| **API Review Hub release gate** | `GET /api/releases/check-gate` verifies API hash. `POST /api/releases/mark-released` records release and closes review PRs. | @tjprescott |
+| **API Review Hub release gate** | `GET /api/releases/check-approval` verifies API hash. `POST /api/releases/mark-released` records release and closes review PRs. | @tjprescott |
 | Language release pipelines | Publish to PyPI, Maven, npm, NuGet, Go module proxy | Language teams |
 | Service Tree integration | Mark service KPIs as completed | EngSys |
 

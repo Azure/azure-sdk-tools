@@ -624,6 +624,24 @@
           "metadata": {
             "scope": "branded"
           }
+        },
+        {
+          "description": "TypeSpec suppressions CLI and CI approval workflow documentation for Azure REST API specs",
+          "path": "/eng/tools/typespec-suppressions/README.md",
+          "folder": "azure_rest_api_specs_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": "ARM lease design discussion period, lease.yaml validation, and automation guidance for Azure REST API specs",
+          "path": "/.github/arm-leases/README.md",
+          "folder": "azure_rest_api_specs_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
         }
       ]
     },

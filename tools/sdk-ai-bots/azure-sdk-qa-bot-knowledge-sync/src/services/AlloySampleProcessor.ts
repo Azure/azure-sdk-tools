@@ -75,9 +75,9 @@ export class AlloySampleProcessor {
         const lines: string[] = [
             `# Alloy framework sample: ${sampleName}`,
             '',
-            `Complete source code of the \`${sampleName}\` sample project from the Alloy code generation framework, ` +
-                `which the TypeSpec emitter framework (EF v2) builds on. ` +
-                `Source: ${SAMPLES_BASE_URL}/${sampleName}`,
+            `Source files of the \`${sampleName}\` sample project from the Alloy code generation framework, ` +
+                `which the TypeSpec emitter framework (EF v2) builds on (build/test/config files omitted). ` +
+                `Source: ${SAMPLES_BASE_URL}/${sampleName}`, 
             ''
         ];
         for (const filePath of sourceFiles) {

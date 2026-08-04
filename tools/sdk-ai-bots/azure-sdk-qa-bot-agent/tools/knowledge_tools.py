@@ -37,9 +37,6 @@ _WIKI_ONLY_SOURCES = (SRC_WIKI_ENTITY, SRC_WIKI_CONCEPT)
 # titles only so the agent can see the neighbourhood it just missed.
 _WIKI_TOP = 6
 _WIKI_NEIGHBORS = 8
-# Source chunks each kept page is routed back to, for grounded detail.
-_WIKI_ROUTE_PER_PAGE = 3
-_WIKI_ROUTE_MAX_TOTAL = 12
 
 # Shared by both retrieval tracks so the agent picks a strategy the same way.
 _SEARCH_MODE_DESC = (
@@ -274,9 +271,7 @@ class KnowledgeTools:
             "1-3 queries for the curated WIKI layer: per-document SUMMARY pages, "
             "per-symbol ENTITY pages (decorators/APIs/types), per-topic CONCEPT "
             "pages. Use symbol/concept names or short topic phrases. Returns the "
-            "top pages' full synthesized content PLUS the source-document chunks "
-            "they were built from — enough to answer most conceptual/overview "
-            "questions in one call.",
+            "top pages' full synthesized content without source-document backfill.",
         ],
         tenant_id: Annotated[str, "The active tenant ID for the current conversation."],
         sources: Annotated[
@@ -286,7 +281,7 @@ class KnowledgeTools:
         ] = None,
         search_mode: Annotated[str, _SEARCH_MODE_DESC] = "quick",
     ) -> SearchKnowledgeBaseResult:
-        """Search wiki pages, their routed source chunks, and adjacent page titles."""
+        """Search wiki pages without routing them back to source chunks."""
         sources = _wiki_source_names(tenant_id, sources)
         search_client = get_search_client()
         source_filters = _resolve_source_filters(sources, tenant_id, None)
@@ -305,13 +300,7 @@ class KnowledgeTools:
         unique.sort(key=lambda c: c.rerank_score, reverse=True)
         wiki_pages = unique[:_WIKI_TOP]
         neighbors = unique[_WIKI_TOP : _WIKI_TOP + _WIKI_NEIGHBORS]
-        # Route each page to the SOURCE chunks it was built from (grounded detail).
-        routed = await search_client.backfill_wiki_sources(
-            wiki_pages,
-            per_page=_WIKI_ROUTE_PER_PAGE,
-            max_total=_WIKI_ROUTE_MAX_TOTAL,
-            source_filter=_combined_source_filter(source_filters),
-        )
+        routed = []
         combined = wiki_pages + routed
         if not combined:
             logger.info("wiki_search: no wiki pages for queries=%s", capped_queries)
@@ -400,14 +389,6 @@ def _resolve_source_filters(
             filter_clauses.append(service_type_filter)
         source_filters[source_name] = " and ".join(filter_clauses)
     return source_filters
-
-
-def _combined_source_filter(source_filters: dict[str, str]) -> str | None:
-    """Combine per-source filters into one parenthesized OR clause (or None)."""
-    clauses = [f"({f})" for f in source_filters.values() if f]
-    if not clauses:
-        return None
-    return "(" + " or ".join(clauses) + ")"
 
 
 def _truncate_content(content: str | None) -> str:

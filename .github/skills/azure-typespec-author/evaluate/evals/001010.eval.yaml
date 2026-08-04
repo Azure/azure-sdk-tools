@@ -28,9 +28,9 @@ stimuli:
         - src: ../fixtures/001-share-version-new-feature/main.tsp
           dest: Microsoft.Widget/Widget/main.tsp
         - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-          dest: Microsoft.Widget/Widget/package-lock.json
+          dest: package-lock.json
         - src: ../fixtures/Microsoft.Widget/Widget/package.json
-          dest: Microsoft.Widget/Widget/package.json
+          dest: package.json
         - src: ../fixtures/Microsoft.Widget/Widget/node_modules
           dest: node_modules
         - src: ../scripts/check-node-dependencies.js

@@ -5,7 +5,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from models.conversation import ConversationType
 
@@ -25,14 +25,9 @@ class FeedbackRequest(BaseModel):
     tenant_id: str = "unknown"
     reaction: Reaction = Reaction.unknown
     comment: str | None = None
-    reasons: list[str] = []
+    reasons: list[str] = Field(default_factory=list)
     link: str | None = None
     user_name: str | None = None
-    # NEW (required when reaction=bad for chatbot-evolution-agent enqueue
-    # path). The API is conversation-scoped; the server resolves the matching
-    # bot response_id from the most recent assistant message.
-    conversation_id: str | None = None
-    conversation_type: ConversationType | None = None
 
 
 class FeedbackResponse(BaseModel):

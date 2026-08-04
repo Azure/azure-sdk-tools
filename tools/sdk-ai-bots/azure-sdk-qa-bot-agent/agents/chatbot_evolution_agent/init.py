@@ -52,9 +52,9 @@ logger = logging.getLogger(__name__)
 # iterations so the agent can fetch trace, fetch conversation, enumerate
 # sources, re-search (tenant-scoped and whole-KB), read chat-agent source
 # to diagnose system defects, fetch a source URL, and file an issue in one
-# turn.
+# turn, including the duplicate-issue check before creation.
 MAX_TOOL_CALL_ITERATIONS = 8
-MAX_TOOL_CALLS_PER_TURN = 12
+MAX_TOOL_CALLS_PER_TURN = 13
 
 
 def _load_instructions(file_path: Path) -> str:

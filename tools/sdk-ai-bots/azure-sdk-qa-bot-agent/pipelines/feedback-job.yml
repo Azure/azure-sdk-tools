@@ -1,7 +1,7 @@
 # Scheduled daily feedback-job scan pipeline.
 # Runs scripts/run_feedback_jobs.py: ingests conversations into the qa-records
 # status table, evaluates ongoing threads, and drives the feedback loop by
-# calling the backend POST /feedback/session API for failed threads.
+# invoking the hosted Chatbot Evolution Agent in-process for failed threads.
 
 name: Azure SDK QA Bot Feedback Jobs
 

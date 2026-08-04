@@ -12,8 +12,9 @@ drives the feedback loop:
      * still ongoing            -> stay ``ongoing`` (re-check next run).
      * finished + correct       -> ``finished`` (archived).
      * finished + incorrect/unknown -> ``failed`` (needs feedback).
-3. **Feedback** — for records that just turned ``failed``, run the hosted
-   chatbot evolution agent **in-process** via
+3. **Feedback** — for every runnable ``failed`` record, including work left
+   by a disabled or interrupted earlier scan, run the hosted chatbot evolution
+   agent **in-process** via
    :class:`ChatbotEvolutionAgentService` (a synchronous Responses call per
    thread).
 
@@ -62,31 +63,58 @@ logger = logging.getLogger("run_feedback_jobs")
 _TESTING_CHANNEL_SUFFIX = "testing"
 
 
-async def _load_excluded_channels() -> set[str]:
+async def _load_excluded_channels() -> set[str] | None:
     """Return channel ids marked as testing channels in ``channel.yaml``.
 
-    Returns an empty set (and logs a warning) when the blob is missing or
-    malformed so the scan can still proceed without exclusion.
+    Returns ``None`` when the configuration cannot be loaded or validated.
+    Evaluation can still proceed in that case, but feedback invocation must
+    fail closed because testing channels cannot be excluded safely.
     """
     try:
         container = app_config.get("STORAGE_CONFIG_CONTAINER")
         blob = app_config.get("CHANNEL_CONFIG_BLOB")
+        if not container or not blob:
+            raise RuntimeError("Channel configuration storage is not configured")
         data = await download_blob(container, blob)
     except Exception:
         logger.warning("Failed to download channel.yaml", exc_info=True)
-        return set()
+        return None
     if not data:
-        return set()
+        logger.warning("channel.yaml is empty")
+        return None
     try:
         parsed = yaml.safe_load(data.decode("utf-8")) or {}
-    except yaml.YAMLError:
+    except (UnicodeDecodeError, yaml.YAMLError):
         logger.warning("Failed to parse channel.yaml", exc_info=True)
-        return set()
+        return None
+    if not isinstance(parsed, dict):
+        logger.warning("channel.yaml root must be a mapping")
+        return None
+    if "channels" not in parsed:
+        logger.warning("channel.yaml is missing the channels list")
+        return None
+    channels = parsed["channels"]
+    if not isinstance(channels, list):
+        logger.warning("channel.yaml channels must be a list")
+        return None
+
     excluded: set[str] = set()
-    for entry in parsed.get("channels", []) or []:
+    for entry in channels:
+        if not isinstance(entry, dict):
+            logger.warning("channel.yaml contains a non-mapping channel entry")
+            return None
         channel_id = entry.get("id")
-        name = (entry.get("name") or "").strip().lower()
-        if channel_id and name.endswith(_TESTING_CHANNEL_SUFFIX):
+        raw_name = entry.get("name")
+        if (
+            not isinstance(channel_id, str)
+            or not channel_id.strip()
+            or not isinstance(raw_name, str)
+            or not raw_name.strip()
+        ):
+            logger.warning("channel.yaml channel entries require string id and name")
+            return None
+        name = raw_name.strip().lower()
+        if name.endswith(_TESTING_CHANNEL_SUFFIX):
             excluded.add(channel_id)
     return excluded
 
@@ -117,9 +145,16 @@ async def _run(args: argparse.Namespace) -> None:
     start, end = _resolve_window(args)
     logger.info("Scanning conversations active in [%s, %s)", start.isoformat(), end.isoformat())
 
-    excluded_channels = await _load_excluded_channels()
+    loaded_excluded_channels = await _load_excluded_channels()
+    channel_filter_available = loaded_excluded_channels is not None
+    excluded_channels = loaded_excluded_channels or set()
     if excluded_channels:
         logger.info("Excluding %d testing channel(s)", len(excluded_channels))
+    if not channel_filter_available:
+        logger.error(
+            "Testing-channel configuration is unavailable; feedback invocation "
+            "will be disabled for this scan"
+        )
 
     # 1. Ingest — upsert QA records for threads active in the window.
     messages = await conversation_service.get_messages_in_period(start, end)
@@ -144,7 +179,13 @@ async def _run(args: argparse.Namespace) -> None:
             "CHATBOT_EVOLUTION_AGENT_ENABLED is not set; feedback analysis disabled"
         )
 
-    counts = {"ongoing": 0, "finished": 0, "failed": 0, "skipped": 0, "triggered": 0}
+    counts = {
+        "ongoing": 0,
+        "finished": 0,
+        "failed": 0,
+        "skipped": 0,
+        "feedback_attempted": 0,
+    }
 
     for i, record in enumerate(ongoing):
         if args.limit is not None and i >= args.limit:
@@ -168,26 +209,46 @@ async def _run(args: argparse.Namespace) -> None:
             counts["ongoing"] += 1
             continue
 
-        # 3. qa_status == failed -> run the hosted chatbot evolution agent
-        #    in-process.
         counts["failed"] += 1
-        if args.dry_run or not feedback_enabled:
-            logger.info("Skipping feedback for %s (disabled or dry-run)", record.id)
-            continue
-        try:
-            await evolution_service.run_job(record.id, record.tenant_id)
-            counts["triggered"] += 1
-        except Exception:
-            logger.exception("Failed to trigger feedback for %s", record.id)
+
+    # 3. Run every eligible failed record, not only records that failed during
+    # this scan. This catches up work created while feedback was disabled and
+    # retries failed or stale-running synchronous invocations.
+    failed_records = await qa_service.list_failed(tenant_id=args.tenant)
+    runnable = [
+        record
+        for record in failed_records
+        if evolution_service.is_runnable(record)
+        and QARecordService.channel_key_of(record) not in excluded_channels
+    ]
+    logger.info("Found %d runnable feedback record(s)", len(runnable))
+
+    if args.dry_run or not feedback_enabled or not channel_filter_available:
+        if runnable:
+            logger.info(
+                "Skipping %d runnable feedback record(s) "
+                "(disabled, dry-run, or channel filter unavailable)",
+                len(runnable),
+            )
+    else:
+        for record in runnable:
+            try:
+                attempted = await evolution_service.run_job(
+                    record.id, record.tenant_id
+                )
+                if attempted:
+                    counts["feedback_attempted"] += 1
+            except Exception:
+                logger.exception("Failed to run feedback for %s", record.id)
 
     logger.info(
         "Feedback scan complete: finished=%d failed=%d still-ongoing=%d "
-        "skipped=%d feedback-triggered=%d",
+        "skipped=%d feedback-attempted=%d",
         counts["finished"],
         counts["failed"],
         counts["ongoing"],
         counts["skipped"],
-        counts["triggered"],
+        counts["feedback_attempted"],
     )
 
 

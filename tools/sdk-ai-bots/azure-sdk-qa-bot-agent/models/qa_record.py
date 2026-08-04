@@ -11,7 +11,7 @@ A ``QARecord`` is the durable status row for **one conversation thread**
 * **Layer 2 — Feedback lifecycle** (:class:`FeedbackStatus`, embedded in
   :class:`FeedbackState`): only populated once the QA reaches ``failed``.
   ``created`` when the chatbot evolution agent session is requested, ``running``
-  once the hosted agent accepted and is processing, ``done`` when it
+  once the hosted-agent invocation begins, ``done`` when it
   finished, ``failed`` when it errored/timed out.
 
 Partition key is ``/tenant_id`` (matches the episode and conversation
@@ -26,7 +26,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from models.conversation import BotAnswerVerdict, ConversationType
 
@@ -49,7 +49,7 @@ class FeedbackStatus(str, Enum):
 
     #: A feedback-agent session has been requested/persisted.
     created = "created"
-    #: The hosted agent accepted the request and is processing.
+    #: The hosted-agent invocation has started.
     running = "running"
     #: The agent finished and the result was persisted.
     done = "done"
@@ -108,6 +108,9 @@ class QARecord(BaseModel):
     evaluated_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
+    #: Cosmos concurrency token. Populated on reads and never persisted as an
+    #: application field.
+    cosmos_etag: str | None = Field(default=None, exclude=True, repr=False)
 
     @staticmethod
     def build_id(
@@ -125,7 +128,10 @@ class QARecord(BaseModel):
     def from_cosmos(cls, doc: dict[str, Any]) -> "QARecord":
         """Deserialize a Cosmos document, stripping system (``_``) fields."""
         cleaned = {k: v for k, v in doc.items() if not k.startswith("_")}
-        return cls.model_validate(cleaned)
+        record = cls.model_validate(cleaned)
+        etag = doc.get("_etag")
+        record.cosmos_etag = etag if isinstance(etag, str) else None
+        return record
 
 
 __all__ = [

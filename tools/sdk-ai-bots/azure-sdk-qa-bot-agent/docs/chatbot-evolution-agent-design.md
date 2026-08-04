@@ -8,7 +8,7 @@ We are introducing a **Chatbot Evolution Agent** — a new hosted agent in the F
 
 | Signal | Source | Description |
 | --- | --- | --- |
-| **Explicit** | User feedback card (`reaction == bad`) | User clicked thumbs-down on a bot answer; captured in the thread and surfaced by `fetch_conversation`. |
+| **Explicit** | User feedback card (`reaction == bad`) | User clicked thumbs-down on a bot answer; surfaced by `fetch_conversation` when conversation-scoped feedback has been projected into Cosmos. |
 | **Implicit** | Expert reply in the thread | A human expert (non-author, non-bot) replies in a thread the bot has already answered — a strong implicit "the bot didn't fully solve it." |
 
 ## 2 Design
@@ -73,7 +73,7 @@ flowchart TB
     Bot -->|"9 post reply"| Channel
     Channel -->|"10 up/down feedback"| Bot
     Bot -->|"feedback"| Server
-    Server -.->|"store feedback"| Cosmos
+    Server -.->|"store feedback (Excel)"| Blob
 
     %% ---------- Feedback loop (daily) ----------
     Scan -->|"A Detect: read threads"| Cosmos
@@ -102,9 +102,9 @@ resolving the channel-to-tenant map from **Blob**. If the bot should reply, it
 invokes the **Teams Bot**, which calls the backend's chat path; the **Chat
 Agent** (Foundry hosted) retrieves from **AI Search (KB)**, uses conversation
 context/memory in **Cosmos**, and emits a trace to **App Insights**. The answer
-is saved to `conversation-messages` and posted back to the channel. A user
-thumbs-up/down (or a later expert reply in the thread) becomes a failure
-signal.
+is saved to `conversation-messages` and posted back to the channel. User
+thumbs-up/down feedback is stored in Blob; a later expert reply is already
+part of the conversation thread and becomes an implicit failure signal.
 
 **Feedback loop (A–F, daily).** The scheduled **scan** reads conversation
 threads from Cosmos (Detect); the **Bot Answer Evaluator** judges each —
@@ -227,7 +227,7 @@ record carries **two status layers**:
 | Layer | Field | States | Meaning |
 | --- | --- | --- | --- |
 | **1 — QA lifecycle** | `qa_status` | `ongoing` → `finished` \| `failed` | `ongoing` while the thread is still open; `finished` once it concluded with a **correct** bot answer (archived); `failed` once it concluded with an **incorrect/unknown** bot answer (worth a feedback analysis). |
-| **2 — Feedback lifecycle** | `feedback.status` | `created` → `running` → `done` \| `failed` | Present only once `qa_status == failed`. `created` when a session is requested, `running` once the hosted agent accepted and is processing, `done` when it finished, `failed` on error/timeout. |
+| **2 — Feedback lifecycle** | `feedback.status` | `created` → `running` → `done` \| `failed` | Present only once `qa_status == failed`. `created` when a session is requested, `running` once the hosted-agent invocation begins, `done` when it finished, `failed` on error/timeout. |
 
 ![alt text](job_lifecycle.png)
 
@@ -244,9 +244,11 @@ record carries **two status layers**:
    - still ongoing → stay `ongoing` (re-check next run);
    - finished + correct → `finished` (archived);
    - finished + incorrect/unknown → `failed`.
-3. **Feedback** — for records that just turned `failed`, run the hosted
-   chatbot evolution agent in-process via
-   `ChatbotEvolutionAgentService.run_job` (§2.3.1).
+3. **Feedback** — query all `failed` records and run every eligible item
+   in-process via `ChatbotEvolutionAgentService.run_job` (§2.3.1). This
+   includes newly failed records, records left pending while the feature was
+   disabled, previous failed attempts, and stale `running` records left by an
+   interrupted process.
 
 The whole feature is gated by `CHATBOT_EVOLUTION_AGENT_ENABLED` so it can be
 disabled without a code rollback.
@@ -255,19 +257,33 @@ disabled without a code rollback.
 
 The daily batch job (`scripts/run_feedback_jobs.py`) owns the Layer-2
 lifecycle and drives the Foundry interaction **in-process** via
-:class:`ChatbotEvolutionAgentService` — there is no backend HTTP API. For each
-thread that just turned `failed`, the job calls `run_job(record_id, tenant_id)`,
-which marks `feedback.status = running`, runs the hosted chatbot evolution
-agent **synchronously**, and writes back a terminal `done` / `failed` status.
+`ChatbotEvolutionAgentService` — there is no backend HTTP API. For each
+runnable failed thread, the job calls `run_job(record_id, tenant_id)`, which
+persists `feedback.status = created`, advances it to `running`, runs the hosted
+chatbot evolution agent **synchronously**, and writes back a terminal `done` /
+`failed` status.
 
 The agent is invoked through the Responses API (`store=True`); the call
 **blocks** until the run finishes (bounded by a wall-clock timeout), so the
 job gets the terminal status back before moving to the next thread. There is
-no background poller or reconciler.
+no background poller or reconciler. A later daily scan retries `failed`
+attempts and reclaims `running` records older than the invocation timeout plus
+a safety margin. Cosmos ETag conditions make the `running` claim atomic across
+overlapping scans. Because issue creation happens inside the hosted agent, the
+agent searches for an existing issue containing the same trace ID before
+creating one, making a reclaimed invocation idempotent.
 
 The hosted agent owns the entire analysis and `create_issue`; the service
-**does not parse** the reply (there is no structured output contract). It
-only advances `feedback.status` and logs the raw reply for triage.
+**does not parse or persist** the fixed-schema reply. It only advances
+`feedback.status` and logs the raw reply for triage.
+
+**Current explicit-feedback boundary.** The existing `/feedback` path writes
+monthly Excel files to Blob Storage and remains unchanged. The
+`fetch_conversation` read path can attach `conversation_feedback` documents
+from the conversation's Cosmos partition, but the current Teams feedback
+writer does not create those documents. Until a conversation-scoped projection
+is added, the automated loop is grounded primarily by the persisted thread and
+expert replies rather than thumbs-down comments.
 
 #### QA record
 
@@ -291,7 +307,7 @@ union FeedbackStatus {
   @doc("A feedback session has been requested/persisted")
   Created: "created",
 
-  @doc("The hosted agent accepted and is processing")
+  @doc("The hosted-agent invocation has started")
   Running: "running",
 
   @doc("The agent finished and the result was persisted")

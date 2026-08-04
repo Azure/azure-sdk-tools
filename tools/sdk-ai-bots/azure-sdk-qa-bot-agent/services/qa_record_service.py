@@ -29,9 +29,10 @@ from models.conversation import (
 from models.qa_record import QARecord, QAStatus
 from services.conversation_service import ConversationService
 from utils.azure_cosmosdb import (
+    create_qa_record_if_absent,
     query_qa_records_by_qa_status,
     read_qa_record,
-    upsert_qa_record,
+    replace_qa_record_if_match,
 )
 
 logger = logging.getLogger(__name__)
@@ -75,8 +76,21 @@ class QARecordService:
                 record_id=candidate.id, tenant_id=candidate.tenant_id
             )
             if existing_doc is None:
-                await upsert_qa_record(candidate.to_cosmos())
-                touched.append(candidate)
+                created = await create_qa_record_if_absent(candidate.to_cosmos())
+                if created is not None:
+                    touched.append(QARecord.from_cosmos(created))
+                    continue
+
+                existing_doc = await read_qa_record(
+                    record_id=candidate.id,
+                    tenant_id=candidate.tenant_id,
+                )
+                if existing_doc is None:
+                    raise RuntimeError(
+                        f"QA record {candidate.id} was created concurrently "
+                        "but could not be reloaded"
+                    )
+                touched.append(QARecord.from_cosmos(existing_doc))
                 continue
 
             existing = QARecord.from_cosmos(existing_doc)
@@ -91,8 +105,7 @@ class QARecordService:
             existing.has_expert_reply = candidate.has_expert_reply
             existing.last_activity_at = candidate.last_activity_at
             existing.updated_at = _now()
-            await upsert_qa_record(existing.to_cosmos())
-            touched.append(existing)
+            touched.append(await self._replace_or_reload(existing))
         return touched
 
     def build_record(
@@ -232,8 +245,34 @@ class QARecordService:
         record.qa_status = self.decide_qa_status(evaluation.state, evaluation.verdict)
 
         record.updated_at = _now()
-        await upsert_qa_record(record.to_cosmos())
-        return record
+        return await self._replace_or_reload(record)
+
+    async def _replace_or_reload(self, record: QARecord) -> QARecord:
+        """Conditionally replace an existing record or return the newer row."""
+        if not record.cosmos_etag:
+            raise RuntimeError(
+                f"QA record {record.id} is missing its Cosmos ETag"
+            )
+        updated = await replace_qa_record_if_match(
+            record.to_cosmos(),
+            etag=record.cosmos_etag,
+        )
+        if updated is not None:
+            return QARecord.from_cosmos(updated)
+
+        latest = await read_qa_record(
+            record_id=record.id,
+            tenant_id=record.tenant_id,
+        )
+        if latest is None:
+            raise RuntimeError(
+                f"QA record {record.id} disappeared during a concurrent update"
+            )
+        logger.info(
+            "QA record %s changed concurrently; using the latest persisted state",
+            record.id,
+        )
+        return QARecord.from_cosmos(latest)
 
     # -- Queries -----------------------------------------------------------
 
@@ -241,6 +280,13 @@ class QARecordService:
         """Return every QA record still in the ``ongoing`` state."""
         docs = await query_qa_records_by_qa_status(
             qa_status=QAStatus.ongoing.value, tenant_id=tenant_id
+        )
+        return [QARecord.from_cosmos(d) for d in docs]
+
+    async def list_failed(self, *, tenant_id: str | None = None) -> list[QARecord]:
+        """Return QA records eligible for feedback lifecycle processing."""
+        docs = await query_qa_records_by_qa_status(
+            qa_status=QAStatus.failed.value, tenant_id=tenant_id
         )
         return [QARecord.from_cosmos(d) for d in docs]
 

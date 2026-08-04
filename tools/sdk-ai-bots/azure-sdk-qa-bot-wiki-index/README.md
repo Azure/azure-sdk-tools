@@ -60,7 +60,7 @@ The agent scopes retrieval with an OData filter on `context_id`, using the sourc
 
 Because the cross-document contexts are shared, a tenant reading them can see facts synthesized from documents outside its own source list. This is accepted: the corpus is public documentation and tenants map to topic channels, not access boundaries.
 
-The agent keeps the two scopes from leaking into each other: the raw-chunk tools drop `wiki_entity` / `wiki_concept` from their source list, since those contexts never match a raw chunk, and `wiki_search` adds the tenant's wiki sources back even when the caller scopes the search to a topical source.
+The agent keeps the two scopes from leaking into each other: raw-chunk search drops `wiki_entity` / `wiki_concept` from its source list, since those contexts never match a raw chunk, and `wiki_search` adds the tenant's wiki sources back even when the caller scopes the search to a topical source.
 
 ## Configuration
 

@@ -96,9 +96,8 @@ class KnowledgeTools:
             "standalone restatement of the user's question that KEEPS their "
             "concrete nouns (decorator names, model/property names, version "
             "numbers, error text, rule IDs, check names, config keys) verbatim. "
-            "This is also the exact-term lookup path; do not issue a separate "
-            "keyword-only search. Resolve follow-up context (replace "
-            "'it'/'this' with the real subject) and normalize obvious synonyms "
+            "This is also the exact-term lookup path. Resolve follow-up context "
+            "(replace 'it'/'this' with the real subject) and normalize obvious synonyms "
             "(e.g. 'CI failure' → 'validation failure'). "
             "QUERY 2 (optional) — **more abstract**: drop the conversation-"
             "specific sample values (their own model name, exact version "
@@ -304,7 +303,7 @@ def _tenant_source_names(tenant_id: str) -> list[str]:
 
 
 def _raw_source_names(tenant_id: str, sources: list[str] | None) -> list[str]:
-    """Source names for the raw-chunk tools.
+    """Source names for raw-chunk search.
 
     Wiki page sources carry their own ``context_id`` and never match a raw
     chunk, so they are dropped — unless that would empty the list, which would

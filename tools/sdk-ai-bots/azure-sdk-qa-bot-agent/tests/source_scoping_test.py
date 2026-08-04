@@ -24,18 +24,18 @@ from tools.knowledge_tools import (
 _TENANT = TenantID.TYPESPEC_CHANNEL_QA_BOT.value
 
 
-def test_raw_tools_drop_wiki_only_sources():
+def test_raw_search_drops_wiki_only_sources():
     got = _raw_source_names(_TENANT, [SRC_TYPESPEC_DOCS, SRC_WIKI_ENTITY])
     assert got == [SRC_TYPESPEC_DOCS]
 
 
-def test_raw_tools_keep_wiki_sources_rather_than_emptying_the_scope():
+def test_raw_search_keeps_wiki_sources_rather_than_emptying_the_scope():
     # An empty list would resolve to no filter at all, i.e. the whole index.
     got = _raw_source_names(_TENANT, [SRC_WIKI_ENTITY, SRC_WIKI_CONCEPT])
     assert got == [SRC_WIKI_ENTITY, SRC_WIKI_CONCEPT]
 
 
-def test_raw_tools_fall_back_to_tenant_sources_without_wiki():
+def test_raw_search_falls_back_to_tenant_sources_without_wiki():
     got = _raw_source_names(_TENANT, None)
     assert got
     assert SRC_WIKI_ENTITY not in got and SRC_WIKI_CONCEPT not in got

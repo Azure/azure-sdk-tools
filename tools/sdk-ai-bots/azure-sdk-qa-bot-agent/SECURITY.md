@@ -139,7 +139,7 @@ The agent limits both the number of tool-call iterations and the number of tool 
 
 - **Azure AI Content Safety (overview)** — https://learn.microsoft.com/azure/ai-services/content-safety/overview
 - **Content Safety harm categories** — https://learn.microsoft.com/azure/ai-services/content-safety/concepts/harm-categories
-- **Prompt Shields (user prompt & document attacks) + Spotlighting** — https://learn.microsoft.com/azure/foundry/openai/concepts content-filter-prompt-shields
+- **Prompt Shields (user prompt & document attacks) + Spotlighting** — https://learn.microsoft.com/azure/foundry/openai/concepts/content-filter-prompt-shields
 - **Groundedness detection** — https://learn.microsoft.com/azure/ai-services/content-safety/concepts/groundedness
 - **Protected material detection** — https://learn.microsoft.com/azure/ai-services/content-safety/concepts/protected-material
 - **Task adherence** — https://learn.microsoft.com/azure/ai-services/content-safety/concepts/task-adherence

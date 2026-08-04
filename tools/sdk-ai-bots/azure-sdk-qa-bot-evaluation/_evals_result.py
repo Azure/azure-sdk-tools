@@ -45,6 +45,7 @@ class EvalsResult:
 
     def record_run_result(self, result: dict[str, Any]) -> list[dict[str, Any]]:
         run_result: list[dict[str, Any]] = []
+        tool_call_counts: dict[str, int] = {}
 
         metrics = self._metrics.keys()
 
@@ -66,7 +67,10 @@ class EvalsResult:
                 "answer": row["inputs.response"],
                 "references": row["inputs.references"],
                 "knowledges": row["inputs.knowledges"],
+                "tool_calls": row.get("inputs.tool_calls", []),
             }
+            for tool_name in row.get("inputs.tool_calls", []):
+                tool_call_counts[tool_name] = tool_call_counts.get(tool_name, 0) + 1
             pattern = r"^outputs\.(\w+)\.(\w+)$"
             for index, (key, value) in enumerate(row.items()):
                 match = re.match(pattern, key)
@@ -93,7 +97,10 @@ class EvalsResult:
                         row_result[metric_name] = value
             run_result.append(row_result)
 
-        summary_result: dict[str, Any] = {"total_evals": len(result["rows"])}
+        summary_result: dict[str, Any] = {
+            "total_evals": len(result["rows"]),
+            "tool_call_counts": dict(sorted(tool_call_counts.items())),
+        }
         for index, (key, value) in enumerate(pass_rates.items()):
             summary_result[f"{key}_pass_rate"] = value
         for index, (key, value) in enumerate(fail_rates.items()):

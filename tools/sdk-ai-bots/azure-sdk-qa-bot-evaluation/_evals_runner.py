@@ -64,6 +64,7 @@ COMPLETION_ITEM_SCHEMA: dict[str, Any] = {
         "expected_knowledges": {"type": "array", "items": {"type": "object"}},
         "references": {"type": "array", "items": {"type": "object"}},
         "knowledges": {"type": "array", "items": {"type": "object"}},
+        "tool_calls": {"type": "array", "items": {"type": "string"}},
     },
     "required": ["query", "response"],
 }
@@ -81,6 +82,7 @@ def _completion_item(it: dict[str, Any]) -> dict[str, Any]:
         "expected_knowledges": it.get("expected_knowledges", []),
         "references": it.get("references", []),
         "knowledges": it.get("knowledges", []),
+        "tool_calls": it.get("tool_calls", []),
     }
 
 
@@ -183,6 +185,7 @@ class CompletionCollector:
                     "references": extract_title_and_link_from_references(references),
                     "expected_knowledges": record.get("expected_knowledges", []),
                     "knowledges": extract_title_and_link_from_context(full_context),
+                    "tool_calls": api_response.get("tool_calls", []) or [],
                 }
 
         timeout = aiohttp.ClientTimeout(total=self._timeout_seconds)
@@ -319,6 +322,7 @@ def output_items_to_rows(
             "inputs.response": item.get("response", ""),
             "inputs.references": item.get("references", []) or [],
             "inputs.knowledges": item.get("knowledges", []) or [],
+            "inputs.tool_calls": item.get("tool_calls", []) or [],
         }
 
         per_metric: dict[str, float] = {}

@@ -55,7 +55,7 @@ from openai.types.responses import (
 )
 from openai.types.responses.response_input_item_param import ResponseInputItemParam
 from config.tenant_config import TenantID
-from typing import cast
+from typing import Sequence, cast
 from utils.background_tasks import BackgroundTaskTracker
 
 logger = logging.getLogger(__name__)
@@ -68,6 +68,18 @@ BOT_SENDER_ID = "azure-sdk-qa-bot"
 BOT_SENDER_NAME = "Azure SDK Q&A Bot"
 
 _CITATION_RE = re.compile(r"[^\w\s]*cite[^\w\s]*turn\d+\S*")
+
+_BUILTIN_TOOL_CALL_NAMES = {
+    "apply_patch_call": "apply_patch",
+    "code_interpreter_call": "code_interpreter",
+    "computer_call": "computer",
+    "file_search_call": "file_search",
+    "image_generation_call": "image_generation",
+    "local_shell_call": "local_shell",
+    "shell_call": "shell",
+    "tool_search_call": "tool_search",
+    "web_search_call": "web_search",
+}
 
 
 class ChatService:
@@ -431,6 +443,7 @@ class ChatService:
             has_result=bool(answer.strip()),
             references=references if references else None,
             full_context=full_context,
+            tool_calls=self._extract_tool_call_names(response.output) or None,
             agent_conversation_id=agent_conversation_id,
         )
         if req.tenant_id != tenant:
@@ -507,6 +520,20 @@ class ChatService:
             )
 
         return answer, extracted
+
+    @staticmethod
+    def _extract_tool_call_names(items: Sequence[object]) -> list[str]:
+        """Return one entry per tool invocation in response order."""
+        calls: list[str] = []
+        for item in items or []:
+            item_type = getattr(item, "type", "")
+            if item_type in ("function_call", "custom_tool_call", "mcp_call"):
+                name = getattr(item, "name", "")
+                if name:
+                    calls.append(name)
+            elif item_type in _BUILTIN_TOOL_CALL_NAMES:
+                calls.append(_BUILTIN_TOOL_CALL_NAMES[item_type])
+        return calls
 
     @staticmethod
     def _unwrap_json(raw_output) -> str | None:

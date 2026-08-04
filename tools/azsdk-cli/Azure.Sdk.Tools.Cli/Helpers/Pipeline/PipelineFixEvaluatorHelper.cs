@@ -235,15 +235,15 @@ public class PipelineFixEvaluatorHelper(
         IReadOnlyDictionary<int, PullRequest> originals,
         CancellationToken ct)
     {
-        var branch = FixBranch.Match(fixPr.Head?.Ref ?? string.Empty);
+        var branchMatch = FixBranch.Match(fixPr.Head?.Ref ?? string.Empty);
         var fixHeadSha = fixPr.Head?.Sha;
-        if (!branch.Success || string.IsNullOrEmpty(fixHeadSha))
+        if (!branchMatch.Success || string.IsNullOrEmpty(fixHeadSha))
         {
             return null;
         }
 
-        var originalPrNumber = int.Parse(branch.Groups[1].Value, CultureInfo.InvariantCulture);
-        var failingSha = branch.Groups[2].Value;
+        var originalPrNumber = int.Parse(branchMatch.Groups[1].Value, CultureInfo.InvariantCulture);
+        var failingSha = branchMatch.Groups[2].Value;
 
         if (!originals.TryGetValue(originalPrNumber, out var originalPr))
         {

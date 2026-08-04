@@ -4,12 +4,17 @@
 
 ### Features Added
 
+- Create release plan tool parses TypeSpec project using metadata emitter to get API version and update it in the release plan.
+
+### Breaking Changes
 - Added `AZSDK_COPILOT_GITHUB_TOKEN` support for authenticating Copilot-backed commands in non-interactive environments.
 
 ### Bugs Fixed
 
 - Removed the unavailable `claude-sonnet-4.5` default from Copilot-backed commands.
 - `api-review create` now surfaces the API Review Hub server response for an already-existing review PR as a success rather than an error.
+
+- Removed the option to force-create a release plan to avoid duplicate release plans.
 
 ## 0.6.32 (2026-07-28)
 

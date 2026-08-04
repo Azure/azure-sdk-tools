@@ -19,7 +19,6 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from urllib.parse import urlparse
 
 os.environ.setdefault("AZURE_CORE_WELCOME_MESSAGE", "false")
 
@@ -41,7 +40,6 @@ from azure.ai.projects.models import (
     RaiConfig,
 )
 from azure.identity import AzureCliCredential
-from azure.mgmt.cognitiveservices import CognitiveServicesManagementClient
 
 import config.app_config as app_config
 from config.app_config import get as cfg
@@ -69,61 +67,6 @@ def _git_short_sha() -> str:
         return r.stdout.strip()
     except (subprocess.CalledProcessError, FileNotFoundError):
         return "latest"
-
-
-# ARM ID: /subscriptions/{sub}/resourceGroups/{rg}/providers/.../accounts/{name}
-_ACCOUNT_ID_RE = re.compile(
-    r"/subscriptions/(?P<sub>[^/]+)/resourceGroups/(?P<rg>[^/]+)"
-    r"/providers/Microsoft\.CognitiveServices/accounts/(?P<account>[^/]+)",
-    re.IGNORECASE,
-)
-
-
-def _resolve_account_resource_id(account_name: str) -> str | None:
-    """Return the ARM resource ID of the Foundry (Cognitive Services) account."""
-    res = _run_quiet(
-        [
-            "az",
-            "cognitiveservices",
-            "account",
-            "list",
-            "--query",
-            f"[?name=='{account_name}'].id",
-            "-o",
-            "tsv",
-        ]
-    )
-    if res.returncode != 0:
-        detail = res.stderr.strip() or res.stdout.strip() or "no Azure CLI error output"
-        print(
-            "  WARNING: Guardrail account lookup command failed "
-            f"with exit code {res.returncode}: {detail}"
-        )
-        return None
-    if res.stdout.strip():
-        return res.stdout.strip().splitlines()[0].strip()
-    print(
-        f"  WARNING: No Cognitive Services account named '{account_name}' was found "
-        "in the current Azure CLI subscription. Verify the account name, subscription, "
-        "and service-connection access."
-    )
-    return None
-
-
-def _resolve_rai_policy_id(
-    credential: AzureCliCredential, account_resource_id: str, policy_name: str
-) -> str:
-    """Resolve an existing guardrail policy and return its ARM ID."""
-    m = _ACCOUNT_ID_RE.match(account_resource_id)
-    if not m:
-        raise ValueError(f"Unrecognized account resource ID: {account_resource_id}")
-    client = CognitiveServicesManagementClient(credential, m.group("sub"))
-    for policy in client.rai_policies.list(m.group("rg"), m.group("account")):
-        if policy.name == policy_name:
-            return policy.id or f"{account_resource_id}/raiPolicies/{policy_name}"
-    raise RuntimeError(
-        f"RAI policy '{policy_name}' was not found on account '{m.group('account')}'."
-    )
 
 
 def _wait_for_version_active(
@@ -328,23 +271,12 @@ def main() -> None:
             "APP_VERSION": next_version,
         }
 
-        # Ensure Content-safety guardrail
-        account_name = os.environ.get("AI_FOUNDRY_ACCOUNT_NAME", "")
-        if not account_name:
-            host = urlparse(project_endpoint).hostname or ""
-            account_name = host.split(".")[0]
-        policy_name = cfg("AI_FOUNDRY_RAI_POLICY_NAME", "azure-sdk-qa-bot-guardrail")
-
-        account_resource_id = (
-            _resolve_account_resource_id(account_name) if account_name else None
-        )
-        if not account_resource_id:
+        # Ensure Content-safety guardrail.
+        rai_policy_id = os.environ.get("AI_FOUNDRY_RAI_POLICY_ID", "")
+        if not rai_policy_id:
             raise RuntimeError(
-                f"Cannot apply guardrail because account '{account_name}' was not found."
+                "Cannot apply guardrail because AI_FOUNDRY_RAI_POLICY_ID is not set."
             )
-        rai_policy_id = _resolve_rai_policy_id(
-            credential, account_resource_id, policy_name
-        )
         rai_config = RaiConfig(rai_policy_name=rai_policy_id)
         print(f"  Guardrail: {rai_policy_id}")
 

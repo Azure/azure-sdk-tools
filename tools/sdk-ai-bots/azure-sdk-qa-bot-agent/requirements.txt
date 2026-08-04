@@ -4,7 +4,6 @@ azure-search-documents==12.0.0
 azure-appconfiguration==1.8.0
 azure-cosmos==4.9.0
 azure-identity==1.26.0b2
-azure-mgmt-cognitiveservices==14.1.0
 azure-keyvault-keys==4.11.0
 azure-keyvault-secrets==4.9.0
 azure-storage-blob==12.29.0

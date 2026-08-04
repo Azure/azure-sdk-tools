@@ -44,6 +44,12 @@ parameters:
     displayName: Look back this many days for merged PRs
     type: number
     default: 1
+  # The per-repository timeout is derived from this at runtime (see 'Evaluate each
+  # repository'), because template expressions have no arithmetic functions.
+  - name: jobTimeoutMinutes
+    displayName: Overall job timeout in minutes, shared evenly by the repositories
+    type: number
+    default: 120
   - name: publishToBlob
     displayName: Publish results to Azure Blob Storage
     type: boolean
@@ -52,22 +58,18 @@ parameters:
 variables:
   # Provides azuresdk-copilot-github-pat (GitHub token for the evaluator's Octokit client).
   - group: 'AzSDK_Eval_Variable_group'
-  - name: CliDir
-    value: tools/azsdk-cli/Azure.Sdk.Tools.Cli
-  - name: OutDir
-    value: $(Build.ArtifactStagingDirectory)/azsdk-cli
   # Root of the tree uploaded to the container; its layout IS the blob key layout.
   - name: EvalArtifactDir
     value: $(Build.ArtifactStagingDirectory)/pipeline-fix-eval
   - name: MetricsStorageAccount
-    value: azsdkpipelinemetrics
+    value: azuresdkartifacts
   - name: MetricsContainer
     value: metrics
 
 jobs:
   - job: Evaluate
     displayName: 'Evaluate Copilot pipeline fixes'
-    timeoutInMinutes: 120
+    timeoutInMinutes: ${{ parameters.jobTimeoutMinutes }}
     pool:
       name: azsdk-pool
       demands: ImageOverride -equals ubuntu-24.04
@@ -75,28 +77,32 @@ jobs:
       - checkout: self
         fetchDepth: 1
 
-      - task: UseDotNet@2
-        displayName: 'Install .NET SDK (global.json)'
+      # Exists before evaluation so the artifact step has a path even on early failure.
+      - script: mkdir -p $(EvalArtifactDir)
+        displayName: 'Create evaluation output directory'
+
+      - template: /eng/common/pipelines/templates/steps/install-azsdk-cli.yml
+
+      - task: NodeTool@0
+        displayName: 'Install Node.js'
         inputs:
-          useGlobalJson: true
+          versionSpec: '24.x'
 
-      # The CLI is a Microsoft.NET.Sdk.Web app targeting net8.0, so running it needs
-      # the ASP.NET Core 8 shared framework. Installing the 8.0 SDK provides it (the
-      # 9.0 SDK from global.json only ships the 9.0 shared frameworks). global.json
-      # still pins the build to the 9.0 SDK.
-      - task: UseDotNet@2
-        displayName: 'Install .NET 8 SDK (ASP.NET Core 8 runtime to run the CLI)'
-        inputs:
-          packageType: sdk
-          version: '8.0.x'
+      # 1ES images block registry.npmjs.org; restore via the azure-sdk npm mirror. Written to
+      # the agent user's .npmrc so the global install below inherits the registry and its auth.
+      - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+        parameters:
+          registryUrl: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
 
-      - script: dotnet build $(CliDir) -c Release -o $(OutDir) --nologo
-        displayName: 'Build azsdk CLI'
+      # Not bundled into the released CLI (its build sets CopilotSkipCliDownload under TF_BUILD),
+      # and the judge reports a missing CLI as Undetermined rather than failing, so without this
+      # the whole night would look green with no verdicts.
+      - script: |
+          npm install --global @github/copilot@1.0.5
+          copilot --version
+        displayName: 'Install Copilot CLI'
+        retryCountOnTaskFailure: 2
 
-      # Note: the Copilot CLI (used only by the model-judge tier) is
-      # downloaded and copied into $(OutDir)/runtimes/<rid>/native by the
-      # GitHub.Copilot.SDK NuGet build targets during the 'dotnet build' above, so
-      # no separate Copilot CLI / Node install step is required here.
       - task: AzureCLI@2
         displayName: 'Evaluate each repository'
         inputs:
@@ -112,7 +118,13 @@ jobs:
             # The blob name must agree with the window the report covers, and the dashboard
             # prefers the report's own "until" (set to UtcNow by the tool) over the name.
             $reportDate = (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd')
-            $repos = $env:REPOS | ConvertFrom-Json
+            $repos = @($env:REPOS | ConvertFrom-Json)
+            
+            $shareableMinutes = [int]$env:JOB_TIMEOUT_MINUTES * 0.75
+            $perRepoMinutes = [int][math]::Max(1, [math]::Floor($shareableMinutes / $repos.Count))
+            $timeoutArg = "${perRepoMinutes}m"
+            Write-Host "Job timeout $($env:JOB_TIMEOUT_MINUTES)m over $($repos.Count) repo(s): allowing $timeoutArg each."
+
             $failed = @()
 
             foreach ($repo in $repos) {
@@ -130,13 +142,25 @@ jobs:
                               '--output', 'json')
 
                 # --output json puts the structured response on stdout and progress on stderr,
-                # so redirecting stdout alone yields a clean report.
-                dotnet "$(OutDir)/azsdk.dll" @evalArgs > $reportPath
+                # so redirecting stdout alone yields a clean report. The timeout is per repo;
+                # the job-level one would let a single hung repo starve the rest.
+                timeout --signal=TERM --kill-after=60s $timeoutArg `
+                    $env:AZSDK @evalArgs > $reportPath
+                $exitCode = $LASTEXITCODE
 
-                if ($LASTEXITCODE -ne 0) {
+                # 124 = terminated at the timeout, 137 = needed the follow-up KILL.
+                if ($exitCode -eq 124 -or $exitCode -eq 137) {
+                    Write-Host "##vso[task.logissue type=error]azp evaluate for $repo exceeded $timeoutArg and was terminated"
+                    Remove-Item -Path $reportPath -Force -ErrorAction SilentlyContinue
+                    $failed += $repo
+                    Write-Host '##[endgroup]'
+                    continue
+                }
+
+                if ($exitCode -ne 0) {
                     # One unhealthy repo must not cost the night's data for the others; record
                     # it, drop the partial file, and keep going.
-                    Write-Host "##vso[task.logissue type=error]azp evaluate failed for $repo with exit code $LASTEXITCODE"
+                    Write-Host "##vso[task.logissue type=error]azp evaluate failed for $repo with exit code $exitCode"
                     Remove-Item -Path $reportPath -Force -ErrorAction SilentlyContinue
                     $failed += $repo
                     Write-Host '##[endgroup]'
@@ -159,30 +183,42 @@ jobs:
                 Write-Host '##[endgroup]'
             }
 
+            # Checked before the partial-failure result below, so a total failure never records
+            # a success that would let the publish step run.
+            if ($failed.Count -eq @($repos).Count) {
+                throw 'Evaluation failed for every repository; nothing to publish.'
+            }
+
             if ($failed.Count -gt 0) {
                 # Surfaced after the loop so the successful repos are still uploaded below.
                 Write-Host "##vso[task.complete result=SucceededWithIssues;]Evaluation failed for: $($failed -join ', ')"
             }
-
-            if ($failed.Count -eq @($repos).Count) {
-                throw 'Evaluation failed for every repository; nothing to publish.'
-            }
         env:
           OWNER: ${{ parameters.owner }}
           REPOS: ${{ convertToJson(parameters.repos) }}
+          JOB_TIMEOUT_MINUTES: ${{ parameters.jobTimeoutMinutes }}
           GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
 
       - task: AzureCLI@2
         displayName: 'Publish results to Azure Blob Storage'
         condition: and(succeeded(), ${{ parameters.publishToBlob }})
+        retryCountOnTaskFailure: 2
         inputs:
           # The service connection's identity needs 'Storage Blob Data Contributor' on the
           # account; --auth-mode login uses it instead of an account key.
-          azureSubscription: 'opensource-api-connection'
+          azureSubscription: 'Azure SDK Artifacts'
           scriptType: pscore
           scriptLocation: inlineScript
           inlineScript: |
             $ErrorActionPreference = 'Stop'
+
+            # upload-batch exits 0 when nothing matches the pattern, so an empty tree would
+            # otherwise be reported as a successful publish.
+            $reports = @(Get-ChildItem -Path '$(EvalArtifactDir)' -Filter '*.json' -Recurse -File)
+            if ($reports.Count -eq 0) {
+                throw 'No evaluation reports were produced; nothing to upload.'
+            }
+            Write-Host "Uploading $($reports.Count) report(s)."
 
             # Uploading the staged tree as-is preserves pipeline-fix/<repo>/<date>.json as the
             # blob key. --overwrite lets a re-run correct the same day's report in place.
@@ -192,15 +228,13 @@ jobs:
                 --source '$(EvalArtifactDir)' `
                 --pattern '*.json' `
                 --auth-mode login `
-                --overwrite
+                --overwrite true
 
             if ($LASTEXITCODE -ne 0) {
                 throw "Failed to upload evaluation reports with exit code $LASTEXITCODE"
             }
 
-      - task: PublishPipelineArtifact@1
-        displayName: 'Publish evaluation JSON artifact'
-        condition: always()
-        inputs:
-          targetPath: '$(EvalArtifactDir)'
-          artifactName: 'pipeline-fix-evaluation'
+      - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
+        parameters:
+          ArtifactName: 'pipeline-fix-evaluation'
+          ArtifactPath: '$(EvalArtifactDir)'

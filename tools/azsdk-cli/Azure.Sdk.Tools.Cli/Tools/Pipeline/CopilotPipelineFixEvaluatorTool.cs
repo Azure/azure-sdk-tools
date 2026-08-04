@@ -23,7 +23,7 @@ public class CopilotPipelineFixEvaluatorTool(
     private const string EvaluatePipelineFixesToolName = "azsdk_evaluate_copilot_pipeline_fixes";
 
     private const int DefaultSinceDays = 1;
-    private const string DefaultModel = "claude-sonnet-4.5";
+    private const string CopilotSelectedModel = "copilot-cli-default";
 
     private readonly Argument<string> ownerArg = new("owner")
     {
@@ -43,8 +43,8 @@ public class CopilotPipelineFixEvaluatorTool(
 
     private readonly Option<string> modelOpt = new("--model")
     {
-        Description = "Chat model used by the survival judge",
-        DefaultValueFactory = _ => DefaultModel,
+        Description = "Chat model used by the survival judge; omitted lets the Copilot CLI select one",
+        Required = false,
     };
 
     protected override Command GetCommand() =>
@@ -56,7 +56,7 @@ public class CopilotPipelineFixEvaluatorTool(
         var owner = parseResult.GetValue(ownerArg)!;
         var repo = parseResult.GetValue(repoArg)!;
         var sinceDays = parseResult.GetValue(sinceDaysOpt);
-        var model = parseResult.GetValue(modelOpt)!;
+        var model = parseResult.GetValue(modelOpt);
         return await EvaluatePipelineFixes(owner, repo, sinceDays, model, ct);
     }
 
@@ -65,7 +65,7 @@ public class CopilotPipelineFixEvaluatorTool(
         [Description("GitHub repository owner (e.g. Azure)")] string owner,
         [Description("GitHub repository name (e.g. azure-sdk-for-python)")] string repo,
         [Description("Look back this many days for merged PRs (default 1)")] int sinceDays = DefaultSinceDays,
-        [Description("Chat model used by the survival judge (default claude-sonnet-4.5)")] string model = DefaultModel,
+        [Description("Chat model used by the survival judge (defaults to the Copilot CLI's own choice)")] string? model = null,
         CancellationToken ct = default)
     {
         try
@@ -84,8 +84,7 @@ public class CopilotPipelineFixEvaluatorTool(
             var until = DateTimeOffset.UtcNow;
             var since = until.AddDays(-sinceDays);
 
-            var pipelineFixes = await pipelineFixEvaluatorHelper.ResolvePipelineFixesAsync(owner, repo, since, until, ct);
-            var results = await pipelineFixEvaluatorHelper.EvaluatePipelineFixesAsync(pipelineFixes, model, ct);
+            var results = await pipelineFixEvaluatorHelper.EvaluatePipelineFixesAsync(owner, repo, since, until, model, ct);
 
             return new CopilotPipelineFixEvaluatorResponse
             {
@@ -93,8 +92,8 @@ public class CopilotPipelineFixEvaluatorTool(
                 Repo = repo,
                 Since = since,
                 Until = until,
-                ModelUsed = model,
-                Results = [.. results],
+                ModelUsed = model ?? CopilotSelectedModel,
+                Results = results,
             };
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)

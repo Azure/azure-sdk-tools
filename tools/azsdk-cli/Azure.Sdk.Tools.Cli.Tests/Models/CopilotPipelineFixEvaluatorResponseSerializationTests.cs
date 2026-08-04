@@ -32,23 +32,26 @@ public class CopilotPipelineFixEvaluatorResponseSerializationTests
                 {
                     PrNumber = 123,
                     PrTitle = "Fix flaky pipeline",
+                    FixPrNumber = 124,
                     Trigger = CopilotFixTrigger.GitHubActionsWorkflow,
                     ChecksFixed = ["static-analysis"],
                     ChecksBroken = [],
                     CopilotCommitShas = ["abc123def456"],
                     PipelineOutcome = CopilotPipelineOutcome.CopilotPipelineFixSuccess,
                     Verification = CopilotFixVerification.CopilotVerifiedFix,
+                    AnalysisCommentPresent = true,
                 },
                 new CopilotPipelineFixResult
                 {
                     PrNumber = 124,
                     PrTitle = "Fix flaky pipeline, with human follow-up",
-                    Trigger = CopilotFixTrigger.GitHubActionsWorkflow,
+                    Trigger = CopilotFixTrigger.CopilotMention,
                     ChecksFixed = ["Test Azure SDK Tools"],
                     ChecksBroken = [],
                     CopilotCommitShas = ["def456abc123"],
                     PipelineOutcome = CopilotPipelineOutcome.CopilotPipelineFixSuccess,
                     Verification = CopilotFixVerification.CopilotJudgeVerifiedFix,
+                    AnalysisCommentPresent = false,
                     JudgeVerdict = new PipelineFixEvaluationJudgeVerdict
                     {
                         CopilotContributionSurvived = true,
@@ -89,8 +92,8 @@ public class CopilotPipelineFixEvaluatorResponseSerializationTests
         {
             foreach (var key in new[]
             {
-                "pr_number", "pr_title", "trigger", "checks_fixed", "checks_broken",
-                "copilot_commit_shas", "pipeline_outcome", "verification",
+                "pr_number", "pr_title", "fix_pr_number", "trigger", "checks_fixed", "checks_broken",
+                "copilot_commit_shas", "pipeline_outcome", "verification", "analysis_comment_present",
             })
             {
                 Assert.That(result.TryGetProperty(key, out _), Is.True, $"result key '{key}' missing");
@@ -106,6 +109,24 @@ public class CopilotPipelineFixEvaluatorResponseSerializationTests
             Assert.That(result.GetProperty("trigger").GetString(), Is.EqualTo("GitHubActionsWorkflow"));
             // A result the judge never graded must not carry an empty verdict object.
             Assert.That(result.TryGetProperty("judge_verdict", out _), Is.False);
+        });
+    }
+
+    // A pull request can be fixed more than once, so pr_number is not a unique key. Consumers must be able
+    // to tell two attempts on the same pull request apart, which is what fix_pr_number is for; an @copilot
+    // mention has no second pull request and must omit it rather than report a misleading zero.
+    [Test]
+    public void Response_IdentifiesAttemptsSharingAPullRequest()
+    {
+        var root = SerializeThroughOutputHelper();
+        var workflowResult = root.GetProperty("results")[0];
+        var mentionResult = root.GetProperty("results")[1];
+        Assert.Multiple(() =>
+        {
+            Assert.That(workflowResult.GetProperty("trigger").GetString(), Is.EqualTo("GitHubActionsWorkflow"));
+            Assert.That(workflowResult.GetProperty("fix_pr_number").GetInt32(), Is.EqualTo(124));
+            Assert.That(mentionResult.GetProperty("trigger").GetString(), Is.EqualTo("CopilotMention"));
+            Assert.That(mentionResult.TryGetProperty("fix_pr_number", out _), Is.False);
         });
     }
 
@@ -190,6 +211,7 @@ public class CopilotPipelineFixEvaluatorResponseSerializationTests
     [TestCase(CopilotFixVerification.CopilotJudgeVerifiedFix, "CopilotJudgeVerifiedFix")]
     [TestCase(CopilotFixVerification.CopilotJudgeVerifiedFailure, "CopilotJudgeVerifiedFailure")]
     [TestCase(CopilotFixVerification.NotApplicable, "NotApplicable")]
+    [TestCase(CopilotFixVerification.CopilotFixNotMerged, "CopilotFixNotMerged")]
     public void CopilotFixVerification_SerializesToExactWireString(CopilotFixVerification verification, string expected)
     {
         var json = JsonSerializer.Serialize(verification);

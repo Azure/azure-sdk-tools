@@ -166,8 +166,9 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<IReadOnlyList<PullRequestCommit>> GetPullRequestCommitsAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
         public Task<IReadOnlyList<PullRequestFile>> GetPullRequestFilesAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
         public Task<IReadOnlyList<GitHubCommitFile>> GetCommitFilesAsync(string repoOwner, string repoName, string sha, CancellationToken ct);
-        public Task<IReadOnlyList<PullRequest>> GetMergedPullRequestByTimeFrameAsync(string repoOwner, string repoName, DateTimeOffset since, DateTimeOffset until, CancellationToken ct = default);
-        public Task<List<PrCheckRun>> GetCommitCheckRunsAsync(string owner, string repo, string sha, CancellationToken ct);
+        public Task<IReadOnlyList<PullRequest>> GetMergedPullRequestsByTimeFrameAsync(string repoOwner, string repoName, DateTimeOffset since, DateTimeOffset until, CancellationToken ct);
+        public Task<IReadOnlyList<PullRequest>> GetPullRequestsByHeadPrefixAsync(string repoOwner, string repoName, string headBranchPrefix, DateTimeOffset since, CancellationToken ct);
+        public Task<IReadOnlyList<PrCheckRun>> GetCommitCheckRunsAsync(string owner, string repo, string sha, CancellationToken ct);
     }
 
     // We enforce cancellation token usage broadly via an analyzer across this codebase,
@@ -511,7 +512,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             List<string> responseList = [];
             try
             {
-                var comments = await gitHubClient.Issue.Comment.GetAllForIssue(repoOwner, repoName, pullRequestNumber);
+                var comments = await GetPullRequestIssueCommentsAsync(repoOwner, repoName, pullRequestNumber, ct);
                 if (comments == null || comments.Count == 0)
                 {
                     responseList.Add($"No comments found for pull request {pullRequestNumber}.");
@@ -969,33 +970,7 @@ query($owner: String!, $repo: String!, $pr: Int!, $after: String) {
                     }
 
                     var contexts = rollup.GetProperty("contexts");
-                    foreach (var contextNode in contexts.GetProperty("nodes").EnumerateArray())
-                    {
-                        var typeName = contextNode.GetProperty("__typename").GetString();
-
-                        if (typeName == "CheckRun")
-                        {
-                            checkRuns.Add(new PrCheckRun
-                            {
-                                Type = "CheckRun",
-                                Name = contextNode.GetProperty("name").GetString() ?? "",
-                                Conclusion = contextNode.GetProperty("conclusion").GetString(),
-                                DetailsUrl = contextNode.GetProperty("detailsUrl").GetString(),
-                                AppName = ReadCheckSuiteAppName(contextNode),
-                            });
-                        }
-                        else if (typeName == "StatusContext")
-                        {
-                            checkRuns.Add(new PrCheckRun
-                            {
-                                Type = "StatusContext",
-                                Name = contextNode.GetProperty("context").GetString() ?? "",
-                                Conclusion = contextNode.GetProperty("state").GetString(),
-                                DetailsUrl = contextNode.GetProperty("targetUrl").GetString(),
-                                AppName = "StatusContext",
-                            });
-                        }
-                    }
+                    checkRuns.AddRange(ReadCheckContexts(contexts));
 
                     var pageInfo = contexts.GetProperty("pageInfo");
                     if (pageInfo.GetProperty("hasNextPage").GetBoolean())
@@ -1009,7 +984,7 @@ query($owner: String!, $repo: String!, $pr: Int!, $after: String) {
             return checkRuns;
         }
 
-        public async Task<IReadOnlyList<PullRequest>> GetMergedPullRequestByTimeFrameAsync(string repoOwner, string repoName, DateTimeOffset since, DateTimeOffset until, CancellationToken ct = default)
+        public async Task<IReadOnlyList<PullRequest>> GetMergedPullRequestsByTimeFrameAsync(string repoOwner, string repoName, DateTimeOffset since, DateTimeOffset until, CancellationToken ct)
         {
             try
             {
@@ -1071,6 +1046,62 @@ query($owner: String!, $repo: String!, $pr: Int!, $after: String) {
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error getting merged pull requests in {RepoOwner}/{RepoName}", repoOwner, repoName);
+                throw;
+            }
+        }
+
+        public async Task<IReadOnlyList<PullRequest>> GetPullRequestsByHeadPrefixAsync(string repoOwner, string repoName, string headBranchPrefix, DateTimeOffset since, CancellationToken ct)
+        {
+            try
+            {
+                logger.LogInformation(
+                    "Searching for pull requests with head branch prefix '{Prefix}' updated since {Since} in {RepoOwner}/{RepoName}",
+                    headBranchPrefix, since, repoOwner, repoName);
+
+                var query = $"repo:{repoOwner}/{repoName} is:pr head:{headBranchPrefix} updated:>={since.UtcDateTime:yyyy-MM-ddTHH:mm:ssZ}";
+
+                var pullRequests = new List<PullRequest>();
+                for (var page = 1; ; page++)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    var searchRequest = new SearchIssuesRequest(query)
+                    {
+                        Type = IssueTypeQualifier.PullRequest,
+                        PerPage = 100, // Maximum allowed by GitHub API.
+                        Page = page,
+                    };
+
+                    var searchResult = await gitHubClient.Search.SearchIssues(searchRequest);
+                    if (searchResult?.Items == null || searchResult.Items.Count == 0)
+                    {
+                        break;
+                    }
+
+                    foreach (var issue in searchResult.Items)
+                    {
+                        ct.ThrowIfCancellationRequested();
+
+                        var pullRequest = await gitHubClient.PullRequest.Get(repoOwner, repoName, issue.Number);
+                        if (pullRequest.Head?.Ref?.StartsWith(headBranchPrefix, StringComparison.OrdinalIgnoreCase) == true)
+                        {
+                            pullRequests.Add(pullRequest);
+                        }
+                    }
+
+                    if (searchResult.Items.Count < searchRequest.PerPage)
+                    {
+                        break;
+                    }
+                }
+
+                logger.LogInformation(
+                    "Found {PullRequestCount} pull request(s) with head branch prefix '{Prefix}' in {RepoOwner}/{RepoName}",
+                    pullRequests.Count, headBranchPrefix, repoOwner, repoName);
+                return pullRequests;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error searching pull requests by head prefix in {RepoOwner}/{RepoName}", repoOwner, repoName);
                 throw;
             }
         }
@@ -1143,7 +1174,7 @@ query($owner: String!, $repo: String!, $sha: GitObjectID!, $after: String) {
         /// the repository, such as the ephemeral merge commit an Azure Pipelines PR run reports as its
         /// source version.
         /// </summary>
-        public async Task<List<PrCheckRun>> GetCommitCheckRunsAsync(string owner, string repo, string sha, CancellationToken ct)
+        public async Task<IReadOnlyList<PrCheckRun>> GetCommitCheckRunsAsync(string owner, string repo, string sha, CancellationToken ct)
         {
             logger.LogDebug("Querying GitHub GraphQL for commit check runs: {owner}/{repo}@{sha}", owner, repo, sha);
 
@@ -1154,8 +1185,11 @@ query($owner: String!, $repo: String!, $sha: GitObjectID!, $after: String) {
             {
                 using var doc = await PostGraphQLAsync(CommitCheckRunsGraphQLQuery, new { owner, repo, sha, after }, ct);
 
-                var commit = doc.RootElement.GetProperty("data").GetProperty("repository").GetProperty("object");
-                if (commit.ValueKind == JsonValueKind.Null)
+                if (!doc.RootElement.TryGetProperty("data", out var data)
+                    || !data.TryGetProperty("repository", out var repository)
+                    || repository.ValueKind != JsonValueKind.Object
+                    || !repository.TryGetProperty("object", out var commit)
+                    || commit.ValueKind == JsonValueKind.Null)
                 {
                     return checkRuns;
                 }

@@ -13,22 +13,15 @@ namespace Azure.Sdk.Tools.Cli.Models.Pipeline;
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum CopilotFixTrigger
 {
-    /// <summary>The trigger could not be identified.</summary>
-    Unknown = 0,
-
-    /// <summary>
     /// The pipeline-analysis auto-fix workflow produced the commit on a copilot-pipeline-fix/pr-N branch.
-    /// </summary>
     GitHubActionsWorkflow,
 
-    /// <summary>Somebody directed Copilot at the pull request with an @copilot mention.</summary>
+    /// Somebody directed Copilot at the pull request with an @copilot mention.
     CopilotMention,
 }
 
 /// <summary>
-/// Whether the Copilot fix changed the pipeline outcome. The collection phase only emits a candidate once
-/// a check that ran on both the commit and its parent changed state, so there is no third state: every
-/// candidate that reaches telemetry either fixed a check or broke one.
+/// Whether the Copilot fix changed the pipeline outcome.
 /// </summary>
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum CopilotPipelineOutcome
@@ -41,8 +34,9 @@ public enum CopilotPipelineOutcome
 }
 
 /// <summary>
-/// Whether the Copilot fix survived into the merged pull request, independent of whether it
-/// fixed the pipeline.
+/// Whether the Copilot fix was carried through to the pull request that merged to main, independent of
+/// whether it fixed the pipeline. For an @copilot mention this is survival of the change through any later
+/// human commits; for the auto-fix workflow it is adoption.
 /// </summary>
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum CopilotFixVerification
@@ -53,7 +47,10 @@ public enum CopilotFixVerification
     /// </summary>
     Undetermined = 0,
 
-    /// <summary>No human commits landed after the fix, so it survived unmodified into the merge.</summary>
+    /// <summary>
+    /// The fix reached the merge unmodified: either no human commits landed after an @copilot fix,
+    /// or the auto-fix workflow's fix pull request was merged into the original.
+    /// </summary>
     CopilotVerifiedFix,
 
     /// <summary>Mixed history, but the model judged Copilot's change was not overridden.</summary>
@@ -64,4 +61,8 @@ public enum CopilotFixVerification
 
     /// <summary>The pipeline never recovered across the commit, so there is no fix whose survival can be judged.</summary>
     NotApplicable,
+
+    /// <summary>The auto-fix workflow's fix pull request fixed the pipeline in isolation but was not merged
+    /// into the original pull request, so the fix was not adopted.</summary>
+    CopilotFixNotMerged,
 }

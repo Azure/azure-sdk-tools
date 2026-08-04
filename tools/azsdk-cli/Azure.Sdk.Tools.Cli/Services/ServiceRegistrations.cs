@@ -123,6 +123,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddScoped<IPipelineAnalysisHelper, PipelineAnalysisHelper>();
             services.AddScoped<IGitHubWorkflowAnalysisHelper, GitHubWorkflowAnalysisHelper>();
             services.AddScoped<ICopilotPipelineFixEvaluatorHelper, CopilotPipelineFixEvaluatorHelper>();
+            services.AddScoped<IPipelineFixSurvivalJudge, PipelineFixSurvivalJudge>();
 
             // Services that need to be scoped so we can track/update state across services per request
             services.AddScoped<TokenUsageHelper>();

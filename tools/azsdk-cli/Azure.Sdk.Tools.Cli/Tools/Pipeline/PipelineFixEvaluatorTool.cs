@@ -13,14 +13,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Pipeline;
 
 [Description("Evaluates whether GitHub Copilot's fixes for failing Azure SDK pipelines took the pipeline from failure to success and survived into the merged pull request, recording trendable metrics.")]
 [McpServerToolType]
-public class CopilotPipelineFixEvaluatorTool(
-    ICopilotPipelineFixEvaluatorHelper pipelineFixEvaluatorHelper,
-    ILogger<CopilotPipelineFixEvaluatorTool> logger
+public class PipelineFixEvaluatorTool(
+    IPipelineFixEvaluatorHelper pipelineFixEvaluatorHelper,
+    ILogger<PipelineFixEvaluatorTool> logger
 ) : MCPTool
 {
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.AzurePipelines];
 
-    private const string EvaluatePipelineFixesToolName = "azsdk_evaluate_copilot_pipeline_fixes";
+    private const string EvaluatePipelineFixesToolName = "azsdk_evaluate_pipeline_fixes";
 
     private const int DefaultSinceDays = 1;
     private const string CopilotSelectedModel = "copilot-cli-default";
@@ -61,7 +61,7 @@ public class CopilotPipelineFixEvaluatorTool(
     }
 
     [McpServerTool(Name = EvaluatePipelineFixesToolName), Description("Evaluate whether GitHub Copilot's fixes for failing pipelines took the pipeline from failure to success and survived into merged PRs over the last N days, and record trendable metrics")]
-    public async Task<CopilotPipelineFixEvaluatorResponse> EvaluatePipelineFixes(
+    public async Task<PipelineFixEvaluatorResponse> EvaluatePipelineFixes(
         [Description("GitHub repository owner (e.g. Azure)")] string owner,
         [Description("GitHub repository name (e.g. azure-sdk-for-python)")] string repo,
         [Description("Look back this many days for merged PRs (default 1)")] int sinceDays = DefaultSinceDays,
@@ -72,7 +72,7 @@ public class CopilotPipelineFixEvaluatorTool(
         {
             if (sinceDays <= 0)
             {
-                return new CopilotPipelineFixEvaluatorResponse
+                return new PipelineFixEvaluatorResponse
                 {
                     ResponseError = $"--since-days must be greater than zero (got {sinceDays})."
                 };
@@ -86,7 +86,7 @@ public class CopilotPipelineFixEvaluatorTool(
 
             var results = await pipelineFixEvaluatorHelper.EvaluatePipelineFixesAsync(owner, repo, since, until, model, ct);
 
-            return new CopilotPipelineFixEvaluatorResponse
+            return new PipelineFixEvaluatorResponse
             {
                 Owner = owner,
                 Repo = repo,
@@ -103,7 +103,7 @@ public class CopilotPipelineFixEvaluatorTool(
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to evaluate Copilot pipeline fixes for {Owner}/{Repo}", owner, repo);
-            return new CopilotPipelineFixEvaluatorResponse
+            return new PipelineFixEvaluatorResponse
             {
                 ResponseError = $"Failed to evaluate Copilot pipeline fixes for {owner}/{repo}: {ex.Message}"
             };

@@ -16,7 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers.Pipeline;
 /// Take the commit from before the fix and the commit from after it, then see which
 /// checks went from failing to passing, and which went the other way.
 /// </summary>
-public interface ICopilotPipelineFixEvaluatorHelper
+public interface IPipelineFixEvaluatorHelper
 {
     Task<List<CopilotPipelineFixResult>> EvaluatePipelineFixesAsync(
         string owner,
@@ -27,11 +27,11 @@ public interface ICopilotPipelineFixEvaluatorHelper
         CancellationToken ct);
 }
 
-public class CopilotPipelineFixEvaluatorHelper(
+public class PipelineFixEvaluatorHelper(
     IGitHubService gitHubService,
     IPipelineFixSurvivalJudge survivalJudge,
-    ILogger<CopilotPipelineFixEvaluatorHelper> logger
-) : ICopilotPipelineFixEvaluatorHelper
+    ILogger<PipelineFixEvaluatorHelper> logger
+) : IPipelineFixEvaluatorHelper
 {
     private const int CommitListLimit = 250;
     private const string CopilotMention = "@copilot";

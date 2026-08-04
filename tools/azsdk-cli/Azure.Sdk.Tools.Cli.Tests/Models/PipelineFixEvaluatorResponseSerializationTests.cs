@@ -15,11 +15,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Models;
 /// <see cref="OutputHelper"/> so a change to its options is also caught.
 /// </summary>
 [TestFixture]
-public class CopilotPipelineFixEvaluatorResponseSerializationTests
+public class PipelineFixEvaluatorResponseSerializationTests
 {
     private static JsonElement SerializeThroughOutputHelper()
     {
-        var response = new CopilotPipelineFixEvaluatorResponse
+        var response = new PipelineFixEvaluatorResponse
         {
             Owner = "Azure",
             Repo = "azure-sdk-for-net",
@@ -184,7 +184,7 @@ public class CopilotPipelineFixEvaluatorResponseSerializationTests
     [Test]
     public void Response_WithNoResults_ReportsNothingToEvaluate()
     {
-        var response = new CopilotPipelineFixEvaluatorResponse
+        var response = new PipelineFixEvaluatorResponse
         {
             Owner = "Azure",
             Repo = "azure-sdk-for-net",

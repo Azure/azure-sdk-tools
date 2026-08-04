@@ -11,14 +11,14 @@ using Octokit;
 namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Pipeline;
 
 /// <summary>
-/// Seam: <see cref="CopilotPipelineFixEvaluatorHelper.EvaluatePipelineFixesAsync"/> turns a repository and a
+/// Seam: <see cref="PipelineFixEvaluatorHelper.EvaluatePipelineFixesAsync"/> turns a repository and a
 /// time window into one telemetry row per Copilot pipeline-fix attempt, given <see cref="IGitHubService"/>
 /// and <see cref="IPipelineFixSurvivalJudge"/>. Two delivery paths feed it: an @copilot mention that pushes
 /// commits onto the pull request, and the auto-fix workflow that opens a separate copilot-pipeline-fix/ pull
 /// request.
 /// </summary>
 [TestFixture]
-public class CopilotPipelineFixEvaluatorHelperTests
+public class PipelineFixEvaluatorHelperTests
 {
     private const string Owner = "ReilleyMilne";
     private const string Repo = "azure-sdk-for-python";
@@ -39,17 +39,17 @@ public class CopilotPipelineFixEvaluatorHelperTests
 
     private Mock<IGitHubService> gitHubService;
     private Mock<IPipelineFixSurvivalJudge> survivalJudge;
-    private CopilotPipelineFixEvaluatorHelper helper;
+    private PipelineFixEvaluatorHelper helper;
 
     [SetUp]
     public void SetUp()
     {
         gitHubService = new Mock<IGitHubService>(MockBehavior.Loose);
         survivalJudge = new Mock<IPipelineFixSurvivalJudge>(MockBehavior.Loose);
-        helper = new CopilotPipelineFixEvaluatorHelper(
+        helper = new PipelineFixEvaluatorHelper(
             gitHubService.Object,
             survivalJudge.Object,
-            new TestLogger<CopilotPipelineFixEvaluatorHelper>());
+            new TestLogger<PipelineFixEvaluatorHelper>());
 
         gitHubService
             .Setup(g => g.GetMergedPullRequestsByTimeFrameAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))

@@ -13,7 +13,7 @@ namespace Azure.Sdk.Tools.Cli.Models;
 /// see CopilotPipelineFixResult for how attempts are told apart. Consumers that need
 /// aggregate counts derive them from <see cref="Results"/>.
 /// </summary>
-public class CopilotPipelineFixEvaluatorResponse : CommandResponse
+public class PipelineFixEvaluatorResponse : CommandResponse
 {
     [JsonPropertyName("owner")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

@@ -53,6 +53,10 @@ SRC_STATIC_TYPESPEC_TO_SWAGGER_MAPPING = "static_typespec_to_swagger_mapping"
 SRC_TYPESPEC_AZURE_RESOURCE_MANAGER_LIB = "typespec-azure-resource-manager-lib"
 SRC_TYPESPEC_AZURE_PROVIDERHUB_DOCS = "typespec_azure_providerhub_docs"
 
+# -- Emitter framework (EF v2) / Alloy --
+SRC_ALLOY_FRAMEWORK_DOCS = "alloy_framework_docs"
+SRC_ALLOY_FRAMEWORK_SAMPLES = "alloy_framework_samples"
+
 # -- Azure Guidelines & Standards --
 SRC_AZURE_API_GUIDELINES = "azure_api_guidelines"
 SRC_AZURE_RESOURCE_MANAGER_RPC = "azure_resource_manager_rpc"
@@ -157,6 +161,23 @@ _register(
         name=SRC_TYPESPEC_AZURE_PROVIDERHUB_DOCS,
         description="Documentation for Azure TypeSpec ProviderHub.",
         base_url="https://github.com/Azure/typespec-azure-pr/blob/providerhub/",
+    ),
+    # -- Emitter framework (EF v2) / Alloy --
+    KnowledgeSource(
+        name=SRC_ALLOY_FRAMEWORK_DOCS,
+        description="Guides for the Alloy code generation framework that the TypeSpec emitter framework (EF v2) is built on: component model, reactivity, symbols and references, source file/directory rendering, formatting, and debugging emitter output. Search this source for questions about writing a new TypeSpec emitter with alloy or EF v2.",
+        link_fn=lambda title: "https://alloy-framework.github.io/alloy/"
+        + (
+            ""
+            if _trim_file_format(title.replace("#", "/")) == "index"
+            else _trim_file_format(title.replace("#", "/"))
+        ),
+    ),
+    KnowledgeSource(
+        name=SRC_ALLOY_FRAMEWORK_SAMPLES,
+        description="Full source code of the official Alloy framework sample projects, including an end-to-end client emitter, a basic project, a scaffold generator, and Go/Python emitter examples. Use these as reference implementations when someone asks how to start building an emitter with alloy or the emitter framework.",
+        base_url="https://github.com/alloy-framework/alloy/tree/main/samples/",
+        trim_format=True,
     ),
     # -- Azure Guidelines & Standards --
     KnowledgeSource(
@@ -353,6 +374,8 @@ _TYPESPEC_SOURCES = _sources(
     SRC_STATIC_TYPESPEC_TO_SWAGGER_MAPPING,
     SRC_TYPESPEC_AZURE_PROVIDERHUB_DOCS,
     SRC_STATIC_ARM_DOCS,
+    SRC_ALLOY_FRAMEWORK_DOCS,
+    SRC_ALLOY_FRAMEWORK_SAMPLES,
 )
 
 _AZURE_TYPESPEC_AUTHORING_SOURCES = _sources(
@@ -505,6 +528,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             "TypeSpec migration from OpenAPI",
             "TypeSpec validation and configurations (tspconfig.yaml)",
             "TypeSpec generated OpenAPI/Swagger review",
+            "Writing TypeSpec emitters with the emitter framework (EF v2) and the alloy framework",
             "Client customization for SDKs (even if a specific language is mentioned, if the core topic is TypeSpec authoring)",
             "API design guidelines and best practices",
         ],

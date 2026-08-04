@@ -39,8 +39,8 @@ flowchart LR
 The load-bearing decision: **wiki pages and source chunks never fuse into one ranked list** — fusing lets generic wiki pages displace specific source docs and regresses the score. They are retrieved on separate tracks and combined only in the answer.
 
 - **`search_knowledge_base`** — source chunks only (`page_type` null).
-- **`wiki_search`** — wiki pages only, **self-contained**: for the top pages it returns their full content **plus** the source chunks each was built from (routed via `chunk_refs`). The next-ranked pages that did not make the cut are appended as a titles-only "Related wiki pages" reference, so the agent can see the neighbourhood it just missed and name an adjacent variant without a second search.
-- **`grep_chunks`** (literal symbol/error-string match), **`wiki_read_page`**, **`wiki_read_source_doc`** — optional targeted drills.
+- **`wiki_search`** — wiki pages only, **self-contained**: for the top pages it returns their full content **plus** the source chunks each was built from (routed via `chunk_refs`). The next-ranked pages that did not make the cut are appended as a titles-only "Related wiki pages" reference for orientation; those titles are not answer evidence.
+- **`grep_chunks`** — literal symbol/error-string matching over source chunks, used when semantic retrieval blurs an exact decorator, model, diagnostic, or configuration key.
 
 Both tracks run the same retrieval pipeline (`SearchClient.fused_search`) and differ only by page-type filter: per query, dense + BM25 (+ agentic in `deep` mode) run in parallel and are fused with RRF, then the caller dedupes and caps.
 
@@ -109,6 +109,16 @@ Two properties of this design are easy to trip over:
 | Wiki two-track | **74.9 %** | **81.6** | **65.4** | **62.5** | **80.8** | **60.0** |
 
 Every scenario is at or above the baseline (**+5.7 pp** overall, net **+12** cases: 27 fixed, 15 regressed). Groundedness / relevance / coherence / fluency stay ~100 %, and median answer length is flat (165 → 173 words), so the gain is not bought with longer or less grounded answers — it is carried by `similarity` (79.3 → 83.7 %) and `response_completeness` (70.0 → 76.2 %).
+
+A same-day tool ablation then compared three wiki configurations. `search_knowledge_base` remained available in all three:
+
+| | TOTAL | typespec | apispec | python | authoring | general |
+| --- | --- | --- | --- | --- | --- | --- |
+| Full tool set | 72.2 % | 80.0 | 53.8 | 54.2 | 88.5 | 55.0 |
+| `wiki_search` + `grep_chunks` | **73.1 %** | 77.6 | **69.2** | **58.3** | 84.6 | **60.0** |
+| `wiki_search` only | 67.8 % | 76.8 | 53.8 | **58.3** | 73.1 | 45.0 |
+
+Adding `grep_chunks` to the wiki-search-only configuration gained **5.3 pp** overall (26 fixed, 14 regressed, net +12) and raised response completeness by 4.8 pp, so exact-term retrieval remains part of the final path. Removing `wiki_read_page` and `wiki_read_source_doc` from the full configuration changed the total by only **+0.9 pp** (19 fixed, 17 regressed), which is inside the measured run-to-run noise and shows no benefit for retaining either drill tool. The final tool set therefore keeps `search_knowledge_base`, `wiki_search`, and `grep_chunks`; `wiki_search` already returns full page content and bounded source backfill.
 
 Reading the numbers: same-config reruns churn ~16 % of cases and move the total by up to ±5 pp, so a single run cannot resolve a smaller delta. `typespec` (N = 125) is the only single scenario large enough to trust on its own; `onboarding` and `releasesupport` (N = 3) swing 33 pp on one case and are reported for completeness only.
 

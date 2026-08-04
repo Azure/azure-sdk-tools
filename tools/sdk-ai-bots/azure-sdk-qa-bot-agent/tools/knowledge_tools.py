@@ -22,7 +22,6 @@ from utils.azure_ai_search import (
     WIKI_FILTER,
     _escape_odata,
     get_search_client,
-    split_source_ref,
 )
 
 logger = logging.getLogger(__name__)
@@ -331,107 +330,6 @@ class KnowledgeTools:
         )
         return SearchKnowledgeBaseResult(results=results)
 
-    @tool
-    async def wiki_read_page(
-        self,
-        *,
-        titles: Annotated[
-            list[str],
-            "1-5 wiki page titles (exactly as returned by `wiki_search`) to read "
-            "in full. Read several related pages at once for broad coverage.",
-        ],
-        tenant_id: Annotated[str, "The active tenant ID for the current conversation."],
-        sources: Annotated[
-            list[str] | None,
-            "Optional list of knowledge source names to scope the lookup. "
-            "If omitted, all sources configured for the tenant are used.",
-        ] = None,
-    ) -> SearchKnowledgeBaseResult:
-        """Read full wiki pages and list their source document refs."""
-        source_filter = _tenant_source_filter(
-            tenant_id, _wiki_source_names(tenant_id, sources)
-        )
-        search_client = get_search_client()
-        chunks = await search_client.fetch_by_title(
-            titles[:5], WIKI_FILTER, source_filter=source_filter
-        )
-        if not chunks:
-            return SearchKnowledgeBaseResult(results=[])
-        # Group multi-chunk pages by title; concat body + collect source refs.
-        by_title: dict[str, list] = {}
-        for c in chunks:
-            by_title.setdefault(c.title, []).append(c)
-        results: list[Reference] = []
-        for title, parts in by_title.items():
-            body = "\n".join(p.content for p in parts if p.content)
-            refs: list[str] = []
-            for p in parts:
-                for r in p.chunk_refs:
-                    if r and r not in refs:
-                        refs.append(r)
-            page_type = parts[0].page_type
-            source_def = get_knowledge_source(parts[0].source)
-            link = source_def.get_link(title) if source_def else ""
-            if refs:
-                body += "\n\nSources (drill with wiki_read_source_doc(source_ref=...)):\n" + \
-                    "\n".join(f"- {r}" for r in refs[:10])
-            results.append(
-                Reference(
-                    title=title,
-                    source=page_type,
-                    link=link,
-                    content=_truncate_content(body),
-                    score=0.0,
-                )
-            )
-        logger.info("wiki_read_page: read %d page(s) for titles=%s", len(results), titles[:5])
-        return SearchKnowledgeBaseResult(results=results)
-
-    @tool
-    async def wiki_read_source_doc(
-        self,
-        *,
-        source_ref: Annotated[
-            str,
-            "A source document reference exactly as listed in a wiki page's "
-            "`Sources` section (from `wiki_read_page`). Reads that original "
-            "source document to drill into details the wiki page omits.",
-        ],
-        tenant_id: Annotated[str, "The active tenant ID for the current conversation."],
-        query: Annotated[
-            str | None,
-            "Optional keyword(s) to focus the source doc on a specific detail "
-            "(BM25). Omit to read the document from the top.",
-        ] = None,
-    ) -> SearchKnowledgeBaseResult:
-        """Read an original source document referenced by a wiki page."""
-        search_client = get_search_client()
-        context_id, rel = split_source_ref(source_ref)
-        chunks = await search_client.fetch_by_title(
-            [rel], NON_WIKI_FILTER, top=60, keyword=query,
-            source_filter=_tenant_source_filter(
-                tenant_id, _raw_source_names(tenant_id, None)
-            ),
-            context_id=context_id,
-        )
-        chunks = [c for c in chunks if not c.page_type]
-        if not chunks:
-            return SearchKnowledgeBaseResult(results=[])
-        body = "\n".join(c.content for c in chunks if c.content)
-        source_def = get_knowledge_source(chunks[0].source)
-        link = source_def.get_link(rel) if source_def else ""
-        return SearchKnowledgeBaseResult(
-            results=[
-                Reference(
-                    title=source_ref,
-                    source=chunks[0].source,
-                    link=link,
-                    content=_truncate_content(body),
-                    score=0.0,
-                )
-            ]
-        )
-
 
 def _tenant_source_names(tenant_id: str) -> list[str]:
     """All source names the tenant is configured for."""
@@ -512,11 +410,6 @@ def _combined_source_filter(source_filters: dict[str, str]) -> str | None:
     return "(" + " or ".join(clauses) + ")"
 
 
-def _tenant_source_filter(tenant_id: str, sources: list[str]) -> str | None:
-    """Resolve a combined ``context_id`` OR clause for title lookups."""
-    return _combined_source_filter(_resolve_source_filters(sources, tenant_id, None))
-
-
 def _truncate_content(content: str | None) -> str:
     """Truncate content to _MAX_CONTENT_CHARS_PER_RESULT to control context size."""
     if not content:
@@ -538,11 +431,7 @@ def _build_reference_title(
 
 
 def _neighbor_reference(neighbors: list) -> Reference | None:
-    """List adjacent wiki page titles so the agent can mention related topics.
-
-    These pages ranked just below the returned ones. Titles only — the agent
-    reads any that matter via ``wiki_read_page``.
-    """
+    """List adjacent wiki page titles for orientation."""
     seen: list[str] = []
     for c in neighbors:
         label = f"{c.title} ({c.page_type})"
@@ -555,8 +444,8 @@ def _neighbor_reference(neighbors: list) -> Reference | None:
         source="wiki",
         link="",
         content=(
-            "Adjacent pages for this question. Cover the ones the answer should "
-            "also mention; call wiki_read_page(titles=[...]) to read any of them.\n"
+            "Adjacent page titles for orientation only; their content was not "
+            "returned and must not be treated as evidence.\n"
             + "\n".join(f"- {s}" for s in seen)
         ),
         score=0.0,

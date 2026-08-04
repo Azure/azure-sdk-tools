@@ -529,50 +529,6 @@ class SearchClient:
         )
         return backfilled
 
-    async def fetch_by_title(
-        self,
-        titles: "list[str]",
-        extra_filter: str,
-        top: int = 40,
-        keyword: str | None = None,
-        source_filter: str | None = None,
-        context_id: str | None = None,
-    ) -> "list[KnowledgeChunk]":
-        """Fetch chunks/pages whose ``title`` is one of *titles*, gated by
-        *extra_filter* (WIKI_FILTER or NON_WIKI_FILTER) and, when given, the
-        tenant's combined ``context_id`` *source_filter*.
-
-        When *context_id* is set, results are further scoped to that exact
-        source, disambiguating same-named files across folders.
-
-        With *keyword* set, ranks by BM25 over the matched docs; otherwise
-        returns them in ``ordinal_position`` order.
-        """
-        titles = [t for t in (titles or []) if t]
-        if not titles:
-            return []
-        title_clause = " or ".join(f"title eq '{_escape_odata(t)}'" for t in titles)
-        combined = f"({title_clause}) and {extra_filter}"
-        if context_id is not None:
-            if context_id:
-                combined = f"{combined} and (context_id eq '{_escape_odata(context_id)}')"
-            else:
-                combined = f"{combined} and (context_id eq null or context_id eq '')"
-        combined = _and_extra(combined, source_filter)
-        search_kwargs: dict = {
-            "search_text": keyword or "*",
-            "filter": combined,
-            "top": top,
-            "select": _RETRIEVER_SELECT_FIELDS,
-        }
-        if not keyword:
-            search_kwargs["order_by"] = ["ordinal_position asc"]
-        results = await self._search_client.search(**search_kwargs)
-        chunks: list[KnowledgeChunk] = []
-        async for doc in results:
-            chunks.append(KnowledgeChunk.model_validate(dict(doc)))
-        return chunks
-
     async def close(self) -> None:
         await self._kb_client.close()
         await self._search_client.close()

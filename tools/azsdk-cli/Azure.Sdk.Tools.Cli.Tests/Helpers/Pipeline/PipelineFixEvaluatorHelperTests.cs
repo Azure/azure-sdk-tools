@@ -299,6 +299,53 @@ public class PipelineFixEvaluatorHelperTests
             Times.Never);
     }
 
+    // A pass -> fail flip on a check that is itself still red on the commit that merged is a known failure the
+    // team accepted, not a regression the fix is answerable for. This mirrors the real case where Copilot's
+    // commit turned one check green while a second check - red at merge and merged anyway - flipped alongside it.
+    [Test]
+    public async Task MentionFix_BrokenCheckStillRedOnMergedHead_IsDiscountedSoOutcomeIsSuccess()
+    {
+        const string RustCheck = "SDK Validation - Rust";
+        const string ApiDocCheck = "Swagger ApiDocPreview";
+
+        // The Copilot commit is the head that merged, so its own red check is a failure the team shipped with.
+        GivenMergedPrs(MergedPr(10, headSha: Sha(2)));
+        GivenComments(10, Comment("@copilot please fix", "human-dev"));
+        GivenCommits(10, CopilotCommit(Sha(2), Sha(1)));
+        GivenChecks(Sha(1), Check(RustCheck, "FAILURE"), Check(ApiDocCheck, "SUCCESS"));
+        GivenChecks(Sha(2), Check(RustCheck, "SUCCESS"), Check(ApiDocCheck, "FAILURE"));
+
+        var row = (await RunAsync()).Single();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(row.ChecksFixed, Is.EqualTo(new[] { RustCheck }));
+            Assert.That(row.ChecksBroken, Is.Empty);
+            Assert.That(row.PipelineOutcome, Is.EqualTo(CopilotPipelineOutcome.CopilotPipelineFixSuccess));
+        });
+    }
+
+    // The discount only applies to checks red at merge: a check Copilot broke that a later human commit turned
+    // green before merge is not a known failure the team accepted, so it still counts as a regression.
+    [Test]
+    public async Task MentionFix_BrokenCheckGreenOnMergedHead_StillCountsAsFailure()
+    {
+        GivenMergedPrs(MergedPr(10, headSha: Sha(3)));
+        GivenComments(10, Comment("@copilot please fix", "human-dev"));
+        GivenCommits(10, CopilotCommit(Sha(2), Sha(1)), HumanCommit(Sha(3), Sha(2)));
+        GivenChecks(Sha(1), Check(CheckName, "SUCCESS"));
+        GivenChecks(Sha(2), Check(CheckName, "FAILURE"));
+        GivenChecks(Sha(3), Check(CheckName, "SUCCESS"));
+
+        var row = (await RunAsync()).Single();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(row.ChecksBroken, Is.EqualTo(new[] { CheckName }));
+            Assert.That(row.PipelineOutcome, Is.EqualTo(CopilotPipelineOutcome.CopilotPipelineFixFailure));
+        });
+    }
+
     // A check that was already red and stayed red says nothing about the fix, so no row is emitted: the
     // absence of evidence is distinct from a success or a failure.
     [Test]
@@ -486,8 +533,8 @@ public class PipelineFixEvaluatorHelperTests
         GivenChecks(after, Check(CheckName, "SUCCESS"));
     }
 
-    private static PullRequest MergedPr(int number, string? title = null, DateTimeOffset? createdAt = null) =>
-        Pr(number, title: title ?? $"PR {number}", mergedAt: Merged, headRef: "user/feature", createdAt: createdAt ?? Since);
+    private static PullRequest MergedPr(int number, string? title = null, DateTimeOffset? createdAt = null, string? headSha = null) =>
+        Pr(number, title: title ?? $"PR {number}", mergedAt: Merged, headRef: "user/feature", headSha: headSha, createdAt: createdAt ?? Since);
 
     private static PullRequest FixPr(DateTimeOffset? mergedAt) =>
         Pr(FixPrNumber, title: "[pipeline-fix] Fix Analyze stage failure", mergedAt: mergedAt, headRef: FixBranchRef, headSha: FixHeadSha, createdAt: Merged);

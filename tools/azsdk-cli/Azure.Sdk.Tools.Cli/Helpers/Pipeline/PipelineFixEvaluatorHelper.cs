@@ -203,10 +203,15 @@ public class PipelineFixEvaluatorHelper(
         }
 
         var afterChecks = await GetChecksAsync(owner, repo, afterShas, ct);
+
+        // A check still red on the commit that actually merged is one the team shipped with, so a
+        // pass -> fail flip on it is a known failure they accepted, not a regression this fix is answerable for.
+        var mergedHeadFailed = await MergedHeadFailedAsync(owner, repo, pr.Head?.Sha, afterShas, afterChecks, ct);
+
         var result = BuildResult(
             pr.Number, pr.Title, CopilotFixTrigger.CopilotMention, afterShas,
             analysisPresent: comments.Any(c => Mentions(c, AnalysisMarker)),
-            beforeChecks, afterChecks);
+            beforeChecks, afterChecks, mergedHeadFailed);
 
         if (result?.PipelineOutcome != CopilotPipelineOutcome.CopilotPipelineFixSuccess)
         {
@@ -257,11 +262,13 @@ public class PipelineFixEvaluatorHelper(
         }
 
         var afterChecks = await WorkflowAfterChecksAsync(owner, repo, fixPr.Number, fixHeadSha, ct);
+        var mergedHeadFailed = await MergedHeadFailedAsync(owner, repo, originalPr.Head?.Sha, [fixHeadSha], afterChecks, ct);
+
         var result = BuildResult(
             originalPrNumber, originalPr.Title, CopilotFixTrigger.GitHubActionsWorkflow, [fixHeadSha],
             // The workflow only opens a fix pull request after analysing the failure.
             analysisPresent: true,
-            beforeChecks, afterChecks,
+            beforeChecks, afterChecks, mergedHeadFailed,
             fixPrNumber: fixPr.Number);
 
         if (result?.PipelineOutcome == CopilotPipelineOutcome.CopilotPipelineFixSuccess)
@@ -286,10 +293,12 @@ public class PipelineFixEvaluatorHelper(
         bool analysisPresent,
         CheckSet beforeChecks,
         CheckSet afterChecks,
+        IReadOnlySet<string> mergedHeadFailed,
         int? fixPrNumber = null)
     {
         var fixedChecks = Sorted(beforeChecks.Failed.Intersect(afterChecks.Passed));
-        var brokenChecks = Sorted(beforeChecks.Passed.Intersect(afterChecks.Failed));
+        var brokenChecks = Sorted(beforeChecks.Passed.Intersect(afterChecks.Failed)
+            .Where(name => !mergedHeadFailed.Contains(name)));
         if (fixedChecks.Count == 0 && brokenChecks.Count == 0)
         {
             return null;
@@ -311,6 +320,28 @@ public class PipelineFixEvaluatorHelper(
             Verification = CopilotFixVerification.NotApplicable,
             AnalysisCommentPresent = analysisPresent,
         };
+    }
+
+    // The check names still failing on the commit that merged.
+    private async Task<IReadOnlySet<string>> MergedHeadFailedAsync(
+        string owner,
+        string repo,
+        string? mergedHeadSha,
+        IReadOnlyList<string> afterShas,
+        CheckSet afterChecks,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrEmpty(mergedHeadSha))
+        {
+            return new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        if (afterShas.Count == 1 && afterShas[0].Equals(mergedHeadSha, StringComparison.OrdinalIgnoreCase))
+        {
+            return afterChecks.Failed;
+        }
+
+        return (await GetChecksAsync(owner, repo, [mergedHeadSha], ct)).Failed;
     }
 
     private async Task<CheckSet> GetChecksAsync(string owner, string repo, IReadOnlyList<string> shas, CancellationToken ct)

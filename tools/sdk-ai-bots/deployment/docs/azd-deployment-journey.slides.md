@@ -23,8 +23,7 @@ A multi-component **AI/chat** service:
 | Component        | Runtime                                                                  | Purpose                                   |
 | ---------------- | ------------------------------------------------------------------------ | ----------------------------------------- |
 | **frontend**     | App Service (Node)                                                       | Teams bot `/api/messages`, health, config |
-| **backend**      | App Service (Go)                                                         | RAG orchestration, Cosmos, Search         |
-| **agent-server** | App Service `agent` **slot** (Python FastAPI)                            | `/agent/chat`, `/ping`                    |
+| **agent-server** | App Service production site (Python FastAPI)                             | RAG orchestration, Cosmos, Search, `/ping` |
 | **agent**        | Foundry hosted agent (`azure.ai.agent`)                                  | Model reasoning / responses               |
 | **function-app** | Function App (TS, container)                                             | `AdoTokenRefresh` timer, hooks            |
 | **logic-app**    | Standard Logic App                                                       | Teams event routing                       |
@@ -69,7 +68,7 @@ The goal: **make provisioning a solved problem, and make the interesting work be
 │ preprovision.ts  │──►│  main.bicep      │──►│ postprovision.ts         │
 │  quotas, Entra   │   │  6 module layers │   │  outputs → env, RBAC,    │
 │  drift, guards   │   │  (shared→agent→  │   │  KV seed, App Config,    │
-│                  │   │   backend→…)     │   │  Teams env sync          │
+│                  │   │   agent-server→…)│   │  Teams env sync          │
 └──────────────────┘   └──────────────────┘   └──────────────────────────┘
                               │
                               ▼
@@ -183,11 +182,11 @@ The slot and its targeting environment variable were removed.
 
 # Challenge 7 — `azd deploy` wipes App Service settings
 
-**Symptom:** `azd deploy backend` overwrote the site container config → `acrUserManagedIdentityID` cleared → platform fell back to a nonexistent system-assigned identity → 503 on image pull.
+**Symptom:** the former App Service container deployment overwrote `acrUserManagedIdentityID` → the platform fell back to a nonexistent system-assigned identity → 503 on image pull.
 
 **Resolution:** fixed in `azd` 1.29.0. App Service container deploys now update only `linuxFxVersion`, preserving the ACR pull identity configured by Bicep.
 
-The `repinAcrPullIdentity()` postdeploy workaround and the deleted legacy backend service were removed.
+The `repinAcrPullIdentity()` postdeploy workaround was removed after the agent-server moved to native azd deployment.
 
 ---
 
@@ -465,7 +464,7 @@ What this changes:
 # What that unlocks on the `azd` side
 
 - **`azd` extensions API** — turn what remains of our hooks into reusable, versioned extensions rather than repo-local scripts.
-- **`azd` composability** — each service (frontend, backend, agent, function-app) becomes its own composable unit; a new environment is `azd env new` + a config file, not a 400-line runbook.
+- **`azd` composability** — each service (frontend, agent-server, agent, function-app) becomes its own composable unit; a new environment is `azd env new` + a config file, not a 400-line runbook.
 - **First-class hosts** for the resource types we struggle with today: named App Service slots, Logic App workflows, hosted Foundry agents with env injection.
 - **Bicep provider ecosystem** feeds into `js-provisioning-lib` — Microsoft Graph for Entra apps, Foundry for agent versions — each new provider becomes a new resource package in the library.
 

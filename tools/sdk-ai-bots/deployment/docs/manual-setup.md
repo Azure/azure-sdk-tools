@@ -128,24 +128,23 @@ Logic App callers.
 
 ---
 
-## 6. Register the 16 pipelines
+## 6. Register the 15 pipelines
 
 In Azure DevOps → Pipelines → "New pipeline" → "Existing Azure Pipelines
 YAML file", create the following. **Name them exactly** per the repo
 convention (`tools - <tool-name> - <action>`).
 
-### Component CI (5)
+### Component CI (4)
 
 - [ ] `tools - sdk-ai-bots-frontend - ci` → [frontend.ci.yml](../component-pipelines/frontend/frontend.ci.yml)
-- [ ] `tools - sdk-ai-bots-backend - ci` → [backend.ci.yml](../component-pipelines/backend/backend.ci.yml)
 - [ ] `tools - sdk-ai-bots-function-app - ci` → [function-app.ci.yml](../component-pipelines/function-app/function-app.ci.yml)
-- [ ] `tools - sdk-ai-bots-agent - ci` → [agent.ci.yml](../component-pipelines/agent/agent.ci.yml)
+- [ ] `tools - sdk-ai-bots-agent - ci` → [agent.ci.yml](../component-pipelines/agent/agent.ci.yml) (also builds the agent-server image)
 - [ ] `tools - sdk-ai-bots-knowledge-sync - ci` → [knowledge-sync.ci.yml](../component-pipelines/knowledge-sync/knowledge-sync.ci.yml)
 
 ### Component CD (5)
 
 - [ ] `tools - sdk-ai-bots-frontend - cd` → [frontend.cd.yml](../component-pipelines/frontend/frontend.cd.yml)
-- [ ] `tools - sdk-ai-bots-backend - cd` → [backend.cd.yml](../component-pipelines/backend/backend.cd.yml)
+- [ ] `tools - sdk-ai-bots-agent-server - cd` → [agent-server.cd.yml](../component-pipelines/agent-server/agent-server.cd.yml)
 - [ ] `tools - sdk-ai-bots-function-app - cd` → [function-app.cd.yml](../component-pipelines/function-app/function-app.cd.yml)
 - [ ] `tools - sdk-ai-bots-agent - cd` → [agent.cd.yml](../component-pipelines/agent/agent.cd.yml)
 - [ ] `tools - sdk-ai-bots-knowledge-sync - cd` → [knowledge-sync.cd.yml](../component-pipelines/knowledge-sync/knowledge-sync.cd.yml) (scheduled)
@@ -217,7 +216,7 @@ have:
 - ACR `azsdkqabotacrdev`
 - Cosmos DB, Key Vault, App Configuration, Search, Storage, Log Analytics
 - AI Services account + model deployments
-- Backend App Service (+ `authoring`, `agent` slots)
+- Agent-server App Service production site (no deployment slots)
 - Function App (+ `staging` slot)
 - Logic App (workflow disabled until step 10)
 
@@ -231,7 +230,7 @@ Seed them once per environment. Substitute `<env>` accordingly:
 ```bash
 KV="azsdkqabot-kv-<env>"
 
-# GitHub App private key (for the GitHub integration in the backend)
+# GitHub App private key (for the GitHub integration in the agent server)
 az keyvault secret set --vault-name "$KV" --name GitHubAppPrivateKey \
   --file <path>/github-app.pem
 
@@ -277,7 +276,7 @@ az logic workflow update \
 
 ## 11. App Configuration seed values
 
-**Automated.** The runtime config keys consumed by the agent / backend /
+**Automated.** The runtime config keys consumed by the agent / agent-server /
 function-app are seeded by the postprovision hook
 ([hooks/postprovision.ts](../hooks/postprovision.ts) `updateAppConfiguration()`
 → [hooks/lib/seed-app-config.ts](../hooks/lib/seed-app-config.ts)). It writes

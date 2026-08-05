@@ -1,0 +1,35 @@
+name: sensei-eval
+description: Evaluation suite for the sensei skill
+type: capability
+
+environment: azsdk-mcp-mock
+
+tags:
+  area: sensei
+  type: ci-gate
+
+config:
+  runs: 1
+  timeout: "90s"
+  model: claude-opus-4.6
+  executor: copilot-sdk
+
+stimuli:
+  - name: basic-trigger
+    prompt: "Run sensei on the api-validation skill to improve its frontmatter compliance"
+    graders:
+      - type: output-contains
+        config:
+          substring: "skill"
+    constraints:
+      expect_skills: ["sensei"]
+
+  - name: anti-trigger
+    prompt: "How do I set up automatic retries for my HTTP client?"
+    graders:
+      - type: output-not-contains
+        config:
+          substring: "frontmatter"
+      - type: output-not-contains
+        config:
+          substring: "Ralph loop"

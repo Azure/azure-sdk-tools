@@ -32,6 +32,7 @@ The three eval-authoring skills share the repository-local [eval authoring guide
 
 | Skill                                                                                 | Triggers                                            | Description                                                           |
 | ------------------------------------------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------------------------- |
+| [sensei](sensei/SKILL.md)                                                             | "run sensei", "improve skill", "fix frontmatter"    | Iteratively improve skill frontmatter compliance using the Ralph loop |
 | [skill-authoring](skill-authoring/SKILL.md)                                           | "create a skill", "new skill", "skill template"     | Guidelines for writing Agent Skills per agentskills.io spec           |
 | [eval-authoring-skill](eval-authoring-skill/SKILL.md)                                 | "write a skill eval", "test skill routing"          | Author repository-local routing and capability evals for Agent Skills |
 | [eval-authoring-tool](eval-authoring-tool/SKILL.md)                                   | "write a tool eval", "add prompt-to-tool coverage"  | Author repository-local hermetic single-tool MCP selection evals      |
@@ -82,11 +83,11 @@ vally eval --tag "type=ci-gate"
 # Run evals for a specific skill
 vally eval --tag area="skill-authoring"
 
-# Run with an output directory for logs
-vally eval --tag area="markdown-token-optimizer" --output-dir ./results
+# Run with output directory for logs
+vally eval --tag area="sensei" --output-dir ./results
 ```
 
-The [Skill Evaluations workflow](../workflows/skill-eval.yml) runs Vally lint when skill files or the pinned Vally dependency change.
+The [skill-eval pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8165&_a=summary) runs ci-gate evals automatically after PRs are merged. It can also be triggered manually from the same page.
 
 ---
 

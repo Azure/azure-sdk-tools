@@ -1,5 +1,6 @@
 {
-  "description": "Representative prompts for MCP tool coverage. Each tool should have 2-3 prompt variations.",
+  "$schema": "./TestPrompts.schema.json",
+  "description": "Test prompts for PromptToToolMatchEvaluator to measure tool discoverability via keyword matching. Each tool should have 2-3 prompt variations.",
   "prompts": [
     { "toolName": "azsdk_apiview_get_comments", "prompt": "Get all the APIView comments for my package", "category": "all" },
     { "toolName": "azsdk_apiview_get_comments", "prompt": "Show me the API review feedback for this package", "category": "all" },

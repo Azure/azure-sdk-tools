@@ -1,0 +1,13 @@
+id: basic-trigger
+name: basic-trigger
+description: Should trigger on sensei invocation requests
+inputs:
+  prompt: "Run sensei on the api-validation skill to improve its frontmatter compliance"
+expected:
+  skill_activated: true
+graders:
+  - type: text
+    name: mentions-compliance
+    config:
+      contains:
+        - "skill"

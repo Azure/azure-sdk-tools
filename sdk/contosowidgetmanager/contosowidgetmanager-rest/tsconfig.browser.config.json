@@ -1,0 +1,10 @@
+{
+  "extends": "../../../tsconfig.browser.base.json",
+  "compilerOptions": {
+    "paths": {
+      "@azure-rest/contoso-widgetmanager-rest": ["./dist/browser/index.d.ts"],
+      "@azure-rest/contoso-widgetmanager-rest/*": ["./dist/browser/*"],
+      "$internal/*": ["./dist/browser/*"]
+    }
+  }
+}

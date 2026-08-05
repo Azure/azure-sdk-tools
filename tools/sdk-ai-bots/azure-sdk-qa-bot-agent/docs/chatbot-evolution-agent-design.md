@@ -22,7 +22,7 @@ The architecture has four execution planes:
 - **Detection:** the daily feedback job identifies concluded conversations with an incorrect or unconfirmed bot answer.
 - **Evolution loop:** the Evolution agent diagnoses the failure. For a KB issue, it writes a candidate to the existing dev knowledge source, validates the original bad case against the deployed dev Chat Agent, and revises until the case passes or the attempt limit is reached.
 - **Issue creation:** after KB validation passes, the same Evolution agent creates the GitHub issue with the diagnosis, proposed source change, answer, trace ID, and validation evidence. For chatbot self-issues, it creates the issue immediately after diagnosis without validation.
-- **Restoration:** after each mutating Evolution-agent session, the feedback orchestrator queues the knowledge-sync pipeline and waits for it to restore dev storage and search from authoritative upstream sources.
+- **Restoration:** after the feedback job processes all cases, the feedback orchestrator queues the knowledge-sync pipeline once if any Evolution-agent session mutated the KB, then waits for it to restore dev storage and search from authoritative upstream sources.
 
 ```text
 failed QA record
@@ -34,9 +34,11 @@ Evolution agent diagnosis
     │     └── update_knowledge
     │           └── validate_agent_response(original bad case)
     │                 ├── fail → revise candidate and retry
-    │                 └── pass → create_issue → restore dev knowledge
+    │                 └── pass → create_issue
     │
     └── chatbot self-issue → create_issue
+
+after all cases → if KB was mutated → restore dev knowledge
 ```
 
 ### 2.2 Agent Design
@@ -154,7 +156,7 @@ The feedback loop is driven by a **daily batch job** over a durable status table
 | Layer | Field | States | Meaning |
 | --- | --- | --- | --- |
 | **1 — QA lifecycle** | `qa_status` | `ongoing` → `finished` \| `failed` | `ongoing` while the thread is still open; `finished` once it concluded with a **correct** bot answer (archived); `failed` once it concluded with an **incorrect/unknown** bot answer (worth a feedback analysis). |
-| **2 — Feedback lifecycle** | `feedback.status` | `created` → `running` → `done` \| `failed` | Present only once `qa_status == failed`. Tracks the Evolution-agent loop, issue result, and restoration outcome. |
+| **2 — Feedback lifecycle** | `feedback.status` | `created` → `running` → `done` \| `failed` | Present only once `qa_status == failed`. Tracks the Evolution-agent loop and issue result. |
 
 #### Daily scan (`scripts/run_feedback_jobs.py`, `pipelines/feedback-job.yml`)
 
@@ -164,6 +166,7 @@ The feedback loop is driven by a **daily batch job** over a durable status table
     - finished + correct → `finished` (archived);
     - finished + incorrect/unknown → `failed`.
 3. **Feedback** — for records that just turned `failed`, run the hosted chatbot evolution agent in-process via `ChatbotEvolutionAgentService.run_job` (§2.3.1).
+4. **Restore** — if any session mutated the KB, queue the knowledge-sync pipeline once after all feedback sessions finish and wait for successful restoration.
 
 The whole feature is gated by `CHATBOT_EVOLUTION_AGENT_ENABLED` so it can be disabled without a code rollback.
 
@@ -173,7 +176,7 @@ The daily batch job (`scripts/run_feedback_jobs.py`) starts the Layer-2 analysis
 
 The agent is invoked through the Responses API (`store=True`) with bounded analysis and iteration limits. The guarded tools own dev-storage writes, indexing, chatbot invocation, and evidence collection. No public issue is created for an unvalidated KB candidate.
 
-The feedback orchestrator runs mutating sessions serially and restores dev knowledge after each session before starting another. It queues `sync_knowledge.yml` through the Azure DevOps Build REST API using `$(System.AccessToken)`, waits for completion, and requires a successful result. An outer `condition: always()` cleanup job provides a final fallback. The feedback job is not complete until dev knowledge is restored.
+The feedback orchestrator runs mutating sessions serially and validates each case immediately after its candidate update. Before `update_knowledge` writes anything, its wrapper sets a run-scoped `restore_required` Azure Pipelines output variable to `true`, ensuring that partial writes or later failures still trigger cleanup without adding fields to `QARecord`. After all sessions finish, an outer `condition: always()` cleanup job queues `sync_knowledge.yml` once through the Azure DevOps Build REST API using `$(System.AccessToken)` when `restore_required` is `true`, waits for completion, and requires a successful result. The feedback job is not complete until dev knowledge is restored.
 
 #### QA record
 
@@ -200,10 +203,10 @@ union FeedbackStatus {
   @doc("The hosted agent accepted and is processing")
   Running: "running",
 
-  @doc("The agent finished, the result was persisted, and dev knowledge was restored")
+  @doc("The agent finished and the result was persisted")
   Done: "done",
 
-  @doc("The agent or mandatory restoration errored, timed out, or was cancelled")
+  @doc("The agent errored, timed out, or was cancelled")
   Failed: "failed",
 }
 
@@ -271,7 +274,7 @@ The Evolution agent owns the loop through two guarded tools:
 2. Call `validate_agent_response` with the original bad case.
 3. If validation fails, revise the candidate and repeat within the attempt limit. If it passes, create the issue with the answer and trace ID as evidence.
 
-After the agent session finishes, fails, or times out, the feedback pipeline triggers the knowledge-sync pipeline to restore dev storage and search from the authoritative sources. The next case does not start until restoration succeeds; otherwise the feedback job is marked failed.
+After all agent sessions finish, fail, or time out, the feedback pipeline triggers the knowledge-sync pipeline once if any session mutated the KB. The feedback job waits for restoration from the authoritative sources and is marked failed if restoration does not succeed.
 
 ### 2.6 Issue creation
 

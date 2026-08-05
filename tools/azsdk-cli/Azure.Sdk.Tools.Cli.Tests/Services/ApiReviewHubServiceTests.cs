@@ -323,6 +323,127 @@ public class ApiReviewHubServiceTests
         Assert.That(exception.Message, Does.Contain("timed out"));
     }
 
+    [Test]
+    public async Task RequestReviewPullRequestAsync_WhenReviewPullRequestAlreadyExists_ReturnsExpectedStatus()
+    {
+        var mockHandler = new Mock<HttpMessageHandler>();
+        mockHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(request => request.Method == HttpMethod.Post),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Conflict)
+            {
+                Content = new StringContent(
+                    """
+                    {
+                      "error": {
+                        "code": "reviewPullRequestAlreadyExists",
+                                                "message": "An API Review Hub review PR already exists for pkg.",
+                                                "reviewPullRequest": {
+                                                    "url": "https://github.com/Azure/azure-sdk-for-python/pull/13"
+                                                }
+                      }
+                    }
+                    """,
+                    Encoding.UTF8,
+                    "application/json")
+            });
+
+        httpClientFactoryMock
+            .Setup(x => x.CreateClient(It.IsAny<string>()))
+            .Returns(new HttpClient(mockHandler.Object));
+
+        var request = new ReviewPullRequestCreationRequest
+        {
+            Language = "python",
+            PackageName = "pkg",
+            BaseTag = "v1.0.0",
+            TargetBranch = new GitBranchReference
+            {
+                Owner = "Azure",
+                Repo = "azure-sdk-for-python",
+                Name = "main"
+            }
+        };
+
+        var result = await service.RequestReviewPullRequestAsync(
+            request,
+            "https://api-review-hub-test.azurewebsites.net",
+            waitForCompletion: true,
+            pollInterval: TimeSpan.Zero,
+            CancellationToken.None);
+
+        Assert.That(result.Status, Is.EqualTo("succeeded"));
+        Assert.That(result.PackageName, Is.EqualTo("pkg"));
+        Assert.That(result.Message, Is.EqualTo("An API Review Hub review PR already exists for pkg."));
+        Assert.That(result.ReviewPullRequest, Is.Not.Null);
+        Assert.That(result.ReviewPullRequest!.Value.GetProperty("url").GetString(), Is.EqualTo("https://github.com/Azure/azure-sdk-for-python/pull/13"));
+    }
+
+    [Test]
+    public async Task RequestReviewPullRequestAsync_WhenConflictIsNotExpected_Throws()
+    {
+        var mockHandler = new Mock<HttpMessageHandler>();
+        mockHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(request => request.Method == HttpMethod.Post),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Conflict)
+            {
+                Content = new StringContent(
+                    """
+                    {
+                      "error": {
+                        "code": "operationConflict",
+                        "message": "Another operation is in progress."
+                      }
+                    }
+                    """,
+                    Encoding.UTF8,
+                    "application/json")
+            });
+
+        httpClientFactoryMock
+            .Setup(x => x.CreateClient(It.IsAny<string>()))
+            .Returns(new HttpClient(mockHandler.Object));
+
+        var request = new ReviewPullRequestCreationRequest
+        {
+            Language = "python",
+            PackageName = "pkg",
+            BaseTag = "v1.0.0",
+            TargetBranch = new GitBranchReference
+            {
+                Owner = "Azure",
+                Repo = "azure-sdk-for-python",
+                Name = "main"
+            }
+        };
+
+        HttpRequestException? exception = null;
+        try
+        {
+            await service.RequestReviewPullRequestAsync(
+                request,
+                "https://api-review-hub-test.azurewebsites.net",
+                waitForCompletion: true,
+                pollInterval: TimeSpan.Zero,
+                CancellationToken.None);
+            Assert.Fail("Expected HttpRequestException was not thrown.");
+        }
+        catch (HttpRequestException ex)
+        {
+            exception = ex;
+        }
+
+        Assert.That(exception!.StatusCode, Is.EqualTo(HttpStatusCode.Conflict));
+        Assert.That(exception.Message, Does.Contain("operationConflict"));
+    }
+
     private sealed class SteppingTimeProvider(DateTimeOffset initial, TimeSpan step) : TimeProvider
     {
         private DateTimeOffset _current = initial;

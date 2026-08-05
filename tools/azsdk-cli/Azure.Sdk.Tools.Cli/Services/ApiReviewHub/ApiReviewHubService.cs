@@ -54,7 +54,25 @@ public class ApiReviewHubService(
         var authorization = await GetAuthorizationAsync(endpoint, ct);
 
         logger.LogInformation("Requesting API Review Hub review PR for {packageName} from {endpoint}", request.PackageName, endpoint);
-        var accepted = await PostJsonAsync<ReviewPullRequestCreationAcceptedResponse>(httpClient, $"{endpoint}/api/review-prs", request, authorization, ct);
+        ReviewPullRequestCreationAcceptedResponse accepted;
+        try
+        {
+            accepted = await PostJsonAsync<ReviewPullRequestCreationAcceptedResponse>(httpClient, $"{endpoint}/api/review-prs", request, authorization, ct);
+        }
+        catch (ApiReviewHubRequestException ex) when (string.Equals(ex.ErrorCode, "reviewPullRequestAlreadyExists", StringComparison.Ordinal))
+        {
+            var serverMessage = TryGetMessage(ex.Content) ?? $"An API Review Hub review PR already exists for {request.PackageName}.";
+            logger.LogDebug("{message}", serverMessage);
+
+            var reviewPullRequest = TryGetReviewPullRequest(ex.Content);
+            return new OperationStatus
+            {
+                Status = "succeeded",
+                PackageName = request.PackageName,
+                Message = serverMessage,
+                ReviewPullRequest = reviewPullRequest
+            };
+        }
 
         if (!waitForCompletion)
         {
@@ -182,10 +200,12 @@ public class ApiReviewHubService(
         var content = await response.Content.ReadAsStringAsync(ct);
         if (!response.IsSuccessStatusCode)
         {
-            throw new HttpRequestException(
+            var errorCode = TryGetErrorCode(content);
+            throw new ApiReviewHubRequestException(
                 $"API Review Hub request failed with status {(int)response.StatusCode}: {content}",
-                null,
-                response.StatusCode);
+                response.StatusCode,
+                errorCode,
+                content);
         }
 
         var value = JsonSerializer.Deserialize<T>(content, serializerOptions);
@@ -195,6 +215,118 @@ public class ApiReviewHubService(
         }
 
         return value;
+    }
+
+    private static string? TryGetErrorCode(string content)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(content);
+            return document.RootElement.GetProperty("error").GetProperty("code").GetString();
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
+        catch (KeyNotFoundException)
+        {
+            return null;
+        }
+    }
+
+    private static string? TryGetMessage(string content)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(content);
+            var root = document.RootElement;
+
+            if (TryGetStringProperty(root, "message", out var message))
+            {
+                return message;
+            }
+
+            if (root.TryGetProperty("error", out var error) && TryGetStringProperty(error, "message", out message))
+            {
+                return message;
+            }
+
+            return null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
+        catch (KeyNotFoundException)
+        {
+            return null;
+        }
+    }
+
+    private static JsonElement? TryGetReviewPullRequest(string content)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(content);
+            return TryGetReviewPullRequest(document.RootElement);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
+        catch (KeyNotFoundException)
+        {
+            return null;
+        }
+    }
+
+    private static JsonElement? TryGetReviewPullRequest(JsonElement element)
+    {
+        if (element.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        if (element.TryGetProperty("reviewPullRequest", out var reviewPullRequest))
+        {
+            return reviewPullRequest.Clone();
+        }
+
+        if (element.TryGetProperty("error", out var error))
+        {
+            var nestedReviewPullRequest = TryGetReviewPullRequest(error);
+            if (nestedReviewPullRequest != null)
+            {
+                return nestedReviewPullRequest;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool TryGetStringProperty(JsonElement element, string propertyName, out string? value)
+    {
+        value = null;
+
+        if (element.ValueKind != JsonValueKind.Object || !element.TryGetProperty(propertyName, out var property) || property.ValueKind != JsonValueKind.String)
+        {
+            return false;
+        }
+
+        value = property.GetString();
+        return true;
     }
 
     private static string GetAppIdUri(string endpoint)
@@ -216,4 +348,11 @@ public class ApiReviewHubService(
         var environmentSuffix = siteName[prefix.Length..];
         return $"api://apireviewhub{environmentSuffix}";
     }
+}
+
+internal class ApiReviewHubRequestException(string message, System.Net.HttpStatusCode statusCode, string? errorCode, string? content)
+    : HttpRequestException(message, null, statusCode)
+{
+    public string? ErrorCode { get; } = errorCode;
+    public string? Content { get; } = content;
 }

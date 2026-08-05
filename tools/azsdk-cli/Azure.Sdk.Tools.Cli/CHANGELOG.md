@@ -9,6 +9,7 @@
 ### Bugs Fixed
 
 - Removed the unavailable `claude-sonnet-4.5` default from Copilot-backed commands.
+- `api-review create` now surfaces the API Review Hub server response for an already-existing review PR as a success rather than an error.
 
 ## 0.6.32 (2026-07-28)
 

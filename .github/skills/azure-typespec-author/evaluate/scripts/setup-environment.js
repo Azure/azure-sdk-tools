@@ -1,16 +1,15 @@
 /**
  * Sets up the evaluation fixture environment:
- * 1. Selects pipeline-style prebuilt MCP startup or legacy local project startup.
- * 2. Builds the live and mock MCP binaries into artifacts/mcp in pipeline mode.
+ * 1. Selects the prebuilt MCP Vally environment.
+ * 2. Builds the live and mock MCP binaries into artifacts/mcp.
  * 3. Runs setup-fixture-files.js to download package.json / package-lock.json
  *    and the live .github/copilot-instructions.md from azure-rest-api-specs.
  * 4. Runs npm ci in the Widget fixture directory.
- * 5. Outputs the shell commands to set AZSDK_EVAL_REPO_ROOT and FIXTURE_NODE_MODULES.
+ * 5. Outputs the shell commands to set the environment variables used by Vally.
  *
  * Usage:
- *   node scripts/setup-environment.js                       # pipeline MCP mode
- *   node scripts/setup-environment.js --mcp-mode local      # legacy local MCP mode
- *   eval $(node scripts/setup-environment.js)               # sets env vars in current shell
+ *   node scripts/setup-environment.js
+ *   eval $(node scripts/setup-environment.js)
  *
  * On Windows (PowerShell):
  *   node scripts/setup-environment.js | Invoke-Expression
@@ -25,10 +24,8 @@ const evalsDir = path.resolve(scriptDir, '..', 'evals');
 const widgetDir = path.resolve(scriptDir, '..', 'fixtures', 'Microsoft.Widget', 'Widget');
 const copilotNpmRegistryUrl = process.env.COPILOT_NPM_REGISTRY_URL || 'https://packagefeedproxy.microsoft.io/npm/';
 
-const modeArgIndex = process.argv.indexOf('--mcp-mode');
-const mcpMode = modeArgIndex === -1 ? 'pipeline' : process.argv[modeArgIndex + 1];
-if (!['pipeline', 'local'].includes(mcpMode)) {
-  process.stderr.write('Usage: node scripts/setup-environment.js [--mcp-mode pipeline|local]\n');
+if (process.argv.length > 2) {
+  process.stderr.write('Usage: node scripts/setup-environment.js\n');
   process.exit(1);
 }
 
@@ -36,28 +33,26 @@ function run(command, options = {}) {
   execSync(command, { stdio: ['inherit', 2, 'inherit'], ...options });
 }
 
-// Step 1: Keep eval specs aligned with the selected MCP startup mode.
-const evalEnvironment = mcpMode === 'pipeline' ? 'azsdk-mcp' : 'azsdk-mcp-local';
+// Step 1: Keep eval specs aligned with the prebuilt MCP environment.
+const evalEnvironment = 'azsdk-mcp';
 for (const fileName of fs.readdirSync(evalsDir).filter((name) => name.endsWith('.eval.yaml'))) {
   const filePath = path.join(evalsDir, fileName);
   const content = fs.readFileSync(filePath, 'utf8');
   const environmentPattern = /^environment:[ \t]+\S+[ \t]*(?=\r?$)/m;
   if (!environmentPattern.test(content)) {
-    throw new Error(`Missing root environment in ${filePath}`);
+    continue;
   }
   const updatedContent = content.replace(environmentPattern, `environment: ${evalEnvironment}`);
   if (updatedContent !== content) {
     fs.writeFileSync(filePath, updatedContent);
   }
 }
-process.stderr.write(`==> Using ${mcpMode} MCP startup (${evalEnvironment}).\n`);
+process.stderr.write(`==> Using prebuilt MCP startup (${evalEnvironment}).\n`);
 
-// Step 2: Build binaries used by the pipeline-style Vally environment.
-if (mcpMode === 'pipeline') {
-  process.stderr.write('==> Building prebuilt MCP binaries into artifacts/mcp...\n');
-  run(`dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli -c Release -o artifacts/mcp/cli --nologo /p:CopilotNpmRegistryUrl=${copilotNpmRegistryUrl}`, { cwd: repoRoot });
-  run(`dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Mock -c Release -o artifacts/mcp/mock --nologo /p:CopilotNpmRegistryUrl=${copilotNpmRegistryUrl}`, { cwd: repoRoot });
-}
+// Step 2: Build binaries used by the Vally environment.
+process.stderr.write('==> Building prebuilt MCP binaries into artifacts/mcp...\n');
+run(`dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli -c Release -o artifacts/mcp/cli --nologo /p:CopilotNpmRegistryUrl=${copilotNpmRegistryUrl}`, { cwd: repoRoot });
+run(`dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Mock -c Release -o artifacts/mcp/mock --nologo /p:CopilotNpmRegistryUrl=${copilotNpmRegistryUrl}`, { cwd: repoRoot });
 
 // Step 3: Download package files and copilot-instructions.md.
 process.stderr.write('==> Downloading package files and copilot-instructions.md from azure-rest-api-specs...\n');
@@ -72,10 +67,8 @@ const nodeModules = path.join(widgetDir, 'node_modules');
 const shell = process.env.SHELL || '';
 const isPowerShell = !shell && process.platform === 'win32' && !process.env.BASH;
 if (isPowerShell) {
-  console.log(`$env:AZSDK_EVAL_REPO_ROOT="${repoRoot}"`);
   console.log(`$env:FIXTURE_NODE_MODULES="${nodeModules}"`);
 } else {
-  console.log(`export AZSDK_EVAL_REPO_ROOT="${repoRoot}"`);
   console.log(`export FIXTURE_NODE_MODULES="${nodeModules}"`);
 }
 process.stderr.write('==> Setup complete.\n');

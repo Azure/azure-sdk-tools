@@ -16,8 +16,8 @@ This directory contains [Vally](https://aka.ms/vally) evaluation cases for the `
 Before running any evals, run the setup script from this directory. It builds the live and mock MCP
 servers into `artifacts/mcp`, primes fixtures from the live
 [azure-rest-api-specs](https://github.com/Azure/azure-rest-api-specs) `main` branch, runs fixture
-`npm ci`, and prints the environment variables needed by local Vally runs. The default `pipeline`
-mode uses the same prebuilt MCP startup as CI and sets every eval spec to `environment: azsdk-mcp`:
+`npm ci`, and prints the environment variables needed by local Vally runs. The MCP binaries use the
+same `artifacts/mcp/cli` and `artifacts/mcp/mock` layout staged by the pipeline:
 
 ```powershell
 # PowerShell
@@ -29,36 +29,36 @@ node scripts/setup-environment.js | Invoke-Expression
 eval $(node scripts/setup-environment.js)
 ```
 
-To debug the legacy source-based MCP startup, select `local` mode. This skips the prebuilt MCP build
-and changes every `evals/*.eval.yaml` file to `environment: azsdk-mcp-local`:
+Managed development devices cannot download packages directly from `registry.npmjs.org`.
+`dotnet run` performs an implicit build, and `GitHub.Copilot.SDK` may download its platform package
+during that build. Local evals therefore use prebuilt Release DLLs instead of building MCP from
+source in each trial. Setup routes that package download through the Microsoft CFS-protected feed.
+
+Setup builds both live and mock once. Switch between them without rerunning setup:
 
 ```powershell
-node scripts/setup-environment.js --mcp-mode local | Invoke-Expression
+$env:AZSDK_EVAL_MCP_KIND = 'live'
+# Or:
+$env:AZSDK_EVAL_MCP_KIND = 'mock'
 ```
 
-Run the script again with `--mcp-mode pipeline` (or without `--mcp-mode`) to restore the eval files
-to the pipeline environment.
+All scalar eval specs use `environment: azsdk-mcp`, matching the pipeline artifact-based startup.
 
 `setup-environment.js` does the following:
 
-1. Set every eval file's root environment to `azsdk-mcp` in `pipeline` mode or
-  `azsdk-mcp-local` in `local` mode.
-2. In `pipeline` mode, build the live MCP server into `artifacts/mcp/cli` and the mock MCP server
+1. Set scalar eval specs to `azsdk-mcp`.
+2. Build the live MCP server into `artifacts/mcp/cli` and the mock MCP server
   into `artifacts/mcp/mock`.
 3. Download `package.json` / `package-lock.json` into `fixtures/Microsoft.Widget/Widget/` and run
    `npm ci` there.
 4. Download `.github/copilot-instructions.md` into `fixtures/instructions-test/copilot-instructions.md`.
-5. Print shell commands that export `AZSDK_EVAL_REPO_ROOT` and `FIXTURE_NODE_MODULES`.
+5. Print the shell command that exports `FIXTURE_NODE_MODULES`.
 
 The MCP build uses `GitHub.Copilot.SDK`, which downloads platform-specific `@github/copilot-*`
 assets through MSBuild. The setup script passes
 `/p:CopilotNpmRegistryUrl=https://packagefeedproxy.microsoft.io/npm/` so the download URL uses the
 Microsoft package feed proxy instead of `registry.npmjs.org`. To use a different registry, set
 `COPILOT_NPM_REGISTRY_URL` before running the setup script.
-
-The source-based environments remain available as `azsdk-mcp-local` and `azsdk-mcp-mock-local` for
-debugging the server from projects instead of DLLs. Pipeline mode requires `AZSDK_EVAL_MCP_KIND` to
-be explicitly set to `live` or `mock`; no default is assumed.
 
 Why each piece matters:
 
@@ -80,10 +80,21 @@ outer `.github/skills/.vally.yaml` integration described later.
 
 ### Local forced smoke test
 
-Use this command for the usual local check:
+Use these commands for the usual local check. Setup builds the same Release binaries that trials
+run in CI:
 
 ```powershell
+$env:AZSDK_EVAL_MCP_KIND = 'live'
+# Ensure the eval spec uses: environment: azsdk-mcp
 vally eval --suite forced --skill-dir .. --output-dir ./result-forced --workspace ./debug-forced --verbose
+```
+
+Switch to the mock server for a trigger run without repeating setup:
+
+```powershell
+$env:AZSDK_EVAL_MCP_KIND = 'mock'
+# Ensure the eval spec uses: environment: azsdk-mcp
+vally eval --suite trigger --skill-dir .. --output-dir ./result-trigger --workspace ./debug-trigger --verbose
 ```
 
 ### Which file to use

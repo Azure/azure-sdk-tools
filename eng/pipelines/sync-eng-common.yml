@@ -11,37 +11,26 @@ parameters:
   default:
     - RepoOwner: Azure
       RepoName: azure-sdk
-      BranchOwner: azure-sdk
     - RepoOwner: Azure
       RepoName: azure-sdk-for-cpp
-      BranchOwner: azure-sdk
     - RepoOwner: Azure
       RepoName: azure-sdk-for-go
-      BranchOwner: azure-sdk
     - RepoOwner: Azure
       RepoName: azure-sdk-for-ios
-      BranchOwner: azure-sdk
     - RepoOwner: Azure
       RepoName: azure-sdk-for-java
-      BranchOwner: azure-sdk
     - RepoOwner: Azure
       RepoName: azure-sdk-for-js
-      BranchOwner: azure-sdk
     - RepoOwner: Azure
       RepoName: azure-sdk-for-net
-      BranchOwner: azure-sdk
     - RepoOwner: Azure
       RepoName: azure-sdk-for-python
-      BranchOwner: azure-sdk
     - RepoOwner: Azure
       RepoName: azure-sdk-for-rust
-      BranchOwner: azure-sdk
     - RepoOwner: Azure
       RepoName: azure-rest-api-specs
-      BranchOwner: azure-sdk
     - RepoOwner: Microsoft
       RepoName: mcp
-      BranchOwner: Microsoft
 - name: RepoOwners
   type: object
   default:

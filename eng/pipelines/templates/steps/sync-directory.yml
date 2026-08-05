@@ -215,7 +215,7 @@ steps:
       parameters:
         RepoName: ${{ repo.RepoName }}
         RepoOwner: ${{ repo.RepoOwner }}
-        PROwner: ${{ repo.BranchOwner }}
+        PROwner: ${{ parameters.PROwner }}
         BaseBranchName: ${{ parameters.BaseBranchName }}
         PRBranchName: sync-${{ parameters.DirectoryToSync }}
         CommitMsg: ${{ parameters.CommitMessage }}

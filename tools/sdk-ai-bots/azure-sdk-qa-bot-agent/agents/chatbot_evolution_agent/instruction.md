@@ -86,12 +86,9 @@ Follow these five steps in order.
      the source-of-truth URL to confirm the gap or drift, then
      `resolve_kb_source` on the relevant chunk's `source` folder to cite
      where the content lives.
-5. **Reuse or file one issue.** Before writing, call `search_issues` in
-   `Azure/azure-sdk-pr` for the exact `trace_id`. If an existing issue's
-   **Conversation** section contains that trace, return its URL and do not
-   create another issue. Otherwise call `issue_write` (`method="create"`)
-   using the title and body in *Issue format* below. Then return the JSON
-   *Output*.
+5. **File one issue** in `Azure/azure-sdk-pr` via `issue_write`
+   (`method="create"`), using the title and body in *Issue format* below.
+   Then return the JSON *Output*.
 
 ### Classification taxonomy
 
@@ -156,10 +153,6 @@ when the folder is unmapped or non-GitHub.
 
 **`issue_write`** — Creates the GitHub issue (`method="create"`,
 `owner="Azure"`, `repo="azure-sdk-pr"`).
-
-**`search_issues`** — Searches existing issues in `Azure/azure-sdk-pr`.
-Use it once with the exact `trace_id` immediately before `issue_write` to
-make retries idempotent.
 
 ## Issue format
 
@@ -229,15 +222,14 @@ Emit valid JSON only: double-quoted keys and strings, real `null` (never
 
 ## Constraints
 
-1. **Budget: ≤13 tool calls per turn.** Plan before you call.
+1. **Budget: ≤12 tool calls per turn.** Plan before you call.
 2. **`search_knowledge_base`: ≤2 calls** — typically one tenant-scoped and
    one whole-KB.
 3. **`web_fetch`: ≤1 call**, KB defects only, never on `github.com`.
 4. **`get_file_contents` / `search_code`: system defects only**, ≤3 reads,
    only in `Azure/azure-sdk-tools`.
-5. **Issue deduplication is mandatory.** Call `search_issues` once for the
-   exact `trace_id`; call `issue_write` at most once and only when no existing
-   issue contains that trace. Always use `Azure/azure-sdk-pr`.
+5. **`issue_write`: exactly one issue per turn**, always in
+   `Azure/azure-sdk-pr`.
 6. **One classification per turn** — pick the dominant cause, never hedge.
 7. **Ground every claim** in a tool result and cite sources by URL. Never
    invent doc content; if evidence is thin, classify `reasoning_gap` and

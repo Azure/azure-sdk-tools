@@ -10,7 +10,6 @@ import asyncio
 import logging
 from typing import Any
 
-from azure.core import MatchConditions
 from azure.cosmos import PartitionKey, exceptions as cosmos_exceptions
 from azure.cosmos.aio import ContainerProxy, CosmosClient
 
@@ -398,37 +397,10 @@ async def get_qa_records_container() -> ContainerProxy:
     return await ensure_qa_records_container()
 
 
-async def create_qa_record_if_absent(
-    document: dict[str, Any],
-) -> dict[str, Any] | None:
-    """Create a QA record without replacing an item created concurrently."""
+async def upsert_qa_record(document: dict[str, Any]) -> dict[str, Any]:
+    """Upsert a QA-record document into the qa-records container."""
     container = await get_qa_records_container()
-    try:
-        return await container.create_item(document)
-    except cosmos_exceptions.CosmosResourceExistsError:
-        return None
-
-
-async def replace_qa_record_if_match(
-    document: dict[str, Any],
-    *,
-    etag: str,
-) -> dict[str, Any] | None:
-    """Replace a QA record only when its ETag still matches.
-
-    Returns the updated document, or ``None`` when another worker changed the
-    record first.
-    """
-    container = await get_qa_records_container()
-    try:
-        return await container.replace_item(
-            item=document["id"],
-            body=document,
-            etag=etag,
-            match_condition=MatchConditions.IfNotModified,
-        )
-    except cosmos_exceptions.CosmosAccessConditionFailedError:
-        return None
+    return await container.upsert_item(document)
 
 
 async def read_qa_record(*, record_id: str, tenant_id: str) -> dict[str, Any] | None:

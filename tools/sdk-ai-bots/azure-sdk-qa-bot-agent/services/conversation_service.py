@@ -359,7 +359,7 @@ class ConversationService:
 
         Read-only companion to :meth:`get_messages_by_conversation_id`: returns
         the ``conversation_feedback`` documents stored in the same partition,
-        ordered by feedback ``created_at``.
+        ordered by feedback ``created_at``. 
         """
         container = await get_conversation_message_container()
         partition_key = f"{conversation_type.value}:{conversation_id}"

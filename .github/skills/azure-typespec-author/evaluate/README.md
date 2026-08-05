@@ -21,12 +21,12 @@ same `artifacts/mcp/cli` and `artifacts/mcp/mock` layout staged by the pipeline:
 
 ```powershell
 # PowerShell
-node scripts/setup-environment.js | Invoke-Expression
+node scripts/setup-environment.js --mcp-kind live | Invoke-Expression
 ```
 
 ```bash
 # Bash / Zsh
-eval $(node scripts/setup-environment.js)
+eval $(node scripts/setup-environment.js --mcp-kind live)
 ```
 
 Managed development devices cannot download packages directly from `registry.npmjs.org`.
@@ -34,25 +34,43 @@ Managed development devices cannot download packages directly from `registry.npm
 during that build. Local evals therefore use prebuilt Release DLLs instead of building MCP from
 source in each trial. Setup routes that package download through the Microsoft CFS-protected feed.
 
-Setup builds both live and mock once. Switch between them without rerunning setup:
+Setup builds both live and mock once and rewrites scalar eval specs to the selected local
+environment. Choose `mock` instead when initially preparing trigger evaluations:
 
 ```powershell
-$env:AZSDK_EVAL_MCP_KIND = 'live'
-# Or:
-$env:AZSDK_EVAL_MCP_KIND = 'mock'
+node scripts/setup-environment.js --mcp-kind mock | Invoke-Expression
 ```
 
-All scalar eval specs use `environment: azsdk-mcp`, matching the pipeline artifact-based startup.
+Local live and mock runs use `environment: azsdk-mcp-local` and
+`environment: azsdk-mcp-mock-local`, respectively. Both run prebuilt DLLs; neither uses
+`dotnet run`. Do not rerun setup just to switch MCP kind because setup rebuilds both binaries and
+refreshes the fixtures. Instead, change the root environment in the eval files being run:
+
+```yaml
+# Local live MCP
+environment: azsdk-mcp-local
+
+# Local mock MCP
+environment: azsdk-mcp-mock-local
+
+# Pipeline
+environment: azsdk-mcp
+```
+
+For a single-case run, change only that eval file. For a suite run, replace the environment in all
+participating files under `evals/`. Local environment overrides should not be committed; restore
+`environment: azsdk-mcp` before committing. Pipeline live/mock selection remains controlled by
+`AZSDK_EVAL_MCP_KIND`.
 
 `setup-environment.js` does the following:
 
-1. Set scalar eval specs to `azsdk-mcp`.
+1. Set scalar eval specs to the selected local prebuilt environment.
 2. Build the live MCP server into `artifacts/mcp/cli` and the mock MCP server
   into `artifacts/mcp/mock`.
 3. Download `package.json` / `package-lock.json` into `fixtures/Microsoft.Widget/Widget/` and run
    `npm ci` there.
 4. Download `.github/copilot-instructions.md` into `fixtures/instructions-test/copilot-instructions.md`.
-5. Print the shell command that exports `FIXTURE_NODE_MODULES`.
+5. Print shell commands that export `AZSDK_EVAL_REPO_ROOT` and `FIXTURE_NODE_MODULES`.
 
 The MCP build uses `GitHub.Copilot.SDK`, which downloads platform-specific `@github/copilot-*`
 assets through MSBuild. The setup script passes
@@ -84,16 +102,14 @@ Use these commands for the usual local check. Setup builds the same Release bina
 run in CI:
 
 ```powershell
-$env:AZSDK_EVAL_MCP_KIND = 'live'
-# Ensure the eval spec uses: environment: azsdk-mcp
+# Ensure the eval spec uses: environment: azsdk-mcp-local
 vally eval --suite forced --skill-dir .. --output-dir ./result-forced --workspace ./debug-forced --verbose
 ```
 
 Switch to the mock server for a trigger run without repeating setup:
 
 ```powershell
-$env:AZSDK_EVAL_MCP_KIND = 'mock'
-# Ensure the eval spec uses: environment: azsdk-mcp
+# Ensure the eval spec uses: environment: azsdk-mcp-mock-local
 vally eval --suite trigger --skill-dir .. --output-dir ./result-trigger --workspace ./debug-trigger --verbose
 ```
 

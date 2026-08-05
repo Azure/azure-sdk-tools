@@ -8,8 +8,9 @@
  * 5. Outputs the shell commands to set the environment variables used by Vally.
  *
  * Usage:
- *   node scripts/setup-environment.js
- *   eval $(node scripts/setup-environment.js)
+ *   node scripts/setup-environment.js --mcp-kind live
+ *   node scripts/setup-environment.js --mcp-kind mock
+ *   eval $(node scripts/setup-environment.js --mcp-kind live)
  *
  * On Windows (PowerShell):
  *   node scripts/setup-environment.js | Invoke-Expression
@@ -24,8 +25,10 @@ const evalsDir = path.resolve(scriptDir, '..', 'evals');
 const widgetDir = path.resolve(scriptDir, '..', 'fixtures', 'Microsoft.Widget', 'Widget');
 const copilotNpmRegistryUrl = process.env.COPILOT_NPM_REGISTRY_URL || 'https://packagefeedproxy.microsoft.io/npm/';
 
-if (process.argv.length > 2) {
-  process.stderr.write('Usage: node scripts/setup-environment.js\n');
+const kindArgIndex = process.argv.indexOf('--mcp-kind');
+const mcpKind = kindArgIndex === -1 ? undefined : process.argv[kindArgIndex + 1];
+if (!['live', 'mock'].includes(mcpKind) || process.argv.length !== 4) {
+  process.stderr.write('Usage: node scripts/setup-environment.js --mcp-kind live|mock\n');
   process.exit(1);
 }
 
@@ -33,8 +36,8 @@ function run(command, options = {}) {
   execSync(command, { stdio: ['inherit', 2, 'inherit'], ...options });
 }
 
-// Step 1: Keep eval specs aligned with the prebuilt MCP environment.
-const evalEnvironment = 'azsdk-mcp';
+// Step 1: Select the local prebuilt MCP environment.
+const evalEnvironment = mcpKind === 'live' ? 'azsdk-mcp-local' : 'azsdk-mcp-mock-local';
 for (const fileName of fs.readdirSync(evalsDir).filter((name) => name.endsWith('.eval.yaml'))) {
   const filePath = path.join(evalsDir, fileName);
   const content = fs.readFileSync(filePath, 'utf8');
@@ -47,7 +50,7 @@ for (const fileName of fs.readdirSync(evalsDir).filter((name) => name.endsWith('
     fs.writeFileSync(filePath, updatedContent);
   }
 }
-process.stderr.write(`==> Using prebuilt MCP startup (${evalEnvironment}).\n`);
+process.stderr.write(`==> Using local prebuilt MCP startup (${evalEnvironment}).\n`);
 
 // Step 2: Build binaries used by the Vally environment.
 process.stderr.write('==> Building prebuilt MCP binaries into artifacts/mcp...\n');
@@ -67,8 +70,10 @@ const nodeModules = path.join(widgetDir, 'node_modules');
 const shell = process.env.SHELL || '';
 const isPowerShell = !shell && process.platform === 'win32' && !process.env.BASH;
 if (isPowerShell) {
+  console.log(`$env:AZSDK_EVAL_REPO_ROOT="${repoRoot}"`);
   console.log(`$env:FIXTURE_NODE_MODULES="${nodeModules}"`);
 } else {
+  console.log(`export AZSDK_EVAL_REPO_ROOT="${repoRoot}"`);
   console.log(`export FIXTURE_NODE_MODULES="${nodeModules}"`);
 }
 process.stderr.write('==> Setup complete.\n');

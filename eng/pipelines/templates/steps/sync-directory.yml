@@ -40,9 +40,46 @@ steps:
              Write-Host $file.FullName
              git -c user.name="azure-sdk" -c user.email="azuresdk@microsoft.com" am -3 $file.FullName
              if ($lastExitCode -ne 0) {
-               git -c user.name="azure-sdk" -c user.email="azuresdk@microsoft.com" am --show-current-patch=diff
-               Write-Error "##vso[task.LogIssue type=warning;]Failed to properly apply patch files to [https://github.com/${{ repo.RepoOwner }}/${{ repo.RepoName }}]"
-               exit 1
+               git -c user.name="azure-sdk" -c user.email="azuresdk@microsoft.com" am --show-current-patch=diff | ForEach-Object {
+                 Write-Host ($_ -replace '##vso', '## vso')
+               }
+               git am --abort
+
+               Write-Warning "Patch did not apply cleanly. Mirroring the affected files from azure-sdk-tools."
+               $patchPaths = Get-Content $file.FullName | ForEach-Object {
+                 if ($_ -match '^diff --git a/(.+) b/(.+)$') {
+                   $Matches[1]
+                   $Matches[2]
+                 }
+               } | Sort-Object -Unique
+
+               if (!$patchPaths) {
+                 throw "Unable to determine the files changed by patch '$($file.FullName)'."
+               }
+
+               foreach ($patchPath in $patchPaths) {
+                 if (($patchPath -split '/') -contains '..' -or
+                     ($patchPath -ne '${{ parameters.DirectoryToSync }}' -and !$patchPath.StartsWith('${{ parameters.DirectoryToSync }}/'))) {
+                   throw "Patch path '$patchPath' is outside '${{ parameters.DirectoryToSync }}'."
+                 }
+
+                 $sourcePath = Join-Path '$(System.DefaultWorkingDirectory)' $patchPath
+                 $destinationPath = Join-Path (Get-Location) $patchPath
+                 if (Test-Path $sourcePath) {
+                   New-Item -ItemType Directory -Force -Path (Split-Path $destinationPath -Parent) | Out-Null
+                   Copy-Item -Force -Path $sourcePath -Destination $destinationPath
+                 } else {
+                   Remove-Item -Force -Recurse -ErrorAction Ignore -Path $destinationPath
+                 }
+               }
+
+               git add --all -- ${{ parameters.DirectoryToSync }}
+               if (git status --short -- ${{ parameters.DirectoryToSync }}) {
+                 git -c user.name="azure-sdk" -c user.email="azuresdk@microsoft.com" commit -m "${{ parameters.CommitMessage }}"
+                 if ($LASTEXITCODE -ne 0) {
+                   throw "Failed to commit files recovered from patch '$($file.FullName)'."
+                 }
+               }
              }
           }
           $shaAfterPatches = git rev-parse --short HEAD

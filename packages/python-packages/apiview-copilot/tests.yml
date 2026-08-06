@@ -25,7 +25,7 @@ extends:
 
             steps:
               # Authenticate pip to the configured Azure DevOps feed before installs.
-              - template: /eng/common/pipelines/templates/steps/auth-dev-feed.yml
+              - template: /eng/common/pipelines/templates/steps/python-auth-dev-feed.yml
                 parameters:
                   DevFeedName: ${{ parameters.DevFeedName }}
                   EnableTwineAuth: false

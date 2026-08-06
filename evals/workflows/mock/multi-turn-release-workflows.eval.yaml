@@ -53,7 +53,7 @@ stimuli:
     environment: &multiTurnEnv
       # Load all four candidate skills so the routing choice is genuinely
       # contested across turns. Paths are relative to this eval file
-      # (4 levels up = repo root).
+      # (3 levels up = repo root).
       skills:
         - ../../../.github/skills/azsdk-common-prepare-release-plan
         - ../../../.github/skills/azsdk-common-generate-sdk-pipeline

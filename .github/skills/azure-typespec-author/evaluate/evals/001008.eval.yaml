@@ -86,8 +86,10 @@ stimuli:
         config:
           required:
             - "^(edit|bash)$"
-            - "^(web_fetch|azure-sdk-mcp-azsdk_typespec_generate_authoring_plan)$"
+            - "web_fetch"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
+          disallowed:
+            - "azure-sdk-mcp-azsdk_typespec_generate_authoring_plan"
       - type: "skill-invocation"
         config:
           required:
@@ -107,8 +109,10 @@ stimuli:
         config:
           required:
             - "^(edit|bash)$"
-            - "^(web_fetch|azure-sdk-mcp-azsdk_typespec_generate_authoring_plan)$"
+            - "web_fetch"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
+          disallowed:
+            - "azure-sdk-mcp-azsdk_typespec_generate_authoring_plan"
       - type: "run-command"
         config:
           command: "node check-node-dependencies.js node_modules"

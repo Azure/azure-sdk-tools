@@ -21,7 +21,7 @@
 
 The end-to-end process from TypeSpec authoring → spec PR → SDK generation → SDK PR validation → release.
 
-> **Scope note**: This document covers the **spec-change-triggered** release path. Data shows ~50% of SDK releases (Python, .NET) happen **without a spec change** — for example, customization-only updates, bug fixes, or dependency bumps. That flow shares Stages 4–5 (SDK PR validation → release) but skips Stages 1–3. Additionally, some packages have **no spec at all** (messaging services, companion packages, language ecosystem helpers). These still require namespace/naming approval and architect review but enter the workflow at Stage 4.
+> **Scope note**: This document covers the **spec-change-triggered** release path. Data shows ~50% of SDK releases (Python, .NET) happen **without a spec change** — for example, customization-only updates, bug fixes, or dependency bumps. That flow shares Stages 4–5 (SDK PR validation → release) but skips Stages 1–3. Additionally, some packages have **no spec at all** (messaging services, companion packages, language ecosystem helpers). These still require package name approval and architect review but enter the workflow at Stage 4.
 >
 > **Open question**: Should the no-spec-change and no-spec paths be documented as first-class entry points in this document? See also [#16297](https://github.com/Azure/azure-sdk-tools/issues/16297).
 
@@ -57,7 +57,7 @@ flowchart TD
 
 3. 🧑‍💻 **Wait for approvals** *(human gating)*
    - **`PublishToCustomers` label** — required on all PRs targeting `main` or `RPSaaSMaster`. Author self-applies to acknowledge APIs are shipped to customers. Enforced by CI (`summarize-checks`). **Candidate for removal** -- redundant once other gates pass; causes service team confusion.
-   - **Namespace approval** — required for first preview of new packages (`namespace-<lang>-pending` → `namespace-<lang>-approved`)
+   - **Package name approval** — required for first preview of new packages (`package-name-review-required` + `package-name-<lang>-pending` → `package-name-<lang>-approved`)
    - **ARM validation** (owned by ARM, non-exhaustive) -- includes ARM review board (`ARM-Review-Required` -> `ARMSignedOff`), breaking change review, and modeling/leasing review. ARM controls what checks apply to their specs.
    - **Breaking change review** -- Spec-level: `BreakingChangeReviewRequired` label auto-applied by CI on any spec PR with breaking changes (review team defined for ARM, undefined for data-plane -- Gap #9). SDK-level: `BreakingChange-{Language}-Sdk` label currently applies to management plane spec PRs only.
    - > **Note**: There is no spec-level API review. API review happens only at the SDK level (Stage 4).
@@ -95,13 +95,13 @@ flowchart TD
 2. **SDK API review** — Review generated SDK API surface on SDK PRs via APIView (current) or API Review Hub review PRs (future). **There is no spec-level API review** — API review applies only to the generated SDK. **Current**: `<lang>-api-approved` labels applied manually by architects. **Future (ARH)**: `api-approved` label applied automatically via webhooks/GH App. Labels are **informational** — source of truth is the ARH database (API hash).
 3. **SDK PR review** (management plane) -- Service team approves SDK PRs for ARM. Shanghai team may also review (to be verified).
 4. **Breaking change review** — Spec-level: `BreakingChangeReviewRequired` label on spec PRs (review team defined for ARM; data-plane routing is Gap #9). SDK-level: `BreakingChange-{Language}-Sdk` label on management plane spec PRs only.
-5. **Namespace review** — Approve new package namespaces; apply `namespace-<lang>-approved` labels
+5. **Package name review** — Approve new package names; apply `package-name-<lang>-approved` labels
 6. **Release approval** -- Approve release pipeline runs (service team for ARM)
 
 ### For EngSys / SDK Team
 
 1. **Monitor pipelines** — Spec PR validation, SDK generation, and SDK CI pipelines run automatically
-2. **Label routing** — Labels like `BreakingChangeReviewRequired`, `namespace-<lang>-pending`, and `auto-sdk-build-fix` trigger review routing and automation
+2. **Label routing** — Labels like `BreakingChangeReviewRequired`, `package-name-review-required`, and `auto-sdk-build-fix` trigger review routing and automation
 3. **Generation failures** — When SDK generation fails, failures are visible on [release plan dashboard](https://aka.ms/azsdk/releaseplan-dashboard). Structured error reporting for agent troubleshooting is a [known gap](#gap-tracker).
 4. **Auto-repair** — `auto-sdk-build-fix` label triggers Copilot cloud agent to fix custom code drift on SDK PRs
 5. **Release coordination** — `azsdk_release_sdk` checks readiness; release pipelines publish to package registries (manual approval gate required)
@@ -246,7 +246,7 @@ Build author-validation loop where agent auto-applies suppression decorators bas
 1. PR opens → CI triggers automatically
 2. TypeSpec compiles (includes linting) → suppression review → breaking change detection → APIView tokens generated → SDK dry-run → SDK APIView generated
 3. Labels applied based on results
-4. ARM review (if ARM spec) + namespace approval (if new package)
+4. ARM review (if ARM spec) + package name approval (if new package)
 5. All approvals → PR merges
 
 #### Failure paths
@@ -258,7 +258,7 @@ Build author-validation loop where agent auto-applies suppression decorators bas
 | Breaking change detected | `BreakingChangeReviewRequired` label | @markcowl | Approve, suppress, or redesign | Manual |
 | SDK breaking change detected | `BreakingChange-{Language}-Sdk` label | @chunyu3 / @raych1 | Address breaking change or add suppression | Manual |
 | SDK dry-run failure | CI failure in spec-gen-sdk | Author / EngSys | Fix TypeSpec or escalate | Manual |
-| Namespace needs approval | `namespace-<lang>-pending` label | Namespace approvers | Apply `namespace-<lang>-approved` | Manual (label) |
+| Package name needs approval | `package-name-review-required` + `package-name-<lang>-pending` labels | Package name approvers | Apply `package-name-<lang>-approved` | Manual (label) |
 
 <details>
 <summary>Deep spec: tools, contracts, and unresolved questions</summary>
@@ -468,9 +468,9 @@ Structured error reporting from generation pipeline + agent-assisted troubleshoo
 
 | Release Type | Approval Gates | Notes |
 |-------------|----------------|-------|
-| Preview (first) | Namespace approval required | Fastest path; namespace needed for new packages |
+| Preview (first) | Package name approval required | Fastest path; package name approval needed for new packages |
 | Preview (update) | No architect board review (can be requested) | Fastest path |
-| GA (first release) | Architect board review required | Namespace approval if new package |
+| GA (first release) | Architect board review required | Package name approval if new package |
 | GA (update) | Architect board review required (all GA releases) | Breaking changes need separate approval |
 | Patch | SDK PR review + CI pass (no architect board review) | Must maintain backward compatibility |
 
@@ -484,7 +484,7 @@ Structured error reporting from generation pipeline + agent-assisted troubleshoo
 | Release plan tooling (`azsdk_create_release_plan`, etc.) | Create/update/link Azure DevOps work items | azsdk-cli team |
 | Changelog/versioning tool | Automates changelog updates. **Mgmt plane**: auto-generated reliably (compare with latest GA). **Data-plane**: not reliable, may need manual curation ([discussion](https://github.com/Azure/azure-sdk-tools/pull/15248#discussion_r3353097483)). | @jsquire |
 | Release pipeline (`azsdk_release_sdk`) | Check readiness, trigger release | azsdk-cli team |
-| **API Review Hub release gate** | `GET /api/releases/check-gate` verifies API hash. `POST /api/releases/mark-released` records release and closes review PRs. | @tjprescott |
+| **API Review Hub release gate** | `GET /api/releases/check-approval` verifies API hash. `POST /api/releases/mark-released` records release and closes review PRs. | @tjprescott |
 | Language release pipelines | Publish to PyPI, Maven, npm, NuGet, Go module proxy | Language teams |
 | Service Tree integration | Mark service KPIs as completed | EngSys |
 
@@ -518,9 +518,11 @@ Manual approval gate on release pipeline cannot be removed for security (ARM app
 | `ARM-Review-Required` | CI | ARM spec — routes to ARM team | Yes | ✅ Fully automated |
 | `ARMSignedOff` | ARM team | ARM review approved | Unblocks | ✅ Manual label, gate automated |
 | `APIStewardshipBoard-SignedOff` | Stewardship board | Data-plane REST API spec approved (stewardship review) | No (transitioning) | ⚠️ Process in transition |
-| `namespace-<lang>-pending` | CI | New namespace detected | Yes | ✅ Fully automated |
-| `namespace-<lang>-approved` | Architect | Namespace approved | Unblocks | ✅ Manual label, gate automated |
-| `namespace-approved-all` | Architect | Approves all languages (mgmt) | Unblocks | ✅ Manual label, gate automated |
+| `package-name-review-required` | CI | New package name detected | Yes | ✅ Fully automated |
+| `package-name-<lang>-pending` | CI | Per-language package name pending review | Yes | ✅ Fully automated |
+| `package-name-<lang>-approved` | Architect | Package name approved for language | Unblocks | ✅ Manual label, gate automated |
+| `package-name-approved-all` | Architect | Approves all languages (mgmt) | Unblocks | ✅ Manual label, gate automated |
+| `package-name-approved` | CI (bot) | All required languages approved, merge unblocked | Unblocks | ✅ Fully automated |
 | `Approved-BreakingChange*` | Review team | Breaking change approved (multiple labels exist per break category) | Unblocks | ⚠️ Manual label, gate works |
 | `BreakingChange-{Language}-Sdk` | CI | Sdk breaking change detected (management plane only) | Yes | ✅ Fully automated |
 | `BreakingChange-{Language}-Sdk-Approved` | Review team | Sdk breaking change approved | Yes | ⚠️ Manual label, validation automated |
@@ -542,15 +544,15 @@ Manual approval gate on release pipeline cannot be removed for security (ARM app
 | `review-out-of-date` | ARH | Review PR stale | No | 🔜 Part of ARH |
 | `architecture-review-needed` | ARH | Flags for architect review | No | 🔜 Part of ARH |
 
-> **📋 Proposal: Label naming consistency** — Current labels use mixed conventions: `PascalCase` (`BreakingChangeReviewRequired`, `ARMSignedOff`, `APIStewardshipBoard-SignedOff`), `kebab-case` (`auto-sdk-build-fix`, `release-plan-linked`, `namespace-<lang>-approved`), and hybrid (`ARM-Review-Required`). Consider standardizing to `kebab-case` (e.g., `breaking-change-review-required`, `arm-signed-off`) for new labels, with backward-compatible aliasing for existing ones.
+> **📋 Proposal: Label naming consistency** — Current labels use mixed conventions: `PascalCase` (`BreakingChangeReviewRequired`, `ARMSignedOff`, `APIStewardshipBoard-SignedOff`), `kebab-case` (`auto-sdk-build-fix`, `release-plan-linked`, `package-name-<lang>-approved`), and hybrid (`ARM-Review-Required`). Consider standardizing to `kebab-case` (e.g., `breaking-change-review-required`, `arm-signed-off`) for new labels, with backward-compatible aliasing for existing ones.
 
 ### Approval gates (3 workstreams converging)
 
 | Workstream | Status | Scope | Long-term fate |
 |-----------|--------|-------|----------------|
-| **GitHub Forms + Actions** (PR #10037, shipped) | ✅ Live | Review intake via `azure-sdk` repo. `arch-board-review.yml` = bridge. `namespace-review.yml` = long-term. | `arch-board-review.yml` retires when ARH ships |
+| **GitHub Forms + Actions** (PR #10037, shipped) | ✅ Live | Review intake via `azure-sdk` repo. `arch-board-triage.yml` handles architect board triage. | Retires when ARH ships |
 | **API Review Hub** (@tjprescott, in progress) | 🔜 Prototype | SDK-level review via synthetic GitHub PRs. Does NOT operate at spec level. | Replaces APIView for SDK review |
-| **Spec PR-based namespace approval** ([process doc](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/workflows/src/namespace-approval/NAMESPACE-REVIEW-PROCESS.md), live) | ✅ Live | Namespace approval on spec PR merge. | Retires `namespace-review.yml` |
+| **Spec PR-based package name approval** ([process doc](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/workflows/src/package-name-approval/PACKAGE-NAME-REVIEW-PROCESS.md), live) | ✅ Live | Package name approval on spec PR merge. Replaces the previous `azure-sdk` repo issue-based namespace review. | Primary mechanism for package name approval |
 
 ### Orchestration architecture: skill chaining
 
@@ -574,7 +576,7 @@ The system uses **prompt chaining**: independent sub-skills invoked sequentially
 
 | Process | Link | Scope |
 |---------|------|-------|
-| Namespace approval | [Namespace review process](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/workflows/src/namespace-approval/NAMESPACE-REVIEW-PROCESS.md) | Permissions, flow, labels -- live |
+| Package name approval | [Package name review process](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/workflows/src/package-name-approval/PACKAGE-NAME-REVIEW-PROCESS.md) | Permissions, flow, labels - live |
 | SDK API review (architecture board) | [Review process](https://eng.ms/docs/products/azure-developer-experience/design/api-review) | Architecture review board for SDK API review |
 | SDK API review (bridge) | [Arch board review process](https://github.com/Azure/azure-sdk/blob/main/.github/workflows/src/arch-board-review/ARCH-BOARD-REVIEW-PROCESS.md) | GitHub Form — **bridge** until ARH |
 | API Review Hub | [POC implementation (PR #49)](https://github.com/tjprescott/azure-sdk-tools/pull/49) | Synthetic review PRs replacing APIView |
@@ -642,16 +644,16 @@ The system uses **prompt chaining**: independent sub-skills invoked sequentially
 ## Exceptions and limitations
 
 <details>
-<summary>Exception 1: Architect Board Review & Namespace Approval</summary>
+<summary>Exception 1: Architect Board Review & Package Name Approval</summary>
 
-**Description**: All GA releases should expect architect board review (some languages may opt out for specific scenarios, but the workflow must account for it). First preview requires namespace approval for new packages. New SDK packages require namespace/naming approval before release.
+**Description**: All GA releases should expect architect board review (some languages may opt out for specific scenarios, but the workflow must account for it). First preview requires package name approval for new packages. New SDK packages require package name approval before release.
 
-**Impact**: Cannot fully automate GA approval or first preview namespace approval. New package releases blocked until naming approved.
+**Impact**: Cannot fully automate GA approval or first preview package name approval. New package releases blocked until naming approved.
 
 **Status**: Three workstreams converging:
-1. **GitHub Forms + Actions (shipped)** — `arch-board-review.yml` is bridge until ARH. `namespace-review.yml` stays long-term.
-2. **API Review Hub (in progress)** — Replaces APIView for SDK review. Namespace out of scope.
-3. **Spec PR-based namespace approval ([process doc](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/workflows/src/namespace-approval/NAMESPACE-REVIEW-PROCESS.md), live)** — Namespace approval on spec PR merge. CI extracts namespaces, applies `namespace-<lang>-pending` labels, blocks merge until approved.
+1. **GitHub Forms + Actions (shipped)** — `arch-board-triage.yml` in `azure-sdk` repo handles architect review triage. Retires when ARH ships.
+2. **API Review Hub (in progress)** — Replaces APIView for SDK review. Package name approval out of scope.
+3. **Spec PR-based package name approval ([process doc](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/workflows/src/package-name-approval/PACKAGE-NAME-REVIEW-PROCESS.md), live)** — Package name approval on spec PR merge. CI extracts package names, applies `package-name-review-required` + `package-name-<lang>-pending` labels, blocks merge until approved.
 
 </details>
 
@@ -735,7 +737,7 @@ flowchart TD
     subgraph S2["STAGE 2: Spec PR Validation (CI)"]
         step4["Step 4: CI Validation Pipeline<br/>• TypeSpec compilation (includes linting)<br/>• Suppression review<br/>• Breaking change detection<br/>• APIView token generation<br/>• SDK generation dry-run<br/>• Labels applied"]
         step4 -->|FAIL| fixPR["Fix issues → push to PR<br/>(re-triggers pipeline)"]
-        step4 -->|PASS| reviews["Step 4b: Reviews<br/>• ARM review<br/>• Namespace approval"]
+        step4 -->|PASS| reviews["Step 4b: Reviews<br/>• ARM review<br/>• Package name approval"]
     end
 
     reviews --> merged["PR approved & merged"]

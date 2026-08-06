@@ -40,20 +40,15 @@ public class AzureService : IAzureService
             );
         }
 
-        try
-        {
-            return new ChainedTokenCredential(
-                new AzureCliCredential(new AzureCliCredentialOptions { TenantId = tenantId }),
-                new AzurePowerShellCredential(new AzurePowerShellCredentialOptions { TenantId = tenantId }),
-                new AzureDeveloperCliCredential(new AzureDeveloperCliCredentialOptions { TenantId = tenantId }),
-                new VisualStudioCredential(new VisualStudioCredentialOptions { TenantId = tenantId }),
-                new ManagedIdentityCredential(GetManagedIdentityClientId())
-            );
-        }
-        catch (CredentialUnavailableException)
-        {
-            return new InteractiveBrowserCredential(new InteractiveBrowserCredentialOptions { TenantId = tenantId });
-        }
+        // Local dev: prefer developer credentials (Azure CLI, then PowerShell, Developer CLI, Visual Studio) and
+        // fall back to managed identity last, so a signed-in developer's `az login` always wins.
+        return new ChainedTokenCredential(
+            new AzureCliCredential(new AzureCliCredentialOptions { TenantId = tenantId }),
+            new AzurePowerShellCredential(new AzurePowerShellCredentialOptions { TenantId = tenantId }),
+            new AzureDeveloperCliCredential(new AzureDeveloperCliCredentialOptions { TenantId = tenantId }),
+            new VisualStudioCredential(new VisualStudioCredentialOptions { TenantId = tenantId }),
+            CreateManagedIdentityCredential()
+        );
     }
 
     private static bool IsRunningInPipeline()
@@ -63,14 +58,37 @@ public class AzureService : IAzureService
     }
 
     /// <summary>
-    /// Gets the client ID for a user-assigned managed identity from the AZURE_CLIENT_ID environment variable.
-    /// Returns null if not set, allowing the credential to use system-assigned managed identity.
+    /// Builds the managed-identity link for the local-dev credential chain. A bare
+    /// ManagedIdentityCredential placed in a ChainedTokenCredential blocks on the IMDS
+    /// endpoint when running off-Azure, because a hand-built chain does not enable the fast-fail
+    /// IMDS probe. Wrapping managed identity in a managed-identity-only DefaultAzureCredential restores
+    /// that probe, so the credential fails fast with CredentialUnavailableException (about a second)
+    /// when no IMDS endpoint is reachable instead of hanging. ManagedIdentityClientId defaults to the AZURE_CLIENT_ID
+    /// environment variable, so a user-assigned identity is honored when one is configured.
     /// </summary>
-    /// <returns>The client ID for user-assigned managed identity, or null for system-assigned.</returns>
-    private static string? GetManagedIdentityClientId()
+    private static DefaultAzureCredential CreateManagedIdentityCredential()
     {
-        return Environment.GetEnvironmentVariable("AZURE_CLIENT_ID");
+        return new DefaultAzureCredential(ManagedIdentityCredentialOptions);
     }
+
+    /// <summary>
+    /// The options used to build the managed-identity-only <see cref="DefaultAzureCredential"/>. Every credential
+    /// type that DefaultAzureCredential can probe must be excluded except ManagedIdentity, otherwise the wrapper
+    /// could silently pick up an unwanted identity from the environment.
+    /// </summary>
+    public static DefaultAzureCredentialOptions ManagedIdentityCredentialOptions => new()
+    {
+        ExcludeEnvironmentCredential = true,
+        ExcludeWorkloadIdentityCredential = true,
+        ExcludeManagedIdentityCredential = false,
+        ExcludeVisualStudioCredential = true,
+        ExcludeVisualStudioCodeCredential = true,
+        ExcludeAzureCliCredential = true,
+        ExcludeAzurePowerShellCredential = true,
+        ExcludeAzureDeveloperCliCredential = true,
+        ExcludeInteractiveBrowserCredential = true,
+        ExcludeBrokerCredential = true,
+    };
 
     private static bool IsGitHubAction()
     {

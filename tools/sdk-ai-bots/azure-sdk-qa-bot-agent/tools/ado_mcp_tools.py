@@ -32,6 +32,25 @@ _ADO_TOKEN_ENV = "ADO_MCP_AUTH_TOKEN"
 # so `npx` resolves from cache instead of hitting the registry on cold start.
 _ADO_MCP_PACKAGE = os.environ.get("ADO_MCP_PACKAGE", "@azure-devops/mcp@2.7.0")
 
+_ADO_ALLOWED_TOOLS: list[str] = [
+    # core (read-only)
+    "core_list_projects",
+    "core_list_project_teams",
+    "core_get_identity_ids",
+    # pipelines / builds (read-only) — pipeline definition & run lookup
+    "pipelines_get_build_definitions",
+    "pipelines_get_build_definition_revisions",
+    "pipelines_get_builds",
+    "pipelines_get_build_status",
+    "pipelines_get_build_changes",
+    "pipelines_get_build_log",
+    "pipelines_get_build_log_by_id",
+    "pipelines_get_run",
+    "pipelines_list_runs",
+    "pipelines_list_artifacts",
+    "pipelines_download_artifact",
+]
+
 
 async def create_ado_mcp_tool() -> MCPStdioTool:
     """Create an MCPStdioTool that launches the Azure DevOps MCP server.
@@ -70,6 +89,8 @@ async def create_ado_mcp_tool() -> MCPStdioTool:
         ],
         env=env,
         load_prompts=False,
+        allowed_tools=_ADO_ALLOWED_TOOLS,
+        approval_mode="never_require",
         parse_tool_results=truncating_mcp_parser,
         description=(
             "Azure DevOps stdio MCP server tools for pipeline lookup. "

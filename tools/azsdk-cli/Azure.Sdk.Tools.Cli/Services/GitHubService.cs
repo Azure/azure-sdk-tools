@@ -1058,37 +1058,48 @@ query($owner: String!, $repo: String!, $pr: Int!, $after: String) {
                     "Searching for pull requests with head branch prefix '{Prefix}' updated since {Since} in {RepoOwner}/{RepoName}",
                     headBranchPrefix, since, repoOwner, repoName);
 
-                var query = $"repo:{repoOwner}/{repoName} is:pr head:{headBranchPrefix} updated:>={since.UtcDateTime:yyyy-MM-ddTHH:mm:ssZ}";
+                // Filter head refs client-side from the listing to avoid a PullRequest.Get per search hit.
+                var request = new PullRequestRequest
+                {
+                    State = ItemStateFilter.All,
+                    SortProperty = PullRequestSort.Updated,
+                    SortDirection = SortDirection.Descending,
+                };
 
                 var pullRequests = new List<PullRequest>();
                 for (var page = 1; ; page++)
                 {
                     ct.ThrowIfCancellationRequested();
-                    var searchRequest = new SearchIssuesRequest(query)
+                    var options = new ApiOptions
                     {
-                        Type = IssueTypeQualifier.PullRequest,
-                        PerPage = 100, // Maximum allowed by GitHub API.
-                        Page = page,
+                        PageSize = 100, // Maximum allowed by GitHub API.
+                        PageCount = 1,
+                        StartPage = page,
                     };
 
-                    var searchResult = await gitHubClient.Search.SearchIssues(searchRequest);
-                    if (searchResult?.Items == null || searchResult.Items.Count == 0)
+                    var pageResults = await gitHubClient.PullRequest.GetAllForRepository(repoOwner, repoName, request, options);
+                    if (pageResults.Count == 0)
                     {
                         break;
                     }
 
-                    foreach (var issue in searchResult.Items)
+                    var reachedWindowStart = false;
+                    foreach (var pullRequest in pageResults)
                     {
-                        ct.ThrowIfCancellationRequested();
+                        if (pullRequest.UpdatedAt < since)
+                        {
+                            // Sorted by UpdatedAt desc: nothing after this can be in the window.
+                            reachedWindowStart = true;
+                            break;
+                        }
 
-                        var pullRequest = await gitHubClient.PullRequest.Get(repoOwner, repoName, issue.Number);
                         if (pullRequest.Head?.Ref?.StartsWith(headBranchPrefix, StringComparison.OrdinalIgnoreCase) == true)
                         {
                             pullRequests.Add(pullRequest);
                         }
                     }
 
-                    if (searchResult.Items.Count < searchRequest.PerPage)
+                    if (reachedWindowStart || pageResults.Count < options.PageSize)
                     {
                         break;
                     }

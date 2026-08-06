@@ -4,7 +4,7 @@
 
 ### Features Added
 
-- Added `azp evaluate` CLI command and `azsdk_evaluate_copilot_pipeline_fixes` MCP tool to evaluate whether Copilot's fixes for failing pipelines took the pipeline from failure to success and survived into the merged pull request. Accepts a repository owner and name. Optional parameters: `--since-days`, `--model`.
+- Added `azp evaluate` CLI command and `azsdk_evaluate_pipeline_fixes` MCP tool to evaluate whether Copilot's fixes for failing pipelines took the pipeline from failure to success and survived into the merged pull request. Accepts a repository owner and name. Optional parameters: `--since-days`, `--model`.
 
 ## 0.6.33 (2026-07-29)
 

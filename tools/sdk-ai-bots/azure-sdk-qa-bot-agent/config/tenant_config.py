@@ -25,6 +25,7 @@ from models.knowledge import KnowledgeSource, _trim_file_format
 
 class TenantID(str, Enum):
     TYPESPEC_CHANNEL_QA_BOT = "typespec_channel_qa_bot"
+    ALLOY_FRAMEWORK_QA_BOT = "alloy_framework_qa_bot"
     PYTHON_CHANNEL_QA_BOT = "python_channel_qa_bot"
     DOTNET_CHANNEL_QA_BOT = "dotnet_channel_qa_bot"
     GOLANG_CHANNEL_QA_BOT = "golang_channel_qa_bot"
@@ -374,8 +375,6 @@ _TYPESPEC_SOURCES = _sources(
     SRC_STATIC_TYPESPEC_TO_SWAGGER_MAPPING,
     SRC_TYPESPEC_AZURE_PROVIDERHUB_DOCS,
     SRC_STATIC_ARM_DOCS,
-    SRC_ALLOY_FRAMEWORK_DOCS,
-    SRC_ALLOY_FRAMEWORK_SAMPLES,
 )
 
 _AZURE_TYPESPEC_AUTHORING_SOURCES = _sources(
@@ -528,7 +527,6 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             "TypeSpec migration from OpenAPI",
             "TypeSpec validation and configurations (tspconfig.yaml)",
             "TypeSpec generated OpenAPI/Swagger review",
-            "Writing TypeSpec emitters with the emitter framework (EF v2) and the alloy framework",
             "Client customization for SDKs (even if a specific language is mentioned, if the core topic is TypeSpec authoring)",
             "API design guidelines and best practices",
         ],
@@ -539,6 +537,22 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         },
         qa_guideline_file="tenants/typespec.md",
         enable_routing=True,
+    ),
+    TenantID.ALLOY_FRAMEWORK_QA_BOT: TenantConfig(
+        display_name="Alloy Framework (Test)",
+        skill_name="alloy-framework-test",
+        scope="TypeSpec emitter framework (EF v2) and Alloy framework implementation guidance for Azure SDK developers.",
+        topics=[
+            "Getting started with the Alloy framework for TypeSpec emitters",
+            "Emitter framework (EF v2) architecture and implementation patterns",
+            "Reference implementations from official Alloy sample emitters",
+        ],
+        sources=_sources(
+            SRC_TYPESPEC_DOCS,
+            SRC_ALLOY_FRAMEWORK_DOCS,
+            SRC_ALLOY_FRAMEWORK_SAMPLES,
+        ),
+        qa_guideline_file="tenants/typespec.md",
     ),
     TenantID.AZURE_SDK_ONBOARDING: TenantConfig(
         display_name="Azure SDK Onboarding",

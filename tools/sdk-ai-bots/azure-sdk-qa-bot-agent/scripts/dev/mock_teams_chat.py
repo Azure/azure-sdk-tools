@@ -28,6 +28,7 @@ import httpx
 
 TENANTS = [
     "azure_sdk_qa_bot",
+    "alloy_framework_qa_bot",
     "python_channel_qa_bot",
     "dotnet_channel_qa_bot",
     "golang_channel_qa_bot",

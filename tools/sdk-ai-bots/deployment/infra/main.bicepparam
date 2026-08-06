@@ -4,10 +4,9 @@
 // automatically sets (AZURE_ENV_NAME, AZURE_LOCATION) plus values that azd
 // loads from .azure/<env>/.env when an environment is selected.
 //
-// Pipelines do NOT use this file. They invoke `az deployment sub create`
-// directly with `--parameters @environments/<env>.parameters.json`, which is
-// the authoritative per-environment config (full Teams channel list, real
-// AAD app audience, etc.).
+// Pipelines do NOT use this file. Their environment-suite loader exports
+// suite-owned values (including Teams routing), while environment parameter
+// files provide resource overrides and the Entra app audience.
 
 using './main.bicep'
 
@@ -67,3 +66,7 @@ param teamsChannelIds = split(readEnvironmentVariable('TEAMS_CHANNEL_IDS', '19:d
 // this provision leaves the token binding untouched. Default true so the
 // first provision creates the connection shell.
 param createTeamsConnection = readEnvironmentVariable('CREATE_TEAMS_CONNECTION', 'true') == 'true'
+
+// Preserve the complete workflow on subsequent provisions. The preprovision
+// hook sets this to false only when no Logic App workflow exists yet.
+param includeLogicAppWorkflowDefinition = readEnvironmentVariable('INCLUDE_LOGIC_APP_WORKFLOW_DEFINITION', 'false') == 'true'

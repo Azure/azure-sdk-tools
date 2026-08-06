@@ -15,8 +15,10 @@
         - per-service hooks       (via process env vars)
         - az deployment sub what-if in pipelines (via <env>.parameters.json)
 
-    Fields not owned by the suite (teamsGroupId, teamsChannelIds, serverAudience)
-    are preserved untouched in <env>.parameters.json.
+    Fields not owned by the suite are preserved in <env>.parameters.json.
+    Teams IDs are copied from the suite into the azd environment. A concrete
+    serverAudience is copied from the parameters file; a REPLACE_WITH_*
+    placeholder is left for the preprovision hook to resolve.
 
     Run this once after `azd env new <env>`, and again whenever the suite is
     updated. Pipelines do not need it — they read the suite directly via
@@ -79,6 +81,12 @@ if (-not ($existingNames -contains $Environment)) {
 }
 & azd env select $Environment | Out-Null
 
+if (-not (Test-Path $ParametersFile)) {
+    Write-Error "Parameters file not found at $ParametersFile"
+    exit 1
+}
+$paramsJson = Get-Content -Raw -Path $ParametersFile | ConvertFrom-Json
+
 # Mapping: <env-suite yq path>  →  <azd env var name>
 $Mapping = @(
     @{ Path = ".environments.$Environment.subscriptionId";       Key = 'AZURE_SUBSCRIPTION_ID' }
@@ -118,6 +126,31 @@ foreach ($entry in $Mapping) {
     Write-Host "  $($entry.Key) = $value"
 }
 
+# Teams routing is suite-owned and flows into the local azd environment.
+$teamsGroupId = (& yq -r ".environments.$Environment.teamsGroupId" $SuitePath).Trim()
+$teamsChannelIds = @(& yq -r ".environments.$Environment.teamsChannelIds[]" $SuitePath | ForEach-Object { ([string]$_).Trim() })
+
+if ([string]::IsNullOrWhiteSpace($teamsGroupId) -or $teamsGroupId -match '^REPLACE_WITH_') {
+    $failed += "teamsGroupId is missing or still a placeholder in environment-suite.yaml."
+} else {
+    & azd env set TEAMS_GROUP_ID $teamsGroupId | Out-Null
+    Write-Host "  TEAMS_GROUP_ID = $teamsGroupId"
+}
+
+if ($teamsChannelIds.Count -eq 0 -or @($teamsChannelIds | Where-Object { [string]::IsNullOrWhiteSpace($_) -or $_ -match '^REPLACE_WITH_' }).Count -gt 0) {
+    $failed += "teamsChannelIds is empty or contains a placeholder in environment-suite.yaml."
+} else {
+    $teamsChannelIdsValue = $teamsChannelIds -join ','
+    & azd env set TEAMS_CHANNEL_IDS $teamsChannelIdsValue | Out-Null
+    Write-Host "  TEAMS_CHANNEL_IDS = $teamsChannelIdsValue"
+}
+
+$serverAudience = [string]$paramsJson.parameters.serverAudience.value
+if (-not [string]::IsNullOrWhiteSpace($serverAudience) -and $serverAudience -notmatch '^REPLACE_WITH_') {
+    & azd env set SERVER_AUDIENCE $serverAudience | Out-Null
+    Write-Host "  SERVER_AUDIENCE = $serverAudience"
+}
+
 if ($failed.Count -gt 0) {
     Write-Host ""
     Write-Host "Sync incomplete:" -ForegroundColor Red
@@ -127,11 +160,6 @@ if ($failed.Count -gt 0) {
 
 # ── Sync into <env>.parameters.json ────────────────────────────────────────────
 # Fields owned by the suite are overwritten; unmanaged fields are preserved.
-if (-not (Test-Path $ParametersFile)) {
-    Write-Error "Parameters file not found at $ParametersFile"
-    exit 1
-}
-
 Write-Host ""
 Write-Host "Syncing environment-suite.yaml → $([System.IO.Path]::GetFileName($ParametersFile))..." -ForegroundColor Cyan
 
@@ -156,8 +184,6 @@ foreach ($pair in @(
         exit 1
     }
 }
-
-$paramsJson = Get-Content -Raw -Path $ParametersFile | ConvertFrom-Json
 
 function Set-ParamValue {
     param($Parameters, [string]$Name, $Value)
@@ -187,8 +213,8 @@ Write-Host "  resourceGroupName              = $resourceGroupName"
 Write-Host "  functionImageRepository        = ${functionImageName}:${Environment}"
 Write-Host "  agentServerImageRepository     = ${agentImageName}:${Environment}"
 
-# Warn on unmanaged placeholders that pipelines still need.
-foreach ($key in @('serverAudience', 'teamsGroupId')) {
+# Warn on an unmanaged placeholder that pipelines still need.
+foreach ($key in @('serverAudience')) {
     if ($paramsJson.parameters.PSObject.Properties.Name -contains $key) {
         $v = [string]$paramsJson.parameters.$key.value
         if ($v -match '^REPLACE_WITH_') {
@@ -198,5 +224,5 @@ foreach ($key in @('serverAudience', 'teamsGroupId')) {
 }
 
 Write-Host ""
-Write-Host "✓ azd env '$Environment' and $([System.IO.Path]::GetFileName($ParametersFile)) are in sync with environment-suite.yaml." -ForegroundColor Green
+Write-Host "✓ azd env '$Environment' is in sync with environment-suite.yaml and $([System.IO.Path]::GetFileName($ParametersFile))." -ForegroundColor Green
 Write-Host "  Next: azd provision --environment $Environment --no-prompt"

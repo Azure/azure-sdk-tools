@@ -112,13 +112,16 @@ param logicAppAlertName string = ''
 @description('When false, skip PUT on the Teams `Microsoft.Web/connections` resource so an already-authorized OAuth connection is left untouched. hooks/preprovision.ts sets CREATE_TEAMS_CONNECTION=false when the connection status is "Connected"; otherwise it defaults to true so the first provision creates the connection shell.')
 param createTeamsConnection bool = true
 
+@description('When true, deploy the complete Logic App workflow definition. The preprovision hook enables this when the workflow already exists; first provision uses an empty shell until the Function App is deployed.')
+param includeLogicAppWorkflowDefinition bool = false
+
 @description('Logical environment name (dev / preview / prod). Used to derive per-env defaults (Table Storage table name, RAG service scope, ...). Sourced from AZURE_ENV_NAME via main.bicepparam.')
 param envName string
 
 @description('Azure Table Storage table name that stores per-conversation Bot Framework state. Read by the frontend at startup — must be non-empty (Table Storage rejects blank names with 400 InvalidInput). Empty string means "compute default from envName" (e.g. TeamsChannelConversationsDev).')
 param azureTableNameForConversation string = ''
 
-@description('OAuth2 scope the frontend requests when calling the agent server. Empty string means "compute default from envName" (e.g. api://azure-sdk-qa-bot-dev/.default).')
+@description('OAuth2 scope the frontend requests when calling the agent server. Empty string uses the server app registration audience.')
 param ragServiceScope string = ''
 
 @description('User-visible display name for the Teams bot. Empty string means "compute default from envName" (prod → "Azure SDK Q&A Bot"; else "Azure SDK Q&A Bot <env>").')
@@ -139,7 +142,7 @@ var _suffix = substring(uniqueString(rg.id), 0, 6)
 // may override the param; empty → this default is used.
 var _envSuffixTitleCase = '${toUpper(substring(envName, 0, 1))}${substring(envName, 1)}'
 var _defaultAzureTableNameForConversation = 'TeamsChannelConversations${_envSuffixTitleCase}'
-var _defaultRagServiceScope = 'api://azure-sdk-qa-bot-${envName}/.default'
+var _defaultRagServiceScope = 'api://${serverAudience}/.default'
 var _defaultTeamsBotFullDisplayName = envName == 'prod' ? 'Azure SDK Q&A Bot' : 'Azure SDK Q&A Bot ${envName}'
 
 // ── Layer 1: Shared resources ──────────────────────────────────────────────────
@@ -250,10 +253,9 @@ module functionApp './modules/qaBotFunctionApp/serverfarm.bicep' = {
 // in the module). All Logic App infrastructure — the workflow resource, its
 // user-assigned identities, the Teams/Blob/CosmosDB managed API connections,
 // the integration account, and the failure metric alert — is created up front.
-// The real workflow definition (which references convertActivity inside the
-// Function App container) is applied afterwards by hooks/function-postdeploy.ts
-// via an ARM PATCH, once `azd deploy function-app` has pushed the image and
-// the Functions host is responding to ARM validation.
+// First provision creates a shell because the Function App runtime is not yet
+// available for ARM validation. Subsequent provisions retain the full workflow
+// definition; postdeploy also applies it after the Function App is deployed.
 module logicApp './modules/qaBotLogicApp/logicAppResources.bicep' = {
   name: 'logic-app'
   scope: rg
@@ -276,7 +278,7 @@ module logicApp './modules/qaBotLogicApp/logicAppResources.bicep' = {
     logicAppWorkflowName:    !empty(logicAppWorkflowName)    ? logicAppWorkflowName    : 'azuresdkqabot-logicapp-${_suffix}'
     logicAppAlertName:       !empty(logicAppAlertName)       ? logicAppAlertName       : 'azuresdkqabot-logicapp-alert-${_suffix}'
     actionGroupName:         sharedResources.outputs.actionGroupName
-    includeWorkflowDefinition: false
+    includeWorkflowDefinition: includeLogicAppWorkflowDefinition
     createTeamsConnection: createTeamsConnection
   }
 }

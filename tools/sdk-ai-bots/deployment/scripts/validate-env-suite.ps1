@@ -30,7 +30,7 @@ $hasYq = $null -ne (Get-Command yq -ErrorAction SilentlyContinue)
 $RequiredKeys = @(
     'subscription', 'subscriptionId', 'tenantId',
     'resourceGroupPrefix', 'keyVaultName', 'appConfigName',
-    'containerRegistryName', 'approvalRequired',
+    'containerRegistryName', 'teamsGroupId', 'approvalRequired',
     'prodDeployOnlyFromPipeline', 'rolloutStrategy'
 )
 $Envs = @('dev', 'preview', 'prod')
@@ -44,7 +44,7 @@ foreach ($env in $Envs) {
             $value = (& yq -r ".environments.$env.$key" $SuitePath).Trim()
         } else {
             $content = Get-Content $SuitePath -Raw
-            $pattern = "(?ms)^\s{2}${env}:.*?^\s{4}${key}:\s*[`"']?(?<v>[^`"'\r\n]+)[`"']?"
+            $pattern = "(?ms)^\s{4}${env}:.*?^\s{8}${key}:\s*[`"']?(?<v>[^`"'\r\n]+)[`"']?"
             if ($content -match $pattern) { $value = $Matches['v'].Trim() }
         }
 
@@ -57,6 +57,23 @@ foreach ($env in $Envs) {
         }
         if ($key -eq 'subscriptionId' -and $value -notmatch '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$') {
             $errors += "[$env] subscriptionId '$value' is not GUID-shaped"
+        }
+    }
+
+    if ($hasYq) {
+        $teamsChannelIds = @(& yq -r ".environments.$env.teamsChannelIds[]?" $SuitePath)
+        if ($teamsChannelIds.Count -eq 0) {
+            $errors += "[$env] missing or empty key 'teamsChannelIds'"
+        } elseif (@($teamsChannelIds | Where-Object { [string]::IsNullOrWhiteSpace($_) -or $_ -match '^REPLACE_WITH_' }).Count -gt 0) {
+            $errors += "[$env] 'teamsChannelIds' contains an empty value or placeholder"
+        }
+    } else {
+        $content = Get-Content $SuitePath -Raw
+        $pattern = "(?ms)^\s{4}${env}:.*?^\s{8}teamsChannelIds:\s*\r?\n(?<items>(?:^\s{12}-\s*.+\r?\n?)+)"
+        if ($content -notmatch $pattern) {
+            $errors += "[$env] missing or empty key 'teamsChannelIds'"
+        } elseif ($Matches['items'] -match 'REPLACE_WITH_') {
+            $errors += "[$env] 'teamsChannelIds' contains a placeholder"
         }
     }
 }

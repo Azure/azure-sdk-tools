@@ -25,11 +25,12 @@
 import { execSync } from "child_process";
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
-import { resolve, join, relative } from "path";
+import { dirname, resolve, join, relative } from "path";
+import { fileURLToPath } from "url";
 
 const CONTAINER = "bot-configs";
 const CONFIG_ROOT_ENV = "BOT_CONFIGS_SOURCE_DIR";
-const DEFAULT_CONFIG_ROOT = "config";
+const DEFAULT_CONFIG_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../../config");
 // Files whose contents get env-var expansion applied. Blobs outside this list
 // (e.g. binary assets) are uploaded verbatim.
 const TEMPLATED_EXTENSIONS = new Set([".yaml", ".yml", ".json"]);

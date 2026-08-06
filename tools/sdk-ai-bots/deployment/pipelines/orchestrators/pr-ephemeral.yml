@@ -13,8 +13,8 @@
 #
 # Pipeline variables required (set on the pipeline or a variable group):
 #   SERVICE_CONNECTION, DEVCENTER_NAME, DEVCENTER_PROJECT, ADE_CATALOG_NAME,
-#   ADE_ENV_DEFINITION, ACR_NAME, SERVER_AUDIENCE, TEAMS_GROUP_ID,
-#   TEAMS_CHANNEL_IDS, FRONTEND_IMAGE_TAG, FUNCTION_IMAGE_TAG, AGENT_IMAGE_TAG
+#   ADE_ENV_DEFINITION, ACR_NAME, SERVER_AUDIENCE, FRONTEND_IMAGE_TAG,
+#   FUNCTION_IMAGE_TAG, AGENT_IMAGE_TAG
 # ─────────────────────────────────────────────────────────────────────────────
 
 name: sdk-ai-bots — pr-ephemeral
@@ -55,11 +55,14 @@ extends:
                         # pipeline variables (image tags produced by CI).
                         - bash: |
                               set -euo pipefail
+                              SUITE="$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment/infra/environments/environment-suite.yaml"
+                              TEAMS_GROUP_ID=$(yq -r '.environments.dev.teamsGroupId' "$SUITE")
+                              TEAMS_CHANNEL_IDS=$(yq -o=json -I=0 '.environments.dev.teamsChannelIds' "$SUITE")
                               cat > params.json <<JSON
                               {
                                 "serverAudience": "$(SERVER_AUDIENCE)",
-                                "teamsGroupId": "$(TEAMS_GROUP_ID)",
-                                "teamsChannelIds": $(TEAMS_CHANNEL_IDS),
+                                "teamsGroupId": "$TEAMS_GROUP_ID",
+                                "teamsChannelIds": $TEAMS_CHANNEL_IDS,
                                 "frontendImageRepository": "azure-sdk-qa-bot:$(FRONTEND_IMAGE_TAG)",
                                 "agentServerImageRepository": "azure-sdk-qa-bot-agent-server:$(AGENT_IMAGE_TAG)",
                                 "functionImageRepository": "azure-sdk-qa-bot-function:$(FUNCTION_IMAGE_TAG)"

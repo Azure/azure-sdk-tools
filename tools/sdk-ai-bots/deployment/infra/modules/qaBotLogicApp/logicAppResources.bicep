@@ -163,9 +163,6 @@ var workflowParameters = {
   blobStorageAccountName: {
     value: blobStorageAccountName
   }
-  blobConnectionName: {
-    value: blobConnection.name
-  }
 }
 
 resource integrationAccount 'Microsoft.Logic/integrationAccounts@2019-05-01' = {

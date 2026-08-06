@@ -7,8 +7,7 @@
  * file via `yq` in pipelines/templates/load-environment-suite.yml.
  *
  * Uses `yq` when available (matches the pipeline path). Otherwise falls back
- * to a small regex parser that handles the flat scalar fields under each
- * `environments.<env>:` block — enough for the keys hooks currently need.
+ * to a small indentation-aware reader for scalar and string-array fields.
  * Adds no runtime dependencies.
  */
 
@@ -25,6 +24,30 @@ const DEFAULT_SUITE_PATH = resolve(
 
 let yqChecked = false;
 let yqAvailable = false;
+
+function getEnvironmentBlock(text: string, envName: string): { block: string; fieldIndent: number } | undefined {
+  const lines = text.split(/\r?\n/);
+  const headerPattern = new RegExp(`^(\\s*)${envName}:\\s*$`);
+  const headerIndex = lines.findIndex((line) => headerPattern.test(line));
+  if (headerIndex < 0) return undefined;
+
+  const headerMatch = headerPattern.exec(lines[headerIndex]);
+  const headerIndent = headerMatch?.[1].length ?? 0;
+  let endIndex = lines.length;
+  for (let index = headerIndex + 1; index < lines.length; index++) {
+    const line = lines[index];
+    if (!line.trim() || line.trimStart().startsWith("#")) continue;
+    const indent = line.length - line.trimStart().length;
+    if (indent <= headerIndent) {
+      endIndex = index;
+      break;
+    }
+  }
+  return {
+    block: lines.slice(headerIndex + 1, endIndex).join("\n"),
+    fieldIndent: headerIndent + 4,
+  };
+}
 
 function hasYq(): boolean {
   if (yqChecked) return yqAvailable;
@@ -64,20 +87,10 @@ export function getEnvSuiteValue(
   // line at its top-level indentation. Handles single-quoted, double-quoted,
   // and unquoted scalars. Sufficient for the flat scalar fields the hooks
   // currently need (subscriptionId, resourceGroupPrefix, teamsAppId, ...).
-  const text = readFileSync(suitePath, "utf8");
-  const envHeader = new RegExp(`^(\\s+)${envName}:\\s*$`, "m");
-  const headerMatch = envHeader.exec(text);
-  if (!headerMatch) return undefined;
-  const indent = headerMatch[1].length + 4; // block members are one level deeper
-  // Slice from just after the env header until the next line at the same or
-  // shallower indent (i.e. the next sibling env or top-level block).
-  const startIdx = headerMatch.index + headerMatch[0].length + 1;
-  const rest = text.slice(startIdx);
-  const siblingRe = new RegExp(`\\n {0,${indent - 1}}[^\\s#][^\\n]*`, "");
-  const siblingMatch = siblingRe.exec("\n" + rest);
-  const block = siblingMatch ? rest.slice(0, siblingMatch.index) : rest;
-  const fieldRe = new RegExp(`^ {${indent}}${key}:\\s*(.*)$`, "m");
-  const fieldMatch = fieldRe.exec(block);
+  const environment = getEnvironmentBlock(readFileSync(suitePath, "utf8"), envName);
+  if (!environment) return undefined;
+  const fieldRe = new RegExp(`^ {${environment.fieldIndent}}${key}:\\s*(.*)$`, "m");
+  const fieldMatch = fieldRe.exec(environment.block);
   if (!fieldMatch) return undefined;
   let value = fieldMatch[1].trim();
   // Strip trailing inline comment.
@@ -90,4 +103,46 @@ export function getEnvSuiteValue(
     value = value.slice(1, -1);
   }
   return value === "" ? undefined : value;
+}
+
+/** Read a string-array field for `envName` from environment-suite.yaml. */
+export function getEnvSuiteValues(
+  envName: string,
+  key: string,
+  suitePath: string = DEFAULT_SUITE_PATH,
+): string[] {
+  if (!existsSync(suitePath)) return [];
+
+  if (hasYq()) {
+    return execFileSync(
+      "yq",
+      ["-r", `.environments.${envName}.${key}[]? // ""`, suitePath],
+      { encoding: "utf8" },
+    )
+      .split(/\r?\n/)
+      .map((value) => value.trim())
+      .filter(Boolean);
+  }
+
+  const environment = getEnvironmentBlock(readFileSync(suitePath, "utf8"), envName);
+  if (!environment) return [];
+  const fieldRe = new RegExp(`^ {${environment.fieldIndent}}${key}:\\s*$`, "m");
+  const fieldMatch = fieldRe.exec(environment.block);
+  if (!fieldMatch) return [];
+  const arrayRest = environment.block.slice(fieldMatch.index + fieldMatch[0].length + 1);
+  const itemIndent = environment.fieldIndent + 4;
+  const values: string[] = [];
+  for (const line of arrayRest.split(/\r?\n/)) {
+    const itemMatch = new RegExp(`^ {${itemIndent}}-\\s*(.+)$`).exec(line);
+    if (!itemMatch) break;
+    let value = itemMatch[1].replace(/\s+#.*$/, "").trim();
+    if (
+      (value.startsWith("'") && value.endsWith("'")) ||
+      (value.startsWith('"') && value.endsWith('"'))
+    ) {
+      value = value.slice(1, -1);
+    }
+    if (value) values.push(value);
+  }
+  return values;
 }

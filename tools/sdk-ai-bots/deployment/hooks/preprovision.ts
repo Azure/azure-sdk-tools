@@ -19,6 +19,7 @@ import { readFileSync, existsSync } from "fs";
 import { resolve } from "path";
 
 import { ensureEntraApp } from "./lib/ensure-entra-app.js";
+import { getEnvSuiteValue, getEnvSuiteValues } from "./lib/env-suite.js";
 import { runQuotaCheck } from "./lib/quota-check.js";
 
 const ENV_NAME = process.env.AZURE_ENV_NAME ?? "";
@@ -28,6 +29,7 @@ const LOCATION = process.env.AZURE_LOCATION ?? "westus2";
 const RUNNING_IN_PIPELINE = !!process.env.TF_BUILD || !!process.env.GITHUB_ACTIONS;
 
 const SUITE_PATH = resolve(process.cwd(), "deployment/infra/environments/environment-suite.yaml");
+const PARAMETERS_PATH = resolve(process.cwd(), `deployment/infra/environments/${ENV_NAME}.parameters.json`);
 
 function log(msg: string): void {
   console.log(`[preprovision] ${msg}`);
@@ -80,41 +82,62 @@ function validateEnvironmentSuite(): void {
 function detectLocalDrift(): void {
   if (RUNNING_IN_PIPELINE || !ENV_NAME) return;
 
-  let yqAvailable = false;
+  const expected: Record<string, string> = {};
   const lookup = process.platform === "win32" ? "where" : "command -v";
+  let yqAvailable = false;
   try {
     execSync(`${lookup} yq`, { stdio: "ignore" });
     yqAvailable = true;
   } catch {
-    log("  yq not on PATH — skipping env-suite drift check.");
-    return;
+    log("  yq not on PATH — skipping env-suite portion of drift check.");
   }
-  if (!yqAvailable) return;
 
-  const read = (path: string): string =>
-    execFileSync("yq", ["-r", path, SUITE_PATH], { encoding: "utf8" }).trim();
+  if (yqAvailable) {
+    const read = (path: string): string =>
+      execFileSync("yq", ["-r", path, SUITE_PATH], { encoding: "utf8" }).trim();
 
-  const expected: Record<string, string> = {
-    AZURE_SUBSCRIPTION_ID: read(`.environments.${ENV_NAME}.subscriptionId`),
-    AZURE_RESOURCE_GROUP: read(`.environments.${ENV_NAME}.resourceGroupPrefix`),
-    AZURE_LOCATION: read(`.environments.${ENV_NAME}.regions[0].name`),
-  };
+    expected.AZURE_SUBSCRIPTION_ID = read(`.environments.${ENV_NAME}.subscriptionId`);
+    expected.AZURE_RESOURCE_GROUP = read(`.environments.${ENV_NAME}.resourceGroupPrefix`);
+    expected.AZURE_LOCATION = read(`.environments.${ENV_NAME}.regions[0].name`);
+  }
+
+  if (!existsSync(PARAMETERS_PATH)) {
+    throw new Error(`Environment parameters file not found: ${PARAMETERS_PATH}`);
+  }
+  const parameters = JSON.parse(readFileSync(PARAMETERS_PATH, "utf8")).parameters ?? {};
+  const teamsGroupId = getEnvSuiteValue(ENV_NAME, "teamsGroupId", SUITE_PATH) ?? "";
+  const teamsChannelIds = getEnvSuiteValues(ENV_NAME, "teamsChannelIds", SUITE_PATH);
+  if (!teamsGroupId || teamsGroupId.startsWith("REPLACE_WITH_")) {
+    throw new Error(`teamsGroupId is missing or still a placeholder in ${SUITE_PATH}`);
+  }
+  if (
+    teamsChannelIds.length === 0 ||
+    teamsChannelIds.some((id: string) => !id || id.startsWith("REPLACE_WITH_"))
+  ) {
+    throw new Error(`teamsChannelIds is empty or contains a placeholder in ${SUITE_PATH}`);
+  }
+  expected.TEAMS_GROUP_ID = teamsGroupId;
+  expected.TEAMS_CHANNEL_IDS = teamsChannelIds.join(",");
+  const serverAudience = String(parameters.serverAudience?.value ?? "");
+  if (serverAudience && !serverAudience.startsWith("REPLACE_WITH_")) {
+    expected.SERVER_AUDIENCE = serverAudience;
+  }
 
   const drift: string[] = [];
   for (const [key, want] of Object.entries(expected)) {
     if (!want || want === "null" || want.startsWith("REPLACE_WITH_")) continue;
     const have = process.env[key] ?? "";
-    if (have !== want) drift.push(`  ${key}: azd='${have}'  suite='${want}'`);
+    if (have !== want) drift.push(`  ${key}: azd='${have}'  expected='${want}'`);
   }
 
   if (drift.length > 0) {
     throw new Error(
-      "azd environment is out of sync with environment-suite.yaml:\n" +
+      "azd environment is out of sync with its configuration sources:\n" +
         drift.join("\n") +
         `\n\nRun:  pwsh ./scripts/sync-env-suite.ps1 -Environment ${ENV_NAME}`
     );
   }
-  log("  ✓ azd env vars match environment-suite.yaml");
+  log("  ✓ azd env vars match environment-suite.yaml and the environment parameters file");
 }
 
 function enforceProdGuardrail(): void {
@@ -300,6 +323,58 @@ function ensureTeamsConnectionFlag(): void {
   );
 }
 
+/**
+ * Preserve the full Logic App definition on subsequent provisions. The first
+ * provision still creates an empty workflow shell because the Function App
+ * runtime is not available for ARM validation until after `azd deploy`.
+ */
+function ensureLogicAppWorkflowFlag(): void {
+  const includeDefinitionEnv = "INCLUDE_LOGIC_APP_WORKFLOW_DEFINITION";
+  if (!RESOURCE_GROUP || !SUBSCRIPTION_ID) {
+    log(
+      "  Resource group / subscription not yet known — " +
+        `${includeDefinitionEnv}=false (first provision deploys the workflow shell).`,
+    );
+    process.env[includeDefinitionEnv] = "false";
+    return;
+  }
+
+  const configuredWorkflowName = process.env.LOGIC_APP_WORKFLOW_NAME?.trim();
+  let workflowNames: string[] = [];
+  try {
+    const raw = execSync(
+      `az resource list --resource-group "${RESOURCE_GROUP}" ` +
+        `--subscription "${SUBSCRIPTION_ID}" ` +
+        `--resource-type Microsoft.Logic/workflows ` +
+        `--query "[?${configuredWorkflowName
+          ? `name=='${configuredWorkflowName}'`
+          : "starts_with(name, 'azuresdkqabot-logicapp-')"}].name" -o json`,
+      { encoding: "utf8" },
+    );
+    workflowNames = JSON.parse(raw);
+  } catch {
+    // A missing resource group or transient lookup failure is equivalent to a
+    // first provision; Bicep will create the shell and postdeploy fills it.
+  }
+
+  const includeDefinition = workflowNames.length > 0;
+  const value = String(includeDefinition);
+  execSync(`azd env set ${includeDefinitionEnv} ${value}`, { stdio: "inherit" });
+  process.env[includeDefinitionEnv] = value;
+
+  if (includeDefinition) {
+    log(
+      `  ✓ Existing Logic App workflow found (${workflowNames.join(", ")}) — ` +
+        `${includeDefinitionEnv}=true (provision full definition).`,
+    );
+  } else {
+    log(
+      `  No Logic App workflow found in '${RESOURCE_GROUP}' — ` +
+        `${includeDefinitionEnv}=false (provision workflow shell).`,
+    );
+  }
+}
+
 (async () => {
   log(`Starting preprovision for environment '${ENV_NAME}' in '${LOCATION}'`);
   log(`  Resource group: ${RESOURCE_GROUP || "(not set; will be created by main.bicep)"}`);
@@ -313,6 +388,7 @@ function ensureTeamsConnectionFlag(): void {
   ensureServerAudience();
   ensureDeveloperPrincipal();
   ensureTeamsConnectionFlag();
+  ensureLogicAppWorkflowFlag();
 
   log("Preprovision checks passed.");
 })().catch((err) => {

@@ -21,8 +21,8 @@ For each of `frontend`, `function-app`, `agent-server`,
 
 - [ ] `scripts/validate-env-suite.ps1` passes for prod
 - [ ] `scripts/detect-drift.ps1 -Environment prod` shows zero drift
-- [ ] `az deployment sub what-if --parameters @prod.parameters.json` is
-      reviewed by at least one other engineer
+- [ ] The prod pipeline `az deployment sub what-if` output is reviewed by at
+      least one other engineer
 - [ ] Bicep changes merged via PR with at least one CODEOWNER approval
 
 ## Identity / RBAC

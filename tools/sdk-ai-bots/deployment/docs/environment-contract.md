@@ -12,6 +12,7 @@ declared:
 - approval requirement
 - whether prod is pipeline-only
 - whether local deploy is allowed
+- Teams group ID and channel IDs
 - rollout strategy (`direct`, `slot-swap`, `slot-swap-with-watch`)
 - per-component image names, slot names, and health paths
 
@@ -30,6 +31,8 @@ environments:
         keyVaultName: string
         appConfigName: string
         containerRegistryName: string
+        teamsGroupId: string
+        teamsChannelIds: string[]
         regions:
             - name: string # e.g. westus2
               ring: string # canary | broad | single
@@ -71,6 +74,12 @@ This script reads the per-env block from `environment-suite.yaml` and calls
 `azd env set` for each mapped key (`AZURE_SUBSCRIPTION_ID`,
 `AZURE_TENANT_ID`, `AZURE_RESOURCE_GROUP`, `AZURE_LOCATION`,
 `CONTAINER_REGISTRY_NAME`, `KEY_VAULT_NAME`, `APP_CONFIG_NAME`).
+
+Teams routing values are suite-owned and copied into the local azd environment:
+`teamsGroupId` → `TEAMS_GROUP_ID`, and the `teamsChannelIds` array →
+comma-separated `TEAMS_CHANNEL_IDS`. Pipelines export the same values directly
+from the suite. A concrete `serverAudience` remains parameter-file-owned and is
+copied to `SERVER_AUDIENCE`; placeholders are left for preprovision to resolve.
 
 The `preprovision` hook detects drift on every `azd provision` and fails fast
 if the azd env is out of sync, pointing you back at this script. Pipelines

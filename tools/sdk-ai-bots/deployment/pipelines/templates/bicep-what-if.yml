@@ -23,10 +23,12 @@ steps:
           inlineScript: |
               set -euo pipefail
               echo "Running what-if for env=$AZURE_ENV_NAME"
+              python3 -c 'import json, os; print(json.dumps({"parameters": {"teamsGroupId": {"value": os.environ["TEAMS_GROUP_ID"]}, "teamsChannelIds": {"value": json.loads(os.environ["TEAMS_CHANNEL_IDS_JSON"])}}}))' \
+                > "$(Agent.TempDirectory)/teams.parameters.json"
               OUTPUT=$(az deployment sub what-if \
                 --location "$AZURE_LOCATION" \
                 --template-file "${{ parameters.bicepFile }}" \
-                --parameters "@${{ parameters.parametersFile }}" \
+                --parameters "@${{ parameters.parametersFile }}" "@$(Agent.TempDirectory)/teams.parameters.json" \
                 --no-pretty-print 2>&1) || {
                   echo "$OUTPUT"
                   echo "##[error]what-if failed"

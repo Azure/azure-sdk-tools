@@ -30,25 +30,18 @@ infra/
 # Local (dev only)
 azd provision --environment dev --no-prompt
 
-# Pipeline (any env)
-az deployment sub create \
-  --location westus2 \
-  --template-file infra/main.bicep \
-  --parameters @infra/environments/<env>.parameters.json \
-  --name "sdk-ai-bots-<env>-$(date +%s)"
+# Pipeline (any env) loads environment-suite.yaml, then provisions through azd.
+# See deployment/pipelines/templates/provision-stage.yml.
 ```
 
 ## What-if (always run before prod apply)
 
-```bash
-az deployment sub what-if \
-  --location westus2 \
-  --template-file infra/main.bicep \
-  --parameters @infra/environments/prod.parameters.json
+```pwsh
+pwsh ../scripts/detect-drift.ps1 -Environment prod
 ```
 
 ## Environment-suite
 
 Every pipeline reads `environments/environment-suite.yaml` rather than
-hard-coding subscription IDs or region lists. See
+hard-coding subscription IDs, regions, or Teams routing. See
 [`../docs/environment-contract.md`](../docs/environment-contract.md).

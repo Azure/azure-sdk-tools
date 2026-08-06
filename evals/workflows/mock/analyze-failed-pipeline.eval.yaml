@@ -14,7 +14,7 @@ tags:
 
 environment: azsdk-mcp-mock
 
-config:
+defaults:
   runs: 1
   timeout: 5m
   model: gpt-5.4

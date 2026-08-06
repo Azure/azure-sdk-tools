@@ -12,11 +12,14 @@ tags:
   area: package
   priority: p0
 
-config:
+defaults:
   runs: 3
   timeout: "120s"
   executor: copilot-sdk
   model: gpt-5.4
+
+scoring:
+  threshold: 0.8
 
 stimuli:
 

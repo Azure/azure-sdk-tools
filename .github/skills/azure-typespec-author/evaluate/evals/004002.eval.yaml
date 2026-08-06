@@ -7,7 +7,7 @@ type: capability # capability | regression
 environment: azsdk-mcp
 
 # Execution configuration
-config:
+defaults:
   runs: 1 # Trials per stimulus
   timeout: "660s" # Seconds per trial
   model: claude-opus-4.6 #gpt-4o #claude-sonnet-4.6 # Model for agent execution
@@ -137,8 +137,10 @@ stimuli:
 
 scoring:
   weights:
-    prompt: 1
-    run-command: 1
-    skill-invocation: 1
-    file-matches: 4
+    prompt: 0.142857
+    run-command: 0.142857
+    skill-invocation: 0.142857
+    file-matches: 0.571429
+    tool-calls: 0
+    file-not-matches: 0
   threshold: 0.97

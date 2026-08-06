@@ -109,7 +109,7 @@
                         </ng-template>
                         <ng-template pTemplate="item" let-item>
                             <a pRipple [attr.data-item-id]="comment.id" [attr.data-element-id]="comment.elementId" class="flex align-items-center p-menuitem-link">
-                                <img *ngIf="item?.title" src="{{assetsPath}}/images/{{ item?.title! | languageNames: userProfile?.preferences?.theme }}-original.svg" width="25" height="25" class="ms-2">
+                                <img *ngIf="item?.title" src="{{assetsPath}}/images/{{ $safeNavigationMigration($safeNavigationMigration(item?.title))! | languageNames: $safeNavigationMigration($safeNavigationMigration(userProfile?.preferences?.theme)) }}-original.svg" width="25" height="25" class="ms-2">
                                 <i *ngIf="item?.icon" class="ms-2 {{item?.icon}}"></i>
                                 <span class="ms-2">{{ item.label }}</span>
                             </a>
@@ -139,7 +139,7 @@
         <div *ngIf="!codePanelRowData!.comments || codePanelRowData!.comments.length === 0"
              class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom">
             <div class="d-flex align-items-center" style="margin-left: 18px;">
-                <img [alt]="userProfile?.userName" src="https://github.com/{{ userProfile?.userName }}.png?size=20" width="20" height="20" class="user-avartar me-2"/>
+                <img [alt]="$safeNavigationMigration(userProfile?.userName)" src="https://github.com/{{ userProfile?.userName }}.png?size=20" width="20" height="20" class="user-avartar me-2"/>
                 <span class="text-muted">Add comment on line {{ actualLineNumber }}</span>
             </div>
             <div class="d-flex align-items-center" style="margin-right: 20px;">
@@ -179,10 +179,10 @@
     </div>
     <div *ngIf="!isThreadCollapsed" class="mt-2 d-grid gap-2">
         <div *ngIf="!(codePanelRowData!.showReplyTextBox)" class="border-top border-bottom reply-button-container p-2" style="display: flex; align-items: center;">
-            <img [alt]="userProfile?.userName" src="https://github.com/{{ userProfile?.userName }}.png?size=40" width="40" height="40" class="user-avartar mx-4"/>
+            <img [alt]="$safeNavigationMigration(userProfile?.userName)" src="https://github.com/{{ userProfile?.userName }}.png?size=40" width="40" height="40" class="user-avartar mx-4"/>
             <button type="button" style="flex-grow: 1;" class="btn btn-sm border text-muted text-start me-4 reply-button" (click)="showReplyEditor($event)">Reply...</button>
         </div>
-        <button *ngIf="codePanelRowData!.comments?.length! > 0" type="button" (click)="handleThreadResolutionButtonClick(codePanelRowData!.isResolvedCommentThread ? 'Unresolve' : 'Resolve')" class="btn btn-outline-secondary comment-action-btn btn-sm" style="width: 90%; margin: 0 auto; display: block;">{{codePanelRowData!.isResolvedCommentThread ? 'Unresolve' : 'Resolve'}} Conversation</button>
+        <button *ngIf="codePanelRowData!.comments.length > 0" type="button" (click)="handleThreadResolutionButtonClick(codePanelRowData!.isResolvedCommentThread ? 'Unresolve' : 'Resolve')" class="btn btn-outline-secondary comment-action-btn btn-sm" style="width: 90%; margin: 0 auto; display: block;">{{codePanelRowData!.isResolvedCommentThread ? 'Unresolve' : 'Resolve'}} Conversation</button>
     </div>
 </div>
 <div *ngIf="instanceLocation === 'code-panel' && !isThreadCollapsed && (!codePanelRowData!.isResolvedCommentThread || threadResolvedAndExpanded)" class="btn-group-vertical comment-thread-navigation ms-2 {{ floatItemEnd }}" role="group" aria-label="Comment Navigation Button">

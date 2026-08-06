@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, Injector, Input, Renderer2, SimpleChange, ViewContainerRef } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, Injector, Input, Renderer2, SimpleChange, ViewContainerRef, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
@@ -34,6 +34,7 @@ import { MarkdownToHtmlPipe } from 'src/app/_pipes/markdown-to-html.pipe';
     templateUrl: './samples-page.component.html',
     styleUrls: ['./samples-page.component.scss'],
     standalone: true,
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [
       CommonModule,
       FormsModule,

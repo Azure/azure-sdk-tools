@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
 import { getCodePanelRowDataClass, getStructuredTokenClass } from 'src/app/_helpers/common-helpers';
@@ -15,6 +15,7 @@ import { environment } from 'src/environments/environment';
         'class': 'cross-language-view-content'
     },
     standalone: true,
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [CommonModule, LanguageNamesPipe]
 })
 export class CrossLangViewComponent {

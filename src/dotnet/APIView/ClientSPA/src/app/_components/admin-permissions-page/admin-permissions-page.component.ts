@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { Subject } from 'rxjs';
 import { switchMap, finalize, takeUntil } from 'rxjs/operators';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -30,6 +30,7 @@ interface GroupFormData {
     selector: 'app-admin-permissions-page',
     templateUrl: './admin-permissions-page.component.html',
     styleUrls: ['./admin-permissions-page.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class AdminPermissionsPageComponent implements OnInit, OnDestroy {

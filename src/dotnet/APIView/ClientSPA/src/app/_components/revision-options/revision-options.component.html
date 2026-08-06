@@ -24,7 +24,7 @@
                         <input type="text" class="form-control" aria-label="Active APIRevision Filter" placeholder="Filter"
                         [(ngModel)]="activeApiRevisionsSearchValue" (keyup)="activeApiRevisionSearchFunction($event)">
                     </div>
-                    <p-selectButton
+                    <p-select-button
                     styleClass="apiview-toggle-button-group"
                     [options]="filterOptions"
                     [(ngModel)]="activeApiRevisionsFilterValue"
@@ -35,7 +35,7 @@
                                 {{ item.label }}
                             </span>
                         </ng-template>
-                    </p-selectButton>
+                    </p-select-button>
                 </div>
             </ng-template>
             <ng-template pTemplate="selectedItem" let-item>

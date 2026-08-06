@@ -71,7 +71,7 @@
                     [activeApiRevisionId]="activeApiRevisionId"
                     [diffApiRevisionId]="diffApiRevisionId"
                     [isDiffView]="!!diffApiRevisionId"
-                    [contentHasDiff]="codePanelData?.hasDiff"
+                    [contentHasDiff]="$safeNavigationMigration(codePanelData?.hasDiff)"
                     [diffStyleInput]="diffStyle!"
                     [userProfile]="userProfile"
                     [codeLineSearchInfo]="codeLineSearchInfo"
@@ -118,7 +118,7 @@
                 <app-review-page-options
                     [loadingStatus]="loadingStatus"
                     [isDiffView]="!!diffApiRevisionId"
-                    [contentHasDiff]="codePanelData?.hasDiff"
+                    [contentHasDiff]="$safeNavigationMigration(codePanelData?.hasDiff)"
                     [diffStyleInput]="diffStyle!"
                     [userProfile]="userProfile"
                     [review]="review"
@@ -155,7 +155,7 @@
     <div (click)="$event.stopPropagation()" style="height: 100%; overflow-y: auto">
         <div class="py-3" *ngFor="let groupedRevision of crossLanguageAPIRevisions">
             <span>
-                <img src="{{assetsPath}}/images/{{ groupedRevision.label! | languageNames: userProfile?.preferences?.theme }}-original.svg" width="25" height="25">
+                <img src="{{assetsPath}}/images/{{ groupedRevision.label! | languageNames: $safeNavigationMigration(userProfile?.preferences?.theme) }}-original.svg" width="25" height="25">
                 <app-revision-options
                 [crossLanguageAPIRevisions]="groupedRevision.items"
                 (crossLangaugeAPIRevisionChange)="handleCrossLangaugeAPIRevisionChange($event)"></app-revision-options>

@@ -247,7 +247,7 @@
             <h6 class="mb-2 fw-semibold">Associated API Revisions</h6>
             <div *ngFor="let pullRequest of pullRequestsOfAssociatedAPIRevisions" class="py-1">
                 <span>
-                    <img src="{{assetsPath}}/images/{{ pullRequest.language | languageNames: userProfile?.preferences?.theme }}-original.svg" class="me-2" width="20" height="20">
+                    <img src="{{assetsPath}}/images/{{ pullRequest.language | languageNames: $safeNavigationMigration(userProfile?.preferences?.theme) }}-original.svg" class="me-2" width="20" height="20">
                     <a [href]="getPullRequestsOfAssociatedAPIRevisionsUrl(pullRequest)" target="_blank"><small>{{pullRequest.packageName}}</small></a>
                 </span>
             </div>

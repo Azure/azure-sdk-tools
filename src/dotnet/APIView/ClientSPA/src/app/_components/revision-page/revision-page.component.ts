@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { Subject, takeUntil } from 'rxjs';
@@ -15,6 +15,7 @@ import { CommonModule } from '@angular/common';
     templateUrl: './revision-page.component.html',
     styleUrls: ['./revision-page.component.scss'],
     standalone: true,
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [CommonModule, ReviewPageLayoutModule, SharedAppModule]
 })
 export class RevisionPageComponent {

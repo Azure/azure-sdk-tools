@@ -175,7 +175,7 @@
           <div class="row g-3">
             <!-- Feedback Reasons - Multi-select Dropdown -->
             <div class="col-12">
-              <p-multiSelect
+              <p-multi-select
                 [options]="feedbackReasonOptions"
                 [(ngModel)]="feedbackReasons"
                 [placeholder]="feedbackReasons.length > 0 ? feedbackReasons.length + ' reason(s) selected' : 'Select one or more reasons'"
@@ -188,7 +188,7 @@
                 <ng-template let-reason pTemplate="item">
                   <div class="p-multiselect-item-custom">{{ reason.label }}</div>
                 </ng-template>
-              </p-multiSelect>
+              </p-multi-select>
               <small *ngIf="!canSubmitFeedback" class="text-danger d-block mt-1">
                 <i class="bi bi-exclamation-circle me-1"></i>Please select at least one reason
               </small>

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, Output, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
@@ -15,6 +15,7 @@ import { ProjectsService } from 'src/app/_services/projects/projects.service';
     templateUrl: './review-page-layout.component.html',
     styleUrls: ['./review-page-layout.component.scss'],
     standalone: true,
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [
         CommonModule,
         FormsModule,

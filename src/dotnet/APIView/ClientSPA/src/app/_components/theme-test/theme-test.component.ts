@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -6,6 +6,7 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './theme-test.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./theme-test.component.scss']
 })
 export class ThemeTestComponent {

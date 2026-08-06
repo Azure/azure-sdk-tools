@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { TreeNode } from 'primeng/api';
 import { environment } from 'src/environments/environment';
 
@@ -6,6 +6,7 @@ import { environment } from 'src/environments/environment';
     selector: 'app-review-nav',
     templateUrl: './review-nav.component.html',
     styleUrls: ['./review-nav.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ReviewNavComponent implements OnChanges {

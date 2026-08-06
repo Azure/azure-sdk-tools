@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SimplemdeModule, SimplemdeOptions } from 'ngx-simplemde';
@@ -8,6 +8,7 @@ import { SimplemdeModule, SimplemdeOptions } from 'ngx-simplemde';
     templateUrl: './editor.component.html',
     styleUrls: ['./editor.component.scss'],
     standalone: true,
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [
         CommonModule,
         FormsModule,

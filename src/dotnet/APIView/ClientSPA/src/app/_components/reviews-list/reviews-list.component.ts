@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, OnInit, AfterViewInit, Output, ViewChild, ChangeDetectorRef, Input } from '@angular/core';
+import { Component, ElementRef, EventEmitter, OnInit, AfterViewInit, Output, ViewChild, ChangeDetectorRef, Input, ChangeDetectionStrategy } from '@angular/core';
 
 import { FirstReleaseApproval, Review, SelectItemModel } from 'src/app/_models/review';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
@@ -14,6 +14,7 @@ import { getSupportedLanguages } from 'src/app/_helpers/common-helpers';
     selector: 'app-reviews-list',
     templateUrl: './reviews-list.component.html',
     styleUrls: ['./reviews-list.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ReviewsListComponent implements OnInit, AfterViewInit {

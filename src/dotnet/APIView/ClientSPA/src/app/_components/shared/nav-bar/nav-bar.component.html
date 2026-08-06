@@ -118,7 +118,7 @@
             <button type="button" class="btn btn-link btn-sm small ms-auto" *ngIf="notifications.length > 0" (click)="clearAllNotification()">Clear all</button>
         </div>
     </ng-template>
-    <p-selectButton
+    <p-select-button
         *ngIf="notifications.length > 0 && reviewId"
         styleClass="apiview-toggle-button-group"
         [options]="notificationsFilters"

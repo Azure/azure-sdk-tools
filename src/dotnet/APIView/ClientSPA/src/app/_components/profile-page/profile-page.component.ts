@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectorRef, Component, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { take, forkJoin } from 'rxjs';
 import { USER_NAME_ROUTE_PARAM } from 'src/app/_helpers/router-helpers';
@@ -11,6 +11,7 @@ import { GroupPermissions, ROLE_DISPLAY_NAMES } from 'src/app/_models/permission
     selector: 'app-profile-page',
     templateUrl: './profile-page.component.html',
     styleUrl: './profile-page.component.scss',
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ProfilePageComponent {

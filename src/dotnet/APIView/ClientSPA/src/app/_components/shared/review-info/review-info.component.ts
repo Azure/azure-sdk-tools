@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MenubarModule } from 'primeng/menubar';
 import { RevisionOptionsComponent } from 'src/app/_components/revision-options/revision-options.component';
@@ -13,6 +13,7 @@ import { environment } from 'src/environments/environment';
     templateUrl: './review-info.component.html',
     styleUrls: ['./review-info.component.scss'],
     standalone: true,
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [
         CommonModule,
         MenubarModule,

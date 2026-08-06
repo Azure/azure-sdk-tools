@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, inject, Input, OnChanges, OnInit, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, inject, Input, OnChanges, OnInit, OnDestroy, Output, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToggleSwitchChangeEvent } from 'primeng/toggleswitch';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
@@ -50,6 +50,7 @@ const APPROVAL_DISABLED_MESSAGES: Record<ApprovalDisabledReason, string> = {
     selector: 'app-review-page-options',
     templateUrl: './review-page-options.component.html',
     styleUrls: ['./review-page-options.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy {

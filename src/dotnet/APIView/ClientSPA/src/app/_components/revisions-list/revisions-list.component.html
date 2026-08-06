@@ -1,4 +1,4 @@
-<p-contextMenu #cm [model]="contextMenuItems"></p-contextMenu>
+<p-context-menu #cm [model]="contextMenuItems"></p-context-menu>
 <div *ngIf="review == null && revisions.length == 0" class="d-flex justify-content-center align-items-center flex-grow-1">
     <div class="text-center">
         <h6>Select a Review on the left panel to view its APIRevisions</h6>
@@ -62,8 +62,8 @@
             <th style="width:25%">APIRevision - Label</th>
             <th style="width:19%">Author</th>
             <th style="width:15%">Details</th>
-            <th *ngIf="!showAPIRevisionsAssignedToMe" pSortableColumn="createdOn" style="width:15%">Created<p-sortIcon class="ms-2" field="createdOn"></p-sortIcon></th>
-            <th *ngIf="!showAPIRevisionsAssignedToMe" pSortableColumn="lastUpdatedOn" style="width:15%">Updated<p-sortIcon class="ms-2" field="lastUpdatedOn"></p-sortIcon></th>
+            <th *ngIf="!showAPIRevisionsAssignedToMe" pSortableColumn="createdOn" style="width:15%">Created<p-sort-icon class="ms-2" field="createdOn"></p-sort-icon></th>
+            <th *ngIf="!showAPIRevisionsAssignedToMe" pSortableColumn="lastUpdatedOn" style="width:15%">Updated<p-sort-icon class="ms-2" field="lastUpdatedOn"></p-sort-icon></th>
             <th *ngIf="showAPIRevisionsAssignedToMe" style="width:15%">RequestedOn</th>
             <th *ngIf="showAPIRevisionsAssignedToMe"  style="width:15%">RequestedBy</th>
         </tr>
@@ -71,23 +71,23 @@
             <th>
             </th>
             <th>
-                <p-columnFilter type="text" field="label" [showMenu]="false"></p-columnFilter>
+                <p-column-filter type="text" field="label" [showMenu]="false"></p-column-filter>
             </th>
             <th>
-                <p-columnFilter type="text" field="author" [showMenu]="false"></p-columnFilter>
+                <p-column-filter type="text" field="author" [showMenu]="false"></p-column-filter>
             </th>
             <th>
-                <p-columnFilter id="details-filter" field="details" matchMode="in" [showMenu]="false">
+                <p-column-filter id="details-filter" field="details" matchMode="in" [showMenu]="false">
                     <ng-template pTemplate="filter" let-value let-filter="filterCallback">
-                        <p-multiSelect [ngModel]="value" [options]="details" [group]="true" [filter]="false" [(ngModel)]="selectedDetails" (onChange)="filter($event.value)" optionLabel="label" scrollHeight="500px">
+                        <p-multi-select [ngModel]="value" [options]="details" [group]="true" [filter]="false" [(ngModel)]="selectedDetails" (onChange)="filter($event.value)" optionLabel="label" scrollHeight="500px">
                             <ng-template let-group pTemplate="group">
                                 <div class="inline-block vertical-align-middle">
                                     <span class="ml-1 mt-1">{{ group.label }}</span>
                                 </div>
                             </ng-template>
-                        </p-multiSelect>
+                        </p-multi-select>
                     </ng-template>
-                </p-columnFilter>
+                </p-column-filter>
             </th>
             <th>
             </th>
@@ -97,7 +97,7 @@
     </ng-template>
     <ng-template pTemplate="body" let-revision>
         <tr [pContextMenuRow]="revision">
-            <td><p-tableCheckbox [value]="revision"></p-tableCheckbox></td>
+            <td><p-table-checkbox [value]="revision"></p-table-checkbox></td>
             <td>
                 <a *ngIf="!showDeletedAPIRevisions; else disabledLink" (click)="viewRevision(revision)" style="cursor: pointer;">{{ revision.resolvedLabel }}</a>
                 <ng-template #disabledLink>{{ revision.resolvedLabel }}</ng-template>
@@ -144,13 +144,13 @@
         <p-select formControlName="selectedCRLanguage" [options]="crLanguages" optionLabel="label" placeholder="Language" (onChange)="onCRLanguageSelectChange()">
             <ng-template pTemplate="selectedItem">
                 <div class="flex align-items-center gap-2" *ngIf="createRevisionForm.get('selectedCRLanguage')!.value">
-                  <img src="{{assetsPath}}/images/{{ createRevisionForm.get('selectedCRLanguage')!.value!.label | languageNames: userProfile?.preferences?.theme }}-original.svg" style="width: 25px"/>
+                  <img src="{{assetsPath}}/images/{{ createRevisionForm.get('selectedCRLanguage')!.value!.label | languageNames: $safeNavigationMigration(userProfile?.preferences?.theme) }}-original.svg" style="width: 25px"/>
                   <span class="mx-2 mt-1">{{ createRevisionForm.get('selectedCRLanguage')!.value!.label }}</span>
                 </div>
             </ng-template>
             <ng-template let-crLanguage pTemplate="item">
                 <div class="flex align-items-center gap-2">
-                    <img src="{{assetsPath}}/images/{{ crLanguage.label | languageNames: userProfile?.preferences?.theme }}-original.svg" style="width: 25px"/>
+                    <img src="{{assetsPath}}/images/{{ crLanguage.label | languageNames: $safeNavigationMigration(userProfile?.preferences?.theme) }}-original.svg" style="width: 25px"/>
                     <span class="mx-2 mt-1">{{ crLanguage.label }}</span>
                 </div>
             </ng-template>

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PanelModule } from 'primeng/panel';
 import { CookieService } from 'ngx-cookie-service';
@@ -8,6 +8,7 @@ import { CookieService } from 'ngx-cookie-service';
     templateUrl: './page-options-section.component.html',
     styleUrls: ['./page-options-section.component.scss'],
     standalone: true,
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [
         CommonModule,
         PanelModule
@@ -17,7 +18,7 @@ export class PageOptionsSectionComponent implements OnInit{
   @Input() sectionName : string = '';
   @Input() collapsedInput: boolean | undefined;
   sectionId: string | undefined;
-  collapsed: boolean | undefined;
+  collapsed = false;
   sectionStateCookieKey : string | undefined;
 
   constructor(private cookieService: CookieService) { }

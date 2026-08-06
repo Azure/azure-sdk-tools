@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, Output, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { ConfigService } from 'src/app/_services/config/config.service';
@@ -9,6 +9,7 @@ import { ConfigService } from 'src/app/_services/config/config.service';
     templateUrl: './code-editor.component.html',
     styleUrls: ['./code-editor.component.scss'],
     standalone: true,
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [FormsModule, MonacoEditorModule]
 })
 export class CodeEditorComponent {

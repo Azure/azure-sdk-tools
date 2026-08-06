@@ -1,5 +1,5 @@
 <app-nav-bar></app-nav-bar>
-<p-confirmDialog></p-confirmDialog>
+<p-confirm-dialog></p-confirm-dialog>
 <div class="admin-permissions-container">
     <!-- Hero Header -->
     <div class="page-header">
@@ -245,8 +245,8 @@
             
             <!-- Role Type Toggle -->
             <div class="role-type-toggle">
-                <p-selectButton [options]="[{label: '🌐 Global Role', value: 'global'}, {label: '🔤 Language Role', value: 'scoped'}]" 
-                    [(ngModel)]="newRoleKind" optionLabel="label" optionValue="value"></p-selectButton>
+                <p-select-button [options]="[{label: '🌐 Global Role', value: 'global'}, {label: '🔤 Language Role', value: 'scoped'}]"
+                    [(ngModel)]="newRoleKind" optionLabel="label" optionValue="value"></p-select-button>
             </div>
             
             <!-- Add Role Form -->
@@ -311,14 +311,19 @@
 
     <ng-template pTemplate="footer">
         <div class="dialog-footer">
-            <button pButton label="Cancel" icon="pi pi-times" 
+            <button pButton
                 class="p-button-text p-button-secondary" 
-                (click)="showGroupDialog = false"></button>
-            <button pButton [label]="isEditMode ? 'Save Changes' : 'Create Group'" 
-                [icon]="isEditMode ? 'pi pi-check' : 'pi pi-plus'"
+                (click)="showGroupDialog = false">
+                <i class="pi pi-times"></i>
+                <span>Cancel</span>
+            </button>
+            <button pButton
                 class="p-button-rounded"
                 (click)="saveGroup()"
-                [disabled]="!groupForm.groupId || !groupForm.groupName"></button>
+                [disabled]="!groupForm.groupId || !groupForm.groupName">
+                <i [class]="isEditMode ? 'pi pi-check' : 'pi pi-plus'"></i>
+                <span>{{ isEditMode ? 'Save Changes' : 'Create Group' }}</span>
+            </button>
         </div>
     </ng-template>
 </p-dialog>
@@ -340,7 +345,7 @@
             <label for="memberUsername">
                 <i class="pi pi-github"></i> GitHub Usernames
             </label>
-            <p-autoComplete 
+            <p-auto-complete
                 [(ngModel)]="newMemberUsernames" 
                 [suggestions]="userSuggestions"
                 (completeMethod)="searchUsers($event)"
@@ -352,7 +357,7 @@
                 [showEmptyMessage]="true"
                 emptyMessage="No matching users found"
                 appendTo="body">
-            </p-autoComplete>
+            </p-auto-complete>
             <small class="field-hint">
                 <i class="pi pi-info-circle"></i>
                 Start typing to search for users. You can add multiple users at once.

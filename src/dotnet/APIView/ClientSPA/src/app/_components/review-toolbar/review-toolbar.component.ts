@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -42,6 +42,7 @@ import { LastUpdatedOnPipe } from 'src/app/_pipes/last-updated-on.pipe';
     LastUpdatedOnPipe
   ],
   templateUrl: './review-toolbar.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './review-toolbar.component.scss',
 })
 export class ReviewToolbarComponent implements OnInit, OnChanges {

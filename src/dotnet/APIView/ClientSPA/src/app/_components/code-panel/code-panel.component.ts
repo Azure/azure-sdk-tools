@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, NgZone, OnChanges, Output, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, NgZone, OnChanges, Output, QueryList, SimpleChanges, ViewChildren, ChangeDetectionStrategy } from '@angular/core';
 import { filter, take, takeUntil } from 'rxjs/operators';
 import { Datasource, IDatasource, SizeStrategy } from 'ngx-ui-scroll';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
@@ -22,6 +22,7 @@ import { DoublyLinkedList } from 'src/app/_helpers/doubly-linkedlist';
     selector: 'app-code-panel',
     templateUrl: './code-panel.component.html',
     styleUrls: ['./code-panel.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class CodePanelComponent implements OnChanges {

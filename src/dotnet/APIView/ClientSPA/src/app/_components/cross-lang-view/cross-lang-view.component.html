@@ -1,7 +1,7 @@
 <div class="d-flex align-items-center my-2">
   <div class="me-2">
       <button type="button" class="btn-close" aria-label="Close" (click)="closeCrossLanguageViewEmitter.emit([
-          codePanelRowData?.nodeIdHashed!, codePanelRowData?.type!])"></button>
+          $safeNavigationMigration(codePanelRowData?.nodeIdHashed)!, $safeNavigationMigration(codePanelRowData?.type)!])"></button>
   </div>
   <div class="p-1 cross-language-view-container">
     <div class="d-flex align-items-start">
@@ -16,7 +16,7 @@
           [attr.aria-controls]="getTabId(key)"
           [attr.aria-selected]="i === activeTabIndex ? 'true' : 'false'"
           (click)="setActiveTab(i)">
-          <img src="{{assetsPath}}/images/{{ key | languageNames: userProfile?.preferences?.theme }}-original.svg" width="25" height="25">
+          <img src="{{assetsPath}}/images/{{ key | languageNames: $safeNavigationMigration(userProfile?.preferences?.theme) }}-original.svg" width="25" height="25">
         </a>
       </div>
       <div class="tab-content border-start pe-4" id="{{ codePanelRowData?.nodeIdHashed }}-tabContent">

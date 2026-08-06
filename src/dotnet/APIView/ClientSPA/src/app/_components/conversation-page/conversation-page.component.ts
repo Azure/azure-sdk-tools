@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { MenuItem } from 'primeng/api';
@@ -21,6 +21,7 @@ import { CommonModule } from '@angular/common';
     templateUrl: './conversation-page.component.html',
     styleUrls: ['./conversation-page.component.scss'],
     standalone: true,
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [CommonModule, ReviewPageLayoutModule]
 })
 export class ConversationPageComponent {

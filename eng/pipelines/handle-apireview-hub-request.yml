@@ -4,6 +4,50 @@
 pr: none
 trigger: none
 
+resources:
+  repositories:
+    - repository: python-repo
+      type: github
+      endpoint: Azure
+      name: Azure/azure-sdk-for-python
+      # For testing. Needs to be set to main before merging.
+      ref: refs/heads/arh/PythonPipelines
+    - repository: java-repo
+      type: github
+      endpoint: Azure
+      name: Azure/azure-sdk-for-java
+      ref: main
+    - repository: csharp-repo
+      type: github
+      endpoint: Azure
+      name: Azure/azure-sdk-for-net
+      ref: main
+    - repository: javascript-repo
+      type: github
+      endpoint: Azure
+      name: Azure/azure-sdk-for-js
+      ref: main
+    - repository: go-repo
+      type: github
+      endpoint: Azure
+      name: Azure/azure-sdk-for-go
+      ref: main
+    - repository: rust-repo
+      type: github
+      endpoint: Azure
+      name: Azure/azure-sdk-for-rust
+      ref: main
+    - repository: swift-repo
+      type: github
+      endpoint: Azure
+      name: Azure/azure-sdk-for-ios
+      ref: main
+    - repository: cpp-repo
+      type: github
+      endpoint: Azure
+      name: Azure/azure-sdk-for-cpp
+      ref: main
+
 variables:
   callbackTokenAudience: 'api://apireviewhub'
   completionCallbackUrl: 'https://api-review-hub.azurewebsites.net/api/operations/'
@@ -54,9 +98,9 @@ parameters:
 
 jobs:
 # The language value is validated above. Each supported language must provide:
-# - /eng/common/pipelines/templates/jobs/apireview-hub-job-{language}.yml
-# - /eng/common/pipelines/templates/steps/create-apireview-hub-artifacts-{language}.yml
-- template: ${{ format('/eng/common/pipelines/templates/jobs/apireview-hub-job-{0}.yml', parameters.language) }}
+# - /eng/pipelines/templates/jobs/apireview-hub-job-{language}.yml
+# - /eng/pipelines/templates/steps/create-apireview-hub-artifacts-{language}.yml
+- template: ${{ format('/eng/pipelines/templates/jobs/apireview-hub-job-{0}.yml@{0}-repo', parameters.language) }}
   parameters:
     repositoryOwner: ${{ parameters.owner }}
     steps:
@@ -87,7 +131,7 @@ jobs:
       # Create requests with a baseline need the baseline bundle first. Empty
       # baseRef values intentionally generate a target-only review.
       - ${{ if and(eq(parameters.requestMode, 'create'), ne(trim(parameters.baseRef), '')) }}:
-        - template: ${{ format('/eng/common/pipelines/templates/steps/create-apireview-hub-artifacts-{0}.yml', parameters.language) }}
+        - template: ${{ format('/eng/pipelines/templates/steps/create-apireview-hub-artifacts-{0}.yml@{0}-repo', parameters.language) }}
           parameters:
             requestMode: ${{ parameters.requestMode }}
             operationId: ${{ parameters.operationId }}
@@ -99,7 +143,7 @@ jobs:
 
       # Always generate the target bundle. Update requests only generate this
       # artifact; create requests generate it after the base bundle above.
-      - template: ${{ format('/eng/common/pipelines/templates/steps/create-apireview-hub-artifacts-{0}.yml', parameters.language) }}
+      - template: ${{ format('/eng/pipelines/templates/steps/create-apireview-hub-artifacts-{0}.yml@{0}-repo', parameters.language) }}
         parameters:
           requestMode: ${{ parameters.requestMode }}
           operationId: ${{ parameters.operationId }}

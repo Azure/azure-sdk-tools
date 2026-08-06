@@ -4,7 +4,8 @@ This directory contains [Vally](https://aka.ms/vally) evaluation cases for the `
 
 ## Prerequisites
 
-- [Vally CLI](https://aka.ms/vally) installed globally: `npm install -g @microsoft/vally-cli@0.6.0`
+- Node.js `>=22.12.0` and npm `>=11.11.1`
+- [Vally CLI](https://aka.ms/vally) 0.12.0 (the benchmark pipeline installs the pinned local package)
 - The `azsdk-cli` MCP server built: `dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli`
 - An API key for the model configured (e.g., Anthropic or OpenAI key via environment variable)
 
@@ -35,7 +36,7 @@ Why each piece matters:
 - **`FIXTURE_NODE_MODULES`** lets the agent symlink a prebuilt `node_modules` instead of running
   `npm install` on every case. Without it evals still work, just slower.
 - **`copilot-instructions.md`** is copied into each run's `.github/` by the `azsdk-mcp` environments
-  in `.vally.yaml`, so evals exercise the *real* spec-repo authoring guidance. It is intentionally
+  in `.vally.yaml`, so evals exercise the _real_ spec-repo authoring guidance. It is intentionally
   **not** checked in (it is git-ignored) and always refreshed from `main`, so the eval reflects what
   authors actually see today.
 
@@ -72,8 +73,8 @@ vally eval --eval-spec evals/001001.eval.yaml --tag mode=no-skill --skill-dir /t
 
 Use different entry files depending on your goal:
 
-| File                     | When to use                            | Example command                                                                                                   |
-| ------------------------ | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| File                     | When to use                            | Example command                                                                                                                  |
+| ------------------------ | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | `.vally.yaml`            | Default local entry; run by suite name | `vally eval --suite versioning-forced --skill-dir .. --output-dir ./result --workspace ./debug --verbose`                        |
 | `evals/00xxxx.eval.yaml` | Debug one specific case file           | `vally eval --eval-spec evals/003001.eval.yaml --skill-dir .. --output-dir ./result-003001 --workspace ./debug-003001 --verbose` |
 
@@ -86,29 +87,29 @@ Notes:
 
 Test suites are defined in `.vally.yaml` under the `suites` key. Available suites:
 
-| Suite                           | Description                                     |
-| ------------------------------- | ----------------------------------------------- |
-| `versioning-forced`             | Versioning cases (001xxx) — forced mode         |
-| `armtemplate-forced`            | ARM template cases (002xxx) — forced mode       |
-| `longrunningoperation-forced`   | Long-running operation cases (003xxx) — forced  |
-| `decorators-forced`             | Decorator cases (004xxx) — forced mode          |
-| `warning-forced`                | Warning cases (005xxx) — forced mode            |
-| `dataplane-forced`              | Data-plane cases (006xxx) — forced mode         |
-| `versioning-trigger`            | Versioning cases — trigger mode                 |
-| `armtemplate-trigger`           | ARM template cases — trigger mode               |
-| `longrunningoperation-trigger`  | LRO cases — trigger mode                        |
-| `decorators-trigger`            | Decorator cases — trigger mode                  |
-| `warning-trigger`               | Warning cases — trigger mode                    |
-| `dataplane-trigger`             | Data-plane cases — trigger mode                 |
-| `versioning-no-skill`           | Versioning cases — no-skill baseline            |
-| `armtemplate-no-skill`          | ARM template cases — no-skill baseline          |
-| `longrunningoperation-no-skill` | LRO cases — no-skill baseline                   |
-| `decorators-no-skill`           | Decorator cases — no-skill baseline             |
-| `warning-no-skill`              | Warning cases — no-skill baseline               |
-| `dataplane-no-skill`            | Data-plane cases — no-skill baseline            |
-| `forced`                        | All cases — forced mode                         |
-| `trigger`                       | All cases — trigger mode                        |
-| `no-skill`                      | All cases — no-skill baseline                   |
+| Suite                           | Description                                    |
+| ------------------------------- | ---------------------------------------------- |
+| `versioning-forced`             | Versioning cases (001xxx) — forced mode        |
+| `armtemplate-forced`            | ARM template cases (002xxx) — forced mode      |
+| `longrunningoperation-forced`   | Long-running operation cases (003xxx) — forced |
+| `decorators-forced`             | Decorator cases (004xxx) — forced mode         |
+| `warning-forced`                | Warning cases (005xxx) — forced mode           |
+| `dataplane-forced`              | Data-plane cases (006xxx) — forced mode        |
+| `versioning-trigger`            | Versioning cases — trigger mode                |
+| `armtemplate-trigger`           | ARM template cases — trigger mode              |
+| `longrunningoperation-trigger`  | LRO cases — trigger mode                       |
+| `decorators-trigger`            | Decorator cases — trigger mode                 |
+| `warning-trigger`               | Warning cases — trigger mode                   |
+| `dataplane-trigger`             | Data-plane cases — trigger mode                |
+| `versioning-no-skill`           | Versioning cases — no-skill baseline           |
+| `armtemplate-no-skill`          | ARM template cases — no-skill baseline         |
+| `longrunningoperation-no-skill` | LRO cases — no-skill baseline                  |
+| `decorators-no-skill`           | Decorator cases — no-skill baseline            |
+| `warning-no-skill`              | Warning cases — no-skill baseline              |
+| `dataplane-no-skill`            | Data-plane cases — no-skill baseline           |
+| `forced`                        | All cases — forced mode                        |
+| `trigger`                       | All cases — trigger mode                       |
+| `no-skill`                      | All cases — no-skill baseline                  |
 
 Run a suite by name:
 
@@ -136,20 +137,20 @@ vally eval --suite longrunningoperation-forced --skill-dir .. --output-dir ./res
 vally eval --suite versioning-trigger --skill-dir .. --output-dir ./result --workspace ./debug --verbose
 ```
 
-### Vally 0.6.0 local runs
+### Vally 0.12.0 local runs
 
-Vally 0.6.0 uses the `copilot-sdk` executor and records skill/tool calls differently from 0.5.0.
-For local forced and trigger runs, pass `--skill-dir ..` explicitly so Vally discovers the
+Vally 0.12.0 uses the `copilot-sdk` executor and does not auto-discover skills.
+For local forced and trigger runs, pass `--skill-dir ..` explicitly so Vally loads the
 `azure-typespec-author` skill directory that contains `SKILL.md`. The prompts still include the
 `@azure-typespec-author` prefix, and the evals still use `skill-invocation` graders to verify that
 the skill was invoked.
 
-Compared with 0.5.0, 0.6.0 result output includes additional run metadata such as `Turns`,
-`Tool Calls`, `Executor: copilot-sdk`, and richer JSONL fields (`type`, `itemId`, `stimulus`,
-`durationMs`, `workspacePath`). Because tool-call tracking is stricter, forced-mode failures often
-mean the agent did not call a required tool such as `azure-sdk-mcp-azsdk_run_typespec_validation`.
-When debugging local runs, keep `--verbose` enabled and inspect the `Tool Calls` column in
-`eval-results.md` or the trial entries in `results.jsonl`.
+Before running an eval, execute `node scripts/setup-environment.js`, then validate the relevant
+spec with `vally lint -e evals/<case>.eval.yaml --strict`. Vally validates referenced fixture
+files and every named environment at load time. Scoring weights are keyed by grader type and must
+form a normalized distribution totaling `1.0`; a type assigned `0` is intentionally excluded.
+When debugging local runs, keep `--verbose` enabled and inspect `eval-results.md`, `results.jsonl`,
+and the automatically preserved per-trial session directory.
 
 Do not add `--skill-dir ..` to no-skill baseline runs. Those runs intentionally use an empty skill
 directory, for example `--skill-dir /tmp/no-skills`, to measure behavior without loading the skill.
@@ -171,11 +172,14 @@ vally eval --suite trigger --skill-dir ..
 
 ### Useful flags
 
-| Flag                           | Purpose                                                        |
-| ------------------------------ | -------------------------------------------------------------- |
-| `--keep-executor-session-logs` | Preserve agent session logs under `--output-dir` for debugging |
-| `--verbose`                    | Show full agent output during the run                          |
-| `--workers <n>`                | Run multiple stimuli in parallel (default: 5)                  |
+| Flag            | Purpose                                       |
+| --------------- | --------------------------------------------- |
+| Flag            | Purpose                                       |
+| --------------- | --------------------------------------------- |
+| `--verbose`     | Show full agent output during the run         |
+| `--workers <n>` | Run multiple stimuli in parallel (default: 5) |
+
+Executor session logs are preserved automatically under the run output directory.
 
 ### Parallel run the environment
 
@@ -220,15 +224,15 @@ evaluate/
 The CI runs in three mode groups (forced, trigger, no-skill), and each group is split into
 five suite steps. Each step runs the corresponding `.vally.yaml` suite branch directly,
 for example `--suite versioning-forced`, `--suite versioning-trigger`, or
-`--suite versioning-no-skill`. Vally 0.6.0 supports parallel execution across multiple
+`--suite versioning-no-skill`. Vally 0.12.0 supports parallel execution across multiple
 eval files, so the pipelines no longer need consolidated suite eval files plus
 `--tag suite=...` filtering.
 
-| Pipeline           | Command/source              | Purpose                                                               |
-| ------------------ | --------------------------- | --------------------------------------------------------------------- |
-| benchmark          | `--suite *-forced`          | Forced skill invocation + code-quality graders (real MCP environment) |
-| benchmark          | `--suite *-trigger`         | Skill trigger detection (mock MCP environment)                        |
-| benchmark-no-skill | `--suite *-no-skill`        | Baseline run without loading the skill (`--skill-dir /tmp/no-skills`) |
+| Pipeline           | Command/source       | Purpose                                                               |
+| ------------------ | -------------------- | --------------------------------------------------------------------- |
+| benchmark          | `--suite *-forced`   | Forced skill invocation + code-quality graders (real MCP environment) |
+| benchmark          | `--suite *-trigger`  | Skill trigger detection (mock MCP environment)                        |
+| benchmark-no-skill | `--suite *-no-skill` | Baseline run without loading the skill (`--skill-dir /tmp/no-skills`) |
 
 Each stimulus has dual tags: `suite` and `mode`, for example
 `{ suite: versioning, mode: forced }`.

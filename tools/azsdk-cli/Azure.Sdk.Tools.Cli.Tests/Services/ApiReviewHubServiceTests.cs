@@ -324,6 +324,58 @@ public class ApiReviewHubServiceTests
     }
 
     [Test]
+    public async Task RequestReviewPullRequestAsync_WithoutBaseTag_SendsEmptyString()
+    {
+        string? requestBody = null;
+        var mockHandler = new Mock<HttpMessageHandler>();
+        mockHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(request => request.Method == HttpMethod.Post),
+                ItExpr.IsAny<CancellationToken>())
+            .Callback<HttpRequestMessage, CancellationToken>((request, cancellationToken) =>
+                requestBody = request.Content!.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Accepted)
+            {
+                Content = new StringContent(
+                    """
+                    {
+                      "operationId": "op-accepted",
+                      "status": "accepted"
+                    }
+                    """,
+                    Encoding.UTF8,
+                    "application/json")
+            });
+
+        httpClientFactoryMock
+            .Setup(x => x.CreateClient(It.IsAny<string>()))
+            .Returns(new HttpClient(mockHandler.Object));
+
+        var request = new ReviewPullRequestCreationRequest
+        {
+            Language = "python",
+            PackageName = "pkg",
+            TargetBranch = new GitBranchReference
+            {
+                Owner = "Azure",
+                Repo = "azure-sdk-for-python",
+                Name = "main"
+            }
+        };
+
+        await service.RequestReviewPullRequestAsync(
+            request,
+            "https://api-review-hub-test.azurewebsites.net",
+            waitForCompletion: false,
+            pollInterval: TimeSpan.Zero,
+            CancellationToken.None);
+
+        Assert.That(requestBody, Does.Contain("\"baseTag\":\"\""));
+    }
+
+    [Test]
     public async Task RequestReviewPullRequestAsync_WhenReviewPullRequestAlreadyExists_ReturnsExpectedStatus()
     {
         var mockHandler = new Mock<HttpMessageHandler>();

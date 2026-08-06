@@ -62,16 +62,15 @@ public class ApiReviewHubService(
         }
         catch (ApiReviewHubRequestException ex) when (string.Equals(ex.ErrorCode, "reviewPullRequestAlreadyExists", StringComparison.Ordinal))
         {
-            var serverMessage = TryGetMessage(ex.Content) ?? $"An API Review Hub review PR already exists for {request.PackageName}.";
+            var serverMessage = TryGetErrorMessage(ex.Content) ?? $"An API Review Hub review PR already exists for {request.PackageName}.";
             logger.LogDebug("{message}", serverMessage);
 
-            var reviewPullRequest = TryGetReviewPullRequest(ex.Content);
             return new OperationStatus
             {
                 Status = "succeeded",
                 PackageName = request.PackageName,
                 Message = serverMessage,
-                ReviewPullRequest = reviewPullRequest
+                ReviewPullRequest = TryGetErrorReviewPullRequest(ex.Content)
             };
         }
 
@@ -245,82 +244,45 @@ public class ApiReviewHubService(
         }
     }
 
-    private static string? TryGetMessage(string content)
+    private static string? TryGetErrorMessage(string? content)
     {
+        return TryGetErrorProperty(content, "message", out var property) && property.ValueKind == JsonValueKind.String
+            ? property.GetString()
+            : null;
+    }
+
+    private static JsonElement? TryGetErrorReviewPullRequest(string? content)
+    {
+        return TryGetErrorProperty(content, "reviewPullRequest", out var property)
+            ? property.Clone()
+            : null;
+    }
+
+    private static bool TryGetErrorProperty(string? content, string propertyName, out JsonElement property)
+    {
+        property = default;
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            return false;
+        }
+
         try
         {
             using var document = JsonDocument.Parse(content);
-            var root = document.RootElement;
-
-            if (TryGetStringProperty(root, "message", out var message))
+            if (!document.RootElement.TryGetProperty("error", out var error)
+                || error.ValueKind != JsonValueKind.Object
+                || !error.TryGetProperty(propertyName, out var parsedProperty))
             {
-                return message;
+                return false;
             }
 
-            if (root.TryGetProperty("error", out var error) && TryGetStringProperty(error, "message", out message))
-            {
-                return message;
-            }
-
-            return null;
+            property = parsedProperty.Clone();
+            return true;
         }
         catch (JsonException)
         {
-            return null;
+            return false;
         }
-        catch (InvalidOperationException)
-        {
-            return null;
-        }
-        catch (KeyNotFoundException)
-        {
-            return null;
-        }
-    }
-
-    private static JsonElement? TryGetReviewPullRequest(string content)
-    {
-        try
-        {
-            using var document = JsonDocument.Parse(content);
-            return TryGetReviewPullRequest(document.RootElement);
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
-        catch (InvalidOperationException)
-        {
-            return null;
-        }
-        catch (KeyNotFoundException)
-        {
-            return null;
-        }
-    }
-
-    private static JsonElement? TryGetReviewPullRequest(JsonElement element)
-    {
-        if (element.ValueKind != JsonValueKind.Object)
-        {
-            return null;
-        }
-
-        if (element.TryGetProperty("reviewPullRequest", out var reviewPullRequest))
-        {
-            return reviewPullRequest.Clone();
-        }
-
-        if (element.TryGetProperty("error", out var error))
-        {
-            var nestedReviewPullRequest = TryGetReviewPullRequest(error);
-            if (nestedReviewPullRequest != null)
-            {
-                return nestedReviewPullRequest;
-            }
-        }
-
-        return null;
     }
 
     private static bool TryGetStringProperty(JsonElement element, string propertyName, out string? value)

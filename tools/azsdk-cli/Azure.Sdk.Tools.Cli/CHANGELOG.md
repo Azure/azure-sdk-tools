@@ -10,7 +10,8 @@
 ### Bugs Fixed
 
 - Removed the unavailable `claude-sonnet-4.5` default from Copilot-backed commands.
-- `api-review create` now surfaces the API Review Hub server response for an already-existing review PR as a success rather than an error.
+- `api-review create` now surfaces an already-existing API Review Hub review PR as a success rather than an error.
+- `api-review create` no longer requires `--base-tag`; when omitted, API Review Hub will construct an "all-green" review.
 
 ## 0.6.32 (2026-07-28)
 

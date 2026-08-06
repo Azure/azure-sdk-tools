@@ -67,8 +67,7 @@ public class ApiReviewHubTool(
 
     private readonly Option<string> baseTagOption = new("--base-tag")
     {
-        Description = "The release tag or ref used as the base API surface.",
-        Required = true
+        Description = "The optional release tag or ref used as the base API surface."
     };
 
     private readonly Option<string> targetOwnerOption = new("--target-owner")
@@ -138,10 +137,10 @@ public class ApiReviewHubTool(
         return await RequestReviewPullRequest(
             parseResult.GetValue(languageOption) ?? string.Empty,
             parseResult.GetValue(packageNameOption) ?? string.Empty,
-            parseResult.GetValue(baseTagOption) ?? string.Empty,
             parseResult.GetValue(targetOwnerOption) ?? string.Empty,
             ResolveTargetRepo(parseResult.GetValue(languageOption), parseResult.GetValue(targetRepoOption)),
             parseResult.GetValue(targetBranchOption) ?? string.Empty,
+            parseResult.GetValue(baseTagOption),
             !parseResult.GetValue(noWaitOption),
             parseResult.GetValue(pollIntervalSecondsOption),
             ct);
@@ -175,10 +174,10 @@ public class ApiReviewHubTool(
     public async Task<ApiReviewHubResponse> RequestReviewPullRequest(
         [Description("The SDK language for the review PR request.")] string language,
         [Description("The package name to review.")] string packageName,
-        [Description("The release tag or ref used as the base API surface.")] string baseTag,
         [Description("The GitHub owner for the target working branch.")] string targetOwner,
         [Description("The GitHub repository for the target working branch. By default, the command selects the appropriate repo based on the language.")] string targetRepo,
         [Description("The target working branch name.")] string targetBranch,
+        [Description("The optional release tag or ref used as the base API surface.")] string? baseTag = null,
         [Description("Poll API Review Hub until the operation completes.")] bool waitForCompletion = true,
         [Description("Seconds to wait between API Review Hub operation status polls.")] int pollIntervalSeconds = 10,
         CancellationToken ct = default)
@@ -189,7 +188,7 @@ public class ApiReviewHubTool(
             {
                 Language = language,
                 PackageName = packageName,
-                BaseTag = baseTag,
+                BaseTag = baseTag ?? string.Empty,
                 TargetBranch = new GitBranchReference
                 {
                     Owner = targetOwner,

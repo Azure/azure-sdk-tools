@@ -54,6 +54,30 @@ public class ApiReviewHubResponseTests
         Assert.That(output, Is.Empty);
     }
 
+    [Test]
+    public void ToString_IncludesResultMessage_WhenPresent()
+    {
+        var response = new ApiReviewHubResponse
+        {
+            Result = new OperationStatus
+            {
+                OperationId = "op-123",
+                Status = "succeeded",
+                Message = "An API Review Hub review PR already exists for pkg.",
+                ReviewPullRequest = ParseJsonElement("""
+                    {
+                      "url": "https://github.com/Azure/azure-sdk-for-python/pull/13"
+                    }
+                    """)
+            }
+        };
+
+        var output = response.ToString();
+
+        Assert.That(output, Does.Contain("An API Review Hub review PR already exists for pkg."));
+        Assert.That(output, Does.Contain("Review PR: https://github.com/Azure/azure-sdk-for-python/pull/13"));
+    }
+
     private static JsonElement ParseJsonElement(string json)
     {
         using var document = JsonDocument.Parse(json);

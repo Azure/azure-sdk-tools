@@ -6,7 +6,7 @@
 # behave as teammates expect.
 #
 # The benchmark pipelines invoke suite branches from this file directly with --suite.
-# Vally 0.6.0 supports parallel execution across multiple eval files, so pipeline
+# Vally 0.12.0 supports parallel execution across multiple eval files, so pipeline
 # runs do not need consolidated suite eval files plus tag filtering.
 
 paths:

@@ -126,6 +126,9 @@ steps:
       npmrcPath: $(Build.SourcesDirectory)/.npmrc
       registryUrl: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
 
+  - script: npm install --global npm@11.11.1 --userconfig $(Build.SourcesDirectory)/.npmrc
+    displayName: Use npm 11.11.1
+
   - script: |
       npm ci --userconfig $(Build.SourcesDirectory)/.npmrc
       echo "##vso[task.prependpath]$(Build.SourcesDirectory)/eng/pipelines/azure-typespec-author-eval/node_modules/.bin"

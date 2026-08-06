@@ -17,9 +17,9 @@ Choose the grounding source based on whether the request's case is covered by [r
 
 ## 3.2 Case-Specific Authoring Plan
 
-### Case 3 — API Version Evolution (ARM / Data-plane)
+### Case 3 — API Versioning
 
-> Version evolution **is covered** by [reference-document-links.md](reference-document-links.md), so use **Agentic Search** (per [3.1 General](#31-general-all-cases)) — you **MUST** call `web_fetch` on the matching versioning doc and follow its steps. Do **not** call the MCP tool `azsdk_typespec_generate_authoring_plan` for this case.
+> API Versioning **is covered** by [reference-document-links.md](reference-document-links.md), so use **Agentic Search** (per [3.1 General](#31-general-all-cases)) — you **MUST** call `web_fetch` on the matching versioning doc and follow its steps. Do **not** call the MCP tool `azsdk_typespec_generate_authoring_plan` for this case.
 
 **Decide the path first:** if the current latest version is an **unreleased preview** (treat the latest preview as unreleased unless the user says it already shipped), you **collapse** it into the new version (do step 3). If the current latest version is a **released stable**, add the new version **incrementally** with no collapse (skip step 3). Apply this even when the fetched doc shows an incremental keep-the-preview approach.
 

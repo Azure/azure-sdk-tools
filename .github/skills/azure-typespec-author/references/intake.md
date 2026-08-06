@@ -9,9 +9,9 @@
 
 | Case | Name                      | Description                                            | Service Type     |
 | ---- | ------------------------- | ------------------------------------------------------ | ---------------- |
-| 1    | Add Resource Type         | Define a new ARM resource with operations              | ARM              |
-| 2    | Add Resource Operations   | Add CRUD or custom actions on an existing resource     | ARM              |
-| 3    | API Version Evolution     | Add, bump, or promote an API version (preview/stable)  | ARM / Data-plane |
+| 1    | Add Resource Type (ARM)   | Define a new ARM resource with operations              | ARM              |
+| 2    | Add Resource Operations (ARM) | Add CRUD or custom actions on an existing resource | ARM              |
+| 3    | API Versioning            | Add, bump, or promote an API version (preview/stable)  | ARM / Data-plane |
 | 4    | Add Data-Plane Operations | Add CRUD or custom operations on a data-plane resource | Data-plane       |
 
 ---
@@ -36,7 +36,7 @@ Defaults: never async → GET, LIST, HEAD. Default async → PUT, DELETE. Defaul
 > Use `createOrReplace` (not `createOrUpdate`). Use `ArmCustomPatch` for PATCH.
 > For async POST, use ARM combined headers: `LroHeaders = ArmCombinedLroHeaders<FinalResult = ExportResult>`.
 
-### Case 3 — API Version Evolution (ARM / Data-plane)
+### Case 3 — API Versioning
 
 Collect from user:
 

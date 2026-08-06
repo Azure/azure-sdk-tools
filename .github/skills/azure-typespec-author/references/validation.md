@@ -30,7 +30,7 @@ Run `tsp compile .` from the project root. Verify `.json` output under the direc
 
 Run the sub-section matching the case identified in [intake.md](intake.md) §2.1. If no case matches, skip this step — 5.1 is sufficient.
 
-### Case 3 — API Version Evolution (ARM / Data-plane)
+### Case 3 — API Versioning (ARM / Data-plane)
 
 Run after 5.1. Perform each check below and **report the result as a checklist** — one line per check marked ✅ (pass) or ❌ (fail) with a short note. If any check fails, fix the code and re-run 5.1, then continue.
 

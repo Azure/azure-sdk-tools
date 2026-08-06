@@ -88,6 +88,13 @@ namespace Azure.Sdk.Tools.Cli.Commands
             Options: []
         );
 
+        public static readonly CommandGroup ApiReviewHub = new(
+            Verb: "api-review",
+            Description: "Interact with API Review Hub services and functionality",
+            Aliases: [],
+            Options: []
+        );
+
 #if DEBUG
         public static readonly CommandGroup Example = new(
             Verb: "example",

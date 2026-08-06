@@ -36,7 +36,6 @@ extends:
             value: 'tools/apiview/parsers/rust-api-parser'
         jobs:
           - job: 'Build'
-
             pool:
               name: $(LINUXPOOL)
               image: $(LINUXVMIMAGE)
@@ -48,8 +47,10 @@ extends:
                   versionSpec: '$(NodeVersion)'
                 displayName: 'Use NodeJS $(NodeVersion)'
 
+              - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+
               - script: |
-                        npm install -g npm@latest
+                  npm install -g npm@latest
                 displayName: "Install latest npm"
 
               - script: |

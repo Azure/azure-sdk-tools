@@ -2,6 +2,8 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Pipeline;
+using Azure.Sdk.Tools.Cli.Models.Responses;
 
 namespace Azure.Sdk.Tools.Mock.Handlers.Pipeline;
 
@@ -11,9 +13,9 @@ namespace Azure.Sdk.Tools.Mock.Handlers.Pipeline;
 /// two newest service-version cases, "2026-10-06" (V2026_10_06) and "2026-12-06" (V2026_12_06) —
 /// a real, identifiable code bug. Because TryGetServiceVersion_ParsesAllServiceVersions iterates
 /// every enum value, a complete fix must add BOTH cases; adding only one leaves the test red. This
-/// is the same bug the tools/azsdk-cli/Azure.Sdk.Tools.Vally/fixtures/analyze-pipeline/QueueClientOptionsTests fixture overlays for the
+/// is the same bug the evals/fixtures/analyze-pipeline/QueueClientOptionsTests fixture overlays for the
 /// fixer, so a single fixture drives both the analyze and fix quality evals. See
-/// tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/workflow-scenarios/mock/ and tools/azsdk-cli/Azure.Sdk.Tools.Vally/fixtures/analyze-pipeline/QueueClientOptionsTests.
+/// evals/workflows/mock/ and evals/fixtures/analyze-pipeline/QueueClientOptionsTests.
 /// </summary>
 public class AnalyzePipelineHandler : IMockToolHandler
 {
@@ -21,40 +23,38 @@ public class AnalyzePipelineHandler : IMockToolHandler
 
     public CommandResponse Handle(Dictionary<string, object?>? arguments)
     {
-        var buildId = arguments?.GetValueOrDefault("buildId")?.ToString() ?? "6455504";
-        const string versionParseError =
-            "TryGetServiceVersion failed to parse the new service versions \"2026-10-06\" (V2026_10_06) and \"2026-12-06\" (V2026_12_06): both cases are missing from the parser switch. Expected: True But was: False";
+        var buildId = MockPipelineIdentifier.GetBuildId(arguments) ?? "90001";
+        var buildIdValue = int.TryParse(buildId, out var parsed) ? parsed : 90001;
+        var pipelineUrl = $"https://dev.azure.com/azure-sdk/internal/_build/results?buildId={buildId}";
         return new AnalyzePipelineResponse
         {
-            FailedTests = new Dictionary<string, List<string>>
+            AzurePipelineAnalyses = new List<AzurePipelineAnalysis>
             {
-                ["azure.storage.queues.tests.dll"] =
-                    ["Azure.Storage.Queues.Test.QueueClientOptionsTests.TryGetServiceVersion_ParsesAllServiceVersions"],
-                ["azure.storage.files.shares.tests.dll"] =
-                    ["Azure.Storage.Files.Shares.Tests.ShareClientOptionsTests.TryGetServiceVersion_ParsesAllServiceVersions"]
-            },
-            FailedTasks =
-            [
-                new LogAnalysisResponse
+                new AzurePipelineAnalysis
                 {
-                    PipelineUrl = $"https://dev.azure.com/azure-sdk/public/_build/results?buildId={buildId}",
-                    Errors =
-                    [
-                        new LogEntry
-                        {
-                            File = "sdk/storage/Azure.Storage.Queues/tests/QueueClientOptionsTests.cs",
-                            Line = 24,
-                            Message = versionParseError
-                        },
-                        new LogEntry
-                        {
-                            File = "sdk/storage/Azure.Storage.Files.Shares/tests/ShareClientOptionsTests.cs",
-                            Line = 24,
-                            Message = versionParseError
-                        }
-                    ]
+                    PipelineBuild = new AzurePipelineBuild(buildIdValue, "internal", pipelineUrl, "completed", "failed"),
+                    FailedPipelineTests = new Dictionary<string, List<string>>
+                    {
+                        ["Ubuntu2404_NET80_PackageRef_Debug"] =
+                        [
+                            "WidgetClientLiveTests.GetWidget"
+                        ]
+                    },
+                    FailedPipelineTasks = new LogAnalysisResponse
+                    {
+                        PipelineUrl = pipelineUrl,
+                        Errors =
+                        [
+                            new LogEntry
+                            {
+                                File = "logs/test.log",
+                                Line = 128,
+                                Message = "Test WidgetClientLiveTests.GetWidget failed: expected 200 got 404"
+                            }
+                        ]
+                    }
                 }
-            ]
+            }
         };
     }
 }
@@ -66,7 +66,7 @@ public class GetPipelineLlmArtifactsHandler : IMockToolHandler
 
     public CommandResponse Handle(Dictionary<string, object?>? arguments)
     {
-        var buildId = arguments?.GetValueOrDefault("buildId")?.ToString() ?? "90001";
+        var buildId = MockPipelineIdentifier.GetBuildId(arguments) ?? "90001";
         return new ObjectCommandResponse
         {
             Message = $"Retrieved LLM artifacts for build {buildId} (mock)",

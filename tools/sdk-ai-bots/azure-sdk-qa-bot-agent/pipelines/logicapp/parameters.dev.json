@@ -24,7 +24,7 @@
       ]
     },
     "serverBaseUrl": {
-      "value": "https://azuresdkqabot-dev-serve-agent-bxdnc6b4crcuembs.westus2-01.azurewebsites.net"
+      "value": "https://azuresdkqabot-dev-server-hrcrckaad5gcedcv.westus2-01.azurewebsites.net"
     },
     "serverAudience": {
       "value": "830f1656-8b36-4e8e-9781-87ccdd038644"

@@ -1,4 +1,3 @@
-// tslint:disable:max-line-length
 /**
  * @description
  *   This function has been copied over and adapted to TypeScript from:

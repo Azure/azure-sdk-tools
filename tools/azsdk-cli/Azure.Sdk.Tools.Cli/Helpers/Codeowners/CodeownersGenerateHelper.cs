@@ -62,7 +62,7 @@ public class CodeownersGenerateHelper(
         var packageLookup = repoPackages.ToDictionary(p => p.Name, p => p, StringComparer.OrdinalIgnoreCase);
 
         logger.LogInformation("Fetching work items from Azure DevOps...");
-        var workItemData = await FetchAllWorkItemsAsync(repoName, language, packageTypes, ct);
+        var workItemData = await FetchAllWorkItemsAsync(repoName, language, packageTypes, sectionName, ct);
 
         logger.LogInformation("Building CODEOWNERS entries...");
         var invalidOwnerCutoff = DateTime.UtcNow.AddDays(-invalidOwnerLookbackDays);
@@ -125,7 +125,7 @@ public class CodeownersGenerateHelper(
         }
     }
 
-    private async Task<WorkItemData> FetchAllWorkItemsAsync(string repoName, SdkLanguage language, string[] packageTypes, CancellationToken ct)
+    private async Task<WorkItemData> FetchAllWorkItemsAsync(string repoName, SdkLanguage language, string[] packageTypes, string sectionName, CancellationToken ct)
     {
         // Build package type filter using IN clause
         var packageTypeList = string.Join(", ", packageTypes.Select(pt => $"'{pt}'"));
@@ -156,9 +156,12 @@ public class CodeownersGenerateHelper(
             ct);
         logger.LogInformation("Labels: {Count}", labels.Count);
 
-        // Fetch Label Owners by repository
+        // Fetch Label Owners by repository and section.
+        // Scoping by section prevents Label Owner entries from other sections
+        // (e.g. client/data-plane services) from leaking into the section being generated.
+        var escapedSection = sectionName.Replace("'", "''");
         var labelOwners = await FetchWorkItemsAsync<LabelOwnerWorkItem>(
-            $"[System.WorkItemType] = 'Label Owner' AND [Custom.Repository] = '{repoName}'",
+            $"[System.WorkItemType] = 'Label Owner' AND [Custom.Repository] = '{repoName}' AND [Custom.Section] = '{escapedSection}'",
             WorkItemMappers.MapToLabelOwnerWorkItem,
             ct);
         logger.LogInformation("Label Owners: {Count}", labelOwners.Count);
@@ -185,6 +188,8 @@ public class CodeownersGenerateHelper(
         return workItems.Select(factory).ToList();
     }
 
+    // Assumes the data passed in has already been filtered to the target section
+    // by the WIQL query in FetchAllWorkItemsAsync. No additional section filtering is applied here.
     private List<CodeownersEntry> BuildCodeownersEntries(
         WorkItemData data,
         Dictionary<string, RepoPackage> packageLookup,

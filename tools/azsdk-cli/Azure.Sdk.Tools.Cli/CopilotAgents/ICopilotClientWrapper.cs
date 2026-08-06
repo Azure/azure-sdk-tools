@@ -1,4 +1,4 @@
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
 
 namespace Azure.Sdk.Tools.Cli.CopilotAgents;
 

@@ -12,6 +12,8 @@ using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan;
 using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.Notification;
+using Azure.Sdk.Tools.Cli.Services.Notification.Templates;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using ModelContextProtocol;
 using ModelContextProtocol.Server;
@@ -32,7 +34,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         IInputSanitizer inputSanitizer,
         HttpClient httpClient,
         INpxHelper npxHelper,
-        IRawOutputHelper outputHelper
+        IRawOutputHelper outputHelper,
+        INotificationService notificationService
     ) : MCPMultiCommandTool
     {
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.ReleasePlan];
@@ -864,6 +867,34 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             return match.Success ? int.Parse(match.Groups[1].Value) : 0;
         }
 
+        /// <summary>
+        /// Resolves the email address of the spec pull request author by mapping the PR author's
+        /// GitHub username to their user profile. Returns an empty string when the author or email
+        /// cannot be determined.
+        /// </summary>
+        private async Task<string> ResolveSpecPullRequestAuthorEmailAsync(string specPullRequestUrl, CancellationToken ct)
+        {
+            var prNumber = ParsePullRequestNumberFromUrl(specPullRequestUrl);
+            if (prNumber <= 0)
+            {
+                return string.Empty;
+            }
+
+            var isPrivateSpec = specPullRequestUrl.Contains(PRIVATE_SPECS_REPO, StringComparison.OrdinalIgnoreCase);
+            var specRepoName = isPrivateSpec ? PRIVATE_SPECS_REPO : PUBLIC_SPECS_REPO;
+            var specPr = await githubService.GetPullRequestAsync(REPO_OWNER, specRepoName, prNumber, ct);
+            var authorLogin = specPr?.User?.Login;
+            if (string.IsNullOrEmpty(authorLogin))
+            {
+                logger.LogWarning("Could not determine spec PR author for '{specPullRequestUrl}'.", specPullRequestUrl);
+                return string.Empty;
+            }
+
+            logger.LogInformation("Resolving email for spec PR author '{authorLogin}'.", authorLogin);
+            var userProfile = await userHelper.GetUserProfile(authorLogin, ct);
+            return userProfile?.Aad?.EmailAddress ?? string.Empty;
+        }
+
         private async Task ValidateCreateReleasePlanInputAsync(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, ApiReleaseType apiReleaseType, CancellationToken ct)
         {
             if (!string.IsNullOrEmpty(specPullRequestUrl))
@@ -1060,6 +1091,23 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     logger.LogWarning(ex, "Failed to retrieve user email. Proceeding without user email for release plan submission.");
                 }
 
+                // Only run the GitHub user ID to email mapping when the current user's email could not be resolved.
+                if (string.IsNullOrEmpty(userEmail) && !string.IsNullOrEmpty(specPullRequestUrl))
+                {
+                    try
+                    {
+                        logger.LogInformation("User email not available. Attempting to resolve spec PR author email for release plan submission.");
+                        userEmail = await ResolveSpecPullRequestAuthorEmailAsync(specPullRequestUrl, ct);
+                        logger.LogInformation("Resolved spec PR author email for release plan submission: {userEmail}", userEmail);
+                    }
+                    catch (Exception ex)
+                    {
+                        var warning = "Failed to resolve spec PR author email. Proceeding without user email for release plan submission.";
+                        warnings.Add(warning);
+                        logger.LogWarning(ex, "Failed to resolve spec PR author email. Proceeding without user email for release plan submission.");
+                    }
+                }
+
                 var productDisplayName = productName;
                 var releasePlan = new ReleasePlanWorkItem
                 {
@@ -1135,7 +1183,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                                         nextSteps.AddRange(sdkDetailsResult.NextSteps);
                                     }
                                 }
-                            }                            
+                            }
                         }
                         catch (Exception sdkEx)
                         {
@@ -1156,6 +1204,24 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
 
                     reporter.NextStep(message.ToString());
+
+                    // Refresh the release plan and notify the submitter. Both are best-effort and must
+                    // never fail release plan creation, so any error here is logged and swallowed.
+                    try
+                    {
+                        //Refresh release plan to get latest details
+                        releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(releasePlan.WorkItemId, ct);
+
+                        // Recipient routing (To/CC) is owned by the email template.
+                        // Silently completes when notifications are disabled.
+                        var releasePlanEmail = new NewReleasePlanEmail(releasePlan);
+                        await notificationService.SendEmailNotificationAsync(releasePlanEmail, ct);
+                    }
+                    catch (Exception notifyEx)
+                    {
+                        logger.LogWarning(notifyEx, "Failed to refresh release plan or send release plan notification.");
+                    }
+
                     return new ReleasePlanResponse
                     {
                         Message = message.ToString(),
@@ -1197,6 +1263,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 if (resolvedPackages == null)
                 {
                     return new DefaultCommandResponse { ResponseError = $"Failed to parse TypeSpec project at {typeSpecProjectPath}." };
+                }
+
+                // Skip updating SDK details to avoid marking packages as missing emitter config when no SDK details are available.
+                if (resolvedPackages.Count == 0)
+                {
+                    logger.LogDebug("No package details were identified in the TypeSpec project path {typeSpecProjectPath}", typeSpecProjectPath);
+                    return new DefaultCommandResponse { Message = $"No package details were identified in the TypeSpec project path {typeSpecProjectPath}" };
                 }
 
                 // Get release plan. The resolver accepts either a Release Plan ID or a work item ID.

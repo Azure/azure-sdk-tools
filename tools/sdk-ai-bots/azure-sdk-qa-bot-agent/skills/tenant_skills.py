@@ -44,6 +44,10 @@ _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
         "TypeSpec language: syntax, decorators, patterns, Azure extensions, "
         "migration from OpenAPI, validation, tspconfig."
     ),
+    TenantID.ALLOY_FRAMEWORK_QA_BOT: (
+        "TypeSpec emitter framework (EF v2) and Alloy framework guidance: "
+        "emitter architecture, implementation patterns, and sample references."
+    ),
     TenantID.PYTHON_CHANNEL_QA_BOT: (
         "Azure Python SDK: code generation, tsp-client, validation, testing, "
         "release processes, runtime usage."

@@ -33,6 +33,34 @@
     },
     {
       "repository": {
+        "url": "https://github.com/alloy-framework/alloy.git",
+        "branch": "main",
+        "authType": "public"
+      },
+      "paths": [
+        {
+          "description": "Alloy code generation framework documentation (component model, reactivity, formatting) used by the TypeSpec emitter framework",
+          "path": "/packages/docs/src/content/docs",
+          "folder": "alloy_framework_docs",
+          "fileNameLowerCase": true,
+          "metadata": {
+            "scope": "unbranded"
+          }
+        },
+        {
+          "description": "Alloy framework sample emitter projects for various target languages",
+          "path": "/samples",
+          "folder": "alloy_framework_samples",
+          "ignoredPaths": ["readme.md"],
+          "isGenerated": true,
+          "metadata": {
+            "scope": "unbranded"
+          }
+        }
+      ]
+    },
+    {
+      "repository": {
         "url": "https://github.com/Azure/typespec-azure.git",
         "branch": "main",
         "authType": "public"

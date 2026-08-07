@@ -1,0 +1,33 @@
+# Pipeline template — Azure auth for both `az` and `azd`.
+#
+# Uses an AzureCLI@2 task to obtain a federated token from the service
+# connection, then exports the standard env vars consumed by azd
+# (AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID,
+# AZURE_FEDERATED_TOKEN_FILE).
+#
+# Required pipeline variables (typically set by load-environment-suite.yml):
+#   SERVICE_CONNECTION   — name of the Azure DevOps service connection
+
+parameters: []
+
+steps:
+    - task: AzureCLI@2
+      displayName: 'azd / az auth (federated)'
+      inputs:
+          azureSubscription: $(SERVICE_CONNECTION)
+          addSpnToEnvironment: true
+          scriptType: bash
+          scriptLocation: inlineScript
+          inlineScript: |
+              set -euo pipefail
+              echo "##vso[task.setvariable variable=AZURE_CLIENT_ID]$servicePrincipalId"
+              echo "##vso[task.setvariable variable=AZURE_TENANT_ID]$tenantId"
+              echo "##vso[task.setvariable variable=AZURE_SUBSCRIPTION_ID]$(az account show --query id -o tsv)"
+              echo "$idToken" > "$(Agent.BuildDirectory)/id_token"
+              echo "##vso[task.setvariable variable=AZURE_FEDERATED_TOKEN_FILE]$(Agent.BuildDirectory)/id_token"
+
+    - bash: |
+          set -euo pipefail
+          command -v azd >/dev/null || curl -fsSL https://aka.ms/install-azd.sh | bash
+          azd version
+      displayName: 'Ensure azd is installed'

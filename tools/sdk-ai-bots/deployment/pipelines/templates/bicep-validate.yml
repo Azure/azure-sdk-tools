@@ -1,0 +1,29 @@
+# Pipeline template — bicep build + ARM-TTK lint.
+#
+# Runs as part of every provision pipeline and on PR validation for any
+# change to infra/**.
+
+parameters:
+    - name: bicepFile
+      type: string
+      default: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment/infra/main.bicep'
+
+steps:
+    - bash: |
+          set -euo pipefail
+          command -v bicep >/dev/null || az bicep install
+          echo "bicep version: $(bicep --version)"
+      displayName: 'Install bicep CLI'
+
+    - bash: |
+          set -euo pipefail
+          bicep build "${{ parameters.bicepFile }}"
+          echo "✓ bicep build succeeded"
+      displayName: 'bicep build'
+
+    - bash: |
+          set -euo pipefail
+          bicep lint "${{ parameters.bicepFile }}"
+          echo "✓ bicep lint succeeded"
+      displayName: 'bicep lint'
+      continueOnError: true

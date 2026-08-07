@@ -1,0 +1,26 @@
+# Orchestrator pipeline — full preview provision.
+# Runs bicep-validate + what-if, then applies with `azd provision`. Approval
+# gating comes from the `sdk-ai-bots-preview` ADO environment (which is
+# expected to have a manual approval policy configured).
+
+name: tools - sdk-ai-bots - provision-all-preview
+
+trigger: none
+pr: none
+
+variables:
+    - template: /eng/pipelines/templates/variables/globals.yml
+    - template: /eng/pipelines/templates/variables/image.yml
+
+extends:
+    template: /eng/pipelines/templates/stages/1es-redirect.yml
+    parameters:
+        Use1ESOfficial: true
+        stages:
+            - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-stage.yml
+              parameters:
+                  environment: preview
+                  runValidateAndWhatIf: true
+                  runProvision: true
+                  showReadinessReminder: false
+

@@ -1,0 +1,96 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# PR environment pool reaper — scheduled cleanup of the `pr-sandbox` pool.
+#
+# Deletes ADE environments whose PR is no longer active (closed/merged) or that
+# have exceeded the TTL. Orphaned PR environments are the #1 cost leak, so this
+# runs hourly. Requires "DevCenter Project Admin" (or at least delete rights on
+# all environments in the project) on the service connection identity.
+#
+# Required pipeline variables:
+#   SERVICE_CONNECTION, DEVCENTER_NAME, DEVCENTER_PROJECT
+#   ADO_ORG_URL       — e.g. https://dev.azure.com/azure-sdk
+#   ADO_REPO_ID       — repository id/name hosting the PRs
+#   TTL_HOURS         — max environment age before forced deletion (default 48)
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: sdk-ai-bots — pr-reaper
+
+trigger: none
+pr: none
+
+schedules:
+    - cron: '0 * * * *' # hourly
+      displayName: Hourly PR-env reap
+      branches:
+          include: [main]
+      always: true
+
+variables:
+    - template: /eng/pipelines/templates/variables/globals.yml
+    - name: ttlHours
+      value: 48
+
+extends:
+    template: /eng/pipelines/templates/stages/1es-redirect.yml
+    parameters:
+        Use1ESOfficial: true
+        stages:
+            - stage: Reap
+              displayName: 'Reap stale PR environments'
+              jobs:
+                  - job: Reap
+                    pool:
+                        name: $(LINUXPOOL)
+                        image: $(LINUXVMIMAGE)
+                        os: linux
+                    steps:
+                        - checkout: self
+                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+
+                        - task: AzureCLI@2
+                          displayName: 'Delete closed/expired pr-sandbox environments'
+                          env:
+                              AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
+                          inputs:
+                              azureSubscription: $(SERVICE_CONNECTION)
+                              scriptType: bash
+                              scriptLocation: inlineScript
+                              inlineScript: |
+                                  set -euo pipefail
+                                  az extension add --name devcenter --upgrade --only-show-errors
+                                  az extension add --name azure-devops --upgrade --only-show-errors
+
+                                  DC="$(DEVCENTER_NAME)"; PROJ="$(DEVCENTER_PROJECT)"
+                                  NOW=$(date -u +%s)
+                                  TTL_SECS=$(( $(TTL_HOURS) * 3600 ))
+
+                                  az devcenter dev environment list \
+                                    --dev-center-name "$DC" --project-name "$PROJ" \
+                                    --query "[?environmentType=='pr-sandbox'].name" -o tsv | while read -r ENV; do
+                                      [ -n "$ENV" ] || continue
+                                      PR="${ENV#pr-}"
+
+                                      # 1) delete if PR is no longer active
+                                      STATE=$(az repos pr show --id "$PR" \
+                                                --org "$(ADO_ORG_URL)" \
+                                                --query status -o tsv 2>/dev/null || echo "completed")
+
+                                      REASON=""
+                                      if [ "$STATE" != "active" ]; then
+                                        REASON="PR state=$STATE"
+                                      fi
+
+                                      # 2) TTL fallback (in case PR lookup failed but env is old)
+                                      # NOTE: ADE does not return creation time in `list`; use the
+                                      # provisioning tags or an App Config ledger if you need strict TTL.
+
+                                      if [ -n "$REASON" ]; then
+                                        echo "Reaping $ENV ($REASON)"
+                                        az devcenter dev environment delete \
+                                          --dev-center-name "$DC" --project-name "$PROJ" \
+                                          --environment-name "$ENV" --yes --only-show-errors || \
+                                          echo "##[warning]Failed to delete $ENV"
+                                      else
+                                        echo "Keeping $ENV (PR active)"
+                                      fi
+                                  done

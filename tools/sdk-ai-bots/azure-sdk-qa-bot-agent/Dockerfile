@@ -14,19 +14,21 @@ RUN tdnf install -y ca-certificates tar gzip && \
     tdnf clean all
 
 # Install dependencies first (layer caching)
-COPY tools/sdk-ai-bots/azure-sdk-qa-bot-agent/requirements.txt .
+# NOTE: paths are relative to the build context, which is the project directory
+# (tools/sdk-ai-bots/azure-sdk-qa-bot-agent), not the repository root.
+COPY requirements.txt .
 RUN pip install --no-cache-dir --pre --timeout ${PIP_DEFAULT_TIMEOUT} --retries ${PIP_RETRIES} -r requirements.txt
 
 # Copy application code
-COPY tools/sdk-ai-bots/azure-sdk-qa-bot-agent/config/ ./config/
-COPY tools/sdk-ai-bots/azure-sdk-qa-bot-agent/models/ ./models/
-COPY tools/sdk-ai-bots/azure-sdk-qa-bot-agent/prompts/ ./prompts/
-COPY tools/sdk-ai-bots/azure-sdk-qa-bot-agent/services/ ./services/
-COPY tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tools/ ./tools/
-COPY tools/sdk-ai-bots/azure-sdk-qa-bot-agent/utils/ ./utils/
-COPY tools/sdk-ai-bots/azure-sdk-qa-bot-agent/skills/ ./skills/
-COPY tools/sdk-ai-bots/azure-sdk-qa-bot-agent/server.py .
-COPY tools/sdk-ai-bots/azure-sdk-qa-bot-agent/_version.py .
+COPY config/ ./config/
+COPY models/ ./models/
+COPY prompts/ ./prompts/
+COPY services/ ./services/
+COPY tools/ ./tools/
+COPY utils/ ./utils/
+COPY skills/ ./skills/
+COPY server.py .
+COPY _version.py .
 
 EXPOSE 8089
 

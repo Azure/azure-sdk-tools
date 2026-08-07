@@ -1,0 +1,66 @@
+default:
+  tenant: general_qa_bot
+  endpoint: ${SERVER_BASE_URL}
+
+# env - provision - Teams
+channels:
+  # development - dev - Azure SDK QA Bot
+  - name: General
+    id: 19:3iefzURPmxhDZJJTtwePbdO1EdI5T0hfK9UFK_59Sbk1@thread.tacv2
+    endpoint: ${SERVER_BASE_URL}
+    tenant: general_qa_bot
+
+  - name: Language - Python
+    id: 19:f876c6910f4048aa81f172300e0f7104@thread.tacv2
+    endpoint: ${SERVER_BASE_URL}
+    tenant: python_channel_qa_bot
+
+  - name: Language - Go
+    id: 19:43d25834bb394e0fa9a3b316ce5a2ea4@thread.tacv2
+    endpoint: ${SERVER_BASE_URL}
+    tenant: golang_channel_qa_bot
+
+  - name: Azure SDK Onboarding
+    id: 19:6f6b56e7deda45ecb9dc001a18dcfa3b@thread.tacv2
+    endpoint: ${SERVER_BASE_URL}
+    tenant: azure_sdk_onboarding
+
+  - name: API Spec Review
+    id: 19:06178cf7377f447cb486bb15fca7a5f5@thread.tacv2
+    endpoint: ${SERVER_BASE_URL}
+    tenant: api_spec_review_bot
+
+  - name: Language - Java
+    id: 19:e0c83381ddd141d08e5ebea53fd8366c@thread.tacv2
+    endpoint: ${SERVER_BASE_URL}
+    tenant: java_channel_qa_bot
+
+  - name: Language – JS ＆ TS 🥷
+    id: 19:2f1cb90ce78a46678b203709167db8c1@thread.tacv2
+    endpoint: ${SERVER_BASE_URL}
+    tenant: javascript_channel_qa_bot
+
+  - name: Language - DotNet
+    id: 19:b518e8426f32490eab370e9642b3600a@thread.tacv2
+    endpoint: ${SERVER_BASE_URL}
+    tenant: dotnet_channel_qa_bot
+
+  - name: TypeSpec Discussion
+    id: 19:7fed54bbc68e443381c6e196c7615b6b@thread.tacv2
+    endpoint: ${SERVER_BASE_URL}
+    tenant: azure_sdk_qa_bot
+
+  - name: SDK release support
+    id: 19:453ec446a66446589d764132f5cebb00@thread.tacv2
+    endpoint: ${SERVER_BASE_URL}
+    tenant: azure_sdk_onboarding
+
+  - name: Parikh Public Lens - General
+    id: 19:ZZ7p9ifL_YkWM6apZYhO0oH6rI3hOBOVf5i0ZLnoab81@thread.tacv2
+    endpoint: https://azuresdkqabot-dev-serve-digital-avatar-hjcmhheve6dyaren.westus2-01.azurewebsites.net
+    tenant: digital_avatar_jay_parikh
+
+  - name: Authoring Test
+    id: 19:975533cdd084485ca305739f16b30507@thread.tacv2
+    endpoint: ${SERVER_BASE_URL}
+    tenant: azure_typespec_authoring

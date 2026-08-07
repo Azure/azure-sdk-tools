@@ -25,6 +25,7 @@ environments:
       azure-sdk-mcp:
         type: stdio
         command: dotnet
+        cwd: .
         args: ["../../artifacts/mcp/cli/azsdk.dll", "start"]
         timeout: "60s"
         env:
@@ -35,5 +36,6 @@ environments:
       azure-sdk-mcp:
         type: stdio
         command: dotnet
+        cwd: .
         args: ["../../artifacts/mcp/mock/azsdk-mock.dll"]
         timeout: "60s"

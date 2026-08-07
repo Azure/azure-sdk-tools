@@ -217,8 +217,8 @@ The project has three independently deployable components, each with its own CD 
 
 Builds the agent container image, pushes to ACR, and deploys a new hosted agent version to Azure AI Foundry.
 
-- **Pipeline**: [agent-cd.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/agent-cd.yml) | [Run in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8159)
-- **Deploy script**: [scripts/deploy_hosted_agent.py](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/scripts/deploy_hosted_agent.py)
+- **Pipeline**: [agent-cd.yml](pipelines/agent-cd.yml) | [Run in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8159)
+- **Deploy script**: [scripts/deploy_hosted_agent.py](scripts/deploy_hosted_agent.py)
 - **Parameters**: `environment` (dev/prod), `agentName` (`chat_agent` or `chatbot_evolution_agent`)
 - **What it does**:
   1. Builds the Docker image from `agents/<agentName>/Dockerfile`

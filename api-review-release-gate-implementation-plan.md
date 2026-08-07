@@ -7,7 +7,7 @@ API Review Hub must be integrated into the release process so approval and relea
 Replace pipeline use of the overloaded `Create-APIReview.ps1` with three focused scripts:
 
 1. Create an APIView revision during the transition to API Review Hub (ARH), from the Build stage only.
-2. Determine release readiness through `azsdk api-review get-approval-status`, from the Build stage and again when those steps are replayed during release. This gate must not be disabled, bypassed, or overridden by local language-specific tooling or configuration.
+2. Determine release readiness through `azsdk package get-approval-status`, from the Build stage and again when those steps are replayed during release. This gate must not be disabled, bypassed, or overridden by local language-specific tooling or configuration.
 3. Mark a released package in ARH during the release stage only, while preserving the legacy APIView update.
 
 `eng/common/scripts/Create-APIReview.ps1` will not be changed or removed. Pipeline owners will wire the new scripts into the appropriate jobs.
@@ -63,7 +63,7 @@ Responsibility:
 
 - Resolve the package name and package version required by the CLI.
 - Resolve the canonical API hash when ARH artifacts are available.
-- Invoke `azsdk api-review get-approval-status`.
+- Invoke `azsdk package get-approval-status`.
 - Consume the established `ReleaseGateDecision` response contract without redefining or independently interpreting it.
 - Treat the CLI result as authoritative because the command owns ARH evaluation and explicit APIView fallback.
 - Prevent language-specific tooling or configuration from skipping the check or converting an unapproved result into pipeline success.
@@ -138,7 +138,7 @@ Non-responsibilities:
 
 ### Phase 3: Add the Unified Approval Gate
 
-- Implement `Get-PackageApprovalStatus.ps1` around `azsdk api-review get-approval-status`.
+- Implement `Get-PackageApprovalStatus.ps1` around `azsdk package get-approval-status`.
 - Resolve package/version and, when present, the hash from release-candidate artifacts before invoking the command.
 - Pass `--api-hash` only when a matching `api.metadata.yml` is available; otherwise invoke the command without that option.
 - Normalize CLI output and exit codes into deterministic pipeline success or failure.
@@ -181,7 +181,7 @@ Non-responsibilities:
 - **Artifact determinism:** Approval and mark-released must use the exact API hash associated with the package being published.
 - **Onboarding dependency:** ARH-enabled repositories must run `create-apireview-hub-artifacts-{lang}` during their build stage and make its metadata available to the release job.
 - **Future enforcement:** API hash is optional only during the APIView-to-ARH transition. It becomes required once ARH onboarding is complete and APIView fallback is removed.
-- **CLI availability:** Release agents must provide a version of `azsdk` containing `api-review get-approval-status`.
+- **CLI availability:** Release agents must provide a version of `azsdk` containing `package get-approval-status`.
 - **Behavior preservation:** The creation-only script must retain source-only upload because not every language pipeline produces a review token file.
 - **CLI command removal:** Any out-of-repository consumers of the two APIView revision commands would break. Repository search found no callers, but release notes should identify the removal.
 - **Dual-backend consistency:** The CLI owns approval reconciliation across APIView and ARH; scripts should not second-guess it.
@@ -214,7 +214,7 @@ Non-responsibilities:
 
 ## Recommended First Implementation Slice
 
-- Implement and test `Get-PackageApprovalStatus.ps1` first because it establishes the new release gate without changing revision creation or release completion.
-- Implement `Create-APIViewRevision.ps1` and migrate the Build-stage caller, keeping creation Build-only while approval status is replayed during release.
-- Implement `Mark-PackageReleased.ps1` and add it only to the release stage after publishing.
-- Retain `Create-APIReview.ps1` unchanged until migration is complete.
+- [x] Implement and test `Get-PackageApprovalStatus.ps1` first because it establishes the new release gate without changing revision creation or release completion.
+- [x] Implement `Create-APIViewRevision.ps1` and migrate the Build-stage caller, keeping creation Build-only while approval status is replayed during release.
+- [ ] Implement `Mark-PackageReleased.ps1` and add it only to the release stage after publishing.
+- [x] Retain `Create-APIReview.ps1` unchanged until migration is complete.

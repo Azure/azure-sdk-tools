@@ -52,7 +52,9 @@ export const generateReport = (context: WorkflowContext) => {
       apiViewArtifact: pkg.apiViewArtifactPath,
       language: pkg.language,
       hasBreakingChange: pkg.hasBreakingChange,
-      breakingChangeLabel: context.swaggerToSdkConfig.packageOptions.breakingChangesLabel,
+      breakingChangeLabel:
+        context.swaggerToSdkConfig.packageOptions.breakingChangesLabel
+          ?? context.swaggerToSdkConfig.packageOptions.breakingChangeLabel,
       shouldLabelBreakingChange,
       areBreakingChangeSuppressed,
       presentBreakingChangeSuppressions: pkg.presentSuppressionLines,

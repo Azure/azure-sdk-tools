@@ -1,5 +1,9 @@
 # Release
 
+## Unreleased
+
+- Added `breakingChangesLabel` (plural) to the `SwaggerToSdkConfig` JSON schema and kept `breakingChangeLabel` (singular) as a deprecated fallback. `reportStatus` now prefers the plural value and falls back to the singular when only the legacy key is set.
+
 ## 2026-04-07 - 0.9.7
 
 - Made 'sdk-release-type' parameter optional, same as 'api-version'

@@ -13,7 +13,7 @@ stimuli:
   tags:
     suite: dataplane
     mode: trigger
-  prompt: Add a new preview version `2023-06-01-preview` to the Versions enum.
+  prompt: Add a new preview version `2023-06-01-preview` to the Versions enum and carry over all features from the latest stable version `2022-12-01` into the new preview.
   environment: &id001
     files:
     - src: ../fixtures/006005-dp-version-add-preview/main.tsp
@@ -46,7 +46,7 @@ stimuli:
   tags:
     suite: dataplane
     mode: forced
-  prompt: '@azure-typespec-author Add a new preview version `2023-06-01-preview` to the Versions enum.'
+  prompt: '@azure-typespec-author Add a new preview version `2023-06-01-preview` to the Versions enum and carry over all features from the latest stable version `2022-12-01` into the new preview.'
   environment: *id001
   graders:
   - *id002
@@ -71,7 +71,7 @@ stimuli:
   tags:
     suite: dataplane
     mode: no-skill
-  prompt: Add a new preview version `2023-06-01-preview` to the Versions enum.
+  prompt: Add a new preview version `2023-06-01-preview` to the Versions enum and carry over all features from the latest stable version `2022-12-01` into the new preview.
   environment: *id001
   graders:
   - type: tool-calls

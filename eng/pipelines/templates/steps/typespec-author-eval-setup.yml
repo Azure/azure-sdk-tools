@@ -27,12 +27,17 @@ steps:
       fi
       echo "Overlaying azure-typespec-author skill source from branch: $BRANCH"
       git fetch origin "$BRANCH"
+      if [[ "$BRANCH" == refs/* ]]; then
+        SOURCE_REF=FETCH_HEAD
+      else
+        SOURCE_REF="origin/$BRANCH"
+      fi
       rm -rf .github/skills/azure-typespec-author/SKILL.md \
              .github/skills/azure-typespec-author/references
-      git checkout "origin/$BRANCH" -- \
+      git checkout "$SOURCE_REF" -- \
         .github/skills/azure-typespec-author/SKILL.md \
         .github/skills/azure-typespec-author/references
-      echo "Skill source overlaid from origin/$BRANCH ($(git rev-parse origin/$BRANCH))"
+      echo "Skill source overlaid from $SOURCE_REF ($(git rev-parse "$SOURCE_REF"))"
       ls -R .github/skills/azure-typespec-author
     displayName: Checkout skill branch
 

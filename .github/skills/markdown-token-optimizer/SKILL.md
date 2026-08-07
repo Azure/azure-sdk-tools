@@ -1,6 +1,6 @@
 ---
 name: markdown-token-optimizer
-description: "Analyze markdown files for token efficiency and reduce context-window bloat. **UTILITY SKILL**. DO NOT USE FOR: code optimization, general file editing, non-markdown files. TRIGGERS: optimize markdown, reduce tokens, token count, token bloat, too many tokens, make concise, shrink file, file too large, optimize for AI, token efficiency, verbose markdown, reduce file size. INVOKES: waza CLI."
+description: "Analyze markdown files for token efficiency and reduce context-window bloat. **UTILITY SKILL**. DO NOT USE FOR: code optimization, general file editing, non-markdown files. TRIGGERS: optimize markdown, reduce tokens, token count, token bloat, too many tokens, make concise, shrink file, file too large, optimize for AI, token efficiency, verbose markdown, reduce file size."
 license: MIT
 metadata:
   author: Microsoft

@@ -37,6 +37,7 @@ from azure.ai.projects.models import (
     ContainerConfiguration,
     HostedAgentDefinition,
     ProtocolVersionRecord,
+    RaiConfig,
 )
 from azure.identity import AzureCliCredential
 
@@ -247,9 +248,10 @@ def main() -> None:
 
     # ── Deploy ──
     print(f"Deploying: {image_name}")
+    credential = AzureCliCredential()
     project = AIProjectClient(
         endpoint=project_endpoint,
-        credential=AzureCliCredential(),
+        credential=credential,
         allow_preview=True,
     )
     try:
@@ -268,6 +270,16 @@ def main() -> None:
             "ENABLE_INSTRUMENTATION": "true",
             "APP_VERSION": next_version,
         }
+
+        # Ensure Content-safety guardrail.
+        rai_policy_id = os.environ.get("AI_FOUNDRY_RAI_POLICY_ID", "")
+        if not rai_policy_id:
+            raise RuntimeError(
+                "Cannot apply guardrail because AI_FOUNDRY_RAI_POLICY_ID is not set."
+            )
+        rai_config = RaiConfig(rai_policy_name=rai_policy_id)
+        print(f"  Guardrail: {rai_policy_id}")
+
         agent = project.agents.create_version(
             agent_name=image_name,
             definition=HostedAgentDefinition(
@@ -280,6 +292,7 @@ def main() -> None:
                     )
                 ],
                 environment_variables=env_vars,
+                rai_config=rai_config,
             ),
             metadata={"enableVnextExperience": "true"},
         )

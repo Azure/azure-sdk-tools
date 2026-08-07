@@ -20,7 +20,7 @@ if _PROJECT_ROOT not in sys.path:
 
 from openai import BadRequestError, NotFoundError
 
-from utils.azure_ai_foundry_agent import HostedAgentClient
+from utils.azure_ai_foundry_agent import CONTENT_SAFETY_MESSAGE, HostedAgentClient
 
 
 class _FakeResponse:
@@ -246,4 +246,37 @@ async def test_invoke_drops_rejected_session_and_retries_without_it(
     # First attempt carried the stale session; the retry dropped it.
     assert captured_extra_bodies[0].get("agent_session_id") == "stale-session"
     assert "agent_session_id" not in captured_extra_bodies[1]
+
+
+def _content_filter_error() -> BadRequestError:
+    """Build a ``BadRequestError`` shaped like a content-safety block."""
+    request = httpx.Request("POST", "https://example.test/v1/responses")
+    response = httpx.Response(400, request=request)
+    body = {
+        "error": {
+            "code": "content_filter",
+            "message": "blocked at input stage",
+            "type": "content_safety_error",
+        }
+    }
+    return BadRequestError("blocked", response=response, body=body)
+
+
+@pytest.mark.asyncio
+async def test_invoke_returns_content_safety_response_without_retry() -> None:
+    """A content-filter block returns a safe message and is not retried."""
+    client = _mock_client(lambda *_a, **_k: (_ for _ in ()).throw(
+        _content_filter_error()
+    ))
+
+    trace_id, out = await HostedAgentClient(client, retry_delay=0).invoke(
+        conversation_items=[],
+        agent_ref={},
+    )
+
+    assert trace_id is None
+    assert out.output_text == CONTENT_SAFETY_MESSAGE
+    # No retry: the deterministic content-safety block fails fast.
+    assert client.responses.create.await_count == 1
+
 

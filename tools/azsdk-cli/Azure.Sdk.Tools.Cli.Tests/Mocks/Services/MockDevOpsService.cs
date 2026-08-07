@@ -3,9 +3,9 @@
 
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
+using Azure.Sdk.Tools.Cli.Models.Pipeline;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
-using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
@@ -261,6 +261,26 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(new Dictionary<string, List<string>>());
         }
 
+        Task<Build> IDevOpsService.GetBuildDetailsAsync(int buildId, string? project, CancellationToken ct)
+        {
+            return Task.FromResult(ConfiguredPipelineRun
+                ?? throw new InvalidOperationException(
+                    $"{nameof(ConfiguredPipelineRun)} was not set on the mock before {nameof(IDevOpsService.GetBuildDetailsAsync)} was called."));
+        }
+
+        Task<Timeline> IDevOpsService.GetBuildTimelineAsync(string project, int buildId, CancellationToken ct)
+        {
+            // Timeline has no public constructor; the non-public parameterless ctor initializes an empty
+            // (non-null) Records list, giving a benign "no failed tasks" timeline for tests.
+            var timeline = (Timeline)Activator.CreateInstance(typeof(Timeline), nonPublic: true)!;
+            return Task.FromResult(timeline);
+        }
+
+        Task<List<string>> IDevOpsService.GetBuildLogLinesAsync(string project, int buildId, int logId, CancellationToken ct)
+        {
+            return Task.FromResult(new List<string>());
+        }
+
         Task<WorkItem> IDevOpsService.UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, CancellationToken ct)
         {
             return ((IDevOpsService)this).UpdateWorkItemAsync(workItemId, fields, new Dictionary<string, string>(), ct);
@@ -410,6 +430,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             wi.SetFromProductOnboardingStatus(status);
             wi.IsTestProductOnboarding = isTest;
             return await Task.FromResult(wi);
+        }
+
+        public Task<GitHubCommitRef?> ResolveBuildCommitRefAsync(int buildId, string? project, CancellationToken ct)
+        {
+            return Task.FromResult<GitHubCommitRef?>(null);
         }
     }
 }

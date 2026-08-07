@@ -438,3 +438,29 @@ async def query_qa_records_by_qa_status(
     ):
         items.append(raw)
     return items
+
+
+async def query_qa_records_by_feedback_status(
+    *,
+    feedback_status: str,
+    tenant_id: str | None = None,
+) -> list[dict[str, Any]]:
+    """Return QA records whose embedded feedback status matches."""
+    container = await get_qa_records_container()
+    conditions = ["c.feedback.status = @feedback_status"]
+    parameters: list[dict[str, Any]] = [
+        {"name": "@feedback_status", "value": feedback_status}
+    ]
+    kwargs: dict[str, Any] = {}
+    if tenant_id:
+        conditions.append("c.tenant_id = @tenant_id")
+        parameters.append({"name": "@tenant_id", "value": tenant_id})
+        kwargs["partition_key"] = tenant_id
+
+    query = f"SELECT * FROM c WHERE {' AND '.join(conditions)}"
+    items: list[dict[str, Any]] = []
+    async for raw in container.query_items(
+        query=query, parameters=parameters, **kwargs
+    ):
+        items.append(raw)
+    return items

@@ -137,9 +137,11 @@ Same AI Toolkit workflow as the chat agent, just pointed at the chatbot evolutio
 
 ```json
 {
+  "mode": "analysis",
   "tenant_id": "azure_sdk_onboarding",
   "conversation_id": "<a real conversation id from Cosmos>",
-  "conversation_type": "teams_channel"
+  "conversation_type": "teams_channel",
+  "issue_url": null
 }
 ```
 
@@ -151,10 +153,10 @@ The agent will call `fetch_chat_trace` / `fetch_conversation` / `search_knowledg
 
 To exercise the loop locally:
 
-1. Run the daily scan against a small window: `python scripts/run_feedback_jobs.py --days 2` (evaluates ongoing threads, transitions the `qa-records` table, and runs the hosted chatbot evolution agent in-process for `failed` threads). Use `--dry-run` to update statuses without invoking the agent. Set breakpoints in `services/chatbot_evolution_agent_service.py` to step through a run.
+1. Run the daily scan against a small window: `python scripts/run_feedback_jobs.py --days 2` (ingests active threads and runs the hosted chatbot evolution agent in-process to analyze `ongoing` records and validate remediated failures). Use `--dry-run` to ingest records without invoking the agent. Set breakpoints in `services/chatbot_evolution_agent_service.py` to step through a run.
 2. Inspect outcomes in:
-   - **Script logs** — the service logs the agent's raw reply at INFO (4 KB preview) and DEBUG (full).
-   - **Cosmos `qa-records` container** — partitioned by `/tenant_id`; each thread row carries `qa_status` (`ongoing → finished | failed`) and, once `failed`, an embedded `feedback.status` (`created → running → done | failed`).
+   - **Script logs** — the service logs a bounded preview of the Agent's structured result.
+   - **Cosmos `qa-records` container** — partitioned by `/tenant_id`; each thread row carries `qa_status` (`ongoing → finished | failed`) and an embedded `feedback.status` for Agent work (`created → running → pending_validation → done | failed`).
    - **Foundry tracing** — the hosted agent's tool calls are visible in the Foundry portal under the agent's run history.
 
 ### Debugging the Server

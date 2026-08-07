@@ -8,11 +8,10 @@ A ``QARecord`` is the durable status row for **one conversation thread**
   thread is still open, ``finished`` once it concluded with a correct bot
   answer, or ``failed`` once it concluded with an incorrect/unknown bot
   answer (i.e. a case worth a feedback analysis).
-* **Layer 2 — Feedback lifecycle** (:class:`FeedbackStatus`, embedded in
-  :class:`FeedbackState`): only populated once the QA reaches ``failed``.
-  ``created`` when the chatbot evolution agent session is requested, ``running``
-  once the hosted agent accepted and is processing, ``done`` when it
-  finished, ``failed`` when it errored/timed out.
+* **Layer 2 — Evolution lifecycle** (:class:`FeedbackStatus`, embedded in
+  :class:`FeedbackState`): tracks analysis, issue remediation, and validation.
+  An issue moves to ``pending_validation``; successful validation moves to
+  ``done`` and any processing or validation error moves to terminal ``failed``.
 
 Partition key is ``/tenant_id`` (matches the episode and conversation
 conventions). The ``id`` is the thread key
@@ -29,6 +28,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from models.conversation import BotAnswerVerdict, ConversationType
+from models.feedback import RootCauseClassification
 
 
 class QAStatus(str, Enum):
@@ -45,12 +45,14 @@ class QAStatus(str, Enum):
 
 
 class FeedbackStatus(str, Enum):
-    """Layer-2 lifecycle state of the feedback-agent analysis."""
+    """Layer-2 lifecycle state of evolution analysis and validation."""
 
-    #: A feedback-agent session has been requested/persisted.
+    #: An evolution-agent session has been requested/persisted.
     created = "created"
     #: The hosted agent accepted the request and is processing.
     running = "running"
+    #: An issue was created; wait for it to close before validating the fix.
+    pending_validation = "pending_validation"
     #: The agent finished and the result was persisted.
     done = "done"
     #: The agent errored, timed out, or the run was cancelled.
@@ -64,6 +66,10 @@ class FeedbackState(BaseModel):
     #: Failure context (e.g. ``agent_invocation_failed``, ``timeout``);
     #: ``None`` while healthy.
     error: str | None = None
+    issue_url: str | None = None
+    classification: RootCauseClassification | None = None
+    validation_reasoning: str | None = None
+    validated_at: datetime | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
@@ -95,7 +101,7 @@ class QARecord(BaseModel):
     has_expert_reply: bool = False
     message_count: int = 0
 
-    # -- Layer 2: feedback lifecycle (present once qa_status == failed) ----
+    # -- Layer 2: evolution lifecycle -------------------------------------
     feedback: FeedbackState | None = None
 
     # -- Bookkeeping ------------------------------------------------------

@@ -1,18 +1,14 @@
-"""Unit tests for the feedback-job data model and status logic.
-
-These are pure/offline tests — they do not touch Cosmos, Foundry, or the
-network. They cover:
-
-* the ``finished`` gate parsing in the conversation evaluator,
-* the Layer-1 QA status decision and thread aggregation, and
-* the Layer-2 feedback status mapping from a Foundry Responses object.
-"""
+"""Offline tests for QA-record aggregation and evolution transitions."""
 
 from __future__ import annotations
 
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from unittest.mock import AsyncMock, patch
+
+import pytest
+from pydantic import ValidationError
 
 _PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
 if _PROJECT_ROOT not in sys.path:
@@ -22,12 +18,17 @@ from models.conversation import (
     BotAnswerVerdict,
     ConversationMessageExtraInfo,
     ConversationMessageItem,
-    ConversationState,
     ConversationType,
     Role,
 )
+from models.feedback import (
+    ChatbotEvolutionAgentInput,
+    ChatbotEvolutionAgentMode,
+    ChatbotEvolutionAgentOutcome,
+    ChatbotEvolutionAgentResult,
+    RootCauseClassification,
+)
 from models.qa_record import FeedbackState, FeedbackStatus, QARecord, QAStatus
-from services.conversation_service import ConversationService
 from services.chatbot_evolution_agent_service import ChatbotEvolutionAgentService
 from services.qa_record_service import QARecordService
 
@@ -42,12 +43,10 @@ def _msg(
     content: str,
     order: int,
     *,
-    msg_id: str | None = None,
     tenant_id: str | None = None,
-    trace_id: str | None = None,
 ) -> ConversationMessageItem:
     return ConversationMessageItem(
-        id=msg_id or f"msg-{order}",
+        id=f"msg-{order}",
         tenant_id=tenant_id,
         sender_role=role,
         sender_id=sender_id,
@@ -57,241 +56,349 @@ def _msg(
         conversation_id=_CONVERSATION_ID,
         conversation_type=ConversationType.teams_channel,
         conversation_partition=_PARTITION,
-        trace_id=trace_id,
     )
 
 
-# ---------------------------------------------------------------------------
-# 1. Evaluation `finished` gate parsing
-# ---------------------------------------------------------------------------
-
-
-def test_parse_evaluation_finished_true():
-    state, verdict, reasoning, confidence = ConversationService._parse_evaluation(
-        '{"finished": true, "verdict": "correct", "reasoning": "ok", "confidence": 0.9}'
-    )
-    assert state == ConversationState.Finished
-    assert verdict == BotAnswerVerdict.Correct
-    assert confidence == 0.9
-
-
-def test_parse_evaluation_finished_false_is_ongoing():
-    state, verdict, _, _ = ConversationService._parse_evaluation(
-        '{"finished": false, "verdict": "unknown", "reasoning": "still going", "confidence": 0.3}'
-    )
-    assert state == ConversationState.Ongoing
-    assert verdict == BotAnswerVerdict.Unknown
-
-
-def test_parse_evaluation_missing_finished_defaults_ongoing():
-    state, _, _, _ = ConversationService._parse_evaluation(
-        '{"verdict": "incorrect", "reasoning": "wrong", "confidence": 0.8}'
-    )
-    assert state == ConversationState.Ongoing
-
-
-def test_parse_evaluation_invalid_json_is_ongoing_unknown():
-    state, verdict, _, confidence = ConversationService._parse_evaluation("not json")
-    assert state == ConversationState.Ongoing
-    assert verdict == BotAnswerVerdict.Unknown
-    assert confidence == 0.0
-
-
-# ---------------------------------------------------------------------------
-# 2. Layer-1 QA status decision
-# ---------------------------------------------------------------------------
-
-
-def test_decide_status_ongoing_stays_ongoing():
-    assert (
-        QARecordService.decide_qa_status(
-            ConversationState.Ongoing, BotAnswerVerdict.Correct
+def _record(
+    *,
+    qa_status: QAStatus = QAStatus.ongoing,
+    feedback_status: FeedbackStatus | None = FeedbackStatus.running,
+) -> QARecord:
+    feedback = (
+        FeedbackState(
+            status=feedback_status,
+            created_at=_BASE_TIME,
+            updated_at=_BASE_TIME,
         )
-        == QAStatus.ongoing
+        if feedback_status
+        else None
+    )
+    return QARecord(
+        id=_PARTITION,
+        tenant_id="typespec",
+        conversation_id=_CONVERSATION_ID,
+        conversation_type=ConversationType.teams_channel,
+        qa_status=qa_status,
+        feedback=feedback,
+        first_seen_at=_BASE_TIME,
+        created_at=_BASE_TIME,
+        updated_at=_BASE_TIME,
     )
 
 
-def test_decide_status_finished_correct_is_finished():
-    assert (
-        QARecordService.decide_qa_status(
-            ConversationState.Finished, BotAnswerVerdict.Correct
+def _result(
+    outcome: ChatbotEvolutionAgentOutcome,
+) -> ChatbotEvolutionAgentResult:
+    if outcome == ChatbotEvolutionAgentOutcome.issue_created:
+        return ChatbotEvolutionAgentResult(
+            outcome=outcome,
+            classification=RootCauseClassification.retrieval_mismatch,
+            issue_url="https://github.com/Azure/azure-sdk-pr/issues/123",
+            reasoning="Grounded result.",
+            confidence=0.9,
         )
-        == QAStatus.finished
-    )
-
-
-def test_decide_status_finished_incorrect_is_failed():
-    assert (
-        QARecordService.decide_qa_status(
-            ConversationState.Finished, BotAnswerVerdict.Incorrect
-        )
-        == QAStatus.failed
-    )
-
-
-def test_decide_status_finished_unknown_is_failed():
-    # Per design: unknown on a concluded thread is treated as failed.
-    assert (
-        QARecordService.decide_qa_status(
-            ConversationState.Finished, BotAnswerVerdict.Unknown
-        )
-        == QAStatus.failed
+    return ChatbotEvolutionAgentResult(
+        outcome=outcome,
+        reasoning="Grounded result.",
+        confidence=0.9,
     )
 
 
 # ---------------------------------------------------------------------------
-# 3. Thread aggregation -> QA record
+# Thread aggregation and channel metadata
 # ---------------------------------------------------------------------------
 
 
-def test_build_record_from_thread():
+def test_build_record_from_thread() -> None:
     messages = [
         _msg(Role.User, "poster-1", "How do I add an API version?", 0),
-        _msg(
-            Role.System,
-            "azure-sdk-qa-bot",
-            "Use @added.",
-            1,
-            msg_id="bot-resp_abc123",
-            tenant_id="typespec",
-            trace_id="trace-xyz",
-        ),
+        _msg(Role.System, "azure-sdk-qa-bot", "Use @added.", 1, tenant_id="typespec"),
         _msg(Role.User, "expert-2", "That's right.", 2),
     ]
     record = QARecordService().build_record(messages)
     assert record is not None
     assert record.id == _PARTITION
     assert record.tenant_id == "typespec"
-    assert record.conversation_id == _CONVERSATION_ID
     assert record.qa_status == QAStatus.ongoing
     assert record.has_expert_reply is True
     assert record.message_count == 3
-    # Feedback is thread-scoped: the record carries no per-reply response_id
-    # or trace_id — the agent derives traces from the conversation.
+    # Records stay thread-scoped; the Agent selects the relevant bot turn and
+    # trace after fetching the complete conversation.
     assert not hasattr(record, "response_id")
     assert not hasattr(record, "trace_id")
 
 
-def test_build_record_without_bot_answer_is_none():
-    messages = [
-        _msg(Role.User, "poster-1", "Anyone there?", 0),
-    ]
-    assert QARecordService().build_record(messages) is None
+def test_build_record_without_bot_answer_is_none() -> None:
+    assert QARecordService().build_record(
+        [_msg(Role.User, "poster-1", "Anyone there?", 0)]
+    ) is None
 
 
-# ---------------------------------------------------------------------------
-# 3b. Testing-channel exclusion
-# ---------------------------------------------------------------------------
-
-
-def test_build_record_captures_channel_id_from_extra_info():
-    bot = _msg(
-        Role.System,
-        "azure-sdk-qa-bot",
-        "answer",
-        1,
-        msg_id="bot-resp_1",
-        tenant_id="typespec",
+def test_build_record_captures_channel_id_from_extra_info() -> None:
+    bot = _msg(Role.System, "azure-sdk-qa-bot", "answer", 1, tenant_id="typespec")
+    bot.extra_info = ConversationMessageExtraInfo(channel_id="19:channel@thread.tacv2")
+    record = QARecordService().build_record(
+        [_msg(Role.User, "poster-1", "q?", 0), bot]
     )
-    bot.extra_info = ConversationMessageExtraInfo(channel_id="19:channel-abc@thread.tacv2")
-    messages = [_msg(Role.User, "poster-1", "q?", 0), bot]
-    record = QARecordService().build_record(messages)
     assert record is not None
-    assert record.channel_id == "19:channel-abc@thread.tacv2"
+    assert record.channel_id == "19:channel@thread.tacv2"
 
 
-def test_channel_key_of_prefers_stored_channel_id():
-    now = datetime.now(timezone.utc)
-    record = QARecord(
-        id=_PARTITION,
-        tenant_id="typespec",
-        conversation_id="19:conv-root@thread.tacv2;messageid=123",
-        conversation_type=ConversationType.teams_channel,
-        channel_id="19:stored-channel@thread.tacv2",
+def test_channel_key_falls_back_to_conversation_id() -> None:
+    record = _record(feedback_status=None)
+    record.conversation_id = "19:channel@thread.tacv2;messageid=123"
+    assert QARecordService.channel_key_of(record) == "19:channel@thread.tacv2"
+
+
+def test_qa_record_round_trip_preserves_validation_state() -> None:
+    record = _record(
         qa_status=QAStatus.failed,
-        first_seen_at=now,
-        created_at=now,
-        updated_at=now,
+        feedback_status=FeedbackStatus.pending_validation,
     )
-    assert QARecordService.channel_key_of(record) == "19:stored-channel@thread.tacv2"
-
-
-def test_channel_key_of_falls_back_to_conversation_id_segment():
-    now = datetime.now(timezone.utc)
-    record = QARecord(
-        id=_PARTITION,
-        tenant_id="typespec",
-        conversation_id="19:conv-root@thread.tacv2;messageid=123",
-        conversation_type=ConversationType.teams_channel,
-        qa_status=QAStatus.failed,
-        first_seen_at=now,
-        created_at=now,
-        updated_at=now,
-    )
-    assert QARecordService.channel_key_of(record) == "19:conv-root@thread.tacv2"
-
-
-def test_qa_record_round_trips_through_cosmos_dict():
-    now = datetime.now(timezone.utc)
-    record = QARecord(
-        id=_PARTITION,
-        tenant_id="typespec",
-        conversation_id=_CONVERSATION_ID,
-        conversation_type=ConversationType.teams_channel,
-        qa_status=QAStatus.failed,
-        feedback=FeedbackState(
-            status=FeedbackStatus.running,
-            created_at=now,
-            updated_at=now,
-        ),
-        first_seen_at=now,
-        created_at=now,
-        updated_at=now,
-    )
+    assert record.feedback is not None
+    record.feedback.issue_url = "https://github.com/Azure/azure-sdk-pr/issues/123"
+    record.feedback.classification = RootCauseClassification.reasoning_gap
     doc = record.to_cosmos()
-    doc["_etag"] = "system-field"  # simulate a Cosmos system field
+    assert "mode" not in doc["feedback"]
+    doc["_etag"] = "system-field"
     restored = QARecord.from_cosmos(doc)
-    assert restored.qa_status == QAStatus.failed
     assert restored.feedback is not None
-    assert restored.feedback.status == FeedbackStatus.running
+    assert restored.feedback.status == FeedbackStatus.pending_validation
+    assert restored.feedback.classification == RootCauseClassification.reasoning_gap
 
 
 # ---------------------------------------------------------------------------
-# 4. Layer-2 feedback helpers (issue-url capture + failure marking)
+# Agent contract and lifecycle transitions
 # ---------------------------------------------------------------------------
 
 
-def _record_with_feedback() -> QARecord:
-    now = datetime.now(timezone.utc)
-    return QARecord(
-        id=_PARTITION,
-        tenant_id="typespec",
-        conversation_id=_CONVERSATION_ID,
-        conversation_type=ConversationType.teams_channel,
-        qa_status=QAStatus.failed,
-        feedback=FeedbackState(status=FeedbackStatus.running, created_at=now, updated_at=now),
-        first_seen_at=now,
-        created_at=now,
-        updated_at=now,
+def test_analysis_input_omits_issue() -> None:
+    payload = ChatbotEvolutionAgentService()._build_input(
+        _record(),
+        ChatbotEvolutionAgentMode.analysis,
+    )
+    assert payload.mode == ChatbotEvolutionAgentMode.analysis
+    assert payload.issue_url is None
+
+
+def test_validation_input_requires_issue() -> None:
+    with pytest.raises(ValidationError):
+        ChatbotEvolutionAgentInput(
+            tenant_id="typespec",
+            conversation_id=_CONVERSATION_ID,
+            conversation_type=ConversationType.teams_channel,
+            mode=ChatbotEvolutionAgentMode.validation,
+        )
+
+
+def test_ongoing_result_keeps_record_reanalyzable() -> None:
+    record = _record()
+    ChatbotEvolutionAgentService()._apply_result(
+        record,
+        _result(ChatbotEvolutionAgentOutcome.conversation_ongoing),
+    )
+    assert record.qa_status == QAStatus.ongoing
+    assert record.feedback is None
+    assert record.verdict == BotAnswerVerdict.Unknown
+
+
+def test_no_issue_result_finishes_record() -> None:
+    record = _record()
+    ChatbotEvolutionAgentService()._apply_result(
+        record,
+        _result(ChatbotEvolutionAgentOutcome.no_issue),
+    )
+    assert record.qa_status == QAStatus.finished
+    assert record.feedback is not None
+    assert record.feedback.status == FeedbackStatus.done
+
+
+def test_issue_result_waits_for_validation() -> None:
+    record = _record()
+    ChatbotEvolutionAgentService()._apply_result(
+        record,
+        _result(ChatbotEvolutionAgentOutcome.issue_created),
+    )
+    assert record.qa_status == QAStatus.failed
+    assert record.feedback is not None
+    assert record.feedback.status == FeedbackStatus.pending_validation
+    assert record.feedback.issue_url == (
+        "https://github.com/Azure/azure-sdk-pr/issues/123"
     )
 
 
-def test_finalize_failed_sets_error():
-    svc = ChatbotEvolutionAgentService()
-    record = _record_with_feedback()
-    svc._finalize_failed(record, error="timeout")
-    assert record.feedback.status == FeedbackStatus.failed
-    assert record.feedback.error == "timeout"
+@pytest.mark.parametrize(
+    ("outcome", "expected"),
+    [
+        (ChatbotEvolutionAgentOutcome.validation_passed, FeedbackStatus.done),
+        (ChatbotEvolutionAgentOutcome.validation_failed, FeedbackStatus.failed),
+    ],
+)
+def test_validation_result_is_terminal(
+    outcome: ChatbotEvolutionAgentOutcome,
+    expected: FeedbackStatus,
+) -> None:
+    record = _record(
+        qa_status=QAStatus.failed,
+        feedback_status=FeedbackStatus.pending_validation,
+    )
+    record.verdict = BotAnswerVerdict.Incorrect
+    ChatbotEvolutionAgentService()._apply_result(record, _result(outcome))
+    assert record.qa_status == QAStatus.failed
+    assert record.verdict == BotAnswerVerdict.Incorrect
+    assert record.feedback is not None
+    assert record.feedback.status == expected
+    assert record.feedback.validated_at is not None
 
 
-def test_build_input_shape():
-    svc = ChatbotEvolutionAgentService()
-    record = _record_with_feedback()
-    payload = svc._build_input(record)
-    assert payload.tenant_id == "typespec"
-    assert payload.conversation_id == _CONVERSATION_ID
-    assert payload.conversation_type == ConversationType.teams_channel
-    # Feedback is thread-scoped: the payload carries only thread coordinates,
-    # no per-reply response_id and no trigger.
-    assert not hasattr(payload, "response_id")
-    assert not hasattr(payload, "trigger")
+def test_failed_feedback_is_not_eligible_for_retry() -> None:
+    record = _record(
+        qa_status=QAStatus.failed,
+        feedback_status=FeedbackStatus.failed,
+    )
+    assert not ChatbotEvolutionAgentService._can_run(
+        record,
+        ChatbotEvolutionAgentMode.analysis,
+    )
+    assert not ChatbotEvolutionAgentService._can_run(
+        record,
+        ChatbotEvolutionAgentMode.validation,
+    )
+
+
+@pytest.mark.parametrize(
+    "feedback_status",
+    [FeedbackStatus.created, FeedbackStatus.running],
+)
+def test_interrupted_synchronous_run_is_not_retried(
+    feedback_status: FeedbackStatus,
+) -> None:
+    record = _record(
+        qa_status=QAStatus.failed,
+        feedback_status=feedback_status,
+    )
+    assert not ChatbotEvolutionAgentService._can_run(
+        record,
+        ChatbotEvolutionAgentMode.analysis,
+    )
+    assert not ChatbotEvolutionAgentService._can_run(
+        record,
+        ChatbotEvolutionAgentMode.validation,
+    )
+
+
+def test_pending_validation_is_eligible_only_for_validation() -> None:
+    record = _record(
+        qa_status=QAStatus.failed,
+        feedback_status=FeedbackStatus.pending_validation,
+    )
+    assert record.feedback is not None
+    record.feedback.issue_url = "https://github.com/Azure/azure-sdk-pr/issues/123"
+    assert not ChatbotEvolutionAgentService._can_run(
+        record, ChatbotEvolutionAgentMode.analysis
+    )
+    assert ChatbotEvolutionAgentService._can_run(
+        record, ChatbotEvolutionAgentMode.validation
+    )
+
+
+def test_issue_created_requires_issue_metadata() -> None:
+    with pytest.raises(ValidationError):
+        ChatbotEvolutionAgentResult(
+            outcome=ChatbotEvolutionAgentOutcome.issue_created,
+            reasoning="Missing issue metadata.",
+            confidence=0.9,
+        )
+
+
+def test_agent_result_rejects_removed_fields() -> None:
+    with pytest.raises(ValidationError):
+        ChatbotEvolutionAgentResult.model_validate(
+            {
+                "outcome": ChatbotEvolutionAgentOutcome.no_issue,
+                "reasoning": "Grounded.",
+                "confidence": 0.9,
+                "verdict": BotAnswerVerdict.Correct,
+            }
+        )
+
+
+@pytest.mark.asyncio
+async def test_run_job_persists_issue_result() -> None:
+    record = _record(qa_status=QAStatus.ongoing, feedback_status=None)
+    result = _result(ChatbotEvolutionAgentOutcome.issue_created)
+
+    service = ChatbotEvolutionAgentService()
+    service._load_job = AsyncMock(return_value=record)
+    service._invoke_agent = AsyncMock(return_value=result.model_dump_json())
+    upsert = AsyncMock()
+    with patch(
+        "services.chatbot_evolution_agent_service.upsert_qa_record",
+        new=upsert,
+    ):
+        actual = await service.run_job(record.id, record.tenant_id)
+
+    assert actual == result
+    states = [
+        QARecord.from_cosmos(call.args[0]).feedback
+        for call in upsert.await_args_list
+    ]
+    assert states[0] is not None
+    assert states[1] is not None
+    assert states[0].status == FeedbackStatus.created
+    assert states[1].status == FeedbackStatus.running
+    final_call = upsert.await_args
+    assert final_call is not None
+    persisted = QARecord.from_cosmos(final_call.args[0])
+    assert persisted.verdict == BotAnswerVerdict.Incorrect
+    assert persisted.feedback is not None
+    assert persisted.feedback.status == FeedbackStatus.pending_validation
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("mode", "outcome"),
+    [
+        (
+            ChatbotEvolutionAgentMode.analysis,
+            ChatbotEvolutionAgentOutcome.validation_passed,
+        ),
+        (
+            ChatbotEvolutionAgentMode.validation,
+            ChatbotEvolutionAgentOutcome.no_issue,
+        ),
+    ],
+)
+async def test_run_job_rejects_outcome_for_wrong_mode(
+    mode: ChatbotEvolutionAgentMode,
+    outcome: ChatbotEvolutionAgentOutcome,
+) -> None:
+    if mode == ChatbotEvolutionAgentMode.analysis:
+        record = _record(qa_status=QAStatus.ongoing, feedback_status=None)
+    else:
+        record = _record(
+            qa_status=QAStatus.failed,
+            feedback_status=FeedbackStatus.pending_validation,
+        )
+        assert record.feedback is not None
+        record.feedback.issue_url = (
+            "https://github.com/Azure/azure-sdk-pr/issues/123"
+        )
+    result = _result(outcome)
+
+    service = ChatbotEvolutionAgentService()
+    service._load_job = AsyncMock(return_value=record)
+    service._invoke_agent = AsyncMock(return_value=result.model_dump_json())
+    upsert = AsyncMock()
+    with patch(
+        "services.chatbot_evolution_agent_service.upsert_qa_record",
+        new=upsert,
+    ):
+        actual = await service.run_job(record.id, record.tenant_id, mode=mode)
+
+    assert actual is None
+    final_call = upsert.await_args
+    assert final_call is not None
+    persisted = QARecord.from_cosmos(final_call.args[0])
+    assert persisted.feedback is not None
+    assert persisted.feedback.status == FeedbackStatus.failed

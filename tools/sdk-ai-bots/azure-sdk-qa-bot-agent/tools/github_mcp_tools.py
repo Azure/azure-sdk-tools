@@ -21,8 +21,10 @@ import hashlib
 import json
 import logging
 import os
+import re
 import time as _time
 from datetime import datetime, timedelta, timezone
+from urllib.parse import urlparse
 
 import httpx
 from azure.keyvault.keys.crypto.aio import CryptographyClient
@@ -99,6 +101,9 @@ _JWT_EXPIRY_SECS = 600
 _DEFAULT_TOKEN_LIFETIME_HOURS = 1
 # MCP request timeout (seconds) — GitHub MCP may take time for large repos.
 _MCP_REQUEST_TIMEOUT_SECS = 60
+_ISSUE_PATH_RE = re.compile(
+    r"^/(?P<owner>[^/]+)/(?P<repo>[^/]+)/issues/(?P<number>[1-9]\d*)/?$"
+)
 
 
 class _GitHubTokenManager:
@@ -386,6 +391,40 @@ def _github_mcp_parser(result):
 
 
 # -- public ----------------------------------------------------------------
+
+
+async def get_github_issue_state(issue_url: str) -> str:
+    """Return ``open`` or ``closed`` for a canonical GitHub issue URL."""
+    parsed = urlparse(issue_url)
+    match = (
+        _ISSUE_PATH_RE.fullmatch(parsed.path)
+        if parsed.scheme == "https" and parsed.netloc.lower() == "github.com"
+        else None
+    )
+    if match is None:
+        raise ValueError(f"Invalid GitHub issue URL: {issue_url}")
+
+    token, _ = await _get_github_token()
+    headers = {
+        "Authorization": "Bearer " + token,
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+    owner = match.group("owner")
+    repo = match.group("repo")
+    number = match.group("number")
+    async with httpx.AsyncClient(timeout=_GITHUB_API_TIMEOUT_SECS) as client:
+        response = await client.get(
+            f"{_GITHUB_API}/repos/{owner}/{repo}/issues/{number}",
+            headers=headers,
+        )
+        response.raise_for_status()
+    state = response.json().get("state")
+    if state not in ("open", "closed"):
+        raise RuntimeError(
+            f"GitHub returned an unknown state for {issue_url}: {state!r}"
+        )
+    return state
 
 
 async def create_github_mcp_tool(

@@ -1,17 +1,8 @@
-"""QA record service — Layer-1 lifecycle for QA threads.
+"""Aggregate conversation messages and query QA-record workflow states.
 
-Aggregates the per-message rows in ``conversation-messages`` into one
-:class:`~models.qa_record.QARecord` per thread (keyed by
-``conversation_id``) and owns the **Layer-1** ``qa_status`` transitions:
-
-* New threads with a bot answer are inserted as ``ongoing``.
-* Applying an evaluation result advances a thread to ``finished`` (bot
-  answered correctly) or ``failed`` (bot answer wrong/unconfirmed — a case
-  worth a feedback analysis). Threads the evaluator marks *ongoing* stay
-  ``ongoing`` for re-evaluation on a later run.
-
-The **Layer-2** feedback lifecycle is owned separately by
-:class:`services.chatbot_evolution_agent_service.ChatbotEvolutionAgentService`.
+Aggregates per-message rows into one ``QARecord`` per thread. New threads with
+a bot answer start as ``ongoing``; the Chatbot Evolution Agent owns subsequent
+evaluation and lifecycle transitions.
 """
 
 from __future__ import annotations
@@ -21,15 +12,15 @@ from datetime import datetime, timezone
 from typing import Sequence
 
 from models.conversation import (
-    BotAnswerVerdict,
-    ConversationEvaluationItem,
+    ConversationDocumentType,
     ConversationMessageItem,
-    ConversationState,
+    Role,
 )
-from models.qa_record import QARecord, QAStatus
-from services.conversation_service import ConversationService
+from models.qa_record import FeedbackStatus, QARecord, QAStatus
 from utils.azure_cosmosdb import (
+    get_conversation_message_container,
     query_qa_records_by_qa_status,
+    query_qa_records_by_feedback_status,
     read_qa_record,
     upsert_qa_record,
 )
@@ -38,14 +29,75 @@ logger = logging.getLogger(__name__)
 
 
 class QARecordService:
-    """Builds and transitions the Layer-1 status of QA threads."""
-
-    def __init__(
-        self, conversation_service: ConversationService | None = None
-    ) -> None:
-        self._conversation = conversation_service or ConversationService()
+    """Build QA records from messages and expose workflow queries."""
 
     # -- Aggregation: messages -> QA records -------------------------------
+
+    async def get_messages_in_period(
+        self,
+        start: datetime,
+        end: datetime,
+    ) -> list[ConversationMessageItem]:
+        """Return full threads with a bot message in the scan window."""
+        if start.tzinfo is not None:
+            start = start.astimezone(timezone.utc)
+        if end.tzinfo is not None:
+            end = end.astimezone(timezone.utc)
+        start = start.replace(hour=0, minute=0, second=0, microsecond=0)
+        container = await get_conversation_message_container()
+
+        # Cosmos cannot aggregate this cross-partition query reliably, so first
+        # collect qualifying partitions, then fetch each complete thread.
+        window_query = (
+            "SELECT c.conversation_partition AS partition FROM c "
+            "WHERE c.document_type = @dtype "
+            "AND ARRAY_CONTAINS(@bot_roles, c.sender_role) "
+            "AND c.created_at >= @start AND c.created_at < @end"
+        )
+        window_params: list[dict[str, object]] = [
+            {
+                "name": "@dtype",
+                "value": ConversationDocumentType.message.value,
+            },
+            {
+                "name": "@bot_roles",
+                "value": [Role.System.value, Role.Assistant.value],
+            },
+            {"name": "@start", "value": start.isoformat()},
+            {"name": "@end", "value": end.isoformat()},
+        ]
+        partitions: set[str] = set()
+        async for row in container.query_items(
+            query=window_query,
+            parameters=window_params,
+        ):
+            partition = row.get("partition")
+            if partition:
+                partitions.add(partition)
+        if not partitions:
+            return []
+
+        # Return every message from each qualifying partition, including
+        # messages outside the activity window, so the Agent sees full context.
+        messages_query = (
+            "SELECT * FROM c "
+            "WHERE c.document_type = @dtype "
+            "AND ARRAY_CONTAINS(@partitions, c.conversation_partition)"
+        )
+        messages_params: list[dict[str, object]] = [
+            {
+                "name": "@dtype",
+                "value": ConversationDocumentType.message.value,
+            },
+            {"name": "@partitions", "value": sorted(partitions)},
+        ]
+        items: list[ConversationMessageItem] = []
+        async for raw in container.query_items(
+            query=messages_query,
+            parameters=messages_params,
+        ):
+            items.append(ConversationMessageItem.model_validate(raw))
+        return sorted(items, key=lambda message: message.created_at)
 
     async def upsert_threads_from_messages(
         self,
@@ -62,7 +114,9 @@ class QARecordService:
         refreshed. Returns the records touched.
         """
         excluded_channels = excluded_channels or set()
-        groups = ConversationService.group_by_conversation(messages)
+        groups: dict[str, list[ConversationMessageItem]] = {}
+        for message in messages:
+            groups.setdefault(message.conversation_partition, []).append(message)
         touched: list[QARecord] = []
         for _partition, items in groups.items():
             candidate = self.build_record(items)
@@ -191,58 +245,32 @@ class QARecordService:
                 return link
         return None
 
-    # -- Transition: apply an evaluation result ----------------------------
-
-    @staticmethod
-    def decide_qa_status(
-        state: ConversationState, verdict: BotAnswerVerdict
-    ) -> QAStatus:
-        """Pure Layer-1 status decision (no I/O).
-
-        * ``ongoing`` thread                     -> ``ongoing``.
-        * ``finished`` + ``correct``             -> ``finished``.
-        * ``finished`` + ``incorrect``/``unknown`` -> ``failed``.
-        """
-        if state == ConversationState.Ongoing:
-            return QAStatus.ongoing
-        if verdict == BotAnswerVerdict.Correct:
-            return QAStatus.finished
-        return QAStatus.failed
-
-    async def apply_evaluation(
-        self,
-        record: QARecord,
-        evaluation: ConversationEvaluationItem,
-    ) -> QARecord:
-        """Advance ``record``'s Layer-1 status from an evaluation result.
-
-        Mapping (per design):
-        * ``ongoing`` thread  -> stay ``ongoing`` (re-evaluate later).
-        * ``finished`` + ``correct``            -> ``finished`` (archive).
-        * ``finished`` + ``incorrect``/``unknown`` -> ``failed`` (feedback).
-        """
-        record.verdict = evaluation.verdict
-        record.reasoning = evaluation.reasoning
-        record.confidence = evaluation.confidence
-        record.has_expert_reply = evaluation.has_expert_reply
-        record.message_count = evaluation.message_count
-        record.evaluated_at = evaluation.evaluated_at
-        record.message_link = record.message_link or evaluation.message_link
-
-        record.qa_status = self.decide_qa_status(evaluation.state, evaluation.verdict)
-
-        record.updated_at = _now()
-        await upsert_qa_record(record.to_cosmos())
-        return record
-
     # -- Queries -----------------------------------------------------------
 
-    async def list_ongoing(self, *, tenant_id: str | None = None) -> list[QARecord]:
-        """Return every QA record still in the ``ongoing`` state."""
+    async def list_analyzable(
+        self,
+        *,
+        tenant_id: str | None = None,
+    ) -> list[QARecord]:
+        """Return ongoing records that have not started Agent analysis."""
         docs = await query_qa_records_by_qa_status(
-            qa_status=QAStatus.ongoing.value, tenant_id=tenant_id
+            qa_status=QAStatus.ongoing.value,
+            tenant_id=tenant_id,
         )
-        return [QARecord.from_cosmos(d) for d in docs]
+        records = [QARecord.from_cosmos(doc) for doc in docs]
+        return [record for record in records if record.feedback is None]
+
+    async def list_pending_validation(
+        self,
+        *,
+        tenant_id: str | None = None,
+    ) -> list[QARecord]:
+        """Return records waiting for remediation-issue validation."""
+        docs = await query_qa_records_by_feedback_status(
+            feedback_status=FeedbackStatus.pending_validation.value,
+            tenant_id=tenant_id,
+        )
+        return [QARecord.from_cosmos(doc) for doc in docs]
 
 
 def _now() -> datetime:

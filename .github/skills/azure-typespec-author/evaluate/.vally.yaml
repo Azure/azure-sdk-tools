@@ -24,6 +24,7 @@ environments:
       azure-sdk-mcp:
         type: stdio
         command: dotnet
+        cwd: .
         args:
           [
             "run",
@@ -53,6 +54,7 @@ environments:
       azure-sdk-mcp:
         type: stdio
         command: dotnet
+        cwd: .
         args:
           [
             "run",
@@ -74,6 +76,7 @@ environments:
       azure-sdk-mcp:
         type: stdio
         command: dotnet
+        cwd: .
         args:
           [
             "run",

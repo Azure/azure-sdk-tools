@@ -26,7 +26,7 @@ public class ReviewPullRequestCreationRequest
     public required string PackageName { get; set; }
 
     [JsonPropertyName("baseTag")]
-    public required string BaseTag { get; set; }
+    public string BaseTag { get; set; } = string.Empty;
 
     [JsonPropertyName("targetBranch")]
     public required GitBranchReference TargetBranch { get; set; }

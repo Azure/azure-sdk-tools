@@ -9,8 +9,8 @@ Sync `.github/skills/azure-typespec-author/references/reference-document-links.m
 
 Cases (these 8 categories MUST exist, in this order):
 
-1. Add Resource Type (ARM)
-2. Add Resource Operations (ARM)
+1. Add ARM Resource Type
+2. Add ARM Resource Operation
 3. API Versioning
 4. Long-Running Operations (LRO)
 5. Paging

@@ -15,21 +15,22 @@ jobs:
   steps:
   - pwsh: |
       $reposToClone = @(
-        "azure-rest-api-specs",
-        "azure-sdk",
-        "azure-sdk-for-android",
-        "azure-sdk-for-c",
-        "azure-sdk-for-cpp",
-        "azure-sdk-for-go",
-        "azure-sdk-for-ios",
-        "azure-sdk-for-java",
-        "azure-sdk-for-js",
-        "azure-sdk-for-net",
-        "azure-sdk-for-python",
-        "azure-sdk-for-rust"
+        "Azure/azure-rest-api-specs",
+        "Azure/azure-sdk",
+        "Azure/azure-sdk-for-android",
+        "Azure/azure-sdk-for-c",
+        "Azure/azure-sdk-for-cpp",
+        "Azure/azure-sdk-for-go",
+        "Azure/azure-sdk-for-ios",
+        "Azure/azure-sdk-for-java",
+        "Azure/azure-sdk-for-js",
+        "Azure/azure-sdk-for-net",
+        "Azure/azure-sdk-for-python",
+        "Azure/azure-sdk-for-rust",
+        "microsoft/mcp"
       )
       foreach ($repo in $reposToClone) {
-        git clone https://github.com/Azure/${repo}.git --depth 1 --single-branch --branch main
+        git clone https://github.com/${repo}.git --depth 1 --single-branch --branch main
       }
 
     workingDirectory: $(Pipeline.Workspace)

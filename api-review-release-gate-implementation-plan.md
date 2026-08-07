@@ -214,7 +214,7 @@ Non-responsibilities:
 
 ## Recommended First Implementation Slice
 
-- Implement and test `Get-PackageApprovalStatus.ps1` first because it establishes the new release gate without changing revision creation or release completion.
-- Implement `Create-APIViewRevision.ps1` and migrate the Build-stage caller, keeping creation Build-only while approval status is replayed during release.
-- Implement `Mark-PackageReleased.ps1` and add it only to the release stage after publishing.
-- Retain `Create-APIReview.ps1` unchanged until migration is complete.
+- [x] Implement and test `Get-PackageApprovalStatus.ps1` first because it establishes the new release gate without changing revision creation or release completion.
+- [x] Implement `Create-APIViewRevision.ps1` and migrate the Build-stage caller, keeping creation Build-only while approval status is replayed during release.
+- [ ] Implement `Mark-PackageReleased.ps1` and add it only to the release stage after publishing.
+- [x] Retain `Create-APIReview.ps1` unchanged until migration is complete.

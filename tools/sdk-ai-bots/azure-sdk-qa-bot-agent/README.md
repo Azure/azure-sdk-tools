@@ -11,6 +11,7 @@ azure-sdk-qa-bot-agent/
 ├── agents/          # Agent definition, instructions, and tool implementations
 ├── config/          # Configuration (Azure App Configuration integration)
 ├── services/        # Core business logic (chat, conversation, feedback)
+├── skills/          # Agent Skills (per-tenant + remote azure-api-review skill)
 ├── utils/           # Azure service clients (AI Foundry, AI Search, Cosmos DB, Storage, Memory)
 ├── models/          # Data models
 ├── pipelines/       # CI/CD pipeline definitions

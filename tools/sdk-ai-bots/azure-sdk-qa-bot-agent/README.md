@@ -1,6 +1,6 @@
 # Azure SDK Chat Agent
 
-The Azure SDK Chat Agent helps developers with Azure SDK questions. This project is a migration of the [azure-sdk-qa-bot-backend](../azure-sdk-qa-bot-backend/) from Go to Python, built on the [Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/overview/agent-framework-overview) with Azure AI Foundry. It leverages Azure AI Search for knowledge retrieval and Foundry Memory for conversation context.
+The Azure SDK Chat Agent helps developers with Azure SDK questions. It is built on the [Microsoft Agent Framework](https://learn.microsoft.com/agent-framework/overview/agent-framework-overview) with Azure AI Foundry. It leverages Azure AI Search for knowledge retrieval and Foundry Memory for conversation context.
 
 > **Note:** This project is currently in draft / active development.
 
@@ -137,9 +137,11 @@ Same AI Toolkit workflow as the chat agent, just pointed at the chatbot evolutio
 
 ```json
 {
+  "mode": "analysis",
   "tenant_id": "azure_sdk_onboarding",
   "conversation_id": "<a real conversation id from Cosmos>",
-  "conversation_type": "teams_channel"
+  "conversation_type": "teams_channel",
+  "issue_url": null
 }
 ```
 
@@ -151,10 +153,10 @@ The agent will call `fetch_chat_trace` / `fetch_conversation` / `search_knowledg
 
 To exercise the loop locally:
 
-1. Run the daily scan against a small window: `python scripts/run_feedback_jobs.py --days 2` (evaluates ongoing threads, transitions the `qa-records` table, and runs the hosted chatbot evolution agent in-process for `failed` threads). Use `--dry-run` to update statuses without invoking the agent. Set breakpoints in `services/chatbot_evolution_agent_service.py` to step through a run.
+1. Run the daily scan against a small window: `python scripts/run_feedback_jobs.py --days 2` (ingests active threads and runs the hosted chatbot evolution agent in-process to analyze `ongoing` records and validate remediated failures). Use `--dry-run` to ingest records without invoking the agent. Set breakpoints in `services/chatbot_evolution_agent_service.py` to step through a run.
 2. Inspect outcomes in:
-   - **Script logs** — the service logs the agent's raw reply at INFO (4 KB preview) and DEBUG (full).
-   - **Cosmos `qa-records` container** — partitioned by `/tenant_id`; each thread row carries `qa_status` (`ongoing → finished | failed`) and, once `failed`, an embedded `feedback.status` (`created → running → done | failed`).
+   - **Script logs** — the service logs a bounded preview of the Agent's structured result.
+   - **Cosmos `qa-records` container** — partitioned by `/tenant_id`; each thread row carries `qa_status` (`ongoing → finished | failed`) and an embedded `feedback.status` for Agent work (`created → running → pending_validation → done | failed`).
    - **Foundry tracing** — the hosted agent's tool calls are visible in the Foundry portal under the agent's run history.
 
 ### Debugging the Server
@@ -175,10 +177,13 @@ To exercise the loop locally:
 2. Press **F5** to start debugging the server.
 3. Install the [REST Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) extension.
 4. Run tests under `tests/api_test.rest` to verify the server is working.
+5. Open `http://localhost:8089/dashboard/qa-records` to inspect QA and
+   feedback lifecycle records. The dashboard supports tenant, status,
+   updated-time, and conversation ID filters.
 
 ## Testing Remote Endpoints
 
-The main endpoint for querying the bot is `/agent/chat`. See [tests/api_test.rest](tests/api_test.rest) for example requests.
+The main endpoint for querying the bot is `/agent/chat`. See [tests/api_test.rest](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tests/api_test.rest) for example requests.
 
 ### Remote Endpoints
 
@@ -236,7 +241,7 @@ python scripts/deploy_hosted_agent.py chatbot_evolution_agent --tag <image-tag>
 
 Builds the backend API (FastAPI) container image and deploys to Azure App Service.
 
-- **Pipeline**: [server-cd.yml](pipelines/server-cd.yml) | [Run in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8128)
+- **Pipeline**: [server-cd.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/server-cd.yml) | [Run in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8128)
 - **Parameters**: `environment` (dev/preview/prod), `slot` (default/agent)
 - **What it does**:
   1. Resolves image tag from `_version.py` (prod) or git short SHA (dev)
@@ -247,7 +252,7 @@ Builds the backend API (FastAPI) container image and deploys to Azure App Servic
 
 Deploys the Logic App ARM template for Teams channel message mirroring.
 
-- **Pipeline**: [logicapp-cd.yml](pipelines/logicapp-cd.yml) | [Run in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8177)
+- **Pipeline**: [logicapp-cd.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/logicapp-cd.yml) | [Run in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8177)
 - **Parameters**: `environment` (dev/test/prod)
 - **What it does**:
   1. Runs `az deployment group create` with environment-specific ARM template parameters
@@ -257,12 +262,12 @@ Deploys the Logic App ARM template for Teams channel message mirroring.
 
 Runs linting (pyright) and unit tests on PRs that touch the bot agent code.
 
-- **Pipeline**: [server-ci.yml](pipelines/server-ci.yml) | [View in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8156)
+- **Pipeline**: [server-ci.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/server-ci.yml) | [View in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8156)
 - **Triggers**: PRs to `main` touching `tools/sdk-ai-bots/azure-sdk-qa-bot-agent`
 
 ## Troubleshooting
 
-For incident response, agent tracing, and server log analysis, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+For incident response, agent tracing, and server log analysis, see [TROUBLESHOOTING.md](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/TROUBLESHOOTING.md).
 
 ## Contributing
 

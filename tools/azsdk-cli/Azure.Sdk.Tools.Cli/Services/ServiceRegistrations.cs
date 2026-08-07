@@ -7,15 +7,18 @@ using System.ClientModel;
 using Microsoft.Extensions.Azure;
 using ModelContextProtocol.Server;
 using OpenAI;
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Helpers.Codeowners;
+using Azure.Sdk.Tools.Cli.Helpers.Pipeline;
 using Azure.Sdk.Tools.Cli.Helpers.Codeowners.Rules;
 using Azure.Sdk.Tools.Cli.Tools.Core;
+using Azure.Sdk.Tools.Cli.Services.ApiReviewHub;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Services.Languages;
+using Azure.Sdk.Tools.Cli.Services.Notification;
 using Azure.Sdk.Tools.Cli.Services.SetupRequirements;
 using Azure.Sdk.Tools.Cli.Services.TypeSpec;
 using Azure.Sdk.Tools.Cli.Services.Upgrade;
@@ -41,11 +44,15 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IGitHubService, GitHubService>();
             services.AddSingleton<IAzureSdkKnowledgeBaseService, AzureSdkKnowledgeBaseService>();
             services.AddSingleton<IUpgradeService, UpgradeService>();
+            services.AddSingleton<INotificationService, NotificationService>();
 
             // APIView Services
             services.AddSingleton<IAPIViewAuthenticationService, APIViewAuthenticationService>();
             services.AddSingleton<IAPIViewHttpService, APIViewHttpService>();
+            services.AddSingleton<IAPIViewReleaseStatusService, APIViewReleaseStatusService>();
             services.AddSingleton<IAPIViewService, APIViewService>();
+            services.AddSingleton<IApiReviewHubService, ApiReviewHubService>();
+            services.AddSingleton<IApiReviewReleaseStatusService, ApiReviewReleaseStatusService>();
 
             services.AddScoped<LanguageService, DotnetLanguageService>();
             services.AddScoped<LanguageService, JavaLanguageService>();
@@ -99,6 +106,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ITspClientHelper, TspClientHelper>();
             services.AddSingleton<IAPIViewFeedbackService, APIViewFeedbackService>();
             services.AddScoped<IFeedbackClassifierService, FeedbackClassifierService>();
+            services.AddScoped<ISdkBreakingChangeClassificationService, SdkBreakingChangeClassificationService>();
             services.AddScoped<IUserPromptProcessor, UserPromptProcessor>();
 
             // Process Helper Classes
@@ -112,6 +120,8 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             // Pipeline helpers
             services.AddSingleton<IPipelineIdentifierHelper, PipelineIdentifierHelper>();
+            services.AddScoped<IPipelineAnalysisHelper, PipelineAnalysisHelper>();
+            services.AddScoped<IGitHubWorkflowAnalysisHelper, GitHubWorkflowAnalysisHelper>();
 
             // Services that need to be scoped so we can track/update state across services per request
             services.AddScoped<TokenUsageHelper>();
@@ -127,23 +137,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<CopilotClient>(sp =>
             {
                 var logger = sp.GetService<ILogger<CopilotClient>>();
-                var options = new CopilotClientOptions
-                {
-                    UseStdio = true,
-                    AutoStart = true,
-                    Logger = logger
-                };
-
-                // Allow overriding the bundled Copilot CLI path via environment variable.
-                // This is useful when the standalone azsdk.exe doesn't include the Copilot CLI executable
-                // but the user has it installed elsewhere (e.g. via npm).
-                var cliPath = Environment.GetEnvironmentVariable("AZSDK_COPILOT_CLI_PATH");
-                if (!string.IsNullOrWhiteSpace(cliPath))
-                {
-                    options.CliPath = cliPath.Trim();
-                }
-
-                return new CopilotClient(options);
+                return new CopilotClient(CreateCopilotClientOptions(logger));
             });
             services.AddSingleton<ICopilotClientWrapper, CopilotClientWrapper>();
             services.AddScoped<ICopilotAgentRunner, CopilotAgentRunner>();
@@ -177,6 +171,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 {
                     endpoint = new Uri(openAiBaseUrl);
                 }
+
                 // Priority 2: Use AZURE_OPENAI_ENDPOINT with /openai/v1 postfix if it exists
                 else if (!string.IsNullOrWhiteSpace(azureOpenAiEndpoint))
                 {
@@ -199,6 +194,19 @@ namespace Azure.Sdk.Tools.Cli.Services
                 // For standard OpenAI (OPENAI_API_KEY exists, no Azure endpoint)
                 return new OpenAIClient(new ApiKeyCredential(openAiApiKey!));
             });
+        }
+
+        public static CopilotClientOptions CreateCopilotClientOptions(ILogger<CopilotClient>? logger)
+        {
+            var cliPath = Environment.GetEnvironmentVariable("AZSDK_COPILOT_CLI_PATH");
+            var githubToken = Environment.GetEnvironmentVariable("AZSDK_COPILOT_GITHUB_TOKEN");
+            return new CopilotClientOptions
+            {
+                Connection = RuntimeConnection.ForStdio(
+                    string.IsNullOrWhiteSpace(cliPath) ? null : cliPath.Trim()),
+                GitHubToken = string.IsNullOrWhiteSpace(githubToken) ? null : githubToken.Trim(),
+                Logger = logger
+            };
         }
 
         // Update checking and upgrade management in MCP server mode

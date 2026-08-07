@@ -28,24 +28,30 @@ pipeline to match and distribute them to all subscribed language SDK repos.
 
 These skills help with skill development itself:
 
-| Skill                                                         | Triggers                                            | Description                                                           |
-| ------------------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------------------------- |
-| [sensei](sensei/SKILL.md)                                     | "run sensei", "improve skill", "fix frontmatter"    | Iteratively improve skill frontmatter compliance using the Ralph loop |
-| [skill-authoring](skill-authoring/SKILL.md)                   | "create a skill", "new skill", "skill template"     | Guidelines for writing Agent Skills per agentskills.io spec           |
-| [markdown-token-optimizer](markdown-token-optimizer/SKILL.md) | "optimize markdown", "reduce tokens", "token count" | Analyze markdown files for token efficiency                           |
+The three eval-authoring skills share the repository-local [eval authoring guide](eval-authoring/README.md).
+
+| Skill                                                                                 | Triggers                                            | Description                                                           |
+| ------------------------------------------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------------------------- |
+| [skill-authoring](skill-authoring/SKILL.md)                                           | "create a skill", "new skill", "skill template"     | Guidelines for writing Agent Skills per agentskills.io spec           |
+| [eval-authoring-skill](eval-authoring-skill/SKILL.md)                                 | "write a skill eval", "test skill routing"          | Author repository-local routing and capability evals for Agent Skills |
+| [eval-authoring-tool](eval-authoring-tool/SKILL.md)                                   | "write a tool eval", "add prompt-to-tool coverage"  | Author repository-local hermetic single-tool MCP selection evals      |
+| [eval-authoring-workflow](eval-authoring-workflow/SKILL.md)                           | "write a workflow eval", "create multi-turn eval"   | Author repository-local multi-tool, multi-turn, mock, and live evals  |
+| [markdown-token-optimizer](markdown-token-optimizer/SKILL.md)                         | "optimize markdown", "reduce tokens", "token count" | Analyze markdown files for token efficiency                           |
 
 ### Skill Anatomy
 
 Each skill lives in `<name>/` and contains:
 
-```
+```text
 <name>/
 ├── SKILL.md           # Skill definition: YAML frontmatter + steps + related skills
 ├── references/        # Detailed reference docs (offloaded to keep SKILL.md under 500 tokens)
 │   └── *.md
 └── evals/             # Evaluation definitions
-    ├── eval.yaml          # Capability evals (graders, stimuli, tool-call checks)
-    └── trigger.eval.yaml  # Trigger & anti-trigger evals (skill-invocation checks)
+    └── eval.yaml       # Routing (trigger/anti-trigger) + capability stimuli together;
+                        # split into additional *.eval.yaml files (e.g. <behavior>.eval.yaml,
+                        # or the older trigger.eval.yaml naming some existing skills still use)
+                        # once coverage grows large
 ```
 
 ---
@@ -76,11 +82,11 @@ vally eval --tag "type=ci-gate"
 # Run evals for a specific skill
 vally eval --tag area="skill-authoring"
 
-# Run with output directory for logs
-vally eval --tag area="sensei" --output-dir ./results
+# Run with an output directory for logs
+vally eval --tag area="markdown-token-optimizer" --output-dir ./results
 ```
 
-The [skill-eval pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8165&_a=summary) runs ci-gate evals automatically after PRs are merged. It can also be triggered manually from the same page.
+The [Skill Evaluations workflow](../workflows/skill-eval.yml) runs Vally lint when skill files or the pinned Vally dependency change.
 
 ---
 

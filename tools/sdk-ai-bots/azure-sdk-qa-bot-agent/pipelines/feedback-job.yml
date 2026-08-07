@@ -1,7 +1,7 @@
 # Scheduled daily feedback-job scan pipeline.
 # Runs scripts/run_feedback_jobs.py: ingests conversations into the qa-records
-# status table, evaluates ongoing threads, and drives the feedback loop by
-# calling the backend POST /feedback/session API for failed threads.
+# status table, invokes the evolution agent, monitors remediation issues, and
+# validates fixes after issue closure.
 
 name: Azure SDK QA Bot Feedback Jobs
 
@@ -30,7 +30,7 @@ parameters:
     type: string
     default: ' '
   - name: dryRun
-    displayName: 'Dry run (evaluate + update statuses, do not trigger feedback)'
+    displayName: 'Dry run (ingest records only)'
     type: boolean
     default: false
 
@@ -89,23 +89,23 @@ extends:
 
                     pip install -r requirements.txt --retries 5 --timeout 60
 
-                    EVAL_ARGS=()
+                    JOB_ARGS=()
                     START_DATE="$(echo '${{ parameters.startDate }}' | xargs)"
                     END_DATE="$(echo '${{ parameters.endDate }}' | xargs)"
                     if [ -n "$START_DATE" ]; then
-                      EVAL_ARGS+=(--start "$START_DATE")
+                      JOB_ARGS+=(--start "$START_DATE")
                     fi
                     if [ -n "$END_DATE" ]; then
-                      EVAL_ARGS+=(--end "$END_DATE")
+                      JOB_ARGS+=(--end "$END_DATE")
                     fi
                     if [ -z "$START_DATE" ]; then
-                      EVAL_ARGS+=(--days ${{ parameters.days }})
+                      JOB_ARGS+=(--days ${{ parameters.days }})
                     fi
                     if [ "${{ parameters.dryRun }}" = "True" ]; then
-                      EVAL_ARGS+=(--dry-run)
+                      JOB_ARGS+=(--dry-run)
                     fi
 
-                    python scripts/run_feedback_jobs.py "${EVAL_ARGS[@]}"
+                    python scripts/run_feedback_jobs.py "${JOB_ARGS[@]}"
                 env:
                   AZURE_CORE_WELCOME_MESSAGE: 'false'
                   AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)

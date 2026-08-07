@@ -54,8 +54,8 @@ logger = logging.getLogger(__name__)
 # sources, re-search (tenant-scoped and whole-KB), read chat-agent source
 # to diagnose system defects, fetch a source URL, and file an issue in one
 # turn.
-MAX_TOOL_CALL_ITERATIONS = 20
 MAX_TOOL_CALLS_PER_TURN = 20
+MAX_TOOL_CALL_ITERATIONS = MAX_TOOL_CALLS_PER_TURN
 
 
 def _load_instructions(file_path: Path) -> str:
@@ -106,7 +106,7 @@ async def main() -> None:
     try:
         github_mcp_tool = await create_github_mcp_tool(
             readonly=False,
-            extra_allowed_tools=("issue_write",),
+            extra_allowed_tools=("add_issue_comment", "issue_write"),
         )
         tools.append(github_mcp_tool)
     except Exception:

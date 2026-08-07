@@ -91,6 +91,96 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
             _mockCodeownersManagement.Verify(m => m.AddOwnersToPackage(It.IsAny<OwnerWorkItem[]>(), "pkg1", "Azure/azure-sdk-for-net", It.IsAny<CancellationToken>()), Times.Once);
         }
 
+        [TestCase("/sdk/storage/Azure.Storage.Blobs")]
+        [TestCase("/sdk/storage/Azure.Storage.Blobs/")]
+        [TestCase("sdk/storage/Azure.Storage.Blobs")]
+        [TestCase("sdk/storage/Azure.Storage.Blobs/")]
+        public async Task AddLabelOwner_WithPackageDirectoryPath_ReturnsErrorAndDoesNotCallHelper(string path)
+        {
+            var result = await _tool.AddLabelOwner(
+                githubUsers: [],
+                labels: [],
+                ownerType: OwnerType.ServiceOwner,
+                path: path,
+                repo: "Azure/azure-sdk-for-net");
+
+            Assert.That(result, Is.TypeOf<DefaultCommandResponse>());
+            var response = (DefaultCommandResponse)result;
+            Assert.Multiple(() =>
+            {
+                Assert.That(response.ResponseError, Does.Contain("Azure.Storage.Blobs"));
+                Assert.That(response.ResponseError, Does.Contain("--force"));
+            });
+
+            _mockCodeownersManagement.Verify(
+                m => m.AddOwnersAndLabelsToPath(It.IsAny<OwnerWorkItem[]>(), It.IsAny<LabelWorkItem[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<OwnerType>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+                Times.Never);
+        }
+
+        [Test]
+        public async Task AddLabelOwner_WithPackageDirectoryPath_AndForce_CallsHelper()
+        {
+            _mockCodeownersManagement
+                .Setup(m => m.AddOwnersAndLabelsToPath(It.IsAny<OwnerWorkItem[]>(), It.IsAny<LabelWorkItem[]>(), "Azure/azure-sdk-for-net", It.IsAny<string>(), It.IsAny<OwnerType>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new CodeownersModifyResponse { View = new CodeownersViewResponse() });
+
+            var result = await _tool.AddLabelOwner(
+                githubUsers: [],
+                labels: [],
+                ownerType: OwnerType.ServiceOwner,
+                path: "/sdk/storage/Azure.Storage.Blobs",
+                repo: "Azure/azure-sdk-for-net",
+                force: true);
+
+            Assert.That(result, Is.Not.Null);
+            _mockCodeownersManagement.Verify(
+                m => m.AddOwnersAndLabelsToPath(It.IsAny<OwnerWorkItem[]>(), It.IsAny<LabelWorkItem[]>(), "Azure/azure-sdk-for-net", "/sdk/storage/Azure.Storage.Blobs", OwnerType.ServiceOwner, It.IsAny<string>(), It.IsAny<CancellationToken>()),
+                Times.Once);
+        }
+
+        [Test]
+        public async Task AddLabelOwner_WithServiceLevelPath_CallsHelper()
+        {
+            _mockCodeownersManagement
+                .Setup(m => m.AddOwnersAndLabelsToPath(It.IsAny<OwnerWorkItem[]>(), It.IsAny<LabelWorkItem[]>(), "Azure/azure-sdk-for-net", It.IsAny<string>(), It.IsAny<OwnerType>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new CodeownersModifyResponse { View = new CodeownersViewResponse() });
+
+            var result = await _tool.AddLabelOwner(
+                githubUsers: [],
+                labels: [],
+                ownerType: OwnerType.ServiceOwner,
+                path: "sdk/storage/",
+                repo: "Azure/azure-sdk-for-net");
+
+            Assert.That(result, Is.Not.Null);
+            _mockCodeownersManagement.Verify(
+                m => m.AddOwnersAndLabelsToPath(It.IsAny<OwnerWorkItem[]>(), It.IsAny<LabelWorkItem[]>(), "Azure/azure-sdk-for-net", "sdk/storage/", OwnerType.ServiceOwner, It.IsAny<string>(), It.IsAny<CancellationToken>()),
+                Times.Once);
+        }
+
+        [TestCase("/sdk/storage/Azure.Storage.Blobs", "Azure.Storage.Blobs")]
+        [TestCase("sdk/storage/Azure.Storage.Blobs", "Azure.Storage.Blobs")]
+        [TestCase("sdk/storage/Azure.Storage.Blobs/", "Azure.Storage.Blobs")]
+        [TestCase("/sdk/storage/Azure.Storage.Blobs/", "Azure.Storage.Blobs")]
+        public void LooksLikePackageDirectory_ThreeSegments_ReturnsTrue(string path, string expected)
+        {
+            Assert.That(CodeownersTool.LooksLikePackageDirectory(path, out var packageName), Is.True);
+            Assert.That(packageName, Is.EqualTo(expected));
+        }
+
+        [TestCase("")]
+        [TestCase(null)]
+        [TestCase("sdk/storage/")]
+        [TestCase("/sdk/storage")]
+        [TestCase("sdk/storage/Azure.Storage.Blobs/extra")]
+        [TestCase("sdk/storage/*")]
+        [TestCase("sdk/*/Azure.Storage.Blobs")]
+        [TestCase("/sdk/storage/Azure.Storage.*")]
+        public void LooksLikePackageDirectory_NonPackageDirectory_ReturnsFalse(string? path)
+        {
+            Assert.That(CodeownersTool.LooksLikePackageDirectory(path, out _), Is.False);
+        }
+
         [Test]
         public async Task RemovePackageLabel_CallsRemoveLabelsFromPackage()
         {

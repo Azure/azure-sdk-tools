@@ -4,6 +4,7 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
+using Azure.Sdk.Tools.Cli.Models.Pipeline;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 {
@@ -18,6 +19,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public string? ConfiguredSDKPullRequest { get; set; }
         public Build? ConfiguredRunSDKGenerationPipeline { get; set; }
         public string ConfiguredAPIViewStatus { get; set; } = "Approved";
+
+        // Captures the release plan passed to CreateReleasePlanWorkItemAsync so that a subsequent
+        // GetReleasePlanForWorkItemAsync (used to refresh the plan) returns the same details.
+        private ReleasePlanWorkItem? createdReleasePlan;
 
         public Task<List<PackageWorkitemResponse>> ListPartialPackageWorkItemAsync(string packageName, string language, CancellationToken ct)
         {
@@ -91,6 +96,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 
         Task<WorkItem> IDevOpsService.CreateReleasePlanWorkItemAsync(ReleasePlanWorkItem releasePlan, CancellationToken ct)
         {
+            createdReleasePlan = releasePlan;
             var workItem = new WorkItem
             {
                 Id = 1,
@@ -156,6 +162,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             if (ConfiguredReleasePlanForWorkItem != null)
             {
                 return Task.FromResult(ConfiguredReleasePlanForWorkItem);
+            }
+
+            // When a release plan was created earlier in the same test, a refresh should return
+            // the same plan (with its populated details) rather than a bare placeholder.
+            if (createdReleasePlan != null)
+            {
+                createdReleasePlan.WorkItemId = workItemId;
+                return Task.FromResult(createdReleasePlan);
             }
 
             var releasePlan = new ReleasePlanWorkItem
@@ -243,6 +257,26 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         Task<Dictionary<string, List<string>>> IDevOpsService.GetPipelineLlmArtifacts(string project, int buildId, CancellationToken ct)
         {
             return Task.FromResult(new Dictionary<string, List<string>>());
+        }
+
+        Task<Build> IDevOpsService.GetBuildDetailsAsync(int buildId, string? project, CancellationToken ct)
+        {
+            return Task.FromResult(ConfiguredPipelineRun
+                ?? throw new InvalidOperationException(
+                    $"{nameof(ConfiguredPipelineRun)} was not set on the mock before {nameof(IDevOpsService.GetBuildDetailsAsync)} was called."));
+        }
+
+        Task<Timeline> IDevOpsService.GetBuildTimelineAsync(string project, int buildId, CancellationToken ct)
+        {
+            // Timeline has no public constructor; the non-public parameterless ctor initializes an empty
+            // (non-null) Records list, giving a benign "no failed tasks" timeline for tests.
+            var timeline = (Timeline)Activator.CreateInstance(typeof(Timeline), nonPublic: true)!;
+            return Task.FromResult(timeline);
+        }
+
+        Task<List<string>> IDevOpsService.GetBuildLogLinesAsync(string project, int buildId, int logId, CancellationToken ct)
+        {
+            return Task.FromResult(new List<string>());
         }
 
         Task<WorkItem> IDevOpsService.UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, CancellationToken ct)
@@ -361,6 +395,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public Task DeleteWorkItemAsync(int workItemId, CancellationToken ct)
         {
             throw new NotImplementedException();
+        }
+
+        public Task<GitHubCommitRef?> ResolveBuildCommitRefAsync(int buildId, string? project, CancellationToken ct)
+        {
+            return Task.FromResult<GitHubCommitRef?>(null);
         }
     }
 }

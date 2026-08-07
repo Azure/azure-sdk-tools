@@ -1,25 +1,13 @@
-"""Daily feedback-job scan.
+"""Daily Chatbot Evolution Agent orchestration.
 
-Scheduled batch job that keeps the ``qa-records`` status table up to date and
-drives the feedback loop:
-
-1. **Ingest** — read conversation messages active in a time window, aggregate
-   them by ``conversation_id`` into threads, and upsert one QA record per
-   thread (new threads start ``ongoing``).
-2. **Evaluate** — for every ``ongoing`` record, ask the LLM judge whether the
-   thread has *finished* and whether the bot answered *correctly*
-   (:meth:`ConversationService.evaluate_conversation`):
-     * still ongoing            -> stay ``ongoing`` (re-check next run).
-     * finished + correct       -> ``finished`` (archived).
-     * finished + incorrect/unknown -> ``failed`` (needs feedback).
-3. **Feedback** — for records that just turned ``failed``, run the hosted
-   chatbot evolution agent **in-process** via
-   :class:`ChatbotEvolutionAgentService` (a synchronous Responses call per
-   thread).
+The pipeline ingests active Teams threads, invokes the Agent to evaluate every
+eligible conversation, checks remediation issues, and invokes Agent validation
+after an issue closes. Conversation completion and correctness are judged only
+inside the Agent.
 
 Usage::
 
-    # Scan the last day (default) and drive the feedback loop
+    # Scan the last day (default) and drive the evolution loop
     python scripts/run_feedback_jobs.py
 
     # Scan a wider window
@@ -31,6 +19,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import logging
+import re
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -45,10 +34,13 @@ if str(_PROJECT_DIR) not in sys.path:
     sys.path.insert(0, str(_PROJECT_DIR))
 
 import config.app_config as app_config
-from models.qa_record import QAStatus
-from services.conversation_service import ConversationService
+from models.feedback import (
+    ChatbotEvolutionAgentMode,
+    ChatbotEvolutionAgentOutcome,
+)
 from services.chatbot_evolution_agent_service import ChatbotEvolutionAgentService
 from services.qa_record_service import QARecordService
+from tools.github_mcp_tools import get_github_issue_state
 from utils.azure_ai_foundry import close_clients as close_ai_clients
 from utils.azure_cosmosdb import close_cosmos_client
 from utils.azure_credential import close_credential
@@ -56,37 +48,39 @@ from utils.azure_storage import close_storage_client, download_blob
 
 logger = logging.getLogger("run_feedback_jobs")
 
-# Channels whose display name ends with this suffix (case-insensitive) are
-# testing channels — excluded from the feedback loop so we never file issues
-# for test traffic. Mirrors scripts/evaluate_channel_conversations.py.
-_TESTING_CHANNEL_SUFFIX = "testing"
+_TESTING_CHANNEL_PATTERN = re.compile(r"\btesting\b", re.IGNORECASE)
+_TESTING_CHANNEL_NAMES = {
+    "azure sdk qa bot - auto reply - test",
+    "smoke-tests",
+}
+
+
+def _is_testing_channel(name: str) -> bool:
+    normalized = name.strip().casefold()
+    return (
+        _TESTING_CHANNEL_PATTERN.search(normalized) is not None
+        or normalized in _TESTING_CHANNEL_NAMES
+    )
 
 
 async def _load_excluded_channels() -> set[str]:
-    """Return channel ids marked as testing channels in ``channel.yaml``.
-
-    Returns an empty set (and logs a warning) when the blob is missing or
-    malformed so the scan can still proceed without exclusion.
-    """
-    try:
-        container = app_config.get("STORAGE_CONFIG_CONTAINER")
-        blob = app_config.get("CHANNEL_CONFIG_BLOB")
-        data = await download_blob(container, blob)
-    except Exception:
-        logger.warning("Failed to download channel.yaml", exc_info=True)
-        return set()
+    """Return channel ids whose configured display name marks test traffic."""
+    container = app_config.get("STORAGE_CONFIG_CONTAINER")
+    blob = app_config.get("CHANNEL_CONFIG_BLOB")
+    if not container or not blob:
+        raise RuntimeError("Storage channel configuration is not configured")
+    data = await download_blob(container, blob)
     if not data:
-        return set()
+        raise RuntimeError("Storage channel configuration is empty")
     try:
         parsed = yaml.safe_load(data.decode("utf-8")) or {}
-    except yaml.YAMLError:
-        logger.warning("Failed to parse channel.yaml", exc_info=True)
-        return set()
+    except (UnicodeDecodeError, yaml.YAMLError) as exc:
+        raise RuntimeError("Storage channel configuration is invalid") from exc
     excluded: set[str] = set()
     for entry in parsed.get("channels", []) or []:
         channel_id = entry.get("id")
-        name = (entry.get("name") or "").strip().lower()
-        if channel_id and name.endswith(_TESTING_CHANNEL_SUFFIX):
+        name = entry.get("name") or ""
+        if channel_id and _is_testing_channel(name):
             excluded.add(channel_id)
     return excluded
 
@@ -100,113 +94,154 @@ def _parse_dt(value: str) -> datetime:
 
 def _resolve_window(args: argparse.Namespace) -> tuple[datetime, datetime]:
     end = _parse_dt(args.end) if args.end else datetime.now(timezone.utc)
-    if args.start:
-        start = _parse_dt(args.start)
-    else:
-        start = end - timedelta(days=args.days)
+    start = _parse_dt(args.start) if args.start else end - timedelta(days=args.days)
     if start >= end:
         raise ValueError(f"start ({start}) must be before end ({end})")
     return start, end
 
 
 async def _run(args: argparse.Namespace) -> None:
-    conversation_service = ConversationService()
-    qa_service = QARecordService(conversation_service)
+    qa_service = QARecordService()
     evolution_service = ChatbotEvolutionAgentService()
 
     start, end = _resolve_window(args)
-    logger.info("Scanning conversations active in [%s, %s)", start.isoformat(), end.isoformat())
-
-    excluded_channels = await _load_excluded_channels()
-    if excluded_channels:
-        logger.info("Excluding %d testing channel(s)", len(excluded_channels))
-
-    # 1. Ingest — upsert QA records for threads active in the window.
-    messages = await conversation_service.get_messages_in_period(start, end)
-    touched = await qa_service.upsert_threads_from_messages(
-        messages, excluded_channels=excluded_channels
+    logger.info(
+        "Scanning conversations active in [%s, %s)",
+        start.isoformat(),
+        end.isoformat(),
     )
-    logger.info("Upserted %d QA thread record(s) from the window", len(touched))
+    excluded_channels = await _load_excluded_channels()
 
-    # 2. Evaluate every ongoing record (across the whole table, not just the
-    #    window — a thread may have gone quiet and become judgeable).
-    ongoing = await qa_service.list_ongoing(tenant_id=args.tenant)
-    logger.info("Evaluating %d ongoing QA record(s)", len(ongoing))
+    # 1. Ingest threads active in the window into the durable QA status table.
+    messages = await qa_service.get_messages_in_period(start, end)
+    touched = await qa_service.upsert_threads_from_messages(
+        messages,
+        excluded_channels=excluded_channels,
+    )
+    logger.info("Upserted %d QA thread record(s)", len(touched))
 
-    # The feedback step (which files GitHub issues via the hosted agent) is
-    # gated so it can be disabled via config without touching the pipeline.
-    feedback_enabled = (
+    # Keep the complete Agent workflow behind one configuration gate so it can
+    # be disabled without changing the scheduled pipeline.
+    enabled = (
         app_config.get("CHATBOT_EVOLUTION_AGENT_ENABLED", "false").strip().lower()
         == "true"
     )
-    if not feedback_enabled and not args.dry_run:
-        logger.info(
-            "CHATBOT_EVOLUTION_AGENT_ENABLED is not set; feedback analysis disabled"
-        )
+    if args.dry_run or not enabled:
+        logger.info("Agent processing disabled; ingestion completed only")
+        return
 
-    counts = {"ongoing": 0, "finished": 0, "failed": 0, "skipped": 0, "triggered": 0}
+    counts = {
+        "ongoing": 0,
+        "finished": 0,
+        "issues": 0,
+        "waiting_validation": 0,
+        "validated": 0,
+        "validation_failed": 0,
+        "skipped": 0,
+    }
 
-    for i, record in enumerate(ongoing):
-        if args.limit is not None and i >= args.limit:
-            break
+    # 2. Validate fixes first. Newly created issues from this run wait until
+    # the next daily scan before their closure is checked.
+    pending = await qa_service.list_pending_validation(tenant_id=args.tenant)
+    for record in pending:
         if QARecordService.channel_key_of(record) in excluded_channels:
             counts["skipped"] += 1
             continue
-        items = await conversation_service.get_messages_by_conversation_id(
-            record.conversation_id, record.conversation_type
-        )
-        evaluation = await conversation_service.evaluate_conversation(items)
-        if evaluation is None:
+        issue_url = record.feedback.issue_url if record.feedback else None
+        if not issue_url:
+            logger.error("Pending-validation record %s has no issue URL", record.id)
             counts["skipped"] += 1
             continue
-
-        record = await qa_service.apply_evaluation(record, evaluation)
-        if record.qa_status == QAStatus.finished:
-            counts["finished"] += 1
+        try:
+            issue_state = await get_github_issue_state(issue_url)
+        except Exception:
+            logger.exception("Failed to read issue state for %s", record.id)
+            counts["skipped"] += 1
             continue
-        if record.qa_status == QAStatus.ongoing:
-            counts["ongoing"] += 1
+        if issue_state != "closed":
+            counts["waiting_validation"] += 1
             continue
 
-        # 3. qa_status == failed -> run the hosted chatbot evolution agent
-        #    in-process.
-        counts["failed"] += 1
-        if args.dry_run or not feedback_enabled:
-            logger.info("Skipping feedback for %s (disabled or dry-run)", record.id)
+        try:
+            result = await evolution_service.run_job(
+                record.id,
+                record.tenant_id,
+                mode=ChatbotEvolutionAgentMode.validation,
+            )
+        except Exception:
+            logger.exception("Validation persistence failed for %s", record.id)
+            counts["validation_failed"] += 1
+            continue
+        if result is None:
+            counts["validation_failed"] += 1
+        elif result.outcome == ChatbotEvolutionAgentOutcome.validation_passed:
+            counts["validated"] += 1
+        else:
+            counts["validation_failed"] += 1
+
+    # 3. Ask the Evolution Agent to evaluate and, when necessary, diagnose
+    # each conversation. The pipeline does not make either decision itself.
+    analyzable = await qa_service.list_analyzable(tenant_id=args.tenant)
+    if args.limit is not None:
+        analyzable = analyzable[: args.limit]
+    for record in analyzable:
+        if QARecordService.channel_key_of(record) in excluded_channels:
+            counts["skipped"] += 1
             continue
         try:
-            await evolution_service.run_job(record.id, record.tenant_id)
-            counts["triggered"] += 1
+            result = await evolution_service.run_job(
+                record.id,
+                record.tenant_id,
+                mode=ChatbotEvolutionAgentMode.analysis,
+            )
         except Exception:
-            logger.exception("Failed to trigger feedback for %s", record.id)
+            logger.exception("Analysis persistence failed for %s", record.id)
+            counts["skipped"] += 1
+            continue
+        if result is None:
+            counts["skipped"] += 1
+        elif result.outcome == ChatbotEvolutionAgentOutcome.processing_failed:
+            counts["skipped"] += 1
+        elif result.outcome == ChatbotEvolutionAgentOutcome.conversation_ongoing:
+            counts["ongoing"] += 1
+        elif result.outcome == ChatbotEvolutionAgentOutcome.no_issue:
+            counts["finished"] += 1
+        else:
+            counts["issues"] += 1
 
     logger.info(
-        "Feedback scan complete: finished=%d failed=%d still-ongoing=%d "
-        "skipped=%d feedback-triggered=%d",
-        counts["finished"],
-        counts["failed"],
+        "Evolution scan complete: ongoing=%d finished=%d issues=%d "
+        "waiting-validation=%d validated=%d validation-failed=%d skipped=%d",
         counts["ongoing"],
+        counts["finished"],
+        counts["issues"],
+        counts["waiting_validation"],
+        counts["validated"],
+        counts["validation_failed"],
         counts["skipped"],
-        counts["triggered"],
     )
 
 
 async def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Scan QA conversations, update the qa-records status table, "
-        "and drive the feedback loop.",
+        description="Ingest QA conversations and run the evolution loop.",
     )
-    parser.add_argument("--days", type=int, default=1, help="Look back this many days (default: 1).")
-    parser.add_argument("--start", type=str, default=None, help="Window start (UTC ISO-8601).")
-    parser.add_argument("--end", type=str, default=None, help="Window end (UTC ISO-8601). Default: now.")
-    parser.add_argument("--tenant", type=str, default=None, help="Restrict to a single tenant id.")
-    parser.add_argument("--limit", type=int, default=None, help="Max ongoing records to evaluate.")
+    parser.add_argument(
+        "--days",
+        type=int,
+        default=1,
+        help="Look back this many days (default: 1).",
+    )
+    parser.add_argument("--start", type=str, default=None, help="Window start.")
+    parser.add_argument("--end", type=str, default=None, help="Window end.")
+    parser.add_argument("--tenant", type=str, default=None)
+    parser.add_argument("--limit", type=int, default=None)
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Evaluate and update statuses but do not trigger feedback sessions.",
+        help="Ingest records without invoking agents or checking issues.",
     )
-    parser.add_argument("--verbose", "-v", action="store_true", help="Enable debug logging.")
+    parser.add_argument("--verbose", "-v", action="store_true")
     args = parser.parse_args()
 
     logging.basicConfig(

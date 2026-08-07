@@ -31,6 +31,8 @@ stimuli:
           dest: package-lock.json
         - src: ../fixtures/Microsoft.Widget/Widget/package.json
           dest: package.json
+        - src: ../scripts/check-node-dependencies.js
+          dest: check-node-dependencies.js
         - src: ../fixtures/001006-version-add-preview-after-stable/shared.tsp
           dest: shared.tsp
         - src: ../fixtures/001006-version-add-preview-after-stable/tspconfig.yaml
@@ -80,6 +82,8 @@ stimuli:
             - "edit"
             - "web_fetch"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
+          disallowed:
+            - "azure-sdk-mcp-azsdk_typespec_generate_authoring_plan"
       - type: "skill-invocation"
         config:
           required:
@@ -101,6 +105,16 @@ stimuli:
             - "edit"
             - "web_fetch"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
+          disallowed:
+            - "azure-sdk-mcp-azsdk_typespec_generate_authoring_plan"
+      - type: "run-command"
+        config:
+          command: "node check-node-dependencies.js node_modules"
+          expected_exit_code: 0
+      - type: "run-command"
+        config:
+          command: "node check-node-dependencies.js packages"
+          expected_exit_code: 0
       - type: "run-command"
         config:
           command: "tsp compile ."

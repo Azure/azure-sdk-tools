@@ -157,6 +157,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             DefaultValueFactory = _ => false,
         };
 
+        // Add-label-owner command options
+        private readonly Option<bool> forceLabelOwnerPathOption = new("--force")
+        {
+            Description = "Create the CODEOWNERS entry even when the path looks like a package directory. "
+                + "By default a 3-segment path (e.g. sdk/<service>/<package>) is rejected in favor of using the package name.",
+            Required = false,
+            DefaultValueFactory = _ => false,
+        };
+
         // Command names
         private const string generateCodeownersCommandName = "generate";
         private const string viewCodeownersCommandName = "view";
@@ -227,7 +236,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             },
             new(addLabelOwnerCommandName, "Add owner(s) to a label and optional path")
             {
-                multipleGithubUserOption, labelsOption, pathOption, ownerTypeOption, repoOption, sectionOption,
+                multipleGithubUserOption, labelsOption, pathOption, ownerTypeOption, repoOption, sectionOption, forceLabelOwnerPathOption,
             },
             new(removeCodeownersToPackageCommandName, "Remove source owner(s) from a package")
             {
@@ -306,7 +315,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 var path = parseResult.GetValue(pathOption);
                 var repo = parseResult.GetValue(repoOption);
                 var section = parseResult.GetValue(sectionOption);
-                return await AddLabelOwner(users!, labels!, ownerType!, path, repo, section, ct);
+                var force = parseResult.GetValue(forceLabelOwnerPathOption);
+                return await AddLabelOwner(users!, labels!, ownerType!, path, repo, section, force, ct);
             }
 
             if (command == removeCodeownersToPackageCommandName)
@@ -628,7 +638,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             }
         }
 
-        [McpServerTool(Name = CodeownerAddLabelOwnerToolName), Description("Add owner(s) to a label with an optional path in CODEOWNERS work items. Valid ownerType values: service-owner, azsdk-owner, pr-label.")]
+        [McpServerTool(Name = CodeownerAddLabelOwnerToolName), Description("Add owner(s) to a label with an optional path in CODEOWNERS work items. Valid ownerType values: service-owner, azsdk-owner, pr-label. A 3-segment path (e.g. sdk/<service>/<package>) is rejected because it targets a package directory; add owners to the package by name instead, or set force=true to create the path anyway.")]
         public async Task<CommandResponse> AddLabelOwner(
             string[] githubUsers,
             string[] labels,
@@ -636,6 +646,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             string? path = null,
             string? repo = null,
             string section = "Client Libraries",
+            bool force = false,
             CancellationToken ct = default
         )
         {
@@ -644,6 +655,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 if (string.IsNullOrEmpty(section))
                 {
                     throw new ArgumentException("Section name must be provided", nameof(section));
+                }
+                if (!force && LooksLikePackageDirectory(path, out var packageName))
+                {
+                    throw new ArgumentException(
+                        $"The path '{path}' looks like a package directory. Use the package name '{packageName}' instead of a full path, "
+                        + "or pass --force to create a CODEOWNERS entry for this path anyway.",
+                        nameof(path));
                 }
                 repo = await ResolveRepo(repo, ct);
                 return await codeownersManagementHelper.AddOwnersAndLabelsToPath(
@@ -661,6 +679,34 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 logger.LogError(ex, "Error adding label owner(s)");
                 return new DefaultCommandResponse { ResponseError = ex.Message };
             }
+        }
+
+        /// <summary>
+        /// Returns true when a CODEOWNERS path targets a specific package directory
+        /// (exactly three segments, e.g. sdk/<service>/<package>), as opposed to a
+        /// service-level path. Such entries should be attached to the package by name rather
+        /// than a raw path. The final path segment is returned as the suggested package name.
+        /// Paths containing a wildcard ('*') are never treated as package directories.
+        /// </summary>
+        public static bool LooksLikePackageDirectory(string? path, out string packageName)
+        {
+            packageName = string.Empty;
+            if (string.IsNullOrWhiteSpace(path) || path.Contains('*'))
+            {
+                return false;
+            }
+
+            var segments = path
+                .Replace('\\', '/')
+                .Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+            if (segments.Length != 3)
+            {
+                return false;
+            }
+
+            packageName = segments[^1];
+            return true;
         }
 
         [McpServerTool(Name = CodeownerRemovePackageOwnerToolName), Description("Remove source owner(s) from a package in CODEOWNERS work items.")]

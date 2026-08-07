@@ -3,3 +3,5 @@ result/
 .waza-cache/
 coverage.txt
 *.exe
+eval-results.md
+results.jsonl

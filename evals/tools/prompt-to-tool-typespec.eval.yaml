@@ -7,7 +7,7 @@ type: capability
 
 environment: azsdk-mcp-mock
 
-config:
+defaults:
   runs: 3
   timeout: "120s"
   executor: copilot-sdk
@@ -17,6 +17,9 @@ tags:
   tier: unit
   area: typespec
   priority: p0
+
+scoring:
+  threshold: 0.8
 
 stimuli:
 

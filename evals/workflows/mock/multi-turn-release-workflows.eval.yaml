@@ -1,7 +1,7 @@
 name: azsdk-mcp-multi-turn-scenarios
 description: |
   Multi-turn conversation scenarios that exercise Vally's session-resume
-  support (microsoft/vally#495, shipped in @microsoft/vally-cli 0.7.0). Each
+  support (microsoft/vally#495, available since 0.7.0 and validated on 0.12.0). Each
   stimulus sends its `turns` sequentially to the SAME agent session, so later
   turns must build on context established by earlier turns (e.g. the release
   plan work item ID created in turn 0 is reused in turn 1).
@@ -39,7 +39,7 @@ tags:
 
 environment: azsdk-mcp-mock
 
-config:
+defaults:
   runs: 1
   timeout: 30m
   model: gpt-5.4

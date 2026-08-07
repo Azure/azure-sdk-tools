@@ -30,6 +30,9 @@ jobs:
           cache: 'npm'
           cache-dependency-path: eng/skill-eval/package-lock.json
 
+      - name: Use npm 11.11.1
+        run: npm install --global npm@11.11.1
+
       - name: Install Vally CLI (pinned via lockfile)
         working-directory: eng/skill-eval
         run: npm ci

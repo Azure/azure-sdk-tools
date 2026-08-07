@@ -4,6 +4,8 @@ One guide for writing Vally evals in this repo, whatever you're testing: a singl
 
 This repository-local guide lives under `.github/skills/eval-authoring/` alongside the eval-authoring meta-skills. It documents Azure SDK Tools conventions. If you adapt an eval in another repository, inspect that repository's own pipeline and configuration first; its paths and tooling may differ.
 
+This guide targets `@microsoft/vally-cli` 0.12.0. Azure SDK Tools pins Node.js `>=22.12.0` and npm `>=11.11.1` for Vally because its Copilot SDK dependency requires that runtime.
+
 ## Contents
 
 1. [Which category is this?](#1-which-category-is-this)
@@ -21,10 +23,10 @@ This repository-local guide lives under `.github/skills/eval-authoring/` alongsi
 
 Before anything else: find the pipeline file that extends `eng/common/pipelines/templates/stages/archetype-eval.yml` for the category you're authoring, and read its `vallyRoot`/`evalGlobs`. Do not assume this repository's paths are universal.
 
-| Category | Azure SDK Tools example pipeline | Azure SDK Tools example `vallyRoot` |
-| --- | --- | --- |
-| Skill | `eng/common/pipelines/skill-eval.yml` | `.github/skills` |
-| Tool / Workflow | `eng/common/pipelines/workflow-eval.yml`, `eng/common/pipelines/live-eval.yml` | `evals` |
+| Category        | Azure SDK Tools example pipeline                                               | Azure SDK Tools example `vallyRoot` |
+| --------------- | ------------------------------------------------------------------------------ | ----------------------------------- |
+| Skill           | `eng/common/pipelines/skill-eval.yml`                                          | `.github/skills`                    |
+| Tool / Workflow | `eng/common/pipelines/workflow-eval.yml`, `eng/common/pipelines/live-eval.yml` | `evals`                             |
 
 These are Azure SDK Tools examples. If you apply this guidance in another repository, confirm that repository's own pipeline file before adding an eval.
 
@@ -48,11 +50,11 @@ The point of a naming convention is that related files and results **sort and gr
 
 ### Files
 
-| Category | Filename pattern | Example |
-| --- | --- | --- |
-| Skill | `eval.yaml` (routing + capability stimuli together; split into `<behavior-in-kebab-case>.eval.yaml` only once coverage grows large) | `.github/skills/my-skill/evals/eval.yaml` |
-| Tool | `prompt-to-tool-<area>.eval.yaml` (one per tool namespace/area) | `evals/tools/prompt-to-tool-pipeline.eval.yaml` |
-| Workflow | `<scenario-in-kebab-case>.eval.yaml` | `evals/workflows/mock/release-planner-workflows.eval.yaml` |
+| Category | Filename pattern                                                                                                                    | Example                                                    |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Skill    | `eval.yaml` (routing + capability stimuli together; split into `<behavior-in-kebab-case>.eval.yaml` only once coverage grows large) | `.github/skills/my-skill/evals/eval.yaml`                  |
+| Tool     | `prompt-to-tool-<area>.eval.yaml` (one per tool namespace/area)                                                                     | `evals/tools/prompt-to-tool-pipeline.eval.yaml`            |
+| Workflow | `<scenario-in-kebab-case>.eval.yaml`                                                                                                | `evals/workflows/mock/release-planner-workflows.eval.yaml` |
 
 ### Stimuli (the `name:` field inside a file)
 
@@ -66,62 +68,64 @@ The point of a naming convention is that related files and results **sort and gr
 
 ## 3. Category requirements
 
-| | Tool | Skill | Workflow |
-| --- | --- | --- | --- |
-| **Purpose** | Given a prompt, is the right MCP tool selected? | Given a prompt, does the right skill activate, and does it call the right tools? | Given a scenario (possibly multi-turn), does the right combination of skills/tools reach the right outcome? |
-| **Location** | `evals/tools/` | `.github/skills/<skill>/evals/` | `evals/workflows/{mock,live}/` |
-| **Must have** | Realistic, concrete prompt (identifiers included, not left for the agent to discover); hermetic mock environment | Routing stimuli (trigger **and** anti-trigger, `skill-invocation` grader) alongside capability stimuli in `eval.yaml`; boundary anti-triggers mount **and require** a genuine competing skill | Every candidate skill mounted explicitly; bounded turns/tokens/timeout; choose the `vally eval --workers` value deliberately; mock by default, live only when the mock can't represent it |
-| **Primary graders** | `tool-calls` | `skill-invocation` (+ `tool-calls`, `output-matches` for capability) | `skill-invocation` + `tool-calls` (ordering where it matters) + outcome graders |
-| **Do NOT use for** | Orchestration, conversation state, live services → use Workflow | Single-tool selection → use Tool; multi-skill orchestration → use Workflow | Isolated single-tool or single-skill checks → use Tool/Skill instead |
+|                     | Tool                                                                                                             | Skill                                                                                                                                                                                         | Workflow                                                                                                                                                                                  |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Purpose**         | Given a prompt, is the right MCP tool selected?                                                                  | Given a prompt, does the right skill activate, and does it call the right tools?                                                                                                              | Given a scenario (possibly multi-turn), does the right combination of skills/tools reach the right outcome?                                                                               |
+| **Location**        | `evals/tools/`                                                                                                   | `.github/skills/<skill>/evals/`                                                                                                                                                               | `evals/workflows/{mock,live}/`                                                                                                                                                            |
+| **Must have**       | Realistic, concrete prompt (identifiers included, not left for the agent to discover); hermetic mock environment | Routing stimuli (trigger **and** anti-trigger, `skill-invocation` grader) alongside capability stimuli in `eval.yaml`; boundary anti-triggers mount **and require** a genuine competing skill | Every candidate skill mounted explicitly; bounded turns/tokens/timeout; choose the `vally eval --workers` value deliberately; mock by default, live only when the mock can't represent it |
+| **Primary graders** | `tool-calls`                                                                                                     | `skill-invocation` (+ `tool-calls`, `output-matches` for capability)                                                                                                                          | `skill-invocation` + `tool-calls` (ordering where it matters) + outcome graders                                                                                                           |
+| **Do NOT use for**  | Orchestration, conversation state, live services → use Workflow                                                  | Single-tool selection → use Tool; multi-skill orchestration → use Workflow                                                                                                                    | Isolated single-tool or single-skill checks → use Tool/Skill instead                                                                                                                      |
 
 ## 4. Glossary
 
 Plain-English definitions of the eval fields and CLI options you'll actually touch:
 
-| Term | Meaning |
-| --- | --- |
-| **stimulus** | One test case: a `prompt` (or `turns`) plus the `graders` that judge the response. A file is a list of stimuli. |
-| **trajectory** | The full recorded sequence of tool calls and messages the agent produced for a stimulus. Graders inspect this, not just the final reply. |
-| **turns** | An ordered list of prompts within one stimulus, for scenarios where a later request depends on earlier session context. Omit it and use a single `prompt` unless you specifically need that. |
-| **timeout** | Max wall-clock time one stimulus run may take before it's failed as timed out. Live/orchestration-heavy stimuli need more headroom than a single tool call. |
-| **model** | Which LLM executes the stimulus (e.g. `claude-opus-4.6`, `gpt-5.4`). Use a stronger model where judgment matters; a cheaper/faster one is fine for high-volume routing suites. |
-| **executor** | The harness driving the model + tools for a stimulus. `copilot-sdk` is the real Copilot Chat SDK loop used across this repo's suites. |
-| **environment** | A named MCP server + skill-mount configuration (e.g. `azsdk-mcp-mock` vs `azsdk-mcp-live`) that a stimulus runs against. |
-| **scoring.threshold** | The minimum aggregate score (0–1) for an eval suite to pass. A suite can clear its threshold even if an individual stimulus fails. Always set it explicitly — repo convention: `0.8`. |
-| **scoring.weights** | Optional per-grader weighting. When present, must sum to `1.0` or the spec fails to load. |
-| **workers** | How many stimuli `vally eval` runs in parallel. Live/write-side suites should use `--workers 1` to avoid racing real side effects. |
+| Term                         | Meaning                                                                                                                                                                                                                       |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **stimulus**                 | One test case: a `prompt` (or `turns`) plus the `graders` that judge the response. A file is a list of stimuli.                                                                                                               |
+| **trajectory**               | The full recorded sequence of tool calls and messages the agent produced for a stimulus. Graders inspect this, not just the final reply.                                                                                      |
+| **turns**                    | An ordered list of prompts within one stimulus, for scenarios where a later request depends on earlier session context. Omit it and use a single `prompt` unless you specifically need that.                                  |
+| **timeout**                  | Max wall-clock time one stimulus run may take before it's failed as timed out. Live/orchestration-heavy stimuli need more headroom than a single tool call.                                                                   |
+| **model**                    | Which LLM executes the stimulus (e.g. `claude-opus-4.6`, `gpt-5.4`). Use a stronger model where judgment matters; a cheaper/faster one is fine for high-volume routing suites.                                                |
+| **executor**                 | The harness driving the model + tools for a stimulus. `copilot-sdk` is the real Copilot Chat SDK loop used across this repo's suites.                                                                                         |
+| **defaults**                 | Eval-wide execution defaults such as `runs`, `timeout`, `model`, and `executor`. Use `defaults:`, not the deprecated top-level `config:` alias.                                                                               |
+| **environment**              | A named MCP server + skill/file/git configuration (e.g. `azsdk-mcp-mock` vs `azsdk-mcp-live`). Vally validates every named environment at load time, even unused ones.                                                        |
+| **scoring.threshold**        | The minimum aggregate score (0–1) for an eval suite to pass. A suite can clear its threshold even if an individual stimulus fails. Always set it explicitly — repo convention: `0.8`.                                         |
+| **scoring.weights**          | Optional weights keyed by grader **type**. Scores from repeated graders of one type are averaged first. Include every used type, use `0` only for an intentionally non-scoring type, and normalize positive weights to `1.0`. |
+| **constraints.max_duration** | Hard wall-clock limit for a stimulus. Vally 0.12 enforces it; use a duration string with units and leave realistic headroom.                                                                                                  |
+| **workers**                  | How many stimuli `vally eval` runs in parallel. Live/write-side suites should use `--workers 1` to avoid racing real side effects.                                                                                            |
 
 ## 5. Four-layer grading pattern
 
-Every stimulus verifies a *contract*. These are the dimensions of that contract — use as many as apply, minimum routing + tool-use for any capability stimulus:
+Every stimulus verifies a _contract_. These are the dimensions of that contract — use as many as apply, minimum routing + tool-use for any capability stimulus:
 
 1. **Routing** (`skill-invocation`) — did the right skill get loaded (and the wrong one not)?
-2. **Tool-use** (`tool-calls`) — did the agent call the right MCP tool, and avoid the wrong one? `name` is matched as a regex against the trajectory; prefer bare tool names over server-prefixed forms.
+2. **Tool-use** (`tool-calls`) — did the agent call the right MCP tool, and avoid the wrong one? `name` is an unanchored regex; use `^...$` and escape regex metacharacters when exact matching is required.
 3. **Output shape** (`output-matches`) — does the reply structurally address the request? Prefer a regex requiring two related concepts in proximity over a bare `output-contains` keyword — much harder to satisfy by accident.
 4. **Judgment** (`prompt`) — anything the first three can't express. Use sparingly; LLM judges are expensive and non-deterministic.
 
-| Stimulus kind | Required layers |
-| --- | --- |
-| Capability — happy path | Routing + Tool-use, optionally Output-shape |
-| Capability — multi-tool flow | Routing + Tool-use (multiple required entries, optionally ordered) |
-| Negative — wrong topic | Routing disallowed + Tool-use disallowed |
+| Stimulus kind                               | Required layers                                                                   |
+| ------------------------------------------- | --------------------------------------------------------------------------------- |
+| Capability — happy path                     | Routing + Tool-use, optionally Output-shape                                       |
+| Capability — multi-tool flow                | Routing + Tool-use (multiple required entries, optionally ordered)                |
+| Negative — wrong topic                      | Routing disallowed + Tool-use disallowed                                          |
 | Boundary — sibling skill should win instead | Routing required for the sibling / disallowed for this skill; mount both together |
-| Trigger | Routing required only |
-| Anti-trigger | Routing disallowed only |
+| Trigger                                     | Routing required only                                                             |
+| Anti-trigger                                | Routing disallowed only                                                           |
 
 ## 6. Grader catalog
 
-| Grader | Purpose | Typical use |
-| --- | --- | --- |
-| `skill-invocation` | `required` / `disallowed` skills loaded during the run | Trigger, anti-trigger, boundary tests |
-| `tool-calls` | `required` / `disallowed` (optionally `ordered`) MCP tool calls; `name` is a regex | Every capability test |
-| `output-contains` / `output-not-contains` | Substring search on the final assistant message | Cheap sanity check; never the sole grader |
-| `output-matches` / `output-not-matches` | Regex search on the final assistant message | Preferred output-shape grader |
-| `file-exists` | A file exists in the workspace after the run | Skills that scaffold files |
-| `file-contains` / `file-matches` | Substring/regex search in a workspace file | Skills that edit or generate files |
-| `run-command` | Executes a shell command; nonzero exit fails the grader | Build/lint/compile verification |
-| `completed` | Trajectory finished without an unhandled error | Liveness baseline |
-| `prompt` | Free-form LLM judge against a custom rubric | Last resort — expensive, non-deterministic |
+| Grader                                    | Purpose                                                                  | Typical use                                |
+| ----------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------ |
+| `skill-invocation`                        | `required` / `disallowed` skills loaded during the run                   | Trigger, anti-trigger, boundary tests      |
+| `tool-calls`                              | `required` / `disallowed` / `sequence` MCP tool calls; `name` is a regex | Every capability test                      |
+| `output-contains` / `output-not-contains` | Substring search on the final assistant message                          | Cheap sanity check; never the sole grader  |
+| `output-matches` / `output-not-matches`   | Regex search on the final assistant message                              | Preferred output-shape grader              |
+| `file-exists`                             | A file exists in the workspace after the run                             | Skills that scaffold files                 |
+| `file-contains` / `file-matches`          | Substring/regex search in a workspace file                               | Skills that edit or generate files         |
+| `run-command`                             | Executes a shell command; nonzero exit fails the grader                  | Build/lint/compile verification            |
+| `completed`                               | Trajectory finished without an unhandled error                           | Liveness baseline                          |
+| `prompt`                                  | Free-form LLM judge against a custom rubric                              | Last resort — expensive, non-deterministic |
 
 Picking one:
 
@@ -129,7 +133,7 @@ Picking one:
 routing?                  -> skill-invocation
 right tool fired?         -> tool-calls (required)
 wrong tool did not?       -> tool-calls (disallowed)
-call order matters?       -> tool-calls (ordered)
+call order matters?       -> tool-calls (sequence)
 reply mentions X?         -> output-contains (secondary only)
 reply structurally right? -> output-matches
 file created/edited?      -> file-exists / file-contains / file-matches
@@ -141,24 +145,27 @@ For multi-turn stimuli, a grader's `turn:` field slices the trajectory to that t
 
 ## 7. Anti-patterns
 
-| # | Smell | Fix |
-| --- | --- | --- |
-| A1 | Single vacuous `output-contains` as the only grader — passes on almost any outcome | Add `skill-invocation`/`tool-calls`; keep the substring only as a secondary check |
-| A2 | Negative test grades only output text, not tool absence — the tool can still fire silently | Add `tool-calls.disallowed` for every tool the skill could wrongly invoke |
-| A3 | Stimulus prompt and grader substring are the same phrase — any cooperative reply parrots it | Use `output-matches` describing the response *shape*, or replace with `skill-invocation`/`tool-calls` |
-| A4 | Missing/inconsistent `scoring.threshold` or `weights` not summing to `1.0` | Always set `threshold` explicitly (`0.8` convention); verify weights sum to `1.0` before adding them |
-| A5 | No routing stimuli anywhere in a skill's `evals/` — routing regressions go undetected | Add ≥3 trigger + ≥3 anti-trigger stimuli (`skill-invocation` grader) to `eval.yaml` |
-| A6 | Tool name typo in `required`/`disallowed` — the regex compiles, matches nothing, "passes" silently | Cross-check names against a real trajectory (`results.jsonl`) |
-| A7 | Boundary anti-trigger with no competing skill mounted — trivially "passes" since nothing else was ever available | Mount every genuinely competing skill together, require the intended sibling, and disallow the skill under test |
-| A8 | One environment for everything — mock can't catch contract drift against the real backend | Reserve a small live tier, run nightly, use `--workers 1` |
+| #   | Smell                                                                                                            | Fix                                                                                                                                         |
+| --- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| A1  | Single vacuous `output-contains` as the only grader — passes on almost any outcome                               | Add `skill-invocation`/`tool-calls`; keep the substring only as a secondary check                                                           |
+| A2  | Negative test grades only output text, not tool absence — the tool can still fire silently                       | Add `tool-calls.disallowed` for every tool the skill could wrongly invoke                                                                   |
+| A3  | Stimulus prompt and grader substring are the same phrase — any cooperative reply parrots it                      | Use `output-matches` describing the response _shape_, or replace with `skill-invocation`/`tool-calls`                                       |
+| A4  | Missing `scoring.threshold`, unnormalized weights, or a used grader type omitted from the map                    | Set `threshold` explicitly (`0.8` convention); include every used type and normalize positive type weights to `1.0`                         |
+| A5  | No routing stimuli anywhere in a skill's `evals/` — routing regressions go undetected                            | Add ≥3 trigger + ≥3 anti-trigger stimuli (`skill-invocation` grader) to `eval.yaml`                                                         |
+| A6  | Tool name typo in `required`/`disallowed` — the regex compiles, matches nothing, "passes" silently               | Cross-check names against a real trajectory (`results.jsonl`)                                                                               |
+| A7  | Boundary anti-trigger with no competing skill mounted — trivially "passes" since nothing else was ever available | Mount every genuinely competing skill together, require the intended sibling, and disallow the skill under test                             |
+| A8  | One environment for everything — mock can't catch contract drift against the real backend                        | Reserve a small live tier, run nightly, use `--workers 1`                                                                                   |
+| A9  | An unused named environment has malformed `git` or incomplete `files` entries                                    | Fix or remove it: Vally 0.12 validates every named environment; each file needs `src` + `dest` and generated sources must exist before lint |
+| A10 | Trusting lint to catch an executor typo                                                                          | Run a focused eval too: Vally 0.12 resolves executor names at runtime and reports the available executors there                             |
 
 ## 8. Customization guidance
 
 - **Mock vs live**: default to mock (hermetic, PR-gate). Move to live only for behavior the mock genuinely can't represent (real auth, real backend contract) — document writes, cleanup, and run it nightly with `--workers 1`.
 - **`defaults.runs`**: bump above `1` to stabilize a flaky stimulus before assuming the implementation is wrong.
 - **`scoring.threshold`**: `0.8` is the starting convention for new suites; raise it as a suite's coverage and stability mature.
+- **`scoring.weights`**: weights apply by grader type, not individual grader instance. Explicit `0` preserves a deliberately non-scoring process grader while keeping strict lint clean.
 - **`model`**: cheaper/faster models are fine for high-volume routing suites; reserve stronger models for judgment-heavy (`prompt` grader) suites.
-- **`timeout`/`--workers`**: give orchestration-heavy or live stimuli more headroom than a single tool call; `workers` is a `vally eval` CLI option, not an eval-spec field. Always serialize (`--workers 1`) anything with real side effects.
+- **`timeout`/`max_duration`/`--workers`**: give orchestration-heavy or live stimuli more headroom than a single tool call. `max_duration` is enforced; `workers` is a CLI option, not an eval-spec field. Always serialize (`--workers 1`) anything with real side effects.
 
 ## 9. Worked examples
 
@@ -175,6 +182,8 @@ defaults:
   timeout: "120s"
   model: gpt-5.4
   executor: copilot-sdk
+scoring:
+  threshold: 0.8
 tags:
   tier: unit
   area: example
@@ -251,6 +260,8 @@ defaults:
   timeout: "180s"
   model: gpt-5.4
   executor: copilot-sdk
+scoring:
+  threshold: 0.8
 stimuli:
   - name: create-then-generate-conversation
     environment:
@@ -284,14 +295,16 @@ cd <vallyRoot>
 
 # Skill eval (if this repository supports skill linting):
 vally lint <skill-directory> --strict
+vally lint -e <skill-directory>/evals/eval.yaml --strict
 vally eval -e <skill-directory>/evals/eval.yaml `
   --skill-dir <skills-directory> --workers <worker-count> `
   --output jsonl --output-dir <results-directory>
 
 # Tool or mock-workflow eval:
+vally lint -e <tool-or-workflow-eval-relative-to-vallyRoot> --strict
 vally eval -e <tool-or-workflow-eval-relative-to-vallyRoot> `
   --skill-dir <skills-directory-if-needed> --workers <worker-count> `
   --output jsonl --output-dir <results-directory>
 ```
 
-Use `--workers 1` for live or write-side scenarios. Do not finish or open a PR until the focused local run passes. On failure, inspect `eval-results.md` and `results.jsonl` (they record every tool name/argument actually called) — fix the prompt, grader, or implementation, then rerun. Record the exact repository-specific command and pass count in the PR.
+Run fixture setup before lint when an eval references generated `environment.files` sources. Use `--workers 1` for live or write-side scenarios. Do not finish or open a PR until strict lint and the focused local run pass. Executor session logs are preserved automatically in the run directory. On failure, inspect `eval-results.md`, `results.jsonl`, and the trial directory — fix the prompt, grader, environment, or implementation, then rerun. Record the exact repository-specific command and pass count in the PR.

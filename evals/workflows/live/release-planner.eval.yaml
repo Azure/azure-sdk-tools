@@ -44,7 +44,7 @@ metadata:
 # graders. Picked up by the `scenarios-live` / `nightly` suite via folder.
 environment: azsdk-mcp-live
 
-config:
+defaults:
   runs: 1
   timeout: 30m
   model: gpt-5.4

@@ -10,8 +10,7 @@ resources:
       type: github
       endpoint: Azure
       name: Azure/azure-sdk-for-python
-      # For testing. Needs to be set to main before merging.
-      ref: refs/heads/arh/PythonPipelines
+      ref: main
     - repository: java-repo
       type: github
       endpoint: Azure

@@ -57,7 +57,7 @@ This script is temporary and can be retired when revision creation has fully tra
 ### 2. Get API Review Approval Status
 Suggested script:
 
-- `eng/common/scripts/Get-APIReviewApprovalStatus.ps1`
+- `eng/common/scripts/Get-PackageApprovalStatus.ps1`
 
 Responsibility:
 
@@ -96,7 +96,7 @@ Non-responsibilities:
 ### 3. Mark API Review Released
 Suggested script:
 
-- `eng/common/scripts/Mark-APIReviewReleased.ps1`
+- `eng/common/scripts/Mark-PackageReleased.ps1`
 
 Responsibility:
 
@@ -138,7 +138,7 @@ Non-responsibilities:
 
 ### Phase 3: Add the Unified Approval Gate
 
-- Implement `Get-APIReviewApprovalStatus.ps1` around `azsdk api-review get-approval-status`.
+- Implement `Get-PackageApprovalStatus.ps1` around `azsdk api-review get-approval-status`.
 - Resolve package/version and, when present, the hash from release-candidate artifacts before invoking the command.
 - Pass `--api-hash` only when a matching `api.metadata.yml` is available; otherwise invoke the command without that option.
 - Normalize CLI output and exit codes into deterministic pipeline success or failure.
@@ -146,7 +146,7 @@ Non-responsibilities:
 
 ### Phase 4: Separate Release Completion
 
-- Implement `Mark-APIReviewReleased.ps1`.
+- Implement `Mark-PackageReleased.ps1`.
 - Call ARH `releases/mark-released` with package/version/hash.
 - Perform the legacy APIView mark-as-shipped operation separately.
 - Make partial failures visible so retries and remediation are clear.
@@ -197,11 +197,11 @@ Non-responsibilities:
 1. Compare `Create-APIViewRevision.ps1` output against current source-only upload and token-file creation behavior.
 2. Verify artifact discovery, package selection, branch/version eligibility, metadata, and multi-package processing remain equivalent.
 3. Verify the two Azure SDK CLI commands, their tests, service methods, and documentation are removed without affecting other APIView commands.
-4. Validate `Get-APIReviewApprovalStatus.ps1` with ARH approval, APIView fallback approval, combined unapproved, malformed-response, and CLI-failure cases.
+4. Validate `Get-PackageApprovalStatus.ps1` with ARH approval, APIView fallback approval, combined unapproved, malformed-response, and CLI-failure cases.
 5. Confirm ARH-enabled repositories pass the matching package/version/hash to approval status in Build and when that step is replayed during release.
 6. Confirm missing `api.metadata.yml` or API hash does not fail the script before the CLI runs, and that the script propagates a successful CLI result produced through APIView fallback.
 7. Verify language-specific tooling and configuration cannot skip the approval check or override an unapproved or failed CLI result.
-8. Validate `Mark-APIReviewReleased.ps1` against ARH and APIView success paths.
+8. Validate `Mark-PackageReleased.ps1` against ARH and APIView success paths.
 9. Simulate one-backend failure during mark-released and verify the failure is diagnosable and safely retryable.
 10. Run a multi-package pipeline and verify package isolation.
 11. Confirm mark-released runs only in the release stage and is not included in Build-stage replay.
@@ -214,7 +214,7 @@ Non-responsibilities:
 
 ## Recommended First Implementation Slice
 
-- Implement and test `Get-APIReviewApprovalStatus.ps1` first because it establishes the new release gate without changing revision creation or release completion.
+- Implement and test `Get-PackageApprovalStatus.ps1` first because it establishes the new release gate without changing revision creation or release completion.
 - Implement `Create-APIViewRevision.ps1` and migrate the Build-stage caller, keeping creation Build-only while approval status is replayed during release.
-- Implement `Mark-APIReviewReleased.ps1` and add it only to the release stage after publishing.
+- Implement `Mark-PackageReleased.ps1` and add it only to the release stage after publishing.
 - Retain `Create-APIReview.ps1` unchanged until migration is complete.

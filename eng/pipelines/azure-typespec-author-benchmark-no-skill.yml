@@ -1,6 +1,6 @@
 # NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
 # This pipeline runs evaluations WITHOUT loading the azure-typespec-author skill,
-# testing the agent's baseline capability with the live MCP tool surface.
+# testing the agent's baseline capability with the selected live or mock MCP tool surface.
 trigger: none
 pr: none
 

@@ -286,13 +286,14 @@ each track passes its mode through `TypeSpecAuthorEvalExtraArgs`.
 
 | Pipeline           | Template shape                              | Extra args                                     | MCP binding                                                    | Purpose                                                               |
 | ------------------ | ------------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------- |
-| benchmark          | Manual two-track stages with `pipeline` templates | `--tag mode=forced --skill-dir azure-typespec-author` | Uses `azsdk-mcp` with `AZSDK_EVAL_MCP_KIND=live` | Forced skill invocation + code-quality graders                        |
-| benchmark          | Manual two-track stages with `pipeline` templates | `--tag mode=trigger --skill-dir azure-typespec-author` | Uses `azsdk-mcp` with `AZSDK_EVAL_MCP_KIND=mock` | Skill trigger detection                                               |
-| benchmark-no-skill | Common `archetype-eval.yml` + `pipeline` no-skill invoke wrapper | `--tag mode=no-skill --skill-dir /tmp/no-skills` | Uses `azsdk-mcp` from `.github/skills/.vally.yaml` | Baseline run without loading the skill                                 |
+| benchmark          | Manual two-track stages with `pipeline` templates | `--tag mode=forced --skill-dir azure-typespec-author` | Uses the run's selected `McpKind` | Forced skill invocation + code-quality graders                        |
+| benchmark          | Manual two-track stages with `pipeline` templates | `--tag mode=trigger --skill-dir azure-typespec-author` | Uses the run's selected `McpKind` | Skill trigger detection                                               |
+| benchmark-no-skill | Common `archetype-eval.yml` + `pipeline` no-skill invoke wrapper | `--tag mode=no-skill --skill-dir /tmp/no-skills` | Uses its run's selected `McpKind` | Baseline run without loading the skill                                 |
 
-The forced and trigger tracks are composed manually because they need different MCP environments in
-one pipeline run. The no-skill pipeline stays on the common `archetype-eval.yml` entry point and only
-uses a repo-owned wrapper for Vally invocation.
+The forced and trigger tracks are composed manually so they can run and summarize independently in
+one pipeline run. Both tracks use the same live or mock MCP implementation selected by `McpKind`.
+The no-skill pipeline stays on the common `archetype-eval.yml` entry point and only uses a repo-owned
+wrapper for Vally invocation.
 
 ### Pipeline Parameters and Extensions
 

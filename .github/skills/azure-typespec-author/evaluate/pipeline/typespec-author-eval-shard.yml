@@ -51,12 +51,12 @@ jobs:
         # publish the results directory rather than the common junit-only path.
         - output: pipelineArtifact
           displayName: 'Publish $(shardName) eval results'
-          artifactName: '${{ parameters.matrixStageName }}-eval-result-$(shardName)-$(System.JobAttempt)'
+          artifactName: 'eval-result-${{ parameters.matrixStageName }}-$(shardName)-$(System.JobAttempt)'
           targetPath: $(Build.ArtifactStagingDirectory)/results
           condition: always()
         - output: pipelineArtifact
           displayName: 'Publish $(shardName) transcripts (on failure)'
-          artifactName: '${{ parameters.matrixStageName }}-eval-debug-$(shardName)-$(System.JobAttempt)'
+          artifactName: 'eval-debug-${{ parameters.matrixStageName }}-$(shardName)-$(System.JobAttempt)'
           targetPath: $(Build.ArtifactStagingDirectory)/debug
           condition: failed()
     steps:

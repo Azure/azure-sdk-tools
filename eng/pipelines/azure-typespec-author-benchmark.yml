@@ -79,7 +79,7 @@ extends:
         jobs:
           - template: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-summary.yml
             parameters:
-              resultArtifactPrefix: PrepareForced-eval-result-
+              resultArtifactPrefix: eval-result-PrepareForced-
               failOnFailedTests: false
 
       - stage: PrepareTrigger
@@ -113,5 +113,5 @@ extends:
         jobs:
           - template: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-summary.yml
             parameters:
-              resultArtifactPrefix: PrepareTrigger-eval-result-
+              resultArtifactPrefix: eval-result-PrepareTrigger-
               failOnFailedTests: false

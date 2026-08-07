@@ -40,7 +40,9 @@ jobs:
             name="$(basename "$path")"
             case "$name" in
               "$prefix"*)
-                echo "Keeping $name"
+                normalized="eval-result-${name#"$prefix"}"
+                echo "Keeping $name as $normalized"
+                mv "$path" "$root/$normalized"
                 ;;
               *)
                 echo "Removing $name"

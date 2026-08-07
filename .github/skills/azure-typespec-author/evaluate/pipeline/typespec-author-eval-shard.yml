@@ -109,24 +109,39 @@ jobs:
 
       # This runner keeps the pipeline threshold out of `vally eval`: TypeSpec
       # gates the completed results.jsonl without overriding eval scoring.
-      - task: AzureCLI@2
-        displayName: 'vally eval $(shardName)'
-        inputs:
-          azureSubscription: ${{ parameters.azureSubscription }}
-          scriptType: bash
-          scriptLocation: inlineScript
-          workingDirectory: ${{ parameters.vallyRoot }}
-          inlineScript: |
+      - ${{ if eq(parameters.mcpEnvironment, 'live') }}:
+        - task: AzureCLI@2
+          displayName: 'vally eval $(shardName) (authenticated)'
+          inputs:
+            azureSubscription: ${{ parameters.azureSubscription }}
+            scriptType: bash
+            scriptLocation: inlineScript
+            workingDirectory: ${{ parameters.vallyRoot }}
+            inlineScript: |
+              node --experimental-strip-types "$(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-invoke-shard.ts" \
+                --eval-args "$(evalArgs)" \
+                --shard-name "$(shardName)" \
+                --output-dir "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)" \
+                --extra-args "$(TypeSpecAuthorEvalExtraArgs)" \
+                --threshold ${{ parameters.threshold }}
+          env:
+            GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+            AZSDK_EVAL_MCP_KIND: live
+
+      - ${{ else }}:
+        - script: |
             node --experimental-strip-types "$(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-invoke-shard.ts" \
               --eval-args "$(evalArgs)" \
               --shard-name "$(shardName)" \
               --output-dir "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)" \
               --extra-args "$(TypeSpecAuthorEvalExtraArgs)" \
               --threshold ${{ parameters.threshold }}
-        env:
-          GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
-          ${{ if ne(parameters.mcpEnvironment, 'none') }}:
-            AZSDK_EVAL_MCP_KIND: ${{ parameters.mcpEnvironment }}
+          displayName: 'vally eval $(shardName)'
+          workingDirectory: ${{ parameters.vallyRoot }}
+          env:
+            GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+            ${{ if ne(parameters.mcpEnvironment, 'none') }}:
+              AZSDK_EVAL_MCP_KIND: ${{ parameters.mcpEnvironment }}
 
       - ${{ if parameters.postEvalTemplate }}:
         - template: ${{ parameters.postEvalTemplate }}

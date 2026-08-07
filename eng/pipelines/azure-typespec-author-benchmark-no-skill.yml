@@ -30,7 +30,7 @@ extends:
     mcpSetupTemplate: /eng/common/pipelines/templates/steps/eval-mcp-setup.yml
     TestType: ${{ parameters.McpKind }}
     evalInvokeTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-noskill-eval-invoke.yml
-    UseAzSdkAuthentication: true
+    UseAzSdkAuthentication: ${{ eq(parameters.McpKind, 'live') }}
     preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
     failOnFailedTests: false
     shardTimeoutInMinutes: 30

@@ -7,7 +7,7 @@ import { vsoAddAttachment, vsoLogError, vsoLogWarning } from './logging';
 import { ExecutionReport, PackageReport } from '../types/ExecutionReport';
 import { deleteTmpJsonFile, readTmpJsonFile, writeTmpJsonFile } from '../utils/fsUtils';
 import { marked } from "marked";
-import { toolError, toolWarning } from '../utils/messageUtils';
+import { toolError, toolWarning, configWarning } from '../utils/messageUtils';
 import { FailureType, WorkflowContext } from '../types/Workflow';
 import { setFailureType } from '../utils/workflowUtils';
 import { commentDetailView, renderHandlebarTemplate } from '../utils/reportStatusUtils';
@@ -31,6 +31,17 @@ export const generateReport = (context: WorkflowContext) => {
   if (context.specConfigPath && context.specConfigPath.endsWith('tspconfig.yaml')) {
     generateFromTypeSpec = true;
   }
+
+  const packageOptions = context.swaggerToSdkConfig.packageOptions;
+  const breakingChangeLabelValue = packageOptions.breakingChangesLabel ?? packageOptions.breakingChangeLabel;
+  if (packageOptions.breakingChangesLabel === undefined && packageOptions.breakingChangeLabel !== undefined) {
+    context.logger.warn(
+      configWarning(
+        "'breakingChangeLabel' in swagger_to_sdk config is deprecated. Rename it to 'breakingChangesLabel'.",
+      ),
+    );
+  }
+
   for (const pkg of context.handledPackages) {
     setSdkAutoStatus(context, pkg.status);
     hasSuppressions = Boolean(pkg.presentSuppressionLines.length > 0);
@@ -52,7 +63,7 @@ export const generateReport = (context: WorkflowContext) => {
       apiViewArtifact: pkg.apiViewArtifactPath,
       language: pkg.language,
       hasBreakingChange: pkg.hasBreakingChange,
-      breakingChangeLabel: context.swaggerToSdkConfig.packageOptions.breakingChangesLabel,
+      breakingChangeLabel: breakingChangeLabelValue,
       shouldLabelBreakingChange,
       areBreakingChangeSuppressed,
       presentBreakingChangeSuppressions: pkg.presentSuppressionLines,

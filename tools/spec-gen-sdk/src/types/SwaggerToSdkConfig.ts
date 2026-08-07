@@ -52,8 +52,9 @@ export type SwaggerToSdkConfig = {
     changelogScript?: RunOptions & {
       breakingChangeDetect?: RunLogFilterOptions;
     };
-    breakingChangeLabel?: string;
     breakingChangesLabel?: string;
+    /** @deprecated Use breakingChangesLabel. Read for backward compatibility with existing language repo configs. */
+    breakingChangeLabel?: string;
   };
   artifactOptions: {
     artifactPathFromFileSearch?:

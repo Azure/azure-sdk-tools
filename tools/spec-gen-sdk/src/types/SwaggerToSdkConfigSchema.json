@@ -165,9 +165,16 @@
           // Update version and release data.
           "$ref": "#/definitions/RunOptions"
         },
-        "breakingChangeLabel": {
+        "breakingChangesLabel": {
           // Label to be added in spec PR if breaking change is found
           "type": "string"
+        },
+        "breakingChangeLabel": {
+          // Deprecated alias of breakingChangesLabel. Kept for backward
+          // compatibility with existing language repo configs; new configs
+          // should use breakingChangesLabel.
+          "type": "string",
+          "deprecated": true
         }
       },
       "default": {}

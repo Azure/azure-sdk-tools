@@ -71,6 +71,7 @@ class RootCauseClassification(str, Enum):
 
     missing_content = "missing_content"
     outdated_content = "outdated_content"
+    insufficient_content = "insufficient_content"
     retrieval_mismatch = "retrieval_mismatch"
     reasoning_gap = "reasoning_gap"
     out_of_scope = "out_of_scope"

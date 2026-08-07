@@ -96,9 +96,15 @@ Follow these steps in order.
      the source-of-truth URL to confirm the gap, insufficiency, or drift, then
      `resolve_kb_source` on the relevant chunk's `source` folder to cite
      where the content lives.
-7. **File one issue** in `Azure/azure-sdk-pr` via `issue_write`
-   (`method="create"`), using the title and body in *Issue format* below.
-   Then return the JSON *Output*.
+7. **Act on the classification.** For a system defect, skip knowledge mutation. For a KB defect, read the target document, apply a grounded candidate with `update_knowledge`, then call `validate_agent_response` with the complete original question. Compare the answer with the grounded expected answer; tool completion alone is not a pass. If validation fails, strengthen the general guidance and retry within the attempt limit. If all attempts fail, return `processing_failed` without creating an issue.
+8. **File one issue** in `Azure/azure-sdk-pr` via `issue_write` (`method="create"`) after a system diagnosis or successful KB validation. Apply the labels `feedback-agent`, `classification:<classification>`, and `fix-validation:pending`, use the title and body in *Issue format* below, then return the JSON *Output*.
+
+### Validation mode
+
+1. Read `issue_url` with `issue_read` and recover the original case and expected behavior from the issue.
+2. Call `validate_agent_response` once with the original question and `tenant_id`, then compare the answer with the expected behavior.
+3. Add one issue comment containing the answer, trace ID, and pass/fail reasoning.
+4. Use `issue_write` to replace `fix-validation:pending` with `fix-validation:passed` or `fix-validation:failed`, preserving other labels, then return `validation_passed` or `validation_failed`.
 
 ### Classification taxonomy
 
@@ -177,12 +183,6 @@ gap or drift. Never on `github.com` URLs.
 **`resolve_kb_source(folder)`** — Resolves a chunk's `source` folder to
 its upstream `owner/repo/branch/path` so you can cite it. `resolved=false`
 when the folder is unmapped or non-GitHub.
-
-**`update_knowledge`** — Writes candidate markdown to the matching
-tenant-configured dev knowledge source and refreshes the dev search index.
-
-**`ask_chat_agent(question, tenant_id)`** — Sends the original question to
-the deployed dev Chat Agent and returns its answer, trace ID, and citations.
 
 **`issue_write`** — Creates the remediation issue in analysis mode or
 updates its validation label in validation mode.
@@ -267,17 +267,12 @@ Emit valid JSON only: double-quoted keys and strings, real `null` (never
 3. **`web_fetch`: ≤1 call**, KB defects only, never on `github.com`.
 4. **`get_file_contents` / `search_code`: system defects only**, ≤3 reads,
    only in `Azure/azure-sdk-tools`.
-5. **`update_knowledge`: at most two calls**, analysis-mode KB defects only.
-6. **`ask_chat_agent`: at most two calls** for an analysis-mode KB defect;
-   exactly one call in validation mode.
-7. **`issue_write`: exactly one call** after confirmed failure: create in
-   analysis mode or update labels in validation mode, always in
-   `Azure/azure-sdk-pr`.
+5. **`update_knowledge`: at most three calls**, analysis-mode KB defects only.
+6. **`validate_agent_response`: at most three calls** for an analysis-mode KB defect; exactly one call in validation mode.
+7. **`issue_write`: exactly one call** after a system diagnosis, successful KB validation, or closed-issue validation, always in `Azure/azure-sdk-pr`.
 8. **`add_issue_comment`: exactly one call in validation mode**, none in
    analysis mode.
 9. **One classification per confirmed failure** — pick the dominant cause,
    never hedge.
-10. **Ground every claim** in a tool result and cite sources by URL. Never
-   invent doc content; if evidence is thin, classify `reasoning_gap` and
-   say what is missing.
+10. **Ground every claim** in a tool result and cite sources by URL. Never invent doc content or use `reasoning_gap` without positive evidence that the retrieved knowledge was sufficient.
 11. **Redact PII** (emails, UPNs, user IDs, AAD object IDs) before filing.

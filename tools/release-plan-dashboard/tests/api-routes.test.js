@@ -1142,7 +1142,6 @@ describe("API routes", () => {
           {
             version: "13.0.0",
             apiReviewStatus: "Approved",
-            namespaceApproval: "Approved",
           },
         ],
       ]);
@@ -1155,7 +1154,6 @@ describe("API routes", () => {
       expect(res.status).toBe(200);
       const dotnet = res.body.plan.languages[".NET"];
       expect(dotnet.pkgVersion).toBe("13.0.0");
-      expect(dotnet.namespaceApproval).toBe("Approved");
       expect(dotnet.apiReviewStatus).toBe("Approved");
     });
 

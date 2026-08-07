@@ -413,8 +413,8 @@ describe("mapReleasePlan includes releasedVersion", () => {
 });
 
 describe("enrichment skips Package WI version when released", () => {
-  // This tests the logic in routes/api.js where pkgVersion is not set when released
-  test("pkgVersion is always set from Package WI, but namespaceApproval is skipped when released", () => {
+  // This tests the logic in routes/api.js where apiReviewStatus is not set when released
+  test("pkgVersion is always set from Package WI but apiReviewStatus is skipped when released", () => {
     // Simulate the updated enrichment logic from routes/api.js
     const li = {
       packageName: "Azure.Core",
@@ -424,7 +424,6 @@ describe("enrichment skips Package WI version when released", () => {
     const isReleased = (li.releaseStatus || "").toLowerCase() === "released";
     const pkgData = {
       version: "1.5.0",
-      namespaceApproval: "Approved",
       apiReviewStatus: "Approved",
     };
 
@@ -432,15 +431,15 @@ describe("enrichment skips Package WI version when released", () => {
     if (pkgData) {
       li.pkgVersion = pkgData.version;
       if (!isReleased) {
-        li.namespaceApproval = pkgData.namespaceApproval;
+        li.apiReviewStatus = pkgData.apiReviewStatus;
       }
     }
 
     expect(li.pkgVersion).toBe("1.5.0");
-    expect(li.namespaceApproval).toBeUndefined();
+    expect(li.apiReviewStatus).toBeUndefined();
   });
 
-  test("pkgVersion and namespaceApproval are both applied when not released", () => {
+  test("pkgVersion and apiReviewStatus are both applied when not released", () => {
     const li = {
       packageName: "Azure.Core",
       releaseStatus: "Unreleased",
@@ -449,19 +448,18 @@ describe("enrichment skips Package WI version when released", () => {
     const isReleased = (li.releaseStatus || "").toLowerCase() === "released";
     const pkgData = {
       version: "1.5.0",
-      namespaceApproval: "Approved",
       apiReviewStatus: "Approved",
     };
 
     if (pkgData) {
       li.pkgVersion = pkgData.version;
       if (!isReleased) {
-        li.namespaceApproval = pkgData.namespaceApproval;
+        li.apiReviewStatus = pkgData.apiReviewStatus;
       }
     }
 
     expect(li.pkgVersion).toBe("1.5.0");
-    expect(li.namespaceApproval).toBe("Approved");
+    expect(li.apiReviewStatus).toBe("Approved");
   });
 });
 

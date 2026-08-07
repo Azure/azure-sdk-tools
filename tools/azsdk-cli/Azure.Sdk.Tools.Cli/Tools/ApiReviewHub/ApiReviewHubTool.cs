@@ -342,7 +342,6 @@ public class ApiReviewHubTool(
                     details.Add($"Status Code: {result.ApiView.StatusCode}");
                 }
                 details.Add($"Approved: {result.ApiView.IsApproved}");
-                details.Add($"Package Name Approved: {result.ApiView.PackageNameApproved}");
                 details.Add($"Reason: {result.ApiView.Reason}");
                 details.AddRange(result.ApiView.Details);
             }

@@ -35,6 +35,7 @@ from agent_framework_foundry_hosting import ResponsesHostServer
 
 import config.app_config as app_config
 from config.app_config import get as cfg
+from tools.chatagent_tools import ChatAgentTools
 from tools.conversation_tools import ConversationTools
 from tools.github_mcp_tools import create_github_mcp_tool
 from tools.knowledge_tools import KnowledgeTools
@@ -53,8 +54,8 @@ logger = logging.getLogger(__name__)
 # sources, re-search (tenant-scoped and whole-KB), read chat-agent source
 # to diagnose system defects, fetch a source URL, and file an issue in one
 # turn.
-MAX_TOOL_CALL_ITERATIONS = 8
-MAX_TOOL_CALLS_PER_TURN = 12
+MAX_TOOL_CALL_ITERATIONS = 20
+MAX_TOOL_CALLS_PER_TURN = 20
 
 
 def _load_instructions(file_path: Path) -> str:
@@ -84,6 +85,7 @@ async def main() -> None:
     # Tools.
     monitor_tools = MonitorTools()
     conversation_tools = ConversationTools()
+    chatagent_tools = ChatAgentTools()
     knowledge_tools = KnowledgeTools()
     web_tools = WebTools()
 
@@ -94,6 +96,9 @@ async def main() -> None:
         knowledge_tools.list_knowledge_sources,
         knowledge_tools.resolve_kb_source,
         knowledge_tools.search_knowledge_base,
+        knowledge_tools.read_knowledge,
+        knowledge_tools.update_knowledge,
+        chatagent_tools.validate_agent_response,
         web_tools.web_fetch,
     ]
 

@@ -73,9 +73,10 @@ The agent classifies each case into exactly one root cause and acts accordingly:
 | Classification | Description | Category | Issue Repo |
 | --- | --- | --- | --- |
 | `missing_content` | No KB chunk covers the user's intent. | KB issue | `Azure/azure-sdk-pr` (cite KB source) |
-| `outdated_content` | KB has stale information vs. the source URL. | KB issue | `Azure/azure-sdk-pr` (cite KB source) |
+| `outdated_content` | KB guidance contradicts or has drifted from the current source of truth. | KB issue | `Azure/azure-sdk-pr` (cite KB source) |
+| `insufficient_content` | Related KB guidance exists but omits the rule, applicability, decision criteria, or cross-document connection needed for reasonable use. | KB issue | `Azure/azure-sdk-pr` (cite KB source) |
 | `retrieval_mismatch` | Relevant chunks exist but were not retrieved. | System issue | `Azure/azure-sdk-pr` |
-| `reasoning_gap` | Chunks were retrieved but the bot reasoned poorly. | System issue | `Azure/azure-sdk-pr` |
+| `reasoning_gap` | Retrieved chunks explicitly state the correct rule and its applicability, but the bot reasoned poorly or ignored them. | System issue | `Azure/azure-sdk-pr` |
 | `out_of_scope` | The intent is outside the tenant's scope. | System issue | `Azure/azure-sdk-pr` |
 
 #### 2.2.3 Agent instruction
@@ -109,8 +110,8 @@ A JSON payload with: `tenant_id`, `conversation_id`, and
    intent to confirm what is indexed today. If a chunk looks stale, call
    `web_fetch` on its source URL to check for drift.
 3. **Classify** the case into exactly one root cause (see taxonomy below).
-4. **Propose a fix.** For `missing_content` and `outdated_content`, provide candidate markdown plus source/path and tenant metadata. For system issues, describe the suggested bot change.
-5. **Validate KB remediation.** For `missing_content` and `outdated_content`,
+4. **Propose a fix.** For `missing_content`, `outdated_content`, and `insufficient_content`, provide candidate markdown plus source/path and tenant metadata. For system issues, describe the suggested bot change.
+5. **Validate KB remediation.** For `missing_content`, `outdated_content`, and `insufficient_content`,
    call `update_knowledge` to write the candidate into the matching existing
    dev knowledge folder, then call `validate_agent_response` with the original bad
    case. If it fails, revise the candidate and repeat within the attempt limit.
@@ -125,6 +126,7 @@ A JSON payload with: `tenant_id`, `conversation_id`, and
 
 - `missing_content` — no KB chunk covers the intent (KB issue, cite source).
 - `outdated_content` — KB contradicts the source URL (KB issue, cite source).
+- `insufficient_content` — related KB content exists but is not reasonably usable without missing context or an undisclosed cross-document inference (KB issue, cite source).
 - `retrieval_mismatch` — relevant chunks exist but weren't retrieved.
 - `reasoning_gap` — chunks were retrieved but the bot reasoned poorly.
 - `out_of_scope` — the intent is outside the tenant's scope.
@@ -285,7 +287,7 @@ After all agent sessions finish, fail, or time out, the feedback pipeline trigge
 
 The Evolution agent may prepare the issue content during analysis, but it must complete the KB validation loop before creating the issue. Only after `validate_agent_response` shows that the original bad case passes may the agent call `create_issue` in **`Azure/azure-sdk-pr`** through the existing GitHub MCP tool ([`tools/github_mcp_tools.py`](../tools/github_mcp_tools.py)).
 
-Every agent-created issue includes the sanitized original bad case and the `fix-validation:pending` label so the daily job can validate it after closure without adding fields to `QARecord`. For KB issues (`missing_content` / `outdated_content`), the agent calls `resolve_kb_source` and cites the upstream source in the issue:
+Every agent-created issue includes the sanitized original bad case and the `fix-validation:pending` label so the daily job can validate it after closure without adding fields to `QARecord`. For KB issues (`missing_content` / `outdated_content` / `insufficient_content`), the agent calls `resolve_kb_source` and cites the upstream source in the issue:
 
 > **Title:** [Doc] No guidance on the TypeSpec `@added` versioning decorator
 >

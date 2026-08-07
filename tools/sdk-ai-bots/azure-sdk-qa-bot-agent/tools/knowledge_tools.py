@@ -10,10 +10,13 @@ from __future__ import annotations
 import asyncio
 import logging
 from enum import Enum
+from pathlib import PurePosixPath
 from typing import Annotated
 
+from azure.core.exceptions import ResourceModifiedError
 from pydantic import BaseModel
 
+from config.app_config import get as cfg
 from config.tenant_config import (
     KNOWLEDGE_SOURCE_REGISTRY,
     TenantID,
@@ -22,6 +25,7 @@ from config.tenant_config import (
 from models.knowledge import Reference, SearchKnowledgeBaseResult
 from tools import tool
 from utils.azure_ai_search import get_search_client
+from utils.azure_storage import BlobContent, download_blob, upload_blob
 from utils.knowledge_config import KbTarget, get_kb_target
 
 logger = logging.getLogger(__name__)
@@ -54,6 +58,18 @@ class KnowledgeSourceCatalog(BaseModel):
 
     tenant_id: str | None = None
     sources: list[KnowledgeSourceView]
+
+class ReadKnowledgeResult(BaseModel):
+    blob_path: str
+    content: str
+    etag: str
+
+
+class UpdateKnowledgeResult(BaseModel):
+    blob_path: str
+    status: str
+    indexer_status: str | None = None
+    error: str | None = None
 
 
 
@@ -249,6 +265,7 @@ class KnowledgeTools:
                     expanded[i].header3,
                 ),
                 source=expanded[i].source,
+                blob_path=f"{expanded[i].source}/{expanded[i].title}",
                 link=expanded[i].link,
                 content=_truncate_content(expanded[i].content),
                 score=unique_chunks[i].rerank_score,
@@ -271,6 +288,107 @@ class KnowledgeTools:
         )
 
         return SearchKnowledgeBaseResult(results=refs)
+
+    @tool
+    async def read_knowledge(
+        self,
+        *,
+        blob_path: Annotated[
+            str,
+            "Exact `blob_path` returned by `search_knowledge_base`. The path must be a Markdown document under a registered knowledge-source folder.",
+        ],
+    ) -> ReadKnowledgeResult:
+        """Read a complete knowledge document and its version for a safe update."""
+        normalized_path = _validate_blob_path(blob_path)
+        blob = await download_blob(
+            cfg("STORAGE_KNOWLEDGE_CONTAINER", ""),
+            normalized_path,
+            include_metadata=True,
+        )
+        if blob is None:
+            raise ValueError(f"Knowledge document not found: {normalized_path}")
+        return ReadKnowledgeResult(
+            blob_path=normalized_path,
+            content=blob.data.decode("utf-8"),
+            etag=blob.etag,
+        )
+
+    @tool
+    async def update_knowledge(
+        self,
+        *,
+        blob_path: Annotated[
+            str,
+            "Exact `blob_path` previously passed to `read_knowledge`.",
+        ],
+        expected_content: Annotated[
+            str,
+            "Exact existing text to replace. It must occur exactly once in the current document; include enough surrounding text to make it unique.",
+        ],
+        replacement_content: Annotated[
+            str,
+            "Replacement text. Use an empty string only when the grounded fix requires deleting the expected content.",
+        ],
+        etag: Annotated[
+            str,
+            "The ETag returned by `read_knowledge`; prevents overwriting a document changed since it was read.",
+        ],
+    ) -> UpdateKnowledgeResult:
+        """Safely replace one exact passage and refresh the knowledge index."""
+        normalized_path = _validate_blob_path(blob_path)
+        if not expected_content:
+            raise ValueError("expected_content must not be empty")
+
+        knowledge_container = cfg("STORAGE_KNOWLEDGE_CONTAINER", "")
+        blob = await download_blob(
+            knowledge_container,
+            normalized_path,
+            include_metadata=True,
+        )
+        if blob is None:
+            raise ValueError(f"Knowledge document not found: {normalized_path}")
+        occurrence_count = blob.data.decode("utf-8").count(expected_content)
+        if occurrence_count != 1:
+            raise ValueError(
+                "expected_content must occur exactly once; "
+                f"found {occurrence_count} occurrences"
+            )
+
+        updated_content = blob.data.decode("utf-8").replace(
+            expected_content,
+            replacement_content,
+            1,
+        )
+        print("##vso[task.setvariable variable=restore_required]true", flush=True)
+        try:
+            await upload_blob(
+                knowledge_container,
+                normalized_path,
+                updated_content.encode("utf-8"),
+                etag=etag,
+            )
+        except ResourceModifiedError:
+            return UpdateKnowledgeResult(
+                blob_path=normalized_path,
+                status="conflict",
+                error="The knowledge document changed after it was read. Read it again before retrying.",
+            )
+
+        try:
+            indexer_status = await get_search_client().run_indexer()
+        except (RuntimeError, TimeoutError) as exc:
+            logger.exception("Knowledge indexer did not complete after updating %s", normalized_path)
+            return UpdateKnowledgeResult(
+                blob_path=normalized_path,
+                status="indexing_failed",
+                indexer_status="failed",
+                error=str(exc),
+            )
+        return UpdateKnowledgeResult(
+            blob_path=normalized_path,
+            status="updated",
+            indexer_status=indexer_status,
+        )
 
     @tool
     async def list_knowledge_sources(
@@ -394,6 +512,20 @@ def _resolve_source_filters(
             filter_clauses.append(service_type_filter)
         source_filters[source_name] = " and ".join(filter_clauses)
     return source_filters
+
+
+def _validate_blob_path(blob_path: str) -> str:
+    """Return a normalized knowledge blob path or reject unsafe/unmapped paths."""
+    if not blob_path or "\\" in blob_path:
+        raise ValueError("blob_path must use a non-empty forward-slash path")
+    path = PurePosixPath(blob_path)
+    if path.is_absolute() or any(part in {"", ".", ".."} for part in path.parts):
+        raise ValueError("blob_path must be a normalized relative path")
+    if len(path.parts) < 2 or path.parts[0] not in KNOWLEDGE_SOURCE_REGISTRY:
+        raise ValueError("blob_path must be under a registered knowledge-source folder")
+    if path.suffix.lower() not in {".md", ".mdx"}:
+        raise ValueError("blob_path must identify a Markdown document")
+    return path.as_posix()
 
 
 def _truncate_content(content: str | None) -> str:

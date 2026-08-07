@@ -110,6 +110,7 @@ class Reference(BaseModel):
 
     title: str
     source: str
+    blob_path: str = ""
     link: str
     content: str = ""
     score: float = 0.0

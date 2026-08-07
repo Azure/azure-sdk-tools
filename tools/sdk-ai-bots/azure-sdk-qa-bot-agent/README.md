@@ -177,6 +177,9 @@ To exercise the loop locally:
 2. Press **F5** to start debugging the server.
 3. Install the [REST Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) extension.
 4. Run tests under `tests/api_test.rest` to verify the server is working.
+5. Open `http://localhost:8089/dashboard/qa-records` to inspect QA and
+   feedback lifecycle records. The dashboard supports tenant, status,
+   updated-time, and conversation ID filters.
 
 ## Testing Remote Endpoints
 

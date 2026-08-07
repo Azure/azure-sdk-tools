@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>QA Record Dashboard</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      color: #172033;
+      background: #f4f7fb;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    header {
+      padding: 22px 28px;
+      color: white;
+      background: #182b49;
+    }
+    header h1 { margin: 0; font-size: 24px; }
+    header p { margin: 6px 0 0; color: #d9e4f5; }
+    main { padding: 20px 28px 32px; }
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(150px, 1fr));
+      gap: 12px;
+      padding: 16px;
+      border: 1px solid #d8e0ec;
+      border-radius: 8px;
+      background: white;
+      box-shadow: 0 2px 8px rgba(23, 32, 51, .06);
+    }
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      color: #41506a;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    input, select, button {
+      min-height: 36px;
+      border: 1px solid #aebbd0;
+      border-radius: 5px;
+      padding: 7px 9px;
+      font: inherit;
+    }
+    button {
+      cursor: pointer;
+      color: white;
+      border-color: #0067b8;
+      background: #0067b8;
+      font-weight: 600;
+    }
+    button.secondary {
+      color: #24324a;
+      border-color: #aebbd0;
+      background: white;
+    }
+    button:disabled { cursor: default; opacity: .5; }
+    .actions {
+      display: flex;
+      align-items: end;
+      gap: 8px;
+    }
+    .summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 18px 0 10px;
+      color: #41506a;
+    }
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid #d8e0ec;
+      border-radius: 8px;
+      background: white;
+    }
+    table {
+      width: 100%;
+      min-width: 1100px;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e5eaf2;
+      text-align: left;
+      vertical-align: middle;
+      font-size: 13px;
+    }
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      color: #34425a;
+      background: #eef3f9;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+    tr:last-child td { border-bottom: 0; }
+    tr:hover td { background: #f8fbff; }
+    .conversation {
+      max-width: 290px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .badge {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 3px 8px;
+      background: #e7edf6;
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .status-finished, .status-done { color: #0b5f32; background: #dff5e7; }
+    .status-failed { color: #9b1c1c; background: #fde3e3; }
+    .status-running { color: #705500; background: #fff1bd; }
+    .status-pending_validation { color: #63348b; background: #eee2fa; }
+    .status-ongoing, .status-created { color: #075a9c; background: #deefff; }
+    .status-not_started { color: #596579; background: #edf0f4; }
+    .pagination {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .pagination button { min-width: 84px; }
+    .error { color: #a4262c; font-weight: 600; }
+    dialog {
+      width: min(900px, 92vw);
+      max-height: 88vh;
+      border: 0;
+      border-radius: 9px;
+      padding: 0;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, .3);
+    }
+    dialog::backdrop { background: rgba(10, 18, 32, .55); }
+    .dialog-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 18px;
+      border-bottom: 1px solid #d8e0ec;
+    }
+    .dialog-header h2 { margin: 0; font-size: 18px; }
+    .dialog-header button { min-height: 32px; }
+    pre {
+      overflow: auto;
+      margin: 0;
+      padding: 18px;
+      background: #f7f9fc;
+      font: 12px/1.5 Consolas, monospace;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    @media (max-width: 1100px) {
+      .filters { grid-template-columns: repeat(3, minmax(160px, 1fr)); }
+    }
+    @media (max-width: 650px) {
+      main { padding: 14px; }
+      header { padding: 18px 14px; }
+      .filters { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>QA Record Dashboard</h1>
+    <p>Conversation evaluation and Chatbot Evolution Agent lifecycle</p>
+  </header>
+  <main>
+    <form id="filters" class="filters">
+      <label>Tenant
+        <select id="tenant"><option value="">All tenants</option></select>
+      </label>
+      <label>QA status
+        <select id="qa-status">
+          <option value="">All QA statuses</option>
+          <option value="ongoing">Ongoing</option>
+          <option value="finished">Finished</option>
+          <option value="failed">Failed</option>
+        </select>
+      </label>
+      <label>Feedback status
+        <select id="feedback-status">
+          <option value="">All feedback statuses</option>
+          <option value="not_started">Not started</option>
+          <option value="created">Created</option>
+          <option value="running">Running</option>
+          <option value="pending_validation">Pending validation</option>
+          <option value="done">Done</option>
+          <option value="failed">Failed</option>
+        </select>
+      </label>
+      <label>Updated from
+        <input id="updated-from" type="datetime-local">
+      </label>
+      <label>Updated to
+        <input id="updated-to" type="datetime-local">
+      </label>
+      <label>Conversation ID
+        <input id="conversation-id" type="search" placeholder="Contains...">
+      </label>
+      <div class="actions">
+        <button type="submit">Apply</button>
+        <button id="reset" class="secondary" type="button">Reset</button>
+        <button id="refresh" class="secondary" type="button">Refresh</button>
+      </div>
+    </form>
+
+    <div class="summary">
+      <span id="result-count">Loading...</span>
+      <span id="error" class="error" role="alert"></span>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Updated</th>
+            <th>Tenant</th>
+            <th>Conversation ID</th>
+            <th>QA status</th>
+            <th>Feedback status</th>
+            <th>Verdict</th>
+            <th>Classification</th>
+            <th>Issue</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody id="records"></tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <button id="previous" class="secondary" type="button">Previous</button>
+      <span id="page-label">Page 1</span>
+      <button id="next" class="secondary" type="button">Next</button>
+    </div>
+  </main>
+
+  <dialog id="details">
+    <div class="dialog-header">
+      <h2>QARecord details</h2>
+      <button id="close-details" class="secondary" type="button">Close</button>
+    </div>
+    <pre id="details-json"></pre>
+  </dialog>
+
+  <script>
+    const pageSize = 50;
+    let page = 1;
+    let total = 0;
+    let activeRequest = null;
+
+    const elements = {
+      form: document.querySelector("#filters"),
+      tenant: document.querySelector("#tenant"),
+      qaStatus: document.querySelector("#qa-status"),
+      feedbackStatus: document.querySelector("#feedback-status"),
+      updatedFrom: document.querySelector("#updated-from"),
+      updatedTo: document.querySelector("#updated-to"),
+      conversationId: document.querySelector("#conversation-id"),
+      records: document.querySelector("#records"),
+      resultCount: document.querySelector("#result-count"),
+      error: document.querySelector("#error"),
+      previous: document.querySelector("#previous"),
+      next: document.querySelector("#next"),
+      pageLabel: document.querySelector("#page-label"),
+      details: document.querySelector("#details"),
+      detailsJson: document.querySelector("#details-json")
+    };
+
+    function addParameter(parameters, name, value) {
+      if (value) parameters.set(name, value);
+    }
+
+    function toIso(value) {
+      return value ? new Date(value).toISOString() : "";
+    }
+
+    function statusBadge(value) {
+      const badge = document.createElement("span");
+      badge.className = `badge status-${value}`;
+      badge.textContent = value.replaceAll("_", " ");
+      return badge;
+    }
+
+    function cell(value, className = "") {
+      const td = document.createElement("td");
+      td.textContent = value ?? "—";
+      if (className) td.className = className;
+      return td;
+    }
+
+    function isAllowedIssueUrl(value) {
+      try {
+        const url = new URL(value);
+        return url.protocol === "https:"
+          && url.hostname.toLowerCase() === "github.com"
+          && /^\/Azure\/azure-sdk-pr\/issues\/[1-9]\d*\/?$/i.test(url.pathname);
+      } catch {
+        return false;
+      }
+    }
+
+    function renderRecords(items) {
+      elements.records.replaceChildren();
+      if (!items.length) {
+        const row = document.createElement("tr");
+        const empty = cell("No QA records match the current filters.");
+        empty.colSpan = 9;
+        row.append(empty);
+        elements.records.append(row);
+        return;
+      }
+
+      for (const record of items) {
+        const row = document.createElement("tr");
+        row.append(cell(new Date(record.updated_at).toLocaleString()));
+        row.append(cell(record.tenant_id));
+        row.append(cell(record.conversation_id, "conversation"));
+
+        const qaStatus = document.createElement("td");
+        qaStatus.append(statusBadge(record.qa_status));
+        row.append(qaStatus);
+
+        const feedbackStatusValue = record.feedback?.status ?? "not_started";
+        const feedbackStatus = document.createElement("td");
+        feedbackStatus.append(statusBadge(feedbackStatusValue));
+        row.append(feedbackStatus);
+
+        row.append(cell(record.verdict));
+        row.append(cell(record.feedback?.classification));
+
+        const issue = document.createElement("td");
+        if (isAllowedIssueUrl(record.feedback?.issue_url)) {
+          const link = document.createElement("a");
+          link.href = record.feedback.issue_url;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.textContent = "Open issue";
+          issue.append(link);
+        } else {
+          issue.textContent = "—";
+        }
+        row.append(issue);
+
+        const details = document.createElement("td");
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = "View";
+        button.addEventListener("click", () => {
+          elements.detailsJson.textContent = JSON.stringify(record, null, 2);
+          elements.details.showModal();
+        });
+        details.append(button);
+        row.append(details);
+        elements.records.append(row);
+      }
+    }
+
+    function populateTenants(tenants) {
+      const selected = elements.tenant.value;
+      const options = [new Option("All tenants", "")];
+      for (const tenant of tenants) options.push(new Option(tenant, tenant));
+      elements.tenant.replaceChildren(...options);
+      elements.tenant.value = selected;
+    }
+
+    async function loadRecords() {
+      if (activeRequest) activeRequest.abort();
+      const request = new AbortController();
+      activeRequest = request;
+      elements.error.textContent = "";
+      elements.resultCount.textContent = "Loading...";
+      const parameters = new URLSearchParams({page: String(page)});
+      addParameter(parameters, "tenant_id", elements.tenant.value);
+      addParameter(parameters, "qa_status", elements.qaStatus.value);
+      addParameter(parameters, "feedback_status", elements.feedbackStatus.value);
+      addParameter(parameters, "updated_from", toIso(elements.updatedFrom.value));
+      addParameter(parameters, "updated_to", toIso(elements.updatedTo.value));
+      addParameter(parameters, "conversation_id", elements.conversationId.value.trim());
+
+      try {
+        const response = await fetch(`/api/dashboard/qa-records?${parameters}`, {
+          cache: "no-store",
+          signal: request.signal
+        });
+        if (!response.ok) {
+          const body = await response.json().catch(() => ({}));
+          throw new Error(body.detail ?? `Request failed (${response.status})`);
+        }
+        const data = await response.json();
+        if (request !== activeRequest) return;
+        page = data.page;
+        total = data.total;
+        populateTenants(data.tenants);
+        renderRecords(data.items);
+        const first = total ? (data.page - 1) * data.page_size + 1 : 0;
+        const last = Math.min(data.page * data.page_size, total);
+        elements.resultCount.textContent = `${first}-${last} of ${total} records`;
+        const totalPages = Math.max(1, Math.ceil(total / data.page_size));
+        elements.pageLabel.textContent = `Page ${data.page} of ${totalPages}`;
+        elements.previous.disabled = data.page <= 1;
+        elements.next.disabled = data.page >= totalPages;
+      } catch (error) {
+        if (error.name === "AbortError") return;
+        elements.error.textContent = error.message;
+        elements.resultCount.textContent = "Unable to load records";
+        elements.records.replaceChildren();
+        elements.previous.disabled = true;
+        elements.next.disabled = true;
+      } finally {
+        if (request === activeRequest) activeRequest = null;
+      }
+    }
+
+    elements.form.addEventListener("submit", event => {
+      event.preventDefault();
+      page = 1;
+      loadRecords();
+    });
+    document.querySelector("#reset").addEventListener("click", () => {
+      elements.form.reset();
+      page = 1;
+      loadRecords();
+    });
+    document.querySelector("#refresh").addEventListener("click", loadRecords);
+    elements.previous.addEventListener("click", () => {
+      if (page > 1) {
+        page -= 1;
+        loadRecords();
+      }
+    });
+    elements.next.addEventListener("click", () => {
+      if (page * pageSize < total) {
+        page += 1;
+        loadRecords();
+      }
+    });
+    document.querySelector("#close-details").addEventListener(
+      "click",
+      () => elements.details.close()
+    );
+
+    loadRecords();
+  </script>
+</body>
+</html>

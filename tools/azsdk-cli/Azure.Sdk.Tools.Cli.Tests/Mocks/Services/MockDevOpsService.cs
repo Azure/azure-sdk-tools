@@ -1,10 +1,13 @@
-using Microsoft.TeamFoundation.Build.WebApi;
-using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Pipeline;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
+using Azure.Sdk.Tools.Cli.Services;
+using Microsoft.TeamFoundation.Build.WebApi;
+using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 {
@@ -395,6 +398,39 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public Task DeleteWorkItemAsync(int workItemId, CancellationToken ct)
         {
             throw new NotImplementedException();
+        }
+
+        public async Task<ProductOnboardingWorkItem?> GetProductOnboardingAsync(Guid productId, Guid serviceId, CancellationToken ct, bool isTest)
+            => productId == Guid.Empty
+                ? await Task.FromResult<ProductOnboardingWorkItem?>(null)
+                : await Task.FromResult<ProductOnboardingWorkItem?>(
+                    UpdateProductOnboardingAsync(
+                        123,
+                        new()
+                        {
+                            ProductId = productId,
+                            ProductName = "Product Name",
+                            ProductType = ProductType.Sku,
+                            ProductLifecycle = ProductLifecycle.InDev,
+                            ServiceId = serviceId,
+                            ServiceName = "Service Name",
+                            DataPlane = DataPlaneApplicability.Yes,
+                            ManagementPlane = ManagementPlaneApplicability.No,
+                            Submitter = "@handle",
+                        },
+                        ct,
+                        isTest
+                    ).Result);
+
+        public async Task<ProductOnboardingWorkItem> CreateProductOnboardingAsync(ProductOnboardingStatus status, CancellationToken ct, bool isTest)
+            => await UpdateProductOnboardingAsync(456, status, ct, isTest);
+
+        public async Task<ProductOnboardingWorkItem> UpdateProductOnboardingAsync(int workItemId, ProductOnboardingStatus status, CancellationToken ct, bool isTest)
+        {
+            var wi = new ProductOnboardingWorkItem { WorkItemId = workItemId };
+            wi.SetFromProductOnboardingStatus(status);
+            wi.IsTestProductOnboarding = isTest;
+            return await Task.FromResult(wi);
         }
 
         public Task<GitHubCommitRef?> ResolveBuildCommitRefAsync(int buildId, string? project, CancellationToken ct)

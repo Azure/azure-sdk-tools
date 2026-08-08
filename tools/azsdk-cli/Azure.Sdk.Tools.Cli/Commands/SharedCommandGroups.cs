@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 namespace Azure.Sdk.Tools.Cli.Commands
 {
     public static class SharedCommandGroups
@@ -53,6 +56,11 @@ namespace Azure.Sdk.Tools.Cli.Commands
         public static readonly CommandGroup ReleasePlan = new(
            Verb: "release-plan",
            Description: "Manage release plans in Azure DevOps"
+       );
+
+        public static readonly CommandGroup ProductOnboarding = new(
+           Verb: "product-onboarding",
+           Description: "Manage product onboarding status in Azure DevOps"
        );
 
         public static readonly CommandGroup TypeSpec = new(

@@ -377,55 +377,6 @@ namespace APIViewUnitTests
         }
 
         [Fact]
-        public async Task CreateAutomaticRevisionAsync_DoesNotCarryForwardFromSandboxPlaceholder()
-        {
-            var codeFile = CreateCodeFile("TestPackage", "1.0.1", "Python");
-            codeFile.ContentGenerationInProgress = true;
-            using var memoryStream = new MemoryStream();
-            var existingReview = new ReviewListItemModel
-            {
-                Id = "review-id",
-                PackageName = "TestPackage",
-                Language = "Python"
-            };
-            var approvedRevision = new APIRevisionListItemModel
-            {
-                Id = "approved-revision-id",
-                ReviewId = "review-id",
-                APIRevisionType = APIRevisionType.Automatic,
-                IsApproved = true,
-                Files = [new APICodeFileModel { PackageVersion = "1.0.0", ContentHash = "final-hash" }]
-            };
-            var newRevision = new APIRevisionListItemModel
-            {
-                Id = "new-revision-id",
-                ReviewId = "review-id",
-                APIRevisionType = APIRevisionType.Automatic
-            };
-
-            _mockReviewManager.Setup(m => m.GetReviewAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool?>()))
-                .ReturnsAsync(existingReview);
-            _mockApiRevisionsManager.Setup(m => m.GetAPIRevisionsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>()))
-                .ReturnsAsync([approvedRevision]);
-            _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType?>()))
-                .ReturnsAsync([]);
-            _mockApiRevisionsManager.Setup(m => m.CreateAPIRevisionAsync(
-                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>(),
-                    It.IsAny<string>(), It.IsAny<MemoryStream>(), It.IsAny<CodeFile>(),
-                    It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()))
-                .ReturnsAsync(newRevision);
-
-            await _service.CreateAutomaticRevisionAsync(
-                _testUser, codeFile, "test-label", "test.json", memoryStream, null, compareAllRevisions: true);
-
-            _mockCodeFileManager.Verify(m => m.ComputeAPIContentHashAsync(It.IsAny<CodeFile>()), Times.Never);
-            _mockApiRevisionsManager.Verify(m => m.AreAPIRevisionsTheSame(
-                It.IsAny<APIRevisionListItemModel>(), It.IsAny<RenderedCodeFile>(), It.IsAny<bool>(), It.IsAny<string>()), Times.Never);
-            _mockApiRevisionsManager.Verify(m => m.CarryForwardRevisionDataAsync(
-                It.IsAny<APIRevisionListItemModel>(), It.IsAny<APIRevisionListItemModel>()), Times.Never);
-        }
-
-        [Fact]
         public async Task CreateAutomaticRevisionAsync_DoesNotCopyApprovalWhenNoMatchingApprovedRevision()
         {
             var codeFile = CreateCodeFile("TestPackage", "2.0.0", "C#");

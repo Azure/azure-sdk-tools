@@ -44,11 +44,9 @@ class QADashboardService:
         where_clause = (
             f" WHERE {' AND '.join(conditions)}" if conditions else ""
         )
-        query_options: dict[str, Any]
+        query_options: dict[str, Any] = {}
         if tenant_id:
-            query_options = {"partition_key": tenant_id}
-        else:
-            query_options = {"enable_cross_partition_query": True}
+            query_options["partition_key"] = tenant_id
 
         container = await get_qa_records_container()
         count_query = f"SELECT VALUE COUNT(1) FROM c{where_clause}"
@@ -90,7 +88,6 @@ class QADashboardService:
                 "SELECT DISTINCT VALUE c.tenant_id FROM c "
                 "WHERE IS_DEFINED(c.tenant_id)"
             ),
-            enable_cross_partition_query=True,
         ):
             if isinstance(value, str) and value:
                 tenants.append(value)

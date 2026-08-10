@@ -2,15 +2,17 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 from pydantic import BaseModel
 
 from config.tenant_config import TenantID
 from models.chat import ChatRequest, Message
 from models.conversation import Role
-from services.chat_service import ChatService
 from tools import tool
+
+if TYPE_CHECKING:
+    from services.chat_service import ChatService
 
 
 class ValidateAgentResponseResult(BaseModel):
@@ -22,7 +24,11 @@ class ChatAgentTools:
     """Tools that exercise the deployed Chat Agent."""
 
     def __init__(self, chat_service: ChatService | None = None) -> None:
-        self._chat_service = chat_service or ChatService()
+        if chat_service is None:
+            from services.chat_service import ChatService
+
+            chat_service = ChatService()
+        self._chat_service = chat_service
 
     @tool
     async def validate_agent_response(

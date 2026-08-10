@@ -130,7 +130,7 @@ async def test_list_records_filters_not_started_feedback() -> None:
     assert "NOT IS_DEFINED(c.feedback) OR IS_NULL(c.feedback)" in (
         container.calls[0]["query"]
     )
-    assert container.calls[0]["enable_cross_partition_query"] is True
+    assert "enable_cross_partition_query" not in container.calls[0]
 
 
 @pytest.mark.asyncio

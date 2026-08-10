@@ -2,7 +2,7 @@ name: azure-typespec-author-eval
 description: Evaluation suite for azure-typespec-author.
 version: "1.0"
 type: capability # capability | regression
-
+area: "warning"
 # Root-level environment
 environment: azsdk-mcp
 
@@ -113,7 +113,8 @@ stimuli:
 
 scoring:
   weights:
-    run-command: 1
-    skill-invocation: 1
-    file-matches: 2
+    tool-calls: 0.2
+    run-command: 0.2
+    skill-invocation: 0.2
+    file-matches: 0.4
   threshold: 1

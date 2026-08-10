@@ -4,12 +4,12 @@ parameters:
     default: false
 
 steps:
+  - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+
   - task: NodeTool@0
     inputs:
       versionSpec: '$(NodeVersion)'
     displayName: 'Install Node.js'
-
-  - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
 
   - bash: |
       npm ci

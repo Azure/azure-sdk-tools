@@ -25,7 +25,7 @@ from models.knowledge import KnowledgeSource, _trim_file_format
 
 class TenantID(str, Enum):
     TYPESPEC_CHANNEL_QA_BOT = "typespec_channel_qa_bot"
-    ALLOY_FRAMEWORK_QA_BOT = "alloy_framework_qa_bot"
+    TYPESPEC_EMITTER_QA_BOT = "typespec_emitter_qa_bot"
     PYTHON_CHANNEL_QA_BOT = "python_channel_qa_bot"
     DOTNET_CHANNEL_QA_BOT = "dotnet_channel_qa_bot"
     GOLANG_CHANNEL_QA_BOT = "golang_channel_qa_bot"
@@ -538,7 +538,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         qa_guideline_file="tenants/typespec.md",
         enable_routing=True,
     ),
-    TenantID.ALLOY_FRAMEWORK_QA_BOT: TenantConfig(
+    TenantID.TYPESPEC_EMITTER_QA_BOT: TenantConfig(
         display_name="Alloy Framework (Test)",
         skill_name="alloy-framework-test",
         scope="TypeSpec emitter framework (EF v2) and Alloy framework implementation guidance for Azure SDK developers.",
@@ -552,6 +552,9 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_ALLOY_FRAMEWORK_DOCS,
             SRC_ALLOY_FRAMEWORK_SAMPLES,
         ),
+        source_filter={
+            SRC_TYPESPEC_DOCS: "search.ismatch('/.*extending-typespec.*emitter-framework.*/', 'title', 'full', 'any')",
+        },
         qa_guideline_file="tenants/typespec.md",
     ),
     TenantID.AZURE_SDK_ONBOARDING: TenantConfig(

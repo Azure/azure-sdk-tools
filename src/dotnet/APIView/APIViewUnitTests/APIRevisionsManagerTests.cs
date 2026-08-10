@@ -574,6 +574,99 @@ public class APIRevisionsManagerTests
     }
 
     [Fact]
+    public async Task UpdateAPIRevisionCodeFileAsync_CopiesApprovalUsingFinalPipelineHash()
+    {
+        CodeFile pipelineCodeFile = CreatePipelineCodeFile(null);
+        MemoryStream zipStream = await CreateZipArchiveWithCodeFile(TestReviewId, TestApiRevisionId, TestFileId, pipelineCodeFile);
+        var targetRevision = new APIRevisionListItemModel
+        {
+            Id = TestApiRevisionId,
+            ReviewId = TestReviewId,
+            Language = "Python",
+            APIRevisionType = APIRevisionType.Automatic,
+            IsApproved = false,
+            Approvers = [],
+            ChangeHistory = [],
+            Files = [new APICodeFileModel { FileId = TestFileId, FileName = TestFileName, ContentHash = "placeholder-hash" }]
+        };
+        var approvedRevision = new APIRevisionListItemModel
+        {
+            Id = "approved-revision-id",
+            ReviewId = TestReviewId,
+            Language = "Python",
+            APIRevisionType = APIRevisionType.Automatic,
+            IsApproved = true,
+            Approvers = ["approver"],
+            ChangeHistory = [],
+            Files = [new APICodeFileModel { ContentHash = "final-hash" }]
+        };
+
+        _mockDevopsArtifactRepository
+            .Setup(x => x.DownloadPackageArtifact(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), null,
+                It.IsAny<string>(), "zip"))
+            .ReturnsAsync(zipStream);
+        _mockReviewsRepository
+            .Setup(x => x.GetReviewAsync(TestReviewId))
+            .ReturnsAsync(new ReviewListItemModel { Id = TestReviewId, Language = "Python" });
+        _mockAPIRevisionsRepository
+            .Setup(x => x.GetAPIRevisionAsync(TestApiRevisionId))
+            .ReturnsAsync(targetRevision);
+        _mockAPIRevisionsRepository
+            .Setup(x => x.GetAPIRevisionsAsync(TestReviewId))
+            .ReturnsAsync([targetRevision, approvedRevision]);
+        _mockCodeFileRepository
+            .Setup(x => x.GetCodeFileFromStorageAsync(TestApiRevisionId, TestFileId))
+            .ReturnsAsync((CodeFile)null);
+        _mockCodeFileManager
+            .Setup(x => x.ComputeAPIContentHashAsync(It.IsAny<CodeFile>()))
+            .ReturnsAsync("final-hash");
+
+        await _manager.UpdateAPIRevisionCodeFileAsync("test-repo", "12345", "apiview", "internal");
+
+        Assert.True(targetRevision.IsApproved);
+        Assert.Contains("approver", targetRevision.Approvers);
+        Assert.Equal("final-hash", targetRevision.Files[0].ContentHash);
+    }
+
+    [Fact]
+    public async Task UpdateAPIRevisionCodeFileAsync_DoesNotCarryForwardForManualRevision()
+    {
+        CodeFile pipelineCodeFile = CreatePipelineCodeFile(null);
+        MemoryStream zipStream = await CreateZipArchiveWithCodeFile(TestReviewId, TestApiRevisionId, TestFileId, pipelineCodeFile);
+        var targetRevision = new APIRevisionListItemModel
+        {
+            Id = TestApiRevisionId,
+            ReviewId = TestReviewId,
+            Language = "Python",
+            APIRevisionType = APIRevisionType.Manual,
+            Files = [new APICodeFileModel { FileId = TestFileId, FileName = TestFileName, ContentHash = "placeholder-hash" }]
+        };
+
+        _mockDevopsArtifactRepository
+            .Setup(x => x.DownloadPackageArtifact(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), null,
+                It.IsAny<string>(), "zip"))
+            .ReturnsAsync(zipStream);
+        _mockReviewsRepository
+            .Setup(x => x.GetReviewAsync(TestReviewId))
+            .ReturnsAsync(new ReviewListItemModel { Id = TestReviewId, Language = "Python" });
+        _mockAPIRevisionsRepository
+            .Setup(x => x.GetAPIRevisionAsync(TestApiRevisionId))
+            .ReturnsAsync(targetRevision);
+        _mockCodeFileRepository
+            .Setup(x => x.GetCodeFileFromStorageAsync(TestApiRevisionId, TestFileId))
+            .ReturnsAsync((CodeFile)null);
+        _mockCodeFileManager
+            .Setup(x => x.ComputeAPIContentHashAsync(It.IsAny<CodeFile>()))
+            .ReturnsAsync("final-hash");
+
+        await _manager.UpdateAPIRevisionCodeFileAsync("test-repo", "12345", "apiview", "internal");
+
+        Assert.False(targetRevision.IsApproved);
+        Assert.Equal("final-hash", targetRevision.Files[0].ContentHash);
+        _mockAPIRevisionsRepository.Verify(x => x.GetAPIRevisionsAsync(TestReviewId), Times.Never);
+    }
+
+    [Fact]
     public async Task UpdateAPIRevisionCodeFileAsync_WhenRevisionBelongsToDifferentReview_SkipsUpdate()
     {
         MemoryStream zipStream = await CreateZipArchiveWithCodeFile(TestReviewId, TestApiRevisionId, TestFileId, CreatePipelineCodeFile(null));

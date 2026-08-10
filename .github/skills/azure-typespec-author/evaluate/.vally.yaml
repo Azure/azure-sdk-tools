@@ -42,7 +42,7 @@ environments:
           # explicitly (values validated in issue #15675). The access token is requested
           # as "{AZURE_SDK_KB_CLIENT_ID}/.default"; the ambient Azure credential is provided
           # by the pipeline (AzureCLI@2 / azuresdkqabot-dev) or `az login` locally.
-          AZURE_SDK_KB_ENDPOINT: "https://azuresdkqabot-test-serv-agent-dydweeaxaah6g3b4.westus2-01.azurewebsites.net"
+          AZURE_SDK_KB_ENDPOINT: "https://azuresdkqabot-server-c8czabhzhweadwgu.westus2-01.azurewebsites.net"
           AZURE_SDK_KB_CLIENT_ID: "674414e1-152b-41ac-b0d2-763535edea6c"
           AZURE_SDK_KB_SCOPE: "api://azure-sdk-qa-bot-test/user_impersonation"
   azsdk-mcp-remote-kb:

@@ -47,7 +47,7 @@ The workflow should call these tools in roughly this order:
 | Tool | Mock Response |
 |------|---------------|
 | `azsdk_run_generate_sdk` | Returns build IDs 90001–90005 per language |
-| `azsdk_get_pipeline_status` | Always returns "Succeeded" |
+| `azsdk_get_pipeline_status` | Always returns status `completed` with result `failed` (build 90001 is the failed-run fixture) |
 | `azsdk_get_sdk_pull_request_link` | Returns PR URLs like `azure-sdk-for-net/pull/45001` |
 | `azsdk_create_release_plan` | Returns work item 35000, release plan ID 50001 |
 | `azsdk_get_release_plan` | Returns same release plan with SDK info populated |

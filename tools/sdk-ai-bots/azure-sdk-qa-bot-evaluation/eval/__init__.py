@@ -1,7 +1,9 @@
-from .evaluator.azure_bot_evaluator import AzureBotEvaluator
-from .evaluator.azure_bot_reference_evaluator import AzureBotReferenceEvaluator
+"""Evaluation criteria for the QA bot.
 
-__all__ = [
-    "AzureBotEvaluator",
-    "AzureBotReferenceEvaluator"
-]
+``criteria`` builds ``TestingCriterionAzureAIEvaluator`` lists for the builtin
+LLM evaluators (similarity, response_completeness, groundedness).
+"""
+
+from . import criteria
+
+__all__ = ["criteria"]

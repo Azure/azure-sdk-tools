@@ -1,11 +1,12 @@
-using System.Security.Policy;
-using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
 public interface ILogAnalysisHelper
 {
     Task<List<LogEntry>> AnalyzeLogContent(string filePath, List<string>? keywords, int? beforeLines, int? afterLines, CancellationToken ct);
+
+    Task<List<LogEntry>> AnalyzeLogContent(TextReader reader, List<string>? keywords, int? beforeLines, int? afterLines, string url = "", string filePath = "", CancellationToken ct = default);
 }
 
 public class Keyword
@@ -51,13 +52,13 @@ public class LogAnalysisHelper(ILogger<LogAnalysisHelper> logger) : ILogAnalysis
 
         // custom keyword comparers
         new("error", (i) => {
-            var falsePositives = new[] { "no error", "0 error", "any errors", "`error`", "error.type" };
+            var falsePositives = new[] { "no error", "0 error", "any errors", "`error`", "error.type", "errorActionPreference" };
             var hasFalsePositives = falsePositives.Any(fp => i.Contains(fp, StringComparison.OrdinalIgnoreCase));
             return hasFalsePositives ? false : i.Contains("error", StringComparison.OrdinalIgnoreCase);
         }),
 
         new("fail", (i) => {
-            var falsePositives = new[] { "no fail", "0 fail", "any fail" };
+            var falsePositives = new[] { "no fail", "0 fail", "any fail", "succeededOrFailed", "failOnStderr" };
             var hasFalsePositives = falsePositives.Any(fp => i.Contains(fp, StringComparison.OrdinalIgnoreCase));
             return hasFalsePositives ? false : i.Contains("fail", StringComparison.OrdinalIgnoreCase);
         }),
@@ -78,13 +79,40 @@ public class LogAnalysisHelper(ILogger<LogAnalysisHelper> logger) : ILogAnalysis
         "bad request"
     ];
 
-    public async Task<List<LogEntry>> AnalyzeLogContent(string filePath, List<string>? keywordOverrides, int? beforeLines, int? afterLines, CancellationToken ct)
+    /// <summary>
+    /// Azure Pipelines logging command prefixes that are excluded from context lines.
+    /// These lines are skipped when counting before/after context so they don't consume
+    /// context slots with pipeline infrastructure noise.
+    /// </summary>
+    private static readonly string[] contextExclusionPrefixes =
+    [
+        "##[debug]",
+        "##[warning]",
+        "##[section]",
+        "##[group]",
+        "##[endgroup]",
+        "##vso[",
+    ];
+
+    private static bool IsExcludedContextLine(string line)
+    {
+        foreach (var prefix in contextExclusionPrefixes)
+        {
+            if (line.Contains(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public async Task<List<LogEntry>> AnalyzeLogContent(string filePath, List<string>? keywordOverrides, int? beforeLines, int? afterLines, CancellationToken ct = default)
     {
         using var stream = new StreamReader(filePath);
         return await AnalyzeLogContent(stream, keywordOverrides, beforeLines, afterLines, filePath: filePath, ct: ct);
     }
 
-    public async Task<List<LogEntry>> AnalyzeLogContent(StreamReader reader, List<string>? keywordOverrides, int? beforeLines, int? afterLines, string url = "", string filePath = "", CancellationToken ct = default)
+    public async Task<List<LogEntry>> AnalyzeLogContent(TextReader reader, List<string>? keywordOverrides, int? beforeLines, int? afterLines, string url = "", string filePath = "", CancellationToken ct = default)
     {
         var keywords = defaultErrorKeywords;
         if (keywordOverrides?.Count > 0)
@@ -96,11 +124,10 @@ public class LogAnalysisHelper(ILogger<LogAnalysisHelper> logger) : ILogAnalysis
             }
         }
 
-        beforeLines ??= DEFAULT_BEFORE_LINES;
-        afterLines ??= DEFAULT_AFTER_LINES;
-        var before = new Queue<string>((int)beforeLines);
-        var after = new Queue<string>((int)afterLines);
-        var maxAfterLines = afterLines ?? 100;
+        var beforeCount = beforeLines ?? DEFAULT_BEFORE_LINES;
+        var afterCount = afterLines ?? DEFAULT_AFTER_LINES;
+        var before = new LinkedList<string>();
+        var maxAfterLines = afterCount;
 
         var errors = new List<LogEntry>();
 
@@ -109,33 +136,49 @@ public class LogAnalysisHelper(ILogger<LogAnalysisHelper> logger) : ILogAnalysis
         while ((line = await reader.ReadLineAsync(ct)) != null)
         {
             lineNumber++;
-            // check > not >= because an error match will take up an extra slot
-            if (before.Count > beforeLines)
+
+            if (IsExcludedContextLine(line))
             {
-                before.Dequeue();
+                continue;
             }
-            before.Enqueue(line);
+
+            // Maintain a sliding window of non-excluded before-context lines
+            before.AddLast(line);
+            // check > not >= because the error match line itself takes a slot
+            if (before.Count > beforeCount + 1)
+            {
+                before.RemoveFirst();
+            }
+
             var matchedKeywords = keywords.Where(k => k.Matches(line)).ToList();
 
             if (matchedKeywords.Count > 0)
             {
                 logger.LogDebug("Found error matches at line {lineNumber}: {keywords}. Line: {line}", lineNumber, string.Join(", ", matchedKeywords), line);
-                while (after.Count < afterLines && (line = await reader.ReadLineAsync(ct)) != null)
+
+                var after = new List<string>();
+                var currentAfterTarget = afterCount;
+
+                while (after.Count < currentAfterTarget && (line = await reader.ReadLineAsync(ct)) != null)
                 {
                     lineNumber++;
+                    if (IsExcludedContextLine(line))
+                    {
+                        continue;
+                    }
+
                     matchedKeywords = keywords.Where(k => k.Matches(line)).ToList();
                     // Keep seeking if we find new errors while collecting the trailing error context
-                    if (matchedKeywords.Count > 0 && afterLines < maxAfterLines)
+                    if (matchedKeywords.Count > 0 && currentAfterTarget < maxAfterLines)
                     {
                         logger.LogDebug("Found contiguous error matches at line {lineNumber}: {keywords}", lineNumber, string.Join(", ", matchedKeywords));
-                        afterLines++;
+                        currentAfterTarget++;
                     }
-                    after.Enqueue(line);
+                    after.Add(line);
                 }
 
                 var fullContext = before.Concat(after).ToList();
                 before.Clear();
-                after.Clear();
                 var entry = new LogEntry
                 {
                     Line = lineNumber,

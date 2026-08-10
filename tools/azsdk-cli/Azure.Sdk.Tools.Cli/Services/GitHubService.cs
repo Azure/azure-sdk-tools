@@ -1,7 +1,12 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using System.IO.Compression;
+using System.Text;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models;
 using Octokit;
 
 namespace Azure.Sdk.Tools.Cli.Services
@@ -23,6 +28,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         private const int GitHubCliAuthTokenTimeoutMs = 120000;
         private readonly IProcessHelper processHelper;
         private GitHubClient? _gitHubClient; // Backing field for the property
+        private GitHubClient? _anonymousGitHubClient; // Backing field for the anonymous client
 
         protected GitConnection(IProcessHelper processHelper)
         {
@@ -45,7 +51,34 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        private string GetGitHubAuthToken()
+        /// <summary>
+        /// An unauthenticated GitHub client suitable for read-only access to public repositories.
+        /// </summary>
+        protected GitHubClient anonymousGitHubClient =>
+            _anonymousGitHubClient ??= new GitHubClient(new ProductHeaderValue("AzureSDKDevToolsMCP"));
+
+        /// <summary>
+        /// Runs a read-only GitHub operation anonymously first so that public data (for example, the status
+        /// or labels of a public spec pull request during SDK generation) can be read without authentication.
+        /// If the anonymous request fails (the resource is private, access is forbidden, or the rate limit is
+        /// exhausted), it is retried with an authenticated client, which prompts the user to run `gh auth login`
+        /// when no token is available.
+        /// </summary>
+        protected async Task<T> ReadWithAnonymousFallbackAsync<T>(Func<GitHubClient, Task<T>> operation, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+            try
+            {
+                return await operation(anonymousGitHubClient);
+            }
+            catch (Octokit.ApiException)
+            {
+                ct.ThrowIfCancellationRequested();
+                return await operation(gitHubClient);
+            }
+        }
+
+        protected string GetGitHubAuthToken()
         {
             var token = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
             if (!string.IsNullOrEmpty(token))
@@ -63,7 +96,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             ProcessResult result;
             try
             {
-                var options = new ProcessOptions("gh", ["auth", "token"], timeout: TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs));
+                var options = new ProcessOptions("gh", ["auth", "token"], timeout: TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs), logOutputStream:false);
                 using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs));
                 result = processHelper.Run(options, timeoutCts.Token).GetAwaiter().GetResult();
             }
@@ -99,6 +132,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
     public interface IGitHubService
     {
+        public string GetAuthToken();
         public Task<User> GetGitUserDetailsAsync(CancellationToken ct);
         public Task<List<String>> GetPullRequestChecksAsync(int pullRequestNumber, string repoName, string repoOwner, CancellationToken ct);
         public Task<PullRequest> GetPullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
@@ -124,6 +158,10 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<Octokit.SearchCodeResult> SearchFilesAsync(string searchQuery, CancellationToken ct);
         public Task<Team> GetTeamByNameAsync(string org, string teamSlug, CancellationToken ct);
         public Task<HashSet<string>> GetRepoLabels(string owner, string repo, CancellationToken ct);
+        public Task<IReadOnlyList<WorkflowRun>> GetFailedWorkflowRunsForCommitAsync(string owner, string repo, string commitSha, CancellationToken ct);
+        public Task<IReadOnlyList<(string Name, string Content)>> GetFailedWorkflowRunLogsAsync(string owner, string repo, long runId, CancellationToken ct);
+        public Task<IReadOnlyList<WorkflowJob>> GetWorkflowRunJobsAsync(string owner, string repo, long runId, CancellationToken ct);
+        public Task<List<PrCheckRun>> GetPrCheckRunsAsync(string owner, string repo, int prNumber, CancellationToken ct);
     }
 
     // We enforce cancellation token usage broadly via an analyzer across this codebase,
@@ -133,10 +171,15 @@ namespace Azure.Sdk.Tools.Cli.Services
     public class GitHubService : GitConnection, IGitHubService
     {
         private readonly ILogger<GitHubService> logger;
-        public GitHubService(ILogger<GitHubService> _logger, IProcessHelper processHelper) : base(processHelper)
+        private readonly IHttpClientFactory httpClientFactory;
+
+        public GitHubService(ILogger<GitHubService> _logger, IProcessHelper processHelper, IHttpClientFactory httpClientFactory) : base(processHelper)
         {
             logger = _logger;
+            this.httpClientFactory = httpClientFactory;
         }
+        
+        public string GetAuthToken() => GetGitHubAuthToken();
 
         public async Task<User> GetGitUserDetailsAsync(CancellationToken ct)
         {
@@ -146,7 +189,9 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         public async Task<PullRequest> GetPullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
         {
-            var pullRequest = await gitHubClient.PullRequest.Get(repoOwner, repoName, pullRequestNumber);
+            // Reading a pull request (including its status and labels) is a read-only operation that works
+            // anonymously for public repositories, so try anonymously first and only prompt for auth if needed.
+            var pullRequest = await ReadWithAnonymousFallbackAsync(client => client.PullRequest.Get(repoOwner, repoName, pullRequestNumber), ct);
             return pullRequest;
         }
 
@@ -186,7 +231,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             try
             {
                 logger.LogInformation("Getting head SHA for PR #{PullRequestNumber} in {Owner}/{Repo}", pullRequestNumber, repoOwner, repoName);
-                var pr = await gitHubClient.PullRequest.Get(repoOwner, repoName, pullRequestNumber);
+                var pr = await ReadWithAnonymousFallbackAsync(client => client.PullRequest.Get(repoOwner, repoName, pullRequestNumber), ct);
                 return pr?.Head?.Sha;
             }
             catch (Exception ex)
@@ -491,7 +536,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                     throw new NotFoundException($"Pull request {pullRequestNumber} not found.", System.Net.HttpStatusCode.NotFound);
                 }
 
-                var checkResponse = await gitHubClient.Check.Run.GetAllForReference(repoOwner, repoName, pr.Head.Sha);
+                var checkResponse = await ReadWithAnonymousFallbackAsync(client => client.Check.Run.GetAllForReference(repoOwner, repoName, pr.Head.Sha), ct);
                 if (checkResponse == null || checkResponse.TotalCount == 0)
                 {
                     logger.LogError("No checkruns found for pull request.");
@@ -713,6 +758,303 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             var labels = await gitHubClient.Issue.Labels.GetAllForRepository(owner, repo);
             return labels.Select(l => l.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Lists the failed GitHub Actions workflow runs triggered by a specific commit. For a pull request
+        /// build this must be the PR head SHA, since no run is associated with the ephemeral merge commit.
+        /// </summary>
+        public async Task<IReadOnlyList<WorkflowRun>> GetFailedWorkflowRunsForCommitAsync(string owner, string repo, string commitSha, CancellationToken ct)
+        {
+            logger.LogInformation("Getting failed workflow runs for commit {CommitSha} in {Owner}/{Repo}", commitSha, owner, repo);
+
+            // A commit in this org can carry dozens of runs, nearly all of them green, so the failures are
+            // selected by the API rather than fetched and discarded here.
+            var request = new WorkflowRunsRequest
+            {
+                HeadSha = commitSha,
+                Status = CheckRunStatusFilter.Failure,
+            };
+            var response = await ReadWithAnonymousFallbackAsync(client => client.Actions.Workflows.Runs.List(owner, repo, request), ct);
+            return response?.WorkflowRuns ?? [];
+        }
+        
+        public async Task<IReadOnlyList<(string Name, string Content)>> GetFailedWorkflowRunLogsAsync(string owner, string repo, long runId, CancellationToken ct)
+        {
+            logger.LogInformation("Getting logs for workflow run {RunId} in {Owner}/{Repo}", runId, owner, repo);
+            var archive = await ReadWithAnonymousFallbackAsync(client => client.Actions.Workflows.Runs.GetLogs(owner, repo, runId), ct);
+            if (archive == null || archive.Length == 0)
+            {
+                return [];
+            }
+
+            // A failure to list the jobs costs the step filtering, not the logs, so the whole run is reported.
+            IReadOnlyList<WorkflowJob> jobs = [];
+            try
+            {
+                jobs = await GetWorkflowRunJobsAsync(owner, repo, runId, ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Could not list the jobs of workflow run {RunId}; reporting its full logs", runId);
+            }
+
+            using var stream = new MemoryStream(archive);
+            using var zip = new ZipArchive(stream, ZipArchiveMode.Read);
+
+            var entries = SelectFailedStepLogEntries(zip, jobs);
+            if (entries.Count == 0)
+            {
+                logger.LogDebug("No failed step logs matched for workflow run {RunId}; falling back to the full job logs", runId);
+                entries = [.. zip.Entries.Where(e => JobLogNameOf(e) != null && e.Length > 0)];
+            }
+
+            List<(string Name, string Content)> logs = [];
+            foreach (var entry in entries)
+            {
+                using var reader = new StreamReader(entry.Open());
+                logs.Add((entry.FullName, await reader.ReadToEndAsync(ct)));
+            }
+
+            return logs;
+        }
+
+        /// <summary>
+        /// Picks the archive entries that explain each failed job: the logs of the steps it reports as failed,
+        /// or its full job log when the archive carries no matching step entry.
+        /// </summary>
+        private static List<ZipArchiveEntry> SelectFailedStepLogEntries(ZipArchive zip, IReadOnlyList<WorkflowJob> jobs)
+        {
+            List<ZipArchiveEntry> selected = [];
+
+            foreach (var job in jobs.Where(j => j.Conclusion == WorkflowJobConclusion.Failure))
+            {
+                var failedSteps = (job.Steps ?? [])
+                    .Where(s => s.Conclusion == WorkflowJobConclusion.Failure)
+                    .Select(s => s.Number)
+                    .ToHashSet();
+
+                var stepEntries = zip.Entries
+                    .Where(e => e.Length > 0 && StepLogRegex.Match(e.FullName) is { Success: true } m
+                        && string.Equals(m.Groups["job"].Value, job.Name, StringComparison.OrdinalIgnoreCase)
+                        && int.TryParse(m.Groups["step"].Value, out var step)
+                        && failedSteps.Contains(step))
+                    .ToList();
+
+                if (stepEntries.Count > 0)
+                {
+                    selected.AddRange(stepEntries);
+                    continue;
+                }
+
+                var jobEntry = zip.Entries.FirstOrDefault(e =>
+                    e.Length > 0 && string.Equals(JobLogNameOf(e), job.Name, StringComparison.OrdinalIgnoreCase));
+                if (jobEntry != null)
+                {
+                    selected.Add(jobEntry);
+                }
+            }
+
+            return selected;
+        }
+
+        /// <summary>
+        /// Returns the job a root-level archive entry holds the full log for, or null if the entry is not one.
+        /// </summary>
+        private static string? JobLogNameOf(ZipArchiveEntry entry)
+        {
+            var match = JobLogRegex.Match(entry.FullName);
+            return match.Success ? match.Groups["job"].Value : null;
+        }
+
+        // A run's log archive names each job's full log "<index>_<job>.txt" at the root, and each step's log
+        // "<job>/<step>_<name>.txt", where the step number is the one the jobs API reports.
+        private static readonly Regex JobLogRegex = new(@"^\d+_(?<job>[^/]+)\.txt$", RegexOptions.Compiled);
+        private static readonly Regex StepLogRegex = new(@"^(?<job>.+)/(?<step>\d+)_[^/]+\.txt$", RegexOptions.Compiled);
+
+        public async Task<IReadOnlyList<WorkflowJob>> GetWorkflowRunJobsAsync(string owner, string repo, long runId, CancellationToken ct)
+        {
+            logger.LogInformation("Getting jobs for workflow run {RunId} in {Owner}/{Repo}", runId, owner, repo);
+            var response = await ReadWithAnonymousFallbackAsync(client => client.Actions.Workflows.Jobs.List(owner, repo, runId), ct);
+            return response?.Jobs ?? [];
+        }
+
+        private const string CheckRunsGraphQLQuery = @"
+query($owner: String!, $repo: String!, $pr: Int!, $after: String) {
+  repository(owner: $owner, name: $repo) {
+    pullRequest(number: $pr) {
+      commits(last: 1) {
+        nodes {
+          commit {
+            statusCheckRollup {
+              contexts(first: 100, after: $after) {
+                pageInfo {
+                  hasNextPage
+                  endCursor
+                }
+                nodes {
+                  __typename
+                  ... on CheckRun {
+                    name
+                    conclusion
+                    detailsUrl
+                    checkSuite { app { name } }
+                  }
+                  ... on StatusContext {
+                    context
+                    state
+                    targetUrl
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}";
+
+        /// <summary>
+        /// Lists the CI checks reported on a pull request's latest commit. Uses GraphQL rather than Octokit
+        /// because the status-check rollup returns check runs and legacy commit statuses together; the REST
+        /// equivalent requires a separate call per shape and a prior lookup of the head SHA.
+        /// </summary>
+        public async Task<List<PrCheckRun>> GetPrCheckRunsAsync(string owner, string repo, int prNumber, CancellationToken ct)
+        {
+            logger.LogDebug("Querying GitHub GraphQL for PR check runs: {owner}/{repo}#{prNumber}", owner, repo, prNumber);
+
+            var checkRuns = new List<PrCheckRun>();
+            string? after = null;
+
+            // Repositories in this org routinely report more checks than fit in a single page, and a truncated
+            // rollup would silently drop failed checks, so every page is read before returning.
+            do
+            {
+                using var doc = await PostGraphQLAsync(CheckRunsGraphQLQuery, new { owner, repo, pr = prNumber, after }, ct);
+
+                // A missing repository or a null pullRequest (wrong name, private, or
+                // deleted) otherwise surfaces as an opaque KeyNotFound/InvalidOperation deep in the chain.
+                if (!doc.RootElement.TryGetProperty("data", out var data)
+                    || data.ValueKind != JsonValueKind.Object
+                    || !data.TryGetProperty("repository", out var repository)
+                    || repository.ValueKind != JsonValueKind.Object)
+                {
+                    throw new Exception($"GitHub GraphQL response did not contain repository data for {owner}/{repo}.");
+                }
+
+                if (!repository.TryGetProperty("pullRequest", out var pullRequest)
+                    || pullRequest.ValueKind == JsonValueKind.Null)
+                {
+                    throw new Exception($"Pull request #{prNumber} was not found in {owner}/{repo}.");
+                }
+
+                var nodes = pullRequest
+                    .GetProperty("commits")
+                    .GetProperty("nodes");
+
+                after = null;
+                foreach (var commitNode in nodes.EnumerateArray())
+                {
+                    var rollup = commitNode.GetProperty("commit").GetProperty("statusCheckRollup");
+                    if (rollup.ValueKind == JsonValueKind.Null)
+                    {
+                        continue;
+                    }
+
+                    var contexts = rollup.GetProperty("contexts");
+                    foreach (var contextNode in contexts.GetProperty("nodes").EnumerateArray())
+                    {
+                        var typeName = contextNode.GetProperty("__typename").GetString();
+
+                        if (typeName == "CheckRun")
+                        {
+                            checkRuns.Add(new PrCheckRun
+                            {
+                                Type = "CheckRun",
+                                Name = contextNode.GetProperty("name").GetString() ?? "",
+                                Conclusion = contextNode.GetProperty("conclusion").GetString(),
+                                DetailsUrl = contextNode.GetProperty("detailsUrl").GetString(),
+                                AppName = ReadCheckSuiteAppName(contextNode),
+                            });
+                        }
+                        else if (typeName == "StatusContext")
+                        {
+                            checkRuns.Add(new PrCheckRun
+                            {
+                                Type = "StatusContext",
+                                Name = contextNode.GetProperty("context").GetString() ?? "",
+                                Conclusion = contextNode.GetProperty("state").GetString(),
+                                DetailsUrl = contextNode.GetProperty("targetUrl").GetString(),
+                                AppName = "StatusContext",
+                            });
+                        }
+                    }
+
+                    var pageInfo = contexts.GetProperty("pageInfo");
+                    if (pageInfo.GetProperty("hasNextPage").GetBoolean())
+                    {
+                        after = pageInfo.GetProperty("endCursor").GetString();
+                    }
+                }
+            }
+            while (after != null);
+
+            return checkRuns;
+        }
+
+        /// <summary>
+        /// Reads the name of the GitHub App that produced a check run. The app is optional in the schema and is
+        /// absent for check suites whose app has since been uninstalled, so a missing one is not an error.
+        /// </summary>
+        private static string? ReadCheckSuiteAppName(JsonElement checkRunNode)
+        {
+            if (checkRunNode.TryGetProperty("checkSuite", out var checkSuite)
+                && checkSuite.ValueKind == JsonValueKind.Object
+                && checkSuite.TryGetProperty("app", out var app)
+                && app.ValueKind == JsonValueKind.Object)
+            {
+                return app.GetProperty("name").GetString();
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Posts a GraphQL query and returns the parsed response, translating the errors GitHub reports in the
+        /// body of an otherwise successful response into an exception. The caller owns the returned document.
+        /// </summary>
+        private async Task<JsonDocument> PostGraphQLAsync(string query, object variables, CancellationToken ct)
+        {
+            var httpClient = httpClientFactory.CreateClient();
+            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GetGitHubAuthToken());
+            httpClient.DefaultRequestHeaders.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue("AzureSDKDevToolsMCP", "1.0"));
+
+            var requestBody = JsonSerializer.Serialize(new { query, variables });
+
+            var response = await httpClient.PostAsync(
+                "https://api.github.com/graphql",
+                new StringContent(requestBody, Encoding.UTF8, "application/json"),
+                ct);
+            response.EnsureSuccessStatusCode();
+
+            var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct));
+
+            // GraphQL reports failures in the body with a 200 status, so this has to be checked explicitly.
+            if (doc.RootElement.TryGetProperty("errors", out var errors)
+                && errors.ValueKind == JsonValueKind.Array
+                && errors.GetArrayLength() > 0)
+            {
+                var firstError = errors[0];
+                var errorMsg = firstError.ValueKind == JsonValueKind.Object
+                    && firstError.TryGetProperty("message", out var messageElement)
+                        ? messageElement.GetString()
+                        : null;
+                doc.Dispose();
+                throw new Exception($"GitHub GraphQL error: {errorMsg ?? "unknown error"}");
+            }
+
+            return doc;
         }
     }
 }

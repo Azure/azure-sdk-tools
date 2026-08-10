@@ -14,6 +14,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
+from urllib.parse import quote
 
 from models.knowledge import KnowledgeSource, _trim_file_format
 
@@ -24,6 +25,7 @@ from models.knowledge import KnowledgeSource, _trim_file_format
 
 class TenantID(str, Enum):
     TYPESPEC_CHANNEL_QA_BOT = "typespec_channel_qa_bot"
+    TYPESPEC_EMITTER_QA_BOT = "typespec_emitter_qa_bot"
     PYTHON_CHANNEL_QA_BOT = "python_channel_qa_bot"
     DOTNET_CHANNEL_QA_BOT = "dotnet_channel_qa_bot"
     GOLANG_CHANNEL_QA_BOT = "golang_channel_qa_bot"
@@ -43,12 +45,18 @@ class TenantID(str, Enum):
 # -- TypeSpec --
 SRC_TYPESPEC_DOCS = "typespec_docs"
 SRC_TYPESPEC_AZURE_DOCS = "typespec_azure_docs"
+SRC_TYPESPEC_AZURE_SAMPLES = "typespec_azure_samples"
 SRC_TYPESPEC_AZURE_HTTP_SPECS = "typespec_azure_http_specs"
 SRC_TYPESPEC_HTTP_SPECS = "typespec_http_specs"
 SRC_STATIC_TYPESPEC_QA = "static_typespec_qa"
 SRC_STATIC_TYPESPEC_MIGRATION_DOCS = "static_typespec_migration_docs"
 SRC_STATIC_TYPESPEC_TO_SWAGGER_MAPPING = "static_typespec_to_swagger_mapping"
 SRC_TYPESPEC_AZURE_RESOURCE_MANAGER_LIB = "typespec-azure-resource-manager-lib"
+SRC_TYPESPEC_AZURE_PROVIDERHUB_DOCS = "typespec_azure_providerhub_docs"
+
+# -- Emitter framework (EF v2) / Alloy --
+SRC_ALLOY_FRAMEWORK_DOCS = "alloy_framework_docs"
+SRC_ALLOY_FRAMEWORK_SAMPLES = "alloy_framework_samples"
 
 # -- Azure Guidelines & Standards --
 SRC_AZURE_API_GUIDELINES = "azure_api_guidelines"
@@ -56,6 +64,7 @@ SRC_AZURE_RESOURCE_MANAGER_RPC = "azure_resource_manager_rpc"
 SRC_AZURE_REST_API_SPECS_WIKI = "azure_rest_api_specs_wiki"
 SRC_AZURE_REST_API_SPECS_DOCS = "azure_rest_api_specs_docs"
 SRC_AZURE_OPENAPI_DIFF_DOCS = "azure_openapi_diff_docs"
+SRC_STATIC_CPEX_DOCS = "static_cpex_docs"
 
 # -- SDK language docs --
 SRC_AZURE_SDK_FOR_PYTHON_DOCS = "azure_sdk_for_python_docs"
@@ -72,9 +81,13 @@ SRC_AZURE_SDK_GUIDELINES = "azure-sdk-guidelines"
 SRC_AZURE_SDK_DOCS_ENG = "azure-sdk-docs-eng"
 SRC_AZURE_SDK_INTERNAL_WIKI = "azure-sdk-internal-wiki"
 
+# -- SDK tools --
+SRC_AZURE_SDK_TOOLS_DOCS = "azure_sdk_tools_docs"
+
 # -- General Azure & review resources --
 SRC_STATIC_AZURE_DOCS = "static_azure_docs"
 SRC_STATIC_API_SPEC_VIEW_QA = "static_api_spec_view_qa"
+SRC_STATIC_ARM_DOCS = "static_arm_docs"
 
 
 # ---------------------------------------------------------------------------
@@ -103,6 +116,12 @@ _register(
         name=SRC_TYPESPEC_AZURE_DOCS,
         description="Azure-specific TypeSpec documentation, patterns, and templates for management and data-plane services.",
         base_url="https://azure.github.io/typespec-azure/docs/",
+        trim_format=True,
+    ),
+    KnowledgeSource(
+        name=SRC_TYPESPEC_AZURE_SAMPLES,
+        description="Azure TypeSpec samples covering common ARM and data-plane patterns, useful as references when building similar scenarios.",
+        base_url="https://azure.github.io/typespec-azure/docs/samples/",
         trim_format=True,
     ),
     KnowledgeSource(
@@ -139,6 +158,28 @@ _register(
         trim_format=True,
         suffix=".tsp",
     ),
+    KnowledgeSource(
+        name=SRC_TYPESPEC_AZURE_PROVIDERHUB_DOCS,
+        description="Documentation for Azure TypeSpec ProviderHub.",
+        base_url="https://github.com/Azure/typespec-azure-pr/blob/providerhub/",
+    ),
+    # -- Emitter framework (EF v2) / Alloy --
+    KnowledgeSource(
+        name=SRC_ALLOY_FRAMEWORK_DOCS,
+        description="Guides for the Alloy code generation framework that the TypeSpec emitter framework (EF v2) is built on: component model, reactivity, symbols and references, source file/directory rendering, formatting, and debugging emitter output. Search this source for questions about writing a new TypeSpec emitter with alloy or EF v2.",
+        link_fn=lambda title: "https://alloy-framework.github.io/alloy/"
+        + (
+            ""
+            if _trim_file_format(title.replace("#", "/")) == "index"
+            else _trim_file_format(title.replace("#", "/"))
+        ),
+    ),
+    KnowledgeSource(
+        name=SRC_ALLOY_FRAMEWORK_SAMPLES,
+        description="Full source code of the official Alloy framework sample projects, including an end-to-end client emitter, a basic project, a scaffold generator, and Go/Python emitter examples. Use these as reference implementations when someone asks how to start building an emitter with alloy or the emitter framework.",
+        base_url="https://github.com/alloy-framework/alloy/tree/main/samples/",
+        trim_format=True,
+    ),
     # -- Azure Guidelines & Standards --
     KnowledgeSource(
         name=SRC_AZURE_API_GUIDELINES,
@@ -165,6 +206,12 @@ _register(
         name=SRC_AZURE_OPENAPI_DIFF_DOCS,
         description="OpenAPI diff documentation for detecting and managing breaking changes in API specifications.",
         base_url="https://github.com/Azure/openapi-diff/blob/main/",
+    ),
+    KnowledgeSource(
+        name=SRC_STATIC_CPEX_DOCS,
+        description="Cloud Product Excellence (CPEX) documentation covering Azure-branded product lifecycle management, breaking change policy and process guidance, API breaking changes, S360 KPI requirements, preview/GA readiness, and retirement guidance.",
+        base_url="https://eng.ms/docs/cloud-ai-platform/azure-core/azure-core-product/azure-product-lifecycle-management-plm/azure-product-lifecycle-management/cpex/media/",
+        trim_format=True,
     ),
     # -- SDK language docs --
     KnowledgeSource(
@@ -231,22 +278,30 @@ _register(
         link_fn=lambda title: (
             "https://dev.azure.com/azure-sdk/internal/_wiki/wikis/internal.wiki"
             "?wikiVersion=GBwikiMaster&pagePath=/"
-            + _trim_file_format(title.replace("#", "/"))
+            + quote(_trim_file_format(title.replace("#", "/")), safe="/")
         ),
     ),
     # -- General Azure & review resources --
     KnowledgeSource(
         name=SRC_STATIC_AZURE_DOCS,
         description="Static Azure documentation and reference materials for general Azure services.",
-        link_fn=lambda title: (
-            "http://aka.ms/azbreakingchangespolicy"
-            if title == "Azure Versioning and Breaking Changes Policy V1.3.2"
-            else ""
-        ),
     ),
     KnowledgeSource(
         name=SRC_STATIC_API_SPEC_VIEW_QA,
         description="Historical Q&A for API specification review covering common validation errors and fixes.",
+    ),
+    KnowledgeSource(
+        name=SRC_STATIC_ARM_DOCS,
+        description="ARM Wiki (RPaaS) documentation for ARM resource modeling, OpenAPI/TypeSpec onboarding, and related RP platform guidance.",
+        base_url="https://armwiki.azurewebsites.net/rpaas/",
+        trim_format=True,
+        suffix=".html",
+    ),
+    # -- SDK tools --
+    KnowledgeSource(
+        name=SRC_AZURE_SDK_TOOLS_DOCS,
+        description="Azure SDK tools documentation covering js-sdk-release-tools and related JavaScript SDK tooling.",
+        base_url="https://github.com/Azure/azure-sdk-tools/blob/main/",
     ),
 )
 
@@ -309,6 +364,7 @@ _TYPESPEC_SOURCES = _sources(
     SRC_AZURE_RESOURCE_MANAGER_RPC,
     SRC_AZURE_API_GUIDELINES,
     SRC_TYPESPEC_AZURE_DOCS,
+    SRC_TYPESPEC_AZURE_SAMPLES,
     SRC_STATIC_TYPESPEC_QA,
     SRC_TYPESPEC_AZURE_HTTP_SPECS,
     SRC_TYPESPEC_DOCS,
@@ -317,12 +373,15 @@ _TYPESPEC_SOURCES = _sources(
     SRC_TYPESPEC_HTTP_SPECS,
     SRC_STATIC_AZURE_DOCS,
     SRC_STATIC_TYPESPEC_TO_SWAGGER_MAPPING,
+    SRC_TYPESPEC_AZURE_PROVIDERHUB_DOCS,
+    SRC_STATIC_ARM_DOCS,
 )
 
 _AZURE_TYPESPEC_AUTHORING_SOURCES = _sources(
     SRC_AZURE_API_GUIDELINES,
     SRC_AZURE_RESOURCE_MANAGER_RPC,
     SRC_TYPESPEC_AZURE_DOCS,
+    SRC_TYPESPEC_AZURE_SAMPLES,
     SRC_STATIC_TYPESPEC_QA,
     SRC_TYPESPEC_AZURE_HTTP_SPECS,
     SRC_TYPESPEC_DOCS,
@@ -449,6 +508,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_AZURE_SDK_DOCS_ENG,
             SRC_TYPESPEC_AZURE_DOCS,
             SRC_AZURE_REST_API_SPECS_WIKI,
+            SRC_AZURE_SDK_TOOLS_DOCS,
         ),
         source_filter={
             SRC_AZURE_SDK_GUIDELINES: "search.ismatch('typescript', 'title')",
@@ -470,12 +530,32 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             "Client customization for SDKs (even if a specific language is mentioned, if the core topic is TypeSpec authoring)",
             "API design guidelines and best practices",
         ],
-        sources=[*_TYPESPEC_SOURCES, *_sources(SRC_AZURE_SDK_DOCS_ENG)],
+        sources=[*_TYPESPEC_SOURCES, *_sources(SRC_AZURE_SDK_DOCS_ENG, SRC_STATIC_CPEX_DOCS)],
         source_filter={
             SRC_AZURE_SDK_DOCS_ENG: "search.ismatch('design*', 'title')",
+            SRC_STATIC_CPEX_DOCS: "search.ismatch('/.*breaking.*/', 'title', 'full', 'any')",
         },
         qa_guideline_file="tenants/typespec.md",
         enable_routing=True,
+    ),
+    TenantID.TYPESPEC_EMITTER_QA_BOT: TenantConfig(
+        display_name="Alloy Framework (Test)",
+        skill_name="alloy-framework-test",
+        scope="TypeSpec emitter framework (EF v2) and Alloy framework implementation guidance for Azure SDK developers.",
+        topics=[
+            "Getting started with the Alloy framework for TypeSpec emitters",
+            "Emitter framework (EF v2) architecture and implementation patterns",
+            "Reference implementations from official Alloy sample emitters",
+        ],
+        sources=_sources(
+            SRC_TYPESPEC_DOCS,
+            SRC_ALLOY_FRAMEWORK_DOCS,
+            SRC_ALLOY_FRAMEWORK_SAMPLES,
+        ),
+        source_filter={
+            SRC_TYPESPEC_DOCS: "search.ismatch('/.*extending-typespec.*emitter-framework.*/', 'title', 'full', 'any')",
+        },
+        qa_guideline_file="tenants/typespec.md",
     ),
     TenantID.AZURE_SDK_ONBOARDING: TenantConfig(
         display_name="Azure SDK Onboarding",
@@ -490,7 +570,10 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             "AzSDK agent, Azure MCP tool usage guidance",
             "Creating new service based on TypeSpec or OpenAPI (Swagger)",
         ],
-        sources=_sources(SRC_AZURE_SDK_DOCS_ENG),
+        sources=_sources(
+            SRC_AZURE_SDK_DOCS_ENG,
+            SRC_STATIC_CPEX_DOCS,
+        ),
         qa_guideline_file="tenants/azure_sdk_onboarding.md",
     ),
     TenantID.AZURE_TYPESPEC_AUTHORING: TenantConfig(
@@ -527,9 +610,13 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_AZURE_REST_API_SPECS_DOCS,
             SRC_AZURE_OPENAPI_DIFF_DOCS,
             SRC_AZURE_SDK_DOCS_ENG,
+            SRC_STATIC_ARM_DOCS,
+            SRC_STATIC_CPEX_DOCS,
+            SRC_AZURE_SDK_INTERNAL_WIKI,
         ),
         source_filter={
             SRC_AZURE_SDK_DOCS_ENG: "search.ismatch('design*', 'title')",
+            SRC_STATIC_CPEX_DOCS: "search.ismatch('/.*breaking.*/', 'title', 'full', 'any')",
         },
         qa_guideline_file="tenants/api_spec_review.md",
         enable_routing=True,

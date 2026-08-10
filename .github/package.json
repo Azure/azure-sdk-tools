@@ -1,0 +1,11 @@
+{
+  "name": "azure-sdk-tools-github",
+  "private": true,
+  "scripts": {
+    "format:check": "prettier --check \"skills/**/*.{md,yaml,yml,json}\"",
+    "format": "prettier --write \"skills/**/*.{md,yaml,yml,json}\""
+  },
+  "devDependencies": {
+    "prettier": "3.8.4"
+  }
+}

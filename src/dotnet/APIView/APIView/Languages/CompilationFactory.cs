@@ -14,7 +14,8 @@ namespace APIView
         private static HashSet<string> AllowedAssemblies = new HashSet<string>(new[]
         {
             "Microsoft.Bcl.AsyncInterfaces",
-            "System.ClientModel"
+            "System.ClientModel",
+            "System.Memory.Data"
 
         }, StringComparer.InvariantCultureIgnoreCase);
 

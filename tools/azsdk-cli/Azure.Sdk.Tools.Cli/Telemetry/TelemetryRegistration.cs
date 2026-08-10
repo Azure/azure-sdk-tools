@@ -4,6 +4,8 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Azure.Monitor.OpenTelemetry.Exporter;
+using OpenTelemetry;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -43,7 +45,6 @@ internal static class TelemetryRegistration
             .WithTracing(builder =>
             {
                 builder.AddSource(Constants.TOOLS_ACTIVITY_SOURCE)
-                    .AddHttpClientInstrumentation()
                     .AddProcessor(new TelemetryProcessor());
 
                 // Not necessary for CLI mode but should be harmless since we won't run asp.net
@@ -51,7 +52,10 @@ internal static class TelemetryRegistration
 
                 if (debug)
                 {
-                    builder.AddConsoleExporter();
+                    // Use a custom exporter that writes to stderr so it doesn't pollute
+                    // the command response on stdout (e.g. when piping `-o json` to jq).
+                    builder.AddProcessor(new SimpleActivityExportProcessor(
+                        new StderrConsoleActivityExporter(new ConsoleExporterOptions())));
                 }
 
                 if (telemetryEnabled)

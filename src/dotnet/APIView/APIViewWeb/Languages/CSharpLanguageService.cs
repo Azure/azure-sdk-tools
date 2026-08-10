@@ -14,7 +14,7 @@ namespace APIViewWeb
         public override string Name { get; } = "C#";
         public override string[] Extensions { get; } = { ".dll" };
         public override string ProcessName => _csharpParserToolPath;
-        public override string VersionString { get; } = "29.91";
+        public override string VersionString { get; } = "29.92";
 
         public CSharpLanguageService(IConfiguration configuration, TelemetryClient telemetryClient) : base(telemetryClient)
         {

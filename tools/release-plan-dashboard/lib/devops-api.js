@@ -71,6 +71,7 @@ for (const lang of LANGUAGES) {
     `Custom.SDKPullRequestStatusFor${lang}`,
     `Custom.ReleaseExclusionStatusFor${lang}`,
     `Custom.ReleasedVersionFor${lang}`,
+    `Custom.ReleasePipelineFor${lang}`,
   );
 }
 
@@ -210,10 +211,15 @@ function extractSpecPrUrls(reviewsHtml) {
 function mapReleasePlan(workItem, apiSpecMap) {
   const fields = workItem.fields || {};
   const id = workItem.id || fields["System.Id"];
+  const isDataPlaneOnly =
+    fields["Custom.DataScope"] === "Yes" &&
+    fields["Custom.MgmtScope"] !== "Yes";
   const languages = {};
   for (const lang of LANGUAGES) {
+    const packageName = fields[`Custom.${lang}PackageName`] || "";
+    if (lang === "Go" && isDataPlaneOnly && !packageName.trim()) continue;
     languages[LANGUAGE_DISPLAY[lang]] = {
-      packageName: fields[`Custom.${lang}PackageName`] || "",
+      packageName,
       sdkPrUrl: (fields[`Custom.SDKPullRequestFor${lang}`] || "")
         .trim()
         .replace(/\/+$/, ""),
@@ -222,6 +228,14 @@ function mapReleasePlan(workItem, apiSpecMap) {
       exclusionStatus: fields[`Custom.ReleaseExclusionStatusFor${lang}`] || "",
       generationStatus: fields[`Custom.GenerationStatusFor${lang}`] || "",
       releasedVersion: fields[`Custom.ReleasedVersionFor${lang}`] || "",
+      sdkGenerationPipeline: (
+        fields[`Custom.SDKGenerationPipelineFor${lang}`] || ""
+      )
+        .trim()
+        .replace(/\/+$/, ""),
+      releasePipeline: (fields[`Custom.ReleasePipelineFor${lang}`] || "")
+        .trim()
+        .replace(/\/+$/, ""),
     };
   }
   const childIds = extractChildIds(workItem);
@@ -307,7 +321,7 @@ async function fetchPackageWorkItems(pkgLangPairs) {
       const items = await fetchWorkItemsBatch(ids, PACKAGE_FIELDS);
       for (const item of items) {
         const itemFields = item.fields || {};
-        const key = `${itemFields["Custom.Package"] || ""}|${itemFields["Custom.Language"] || ""}`;
+        const key = `${itemFields["Custom.Package"] || ""}|${(itemFields["Custom.Language"] || "").toLowerCase()}`;
         const existing = resultMap.get(key);
         const changedDate = new Date(itemFields["System.ChangedDate"] || 0);
         if (!existing || changedDate > existing._changedDate) {

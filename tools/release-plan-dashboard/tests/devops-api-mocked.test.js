@@ -295,11 +295,60 @@ describe("fetchPackageWorkItems", () => {
       { pkg: "azure-core", lang: "Python" },
     ]);
     expect(result).toBeInstanceOf(Map);
-    expect(result.has("azure-core|Python")).toBe(true);
-    const entry = result.get("azure-core|Python");
+    expect(result.has("azure-core|python")).toBe(true);
+    const entry = result.get("azure-core|python");
     expect(entry.version).toBe("1.2.0");
     expect(entry.apiReviewStatus).toBe("Approved");
     expect(entry.namespaceApproval).toBe("Approved");
+  });
+
+  test("normalizes language key to lowercase for Go packages stored as 'go' in ADO", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation((url) => {
+        if (url.includes("wiql")) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            text: () =>
+              Promise.resolve(JSON.stringify({ workItems: [{ id: 200 }] })),
+            headers: new Headers(),
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          text: () =>
+            Promise.resolve(
+              JSON.stringify({
+                value: [
+                  {
+                    id: 200,
+                    fields: {
+                      "Custom.Package": "azure-sdk-go",
+                      "Custom.Language": "go",
+                      "Custom.PackageVersion": "1.5.0",
+                      "Custom.APIReviewStatus": "Approved",
+                      "Custom.PackageNameApprovalStatus": "Approved",
+                      "System.ChangedDate": "2024-06-01T00:00:00Z",
+                    },
+                  },
+                ],
+              }),
+            ),
+          headers: new Headers(),
+        });
+      }),
+    );
+
+    const result = await fetchPackageWorkItems([
+      { pkg: "azure-sdk-go", lang: "Go" },
+    ]);
+    expect(result).toBeInstanceOf(Map);
+    // Key should be lowercase regardless of how ADO stores the language
+    expect(result.has("azure-sdk-go|go")).toBe(true);
+    const entry = result.get("azure-sdk-go|go");
+    expect(entry.version).toBe("1.5.0");
   });
 
   test("keeps most recent by changedDate when duplicates", async () => {
@@ -353,7 +402,7 @@ describe("fetchPackageWorkItems", () => {
     const result = await fetchPackageWorkItems([
       { pkg: "azure-core", lang: "Python" },
     ]);
-    const entry = result.get("azure-core|Python");
+    const entry = result.get("azure-core|python");
     expect(entry.version).toBe("2.0.0");
   });
 

@@ -1,6 +1,6 @@
 ---
 name: skill-authoring
-description: "Write Agent Skills that comply with the agentskills.io specification. WHEN: \"create a skill\", \"new skill\", \"write a skill\", \"skill template\", \"skill structure\", \"review skill\", \"skill PR\", \"skill compliance\", \"SKILL.md format\", \"skill frontmatter\", \"skill best practices\". DO NOT USE FOR: improving existing skills (use sensei), general documentation. INVOKES: waza CLI."
+description: 'Write Agent Skills that comply with the agentskills.io specification. WHEN: "create a skill", "new skill", "write a skill", "skill template", "skill structure", "review skill", "skill PR", "skill compliance", "SKILL.md format", "skill frontmatter", "skill best practices". DO NOT USE FOR: general documentation. INVOKES: vally CLI.'
 license: MIT
 metadata:
   author: Microsoft
@@ -10,13 +10,21 @@ compatibility: "copilot-chat"
 
 # Skill Authoring Guide
 
-## Constraints
+This skill helps write Agent Skills that comply with the agentskills.io specification by defining valid frontmatter, structure, and routing patterns, while guiding authors toward compliant `SKILL.md` files, supporting references, and local validation with the vally CLI.
+
+## Triggers
+
+USE FOR: write Agent Skills that comply with the agentskills.io specification; skill template; skill structure; review skill; skill PR; skill compliance; SKILL.md format; skill frontmatter; skill best practices
+WHEN: "create a skill", "new skill", "write a skill", "skill template", "skill structure", "review skill", "skill PR", "skill compliance", "SKILL.md format", "skill frontmatter", "skill best practices"
+DO NOT USE FOR: general documentation
+
+## Rules
 
 - `name`: 1-64 chars, lowercase + hyphens, match directory
 - `description`: inline double-quoted, ≤60 words, ≤1024 chars
 - Use `WHEN:` with quoted trigger phrases (preferred over `USE FOR:`)
 - SKILL.md: <500 tokens (soft), <5000 (hard)
-- references/*.md: <1000 tokens each
+- references/\*.md: <1000 tokens each
 
 ## Structure
 
@@ -24,23 +32,28 @@ compatibility: "copilot-chat"
 - `references/` (optional) — Detailed docs, loaded on demand
 - `scripts/` (optional) — Executable code
 
+## Formatting
+
+- run `npm ci` in `.github/skills` to install dependencies
+- run `npm run format` to auto-format markdown and yaml files using Prettier
+
 ## Progressive Disclosure
 
 Metadata loads at startup. SKILL.md on activation. References load when linked via markdown link.
 
 ## MCP Tools
 
-| Tool | Purpose |
-|------|---------|
+| Tool | Purpose                         |
+| ---- | ------------------------------- |
 | None | CLI-only; uses local file tools |
 
 **CLI fallback:** Primary mode is CLI-based. No MCP servers required.
 
-## Quick Start
+## Steps
 
 1. Create skill directory with `SKILL.md`
 2. Add frontmatter: `name`, `description`, `license`
-3. Run `waza check {skill-name}` to validate
+3. Run `vally lint {skill-name}` to validate
 
 ## Examples
 
@@ -49,7 +62,7 @@ Metadata loads at startup. SKILL.md on activation. References load when linked v
 
 ## Troubleshooting
 
-If `waza check` reports broken links, verify reference file paths match exactly.
+If `vally lint` reports broken links, verify reference file paths match exactly.
 
 ## References
 

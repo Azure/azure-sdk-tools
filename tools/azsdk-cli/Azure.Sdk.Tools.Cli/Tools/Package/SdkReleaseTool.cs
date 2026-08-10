@@ -70,7 +70,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return await ReleasePackageAsync(packageName, language, branch, checkReady, ct);
         }
 
-        [McpServerTool(Name = ReleaseSdkToolName), Description("Releases the specified SDK package for a language. This includes checking if the package is ready for release and triggering the release pipeline. To ONLY check package release readiness pass checkReady as true.")]
+        [McpServerTool(Name = ReleaseSdkToolName), Description("Releases (publishes) an SDK package to the package registry for a language. Use this only to publish a package; it does NOT generate SDK code. This includes checking if the package is ready for release and triggering the release pipeline. To ONLY check package release readiness pass checkReady as true. To generate SDKs (including for all languages in a release plan) use azsdk_run_generate_sdk instead.")]
         public async Task<SdkReleaseResponse> ReleasePackageAsync(string packageName, string language, string branch = "main", bool checkReady = false, CancellationToken ct = default)
         {
             try
@@ -197,6 +197,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                         response.PipelineBuildId = releasePipelineRun.Id;
                         response.ReleasePipelineStatus = releasePipelineRun.Status?.ToString() ?? "";
                         response.ReleaseStatusDetails = $"Release pipeline triggered successfully for package '{packageName}' in language '{language}'. Check the status of the pipeline after some time and approve the SDK release using the link to the pipeline run. You can find more information about release approval in https://aka.ms/azsdk/publishsdk";
+                        response.NextSteps = ["Prompt the user to approve the release stage in the pipeline run using the pipeline link", "After release completes, prompt the user to verify the package is published to the registry"];
                         logger.LogInformation("{details}", response.ReleaseStatusDetails);
                     }
                     else

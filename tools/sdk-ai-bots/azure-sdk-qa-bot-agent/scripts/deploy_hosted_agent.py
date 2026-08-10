@@ -34,8 +34,10 @@ if str(_PROJECT_DIR) not in sys.path:
 from azure.ai.projects import AIProjectClient
 from azure.ai.projects.models import (
     AgentProtocol,
+    ContainerConfiguration,
     HostedAgentDefinition,
     ProtocolVersionRecord,
+    RaiConfig,
 )
 from azure.identity import AzureCliCredential
 
@@ -204,9 +206,6 @@ def main() -> None:
     image = f"{registry}/{image_name}:{tag}"
     dockerfile = _PROJECT_DIR / "agents" / args.agent_name / "Dockerfile"
 
-    # Project resource ID is used as an env var inside the container for telemetry.
-    project_resource_id = os.environ.get("AI_FOUNDRY_PROJECT_RESOURCE_ID", "").strip()
-
     acr_name = registry.split(".")[0]
 
     # Check if the image tag already exists in ACR
@@ -249,9 +248,10 @@ def main() -> None:
 
     # ── Deploy ──
     print(f"Deploying: {image_name}")
+    credential = AzureCliCredential()
     project = AIProjectClient(
         endpoint=project_endpoint,
-        credential=AzureCliCredential(),
+        credential=credential,
         allow_preview=True,
     )
     try:
@@ -269,20 +269,30 @@ def main() -> None:
             "AZURE_APPCONFIG_ENDPOINT": appconfig_endpoint,
             "ENABLE_INSTRUMENTATION": "true",
             "APP_VERSION": next_version,
-            "AI_FOUNDRY_PROJECT_RESOURCE_ID": project_resource_id,
         }
+
+        # Ensure Content-safety guardrail.
+        rai_policy_id = os.environ.get("AI_FOUNDRY_RAI_POLICY_ID", "")
+        if not rai_policy_id:
+            raise RuntimeError(
+                "Cannot apply guardrail because AI_FOUNDRY_RAI_POLICY_ID is not set."
+            )
+        rai_config = RaiConfig(rai_policy_name=rai_policy_id)
+        print(f"  Guardrail: {rai_policy_id}")
+
         agent = project.agents.create_version(
             agent_name=image_name,
             definition=HostedAgentDefinition(
-                container_protocol_versions=[
+                cpu="2",
+                memory="4Gi",
+                container_configuration=ContainerConfiguration(image=image),
+                protocol_versions=[
                     ProtocolVersionRecord(
                         protocol=AgentProtocol.RESPONSES, version="1.0.0"
                     )
                 ],
-                cpu="2",
-                memory="4Gi",
-                image=image,
                 environment_variables=env_vars,
+                rai_config=rai_config,
             ),
             metadata={"enableVnextExperience": "true"},
         )

@@ -57,7 +57,18 @@ function getPackageFeedUrl(lang, packageName, version, plan) {
 // Replicate version display logic from app.js
 function getDisplayVersion(l) {
   const isReleased = (l.releaseStatus || "").toLowerCase() === "released";
-  return isReleased ? l.releasedVersion || "" : l.pkgVersion || "";
+  if (isReleased) return l.releasedVersion || "";
+  const prSt = (l.sdkPrGitHubStatus || l.prStatus || "").toLowerCase();
+  const isPrMerged = prSt.includes("merged") || prSt === "completed";
+  return isPrMerged ? l.pkgVersion || "" : "";
+}
+
+function isVersionPending(l) {
+  const isReleased = (l.releaseStatus || "").toLowerCase() === "released";
+  if (isReleased) return false;
+  const prSt = (l.sdkPrGitHubStatus || l.prStatus || "").toLowerCase();
+  const isPrMerged = prSt.includes("merged") || prSt === "completed";
+  return isPrMerged && !!l.pkgVersion;
 }
 
 describe("getPackageFeedUrl", () => {
@@ -228,22 +239,43 @@ describe("getDisplayVersion (version display logic)", () => {
     expect(getDisplayVersion(l)).toBe("2.0.0");
   });
 
-  test("shows pkgVersion when not released (even if releasedVersion field has a value)", () => {
+  test("shows pkgVersion when not released and PR is merged", () => {
     const l = {
       releaseStatus: "Unreleased",
       releasedVersion: "2.0.0-beta.1",
       pkgVersion: "1.9.0",
+      sdkPrGitHubStatus: "merged",
     };
     expect(getDisplayVersion(l)).toBe("1.9.0");
   });
 
-  test("shows pkgVersion when not released and no releasedVersion", () => {
+  test("shows pkgVersion when not released, no releasedVersion, and PR is merged", () => {
+    const l = {
+      releaseStatus: "Unreleased",
+      releasedVersion: "",
+      pkgVersion: "1.9.0",
+      prStatus: "merged",
+    };
+    expect(getDisplayVersion(l)).toBe("1.9.0");
+  });
+
+  test("does NOT show pkgVersion when not released and PR is not merged", () => {
+    const l = {
+      releaseStatus: "Unreleased",
+      releasedVersion: "",
+      pkgVersion: "1.9.0",
+      sdkPrGitHubStatus: "open",
+    };
+    expect(getDisplayVersion(l)).toBe("");
+  });
+
+  test("does NOT show pkgVersion when not released and no PR status", () => {
     const l = {
       releaseStatus: "Unreleased",
       releasedVersion: "",
       pkgVersion: "1.9.0",
     };
-    expect(getDisplayVersion(l)).toBe("1.9.0");
+    expect(getDisplayVersion(l)).toBe("");
   });
 
   test("does NOT show pkgVersion when released and no releasedVersion", () => {
@@ -277,12 +309,71 @@ describe("getDisplayVersion (version display logic)", () => {
 
   test("does NOT treat Unreleased as released (exact match)", () => {
     // With exact match === "released", "Unreleased" is NOT treated as released
+    // PR must be merged to show pkgVersion
     const l = {
       releaseStatus: "Unreleased",
       releasedVersion: "",
       pkgVersion: "1.0.0",
+      sdkPrGitHubStatus: "merged",
     };
     expect(getDisplayVersion(l)).toBe("1.0.0");
+  });
+
+  test("shows pkgVersion when PR status is 'completed' (merged equivalent)", () => {
+    const l = {
+      releaseStatus: "In Progress",
+      releasedVersion: "",
+      pkgVersion: "2.0.0",
+      prStatus: "completed",
+    };
+    expect(getDisplayVersion(l)).toBe("2.0.0");
+  });
+});
+
+describe("isVersionPending (pending label logic)", () => {
+  test("returns true when not released and PR is merged with pkgVersion", () => {
+    const l = {
+      releaseStatus: "Unreleased",
+      pkgVersion: "1.9.0",
+      sdkPrGitHubStatus: "merged",
+    };
+    expect(isVersionPending(l)).toBe(true);
+  });
+
+  test("returns false when released (even if PR is merged)", () => {
+    const l = {
+      releaseStatus: "Released",
+      pkgVersion: "1.9.0",
+      sdkPrGitHubStatus: "merged",
+    };
+    expect(isVersionPending(l)).toBe(false);
+  });
+
+  test("returns false when not released and PR is not merged", () => {
+    const l = {
+      releaseStatus: "Unreleased",
+      pkgVersion: "1.9.0",
+      sdkPrGitHubStatus: "open",
+    };
+    expect(isVersionPending(l)).toBe(false);
+  });
+
+  test("returns false when not released and no pkgVersion", () => {
+    const l = {
+      releaseStatus: "Unreleased",
+      pkgVersion: "",
+      sdkPrGitHubStatus: "merged",
+    };
+    expect(isVersionPending(l)).toBe(false);
+  });
+
+  test("returns true when PR status is 'completed'", () => {
+    const l = {
+      releaseStatus: "In Progress",
+      pkgVersion: "2.0.0",
+      prStatus: "completed",
+    };
+    expect(isVersionPending(l)).toBe(true);
   });
 });
 
@@ -656,11 +747,7 @@ describe("feed link visibility based on release status", () => {
       pkgVersion: "2.0.0",
       releaseStatus: "Released",
     };
-    const isReleased = (l.releaseStatus || "").toLowerCase() === "released";
-    const displayVersion = isReleased
-      ? l.releasedVersion || ""
-      : l.pkgVersion || "";
-    expect(displayVersion).toBe("");
+    expect(getDisplayVersion(l)).toBe("");
   });
 
   test("displayVersion uses releasedVersion when released", () => {
@@ -669,24 +756,27 @@ describe("feed link visibility based on release status", () => {
       pkgVersion: "2.0.0",
       releaseStatus: "Released",
     };
-    const isReleased = (l.releaseStatus || "").toLowerCase() === "released";
-    const displayVersion = isReleased
-      ? l.releasedVersion || ""
-      : l.pkgVersion || "";
-    expect(displayVersion).toBe("3.0.0");
+    expect(getDisplayVersion(l)).toBe("3.0.0");
   });
 
-  test("displayVersion uses pkgVersion when not released", () => {
+  test("displayVersion uses pkgVersion when not released and PR is merged", () => {
     const l = {
       releasedVersion: "",
       pkgVersion: "2.0.0",
       releaseStatus: "Unreleased",
+      sdkPrGitHubStatus: "merged",
     };
-    const isReleased = (l.releaseStatus || "").toLowerCase() === "released";
-    const displayVersion = isReleased
-      ? l.releasedVersion || ""
-      : l.pkgVersion || "";
-    expect(displayVersion).toBe("2.0.0");
+    expect(getDisplayVersion(l)).toBe("2.0.0");
+  });
+
+  test("displayVersion returns empty string when not released and PR is not merged", () => {
+    const l = {
+      releasedVersion: "",
+      pkgVersion: "2.0.0",
+      releaseStatus: "Unreleased",
+      sdkPrGitHubStatus: "open",
+    };
+    expect(getDisplayVersion(l)).toBe("");
   });
 });
 

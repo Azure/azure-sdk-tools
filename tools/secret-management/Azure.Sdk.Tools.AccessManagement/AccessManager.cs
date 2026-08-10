@@ -18,8 +18,7 @@ public class AccessManager
             reconciler = new Reconciler(
                 logger,
                 new ManagedIdentityClient(logger, credential),
-                new RbacClient(logger, credential),
-                new GitHubClient(logger));
+                new RbacClient(logger, credential));
         }
         catch (Exception ex)
         {

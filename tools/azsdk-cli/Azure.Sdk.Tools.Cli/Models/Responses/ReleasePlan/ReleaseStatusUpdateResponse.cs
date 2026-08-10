@@ -26,6 +26,18 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? PackageVersion { get; set; }
 
+        [JsonPropertyName("sdk_release_type")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? SdkReleaseType { get; set; }
+
+        [JsonPropertyName("release_pipeline_url")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? ReleasePipelineUrl { get; set; }
+
+        [JsonPropertyName("sdk_pull_request")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? SdkPullRequest { get; set; }
+
         [JsonPropertyName("message")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? Message { get; set; }
@@ -52,6 +64,18 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
             if (!string.IsNullOrEmpty(PackageVersion))
             {
                 result.AppendLine($"Package Version: {PackageVersion}");
+            }
+            if (!string.IsNullOrEmpty(SdkReleaseType))
+            {
+                result.AppendLine($"SDK Release Type: {SdkReleaseType}");
+            }
+            if (!string.IsNullOrEmpty(ReleasePipelineUrl))
+            {
+                result.AppendLine($"Release Pipeline URL: {ReleasePipelineUrl}");
+            }
+            if (!string.IsNullOrEmpty(SdkPullRequest))
+            {
+                result.AppendLine($"SDK Pull Request: {SdkPullRequest}");
             }
             if (Language != SdkLanguage.Unknown)
             {

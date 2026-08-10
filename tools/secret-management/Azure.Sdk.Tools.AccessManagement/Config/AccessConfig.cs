@@ -78,14 +78,6 @@ public class AccessConfig
                     sb.AppendLine(rbac.ToIndentedString(1));
                 }
             }
-            if (config.ApplicationAccessConfig.GithubRepositorySecrets != null)
-            {
-                sb.AppendLine("GithubRepositorySecrets ->");
-                foreach (var secret in config.ApplicationAccessConfig.GithubRepositorySecrets)
-                {
-                    sb.AppendLine(secret.ToIndentedString(1));
-                }
-            }
         }
 
         return sb.ToString();

@@ -159,7 +159,7 @@ public class OutputHelper : IOutputHelper, IRawOutputHelper
 
     public virtual void OutputConsole(string output)
     {
-        if (OutputMode != OutputModes.Mcp && OutputMode != OutputModes.Hidden)
+        if (OutputMode != OutputModes.Mcp && OutputMode != OutputModes.Hidden && OutputMode != OutputModes.Json)
         {
             Console.Error.WriteLine(output);
         }
@@ -167,7 +167,7 @@ public class OutputHelper : IOutputHelper, IRawOutputHelper
 
     public virtual void OutputConsoleInfo(string output)
     {
-        if (OutputMode != OutputModes.Mcp && OutputMode != OutputModes.Hidden)
+        if (OutputMode != OutputModes.Mcp && OutputMode != OutputModes.Hidden && OutputMode != OutputModes.Json)
         {
             Console.Error.WriteLine(output);
         }

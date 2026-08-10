@@ -21,7 +21,7 @@ public class Program
     public static async Task<int> Run(string[] args, LogLevel? logLevel = null, CancellationToken ct = default)
     {
         var (outputFormat, debug) = SharedOptions.GetGlobalOptionValues(args);
-        logLevel ??= debug ? LogLevel.Debug : LogLevel.Information;
+        logLevel ??= debug ? LogLevel.Debug : (outputFormat == "json" ? LogLevel.Error : LogLevel.Information);
 
         ServerApp = CreateAppBuilder(args, outputFormat, logLevel.Value, debug).Build();
         return await CommandRunner.BuildAndRun(args, ServerApp.Services, debug, ct);
@@ -63,7 +63,7 @@ public class Program
 
             // Suppress noisy third-party/framework categories
             if (category.StartsWith("System.Net.Http.HttpClient", StringComparison.Ordinal)
-                || category.StartsWith("GitHub.Copilot.SDK", StringComparison.Ordinal)
+                || category.StartsWith("GitHub.Copilot", StringComparison.Ordinal)
                 || category.StartsWith("Microsoft.AspNetCore", StringComparison.Ordinal))
             {
                 return level >= LogLevel.Warning;

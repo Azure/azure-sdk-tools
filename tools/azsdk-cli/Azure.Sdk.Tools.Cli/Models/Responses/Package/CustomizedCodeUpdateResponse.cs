@@ -52,7 +52,39 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
         public const string UnexpectedError = "UnexpectedError";
         public const string TypeSpecCustomizationFailed = "TypeSpecCustomizationFailed";
         public const string ManualInterventionRequired = "ManualInterventionRequired";
+
+        /// <summary>
+        /// Returned when spec inputs are out of scope (<see cref="Models.EditScope.SpecInputs"/> not set):
+        /// the failure can only be fixed by editing the spec inputs (client.tsp / tspconfig.yaml) or moving
+        /// the pinned spec commit, which belongs in a separate spec-repo PR.
+        /// </summary>
+        public const string SpecChangeRequired = "SpecChangeRequired";
+
+        /// <summary>
+        /// Returned when custom code is out of scope (<see cref="Models.EditScope.CustomCode"/> not set):
+        /// the remaining failures can only be fixed by editing customization code, but the current edit
+        /// scope only permits spec-input changes.
+        /// </summary>
+        public const string CustomCodeChangeRequired = "CustomCodeChangeRequired";
     }
+
+    /// <summary>
+    /// Populated when spec inputs are out of scope: items that cannot be fixed by editing custom code and
+    /// instead require a spec-repo change (e.g. a <c>@@clientName</c>/<c>@@access</c> decorator in
+    /// <c>client.tsp</c>). These are reported, not applied — spec inputs are never edited in this scope.
+    /// </summary>
+    [JsonPropertyName("specChangeRequired")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<string>? SpecChangeRequired { get; set; }
+
+    /// <summary>
+    /// Populated when custom code is out of scope: items that can only be fixed by editing customization
+    /// code, but the current edit scope (<see cref="Models.EditScope.SpecInputs"/> only) does not permit
+    /// custom-code changes. These are reported, not applied — custom code is never edited in this scope.
+    /// </summary>
+    [JsonPropertyName("customCodeChangeRequired")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<string>? CustomCodeChangeRequired { get; set; }
 
     [JsonPropertyName("message")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -96,6 +128,22 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
             foreach (var patch in AppliedPatches)
             {
                 sb.AppendLine($"  - {patch.FilePath}: {patch.Description} ({patch.ReplacementCount} replacement(s))");
+            }
+        }
+        if (SpecChangeRequired is { Count: > 0 })
+        {
+            sb.AppendLine("Spec-level fix preferred (shift-left): the canonical fix for the following belongs in the spec inputs (e.g. a @@clientName/@@access decorator in client.tsp), not in custom code. They were reported here, not applied, and should be migrated to a pull request in the Azure REST API specs repository:");
+            foreach (var item in SpecChangeRequired)
+            {
+                sb.AppendLine($"  - {item}");
+            }
+        }
+        if (CustomCodeChangeRequired is { Count: > 0 })
+        {
+            sb.AppendLine("Requires custom-code changes (out of scope for the current edit scope):");
+            foreach (var item in CustomCodeChangeRequired)
+            {
+                sb.AppendLine($"  - {item}");
             }
         }
         return sb.ToString();

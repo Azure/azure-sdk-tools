@@ -176,7 +176,7 @@ async function enrichPackageData(plans) {
       if (!langData.packageName) continue;
       const isReleased =
         (langData.releaseStatus || "").toLowerCase() === "released";
-      const key = `${langData.packageName}|${LANGUAGE_PACKAGE_WI[displayLang] || displayLang}`;
+      const key = `${langData.packageName}|${(LANGUAGE_PACKAGE_WI[displayLang] || displayLang).toLowerCase()}`;
       const pkgData = pkgMap.get(key);
       if (pkgData) {
         langData.pkgVersion = pkgData.version;
@@ -314,6 +314,24 @@ router.get("/api/release-plans", async (req, res) => {
       }
       // Match by Custom.ReleasePlanID or by work item ID (numeric fallback)
       const isNumeric = /^\d+$/.test(filterPlanId);
+
+      // Serve from cache when the plan is already loaded — this avoids
+      // on-demand ADO/GitHub requests. On-demand fetching happens only when
+      // the plan is not present in the cache.
+      if (cache.releasePlans.data && cache.releasePlans.data.plans) {
+        const cachedPlan = cache.releasePlans.data.plans.find(
+          (p) =>
+            String(p.releasePlanId) === filterPlanId ||
+            (isNumeric && String(p.id) === filterPlanId),
+        );
+        if (cachedPlan) {
+          return res.json({
+            plans: [cachedPlan],
+            fetchedAt: cache.releasePlans.fetchedAt || new Date().toISOString(),
+          });
+        }
+      }
+
       const environment = (
         process.env.ENVIRONMENT || "production"
       ).toLowerCase();

@@ -146,7 +146,7 @@ async def test_web_fetch_returns_error_on_http_forbidden() -> None:
 
 @pytest.mark.asyncio
 async def test_web_fetch_blocks_redirects() -> None:
-    """A 3xx response must be returned as an error without following it.
+    """A redirect to a non-public address must be rejected, not followed.
 
     This closes the SSRF vector where an attacker hosts a public URL that
     redirects to an internal address (e.g. 169.254.169.254 / IMDS).
@@ -173,11 +173,52 @@ async def test_web_fetch_blocks_redirects() -> None:
 
         result = await WebTools().web_fetch(url=initial_url)
 
-    # The httpx client must be constructed with follow_redirects=False.
+    # The httpx client must be constructed with follow_redirects=False so we
+    # control redirect following and re-validate each hop ourselves.
     assert MockClient.call_args.kwargs.get("follow_redirects") is False
-    # Only the initial request is issued; the redirect target is never fetched.
+    # Only the initial request is issued; the internal redirect target is
+    # rejected before any second fetch.
     assert instance.get.call_count == 1
     assert result.success is False
     assert result.status_code == 302
     assert result.content_excerpt == ""
     assert result.error is not None
+
+
+@pytest.mark.asyncio
+async def test_web_fetch_follows_public_redirect() -> None:
+    """A redirect to a public URL is followed and its content returned."""
+    initial_url = "https://azure.github.io/typespec-azure/docs/page"
+    final_url = "https://azure.github.io/typespec-azure/docs/page/"
+    redirect_resp = httpx.Response(
+        status_code=301,
+        headers={"location": final_url},
+        content=b"",
+        request=httpx.Request("GET", initial_url),
+    )
+    final_resp = _make_response(
+        final_url,
+        "<html><head><title>Docs</title></head><body><p>Hello world</p></body></html>",
+        "text/html; charset=utf-8",
+    )
+
+    with patch("tools.web_tools.httpx.AsyncClient") as MockClient, patch(
+        "tools.web_tools.socket.getaddrinfo",
+        return_value=[
+            (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("185.199.108.153", 0)),
+        ],
+    ):
+        instance = AsyncMock()
+        instance.get.side_effect = [redirect_resp, final_resp]
+        instance.__aenter__ = AsyncMock(return_value=instance)
+        instance.__aexit__ = AsyncMock(return_value=False)
+        MockClient.return_value = instance
+
+        result = await WebTools().web_fetch(url=initial_url)
+
+    # Two GETs: the original and the validated public redirect target.
+    assert instance.get.call_count == 2
+    assert result.success is True
+    assert result.status_code == 200
+    assert result.resolved_url == final_url
+    assert "Hello world" in result.content_excerpt

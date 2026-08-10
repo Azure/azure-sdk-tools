@@ -26,7 +26,7 @@ public class ReviewPullRequestCreationRequest
     public required string PackageName { get; set; }
 
     [JsonPropertyName("baseTag")]
-    public required string BaseTag { get; set; }
+    public string BaseTag { get; set; } = string.Empty;
 
     [JsonPropertyName("targetBranch")]
     public required GitBranchReference TargetBranch { get; set; }
@@ -60,6 +60,10 @@ public class OperationStatus
     [JsonPropertyName("packageName")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? PackageName { get; set; }
+
+    [JsonPropertyName("message")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Message { get; set; }
 
     [JsonPropertyName("pipelineUrl")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -175,10 +179,6 @@ public class ApiReviewReleaseStatusResult
 
 public class ApiReviewHubResponse : CommandResponse
 {
-    [JsonPropertyName("message")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? Message { get; set; }
-
     [JsonPropertyName("result")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public OperationStatus? Result { get; set; }
@@ -186,9 +186,9 @@ public class ApiReviewHubResponse : CommandResponse
     protected override string Format()
     {
         var output = new StringBuilder();
-        if (!string.IsNullOrEmpty(Message))
+        if (!string.IsNullOrWhiteSpace(Result?.Message))
         {
-            output.AppendLine(Message);
+            output.AppendLine(Result.Message);
         }
 
         if (Result != null)
@@ -207,7 +207,12 @@ public class ApiReviewHubResponse : CommandResponse
     {
         if (reviewPullRequest is null || reviewPullRequest.Value.ValueKind != JsonValueKind.Object)
         {
-            return null;
+            if (reviewPullRequest is null || reviewPullRequest.Value.ValueKind != JsonValueKind.String)
+            {
+                return null;
+            }
+
+            return reviewPullRequest.Value.GetString();
         }
 
         if (reviewPullRequest.Value.TryGetProperty("url", out var urlElement) &&

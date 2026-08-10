@@ -1,5 +1,26 @@
 # Release History
 
+## 0.6.35 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
+## 0.6.34 (2026-08-07)
+
+### Features Added
+
+- Added optional `--repo-owner` support to `api-review get-approval-status` (and `azsdk_apireview_get_approval_status`) so approval checks can target a specific repository owner when needed.
+
+### Bugs Fixed
+
+- `api-review create` now surfaces an already-existing API Review Hub review PR as a success rather than an error.
+- `api-review create` no longer requires `--base-tag`; when omitted, API Review Hub will construct an "all-green" review.
+
 ## 0.6.33 (2026-07-29)
 
 ### Features Added

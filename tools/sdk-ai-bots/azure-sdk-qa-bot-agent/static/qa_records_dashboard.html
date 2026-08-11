@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title>Chatbot Evolution Dashboard</title>
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.11.1/styles/github-dark.min.css"
+    integrity="sha384-wH75j6z1lH97ZOpMOInqhgKzFkAInZPPSPlZpYKYTOqsaizPvhQZmAtLcPKXpLyH"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer">
   <style>
     :root {
       color-scheme: light;
@@ -146,7 +152,8 @@
       color: #075a9c;
       background: #deefff;
     }
-    .status-not_started, .status-not_evaluated, .status-inconclusive {
+    .status-not_started, .status-not_evaluated, .status-inconclusive,
+    .status-not_applicable {
       color: #596579;
       background: #edf0f4;
     }
@@ -486,6 +493,26 @@
     </div>
   </dialog>
 
+  <script
+    src="https://cdn.jsdelivr.net/npm/marked@18.0.9/lib/marked.umd.js"
+    integrity="sha384-kyb7rY2xnKgiRpRdAeNJxQ8e2SiGZy1m+FK9yME6M0eGJpg7EFaGGvf7+JSirgqE"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/dompurify@3.4.13/dist/purify.min.js"
+    integrity="sha384-ZuC+DIACqSIZTsp+7YF57cR5Y+6qXa7YFbEKdA/EHA/R0T+41dtorqucYl71Zp+t"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.11.1/highlight.min.js"
+    integrity="sha384-RH2xi4eIQ/gjtbs9fUXM68sLSi99C7ZWBRX1vDrVv6GQXRibxXLbwO2NGZB74MbU"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.11.1/languages/powershell.min.js"
+    integrity="sha384-q/8iVbv95DiFN+l7qeoBwJ0Wju7gozJemMfG3DdxiOR8CfA/2dKvKA3W5t4l/n9t"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"></script>
   <script>
     const pageSize = 50;
     let page = 1;
@@ -588,6 +615,14 @@
       return statusBadge(record.qa_status, conversationStatus(record));
     }
 
+    function evolutionStatusBadge(record) {
+      if (record.qa_status === "finished") {
+        return statusBadge("not_applicable", "/");
+      }
+      const value = record.feedback?.status ?? "not_started";
+      return statusBadge(value);
+    }
+
     function setDetailsTitle(record) {
       const link = externalLink(record.message_link, record.conversation_title);
       elements.detailsTitle.replaceChildren(
@@ -595,117 +630,36 @@
       );
     }
 
-    function appendInlineMarkdown(parent, text) {
-      const pattern = /(`[^`\n]+`|\*\*[^*\n]+\*\*|\[[^\]\n]+\]\([^)]+\))/g;
-      let cursor = 0;
-      for (const match of text.matchAll(pattern)) {
-        if (match.index > cursor) {
-          parent.append(document.createTextNode(text.slice(cursor, match.index)));
-        }
-        const token = match[0];
-        if (token.startsWith("`")) {
-          parent.append(node("code", "", token.slice(1, -1)));
-        } else if (token.startsWith("**")) {
-          parent.append(node("strong", "", token.slice(2, -2)));
-        } else {
-          const linkMatch = token.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
-          const link = linkMatch && externalLink(linkMatch[2], linkMatch[1]);
-          parent.append(link || document.createTextNode(token));
-        }
-        cursor = match.index + token.length;
-      }
-      if (cursor < text.length) {
-        parent.append(document.createTextNode(text.slice(cursor)));
-      }
-    }
-
-    function isMarkdownBlockStart(line) {
-      return /^```/.test(line)
-        || /^#{1,4}\s+/.test(line)
-        || /^>\s?/.test(line)
-        || /^[-*]\s+/.test(line)
-        || /^\d+\.\s+/.test(line);
-    }
-
     function renderMarkdown(content) {
       const wrapper = node("div", "markdown");
-      const lines = String(content || "").replaceAll("\r\n", "\n").split("\n");
-      let index = 0;
-      while (index < lines.length) {
-        const line = lines[index];
-        if (!line.trim()) {
-          index += 1;
+      const source = String(content || "—");
+      if (!window.marked || !window.DOMPurify || !window.hljs) {
+        wrapper.textContent = source;
+        return wrapper;
+      }
+      const markup = marked.parse(source, {
+        breaks: true,
+        gfm: true
+      });
+      const sanitized = DOMPurify.sanitize(markup, {
+        USE_PROFILES: {html: true}
+      });
+      const parsed = new DOMParser().parseFromString(sanitized, "text/html");
+      for (const link of parsed.body.querySelectorAll("a")) {
+        const safeUrl = safeHttpsUrl(link.getAttribute("href"));
+        if (!safeUrl) {
+          link.replaceWith(document.createTextNode(link.textContent || ""));
           continue;
         }
-
-        const fence = line.match(/^```([\w+-]*)\s*$/);
-        if (fence) {
-          index += 1;
-          const codeLines = [];
-          while (index < lines.length && !/^```\s*$/.test(lines[index])) {
-            codeLines.push(lines[index]);
-            index += 1;
-          }
-          if (index < lines.length) index += 1;
-          const pre = node("pre");
-          const code = node("code", "", codeLines.join("\n"));
-          if (fence[1]) code.dataset.language = fence[1];
-          pre.append(code);
-          wrapper.append(pre);
-          continue;
-        }
-
-        const heading = line.match(/^(#{1,4})\s+(.+)$/);
-        if (heading) {
-          const value = node(`h${heading[1].length}`);
-          appendInlineMarkdown(value, heading[2]);
-          wrapper.append(value);
-          index += 1;
-          continue;
-        }
-
-        if (/^>\s?/.test(line)) {
-          const quote = node("blockquote");
-          while (index < lines.length && /^>\s?/.test(lines[index])) {
-            const paragraph = node("p");
-            appendInlineMarkdown(paragraph, lines[index].replace(/^>\s?/, ""));
-            quote.append(paragraph);
-            index += 1;
-          }
-          wrapper.append(quote);
-          continue;
-        }
-
-        const listMatch = line.match(/^([-*]|\d+\.)\s+(.+)$/);
-        if (listMatch) {
-          const ordered = /\d+\./.test(listMatch[1]);
-          const list = node(ordered ? "ol" : "ul");
-          const listPattern = ordered ? /^\d+\.\s+(.+)$/ : /^[-*]\s+(.+)$/;
-          while (index < lines.length) {
-            const itemMatch = lines[index].match(listPattern);
-            if (!itemMatch) break;
-            const item = node("li");
-            appendInlineMarkdown(item, itemMatch[1]);
-            list.append(item);
-            index += 1;
-          }
-          wrapper.append(list);
-          continue;
-        }
-
-        const paragraph = node("p");
-        let firstLine = true;
-        while (
-          index < lines.length
-          && lines[index].trim()
-          && (firstLine || !isMarkdownBlockStart(lines[index]))
-        ) {
-          if (!firstLine) paragraph.append(document.createElement("br"));
-          appendInlineMarkdown(paragraph, lines[index]);
-          firstLine = false;
-          index += 1;
-        }
-        wrapper.append(paragraph);
+        link.href = safeUrl.href;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+      }
+      for (const child of Array.from(parsed.body.childNodes)) {
+        wrapper.append(document.importNode(child, true));
+      }
+      for (const code of wrapper.querySelectorAll("pre code")) {
+        hljs.highlightElement(code);
       }
       return wrapper;
     }
@@ -755,9 +709,8 @@
         conversationStatus.append(conversationStatusBadge(record));
         row.append(conversationStatus);
 
-        const evolutionStatusValue = record.feedback?.status ?? "not_started";
         const evolutionStatus = node("td");
-        evolutionStatus.append(statusBadge(evolutionStatusValue));
+        evolutionStatus.append(evolutionStatusBadge(record));
         row.append(evolutionStatus);
 
         const issue = node("td");
@@ -870,7 +823,9 @@
         record.confidence == null ? "—" : `${Math.round(record.confidence * 100)}%`
       ));
       step.append(metadata);
-      if (record.reasoning) step.append(evidence("Assessment reasoning", record.reasoning));
+      if (record.reasoning) {
+        step.append(evidence("Assessment reasoning", record.reasoning));
+      }
       if (record.qa_status === "ongoing") {
         step.append(evidence(
           "Why no verdict yet",
@@ -897,7 +852,9 @@
       ));
       metadata.append(metaItem("Processing error", record.feedback?.error || "None"));
       step.append(metadata);
-      if (rootCause) step.append(evidence("Root cause", rootCause));
+      if (rootCause) {
+        step.append(evidence("Root cause", rootCause));
+      }
       if (issue?.sections?.suggested_fix) {
         step.append(evidence("Suggested fix", issue.sections.suggested_fix));
       }
@@ -1005,7 +962,7 @@
 
       const overview = node("div", "detail-overview");
       overview.append(conversationStatusBadge(record));
-      overview.append(statusBadge(record.feedback?.status ?? "not_started"));
+      overview.append(evolutionStatusBadge(record));
       const assessment = answerAssessment(record);
       overview.append(statusBadge(assessment.value, assessment.text));
       if (record.feedback?.classification) {

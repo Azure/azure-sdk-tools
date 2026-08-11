@@ -394,5 +394,14 @@ def test_dashboard_html_uses_text_content_for_record_data() -> None:
     assert "setDetailsTitle(record)" in html
     assert "externalLink(record.message_link" in html
     assert "renderMarkdown" in html
+    assert 'statusBadge("not_applicable", "/")' in html
+    assert "marked@18.0.9" in html
+    assert "dompurify@3.4.13" in html
+    assert "@highlightjs/cdn-assets@11.11.1" in html
+    assert "languages/powershell.min.js" in html
+    assert html.count('integrity="sha384-') == 5
+    assert html.count('referrerpolicy="no-referrer"') == 5
+    assert "DOMPurify.sanitize" in html
+    assert "hljs.highlightElement" in html
     assert "AI answer assessment" in html
     assert "Candidate fix and validation attempt" in html

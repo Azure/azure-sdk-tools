@@ -133,7 +133,9 @@ class SearchClient:
         """
         # Combine per-source filters into a single filter_add_on with OR
         # so the KB client performs one retrieval pass instead of N.
-        combined_filter = " or ".join(f"({f})" for f in source_filters.values() if f)
+        combined_filter = _raw_chunk_filter(
+            " or ".join(f"({f})" for f in source_filters.values() if f)
+        )
 
         kb_params: list[KnowledgeSourceParams] = [
             SearchIndexKnowledgeSourceParams(
@@ -191,13 +193,16 @@ class SearchClient:
             "header_1",
             "header_2",
             "header_3",
+            "page_type",
             "ordinal_position",
             "scope",
             "service_type",
         ]
 
         # Combine per-source filters into a single OData expression with OR
-        combined_filter = " or ".join(f"({f})" for f in source_filters.values() if f)
+        combined_filter = _raw_chunk_filter(
+            " or ".join(f"({f})" for f in source_filters.values() if f)
+        )
 
         results = await self._search_client.search(
             search_text=query,
@@ -350,6 +355,11 @@ class SearchClient:
 
 def _escape_odata(value: str) -> str:
     return value.replace("'", "''")
+
+
+def _raw_chunk_filter(source_filter: str) -> str:
+    raw_filter = "(page_type eq null or page_type eq '')"
+    return f"({source_filter}) and {raw_filter}" if source_filter else raw_filter
 
 
 class HierarchyLevel(str, Enum):

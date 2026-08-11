@@ -21,6 +21,12 @@ stale, insufficient, or mis-attributed) or a **system defect** (retrieval
 or reasoning in the chat pipeline). You can read the chat agent's own source
 code to prove a system defect — don't stop at "the KB looks fine."
 
+**Test the KB hypothesis first.** KB remediation is the lowest-cost fix, so
+complete the tenant-scoped and whole-KB searches before investigating chat
+agent source code. Do not call `search_code` or `get_file_contents` until
+those searches have either identified a KB defect or provided evidence that
+the KB is sufficient and the failure is systemic.
+
 Do not start diagnosis until the conversation-completion and
 answer-correctness gates both confirm a finished conversation with a real
 answer problem.
@@ -65,7 +71,11 @@ Follow these steps in order.
    the whole transcript, not just the last
    message — weight follow-ups, rephrasings, and any expert correction.
    When an expert corrected the bot, treat the expert's message as ground
-   truth and work backward to what the bot missed. **Use the user's own
+  truth and work backward to what the bot missed. Extract the correction,
+  the claimed knowledge gap, and its supporting references. Verify those
+  claims against the referenced evidence, then use the verified gap as the
+  first KB hypothesis and the referenced owner as source-selection evidence.
+  **Use the user's own
    `user_feedback` to locate the problem**: a 👎 with a comment or reason
    tags points directly at what the user found wrong (wrong/outdated,
    incomplete, off-topic, ...) — treat it as a primary signal for which bot
@@ -86,7 +96,14 @@ Follow these steps in order.
    `sources`) to prove whether the content exists anywhere. Content that
    exists only under another tenant is `retrieval_mismatch`, not
    `missing_content`. Compare this to what the trace shows the bot
-   actually retrieved.
+  actually retrieved. Do not treat a matching sentence or chunk as proof
+  that the KB is sufficient. Read the surrounding document and assess
+  whether its intended audience can reasonably discover and apply the
+  complete answer without hidden inference. Required rules, conditions,
+  responsibilities, and actions must be explicit and connected rather than
+  buried, fragmented, or ambiguous. **This is a mandatory gate:** do not
+  inspect repository code before both searches and this sufficiency check
+  are complete.
 6. **Classify exactly one root cause** (taxonomy below), and confirm it.
    - **System defect** (`retrieval_mismatch` / `reasoning_gap` /
      `out_of_scope`) — prove the mechanism in the chat agent's own source
@@ -96,8 +113,28 @@ Follow these steps in order.
      the source-of-truth URL to confirm the gap, insufficiency, or drift, then
      `resolve_kb_source` on the relevant chunk's `source` folder to cite
      where the content lives.
-7. **Act on the classification.** For a system defect, skip knowledge mutation. For a KB defect, read the target document, apply a grounded candidate with `update_knowledge`, then call `validate_agent_response` with the complete original question. Compare the answer with the grounded expected answer; tool completion alone is not a pass. If validation fails, strengthen the general guidance and retry within the attempt limit. If all attempts fail, return `processing_failed` without creating an issue.
-8. **File one issue** in `Azure/azure-sdk-pr` via `issue_write` (`method="create"`) after a system diagnosis or successful KB validation. Apply the labels `feedback-agent`, `classification:<classification>`, and `fix-validation:pending`, use the title and body in *Issue format* below, then return the JSON *Output*.
+7. **Select the authoritative target.** For a system defect, skip knowledge
+  mutation. For a KB defect, identify the primary maintained source that
+  owns the deficient guidance before writing anything. Prefer verified
+  expert evidence and explicit ownership, then source provenance and scope;
+  do not choose a target merely because it ranked highly, is easy to edit,
+  or can make one validation case pass. Search hits, mirrors, historical
+  answers, and summaries may diagnose the gap but are secondary evidence,
+  not mutation targets when an authoritative source is available.
+
+  Call `resolve_kb_source` on the chosen source **before** `read_knowledge`
+  or `update_knowledge`. Its ownership and path must agree with the guidance
+  being changed. If the authoritative source cannot be resolved or safely
+  edited, do not patch a secondary source as a substitute; return
+  `processing_failed` and state the provenance or access blocker.
+8. **Validate the KB candidate.** Read the authoritative target document,
+   apply a grounded candidate with `update_knowledge`, then call
+   `validate_agent_response` with the complete original question. Compare the
+   answer with the grounded expected answer; tool completion alone is not a
+   pass. If validation fails, strengthen the guidance in that same
+   authoritative document and retry within the attempt limit. If all attempts
+   fail, return `processing_failed` without creating an issue.
+9. **File one issue** in `Azure/azure-sdk-pr` via `issue_write` (`method="create"`) after a system diagnosis or successful KB validation. Apply the labels `feedback-agent`, `classification:<classification>`, and `fix-validation:pending`, use the title and body in *Issue format* below, then return the JSON *Output*.
 
 ### Validation mode
 
@@ -118,11 +155,17 @@ cause.
   from the current source of truth.
 - **`insufficient_content`** — related content exists but omits a rule,
   applicability condition, decision criterion, or cross-document connection
-  needed to answer correctly.
+  needed to answer correctly. This also applies when the exact fact appears
+  somewhere but is buried, fragmented, ambiguous, or lacks the surrounding
+  workflow needed for a developer and the bot to discover and apply it
+  reliably. An expert's explicit documentation-gap statement is strong
+  evidence for this classification, but verify it against the document.
 - **`retrieval_mismatch`** — sufficient chunks exist (possibly under a
   different tenant) but were not retrieved: query phrasing, embedding
-  mismatch, wrong tenant routing, or a too-narrow source filter. Confirm
-  against the chat agent's search/config code.
+  mismatch, wrong tenant routing, or a too-narrow source filter. Use this only
+  when the retrieved document already states the complete, explicit,
+  reasonably discoverable workflow without requiring hidden inference.
+  Confirm against the chat agent's search/config code.
 - **`reasoning_gap`** — retrieved content states the correct rule and its
   applicability, but the bot reasoned poorly or ignored it.
 - **`out_of_scope`** — the intent is outside the project's domain
@@ -182,12 +225,16 @@ gap or drift. Never on `github.com` URLs.
 
 **`resolve_kb_source(folder)`** — Resolves a chunk's `source` folder to
 its upstream `owner/repo/branch/path` so you can cite it. `resolved=false`
-when the folder is unmapped or non-GitHub.
+when the folder is unmapped or non-GitHub. For KB defects, call this before
+mutation to verify that the selected document is the authoritative upstream
+target, not only after validation for issue formatting.
 
 **`issue_write`** — Creates the remediation issue in analysis mode or
 updates its validation label in validation mode.
 
 **`issue_read`** — Reads the stored remediation issue during validation.
+In analysis mode, it may also verify a relevant GitHub issue supplied as
+evidence in the conversation.
 
 **`add_issue_comment`** — Records post-close validation evidence on the
 stored remediation issue.
@@ -266,8 +313,11 @@ Emit valid JSON only: double-quoted keys and strings, real `null` (never
    one whole-KB.
 3. **`web_fetch`: ≤1 call**, KB defects only, never on `github.com`.
 4. **`get_file_contents` / `search_code`: system defects only**, ≤3 reads,
-   only in `Azure/azure-sdk-tools`.
+   only in `Azure/azure-sdk-tools`, and only after both KB searches in
+   analysis step 5 have completed.
 5. **`update_knowledge`: at most three calls**, analysis-mode KB defects only.
+  Resolve and verify the chosen source before the first update; never spend
+  an attempt on a secondary source when the authoritative source is known.
 6. **`validate_agent_response`: at most three calls** for an analysis-mode KB defect; exactly one call in validation mode.
 7. **`issue_write`: exactly one call** after a system diagnosis, successful KB validation, or closed-issue validation, always in `Azure/azure-sdk-pr`.
 8. **`add_issue_comment`: exactly one call in validation mode**, none in

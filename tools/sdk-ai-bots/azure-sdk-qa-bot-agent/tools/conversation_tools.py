@@ -18,17 +18,8 @@ from tools import tool
 
 logger = logging.getLogger(__name__)
 
-# Caps to keep tool output token-bounded.
+# Cap the number of messages while preserving each message's full evidence.
 _MAX_MESSAGES = 100
-_MAX_MESSAGE_CHARS = 1500
-
-
-def _truncate(s: str | None, limit: int) -> str | None:
-    if s is None:
-        return None
-    if len(s) <= limit:
-        return s
-    return s[:limit] + " …[truncated]"
 
 
 def _resolve_conversation_type(value: str) -> ConversationType:
@@ -169,7 +160,7 @@ class ConversationTools:
                 id=m.id,
                 role=m.sender_role.value,
                 sender_name=m.sender_name,
-                content=_truncate(m.content, _MAX_MESSAGE_CHARS) or "",
+                content=m.content or "",
                 created_at=m.created_at.isoformat() if m.created_at else "",
                 message_link=(
                     m.extra_info.message_link if m.extra_info else None

@@ -402,7 +402,7 @@ class KnowledgeTools:
             "whether information exists anywhere in the knowledge base.",
         ] = None,
     ) -> KnowledgeSourceCatalog:
-        """List knowledge sources for a tenant, or the whole project.
+        """List maintainable knowledge sources for a tenant, or the whole project.
 
         When *tenant_id* is given, returns only that tenant's sources. When
         omitted, returns every source registered across the entire project.
@@ -416,6 +416,7 @@ class KnowledgeTools:
             sources = [
                 KnowledgeSourceView(name=src.name, description=src.description)
                 for src in KNOWLEDGE_SOURCE_REGISTRY.values()
+                if not _is_static_source(src.name)
             ]
             return KnowledgeSourceCatalog(tenant_id=None, sources=sources)
 
@@ -429,6 +430,7 @@ class KnowledgeTools:
             [
                 KnowledgeSourceView(name=src.name, description=src.description)
                 for src in config.sources
+                if not _is_static_source(src.name)
             ]
             if config
             else []
@@ -473,6 +475,10 @@ class KnowledgeTools:
             resolved=False,
             reason="folder_unmapped_or_non_github",
         )
+
+
+def _is_static_source(source_name: str) -> bool:
+    return source_name.startswith("static_")
 
 
 def _resolve_source_filters(

@@ -9,7 +9,12 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 from azure.search.documents.indexes.models import IndexerExecutionStatus
-from config.tenant_config import SRC_AZURE_REST_API_SPECS_WIKI, TenantID
+from config.tenant_config import (
+    SRC_AZURE_REST_API_SPECS_DOCS,
+    SRC_AZURE_REST_API_SPECS_WIKI,
+    SRC_STATIC_ARM_DOCS,
+    TenantID,
+)
 import pytest
 
 # Ensure the project root is on sys.path so ``config``, ``tools``, etc. resolve.
@@ -18,10 +23,41 @@ if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
 import tools.knowledge_tools as knowledge_tools_module
+from models.knowledge import KnowledgeChunk
 from tools.knowledge_tools import KnowledgeTools
 import utils.azure_ai_search as azure_ai_search_module
-from utils.azure_ai_search import SearchClient
+from utils.azure_ai_search import SearchClient, _raw_chunk_filter
 from utils.azure_storage import BlobContent
+
+
+def test_raw_chunk_filter_excludes_wiki_pages() -> None:
+    source_filter = "context_id eq 'static_arm_docs'"
+
+    result = _raw_chunk_filter(source_filter)
+
+    assert result == (
+        "(context_id eq 'static_arm_docs') and "
+        "(page_type eq null or page_type eq '')"
+    )
+
+
+def test_knowledge_chunk_accepts_null_page_type() -> None:
+    chunk = KnowledgeChunk.model_validate({"page_type": None})
+
+    assert chunk.page_type == ""
+
+
+@pytest.mark.asyncio
+async def test_list_knowledge_sources_excludes_static_sources() -> None:
+    result = await KnowledgeTools().list_knowledge_sources(
+        tenant_id=TenantID.API_SPEC_REVIEW_BOT.value
+    )
+    source_names = {source.name for source in result.sources}
+
+    assert SRC_AZURE_REST_API_SPECS_DOCS in source_names
+    assert SRC_AZURE_REST_API_SPECS_WIKI in source_names
+    assert SRC_STATIC_ARM_DOCS not in source_names
+    assert all(not name.startswith("static_") for name in source_names)
 
 
 @pytest.mark.asyncio

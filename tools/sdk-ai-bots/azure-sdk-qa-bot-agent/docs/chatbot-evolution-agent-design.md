@@ -117,27 +117,32 @@ A JSON payload with `mode`, `tenant_id`, `conversation_id`,
    intent to confirm what is indexed today. If a chunk looks stale, call
    `web_fetch` on its source URL to check for drift.
 5. **Classify** the case into exactly one root cause (see taxonomy below).
-6. **Propose a fix.** For `missing_content`, `outdated_content`, and `insufficient_content`, provide candidate markdown plus source/path and tenant metadata. For system issues, describe the suggested bot change.
-7. **Validate KB remediation.** For `missing_content`, `outdated_content`, and `insufficient_content`,
+6. **Select the owning source.** Extract every document or documentation
+  issue linked by the expert. Prefer the official document named there,
+  then a mapped upstream source that owns the workflow. Resolve the source
+  before mutation. Static mirrors and historical Q&A may provide evidence,
+  but cannot replace an available official source as the fix target.
+7. **Propose a fix.** For `missing_content`, `outdated_content`, and `insufficient_content`, provide candidate markdown plus source/path and tenant metadata. For system issues, describe the suggested bot change.
+8. **Validate KB remediation.** For `missing_content`, `outdated_content`, and `insufficient_content`,
    call `update_knowledge` to write the candidate into the matching existing
    dev knowledge folder, then call `ask_chat_agent` with the original bad
    case. If it fails, revise the candidate and repeat within the attempt limit.
-8. **Create the KB issue after validation.** When the original bad case passes,
+9. **Create the KB issue after validation.** When the original bad case passes,
    call `resolve_kb_source`, build the issue with the validation evidence, and
    call `issue_write`. Never create a KB issue before validation passes.
-9. **Handle chatbot self-issues.** Record the diagnosis and suggested fix,
+10. **Handle chatbot self-issues.** Record the diagnosis and suggested fix,
    then call `issue_write` without entering the candidate-validation loop.
-10. **Validate a closed issue.** In validation mode, read `issue_url`,
+11. **Validate a closed issue.** In validation mode, read `issue_url`,
     replay the original bad case through `ask_chat_agent`, comment the
     evidence, replace the pending validation label, and return the result.
-11. **Return** the fixed-schema result.
+12. **Return** the fixed-schema result.
 
 ## Classification
 
 - `missing_content` — no KB chunk covers the intent (KB issue, cite source).
 - `outdated_content` — KB contradicts the source URL (KB issue, cite source).
-- `insufficient_content` — related KB content exists but is not reasonably usable without missing context or an undisclosed cross-document inference (KB issue, cite source).
-- `retrieval_mismatch` — relevant chunks exist but weren't retrieved.
+- `insufficient_content` — related KB content exists but is buried, fragmented, ambiguous, or not reasonably usable without missing context, an explicit workflow, or a cross-document connection (KB issue, cite source).
+- `retrieval_mismatch` — complete, explicit, reasonably discoverable guidance exists but wasn't retrieved.
 - `reasoning_gap` — chunks were retrieved but the bot reasoned poorly.
 - `out_of_scope` — the intent is outside the tenant's scope.
 
@@ -154,7 +159,10 @@ issue rather than duplicated in the status result.
 - Do not diagnose or mutate dev knowledge before the completion and
   correctness gates pass.
 - When an expert corrected the bot, treat the expert's message as the
-  correct answer and work backward to why the bot missed it.
+  correct answer. Extract any documentation gap they identify as the first
+  KB hypothesis, inspect linked documentation issues, and use the official
+  document they identify as the preferred fix target. Do not patch a static
+  mirror merely because it makes one validation case pass.
 - Redact PII (names, emails, tokens) from anything you write into an issue.
 - Be concise; this output feeds a dataset and an issue, not a chat reply.
 ```

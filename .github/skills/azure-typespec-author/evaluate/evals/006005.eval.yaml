@@ -7,7 +7,7 @@ environment: azsdk-mcp
 config:
   runs: 1
   timeout: 660s
-  model: claude-opus-4.6
+  model: gpt-5.6-sol
   executor: copilot-sdk
 stimuli:
 - name: 006005-dp-version-add-preview-trigger

@@ -1799,14 +1799,15 @@
     }
     if (specPath)
       html += `<div class="detail-row"><strong>Spec Project Path:</strong> ${esc(specPath)}</div>`;
-    // Work item link — show as link for PMs, plain text for others
+    // Release plan link — show as link for PMs, plain text for others
     {
+      const planId = p.releasePlanId || p.id;
       const label = p.releasePlanId
         ? `#${esc(String(p.releasePlanId))}`
         : `WI ${esc(String(p.id))}`;
       if (currentUserIsPM) {
-        const wiUrl = `https://dev.azure.com/azure-sdk/Release/_workitems/edit/${p.id}`;
-        html += `<div class="detail-row"><strong>Release Plan:</strong> <a href="${esc(wiUrl)}" target="_blank" rel="noopener">${label}</a> <span class="wi-warning">⚠️ Do not modify directly — use the <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">azsdk agent</a></span></div>`;
+        const dashboardUrl = `/?releasePlan=${encodeURIComponent(planId)}`;
+        html += `<div class="detail-row"><strong>Release Plan:</strong> <a href="${esc(dashboardUrl)}" target="_blank" rel="noopener">${label}</a> <span class="wi-warning">⚠️ Do not modify directly — use the <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">azsdk agent</a></span></div>`;
       } else {
         html += `<div class="detail-row"><strong>Release Plan:</strong> ${label}</div>`;
       }
@@ -2724,9 +2725,12 @@
 
     const planeFilter = getGlobalPlaneFilter();
     const monthFilter = getMonthFilter();
-    let filtered = planeFilter
-      ? plans.filter((p) => classifyPlane(p) === planeFilter)
+    const filter = store().filters.search.toLowerCase();
+    let filtered = filter
+      ? plans.filter((p) => matchesFilter(p, filter))
       : plans;
+    if (planeFilter)
+      filtered = filtered.filter((p) => classifyPlane(p) === planeFilter);
     if (monthFilter)
       filtered = filtered.filter(
         (p) =>

@@ -4,15 +4,29 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import httpx
 import pytest
 
-from models.conversation import ConversationType
-from models.qa_dashboard import FeedbackStatusFilter, QARecordPage
+from models.conversation import (
+    ConversationFeedbackItem,
+    ConversationMessageItem,
+    ConversationType,
+    Role,
+    UserFeedback,
+)
+from models.qa_dashboard import (
+    DashboardChannel,
+    QADashboardDetail,
+    QADashboardRecord,
+    FeedbackStatusFilter,
+    QARecordPage,
+)
 from models.qa_record import FeedbackState, FeedbackStatus, QARecord, QAStatus
 from services.qa_dashboard_service import QADashboardService
+from tools.github_mcp_tools import GitHubIssueDetails
 
 
 class _FakeContainer:
@@ -26,9 +40,9 @@ class _FakeContainer:
         query = kwargs["query"]
         if "COUNT(1)" in query:
             yield self.count
-        elif "DISTINCT VALUE c.tenant_id" in query:
-            yield "tenant-b"
-            yield "tenant-a"
+        elif "DISTINCT VALUE c.channel_id" in query:
+            yield "channel-b"
+            yield "channel-a"
         else:
             yield self.document
 
@@ -40,6 +54,7 @@ def _record() -> QARecord:
         tenant_id="tenant-a",
         conversation_id="conversation-1",
         conversation_type=ConversationType.teams_channel,
+        channel_id="channel-a",
         qa_status=QAStatus.failed,
         feedback=FeedbackState(
             status=FeedbackStatus.pending_validation,
@@ -53,6 +68,36 @@ def _record() -> QARecord:
     )
 
 
+def _dashboard_record() -> QADashboardRecord:
+    return QADashboardRecord(
+        **_record().model_dump(),
+        conversation_title="How do I fix this?",
+        channel_name="Channel A",
+    )
+
+
+def _message(
+    *,
+    message_id: str,
+    role: Role,
+    sender_name: str,
+    content: str,
+    minute: int,
+) -> ConversationMessageItem:
+    return ConversationMessageItem(
+        id=message_id,
+        tenant_id="tenant-a",
+        sender_role=role,
+        sender_id=sender_name.lower(),
+        sender_name=sender_name,
+        content=content,
+        created_at=datetime(2026, 8, 7, 10, minute, tzinfo=timezone.utc),
+        conversation_id="conversation-1",
+        conversation_type=ConversationType.teams_channel,
+        conversation_partition="teams_channel:conversation-1",
+    )
+
+
 @pytest.mark.asyncio
 async def test_list_records_applies_filters_and_pagination() -> None:
     container = _FakeContainer(_record().to_cosmos(), count=101)
@@ -60,13 +105,33 @@ async def test_list_records_applies_filters_and_pagination() -> None:
     start = datetime(2026, 8, 1, tzinfo=timezone.utc)
     end = datetime(2026, 8, 8, tzinfo=timezone.utc)
 
-    with patch(
-        "services.qa_dashboard_service.get_qa_records_container",
-        new=AsyncMock(return_value=container),
+    with (
+        patch(
+            "services.qa_dashboard_service.get_qa_records_container",
+            new=AsyncMock(return_value=container),
+        ),
+        patch(
+            "services.qa_dashboard_service._load_channel_names",
+            new=AsyncMock(
+                return_value={
+                    "channel-a": "Channel A",
+                    "channel-b": "Channel B",
+                }
+            ),
+        ),
+        patch(
+            "services.qa_dashboard_service._load_conversation_titles",
+            new=AsyncMock(
+                return_value={
+                    "teams_channel:conversation-1": "How do I fix this?"
+                }
+            ),
+        ),
     ):
         result = await service.list_records(
             page=2,
             tenant_id="tenant-a",
+            channel_id="channel-a",
             qa_status=QAStatus.failed,
             feedback_status=FeedbackStatusFilter.pending_validation,
             updated_from=start,
@@ -77,8 +142,13 @@ async def test_list_records_applies_filters_and_pagination() -> None:
     assert result.total == 101
     assert result.page == 2
     assert result.page_size == 50
-    assert result.tenants == ["tenant-a", "tenant-b"]
+    assert result.channels == [
+        DashboardChannel(id="channel-a", name="Channel A"),
+        DashboardChannel(id="channel-b", name="Channel B"),
+    ]
     assert result.items[0].id == "teams_channel:conversation-1"
+    assert result.items[0].conversation_title == "How do I fix this?"
+    assert result.items[0].channel_name == "Channel A"
 
     records_call = container.calls[1]
     assert records_call["partition_key"] == "tenant-a"
@@ -89,6 +159,7 @@ async def test_list_records_applies_filters_and_pagination() -> None:
         item["name"]: item["value"] for item in records_call["parameters"]
     }
     assert parameters["@qa_status"] == "failed"
+    assert parameters["@channel_id"] == "channel-a"
     assert parameters["@feedback_status"] == "pending_validation"
     assert parameters["@offset"] == 50
     assert parameters["@limit"] == 50
@@ -99,9 +170,19 @@ async def test_list_records_clamps_page_after_total_shrinks() -> None:
     container = _FakeContainer(_record().to_cosmos())
     service = QADashboardService()
 
-    with patch(
-        "services.qa_dashboard_service.get_qa_records_container",
-        new=AsyncMock(return_value=container),
+    with (
+        patch(
+            "services.qa_dashboard_service.get_qa_records_container",
+            new=AsyncMock(return_value=container),
+        ),
+        patch(
+            "services.qa_dashboard_service._load_channel_names",
+            new=AsyncMock(return_value={"channel-a": "Channel A"}),
+        ),
+        patch(
+            "services.qa_dashboard_service._load_conversation_titles",
+            new=AsyncMock(return_value={}),
+        ),
     ):
         result = await service.list_records(page=2)
 
@@ -118,9 +199,19 @@ async def test_list_records_filters_not_started_feedback() -> None:
     container = _FakeContainer(_record().to_cosmos())
     service = QADashboardService()
 
-    with patch(
-        "services.qa_dashboard_service.get_qa_records_container",
-        new=AsyncMock(return_value=container),
+    with (
+        patch(
+            "services.qa_dashboard_service.get_qa_records_container",
+            new=AsyncMock(return_value=container),
+        ),
+        patch(
+            "services.qa_dashboard_service._load_channel_names",
+            new=AsyncMock(return_value={}),
+        ),
+        patch(
+            "services.qa_dashboard_service._load_conversation_titles",
+            new=AsyncMock(return_value={}),
+        ),
     ):
         await service.list_records(
             page=1,
@@ -131,6 +222,95 @@ async def test_list_records_filters_not_started_feedback() -> None:
         container.calls[0]["query"]
     )
     assert "enable_cross_partition_query" not in container.calls[0]
+
+
+@pytest.mark.asyncio
+async def test_get_record_detail_builds_timeline() -> None:
+    messages = [
+        _message(
+            message_id="user-1",
+            role=Role.User,
+            sender_name="User",
+            content="<p>How do I fix this?</p>",
+            minute=0,
+        ),
+        _message(
+            message_id="bot-1",
+            role=Role.Assistant,
+            sender_name="Bot",
+            content="Use the old guidance.",
+            minute=1,
+        ),
+    ]
+    feedbacks = [
+        ConversationFeedbackItem(
+            id="feedback-1",
+            conversation_id="conversation-1",
+            conversation_type=ConversationType.teams_channel,
+            conversation_partition="teams_channel:conversation-1",
+            target_message_id="bot-1",
+            feedback=UserFeedback(
+                reaction="bad",
+                comment="This is outdated.",
+                created_at=datetime(
+                    2026,
+                    8,
+                    7,
+                    10,
+                    2,
+                    tzinfo=timezone.utc,
+                ),
+            ),
+        )
+    ]
+    conversation_service = SimpleNamespace(
+        get_messages_by_conversation_id=AsyncMock(return_value=messages),
+        get_feedback_by_conversation_id=AsyncMock(return_value=feedbacks),
+    )
+    issue = GitHubIssueDetails(
+        url="https://github.com/Azure/azure-sdk-pr/issues/123",
+        title="Fix outdated guidance",
+        body=(
+            "### Root cause\nThe document is stale.\n\n"
+            "### Suggested Fix\nUpdate the version guidance.\n\n"
+            "### Validation\nCandidate answer passed.\n\n"
+            "### Expected behavior\nUse the current version."
+        ),
+        state="open",
+        labels=["feedback-agent"],
+        created_at=datetime(2026, 8, 7, 11, tzinfo=timezone.utc),
+        updated_at=datetime(2026, 8, 7, 12, tzinfo=timezone.utc),
+    )
+
+    with (
+        patch(
+            "services.qa_dashboard_service.read_qa_record",
+            new=AsyncMock(return_value=_record().to_cosmos()),
+        ),
+        patch(
+            "services.qa_dashboard_service._load_channel_names",
+            new=AsyncMock(return_value={"channel-a": "Channel A"}),
+        ),
+        patch(
+            "services.qa_dashboard_service.get_github_issue_details",
+            new=AsyncMock(return_value=issue),
+        ),
+    ):
+        detail = await QADashboardService(
+            conversation_service=conversation_service
+        ).get_record_detail(
+            record_id="teams_channel:conversation-1",
+            tenant_id="tenant-a",
+        )
+
+    assert detail is not None
+    assert detail.record.conversation_title == "How do I fix this?"
+    assert detail.record.channel_name == "Channel A"
+    assert detail.messages[1].user_feedback[0].comment == "This is outdated."
+    assert detail.issue is not None
+    assert detail.issue.sections.root_cause == "The document is stale."
+    assert detail.issue.sections.suggested_fix == "Update the version guidance."
+    assert detail.issue.sections.validation == "Candidate answer passed."
 
 
 @pytest.mark.asyncio
@@ -149,14 +329,19 @@ async def test_dashboard_routes() -> None:
     import server
 
     page = QARecordPage(
-        items=[_record()],
+        items=[_dashboard_record()],
         total=1,
         page=1,
         page_size=50,
-        tenants=["tenant-a"],
+        channels=[DashboardChannel(id="channel-a", name="Channel A")],
+    )
+    detail = QADashboardDetail(
+        record=_dashboard_record(),
+        messages=[],
     )
     service = AsyncMock()
     service.list_records.return_value = page
+    service.get_record_detail.return_value = detail
 
     with patch.object(server, "_qa_dashboard_service", service):
         transport = httpx.ASGITransport(app=server.app)
@@ -168,17 +353,28 @@ async def test_dashboard_routes() -> None:
                 "/api/dashboard/qa-records",
                 params={
                     "tenant_id": "tenant-a",
+                    "channel_id": "channel-a",
                     "qa_status": "failed",
                     "feedback_status": "pending_validation",
+                },
+            )
+            detail_response = await client.get(
+                "/api/dashboard/qa-record-details",
+                params={
+                    "record_id": "teams_channel:conversation-1",
+                    "tenant_id": "tenant-a",
                 },
             )
             page_response = await client.get("/dashboard/qa-records")
 
     assert api_response.status_code == 200
     assert api_response.json()["total"] == 1
+    assert detail_response.status_code == 200
+    assert detail_response.json()["record"]["channel_name"] == "Channel A"
     assert page_response.status_code == 200
-    assert "QA Record Dashboard" in page_response.text
+    assert "Chatbot Evolution Dashboard" in page_response.text
     service.list_records.assert_awaited_once()
+    service.get_record_detail.assert_awaited_once()
 
 
 def test_dashboard_html_uses_text_content_for_record_data() -> None:
@@ -187,6 +383,9 @@ def test_dashboard_html_uses_text_content_for_record_data() -> None:
         / "static"
         / "qa_records_dashboard.html"
     ).read_text(encoding="utf-8")
-    assert "detailsJson.textContent" in html
     assert "innerHTML" not in html
     assert "isAllowedIssueUrl" in html
+    assert "Conversation status" in html
+    assert "Evolution status" in html
+    assert "AI answer assessment" in html
+    assert "Candidate fix and validation attempt" in html

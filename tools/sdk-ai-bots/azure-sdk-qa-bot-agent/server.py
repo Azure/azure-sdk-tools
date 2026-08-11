@@ -25,7 +25,11 @@ from models.conversation import ConversationMessage, SaveConversationMessageResp
 from models.feedback import FeedbackRequest, FeedbackResponse
 from models.intention import IntentionRequest, IntentionResponse
 from models.knowledge_retrieve import KnowledgeRetrieveResponse, KnowledgeRetrieveRequest
-from models.qa_dashboard import FeedbackStatusFilter, QARecordPage
+from models.qa_dashboard import (
+    FeedbackStatusFilter,
+    QADashboardDetail,
+    QARecordPage,
+)
 from models.qa_record import QAStatus
 from services.chat_service import ChatService
 from services.conversation_service import ConversationService
@@ -157,6 +161,7 @@ async def qa_records_dashboard() -> FileResponse:
 async def list_dashboard_qa_records(
     page: int = Query(default=1, ge=1),
     tenant_id: str | None = Query(default=None, max_length=200),
+    channel_id: str | None = Query(default=None, max_length=200),
     qa_status: QAStatus | None = None,
     feedback_status: FeedbackStatusFilter | None = None,
     updated_from: datetime | None = None,
@@ -168,6 +173,7 @@ async def list_dashboard_qa_records(
         return await _qa_dashboard_service.list_records(
             page=page,
             tenant_id=tenant_id,
+            channel_id=channel_id,
             qa_status=qa_status,
             feedback_status=feedback_status,
             updated_from=updated_from,
@@ -176,6 +182,21 @@ async def list_dashboard_qa_records(
         )
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@app.get("/api/dashboard/qa-record-details", response_model=QADashboardDetail)
+async def get_dashboard_qa_record_details(
+    record_id: str = Query(min_length=1, max_length=1000),
+    tenant_id: str = Query(min_length=1, max_length=200),
+) -> QADashboardDetail:
+    """Return the complete conversation and evolution timeline."""
+    detail = await _qa_dashboard_service.get_record_detail(
+        record_id=record_id,
+        tenant_id=tenant_id,
+    )
+    if detail is None:
+        raise HTTPException(status_code=404, detail="QA record not found")
+    return detail
 
 
 @app.post(

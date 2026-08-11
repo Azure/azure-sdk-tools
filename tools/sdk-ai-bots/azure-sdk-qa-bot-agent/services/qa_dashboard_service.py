@@ -2,24 +2,76 @@
 
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime, timezone
+import logging
+import re
 from typing import Any
 
-from models.qa_dashboard import FeedbackStatusFilter, QARecordPage
+import httpx
+import yaml
+from azure.core.exceptions import AzureError
+
+from config import app_config
+from models.conversation import (
+    ConversationDocumentType,
+    ConversationFeedbackItem,
+    ConversationMessageItem,
+    Role,
+)
+from models.qa_dashboard import (
+    DashboardChannel,
+    DashboardConversationMessage,
+    DashboardIssue,
+    DashboardIssueSections,
+    DashboardUserFeedback,
+    FeedbackStatusFilter,
+    QADashboardDetail,
+    QADashboardRecord,
+    QARecordPage,
+)
 from models.qa_record import QARecord, QAStatus
-from utils.azure_cosmosdb import get_qa_records_container
+from services.conversation_service import ConversationService
+from tools.github_mcp_tools import get_github_issue_details
+from utils.azure_cosmosdb import (
+    get_conversation_message_container,
+    get_qa_records_container,
+    read_qa_record,
+)
+from utils.azure_storage import download_blob
+from utils.text_util import preprocess_html_content
 
 _PAGE_SIZE = 50
+_TITLE_LIMIT = 140
+_ISSUE_SECTION_RE = re.compile(r"^###\s+(.+?)\s*$", re.MULTILINE)
+_ISSUE_SECTION_FIELDS = {
+    "description": "description",
+    "feedback": "feedback",
+    "root cause": "root_cause",
+    "suggested fix": "suggested_fix",
+    "validation": "validation",
+    "expected behavior": "expected_behavior",
+}
+
+logger = logging.getLogger(__name__)
 
 
 class QADashboardService:
     """Query QA records with dashboard filters and server-side pagination."""
+
+    def __init__(
+        self,
+        *,
+        conversation_service: ConversationService | None = None,
+    ) -> None:
+        self._conversations = conversation_service or ConversationService()
 
     async def list_records(
         self,
         *,
         page: int,
         tenant_id: str | None = None,
+        channel_id: str | None = None,
         qa_status: QAStatus | None = None,
         feedback_status: FeedbackStatusFilter | None = None,
         updated_from: datetime | None = None,
@@ -35,6 +87,7 @@ class QADashboardService:
 
         conditions, filter_parameters = self._build_filters(
             tenant_id=tenant_id,
+            channel_id=channel_id,
             qa_status=qa_status,
             feedback_status=feedback_status,
             updated_from=updated_from,
@@ -82,28 +135,115 @@ class QADashboardService:
         ):
             items.append(QARecord.from_cosmos(document))
 
-        tenants: list[str] = []
+        channel_ids: set[str] = {
+            item.channel_id for item in items if item.channel_id
+        }
         async for value in container.query_items(
             query=(
-                "SELECT DISTINCT VALUE c.tenant_id FROM c "
-                "WHERE IS_DEFINED(c.tenant_id)"
+                "SELECT DISTINCT VALUE c.channel_id FROM c "
+                "WHERE IS_DEFINED(c.channel_id) AND NOT IS_NULL(c.channel_id)"
             ),
         ):
             if isinstance(value, str) and value:
-                tenants.append(value)
+                channel_ids.add(value)
+
+        channel_names, titles = await asyncio.gather(
+            _load_channel_names(),
+            _load_conversation_titles(items),
+        )
+        dashboard_items = [
+            _dashboard_record(
+                item,
+                title=titles.get(item.id),
+                channel_names=channel_names,
+            )
+            for item in items
+        ]
+        channels = [
+            DashboardChannel(id=value, name=channel_names.get(value, value))
+            for value in channel_ids
+        ]
+        channels.sort(key=lambda item: (item.name.casefold(), item.id))
 
         return QARecordPage(
-            items=items,
+            items=dashboard_items,
             total=total,
             page=page,
             page_size=_PAGE_SIZE,
-            tenants=sorted(set(tenants)),
+            channels=channels,
+        )
+
+    async def get_record_detail(
+        self,
+        *,
+        record_id: str,
+        tenant_id: str,
+    ) -> QADashboardDetail | None:
+        """Build the full conversation and evolution timeline on demand."""
+        document = await read_qa_record(
+            record_id=record_id,
+            tenant_id=tenant_id,
+        )
+        if document is None:
+            return None
+        record = QARecord.from_cosmos(document)
+
+        messages, feedbacks, channel_names = await asyncio.gather(
+            self._conversations.get_messages_by_conversation_id(
+                record.conversation_id,
+                record.conversation_type,
+            ),
+            self._conversations.get_feedback_by_conversation_id(
+                record.conversation_id,
+                record.conversation_type,
+            ),
+            _load_channel_names(),
+        )
+        dashboard_record = _dashboard_record(
+            record,
+            title=_title_from_messages(messages),
+            channel_names=channel_names,
+        )
+
+        issue = None
+        issue_lookup_error = None
+        issue_url = record.feedback.issue_url if record.feedback else None
+        if issue_url:
+            try:
+                issue_details = await get_github_issue_details(issue_url)
+                issue = DashboardIssue(
+                    url=issue_details.url,
+                    title=issue_details.title,
+                    state=issue_details.state,
+                    labels=issue_details.labels,
+                    created_at=issue_details.created_at,
+                    updated_at=issue_details.updated_at,
+                    closed_at=issue_details.closed_at,
+                    sections=_parse_issue_sections(issue_details.body),
+                    body=issue_details.body,
+                )
+            except (
+                AzureError,
+                httpx.HTTPError,
+                KeyError,
+                RuntimeError,
+                ValueError,
+            ):
+                logger.exception("Failed to read dashboard issue %s", issue_url)
+                issue_lookup_error = "Issue details are temporarily unavailable."
+
+        return QADashboardDetail(
+            record=dashboard_record,
+            messages=_dashboard_messages(messages, feedbacks),
+            issue=issue,
+            issue_lookup_error=issue_lookup_error,
         )
 
     @staticmethod
     def _build_filters(
         *,
         tenant_id: str | None,
+        channel_id: str | None,
         qa_status: QAStatus | None,
         feedback_status: FeedbackStatusFilter | None,
         updated_from: datetime | None,
@@ -116,6 +256,9 @@ class QADashboardService:
         if tenant_id:
             conditions.append("c.tenant_id = @tenant_id")
             parameters.append({"name": "@tenant_id", "value": tenant_id})
+        if channel_id:
+            conditions.append("c.channel_id = @channel_id")
+            parameters.append({"name": "@channel_id", "value": channel_id})
         if qa_status:
             conditions.append("c.qa_status = @qa_status")
             parameters.append({"name": "@qa_status", "value": qa_status.value})
@@ -153,6 +296,181 @@ class QADashboardService:
             )
 
         return conditions, parameters
+
+
+async def _load_channel_names() -> dict[str, str]:
+    container = app_config.get("STORAGE_CONFIG_CONTAINER")
+    blob = app_config.get("CHANNEL_CONFIG_BLOB")
+    if not container or not blob:
+        raise RuntimeError("Storage channel configuration is not configured")
+    data = await download_blob(container, blob)
+    if not data:
+        raise RuntimeError("Storage channel configuration is empty")
+    try:
+        parsed = yaml.safe_load(data.decode("utf-8")) or {}
+    except (UnicodeDecodeError, yaml.YAMLError) as exc:
+        raise RuntimeError("Storage channel configuration is invalid") from exc
+
+    names: dict[str, str] = {}
+    for entry in parsed.get("channels", []) or []:
+        channel_id = entry.get("id")
+        name = entry.get("name")
+        if isinstance(channel_id, str) and isinstance(name, str):
+            names[channel_id] = name
+    return names
+
+
+async def _load_conversation_titles(
+    records: list[QARecord],
+) -> dict[str, str]:
+    if not records:
+        return {}
+    partitions = [record.id for record in records]
+    container = await get_conversation_message_container()
+    query = (
+        "SELECT c.conversation_partition, c.content, c.created_at FROM c "
+        "WHERE c.document_type = @dtype AND c.sender_role = @role "
+        "AND ARRAY_CONTAINS(@partitions, c.conversation_partition)"
+    )
+    parameters: list[dict[str, object]] = [
+        {"name": "@dtype", "value": ConversationDocumentType.message.value},
+        {"name": "@role", "value": Role.User.value},
+        {"name": "@partitions", "value": partitions},
+    ]
+    first_messages: dict[str, tuple[str, str]] = {}
+    async for row in container.query_items(
+        query=query,
+        parameters=parameters,
+    ):
+        partition = row.get("conversation_partition")
+        content = row.get("content")
+        created_at = row.get("created_at")
+        if (
+            not isinstance(partition, str)
+            or not isinstance(content, str)
+            or not isinstance(created_at, str)
+        ):
+            continue
+        current = first_messages.get(partition)
+        if current is None or created_at < current[0]:
+            first_messages[partition] = (created_at, content)
+    return {
+        partition: _conversation_title(content)
+        for partition, (_created_at, content) in first_messages.items()
+    }
+
+
+def _dashboard_record(
+    record: QARecord,
+    *,
+    title: str | None,
+    channel_names: dict[str, str],
+) -> QADashboardRecord:
+    channel_name = (
+        channel_names.get(record.channel_id, record.channel_id)
+        if record.channel_id
+        else None
+    )
+    return QADashboardRecord(
+        **record.model_dump(),
+        conversation_title=title or "Untitled conversation",
+        channel_name=channel_name or "Unknown channel",
+    )
+
+
+def _title_from_messages(messages: list[ConversationMessageItem]) -> str | None:
+    first_user_message = next(
+        (message.content for message in messages if message.sender_role == Role.User),
+        None,
+    )
+    return _conversation_title(first_user_message) if first_user_message else None
+
+
+def _conversation_title(content: str) -> str:
+    normalized = " ".join(preprocess_html_content(content).split())
+    if len(normalized) <= _TITLE_LIMIT:
+        return normalized
+    return normalized[: _TITLE_LIMIT - 1].rstrip() + "…"
+
+
+def _dashboard_messages(
+    messages: list[ConversationMessageItem],
+    feedbacks: list[ConversationFeedbackItem],
+) -> list[DashboardConversationMessage]:
+    feedback_by_message = _feedback_by_message(messages, feedbacks)
+    return [
+        DashboardConversationMessage(
+            id=message.id,
+            role=message.sender_role,
+            sender_name=message.sender_name,
+            content=preprocess_html_content(message.content),
+            created_at=message.created_at,
+            message_link=(
+                message.extra_info.message_link if message.extra_info else None
+            ),
+            trace_id=message.trace_id,
+            user_feedback=feedback_by_message.get(message.id, []),
+        )
+        for message in messages
+    ]
+
+
+def _feedback_by_message(
+    messages: list[ConversationMessageItem],
+    feedbacks: list[ConversationFeedbackItem],
+) -> dict[str, list[DashboardUserFeedback]]:
+    by_id = {message.id: message for message in messages}
+    bot_messages = [
+        message
+        for message in messages
+        if message.sender_role in (Role.System, Role.Assistant)
+    ]
+    result: dict[str, list[DashboardUserFeedback]] = {}
+    for item in feedbacks:
+        target = (
+            by_id.get(item.target_message_id)
+            if item.target_message_id
+            else None
+        )
+        if target is None and bot_messages:
+            created_at = item.feedback.created_at
+            candidates = (
+                [
+                    message
+                    for message in bot_messages
+                    if created_at is not None and message.created_at <= created_at
+                ]
+                if created_at is not None
+                else []
+            )
+            target = candidates[-1] if candidates else bot_messages[-1]
+        if target is None:
+            continue
+        result.setdefault(target.id, []).append(
+            DashboardUserFeedback(
+                reaction=item.feedback.reaction,
+                comment=item.feedback.comment,
+                reasons=item.feedback.reasons,
+                user_name=item.feedback.user_name,
+            )
+        )
+    return result
+
+
+def _parse_issue_sections(body: str | None) -> DashboardIssueSections:
+    if not body:
+        return DashboardIssueSections()
+    matches = list(_ISSUE_SECTION_RE.finditer(body))
+    values: dict[str, str] = {}
+    for index, match in enumerate(matches):
+        field = _ISSUE_SECTION_FIELDS.get(match.group(1).strip().casefold())
+        if not field:
+            continue
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(body)
+        value = body[match.end() : end].strip()
+        if value:
+            values[field] = value
+    return DashboardIssueSections(**values)
 
 
 def _as_utc_iso(value: datetime) -> str:

@@ -27,6 +27,7 @@ from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse
 
 import httpx
+from pydantic import BaseModel
 from azure.keyvault.keys.crypto.aio import CryptographyClient
 from azure.keyvault.keys.crypto import SignatureAlgorithm
 from agent_framework import MCPStreamableHTTPTool
@@ -393,8 +394,20 @@ def _github_mcp_parser(result):
 # -- public ----------------------------------------------------------------
 
 
-async def get_github_issue_state(issue_url: str) -> str:
-    """Return ``open`` or ``closed`` for a canonical GitHub issue URL."""
+class GitHubIssueDetails(BaseModel):
+    """GitHub issue fields used by deterministic backend workflows."""
+
+    url: str
+    title: str
+    body: str | None = None
+    state: str
+    labels: list[str]
+    created_at: datetime
+    updated_at: datetime
+    closed_at: datetime | None = None
+
+
+async def _get_github_issue_payload(issue_url: str) -> dict:
     parsed = urlparse(issue_url)
     match = (
         _ISSUE_PATH_RE.fullmatch(parsed.path)
@@ -419,12 +432,43 @@ async def get_github_issue_state(issue_url: str) -> str:
             headers=headers,
         )
         response.raise_for_status()
-    state = response.json().get("state")
+    return response.json()
+
+
+def _validated_issue_state(payload: dict, issue_url: str) -> str:
+    state = payload.get("state")
     if state not in ("open", "closed"):
         raise RuntimeError(
             f"GitHub returned an unknown state for {issue_url}: {state!r}"
         )
     return state
+
+
+async def get_github_issue_details(issue_url: str) -> GitHubIssueDetails:
+    """Return live metadata for a canonical GitHub issue URL."""
+    payload = await _get_github_issue_payload(issue_url)
+    return GitHubIssueDetails(
+        url=issue_url,
+        title=payload["title"],
+        body=payload.get("body"),
+        state=_validated_issue_state(payload, issue_url),
+        labels=[
+            label["name"]
+            for label in payload.get("labels", [])
+            if isinstance(label, dict) and isinstance(label.get("name"), str)
+        ],
+        created_at=payload["created_at"],
+        updated_at=payload["updated_at"],
+        closed_at=payload.get("closed_at"),
+    )
+
+
+async def get_github_issue_state(issue_url: str) -> str:
+    """Return ``open`` or ``closed`` for a canonical GitHub issue URL."""
+    return _validated_issue_state(
+        await _get_github_issue_payload(issue_url),
+        issue_url,
+    )
 
 
 async def create_github_mcp_tool(

@@ -387,5 +387,12 @@ def test_dashboard_html_uses_text_content_for_record_data() -> None:
     assert "isAllowedIssueUrl" in html
     assert "Conversation status" in html
     assert "Evolution status" in html
+    assert "<th>Answer assessment</th>" not in html
+    assert "<th>Root cause</th>" not in html
+    assert "Bot answered correctly" in html
+    assert "Bot answered incorrectly" in html
+    assert "setDetailsTitle(record)" in html
+    assert "externalLink(record.message_link" in html
+    assert "renderMarkdown" in html
     assert "AI answer assessment" in html
     assert "Candidate fix and validation attempt" in html

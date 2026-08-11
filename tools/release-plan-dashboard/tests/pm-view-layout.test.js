@@ -29,12 +29,18 @@ describe("PM View Attention Required layout", () => {
     );
   });
 
-  test("links release plan IDs to the filtered dashboard", () => {
+  test("links release plan IDs to the dashboard and ADO work item", () => {
     expect(appJs).toContain(
       "const dashboardUrl = `/?releasePlan=${encodeURIComponent(planId)}`;",
     );
     expect(appJs).toContain(
       '<a href="${esc(dashboardUrl)}" target="_blank" rel="noopener">${label}</a>',
+    );
+    expect(appJs).toContain(
+      "const wiUrl = `https://dev.azure.com/azure-sdk/Release/_workitems/edit/${p.id}`;",
+    );
+    expect(appJs).toContain(
+      '<a href="${esc(wiUrl)}" target="_blank" rel="noopener">ADO work item ${esc(String(p.id))}</a>',
     );
   });
 

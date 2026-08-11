@@ -1807,7 +1807,8 @@
         : `WI ${esc(String(p.id))}`;
       if (currentUserIsPM) {
         const dashboardUrl = `/?releasePlan=${encodeURIComponent(planId)}`;
-        html += `<div class="detail-row"><strong>Release Plan:</strong> <a href="${esc(dashboardUrl)}" target="_blank" rel="noopener">${label}</a> <span class="wi-warning">⚠️ Do not modify directly — use the <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">azsdk agent</a></span></div>`;
+        const wiUrl = `https://dev.azure.com/azure-sdk/Release/_workitems/edit/${p.id}`;
+        html += `<div class="detail-row"><strong>Release Plan:</strong> <a href="${esc(dashboardUrl)}" target="_blank" rel="noopener">${label}</a> (<a href="${esc(wiUrl)}" target="_blank" rel="noopener">ADO work item ${esc(String(p.id))}</a>) <span class="wi-warning">⚠️ Do not modify directly — use the <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">azsdk agent</a></span></div>`;
       } else {
         html += `<div class="detail-row"><strong>Release Plan:</strong> ${label}</div>`;
       }

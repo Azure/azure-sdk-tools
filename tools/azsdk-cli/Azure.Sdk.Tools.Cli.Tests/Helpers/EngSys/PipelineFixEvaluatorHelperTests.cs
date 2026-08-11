@@ -1,6 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using Azure.Sdk.Tools.Cli.Helpers.Pipeline;
+using Azure.Sdk.Tools.Cli.Helpers.EngSys;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Pipeline;
 using Azure.Sdk.Tools.Cli.Services;
@@ -8,7 +8,7 @@ using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Moq;
 using Octokit;
 
-namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Pipeline;
+namespace Azure.Sdk.Tools.Cli.Tests.Helpers.EngSys;
 
 /// <summary>
 /// Seam: <see cref="PipelineFixEvaluatorHelper.EvaluatePipelineFixesAsync"/> turns a repository and a

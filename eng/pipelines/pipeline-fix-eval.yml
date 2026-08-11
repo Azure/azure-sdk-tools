@@ -98,7 +98,7 @@ jobs:
       # and the judge reports a missing CLI as Undetermined rather than failing, so without this
       # the whole night would look green with no verdicts.
       - script: |
-          npm install --global @github/copilot@1.0.5
+          npm install --global @github/copilot
           copilot --version
         displayName: 'Install Copilot CLI'
         retryCountOnTaskFailure: 2
@@ -137,7 +137,7 @@ jobs:
 
                 # Build the args as an array so owner/repo (from env) are passed as single
                 # args without shell re-parsing.
-                $evalArgs = @('azp', 'evaluate', $env:OWNER, $repo,
+                $evalArgs = @('eng', 'evaluate', $env:OWNER, $repo,
                               '--since-days', '${{ parameters.sinceDays }}',
                               '--output', 'json')
 
@@ -150,7 +150,7 @@ jobs:
 
                 # 124 = terminated at the timeout, 137 = needed the follow-up KILL.
                 if ($exitCode -eq 124 -or $exitCode -eq 137) {
-                    Write-Host "##vso[task.logissue type=error]azp evaluate for $repo exceeded $timeoutArg and was terminated"
+                    Write-Host "##vso[task.logissue type=error]eng evaluate for $repo exceeded $timeoutArg and was terminated"
                     Remove-Item -Path $reportPath -Force -ErrorAction SilentlyContinue
                     $failed += $repo
                     Write-Host '##[endgroup]'
@@ -160,7 +160,7 @@ jobs:
                 if ($exitCode -ne 0) {
                     # One unhealthy repo must not cost the night's data for the others; record
                     # it, drop the partial file, and keep going.
-                    Write-Host "##vso[task.logissue type=error]azp evaluate failed for $repo with exit code $exitCode"
+                    Write-Host "##vso[task.logissue type=error]eng evaluate failed for $repo with exit code $exitCode"
                     Remove-Item -Path $reportPath -Force -ErrorAction SilentlyContinue
                     $failed += $repo
                     Write-Host '##[endgroup]'
@@ -171,7 +171,7 @@ jobs:
                 try {
                     $report = Get-Content -Raw -Path $reportPath | ConvertFrom-Json
                 } catch {
-                    Write-Host "##vso[task.logissue type=error]azp evaluate produced invalid JSON for ${repo}: $_"
+                    Write-Host "##vso[task.logissue type=error]eng evaluate produced invalid JSON for ${repo}: $_"
                     Remove-Item -Path $reportPath -Force -ErrorAction SilentlyContinue
                     $failed += $repo
                     Write-Host '##[endgroup]'

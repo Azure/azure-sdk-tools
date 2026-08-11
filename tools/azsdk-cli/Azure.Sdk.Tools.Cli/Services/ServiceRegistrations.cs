@@ -12,6 +12,7 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Helpers.Codeowners;
+using Azure.Sdk.Tools.Cli.Helpers.EngSys;
 using Azure.Sdk.Tools.Cli.Helpers.Pipeline;
 using Azure.Sdk.Tools.Cli.Helpers.Codeowners.Rules;
 using Azure.Sdk.Tools.Cli.Tools.Core;

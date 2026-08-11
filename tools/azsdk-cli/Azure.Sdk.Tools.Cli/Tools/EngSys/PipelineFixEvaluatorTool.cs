@@ -3,13 +3,13 @@
 using System.CommandLine;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
-using Azure.Sdk.Tools.Cli.Helpers.Pipeline;
+using Azure.Sdk.Tools.Cli.Helpers.EngSys;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Pipeline;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using ModelContextProtocol.Server;
 
-namespace Azure.Sdk.Tools.Cli.Tools.Pipeline;
+namespace Azure.Sdk.Tools.Cli.Tools.EngSys;
 
 [Description("Evaluates whether GitHub Copilot's fixes for failing Azure SDK pipelines took the pipeline from failure to success and survived into the merged pull request, recording trendable metrics.")]
 [McpServerToolType]
@@ -18,7 +18,7 @@ public class PipelineFixEvaluatorTool(
     ILogger<PipelineFixEvaluatorTool> logger
 ) : MCPTool
 {
-    public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.AzurePipelines];
+    public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.EngSys];
 
     private const string EvaluatePipelineFixesToolName = "azsdk_evaluate_pipeline_fixes";
 

@@ -7,7 +7,7 @@ using Azure.Sdk.Tools.Cli.Models.Pipeline;
 using Azure.Sdk.Tools.Cli.Services;
 using Octokit;
 
-namespace Azure.Sdk.Tools.Cli.Helpers.Pipeline;
+namespace Azure.Sdk.Tools.Cli.Helpers.EngSys;
 
 public interface IPipelineFixSurvivalJudge
 {

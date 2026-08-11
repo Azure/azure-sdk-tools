@@ -121,9 +121,6 @@ jobs:
           if ([string]::IsNullOrWhiteSpace('${{ parameters.targetRef }}')) {
             throw 'targetRef is required.'
           }
-          if ('${{ parameters.requestMode }}' -eq 'update' -and [string]::IsNullOrWhiteSpace('${{ parameters.baseRef }}')) {
-            throw 'baseRef is required for update requests.'
-          }
 
           New-Item -ItemType Directory -Force -Path '$(Build.ArtifactStagingDirectory)/base' | Out-Null
           New-Item -ItemType Directory -Force -Path '$(Build.ArtifactStagingDirectory)/target' | Out-Null
@@ -131,8 +128,8 @@ jobs:
         displayName: 'Validate request parameters'
 
       # Create and update requests with a baseline generate it with the same
-      # pipeline and tooling inputs as the target. Create requests may omit
-      # baseRef to intentionally generate a target-only review.
+      # pipeline and tooling inputs as the target. Either mode may omit baseRef
+      # to intentionally generate a target-only review.
       - ${{ if ne(trim(parameters.baseRef), '') }}:
         - template: ${{ format('/eng/pipelines/templates/steps/create-apireview-hub-artifacts-{0}.yml@{0}-repo', parameters.language) }}
           parameters:

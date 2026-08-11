@@ -34,7 +34,7 @@ stimuli:
     type: tool-calls
     config:
       required:
-      - edit
+      - "^(edit|apply_patch|bash|powershell)$"
       - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: skill-invocation
     config:
@@ -78,7 +78,7 @@ stimuli:
   - type: tool-calls
     config:
       required:
-      - edit
+      - "^(edit|apply_patch|bash|powershell)$"
   - *id003
   - *id004
   constraints:

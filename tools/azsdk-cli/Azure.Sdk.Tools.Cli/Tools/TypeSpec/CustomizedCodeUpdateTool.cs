@@ -196,36 +196,55 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
         var specInputsInScope = editScope.HasFlag(EditScope.SpecInputs);
         var customCodeInScope = editScope.HasFlag(EditScope.CustomCode);
-        // Validate input
-        if (customCodeInScope)
+        string? repoRoot = null;
+        
+        var validSdkRepoPackagePath = true;
+
+        if (!Directory.Exists(packagePath))
         {
-            if (string.IsNullOrWhiteSpace(packagePath))
-            {
-                string packagePathMessage = "A package path is required when custom code is in scope " +
-               "(editScope includes CustomCode/All), because the tool must edit SDK source code locally. " +
-               "Provide --package-path, or use editScope specInputs to repair typespec only.";
-                return new CustomizedCodeUpdateResponse
-                {
-                    Success = false,
-                    ResponseError = packagePathMessage,
-                    Message = packagePathMessage,
-                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
-                    BuildResult = packagePathMessage
-                };
-            }
+            logger.LogError("Package path does not exist: {PackagePath}", packagePath);
+            validSdkRepoPackagePath = false;
+        }
 
-            if (!Directory.Exists(packagePath))
-            {
-                return new CustomizedCodeUpdateResponse
-                {
-                    Success = false,
-                    ResponseError = $"package path does not exist: {packagePath}",
-                    Message = $"package path does not exist: {packagePath}",
-                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
-                    BuildResult = $"package path does not exist: {packagePath}"
-                };
-            }
+        // Discover the Git repository root for the package path, and validate that the package path is within a Git repository, if not, it is not a valid package path.
+        try
+        {
+            repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to discover Git repository root for package path: {PackagePath}", packagePath);
+            validSdkRepoPackagePath = false;
+        }
 
+        // Validate input
+        if (string.IsNullOrWhiteSpace(packagePath))
+        {
+            string packagePathMessage = "A package path is required when custom code is in scope " +
+           "(editScope includes CustomCode/All), because the tool must edit SDK source code locally. " +
+           "Provide --package-path, or use editScope specInputs to repair typespec only.";
+            return new CustomizedCodeUpdateResponse
+            {
+                Success = false,
+                ResponseError = packagePathMessage,
+                Message = packagePathMessage,
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+                BuildResult = packagePathMessage
+            };
+        }
+        if (customCodeInScope && !validSdkRepoPackagePath)
+        {
+            const string packagePathMessage = "A valid package path which is a local cloned SDK repo is required when custom code is in scope " +
+                "(editScope includes CustomCode/All), because the tool must edit SDK source code locally. " +
+                "Provide --package-path, or use editScope specInputs to repair typespec only.";
+            return new CustomizedCodeUpdateResponse
+            {
+                Success = false,
+                ResponseError = packagePathMessage,
+                Message = packagePathMessage,
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+                BuildResult = packagePathMessage
+            };
         }
 
         // tspProjectPath is only required when spec inputs are in scope (the tool must edit a local
@@ -528,6 +547,19 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             });
         }
 
+        //
+        if (!customCodeInScope && customCodeChangeRequired.Count > 0)
+        {
+            return CreateResponse(new CustomizedCodeUpdateResponse
+            {
+                Success = false,
+                Message = "Out of scope: one or more items require a custom-code change, which is not allowed in the current edit scope.",
+                CustomCodeChangeRequired = customCodeChangeRequired,
+                NextSteps = manualInterventions.Count > 0 ? manualInterventions : null,
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.CustomCodeChangeRequired
+            });
+        }
+
         // ── Regen + Build if TSP fixes were applied ──
         if (tspFixSucceeded > 0)
         {
@@ -539,8 +571,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             }
 
             logger.LogDebug("Using local spec project for regeneration: {localSpecProjectPath}", localSpecProjectPath);
-
-            var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
             await languageService.PreGenerateAsync(repoRoot, ct);
             var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: localSpecProjectPath, isCli: false, ct: ct);
             if (!regenResult.IsSuccessful)
@@ -588,11 +618,27 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             }
         }
 
+        // Step 1: If the build failed and custom code is out of scope, report the remaining items as out of scope
+        if (!customCodeInScope)
+        {
+            return CreateResponse(new CustomizedCodeUpdateResponse
+            {
+                Success = false,
+                Message = "Out of scope: remaining build failures require custom-code changes, which are not permitted by the current edit scope.",
+                TypeSpecChangesSummary = changesMade.Count > 0 ? changesMade : null,
+                CustomCodeChangeRequired = customCodeChangeRequired.Count > 0 ? customCodeChangeRequired : null,
+                NextSteps = manualInterventions.Count > 0 ? manualInterventions : null,
+                BuildResult = buildError,
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.CustomCodeChangeRequired
+            });
+        }
+
         // ── Pass 2: Re-classify remaining items with regen/build context ──
         // Items that had TSP fixes applied but regen/build failed get re-evaluated.
         // The classifier can now reclassify them as CODE_CUSTOMIZATION or REQUIRES_MANUAL_INTERVENTION.
         if (feedbackDictionary.Count > 0)
         {
+            codeCustomizations = 0; //reset for second pass
             var secondResponse = await _classifierService.ClassifyItemsAsync([.. feedbackDictionary.Values], globalContext: string.Join(";", changesMade), tspProjectPath: tspProjectPath, language: languageService.Language.ToString(), editScope: editScope, ct: ct);
 
             if (secondResponse.Classifications != null)

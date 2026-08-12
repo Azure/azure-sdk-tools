@@ -312,6 +312,17 @@ namespace Reviews {
     }
 
     /**
+     * Result of marking a resolved revision as released.
+     */
+    model MarkReleasedResult {
+        ...RevisionResolveResult;
+        /** Whether the revision is released */
+        isReleased: boolean;
+        /** When the revision was marked released */
+        releasedOn?: utcDateTime;
+    }
+
+    /**
      * Metadata about an API revision
      */
     model RevisionMetadata {

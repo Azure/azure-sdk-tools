@@ -236,7 +236,7 @@ namespace Reviews {
      * @param language Programming language (e.g., "C#", "Python").
      * @param version Exact package version to mark as released.
     * @param dryRun Whether to resolve and return the matching revision without marking it released.
-    * @returns IDs of the resolved review and revision.
+    * @returns Resolved review and revision IDs, release status, and the release timestamp when applicable.
      */
     @post
     @route("/mark-released")
@@ -247,7 +247,7 @@ namespace Reviews {
         @query dryRun?: boolean = false
     ): {
         @statusCode statusCode: 200;
-        @body result: RevisionResolveResult;
+        @body result: MarkReleasedResult;
     } | BadRequestErrorResponse | UnauthorizedErrorResponse | NotFoundErrorResponse | InternalServerErrorResponse;
 
     /**

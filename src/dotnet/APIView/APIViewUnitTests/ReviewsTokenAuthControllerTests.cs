@@ -150,6 +150,7 @@ public class ReviewsTokenAuthControllerTests
     [Fact]
     public async Task MarkReleased_WithExactVersion_MarksResolvedRevisionReleased()
     {
+        DateTime releasedOn = DateTime.UtcNow;
         var resolved = new ResolvePackageResponse
         {
             PackageName = "Azure.Storage.Blobs",
@@ -163,11 +164,16 @@ public class ReviewsTokenAuthControllerTests
             .ReturnsAsync(resolved);
         _mockApiRevisionsManager
             .Setup(x => x.MarkAPIRevisionReleasedAsync("revision456"))
-            .ReturnsAsync(new APIRevisionListItemModel { Id = "revision456", IsReleased = true });
+            .ReturnsAsync(new APIRevisionListItemModel { Id = "revision456", IsReleased = true, ReleasedOn = releasedOn });
 
-        ActionResult<ResolvePackageResponse> result = await _controller.MarkReleased("Azure.Storage.Blobs", "C#", "12.0.0");
+        ActionResult<MarkReleasedResult> result = await _controller.MarkReleased("Azure.Storage.Blobs", "C#", "12.0.0");
 
-        Assert.IsType<LeanJsonResult>(result.Result);
+        LeanJsonResult jsonResult = Assert.IsType<LeanJsonResult>(result.Result);
+        MarkReleasedResult response = Assert.IsType<MarkReleasedResult>(jsonResult.Value);
+        Assert.Equal("review123", response.ReviewId);
+        Assert.Equal("revision456", response.RevisionId);
+        Assert.True(response.IsReleased);
+        Assert.Equal(releasedOn, response.ReleasedOn);
         _mockApiRevisionsManager.Verify(x => x.MarkAPIRevisionReleasedAsync("revision456"), Times.Once);
     }
 
@@ -185,12 +191,20 @@ public class ReviewsTokenAuthControllerTests
         _mockReviewSearch
             .Setup(x => x.ResolveAutomaticRevisionForRelease("Azure.Storage.Blobs", "C#", "12.0.0"))
             .ReturnsAsync(resolved);
+        _mockApiRevisionsManager
+            .Setup(x => x.GetAPIRevisionAsync("revision456"))
+            .ReturnsAsync(new APIRevisionListItemModel { Id = "revision456", IsReleased = false });
 
-        ActionResult<ResolvePackageResponse> result = await _controller.MarkReleased(
+        ActionResult<MarkReleasedResult> result = await _controller.MarkReleased(
             "Azure.Storage.Blobs", "C#", "12.0.0", dryRun: true);
 
         LeanJsonResult jsonResult = Assert.IsType<LeanJsonResult>(result.Result);
-        Assert.Same(resolved, jsonResult.Value);
+        MarkReleasedResult response = Assert.IsType<MarkReleasedResult>(jsonResult.Value);
+        Assert.Equal("review123", response.ReviewId);
+        Assert.Equal("revision456", response.RevisionId);
+        Assert.False(response.IsReleased);
+        Assert.Null(response.ReleasedOn);
+        _mockApiRevisionsManager.Verify(x => x.GetAPIRevisionAsync("revision456"), Times.Once);
         _mockApiRevisionsManager.Verify(x => x.MarkAPIRevisionReleasedAsync(It.IsAny<string>()), Times.Never);
     }
 
@@ -200,7 +214,7 @@ public class ReviewsTokenAuthControllerTests
     [InlineData("Azure.Storage.Blobs", "C#", null)]
     public async Task MarkReleased_WithMissingParameter_ReturnsBadRequest(string package, string language, string version)
     {
-        ActionResult<ResolvePackageResponse> result = await _controller.MarkReleased(package, language, version);
+        ActionResult<MarkReleasedResult> result = await _controller.MarkReleased(package, language, version);
 
         BadRequestObjectResult badRequest = Assert.IsType<BadRequestObjectResult>(result.Result);
         System.Text.Json.JsonSerializer.Serialize(badRequest.Value).Should().Contain("\"message\"");
@@ -214,7 +228,7 @@ public class ReviewsTokenAuthControllerTests
             .Setup(x => x.ResolveAutomaticRevisionForRelease("Azure.Storage.Blobs", "C#", "12.0.0"))
             .ReturnsAsync((ResolvePackageResponse)null);
 
-        ActionResult<ResolvePackageResponse> result = await _controller.MarkReleased("Azure.Storage.Blobs", "C#", "12.0.0");
+        ActionResult<MarkReleasedResult> result = await _controller.MarkReleased("Azure.Storage.Blobs", "C#", "12.0.0");
 
         NotFoundObjectResult notFound = Assert.IsType<NotFoundObjectResult>(result.Result);
         System.Text.Json.JsonSerializer.Serialize(notFound.Value).Should().Contain("\"message\"");
@@ -231,7 +245,7 @@ public class ReviewsTokenAuthControllerTests
             .Setup(x => x.MarkAPIRevisionReleasedAsync("revision456"))
             .ReturnsAsync((APIRevisionListItemModel)null);
 
-        ActionResult<ResolvePackageResponse> result = await _controller.MarkReleased("Azure.Storage.Blobs", "C#", "12.0.0");
+        ActionResult<MarkReleasedResult> result = await _controller.MarkReleased("Azure.Storage.Blobs", "C#", "12.0.0");
 
         NotFoundObjectResult notFound = Assert.IsType<NotFoundObjectResult>(result.Result);
         System.Text.Json.JsonSerializer.Serialize(notFound.Value).Should().Contain("\"message\"");
@@ -244,7 +258,7 @@ public class ReviewsTokenAuthControllerTests
             .Setup(x => x.ResolveAutomaticRevisionForRelease("Azure.Storage.Blobs", "C#", "12.0.0"))
             .ThrowsAsync(new InvalidOperationException("failure"));
 
-        ActionResult<ResolvePackageResponse> result = await _controller.MarkReleased("Azure.Storage.Blobs", "C#", "12.0.0");
+        ActionResult<MarkReleasedResult> result = await _controller.MarkReleased("Azure.Storage.Blobs", "C#", "12.0.0");
 
         ObjectResult internalServerError = Assert.IsType<ObjectResult>(result.Result);
         Assert.Equal(StatusCodes.Status500InternalServerError, internalServerError.StatusCode);

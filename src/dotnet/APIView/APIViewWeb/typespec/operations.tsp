@@ -230,6 +230,27 @@ namespace Reviews {
     } | BadRequestErrorResponse | NotFoundErrorResponse | InternalServerErrorResponse;
 
     /**
+     * Mark the newest revision matching an exact package version as released.
+     *
+    * @param packageName Exact package name (e.g., "Azure.Storage.Blobs").
+     * @param language Programming language (e.g., "C#", "Python").
+     * @param version Exact package version to mark as released.
+    * @param dryRun Whether to resolve and return the matching revision without marking it released.
+    * @returns IDs of the resolved review and revision.
+     */
+    @post
+    @route("/mark-released")
+    op markReleased(
+        @query packageName: string,
+        @query language: string,
+        @query version: string,
+        @query dryRun?: boolean = false
+    ): {
+        @statusCode statusCode: 200;
+        @body result: RevisionResolveResult;
+    } | BadRequestErrorResponse | UnauthorizedErrorResponse | NotFoundErrorResponse | InternalServerErrorResponse;
+
+    /**
      * Get full metadata for a review and revision.
      * Requires a revisionId (obtained from the /resolve endpoint).
      * 

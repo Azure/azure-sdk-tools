@@ -127,9 +127,10 @@ jobs:
           New-Item -ItemType Directory -Force -Path '$(Build.ArtifactStagingDirectory)/result' | Out-Null
         displayName: 'Validate request parameters'
 
-      # Create requests with a baseline need the baseline bundle first. Empty
-      # baseRef values intentionally generate a target-only review.
-      - ${{ if and(eq(parameters.requestMode, 'create'), ne(trim(parameters.baseRef), '')) }}:
+      # Create and update requests with a baseline generate it with the same
+      # pipeline and tooling inputs as the target. Either mode may omit baseRef
+      # to intentionally generate a target-only review.
+      - ${{ if ne(trim(parameters.baseRef), '') }}:
         - template: ${{ format('/eng/pipelines/templates/steps/create-apireview-hub-artifacts-{0}.yml@{0}-repo', parameters.language) }}
           parameters:
             requestMode: ${{ parameters.requestMode }}
@@ -140,8 +141,7 @@ jobs:
             outputDir: $(Build.ArtifactStagingDirectory)/base
             workingDir: $(Pipeline.Workspace)/apireview/base
 
-      # Always generate the target bundle. Update requests only generate this
-      # artifact; create requests generate it after the base bundle above.
+      # Always generate the target bundle after any requested baseline bundle.
       - template: ${{ format('/eng/pipelines/templates/steps/create-apireview-hub-artifacts-{0}.yml@{0}-repo', parameters.language) }}
         parameters:
           requestMode: ${{ parameters.requestMode }}
@@ -170,7 +170,7 @@ jobs:
             $baseRef = ''
           }
 
-          $hasBaseline = '${{ parameters.requestMode }}' -eq 'create' -and -not [string]::IsNullOrWhiteSpace($baseRef)
+          $hasBaseline = -not [string]::IsNullOrWhiteSpace($baseRef)
           $baseVersion = ''
           $changed = $null
           if ($hasBaseline) {
@@ -233,7 +233,7 @@ jobs:
         displayName: 'Write failure result summary'
         condition: failed()
 
-      - ${{ if and(eq(parameters.requestMode, 'create'), ne(trim(parameters.baseRef), '')) }}:
+      - ${{ if ne(trim(parameters.baseRef), '') }}:
         - task: PublishBuildArtifacts@1
           displayName: 'Publish base API review bundle'
           condition: succeeded()
@@ -312,7 +312,7 @@ jobs:
             }
 
             $baseRef = '${{ parameters.baseRef }}'
-            $hasBaseline = '${{ parameters.requestMode }}' -eq 'create' -and -not [string]::IsNullOrWhiteSpace($baseRef)
+            $hasBaseline = -not [string]::IsNullOrWhiteSpace($baseRef)
             if ($hasBaseline -and ('$(Agent.JobStatus)' -eq 'Succeeded' -or '$(Agent.JobStatus)' -eq 'SucceededWithIssues')) {
               $body.artifacts.base = '${{ parameters.baseArtifactName }}'
             }

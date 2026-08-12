@@ -1,0 +1,432 @@
+[
+    {
+        "testcase": "Missing APIs in default tag error for typespec conversion PR",
+        "expected": {
+            "answer": "Part of the typespec conversion is replacing the existing swagger with a generated swagger.  The generated swagger is still used for some purposes, and Avocado protects the ability to process it. The generated swagger needs to be equivalent, but not necessarily identical.  Generally these issues reflected in the swagger will also show up in breaking change checks, which will have to be resolved (or suppressed if they are false positives)",
+            "references": [
+                {
+                    "title": "Known Issues",
+                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-Avocado"
+                },
+                {
+                    "title": "Missing APIs in default tag error for typespec conversion PR | answer",
+                    "link": ""
+                },
+                {
+                    "title": "Looking for someone to suppress CI failures https://github.com/Azure/azure-rest-api-specs/pull/36221 | answer",
+                    "link": ""
+                }
+            ]
+        },
+        "actual": {
+            "answer": "There is no direct way to suppress the 'missing APIs in default tag' (Avocado) check only for a TypeSpec conversion PR. The Avocado check is designed to ensure that the generated Swagger (OpenAPI) from your TypeSpec is equivalent to the previous version, as the generated Swagger is still used for validation and downstream tooling. Any differences, including missing APIs, will be flagged—even if your PR only contains TypeSpec conversion and no manual OpenAPI changes.\n\nIf the missing APIs are intentional (for example, you are intentionally removing deprecated APIs as part of the migration), you must follow the standard breaking change process and request approval from the breaking change board. If the differences are false positives or due to known tool limitations, you may request a temporary suppression by adding the 'Approved-Avocado' label to your PR, but this requires coordination with the Avocado/tooling team and is not a self-service option.\n\nIn summary, you cannot suppress this check yourself for a single PR. You must:\n- Ensure your TypeSpec-generated Swagger is equivalent to the previous version, or\n- Work with the breaking change board or Avocado team for approval if the differences are intentional or false positives.\n\nFor more details, see the Avocado known issues and suppression process documentation.",
+            "references": [
+                {
+                    "title": "Known Issues",
+                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-Avocado"
+                },
+                {
+                    "title": "Missing APIs in default tag error for typespec conversion PR | answer",
+                    "link": ""
+                },
+                {
+                    "title": "Suppress validation failures on a PR",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+                }
+            ]
+        },
+        "similarity": 4.0,
+        "gpt_similarity": 4.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The RESPONSE is fully supported by the CONTEXT, covers all essential details, and does not introduce unsupported information or omit critical points.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 4.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 4,
+        "response_completeness_reason": "The response is mostly complete, covering the main points about Avocado checks, equivalence, breaking change process, and suppression, but misses minor details about equivalence not requiring identity and explicit replacement of Swagger.",
+        "reference_match": 0.6666666666666666,
+        "reference_match_result": "fail",
+        "knowledge_match": 0.8275862068965517,
+        "knowledge_match_result": "pass",
+        "overall_score": 7.494252873563219
+    },
+    {
+        "testcase": "ArmResourcePatchAsync & discriminator",
+        "expected": {
+            "answer": "we generally suggest that PATCH requests over discriminated types should require the discriminator property.  This may result in some lintdiff violations, but that is expected, and those cna be suppressed.  This is especially true if, as most services, your PATCH operation would need the discriminator value on the wire to determine how to apply the PATCH request to the existing reosurce.",
+            "references": [
+                {
+                    "title": "TypeSpec for OpenAPI Developers | Schema Object | allOf and polymorphism using allOf",
+                    "link": "https://typespec.io/docs/getting-started/typespec-for-openapi-dev"
+                },
+                {
+                    "title": "TypeSpec ARM Operation Mapping to Swagger Documentation | 23. ArmResourcePatchAsync | TypeSpec Example",
+                    "link": ""
+                },
+                {
+                    "title": "Interfaces and Operations | Azure.ResourceManager | ArmResourcePatchAsync",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces"
+                },
+                {
+                    "title": "TypeSpec for OpenAPI Developers | Schema Object | Polymorphism using anyOf and oneOf (OAS3)",
+                    "link": "https://typespec.io/docs/getting-started/typespec-for-openapi-dev"
+                }
+            ]
+        },
+        "actual": {
+            "answer": "When using ArmResourcePatchAsync for a resource with a discriminator (polymorphic resource), you must ensure that the PATCH request body schema includes all required properties, especially the discriminator property. The OBJECT_MISSING_REQUIRED_PROPERTY_DEFINITION error from oav typically means the PATCH schema is missing the discriminator property, which is required for correct deserialization and validation.\n\nIn TypeSpec, the PATCH request body is generated from the resource's properties model. For polymorphic resources, you should:\n\n1. Use the @discriminator decorator on your base model and ensure all derived models set the discriminator property as a required string literal.\n2. When defining the PATCH operation, use ArmResourcePatchAsync<Resource, ResourceProperties> (or ArmCustomPatchAsync if you need a custom PATCH shape).\n3. Make sure the PATCH request body model includes the discriminator property as required. If your PATCH model omits the discriminator, OpenAPI and oav will fail validation.\n\nExample:\n\n```typespec\n@discriminator(\"kind\")\nmodel HostProperties {\n  kind: string;\n  // ... other properties\n}\n\nmodel WindowsHostProperties extends HostProperties {\n  kind: \"Windows\";\n  // ... windows-specific properties\n}\n\nmodel LinuxHostProperties extends HostProperties {\n  kind: \"Linux\";\n  // ... linux-specific properties\n}\n\nmodel Host is TrackedResource<HostProperties> {}\n\n@armResourceOperations\ninterface Hosts {\n  update is ArmResourcePatchAsync<Host, HostProperties>;\n}\n```\n\nThis ensures the PATCH request body includes the discriminator property (\"kind\") as required, satisfying both OpenAPI and oav validation. If you use a PATCH model that omits the discriminator, you will get OBJECT_MISSING_REQUIRED_PROPERTY_DEFINITION.\n\nIf you need to allow partial updates and want the discriminator to be optional in PATCH, this is not allowed by Azure API guidelines: the discriminator must always be present for polymorphic models in PATCH bodies.\n\n**Summary:**\n- Always include the discriminator property as required in your PATCH request body model for resources with polymorphism.\n- Use @discriminator and ensure all derived types set the discriminator property.\n- Use ArmResourcePatchAsync with the correct properties model.\n\nThis approach is fully compliant with Azure ARM and OpenAPI guidelines.",
+            "references": [
+                {
+                    "title": "TypeSpec for OpenAPI Developers | Schema Object | allOf and polymorphism using allOf",
+                    "link": "https://typespec.io/docs/getting-started/typespec-for-openapi-dev"
+                },
+                {
+                    "title": "Patch Resource # | Rules ## | General impact of violating the rules ###",
+                    "link": "https://github.com/cloud-and-ai-microsoft/resource-provider-contract/blob/master/v1.0/patch-resource.md"
+                },
+                {
+                    "title": "TypeSpec for OpenAPI Developers | Schema Object | Polymorphism using anyOf and oneOf (OAS3)",
+                    "link": "https://typespec.io/docs/getting-started/typespec-for-openapi-dev"
+                },
+                {
+                    "title": "TypeSpec ARM Operation Mapping to Swagger Documentation | 23. ArmResourcePatchAsync | TypeSpec Example",
+                    "link": ""
+                }
+            ]
+        },
+        "similarity": 4.0,
+        "gpt_similarity": 4.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The RESPONSE is fully grounded in the CONTEXT, accurately and thoroughly conveying all essential information about PATCH operations for polymorphic resources, including the need for a required discriminator property and the use of TypeSpec features. No unsupported additions or omissions are present.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 4.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 4,
+        "response_completeness_reason": "The response is mostly complete, covering all major points about requiring the discriminator property in PATCH requests for discriminated types, but it misses the minor detail about lintdiff violations and their suppression.",
+        "reference_match": 0.75,
+        "reference_match_result": "fail",
+        "knowledge_match": 0.8076923076923077,
+        "knowledge_match_result": "pass",
+        "overall_score": 7.5576923076923075
+    },
+    {
+        "testcase": "CI Failure – Swagger LintDiff",
+        "expected": {
+            "answer": "if you are fixing bugs already in main, this is expected.  lintdiff needs to run on your spec both before and after your PR, and if before is crashing, the PR to fix it will still crash.",
+            "references": [
+                {
+                    "title": "CI Failure – Swagger LintDiff | question",
+                    "link": ""
+                }
+            ]
+        },
+        "actual": {
+            "answer": "This error is expected when you are fixing bugs that already exist in the main branch. The Swagger LintDiff check works by running on your spec both before and after your PR. If the 'before' state (main branch) is already broken (for example, missing input files or invalid configuration), then your PR to fix it will still show the same error because LintDiff cannot run the comparison. \n\nTo resolve this, ensure that the main branch is fixed first so that LintDiff can successfully run on both the base and your PR branch. Once the main branch is healthy, your PR should pass the LintDiff check if your changes are correct. This is not a configuration bug in your PR, but a limitation of how LintDiff operates when the baseline is already failing.",
+            "references": [
+                {
+                    "title": "CI Failure – Swagger LintDiff",
+                    "link": ""
+                }
+            ]
+        },
+        "similarity": 4.0,
+        "gpt_similarity": 4.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": NaN,
+        "gpt_groundedness": NaN,
+        "groundedness_reason": "",
+        "groundedness_result": "unknown",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 5.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 4,
+        "response_completeness_reason": "The response contains all the necessary and relevant information from the ground truth, with some additional helpful context, and does not miss any key statements.",
+        "reference_match": 0.0,
+        "reference_match_result": "fail",
+        "knowledge_match": 0.9259259259259259,
+        "knowledge_match_result": "pass",
+        "overall_score": NaN
+    },
+    {
+        "testcase": "PR gateway pipelines not starting/waiting for long time",
+        "expected": {
+            "answer": "Looks like a permissions issue.  The PR author needs to make their membership in Azure public, not private.  And also join the Azure SDK Partners group.\nhttps://aka.ms/azsdk/access\nhttps://github.com/orgs/Azure/people?query=AbhishekSinha-AEP",
+            "references": [
+                {
+                    "title": "PR gateway pipelines not starting/waiting for long time | answer",
+                    "link": ""
+                }
+            ]
+        },
+        "actual": {
+            "answer": "This issue is most likely caused by a permissions problem with the PR author. For the Azure REST API specs pipelines (including SDK Validation Status and Swagger PrettierCheck) to run and report status, the PR author must:\n\n1. Make their membership in the Azure GitHub organization public (not private).\n2. Join the Azure SDK Partners group to get the necessary permissions.\n\nYou can verify and update your membership visibility here: https://github.com/orgs/Azure/people?query=AbhishekSinha-AEP\n\nAnd request access or check your status here: https://aka.ms/azsdk/access\n\nOnce these steps are completed, the required pipelines should start and report status, unblocking your PR merge. If you have already done this and the issue persists, please allow some time for permissions to propagate, or try closing and reopening the PR after updating your membership.",
+            "references": [
+                {
+                    "title": "PR gateway pipelines not starting/waiting for long time | answer",
+                    "link": ""
+                },
+                {
+                    "title": "SDK-Validation.md | How to Re-evaluate `SDK Validation Status` Check",
+                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/SDK-Validation"
+                }
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The RESPONSE is fully grounded in the CONTEXT, accurately restating the cause and solution, and does not introduce unsupported details or omit critical information.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 5.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 4,
+        "response_completeness_reason": "The response contains all necessary and relevant information from the ground truth, with no missing statements or claims.",
+        "reference_match": 1.0,
+        "reference_match_result": "pass",
+        "knowledge_match": 0.8461538461538461,
+        "knowledge_match_result": "pass",
+        "overall_score": 8.846153846153847
+    },
+    {
+        "testcase": "RPaaSMaster branch requirement for Ring 0 services",
+        "expected": {
+            "answer": "Based on the available knowledge context, syncing API specs between the public 'main' branch and the private 'RPaaSMaster' branch is the responsibility of the spec owner. There is no strict requirement in the referenced documentation that all resource providers (including ring 0 services like Microsoft.Compute) must have their specs present in RPaaSMaster if they have received an explicit exemption from RPaaS onboarding. The documentation and FAQ state that if your service is not onboarded to RPaaS (and has an exception), you do not need to merge your specs into RPaaSMaster. The presence or absence of Microsoft.Compute in RPaaSMaster does not dictate requirements for other RPs; each spec owner is responsible for their own onboarding and branch sync according to their onboarding status and exemptions. If your ring 0 service has an approved exception, you can continue to manage your specs in 'main' and do not need to merge into RPaaSMaster unless instructed otherwise by the ARM or EngSys team.",
+            "references": [
+                {
+                    "title": "PR in azure-rest-api-specs-pr/main branch isnt merged to RPSaasMaster | answer",
+                    "link": ""
+                },
+                {
+                    "title": "API-Spec-Review-FAQ.md",
+                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/API-Spec-Review-FAQ"
+                }
+            ]
+        },
+        "actual": {
+            "answer": "If your service has received an explicit exception from onboarding to RPaaS, you are not required to merge your API spec into the RPaaSMaster branch before merging to the main branch in the public repository. The requirement to sync specs between main and RPaaSMaster is generally for services that are onboarded to RPaaS. Since you are a ring 0 service with an onboarding exception, and as you observed with Microsoft.Compute (another ring 0 RP not present in RPaaSMaster), you are exempt from this requirement. You should follow the standard process for main branch PRs and ensure you comply with any other guidance provided for ring 0 services.",
+            "references": [
+                {
+                    "title": "PR in azure-rest-api-specs-pr/main branch isnt merged to RPSaasMaster | answer",
+                    "link": ""
+                },
+                {
+                    "title": "API-Spec-Review-FAQ.md",
+                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/API-Spec-Review-FAQ"
+                }
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": NaN,
+        "gpt_groundedness": NaN,
+        "groundedness_reason": NaN,
+        "groundedness_result": NaN,
+        "groundedness_threshold": NaN,
+        "response_completeness": 4.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 4,
+        "response_completeness_reason": "The response is mostly complete, covering the main requirements and exemptions, but misses minor details about spec owner responsibility and conditional instructions from ARM/EngSys.",
+        "reference_match": 1.0,
+        "reference_match_result": "pass",
+        "knowledge_match": 0.7777777777777778,
+        "knowledge_match_result": "fail",
+        "overall_score": NaN
+    },
+    {
+        "testcase": "Conflicting @azure-tools/typespec-azure-core/no-openapi and missing-x-ms-identifiers errors",
+        "expected": {
+            "answer": "You should NOT use @OpenAPI.extension(\"x-ms-identifiers\", #[]) in your Azure Resource Manager TypeSpec code. The no-openapi rule is strict: ARM specs must NOT use decorators from @typespec/openapi or @azure-tools/typespec-autorest, including $extension, because these are only processed by OpenAPI emitters and will break other emitters (like client SDKs).\nFor array properties, the correct approach is to use the @identifiers decorator from @azure-tools/typespec-azure-resource-manager. This decorator is the ARM-compliant way to specify identifying properties for array items and will ensure that x-ms-identifiers is emitted in the generated OpenAPI as needed, without violating the no-openapi rule. If there are no identifying properties, you can use @identifiers([]) to indicate this.\nExample:\n```\n@identifiers([])\nmyArrayField: MyItemType[];\n```\nIf you use @identifiers, the ARM linter will recognize the array is correctly specified and will not require you to use the OpenAPI extension directly.\nYou should only suppress the error if you have a legitimate, ARM-approved reason (for example, for backwards compatibility or an explicit reviewer exemption). But for new fields and normal scenarios, always use the ARM-compliant decorators, NOT OpenAPI extensions.\nSummary:\nDO NOT use @OpenAPI.extension(\"x-ms-identifiers\", #[]) in ARM specs.\nDO use @identifiers([]) or @identifiers([\"propertyName\"]) as appropriate for array items.\nSuppression should only be used in rare, reviewer-approved cases, not as a general workaround.\nThis approach ensures your spec is future-proof, passes all ARM validation, and is compliant with Azure API guidelines.",
+            "references": [
+                {
+                    "title": "missing-x-ms-identifiers",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/rules/missing-x-ms-identifiers"
+                },
+                {
+                    "title": "no-openapi",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi"
+                },
+                {
+                    "title": "TypeSpec ARM Decorator Mapping to Swagger Documentation | 15. @identifiers | Description",
+                    "link": ""
+                }
+            ]
+        },
+        "actual": {
+            "answer": "You should NOT use the @OpenAPI.extension(\"x-ms-identifiers\", #[]) decorator directly in your TypeSpec code for Azure management-plane specs. The correct and Azure-compliant way to resolve the missing-x-ms-identifiers error is to use the @identifiers decorator from the Azure.ResourceManager library, not the OpenAPI extension decorator.\n\nHere's how to fix both errors:\n\n1. **Replace @OpenAPI.extension(\"x-ms-identifiers\", #[]) with @identifiers(#[...])**\n   - For each array property of a model where you get the missing-x-ms-identifiers error, decorate it with @identifiers and specify the identifying property names of the array item type. If there are no identifying properties, you can pass an empty array (#[ ]), but this should be rare and only if justified.\n\nExample:\n```typespec\nimport \"@azure-tools/typespec-azure-resource-manager\";\n\nmodel ResourceProperties {\n  @identifiers(#[\"city\", \"street\"])\n  addresses: Address[];\n}\n\nmodel Address {\n  city: string;\n  street: string;\n}\n```\nIf there are truly no identifiers:\n```typespec\nmodel ResourceProperties {\n  @identifiers(#[])\n  items: Item[];\n}\nmodel Item {\n  // ...\n}\n```\n\n2. **Remove all uses of @OpenAPI.extension(\"x-ms-identifiers\", ...)**\n   - This decorator is not allowed in Azure specs and will trigger the @azure-tools/typespec-azure-core/no-openapi error. The @identifiers decorator is the supported and required approach.\n\n3. **Suppressions**\n   - Suppression should only be used as a last resort and only if you have a strong justification. In almost all cases, using @identifiers will resolve both errors without the need for suppression.\n\n**Summary:**\n- Use @identifiers from the Azure.ResourceManager library, not @OpenAPI.extension.\n- Do not suppress these errors unless you have a scenario that cannot be modeled with @identifiers (which is extremely rare).\n- This approach is fully compliant with Azure API guidelines and TypeSpec best practices.",
+            "references": [
+                {
+                    "title": "missing-x-ms-identifiers",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/rules/missing-x-ms-identifiers"
+                },
+                {
+                    "title": "no-openapi",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi"
+                },
+                {
+                    "title": "TypeSpec ARM Decorator Mapping to Swagger Documentation | 15. @identifiers | TypeSpec Example",
+                    "link": ""
+                }
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The RESPONSE is fully grounded, complete, and directly supported by the CONTEXT without any unsupported additions or omissions.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 4.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 4,
+        "response_completeness_reason": "The response contains all major claims and instructions from the ground truth, with only minor omissions of technical rationale and ARM linter details. It is mostly complete.",
+        "reference_match": 0.6666666666666666,
+        "reference_match_result": "fail",
+        "knowledge_match": 0.9333333333333333,
+        "knowledge_match_result": "pass",
+        "overall_score": 8.2
+    },
+    {
+        "testcase": "Need help with what appear like False Positives in ARM PR",
+        "expected": {
+            "answer": "You should NOT manually edit the autogenerated hardware.json file to work around TypeSpec or linter errors. Instead, you must address these issues at the TypeSpec source level and via configuration, following Azure TypeSpec best practices.\n1.ProvisioningState Must Be ReadOnly: The LintDiff check for `ProvisioningStateMustBeReadOnly` is triggered because the validation expects the type schema referenced by `provisioningState` to be `readOnly`, not just the property instance. The recommended (and officially supported) solution is to update your `tspconfig.yaml` to set:\n```\noptions:\n\"@azure-tools/typespec-autorest\":\nuse-read-only-status-schema: true\n```\nThis ensures all `ProvisioningState` schemas are emitted as `readOnly`, resolving the LintDiff error at the TypeSpec emission layer and removing the need to edit the generated Swagger.\n2.Missing Examples for Subscription-level APIs: The OpenAPI validation (ModelValidation) requires an example for each operation, including subscription-level (preview) APIs. If auto-generation tools like OAV are not generating examples for these, you must:\nManually add a valid example JSON file in the `examples/<api-version>/` folder of your TypeSpec project, ensuring the `operationId` matches your operation.\nThere is currently NO supported way to suppress example requirements in TypeSpec or Swagger for missing examples. Suppression can sometimes be done via labels (like `Approved-ModelValidation`) to unblock a PR, but the recommended approach is to provide at least one example per operation.\nGeneral Best Practices:\nDo NOT edit the emitted Swagger (`hardware.json`). Always make changes at the TypeSpec or configuration level.\nIf you encounter TypeSpec validation failures, refer to the TypeSpec source, emitter options, or required supporting files (such as examples or suppressions.yaml for certain rule types). For LintDiff, suppressions must be done in `readme.md` or `suppressions.yaml` (for TypeSpecRequirement errors only, not LintDiff or example requirements).\nSummary:\nSet `use-read-only-status-schema: true` in `tspconfig.yaml` to resolve the `ProvisioningStateMustBeReadOnly` error.\nAdd missing example files for all operations, including subscription-level ones, as there is no suppression for missing examples.\nNever edit the generated OpenAPI files to workaround linter errors.\nLet me know if you need guidance on creating an example file or configuring the emitter options.",
+            "references": [
+                {
+                    "title": "`ProvisioningStateMustBeReadOnly` lintdiff violation in TypeSpec for ARM Service",
+                    "link": "https://azure.github.io/typespec-azure/docs/troubleshoot/status-read-only-error"
+                },
+                {
+                    "title": "How to create an Example for a typespec model? | answer",
+                    "link": ""
+                },
+                {
+                    "title": "TypeSpec Validation failed | answer",
+                    "link": ""
+                },
+                {
+                    "title": "Suppress validation failures on a PR | Suppression cases table",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+                }
+            ]
+        },
+        "actual": {
+            "answer": "You should not manually edit the generated OpenAPI (hardware.json) to work around validation or linter errors. All changes must be made in the TypeSpec (.tsp) files, and then you must regenerate the OpenAPI files using `npx tsp compile`. This is a strict requirement for Azure REST API specs to ensure consistency and traceability.\n\n**1. Marking `provisioningState` as readOnly:**\n- The Swagger LintDiff check for `ProvisioningStateMustBeReadOnly` is a known issue due to legacy validation logic. The correct way to resolve this is to configure the TypeSpec emitter to always output the `ProvisioningState` schema as readOnly, not by editing the OpenAPI directly.\n- In your `tspconfig.yaml`, add the following under the `@azure-tools/typespec-autorest` options:\n\n```yaml\nemit:\n  - \"@azure-tools/typespec-autorest\"\noptions:\n  \"@azure-tools/typespec-autorest\":\n    use-read-only-status-schema: true\n```\n\n- This will ensure the generated OpenAPI marks `provisioningState` as readOnly and resolves the LintDiff error. If you use the ARM scaffolding template, this is already set.\n\n**2. Examples for Subscription-level APIs:**\n- Do not use the `@example` decorator in TypeSpec for Azure specs. Instead, operation examples are required as separate `.json` files in the `examples/<api-version>/` folder. These are matched to operations by `operationId`.\n- If `oav` (OpenAPI validator) does not generate examples for subscription-level APIs, you must manually create the example file and ensure it is placed in the correct folder and references the correct `operationId`.\n- The OpenAPI emitter will automatically associate the example with the operation if the `operationId` matches.\n\n**3. TypeSpec Validation Failure (hardware.json changed):**\n- The validation failure is likely because the OpenAPI file in your PR does not match what is generated from the current TypeSpec source. This usually happens if you manually edit the OpenAPI or your local dependencies are out of date.\n- To resolve:\n  1. Sync your branch with the latest upstream/main.\n  2. Run `npm ci` at the repo root.\n  3. Run `npx tsp compile` in your service directory.\n  4. Add and commit all generated files.\n  5. Push your changes.\n- If you still see differences, try a clean clone or a different machine. If the issue persists, reach out to the TypeSpec Discussion Teams channel.\n\n**Suppression:**\n- TypeSpec Validation failures cannot be suppressed. You must resolve the underlying issue in the TypeSpec source and regenerate the OpenAPI.\n\n**Summary:**\n- Never manually edit generated OpenAPI files to work around validation errors.\n- Mark `provisioningState` as readOnly using the emitter config, not by editing OpenAPI.\n- Add operation examples as separate files, not via decorators or direct OpenAPI edits.\n- Always regenerate OpenAPI from TypeSpec after making changes.\n\nIf you follow these steps, your PR should pass TypeSpec Validation and Swagger LintDiff checks.",
+            "references": [
+                {
+                    "title": "`ProvisioningStateMustBeReadOnly` lintdiff violation in TypeSpec for ARM Service",
+                    "link": "https://azure.github.io/typespec-azure/docs/troubleshoot/status-read-only-error"
+                },
+                {
+                    "title": "How to create an Example for a typespec model? | answer",
+                    "link": ""
+                },
+                {
+                    "title": "TypeSpec Validation failed | answer",
+                    "link": ""
+                },
+                {
+                    "title": "Suppress validation failures on a PR | Suppression cases table",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+                },
+                {
+                    "title": "Examples generation | answer",
+                    "link": ""
+                }
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The RESPONSE is fully grounded in the CONTEXT, accurately conveying all necessary details and instructions without unsupported additions or omissions.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 5.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 4,
+        "response_completeness_reason": "The Response is fully complete, accurately reflecting all key statements and instructions from the Ground Truth, with only minor differences in wording and no missing substantive information.",
+        "reference_match": 1.0,
+        "reference_match_result": "pass",
+        "knowledge_match": 0.8518518518518519,
+        "knowledge_match_result": "pass",
+        "overall_score": 8.851851851851851
+    },
+    {
+        "testcase": "Typespec Validation Failing on PR due to `typespec-go` configuration missing",
+        "expected": {
+            "answer": "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Validation#suppressing-sdktspconfigvalidation-rules\nSuppressing go specific rules worked for me. Here's our suppression file:\n```yml\n- tool: TypeSpecValidation\npaths:\n- tspconfig.yaml\nrules:\n- SdkTspConfigValidation\nsub-rules:\n- options.@azure-tools/typespec-go.generate-fakes\n- options.@azure-tools/typespec-go.inject-spans\n- options.@azure-tools/typespec-go.service-dir\n- options.@azure-tools/typespec-go.package-dir\nreason: 'Azure Load Testing does not support a Go SDK currently'\n```",
+            "references": [
+                {
+                    "title": "Typespec Validation Failing on PR due to `typespec-go` configuration missing | answer",
+                    "link": ""
+                },
+                {
+                    "title": "Validation Rule Suppression",
+                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Validation"
+                }
+            ]
+        },
+        "actual": {
+            "answer": "Your TypeSpec validation is failing because the CI checks are enforcing the presence of Go SDK emitter configuration options in your `tspconfig.yaml`, even though your service does not plan to support a Go SDK. This is due to the `SdkTspConfigValidation` rule, which validates emitter options for all supported SDK languages by default.\n\n**Best Practice Solution:**\nSince you do not intend to support a Go SDK, you should suppress the specific Go-related validation sub-rules for your TypeSpec project. This is the recommended and supported approach according to Azure TypeSpec validation guidelines.\n\n**How to Suppress Go Emitter Validation:**\n1. Create or update a `suppressions.yaml` file in the root directory of your service specification (the same folder as your `tspconfig.yaml`).\n2. Add the following suppression entry to ignore only the Go emitter options:\n\n```yaml\n- tool: TypeSpecValidation\n  paths:\n    - tspconfig.yaml\n  rules:\n    - SdkTspConfigValidation\n  sub-rules:\n    # Suppress validation for Go emitter options\n    - options.@azure-tools/typespec-go.generate-fakes\n    - options.@azure-tools/typespec-go.inject-spans\n    - options.@azure-tools/typespec-go.service-dir\n    - options.@azure-tools/typespec-go.package-dir\n  reason: 'This service does not support a Go SDK currently.'\n```\n\nThis will allow your PR to pass TypeSpec validation without requiring you to add unnecessary Go SDK configuration. If you ever decide to support Go in the future, you should remove these suppressions and add the required configuration.\n\n**References:**\n- [TypeSpec Validation Rule Suppression Guidance](https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Validation)\n- [Sample suppression for Go emitter options](see below)\n\nIf you need to suppress all validation for emitter options (not recommended unless absolutely necessary), you can suppress the entire `SdkTspConfigValidation` rule, but targeting only the Go sub-rules is preferred.",
+            "references": [
+                {
+                    "title": "Validation Rule Suppression",
+                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Validation"
+                },
+                {
+                    "title": "Typespec Validation Failing on PR due to `typespec-go` configuration missing | answer",
+                    "link": ""
+                }
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The RESPONSE is fully supported by the CONTEXT, accurately reflects the recommended solution, and does not add or omit any critical details.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 5.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 4,
+        "response_completeness_reason": "The response contains all necessary and relevant information from the ground truth, including the specific suppression approach, sample file, and reference to official documentation.",
+        "reference_match": 1.0,
+        "reference_match_result": "pass",
+        "knowledge_match": 0.8928571428571429,
+        "knowledge_match_result": "pass",
+        "overall_score": 8.892857142857142
+    },
+    {
+        "average_score": 8.30713467035306,
+        "total_evals": 8,
+        "similarity_pass_rate": 8,
+        "similarity_fail_rate": 0,
+        "groundedness_pass_rate": 6,
+        "groundedness_fail_rate": 0,
+        "response_completeness_pass_rate": 8,
+        "response_completeness_fail_rate": 0,
+        "reference_match_pass_rate": 4,
+        "reference_match_fail_rate": 4,
+        "knowledge_match_pass_rate": 7,
+        "knowledge_match_fail_rate": 1
+    }
+]

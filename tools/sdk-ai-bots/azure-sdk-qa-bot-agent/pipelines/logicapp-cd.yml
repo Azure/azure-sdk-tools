@@ -1,0 +1,73 @@
+# Deployment pipeline for the Azure SDK QA Bot Logic App.
+# Deploys the Logic App ARM template with environment-specific parameters.
+
+name: Deploy Azure SDK QA Bot Logic App
+
+trigger: none
+pr: none
+
+parameters:
+  - name: environment
+    displayName: 'Target Environment'
+    type: string
+    default: dev
+    values:
+      - dev
+      - test
+      - prod
+
+variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+  - template: /eng/pipelines/templates/variables/image.yml
+  - ${{ if eq(parameters.environment, 'dev') }}:
+    - group: 'Azure SDK QA Bot Dev Variables'
+  - ${{ if eq(parameters.environment, 'test') }}:
+    - group: 'Azure SDK QA Bot Preview Variables'
+  - ${{ if eq(parameters.environment, 'prod') }}:
+    - group: 'Azure SDK QA Bot Prod Variables'
+  - name: workingDirectory
+    value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent'
+
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    Use1ESOfficial: true
+    stages:
+      - stage: DeployLogicApp
+        displayName: 'Deploy Logic App (${{ parameters.environment }})'
+        jobs:
+          - job: Deploy
+            displayName: 'ARM Template Deployment'
+            pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
+            steps:
+              - checkout: self
+                displayName: 'Checkout repository'
+
+              - task: AzureCLI@2
+                displayName: 'Deploy Logic App'
+                inputs:
+                  azureSubscription: $(SERVICE_CONNECTION)
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  workingDirectory: $(workingDirectory)
+                  inlineScript: |
+                    set -euo pipefail
+
+                    TEMPLATE_FILE="pipelines/logicapp/template.json"
+                    PARAMS_FILE="pipelines/logicapp/parameters.${{ parameters.environment }}.json"
+
+                    echo "Deploying Logic App to resource group: $(RESOURCE_GROUP)"
+                    echo "Template: $TEMPLATE_FILE"
+                    echo "Parameters: $PARAMS_FILE"
+
+                    az deployment group create \
+                      --resource-group "$(RESOURCE_GROUP)" \
+                      --template-file "$TEMPLATE_FILE" \
+                      --parameters "@$PARAMS_FILE" \
+                      --name "logicapp-$(Build.BuildId)" \
+                      --verbose
+
+                    echo "Logic App deployment completed successfully."

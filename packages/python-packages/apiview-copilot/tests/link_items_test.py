@@ -23,8 +23,8 @@ sys.modules.setdefault("azure.search.documents.indexes", MagicMock())
 from src._database_manager import RELATIONSHIP_FIELDS, DatabaseManager
 from src._models import Example, ExampleType, Guideline, Memory
 
-
 # ── Helpers ──────────────────────────────────────────────────────────────
+
 
 def _make_guideline(**overrides):
     defaults = {
@@ -70,6 +70,7 @@ def _make_example(**overrides):
 
 
 # ── link_items tests ─────────────────────────────────────────────────────
+
 
 class TestLinkItemsBidirectional:
     """Verify link_items adds cross-references to both items."""
@@ -178,6 +179,7 @@ class TestRelationshipFieldsCoverage:
 
 # ── link_and_save tests ─────────────────────────────────────────────────
 
+
 class FakeContainer:
     """Minimal fake container that stores items in a dict."""
 
@@ -192,6 +194,7 @@ class FakeContainer:
         if item in self._items:
             return dict(self._items[item])
         from azure.cosmos.exceptions import CosmosResourceNotFoundError
+
         raise CosmosResourceNotFoundError(status_code=404, message=f"Item '{item}' not found")
 
     def upsert_item(self, body):

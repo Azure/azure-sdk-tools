@@ -1,12 +1,13 @@
 # Use the official Azure Functions Node.js runtime as the base image
-# Using the latest tag ensures we get the most recent security patches
-FROM mcr.microsoft.com/azure-functions/node:4.0-node20-appservice
+# Pin to the latest v4 Node 22 LTS image for security patches
+FROM mcr.microsoft.com/azure-functions/node:4-node22-appservice
 
 # Set the working directory inside the container
 WORKDIR /home/site/wwwroot
 
-# Install git and other necessary packages
+# Apply security patches and install git
 RUN apt-get update && \
+    apt-get upgrade -y && \
     apt-get install -y git && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*

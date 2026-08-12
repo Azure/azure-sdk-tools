@@ -96,58 +96,42 @@ BOLD_GREEN = BOLD + GREEN
 BOLD_BLUE = BOLD + BLUE
 
 
-helps[
-    "review"
-] = """
+helps["review"] = """
     type: group
     short-summary: Commands for creating and managing APIView reviews.
 """
 
-helps[
-    "agent"
-] = """
+helps["agent"] = """
     type: group
     short-summary: Commands for interacting with the agent.
 """
 
-helps[
-    "apiview"
-] = """
+helps["apiview"] = """
     type: group
     short-summary: Commands for querying APIView data.
 """
 
-helps[
-    "test"
-] = """
+helps["test"] = """
     type: group
     short-summary: Commands for development and testing.
 """
 
-helps[
-    "ops"
-] = """
+helps["ops"] = """
     type: group
     short-summary: Commands for deployment and infrastructure.
 """
 
-helps[
-    "kb"
-] = """
+helps["kb"] = """
     type: group
     short-summary: Commands for interacting with the knowledge base.
 """
 
-helps[
-    "db"
-] = """
+helps["db"] = """
     type: group
     short-summary: Commands for managing the database.
 """
 
-helps[
-    "report"
-] = """
+helps["report"] = """
     type: group
     short-summary: Commands for analytics, auditing, and reporting.
 """
@@ -1653,10 +1637,7 @@ def db_ingest_guidelines(
         )
 
     if result.total_memories:
-        print(
-            f"Memories: {len(result.memories_absorbed)} to absorb, "
-            f"{len(result.memories_retained)} to retain"
-        )
+        print(f"Memories: {len(result.memories_absorbed)} to absorb, " f"{len(result.memories_retained)} to retain")
 
     if result.errors:
         print(f"{Fore.RED}Errors ({len(result.errors)}):{RESET}")
@@ -1906,7 +1887,9 @@ def list_opened_revisions(
     Queries Application Insights for reviews that had page views, then enriches
     with revision metadata from Cosmos DB.
     """
-    data = get_opened_revisions(start_date, end_date, environment=environment, exclude_languages=exclude, created_in_window=created_in_window)
+    data = get_opened_revisions(
+        start_date, end_date, environment=environment, exclude_languages=exclude, created_in_window=created_in_window
+    )
     _print_revision_table(data, empty_msg="No opened revisions found in the specified date range.")
 
 
@@ -2415,9 +2398,7 @@ def get_architect_comments(
             params.append({"name": param_name, "value": rid})
         review_query = f"SELECT c.id, c.Language FROM c WHERE ({' OR '.join(clauses)})"
         review_results = list(
-            reviews_container.query_items(
-                query=review_query, parameters=params, enable_cross_partition_query=True
-            )
+            reviews_container.query_items(query=review_query, parameters=params, enable_cross_partition_query=True)
         )
         review_lang_map = {r["id"]: get_language_pretty_name(r.get("Language", "")) for r in review_results}
 
@@ -2430,19 +2411,13 @@ def get_architect_comments(
     start_iso = to_iso8601(start_date)
     end_iso = to_iso8601(end_date, end_of_day=True)
     thread_starts = get_thread_start_dates(filtered, environment=environment)
-    started_in_window = {
-        key for key, min_created in thread_starts.items() if start_iso <= min_created <= end_iso
-    }
+    started_in_window = {key for key, min_created in thread_starts.items() if start_iso <= min_created <= end_iso}
 
     # By default, exclude replies — keep only the thread-starting comment for threads
     # that actually *started* in the date window (not merely replied to).
     if not include_replies:
         # Keep only comments belonging to threads that started in the window
-        filtered = [
-            c
-            for c in filtered
-            if (c.get("ThreadId") or c.get("ElementId")) in started_in_window
-        ]
+        filtered = [c for c in filtered if (c.get("ThreadId") or c.get("ElementId")) in started_in_window]
 
         # Keep only the first (earliest) comment per thread
         seen_threads = {}
@@ -2466,11 +2441,7 @@ def get_architect_comments(
         # When including replies, identify threads started by an approver and include
         # *all* comments in those threads (not just approver-authored ones).
         # First, restrict to threads that actually started in the date window.
-        filtered = [
-            c
-            for c in filtered
-            if (c.get("ThreadId") or c.get("ElementId")) in started_in_window
-        ]
+        filtered = [c for c in filtered if (c.get("ThreadId") or c.get("ElementId")) in started_in_window]
 
         if allowed_commenters is not None:
             # Find who authored the earliest comment per thread
@@ -2485,20 +2456,18 @@ def get_architect_comments(
                     thread_earliest_in_window[thread_key] = created
                     thread_starters[thread_key] = c.get("CreatedBy", "")
 
-            approver_threads = {
-                k for k, author in thread_starters.items() if author in allowed_commenters
-            }
-            filtered = [
-                c
-                for c in filtered
-                if (c.get("ThreadId") or c.get("ElementId")) in approver_threads
-            ]
+            approver_threads = {k for k, author in thread_starters.items() if author in allowed_commenters}
+            filtered = [c for c in filtered if (c.get("ThreadId") or c.get("ElementId")) in approver_threads]
 
     comments = [APIViewComment(**c) for c in filtered]
 
     results = [
         {
-            **{k: v for k, v in comment.model_dump(by_alias=True, mode="json").items() if k in _APIVIEW_COMMENT_SELECT_FIELDS},
+            **{
+                k: v
+                for k, v in comment.model_dump(by_alias=True, mode="json").items()
+                if k in _APIVIEW_COMMENT_SELECT_FIELDS
+            },
             "Language": review_lang_map.get(comment.review_id, ""),
         }
         for comment in comments

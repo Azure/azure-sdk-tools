@@ -24,7 +24,6 @@ sys.modules["azure.ai.inference.models"] = MagicMock()
 
 from src._apiview_reviewer import ApiViewReview
 
-
 # A minimal API surface that produces exactly 1 section
 SMALL_API = "namespace Foo {\\n  class Bar {\\n  }\\n}"
 

@@ -1,4 +1,27 @@
 :host ::ng-deep {
+    // Approved-status pill shown to non-architect viewers in place of the
+    // Approve action button. Mirrors the size/shape of .btn-success so the
+    // approval status is visually unmissable. See issue #14724.
+    .btn-approved-pill {
+        background-color: var(--alert-success-bg);
+        color: var(--alert-success-color);
+        border: 1px solid var(--success-color);
+        font-weight: 600;
+        cursor: default;
+
+        &:disabled,
+        &.disabled {
+            background-color: var(--alert-success-bg);
+            color: var(--alert-success-color);
+            border-color: var(--success-color);
+            opacity: 1;
+        }
+
+        i {
+            color: var(--success-color);
+        }
+    }
+
     .p-multiselect .p-multiselect-label {
         padding: 0.25rem 0.5rem;
     }

@@ -26,7 +26,7 @@ extends:
           - template: /eng/pipelines/templates/variables/globals.yml
           - template: /eng/pipelines/templates/variables/image.yml
           - name: NodeVersion
-            value: '20.x'
+            value: '24.x'
           - name: VAR_ARTIFACT_NAME
             value: 'drop'
           - name: VAR_BUILD_ARTIFACT_STAGING_DIRECTORY
@@ -38,6 +38,8 @@ extends:
               image: $(LINUXVMIMAGE)
               os: linux
             steps:
+              - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+              
               - task: NodeTool@0
                 inputs:
                   versionSpec: '$(NodeVersion)'

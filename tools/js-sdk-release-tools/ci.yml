@@ -37,7 +37,7 @@ extends:
           - template: /eng/pipelines/templates/variables/globals.yml
           - template: /eng/pipelines/templates/variables/image.yml
           - name: NodeVersion
-            value: '18.x'
+            value: '22.x'
 
         jobs:
           - job: Build
@@ -46,6 +46,8 @@ extends:
               image: $(LINUXVMIMAGE)
               os: linux
             steps:
+            - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+
             - task: NodeTool@0
               inputs:
                 versionSpec: '$(NodeVersion)'

@@ -81,7 +81,7 @@ namespace APIViewLegacy
                 if (a)
                 {
                     stringBuilder.Append("a");
-                    stringBuilder.Append(" href=\"").Append(href).Append("\"");
+                    stringBuilder.Append(" href=\"").Append(HttpUtility.HtmlAttributeEncode(href)).Append("\"");
                 }
                 else
                 {
@@ -89,7 +89,7 @@ namespace APIViewLegacy
                 }
                 if (!string.IsNullOrEmpty(id) && !_readOnly)
                 {
-                    stringBuilder.Append(" id=\"").Append(id).Append("\"");
+                    stringBuilder.Append(" id=\"").Append(HttpUtility.HtmlAttributeEncode(id)).Append("\"");
                 }
                 stringBuilder.Append(" class=\"").Append(elementClass).Append("\"");
                 stringBuilder.Append(">");
@@ -121,7 +121,7 @@ namespace APIViewLegacy
 
         private string EscapeHTML(string word)
         {
-            return word.Replace("<", "&lt;").Replace(">", "&gt;");
+            return word.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
         }
     }
 }

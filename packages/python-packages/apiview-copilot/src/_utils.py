@@ -107,7 +107,7 @@ def guideline_id_to_db(gid: str) -> str:
     """
     prefix = "https://azure.github.io/azure-sdk/"
     if gid.startswith(prefix):
-        gid = gid[len(prefix):]
+        gid = gid[len(prefix) :]
     return gid.replace(".html#", "=html=")
 
 

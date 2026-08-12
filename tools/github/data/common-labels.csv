@@ -102,6 +102,7 @@ Container Instances,,e99695
 Container Orchestrator Runtime,,e99695
 Container Registry,,e99695
 Container Service,,e99695
+Cosmic,,e99695
 Cosmos,,e99695
 Cost Management - Billing,All issues in cost management where billing/price-related data is shown.,e99695
 Cost Management - Budget,"All issues in cost management for Budgets API, Alert API and other Notification scenarios.",e99695
@@ -132,6 +133,7 @@ DevOps,,e99695
 DevOps - Infrastructure,,e99695
 Device Update,,e99695
 Devtestlab,,e99695
+DigitalAssets,,e99695
 Digital Twins,,e99695
 Do Not Merge,,b60205
 Docs,,e99695
@@ -275,7 +277,11 @@ Web Apps,,e99695
 WebPubSub,,e99695
 Weights & Biases,,e99695
 Workload Orchestration,,e99695
+architecture-review-added,Architecture review completed,0e8a16
+architecture-review-in-progress,Architecture review is in progress,fbca04
+architecture-review-needed,Triggers Archie: AI architecture review agent,1d76db
 auto-close-exempt,Prevents the auto-close from closing based on max lifetime,ededed
+auto-release,"When merged to main, release pipelines for this PR's changed packages trigger automatically.",1d76db
 blocking-release,Blocks release,d73a49
 breaking-change,,d73a49
 bug,This issue requires a change to an existing behavior in the product in order to be resolved.,eaa875

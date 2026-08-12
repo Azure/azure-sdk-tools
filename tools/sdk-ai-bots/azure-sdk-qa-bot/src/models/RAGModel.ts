@@ -71,11 +71,16 @@ export class RAGModel implements PromptCompletionModel {
         id: 'N/A',
         answer: '⚠️Unable to establish a connection to the AI service at this time. Please try again later.',
         has_result: false,
-        references: [],
+        references: undefined,
       };
     }
-    // TODO: try merge cancelTimer and stop into one method
-    await thinkingHandler.safeCancelTimer();
+    // Best-effort cancel: safeCancelTimer can throw if the thinking loop can't be stopped.
+    // Swallow the error so stop() still updates the activity with the final reply.
+    try {
+      await thinkingHandler.safeCancelTimer();
+    } catch (error: any) {
+      logger.warn('safeCancelTimer failed unexpectedly, proceeding to deliver reply', { error: error?.message, meta });
+    }
     await thinkingHandler.stop(replyStartTimestamp, ragReply, currentPrompt, ragTenantId);
 
     return { status: 'success' };
@@ -88,23 +93,11 @@ export class RAGModel implements PromptCompletionModel {
     const message: Message = {
       role: 'user',
       content: fullPrompt.currentQuestion,
-      name: fullPrompt.user,
+      user_name: fullPrompt.userName,
+      user_id: fullPrompt.userID,
     };
 
-    const history: Message[] = [];
-    fullPrompt.conversations.forEach((c) => {
-      if (c.question) {
-        history.push({ role: 'user', content: c.question, name: fullPrompt.user });
-      }
-      if (c.answer) {
-        history.push({ role: 'assistant', content: c.answer });
-      }
-    });
-
     const additional_infos: AdditionalInfo[] = [];
-    fullPrompt.additionalInfo.links.forEach((link) => {
-      additional_infos.push({ type: 'link', content: link.text, link: link.url.toString() });
-    });
     fullPrompt.additionalInfo.images.forEach((image) => {
       additional_infos.push({ type: 'image', content: image.text, link: image.url.toString() });
     });
@@ -112,8 +105,9 @@ export class RAGModel implements PromptCompletionModel {
     const payload: CompletionRequestPayload = {
       tenant_id: tenantId,
       message: message,
-      history: history,
       additional_infos,
+      conversation_id: fullPrompt.conversationID,
+      conversation_type: 'teams_channel',
     };
 
     return payload;

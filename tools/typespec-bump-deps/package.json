@@ -19,7 +19,7 @@
     "test": "vitest run"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.0.0"
   },
   "repository": {
     "type": "git",
@@ -41,7 +41,7 @@
     "@types/pacote": "11.1.8",
     "@types/semver": "^7.7.0",
     "chai": "^5.2.0",
-    "vitest": "^3.1.2",
+    "vitest": "^4.1.0",
     "ts-node": "^10.9.2",
     "typescript": "~5.8.3",
     "rimraf": "^6.1.2"

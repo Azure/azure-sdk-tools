@@ -38,11 +38,13 @@ namespace Azure.Sdk.Tools.Cli.Models
                 return false;
             }
 
-            var path = typeSpecProjectPath;
-            if (!path.EndsWith(TSPCONFIG_FILENAME))
+            var path = GetTypeSpecProjectRootPath(typeSpecProjectPath);
+            if (string.IsNullOrEmpty(path))
             {
-                path = Path.Combine(path, TSPCONFIG_FILENAME);
+                return false;
             }
+
+            path = Path.Combine(path, TSPCONFIG_FILENAME);
 
             return File.Exists(path);
         }
@@ -54,7 +56,7 @@ namespace Azure.Sdk.Tools.Cli.Models
                 throw new ArgumentException($"TypeSpec config file is not found in [{typeSpecProjectPath}].");
             }
 
-            var path = typeSpecProjectPath ?? string.Empty;
+            var path = GetTypeSpecProjectRootPath(typeSpecProjectPath);
             var typeSpecProject = new TypeSpecProject
             {
                 ProjectRootPath = path,
@@ -68,6 +70,22 @@ namespace Azure.Sdk.Tools.Cli.Models
 
             typeSpecProject.TypeSpecConfigYaml = tspConfigYaml;
             return typeSpecProject;
+        }
+
+        private static string GetTypeSpecProjectRootPath(string typeSpecProjectPath)
+        {
+            if (string.IsNullOrWhiteSpace(typeSpecProjectPath))
+            {
+                return string.Empty;
+            }
+
+            var path = typeSpecProjectPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            if (Path.GetFileName(path).Equals(TSPCONFIG_FILENAME, StringComparison.OrdinalIgnoreCase))
+            {
+                return Path.GetDirectoryName(path) ?? string.Empty;
+            }
+
+            return path;
         }
 
         public bool IsManagementPlane

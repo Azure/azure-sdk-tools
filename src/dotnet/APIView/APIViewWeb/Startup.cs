@@ -134,7 +134,6 @@ namespace APIViewWeb
             services.AddSingleton<ICosmosVersionsRepository, CosmosVersionsRepository>();
             services.AddSingleton<IDevopsArtifactRepository, DevopsArtifactRepository>();
 
-            services.AddSingleton<IDiagnosticCommentService, DiagnosticCommentService>();
             services.AddSingleton<IReviewManager, ReviewManager>();
             services.AddSingleton<IAPIRevisionsManager, APIRevisionsManager>();
             services.AddSingleton<IAPIVersionsManager, APIVersionsManager>();

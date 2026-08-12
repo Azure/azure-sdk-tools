@@ -12,10 +12,11 @@ const testTimestamp = new Date('2023-10-01T12:00:00Z');
 
 const testPrompt: Prompt = {
   textWithoutMention: 'Hello, world!',
-  links: ['http://example.com/aaa/', 'http://example.com/bbb/'],
   images: ['http://example.com/image1.jpg', 'http://example.com/image2.jpg'],
   userName: 'test-user',
+  userID: 'user-123',
   timestamp: testTimestamp,
+  conversationID: 'test-conversation'
 };
 
 const references: Reference[] = [

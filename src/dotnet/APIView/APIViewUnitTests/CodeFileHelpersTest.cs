@@ -191,7 +191,7 @@ namespace APIViewUnitTests
             result = await CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
             Assert.NotNull(result);
             Assert.False(result.HasDiff);
-            Assert.Equal(15, codeFile.Diagnostics.Length);
+            Assert.Equal(15, result.NodeMetaData.Values.Select(v => v.DiagnosticsObj.Count).Sum());
         }
 
         [Fact]
@@ -503,60 +503,6 @@ namespace APIViewUnitTests
             Assert.Equal(DiffKind.Added, decoratorLine.DiffKind);
         }
 
-        [Fact]
-        public void MapDiagnosticLevelToSeverity_Fatal_ReturnsMustFix()
-        {
-            var method = typeof(DiagnosticCommentService).GetMethod("MapDiagnosticLevelToSeverity",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-
-            var result = (CommentSeverity)method?.Invoke(null, [CodeDiagnosticLevel.Fatal]);
-
-            Assert.Equal(CommentSeverity.MustFix, result);
-        }
-
-        [Fact]
-        public void MapDiagnosticLevelToSeverity_Error_ReturnsMustFix()
-        {
-            var method = typeof(DiagnosticCommentService).GetMethod("MapDiagnosticLevelToSeverity",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-
-            var result = (CommentSeverity)method.Invoke(null, [CodeDiagnosticLevel.Error]);
-
-            Assert.Equal(CommentSeverity.MustFix, result);
-        }
-
-        [Fact]
-        public void MapDiagnosticLevelToSeverity_Warning_ReturnsShouldFix()
-        {
-            var method = typeof(DiagnosticCommentService).GetMethod("MapDiagnosticLevelToSeverity",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-
-            var result = (CommentSeverity)method.Invoke(null, [CodeDiagnosticLevel.Warning]);
-
-            Assert.Equal(CommentSeverity.ShouldFix, result);
-        }
-
-        [Fact]
-        public void MapDiagnosticLevelToSeverity_Info_ReturnsSuggestion()
-        {
-            var method = typeof(DiagnosticCommentService).GetMethod("MapDiagnosticLevelToSeverity",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-
-            var result = (CommentSeverity)method.Invoke(null, [CodeDiagnosticLevel.Info]);
-
-            Assert.Equal(CommentSeverity.Suggestion, result);
-        }
-
-        [Fact]
-        public void MapDiagnosticLevelToSeverity_Default_ReturnsShouldFix()
-        {
-            var method = typeof(DiagnosticCommentService).GetMethod("MapDiagnosticLevelToSeverity",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-
-            var result = (CommentSeverity)method.Invoke(null, [CodeDiagnosticLevel.Default]);
-
-            Assert.Equal(CommentSeverity.ShouldFix, result);
-        }
       
     }
 }

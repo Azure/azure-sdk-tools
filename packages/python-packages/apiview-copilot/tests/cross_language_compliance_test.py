@@ -18,7 +18,9 @@ from src._apiview import get_cross_language_compliance
 from src._apiview_metrics import build_compliance_reports
 
 
-def _make_revision(review_id, language, cross_lang_id=None, created_on="2026-04-15T00:00:00Z", revision_type="Automatic"):
+def _make_revision(
+    review_id, language, cross_lang_id=None, created_on="2026-04-15T00:00:00Z", revision_type="Automatic"
+):
     """Helper to create a fake revision dict."""
     return {
         "ReviewId": review_id,
@@ -148,7 +150,9 @@ class TestBuildComplianceReports:
         container.query_items.return_value = [
             _make_revision("r1", "Python", "azure-core", created_on="2026-03-15T00:00:00Z"),
             _make_revision("r2", "Python", None, created_on="2026-03-20T00:00:00Z", revision_type="Manual"),
-            _make_revision("r3", "Python", "azure-storage", created_on="2026-04-10T00:00:00Z", revision_type="PullRequest"),
+            _make_revision(
+                "r3", "Python", "azure-storage", created_on="2026-04-10T00:00:00Z", revision_type="PullRequest"
+            ),
         ]
         mock_cosmos.return_value = container
 

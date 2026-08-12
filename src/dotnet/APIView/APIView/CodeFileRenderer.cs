@@ -6,6 +6,7 @@ using APIView.Model;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Web;
 
 namespace APIViewLegacy
 {
@@ -39,6 +40,7 @@ namespace APIViewLegacy
             bool isHiddenApiToken = false;
             bool isDeprecatedToken = false;
             bool isSkipDiffRange = false;
+            bool? externalLinkOpen = null;
             Stack<SectionType> nodesInProcess = new Stack<SectionType>();
             int lineNumber = 0;
             (int Count, int Curr) tableColumnCount = (0, 0);
@@ -201,11 +203,29 @@ namespace APIViewLegacy
                         break;
 
                     case CodeFileTokenKind.ExternalLinkStart:
-                        stringBuilder.Append($"<a target=\"_blank\" href=\"{token.Value}\">");
+                        if (Uri.TryCreate(token.Value, UriKind.Absolute, out var linkUri) &&
+                            (linkUri.Scheme == Uri.UriSchemeHttps || linkUri.Scheme == Uri.UriSchemeHttp))
+                        {
+                            stringBuilder.Append("<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"").Append(HttpUtility.HtmlAttributeEncode(token.Value)).Append("\">");
+                            externalLinkOpen = true;
+                        }
+                        else
+                        {
+                            stringBuilder.Append("<span>");
+                            externalLinkOpen = false;
+                        }
                         break;
 
                     case CodeFileTokenKind.ExternalLinkEnd:
-                        stringBuilder.Append("</a>");
+                        if (externalLinkOpen == true)
+                        {
+                            stringBuilder.Append("</a>");
+                        }
+                        else if (externalLinkOpen == false)
+                        {
+                            stringBuilder.Append("</span>");
+                        }
+                        externalLinkOpen = null;
                         break;
 
                     default:

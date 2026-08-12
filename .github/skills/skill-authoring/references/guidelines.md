@@ -4,12 +4,12 @@ Best practices for writing Agent Skills per the [Agent Skills Specification](htt
 
 ## Quick Reference
 
-| Constraint | Limit | Notes |
-|------------|-------|-------|
-| `name` field | 1-64 chars | Lowercase, hyphens only, no consecutive hyphens |
-| `description` field | 1-1024 chars | Describe what AND when to use |
-| SKILL.md body | < 5000 tokens | ~500 lines max |
-| Reference files | < 1000 tokens | Load on demand |
+| Constraint          | Limit         | Notes                                           |
+| ------------------- | ------------- | ----------------------------------------------- |
+| `name` field        | 1-64 chars    | Lowercase, hyphens only, no consecutive hyphens |
+| `description` field | 1-1024 chars  | Describe what AND when to use                   |
+| SKILL.md body       | < 5000 tokens | ~500 lines max                                  |
+| Reference files     | < 1000 tokens | Load on demand                                  |
 
 ## Frontmatter
 
@@ -23,11 +23,13 @@ description: A clear description of what this skill does and when to use it.
 ```
 
 **`name` rules:**
+
 - 1-64 characters, lowercase letters, numbers, hyphens only
 - Must not start/end with `-` or contain `--`
 - Must match parent directory name
 
 **`description` rules:**
+
 - 1-1024 characters
 - Should describe BOTH what the skill does AND when to use it
 - Include keywords that help agents identify relevant tasks
@@ -48,7 +50,7 @@ Use `WHEN:` with distinctive quoted trigger phrases (preferred for cross-model c
 
 ```yaml
 # Good - WHEN: with quoted phrases (preferred)
-description: "Perform Azure compliance assessments using azqr. WHEN: \"check compliance\", \"assess Azure resources\"."
+description: 'Perform Azure compliance assessments using azqr. WHEN: "check compliance", "assess Azure resources".'
 ```
 
 > ⚠️ **Do NOT add "DO NOT USE FOR:" clauses.** They cause keyword contamination on Claude Sonnet and similar models.
@@ -66,12 +68,12 @@ my-skill/
 └── assets/               # Optional: templates, data files
 ```
 
-| Folder | Purpose | Naming |
-|--------|---------|--------|
+| Folder        | Purpose                         | Naming                 |
+| ------------- | ------------------------------- | ---------------------- |
 | `references/` | Detailed docs, loaded on-demand | `lowercase-hyphens.md` |
-| `templates/` | Output format templates | `lowercase-hyphens.md` |
-| `scripts/` | Executable code | Language conventions |
-| `assets/` | Data files, configs | File type conventions |
+| `templates/`  | Output format templates         | `lowercase-hyphens.md` |
+| `scripts/`    | Executable code                 | Language conventions   |
+| `assets/`     | Data files, configs             | File type conventions  |
 
 ### Recipes Pattern
 
@@ -85,11 +87,11 @@ For skills working with multiple cloud services, use `references/services/` with
 
 ### Progressive Disclosure
 
-| Tier | Content | When Loaded |
-|------|---------|-------------|
-| **Metadata** | `name` + `description` | Startup (all skills) |
-| **Instructions** | SKILL.md body | On activation |
-| **Resources** | `references/`, `scripts/` | On demand |
+| Tier             | Content                   | When Loaded          |
+| ---------------- | ------------------------- | -------------------- |
+| **Metadata**     | `name` + `description`    | Startup (all skills) |
+| **Instructions** | SKILL.md body             | On activation        |
+| **Resources**    | `references/`, `scripts/` | On demand            |
 
 **Key principle:** Keep SKILL.md lean, move details to references.
 
@@ -101,6 +103,7 @@ References load **only when explicitly linked** — NOT when the skill activates
 - ❌ "Error docs are in references/" → Agent won't find files
 
 Per [agentskills Issue #97](https://github.com/agentskills/agentskills/issues/97):
+
 - References are re-read each time (no caching)
 - Write each reference as a **self-contained unit**
 - The **entire file** loads when referenced (not sections)

@@ -1,11 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using ModelContextProtocol.Server;
 
@@ -122,8 +122,6 @@ public class LogAnalysisTool(
 
             return new LogAnalysisResponse
             {
-                Summary = string.Empty, // As requested, leaving empty
-                SuggestedFix = string.Empty, // As requested, leaving empty
                 Errors = errors
             };
         }

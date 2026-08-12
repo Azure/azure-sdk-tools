@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 
@@ -64,12 +65,75 @@ namespace Azure.Sdk.Tools.TestProxy.Store
     /// each other.
     /// 
     /// This simple class merely abstracts the enqueuing of that work so that users don't need to worry about the above.
+    ///
+    /// NOTE: TaskQueue serializes updates within a single process only. Multiple test-proxy instances running concurrently
+    /// against the same --storage-location (e.g. `go test ./...` across SDK subpackages on a developer box or CI) are peers
+    /// that share the breadcrumb file with no cross-process coordination. To avoid spurious ERROR_SHARING_VIOLATION failures
+    /// on Windows in that scenario, all reads and writes below open the file with FileShare.ReadWrite | FileShare.Delete,
+    /// which matches the default sharing semantics of POSIX open(2). This intentionally adopts POSIX behavior on Windows
+    /// rather than introducing atomic-rename or cross-process locking: the underlying race exists on Linux/macOS today and
+    /// has not been observed to cause test failures in practice (writes are small and fast; same-SHA writers produce identical
+    /// output, so a lost update is invisible). A fully race-free implementation would require temp-file-plus-rename for writes
+    /// and a named cross-process mutex around the read-modify-write in Update; both are deferred until observed harm justifies
+    /// the added complexity.
     /// </summary>
     public class GitStoreBreadcrumb
     {
+        // Sharing flags that mirror POSIX open(2) defaults: any peer may open, read, write,
+        // or unlink/rename the file while we hold a handle.
+        private const FileShare PosixLikeShare = FileShare.ReadWrite | FileShare.Delete;
+
         TaskQueue BreadCrumbWorker = new TaskQueue();
 
         public GitStoreBreadcrumb() { }
+
+        // ReadAllLinesShared / ReadAllLinesSharedAsync / WriteAllLinesShared mirror the
+        // File.ReadAllLines / File.WriteAllLines helpers but open the underlying FileStream
+        // with FileShare.ReadWrite | FileShare.Delete. See class remarks for rationale.
+        private static string[] ReadAllLinesShared(string path)
+        {
+            using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, PosixLikeShare);
+            using var sr = new StreamReader(fs, Encoding.UTF8);
+            var lines = new List<string>();
+            string line;
+            while ((line = sr.ReadLine()) != null)
+            {
+                lines.Add(line);
+            }
+            return lines.ToArray();
+        }
+
+        private static async Task<string[]> ReadAllLinesSharedAsync(string path)
+        {
+            // Open with FileOptions.Asynchronous so ReadLineAsync uses true async I/O
+            // rather than dispatching sync reads to the thread pool.
+            var opts = new FileStreamOptions
+            {
+                Mode = FileMode.Open,
+                Access = FileAccess.Read,
+                Share = PosixLikeShare,
+                Options = FileOptions.Asynchronous,
+            };
+            using var fs = new FileStream(path, opts);
+            using var sr = new StreamReader(fs, Encoding.UTF8);
+            var lines = new List<string>();
+            string line;
+            while ((line = await sr.ReadLineAsync()) != null)
+            {
+                lines.Add(line);
+            }
+            return lines.ToArray();
+        }
+
+        private static void WriteAllLinesShared(string path, IEnumerable<string> lines)
+        {
+            using var fs = new FileStream(path, FileMode.Create, FileAccess.Write, PosixLikeShare);
+            using var sw = new StreamWriter(fs, Encoding.UTF8);
+            foreach (var line in lines)
+            {
+                sw.WriteLine(line);
+            }
+        }
 
         public string GetBreadCrumbLocation(GitAssetsConfiguration configuration)
         {
@@ -103,13 +167,13 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 }
                 else
                 {
-                    var readLines = await File.ReadAllLinesAsync(breadcrumbFile);
+                    var readLines = await ReadAllLinesSharedAsync(breadcrumbFile);
                     var lines = readLines.Select(x => new BreadcrumbLine(x)).ToDictionary(x => x.PathToAssetsJson, x => x);
                     lines[targetKey] = new BreadcrumbLine(configuration);
                     linesForWriting = lines.Values.Select(x => x.ToString());
                 }
                 
-                File.WriteAllLines(breadcrumbFile, linesForWriting, System.Text.Encoding.UTF8);
+                WriteAllLinesShared(breadcrumbFile, linesForWriting);
             });
         }
 
@@ -119,7 +183,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (File.Exists(breadLocation))
             {
-                var readLines = File.ReadAllLines(breadLocation);
+                var readLines = ReadAllLinesShared(breadLocation);
                 var lines = readLines.Select(x => new BreadcrumbLine(x)).ToDictionary(x => x.PathToAssetsJson, x => x);
 
                 foreach (var line in lines)

@@ -1,4 +1,4 @@
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
 
 namespace Azure.Sdk.Tools.Cli.CopilotAgents;
 
@@ -7,6 +7,6 @@ namespace Azure.Sdk.Tools.Cli.CopilotAgents;
 /// </summary>
 public interface ICopilotSessionWrapper : IAsyncDisposable
 {
-    IDisposable On(SessionEventHandler handler);
+    IDisposable On(Action<SessionEvent> handler);
     Task<string> SendAsync(MessageOptions options, CancellationToken cancellationToken = default);
 }

@@ -1,5 +1,6 @@
 import { createFeedbackCard } from './feedback.js';
 import { supportChannelCard } from './support-channel.js';
+import config from '../../config/config.js';
 
 export function createContactCard() {
   const feedbackCard = createFeedbackCard();
@@ -25,7 +26,7 @@ export function createContactCard() {
       },
       {
         type: 'TextBlock',
-        text: '📝 The bot cannot respond further to messages with edits; reply with @ Azure SDK QA bot for follow-up.',
+        text: `📝 The bot will automatically follow up with the original poster. Once others join the thread, everyone must @${config.botDisplayName} for follow-up; message edits won't trigger a reply.`,
         wrap: true,
       },
     ],

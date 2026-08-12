@@ -320,7 +320,9 @@ describe('ThinkingHandler', () => {
       const mockPrompt: Prompt = {
         textWithoutMention: 'Test prompt',
         userName: 'TestUser',
+        userID: 'user-123',
         timestamp: new Date(),
+        conversationID: 'test-conversation',
       };
 
       // Test the stop method with error
@@ -331,6 +333,15 @@ describe('ThinkingHandler', () => {
         type: 'message',
         id: undefined, // resourceId is undefined in this test
         text: "🚫Sorry, I'm having some validation issues right now and can't answer your question. Error: Message content cannot be empty.",
+        entities: [
+          {
+            type: 'https://schema.org/Message',
+            '@type': 'Message',
+            '@context': 'https://schema.org',
+            '@id': '',
+            additionalType: ['AIGeneratedContent'],
+          },
+        ],
         conversation: mockContext.activity?.conversation,
       });
     });
@@ -345,7 +356,9 @@ describe('ThinkingHandler', () => {
       const mockPrompt: Prompt = {
         textWithoutMention: 'Another test prompt',
         userName: 'TestUser',
+        userID: 'user-123',
         timestamp: new Date(),
+        conversationID: 'test-conversation',
       };
 
       // Test the stop method with error
@@ -356,6 +369,56 @@ describe('ThinkingHandler', () => {
         type: 'message',
         id: undefined,
         text: "🚫Sorry, I'm having some service issues right now and can't answer your question. Please try again later. Error: LLM model is currently overloaded.",
+        entities: [
+          {
+            type: 'https://schema.org/Message',
+            '@type': 'Message',
+            '@context': 'https://schema.org',
+            '@id': '',
+            additionalType: ['AIGeneratedContent'],
+          },
+        ],
+        conversation: mockContext.activity?.conversation,
+      });
+    });
+
+    it('should add AI-generated and trace labels to successful responses', async () => {
+      const successResponse: CompletionResponsePayload = {
+        id: 'test-id',
+        answer: 'This is a successful response',
+        has_result: true,
+        references: [],
+        trace_id: 'test-trace-id',
+      };
+      const mockPrompt: Prompt = {
+        textWithoutMention: 'Test prompt',
+        userName: 'TestUser',
+        userID: 'user-123',
+        timestamp: new Date(),
+        conversationID: 'test-conversation',
+      };
+
+      await thinkingHandler.stop(new Date(), successResponse, mockPrompt);
+
+      expect(mockContext.updateActivity).toHaveBeenCalledWith({
+        type: 'message',
+        id: undefined,
+        text: 'This is a successful response',
+        entities: [
+          {
+            type: 'https://schema.org/Message',
+            '@type': 'Message',
+            '@context': 'https://schema.org',
+            '@id': '',
+            additionalType: ['AIGeneratedContent'],
+            usageInfo: {
+              type: 'https://schema.org/Message',
+              '@type': 'CreativeWork',
+              name: 'Internal Tracking',
+              description: 'Trace ID: test-trace-id',
+            },
+          },
+        ],
         conversation: mockContext.activity?.conversation,
       });
     });

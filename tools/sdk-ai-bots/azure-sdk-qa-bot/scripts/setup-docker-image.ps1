@@ -28,10 +28,6 @@ if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 
-# Copy azsdk-cli source using the dedicated script
-Write-Host "Copying azsdk-cli source..."
-& "./scripts/copy-azsdk-source.ps1"
-
 # setup docker
 docker build . -t ${ImageName}:local
 

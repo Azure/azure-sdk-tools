@@ -52,7 +52,7 @@ export class ActivityConverter {
         conversationType: 'channel',
         tenantId: tenantId,
         id: (chatMessage.channelIdentity?.channelId || '') + 
-            ';messageid=' + (chatMessage.id || '')
+            ';messageid=' + (chatMessage.replyToId || '')
       },
       
       // Recipient information (bot)

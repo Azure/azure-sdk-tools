@@ -18,7 +18,7 @@ public class APIVersionsManager : IAPIVersionsManager
         _versionsRepository = versionsRepository;
     }
 
-    public async Task<APIVersionModel> GetOrCreateVersionAsync(string reviewId, string packageVersion, int? pullRequestNo = null, string sourceBranch = null)
+    public async Task<APIVersionModel> GetOrCreateVersionAsync(string reviewId, string packageVersion, string language = null, int? pullRequestNo = null, string sourceBranch = null)
     {
         string versionIdentifier;
         VersionKind kind;
@@ -30,7 +30,7 @@ public class APIVersionsManager : IAPIVersionsManager
         }
         else
         {
-            (versionIdentifier, kind) = VersionNormalizationHelper.NormalizeVersion(packageVersion);
+            (versionIdentifier, kind) = VersionNormalizationHelper.NormalizeVersion(packageVersion, language);
         }
 
         APIVersionModel existing = await _versionsRepository.GetVersionByIdentifierAsync(reviewId, versionIdentifier, kind);

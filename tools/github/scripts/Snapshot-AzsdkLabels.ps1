@@ -40,7 +40,11 @@ if ($PSCmdlet.ParameterSetName -eq 'Languages') {
 }
 
 if ($PSCmdlet.ParameterSetName -eq 'RepositoryFile') {
-    $Repositories = Get-Content $RepositoryFilePath
+    $Repositories = @(
+        Get-Content $RepositoryFilePath |
+            ForEach-Object { ([string]$_).Trim() } |
+            Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and -not $_.EndsWith('-pr', [StringComparison]::OrdinalIgnoreCase) }
+    )
 }
 
 # If the output path does not exist, create it.
@@ -107,7 +111,7 @@ foreach ($repo in $Repositories) {
 Inspects labels for a set of repositories and creates a snapshot of those not part of the common set.
 
 .DESCRIPTION
-Inspects labels for a set of repositories and creates a snapshot of those labels not part of the common set.  The snapshot is written as a line-delimited list of label names in the specified directory named after the source repository.
+Inspects labels for a set of repositories and creates a snapshot of those labels not part of the common set.  The snapshot is written as a line-delimited list of label names in the specified directory named after the source repository. When repositories are loaded from RepositoryFilePath, entries ending in "-pr" are skipped before any snapshots or reporting are generated.
 
 .PARAMETER SnapshotDirectory
 The fully-qualifeid path to the directory in which repository shapshot files should be written.
@@ -122,7 +126,7 @@ The GitHub repositories to inspect and build snapshots for.
 The Azure SDK languages whose repositories should be inspected and snapshots built for.   e.g., "net" for "Azure/azure-sdk-for-net".
 
 .PARAMETER RepositoryFilePath
-The fully-qualified path (including filename) to a new line-delmited file of respositories to inspect and build snapshots for.
+The fully-qualified path (including filename) to a new line-delmited file of respositories to inspect and build snapshots for. Entries ending in "-pr" are skipped.
 
 .PARAMETER Force
 Build snapshots for each repository without prompting.

@@ -1,12 +1,13 @@
 using System.CommandLine;
 using System.CommandLine.Parsing;
-using Moq;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
+using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Telemetry;
+using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Package;
-using Azure.Sdk.Tools.Cli.Telemetry;
-using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
+using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
 {
@@ -131,7 +132,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
                 {
                     Assert.That(exitCode, Is.EqualTo(1), "Command should fail, as the final readme doesn't pass validation");
                     Assert.That(outputHelper.Outputs.First().Stream, Is.EqualTo(OutputHelper.StreamType.Stderr));
-                    Assert.That(outputHelper.Outputs.First().Output, Is.EqualTo($"[ERROR] ReadmeGenerator failed with validation errors: {expectedFeedback}"));
+                    Assert.That(outputHelper.Outputs.First().Output, Is.EqualTo($"[ERROR] ReadmeGenerator failed with validation errors: {expectedFeedback}{Environment.NewLine}{CommandResponse.SupportChannelMessage}"));
                 });
 
                 Assert.That(File.Exists(readmeOutputPath), Is.True, "Readme output file should be created");

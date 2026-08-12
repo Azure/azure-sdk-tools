@@ -21,7 +21,6 @@ import { ReviewPageModule } from 'src/app/_modules/review-page.module';
 import { APIRevision } from 'src/app/_models/revision';
 import { CommentItemModel, CommentSource } from 'src/app/_models/commentItemModel';
 import { CommentSeverity } from 'src/app/_models/commentItemModel';
-import { getVisibleComments } from 'src/app/_helpers/comment-visibility.helper';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
@@ -319,163 +318,6 @@ describe('ConversationComponent', () => {
 
       // Back to 1 active thread
       expect(component.numberOfActiveThreads).toBe(1);
-    });
-  });
-
-  describe('Diagnostic visibility filtering', () => {
-    it('should only show diagnostic comments for active revision and exclude others', () => {
-      const apiRevisions = [
-        { id: 'rev-1', createdOn: '2021-10-01T00:00:00Z' },
-        { id: 'rev-2', createdOn: '2022-10-01T00:00:00Z' }
-      ] as APIRevision[];
-
-      const comments = [
-        // User comment — always visible
-        { id: 'c1', elementId: 'elem-1', apiRevisionId: 'rev-1', commentSource: CommentSource.UserGenerated, isResolved: false },
-        // Diagnostic for active revision — visible
-        { id: 'c2', elementId: 'elem-2', apiRevisionId: 'rev-2', commentSource: CommentSource.Diagnostic, isResolved: false },
-        // Diagnostic for non-active revision — NOT visible
-        { id: 'c3', elementId: 'elem-3', apiRevisionId: 'rev-1', commentSource: CommentSource.Diagnostic, isResolved: false },
-        // AI comment — always visible
-        { id: 'c4', elementId: 'elem-4', apiRevisionId: 'rev-1', commentSource: CommentSource.AIGenerated, isResolved: false },
-      ] as CommentItemModel[];
-
-      component.apiRevisions = apiRevisions;
-      component.comments = comments;
-      component.activeApiRevisionId = 'rev-2';
-      component.createCommentThreads();
-
-      // The shared helper should produce the same set the component uses
-      const helperResult = getVisibleComments(comments, 'rev-2');
-      expect(helperResult.allVisibleComments.map(c => c.id).sort()).toEqual(['c1', 'c2', 'c4']);
-
-      // Component should show 3 threads (c1, c2, c4) — c3 excluded
-      const allThreads = Array.from(component.commentThreads.values()).flat();
-      const allCommentIds = allThreads.flatMap(t => t.comments!.map(c => c.id)).sort();
-      expect(allCommentIds).toEqual(['c1', 'c2', 'c4']);
-
-      // All 3 are unresolved
-      expect(component.numberOfActiveThreads).toBe(3);
-    });
-
-    it('should cap diagnostics at 250 for display but count all for badge', () => {
-      const apiRevisions = [
-        { id: 'rev-1', createdOn: '2021-10-01T00:00:00Z' }
-      ] as APIRevision[];
-
-      // 300 diagnostic comments for active revision + 1 user comment
-      const diagnostics = Array.from({ length: 300 }, (_, i) => ({
-        id: `diag-${i}`,
-        elementId: `diag-elem-${i}`,
-        apiRevisionId: 'rev-1',
-        commentSource: CommentSource.Diagnostic,
-        isResolved: false,
-      })) as CommentItemModel[];
-
-      const userComment = {
-        id: 'user-1',
-        elementId: 'user-elem-1',
-        apiRevisionId: 'rev-1',
-        commentSource: CommentSource.UserGenerated,
-        isResolved: false,
-      } as CommentItemModel;
-
-      component.apiRevisions = apiRevisions;
-      component.comments = [userComment, ...diagnostics];
-      component.activeApiRevisionId = 'rev-1';
-      component.createCommentThreads();
-
-      expect(component.totalDiagnosticsInRevision).toBe(300);
-      expect(component.diagnosticsTruncated).toBe(true);
-      expect(component.hiddenUnresolvedDiagnosticsCount).toBe(50);
-      expect(component.hiddenResolvedDiagnosticsCount).toBe(0);
-
-      // Display threads are capped: 1 user + 250 diagnostics = 251 threads shown
-      const allDisplayedThreads = Array.from(component.commentThreads.values()).flat();
-      expect(allDisplayedThreads).toHaveLength(251);
-    });
-
-    it('should always show all MustFix unresolved diagnostics even when they exceed 250', () => {
-      const apiRevisions = [
-        { id: 'rev-1', createdOn: '2021-10-01T00:00:00Z' }
-      ] as APIRevision[];
-
-      // 300 MustFix unresolved + 50 lower-severity unresolved + 40 resolved
-      const mustFixDiagnostics = Array.from({ length: 300 }, (_, i) => ({
-        id: `mf-${i}`, elementId: `mf-elem-${i}`,
-        apiRevisionId: 'rev-1', commentSource: CommentSource.Diagnostic,
-        severity: CommentSeverity.MustFix, isResolved: false,
-      })) as CommentItemModel[];
-      const otherUnresolved = Array.from({ length: 50 }, (_, i) => ({
-        id: `oth-${i}`, elementId: `oth-elem-${i}`,
-        apiRevisionId: 'rev-1', commentSource: CommentSource.Diagnostic,
-        severity: CommentSeverity.Suggestion, isResolved: false,
-      })) as CommentItemModel[];
-      const resolved = Array.from({ length: 40 }, (_, i) => ({
-        id: `res-${i}`, elementId: `res-elem-${i}`,
-        apiRevisionId: 'rev-1', commentSource: CommentSource.Diagnostic,
-        severity: CommentSeverity.MustFix, isResolved: true,
-      })) as CommentItemModel[];
-
-      component.apiRevisions = apiRevisions;
-      component.comments = [...mustFixDiagnostics, ...otherUnresolved, ...resolved];
-      component.activeApiRevisionId = 'rev-1';
-      component.createCommentThreads();
-
-      // displayLimit = max(250, 300) = 300; so all 300 MustFix unresolved fit,
-      // but the 50 other unresolved and 40 resolved are all hidden
-      expect(component.totalDiagnosticsInRevision).toBe(390);
-      expect(component.diagnosticsTruncated).toBe(true);
-      expect(component.hiddenUnresolvedDiagnosticsCount).toBe(50);
-      expect(component.hiddenResolvedDiagnosticsCount).toBe(40);
-
-      const allDisplayedThreads = Array.from(component.commentThreads.values()).flat();
-      expect(allDisplayedThreads).toHaveLength(300);
-    });
-
-    it('should correctly detect MustFix and sort when severity is a camelCase string from the API', () => {
-      const apiRevisions = [
-        { id: 'rev-1', createdOn: '2021-10-01T00:00:00Z' }
-      ] as APIRevision[];
-
-      // Simulate real API payload: severity as camelCase strings, not numeric enum values
-      const mustFixUnresolved = Array.from({ length: 10 }, (_, i) => ({
-        id: `mf-${i}`, elementId: `mf-elem-${i}`,
-        apiRevisionId: 'rev-1', commentSource: CommentSource.Diagnostic,
-        severity: 'mustFix' as any, isResolved: false,
-      })) as CommentItemModel[];
-      const suggestionUnresolved = Array.from({ length: 5 }, (_, i) => ({
-        id: `sug-${i}`, elementId: `sug-elem-${i}`,
-        apiRevisionId: 'rev-1', commentSource: CommentSource.Diagnostic,
-        severity: 'suggestion' as any, isResolved: false,
-      })) as CommentItemModel[];
-      const resolved = Array.from({ length: 3 }, (_, i) => ({
-        id: `res-${i}`, elementId: `res-elem-${i}`,
-        apiRevisionId: 'rev-1', commentSource: CommentSource.Diagnostic,
-        severity: 'mustFix' as any, isResolved: true,
-      })) as CommentItemModel[];
-
-      component.apiRevisions = apiRevisions;
-      component.comments = [...mustFixUnresolved, ...suggestionUnresolved, ...resolved];
-      component.activeApiRevisionId = 'rev-1';
-      component.createCommentThreads();
-
-      // All 18 fit within 250 so none are hidden
-      expect(component.totalDiagnosticsInRevision).toBe(18);
-      expect(component.diagnosticsTruncated).toBe(false);
-      expect(component.hiddenUnresolvedDiagnosticsCount).toBe(0);
-      expect(component.hiddenResolvedDiagnosticsCount).toBe(0);
-
-      // All threads displayed
-      const allDisplayedThreads = Array.from(component.commentThreads.values()).flat();
-      expect(allDisplayedThreads).toHaveLength(18);
-
-      // First 10 threads should be the MustFix unresolved (tier 0), next 5 suggestion, last 3 resolved
-      const firstThread = allDisplayedThreads[0];
-      expect(firstThread.comments![0].severity).toBe('mustFix');
-      expect(firstThread.isResolvedCommentThread).toBe(false);
-      const lastThread = allDisplayedThreads[17];
-      expect(lastThread.isResolvedCommentThread).toBe(true);
     });
   });
 
@@ -856,8 +698,7 @@ describe('ConversationComponent', () => {
     it('should filter by kind "human" (UserGenerated source)', () => {
       const human = makeThread({ commentSource: CommentSource.UserGenerated });
       const ai = makeThread({ commentSource: CommentSource.AIGenerated });
-      const diag = makeThread({ commentSource: CommentSource.Diagnostic });
-      setThreads(component, [human, ai, diag]);
+      setThreads(component, [human, ai]);
 
       component.filterStatus = 'all';
       component.filterSeverities.clear();
@@ -881,31 +722,17 @@ describe('ConversationComponent', () => {
       expect(component.filteredThreadCount).toBe(2);
     });
 
-    it('should filter by kind "diagnostic"', () => {
-      const diag = makeThread({ commentSource: CommentSource.Diagnostic });
-      const human = makeThread({ commentSource: CommentSource.UserGenerated });
-      setThreads(component, [diag, human]);
-
-      component.filterStatus = 'all';
-      component.filterSeverities.clear();
-      component.filterKinds = new Set(['diagnostic']);
-      component.applyFilters();
-
-      expect(component.filteredThreadCount).toBe(1);
-    });
-
     it('should show all kinds when filterKinds is empty', () => {
       const human = makeThread({ commentSource: CommentSource.UserGenerated });
       const ai = makeThread({ commentSource: CommentSource.AIGenerated });
-      const diag = makeThread({ commentSource: CommentSource.Diagnostic });
-      setThreads(component, [human, ai, diag]);
+      setThreads(component, [human, ai]);
 
       component.filterStatus = 'all';
       component.filterSeverities.clear();
       component.filterKinds.clear();
       component.applyFilters();
 
-      expect(component.filteredThreadCount).toBe(3);
+      expect(component.filteredThreadCount).toBe(2);
     });
 
     it('should combine status + severity filters', () => {
@@ -970,8 +797,8 @@ describe('ConversationComponent', () => {
 
     it('toggleKindFilter should add and remove kind keys', () => {
       const human = makeThread({ commentSource: CommentSource.UserGenerated });
-      const diag = makeThread({ commentSource: CommentSource.Diagnostic });
-      setThreads(component, [human, diag]);
+      const ai = makeThread({ commentSource: CommentSource.AIGenerated });
+      setThreads(component, [human, ai]);
 
       component.filterStatus = 'all';
       component.filterSeverities.clear();
@@ -981,7 +808,7 @@ describe('ConversationComponent', () => {
       expect(component.filterKinds.has('human')).toBe(true);
       expect(component.filteredThreadCount).toBe(1);
 
-      component.toggleKindFilter('diagnostic');
+      component.toggleKindFilter('ai');
       expect(component.filteredThreadCount).toBe(2);
 
       component.toggleKindFilter('human');

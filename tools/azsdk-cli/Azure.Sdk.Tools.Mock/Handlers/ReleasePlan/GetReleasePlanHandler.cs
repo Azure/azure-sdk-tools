@@ -39,7 +39,6 @@ public class GetReleasePlanHandler : IMockToolHandler
             Owner = "testuser@microsoft.com",
             SDKReleaseMonth = "06/2026",
             ReleasePlanId = 50001,
-            ReleasePlanLink = "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35000",
             IsDataPlane = true,
             SpecType = "TypeSpec",
             ActiveSpecPullRequest = "https://github.com/Azure/azure-rest-api-specs/pull/12345",

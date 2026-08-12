@@ -45,16 +45,12 @@ class TestCheckForDuplicateMemory:
 
     def test_empty_guideline_ids_returns_none(self):
         """When guideline_ids is an empty list, should skip dedup."""
-        result = check_for_duplicate_memory(
-            raw_memory=_make_raw_memory(), guideline_ids=[]
-        )
+        result = check_for_duplicate_memory(raw_memory=_make_raw_memory(), guideline_ids=[])
         assert result is None
 
     def test_empty_memory_returns_none(self):
         """When title and content are empty, should return None immediately."""
-        result = check_for_duplicate_memory(
-            raw_memory={"title": "", "content": ""}, guideline_ids=["g1"]
-        )
+        result = check_for_duplicate_memory(raw_memory={"title": "", "content": ""}, guideline_ids=["g1"])
         assert result is None
 
     @patch("src._memory_utils.DatabaseManager")
@@ -64,9 +60,7 @@ class TestCheckForDuplicateMemory:
         mock_db_cls.get_instance.return_value = mock_db
         mock_db.guidelines.get_batched.side_effect = Exception("Not found")
 
-        result = check_for_duplicate_memory(
-            raw_memory=_make_raw_memory(), guideline_ids=["g1"]
-        )
+        result = check_for_duplicate_memory(raw_memory=_make_raw_memory(), guideline_ids=["g1"])
         assert result is None
 
     @patch("src._memory_utils.DatabaseManager")
@@ -76,9 +70,7 @@ class TestCheckForDuplicateMemory:
         mock_db_cls.get_instance.return_value = mock_db
         mock_db.guidelines.get_batched.return_value = [{"id": "g1", "title": "Guideline", "related_memories": []}]
 
-        result = check_for_duplicate_memory(
-            raw_memory=_make_raw_memory(), guideline_ids=["g1"]
-        )
+        result = check_for_duplicate_memory(raw_memory=_make_raw_memory(), guideline_ids=["g1"])
         assert result is None
 
     @patch("src._memory_utils.run_prompt")
@@ -94,18 +86,20 @@ class TestCheckForDuplicateMemory:
             {"id": "mem-existing", "title": "Existing title", "content": "Existing content"}
         ]
 
-        mock_run_prompt.return_value = json.dumps({
-            "groups": [{
-                "memory_ids": ["mem-existing", _NEW_MEMORY_SENTINEL],
-                "merged_title": "Merged title",
-                "merged_content": "Merged content",
-                "reason": "Same core recommendation",
-            }]
-        })
-
-        result = check_for_duplicate_memory(
-            raw_memory=_make_raw_memory(), guideline_ids=["g1"]
+        mock_run_prompt.return_value = json.dumps(
+            {
+                "groups": [
+                    {
+                        "memory_ids": ["mem-existing", _NEW_MEMORY_SENTINEL],
+                        "merged_title": "Merged title",
+                        "merged_content": "Merged content",
+                        "reason": "Same core recommendation",
+                    }
+                ]
+            }
         )
+
+        result = check_for_duplicate_memory(raw_memory=_make_raw_memory(), guideline_ids=["g1"])
         assert result is not None
         assert result["existing_memory_id"] == "mem-existing"
         assert result["merged_title"] == "Merged title"
@@ -126,9 +120,7 @@ class TestCheckForDuplicateMemory:
 
         mock_run_prompt.return_value = json.dumps({"groups": []})
 
-        result = check_for_duplicate_memory(
-            raw_memory=_make_raw_memory(), guideline_ids=["g1"]
-        )
+        result = check_for_duplicate_memory(raw_memory=_make_raw_memory(), guideline_ids=["g1"])
         assert result is None
 
     @patch("src._memory_utils.run_prompt")
@@ -146,9 +138,7 @@ class TestCheckForDuplicateMemory:
 
         mock_run_prompt.side_effect = Exception("LLM error")
 
-        result = check_for_duplicate_memory(
-            raw_memory=_make_raw_memory(), guideline_ids=["g1"]
-        )
+        result = check_for_duplicate_memory(raw_memory=_make_raw_memory(), guideline_ids=["g1"])
         assert result is None
 
     @patch("src._memory_utils.run_prompt")
@@ -160,9 +150,7 @@ class TestCheckForDuplicateMemory:
         mock_db.guidelines.get_batched.return_value = [
             {"id": "python_design=html=some-rule", "title": "Some Rule", "related_memories": ["mem-1"]}
         ]
-        mock_db.memories.get_batched.return_value = [
-            {"id": "mem-1", "title": "M1", "content": "C1"}
-        ]
+        mock_db.memories.get_batched.return_value = [{"id": "mem-1", "title": "M1", "content": "C1"}]
         mock_run_prompt.return_value = json.dumps({"groups": []})
 
         check_for_duplicate_memory(
@@ -190,9 +178,7 @@ class TestCheckForDuplicateMemory:
         ]
         mock_run_prompt.return_value = json.dumps({"groups": []})
 
-        check_for_duplicate_memory(
-            raw_memory=_make_raw_memory(), guideline_ids=["g1", "g2"]
-        )
+        check_for_duplicate_memory(raw_memory=_make_raw_memory(), guideline_ids=["g1", "g2"])
 
         call_args = mock_run_prompt.call_args
         memories_json = json.loads(call_args[1]["inputs"]["memories"])
@@ -219,13 +205,17 @@ class TestCheckForDuplicateMemory:
             {"id": "mem-2", "title": "Title 2", "content": "Content 2"},
             {"id": "mem-3", "title": "Title 3", "content": "Content 3"},
         ]
-        mock_run_prompt.return_value = json.dumps({
-            "groups": [{
-                "memory_ids": ["mem-1", _NEW_MEMORY_SENTINEL],
-                "merged_title": "Merged title",
-                "merged_content": "Merged content",
-            }]
-        })
+        mock_run_prompt.return_value = json.dumps(
+            {
+                "groups": [
+                    {
+                        "memory_ids": ["mem-1", _NEW_MEMORY_SENTINEL],
+                        "merged_title": "Merged title",
+                        "merged_content": "Merged content",
+                    }
+                ]
+            }
+        )
 
         result = check_for_duplicate_memory(
             raw_memory=_make_raw_memory(),
@@ -236,6 +226,7 @@ class TestCheckForDuplicateMemory:
         assert result["existing_memory_id"] == "mem-1"
         mock_db.guidelines.get_batched.assert_called_once_with(["g1", "g2"])
         mock_db.memories.get_batched.assert_called_once_with(["mem-1", "mem-2", "mem-2", "mem-3"])
+
 
 class TestMergeAndSaveMemory:
 
@@ -378,14 +369,18 @@ class TestFindConsolidationCandidates:
         mock_db.guidelines.get_batched.return_value = [guideline]
         mock_db.memories.get_batched.side_effect = lambda ids: [{"m1": m1, "m2": m2, "m3": m3}[mid] for mid in ids]
 
-        mock_run_prompt.return_value = json.dumps({
-            "groups": [{
-                "memory_ids": ["m1", "m2"],
-                "merged_title": "Return 404 for missing resources",
-                "merged_content": "APIs should return 404 when a resource is not found.",
-                "reason": "Both describe the same 404 pattern.",
-            }],
-        })
+        mock_run_prompt.return_value = json.dumps(
+            {
+                "groups": [
+                    {
+                        "memory_ids": ["m1", "m2"],
+                        "merged_title": "Return 404 for missing resources",
+                        "merged_content": "APIs should return 404 when a resource is not found.",
+                        "reason": "Both describe the same 404 pattern.",
+                    }
+                ],
+            }
+        )
 
         result = find_consolidation_candidates(kind="guideline", ids=["g1"])
         assert len(result) == 1
@@ -446,7 +441,9 @@ class TestFindConsolidationCandidates:
         m4 = _make_memory_doc("m4")
 
         mock_db.guidelines.get_batched.return_value = [g1, g2]
-        mock_db.memories.get_batched.side_effect = lambda ids: [{"m1": m1, "m2": m2, "m3": m3, "m4": m4}[mid] for mid in ids]
+        mock_db.memories.get_batched.side_effect = lambda ids: [
+            {"m1": m1, "m2": m2, "m3": m3, "m4": m4}[mid] for mid in ids
+        ]
 
         mock_run_prompt.return_value = json.dumps({"groups": []})
 
@@ -468,14 +465,18 @@ class TestFindConsolidationCandidates:
         mock_db.guidelines.get_batched.return_value = [g1, g2]
         mock_db.memories.get_batched.side_effect = lambda ids: [{"m1": m1, "m2": m2}[mid] for mid in ids]
 
-        mock_run_prompt.return_value = json.dumps({
-            "groups": [{
-                "memory_ids": ["m1", "m2"],
-                "merged_title": "Merged",
-                "merged_content": "Merged content",
-                "reason": "Duplicates",
-            }],
-        })
+        mock_run_prompt.return_value = json.dumps(
+            {
+                "groups": [
+                    {
+                        "memory_ids": ["m1", "m2"],
+                        "merged_title": "Merged",
+                        "merged_content": "Merged content",
+                        "reason": "Duplicates",
+                    }
+                ],
+            }
+        )
 
         result = find_consolidation_candidates(kind="guideline", ids=["g1", "g2"])
         assert mock_run_prompt.call_count == 1
@@ -515,14 +516,18 @@ class TestFindConsolidationCandidates:
         mock_db.memories.get_batched.side_effect = lambda ids: [{"m1": memory_doc, "m2": m2}[mid] for mid in ids]
         mock_db.guidelines.get_batched.return_value = [guideline]
 
-        mock_run_prompt.return_value = json.dumps({
-            "groups": [{
-                "memory_ids": ["m1", "m2"],
-                "merged_title": "Merged",
-                "merged_content": "Merged content",
-                "reason": "Duplicates",
-            }],
-        })
+        mock_run_prompt.return_value = json.dumps(
+            {
+                "groups": [
+                    {
+                        "memory_ids": ["m1", "m2"],
+                        "merged_title": "Merged",
+                        "merged_content": "Merged content",
+                        "reason": "Duplicates",
+                    }
+                ],
+            }
+        )
 
         result = find_consolidation_candidates(kind="memory", ids=["m1"])
         assert len(result) == 1
@@ -558,17 +563,21 @@ class TestApplyConsolidation:
         mock_db.guidelines.get.side_effect = mock_get
         mock_db.examples.get.side_effect = mock_get
 
-        actions = [{
-            "parent_type": "guideline",
-            "parent_id": "g1",
-            "parent_title": "Use HTTP 404",
-            "groups": [{
-                "memory_ids": ["m1", "m2"],
-                "merged_title": "Merged 404 memory",
-                "merged_content": "Return 404 for missing resources.",
-                "reason": "Duplicates",
-            }],
-        }]
+        actions = [
+            {
+                "parent_type": "guideline",
+                "parent_id": "g1",
+                "parent_title": "Use HTTP 404",
+                "groups": [
+                    {
+                        "memory_ids": ["m1", "m2"],
+                        "merged_title": "Merged 404 memory",
+                        "merged_content": "Return 404 for missing resources.",
+                        "reason": "Duplicates",
+                    }
+                ],
+            }
+        ]
 
         result = apply_consolidation(actions)
         assert result["merged"] == 1
@@ -600,17 +609,21 @@ class TestApplyConsolidation:
         mock_db_cls.get_instance.return_value = mock_db
         mock_db.memories.get.side_effect = Exception("Not found")
 
-        actions = [{
-            "parent_type": "guideline",
-            "parent_id": "g1",
-            "parent_title": "Test",
-            "groups": [{
-                "memory_ids": ["m1", "m2"],
-                "merged_title": "Merged",
-                "merged_content": "Content",
-                "reason": "Duplicates",
-            }],
-        }]
+        actions = [
+            {
+                "parent_type": "guideline",
+                "parent_id": "g1",
+                "parent_title": "Test",
+                "groups": [
+                    {
+                        "memory_ids": ["m1", "m2"],
+                        "merged_title": "Merged",
+                        "merged_content": "Content",
+                        "reason": "Duplicates",
+                    }
+                ],
+            }
+        ]
 
         result = apply_consolidation(actions)
         assert result["merged"] == 0

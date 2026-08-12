@@ -9,6 +9,7 @@ using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Example;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
+using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.Example;
 
@@ -51,7 +52,7 @@ Duration: 1ms
         var exitCode = await parseResult.InvokeAsync();
         Assert.That(exitCode, Is.EqualTo(1));
 
-        var expected = "[ERROR] RESPONDING TO 'HI. MY NAME IS' with FAIL: 1";
+        var expected = $"[ERROR] RESPONDING TO 'HI. MY NAME IS' with FAIL: 1{Environment.NewLine}{CommandResponse.SupportChannelMessage}";
 
         Assert.That(outputHelper.Outputs.Count(), Is.EqualTo(1));
         Assert.That(outputHelper.Outputs.First().Stream, Is.EqualTo(OutputHelper.StreamType.Stderr));

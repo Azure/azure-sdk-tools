@@ -76,4 +76,4 @@ class GitHubRepository:
             add_label_response.raise_for_status()
 
     def _headers(self) -> Dict[str, str]:
-        return {"X-GitHub-Api-Version": "2022-11-28", "Authorization": f"token {self.token}"}
+        return {"X-GitHub-Api-Version": "2022-11-28", "Authorization": f"bearer {self.token}"}

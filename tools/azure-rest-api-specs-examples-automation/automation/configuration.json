@@ -4,23 +4,6 @@
   },
   "sdkConfigurations": [
     {
-      "name": "azure-sdk-for-java",
-      "language": "java",
-      "repository": "https://github.com/Azure/azure-sdk-for-java",
-      "releaseTag": {
-        "regexMatch": "^(com\\.azure\\.resourcemanager\\+)?(?!azure-resourcemanager.*_.+-hybrid)azure-resourcemanager.*_.+$",
-        "packageRegexGroup": "(.*)_.*",
-        "versionRegexGroup": ".*_(.*)"
-      },
-      "ignoredPackages": [
-        "azure-resourcemanager",
-        "com.azure.resourcemanager+azure-resourcemanager"
-      ],
-      "script": {
-        "run": "java/main.sh"
-      }
-    },
-    {
       "name": "azure-sdk-for-go",
       "language": "go",
       "repository": "https://github.com/Azure/azure-sdk-for-go",
@@ -47,19 +30,6 @@
       }
     },
     {
-      "name": "azure-sdk-for-net",
-      "language": "dotnet",
-      "repository": "https://github.com/Azure/azure-sdk-for-net",
-      "releaseTag": {
-        "regexMatch": "^Azure.ResourceManager.*_.+$",
-        "packageRegexGroup": "(.*)_.*",
-        "versionRegexGroup": ".*_(.*)"
-      },
-      "script": {
-        "run": "dotnet/main.sh"
-      }
-    },
-    {
       "name": "azure-sdk-for-python",
       "language": "python",
       "repository": "https://github.com/Azure/azure-sdk-for-python",
@@ -70,6 +40,36 @@
       },
       "script": {
         "run": "python/main.sh"
+      }
+    },
+    {
+      "name": "azure-sdk-for-java",
+      "language": "java",
+      "repository": "https://github.com/Azure/azure-sdk-for-java",
+      "releaseTag": {
+        "regexMatch": "^(com\\.azure\\.resourcemanager\\+)?(?!azure-resourcemanager.*_.+-hybrid)azure-resourcemanager.*_.+$",
+        "packageRegexGroup": "(.*)_.*",
+        "versionRegexGroup": ".*_(.*)"
+      },
+      "ignoredPackages": [
+        "azure-resourcemanager",
+        "com.azure.resourcemanager+azure-resourcemanager"
+      ],
+      "script": {
+        "run": "java/main.sh"
+      }
+    },
+    {
+      "name": "azure-sdk-for-net",
+      "language": "dotnet",
+      "repository": "https://github.com/Azure/azure-sdk-for-net",
+      "releaseTag": {
+        "regexMatch": "^Azure.ResourceManager.*_.+$",
+        "packageRegexGroup": "(.*)_.*",
+        "versionRegexGroup": ".*_(.*)"
+      },
+      "script": {
+        "run": "dotnet/main.sh"
       }
     }
   ]

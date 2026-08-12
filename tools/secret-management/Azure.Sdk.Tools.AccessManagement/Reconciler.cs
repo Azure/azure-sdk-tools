@@ -4,15 +4,13 @@ public class Reconciler
 {
     public IManagedIdentityClient ManagedIdentityClient { get; set; }
     public IRbacClient RbacClient { get; set; }
-    public IGitHubClient GitHubClient { get; set; }
 
     private ILogger Log { get; }
 
-    public Reconciler(ILogger logger, IManagedIdentityClient managedIdentityClient, IRbacClient rbacClient, IGitHubClient gitHubClient)
+    public Reconciler(ILogger logger, IManagedIdentityClient managedIdentityClient, IRbacClient rbacClient)
     {
         ManagedIdentityClient = managedIdentityClient;
         RbacClient = rbacClient;
-        GitHubClient = gitHubClient;
         Log = logger;
     }
 
@@ -43,7 +41,6 @@ public class Reconciler
 
                     await ReconcileRoleBasedAccessControls(identityInfo.PrincipalId, cfg, options);
                     await ReconcileFederatedIdentityCredentials(cfg, options);
-                    await ReconcileGithubRepositorySecrets(cfg, options);
 
                     succeededConfigs.Add(cfg.IdentityName!);
                 }
@@ -117,41 +114,6 @@ public class Reconciler
         Log.LogInformation($"Created managed identity '{cfg.IdentityName}' with clientId '{identityInfo.ClientId}' and principalId '{identityInfo.PrincipalId}'");
 
         return identityInfo;
-    }
-
-    public async Task ReconcileGithubRepositorySecrets(ApplicationAccessConfig appAccessConfig, ReconcileOptions options)
-    {
-        if (options.NoGitHubSecrets)
-        {
-            Log.LogInformation("Skipping GitHub repository secrets (--no-github-secrets)");
-            return;
-        }
-
-        foreach (var config in appAccessConfig.GithubRepositorySecrets)
-        {
-            foreach (var repository in config.Repositories)
-            {
-                foreach (var secret in config.Secrets!)
-                {
-                    if (options.DryRun)
-                    {
-                        Log.LogInformation($"[DRY RUN] Would set GitHub repository secret '{secret.Key}' for repository '{repository}'");
-                        continue;
-                    }
-
-                    Log.LogInformation($"Setting GitHub repository secret '{secret.Key}:{secret.Value}' for repository '{repository}'...");
-                    var split = repository.Split('/');
-                    if (split.Length != 2)
-                    {
-                        throw new Exception($"Expected repository entry '{repository}' to match format '<owner>/<repository name>'");
-                    }
-                    var (owner, repoName) = (split[0], split[1]);
-                    await GitHubClient.SetRepositorySecret(owner, repoName, secret.Key, secret.Value);
-                    Log.LogInformation($"GitHub repository secret '{secret.Key}:{secret.Value}' for repository '{repository}' created");
-                }
-                Log.LogInformation($"Updated secrets for repository {repository} - {config.Secrets?.Count() ?? 0} created or updated");
-            }
-        }
     }
 
     public async Task ReconcileRoleBasedAccessControls(

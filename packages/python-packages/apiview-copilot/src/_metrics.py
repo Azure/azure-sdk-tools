@@ -275,9 +275,7 @@ def _build_metrics_segment(
                     approved_revision_ids.add(revision_id)
 
     # Reduce to root comments only (one per thread/line) so replies are not counted separately.
-    root_comments = _filter_to_root_comments(
-        [c for c in comments if c.get("CommentSource") != "Diagnostic"]
-    )
+    root_comments = _filter_to_root_comments([c for c in comments if c.get("CommentSource") != "Diagnostic"])
 
     # When a thread start index is provided, only count threads
     # that originated within the current window (applies to both human and AI).
@@ -288,16 +286,14 @@ def _build_metrics_segment(
         window_end_iso = to_iso8601(end_date, end_of_day=True)
 
         root_comments = [
-            c for c in root_comments
+            c
+            for c in root_comments
             if _thread_started_in_window(c, thread_start_index, window_start_iso, window_end_iso)
         ]
 
     # Filter root comments to only those belonging to approved revisions
     # (for human comment counts - comment_makeup metrics)
-    approved_revision_comments = [
-        c for c in root_comments
-        if c.get("APIRevisionId") in approved_revision_ids
-    ]
+    approved_revision_comments = [c for c in root_comments if c.get("APIRevisionId") in approved_revision_ids]
 
     # Categorize comments based on whether the revision has Copilot (for comment_makeup)
     human_comments_with_copilot_count = 0
@@ -321,7 +317,8 @@ def _build_metrics_segment(
 
     # For comment_quality: count ALL AI comments across ALL active revisions (approved + unapproved)
     all_ai_comments = [
-        c for c in root_comments
+        c
+        for c in root_comments
         if c.get("APIRevisionId") in all_revision_ids and c.get("CommentSource") == "AIGenerated"
     ]
 
@@ -456,11 +453,25 @@ def _build_metrics_report(data: Dict[str, MetricsSegment]) -> dict:
                 ),
                 "neutral_count": segment.neutral_ai_comment_count,
                 # Average confidence scores per category
-                "avg_confidence_good": fmt(segment.avg_confidence_upvoted) if segment.avg_confidence_upvoted is not None else None,
-                "avg_confidence_bad": fmt(segment.avg_confidence_downvoted) if segment.avg_confidence_downvoted is not None else None,
-                "avg_confidence_deleted": fmt(segment.avg_confidence_deleted) if segment.avg_confidence_deleted is not None else None,
-                "avg_confidence_implicit_good": fmt(segment.avg_confidence_implicit_good) if segment.avg_confidence_implicit_good is not None else None,
-                "avg_confidence_implicit_bad": fmt(segment.avg_confidence_implicit_bad) if segment.avg_confidence_implicit_bad is not None else None,
+                "avg_confidence_good": (
+                    fmt(segment.avg_confidence_upvoted) if segment.avg_confidence_upvoted is not None else None
+                ),
+                "avg_confidence_bad": (
+                    fmt(segment.avg_confidence_downvoted) if segment.avg_confidence_downvoted is not None else None
+                ),
+                "avg_confidence_deleted": (
+                    fmt(segment.avg_confidence_deleted) if segment.avg_confidence_deleted is not None else None
+                ),
+                "avg_confidence_implicit_good": (
+                    fmt(segment.avg_confidence_implicit_good)
+                    if segment.avg_confidence_implicit_good is not None
+                    else None
+                ),
+                "avg_confidence_implicit_bad": (
+                    fmt(segment.avg_confidence_implicit_bad)
+                    if segment.avg_confidence_implicit_bad is not None
+                    else None
+                ),
             },
             "comment_makeup": {
                 "human_comment_count_without_copilot": segment.human_comment_count_without_ai,
@@ -490,7 +501,10 @@ def _build_metrics_data(
         pretty_languages_to_omit.extend([lang.lower() for lang in exclude])
 
     active_reviews, raw_comments = get_active_reviews(
-        start_date, end_date, environment=environment, omit_languages=pretty_languages_to_omit,
+        start_date,
+        end_date,
+        environment=environment,
+        omit_languages=pretty_languages_to_omit,
         select_fields=METRICS_COMMENT_FIELDS,
     )
 

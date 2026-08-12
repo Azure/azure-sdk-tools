@@ -1,39 +1,31 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.ComponentModel;
+using System.Net;
 using System.Text.Json;
-using System.Web;
-using Azure.Core;
 using Microsoft.TeamFoundation.Build.WebApi;
-using Microsoft.TeamFoundation.TestManagement.WebApi;
-using Microsoft.VisualStudio.Services.OAuth;
-using Microsoft.VisualStudio.Services.TestResults.WebApi;
+using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.WebApi;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
-using Azure.Sdk.Tools.Cli.Configuration;
-using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
+using Azure.Sdk.Tools.Cli.Helpers.Pipeline;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Pipeline;
 
 [McpServerToolType, Description("Fetches data from an Azure Pipelines run.")]
 public class PipelineAnalysisTool(
-    IAzureService azureService,
-    IDevOpsService devopsService,
-    IAzureAgentServiceFactory azureAgentServiceFactory,
-    ILogAnalysisHelper logAnalysisHelper,
-    ITestHelper testHelper,
-    ILogger<PipelineAnalysisTool> logger,
-    TokenUsageHelper tokenUsageHelper
+    IPipelineAnalysisHelper pipelineAnalysisHelper,
+    IGitHubWorkflowAnalysisHelper workflowAnalysisHelper,
+    IPipelineIdentifierHelper pipelineIdentifierHelper,
+    ICopilotAgentRunner copilotAgentRunner,
+    ILogger<PipelineAnalysisTool> logger
 ) : MCPTool
 {
-    // Options
-    private readonly Argument<string> pipelineArg = new("Pipeline link or Build ID");
     private readonly Option<int> logIdOpt = new("--log-id")
     {
         Description = "ID of the pipeline task log",
@@ -46,30 +38,11 @@ public class PipelineAnalysisTool(
         Required = false,
     };
 
-    private readonly Option<bool> analyzeWithAgentOpt = new("--agent", "-a")
+    private readonly Option<bool> copilotOpt = new("--copilot")
     {
-        Description = "Analyze logs with RAG via upstream ai agent",
+        Description = "Use Copilot agent to analyze pipeline failures",
         Required = false,
         DefaultValueFactory = _ => false,
-    };
-
-    private readonly Option<string> projectEndpointOpt = new("--ai-endpoint", "-e")
-    {
-        Description = "The ai foundry project endpoint for the Azure AI Agent service",
-        Required = false,
-    };
-
-    private readonly Option<string> aiModelOpt = new("--ai-model")
-    {
-        Description = "The model to use for the Azure AI Agent",
-        Required = false,
-    };
-
-    private readonly Option<string> queryOpt = new("--query")
-    {
-        Description = "Log analysis query for agent mode",
-        Required = false,
-        DefaultValueFactory = _ => "Why did this pipeline fail?",
     };
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.AzurePipelines];
@@ -79,435 +52,203 @@ public class PipelineAnalysisTool(
     protected override Command GetCommand() =>
         new McpCommand("analyze", "Analyze a pipeline run", AnalyzePipelineToolName)
         {
-            pipelineArg, projectOpt, logIdOpt, analyzeWithAgentOpt, projectEndpointOpt, aiModelOpt, queryOpt,
+            SharedOptions.PipelineLocator, projectOpt, logIdOpt, copilotOpt,
         };
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
-        var pipelineIdentifier = parseResult.GetValue(pipelineArg);
+        var pipelineIdentifier = parseResult.GetValue(SharedOptions.PipelineLocator);
         var project = parseResult.GetValue(projectOpt);
-
         var logId = parseResult.GetValue(logIdOpt);
-        var analyzeWithAgent = parseResult.GetValue(analyzeWithAgentOpt);
-        var projectEndpoint = parseResult.GetValue(projectEndpointOpt);
-        var aiModel = parseResult.GetValue(aiModelOpt);
-        var query = parseResult.GetValue(queryOpt);
+        var useCopilot = parseResult.GetValue(copilotOpt);
 
-        var (buildId, projectFromLink) = getBuildIdFromPipelineIdentifier(pipelineIdentifier);
-        logger.LogInformation("Analyzing pipeline {pipelineIdentifier}...", pipelineIdentifier);
-        azureAgentService = azureAgentServiceFactory.Create(projectEndpoint, aiModel);
+        var result = await AnalyzePipeline(pipelineIdentifier, project, logId != 0 ? logId : null, ct);
 
-        if (logId != 0)
+        if (!useCopilot)
         {
-            var result = await AnalyzePipelineFailureLogs(project ?? projectFromLink, buildId, query, [logId], analyzeWithAgent, ct);
-            tokenUsageHelper.LogUsage();
             return result;
         }
-        else
-        {
-            var result = await AnalyzePipeline(project ?? projectFromLink, buildId, query, analyzeWithAgent, ct);
-            tokenUsageHelper.LogUsage();
-            return result;
-        }
+
+        return await AnalyzeWithCopilotAsync(result, pipelineIdentifier, ct);
     }
 
-    private IAzureAgentService azureAgentService;
-    private bool initialized = false;
-
-    private readonly HttpClient httpClient = new();
-    private BuildHttpClient buildClientValue;
-    private BuildHttpClient buildClient
-    {
-        get
-        {
-            Initialize();
-            return buildClientValue;
-        }
-    }
-    private TestResultsHttpClient testClientValue;
-    private TestResultsHttpClient testClient
-    {
-        get
-        {
-            Initialize();
-            return testClientValue;
-        }
-    }
-
-    private static (int, string?) getBuildIdFromPipelineIdentifier(string pipelineIdentifier)
-    {
-        // pipelineIdentifier could be a pipeline link like
-        // https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5094469&view=results (buildId 5094469, project internal)
-        // or just an id like 5094469 (project will be auto-discovered)
-        if (int.TryParse(pipelineIdentifier, out int buildId))
-        {
-            return (buildId, null);
-        }
-
-        string? project = null;
-        if (!Uri.TryCreate(pipelineIdentifier, UriKind.Absolute, out var uri))
-        {
-            throw new ArgumentException($"Invalid pipeline identifier: {pipelineIdentifier}. Expected a valid absolute URI or an integer.");
-        }
-
-        // Extract devops project from URI segments
-        var segments = uri.Segments.Select(s => s.Trim('/')).ToList();
-        if (segments.Count >= 3)
-        {
-            project = segments[2];
-        }
-
-        var query = uri.Query;
-        var queryParams = HttpUtility.ParseQueryString(query);
-        if (int.TryParse(queryParams.Get("buildId"), out buildId))
-        {
-            return (buildId, project);
-        }
-
-        throw new ArgumentException($"Could not extract buildId from pipeline identifier: {pipelineIdentifier}");
-    }
-
-    private void Initialize(bool auth = true, CancellationToken ct = default)
-    {
-        if (initialized)
-        {
-            return;
-        }
-
-        if (auth)
-        {
-            var tokenScope = new[] { Constants.AZURE_DEVOPS_TOKEN_SCOPE };
-            var token = azureService.GetCredential(Constants.MICROSOFT_CORP_TENANT).GetToken(new TokenRequestContext(tokenScope), ct);
-            var tokenCredential = new VssOAuthAccessTokenCredential(token.Token);
-            var connection = new VssConnection(new Uri(Constants.AZURE_SDK_DEVOPS_BASE_URL), tokenCredential);
-            buildClientValue = connection.GetClient<BuildHttpClient>();
-            testClientValue = connection.GetClient<TestResultsHttpClient>();
-        }
-        else
-        {
-            var connection = new VssConnection(new Uri(Constants.AZURE_SDK_DEVOPS_BASE_URL), null);
-            buildClientValue = connection.GetClient<BuildHttpClient>();
-            testClientValue = connection.GetClient<TestResultsHttpClient>();
-        }
-
-        initialized = true;
-    }
-
-    private async Task<string> GetPipelineProject(int buildId, string? project = null, CancellationToken ct = default)
-    {
-        if (project == Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT || string.IsNullOrEmpty(project))
-        {
-            var pipelineUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT}/_apis/build/builds/{buildId}?api-version=7.1";
-            logger.LogDebug("Getting pipeline details from {url} via http", pipelineUrl);
-            var response = await httpClient.GetAsync(pipelineUrl, ct);
-            // If project is not specified, try both public and internal projects
-            if (string.IsNullOrEmpty(project) && !response.IsSuccessStatusCode)
-            {
-                return await GetPipelineProject(buildId, Constants.AZURE_SDK_DEVOPS_INTERNAL_PROJECT, ct);
-            }
-            // Devops will return a sign-in html page if the user is not authorized
-            if (response.StatusCode == System.Net.HttpStatusCode.NonAuthoritativeInformation)
-            {
-                throw new Exception($"Not authorized to get pipeline details from {pipelineUrl}");
-            }
-            response.EnsureSuccessStatusCode();
-            var json = await response.Content.ReadAsStringAsync(ct);
-            using var doc = JsonDocument.Parse(json);
-            var projectName = doc.RootElement.GetProperty("project").GetProperty("name").GetString();
-            if (string.IsNullOrEmpty(projectName))
-            {
-                throw new Exception($"Failed to parse project name from build details for build {buildId}");
-            }
-            return projectName;
-        }
-
-        var _pipelineUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{project}/_apis/build/builds/{buildId}?api-version=7.1";
-        logger.LogDebug("Getting pipeline details from {url} via sdk", _pipelineUrl);
-        var build = await buildClient.GetBuildAsync(project, buildId, cancellationToken: ct);
-        return build.Project.Name;
-    }
-
-    private async Task<List<int>> getPipelineFailureLogIds(string project, int buildId, CancellationToken ct = default)
-    {
-        logger.LogDebug("Getting pipeline task failures for {project} {buildId}", project, buildId);
-
-        if (project != Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT)
-        {
-            var timeline = await buildClient.GetBuildTimelineAsync(project, buildId, cancellationToken: ct);
-            var _failedTasks = timeline.Records.Where(
-                                    r => r.Result == TaskResult.Failed
-                                    && r.RecordType == "Task"
-                                    && !isTestStep(r.Name))
-                                .ToList();
-            logger.LogDebug("Found {count} failed tasks", _failedTasks.Count);
-            return _failedTasks.Select(t => t.Log?.Id ?? 0).Where(id => id != 0).Distinct().ToList();
-        }
-
-        var timelineUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{project}/_apis/build/builds/{buildId}/timeline?api-version=7.1";
-        logger.LogDebug("Getting timeline records from {url}", timelineUrl);
-        var response = await httpClient.GetAsync(timelineUrl, ct);
-        // Devops will return a sign-in html page if the user is not authorized
-        if (response.StatusCode == System.Net.HttpStatusCode.NonAuthoritativeInformation)
-        {
-            throw new Exception($"Not authorized to get timeline records from {timelineUrl}");
-        }
-        response.EnsureSuccessStatusCode();
-        var json = await response.Content.ReadAsStringAsync(ct);
-        if (string.IsNullOrEmpty(json))
-        {
-            throw new Exception($"No timeline records found for build {buildId} in project {project}");
-        }
-
-        using var doc = JsonDocument.Parse(json);
-        var failedTasks = doc.RootElement.GetProperty("records")
-            .EnumerateArray()
-            .Where(r =>
-                r.GetProperty("result").GetString() == "failed" &&
-                r.GetProperty("type").GetString() == "Task" &&
-                !isTestStep(r.GetProperty("name").GetString())).ToList();
-
-        List<int> logIds = [];
-        foreach (var task in failedTasks)
-        {
-            if (task.TryGetProperty("log", out var logProp) && logProp.TryGetProperty("id", out var idProp))
-            {
-                var id = idProp.GetInt32();
-                if (id != 0)
-                {
-                    logIds.Add(id);
-                }
-            }
-        }
-
-        logger.LogDebug("Found {count} failed tasks", failedTasks.Count);
-        return logIds;
-    }
-
-    private async Task<FailedTestRunListResponse> getPipelineFailedTestResults(string project, int buildId, CancellationToken ct = default)
+    [McpServerTool(Name = AnalyzePipelineToolName), Description("Analyzes and returns structured failure data and logs from an Azure Pipeline build. Accepts an Azure Pipeline link, Build ID, GitHub Pull Request link, or PR number.")]
+    public async Task<AnalyzePipelineResponse> AnalyzePipeline(
+        [Description("Azure Pipeline link, Build ID, GitHub Pull Request link, or PR number")] string pipelineIdentifier,
+        [Description("Pipeline project name (optional)")] string? project = null,
+        [Description("Specific log ID to analyze (optional)")] int? logId = null,
+        CancellationToken ct = default)
     {
         try
         {
-            logger.LogDebug("Getting pipeline failed test results for {project} {buildId}", project, buildId);
-            var results = new List<ShallowTestCaseResult>();
+            AnalyzePipelineResponse response = new AnalyzePipelineResponse();
 
-            var testRuns = await testClient.GetTestResultsByPipelineAsync(project, buildId, cancellationToken: ct);
-            results.AddRange(testRuns);
-            while (testRuns.ContinuationToken != null)
+            var builds = await pipelineIdentifierHelper.ResolveBuildsAsync(pipelineIdentifier, project, ct);
+
+            // A pull request can be red on GitHub Actions alone, so when no build backs the identifier the
+            // source is resolved from the pull request itself rather than reporting nothing to analyze.
+            var commitRef = builds.Count > 0
+                ? await pipelineIdentifierHelper.ResolveCommitRefFromBuildsAsync(builds, ct)
+                : await pipelineIdentifierHelper.ResolveCommitRefFromPrAsync(pipelineIdentifier, ct);
+
+            if (builds.Count == 0 && commitRef == null)
             {
-                var nextResults = await testClient.GetTestResultsByPipelineAsync(project, buildId, continuationToken: testRuns.ContinuationToken, cancellationToken: ct);
-                results.AddRange(nextResults);
-                testRuns.ContinuationToken = nextResults.ContinuationToken;
+                response.ResponseError = $"No failed Azure Pipeline builds found for {pipelineIdentifier}";
+                return response;
             }
 
-            var failedRuns = results.Where(
-                r => r.Outcome == TestOutcome.Failed.ToString()
-                || r.Outcome == TestOutcome.Aborted.ToString())
-            .Select(r => r.RunId)
-            .Distinct()
-            .ToList();
+            logger.LogInformation("Analyzing pipeline {pipelineIdentifier}...", pipelineIdentifier);
 
-            logger.LogDebug("Getting test results for {count} failed test runs", failedRuns.Count);
-
-            var failedRunData = new FailedTestRunListResponse();
-
-            foreach (var runId in failedRuns)
+            if (builds.Count > 0)
             {
-                var testCases = await testClient.GetTestResultsAsync(
-                                    project,
-                                    runId,
-                                    outcomes: [TestOutcome.Failed, TestOutcome.Aborted],
-                                    cancellationToken: ct);
-
-                foreach (var tc in testCases)
+                var (pipelineAnalyses, warnings) = await pipelineAnalysisHelper.AnalyzePipelineAsync(builds, logId, ct);
+                response.AzurePipelineAnalyses = pipelineAnalyses;
+                if (warnings.Count > 0)
                 {
-                    failedRunData.Items.Add(new FailedTestRunResponse
-                    {
-                        RunId = runId,
-                        TestCaseTitle = tc.TestCaseTitle,
-                        ErrorMessage = tc.ErrorMessage,
-                        StackTrace = tc.StackTrace,
-                        Outcome = tc.Outcome,
-                        Uri = tc.Url
-                    });
+                    (response.NextSteps ??= []).AddRange(warnings);
                 }
             }
 
-            return failedRunData;
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Failed to get pipeline failed test results {buildId}", buildId);
-            return new() { ResponseError = $"Failed to get pipeline failed test results {buildId}: {ex.Message}" };
-        }
-    }
-
-    private async Task<string> getBuildLogLinesUnauthenticated(string project, int buildId, int logId, CancellationToken ct = default)
-    {
-        var logUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{project}/_apis/build/builds/{buildId}/logs/{logId}?api-version=7.1";
-        logger.LogDebug("Fetching log file from {url}", logUrl);
-        var response = await httpClient.GetAsync(logUrl, ct);
-        // Devops will return a sign-in html page if the user is not authorized
-        if (response.StatusCode == System.Net.HttpStatusCode.NonAuthoritativeInformation)
-        {
-            throw new Exception($"Not authorized to get log file from {logUrl}");
-        }
-        response.EnsureSuccessStatusCode();
-        var logContent = await response.Content.ReadAsStringAsync(ct);
-        return logContent;
-    }
-
-    public async Task<LogAnalysisResponse> AnalyzePipelineFailureLogs(string? project, int buildId, string query, List<int> logIds, bool analyzeWithAgent, CancellationToken ct)
-    {
-        try
-        {
-            return await analyzePipelineFailureLogs(project, buildId, query, logIds, analyzeWithAgent, ct);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Failed to analyze pipeline {buildId}", buildId);
-            return new LogAnalysisResponse()
+            if (commitRef != null)
             {
-                ResponseError = $"Failed to analyze pipeline {buildId}: {ex.Message}",
-            };
-        }
-    }
-
-    private async Task<LogAnalysisResponse> analyzePipelineFailureLogs(string? project, int buildId, string query, List<int> logIds, bool analyzeWithAgent, CancellationToken ct)
-    {
-        project ??= Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT;
-        var session = $"{project}-{buildId}";
-        List<string> logs = [];
-
-        foreach (var logId in logIds)
-        {
-            string logText;
-            logger.LogDebug("Downloading pipeline failure log for {project} {buildId} {logId}", project, buildId, logId);
-
-            if (project == Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT)
-            {
-                logText = await getBuildLogLinesUnauthenticated(project, buildId, logId, ct);
-            }
-            else
-            {
-                var logContent = await buildClient.GetBuildLogLinesAsync(project, buildId, logId, cancellationToken: ct);
-                logText = string.Join("\n", logContent);
+                try
+                {
+                    response.GitHubWorkflowAnalyses = await workflowAnalysisHelper.AnalyzeWorkflowsAsync(commitRef, ct);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to analyze GitHub workflow runs for {owner}/{repo} @ {sha}", commitRef.Owner, commitRef.Repo, commitRef.HeadSha);
+                    (response.NextSteps ??= []).Add(
+                        $"GitHub Actions runs for {commitRef.Owner}/{commitRef.Repo} @ {commitRef.HeadSha} could not be listed " +
+                        $"({ex.Message}); the pipeline results are unaffected.");
+                }
             }
 
-            var tempPath = Path.GetTempFileName() + ".txt";
-            logger.LogDebug("Writing log id {logId} to temporary file {tempPath}", logId, tempPath);
-            await File.WriteAllTextAsync(tempPath, logText, ct);
-            var filename = $"{session}-{logId}.txt";
-            logs.Add(tempPath);
-        }
-
-        if (!analyzeWithAgent)
-        {
-            LogAnalysisResponse response = new() { Errors = [] };
-            foreach (var log in logs)
+            if (commitRef?.PullRequestNumber != null)
             {
-                var localLogResult = await logAnalysisHelper.AnalyzeLogContent(log, null, null, null, ct);
-                response.Errors.AddRange(localLogResult);
+                try
+                {
+                    response.FailingPullRequestChecks = await workflowAnalysisHelper.GetFailingChecksAsync(commitRef, ct);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to list failing checks for {owner}/{repo}#{pr}", commitRef.Owner, commitRef.Repo, commitRef.PullRequestNumber);
+                    (response.NextSteps ??= []).Add(
+                        $"Failing checks for {commitRef.Owner}/{commitRef.Repo}#{commitRef.PullRequestNumber} could not be listed " +
+                        $"({ex.Message}); the results above may not cover every red check on the pull request.");
+                }
             }
+
             return response;
         }
-
-        var result = await azureAgentService.QueryFiles(logs, session, query, ct);
-        // Sometimes chat gpt likes to wrap the json in markdown
-        if (result.StartsWith("```json"))
+        catch (Exception ex)
         {
-            result = result[7..].Trim();
-        }
-        if (result.EndsWith("```"))
-        {
-            result = result[..^3].Trim();
-        }
-
-        foreach (var log in logs)
-        {
-            File.Delete(log);
-        }
-
-        try
-        {
-            return JsonSerializer.Deserialize<LogAnalysisResponse>(result);
-        }
-        catch (JsonException ex)
-        {
-            logger.LogError(ex, "Failed to deserialize log analysis response. Raw response: {Response}", result);
-            throw;
+            logger.LogError(ex, "Failed to analyze pipeline {pipelineIdentifier}", pipelineIdentifier);
+            return new AnalyzePipelineResponse()
+            {
+                ResponseError = $"Failed to analyze pipeline {pipelineIdentifier}: {ex.Message}",
+                NextSteps = NextStepsForFailure(ex),
+            };
         }
     }
 
-    [McpServerTool(Name = AnalyzePipelineToolName), Description("Analyze what happened in an Azure pipeline build. Investigates pipeline runs, identifies failures, and explains build issues.")]
-    public async Task<AnalyzePipelineResponse> AnalyzePipeline(int buildId, string query, bool analyzeWithAgent, CancellationToken ct)
+    /// <summary>
+    /// Picks next steps that match how the analysis failed. Public builds and public pull requests are read
+    /// without credentials, so telling the user to sign in is misleading for the failures signing in would not
+    /// fix: a malformed identifier, or a run or pull request that does not exist. Failures that already carry
+    /// their own instructions - the DevOps and GitHub CLI sign-in errors - are left to speak for themselves.
+    /// </summary>
+    private static List<string>? NextStepsForFailure(Exception ex) => ex switch
+    {
+        ArgumentException =>
+        [
+            "Pass an Azure Pipelines run link, a build ID, a GitHub pull request link, or a pull request number.",
+        ],
+        BuildNotFoundException =>
+        [
+            "Check that the identifier names a run that still exists, and that any project in its link is correct.",
+        ],
+        VssUnauthorizedException or VssServiceResponseException { HttpStatusCode: HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden } =>
+        [
+            "Make sure you're authenticated with the Azure CLI (`az login --tenant microsoft.onmicrosoft.com`) and have access to the azure-sdk DevOps project (https://aka.ms/azsdk/access).",
+        ],
+        Octokit.NotFoundException =>
+        [
+            "Check that the repository and pull request named by the identifier exist.",
+        ],
+        Octokit.ApiException =>
+        [
+            "If the repository is private, or the request was rate limited, authenticate the GitHub CLI (`gh auth login`) and try again.",
+        ],
+        _ => null,
+    };
+
+    /// <summary>
+    /// Summarizes a completed pipeline analysis with the Copilot agent as a markdown root-cause report.
+    /// </summary>
+    private async Task<CommandResponse> AnalyzeWithCopilotAsync(AnalyzePipelineResponse pipelineResult, string pipelineIdentifier, CancellationToken ct)
     {
         try
         {
-            return await AnalyzePipeline(null, buildId, query, analyzeWithAgent, ct);
+            // Serialize as JSON to ensure Copilot gets the full context (FailedPipelineTasks, FailedPipelineTests)
+            // even when ResponseErrors is set, since ToString() suppresses Format() output on errors.
+            var pipelineData = JsonSerializer.Serialize(pipelineResult, new JsonSerializerOptions { WriteIndented = true });
+
+            var tempPath = Path.Combine(Path.GetTempPath(), $"pipeline-analysis-{Guid.NewGuid():N}.md");
+            await File.WriteAllTextAsync(tempPath, pipelineData, ct);
+            logger.LogInformation("Pipeline analysis data written to {tempPath}", tempPath);
+            logger.LogInformation("Run `copilot -i 'Fix the pipeline failures detailed in {tempPath}'` to attempt a fix", tempPath);
+
+            var instructions = $"""
+                You are a pipeline failure analyst. You have been given the output of a CI/CD pipeline analysis.
+                Your job is to examine the `failed_pipeline_tasks` and `failed_pipeline_tests` of each entry in
+                `azure_pipeline_analyses`, identify root causes, and provide a clear, actionable summary for a
+                developer.
+
+                Respond in markdown format. Structure your response as:
+                1. **Root Cause Analysis** - What likely caused each failure
+                2. **Summary** - A brief overview of what failed
+                3. **Recommended Actions** - Concrete steps the developer should take to fix the issues
+
+                If there are no failures, state that the pipeline appears healthy.
+
+                If any build in `azure_pipeline_analyses` has a `pipeline_build.status` that is present and is
+                neither "completed" nor "Not available", that build is still running: note that its failure
+                logs and test artifacts may not be published yet, so the analysis may be incomplete
+                and the developer should re-run it once the build finishes. In that case do not
+                describe that build as healthy just because no failures were found.
+
+                `github_workflow_analyses`, if present, holds GitHub Actions runs for the same commit, with
+                their failures in `logs` and `jobs` rather than the `failed_pipeline_*` fields above.
+                These are independent of the pipeline builds: report them separately and do not treat an
+                Actions failure as a pipeline failure (or vice versa).
+
+                `failing_pull_request_checks`, if present, lists every check GitHub reports as red on the pull
+                request. This can be a duplicate of a pipeline or Actions failure. But it is a catch all for
+                anything that failed.
+
+                Here is the pipeline analysis data:
+
+                {pipelineData}
+                """;
+
+            var agent = new CopilotAgent<string>
+            {
+                Instructions = instructions,
+                MaxIterations = 3,
+            };
+
+            var analysis = await copilotAgentRunner.RunAsync(agent, ct);
+
+            return new DefaultCommandResponse { Message = analysis };
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to analyze pipeline {buildId}", buildId);
-            return new AnalyzePipelineResponse()
+            logger.LogError(ex, "Failed to run Copilot analysis for pipeline {pipelineIdentifier}", pipelineIdentifier);
+            return new DefaultCommandResponse
             {
-                ResponseError = $"Failed to analyze pipeline {buildId}: {ex.Message}",
+                ResponseError = $"Failed to run Copilot analysis: {ex.Message}"
             };
         }
-    }
-
-    public async Task<AnalyzePipelineResponse> AnalyzePipeline(string? project, int buildId, string query, bool analyzeWithAgent, CancellationToken ct)
-    {
-        try
-        {
-            if (string.IsNullOrEmpty(project))
-            {
-                project = await GetPipelineProject(buildId, project, ct);
-            }
-
-            var failureLogIds = await getPipelineFailureLogIds(project, buildId, ct);
-            var analysis = await analyzePipelineFailureLogs(project, buildId, query, failureLogIds, analyzeWithAgent, ct);
-
-            var failedTests = new FailedTestRunListResponse();
-            var failedTestArtifacts = await devopsService.GetPipelineLlmArtifacts(project, buildId, ct);
-
-            foreach (var testFiles in failedTestArtifacts)
-            {
-                foreach (var file in testFiles.Value)
-                {
-                    var failed = await testHelper.GetFailedTestCases(file, ct: ct);
-                    failedTests.Items.AddRange(failed.Items);
-                }
-            }
-
-            var failedTestsByUri = failedTests.Items
-                .GroupBy(ft => ft.Uri)
-                .ToDictionary(
-                    g => g.Key,
-                    g => g.Select(ft => ft.TestCaseTitle).ToList()
-                );
-
-            return new AnalyzePipelineResponse()
-            {
-                FailedTasks = [analysis],
-                FailedTests = failedTestsByUri
-            };
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Failed to analyze pipeline {buildId}", buildId);
-            return new AnalyzePipelineResponse()
-            {
-                ResponseError = $"Failed to analyze pipeline {buildId}: {ex.Message}",
-            };
-        }
-    }
-
-    private bool isTestStep(string stepName)
-    {
-        if (stepName.Contains("deploy test resources", StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-        return stepName.Contains("test", StringComparison.OrdinalIgnoreCase);
     }
 }

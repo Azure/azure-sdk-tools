@@ -399,6 +399,20 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         }
 
         /// <summary>
+        /// Performs language-specific pre-generation steps (e.g., pre-building plugins).
+        /// Called before tools run code generation.
+        /// The default implementation is a no-op. Override in language-specific subclasses as needed.
+        /// As of now, only the .NET language service overrides this to pre-build its generator plugin.
+        /// Implementations should warn and continue on failure rather than throwing.
+        /// </summary>
+        /// <param name="repoRoot">Absolute path to the SDK repository root.</param>
+        /// <param name="ct">Cancellation token.</param>
+        public virtual Task PreGenerateAsync(string repoRoot, CancellationToken ct)
+        {
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
         /// Performs language-specific validation (build, compile, tests, lint, type-check, etc.).
         /// </summary>
         /// <param name="packagePath">Path to the package directory containing generated code.</param>
@@ -460,6 +474,82 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                         "Update package metadata after the changelog content has been updated"
                         ],
                     result: "noop"));
+        }
+
+        public virtual Task<PackageOperationResponse> DetectSdkBreakingChangeAsync(string packagePath, CancellationToken ct)
+        {
+            return Task.FromResult(
+                new PackageOperationResponse
+                {
+                        ResponseError = $"SDK Breaking Change Detection is not implemented for language {this.Language}.",
+                        NextSteps = ["Manually detect the sdk breaking changes."],
+                });
+        }
+
+        /// <summary>
+        /// Retrieves the breaking change pattern content for the current language.
+        /// </summary>
+        /// <param name="sdkRepoRoot">The root directory of the SDK repository.</param>
+        /// <param name="ct">Cancellation token for the operation.</param>
+        /// <returns>
+        /// The content of the breaking change pattern file if it exists, or an empty string if:
+        /// - <see cref="SDKBreakingPatternFilePath"/> is not overridden (returns empty string)
+        /// - The pattern file does not exist at the specified path
+        /// - An error occurs while reading the file
+        /// </returns>
+        /// <remarks>
+        /// <para>
+        /// This method constructs the full file path by combining <paramref name="sdkRepoRoot"/> 
+        /// with <see cref="SDKBreakingPatternFilePath"/>. The pattern file contains language-specific
+        /// rules that define what TypeSpec/API changes constitute breaking changes in the generated SDK.
+        /// </para>
+        /// <para>
+        /// The returned content is typically used by AI agents or classification tools to analyze
+        /// SDK changes and provide mitigation guidance. The pattern content should describe:
+        /// - What SDK changes are considered breaking for the specific language
+        /// - How these changes impact client code
+        /// - Recommended mitigation strategies (e.g., client.tsp customizations)
+        /// </para>
+        /// <para>
+        /// See <see cref="DetectSdkBreakingChangeAsync"/> and the SdkBreakingChangeDetectTool
+        /// for usage examples where this pattern content is used in AI-powered classification.
+        /// </para>
+        /// </remarks>
+        /// <example>
+        /// Example usage in a language service:
+        /// <code>
+        /// protected override string SDKBreakingPatternFilePath => "eng/common/breaking-change-patterns/go-patterns.md";
+        /// 
+        /// var pattern = await GetSDKBreakingPattern(repoRoot, ct);
+        /// // pattern contains the markdown content describing Go-specific breaking changes
+        /// </code>
+        /// </example>
+        public virtual async Task<string> GetSdkBreakingPattern(string sdkRepoRoot, CancellationToken ct)
+        {
+            try
+            {
+                var sdkBreakingPatternFilePath = await specGenSdkConfigHelper.GetSdkBreakingChangePatternFileConfigurationAsync(sdkRepoRoot, ct);
+                if (string.IsNullOrEmpty(sdkBreakingPatternFilePath))
+                {
+                    logger.LogWarning("Failed to retrieve the SDK breaking change pattern file path for language '{language}' from swagger_to_sdk_config.json. Please verify the configuration. No pattern file will be loaded.", Language);
+                    return string.Empty;
+                }
+                var patternFilePath = Path.Combine(sdkRepoRoot, sdkBreakingPatternFilePath);
+                if (File.Exists(patternFilePath))
+                {
+                    return await File.ReadAllTextAsync(patternFilePath, ct);
+                }
+                else
+                {
+                    logger.LogWarning("SDK breaking change pattern file not found at expected path: {PatternFilePath}", patternFilePath);
+                    return string.Empty;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error reading SDK breaking change pattern file for language {Language}", Language);
+                return string.Empty;
+            }
         }
 
         /// <summary>

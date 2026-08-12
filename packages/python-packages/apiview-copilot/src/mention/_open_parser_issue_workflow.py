@@ -12,6 +12,7 @@ from ._github_issue_helpers import check_for_duplicate_issue, create_and_submit_
 
 load_dotenv(override=True)
 
+
 class OpenParserIssueWorkflow(MentionWorkflow):
     prompty_filename = "parse_conversation_to_github_issue.prompty"
     summarize_prompt_file = "summarize_github_actions.prompty"

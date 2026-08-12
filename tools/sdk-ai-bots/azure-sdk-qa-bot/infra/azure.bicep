@@ -190,6 +190,11 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
           name: 'GITHUB_APP_INSTALL_OWNER'
           value: githubAppInstallOwner
         }
+        // Bot display name
+        {
+          name: 'TEAMS_BOT_FULL_DISPLAY_NAME'
+          value: botDisplayName
+        }
       ]
       ftpsState: 'FtpsOnly'
       httpLoggingEnabled: true

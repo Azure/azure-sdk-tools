@@ -115,3 +115,14 @@ This lets callers control the mock behavior through input:
 - `{"message": "Alice"}` → normal success response
 
 Use this pattern in any handler to test how your integration handles different scenarios without changing the mock server code.
+
+## Keeping the Mock in Sync with the Live MCP Server
+
+The mock reuses the live CLI's tool definitions (`SharedOptions.ToolsList`), so the *set* of advertised tools is always identical. What can drift is which tools have a hand-written `IMockToolHandler`. Tools without a handler fall back to the generic `{"message":"Success"}` default — fine for routing tests but useless for scenarios that chain calls together (e.g. consume an ID returned by a previous tool).
+
+When you add or rename an MCP tool in `Azure.Sdk.Tools.Cli`, add a matching handler under `Handlers/<Domain>/`:
+
+1. Look up the live tool's response type under `tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools/`. The return type is usually a typed `CommandResponse` in `Azure.Sdk.Tools.Cli.Models.Responses.*`.
+2. Create a new file under `Handlers/<Domain>/` (e.g., `Handlers/Pipeline/MyToolHandler.cs`).
+3. Implement `IMockToolHandler`. Set `ToolName` to the exact `[McpServerTool(Name = "…")]` value from the real tool.
+4. Return an instance of the same response type the real tool returns, populated with realistic sample data. For scenarios that need to exercise multiple branches, switch on `arguments` (see `HelloWorldHandler` above).

@@ -1,91 +1,94 @@
 # Rust SDK APIView Exporter
 
-Tool for converting Rustdoc JSON output into a structured format for Azure SDK API View project.
+Compatibility parser for Rust APIView inputs.
 
 ## Overview
 
-This tool processes Rustdoc JSON files from the azure-sdk-for-rust repository and generates API views that capture the exported API surface. It organizes API elements into a hierarchical representation of modules, functions, traits, structs, and other Rust constructs while maintaining the parent-child relationships.
+The **current** Rust APIView design lives in `Azure/azure-sdk-for-rust` under
+`eng/tools/generate_api`. That tool now generates the complete APIView tree-style
+`CodeFile` JSON itself and sets `ParserVersion` from the tool version
+(`2.0.0` or newer). The resulting token file is uploaded to APIView as an
+already-generated review token file.
 
-## Features
+This repository's TypeScript parser is now primarily a **compatibility bridge**:
 
-- Parses Rustdoc JSON files (e.g., `azure_core.rust.json`)
-- Extracts and organizes the public API surface
-- Preserves the hierarchical structure of the API
-- Generates output compatible with the APIView JSON schema
-- Supports both development mode (ts-node) and production mode (compiled JavaScript)
+- if the input already has `ParserVersion >= 2.0.0`, it passes the JSON through unchanged
+- otherwise, it uses the legacy rustdoc-JSON conversion path and emits the older
+  APIView `CodeFile` shape produced by this tool
 
-## Prerequisites
+## Current end-to-end flow
 
-- **Rust and Cargo**: Required for the rustdoc-types processing. Install from [rust-lang.org](https://www.rust-lang.org/)
-- **Node.js and npm**: Required for running the TypeScript code. Install from [nodejs.org](https://nodejs.org/)
+Generate the APIView token file in `azure-sdk-for-rust`:
 
-Install `ts-node` to run TypeScript files directly:
 ```sh
-npm i -g ts-node
+cargo run --manifest-path eng/tools/Cargo.toml -p generate_api -- \
+  --manifest-path sdk/core/azure_core/Cargo.toml \
+  --format apiview \
+  --output target/generate_api/azure_core
 ```
 
-For details about the Rust aspects of this project:
-- See [rustdoc-types README](./rustdoc-types/README.md) for Rust project setup and usage
-- The project uses [typeshare](https://github.com/1password/typeshare) to convert Rust models into TypeScript types
+That writes `apiview.json`, whose top-level shape already matches APIView's
+tree-style schema (`PackageName`, `PackageVersion`, `ParserVersion`, `Language`,
+`ReviewLines`).
 
-## Installation
+For manual website uploads, rename `apiview.json` to `<package>.rust.json`.
 
-1. Clone the repository:
-   ```sh
-   git clone https://github.com/Azure/azure-sdk-tools.git
-   cd azure-sdk-tools/tools/apiview/parsers/rust-api-parser
-   ```
+For the new design, this parser does not transform the file; it only preserves
+pass-through behavior if APIView still invokes it.
 
-2. Install Node.js dependencies:
-   ```sh
-   npm install
-   ```
+## Legacy compatibility
 
-3. Build the project:
-   ```sh
-   npm run build
-   ```
+Older Rust API review artifacts came from `eng/tools/generate_api_report` in the
+Rust repo. That tool produced cleaned rustdoc JSON, not a complete APIView token
+file, so this parser converted it into APIView `CodeFile` JSON.
 
-## Usage
+Keep using this parser for any older input that is missing `ParserVersion` or has
+`ParserVersion < 2.0.0`.
 
-### Command Line Interface
+### Legacy CLI
 
 ```sh
 # Development mode
 ts-node src/main.ts <input_file_path> <output_file_path>
 
-# Production mode (after building)
+# Production mode
 node ./dist/src/main.js <input_file_path> <output_file_path>
 
-# Using the installed package
+# Installed package
 rust-genapi <input_file_path> <output_file_path>
 ```
 
-### Examples
+Example:
 
-#### Processing azure_core
 ```sh
-ts-node src/main.ts ./inputs/azure_core.rust.json ./outputs/azure_core.json
-# or
-node ./dist/src/main.js ./inputs/azure_core.rust.json ./outputs/azure_core.json
+rust-genapi ./inputs/azure_core.rust.json ./outputs/azure_core.json
 ```
 
-#### Processing azure_template
+## Legacy version alignment
+
+The old rustdoc-based flow depended on tight alignment between:
+
+- the nightly rustdoc JSON `format_version`
+- the vendored `rustdoc-types`
+- this parser's legacy conversion logic
+- the old `generate_api_report` producer in `azure-sdk-for-rust`
+
+That compatibility information is still relevant only when reprocessing older
+rustdoc JSON files. For the current design, the Rust repo's `generate_api`
+implementation is the source of truth and produces APIView-ready output directly.
+
+## Local development
+
 ```sh
-ts-node src/main.ts ./inputs/azure_template.rust.json ./outputs/azure_template.json
-# or
-node ./dist/src/main.js ./inputs/azure_template.rust.json ./outputs/azure_template.json
+npm install
+npm run build
 ```
 
-## Development
+Helpful project areas:
 
-### Folder Structure
-- `src/`: TypeScript source code
-  - `models/`: Data models and interfaces
-  - `process-items/`: Processors for different Rust items
-- `rustdoc-types/`: Rust code for processing rustdoc output
-- `inputs/`: Example input files
-- `outputs/`: Generated output files
+- `src/`: legacy converter and pass-through entry point
+- `rustdoc-types/`: Rustdoc type model used by the legacy path
+- `test/`: pass-through and legacy compatibility coverage
 
 ## License
 

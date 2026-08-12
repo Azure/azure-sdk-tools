@@ -126,7 +126,7 @@ class CsvDatabase:
         if self.branch:
             title = f"[Automation] Update metadata on {self.date_str}"
             # git push
-            remote_uri = "https://" + github_token + "@" + example_repo[len("https://") :]
+            remote_uri = "https://x-access-token:" + github_token + "@" + example_repo[len("https://") :]
             cmd = ["git", "push", remote_uri, self.branch]
             # do not print this as it contains token
             # logging.info('Command line: ' + ' '.join(cmd))

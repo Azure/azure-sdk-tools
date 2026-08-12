@@ -1,0 +1,10 @@
+{
+  "name": "azure-typespec-author-benchmark",
+  "private": true,
+  "description": "CI-only npm project that pins @microsoft/vally-cli, @github/copilot-sdk and @typespec/compiler via the committed lockfile for reproducible benchmark pipeline runs; not published.",
+  "devDependencies": {
+    "@github/copilot-sdk": "1.0.0-beta.5",
+    "@microsoft/vally-cli": "0.6.0",
+    "@typespec/compiler": "1.13.0"
+  }
+}

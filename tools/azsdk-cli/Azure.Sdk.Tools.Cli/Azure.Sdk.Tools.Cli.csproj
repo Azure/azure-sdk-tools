@@ -13,7 +13,7 @@
     <WarningsAsErrors>CA2254</WarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <AssemblyName>azsdk</AssemblyName>
-    <VersionPrefix>0.6.13</VersionPrefix>
+    <VersionPrefix>0.6.35</VersionPrefix>
     <VersionSuffix></VersionSuffix>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <!-- Package metadata -->
@@ -24,16 +24,19 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.AI.Agents.Persistent" Version="1.2.0-beta.5" />
-    <PackageReference Include="GitHub.Copilot.SDK" Version="0.2.2" />
+    <PackageReference Include="GitHub.Copilot.SDK" Version="1.0.8" />
     <PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" Version="1.5.0" />
+    <PackageReference Include="MessagePack" Version="3.1.8" />
+    <PackageReference Include="Microsoft.Bcl.Memory" Version="10.0.10" />
     <PackageReference Include="Microsoft.Extensions.Azure" Version="1.12.0" />
-    <PackageReference Include="Microsoft.Graph" Version="5.79.0" />
+    <PackageReference Include="Microsoft.Graph" Version="5.105.0" />
+    <PackageReference Include="Microsoft.Kiota.Abstractions" Version="1.22.2" />
+    <PackageReference Include="Nerdbank.MessagePack" Version="1.2.36" />
     <PackageReference Include="OpenAI" Version="2.6.0" />
-    <PackageReference Include="OpenTelemetry" Version="1.14.0" />
-    <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.14.0" />
-    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.14.0" />
-    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.14.0" />
+    <PackageReference Include="OpenTelemetry" Version="1.15.3" />
+    <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.15.3" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.3" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.15.3" />
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.14.0" />
     <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.14.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
@@ -92,5 +95,23 @@
   <PropertyGroup Condition="'$(TF_BUILD)' == 'True'">
     <CopilotSkipCliDownload>true</CopilotSkipCliDownload>
   </PropertyGroup>
+
+  <!-- On managed devices where npmjs.org is blocked (e.g. 1ES policy), redirect
+       the Copilot CLI download to whatever registry npm is configured to use.
+       NPM_CONFIG_REGISTRY env var takes priority; if not set, we read from npm config. -->
+  <PropertyGroup Condition="'$(NPM_CONFIG_REGISTRY)' != ''">
+    <CopilotNpmRegistryUrl>$(NPM_CONFIG_REGISTRY)</CopilotNpmRegistryUrl>
+  </PropertyGroup>
+
+  <Target Name="_GetNpmRegistryUrl" BeforeTargets="_DownloadCopilotCli"
+          Condition="'$(CopilotNpmRegistryUrl)' == '' And '$(CopilotSkipCliDownload)' != 'true' And '$(TF_BUILD)' != 'True'">
+    <Exec Command="npm config get registry" ConsoleToMSBuild="true" StandardOutputImportance="low" IgnoreExitCode="true" EchoOff="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_NpmConfigRegistry" />
+      <Output TaskParameter="ExitCode" PropertyName="_NpmExitCode" />
+    </Exec>
+    <PropertyGroup Condition="'$(_NpmExitCode)' == '0' And '$(_NpmConfigRegistry)' != '' And !$(_NpmConfigRegistry.Contains('registry.npmjs.org'))">
+      <CopilotNpmRegistryUrl>$(_NpmConfigRegistry.Trim())</CopilotNpmRegistryUrl>
+    </PropertyGroup>
+  </Target>
 
 </Project>

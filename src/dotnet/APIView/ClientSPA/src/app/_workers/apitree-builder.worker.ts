@@ -6,7 +6,6 @@ import { InsertCodePanelRowDataMessage, ReviewPageWorkerMessageDirective } from 
 import { NavigationTreeNode } from '../_models/navigationTreeModels';
 import { DIFF_ADDED, DIFF_REMOVED, FULL_DIFF_STYLE, TREE_DIFF_STYLE } from '../_helpers/common-helpers';
 import { applyNavNodeToTree } from './nav-node-helpers';
-import { CommentSource } from '../_models/commentItemModel';
 
 let codePanelData: CodePanelData | null = null;
 let codePanelRowData: CodePanelRowData[] = [];
@@ -168,10 +167,6 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
       const threads: CodePanelRowData[] = node.commentThread[key];
       if (Array.isArray(threads)) {
         threads.forEach((thread) => {
-          const isDiagnosticThread = thread.comments?.some(c => c.commentSource === CommentSource.Diagnostic);
-          if (isDiagnosticThread && !apiTreeBuilderData?.showSystemComments) {
-            return;
-          }
           if (shouldAppendIfRowIsHiddenAPI(thread)) {
             thread.rowClasses = new Set<string>(thread.rowClasses);
             codePanelRowData.push(thread);

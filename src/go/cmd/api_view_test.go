@@ -200,6 +200,12 @@ func TestAliasDefinitions(t *testing.T) {
 			path:       "testdata/test_external_alias_exporter",
 			sourceName: "github.com/Azure/azure-sdk-tools/src/go/cmd/testdata/test_external_alias_source.Foo",
 		},
+		{
+			diagLevel:  CodeDiagnosticLevelInfo,
+			name:       "internal_package_major_version",
+			path:       "testdata/test_alias_export_major_version",
+			sourceName: "internal/exported.Foo",
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			p, err := filepath.Abs(test.path)

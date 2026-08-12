@@ -110,9 +110,9 @@ The `azsdk-common-` prefix ensures shared skills sort together in a distinct blo
 
 ### How to sync skills across azure sdk repositories
 
-The `tools - sync-.github` pipeline syncs shared skills from `.github/skills/` in `azure-sdk-tools` to `.github/skills/` in all subscribed Azure SDK repositories. It uses `FilePatterns` to sync only `azsdk-common-*` directories, leaving repo-specific skills untouched. This works the same way as the `tools - sync-eng-common` pipeline.
+The `tools - sync-.github-skills` pipeline syncs shared skills from `.github/skills/` in `azure-sdk-tools` to `.github/skills/` in all subscribed Azure SDK repositories. It uses `FilePatterns` to sync only `azsdk-common-*` directories, leaving repo-specific skills untouched. This works the same way as the `tools - sync-eng-common` pipeline.
 
-The pipeline definition is at [`eng/pipelines/sync-.github.yml`](../../eng/pipelines/sync-.github.yml).
+The pipeline definition is at [`eng/pipelines/sync-.github-skills.yml`](../../eng/pipelines/sync-.github-skills.yml).
 
 To distribute skills from azure-sdk-tools to individual Azure SDK repositories:
 
@@ -135,7 +135,7 @@ To distribute skills from azure-sdk-tools to individual Azure SDK repositories:
 
     <Skill instructions and sub-sections here>
     ```
-3. Submit a PR — the sync pipeline triggers automatically when files under `.github/skills/azsdk-common-*` change.
+3. Submit a PR — the `tools - sync-.github-skills` pipeline triggers automatically when files under `.github/skills/azsdk-common-*` change.
 4. The pipeline creates sync PRs in all subscribed repos following the standard sync workflow (see [common_engsys.md](../../doc/common/common_engsys.md) for details on the sync process).
 
 **Important:** Do **NOT** modify `azsdk-common-*` skill directories in individual language repos — they will be overwritten on the next sync.

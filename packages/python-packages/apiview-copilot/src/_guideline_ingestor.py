@@ -193,9 +193,7 @@ class SyncResult:
             f"{len(self.examples_deleted)} deleted, {len(self.examples_unchanged)} unchanged",
         ]
         if self.memories_absorbed or self.memories_retained:
-            parts.append(
-                f" | Memories: {len(self.memories_absorbed)} absorbed, {len(self.memories_retained)} retained"
-            )
+            parts.append(f" | Memories: {len(self.memories_absorbed)} absorbed, {len(self.memories_retained)} retained")
         parts.append(f" | {len(self.errors)} errors")
         return "".join(parts)
 
@@ -558,7 +556,9 @@ class GuidelineIngestor:
             raise ValueError(f"base_sha and target_sha are identical ({current_sha[:8]}). Nothing to sync.")
 
         # Verify base is an ancestor of target using the compare API
-        compare_url = f"https://api.github.com/repos/{AZURE_SDK_OWNER}/{AZURE_SDK_REPO}/compare/{last_sha}...{current_sha}"
+        compare_url = (
+            f"https://api.github.com/repos/{AZURE_SDK_OWNER}/{AZURE_SDK_REPO}/compare/{last_sha}...{current_sha}"
+        )
         compare_resp = self._client.get(compare_url)
         compare_resp.raise_for_status()
         compare_data = compare_resp.json()
@@ -595,10 +595,7 @@ class GuidelineIngestor:
             allowed_folders.add("general")
 
             before_count = len(files_to_process)
-            files_to_process = [
-                f for f in files_to_process
-                if self._file_matches_language_folders(f, allowed_folders)
-            ]
+            files_to_process = [f for f in files_to_process if self._file_matches_language_folders(f, allowed_folders)]
             print(f"Language filter ({', '.join(languages)}): {before_count} -> {len(files_to_process)} files")
 
         if not files_to_process:
@@ -638,9 +635,7 @@ class GuidelineIngestor:
 
         if bad_guidelines:
             bad_ids = set(g.id for g in bad_guidelines)
-            errors.append(
-                f"Conflicting duplicate IDs (skipped, not deleted): {sorted(bad_ids)}"
-            )
+            errors.append(f"Conflicting duplicate IDs (skipped, not deleted): {sorted(bad_ids)}")
             # Include one copy of each conflicting ID so it's not treated as a deletion
             seen_bad = set()
             for g in bad_guidelines:
@@ -720,8 +715,12 @@ class GuidelineIngestor:
                 result.guidelines_created.append(gid)
                 print(f"  {prefix}: {gid}")
                 if details:
-                    after_content = enriched.get("content", target_map[gid][0].text) if enriched else target_map[gid][0].text
-                    result.details.append(SyncDetail(id=gid, kind="guideline", action="created", before=None, after=after_content))
+                    after_content = (
+                        enriched.get("content", target_map[gid][0].text) if enriched else target_map[gid][0].text
+                    )
+                    result.details.append(
+                        SyncDetail(id=gid, kind="guideline", action="created", before=None, after=after_content)
+                    )
                 if not dry_run:
                     self._upsert_guideline(target_map[gid][0], target_map[gid][1], target_sha, enriched=enriched)
 
@@ -730,7 +729,9 @@ class GuidelineIngestor:
                 result.guidelines_deleted.append(gid)
                 print(f"  {delete_prefix}: {gid}")
                 if details:
-                    result.details.append(SyncDetail(id=gid, kind="guideline", action="deleted", before=base_map[gid][0].text, after=None))
+                    result.details.append(
+                        SyncDetail(id=gid, kind="guideline", action="deleted", before=base_map[gid][0].text, after=None)
+                    )
                 if not dry_run:
                     try:
                         item = self._db.guidelines.get(gid)
@@ -753,8 +754,18 @@ class GuidelineIngestor:
                     result.guidelines_updated.append(gid)
                     print(f"  {update_prefix}: {gid}")
                     if details:
-                        after_content = enriched.get("content", target_map[gid][0].text) if enriched else target_map[gid][0].text
-                        result.details.append(SyncDetail(id=gid, kind="guideline", action="updated", before=base_map[gid][0].text, after=after_content))
+                        after_content = (
+                            enriched.get("content", target_map[gid][0].text) if enriched else target_map[gid][0].text
+                        )
+                        result.details.append(
+                            SyncDetail(
+                                id=gid,
+                                kind="guideline",
+                                action="updated",
+                                before=base_map[gid][0].text,
+                                after=after_content,
+                            )
+                        )
                     # Verify guideline exists in database
                     try:
                         existing = self._db.guidelines.get(gid)
@@ -916,16 +927,20 @@ class GuidelineIngestor:
                             )
                         )
 
-                print(f"  Batch {batch_idx + 1}/{batch_count}: {len(items)} guidelines, "
-                      f"{sum(len(i.get('related_examples', [])) for i in items)} examples")
+                print(
+                    f"  Batch {batch_idx + 1}/{batch_count}: {len(items)} guidelines, "
+                    f"{sum(len(i.get('related_examples', [])) for i in items)} examples"
+                )
 
             except Exception as e:
                 logger.error("LLM parsing failed for batch %d: %s", batch_idx + 1, e)
                 result.errors.append(f"LLM batch {batch_idx + 1}: {e}")
                 # Fall through — guidelines without LLM enrichment will use raw data
 
-        print(f"LLM parsing complete: {len(enriched_guidelines)} guidelines enriched, "
-              f"{len(all_examples)} examples extracted")
+        print(
+            f"LLM parsing complete: {len(enriched_guidelines)} guidelines enriched, "
+            f"{len(all_examples)} examples extracted"
+        )
         return enriched_guidelines, all_examples
 
     def _sync_examples(
@@ -980,13 +995,25 @@ class GuidelineIngestor:
 
                 result.examples_updated.append(parsed_ex.id)
                 if details:
-                    result.details.append(SyncDetail(id=parsed_ex.id, kind="example", action="updated", before=existing.get("content", ""), after=parsed_ex.content))
+                    result.details.append(
+                        SyncDetail(
+                            id=parsed_ex.id,
+                            kind="example",
+                            action="updated",
+                            before=existing.get("content", ""),
+                            after=parsed_ex.content,
+                        )
+                    )
                 if not dry_run:
                     self._upsert_example(parsed_ex, new_hash, commit_sha, existing)
             except CosmosResourceNotFoundError:
                 result.examples_created.append(parsed_ex.id)
                 if details:
-                    result.details.append(SyncDetail(id=parsed_ex.id, kind="example", action="created", before=None, after=parsed_ex.content))
+                    result.details.append(
+                        SyncDetail(
+                            id=parsed_ex.id, kind="example", action="created", before=None, after=parsed_ex.content
+                        )
+                    )
                 if not dry_run:
                     self._upsert_example(parsed_ex, new_hash, commit_sha)
 
@@ -1009,7 +1036,15 @@ class GuidelineIngestor:
                                 if not ex_guideline_ids and not ex_item.get("memory_ids", []):
                                     result.examples_deleted.append(ex_id)
                                     if details:
-                                        result.details.append(SyncDetail(id=ex_id, kind="example", action="deleted", before=ex_item.get("content", ""), after=None))
+                                        result.details.append(
+                                            SyncDetail(
+                                                id=ex_id,
+                                                kind="example",
+                                                action="deleted",
+                                                before=ex_item.get("content", ""),
+                                                after=None,
+                                            )
+                                        )
                                     self._db.examples.delete(ex_id, run_indexer=False)
                                 else:
                                     # Just update the example to remove this guideline link
@@ -1022,9 +1057,19 @@ class GuidelineIngestor:
                             if details:
                                 try:
                                     ex_item = self._db.examples.get(ex_id)
-                                    result.details.append(SyncDetail(id=ex_id, kind="example", action="deleted", before=ex_item.get("content", ""), after=None))
+                                    result.details.append(
+                                        SyncDetail(
+                                            id=ex_id,
+                                            kind="example",
+                                            action="deleted",
+                                            before=ex_item.get("content", ""),
+                                            after=None,
+                                        )
+                                    )
                                 except Exception:
-                                    result.details.append(SyncDetail(id=ex_id, kind="example", action="deleted", before=None, after=None))
+                                    result.details.append(
+                                        SyncDetail(id=ex_id, kind="example", action="deleted", before=None, after=None)
+                                    )
             except Exception:
                 pass
 
@@ -1116,8 +1161,10 @@ class GuidelineIngestor:
 
         total_memories = sum(len(g.get("related_memories", [])) for g in guidelines_with_memories)
         prefix = "[DRY RUN] " if dry_run else ""
-        print(f"\n{prefix}Reconciling memories for {len(guidelines_with_memories)} guidelines "
-              f"({total_memories} memories to check)...")
+        print(
+            f"\n{prefix}Reconciling memories for {len(guidelines_with_memories)} guidelines "
+            f"({total_memories} memories to check)..."
+        )
 
         any_deletions = False
         guidelines_needing_reindex = False
@@ -1148,8 +1195,7 @@ class GuidelineIngestor:
             }
 
             memory_inputs = [
-                {"id": m["id"], "title": m.get("title", ""), "content": m.get("content", "")}
-                for m in memories
+                {"id": m["id"], "title": m.get("title", ""), "content": m.get("content", "")} for m in memories
             ]
 
             prompt_input = json.dumps({"guideline": guideline_content, "memories": memory_inputs})

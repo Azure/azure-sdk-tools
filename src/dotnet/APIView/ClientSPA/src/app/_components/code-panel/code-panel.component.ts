@@ -8,7 +8,7 @@ import { CodeLineRowNavigationDirection, convertRowOfTokensToString, isDiffRow, 
 import { SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/router-helpers';
 import { CodePanelData, CodePanelRowData, CodePanelRowDatatype, CrossLanguageContentDto, CrossLanguageRowDto } from 'src/app/_models/codePanelModels';
 import { StructuredToken } from 'src/app/_models/structuredToken';
-import { CommentItemModel, CommentSeverity, CommentSource, CommentType } from 'src/app/_models/commentItemModel';
+import { CommentItemModel, CommentSeverity, CommentType } from 'src/app/_models/commentItemModel';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { MenuItem, MenuItemCommandEvent, MessageService, ToastMessageOptions } from 'primeng/api';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
@@ -413,61 +413,6 @@ export class CodePanelComponent implements OnChanges {
       indexes: indexesToRemove
     });
     this.changeDetectorRef.markForCheck();
-  }
-
-  /**
-   * Removes diagnostic comment threads from the scroller in real-time.
-   */
-  async removeDiagnosticCommentThreads() {
-    await this.codePanelRowSource?.adapter?.relax();
-
-    const indexesToRemove: number[] = [];
-    const filteredData: CodePanelRowData[] = [];
-
-    for (let i = 0; i < this.codePanelRowData.length; i++) {
-      if (this.isDiagnosticCommentThread(this.codePanelRowData[i])) {
-        indexesToRemove.push(i);
-      } else {
-        filteredData.push(this.codePanelRowData[i]);
-      }
-    }
-
-    this.codePanelRowData = filteredData;
-    await this.codePanelRowSource?.adapter?.remove({ indexes: indexesToRemove });
-    this.changeDetectorRef.markForCheck();
-  }
-
-  /**
-   * Inserts diagnostic comment threads back into the scroller from codePanelData.
-   */
-  async insertDiagnosticCommentThreads() {
-    if (!this.codePanelData?.nodeMetaData) return;
-    await this.codePanelRowSource?.adapter?.relax();
-
-    for (const [nodeIdHashed, nodeMetaData] of Object.entries(this.codePanelData.nodeMetaData)) {
-      if (!nodeMetaData.commentThread) continue;
-
-      for (const [rowPosition, threads] of Object.entries(nodeMetaData.commentThread)) {
-        if (!Array.isArray(threads)) continue;
-
-        for (const thread of threads) {
-          if (!this.isDiagnosticCommentThread(thread)) continue;
-
-          thread.rowClasses = new Set<string>(thread.rowClasses as any);
-          const insertIndex = this.findInsertIndexForThread(nodeIdHashed, parseInt(rowPosition));
-
-          if (insertIndex >= 0) {
-            this.codePanelRowData.splice(insertIndex, 0, thread);
-            await this.codePanelRowSource?.adapter?.insert({ beforeIndex: insertIndex, items: [thread] });
-          }
-        }
-      }
-    }
-  }
-
-  private isDiagnosticCommentThread(row: CodePanelRowData): boolean {
-    return row.type === CodePanelRowDatatype.CommentThread &&
-      row.comments?.some(c => c.commentSource === CommentSource.Diagnostic) === true;
   }
 
   private findInsertIndexForThread(nodeIdHashed: string, rowPosition: number): number {

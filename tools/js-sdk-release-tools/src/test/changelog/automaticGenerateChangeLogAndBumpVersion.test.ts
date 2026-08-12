@@ -49,13 +49,15 @@ describe('generateChangelogAndBumpVersion beta version test', () => {
     }));
 
     vi.doMock('../../changelog/v2/DifferenceDetector.js', () => ({
-      DifferenceDetector: vi.fn().mockImplementation(() => ({
-        detect: vi.fn().mockResolvedValue({
-          hasBreakingChange: false,
-          hasFeature: true,
-        }),
-        getDetectContext: vi.fn().mockReturnValue({}),
-      })),
+      DifferenceDetector: vi.fn().mockImplementation(function () {
+        return {
+          detect: vi.fn().mockResolvedValue({
+            hasBreakingChange: false,
+            hasFeature: true,
+          }),
+          getDetectContext: vi.fn().mockReturnValue({}),
+        };
+      }),
     }));
 
     vi.doMock('../../utils/version.js', async () => {
@@ -185,13 +187,15 @@ describe('generateChangelogAndBumpVersion beta version test', () => {
     }));
 
     vi.doMock('../../changelog/v2/ChangelogGenerator.js', () => ({
-      ChangelogGenerator: vi.fn().mockImplementation(() => ({
-        generate: vi.fn().mockReturnValue({
-          hasBreakingChange: false,
-          hasFeature: true,
-          content: '## 2.0.0 (2023-05-01)\n\n### Features\n\n- Added new feature',
-        }),
-      })),
+      ChangelogGenerator: vi.fn().mockImplementation(function () {
+        return {
+          generate: vi.fn().mockReturnValue({
+            hasBreakingChange: false,
+            hasFeature: true,
+            content: '## 2.0.0 (2023-05-01)\n\n### Features\n\n- Added new feature',
+          }),
+        };
+      }),
     }));
 
     const changelogTempDir = path.join(packageDir, 'changelog-temp', 'package');
@@ -272,13 +276,15 @@ describe('generateChangelogAndBumpVersion beta version test', () => {
     }));
 
     vi.doMock('../../changelog/v2/ChangelogGenerator.js', () => ({
-      ChangelogGenerator: vi.fn().mockImplementation(() => ({
-        generate: vi.fn().mockReturnValue({
-          hasBreakingChange: false,
-          hasFeature: true,
-          content: '## 2.0.0 (2023-05-01)\n\n### Features\n\n- Added new feature',
-        }),
-      })),
+      ChangelogGenerator: vi.fn().mockImplementation(function () {
+        return {
+          generate: vi.fn().mockReturnValue({
+            hasBreakingChange: false,
+            hasFeature: true,
+            content: '## 2.0.0 (2023-05-01)\n\n### Features\n\n- Added new feature',
+          }),
+        };
+      }),
     }));
 
     const changelogTempDir = path.join(packageDir, 'changelog-temp', 'package');
@@ -357,13 +363,15 @@ describe('generateChangelogAndBumpVersion beta version test', () => {
     }));
 
     vi.doMock('../../changelog/v2/ChangelogGenerator.js', () => ({
-      ChangelogGenerator: vi.fn().mockImplementation(() => ({
-        generate: vi.fn().mockReturnValue({
-          hasBreakingChange: false,
-          hasFeature: true,
-          content: '## 2.0.0 (2023-04-01)\n\n### Features\n\n- Added beta feature',
-        }),
-      })),
+      ChangelogGenerator: vi.fn().mockImplementation(function () {
+        return {
+          generate: vi.fn().mockReturnValue({
+            hasBreakingChange: false,
+            hasFeature: true,
+            content: '## 2.0.0 (2023-04-01)\n\n### Features\n\n- Added beta feature',
+          }),
+        };
+      }),
     }));
 
     const changelogTempDir = path.join(packageDir, 'changelog-temp', 'package');
@@ -406,5 +414,85 @@ describe('generateChangelogAndBumpVersion beta version test', () => {
       expect(changelog.hasFeature).toBe(true);
       expect(changelog.hasBreakingChange).toBe(false);
     }
+  });
+
+  test('report-only mode returns changes without modifying CHANGELOG.md or bumping version', async () => {
+    const npmViewWithStable = {
+      versions: ['1.0.0', '1.1.0', '1.2.0'],
+      'dist-tags': {
+        latest: '1.2.0',
+      },
+      time: {
+        '1.0.0': '2023-01-01T00:00:00.000Z',
+        '1.1.0': '2023-02-01T00:00:00.000Z',
+        '1.2.0': '2023-03-01T00:00:00.000Z',
+      },
+    };
+
+    const packageJson = {
+      name: '@azure/arm-testservice',
+      version: '2.0.0',
+      'sdk-type': 'mgmt',
+    };
+
+    await writeFile(path.join(packageDir, 'package.json'), JSON.stringify(packageJson, null, 2));
+
+    await writeFile(
+      path.join(packageDir, 'review', 'arm-testservice-node.api.md'),
+      `// New API content\nexport interface TestServiceClient {\n    newOperation(): Promise<string>;\n}`
+    );
+
+    vi.doMock('../../common/npmUtils.js', () => ({
+      tryGetNpmView: vi.fn().mockResolvedValue(npmViewWithStable),
+      tryCreateLastestStableNpmViewFromGithub: vi.fn().mockResolvedValue(undefined),
+    }));
+
+    vi.doMock('../../changelog/v2/ChangelogGenerator.js', () => ({
+      ChangelogGenerator: vi.fn().mockImplementation(function () {
+        return {
+          generate: vi.fn().mockReturnValue({
+            hasBreakingChange: true,
+            hasFeature: true,
+            content: '### Features Added\n\n  - Added operation\n\n### Breaking Changes\n\n  - Removed operation group',
+          }),
+        };
+      }),
+    }));
+
+    const changelogTempDir = path.join(packageDir, 'changelog-temp', 'package');
+    await mkdir(changelogTempDir, { recursive: true });
+    await mkdir(path.join(changelogTempDir, 'review'), { recursive: true });
+
+    const npmPackageJson = {
+      name: '@azure/arm-testservice',
+      version: '1.2.0',
+      'sdk-type': 'mgmt',
+    };
+    await writeFile(path.join(changelogTempDir, 'package.json'), JSON.stringify(npmPackageJson, null, 2));
+
+    await writeFile(
+      path.join(changelogTempDir, 'review', 'arm-testservice-node.api.md'),
+      `// Old API content\nexport interface TestServiceClient {\n    oldOperation(): Promise<string>;\n}`
+    );
+
+    vi.resetModules();
+    const { generateChangelogAndBumpVersion, UpdateMode } =
+      await import('../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js');
+
+    const changelog = await generateChangelogAndBumpVersion(
+      'arm-testservice',
+      { apiVersion: undefined, sdkReleaseType: undefined },
+      UpdateMode.ChangelogOnly,
+      undefined,
+      true
+    );
+
+    // Report-only mode must not write CHANGELOG.md or compute a new version.
+    expect(mockMakeChangesForReleasingTrack2).not.toHaveBeenCalled();
+
+    expect(changelog).toBeDefined();
+    expect(changelog!.hasBreakingChange).toBe(true);
+    expect(changelog!.content).toContain('### Breaking Changes');
+    expect(changelog!.content).toContain('### Features Added');
   });
 });

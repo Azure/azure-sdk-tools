@@ -214,11 +214,25 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 Status = BuildStatus.InProgress,
             };
 
+            var releasePlan = new ReleasePlanWorkItem
+            {
+                SDKInfo = new List<SDKInfo>
+                {
+                    new SDKInfo
+                    {
+                        Language = "Java",
+                        PackageName = "azure-test"
+                    }
+                }
+            };
+            mockDevOpsService.ConfiguredReleasePlanForWorkItem = releasePlan;
+
             var result = await specWorkflowTool.RunGenerateSdkAsync(
                 typespecProjectRoot: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
                 apiVersion: "2023-01-01",
                 sdkReleaseType: "beta",
-                language: "Java"
+                language: "Java",
+                workItemId: 456
             );
             Assert.That(result.ToString(), Does.Contain("Azure DevOps pipeline https://dev.azure.com/azure-sdk/internal/_build/results?buildId=100 has been initiated to generate the SDK. Build ID is 100"));
         }
@@ -241,13 +255,26 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 .ReturnsAsync(
                 new Octokit.PullRequest(123, null, null, null, null, null, null, null, 123, ItemState.Open, null, null, DateTimeOffset.Now, DateTimeOffset.Now, DateTimeOffset.Now, null, null, null, null, null, null, false, null, null, null, null, 0, 1, 1, 1, 1, null, false, null, null, null, null, null));
 
+            var releasePlan = new ReleasePlanWorkItem
+            {
+                SDKInfo = new List<SDKInfo>
+                {
+                    new SDKInfo
+                    {
+                        Language = "Java",
+                        PackageName = "azure-test"
+                    }
+                }
+            };
+            mockDevOpsService.ConfiguredReleasePlanForWorkItem = releasePlan;
 
             var result = await specWorkflowTool.RunGenerateSdkAsync(
                 typespecProjectRoot: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
                 apiVersion: "2023-01-01",
                 sdkReleaseType: "beta",
-                language: "Java",
-                pullRequestNumber: 123
+                language: "Java",                
+                pullRequestNumber: 123,
+                workItemId: 456               
             );
             Assert.That(result.ToString(), Does.Contain("Azure DevOps pipeline https://dev.azure.com/azure-sdk/internal/_build/results?buildId=100 has been initiated to generate the SDK. Build ID is 100"));
         }
@@ -392,7 +419,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 typespecProjectRoot: "InvalidPath/specification/testcontoso/Contoso.Management",
                 apiVersion: "2023-01-01",
                 sdkReleaseType: "beta",
-                language: "Java"
+                language: "Java",
+                workItemId: 456
             );
             Assert.That(result.TypeSpecProject, Is.EqualTo(""));
             Assert.That(result.Language, Is.EqualTo(SdkLanguage.Java));

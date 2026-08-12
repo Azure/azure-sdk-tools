@@ -7,7 +7,6 @@ parameters:
   default:
     - Azure/azure-sdk
     - Azure/azure-sdk-for-android
-    - Azure/azure-sdk-for-c
     - Azure/azure-sdk-for-cpp
     - Azure/azure-sdk-for-go
     - Azure/azure-sdk-for-ios
@@ -97,7 +96,7 @@ jobs:
               -WhatIf:$${{parameters.WhatIfPreference}}
 
         - task: PowerShell@2
-          displayName: ${{ repo }} sync workflow branch clean-up
+          displayName: ${{ repo }} sync .github branch clean-up
           condition: succeededOrFailed()
           continueOnError: true
           inputs:

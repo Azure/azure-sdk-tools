@@ -846,9 +846,27 @@ class TestGetCreatedRevisions:
     @pytest.fixture
     def revisions_data(self):
         return [
-            {"id": "rev-1", "ReviewId": "review-1", "APIRevisionType": "Manual", "Language": "Python", "CreatedOn": "2026-03-05T00:00:00Z"},
-            {"id": "rev-2", "ReviewId": "review-1", "APIRevisionType": "Automatic", "Language": "Python", "CreatedOn": "2026-03-06T00:00:00Z"},
-            {"id": "rev-3", "ReviewId": "review-2", "APIRevisionType": "PullRequest", "Language": "Java", "CreatedOn": "2026-03-07T00:00:00Z"},
+            {
+                "id": "rev-1",
+                "ReviewId": "review-1",
+                "APIRevisionType": "Manual",
+                "Language": "Python",
+                "CreatedOn": "2026-03-05T00:00:00Z",
+            },
+            {
+                "id": "rev-2",
+                "ReviewId": "review-1",
+                "APIRevisionType": "Automatic",
+                "Language": "Python",
+                "CreatedOn": "2026-03-06T00:00:00Z",
+            },
+            {
+                "id": "rev-3",
+                "ReviewId": "review-2",
+                "APIRevisionType": "PullRequest",
+                "Language": "Java",
+                "CreatedOn": "2026-03-07T00:00:00Z",
+            },
         ]
 
     def _setup_mocks(self, mock_client, revisions):
@@ -900,7 +918,13 @@ class TestGetCreatedRevisions:
 
     def test_unknown_revision_type_mapped_to_unknown(self):
         revisions = [
-            {"id": "rev-1", "ReviewId": "review-1", "APIRevisionType": "SomeNewType", "Language": "Python", "CreatedOn": "2026-03-05T00:00:00Z"},
+            {
+                "id": "rev-1",
+                "ReviewId": "review-1",
+                "APIRevisionType": "SomeNewType",
+                "Language": "Python",
+                "CreatedOn": "2026-03-05T00:00:00Z",
+            },
         ]
         with patch("src._apiview.get_apiview_cosmos_client") as mock_client:
             self._setup_mocks(mock_client, revisions)
@@ -922,7 +946,13 @@ class TestGetCreatedRevisions:
 
     def test_many_revisions(self):
         revisions = [
-            {"id": f"rev-{i}", "ReviewId": "review-1", "APIRevisionType": "Manual", "Language": "Python", "CreatedOn": "2026-03-05T00:00:00Z"}
+            {
+                "id": f"rev-{i}",
+                "ReviewId": "review-1",
+                "APIRevisionType": "Manual",
+                "Language": "Python",
+                "CreatedOn": "2026-03-05T00:00:00Z",
+            }
             for i in range(250)
         ]
         with patch("src._apiview.get_apiview_cosmos_client") as mock_client:
@@ -947,8 +977,20 @@ class TestGetOpenedRevisions:
     @pytest.fixture
     def revisions_data(self):
         return [
-            {"id": "rev-1", "ReviewId": "review-1", "APIRevisionType": "Manual", "Language": "Python", "CreatedOn": "2026-03-05T00:00:00Z"},
-            {"id": "rev-2", "ReviewId": "review-2", "APIRevisionType": "PullRequest", "Language": "Java", "CreatedOn": "2026-03-10T00:00:00Z"},
+            {
+                "id": "rev-1",
+                "ReviewId": "review-1",
+                "APIRevisionType": "Manual",
+                "Language": "Python",
+                "CreatedOn": "2026-03-05T00:00:00Z",
+            },
+            {
+                "id": "rev-2",
+                "ReviewId": "review-2",
+                "APIRevisionType": "PullRequest",
+                "Language": "Java",
+                "CreatedOn": "2026-03-10T00:00:00Z",
+            },
         ]
 
     def _setup_mocks(self, mock_client, revisions):
@@ -1038,7 +1080,13 @@ class TestGetOpenedRevisions:
     def test_batching_with_many_viewed_ids(self):
         viewed_ids = {f"rev-{i}" for i in range(250)}
         revisions = [
-            {"id": f"rev-{i}", "ReviewId": "review-1", "APIRevisionType": "Automatic", "Language": "Python", "CreatedOn": "2026-03-05T00:00:00Z"}
+            {
+                "id": f"rev-{i}",
+                "ReviewId": "review-1",
+                "APIRevisionType": "Automatic",
+                "Language": "Python",
+                "CreatedOn": "2026-03-05T00:00:00Z",
+            }
             for i in range(250)
         ]
         revision_query_count = [0]

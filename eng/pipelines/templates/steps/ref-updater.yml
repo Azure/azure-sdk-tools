@@ -10,7 +10,7 @@ steps:
   - pwsh: |
       if (!(Test-Path ${{ repo.key }}))
       {
-        git clone https://github.com/azure/${{ repo.key }}
+        git clone https://github.com/${{ coalesce(repo.value.org, 'azure') }}/${{ repo.key }}
         if ("${{ repo.value.branch }}")
         { 
           Push-Location ${{ repo.key }}
@@ -35,6 +35,7 @@ steps:
 
   - template: ../../../common/pipelines/templates/steps/create-pull-request.yml
     parameters:
+      RepoOwner: ${{ coalesce(repo.value.org, 'azure') }}
       RepoName: ${{ repo.key }}
       PRBranchName: UpdateRepositoryRefsFor${{ parameters.ToolRepo }}
       CommitMsg: Update ${{ parameters.ToolRepo }} Repository Resource Refs in Yaml files

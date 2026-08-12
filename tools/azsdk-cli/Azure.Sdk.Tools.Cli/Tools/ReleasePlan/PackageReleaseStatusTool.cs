@@ -156,29 +156,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 if (releasePlans.Count == 0)
                 {
                     response.Message = $"No in-progress release plans found for package '{packageName}' in language '{language}'.";
+                    response.ResponseError = response.Message;
                     return response;
                 }
 
-                ReleasePlanWorkItem releasePlan;
-
-                // If release plan ID is provided, use it to select the matching release plan from the results
-                if (releasePlanId > 0)
+                var (releasePlan, selectionError) = SelectReleasePlan(releasePlans, packageName, language, releasePlanId, sdkReleaseType, sdkPullRequest);
+                if (releasePlan == null)
                 {
-                    var matchingPlan = releasePlans.FirstOrDefault(rp => rp.ReleasePlanId == releasePlanId);
-                    if (matchingPlan != null)
-                    {
-                        logger.LogInformation("Found release plan {releasePlanId} matching the provided ID for package {packageName}.", releasePlanId, packageName);
-                        releasePlan = matchingPlan;
-                    }
-                    else
-                    {
-                        response.Message = $"Release plan with ID '{releasePlanId}' not found among in-progress release plans for package '{packageName}' in language '{language}'.";
-                        return response;
-                    }
-                }
-                else
-                {
-                    releasePlan = SelectReleasePlan(releasePlans, packageName, sdkReleaseType, sdkPullRequest);
+                    response.ResponseError = selectionError;
+                    return response;
                 }
 
                 response.ReleasePlanId = releasePlan.ReleasePlanId;
@@ -245,57 +231,53 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        private ReleasePlanWorkItem SelectReleasePlan(List<ReleasePlanWorkItem> releasePlans, string packageName, string? sdkReleaseType, string? sdkPullRequest)
+        private (ReleasePlanWorkItem? ReleasePlan, string? Error) SelectReleasePlan(
+            List<ReleasePlanWorkItem> releasePlans,
+            string packageName,
+            string language,
+            int releasePlanId,
+            string? sdkReleaseType,
+            string? sdkPullRequest)
         {
-            var releasePlan = releasePlans[0];
-            if (releasePlans.Count > 1)
+            IEnumerable<ReleasePlanWorkItem> candidates = releasePlans;
+            var criteria = new List<string>();
+
+            if (releasePlanId > 0)
             {
-                logger.LogInformation("Multiple active release plans are found for '{packageName}'", packageName);
-                // If an SDK pull request URL is provided, try to select the release plan that matches it.
-                if (!string.IsNullOrWhiteSpace(sdkPullRequest))
-                {
-                    var releasePlanWithSdkPullRequest = releasePlans.FirstOrDefault(rp =>
-                        rp.SDKInfo.Any(s =>
-                            string.Equals(s.PackageName, packageName, StringComparison.OrdinalIgnoreCase)
-                            && !string.IsNullOrWhiteSpace(s.SdkPullRequestUrl)
-                            && string.Equals(s.SdkPullRequestUrl, sdkPullRequest, StringComparison.OrdinalIgnoreCase)));
-                    if (releasePlanWithSdkPullRequest != null)
-                    {
-                        logger.LogInformation("Selected release plan {releasePlanId} with SDK pull request {sdkPullRequest}.", releasePlanWithSdkPullRequest.ReleasePlanId, sdkPullRequest);
-                        releasePlan = releasePlanWithSdkPullRequest;
-                        return releasePlan;
-                    }
-                    logger.LogInformation("No release plan matched the SDK pull request {sdkPullRequest}.", sdkPullRequest);
-                }
-                // If an SDK release type is provided, try to select the release plan that matches it.
-                if (!string.IsNullOrWhiteSpace(sdkReleaseType))
-                {
-                    var releasePlanWithSdkReleaseType = releasePlans.FirstOrDefault(rp => string.Equals(rp.SDKReleaseType, sdkReleaseType, StringComparison.OrdinalIgnoreCase));
-                    if (releasePlanWithSdkReleaseType != null)
-                    {
-                        logger.LogInformation("Selected release plan {releasePlanId} with SDK release type {sdkReleaseType}.", releasePlanWithSdkReleaseType.ReleasePlanId, sdkReleaseType);
-                        releasePlan = releasePlanWithSdkReleaseType;
-                        return releasePlan;
-                    }
-                    logger.LogInformation("No release plan matched the SDK release type {sdkReleaseType}.", sdkReleaseType);
-                }
-                // If no release plan was selected by SDK pull request or SDK release type, try to select the release plan with a merged pull request.
-                var releasePlanWithPrMerged = releasePlans.FirstOrDefault(rp => rp.SDKInfo.Any(s => string.Equals(s.PackageName, packageName, StringComparison.OrdinalIgnoreCase) && s.PullRequestStatus.Equals("Merged")));
-                if (releasePlanWithPrMerged != null)
-                {
-                    logger.LogInformation("Selected first release plan {releasePlanId} with pull request as merged.", releasePlanWithPrMerged.ReleasePlanId);
-                    releasePlan = releasePlanWithPrMerged;
-                }
-                else
-                {
-                    logger.LogInformation("No release plan with merged pull request status found. Defaulting to first release plan {releasePlanId}.", releasePlan.ReleasePlanId);
-                }
+                candidates = candidates.Where(rp => rp.ReleasePlanId == releasePlanId);
+                criteria.Add($"release plan ID '{releasePlanId}'");
             }
-            else
+
+            if (!string.IsNullOrWhiteSpace(sdkPullRequest))
             {
-                logger.LogInformation("Found release plan work item {workItemId} for package {packageName}", releasePlan.WorkItemId, packageName);
+                candidates = candidates.Where(rp => rp.SDKInfo.Any(s =>
+                    !string.IsNullOrWhiteSpace(s.SdkPullRequestUrl)
+                    && string.Equals(s.SdkPullRequestUrl, sdkPullRequest, StringComparison.OrdinalIgnoreCase)));
+                criteria.Add($"SDK pull request '{sdkPullRequest}'");
             }
-            return releasePlan;
+
+            if (!string.IsNullOrWhiteSpace(sdkReleaseType))
+            {
+                candidates = candidates.Where(rp => string.Equals(rp.SDKReleaseType, sdkReleaseType, StringComparison.OrdinalIgnoreCase));
+                criteria.Add($"SDK release type '{sdkReleaseType}'");
+            }
+
+            var matchingPlans = candidates.ToList();
+            var criteriaDescription = criteria.Count > 0 ? $" with {string.Join(" and ", criteria)}" : string.Empty;
+            if (matchingPlans.Count == 0)
+            {
+                return (null, $"No in-progress release plans matched package '{packageName}' in language '{language}'{criteriaDescription}.");
+            }
+
+            if (matchingPlans.Count > 1)
+            {
+                var matchingIds = string.Join(", ", matchingPlans.Select(rp => rp.ReleasePlanId));
+                return (null, $"Multiple in-progress release plans matched package '{packageName}' in language '{language}'{criteriaDescription}. Matching release plan IDs: {matchingIds}. Provide --release-plan-id or --sdk-pull-request to select one.");
+            }
+
+            var releasePlan = matchingPlans[0];
+            logger.LogInformation("Selected release plan {releasePlanId} for package {packageName}.", releasePlan.ReleasePlanId, packageName);
+            return (releasePlan, null);
         }
 
         internal static bool IsReleasePlanComplete(ReleasePlanWorkItem releasePlan)

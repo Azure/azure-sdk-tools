@@ -123,7 +123,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             // Assert
             Assert.That(result.Message, Does.Contain("No in-progress release plans found"));
             Assert.That(result.Message, Does.Contain("azure-test-package"));
-            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(result.ResponseError, Is.EqualTo(result.Message));
             Assert.That(result.ReleaseStatus, Is.EqualTo("Released"));
         }
 
@@ -142,7 +142,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             // Assert
             Assert.That(result.Message, Does.Contain("No in-progress release plans found"));
             Assert.That(result.Message, Does.Contain("azure-resourcemanager-containerservice"));
-            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(result.ResponseError, Is.EqualTo(result.Message));
             Assert.That(result.ReleaseStatus, Is.EqualTo("Released"));
         }
 
@@ -190,7 +190,41 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
-        public async Task UpdatePackageReleaseStatus_WithMultipleReleasePlans_SelectsMergedPullRequest()
+        public async Task UpdatePackageReleaseStatus_WithSingleReleasePlanAndWrongReleaseType_ReturnsError()
+        {
+            // Arrange
+            var releasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 12345,
+                ReleasePlanId = 100,
+                SDKReleaseType = "beta",
+                SDKInfo = new List<SDKInfo>
+                {
+                    new SDKInfo
+                    {
+                        Language = "go",
+                        PackageName = "sdk/resourcemanager/cosmos/armcosmos"
+                    }
+                }
+            };
+
+            mockDevOpsService
+                .Setup(x => x.GetReleasePlansForPackageAsync("sdk/resourcemanager/cosmos/armcosmos/v4", "go", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<ReleasePlanWorkItem> { releasePlan });
+
+            // Act
+            var result = await packageReleaseStatusTool.UpdatePackageReleaseStatus(
+                "sdk/resourcemanager/cosmos/armcosmos/v4", "go", "Released", "4.0.0", 0, "stable", null, null, CancellationToken.None);
+
+            // Assert
+            Assert.That(result.ResponseError, Does.Contain("SDK release type 'stable'"));
+            mockDevOpsService.Verify(
+                x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()),
+                Times.Never);
+        }
+
+        [Test]
+        public async Task UpdatePackageReleaseStatus_WithMultipleReleasePlansAndMergedPullRequestStatus_ReturnsError()
         {
             // Arrange
             var releasePlanWithMergedPR = new ReleasePlanWorkItem
@@ -227,32 +261,25 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 .Setup(x => x.GetReleasePlansForPackageAsync("azure-test-package", "python", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<ReleasePlanWorkItem> { releasePlanWithOpenPR, releasePlanWithMergedPR });
 
-            mockDevOpsService
-                .Setup(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 11111 });
-
             // Act
             var result = await packageReleaseStatusTool.UpdatePackageReleaseStatus("azure-test-package", "python", "Released", null, 0, null, null, null, CancellationToken.None);
 
             // Assert
-            Assert.That(result.ResponseError, Is.Null);
-            Assert.That(result.ReleaseStatus, Is.EqualTo("Released"));
-
-            // Verify the one with merged PR was selected (work item 11111)
+            Assert.That(result.ResponseError, Does.Contain("Multiple in-progress release plans"));
             mockDevOpsService.Verify(
-                x => x.UpdateWorkItemAsync(11111, It.Is<Dictionary<string, string>>(d =>
-                    d.ContainsKey("Custom.ReleaseStatusForPython")), It.IsAny<CancellationToken>()),
-                Times.Once);
+                x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()),
+                Times.Never);
         }
 
         [Test]
-        public async Task UpdatePackageReleaseStatus_WithMultipleReleasePlans_NoMergedPR_SelectsFirst()
+        public async Task UpdatePackageReleaseStatus_WithMultipleSameReleaseType_ReturnsError()
         {
             // Arrange
             var firstReleasePlan = new ReleasePlanWorkItem
             {
                 WorkItemId = 11111,
                 ReleasePlanId = 101,
+                SDKReleaseType = "stable",
                 SDKInfo = new List<SDKInfo>
                 {
                     new SDKInfo
@@ -268,6 +295,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             {
                 WorkItemId = 22222,
                 ReleasePlanId = 102,
+                SDKReleaseType = "stable",
                 SDKInfo = new List<SDKInfo>
                 {
                     new SDKInfo
@@ -283,21 +311,57 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 .Setup(x => x.GetReleasePlansForPackageAsync("azure-test-package", "python", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<ReleasePlanWorkItem> { firstReleasePlan, secondReleasePlan });
 
+            // Act
+            var result = await packageReleaseStatusTool.UpdatePackageReleaseStatus("azure-test-package", "python", "Released", null, 0, "stable", null, null, CancellationToken.None);
+
+            // Assert
+            Assert.That(result.ResponseError, Does.Contain("Multiple in-progress release plans"));
+            mockDevOpsService.Verify(
+                x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()),
+                Times.Never);
+        }
+
+        [Test]
+        public async Task UpdatePackageReleaseStatus_WithUniqueReleaseType_SelectsMatchingReleasePlan()
+        {
+            // Arrange
+            var betaReleasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 11111,
+                ReleasePlanId = 101,
+                SDKReleaseType = "beta",
+                SDKInfo = new List<SDKInfo>()
+            };
+            var stableReleasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 22222,
+                ReleasePlanId = 102,
+                SDKReleaseType = "stable",
+                SDKInfo = new List<SDKInfo>()
+            };
+
             mockDevOpsService
-                .Setup(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 11111 });
+                .Setup(x => x.GetReleasePlansForPackageAsync("sdk/resourcemanager/cosmos/armcosmos/v4", "go", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<ReleasePlanWorkItem> { betaReleasePlan, stableReleasePlan });
+            mockDevOpsService
+                .Setup(x => x.UpdateWorkItemAsync(22222, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 22222 });
 
             // Act
-            var result = await packageReleaseStatusTool.UpdatePackageReleaseStatus("azure-test-package", "python", "Released", null, 0, null, null, null, CancellationToken.None);
+            var result = await packageReleaseStatusTool.UpdatePackageReleaseStatus(
+                "sdk/resourcemanager/cosmos/armcosmos/v4", "go", "Released", "4.0.0", 0, "stable", null, null, CancellationToken.None);
 
             // Assert
             Assert.That(result.ResponseError, Is.Null);
-
-            // Verify the first one was selected (work item 11111)
+            Assert.That(result.ReleasePlanId, Is.EqualTo(102));
             mockDevOpsService.Verify(
-                x => x.UpdateWorkItemAsync(11111, It.Is<Dictionary<string, string>>(d =>
-                    d.ContainsKey("Custom.ReleaseStatusForPython")), It.IsAny<CancellationToken>()),
+                x => x.UpdateWorkItemAsync(22222, It.Is<Dictionary<string, string>>(fields =>
+                    fields["Custom.ReleaseStatusForGo"] == "Released"
+                    && fields["Custom.ReleasedVersionForGo"] == "4.0.0"), It.IsAny<CancellationToken>()),
                 Times.Once);
+            mockDevOpsService.Verify(
+                x => x.UpdateWorkItemAsync(11111, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()),
+                Times.Never);
         }
 
         [Test]
@@ -547,7 +611,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var result = await packageReleaseStatusTool.UpdatePackageReleaseStatus(packageName, language, "Released", null, 0, null, null, null, CancellationToken.None);
 
             // Assert
-            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(result.ResponseError, Is.EqualTo(result.Message));
             Assert.That(result.Message, Does.Contain("No in-progress release plans found"));
             Assert.That(result.Message, Does.Contain(packageName));
             Assert.That(result.Message, Does.Contain(language));
@@ -813,11 +877,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var result = await packageReleaseStatusTool.UpdatePackageReleaseStatus(
                 "azure-test-package", "python", "Released", null, 999, null, null, null, CancellationToken.None);
 
-            // Assert - returns message, does not update any work item
-            Assert.That(result.ResponseError, Is.Null);
-            Assert.That(result.Message, Does.Contain("999"));
-            Assert.That(result.Message, Does.Contain("azure-test-package"));
-            Assert.That(result.Message, Does.Contain("python"));
+            // Assert - returns an error and does not update any work item
+            Assert.That(result.ResponseError, Does.Contain("999"));
+            Assert.That(result.ResponseError, Does.Contain("azure-test-package"));
+            Assert.That(result.ResponseError, Does.Contain("python"));
 
             // Verify it searched by package name but did NOT update any work item
             mockDevOpsService.Verify(
@@ -1194,7 +1257,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var result = await packageReleaseStatusTool.UpdatePackageReleaseStatus("azure-test-package", "python", "Released", "2.0.0", 0, null, null, null, CancellationToken.None);
 
             // Assert - The tool should report no in-progress release plans found
-            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(result.ResponseError, Is.EqualTo(result.Message));
             Assert.That(result.Message, Does.Contain("No in-progress release plans found"));
             Assert.That(result.Message, Does.Contain("azure-test-package"));
             Assert.That(result.Message, Does.Contain("python"));

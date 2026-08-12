@@ -1,5 +1,4 @@
 using System.CommandLine;
-using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.APIView;
@@ -7,18 +6,15 @@ using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services.ApiReviewHub;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Tools.Core;
-using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package;
 
-[McpServerToolType, Description("Mark released SDK packages in API Review Hub and APIView")]
 public class PackageMarkReleasedTool(
     IApiReviewHubService apiReviewHubService,
     IAPIViewService apiViewService,
     ILogger<PackageMarkReleasedTool> logger) : MCPTool
 {
     private const string CommandName = "mark-released";
-    private const string ToolName = "azsdk_package_mark_released";
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
 
@@ -46,10 +42,9 @@ public class PackageMarkReleasedTool(
     };
     private readonly Option<string?> sourceBranchOption = new("--source-branch") { Description = "The source branch associated with the APIView revision." };
 
-    protected override Command GetCommand() => new McpCommand(
+    protected override Command GetCommand() => new(
         CommandName,
-        "Mark a package as released in API Review Hub and APIView",
-        ToolName)
+        "Mark a package as released in API Review Hub and APIView")
     {
         languageOption,
         packageNameOption,
@@ -81,20 +76,19 @@ public class PackageMarkReleasedTool(
             parseResult.GetValue(sourceBranchOption),
             ct);
 
-    [McpServerTool(Name = ToolName), Description("Mark a released SDK package in API Review Hub and APIView.")]
     public async Task<PackageMarkReleasedResponse> MarkReleasedAsync(
-        [Description("SDK language.")] string language,
-        [Description("Package name.")] string packageName,
-        [Description("Released package version.")] string packageVersion,
-        [Description("API Review Hub API hash.")] string apiHash,
-        [Description("Source artifact path used by APIView.")] string sourceFilePath,
-        [Description("APIView package type.")] string packageType,
-        [Description("Optional APIView review token file name.")] string? reviewTokenFileName = null,
-        [Description("Build ID containing the review token.")] string? buildId = null,
-        [Description("Repository containing the pipeline build.")] string? repoName = null,
-        [Description("Pipeline artifact name.")] string artifactName = "packages",
-        [Description("Azure DevOps project.")] string project = "internal",
-        [Description("Source branch associated with the revision.")] string? sourceBranch = null,
+        string language,
+        string packageName,
+        string packageVersion,
+        string apiHash,
+        string sourceFilePath,
+        string packageType,
+        string? reviewTokenFileName = null,
+        string? buildId = null,
+        string? repoName = null,
+        string artifactName = "packages",
+        string project = "internal",
+        string? sourceBranch = null,
         CancellationToken ct = default)
     {
         try

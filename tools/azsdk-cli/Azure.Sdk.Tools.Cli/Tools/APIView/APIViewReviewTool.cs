@@ -23,8 +23,6 @@ public class APIViewReviewTool : MCPMultiCommandTool
     // Sub-command constants
     private const string GetCommentsCmd = "get-comments";
     private const string GetContentCmd = "get-content";
-    private const string CreateCIRevisionCmd = "create-ci-revision";
-    private const string CreatePullRequestRevisionCmd = "create-pull-request-revision";
     private const string RequestCopilotReviewCmd = "request-copilot-review";
     private const string GetCopilotReviewCmd = "get-copilot-review";
     private const string GetReviewUrlCmd = "get-review-url";
@@ -57,78 +55,15 @@ public class APIViewReviewTool : MCPMultiCommandTool
         Description = "The URL to the API review in APIView (e.g., https://apiview.dev/review/{reviewId}?activeApiRevisionId={revisionId}). Use --api-text instead to provide the text directly."
     };
 
-    private readonly Option<string> buildIdOption = new("--build-id")
-    {
-        Description = "The Azure DevOps build ID",
-        Required = true
-    };
-
-    private readonly Option<string> codeFileOption = new("--code-token-file-path")
-    {
-        Description = "The APIView token file path within the artifact (e.g., 'azure-core_python.json')",
-        Required = true,
-    };
-
-    private readonly Option<string> sourceFileOption = new("--source-file-path")
-    {
-        Description = "The original source/package file path relative to the artifact (e.g., 'azure-core-1.0.0.whl', 'Microsoft.Cache-Redis.New.json')",
-        Required = true
-    };
-
-    private readonly Option<string> repoNameOption = new("--repo-name")
-    {
-        Description = "The repository name in 'owner/repo' format (e.g., 'Azure/azure-sdk-for-python')",
-        Required = true
-    };
-
     private readonly Option<string> packageNameOption = new("--package-name")
     {
         Description = "The package name (e.g., 'azure-core')",
         Required = true
     };
 
-    private readonly Option<string> artifactNameOption = new("--artifact-name")
-    {
-        Description = "The Azure DevOps artifact name",
-        Required = true
-    };
-
-    private readonly Option<string> projectOption = new("--project")
-    {
-        Description = "The Azure DevOps project name (defaults to 'internal')",
-        DefaultValueFactory = _ => "internal"
-    };
-
-    private readonly Option<string> labelOption = new("--label")
-    {
-        Description = "A label to associate with the API review. If not provided, defaults to 'Source Branch:{sourceBranch}'"
-    };
-
     private readonly Option<string> packageVersionOption = new("--package-version")
     {
         Description = "The package version for the API review"
-    };
-
-    private readonly Option<bool> compareAllRevisionsOption = new("--compare-all-revisions")
-    {
-        Description = "Whether to compare all revisions (typically set for released packages)",
-        DefaultValueFactory = _ => false
-    };
-
-    private readonly Option<bool> setReleaseTagOption = new("--set-release-tag")
-    {
-        Description = "Whether to tag the revision as released (used from release pipelines)",
-        DefaultValueFactory = _ => false
-    };
-
-    private readonly Option<string> packageTypeOption = new("--package-type")
-    {
-        Description = "The SDK package type"
-    };
-
-    private readonly Option<string> sourceBranchOption = new("--source-branch")
-    {
-        Description = "The source branch for the build"
     };
 
     // get-review-url specific options
@@ -138,32 +73,9 @@ public class APIViewReviewTool : MCPMultiCommandTool
         Required = true
     };
 
-    // create-pull-request-revision specific options
-    private readonly Option<string> commitShaOption = new("--commit-sha")
-    {
-        Description = "The git commit SHA of the pull request head",
-        Required = true
-    };
-
-    private readonly Option<int> pullRequestNumberOption = new("--pull-request-number")
-    {
-        Description = "The pull request number",
-        Required = true
-    };
-
     private readonly Option<string> languageOption = new("--language")
     {
         Description = "The language identifier (e.g., 'python', 'java', 'js', 'net', 'go')"
-    };
-
-    private readonly Option<string> baselineCodeFileOption = new("--baseline-code-file")
-    {
-        Description = "The baseline code file name for API comparison"
-    };
-
-    private readonly Option<string> metadataFileOption = new("--metadata-file")
-    {
-        Description = "TypeSpec metadata file name within the artifact (e.g., 'typespec-metadata.json')"
     };
 
     private readonly Option<string> apiTextOption = new("--api-text")
@@ -205,18 +117,6 @@ public class APIViewReviewTool : MCPMultiCommandTool
         {
             apiViewUrlRequiredOption, outputFileOption, contentReturnTypeOption
         },
-        new(CreateCIRevisionCmd, "Create an API revision from Azure DevOps pipeline artifacts (CI/release pipeline usage)")
-        {
-            buildIdOption, artifactNameOption, sourceFileOption, codeFileOption,
-            repoNameOption, packageNameOption, projectOption,
-            labelOption, compareAllRevisionsOption, packageVersionOption, setReleaseTagOption, packageTypeOption, sourceBranchOption
-        },
-        new(CreatePullRequestRevisionCmd, "Create an API revision if API changes are detected in a pull request (PR pipeline usage)")
-        {
-            buildIdOption, artifactNameOption, sourceFileOption, commitShaOption,
-            repoNameOption, packageNameOption, pullRequestNumberOption,
-            projectOption, packageTypeOption, codeFileOption, languageOption, baselineCodeFileOption, metadataFileOption
-        },
         new McpCommand(GetReviewUrlCmd, "Get the APIView review URL for a package and language", ApiViewGetReviewUrlToolName)
         {
             packageNameOption, languageQueryOption, packageVersionOption
@@ -238,8 +138,6 @@ public class APIViewReviewTool : MCPMultiCommandTool
         {
             GetCommentsCmd => await GetComments(parseResult, ct),
             GetContentCmd => await GetContent(parseResult, ct),
-            CreateCIRevisionCmd => await CreateCIRevision(parseResult, ct),
-            CreatePullRequestRevisionCmd => await CreatePullRequestRevision(parseResult, ct),
             GetReviewUrlCmd => await GetReviewUrl(parseResult, ct),
             RequestCopilotReviewCmd => await RequestCopilotReview(parseResult, ct),
             GetCopilotReviewCmd => await GetCopilotReview(parseResult, ct),
@@ -372,116 +270,6 @@ public class APIViewReviewTool : MCPMultiCommandTool
         catch (Exception ex)
         {
             return new APIViewResponse { ResponseError = $"Failed to get content: {ex.Message}" };
-        }
-    }
-
-    private async Task<APIViewResponse> CreateCIRevision(ParseResult parseResult, CancellationToken ct)
-    {
-        string? reviewFilePath = parseResult.GetValue(codeFileOption);
-        string? buildId = parseResult.GetValue(buildIdOption);
-        string? artifactName = parseResult.GetValue(artifactNameOption);
-        string? originalFilePath = parseResult.GetValue(sourceFileOption);
-        string? label = parseResult.GetValue(labelOption);
-        string? repoName = parseResult.GetValue(repoNameOption);
-        string? packageName = parseResult.GetValue(packageNameOption);
-        string? project = parseResult.GetValue(projectOption);
-        bool compareAllRevisions = parseResult.GetValue(compareAllRevisionsOption);
-        string? packageVersion = parseResult.GetValue(packageVersionOption);
-        bool setReleaseTag = parseResult.GetValue(setReleaseTagOption);
-        string? packageType = parseResult.GetValue(packageTypeOption);
-        string? sourceBranch = parseResult.GetValue(sourceBranchOption);
-        label ??= !string.IsNullOrEmpty(sourceBranch) ? $"Source Branch:{sourceBranch}" : null;
-
-        if (string.IsNullOrEmpty(repoName) || !repoName.Contains('/'))
-        {
-            return new APIViewResponse { ResponseError = $"Invalid --repo-name '{repoName}'. Must be in 'owner/repo' format (e.g., 'Azure/azure-sdk-for-python')." };
-        }
-
-        try
-        {
-            (string? content, int statusCode) = await _apiViewService.CreateCIReviewAsync(
-                buildId!, artifactName!, originalFilePath!, reviewFilePath!,
-                repoName!, packageName!, project!,
-                label, compareAllRevisions, packageVersion, setReleaseTag, packageType, sourceBranch, ct);
-
-            return statusCode switch
-            {
-                200 => new APIViewResponse
-                {
-                    Message = $"API review approved and package name approved for {packageName}",
-                    Result = content
-                },
-                201 => new APIViewResponse
-                {
-                    Message = $"API review is not yet approved, but package name is approved for {packageName}",
-                    Result = content
-                },
-                202 => new APIViewResponse
-                {
-                    Message = $"API review created. API review and package name are not yet approved for {packageName}",
-                    Result = content
-                },
-                _ => new APIViewResponse
-                {
-                    ResponseError = $"Invalid status code from APIView. Status code {statusCode}. Please reach out to Azure SDK engineering systems on Teams channel."
-                }
-            };
-        }
-        catch (Exception ex)
-        {
-            return new APIViewResponse { ResponseError = $"Failed to create API revision: {ex.Message}" };
-        }
-    }
-
-    private async Task<APIViewResponse> CreatePullRequestRevision(ParseResult parseResult, CancellationToken ct)
-    {
-        string? buildId = parseResult.GetValue(buildIdOption);
-        string? artifactName = parseResult.GetValue(artifactNameOption);
-        string? filePath = parseResult.GetValue(sourceFileOption);
-        string? commitSha = parseResult.GetValue(commitShaOption);
-        string? repoName = parseResult.GetValue(repoNameOption);
-        string? packageName = parseResult.GetValue(packageNameOption);
-        int pullRequestNumber = parseResult.GetValue(pullRequestNumberOption);
-        string? project = parseResult.GetValue(projectOption);
-        string? packageType = parseResult.GetValue(packageTypeOption);
-        string? language = parseResult.GetValue(languageOption);
-        string? codeFile = parseResult.GetValue(codeFileOption);
-        string? baselineCodeFile = parseResult.GetValue(baselineCodeFileOption);
-        string? metadataFile = parseResult.GetValue(metadataFileOption);
-
-        if (string.IsNullOrEmpty(repoName) || !repoName.Contains('/'))
-        {
-            return new APIViewResponse { ResponseError = $"Invalid --repo-name '{repoName}'. Must be in 'owner/repo' format (e.g., 'Azure/azure-sdk-for-python')." };
-        }
-
-        try
-        {
-            (string? content, int statusCode) = await _apiViewService.CreatePullRequestRevisionAsync(
-                buildId!, artifactName!, filePath!, commitSha!,
-                repoName!, packageName!,
-                pullRequestNumber, codeFile, baselineCodeFile, language, project, packageType, metadataFile, ct);
-
-            return statusCode switch
-            {
-                201 => new APIViewResponse
-                {
-                    Message = $"API changes detected for {packageName}. New API revision created.",
-                    Result = content
-                },
-                208 => new APIViewResponse
-                {
-                    Message = $"No API changes detected for {packageName}. Existing revision is up to date.",
-                    Result = content
-                },
-                _ => new APIViewResponse
-                {
-                    ResponseError = $"Invalid status code from APIView. Status code {statusCode}. Please reach out to Azure SDK engineering systems on Teams channel."
-                }
-            };
-        }
-        catch (Exception ex)
-        {
-            return new APIViewResponse { ResponseError = $"Failed to create API revision: {ex.Message}" };
         }
     }
 

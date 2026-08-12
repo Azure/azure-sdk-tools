@@ -1,3 +1,4 @@
+using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models.APIView;
 using Azure.Sdk.Tools.Cli.Services.ApiReviewHub;
 using Azure.Sdk.Tools.Cli.Services.APIView;
@@ -78,6 +79,14 @@ public class PackageMarkReleasedToolTests
         var command = tool.GetCommandInstances().Single();
 
         Assert.That(command.Options.Any(option => option.Name.Contains("endpoint", StringComparison.OrdinalIgnoreCase)), Is.False);
+    }
+
+    [Test]
+    public void Command_IsNotExposedAsMcpTool()
+    {
+        var command = tool.GetCommandInstances().Single();
+
+        Assert.That(command, Is.Not.TypeOf<McpCommand>());
     }
 
     private Task<Azure.Sdk.Tools.Cli.Models.Responses.Package.PackageMarkReleasedResponse> MarkReleasedAsync() =>

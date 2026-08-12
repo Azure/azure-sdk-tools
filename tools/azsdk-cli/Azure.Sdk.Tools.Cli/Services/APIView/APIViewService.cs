@@ -29,17 +29,6 @@ public interface IAPIViewService
     /// </summary>
     Task<string?> GetReviewUrlByPackageAsync(string packageName, string language, string? version, CancellationToken ct);
 
-    /// <summary>
-    /// Creates an API revision for a pull request if API surface changes are detected.
-    /// Use this during PR validation to compare the PR's API against the baseline.
-    /// </summary>
-    Task<(string? content, int statusCode)> CreatePullRequestRevisionAsync(
-        string buildId, string artifactName, string filePath, string commitSha,
-        string repoName, string packageName,
-        int pullRequestNumber = 0, string? codeFile = null, string? baselineCodeFile = null,
-        string? language = null, string? project = null, string? packageType = null,
-        string? metadataFile = null, CancellationToken ct = default);
-
     Task<(string? content, int statusCode)> MarkPackageReleasedAsync(
         APIViewReleaseRequest request,
         CancellationToken ct = default);
@@ -220,73 +209,6 @@ public class APIViewService : IAPIViewService
             ["compareAllRevisions"] = "true"
         };
         return await _httpService.PostMultipartAsync("/autoreview/upload", request.SourceFilePath, fields, ct);
-    }
-
-    /// <inheritdoc />
-    public async Task<(string? content, int statusCode)> CreatePullRequestRevisionAsync(
-        string buildId,
-        string artifactName,
-        string filePath,
-        string commitSha,
-        string repoName,
-        string packageName,
-        int pullRequestNumber = 0,
-        string? codeFile = null,
-        string? baselineCodeFile = null,
-        string? language = null,
-        string? project = null,
-        string? packageType = null,
-        string? metadataFile = null,
-        CancellationToken ct = default
-    ) {
-        var queryParams = new List<string>
-        {
-            $"buildId={Uri.EscapeDataString(buildId)}",
-            $"artifactName={Uri.EscapeDataString(artifactName)}",
-            $"filePath={Uri.EscapeDataString(filePath)}",
-            $"commitSha={Uri.EscapeDataString(commitSha)}",
-            $"repoName={Uri.EscapeDataString(repoName)}",
-            $"packageName={Uri.EscapeDataString(packageName)}"
-        };
-
-        if (pullRequestNumber > 0)
-        {
-            queryParams.Add($"pullRequestNumber={pullRequestNumber}");
-        }
-
-        if (!string.IsNullOrEmpty(codeFile))
-        {
-            queryParams.Add($"codeFile={Uri.EscapeDataString(codeFile)}");
-        }
-
-        if (!string.IsNullOrEmpty(baselineCodeFile))
-        {
-            queryParams.Add($"baselineCodeFile={Uri.EscapeDataString(baselineCodeFile)}");
-        }
-
-        if (!string.IsNullOrEmpty(language))
-        {
-            queryParams.Add($"language={Uri.EscapeDataString(language)}");
-        }
-
-        if (!string.IsNullOrEmpty(project))
-        {
-            queryParams.Add($"project={Uri.EscapeDataString(project)}");
-        }
-
-        if (!string.IsNullOrEmpty(packageType))
-        {
-            queryParams.Add($"packageType={Uri.EscapeDataString(packageType)}");
-        }
-
-        if (!string.IsNullOrEmpty(metadataFile))
-        {
-            queryParams.Add($"metadataFile={Uri.EscapeDataString(metadataFile)}");
-        }
-
-        string endpoint = $"/api/PullRequests/CreateAPIRevisionIfAPIHasChanges?{string.Join("&", queryParams)}";
-
-        return await _httpService.GetAsync(endpoint, ct);
     }
 
     /// <inheritdoc />

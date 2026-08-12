@@ -71,8 +71,6 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_update_sdk_details_in_release_plan |  | Update the SDK details in the release plan work item. This tool is called to update SDK language and package name in the release plan work item. Provide path to typespec project. |
 | azsdk_upgrade | `azsdk upgrade` | Upgrade the MCP server to the latest version. IMPORTANT: After upgrade completes, the MCP server must be restarted to use the new version. |
 | azsdk_verify_setup | `azsdk verify setup check` | Verifies the developer environment for MCP release tool requirements. Accepts a list of supported languages to check requirements for, the packagePath of the repo to check, and an optional list of requirement names to try installing. To auto-install, call with `requirementsToInstall` containing the exact requirement names the user wants to install. |
-|  | `azsdk apiview create-pull-request-revision` | Create an API revision if API changes are detected in a pull request (PR pipeline usage) |
-|  | `azsdk apiview create-ci-revision` | Create an API revision from Azure DevOps pipeline artifacts (CI/release pipeline usage) |
 |  | `azsdk apiview get-content` | Get content by APIView URL |
 |  | `azsdk tsp generate-authoring-plan` | Generate a solution or execution plan for defining and updating a TypeSpec-based API specification for an Azure service. |
 |  | `azsdk release-plan update-release-status` |  |

@@ -85,7 +85,7 @@ stimuli:
   - type: tool-calls
     config:
       required:
-        - ^(edit|apply_patch|bash|powershell)$
+        - "^(edit|apply_patch|bash|powershell)$"
   - *id003
   - *id004
   - *id005

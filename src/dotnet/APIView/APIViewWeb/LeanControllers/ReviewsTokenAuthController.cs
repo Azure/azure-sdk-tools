@@ -103,7 +103,7 @@ public class ReviewsTokenAuthController : ControllerBase
     }
 
     [HttpPost("mark-released", Name = "MarkPackageReleased")]
-    public async Task<ActionResult<ResolvePackageResponse>> MarkReleased(
+    public async Task<ActionResult<MarkReleasedResult>> MarkReleased(
         [FromQuery, Required] string packageName,
         [FromQuery, Required] string language,
         [FromQuery, Required] string version,
@@ -122,18 +122,23 @@ public class ReviewsTokenAuthController : ControllerBase
                 return NotFound(new { message = $"Could not find an APIView revision for package '{packageName}' in language '{language}' with version '{version}'." });
             }
 
-            if (dryRun)
-            {
-                return new LeanJsonResult(result, StatusCodes.Status200OK);
-            }
-
-            APIRevisionListItemModel revision = await _apiRevisionsManager.MarkAPIRevisionReleasedAsync(result.RevisionId);
+            APIRevisionListItemModel revision = dryRun
+                ? await _apiRevisionsManager.GetAPIRevisionAsync(result.RevisionId)
+                : await _apiRevisionsManager.MarkAPIRevisionReleasedAsync(result.RevisionId);
             if (revision == null)
             {
                 return NotFound(new { message = $"APIView revision '{result.RevisionId}' was not found." });
             }
 
-            return new LeanJsonResult(result, StatusCodes.Status200OK);
+            var response = new MarkReleasedResult
+            {
+                ReviewId = result.ReviewId,
+                RevisionId = result.RevisionId,
+                IsReleased = revision.IsReleased,
+                ReleasedOn = revision.IsReleased ? revision.ReleasedOn : null
+            };
+
+            return new LeanJsonResult(response, StatusCodes.Status200OK);
         }
         catch (Exception ex)
         {

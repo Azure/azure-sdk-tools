@@ -9,6 +9,11 @@ public interface IAPIViewHttpService
     Task<(string? content, int statusCode)> GetAsync(string endpoint, CancellationToken ct);
     Task<(string? content, int statusCode)> PostAsync(string endpoint, CancellationToken ct);
     Task<(string? content, int statusCode)> PostAsync(string endpoint, string? jsonBody, CancellationToken ct);
+    Task<(string? content, int statusCode)> PostMultipartAsync(
+        string endpoint,
+        string filePath,
+        IReadOnlyDictionary<string, string> fields,
+        CancellationToken ct);
 }
 
 public class APIViewHttpService : IAPIViewHttpService
@@ -69,6 +74,35 @@ public class APIViewHttpService : IAPIViewHttpService
 
         string content = await response.Content.ReadAsStringAsync(ct);
 
+        if (!response.IsSuccessStatusCode)
+        {
+            HandleErrorResponse("POST", endpoint, response, content);
+        }
+
+        return (content, (int)response.StatusCode);
+    }
+
+    public async Task<(string? content, int statusCode)> PostMultipartAsync(
+        string endpoint,
+        string filePath,
+        IReadOnlyDictionary<string, string> fields,
+        CancellationToken ct)
+    {
+        HttpClient httpClient = await GetOrCreateAuthenticatedClientAsync(ct);
+        string requestUrl = $"{_baseUrl}{endpoint}";
+
+        await using FileStream fileStream = File.OpenRead(filePath);
+        using MultipartFormDataContent requestContent = new();
+        using StreamContent fileContent = new(fileStream);
+        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+        requestContent.Add(fileContent, "file", Path.GetFileName(filePath));
+        foreach ((string name, string value) in fields)
+        {
+            requestContent.Add(new StringContent(value), name);
+        }
+
+        using HttpResponseMessage response = await httpClient.PostAsync(requestUrl, requestContent, ct);
+        string content = await response.Content.ReadAsStringAsync(ct);
         if (!response.IsSuccessStatusCode)
         {
             HandleErrorResponse("POST", endpoint, response, content);

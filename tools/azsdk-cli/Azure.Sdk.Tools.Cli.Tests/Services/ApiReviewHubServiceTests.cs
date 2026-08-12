@@ -38,6 +38,47 @@ public class ApiReviewHubServiceTests
     }
 
     [Test]
+    public async Task MarkPackageReleasedAsync_UsesProductionEndpointAndAuthenticatedPayload()
+    {
+        HttpMethod? method = null;
+        Uri? requestUri = null;
+        string? authorizationScheme = null;
+        string? authorizationParameter = null;
+        string? requestBody = null;
+        var mockHandler = new Mock<HttpMessageHandler>();
+        mockHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .Callback<HttpRequestMessage, CancellationToken>((request, cancellationToken) =>
+            {
+                method = request.Method;
+                requestUri = request.RequestUri;
+                authorizationScheme = request.Headers.Authorization?.Scheme;
+                authorizationParameter = request.Headers.Authorization?.Parameter;
+                requestBody = request.Content?.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult();
+            })
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.NoContent));
+
+        httpClientFactoryMock
+            .Setup(x => x.CreateClient(It.IsAny<string>()))
+            .Returns(new HttpClient(mockHandler.Object));
+
+        await service.MarkPackageReleasedAsync("python", "azure-test", "1.0.0", "api-hash", CancellationToken.None);
+
+        Assert.That(method, Is.EqualTo(HttpMethod.Post));
+        Assert.That(requestUri?.ToString(), Is.EqualTo("https://api-review-hub.azurewebsites.net/api/releases/mark-released"));
+        Assert.That(authorizationScheme, Is.EqualTo("Bearer"));
+        Assert.That(authorizationParameter, Is.EqualTo("mock-token"));
+        Assert.That(requestBody, Does.Contain("\"language\":\"python\""));
+        Assert.That(requestBody, Does.Contain("\"packageName\":\"azure-test\""));
+        Assert.That(requestBody, Does.Contain("\"version\":\"1.0.0\""));
+        Assert.That(requestBody, Does.Contain("\"apiHash\":\"api-hash\""));
+    }
+
+    [Test]
     [TestCase("python", "1.0.0")]
     [TestCase("python", "4.12.0b3")]
     [TestCase("csharp", "4.12.0-beta.3")]

@@ -32,6 +32,15 @@ public class ReviewPullRequestCreationRequest
     public required GitBranchReference TargetBranch { get; set; }
 }
 
+public class MarkPackageReleasedRequest
+{
+    public required string Language { get; set; }
+    public required string PackageName { get; set; }
+    public required string Version { get; set; }
+    public required string ApiHash { get; set; }
+    public required DateTimeOffset ReleasedOn { get; set; }
+}
+
 public class ReviewPullRequestCreationAcceptedResponse
 {
     [JsonPropertyName("operationId")]

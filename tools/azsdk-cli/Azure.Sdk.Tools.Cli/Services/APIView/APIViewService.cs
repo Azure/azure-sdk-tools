@@ -1,5 +1,6 @@
 
 using System.Text.Json;
+using Azure.Sdk.Tools.Cli.Models.APIView;
 
 namespace Azure.Sdk.Tools.Cli.Services.APIView;
 
@@ -38,6 +39,10 @@ public interface IAPIViewService
         int pullRequestNumber = 0, string? codeFile = null, string? baselineCodeFile = null,
         string? language = null, string? project = null, string? packageType = null,
         string? metadataFile = null, CancellationToken ct = default);
+
+    Task<(string? content, int statusCode)> MarkPackageReleasedAsync(
+        APIViewReleaseRequest request,
+        CancellationToken ct = default);
 
     /// <summary>
     /// Submits API surface text for automated Copilot review.
@@ -175,6 +180,46 @@ public class APIViewService : IAPIViewService
         string endpoint = $"/autoreview/create?{string.Join("&", queryParams)}";
 
         return await _httpService.PostAsync(endpoint, ct);
+    }
+
+    public async Task<(string? content, int statusCode)> MarkPackageReleasedAsync(
+        APIViewReleaseRequest request,
+        CancellationToken ct = default)
+    {
+        string label = $"Source Branch:{request.SourceBranch}";
+        if (!string.IsNullOrWhiteSpace(request.ReviewTokenFileName))
+        {
+            if (string.IsNullOrWhiteSpace(request.BuildId) || string.IsNullOrWhiteSpace(request.RepoName))
+            {
+                throw new ArgumentException("BuildId and RepoName are required when marking a token-based APIView revision as released.");
+            }
+
+            return await CreateCIReviewAsync(
+                request.BuildId,
+                request.ArtifactName,
+                Path.GetFileName(request.SourceFilePath),
+                request.ReviewTokenFileName,
+                request.RepoName,
+                request.PackageName,
+                request.Project,
+                label,
+                compareAllRevisions: true,
+                request.PackageVersion,
+                setReleaseTag: true,
+                request.PackageType,
+                request.SourceBranch,
+                ct);
+        }
+
+        var fields = new Dictionary<string, string>
+        {
+            ["label"] = label,
+            ["packageVersion"] = request.PackageVersion,
+            ["setReleaseTag"] = "true",
+            ["packageType"] = request.PackageType,
+            ["compareAllRevisions"] = "true"
+        };
+        return await _httpService.PostMultipartAsync("/autoreview/upload", request.SourceFilePath, fields, ct);
     }
 
     /// <inheritdoc />

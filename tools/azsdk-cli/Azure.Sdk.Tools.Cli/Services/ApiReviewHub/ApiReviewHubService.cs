@@ -23,6 +23,13 @@ public interface IApiReviewHubService
         string apiHash,
         string repoOwner,
         CancellationToken ct);
+
+    Task MarkPackageReleasedAsync(
+        string language,
+        string packageName,
+        string packageVersion,
+        string apiHash,
+        CancellationToken ct);
 }
 
 public class ApiReviewHubService(
@@ -33,6 +40,7 @@ public class ApiReviewHubService(
     TimeSpan? operationTimeout = null) : IApiReviewHubService
 {
     private static readonly TimeSpan DefaultOperationTimeout = TimeSpan.FromMinutes(30);
+    private const string DefaultEndpoint = "https://api-review-hub.azurewebsites.net";
 
     private static readonly JsonSerializerOptions serializerOptions = new()
     {
@@ -141,6 +149,28 @@ public class ApiReviewHubService(
         return result;
     }
 
+    public async Task MarkPackageReleasedAsync(
+        string language,
+        string packageName,
+        string packageVersion,
+        string apiHash,
+        CancellationToken ct)
+    {
+        var httpClient = httpClientFactory.CreateClient(nameof(ApiReviewHubService));
+        var authorization = await GetAuthorizationAsync(DefaultEndpoint, ct);
+        var request = new MarkPackageReleasedRequest
+        {
+            Language = language,
+            PackageName = packageName,
+            Version = packageVersion,
+            ApiHash = apiHash,
+            ReleasedOn = _timeProvider.GetUtcNow()
+        };
+
+        logger.LogInformation("Marking {packageName} {packageVersion} as released in API Review Hub", packageName, packageVersion);
+        await PostJsonAsync(httpClient, $"{DefaultEndpoint}/api/releases/mark-released", request, authorization, ct);
+    }
+
     private void LogOperationProgress(OperationStatus operation, DateTimeOffset startedAt, ref bool loggedPipelineUrl)
     {
         if (!loggedPipelineUrl && !string.IsNullOrWhiteSpace(operation.PipelineUrl))
@@ -182,6 +212,23 @@ public class ApiReviewHubService(
 
         using var response = await httpClient.SendAsync(request, ct);
         return await ReadResponseAsync<T>(response, ct);
+    }
+
+    private static async Task PostJsonAsync(HttpClient httpClient, string url, object body, AuthenticationHeaderValue authorization, CancellationToken ct)
+    {
+        var content = new StringContent(JsonSerializer.Serialize(body, serializerOptions), Encoding.UTF8, "application/json");
+        using var request = new HttpRequestMessage(HttpMethod.Post, url)
+        {
+            Content = content
+        };
+        request.Headers.Authorization = authorization;
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        using var response = await httpClient.SendAsync(request, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            _ = await ReadResponseAsync<object>(response, ct);
+        }
     }
 
     private static async Task<T> GetJsonAsync<T>(HttpClient httpClient, string url, AuthenticationHeaderValue authorization, CancellationToken ct) where T : class

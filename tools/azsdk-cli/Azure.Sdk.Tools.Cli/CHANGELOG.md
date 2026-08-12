@@ -4,7 +4,11 @@
 
 ### Features Added
 
+- Added `package mark-released` and `azsdk_package_mark_released` to mark released packages independently in API Review Hub and APIView.
+
 ### Breaking Changes
+
+- Moved `api-review get-approval-status` to `package get-approval-status` and renamed its MCP tool from `azsdk_apireview_get_approval_status` to `azsdk_package_get_approval_status`.
 
 ### Bugs Fixed
 

@@ -32,12 +32,10 @@ public class ApiReviewHubTool(
     private static readonly string SupportedLanguagesDescription = string.Join(", ", SupportedLanguages);
 
     private const string CreateCommandName = "create";
-    private const string GetApprovalStatusCommandName = "get-approval-status";
     private const string RequestReviewPullRequestToolName = "azsdk_apireviewhub_request_review_pr";
-    private const string GetApprovalStatusToolName = "azsdk_apireview_get_approval_status";
+    private const string GetApprovalStatusToolName = "azsdk_package_get_approval_status";
     private const string DefaultEndpoint = "https://api-review-hub.azurewebsites.net";
     private const string DefaultTargetOwner = "Azure";
-    private const string DefaultApiViewReleaseStatusEndpoint = "https://apiview.dev/AutoReview/GetReviewStatus";
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.ApiReviewHub];
 
@@ -47,22 +45,6 @@ public class ApiReviewHubTool(
     {
         Description = "The package name.",
         Required = true
-    };
-
-    private readonly Option<string> packageVersionOption = new("--package-version")
-    {
-        Description = "The package version to check.",
-        Required = true
-    };
-
-    private readonly Option<string> apiHashOption = new("--api-hash")
-    {
-        Description = "The API Review Hub API hash to check. When omitted, the release gate cannot be approved but current approval status is returned."
-    };
-
-    private readonly Option<string> repoOwnerOption = new("--repo-owner")
-    {
-        Description = "The GitHub repository owner to query in API Review Hub. Optional; when omitted, the service default is used."
     };
 
     private readonly Option<string> baseTagOption = new("--base-tag")
@@ -111,14 +93,6 @@ public class ApiReviewHubTool(
             targetBranchOption,
             noWaitOption,
             pollIntervalSecondsOption
-        },
-        new McpCommand(GetApprovalStatusCommandName, "Check API review release approval status using APIView and API Review Hub", GetApprovalStatusToolName)
-        {
-            languageOption,
-            packageNameOption,
-            packageVersionOption,
-            apiHashOption,
-            repoOwnerOption
         }
     ];
 
@@ -127,7 +101,6 @@ public class ApiReviewHubTool(
         return parseResult.CommandResult.Command.Name switch
         {
             CreateCommandName => await HandleCreateCommand(parseResult, ct),
-            GetApprovalStatusCommandName => await HandleGetApprovalStatusCommand(parseResult, ct),
             _ => new DefaultCommandResponse { ResponseError = $"Unknown command: {parseResult.CommandResult.Command.Name}" }
         };
     }
@@ -144,30 +117,6 @@ public class ApiReviewHubTool(
             !parseResult.GetValue(noWaitOption),
             parseResult.GetValue(pollIntervalSecondsOption),
             ct);
-    }
-
-    private async Task<CommandResponse> HandleGetApprovalStatusCommand(ParseResult parseResult, CancellationToken ct)
-    {
-        var response = await GetApprovalStatus(
-            parseResult.GetValue(languageOption) ?? string.Empty,
-            parseResult.GetValue(packageNameOption) ?? string.Empty,
-            parseResult.GetValue(packageVersionOption) ?? string.Empty,
-            parseResult.GetValue(apiHashOption) ?? string.Empty,
-            parseResult.GetValue(repoOwnerOption) ?? string.Empty,
-            ct);
-
-        if (IsJsonOutput(parseResult))
-        {
-            response.Details = null;
-        }
-
-        return response;
-    }
-
-    private static bool IsJsonOutput(ParseResult parseResult)
-    {
-        var outputFormat = parseResult.GetValue(SharedOptions.Format);
-        return string.Equals(outputFormat, "json", StringComparison.OrdinalIgnoreCase);
     }
 
     [McpServerTool(Name = RequestReviewPullRequestToolName), Description("Request API Review Hub creation of a review pull request for a package API change.")]

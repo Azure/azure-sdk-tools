@@ -79,6 +79,8 @@ extends:
                 os: linux
 
               steps:
+                - template: /eng/common/pipelines/templates/steps/python-auth-dev-feed.yml
+
                 - task: UsePythonVersion@0
                   displayName: 'Use Python $(PythonTestVersion)'
                   inputs:
@@ -95,6 +97,8 @@ extends:
                 os: linux
 
               steps:
+                - template: /eng/common/pipelines/templates/steps/python-auth-dev-feed.yml
+
                 - task: UsePythonVersion@0
                   displayName: 'Use Python ${{ parameters.PythonVersion }}'
                   inputs:

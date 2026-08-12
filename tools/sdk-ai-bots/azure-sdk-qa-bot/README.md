@@ -98,6 +98,7 @@ This section describes how to update bot service logic in Azure web app
 > - Install [Teams Toolkit VS Code Extension](https://marketplace.visualstudio.com/items?itemName=TeamsDevApp.ms-teams-vscode-extension)
 >   - Make sure accounts are logged in in `ACCOUNTS` tab
 >
+> - When running locally, add a `.npmrc` file that configures npm to use the Microsoft feed.
 > - acr-name-for-env: use the name of the ACR in the same resource group
 > - make sure the required azure resources are deployed:
 >   - resource group

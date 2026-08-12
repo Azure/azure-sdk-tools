@@ -2,7 +2,7 @@ name: azure-typespec-author-eval
 description: Evaluation suite for azure-typespec-author.
 version: "1.0"
 type: capability # capability | regression
-
+area: "armtemplate"
 # Root-level environment
 environment: azsdk-mcp
 
@@ -45,7 +45,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "edit"
+            - "^(edit|bash)$"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "skill-invocation"
         config:
@@ -65,7 +65,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "edit"
+            - "^(edit|bash)$"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "run-command"
         config:
@@ -96,7 +96,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "edit"
+            - "^(edit|bash)$"
       - type: "file-matches"
         config:
           path: "*.tsp"
@@ -107,7 +107,8 @@ stimuli:
 
 scoring:
   weights:
-    run-command: 1
-    skill-invocation: 1
-    file-matches: 1
+    tool-calls: 0.25
+    run-command: 0.25
+    skill-invocation: 0.25
+    file-matches: 0.25
   threshold: 1

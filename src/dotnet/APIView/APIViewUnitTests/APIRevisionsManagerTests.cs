@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -132,6 +133,67 @@ public class APIRevisionsManagerTests
             _mockApiVersionsManager.Object,
             _mockConfiguration.Object
         );
+    }
+
+    [Fact]
+    public async Task MarkAPIRevisionReleasedAsync_MarksAndPersistsRevision()
+    {
+        const string revisionId = "revision-1";
+        var revision = new APIRevisionListItemModel
+        {
+            Id = revisionId,
+            IsReleased = false
+        };
+        _mockAPIRevisionsRepository.Setup(r => r.GetAPIRevisionAsync(revisionId)).ReturnsAsync(revision);
+
+        APIRevisionListItemModel result = await _manager.MarkAPIRevisionReleasedAsync(revisionId);
+
+        Assert.True(result.IsReleased);
+        Assert.True(result.ReleasedOn <= DateTime.UtcNow);
+        _mockAPIRevisionsRepository.Verify(r => r.UpsertAPIRevisionAsync(revision), Times.Once);
+    }
+
+    [Fact]
+    public async Task MarkAPIRevisionReleasedAsync_WhenAlreadyReleased_DoesNotPersistAgain()
+    {
+        const string revisionId = "revision-1";
+        var revision = new APIRevisionListItemModel
+        {
+            Id = revisionId,
+            IsReleased = true,
+            ReleasedOn = DateTime.UtcNow.AddDays(-1)
+        };
+        _mockAPIRevisionsRepository.Setup(r => r.GetAPIRevisionAsync(revisionId)).ReturnsAsync(revision);
+
+        APIRevisionListItemModel result = await _manager.MarkAPIRevisionReleasedAsync(revisionId);
+
+        Assert.Same(revision, result);
+        _mockAPIRevisionsRepository.Verify(r => r.UpsertAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetAPIRevisionsAsync_WithMultipleExactVersionMatches_ReturnsNewestFirst()
+    {
+        const string reviewId = "review-1";
+        var olderRevision = new APIRevisionListItemModel
+        {
+            Id = "older",
+            CreatedOn = DateTime.UtcNow.AddDays(-1),
+            Files = [new APICodeFileModel { PackageVersion = "1.2.3" }]
+        };
+        var newerRevision = new APIRevisionListItemModel
+        {
+            Id = "newer",
+            CreatedOn = DateTime.UtcNow,
+            Files = [new APICodeFileModel { PackageVersion = "1.2.3" }]
+        };
+        _mockAPIRevisionsRepository
+            .Setup(r => r.GetAPIRevisionsAsync(reviewId))
+            .ReturnsAsync([olderRevision, newerRevision]);
+
+        IEnumerable<APIRevisionListItemModel> result = await _manager.GetAPIRevisionsAsync(reviewId, "1.2.3");
+
+        Assert.Equal(["newer", "older"], result.Select(revision => revision.Id));
     }
 
     [Fact]

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using APIViewWeb;
 using APIViewWeb.Helpers;
 using APIViewWeb.LeanControllers;
+using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
@@ -140,6 +141,82 @@ public class ReviewsTokenAuthControllerTests
         notFoundResult.Value?.ToString().Should().Contain("Could not find an APIView review");
         notFoundResult.Value?.ToString().Should().Contain(package);
         notFoundResult.Value?.ToString().Should().Contain(language);
+    }
+
+    #endregion
+
+    #region MarkReleased Tests
+
+    [Fact]
+    public async Task MarkReleased_WithExactVersion_MarksResolvedRevisionReleased()
+    {
+        var resolved = new ResolvePackageResponse
+        {
+            PackageName = "Azure.Storage.Blobs",
+            Language = "C#",
+            ReviewId = "review123",
+            RevisionId = "revision456",
+            Version = "12.0.0"
+        };
+        _mockReviewSearch
+            .Setup(x => x.ResolveAutomaticRevisionForRelease("Azure.Storage.Blobs", "C#", "12.0.0"))
+            .ReturnsAsync(resolved);
+        _mockApiRevisionsManager
+            .Setup(x => x.MarkAPIRevisionReleasedAsync("revision456"))
+            .ReturnsAsync(new APIRevisionListItemModel { Id = "revision456", IsReleased = true });
+
+        ActionResult<ResolvePackageResponse> result = await _controller.MarkReleased("Azure.Storage.Blobs", "C#", "12.0.0");
+
+        Assert.IsType<LeanJsonResult>(result.Result);
+        _mockApiRevisionsManager.Verify(x => x.MarkAPIRevisionReleasedAsync("revision456"), Times.Once);
+    }
+
+    [Fact]
+    public async Task MarkReleased_WithDryRun_ReturnsResolvedRevisionWithoutMarkingReleased()
+    {
+        var resolved = new ResolvePackageResponse
+        {
+            PackageName = "Azure.Storage.Blobs",
+            Language = "C#",
+            ReviewId = "review123",
+            RevisionId = "revision456",
+            Version = "12.0.0"
+        };
+        _mockReviewSearch
+            .Setup(x => x.ResolveAutomaticRevisionForRelease("Azure.Storage.Blobs", "C#", "12.0.0"))
+            .ReturnsAsync(resolved);
+
+        ActionResult<ResolvePackageResponse> result = await _controller.MarkReleased(
+            "Azure.Storage.Blobs", "C#", "12.0.0", dryRun: true);
+
+        LeanJsonResult jsonResult = Assert.IsType<LeanJsonResult>(result.Result);
+        Assert.Same(resolved, jsonResult.Value);
+        _mockApiRevisionsManager.Verify(x => x.MarkAPIRevisionReleasedAsync(It.IsAny<string>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData(null, "C#", "12.0.0")]
+    [InlineData("Azure.Storage.Blobs", null, "12.0.0")]
+    [InlineData("Azure.Storage.Blobs", "C#", null)]
+    public async Task MarkReleased_WithMissingParameter_ReturnsBadRequest(string package, string language, string version)
+    {
+        ActionResult<ResolvePackageResponse> result = await _controller.MarkReleased(package, language, version);
+
+        Assert.IsType<BadRequestObjectResult>(result.Result);
+        _mockApiRevisionsManager.Verify(x => x.MarkAPIRevisionReleasedAsync(It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task MarkReleased_WithMajorMinorFallback_ReturnsNotFound()
+    {
+        _mockReviewSearch
+            .Setup(x => x.ResolveAutomaticRevisionForRelease("Azure.Storage.Blobs", "C#", "12.0.0"))
+            .ReturnsAsync((ResolvePackageResponse)null);
+
+        ActionResult<ResolvePackageResponse> result = await _controller.MarkReleased("Azure.Storage.Blobs", "C#", "12.0.0");
+
+        Assert.IsType<NotFoundObjectResult>(result.Result);
+        _mockApiRevisionsManager.Verify(x => x.MarkAPIRevisionReleasedAsync(It.IsAny<string>()), Times.Never);
     }
 
     #endregion

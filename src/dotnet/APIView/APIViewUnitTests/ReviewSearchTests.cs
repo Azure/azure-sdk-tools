@@ -251,6 +251,51 @@ public class ReviewSearchTests
 
     #endregion
 
+    #region ResolveAutomaticRevisionForRelease Tests
+
+    [Fact]
+    public async Task ResolveAutomaticRevisionForRelease_SelectsNewestExactAutomaticRevision()
+    {
+        ReviewListItemModel review = CreateMockReview("review123", "Azure.Storage.Blobs", "C#");
+        APIRevisionListItemModel older = CreateMockRevision("older", review.Id, "12.0.0");
+        older.APIRevisionType = APIRevisionType.Automatic;
+        older.CreatedOn = DateTime.UtcNow.AddDays(-2);
+        APIRevisionListItemModel newer = CreateMockRevision("newer", review.Id, "12.0.0");
+        newer.APIRevisionType = APIRevisionType.Automatic;
+        APIRevisionListItemModel manual = CreateMockRevision("manual", review.Id, "12.0.0");
+        manual.APIRevisionType = APIRevisionType.Manual;
+        manual.CreatedOn = DateTime.UtcNow;
+
+        _mockReviewManager.Setup(x => x.GetReviewAsync("C#", "Azure.Storage.Blobs", null)).ReturnsAsync(review);
+        _mockApiRevisionsManager.Setup(x => x.GetAPIRevisionsAsync(review.Id, "", APIRevisionType.All))
+            .ReturnsAsync([older, manual, newer]);
+
+        ResolvePackageResponse result = await package.ResolveAutomaticRevisionForRelease(
+            "Azure.Storage.Blobs", "C#", "12.0.0");
+
+        Assert.NotNull(result);
+        Assert.Equal("newer", result.RevisionId);
+    }
+
+    [Fact]
+    public async Task ResolveAutomaticRevisionForRelease_ReturnsNullWithoutExactVersion()
+    {
+        ReviewListItemModel review = CreateMockReview("review123", "Azure.Storage.Blobs", "C#");
+        APIRevisionListItemModel fallback = CreateMockRevision("fallback", review.Id, "12.0.1");
+        fallback.APIRevisionType = APIRevisionType.Automatic;
+
+        _mockReviewManager.Setup(x => x.GetReviewAsync("C#", "Azure.Storage.Blobs", null)).ReturnsAsync(review);
+        _mockApiRevisionsManager.Setup(x => x.GetAPIRevisionsAsync(review.Id, "", APIRevisionType.All))
+            .ReturnsAsync([fallback]);
+
+        ResolvePackageResponse result = await package.ResolveAutomaticRevisionForRelease(
+            "Azure.Storage.Blobs", "C#", "12.0.0");
+
+        Assert.Null(result);
+    }
+
+    #endregion
+
     #region ResolvePackageLink Tests
 
     [Fact]

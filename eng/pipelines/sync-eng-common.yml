@@ -29,8 +29,9 @@ parameters:
       RepoName: azure-sdk-for-rust
     - RepoOwner: Azure
       RepoName: azure-rest-api-specs
-    - RepoOwner: Microsoft
-      RepoName: mcp
+    # TODO: Enable mcp syncing once the repo is updated to latest
+    # - RepoOwner: Microsoft
+    #   RepoName: mcp
 - name: RepoOwners
   type: object
   default:

@@ -146,10 +146,12 @@ public class APIRevisionsManagerTests
         };
         _mockAPIRevisionsRepository.Setup(r => r.GetAPIRevisionAsync(revisionId)).ReturnsAsync(revision);
 
+        DateTime before = DateTime.UtcNow;
         APIRevisionListItemModel result = await _manager.MarkAPIRevisionReleasedAsync(revisionId);
+        DateTime after = DateTime.UtcNow;
 
         Assert.True(result.IsReleased);
-        Assert.True(result.ReleasedOn <= DateTime.UtcNow);
+        Assert.InRange(result.ReleasedOn, before, after);
         _mockAPIRevisionsRepository.Verify(r => r.UpsertAPIRevisionAsync(revision), Times.Once);
     }
 

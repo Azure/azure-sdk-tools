@@ -111,7 +111,7 @@ public class ReviewsTokenAuthController : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(packageName) || string.IsNullOrWhiteSpace(language) || string.IsNullOrWhiteSpace(version))
         {
-            return BadRequest("'packageName', 'language', and 'version' are required.");
+            return BadRequest(new { message = "'packageName', 'language', and 'version' are required." });
         }
 
         try
@@ -119,7 +119,7 @@ public class ReviewsTokenAuthController : ControllerBase
             ResolvePackageResponse result = await reviewSearch.ResolveAutomaticRevisionForRelease(packageName, language, version);
             if (result == null)
             {
-                return NotFound($"Could not find an APIView revision for package '{packageName}' in language '{language}' with version '{version}'.");
+                return NotFound(new { message = $"Could not find an APIView revision for package '{packageName}' in language '{language}' with version '{version}'." });
             }
 
             if (dryRun)
@@ -130,7 +130,7 @@ public class ReviewsTokenAuthController : ControllerBase
             APIRevisionListItemModel revision = await _apiRevisionsManager.MarkAPIRevisionReleasedAsync(result.RevisionId);
             if (revision == null)
             {
-                return NotFound($"APIView revision '{result.RevisionId}' was not found.");
+                return NotFound(new { message = $"APIView revision '{result.RevisionId}' was not found." });
             }
 
             return new LeanJsonResult(result, StatusCodes.Status200OK);
@@ -138,7 +138,7 @@ public class ReviewsTokenAuthController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error marking package {Package} {Version} released for {Language}", packageName, version, language);
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while marking the package released.");
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while marking the package released." });
         }
     }
 

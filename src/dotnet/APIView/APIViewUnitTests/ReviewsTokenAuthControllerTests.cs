@@ -202,7 +202,8 @@ public class ReviewsTokenAuthControllerTests
     {
         ActionResult<ResolvePackageResponse> result = await _controller.MarkReleased(package, language, version);
 
-        Assert.IsType<BadRequestObjectResult>(result.Result);
+        BadRequestObjectResult badRequest = Assert.IsType<BadRequestObjectResult>(result.Result);
+        System.Text.Json.JsonSerializer.Serialize(badRequest.Value).Should().Contain("\"message\"");
         _mockApiRevisionsManager.Verify(x => x.MarkAPIRevisionReleasedAsync(It.IsAny<string>()), Times.Never);
     }
 
@@ -215,8 +216,39 @@ public class ReviewsTokenAuthControllerTests
 
         ActionResult<ResolvePackageResponse> result = await _controller.MarkReleased("Azure.Storage.Blobs", "C#", "12.0.0");
 
-        Assert.IsType<NotFoundObjectResult>(result.Result);
+        NotFoundObjectResult notFound = Assert.IsType<NotFoundObjectResult>(result.Result);
+        System.Text.Json.JsonSerializer.Serialize(notFound.Value).Should().Contain("\"message\"");
         _mockApiRevisionsManager.Verify(x => x.MarkAPIRevisionReleasedAsync(It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task MarkReleased_WhenResolvedRevisionDisappears_ReturnsStructuredNotFound()
+    {
+        _mockReviewSearch
+            .Setup(x => x.ResolveAutomaticRevisionForRelease("Azure.Storage.Blobs", "C#", "12.0.0"))
+            .ReturnsAsync(new ResolvePackageResponse { RevisionId = "revision456" });
+        _mockApiRevisionsManager
+            .Setup(x => x.MarkAPIRevisionReleasedAsync("revision456"))
+            .ReturnsAsync((APIRevisionListItemModel)null);
+
+        ActionResult<ResolvePackageResponse> result = await _controller.MarkReleased("Azure.Storage.Blobs", "C#", "12.0.0");
+
+        NotFoundObjectResult notFound = Assert.IsType<NotFoundObjectResult>(result.Result);
+        System.Text.Json.JsonSerializer.Serialize(notFound.Value).Should().Contain("\"message\"");
+    }
+
+    [Fact]
+    public async Task MarkReleased_WhenResolutionThrows_ReturnsStructuredInternalServerError()
+    {
+        _mockReviewSearch
+            .Setup(x => x.ResolveAutomaticRevisionForRelease("Azure.Storage.Blobs", "C#", "12.0.0"))
+            .ThrowsAsync(new InvalidOperationException("failure"));
+
+        ActionResult<ResolvePackageResponse> result = await _controller.MarkReleased("Azure.Storage.Blobs", "C#", "12.0.0");
+
+        ObjectResult internalServerError = Assert.IsType<ObjectResult>(result.Result);
+        Assert.Equal(StatusCodes.Status500InternalServerError, internalServerError.StatusCode);
+        System.Text.Json.JsonSerializer.Serialize(internalServerError.Value).Should().Contain("\"message\"");
     }
 
     #endregion

@@ -265,10 +265,14 @@ public class ReviewSearchTests
         APIRevisionListItemModel manual = CreateMockRevision("manual", review.Id, "12.0.0");
         manual.APIRevisionType = APIRevisionType.Manual;
         manual.CreatedOn = DateTime.UtcNow;
+        APIRevisionListItemModel deleted = CreateMockRevision("deleted", review.Id, "12.0.0");
+        deleted.APIRevisionType = APIRevisionType.Automatic;
+        deleted.IsDeleted = true;
+        deleted.CreatedOn = DateTime.UtcNow.AddDays(1);
 
         _mockReviewManager.Setup(x => x.GetReviewAsync("C#", "Azure.Storage.Blobs", null)).ReturnsAsync(review);
         _mockApiRevisionsManager.Setup(x => x.GetAPIRevisionsAsync(review.Id, "", APIRevisionType.All))
-            .ReturnsAsync([older, manual, newer]);
+            .ReturnsAsync([older, manual, newer, deleted]);
 
         ResolvePackageResponse result = await package.ResolveAutomaticRevisionForRelease(
             "Azure.Storage.Blobs", "C#", "12.0.0");

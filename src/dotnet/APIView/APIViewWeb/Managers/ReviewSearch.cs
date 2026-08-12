@@ -139,7 +139,7 @@ public class ReviewSearch : IReviewSearch
 
         IEnumerable<APIRevisionListItemModel> revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(review.Id);
         APIRevisionListItemModel revision = revisions
-            .Where(r => r.APIRevisionType == APIRevisionType.Automatic && r.PackageVersion == version)
+            .Where(r => !r.IsDeleted && r.APIRevisionType == APIRevisionType.Automatic && r.PackageVersion == version)
             .OrderByDescending(r => r.CreatedOn)
             .FirstOrDefault();
 

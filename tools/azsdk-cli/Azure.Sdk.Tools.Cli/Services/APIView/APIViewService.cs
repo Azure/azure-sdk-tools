@@ -35,10 +35,6 @@ public interface IAPIViewService
         CancellationToken ct = default,
         bool dryRun = false);
 
-    Task<(string? content, int statusCode)> MarkPackageReleasedAsync(
-        APIViewReleaseRequest request,
-        CancellationToken ct = default);
-
     /// <summary>
     /// Submits API surface text for automated Copilot review.
     /// </summary>

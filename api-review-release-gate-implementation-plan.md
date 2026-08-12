@@ -8,7 +8,7 @@ Replace pipeline use of the overloaded `Create-APIReview.ps1` with three focused
 
 1. Create an APIView revision during the transition to API Review Hub (ARH), from the Build stage only.
 2. Determine release readiness through `azsdk package get-approval-status`, from the Build stage and again when those steps are replayed during release. This gate must not be disabled, bypassed, or overridden by local language-specific tooling or configuration.
-3. Mark a released package in ARH during the release stage only, while preserving the legacy APIView update.
+3. Mark a released package in ARH and APIView during the release stage only through `azsdk package mark-released`.
 
 `eng/common/scripts/Create-APIReview.ps1` will not be changed or removed. Pipeline owners will wire the new scripts into the appropriate jobs.
 
@@ -16,7 +16,7 @@ This proposal does not change `eng/common/pipelines/templates/steps/validate-all
 
 Any future changes to `validate-all-packages.yml`, `Validate-All-Packages.ps1`, or their Package work-item behavior must be coordinated with Praveen, who owns that pipeline area.
 
-The unused `azsdk apiview create-ci-revision` and `azsdk apiview create-pull-request-revision` commands will be removed. They cannot replace the existing source-artifact and token-file workflows without additional investment that is not justified while APIView is being deprecated.
+The unused `azsdk apiview create-ci-revision` and `azsdk apiview create-pull-request-revision` commands were removed. They could not replace the existing source-artifact and token-file workflows without additional investment that was not justified while APIView is being deprecated.
 
 ## Current State
 `Create-APIReview.ps1` currently combines three independent responsibilities:
@@ -27,7 +27,9 @@ The unused `azsdk apiview create-ci-revision` and `azsdk apiview create-pull-req
 
 The script is invoked through `eng/common/pipelines/templates/steps/create-apireview.yml` in both Build and release flows. The new design separates those operations so revision creation runs only during Build, approval checks run during Build and are replayed during release, and marking a package as released remains a release-only operation.
 
-The Azure SDK CLI also exposes `apiview create-ci-revision` and `apiview create-pull-request-revision`, which originated from [Support API View creation and validation (issue #13813)](https://github.com/Azure/azure-sdk-tools/issues/13813). The intended pipeline adoption did not occur, and neither command is invoked by repository pipelines or tools. The commands do not cover all existing behavior, notably source-only artifact upload, so they will be removed rather than expanded.
+The Azure SDK CLI previously exposed `azsdk apiview create-ci-revision` and `azsdk apiview create-pull-request-revision`, which originated from [Support API View creation and validation (issue #13813)](https://github.com/Azure/azure-sdk-tools/issues/13813). The intended pipeline adoption did not occur, and neither command was invoked by repository pipelines or tools. The commands did not cover all existing behavior, notably source-only artifact upload, so they were removed rather than expanded.
+
+The Azure SDK CLI now exposes `azsdk package mark-released`, which owns the coordinated ARH and legacy APIView release updates and returns each backend result independently. The release-stage script should invoke this command rather than duplicating either backend integration in PowerShell.
 
 ## Proposed Scripts
 
@@ -100,23 +102,25 @@ Suggested script:
 
 Responsibility:
 
-- Call the ARH `releases/mark-released` endpoint for the released package/version/API hash.
-- Authenticate to ARH using the pipeline service connection `ADO to ARH Service Connection`.
-- Preserve the legacy APIView behavior that marks the corresponding revision as shipped.
-- Report each backend result independently and fail if either required update fails.
-- Retry and remediate each backend independently so an APIView failure does not repeat or alter a successful ARH update, and vice versa.
+- Resolve the released package metadata and APIView revision inputs required by the CLI.
+- Invoke `azsdk package mark-released` under the pipeline service connection `ADO to ARH Service Connection`.
+- Consume the established `PackageMarkReleasedResponse` contract without independently calling or interpreting either backend.
+- Emit the ARH and APIView results returned by the command and propagate its nonzero exit when either update fails.
 
 Inputs should include:
 
+- Language.
 - Package name.
 - Package version.
 - API hash.
-- APIView revision inputs required by the legacy mark-as-shipped operation.
+- Source artifact path and APIView package type.
+- Optional APIView review token file name, build ID, repository name, artifact name, Azure DevOps project, and source branch when required by the revision path.
 
 Non-responsibilities:
 
 - Do not create a new release-candidate revision.
 - Do not determine whether a package is approved.
+- Do not call ARH or APIView directly or reimplement the CLI's backend result handling.
 
 ## Implementation Phases
 
@@ -147,9 +151,9 @@ Non-responsibilities:
 ### Phase 4: Separate Release Completion
 
 - Implement `Mark-PackageReleased.ps1`.
-- Call ARH `releases/mark-released` with package/version/hash.
-- Perform the legacy APIView mark-as-shipped operation separately.
-- Make partial failures visible so retries and remediation are clear.
+- Resolve the inputs for and invoke `azsdk package mark-released`.
+- Treat the CLI's ARH and APIView results and exit code as authoritative.
+- Make the command's partial-failure details visible so remediation is clear.
 
 ### Phase 5: Pipeline Migration
 
@@ -168,25 +172,25 @@ Non-responsibilities:
 - Use explicit parameters and avoid behavior switches such as `MarkPackageAsShipped` that change a script's responsibility.
 - Preserve source-only and pre-generated-token creation paths.
 - Validate required artifact, build, repository, and package inputs before calling APIView.
-- Keep authentication helpers shared only where doing so does not couple the workflows again.
+- Keep APIView authentication helpers shared only for revision creation; release completion authentication remains owned by the CLI command.
 - Use structured JSON/YAML parsing for package metadata and CLI responses.
 - Never recompute the hash from content different from the release candidate artifact.
 - Treat missing ARH metadata as an omitted optional CLI input, not a script or CI failure.
 - Make approval status a mandatory centralized release gate that local language-specific tooling and configuration cannot disable, bypass, or override.
 - Include package name, version, and hash in diagnostic output without exposing tokens.
-- Propagate nonzero exits for authentication, transport, malformed response, unapproved status, and backend update failures.
+- Propagate nonzero exits for authentication, transport, malformed response, unapproved status, CLI failure, and backend update failures.
 
 ## Compatibility and Risks
 
 - **Artifact determinism:** Approval and mark-released must use the exact API hash associated with the package being published.
 - **Onboarding dependency:** ARH-enabled repositories must run `create-apireview-hub-artifacts-{lang}` during their build stage and make its metadata available to the release job.
 - **Future enforcement:** API hash is optional only during the APIView-to-ARH transition. It becomes required once ARH onboarding is complete and APIView fallback is removed.
-- **CLI availability:** Release agents must provide a version of `azsdk` containing `package get-approval-status`.
+- **CLI availability:** Release agents must provide AZSdkCli 0.6.35 or later for the required `azsdk package get-approval-status` and `azsdk package mark-released` commands.
 - **Behavior preservation:** The creation-only script must retain source-only upload because not every language pipeline produces a review token file.
 - **CLI command removal:** Any out-of-repository consumers of the two APIView revision commands would break. Repository search found no callers, but release notes should identify the removal.
 - **Dual-backend consistency:** The CLI owns approval reconciliation across APIView and ARH; scripts should not second-guess it.
 - **Gate integrity:** Language-specific tooling or configuration must not suppress the approval check or override its result. The pipeline must fail whenever the centralized CLI decision is unapproved or the check cannot complete successfully.
-- **Partial release updates:** ARH is the authoritative release record, so its accuracy takes precedence over the legacy APIView update. If either backend succeeds while the other fails, logging must preserve each result and retries must not corrupt or obscure the ARH state.
+- **Partial release updates:** `azsdk package mark-released` attempts ARH and APIView independently and preserves each result in `PackageMarkReleasedResponse`. The script must surface those results unchanged; command retries require both backend operations to be idempotent because the command invokes both on each run.
 - **Multi-package runs:** Each package must be evaluated and marked independently.
 - **Stage placement:** Revision creation runs only in the Build stage. Approval status runs in Build and is replayed during release. Mark-released runs only in the release stage.
 - **Transition lifetime:** The APIView revision script is intentionally temporary and should not accumulate ARH behavior.
@@ -201,8 +205,8 @@ Non-responsibilities:
 5. Confirm ARH-enabled repositories pass the matching package/version/hash to approval status in Build and when that step is replayed during release.
 6. Confirm missing `api.metadata.yml` or API hash does not fail the script before the CLI runs, and that the script propagates a successful CLI result produced through APIView fallback.
 7. Verify language-specific tooling and configuration cannot skip the approval check or override an unapproved or failed CLI result.
-8. Validate `Mark-PackageReleased.ps1` against ARH and APIView success paths.
-9. Simulate one-backend failure during mark-released and verify the failure is diagnosable and safely retryable.
+8. Validate that `Mark-PackageReleased.ps1` passes the complete input set to `azsdk package mark-released` and propagates its successful response.
+9. Simulate each one-backend failure response and verify the script surfaces both backend results and returns failure without implementing its own backend calls or policy.
 10. Run a multi-package pipeline and verify package isolation.
 11. Confirm mark-released runs only in the release stage and is not included in Build-stage replay.
 12. Confirm `Create-APIReview.ps1` remains unchanged throughout migration.
@@ -216,5 +220,6 @@ Non-responsibilities:
 
 - [x] Implement and test `Get-PackageApprovalStatus.ps1` first because it establishes the new release gate without changing revision creation or release completion.
 - [x] Implement `Create-APIViewRevision.ps1` and migrate the Build-stage caller, keeping creation Build-only while approval status is replayed during release.
-- [ ] Implement `Mark-PackageReleased.ps1` and add it only to the release stage after publishing.
+- [x] Implement `azsdk package mark-released` with independent ARH and APIView results.
+- [x] Implement `Mark-PackageReleased.ps1` as a thin wrapper around that command; release-stage wiring after publishing remains pending.
 - [x] Retain `Create-APIReview.ps1` unchanged until migration is complete.

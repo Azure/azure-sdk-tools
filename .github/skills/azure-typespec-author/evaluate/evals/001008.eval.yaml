@@ -2,7 +2,7 @@ name: azure-typespec-author-eval
 description: Evaluation suite for azure-typespec-author.
 version: "1.0"
 type: capability # capability | regression
-
+area: "versioning"
 # Root-level environment
 environment: azsdk-mcp
 
@@ -85,7 +85,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "edit"
+            - "^(edit|bash)$"
             - "web_fetch"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
           disallowed:
@@ -108,7 +108,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "edit"
+            - "^(edit|bash)$"
             - "web_fetch"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
           disallowed:
@@ -156,7 +156,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "edit"
+            - "^(edit|bash)$"
       - type: "file-exists"
         config:
           path: "examples/2024-10-01/Employees_Get_MaximumSet_Gen.json"
@@ -187,9 +187,10 @@ stimuli:
 
 scoring:
   weights:
-    prompt: 1
-    file-exists: 2
-    run-command: 1
-    skill-invocation: 1
-    file-matches: 3
+    tool-calls: 0.1
+    prompt: 0.1
+    file-exists: 0.2
+    run-command: 0.1
+    skill-invocation: 0.1
+    file-matches: 0.4
   threshold: 0.97

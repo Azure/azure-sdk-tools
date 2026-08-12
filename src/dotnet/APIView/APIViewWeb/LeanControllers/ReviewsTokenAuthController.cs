@@ -102,6 +102,46 @@ public class ReviewsTokenAuthController : ControllerBase
         }
     }
 
+    [HttpPost("mark-released", Name = "MarkPackageReleased")]
+    public async Task<ActionResult<ResolvePackageResponse>> MarkReleased(
+        [FromQuery, Required] string packageName,
+        [FromQuery, Required] string language,
+        [FromQuery, Required] string version,
+        [FromQuery] bool dryRun = false)
+    {
+        if (string.IsNullOrWhiteSpace(packageName) || string.IsNullOrWhiteSpace(language) || string.IsNullOrWhiteSpace(version))
+        {
+            return BadRequest(new { message = "'packageName', 'language', and 'version' are required." });
+        }
+
+        try
+        {
+            ResolvePackageResponse result = await reviewSearch.ResolveAutomaticRevisionForRelease(packageName, language, version);
+            if (result == null)
+            {
+                return NotFound(new { message = $"Could not find an APIView revision for package '{packageName}' in language '{language}' with version '{version}'." });
+            }
+
+            if (dryRun)
+            {
+                return new LeanJsonResult(result, StatusCodes.Status200OK);
+            }
+
+            APIRevisionListItemModel revision = await _apiRevisionsManager.MarkAPIRevisionReleasedAsync(result.RevisionId);
+            if (revision == null)
+            {
+                return NotFound(new { message = $"APIView revision '{result.RevisionId}' was not found." });
+            }
+
+            return new LeanJsonResult(result, StatusCodes.Status200OK);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error marking package {Package} {Version} released for {Language}", packageName, version, language);
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while marking the package released." });
+        }
+    }
+
     /// <summary>
     ///     Returns the canonical APIView review URL for a given package and language.
     ///     By default redirects to the review page. Use redirect=false to get JSON response instead.

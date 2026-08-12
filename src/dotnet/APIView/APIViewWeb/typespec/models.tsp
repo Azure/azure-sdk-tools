@@ -312,6 +312,18 @@ namespace Reviews {
     }
 
     /**
+     * Result returned by the mark-released endpoint.
+     * Includes the resolved IDs plus the release state and timestamp.
+     */
+    model MarkReleasedResult {
+        ...RevisionResolveResult;
+        /** Whether the resolved revision is currently marked as released. */
+        isReleased: boolean;
+        /** The UTC timestamp when the revision was marked released, if applicable. */
+        releasedOn?: utcDateTime;
+    }
+
+    /**
      * Metadata about an API revision
      */
     model RevisionMetadata {

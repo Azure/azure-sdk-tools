@@ -103,7 +103,7 @@ public class ReviewsTokenAuthController : ControllerBase
     }
 
     [HttpPost("mark-released", Name = "MarkPackageReleased")]
-    public async Task<ActionResult<ResolvePackageResponse>> MarkReleased(
+    public async Task<ActionResult<MarkReleasedResult>> MarkReleased(
         [FromQuery, Required] string packageName,
         [FromQuery, Required] string language,
         [FromQuery, Required] string version,
@@ -116,11 +116,24 @@ public class ReviewsTokenAuthController : ControllerBase
 
         try
         {
-            ResolvePackageResponse result = await reviewSearch.ResolveAutomaticRevisionForRelease(packageName, language, version);
-            if (result == null)
+            ResolvePackageResponse resolved = await reviewSearch.ResolveAutomaticRevisionForRelease(packageName, language, version);
+            if (resolved == null)
             {
                 return NotFound(new { message = $"Could not find an APIView revision for package '{packageName}' in language '{language}' with version '{version}'." });
             }
+
+            APIRevisionListItemModel currentRevision = await _apiRevisionsManager.GetAPIRevisionAsync(resolved.RevisionId);
+            var result = new MarkReleasedResult
+            {
+                PackageName = resolved.PackageName,
+                Language = resolved.Language,
+                ReviewId = resolved.ReviewId,
+                Version = resolved.Version,
+                RevisionId = resolved.RevisionId,
+                RevisionLabel = resolved.RevisionLabel,
+                IsReleased = currentRevision?.IsReleased ?? false,
+                ReleasedOn = currentRevision != null && currentRevision.IsReleased ? currentRevision.ReleasedOn : null
+            };
 
             if (dryRun)
             {
@@ -133,6 +146,8 @@ public class ReviewsTokenAuthController : ControllerBase
                 return NotFound(new { message = $"APIView revision '{result.RevisionId}' was not found." });
             }
 
+            result.IsReleased = revision.IsReleased;
+            result.ReleasedOn = revision.ReleasedOn;
             return new LeanJsonResult(result, StatusCodes.Status200OK);
         }
         catch (Exception ex)

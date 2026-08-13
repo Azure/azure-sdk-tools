@@ -12,6 +12,7 @@ type ShardRunOptions = {
   shardName: string;
   outputDir: string;
   extraArgs?: string;
+  runs?: number;
   // Pipeline pass-rate gate for results.jsonl. It intentionally does not
   // override Vally's per-eval scoring threshold.
   threshold?: number;
@@ -25,12 +26,16 @@ function normalizeExtraArgs(extraArgs: string): string[] {
   return extraArgs.split(/\s+/).filter(Boolean);
 }
 
-export function runShard({ evalArgs, shardName, outputDir, extraArgs = "", threshold = 0.8 }: ShardRunOptions) {
+export function runShard({ evalArgs, shardName, outputDir, extraArgs = "", runs = 1, threshold = 0.8 }: ShardRunOptions) {
+  if (!Number.isInteger(runs) || runs < 1) {
+    throw new Error("--runs must be a positive integer.");
+  }
+
   const evalArgList = evalArgs.split(/\s+/).filter(Boolean);
   const extraArgList = normalizeExtraArgs(extraArgs);
 
   console.log(
-    `Running: vally eval ${evalArgs} --junit --output-dir "${outputDir}" ${extraArgList.join(" ")}`
+    `Running: vally eval ${evalArgs} --junit --output-dir "${outputDir}" --runs ${runs} ${extraArgList.join(" ")}`
   );
 
   const vallyArgs = [
@@ -45,6 +50,8 @@ export function runShard({ evalArgs, shardName, outputDir, extraArgs = "", thres
     "--junit",
     "--output-dir",
     outputDir,
+    "--runs",
+    String(runs),
     ...extraArgList,
   ];
 
@@ -106,6 +113,9 @@ function parseArgs(argv: string[]): ShardRunOptions {
         break;
       case "--extra-args":
         options.extraArgs = next();
+        break;
+      case "--runs":
+        options.runs = Number(next());
         break;
       case "--threshold":
         options.threshold = Number(next());

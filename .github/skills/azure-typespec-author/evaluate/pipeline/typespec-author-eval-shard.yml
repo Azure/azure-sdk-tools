@@ -26,6 +26,9 @@ parameters:
   - name: threshold
     type: number
     default: 0.8
+  - name: runs
+    type: number
+    default: 1
   - name: postEvalTemplate
     type: string
     default: ''
@@ -123,6 +126,7 @@ jobs:
                 --shard-name "$(shardName)" \
                 --output-dir "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)" \
                 --extra-args "$(TypeSpecAuthorEvalExtraArgs)" \
+                --runs ${{ parameters.runs }} \
                 --threshold ${{ parameters.threshold }}
           env:
             GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
@@ -135,6 +139,7 @@ jobs:
               --shard-name "$(shardName)" \
               --output-dir "$(Build.SourcesDirectory)/artifacts/vally-results/$(shardName)" \
               --extra-args "$(TypeSpecAuthorEvalExtraArgs)" \
+              --runs ${{ parameters.runs }} \
               --threshold ${{ parameters.threshold }}
           displayName: 'vally eval $(shardName)'
           workingDirectory: ${{ parameters.vallyRoot }}

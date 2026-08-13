@@ -29,7 +29,7 @@ from tools.knowledge_tools import KnowledgeTools
 import utils.azure_ai_search as azure_ai_search_module
 from utils.azure_ai_search import SearchClient, _raw_chunk_filter
 from utils.azure_storage import BlobContent
-from utils.knowledge_config import KbTarget
+from utils.knowledge_config import KbTarget, _build_targets
 
 
 def test_raw_chunk_filter_excludes_wiki_pages() -> None:
@@ -63,8 +63,8 @@ async def test_list_knowledge_sources_includes_static_sources() -> None:
 
 @pytest.mark.asyncio
 async def test_resolve_kb_source_allows_registered_static_source(monkeypatch) -> None:
-    get_kb_target = AsyncMock(return_value=None)
-    monkeypatch.setattr(knowledge_tools_module, "get_kb_target", get_kb_target)
+    get_kb_targets = AsyncMock(return_value=())
+    monkeypatch.setattr(knowledge_tools_module, "get_kb_targets", get_kb_targets)
 
     result = await KnowledgeTools().resolve_kb_source(folder=SRC_STATIC_ARM_DOCS)
 
@@ -77,8 +77,8 @@ async def test_resolve_kb_source_allows_registered_static_source(monkeypatch) ->
 
 @pytest.mark.asyncio
 async def test_resolve_kb_source_rejects_unknown_source(monkeypatch) -> None:
-    get_kb_target = AsyncMock(return_value=None)
-    monkeypatch.setattr(knowledge_tools_module, "get_kb_target", get_kb_target)
+    get_kb_targets = AsyncMock(return_value=())
+    monkeypatch.setattr(knowledge_tools_module, "get_kb_targets", get_kb_targets)
 
     result = await KnowledgeTools().resolve_kb_source(folder="static_unknown")
 
@@ -88,8 +88,8 @@ async def test_resolve_kb_source_rejects_unknown_source(monkeypatch) -> None:
 
 @pytest.mark.asyncio
 async def test_resolve_kb_source_allows_registered_static_qa_source(monkeypatch) -> None:
-    get_kb_target = AsyncMock(return_value=None)
-    monkeypatch.setattr(knowledge_tools_module, "get_kb_target", get_kb_target)
+    get_kb_targets = AsyncMock(return_value=())
+    monkeypatch.setattr(knowledge_tools_module, "get_kb_targets", get_kb_targets)
 
     result = await KnowledgeTools().resolve_kb_source(
         folder="static_api_spec_view_qa"
@@ -100,18 +100,132 @@ async def test_resolve_kb_source_allows_registered_static_qa_source(monkeypatch)
     assert result.scope == "static_api_spec_view_qa"
 
 
+def test_build_targets_preserves_duplicate_folder_paths() -> None:
+    targets = _build_targets(
+        {
+            "sources": [
+                {
+                    "repository": {
+                        "url": "https://github.com/Azure/azure-sdk-for-net.git",
+                        "branch": "main",
+                    },
+                    "paths": [
+                        {"folder": "azure_sdk_for_net_docs", "path": "/doc"},
+                        {
+                            "folder": "azure_sdk_for_net_docs",
+                            "path": "/sdk/resourcemanager/Azure.ResourceManager/docs",
+                        },
+                    ],
+                }
+            ]
+        }
+    )
+
+    assert [target.path for target in targets["azure_sdk_for_net_docs"]] == [
+        "/doc",
+        "/sdk/resourcemanager/Azure.ResourceManager/docs",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_resolve_kb_source_uses_blob_path_for_duplicate_folder(
+    monkeypatch,
+) -> None:
+    targets = (
+        KbTarget(
+            owner="Azure",
+            repo="azure-sdk-for-net",
+            branch="main",
+            path="/doc",
+            scope="azure_sdk_for_net_docs",
+        ),
+        KbTarget(
+            owner="Azure",
+            repo="azure-sdk-for-net",
+            branch="main",
+            path="/sdk/resourcemanager/Azure.ResourceManager/docs",
+            scope="azure_sdk_for_net_docs",
+        ),
+    )
+    get_kb_targets = AsyncMock(return_value=targets)
+    monkeypatch.setattr(
+        knowledge_tools_module,
+        "get_kb_targets",
+        get_kb_targets,
+    )
+
+    result = await KnowledgeTools().resolve_kb_source(
+        folder="azure_sdk_for_net_docs",
+        blob_path=(
+            "azure_sdk_for_net_docs/"
+            "doc#DataPlaneCodeGeneration#DeveloperDrivenEvolution.md"
+        ),
+    )
+
+    assert result.resolved is True
+    assert result.path == "/doc"
+
+    arm_result = await KnowledgeTools().resolve_kb_source(
+        folder="azure_sdk_for_net_docs",
+        blob_path=(
+            "azure_sdk_for_net_docs/"
+            "sdk#resourcemanager#Azure.ResourceManager#docs#overview.md"
+        ),
+    )
+
+    assert arm_result.resolved is True
+    assert arm_result.path == "/sdk/resourcemanager/Azure.ResourceManager/docs"
+
+
+@pytest.mark.asyncio
+async def test_resolve_kb_source_requires_blob_path_for_duplicate_folder(
+    monkeypatch,
+) -> None:
+    targets = (
+        KbTarget(
+            owner="Azure",
+            repo="azure-sdk-for-net",
+            branch="main",
+            path="/doc",
+            scope="azure_sdk_for_net_docs",
+        ),
+        KbTarget(
+            owner="Azure",
+            repo="azure-sdk-for-net",
+            branch="main",
+            path="/sdk/resourcemanager/Azure.ResourceManager/docs",
+            scope="azure_sdk_for_net_docs",
+        ),
+    )
+    get_kb_targets = AsyncMock(return_value=targets)
+    monkeypatch.setattr(
+        knowledge_tools_module,
+        "get_kb_targets",
+        get_kb_targets,
+    )
+
+    result = await KnowledgeTools().resolve_kb_source(
+        folder="azure_sdk_for_net_docs",
+    )
+
+    assert result.resolved is False
+    assert result.reason == "blob_path_required_for_ambiguous_folder"
+
+
 @pytest.mark.asyncio
 async def test_resolve_kb_source_returns_ownership_only(monkeypatch) -> None:
     monkeypatch.setattr(
         knowledge_tools_module,
-        "get_kb_target",
+        "get_kb_targets",
         AsyncMock(
-            return_value=KbTarget(
-                owner="Azure",
-                repo="typespec-azure",
-                branch="main",
-                path="./website/src/content/docs/docs",
-                scope=SRC_TYPESPEC_AZURE_DOCS,
+            return_value=(
+                KbTarget(
+                    owner="Azure",
+                    repo="typespec-azure",
+                    branch="main",
+                    path="./website/src/content/docs/docs",
+                    scope=SRC_TYPESPEC_AZURE_DOCS,
+                ),
             )
         ),
     )

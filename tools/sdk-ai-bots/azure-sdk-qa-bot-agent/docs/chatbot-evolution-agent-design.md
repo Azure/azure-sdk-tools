@@ -65,7 +65,7 @@ The Chatbot Evolution Agent is built on the `agent_framework` library and deploy
 | `fetch_conversation` | `tools/conversation_tools.py` (new) | `FunctionTool` | Returns the full thread transcript for the conversation under analysis (Cosmos `conversation-messages`); each bot message includes its `trace_id`. |
 | `search_knowledge_base` | `tools/knowledge_tools.py` | `FunctionTool` | Re-runs targeted KB searches to confirm what is/isn't indexed today. Reused unchanged from the Chat Agent. |
 | `web_fetch` | `tools/web_tools.py` | `FunctionTool` | Fetches the source-of-truth doc URL to detect drift between KB content and upstream docs. Reused unchanged from the Chat Agent. |
-| `resolve_kb_source` | `tools/knowledge_tools.py` (extend) | `FunctionTool` | Maps the chunk's `source` folder to `{owner, repo, branch, path, labels}` by looking up `knowledge-config.json` from the `azure-sdk-qa-bot-knowledge-sync` project. |
+| `resolve_kb_source` | `tools/knowledge_tools.py` (extend) | `FunctionTool` | Maps the chunk's `source` folder and exact `blob_path` to `{owner, repo, branch, path, labels}` by looking up `knowledge-config.json`. The blob path disambiguates folders backed by multiple repository paths. |
 | `issue_write` | `tools/github_mcp_tools.py` | MCP Server | The existing GitHub MCP tool. Creates a chatbot self-issue after diagnosis or a KB issue after validation passes. |
 | `issue_read`, `add_issue_comment`, `issue_write` | `tools/github_mcp_tools.py` | MCP Server | Existing GitHub MCP tools used to read closed agent-created issues, record validation evidence, and replace the pending label with a passed or failed label. |
 | `update_knowledge` | `tools/knowledge_tools.py` | `FunctionTool` | Writes candidate markdown to an existing tenant-configured folder in the dev knowledge container and refreshes the existing dev AI Search index. |
@@ -128,8 +128,9 @@ A JSON payload with `mode`, `tenant_id`, `conversation_id`,
    dev knowledge folder, then call `ask_chat_agent` with the original bad
    case. If it fails, revise the candidate and repeat within the attempt limit.
 9. **Create the KB issue after validation.** When the original bad case passes,
-   call `resolve_kb_source`, build the issue with the validation evidence, and
-   call `issue_write`. Never create a KB issue before validation passes.
+   call `resolve_kb_source` with the selected chunk's exact `blob_path`, build
+   the issue with the validation evidence, and call `issue_write`. Never create
+   a KB issue before validation passes.
 10. **Handle chatbot self-issues.** Record the diagnosis and suggested fix,
    then call `issue_write` without entering the candidate-validation loop.
 11. **Validate a closed issue.** In validation mode, read `issue_url`,
@@ -331,7 +332,12 @@ Every Agent-created issue includes concise expected behavior, detailed fixed-doc
 >
 > **Validation:** The deployed dev Chat Agent passed the original bad case. Trace ID: `abc123def456`.
 
-When a registered KB source has no GitHub upstream, `resolve_kb_source` returns its source folder without owner/repository coordinates. Unknown source folders return `resolved=false`. Chatbot self-issues include the diagnosis and suggested fix but no validation evidence.
+When a registered KB source has no GitHub upstream, `resolve_kb_source`
+returns its source folder without owner/repository coordinates. Unknown source
+folders, blob paths outside the configured repository roots, and ambiguous
+folders resolved without a blob path return `resolved=false`. Chatbot
+self-issues include the diagnosis and suggested fix but no validation
+evidence.
 
 ### 2.7 Closed-issue validation
 

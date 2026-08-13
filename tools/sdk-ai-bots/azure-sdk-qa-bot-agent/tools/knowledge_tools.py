@@ -26,7 +26,11 @@ from models.knowledge import Reference, SearchKnowledgeBaseResult
 from tools import tool
 from utils.azure_ai_search import get_search_client
 from utils.azure_storage import BlobContent, download_blob, upload_blob
-from utils.knowledge_config import KbTarget, get_kb_target
+from utils.knowledge_config import (
+    KbTarget,
+    get_kb_targets,
+    select_kb_target,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -443,6 +447,11 @@ class KnowledgeTools:
             "The chunk `source` value from a knowledge-base hit — used as "
             "the join key into the upstream knowledge-config.json.",
         ],
+        blob_path: Annotated[
+            str | None,
+            "The exact `blob_path` from the same search hit. Required when "
+            "multiple repository paths use the same source folder.",
+        ] = None,
     ) -> KbSourceView:
         """Resolve a KB folder to its upstream ownership metadata.
 
@@ -450,12 +459,13 @@ class KnowledgeTools:
         cite in a KB-gap issue. ``resolved=False`` when the folder is not
         mapped or points to a non-GitHub source (ADO, SSH, wiki).
         """
-        target: KbTarget | None = None
+        targets: tuple[KbTarget, ...] = ()
         try:
-            target = await get_kb_target(folder)
+            targets = await get_kb_targets(folder)
         except Exception:
             logger.exception("knowledge_config lookup failed for %s", folder)
 
+        target = select_kb_target(folder, blob_path, targets)
         if target is not None:
             return KbSourceView(
                 folder=folder,
@@ -465,6 +475,17 @@ class KnowledgeTools:
                 branch=target.branch,
                 path=target.path,
                 scope=target.scope,
+            )
+
+        if targets:
+            return KbSourceView(
+                folder=folder,
+                resolved=False,
+                reason=(
+                    "blob_path_required_for_ambiguous_folder"
+                    if blob_path is None
+                    else "blob_path_not_in_registered_source_path"
+                ),
             )
 
         if folder in KNOWLEDGE_SOURCE_REGISTRY:

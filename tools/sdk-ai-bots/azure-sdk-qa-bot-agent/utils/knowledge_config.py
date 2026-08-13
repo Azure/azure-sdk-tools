@@ -44,7 +44,7 @@ class KbTarget:
     scope: str  # human-friendly scope label (folder name)
 
 
-_cache: dict[str, Optional[KbTarget]] | None = None
+_cache: dict[str, tuple[KbTarget, ...]] | None = None
 _cache_ts: float = 0.0
 _lock = asyncio.Lock()
 
@@ -71,8 +71,8 @@ def _parse_github_url(url: str) -> tuple[str, str] | None:
     return m.group(1), m.group(2)
 
 
-def _build_targets(config: dict) -> dict[str, Optional[KbTarget]]:
-    targets: dict[str, Optional[KbTarget]] = {}
+def _build_targets(config: dict) -> dict[str, tuple[KbTarget, ...]]:
+    targets: dict[str, list[KbTarget]] = {}
     sources = config.get("sources") or []
     for src in sources:
         repo_block = src.get("repository") or {}
@@ -85,18 +85,19 @@ def _build_targets(config: dict) -> dict[str, Optional[KbTarget]]:
                 continue
             path = path_entry.get("path") or ""
             if owner_repo is None:
-                # Non-GitHub source (ADO, SSH, wiki): mark un-mappable.
-                targets[folder] = None
+                targets.setdefault(folder, [])
             else:
                 owner, repo = owner_repo
-                targets[folder] = KbTarget(
-                    owner=owner,
-                    repo=repo,
-                    branch=branch,
-                    path=path,
-                    scope=folder,
+                targets.setdefault(folder, []).append(
+                    KbTarget(
+                        owner=owner,
+                        repo=repo,
+                        branch=branch,
+                        path=path,
+                        scope=folder,
+                    )
                 )
-    return targets
+    return {folder: tuple(values) for folder, values in targets.items()}
 
 
 async def _fetch_config() -> dict:
@@ -106,7 +107,7 @@ async def _fetch_config() -> dict:
         return json.loads(resp.text)
 
 
-async def _refresh_cache() -> dict[str, Optional[KbTarget]]:
+async def _refresh_cache() -> dict[str, tuple[KbTarget, ...]]:
     global _cache, _cache_ts
     config = await _fetch_config()
     _cache = _build_targets(config)
@@ -115,7 +116,7 @@ async def _refresh_cache() -> dict[str, Optional[KbTarget]]:
     return _cache
 
 
-async def _get_cache() -> dict[str, Optional[KbTarget]]:
+async def _get_cache() -> dict[str, tuple[KbTarget, ...]]:
     """Return the cached folder→target dict, refreshing if stale."""
     global _cache
     if _cache is not None and (time.time() - _cache_ts) < _CACHE_TTL_SECS:
@@ -135,12 +136,63 @@ async def _get_cache() -> dict[str, Optional[KbTarget]]:
             return {}
 
 
-async def get_kb_target(folder: str) -> Optional[KbTarget]:
-    """Return the GitHub issue target for a KB folder, or ``None``.
+async def get_kb_targets(folder: str) -> tuple[KbTarget, ...]:
+    """Return every GitHub source path registered for a KB folder."""
+    cache = await _get_cache()
+    return cache.get(folder, ())
+
+
+def select_kb_target(
+    folder: str,
+    blob_path: str | None,
+    targets: tuple[KbTarget, ...],
+) -> Optional[KbTarget]:
+    """Select the source path that contains an exact KB blob.
+
+    Knowledge-sync blob names preserve the configured repository path with
+    ``#`` separators, for example ``folder/doc#guide.md`` for ``/doc``.
+    Prefer the longest matching path when configured roots are nested.
+    """
+    if not targets:
+        return None
+    if blob_path is None:
+        return targets[0] if len(targets) == 1 else None
+
+    prefix = f"{folder}/"
+    if not blob_path.startswith(prefix):
+        return None
+    relative_blob_path = blob_path[len(prefix) :]
+    matches = [
+        target
+        for target in targets
+        if _blob_path_matches_target(relative_blob_path, target.path)
+    ]
+    if not matches:
+        return None
+    return max(matches, key=lambda target: len(target.path))
+
+
+def _blob_path_matches_target(relative_blob_path: str, target_path: str) -> bool:
+    normalized_target = target_path.strip("/").replace("/", "#")
+    if not normalized_target:
+        return True
+    return (
+        relative_blob_path == normalized_target
+        or relative_blob_path.startswith(f"{normalized_target}#")
+    )
+
+
+async def get_kb_target(
+    folder: str,
+    blob_path: str | None = None,
+) -> Optional[KbTarget]:
+    """Return the GitHub target containing ``blob_path``, or ``None``.
 
     Returns ``None`` when:
       - The folder is unknown.
       - The folder's repository is not a GitHub HTTPS URL (ADO, SSH, etc.).
+      - Multiple paths share the folder and ``blob_path`` is omitted.
+      - The blob does not belong to a configured path.
     """
-    cache = await _get_cache()
-    return cache.get(folder)
+    targets = await get_kb_targets(folder)
+    return select_kb_target(folder, blob_path, targets)

@@ -115,7 +115,12 @@ Confirm KB defects against the non-GitHub source of truth and resolve the owning
 
 Choose the primary maintained source that owns the deficient guidance. Prefer verified ownership and provenance; do not mutate a convenient search hit, mirror, historical answer, or summary when an authoritative source is available.
 
-Call `resolve_kb_source` before reading or updating. The resolved ownership and scope must match the guidance being changed. Use the exact `blob_path` and `link` from the same selected search result; never synthesize a document URL. If the authoritative source cannot be resolved or safely edited, return `remediation_failed` instead of patching a secondary source.
+Call `resolve_kb_source` with the selected result's `source` folder and exact
+`blob_path` before reading or updating. The resolved ownership and scope must
+match the guidance being changed. Use the exact `blob_path` and `link` from
+the same selected search result; never synthesize a document URL. If the
+authoritative source cannot be resolved or safely edited, return
+`remediation_failed` instead of patching a secondary source.
 
 Use only an exact `blob_path` returned by search. Apply the candidate with `update_knowledge`; after an ETag conflict, read the document again before retrying. Validate with the complete original question and compare the answer with grounded expected behavior. Tool completion alone is not a pass. Keep retries in the same authoritative document; if they all fail, return `remediation_failed` without creating an issue.
 

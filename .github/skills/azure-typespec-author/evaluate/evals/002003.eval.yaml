@@ -79,7 +79,8 @@ stimuli:
         config:
           command: "tsp compile ."
           expected_exit_code: 0
-      - type: "file-matches"
+      - &file_matches
+        type: "file-matches"
         config:
           pattern: 'update\s+is\s+ArmCustomPatchSync\s*<'
           path: "*.tsp"
@@ -97,10 +98,7 @@ stimuli:
         config:
           required:
             - "^(edit|apply_patch|bash|powershell)$"
-      - type: "file-matches"
-        config:
-          path: "*.tsp"
-          pattern: 'update\s+is\s+ArmCustomPatchSync\s*<'
+      - *file_matches
     constraints:
       max_turns: 6
       max_tokens: 100000

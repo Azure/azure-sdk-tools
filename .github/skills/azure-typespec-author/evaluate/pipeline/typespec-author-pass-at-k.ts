@@ -24,6 +24,8 @@ function findNewestFile(root: string, fileName: string): string | undefined {
   let newestFile: string | undefined;
   let newestMtime = -Infinity;
 
+  // Vally creates one timestamped output directory per invocation. Ignore stale
+  // local or retry output and evaluate only the most recently written run.
   const visit = (directory: string) => {
     for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
       const fullPath = path.join(directory, entry.name);
@@ -53,6 +55,8 @@ export function getPassAtKVerdict(resultsDir: string): PassAtKVerdict {
     return result;
   }
 
+  // Keep stimuli from different eval files independent even when they share a
+  // display name. pass@k succeeds when any trial for a stimulus succeeds.
   const trials = new Map<string, { passed: number; total: number }>();
   let runSummary: RunSummary | undefined;
   for (const line of fs.readFileSync(resultsFile, "utf8").split(/\r?\n/)) {
@@ -103,6 +107,8 @@ export function getPassAtKVerdict(resultsDir: string): PassAtKVerdict {
 }
 
 export function setJunitPassAtKThreshold(resultsDir: string, runs: number): number {
+  // The common JUnit summary compares passed/total against threshold. Requiring
+  // 1 of k trials is therefore equivalent to a threshold of 1/k for any run count.
   const threshold = 1 / runs;
   let updated = 0;
 

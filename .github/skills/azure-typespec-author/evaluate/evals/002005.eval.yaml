@@ -77,35 +77,50 @@ stimuli:
         config:
           command: "tsp compile ."
           expected_exit_code: 0
-      - type: "file-matches"
+      - &file_matches
+        type: "file-matches"
         config:
           pattern: "model Employee is TrackedResource<EmployeeProperties>"
           path: "*.tsp"
-      - type: "file-matches"
+      - &file_matches_import
+        type: "file-matches"
+        name: "file-matches-import"
         config:
           pattern: "import\\s+\"\\./[^\"]+\\.tsp\";"
           path: "main.tsp"
-      - type: "file-matches"
+      - &file_matches_age_property
+        type: "file-matches"
+        name: "file-matches-age-property"
         config:
           pattern: 'age\?: int32'
           path: "*.tsp"
-      - type: "file-matches"
+      - &file_matches_visibility
+        type: "file-matches"
+        name: "file-matches-visibility"
         config:
           pattern: '@visibility\(Lifecycle\.Read\)'
           path: "*.tsp"
-      - type: "file-matches"
+      - &file_matches_provisioning_state
+        type: "file-matches"
+        name: "file-matches-provisioning-state"
         config:
           pattern: "ResourceProvisioningState"
           path: "*.tsp"
-      - type: "file-matches"
+      - &file_matches_create_operation
+        type: "file-matches"
+        name: "file-matches-create-operation"
         config:
           pattern: "ArmResourceCreateOrReplaceAsync<Employee>|ArmResourceCreateOrUpdateAsync<Employee>"
           path: "*.tsp"
-      - type: "file-matches"
+      - &file_matches_parent_list_operation
+        type: "file-matches"
+        name: "file-matches-parent-list-operation"
         config:
           pattern: "ArmResourceListByParent<Employee>"
           path: "*.tsp"
-      - type: "file-matches"
+      - &file_matches_subscription_list_operation
+        type: "file-matches"
+        name: "file-matches-subscription-list-operation"
         config:
           pattern: "ArmListBySubscription<Employee>"
           path: "*.tsp"
@@ -123,38 +138,14 @@ stimuli:
         config:
           required:
             - "^(edit|apply_patch|bash|powershell)$"
-      - type: "file-matches"
-        config:
-          path: "*.tsp"
-          pattern: "model Employee is TrackedResource<EmployeeProperties>"
-      - type: "file-matches"
-        config:
-          path: "main.tsp"
-          pattern: "import\\s+\"\\./[^\"]+\\.tsp\";"
-      - type: "file-matches"
-        config:
-          path: "*.tsp"
-          pattern: 'age\?: int32'
-      - type: "file-matches"
-        config:
-          path: "*.tsp"
-          pattern: '@visibility\(Lifecycle\.Read\)'
-      - type: "file-matches"
-        config:
-          path: "*.tsp"
-          pattern: "ResourceProvisioningState"
-      - type: "file-matches"
-        config:
-          path: "*.tsp"
-          pattern: "ArmResourceCreateOrReplaceAsync<Employee>|ArmResourceCreateOrUpdateAsync<Employee>"
-      - type: "file-matches"
-        config:
-          path: "*.tsp"
-          pattern: "ArmResourceListByParent<Employee>"
-      - type: "file-matches"
-        config:
-          path: "*.tsp"
-          pattern: "ArmListBySubscription<Employee>"
+      - *file_matches
+      - *file_matches_import
+      - *file_matches_age_property
+      - *file_matches_visibility
+      - *file_matches_provisioning_state
+      - *file_matches_create_operation
+      - *file_matches_parent_list_operation
+      - *file_matches_subscription_list_operation
       - type: "prompt"
         config:
           prompt: "Verify all five aspects: (1) Employee resource definition is written into a TSP file; (2) Employee model uses TrackedResource<EmployeeProperties> under Microsoft.Widget namespace; (3) EmployeeProperties includes age, city, profile, and a read-only provisioningState; (4) ProvisioningState is a union type incorporating standard ARM ResourceProvisioningState; (5) Employees interface includes full CRUD operations (get, create, update, delete) plus listByResourceGroup and listBySubscription."

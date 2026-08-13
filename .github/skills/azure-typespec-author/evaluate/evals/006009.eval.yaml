@@ -62,11 +62,13 @@ stimuli:
       pattern: v2023_06_01_Preview
   - &id004
     type: file-matches
+    name: file-matches-renamed-property
     config:
       path: main.tsp
       pattern: '@renamedFrom\(Versions\.v2023_06_01_Preview,\s*"color"\)'
   - &id005
     type: file-matches
+    name: file-matches-widget-color-property
     config:
       path: main.tsp
       pattern: widgetColor

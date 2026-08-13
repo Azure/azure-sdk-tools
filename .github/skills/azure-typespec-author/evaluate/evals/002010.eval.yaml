@@ -79,7 +79,8 @@ stimuli:
         config:
           command: "tsp compile ."
           expected_exit_code: 0
-      - type: "file-matches"
+      - &file_matches
+        type: "file-matches"
         config:
           pattern: 'exportData\s+is\s+ArmResourceActionSync'
           path: "employee.tsp"
@@ -97,10 +98,7 @@ stimuli:
         config:
           required:
             - "^(edit|apply_patch|bash|powershell)$"
-      - type: "file-matches"
-        config:
-          path: "employee.tsp"
-          pattern: 'exportData\s+is\s+ArmResourceActionSync'
+      - *file_matches
       - type: "prompt"
         config:
           prompt: "Verify the exportData operation is correctly defined: (1) uses ArmResourceActionSync template, (2) has a response model that represents exported data with appropriate properties, (3) operation name is exportData. Do not penalize for specific model naming choices. Verify change scope and quality: no unrelated edits, and the result is semantically consistent with the task intent."

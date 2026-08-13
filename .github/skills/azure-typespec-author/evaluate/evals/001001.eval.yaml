@@ -10,7 +10,7 @@ environment: azsdk-mcp
 config:
   runs: 1 # Trials per stimulus
   timeout: "660s" # Seconds per trial
-  model: claude-opus-4.6 #gpt-4o #claude-sonnet-4.6 # Model for agent execution
+  model: gpt-5.6-sol # Model for agent execution
   executor: copilot-sdk # Which executor to use
 
 # Test cases
@@ -44,7 +44,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "^(edit|bash)$"
+            - "^(edit|apply_patch|bash|powershell)$"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "skill-invocation"
         config:
@@ -63,7 +63,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "^(edit|bash)$"
+            - "^(edit|apply_patch|bash|powershell)$"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "run-command"
         config:
@@ -92,7 +92,7 @@ stimuli:
       - type: "prompt"
         config:
           prompt: "Verify the identity property is cleanly version-scoped to 2025-05-04-preview only, with changes limited to this task. Using `#suppress` to bypass TypeSpec or ARM validation is NOT an acceptable solution: if any suppression is present, fail regardless of how the agent justifies it as \"appropriate\". If a compiled swagger is present, also confirm the Employee identity is a valid ARM envelope property that appears only in the 2025-05-04-preview spec and is absent from the 2021-11-01 stable spec."
-          model: "claude-opus-4.6"
+          model: "gpt-5.6-sol"
           threshold: 0.77
           scoring: "scale_1_10"
     constraints:
@@ -108,7 +108,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "^(edit|bash)$"
+            - "^(edit|apply_patch|bash|powershell)$"
       - type: "file-matches"
         config:
           path: "main.tsp"
@@ -124,7 +124,7 @@ stimuli:
       - type: "prompt"
         config:
           prompt: "Verify the identity property is cleanly version-scoped to 2025-05-04-preview only, with changes limited to this task. Using `#suppress` to bypass TypeSpec or ARM validation is NOT an acceptable solution: if any suppression is present, fail regardless of how the agent justifies it as \"appropriate\". If a compiled swagger is present, also confirm the Employee identity is a valid ARM envelope property that appears only in the 2025-05-04-preview spec and is absent from the 2021-11-01 stable spec."
-          model: "claude-opus-4.6"
+          model: "gpt-5.6-sol"
           threshold: 0.77
           scoring: "scale_1_10"
     constraints:

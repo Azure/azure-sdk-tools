@@ -1,7 +1,6 @@
 
 using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Models.APIView;
-
 namespace Azure.Sdk.Tools.Cli.Services.APIView;
 
 using System.Net;
@@ -29,8 +28,10 @@ public interface IAPIViewService
     /// </summary>
     Task<string?> GetReviewUrlByPackageAsync(string packageName, string language, string? version, CancellationToken ct);
 
-    Task<(string? content, int statusCode)> MarkPackageReleasedAsync(
-        APIViewReleaseRequest request,
+    Task<APIViewMarkReleasedResult> MarkPackageReleasedAsync(
+        string packageName,
+        string language,
+        string version,
         CancellationToken ct = default);
 
     /// <summary>
@@ -171,44 +172,16 @@ public class APIViewService : IAPIViewService
         return await _httpService.PostAsync(endpoint, ct);
     }
 
-    public async Task<(string? content, int statusCode)> MarkPackageReleasedAsync(
-        APIViewReleaseRequest request,
+    public async Task<APIViewMarkReleasedResult> MarkPackageReleasedAsync(
+        string packageName,
+        string language,
+        string version,
         CancellationToken ct = default)
     {
-        string label = $"Source Branch:{request.SourceBranch}";
-        if (!string.IsNullOrWhiteSpace(request.ReviewTokenFileName))
-        {
-            if (string.IsNullOrWhiteSpace(request.BuildId) || string.IsNullOrWhiteSpace(request.RepoName))
-            {
-                throw new ArgumentException("BuildId and RepoName are required when marking a token-based APIView revision as released.");
-            }
-
-            return await CreateCIReviewAsync(
-                request.BuildId,
-                request.ArtifactName,
-                Path.GetFileName(request.SourceFilePath),
-                request.ReviewTokenFileName,
-                request.RepoName,
-                request.PackageName,
-                request.Project,
-                label,
-                compareAllRevisions: true,
-                request.PackageVersion,
-                setReleaseTag: true,
-                request.PackageType,
-                request.SourceBranch,
-                ct);
-        }
-
-        var fields = new Dictionary<string, string>
-        {
-            ["label"] = label,
-            ["packageVersion"] = request.PackageVersion,
-            ["setReleaseTag"] = "true",
-            ["packageType"] = request.PackageType,
-            ["compareAllRevisions"] = "true"
-        };
-        return await _httpService.PostMultipartAsync("/autoreview/upload", request.SourceFilePath, fields, ct);
+        string endpoint = $"/api/reviews/mark-released?packageName={Uri.EscapeDataString(packageName)}&language={Uri.EscapeDataString(language)}&version={Uri.EscapeDataString(version)}&dryRun=true";
+        (string? content, _) = await _httpService.PostAsync(endpoint, ct);
+        return JsonSerializer.Deserialize<APIViewMarkReleasedResult>(content ?? string.Empty)
+            ?? throw new InvalidDataException("APIView returned an empty mark-released response.");
     }
 
     /// <inheritdoc />

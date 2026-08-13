@@ -1,7 +1,6 @@
 using System.CommandLine;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.APIView;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services.ApiReviewHub;
 using Azure.Sdk.Tools.Cli.Services.APIView;
@@ -21,26 +20,10 @@ public class PackageMarkReleasedTool(
     private readonly Option<string> languageOption = RequiredOption("--language", "The SDK language.");
     private readonly Option<string> packageNameOption = RequiredOption("--package-name", "The package name.");
     private readonly Option<string> packageVersionOption = RequiredOption("--package-version", "The released package version.");
-    private readonly Option<string> apiHashOption = RequiredOption("--api-hash", "The API Review Hub hash for the released API artifact.");
-    private readonly Option<string> sourceFilePathOption = RequiredOption("--source-file-path", "The source artifact path used by APIView.");
-    private readonly Option<string> packageTypeOption = RequiredOption("--package-type", "The APIView package type.");
-    private readonly Option<string?> reviewTokenFileNameOption = new("--review-token-file-name")
+    private readonly Option<string> apiHashOption = new("--api-hash")
     {
-        Description = "The APIView review token file name. When omitted, the source artifact is uploaded."
+        Description = "The API Review Hub hash for the released API artifact."
     };
-    private readonly Option<string?> buildIdOption = new("--build-id") { Description = "The Azure Pipelines build ID containing the review token." };
-    private readonly Option<string?> repoNameOption = new("--repo-name") { Description = "The owner/repository containing the pipeline build." };
-    private readonly Option<string> artifactNameOption = new("--artifact-name")
-    {
-        Description = "The Azure Pipelines artifact name.",
-        DefaultValueFactory = _ => "packages"
-    };
-    private readonly Option<string> projectOption = new("--project")
-    {
-        Description = "The Azure DevOps project containing the build.",
-        DefaultValueFactory = _ => "internal"
-    };
-    private readonly Option<string?> sourceBranchOption = new("--source-branch") { Description = "The source branch associated with the APIView revision." };
 
     protected override Command GetCommand() => new(
         CommandName,
@@ -49,15 +32,7 @@ public class PackageMarkReleasedTool(
         languageOption,
         packageNameOption,
         packageVersionOption,
-        apiHashOption,
-        sourceFilePathOption,
-        packageTypeOption,
-        reviewTokenFileNameOption,
-        buildIdOption,
-        repoNameOption,
-        artifactNameOption,
-        projectOption,
-        sourceBranchOption
+        apiHashOption
     };
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct) =>
@@ -65,15 +40,7 @@ public class PackageMarkReleasedTool(
             parseResult.GetValue(languageOption)!,
             parseResult.GetValue(packageNameOption)!,
             parseResult.GetValue(packageVersionOption)!,
-            parseResult.GetValue(apiHashOption)!,
-            parseResult.GetValue(sourceFilePathOption)!,
-            parseResult.GetValue(packageTypeOption)!,
-            parseResult.GetValue(reviewTokenFileNameOption),
-            parseResult.GetValue(buildIdOption),
-            parseResult.GetValue(repoNameOption),
-            parseResult.GetValue(artifactNameOption)!,
-            parseResult.GetValue(projectOption)!,
-            parseResult.GetValue(sourceBranchOption),
+            parseResult.GetValue(apiHashOption) ?? string.Empty,
             ct);
 
     public async Task<PackageMarkReleasedResponse> MarkReleasedAsync(
@@ -81,14 +48,6 @@ public class PackageMarkReleasedTool(
         string packageName,
         string packageVersion,
         string apiHash,
-        string sourceFilePath,
-        string packageType,
-        string? reviewTokenFileName = null,
-        string? buildId = null,
-        string? repoName = null,
-        string artifactName = "packages",
-        string project = "internal",
-        string? sourceBranch = null,
         CancellationToken ct = default)
     {
         try
@@ -108,21 +67,15 @@ public class PackageMarkReleasedTool(
             ReleaseBackendResult apiViewResult;
             try
             {
-                var request = new APIViewReleaseRequest
+                var result = await apiViewService.MarkPackageReleasedAsync(packageName, language, packageVersion, ct);
+                string releaseState = result.IsReleased
+                    ? $"already released{(result.ReleasedOn.HasValue ? $" on {result.ReleasedOn.Value:O}" : string.Empty)}"
+                    : "not released";
+                apiViewResult = new ReleaseBackendResult
                 {
-                    SourceFilePath = sourceFilePath,
-                    ReviewTokenFileName = reviewTokenFileName,
-                    BuildId = buildId,
-                    ArtifactName = artifactName,
-                    RepoName = repoName,
-                    PackageName = packageName,
-                    Project = project,
-                    PackageVersion = packageVersion,
-                    PackageType = packageType,
-                    SourceBranch = sourceBranch
+                    Succeeded = true,
+                    Message = $"Dry run resolved revision {result.RevisionId} (review {result.ReviewId}); revision is {releaseState}."
                 };
-                await apiViewService.MarkPackageReleasedAsync(request, ct);
-                apiViewResult = new ReleaseBackendResult { Succeeded = true, Message = "Revision marked shipped." };
             }
             catch (Exception ex)
             {

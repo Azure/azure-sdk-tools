@@ -1,4 +1,3 @@
-using Azure.Sdk.Tools.Cli.Models.APIView;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Moq;
@@ -17,58 +16,21 @@ public class APIViewReleaseServiceTests
         httpService = new Mock<IAPIViewHttpService>();
         httpService
             .Setup(x => x.PostAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("released", 200));
-        httpService
-            .Setup(x => x.PostMultipartAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyDictionary<string, string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("released", 200));
+            .ReturnsAsync(("""{"reviewId":"review123","revisionId":"revision456","isReleased":false,"releasedOn":null}""", 200));
         service = new APIViewService(httpService.Object, new TestLogger<APIViewService>());
     }
 
     [Test]
-    public async Task MarkPackageReleasedAsync_WithReviewToken_UsesCreateEndpoint()
+    public async Task MarkPackageReleasedAsync_UsesReviewsEndpointWithDryRun()
     {
-        APIViewReleaseRequest request = CreateRequest();
-        request.ReviewTokenFileName = "azure-test_Python.json";
-        request.BuildId = "123";
-        request.RepoName = "Azure/azure-sdk-for-python";
-
-        await service.MarkPackageReleasedAsync(request);
+        var result = await service.MarkPackageReleasedAsync("azure test", "C#", "1.0.0-beta.1");
 
         httpService.Verify(x => x.PostAsync(
-            It.Is<string>(endpoint =>
-                endpoint.StartsWith("/autoreview/create?", StringComparison.Ordinal) &&
-                endpoint.Contains("setReleaseTag=true", StringComparison.Ordinal) &&
-                endpoint.Contains("compareAllRevisions=true", StringComparison.Ordinal) &&
-                endpoint.Contains("reviewFilePath=azure-test_Python.json", StringComparison.Ordinal)),
+            "/api/reviews/mark-released?packageName=azure%20test&language=C%23&version=1.0.0-beta.1&dryRun=true",
             It.IsAny<CancellationToken>()), Times.Once);
-        httpService.Verify(x => x.PostMultipartAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyDictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.That(result.ReviewId, Is.EqualTo("review123"));
+        Assert.That(result.RevisionId, Is.EqualTo("revision456"));
+        Assert.That(result.IsReleased, Is.False);
+        Assert.That(result.ReleasedOn, Is.Null);
     }
-
-    [Test]
-    public async Task MarkPackageReleasedAsync_WithoutReviewToken_UsesUploadEndpoint()
-    {
-        APIViewReleaseRequest request = CreateRequest();
-
-        await service.MarkPackageReleasedAsync(request);
-
-        httpService.Verify(x => x.PostMultipartAsync(
-            "/autoreview/upload",
-            "azure-test.zip",
-            It.Is<IReadOnlyDictionary<string, string>>(fields =>
-                fields["setReleaseTag"] == "true" &&
-                fields["compareAllRevisions"] == "true" &&
-                fields["packageVersion"] == "1.0.0"),
-            It.IsAny<CancellationToken>()), Times.Once);
-        httpService.Verify(x => x.PostAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
-    }
-
-    private static APIViewReleaseRequest CreateRequest() => new()
-    {
-        SourceFilePath = "azure-test.zip",
-        PackageName = "azure-test",
-        PackageVersion = "1.0.0",
-        PackageType = "client",
-        SourceBranch = "main"
-    };
 }

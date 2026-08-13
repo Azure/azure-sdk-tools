@@ -32,4 +32,12 @@ public class PackageMarkReleasedResponse : PackageResponseBase
         output.AppendLine($"APIView: {(ApiView.Succeeded ? "SUCCEEDED" : "FAILED")} - {ApiView.Message}");
         return output.ToString();
     }
+
+    public override string ToString()
+    {
+        string output = Format().TrimEnd();
+        return SupportChannel == null
+            ? output
+            : $"{output}{Environment.NewLine}{SupportChannel}";
+    }
 }

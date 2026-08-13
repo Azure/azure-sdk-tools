@@ -65,14 +65,23 @@ class _PublicIPTransport(httpx.AsyncBaseTransport):
         extensions = dict(request.extensions)
         if request.url.scheme == "https":
             extensions["sni_hostname"] = hostname
-        pinned_request = httpx.Request(
-            method=request.method,
-            url=request.url.copy_with(host=str(resolved_ips[0])),
-            headers=request.headers,
-            stream=request.stream,
-            extensions=extensions,
-        )
-        return await self._transport.handle_async_request(pinned_request)
+
+        last_error: httpx.ConnectError | httpx.ConnectTimeout | None = None
+        for resolved_ip in resolved_ips:
+            pinned_request = httpx.Request(
+                method=request.method,
+                url=request.url.copy_with(host=str(resolved_ip)),
+                headers=request.headers,
+                stream=request.stream,
+                extensions=extensions,
+            )
+            try:
+                return await self._transport.handle_async_request(pinned_request)
+            except (httpx.ConnectError, httpx.ConnectTimeout) as e:
+                last_error = e
+
+        assert last_error is not None
+        raise last_error
 
     async def aclose(self) -> None:
         await self._transport.aclose()

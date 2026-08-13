@@ -105,6 +105,31 @@ async def test_public_ip_transport_pins_address_and_preserves_hostname() -> None
     assert pinned_request.extensions["sni_hostname"] == "example.com"
 
 
+@pytest.mark.asyncio
+async def test_public_ip_transport_tries_each_validated_address() -> None:
+    attempted_hosts: list[str] = []
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        attempted_hosts.append(request.url.host)
+        if len(attempted_hosts) == 1:
+            raise httpx.ConnectError("unreachable", request=request)
+        return httpx.Response(200)
+
+    transport = _PublicIPTransport(httpx.MockTransport(handler))
+    with patch(
+        "tools.web_tools.socket.getaddrinfo",
+        return_value=[
+            (socket.AF_INET6, socket.SOCK_STREAM, 0, "", ("2606:2800:220:1::", 443)),
+            (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("93.184.216.34", 443)),
+        ],
+    ):
+        async with httpx.AsyncClient(transport=transport) as client:
+            response = await client.get("https://example.com/path")
+
+    assert response.status_code == 200
+    assert attempted_hosts == ["2606:2800:220:1::", "93.184.216.34"]
+
+
 def test_html_text_extractor_strips_tags() -> None:
     html = (
         "<html><head><style>body{color:red}</style><title>T</title></head>"

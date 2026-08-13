@@ -395,6 +395,8 @@ def test_dashboard_html_uses_text_content_for_record_data() -> None:
     assert "Failed (incorrect or unassessed)" in html
     assert ".status-assessment_failed" in html
     assert "Agent report" in html
+    assert 'record.feedback?.error !== "agent_remediation_failed"' in html
+    assert 'record.feedback.status === "failed"' in html
     assert "setDetailsTitle(record)" in html
     assert "externalLink(record.message_link" in html
     assert "renderMarkdown" in html

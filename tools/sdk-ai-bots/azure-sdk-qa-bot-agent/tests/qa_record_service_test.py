@@ -244,9 +244,15 @@ def test_processing_failure_marks_assessment_failed() -> None:
 
 def test_remediation_failure_preserves_incorrect_answer() -> None:
     record = _record()
+    result = ChatbotEvolutionAgentResult(
+        outcome=ChatbotEvolutionAgentOutcome.remediation_failed,
+        reasoning="Grounded result.",
+        confidence=0.9,
+        classification=RootCauseClassification.outdated_content,
+    )
     ChatbotEvolutionAgentService()._apply_result(
         record,
-        _result(ChatbotEvolutionAgentOutcome.remediation_failed),
+        result,
     )
     assert record.qa_status == QAStatus.failed
     assert record.verdict == BotAnswerVerdict.Incorrect
@@ -255,6 +261,21 @@ def test_remediation_failure_preserves_incorrect_answer() -> None:
     assert record.feedback is not None
     assert record.feedback.status == FeedbackStatus.failed
     assert record.feedback.error == "agent_remediation_failed"
+    assert (
+        record.feedback.classification
+        == RootCauseClassification.outdated_content
+    )
+
+
+def test_remediation_failure_rejects_issue_url() -> None:
+    with pytest.raises(ValidationError):
+        ChatbotEvolutionAgentResult(
+            outcome=ChatbotEvolutionAgentOutcome.remediation_failed,
+            reasoning="Issue creation failed.",
+            confidence=0.9,
+            classification=RootCauseClassification.outdated_content,
+            issue_url="https://github.com/Azure/azure-sdk-pr/issues/123",
+        )
 
 
 @pytest.mark.parametrize(

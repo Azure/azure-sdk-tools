@@ -180,7 +180,7 @@ Allowed combinations:
 | --- | --- | --- |
 | analysis | `conversation_ongoing`, `no_issue`, `issue_created` | `issue_created` requires `classification` and `issue_url`; otherwise both are `null` |
 | validation | `validation_passed`, `validation_failed` | `classification` and `issue_url` are `null` |
-| analysis | `remediation_failed` | Both gates confirmed a completed conversation with a real answer problem, but diagnosis, candidate validation, or issue creation could not finish; failure reason in `reasoning` |
+| analysis | `remediation_failed` | Both gates confirmed a completed conversation with a real answer problem, but diagnosis, candidate validation, or issue creation could not finish; include the established `classification` when known, keep `issue_url` null, and put the blocker in `reasoning` |
 | either | `processing_failed` | Failure reason in `reasoning`; `classification` and `issue_url` are `null` |
 
 Use `processing_failed` only when processing fails before analysis has

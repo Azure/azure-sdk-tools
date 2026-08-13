@@ -144,15 +144,20 @@ class ChatbotEvolutionAgentResult(BaseModel):
 
     @model_validator(mode="after")
     def validate_outcome(self) -> "ChatbotEvolutionAgentResult":
-        has_issue = self.issue_url is not None or self.classification is not None
         if self.outcome == ChatbotEvolutionAgentOutcome.issue_created:
             if not self.issue_url or self.classification is None:
                 raise ValueError(
                     "issue_created requires classification and issue_url"
                 )
-        elif has_issue:
+        elif self.outcome == ChatbotEvolutionAgentOutcome.remediation_failed:
+            if self.issue_url is not None:
+                raise ValueError(
+                    "remediation_failed cannot include issue_url"
+                )
+        elif self.issue_url is not None or self.classification is not None:
             raise ValueError(
-                "classification and issue_url are only valid for issue_created"
+                "classification is only valid for issue_created or "
+                "remediation_failed; issue_url is only valid for issue_created"
             )
         return self
 

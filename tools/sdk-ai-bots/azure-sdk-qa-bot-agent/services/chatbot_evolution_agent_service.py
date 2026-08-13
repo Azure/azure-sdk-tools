@@ -228,6 +228,7 @@ class ChatbotEvolutionAgentService:
                 record.verdict = BotAnswerVerdict.Incorrect
                 record.feedback.status = FeedbackStatus.failed
                 record.feedback.error = "agent_remediation_failed"
+                record.feedback.classification = result.classification
                 return
 
             if result.outcome == ChatbotEvolutionAgentOutcome.no_issue:

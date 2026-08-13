@@ -230,7 +230,7 @@ public class ReviewsTokenAuthControllerTests
     }
 
     [Fact]
-    public async Task MarkReleased_WhenRevisionMetadataMissing_UsesRequestValues()
+    public async Task MarkReleased_WhenRevisionMetadataMissing_ReturnsEmptyStrings()
     {
         var resolved = new ResolvePackageResponse
         {
@@ -256,9 +256,9 @@ public class ReviewsTokenAuthControllerTests
 
         LeanJsonResult jsonResult = Assert.IsType<LeanJsonResult>(result.Result);
         MarkReleasedResult response = Assert.IsType<MarkReleasedResult>(jsonResult.Value);
-        Assert.Equal("Azure.Storage.Blobs", response.PackageName);
-        Assert.Equal("C#", response.Language);
-        Assert.Equal("12.0.0", response.Version);
+        Assert.Equal(string.Empty, response.PackageName);
+        Assert.Equal(string.Empty, response.Language);
+        Assert.Equal(string.Empty, response.Version);
     }
 
     [Theory]

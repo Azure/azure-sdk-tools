@@ -220,23 +220,6 @@ public class ApiReviewHubService(
         return await ReadResponseAsync<T>(response, ct);
     }
 
-    private static async Task PostJsonAsync(HttpClient httpClient, string url, object body, AuthenticationHeaderValue authorization, CancellationToken ct)
-    {
-        var content = new StringContent(JsonSerializer.Serialize(body, serializerOptions), Encoding.UTF8, "application/json");
-        using var request = new HttpRequestMessage(HttpMethod.Post, url)
-        {
-            Content = content
-        };
-        request.Headers.Authorization = authorization;
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-        using var response = await httpClient.SendAsync(request, ct);
-        if (!response.IsSuccessStatusCode)
-        {
-            _ = await ReadResponseAsync<object>(response, ct);
-        }
-    }
-
     private static async Task<T> GetJsonAsync<T>(HttpClient httpClient, string url, AuthenticationHeaderValue authorization, CancellationToken ct) where T : class
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, url);

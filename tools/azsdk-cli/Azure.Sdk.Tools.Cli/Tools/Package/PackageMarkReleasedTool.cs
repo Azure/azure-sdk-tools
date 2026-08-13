@@ -110,11 +110,11 @@ public class PackageMarkReleasedTool(
                     || (int)statusCode >= 500;
                 if (!apiViewFailureIsFatal)
                 {
-                    logger.LogWarning("APIView returned a non-server error while marking {packageName} {packageVersion} shipped", packageName, packageVersion);
+                    logger.LogWarning("APIView returned a non-server error while marking {packageName} {packageVersion} released", packageName, packageVersion);
                 }
                 else
                 {
-                    logger.LogError(ex, "Failed to mark {packageName} {packageVersion} shipped in APIView", packageName, packageVersion);
+                    logger.LogError(ex, "Failed to mark {packageName} {packageVersion} released in APIView", packageName, packageVersion);
                 }
                 apiViewMessage = ex.Message;
             }

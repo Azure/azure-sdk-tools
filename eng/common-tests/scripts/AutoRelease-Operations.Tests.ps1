@@ -205,35 +205,35 @@ Describe "New-GitHubPullRequestDiffObject" -Tag "UnitTest", "AutoRelease-Operati
     }
 
     It "excludes service-root files when requested" {
-      $files = @(
-        [PSCustomObject]@{ filename = "sdk/storage/ci.yml"; status = "modified" },
-        [PSCustomObject]@{ filename = "sdk/storage/README.md"; status = "removed" },
-        [PSCustomObject]@{ filename = "sdk\storage\swagger_to_sdk_config.json"; status = "renamed"; previous_filename = "sdk\storage\ci.storage.yml" },
-        [PSCustomObject]@{ filename = "sdk/storage/azure-storage-blob/pom.xml"; status = "modified" },
-        [PSCustomObject]@{ filename = "eng/common/file.txt"; status = "modified" }
-      )
+        $files = @(
+            [pscustomobject]@{ filename = "sdk/storage/ci.yml"; status = "modified" },
+            [pscustomobject]@{ filename = "sdk/storage/README.md"; status = "removed" },
+            [pscustomobject]@{ filename = "sdk\storage\swagger_to_sdk_config.json"; status = "renamed"; previous_filename = "sdk\storage\ci.storage.yml" },
+            [pscustomobject]@{ filename = "sdk/storage/azure-storage-blob/pom.xml"; status = "modified" },
+            [pscustomobject]@{ filename = "eng/common/file.txt"; status = "modified" }
+        )
 
-      $diff = New-GitHubPullRequestDiffObject `
-        -PullRequestNumber 123 `
-        -PullRequestFiles $files `
-        -ExcludeServiceRootFiles
+        $diff = New-GitHubPullRequestDiffObject `
+            -PullRequestNumber 123 `
+            -PullRequestFiles $files `
+            -ExcludeServiceRootFiles
 
-      $diff.ChangedFiles | Should -Be @(
-        "eng/common/file.txt"
-        "sdk/storage/azure-storage-blob/pom.xml"
-      )
-      $diff.DeletedFiles | Should -BeNullOrEmpty
-      $diff.ChangedServices | Should -Be @("storage")
-  }
+        $diff.ChangedFiles | Should -Be @(
+            "eng/common/file.txt"
+            "sdk/storage/azure-storage-blob/pom.xml"
+        )
+        $diff.DeletedFiles | Should -BeNullOrEmpty
+        $diff.ChangedServices | Should -Be @("storage")
+    }
 
-  It "retains service-root files by default" {
-      $files = @(
-        [PSCustomObject]@{ filename = "sdk/storage/ci.yml"; status = "modified" }
-      )
+    It "retains service-root files by default" {
+        $files = @(
+            [pscustomobject]@{ filename = "sdk/storage/ci.yml"; status = "modified" }
+        )
 
-      $diff = New-GitHubPullRequestDiffObject -PullRequestNumber 123 -PullRequestFiles $files
+        $diff = New-GitHubPullRequestDiffObject -PullRequestNumber 123 -PullRequestFiles $files
 
-      $diff.ChangedFiles | Should -Be @("sdk/storage/ci.yml")
-      $diff.ChangedServices | Should -Be @("storage")
-  }
+        $diff.ChangedFiles | Should -Be @("sdk/storage/ci.yml")
+        $diff.ChangedServices | Should -Be @("storage")
+    }
 }

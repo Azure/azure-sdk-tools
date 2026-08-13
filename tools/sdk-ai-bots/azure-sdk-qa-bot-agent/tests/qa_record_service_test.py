@@ -227,6 +227,36 @@ def test_issue_result_waits_for_validation() -> None:
     )
 
 
+def test_processing_failure_marks_assessment_failed() -> None:
+    record = _record()
+    ChatbotEvolutionAgentService()._apply_result(
+        record,
+        _result(ChatbotEvolutionAgentOutcome.processing_failed),
+    )
+    assert record.qa_status == QAStatus.failed
+    assert record.verdict == BotAnswerVerdict.Unknown
+    assert record.reasoning == "Grounded result."
+    assert record.evaluated_at is not None
+    assert record.feedback is not None
+    assert record.feedback.status == FeedbackStatus.failed
+    assert record.feedback.error == "agent_processing_failed"
+
+
+def test_remediation_failure_preserves_incorrect_answer() -> None:
+    record = _record()
+    ChatbotEvolutionAgentService()._apply_result(
+        record,
+        _result(ChatbotEvolutionAgentOutcome.remediation_failed),
+    )
+    assert record.qa_status == QAStatus.failed
+    assert record.verdict == BotAnswerVerdict.Incorrect
+    assert record.reasoning == "Grounded result."
+    assert record.evaluated_at is not None
+    assert record.feedback is not None
+    assert record.feedback.status == FeedbackStatus.failed
+    assert record.feedback.error == "agent_remediation_failed"
+
+
 @pytest.mark.parametrize(
     ("outcome", "expected"),
     [
@@ -243,7 +273,11 @@ def test_validation_result_is_terminal(
         feedback_status=FeedbackStatus.pending_validation,
     )
     record.verdict = BotAnswerVerdict.Incorrect
-    ChatbotEvolutionAgentService()._apply_result(record, _result(outcome))
+    ChatbotEvolutionAgentService()._apply_result(
+        record,
+        _result(outcome),
+        mode=ChatbotEvolutionAgentMode.validation,
+    )
     assert record.qa_status == QAStatus.failed
     assert record.verdict == BotAnswerVerdict.Incorrect
     assert record.feedback is not None
@@ -356,6 +390,33 @@ async def test_run_job_persists_issue_result() -> None:
 
 
 @pytest.mark.asyncio
+async def test_run_job_persists_remediation_failure() -> None:
+    record = _record(qa_status=QAStatus.ongoing, feedback_status=None)
+    result = _result(ChatbotEvolutionAgentOutcome.remediation_failed)
+
+    service = ChatbotEvolutionAgentService()
+    service._load_job = AsyncMock(return_value=record)
+    service._invoke_agent = AsyncMock(return_value=result.model_dump_json())
+    upsert = AsyncMock()
+    with patch(
+        "services.chatbot_evolution_agent_service.upsert_qa_record",
+        new=upsert,
+    ):
+        actual = await service.run_job(record.id, record.tenant_id)
+
+    assert actual == result
+    final_call = upsert.await_args
+    assert final_call is not None
+    persisted = QARecord.from_cosmos(final_call.args[0])
+    assert persisted.qa_status == QAStatus.failed
+    assert persisted.verdict == BotAnswerVerdict.Incorrect
+    assert persisted.reasoning == "Grounded result."
+    assert persisted.feedback is not None
+    assert persisted.feedback.status == FeedbackStatus.failed
+    assert persisted.feedback.error == "agent_remediation_failed"
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("mode", "outcome"),
     [
@@ -366,6 +427,10 @@ async def test_run_job_persists_issue_result() -> None:
         (
             ChatbotEvolutionAgentMode.validation,
             ChatbotEvolutionAgentOutcome.no_issue,
+        ),
+        (
+            ChatbotEvolutionAgentMode.validation,
+            ChatbotEvolutionAgentOutcome.remediation_failed,
         ),
     ],
 )
@@ -402,3 +467,6 @@ async def test_run_job_rejects_outcome_for_wrong_mode(
     persisted = QARecord.from_cosmos(final_call.args[0])
     assert persisted.feedback is not None
     assert persisted.feedback.status == FeedbackStatus.failed
+    if mode == ChatbotEvolutionAgentMode.analysis:
+        assert persisted.qa_status == QAStatus.failed
+        assert persisted.verdict == BotAnswerVerdict.Unknown

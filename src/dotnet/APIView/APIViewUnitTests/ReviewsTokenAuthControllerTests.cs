@@ -229,6 +229,38 @@ public class ReviewsTokenAuthControllerTests
         _mockApiRevisionsManager.Verify(x => x.MarkAPIRevisionReleasedAsync(It.IsAny<string>()), Times.Never);
     }
 
+    [Fact]
+    public async Task MarkReleased_WhenRevisionMetadataMissing_UsesRequestValues()
+    {
+        var resolved = new ResolvePackageResponse
+        {
+            PackageName = "Azure.Storage.Blobs",
+            Language = "C#",
+            ReviewId = "review123",
+            RevisionId = "revision456",
+            Version = "12.0.0"
+        };
+        _mockReviewSearch
+            .Setup(x => x.ResolveAutomaticRevisionForRelease("Azure.Storage.Blobs", "C#", "12.0.0"))
+            .ReturnsAsync(resolved);
+        _mockApiRevisionsManager
+            .Setup(x => x.MarkAPIRevisionReleasedAsync("revision456"))
+            .ReturnsAsync(new APIRevisionListItemModel
+            {
+                Id = "revision456",
+                IsReleased = true,
+                ReleasedOn = DateTime.UtcNow
+            });
+
+        ActionResult<MarkReleasedResult> result = await _controller.MarkReleased("Azure.Storage.Blobs", "C#", "12.0.0");
+
+        LeanJsonResult jsonResult = Assert.IsType<LeanJsonResult>(result.Result);
+        MarkReleasedResult response = Assert.IsType<MarkReleasedResult>(jsonResult.Value);
+        Assert.Equal("Azure.Storage.Blobs", response.PackageName);
+        Assert.Equal("C#", response.Language);
+        Assert.Equal("12.0.0", response.Version);
+    }
+
     [Theory]
     [InlineData(null, "C#", "12.0.0")]
     [InlineData("Azure.Storage.Blobs", null, "12.0.0")]

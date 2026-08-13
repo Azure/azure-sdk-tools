@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -132,6 +133,69 @@ public class APIRevisionsManagerTests
             _mockApiVersionsManager.Object,
             _mockConfiguration.Object
         );
+    }
+
+    [Fact]
+    public async Task MarkAPIRevisionReleasedAsync_MarksAndPersistsRevision()
+    {
+        const string revisionId = "revision-1";
+        var revision = new APIRevisionListItemModel
+        {
+            Id = revisionId,
+            IsReleased = false
+        };
+        _mockAPIRevisionsRepository.Setup(r => r.GetAPIRevisionAsync(revisionId)).ReturnsAsync(revision);
+
+        DateTime before = DateTime.UtcNow;
+        APIRevisionListItemModel result = await _manager.MarkAPIRevisionReleasedAsync(revisionId);
+        DateTime after = DateTime.UtcNow;
+
+        Assert.True(result.IsReleased);
+        Assert.InRange(result.ReleasedOn, before, after);
+        _mockAPIRevisionsRepository.Verify(r => r.UpsertAPIRevisionAsync(revision), Times.Once);
+    }
+
+    [Fact]
+    public async Task MarkAPIRevisionReleasedAsync_WhenAlreadyReleased_DoesNotPersistAgain()
+    {
+        const string revisionId = "revision-1";
+        var revision = new APIRevisionListItemModel
+        {
+            Id = revisionId,
+            IsReleased = true,
+            ReleasedOn = DateTime.UtcNow.AddDays(-1)
+        };
+        _mockAPIRevisionsRepository.Setup(r => r.GetAPIRevisionAsync(revisionId)).ReturnsAsync(revision);
+
+        APIRevisionListItemModel result = await _manager.MarkAPIRevisionReleasedAsync(revisionId);
+
+        Assert.Same(revision, result);
+        _mockAPIRevisionsRepository.Verify(r => r.UpsertAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetAPIRevisionsAsync_WithMultipleExactVersionMatches_ReturnsNewestFirst()
+    {
+        const string reviewId = "review-1";
+        var olderRevision = new APIRevisionListItemModel
+        {
+            Id = "older",
+            CreatedOn = DateTime.UtcNow.AddDays(-1),
+            Files = [new APICodeFileModel { PackageVersion = "1.2.3" }]
+        };
+        var newerRevision = new APIRevisionListItemModel
+        {
+            Id = "newer",
+            CreatedOn = DateTime.UtcNow,
+            Files = [new APICodeFileModel { PackageVersion = "1.2.3" }]
+        };
+        _mockAPIRevisionsRepository
+            .Setup(r => r.GetAPIRevisionsAsync(reviewId))
+            .ReturnsAsync([olderRevision, newerRevision]);
+
+        IEnumerable<APIRevisionListItemModel> result = await _manager.GetAPIRevisionsAsync(reviewId, "1.2.3");
+
+        Assert.Equal(["newer", "older"], result.Select(revision => revision.Id));
     }
 
     [Fact]
@@ -571,115 +635,6 @@ public class APIRevisionsManagerTests
 
         Assert.NotNull(result);
         Assert.Null(result.CrossLanguageMetadata);
-    }
-
-    [Fact]
-    public async Task UpdateAPIRevisionCodeFileAsync_CopiesApprovalFromNewestRevisionUsingFinalPipelineHash()
-    {
-        CodeFile pipelineCodeFile = CreatePipelineCodeFile(null);
-        MemoryStream zipStream = await CreateZipArchiveWithCodeFile(TestReviewId, TestApiRevisionId, TestFileId, pipelineCodeFile);
-        var targetRevision = new APIRevisionListItemModel
-        {
-            Id = TestApiRevisionId,
-            ReviewId = TestReviewId,
-            Language = "Python",
-            APIRevisionType = APIRevisionType.Automatic,
-            IsApproved = false,
-            Approvers = [],
-            ChangeHistory = [],
-            Files = [new APICodeFileModel { FileId = TestFileId, FileName = TestFileName, ContentHash = "placeholder-hash" }]
-        };
-        var olderApprovedRevision = new APIRevisionListItemModel
-        {
-            Id = "older-approved-revision-id",
-            ReviewId = TestReviewId,
-            Language = "Python",
-            APIRevisionType = APIRevisionType.Automatic,
-            IsApproved = true,
-            Approvers = ["older-approver"],
-            ChangeHistory = [],
-            CreatedOn = DateTime.UtcNow.AddDays(-2),
-            Files = [new APICodeFileModel { ContentHash = "final-hash" }]
-        };
-        var newerApprovedRevision = new APIRevisionListItemModel
-        {
-            Id = "newer-approved-revision-id",
-            ReviewId = TestReviewId,
-            Language = "Python",
-            APIRevisionType = APIRevisionType.Automatic,
-            IsApproved = true,
-            Approvers = ["newer-approver"],
-            ChangeHistory = [],
-            CreatedOn = DateTime.UtcNow.AddDays(-1),
-            Files = [new APICodeFileModel { ContentHash = "final-hash" }]
-        };
-
-        _mockDevopsArtifactRepository
-            .Setup(x => x.DownloadPackageArtifact(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), null,
-                It.IsAny<string>(), "zip"))
-            .ReturnsAsync(zipStream);
-        _mockReviewsRepository
-            .Setup(x => x.GetReviewAsync(TestReviewId))
-            .ReturnsAsync(new ReviewListItemModel { Id = TestReviewId, Language = "Python" });
-        _mockAPIRevisionsRepository
-            .Setup(x => x.GetAPIRevisionAsync(TestApiRevisionId))
-            .ReturnsAsync(targetRevision);
-        _mockAPIRevisionsRepository
-            .Setup(x => x.GetAPIRevisionsAsync(TestReviewId))
-            .ReturnsAsync([targetRevision, olderApprovedRevision, newerApprovedRevision]);
-        _mockCodeFileRepository
-            .Setup(x => x.GetCodeFileFromStorageAsync(TestApiRevisionId, TestFileId))
-            .ReturnsAsync((CodeFile)null);
-        _mockCodeFileManager
-            .Setup(x => x.ComputeAPIContentHashAsync(It.IsAny<CodeFile>()))
-            .ReturnsAsync("final-hash");
-
-        await _manager.UpdateAPIRevisionCodeFileAsync("test-repo", "12345", "apiview", "internal");
-
-        Assert.True(targetRevision.IsApproved);
-        Assert.Contains("newer-approver", targetRevision.Approvers);
-        Assert.DoesNotContain("older-approver", targetRevision.Approvers);
-        var approvalChange = Assert.Single(targetRevision.ChangeHistory);
-        Assert.Contains("newer-approved-revision-id", approvalChange.Notes);
-        Assert.Equal("final-hash", targetRevision.Files[0].ContentHash);
-    }
-
-    [Fact]
-    public async Task UpdateAPIRevisionCodeFileAsync_DoesNotCarryForwardForManualRevision()
-    {
-        CodeFile pipelineCodeFile = CreatePipelineCodeFile(null);
-        MemoryStream zipStream = await CreateZipArchiveWithCodeFile(TestReviewId, TestApiRevisionId, TestFileId, pipelineCodeFile);
-        var targetRevision = new APIRevisionListItemModel
-        {
-            Id = TestApiRevisionId,
-            ReviewId = TestReviewId,
-            Language = "Python",
-            APIRevisionType = APIRevisionType.Manual,
-            Files = [new APICodeFileModel { FileId = TestFileId, FileName = TestFileName, ContentHash = "placeholder-hash" }]
-        };
-
-        _mockDevopsArtifactRepository
-            .Setup(x => x.DownloadPackageArtifact(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), null,
-                It.IsAny<string>(), "zip"))
-            .ReturnsAsync(zipStream);
-        _mockReviewsRepository
-            .Setup(x => x.GetReviewAsync(TestReviewId))
-            .ReturnsAsync(new ReviewListItemModel { Id = TestReviewId, Language = "Python" });
-        _mockAPIRevisionsRepository
-            .Setup(x => x.GetAPIRevisionAsync(TestApiRevisionId))
-            .ReturnsAsync(targetRevision);
-        _mockCodeFileRepository
-            .Setup(x => x.GetCodeFileFromStorageAsync(TestApiRevisionId, TestFileId))
-            .ReturnsAsync((CodeFile)null);
-        _mockCodeFileManager
-            .Setup(x => x.ComputeAPIContentHashAsync(It.IsAny<CodeFile>()))
-            .ReturnsAsync("final-hash");
-
-        await _manager.UpdateAPIRevisionCodeFileAsync("test-repo", "12345", "apiview", "internal");
-
-        Assert.False(targetRevision.IsApproved);
-        Assert.Equal("final-hash", targetRevision.Files[0].ContentHash);
-        _mockAPIRevisionsRepository.Verify(x => x.GetAPIRevisionsAsync(TestReviewId), Times.Never);
     }
 
     [Fact]

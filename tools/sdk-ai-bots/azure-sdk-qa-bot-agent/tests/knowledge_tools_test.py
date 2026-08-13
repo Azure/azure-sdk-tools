@@ -110,10 +110,15 @@ def test_build_targets_preserves_duplicate_folder_paths() -> None:
                         "branch": "main",
                     },
                     "paths": [
-                        {"folder": "azure_sdk_for_net_docs", "path": "/doc"},
+                        {
+                            "folder": "azure_sdk_for_net_docs",
+                            "path": "/doc",
+                            "relativeByRepoPath": True,
+                        },
                         {
                             "folder": "azure_sdk_for_net_docs",
                             "path": "/sdk/resourcemanager/Azure.ResourceManager/docs",
+                            "relativeByRepoPath": True,
                         },
                     ],
                 }
@@ -125,6 +130,10 @@ def test_build_targets_preserves_duplicate_folder_paths() -> None:
         "/doc",
         "/sdk/resourcemanager/Azure.ResourceManager/docs",
     ]
+    assert all(
+        target.relative_by_repo_path
+        for target in targets["azure_sdk_for_net_docs"]
+    )
 
 
 @pytest.mark.asyncio
@@ -138,6 +147,7 @@ async def test_resolve_kb_source_uses_blob_path_for_duplicate_folder(
             branch="main",
             path="/doc",
             scope="azure_sdk_for_net_docs",
+            relative_by_repo_path=True,
         ),
         KbTarget(
             owner="Azure",
@@ -145,6 +155,7 @@ async def test_resolve_kb_source_uses_blob_path_for_duplicate_folder(
             branch="main",
             path="/sdk/resourcemanager/Azure.ResourceManager/docs",
             scope="azure_sdk_for_net_docs",
+            relative_by_repo_path=True,
         ),
     )
     get_kb_targets = AsyncMock(return_value=targets)
@@ -188,6 +199,7 @@ async def test_resolve_kb_source_requires_blob_path_for_duplicate_folder(
             branch="main",
             path="/doc",
             scope="azure_sdk_for_net_docs",
+            relative_by_repo_path=True,
         ),
         KbTarget(
             owner="Azure",
@@ -195,6 +207,7 @@ async def test_resolve_kb_source_requires_blob_path_for_duplicate_folder(
             branch="main",
             path="/sdk/resourcemanager/Azure.ResourceManager/docs",
             scope="azure_sdk_for_net_docs",
+            relative_by_repo_path=True,
         ),
     )
     get_kb_targets = AsyncMock(return_value=targets)
@@ -230,7 +243,10 @@ async def test_resolve_kb_source_returns_ownership_only(monkeypatch) -> None:
         ),
     )
 
-    result = await KnowledgeTools().resolve_kb_source(folder=SRC_TYPESPEC_AZURE_DOCS)
+    result = await KnowledgeTools().resolve_kb_source(
+        folder=SRC_TYPESPEC_AZURE_DOCS,
+        blob_path=f"{SRC_TYPESPEC_AZURE_DOCS}/howtos#arm#resource-operations.md",
+    )
 
     assert result.owner == "Azure"
     assert result.repo == "typespec-azure"

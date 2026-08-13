@@ -42,6 +42,7 @@ class KbTarget:
     branch: str
     path: str  # path inside the repo this folder covers
     scope: str  # human-friendly scope label (folder name)
+    relative_by_repo_path: bool = False
 
 
 _cache: dict[str, tuple[KbTarget, ...]] | None = None
@@ -95,6 +96,9 @@ def _build_targets(config: dict) -> dict[str, tuple[KbTarget, ...]]:
                         branch=branch,
                         path=path,
                         scope=folder,
+                        relative_by_repo_path=bool(
+                            path_entry.get("relativeByRepoPath")
+                        ),
                     )
                 )
     return {folder: tuple(values) for folder, values in targets.items()}
@@ -161,19 +165,27 @@ def select_kb_target(
     prefix = f"{folder}/"
     if not blob_path.startswith(prefix):
         return None
+    if len(targets) == 1:
+        return targets[0]
+
     relative_blob_path = blob_path[len(prefix) :]
-    matches = [
+    path_matches = [
         target
         for target in targets
-        if _blob_path_matches_target(relative_blob_path, target.path)
+        if target.relative_by_repo_path
+        and _blob_path_matches_target(relative_blob_path, target.path)
     ]
-    if not matches:
-        return None
-    return max(matches, key=lambda target: len(target.path))
+    if path_matches:
+        return max(path_matches, key=lambda target: len(target.path))
+
+    relative_targets = [
+        target for target in targets if not target.relative_by_repo_path
+    ]
+    return relative_targets[0] if len(relative_targets) == 1 else None
 
 
 def _blob_path_matches_target(relative_blob_path: str, target_path: str) -> bool:
-    normalized_target = target_path.strip("/").replace("/", "#")
+    normalized_target = target_path.strip("/").removeprefix("./").replace("/", "#")
     if not normalized_target:
         return True
     return (

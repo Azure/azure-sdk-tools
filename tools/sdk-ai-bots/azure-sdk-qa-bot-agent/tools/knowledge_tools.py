@@ -456,8 +456,8 @@ class KnowledgeTools:
         """Resolve a KB folder to its upstream ownership metadata.
 
         Returns the owner/repo/branch/path where the KB content lives, to
-        cite in a KB-gap issue. ``resolved=False`` when the folder is not
-        mapped or points to a non-GitHub source (ADO, SSH, wiki).
+        cite in a KB-gap issue. ``resolved=False`` when the folder is
+        unmapped or an ambiguous path cannot be selected.
         """
         targets: tuple[KbTarget, ...] = ()
         try:

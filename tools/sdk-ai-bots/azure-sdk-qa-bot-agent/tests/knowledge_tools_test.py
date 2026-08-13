@@ -48,7 +48,7 @@ def test_knowledge_chunk_accepts_null_page_type() -> None:
 
 
 @pytest.mark.asyncio
-async def test_list_knowledge_sources_excludes_static_sources() -> None:
+async def test_list_knowledge_sources_includes_static_sources() -> None:
     result = await KnowledgeTools().list_knowledge_sources(
         tenant_id=TenantID.API_SPEC_REVIEW_BOT.value
     )
@@ -56,8 +56,46 @@ async def test_list_knowledge_sources_excludes_static_sources() -> None:
 
     assert SRC_AZURE_REST_API_SPECS_DOCS in source_names
     assert SRC_AZURE_REST_API_SPECS_WIKI in source_names
-    assert SRC_STATIC_ARM_DOCS not in source_names
-    assert all(not name.startswith("static_") for name in source_names)
+    assert SRC_STATIC_ARM_DOCS in source_names
+
+
+@pytest.mark.asyncio
+async def test_resolve_kb_source_allows_registered_static_source(monkeypatch) -> None:
+    get_kb_target = AsyncMock(return_value=None)
+    monkeypatch.setattr(knowledge_tools_module, "get_kb_target", get_kb_target)
+
+    result = await KnowledgeTools().resolve_kb_source(folder=SRC_STATIC_ARM_DOCS)
+
+    assert result.resolved is True
+    assert result.owner is None
+    assert result.repo is None
+    assert result.path == SRC_STATIC_ARM_DOCS
+    assert result.scope == SRC_STATIC_ARM_DOCS
+
+
+@pytest.mark.asyncio
+async def test_resolve_kb_source_rejects_unknown_source(monkeypatch) -> None:
+    get_kb_target = AsyncMock(return_value=None)
+    monkeypatch.setattr(knowledge_tools_module, "get_kb_target", get_kb_target)
+
+    result = await KnowledgeTools().resolve_kb_source(folder="static_unknown")
+
+    assert result.resolved is False
+    assert result.reason == "folder_unmapped_or_non_github"
+
+
+@pytest.mark.asyncio
+async def test_resolve_kb_source_allows_registered_static_qa_source(monkeypatch) -> None:
+    get_kb_target = AsyncMock(return_value=None)
+    monkeypatch.setattr(knowledge_tools_module, "get_kb_target", get_kb_target)
+
+    result = await KnowledgeTools().resolve_kb_source(
+        folder="static_api_spec_view_qa"
+    )
+
+    assert result.resolved is True
+    assert result.path == "static_api_spec_view_qa"
+    assert result.scope == "static_api_spec_view_qa"
 
 
 @pytest.mark.asyncio

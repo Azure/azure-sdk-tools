@@ -34,7 +34,6 @@ logger = logging.getLogger(__name__)
 # Expanded content beyond this limit is truncated to control context size.
 _MAX_CONTENT_CHARS_PER_RESULT = 3000
 
-
 class KbSourceView(BaseModel):
     folder: str
     resolved: bool
@@ -416,7 +415,6 @@ class KnowledgeTools:
             sources = [
                 KnowledgeSourceView(name=src.name, description=src.description)
                 for src in KNOWLEDGE_SOURCE_REGISTRY.values()
-                if not _is_static_source(src.name)
             ]
             return KnowledgeSourceCatalog(tenant_id=None, sources=sources)
 
@@ -430,7 +428,6 @@ class KnowledgeTools:
             [
                 KnowledgeSourceView(name=src.name, description=src.description)
                 for src in config.sources
-                if not _is_static_source(src.name)
             ]
             if config
             else []
@@ -470,15 +467,19 @@ class KnowledgeTools:
                 scope=target.scope,
             )
 
+        if folder in KNOWLEDGE_SOURCE_REGISTRY:
+            return KbSourceView(
+                folder=folder,
+                resolved=True,
+                path=folder,
+                scope=folder,
+            )
+
         return KbSourceView(
             folder=folder,
             resolved=False,
             reason="folder_unmapped_or_non_github",
         )
-
-
-def _is_static_source(source_name: str) -> bool:
-    return source_name.startswith("static_")
 
 
 def _resolve_source_filters(

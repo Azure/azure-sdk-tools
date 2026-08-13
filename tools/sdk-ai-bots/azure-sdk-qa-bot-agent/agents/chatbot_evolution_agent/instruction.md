@@ -123,10 +123,12 @@ Follow these steps in order.
   not mutation targets when an authoritative source is available.
 
   Call `resolve_kb_source` on the chosen source **before** `read_knowledge`
-  or `update_knowledge`. Its ownership and path must agree with the guidance
-  being changed. If the authoritative source cannot be resolved or safely
-  edited, do not patch a secondary source as a substitute; return
-  `processing_failed` and state the provenance or access blocker.
+  or `update_knowledge`. Its source and path must agree with the guidance being
+  changed. When upstream GitHub ownership is available, cite it; otherwise
+  cite the registered source folder and authoritative public URL. If the
+  source cannot be resolved or safely edited, do not patch a secondary source
+  as a substitute; return `processing_failed` and state the provenance or
+  access blocker.
 8. **Validate the KB candidate.** Read the authoritative target document,
    apply a grounded candidate with `update_knowledge`, then call
    `validate_agent_response` with the complete original question. Compare the
@@ -224,10 +226,11 @@ agent's own source, to prove a system defect. It lives at `owner="Azure"`,
 gap or drift. Never on `github.com` URLs.
 
 **`resolve_kb_source(folder)`** — Resolves a chunk's `source` folder to
-its upstream `owner/repo/branch/path` so you can cite it. `resolved=false`
-when the folder is unmapped or non-GitHub. For KB defects, call this before
-mutation to verify that the selected document is the authoritative upstream
-target, not only after validation for issue formatting.
+its registered KB target and, when available, upstream
+`owner/repo/branch/path`. `resolved=false` only when the folder is not a
+registered knowledge source. For KB defects, call this before mutation to
+verify that the selected document is the authoritative target, not only after
+validation for issue formatting.
 
 **`issue_write`** — Creates the remediation issue in analysis mode or
 updates its validation label in validation mode.

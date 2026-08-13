@@ -1,35 +1,41 @@
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
-public class ReleaseBackendResult
+public class PackageMarkReleasedResponse : CommandResponse
 {
-    [JsonPropertyName("succeeded")]
-    public bool Succeeded { get; set; }
+    [JsonIgnore]
+    public string PackageName { get; set; } = string.Empty;
 
-    [JsonPropertyName("message")]
-    public required string Message { get; set; }
-}
-
-public class PackageMarkReleasedResponse : PackageResponseBase
-{
-    [JsonPropertyName("api_hash")]
-    public required string ApiHash { get; set; }
+    [JsonIgnore]
+    public string Version { get; set; } = string.Empty;
 
     [JsonPropertyName("api_review_hub")]
-    public required ReleaseBackendResult ApiReviewHub { get; set; }
+    public JsonElement? ApiReviewHub { get; set; }
 
     [JsonPropertyName("api_view")]
-    public required ReleaseBackendResult ApiView { get; set; }
+    public JsonElement? ApiView { get; set; }
+
+    [JsonIgnore]
+    public bool ApiReviewHubSucceeded { get; set; }
+
+    [JsonIgnore]
+    public string ApiReviewHubMessage { get; set; } = string.Empty;
+
+    [JsonIgnore]
+    public bool ApiViewSucceeded { get; set; }
+
+    [JsonIgnore]
+    public string ApiViewMessage { get; set; } = string.Empty;
 
     protected override string Format()
     {
         StringBuilder output = new();
         output.AppendLine($"Package: {PackageName} {Version}");
-        output.AppendLine($"API hash: {ApiHash}");
-        output.AppendLine($"API Review Hub: {(ApiReviewHub.Succeeded ? "SUCCEEDED" : "FAILED")} - {ApiReviewHub.Message}");
-        output.AppendLine($"APIView: {(ApiView.Succeeded ? "SUCCEEDED" : "FAILED")} - {ApiView.Message}");
+        output.AppendLine($"API Review Hub: {(ApiReviewHubSucceeded ? "SUCCEEDED" : "FAILED")} - {ApiReviewHubMessage}");
+        output.AppendLine($"APIView: {(ApiViewSucceeded ? "SUCCEEDED" : "FAILED")} - {ApiViewMessage}");
         return output.ToString();
     }
 

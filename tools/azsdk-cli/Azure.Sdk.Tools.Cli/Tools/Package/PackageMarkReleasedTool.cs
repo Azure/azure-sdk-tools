@@ -1,4 +1,5 @@
 using System.CommandLine;
+using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
@@ -14,6 +15,10 @@ public class PackageMarkReleasedTool(
     ILogger<PackageMarkReleasedTool> logger) : MCPTool
 {
     private const string CommandName = "mark-released";
+    private static readonly JsonSerializerOptions responseSerializerOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
 
@@ -24,6 +29,14 @@ public class PackageMarkReleasedTool(
     {
         Description = "The API Review Hub hash for the released API artifact."
     };
+    private readonly Option<string> repoOwnerOption = new("--repo-owner")
+    {
+        Description = "The GitHub repository owner to query in API Review Hub. Optional; when omitted, the service default is used."
+    };
+    private readonly Option<bool> dryRunOption = new("--dry-run")
+    {
+        Description = "Preview the release operation without marking the package as released."
+    };
 
     protected override Command GetCommand() => new(
         CommandName,
@@ -32,7 +45,9 @@ public class PackageMarkReleasedTool(
         languageOption,
         packageNameOption,
         packageVersionOption,
-        apiHashOption
+        apiHashOption,
+        repoOwnerOption,
+        dryRunOption
     };
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct) =>
@@ -41,6 +56,8 @@ public class PackageMarkReleasedTool(
             parseResult.GetValue(packageNameOption)!,
             parseResult.GetValue(packageVersionOption)!,
             parseResult.GetValue(apiHashOption) ?? string.Empty,
+            parseResult.GetValue(repoOwnerOption) ?? string.Empty,
+            parseResult.GetValue(dryRunOption),
             ct);
 
     public async Task<PackageMarkReleasedResponse> MarkReleasedAsync(
@@ -48,58 +65,80 @@ public class PackageMarkReleasedTool(
         string packageName,
         string packageVersion,
         string apiHash,
+        string repoOwner,
+        bool dryRun = false,
         CancellationToken ct = default)
     {
         try
         {
-            ReleaseBackendResult reviewHubResult;
+            JsonElement? reviewHubResponse = null;
+            bool reviewHubSucceeded = false;
+            string reviewHubMessage;
             try
             {
-                await apiReviewHubService.MarkPackageReleasedAsync(language, packageName, packageVersion, apiHash, ct);
-                reviewHubResult = new ReleaseBackendResult { Succeeded = true, Message = "Package marked released." };
+                var result = await apiReviewHubService.MarkPackageReleasedAsync(language, packageName, packageVersion, apiHash, repoOwner, ct, dryRun);
+                reviewHubResponse = JsonSerializer.SerializeToElement(result, responseSerializerOptions);
+                reviewHubSucceeded = true;
+                string reviewHubAction = dryRun ? "Dry run resolved" : "Release request resolved";
+                reviewHubMessage = $"{reviewHubAction} package version {result.PackageVersionId}; approval is {result.ApprovalStatus}, release state is {(result.IsReleased ? "released" : "not released")}.";
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to mark {packageName} {packageVersion} released in API Review Hub", packageName, packageVersion);
-                reviewHubResult = new ReleaseBackendResult { Succeeded = false, Message = ex.Message };
+                reviewHubResponse = GetRawErrorResponse(ex);
+                reviewHubMessage = ex.Message;
             }
 
-            ReleaseBackendResult apiViewResult;
+            JsonElement? apiViewResponse = null;
+            bool apiViewSucceeded = false;
+            bool apiViewFailureIsFatal = false;
+            string apiViewMessage;
             try
             {
-                var result = await apiViewService.MarkPackageReleasedAsync(packageName, language, packageVersion, ct);
+                var result = await apiViewService.MarkPackageReleasedAsync(packageName, language, packageVersion, ct, dryRun);
+                apiViewResponse = JsonSerializer.SerializeToElement(result, responseSerializerOptions);
+                apiViewSucceeded = true;
                 string releaseState = result.IsReleased
                     ? $"already released{(result.ReleasedOn.HasValue ? $" on {result.ReleasedOn.Value:O}" : string.Empty)}"
                     : "not released";
-                apiViewResult = new ReleaseBackendResult
-                {
-                    Succeeded = true,
-                    Message = $"Dry run resolved revision {result.RevisionId} (review {result.ReviewId}); revision is {releaseState}."
-                };
+                string apiViewAction = dryRun ? "Dry run resolved" : "Release request resolved";
+                apiViewMessage = $"{apiViewAction} revision {result.RevisionId} (review {result.ReviewId}); revision is {releaseState}.";
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to mark {packageName} {packageVersion} shipped in APIView", packageName, packageVersion);
-                apiViewResult = new ReleaseBackendResult { Succeeded = false, Message = ex.Message };
+                apiViewFailureIsFatal = ex is not HttpRequestException { StatusCode: { } statusCode }
+                    || (int)statusCode >= 500;
+                if (!apiViewFailureIsFatal)
+                {
+                    logger.LogWarning("APIView returned a non-server error while marking {packageName} {packageVersion} shipped", packageName, packageVersion);
+                }
+                else
+                {
+                    logger.LogError(ex, "Failed to mark {packageName} {packageVersion} shipped in APIView", packageName, packageVersion);
+                }
+                apiViewMessage = ex.Message;
             }
 
             List<string> errors = [];
-            if (!reviewHubResult.Succeeded)
+            if (!reviewHubSucceeded)
             {
-                errors.Add($"API Review Hub: {reviewHubResult.Message}");
+                errors.Add($"API Review Hub: {reviewHubMessage}");
             }
-            if (!apiViewResult.Succeeded)
+            if (!apiViewSucceeded && apiViewFailureIsFatal)
             {
-                errors.Add($"APIView: {apiViewResult.Message}");
+                errors.Add($"APIView: {apiViewMessage}");
             }
 
             return new PackageMarkReleasedResponse
             {
                 PackageName = packageName,
                 Version = packageVersion,
-                ApiHash = apiHash,
-                ApiReviewHub = reviewHubResult,
-                ApiView = apiViewResult,
+                ApiReviewHub = reviewHubResponse,
+                ApiReviewHubSucceeded = reviewHubSucceeded,
+                ApiReviewHubMessage = reviewHubMessage,
+                ApiView = apiViewResponse,
+                ApiViewSucceeded = apiViewSucceeded,
+                ApiViewMessage = apiViewMessage,
                 ResponseErrors = errors
             };
         }
@@ -110,11 +149,28 @@ public class PackageMarkReleasedTool(
             {
                 PackageName = packageName,
                 Version = packageVersion,
-                ApiHash = apiHash,
-                ApiReviewHub = new ReleaseBackendResult { Succeeded = false, Message = "Not completed." },
-                ApiView = new ReleaseBackendResult { Succeeded = false, Message = "Not completed." },
+                ApiReviewHubMessage = "Not completed.",
+                ApiViewMessage = "Not completed.",
                 ResponseErrors = [$"Unexpected error: {ex.Message}"]
             };
+        }
+    }
+
+    private static JsonElement? GetRawErrorResponse(Exception exception)
+    {
+        if (exception is not ApiReviewHubRequestException { Content: { } content }
+            || string.IsNullOrWhiteSpace(content))
+        {
+            return null;
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<JsonElement>(content);
+        }
+        catch (JsonException)
+        {
+            return null;
         }
     }
 

@@ -60,13 +60,21 @@ public class ApiReviewHubServiceTests
                 authorizationParameter = request.Headers.Authorization?.Parameter;
                 requestBody = request.Content?.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult();
             })
-            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.NoContent));
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    """
+                    {"packageId":"11111111-1111-1111-1111-111111111111","packageVersionId":"22222222-2222-2222-2222-222222222222","packageName":"azure-test","language":"python","version":"1.0.0","releasedApiHash":"api-hash","approvalStatus":"Approved","isReleased":false,"releasedOn":null}
+                    """,
+                    Encoding.UTF8,
+                    "application/json")
+            });
 
         httpClientFactoryMock
             .Setup(x => x.CreateClient(It.IsAny<string>()))
             .Returns(new HttpClient(mockHandler.Object));
 
-        await service.MarkPackageReleasedAsync("python", "azure-test", "1.0.0", "api-hash", CancellationToken.None);
+        var result = await service.MarkPackageReleasedAsync("python", "azure-test", "1.0.0", "api-hash", "tjprescott", CancellationToken.None);
 
         Assert.That(method, Is.EqualTo(HttpMethod.Post));
         Assert.That(requestUri?.ToString(), Is.EqualTo("https://api-review-hub.azurewebsites.net/api/releases/mark-released"));
@@ -76,6 +84,12 @@ public class ApiReviewHubServiceTests
         Assert.That(requestBody, Does.Contain("\"packageName\":\"azure-test\""));
         Assert.That(requestBody, Does.Contain("\"version\":\"1.0.0\""));
         Assert.That(requestBody, Does.Contain("\"apiHash\":\"api-hash\""));
+        Assert.That(requestBody, Does.Contain("\"repoOwner\":\"tjprescott\""));
+        Assert.That(requestBody, Does.Contain("\"dryRun\":true"));
+        Assert.That(result.PackageName, Is.EqualTo("azure-test"));
+        Assert.That(result.PackageVersionId, Is.EqualTo(Guid.Parse("22222222-2222-2222-2222-222222222222")));
+        Assert.That(result.ApprovalStatus, Is.EqualTo("Approved"));
+        Assert.That(result.IsReleased, Is.False);
     }
 
     [Test]

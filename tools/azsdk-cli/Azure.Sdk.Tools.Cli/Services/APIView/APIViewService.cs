@@ -32,7 +32,8 @@ public interface IAPIViewService
         string packageName,
         string language,
         string version,
-        CancellationToken ct = default);
+        CancellationToken ct = default,
+        bool dryRun = true);
 
     /// <summary>
     /// Submits API surface text for automated Copilot review.
@@ -176,9 +177,10 @@ public class APIViewService : IAPIViewService
         string packageName,
         string language,
         string version,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        bool dryRun = true)
     {
-        string endpoint = $"/api/reviews/mark-released?packageName={Uri.EscapeDataString(packageName)}&language={Uri.EscapeDataString(language)}&version={Uri.EscapeDataString(version)}&dryRun=true";
+        string endpoint = $"/api/reviews/mark-released?packageName={Uri.EscapeDataString(packageName)}&language={Uri.EscapeDataString(language)}&version={Uri.EscapeDataString(version)}&dryRun={dryRun.ToString().ToLowerInvariant()}";
         (string? content, _) = await _httpService.PostAsync(endpoint, ct);
         return JsonSerializer.Deserialize<APIViewMarkReleasedResult>(content ?? string.Empty)
             ?? throw new InvalidDataException("APIView returned an empty mark-released response.");

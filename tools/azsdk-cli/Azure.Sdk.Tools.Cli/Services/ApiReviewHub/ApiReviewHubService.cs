@@ -24,12 +24,14 @@ public interface IApiReviewHubService
         string repoOwner,
         CancellationToken ct);
 
-    Task MarkPackageReleasedAsync(
+    Task<ApiReviewHubMarkReleasedResult> MarkPackageReleasedAsync(
         string language,
         string packageName,
         string packageVersion,
         string apiHash,
-        CancellationToken ct);
+        string repositoryOwner,
+        CancellationToken ct,
+        bool dryRun = true);
 }
 
 public class ApiReviewHubService(
@@ -149,12 +151,14 @@ public class ApiReviewHubService(
         return result;
     }
 
-    public async Task MarkPackageReleasedAsync(
+    public async Task<ApiReviewHubMarkReleasedResult> MarkPackageReleasedAsync(
         string language,
         string packageName,
         string packageVersion,
         string apiHash,
-        CancellationToken ct)
+        string repositoryOwner,
+        CancellationToken ct,
+        bool dryRun = true)
     {
         var httpClient = httpClientFactory.CreateClient(nameof(ApiReviewHubService));
         var authorization = await GetAuthorizationAsync(DefaultEndpoint, ct);
@@ -164,11 +168,13 @@ public class ApiReviewHubService(
             PackageName = packageName,
             Version = packageVersion,
             ApiHash = apiHash,
-            ReleasedOn = _timeProvider.GetUtcNow()
+            RepoOwner = repositoryOwner,
+            ReleasedOn = _timeProvider.GetUtcNow(),
+            DryRun = dryRun
         };
 
         logger.LogInformation("Marking {packageName} {packageVersion} as released in API Review Hub", packageName, packageVersion);
-        await PostJsonAsync(httpClient, $"{DefaultEndpoint}/api/releases/mark-released", request, authorization, ct);
+        return await PostJsonAsync<ApiReviewHubMarkReleasedResult>(httpClient, $"{DefaultEndpoint}/api/releases/mark-released", request, authorization, ct);
     }
 
     private void LogOperationProgress(OperationStatus operation, DateTimeOffset startedAt, ref bool loggedPipelineUrl)

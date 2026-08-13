@@ -10,6 +10,15 @@ public class APIViewMarkReleasedResult
     [JsonPropertyName("revisionId")]
     public required string RevisionId { get; set; }
 
+    [JsonPropertyName("packageName")]
+    public required string PackageName { get; set; }
+
+    [JsonPropertyName("language")]
+    public required string Language { get; set; }
+
+    [JsonPropertyName("version")]
+    public required string Version { get; set; }
+
     [JsonPropertyName("isReleased")]
     public bool IsReleased { get; set; }
 

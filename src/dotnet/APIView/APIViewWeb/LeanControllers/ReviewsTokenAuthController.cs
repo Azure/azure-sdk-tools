@@ -134,6 +134,9 @@ public class ReviewsTokenAuthController : ControllerBase
             {
                 ReviewId = result.ReviewId,
                 RevisionId = result.RevisionId,
+                PackageName = revision.PackageName,
+                Language = revision.Language,
+                Version = revision.PackageVersion,
                 IsReleased = revision.IsReleased,
                 ReleasedOn = revision.IsReleased ? revision.ReleasedOn : null
             };

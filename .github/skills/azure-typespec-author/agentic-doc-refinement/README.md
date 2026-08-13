@@ -1,7 +1,9 @@
 # Agentic doc-refinement for `azure-typespec-author`
 
-Design + implementation of an agentic loop that closes the gap between the skill's
-reference documentation, the Vally code-quality evals, and the resulting gap analysis.
+Design + implementation of a single-pass agentic refinement workflow that closes the
+gap between the skill's reference documentation, the Vally code-quality evals, and the
+resulting gap analysis. Rerun the workflow after committing accepted documentation
+changes to iterate toward better eval results.
 
 ## Goal
 
@@ -40,8 +42,10 @@ local machine.
 - **Script**: `doc-refinement.mjs` (this folder). Run with `npm ci && npm run refine`.
 - **Agent steps (1, 2, 4, 5)** use the **Copilot SDK** (`@github/copilot-sdk`):
   `new CopilotClient()` -> `createSession({ model, workingDirectory, skillDirectories,
-  onPermissionRequest: approveAll, systemMessage })` -> `session.sendAndWait({ prompt },
-  timeout)`. `approveAll` auto-approves file/shell tool permissions for autonomous runs.
+  onPermissionRequest, systemMessage })` -> `session.sendAndWait({ prompt }, timeout)`.
+  Steps 1-2 share one session, as do Steps 4-5, so related steps retain context. The
+  permission handler denies shell access and restricts local reads/writes to the
+  repository and each phase's approved output directories.
 - **Step 3** queues
   [`azure-typespec-author-benchmark`](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8178&_a=summary),
   waits for completion, downloads `eval-results-code-quality-<buildId>`, and extracts it
@@ -49,7 +53,8 @@ local machine.
 > **Steps 1 & 2 never commit.** The agent leaves the reference-doc and skill edits
 > **unstaged in the working tree** so you can review them and decide whether to commit.
 > The orchestrator's system message and the step 1/2 prompts forbid `git add`/`commit`/
-> `push`, so an autonomous run cannot commit them on your behalf.
+> `push`, and shell access is denied by the permission handler, so an autonomous run
+> cannot commit them on your behalf.
 >
 > **Pipeline boundary:** ADO can evaluate only committed and pushed content. If Steps
 > 1-2 create local changes, the full run stops before queueing the pipeline. Run once

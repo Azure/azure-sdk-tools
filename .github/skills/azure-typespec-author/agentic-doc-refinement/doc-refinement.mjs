@@ -31,7 +31,7 @@
 //   node doc-refinement.mjs --model gpt-5.5 --idle-timeout 1800
 //   node doc-refinement.mjs --help
 
-import { CopilotClient, approveAll } from "@github/copilot-sdk";
+import { CopilotClient } from "@github/copilot-sdk";
 import AdmZip from "adm-zip";
 import { spawn } from "node:child_process";
 import { readFile, mkdir, readdir, stat } from "node:fs/promises";
@@ -227,7 +227,7 @@ function parseArgs(argv) {
 
 // -------------------------- helpers --------------------------
 function log(msg) {
-  process.stderr.write(`\n\u001b[36m==> ${msg}\u001b[0m\n`);
+  process.stderr.write(`\n\x1b[36m==> ${msg}\x1b[0m\n`);
 }
 
 function runId() {
@@ -266,12 +266,20 @@ function runCommand(command, args) {
 }
 
 async function upstreamRemote() {
-  try {
-    await runCommand("git", ["remote", "get-url", "remote"]);
-    return "remote";
-  } catch {
-    return UPSTREAM_REPOSITORY;
+  for (const name of ["upstream", "origin"]) {
+    try {
+      const url = await runCommand("git", ["remote", "get-url", name]);
+      if (
+        url.replace(/\.git$/, "").toLowerCase() ===
+        UPSTREAM_REPOSITORY.replace(/\.git$/, "").toLowerCase()
+      ) {
+        return name;
+      }
+    } catch {
+      // Try the next conventional remote name.
+    }
   }
+  return UPSTREAM_REPOSITORY;
 }
 
 async function remoteRefSha(remote, ref) {
@@ -472,35 +480,90 @@ async function readPrompt(name) {
 }
 
 /**
- * Run a single autonomous agent turn via the Copilot SDK.
- * @param {CopilotClient} client
- * @param {string} prompt
- * @param {{ model: string, idleTimeoutMs: number }} cfg
+ * Return whether a requested path is contained by one of the allowed roots.
+ * @param {string} requestedPath
+ * @param {string[]} allowedRoots
  */
-async function runAgent(client, prompt, cfg) {
-  const session = await client.createSession({
+function isAllowedPath(requestedPath, allowedRoots) {
+  const resolvedPath = path.resolve(REPO_ROOT, requestedPath);
+  return allowedRoots.some((root) => {
+    const relative = path.relative(root, resolvedPath);
+    return (
+      relative === "" ||
+      (!relative.startsWith("..") && !path.isAbsolute(relative))
+    );
+  });
+}
+
+/**
+ * Create an autonomous agent session with least-privilege file access.
+ * @param {CopilotClient} client
+ * @param {{ model: string, idleTimeoutMs: number }} cfg
+ * @param {{ read: string[], write: string[] }} allowedPaths
+ */
+async function createAgentSession(client, cfg, allowedPaths) {
+  return client.createSession({
     model: cfg.model,
     workingDirectory: REPO_ROOT,
     skillDirectories: [SKILLS_ROOT],
-    // Autonomous run: auto-approve file/shell/tool permission requests.
-    onPermissionRequest: approveAll,
+    onPermissionRequest: (request) => {
+      if (request.kind === "write") {
+        const fileName = "fileName" in request ? request.fileName : null;
+        if (
+          typeof fileName === "string" &&
+          isAllowedPath(fileName, allowedPaths.write)
+        ) {
+          return { kind: "approve-once" };
+        }
+        return {
+          kind: "reject",
+          feedback:
+            "Writes are restricted to the workflow's approved output directories.",
+        };
+      }
+      if (request.kind === "read") {
+        const requestedPath = "path" in request ? request.path : null;
+        if (
+          typeof requestedPath === "string" &&
+          isAllowedPath(requestedPath, allowedPaths.read)
+        ) {
+          return { kind: "approve-once" };
+        }
+        return {
+          kind: "reject",
+          feedback: "Local reads are restricted to the repository and workflow output.",
+        };
+      }
+      if (request.kind === "mcp" || request.kind === "url") {
+        return { kind: "approve-once" };
+      }
+      return {
+        kind: "reject",
+        feedback:
+          "Shell and other unscoped tools are disabled for this autonomous workflow.",
+      };
+    },
     systemMessage: {
       mode: "append",
       content:
         "You are running fully autonomously in a script; never ask for confirmation " +
         "or further input. Make the edits directly, then stop. " +
-        "Do NOT run any git commands that change history or the index/remote " +
-        "(no `git add`, `git commit`, `git push`, `git stash`, `git reset`, etc.). " +
+        "Shell commands are disabled. " +
         "Leave every change unstaged in the working tree so the user can review and " +
         "decide whether to commit.",
     },
   });
-  try {
-    const result = await session.sendAndWait({ prompt }, cfg.idleTimeoutMs);
-    return result?.data?.content ?? "";
-  } finally {
-    await session.disconnect();
-  }
+}
+
+/**
+ * Run a single autonomous agent turn in an existing session.
+ * @param {import("@github/copilot-sdk").CopilotSession} session
+ * @param {string} prompt
+ * @param {{ idleTimeoutMs: number }} cfg
+ */
+async function runAgent(session, prompt, cfg) {
+  const result = await session.sendAndWait({ prompt }, cfg.idleTimeoutMs);
+  return result?.data?.content ?? "";
 }
 
 /** Recursively collect every results.jsonl produced by Vally under a dir. */
@@ -591,11 +654,27 @@ async function main() {
     }
 
     // ---- Steps 1-2: update reference documents and skill markdown ----
-    log("Step 1 — update reference documents");
-    await runAgent(client, await readPrompt("01-update-reference-docs.md"), opts);
+    const updateSession = await createAgentSession(client, opts, {
+      read: [REPO_ROOT],
+      write: [SKILL_DIR],
+    });
+    try {
+      log("Step 1 — update reference documents");
+      await runAgent(
+        updateSession,
+        await readPrompt("01-update-reference-docs.md"),
+        opts,
+      );
 
-    log("Step 2 — update skill markdown if needed");
-    await runAgent(client, await readPrompt("02-update-skill.md"), opts);
+      log("Step 2 — update skill markdown if needed");
+      await runAgent(
+        updateSession,
+        await readPrompt("02-update-skill.md"),
+        opts,
+      );
+    } finally {
+      await updateSession.disconnect();
+    }
 
     if (opts.skipEval) {
       log("Skipping steps 3-5 (--skip-eval)");
@@ -623,29 +702,37 @@ async function main() {
       resultFiles.map((f) => `- ${f}`).join("\n") +
       `\n\nADO build: ${pipeline.buildUrl} (${pipeline.result}).` +
       `\n\nWrite your structured analysis to ${analysisPath}.`;
-    await runAgent(
-      client,
-      (await readPrompt("04-analyze-results.md")) + analysisContext,
-      opts,
-    );
-    await stat(analysisPath).catch(() => {
-      throw new Error(`Expected analysis was not written: ${analysisPath}`);
+    const analysisSession = await createAgentSession(client, opts, {
+      read: [REPO_ROOT, currentResultDir],
+      write: [currentResultDir],
     });
+    try {
+      await runAgent(
+        analysisSession,
+        (await readPrompt("04-analyze-results.md")) + analysisContext,
+        opts,
+      );
+      await stat(analysisPath).catch(() => {
+        throw new Error(`Expected analysis was not written: ${analysisPath}`);
+      });
 
-    // ---- Step 5: generate the gap report ----
-    log("Step 5 — generate documentation-gap report");
-    const reportContext =
-      `\n\nUse ${analysisPath} as the step-4 analysis input. ` +
-      `Write the final report to ${reportPath}.`;
-    await runAgent(
-      client,
-      (await readPrompt("05-generate-report.md")) + reportContext,
-      opts,
-    );
+      // ---- Step 5: generate the gap report ----
+      log("Step 5 — generate documentation-gap report");
+      const reportContext =
+        `\n\nUse ${analysisPath} as the step-4 analysis input. ` +
+        `Write the final report to ${reportPath}.`;
+      await runAgent(
+        analysisSession,
+        (await readPrompt("05-generate-report.md")) + reportContext,
+        opts,
+      );
 
-    await stat(reportPath).catch(() => {
-      throw new Error(`Expected report was not written: ${reportPath}`);
-    });
+      await stat(reportPath).catch(() => {
+        throw new Error(`Expected report was not written: ${reportPath}`);
+      });
+    } finally {
+      await analysisSession.disconnect();
+    }
     log(`Done. Report: ${reportPath}`);
   } finally {
     const errs = await client.stop().catch(() => []);
@@ -656,6 +743,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  process.stderr.write(`\u001b[31mFAILED: ${err?.stack || err}\u001b[0m\n`);
+  process.stderr.write(`\x1b[31mFAILED: ${err?.stack || err}\x1b[0m\n`);
   process.exit(1);
 });

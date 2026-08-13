@@ -444,7 +444,7 @@ class KnowledgeTools:
             "the join key into the upstream knowledge-config.json.",
         ],
     ) -> KbSourceView:
-        """Resolve a KB folder to its upstream source location.
+        """Resolve a KB folder to its upstream ownership metadata.
 
         Returns the owner/repo/branch/path where the KB content lives, to
         cite in a KB-gap issue. ``resolved=False`` when the folder is not

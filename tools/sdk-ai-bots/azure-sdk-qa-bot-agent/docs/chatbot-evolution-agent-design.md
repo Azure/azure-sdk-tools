@@ -79,8 +79,8 @@ The agent classifies each case into exactly one root cause and acts accordingly:
 | --- | --- | --- | --- |
 | `missing_content` | No KB chunk covers the user's intent. | KB issue | `Azure/azure-sdk-pr` (cite KB source) |
 | `outdated_content` | KB guidance contradicts or has drifted from the current source of truth. | KB issue | `Azure/azure-sdk-pr` (cite KB source) |
-| `insufficient_content` | Related KB guidance exists but omits the rule, applicability, decision criteria, or cross-document connection needed for reasonable use. | KB issue | `Azure/azure-sdk-pr` (cite KB source) |
-| `retrieval_mismatch` | Relevant chunks exist but were not retrieved. | System issue | `Azure/azure-sdk-pr` |
+| `insufficient_content` | Related KB guidance exists but omits the rule, applicability, decision criteria, or cross-document connection needed for reasonable use. This includes facts that exist elsewhere but are not coherently connected to the owning workflow. | KB issue | `Azure/azure-sdk-pr` (cite KB source) |
+| `retrieval_mismatch` | A complete passage or explicit cross-reference chain exists but was not retrieved. Disconnected facts across documents are not sufficient. | System issue | `Azure/azure-sdk-pr` |
 | `reasoning_gap` | Retrieved chunks explicitly state the correct rule and its applicability, but the bot reasoned poorly or ignored them. | System issue | `Azure/azure-sdk-pr` |
 | `out_of_scope` | The intent is outside the tenant's scope. | System issue | `Azure/azure-sdk-pr` |
 
@@ -133,17 +133,18 @@ A JSON payload with `mode`, `tenant_id`, `conversation_id`,
 10. **Handle chatbot self-issues.** Record the diagnosis and suggested fix,
    then call `issue_write` without entering the candidate-validation loop.
 11. **Validate a closed issue.** In validation mode, read `issue_url`,
-    replay the original bad case through `ask_chat_agent`, comment the
-    evidence, replace the pending validation label, and return the result.
+  refetch the persisted conversation using its input coordinates, replay
+  the original bad case through `ask_chat_agent`, comment the evidence,
+  replace the pending validation label, and return the result.
 12. **Return** the fixed-schema result.
 
 ## Classification
 
 - `missing_content` — no KB chunk covers the intent (KB issue, cite source).
 - `outdated_content` — KB contradicts the source URL (KB issue, cite source).
-- `insufficient_content` — related KB content exists but is buried, fragmented, ambiguous, or not reasonably usable without missing context, an explicit workflow, or a cross-document connection (KB issue, cite source).
-- `retrieval_mismatch` — complete, explicit, reasonably discoverable guidance exists but wasn't retrieved.
-- `reasoning_gap` — chunks were retrieved but the bot reasoned poorly.
+- `insufficient_content` — related KB content exists but is buried, fragmented, ambiguous, or not reasonably usable without missing context, an explicit workflow, or a cross-document connection. If making the owning document self-contained or adding a necessary cross-reference would prevent the failure, this classification applies even when another document contains the missing fact (KB issue, cite source).
+- `retrieval_mismatch` — a complete, explicit, reasonably discoverable passage or cross-reference chain exists but wasn't retrieved. The diagnosis must cite that connected guidance; disconnected facts across documents instead indicate `insufficient_content`.
+- `reasoning_gap` — the retrieved document already states the complete rule, applicability, and necessary connections coherently, but the bot reasoned poorly. No documentation change or cross-reference should be needed.
 - `out_of_scope` — the intent is outside the tenant's scope.
 
 ## Output
@@ -297,7 +298,6 @@ In the feedback loop, the Evolution Agent judges each `ongoing` thread and decid
 
 The existing `conversation-eval` pipeline remains an independent reporting workflow and continues to use `prompts/conversation_evaluation.md` and `ConversationService.evaluate_conversation`. Its result does not drive the feedback lifecycle.
 
-
 ### 2.5 KB validation loop
 
 Only KB classifications enter the automated validation loop. A knowledge-gap issue cannot be validated by rerunning the current production bot because the missing content is still absent. In the dev environment, the agent therefore writes candidate markdown into the existing tenant-configured knowledge folder, refreshes the existing dev index, and calls the deployed dev Chat Agent.
@@ -314,24 +314,26 @@ After all agent sessions finish, fail, or time out, the feedback pipeline trigge
 
 The Evolution Agent may prepare the issue content during analysis, but it must complete the KB validation loop before creating the issue. Only after `ask_chat_agent` shows that the original bad case passes may the Agent call `issue_write` in **`Azure/azure-sdk-pr`** through the existing GitHub MCP tool ([`tools/github_mcp_tools.py`](../tools/github_mcp_tools.py)).
 
-Every Agent-created issue includes the sanitized original bad case, expected behavior, and the `fix-validation:pending` label. The backend also stores the issue URL and `feedback.status=pending_validation` in the QA record so the daily job can find and validate it after closure. For KB issues (`missing_content` / `outdated_content` / `insufficient_content`), the Agent calls `resolve_kb_source` and cites the upstream source in the issue:
+Every Agent-created issue includes concise expected behavior, detailed fixed-document provenance, validation evidence, and the `fix-validation:pending` label. It does not duplicate the complete conversation or validated answer. The backend stores the issue URL, conversation coordinates, and `feedback.status=pending_validation` in the QA record so the daily job can find and validate it after closure. For KB issues (`missing_content` / `outdated_content` / `insufficient_content`), the Agent calls `resolve_kb_source` and cites the exact KB document and upstream source in the issue:
 
 > **Title:** [Doc] No guidance on the TypeSpec `@added` versioning decorator
 >
 > **Labels:** `feedback-agent`, `classification:missing_content`, `fix-validation:pending`
 >
-> **KB source:** `Azure/azure-rest-api-specs-pr` — `documentation/typespec/versioning.md`
+> **Fixed document:** `typespec_docs/documentation/typespec/versioning.md`
+>
+> **Upstream:** `Azure/azure-rest-api-specs-pr @ main: documentation/typespec/versioning.md`
 >
 > **Gap:** There is no documentation covering the `@added` decorator; the bot answered with a generic versioning explanation that did not address the question.
 >
-> **Suggested change:** Add a section to `versioning.md` documenting `@added`/`@removed`, with an example. Source: https://typespec.io/docs/libraries/versioning/reference/decorators
+> **Suggested change:** Add a section to `versioning.md` documenting `@added`/`@removed`, with an example. Source: [TypeSpec versioning decorators](https://typespec.io/docs/libraries/versioning/reference/decorators)
 >
 > **Validation:** The deployed dev Chat Agent passed the original bad case. Trace ID: `abc123def456`.
 
-When the KB source is unmapped or non-GitHub, `resolve_kb_source` returns `resolved=false` and the agent records the raw folder name. Chatbot self-issues include the diagnosis and suggested fix but no validation evidence.
+When a registered KB source has no GitHub upstream, `resolve_kb_source` returns its source folder without owner/repository coordinates. Unknown source folders return `resolved=false`. Chatbot self-issues include the diagnosis and suggested fix but no validation evidence.
 
 ### 2.7 Closed-issue validation
 
-The daily feedback job reads `pending_validation` QA records and checks their stored issues for closure; labels do not gate validation eligibility. For a KB issue, it first waits for the knowledge-sync pipeline so the deployed dev Chat Agent uses the authoritative fixed content rather than the temporary candidate. The Evolution Agent then calls `ask_chat_agent` with the sanitized original bad case stored in the issue.
+The daily feedback job reads `pending_validation` QA records and checks their stored issues for closure; labels do not gate validation eligibility. For a KB issue, it first waits for the knowledge-sync pipeline so the deployed dev Chat Agent uses the authoritative fixed content rather than the temporary candidate. The Evolution Agent refetches the conversation using the coordinates persisted in the QA record, recovers the original question, and calls `ask_chat_agent` with it. The issue supplies the concise expected behavior used for comparison.
 
 The Agent comments the returned answer, trace ID, and pass/fail evidence on the closed issue. It replaces the pending label with `fix-validation:passed` when the original case now succeeds or `fix-validation:failed` when it does not; a failed validation does not automatically reopen the issue. The backend also persists `feedback.status=done` for a pass or terminal `feedback.status=failed` for a failure. The historical `qa_status` remains `failed` because the original answer was wrong. The terminal Cosmos status and issue label prevent the same closed issue from being validated again on later daily runs.

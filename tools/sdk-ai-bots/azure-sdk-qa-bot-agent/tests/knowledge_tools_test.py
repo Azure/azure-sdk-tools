@@ -13,6 +13,7 @@ from config.tenant_config import (
     SRC_AZURE_REST_API_SPECS_DOCS,
     SRC_AZURE_REST_API_SPECS_WIKI,
     SRC_STATIC_ARM_DOCS,
+    SRC_TYPESPEC_AZURE_DOCS,
     TenantID,
 )
 import pytest
@@ -28,6 +29,7 @@ from tools.knowledge_tools import KnowledgeTools
 import utils.azure_ai_search as azure_ai_search_module
 from utils.azure_ai_search import SearchClient, _raw_chunk_filter
 from utils.azure_storage import BlobContent
+from utils.knowledge_config import KbTarget
 
 
 def test_raw_chunk_filter_excludes_wiki_pages() -> None:
@@ -96,6 +98,32 @@ async def test_resolve_kb_source_allows_registered_static_qa_source(monkeypatch)
     assert result.resolved is True
     assert result.path == "static_api_spec_view_qa"
     assert result.scope == "static_api_spec_view_qa"
+
+
+@pytest.mark.asyncio
+async def test_resolve_kb_source_returns_ownership_only(monkeypatch) -> None:
+    monkeypatch.setattr(
+        knowledge_tools_module,
+        "get_kb_target",
+        AsyncMock(
+            return_value=KbTarget(
+                owner="Azure",
+                repo="typespec-azure",
+                branch="main",
+                path="./website/src/content/docs/docs",
+                scope=SRC_TYPESPEC_AZURE_DOCS,
+            )
+        ),
+    )
+
+    result = await KnowledgeTools().resolve_kb_source(folder=SRC_TYPESPEC_AZURE_DOCS)
+
+    assert result.owner == "Azure"
+    assert result.repo == "typespec-azure"
+    assert result.branch == "main"
+    assert result.path == "./website/src/content/docs/docs"
+    assert "upstream_url" not in result.model_fields
+    assert "source_url" not in result.model_fields
 
 
 @pytest.mark.asyncio

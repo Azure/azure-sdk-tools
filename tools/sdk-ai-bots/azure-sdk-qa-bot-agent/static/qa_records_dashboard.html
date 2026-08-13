@@ -828,7 +828,10 @@
         record.confidence == null ? "—" : `${Math.round(record.confidence * 100)}%`
       ));
       step.append(metadata);
-      if (record.reasoning) {
+      if (
+        record.reasoning
+        && record.feedback?.error !== "agent_remediation_failed"
+      ) {
         step.append(evidence("Assessment reasoning", record.reasoning));
       }
       if (record.qa_status === "ongoing") {
@@ -843,7 +846,9 @@
     function renderDiagnosis(record, issue) {
       const classification = record.feedback?.classification;
       const rootCause = issue?.sections?.root_cause;
-      if (!classification && !rootCause && !record.feedback?.error) return null;
+      const remediationFailed =
+        record.feedback?.error === "agent_remediation_failed";
+      if (!classification && !rootCause && !remediationFailed) return null;
       const step = timelineStep(
         "Diagnosis and remediation attempt",
         record.feedback?.created_at,
@@ -869,7 +874,7 @@
           issue.sections.validation
         ));
       }
-      if (record.feedback?.error && record.reasoning) {
+      if (remediationFailed && record.reasoning) {
         step.append(evidence("Agent report", record.reasoning));
       }
       return step;
@@ -878,6 +883,7 @@
     function renderIssue(record, issue, issueLookupError) {
       if (!record.feedback?.issue_url) {
         if (!record.feedback) return null;
+        if (record.feedback.status === "failed") return null;
         const step = timelineStep(
           "Evolution result",
           record.feedback.updated_at,

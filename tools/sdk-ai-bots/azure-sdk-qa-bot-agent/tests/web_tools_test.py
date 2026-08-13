@@ -15,7 +15,12 @@ _PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
-from tools.web_tools import WebTools, _is_public_url, _HtmlTextExtractor
+from tools.web_tools import (
+    WebTools,
+    _HtmlTextExtractor,
+    _is_public_url,
+    _PublicIPTransport,
+)
 
 
 def _make_response(
@@ -48,6 +53,56 @@ def test_is_public_url_blocks_hostname_resolving_to_private_ip() -> None:
             (2, 1, 6, "", ("169.254.169.254", 0)),
         ]
         assert _is_public_url("https://example.com/path") is False
+
+
+@pytest.mark.asyncio
+async def test_public_ip_transport_blocks_dns_rebinding() -> None:
+    connected = False
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal connected
+        connected = True
+        return httpx.Response(200)
+
+    transport = _PublicIPTransport(httpx.MockTransport(handler))
+    with patch(
+        "tools.web_tools.socket.getaddrinfo",
+        side_effect=[
+            [(socket.AF_INET, socket.SOCK_STREAM, 0, "", ("93.184.216.34", 443))],
+            [(socket.AF_INET, socket.SOCK_STREAM, 0, "", ("169.254.169.254", 443))],
+        ],
+    ):
+        assert _is_public_url("https://example.com/path") is True
+        async with httpx.AsyncClient(transport=transport) as client:
+            with pytest.raises(httpx.ConnectError, match="non-public IP"):
+                await client.get("https://example.com/path")
+
+    assert connected is False
+
+
+@pytest.mark.asyncio
+async def test_public_ip_transport_pins_address_and_preserves_hostname() -> None:
+    pinned_request: httpx.Request | None = None
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal pinned_request
+        pinned_request = request
+        return httpx.Response(200)
+
+    transport = _PublicIPTransport(httpx.MockTransport(handler))
+    with patch(
+        "tools.web_tools.socket.getaddrinfo",
+        return_value=[
+            (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("93.184.216.34", 443))
+        ],
+    ):
+        async with httpx.AsyncClient(transport=transport) as client:
+            await client.get("https://example.com/path")
+
+    assert pinned_request is not None
+    assert pinned_request.url.host == "93.184.216.34"
+    assert pinned_request.headers["host"] == "example.com"
+    assert pinned_request.extensions["sni_hostname"] == "example.com"
 
 
 def test_html_text_extractor_strips_tags() -> None:
@@ -176,6 +231,10 @@ async def test_web_fetch_blocks_redirects() -> None:
     # The httpx client must be constructed with follow_redirects=False so we
     # control redirect following and re-validate each hop ourselves.
     assert MockClient.call_args.kwargs.get("follow_redirects") is False
+    assert isinstance(
+        MockClient.call_args.kwargs.get("transport"), _PublicIPTransport
+    )
+    assert MockClient.call_args.kwargs.get("trust_env") is False
     # Only the initial request is issued; the internal redirect target is
     # rejected before any second fetch.
     assert instance.get.call_count == 1

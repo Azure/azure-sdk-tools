@@ -152,6 +152,10 @@ Return only the fixed-schema JSON object containing `outcome`, `reasoning`,
 `confidence`, `classification`, and `issue_url`.
 Candidate content and validation evidence are recorded in the remediation
 issue rather than duplicated in the status result.
+Use `remediation_failed` after the completion and correctness gates have
+confirmed a real answer problem but diagnosis, candidate validation, or issue
+creation cannot finish. Reserve `processing_failed` for failures before those
+gates complete, or for validation-workflow failures.
 
 ## Rules
 
@@ -183,6 +187,8 @@ The feedback loop is driven by a **daily batch job** over a durable status table
     - still ongoing → clear transient feedback state and stay `ongoing`;
     - finished + correct → `qa_status=finished`, `feedback.status=done`;
     - finished + problem → set `qa_status=failed`, run diagnosis and the KB candidate-validation loop when applicable, then create the remediation issue and set `feedback.status=pending_validation`.
+    - finished + problem + remediation blocker → keep `qa_status=failed`, persist the Agent's failure reason, and set `feedback.status=failed`.
+    - processing failure before a verdict → set `qa_status=failed` with an unknown verdict and `feedback.status=failed`; the Dashboard distinguishes this from an incorrect bot answer.
 3. **Closed-issue scan** — read `pending_validation` records and find issues whose stored GitHub issue is closed. Issue closure, not labels, determines validation eligibility.
 4. **Restore** — if any analysis session mutated the KB or a closed KB issue needs validation, queue the knowledge-sync pipeline once and wait for successful restoration.
 5. **Validate fixes** — rerun each closed issue's original bad case, comment the evidence, replace `fix-validation:pending` with `fix-validation:passed` or `fix-validation:failed`, and persist `feedback.status=done` or terminal `failed`.

@@ -61,6 +61,7 @@ class ChatbotEvolutionAgentOutcome(str, Enum):
     conversation_ongoing = "conversation_ongoing"
     no_issue = "no_issue"
     issue_created = "issue_created"
+    remediation_failed = "remediation_failed"
     validation_passed = "validation_passed"
     validation_failed = "validation_failed"
     processing_failed = "processing_failed"

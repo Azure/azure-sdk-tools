@@ -136,7 +136,8 @@
       color: #0b5f32;
       background: #dff5e7;
     }
-    .status-failed, .status-incorrect, .status-validation_failed {
+    .status-failed, .status-incorrect, .status-validation_failed,
+    .status-assessment_failed {
       color: #9b1c1c;
       background: #fde3e3;
     }
@@ -421,7 +422,7 @@
           <option value="">All conversation statuses</option>
           <option value="ongoing">Ongoing</option>
           <option value="finished">Bot answered correctly</option>
-          <option value="failed">Bot answered incorrectly</option>
+          <option value="failed">Failed (incorrect or unassessed)</option>
         </select>
       </label>
       <label>Evolution status
@@ -603,12 +604,13 @@
     }
 
     function conversationStatus(record) {
-      const statuses = {
-        ongoing: "Ongoing",
-        finished: "Bot answered correctly",
-        failed: "Bot answered incorrectly"
-      };
-      return statuses[record.qa_status] ?? label(record.qa_status);
+      if (record.qa_status === "ongoing") return "Ongoing";
+      if (record.qa_status === "finished") return "Bot answered correctly";
+      if (record.qa_status === "failed" && record.verdict === "incorrect") {
+        return "Bot answered incorrectly";
+      }
+      if (record.qa_status === "failed") return "Bot answer assessment failed";
+      return label(record.qa_status);
     }
 
     function conversationStatusBadge(record) {
@@ -670,6 +672,9 @@
       }
       if (record.verdict === "correct" || record.verdict === "incorrect") {
         return {value: record.verdict, text: label(record.verdict)};
+      }
+      if (record.feedback?.status === "failed") {
+        return {value: "assessment_failed", text: "Assessment failed"};
       }
       return {value: "inconclusive", text: "Inconclusive"};
     }
@@ -864,6 +869,9 @@
           issue.sections.validation
         ));
       }
+      if (record.feedback?.error && record.reasoning) {
+        step.append(evidence("Agent report", record.reasoning));
+      }
       return step;
     }
 
@@ -879,7 +887,11 @@
           "Result",
           record.qa_status === "finished"
             ? "The Bot answer was accepted; no remediation issue was needed."
-            : (record.feedback.error || "No remediation issue was created.")
+            : (
+              record.reasoning
+              || record.feedback.error
+              || "No remediation issue was created."
+            )
         ));
         return step;
       }

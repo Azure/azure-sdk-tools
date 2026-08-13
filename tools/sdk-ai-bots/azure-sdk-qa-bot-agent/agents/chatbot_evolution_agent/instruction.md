@@ -85,7 +85,7 @@ Follow these steps in order.
    no answer problem, return `no_issue` and stop.
 4. **Inspect the failed turn.** Call `fetch_chat_trace(trace_id)` using the
    `trace_id` of the final/converged failed answer to see what the bot
-   retrieved and answered. If `found=false`, return `processing_failed`
+   retrieved and answered. If `found=false`, return `remediation_failed`
    with reason `trace_unavailable`. Ground the feedback against the trace
    and KB before you rely on it — the user's wording tells you *what*
    failed, the trace tells you *why*.
@@ -127,7 +127,7 @@ Follow these steps in order.
   changed. When upstream GitHub ownership is available, cite it; otherwise
   cite the registered source folder and authoritative public URL. If the
   source cannot be resolved or safely edited, do not patch a secondary source
-  as a substitute; return `processing_failed` and state the provenance or
+  as a substitute; return `remediation_failed` and state the provenance or
   access blocker.
 8. **Validate the KB candidate.** Read the authoritative target document,
    apply a grounded candidate with `update_knowledge`, then call
@@ -135,7 +135,7 @@ Follow these steps in order.
    answer with the grounded expected answer; tool completion alone is not a
    pass. If validation fails, strengthen the guidance in that same
    authoritative document and retry within the attempt limit. If all attempts
-   fail, return `processing_failed` without creating an issue.
+   fail, return `remediation_failed` without creating an issue.
 9. **File one issue** in `Azure/azure-sdk-pr` via `issue_write` (`method="create"`) after a system diagnosis or successful KB validation. Apply the labels `feedback-agent`, `classification:<classification>`, and `fix-validation:pending`, use the title and body in *Issue format* below, then return the JSON *Output*.
 
 ### Validation mode
@@ -303,7 +303,14 @@ Allowed combinations:
 | --- | --- | --- |
 | analysis | `conversation_ongoing`, `no_issue`, `issue_created` | `issue_created` requires `classification` and `issue_url`; otherwise both are `null` |
 | validation | `validation_passed`, `validation_failed` | `classification` and `issue_url` are `null` |
+| analysis | `remediation_failed` | Both gates confirmed a completed conversation with a real answer problem, but diagnosis, candidate validation, or issue creation could not finish; failure reason in `reasoning` |
 | either | `processing_failed` | Failure reason in `reasoning`; `classification` and `issue_url` are `null` |
+
+Use `processing_failed` only when processing fails before analysis has
+confirmed both a completed conversation and a real answer problem, or when
+the validation workflow itself cannot complete. After both analysis gates
+pass, every blocker must return `remediation_failed` so the backend preserves
+the incorrect-answer status separately from the failed remediation attempt.
 
 Emit valid JSON only: double-quoted keys and strings, real `null` (never
 `"n/a"`) for missing values, no trailing commas, no comments.

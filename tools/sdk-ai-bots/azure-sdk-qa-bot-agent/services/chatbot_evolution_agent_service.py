@@ -35,6 +35,7 @@ _ALLOWED_OUTCOMES = {
             ChatbotEvolutionAgentOutcome.conversation_ongoing,
             ChatbotEvolutionAgentOutcome.no_issue,
             ChatbotEvolutionAgentOutcome.issue_created,
+            ChatbotEvolutionAgentOutcome.remediation_failed,
             ChatbotEvolutionAgentOutcome.processing_failed,
         }
     ),
@@ -110,7 +111,7 @@ class ChatbotEvolutionAgentService:
                     f"Agent returned outcome={result.outcome.value} "
                     f"for mode={mode.value}"
                 )
-            self._apply_result(record, result)
+            self._apply_result(record, result, mode=mode)
         except Exception as exc:
             logger.exception(
                 "Chatbot evolution agent %s failed for job %s",
@@ -120,7 +121,11 @@ class ChatbotEvolutionAgentService:
             persisted = await self._load_job(record.id, record.tenant_id)
             if persisted is not None:
                 record = persisted
-            self._finalize_failed(record, error=f"agent_{mode.value}_failed: {exc}")
+            self._finalize_failed(
+                record,
+                mode=mode,
+                error=f"agent_{mode.value}_failed: {exc}",
+            )
             await upsert_qa_record(record.to_cosmos())
             return None
 
@@ -190,35 +195,63 @@ class ChatbotEvolutionAgentService:
         self,
         record: QARecord,
         result: ChatbotEvolutionAgentResult,
+        *,
+        mode: ChatbotEvolutionAgentMode = ChatbotEvolutionAgentMode.analysis,
     ) -> None:
         now = _now()
         record.updated_at = now
 
-        if result.outcome in (
-            ChatbotEvolutionAgentOutcome.conversation_ongoing,
-            ChatbotEvolutionAgentOutcome.no_issue,
-            ChatbotEvolutionAgentOutcome.issue_created,
-        ):
+        if mode == ChatbotEvolutionAgentMode.analysis:
             record.reasoning = result.reasoning
             record.confidence = result.confidence
-            record.verdict = {
-                ChatbotEvolutionAgentOutcome.conversation_ongoing: (
-                    BotAnswerVerdict.Unknown
-                ),
-                ChatbotEvolutionAgentOutcome.no_issue: BotAnswerVerdict.Correct,
-                ChatbotEvolutionAgentOutcome.issue_created: (
-                    BotAnswerVerdict.Incorrect
-                ),
-            }[result.outcome]
             record.evaluated_at = now
 
-        if result.outcome == ChatbotEvolutionAgentOutcome.conversation_ongoing:
-            record.qa_status = QAStatus.ongoing
-            record.feedback = None
-            return
+            if result.outcome == ChatbotEvolutionAgentOutcome.conversation_ongoing:
+                record.qa_status = QAStatus.ongoing
+                record.verdict = BotAnswerVerdict.Unknown
+                record.feedback = None
+                return
+
+            assert record.feedback is not None
+            record.feedback.updated_at = now
+            record.feedback.error = None
+
+            if result.outcome == ChatbotEvolutionAgentOutcome.processing_failed:
+                record.qa_status = QAStatus.failed
+                record.verdict = BotAnswerVerdict.Unknown
+                record.feedback.status = FeedbackStatus.failed
+                record.feedback.error = "agent_processing_failed"
+                return
+
+            if result.outcome == ChatbotEvolutionAgentOutcome.remediation_failed:
+                record.qa_status = QAStatus.failed
+                record.verdict = BotAnswerVerdict.Incorrect
+                record.feedback.status = FeedbackStatus.failed
+                record.feedback.error = "agent_remediation_failed"
+                return
+
+            if result.outcome == ChatbotEvolutionAgentOutcome.no_issue:
+                record.qa_status = QAStatus.finished
+                record.verdict = BotAnswerVerdict.Correct
+                record.feedback.status = FeedbackStatus.done
+                return
+
+            if result.outcome == ChatbotEvolutionAgentOutcome.issue_created:
+                record.qa_status = QAStatus.failed
+                record.verdict = BotAnswerVerdict.Incorrect
+                record.feedback.status = FeedbackStatus.pending_validation
+                record.feedback.issue_url = result.issue_url
+                record.feedback.classification = result.classification
+                return
+
+            raise ValueError(
+                f"Unsupported analysis outcome: {result.outcome.value}"
+            )
 
         assert record.feedback is not None
         record.feedback.updated_at = now
+        record.feedback.validation_reasoning = result.reasoning
+        record.feedback.validated_at = now
         record.feedback.error = None
 
         if result.outcome == ChatbotEvolutionAgentOutcome.processing_failed:
@@ -226,35 +259,39 @@ class ChatbotEvolutionAgentService:
             record.feedback.error = "agent_processing_failed"
             return
 
-        if result.outcome == ChatbotEvolutionAgentOutcome.no_issue:
-            record.qa_status = QAStatus.finished
-            record.feedback.status = FeedbackStatus.done
-            return
-
-        if result.outcome == ChatbotEvolutionAgentOutcome.issue_created:
-            record.qa_status = QAStatus.failed
-            record.feedback.status = FeedbackStatus.pending_validation
-            record.feedback.issue_url = result.issue_url
-            record.feedback.classification = result.classification
-            return
-
-        record.feedback.validation_reasoning = result.reasoning
-        record.feedback.validated_at = now
         if result.outcome == ChatbotEvolutionAgentOutcome.validation_passed:
             record.feedback.status = FeedbackStatus.done
-        else:
+        elif result.outcome == ChatbotEvolutionAgentOutcome.validation_failed:
             record.feedback.status = FeedbackStatus.failed
             record.feedback.error = "validation_failed"
+        else:
+            raise ValueError(
+                f"Unsupported validation outcome: {result.outcome.value}"
+            )
 
-    def _finalize_failed(self, record: QARecord, *, error: str) -> None:
+    def _finalize_failed(
+        self,
+        record: QARecord,
+        *,
+        mode: ChatbotEvolutionAgentMode,
+        error: str,
+    ) -> None:
+        now = _now()
         feedback = record.feedback
         if feedback is None:
-            feedback = FeedbackState(created_at=_now())
+            feedback = FeedbackState(created_at=now)
             record.feedback = feedback
         feedback.status = FeedbackStatus.failed
         feedback.error = error
-        feedback.updated_at = _now()
-        record.updated_at = _now()
+        feedback.updated_at = now
+        if mode == ChatbotEvolutionAgentMode.analysis:
+            record.qa_status = QAStatus.failed
+            record.verdict = BotAnswerVerdict.Unknown
+            record.evaluated_at = now
+        else:
+            feedback.validation_reasoning = error
+            feedback.validated_at = now
+        record.updated_at = now
 
     # -- Foundry invocation ------------------------------------------------
 

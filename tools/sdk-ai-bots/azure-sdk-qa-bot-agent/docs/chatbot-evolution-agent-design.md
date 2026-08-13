@@ -154,8 +154,9 @@ Candidate content and validation evidence are recorded in the remediation
 issue rather than duplicated in the status result.
 Use `remediation_failed` after the completion and correctness gates have
 confirmed a real answer problem but diagnosis, candidate validation, or issue
-creation cannot finish. Reserve `processing_failed` for failures before those
-gates complete, or for validation-workflow failures.
+creation cannot finish. Persist its classification when the Agent established
+one, even though no issue was created. Reserve `processing_failed` for failures
+before those gates complete, or for validation-workflow failures.
 
 ## Rules
 

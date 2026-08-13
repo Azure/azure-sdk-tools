@@ -316,6 +316,12 @@ namespace Reviews {
      */
     model MarkReleasedResult {
         ...RevisionResolveResult;
+        /** The exact package name for the released revision */
+        packageName: string;
+        /** The programming language for the released revision */
+        language: string;
+        /** The package version for the released revision */
+        version: string;
         /** Whether the revision is released */
         isReleased: boolean;
         /** When the revision was marked released */

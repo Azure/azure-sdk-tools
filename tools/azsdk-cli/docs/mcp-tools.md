@@ -1,6 +1,6 @@
 # Tools available in Azure SDK MCP server
 
-This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.28.
+This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.35.
 
 ## Tools list
 
@@ -9,12 +9,11 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_abandon_release_plan | `azsdk release-plan abandon` | Abandon a release plan by work item ID or release plan ID. Updates the release plan status to 'Abandoned'. |
 | azsdk_analyze_log_file | `azsdk ci log analyze` | Analyzes a log file for errors and issues |
 | azsdk_analyze_pipeline | `azsdk ci analyze` | Analyzes and returns structured failure data and logs from an Azure Pipeline build. Accepts an Azure Pipeline link, Build ID, GitHub Pull Request link, or PR number. |
+| azsdk_apireviewhub_request_review_pr | `azsdk api-review create` | Request API Review Hub creation of a review pull request for a package API change. |
 | azsdk_apiview_get_comments | `azsdk apiview get-comments` | Get API review comments and feedback from APIView for a package. Retrieves all reviewer comments left on the API review. |
 | azsdk_apiview_get_copilot_review | `azsdk apiview get-copilot-review` | Get the status and results of a Copilot review job. When complete, the response includes all generated review comments. |
 | azsdk_apiview_get_review_url | `azsdk apiview get-review-url` | Get the APIView review URL for a package by name and language. Returns the direct link to the API review page for the specified package. |
-| azsdk_package_get_approval_status | `azsdk package get-approval-status` | Check API review release approval status using APIView and API Review Hub. |
 | azsdk_apiview_request_copilot_review | `azsdk apiview request-copilot-review` | Submit an API surface text for automated Copilot review. Provide the text directly via 'api-text' (raw or markdown-fenced), or supply an APIView URL to have the text fetched automatically. Returns a job ID — use get-copilot-review to poll for results and comments. |
-| azsdk_apireviewhub_request_review_pr | `azsdk api-review create` | Request API Review Hub creation of a review pull request for a package API change. |
 | azsdk_check_api_spec_ready_for_sdk | `azsdk release-plan check-api-readiness` | Checks whether a TypeSpec API spec is ready to generate SDK. Provide a pull request number and path to TypeSpec project json as params. |
 | azsdk_check_service_label |  | Checks if a service label exists and returns its details |
 | azsdk_convert_swagger_to_typespec | `azsdk tsp convert` | Converts an existing Azure service swagger definition to a TypeSpec project. Returns path to the created project. |
@@ -22,7 +21,7 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_create_release_plan | `azsdk release-plan create` | Create Release Plan for a TypeSpec project and API release type. API release types support Private Preview, Public Preview, and GA. Service ID and product ID are optional and will be resolved from existing release plans when available. |
 | azsdk_create_service_label |  | Creates a pull request to add a new service label |
 | azsdk_customized_code_update | `azsdk tsp client customized-update` | Applies patches to customization files based on build errors, regenerates code if needed (Java), builds, and returns success/failure with build result. |
-| azsdk_engsys_codeowner_add_label_owner |  | Add owner(s) to a label with an optional path in CODEOWNERS work items. Valid ownerType values: service-owner, azsdk-owner, pr-label. |
+| azsdk_engsys_codeowner_add_label_owner |  | Add owner(s) to a label with an optional path in CODEOWNERS work items. Valid ownerType values: service-owner, azsdk-owner, pr-label. A 3-segment path (e.g. sdk/<service>/<package>) is rejected because it targets a package directory; add owners to the package by name instead, or set force=true to create the path anyway. |
 | azsdk_engsys_codeowner_add_package_label |  | Add PR label(s) to a package in CODEOWNERS work items. |
 | azsdk_engsys_codeowner_add_package_owner |  | Add source owner(s) to a package in CODEOWNERS work items. |
 | azsdk_engsys_codeowner_check_package |  | Check that a package has sufficient owners, PR labels, and service owners from a CODEOWNERS cache file. |
@@ -48,8 +47,10 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_link_namespace_approval_issue | `azsdk release-plan link-namespace-approval` | Link package namespace approval issue to release plan(required only for management plan). This requires GitHub issue URL for the namespace approval request and release plan work item id. |
 | azsdk_link_sdk_pull_request_to_release_plan | `azsdk release-plan link-sdk-pr` | Link SDK pull request to release plan work item |
 | azsdk_package_build_code | `azsdk pkg build` | Build/compile SDK code for a specified project locally. |
+| azsdk_package_detect_breaking_change | `azsdk pkg detect-breaking-change` | Detects breaking changes in the SDK. |
 | azsdk_package_generate_code | `azsdk pkg generate` | Generate SDK code locally or run code generation for a package from TypeSpec. Creates client library code for Azure services. Runs locally, not via pipeline. |
 | azsdk_package_generate_samples |  | Generates sample code for a specified package based on a prompt describing sample scenarios. |
+| azsdk_package_get_approval_status |  | Check API review release approval status using APIView and API Review Hub. |
 | azsdk_package_pack | `azsdk pkg pack` | Create distributable artifacts for the specified SDK package. |
 | azsdk_package_run_check | `azsdk pkg validate` | Run validation checks for SDK packages. Provide package path, check type (All, Changelog, Dependency, Readme, Cspell, Snippets), and whether to fix errors. |
 | azsdk_package_run_tests | `azsdk pkg test run` | Run tests for the specified SDK package. Provide package path. |
@@ -76,27 +77,29 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 |  | `azsdk release-plan update-release-status` |  |
 |  | `azsdk release-plan list-overdue` |  |
 |  | `azsdk quokka` |  |
+|  | `azsdk pkg mark-released` | Mark a package as released in API Review Hub and APIView |
+|  | `azsdk pkg get-approval-status` | Check API review release approval status using APIView and API Review Hub |
 |  | `azsdk pkg samples translate` | Translates sample files from source language to target package language |
 |  | `azsdk pkg samples generate` | Generates sample files |
 |  | `azsdk pkg readme generate` | Generate README content for a package |
 |  | `azsdk eng package-info` | Generate PackageInfo JSON files for CI pipelines |
 |  | `azsdk ingest-telemetry` |  |
 |  | `azsdk config github-label sync-ado` | Synchronize service labels from the GitHub CSV to Azure DevOps Work Items |
-|  | `azsdk config codeowners remove-package-label` | Remove PR label(s) from a package |
-|  | `azsdk config github-label check` | Check if a service label exists in the common labels CSV |
+|  | `azsdk config github-label create` | Creates a PR for a new label given a proposed label and brand documentation |
+|  | `azsdk config codeowners add-package-label` | Add PR label(s) to a package |
 |  | `azsdk config codeowners audit` | Audit CODEOWNERS work items for violations and optionally fix them. You MUST update the CODEOWNERS cache before running this command. |
 |  | `azsdk config codeowners check-package` | Check that a package has sufficient owners, PR labels, and service owners from a CODEOWNERS cache file |
 |  | `azsdk config codeowners export-section` | Export one or more named sections from a CODEOWNERS file |
 |  | `azsdk config codeowners remove-label-owner` | Remove owner(s) from a label and optional path |
-|  | `azsdk verify setup install` | Install missing environment requirements. Exit codes: 0 = all requirements met, 1 = blocking (manual intervention needed).  |
+|  | `azsdk config codeowners remove-package-label` | Remove PR label(s) from a package |
 |  | `azsdk config codeowners remove-package-owner` | Remove source owner(s) from a package |
 |  | `azsdk config codeowners add-label-owner` | Add owner(s) to a label and optional path |
-|  | `azsdk config codeowners add-package-label` | Add PR label(s) to a package |
+|  | `azsdk verify setup install` | Install missing environment requirements. Exit codes: 0 = all requirements met, 1 = blocking (manual intervention needed).  |
 |  | `azsdk config codeowners add-package-owner` | Add source owner(s) to a package |
 |  | `azsdk config codeowners view` | View CODEOWNERS associations for a user, label, package, or path |
 |  | `azsdk config codeowners generate` | Generate CODEOWNERS file from Azure DevOps work items |
 |  | `azsdk start` | Starts the MCP server (stdio mode) |
 |  | `azsdk mcp` | Starts the MCP server (stdio mode) |
-|  | `azsdk config github-label create` | Creates a PR for a new label given a proposed label and brand documentation |
+|  | `azsdk config github-label check` | Check if a service label exists in the common labels CSV |
 |  | `azsdk list` |  |
 

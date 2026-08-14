@@ -20,7 +20,7 @@ stimuli:
       suite: "armtemplate"
       mode: "trigger"
     prompt: |
-      Define an Azure resource named "Employee" under the namespace "Microsoft.Widget" in API version `2024-10-01-preview`. Properties: age (int32, optional), city (string, optional), profile (bytes, optional), and provisioningState (enum incorporating ResourceProvisioningState, optional, read-only). Include the standard create, get, update, delete, list-by-resource-group, and list-by-subscription operations. I have provided all required decisions, so please implement and validate the change according to the TypeSpec Azure design guidelines without pausing for a separate confirmation.
+      Define an Azure resource named "Employee" under the namespace "Microsoft.Widget" in API version `2024-10-01-preview`. Properties: age (int32, optional), city (string, optional), profile (bytes, optional), and provisioningState (a union type incorporating ResourceProvisioningState, optional, read-only). Include the standard create, get, update, delete, list-by-resource-group, and list-by-subscription operations. I have provided all required decisions, so please implement and validate the change according to the TypeSpec Azure design guidelines without pausing for a separate confirmation.
     environment: &shared_environment
       files:
         - src: ../fixtures/002005-ARM-define-the-resource/main.tsp
@@ -57,7 +57,7 @@ stimuli:
       suite: "armtemplate"
       mode: "forced"
     prompt: |
-      @azure-typespec-author Define an Azure resource named "Employee" under the namespace "Microsoft.Widget" in API version `2024-10-01-preview`. Properties: age (int32, optional), city (string, optional), profile (bytes, optional), and provisioningState (enum incorporating ResourceProvisioningState, optional, read-only). Include the standard create, get, update, delete, list-by-resource-group, and list-by-subscription operations. I have provided all required decisions, so please implement and validate the change according to the TypeSpec Azure design guidelines without pausing for a separate confirmation.
+      @azure-typespec-author Define an Azure resource named "Employee" under the namespace "Microsoft.Widget" in API version `2024-10-01-preview`. Properties: age (int32, optional), city (string, optional), profile (bytes, optional), and provisioningState (a union type incorporating ResourceProvisioningState, optional, read-only). Include the standard create, get, update, delete, list-by-resource-group, and list-by-subscription operations. I have provided all required decisions, so please implement and validate the change according to the TypeSpec Azure design guidelines without pausing for a separate confirmation.
     environment: *shared_environment
     graders:
       - type: "tool-calls"
@@ -117,7 +117,7 @@ stimuli:
       suite: "armtemplate"
       mode: "no-skill"
     prompt: |
-      Define an Azure resource named "Employee" under the namespace "Microsoft.Widget" in API version `2024-10-01-preview`. Properties: age (int32, optional), city (string, optional), profile (bytes, optional), and provisioningState (enum incorporating ResourceProvisioningState, optional, read-only). Include the standard create, get, update, delete, list-by-resource-group, and list-by-subscription operations. I have provided all required decisions, so please implement and validate the change according to the TypeSpec Azure design guidelines without pausing for a separate confirmation.
+      Define an Azure resource named "Employee" under the namespace "Microsoft.Widget" in API version `2024-10-01-preview`. Properties: age (int32, optional), city (string, optional), profile (bytes, optional), and provisioningState (a union type incorporating ResourceProvisioningState, optional, read-only). Include the standard create, get, update, delete, list-by-resource-group, and list-by-subscription operations. I have provided all required decisions, so please implement and validate the change according to the TypeSpec Azure design guidelines without pausing for a separate confirmation.
     environment: *shared_environment
     graders:
       - type: "tool-calls"

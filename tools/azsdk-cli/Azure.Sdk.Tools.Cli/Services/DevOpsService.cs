@@ -2177,7 +2177,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                         ? id?.ToString() ?? string.Empty : string.Empty).Contains(ProductOnboardingWorkItem.TestFieldTestValue),
             };
 
-            foreach (var property in result.GetType().GetProperties(BindingFlags.DeclaredOnly).Where(p => p.CanWrite))
+            foreach (var property in result.GetType().GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanWrite))
             {
                 var fieldName = property.GetCustomAttribute<FieldNameAttribute>()?.Name;
                 if (!fieldName.IsNullOrEmpty())
@@ -2204,7 +2204,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 .GetCustomAttribute<FieldNameAttribute>()?.Name;
 
             var serviceCondition = new StringBuilder();
-            serviceCondition.Append($"[{productIdPropertyName}] = '{productId.ToString()}' AND [{serviceId}] = '{serviceId.ToString()}'");
+            serviceCondition.Append($"[{productIdPropertyName}] = '{productId.ToString()}' AND [{serviceIdPropertyName}] = '{serviceId.ToString()}'");
             serviceCondition.Append(
                 $" AND [{ProductOnboardingWorkItem.TestFieldName}] {(isTest ? "" : "NOT ")}CONTAINS '{ProductOnboardingWorkItem.TestFieldTestValue}'");
             
@@ -2235,19 +2235,25 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         private string GetProductOnboardingWorkItemTitle(ProductOnboardingStatus status) => $"Onboarding {status.ServiceName} - {status.ProductName}";
 
-        private void SetTestValue(ProductOnboardingWorkItem wi)
-            => wi.GetType().GetProperties().Where(p => p.CanWrite).ForEach(
-                property => {
-                    string? fieldName = property.GetCustomAttribute<FieldNameAttribute>()?.Name;
-                    if (fieldName == ProductOnboardingWorkItem.TestFieldName)
+        private IEnumerable<PropertyInfo> SetTestValue(ProductOnboardingWorkItem wi)
+        {
+            var result = new List<PropertyInfo>();
+            foreach (var property in wi.GetType().GetProperties().Where(p => p.CanWrite))
+            {
+                string? fieldName = property.GetCustomAttribute<FieldNameAttribute>()?.Name;
+                if (fieldName == ProductOnboardingWorkItem.TestFieldName)
+                {
+                    string testValue = ProductOnboardingWorkItem.TestFieldTestValue;
+                    if (property.PropertyType == typeof(string))
                     {
-                        string testValue = ProductOnboardingWorkItem.TestFieldTestValue;
-                        if (property.PropertyType == typeof(string))
-                        {
-                            property.SetValue(wi, testValue);
-                        }
+                        property.SetValue(wi, testValue);
+                        result.Add(property);
                     }
-                });
+                }
+            }
+
+            return result;
+        }
 
         public async Task<ProductOnboardingWorkItem> CreateProductOnboardingAsync(ProductOnboardingStatus status, CancellationToken ct, bool isTest)
         {
@@ -2271,14 +2277,22 @@ namespace Azure.Sdk.Tools.Cli.Services
             };
             wi.SetFromProductOnboardingStatus(status);
 
-            var properties
-                = wi.GetType().GetProperties(BindingFlags.DeclaredOnly).Where(p => p.CanRead)
-                    .Concat([wi.GetType().GetProperty(nameof(wi.Title))]).ToList();
+            IList<PropertyInfo> properties = new List<PropertyInfo>();
+            foreach (
+                var property
+                in wi.GetType().GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead)
+                    .Concat([wi.GetType().GetProperty(nameof(wi.Title))])
+            )
+            {
+                if (property != null)
+                {
+                    properties.Add(property);
+                }
+            }
 
             if (isTest)
             {
-                SetTestValue(wi);
-                properties.Add(wi.GetType().GetProperty(ProductOnboardingWorkItem.TestFieldName));
+                properties.AddRange(SetTestValue(wi));
             }
 
             var fields = new Dictionary<string, string>();

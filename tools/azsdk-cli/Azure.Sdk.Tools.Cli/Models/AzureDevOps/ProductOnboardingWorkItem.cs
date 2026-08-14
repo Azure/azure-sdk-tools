@@ -19,7 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         [FieldName("Custom.ProductLifecycle")]
         public string ProductLifecycle { get; set; } = string.Empty;
 
-        [FieldName("Custom.ServiceTreeID")]
+        [FieldName("Custom.AssociatedServiceServiceTreeID")]
         public string ServiceId { get; set; } = string.Empty;
 
         [FieldName("Custom.dc40c65c-202b-4c93-8958-8e4b92c75e54")]
@@ -36,31 +36,11 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 
         public bool IsTestProductOnboarding { get; set; } = true;
 
-        [FieldName("Custom.SDKtypetobereleased")]
-        public string SDKReleaseType { get; set; } = string.Empty;
-
         public static string TestFieldName { get; } = "System.Tags";
         public static string TestFieldTestValue { get; } = "Release Planner App Test";
 
         public static string WorkItemTypeFieldName { get; } = "System.WorkItemType";
         public static string WorkItemTypeValue { get; } = "Triage";
-
-        public override Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument GetPatchDocument()
-        {
-            var jsonDocument = base.GetPatchDocument();
-
-            if (IsTestProductOnboarding)
-            {
-                jsonDocument.Add(new ()
-                {
-                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                    Path = $"/fields/{TestFieldName}",
-                    Value = TestFieldTestValue,
-                });
-            }
-
-            return jsonDocument;
-        }
 
         public ProductOnboardingStatus ToProductOnboardingStatus()
             => new ()

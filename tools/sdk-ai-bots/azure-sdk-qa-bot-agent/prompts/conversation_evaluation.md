@@ -49,20 +49,12 @@ right, because the thread could still change. Only continue to step 2 when
 
 Judge the **bot's answers across the whole thread** by the **human response to them**. The verdict is driven by whether a human — the poster or an expert — confirmed or corrected the bot, not by whether you personally think the answer is right. In a multi-turn thread, weight the bot's **final converged answer**.
 
-An explicit expert problem signal is conclusive. Return `incorrect` when an
-expert says the answer is wrong, incomplete, or misleading; contradicts it; or
-says documentation must be added, clarified, or improved so the answer is
-discoverable. Do not independently overrule that signal because the bot's
-answer appears plausible or because retrieved guidance supports part of it. A
-documentation-gap signal is still `incorrect` even when the bot happened to
-give usable advice for this one case.
-
 **Judge only what the bot could have known.** The bot stops replying once an expert joins and never sees later messages, so only mark it `incorrect` when a human refutes its advice based on information it already had — not when a different outcome came from new details or investigation that surfaced after its last answer.
 
 
 ## Verdicts
 
-- **correct** — The poster or an expert **confirms, agrees with, builds on, or acts on** the bot's answer without identifying an answer or documentation gap. A procedural nudge that still matches the bot's advice (e.g. "work with the assigned reviewers directly") is agreement. An expert adding an orthogonal side-detail the bot couldn't know is not a correction. The poster thanking the bot, saying it answered their question, or adopting one of several valid paths it offered counts as confirmation.
+- **correct** — The poster or an expert **confirms, agrees with, builds on, or acts on** the bot's answer. A procedural nudge that still matches the bot's advice (e.g. "work with the assigned reviewers directly") is agreement. An expert adding an orthogonal side-detail the bot couldn't know is not a correction. The poster thanking the bot, saying it answered their question, or adopting one of several valid paths it offered counts as confirmation.
 - **incorrect** — The poster or an expert **corrects or contradicts** the bot, or supplies a **materially different** resolution — including when a human shows the bot's concrete guidance was wrong, missed a real defect it called clean, or treated only a symptom while missing the actual root cause.
 - **unknown** — **No clear confirmation or correction signal.** Use this when nobody authoritative replied, the expert only **deferred or redirected** (pointed to another owner/thread, left it "being discussed") without endorsing or contradicting the bot, the human response is too ambiguous to read, or the bot only emitted a system/generation error (e.g. "Sorry, something went wrong, please retry") with no real answer to judge. A concrete answer that is probably right but that **no human confirmed** is **unknown**, not correct.
 

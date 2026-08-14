@@ -62,6 +62,8 @@ extends:
               - checkout: self
                 displayName: 'Checkout repository'
 
+              - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+
               - task: PipAuthenticate@1
                 displayName: 'Authenticate pip to Azure Artifacts'
                 inputs:
@@ -109,4 +111,5 @@ extends:
                 env:
                   AZURE_CORE_WELCOME_MESSAGE: 'false'
                   AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
+                  GITHUB_TOKEN: $(GH_TOKEN)
                   SYSTEM_ACCESSTOKEN: $(System.AccessToken)

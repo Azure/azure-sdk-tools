@@ -105,6 +105,9 @@ class QARecord(BaseModel):
     feedback: FeedbackState | None = None
 
     # -- Bookkeeping ------------------------------------------------------
+    #: Timestamp of the first message in the conversation. Older records may
+    #: omit it until the daily scanner backfills their thread metadata.
+    conversation_created_at: datetime | None = None
     #: Timestamp of the latest message in the thread (drives the "did the
     #: thread go quiet?" heuristic the evaluator's `finished` gate refines).
     last_activity_at: datetime | None = None

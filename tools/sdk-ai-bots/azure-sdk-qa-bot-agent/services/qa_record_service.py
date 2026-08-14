@@ -134,8 +134,16 @@ class QARecordService:
                 continue
 
             existing = QARecord.from_cosmos(existing_doc)
+            needs_creation_time_backfill = (
+                existing.conversation_created_at is None
+                and candidate.conversation_created_at is not None
+            )
+            if needs_creation_time_backfill:
+                existing.conversation_created_at = candidate.conversation_created_at
             if existing.qa_status in (QAStatus.finished, QAStatus.failed):
                 # Concluded threads are immutable to the scanner.
+                if needs_creation_time_backfill:
+                    await upsert_qa_record(existing.to_cosmos())
                 touched.append(existing)
                 continue
 
@@ -199,6 +207,7 @@ class QARecordService:
             qa_status=QAStatus.ongoing,
             has_expert_reply=has_expert_reply,
             message_count=len(ordered),
+            conversation_created_at=ordered[0].created_at if ordered else None,
             last_activity_at=ordered[-1].created_at if ordered else None,
             first_seen_at=now,
             created_at=now,

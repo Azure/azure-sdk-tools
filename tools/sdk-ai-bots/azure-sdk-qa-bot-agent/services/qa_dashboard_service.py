@@ -102,7 +102,8 @@ class QADashboardService:
         offset = (page - 1) * _PAGE_SIZE
         records_query = (
             f"SELECT * FROM c{where_clause} "
-            "ORDER BY c.updated_at DESC OFFSET @offset LIMIT @limit"
+            "ORDER BY c.conversation_created_at DESC "
+            "OFFSET @offset LIMIT @limit"
         )
         records_parameters = [
             *filter_parameters,

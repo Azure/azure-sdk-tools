@@ -461,7 +461,7 @@
       <table>
         <thead>
           <tr>
-            <th>Updated</th>
+            <th>Created</th>
             <th>Channel</th>
             <th>Conversation</th>
             <th>Conversation status</th>
@@ -692,7 +692,9 @@
 
       for (const record of items) {
         const row = node("tr");
-        row.append(cell(formatDate(record.updated_at)));
+        row.append(cell(formatDate(
+          record.conversation_created_at || record.first_seen_at
+        )));
         row.append(cell(record.channel_name));
 
         const titleCell = node("td", "conversation-title");

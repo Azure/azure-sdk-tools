@@ -122,6 +122,7 @@ def test_build_record_from_thread() -> None:
     assert record.qa_status == QAStatus.ongoing
     assert record.has_expert_reply is True
     assert record.message_count == 3
+    assert record.conversation_created_at == _BASE_TIME
     # Records stay thread-scoped; the Agent selects the relevant bot turn and
     # trace after fetching the complete conversation.
     assert not hasattr(record, "response_id")

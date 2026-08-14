@@ -55,6 +55,7 @@ def _record() -> QARecord:
         conversation_type=ConversationType.teams_channel,
         channel_id="channel-a",
         qa_status=QAStatus.failed,
+        conversation_created_at=now,
         feedback=FeedbackState(
             status=FeedbackStatus.pending_validation,
             issue_url="https://github.com/Azure/azure-sdk-pr/issues/123",
@@ -151,9 +152,10 @@ async def test_list_records_applies_filters_and_pagination() -> None:
 
     records_call = container.calls[1]
     assert records_call["partition_key"] == "tenant-a"
-    assert "ORDER BY c.updated_at DESC OFFSET @offset LIMIT @limit" in (
-        records_call["query"]
-    )
+    assert (
+        "ORDER BY c.conversation_created_at DESC "
+        "OFFSET @offset LIMIT @limit"
+    ) in records_call["query"]
     parameters = {
         item["name"]: item["value"] for item in records_call["parameters"]
     }

@@ -31,7 +31,7 @@ public interface IApiReviewHubService
         string apiHash,
         string repositoryOwner,
         CancellationToken ct,
-        bool dryRun = true);
+        bool dryRun = false);
 }
 
 public class ApiReviewHubService(
@@ -158,7 +158,7 @@ public class ApiReviewHubService(
         string apiHash,
         string repositoryOwner,
         CancellationToken ct,
-        bool dryRun = true)
+        bool dryRun = false)
     {
         var httpClient = httpClientFactory.CreateClient(nameof(ApiReviewHubService));
         var authorization = await GetAuthorizationAsync(DefaultEndpoint, ct);

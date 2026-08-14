@@ -21,12 +21,12 @@ public class APIViewReleaseServiceTests
     }
 
     [Test]
-    public async Task MarkPackageReleasedAsync_UsesReviewsEndpointWithDryRun()
+    public async Task MarkPackageReleasedAsync_DefaultsToRelease()
     {
         var result = await service.MarkPackageReleasedAsync("azure test", "C#", "1.0.0-beta.1");
 
         httpService.Verify(x => x.PostAsync(
-            "/api/reviews/mark-released?packageName=azure%20test&language=C%23&version=1.0.0-beta.1&dryRun=true",
+            "/api/reviews/mark-released?packageName=azure%20test&language=C%23&version=1.0.0-beta.1&dryRun=false",
             It.IsAny<CancellationToken>()), Times.Once);
         Assert.That(result.ReviewId, Is.EqualTo("review123"));
         Assert.That(result.RevisionId, Is.EqualTo("revision456"));

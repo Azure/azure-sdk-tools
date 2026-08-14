@@ -52,7 +52,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IAPIViewReleaseStatusService, APIViewReleaseStatusService>();
             services.AddSingleton<IAPIViewService, APIViewService>();
             services.AddSingleton<IApiReviewHubService, ApiReviewHubService>();
-            services.AddSingleton<IApiReviewReleaseStatusService, ApiReviewReleaseStatusService>();
+            services.AddSingleton<IPackageReleaseStatusService, PackageReleaseStatusService>();
 
             services.AddScoped<LanguageService, DotnetLanguageService>();
             services.AddScoped<LanguageService, JavaLanguageService>();

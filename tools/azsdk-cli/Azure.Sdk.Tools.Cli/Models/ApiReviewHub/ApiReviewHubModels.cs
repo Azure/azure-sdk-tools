@@ -183,7 +183,7 @@ public class ApiViewReleaseStatusResult
     public string? Error { get; set; }
 }
 
-public class ApiReviewReleaseStatusResult
+public class PackageReleaseStatusResult
 {
     [JsonPropertyName("isApproved")]
     public bool IsApproved { get; set; }
@@ -249,7 +249,7 @@ public class ApiReviewHubResponse : CommandResponse
     }
 }
 
-public class ApiReviewReleaseStatusResponse : CommandResponse
+public class PackageReleaseStatusResponse : CommandResponse
 {
     private const string Yellow = "\u001b[33m";
     private const string Red = "\u001b[31m";
@@ -257,7 +257,7 @@ public class ApiReviewReleaseStatusResponse : CommandResponse
 
     [JsonPropertyName("result")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public ApiReviewReleaseStatusResult? Result { get; set; }
+    public PackageReleaseStatusResult? Result { get; set; }
 
     [JsonPropertyName("details")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

@@ -85,7 +85,7 @@ public class ApiReviewHubServiceTests
         Assert.That(requestBody, Does.Contain("\"version\":\"1.0.0\""));
         Assert.That(requestBody, Does.Contain("\"apiHash\":\"api-hash\""));
         Assert.That(requestBody, Does.Contain("\"repoOwner\":\"tjprescott\""));
-        Assert.That(requestBody, Does.Contain("\"dryRun\":true"));
+        Assert.That(requestBody, Does.Contain("\"dryRun\":false"));
         Assert.That(result.PackageName, Is.EqualTo("azure-test"));
         Assert.That(result.PackageVersionId, Is.EqualTo(Guid.Parse("22222222-2222-2222-2222-222222222222")));
         Assert.That(result.ApprovalStatus, Is.EqualTo("Approved"));

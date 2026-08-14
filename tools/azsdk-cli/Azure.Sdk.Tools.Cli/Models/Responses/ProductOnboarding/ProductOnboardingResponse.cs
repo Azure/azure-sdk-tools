@@ -8,7 +8,7 @@ using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 namespace Azure.Sdk.Tools.Cli.Models.Responses.ProductOnboarding
 {
     /// <summary>
-    /// Serves as a base class for release plan-related responses, providing common telemetry properties.
+    /// Represents a response containing product onboarding work item details and the result of an onboarding operation.
     /// </summary>
     public class ProductOnboardingResponse : CommandResponse
     {

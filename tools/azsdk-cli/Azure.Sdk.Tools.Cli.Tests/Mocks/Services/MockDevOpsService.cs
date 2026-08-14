@@ -402,25 +402,23 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 
         public async Task<ProductOnboardingWorkItem?> GetProductOnboardingAsync(Guid productId, Guid serviceId, CancellationToken ct, bool isTest)
             => productId == Guid.Empty
-                ? await Task.FromResult<ProductOnboardingWorkItem?>(null)
-                : await Task.FromResult<ProductOnboardingWorkItem?>(
-                    UpdateProductOnboardingAsync(
-                        123,
-                        new()
-                        {
-                            ProductId = productId,
-                            ProductName = "Product Name",
-                            ProductType = ProductType.Sku,
-                            ProductLifecycle = ProductLifecycle.InDev,
-                            ServiceId = serviceId,
-                            ServiceName = "Service Name",
-                            DataPlane = DataPlaneApplicability.Yes,
-                            ManagementPlane = ManagementPlaneApplicability.No,
-                            Submitter = "@handle",
-                        },
-                        ct,
-                        isTest
-                    ).Result);
+                ? null
+                : await UpdateProductOnboardingAsync(
+                    123,
+                    new()
+                    {
+                        ProductId = productId,
+                        ProductName = "Product Name",
+                        ProductType = ProductType.Sku,
+                        ProductLifecycle = ProductLifecycle.InDev,
+                        ServiceId = serviceId,
+                        ServiceName = "Service Name",
+                        DataPlane = DataPlaneApplicability.Yes,
+                        ManagementPlane = ManagementPlaneApplicability.No,
+                        Submitter = "@handle",
+                    },
+                    ct,
+                    isTest);
 
         public async Task<ProductOnboardingWorkItem> CreateProductOnboardingAsync(ProductOnboardingStatus status, CancellationToken ct, bool isTest)
             => await UpdateProductOnboardingAsync(456, status, ct, isTest);

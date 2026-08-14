@@ -16,7 +16,6 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Pipeline;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
-using Microsoft.CodeAnalysis;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.Common;
 using Microsoft.TeamFoundation.Core.WebApi;
@@ -180,9 +179,9 @@ namespace Azure.Sdk.Tools.Cli.Services
         Task<WorkItem> CreateWorkItemRelationAsync(int id, string relationType, int? targetId = null, string? targetUrl = null, CancellationToken ct = default);
         Task RemoveWorkItemRelationAsync(int id, string relationType, int targetId, CancellationToken ct);
         Task DeleteWorkItemAsync(int workItemId, CancellationToken ct);
-        public Task<ProductOnboardingWorkItem?> GetProductOnboardingAsync(Guid productId, Guid serviceId, CancellationToken ct, bool isTest = true);
-        public Task<ProductOnboardingWorkItem> CreateProductOnboardingAsync(ProductOnboardingStatus status, CancellationToken ct, bool isTest = true);
-        public Task<ProductOnboardingWorkItem> UpdateProductOnboardingAsync(int workItemId, ProductOnboardingStatus status, CancellationToken ct, bool isTest = true);
+        Task<ProductOnboardingWorkItem?> GetProductOnboardingAsync(Guid productId, Guid serviceId, CancellationToken ct, bool isTest = true);
+        Task<ProductOnboardingWorkItem> CreateProductOnboardingAsync(ProductOnboardingStatus status, CancellationToken ct, bool isTest = true);
+        Task<ProductOnboardingWorkItem> UpdateProductOnboardingAsync(int workItemId, ProductOnboardingStatus status, CancellationToken ct, bool isTest = true);
         Task<GitHubCommitRef?> ResolveBuildCommitRefAsync(int buildId, string? project, CancellationToken ct);
     }
 

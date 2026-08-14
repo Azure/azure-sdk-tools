@@ -843,12 +843,11 @@
       return step;
     }
 
-    function renderDiagnosis(record, issue) {
+    function renderDiagnosis(record) {
       const classification = record.feedback?.classification;
-      const rootCause = issue?.sections?.root_cause;
       const remediationFailed =
         record.feedback?.error === "agent_remediation_failed";
-      if (!classification && !rootCause && !remediationFailed) return null;
+      if (!classification && !remediationFailed) return null;
       const step = timelineStep(
         "Diagnosis and remediation attempt",
         record.feedback?.created_at,
@@ -862,25 +861,13 @@
       ));
       metadata.append(metaItem("Processing error", record.feedback?.error || "None"));
       step.append(metadata);
-      if (rootCause) {
-        step.append(evidence("Root cause", rootCause));
-      }
-      if (issue?.sections?.suggested_fix) {
-        step.append(evidence("Suggested fix", issue.sections.suggested_fix));
-      }
-      if (issue?.sections?.validation) {
-        step.append(evidence(
-          "Candidate fix and validation attempt",
-          issue.sections.validation
-        ));
-      }
       if (remediationFailed && record.reasoning) {
         step.append(evidence("Agent report", record.reasoning));
       }
       return step;
     }
 
-    function renderIssue(record, issue, issueLookupError) {
+    function renderIssue(record) {
       if (!record.feedback?.issue_url) {
         if (!record.feedback) return null;
         if (record.feedback.status === "failed") return null;
@@ -904,48 +891,21 @@
 
       const step = timelineStep(
         "Remediation issue",
-        issue?.created_at || record.feedback.created_at,
-        statusBadge(issue?.state || "pending_validation")
+        record.feedback.created_at,
+        statusBadge(record.feedback.status)
       );
       const url = record.feedback.issue_url;
       if (isAllowedIssueUrl(url)) {
-        const link = node("a", "", issue?.title || "Open remediation issue");
+        const link = node("a", "", "Open remediation issue");
         link.href = url;
         link.target = "_blank";
         link.rel = "noopener noreferrer";
         step.append(link);
       }
-      if (issueLookupError) {
-        step.append(evidence("Issue lookup", issueLookupError));
-        return step;
-      }
-      if (!issue) return step;
-
-      const metadata = node("div", "meta-grid");
-      metadata.append(metaItem("Issue state", label(issue.state)));
-      metadata.append(metaItem("Updated", formatDate(issue.updated_at)));
-      metadata.append(metaItem("Closed", formatDate(issue.closed_at)));
-      step.append(metadata);
-      if (issue.labels.length) {
-        const labels = node("div", "labels");
-        for (const value of issue.labels) {
-          labels.append(node("span", "label-chip", value));
-        }
-        step.append(labels);
-      }
-      if (issue.sections.description) {
-        step.append(evidence("Problem description", issue.sections.description));
-      }
-      if (issue.sections.expected_behavior) {
-        step.append(evidence("Expected behavior", issue.sections.expected_behavior));
-      }
-      if (!issue.sections.description && !issue.sections.expected_behavior && issue.body) {
-        step.append(evidence("Issue body", issue.body));
-      }
       return step;
     }
 
-    function renderValidation(record, issue) {
+    function renderValidation(record) {
       const feedback = record.feedback;
       if (!feedback || (
         !feedback.validation_reasoning
@@ -962,9 +922,7 @@
       if (waiting) {
         step.append(evidence(
           "Next step",
-          issue?.state === "closed"
-            ? "The issue is closed; the scheduled Evolution job will validate the fix."
-            : "Validation starts after the remediation issue is closed."
+          "Validation starts after the remediation issue is closed."
         ));
       } else if (feedback.validation_reasoning) {
         step.append(evidence("Validation result", feedback.validation_reasoning));
@@ -990,11 +948,11 @@
       const timeline = node("div", "timeline");
       timeline.append(renderConversation(detail.messages, record));
       timeline.append(renderAssessment(record));
-      const diagnosis = renderDiagnosis(record, detail.issue);
+      const diagnosis = renderDiagnosis(record);
       if (diagnosis) timeline.append(diagnosis);
-      const issue = renderIssue(record, detail.issue, detail.issue_lookup_error);
+      const issue = renderIssue(record);
       if (issue) timeline.append(issue);
-      const validation = renderValidation(record, detail.issue);
+      const validation = renderValidation(record);
       if (validation) timeline.append(validation);
 
       elements.detailsContent.replaceChildren(overview, timeline);

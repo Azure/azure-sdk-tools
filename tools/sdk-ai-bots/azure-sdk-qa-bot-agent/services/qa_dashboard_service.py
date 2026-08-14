@@ -4,13 +4,9 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timezone
-import logging
-import re
 from typing import Any
 
-import httpx
 import yaml
-from azure.core.exceptions import AzureError
 
 from config import app_config
 from models.conversation import (
@@ -22,8 +18,6 @@ from models.conversation import (
 from models.qa_dashboard import (
     DashboardChannel,
     DashboardConversationMessage,
-    DashboardIssue,
-    DashboardIssueSections,
     DashboardUserFeedback,
     FeedbackStatusFilter,
     QADashboardDetail,
@@ -32,7 +26,6 @@ from models.qa_dashboard import (
 )
 from models.qa_record import QARecord, QAStatus
 from services.conversation_service import ConversationService
-from tools.github_mcp_tools import get_github_issue_details
 from utils.azure_cosmosdb import (
     get_conversation_message_container,
     get_qa_records_container,
@@ -43,17 +36,6 @@ from utils.text_util import preprocess_html_content
 
 _PAGE_SIZE = 50
 _TITLE_LIMIT = 140
-_ISSUE_SECTION_RE = re.compile(r"^###\s+(.+?)\s*$", re.MULTILINE)
-_ISSUE_SECTION_FIELDS = {
-    "description": "description",
-    "feedback": "feedback",
-    "root cause": "root_cause",
-    "suggested fix": "suggested_fix",
-    "validation": "validation",
-    "expected behavior": "expected_behavior",
-}
-
-logger = logging.getLogger(__name__)
 
 
 class QADashboardService:
@@ -205,38 +187,9 @@ class QADashboardService:
             channel_names=channel_names,
         )
 
-        issue = None
-        issue_lookup_error = None
-        issue_url = record.feedback.issue_url if record.feedback else None
-        if issue_url:
-            try:
-                issue_details = await get_github_issue_details(issue_url)
-                issue = DashboardIssue(
-                    url=issue_details.url,
-                    title=issue_details.title,
-                    state=issue_details.state,
-                    labels=issue_details.labels,
-                    created_at=issue_details.created_at,
-                    updated_at=issue_details.updated_at,
-                    closed_at=issue_details.closed_at,
-                    sections=_parse_issue_sections(issue_details.body),
-                    body=issue_details.body,
-                )
-            except (
-                AzureError,
-                httpx.HTTPError,
-                KeyError,
-                RuntimeError,
-                ValueError,
-            ):
-                logger.exception("Failed to read dashboard issue %s", issue_url)
-                issue_lookup_error = "Issue details are temporarily unavailable."
-
         return QADashboardDetail(
             record=dashboard_record,
             messages=_dashboard_messages(messages, feedbacks),
-            issue=issue,
-            issue_lookup_error=issue_lookup_error,
         )
 
     @staticmethod
@@ -455,22 +408,6 @@ def _feedback_by_message(
             )
         )
     return result
-
-
-def _parse_issue_sections(body: str | None) -> DashboardIssueSections:
-    if not body:
-        return DashboardIssueSections()
-    matches = list(_ISSUE_SECTION_RE.finditer(body))
-    values: dict[str, str] = {}
-    for index, match in enumerate(matches):
-        field = _ISSUE_SECTION_FIELDS.get(match.group(1).strip().casefold())
-        if not field:
-            continue
-        end = matches[index + 1].start() if index + 1 < len(matches) else len(body)
-        value = body[match.end() : end].strip()
-        if value:
-            values[field] = value
-    return DashboardIssueSections(**values)
 
 
 def _as_utc_iso(value: datetime) -> str:

@@ -26,7 +26,6 @@ from models.qa_dashboard import (
 )
 from models.qa_record import FeedbackState, FeedbackStatus, QARecord, QAStatus
 from services.qa_dashboard_service import QADashboardService
-from tools.github_mcp_tools import GitHubIssueDetails
 
 
 class _FakeContainer:
@@ -267,21 +266,6 @@ async def test_get_record_detail_builds_timeline() -> None:
         get_messages_by_conversation_id=AsyncMock(return_value=messages),
         get_feedback_by_conversation_id=AsyncMock(return_value=feedbacks),
     )
-    issue = GitHubIssueDetails(
-        url="https://github.com/Azure/azure-sdk-pr/issues/123",
-        title="Fix outdated guidance",
-        body=(
-            "### Root cause\nThe document is stale.\n\n"
-            "### Suggested Fix\nUpdate the version guidance.\n\n"
-            "### Validation\nCandidate answer passed.\n\n"
-            "### Expected behavior\nUse the current version."
-        ),
-        state="open",
-        labels=["feedback-agent"],
-        created_at=datetime(2026, 8, 7, 11, tzinfo=timezone.utc),
-        updated_at=datetime(2026, 8, 7, 12, tzinfo=timezone.utc),
-    )
-
     with (
         patch(
             "services.qa_dashboard_service.read_qa_record",
@@ -290,10 +274,6 @@ async def test_get_record_detail_builds_timeline() -> None:
         patch(
             "services.qa_dashboard_service._load_channel_names",
             new=AsyncMock(return_value={"channel-a": "Channel A"}),
-        ),
-        patch(
-            "services.qa_dashboard_service.get_github_issue_details",
-            new=AsyncMock(return_value=issue),
         ),
     ):
         detail = await QADashboardService(
@@ -307,10 +287,11 @@ async def test_get_record_detail_builds_timeline() -> None:
     assert detail.record.conversation_title == "How do I fix this?"
     assert detail.record.channel_name == "Channel A"
     assert detail.messages[1].user_feedback[0].comment == "This is outdated."
-    assert detail.issue is not None
-    assert detail.issue.sections.root_cause == "The document is stale."
-    assert detail.issue.sections.suggested_fix == "Update the version guidance."
-    assert detail.issue.sections.validation == "Candidate answer passed."
+    assert detail.record.feedback is not None
+    assert (
+        detail.record.feedback.issue_url
+        == "https://github.com/Azure/azure-sdk-pr/issues/123"
+    )
 
 
 @pytest.mark.asyncio
@@ -410,4 +391,6 @@ def test_dashboard_html_uses_text_content_for_record_data() -> None:
     assert "DOMPurify.sanitize" in html
     assert "hljs.highlightElement" in html
     assert "AI answer assessment" in html
-    assert "Candidate fix and validation attempt" in html
+    assert "Open remediation issue" in html
+    assert "Issue details are temporarily unavailable." not in html
+    assert "detail.issue" not in html

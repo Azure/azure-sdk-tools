@@ -56,38 +56,11 @@ class DashboardConversationMessage(BaseModel):
     user_feedback: list[DashboardUserFeedback] = Field(default_factory=list)
 
 
-class DashboardIssueSections(BaseModel):
-    """Structured sections extracted from an Evolution Agent issue."""
-
-    description: str | None = None
-    feedback: str | None = None
-    root_cause: str | None = None
-    suggested_fix: str | None = None
-    validation: str | None = None
-    expected_behavior: str | None = None
-
-
-class DashboardIssue(BaseModel):
-    """Live remediation issue metadata."""
-
-    url: str
-    title: str
-    state: str
-    labels: list[str] = Field(default_factory=list)
-    created_at: datetime
-    updated_at: datetime
-    closed_at: datetime | None = None
-    sections: DashboardIssueSections
-    body: str | None = None
-
-
 class QADashboardDetail(BaseModel):
     """Complete on-demand view of one conversation and evolution run."""
 
     record: QADashboardRecord
     messages: list[DashboardConversationMessage]
-    issue: DashboardIssue | None = None
-    issue_lookup_error: str | None = None
 
 
 class QARecordPage(BaseModel):
@@ -103,8 +76,6 @@ class QARecordPage(BaseModel):
 __all__ = [
     "DashboardChannel",
     "DashboardConversationMessage",
-    "DashboardIssue",
-    "DashboardIssueSections",
     "DashboardUserFeedback",
     "FeedbackStatusFilter",
     "QADashboardDetail",

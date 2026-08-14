@@ -33,8 +33,8 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ProductOnboarding
         [JsonPropertyName("needs_sdk")]
         public bool NeedsSDK { get; set; }
 
-        [JsonPropertyName("date_plane")]
-        public DataPlaneApplicability DatePlane { get; set; } = DataPlaneApplicability.Unknown;
+        [JsonPropertyName("data_plane")]
+        public DataPlaneApplicability DataPlane { get; set; } = DataPlaneApplicability.Unknown;
 
         [JsonPropertyName("management_plane")]
         public ManagementPlaneApplicability ManagementPlane { get; set; } = ManagementPlaneApplicability.Unknown;

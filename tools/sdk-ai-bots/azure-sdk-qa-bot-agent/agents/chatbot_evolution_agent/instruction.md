@@ -53,13 +53,23 @@ Follow these steps in order.
 3. **Pin the question and decide whether the answer has a problem.** Read
    the whole transcript, not just the last
    message — weight follow-ups, rephrasings, and any expert correction.
-   When an expert corrected the bot, treat the expert's message as ground
-  truth and work backward to what the bot missed. Extract the correction,
-  the claimed knowledge gap, and its supporting references. Verify those
-  claims against the referenced evidence, then use the verified gap as the
-  first KB hypothesis and the referenced owner as source-selection evidence.
+  The first non-bot sender is the original poster; treat a later non-bot
+  sender with a different name as an expert even though both messages have
+  role `user`. These expert problem signals are conclusive:
+  - the expert explicitly says the answer is wrong, incomplete, or misleading;
+  - the expert contradicts the answer or supplies a materially different answer;
+  - the expert says documentation must be added, clarified, or improved so the
+    rule or workflow is discoverable.
+  After any of these signals, the answer has a real problem and you **must not**
+  return `no_issue`. A documentation-gap signal remains a KB defect even when
+  the bot happened to give usable advice for this one case. Treat the expert's
+  message as ground truth and work backward to what the bot or KB missed.
+  Retrieve evidence to classify and remediate the problem; do not use retrieved
+  evidence to overrule or cancel the explicit expert signal. Extract the
+  correction, the claimed knowledge gap, and its supporting references, then
+  use them as the first KB hypothesis and source-selection evidence.
   **Use the user's own
-   `user_feedback` to locate the problem**: a 👎 with a comment or reason
+  `user_feedback` to locate the problem**: a 👎 with a comment or reason
    tags points directly at what the user found wrong (wrong/outdated,
    incomplete, off-topic, ...) — treat it as a primary signal for which bot
    turn to analyze and what to look for; a 👍 marks an answer the user

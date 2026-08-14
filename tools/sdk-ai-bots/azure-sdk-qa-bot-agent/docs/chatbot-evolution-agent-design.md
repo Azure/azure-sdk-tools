@@ -9,7 +9,7 @@ We are introducing a **Chatbot Evolution Agent** — a new hosted agent in the F
 | Signal | Source | Description |
 | --- | --- | --- |
 | **Explicit** | User feedback card (`reaction == bad`) | User clicked thumbs-down on a bot answer; captured in the thread and surfaced by `fetch_conversation`. |
-| **Implicit** | Expert reply in the thread | A human expert (non-author, non-bot) replies in a thread the bot has already answered — a strong implicit "the bot didn't fully solve it." |
+| **Implicit** | Expert reply in the thread | A human expert (non-author, non-bot) replies after the bot. An explicit correction or request to add, clarify, or improve documentation is a conclusive problem signal that cannot be overridden by the Agent's independent assessment. |
 
 ## 2 Design
 

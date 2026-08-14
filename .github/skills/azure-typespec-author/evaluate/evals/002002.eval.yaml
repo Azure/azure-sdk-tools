@@ -20,7 +20,7 @@ stimuli:
       suite: "armtemplate"
       mode: "trigger"
     prompt: |
-      add an extension resource named asset
+      Add an extension resource named Asset in API version `2024-10-01-preview` that can be attached to any ARM resource. Its properties should consist of an optional, read-only provisioning state, and it should support standard create, get, update, delete, and list operations. I have provided all required decisions, so please implement and validate the change according to the TypeSpec Azure design guidelines without pausing for a separate confirmation.
     environment: &shared_environment
       files:
         - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -59,7 +59,7 @@ stimuli:
       suite: "armtemplate"
       mode: "forced"
     prompt: |
-      @azure-typespec-author add an extension resource named asset
+      @azure-typespec-author Add an extension resource named Asset in API version `2024-10-01-preview` that can be attached to any ARM resource. Its properties should consist of an optional, read-only provisioning state, and it should support standard create, get, update, delete, and list operations. I have provided all required decisions, so please implement and validate the change according to the TypeSpec Azure design guidelines without pausing for a separate confirmation.
     environment: *shared_environment
     graders:
       - type: "tool-calls"
@@ -98,7 +98,8 @@ stimuli:
     tags:
       suite: "armtemplate"
       mode: "no-skill"
-    prompt: "add an extension resource named asset"
+    prompt: |
+      Add an extension resource named Asset in API version `2024-10-01-preview` that can be attached to any ARM resource. Its properties should consist of an optional, read-only provisioning state, and it should support standard create, get, update, delete, and list operations. I have provided all required decisions, so please implement and validate the change according to the TypeSpec Azure design guidelines without pausing for a separate confirmation.
     environment: *shared_environment
     graders:
       - type: "tool-calls"

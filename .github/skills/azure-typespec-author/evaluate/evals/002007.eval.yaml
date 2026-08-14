@@ -20,7 +20,7 @@ stimuli:
       suite: "armtemplate"
       mode: "trigger"
     prompt: |
-      Add an additional POST action called "/notify" to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). Ensure the definition meets TypeSpec Azure design guidelines.
+      In API version `2024-10-01-preview`, add a synchronous POST action called "/notify" to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). I have provided all required decisions, so please implement and validate the change according to the TypeSpec Azure design guidelines without pausing for a separate confirmation.
     environment: &shared_environment
       files:
         - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -63,7 +63,7 @@ stimuli:
       suite: "armtemplate"
       mode: "forced"
     prompt: |
-      @azure-typespec-author Add an additional POST action called "/notify" to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). Ensure the definition meets TypeSpec Azure design guidelines.
+      @azure-typespec-author In API version `2024-10-01-preview`, add a synchronous POST action called "/notify" to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). I have provided all required decisions, so please implement and validate the change according to the TypeSpec Azure design guidelines without pausing for a separate confirmation.
     environment: *shared_environment
     graders:
       - type: "tool-calls"
@@ -140,7 +140,8 @@ stimuli:
     tags:
       suite: "armtemplate"
       mode: "no-skill"
-    prompt: 'Add an additional POST action called "/notify" to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). Ensure the definition meets TypeSpec Azure design guidelines.'
+    prompt: |
+      In API version `2024-10-01-preview`, add a synchronous POST action called "/notify" to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). I have provided all required decisions, so please implement and validate the change according to the TypeSpec Azure design guidelines without pausing for a separate confirmation.
     environment: *shared_environment
     graders:
       - type: "tool-calls"

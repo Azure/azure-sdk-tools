@@ -20,7 +20,7 @@ stimuli:
       suite: "armtemplate"
       mode: "trigger"
     prompt: |
-      Create a new "AddressResource" child resource under the parent resource "Employee". Address properties: street 1(optional), street 2(optional), city(optional), state(optional), postal code(optional), country(optional), and a read-only provisioningState(optional). Ensure the definition meets TypeSpec Azure design guidelines.
+      Create a new "AddressResource" child resource under the parent resource "Employee" in API version `2024-10-01-preview`, with standard create, get, update, delete, and list-by-parent operations. Address properties: street 1(optional), street 2(optional), city(optional), state(optional), postal code(optional), country(optional), and a read-only provisioningState(optional). I have provided all required decisions, so please implement and validate the change according to the TypeSpec Azure design guidelines without pausing for a separate confirmation.
     environment: &shared_environment
       files:
         - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -63,7 +63,7 @@ stimuli:
       suite: "armtemplate"
       mode: "forced"
     prompt: |
-      @azure-typespec-author Create a new "AddressResource" child resource under the parent resource "Employee". Address properties: street 1(optional), street 2(optional), city(optional), state(optional), postal code(optional), country(optional), and a read-only provisioningState(optional). Ensure the definition meets TypeSpec Azure design guidelines.
+      @azure-typespec-author Create a new "AddressResource" child resource under the parent resource "Employee" in API version `2024-10-01-preview`, with standard create, get, update, delete, and list-by-parent operations. Address properties: street 1(optional), street 2(optional), city(optional), state(optional), postal code(optional), country(optional), and a read-only provisioningState(optional). I have provided all required decisions, so please implement and validate the change according to the TypeSpec Azure design guidelines without pausing for a separate confirmation.
     environment: *shared_environment
     graders:
       - type: "tool-calls"
@@ -154,7 +154,8 @@ stimuli:
     tags:
       suite: "armtemplate"
       mode: "no-skill"
-    prompt: 'Create a new "AddressResource" child resource under the parent resource "Employee". Address properties: street 1(optional), street 2(optional), city(optional), state(optional), postal code(optional), country(optional), and a read-only provisioningState(optional). Ensure the definition meets TypeSpec Azure design guidelines.'
+    prompt: |
+      Create a new "AddressResource" child resource under the parent resource "Employee" in API version `2024-10-01-preview`, with standard create, get, update, delete, and list-by-parent operations. Address properties: street 1(optional), street 2(optional), city(optional), state(optional), postal code(optional), country(optional), and a read-only provisioningState(optional). I have provided all required decisions, so please implement and validate the change according to the TypeSpec Azure design guidelines without pausing for a separate confirmation.
     environment: *shared_environment
     graders:
       - type: "tool-calls"

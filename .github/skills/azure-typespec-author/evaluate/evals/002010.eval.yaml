@@ -20,7 +20,7 @@ stimuli:
       suite: "armtemplate"
       mode: "trigger"
     prompt: |
-      In the Widget project, add a sync operation exportData for employee resource.
+      In the Widget project, add a synchronous exportData operation for the Employee resource in API version `2024-10-01-preview`. The operation should take no request body and return an optional exported data string. I have provided all required decisions, so please implement and validate the change according to the TypeSpec Azure design guidelines without pausing for a separate confirmation.
     environment: &shared_environment
       files:
         - src: ../fixtures/002010-arm-action-sync-operation/employee.tsp
@@ -59,7 +59,7 @@ stimuli:
       suite: "armtemplate"
       mode: "forced"
     prompt: |
-      @azure-typespec-author In the Widget project, add a sync operation exportData for employee resource.
+      @azure-typespec-author In the Widget project, add a synchronous exportData operation for the Employee resource in API version `2024-10-01-preview`. The operation should take no request body and return an optional exported data string. I have provided all required decisions, so please implement and validate the change according to the TypeSpec Azure design guidelines without pausing for a separate confirmation.
     environment: *shared_environment
     graders:
       - type: "tool-calls"
@@ -90,7 +90,8 @@ stimuli:
     tags:
       suite: "armtemplate"
       mode: "no-skill"
-    prompt: "In the Widget project, add a sync operation exportData for employee resource."
+    prompt: |
+      In the Widget project, add a synchronous exportData operation for the Employee resource in API version `2024-10-01-preview`. The operation should take no request body and return an optional exported data string. I have provided all required decisions, so please implement and validate the change according to the TypeSpec Azure design guidelines without pausing for a separate confirmation.
     environment: *shared_environment
     graders:
       - type: "tool-calls"

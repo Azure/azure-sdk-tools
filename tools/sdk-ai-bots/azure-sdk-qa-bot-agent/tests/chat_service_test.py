@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from unittest.mock import patch
 
 _PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
 from models.chat import ChatRequest, Message as ChatMessage
+from config.tenant_config import TenantID, get_tenant_config
 from services.chat_service import ChatService
 
 
@@ -72,3 +74,20 @@ def test_chat_service_returns_none_when_user_id_empty() -> None:
         message=ChatMessage(role="user", content="hello", user_id="  "),
     )
     assert service._resolve_memory_scope(whitespace_id) is None
+
+
+def test_chat_service_resolves_agent_by_tenant() -> None:
+    settings = {
+        "AI_FOUNDRY_AGENT_NAME": "sdk-agent",
+        "AI_FOUNDRY_AGENT_VERSION": "3",
+        "AZURE_MCP_SERVER_AGENT_NAME": "mcp-agent",
+        "AZURE_MCP_SERVER_AGENT_VERSION": "7",
+    }
+
+    with patch("services.chat_service.cfg", side_effect=settings.get):
+        assert ChatService._resolve_agent_configuration(
+            get_tenant_config(TenantID.TYPESPEC_CHANNEL_QA_BOT)
+        ) == ("sdk-agent", "3")
+        assert ChatService._resolve_agent_configuration(
+            get_tenant_config(TenantID.AZURE_MCP_SERVER)
+        ) == ("mcp-agent", "7")

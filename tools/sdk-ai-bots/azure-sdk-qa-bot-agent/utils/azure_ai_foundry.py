@@ -24,7 +24,7 @@ COMPACTION_TARGET_TOKENS = 80000
 
 _agent_client: FoundryChatClient | None = None
 _project_client: AIProjectClient | None = None
-_openai_client: AsyncOpenAI | None = None
+_openai_clients: dict[str, AsyncOpenAI] = {}
 _embedding_client: AsyncAzureOpenAI | None = None
 
 
@@ -61,14 +61,15 @@ def get_project_client() -> AIProjectClient:
     return _project_client
 
 
-def get_openai_client() -> AsyncOpenAI:
-    """Return the shared OpenAI client (created once on first call)."""
-    global _openai_client
-    if _openai_client is None:
-        agent_name = cfg("AI_FOUNDRY_AGENT_NAME", "azure-sdk-chat-agent")
+def get_openai_client(agent_name: str) -> AsyncOpenAI:
+    """Return the OpenAI client for a hosted agent."""
+    resolved_name = agent_name
+    if resolved_name not in _openai_clients:
         # Hosted agents in refreshed preview must be called via per-agent endpoint.
-        _openai_client = get_project_client().get_openai_client(agent_name=agent_name)
-    return _openai_client
+        _openai_clients[resolved_name] = get_project_client().get_openai_client(
+            agent_name=resolved_name
+        )
+    return _openai_clients[resolved_name]
 
 
 def get_embedding_client() -> AsyncAzureOpenAI:
@@ -116,13 +117,13 @@ def _get_token_provider():
 
 async def close_clients() -> None:
     """Close all clients.  Safe to call even if never created."""
-    global _agent_client, _project_client, _openai_client, _embedding_client
+    global _agent_client, _project_client, _embedding_client
     if _embedding_client is not None:
         await _embedding_client.close()
         _embedding_client = None
-    if _openai_client is not None:
-        await _openai_client.close()
-        _openai_client = None
+    for client in _openai_clients.values():
+        await client.close()
+    _openai_clients.clear()
     if _agent_client is not None:
         _agent_client = None
     if _project_client is not None:

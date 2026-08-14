@@ -1,14 +1,15 @@
 # Release History
 
-## 0.6.35 (Unreleased)
+## 0.6.35 (2026-08-14)
 
 ### Features Added
 
+- Added the CLI-only `package mark-released` command to mark released packages independently in API Review Hub and APIView.
+
 ### Breaking Changes
 
-### Bugs Fixed
-
-### Other Changes
+- Moved `api-review get-approval-status` to `package get-approval-status` and renamed its MCP tool from `azsdk_apireview_get_approval_status` to `azsdk_package_get_approval_status`.
+- Removed the unused `apiview create-ci-revision` and `apiview create-pull-request-revision` commands.
 
 ## 0.6.34 (2026-08-07)
 

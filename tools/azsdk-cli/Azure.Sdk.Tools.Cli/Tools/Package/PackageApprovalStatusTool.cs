@@ -4,6 +4,7 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.ApiReviewHub;
 using Azure.Sdk.Tools.Cli.Services.ApiReviewHub;
+using Azure.Sdk.Tools.Cli.Tools.ApiReviewHub;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using ModelContextProtocol.Server;
 
@@ -14,7 +15,7 @@ public class PackageApprovalStatusTool(
     IPackageReleaseStatusService packageReleaseStatusService,
     ILogger<PackageApprovalStatusTool> logger) : MCPTool
 {
-    private static readonly string[] SupportedLanguages = ["python", "java", "csharp", "js", "go", "cpp", "swift", "rust"];
+    private static readonly string[] SupportedLanguages = [.. ApiReviewHubTool.DefaultTargetRepos.Keys.Order(StringComparer.OrdinalIgnoreCase)];
     private const string GetApprovalStatusToolName = "azsdk_package_get_approval_status";
     private const string DefaultEndpoint = "https://api-review-hub.azurewebsites.net";
 

@@ -15,7 +15,7 @@ public class ApiReviewHubTool(
     IApiReviewHubService apiReviewHubService,
     ILogger<ApiReviewHubTool> logger) : MCPMultiCommandTool
 {
-    private static readonly IReadOnlyDictionary<string, string> DefaultTargetRepos = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    internal static readonly IReadOnlyDictionary<string, string> DefaultTargetRepos = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
     {
         ["python"] = "azure-sdk-for-python",
         ["java"] = "azure-sdk-for-java",

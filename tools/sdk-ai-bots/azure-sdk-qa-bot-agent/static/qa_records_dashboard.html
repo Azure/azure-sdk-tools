@@ -607,7 +607,7 @@
       if (record.qa_status === "ongoing") return "Ongoing";
       if (record.qa_status === "finished") return "Bot answered correctly";
       if (record.qa_status === "failed" && record.verdict === "incorrect") {
-        return "Bot answered incorrectly";
+        return "Needs evolution";
       }
       if (record.qa_status === "failed") return "Bot answer assessment failed";
       return label(record.qa_status);

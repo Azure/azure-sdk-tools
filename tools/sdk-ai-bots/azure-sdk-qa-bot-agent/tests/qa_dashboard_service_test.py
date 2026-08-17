@@ -373,7 +373,8 @@ def test_dashboard_html_uses_text_content_for_record_data() -> None:
     assert "<th>Answer assessment</th>" not in html
     assert "<th>Root cause</th>" not in html
     assert "Bot answered correctly" in html
-    assert "Bot answered incorrectly" in html
+    assert "Needs evolution" in html
+    assert "Bot answered incorrectly" not in html
     assert "Bot answer assessment failed" in html
     assert "Failed (incorrect or unassessed)" in html
     assert ".status-assessment_failed" in html

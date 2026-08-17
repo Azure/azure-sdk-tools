@@ -202,7 +202,7 @@ steps:
           $destPath = if ($patternDir) { Join-Path $repoPath $patternDir } else { $repoPath }
           New-Item -ItemType Directory -Force -ErrorAction Ignore -Path $destPath
 
-          Remove-Item -v -r -ErrorAction Ignore "${repoPath}/${filePattern}"
+          Remove-Item -v -r -Force -ErrorAction Ignore "${repoPath}/${filePattern}"
           Copy-Item -v -r `
             "$(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/${{ parameters.DirectoryToSync }}/${filePattern}" `
             $destPath

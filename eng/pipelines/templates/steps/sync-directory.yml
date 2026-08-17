@@ -216,7 +216,7 @@ steps:
         RepoName: ${{ repo.RepoName }}
         RepoOwner: ${{ repo.RepoOwner }}
         BaseBranchName: ${{ parameters.BaseBranchName }}
-        PRBranchName: sync-${{ parameters.DirectoryToSync }}
+        PRBranchName: ${{ parameters.UpstreamBranchName }}
         CommitMsg: ${{ parameters.CommitMessage }}
         PRTitle: ${{ parameters.CommitMessage }}
         PushArgs: -f

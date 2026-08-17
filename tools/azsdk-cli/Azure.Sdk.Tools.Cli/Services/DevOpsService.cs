@@ -1595,6 +1595,8 @@ namespace Azure.Sdk.Tools.Cli.Services
                 APIViewStatus = GetWorkItemValue(workItem, "Custom.APIReviewStatus"),
                 ApiViewValidationDetails = GetWorkItemValue(workItem, "Custom.APIReviewStatusDetails"),
                 PendingApiReviews = GetWorkItemValue(workItem, "Custom.PendingAPIReviews"),
+                PackageNameStatus = GetWorkItemValue(workItem, "Custom.PackageNameApprovalStatus"),
+                PackageNameApprovalDetails = GetWorkItemValue(workItem, "Custom.PackageNameApprovalDetails"),
                 TypeSpecProject = GetWorkItemValue(workItem, "Custom.SpecProjectPath"),
                 PipelineDefinitionUrl = GetWorkItemValue(workItem, "Custom.PipelineDefinition"),
                 LatestPipelineRun = GetWorkItemValue(workItem, "Custom.LatestPipelineRun")

@@ -279,6 +279,7 @@ describe("fetchPackageWorkItems", () => {
                       "Custom.Language": "Python",
                       "Custom.PackageVersion": "1.2.0",
                       "Custom.APIReviewStatus": "Approved",
+                      "Custom.PackageNameApprovalStatus": "Approved",
                       "System.ChangedDate": "2024-06-01T00:00:00Z",
                     },
                   },
@@ -298,6 +299,7 @@ describe("fetchPackageWorkItems", () => {
     const entry = result.get("azure-core|python");
     expect(entry.version).toBe("1.2.0");
     expect(entry.apiReviewStatus).toBe("Approved");
+    expect(entry.namespaceApproval).toBe("Approved");
   });
 
   test("normalizes language key to lowercase for Go packages stored as 'go' in ADO", async () => {
@@ -327,6 +329,7 @@ describe("fetchPackageWorkItems", () => {
                       "Custom.Language": "go",
                       "Custom.PackageVersion": "1.5.0",
                       "Custom.APIReviewStatus": "Approved",
+                      "Custom.PackageNameApprovalStatus": "Approved",
                       "System.ChangedDate": "2024-06-01T00:00:00Z",
                     },
                   },

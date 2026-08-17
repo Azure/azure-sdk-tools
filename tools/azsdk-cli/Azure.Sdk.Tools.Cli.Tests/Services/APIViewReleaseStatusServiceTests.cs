@@ -17,11 +17,11 @@ public class APIViewReleaseStatusServiceTests
         service = new APIViewReleaseStatusService(apiViewHttpServiceMock.Object, new TestLogger<APIViewReleaseStatusService>());
     }
 
-    [TestCase(200, true, "approved", "python", "language=Python", "1.0.0", "1.0.0")]
-    [TestCase(201, false, "apiApprovalPending", "python", "language=Python", "4.12.0b3", "4.12.0b3")]
-    [TestCase(201, false, "apiApprovalPending", "csharp", "language=C%23", "4.12.0-beta.3", "4.12.0-beta.3")]
-    [TestCase(202, false, "apiApprovalPending", "go", "language=Go", "1.0.0", "1.0.0")]
-    public async Task GetApprovalStatusAsync_MapsAPIViewStatusCodes(int statusCode, bool isApproved, string reason, string language, string expectedLanguageQuery, string packageVersion, string expectedPackageVersion)
+    [TestCase(200, true, true, "approved", "python", "language=Python", "1.0.0", "1.0.0")]
+    [TestCase(201, false, true, "packageNameApproved", "python", "language=Python", "4.12.0b3", "4.12.0b3")]
+    [TestCase(201, false, true, "packageNameApproved", "csharp", "language=C%23", "4.12.0-beta.3", "4.12.0-beta.3")]
+    [TestCase(202, false, false, "packageNamePending", "go", "language=Go", "1.0.0", "1.0.0")]
+    public async Task GetApprovalStatusAsync_MapsAPIViewStatusCodes(int statusCode, bool isApproved, bool packageNameApproved, string reason, string language, string expectedLanguageQuery, string packageVersion, string expectedPackageVersion)
     {
         string? capturedEndpoint = null;
         apiViewHttpServiceMock
@@ -36,6 +36,7 @@ public class APIViewReleaseStatusServiceTests
 
         Assert.That(result.StatusCode, Is.EqualTo(statusCode));
         Assert.That(result.IsApproved, Is.EqualTo(isApproved));
+        Assert.That(result.PackageNameApproved, Is.EqualTo(packageNameApproved));
         Assert.That(result.Reason, Is.EqualTo(reason));
         Assert.That(capturedEndpoint, Does.Contain(expectedLanguageQuery));
         Assert.That(capturedEndpoint, Does.Contain("packageName=Azure.Test"));

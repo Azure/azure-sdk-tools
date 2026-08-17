@@ -54,6 +54,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
                     WorkItemId = 0,
                     changeLogStatus = "Approved",
                     APIViewStatus = ConfiguredAPIViewStatus,
+                    PackageNameStatus = "Approved",
                     PackageRepoPath = "template",
                     LatestPipelineRun = "https://dev.azure.com/fake-org/fake-project/_build/results?buildId=1",
                     LatestPipelineStatus = "Succeeded",

@@ -47,6 +47,7 @@ public class PackageReleaseStatusService(
             result.ApiView = new ApiViewReleaseStatusResult
             {
                 IsApproved = false,
+                PackageNameApproved = false,
                 Reason = "languageNotSupported",
                 Details = [$"APIView does not support {language} for release gating."]
             };
@@ -85,6 +86,7 @@ public class PackageReleaseStatusService(
                 {
                     StatusCode = apiViewStatusCode,
                     IsApproved = false,
+                    PackageNameApproved = false,
                     Reason = "reviewNotFound",
                     Details = [$"APIView review is not found for {packageName} {packageVersion}."]
                 };

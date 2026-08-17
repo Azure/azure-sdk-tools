@@ -181,6 +181,7 @@ async function enrichPackageData(plans) {
       if (pkgData) {
         langData.pkgVersion = pkgData.version;
         if (!isReleased) {
+          langData.namespaceApproval = pkgData.namespaceApproval;
           if (isGAVersion(pkgData.version))
             langData.apiReviewStatus = pkgData.apiReviewStatus;
         }

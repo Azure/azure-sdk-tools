@@ -169,6 +169,9 @@ public class ApiViewReleaseStatusResult
     [JsonPropertyName("isApproved")]
     public bool IsApproved { get; set; }
 
+    [JsonPropertyName("packageNameApproved")]
+    public bool PackageNameApproved { get; set; }
+
     [JsonPropertyName("reason")]
     public string Reason { get; set; } = string.Empty;
 

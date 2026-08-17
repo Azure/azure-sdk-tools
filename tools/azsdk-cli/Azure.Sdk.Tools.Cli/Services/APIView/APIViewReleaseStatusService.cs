@@ -34,6 +34,7 @@ public class APIViewReleaseStatusService(
             (int)HttpStatusCode.OK => new ApiViewReleaseStatusResult
             {
                 IsApproved = true,
+                PackageNameApproved = true,
                 StatusCode = statusCode,
                 Reason = "approved",
                 Details = [$"APIView reports API approval for {packageName} {packageVersion}."]
@@ -41,16 +42,18 @@ public class APIViewReleaseStatusService(
             (int)HttpStatusCode.Created => new ApiViewReleaseStatusResult
             {
                 IsApproved = false,
+                PackageNameApproved = true,
                 StatusCode = statusCode,
-                Reason = "apiApprovalPending",
-                Details = [$"APIView reports API approval is still pending for {packageName} {packageVersion}."]
+                Reason = "packageNameApproved",
+                Details = [$"APIView reports package-name approval, but API approval is still pending for {packageName} {packageVersion}."]
             },
             (int)HttpStatusCode.Accepted => new ApiViewReleaseStatusResult
             {
                 IsApproved = false,
+                PackageNameApproved = false,
                 StatusCode = statusCode,
-                Reason = "apiApprovalPending",
-                Details = [$"APIView reports API approval is pending for {packageName} {packageVersion}."]
+                Reason = "packageNamePending",
+                Details = [$"APIView reports neither API approval nor package-name approval for {packageName} {packageVersion}."]
             },
             _ => throw new InvalidOperationException($"Unexpected APIView status code {statusCode} for {packageName} {packageVersion}.")
         };

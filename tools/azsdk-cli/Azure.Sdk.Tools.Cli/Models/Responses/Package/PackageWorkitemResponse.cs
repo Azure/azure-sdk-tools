@@ -49,6 +49,19 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
         public string ApiViewUrl { get; set; } = string.Empty;
         [JsonPropertyName("pending_api_reviews")]
         public string PendingApiReviews { get; set; } = string.Empty;
+        [JsonPropertyName("is_package_name_approved")]
+        public bool IsPackageNameApproved
+        {
+            get
+            {
+                return PackageNameStatus.Equals("Approved") || PackageNameStatus.Equals("Not required");
+            }
+        }
+
+        [JsonPropertyName("package_name_status")]
+        public string PackageNameStatus { get; set; } = string.Empty;
+        [JsonPropertyName("package_name_approval_details")]
+        public string PackageNameApprovalDetails { get; set; } = string.Empty;
         [JsonIgnore(Condition = JsonIgnoreCondition.Always)]
         public List<SDKReleaseInfo> PlannedReleases = [];
         [JsonIgnore(Condition = JsonIgnoreCondition.Always)]
@@ -94,6 +107,9 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
             output.AppendLine($"### API View Validation Details: {ApiViewValidationDetails}");
             output.AppendLine($"### API View URL: {ApiViewUrl}");
             output.AppendLine($"### Pending API Reviews: {PendingApiReviews}");
+            output.AppendLine($"### Is Package PackageName Approved: {IsPackageNameApproved}");
+            output.AppendLine($"### Package PackageName Status: {PackageNameStatus}");
+            output.AppendLine($"### Package PackageName Approval Details: {PackageNameApprovalDetails}");
             output.AppendLine($"### Planned Release Date: {PlannedReleaseDate}");
             output.AppendLine($"### Is Package Ready for Release: {IsPackageReady}");
             output.AppendLine($"### Package Readiness Details: {PackageReadinessDetails}");

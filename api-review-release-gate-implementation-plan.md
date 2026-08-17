@@ -1,42 +1,41 @@
-# API Review Release Workflow Decomposition Plan
+# SDK Release Pipeline Update Plan
 
 ## Motivation
-API Review Hub must be integrated into the release process so approval and release state are tracked by the new system during the transition from APIView. The existing `Create-APIReview.ps1` is confusingly overloaded: despite its name, it creates revisions, evaluates release approval, and marks revisions as shipped. Splitting these responsibilities makes each pipeline step's purpose and stage placement explicit while allowing APIView compatibility to be retired independently.
+API Review Hub must be integrated into the release process so approval and release state are tracked by the new system, while maintaining compatability with APIView during the transition phase. When APIView is retired, the new new pipeline must continue to "just work".
 
-## Goal
-Replace pipeline use of the overloaded `Create-APIReview.ps1` with three focused scripts:
+## Current State
+The current release pipeline depends heavily on `Create-APIReview.ps1`. This script combines three independent responsibilities:
+
+- Uploading an artifact or token file to create an APIView revision.
+- Interpreting APIView responses to determine whether a package is approved.
+- Marking an APIView revision as shipped through the same upload path.
+
+The script is invoked through `eng/common/pipelines/templates/steps/create-apireview.yml` in both Build and release flows. 
+
+The problem is that this script is confusingly overloaded. There is no logical situation where you would ever be invoking more than one "mode" of this script at a time, and yet running the script *always* requires creating an APIView revision. Any tooling that subverts that will break all three use cases.
+
+## Planned State
+The plan is to replace pipeline use of the overloaded `Create-APIReview.ps1` with three focused scripts and a dedicated step template for each script:
 
 1. Create an APIView revision during the transition to API Review Hub (ARH), from the Build stage only.
 2. Determine release readiness through `azsdk package get-approval-status`, from the Build stage and again when those steps are replayed during release. This gate must not be disabled, bypassed, or overridden by local language-specific tooling or configuration.
 3. Mark a released package in ARH and APIView during the release stage only through `azsdk package mark-released`.
 
 `eng/common/scripts/Create-APIReview.ps1` will not be changed or removed. Pipeline owners will wire the new scripts into the appropriate jobs.
+`eng/common/pipelines/templates/steps/create-apireview.yml` will not be changed or removed. Pipeline owners will wire the new step templates into the appropriate jobs.
 
-This proposal does not change `eng/common/pipelines/templates/steps/validate-all-packages.yml`, `Validate-All-Packages.ps1`, or the Azure DevOps Package work-item update flow. Those pipelines may continue recording their existing APIView-derived validation fields independently; the unified release gate introduced here does not depend on or replace that behavior.
+**NOTE:** This proposal does not change `eng/common/pipelines/templates/steps/validate-all-packages.yml`, `Validate-All-Packages.ps1`, or the Azure DevOps Package work-item update flow. Those pipelines may continue recording their existing APIView-derived validation fields independently; the unified release gate introduced here does not depend on or replace that behavior. Any changes to `validate-all-packages.yml`, `Validate-All-Packages.ps1`, or their Package work-item behavior must be coordinated with Praveen, who owns that pipeline area.
 
-Any future changes to `validate-all-packages.yml`, `Validate-All-Packages.ps1`, or their Package work-item behavior must be coordinated with Praveen, who owns that pipeline area.
-
-The unused `azsdk apiview create-ci-revision` and `azsdk apiview create-pull-request-revision` commands were removed. They could not replace the existing source-artifact and token-file workflows without additional investment that was not justified while APIView is being deprecated.
-
-## Current State
-`Create-APIReview.ps1` currently combines three independent responsibilities:
-
-- Uploading an artifact or token file to create an APIView revision.
-- Interpreting APIView responses to determine whether a package is approved.
-- Marking an APIView revision as shipped through the same upload path.
-
-The script is invoked through `eng/common/pipelines/templates/steps/create-apireview.yml` in both Build and release flows. The new design separates those operations so revision creation runs only during Build, approval checks run during Build and are replayed during release, and marking a package as released remains a release-only operation.
-
-The Azure SDK CLI previously exposed `azsdk apiview create-ci-revision` and `azsdk apiview create-pull-request-revision`, which originated from [Support API View creation and validation (issue #13813)](https://github.com/Azure/azure-sdk-tools/issues/13813). The intended pipeline adoption did not occur, and neither command was invoked by repository pipelines or tools. The commands did not cover all existing behavior, notably source-only artifact upload, so they were removed rather than expanded.
-
-The Azure SDK CLI now exposes `azsdk package mark-released`, which owns the coordinated ARH and legacy APIView release updates and returns each backend result independently. The release-stage script should invoke this command rather than duplicating either backend integration in PowerShell.
-
-## Proposed Scripts
+## Proposed Scripts and Step Templates
 
 ### 1. Create APIView Revision
 Suggested script:
 
 - `eng/common/scripts/Create-APIViewRevision.ps1`
+
+Required step template:
+
+- `eng/common/pipelines/templates/steps/create-apiview-revision.yml`
 
 Responsibility:
 
@@ -61,6 +60,10 @@ Suggested script:
 
 - `eng/common/scripts/Get-PackageApprovalStatus.ps1`
 
+Required step template:
+
+- `eng/common/pipelines/templates/steps/get-package-approval-status.yml`
+
 Responsibility:
 
 - Resolve the package name and package version required by the CLI.
@@ -76,7 +79,7 @@ Inputs should be explicit rather than inferred from revision-creation behavior:
 
 - Package name.
 - Package version.
-- Optional API hash, expected to be `apiMdSha256` from `api.metadata.yml` when available.
+- API hash, expected to be `apiMdSha256` from `api.metadata.yml` when available.
 
 CI metadata:
 
@@ -100,6 +103,10 @@ Suggested script:
 
 - `eng/common/scripts/Mark-PackageReleased.ps1`
 
+Required step template:
+
+- `eng/common/pipelines/templates/steps/mark-package-released.yml`
+
 Responsibility:
 
 - Resolve the released package metadata and APIView revision inputs required by the CLI.
@@ -113,13 +120,10 @@ Inputs should include:
 - Package name.
 - Package version.
 - API hash.
-- Source artifact path and APIView package type.
-- Optional APIView review token file name, build ID, repository name, artifact name, Azure DevOps project, and source branch when required by the revision path.
 
 Non-responsibilities:
 
 - Do not create a new release-candidate revision.
-- Do not determine whether a package is approved.
 - Do not call ARH or APIView directly or reimplement the CLI's backend result handling.
 
 ## Implementation Phases
@@ -127,42 +131,38 @@ Non-responsibilities:
 ### Phase 1: Extract Revision Creation
 
 - Implement `Create-APIViewRevision.ps1` using only the revision-creation behavior currently embedded in `Create-APIReview.ps1`.
+- Implement `create-apiview-revision.yml` as the pipeline entry point for the script.
 - Preserve both the source-only `/autoreview/upload` path and token-file `/autoreview/create` path.
 - Preserve existing artifact discovery, package iteration, request metadata, and creation eligibility rules.
 - Exclude approval-policy evaluation and `MarkPackageAsShipped` behavior.
 - Validate that created APIView revisions match current behavior.
 - Leave `Create-APIReview.ps1` untouched.
 
-### Phase 2: Remove Unused AZSdkCli Commands
-
-- Remove `azsdk apiview create-ci-revision` and `azsdk apiview create-pull-request-revision`.
-- Remove their command registration, handlers, command-specific options, service methods, tests, and documentation.
-- Retain APIView services and options used by other supported AZSdkCli commands.
-- Do not add replacement commands because APIView revision creation is temporary and remains pipeline-specific during deprecation.
-
-### Phase 3: Add the Unified Approval Gate
+### Phase 2: Add the Unified Approval Gate
 
 - Implement `Get-PackageApprovalStatus.ps1` around `azsdk package get-approval-status`.
+- Implement `get-package-approval-status.yml` as the mandatory pipeline entry point for the script.
 - Resolve package/version and, when present, the hash from release-candidate artifacts before invoking the command.
 - Pass `--api-hash` only when a matching `api.metadata.yml` is available; otherwise invoke the command without that option.
 - Normalize CLI output and exit codes into deterministic pipeline success or failure.
 - Do not duplicate backend-specific approval or fallback rules in PowerShell.
 
-### Phase 4: Separate Release Completion
+### Phase 3: Separate Release Completion
 
 - Implement `Mark-PackageReleased.ps1`.
+- Implement `mark-package-released.yml` as the release-stage pipeline entry point for the script.
 - Resolve the inputs for and invoke `azsdk package mark-released`.
 - Treat the CLI's ARH and APIView results and exit code as authoritative.
 - Make the command's partial-failure details visible so remediation is clear.
 
-### Phase 5: Pipeline Migration
+### Phase 4: Pipeline Migration
 
 - Wire the creation-only script and approval-status script into the Build stage. Replay only the approval-status step during the release stage.
 - In each ARH-enabled SDK repository, add build-stage steps that run `create-apireview-hub-artifacts-{lang}` and publish the resulting metadata for the release gate.
 - Do not require ARH artifact-generation steps in repositories that have not been onboarded to ARH.
 - Ensure the replayed approval-status step gates publishing during release.
 - Wire mark-released into the release stage only, after publishing.
-- Migrate callers incrementally from `create-apireview.yml` to focused templates or direct script tasks.
+- Migrate callers incrementally from `create-apireview.yml` to the three focused step templates.
 - Keep the legacy script and template available until all callers have migrated.
 - Do not modify `validate-all-packages.yml`, `Validate-All-Packages.ps1`, or Package work-item update pipelines as part of this migration.
 - Coordinate with Praveen before proposing any follow-up changes to those validation or work-item flows.
@@ -170,6 +170,7 @@ Non-responsibilities:
 ## Script Design Requirements
 
 - Use explicit parameters and avoid behavior switches such as `MarkPackageAsShipped` that change a script's responsibility.
+- Give each script a dedicated step template that exposes its inputs explicitly and propagates its exit status.
 - Preserve source-only and pre-generated-token creation paths.
 - Validate required artifact, build, repository, and package inputs before calling APIView.
 - Keep APIView authentication helpers shared only for revision creation; release completion authentication remains owned by the CLI command.
@@ -215,11 +216,3 @@ Non-responsibilities:
 
 1. Is the APIView mark-as-shipped operation idempotent, and can its existing request logic be moved without changing behavior?
 2. Which existing helper functions can be reused without importing the overloaded script itself?
-
-## Recommended First Implementation Slice
-
-- [x] Implement and test `Get-PackageApprovalStatus.ps1` first because it establishes the new release gate without changing revision creation or release completion.
-- [x] Implement `Create-APIViewRevision.ps1` and migrate the Build-stage caller, keeping creation Build-only while approval status is replayed during release.
-- [x] Implement `azsdk package mark-released` with independent ARH and APIView results.
-- [x] Implement `Mark-PackageReleased.ps1` as a thin wrapper around that command; release-stage wiring after publishing remains pending.
-- [x] Retain `Create-APIReview.ps1` unchanged until migration is complete.

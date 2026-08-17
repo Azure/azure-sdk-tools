@@ -8,18 +8,18 @@ using System.Net;
 namespace Azure.Sdk.Tools.Cli.Tests.Services;
 
 [TestFixture]
-public class ApiReviewReleaseStatusServiceTests
+public class PackageReleaseStatusServiceTests
 {
     private Mock<IApiReviewHubService> reviewHubServiceMock = null!;
     private Mock<IAPIViewReleaseStatusService> apiViewServiceMock = null!;
-    private ApiReviewReleaseStatusService service = null!;
+    private PackageReleaseStatusService service = null!;
 
     [SetUp]
     public void Setup()
     {
         reviewHubServiceMock = new Mock<IApiReviewHubService>();
         apiViewServiceMock = new Mock<IAPIViewReleaseStatusService>();
-        service = new ApiReviewReleaseStatusService(reviewHubServiceMock.Object, apiViewServiceMock.Object, new TestLogger<ApiReviewReleaseStatusService>());
+        service = new PackageReleaseStatusService(reviewHubServiceMock.Object, apiViewServiceMock.Object, new TestLogger<PackageReleaseStatusService>());
     }
 
     [Test]

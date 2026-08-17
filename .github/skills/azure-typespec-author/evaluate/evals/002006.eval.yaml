@@ -20,7 +20,7 @@ stimuli:
       suite: "armtemplate"
       mode: "trigger"
     prompt: |
-      In API version `2024-10-01-preview`, create a new child resource `AddressResource` under the parent resource `Employee` (use `@parentResource(Employee)` and a `ProxyResource` model). Address properties (all optional): `street1`, `street2`, `city`, `state`, `postalCode`, `country`, and read-only `provisioningState`. Include standard create, get, update, delete, and list-by-parent operations. All required decisions are provided; implement and validate the change according to the TypeSpec Azure design guidelines without pausing for a separate confirmation.
+      In API version `2024-10-01-preview`, create a new child resource `AddressResource` under the parent resource `Employee` (use `@parentResource(Employee)` and a `ProxyResource` model). Address properties (all optional): `street1`, `street2`, `city`, `state`, `postalCode`, `country`, and read-only `provisioningState`. Include standard create, get, update, delete, and list-by-parent operations. All required decisions are provided; no separate confirmation is needed. Ensure the definition meets TypeSpec Azure guidelines.
     environment: &shared_environment
       files:
         - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -63,7 +63,7 @@ stimuli:
       suite: "armtemplate"
       mode: "forced"
     prompt: |
-      @azure-typespec-author In API version `2024-10-01-preview`, create a new child resource `AddressResource` under the parent resource `Employee` (use `@parentResource(Employee)` and a `ProxyResource` model). Address properties (all optional): `street1`, `street2`, `city`, `state`, `postalCode`, `country`, and read-only `provisioningState`. Include standard create, get, update, delete, and list-by-parent operations. All required decisions are provided; implement and validate the change according to the TypeSpec Azure design guidelines without pausing for a separate confirmation.
+      @azure-typespec-author In API version `2024-10-01-preview`, create a new child resource `AddressResource` under the parent resource `Employee` (use `@parentResource(Employee)` and a `ProxyResource` model). Address properties (all optional): `street1`, `street2`, `city`, `state`, `postalCode`, `country`, and read-only `provisioningState`. Include standard create, get, update, delete, and list-by-parent operations. All required decisions are provided; no separate confirmation is needed. Ensure the definition meets TypeSpec Azure guidelines.
     environment: *shared_environment
     graders:
       - type: "tool-calls"
@@ -155,7 +155,7 @@ stimuli:
       suite: "armtemplate"
       mode: "no-skill"
     prompt: |
-      In API version `2024-10-01-preview`, create a new child resource `AddressResource` under the parent resource `Employee` (use `@parentResource(Employee)` and a `ProxyResource` model). Address properties (all optional): `street1`, `street2`, `city`, `state`, `postalCode`, `country`, and read-only `provisioningState`. Include standard create, get, update, delete, and list-by-parent operations. All required decisions are provided; implement and validate the change according to the TypeSpec Azure design guidelines without pausing for a separate confirmation.
+      In API version `2024-10-01-preview`, create a new child resource `AddressResource` under the parent resource `Employee` (use `@parentResource(Employee)` and a `ProxyResource` model). Address properties (all optional): `street1`, `street2`, `city`, `state`, `postalCode`, `country`, and read-only `provisioningState`. Include standard create, get, update, delete, and list-by-parent operations. All required decisions are provided; no separate confirmation is needed. Ensure the definition meets TypeSpec Azure guidelines.
     environment: *shared_environment
     graders:
       - type: "tool-calls"

@@ -9,6 +9,10 @@ namespace APIViewWeb.Managers.Interfaces
             string packageQuery,
             string language,
             string version = null);
+        Task<ResolvePackageResponse> ResolveAutomaticRevisionForRelease(
+            string packageName,
+            string language,
+            string version);
         Task<ResolvePackageResponse> ResolvePackageLink(string link);
     }
 }

@@ -13,10 +13,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ApiReviewHub;
 [Description("API Review Hub operations including review pull request creation")]
 public class ApiReviewHubTool(
     IApiReviewHubService apiReviewHubService,
-    IApiReviewReleaseStatusService apiReviewReleaseStatusService,
     ILogger<ApiReviewHubTool> logger) : MCPMultiCommandTool
 {
-    private static readonly IReadOnlyDictionary<string, string> DefaultTargetRepos = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    internal static readonly IReadOnlyDictionary<string, string> DefaultTargetRepos = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
     {
         ["python"] = "azure-sdk-for-python",
         ["java"] = "azure-sdk-for-java",
@@ -32,12 +31,9 @@ public class ApiReviewHubTool(
     private static readonly string SupportedLanguagesDescription = string.Join(", ", SupportedLanguages);
 
     private const string CreateCommandName = "create";
-    private const string GetApprovalStatusCommandName = "get-approval-status";
     private const string RequestReviewPullRequestToolName = "azsdk_apireviewhub_request_review_pr";
-    private const string GetApprovalStatusToolName = "azsdk_apireview_get_approval_status";
     private const string DefaultEndpoint = "https://api-review-hub.azurewebsites.net";
     private const string DefaultTargetOwner = "Azure";
-    private const string DefaultApiViewReleaseStatusEndpoint = "https://apiview.dev/AutoReview/GetReviewStatus";
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.ApiReviewHub];
 
@@ -49,21 +45,9 @@ public class ApiReviewHubTool(
         Required = true
     };
 
-    private readonly Option<string> packageVersionOption = new("--package-version")
-    {
-        Description = "The package version to check.",
-        Required = true
-    };
-
-    private readonly Option<string> apiHashOption = new("--api-hash")
-    {
-        Description = "The API Review Hub API hash to check. When omitted, the release gate cannot be approved but current approval status is returned."
-    };
-
     private readonly Option<string> baseTagOption = new("--base-tag")
     {
-        Description = "The release tag or ref used as the base API surface.",
-        Required = true
+        Description = "The optional release tag or ref used as the base API surface."
     };
 
     private readonly Option<string> targetOwnerOption = new("--target-owner")
@@ -107,13 +91,6 @@ public class ApiReviewHubTool(
             targetBranchOption,
             noWaitOption,
             pollIntervalSecondsOption
-        },
-        new McpCommand(GetApprovalStatusCommandName, "Check API review release approval status using APIView and API Review Hub", GetApprovalStatusToolName)
-        {
-            languageOption,
-            packageNameOption,
-            packageVersionOption,
-            apiHashOption
         }
     ];
 
@@ -122,7 +99,6 @@ public class ApiReviewHubTool(
         return parseResult.CommandResult.Command.Name switch
         {
             CreateCommandName => await HandleCreateCommand(parseResult, ct),
-            GetApprovalStatusCommandName => await HandleGetApprovalStatusCommand(parseResult, ct),
             _ => new DefaultCommandResponse { ResponseError = $"Unknown command: {parseResult.CommandResult.Command.Name}" }
         };
     }
@@ -132,46 +108,23 @@ public class ApiReviewHubTool(
         return await RequestReviewPullRequest(
             parseResult.GetValue(languageOption) ?? string.Empty,
             parseResult.GetValue(packageNameOption) ?? string.Empty,
-            parseResult.GetValue(baseTagOption) ?? string.Empty,
             parseResult.GetValue(targetOwnerOption) ?? string.Empty,
             ResolveTargetRepo(parseResult.GetValue(languageOption), parseResult.GetValue(targetRepoOption)),
             parseResult.GetValue(targetBranchOption) ?? string.Empty,
+            parseResult.GetValue(baseTagOption),
             !parseResult.GetValue(noWaitOption),
             parseResult.GetValue(pollIntervalSecondsOption),
             ct);
-    }
-
-    private async Task<CommandResponse> HandleGetApprovalStatusCommand(ParseResult parseResult, CancellationToken ct)
-    {
-        var response = await GetApprovalStatus(
-            parseResult.GetValue(languageOption) ?? string.Empty,
-            parseResult.GetValue(packageNameOption) ?? string.Empty,
-            parseResult.GetValue(packageVersionOption) ?? string.Empty,
-            parseResult.GetValue(apiHashOption) ?? string.Empty,
-            ct);
-
-        if (IsJsonOutput(parseResult))
-        {
-            response.Details = null;
-        }
-
-        return response;
-    }
-
-    private static bool IsJsonOutput(ParseResult parseResult)
-    {
-        var outputFormat = parseResult.GetValue(SharedOptions.Format);
-        return string.Equals(outputFormat, "json", StringComparison.OrdinalIgnoreCase);
     }
 
     [McpServerTool(Name = RequestReviewPullRequestToolName), Description("Request API Review Hub creation of a review pull request for a package API change.")]
     public async Task<ApiReviewHubResponse> RequestReviewPullRequest(
         [Description("The SDK language for the review PR request.")] string language,
         [Description("The package name to review.")] string packageName,
-        [Description("The release tag or ref used as the base API surface.")] string baseTag,
         [Description("The GitHub owner for the target working branch.")] string targetOwner,
         [Description("The GitHub repository for the target working branch. By default, the command selects the appropriate repo based on the language.")] string targetRepo,
         [Description("The target working branch name.")] string targetBranch,
+        [Description("The optional release tag or ref used as the base API surface.")] string? baseTag = null,
         [Description("Poll API Review Hub until the operation completes.")] bool waitForCompletion = true,
         [Description("Seconds to wait between API Review Hub operation status polls.")] int pollIntervalSeconds = 10,
         CancellationToken ct = default)
@@ -182,7 +135,7 @@ public class ApiReviewHubTool(
             {
                 Language = language,
                 PackageName = packageName,
-                BaseTag = baseTag,
+                BaseTag = baseTag ?? string.Empty,
                 TargetBranch = new GitBranchReference
                 {
                     Owner = targetOwner,
@@ -253,189 +206,4 @@ public class ApiReviewHubTool(
         return option;
     }
 
-    [McpServerTool(Name = GetApprovalStatusToolName), Description("Check API review release approval status using APIView and API Review Hub.")]
-    public async Task<ApiReviewReleaseStatusResponse> GetApprovalStatus(
-        [Description("The SDK language.")] string language,
-        [Description("The package name.")] string packageName,
-        [Description("The package version to check.")] string packageVersion,
-        [Description("The API Review Hub API hash to check. When omitted, the release gate cannot be approved but current approval status is returned.")] string apiHash = "",
-        CancellationToken ct = default)
-    {
-        try
-        {
-            var result = await apiReviewReleaseStatusService.GetApprovalStatusAsync(DefaultEndpoint, language, packageName, packageVersion, apiHash, ct);
-            var response = new ApiReviewReleaseStatusResponse
-            {
-                Result = result,
-                Details = BuildDetails(result, packageName, packageVersion, apiHash)
-            };
-
-            if (!result.IsApproved)
-            {
-                response.ResponseError = BuildFailureMessage(result, packageName, packageVersion);
-            }
-
-            return response;
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Failed to get API review release approval status for {packageName}", packageName);
-            return new ApiReviewReleaseStatusResponse
-            {
-                ResponseError = $"Failed to get API review release approval status for {packageName}: {ex.Message}"
-            };
-        }
-    }
-
-    private static List<string> BuildDetails(ApiReviewReleaseStatusResult result, string packageName, string packageVersion, string apiHash)
-    {
-        var details = new List<string>();
-
-        details.Add("== API Review Hub (Primary) ==");
-        if (result.ReviewHub.StatusCode is >= 200 and < 300)
-        {
-            details.Add($"Status Code: {result.ReviewHub.StatusCode}");
-            details.Add($"Approved: {result.ReviewHub.IsApproved}");
-            details.Add($"Reason: {result.ReviewHub.Reason ?? "none"}");
-            if (!string.IsNullOrWhiteSpace(result.ReviewHub.AppliedInheritanceRule))
-            {
-                details.Add($"Applied Inheritance Rule: {result.ReviewHub.AppliedInheritanceRule}");
-            }
-            if (result.ReviewHub.Details?.Count > 0)
-            {
-                details.AddRange(result.ReviewHub.Details);
-            }
-
-            AddApprovalDetails(details, result.ReviewHub.Approvals, apiHash);
-        }
-        else
-        {
-            details.Add($"WARNING: Primary query failed for {packageName} {packageVersion}.");
-            if (result.ReviewHub.StatusCode is not null)
-            {
-                details.Add($"Status Code: {result.ReviewHub.StatusCode}");
-            }
-            if (!string.IsNullOrWhiteSpace(result.ReviewHub.Error))
-            {
-                details.Add(result.ReviewHub.Error);
-            }
-        }
-
-        if (result.ApiView != null)
-        {
-            details.Add(string.Empty);
-            details.Add("== APIView (Legacy) ==");
-            if (result.ApiView.StatusCode is >= 200 and < 300
-                || string.Equals(result.ApiView.Reason, "reviewNotFound", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(result.ApiView.Reason, "languageNotSupported", StringComparison.OrdinalIgnoreCase))
-            {
-                details.Add("Queried because the primary API Review Hub result was not approved or could not be retrieved.");
-                if (result.ApiView.StatusCode is not null)
-                {
-                    details.Add($"Status Code: {result.ApiView.StatusCode}");
-                }
-                details.Add($"Approved: {result.ApiView.IsApproved}");
-                details.Add($"Reason: {result.ApiView.Reason}");
-                details.AddRange(result.ApiView.Details);
-            }
-            else
-            {
-                details.Add($"WARNING: Fallback query failed for {packageName} {packageVersion}.");
-                if (result.ApiView.StatusCode is not null)
-                {
-                    details.Add($"Status Code: {result.ApiView.StatusCode}");
-                }
-                if (!string.IsNullOrWhiteSpace(result.ApiView.Error))
-                {
-                    details.Add(result.ApiView.Error);
-                }
-            }
-        }
-
-        details.Add(string.Empty);
-        details.Add("== Final Result ==");
-        details.Add($"Approved: {result.IsApproved}");
-        if (result.IsApproved)
-        {
-            details.Add($"Source: {GetSourceLabel(result.FinalSource)}");
-        }
-        else
-        {
-            details.Add($"Reason: {result.Reason}");
-        }
-
-        return details;
-    }
-
-    private static string BuildFailureMessage(ApiReviewReleaseStatusResult result, string packageName, string packageVersion)
-    {
-        return result.Reason switch
-        {
-            "rejected" => $"API review release gate is rejected for {packageName} {packageVersion}.",
-            "staleArtifact" => $"API review release gate cannot be approved for {packageName} {packageVersion} because the release candidate artifact is not the one that was approved.",
-            "missingApiHash" => $"API review release gate cannot be approved for {packageName} {packageVersion} because no API hash was provided.",
-            "repositoryNotSupported" => $"API review release gate cannot be evaluated by API Review Hub for {packageName} {packageVersion} because this repository is not currently supported.",
-            "reviewNotFound" => $"API review release gate is not approved for {packageName} {packageVersion} because no APIView review was found.",
-            "apiViewLanguageNotSupported" => $"API review release gate is not approved for {packageName} {packageVersion} because APIView does not support this language for release gating.",
-            "queryFailed" => $"API review release gate status could not be determined for {packageName} {packageVersion} because both API Review Hub and APIView status queries failed.",
-            _ => $"API review release gate is not approved for {packageName} {packageVersion}."
-        };
-    }
-
-    private static void AddApprovalDetails(List<string> details, IReadOnlyList<ApiReviewHubApprovalRecord>? approvals, string apiHash)
-    {
-        if (approvals?.Count is not > 0)
-        {
-            details.Add("Approval records returned by service: none");
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(apiHash))
-        {
-            details.Add("No API hash was provided. Approval records returned by the service:");
-        }
-        else
-        {
-            details.Add($"Provided API hash: {apiHash}");
-            details.Add("Approval records returned by the service:");
-        }
-
-        foreach (var approval in approvals.OrderByDescending(approval => ApiHashMatches(approval.ApiHash, apiHash)).ThenByDescending(approval => approval.LastUpdatedOn, StringComparer.Ordinal))
-        {
-            var matchText = ApiHashMatches(approval.ApiHash, apiHash) ? " [provided hash]" : string.Empty;
-            var versionText = string.IsNullOrWhiteSpace(approval.Version) ? string.Empty : $" (version {approval.Version})";
-            details.Add($"- {approval.Status}: {approval.ApiHash}{matchText}{versionText}");
-
-            if (!string.IsNullOrWhiteSpace(approval.LastUpdatedBy) || !string.IsNullOrWhiteSpace(approval.LastUpdatedOn))
-            {
-                details.Add($"  Updated by: {approval.LastUpdatedBy ?? "unknown"}{FormatOnSuffix(approval.LastUpdatedOn)}");
-            }
-
-            if (!string.IsNullOrWhiteSpace(approval.PullRequestUrl))
-            {
-                details.Add($"  Pull request: {approval.PullRequestUrl}");
-            }
-        }
-    }
-
-    private static bool ApiHashMatches(string approvalApiHash, string requestedApiHash)
-    {
-        return !string.IsNullOrWhiteSpace(requestedApiHash)
-            && string.Equals(approvalApiHash, requestedApiHash, StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static string FormatOnSuffix(string? lastUpdatedOn)
-    {
-        return string.IsNullOrWhiteSpace(lastUpdatedOn) ? string.Empty : $" on {lastUpdatedOn}";
-    }
-
-    private static string GetSourceLabel(string finalSource)
-    {
-        return finalSource switch
-        {
-            "ApiReviewHub" => "API Review Hub (Primary)",
-            "APIView" => "APIView (Legacy)",
-            _ => finalSource
-        };
-    }
 }

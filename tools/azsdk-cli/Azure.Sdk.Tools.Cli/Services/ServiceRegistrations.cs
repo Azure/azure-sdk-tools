@@ -12,6 +12,7 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Helpers.Codeowners;
+using Azure.Sdk.Tools.Cli.Helpers.Pipeline;
 using Azure.Sdk.Tools.Cli.Helpers.Codeowners.Rules;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Azure.Sdk.Tools.Cli.Services.ApiReviewHub;
@@ -51,7 +52,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IAPIViewReleaseStatusService, APIViewReleaseStatusService>();
             services.AddSingleton<IAPIViewService, APIViewService>();
             services.AddSingleton<IApiReviewHubService, ApiReviewHubService>();
-            services.AddSingleton<IApiReviewReleaseStatusService, ApiReviewReleaseStatusService>();
+            services.AddSingleton<IPackageReleaseStatusService, PackageReleaseStatusService>();
 
             services.AddScoped<LanguageService, DotnetLanguageService>();
             services.AddScoped<LanguageService, JavaLanguageService>();
@@ -119,6 +120,8 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             // Pipeline helpers
             services.AddSingleton<IPipelineIdentifierHelper, PipelineIdentifierHelper>();
+            services.AddScoped<IPipelineAnalysisHelper, PipelineAnalysisHelper>();
+            services.AddScoped<IGitHubWorkflowAnalysisHelper, GitHubWorkflowAnalysisHelper>();
 
             // Services that need to be scoped so we can track/update state across services per request
             services.AddScoped<TokenUsageHelper>();
@@ -134,18 +137,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<CopilotClient>(sp =>
             {
                 var logger = sp.GetService<ILogger<CopilotClient>>();
-                var cliPath = Environment.GetEnvironmentVariable("AZSDK_COPILOT_CLI_PATH");
-                var options = new CopilotClientOptions
-                {
-                    Connection = RuntimeConnection.ForStdio(
-                        string.IsNullOrWhiteSpace(cliPath) ? null : cliPath.Trim()),
-                    Logger = logger
-                };
-
-                // Allow overriding the bundled Copilot CLI path via environment variable.
-                // This is useful when the standalone azsdk.exe doesn't include the Copilot CLI executable
-                // but the user has it installed elsewhere (e.g. via npm).
-                return new CopilotClient(options);
+                return new CopilotClient(CreateCopilotClientOptions(logger));
             });
             services.AddSingleton<ICopilotClientWrapper, CopilotClientWrapper>();
             services.AddScoped<ICopilotAgentRunner, CopilotAgentRunner>();
@@ -179,6 +171,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 {
                     endpoint = new Uri(openAiBaseUrl);
                 }
+
                 // Priority 2: Use AZURE_OPENAI_ENDPOINT with /openai/v1 postfix if it exists
                 else if (!string.IsNullOrWhiteSpace(azureOpenAiEndpoint))
                 {
@@ -201,6 +194,19 @@ namespace Azure.Sdk.Tools.Cli.Services
                 // For standard OpenAI (OPENAI_API_KEY exists, no Azure endpoint)
                 return new OpenAIClient(new ApiKeyCredential(openAiApiKey!));
             });
+        }
+
+        public static CopilotClientOptions CreateCopilotClientOptions(ILogger<CopilotClient>? logger)
+        {
+            var cliPath = Environment.GetEnvironmentVariable("AZSDK_COPILOT_CLI_PATH");
+            var githubToken = Environment.GetEnvironmentVariable("AZSDK_COPILOT_GITHUB_TOKEN");
+            return new CopilotClientOptions
+            {
+                Connection = RuntimeConnection.ForStdio(
+                    string.IsNullOrWhiteSpace(cliPath) ? null : cliPath.Trim()),
+                GitHubToken = string.IsNullOrWhiteSpace(githubToken) ? null : githubToken.Trim(),
+                Logger = logger
+            };
         }
 
         // Update checking and upgrade management in MCP server mode

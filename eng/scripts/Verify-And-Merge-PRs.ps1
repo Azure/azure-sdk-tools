@@ -3,10 +3,21 @@ param(
   # @('Azure;azure-sdk-for-net;1', ...)
   [array]$PRDataInline,
   [string]$AuthToken,
+  [string]$AuthTokenVariablePrefix = 'GH_TOKEN',
   [switch]$SkipMerge
 )
 
 . "${PSScriptRoot}/../common/scripts/common.ps1"
+
+function Set-GitHubToken([string]$repoOwner, [string]$fallbackToken) {
+  $ownerToken = [Environment]::GetEnvironmentVariable("${AuthTokenVariablePrefix}_${repoOwner}")
+  $token = if ($ownerToken) { $ownerToken } else { $fallbackToken }
+  if (!$token) {
+    throw "No GitHub token is available for repository owner '$repoOwner'."
+  }
+
+  $env:GH_TOKEN = $token
+}
 
 function Main([string]$prFile, [array]$prs, [string]$ghToken, [switch]$noMerge) {
   # Setup GH_TOKEN for the gh cli commands
@@ -64,6 +75,7 @@ function ProcessPRMergeStatuses([array]$prData, [switch]$noMerge) {
 
 function MergePRs([array]$toMerge) {
   foreach ($pr in $toMerge) {
+    Set-GitHubToken -repoOwner $pr.RepoOwner -fallbackToken $AuthToken
     LogInfo "Merging $($pr.Url) at $($pr.HeadSHA)"
     gh pr merge $pr.Url --squash --match-head-commit $pr.HeadSHA
     if ($LASTEXITCODE) {
@@ -74,6 +86,7 @@ function MergePRs([array]$toMerge) {
 }
 
 function GetOrSetMergeablePR([string]$repoOwner, [string]$repoName, [string]$prNumber, [switch]$SkipResolveReviews) {
+  Set-GitHubToken -repoOwner $repoOwner -fallbackToken $AuthToken
   $prUrl = "https://github.com/${repoOwner}/${repoName}/pull/${prNumber}"
 
   function _pr([switch]$block, [switch]$retry, [string]$headSha) {

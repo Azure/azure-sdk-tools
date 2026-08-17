@@ -8,6 +8,7 @@ import { SearchService } from './services/SearchService';
 import { MetadataResolver } from './services/MetadataResolver';
 import { TypeSpecProcessor } from './services/TypeSpecProcessor';
 import { SampleProcessor } from './services/SampleProcessor';
+import { AlloySampleProcessor } from './services/AlloySampleProcessor';
 
 /**
  * Daily sync knowledge function that processes documentation from various repositories
@@ -82,6 +83,9 @@ export async function processDailySyncKnowledge(): Promise<void> {
 
         console.log(`processing typespec-azure samples`);
         processSamples(docsDir, "typespec-azure/packages/samples/specs");
+
+        console.log(`processing alloy framework samples`);
+        processAlloySamples(docsDir, "alloy/samples");
 
         console.log('Processing documentation sources...');
         
@@ -903,5 +907,16 @@ function processTypeSpec(docsDir: string, relativeLibDir: string) : void {
         new TypeSpecProcessor(docsDir, relativeLibDir).processTypeSpecLibraries();
     } catch (error) {
         console.error(`Error processing typespec library: ${relativeLibDir}`, error);
+    }
+}
+
+/**
+ * Process Alloy framework samples into generated markdown
+ */
+function processAlloySamples(docsDir: string, relativeSamplesDir: string) : void {
+    try {
+        new AlloySampleProcessor(docsDir, relativeSamplesDir).processSamples();
+    } catch (error) {
+        console.error(`Error processing alloy framework samples: ${relativeSamplesDir}`, error);
     }
 }

@@ -5,10 +5,10 @@
 # response is written to Azure Blob Storage using the layout the pipeline-analysis-dashboard
 # reads (tools/pipeline-analysis-dashboard):
 #
-#     <container>/pipeline-fix/<repo>/<YYYY-MM-DD>.json
+#     $web/pipeline-evaluation/<repo>/<YYYY-MM-DD>.json
 #
 # One blob per repo per day is what gives the dashboard its trend lines: it lists the
-# "pipeline-fix/" prefix and reads N days back, with no database in between. The dashboard
+# "pipeline-evaluation/" prefix and reads N days back, with no database in between. The dashboard
 # derives each run's date from the report's own "until" field, falling back to the date in
 # the blob name.
 #
@@ -64,7 +64,9 @@ variables:
   - name: MetricsStorageAccount
     value: azuresdkartifacts
   - name: MetricsContainer
-    value: metrics
+    value: '$web'
+  - name: MetricsPrefix
+    value: pipeline-evaluation
 
 jobs:
   - job: Evaluate
@@ -130,8 +132,8 @@ jobs:
             foreach ($repo in $repos) {
                 Write-Host "##[group]Evaluating $env:OWNER/$repo"
 
-                # Mirrors the dashboard's key layout: pipeline-fix/<repo>/<YYYY-MM-DD>.json
-                $repoDir = Join-Path '$(EvalArtifactDir)' "pipeline-fix/$repo"
+                # Mirrors the dashboard's key layout: pipeline-evaluation/<repo>/<YYYY-MM-DD>.json
+                $repoDir = Join-Path '$(EvalArtifactDir)' "$(MetricsPrefix)/$repo"
                 New-Item -ItemType Directory -Force -Path $repoDir | Out-Null
                 $reportPath = Join-Path $repoDir "$reportDate.json"
 
@@ -206,7 +208,7 @@ jobs:
         inputs:
           # The service connection's identity needs 'Storage Blob Data Contributor' on the
           # account; --auth-mode login uses it instead of an account key.
-          azureSubscription: 'Azure SDK Artifacts'
+          azureSubscription: 'Azure SDK Engineering System'
           scriptType: pscore
           scriptLocation: inlineScript
           inlineScript: |
@@ -227,6 +229,7 @@ jobs:
                 --destination '$(MetricsContainer)' `
                 --source '$(EvalArtifactDir)' `
                 --pattern '*.json' `
+                --content-type 'application/json' `
                 --auth-mode login `
                 --overwrite true
 

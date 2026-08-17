@@ -20,7 +20,7 @@ stimuli:
       suite: "armtemplate"
       mode: "trigger"
     prompt: |
-      change resource Employee to be an extension resource. Ensure the definition meets TypeSpec Azure guidelines.
+      Change Employee to an extension resource that can be created under any ARM resource. This intentional breaking change is approved. Follow TypeSpec Azure guidelines and proceed without additional confirmation.
     environment: &shared_environment
       files:
         - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -63,7 +63,7 @@ stimuli:
       suite: "armtemplate"
       mode: "forced"
     prompt: |
-      @azure-typespec-author change resource Employee to be an extension resource. Ensure the definition meets TypeSpec Azure guidelines.
+      @azure-typespec-author Change Employee to an extension resource that can be created under any ARM resource. This intentional breaking change is approved. Follow TypeSpec Azure guidelines and proceed without additional confirmation.
     environment: *shared_environment
     graders:
       - type: "tool-calls"
@@ -102,7 +102,7 @@ stimuli:
     tags:
       suite: "armtemplate"
       mode: "no-skill"
-    prompt: "change resource Employee to be an extension resource. Ensure the definition meets TypeSpec Azure guidelines."
+    prompt: "Change Employee to an extension resource that can be created under any ARM resource. This intentional breaking change is approved. Follow TypeSpec Azure guidelines and proceed without additional confirmation."
     environment: *shared_environment
     graders:
       - type: "tool-calls"

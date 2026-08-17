@@ -20,7 +20,7 @@ stimuli:
       suite: "armtemplate"
       mode: "trigger"
     prompt: |
-      In API versions `2021-11-01` and `2024-10-01-preview`, update the existing `Employees.update` operation to be a synchronous, non-LRO PATCH using `ArmCustomPatchSync`. The PATCH request should allow updating ARM tags and any updatable Employee properties (use the standard ARM update-model pattern for tags + properties). All required decisions are provided; no separate confirmation is needed. Ensure the definition meets TypeSpec Azure guidelines.
+      Update the existing Employee ARM resource operation so clients can synchronously update its tags and mutable Employee properties. Follow TypeSpec Azure guidelines. I've already made the design decisions, so go ahead with the change.
     environment: &shared_environment
       files:
         - src: ../fixtures/002003-ARM-define-full-update-operation/employee.tsp
@@ -59,7 +59,7 @@ stimuli:
       suite: "armtemplate"
       mode: "forced"
     prompt: |
-      @azure-typespec-author In API versions `2021-11-01` and `2024-10-01-preview`, update the existing `Employees.update` operation to be a synchronous, non-LRO PATCH using `ArmCustomPatchSync`. The PATCH request should allow updating ARM tags and any updatable Employee properties (use the standard ARM update-model pattern for tags + properties). All required decisions are provided; no separate confirmation is needed. Ensure the definition meets TypeSpec Azure guidelines.
+      @azure-typespec-author Update the existing Employee ARM resource operation so clients can synchronously update its tags and mutable Employee properties. Follow TypeSpec Azure guidelines. I've already made the design decisions, so go ahead with the change.
     environment: *shared_environment
     graders:
       - type: "tool-calls"
@@ -91,7 +91,7 @@ stimuli:
       suite: "armtemplate"
       mode: "no-skill"
     prompt: |
-      In API versions `2021-11-01` and `2024-10-01-preview`, update the existing `Employees.update` operation to be a synchronous, non-LRO PATCH using `ArmCustomPatchSync`. The PATCH request should allow updating ARM tags and any updatable Employee properties (use the standard ARM update-model pattern for tags + properties). All required decisions are provided; no separate confirmation is needed. Ensure the definition meets TypeSpec Azure guidelines.
+      Update the existing Employee ARM resource operation so clients can synchronously update its tags and mutable Employee properties. Follow TypeSpec Azure guidelines. I've already made the design decisions, so go ahead with the change.
     environment: *shared_environment
     graders:
       - type: "tool-calls"

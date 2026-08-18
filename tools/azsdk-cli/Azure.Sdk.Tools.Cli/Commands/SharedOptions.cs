@@ -23,6 +23,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(PipelineTool),
             typeof(PipelineAnalysisTool),
             typeof(PipelineChecksTool),
+            typeof(PipelineFixEvaluatorTool),
             typeof(CodeownersTool),
             typeof(GitHubLabelsTool),
             typeof(LogAnalysisTool),

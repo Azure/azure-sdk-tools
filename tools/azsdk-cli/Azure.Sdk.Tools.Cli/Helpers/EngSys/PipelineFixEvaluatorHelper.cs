@@ -39,10 +39,10 @@ public class PipelineFixEvaluatorHelper(
     private const string BotLoginSuffix = "[bot]";
     private const string GitHubCommitterName = "GitHub";
     private const string ActionsBotName = "github-actions[bot]";
-    private const string FixBranchPrefix = "copilot-pipeline-fix/";
+    private const string FixBranchPrefix = "pipeline-fix/";
     private static readonly string[] CopilotAuthors = ["Copilot", "copilot-swe-agent[bot]"];
     private static readonly Regex FixBranch =
-        new(@"^copilot-pipeline-fix/pr-(\d+)-([0-9a-f]{40})/", RegexOptions.IgnoreCase);
+        new(@"^pipeline-fix/pr-(\d+)-([0-9a-f]{40})/", RegexOptions.IgnoreCase);
 
     private const string EvidenceMarker = "<!-- pipeline-analysis-ci-evidence -->";
     private static readonly Regex EvidenceCommit = new(@"Commit `([0-9a-f]{40})`", RegexOptions.IgnoreCase);

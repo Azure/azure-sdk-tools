@@ -31,7 +31,7 @@ extends:
       ${{ if eq(variables['Build.DefinitionName'], 'net - partner-release') }}:
         networkIsolationPolicy: Permissive
       ${{ else }}:
-        networkIsolationPolicy: Permissive, CFSClean
+        networkIsolationPolicy: Permissive, CFSClean, CFSClean2
     sdl:
       # Turn off the build warnings caused by disabling some sdl checks
       createAdoIssuesForJustificationsForDisablement: false

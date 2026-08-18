@@ -401,7 +401,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         }
 
         public async Task<ProductOnboardingWorkItem?> GetProductOnboardingAsync(Guid productId, Guid serviceId, CancellationToken ct, bool isTest)
-            => productId == Guid.Empty
+            => productId == serviceId
                 ? null
                 : await UpdateProductOnboardingAsync(
                     123,

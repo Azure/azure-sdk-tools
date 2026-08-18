@@ -108,7 +108,6 @@
     { "toolName": "azsdk_update_api_spec_pull_request_in_release_plan", "prompt": "Update the TypeSpec pull request URL in my release plan", "category": "all" },
     { "toolName": "azsdk_update_language_exclusion_justification", "prompt": "Update the language exclusion justification", "category": "all" },
     { "toolName": "azsdk_update_language_exclusion_justification", "prompt": "Explain why Python is excluded from this release", "category": "all" },
-    { "toolName": "azsdk_update_product_onboarding", "prompt": "Update the product onboarding status", "category": "all" },
     { "toolName": "azsdk_update_sdk_details_in_release_plan", "prompt": "Update SDK details in the release plan", "category": "all" },
     { "toolName": "azsdk_update_sdk_details_in_release_plan", "prompt": "Change the SDK package name in the release plan", "category": "all" },
 

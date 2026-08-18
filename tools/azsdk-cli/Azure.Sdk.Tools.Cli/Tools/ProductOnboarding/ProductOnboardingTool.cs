@@ -156,7 +156,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ProductOnboarding
             string dataPlane,
             string managementPlane,
             string submitter,
-            CancellationToken ct)
+            CancellationToken ct,
+            bool isTest = true)
         {
             try
             {
@@ -233,14 +234,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.ProductOnboarding
                     Submitter = submitter,
                 };
 
-                ProductOnboardingWorkItem? productOnboarding = await devOpsService.GetProductOnboardingAsync(status.ProductId, status.ServiceId, ct);
+                ProductOnboardingWorkItem? productOnboarding = await devOpsService.GetProductOnboardingAsync(status.ProductId, status.ServiceId, ct, isTest);
                 if (productOnboarding == null)
                 {
-                    productOnboarding = await devOpsService.CreateProductOnboardingAsync(status, ct);
+                    productOnboarding = await devOpsService.CreateProductOnboardingAsync(status, ct, isTest);
                 }
                 else
                 {
-                    productOnboarding = await devOpsService.UpdateProductOnboardingAsync(productOnboarding.WorkItemId, status, ct);
+                    productOnboarding = await devOpsService.UpdateProductOnboardingAsync(productOnboarding.WorkItemId, status, ct, isTest);
                 }
 
                 return new ()

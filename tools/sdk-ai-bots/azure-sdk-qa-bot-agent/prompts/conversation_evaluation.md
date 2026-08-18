@@ -31,14 +31,20 @@ clearly mid-flight and a later message could still change the outcome.
 - **finished** — the poster's question was resolved or abandoned: the
   poster or an expert gave a conclusive reply (confirmation, correction,
   a redirect that closes the thread), the poster thanked the bot and
-  stopped, or the last bot answer has been sitting with no further human
-  activity (the thread went quiet). Most threads you see are finished.
+  stopped. When there is no explicit closing message, a quiet thread is
+  also finished when **both** of these conditions hold:
+  1. no unanswered question, requested follow-up, pending action, or
+     participant waiting for a response remains anywhere in the thread; and
+  2. at least 72 hours have elapsed between the supplied last-activity time
+     and evaluation time.
 - **ongoing** — the last message is a **user question or follow-up the
   bot has not answered yet**, or a human is **actively mid-discussion**
   (e.g. an expert just asked the poster for more detail and is awaiting a
-  reply). Only mark `ongoing` when a further message is plainly still
-  expected; do not mark a quiet, answered thread `ongoing` just because
-  nobody explicitly confirmed.
+  reply). Inactivity alone never closes a thread with an unresolved item.
+  If an otherwise resolved thread has no explicit closing message and has
+  been inactive for less than 72 hours, keep it ongoing until the inactivity
+  threshold is reached. A bot's optional offer such as "I can also show an
+  example" is not a pending item unless a human accepts it or asks for it.
 
 **If the conversation is not finished, stop here.** Return `finished: false`
 and `verdict: "unknown"` — do not attempt to judge whether the bot was

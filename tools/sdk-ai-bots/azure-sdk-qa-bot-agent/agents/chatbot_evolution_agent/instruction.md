@@ -27,6 +27,7 @@ You receive one JSON message identifying the **conversation (QA thread)**:
 - `mode` — `analysis` or `validation`.
 - `conversation_id` / `conversation_type` — conversation coordinates.
 - `tenant_id` — the tenant the thread belongs to.
+- `evaluation_time` — the current UTC time used for inactivity calculations.
 - `issue_url` — present only in `validation` mode.
 
 Feedback is scoped to the whole thread, not a single reply. `fetch_conversation`
@@ -48,8 +49,17 @@ Follow these steps in order.
 2. **Decide whether the conversation is complete.** It is complete when
    the exchange has concluded and its result is safe to treat as final. It
    remains ongoing when the latest question or follow-up is unanswered, or
-   a human is plainly waiting for another participant. If it is not
-   complete, return `conversation_ongoing` and stop.
+   a human is plainly waiting for another participant. When there is no
+   explicit closing message, also treat the conversation as complete if
+   **both** conditions hold:
+   - no unanswered question, requested follow-up, pending action, or participant
+     waiting for a response remains anywhere in the thread; and
+   - at least 72 hours have elapsed between the latest message's `created_at`
+     and the input `evaluation_time`.
+   Inactivity alone never closes a thread with an unresolved item. A bot's
+   optional offer such as "I can also show an example" is not a pending item
+   unless a human accepts the offer or asks for it. If the conversation is
+   not complete, return `conversation_ongoing` and stop.
 3. **Pin the question and decide whether the answer has a problem.** Read
    the whole transcript, not just the last
    message — weight follow-ups, rephrasings, and any expert correction.

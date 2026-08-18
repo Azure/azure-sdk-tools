@@ -88,6 +88,40 @@ async def _verdict(
     return result.verdict
 
 
+def test_evaluation_request_includes_deterministic_timing_context() -> None:
+    evaluation_time = _BASE_TIME + timedelta(days=3)
+    request = ConversationService._build_evaluation_request(
+        "[User]\nQuestion\n\n[Bot]\nAnswer",
+        last_activity_at=_BASE_TIME,
+        evaluation_time=evaluation_time,
+    )
+
+    assert f"Evaluation time (UTC): {evaluation_time.isoformat()}" in request
+    assert (
+        f"Last conversation activity (UTC): {_BASE_TIME.isoformat()}"
+        in request
+    )
+    assert request.endswith("[User]\nQuestion\n\n[Bot]\nAnswer")
+
+
+def test_completion_prompts_require_resolved_thread_and_72_hours() -> None:
+    project_root = Path(__file__).resolve().parent.parent
+    evaluator_prompt = (
+        project_root / "prompts" / "conversation_evaluation.md"
+    ).read_text(encoding="utf-8")
+    agent_instruction = (
+        project_root
+        / "agents"
+        / "chatbot_evolution_agent"
+        / "instruction.md"
+    ).read_text(encoding="utf-8")
+
+    for content in (evaluator_prompt, agent_instruction):
+        assert "72 hours" in content
+        assert "Inactivity alone never closes" in content
+        assert "unanswered question" in content
+
+
 # ---------------------------------------------------------------------------
 # correct — a human confirms / agrees / acts on the bot
 # ---------------------------------------------------------------------------

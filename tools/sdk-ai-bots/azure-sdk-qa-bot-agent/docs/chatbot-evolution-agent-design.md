@@ -296,7 +296,7 @@ model QARecord {
 
 ### 2.4 Conversation Evaluation
 
-In the feedback loop, the Evolution Agent judges each `ongoing` thread and decides **two things, in order**: first whether the conversation is **finished** (vs. still ongoing), then whether the bot answer has a real problem. The `finished` gate lets a thread stay `ongoing` across runs until it actually concludes, and the correctness gate prevents diagnosis or KB mutation for a successful answer.
+In the feedback loop, the Evolution Agent judges each `ongoing` thread and decides **two things, in order**: first whether the conversation is **finished** (vs. still ongoing), then whether the bot answer has a real problem. A thread with no explicit closing message is considered finished after 72 hours without activity only when no unanswered question, pending action, or participant waiting for a response remains; inactivity alone never closes an unresolved thread. The `finished` gate lets a thread stay `ongoing` across runs until it actually concludes, and the correctness gate prevents diagnosis or KB mutation for a successful answer.
 
 The existing `conversation-eval` pipeline remains an independent reporting workflow and continues to use `prompts/conversation_evaluation.md` and `ConversationService.evaluate_conversation`. Its result does not drive the feedback lifecycle.
 

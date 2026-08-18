@@ -305,6 +305,7 @@ class ChatbotEvolutionAgentService:
             tenant_id=record.tenant_id,
             conversation_id=record.conversation_id,
             conversation_type=record.conversation_type,
+            evaluation_time=_now(),
             mode=mode,
             issue_url=record.feedback.issue_url if record.feedback else None,
         )

@@ -539,9 +539,12 @@ class ConversationService:
 
         ordered = sorted(messages, key=lambda m: m.created_at)
         first = ordered[0]
+        evaluation_time = datetime.now(timezone.utc)
 
         state, verdict, reasoning, confidence = await self._evaluate_transcript(
-            transcript
+            transcript,
+            last_activity_at=ordered[-1].created_at,
+            evaluation_time=evaluation_time,
         )
 
         return ConversationEvaluationItem(
@@ -554,7 +557,7 @@ class ConversationService:
             verdict=verdict,
             reasoning=reasoning,
             confidence=confidence,
-            evaluated_at=datetime.now(timezone.utc),
+            evaluated_at=evaluation_time,
         )
 
     @staticmethod
@@ -626,7 +629,11 @@ class ConversationService:
         return prompt
 
     async def _evaluate_transcript(
-        self, transcript: str
+        self,
+        transcript: str,
+        *,
+        last_activity_at: datetime,
+        evaluation_time: datetime,
     ) -> tuple[ConversationState, BotAnswerVerdict, str, float]:
         """Call the LLM to judge whether the thread is finished and correct."""
         model = cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL", "")
@@ -640,13 +647,36 @@ class ConversationService:
             model=model,
             messages=[
                 {"role": "system", "content": self._load_eval_prompt()},
-                {"role": "user", "content": transcript},
+                {
+                    "role": "user",
+                    "content": self._build_evaluation_request(
+                        transcript,
+                        last_activity_at=last_activity_at,
+                        evaluation_time=evaluation_time,
+                    ),
+                },
             ],
             response_format={"type": "json_object"},
             reasoning_effort=reasoning_effort,
         )
         raw = (response.choices[0].message.content or "").strip()
         return self._parse_evaluation(raw)
+
+    @staticmethod
+    def _build_evaluation_request(
+        transcript: str,
+        *,
+        last_activity_at: datetime,
+        evaluation_time: datetime,
+    ) -> str:
+        """Add deterministic timing context for the inactivity completion rule."""
+        return (
+            "Evaluation time (UTC): "
+            f"{evaluation_time.astimezone(timezone.utc).isoformat()}\n"
+            "Last conversation activity (UTC): "
+            f"{last_activity_at.astimezone(timezone.utc).isoformat()}\n\n"
+            f"{transcript}"
+        )
 
     @staticmethod
     def _parse_evaluation(

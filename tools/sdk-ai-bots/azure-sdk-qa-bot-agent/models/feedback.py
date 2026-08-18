@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from datetime import datetime
 from enum import Enum
 from typing import Any
 
@@ -93,8 +94,16 @@ class ChatbotEvolutionAgentInput(BaseModel):
     tenant_id: str
     conversation_id: str
     conversation_type: ConversationType
+    evaluation_time: datetime
     mode: ChatbotEvolutionAgentMode = ChatbotEvolutionAgentMode.analysis
     issue_url: str | None = None
+
+    @field_validator("evaluation_time")
+    @classmethod
+    def validate_evaluation_time(cls, value: datetime) -> datetime:
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError("evaluation_time must include a UTC offset")
+        return value
 
     @field_validator("issue_url")
     @classmethod

@@ -75,7 +75,13 @@ extends:
               mcpEnvironment: ${{ parameters.McpKind }}
               azureSubscription: azuresdkqabot-dev
               runs: ${{ parameters.Runs }}
-              shardTimeoutInMinutes: 50
+              # Azure Pipelines has no template arithmetic, so scale in explicit tiers.
+              ${{ if eq(parameters.Runs, 1) }}:
+                shardTimeoutInMinutes: 50
+              ${{ elseif eq(parameters.Runs, 2) }}:
+                shardTimeoutInMinutes: 80
+              ${{ else }}:
+                shardTimeoutInMinutes: 120
 
       - stage: SummaryForced
         displayName: Summary forced track
@@ -110,7 +116,12 @@ extends:
               mcpEnvironment: ${{ parameters.McpKind }}
               azureSubscription: azuresdkqabot-dev
               runs: ${{ parameters.Runs }}
-              shardTimeoutInMinutes: 30
+              ${{ if eq(parameters.Runs, 1) }}:
+                shardTimeoutInMinutes: 50
+              ${{ elseif eq(parameters.Runs, 2) }}:
+                shardTimeoutInMinutes: 80
+              ${{ else }}:
+                shardTimeoutInMinutes: 120
 
       - stage: SummaryTrigger
         displayName: Summary trigger track

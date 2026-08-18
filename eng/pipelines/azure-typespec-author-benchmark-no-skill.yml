@@ -39,4 +39,10 @@ extends:
     UseAzSdkAuthentication: ${{ eq(parameters.McpKind, 'live') }}
     preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
     failOnFailedTests: false
-    shardTimeoutInMinutes: 30
+    # Keep timeout scaling aligned with the with-skill benchmark.
+    ${{ if eq(parameters.Runs, 1) }}:
+      shardTimeoutInMinutes: 50
+    ${{ elseif eq(parameters.Runs, 2) }}:
+      shardTimeoutInMinutes: 80
+    ${{ else }}:
+      shardTimeoutInMinutes: 120

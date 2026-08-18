@@ -145,8 +145,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ProductOnboarding
             }
         }
 
-
-        [McpServerTool(Name = UpdateProductOnboardingToolName), Description("Update Product Onboarding: Create or update product onboarding work item.")]
         public async Task<ProductOnboardingResponse> UpdateProductOnboarding(
             Guid productId,
             string productName,
@@ -248,7 +246,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ProductOnboarding
                 return new ()
                 {
                     ProductOnboardingDetails = productOnboarding,
-                    Message = "Successfully retrieved product onboarding status."
+                    Message = "Successfully updated product onboarding status."
                 };
             }
             catch (Exception ex)

@@ -16,7 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ProductOnboarding
         public Guid ProductId { get; set; } = Guid.Empty;
 
         [JsonPropertyName("product_name")]
-        public string ProductName { get; set; }
+        public string ProductName { get; set; } = string.Empty;
 
         [JsonPropertyName("product_type")]
         public ProductType ProductType { get; set; } = ProductType.Unknown;
@@ -28,10 +28,10 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ProductOnboarding
         public Guid ServiceId { get; set; } = Guid.Empty;
 
         [JsonPropertyName("service_name")]
-        public string ServiceName { get; set; }
+        public string ServiceName { get; set; } = string.Empty;
 
         [JsonPropertyName("needs_sdk")]
-        public bool NeedsSDK { get; set; }
+        public bool NeedsSDK { get; set; } = false;
 
         [JsonPropertyName("data_plane")]
         public DataPlaneApplicability DataPlane { get; set; } = DataPlaneApplicability.Unknown;
@@ -40,10 +40,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ProductOnboarding
         public ManagementPlaneApplicability ManagementPlane { get; set; } = ManagementPlaneApplicability.Unknown;
 
         [JsonPropertyName("submitter")]
-        public string Submitter { get; set; }
-
-        [JsonPropertyName("release_plan_details")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string Submitter { get; set; } = string.Empty;
 
         public ProductOnboardingWorkItem? ProductOnboardingDetails { get; set; }
 

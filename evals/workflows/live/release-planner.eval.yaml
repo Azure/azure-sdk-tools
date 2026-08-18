@@ -5,7 +5,8 @@ description: |
   Drives the *real* azsdk-cli MCP server against real DevOps APIs, inside a
   real git worktree of azure-rest-api-specs. The MCP server runs with
   AZSDKTOOLS_AGENT_TESTING=true (set globally in .vally.yaml), so work items
-  route to the DevOps test area path and are safe to leave around / re-run.
+  route to the DevOps test area path. The nightly pipeline abandons plans and
+  closes linked SDK PRs after each shard.
 
   This scenario walks the agent through a multi-step chain that exercises
   multiple skills back-to-back in a single conversation:

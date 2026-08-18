@@ -12,6 +12,7 @@ paths:
     - eval-authoring-tool/evals/
     - eval-authoring-workflow/evals/
     - code-review/evals/
+    - azure-typespec-assessment/evals/
   results: results/
   evalFilenames: ["eval.yaml", "*.eval.yaml"]
 

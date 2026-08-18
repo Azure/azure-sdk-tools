@@ -58,8 +58,8 @@ if ($repositories.Count -eq 0) {
 
 $shareableMinutes = $JobTimeoutMinutes * 0.75
 $perRepositoryMinutes = [int][math]::Max(1, [math]::Floor($shareableMinutes / $repositories.Count))
-$timeoutArgument = "${perRepositoryMinutes}m"
-Write-Host "Job timeout ${JobTimeoutMinutes}m over $($repositories.Count) repo(s): allowing $timeoutArgument each."
+$timeoutMilliseconds = [int][TimeSpan]::FromMinutes($perRepositoryMinutes).TotalMilliseconds
+Write-Host "Job timeout ${JobTimeoutMinutes}m over $($repositories.Count) repo(s): allowing ${perRepositoryMinutes}m each."
 
 $failed = @()
 
@@ -69,6 +69,8 @@ foreach ($repository in $repositories) {
     $repositoryDirectory = Join-Path $EvalArtifactDir "$MetricsPrefix/$repository"
     New-Item -ItemType Directory -Force -Path $repositoryDirectory | Out-Null
     $reportPath = Join-Path $repositoryDirectory "$reportDate.json"
+    $standardErrorPath = Join-Path $repositoryDirectory "$reportDate.stderr.log"
+    Remove-Item -Path $reportPath, $standardErrorPath -Force -ErrorAction SilentlyContinue
 
     $evaluationArguments = @(
         'eng', 'evaluate', $Owner, $repository,
@@ -76,20 +78,46 @@ foreach ($repository in $repositories) {
         '--output', 'json'
     )
 
-    timeout --signal=TERM --kill-after=60s $timeoutArgument `
-        $AzSdkPath @evaluationArguments > $reportPath
-    $exitCode = $LASTEXITCODE
+    $process = Start-Process `
+        -FilePath $AzSdkPath `
+        -ArgumentList $evaluationArguments `
+        -RedirectStandardOutput $reportPath `
+        -RedirectStandardError $standardErrorPath `
+        -PassThru
+    $completed = $process.WaitForExit($timeoutMilliseconds)
 
-    if ($exitCode -in @(124, 137)) {
-        Write-Host "##vso[task.logissue type=error]eng evaluate for $repository exceeded $timeoutArgument and was terminated"
+    if (-not $completed) {
+        $process.Kill($true)
+        $process.WaitForExit()
+    }
+
+    if(Test-Path $standardErrorPath)
+    {
+        $standardError = Get-Content -Raw -Path $standardErrorPath
+    }
+    else
+    {
+        $standardError = ''
+    }
+    Remove-Item -Path $standardErrorPath -Force -ErrorAction SilentlyContinue
+
+    if (-not $completed) {
+        Write-Host "##vso[task.logissue type=error]eng evaluate for $repository exceeded ${perRepositoryMinutes}m and was terminated"
+        if (-not [string]::IsNullOrWhiteSpace($standardError)) {
+            Write-Host $standardError
+        }
         Remove-Item -Path $reportPath -Force -ErrorAction SilentlyContinue
         $failed += $repository
         Write-Host '##[endgroup]'
         continue
     }
 
+    $exitCode = $process.ExitCode
     if ($exitCode -ne 0) {
         Write-Host "##vso[task.logissue type=error]eng evaluate failed for $repository with exit code $exitCode"
+        if (-not [string]::IsNullOrWhiteSpace($standardError)) {
+            Write-Host $standardError
+        }
         Remove-Item -Path $reportPath -Force -ErrorAction SilentlyContinue
         $failed += $repository
         Write-Host '##[endgroup]'

@@ -147,12 +147,13 @@ jobs:
             }
             Write-Host "Uploading $($reports.Count) report(s)."
 
-            # Uploading the staged tree as-is preserves pipeline-fix/<repo>/<date>.json as the
-            # blob key. --overwrite lets a re-run correct the same day's report in place.
+            # Keep the destination prefix hardcoded so this job cannot write into the container
+            # root. The narrowed source preserves <repo>/<date>.json beneath that prefix.
+            # --overwrite lets a re-run correct the same day's report in place.
             az storage blob upload-batch `
                 --account-name '$(MetricsStorageAccount)' `
-                --destination '$(MetricsContainer)' `
-                --source '$(EvalArtifactDir)' `
+                --destination '$(MetricsContainer)/pipeline-evaluation' `
+                --source '$(EvalArtifactDir)/$(MetricsPrefix)' `
                 --pattern '*.json' `
                 --content-type 'application/json' `
                 --auth-mode login `

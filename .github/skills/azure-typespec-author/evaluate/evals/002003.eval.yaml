@@ -20,7 +20,7 @@ stimuli:
       suite: "armtemplate"
       mode: "trigger"
     prompt: |
-      Define a PATCH operation for Employees. It is to update properties of an employee. Ensure the definition meets TypeSpec Azure guidelines.
+      Update the existing Employee ARM resource operation so clients can synchronously update its tags and mutable Employee properties. Follow TypeSpec Azure guidelines. I've already made the design decisions, so go ahead with the change.
     environment: &shared_environment
       files:
         - src: ../fixtures/002003-ARM-define-full-update-operation/employee.tsp
@@ -59,7 +59,7 @@ stimuli:
       suite: "armtemplate"
       mode: "forced"
     prompt: |
-      @azure-typespec-author Define a PATCH operation for Employees. It is to update properties of an employee. Ensure the definition meets TypeSpec Azure guidelines.
+      @azure-typespec-author Update the existing Employee ARM resource operation so clients can synchronously update its tags and mutable Employee properties. Follow TypeSpec Azure guidelines. I've already made the design decisions, so go ahead with the change.
     environment: *shared_environment
     graders:
       - type: "tool-calls"
@@ -90,7 +90,8 @@ stimuli:
     tags:
       suite: "armtemplate"
       mode: "no-skill"
-    prompt: "Define a PATCH operation for Employees. It is to update properties of an employee. Ensure the definition meets TypeSpec Azure guidelines."
+    prompt: |
+      Update the existing Employee ARM resource operation so clients can synchronously update its tags and mutable Employee properties. Follow TypeSpec Azure guidelines. I've already made the design decisions, so go ahead with the change.
     environment: *shared_environment
     graders:
       - type: "tool-calls"

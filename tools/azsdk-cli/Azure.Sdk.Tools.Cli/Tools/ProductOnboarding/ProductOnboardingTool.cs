@@ -244,11 +244,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ProductOnboarding
                     productOnboarding = await devOpsService.UpdateProductOnboardingAsync(productOnboarding.WorkItemId, status, ct, isTest);
                 }
 
-                return new ()
-                {
-                    ProductOnboardingDetails = productOnboarding,
-                    Message = "Successfully updated product onboarding status."
-                };
+                return productOnboarding.UpdateProductOnboardingResponse(new() { Message = "Successfully updated product onboarding status." });
             }
             catch (Exception ex)
             {

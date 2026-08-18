@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.Cli.Attributes;
+using Azure.Sdk.Tools.Cli.Models.Responses.ProductOnboarding;
 
 namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 {
@@ -55,6 +56,25 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
                     ManagementPlane = ManagementPlaneApplicabilityExtensions.FromAdoFieldValue(ManagementPlane),
                     Submitter = Submitter,
                 };
+
+        public ProductOnboardingResponse UpdateProductOnboardingResponse(ProductOnboardingResponse response)
+        {
+            response.ProductOnboardingDetails = this;
+            var status = ToProductOnboardingStatus();
+            
+            response.ProductId = status.ProductId;
+            response.ProductName = status.ProductName;
+            response.ProductType = status.ProductType;
+            response.ProductLifecycle = status.ProductLifecycle;
+            response.ServiceId = status.ServiceId;
+            response.ServiceName = status.ServiceName;
+            response.DataPlane = status.DataPlane;
+            response.ManagementPlane = status.ManagementPlane;
+            response.Submitter = status.Submitter;
+
+            response.NeedsSDK = (response.DataPlane == DataPlaneApplicability.Yes || response.ManagementPlane == ManagementPlaneApplicability.Yes);
+            return response;
+        }
 
         public void SetFromProductOnboardingStatus(ProductOnboardingStatus status)
         {

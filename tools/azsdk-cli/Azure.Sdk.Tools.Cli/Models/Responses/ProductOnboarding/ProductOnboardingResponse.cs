@@ -69,7 +69,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ProductOnboarding
             }
             else
             {
-                result.AppendLine("No release plan details available.");
+                result.AppendLine("No product onboarding details available.");
             }
             if (Warnings?.Count > 0)
             {

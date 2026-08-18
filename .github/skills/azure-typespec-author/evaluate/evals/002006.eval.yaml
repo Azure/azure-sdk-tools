@@ -20,7 +20,7 @@ stimuli:
       suite: "armtemplate"
       mode: "trigger"
     prompt: |
-      In API version `2024-10-01-preview`, add an Address child resource under the existing Employee ARM resource. Its optional properties are street1, street2, city, state, postalCode, and country, along with a read-only provisioning state. Support the standard operations for a child ARM resource. Follow TypeSpec Azure guidelines. I've already made the design decisions, so go ahead with the change.
+      In API version `2024-10-01-preview`, add a child resource named `AddressResource` under the existing Employee ARM resource. Its optional properties are street1, street2, city, state, postalCode, and country, along with a read-only provisioning state. Support the standard operations for a child ARM resource. Follow TypeSpec Azure guidelines. I've already made the design decisions, so go ahead with the change.
     environment: &shared_environment
       files:
         - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -63,7 +63,7 @@ stimuli:
       suite: "armtemplate"
       mode: "forced"
     prompt: |
-      @azure-typespec-author In API version `2024-10-01-preview`, add an Address child resource under the existing Employee ARM resource. Its optional properties are street1, street2, city, state, postalCode, and country, along with a read-only provisioning state. Support the standard operations for a child ARM resource. Follow TypeSpec Azure guidelines. I've already made the design decisions, so go ahead with the change.
+      @azure-typespec-author In API version `2024-10-01-preview`, add a child resource named `AddressResource` under the existing Employee ARM resource. Its optional properties are street1, street2, city, state, postalCode, and country, along with a read-only provisioning state. Support the standard operations for a child ARM resource. Follow TypeSpec Azure guidelines. I've already made the design decisions, so go ahead with the change.
     environment: *shared_environment
     graders:
       - type: "tool-calls"
@@ -186,7 +186,7 @@ stimuli:
       suite: "armtemplate"
       mode: "no-skill"
     prompt: |
-      In API version `2024-10-01-preview`, add an Address child resource under the existing Employee ARM resource. Its optional properties are street1, street2, city, state, postalCode, and country, along with a read-only provisioning state. Support the standard operations for a child ARM resource. Follow TypeSpec Azure guidelines. I've already made the design decisions, so go ahead with the change.
+      In API version `2024-10-01-preview`, add a child resource named `AddressResource` under the existing Employee ARM resource. Its optional properties are street1, street2, city, state, postalCode, and country, along with a read-only provisioning state. Support the standard operations for a child ARM resource. Follow TypeSpec Azure guidelines. I've already made the design decisions, so go ahead with the change.
     environment: *shared_environment
     graders:
       - type: "tool-calls"

@@ -181,9 +181,9 @@ stimuli:
         2. Fetch the release plan you just created back from DevOps to confirm
            it was saved, and tell me its work-item ID.
 
-        3. Kick off SDK generation for that same TypeSpec project via the
-           generation pipeline (Java SDK is fine). Use the work-item ID
-           from step 2.
+        3. Kick off Java SDK generation only for that same TypeSpec project
+           via the generation pipeline. Do not generate another language.
+           Use the work-item ID from step 2.
 
         4. Once the generation pipeline reports a pull request URL, link
            that SDK pull request back to the release plan from step 2.
@@ -214,21 +214,20 @@ stimuli:
           scoring: binary
           threshold: 1.0
           prompt: |
-            Did the final assistant message clearly state BOTH of the
+            Did the final assistant message clearly state ALL THREE of the
             following, consistent with the tools that were actually called?
 
               1. A numeric DevOps work-item ID for the release plan that was
                  created (or confirmed).
 
               2. A GitHub pull request URL on
-                 github.com/Azure/azure-sdk-for-* that was linked back to
-                 that release plan.
+                 github.com/Azure/azure-sdk-for-java that was linked back to
+                 that release plan, with no generation attempted for another
+                 language.
 
-              3. The generated SDK is a stable release according to the
-                 selected language's library versioning conventions. Do not
-                 require the literal word "stable" in a package version or PR
-                 if that language represents stability by omitting a
-                 prerelease suffix.
+              3. The Java SDK release type matches the package's library
+                 versioning convention. A beta release is valid and expected
+                 when the Java package does not yet have a stable release.
 
             Answer "pass" only if ALL THREE are satisfied. Otherwise answer
             "fail" and briefly explain the inference or workflow failure.

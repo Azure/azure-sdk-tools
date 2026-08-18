@@ -171,9 +171,7 @@ stimuli:
       end-to-end. Do every step below, in order, and use real tools (no
       dry-run, no simulation):
 
-        1. Inspect the spec pull request and infer the target release timeline,
-           API version, and SDK release type. Then create the appropriate
-           release plan using:
+        1. Create the appropriate release plan using:
              - TypeSpec project: "specification/contosowidgetmanager/Contoso.Management"
              - service tree ID: "a7f2b8e4-9c1d-4a3e-b6f9-2d8e5a7c3b1f"
              - product tree ID: "f1a8c5d2-6e4b-4f7a-9c2d-8b5e1f3a6c9e"
@@ -183,7 +181,7 @@ stimuli:
            it was saved, and tell me its work-item ID.
 
         3. Kick off SDK generation for that same TypeSpec project via the
-           generation pipeline (Python SDK is fine). Use the work-item ID
+           generation pipeline (Java SDK is fine). Use the work-item ID
            from step 2.
 
         4. Once the generation pipeline reports a pull request URL, link

@@ -19,8 +19,8 @@ resources:
     - repository: csharp-repo
       type: github
       endpoint: Azure
-      name: Azure/azure-sdk-for-net
-      ref: main
+      name: tjprescott/azure-sdk-for-net
+      ref: arh/Onboarding
     - repository: javascript-repo
       type: github
       endpoint: Azure

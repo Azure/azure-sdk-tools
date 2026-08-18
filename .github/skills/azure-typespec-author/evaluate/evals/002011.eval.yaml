@@ -20,7 +20,7 @@ stimuli:
       suite: "armtemplate"
       mode: "trigger"
     prompt: |
-      In the Widget project, add a checkExistence (HEAD) operation to the existing Employee resource.
+      In the Widget project, add a checkExistence (HEAD) operation to the existing Employee resource. Ensure the definition meets TypeSpec Azure guidelines.
     environment: &shared_environment
       files:
         - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -59,7 +59,7 @@ stimuli:
       suite: "armtemplate"
       mode: "forced"
     prompt: |
-      @azure-typespec-author In the Widget project, add a checkExistence (HEAD) operation to the existing Employee resource.
+      @azure-typespec-author In the Widget project, add a checkExistence (HEAD) operation to the existing Employee resource. Ensure the definition meets TypeSpec Azure guidelines.
     environment: *shared_environment
     graders:
       - type: "tool-calls"
@@ -98,7 +98,7 @@ stimuli:
     tags:
       suite: "armtemplate"
       mode: "no-skill"
-    prompt: "In the Widget project, add a checkExistence (HEAD) operation to the existing Employee resource."
+    prompt: "In the Widget project, add a checkExistence (HEAD) operation to the existing Employee resource. Ensure the definition meets TypeSpec Azure guidelines."
     environment: *shared_environment
     graders:
       - type: "tool-calls"

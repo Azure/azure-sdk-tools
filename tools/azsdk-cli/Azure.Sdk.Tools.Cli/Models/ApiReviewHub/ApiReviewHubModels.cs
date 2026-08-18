@@ -32,6 +32,30 @@ public class ReviewPullRequestCreationRequest
     public required GitBranchReference TargetBranch { get; set; }
 }
 
+public class MarkPackageReleasedRequest
+{
+    public required string Language { get; set; }
+    public required string PackageName { get; set; }
+    public required string Version { get; set; }
+    public required string ApiHash { get; set; }
+    public string RepoOwner { get; set; } = string.Empty;
+    public required DateTimeOffset ReleasedOn { get; set; }
+    public bool DryRun { get; set; } = true;
+}
+
+public class ApiReviewHubMarkReleasedResult
+{
+    public Guid PackageId { get; set; }
+    public Guid PackageVersionId { get; set; }
+    public required string PackageName { get; set; }
+    public required string Language { get; set; }
+    public required string Version { get; set; }
+    public required string ReleasedApiHash { get; set; }
+    public required string ApprovalStatus { get; set; }
+    public bool IsReleased { get; set; }
+    public DateTimeOffset? ReleasedOn { get; set; }
+}
+
 public class ReviewPullRequestCreationAcceptedResponse
 {
     [JsonPropertyName("operationId")]
@@ -159,7 +183,7 @@ public class ApiViewReleaseStatusResult
     public string? Error { get; set; }
 }
 
-public class ApiReviewReleaseStatusResult
+public class PackageReleaseStatusResult
 {
     [JsonPropertyName("isApproved")]
     public bool IsApproved { get; set; }
@@ -225,7 +249,7 @@ public class ApiReviewHubResponse : CommandResponse
     }
 }
 
-public class ApiReviewReleaseStatusResponse : CommandResponse
+public class PackageReleaseStatusResponse : CommandResponse
 {
     private const string Yellow = "\u001b[33m";
     private const string Red = "\u001b[31m";
@@ -233,7 +257,7 @@ public class ApiReviewReleaseStatusResponse : CommandResponse
 
     [JsonPropertyName("result")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public ApiReviewReleaseStatusResult? Result { get; set; }
+    public PackageReleaseStatusResult? Result { get; set; }
 
     [JsonPropertyName("details")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

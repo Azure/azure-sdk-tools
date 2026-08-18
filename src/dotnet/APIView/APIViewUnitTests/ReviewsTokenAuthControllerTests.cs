@@ -164,7 +164,15 @@ public class ReviewsTokenAuthControllerTests
             .ReturnsAsync(resolved);
         _mockApiRevisionsManager
             .Setup(x => x.MarkAPIRevisionReleasedAsync("revision456"))
-            .ReturnsAsync(new APIRevisionListItemModel { Id = "revision456", IsReleased = true, ReleasedOn = releasedOn });
+            .ReturnsAsync(new APIRevisionListItemModel
+            {
+                Id = "revision456",
+                PackageName = "Azure.Storage.Blobs",
+                Language = "C#",
+                Files = new List<APICodeFileModel> { new APICodeFileModel { PackageVersion = "12.0.0" } },
+                IsReleased = true,
+                ReleasedOn = releasedOn
+            });
 
         ActionResult<MarkReleasedResult> result = await _controller.MarkReleased("Azure.Storage.Blobs", "C#", "12.0.0");
 
@@ -172,6 +180,9 @@ public class ReviewsTokenAuthControllerTests
         MarkReleasedResult response = Assert.IsType<MarkReleasedResult>(jsonResult.Value);
         Assert.Equal("review123", response.ReviewId);
         Assert.Equal("revision456", response.RevisionId);
+        Assert.Equal("Azure.Storage.Blobs", response.PackageName);
+        Assert.Equal("C#", response.Language);
+        Assert.Equal("12.0.0", response.Version);
         Assert.True(response.IsReleased);
         Assert.Equal(releasedOn, response.ReleasedOn);
         _mockApiRevisionsManager.Verify(x => x.MarkAPIRevisionReleasedAsync("revision456"), Times.Once);
@@ -193,7 +204,14 @@ public class ReviewsTokenAuthControllerTests
             .ReturnsAsync(resolved);
         _mockApiRevisionsManager
             .Setup(x => x.GetAPIRevisionAsync("revision456"))
-            .ReturnsAsync(new APIRevisionListItemModel { Id = "revision456", IsReleased = false });
+            .ReturnsAsync(new APIRevisionListItemModel
+            {
+                Id = "revision456",
+                PackageName = "Azure.Storage.Blobs",
+                Language = "C#",
+                Files = new List<APICodeFileModel> { new APICodeFileModel { PackageVersion = "12.0.0" } },
+                IsReleased = false
+            });
 
         ActionResult<MarkReleasedResult> result = await _controller.MarkReleased(
             "Azure.Storage.Blobs", "C#", "12.0.0", dryRun: true);
@@ -202,10 +220,45 @@ public class ReviewsTokenAuthControllerTests
         MarkReleasedResult response = Assert.IsType<MarkReleasedResult>(jsonResult.Value);
         Assert.Equal("review123", response.ReviewId);
         Assert.Equal("revision456", response.RevisionId);
+        Assert.Equal("Azure.Storage.Blobs", response.PackageName);
+        Assert.Equal("C#", response.Language);
+        Assert.Equal("12.0.0", response.Version);
         Assert.False(response.IsReleased);
         Assert.Null(response.ReleasedOn);
         _mockApiRevisionsManager.Verify(x => x.GetAPIRevisionAsync("revision456"), Times.Once);
         _mockApiRevisionsManager.Verify(x => x.MarkAPIRevisionReleasedAsync(It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task MarkReleased_WhenRevisionMetadataMissing_ReturnsEmptyStrings()
+    {
+        var resolved = new ResolvePackageResponse
+        {
+            PackageName = "Azure.Storage.Blobs",
+            Language = "C#",
+            ReviewId = "review123",
+            RevisionId = "revision456",
+            Version = "12.0.0"
+        };
+        _mockReviewSearch
+            .Setup(x => x.ResolveAutomaticRevisionForRelease("Azure.Storage.Blobs", "C#", "12.0.0"))
+            .ReturnsAsync(resolved);
+        _mockApiRevisionsManager
+            .Setup(x => x.MarkAPIRevisionReleasedAsync("revision456"))
+            .ReturnsAsync(new APIRevisionListItemModel
+            {
+                Id = "revision456",
+                IsReleased = true,
+                ReleasedOn = DateTime.UtcNow
+            });
+
+        ActionResult<MarkReleasedResult> result = await _controller.MarkReleased("Azure.Storage.Blobs", "C#", "12.0.0");
+
+        LeanJsonResult jsonResult = Assert.IsType<LeanJsonResult>(result.Result);
+        MarkReleasedResult response = Assert.IsType<MarkReleasedResult>(jsonResult.Value);
+        Assert.Equal(string.Empty, response.PackageName);
+        Assert.Equal(string.Empty, response.Language);
+        Assert.Equal(string.Empty, response.Version);
     }
 
     [Theory]

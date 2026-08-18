@@ -113,92 +113,17 @@ jobs:
           # AzurePipelinesCredential uses to get an Azure DevOps-scoped AAD token.
           azureSubscription: 'opensource-api-connection'
           scriptType: pscore
-          scriptLocation: inlineScript
-          inlineScript: |
-            $ErrorActionPreference = 'Stop'
-
-            # The blob name must agree with the window the report covers, and the dashboard
-            # prefers the report's own "until" (set to UtcNow by the tool) over the name.
-            $reportDate = (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd')
-            $repos = @($env:REPOS | ConvertFrom-Json)
-            
-            $shareableMinutes = [int]$env:JOB_TIMEOUT_MINUTES * 0.75
-            $perRepoMinutes = [int][math]::Max(1, [math]::Floor($shareableMinutes / $repos.Count))
-            $timeoutArg = "${perRepoMinutes}m"
-            Write-Host "Job timeout $($env:JOB_TIMEOUT_MINUTES)m over $($repos.Count) repo(s): allowing $timeoutArg each."
-
-            $failed = @()
-
-            foreach ($repo in $repos) {
-                Write-Host "##[group]Evaluating $env:OWNER/$repo"
-
-                # Mirrors the dashboard's key layout: pipeline-evaluation/<repo>/<YYYY-MM-DD>.json
-                $repoDir = Join-Path '$(EvalArtifactDir)' "$(MetricsPrefix)/$repo"
-                New-Item -ItemType Directory -Force -Path $repoDir | Out-Null
-                $reportPath = Join-Path $repoDir "$reportDate.json"
-
-                # Build the args as an array so owner/repo (from env) are passed as single
-                # args without shell re-parsing.
-                $evalArgs = @('eng', 'evaluate', $env:OWNER, $repo,
-                              '--since-days', '${{ parameters.sinceDays }}',
-                              '--output', 'json')
-
-                # --output json puts the structured response on stdout and progress on stderr,
-                # so redirecting stdout alone yields a clean report. The timeout is per repo;
-                # the job-level one would let a single hung repo starve the rest.
-                timeout --signal=TERM --kill-after=60s $timeoutArg `
-                    $env:AZSDK @evalArgs > $reportPath
-                $exitCode = $LASTEXITCODE
-
-                # 124 = terminated at the timeout, 137 = needed the follow-up KILL.
-                if ($exitCode -eq 124 -or $exitCode -eq 137) {
-                    Write-Host "##vso[task.logissue type=error]eng evaluate for $repo exceeded $timeoutArg and was terminated"
-                    Remove-Item -Path $reportPath -Force -ErrorAction SilentlyContinue
-                    $failed += $repo
-                    Write-Host '##[endgroup]'
-                    continue
-                }
-
-                if ($exitCode -ne 0) {
-                    # One unhealthy repo must not cost the night's data for the others; record
-                    # it, drop the partial file, and keep going.
-                    Write-Host "##vso[task.logissue type=error]eng evaluate failed for $repo with exit code $exitCode"
-                    Remove-Item -Path $reportPath -Force -ErrorAction SilentlyContinue
-                    $failed += $repo
-                    Write-Host '##[endgroup]'
-                    continue
-                }
-
-                # A malformed report would poison the dashboard silently, so parse before publishing.
-                try {
-                    $report = Get-Content -Raw -Path $reportPath | ConvertFrom-Json
-                } catch {
-                    Write-Host "##vso[task.logissue type=error]eng evaluate produced invalid JSON for ${repo}: $_"
-                    Remove-Item -Path $reportPath -Force -ErrorAction SilentlyContinue
-                    $failed += $repo
-                    Write-Host '##[endgroup]'
-                    continue
-                }
-
-                $count = if ($report.results) { @($report.results).Count } else { 0 }
-                Write-Host "$repo -> $reportPath ($count evaluation(s))"
-                Write-Host '##[endgroup]'
-            }
-
-            # Checked before the partial-failure result below, so a total failure never records
-            # a success that would let the publish step run.
-            if ($failed.Count -eq @($repos).Count) {
-                throw 'Evaluation failed for every repository; nothing to publish.'
-            }
-
-            if ($failed.Count -gt 0) {
-                # Surfaced after the loop so the successful repos are still uploaded below.
-                Write-Host "##vso[task.complete result=SucceededWithIssues;]Evaluation failed for: $($failed -join ', ')"
-            }
+          scriptLocation: scriptPath
+          scriptPath: $(Build.SourcesDirectory)/eng/scripts/Evaluate-PipelineFixes.ps1
+          arguments: >
+            -Owner "${{ parameters.owner }}"
+            -SinceDays ${{ parameters.sinceDays }}
+            -JobTimeoutMinutes ${{ parameters.jobTimeoutMinutes }}
+            -EvalArtifactDir "$(EvalArtifactDir)"
+            -MetricsPrefix "$(MetricsPrefix)"
+            -AzSdkPath "$(AZSDK)"
         env:
-          OWNER: ${{ parameters.owner }}
-          REPOS: ${{ convertToJson(parameters.repos) }}
-          JOB_TIMEOUT_MINUTES: ${{ parameters.jobTimeoutMinutes }}
+          REPOSITORIES_JSON: ${{ convertToJson(parameters.repos) }}
           GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
 
       - task: AzureCLI@2

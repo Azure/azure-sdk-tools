@@ -7,20 +7,16 @@ using Azure.Sdk.Tools.Cli.Helpers.EngSys;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Pipeline;
 using Azure.Sdk.Tools.Cli.Tools.Core;
-using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.EngSys;
 
 [Description("Evaluates whether GitHub Copilot's fixes for failing Azure SDK pipelines took the pipeline from failure to success and survived into the merged pull request, recording trendable metrics.")]
-[McpServerToolType]
 public class PipelineFixEvaluatorTool(
     IPipelineFixEvaluatorHelper pipelineFixEvaluatorHelper,
     ILogger<PipelineFixEvaluatorTool> logger
 ) : MCPTool
 {
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.EngSys];
-
-    private const string EvaluatePipelineFixesToolName = "azsdk_evaluate_pipeline_fixes";
 
     private const int DefaultSinceDays = 1;
     private const string CopilotSelectedModel = "copilot-cli-default";
@@ -48,7 +44,7 @@ public class PipelineFixEvaluatorTool(
     };
 
     protected override Command GetCommand() =>
-        new McpCommand("evaluate", "Evaluate whether Copilot's pipeline-failure fixes worked and survived into merged PRs over the last N days", EvaluatePipelineFixesToolName)
+        new Command("evaluate", "Evaluate whether Copilot's pipeline-failure fixes worked and survived into merged PRs over the last N days")
         { ownerArg, repoArg, sinceDaysOpt, modelOpt };
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
@@ -60,7 +56,6 @@ public class PipelineFixEvaluatorTool(
         return await EvaluatePipelineFixes(owner, repo, sinceDays, model, ct);
     }
 
-    [McpServerTool(Name = EvaluatePipelineFixesToolName), Description("Evaluate whether GitHub Copilot's fixes for failing pipelines took the pipeline from failure to success and survived into merged PRs over the last N days, and record trendable metrics")]
     public async Task<PipelineFixEvaluatorResponse> EvaluatePipelineFixes(
         [Description("GitHub repository owner (e.g. Azure)")] string owner,
         [Description("GitHub repository name (e.g. azure-sdk-for-python)")] string repo,

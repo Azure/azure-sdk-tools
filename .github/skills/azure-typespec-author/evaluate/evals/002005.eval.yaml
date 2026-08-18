@@ -20,7 +20,7 @@ stimuli:
       suite: "armtemplate"
       mode: "trigger"
     prompt: |
-      Define a Azure resource "Employee" under the namespace "Microsoft.Widget" using TypeSpec. Properties: age (int32, optional), city (string, optional), profile (bytes, optional), provisioningState (enum incorporating ResourceProvisioningState, optional, read-only). Ensure the definition meets TypeSpec Azure design guidelines.
+      In API version `2024-10-01-preview`, add a tracked Employee ARM resource to the Microsoft.Widget service. It should have optional age, city, and binary profile data, along with a read-only provisioning state. Support the standard operations for a tracked ARM resource. Follow TypeSpec Azure guidelines. I've already made the design decisions, so go ahead with the change.
     environment: &shared_environment
       files:
         - src: ../fixtures/002005-ARM-define-the-resource/main.tsp
@@ -57,7 +57,7 @@ stimuli:
       suite: "armtemplate"
       mode: "forced"
     prompt: |
-      @azure-typespec-author Define a Azure resource "Employee" under the namespace "Microsoft.Widget" using TypeSpec. Properties: age (int32, optional), city (string, optional), profile (bytes, optional), provisioningState (enum incorporating ResourceProvisioningState, optional, read-only). Ensure the definition meets TypeSpec Azure design guidelines.
+      @azure-typespec-author In API version `2024-10-01-preview`, add a tracked Employee ARM resource to the Microsoft.Widget service. It should have optional age, city, and binary profile data, along with a read-only provisioning state. Support the standard operations for a tracked ARM resource. Follow TypeSpec Azure guidelines. I've already made the design decisions, so go ahead with the change.
     environment: *shared_environment
     graders:
       - type: "tool-calls"
@@ -116,7 +116,8 @@ stimuli:
     tags:
       suite: "armtemplate"
       mode: "no-skill"
-    prompt: 'Define a Azure resource "Employee" under the namespace "Microsoft.Widget" using TypeSpec. Properties: age (int32, optional), city (string, optional), profile (bytes, optional), provisioningState (enum incorporating ResourceProvisioningState, optional, read-only). Ensure the definition meets TypeSpec Azure design guidelines.'
+    prompt: |
+      In API version `2024-10-01-preview`, add a tracked Employee ARM resource to the Microsoft.Widget service. It should have optional age, city, and binary profile data, along with a read-only provisioning state. Support the standard operations for a tracked ARM resource. Follow TypeSpec Azure guidelines. I've already made the design decisions, so go ahead with the change.
     environment: *shared_environment
     graders:
       - type: "tool-calls"

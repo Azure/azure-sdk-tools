@@ -30,8 +30,16 @@ environments:
     mcpServers:
       azure-sdk-mcp:
         type: stdio
-        command: dotnet
-        args: ["../artifacts/mcp/cli/azsdk.dll", "start"]
+        # Copilot SDK can close a directly spawned dotnet stdio server during
+        # initialization. A transparent Node child-process proxy keeps the
+        # transport stable without changing MCP messages or environment.
+        command: node
+        args:
+          - --experimental-strip-types
+          - ../eng/common/scripts/eval/mcp-stdio-proxy.ts
+          - dotnet
+          - ../artifacts/mcp/cli/azsdk.dll
+          - start
         timeout: "5m"
         env:
           AZSDKTOOLS_AGENT_TESTING: "true"

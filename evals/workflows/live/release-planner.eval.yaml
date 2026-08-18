@@ -223,8 +223,14 @@ stimuli:
                  github.com/Azure/azure-sdk-for-* that was linked back to
                  that release plan.
 
-            Answer "pass" only if BOTH are present. Otherwise answer "fail"
-            and briefly explain the inference or workflow failure.
+              3. The generated SDK is a stable release according to the
+                 selected language's library versioning conventions. Do not
+                 require the literal word "stable" in a package version or PR
+                 if that language represents stability by omitting a
+                 prerelease suffix.
+
+            Answer "pass" only if ALL THREE are satisfied. Otherwise answer
+            "fail" and briefly explain the inference or workflow failure.
 
 scoring:
   weights:

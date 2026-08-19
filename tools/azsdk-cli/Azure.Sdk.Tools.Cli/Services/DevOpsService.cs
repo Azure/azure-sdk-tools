@@ -483,7 +483,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
                 foreach (var workItem in apiSpecWorkItems)
                 {
-                    if (workItem.Relations.Any())
+                    if (workItem.Relations != null && workItem.Relations.Any())
                     {
                         var parent = workItem.Relations.FirstOrDefault(w => w.Rel.Equals("System.LinkTypes.Hierarchy-Reverse"));
                         if (parent == null)

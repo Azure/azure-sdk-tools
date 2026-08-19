@@ -162,6 +162,24 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.IsNull(result, "Should handle state comparison case-insensitively");
         }
 
+        [Test]
+        public async Task GetReleasePlanAsync_WithPullRequestUrl_NullRelations_ShouldNotThrow()
+        {
+            // Arrange: the ADO client leaves Relations null (rather than empty) for work items
+            // returned without any relations, e.g. an API Spec item never linked to a parent.
+            var pullRequestUrl = "https://github.com/Azure/azure-rest-api-specs/pull/12345";
+            var apiSpecWorkItem = CreateApiSpecWorkItem(1, pullRequestUrl, "Active");
+            apiSpecWorkItem.Relations = null;
+
+            _connection.AddWorkItemToQuery(apiSpecWorkItem);
+
+            // Act
+            var result = await _devOpsService.GetReleasePlanAsync(pullRequestUrl, ct: CancellationToken.None);
+
+            // Assert
+            Assert.IsNull(result, "Should return null instead of throwing when Relations is null");
+        }
+
         #endregion
 
         #region ResolveReleasePlanByIdAsync Tests

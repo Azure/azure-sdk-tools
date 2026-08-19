@@ -16,20 +16,19 @@
 //   5. Agent generates the gap report             (prompts/05-generate-report.md)
 //
 // Prereqs:
-//   - `npm ci` in this folder (installs @github/copilot-sdk, the @github/copilot
-//     CLI it spawns, and the artifact ZIP dependency).
+//   - Run through `run-doc-refinement.mjs`, which installs @github/copilot-sdk,
+//     the @github/copilot CLI it spawns, and the artifact ZIP dependency from CFS.
 //   - GitHub Copilot CLI authenticated (the SDK spawns the bundled copilot CLI), OR
 //     pass a token via COPILOT_GITHUB_TOKEN. Override the CLI with COPILOT_CLI_PATH.
 //   - For step 3: Azure CLI authenticated with access to the azure-sdk/internal
 //     project, and the skill changes committed and pushed to a branch or PR ref.
 //
 // Usage:
-//   npm run refine                                 # full loop via ADO pipeline
-//   npm run refine -- --skip-eval                  # only steps 1-2
-//   node doc-refinement.mjs --skip-eval            # only steps 1-2
-//   node doc-refinement.mjs --skill-ref refs/pull/16460/head
-//   node doc-refinement.mjs --model gpt-5.5 --idle-timeout 1800
-//   node doc-refinement.mjs --help
+//   node run-doc-refinement.mjs                    # full loop via ADO pipeline
+//   node run-doc-refinement.mjs --skip-eval        # only steps 1-2
+//   node run-doc-refinement.mjs --skill-ref refs/pull/16460/head
+//   node run-doc-refinement.mjs --model gpt-5.5 --idle-timeout 1800
+//   node run-doc-refinement.mjs --help
 
 import { CopilotClient } from "@github/copilot-sdk";
 import AdmZip from "adm-zip";
@@ -92,7 +91,7 @@ function resolveCopilotCliPath() {
 }
 
 // -------------------------- arg parsing --------------------------
-const HELP = `Usage: node doc-refinement.mjs [options]
+const HELP = `Usage: node run-doc-refinement.mjs [options]
 
 Workflow:
   --skip-eval                Run steps 1-2 only; skip eval, analysis, and report (steps 3-5)
@@ -109,77 +108,22 @@ General:
   -h, --help                 Show this help
 
 Examples:
-  node doc-refinement.mjs
-  node doc-refinement.mjs --skip-eval
-  node doc-refinement.mjs --skill-ref refs/pull/16460/head
+  node run-doc-refinement.mjs
+  node run-doc-refinement.mjs --skip-eval
+  node run-doc-refinement.mjs --skill-ref refs/pull/16460/head
 `;
 
 function parseArgs(argv) {
   const args = [...argv];
-  const npmForwardingError = (option) =>
-    `${option} was consumed by npm. Use direct node invocation or add a second separator: ` +
-    `npm run refine -- -- ${option} <value>`;
-
-  const npmModelConfig = process.env.npm_config_model;
-  let npmModel;
-  if (npmModelConfig && npmModelConfig !== "true") {
-    npmModel = npmModelConfig;
-  } else if (
-    npmModelConfig === "true" &&
-    args.length === 1 &&
-    !args[0].startsWith("--")
-  ) {
-    // npm 10 on Windows consumes option names after `npm run ... --` into
-    // npm_config_* variables but forwards a space-separated option value.
-    npmModel = args.shift();
-  }
-
-  if (process.env.npm_config_update_skill_only === "true") {
-    throw new Error(
-      "--update-skill-only was removed; use --skip-eval",
-    );
-  }
-  if (process.env.npm_config_skip_docs === "true") {
-    throw new Error("--skip-docs is no longer supported");
-  }
-  if (
-    process.env.npm_config_skip_update === "true" ||
-    process.env.npm_config_skip_report === "true"
-  ) {
-    throw new Error(
-      "--skip-update and --skip-report are no longer supported; use --skip-eval to skip steps 3-5",
-    );
-  }
-  if (process.env.npm_config_skill_ref === "true") {
-    throw new Error(npmForwardingError("--skill-ref"));
-  }
-  if (process.env.npm_config_results_dir === "true") {
-    throw new Error(npmForwardingError("--results-dir"));
-  }
-  if (process.env.npm_config_idle_timeout === "true") {
-    throw new Error(npmForwardingError("--idle-timeout"));
-  }
 
   const opts = {
     help: false,
-    skipEval: process.env.npm_config_skip_eval === "true",
-    skillRef:
-      process.env.npm_config_skill_ref &&
-      process.env.npm_config_skill_ref !== "true"
-        ? process.env.npm_config_skill_ref
-        : null,
-    resultsDir:
-      process.env.npm_config_results_dir &&
-      process.env.npm_config_results_dir !== "true"
-        ? path.resolve(process.env.npm_config_results_dir)
-        : RESULT_DIR,
-    model: process.env.AGENT_MODEL || npmModel || "gpt-5.5",
+    skipEval: false,
+    skillRef: null,
+    resultsDir: RESULT_DIR,
+    model: process.env.AGENT_MODEL || "gpt-5.5",
     idleTimeoutMs:
-      Number(
-        process.env.npm_config_idle_timeout ||
-          process.env.AGENT_IDLE_TIMEOUT_SEC ||
-          1800,
-      ) * 1000,
+      Number(process.env.AGENT_IDLE_TIMEOUT_SEC || 1800) * 1000,
   };
 
   const takeValue = (option, index) => {

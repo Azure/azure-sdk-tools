@@ -39,7 +39,9 @@ Why this is the default: the *forced* (code-quality) eval is infra-heavy. Vally 
 eval runs on the ADO benchmark pool instead of requiring that infrastructure on the
 local machine.
 
-- **Script**: `doc-refinement.mjs` (this folder). Run with `npm ci && npm run refine`.
+- **Scripts**: `run-doc-refinement.mjs` installs the current dependency versions from
+  the CFS-backed npm feed, runs `doc-refinement.mjs`, and removes the generated
+  `package.json` and `package-lock.json` even when the workflow fails.
 - **Agent steps (1, 2, 4, 5)** use the **Copilot SDK** (`@github/copilot-sdk`):
   `new CopilotClient()` -> `createSession({ model, workingDirectory, skillDirectories,
   onPermissionRequest, systemMessage })` -> `session.sendAndWait({ prompt }, timeout)`.
@@ -63,7 +65,7 @@ local machine.
 ### Flow
 
 ```
-npm run refine
+node run-doc-refinement.mjs
   |
   |- 1. agent -> references/reference-document-links.md
   |- 2. agent -> SKILL.md / references/*   (only if needed)
@@ -81,24 +83,22 @@ The workflow has one phase switch:
 - `--skip-eval` runs steps 1-2 only and skips steps 3-5 (Vally, analysis, and report).
 
 ```
-npm run refine
-npm run refine -- -- --skip-eval --model gpt-5.6-sol
-node doc-refinement.mjs --skip-eval
-node doc-refinement.mjs --skill-ref refs/pull/16460/head
-npm run refine -- -- --skill-ref refs/pull/16460/head
-node doc-refinement.mjs --help
-node doc-refinement.mjs --model gpt-5.5 --idle-timeout 1800
-node doc-refinement.mjs --results-dir C:\temp\typespec-author-results
+node run-doc-refinement.mjs
+node run-doc-refinement.mjs --skip-eval --model gpt-5.6-sol
+node run-doc-refinement.mjs --skill-ref refs/pull/16460/head
+node run-doc-refinement.mjs --help
+node run-doc-refinement.mjs --model gpt-5.5 --idle-timeout 1800
+node run-doc-refinement.mjs --results-dir C:\temp\typespec-author-results
 ```
 
 The removed `--update-skill-only` mode is replaced by `--skip-eval`.
-When passing options through npm on Windows, use the second standalone `--` shown above
-so npm forwards the option name instead of converting it to `npm_config_*`. Direct
-`node doc-refinement.mjs ...` invocation does not need the extra separator.
 
 ### Prerequisites
 
-- `npm ci` in this folder (installs the Copilot SDK/CLI and ZIP extraction dependency).
+- Node.js 20 or later and npm. The launcher installs the Copilot SDK/CLI and ZIP
+  extraction dependency from the
+  [Azure SDK for JS CFS feed](https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/).
+  npm must be authenticated for that feed when the environment requires credentials.
 - GitHub Copilot CLI installed & authenticated - the SDK spawns it (`copilot login`), or
   set `COPILOT_GITHUB_TOKEN`.
 - Azure CLI installed and authenticated to the `azure-sdk/internal` ADO project
@@ -121,8 +121,8 @@ so npm forwards the option name instead of converting it to `npm_config_*`. Dire
 ```
 agentic-doc-refinement/
 |- README.md              # this design + usage
+|- run-doc-refinement.mjs # CFS dependency setup, workflow launch, and manifest cleanup
 |- doc-refinement.mjs     # Copilot SDK + ADO pipeline orchestrator
-|- package.json           # pins Copilot SDK/CLI + artifact ZIP dependency
 |- prompts/
    |- 01-update-reference-docs.md
    |- 02-update-skill.md

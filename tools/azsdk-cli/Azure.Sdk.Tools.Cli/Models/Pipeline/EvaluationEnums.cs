@@ -13,7 +13,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Pipeline;
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum CopilotFixTrigger
 {
-    /// The pipeline-analysis auto-fix workflow produced the commit on a copilot-pipeline-fix/pr-N branch.
+    /// The pipeline-analysis auto-fix workflow produced the commit on a pipeline-fix/pr-N branch.
     GitHubActionsWorkflow,
 
     /// Somebody directed Copilot at the pull request with an @copilot mention.

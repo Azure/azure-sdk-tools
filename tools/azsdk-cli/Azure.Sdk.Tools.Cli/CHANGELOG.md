@@ -1,16 +1,10 @@
 # Release History
 
-## 0.6.36 (Unreleased)
+## 0.6.36 (2026-08-19)
 
 ### Features Added
 
 - Added `eng evaluate` CLI command to evaluate whether Copilot's fixes for failing pipelines took the pipeline from failure to success and survived into the merged pull request. Accepts a repository owner and name. Optional parameters: `--since-days`, `--model`.
-
-### Breaking Changes
-
-### Bugs Fixed
-
-### Other Changes
 
 ## 0.6.35 (2026-08-14)
 

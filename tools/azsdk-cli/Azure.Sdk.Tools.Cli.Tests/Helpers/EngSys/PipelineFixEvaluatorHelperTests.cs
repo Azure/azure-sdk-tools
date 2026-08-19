@@ -14,7 +14,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.EngSys;
 /// Seam: <see cref="PipelineFixEvaluatorHelper.EvaluatePipelineFixesAsync"/> turns a repository and a
 /// time window into one telemetry row per Copilot pipeline-fix attempt, given <see cref="IGitHubService"/>
 /// and <see cref="IPipelineFixSurvivalJudge"/>. Two delivery paths feed it: an @copilot mention that pushes
-/// commits onto the pull request, and the auto-fix workflow that opens a separate copilot-pipeline-fix/ pull
+/// commits onto the pull request, and the auto-fix workflow that opens a separate pipeline-fix/ pull
 /// request.
 /// </summary>
 [TestFixture]
@@ -23,7 +23,7 @@ public class PipelineFixEvaluatorHelperTests
     private const string Owner = "ReilleyMilne";
     private const string Repo = "azure-sdk-for-python";
     private const string CheckName = "ReilleyMilne.azure-sdk-for-python - pullrequest (Analyze Analyze)";
-    private const string FixBranchPrefix = "copilot-pipeline-fix/";
+    private const string FixBranchPrefix = "pipeline-fix/";
 
     // Real shapes captured from ReilleyMilne/azure-sdk-for-python#36, the auto-fix pull request opened for #35.
     private const int OriginalPrNumber = 35;
@@ -31,7 +31,7 @@ public class PipelineFixEvaluatorHelperTests
     private const string FailingSha = "f8eedcaef0bed15bc45b7b620d28461958311c95";
     private const string FixHeadSha = "e7f1ea3de721a53bd3e0c0f83173e2b83455ac75";
     private const string FixBranchRef =
-        "copilot-pipeline-fix/pr-35-f8eedcaef0bed15bc45b7b620d28461958311c95/run-30861672656/copilot-pipeline-fix/fix-analyze-pr35-68fe750a7ab81983";
+        "pipeline-fix/pr-35-f8eedcaef0bed15bc45b7b620d28461958311c95/run-30861672656/pipeline-fix/fix-analyze-pr35-68fe750a7ab81983";
 
     private static readonly DateTimeOffset Since = new(2026, 8, 1, 0, 0, 0, TimeSpan.Zero);
     private static readonly DateTimeOffset Until = new(2026, 8, 4, 0, 0, 0, TimeSpan.Zero);
@@ -235,7 +235,7 @@ public class PipelineFixEvaluatorHelperTests
             Times.Never);
     }
 
-    // A copilot-pipeline-fix/ head belongs to the workflow path; treating it as a mention too would count the
+    // A pipeline-fix/ head belongs to the workflow path; treating it as a mention too would count the
     // same fix twice.
     [Test]
     public async Task MentionFix_HeadIsFixBranch_IsSkippedBeforeFetchingComments()

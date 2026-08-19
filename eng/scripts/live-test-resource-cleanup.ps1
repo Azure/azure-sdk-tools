@@ -488,6 +488,7 @@ function Remove-RecoveryServicesVaults() {
   }
 
   foreach ($vault in $vaults) {
+    $vaultErrors = @()
     Write-Host "Tearing down Recovery Services vault '$($vault.Name)' in resource group '$ResourceGroupName'"
 
     # Try to unlock vault-level immutability (best-effort; a 'Locked' state cannot be reversed).
@@ -551,13 +552,16 @@ function Remove-RecoveryServicesVaults() {
       try {
         $containers = @(Get-AzRecoveryServicesBackupContainer -VaultId $vault.ID -ContainerType $bmt -ErrorAction Stop)
       } catch {
-        # Skip container types the vault doesn't support.
+        $vaultErrors += "Failed enumerating $bmt backup containers in vault '$($vault.Name)': $($_.Exception.Message)"
+        continue
       }
       foreach ($container in $containers) {
+        $containerErrors = @()
         $items = @()
         try {
           $items = @(Get-AzRecoveryServicesBackupItem -Container $container -WorkloadType $bmt -VaultId $vault.ID -ErrorAction Stop)
         } catch {
+          $vaultErrors += "Failed enumerating backup items in container '$($container.Name)' in vault '$($vault.Name)': $($_.Exception.Message)"
           continue
         }
         foreach ($item in $items) {
@@ -565,17 +569,45 @@ function Remove-RecoveryServicesVaults() {
             if ($item.PSObject.Properties.Name -contains 'DeleteState' -and $item.DeleteState -eq 'ToBeDeleted') {
               Undo-AzRecoveryServicesBackupItemDeletion -Item $item -VaultId $vault.ID -Force -ErrorAction SilentlyContinue | Out-Null
             }
-            Disable-AzRecoveryServicesBackupProtection -Item $item -VaultId $vault.ID -RemoveRecoveryPoints -Force -ErrorAction Stop | Out-Null
+            Write-Host "Deleting backup item '$($item.Name)' from Recovery Services vault '$($vault.Name)'"
+            $job = Disable-AzRecoveryServicesBackupProtection -Item $item -VaultId $vault.ID -RemoveRecoveryPoints -Force -ErrorAction Stop
+            $completedJob = Wait-AzRecoveryServicesBackupJob -Job $job -Timeout 900 -VaultId $vault.ID -ErrorAction Stop
+            if ($completedJob.Status -and $completedJob.Status -notin @('Completed', 'CompletedWithWarnings')) {
+              throw "Backup item delete job ended in state '$($completedJob.Status)'."
+            }
           } catch {
-            $errors += "Failed removing backup item '$($item.Name)' in vault '$($vault.Name)': $($_.Exception.Message)"
+            $containerErrors += "Failed removing backup item '$($item.Name)' in vault '$($vault.Name)': $($_.Exception.Message)"
           }
         }
+
+        if ($containerErrors.Count -eq 0) {
+          try {
+            $remainingItems = @(Get-AzRecoveryServicesBackupItem -Container $container -WorkloadType $bmt -VaultId $vault.ID -ErrorAction Stop)
+            if ($remainingItems) {
+              $remainingItemNames = $remainingItems | ForEach-Object { $_.Name }
+              $containerErrors += "Backup items still remain in container '$($container.Name)' in vault '$($vault.Name)': $($remainingItemNames -join ', ')"
+            }
+          } catch {
+            $containerErrors += "Failed verifying backup item deletion in container '$($container.Name)' in vault '$($vault.Name)': $($_.Exception.Message)"
+          }
+        }
+
+        $vaultErrors += $containerErrors
+        if ($containerErrors.Count -ne 0) {
+          continue
+        }
+
         try {
           Unregister-AzRecoveryServicesBackupContainer -Container $container -VaultId $vault.ID -Confirm:$false -ErrorAction Stop | Out-Null
         } catch {
           # Best-effort; the vault delete will surface any remaining registration issues.
         }
       }
+    }
+
+    if ($vaultErrors.Count -ne 0) {
+      $errors += $vaultErrors
+      continue
     }
 
     # Remove backup protection policies.
@@ -589,7 +621,7 @@ function Remove-RecoveryServicesVaults() {
       try {
         Remove-AzRecoveryServicesBackupProtectionPolicy -Policy $policy -VaultId $vault.ID -Force -ErrorAction Stop | Out-Null
       } catch {
-        $errors += "Failed removing backup policy '$($policy.Name)' in vault '$($vault.Name)': $($_.Exception.Message)"
+        $vaultErrors += "Failed removing backup policy '$($policy.Name)' in vault '$($vault.Name)': $($_.Exception.Message)"
       }
     }
 
@@ -609,7 +641,7 @@ function Remove-RecoveryServicesVaults() {
       try {
         Remove-AzRecoveryServicesAsrFabric -Fabric $fabric -Force -ErrorAction Stop | Out-Null
       } catch {
-        $errors += "Failed removing ASR fabric '$($fabric.Name)' in vault '$($vault.Name)': $($_.Exception.Message)"
+        $vaultErrors += "Failed removing ASR fabric '$($fabric.Name)' in vault '$($vault.Name)': $($_.Exception.Message)"
       }
     }
 
@@ -621,7 +653,7 @@ function Remove-RecoveryServicesVaults() {
       try {
         Remove-AzRecoveryServicesAsrPolicy -Policy $asrPolicy -ErrorAction Stop | Out-Null
       } catch {
-        $errors += "Failed removing ASR policy '$($asrPolicy.Name)' in vault '$($vault.Name)': $($_.Exception.Message)"
+        $vaultErrors += "Failed removing ASR policy '$($asrPolicy.Name)' in vault '$($vault.Name)': $($_.Exception.Message)"
       }
     }
 
@@ -635,16 +667,142 @@ function Remove-RecoveryServicesVaults() {
       try {
         Remove-AzResource -ResourceId $pec.ResourceId -Force -ErrorAction Stop | Out-Null
       } catch {
-        $errors += "Failed removing private endpoint connection '$($pec.Name)' from vault '$($vault.Name)': $($_.Exception.Message)"
+        $vaultErrors += "Failed removing private endpoint connection '$($pec.Name)' from vault '$($vault.Name)': $($_.Exception.Message)"
       }
+    }
+
+    if ($vaultErrors.Count -ne 0) {
+      $errors += $vaultErrors
+      continue
     }
 
     # Finally delete the vault itself.
     try {
       Remove-AzRecoveryServicesVault -Vault $vault -ErrorAction Stop | Out-Null
+      $vaultDeleted = $false
+      for ($attempt = 0; $attempt -lt 60; $attempt++) {
+        if ($null -eq (Get-AzResource -ResourceId $vault.ID -ErrorAction SilentlyContinue)) {
+          $vaultDeleted = $true
+          break
+        }
+        Start-Sleep -Seconds 5
+      }
+      if (!$vaultDeleted) {
+        throw 'Timed out waiting for the vault to be deleted.'
+      }
     } catch {
-      $errors += "Failed deleting Recovery Services vault '$($vault.Name)' in '$ResourceGroupName': $($_.Exception.Message)"
+      $vaultErrors += "Failed deleting Recovery Services vault '$($vault.Name)' in '$ResourceGroupName': $($_.Exception.Message)"
     }
+    $errors += $vaultErrors
+  }
+
+  return $errors
+}
+
+function Remove-DataProtectionBackupVaults() {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$ResourceGroupName
+  )
+
+  $errors = @()
+  $apiVersion = '2025-07-01'
+  $vaults = @(
+    Get-AzResource -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue |
+      Where-Object { $_.ResourceType -ieq 'Microsoft.DataProtection/backupVaults' }
+  )
+
+  foreach ($vault in $vaults) {
+    $vaultErrors = @()
+    Write-Host "Tearing down Backup Vault '$($vault.Name)' in resource group '$ResourceGroupName'"
+    $vaultPath = "$($vault.ResourceId)?api-version=$apiVersion"
+
+    try {
+      $softDeleteBody = @{
+        properties = @{
+          securitySettings = @{
+            softDeleteSettings = @{ state = 'Off' }
+          }
+        }
+      } | ConvertTo-Json -Depth 5 -Compress
+      $response = Invoke-AzRestMethod -Method PATCH -Path $vaultPath -Payload $softDeleteBody -ErrorAction Stop
+      if ($response.StatusCode -ge 400) {
+        throw "Request failed with status $($response.StatusCode): $($response.Content)"
+      }
+
+      $softDeleteDisabled = $false
+      for ($attempt = 0; $attempt -lt 60; $attempt++) {
+        $vaultResponse = Invoke-AzRestMethod -Method GET -Path $vaultPath -ErrorAction Stop
+        $vaultState = $vaultResponse.Content | ConvertFrom-Json
+        if ($vaultState.properties.securitySettings.softDeleteSettings.state -eq 'Off' -and
+            $vaultState.properties.provisioningState -notin @('Provisioning', 'Updating')) {
+          $softDeleteDisabled = $true
+          break
+        }
+        Start-Sleep -Seconds 5
+      }
+      if (!$softDeleteDisabled) {
+        throw 'Timed out waiting for soft delete to be disabled.'
+      }
+    } catch {
+      $vaultErrors += "Failed disabling soft delete for Backup Vault '$($vault.Name)' in '$ResourceGroupName': $($_.Exception.Message)"
+      $errors += $vaultErrors
+      continue
+    }
+
+    foreach ($childType in @('backupInstances', 'backupPolicies')) {
+      $description = if ($childType -eq 'backupInstances') { 'backup instance' } else { 'backup policy' }
+      $children = @(
+        Get-AzResource -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue |
+          Where-Object {
+            $_.ResourceType -ieq "Microsoft.DataProtection/backupVaults/$childType" -and
+            $_.ResourceId -like "$($vault.ResourceId)/*"
+          } |
+          Sort-Object ResourceId -Descending
+      )
+
+      foreach ($child in $children) {
+        Write-Host "Deleting $description '$($child.Name)' from Backup Vault '$($vault.Name)'"
+        $childResourceId = $child.ResourceId
+        $verifyChildDeleted = {
+          $null -eq (Get-AzResource -ResourceId $childResourceId -ErrorAction SilentlyContinue)
+        }.GetNewClosure()
+        try {
+          $job = Remove-AzResource -ResourceId $childResourceId -Force -AsJob
+          $deleteError = Wait-DeleteJob -Job $job -DisplayName "$description '$($child.Name)'" -VerifyDeleted $verifyChildDeleted
+          if ($deleteError) {
+            $vaultErrors += $deleteError
+          }
+        } catch {
+          $vaultErrors += "Failed deleting $description '$($child.Name)' from Backup Vault '$($vault.Name)': $($_.Exception.Message)"
+        }
+      }
+
+      if ($vaultErrors.Count -ne 0) {
+        break
+      }
+    }
+
+    if ($vaultErrors.Count -ne 0) {
+      $errors += $vaultErrors
+      continue
+    }
+
+    Write-Host "Deleting Backup Vault '$($vault.Name)' from resource group '$ResourceGroupName'"
+    $vaultResourceId = $vault.ResourceId
+    $verifyVaultDeleted = {
+      $null -eq (Get-AzResource -ResourceId $vaultResourceId -ErrorAction SilentlyContinue)
+    }.GetNewClosure()
+    try {
+      $job = Remove-AzResource -ResourceId $vaultResourceId -Force -AsJob
+      $deleteError = Wait-DeleteJob -Job $job -DisplayName "Backup Vault '$($vault.Name)'" -VerifyDeleted $verifyVaultDeleted
+      if ($deleteError) {
+        $vaultErrors += $deleteError
+      }
+    } catch {
+      $vaultErrors += "Failed deleting Backup Vault '$($vault.Name)' from '$ResourceGroupName': $($_.Exception.Message)"
+    }
+    $errors += $vaultErrors
   }
 
   return $errors
@@ -715,6 +873,10 @@ function Invoke-PreDeleteResourceCleanup() {
 
   if ($resources | Where-Object { $_.ResourceType -ieq 'Microsoft.RecoveryServices/vaults' }) {
     $errors += @(Remove-RecoveryServicesVaults -ResourceGroupName $resourceGroupName)
+  }
+
+  if ($resources | Where-Object { $_.ResourceType -ieq 'Microsoft.DataProtection/backupVaults' }) {
+    $errors += @(Remove-DataProtectionBackupVaults -ResourceGroupName $resourceGroupName)
   }
 
   $knownBlockers = @(

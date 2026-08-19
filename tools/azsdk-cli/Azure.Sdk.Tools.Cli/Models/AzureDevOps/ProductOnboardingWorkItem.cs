@@ -57,7 +57,7 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
                     Submitter = Submitter,
                 };
 
-        public ProductOnboardingResponse UpdateProductOnboardingResponse(ProductOnboardingResponse response)
+        public ProductOnboardingResponse PopulateProductOnboardingResponse(ProductOnboardingResponse response)
         {
             response.ProductOnboardingDetails = this;
             var status = ToProductOnboardingStatus();

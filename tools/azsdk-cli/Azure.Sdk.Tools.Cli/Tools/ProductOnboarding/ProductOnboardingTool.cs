@@ -14,7 +14,7 @@ using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.ProductOnboarding
 {
-    [Description("Product Onboarding Tool type that contains tools to connect to Azure DevOps to get release plan work item")]
+    [Description("Product Onboarding Tool type that contains tools to connect to Azure DevOps to work with product onboarding work items")]
     [McpServerToolType]
     public partial class ProductOnboardingTool(  // partial class required due to source generated regex
         IDevOpsService devOpsService,
@@ -24,10 +24,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ProductOnboarding
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.ProductOnboarding];
 
         // Commands
-        private const string updateProductOnboardingCommandName = "update";
+        private const string SyncProductOnboardingCommandName = "sync";
 
         // MCP Tool Names
-        private const string UpdateProductOnboardingToolName = "azsdk_update_product_onboarding";
+        private const string SyncProductOnboardingToolName = "azsdk_sync_product_onboarding";
 
         // Options
         private readonly Option<Guid> productIdOpt = new("--product-id")
@@ -94,7 +94,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ProductOnboarding
 
         protected override List<Command> GetCommands() =>
         [
-            new McpCommand(updateProductOnboardingCommandName, "Update product onboarding status", UpdateProductOnboardingToolName)
+            new McpCommand(SyncProductOnboardingCommandName, "Sync product onboarding status", SyncProductOnboardingToolName)
             {
                 productIdOpt,
                 productNameOpt,
@@ -115,7 +115,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ProductOnboarding
             var command = commandParser.CommandResult.Command.Name;
             switch (command)
             {
-                case updateProductOnboardingCommandName:
+                case SyncProductOnboardingCommandName:
                     var productId = commandParser.GetValue(productIdOpt);
                     var productName = commandParser.GetValue(productNameOpt);
                     var productType = commandParser.GetValue(productTypeOpt);
@@ -126,7 +126,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ProductOnboarding
                     var dataPlane = commandParser.GetValue(dataPlaneOpt);
                     var managementPlane = commandParser.GetValue(managementPlaneOpt);
                     var submitter = commandParser.GetValue(submitterOpt);
-                    return await UpdateProductOnboarding(
+                    return await SyncProductOnboarding(
                         productId,
                         productName,
                         productType,
@@ -145,7 +145,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ProductOnboarding
             }
         }
 
-        public async Task<ProductOnboardingResponse> UpdateProductOnboarding(
+        public async Task<ProductOnboardingResponse> SyncProductOnboarding(
             Guid productId,
             string productName,
             string productType,
@@ -244,12 +244,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ProductOnboarding
                     productOnboarding = await devOpsService.UpdateProductOnboardingAsync(productOnboarding.WorkItemId, status, ct, isTest);
                 }
 
-                return productOnboarding.UpdateProductOnboardingResponse(new() { Message = "Successfully updated product onboarding status." });
+                return productOnboarding.PopulateProductOnboardingResponse(new() { Message = "Successfully synced product onboarding status." });
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to update product onboarding status");
-                return new () { ResponseError = $"Failed to update product onboarding: {ex.Message}" };
+                logger.LogError(ex, "Failed to sync product onboarding status");
+                return new () { ResponseError = $"Failed to sync product onboarding: {ex.Message}" };
             }
         }
     }

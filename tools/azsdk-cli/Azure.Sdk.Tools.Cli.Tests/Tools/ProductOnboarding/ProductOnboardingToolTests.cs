@@ -42,11 +42,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ProductOnboarding
         private readonly static string MockSubmitter = "@handle";
 
         [Test]
-        public async Task Test_Update_ProductOnboarding_New()
+        public async Task Test_Sync_ProductOnboarding_New()
         {
             var NonexistentId = MockProductId; // When productId == serviceId, mock service falls into "does not exist" path.
 
-            var response = await productOnboardingTool.UpdateProductOnboarding(
+            var response = await productOnboardingTool.SyncProductOnboarding(
                 productId: Guid.Parse(NonexistentId),
                 productName: MockProductName,
                 productType: MockProductType,
@@ -74,10 +74,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ProductOnboarding
         }
 
         [Test]
-        public async Task Test_Update_ProductOnboarding_Existing()
+        public async Task Test_Sync_ProductOnboarding_Existing()
         {
 
-            var response = await productOnboardingTool.UpdateProductOnboarding(
+            var response = await productOnboardingTool.SyncProductOnboarding(
                 productId: Guid.Parse(MockProductId),
                 productName: MockProductName,
                 productType: MockProductType,

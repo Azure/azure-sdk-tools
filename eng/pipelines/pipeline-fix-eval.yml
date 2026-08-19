@@ -41,7 +41,7 @@ parameters:
       - azure-sdk-for-js
       - azure-sdk-for-go
   - name: sinceDays
-    displayName: Look back this many days for merged PRs
+    displayName: Number of daily reports to generate
     type: number
     default: 1
   # The per-repository timeout is derived from this at runtime (see 'Evaluate each

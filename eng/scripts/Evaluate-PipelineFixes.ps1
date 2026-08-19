@@ -9,7 +9,8 @@ GitHub repository owner.
 JSON array containing the repository names to evaluate.
 
 .PARAMETER SinceDays
-Number of days of merged pull requests to evaluate.
+Number of one-day evaluation reports to generate, ending at the current UTC time and then each
+preceding day.
 
 .PARAMETER JobTimeoutMinutes
 Overall pipeline job timeout used to calculate a per-repository timeout.
@@ -49,17 +50,21 @@ param(
 Set-StrictMode -Version 4
 $ErrorActionPreference = 'Stop'
 
-$reportDate = (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd')
+$runUntil = (Get-Date).ToUniversalTime()
 $repositories = @($RepositoriesJson | ConvertFrom-Json)
 
 if ($repositories.Count -eq 0) {
     throw 'At least one repository must be provided.'
 }
+if ($SinceDays -le 0) {
+    throw 'SinceDays must be greater than zero.'
+}
 
 $shareableMinutes = $JobTimeoutMinutes * 0.75
-$perRepositoryMinutes = [int][math]::Max(1, [math]::Floor($shareableMinutes / $repositories.Count))
-$timeoutMilliseconds = [int][TimeSpan]::FromMinutes($perRepositoryMinutes).TotalMilliseconds
-Write-Host "Job timeout ${JobTimeoutMinutes}m over $($repositories.Count) repo(s): allowing ${perRepositoryMinutes}m each."
+$evaluationCount = $repositories.Count * $SinceDays
+$perEvaluationMinutes = [int][math]::Max(1, [math]::Floor($shareableMinutes / $evaluationCount))
+$timeoutMilliseconds = [int][TimeSpan]::FromMinutes($perEvaluationMinutes).TotalMilliseconds
+Write-Host "Job timeout ${JobTimeoutMinutes}m over $evaluationCount evaluation(s): allowing ${perEvaluationMinutes}m each."
 
 $failed = @()
 
@@ -68,79 +73,80 @@ foreach ($repository in $repositories) {
 
     $repositoryDirectory = Join-Path $EvalArtifactDir "$MetricsPrefix/$repository"
     New-Item -ItemType Directory -Force -Path $repositoryDirectory | Out-Null
-    $reportPath = Join-Path $repositoryDirectory "$reportDate.json"
-    $standardErrorPath = Join-Path $repositoryDirectory "$reportDate.stderr.log"
-    Remove-Item -Path $reportPath, $standardErrorPath -Force -ErrorAction SilentlyContinue
 
-    $evaluationArguments = @(
-        'eng', 'evaluate', $Owner, $repository,
-        '--since-days', $SinceDays,
-        '--output', 'json'
-    )
+    for ($dayOffset = 0; $dayOffset -lt $SinceDays; $dayOffset++) {
+        $evaluationUntil = $runUntil.AddDays(-$dayOffset)
+        $reportDate = $evaluationUntil.ToString('yyyy-MM-dd')
+        $reportPath = Join-Path $repositoryDirectory "$reportDate.json"
+        $standardErrorPath = Join-Path $repositoryDirectory "$reportDate.stderr.log"
+        Remove-Item -Path $reportPath, $standardErrorPath -Force -ErrorAction SilentlyContinue
 
-    $process = Start-Process `
-        -FilePath $AzSdkPath `
-        -ArgumentList $evaluationArguments `
-        -RedirectStandardOutput $reportPath `
-        -RedirectStandardError $standardErrorPath `
-        -PassThru
-    $completed = $process.WaitForExit($timeoutMilliseconds)
+        $evaluationArguments = @(
+            'eng', 'evaluate', $Owner, $repository,
+            '--since-days', 1,
+            '--until', $evaluationUntil.ToString('o'),
+            '--output', 'json'
+        )
 
-    if (-not $completed) {
-        $process.Kill($true)
-        $process.WaitForExit()
-    }
+        $process = Start-Process `
+            -FilePath $AzSdkPath `
+            -ArgumentList $evaluationArguments `
+            -RedirectStandardOutput $reportPath `
+            -RedirectStandardError $standardErrorPath `
+            -PassThru
+        $completed = $process.WaitForExit($timeoutMilliseconds)
 
-    if(Test-Path $standardErrorPath)
-    {
-        $standardError = Get-Content -Raw -Path $standardErrorPath
-    }
-    else
-    {
-        $standardError = ''
-    }
-    Remove-Item -Path $standardErrorPath -Force -ErrorAction SilentlyContinue
-
-    if (-not $completed) {
-        Write-Host "##vso[task.logissue type=error]eng evaluate for $repository exceeded ${perRepositoryMinutes}m and was terminated"
-        if (-not [string]::IsNullOrWhiteSpace($standardError)) {
-            Write-Host $standardError
+        if (-not $completed) {
+            $process.Kill($true)
+            $process.WaitForExit()
         }
-        Remove-Item -Path $reportPath -Force -ErrorAction SilentlyContinue
-        $failed += $repository
-        Write-Host '##[endgroup]'
-        continue
-    }
 
-    $exitCode = $process.ExitCode
-    if ($exitCode -ne 0) {
-        Write-Host "##vso[task.logissue type=error]eng evaluate failed for $repository with exit code $exitCode"
-        if (-not [string]::IsNullOrWhiteSpace($standardError)) {
-            Write-Host $standardError
+        if (Test-Path $standardErrorPath) {
+            $standardError = Get-Content -Raw -Path $standardErrorPath
+        } else {
+            $standardError = ''
         }
-        Remove-Item -Path $reportPath -Force -ErrorAction SilentlyContinue
-        $failed += $repository
-        Write-Host '##[endgroup]'
-        continue
-    }
+        Remove-Item -Path $standardErrorPath -Force -ErrorAction SilentlyContinue
 
-    try {
-        $report = Get-Content -Raw -Path $reportPath | ConvertFrom-Json
-    } catch {
-        Write-Host "##vso[task.logissue type=error]eng evaluate produced invalid JSON for ${repository}: $_"
-        Remove-Item -Path $reportPath -Force -ErrorAction SilentlyContinue
-        $failed += $repository
-        Write-Host '##[endgroup]'
-        continue
-    }
+        $evaluationName = "$repository/$reportDate"
+        if (-not $completed) {
+            Write-Host "##vso[task.logissue type=error]eng evaluate for $evaluationName exceeded ${perEvaluationMinutes}m and was terminated"
+            if (-not [string]::IsNullOrWhiteSpace($standardError)) {
+                Write-Host $standardError
+            }
+            Remove-Item -Path $reportPath -Force -ErrorAction SilentlyContinue
+            $failed += $evaluationName
+            continue
+        }
 
-    $hasResults = $report.PSObject.Properties.Name -contains 'results' -and $null -ne $report.results
-    $count = if ($hasResults) { @($report.results).Count } else { 0 }
-    Write-Host "$repository -> $reportPath ($count evaluation(s))"
+        $exitCode = $process.ExitCode
+        if ($exitCode -ne 0) {
+            Write-Host "##vso[task.logissue type=error]eng evaluate failed for $evaluationName with exit code $exitCode"
+            if (-not [string]::IsNullOrWhiteSpace($standardError)) {
+                Write-Host $standardError
+            }
+            Remove-Item -Path $reportPath -Force -ErrorAction SilentlyContinue
+            $failed += $evaluationName
+            continue
+        }
+
+        try {
+            $report = Get-Content -Raw -Path $reportPath | ConvertFrom-Json
+        } catch {
+            Write-Host "##vso[task.logissue type=error]eng evaluate produced invalid JSON for ${evaluationName}: $_"
+            Remove-Item -Path $reportPath -Force -ErrorAction SilentlyContinue
+            $failed += $evaluationName
+            continue
+        }
+
+        $hasResults = $report.PSObject.Properties.Name -contains 'results' -and $null -ne $report.results
+        $count = if ($hasResults) { @($report.results).Count } else { 0 }
+        Write-Host "$evaluationName -> $reportPath ($count evaluation(s))"
+    }
     Write-Host '##[endgroup]'
 }
 
-if ($failed.Count -eq $repositories.Count) {
+if ($failed.Count -eq $evaluationCount) {
     throw 'Evaluation failed for every repository; nothing to publish.'
 }
 

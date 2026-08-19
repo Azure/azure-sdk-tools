@@ -38,6 +38,61 @@ public class ApiReviewHubServiceTests
     }
 
     [Test]
+    public async Task MarkPackageReleasedAsync_UsesProductionEndpointAndAuthenticatedPayload()
+    {
+        HttpMethod? method = null;
+        Uri? requestUri = null;
+        string? authorizationScheme = null;
+        string? authorizationParameter = null;
+        string? requestBody = null;
+        var mockHandler = new Mock<HttpMessageHandler>();
+        mockHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .Callback<HttpRequestMessage, CancellationToken>((request, cancellationToken) =>
+            {
+                method = request.Method;
+                requestUri = request.RequestUri;
+                authorizationScheme = request.Headers.Authorization?.Scheme;
+                authorizationParameter = request.Headers.Authorization?.Parameter;
+                requestBody = request.Content?.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult();
+            })
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    """
+                    {"packageId":"11111111-1111-1111-1111-111111111111","packageVersionId":"22222222-2222-2222-2222-222222222222","packageName":"azure-test","language":"python","version":"1.0.0","releasedApiHash":"api-hash","approvalStatus":"Approved","isReleased":false,"releasedOn":null}
+                    """,
+                    Encoding.UTF8,
+                    "application/json")
+            });
+
+        httpClientFactoryMock
+            .Setup(x => x.CreateClient(It.IsAny<string>()))
+            .Returns(new HttpClient(mockHandler.Object));
+
+        var result = await service.MarkPackageReleasedAsync("python", "azure-test", "1.0.0", "api-hash", "tjprescott", CancellationToken.None);
+
+        Assert.That(method, Is.EqualTo(HttpMethod.Post));
+        Assert.That(requestUri?.ToString(), Is.EqualTo("https://api-review-hub.azurewebsites.net/api/releases/mark-released"));
+        Assert.That(authorizationScheme, Is.EqualTo("Bearer"));
+        Assert.That(authorizationParameter, Is.EqualTo("mock-token"));
+        Assert.That(requestBody, Does.Contain("\"language\":\"python\""));
+        Assert.That(requestBody, Does.Contain("\"packageName\":\"azure-test\""));
+        Assert.That(requestBody, Does.Contain("\"version\":\"1.0.0\""));
+        Assert.That(requestBody, Does.Contain("\"apiHash\":\"api-hash\""));
+        Assert.That(requestBody, Does.Contain("\"repoOwner\":\"tjprescott\""));
+        Assert.That(requestBody, Does.Contain("\"dryRun\":false"));
+        Assert.That(result.PackageName, Is.EqualTo("azure-test"));
+        Assert.That(result.PackageVersionId, Is.EqualTo(Guid.Parse("22222222-2222-2222-2222-222222222222")));
+        Assert.That(result.ApprovalStatus, Is.EqualTo("Approved"));
+        Assert.That(result.IsReleased, Is.False);
+    }
+
+    [Test]
     [TestCase("python", "1.0.0")]
     [TestCase("python", "4.12.0b3")]
     [TestCase("csharp", "4.12.0-beta.3")]
@@ -71,7 +126,7 @@ public class ApiReviewHubServiceTests
             .Setup(x => x.CreateClient(It.IsAny<string>()))
             .Returns(new HttpClient(mockHandler.Object));
 
-        var result = await service.GetReleaseGateStatusAsync("https://api-review-hub-test.azurewebsites.net", language, "pkg", packageVersion, "hash", CancellationToken.None);
+        var result = await service.GetReleaseGateStatusAsync("https://api-review-hub-test.azurewebsites.net", language, "pkg", packageVersion, "hash", "", CancellationToken.None);
 
         Assert.That(result.IsApproved, Is.False);
         Assert.That(result.StatusCode, Is.EqualTo(200));
@@ -121,7 +176,7 @@ public class ApiReviewHubServiceTests
             .Setup(x => x.CreateClient(It.IsAny<string>()))
             .Returns(new HttpClient(mockHandler.Object));
 
-        var result = await service.GetReleaseGateStatusAsync("https://api-review-hub-test.azurewebsites.net", "python", "pkg", "4.12.0b3", "hash", CancellationToken.None);
+        var result = await service.GetReleaseGateStatusAsync("https://api-review-hub-test.azurewebsites.net", "python", "pkg", "4.12.0b3", "hash", "", CancellationToken.None);
 
         Assert.That(result.AppliedInheritanceRule, Is.EqualTo("prereleaseToStable"));
         Assert.That(result.Approvals, Is.Not.Null);
@@ -158,7 +213,7 @@ public class ApiReviewHubServiceTests
             .Setup(x => x.CreateClient(It.IsAny<string>()))
             .Returns(new HttpClient(mockHandler.Object));
 
-        var result = await service.GetReleaseGateStatusAsync("https://api-review-hub-test.azurewebsites.net", "python", "pkg", "1.0.0", "hash", CancellationToken.None);
+        var result = await service.GetReleaseGateStatusAsync("https://api-review-hub-test.azurewebsites.net", "python", "pkg", "1.0.0", "hash", "", CancellationToken.None);
 
         Assert.That(result.StatusCode, Is.EqualTo(202));
     }
@@ -194,7 +249,7 @@ public class ApiReviewHubServiceTests
             .Setup(x => x.CreateClient(It.IsAny<string>()))
             .Returns(new HttpClient(mockHandler.Object));
 
-        _ = await service.GetReleaseGateStatusAsync("https://api-review-hub-test.azurewebsites.net", "python", "pkg", "1.0.0", "hash", CancellationToken.None);
+        _ = await service.GetReleaseGateStatusAsync("https://api-review-hub-test.azurewebsites.net", "python", "pkg", "1.0.0", "hash", "", CancellationToken.None);
 
         Assert.That(capturedRequest, Is.Not.Null);
         Assert.That(capturedRequest!.Headers.Authorization, Is.Not.Null);
@@ -231,7 +286,7 @@ public class ApiReviewHubServiceTests
             .Setup(x => x.CreateClient(It.IsAny<string>()))
             .Returns(new HttpClient(mockHandler.Object));
 
-        var result = await service.GetReleaseGateStatusAsync("https://api-review-hub-test.azurewebsites.net", "python", "pkg", "1.0.0", "hash", CancellationToken.None);
+        var result = await service.GetReleaseGateStatusAsync("https://api-review-hub-test.azurewebsites.net", "python", "pkg", "1.0.0", "hash", "", CancellationToken.None);
 
         Assert.That(result.StatusCode, Is.EqualTo(200));
         Assert.That(result.Reason, Is.EqualTo("repositoryNotSupported"));
@@ -243,7 +298,7 @@ public class ApiReviewHubServiceTests
     public void GetReleaseGateStatusAsync_WithDisallowedHost_ThrowsInvalidOperationException()
     {
         var exception = Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await service.GetReleaseGateStatusAsync("https://api-review-hub.evil.example", "python", "pkg", "1.0.0", "hash", CancellationToken.None));
+            await service.GetReleaseGateStatusAsync("https://api-review-hub.evil.example", "python", "pkg", "1.0.0", "hash", "", CancellationToken.None));
 
         Assert.That(exception!.Message, Does.Contain("endpoint host is not allowed"));
     }
@@ -321,6 +376,58 @@ public class ApiReviewHubServiceTests
 
         Assert.That(exception!.Message, Does.Contain("op-timeout"));
         Assert.That(exception.Message, Does.Contain("timed out"));
+    }
+
+    [Test]
+    public async Task RequestReviewPullRequestAsync_WithoutBaseTag_SendsEmptyString()
+    {
+        string? requestBody = null;
+        var mockHandler = new Mock<HttpMessageHandler>();
+        mockHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(request => request.Method == HttpMethod.Post),
+                ItExpr.IsAny<CancellationToken>())
+            .Callback<HttpRequestMessage, CancellationToken>((request, cancellationToken) =>
+                requestBody = request.Content!.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Accepted)
+            {
+                Content = new StringContent(
+                    """
+                    {
+                      "operationId": "op-accepted",
+                      "status": "accepted"
+                    }
+                    """,
+                    Encoding.UTF8,
+                    "application/json")
+            });
+
+        httpClientFactoryMock
+            .Setup(x => x.CreateClient(It.IsAny<string>()))
+            .Returns(new HttpClient(mockHandler.Object));
+
+        var request = new ReviewPullRequestCreationRequest
+        {
+            Language = "python",
+            PackageName = "pkg",
+            TargetBranch = new GitBranchReference
+            {
+                Owner = "Azure",
+                Repo = "azure-sdk-for-python",
+                Name = "main"
+            }
+        };
+
+        await service.RequestReviewPullRequestAsync(
+            request,
+            "https://api-review-hub-test.azurewebsites.net",
+            waitForCompletion: false,
+            pollInterval: TimeSpan.Zero,
+            CancellationToken.None);
+
+        Assert.That(requestBody, Does.Contain("\"baseTag\":\"\""));
     }
 
     [Test]
@@ -442,6 +549,51 @@ public class ApiReviewHubServiceTests
 
         Assert.That(exception!.StatusCode, Is.EqualTo(HttpStatusCode.Conflict));
         Assert.That(exception.Message, Does.Contain("operationConflict"));
+    }
+
+    [Test]
+    public async Task GetReleaseGateStatusAsync_IncludesRepoOwnerInQuery_WhenProvided()
+    {
+        HttpRequestMessage? capturedRequest = null;
+        var mockHandler = new Mock<HttpMessageHandler>();
+        mockHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .Callback<HttpRequestMessage, CancellationToken>((request, _) => capturedRequest = request)
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    """
+                    {
+                      "isApproved": true,
+                      "reason": "approved",
+                      "details": [],
+                      "approvals": []
+                    }
+                    """,
+                    Encoding.UTF8,
+                    "application/json")
+            });
+
+        httpClientFactoryMock
+            .Setup(x => x.CreateClient(It.IsAny<string>()))
+            .Returns(new HttpClient(mockHandler.Object));
+
+        _ = await service.GetReleaseGateStatusAsync(
+            "https://api-review-hub-test.azurewebsites.net",
+            "python",
+            "pkg",
+            "1.0.0",
+            "hash",
+            "Contoso",
+            CancellationToken.None);
+
+        Assert.That(capturedRequest, Is.Not.Null);
+        Assert.That(capturedRequest!.RequestUri, Is.Not.Null);
+        Assert.That(capturedRequest.RequestUri!.Query, Does.Contain("repoOwner=Contoso"));
     }
 
     private sealed class SteppingTimeProvider(DateTimeOffset initial, TimeSpan step) : TimeProvider

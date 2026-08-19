@@ -21,7 +21,17 @@ public interface IApiReviewHubService
         string packageName,
         string packageVersion,
         string apiHash,
+        string repoOwner,
         CancellationToken ct);
+
+    Task<ApiReviewHubMarkReleasedResult> MarkPackageReleasedAsync(
+        string language,
+        string packageName,
+        string packageVersion,
+        string apiHash,
+        string repositoryOwner,
+        CancellationToken ct,
+        bool dryRun = false);
 }
 
 public class ApiReviewHubService(
@@ -32,6 +42,7 @@ public class ApiReviewHubService(
     TimeSpan? operationTimeout = null) : IApiReviewHubService
 {
     private static readonly TimeSpan DefaultOperationTimeout = TimeSpan.FromMinutes(30);
+    private const string DefaultEndpoint = "https://api-review-hub.azurewebsites.net";
 
     private static readonly JsonSerializerOptions serializerOptions = new()
     {
@@ -61,16 +72,15 @@ public class ApiReviewHubService(
         }
         catch (ApiReviewHubRequestException ex) when (string.Equals(ex.ErrorCode, "reviewPullRequestAlreadyExists", StringComparison.Ordinal))
         {
-            var serverMessage = TryGetMessage(ex.Content) ?? $"An API Review Hub review PR already exists for {request.PackageName}.";
+            var serverMessage = TryGetErrorMessage(ex.Content) ?? $"An API Review Hub review PR already exists for {request.PackageName}.";
             logger.LogDebug("{message}", serverMessage);
 
-            var reviewPullRequest = TryGetReviewPullRequest(ex.Content);
             return new OperationStatus
             {
                 Status = "succeeded",
                 PackageName = request.PackageName,
                 Message = serverMessage,
-                ReviewPullRequest = reviewPullRequest
+                ReviewPullRequest = TryGetErrorReviewPullRequest(ex.Content)
             };
         }
 
@@ -111,6 +121,7 @@ public class ApiReviewHubService(
         string packageName,
         string packageVersion,
         string apiHash,
+        string repoOwner,
         CancellationToken ct)
     {
         endpoint = endpoint.TrimEnd('/');
@@ -129,10 +140,41 @@ public class ApiReviewHubService(
             query.Add($"apiHash={Uri.EscapeDataString(apiHash)}");
         }
 
+        if (!string.IsNullOrWhiteSpace(repoOwner))
+        {
+            query.Add($"repoOwner={Uri.EscapeDataString(repoOwner)}");
+        }
+
         uriBuilder.Query = string.Join("&", query);
         logger.LogInformation("Querying API Review Hub release gate for {packageName} {packageVersion}", packageName, packageVersion);
         var result = await GetJsonAsync<ApiReviewHubReleaseGateResult>(httpClient, uriBuilder.Uri.ToString(), authorization, ct);
         return result;
+    }
+
+    public async Task<ApiReviewHubMarkReleasedResult> MarkPackageReleasedAsync(
+        string language,
+        string packageName,
+        string packageVersion,
+        string apiHash,
+        string repositoryOwner,
+        CancellationToken ct,
+        bool dryRun = false)
+    {
+        var httpClient = httpClientFactory.CreateClient(nameof(ApiReviewHubService));
+        var authorization = await GetAuthorizationAsync(DefaultEndpoint, ct);
+        var request = new MarkPackageReleasedRequest
+        {
+            Language = language,
+            PackageName = packageName,
+            Version = packageVersion,
+            ApiHash = apiHash,
+            RepoOwner = repositoryOwner,
+            ReleasedOn = _timeProvider.GetUtcNow(),
+            DryRun = dryRun
+        };
+
+        logger.LogInformation("Marking {packageName} {packageVersion} as released in API Review Hub", packageName, packageVersion);
+        return await PostJsonAsync<ApiReviewHubMarkReleasedResult>(httpClient, $"{DefaultEndpoint}/api/releases/mark-released", request, authorization, ct);
     }
 
     private void LogOperationProgress(OperationStatus operation, DateTimeOffset startedAt, ref bool loggedPipelineUrl)
@@ -238,82 +280,45 @@ public class ApiReviewHubService(
         }
     }
 
-    private static string? TryGetMessage(string content)
+    private static string? TryGetErrorMessage(string? content)
     {
+        return TryGetErrorProperty(content, "message", out var property) && property.ValueKind == JsonValueKind.String
+            ? property.GetString()
+            : null;
+    }
+
+    private static JsonElement? TryGetErrorReviewPullRequest(string? content)
+    {
+        return TryGetErrorProperty(content, "reviewPullRequest", out var property)
+            ? property.Clone()
+            : null;
+    }
+
+    private static bool TryGetErrorProperty(string? content, string propertyName, out JsonElement property)
+    {
+        property = default;
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            return false;
+        }
+
         try
         {
             using var document = JsonDocument.Parse(content);
-            var root = document.RootElement;
-
-            if (TryGetStringProperty(root, "message", out var message))
+            if (!document.RootElement.TryGetProperty("error", out var error)
+                || error.ValueKind != JsonValueKind.Object
+                || !error.TryGetProperty(propertyName, out var parsedProperty))
             {
-                return message;
+                return false;
             }
 
-            if (root.TryGetProperty("error", out var error) && TryGetStringProperty(error, "message", out message))
-            {
-                return message;
-            }
-
-            return null;
+            property = parsedProperty.Clone();
+            return true;
         }
         catch (JsonException)
         {
-            return null;
+            return false;
         }
-        catch (InvalidOperationException)
-        {
-            return null;
-        }
-        catch (KeyNotFoundException)
-        {
-            return null;
-        }
-    }
-
-    private static JsonElement? TryGetReviewPullRequest(string content)
-    {
-        try
-        {
-            using var document = JsonDocument.Parse(content);
-            return TryGetReviewPullRequest(document.RootElement);
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
-        catch (InvalidOperationException)
-        {
-            return null;
-        }
-        catch (KeyNotFoundException)
-        {
-            return null;
-        }
-    }
-
-    private static JsonElement? TryGetReviewPullRequest(JsonElement element)
-    {
-        if (element.ValueKind != JsonValueKind.Object)
-        {
-            return null;
-        }
-
-        if (element.TryGetProperty("reviewPullRequest", out var reviewPullRequest))
-        {
-            return reviewPullRequest.Clone();
-        }
-
-        if (element.TryGetProperty("error", out var error))
-        {
-            var nestedReviewPullRequest = TryGetReviewPullRequest(error);
-            if (nestedReviewPullRequest != null)
-            {
-                return nestedReviewPullRequest;
-            }
-        }
-
-        return null;
     }
 
     private static bool TryGetStringProperty(JsonElement element, string propertyName, out string? value)

@@ -20,6 +20,10 @@ parameters:
 - name: Repos
   type: object
   default: []
+- name: RepoOwners
+  type: object
+  default:
+    - Azure
 - name: PRValidationPipelines
   type: object
   default: []
@@ -49,6 +53,9 @@ stages:
             - ${{ parameters.PreSyncValidationSteps }}
 
             - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+              parameters:
+                TokenOwners: ${{ parameters.RepoOwners }}
+                AlwaysUseOwnerSuffix: true
 
             - pwsh: |
                 Set-PsDebug -Trace 1
@@ -88,6 +95,7 @@ stages:
                 BaseBranchName: $(system.pullRequest.targetBranch)
                 SkipCheckingForChanges: true
                 Repos: ${{ parameters.Repos }}
+                AuthToken: $(GH_TOKEN_Azure)
 
     - stage: CreateSyncPRs
       jobs:
@@ -109,6 +117,9 @@ stages:
                         - ${{ parameters.DirectoryToSync }}
 
                   - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+                    parameters:
+                      TokenOwners: ${{ parameters.RepoOwners }}
+                      AlwaysUseOwnerSuffix: true
 
                   - pwsh: |
                       New-Item -Path $(Build.ArtifactStagingDirectory)/${{ parameters.PRDataFileName }} -ItemType File
@@ -123,7 +134,7 @@ stages:
                         -RepoOwner "Azure"
                         -RepoName "azure-sdk-tools"
                         -PullRequestNumber "$(System.PullRequest.PullRequestNumber)"
-                        -AuthToken "$(GH_TOKEN)"
+                        -AuthToken "$(GH_TOKEN_Azure)"
                       pwsh: true
 
                   - ${{ each repo in parameters.Repos }}:
@@ -135,12 +146,12 @@ stages:
                         workingDirectory: ${{ parameters.WorkingDirectory }}
                         filePath: $(Build.SourcesDirectory)/eng/common/scripts/Submit-PullRequest.ps1
                         arguments: >
-                          -RepoOwner "Azure"
-                          -RepoName "${{ repo }}"
+                          -RepoOwner "${{ repo.RepoOwner }}"
+                          -RepoName "${{ repo.RepoName }}"
                           -BaseBranch $(system.pullRequest.targetBranch)
-                          -PROwner "Azure"
+                          -PROwner "${{ repo.RepoOwner }}"
                           -PRBranch "sync-${{ replace(parameters.DirectoryToSync, '/', '-') }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
-                          -AuthToken "$(GH_TOKEN)"
+                          -AuthToken "$(GH_TOKEN_${{ repo.RepoOwner }})"
                           -PRTitle "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR $(System.PullRequest.PullRequestNumber)"
                           -PRLabels "Central-EngSys,EngSys"
                           -UserReviewers $(System.PullRequest.Creator)
@@ -149,7 +160,7 @@ stages:
                           See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/README.md#workflow)"
 
                     - ${{ each prValidationPipeline in parameters.PRValidationPipelines }}:
-                      - ${{ if eq(prValidationPipeline.Repository, repo) }}:
+                      - ${{ if eq(prValidationPipeline.Repository, repo.RepoName) }}:
                         - task: AzureCLI@2
                           displayName: Queue PR validation pipeline
                           condition: succeeded()
@@ -165,13 +176,13 @@ stages:
                                 throw "Failed to acquire access token for queueing PR validation pipeline."
                               }
 
-                              $prJson = gh pr view "$(Submitted.PullRequest.Number)" -R "Azure/${{ repo }}" --json "headRefName,headRefOid,url"
+                              $prJson = gh pr view "$(Submitted.PullRequest.Number)" -R "${{ repo.RepoOwner }}/${{ repo.RepoName }}" --json "headRefName,headRefOid,url"
                               if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($prJson)) {
-                                throw "Failed to look up PR $(Submitted.PullRequest.Number) in Azure/${{ repo }}."
+                                throw "Failed to look up PR $(Submitted.PullRequest.Number) in ${{ repo.RepoOwner }}/${{ repo.RepoName }}."
                               }
                               $pr = $prJson | ConvertFrom-Json
                               if ([string]::IsNullOrWhiteSpace($pr.headRefName)) {
-                                throw "Could not resolve head branch for PR $(Submitted.PullRequest.Number) in Azure/${{ repo }}."
+                                throw "Could not resolve head branch for PR $(Submitted.PullRequest.Number) in ${{ repo.RepoOwner }}/${{ repo.RepoName }}."
                               }
 
                               Write-Host "Queueing PR validation for $($pr.url) at $($pr.headRefOid)"
@@ -185,10 +196,10 @@ stages:
                                 -BearerToken $accessToken
                             workingDirectory: $(System.DefaultWorkingDirectory)
                           env:
-                            GH_TOKEN: $(GH_TOKEN)
+                            GH_TOKEN: $(GH_TOKEN_${{ repo.RepoOwner }})
 
                     - pwsh: |
-                        $PRData = "Azure;${{ repo }};$(Submitted.PullRequest.Number)"
+                        $PRData = "${{ repo.RepoOwner }};${{ repo.RepoName }};$(Submitted.PullRequest.Number)"
                         Add-Content -Path "$(Build.ArtifactStagingDirectory)/${{ parameters.PRDataFileName }}" -Value $PRData
                       displayName: Write Sync PR Data to Artifact File
                       condition: succeeded()
@@ -220,6 +231,9 @@ stages:
                         - ${{ parameters.DirectoryToSync }}
 
                   - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+                    parameters:
+                      TokenOwners: ${{ parameters.RepoOwners }}
+                      AlwaysUseOwnerSuffix: true
 
                   - download: current
                     artifact: ${{parameters.ArtifactName}}
@@ -232,8 +246,11 @@ stages:
                       filePath: $(Build.SourcesDirectory)/eng/scripts/Verify-And-Merge-PRs.ps1
                       arguments: >
                         -PRDataArtifactPath "$(Pipeline.Workspace)/${{parameters.ArtifactName}}/${{ parameters.PRDataFileName }}"
-                        -AuthToken "$(GH_TOKEN)"
+                        -AuthToken "$(GH_TOKEN_Azure)"
                       pwsh: true
+                    env:
+                      ${{ each repoOwner in parameters.RepoOwners }}:
+                        GH_TOKEN_${{ repoOwner }}: $(GH_TOKEN_${{ repoOwner }})
 
                   - ${{ each repo in parameters.Repos }}:
                     - task: PowerShell@2
@@ -244,9 +261,9 @@ stages:
                         workingDirectory: $(System.DefaultWorkingDirectory)
                         filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
                         arguments: >
-                          -RepoId "Azure/${{ repo }}"
+                          -RepoId "${{ repo.RepoOwner }}/${{ repo.RepoName }}"
                           -TargetBranch "sync-${{ replace(parameters.DirectoryToSync, '/', '-') }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
-                          -AuthToken $(GH_TOKEN)
+                          -AuthToken $(GH_TOKEN_${{ repo.RepoOwner }})
 
   - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
     - stage: CreateSync
@@ -260,6 +277,9 @@ stages:
 
           steps:
             - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+              parameters:
+                TokenOwners: ${{ parameters.RepoOwners }}
+                AlwaysUseOwnerSuffix: true
 
             - template: /eng/pipelines/templates/steps/sync-directory.yml
               parameters:
@@ -269,3 +289,4 @@ stages:
                 UpstreamBranchName: "sync-${{ replace(parameters.DirectoryToSync, '/', '-') }}"
                 BaseBranchName: ${{ parameters.BaseBranchName }}
                 Repos: ${{ parameters.Repos }}
+                AuthToken: $(GH_TOKEN_Azure)

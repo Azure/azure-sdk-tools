@@ -4,23 +4,23 @@ using System.Net;
 
 namespace Azure.Sdk.Tools.Cli.Services.ApiReviewHub;
 
-public interface IApiReviewReleaseStatusService
+public interface IPackageReleaseStatusService
 {
-    Task<ApiReviewReleaseStatusResult> GetApprovalStatusAsync(string endpoint, string language, string packageName, string packageVersion, string apiHash, CancellationToken ct);
+    Task<PackageReleaseStatusResult> GetApprovalStatusAsync(string endpoint, string language, string packageName, string packageVersion, string apiHash, string repoOwner, CancellationToken ct);
 }
 
-public class ApiReviewReleaseStatusService(
+public class PackageReleaseStatusService(
     IApiReviewHubService apiReviewHubService,
     IAPIViewReleaseStatusService apiViewReleaseStatusService,
-    ILogger<ApiReviewReleaseStatusService> logger) : IApiReviewReleaseStatusService
+    ILogger<PackageReleaseStatusService> logger) : IPackageReleaseStatusService
 {
-    public async Task<ApiReviewReleaseStatusResult> GetApprovalStatusAsync(string endpoint, string language, string packageName, string packageVersion, string apiHash, CancellationToken ct)
+    public async Task<PackageReleaseStatusResult> GetApprovalStatusAsync(string endpoint, string language, string packageName, string packageVersion, string apiHash, string repoOwner, CancellationToken ct)
     {
-        var result = new ApiReviewReleaseStatusResult();
+        var result = new PackageReleaseStatusResult();
 
         try
         {
-            var reviewHubResult = await apiReviewHubService.GetReleaseGateStatusAsync(endpoint, language, packageName, packageVersion, apiHash, ct);
+            var reviewHubResult = await apiReviewHubService.GetReleaseGateStatusAsync(endpoint, language, packageName, packageVersion, apiHash, repoOwner, ct);
             reviewHubResult.StatusCode ??= (int)HttpStatusCode.OK;
             result.ReviewHub = reviewHubResult;
             result.IsApproved = reviewHubResult.IsApproved;

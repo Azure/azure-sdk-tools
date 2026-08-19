@@ -1,6 +1,6 @@
 # Release History
 
-## 0.6.37 (Unreleased)
+## 0.6.37 (2026-08-21)
 
 ### Features Added
 
@@ -9,6 +9,8 @@
 ### Breaking Changes
 
 ### Bugs Fixed
+
+- `package mark-released` now skips API Review Hub when `--api-hash` is omitted and succeeds when either API Review Hub or APIView succeeds, failing only when neither backend succeeds.
 
 ### Other Changes
 

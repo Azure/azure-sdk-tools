@@ -86,15 +86,16 @@ helper, auto-refreshes every 24h) before invoking the
 - **Trigger evals** (one per skill, verify routing): see e.g.
   [`.github/skills/azsdk-common-prepare-release-plan/evals/trigger.eval.yaml`](../.github/skills/azsdk-common-prepare-release-plan/evals/trigger.eval.yaml),
   plus `azsdk-common-sdk-release`, `azsdk-common-pipeline-analysis`,
-  `azsdk-common-apiview-feedback-resolution`, `sensei`,
-  `skill-authoring`, `markdown-token-optimizer`.
+  `azsdk-common-apiview-feedback-resolution`, `skill-authoring`,
+  `markdown-token-optimizer`.
 - **Specialized benchmark suite** for [`azure-typespec-author`](../.github/skills/azure-typespec-author/) —
   data-driven TypeSpec authoring scenarios under
-  [`.github/skills/azure-typespec-author/evaluate/evals/`](../.github/skills/azure-typespec-author/evaluate/evals/).
-  Its numbered filenames are a legacy, suite-specific format — **do not copy
-  them for new evals**. New suites should use the descriptive names documented
-  in the shared eval-authoring guide. These scenarios would otherwise have
-  been our follow-up #1 here, so this project does not re-port them.
+  [`.github/skills/azure-typespec-author/evaluate/evals/`](../.github/skills/azure-typespec-author/evaluate/evals/)
+  (`001001.eval.yaml` … `005001.eval.yaml`). Its numbered filenames are a
+  legacy, suite-specific format — **do not copy them for new evals**. New
+  suites should use the descriptive names documented in the shared
+  eval-authoring guide. These scenarios are already covered as skill evals, so
+  this project does not re-port them.
 
 This project supersedes the deleted `Azure.Sdk.Tools.Cli.Benchmarks` project
 (removed in [#15697](https://github.com/Azure/azure-sdk-tools/pull/15697)) and
@@ -368,10 +369,10 @@ eval file:
 - [x] `check-sdk-generation-status`
 - [x] `rename-client-property` **(stub — needs `expected-diff` grader + sparse-clone of `azure-rest-api-specs`)**
 
-### Known gaps vs. the original benchmark
+### Known gaps in current tool-eval coverage
 
-The current `tool-calls` grader only checks tool *names*. The deleted
-benchmark's `ToolCallValidator` additionally asserted:
+The current `tool-calls` grader only checks tool *names*. Additional coverage
+could assert:
 
 1. **Argument values** (e.g. `serviceTreeId`, `buildId`, `typeSpecProjectPath`).
 2. **Forbidden tools** (e.g. "must NOT call `azsdk_verify_setup`").
@@ -384,8 +385,8 @@ those constraints are captured in prompt text and inline `TODO:` comments.
 
 ### Follow-ups
 
-- [ ] Port `Evaluate_PromptToToolMatch` + `Evaluate_ToolDescriptionSimilarity`
-      from `Azure.Sdk.Tools.Cli.Evaluations` (still uses Copilot-SDK evaluator).
+- [ ] Add a deterministic Vally coverage strategy for tool-description
+  similarity only if it proves necessary.
 - [ ] File upstream issue against `@microsoft/vally-cli` to add `forbidden`,
       `optional`, argument-matching, and ordering to the built-in `tool-calls`
       grader (or accept that those gaps need custom graders).

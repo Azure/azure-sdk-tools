@@ -22,7 +22,6 @@ parameters:
     default: default
     values:
       - default
-      - agent
 
 variables:
   - template: /eng/pipelines/templates/variables/globals.yml

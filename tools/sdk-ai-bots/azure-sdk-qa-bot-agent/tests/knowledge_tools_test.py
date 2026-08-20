@@ -9,6 +9,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 from azure.search.documents.indexes.models import IndexerExecutionStatus
+import config.app_config as app_config
 from config.tenant_config import (
     SRC_AZURE_REST_API_SPECS_DOCS,
     SRC_AZURE_REST_API_SPECS_WIKI,
@@ -258,6 +259,7 @@ async def test_resolve_kb_source_returns_ownership_only(monkeypatch) -> None:
 
 @pytest.mark.asyncio
 async def test_search_knowledge_tool() -> None:
+    await app_config.init()
     query = "how to solve tsv failure"
     sources = [SRC_AZURE_REST_API_SPECS_WIKI]
 

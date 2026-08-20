@@ -141,7 +141,7 @@ jobs:
         inputs:
           # The service connection's identity needs 'Storage Blob Data Contributor' on the
           # account; --auth-mode login uses it instead of an account key.
-          azureSubscription: 'Azure SDK Artifacts'
+          azureSubscription: 'Azure SDK Engineering System'
           scriptType: pscore
           scriptLocation: inlineScript
           inlineScript: |
@@ -160,7 +160,8 @@ jobs:
             # --overwrite lets a re-run correct the same day's report in place.
             az storage blob upload-batch `
                 --account-name '$(MetricsStorageAccount)' `
-                --destination '$(MetricsContainer)/pipeline-evaluation' `
+                --destination '$(MetricsContainer)' `
+                --destination-path '$(MetricsPrefix)' `
                 --source '$(EvalArtifactDir)/$(MetricsPrefix)' `
                 --pattern '*.json' `
                 --content-type 'application/json' `

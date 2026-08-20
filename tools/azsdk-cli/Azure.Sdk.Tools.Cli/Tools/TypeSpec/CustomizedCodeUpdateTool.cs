@@ -536,7 +536,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.ManualInterventionRequired
             });
         }
-
         // Everything was classified as success
         if (tspApplicable == 0 && codeCustomizations == 0 && noChanges > 0)
         {
@@ -546,22 +545,30 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 Message = "No changes needed — the requested customizations are already in place."
             });
         }
-
-        //
-        if (!customCodeInScope && customCodeChangeRequired.Count > 0)
+        // CustomCode out of scope and some items require a custom-code change (CODE_CUSTOMIZATION) or TSP_APPLICABLE items failed to apply. Report as out of scope.
+        if (!customCodeInScope && (tspFixFailed > 0 || customCodeChangeRequired.Count > 0))
         {
+            var message = "Out of scope:";
+            if (tspFixFailed > 0)
+            {
+                message += $" Some TSP_APPLICABLE items failed to apply and cannot be fixed in this scope.";
+            }
+            if (customCodeChangeRequired.Count > 0)
+            {
+                message += $" One or more items require a custom-code change, which is not allowed in the current edit scope.";
+            }
             return CreateResponse(new CustomizedCodeUpdateResponse
             {
                 Success = false,
-                Message = "Out of scope: one or more items require a custom-code change, which is not allowed in the current edit scope.",
+                Message = message,
                 CustomCodeChangeRequired = customCodeChangeRequired,
                 NextSteps = manualInterventions.Count > 0 ? manualInterventions : null,
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.CustomCodeChangeRequired
             });
         }
 
-        // ── Regen + Build if TSP fixes were applied ──
-        if (tspFixSucceeded > 0)
+        // ── Regen + Build if TSP fixes were applied and custom code is in scope ──
+        if (tspFixSucceeded > 0 && customCodeInScope)
         {
             logger.LogDebug("Regenerating {packagePath}", packagePath);
 
@@ -619,7 +626,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         }
 
         // Step 1: If the build failed and custom code is out of scope, report the remaining items as out of scope
-        if (!customCodeInScope)
+        if (!customCodeInScope && feedbackDictionary.Count > 0)
         {
             return CreateResponse(new CustomizedCodeUpdateResponse
             {
@@ -638,7 +645,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         // The classifier can now reclassify them as CODE_CUSTOMIZATION or REQUIRES_MANUAL_INTERVENTION.
         if (feedbackDictionary.Count > 0)
         {
-            codeCustomizations = 0; //reset for second pass
             var secondResponse = await _classifierService.ClassifyItemsAsync([.. feedbackDictionary.Values], globalContext: string.Join(";", changesMade), tspProjectPath: tspProjectPath, language: languageService.Language.ToString(), editScope: editScope, ct: ct);
 
             if (secondResponse.Classifications != null)

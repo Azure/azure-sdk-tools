@@ -4,6 +4,8 @@
 
 ### Features Added
 
+- Added `product-onboarding sync` CLI command to create or update product onboarding work items.
+
 ### Breaking Changes
 
 ### Bugs Fixed

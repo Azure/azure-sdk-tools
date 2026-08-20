@@ -10,6 +10,7 @@ import { AUTOMATIC_ICON, getTypeClass, MANUAL_ICON, PR_ICON, TREE_DIFF_STYLE } f
 import { ACTIVE_API_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM, DIFF_STYLE_QUERY_PARAM, getQueryParams } from 'src/app/_helpers/router-helpers';
 import { AzureEngSemanticVersion } from 'src/app/_models/azureEngSemanticVersion';
 import { APIRevision } from 'src/app/_models/revision';
+import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
 
 @Component({
     selector: 'app-revision-options',
@@ -55,6 +56,8 @@ export class RevisionOptionsComponent implements OnChanges {
 
   activeApiRevisionsFilterValue: string | undefined = '';
   diffApiRevisionsFilterValue: string | undefined = '';
+  private queriedRevisionFilters = new Set<string>();
+  private queriedReviewId: string | undefined;
 
   filterOptions: any[] = [
     { label: 'Approved', value: 'approved' },
@@ -64,12 +67,15 @@ export class RevisionOptionsComponent implements OnChanges {
     { label: 'Manual', icon: this.manualIcon, value: 'manual' }
   ];
 
-  constructor(private route: ActivatedRoute, private router: Router) {}
+  constructor(private route: ActivatedRoute, private router: Router, private apiRevisionsService: APIRevisionsService) {}
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['apiRevisions'] || changes['activeApiRevisionId'] || changes['diffApiRevisionId']) {
       if (this.apiRevisions.length > 0) {
-        this.mappedApiRevisions = this.mapRevisionToMenu(this.apiRevisions);
+        const mappedApiRevisions = this.mapRevisionToMenu(this.apiRevisions);
+        this.mappedApiRevisions = Array.from(new Map(
+          [...this.mappedApiRevisions, ...mappedApiRevisions].map(apiRevision => [apiRevision.id, apiRevision])
+        ).values());
         this.tagSpecialRevisions(this.mappedApiRevisions);
 
         this.activeApiRevisionsMenu = this.mappedApiRevisions.filter((apiRevision: any) => apiRevision.id !== this.diffApiRevisionId);
@@ -145,6 +151,55 @@ export class RevisionOptionsComponent implements OnChanges {
   }
 
   searchAndFilterDropdown(searchValue : string, filterValue  : string | undefined, dropDownMenu : string) {
+    if ((searchValue || filterValue) &&
+        (dropDownMenu === this.ACTIVE_API_REVISION_SELECT || dropDownMenu === this.DIFF_API_REVISION_SELECT)) {
+      this.queryFilteredAPIRevisions(searchValue, filterValue, dropDownMenu);
+    }
+
+    this.applyDropdownFilter(searchValue, filterValue, dropDownMenu);
+  }
+
+  private queryFilteredAPIRevisions(searchValue: string, filterValue: string | undefined, dropDownMenu: string) {
+    const detailsByFilter: Record<string, string> = {
+      approved: 'Approved',
+      released: 'Released',
+      automatic: 'Automatic',
+      pullRequest: 'PullRequest',
+      manual: 'Manual'
+    };
+    const details = filterValue && detailsByFilter[filterValue] ? [detailsByFilter[filterValue]] : [];
+    const reviewId = this.apiRevisions[0]?.reviewId;
+    if (!reviewId) {
+      return;
+    }
+
+    if (this.queriedReviewId !== reviewId) {
+      this.queriedRevisionFilters.clear();
+      this.queriedReviewId = reviewId;
+    }
+    const queryKey = `${searchValue.trim().toLowerCase()}\u0000${filterValue || ''}`;
+    if (this.queriedRevisionFilters.has(queryKey)) {
+      return;
+    }
+    this.queriedRevisionFilters.add(queryKey);
+
+    this.apiRevisionsService.getAPIRevisions(
+      0, 100, reviewId, searchValue || undefined, undefined, details, 'createdOn', 1, false, false, true
+    ).subscribe({
+      next: (response) => {
+        const results = Array.isArray(response.result) ? response.result : [];
+        const mappedResults = this.mapRevisionToMenu(results);
+        this.mappedApiRevisions = Array.from(new Map(
+          [...this.mappedApiRevisions, ...mappedResults].map(apiRevision => [apiRevision.id, apiRevision])
+        ).values());
+        this.tagSpecialRevisions(this.mappedApiRevisions);
+        this.applyDropdownFilter(searchValue, filterValue, dropDownMenu);
+      },
+      error: () => this.queriedRevisionFilters.delete(queryKey)
+    });
+  }
+
+  private applyDropdownFilter(searchValue : string, filterValue  : string | undefined, dropDownMenu : string) {
     let filtered = [];
     if (dropDownMenu === this.ACTIVE_API_REVISION_SELECT || dropDownMenu === this.DIFF_API_REVISION_SELECT) {
       filtered = this.mappedApiRevisions.filter((apiRevision: APIRevision) => {

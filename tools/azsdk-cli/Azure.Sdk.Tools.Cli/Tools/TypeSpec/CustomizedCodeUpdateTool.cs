@@ -676,7 +676,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     {
                         feedbackDictionary.Remove(itemDetails.ItemId);
                     }
-                    else if (!specInputsInScope && itemDetails.Classification == ClassificationTspApplicable)
+                    else if (itemDetails.Classification == ClassificationTspApplicable)
                     {
                         // Spec inputs out of scope — surface as out of scope instead of applying.
                         logger.LogInformation("Spec inputs out of scope: item '{ItemId}' reclassified as TSP_APPLICABLE on second pass; reporting.", itemDetails.ItemId);

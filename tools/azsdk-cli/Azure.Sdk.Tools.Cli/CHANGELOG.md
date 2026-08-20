@@ -1,14 +1,21 @@
 # Release History
 
-## 0.6.35 (Unreleased)
+## 0.6.36 (2026-08-19)
 
 ### Features Added
 
+- Added `eng evaluate` CLI command to evaluate whether Copilot's fixes for failing pipelines took the pipeline from failure to success and survived into the merged pull request. Accepts a repository owner and name. Optional parameters: `--since-days`, `--model`.
+
+## 0.6.35 (2026-08-14)
+
+### Features Added
+
+- Added the CLI-only `package mark-released` command to mark released packages independently in API Review Hub and APIView.
+
 ### Breaking Changes
 
-### Bugs Fixed
-
-### Other Changes
+- Moved `api-review get-approval-status` to `package get-approval-status` and renamed its MCP tool from `azsdk_apireview_get_approval_status` to `azsdk_package_get_approval_status`.
+- Removed the unused `apiview create-ci-revision` and `apiview create-pull-request-revision` commands.
 
 ## 0.6.34 (2026-08-07)
 

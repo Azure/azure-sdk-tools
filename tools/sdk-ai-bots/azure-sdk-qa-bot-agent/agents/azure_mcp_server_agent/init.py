@@ -27,6 +27,7 @@ from config.app_config import get as cfg
 from skills.tenant_skills import create_tenant_skills
 from tools.github_mcp_tools import create_github_mcp_tool
 from tools.knowledge_tools import KnowledgeTools
+from tools.mslearn_mcp_tools import create_mslearn_mcp_tool
 from tools.web_tools import WebTools
 from utils.azure_ai_foundry import get_agent_client, get_project_client
 from utils.azure_memory_store import ensure_user_memory_store
@@ -83,12 +84,18 @@ async def main() -> None:
     _background_tasks.add(memory_init_task)
     memory_init_task.add_done_callback(_background_tasks.discard)
 
-    try:
-        github_tool = await create_github_mcp_tool()
-    except Exception:
-        logger.exception("GitHub MCP failed to initialize, skipped")
-    else:
-        tools.append(github_tool)
+    async def _init_mcp(factory):
+        try:
+            return await factory()
+        except Exception:
+            logger.exception("%s failed to initialize, skipped", factory.__name__)
+            return None
+
+    mcp_tools = await asyncio.gather(
+        _init_mcp(create_github_mcp_tool),
+        _init_mcp(create_mslearn_mcp_tool),
+    )
+    tools.extend(tool for tool in mcp_tools if tool is not None)
 
     skills = create_tenant_skills(agent_name)
     if not skills:

@@ -300,7 +300,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         string? apiViewUrl = IsApiViewUrl(customizationRequest) ? customizationRequest : null;
 
         var languageService = await ResolveLanguageServiceAsync(packagePath, apiViewUrl, ct);
-        if (languageService == null && customCodeInScope)
+        if (languageService == null)
         {
             return new CustomizedCodeUpdateResponse
             {

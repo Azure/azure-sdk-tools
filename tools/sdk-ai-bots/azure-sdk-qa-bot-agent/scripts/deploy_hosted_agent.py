@@ -69,21 +69,6 @@ def _git_short_sha() -> str:
         return "latest"
 
 
-def _build_agent_environment(
-    appconfig_endpoint: str,
-    app_version: str,
-) -> dict[str, str]:
-    env_vars = {
-        "AZURE_APPCONFIG_ENDPOINT": appconfig_endpoint,
-        "ENABLE_INSTRUMENTATION": "true",
-        "APP_VERSION": app_version,
-    }
-    github_token = os.environ.get("GITHUB_TOKEN", "")
-    if github_token and github_token != "$(GITHUB_TOKEN)":
-        env_vars["GITHUB_TOKEN"] = github_token
-    return env_vars
-
-
 def _wait_for_version_active(
     project: "AIProjectClient",
     agent_name: str,
@@ -280,7 +265,11 @@ def main() -> None:
             latest_version = 0
         next_version = str(latest_version + 1)
 
-        env_vars = _build_agent_environment(appconfig_endpoint, next_version)
+        env_vars = {
+            "AZURE_APPCONFIG_ENDPOINT": appconfig_endpoint,
+            "ENABLE_INSTRUMENTATION": "true",
+            "APP_VERSION": next_version,
+        }
 
         # Ensure Content-safety guardrail.
         rai_policy_id = os.environ.get("AI_FOUNDRY_RAI_POLICY_ID", "")

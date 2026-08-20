@@ -7,18 +7,16 @@
 
 .DESCRIPTION
     `azd` does not read environment-suite.yaml directly — it reads
-    .azure/<env>/.env. Nor does `az deployment sub what-if` in the pipeline
-    read the suite directly — it reads infra/environments/<env>.parameters.json.
-    This script keeps both in sync with environment-suite.yaml so the same
-    subscription / region / RG / image-repository values flow into:
+    .azure/<env>/.env. This script synchronizes the suite-owned values and
+    bicepOverrides into that environment so the same subscription / region /
+    RG / image-repository / resource-name values flow into:
         - azd provision           (via .azure/<env>/.env + main.bicepparam readEnvironmentVariable)
+        - azd provision --preview (the same main.bicepparam path)
         - per-service hooks       (via process env vars)
-        - az deployment sub what-if in pipelines (via <env>.parameters.json)
 
-    Fields not owned by the suite are preserved in <env>.parameters.json.
-    Teams IDs are copied from the suite into the azd environment. A concrete
-    serverAudience is copied from the parameters file; a REPLACE_WITH_*
-    placeholder is left for the preprovision hook to resolve.
+    Teams IDs and any fixed environment-specific Bicep values are copied from
+    the suite. When SERVER_AUDIENCE is not pinned, the preprovision hook creates
+    or discovers the environment's Entra app registration.
 
     Run this once after `azd env new <env>`, and again whenever the suite is
     updated. Pipelines do not need it — they read the suite directly via
@@ -31,9 +29,6 @@
 .PARAMETER SuitePath
     Optional override for the env-suite location.
 
-.PARAMETER ParametersFile
-    Optional override for the <env>.parameters.json path.
-
 .EXAMPLE
     pwsh ./scripts/sync-env-suite.ps1 -Environment dev
 #>
@@ -44,9 +39,7 @@ param(
     [ValidateSet('dev', 'preview', 'prod')]
     [string]$Environment,
 
-    [string]$SuitePath = "$PSScriptRoot/../infra/environments/environment-suite.yaml",
-
-    [string]$ParametersFile = "$PSScriptRoot/../infra/environments/$Environment.parameters.json"
+    [string]$SuitePath = "$PSScriptRoot/../infra/environments/environment-suite.yaml"
 )
 
 Set-StrictMode -Version 4
@@ -81,12 +74,6 @@ if (-not ($existingNames -contains $Environment)) {
 }
 & azd env select $Environment | Out-Null
 
-if (-not (Test-Path $ParametersFile)) {
-    Write-Error "Parameters file not found at $ParametersFile"
-    exit 1
-}
-$paramsJson = Get-Content -Raw -Path $ParametersFile | ConvertFrom-Json
-
 # Mapping: <env-suite yq path>  →  <azd env var name>
 $Mapping = @(
     @{ Path = ".environments.$Environment.subscriptionId";       Key = 'AZURE_SUBSCRIPTION_ID' }
@@ -95,15 +82,16 @@ $Mapping = @(
     @{ Path = ".environments.$Environment.regions[0].name";      Key = 'AZURE_LOCATION' }
     @{ Path = ".environments.$Environment.aiLocation";           Key = 'AZURE_AI_LOCATION' }
     @{ Path = ".environments.$Environment.aiLocation";           Key = 'AZURE_AI_DEPLOYMENTS_LOCATION' }
-    @{ Path = ".environments.$Environment.cosmosDbLocation";    Key = 'COSMOS_DB_LOCATION' }
+    @{ Path = ".environments.$Environment.cosmosDbLocation";     Key = 'COSMOS_DB_LOCATION' }
     @{ Path = ".environments.$Environment.frontendSiteName";     Key = 'FRONTEND_SITE_NAME' }
     @{ Path = ".environments.$Environment.agentServerSiteName";  Key = 'AGENT_SERVER_SITE_NAME' }
     @{ Path = ".environments.$Environment.functionAppName";      Key = 'FUNCTION_APP_NAME' }
-    @{ Path = ".environments.$Environment.containerRegistryName";Key = 'CONTAINER_REGISTRY_NAME' }
+    @{ Path = ".environments.$Environment.containerRegistryName"; Key = 'ACR_NAME' }
+    @{ Path = ".environments.$Environment.containerRegistryName"; Key = 'CONTAINER_REGISTRY_NAME' }
     @{ Path = ".environments.$Environment.keyVaultName";         Key = 'KEY_VAULT_NAME' }
     @{ Path = ".environments.$Environment.appConfigName";        Key = 'APP_CONFIG_NAME' }
-    # Image repositories are <componentImageName>:<env>; consumed by main.bicepparam
-    # so `azd provision` uses the same values as pipelines' <env>.parameters.json.
+    # Image repositories are <componentImageName>:<env>. bicepOverrides can
+    # replace these derived values for an existing environment.
     @{ Path = ".components.`"function-app`".imageName + `":$Environment`"";  Key = 'FUNCTION_IMAGE_REPOSITORY' }
     @{ Path = ".components.`"agent-server`".imageName + `":$Environment`"";  Key = 'AGENT_SERVER_IMAGE_REPOSITORY' }
     @{ Path = ".components.frontend.imageName + `":$Environment`"";          Key = 'FRONTEND_IMAGE_REPOSITORY' }
@@ -145,10 +133,24 @@ if ($teamsChannelIds.Count -eq 0 -or @($teamsChannelIds | Where-Object { [string
     Write-Host "  TEAMS_CHANNEL_IDS = $teamsChannelIdsValue"
 }
 
-$serverAudience = [string]$paramsJson.parameters.serverAudience.value
-if (-not [string]::IsNullOrWhiteSpace($serverAudience) -and $serverAudience -notmatch '^REPLACE_WITH_') {
-    & azd env set SERVER_AUDIENCE $serverAudience | Out-Null
-    Write-Host "  SERVER_AUDIENCE = $serverAudience"
+# Apply environment-specific Bicep overrides after common mappings so an
+# override can intentionally replace a derived value (for example prod's
+# FRONTEND_IMAGE_REPOSITORY).
+$overridesJson = (& yq -o=json ".environments.$Environment.bicepOverrides // {}" $SuitePath | Out-String).Trim()
+$overrides = $overridesJson | ConvertFrom-Json
+foreach ($property in $overrides.PSObject.Properties) {
+    $key = $property.Name
+    $value = [string]$property.Value
+    if ([string]::IsNullOrWhiteSpace($value)) {
+        $failed += "$key is empty in bicepOverrides."
+        continue
+    }
+    if ($value -match '^REPLACE_WITH_') {
+        $failed += "$key is still a placeholder ('$value') in bicepOverrides."
+        continue
+    }
+    & azd env set $key $value | Out-Null
+    Write-Host "  $key = $value"
 }
 
 if ($failed.Count -gt 0) {
@@ -158,71 +160,6 @@ if ($failed.Count -gt 0) {
     exit 1
 }
 
-# ── Sync into <env>.parameters.json ────────────────────────────────────────────
-# Fields owned by the suite are overwritten; unmanaged fields are preserved.
 Write-Host ""
-Write-Host "Syncing environment-suite.yaml → $([System.IO.Path]::GetFileName($ParametersFile))..." -ForegroundColor Cyan
-
-# Values pulled from the suite. Image repositories are <componentImageName>:<env>.
-$location                       = (& yq -r ".environments.$Environment.regions[0].name" $SuitePath).Trim()
-$aiLocation                     = (& yq -r ".environments.$Environment.aiLocation" $SuitePath).Trim()
-$cosmosDbLocation               = (& yq -r ".environments.$Environment.cosmosDbLocation" $SuitePath).Trim()
-$resourceGroupName              = (& yq -r ".environments.$Environment.resourceGroupPrefix" $SuitePath).Trim()
-$functionImageName              = (& yq -r '.components."function-app".imageName' $SuitePath).Trim()
-$agentImageName                 = (& yq -r '.components."agent-server".imageName' $SuitePath).Trim()
-
-foreach ($pair in @(
-    @{ Name = 'location';               Value = $location },
-    @{ Name = 'aiLocation';             Value = $aiLocation },
-    @{ Name = 'cosmosDbLocation';       Value = $cosmosDbLocation },
-    @{ Name = 'resourceGroupName';      Value = $resourceGroupName },
-    @{ Name = 'function-app imageName'; Value = $functionImageName },
-    @{ Name = 'agent-server imageName'; Value = $agentImageName }
-)) {
-    if ([string]::IsNullOrEmpty($pair.Value) -or $pair.Value -eq 'null') {
-        Write-Error "Missing '$($pair.Name)' in $SuitePath for environment '$Environment'."
-        exit 1
-    }
-}
-
-function Set-ParamValue {
-    param($Parameters, [string]$Name, $Value)
-    if (-not $Parameters.PSObject.Properties.Name -contains $Name) {
-        Add-Member -InputObject $Parameters -MemberType NoteProperty -Name $Name -Value ([pscustomobject]@{ value = $Value })
-    } else {
-        $Parameters.$Name.value = $Value
-    }
-}
-
-Set-ParamValue $paramsJson.parameters 'location'                       $location
-Set-ParamValue $paramsJson.parameters 'aiLocation'                     $aiLocation
-Set-ParamValue $paramsJson.parameters 'cosmosDbLocation'               $cosmosDbLocation
-Set-ParamValue $paramsJson.parameters 'resourceGroupName'              $resourceGroupName
-Set-ParamValue $paramsJson.parameters 'functionImageRepository'        "${functionImageName}:${Environment}"
-Set-ParamValue $paramsJson.parameters 'agentServerImageRepository'     "${agentImageName}:${Environment}"
-
-# Preserve trailing newline; ConvertTo-Json reformats but the file is now derived.
-$json = $paramsJson | ConvertTo-Json -Depth 20
-Set-Content -Path $ParametersFile -Value $json -Encoding utf8 -NoNewline
-Add-Content -Path $ParametersFile -Value "" -Encoding utf8
-
-Write-Host "  location                       = $location"
-Write-Host "  aiLocation                     = $aiLocation"
-Write-Host "  cosmosDbLocation               = $cosmosDbLocation"
-Write-Host "  resourceGroupName              = $resourceGroupName"
-Write-Host "  functionImageRepository        = ${functionImageName}:${Environment}"
-Write-Host "  agentServerImageRepository     = ${agentImageName}:${Environment}"
-
-# Warn on an unmanaged placeholder that pipelines still need.
-foreach ($key in @('serverAudience')) {
-    if ($paramsJson.parameters.PSObject.Properties.Name -contains $key) {
-        $v = [string]$paramsJson.parameters.$key.value
-        if ($v -match '^REPLACE_WITH_') {
-            Write-Warning "  $key is still a placeholder ('$v') in $([System.IO.Path]::GetFileName($ParametersFile)). Not owned by env-suite — edit the parameters file directly."
-        }
-    }
-}
-
-Write-Host ""
-Write-Host "✓ azd env '$Environment' is in sync with environment-suite.yaml and $([System.IO.Path]::GetFileName($ParametersFile))." -ForegroundColor Green
+Write-Host "✓ azd env '$Environment' is in sync with environment-suite.yaml." -ForegroundColor Green
 Write-Host "  Next: azd provision --environment $Environment --no-prompt"

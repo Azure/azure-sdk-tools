@@ -94,13 +94,7 @@ and replace every `REPLACE_WITH_*` value:
 
 - [ ] `subscriptionId` for `dev`, `preview`, `prod`
 - [ ] `tenantId` if your tenant is not the default Microsoft one
-- [ ] `serverAudience` per env (AAD app registration GUID — see step 6)
-
-Also fill in the parameter files:
-
-- [ ] [dev.parameters.json](../infra/environments/dev.parameters.json)
-- [ ] [preview.parameters.json](../infra/environments/preview.parameters.json)
-- [ ] [prod.parameters.json](../infra/environments/prod.parameters.json) (most fields already final)
+- [ ] Any fixed existing-resource names under `bicepOverrides`
 
 Validate:
 
@@ -115,14 +109,13 @@ pwsh ./scripts/validate-env-suite.ps1
 The agent server uses Entra ID (EasyAuth) to authenticate Bot Service and
 Logic App callers.
 
-- [ ] Create one **AAD app registration** per environment:
-  - `sdk-ai-bots-agent-server-dev`
-  - `sdk-ai-bots-agent-server-preview`
-  - `sdk-ai-bots-agent-server-prod` (or reuse the existing `899da762-...`
-    already pinned in [prod.parameters.json](../infra/environments/prod.parameters.json))
-- [ ] Note each app's **Application (client) ID** and paste it into the
-  matching `serverAudience` in [environment-suite.yaml](../infra/environments/environment-suite.yaml)
-  and `*.parameters.json`.
+- [ ] Let preprovision create or find one **AAD app registration** per
+  environment, named `azuresdkqabot-server-<env>`.
+- [ ] To reuse an existing registration, add its **Application (client) ID** as
+  `bicepOverrides.SERVER_AUDIENCE` in
+  [environment-suite.yaml](../infra/environments/environment-suite.yaml).
+- [ ] Keep the existing prod registration pinned as
+  `899da762-d510-48f2-911a-db9ea0cc41fd`.
 - [ ] No client secret needed — authentication is bearer-token via federated
   identity.
 

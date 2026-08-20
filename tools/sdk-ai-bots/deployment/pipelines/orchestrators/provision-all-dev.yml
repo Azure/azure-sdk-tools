@@ -23,7 +23,7 @@ extends:
             - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-stage.yml
               parameters:
                   environment: dev
-                  runValidateAndWhatIf: false
+                  runValidateAndPreview: false
                   runProvision: true
                   showReadinessReminder: false
 

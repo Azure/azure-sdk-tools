@@ -64,6 +64,8 @@ environments:
               enabled: true
         aiLocation: 'eastus2'
         cosmosDbLocation: 'eastus2'
+        bicepOverrides:
+            SERVER_AUDIENCE: '89cfbcca-e577-41b8-a4fb-bc6178b7260c'
         approvalRequired: false
         prodDeployOnlyFromPipeline: false
         localDeployAllowed: true
@@ -106,9 +108,9 @@ environments:
 
     prod:
         # Real prod values are captured from the pre-existing `azure-sdk-qa-bot` RG
-        # in the Azure SDK Engineering System subscription. Bicep params in
-        # environments/prod.parameters.json override the auto-generated resource
-        # names so `az deployment sub what-if` attaches to the existing resources.
+        # in the Azure SDK Engineering System subscription. bicepOverrides pins
+        # names that cannot be derived so azd preview/provision attaches to the
+        # existing resources instead of proposing replacements.
         subscription: 'Azure SDK Engineering System'
         subscriptionId: 'a18897a6-7e44-457d-9260-f2854c0aca42'
         tenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
@@ -143,6 +145,39 @@ environments:
             #   enabled: false
         aiLocation: 'swedencentral'
         cosmosDbLocation: 'westus2'
+        bicepOverrides:
+            SERVER_AUDIENCE: '899da762-d510-48f2-911a-db9ea0cc41fd'
+            DEVELOPER_PRINCIPAL_ID: '2efb50ed-0ca9-4cf1-b43b-9b31a87e08f5'
+            DEVELOPER_PRINCIPAL_TYPE: 'Group'
+            FRONTEND_IMAGE_REPOSITORY: 'azure-sdk-qa-bot:latest'
+            MANAGED_IDENTITY_NAME: 'azuresdkqabot-identity'
+            ACTION_GROUP_NAME: 'azuresdkqabot-alert'
+            SEARCH_SERVICE_NAME: 'azuresdkqabot-search'
+            STORAGE_ACCOUNT_NAME: 'azuresdkqabotstorage'
+            COSMOS_DB_ACCOUNT_NAME: 'azuresdkqabot-db'
+            AI_RESOURCE_NAME: 'azuresdkqabot-ai-resource'
+            AI_PROJECT_NAME: 'azuresdkqabot-ai'
+            AGENT_LOG_WORKSPACE_NAME: 'azuresdkqabot-agent-log'
+            AGENT_APP_INSIGHTS_NAME: 'azuresdkqabot-agent'
+            FRONTEND_APP_INSIGHTS_NAME: 'azsdkqabot-insights'
+            FRONTEND_EMAIL_ACTION_GROUP_NAME: 'azsdkqabot-email-alerts'
+            FRONTEND_DIAGNOSTIC_SETTING_NAME: 'azsdkqabot-diagnostic'
+            FRONTEND_HEALTH_TEST_NAME: 'azsdkqabot-health-test'
+            FRONTEND_SERVER_ERRORS_ALERT_NAME: 'azsdkqabot-server-errors'
+            FRONTEND_HEALTH_CHECK_ALERT_NAME: 'azsdkqabot-health-check-failure'
+            FRONTEND_DELETE_LOCK_NAME: 'azsdkqabot-delete-lock'
+            AGENT_SERVER_APP_SERVICE_PLAN_NAME: 'azuresdkqabot-appserviceplan'
+            AGENT_SERVER_LOG_WORKSPACE_NAME: 'azuresdkqabot-log'
+            AGENT_SERVER_APP_INSIGHTS_NAME: 'azuresdkqabot-server202510300250'
+            AGENT_SERVER_ALERT_NAME: 'azuresdkqabot-alert'
+            FUNCTION_APP_SERVICE_PLAN_NAME: 'azuresdkqabot-functionserviceplan'
+            FUNCTION_LOG_WORKSPACE_NAME: 'azuresdkqabot-function-log'
+            INTEGRATION_ACCOUNT_NAME: 'azuresdkqabot-ia'
+            TEAMS_CONNECTION_NAME: 'teams'
+            AZURE_BLOB_CONNECTION_NAME: 'azureblob'
+            DOCUMENT_DB_CONNECTION_NAME: 'documentdb'
+            LOGIC_APP_WORKFLOW_NAME: 'azuresdkqabot-logicapp'
+            LOGIC_APP_ALERT_NAME: 'azuresdkqabot-logicapp-alert'
         approvalRequired: true
         prodDeployOnlyFromPipeline: true
         localDeployAllowed: false
@@ -154,8 +189,8 @@ environments:
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Component contract — names azd / Bicep need to agree on per environment.
-# These values flow through to deployment/infra/environments/<env>.parameters.json
-# and are consumed by pipelines/templates/load-environment-suite.yml.
+# The pipeline loader and local sync script export these values into the azd
+# environment consumed by main.bicepparam.
 # ─────────────────────────────────────────────────────────────────────────────
 components:
     frontend:

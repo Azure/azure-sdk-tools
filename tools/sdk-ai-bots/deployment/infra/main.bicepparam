@@ -4,9 +4,9 @@
 // automatically sets (AZURE_ENV_NAME, AZURE_LOCATION) plus values that azd
 // loads from .azure/<env>/.env when an environment is selected.
 //
-// Pipelines do NOT use this file. Their environment-suite loader exports
-// suite-owned values (including Teams routing), while environment parameter
-// files provide resource overrides and the Entra app audience.
+// Pipelines and local development both use this file. environment-suite.yaml
+// is exported as pipeline variables or synchronized into the local azd
+// environment, so both paths compile the same template with the same values.
 
 using './main.bicep'
 
@@ -39,7 +39,47 @@ param frontendBaseName               = readEnvironmentVariable('FRONTEND_SITE_NA
 param agentServerSiteName            = readEnvironmentVariable('AGENT_SERVER_SITE_NAME',           '')
 param functionAppName                = readEnvironmentVariable('FUNCTION_APP_NAME',                '')
 
-// ── Per-env values (read from .azure/<env>/.env; pipelines override via JSON) ─
+// Optional resource-name overrides. Empty values retain main.bicep's derived
+// names; existing environments (especially prod) pin their deployed names via
+// environment-suite.yaml's bicepOverrides map.
+param managedIdentityName            = readEnvironmentVariable('MANAGED_IDENTITY_NAME',            '')
+param actionGroupName                = readEnvironmentVariable('ACTION_GROUP_NAME',                '')
+param keyVaultName                   = readEnvironmentVariable('KEY_VAULT_NAME',                   '')
+param appConfigName                  = readEnvironmentVariable('APP_CONFIG_NAME',                  '')
+param searchServiceName              = readEnvironmentVariable('SEARCH_SERVICE_NAME',              '')
+param containerRegistryName          = readEnvironmentVariable('CONTAINER_REGISTRY_NAME', readEnvironmentVariable('ACR_NAME', ''))
+param storageAccountName             = readEnvironmentVariable('STORAGE_ACCOUNT_NAME',             '')
+param cosmosDbAccountName            = readEnvironmentVariable('COSMOS_DB_ACCOUNT_NAME',           '')
+
+param aiResourceName                 = readEnvironmentVariable('AI_RESOURCE_NAME',                 '')
+param aiProjectName                  = readEnvironmentVariable('AI_PROJECT_NAME',                  '')
+param agentLogWorkspaceName          = readEnvironmentVariable('AGENT_LOG_WORKSPACE_NAME',         '')
+param agentAppInsightsName           = readEnvironmentVariable('AGENT_APP_INSIGHTS_NAME',          '')
+
+param frontendAppInsightsName        = readEnvironmentVariable('FRONTEND_APP_INSIGHTS_NAME',       '')
+param frontendEmailActionGroupName   = readEnvironmentVariable('FRONTEND_EMAIL_ACTION_GROUP_NAME', '')
+param frontendDiagnosticSettingName  = readEnvironmentVariable('FRONTEND_DIAGNOSTIC_SETTING_NAME', '')
+param frontendHealthTestName         = readEnvironmentVariable('FRONTEND_HEALTH_TEST_NAME',        '')
+param frontendServerErrorsAlertName  = readEnvironmentVariable('FRONTEND_SERVER_ERRORS_ALERT_NAME','')
+param frontendHealthCheckAlertName   = readEnvironmentVariable('FRONTEND_HEALTH_CHECK_ALERT_NAME', '')
+param frontendDeleteLockName         = readEnvironmentVariable('FRONTEND_DELETE_LOCK_NAME',        '')
+
+param agentServerAppServicePlanName  = readEnvironmentVariable('AGENT_SERVER_APP_SERVICE_PLAN_NAME', '')
+param agentServerLogWorkspaceName    = readEnvironmentVariable('AGENT_SERVER_LOG_WORKSPACE_NAME',   '')
+param agentServerAppInsightsName     = readEnvironmentVariable('AGENT_SERVER_APP_INSIGHTS_NAME',    '')
+param agentServerAlertName           = readEnvironmentVariable('AGENT_SERVER_ALERT_NAME',           '')
+
+param functionAppServicePlanName     = readEnvironmentVariable('FUNCTION_APP_SERVICE_PLAN_NAME',   '')
+param functionLogWorkspaceName       = readEnvironmentVariable('FUNCTION_LOG_WORKSPACE_NAME',      '')
+
+param integrationAccountName        = readEnvironmentVariable('INTEGRATION_ACCOUNT_NAME',         '')
+param teamsConnectionName            = readEnvironmentVariable('TEAMS_CONNECTION_NAME',            '')
+param azureBlobConnectionName        = readEnvironmentVariable('AZURE_BLOB_CONNECTION_NAME',       '')
+param documentDbConnectionName       = readEnvironmentVariable('DOCUMENT_DB_CONNECTION_NAME',      '')
+param logicAppWorkflowName           = readEnvironmentVariable('LOGIC_APP_WORKFLOW_NAME',           '')
+param logicAppAlertName              = readEnvironmentVariable('LOGIC_APP_ALERT_NAME',              '')
+
+// ── Per-env values (read from .azure/<env>/.env) ─────────────────────────────
 // SERVER_AUDIENCE is auto-populated by the preprovision hook
 // (hooks/preprovision.ts → ensureServerAudience), which creates or looks up
 // an Entra ID app registration named `azuresdkqabot-server-<env>` via
@@ -54,7 +94,7 @@ param serverAudience  = readEnvironmentVariable('SERVER_AUDIENCE', '')
 // ── Developer access (auto-detected by preprovision hook) ─────────────────
 // The preprovision hook detects the deployer's object ID and type and persists
 // them. Override by setting DEVELOPER_PRINCIPAL_ID / DEVELOPER_PRINCIPAL_TYPE
-// in the azd env (or via environments/<env>.parameters.json for prod groups).
+// in the azd env (or via environment-suite bicepOverrides for prod groups).
 param developerGroupObjectId  = readEnvironmentVariable('DEVELOPER_PRINCIPAL_ID', '')
 param developerPrincipalType  = readEnvironmentVariable('DEVELOPER_PRINCIPAL_TYPE', 'User')
 param cosmosDbLocation        = readEnvironmentVariable('COSMOS_DB_LOCATION', readEnvironmentVariable('AZURE_LOCATION', 'westus2'))
@@ -70,3 +110,7 @@ param createTeamsConnection = readEnvironmentVariable('CREATE_TEAMS_CONNECTION',
 // Preserve the complete workflow on subsequent provisions. The preprovision
 // hook sets this to false only when no Logic App workflow exists yet.
 param includeLogicAppWorkflowDefinition = readEnvironmentVariable('INCLUDE_LOGIC_APP_WORKFLOW_DEFINITION', 'false') == 'true'
+
+param azureTableNameForConversation = readEnvironmentVariable('AZURE_TABLE_NAME_FOR_CONVERSATION', '')
+param ragServiceScope                = readEnvironmentVariable('RAG_SERVICE_SCOPE',                '')
+param teamsBotFullDisplayName        = readEnvironmentVariable('TEAMS_BOT_FULL_DISPLAY_NAME',      '')

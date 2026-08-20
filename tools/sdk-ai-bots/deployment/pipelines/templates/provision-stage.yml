@@ -1,7 +1,7 @@
 # Reusable stage template for provision orchestrators (dev / preview / prod).
 #
 # Encapsulates the common shape: load env-suite → azd auth → (optional
-# bicep-validate + what-if) → (optional azd provision) → (optional readiness
+# bicep-validate + azd preview) → (optional azd apply) → (optional readiness
 # reminder). The three provision-all-*.yml orchestrators consume this
 # template with different flag values instead of duplicating the stage body.
 #
@@ -14,7 +14,7 @@
 #     - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-stage.yml
 #       parameters:
 #         environment: preview
-#         runValidateAndWhatIf: true
+#         runValidateAndPreview: true
 #         runProvision: true
 
 parameters:
@@ -27,7 +27,7 @@ parameters:
     - name: stageDisplayName
       type: string
       default: 'Provision'
-    - name: runValidateAndWhatIf
+    - name: runValidateAndPreview
       type: boolean
       default: false
     - name: runProvision
@@ -60,14 +60,18 @@ stages:
                                   environment: ${{ parameters.environment }}
                             - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
 
-                            - ${{ if parameters.runValidateAndWhatIf }}:
+                            - ${{ if parameters.runValidateAndPreview }}:
                                   - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-validate.yml
-                                  - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-what-if.yml
+                                  - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
                                     parameters:
-                                        parametersFile: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment/infra/environments/${{ parameters.environment }}.parameters.json'
+                                        operation: preview
+                                        workingDirectory: ${{ parameters.workingDirectory }}
 
                             - ${{ if parameters.runProvision }}:
                                   - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
+                                    parameters:
+                                        operation: apply
+                                        workingDirectory: ${{ parameters.workingDirectory }}
 
                             - ${{ if parameters.showReadinessReminder }}:
                                   - bash: |

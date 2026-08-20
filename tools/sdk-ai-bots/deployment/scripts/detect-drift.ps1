@@ -4,9 +4,10 @@
     Detects drift between deployed Azure resources and the Bicep source.
 
 .DESCRIPTION
-    Runs `az deployment sub what-if` against the requested environment and
-    surfaces any Modify or Delete actions. Fails with exit 1 if any drift is
-    detected.
+    Runs the configured preprovision hook followed by `azd provision --preview`
+    against the requested environment. This uses main.bicepparam, the same
+    parameter adapter as apply. Fails with exit 1 if any Modify or Delete
+    operation is detected.
 #>
 
 [CmdletBinding()]
@@ -15,10 +16,7 @@ param(
     [ValidateSet('dev', 'preview', 'prod')]
     [string]$Environment,
 
-    [string]$BicepFile = "$PSScriptRoot/../infra/main.bicep",
-    [string]$ParametersFile = "$PSScriptRoot/../infra/environments/$Environment.parameters.json",
-    [string]$SuitePath = "$PSScriptRoot/../infra/environments/environment-suite.yaml",
-    [string]$Location = ""
+    [string]$ProjectDirectory = "$PSScriptRoot/../.."
 )
 
 Set-StrictMode -Version 4
@@ -26,44 +24,72 @@ $ErrorActionPreference = 'Stop'
 
 Write-Host "Running drift detection for '$Environment'..."
 
-if (-not (Get-Command yq -ErrorAction SilentlyContinue)) {
-    Write-Error "yq is required to read Teams routing from environment-suite.yaml."
+foreach ($tool in @('azd', 'node')) {
+    if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) {
+        Write-Error "$tool is required for azd drift detection."
+        exit 1
+    }
+}
+
+if (-not (Test-Path "$ProjectDirectory/azure.yaml")) {
+    Write-Error "azure.yaml not found under $ProjectDirectory."
     exit 1
 }
 
-if ([string]::IsNullOrWhiteSpace($Location)) {
-    $Location = (& yq -r ".environments.$Environment.regions[0].name" $SuitePath).Trim()
-}
-$teamsGroupId = (& yq -r ".environments.$Environment.teamsGroupId" $SuitePath).Trim()
-$teamsChannelIds = @(& yq -r ".environments.$Environment.teamsChannelIds[]" $SuitePath)
-if ([string]::IsNullOrWhiteSpace($teamsGroupId) -or $teamsChannelIds.Count -eq 0) {
-    Write-Error "Teams routing is missing for '$Environment' in $SuitePath."
-    exit 1
-}
-
-$teamsParametersFile = New-TemporaryFile
+$previewOutputFile = New-TemporaryFile
+$previousLocation = Get-Location
+$previousPreviewMode = $env:AZD_PROVISION_PREVIEW
 try {
-    @{
-        parameters = @{
-            teamsGroupId = @{ value = $teamsGroupId }
-            teamsChannelIds = @{ value = $teamsChannelIds }
-        }
-    } | ConvertTo-Json -Depth 5 | Set-Content -Path $teamsParametersFile -Encoding utf8
+    Set-Location $ProjectDirectory
 
-    $whatIf = az deployment sub what-if `
-        --location $Location `
-        --template-file $BicepFile `
-        --parameters "@$ParametersFile" "@$teamsParametersFile" `
-        --no-pretty-print 2>&1 | Out-String
+    $existingEnvironments = & azd env list --output json | ConvertFrom-Json
+    if ($LASTEXITCODE -ne 0) {
+        throw "Unable to list azd environments."
+    }
+    $existingNames = @($existingEnvironments | ForEach-Object { $_.Name })
+    if ($existingNames -notcontains $Environment) {
+        throw "azd environment '$Environment' does not exist. Run deployment/scripts/sync-env-suite.ps1 -Environment $Environment first."
+    }
+
+    & azd env select $Environment --no-prompt | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        throw "Unable to select azd environment '$Environment'."
+    }
+
+    # azd preview omits hooks, so resolve the same dynamic values as apply.
+    $env:AZD_PROVISION_PREVIEW = 'true'
+    & azd hooks run preprovision --environment $Environment --no-prompt
+    if ($LASTEXITCODE -ne 0) {
+        throw "preprovision preparation failed for '$Environment'."
+    }
+
+    & azd provision --preview --environment $Environment --no-prompt --output json > $previewOutputFile
+    if ($LASTEXITCODE -ne 0) {
+        throw "azd preview failed for '$Environment'."
+    }
+} catch {
+    Remove-Item -Path $previewOutputFile -Force -ErrorAction SilentlyContinue
+    throw
 } finally {
-    Remove-Item -Path $teamsParametersFile -Force
+    $env:AZD_PROVISION_PREVIEW = $previousPreviewMode
+    Set-Location $previousLocation
 }
 
-Write-Host $whatIf
+$previewOutput = Get-Content -Raw -Path $previewOutputFile
+Write-Host $previewOutput
 
-if ($whatIf -match '^\s*(Delete|Modify)' ) {
+$riskyOperations = @(& node "$PSScriptRoot/list-risky-preview-operations.mjs" $previewOutputFile)
+$inspectorExitCode = $LASTEXITCODE
+Remove-Item -Path $previewOutputFile -Force
+if ($inspectorExitCode -ne 0) {
+    Write-Error "Unable to inspect azd preview output."
+    exit 1
+}
+
+if ($riskyOperations.Count -gt 0) {
     Write-Host ""
-    Write-Host "DRIFT DETECTED — Bicep source does not match deployed resources." -ForegroundColor Red
+    Write-Host "DRIFT DETECTED - azd preview reports Modify or Delete operations:" -ForegroundColor Red
+    $riskyOperations | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
     exit 1
 }
 

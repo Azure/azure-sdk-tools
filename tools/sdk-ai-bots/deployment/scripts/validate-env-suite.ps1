@@ -69,7 +69,7 @@ foreach ($env in $Envs) {
         }
     } else {
         $content = Get-Content $SuitePath -Raw
-        $pattern = "(?ms)^\s{4}${env}:.*?^\s{8}teamsChannelIds:\s*\r?\n(?<items>(?:^\s{12}-\s*.+\r?\n?)+)"
+        $pattern = "(?ms)^\s{4}${env}:.*?^\s{8}teamsChannelIds:\s*\r?\n(?<items>(?:^\s{12}-\s*[^\r\n]+\r?\n?)+)"
         if ($content -notmatch $pattern) {
             $errors += "[$env] missing or empty key 'teamsChannelIds'"
         } elseif ($Matches['items'] -match 'REPLACE_WITH_') {

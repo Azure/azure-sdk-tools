@@ -3,9 +3,9 @@
 This folder is the **single source of truth** for deploying the sdk-ai-bots
 chatbot system to Azure.
 
-> **Status:** scaffolding. No existing pipelines are removed or rerouted by
-> this PR. See [DEPLOYMENT_TRANSFORMATION.md](DEPLOYMENT_TRANSFORMATION.md)
-> for the full plan, including migration phases.
+> **Status:** provisioning uses one azd path. Pipeline preview and apply both
+> resolve `main.bicep` through `main.bicepparam`; local environments receive
+> the same values through `sync-env-suite.ps1`.
 
 ## Layout
 
@@ -16,13 +16,10 @@ deployment/
 ├─ package.json                  ← devDeps for hook scripts (tsx, typescript)
 ├─ infra/
 │  ├─ main.bicep                 ← subscription-scope orchestrator
-│  ├─ main.bicepparam            ← default azd parameters (dev)
+│  ├─ main.bicepparam            ← shared azd-to-Bicep parameter adapter
 │  ├─ modules/                   ← Bicep modules per layer
 │  └─ environments/              ← single source of truth for env metadata
-│     ├─ environment-suite.yaml
-│     ├─ dev.parameters.json
-│     ├─ preview.parameters.json
-│     └─ prod.parameters.json
+│     └─ environment-suite.yaml
 ├─ hooks/                        ← azd lifecycle hooks (ts)
 ├─ pipelines/
 │  ├─ templates/                 ← reusable provision/CI/CD/rollout steps

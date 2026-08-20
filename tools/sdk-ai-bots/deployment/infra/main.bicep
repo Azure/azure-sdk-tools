@@ -1,9 +1,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Main azd orchestration template for the sdk-ai-bots deployment.
 //
-// Per-env defaults (location, resource group) come from the parameters
-// files in environments/*.parameters.json, consumed by either
-// `azd provision` or `az deployment sub create`.
+// Per-env values are exported from environment-suite.yaml and adapted through
+// main.bicepparam for both `azd provision --preview` and `azd provision`.
 //
 // Layer order (encoded by module dependsOn):
 //   1. shared-resources  →  2. agent  →  3. frontend  →  4. agent-server
@@ -55,8 +54,8 @@ param frontendImageRepository string
 // ── Optional per-env overrides for locations and resource names ──────────────
 // All defaults reproduce the current dev/preview generated names. Prod's
 // pre-existing RG has different naming (e.g. `azuresdkqabotstorage` instead of
-// `qabotstorage<hash>`), so `environments/prod.parameters.json` overrides each
-// of these to attach Bicep to the existing resources without a rename.
+// `qabotstorage<hash>`), so prod's `bicepOverrides` pins each name to attach
+// Bicep to the existing resources without a rename.
 
 @description('Azure region for the Cognitive Services / Foundry AI resources. Defaults to `location`; override when model availability requires a different region (prod uses `swedencentral`).')
 param aiLocation string = location

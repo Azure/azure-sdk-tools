@@ -13,6 +13,7 @@ declared:
 - whether prod is pipeline-only
 - whether local deploy is allowed
 - Teams group ID and channel IDs
+- fixed Bicep resource-name and identity overrides
 - rollout strategy (`direct`, `slot-swap`, `slot-swap-with-watch`)
 - per-component image names, slot names, and health paths
 
@@ -31,6 +32,12 @@ environments:
         keyVaultName: string
         appConfigName: string
         containerRegistryName: string
+        frontendSiteName: string
+        agentServerSiteName: string
+        functionAppName: string
+        aiLocation: string
+        cosmosDbLocation: string
+        bicepOverrides: Record<string, string>?
         teamsGroupId: string
         teamsChannelIds: string[]
         regions:
@@ -73,13 +80,18 @@ pwsh ./scripts/sync-env-suite.ps1 -Environment <env>
 This script reads the per-env block from `environment-suite.yaml` and calls
 `azd env set` for each mapped key (`AZURE_SUBSCRIPTION_ID`,
 `AZURE_TENANT_ID`, `AZURE_RESOURCE_GROUP`, `AZURE_LOCATION`,
-`CONTAINER_REGISTRY_NAME`, `KEY_VAULT_NAME`, `APP_CONFIG_NAME`).
+`CONTAINER_REGISTRY_NAME`, `KEY_VAULT_NAME`, `APP_CONFIG_NAME`) plus every
+entry in `bicepOverrides`.
 
 Teams routing values are suite-owned and copied into the local azd environment:
 `teamsGroupId` → `TEAMS_GROUP_ID`, and the `teamsChannelIds` array →
 comma-separated `TEAMS_CHANNEL_IDS`. Pipelines export the same values directly
-from the suite. A concrete `serverAudience` remains parameter-file-owned and is
-copied to `SERVER_AUDIENCE`; placeholders are left for preprovision to resolve.
+from the suite. Pin an existing Entra application with
+`bicepOverrides.SERVER_AUDIENCE`; when it is omitted, preprovision creates or
+finds the environment application and persists `SERVER_AUDIENCE` in azd.
+
+`main.bicepparam` is the only adapter from these environment variables to
+`main.bicep`. Both pipeline preview and apply invoke azd through that adapter.
 
 The `preprovision` hook detects drift on every `azd provision` and fails fast
 if the azd env is out of sync, pointing you back at this script. Pipelines
@@ -90,7 +102,7 @@ are unaffected — they read the suite directly via
 ## Adding a new environment
 
 1. Add a top-level block under `environments:` in `environment-suite.yaml`.
-2. Add `infra/environments/<env>.parameters.json`.
+2. Add any existing-resource pins under the environment's `bicepOverrides`.
 3. Create an Azure DevOps Environment named `sdk-ai-bots-<env>` (used by
    `deployment:` jobs for approval gates).
 4. Register an Azure service connection with the same alias as

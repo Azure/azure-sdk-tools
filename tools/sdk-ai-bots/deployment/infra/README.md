@@ -9,7 +9,7 @@ else should mutate these resources.
 ```text
 infra/
 ├─ main.bicep                ← subscription-scope orchestrator (deploys RG + 6 modules)
-├─ main.bicepparam           ← default azd parameters (dev)
+├─ main.bicepparam           ← shared azd-to-Bicep parameter adapter
 ├─ modules/                  ← per-layer Bicep
 │  ├─ qaBotSharedResources/
 │  ├─ qaBotAgent/
@@ -18,10 +18,7 @@ infra/
 │  ├─ qaBotFunctionApp/
 │  └─ qaBotLogicApp/
 └─ environments/
-   ├─ environment-suite.yaml  ← single source of truth for env metadata
-   ├─ dev.parameters.json
-   ├─ preview.parameters.json
-   └─ prod.parameters.json
+   └─ environment-suite.yaml  ← metadata + fixed Bicep overrides
 ```
 
 ## Apply
@@ -34,7 +31,7 @@ azd provision --environment dev --no-prompt
 # See deployment/pipelines/templates/provision-stage.yml.
 ```
 
-## What-if (always run before prod apply)
+## Preview (always run before prod apply)
 
 ```pwsh
 pwsh ../scripts/detect-drift.ps1 -Environment prod
@@ -45,3 +42,5 @@ pwsh ../scripts/detect-drift.ps1 -Environment prod
 Every pipeline reads `environments/environment-suite.yaml` rather than
 hard-coding subscription IDs, regions, or Teams routing. See
 [`../docs/environment-contract.md`](../docs/environment-contract.md).
+Both `azd provision --preview` and `azd provision` resolve those values through
+`main.bicepparam`.

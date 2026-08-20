@@ -16,7 +16,8 @@
 
 import { execFileSync, execSync } from "child_process";
 import { readFileSync, existsSync } from "fs";
-import { resolve } from "path";
+import { dirname, resolve } from "path";
+import { fileURLToPath } from "url";
 
 import { ensureEntraApp } from "./lib/ensure-entra-app.js";
 import { getEnvSuiteValue, getEnvSuiteValues } from "./lib/env-suite.js";
@@ -27,9 +28,12 @@ const SUBSCRIPTION_ID = process.env.AZURE_SUBSCRIPTION_ID ?? "";
 const RESOURCE_GROUP = process.env.AZURE_RESOURCE_GROUP ?? "";
 const LOCATION = process.env.AZURE_LOCATION ?? "westus2";
 const RUNNING_IN_PIPELINE = !!process.env.TF_BUILD || !!process.env.GITHUB_ACTIONS;
+const PREVIEW_MODE = process.env.AZD_PROVISION_PREVIEW === "true";
 
-const SUITE_PATH = resolve(process.cwd(), "deployment/infra/environments/environment-suite.yaml");
-const PARAMETERS_PATH = resolve(process.cwd(), `deployment/infra/environments/${ENV_NAME}.parameters.json`);
+const SUITE_PATH = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../infra/environments/environment-suite.yaml",
+);
 
 function log(msg: string): void {
   console.log(`[preprovision] ${msg}`);
@@ -97,14 +101,33 @@ function detectLocalDrift(): void {
       execFileSync("yq", ["-r", path, SUITE_PATH], { encoding: "utf8" }).trim();
 
     expected.AZURE_SUBSCRIPTION_ID = read(`.environments.${ENV_NAME}.subscriptionId`);
+    expected.AZURE_TENANT_ID = read(`.environments.${ENV_NAME}.tenantId`);
     expected.AZURE_RESOURCE_GROUP = read(`.environments.${ENV_NAME}.resourceGroupPrefix`);
     expected.AZURE_LOCATION = read(`.environments.${ENV_NAME}.regions[0].name`);
+    expected.AZURE_AI_LOCATION = read(`.environments.${ENV_NAME}.aiLocation`);
+    expected.AZURE_AI_DEPLOYMENTS_LOCATION = expected.AZURE_AI_LOCATION;
+    expected.COSMOS_DB_LOCATION = read(`.environments.${ENV_NAME}.cosmosDbLocation`);
+    expected.FRONTEND_SITE_NAME = read(`.environments.${ENV_NAME}.frontendSiteName`);
+    expected.AGENT_SERVER_SITE_NAME = read(`.environments.${ENV_NAME}.agentServerSiteName`);
+    expected.FUNCTION_APP_NAME = read(`.environments.${ENV_NAME}.functionAppName`);
+    expected.ACR_NAME = read(`.environments.${ENV_NAME}.containerRegistryName`);
+    expected.CONTAINER_REGISTRY_NAME = expected.ACR_NAME;
+    expected.KEY_VAULT_NAME = read(`.environments.${ENV_NAME}.keyVaultName`);
+    expected.APP_CONFIG_NAME = read(`.environments.${ENV_NAME}.appConfigName`);
+    expected.FRONTEND_IMAGE_REPOSITORY = `${read('.components.frontend.imageName')}:${ENV_NAME}`;
+    expected.AGENT_SERVER_IMAGE_REPOSITORY = `${read('.components."agent-server".imageName')}:${ENV_NAME}`;
+    expected.FUNCTION_IMAGE_REPOSITORY = `${read('.components."function-app".imageName')}:${ENV_NAME}`;
+
+    const overrides = JSON.parse(
+      execFileSync(
+        "yq",
+        ["-o=json", `.environments.${ENV_NAME}.bicepOverrides // {}`, SUITE_PATH],
+        { encoding: "utf8" },
+      ),
+    );
+    Object.assign(expected, overrides);
   }
 
-  if (!existsSync(PARAMETERS_PATH)) {
-    throw new Error(`Environment parameters file not found: ${PARAMETERS_PATH}`);
-  }
-  const parameters = JSON.parse(readFileSync(PARAMETERS_PATH, "utf8")).parameters ?? {};
   const teamsGroupId = getEnvSuiteValue(ENV_NAME, "teamsGroupId", SUITE_PATH) ?? "";
   const teamsChannelIds = getEnvSuiteValues(ENV_NAME, "teamsChannelIds", SUITE_PATH);
   if (!teamsGroupId || teamsGroupId.startsWith("REPLACE_WITH_")) {
@@ -118,10 +141,6 @@ function detectLocalDrift(): void {
   }
   expected.TEAMS_GROUP_ID = teamsGroupId;
   expected.TEAMS_CHANNEL_IDS = teamsChannelIds.join(",");
-  const serverAudience = String(parameters.serverAudience?.value ?? "");
-  if (serverAudience && !serverAudience.startsWith("REPLACE_WITH_")) {
-    expected.SERVER_AUDIENCE = serverAudience;
-  }
 
   const drift: string[] = [];
   for (const [key, want] of Object.entries(expected)) {
@@ -137,7 +156,11 @@ function detectLocalDrift(): void {
         `\n\nRun:  pwsh ./scripts/sync-env-suite.ps1 -Environment ${ENV_NAME}`
     );
   }
-  log("  ✓ azd env vars match environment-suite.yaml and the environment parameters file");
+  log(
+    yqAvailable
+      ? "  ✓ azd env vars match environment-suite.yaml"
+      : "  ✓ Teams routing matches environment-suite.yaml; full drift check skipped without yq",
+  );
 }
 
 function enforceProdGuardrail(): void {
@@ -196,7 +219,7 @@ function checkResourceQuotas(): void {
  * picks it up in this same provision run.
  *
  * No-op when SERVER_AUDIENCE is already set (e.g. pipelines pass it in
- * explicitly via environments/<env>.parameters.json).
+ * explicitly via environment-suite.yaml bicepOverrides).
  */
 function ensureServerAudience(): void {
   const existing = process.env.SERVER_AUDIENCE?.trim();
@@ -213,6 +236,7 @@ function ensureServerAudience(): void {
   log(`SERVER_AUDIENCE not set — ensuring Entra app registration '${displayName}'`);
   const appId = ensureEntraApp({
     displayName,
+    allowCreate: !PREVIEW_MODE,
     ownedDisplayNameContains: "qabot",
     serviceManagementReference: process.env.SERVICE_MANAGEMENT_REFERENCE?.trim() || undefined,
   });

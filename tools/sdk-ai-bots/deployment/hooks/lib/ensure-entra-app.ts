@@ -23,6 +23,8 @@ export type SignInAudience =
 export interface EnsureEntraAppOptions {
   displayName: string;
   signInAudience?: SignInAudience;
+  /** Set false for read-only discovery, such as azd preview preparation. */
+  allowCreate?: boolean;
   /**
    * Service management reference required by some tenants (e.g. Microsoft
    * internal tenants enforce this via Conditional Access policy).
@@ -59,6 +61,7 @@ export function ensureEntraApp(opts: EnsureEntraAppOptions): string {
   const {
     displayName,
     signInAudience = "AzureADMyOrg",
+    allowCreate = true,
     serviceManagementReference,
     ownedDisplayNameContains,
   } = opts;
@@ -100,7 +103,18 @@ export function ensureEntraApp(opts: EnsureEntraAppOptions): string {
         `or narrow the filter passed to ensureEntraApp.`,
       );
     }
-    log(`  no owned apps matched '${needle}' — will attempt to create '${displayName}'`);
+    log(
+      allowCreate
+        ? `  no owned apps matched '${needle}' — will attempt to create '${displayName}'`
+        : `  no owned apps matched '${needle}'`,
+    );
+  }
+
+  if (!allowCreate) {
+    throw new Error(
+      `App registration '${displayName}' does not exist. Preview is read-only and will not create it. ` +
+        `Set SERVER_AUDIENCE to an existing application client ID, or run azd provision apply first.`,
+    );
   }
 
   const smrFlag = serviceManagementReference

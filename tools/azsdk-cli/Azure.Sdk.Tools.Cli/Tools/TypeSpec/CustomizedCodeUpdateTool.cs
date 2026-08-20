@@ -476,6 +476,12 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     tspFixFailedReasons.Append("; ");
                     tspFixFailed++;
                 }
+
+                //custom code out of scope: remove TSP_APPLICABLE items from feedback dictionary so they are not re-classified in the second pass
+                if (!customCodeInScope)
+                {
+                    feedbackDictionary.Remove(itemDetails.ItemId);
+                }
             }
             else if (itemDetails.Classification == ClassificationCodeCustomization)
             {
@@ -567,6 +573,16 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             });
         }
 
+        //CustomCode out of scope and there is no more feedback in SpecInput scope to process, return success
+        if (!customCodeInScope && tspFixFailed == 0)
+        {
+            return CreateResponse(new CustomizedCodeUpdateResponse
+            {
+                Success = true,
+                Message = "No changes needed — the requested customizations are already in place for the current edit scope."
+            });
+        }
+
         // ── Regen + Build if TSP fixes were applied and custom code is in scope ──
         if (tspFixSucceeded > 0 && customCodeInScope)
         {
@@ -623,21 +639,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     }
                 }
             }
-        }
-
-        // Step 1: If the build failed and custom code is out of scope, report the remaining items as out of scope
-        if (!customCodeInScope && feedbackDictionary.Count > 0)
-        {
-            return CreateResponse(new CustomizedCodeUpdateResponse
-            {
-                Success = false,
-                Message = "Out of scope: remaining build failures require custom-code changes, which are not permitted by the current edit scope.",
-                TypeSpecChangesSummary = changesMade.Count > 0 ? changesMade : null,
-                CustomCodeChangeRequired = customCodeChangeRequired.Count > 0 ? customCodeChangeRequired : null,
-                NextSteps = manualInterventions.Count > 0 ? manualInterventions : null,
-                BuildResult = buildError,
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.CustomCodeChangeRequired
-            });
         }
 
         // ── Pass 2: Re-classify remaining items with regen/build context ──

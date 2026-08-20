@@ -252,14 +252,15 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
       this.queriedRevisionFilters.clear();
       this.queriedReviewId = reviewId;
     }
-    const queryKey = `${searchValue.trim().toLowerCase()}\u0000${filterValue || ''}`;
+    const normalizedSearchValue = searchValue.trim();
+    const queryKey = `${normalizedSearchValue}\u0000${filterValue || ''}`;
     if (this.queriedRevisionFilters.has(queryKey)) {
       return;
     }
     this.queriedRevisionFilters.add(queryKey);
 
     this.apiRevisionsService.getAPIRevisions(
-      0, 100, reviewId, searchValue || undefined, undefined, details, 'createdOn', 1, false, false, true
+      0, 100, reviewId, normalizedSearchValue || undefined, undefined, details, 'createdOn', 1, false, false, true
     ).subscribe({
       next: (response) => {
         const mappedResults = this.mapRevisionToMenu(response.result ?? []);
@@ -267,7 +268,10 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
           [...this.mappedApiRevisions, ...mappedResults].map(apiRevision => [apiRevision.id, apiRevision])
         ).values());
         this.tagSpecialRevisions(this.mappedApiRevisions);
-        this.applyDropdownFilter(searchValue, filterValue);
+        const currentQueryKey = `${this.diffApiRevisionsSearchValue.trim()}\u0000${this.diffApiRevisionsFilterValue || ''}`;
+        if (currentQueryKey === queryKey) {
+          this.applyDropdownFilter(this.diffApiRevisionsSearchValue, this.diffApiRevisionsFilterValue);
+        }
       },
       error: () => this.queriedRevisionFilters.delete(queryKey)
     });

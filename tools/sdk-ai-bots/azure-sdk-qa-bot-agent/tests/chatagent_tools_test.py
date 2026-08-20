@@ -23,7 +23,10 @@ async def test_validate_agent_response_returns_answer_and_trace_id() -> None:
             )
         )
     )
-    result = await ChatAgentTools(chat_service).validate_agent_response(
+    prod_chat_service = SimpleNamespace(chat=AsyncMock())
+    result = await ChatAgentTools(
+        chat_service, prod_chat_service
+    ).validate_agent_response(
         tenant_id="azure_typespec_authoring",
         question="What should I do?",
     )
@@ -41,13 +44,40 @@ async def test_validate_agent_response_returns_answer_and_trace_id() -> None:
 
 
 @pytest.mark.asyncio
+async def test_validate_agent_response_routes_to_selected_environment() -> None:
+    candidate = SimpleNamespace(
+        chat=AsyncMock(
+            return_value=ChatResponse(
+                id="candidate", answer="candidate", has_result=True
+            )
+        )
+    )
+    prod = SimpleNamespace(
+        chat=AsyncMock(return_value=ChatResponse(id="prod", answer="prod", has_result=True))
+    )
+    tools = ChatAgentTools(candidate, prod)
+
+    result = await tools.validate_agent_response(
+        tenant_id="azure_typespec_authoring",
+        question="What should I do?",
+        target="prod",
+    )
+
+    assert result.answer == "prod"
+    candidate.chat.assert_not_awaited()
+    prod.chat.assert_awaited_once()
+
+
+@pytest.mark.asyncio
 async def test_validate_agent_response_rejects_unknown_tenant() -> None:
     chat_service = SimpleNamespace(chat=AsyncMock())
+    prod_chat_service = SimpleNamespace(chat=AsyncMock())
 
     with pytest.raises(ValueError, match="Unknown tenant_id"):
-        await ChatAgentTools(chat_service).validate_agent_response(
+        await ChatAgentTools(chat_service, prod_chat_service).validate_agent_response(
             tenant_id="unknown",
             question="Question",
         )
 
     chat_service.chat.assert_not_awaited()
+    prod_chat_service.chat.assert_not_awaited()

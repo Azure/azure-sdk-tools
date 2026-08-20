@@ -4,7 +4,7 @@
 
 When the chatbot's answer is wrong, today there is no systematic way to understand what the correct answer is, identify whether the underlying knowledge base (KB) is missing or stale, or close the gap so future similar queries are answered correctly. All follow-up is done manually by vendors investigating explicit thumbs-down feedback. The much more common implicit failure mode: an expert had to step in and answer — is never captured.
 
-We are introducing a **Chatbot Evolution Agent** — a new hosted agent in the Foundry project. It automatically analyzes wrong answers, classifies the root cause, and proposes a concrete fix. For knowledge-base (KB) issues, the agent loops through candidate generation and validation until the original bad case passes, then files an issue. For chatbot self-issues, the agent files an issue with its diagnosis and suggested fix without entering the validation loop. The daily job also revisits agent-created issues after they are closed and reruns the original bad case to verify that the implemented fix works in the deployed dev Chat Agent. Rather than firing in real time off an endpoint, the flow is driven by a **daily batch scan** (see §2.3): the Evolution Agent first decides whether each QA thread has concluded and whether its bot answer has a real problem; only confirmed failures continue into diagnosis and remediation. Two human signals in the thread inform that judgement and the agent's analysis:
+We are introducing a **Chatbot Evolution Agent** — a production-only hosted agent in the Foundry project. It automatically analyzes wrong production answers, classifies the root cause, and proposes a concrete fix. For knowledge-base (KB) issues, the agent loops through candidate generation and validation against isolated dev resources until the original bad case passes, then files an issue. For chatbot self-issues, the agent files an issue with its diagnosis and suggested fix without entering the validation loop. The daily job also revisits agent-created issues after they are closed and reruns the original bad case against the production Chat Agent to verify that the implemented fix reached production. Rather than firing in real time off an endpoint, the flow is driven by a **daily batch scan** (see §2.3): the Evolution Agent first decides whether each QA thread has concluded and whether its bot answer has a real problem; only confirmed failures continue into diagnosis and remediation. Two human signals in the thread inform that judgement and the agent's analysis:
 
 | Signal | Source | Description |
 | --- | --- | --- |
@@ -17,13 +17,13 @@ We are introducing a **Chatbot Evolution Agent** — a new hosted agent in the F
 
 ![Chatbot Evolution Agent architecture](chatbot_evolution_agent_architecture.png)
 
-The architecture has five execution planes:
+The architecture has five execution planes and three resource roles. Production configuration owns conversation ingestion, traces, QA records, issue state, and final validation. Dev configuration owns the temporary KB, search index, and dev Chat Agent used to test proposed remediations. The production Evolution Agent receives the dev App Configuration endpoint through `CANDIDATE_APPCONFIG_ENDPOINT` at deployment time.
 
 - **Detection:** the daily feedback job ingests QA threads, and the Evolution Agent identifies concluded conversations with an incorrect or unconfirmed bot answer.
-- **Evolution loop:** the Evolution agent diagnoses the failure. For a KB issue, it writes a candidate to the existing dev knowledge source, validates the original bad case against the deployed dev Chat Agent, and revises until the case passes or the attempt limit is reached.
+- **Evolution loop:** the Evolution Agent diagnoses the failure. For a KB issue, it writes a candidate to the dev knowledge source, validates the original bad case against the dev Chat Agent, and revises until the case passes or the attempt limit is reached.
 - **Issue creation:** after KB validation passes, the same Evolution agent creates the GitHub issue with the diagnosis, proposed source change, answer, trace ID, and validation evidence. For chatbot self-issues, it creates the issue immediately after diagnosis without validation.
-- **Restoration:** the feedback orchestrator queues the knowledge-sync pipeline at most once per run when an Evolution-agent session mutated the KB or a closed KB issue is ready for validation, then waits for it to restore dev storage and search from authoritative upstream sources.
-- **Closed-issue validation:** for an agent-created issue whose QA record is `pending_validation`, the pipeline waits for closure, then the Evolution Agent reruns the original bad case, comments the result and trace ID on the issue, labels the fix as passed or failed, and persists the terminal Cosmos state.
+- **Restoration:** the feedback orchestrator queues the configured knowledge-sync pipeline at most once per run when an Evolution-agent session mutated the dev KB or a closed KB issue is ready for validation, then waits for authoritative content to be restored or promoted before continuing.
+- **Closed-issue validation:** for an agent-created issue whose QA record is `pending_validation`, the pipeline waits for closure and the required production rollout, then the Evolution Agent reruns the original bad case against the production Chat Agent, comments the result and trace ID on the issue, labels the fix as passed or failed, and persists the terminal Cosmos state.
 
 ```text
 ongoing QA record
@@ -37,25 +37,24 @@ Evolution agent completion/correctness gates
     │
     ├── KB issue
     │     └── update_knowledge
-    │           └── ask_chat_agent(original bad case)
+    │           └── validate_agent_response(original bad case)
     │                 ├── fail → revise candidate and retry
     │                 └── pass → issue_write
     │
     └── chatbot self-issue → issue_write
 
-after feedback sessions → if KB was mutated or a closed KB issue is pending → sync dev knowledge
 issue created → feedback.status=pending_validation
-closed agent-created issue → validate original bad case → comment evidence → label and persist passed or failed
+closed agent-created issue → validate original bad case in prod → comment evidence → label and persist passed or failed
 ```
 
 ### 2.2 Agent Design
 
-The Chatbot Evolution Agent is built on the `agent_framework` library and deployed as a Foundry hosted agent alongside the Chat Agent.
+The Chatbot Evolution Agent is built on the `agent_framework` library and deployed only to the production Foundry project. Its default App Configuration endpoint supplies production control-plane resources. `CANDIDATE_APPCONFIG_ENDPOINT` supplies an immutable dev configuration snapshot used to construct separate knowledge, search, storage, and Chat Agent clients. The deployment pipeline rejects attempts to deploy the Evolution Agent to a non-production environment.
 
 | Component | Purpose |
 | --- | --- |
 | **Instruction** | System prompt that tells the agent how to act as a feedback analyst: what the root-cause categories are, how to back up findings with evidence, and how to propose a safely testable fix. |
-| **Tools** | Analysis: `fetch_chat_trace`, `fetch_conversation`, `search_knowledge_base` (reused), `web_fetch` (reused), and `resolve_kb_source`. Validation: guarded `update_knowledge` and the shared Chat Agent invocation tool, temporarily named `ask_chat_agent`. Issue creation and closed-issue updates: existing GitHub MCP. |
+| **Tools** | Analysis: `fetch_chat_trace`, `fetch_conversation`, `search_knowledge_base` (reused), `web_fetch` (reused), and `resolve_kb_source`. Validation: guarded `update_knowledge` and `validate_agent_response`, explicitly routed to `candidate` or `prod`. Issue creation and closed-issue updates: existing GitHub MCP. |
 
 #### 2.2.1 Tools
 
@@ -68,8 +67,8 @@ The Chatbot Evolution Agent is built on the `agent_framework` library and deploy
 | `resolve_kb_source` | `tools/knowledge_tools.py` (extend) | `FunctionTool` | Maps the chunk's `source` folder and exact `blob_path` to `{owner, repo, branch, path, labels}` by looking up `knowledge-config.json`. The blob path disambiguates folders backed by multiple repository paths. |
 | `issue_write` | `tools/github_mcp_tools.py` | MCP Server | The existing GitHub MCP tool. Creates a chatbot self-issue after diagnosis or a KB issue after validation passes. |
 | `issue_read`, `add_issue_comment`, `issue_write` | `tools/github_mcp_tools.py` | MCP Server | Existing GitHub MCP tools used to read closed agent-created issues, record validation evidence, and replace the pending label with a passed or failed label. |
-| `update_knowledge` | `tools/knowledge_tools.py` | `FunctionTool` | Writes candidate markdown to an existing tenant-configured folder in the dev knowledge container and refreshes the existing dev AI Search index. |
-| `ask_chat_agent` | Shared Chat Agent tool (pending) | `FunctionTool` | Sends the original bad case to the deployed dev Chat Agent and returns its answer, trace ID, citations, retrieved documents, and pass/fail evidence. |
+| `update_knowledge` | `tools/knowledge_tools.py` | `FunctionTool` | Writes candidate markdown to an existing tenant-configured folder in dev storage and refreshes the dev AI Search index. The injected clients prevent production KB mutation. |
+| `validate_agent_response` | `tools/chatagent_tools.py` | `FunctionTool` | Sends the original bad case to the explicitly selected Chat Agent. `target="candidate"` routes to the dev Chat Agent during remediation analysis; `target="prod"` is used only for post-close final validation. |
 
 #### 2.2.2 Issue classification
 
@@ -125,7 +124,8 @@ A JSON payload with `mode`, `tenant_id`, `conversation_id`,
 7. **Propose a fix.** For `missing_content`, `outdated_content`, and `insufficient_content`, provide candidate markdown plus source/path and tenant metadata. For system issues, describe the suggested bot change.
 8. **Validate KB remediation.** For `missing_content`, `outdated_content`, and `insufficient_content`,
    call `update_knowledge` to write the candidate into the matching existing
-   dev knowledge folder, then call `ask_chat_agent` with the original bad
+  dev knowledge folder, then call `validate_agent_response` with
+  `target="candidate"` and the original bad
    case. If it fails, revise the candidate and repeat within the attempt limit.
 9. **Create the KB issue after validation.** When the original bad case passes,
    call `resolve_kb_source` with the selected chunk's exact `blob_path`, build
@@ -135,7 +135,7 @@ A JSON payload with `mode`, `tenant_id`, `conversation_id`,
    then call `issue_write` without entering the candidate-validation loop.
 11. **Validate a closed issue.** In validation mode, read `issue_url`,
   refetch the persisted conversation using its input coordinates, replay
-  the original bad case through `ask_chat_agent`, comment the evidence,
+  the original bad case through `validate_agent_response` with `target="prod"`, comment the evidence,
   replace the pending validation label, and return the result.
 12. **Return** the fixed-schema result.
 
@@ -200,9 +200,9 @@ The whole feature is gated by `CHATBOT_EVOLUTION_AGENT_ENABLED` so it can be dis
 
 #### 2.3.1 Feedback-session invocation
 
-The daily batch job (`scripts/run_feedback_jobs.py`) invokes `ChatbotEvolutionAgentService` synchronously in `analysis` or `validation` mode. Analysis starts with the completion and correctness gates. For a confirmed KB issue, the hosted Agent performs the existing bounded loop: it gathers evidence, proposes a candidate, writes it to the existing dev knowledge source, calls the deployed dev Chat Agent, interprets the result, and revises the candidate when needed. The Agent calls `issue_write` only after the original bad case passes. Chatbot self-issues skip candidate validation and are created after diagnosis. In validation mode, the same Agent validates closed agent-created issues without proposing another fix.
+The production daily batch job (`scripts/run_feedback_jobs.py`) invokes `ChatbotEvolutionAgentService` synchronously in `analysis` or `validation` mode. Analysis starts with the completion and correctness gates. For a confirmed KB issue, the hosted Agent performs the existing bounded loop: it gathers evidence, proposes a candidate, writes it to the dev knowledge source, calls the dev Chat Agent, interprets the result, and revises the candidate when needed. The Agent calls `issue_write` only after the original bad case passes. Chatbot self-issues skip candidate validation and are created after diagnosis. In validation mode, the same Agent calls the production Chat Agent to validate closed agent-created issues without proposing another fix.
 
-The Agent is invoked through the Responses API (`store=True`) with bounded analysis and iteration limits. Its fixed-schema result drives the Cosmos status transition. The guarded tools own dev-storage writes, indexing, chatbot invocation, and evidence collection. No public issue is created for an unvalidated KB candidate. Interrupted `created` or `running` records and terminal `failed` records are not retried automatically.
+The Agent is invoked through the Responses API (`store=True`) with bounded analysis and iteration limits. Its fixed-schema result drives the production Cosmos status transition. The guarded tools own dev-storage writes, indexing, explicitly routed chatbot invocation, and evidence collection. No public issue is created for an unvalidated KB candidate. Interrupted `created` or `running` records and terminal `failed` records are not retried automatically.
 
 The feedback orchestrator runs mutating sessions serially and validates each case immediately after its candidate update. Before `update_knowledge` writes anything, its wrapper sets a run-scoped `restore_required` Azure Pipelines output variable to `true`, ensuring that partial writes or later failures still trigger cleanup without adding fields to `QARecord`. After those sessions finish, the orchestrator queues `sync_knowledge.yml` once through the Azure DevOps Build REST API using `$(System.AccessToken)` when `restore_required` is `true` or a closed KB issue needs validation, waits for completion, and then validates the closed issues. The feedback job is not complete until required restoration and closed-issue validation finish.
 
@@ -302,19 +302,19 @@ The existing `conversation-eval` pipeline remains an independent reporting workf
 
 ### 2.5 KB validation loop
 
-Only KB classifications enter the automated validation loop. A knowledge-gap issue cannot be validated by rerunning the current production bot because the missing content is still absent. In the dev environment, the agent therefore writes candidate markdown into the existing tenant-configured knowledge folder, refreshes the existing dev index, and calls the deployed dev Chat Agent.
+Only KB classifications enter the automated validation loop. A knowledge-gap issue cannot be validated by rerunning the current production bot because the missing content is still absent. In the isolated dev environment, the Agent therefore writes candidate markdown into the existing tenant-configured knowledge folder, refreshes the dev index, and calls the dev Chat Agent.
 
 The Evolution agent owns the loop through two guarded tools:
 
-1. Call `update_knowledge` to write the candidate to the existing dev knowledge source and refresh the index.
-2. Call the shared Chat Agent tool, temporarily named `ask_chat_agent`, with the original bad case.
+1. Call `update_knowledge` to write the candidate to the dev knowledge source and refresh the index.
+2. Call `validate_agent_response` with `target="candidate"` and the original bad case.
 3. If validation fails, revise the candidate and repeat within the attempt limit. If it passes, create the issue with the answer and trace ID as evidence.
 
 After all agent sessions finish, fail, or time out, the feedback pipeline triggers the knowledge-sync pipeline once if any session mutated the KB. The feedback job waits for restoration from the authoritative sources and is marked failed if restoration does not succeed.
 
 ### 2.6 Issue creation
 
-The Evolution Agent may prepare the issue content during analysis, but it must complete the KB validation loop before creating the issue. Only after `ask_chat_agent` shows that the original bad case passes may the Agent call `issue_write` in **`Azure/azure-sdk-pr`** through the existing GitHub MCP tool ([`tools/github_mcp_tools.py`](../tools/github_mcp_tools.py)).
+The Evolution Agent may prepare the issue content during analysis, but it must complete the KB validation loop before creating the issue. Only after `validate_agent_response(target="candidate")` shows that the original bad case passes may the Agent call `issue_write` in **`Azure/azure-sdk-pr`** through the existing GitHub MCP tool ([`tools/github_mcp_tools.py`](../tools/github_mcp_tools.py)).
 
 Every Agent-created issue includes concise expected behavior, detailed fixed-document provenance, validation evidence, and the `fix-validation:pending` label. It does not duplicate the complete conversation or validated answer. The backend stores the issue URL, conversation coordinates, and `feedback.status=pending_validation` in the QA record so the daily job can find and validate it after closure. For KB issues (`missing_content` / `outdated_content` / `insufficient_content`), the Agent calls `resolve_kb_source` and cites the exact KB document and upstream source in the issue:
 
@@ -330,7 +330,7 @@ Every Agent-created issue includes concise expected behavior, detailed fixed-doc
 >
 > **Suggested change:** Add a section to `versioning.md` documenting `@added`/`@removed`, with an example. Source: [TypeSpec versioning decorators](https://typespec.io/docs/libraries/versioning/reference/decorators)
 >
-> **Validation:** The deployed dev Chat Agent passed the original bad case. Trace ID: `abc123def456`.
+> **Validation:** The dev Chat Agent passed the original bad case. Trace ID: `abc123def456`.
 
 When a registered KB source has no GitHub upstream, `resolve_kb_source`
 returns its source folder without owner/repository coordinates. Unknown source
@@ -341,6 +341,6 @@ evidence.
 
 ### 2.7 Closed-issue validation
 
-The daily feedback job reads `pending_validation` QA records and checks their stored issues for closure; labels do not gate validation eligibility. For a KB issue, it first waits for the knowledge-sync pipeline so the deployed dev Chat Agent uses the authoritative fixed content rather than the temporary candidate. The Evolution Agent refetches the conversation using the coordinates persisted in the QA record, recovers the original question, and calls `ask_chat_agent` with it. The issue supplies the concise expected behavior used for comparison.
+The daily feedback job reads production `pending_validation` QA records and checks their stored issues for closure; labels do not gate validation eligibility. For a KB issue, it first waits for the configured knowledge-sync or rollout pipeline so the production Chat Agent uses the authoritative fixed content rather than the temporary candidate. The Evolution Agent refetches the production conversation using the coordinates persisted in the QA record, recovers the original question, and calls `validate_agent_response` with `target="prod"`. The issue supplies the concise expected behavior used for comparison.
 
 The Agent comments the returned answer, trace ID, and pass/fail evidence on the closed issue. It replaces the pending label with `fix-validation:passed` when the original case now succeeds or `fix-validation:failed` when it does not; a failed validation does not automatically reopen the issue. The backend also persists `feedback.status=done` for a pass or terminal `feedback.status=failed` for a failure. The historical `qa_status` remains `failed` because the original answer was wrong. The terminal Cosmos status and issue label prevent the same closed issue from being validated again on later daily runs.

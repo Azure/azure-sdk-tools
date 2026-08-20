@@ -11,9 +11,10 @@ import asyncio
 import logging
 from enum import Enum
 from pathlib import PurePosixPath
-from typing import Annotated
+from typing import Annotated, Callable
 
 from azure.core.exceptions import ResourceModifiedError
+from azure.storage.blob.aio import BlobServiceClient
 from pydantic import BaseModel
 
 from config.app_config import get as cfg
@@ -24,7 +25,7 @@ from config.tenant_config import (
 )
 from models.knowledge import Reference, SearchKnowledgeBaseResult
 from tools import tool
-from utils.azure_ai_search import get_search_client
+from utils.azure_ai_search import SearchClient, get_search_client
 from utils.azure_storage import BlobContent, download_blob, upload_blob
 from utils.knowledge_config import (
     KbTarget,
@@ -95,6 +96,36 @@ class ServiceType(str, Enum):
 
 class KnowledgeTools:
     """Tools for Azure SDK knowledge retrieval and search operations."""
+
+    def __init__(
+        self,
+        *,
+        settings: Callable[[str, str], str | None] | None = None,
+        search_client: SearchClient | None = None,
+        blob_client: BlobServiceClient | None = None,
+    ) -> None:
+        self._settings = settings or cfg
+        self._search_client = search_client
+        self._blob_client = blob_client
+
+    def _get_search_client(self) -> SearchClient:
+        return self._search_client or get_search_client()
+
+    async def _download_blob(
+        self, container: str, blob_path: str
+    ) -> BlobContent | None:
+        options = {"include_metadata": True}
+        if self._blob_client is not None:
+            options["client"] = self._blob_client
+        return await download_blob(container, blob_path, **options)
+
+    async def _upload_blob(
+        self, container: str, blob_path: str, data: bytes, etag: str
+    ) -> None:
+        options = {"etag": etag}
+        if self._blob_client is not None:
+            options["client"] = self._blob_client
+        await upload_blob(container, blob_path, data, **options)
 
     @tool
     async def search_knowledge_base(
@@ -190,7 +221,7 @@ class KnowledgeTools:
             else:
                 sources = list(KNOWLEDGE_SOURCE_REGISTRY.keys())
 
-        search_client = get_search_client()
+        search_client = self._get_search_client()
 
         # Resolve source → OData filter using tenant config
         source_filters = _resolve_source_filters(sources, tenant_id, service_type)
@@ -303,10 +334,9 @@ class KnowledgeTools:
     ) -> ReadKnowledgeResult:
         """Read a complete knowledge document and its version for a safe update."""
         normalized_path = _validate_blob_path(blob_path)
-        blob = await download_blob(
-            cfg("STORAGE_KNOWLEDGE_CONTAINER", ""),
+        blob = await self._download_blob(
+            self._settings("STORAGE_KNOWLEDGE_CONTAINER", "") or "",
             normalized_path,
-            include_metadata=True,
         )
         if blob is None:
             raise ValueError(f"Knowledge document not found: {normalized_path}")
@@ -342,11 +372,10 @@ class KnowledgeTools:
         if not expected_content:
             raise ValueError("expected_content must not be empty")
 
-        knowledge_container = cfg("STORAGE_KNOWLEDGE_CONTAINER", "")
-        blob = await download_blob(
+        knowledge_container = self._settings("STORAGE_KNOWLEDGE_CONTAINER", "") or ""
+        blob = await self._download_blob(
             knowledge_container,
             normalized_path,
-            include_metadata=True,
         )
         if blob is None:
             raise ValueError(f"Knowledge document not found: {normalized_path}")
@@ -364,11 +393,11 @@ class KnowledgeTools:
         )
         print("##vso[task.setvariable variable=restore_required]true", flush=True)
         try:
-            await upload_blob(
+            await self._upload_blob(
                 knowledge_container,
                 normalized_path,
                 updated_content.encode("utf-8"),
-                etag=etag,
+                etag,
             )
         except ResourceModifiedError:
             return UpdateKnowledgeResult(
@@ -378,7 +407,7 @@ class KnowledgeTools:
             )
 
         try:
-            indexer_status = await get_search_client().run_indexer()
+            indexer_status = await self._get_search_client().run_indexer()
         except (RuntimeError, TimeoutError) as exc:
             logger.exception("Knowledge indexer did not complete after updating %s", normalized_path)
             return UpdateKnowledgeResult(

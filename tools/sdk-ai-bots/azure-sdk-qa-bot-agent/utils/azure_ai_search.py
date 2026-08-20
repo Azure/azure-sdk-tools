@@ -17,6 +17,7 @@ import asyncio
 import logging
 import time
 from enum import Enum
+from typing import Callable
 
 from azure.core.exceptions import HttpResponseError
 from azure.search.documents.aio import SearchClient as AzureSearchClient
@@ -53,13 +54,15 @@ _RERANK_SCORE_LOW_RELEVANCE_THRESHOLD = 2.0
 class SearchClient:
     """Search wrapper using Azure AI Search SDK clients."""
 
-    def __init__(self) -> None:
-        self._endpoint = (cfg("AI_SEARCH_BASE_URL", "") or "").rstrip("/")
-        self._index = cfg("AI_SEARCH_INDEX", "")
-        self._indexer_name = cfg("AI_SEARCH_INDEXER", "")
-        self._knowledge_base_name = cfg("AI_SEARCH_KNOWLEDGE_BASE", "")
-        self._knowledge_source_name = cfg("AI_SEARCH_KNOWLEDGE_SOURCE", "")
-        self._top_k = int(cfg("AI_SEARCH_TOPK", "5"))
+    def __init__(
+        self, settings: Callable[[str, str], str] = cfg
+    ) -> None:
+        self._endpoint = settings("AI_SEARCH_BASE_URL", "").rstrip("/")
+        self._index = settings("AI_SEARCH_INDEX", "")
+        self._indexer_name = settings("AI_SEARCH_INDEXER", "")
+        self._knowledge_base_name = settings("AI_SEARCH_KNOWLEDGE_BASE", "")
+        self._knowledge_source_name = settings("AI_SEARCH_KNOWLEDGE_SOURCE", "")
+        self._top_k = int(settings("AI_SEARCH_TOPK", "5"))
         self._credential = get_credential()
         self._kb_client = KnowledgeBaseRetrievalClient(
             self._endpoint,

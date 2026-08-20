@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated
+from typing import TYPE_CHECKING, Annotated, Literal
 
 from pydantic import BaseModel
 
@@ -10,9 +10,7 @@ from config.tenant_config import TenantID
 from models.chat import ChatRequest, Message
 from models.conversation import Role
 from tools import tool
-
-if TYPE_CHECKING:
-    from services.chat_service import ChatService
+from services.chat_service import ChatService
 
 
 class ValidateAgentResponseResult(BaseModel):
@@ -23,12 +21,13 @@ class ValidateAgentResponseResult(BaseModel):
 class ChatAgentTools:
     """Tools that exercise the deployed Chat Agent."""
 
-    def __init__(self, chat_service: ChatService | None = None) -> None:
-        if chat_service is None:
-            from services.chat_service import ChatService
-
-            chat_service = ChatService()
-        self._chat_service = chat_service
+    def __init__(
+        self,
+        candidate_chat_service: ChatService,
+        prod_chat_service: ChatService,
+    ) -> None:
+        self._candidate_chat_service = candidate_chat_service
+        self._prod_chat_service = prod_chat_service
 
     @tool
     async def validate_agent_response(
@@ -40,8 +39,12 @@ class ChatAgentTools:
         ],
         question: Annotated[
             str,
-            "The complete original user question to rerun against the deployed dev Chat Agent.",
+            "The complete original user question to rerun against the deployed candidate Chat Agent.",
         ],
+        target: Annotated[
+            Literal["candidate", "prod"],
+            "Use 'candidate' only during analysis after updating the candidate knowledge base. Use 'prod' only during validation after the issue is closed.",
+        ] = "candidate",
     ) -> ValidateAgentResponseResult:
         """Rerun a failed case and return the deployed Chat Agent's evidence."""
         if not question.strip():
@@ -51,7 +54,12 @@ class ChatAgentTools:
         except ValueError as exc:
             raise ValueError(f"Unknown tenant_id: {tenant_id}") from exc
 
-        response = await self._chat_service.chat(
+        chat_service = (
+            self._candidate_chat_service
+            if target == "candidate"
+            else self._prod_chat_service
+        )
+        response = await chat_service.chat(
             ChatRequest(
                 tenant_id=tenant,
                 message=Message(role=Role.User, content=question),

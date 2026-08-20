@@ -296,6 +296,31 @@ async def test_read_knowledge_uses_configured_container(monkeypatch) -> None:
 
 
 @pytest.mark.asyncio
+async def test_read_knowledge_uses_injected_candidate_storage(monkeypatch) -> None:
+    download = AsyncMock(
+        return_value=BlobContent(data=b"# Candidate", etag='"etag-dev"')
+    )
+    candidate_blob_client = SimpleNamespace()
+    candidate_settings = lambda key, default="": (
+        "dev-knowledge" if key == "STORAGE_KNOWLEDGE_CONTAINER" else default
+    )
+    monkeypatch.setattr(knowledge_tools_module, "download_blob", download)
+
+    result = await KnowledgeTools(
+        settings=candidate_settings,
+        blob_client=candidate_blob_client,
+    ).read_knowledge(blob_path="azure-sdk-docs-eng/docs#design#api-design.md")
+
+    assert result.content == "# Candidate"
+    download.assert_awaited_once_with(
+        "dev-knowledge",
+        "azure-sdk-docs-eng/docs#design#api-design.md",
+        include_metadata=True,
+        client=candidate_blob_client,
+    )
+
+
+@pytest.mark.asyncio
 async def test_update_knowledge_replaces_exact_content_and_runs_indexer(
     monkeypatch,
 ) -> None:

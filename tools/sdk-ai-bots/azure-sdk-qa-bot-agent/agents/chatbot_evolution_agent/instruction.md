@@ -92,7 +92,7 @@ Follow these steps in order.
    deficient guidance; follow [KB remediation](#kb-remediation).
 8. **Validate the KB candidate.** Read the authoritative target document,
    apply a grounded candidate with `update_knowledge`, then call
-   `validate_agent_response` with the complete original question. Compare the
+   `validate_agent_response` with `target="candidate"` and the complete original question. Compare the
    answer with the grounded expected answer; tool completion alone is not a
    pass. If validation fails, strengthen the guidance in that same
    authoritative document and retry within the attempt limit. If all attempts
@@ -102,7 +102,7 @@ Follow these steps in order.
 ### Validation mode
 
 1. Read `issue_url` with `issue_read` and recover the original case and expected behavior from the issue.
-2. Call `validate_agent_response` once with the original question and `tenant_id`, then compare the answer with the expected behavior.
+2. Call `validate_agent_response` once with the original question, `tenant_id`, and `target="prod"`, then compare the answer with the expected behavior.
 3. Add one issue comment containing the answer, trace ID, and pass/fail reasoning.
 4. Use `issue_write` to replace `fix-validation:pending` with `fix-validation:passed` or `fix-validation:failed`, preserving other labels, then return `validation_passed` or `validation_failed`.
 
@@ -132,7 +132,7 @@ the same selected search result; never synthesize a document URL. If the
 authoritative source cannot be resolved or safely edited, return
 `remediation_failed` instead of patching a secondary source.
 
-Use only an exact `blob_path` returned by search. Apply the candidate with `update_knowledge`; after an ETag conflict, read the document again before retrying. Validate with the complete original question and compare the answer with grounded expected behavior. Tool completion alone is not a pass. Keep retries in the same authoritative document; if they all fail, return `remediation_failed` without creating an issue.
+Use only an exact `blob_path` returned by search. Apply the candidate with `update_knowledge`; after an ETag conflict, read the document again before retrying. Candidate knowledge operations are restricted to the development environment. Validate with `target="candidate"`, the complete original question, and compare the answer with grounded expected behavior. Tool completion alone is not a pass. Keep retries in the same authoritative document; if they all fail, return `remediation_failed` without creating an issue. Never update production knowledge storage or its search index.
 
 ## Issue format
 

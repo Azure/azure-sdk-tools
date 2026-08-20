@@ -41,10 +41,16 @@ from tools.github_mcp_tools import create_github_mcp_tool
 from tools.knowledge_tools import KnowledgeTools
 from tools.monitor_tools import MonitorTools
 from tools.web_tools import WebTools
+from services.chat_service import ChatService
+from utils.azure_ai_search import SearchClient
 from utils.azure_ai_foundry import (
+    create_openai_client,
+    create_project_client,
     get_agent_client,
     get_project_client,
+    get_openai_client,
 )
+from utils.azure_storage import create_blob_service_client
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +73,12 @@ def _load_instructions(file_path: Path) -> str:
 async def main() -> None:
     """Start the hosted Chatbot Evolution Agent as an HTTP server."""
     await app_config.init()
+    candidate_endpoint = os.environ.get("CANDIDATE_APPCONFIG_ENDPOINT")
+    if not candidate_endpoint:
+        raise RuntimeError(
+            "CANDIDATE_APPCONFIG_ENDPOINT is required in the agent environment."
+        )
+    candidate_config = await app_config.load(candidate_endpoint)
 
     agent_client = get_agent_client()
     agent_client.function_invocation_configuration["max_iterations"] = (
@@ -85,8 +97,28 @@ async def main() -> None:
     # Tools.
     monitor_tools = MonitorTools()
     conversation_tools = ConversationTools()
-    chatagent_tools = ChatAgentTools()
-    knowledge_tools = KnowledgeTools()
+    candidate_project_client = create_project_client(candidate_config.get)
+    candidate_openai_client = create_openai_client(
+        candidate_project_client, candidate_config.get
+    )
+    candidate_chat_service = ChatService(
+        settings=candidate_config.get,
+        project_client=candidate_project_client,
+        openai_client=candidate_openai_client,
+    )
+    prod_chat_service = ChatService(
+        project_client=get_project_client(),
+        openai_client=get_openai_client(),
+    )
+    chatagent_tools = ChatAgentTools(
+        candidate_chat_service=candidate_chat_service,
+        prod_chat_service=prod_chat_service,
+    )
+    knowledge_tools = KnowledgeTools(
+        settings=candidate_config.get,
+        search_client=SearchClient(candidate_config.get),
+        blob_client=create_blob_service_client(candidate_config.get),
+    )
     web_tools = WebTools()
 
     tools = [

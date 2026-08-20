@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Literal, overload
+from typing import Callable, Literal, overload
 
 from azure.core import MatchConditions
 from azure.core.exceptions import ResourceNotFoundError
@@ -27,16 +27,21 @@ class BlobContent:
     etag: str
 
 
+def create_blob_service_client(
+    settings: Callable[[str, str], str | None] = cfg,
+) -> BlobServiceClient:
+    """Create a Blob client from an explicit configuration scope."""
+    base_url = settings("STORAGE_BASE_URL", "")
+    if not base_url:
+        raise RuntimeError("STORAGE_BASE_URL not configured in App Configuration")
+    return BlobServiceClient(account_url=base_url, credential=get_credential())
+
+
 def _get_blob_service_client() -> BlobServiceClient:
     """Return a reusable async BlobServiceClient (singleton)."""
     global _blob_service_client
     if _blob_service_client is None:
-        base_url = cfg("STORAGE_BASE_URL", "")
-        if not base_url:
-            raise RuntimeError("STORAGE_BASE_URL not configured in App Configuration")
-        _blob_service_client = BlobServiceClient(
-            account_url=base_url, credential=get_credential()
-        )
+        _blob_service_client = create_blob_service_client()
     return _blob_service_client
 
 
@@ -53,10 +58,14 @@ async def download_blob(
 
 
 async def download_blob(
-    container: str, blob_name: str, *, include_metadata: bool = False
+    container: str,
+    blob_name: str,
+    *,
+    include_metadata: bool = False,
+    client: BlobServiceClient | None = None,
 ) -> bytes | BlobContent | None:
     """Download a blob, optionally including its ETag for conditional updates."""
-    client = _get_blob_service_client()
+    client = client or _get_blob_service_client()
     blob_client = client.get_blob_client(container=container, blob=blob_name)
     try:
         stream = await blob_client.download_blob()
@@ -75,9 +84,10 @@ async def upload_blob(
     data: bytes,
     *,
     etag: str | None = None,
+    client: BlobServiceClient | None = None,
 ) -> None:
     """Upload a blob, optionally only when its ETag is unchanged."""
-    client = _get_blob_service_client()
+    client = client or _get_blob_service_client()
     blob_client = client.get_blob_client(container=container, blob=blob_name)
     upload_options = {"overwrite": True}
     if etag is not None:

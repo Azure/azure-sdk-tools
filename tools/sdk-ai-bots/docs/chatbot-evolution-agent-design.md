@@ -15,7 +15,7 @@ We are introducing a **Chatbot Evolution Agent** — a production-only hosted ag
 
 ### 2.1 Architecture
 
-![Chatbot Evolution Agent architecture](chatbot_evolution_agent_architecture.png)
+![Chatbot Evolution Agent architecture](images/chatbot_evolution_agent_architecture.png)
 
 The architecture has five execution planes and three resource roles. Production configuration owns conversation ingestion, traces, QA records, issue state, and final validation. Dev configuration owns the temporary KB, search index, and dev Chat Agent used to test proposed remediations. The production Evolution Agent receives the dev App Configuration endpoint through `CANDIDATE_APPCONFIG_ENDPOINT` at deployment time.
 

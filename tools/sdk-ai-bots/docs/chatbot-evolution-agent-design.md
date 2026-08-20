@@ -314,7 +314,7 @@ After all agent sessions finish, fail, or time out, the feedback pipeline trigge
 
 ### 2.6 Issue creation
 
-The Evolution Agent may prepare the issue content during analysis, but it must complete the KB validation loop before creating the issue. Only after `validate_agent_response(target="candidate")` shows that the original bad case passes may the Agent call `issue_write` in **`Azure/azure-sdk-pr`** through the existing GitHub MCP tool ([`tools/github_mcp_tools.py`](../tools/github_mcp_tools.py)).
+The Evolution Agent may prepare the issue content during analysis, but it must complete the KB validation loop before creating the issue. Only after `validate_agent_response(target="candidate")` shows that the original bad case passes may the Agent call `issue_write` in **`Azure/azure-sdk-pr`** through the existing GitHub MCP tool ([`tools/github_mcp_tools.py`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tools/github_mcp_tools.py)).
 
 Every Agent-created issue includes concise expected behavior, detailed fixed-document provenance, validation evidence, and the `fix-validation:pending` label. It does not duplicate the complete conversation or validated answer. The backend stores the issue URL, conversation coordinates, and `feedback.status=pending_validation` in the QA record so the daily job can find and validate it after closure. For KB issues (`missing_content` / `outdated_content` / `insufficient_content`), the Agent calls `resolve_kb_source` and cites the exact KB document and upstream source in the issue:
 

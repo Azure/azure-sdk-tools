@@ -1,5 +1,11 @@
 # Release History
 
+## 0.6.36 (2026-08-20)
+
+### Features Added
+
+- Added `product-onboarding sync` CLI command to create or update product onboarding work items.
+
 ## 0.6.36 (2026-08-19)
 
 ### Features Added

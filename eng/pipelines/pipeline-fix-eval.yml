@@ -141,7 +141,7 @@ jobs:
         inputs:
           # The service connection's identity needs 'Storage Blob Data Contributor' on the
           # account; --auth-mode login uses it instead of an account key.
-          azureSubscription: 'Azure SDK Engineering System'
+          azureSubscription: 'Azure SDK Artifacts'
           scriptType: pscore
           scriptLocation: inlineScript
           inlineScript: |

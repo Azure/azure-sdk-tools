@@ -60,7 +60,7 @@
 
 None detected.
 
-### REST-Compatible Downstream Breaking Changes
+### Downstream Breaking Changes
 
 ### JavaScript property access changes from flattened to nested
 

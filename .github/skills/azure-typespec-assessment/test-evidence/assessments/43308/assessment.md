@@ -120,7 +120,7 @@
 
 None detected.
 
-### REST-Compatible Downstream Breaking Changes
+### Downstream Breaking Changes
 
 ### Generated SDK methods change from synchronous to long-running
 

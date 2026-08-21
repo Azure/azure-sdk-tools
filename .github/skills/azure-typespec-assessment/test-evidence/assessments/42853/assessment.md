@@ -96,7 +96,7 @@
 
 None detected.
 
-### REST-Compatible Downstream Breaking Changes
+### Downstream Breaking Changes
 
 ### Existing Go methods move between generated clients
 

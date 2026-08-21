@@ -67,7 +67,7 @@
 - **TypeSpec source:** [models.tsp:L284-L806](https://github.com/Azure/azure-rest-api-specs/blob/af067c9fc987b837f27a34b86e3ac591507711c9/specification/storage/data-plane/FileStorage/models.tsp#L284-L806)
 
 
-### REST-Compatible Downstream Breaking Changes
+### Downstream Breaking Changes
 
 None detected.
 

@@ -271,7 +271,7 @@ function renderCompatibility(assessment) {
 
 ${renderFindingDetails(dimensions.restBreakingChanges.findings, blocked)}
 
-### REST-Compatible Downstream Breaking Changes
+### Downstream Breaking Changes
 
 ${renderFindingDetails(
   dimensions.restCompatibleDownstreamBreakingChanges.findings,

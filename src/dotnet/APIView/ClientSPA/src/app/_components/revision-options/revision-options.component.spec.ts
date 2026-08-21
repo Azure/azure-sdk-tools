@@ -168,11 +168,13 @@ describe('ApiRevisionOptionsComponent', () => {
     component.activeApiRevisionFilterFunction({ value: 'released' });
 
     expect(component.activeApiRevisionsMenu.map(revision => revision.id)).toEqual(['initial']);
+    expect(component.revisionOptionsLoading).toBe(true);
 
     response.next({ result: [releasedRevision] });
     response.complete();
 
     expect(component.activeApiRevisionsMenu.map(revision => revision.id)).toEqual(['released']);
+    expect(component.revisionOptionsLoading).toBe(false);
   });
 
   describe('Tag APIRevision appropriately based on date and/or status', () => {

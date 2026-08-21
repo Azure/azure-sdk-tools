@@ -37,16 +37,19 @@ describe('RevisionsService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should share filtered revision queries and cache their results', () => {
+  it('should share fixed-filter revision queries and cache their results', () => {
     const releasedRevision = { id: 'released', reviewId: 'review-id' } as APIRevision;
     const getAPIRevisionsSpy = vi.spyOn(service, 'getAPIRevisions').mockReturnValue(of({
       result: [releasedRevision]
     }));
 
-    service.getFilteredAPIRevisionOptions('review-id', undefined, ['Released']).subscribe();
-    service.getFilteredAPIRevisionOptions('review-id', undefined, ['Released']).subscribe();
+    service.getFilteredAPIRevisionOptions('review-id', ['Released']).subscribe();
+    service.getFilteredAPIRevisionOptions('review-id', ['Released']).subscribe();
 
     expect(getAPIRevisionsSpy).toHaveBeenCalledOnce();
+    expect(getAPIRevisionsSpy).toHaveBeenCalledWith(
+      0, 100, 'review-id', undefined, undefined, ['Released'], 'createdOn', 1, false, false, true
+    );
     expect(service.getCachedAPIRevisionOptions('review-id')).toEqual([releasedRevision]);
   });
 });

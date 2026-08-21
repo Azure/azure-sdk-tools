@@ -87,15 +87,15 @@ export class APIRevisionsService {
     return Array.from(this.revisionOptionsCache.get(reviewId)?.values() ?? []);
   }
 
-  getFilteredAPIRevisionOptions(reviewId: string, label: string | undefined, details: string[]): Observable<APIRevision[]> {
-    const queryKey = JSON.stringify([reviewId, label ?? '', details]);
+  getFilteredAPIRevisionOptions(reviewId: string, details: string[]): Observable<APIRevision[]> {
+    const queryKey = JSON.stringify([reviewId, details]);
     const cachedQuery = this.revisionOptionsQueryCache.get(queryKey);
     if (cachedQuery) {
       return cachedQuery;
     }
 
     const query = this.getAPIRevisions(
-      0, 100, reviewId, label, undefined, details, 'createdOn', 1, false, false, true
+      0, 100, reviewId, undefined, undefined, details, 'createdOn', 1, false, false, true
     ).pipe(
       map(response => Array.isArray(response.result) ? response.result : []),
       tap(apiRevisions => this.cacheAPIRevisionOptions(reviewId, apiRevisions)),

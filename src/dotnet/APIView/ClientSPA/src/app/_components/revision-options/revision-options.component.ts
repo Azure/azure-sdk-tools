@@ -174,7 +174,7 @@ export class RevisionOptionsComponent implements OnChanges {
     const normalizedSearchValue = searchValue.trim();
     const queryKey = `${normalizedSearchValue}\u0000${filterValue || ''}`;
     this.apiRevisionsService.getFilteredAPIRevisionOptions(
-      reviewId, normalizedSearchValue || undefined, details
+      reviewId, details
     ).subscribe({
       next: () => {
         this.mappedApiRevisions = this.mapRevisionToMenu(this.apiRevisionsService.getCachedAPIRevisionOptions(reviewId));

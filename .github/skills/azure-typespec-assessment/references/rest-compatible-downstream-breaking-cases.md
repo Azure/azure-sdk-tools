@@ -22,4 +22,5 @@ Changing only the casing of a `@@clientLocation` group name can rename generated
 
 Changing generated enum member names with `@@clientName` does not change serialized wire values. It can still break source code that references previously released language-specific enum constants.
 
-All cases must emit Azure compliance as `not-assessed`.
+Compliance classification is independent and follows fetched authoritative
+TypeSpec documentation as described in `compliance.md`.

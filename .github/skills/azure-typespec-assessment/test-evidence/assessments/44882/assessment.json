@@ -1,0 +1,210 @@
+{
+  "schemaVersion": 1,
+  "overallConfidence": "high",
+  "pr": 44882,
+  "title": "Add new stable version 2026-06-01 for New Relic",
+  "url": "https://github.com/Azure/azure-rest-api-specs/pull/44882",
+  "state": "merged",
+  "createdAt": "2026-07-22T09:00:52Z",
+  "baseline": {
+    "ref": "9eb0993333857ef0ffb2863ccc76f8b123cae90b",
+    "commit": "9eb0993333857ef0ffb2863ccc76f8b123cae90b"
+  },
+  "head": {
+    "commit": "22bc88578fb1f253688e8a5bf127ef3a4502745a",
+    "hasWorkingTreeChanges": false
+  },
+  "result": "compatibility-mitigation",
+  "artifactEvidence": {
+    "autorest": "base/head succeeded; new stable OpenAPI includes the same path/query serialization",
+    "tcgc": "base/head succeeded; generic output generated, while Go-only order is confirmed from source"
+  },
+  "assessmentEvidence": {
+    "changedTypeSpec": [
+      {
+        "path": "specification/newrelic/NewRelicObservability.Management/client.tsp",
+        "revision": "head",
+        "startLine": 7,
+        "endLine": 7,
+        "link": "specification/newrelic/NewRelicObservability.Management/client.tsp#L7-L7"
+      },
+      {
+        "path": "specification/newrelic/NewRelicObservability.Management/client.tsp",
+        "revision": "head",
+        "startLine": 9,
+        "endLine": 9,
+        "link": "specification/newrelic/NewRelicObservability.Management/client.tsp#L9-L9"
+      },
+      {
+        "path": "specification/newrelic/NewRelicObservability.Management/client.tsp",
+        "revision": "head",
+        "startLine": 324,
+        "endLine": 354,
+        "link": "specification/newrelic/NewRelicObservability.Management/client.tsp#L324-L354"
+      },
+      {
+        "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+        "revision": "head",
+        "startLine": 43,
+        "endLine": 47,
+        "link": "specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+      }
+    ],
+    "emitterRuns": [
+      {
+        "project": "specification/newrelic/NewRelicObservability.Management",
+        "revision": "base",
+        "emitter": "@azure-tools/typespec-autorest",
+        "emitterId": "autorest",
+        "output": "OpenAPI",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__newrelic__NewRelicObservability.Management/base/autorest"
+      },
+      {
+        "project": "specification/newrelic/NewRelicObservability.Management",
+        "revision": "base",
+        "emitter": "@azure-tools/typespec-client-generator-core",
+        "emitterId": "tcgc",
+        "output": "SDK metadata (generic)",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__newrelic__NewRelicObservability.Management/base/tcgc"
+      },
+      {
+        "project": "specification/newrelic/NewRelicObservability.Management",
+        "revision": "head",
+        "emitter": "@azure-tools/typespec-autorest",
+        "emitterId": "autorest",
+        "output": "OpenAPI",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__newrelic__NewRelicObservability.Management/head/autorest"
+      },
+      {
+        "project": "specification/newrelic/NewRelicObservability.Management",
+        "revision": "head",
+        "emitter": "@azure-tools/typespec-client-generator-core",
+        "emitterId": "tcgc",
+        "output": "SDK metadata (generic)",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__newrelic__NewRelicObservability.Management/head/tcgc"
+      }
+    ],
+    "repositoryValidation": [
+      {
+        "project": "specification/newrelic/NewRelicObservability.Management",
+        "tool": "TypeSpecValidation",
+        "status": "succeeded",
+        "durationMs": 31418,
+        "log": "validation-logs/specification__newrelic__NewRelicObservability.Management-head.log"
+      }
+    ]
+  },
+  "dimensions": {
+    "semanticUnderstanding": {
+      "items": [
+        {
+          "id": "pr-44882-intent",
+          "intent": "Add a stable API version while preserving the released Go delete parameter order.",
+          "transformationChain": [
+            "Declare a replacement operation with historical parameter order.",
+            "Apply a Go-only override."
+          ],
+          "restRepresentation": {
+            "summary": "The delete path and userEmail query parameter remain unchanged.",
+            "operations": [
+              {
+                "operationId": "NewRelicMonitors_Delete",
+                "apiVersions": [
+                  "2026-06-01"
+                ],
+                "method": "DELETE",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}",
+                "parameters": [
+                  "path subscriptionId, resourceGroupName, monitorName: string, required",
+                  "query userEmail: string, required",
+                  "query api-version: string, required"
+                ],
+                "serviceBehavior": "Deletes the New Relic monitor; the Go override preserves historical parameter order.",
+                "lro": {
+                  "polling": "Poll the emitted async endpoint after Retry-After until a terminal state.",
+                  "finalResult": "Use the final response contract described for this operation.",
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "location"
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200 or 204: no body",
+                  "202: async headers",
+                  "default: ErrorResponse"
+                ],
+                "signature": "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/NewRelic.Observability/monitors/{monitorName}",
+                "sourceReferences": [
+                  {
+                    "path": "specification/newrelic/NewRelicObservability.Management/client.tsp",
+                    "revision": "head",
+                    "startLine": 321,
+                    "endLine": 354,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L321-L354"
+                  }
+                ]
+              }
+            ]
+          },
+          "confidence": "high",
+          "sourceReferences": [
+            {
+              "path": "specification/newrelic/NewRelicObservability.Management/client.tsp",
+              "revision": "head",
+              "startLine": 321,
+              "endLine": 354,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L321-L354"
+            }
+          ]
+        }
+      ]
+    },
+    "restBreakingChanges": {
+      "findings": []
+    },
+    "restCompatibleDownstreamBreakingChanges": {
+      "findings": []
+    },
+    "azureCompliance": {
+      "status": "not-assessed",
+      "reason": "The stable-version addition follows fetched guidance, but the shared catalog has no authoritative document for the Go-only operation override and parameter-order customization.",
+      "documents": [
+        {
+          "title": "Evolving APIs",
+          "url": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
+          "section": "Adding API elements",
+          "guidanceExcerpt": "You can add new models, properties, or operations in a specific version and all subsequent versions using the `@added` decorator.",
+          "applicableGuidance": "A new API version declares its dependencies and scopes introduced API shapes with versioning decorators.",
+          "evidence": "The complete management-plane surface is introduced in stable 2026-06-01 without modifying the prior preview wire API.",
+          "sourceReferences": [
+            {
+              "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+              "revision": "head",
+              "startLine": 43,
+              "endLine": 47,
+              "link": "specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+            }
+          ]
+        }
+      ],
+      "findings": []
+    }
+  },
+  "errors": [],
+  "projects": [
+    "specification/newrelic/NewRelicObservability.Management"
+  ],
+  "assessmentDuration": {
+    "toolchainSetupMs": 62455,
+    "preparationMs": 85514,
+    "documentationReviewMs": 127,
+    "totalMs": 148096
+  }
+}

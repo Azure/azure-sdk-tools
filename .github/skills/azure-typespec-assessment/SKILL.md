@@ -1,6 +1,6 @@
 ---
 name: azure-typespec-assessment
-description: 'Assess only the current Git diff in Azure TypeSpec specifications. Produces source-linked semantic intent, REST breaking changes, REST-compatible downstream breaking changes, and deferred compliance results. WHEN: "assess TypeSpec changes", "review TypeSpec diff", "check TypeSpec breaking changes", "explain TypeSpec REST impact".'
+description: 'Assess only the current Git diff in Azure TypeSpec specifications. Produces source-linked semantic intent, REST breaking changes, REST-compatible downstream breaking changes, and documentation-grounded Azure TypeSpec compliance results. WHEN: "assess TypeSpec changes", "review TypeSpec diff", "check TypeSpec breaking changes", "assess TypeSpec compliance", "explain TypeSpec REST impact".'
 license: MIT
 metadata:
   author: Microsoft
@@ -17,8 +17,9 @@ Assess changed TypeSpec without editing it.
 1. Read the [assessment workflow](references/workflow.md).
 2. Run `node .github/skills/azure-typespec-assessment/scripts/prepare-assessment.mjs`.
 3. Analyze the evidence using the [classification rules](references/classification.md).
-4. Write `assessment.md` and `assessment.json` following the [output contract](references/output-contract.md).
-5. Run `node .github/skills/azure-typespec-assessment/scripts/validate-assessment.mjs assessment.json assessment.md`.
+4. Write `assessment.json` following the [output contract](references/output-contract.md).
+5. Render `assessment.md` with `node .github/skills/azure-typespec-assessment/scripts/render-assessment.mjs assessment.json assessment.md`.
+6. Run `node .github/skills/azure-typespec-assessment/scripts/validate-assessment.mjs assessment.json assessment.md`.
 
 ## Rules
 
@@ -27,7 +28,13 @@ Assess changed TypeSpec without editing it.
 - Enumerate every affected operation and its complete REST behavior.
 - Treat generated artifacts as evidence, not the sole classifier.
 - Every result must link to TypeSpec source lines.
-- Never report compliance as passed in the MVP.
+- Run the repository-native TypeSpec Validation CLI for every affected head
+  project. Treat a failed or unavailable validation as blocking evidence; a
+  pass proves only the checks implemented by that tool.
+- Assess compliance from fetched authoritative TypeSpec Azure documentation,
+  following [the compliance procedure](references/compliance.md), which reuses
+  the author skill's agentic search workflow. Do not substitute an OpenAPI
+  validation tool or maintain hard-coded compliance rules.
 - Do not modify TypeSpec; use `azure-typespec-author` for fixes.
 
 See [REST-compatible downstream breaking cases](references/rest-compatible-downstream-breaking-cases.md) for representative classifications.

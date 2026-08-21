@@ -47,10 +47,26 @@ Explain why the wire contract is unchanged, which client surface changes, and ho
 
 ## Azure compliance
 
-MVP output is always:
+Follow [documentation-grounded compliance](compliance.md). Select relevant
+documents from the shared catalog and fetch them; do not encode their
+requirements in this classifier.
 
-```json
-{ "status": "not-assessed", "reason": "Deferred from MVP." }
-```
+- `passed`: every applicable fetched pattern is followed by the changed
+  TypeSpec.
+- `failed`: changed source contradicts at least one applicable documented
+  pattern. Cite that document and the TypeSpec lines.
+- `not-assessed`: no relevant authoritative document exists or a selected page
+  could not be retrieved.
 
-Do not infer compliance from compilation or linter success.
+Compiler and emitter success are supporting evidence, not compliance proof.
+
+## Overall code safety
+
+Derive the report's code-safety indicator from the complete assessment:
+
+1. `Low` when assessment errors exist or any high-severity finding exists.
+2. `Medium` when any lower-severity finding exists or compliance is
+   `not-assessed`.
+3. `High` when there are no errors or findings and compliance passed.
+
+This indicator summarizes assessed risk; it is not a release approval.

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -13,7 +13,7 @@ import { ButtonModule } from 'primeng/button';
 import { ButtonGroupModule } from 'primeng/buttongroup';
 import { DialogModule } from 'primeng/dialog';
 import { TimeagoModule } from 'ngx-timeago';
-import { debounceTime, distinctUntilChanged, Subject, takeUntil } from 'rxjs';
+import { debounceTime, distinctUntilChanged, finalize, Subject, takeUntil } from 'rxjs';
 import { APIRevision } from 'src/app/_models/revision';
 import { CodeLineSearchInfo } from 'src/app/_models/codeLineSearchInfo';
 import { UserProfile } from 'src/app/_models/userProfile';
@@ -77,6 +77,7 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
   selectedDiffAPIRevision: any = null;
   diffApiRevisionsSearchValue: string = '';
   diffApiRevisionsFilterValue: string | undefined = '';
+  diffApiRevisionsLoading: boolean = false;
 
   DIFF_API_REVISION_SELECT: string = 'diff-api';
 
@@ -120,7 +121,8 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
   totalMatchCountValue: number = 0;
   showSearchControls: boolean = false;
 
-  constructor(private route: ActivatedRoute, private router: Router, private apiRevisionsService: APIRevisionsService) {}
+  constructor(private route: ActivatedRoute, private router: Router, private apiRevisionsService: APIRevisionsService,
+    private changeDetectorRef: ChangeDetectorRef) {}
 
   ngOnInit() {
     // Initialize settings from user profile
@@ -248,8 +250,15 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
 
     const normalizedSearchValue = searchValue.trim();
     const queryKey = `${normalizedSearchValue}\u0000${filterValue || ''}`;
+    this.diffApiRevisionsLoading = true;
+    this.changeDetectorRef.markForCheck();
     this.apiRevisionsService.getFilteredAPIRevisionOptions(
       reviewId, details
+    ).pipe(
+      finalize(() => {
+        this.diffApiRevisionsLoading = false;
+        this.changeDetectorRef.markForCheck();
+      })
     ).subscribe({
       next: () => {
         this.mappedApiRevisions = this.mapRevisionToMenu(this.apiRevisionsService.getCachedAPIRevisionOptions(reviewId));
@@ -258,6 +267,7 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
         if (currentQueryKey === queryKey) {
           this.applyDropdownFilter(this.diffApiRevisionsSearchValue, this.diffApiRevisionsFilterValue);
         }
+        this.changeDetectorRef.markForCheck();
       }
     });
   }

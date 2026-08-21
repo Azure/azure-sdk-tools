@@ -36,6 +36,7 @@
                             </span>
                         </ng-template>
                     </p-selectButton>
+                    <i *ngIf="revisionOptionsLoading" class="pi pi-spin pi-spinner align-self-center" aria-label="Loading revisions"></i>
                 </div>
             </ng-template>
             <ng-template pTemplate="selectedItem" let-item>

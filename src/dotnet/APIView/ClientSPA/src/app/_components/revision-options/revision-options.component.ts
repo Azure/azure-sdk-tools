@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -11,6 +11,7 @@ import { ACTIVE_API_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM, D
 import { AzureEngSemanticVersion } from 'src/app/_models/azureEngSemanticVersion';
 import { APIRevision } from 'src/app/_models/revision';
 import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
+import { finalize } from 'rxjs';
 
 @Component({
     selector: 'app-revision-options',
@@ -56,6 +57,7 @@ export class RevisionOptionsComponent implements OnChanges {
 
   activeApiRevisionsFilterValue: string | undefined = '';
   diffApiRevisionsFilterValue: string | undefined = '';
+  revisionOptionsLoading: boolean = false;
 
   filterOptions: any[] = [
     { label: 'Approved', value: 'approved' },
@@ -65,7 +67,8 @@ export class RevisionOptionsComponent implements OnChanges {
     { label: 'Manual', icon: this.manualIcon, value: 'manual' }
   ];
 
-  constructor(private route: ActivatedRoute, private router: Router, private apiRevisionsService: APIRevisionsService) {}
+  constructor(private route: ActivatedRoute, private router: Router, private apiRevisionsService: APIRevisionsService,
+    private changeDetectorRef: ChangeDetectorRef) {}
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['apiRevisions'] || changes['activeApiRevisionId'] || changes['diffApiRevisionId']) {
@@ -173,8 +176,15 @@ export class RevisionOptionsComponent implements OnChanges {
 
     const normalizedSearchValue = searchValue.trim();
     const queryKey = `${normalizedSearchValue}\u0000${filterValue || ''}`;
+    this.revisionOptionsLoading = true;
+    this.changeDetectorRef.markForCheck();
     this.apiRevisionsService.getFilteredAPIRevisionOptions(
       reviewId, details
+    ).pipe(
+      finalize(() => {
+        this.revisionOptionsLoading = false;
+        this.changeDetectorRef.markForCheck();
+      })
     ).subscribe({
       next: () => {
         this.mappedApiRevisions = this.mapRevisionToMenu(this.apiRevisionsService.getCachedAPIRevisionOptions(reviewId));
@@ -189,6 +199,7 @@ export class RevisionOptionsComponent implements OnChanges {
             this.applyDropdownFilter(currentSearchValue, currentFilterValue, currentDropDownMenu);
           }
         }
+        this.changeDetectorRef.markForCheck();
       }
     });
   }

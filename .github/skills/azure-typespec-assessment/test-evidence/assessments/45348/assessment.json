@@ -26,14 +26,14 @@
         "revision": "head",
         "startLine": 78,
         "endLine": 78,
-        "link": "specification/deviceregistry/DeviceRegistry.Management/main.tsp#L78-L78"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L78-L78"
       },
       {
         "path": "specification/deviceregistry/DeviceRegistry.Management/main.tsp",
         "revision": "head",
         "startLine": 83,
         "endLine": 83,
-        "link": "specification/deviceregistry/DeviceRegistry.Management/main.tsp#L83-L83"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L83-L83"
       }
     ],
     "emitterRuns": [
@@ -222,14 +222,14 @@
               "revision": "head",
               "startLine": 78,
               "endLine": 78,
-              "link": "specification/deviceregistry/DeviceRegistry.Management/main.tsp#L78-L78"
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L78-L78"
             },
             {
               "path": "specification/deviceregistry/DeviceRegistry.Management/main.tsp",
               "revision": "head",
               "startLine": 83,
               "endLine": 83,
-              "link": "specification/deviceregistry/DeviceRegistry.Management/main.tsp#L83-L83"
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L83-L83"
             }
           ]
         }
@@ -242,9 +242,7 @@
     "specification/deviceregistry/DeviceRegistry.Management"
   ],
   "assessmentDuration": {
-    "toolchainSetupMs": 68237,
-    "preparationMs": 129762,
-    "documentationReviewMs": 174,
-    "totalMs": 198173
+    "totalMs": 688675,
+    "note": "End-to-end active reasoning assessment time. Dimension timing is recorded in ../execution-time-analysis.md."
   }
 }

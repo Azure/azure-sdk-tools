@@ -7,7 +7,7 @@
 
 **Baseline:** `2991970c5377110244bcf9614be03e5aaf32362f`<br>
 **Head:** `b209254310b3e569b16210d3c59fc8b8ac3b84b4`; working-tree changes: false<br>
-**Assessment time:** 3m 18s
+**Total assessment time:** 11m 29s
 
 ## 📌 Executive Summary
 
@@ -29,9 +29,9 @@ No action required from the assessed dimensions.
 
 ### Change Overview
 
-| # | Intent | Operations | Shape | API versions | Linked findings | Details |
-| ---: | --- | ---: | --- | --- | --- | --- |
-| 1 | Align the two new Device Registry previews with ARM common-types v5 used by prior versions. | 2 | PUT · 2 LRO · 0 paged | 2026-11-01-preview, 2026-11-15-preview | No linked finding | [details](#intent-1-align-the-two-new-device-registry-previews-with-) |
+| # | Intent | Operations | API versions | Details |
+| ---: | --- | ---: | --- | --- |
+| 1 | Align the two new Device Registry previews with ARM common-types v5 used by prior versions. | 2 | 2026-11-01-preview, 2026-11-15-preview | [details](#intent-1-align-the-two-new-device-registry-previews-with-) |
 
 ### Operation Details
 
@@ -92,15 +92,7 @@ None.
 
 | Result | Document section | Fetched guidance | Observed TypeSpec | Evidence |
 | --- | --- | --- | --- | --- |
-| Matched | [Evolving APIs - Defining API versions](https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/) | For each version, specify dependencies and common types as needed. | Both new preview versions explicitly select ARM common-types v5, matching their generated contracts. | [main.tsp:L75-L84](https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L84), [main.tsp:L78-L78](specification/deviceregistry/DeviceRegistry.Management/main.tsp#L78-L78), [main.tsp:L83-L83](specification/deviceregistry/DeviceRegistry.Management/main.tsp#L83-L83) |
-
-### Timing
-
-- **Toolchain setup:** 1m 8s
-- **Preparation:** 2m 10s
-- **Documentation assessment:** 0s
-- **Total attributed time:** 3m 18s
-
+| Matched | [Evolving APIs - Defining API versions](https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/) | For each version, specify dependencies and common types as needed. | Both new preview versions explicitly select ARM common-types v5, matching their generated contracts. | [main.tsp:L75-L84](https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L84), [main.tsp:L78-L78](https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L78-L78), [main.tsp:L83-L83](https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L83-L83) |
 
 ### Tooling Used
 
@@ -120,4 +112,4 @@ None.
 
 ### Changed TypeSpec
 
-- `specification/deviceregistry/DeviceRegistry.Management/main.tsp`: [main.tsp:L78-L78](specification/deviceregistry/DeviceRegistry.Management/main.tsp#L78-L78), [main.tsp:L83-L83](specification/deviceregistry/DeviceRegistry.Management/main.tsp#L83-L83)
+- `specification/deviceregistry/DeviceRegistry.Management/main.tsp`: [main.tsp:L78-L78](https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L78-L78), [main.tsp:L83-L83](https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L83-L83)

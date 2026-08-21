@@ -7,7 +7,7 @@
 
 **Baseline:** `af067c9fc987b837f27a34b86e3ac591507711c9 (e75a07cd7ea1b2207190a362305db02b639715ec)`<br>
 **Head:** `656ca8b0741973760f8a60ee0fd293ba9c31e708`; working-tree changes: false<br>
-**Assessment time:** 2m 21s
+**Total assessment time:** 12m 46s
 
 ## 📌 Executive Summary
 
@@ -25,15 +25,15 @@
 
 | Severity | Area | Finding | Why it matters | Code | Guidance |
 | --- | --- | --- | --- | --- | --- |
-| high | REST | Stable API response and enum surface is removed | Existing 2026-12-06 clients can no longer request or deserialize the removed NFSv2 shapes. | [models.tsp:L284-L806](https://github.com/Azure/azure-rest-api-specs/blob/af067c9fc987b837f27a34b86e3ac591507711c9/specification/storage/data-plane/FileStorage/models.tsp#L284-L806) | n/a |
+| high | REST | Stable API response and enum surface is removed | Existing 2026-12-06 clients can no longer request or deserialize the removed NFSv2 shapes. | [models.tsp:L284-L806](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L806) | n/a |
 
 ## 🧠 Semantic Understanding
 
 ### Change Overview
 
-| # | Intent | Operations | Shape | API versions | Linked findings | Details |
-| ---: | --- | ---: | --- | --- | --- | --- |
-| 1 | Remove NFSv2 file types, include values, response fields, and item models from the 2026-12-06 File Storage API. | 1 | GET · 0 LRO · 1 paged | 2026-12-06 | 1 finding(s) | [details](#intent-1-remove-nfsv2-file-types-include-values-response-) |
+| # | Intent | Operations | API versions | Details |
+| ---: | --- | ---: | --- | --- |
+| 1 | Remove NFSv2 file types, include values, response fields, and item models from the 2026-12-06 File Storage API. | 1 | 2026-12-06 | [details](#intent-1-remove-nfsv2-file-types-include-values-response-) |
 
 ### Operation Details
 
@@ -53,7 +53,7 @@
 - **Service behavior:** Lists directory entries, including NFS-specific item shapes when requested.
 - **LRO:** No.
 - **Paging:** File or Directory entry; NextMarker; Send the returned marker in the next marker query parameter; stop when absent.
-- **TypeSpec source:** [models.tsp:L284-L806](https://github.com/Azure/azure-rest-api-specs/blob/af067c9fc987b837f27a34b86e3ac591507711c9/specification/storage/data-plane/FileStorage/models.tsp#L284-L806)
+- **TypeSpec source:** [models.tsp:L284-L806](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L806)
 ## 🛡️ Compatibility Assessment
 
 ### REST Breaking Changes
@@ -64,7 +64,7 @@
 - **Confidence:** high
 - **Summary:** Existing 2026-12-06 clients can no longer request or deserialize the removed NFSv2 shapes.
 - **Evidence:** AutoRest removes enum values and response schemas from a stable API version.
-- **TypeSpec source:** [models.tsp:L284-L806](https://github.com/Azure/azure-rest-api-specs/blob/af067c9fc987b837f27a34b86e3ac591507711c9/specification/storage/data-plane/FileStorage/models.tsp#L284-L806)
+- **TypeSpec source:** [models.tsp:L284-L806](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L806)
 
 
 ### Downstream Breaking Changes
@@ -89,15 +89,7 @@ None.
 
 | Result | Document section | Fetched guidance | Observed TypeSpec | Evidence |
 | --- | --- | --- | --- | --- |
-| Matched | [Evolving APIs - Removing API elements](https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/) | To remove models, properties, or operations starting from a specific version, use the `@removed` decorator. | The NFSv2 enum members, properties, and models are explicitly excluded from stable 2026-12-06 while earlier versions remain represented. | [models.tsp:L284-L806](https://github.com/Azure/azure-rest-api-specs/blob/af067c9fc987b837f27a34b86e3ac591507711c9/specification/storage/data-plane/FileStorage/models.tsp#L284-L806), [models.tsp:L287-L302](e75a07cd7ea1b2207190a362305db02b639715ec:specification/storage/data-plane/FileStorage/models.tsp#L287-L302), [models.tsp:L408-L423](e75a07cd7ea1b2207190a362305db02b639715ec:specification/storage/data-plane/FileStorage/models.tsp#L408-L423), +4 more |
-
-### Timing
-
-- **Toolchain setup:** 1m 5s
-- **Preparation:** 1m 16s
-- **Documentation assessment:** 0s
-- **Total attributed time:** 2m 21s
-
+| Matched | [Evolving APIs - Removing API elements](https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/) | To remove models, properties, or operations starting from a specific version, use the `@removed` decorator. | The NFSv2 enum members, properties, and models are explicitly excluded from stable 2026-12-06 while earlier versions remain represented. | [models.tsp:L284-L806](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L806), [models.tsp:L287-L302](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L287-L302), [models.tsp:L408-L423](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L408-L423), +4 more |
 
 ### Tooling Used
 
@@ -117,4 +109,4 @@ None.
 
 ### Changed TypeSpec
 
-- `specification/storage/data-plane/FileStorage/models.tsp`: [models.tsp:L287-L302](e75a07cd7ea1b2207190a362305db02b639715ec:specification/storage/data-plane/FileStorage/models.tsp#L287-L302), [models.tsp:L408-L423](e75a07cd7ea1b2207190a362305db02b639715ec:specification/storage/data-plane/FileStorage/models.tsp#L408-L423), [models.tsp:L560-L589](e75a07cd7ea1b2207190a362305db02b639715ec:specification/storage/data-plane/FileStorage/models.tsp#L560-L589), [models.tsp:L609-L613](e75a07cd7ea1b2207190a362305db02b639715ec:specification/storage/data-plane/FileStorage/models.tsp#L609-L613), [models.tsp:L660-L674](e75a07cd7ea1b2207190a362305db02b639715ec:specification/storage/data-plane/FileStorage/models.tsp#L660-L674), [models.tsp:L694-L803](e75a07cd7ea1b2207190a362305db02b639715ec:specification/storage/data-plane/FileStorage/models.tsp#L694-L803)
+- `specification/storage/data-plane/FileStorage/models.tsp`: [models.tsp:L287-L302](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L287-L302), [models.tsp:L408-L423](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L408-L423), [models.tsp:L560-L589](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L560-L589), [models.tsp:L609-L613](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L609-L613), [models.tsp:L660-L674](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L660-L674), [models.tsp:L694-L803](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L694-L803)

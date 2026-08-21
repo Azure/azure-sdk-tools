@@ -2,8 +2,10 @@
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { buildCompliance } from "./generate-document-compliance-evidence.mjs";
+import { sourceLink } from "./prepare-assessment.mjs";
 import { renderAssessment } from "./render-assessment.mjs";
 import { validateAssessment } from "./validate-assessment.mjs";
 
@@ -52,6 +54,50 @@ function formatDuration(milliseconds) {
   return minutes > 0 ? `${minutes}m ${seconds % 60}s` : `${seconds}s`;
 }
 
+function assessmentRemoteUrl(assessmentUrl) {
+  if (!assessmentUrl) return undefined;
+  const match = assessmentUrl.match(
+    /^(https:\/\/github\.com\/[^/]+\/[^/]+)(?:\/|$)/,
+  );
+  return match?.[1];
+}
+
+export function normalizeAssessmentSourceLinks(assessment) {
+  const remoteUrl = assessmentRemoteUrl(assessment.url);
+
+  function visit(value) {
+    if (Array.isArray(value)) {
+      for (const item of value) visit(item);
+      return;
+    }
+    if (!value || typeof value !== "object") return;
+    if (
+      typeof value.path === "string" &&
+      value.path.endsWith(".tsp") &&
+      ["base", "head"].includes(value.revision) &&
+      Number.isInteger(value.startLine) &&
+      Number.isInteger(value.endLine)
+    ) {
+      const commit =
+        value.revision === "base"
+          ? assessment.baseline?.commit
+          : assessment.head?.commit;
+      value.link = sourceLink(
+        value.path,
+        value.revision,
+        commit,
+        remoteUrl,
+        value.startLine,
+        value.endLine,
+      );
+    }
+    for (const child of Object.values(value)) visit(child);
+  }
+
+  visit(assessment);
+  return assessment;
+}
+
 function main() {
   const [reportRootValue, rerunRootValue, ...prValues] = process.argv.slice(2);
   if (!reportRootValue || !rerunRootValue || prValues.length === 0) {
@@ -79,15 +125,17 @@ function main() {
       throw new Error(`Missing compliance fixture for PR ${pr}.`);
     }
 
-    const validationSkipped = evidence.projects.some(
-      (project) => project.validation.status === "skipped",
+    const incompleteValidation = evidence.projects.filter((project) =>
+      ["skipped", "unavailable"].includes(project.validation.status),
     );
-    assessment.overallConfidence =
-      evidence.errors.length > 0
-        ? "low"
-        : validationSkipped
-          ? "medium"
-          : "high";
+    if (incompleteValidation.length > 0) {
+      throw new Error(
+        `PR ${pr} cannot be finalized without repository validation: ${incompleteValidation
+          .map((project) => `${project.path} (${project.validation.status})`)
+          .join(", ")}`,
+      );
+    }
+    assessment.overallConfidence = evidence.errors.length > 0 ? "low" : "high";
     assessment.baseline = evidence.baseline;
     assessment.head = evidence.head;
     assessment.projects = evidence.projects.map((project) => project.path);
@@ -117,6 +165,7 @@ function main() {
       });
     }
     assessment.errors = evidence.errors;
+    normalizeAssessmentSourceLinks(assessment);
 
     const markdown = renderAssessment(assessment);
     const errors = validateAssessment(assessment, markdown);
@@ -150,32 +199,31 @@ function main() {
       0,
     );
     const duration = assessment.assessmentDuration;
-    const documentationTime =
+    const totalTime =
       duration.documentationReviewMs === null
-        ? "shared batch; unavailable"
-        : formatDuration(duration.documentationReviewMs);
-    return `| [${assessment.pr}](assessments/${assessment.pr}/assessment.md) | ${assessment.overallConfidence} | ${operations} | ${assessment.dimensions.restBreakingChanges.findings.length} | ${assessment.dimensions.restCompatibleDownstreamBreakingChanges.findings.length} | ${assessment.dimensions.azureCompliance.status} | ${formatDuration(duration.toolchainSetupMs)} | ${formatDuration(duration.preparationMs)} | ${documentationTime} | ${formatDuration(duration.totalMs)} | ${assessment.errors.length} |`;
+        ? "unavailable"
+        : duration.note?.toLowerCase().includes("approximate")
+          ? `~${formatDuration(duration.totalMs)}`
+          : formatDuration(duration.totalMs);
+    return `| [${assessment.pr}](assessments/${assessment.pr}/assessment.md) | ${assessment.overallConfidence} | ${operations} | ${assessment.dimensions.restBreakingChanges.findings.length} | ${assessment.dimensions.restCompatibleDownstreamBreakingChanges.findings.length} | ${assessment.dimensions.azureCompliance.status} | ${totalTime} | ${assessment.errors.length} |`;
   });
-  const validationWasSkipped = assessments.every((assessment) =>
-    assessment.assessmentEvidence.repositoryValidation.every(
-      (validation) => validation.status === "skipped",
-    ),
-  );
-  const validationDescription = validationWasSkipped
-    ? "Repository-native TypeSpec Validation was explicitly skipped for this timing experiment; compliance was still assessed from freshly fetched authoritative documentation and exact changed TypeSpec."
-    : "Repository-native TypeSpec Validation and documentation-grounded compliance assessment were both performed.";
   writeFileSync(
     join(reportRoot, "assessment-summary.md"),
     `# Live TypeSpec Assessment Evidence
 
-All ${assessments.length} assessments were rerun from their recorded PR head and base revisions with exact lockfile dependencies plus base/head AutoRest and generic TCGC compilation. ${validationDescription}
+All ${assessments.length} assessments were rerun from their recorded PR head and base revisions with exact lockfile dependencies plus base/head AutoRest and generic TCGC compilation. Repository-native TypeSpec Validation and documentation-grounded compliance assessment were both performed.
 
-| PR | Confidence | Operations | REST findings | Downstream findings | Compliance | Toolchain setup | Preparation | Documentation assessment | Total time | Errors |
-| --- | --- | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: |
+| PR | Confidence | Operations | REST findings | Downstream findings | Compliance | Total assessment | Errors |
+| --- | --- | ---: | ---: | ---: | --- | ---: | ---: |
 ${rows.join("\n")}
 `,
   );
   process.stdout.write(`Finalized ${assessments.length} assessment reports.\n`);
 }
 
-main();
+if (
+  process.argv[1] &&
+  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
+  main();
+}

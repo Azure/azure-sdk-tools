@@ -26,7 +26,7 @@
         "revision": "head",
         "startLine": 286,
         "endLine": 293,
-        "link": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293"
       }
     ],
     "emitterRuns": [
@@ -265,7 +265,7 @@
               "revision": "head",
               "startLine": 286,
               "endLine": 293,
-              "link": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293"
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293"
             }
           ]
         }
@@ -278,9 +278,7 @@
     "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules"
   ],
   "assessmentDuration": {
-    "toolchainSetupMs": 83386,
-    "preparationMs": 69145,
-    "documentationReviewMs": 814,
-    "totalMs": 153345
+    "totalMs": 472057,
+    "note": "End-to-end active reasoning assessment time. Dimension timing is recorded in ../execution-time-analysis.md."
   }
 }

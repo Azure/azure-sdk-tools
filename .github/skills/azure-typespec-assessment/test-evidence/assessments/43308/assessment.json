@@ -26,210 +26,210 @@
         "revision": "head",
         "startLine": 12,
         "endLine": 15,
-        "link": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/client.tsp#L12-L15"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/client.tsp#L12-L15"
       },
       {
         "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/client.tsp",
         "revision": "head",
         "startLine": 59,
         "endLine": 77,
-        "link": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/client.tsp#L59-L77"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/client.tsp#L59-L77"
       },
       {
         "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
         "revision": "base",
         "startLine": 5,
         "endLine": 5,
-        "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L5-L5"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L5-L5"
       },
       {
         "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
         "revision": "base",
         "startLine": 11,
         "endLine": 11,
-        "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L11-L11"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L11-L11"
       },
       {
         "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
         "revision": "base",
         "startLine": 27,
         "endLine": 27,
-        "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L27-L27"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L27-L27"
       },
       {
         "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
         "revision": "head",
         "startLine": 28,
         "endLine": 28,
-        "link": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L28-L28"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L28-L28"
       },
       {
         "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
         "revision": "base",
         "startLine": 70,
         "endLine": 70,
-        "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L70-L70"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L70-L70"
       },
       {
         "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
         "revision": "head",
         "startLine": 66,
         "endLine": 66,
-        "link": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L66-L66"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L66-L66"
       },
       {
         "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
         "revision": "base",
         "startLine": 110,
         "endLine": 110,
-        "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L110-L110"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L110-L110"
       },
       {
         "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
         "revision": "head",
         "startLine": 101,
         "endLine": 101,
-        "link": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L101-L101"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L101-L101"
       },
       {
         "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
         "revision": "head",
         "startLine": 226,
         "endLine": 226,
-        "link": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp#L226-L226"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp#L226-L226"
       },
       {
         "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
         "revision": "head",
         "startLine": 278,
         "endLine": 278,
-        "link": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp#L278-L278"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp#L278-L278"
       },
       {
         "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
         "revision": "head",
         "startLine": 421,
         "endLine": 421,
-        "link": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp#L421-L421"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp#L421-L421"
       },
       {
         "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
         "revision": "head",
         "startLine": 457,
         "endLine": 457,
-        "link": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp#L457-L457"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp#L457-L457"
       },
       {
         "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
         "revision": "base",
         "startLine": 51,
         "endLine": 52,
-        "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L51-L52"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L51-L52"
       },
       {
         "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
         "revision": "base",
         "startLine": 62,
         "endLine": 62,
-        "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L62-L62"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L62-L62"
       },
       {
         "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
         "revision": "base",
         "startLine": 64,
         "endLine": 64,
-        "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L64-L64"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L64-L64"
       },
       {
         "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
         "revision": "base",
         "startLine": 74,
         "endLine": 74,
-        "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L74-L74"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L74-L74"
       },
       {
         "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
         "revision": "base",
         "startLine": 84,
         "endLine": 84,
-        "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L84-L84"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L84-L84"
       },
       {
         "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp",
         "revision": "head",
         "startLine": 8,
         "endLine": 8,
-        "link": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp#L8-L8"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp#L8-L8"
       },
       {
         "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp",
         "revision": "head",
         "startLine": 15,
         "endLine": 42,
-        "link": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp#L15-L42"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp#L15-L42"
       },
       {
         "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
         "revision": "base",
         "startLine": 5,
         "endLine": 5,
-        "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L5-L5"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L5-L5"
       },
       {
         "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
         "revision": "base",
         "startLine": 14,
         "endLine": 14,
-        "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L14-L14"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L14-L14"
       },
       {
         "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
         "revision": "head",
         "startLine": 17,
         "endLine": 17,
-        "link": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L17-L17"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L17-L17"
       },
       {
         "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
         "revision": "head",
         "startLine": 22,
         "endLine": 27,
-        "link": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L22-L27"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L22-L27"
       },
       {
         "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
         "revision": "head",
         "startLine": 29,
         "endLine": 34,
-        "link": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L29-L34"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L29-L34"
       },
       {
         "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
         "revision": "base",
         "startLine": 57,
         "endLine": 58,
-        "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L57-L58"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L57-L58"
       },
       {
         "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
         "revision": "base",
         "startLine": 60,
         "endLine": 60,
-        "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L60-L60"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L60-L60"
       },
       {
         "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp",
         "revision": "base",
         "startLine": 74,
         "endLine": 74,
-        "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp#L74-L74"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp#L74-L74"
       },
       {
         "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp",
         "revision": "head",
         "startLine": 63,
         "endLine": 63,
-        "link": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp#L63-L63"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp#L63-L63"
       }
     ],
     "emitterRuns": [
@@ -775,147 +775,147 @@
               "revision": "base",
               "startLine": 5,
               "endLine": 5,
-              "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L5-L5"
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L5-L5"
             },
             {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
               "revision": "base",
               "startLine": 11,
               "endLine": 11,
-              "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L11-L11"
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L11-L11"
             },
             {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
               "revision": "base",
               "startLine": 27,
               "endLine": 27,
-              "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L27-L27"
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L27-L27"
             },
             {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
               "revision": "head",
               "startLine": 28,
               "endLine": 28,
-              "link": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L28-L28"
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L28-L28"
             },
             {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
               "revision": "base",
               "startLine": 70,
               "endLine": 70,
-              "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L70-L70"
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L70-L70"
             },
             {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
               "revision": "head",
               "startLine": 66,
               "endLine": 66,
-              "link": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L66-L66"
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L66-L66"
             },
             {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
               "revision": "base",
               "startLine": 110,
               "endLine": 110,
-              "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L110-L110"
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L110-L110"
             },
             {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
               "revision": "head",
               "startLine": 101,
               "endLine": 101,
-              "link": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L101-L101"
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L101-L101"
             },
             {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
               "revision": "base",
               "startLine": 51,
               "endLine": 52,
-              "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L51-L52"
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L51-L52"
             },
             {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
               "revision": "base",
               "startLine": 62,
               "endLine": 62,
-              "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L62-L62"
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L62-L62"
             },
             {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
               "revision": "base",
               "startLine": 64,
               "endLine": 64,
-              "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L64-L64"
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L64-L64"
             },
             {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
               "revision": "base",
               "startLine": 74,
               "endLine": 74,
-              "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L74-L74"
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L74-L74"
             },
             {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
               "revision": "base",
               "startLine": 84,
               "endLine": 84,
-              "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L84-L84"
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L84-L84"
             },
             {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
               "revision": "base",
               "startLine": 5,
               "endLine": 5,
-              "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L5-L5"
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L5-L5"
             },
             {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
               "revision": "base",
               "startLine": 14,
               "endLine": 14,
-              "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L14-L14"
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L14-L14"
             },
             {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
               "revision": "head",
               "startLine": 17,
               "endLine": 17,
-              "link": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L17-L17"
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L17-L17"
             },
             {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
               "revision": "head",
               "startLine": 22,
               "endLine": 27,
-              "link": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L22-L27"
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L22-L27"
             },
             {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
               "revision": "head",
               "startLine": 29,
               "endLine": 34,
-              "link": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L29-L34"
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L29-L34"
             },
             {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
               "revision": "base",
               "startLine": 57,
               "endLine": 58,
-              "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L57-L58"
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L57-L58"
             },
             {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
               "revision": "base",
               "startLine": 60,
               "endLine": 60,
-              "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L60-L60"
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L60-L60"
             },
             {
               "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp",
               "revision": "base",
               "startLine": 74,
               "endLine": 74,
-              "link": "232dfa71843fd574be49ba91a918ee7d3e7bfec3:specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp#L74-L74"
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp#L74-L74"
             }
           ]
         }
@@ -928,9 +928,7 @@
     "specification/chaos/resource-manager/Microsoft.Chaos/Chaos"
   ],
   "assessmentDuration": {
-    "toolchainSetupMs": 94907,
-    "preparationMs": 93952,
-    "documentationReviewMs": 987,
-    "totalMs": 189846
+    "totalMs": 829433,
+    "note": "End-to-end active reasoning assessment time. Dimension timing is recorded in ../execution-time-analysis.md."
   }
 }

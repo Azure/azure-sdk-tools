@@ -6,6 +6,7 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
+import { normalizeAssessmentSourceLinks } from "./finalize-rerun-assessments.mjs";
 import { deriveCodeSafety, renderAssessment } from "./render-assessment.mjs";
 import { validateAssessment } from "./validate-assessment.mjs";
 
@@ -21,6 +22,17 @@ function validDocument() {
   return {
     schemaVersion: 1,
     overallConfidence: "high",
+    assessmentEvidence: {
+      repositoryValidation: [
+        {
+          project: "specification/widget/Widget.Management",
+          tool: "TypeSpecValidation",
+          status: "succeeded",
+          durationMs: 1000,
+          log: "TypeSpec Validation succeeded.",
+        },
+      ],
+    },
     dimensions: {
       semanticUnderstanding: {
         items: [
@@ -85,6 +97,52 @@ const markdown = renderAssessment(validDocument());
 
 test("valid assessment passes", () => {
   assert.deepEqual(validateAssessment(validDocument(), markdown), []);
+});
+
+test("explicitly skipped repository validation requires a reason", () => {
+  const document = validDocument();
+  document.assessmentEvidence.repositoryValidation[0].status = "skipped";
+  delete document.assessmentEvidence.repositoryValidation[0].log;
+  assert.match(
+    validateAssessment(document).join("\n"),
+    /reason is required when validation is skipped/,
+  );
+  document.assessmentEvidence.repositoryValidation[0].reason =
+    "Skipped by explicit user request.";
+  assert.deepEqual(validateAssessment(document), []);
+});
+
+test("failed repository validation requires a blocking error", () => {
+  const document = validDocument();
+  document.assessmentEvidence.repositoryValidation[0].status = "failed";
+  assert.match(
+    validateAssessment(document).join("\n"),
+    /failed validation must be represented by a blocking assessment error/,
+  );
+  document.errors = ["TypeSpec Validation failed."];
+  assert.doesNotMatch(
+    validateAssessment(document).join("\n"),
+    /failed validation must be represented by a blocking assessment error/,
+  );
+});
+
+test("finalized GitHub assessments use commit-pinned source links", () => {
+  const document = validDocument();
+  document.url = "https://github.com/Azure/example/pull/123";
+  document.baseline = { commit: "abc123" };
+  document.head = { commit: "def456" };
+  normalizeAssessmentSourceLinks(document);
+  assert.equal(
+    document.dimensions.semanticUnderstanding.items[0].sourceReferences[0].link,
+    "https://github.com/Azure/example/blob/def456/spec/main.tsp#L2-L4",
+  );
+  document.dimensions.semanticUnderstanding.items[0].sourceReferences[0].revision =
+    "base";
+  normalizeAssessmentSourceLinks(document);
+  assert.equal(
+    document.dimensions.semanticUnderstanding.items[0].sourceReferences[0].link,
+    "https://github.com/Azure/example/blob/abc123/spec/main.tsp#L2-L4",
+  );
 });
 
 test("overall code safety reflects assessment risk", () => {
@@ -280,6 +338,38 @@ test("overall confidence is required and must match Markdown", () => {
   );
 });
 
+test("PR report shows only total assessment time", () => {
+  const document = validDocument();
+  document.assessmentDuration = {
+    toolchainSetupMs: 120000,
+    preparationMs: 120000,
+    documentationReviewMs: 960000,
+    totalMs: 1200000,
+    note: "Approximate shared documentation research time.",
+  };
+  const rendered = renderAssessment(document);
+  assert.match(
+    rendered,
+    /\*\*Total assessment time:\*\* ~20m 0s; includes approximate timing/,
+  );
+  assert.doesNotMatch(
+    rendered,
+    /Other assessment time|Compliance assessment time|Toolchain setup|Preparation:/,
+  );
+  assert.deepEqual(validateAssessment(document, rendered), []);
+});
+
+test("reasoning-only reassessment may record only total time", () => {
+  const document = validDocument();
+  document.assessmentDuration = {
+    totalMs: 472057,
+    note: "Dimension timing is recorded in the aggregate timing report.",
+  };
+  const rendered = renderAssessment(document);
+  assert.match(rendered, /\*\*Total assessment time:\*\* 7m 52s/);
+  assert.deepEqual(validateAssessment(document, rendered), []);
+});
+
 test("stale Markdown is rejected", () => {
   const document = validDocument();
   const rendered = renderAssessment(document);
@@ -409,5 +499,7 @@ test("large reports summarize intents before preserving all operations", () => {
     rendered.indexOf("## 🧠 Semantic Understanding") <
       rendered.indexOf("### Change Overview"),
   );
+  assert.doesNotMatch(rendered, /\| Shape \|/);
+  assert.doesNotMatch(rendered, /\| Linked findings \|/);
   assert.deepEqual(validateAssessment(document, rendered), []);
 });

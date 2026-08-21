@@ -8,26 +8,28 @@ third-level detail headings unadorned.
 
 ## Required order
 
-1. **Executive Summary** — dimension status table, confidence, time, intent
-   count, operation count, and project count. Do not derive or display a single
-   top-level assessment decision. List Semantic Understanding first, followed
-   by REST compatibility, downstream compatibility, and Azure compliance.
+1. **Executive Summary** — dimension status table, confidence, total assessment
+   time, intent count, operation count, and project count. Keep dimension-level
+   timing out of individual PR reports and record it in the aggregate execution
+   timing report. Mark approximate total timing explicitly. Do not
+   derive or display a single top-level assessment decision. List Semantic
+   Understanding first, followed by REST compatibility, downstream
+   compatibility, and Azure compliance.
    Display the derived `🟢 High`/`🟡 Medium`/`🔴 Low` overall code-safety
    indicator and `🟢 high`/`🟡 medium`/`🔴 low` overall confidence. Prefix
    dimension results with pass, fail, or not-assessed icons.
 2. **Action Required** — severity-ordered findings with concise code and
    guidance links. State that no action is required when empty.
 3. **Semantic Understanding** — begin with a Change Overview table containing
-   one row per semantic intent, operation count, method/LRO/paging shape, API
-   versions, linked finding count, and detail anchor. Then group complete
-   operation details under an **Operation Details** heading, organized by
-   intent and including confidence, concise REST summary, parameters, payloads,
-   responses, service behavior, LRO, paging, and TypeSpec source. Do not render
-   the internal transformation chain.
+   one row per semantic intent, operation count, API versions, and detail
+   anchor. Then group complete operation details under an **Operation Details**
+   heading, organized by intent and including confidence, concise REST summary,
+   parameters, payloads, responses, service behavior, LRO, paging, and TypeSpec
+   source. Do not render the internal transformation chain.
 4. **Compatibility Assessment** — REST findings first, then REST-compatible
    downstream findings, or explicit evidence-backed empty results.
 5. **Azure Compliance** — status and source-linked compliance findings.
-6. **Appendix** — assessment errors, code-to-guidance evidence, timing,
+6. **Appendix** — assessment errors, code-to-guidance evidence,
    emitters/libraries used, repository validation, artifact evidence, and
    changed sources grouped by file. The code-to-guidance table contains the
    fetched excerpt, observed TypeSpec, result, source, and URL. Tooling

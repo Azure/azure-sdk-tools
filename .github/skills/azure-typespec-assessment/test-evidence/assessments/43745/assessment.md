@@ -7,7 +7,7 @@
 
 **Baseline:** `a6887d2260f26285d4b1f5fba97da370be9200b4`<br>
 **Head:** `71ce7d0c524c4bea7bc737836684acd53f343147`; working-tree changes: false<br>
-**Assessment time:** 2m 33s
+**Total assessment time:** 7m 52s
 
 ## 📌 Executive Summary
 
@@ -31,9 +31,9 @@
 
 ### Change Overview
 
-| # | Intent | Operations | Shape | API versions | Linked findings | Details |
-| ---: | --- | ---: | --- | --- | --- | --- |
-| 1 | Make CloudHsmClusterSkuName forward-compatible by changing it from a closed enum to an extensible string union. | 3 | PUT/GET · 1 LRO · 1 paged | 2025-03-31 | 1 finding(s) | [details](#intent-1-make-cloudhsmclusterskuname-forward-compatible-b) |
+| # | Intent | Operations | API versions | Details |
+| ---: | --- | ---: | --- | --- |
+| 1 | Make CloudHsmClusterSkuName forward-compatible by changing it from a closed enum to an extensible string union. | 3 | 2025-03-31 | [details](#intent-1-make-cloudhsmclusterskuname-forward-compatible-b) |
 
 ### Operation Details
 
@@ -115,15 +115,7 @@ None.
 
 | Result | Document section | Fetched guidance | Observed TypeSpec | Evidence |
 | --- | --- | --- | --- | --- |
-| Matched | [Enums - Custom enum values](https://typespec.io/docs/language-basics/enums/) | You can assign custom values to enum members using the `:` operator. | The known SKU values retain their explicit wire representations. | [models.tsp:L283-L296](https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L283-L296), [models.tsp:L286-L293](specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293) |
-
-### Timing
-
-- **Toolchain setup:** 1m 23s
-- **Preparation:** 1m 9s
-- **Documentation assessment:** 1s
-- **Total attributed time:** 2m 33s
-
+| Matched | [Enums - Custom enum values](https://typespec.io/docs/language-basics/enums/) | You can assign custom values to enum members using the `:` operator. | The known SKU values retain their explicit wire representations. | [models.tsp:L283-L296](https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L283-L296), [models.tsp:L286-L293](https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293) |
 
 ### Tooling Used
 
@@ -143,4 +135,4 @@ None.
 
 ### Changed TypeSpec
 
-- `specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp`: [models.tsp:L286-L293](specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293)
+- `specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp`: [models.tsp:L286-L293](https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293)

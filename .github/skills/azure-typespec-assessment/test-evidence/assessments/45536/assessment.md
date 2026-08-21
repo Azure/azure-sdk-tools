@@ -7,7 +7,7 @@
 
 **Baseline:** `b7170cade07f615426eb153b7035ecf8a1cab4e4`<br>
 **Head:** `1395797d6112cb083837b3772083bafe0a91460c`; working-tree changes: false<br>
-**Assessment time:** 2m 34s
+**Total assessment time:** 11m 52s
 
 ## 📌 Executive Summary
 
@@ -29,9 +29,9 @@ No action required from the assessed dimensions.
 
 ### Change Overview
 
-| # | Intent | Operations | Shape | API versions | Linked findings | Details |
-| ---: | --- | ---: | --- | --- | --- | --- |
-| 1 | Preserve released Java enum constants while retaining existing serialized values. | 3 | GET · 0 LRO · 2 paged | 2024-08-01, 2026-06-01 | No linked finding | [details](#intent-1-preserve-released-java-enum-constants-while-reta) |
+| # | Intent | Operations | API versions | Details |
+| ---: | --- | ---: | --- | --- |
+| 1 | Preserve released Java enum constants while retaining existing serialized values. | 3 | 2024-08-01, 2026-06-01 | [details](#intent-1-preserve-released-java-enum-constants-while-reta) |
 
 ### Operation Details
 
@@ -108,14 +108,6 @@ None.
 | --- | --- | --- | --- | --- |
 | Matched | [Enums - Custom enum values](https://typespec.io/docs/language-basics/enums/) | You can assign custom values to enum members using the `:` operator. | The six existing serialized enum values remain unchanged. | [models.tsp:L31-L50](https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/models.tsp#L31-L50), [models.tsp:L211-L224](https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/models.tsp#L211-L224), [models.tsp:L272-L290](https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/models.tsp#L272-L290) |
 
-### Timing
-
-- **Toolchain setup:** 1m 6s
-- **Preparation:** 1m 28s
-- **Documentation assessment:** 0s
-- **Total attributed time:** 2m 34s
-
-
 ### Tooling Used
 
 - `@azure-tools/typespec-autorest`
@@ -134,4 +126,4 @@ None.
 
 ### Changed TypeSpec
 
-- `specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp`: [client.tsp:L535-L542](specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542)
+- `specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp`: [client.tsp:L535-L542](https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542)

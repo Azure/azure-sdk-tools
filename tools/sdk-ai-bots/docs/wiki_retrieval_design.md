@@ -39,11 +39,13 @@ flowchart LR
 The load-bearing decision: **wiki pages and source chunks never fuse into one ranked list** — fusing lets generic wiki pages displace specific source docs and regresses the score. They are retrieved on separate tracks and combined only in the answer.
 
 - **`search_knowledge_base`** — source chunks only (`page_type` null).
-- **`wiki_search`** — wiki pages only, **self-contained**: for the top pages it returns their full content **plus** query-ranked source chunks from the documents recorded in `chunk_refs`. The next-ranked pages that did not make the cut are appended as a titles-only "Related wiki pages" reference for orientation; those titles are not answer evidence.
+- **`wiki_search`** — wiki pages only, **self-contained**: for the top pages it returns bounded synthesized content **plus** query-ranked source chunks from the documents recorded in `chunk_refs`. The next-ranked pages that did not make the cut are appended as a titles-only "Related wiki pages" reference for orientation; those titles are not answer evidence.
 
 Both tracks run the same retrieval pipeline (`SearchClient.fused_search`) and differ only by page-type filter: dense + BM25 (+ agentic in `deep` mode) run in parallel for every query, all query/retriever rankings are fused together with RRF, then the caller dedupes and caps. Retrieval uses a wider candidate pool than the final answer budget.
 
 For most questions the agent issues `search_knowledge_base` + `wiki_search` in one parallel batch and answers on the next turn.
+
+Wiki results use separate content budgets for synthesized pages and routed source chunks. The exact matched source passage is placed first before truncation. This keeps every ranked reference available while bounding the hosted-agent tool payload. The backend requests the completed Responses API result rather than consuming an SSE stream because it already buffers the final answer, and large multi-tool completion events can exceed the streaming parser's safe event size.
 
 ## Faithfulness of generated pages
 
@@ -80,7 +82,7 @@ The consequence is the cross-document scoping limitation below: a tenant reading
 
 Five phases:
 
-1. **Diff sources by content hash and generation identity.** The corpus reader skips blobs the KB sync has tombstoned (`IsDeleted` metadata), so a retired document reaches the diff as a deletion rather than as live content. `changed` = hash differs from the manifest; `deleted` = in the manifest but absent from the corpus. The generation identity includes the synthesis model, prompt hashes, minimum-document threshold, manifest version, and build-logic version; changing any of them invalidates cached generation.
+1. **Diff sources by content hash and generation identity.** The corpus reader skips blobs the KB sync has tombstoned (`IsDeleted` metadata) and empty/whitespace-only documents, so retired or unusable documents do not enter generation. `changed` = hash differs from the manifest; `deleted` = in the manifest but absent from the corpus. The generation identity includes the synthesis model, prompt hashes, minimum-document threshold, manifest version, and build-logic version; changing any of them invalidates cached generation.
 2. **Extraction.** Only changed documents are re-extracted; every other document's entities/concepts are deserialised from the manifest.
 3. **Summary pages.** Only changed documents are re-summarised; the rest are reused from the manifest.
 4. **Entity/concept pages.** A group's page is reused only when it already has content **and** its `source_refs` set is unchanged **and** its `input_hash` (a digest of the group name plus all member descriptions) is unchanged. So a single changed document re-synthesises only the groups that reference it.
@@ -99,30 +101,33 @@ Two properties of this design are easy to trip over:
 
 ## Evaluation
 
-227-case perf set (7 scenarios), memory off, gpt-5.4 grader, same-day back-to-back runs. A case passes only when all six core metrics score ≥ 4. The baseline is `main` with memory disabled and wiki pages filtered out of retrieval, so it measures the knowledge base alone.
+227-case perf set (7 scenarios), memory off, GPT-5.6 Sol for answering and wiki construction, and gpt-5.4 for grading. The three configurations ran against the same rebuilt index. A case passes only when all six core metrics score ≥ 4. The baseline is current `main` with wiki pages filtered out of retrieval, so it measures the knowledge base alone.
 
-| | TOTAL | typespec | apispec | python | authoring | general |
-| --- | --- | --- | --- | --- | --- | --- |
-| N | 227 | 125 | 26 | 24 | 26 | 20 |
-| KB-only baseline (`main`, memory off) | 69.2 % | 76.8 | 57.7 | 50.0 | 76.9 | 55.0 |
-| Wiki two-track | **74.9 %** | **81.6** | **65.4** | **62.5** | **80.8** | **60.0** |
+| | TOTAL | typespec | apispec | python | authoring | general | onboarding | release support |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| N | 227 | 125 | 26 | 24 | 26 | 20 | 3 | 3 |
+| KB-only baseline (`main`, memory off) | 67.8 % | 71.2 | 65.4 | 58.3 | 80.8 | 45.0 | 33.3 | 100.0 |
+| Wiki without source backfill | 72.2 % | 75.2 | 65.4 | 58.3 | **88.5** | 55.0 | **100.0** | 66.7 |
+| Wiki two-track | **73.6 %** | **80.0** | **73.1** | 54.2 | 76.9 | **55.0** | 66.7 | 66.7 |
 
-Every scenario is at or above the baseline (**+5.7 pp** overall, net **+12** cases: 27 fixed, 15 regressed). Groundedness / relevance / coherence / fluency stay ~100 %, and median answer length is flat (165 → 173 words), so the gain is not bought with longer or less grounded answers — it is carried by `similarity` (79.3 → 83.7 %) and `response_completeness` (70.0 → 76.2 %).
+The main conclusion reproduces: Wiki two-track is **+5.8 pp** overall over the current Main baseline, net **+13** cases (26 fixed, 13 regressed). The largest and most reliable scenario, `typespec`, improves **+8.8 pp**. `similarity` moves 79.7 → 84.1 % and `response_completeness` 68.3 → 76.2 %, while groundedness / relevance / coherence / fluency remain 99–100 %. Median answer length decreases from 123 to 117 words.
 
-The final online tool set is `search_knowledge_base` and `wiki_search`. Exact terms remain verbatim in the first `search_knowledge_base` query, whose fused retrieval already includes BM25. `wiki_search` is self-contained because it returns full page content and bounded source backfill, so separate keyword, page, and source-document read tools are unnecessary.
+Source backfill adds **+1.4 pp** over Wiki without backfill, net **+3** cases (17 fixed, 14 regressed). Its strongest signal is `typespec` (+6 cases), but `authoring` loses 3 cases and the paired churn is larger than the net gain. This supports retaining query-ranked source evidence for provenance and detail, but the evaluation does not establish its independent score contribution as strongly as the earlier ablation did.
 
-Reading the numbers: same-config reruns churn ~16 % of cases and move the total by up to ±5 pp, so a single run cannot resolve a smaller delta. `typespec` (N = 125) is the only single scenario large enough to trust on its own; `onboarding` and `releasesupport` (N = 3) swing 33 pp on one case and are reported for completeness only.
+One intermediate streaming run was excluded: 101 cases returned HTTP 500 after the SSE client received an oversized multi-tool completion event. The backend now uses the non-streaming Responses API, which matches its buffered HTTP contract. All three reported runs have zero synthetic/corrupt rows.
 
-What each design decision is worth, measured by same-day A/B:
+The final online tool set is `search_knowledge_base` and `wiki_search`. Exact terms remain verbatim in the first `search_knowledge_base` query, whose fused retrieval already includes BM25. `wiki_search` is self-contained because it returns bounded page content and source backfill, so separate keyword, page, and source-document read tools are unnecessary.
 
-- **Track separation is essential** — retrieving wiki pages in the same ranked pool as source chunks regresses the score, because generic pages displace the specific source doc.
-- **Full symbol coverage** (always extracting named decorators/templates, including single-doc symbols, plus their constraints) moved typespec **+4.6 pp** and `response_completeness` **+5 pp** by giving symbol questions a consolidated page to route to.
-- **Faithfulness rules** (scope/exception preservation in the build prompts, specific-verdict preference in the answer rules) recovered the cases where a wiki-grounded answer had been *more confident and less correct* than the KB-only one.
-- **Chunk granularity beats page integrity** — raising the indexer split budget so every page indexes as one chunk cost typespec **−5.6 pp**. Retrieval matches on sections and expands to the page afterwards, so one vector per page retrieves measurably worse than one per section.
+Reading the numbers: same-config reruns have previously churned ~16 % of cases and moved the total by up to ±5 pp, so the +1.4 pp backfill delta is directional rather than conclusive. `typespec` (N = 125) is the only single scenario large enough to trust on its own; `onboarding` and `releasesupport` (N = 3) swing 33 pp on one case and are reported for completeness only.
 
-The wiki layer is only measurable when it actually returns results. A silent retrieval outage (see below) cost the entire lead for several days while every tool call still appeared to fire, so any evaluation of this feature should first assert that `wiki_search` returns a non-empty result.
+Earlier targeted ablations, run under a different model/index state, established the design choices that were held constant here:
 
-Roughly 60 % of the remaining failures ask for knowledge that is absent from the indexed corpus, so they are not reachable by retrieval or prompt changes; closing them is a corpus-curation problem.
+- **Track separation is essential** — retrieving wiki pages in the same ranked pool as source chunks lets generic pages displace the specific source document.
+- **Full symbol coverage** gives decorator/template questions a consolidated page to route to.
+- **Faithfulness rules** prevent a generated broad rule from overriding a source that answers the user's exact situation.
+- **Chunk-level retrieval beats one vector per whole page**; the selected passage is expanded only after retrieval.
+
+The wiki layer is only measurable when it actually returns results. A silent retrieval outage previously cost the entire lead while every tool call still appeared to fire, so any evaluation of this feature should first assert that `wiki_search` returns a non-empty result and that the collector contains no synthetic failures.
 
 ## Known limitations
 

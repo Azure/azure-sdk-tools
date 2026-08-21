@@ -104,13 +104,12 @@ public class PipelineAnalysisHelper(
     }
 
     /// <summary>
-    /// Parses the failed-test artifacts published by a build, keyed by the platform each artifact was
-    /// published for. Artifacts that cannot be read or parsed are returned to the caller rather than
-    /// reported here.
+    /// Parses the build's failed-test artifacts into one entry per artifact file (file, platform, failing
+    /// titles). Artifacts that cannot be read or parsed are returned to the caller rather than reported here.
     /// </summary>
-    private async Task<(Dictionary<string, List<string>> FailedTests, List<string> SkippedArtifacts)> AnalyzeBuildTestArtifactsAsync(AzurePipelineBuild build, CancellationToken ct)
+    private async Task<(List<FailedTestArtifact> FailedTests, List<string> SkippedArtifacts)> AnalyzeBuildTestArtifactsAsync(AzurePipelineBuild build, CancellationToken ct)
     {
-        var failedTests = new Dictionary<string, List<string>>();
+        var failedTests = new List<FailedTestArtifact>();
         var failedTestArtifacts = await devopsService.GetPipelineLlmArtifacts(build.Project, build.BuildId, ct);
         var skippedArtifacts = new List<string>();
 
@@ -127,11 +126,12 @@ public class PipelineAnalysisHelper(
                         continue;
                     }
 
-                    if (!failedTests.TryGetValue(testFiles.Key, out var platformTests))
+                    failedTests.Add(new FailedTestArtifact
                     {
-                        failedTests[testFiles.Key] = platformTests = [];
-                    }
-                    platformTests.AddRange(failed.Items.Select(t => t.TestCaseTitle));
+                        ArtifactFilePath = file,
+                        Platform = testFiles.Key,
+                        FailedTestTitles = failed.Items.Select(t => t.TestCaseTitle).ToList(),
+                    });
                 }
                 catch (Exception ex)
                 {

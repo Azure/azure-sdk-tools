@@ -92,9 +92,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                         return PackageOperationResponse.CreateSuccess(
                             "Python SDK project detected. Skipping build step as Python SDKs do not require a build process.",
                             packageInfo,
+                            nextSteps: ["Run package validation checks using azsdk_package_run_check", "Run tests using azsdk_package_run_tests"],
                             result: "noop");
                     }
-                    return PackageOperationResponse.CreateSuccess("Build completed successfully.", packageInfo);
+                    return PackageOperationResponse.CreateSuccess(
+                        "Build completed successfully.",
+                        packageInfo,
+                        nextSteps: ["Run package validation checks using azsdk_package_run_check", "Run tests using azsdk_package_run_tests"]);
                 }
 
                 return PackageOperationResponse.CreateFailure(

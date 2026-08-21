@@ -12,6 +12,7 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Helpers.Codeowners;
+using Azure.Sdk.Tools.Cli.Helpers.EngSys;
 using Azure.Sdk.Tools.Cli.Helpers.Pipeline;
 using Azure.Sdk.Tools.Cli.Helpers.Codeowners.Rules;
 using Azure.Sdk.Tools.Cli.Tools.Core;
@@ -52,7 +53,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IAPIViewReleaseStatusService, APIViewReleaseStatusService>();
             services.AddSingleton<IAPIViewService, APIViewService>();
             services.AddSingleton<IApiReviewHubService, ApiReviewHubService>();
-            services.AddSingleton<IApiReviewReleaseStatusService, ApiReviewReleaseStatusService>();
+            services.AddSingleton<IPackageReleaseStatusService, PackageReleaseStatusService>();
 
             services.AddScoped<LanguageService, DotnetLanguageService>();
             services.AddScoped<LanguageService, JavaLanguageService>();
@@ -122,6 +123,8 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IPipelineIdentifierHelper, PipelineIdentifierHelper>();
             services.AddScoped<IPipelineAnalysisHelper, PipelineAnalysisHelper>();
             services.AddScoped<IGitHubWorkflowAnalysisHelper, GitHubWorkflowAnalysisHelper>();
+            services.AddScoped<IPipelineFixEvaluatorHelper, PipelineFixEvaluatorHelper>();
+            services.AddScoped<IPipelineFixSurvivalJudge, PipelineFixSurvivalJudge>();
 
             // Services that need to be scoped so we can track/update state across services per request
             services.AddScoped<TokenUsageHelper>();

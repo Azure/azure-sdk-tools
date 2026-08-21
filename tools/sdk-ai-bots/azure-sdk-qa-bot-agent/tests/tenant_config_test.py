@@ -84,5 +84,8 @@ def test_azure_mcp_server_instruction_selects_sources_by_question() -> None:
     assert "not to broaden the scope or introduce unsupported requirements" in instruction
     assert "only details that materially affect the recommendation or next action" in instruction
     assert "instead of reproducing exhaustive checklists" in instruction
-    assert "Lead with a direct answer" in instruction
+    assert "Lead with a direct answer in 1–3 sentences" in instruction
     assert "Prefer short bullets with one idea each" in instruction
+    assert "under roughly 150 words unless the user asks for detail" in instruction
+    assert "For broad or multi-part questions" in instruction
+    assert "For under-specified questions, give a short answer first" in instruction

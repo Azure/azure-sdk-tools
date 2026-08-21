@@ -29,6 +29,11 @@ logger = logging.getLogger(__name__)
 
 # Expanded content beyond this limit is truncated to control context size.
 _MAX_CONTENT_CHARS_PER_RESULT = 3000
+# Wiki search returns more references than raw search. Keep its serialized tool
+# result below the hosted-agent streaming limit while retaining every ranked
+# page and routed source.
+_WIKI_PAGE_CONTENT_CHARS = 1800
+_WIKI_SOURCE_CONTENT_CHARS = 1100
 
 # Cross-document wiki pages; reachable only through wiki_search.
 _WIKI_ONLY_SOURCES = (SRC_WIKI_ENTITY, SRC_WIKI_CONCEPT)
@@ -279,7 +284,19 @@ class KnowledgeTools:
         expanded = await asyncio.gather(
             *[search_client.expand_by_hierarchy(c) for c in combined]
         )
-        results = _refs_from_expanded(expanded, combined)
+        page_count = len(wiki_pages)
+        results = _refs_from_expanded(
+            expanded[:page_count],
+            combined[:page_count],
+            max_content_chars=_WIKI_PAGE_CONTENT_CHARS,
+        )
+        results.extend(
+            _refs_from_expanded(
+                expanded[page_count:],
+                combined[page_count:],
+                max_content_chars=_WIKI_SOURCE_CONTENT_CHARS,
+            )
+        )
         neighbor_ref = _neighbor_reference(neighbors)
         if neighbor_ref:
             results.append(neighbor_ref)
@@ -370,13 +387,16 @@ def _combined_source_filter(source_filters: dict[str, str]) -> str | None:
     return "(" + " or ".join(clauses) + ")"
 
 
-def _truncate_content(content: str | None) -> str:
-    """Truncate content to _MAX_CONTENT_CHARS_PER_RESULT to control context size."""
+def _truncate_content(
+    content: str | None,
+    max_chars: int = _MAX_CONTENT_CHARS_PER_RESULT,
+) -> str:
+    """Truncate content to *max_chars* to control context size."""
     if not content:
         return ""
-    if len(content) <= _MAX_CONTENT_CHARS_PER_RESULT:
+    if len(content) <= max_chars:
         return content
-    return content[:_MAX_CONTENT_CHARS_PER_RESULT] + "\n... [truncated]"
+    return content[:max_chars] + "\n... [truncated]"
 
 
 def _deduplicate_wiki_pages(chunks: list[KnowledgeChunk]) -> list[KnowledgeChunk]:
@@ -423,7 +443,12 @@ def _neighbor_reference(neighbors: list) -> Reference | None:
     )
 
 
-def _refs_from_expanded(expanded: list, scored: list) -> list[Reference]:
+def _refs_from_expanded(
+    expanded: list,
+    scored: list,
+    *,
+    max_content_chars: int = _MAX_CONTENT_CHARS_PER_RESULT,
+) -> list[Reference]:
     """Build References from expanded chunks, taking scores from *scored*."""
     return [
         Reference(
@@ -435,7 +460,10 @@ def _refs_from_expanded(expanded: list, scored: list) -> list[Reference]:
             ),
             source=expanded[i].source,
             link=expanded[i].link,
-            content=_truncate_content(expanded[i].content),
+            content=_truncate_content(
+                expanded[i].content,
+                max_chars=max_content_chars,
+            ),
             score=scored[i].rerank_score,
         )
         for i in range(len(expanded))

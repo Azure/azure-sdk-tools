@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+from types import SimpleNamespace
 from typing import Any, cast
 
 from models.knowledge import KnowledgeChunk
-from tools.knowledge_tools import _deduplicate_wiki_pages
+from tools.knowledge_tools import _deduplicate_wiki_pages, _refs_from_expanded
 from utils.azure_ai_search import SearchClient
 
 
@@ -86,3 +87,22 @@ def test_hierarchy_expansion_keeps_matched_passage_first():
         "Earlier section context"
     )
     assert expanded.content.count("Exact matched rule") == 1
+
+
+def test_wiki_references_apply_the_requested_content_limit():
+    expanded = [
+        SimpleNamespace(
+            title="Versioning",
+            header1=None,
+            header2=None,
+            header3=None,
+            source="typespec_docs",
+            link="",
+            content="x" * 2000,
+        )
+    ]
+    scored = [KnowledgeChunk(chunk_id="1", rerank_score=0.5)]
+
+    refs = _refs_from_expanded(expanded, scored, max_content_chars=1100)
+
+    assert refs[0].content == ("x" * 1100) + "\n... [truncated]"

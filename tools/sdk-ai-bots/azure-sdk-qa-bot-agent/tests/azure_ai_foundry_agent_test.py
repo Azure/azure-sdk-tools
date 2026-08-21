@@ -27,11 +27,16 @@ class _FakeResponse:
     """Minimal stand-in for an OpenAI ``Response`` object."""
 
     def __init__(
-        self, output_text: str = "", status: str = "completed", id: str = "resp"
+        self,
+        output_text: str = "",
+        status: str = "completed",
+        id: str = "resp",
+        request_id: str | None = None,
     ):
         self.output_text = output_text
         self.status = status
         self.id = id
+        self._request_id = request_id
 
 
 class _FakeEvent:
@@ -99,6 +104,31 @@ async def test_invoke_returns_trace_id_and_closes_stream_on_success() -> None:
     assert trace_id == "trace-123"
     assert stream.closed is True
     assert client.responses.create.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_invoke_supports_non_streaming_responses() -> None:
+    """Non-streaming invocation returns the response and SDK request id."""
+    resp = _FakeResponse(
+        output_text="hello",
+        status="completed",
+        id="r1",
+        request_id="trace-non-stream",
+    )
+    client = _mock_client([resp])
+
+    trace_id, out = await HostedAgentClient(
+        client,
+        retry_delay=0,
+        stream=False,
+    ).invoke(
+        conversation_items=[],
+        agent_ref={},
+    )
+
+    assert out is resp
+    assert trace_id == "trace-non-stream"
+    assert client.responses.create.await_args.kwargs["stream"] is False
 
 
 @pytest.mark.asyncio
@@ -278,5 +308,4 @@ async def test_invoke_returns_content_safety_response_without_retry() -> None:
     assert out.output_text == CONTENT_SAFETY_MESSAGE
     # No retry: the deterministic content-safety block fails fast.
     assert client.responses.create.await_count == 1
-
 

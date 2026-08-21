@@ -155,7 +155,9 @@ class ChatService:
             "type": AgentReferenceType.agent_reference.value,
         }
 
-        agent_client = HostedAgentClient(openai_client)
+        # The HTTP API waits for the complete answer, so streaming adds no user
+        # benefit and can corrupt large multi-tool response events.
+        agent_client = HostedAgentClient(openai_client, stream=False)
         trace_id, response = await agent_client.invoke(
             conversation_items=conversation_items,
             agent_conversation_id=agent_conversation_id,

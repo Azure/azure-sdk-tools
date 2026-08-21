@@ -15,6 +15,8 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Notification;
 using Azure.Sdk.Tools.Cli.Services.Notification.Templates;
 using Azure.Sdk.Tools.Cli.Tools.Core;
+using Microsoft.VisualStudio.Services.Common;
+using Microsoft.VisualStudio.Services.WebApi;
 using ModelContextProtocol;
 using ModelContextProtocol.Server;
 using Octokit;
@@ -1060,7 +1062,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     if (!string.IsNullOrEmpty(specPullRequestUrl))
                     {
                         logger.LogInformation("Checking for existing release plan for pull request URL: {specPullRequestUrl}", specPullRequestUrl);
-                        var existingReleasePlan = await devOpsService.GetReleasePlanAsync(specPullRequestUrl, parsedApiReleaseType, ct);
+                        using var lookupCancellation = new CancellationTokenSource();
+                        var existingReleasePlan = await devOpsService.GetReleasePlanAsync(specPullRequestUrl, parsedApiReleaseType, lookupCancellation.Token);
                         if (existingReleasePlan != null && existingReleasePlan.WorkItemId > 0)
                         {
                             return new ReleasePlanResponse
@@ -1236,7 +1239,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to create release plan work item");
-                return new ReleasePlanResponse { ResponseError = $"Failed to create release plan work item: {ex.Message}" };
+                var baseException = ex.GetBaseException();
+                var detail = baseException.Message != ex.Message
+                    ? $"{ex.Message}: {baseException.Message}"
+                    : ex.Message;
+                var response = new ReleasePlanResponse
+                {
+                    Message = $"Failed to create release plan work item: {detail}"
+                };
+                if (baseException is VssUnauthorizedException or VssServiceResponseException)
+                {
+                    response.NextSteps =
+                    [
+                        "Authenticate with the Azure CLI and verify work item creation permissions in the Azure SDK Release project."
+                    ];
+                }
+                return response;
             }
         }
 

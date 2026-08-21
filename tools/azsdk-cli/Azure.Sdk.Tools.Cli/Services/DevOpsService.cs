@@ -722,9 +722,9 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
             if (targetWorkItem == null)
             {
-                throw new Exception($"Target work item {targetId} was not found.");
+                throw new Exception($"Target work item {targetId} not found.");
             }
-            if (workItem.Relations == null && !workItem.Relations.Any())
+            if (workItem.Relations == null || !workItem.Relations.Any())
             {
                 throw new Exception($"Work item {id} has no relations.");
             }

@@ -640,7 +640,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             "azsdk CLI / MCP server setup, connection, and reliability (mcp.json, VS Code / Copilot CLI, cold-start/timeout)",
             "Azure SDK Tools Agent capabilities and tool usage (generation, validation, review, release)",
             "Release plan and readiness lifecycle status, errors, and troubleshooting",
-            "SDK generation from TypeSpec failures triggered via the agent",
+            "Triage errors reported by the agent and route downstream failures to the appropriate specialist",
             "Authoring azsdk CLI tools and skills (custom agents, CLI command and skill guidelines)",
         ],
         sources=_sources(

@@ -38,8 +38,10 @@ _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
     ),
     TenantID.AZSDK_TOOLS_AGENT_QA_BOT: (
         "Azure SDK Tools Agent (azsdk CLI/MCP): agent and MCP server setup and "
-        "reliability, tool capabilities, release plan status and readiness lifecycle, "
-        "and authoring azsdk CLI tools and skills."
+        "reliability, tool capabilities, internal agent failures, release plan status "
+        "and readiness lifecycle, and authoring azsdk CLI tools and skills. Triage "
+        "errors surfaced by the Agent, but use the relevant specialist skill when "
+        "the failing layer is a downstream TypeSpec, language SDK, build, test, or pipeline."
     ),
     TenantID.AZURE_TYPESPEC_AUTHORING: (
         "Advanced TypeSpec authoring: ARM and data-plane API design, Azure Templates, "

@@ -57,13 +57,15 @@ class _FakeContainer:
         return _DL()
 
 
-def test_read_blob_container_skips_tombstoned_and_non_markdown():
+def test_read_blob_container_skips_tombstoned_non_markdown_and_empty():
     cc = _FakeContainer(
         [
             ("typespec_docs/a.md", {}, "text a"),
             ("typespec_docs/b.md", {"IsDeleted": "true"}, "text b"),
             ("typespec_docs/c.mdx", {"IsDeleted": "false"}, "text c"),
             ("typespec_docs/d.png", {}, "binary"),
+            ("typespec_docs/e.md", {}, ""),
+            ("typespec_docs/f.mdx", {}, " \n\t"),
         ]
     )
     assert asyncio.run(read_blob_container(cc)) == [

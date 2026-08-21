@@ -29,6 +29,7 @@ async def read_blob_container(container_client) -> list[tuple[str, str]]:
     """Read every markdown blob in the container as ``(source_path, text)``."""
     out: list[tuple[str, str]] = []
     tombstoned = 0
+    empty = 0
     # The knowledge sync retires a document by setting IsDeleted metadata and
     # leaving the content in place, so metadata has to be requested and checked.
     async for blob in container_client.list_blobs(include=["metadata"]):
@@ -44,8 +45,14 @@ async def read_blob_container(container_client) -> list[tuple[str, str]]:
             text = data.decode("utf-8")
         except UnicodeDecodeError:
             text = data.decode("utf-8", errors="replace")
+        if not text.strip():
+            empty += 1
+            continue
         out.append((name, text))
     logger.info(
-        "read_blob_container: %d markdown blobs (%d tombstoned)", len(out), tombstoned
+        "read_blob_container: %d markdown blobs (%d tombstoned, %d empty)",
+        len(out),
+        tombstoned,
+        empty,
     )
     return out

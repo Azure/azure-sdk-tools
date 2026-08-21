@@ -6,13 +6,9 @@
 
 - Added `product-onboarding sync` CLI command to create or update product onboarding work items.
 
-### Breaking Changes
-
 ### Bugs Fixed
 
 - `package mark-released` now skips API Review Hub when `--api-hash` is omitted and succeeds when either API Review Hub or APIView succeeds, failing only when neither backend succeeds.
-
-### Other Changes
 
 ## 0.6.36 (2026-08-19)
 

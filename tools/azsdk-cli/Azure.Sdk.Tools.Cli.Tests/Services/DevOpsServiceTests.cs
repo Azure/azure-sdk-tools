@@ -159,7 +159,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             var result = await _devOpsService.GetReleasePlanAsync(pullRequestUrl, ct: CancellationToken.None);
 
             // Assert
-            Assert.IsNull(result, "Should handle state comparison case-insensitively");
+            Assert.IsNull(result, "An abandoned release plan should be ignored regardless of state casing");
         }
 
         #endregion
@@ -802,4 +802,3 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         #endregion
     }
 }
-

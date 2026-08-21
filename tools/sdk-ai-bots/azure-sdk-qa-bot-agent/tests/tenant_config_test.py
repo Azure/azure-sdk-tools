@@ -40,13 +40,13 @@ def test_tenant_skills_are_partitioned_by_agent() -> None:
     assert mcp_skills[0].frontmatter.name == "azure-mcp-server"
 
 
-def test_azure_mcp_server_skill_contains_source_and_guideline() -> None:
+def test_azure_mcp_server_skill_contains_routing_metadata() -> None:
     content = build_skill_content(TenantID.AZURE_MCP_SERVER)
 
     assert get_skill_name_for_tenant(TenantID.AZURE_MCP_SERVER) == "azure-mcp-server"
     assert f"[skill_tenant_id]: {TenantID.AZURE_MCP_SERVER.value}" in content
     assert f"- {SRC_AZURE_MCP_SERVER_DOCS}:" in content
-    assert "Do not infer roadmap dates or availability" in content
+    assert "[skill_guideline]" not in content
 
 
 def test_azure_mcp_server_source_resolves_repository_paths() -> None:

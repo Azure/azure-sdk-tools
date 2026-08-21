@@ -654,7 +654,6 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             "Azure Skills and Azure MCP Server capability boundaries",
         ],
         sources=_sources(SRC_AZURE_MCP_SERVER_DOCS),
-        qa_guideline_file="tenants/azure_mcp_server.md",
         enable_routing=False,
         agent=AgentConfig(
             name="azure-mcp-server-agent",

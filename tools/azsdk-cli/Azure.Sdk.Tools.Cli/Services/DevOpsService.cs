@@ -532,7 +532,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                                 }
                             }
                             var mappedPlan = await MapWorkItemToReleasePlanAsync(parentWorkItem, ct);
-                            if (apiReleaseType != ApiReleaseType.Unknown && mappedPlan.ApiReleaseType != apiReleaseType)
+                            // A blank/unset release type (ApiReleaseType.Unknown) is treated as a match too,
+                            // so stale records missing this field don't silently evade duplicate detection.
+                            if (apiReleaseType != ApiReleaseType.Unknown && mappedPlan.ApiReleaseType != ApiReleaseType.Unknown && mappedPlan.ApiReleaseType != apiReleaseType)
                             {
                                 logger.LogInformation("Skipping release plan work item {WorkItemId} because API release type {Actual} does not match requested {Requested}", parentWorkItemId, mappedPlan.ApiReleaseType, apiReleaseType);
                                 continue;
@@ -1996,7 +1998,9 @@ namespace Azure.Sdk.Tools.Cli.Services
             query += $" AND [System.Tags] {(IsAgentTesting ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
             if (apiReleaseType != ApiReleaseType.Unknown)
             {
-                query += $" AND [Custom.ReleasePlanType] = '{apiReleaseType.ToAdoFieldValue()}'";
+                // Also match records with a blank/unset ReleasePlanType: these are stale records from
+                // before that field was populated and would otherwise silently evade duplicate detection.
+                query += $" AND ([Custom.ReleasePlanType] = '{apiReleaseType.ToAdoFieldValue()}' OR [Custom.ReleasePlanType] = '')";
             }
             query += "  ORDER BY [System.Id] DESC";
 

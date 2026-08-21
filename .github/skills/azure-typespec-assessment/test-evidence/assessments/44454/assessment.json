@@ -1,0 +1,247 @@
+{
+  "schemaVersion": 1,
+  "overallConfidence": "high",
+  "pr": 44454,
+  "title": "Mitigate operation group casing breaking changes for azure-mgmt-elastic",
+  "url": "https://github.com/Azure/azure-rest-api-specs/pull/44454",
+  "state": "merged",
+  "createdAt": "2026-07-06T09:59:03Z",
+  "baseline": {
+    "ref": "e8420e45fdaf12e2c72417d379c454f1fc8ce1e6",
+    "commit": "e8420e45fdaf12e2c72417d379c454f1fc8ce1e6"
+  },
+  "head": {
+    "commit": "b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2",
+    "hasWorkingTreeChanges": false
+  },
+  "result": "compatibility-mitigation",
+  "artifactEvidence": {
+    "autorest": "base/head succeeded with no wire artifact diff",
+    "tcgc": "base/head succeeded; generic output does not apply Python-only naming, so source decorators are primary evidence"
+  },
+  "assessmentEvidence": {
+    "changedTypeSpec": [
+      {
+        "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+        "revision": "head",
+        "startLine": 97,
+        "endLine": 102,
+        "link": "specification/elastic/Elastic.Management/back-compatible.tsp#L97-L102"
+      },
+      {
+        "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+        "revision": "head",
+        "startLine": 108,
+        "endLine": 113,
+        "link": "specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113"
+      },
+      {
+        "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+        "revision": "head",
+        "startLine": 122,
+        "endLine": 127,
+        "link": "specification/elastic/Elastic.Management/back-compatible.tsp#L122-L127"
+      }
+    ],
+    "emitterRuns": [
+      {
+        "project": "specification/elastic/Elastic.Management",
+        "revision": "base",
+        "emitter": "@azure-tools/typespec-autorest",
+        "emitterId": "autorest",
+        "output": "OpenAPI",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__elastic__Elastic.Management/base/autorest"
+      },
+      {
+        "project": "specification/elastic/Elastic.Management",
+        "revision": "base",
+        "emitter": "@azure-tools/typespec-client-generator-core",
+        "emitterId": "tcgc",
+        "output": "SDK metadata (generic)",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__elastic__Elastic.Management/base/tcgc"
+      },
+      {
+        "project": "specification/elastic/Elastic.Management",
+        "revision": "head",
+        "emitter": "@azure-tools/typespec-autorest",
+        "emitterId": "autorest",
+        "output": "OpenAPI",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__elastic__Elastic.Management/head/autorest"
+      },
+      {
+        "project": "specification/elastic/Elastic.Management",
+        "revision": "head",
+        "emitter": "@azure-tools/typespec-client-generator-core",
+        "emitterId": "tcgc",
+        "output": "SDK metadata (generic)",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__elastic__Elastic.Management/head/tcgc"
+      }
+    ],
+    "repositoryValidation": [
+      {
+        "project": "specification/elastic/Elastic.Management",
+        "tool": "TypeSpecValidation",
+        "status": "succeeded",
+        "durationMs": 25179,
+        "log": "validation-logs/specification__elastic__Elastic.Management-head.log"
+      }
+    ]
+  },
+  "dimensions": {
+    "semanticUnderstanding": {
+      "items": [
+        {
+          "id": "pr-44454-intent",
+          "intent": "Restore released Python PascalCase operation-group names without changing other languages.",
+          "transformationChain": [
+            "Exclude Python from shared camelCase locations.",
+            "Add Python-only PascalCase client locations."
+          ],
+          "restRepresentation": {
+            "summary": "REST operations, paths, parameters, and payloads are unchanged.",
+            "operations": [
+              {
+                "operationId": "ElasticMonitors_ListAssociatedTrafficFilters",
+                "apiVersions": [
+                  "2024-03-01"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Elastic/monitors/{monitorName}/listAssociatedTrafficFilters",
+                "parameters": [
+                  "path subscriptionId, resourceGroupName, monitorName: string, required",
+                  "query api-version: string, required"
+                ],
+                "serviceBehavior": "Lists traffic filters associated with the Elastic monitor.",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200: ElasticTrafficFilterResponse",
+                  "default: ErrorResponse"
+                ],
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Elastic/monitors/{monitorName}/listAssociatedTrafficFilters",
+                "sourceReferences": [
+                  {
+                    "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+                    "revision": "head",
+                    "startLine": 94,
+                    "endLine": 131,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131"
+                  }
+                ]
+              },
+              {
+                "operationId": "ElasticMonitors_CreateAndAssociateIPFilter",
+                "apiVersions": [
+                  "2024-03-01"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Elastic/monitors/{monitorName}/createAndAssociateIPFilter",
+                "parameters": [
+                  "path subscriptionId, resourceGroupName, monitorName: string, required",
+                  "query api-version: string, required"
+                ],
+                "serviceBehavior": "Creates an IP traffic filter and associates it with the monitor.",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "requestPayload": "application/json body: IPFilter",
+                "responsePayloads": [
+                  "200: ElasticTrafficFilterResponse",
+                  "default: ErrorResponse"
+                ],
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Elastic/monitors/{monitorName}/createAndAssociateIPFilter",
+                "sourceReferences": [
+                  {
+                    "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+                    "revision": "head",
+                    "startLine": 94,
+                    "endLine": 131,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131"
+                  }
+                ]
+              },
+              {
+                "operationId": "ElasticMonitors_CreateAndAssociatePLFilter",
+                "apiVersions": [
+                  "2024-03-01"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Elastic/monitors/{monitorName}/createAndAssociatePLFilter",
+                "parameters": [
+                  "path subscriptionId, resourceGroupName, monitorName: string, required",
+                  "query api-version: string, required"
+                ],
+                "serviceBehavior": "Creates a private-link traffic filter and associates it with the monitor.",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "requestPayload": "application/json body: PrivateLinkFilter",
+                "responsePayloads": [
+                  "200: ElasticTrafficFilterResponse",
+                  "default: ErrorResponse"
+                ],
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Elastic/monitors/{monitorName}/createAndAssociatePLFilter",
+                "sourceReferences": [
+                  {
+                    "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+                    "revision": "head",
+                    "startLine": 94,
+                    "endLine": 131,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131"
+                  }
+                ]
+              }
+            ]
+          },
+          "confidence": "high",
+          "sourceReferences": [
+            {
+              "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+              "revision": "head",
+              "startLine": 94,
+              "endLine": 131,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131"
+            }
+          ]
+        }
+      ]
+    },
+    "restBreakingChanges": {
+      "findings": []
+    },
+    "restCompatibleDownstreamBreakingChanges": {
+      "findings": []
+    },
+    "azureCompliance": {
+      "status": "not-assessed",
+      "reason": "The shared catalog has no authoritative document for language-scoped @@clientLocation operation-group naming.",
+      "documents": [],
+      "findings": []
+    }
+  },
+  "errors": [],
+  "projects": [
+    "specification/elastic/Elastic.Management"
+  ],
+  "assessmentDuration": {
+    "toolchainSetupMs": 60898,
+    "preparationMs": 71446,
+    "documentationReviewMs": 24,
+    "totalMs": 132368
+  }
+}

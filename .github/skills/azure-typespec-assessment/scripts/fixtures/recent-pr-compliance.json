@@ -1,0 +1,504 @@
+{
+  "42435": {
+    "status": "passed",
+    "documents": [
+      {
+        "title": "TypeSpec pagination",
+        "url": "https://typespec.io/docs/standard-library/pagination/",
+        "section": "Pagination",
+        "guidanceExcerpt": "To enable pagination for an operation the first step is to decorate it with the `@list` decorator and have the return type contain a property decorated with `@pageItems`.",
+        "applicableGuidance": "Paged operations use @list, identify page items, and identify the server-provided next link.",
+        "evidence": "The changed operation has @list, while OutboundRuleListResult identifies value with @pageItems and nextLink with @nextLink.",
+        "sourcePathIncludes": [
+          "ManagedNetworkSettingsPropertiesBasicResource.tsp",
+          "models.tsp"
+        ]
+      },
+      {
+        "title": "ARM long-running operations",
+        "url": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
+        "section": "Action operations",
+        "guidanceExcerpt": "The `ArmResourceActionAsync` template uses `ArmLroLocationHeader` by default. The `FinalResult` should match the response type of the action.",
+        "applicableGuidance": "An ARM async action's logical final result matches its response type.",
+        "evidence": "The action retains Response = OutboundRuleListResult while adding paging metadata.",
+        "sourcePathIncludes": [
+          "ManagedNetworkSettingsPropertiesBasicResource.tsp"
+        ]
+      }
+    ]
+  },
+  "42853": {
+    "status": "failed",
+    "documents": [
+      {
+        "title": "Adding a Stable Version when the Last Version was Preview",
+        "url": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+        "section": "Making changes to your TypeSpec spec",
+        "guidanceExcerpt": "For any type with an `@added(p)` decorator, delete the type. Remove the replaced preview version from the version enum.",
+        "applicableGuidance": "A stable version replacing a preview removes the preview member and reverses preview-only additions.",
+        "evidence": "RecoveryServicesBackup retains v2026_01_31_preview beside v2026_02_01 and retains preview-only declarations with @removed(v2026_02_01).",
+        "sourcePathIncludes": [
+          "RecoveryServicesBackup/main.tsp",
+          "RecoveryPointResource.tsp",
+          "RecoveryServicesBackup/models.tsp"
+        ]
+      },
+      {
+        "title": "Clients",
+        "url": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/",
+        "section": "Customizations",
+        "guidanceExcerpt": "Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`.",
+        "applicableGuidance": "Client hierarchy customizations belong in client.tsp.",
+        "evidence": "The edited @@clientLocation declarations remain in back-compatible.tsp.",
+        "sourcePathIncludes": [
+          "RecoveryServicesBackup/back-compatible.tsp"
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "id": "compliance-42853-stable-after-preview",
+        "title": "The replaced preview version remains in the stable-version history",
+        "severity": "medium",
+        "summary": "RecoveryServicesBackup keeps v2026_01_31_preview and its preview-only declarations while appending v2026_02_01, contrary to the documented stable-after-preview workflow.",
+        "documentationUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+        "evidence": [
+          "The guide says to remove the replaced preview member and delete preview-only additions.",
+          "The PR instead retains the preview member and scopes preview-only declarations out with @removed(v2026_02_01)."
+        ],
+        "sourcePathIncludes": [
+          "RecoveryServicesBackup/main.tsp",
+          "RecoveryPointResource.tsp",
+          "RecoveryServicesBackup/models.tsp"
+        ]
+      },
+      {
+        "id": "compliance-42853-client-file",
+        "title": "Edited client customizations remain outside client.tsp",
+        "severity": "low",
+        "summary": "The client guide says customizations should always be authored in client.tsp, but the edited @@clientLocation declarations are in back-compatible.tsp.",
+        "documentationUrl": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/",
+        "evidence": [
+          "The decorators correctly customize client hierarchy and language scope.",
+          "Their placement does not follow the documented client.tsp convention."
+        ],
+        "sourcePathIncludes": [
+          "RecoveryServicesBackup/back-compatible.tsp"
+        ]
+      }
+    ]
+  },
+  "43308": {
+    "status": "passed",
+    "documents": [
+      {
+        "title": "Azure.Core decorators",
+        "url": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/decorators/",
+        "section": "@Azure.Core.useFinalStateVia",
+        "guidanceExcerpt": "Overrides the final state value for an operation. The supported values include `location`.",
+        "applicableGuidance": "Use @useFinalStateVia(\"location\") to select the Location-based LRO final-state strategy.",
+        "evidence": "The changed LRO helpers apply @Azure.Core.useFinalStateVia(\"location\").",
+        "sourcePathIncludes": [
+          "lro-helpers.tsp"
+        ]
+      },
+      {
+        "title": "ARM long-running operations",
+        "url": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
+        "section": "Action operations",
+        "guidanceExcerpt": "The `ArmResourceActionAsync` template uses `ArmLroLocationHeader` by default. The `FinalResult` should match the response type of the action.",
+        "applicableGuidance": "Location-polled ARM actions use matching Location headers, Retry-After, and logical final-result types.",
+        "evidence": "The helpers use ArmLroLocationHeader<FinalResult = ...>, RetryAfterHeader, and concrete action result types.",
+        "sourcePathIncludes": [
+          "lro-helpers.tsp",
+          "scenarioConfiguration.tsp",
+          "scenarioRun.tsp",
+          "workspace.tsp"
+        ]
+      },
+      {
+        "title": "Azure Core no-openapi rule",
+        "url": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/",
+        "section": "Rule summary",
+        "guidanceExcerpt": "Azure specs should not be using decorators from @typespec/openapi or @azure-tools/typespec-autorest because other emitters will not be able to understand them.",
+        "applicableGuidance": "Represent behavior with emitter-independent TypeSpec and Azure constructs instead of raw OpenAPI extensions.",
+        "evidence": "The PR removes raw x-ms-long-running-operation extensions and replaces them with Azure.Core LRO metadata.",
+        "sourcePathIncludes": [
+          "lro-helpers.tsp",
+          "scenarioRun.tsp"
+        ]
+      }
+    ]
+  },
+  "43745": {
+    "status": "passed",
+    "documents": [
+      {
+        "title": "Azure Core no-enum rule",
+        "url": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-enum/",
+        "section": "Rule and remediation",
+        "guidanceExcerpt": "Using a union with the base scalar (`string`, `int32`, `int64`, etc.) as a variant instead of an enum makes it extensible.",
+        "applicableGuidance": "Use an open union containing the base scalar and named known values for an extensible service value.",
+        "evidence": "CloudHsmClusterSkuName changes from a suppressed enum to a union containing string and two named variants with unchanged wire values.",
+        "sourcePathIncludes": [
+          "models.tsp"
+        ]
+      }
+    ]
+  },
+  "44200": {
+    "status": "failed",
+    "documents": [
+      {
+        "title": "Adding a Stable Version when the Last Version was Preview",
+        "url": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+        "section": "Making Changes to your TypeSpec spec",
+        "guidanceExcerpt": "Remove the replaced preview version from the version enum.",
+        "applicableGuidance": "A stable release replacing a preview removes the preview member and retargets promoted changes.",
+        "evidence": "The enum retains v2025_10_01_preview and appends stable v2026_03_01.",
+        "sourcePathIncludes": [
+          "main.tsp"
+        ]
+      },
+      {
+        "title": "Private Endpoints",
+        "url": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
+        "section": "Defining a Private Endpoint Connection Resource",
+        "guidanceExcerpt": "Resource providers that support private endpoint connections must declare a private endpoint connection resource type and use the standard `PrivateEndpoints` interface to expose operations.",
+        "applicableGuidance": "Private endpoint connections extend PrivateEndpointConnectionResource and use PrivateEndpoints operations.",
+        "evidence": "The PR manually models PrivateEndpointConnection as ProxyResource and uses generic ArmResource operations.",
+        "sourcePathIncludes": [
+          "main.tsp"
+        ]
+      },
+      {
+        "title": "Private Links",
+        "url": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
+        "section": "Defining a Private Link Resource",
+        "guidanceExcerpt": "Resource providers that support private link resources must declare a private link resource type and use the standard `PrivateLinks` interface to expose operations.",
+        "applicableGuidance": "Private-link discovery uses the standard PrivateLink model and PrivateLinks operation interface.",
+        "evidence": "The PR manually models PrivateLinkResource as ProxyResource and uses generic read/list templates.",
+        "sourcePathIncludes": [
+          "main.tsp"
+        ]
+      },
+      {
+        "title": "TypeSpec Client Generator Core decorators",
+        "url": "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/",
+        "section": "@Azure.ClientGenerator.Core.Legacy.flattenProperty",
+        "guidanceExcerpt": "Set whether a model property should be flattened or not. This decorator is not recommended to use for green field services.",
+        "applicableGuidance": "Do not add legacy flattening to newly introduced API models without an existing compatibility requirement.",
+        "evidence": "The new private endpoint and private link resource properties are flattened for AutoRest and C#.",
+        "sourcePathIncludes": [
+          "back-compatible.tsp",
+          "client.tsp"
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "id": "compliance-44200-stable-after-preview",
+        "title": "The stable version retains the replaced preview version",
+        "severity": "medium",
+        "summary": "The enum keeps v2025_10_01_preview while appending v2026_03_01, contrary to the stable-after-preview procedure.",
+        "documentationUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+        "evidence": [
+          "The documented workflow removes the replaced preview member and retargets promoted changes to stable."
+        ],
+        "sourcePathIncludes": [
+          "main.tsp"
+        ]
+      },
+      {
+        "id": "compliance-44200-private-endpoint",
+        "title": "Private endpoint connections bypass the standard templates",
+        "severity": "medium",
+        "summary": "PrivateEndpointConnection is manually modeled and uses generic operations instead of PrivateEndpointConnectionResource and PrivateEndpoints.",
+        "documentationUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
+        "evidence": [
+          "The official private-endpoint guide requires the standard resource base and PrivateEndpoints interface."
+        ],
+        "sourcePathIncludes": [
+          "main.tsp"
+        ]
+      },
+      {
+        "id": "compliance-44200-private-link",
+        "title": "Private-link discovery bypasses the standard templates",
+        "severity": "medium",
+        "summary": "PrivateLinkResource is manually modeled and uses generic operations instead of PrivateLink and PrivateLinks.",
+        "documentationUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
+        "evidence": [
+          "The official private-link guide requires the standard model and PrivateLinks interface."
+        ],
+        "sourcePathIncludes": [
+          "main.tsp"
+        ]
+      },
+      {
+        "id": "compliance-44200-flattening",
+        "title": "Legacy flattening is applied to newly introduced models",
+        "severity": "low",
+        "summary": "New private endpoint and private link resource properties use a legacy decorator that the reference does not recommend for greenfield types.",
+        "documentationUrl": "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/",
+        "evidence": [
+          "The changed types are newly introduced, so they have no prior flattened SDK contract to preserve."
+        ],
+        "sourcePathIncludes": [
+          "back-compatible.tsp",
+          "client.tsp"
+        ]
+      }
+    ]
+  },
+  "44454": {
+    "status": "failed",
+    "documents": [
+      {
+        "title": "TypeSpec Client Generator Core decorators",
+        "url": "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/",
+        "section": "@Azure.ClientGenerator.Core.clientLocation",
+        "guidanceExcerpt": "Change the operation location in the client. If the target client is not defined, use `string` to indicate a new client name.",
+        "applicableGuidance": "A string target and a supported language scope are valid clientLocation arguments.",
+        "evidence": "The Python-specific @@clientLocation calls use documented string targets and scopes.",
+        "sourcePathIncludes": [
+          "back-compatible.tsp"
+        ]
+      },
+      {
+        "title": "Clients",
+        "url": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/",
+        "section": "Customizations",
+        "guidanceExcerpt": "Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`.",
+        "applicableGuidance": "Client hierarchy customizations belong in client.tsp.",
+        "evidence": "The new customizations are in back-compatible.tsp despite an existing imported client.tsp.",
+        "sourcePathIncludes": [
+          "back-compatible.tsp"
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "id": "compliance-44454-client-file",
+        "title": "New client hierarchy customizations are outside client.tsp",
+        "severity": "low",
+        "summary": "The decorator calls are valid, but their placement in back-compatible.tsp does not follow the documented client.tsp convention.",
+        "documentationUrl": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/",
+        "evidence": [
+          "The project already imports client.tsp, where client hierarchy customizations should be placed."
+        ],
+        "sourcePathIncludes": [
+          "back-compatible.tsp"
+        ]
+      }
+    ]
+  },
+  "44742": {
+    "status": "passed",
+    "documents": [
+      {
+        "title": "TypeSpec.Versioning guide",
+        "url": "https://typespec.io/docs/libraries/versioning/guide/",
+        "section": "Current-state modeling",
+        "guidanceExcerpt": "The TypeSpec should represent the current state of the API.",
+        "applicableGuidance": "Delete declarations that should exist in no API version; use @removed only when retaining them for earlier versions.",
+        "evidence": "The removed NFSv2 declarations existed only in the latest unreleased version and should no longer exist in any version.",
+        "sourcePathIncludes": [
+          "models.tsp"
+        ]
+      }
+    ]
+  },
+  "44882": {
+    "status": "failed",
+    "documents": [
+      {
+        "title": "Adding a Stable Version when the Last Version was Preview",
+        "url": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+        "section": "Making Changes to your TypeSpec spec",
+        "guidanceExcerpt": "Remove the replaced preview version from the version enum.",
+        "applicableGuidance": "The stable version replaces the prior preview member.",
+        "evidence": "The enum retains v2025_05_01_preview and appends v2026_06_01.",
+        "sourcePathIncludes": [
+          "main.tsp"
+        ]
+      },
+      {
+        "title": "TypeSpec Client Generator Core decorators",
+        "url": "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/",
+        "section": "@Azure.ClientGenerator.Core.override",
+        "guidanceExcerpt": "Customize a method's signature in the generated client SDK. Currently, only parameter signature customization is supported.",
+        "applicableGuidance": "Use a language-scoped override operation to customize parameter order.",
+        "evidence": "The Go-only @@override is in client.tsp and reorders the delete operation parameters.",
+        "sourcePathIncludes": [
+          "client.tsp"
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "id": "compliance-44882-stable-after-preview",
+        "title": "The stable version retains the replaced preview version",
+        "severity": "medium",
+        "summary": "The enum keeps v2025_05_01_preview beside v2026_06_01 instead of following the stable-after-preview replacement procedure.",
+        "documentationUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+        "evidence": [
+          "The Go-specific override follows its documentation and is not part of this finding."
+        ],
+        "sourcePathIncludes": [
+          "main.tsp"
+        ]
+      }
+    ]
+  },
+  "44988": {
+    "status": "failed",
+    "documents": [
+      {
+        "title": "ARM resource types and modeling",
+        "url": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
+        "section": "Resource types and child resources",
+        "guidanceExcerpt": "Resources are modeled in TypeSpec by choosing a base resource type, defining rp-specific properties, and optionally mixing in standard envelope properties. Child resources usually use the `ProxyResource<TProperties>` as their base resource type.",
+        "applicableGuidance": "A resource-shaped child chooses a documented ARM base and declares its parent instead of reconstructing the envelope in a legacy plain model.",
+        "evidence": "ConnectionAnalyzer is a plain model with Legacy.customAzureResource and manually repeated ARM envelope fields.",
+        "sourceReferences": [
+          {
+            "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp",
+            "revision": "head",
+            "startLine": 27735,
+            "endLine": 27791,
+            "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp#L27735-L27791"
+          }
+        ]
+      },
+      {
+        "title": "ARM resource operations",
+        "url": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
+        "section": "Recommended operations and custom actions",
+        "guidanceExcerpt": "Custom actions define any operations over resources outside the simple CRUDL (Create, Read, Update, Delete, List) or lifecycle operations described above.",
+        "applicableGuidance": "CRUDL uses ArmResourceRead, ArmResourceCreateOrReplace, ArmTagsPatch or ArmCustomPatch, ArmResourceDelete, and ArmResourceListByParent; actions are reserved for behavior outside CRUDL.",
+        "evidence": "ConnectionAnalyzer PUT, GET, PATCH, and DELETE use Legacy.RoutedOperations action helpers, while list is manually routed.",
+        "sourceReferences": [
+          {
+            "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp",
+            "revision": "head",
+            "startLine": 41,
+            "endLine": 64,
+            "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L41-L64"
+          },
+          {
+            "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp",
+            "revision": "head",
+            "startLine": 470,
+            "endLine": 552,
+            "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L470-L552"
+          }
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "id": "compliance-connection-analyzer-standard-resource-type",
+        "title": "Connection Analyzer does not use a documented ARM base resource type",
+        "severity": "medium",
+        "summary": "The resource-type guidance says an ARM resource is modeled by choosing a base type, but ConnectionAnalyzer is a plain model marked with Legacy.customAzureResource.",
+        "documentationUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
+        "evidence": [
+          "The documented child pattern uses @parentResource and ProxyResource<TProperties> with ResourceNameParameter.",
+          "ConnectionAnalyzer manually repeats id, name, type, location, tags, systemData, and properties."
+        ],
+        "sourceReferences": [
+          {
+            "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp",
+            "revision": "head",
+            "startLine": 27735,
+            "endLine": 27791,
+            "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp#L27735-L27791"
+          }
+        ]
+      },
+      {
+        "id": "compliance-connection-analyzer-standard-resource-operations",
+        "title": "Connection Analyzer does not use the documented ARM resource operation templates",
+        "severity": "medium",
+        "summary": "The new resource-style CRUD and list operations use legacy action helpers and manual routes instead of standard ARM resource-operation templates.",
+        "documentationUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
+        "evidence": [
+          "Official guidance reserves actions for behavior outside CRUDL.",
+          "Exact modern templates exist for all five ConnectionAnalyzer lifecycle operations; only /query is a genuine custom action."
+        ],
+        "sourceReferences": [
+          {
+            "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp",
+            "revision": "head",
+            "startLine": 41,
+            "endLine": 64,
+            "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L41-L64"
+          },
+          {
+            "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp",
+            "revision": "head",
+            "startLine": 470,
+            "endLine": 552,
+            "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L470-L552"
+          }
+        ]
+      }
+    ]
+  },
+  "45348": {
+    "status": "passed",
+    "documents": [
+      {
+        "title": "Azure.ResourceManager decorators",
+        "url": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/decorators/",
+        "section": "@armCommonTypesVersion",
+        "guidanceExcerpt": "This decorator is used either on a namespace or a version enum value to indicate the version of the Azure Resource Manager common-types to use for refs in emitted Swagger files.",
+        "applicableGuidance": "A version enum member may select the ARM common-types version it emits.",
+        "evidence": "Both changed preview members select Azure.ResourceManager.CommonTypes.Versions.v5.",
+        "sourcePathIncludes": [
+          "main.tsp"
+        ]
+      },
+      {
+        "title": "arm-common-types-version rule",
+        "url": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/rules/arm-common-types-version/",
+        "section": "Correct per-version placement",
+        "guidanceExcerpt": "If the common types version is updated in later versions, the decorator should appear on each version enum member.",
+        "applicableGuidance": "Services with varying historical common-types versions use per-version decorators.",
+        "evidence": "The project already uses per-version declarations and the PR preserves that pattern.",
+        "sourcePathIncludes": [
+          "main.tsp"
+        ]
+      }
+    ]
+  },
+  "45536": {
+    "status": "passed",
+    "documents": [
+      {
+        "title": "TypeSpec Client Generator Core decorators",
+        "url": "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/",
+        "section": "@Azure.ClientGenerator.Core.clientName",
+        "guidanceExcerpt": "Overrides the generated name for client SDK elements including clients, methods, parameters, unions, models, enums, and model properties.",
+        "applicableGuidance": "Use a language-scoped @clientName to preserve SDK identifiers without changing service-facing values.",
+        "evidence": "Six augment decorators target union members, provide released Java identifiers, and use the supported java scope.",
+        "sourcePathIncludes": [
+          "client.tsp",
+          "models.tsp"
+        ]
+      },
+      {
+        "title": "Clients",
+        "url": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/",
+        "section": "Customizations and Renaming the Client Name",
+        "guidanceExcerpt": "Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`. This can be achieved with the augment decorator: `@clientName`.",
+        "applicableGuidance": "Client-name compatibility customizations use augment decorators in client.tsp.",
+        "evidence": "The changed @@clientName declarations are in client.tsp and leave serialized union values unchanged.",
+        "sourcePathIncludes": [
+          "client.tsp"
+        ]
+      }
+    ]
+  }
+}

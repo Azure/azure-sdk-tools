@@ -4,9 +4,13 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { renderAssessment } from "./render-assessment.mjs";
+
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const skillRoot = resolve(scriptDirectory, "..");
-const evidenceRoot = resolve(skillRoot, "test-evidence");
+const evidenceRoot = process.argv[2]
+  ? resolve(process.argv[2])
+  : resolve(skillRoot, "test-evidence");
 const assessmentRoot = resolve(evidenceRoot, "assessments");
 const cases = JSON.parse(
   readFileSync(resolve(scriptDirectory, "fixtures", "recent-pr-cases.json")),
@@ -132,153 +136,14 @@ function buildAssessment(item) {
       },
       azureCompliance: {
         status: "not-assessed",
-        reason: "Deferred from MVP.",
+        reason:
+          "Historical fixture predates documentation-grounded compliance evidence.",
+        documents: [],
+        findings: [],
       },
     },
     errors: item.errors,
   };
-}
-
-function sourceLinks(references) {
-  return references
-    .map(
-      (reference) =>
-        `[${reference.path}:L${reference.startLine}-L${reference.endLine}](${reference.link})`,
-    )
-    .join(", ");
-}
-
-function describeLro(lro) {
-  if (!lro.isLongRunning) return "No.";
-  return [
-    `Yes (${lro.pattern})`,
-    `final-state-via: ${lro.finalStateVia}`,
-    `polling: ${lro.polling}`,
-    `final result: ${lro.finalResult}`,
-  ].join("; ");
-}
-
-function describePaging(paging) {
-  if (!paging.isPaged) return "No.";
-  return [
-    `Yes; item type: ${paging.itemType}`,
-    paging.itemsProperty ? `items property: ${paging.itemsProperty}` : null,
-    `continuation field: ${paging.nextLinkName}`,
-    paging.continuation,
-  ]
-    .filter(Boolean)
-    .join("; ");
-}
-
-function findingSection(findings, incompleteMessage) {
-  if (findings.length === 0) {
-    return incompleteMessage ?? "None detected.";
-  }
-  return findings
-    .map(
-      (finding) => `### ${finding.title}
-
-- **Severity:** ${finding.severity}
-- **Confidence:** ${finding.confidence}
-- **Summary:** ${finding.summary}
-- **Evidence:** ${finding.evidence.join("; ")}
-- **TypeSpec source:** ${sourceLinks(finding.sourceReferences)}`,
-    )
-    .join("\n\n");
-}
-
-function buildMarkdown(assessment) {
-  const semantic = assessment.dimensions.semanticUnderstanding.items[0];
-  const operations = semantic.restRepresentation.operations
-    .map(
-      (operation) => `#### \`${operation.operationId}\`
-
-- **HTTP path:** \`${operation.signature}\`
-- **API versions:** ${operation.apiVersions.map((version) => `\`${version}\``).join(", ")}
-- **Parameters:** ${operation.parameters.join("; ") || "None."}
-- **Request payload:** ${operation.requestPayload}
-- **Response payloads:** ${operation.responsePayloads.join("; ")}
-- **Service behavior:** ${operation.serviceBehavior}
-- **LRO:** ${describeLro(operation.lro)}
-- **Paging:** ${describePaging(operation.paging)}
-- **TypeSpec source:** ${sourceLinks(operation.sourceReferences)}`,
-    )
-    .join("\n\n");
-  const incompleteMessage =
-    assessment.errors.length > 0
-      ? "Not fully assessed because compilation did not complete; see Assessment Errors."
-      : undefined;
-  const emitterRuns = assessment.assessmentEvidence.emitterRuns
-    .map(
-      (run) =>
-        `| \`${run.project}\` | ${run.revision} | \`${run.emitter}\` (\`${run.emitterId}\`) | ${run.output} | ${run.status} | ${run.evidence} |`,
-    )
-    .join("\n");
-  const changedTypeSpec = assessment.assessmentEvidence.changedTypeSpec
-    .map((reference) => `- ${sourceLinks([reference])}`)
-    .join("\n");
-
-  return `# TypeSpec Assessment
-
-**PR:** [#${assessment.pr} — ${assessment.title}](${assessment.url})
-
-**Overall confidence:** ${assessment.overallConfidence}
-
-**Baseline:** \`${assessment.baseline.commit}\`  
-**Head:** \`${assessment.head.commit}\`
-
-## Semantic Understanding
-
-### Intent: ${semantic.intent}
-
-**Confidence:** ${semantic.confidence}
-
-**Transformation chain:**
-
-${semantic.transformationChain.map((step, index) => `${index + 1}. ${step}`).join("\n")}
-
-**REST representation:** ${semantic.restRepresentation.summary}
-
-${operations}
-
-## REST Breaking Changes
-
-${findingSection(assessment.dimensions.restBreakingChanges.findings, incompleteMessage)}
-
-## REST-Compatible Downstream Breaking Changes
-
-${findingSection(assessment.dimensions.restCompatibleDownstreamBreakingChanges.findings, incompleteMessage)}
-
-## Azure Compliance
-
-\`not-assessed\` — Deferred from MVP.
-
-## Assessment Errors
-
-${assessment.errors.length === 0 ? "None." : assessment.errors.map((error) => `- ${error}`).join("\n")}
-
-## Assessment Evidence
-
-**Compared revisions:**
-
-- **Baseline:** \`${assessment.baseline.commit}\`
-- **Head:** \`${assessment.head.commit}\`
-- **Changed TypeSpec:**
-
-${changedTypeSpec}
-
-### Emitter Runs
-
-| Project | Revision | Emitter | Output | Status | Evidence |
-| --- | --- | --- | --- | --- | --- |
-${emitterRuns}
-
-### Artifact Evidence
-
-- **AutoRest:** ${assessment.artifactEvidence.autorest}
-- **TCGC:** ${assessment.artifactEvidence.tcgc}
-- **Source-only evidence:** TypeSpec decorators and declarations were inspected at the changed-source links above.
-`;
 }
 
 mkdirSync(assessmentRoot, { recursive: true });
@@ -293,7 +158,7 @@ for (const assessment of assessments) {
   );
   writeFileSync(
     resolve(outputDirectory, "assessment.md"),
-    buildMarkdown(assessment),
+    renderAssessment(assessment),
   );
 }
 

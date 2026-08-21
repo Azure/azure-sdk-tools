@@ -1,95 +1,39 @@
 # Markdown Assessment Template
 
-```markdown
-# TypeSpec Assessment
+Render the report from `assessment.json` with `scripts/render-assessment.mjs`.
+The Markdown is assessment-first and preserves complete evidence in appendices.
+Prefix the report title and each second-level section heading with its
+renderer-defined icon so the major sections are easier to scan. Keep
+third-level detail headings unadorned.
 
-**Overall confidence:** `<high|medium|low>`
+## Required order
 
-## Semantic Understanding
+1. **Executive Summary** — dimension status table, confidence, time, intent
+   count, operation count, and project count. Do not derive or display a single
+   top-level assessment decision. List Semantic Understanding first, followed
+   by REST compatibility, downstream compatibility, and Azure compliance.
+   Display the derived `🟢 High`/`🟡 Medium`/`🔴 Low` overall code-safety
+   indicator and `🟢 high`/`🟡 medium`/`🔴 low` overall confidence. Prefix
+   dimension results with pass, fail, or not-assessed icons.
+2. **Action Required** — severity-ordered findings with concise code and
+   guidance links. State that no action is required when empty.
+3. **Semantic Understanding** — begin with a Change Overview table containing
+   one row per semantic intent, operation count, method/LRO/paging shape, API
+   versions, linked finding count, and detail anchor. Then group complete
+   operation details under an **Operation Details** heading, organized by
+   intent and including confidence, concise REST summary, parameters, payloads,
+   responses, service behavior, LRO, paging, and TypeSpec source. Do not render
+   the internal transformation chain.
+4. **Compatibility Assessment** — REST findings first, then REST-compatible
+   downstream findings, or explicit evidence-backed empty results.
+5. **Azure Compliance** — status and source-linked compliance findings.
+6. **Appendix** — assessment errors, code-to-guidance evidence, timing,
+   emitters/libraries used, repository validation, artifact evidence, and
+   changed sources grouped by file. The code-to-guidance table contains the
+   fetched excerpt, observed TypeSpec, result, source, and URL. Tooling
+   presentation lists names only; do not expose per-run emitter status or
+   output.
 
-### Intent: 
-
-<change summary>
-
-**Confidence:** <high|medium|low>
-
-**Transformation chain:**
-
-1. <TypeSpec edit>
-2. <resulting REST or client behavior>
-
-**REST representation:** <summary>
-
-#### `<operationId>`
-
-- **HTTP path:** `<METHOD> <complete path>`
-- **API versions:** `<versions>`
-- **Parameters:** `<location, wire name, type, requiredness, default>`
-- **Request payload:** `<content type and model, or none>`
-- **Response payloads:** `<status, content type, model, relevant headers>`
-- **Service behavior:** `<domain behavior>`
-- **LRO:** `<pattern, polling, terminal states, final result, or no>`
-- **Paging:** `<items, nextLink/marker, continuation behavior, or no>`
-- **TypeSpec source:** `[path:Lx-Ly](path#Lx-Ly)`
-
-## REST Breaking Changes
-
-### <finding title>
-
-- **Severity:** <high|medium|low>
-- **Confidence:** <high|medium|low>
-- **Summary:** <wire compatibility impact>
-- **Evidence:** <AutoRest and source evidence>
-- **TypeSpec source:** `[path:Lx-Ly](path#Lx-Ly)`
-
-## REST-Compatible Downstream Breaking Changes
-
-### <finding title>
-
-- **Severity:** <high|medium|low>
-- **Confidence:** <high|medium|low>
-- **Summary:** <SDK or client impact while REST remains compatible>
-- **Evidence:** <TCGC and source evidence>
-- **TypeSpec source:** `[path:Lx-Ly](path#Lx-Ly)`
-
-## Azure Compliance
-
-`not-assessed` — Deferred from MVP.
-
-## Document Quality
-
-`not-assessed` — Deferred from MVP.
-
-## Assessment Errors
-
-<Compilation blockers, or “None”>
-
-## Assessment Evidence
-
-**Compared revisions:**
-
-- **Baseline:** `<ref and commit>`
-- **Head:** `<commit and working-tree state>`
-- **Changed TypeSpec:** `[path:Lx-Ly](path#Lx-Ly)`
-
-### Emitter Runs
-
-| Project | Revision | Emitter | Output | Status | Evidence |
-| --- | --- | --- | --- | --- | --- |
-| `<project>` | baseline | `@azure-tools/typespec-autorest` (`autorest`) | OpenAPI | `<succeeded|failed>` | `<artifact directory and compile log>` |
-| `<project>` | baseline | `@azure-tools/typespec-client-generator-core` (`tcgc`, generic) | SDK metadata | `<succeeded|failed>` | `<artifact directory and compile log>` |
-| `<project>` | head | `@azure-tools/typespec-autorest` (`autorest`) | OpenAPI | `<succeeded|failed>` | `<artifact directory and compile log>` |
-| `<project>` | head | `@azure-tools/typespec-client-generator-core` (`tcgc`, generic) | SDK metadata | `<succeeded|failed>` | `<artifact directory and compile log>` |
-
-Repeat the four rows for every affected project.
-
-### Artifact Evidence
-
-- **AutoRest:** `<relevant base/head OpenAPI differences, or no wire difference>`
-- **TCGC:** `<relevant base/head generic SDK metadata differences, or no client-shape difference>`
-- **Source-only evidence:** `<scoped decorators or behavior not represented by the generic TCGC output, or none>`
-```
-
-Repeat the operation subsection for every affected operation and the finding
-subsection for every finding. Use baseline links for deleted TypeSpec. State
-“None detected” only when compilation and analysis completed successfully.
+The summary links to details rather than duplicating long evidence. Keep the
+JSON as the machine-readable source of truth. Never omit operation or source
+evidence to shorten Markdown.

@@ -1,0 +1,146 @@
+# 📋 TypeSpec Assessment
+
+**PR:** [#43745 - Updated CloudHsmClusterSkuName from closed enum to extensible enum](https://github.com/Azure/azure-rest-api-specs/pull/43745)
+
+**Overall confidence:** 🟢 high<br>
+**Overall code safety:** 🔴 Low
+
+**Baseline:** `a6887d2260f26285d4b1f5fba97da370be9200b4`<br>
+**Head:** `71ce7d0c524c4bea7bc737836684acd53f343147`; working-tree changes: false<br>
+**Assessment time:** 2m 33s
+
+## 📌 Executive Summary
+
+| Dimension | Result | Findings |
+| --- | --- | ---: |
+| Semantic understanding | ✅ Assessed — 1 intent(s), 3 operation(s) | n/a |
+| REST compatibility | ✅ No breaks detected | 0 |
+| Downstream compatibility | ❌ Issues found | 1 |
+| Azure compliance | ⚠️ not-assessed | 0 |
+
+**Scope:** 1 intent(s), 3 affected operation(s), 1 project(s).<br>
+**Highest severity:** high.
+
+## 🎯 Action Required
+
+| Severity | Area | Finding | Why it matters | Code | Guidance |
+| --- | --- | --- | --- | --- | --- |
+| high | Downstream | Generated closed enum becomes an extensible string-backed shape | REST becomes more permissive, but generated enum typing, construction, comparison, and exhaustive handling can change. | [models.tsp:L283-L296](https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L283-L296) | n/a |
+
+## 🧠 Semantic Understanding
+
+### Change Overview
+
+| # | Intent | Operations | Shape | API versions | Linked findings | Details |
+| ---: | --- | ---: | --- | --- | --- | --- |
+| 1 | Make CloudHsmClusterSkuName forward-compatible by changing it from a closed enum to an extensible string union. | 3 | PUT/GET · 1 LRO · 1 paged | 2025-03-31 | 1 finding(s) | [details](#intent-1-make-cloudhsmclusterskuname-forward-compatible-b) |
+
+### Operation Details
+
+<a id="intent-1-make-cloudhsmclusterskuname-forward-compatible-b"></a>
+### 1. Make CloudHsmClusterSkuName forward-compatible by changing it from a closed enum to an extensible string union.
+
+**Confidence:** high<br>
+**REST summary:** The same known strings remain valid and unknown strings become allowed; OpenAPI x-ms-enum modelAsString changes from false to true.
+
+#### `CloudHsmClusters_CreateOrUpdate`
+
+- **HTTP path:** `PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}`
+- **API versions:** `2025-03-31`
+- **Parameters:** path subscriptionId, resourceGroupName, cloudHsmClusterName: string, required; query api-version: string, required
+- **Request payload:** application/json body: CloudHsmCluster with sku.name
+- **Response payloads:** 200 or 201: CloudHsmCluster; default: ErrorResponse
+- **Service behavior:** Creates or replaces a Cloud HSM cluster using the requested SKU.
+- **LRO:** arm; via azure-async-operation; Poll the emitted async endpoint after Retry-After until a terminal state.; final result: Use the final response contract described for this operation.
+- **Paging:** No.
+- **TypeSpec source:** [models.tsp:L283-L296](https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L283-L296)
+
+#### `CloudHsmClusters_Get`
+
+- **HTTP path:** `GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}`
+- **API versions:** `2025-03-31`
+- **Parameters:** path subscriptionId, resourceGroupName, cloudHsmClusterName: string, required; query api-version: string, required
+- **Request payload:** none
+- **Response payloads:** 200: CloudHsmCluster; default: ErrorResponse
+- **Service behavior:** Returns a Cloud HSM cluster and its SKU.
+- **LRO:** No.
+- **Paging:** No.
+- **TypeSpec source:** [models.tsp:L283-L296](https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L283-L296)
+
+#### `CloudHsmClusters_ListByResourceGroup`
+
+- **HTTP path:** `GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters`
+- **API versions:** `2025-03-31`
+- **Parameters:** path subscriptionId and resourceGroupName: string, required; query api-version: string, required
+- **Request payload:** none
+- **Response payloads:** 200: CloudHsmClusterListResult; default: ErrorResponse
+- **Service behavior:** Lists Cloud HSM clusters and their SKU values in one resource group.
+- **LRO:** No.
+- **Paging:** CloudHsmCluster; nextLink; GET the opaque nextLink until it is absent.
+- **TypeSpec source:** [models.tsp:L283-L296](https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L283-L296)
+## 🛡️ Compatibility Assessment
+
+### REST Breaking Changes
+
+None detected.
+
+### REST-Compatible Downstream Breaking Changes
+
+### Generated closed enum becomes an extensible string-backed shape
+
+- **Severity:** high
+- **Confidence:** high
+- **Summary:** REST becomes more permissive, but generated enum typing, construction, comparison, and exhaustive handling can change.
+- **Evidence:** AutoRest sets modelAsString to true.; TCGC changes enum member metadata.
+- **TypeSpec source:** [models.tsp:L283-L296](https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L283-L296)
+
+
+## ☁️ Azure Compliance
+
+**Status:** `not-assessed`
+
+The shared catalog explains enums and models but does not document the Azure extensible-enum pattern used to allow unknown SKU values.
+
+### Compliance Findings
+
+No compliance mismatches found.
+
+## 📎 Appendix
+
+### Assessment Errors
+
+None.
+
+### Code-to-Guidance Evidence
+
+| Result | Document section | Fetched guidance | Observed TypeSpec | Evidence |
+| --- | --- | --- | --- | --- |
+| Matched | [Enums - Custom enum values](https://typespec.io/docs/language-basics/enums/) | You can assign custom values to enum members using the `:` operator. | The known SKU values retain their explicit wire representations. | [models.tsp:L283-L296](https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L283-L296), [models.tsp:L286-L293](specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293) |
+
+### Timing
+
+- **Toolchain setup:** 1m 23s
+- **Preparation:** 1m 9s
+- **Documentation assessment:** 1s
+- **Total attributed time:** 2m 33s
+
+
+### Tooling Used
+
+- `@azure-tools/typespec-autorest`
+- `@azure-tools/typespec-client-generator-core`
+
+### Repository Validation
+
+| Project | Tool | Status | Duration | Log |
+| --- | --- | --- | ---: | --- |
+| `specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules` | `TypeSpecValidation` | succeeded | 25s | `validation-logs/specification__hardwaresecuritymodules__resource-manager__Microsoft.HardwareSecurityModules__HardwareSecurityModules-head.log` |
+
+### Artifact Evidence
+
+- **autorest:** base/head succeeded; modelAsString changes false to true
+- **tcgc:** base/head succeeded; enum metadata and StandardB10 definition identity change
+
+### Changed TypeSpec
+
+- `specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp`: [models.tsp:L286-L293](specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293)

@@ -10,7 +10,9 @@ from config.tenant_config import TenantID
 from models.chat import ChatRequest, Message
 from models.conversation import Role
 from tools import tool
-from services.chat_service import ChatService
+
+if TYPE_CHECKING:
+    from services.chat_service import ChatService
 
 
 class ValidateAgentResponseResult(BaseModel):

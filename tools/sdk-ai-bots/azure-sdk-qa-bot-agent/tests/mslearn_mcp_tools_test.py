@@ -17,9 +17,13 @@ async def test_create_mslearn_mcp_tool() -> None:
         name="microsoft-learn",
         url="https://learn.microsoft.com/api/mcp",
         description=(
-            "Search and fetch current official Microsoft Learn documentation "
-            "and Microsoft code samples."
+            "Search and fetch public Azure MCP Server documentation only. "
+            "Scope searches to learn.microsoft.com/azure/developer/azure-mcp-server/ "
+            "and fetch only results under that path. Do not use this tool for "
+            "internal onboarding, merge requirements, team process, support history, "
+            "or prior decisions."
         ),
+        allowed_tools=["microsoft_docs_search", "microsoft_docs_fetch"],
         approval_mode="never_require",
         load_prompts=False,
         request_timeout=30,

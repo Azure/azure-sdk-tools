@@ -1,5 +1,7 @@
 """Tests for tenant skill and knowledge-source configuration."""
 
+from pathlib import Path
+
 from config.tenant_config import (
     SRC_AZURE_MCP_SERVER_DOCS,
     TenantID,
@@ -53,9 +55,34 @@ def test_azure_mcp_server_source_resolves_repository_paths() -> None:
     source = get_knowledge_source(SRC_AZURE_MCP_SERVER_DOCS)
 
     assert source is not None
+    assert "team Q&A" in source.description
+    assert "onboarding and merge practices" in source.description
     assert source.get_link("servers/Azure.Mcp.Server/README.md") == (
         "https://github.com/microsoft/mcp/blob/main/servers/Azure.Mcp.Server/README.md"
     )
     assert source.get_link("docs/Authentication.md") == (
         "https://github.com/microsoft/mcp/blob/main/docs/Authentication.md"
     )
+
+
+def test_azure_mcp_server_instruction_selects_sources_by_question() -> None:
+    instruction_path = (
+        Path(__file__).parents[1]
+        / "agents"
+        / "azure_mcp_server_agent"
+        / "instruction.md"
+    )
+    instruction = instruction_path.read_text(encoding="utf-8")
+
+    assert "Use Microsoft Learn for public setup" in instruction
+    assert "Use GitHub MCP for source code" in instruction
+    assert "raw.githubusercontent.com" in instruction
+    assert "rather than `web_fetch`" in instruction
+    assert "Use the Azure MCP knowledge source for team guidance" in instruction
+    assert "Preserve concrete distinctions and requirements" in instruction
+    assert "answer from it" in instruction
+    assert "not to broaden the scope or introduce unsupported requirements" in instruction
+    assert "only details that materially affect the recommendation or next action" in instruction
+    assert "instead of reproducing exhaustive checklists" in instruction
+    assert "Lead with a direct answer" in instruction
+    assert "Prefer short bullets with one idea each" in instruction

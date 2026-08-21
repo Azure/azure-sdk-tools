@@ -310,7 +310,7 @@ _register(
     # -- Azure MCP Server --
     KnowledgeSource(
         name=SRC_AZURE_MCP_SERVER_DOCS,
-        description="Official Azure MCP Server documentation covering setup, commands, authentication, prompt templates, sovereign clouds, troubleshooting, known issues, support, and release changes.",
+        description="Curated Azure MCP Server documentation and team Q&A covering setup, authentication, onboarding and merge practices, support history, troubleshooting, and release changes.",
         base_url="https://github.com/microsoft/mcp/blob/main/",
     ),
 )

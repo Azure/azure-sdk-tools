@@ -60,6 +60,7 @@ class _FakeSearchClient:
 
     calls: list[tuple[str, str, str | None]] = field(default_factory=list)
     failing: set[str] = field(default_factory=set)
+    candidate_top_k: int = 20
 
     async def _run(self, kind, query, source_filters, extra_filter):
         self.calls.append((kind, query, extra_filter))
@@ -70,10 +71,10 @@ class _FakeSearchClient:
     async def agentic_search(self, query, source_filters, extra_filter=None):
         return await self._run("agentic", query, source_filters, extra_filter)
 
-    async def vector_search(self, query, source_filters, extra_filter=None):
+    async def vector_search(self, query, source_filters, top_k=None, extra_filter=None):
         return await self._run("vector", query, source_filters, extra_filter)
 
-    async def keyword_search(self, query, source_filters, extra_filter=None):
+    async def keyword_search(self, query, source_filters, top_k=None, extra_filter=None):
         return await self._run("keyword", query, source_filters, extra_filter)
 
     def fused_search(self, *args, **kwargs):
@@ -105,3 +106,16 @@ def test_fused_search_survives_a_failing_retriever():
     # Keyword results still come back, ordered by that retriever alone.
     assert [c.chunk_id for c in fused] == ["keyword-q-1", "keyword-q-2"]
 
+
+class _OverlapSearchClient(_FakeSearchClient):
+    async def vector_search(self, query, source_filters, top_k=None, extra_filter=None):
+        return [_chunk("shared"), _chunk(f"vector-{query}")]
+
+    async def keyword_search(self, query, source_filters, top_k=None, extra_filter=None):
+        return [_chunk(f"keyword-{query}"), _chunk("shared")]
+
+
+def test_fused_search_rewards_hits_retrieved_across_queries():
+    client = _OverlapSearchClient()
+    fused = asyncio.run(client.fused_search(["concrete", "abstract"], {"s": "f"}))
+    assert fused[0].chunk_id == "shared"

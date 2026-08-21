@@ -39,13 +39,21 @@ State lives in a manifest blob in the wiki container, holding a content hash plu
 4. **Re-synthesises an entity/concept page** only when its group gained or lost a source document, or when its members' descriptions changed. One changed document therefore touches only the groups that reference it.
 5. **Uploads a page only when its rendered content changed.** Pages whose sources are gone are soft-deleted via `IsDeleted` blob metadata — the same convention the knowledge sync uses, so the shared indexer drops them. Documents whose summary generation failed have their stored hash cleared so the next run retries them.
 
+The manifest also records a generation fingerprint containing the synthesis
+model, prompt hashes, minimum-document threshold, manifest version, and build
+logic version. Changing any of them automatically invalidates cached
+extractions and pages. A transient entity/concept synthesis failure preserves
+the prior active page and leaves it marked for retry.
+
 The first run against an empty manifest is a full build.
 
 The build only writes blobs; `azure-sdk-knowledge-wiki-indexer` projects them into the search index on its own daily schedule, so a fresh build is not queryable until the indexer runs.
 
 ### Full rebuild
 
-Reconcile diffs by **source** content hash, so editing a prompt in `prompts/` does not invalidate any existing page. To make prompt changes take effect, force a full rebuild:
+Prompt, model, and build-logic changes invalidate cached generation
+automatically. To recreate the physical wiki blobs and search documents from a
+clean state:
 
 1. Delete every blob in the wiki container (this removes the manifest, so the next run treats the corpus as new).
 2. Delete the wiki documents from the shared index — everything matching `page_type ne null`; raw knowledge chunks have a null `page_type` and must be left alone.
@@ -74,7 +82,7 @@ Settings are read from the environment first and then from Azure App Configurati
 | `STORAGE_KNOWLEDGE_CONTAINER` | `knowledge` | source knowledge container |
 | `STORAGE_WIKI_OUTPUT_CONTAINER` | `wiki` | generated wiki container |
 | `AZURE_OPENAI_ENDPOINT` | — | Azure OpenAI endpoint |
-| `WIKI_SYNTHESIS_DEPLOYMENT` | `gpt-5.4` | chat deployment |
+| `WIKI_SYNTHESIS_DEPLOYMENT` | `gpt-5.6-sol` | chat deployment |
 | `STORAGE_ACCOUNT_RESOURCE_ID` | — | storage account the indexer reads (setup only) |
 | `SEARCH_USER_ASSIGNED_IDENTITY_RESOURCE_ID` | — | identity the indexer runs as (setup only) |
 

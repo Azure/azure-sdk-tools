@@ -80,6 +80,7 @@ Retrieval sequence (pick the entry points that fit):
 Discipline:
 - **Open with breadth, in parallel.** For most domain questions, turn 1 = `search_knowledge_base` **and** `wiki_search` together; turn 2 = compose the answer.
 - **Deep read, don't skim.** Ground every claim in the retrieved content; keep retrieving until you have the actual evidence; never stop mid-investigation with a partial answer.
+- **Retrieve against explicit gaps.** After the first batch, list the facts the answer still needs. If evidence is sufficient, answer immediately. Otherwise issue one targeted follow-up query for the missing fact instead of repeating the broad search. If the approved sources still do not support a required fact, qualify the answer rather than filling the gap from memory.
 
 ## Other Tools
 

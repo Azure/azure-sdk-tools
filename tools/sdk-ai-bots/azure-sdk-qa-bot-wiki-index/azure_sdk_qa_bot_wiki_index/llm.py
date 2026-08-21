@@ -46,6 +46,11 @@ class ChatLLM:
         self._deployment = deployment
         self._reasoning = deployment.lower().startswith(("gpt-5", "gpt5", "o1", "o3", "o4"))
 
+    @property
+    def deployment(self) -> str:
+        """Return the deployment identity used to generate wiki content."""
+        return self._deployment
+
     def _create(self, system: str, user: str, max_tokens: int, json_mode: bool = False):
         kwargs: dict = {
             "model": self._deployment,

@@ -15,7 +15,7 @@ from config.tenant_config import (
     get_tenant_config,
 )
 from config.app_config import get as cfg
-from models.knowledge import Reference, SearchKnowledgeBaseResult
+from models.knowledge import KnowledgeChunk, Reference, SearchKnowledgeBaseResult
 from tools import tool
 from utils.azure_ai_search import (
     NON_WIKI_FILTER,
@@ -38,7 +38,8 @@ _WIKI_ONLY_SOURCES = (SRC_WIKI_ENTITY, SRC_WIKI_CONCEPT)
 _WIKI_TOP = 6
 _WIKI_NEIGHBORS = 8
 # Source chunks each kept page is routed back to, for grounded detail.
-_WIKI_ROUTE_PER_PAGE = 3
+_WIKI_ROUTE_PER_PAGE = 8
+_WIKI_ROUTE_MAX_REFS = 48
 _WIKI_ROUTE_MAX_TOTAL = 12
 
 # Shared by both retrieval tracks so the agent picks a strategy the same way.
@@ -267,13 +268,16 @@ class KnowledgeTools:
             c for c in search_client.deduplicate_chunks(raw)
             if c.page_type in ("summary", "entity", "concept")
         ]
-        unique.sort(key=lambda c: c.rerank_score, reverse=True)
-        wiki_pages = unique[:_WIKI_TOP]
-        neighbors = unique[_WIKI_TOP : _WIKI_TOP + _WIKI_NEIGHBORS]
+        page_hits = _deduplicate_wiki_pages(unique)
+        page_hits.sort(key=lambda c: c.rerank_score, reverse=True)
+        wiki_pages = page_hits[:_WIKI_TOP]
+        neighbors = page_hits[_WIKI_TOP : _WIKI_TOP + _WIKI_NEIGHBORS]
         # Route each page to the SOURCE chunks it was built from (grounded detail).
         routed = await search_client.backfill_wiki_sources(
             wiki_pages,
+            queries=capped_queries,
             per_page=_WIKI_ROUTE_PER_PAGE,
+            max_refs=_WIKI_ROUTE_MAX_REFS,
             max_total=_WIKI_ROUTE_MAX_TOTAL,
             source_filter=_combined_source_filter(source_filters),
         )
@@ -382,6 +386,17 @@ def _truncate_content(content: str | None) -> str:
     if len(content) <= _MAX_CONTENT_CHARS_PER_RESULT:
         return content
     return content[:_MAX_CONTENT_CHARS_PER_RESULT] + "\n... [truncated]"
+
+
+def _deduplicate_wiki_pages(chunks: list[KnowledgeChunk]) -> list[KnowledgeChunk]:
+    """Keep the strongest chunk hit for each synthesized wiki page."""
+    best: dict[tuple[str, str, str], KnowledgeChunk] = {}
+    for chunk in chunks:
+        key = (chunk.page_type, chunk.source, chunk.title)
+        prior = best.get(key)
+        if prior is None or chunk.rerank_score > prior.rerank_score:
+            best[key] = chunk
+    return list(best.values())
 
 
 def _build_reference_title(

@@ -43,7 +43,7 @@ async def _run(args: argparse.Namespace) -> int:
             return 0
 
         aoai = build_azure_openai_client(cfg("AZURE_OPENAI_ENDPOINT"))
-        llm = ChatLLM(aoai, cfg("WIKI_SYNTHESIS_DEPLOYMENT", "gpt-5.4"))
+        llm = ChatLLM(aoai, cfg("WIKI_SYNTHESIS_DEPLOYMENT", "gpt-5.6-sol"))
 
         # Incremental reconcile against the wiki container (durable + rebuildable).
         wiki_container = cfg("STORAGE_WIKI_OUTPUT_CONTAINER", "wiki")

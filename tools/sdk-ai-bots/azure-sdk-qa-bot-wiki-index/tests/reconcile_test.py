@@ -58,8 +58,9 @@ class _FakeContainer:
 class _FakeLLM:
     """Deterministic stand-in: summary echoes title; extraction/synth are canned."""
 
-    def __init__(self, extraction):
+    def __init__(self, extraction, deployment="gpt-5.6-sol"):
         self._extraction = extraction
+        self.deployment = deployment
 
     def complete(self, system, user, max_tokens=600):
         return f"BODY for {user.splitlines()[0]}"
@@ -123,6 +124,22 @@ def test_first_run_full_build_then_noop():
     assert s2.summaries_regenerated == 0
     assert s2.groups_synthesized == 0
     assert s2.pages_deleted == 0
+
+
+def test_model_change_invalidates_cached_generation():
+    cc = _FakeContainer()
+    corpus = _corpus()
+    asyncio.run(reconcile(cc, corpus, _FakeLLM(_EXTRACTION, "old-model"), min_docs=2))
+
+    s = asyncio.run(
+        reconcile(cc, corpus, _FakeLLM(_EXTRACTION, "gpt-5.6-sol"), min_docs=2)
+    )
+
+    assert s.changed_docs == 2
+    assert s.summaries_regenerated == 2
+    assert s.groups_synthesized == 2
+    man = json.loads(cc.store["_manifest.json"]["data"].decode("utf-8"))
+    assert man["build"]["model"] == "gpt-5.6-sol"
 
 
 def test_doc_delete_soft_deletes_summary_and_shrinks_groups():
@@ -202,6 +219,78 @@ def test_empty_summary_is_retried_on_the_next_run():
     # a healthy run over the same corpus regenerates the summaries
     s2 = asyncio.run(reconcile(cc, corpus, _FakeLLM(_EXTRACTION), min_docs=2))
     assert s2.summaries_regenerated == 2
+
+
+class _InvalidExtractionLLM(_FakeLLM):
+    def complete_json(self, system, user, max_tokens=900):
+        return None
+
+
+def test_invalid_extraction_is_retried_on_the_next_run():
+    cc = _FakeContainer()
+    corpus = _corpus()
+
+    asyncio.run(reconcile(cc, corpus, _InvalidExtractionLLM(_EXTRACTION), min_docs=2))
+    man = json.loads(cc.store["_manifest.json"]["data"].decode("utf-8"))
+    assert all(e["hash"] == "" for e in man["sources"].values())
+
+    s = asyncio.run(reconcile(cc, corpus, _FakeLLM(_EXTRACTION), min_docs=2))
+    assert s.changed_docs == 2
+    assert s.groups_synthesized == 2
+
+
+class _GroupFailureLLM(_FakeLLM):
+    def complete(self, system, user, max_tokens=600):
+        if user.startswith("Name: "):
+            return ""
+        return super().complete(system, user, max_tokens=max_tokens)
+
+
+def test_group_failure_preserves_prior_page_and_retries():
+    cc = _FakeContainer()
+    corpus = _corpus()
+    asyncio.run(reconcile(cc, corpus, _FakeLLM(_EXTRACTION), min_docs=2))
+    changed_extraction = {
+        "entities": [
+            {
+                "name": "@added",
+                "type": "decorator",
+                "description": "adds a versioned member",
+            }
+        ],
+        "concepts": [
+            {
+                "name": "versioning",
+                "description": "api versioning rules and exceptions",
+            }
+        ],
+    }
+    changed_corpus = [(path, text + " changed") for path, text in corpus]
+
+    failed = asyncio.run(
+        reconcile(
+            cc,
+            changed_corpus,
+            _GroupFailureLLM(changed_extraction),
+            min_docs=2,
+        )
+    )
+    man = json.loads(cc.store["_manifest.json"]["data"].decode("utf-8"))
+    active_groups = [
+        page
+        for page in man["pages"].values()
+        if page["page_type"] in ("entity", "concept")
+        and page.get("is_deleted") != "true"
+    ]
+    assert failed.pages_deleted == 0
+    assert len(active_groups) == 2
+    assert all(page["content"] for page in active_groups)
+    assert all(page["input_hash"] == "" for page in active_groups)
+
+    retried = asyncio.run(
+        reconcile(cc, changed_corpus, _FakeLLM(changed_extraction), min_docs=2)
+    )
+    assert retried.groups_synthesized == 2
 
 
 def test_tombstoned_pages_drop_their_body():

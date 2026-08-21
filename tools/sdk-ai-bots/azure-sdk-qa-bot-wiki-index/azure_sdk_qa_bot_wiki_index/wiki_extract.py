@@ -65,6 +65,8 @@ def extract_doc(llm: ChatLLM, source_ref: str, text: str) -> DocExtraction:
         out.failed = True
         return out
     if not isinstance(parsed, dict):
+        logger.warning("extract_doc returned invalid JSON for %s", source_ref)
+        out.failed = True
         return out
     for e in parsed.get("entities", []) or []:
         if isinstance(e, dict) and _norm(e.get("name")):

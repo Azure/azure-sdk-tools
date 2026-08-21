@@ -144,6 +144,10 @@ class SearchClient:
         self._knowledge_base_name = cfg("AI_SEARCH_KNOWLEDGE_BASE", "")
         self._knowledge_source_name = cfg("AI_SEARCH_KNOWLEDGE_SOURCE", "")
         self._top_k = int(cfg("AI_SEARCH_TOPK", "5"))
+        self._candidate_top_k = max(
+            self._top_k,
+            int(cfg("AI_SEARCH_CANDIDATE_TOPK", str(max(self._top_k * 4, 20)))),
+        )
         self._credential = get_credential()
         self._kb_client = KnowledgeBaseRetrievalClient(
             self._endpoint,
@@ -160,6 +164,11 @@ class SearchClient:
     def top_k(self) -> int:
         """The configured top-k result limit."""
         return self._top_k
+
+    @property
+    def candidate_top_k(self) -> int:
+        """Candidate depth used before fusion and final result capping."""
+        return self._candidate_top_k
 
     async def agentic_search(
         self,
@@ -292,12 +301,11 @@ class SearchClient:
 
         Shared by both retrieval tracks — ``extra_filter`` selects raw source
         chunks or wiki pages. Vector and keyword search always run; agentic
-        search is opt-in. Each query is fused independently so a query never
-        loses its own best hits to a stronger sibling query; the per-query
-        rankings are then concatenated for the caller to dedupe and cap.
+        search is opt-in. All query/retriever rankings contribute to one RRF
+        result so duplicate hits accumulate support before the caller caps.
         """
 
-        async def _fused_for_query(query: str) -> list[KnowledgeChunk]:
+        async def _ranked_for_query(query: str) -> list[list[KnowledgeChunk]]:
             coros: list = []
             if use_agentic:
                 coros.append(
@@ -311,6 +319,7 @@ class SearchClient:
                 self.vector_search(
                     query=query,
                     source_filters=source_filters,
+                    top_k=self.candidate_top_k,
                     extra_filter=extra_filter,
                 )
             )
@@ -318,6 +327,7 @@ class SearchClient:
                 self.keyword_search(
                     query=query,
                     source_filters=source_filters,
+                    top_k=self.candidate_top_k,
                     extra_filter=extra_filter,
                 )
             )
@@ -331,19 +341,23 @@ class SearchClient:
                 if res:
                     ranked_lists.append(res)
 
-            if not ranked_lists:
-                return []
-            # Always fuse: RRF scores stay comparable across queries, whereas a
-            # retriever's native score does not.
-            return fuse_with_rrf(ranked_lists)
+            return ranked_lists
 
         per_query = await asyncio.gather(
-            *[_fused_for_query(q) for q in queries[:max_queries]]
+            *[_ranked_for_query(q) for q in queries[:max_queries]]
         )
-        fused: list[KnowledgeChunk] = []
-        for chunk_list in per_query:
-            fused.extend(chunk_list)
-        return fused
+        ranked_lists = [
+            ranked
+            for query_lists in per_query
+            for ranked in query_lists
+            if ranked
+        ]
+        if not ranked_lists:
+            return []
+        # Fuse all query/retriever rankings together. A chunk retrieved by
+        # several query formulations accumulates support instead of keeping
+        # whichever duplicate happened to appear first.
+        return fuse_with_rrf(ranked_lists)
 
     @staticmethod
     def deduplicate_chunks(chunks: list[KnowledgeChunk]) -> list[KnowledgeChunk]:
@@ -426,27 +440,34 @@ class SearchClient:
         )
 
         content_parts: list[str] = [f"# {chunk.title}"]
+        if chunk.content:
+            content_parts.extend(["", "## Matched passage", chunk.content])
+        section_parts: list[str] = []
         current_h1 = ""
         current_h2 = ""
         current_h3 = ""
 
         async for s in sibling_results:
             sibling = KnowledgeChunk.model_validate(dict(s))
+            if sibling.chunk_id and sibling.chunk_id == chunk.chunk_id:
+                continue
 
             if sibling.header1 != current_h1:
                 current_h1, current_h2, current_h3 = sibling.header1, "", ""
                 if current_h1:
-                    content_parts.append(f"# {current_h1}")
+                    section_parts.append(f"# {current_h1}")
             if sibling.header2 != current_h2:
                 current_h2, current_h3 = sibling.header2, ""
                 if current_h2:
-                    content_parts.append(f"## {current_h2}")
+                    section_parts.append(f"## {current_h2}")
             if sibling.header3 != current_h3:
                 current_h3 = sibling.header3
                 if current_h3:
-                    content_parts.append(f"### {current_h3}")
+                    section_parts.append(f"### {current_h3}")
             if sibling.content:
-                content_parts.append(sibling.content)
+                section_parts.append(sibling.content)
+        if section_parts:
+            content_parts.extend(["", "## Surrounding section", *section_parts])
 
         # Resolve link via the source's link config
         source_def = get_knowledge_source(chunk.source)
@@ -466,7 +487,9 @@ class SearchClient:
     async def backfill_wiki_sources(
         self,
         chunks: "list[KnowledgeChunk]",
-        per_page: int = 3,
+        queries: list[str] | None = None,
+        per_page: int = 8,
+        max_refs: int = 48,
         max_total: int = 12,
         source_filter: str | None = None,
     ) -> "list[KnowledgeChunk]":
@@ -491,26 +514,28 @@ class SearchClient:
             for p in pairs:
                 if p not in wanted:
                     wanted.append(p)
-        wanted = wanted[:max_total]
+        wanted = wanted[:max_refs]
         if not wanted:
             return []
 
         pair_clause = " or ".join(_title_context_clause(t, ctx) for t, ctx in wanted)
-        # Only backfill RAW source chunks (never other wiki pages).
-        combined_filter = f"({pair_clause}) and (page_type eq null or page_type eq '')"
-        combined_filter = _and_extra(combined_filter, source_filter)
-
-        results = await self._search_client.search(
-            search_text="*",
-            filter=combined_filter,
-            top=max_total * 3,
-            select=_RETRIEVER_SELECT_FIELDS,
+        query_list = [q for q in (queries or []) if q.strip()]
+        if not query_list:
+            query_list = [
+                " ".join(c.title for c in chunks[:3] if c.title).strip()
+                or "Azure SDK documentation"
+            ]
+        # Retrieve semantically relevant RAW chunks only within the source
+        # documents referenced by the selected wiki pages.
+        ranked = await self.fused_search(
+            query_list,
+            {"wiki_source_refs": f"({pair_clause})"},
+            extra_filter=_and_extra(NON_WIKI_FILTER, source_filter),
         )
 
         backfilled: list[KnowledgeChunk] = []
         per_doc_count: dict[tuple[str, str], int] = {}
-        async for doc in results:
-            chunk = KnowledgeChunk.model_validate(dict(doc))
+        for chunk in ranked:
             if not chunk.chunk_id or chunk.chunk_id in seen_ids:
                 continue
             key = (chunk.title, chunk.source)
@@ -523,7 +548,7 @@ class SearchClient:
             if len(backfilled) >= max_total:
                 break
         logger.info(
-            "backfill_wiki_sources: %d source chunk(s) from %d wiki ref(s)",
+            "backfill_wiki_sources: %d source chunk(s) from %d candidate source ref(s)",
             len(backfilled),
             len(wanted),
         )

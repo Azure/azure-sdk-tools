@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 
-from .llm import ChatLLM
+from .llm import ChatLLM, load_prompt
 from .pages import PAGE_SUMMARY, WikiPage, make_slug
 from .reader import rel_title, source_folder
 from .storage import (
+    MANIFEST_VERSION,
     blob_path,
     content_hash,
     now_iso,
@@ -33,6 +35,7 @@ logger = logging.getLogger(__name__)
 MAX_EXTRACT_WORKERS = 4
 MAX_SUMMARY_WORKERS = 16
 MAX_REDUCE_WORKERS = 8
+BUILD_LOGIC_VERSION = 2
 
 
 @dataclass
@@ -102,6 +105,25 @@ def _group_digest(g: Group) -> str:
     return content_hash("\u0000".join([g.name, *sorted(g.descriptions)]))
 
 
+def _build_identity(llm: ChatLLM, min_docs: int) -> dict[str, object]:
+    """Return the generation identity that invalidates cached wiki content."""
+    prompt_hashes = {
+        name: content_hash(load_prompt(name))
+        for name in ("extract", "summary", "compile")
+    }
+    identity: dict[str, object] = {
+        "logic_version": BUILD_LOGIC_VERSION,
+        "manifest_version": MANIFEST_VERSION,
+        "model": llm.deployment,
+        "min_docs": min_docs,
+        "prompt_hashes": prompt_hashes,
+    }
+    identity["fingerprint"] = content_hash(
+        json.dumps(identity, ensure_ascii=True, sort_keys=True)
+    )
+    return identity
+
+
 async def reconcile(
     container_client,
     corpus: list[tuple[str, str]],
@@ -113,16 +135,30 @@ async def reconcile(
     manifest = await read_manifest(container_client)
     prior_sources: dict[str, dict] = manifest.get("sources", {})
     prior_pages: dict[str, dict] = {slug: {**e, "slug": slug} for slug, e in manifest.get("pages", {}).items()}
+    build_identity = _build_identity(llm, min_docs)
+    build_changed = (
+        manifest.get("build", {}).get("fingerprint")
+        != build_identity["fingerprint"]
+    )
 
     # --- 1. diff sources by content hash (identity = full source_path) ---
     current: dict[str, tuple[str, str]] = {}
     for source_path, text in corpus:
         current[source_path] = (text, content_hash(text or ""))
-    changed = {sp for sp, (_t, h) in current.items() if prior_sources.get(sp, {}).get("hash") != h}
+    changed = {
+        sp
+        for sp, (_t, h) in current.items()
+        if build_changed or prior_sources.get(sp, {}).get("hash") != h
+    }
     deleted = {sp for sp in prior_sources if sp not in current}
     stats = ReconcileStats(changed_docs=len(changed), deleted_docs=len(deleted))
-    logger.info("reconcile: %d changed/new, %d deleted, %d unchanged",
-                len(changed), len(deleted), len(current) - len(changed))
+    logger.info(
+        "reconcile: %d changed/new, %d deleted, %d unchanged, build_changed=%s",
+        len(changed),
+        len(deleted),
+        len(current) - len(changed),
+        build_changed,
+    )
 
     failed_docs: set[str] = set()
 
@@ -203,10 +239,12 @@ async def reconcile(
     digest_by_slug = {g.slug(): _group_digest(g) for g in groups}
     ec_pages: dict[str, WikiPage] = {}
     to_synth: list[Group] = []
+    failed_group_slugs: set[str] = set()
     for g in groups:
         slug = g.slug()
         prior = prior_pages.get(slug)
-        if (prior and prior.get("content")
+        if (not build_changed
+                and prior and prior.get("content")
                 and set(prior.get("source_refs", [])) == set(g.source_refs)
                 and prior.get("input_hash") == digest_by_slug[slug]):
             ec_pages[slug] = _page_from_manifest(prior)
@@ -218,6 +256,15 @@ async def reconcile(
                 if body:
                     ec_pages[g.slug()] = group_to_page(g, body)
                     stats.groups_synthesized += 1
+                    continue
+                prior = prior_pages.get(g.slug())
+                if prior and prior.get("content") and prior.get("is_deleted") != "true":
+                    logger.warning(
+                        "group synthesis failed for %s; preserving prior page",
+                        g.name,
+                    )
+                    ec_pages[g.slug()] = _page_from_manifest(prior)
+                    failed_group_slugs.add(g.slug())
 
     # Collect the full current page set before applying the diff.
     all_pages = list(summary_pages.values()) + list(ec_pages.values())
@@ -245,7 +292,11 @@ async def reconcile(
             "content": page.content,
             "content_hash": chash,
             "blob_path": path,
-            "input_hash": digest_by_slug.get(page.slug, ""),
+            "input_hash": (
+                ""
+                if page.slug in failed_group_slugs
+                else digest_by_slug.get(page.slug, "")
+            ),
             "is_deleted": "false",
             "updated_at": ts,
         }
@@ -270,7 +321,11 @@ async def reconcile(
         if sp in new_sources:
             new_sources[sp]["hash"] = ""
 
-    manifest = {"sources": new_sources, "pages": new_pages_manifest}
+    manifest = {
+        "build": build_identity,
+        "sources": new_sources,
+        "pages": new_pages_manifest,
+    }
     await write_manifest(container_client, manifest)
     logger.info(
         "reconcile done: %d written, %d soft-deleted, %d summaries, %d groups synth, %d total pages",

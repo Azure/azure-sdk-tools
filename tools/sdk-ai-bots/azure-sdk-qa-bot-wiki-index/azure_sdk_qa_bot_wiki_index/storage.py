@@ -12,7 +12,7 @@ from .pages import WikiPage
 logger = logging.getLogger(__name__)
 
 MANIFEST_BLOB = "_manifest.json"
-MANIFEST_VERSION = 1
+MANIFEST_VERSION = 2
 
 # Maximum source refs stored in blob metadata.
 _MAX_CHUNK_REFS_META = 8

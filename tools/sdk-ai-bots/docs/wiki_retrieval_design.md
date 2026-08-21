@@ -39,9 +39,9 @@ flowchart LR
 The load-bearing decision: **wiki pages and source chunks never fuse into one ranked list** — fusing lets generic wiki pages displace specific source docs and regresses the score. They are retrieved on separate tracks and combined only in the answer.
 
 - **`search_knowledge_base`** — source chunks only (`page_type` null).
-- **`wiki_search`** — wiki pages only, **self-contained**: for the top pages it returns their full content **plus** the source chunks each was built from (routed via `chunk_refs`). The next-ranked pages that did not make the cut are appended as a titles-only "Related wiki pages" reference for orientation; those titles are not answer evidence.
+- **`wiki_search`** — wiki pages only, **self-contained**: for the top pages it returns their full content **plus** query-ranked source chunks from the documents recorded in `chunk_refs`. The next-ranked pages that did not make the cut are appended as a titles-only "Related wiki pages" reference for orientation; those titles are not answer evidence.
 
-Both tracks run the same retrieval pipeline (`SearchClient.fused_search`) and differ only by page-type filter: per query, dense + BM25 (+ agentic in `deep` mode) run in parallel and are fused with RRF, then the caller dedupes and caps.
+Both tracks run the same retrieval pipeline (`SearchClient.fused_search`) and differ only by page-type filter: dense + BM25 (+ agentic in `deep` mode) run in parallel for every query, all query/retriever rankings are fused together with RRF, then the caller dedupes and caps. Retrieval uses a wider candidate pool than the final answer budget.
 
 For most questions the agent issues `search_knowledge_base` + `wiki_search` in one parallel batch and answers on the next turn.
 
@@ -80,18 +80,18 @@ The consequence is the cross-document scoping limitation below: a tenant reading
 
 Five phases:
 
-1. **Diff sources by content hash.** The corpus reader skips blobs the KB sync has tombstoned (`IsDeleted` metadata), so a retired document reaches the diff as a deletion rather than as live content. `changed` = hash differs from the manifest; `deleted` = in the manifest but absent from the corpus.
+1. **Diff sources by content hash and generation identity.** The corpus reader skips blobs the KB sync has tombstoned (`IsDeleted` metadata), so a retired document reaches the diff as a deletion rather than as live content. `changed` = hash differs from the manifest; `deleted` = in the manifest but absent from the corpus. The generation identity includes the synthesis model, prompt hashes, minimum-document threshold, manifest version, and build-logic version; changing any of them invalidates cached generation.
 2. **Extraction.** Only changed documents are re-extracted; every other document's entities/concepts are deserialised from the manifest.
 3. **Summary pages.** Only changed documents are re-summarised; the rest are reused from the manifest.
 4. **Entity/concept pages.** A group's page is reused only when it already has content **and** its `source_refs` set is unchanged **and** its `input_hash` (a digest of the group name plus all member descriptions) is unchanged. So a single changed document re-synthesises only the groups that reference it.
-5. **Apply.** A page is uploaded only when its rendered content hash changed. Pages that no longer exist are **soft-deleted** via `IsDeleted` blob metadata — the same convention the KB sync pipeline uses, so the shared indexer drops them — and their manifest entry is reduced to a tombstone. Documents whose summary generation failed have their stored hash cleared, so the next run retries them.
+5. **Apply.** A page is uploaded only when its rendered content hash changed. Pages that no longer exist are **soft-deleted** via `IsDeleted` blob metadata — the same convention the KB sync pipeline uses, so the shared indexer drops them — and their manifest entry is reduced to a tombstone. Documents whose extraction or summary generation failed have their stored hash cleared, so the next run retries them. A transient entity/concept synthesis failure preserves the prior active page and leaves its input hash empty for retry.
 
 The first run against an empty manifest is a full build. A run over an unchanged corpus writes nothing and makes no LLM calls: measured end to end, ~14 minutes for a 72-document delta over 1029 sources, ~1 second of reconcile for no delta, against ~80 minutes for a full rebuild.
 
 Two properties of this design are easy to trip over:
 
 - **The build only writes blobs.** `azure-sdk-knowledge-wiki-indexer` projects them into the shared index on its own daily schedule, so a fresh build is not queryable until the indexer runs. Trigger it explicitly when the new pages are needed immediately.
-- **Prompt edits invalidate nothing.** The diff is over *source document* content, so changing a build prompt leaves every page cache-hit and unchanged. Making prompt changes take effect requires the full-rebuild procedure in the package README: clear the wiki container (including the manifest), delete the index documents matching `page_type ne null`, rebuild, then run the indexer.
+- **A clean physical rebuild is still operationally distinct.** Prompt/model/build changes invalidate cached generation automatically, but recreating the blob and search state still requires clearing the wiki container, deleting only index documents matching `page_type ne null`, rebuilding, then running the dedicated indexer.
 
 ## Scheduling
 
@@ -129,4 +129,4 @@ Roughly 60 % of the remaining failures ask for knowledge that is absent from the
 - **Wiki pages have no header hierarchy.** The indexer maps `header_1` from the page title and leaves `header_2` / `header_3` null, unlike raw chunks. `KnowledgeChunk` coerces null headers to `""`, without which every wiki chunk fails validation and `wiki_search` silently returns empty. Any new index-backed field must tolerate an explicit `null`.
 - **Cross-document page scoping.** Entity/concept pages carry a shared `wiki_entity` / `wiki_concept` context, so a tenant reading them can see facts synthesised from documents outside its own sources. Acceptable because the corpus is public docs and tenants map to topic channels, not access boundaries; summary pages and raw chunks stay scoped to their source `context_id`.
 - **Multi-chunk page ordering.** A synthesised page larger than the indexer chunk size is split into several chunks; wiki reads reassemble by `ordinal_position`, which is not projected onto wiki chunks, so a split page can concatenate out of order. Raising the split budget so pages stay single-chunk removes the disorder but costs more than it saves — one vector per whole page retrieves measurably worse than one per section, and reassembly runs on the retrieved hit anyway. A projected ordinal is the durable fix and needs a reindex.
-- **Prompt changes need a manual full rebuild.** Reconcile diffs by source content hash, so editing a build prompt does not invalidate any page. Changing what pages should contain requires clearing the wiki container and the wiki documents in the index, then a full build.
+- **Document-level provenance.** `chunk_refs` identifies source documents rather than exact supporting spans. Query-time backfill reranks chunks within those referenced documents, but generated claims are not yet bound to stable source chunk IDs.

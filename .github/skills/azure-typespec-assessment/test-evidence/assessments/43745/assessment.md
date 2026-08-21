@@ -84,7 +84,7 @@
 
 None detected.
 
-### REST-Compatible Downstream Breaking Changes
+### Downstream Breaking Changes
 
 ### Generated closed enum becomes an extensible string-backed shape
 

@@ -60,7 +60,7 @@
 
 None detected.
 
-### REST-Compatible Downstream Breaking Changes
+### Downstream Breaking Changes
 
 ### Generated SDK result changes to a pageable abstraction
 

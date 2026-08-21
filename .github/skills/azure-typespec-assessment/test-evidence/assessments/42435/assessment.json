@@ -1,0 +1,275 @@
+{
+  "schemaVersion": 1,
+  "overallConfidence": "medium",
+  "pr": 42435,
+  "title": "Add x-ms-pageable to batchOutboundRules POST for CognitiveServices",
+  "url": "https://github.com/Azure/azure-rest-api-specs/pull/42435",
+  "state": "merged",
+  "createdAt": "2026-04-16T18:56:30Z",
+  "baseline": {
+    "ref": "2ddde2a55d4c8eb6d0bdf22592dfb7c849dfd904",
+    "commit": "2ddde2a55d4c8eb6d0bdf22592dfb7c849dfd904"
+  },
+  "head": {
+    "commit": "96eae0e7d5c7ede040ee0cc646d397e5d8375912",
+    "hasWorkingTreeChanges": false
+  },
+  "result": "rest-compatible-downstream-breaking-change",
+  "artifactEvidence": {
+    "autorest": "all four API versions add x-ms-pageable nextLinkName nextLink without changing paths or schemas",
+    "tcgc": "@list plus @pageItems/@nextLink exposes paged iteration metadata to SDK generators"
+  },
+  "assessmentEvidence": {
+    "changedTypeSpec": [
+      {
+        "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+        "revision": "head",
+        "startLine": 84,
+        "endLine": 84,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84"
+      }
+    ],
+    "emitterRuns": [
+      {
+        "project": "specification/cognitiveservices/CognitiveServices.Management",
+        "revision": "base",
+        "emitter": "@azure-tools/typespec-autorest",
+        "emitterId": "autorest",
+        "output": "OpenAPI",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__cognitiveservices__CognitiveServices.Management/base/autorest"
+      },
+      {
+        "project": "specification/cognitiveservices/CognitiveServices.Management",
+        "revision": "base",
+        "emitter": "@azure-tools/typespec-client-generator-core",
+        "emitterId": "tcgc",
+        "output": "SDK metadata (generic)",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__cognitiveservices__CognitiveServices.Management/base/tcgc"
+      },
+      {
+        "project": "specification/cognitiveservices/CognitiveServices.Management",
+        "revision": "head",
+        "emitter": "@azure-tools/typespec-autorest",
+        "emitterId": "autorest",
+        "output": "OpenAPI",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__cognitiveservices__CognitiveServices.Management/head/autorest"
+      },
+      {
+        "project": "specification/cognitiveservices/CognitiveServices.Management",
+        "revision": "head",
+        "emitter": "@azure-tools/typespec-client-generator-core",
+        "emitterId": "tcgc",
+        "output": "SDK metadata (generic)",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__cognitiveservices__CognitiveServices.Management/head/tcgc"
+      }
+    ],
+    "repositoryValidation": [
+      {
+        "project": "specification/cognitiveservices/CognitiveServices.Management",
+        "tool": "TypeSpecValidation",
+        "status": "skipped",
+        "durationMs": 0,
+        "reason": "Skipped by explicit --skip-validation request."
+      }
+    ]
+  },
+  "dimensions": {
+    "semanticUnderstanding": {
+      "items": [
+        {
+          "id": "pr-42435-intent",
+          "intent": "Expose the existing nextLink-based OutboundRules_Post response as pageable while retaining its ARM LRO behavior.",
+          "transformationChain": [
+            "Add @list to the existing POST action.",
+            "Reuse OutboundRuleListResult @pageItems and @nextLink metadata."
+          ],
+          "restRepresentation": {
+            "summary": "POST batchOutboundRules remains a 200/202 Location-based LRO returning OutboundRuleListResult; OpenAPI additionally emits x-ms-pageable with nextLinkName nextLink.",
+            "operations": [
+              {
+                "operationId": "OutboundRules_Post",
+                "apiVersions": [
+                  "2025-10-01-preview",
+                  "2025-12-01",
+                  "2026-01-15-preview",
+                  "2026-03-01"
+                ],
+                "method": "POST",
+                "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules",
+                "parameters": [
+                  "path subscriptionId, resourceGroupName, accountName, managedNetworkName: string, required",
+                  "query api-version: string, required"
+                ],
+                "serviceBehavior": "Asynchronously updates outbound rules. A successful final response contains a page of rules and an optional nextLink for additional pages.",
+                "lro": {
+                  "polling": "Poll the Location URL after Retry-After until terminal completion.",
+                  "finalResult": "OutboundRuleListResult",
+                  "isLongRunning": true,
+                  "pattern": "arm",
+                  "finalStateVia": "location"
+                },
+                "paging": {
+                  "isPaged": true,
+                  "itemType": "OutboundRuleBasicResource",
+                  "itemsProperty": "value",
+                  "nextLinkName": "nextLink",
+                  "continuation": "GET the opaque absolute nextLink until it is absent."
+                },
+                "requestPayload": "application/json body: ManagedNetworkSettingsBasicResource",
+                "responsePayloads": [
+                  "200: OutboundRuleListResult",
+                  "202: no body; location and Retry-After headers",
+                  "default: ErrorResponse"
+                ],
+                "signature": "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules",
+                "sourceReferences": [
+                  {
+                    "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+                    "revision": "head",
+                    "startLine": 79,
+                    "endLine": 89,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L79-L89"
+                  },
+                  {
+                    "path": "specification/cognitiveservices/CognitiveServices.Management/models.tsp",
+                    "revision": "head",
+                    "startLine": 5483,
+                    "endLine": 5497,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/models.tsp#L5483-L5497"
+                  }
+                ]
+              }
+            ]
+          },
+          "confidence": "high",
+          "sourceReferences": [
+            {
+              "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+              "revision": "head",
+              "startLine": 79,
+              "endLine": 89,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L79-L89"
+            },
+            {
+              "path": "specification/cognitiveservices/CognitiveServices.Management/models.tsp",
+              "revision": "head",
+              "startLine": 5483,
+              "endLine": 5497,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/models.tsp#L5483-L5497"
+            }
+          ]
+        }
+      ]
+    },
+    "restBreakingChanges": {
+      "findings": []
+    },
+    "restCompatibleDownstreamBreakingChanges": {
+      "findings": [
+        {
+          "id": "pr-42435-pageable-shape",
+          "title": "Generated SDK result changes to a pageable abstraction",
+          "severity": "medium",
+          "confidence": "high",
+          "summary": "The service response already carried value and nextLink, but SDK method return and iteration behavior can change when paging metadata becomes visible.",
+          "evidence": [
+            "AutoRest adds x-ms-pageable with nextLinkName nextLink to OutboundRules_Post."
+          ],
+          "sourceReferences": [
+            {
+              "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+              "revision": "head",
+              "startLine": 79,
+              "endLine": 89,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L79-L89"
+            },
+            {
+              "path": "specification/cognitiveservices/CognitiveServices.Management/models.tsp",
+              "revision": "head",
+              "startLine": 5483,
+              "endLine": 5497,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/models.tsp#L5483-L5497"
+            }
+          ]
+        }
+      ]
+    },
+    "azureCompliance": {
+      "status": "passed",
+      "summary": {
+        "patternsAssessed": 2,
+        "findingCount": 0
+      },
+      "documents": [
+        {
+          "title": "TypeSpec pagination",
+          "url": "https://typespec.io/docs/standard-library/pagination/",
+          "section": "Pagination",
+          "guidanceExcerpt": "To enable pagination for an operation the first step is to decorate it with the `@list` decorator and have the return type contain a property decorated with `@pageItems`.",
+          "applicableGuidance": "Paged operations use @list, identify page items, and identify the server-provided next link.",
+          "evidence": "The changed operation has @list, while OutboundRuleListResult identifies value with @pageItems and nextLink with @nextLink.",
+          "sourceReferences": [
+            {
+              "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+              "revision": "head",
+              "startLine": 79,
+              "endLine": 89,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L79-L89"
+            },
+            {
+              "path": "specification/cognitiveservices/CognitiveServices.Management/models.tsp",
+              "revision": "head",
+              "startLine": 5483,
+              "endLine": 5497,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/models.tsp#L5483-L5497"
+            },
+            {
+              "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+              "revision": "head",
+              "startLine": 84,
+              "endLine": 84,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84"
+            }
+          ]
+        },
+        {
+          "title": "ARM long-running operations",
+          "url": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
+          "section": "Action operations",
+          "guidanceExcerpt": "The `ArmResourceActionAsync` template uses `ArmLroLocationHeader` by default. The `FinalResult` should match the response type of the action.",
+          "applicableGuidance": "An ARM async action's logical final result matches its response type.",
+          "evidence": "The action retains Response = OutboundRuleListResult while adding paging metadata.",
+          "sourceReferences": [
+            {
+              "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+              "revision": "head",
+              "startLine": 79,
+              "endLine": 89,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L79-L89"
+            },
+            {
+              "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+              "revision": "head",
+              "startLine": 84,
+              "endLine": 84,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84"
+            }
+          ]
+        }
+      ],
+      "findings": []
+    }
+  },
+  "errors": [],
+  "projects": [
+    "specification/cognitiveservices/CognitiveServices.Management"
+  ],
+  "assessmentDuration": {
+    "totalMs": 691281,
+    "note": "End-to-end active reasoning assessment time. Dimension timing is recorded in ../execution-time-analysis.md."
+  }
+}

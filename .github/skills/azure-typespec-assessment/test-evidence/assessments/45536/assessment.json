@@ -1,0 +1,293 @@
+{
+  "schemaVersion": 1,
+  "overallConfidence": "medium",
+  "pr": 45536,
+  "title": "Preserve Java Consumption enum names",
+  "url": "https://github.com/Azure/azure-rest-api-specs/pull/45536",
+  "state": "merged",
+  "createdAt": "2026-08-17T02:25:48Z",
+  "baseline": {
+    "ref": "b7170cade07f615426eb153b7035ecf8a1cab4e4",
+    "commit": "b7170cade07f615426eb153b7035ecf8a1cab4e4"
+  },
+  "head": {
+    "commit": "1395797d6112cb083837b3772083bafe0a91460c",
+    "hasWorkingTreeChanges": false
+  },
+  "result": "compatibility-mitigation",
+  "artifactEvidence": {
+    "autorest": "base/head succeeded with no wire artifact diff",
+    "tcgc": "base/head succeeded; generic output does not apply Java-only names, so source decorators are primary evidence"
+  },
+  "assessmentEvidence": {
+    "changedTypeSpec": [
+      {
+        "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
+        "revision": "head",
+        "startLine": 535,
+        "endLine": 542,
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542"
+      }
+    ],
+    "emitterRuns": [
+      {
+        "project": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption",
+        "revision": "base",
+        "emitter": "@azure-tools/typespec-autorest",
+        "emitterId": "autorest",
+        "output": "OpenAPI",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__consumption__resource-manager__Microsoft.Consumption__Consumption/base/autorest"
+      },
+      {
+        "project": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption",
+        "revision": "base",
+        "emitter": "@azure-tools/typespec-client-generator-core",
+        "emitterId": "tcgc",
+        "output": "SDK metadata (generic)",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__consumption__resource-manager__Microsoft.Consumption__Consumption/base/tcgc"
+      },
+      {
+        "project": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption",
+        "revision": "head",
+        "emitter": "@azure-tools/typespec-autorest",
+        "emitterId": "autorest",
+        "output": "OpenAPI",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__consumption__resource-manager__Microsoft.Consumption__Consumption/head/autorest"
+      },
+      {
+        "project": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption",
+        "revision": "head",
+        "emitter": "@azure-tools/typespec-client-generator-core",
+        "emitterId": "tcgc",
+        "output": "SDK metadata (generic)",
+        "status": "succeeded",
+        "evidence": "artifacts/specification__consumption__resource-manager__Microsoft.Consumption__Consumption/head/tcgc"
+      }
+    ],
+    "repositoryValidation": [
+      {
+        "project": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption",
+        "tool": "TypeSpecValidation",
+        "status": "skipped",
+        "durationMs": 0,
+        "reason": "Skipped by explicit --skip-validation request."
+      }
+    ]
+  },
+  "dimensions": {
+    "semanticUnderstanding": {
+      "items": [
+        {
+          "id": "pr-45536-intent",
+          "intent": "Preserve released Java enum constants while retaining existing serialized values.",
+          "transformationChain": [
+            "Add Java-scoped client names for six existing enum members."
+          ],
+          "restRepresentation": {
+            "summary": "Serialized enum values and OpenAPI schemas remain unchanged.",
+            "operations": [
+              {
+                "operationId": "ReservationRecommendationDetails_Get",
+                "apiVersions": [
+                  "2024-08-01",
+                  "2026-06-01"
+                ],
+                "method": "GET",
+                "path": "/{resourceScope}/providers/Microsoft.Consumption/reservationRecommendationDetails",
+                "parameters": [
+                  "path resourceScope: string, required",
+                  "query scope, region, term, lookBackPeriod, product, api-version: required"
+                ],
+                "serviceBehavior": "Returns reservation recommendation details using the selected look-back period.",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": false
+                },
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200: ReservationRecommendationDetails",
+                  "default: ErrorResponse"
+                ],
+                "signature": "GET /{resourceScope}/providers/Microsoft.Consumption/reservationRecommendationDetails",
+                "sourceReferences": [
+                  {
+                    "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
+                    "revision": "head",
+                    "startLine": 532,
+                    "endLine": 543,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L532-L543"
+                  }
+                ]
+              },
+              {
+                "operationId": "ReservationsSummaries_List",
+                "apiVersions": [
+                  "2024-08-01",
+                  "2026-06-01"
+                ],
+                "method": "GET",
+                "path": "/{resourceScope}/providers/Microsoft.Consumption/reservationSummaries",
+                "parameters": [
+                  "path resourceScope: string, required",
+                  "query grain: Datagrain, required",
+                  "query filter and api-version"
+                ],
+                "serviceBehavior": "Lists daily or monthly reservation summaries.",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": true,
+                  "itemType": "ReservationSummary",
+                  "nextLinkName": "nextLink",
+                  "continuation": "GET the opaque nextLink until it is absent."
+                },
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200: ReservationSummariesListResult",
+                  "default: ErrorResponse"
+                ],
+                "signature": "GET /{resourceScope}/providers/Microsoft.Consumption/reservationSummaries",
+                "sourceReferences": [
+                  {
+                    "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
+                    "revision": "head",
+                    "startLine": 532,
+                    "endLine": 543,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L532-L543"
+                  }
+                ]
+              },
+              {
+                "operationId": "UsageDetails_List",
+                "apiVersions": [
+                  "2024-08-01",
+                  "2026-06-01"
+                ],
+                "method": "GET",
+                "path": "/{scope}/providers/Microsoft.Consumption/usageDetails",
+                "parameters": [
+                  "path scope: string, required",
+                  "query metric: Metrictype, optional",
+                  "query $expand, $filter, $skiptoken, $top, api-version: optional/required as emitted"
+                ],
+                "serviceBehavior": "Lists cost or usage records using the selected metric.",
+                "lro": {
+                  "isLongRunning": false
+                },
+                "paging": {
+                  "isPaged": true,
+                  "itemType": "UsageDetail",
+                  "nextLinkName": "nextLink",
+                  "continuation": "GET the opaque nextLink, which carries $skiptoken, until absent."
+                },
+                "requestPayload": "none",
+                "responsePayloads": [
+                  "200: UsageDetailsListResult",
+                  "default: ErrorResponse"
+                ],
+                "signature": "GET /{scope}/providers/Microsoft.Consumption/usageDetails",
+                "sourceReferences": [
+                  {
+                    "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
+                    "revision": "head",
+                    "startLine": 532,
+                    "endLine": 543,
+                    "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L532-L543"
+                  }
+                ]
+              }
+            ]
+          },
+          "confidence": "high",
+          "sourceReferences": [
+            {
+              "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
+              "revision": "head",
+              "startLine": 532,
+              "endLine": 543,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L532-L543"
+            }
+          ]
+        }
+      ]
+    },
+    "restBreakingChanges": {
+      "findings": []
+    },
+    "restCompatibleDownstreamBreakingChanges": {
+      "findings": []
+    },
+    "azureCompliance": {
+      "status": "passed",
+      "summary": {
+        "patternsAssessed": 2,
+        "findingCount": 0
+      },
+      "documents": [
+        {
+          "title": "TypeSpec Client Generator Core decorators",
+          "url": "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/",
+          "section": "@Azure.ClientGenerator.Core.clientName",
+          "guidanceExcerpt": "Overrides the generated name for client SDK elements including clients, methods, parameters, unions, models, enums, and model properties.",
+          "applicableGuidance": "Use a language-scoped @clientName to preserve SDK identifiers without changing service-facing values.",
+          "evidence": "Six augment decorators target union members, provide released Java identifiers, and use the supported java scope.",
+          "sourceReferences": [
+            {
+              "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
+              "revision": "head",
+              "startLine": 532,
+              "endLine": 543,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L532-L543"
+            },
+            {
+              "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
+              "revision": "head",
+              "startLine": 535,
+              "endLine": 542,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542"
+            }
+          ]
+        },
+        {
+          "title": "Clients",
+          "url": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/",
+          "section": "Customizations and Renaming the Client Name",
+          "guidanceExcerpt": "Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`. This can be achieved with the augment decorator: `@clientName`.",
+          "applicableGuidance": "Client-name compatibility customizations use augment decorators in client.tsp.",
+          "evidence": "The changed @@clientName declarations are in client.tsp and leave serialized union values unchanged.",
+          "sourceReferences": [
+            {
+              "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
+              "revision": "head",
+              "startLine": 532,
+              "endLine": 543,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L532-L543"
+            },
+            {
+              "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
+              "revision": "head",
+              "startLine": 535,
+              "endLine": 542,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542"
+            }
+          ]
+        }
+      ],
+      "findings": []
+    }
+  },
+  "errors": [],
+  "projects": [
+    "specification/consumption/resource-manager/Microsoft.Consumption/Consumption"
+  ],
+  "assessmentDuration": {
+    "totalMs": 712258,
+    "note": "End-to-end active reasoning assessment time. Dimension timing is recorded in ../execution-time-analysis.md."
+  }
+}

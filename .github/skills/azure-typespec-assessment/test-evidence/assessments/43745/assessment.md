@@ -2,7 +2,7 @@
 
 **PR:** [#43745 - Updated CloudHsmClusterSkuName from closed enum to extensible enum](https://github.com/Azure/azure-rest-api-specs/pull/43745)
 
-**Overall confidence:** 🟢 high<br>
+**Overall confidence:** 🟡 medium<br>
 **Overall code safety:** 🔴 Low
 
 **Baseline:** `a6887d2260f26285d4b1f5fba97da370be9200b4`<br>
@@ -16,7 +16,7 @@
 | Semantic understanding | ✅ Assessed — 1 intent(s), 3 operation(s) | n/a |
 | REST compatibility | ✅ No breaks detected | 0 |
 | Downstream compatibility | ❌ Issues found | 1 |
-| Azure compliance | ⚠️ not-assessed | 0 |
+| Azure compliance | ✅ passed | 0 |
 
 **Scope:** 1 intent(s), 3 affected operation(s), 1 project(s).<br>
 **Highest severity:** high.
@@ -97,9 +97,7 @@ None detected.
 
 ## ☁️ Azure Compliance
 
-**Status:** `not-assessed`
-
-The shared catalog explains enums and models but does not document the Azure extensible-enum pattern used to allow unknown SKU values.
+**Status:** `passed`
 
 ### Compliance Findings
 
@@ -115,7 +113,7 @@ None.
 
 | Result | Document section | Fetched guidance | Observed TypeSpec | Evidence |
 | --- | --- | --- | --- | --- |
-| Matched | [Enums - Custom enum values](https://typespec.io/docs/language-basics/enums/) | You can assign custom values to enum members using the `:` operator. | The known SKU values retain their explicit wire representations. | [models.tsp:L283-L296](https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L283-L296), [models.tsp:L286-L293](https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293) |
+| Matched | [Azure Core no-enum rule - Rule and remediation](https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-enum/) | Using a union with the base scalar (`string`, `int32`, `int64`, etc.) as a variant instead of an enum makes it extensible. | CloudHsmClusterSkuName changes from a suppressed enum to a union containing string and two named variants with unchanged wire values. | [models.tsp:L283-L296](https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L283-L296), [models.tsp:L286-L293](https://github.com/Azure/azure-rest-api-specs/blob/71ce7d0c524c4bea7bc737836684acd53f343147/specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp#L286-L293) |
 
 ### Tooling Used
 
@@ -126,7 +124,7 @@ None.
 
 | Project | Tool | Status | Duration | Log |
 | --- | --- | --- | ---: | --- |
-| `specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules` | `TypeSpecValidation` | succeeded | 25s | `validation-logs/specification__hardwaresecuritymodules__resource-manager__Microsoft.HardwareSecurityModules__HardwareSecurityModules-head.log` |
+| `specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules` | `TypeSpecValidation` | skipped | 0s | `unknown` |
 
 ### Artifact Evidence
 

@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "overallConfidence": "high",
+  "overallConfidence": "medium",
   "pr": 44200,
   "title": "Support for Private Frontend on Application Gateway for Containers",
   "url": "https://github.com/Azure/azure-rest-api-specs/pull/44200",
   "state": "open",
   "createdAt": "2026-06-24T21:30:02Z",
   "baseline": {
-    "ref": "c3011918b7318f44dcc15e92d4ffb307aa50a475",
+    "ref": "0d3ff673b6b63361a7ba06a355d929902e596dac",
     "commit": "0d3ff673b6b63361a7ba06a355d929902e596dac"
   },
   "head": {
@@ -134,9 +134,9 @@
       {
         "project": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking",
         "tool": "TypeSpecValidation",
-        "status": "succeeded",
-        "durationMs": 31403,
-        "log": "validation-logs/specification__servicenetworking__resource-manager__Microsoft.ServiceNetworking__ServiceNetworking-head.log"
+        "status": "skipped",
+        "durationMs": 0,
+        "reason": "Skipped by explicit --skip-validation request."
       }
     ]
   },
@@ -234,16 +234,19 @@
       ]
     },
     "azureCompliance": {
-      "status": "not-assessed",
-      "reason": "The API-version additions follow fetched versioning guidance, but the shared catalog has no authoritative document for the JavaScript-scoped flattening customization changed in the same PR.",
+      "status": "failed",
+      "summary": {
+        "patternsAssessed": 4,
+        "findingCount": 4
+      },
       "documents": [
         {
-          "title": "Versioning overview",
-          "url": "https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/",
-          "section": "Version progression",
-          "guidanceExcerpt": "Always make the last enum value the preview and apply `@previewVersion` to it.",
-          "applicableGuidance": "API versions are chronological and the active preview is marked explicitly.",
-          "evidence": "The preview and stable versions are ordered and scoped without changing earlier emitted versions.",
+          "title": "Adding a Stable Version when the Last Version was Preview",
+          "url": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+          "section": "Making Changes to your TypeSpec spec",
+          "guidanceExcerpt": "Remove the replaced preview version from the version enum.",
+          "applicableGuidance": "A stable release replacing a preview removes the preview member and retargets promoted changes.",
+          "evidence": "The enum retains v2025_10_01_preview and appends stable v2026_03_01.",
           "sourceReferences": [
             {
               "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
@@ -304,12 +307,12 @@
           ]
         },
         {
-          "title": "Evolving APIs",
-          "url": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
-          "section": "Adding API elements",
-          "guidanceExcerpt": "You can add new models, properties, or operations in a specific version and all subsequent versions using the `@added` decorator.",
-          "applicableGuidance": "Resources, operations, and properties introduced in a version use versioning decorators.",
-          "evidence": "Private frontend and private-link additions are scoped to the introduced versions.",
+          "title": "Private Endpoints",
+          "url": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
+          "section": "Defining a Private Endpoint Connection Resource",
+          "guidanceExcerpt": "Resource providers that support private endpoint connections must declare a private endpoint connection resource type and use the standard `PrivateEndpoints` interface to expose operations.",
+          "applicableGuidance": "Private endpoint connections extend PrivateEndpointConnectionResource and use PrivateEndpoints operations.",
+          "evidence": "The PR manually models PrivateEndpointConnection as ProxyResource and uses generic ArmResource operations.",
           "sourceReferences": [
             {
               "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
@@ -368,9 +371,344 @@
               "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558"
             }
           ]
+        },
+        {
+          "title": "Private Links",
+          "url": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
+          "section": "Defining a Private Link Resource",
+          "guidanceExcerpt": "Resource providers that support private link resources must declare a private link resource type and use the standard `PrivateLinks` interface to expose operations.",
+          "applicableGuidance": "Private-link discovery uses the standard PrivateLink model and PrivateLinks operation interface.",
+          "evidence": "The PR manually models PrivateLinkResource as ProxyResource and uses generic read/list templates.",
+          "sourceReferences": [
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 122,
+              "endLine": 127,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 30,
+              "endLine": 35,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 63,
+              "endLine": 70,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 80,
+              "endLine": 105,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 125,
+              "endLine": 125,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L125-L125"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 310,
+              "endLine": 314,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L310-L314"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 357,
+              "endLine": 459,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 543,
+              "endLine": 558,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558"
+            }
+          ]
+        },
+        {
+          "title": "TypeSpec Client Generator Core decorators",
+          "url": "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/",
+          "section": "@Azure.ClientGenerator.Core.Legacy.flattenProperty",
+          "guidanceExcerpt": "Set whether a model property should be flattened or not. This decorator is not recommended to use for green field services.",
+          "applicableGuidance": "Do not add legacy flattening to newly introduced API models without an existing compatibility requirement.",
+          "evidence": "The new private endpoint and private link resource properties are flattened for AutoRest and C#.",
+          "sourceReferences": [
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp",
+              "revision": "head",
+              "startLine": 30,
+              "endLine": 39,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp#L30-L39"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp",
+              "revision": "head",
+              "startLine": 146,
+              "endLine": 182,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L146-L182"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp",
+              "revision": "head",
+              "startLine": 194,
+              "endLine": 203,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L194-L203"
+            }
+          ]
         }
       ],
-      "findings": []
+      "findings": [
+        {
+          "id": "compliance-44200-stable-after-preview",
+          "title": "The stable version retains the replaced preview version",
+          "severity": "medium",
+          "summary": "The enum keeps v2025_10_01_preview while appending v2026_03_01, contrary to the stable-after-preview procedure.",
+          "documentationUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+          "evidence": [
+            "The documented workflow removes the replaced preview member and retargets promoted changes to stable."
+          ],
+          "sourceReferences": [
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 122,
+              "endLine": 127,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 30,
+              "endLine": 35,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 63,
+              "endLine": 70,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 80,
+              "endLine": 105,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 125,
+              "endLine": 125,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L125-L125"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 310,
+              "endLine": 314,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L310-L314"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 357,
+              "endLine": 459,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 543,
+              "endLine": 558,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558"
+            }
+          ]
+        },
+        {
+          "id": "compliance-44200-private-endpoint",
+          "title": "Private endpoint connections bypass the standard templates",
+          "severity": "medium",
+          "summary": "PrivateEndpointConnection is manually modeled and uses generic operations instead of PrivateEndpointConnectionResource and PrivateEndpoints.",
+          "documentationUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/",
+          "evidence": [
+            "The official private-endpoint guide requires the standard resource base and PrivateEndpoints interface."
+          ],
+          "sourceReferences": [
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 122,
+              "endLine": 127,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 30,
+              "endLine": 35,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 63,
+              "endLine": 70,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 80,
+              "endLine": 105,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 125,
+              "endLine": 125,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L125-L125"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 310,
+              "endLine": 314,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L310-L314"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 357,
+              "endLine": 459,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 543,
+              "endLine": 558,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558"
+            }
+          ]
+        },
+        {
+          "id": "compliance-44200-private-link",
+          "title": "Private-link discovery bypasses the standard templates",
+          "severity": "medium",
+          "summary": "PrivateLinkResource is manually modeled and uses generic operations instead of PrivateLink and PrivateLinks.",
+          "documentationUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/",
+          "evidence": [
+            "The official private-link guide requires the standard model and PrivateLinks interface."
+          ],
+          "sourceReferences": [
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 122,
+              "endLine": 127,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 30,
+              "endLine": 35,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 63,
+              "endLine": 70,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 80,
+              "endLine": 105,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 125,
+              "endLine": 125,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L125-L125"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 310,
+              "endLine": 314,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L310-L314"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 357,
+              "endLine": 459,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp",
+              "revision": "head",
+              "startLine": 543,
+              "endLine": 558,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558"
+            }
+          ]
+        },
+        {
+          "id": "compliance-44200-flattening",
+          "title": "Legacy flattening is applied to newly introduced models",
+          "severity": "low",
+          "summary": "New private endpoint and private link resource properties use a legacy decorator that the reference does not recommend for greenfield types.",
+          "documentationUrl": "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/",
+          "evidence": [
+            "The changed types are newly introduced, so they have no prior flattened SDK contract to preserve."
+          ],
+          "sourceReferences": [
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp",
+              "revision": "head",
+              "startLine": 30,
+              "endLine": 39,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp#L30-L39"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp",
+              "revision": "head",
+              "startLine": 146,
+              "endLine": 182,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L146-L182"
+            },
+            {
+              "path": "specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp",
+              "revision": "head",
+              "startLine": 194,
+              "endLine": 203,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L194-L203"
+            }
+          ]
+        }
+      ]
     }
   },
   "errors": [],

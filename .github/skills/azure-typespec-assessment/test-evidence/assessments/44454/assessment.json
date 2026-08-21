@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "overallConfidence": "high",
+  "overallConfidence": "medium",
   "pr": 44454,
   "title": "Mitigate operation group casing breaking changes for azure-mgmt-elastic",
   "url": "https://github.com/Azure/azure-rest-api-specs/pull/44454",
@@ -85,9 +85,9 @@
       {
         "project": "specification/elastic/Elastic.Management",
         "tool": "TypeSpecValidation",
-        "status": "succeeded",
-        "durationMs": 25179,
-        "log": "validation-logs/specification__elastic__Elastic.Management-head.log"
+        "status": "skipped",
+        "durationMs": 0,
+        "reason": "Skipped by explicit --skip-validation request."
       }
     ]
   },
@@ -228,10 +228,131 @@
       "findings": []
     },
     "azureCompliance": {
-      "status": "not-assessed",
-      "reason": "The shared catalog has no authoritative document for language-scoped @@clientLocation operation-group naming.",
-      "documents": [],
-      "findings": []
+      "status": "failed",
+      "summary": {
+        "patternsAssessed": 2,
+        "findingCount": 1
+      },
+      "documents": [
+        {
+          "title": "TypeSpec Client Generator Core decorators",
+          "url": "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/",
+          "section": "@Azure.ClientGenerator.Core.clientLocation",
+          "guidanceExcerpt": "Change the operation location in the client. If the target client is not defined, use `string` to indicate a new client name.",
+          "applicableGuidance": "A string target and a supported language scope are valid clientLocation arguments.",
+          "evidence": "The Python-specific @@clientLocation calls use documented string targets and scopes.",
+          "sourceReferences": [
+            {
+              "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+              "revision": "head",
+              "startLine": 94,
+              "endLine": 131,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131"
+            },
+            {
+              "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+              "revision": "head",
+              "startLine": 97,
+              "endLine": 102,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L97-L102"
+            },
+            {
+              "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+              "revision": "head",
+              "startLine": 108,
+              "endLine": 113,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113"
+            },
+            {
+              "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+              "revision": "head",
+              "startLine": 122,
+              "endLine": 127,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L122-L127"
+            }
+          ]
+        },
+        {
+          "title": "Clients",
+          "url": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/",
+          "section": "Customizations",
+          "guidanceExcerpt": "Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`.",
+          "applicableGuidance": "Client hierarchy customizations belong in client.tsp.",
+          "evidence": "The new customizations are in back-compatible.tsp despite an existing imported client.tsp.",
+          "sourceReferences": [
+            {
+              "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+              "revision": "head",
+              "startLine": 94,
+              "endLine": 131,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131"
+            },
+            {
+              "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+              "revision": "head",
+              "startLine": 97,
+              "endLine": 102,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L97-L102"
+            },
+            {
+              "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+              "revision": "head",
+              "startLine": 108,
+              "endLine": 113,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113"
+            },
+            {
+              "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+              "revision": "head",
+              "startLine": 122,
+              "endLine": 127,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L122-L127"
+            }
+          ]
+        }
+      ],
+      "findings": [
+        {
+          "id": "compliance-44454-client-file",
+          "title": "New client hierarchy customizations are outside client.tsp",
+          "severity": "low",
+          "summary": "The decorator calls are valid, but their placement in back-compatible.tsp does not follow the documented client.tsp convention.",
+          "documentationUrl": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/",
+          "evidence": [
+            "The project already imports client.tsp, where client hierarchy customizations should be placed."
+          ],
+          "sourceReferences": [
+            {
+              "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+              "revision": "head",
+              "startLine": 94,
+              "endLine": 131,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131"
+            },
+            {
+              "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+              "revision": "head",
+              "startLine": 97,
+              "endLine": 102,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L97-L102"
+            },
+            {
+              "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+              "revision": "head",
+              "startLine": 108,
+              "endLine": 113,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113"
+            },
+            {
+              "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+              "revision": "head",
+              "startLine": 122,
+              "endLine": 127,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L122-L127"
+            }
+          ]
+        }
+      ]
     }
   },
   "errors": [],

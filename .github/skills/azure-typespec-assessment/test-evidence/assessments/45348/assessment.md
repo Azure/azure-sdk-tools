@@ -2,7 +2,7 @@
 
 **PR:** [#45348 - Fix cross-version breaking changes for 2026-11 previews](https://github.com/Azure/azure-rest-api-specs/pull/45348)
 
-**Overall confidence:** 🟢 high<br>
+**Overall confidence:** 🟡 medium<br>
 **Overall code safety:** 🟢 High
 
 **Baseline:** `2991970c5377110244bcf9614be03e5aaf32362f`<br>
@@ -92,7 +92,8 @@ None.
 
 | Result | Document section | Fetched guidance | Observed TypeSpec | Evidence |
 | --- | --- | --- | --- | --- |
-| Matched | [Evolving APIs - Defining API versions](https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/) | For each version, specify dependencies and common types as needed. | Both new preview versions explicitly select ARM common-types v5, matching their generated contracts. | [main.tsp:L75-L84](https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L84), [main.tsp:L78-L78](https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L78-L78), [main.tsp:L83-L83](https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L83-L83) |
+| Matched | [Azure.ResourceManager decorators - @armCommonTypesVersion](https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/decorators/) | This decorator is used either on a namespace or a version enum value to indicate the version of the Azure Resource Manager common-types to use for refs in emitted Swagger files. | Both changed preview members select Azure.ResourceManager.CommonTypes.Versions.v5. | [main.tsp:L75-L84](https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L84), [main.tsp:L78-L78](https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L78-L78), [main.tsp:L83-L83](https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L83-L83) |
+| Matched | [arm-common-types-version rule - Correct per-version placement](https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/rules/arm-common-types-version/) | If the common types version is updated in later versions, the decorator should appear on each version enum member. | The project already uses per-version declarations and the PR preserves that pattern. | [main.tsp:L75-L84](https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L75-L84), [main.tsp:L78-L78](https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L78-L78), [main.tsp:L83-L83](https://github.com/Azure/azure-rest-api-specs/blob/b209254310b3e569b16210d3c59fc8b8ac3b84b4/specification/deviceregistry/DeviceRegistry.Management/main.tsp#L83-L83) |
 
 ### Tooling Used
 
@@ -103,7 +104,7 @@ None.
 
 | Project | Tool | Status | Duration | Log |
 | --- | --- | --- | ---: | --- |
-| `specification/deviceregistry/DeviceRegistry.Management` | `TypeSpecValidation` | succeeded | 54s | `validation-logs/specification__deviceregistry__DeviceRegistry.Management-head.log` |
+| `specification/deviceregistry/DeviceRegistry.Management` | `TypeSpecValidation` | skipped | 0s | `unknown` |
 
 ### Artifact Evidence
 

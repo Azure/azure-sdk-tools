@@ -41,7 +41,9 @@ function repositoryValidation(evidence) {
     tool: project.validation.tool,
     status: project.validation.status,
     durationMs: project.validation.durationMs,
-    log: project.validation.log ?? project.validation.reason,
+    ...(project.validation.status === "skipped"
+      ? { reason: project.validation.reason }
+      : { log: project.validation.log }),
     ...(project.validation.failureSummary
       ? { failureSummary: project.validation.failureSummary }
       : {}),
@@ -125,17 +127,21 @@ function main() {
       throw new Error(`Missing compliance fixture for PR ${pr}.`);
     }
 
-    const incompleteValidation = evidence.projects.filter((project) =>
-      ["skipped", "unavailable"].includes(project.validation.status),
+    const unavailableValidation = evidence.projects.filter(
+      (project) => project.validation.status === "unavailable",
     );
-    if (incompleteValidation.length > 0) {
+    if (unavailableValidation.length > 0) {
       throw new Error(
-        `PR ${pr} cannot be finalized without repository validation: ${incompleteValidation
+        `PR ${pr} cannot be finalized with unavailable repository validation: ${unavailableValidation
           .map((project) => `${project.path} (${project.validation.status})`)
           .join(", ")}`,
       );
     }
-    assessment.overallConfidence = evidence.errors.length > 0 ? "low" : "high";
+    const validationSkipped = evidence.projects.some(
+      (project) => project.validation.status === "skipped",
+    );
+    assessment.overallConfidence =
+      evidence.errors.length > 0 ? "low" : validationSkipped ? "medium" : "high";
     assessment.baseline = evidence.baseline;
     assessment.head = evidence.head;
     assessment.projects = evidence.projects.map((project) => project.path);

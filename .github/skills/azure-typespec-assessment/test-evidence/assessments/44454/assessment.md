@@ -2,7 +2,7 @@
 
 **PR:** [#44454 - Mitigate operation group casing breaking changes for azure-mgmt-elastic](https://github.com/Azure/azure-rest-api-specs/pull/44454)
 
-**Overall confidence:** 🟢 high<br>
+**Overall confidence:** 🟡 medium<br>
 **Overall code safety:** 🟡 Medium
 
 **Baseline:** `e8420e45fdaf12e2c72417d379c454f1fc8ce1e6`<br>
@@ -16,14 +16,16 @@
 | Semantic understanding | ✅ Assessed — 1 intent(s), 3 operation(s) | n/a |
 | REST compatibility | ✅ No breaks detected | 0 |
 | Downstream compatibility | ✅ No breaks detected | 0 |
-| Azure compliance | ⚠️ not-assessed | 0 |
+| Azure compliance | ❌ failed | 1 |
 
 **Scope:** 1 intent(s), 3 affected operation(s), 1 project(s).<br>
-**Highest severity:** none.
+**Highest severity:** low.
 
 ## 🎯 Action Required
 
-No action required from the assessed dimensions.
+| Severity | Area | Finding | Why it matters | Code | Guidance |
+| --- | --- | --- | --- | --- | --- |
+| low | Compliance | New client hierarchy customizations are outside client.tsp | The decorator calls are valid, but their placement in back-compatible.tsp does not follow the documented client.tsp convention. | [back-compatible.tsp:L94-L131](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131), [back-compatible.tsp:L97-L102](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L97-L102), +2 more | [Client hierarchy customizations belong in client.tsp.](https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/) |
 
 ## 🧠 Semantic Understanding
 
@@ -88,13 +90,17 @@ None detected.
 
 ## ☁️ Azure Compliance
 
-**Status:** `not-assessed`
-
-The shared catalog has no authoritative document for language-scoped @@clientLocation operation-group naming.
+**Status:** `failed`
 
 ### Compliance Findings
 
-No compliance mismatches found.
+### New client hierarchy customizations are outside client.tsp
+
+- **Severity:** low
+- **Summary:** The decorator calls are valid, but their placement in back-compatible.tsp does not follow the documented client.tsp convention.
+- **Evidence:** The project already imports client.tsp, where client hierarchy customizations should be placed.
+- **TypeSpec source:** [back-compatible.tsp:L94-L131](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131), [back-compatible.tsp:L97-L102](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L97-L102), [back-compatible.tsp:L108-L113](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113), [back-compatible.tsp:L122-L127](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L122-L127)
+- **Guidance:** https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/
 
 ## 📎 Appendix
 
@@ -104,7 +110,10 @@ None.
 
 ### Code-to-Guidance Evidence
 
-No authoritative document evidence was available.
+| Result | Document section | Fetched guidance | Observed TypeSpec | Evidence |
+| --- | --- | --- | --- | --- |
+| Matched | [TypeSpec Client Generator Core decorators - @Azure.ClientGenerator.Core.clientLocation](https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/) | Change the operation location in the client. If the target client is not defined, use `string` to indicate a new client name. | The Python-specific @@clientLocation calls use documented string targets and scopes. | [back-compatible.tsp:L94-L131](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131), [back-compatible.tsp:L97-L102](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L97-L102), [back-compatible.tsp:L108-L113](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113), +1 more |
+| Mismatch | [Clients - Customizations](https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/) | Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`. | The new customizations are in back-compatible.tsp despite an existing imported client.tsp. | [back-compatible.tsp:L94-L131](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L94-L131), [back-compatible.tsp:L97-L102](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L97-L102), [back-compatible.tsp:L108-L113](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113), +1 more |
 
 ### Tooling Used
 
@@ -115,7 +124,7 @@ No authoritative document evidence was available.
 
 | Project | Tool | Status | Duration | Log |
 | --- | --- | --- | ---: | --- |
-| `specification/elastic/Elastic.Management` | `TypeSpecValidation` | succeeded | 25s | `validation-logs/specification__elastic__Elastic.Management-head.log` |
+| `specification/elastic/Elastic.Management` | `TypeSpecValidation` | skipped | 0s | `unknown` |
 
 ### Artifact Evidence
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "overallConfidence": "high",
+  "overallConfidence": "medium",
   "pr": 44882,
   "title": "Add new stable version 2026-06-01 for New Relic",
   "url": "https://github.com/Azure/azure-rest-api-specs/pull/44882",
@@ -92,9 +92,9 @@
       {
         "project": "specification/newrelic/NewRelicObservability.Management",
         "tool": "TypeSpecValidation",
-        "status": "succeeded",
-        "durationMs": 31418,
-        "log": "validation-logs/specification__newrelic__NewRelicObservability.Management-head.log"
+        "status": "skipped",
+        "durationMs": 0,
+        "reason": "Skipped by explicit --skip-validation request."
       }
     ]
   },
@@ -173,16 +173,78 @@
       "findings": []
     },
     "azureCompliance": {
-      "status": "not-assessed",
-      "reason": "The stable-version addition follows fetched guidance, but the shared catalog has no authoritative document for the Go-only operation override and parameter-order customization.",
+      "status": "failed",
+      "summary": {
+        "patternsAssessed": 2,
+        "findingCount": 1
+      },
       "documents": [
         {
-          "title": "Evolving APIs",
-          "url": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
-          "section": "Adding API elements",
-          "guidanceExcerpt": "You can add new models, properties, or operations in a specific version and all subsequent versions using the `@added` decorator.",
-          "applicableGuidance": "A new API version declares its dependencies and scopes introduced API shapes with versioning decorators.",
-          "evidence": "The complete management-plane surface is introduced in stable 2026-06-01 without modifying the prior preview wire API.",
+          "title": "Adding a Stable Version when the Last Version was Preview",
+          "url": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+          "section": "Making Changes to your TypeSpec spec",
+          "guidanceExcerpt": "Remove the replaced preview version from the version enum.",
+          "applicableGuidance": "The stable version replaces the prior preview member.",
+          "evidence": "The enum retains v2025_05_01_preview and appends v2026_06_01.",
+          "sourceReferences": [
+            {
+              "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
+              "revision": "head",
+              "startLine": 43,
+              "endLine": 47,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+            }
+          ]
+        },
+        {
+          "title": "TypeSpec Client Generator Core decorators",
+          "url": "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/",
+          "section": "@Azure.ClientGenerator.Core.override",
+          "guidanceExcerpt": "Customize a method's signature in the generated client SDK. Currently, only parameter signature customization is supported.",
+          "applicableGuidance": "Use a language-scoped override operation to customize parameter order.",
+          "evidence": "The Go-only @@override is in client.tsp and reorders the delete operation parameters.",
+          "sourceReferences": [
+            {
+              "path": "specification/newrelic/NewRelicObservability.Management/client.tsp",
+              "revision": "head",
+              "startLine": 321,
+              "endLine": 354,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L321-L354"
+            },
+            {
+              "path": "specification/newrelic/NewRelicObservability.Management/client.tsp",
+              "revision": "head",
+              "startLine": 7,
+              "endLine": 7,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L7-L7"
+            },
+            {
+              "path": "specification/newrelic/NewRelicObservability.Management/client.tsp",
+              "revision": "head",
+              "startLine": 9,
+              "endLine": 9,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L9-L9"
+            },
+            {
+              "path": "specification/newrelic/NewRelicObservability.Management/client.tsp",
+              "revision": "head",
+              "startLine": 324,
+              "endLine": 354,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L324-L354"
+            }
+          ]
+        }
+      ],
+      "findings": [
+        {
+          "id": "compliance-44882-stable-after-preview",
+          "title": "The stable version retains the replaced preview version",
+          "severity": "medium",
+          "summary": "The enum keeps v2025_05_01_preview beside v2026_06_01 instead of following the stable-after-preview replacement procedure.",
+          "documentationUrl": "https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/",
+          "evidence": [
+            "The Go-specific override follows its documentation and is not part of this finding."
+          ],
           "sourceReferences": [
             {
               "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
@@ -193,8 +255,7 @@
             }
           ]
         }
-      ],
-      "findings": []
+      ]
     }
   },
   "errors": [],

@@ -2,7 +2,7 @@
 
 **PR:** [#43308 - Fix TypeSpec LRO operations: remove @extension, use @useFinalStateVia](https://github.com/Azure/azure-rest-api-specs/pull/43308)
 
-**Overall confidence:** 🟢 high<br>
+**Overall confidence:** 🟡 medium<br>
 **Overall code safety:** 🔴 Low
 
 **Baseline:** `232dfa71843fd574be49ba91a918ee7d3e7bfec3`<br>
@@ -16,7 +16,7 @@
 | Semantic understanding | ✅ Assessed — 1 intent(s), 6 operation(s) | n/a |
 | REST compatibility | ✅ No breaks detected | 0 |
 | Downstream compatibility | ❌ Issues found | 1 |
-| Azure compliance | ⚠️ not-assessed | 0 |
+| Azure compliance | ✅ passed | 0 |
 
 **Scope:** 1 intent(s), 6 affected operation(s), 1 project(s).<br>
 **Highest severity:** high.
@@ -133,9 +133,7 @@ None detected.
 
 ## ☁️ Azure Compliance
 
-**Status:** `not-assessed`
-
-The ARM LRO page documents Location polling and header templates, but it does not document the @useFinalStateVia customization changed by this PR.
+**Status:** `passed`
 
 ### Compliance Findings
 
@@ -151,7 +149,9 @@ None.
 
 | Result | Document section | Fetched guidance | Observed TypeSpec | Evidence |
 | --- | --- | --- | --- | --- |
-| Matched | [ARM long-running operations - Action operations](https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/) | Override the `LroHeaders` parameter. Set `FinalResult` to match the response type of the action. | Generated behavior remains Location-polled, but the changed decorator itself is not covered by this page. | [lro-helpers.tsp:L22-L119](https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L22-L119), [scenarioConfiguration.tsp:L48-L84](https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L48-L84), [scenarioRun.tsp:L44-L52](https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L44-L52), +22 more |
+| Matched | [Azure.Core decorators - @Azure.Core.useFinalStateVia](https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/decorators/) | Overrides the final state value for an operation. The supported values include `location`. | The changed LRO helpers apply @Azure.Core.useFinalStateVia("location"). | [lro-helpers.tsp:L22-L119](https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L22-L119), [lro-helpers.tsp:L5-L5](https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L5-L5), [lro-helpers.tsp:L11-L11](https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L11-L11), +6 more |
+| Matched | [ARM long-running operations - Action operations](https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/) | The `ArmResourceActionAsync` template uses `ArmLroLocationHeader` by default. The `FinalResult` should match the response type of the action. | The helpers use ArmLroLocationHeader<FinalResult = ...>, RetryAfterHeader, and concrete action result types. | [lro-helpers.tsp:L22-L119](https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L22-L119), [scenarioConfiguration.tsp:L48-L84](https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp#L48-L84), [scenarioRun.tsp:L44-L52](https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L44-L52), +22 more |
+| Matched | [Azure Core no-openapi rule - Rule summary](https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/) | Azure specs should not be using decorators from @typespec/openapi or @azure-tools/typespec-autorest because other emitters will not be able to understand them. | The PR removes raw x-ms-long-running-operation extensions and replaces them with Azure.Core LRO metadata. | [lro-helpers.tsp:L22-L119](https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L22-L119), [scenarioRun.tsp:L44-L52](https://github.com/Azure/azure-rest-api-specs/blob/a3b8933eb6ce030faa6abc6d354fc97e30f02e96/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp#L44-L52), [lro-helpers.tsp:L5-L5](https://github.com/Azure/azure-rest-api-specs/blob/232dfa71843fd574be49ba91a918ee7d3e7bfec3/specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp#L5-L5), +14 more |
 
 ### Tooling Used
 
@@ -162,7 +162,7 @@ None.
 
 | Project | Tool | Status | Duration | Log |
 | --- | --- | --- | ---: | --- |
-| `specification/chaos/resource-manager/Microsoft.Chaos/Chaos` | `TypeSpecValidation` | succeeded | 32s | `validation-logs/specification__chaos__resource-manager__Microsoft.Chaos__Chaos-head.log` |
+| `specification/chaos/resource-manager/Microsoft.Chaos/Chaos` | `TypeSpecValidation` | skipped | 0s | `unknown` |
 
 ### Artifact Evidence
 

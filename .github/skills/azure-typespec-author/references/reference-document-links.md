@@ -24,6 +24,7 @@
 - [Add preview after stable](https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/): Add a preview version after the latest stable version.
 - [Add stable after stable](https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/): Add a stable version after the latest stable version.
 - [Evolving APIs](https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/): Add, remove, rename, or modify resources, operations, parameters, and properties across API versions.
+- [TypeSpec.Versioning guide](https://typespec.io/docs/libraries/versioning/guide/): Look up versioning decorators and patterns for adding, removing, renaming, and changing declarations.
 
 ## Long-Running Operations (LRO)
 
@@ -39,18 +40,28 @@
 ## Models and Enums
 
 - [ARM common types](https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/): Author and version common ARM model definitions and expose them with `@@armCommonDefinition`.
+- [ARM common types version rule](https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/rules/arm-common-types-version/): Select an approved ARM common-types version.
+- [Azure.Core data types](https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/data-types/): Look up Azure.Core scalars and model templates such as `armResourceIdentifier`.
 - [Models](https://typespec.io/docs/language-basics/models/): Define model properties, optional values, defaults, spreads, inheritance, and composition.
 - [Enums](https://typespec.io/docs/language-basics/enums/): Define named enum members and service-facing enum values.
+- [Azure.Core no-enum rule](https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-enum/): Understand Azure guidance for extensible string values instead of closed enums.
 - [Scalars](https://typespec.io/docs/language-basics/scalars/): Define reusable custom scalar types and constrained primitive values.
 
 ## Decorators
 
 - [Decorators](https://typespec.io/docs/language-basics/decorators/): Apply decorators and augment decorators to TypeSpec declarations.
 - [Built-in decorators](https://typespec.io/docs/standard-library/built-in-decorators/): Use standard decorators for documentation, visibility, and value constraints such as minimum and maximum length.
+- [Azure.Core decorators](https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/decorators/): Look up Azure.Core decorators for LROs, paging, identifiers, embedding vectors, and operation behavior.
+- [Azure.ResourceManager decorators](https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/decorators/): Look up ARM-specific decorators for resources, operations, common definitions, and lifecycle behavior.
+- [TypeSpec Client Generator Core decorators](https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/): Look up SDK customization decorators such as client location, naming, access, flattening, and operation overrides.
 - [OpenAPI decorators](https://typespec.io/docs/libraries/openapi/reference/decorators/): Reference OpenAPI-specific decorators such as `@operationId`.
 - [Change provider namespace](https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/): Set an ARM provider namespace that differs from the TypeSpec namespace with `@armProviderNamespace`.
 - [Azure Portal default experiences](https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/): Understand the default Azure Portal experiences generated for ARM resource types and the available customization areas.
 - [Content negotiation](https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/): Model Azure.Core content negotiation with shared routes and typed Accept headers.
+
+## Client Customization
+
+- [Clients](https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/): Customize generated client hierarchy and placement with TypeSpec Client Generator Core.
 
 ## Warnings
 

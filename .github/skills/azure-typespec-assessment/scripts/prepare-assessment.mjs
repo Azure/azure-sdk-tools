@@ -285,7 +285,13 @@ export function discoverProjectRoots(repoRoot, changedFiles, baseCommit) {
   return [...roots].sort();
 }
 
-export function parseSourceHunks(diffText, revision, commit, remoteUrl) {
+export function parseSourceHunks(
+  diffText,
+  revision,
+  baseCommit,
+  remoteUrl,
+  headCommit,
+) {
   const references = [];
   let path;
   for (const line of diffText.split(/\r?\n/)) {
@@ -310,6 +316,7 @@ export function parseSourceHunks(diffText, revision, commit, remoteUrl) {
     const startLine = useBase ? oldStart : newStart;
     const count = useBase ? oldCount : newCount;
     const sourceRevision = useBase ? "base" : revision;
+    const sourceCommit = useBase ? baseCommit : headCommit;
     references.push({
       path,
       revision: sourceRevision,
@@ -318,7 +325,7 @@ export function parseSourceHunks(diffText, revision, commit, remoteUrl) {
       link: sourceLink(
         path,
         sourceRevision,
-        commit,
+        sourceCommit,
         remoteUrl,
         startLine,
         Math.max(startLine, startLine + count - 1),
@@ -337,16 +344,30 @@ function normalizeRemoteUrl(remoteUrl) {
   return undefined;
 }
 
-function sourceLink(path, revision, commit, remoteUrl, startLine, endLine) {
+export function sourceLink(
+  path,
+  revision,
+  commit,
+  remoteUrl,
+  startLine,
+  endLine,
+) {
   const fragment = `#L${startLine}-L${endLine}`;
-  if (revision === "head") return `${path}${fragment}`;
   const github = normalizeRemoteUrl(remoteUrl);
-  return github
-    ? `${github}/blob/${commit}/${path}${fragment}`
+  if (github && commit) {
+    return `${github}/blob/${commit}/${path}${fragment}`;
+  }
+  return revision === "head"
+    ? `${path}${fragment}`
     : `${commit}:${path}${fragment}`;
 }
 
-function untrackedReferences(repoRoot, changedFiles) {
+export function untrackedReferences(
+  repoRoot,
+  changedFiles,
+  headCommit,
+  remoteUrl,
+) {
   return changedFiles
     .filter((path) => path.endsWith(".tsp"))
     .filter(
@@ -364,7 +385,7 @@ function untrackedReferences(repoRoot, changedFiles) {
         revision: "head",
         startLine: 1,
         endLine: lines,
-        link: `${path}#L1-L${lines}`,
+        link: sourceLink(path, "head", headCommit, remoteUrl, 1, lines),
       };
     });
 }
@@ -1049,8 +1070,8 @@ export async function prepareAssessment(options) {
     { allowFailure: true },
   ).stdout;
   const sourceReferences = [
-    ...parseSourceHunks(sourceDiff, "head", baseCommit, remoteUrl),
-    ...untrackedReferences(repoRoot, changedFiles),
+    ...parseSourceHunks(sourceDiff, "head", baseCommit, remoteUrl, headCommit),
+    ...untrackedReferences(repoRoot, changedFiles, headCommit, remoteUrl),
   ];
 
   rmSync(outputRoot, { recursive: true, force: true });

@@ -26,28 +26,28 @@
         "revision": "head",
         "startLine": 7,
         "endLine": 7,
-        "link": "specification/newrelic/NewRelicObservability.Management/client.tsp#L7-L7"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L7-L7"
       },
       {
         "path": "specification/newrelic/NewRelicObservability.Management/client.tsp",
         "revision": "head",
         "startLine": 9,
         "endLine": 9,
-        "link": "specification/newrelic/NewRelicObservability.Management/client.tsp#L9-L9"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L9-L9"
       },
       {
         "path": "specification/newrelic/NewRelicObservability.Management/client.tsp",
         "revision": "head",
         "startLine": 324,
         "endLine": 354,
-        "link": "specification/newrelic/NewRelicObservability.Management/client.tsp#L324-L354"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L324-L354"
       },
       {
         "path": "specification/newrelic/NewRelicObservability.Management/main.tsp",
         "revision": "head",
         "startLine": 43,
         "endLine": 47,
-        "link": "specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
       }
     ],
     "emitterRuns": [
@@ -189,7 +189,7 @@
               "revision": "head",
               "startLine": 43,
               "endLine": 47,
-              "link": "specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47"
             }
           ]
         }
@@ -202,9 +202,7 @@
     "specification/newrelic/NewRelicObservability.Management"
   ],
   "assessmentDuration": {
-    "toolchainSetupMs": 62455,
-    "preparationMs": 85514,
-    "documentationReviewMs": 127,
-    "totalMs": 148096
+    "totalMs": 939098,
+    "note": "End-to-end active reasoning assessment time. Dimension timing is recorded in ../execution-time-analysis.md."
   }
 }

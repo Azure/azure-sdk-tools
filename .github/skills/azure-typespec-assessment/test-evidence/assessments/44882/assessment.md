@@ -7,7 +7,7 @@
 
 **Baseline:** `9eb0993333857ef0ffb2863ccc76f8b123cae90b`<br>
 **Head:** `22bc88578fb1f253688e8a5bf127ef3a4502745a`; working-tree changes: false<br>
-**Assessment time:** 2m 28s
+**Total assessment time:** 15m 39s
 
 ## 📌 Executive Summary
 
@@ -29,9 +29,9 @@ No action required from the assessed dimensions.
 
 ### Change Overview
 
-| # | Intent | Operations | Shape | API versions | Linked findings | Details |
-| ---: | --- | ---: | --- | --- | --- | --- |
-| 1 | Add a stable API version while preserving the released Go delete parameter order. | 1 | DELETE · 1 LRO · 0 paged | 2026-06-01 | No linked finding | [details](#intent-1-add-a-stable-api-version-while-preserving-the-re) |
+| # | Intent | Operations | API versions | Details |
+| ---: | --- | ---: | --- | --- |
+| 1 | Add a stable API version while preserving the released Go delete parameter order. | 1 | 2026-06-01 | [details](#intent-1-add-a-stable-api-version-while-preserving-the-re) |
 
 ### Operation Details
 
@@ -82,15 +82,7 @@ None.
 
 | Result | Document section | Fetched guidance | Observed TypeSpec | Evidence |
 | --- | --- | --- | --- | --- |
-| Matched | [Evolving APIs - Adding API elements](https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/) | You can add new models, properties, or operations in a specific version and all subsequent versions using the `@added` decorator. | The complete management-plane surface is introduced in stable 2026-06-01 without modifying the prior preview wire API. | [main.tsp:L43-L47](specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47) |
-
-### Timing
-
-- **Toolchain setup:** 1m 2s
-- **Preparation:** 1m 26s
-- **Documentation assessment:** 0s
-- **Total attributed time:** 2m 28s
-
+| Matched | [Evolving APIs - Adding API elements](https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/) | You can add new models, properties, or operations in a specific version and all subsequent versions using the `@added` decorator. | The complete management-plane surface is introduced in stable 2026-06-01 without modifying the prior preview wire API. | [main.tsp:L43-L47](https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47) |
 
 ### Tooling Used
 
@@ -110,5 +102,5 @@ None.
 
 ### Changed TypeSpec
 
-- `specification/newrelic/NewRelicObservability.Management/client.tsp`: [client.tsp:L7-L7](specification/newrelic/NewRelicObservability.Management/client.tsp#L7-L7), [client.tsp:L9-L9](specification/newrelic/NewRelicObservability.Management/client.tsp#L9-L9), [client.tsp:L324-L354](specification/newrelic/NewRelicObservability.Management/client.tsp#L324-L354)
-- `specification/newrelic/NewRelicObservability.Management/main.tsp`: [main.tsp:L43-L47](specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47)
+- `specification/newrelic/NewRelicObservability.Management/client.tsp`: [client.tsp:L7-L7](https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L7-L7), [client.tsp:L9-L9](https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L9-L9), [client.tsp:L324-L354](https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L324-L354)
+- `specification/newrelic/NewRelicObservability.Management/main.tsp`: [main.tsp:L43-L47](https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47)

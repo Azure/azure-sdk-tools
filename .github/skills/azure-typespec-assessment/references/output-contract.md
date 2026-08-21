@@ -89,9 +89,14 @@ compliance passed. This value is derived by the renderer rather than stored in
 JSON.
 `assessmentDuration` records measured wall-clock preparation and
 toolchain-setup, preparation, and documentation-assessment time. `totalMs` is
-their sum. When historical evidence was assessed as one shared batch,
+their sum when those components were measured separately. A reasoning-only
+reassessment may record only `totalMs` and a `note`, with its dimension timing
+kept in the separate aggregate execution-timing report. When historical
+evidence was assessed as one shared batch,
 `documentationReviewMs` may be `null`; include a
 `note` explaining why it cannot be attributed per PR and do not estimate it.
+Individual PR Markdown renders only the end-to-end total. Record component and
+dimension timing in the separate aggregate execution-timing report.
 
 Semantic items require `id`, `intent`, `transformationChain`,
 `restRepresentation`, `confidence`, and `sourceReferences`.

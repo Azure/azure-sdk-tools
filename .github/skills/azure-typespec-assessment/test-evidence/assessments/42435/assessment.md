@@ -7,7 +7,7 @@
 
 **Baseline:** `4664d78a647b029c314177addf80ebecd8b2a3ff (2ddde2a55d4c8eb6d0bdf22592dfb7c849dfd904)`<br>
 **Head:** `96eae0e7d5c7ede040ee0cc646d397e5d8375912`; working-tree changes: false<br>
-**Assessment time:** 4m 38s
+**Total assessment time:** 11m 31s
 
 ## 📌 Executive Summary
 
@@ -31,9 +31,9 @@
 
 ### Change Overview
 
-| # | Intent | Operations | Shape | API versions | Linked findings | Details |
-| ---: | --- | ---: | --- | --- | --- | --- |
-| 1 | Expose the existing nextLink-based OutboundRules_Post response as pageable while retaining its ARM LRO behavior. | 1 | POST · 1 LRO · 1 paged | 2025-10-01-preview, 2025-12-01, 2026-01-15-preview, 2026-03-01 | 1 finding(s) | [details](#intent-1-expose-the-existing-nextlink-based-outboundrules) |
+| # | Intent | Operations | API versions | Details |
+| ---: | --- | ---: | --- | --- |
+| 1 | Expose the existing nextLink-based OutboundRules_Post response as pageable while retaining its ARM LRO behavior. | 1 | 2025-10-01-preview, 2025-12-01, 2026-01-15-preview, 2026-03-01 | [details](#intent-1-expose-the-existing-nextlink-based-outboundrules) |
 
 ### Operation Details
 
@@ -89,16 +89,8 @@ None.
 
 | Result | Document section | Fetched guidance | Observed TypeSpec | Evidence |
 | --- | --- | --- | --- | --- |
-| Matched | [TypeSpec pagination - Pagination](https://typespec.io/docs/standard-library/pagination/) | To enable pagination for an operation the first step is to decorate it with the `@list` decorator and have the return type contain a property decorated with `@pageItems`. | The changed operation is marked as a list and its existing value and nextLink response fields are identified as page items and the next-page link. | [ManagedNetworkSettingsPropertiesBasicResource.tsp:L79-L89](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L79-L89), [models.tsp:L5483-L5497](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/models.tsp#L5483-L5497), [ManagedNetworkSettingsPropertiesBasicResource.tsp:L84-L84](specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84) |
-| Matched | [ARM long-running operations - Action operations](https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/) | The `ArmResourceActionAsync` template uses `ArmLroLocationHeader` by default. The `FinalResult` should match the response type of the action. | The pagination-only change retains the existing Location-polled action and response type. | [ManagedNetworkSettingsPropertiesBasicResource.tsp:L79-L89](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L79-L89), [ManagedNetworkSettingsPropertiesBasicResource.tsp:L84-L84](specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84) |
-
-### Timing
-
-- **Toolchain setup:** 2m 5s
-- **Preparation:** 2m 31s
-- **Documentation assessment:** 1s
-- **Total attributed time:** 4m 38s
-
+| Matched | [TypeSpec pagination - Pagination](https://typespec.io/docs/standard-library/pagination/) | To enable pagination for an operation the first step is to decorate it with the `@list` decorator and have the return type contain a property decorated with `@pageItems`. | The changed operation is marked as a list and its existing value and nextLink response fields are identified as page items and the next-page link. | [ManagedNetworkSettingsPropertiesBasicResource.tsp:L79-L89](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L79-L89), [models.tsp:L5483-L5497](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/models.tsp#L5483-L5497), [ManagedNetworkSettingsPropertiesBasicResource.tsp:L84-L84](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84) |
+| Matched | [ARM long-running operations - Action operations](https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/) | The `ArmResourceActionAsync` template uses `ArmLroLocationHeader` by default. The `FinalResult` should match the response type of the action. | The pagination-only change retains the existing Location-polled action and response type. | [ManagedNetworkSettingsPropertiesBasicResource.tsp:L79-L89](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L79-L89), [ManagedNetworkSettingsPropertiesBasicResource.tsp:L84-L84](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84) |
 
 ### Tooling Used
 
@@ -118,4 +110,4 @@ None.
 
 ### Changed TypeSpec
 
-- `specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp`: [ManagedNetworkSettingsPropertiesBasicResource.tsp:L84-L84](specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84)
+- `specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp`: [ManagedNetworkSettingsPropertiesBasicResource.tsp:L84-L84](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84)

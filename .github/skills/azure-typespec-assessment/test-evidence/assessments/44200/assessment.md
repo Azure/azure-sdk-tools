@@ -7,7 +7,7 @@
 
 **Baseline:** `c3011918b7318f44dcc15e92d4ffb307aa50a475 (0d3ff673b6b63361a7ba06a355d929902e596dac)`<br>
 **Head:** `b1582b12f39f1d122fce3c7bbb24b812b0c5c487`; working-tree changes: false<br>
-**Assessment time:** 2m 28s
+**Total assessment time:** 12m 8s
 
 ## 📌 Executive Summary
 
@@ -31,9 +31,9 @@
 
 ### Change Overview
 
-| # | Intent | Operations | Shape | API versions | Linked findings | Details |
-| ---: | --- | ---: | --- | --- | --- | --- |
-| 1 | Add private frontend support and stop flattening AssociationUpdate.properties for JavaScript. | 1 | PATCH · 1 LRO · 0 paged | 2025-05-01-preview | 1 finding(s) | [details](#intent-1-add-private-frontend-support-and-stop-flattening) |
+| # | Intent | Operations | API versions | Details |
+| ---: | --- | ---: | --- | --- |
+| 1 | Add private frontend support and stop flattening AssociationUpdate.properties for JavaScript. | 1 | 2025-05-01-preview | [details](#intent-1-add-private-frontend-support-and-stop-flattening) |
 
 ### Operation Details
 
@@ -91,16 +91,8 @@ None.
 
 | Result | Document section | Fetched guidance | Observed TypeSpec | Evidence |
 | --- | --- | --- | --- | --- |
-| Matched | [Versioning overview - Version progression](https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/) | Always make the last enum value the preview and apply `@previewVersion` to it. | The preview and stable versions are ordered and scoped without changing earlier emitted versions. | [main.tsp:L122-L127](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127), [main.tsp:L30-L35](specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35), [main.tsp:L63-L70](specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70), +5 more |
-| Matched | [Evolving APIs - Adding API elements](https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/) | You can add new models, properties, or operations in a specific version and all subsequent versions using the `@added` decorator. | Private frontend and private-link additions are scoped to the introduced versions. | [main.tsp:L122-L127](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127), [main.tsp:L30-L35](specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35), [main.tsp:L63-L70](specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70), +5 more |
-
-### Timing
-
-- **Toolchain setup:** 1m 4s
-- **Preparation:** 1m 24s
-- **Documentation assessment:** 0s
-- **Total attributed time:** 2m 28s
-
+| Matched | [Versioning overview - Version progression](https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/) | Always make the last enum value the preview and apply `@previewVersion` to it. | The preview and stable versions are ordered and scoped without changing earlier emitted versions. | [main.tsp:L122-L127](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127), [main.tsp:L30-L35](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35), [main.tsp:L63-L70](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70), +5 more |
+| Matched | [Evolving APIs - Adding API elements](https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/) | You can add new models, properties, or operations in a specific version and all subsequent versions using the `@added` decorator. | Private frontend and private-link additions are scoped to the introduced versions. | [main.tsp:L122-L127](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L122-L127), [main.tsp:L30-L35](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35), [main.tsp:L63-L70](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70), +5 more |
 
 ### Tooling Used
 
@@ -120,6 +112,6 @@ None.
 
 ### Changed TypeSpec
 
-- `specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp`: [back-compatible.tsp:L30-L39](specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp#L30-L39)
-- `specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp`: [client.tsp:L146-L182](specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L146-L182), [client.tsp:L194-L203](specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L194-L203)
-- `specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp`: [main.tsp:L30-L35](specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35), [main.tsp:L63-L70](specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70), [main.tsp:L80-L105](specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105), [main.tsp:L125-L125](specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L125-L125), [main.tsp:L310-L314](specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L310-L314), [main.tsp:L357-L459](specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459), [main.tsp:L543-L558](specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558)
+- `specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp`: [back-compatible.tsp:L30-L39](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/back-compatible.tsp#L30-L39)
+- `specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp`: [client.tsp:L146-L182](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L146-L182), [client.tsp:L194-L203](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/client.tsp#L194-L203)
+- `specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp`: [main.tsp:L30-L35](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L30-L35), [main.tsp:L63-L70](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L63-L70), [main.tsp:L80-L105](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L80-L105), [main.tsp:L125-L125](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L125-L125), [main.tsp:L310-L314](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L310-L314), [main.tsp:L357-L459](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L357-L459), [main.tsp:L543-L558](https://github.com/Azure/azure-rest-api-specs/blob/b1582b12f39f1d122fce3c7bbb24b812b0c5c487/specification/servicenetworking/resource-manager/Microsoft.ServiceNetworking/ServiceNetworking/main.tsp#L543-L558)

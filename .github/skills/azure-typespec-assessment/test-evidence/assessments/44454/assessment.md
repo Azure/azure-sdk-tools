@@ -7,7 +7,7 @@
 
 **Baseline:** `e8420e45fdaf12e2c72417d379c454f1fc8ce1e6`<br>
 **Head:** `b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2`; working-tree changes: false<br>
-**Assessment time:** 2m 12s
+**Total assessment time:** 10m 29s
 
 ## 📌 Executive Summary
 
@@ -29,9 +29,9 @@ No action required from the assessed dimensions.
 
 ### Change Overview
 
-| # | Intent | Operations | Shape | API versions | Linked findings | Details |
-| ---: | --- | ---: | --- | --- | --- | --- |
-| 1 | Restore released Python PascalCase operation-group names without changing other languages. | 3 | POST · 0 LRO · 0 paged | 2024-03-01 | No linked finding | [details](#intent-1-restore-released-python-pascalcase-operation-gro) |
+| # | Intent | Operations | API versions | Details |
+| ---: | --- | ---: | --- | --- |
+| 1 | Restore released Python PascalCase operation-group names without changing other languages. | 3 | 2024-03-01 | [details](#intent-1-restore-released-python-pascalcase-operation-gro) |
 
 ### Operation Details
 
@@ -106,14 +106,6 @@ None.
 
 No authoritative document evidence was available.
 
-### Timing
-
-- **Toolchain setup:** 1m 1s
-- **Preparation:** 1m 11s
-- **Documentation assessment:** 0s
-- **Total attributed time:** 2m 12s
-
-
 ### Tooling Used
 
 - `@azure-tools/typespec-autorest`
@@ -132,4 +124,4 @@ No authoritative document evidence was available.
 
 ### Changed TypeSpec
 
-- `specification/elastic/Elastic.Management/back-compatible.tsp`: [back-compatible.tsp:L97-L102](specification/elastic/Elastic.Management/back-compatible.tsp#L97-L102), [back-compatible.tsp:L108-L113](specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113), [back-compatible.tsp:L122-L127](specification/elastic/Elastic.Management/back-compatible.tsp#L122-L127)
+- `specification/elastic/Elastic.Management/back-compatible.tsp`: [back-compatible.tsp:L97-L102](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L97-L102), [back-compatible.tsp:L108-L113](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L108-L113), [back-compatible.tsp:L122-L127](https://github.com/Azure/azure-rest-api-specs/blob/b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2/specification/elastic/Elastic.Management/back-compatible.tsp#L122-L127)

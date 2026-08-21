@@ -30,6 +30,8 @@ import {
   satisfiesNodeEngine,
   summarizeCompilerFailure,
   summarizeValidationFailure,
+  sourceLink,
+  untrackedReferences,
   writeEmitterConfig,
 } from "./prepare-assessment.mjs";
 
@@ -407,14 +409,48 @@ test("source hunks map additions and deletions to the correct revision", () => {
     "head",
     "abc123",
     "https://github.com/Azure/example.git",
+    "def456",
   );
   assert.equal(references[0].revision, "head");
-  assert.equal(references[0].link, "spec/main.tsp#L2-L3");
+  assert.equal(
+    references[0].link,
+    "https://github.com/Azure/example/blob/def456/spec/main.tsp#L2-L3",
+  );
   assert.equal(references[1].revision, "base");
   assert.equal(
     references[1].link,
     "https://github.com/Azure/example/blob/abc123/spec/main.tsp#L8-L10",
   );
+});
+
+test("source links fall back locally without a GitHub remote", () => {
+  assert.equal(
+    sourceLink("spec/main.tsp", "head", "def456", "", 2, 3),
+    "spec/main.tsp#L2-L3",
+  );
+  assert.equal(
+    sourceLink("spec/main.tsp", "base", "abc123", "", 8, 10),
+    "abc123:spec/main.tsp#L8-L10",
+  );
+});
+
+test("untracked source links use the head commit", () => {
+  const { repo } = createRepository();
+  try {
+    writeFileSync(join(repo, "spec", "new.tsp"), "model NewModel {}\n");
+    const references = untrackedReferences(
+      repo,
+      ["spec/new.tsp"],
+      "def456",
+      "https://github.com/Azure/example.git",
+    );
+    assert.equal(
+      references[0].link,
+      "https://github.com/Azure/example/blob/def456/spec/new.tsp#L1-L2",
+    );
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
 });
 
 test("prepareAssessment creates source evidence without compilation", async () => {

@@ -404,6 +404,59 @@ function validateCompliance(compliance, errors) {
   }
 }
 
+function validateRepositoryValidation(document, errors) {
+  const validations = document?.assessmentEvidence?.repositoryValidation;
+  if (validations === undefined) return;
+  assert(
+    Array.isArray(validations) && validations.length > 0,
+    "assessmentEvidence.repositoryValidation cannot be empty",
+    errors,
+  );
+  for (const [index, validation] of (validations ?? []).entries()) {
+    const label = `assessmentEvidence.repositoryValidation[${index}]`;
+    assert(
+      typeof validation.project === "string" && validation.project.length > 0,
+      `${label}.project is required`,
+      errors,
+    );
+    assert(
+      validation.tool === "TypeSpecValidation",
+      `${label}.tool must be TypeSpecValidation`,
+      errors,
+    );
+    assert(
+      ["succeeded", "failed", "skipped"].includes(validation.status),
+      `${label}.status must be succeeded, failed, or skipped`,
+      errors,
+    );
+    assert(
+      Number.isInteger(validation.durationMs) && validation.durationMs >= 0,
+      `${label}.durationMs is invalid`,
+      errors,
+    );
+    if (validation.status === "skipped") {
+      assert(
+        typeof validation.reason === "string" && validation.reason.length > 0,
+        `${label}.reason is required when validation is skipped`,
+        errors,
+      );
+    } else {
+      assert(
+        typeof validation.log === "string" && validation.log.length > 0,
+        `${label}.log is required`,
+        errors,
+      );
+    }
+    if (validation.status === "failed") {
+      assert(
+        Array.isArray(document.errors) && document.errors.length > 0,
+        `${label} failed validation must be represented by a blocking assessment error`,
+        errors,
+      );
+    }
+  }
+}
+
 export function validateAssessment(document, markdown) {
   const errors = [];
   assert(document?.schemaVersion === 1, "schemaVersion must be 1", errors);
@@ -413,37 +466,50 @@ export function validateAssessment(document, markdown) {
     errors,
   );
   if (document?.assessmentDuration !== undefined) {
-    if (document.assessmentDuration.toolchainSetupMs !== undefined) {
+    assert(
+      Number.isInteger(document.assessmentDuration.totalMs) &&
+        document.assessmentDuration.totalMs >= 0,
+      "assessmentDuration.totalMs is invalid",
+      errors,
+    );
+    const hasComponents = [
+      "toolchainSetupMs",
+      "preparationMs",
+      "documentationReviewMs",
+    ].some((field) => field in document.assessmentDuration);
+    if (hasComponents) {
+      if (document.assessmentDuration.toolchainSetupMs !== undefined) {
+        assert(
+          Number.isInteger(document.assessmentDuration.toolchainSetupMs) &&
+            document.assessmentDuration.toolchainSetupMs >= 0,
+          "assessmentDuration.toolchainSetupMs is invalid",
+          errors,
+        );
+      }
       assert(
-        Number.isInteger(document.assessmentDuration.toolchainSetupMs) &&
-          document.assessmentDuration.toolchainSetupMs >= 0,
-        "assessmentDuration.toolchainSetupMs is invalid",
+        Number.isInteger(document.assessmentDuration.preparationMs) &&
+          document.assessmentDuration.preparationMs >= 0,
+        "assessmentDuration.preparationMs is invalid",
+        errors,
+      );
+      assert(
+        document.assessmentDuration.documentationReviewMs === null ||
+          (Number.isInteger(
+            document.assessmentDuration.documentationReviewMs,
+          ) &&
+            document.assessmentDuration.documentationReviewMs >= 0),
+        "assessmentDuration.documentationReviewMs is invalid",
+        errors,
+      );
+      assert(
+        document.assessmentDuration.totalMs ===
+          (document.assessmentDuration.toolchainSetupMs ?? 0) +
+            document.assessmentDuration.preparationMs +
+            (document.assessmentDuration.documentationReviewMs ?? 0),
+        "assessmentDuration.totalMs must equal toolchainSetupMs + preparationMs + documentationReviewMs",
         errors,
       );
     }
-    for (const field of ["preparationMs", "totalMs"]) {
-      assert(
-        Number.isInteger(document.assessmentDuration[field]) &&
-          document.assessmentDuration[field] >= 0,
-        `assessmentDuration.${field} is invalid`,
-        errors,
-      );
-    }
-    assert(
-      document.assessmentDuration.documentationReviewMs === null ||
-        (Number.isInteger(document.assessmentDuration.documentationReviewMs) &&
-          document.assessmentDuration.documentationReviewMs >= 0),
-      "assessmentDuration.documentationReviewMs is invalid",
-      errors,
-    );
-    assert(
-      document.assessmentDuration.totalMs ===
-        (document.assessmentDuration.toolchainSetupMs ?? 0) +
-          document.assessmentDuration.preparationMs +
-          (document.assessmentDuration.documentationReviewMs ?? 0),
-      "assessmentDuration.totalMs must equal toolchainSetupMs + preparationMs + documentationReviewMs",
-      errors,
-    );
     if (document.assessmentDuration.documentationReviewMs === null) {
       assert(
         typeof document.assessmentDuration.note === "string" &&
@@ -497,6 +563,7 @@ export function validateAssessment(document, markdown) {
     errors,
   );
   validateCompliance(dimensions?.azureCompliance, errors);
+  validateRepositoryValidation(document, errors);
   if (markdown !== undefined) {
     assert(
       markdown.includes(
@@ -525,8 +592,11 @@ export function validateAssessment(document, markdown) {
       errors,
     );
     assert(
-      markdown.includes("### Timing"),
-      "assessment.md is missing assessment timing evidence",
+      (markdown.match(/\*\*Total assessment time:\*\*/g) ?? []).length === 1 &&
+        !markdown.includes("### Timing") &&
+        !markdown.includes("Other assessment time") &&
+        !markdown.includes("Compliance assessment time"),
+      "assessment.md must contain exactly one total assessment time and no detailed timing",
       errors,
     );
     assert(

@@ -117,6 +117,17 @@ function formatDuration(milliseconds) {
   return minutes > 0 ? `${minutes}m ${seconds % 60}s` : `${seconds}s`;
 }
 
+function formatTotalAssessmentTime(duration) {
+  if (!duration) return "Unavailable";
+  if (duration.documentationReviewMs === null) {
+    return "Unavailable; compliance time was not attributable per PR";
+  }
+  const time = formatDuration(duration.totalMs);
+  const note = duration.note?.toLowerCase() ?? "";
+  if (!note.includes("approximate")) return time;
+  return `~${time}; includes approximate timing`;
+}
+
 function renderHeader(assessment) {
   const pr = assessment.pr
     ? `**PR:** [#${assessment.pr} - ${assessment.title}](${assessment.url})\n\n`
@@ -137,7 +148,7 @@ ${pr}**Overall confidence:** ${formatConfidence(assessment.overallConfidence)}<b
 
 **Baseline:** ${code(baseline)}<br>
 **Head:** ${code(assessment.head?.commit)}${workingTree}<br>
-**Assessment time:** ${formatDuration(assessment.assessmentDuration?.totalMs)}
+**Total assessment time:** ${formatTotalAssessmentTime(assessment.assessmentDuration)}
 `;
 }
 
@@ -199,47 +210,21 @@ ${rows}
 `;
 }
 
-function operationSignals(operations) {
-  const lro = operations.filter(
-    (operation) => operation.lro.isLongRunning,
-  ).length;
-  const paging = operations.filter(
-    (operation) => operation.paging.isPaged,
-  ).length;
-  const methods = [...new Set(operations.map((operation) => operation.method))];
-  return `${methods.join("/")} · ${lro} LRO · ${paging} paged`;
-}
-
-function findingAppliesToIntent(finding, item) {
-  return (finding.sourceReferences ?? []).some((findingSource) =>
-    item.sourceReferences.some(
-      (intentSource) =>
-        intentSource.path === findingSource.path &&
-        intentSource.startLine <= findingSource.endLine &&
-        findingSource.startLine <= intentSource.endLine,
-    ),
-  );
-}
-
 function renderChangeOverview(assessment) {
-  const findings = allFindings(assessment);
   const rows = assessment.dimensions.semanticUnderstanding.items
     .map((item, index) => {
       const operations = item.restRepresentation.operations;
       const versions = [
         ...new Set(operations.flatMap((operation) => operation.apiVersions)),
       ];
-      const linkedFindings = findings.filter((finding) =>
-        findingAppliesToIntent(finding, item),
-      ).length;
       const anchor = `intent-${index + 1}-${slug(item.intent).slice(0, 48)}`;
-      return `| ${index + 1} | ${tableText(item.intent)} | ${operations.length} | ${tableText(operationSignals(operations))} | ${tableText(versions.join(", "))} | ${linkedFindings > 0 ? `${linkedFindings} finding(s)` : "No linked finding"} | [details](#${anchor}) |`;
+      return `| ${index + 1} | ${tableText(item.intent)} | ${operations.length} | ${tableText(versions.join(", "))} | [details](#${anchor}) |`;
     })
     .join("\n");
   return `### Change Overview
 
-| # | Intent | Operations | Shape | API versions | Linked findings | Details |
-| ---: | --- | ---: | --- | --- | --- | --- |
+| # | Intent | Operations | API versions | Details |
+| ---: | --- | ---: | --- | --- |
 ${rows}
 `;
 }
@@ -409,13 +394,6 @@ function renderAppendix(assessment) {
         .map(([name, evidence]) => `- **${name}:** ${evidence}`)
         .join("\n")
     : "No aggregate artifact evidence recorded.";
-  const duration = assessment.assessmentDuration;
-  const timing = duration
-    ? `${duration.toolchainSetupMs === undefined ? "" : `- **Toolchain setup:** ${formatDuration(duration.toolchainSetupMs)}\n`}- **Preparation:** ${formatDuration(duration.preparationMs)}
-- **Documentation assessment:** ${duration.documentationReviewMs === null ? "Shared batch; unavailable per PR" : formatDuration(duration.documentationReviewMs)}
-- **Total attributed time:** ${formatDuration(duration.totalMs)}
-${duration.note ? `- **Note:** ${duration.note}` : ""}`
-    : "No timing evidence recorded.";
   return `## 📎 Appendix
 
 ### Assessment Errors
@@ -425,10 +403,6 @@ ${errors}
 ### Code-to-Guidance Evidence
 
 ${renderGuidanceEvidence(assessment)}
-
-### Timing
-
-${timing}
 
 ### Tooling Used
 

@@ -26,7 +26,7 @@
         "revision": "head",
         "startLine": 535,
         "endLine": 542,
-        "link": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542"
+        "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542"
       }
     ],
     "emitterRuns": [
@@ -267,9 +267,7 @@
     "specification/consumption/resource-manager/Microsoft.Consumption/Consumption"
   ],
   "assessmentDuration": {
-    "toolchainSetupMs": 65804,
-    "preparationMs": 88292,
-    "documentationReviewMs": 310,
-    "totalMs": 154406
+    "totalMs": 712258,
+    "note": "End-to-end active reasoning assessment time. Dimension timing is recorded in ../execution-time-analysis.md."
   }
 }

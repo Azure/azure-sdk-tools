@@ -27,6 +27,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _devOpsService = new DevOpsService(_logger, _connection);
         }
 
+
         #region GetReleasePlanAsync(string pullRequestUrl) Tests
 
         [Test]

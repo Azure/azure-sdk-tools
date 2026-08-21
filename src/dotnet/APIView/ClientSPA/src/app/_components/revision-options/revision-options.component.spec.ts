@@ -4,8 +4,9 @@ import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { of } from 'rxjs';
-import { vi } from 'vitest';
+import { of, Subject } from 'rxjs';
+import { PaginatedResult } from 'src/app/_models/pagination';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { initializeTestBed } from '../../../test-setup';
 
 // Mock ngx-ui-scroll to avoid vscroll dependency error
@@ -143,6 +144,35 @@ describe('ApiRevisionOptionsComponent', () => {
     );
     expect(component.mappedApiRevisions.some(revision => revision.id === releasedRevision.id)).toBeTruthy();
     expect(component.activeApiRevisionsMenu.some(revision => revision.id === releasedRevision.id)).toBeTruthy();
+  });
+
+  it('should keep existing options until a filtered revision query completes', () => {
+    const initialRevision = {
+      id: 'initial',
+      reviewId: 'pending-review-id',
+      resolvedLabel: 'Initial revision',
+      isReleased: false
+    } as APIRevision;
+    const releasedRevision = {
+      id: 'released',
+      reviewId: 'pending-review-id',
+      resolvedLabel: 'Released revision',
+      isReleased: true
+    } as APIRevision;
+    component.apiRevisions = [initialRevision];
+    component.mappedApiRevisions = component.mapRevisionToMenu([initialRevision]);
+    component.activeApiRevisionsMenu = [...component.mappedApiRevisions];
+    const response = new Subject<PaginatedResult<APIRevision[]>>();
+    vi.spyOn(TestBed.inject(APIRevisionsService), 'getAPIRevisions').mockReturnValue(response);
+
+    component.activeApiRevisionFilterFunction({ value: 'released' });
+
+    expect(component.activeApiRevisionsMenu.map(revision => revision.id)).toEqual(['initial']);
+
+    response.next({ result: [releasedRevision] });
+    response.complete();
+
+    expect(component.activeApiRevisionsMenu.map(revision => revision.id)).toEqual(['released']);
   });
 
   describe('Tag APIRevision appropriately based on date and/or status', () => {

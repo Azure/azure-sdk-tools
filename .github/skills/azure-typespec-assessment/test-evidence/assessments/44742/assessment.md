@@ -2,10 +2,10 @@
 
 **PR:** [#44742 - Removed NFSv2 from STG103/104 TypeSpec & Swagger](https://github.com/Azure/azure-rest-api-specs/pull/44742)
 
-**Overall confidence:** 🟢 high<br>
+**Overall confidence:** 🟡 medium<br>
 **Overall code safety:** 🔴 Low
 
-**Baseline:** `af067c9fc987b837f27a34b86e3ac591507711c9 (e75a07cd7ea1b2207190a362305db02b639715ec)`<br>
+**Baseline:** `e75a07cd7ea1b2207190a362305db02b639715ec`<br>
 **Head:** `656ca8b0741973760f8a60ee0fd293ba9c31e708`; working-tree changes: false<br>
 **Total assessment time:** 12m 46s
 
@@ -89,7 +89,7 @@ None.
 
 | Result | Document section | Fetched guidance | Observed TypeSpec | Evidence |
 | --- | --- | --- | --- | --- |
-| Matched | [Evolving APIs - Removing API elements](https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/) | To remove models, properties, or operations starting from a specific version, use the `@removed` decorator. | The NFSv2 enum members, properties, and models are explicitly excluded from stable 2026-12-06 while earlier versions remain represented. | [models.tsp:L284-L806](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L806), [models.tsp:L287-L302](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L287-L302), [models.tsp:L408-L423](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L408-L423), +4 more |
+| Matched | [TypeSpec.Versioning guide - Current-state modeling](https://typespec.io/docs/libraries/versioning/guide/) | The TypeSpec should represent the current state of the API. | The removed NFSv2 declarations existed only in the latest unreleased version and should no longer exist in any version. | [models.tsp:L284-L806](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L284-L806), [models.tsp:L287-L302](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L287-L302), [models.tsp:L408-L423](https://github.com/Azure/azure-rest-api-specs/blob/e75a07cd7ea1b2207190a362305db02b639715ec/specification/storage/data-plane/FileStorage/models.tsp#L408-L423), +4 more |
 
 ### Tooling Used
 
@@ -100,7 +100,7 @@ None.
 
 | Project | Tool | Status | Duration | Log |
 | --- | --- | --- | ---: | --- |
-| `specification/storage/data-plane/FileStorage` | `TypeSpecValidation` | succeeded | 28s | `validation-logs/specification__storage__data-plane__FileStorage-head.log` |
+| `specification/storage/data-plane/FileStorage` | `TypeSpecValidation` | skipped | 0s | `unknown` |
 
 ### Artifact Evidence
 

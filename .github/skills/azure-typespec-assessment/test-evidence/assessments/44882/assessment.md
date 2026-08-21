@@ -2,7 +2,7 @@
 
 **PR:** [#44882 - Add new stable version 2026-06-01 for New Relic](https://github.com/Azure/azure-rest-api-specs/pull/44882)
 
-**Overall confidence:** 🟢 high<br>
+**Overall confidence:** 🟡 medium<br>
 **Overall code safety:** 🟡 Medium
 
 **Baseline:** `9eb0993333857ef0ffb2863ccc76f8b123cae90b`<br>
@@ -16,14 +16,16 @@
 | Semantic understanding | ✅ Assessed — 1 intent(s), 1 operation(s) | n/a |
 | REST compatibility | ✅ No breaks detected | 0 |
 | Downstream compatibility | ✅ No breaks detected | 0 |
-| Azure compliance | ⚠️ not-assessed | 0 |
+| Azure compliance | ❌ failed | 1 |
 
 **Scope:** 1 intent(s), 1 affected operation(s), 1 project(s).<br>
-**Highest severity:** none.
+**Highest severity:** medium.
 
 ## 🎯 Action Required
 
-No action required from the assessed dimensions.
+| Severity | Area | Finding | Why it matters | Code | Guidance |
+| --- | --- | --- | --- | --- | --- |
+| medium | Compliance | The stable version retains the replaced preview version | The enum keeps v2025_05_01_preview beside v2026_06_01 instead of following the stable-after-preview replacement procedure. | [main.tsp:L43-L47](https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47) | [The stable version replaces the prior preview member.](https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/) |
 
 ## 🧠 Semantic Understanding
 
@@ -64,13 +66,17 @@ None detected.
 
 ## ☁️ Azure Compliance
 
-**Status:** `not-assessed`
-
-The stable-version addition follows fetched guidance, but the shared catalog has no authoritative document for the Go-only operation override and parameter-order customization.
+**Status:** `failed`
 
 ### Compliance Findings
 
-No compliance mismatches found.
+### The stable version retains the replaced preview version
+
+- **Severity:** medium
+- **Summary:** The enum keeps v2025_05_01_preview beside v2026_06_01 instead of following the stable-after-preview replacement procedure.
+- **Evidence:** The Go-specific override follows its documentation and is not part of this finding.
+- **TypeSpec source:** [main.tsp:L43-L47](https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47)
+- **Guidance:** https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/
 
 ## 📎 Appendix
 
@@ -82,7 +88,8 @@ None.
 
 | Result | Document section | Fetched guidance | Observed TypeSpec | Evidence |
 | --- | --- | --- | --- | --- |
-| Matched | [Evolving APIs - Adding API elements](https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/) | You can add new models, properties, or operations in a specific version and all subsequent versions using the `@added` decorator. | The complete management-plane surface is introduced in stable 2026-06-01 without modifying the prior preview wire API. | [main.tsp:L43-L47](https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47) |
+| Mismatch | [Adding a Stable Version when the Last Version was Preview - Making Changes to your TypeSpec spec](https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/) | Remove the replaced preview version from the version enum. | The enum retains v2025_05_01_preview and appends v2026_06_01. | [main.tsp:L43-L47](https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/main.tsp#L43-L47) |
+| Matched | [TypeSpec Client Generator Core decorators - @Azure.ClientGenerator.Core.override](https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/) | Customize a method's signature in the generated client SDK. Currently, only parameter signature customization is supported. | The Go-only @@override is in client.tsp and reorders the delete operation parameters. | [client.tsp:L321-L354](https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L321-L354), [client.tsp:L7-L7](https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L7-L7), [client.tsp:L9-L9](https://github.com/Azure/azure-rest-api-specs/blob/22bc88578fb1f253688e8a5bf127ef3a4502745a/specification/newrelic/NewRelicObservability.Management/client.tsp#L9-L9), +1 more |
 
 ### Tooling Used
 
@@ -93,7 +100,7 @@ None.
 
 | Project | Tool | Status | Duration | Log |
 | --- | --- | --- | ---: | --- |
-| `specification/newrelic/NewRelicObservability.Management` | `TypeSpecValidation` | succeeded | 31s | `validation-logs/specification__newrelic__NewRelicObservability.Management-head.log` |
+| `specification/newrelic/NewRelicObservability.Management` | `TypeSpecValidation` | skipped | 0s | `unknown` |
 
 ### Artifact Evidence
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "overallConfidence": "high",
+  "overallConfidence": "medium",
   "pr": 43745,
   "title": "Updated CloudHsmClusterSkuName from closed enum to extensible enum",
   "url": "https://github.com/Azure/azure-rest-api-specs/pull/43745",
@@ -71,9 +71,9 @@
       {
         "project": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules",
         "tool": "TypeSpecValidation",
-        "status": "succeeded",
-        "durationMs": 25112,
-        "log": "validation-logs/specification__hardwaresecuritymodules__resource-manager__Microsoft.HardwareSecurityModules__HardwareSecurityModules-head.log"
+        "status": "skipped",
+        "durationMs": 0,
+        "reason": "Skipped by explicit --skip-validation request."
       }
     ]
   },
@@ -242,16 +242,19 @@
       ]
     },
     "azureCompliance": {
-      "status": "not-assessed",
-      "reason": "The shared catalog explains enums and models but does not document the Azure extensible-enum pattern used to allow unknown SKU values.",
+      "status": "passed",
+      "summary": {
+        "patternsAssessed": 1,
+        "findingCount": 0
+      },
       "documents": [
         {
-          "title": "Enums",
-          "url": "https://typespec.io/docs/language-basics/enums/",
-          "section": "Custom enum values",
-          "guidanceExcerpt": "You can assign custom values to enum members using the `:` operator.",
-          "applicableGuidance": "Enums define named constants and may assign explicit service-facing values.",
-          "evidence": "The known SKU values retain their explicit wire representations.",
+          "title": "Azure Core no-enum rule",
+          "url": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-enum/",
+          "section": "Rule and remediation",
+          "guidanceExcerpt": "Using a union with the base scalar (`string`, `int32`, `int64`, etc.) as a variant instead of an enum makes it extensible.",
+          "applicableGuidance": "Use an open union containing the base scalar and named known values for an extensible service value.",
+          "evidence": "CloudHsmClusterSkuName changes from a suppressed enum to a union containing string and two named variants with unchanged wire values.",
           "sourceReferences": [
             {
               "path": "specification/hardwaresecuritymodules/resource-manager/Microsoft.HardwareSecurityModules/HardwareSecurityModules/models.tsp",

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "overallConfidence": "high",
+  "overallConfidence": "medium",
   "baseline": {
     "ref": "9f0ad696cc186c2d16cb522abc0fbd4aa3854ca5",
     "commit": "9f0ad696cc186c2d16cb522abc0fbd4aa3854ca5"
@@ -2927,173 +2927,48 @@
     "azureCompliance": {
       "status": "failed",
       "summary": {
-        "patternsAssessed": 4,
+        "patternsAssessed": 2,
         "findingCount": 2
       },
       "documents": [
         {
-          "title": "Evolving APIs",
-          "url": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
-          "section": "Adding API elements",
-          "guidanceExcerpt": "You can add new models, properties, or operations in a specific version and all subsequent versions using the `@added` decorator.",
-          "applicableGuidance": "New resources, operations, properties, and changed operation patterns are scoped with versioning decorators.",
-          "evidence": "All new network resources, operations, fields, and synchronous Service Gateway variants are scoped to 2025-09-01.",
-          "sourceReferences": [
-            {
-              "path": "specification/network/resource-manager/Microsoft.Network/Network/Common/main.tsp",
-              "revision": "head",
-              "startLine": 50,
-              "endLine": 62,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Common/main.tsp#L50-L62"
-            },
-            {
-              "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp",
-              "revision": "head",
-              "startLine": 130,
-              "endLine": 284,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/ExpressRouteLag.tsp#L130-L284"
-            },
-            {
-              "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp",
-              "revision": "head",
-              "startLine": 16,
-              "endLine": 83,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/FirewallPolicyKubeSelectorGroup.tsp#L16-L83"
-            },
-            {
-              "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp",
-              "revision": "head",
-              "startLine": 16,
-              "endLine": 140,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/FirstPartyServiceTag.tsp#L16-L140"
-            },
-            {
-              "path": "specification/network/resource-manager/Microsoft.Network/Network/Common/main.tsp",
-              "revision": "head",
-              "startLine": 1441,
-              "endLine": 1531,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Common/main.tsp#L1441-L1531"
-            },
-            {
-              "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp",
-              "revision": "head",
-              "startLine": 461,
-              "endLine": 572,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L461-L572"
-            },
-            {
-              "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/AddressPrefixSet.tsp",
-              "revision": "head",
-              "startLine": 17,
-              "endLine": 88,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/AddressPrefixSet.tsp#L17-L88"
-            },
-            {
-              "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkVirtualAppliance.tsp",
-              "revision": "head",
-              "startLine": 233,
-              "endLine": 290,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkVirtualAppliance.tsp#L233-L290"
-            },
-            {
-              "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/VirtualNetwork.tsp",
-              "revision": "head",
-              "startLine": 138,
-              "endLine": 160,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/VirtualNetwork.tsp#L138-L160"
-            },
-            {
-              "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/VirtualNetworkGateway.tsp",
-              "revision": "head",
-              "startLine": 270,
-              "endLine": 287,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/VirtualNetworkGateway.tsp#L270-L287"
-            },
-            {
-              "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp",
-              "revision": "head",
-              "startLine": 48,
-              "endLine": 203,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp#L48-L203"
-            },
-            {
-              "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp",
-              "revision": "head",
-              "startLine": 8672,
-              "endLine": 8682,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp#L8672-L8682"
-            }
-          ]
-        },
-        {
           "title": "ARM resource types and modeling",
           "url": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
-          "section": "Resource types",
-          "guidanceExcerpt": "Resources are modeled in TypeSpec by choosing a base resource type, defining rp-specific properties, and optionally mixing in standard envelope properties.",
-          "applicableGuidance": "ARM resources use documented tracked, proxy, child, and extension resource modeling patterns.",
-          "evidence": "Most added resources use ARM base-resource patterns, but ConnectionAnalyzer is declared as a plain model with Legacy.customAzureResource instead of choosing a documented base resource type.",
+          "section": "Resource types and child resources",
+          "guidanceExcerpt": "Resources are modeled in TypeSpec by choosing a base resource type, defining rp-specific properties, and optionally mixing in standard envelope properties. Child resources usually use the `ProxyResource<TProperties>` as their base resource type.",
+          "applicableGuidance": "A resource-shaped child chooses a documented ARM base and declares its parent instead of reconstructing the envelope in a legacy plain model.",
+          "evidence": "ConnectionAnalyzer is a plain model with Legacy.customAzureResource and manually repeated ARM envelope fields.",
           "sourceReferences": [
             {
               "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp",
               "revision": "head",
-              "startLine": 27738,
+              "startLine": 27735,
               "endLine": 27791,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp#L27738-L27791"
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp#L27735-L27791"
             }
           ]
         },
         {
           "title": "ARM resource operations",
           "url": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
-          "section": "Resource operation templates",
-          "guidanceExcerpt": "TypeSpec operation templates provide a simple mechanism for producing the most common operation patterns in ARM, using best practices and conforming to ARM RPC guidelines.",
-          "applicableGuidance": "Resource CRUD and list operations use the standard ArmResourceRead, ArmResourceCreateOrReplace, ArmTagsPatch or ArmCustomPatch, ArmResourceDelete, and ArmResourceListByParent templates.",
-          "evidence": "The new Connection Analyzer CRUD operations are built from Legacy.RoutedOperations ActionSync and ActionAsync helpers plus manually declared HTTP routes; the list operation is also declared manually.",
+          "section": "Recommended operations and custom actions",
+          "guidanceExcerpt": "Custom actions define any operations over resources outside the simple CRUDL (Create, Read, Update, Delete, List) or lifecycle operations described above.",
+          "applicableGuidance": "CRUDL uses ArmResourceRead, ArmResourceCreateOrReplace, ArmTagsPatch or ArmCustomPatch, ArmResourceDelete, and ArmResourceListByParent; actions are reserved for behavior outside CRUDL.",
+          "evidence": "ConnectionAnalyzer PUT, GET, PATCH, and DELETE use Legacy.RoutedOperations action helpers, while list is manually routed.",
           "sourceReferences": [
             {
               "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp",
               "revision": "head",
               "startLine": 41,
-              "endLine": 62,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L41-L62"
+              "endLine": 64,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L41-L64"
             },
             {
               "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp",
               "revision": "head",
-              "startLine": 461,
-              "endLine": 572,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L461-L572"
-            }
-          ]
-        },
-        {
-          "title": "ARM long-running operations",
-          "url": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
-          "section": "LRO header models",
-          "guidanceExcerpt": "Each header model accepts a `FinalResult` parameter that indicates the type of the logical result of the operation. It is important that this value matches what the operation actually returns.",
-          "applicableGuidance": "Asynchronous ARM actions preserve polling headers and final-result types matching service behavior.",
-          "evidence": "The added move and migration workflows retain explicit asynchronous action behavior; the new synchronous Service Gateway variants are version-scoped separately.",
-          "sourceReferences": [
-            {
-              "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkVirtualAppliance.tsp",
-              "revision": "head",
-              "startLine": 233,
-              "endLine": 290,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkVirtualAppliance.tsp#L233-L290"
-            },
-            {
-              "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/VirtualNetwork.tsp",
-              "revision": "head",
-              "startLine": 138,
-              "endLine": 160,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/VirtualNetwork.tsp#L138-L160"
-            },
-            {
-              "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp",
-              "revision": "head",
-              "startLine": 48,
-              "endLine": 203,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/ServiceGateway.tsp#L48-L203"
+              "startLine": 470,
+              "endLine": 552,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L470-L552"
             }
           ]
         }
@@ -3103,19 +2978,19 @@
           "id": "compliance-connection-analyzer-standard-resource-type",
           "title": "Connection Analyzer does not use a documented ARM base resource type",
           "severity": "medium",
-          "summary": "The fetched resource-type guidance says an ARM resource is modeled by choosing a base resource type, but the PR declares ConnectionAnalyzer as a plain model and marks it with Legacy.customAzureResource.",
+          "summary": "The resource-type guidance says an ARM resource is modeled by choosing a base type, but ConnectionAnalyzer is a plain model marked with Legacy.customAzureResource.",
           "documentationUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/",
           "evidence": [
-            "The fetched resource-type page directs authors to choose a documented tracked, proxy, child, extension, or other ARM base resource type.",
-            "ConnectionAnalyzer has no ARM base model; suppressions explicitly acknowledge use of the discouraged legacy custom-resource pattern."
+            "The documented child pattern uses @parentResource and ProxyResource<TProperties> with ResourceNameParameter.",
+            "ConnectionAnalyzer manually repeats id, name, type, location, tags, systemData, and properties."
           ],
           "sourceReferences": [
             {
               "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp",
               "revision": "head",
-              "startLine": 27738,
+              "startLine": 27735,
               "endLine": 27791,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp#L27738-L27791"
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/models.tsp#L27735-L27791"
             }
           ]
         },
@@ -3123,26 +2998,26 @@
           "id": "compliance-connection-analyzer-standard-resource-operations",
           "title": "Connection Analyzer does not use the documented ARM resource operation templates",
           "severity": "medium",
-          "summary": "The PR adds resource-style create, read, update, delete, and list operations for Connection Analyzer using Legacy.RoutedOperations action helpers and manual routes instead of the standard ARM resource operation templates required by the fetched guidance.",
+          "summary": "The new resource-style CRUD and list operations use legacy action helpers and manual routes instead of standard ARM resource-operation templates.",
           "documentationUrl": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/",
           "evidence": [
-            "The fetched ARM resource-operations page maps resource GET, PUT, PATCH, DELETE, and list operations to ArmResourceRead, ArmResourceCreateOrReplaceAsync or Sync, ArmTagsPatch or ArmCustomPatch, ArmResourceDelete, and ArmResourceListByParent templates.",
-            "NetworkWatcher.tsp declares ConnectionAnalyzerOps as Azure.ResourceManager.Legacy.RoutedOperations and implements the new CRUD operations with ActionSync or ActionAsync; connectionAnalyzersList is manually declared."
+            "Official guidance reserves actions for behavior outside CRUDL.",
+            "Exact modern templates exist for all five ConnectionAnalyzer lifecycle operations; only /query is a genuine custom action."
           ],
           "sourceReferences": [
             {
               "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp",
               "revision": "head",
               "startLine": 41,
-              "endLine": 62,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L41-L62"
+              "endLine": 64,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L41-L64"
             },
             {
               "path": "specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp",
               "revision": "head",
-              "startLine": 461,
-              "endLine": 572,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L461-L572"
+              "startLine": 470,
+              "endLine": 552,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/780a61ace56c22ce10dd01caa8ab95ca4514ac2e/specification/network/resource-manager/Microsoft.Network/Network/Network/NetworkWatcher.tsp#L470-L552"
             }
           ]
         }
@@ -10453,16 +10328,16 @@
       {
         "project": "specification/network/resource-manager/Microsoft.Network/Network/Network",
         "tool": "TypeSpecValidation",
-        "status": "succeeded",
-        "durationMs": 112130,
-        "log": "validation-logs/specification__network__resource-manager__Microsoft.Network__Network__Network-head.log"
+        "status": "skipped",
+        "durationMs": 0,
+        "reason": "Skipped by explicit --skip-validation request."
       },
       {
         "project": "specification/network/resource-manager/Microsoft.Network/Network/Vmss",
         "tool": "TypeSpecValidation",
-        "status": "succeeded",
-        "durationMs": 20171,
-        "log": "validation-logs/specification__network__resource-manager__Microsoft.Network__Network__Vmss-head.log"
+        "status": "skipped",
+        "durationMs": 0,
+        "reason": "Skipped by explicit --skip-validation request."
       }
     ]
   },

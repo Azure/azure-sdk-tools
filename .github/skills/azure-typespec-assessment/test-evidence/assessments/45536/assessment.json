@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "overallConfidence": "high",
+  "overallConfidence": "medium",
   "pr": 45536,
   "title": "Preserve Java Consumption enum names",
   "url": "https://github.com/Azure/azure-rest-api-specs/pull/45536",
@@ -71,9 +71,9 @@
       {
         "project": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption",
         "tool": "TypeSpecValidation",
-        "status": "succeeded",
-        "durationMs": 31481,
-        "log": "validation-logs/specification__consumption__resource-manager__Microsoft.Consumption__Consumption-head.log"
+        "status": "skipped",
+        "durationMs": 0,
+        "reason": "Skipped by explicit --skip-validation request."
       }
     ]
   },
@@ -224,37 +224,57 @@
       "findings": []
     },
     "azureCompliance": {
-      "status": "not-assessed",
-      "reason": "The enum wire values follow the fetched enum syntax guidance, but the shared catalog has no authoritative document for Java-scoped @@clientName compatibility aliases.",
+      "status": "passed",
+      "summary": {
+        "patternsAssessed": 2,
+        "findingCount": 0
+      },
       "documents": [
         {
-          "title": "Enums",
-          "url": "https://typespec.io/docs/language-basics/enums/",
-          "section": "Custom enum values",
-          "guidanceExcerpt": "You can assign custom values to enum members using the `:` operator.",
-          "applicableGuidance": "Enum members may have explicit service-facing values distinct from their source identifiers.",
-          "evidence": "The six existing serialized enum values remain unchanged.",
+          "title": "TypeSpec Client Generator Core decorators",
+          "url": "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/",
+          "section": "@Azure.ClientGenerator.Core.clientName",
+          "guidanceExcerpt": "Overrides the generated name for client SDK elements including clients, methods, parameters, unions, models, enums, and model properties.",
+          "applicableGuidance": "Use a language-scoped @clientName to preserve SDK identifiers without changing service-facing values.",
+          "evidence": "Six augment decorators target union members, provide released Java identifiers, and use the supported java scope.",
           "sourceReferences": [
             {
-              "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/models.tsp",
+              "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
               "revision": "head",
-              "startLine": 31,
-              "endLine": 50,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/models.tsp#L31-L50"
+              "startLine": 532,
+              "endLine": 543,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L532-L543"
             },
             {
-              "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/models.tsp",
+              "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
               "revision": "head",
-              "startLine": 211,
-              "endLine": 224,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/models.tsp#L211-L224"
+              "startLine": 535,
+              "endLine": 542,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542"
+            }
+          ]
+        },
+        {
+          "title": "Clients",
+          "url": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/",
+          "section": "Customizations and Renaming the Client Name",
+          "guidanceExcerpt": "Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`. This can be achieved with the augment decorator: `@clientName`.",
+          "applicableGuidance": "Client-name compatibility customizations use augment decorators in client.tsp.",
+          "evidence": "The changed @@clientName declarations are in client.tsp and leave serialized union values unchanged.",
+          "sourceReferences": [
+            {
+              "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
+              "revision": "head",
+              "startLine": 532,
+              "endLine": 543,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L532-L543"
             },
             {
-              "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/models.tsp",
+              "path": "specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp",
               "revision": "head",
-              "startLine": 272,
-              "endLine": 290,
-              "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/models.tsp#L272-L290"
+              "startLine": 535,
+              "endLine": 542,
+              "link": "https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542"
             }
           ]
         }

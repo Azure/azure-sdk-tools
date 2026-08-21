@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "overallConfidence": "high",
+  "overallConfidence": "medium",
   "pr": 44742,
   "title": "Removed NFSv2 from STG103/104 TypeSpec & Swagger",
   "url": "https://github.com/Azure/azure-rest-api-specs/pull/44742",
   "state": "merged",
   "createdAt": "2026-07-16T22:13:58Z",
   "baseline": {
-    "ref": "af067c9fc987b837f27a34b86e3ac591507711c9",
+    "ref": "e75a07cd7ea1b2207190a362305db02b639715ec",
     "commit": "e75a07cd7ea1b2207190a362305db02b639715ec"
   },
   "head": {
@@ -106,9 +106,9 @@
       {
         "project": "specification/storage/data-plane/FileStorage",
         "tool": "TypeSpecValidation",
-        "status": "succeeded",
-        "durationMs": 27601,
-        "log": "validation-logs/specification__storage__data-plane__FileStorage-head.log"
+        "status": "skipped",
+        "durationMs": 0,
+        "reason": "Skipped by explicit --skip-validation request."
       }
     ]
   },
@@ -212,12 +212,12 @@
       },
       "documents": [
         {
-          "title": "Evolving APIs",
-          "url": "https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/",
-          "section": "Removing API elements",
-          "guidanceExcerpt": "To remove models, properties, or operations starting from a specific version, use the `@removed` decorator.",
-          "applicableGuidance": "Models, properties, operations, and enum members are removed from a version with explicit versioning decorators.",
-          "evidence": "The NFSv2 enum members, properties, and models are explicitly excluded from stable 2026-12-06 while earlier versions remain represented.",
+          "title": "TypeSpec.Versioning guide",
+          "url": "https://typespec.io/docs/libraries/versioning/guide/",
+          "section": "Current-state modeling",
+          "guidanceExcerpt": "The TypeSpec should represent the current state of the API.",
+          "applicableGuidance": "Delete declarations that should exist in no API version; use @removed only when retaining them for earlier versions.",
+          "evidence": "The removed NFSv2 declarations existed only in the latest unreleased version and should no longer exist in any version.",
           "sourceReferences": [
             {
               "path": "specification/storage/data-plane/FileStorage/models.tsp",

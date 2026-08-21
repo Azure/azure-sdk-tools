@@ -2,8 +2,8 @@
 
 **PR:** [#45536 - Preserve Java Consumption enum names](https://github.com/Azure/azure-rest-api-specs/pull/45536)
 
-**Overall confidence:** 🟢 high<br>
-**Overall code safety:** 🟡 Medium
+**Overall confidence:** 🟡 medium<br>
+**Overall code safety:** 🟢 High
 
 **Baseline:** `b7170cade07f615426eb153b7035ecf8a1cab4e4`<br>
 **Head:** `1395797d6112cb083837b3772083bafe0a91460c`; working-tree changes: false<br>
@@ -16,7 +16,7 @@
 | Semantic understanding | ✅ Assessed — 1 intent(s), 3 operation(s) | n/a |
 | REST compatibility | ✅ No breaks detected | 0 |
 | Downstream compatibility | ✅ No breaks detected | 0 |
-| Azure compliance | ⚠️ not-assessed | 0 |
+| Azure compliance | ✅ passed | 0 |
 
 **Scope:** 1 intent(s), 3 affected operation(s), 1 project(s).<br>
 **Highest severity:** none.
@@ -88,9 +88,7 @@ None detected.
 
 ## ☁️ Azure Compliance
 
-**Status:** `not-assessed`
-
-The enum wire values follow the fetched enum syntax guidance, but the shared catalog has no authoritative document for Java-scoped @@clientName compatibility aliases.
+**Status:** `passed`
 
 ### Compliance Findings
 
@@ -106,7 +104,8 @@ None.
 
 | Result | Document section | Fetched guidance | Observed TypeSpec | Evidence |
 | --- | --- | --- | --- | --- |
-| Matched | [Enums - Custom enum values](https://typespec.io/docs/language-basics/enums/) | You can assign custom values to enum members using the `:` operator. | The six existing serialized enum values remain unchanged. | [models.tsp:L31-L50](https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/models.tsp#L31-L50), [models.tsp:L211-L224](https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/models.tsp#L211-L224), [models.tsp:L272-L290](https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/models.tsp#L272-L290) |
+| Matched | [TypeSpec Client Generator Core decorators - @Azure.ClientGenerator.Core.clientName](https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators/) | Overrides the generated name for client SDK elements including clients, methods, parameters, unions, models, enums, and model properties. | Six augment decorators target union members, provide released Java identifiers, and use the supported java scope. | [client.tsp:L532-L543](https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L532-L543), [client.tsp:L535-L542](https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542) |
+| Matched | [Clients - Customizations and Renaming the Client Name](https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client/) | Customizations SHOULD always be made in a file named `client.tsp` alongside `main.tsp`. This can be achieved with the augment decorator: `@clientName`. | The changed @@clientName declarations are in client.tsp and leave serialized union values unchanged. | [client.tsp:L532-L543](https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L532-L543), [client.tsp:L535-L542](https://github.com/Azure/azure-rest-api-specs/blob/1395797d6112cb083837b3772083bafe0a91460c/specification/consumption/resource-manager/Microsoft.Consumption/Consumption/client.tsp#L535-L542) |
 
 ### Tooling Used
 
@@ -117,7 +116,7 @@ None.
 
 | Project | Tool | Status | Duration | Log |
 | --- | --- | --- | ---: | --- |
-| `specification/consumption/resource-manager/Microsoft.Consumption/Consumption` | `TypeSpecValidation` | succeeded | 31s | `validation-logs/specification__consumption__resource-manager__Microsoft.Consumption__Consumption-head.log` |
+| `specification/consumption/resource-manager/Microsoft.Consumption/Consumption` | `TypeSpecValidation` | skipped | 0s | `unknown` |
 
 ### Artifact Evidence
 

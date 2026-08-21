@@ -2,10 +2,10 @@
 
 **PR:** [#42435 - Add x-ms-pageable to batchOutboundRules POST for CognitiveServices](https://github.com/Azure/azure-rest-api-specs/pull/42435)
 
-**Overall confidence:** 🟢 high<br>
+**Overall confidence:** 🟡 medium<br>
 **Overall code safety:** 🟡 Medium
 
-**Baseline:** `4664d78a647b029c314177addf80ebecd8b2a3ff (2ddde2a55d4c8eb6d0bdf22592dfb7c849dfd904)`<br>
+**Baseline:** `2ddde2a55d4c8eb6d0bdf22592dfb7c849dfd904`<br>
 **Head:** `96eae0e7d5c7ede040ee0cc646d397e5d8375912`; working-tree changes: false<br>
 **Total assessment time:** 11m 31s
 
@@ -89,8 +89,8 @@ None.
 
 | Result | Document section | Fetched guidance | Observed TypeSpec | Evidence |
 | --- | --- | --- | --- | --- |
-| Matched | [TypeSpec pagination - Pagination](https://typespec.io/docs/standard-library/pagination/) | To enable pagination for an operation the first step is to decorate it with the `@list` decorator and have the return type contain a property decorated with `@pageItems`. | The changed operation is marked as a list and its existing value and nextLink response fields are identified as page items and the next-page link. | [ManagedNetworkSettingsPropertiesBasicResource.tsp:L79-L89](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L79-L89), [models.tsp:L5483-L5497](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/models.tsp#L5483-L5497), [ManagedNetworkSettingsPropertiesBasicResource.tsp:L84-L84](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84) |
-| Matched | [ARM long-running operations - Action operations](https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/) | The `ArmResourceActionAsync` template uses `ArmLroLocationHeader` by default. The `FinalResult` should match the response type of the action. | The pagination-only change retains the existing Location-polled action and response type. | [ManagedNetworkSettingsPropertiesBasicResource.tsp:L79-L89](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L79-L89), [ManagedNetworkSettingsPropertiesBasicResource.tsp:L84-L84](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84) |
+| Matched | [TypeSpec pagination - Pagination](https://typespec.io/docs/standard-library/pagination/) | To enable pagination for an operation the first step is to decorate it with the `@list` decorator and have the return type contain a property decorated with `@pageItems`. | The changed operation has @list, while OutboundRuleListResult identifies value with @pageItems and nextLink with @nextLink. | [ManagedNetworkSettingsPropertiesBasicResource.tsp:L79-L89](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L79-L89), [models.tsp:L5483-L5497](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/models.tsp#L5483-L5497), [ManagedNetworkSettingsPropertiesBasicResource.tsp:L84-L84](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84) |
+| Matched | [ARM long-running operations - Action operations](https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/) | The `ArmResourceActionAsync` template uses `ArmLroLocationHeader` by default. The `FinalResult` should match the response type of the action. | The action retains Response = OutboundRuleListResult while adding paging metadata. | [ManagedNetworkSettingsPropertiesBasicResource.tsp:L79-L89](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L79-L89), [ManagedNetworkSettingsPropertiesBasicResource.tsp:L84-L84](https://github.com/Azure/azure-rest-api-specs/blob/96eae0e7d5c7ede040ee0cc646d397e5d8375912/specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp#L84-L84) |
 
 ### Tooling Used
 
@@ -101,7 +101,7 @@ None.
 
 | Project | Tool | Status | Duration | Log |
 | --- | --- | --- | ---: | --- |
-| `specification/cognitiveservices/CognitiveServices.Management` | `TypeSpecValidation` | succeeded | 46s | `validation-logs/specification__cognitiveservices__CognitiveServices.Management-head.log` |
+| `specification/cognitiveservices/CognitiveServices.Management` | `TypeSpecValidation` | skipped | 0s | `unknown` |
 
 ### Artifact Evidence
 

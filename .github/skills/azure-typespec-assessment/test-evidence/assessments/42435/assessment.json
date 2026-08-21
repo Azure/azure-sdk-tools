@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "overallConfidence": "high",
+  "overallConfidence": "medium",
   "pr": 42435,
   "title": "Add x-ms-pageable to batchOutboundRules POST for CognitiveServices",
   "url": "https://github.com/Azure/azure-rest-api-specs/pull/42435",
   "state": "merged",
   "createdAt": "2026-04-16T18:56:30Z",
   "baseline": {
-    "ref": "4664d78a647b029c314177addf80ebecd8b2a3ff",
+    "ref": "2ddde2a55d4c8eb6d0bdf22592dfb7c849dfd904",
     "commit": "2ddde2a55d4c8eb6d0bdf22592dfb7c849dfd904"
   },
   "head": {
@@ -71,9 +71,9 @@
       {
         "project": "specification/cognitiveservices/CognitiveServices.Management",
         "tool": "TypeSpecValidation",
-        "status": "succeeded",
-        "durationMs": 45614,
-        "log": "validation-logs/specification__cognitiveservices__CognitiveServices.Management-head.log"
+        "status": "skipped",
+        "durationMs": 0,
+        "reason": "Skipped by explicit --skip-validation request."
       }
     ]
   },
@@ -211,7 +211,7 @@
           "section": "Pagination",
           "guidanceExcerpt": "To enable pagination for an operation the first step is to decorate it with the `@list` decorator and have the return type contain a property decorated with `@pageItems`.",
           "applicableGuidance": "Paged operations use @list, identify page items, and identify the server-provided next link.",
-          "evidence": "The changed operation is marked as a list and its existing value and nextLink response fields are identified as page items and the next-page link.",
+          "evidence": "The changed operation has @list, while OutboundRuleListResult identifies value with @pageItems and nextLink with @nextLink.",
           "sourceReferences": [
             {
               "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
@@ -241,8 +241,8 @@
           "url": "https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/",
           "section": "Action operations",
           "guidanceExcerpt": "The `ArmResourceActionAsync` template uses `ArmLroLocationHeader` by default. The `FinalResult` should match the response type of the action.",
-          "applicableGuidance": "ARM action LRO metadata must preserve the polling header and final result that match service behavior.",
-          "evidence": "The pagination-only change retains the existing Location-polled action and response type.",
+          "applicableGuidance": "An ARM async action's logical final result matches its response type.",
+          "evidence": "The action retains Response = OutboundRuleListResult while adding paging metadata.",
           "sourceReferences": [
             {
               "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",

@@ -50,8 +50,8 @@ public class PackageApprovalStatusTool(
             parseResult.GetValue(languageOption) ?? string.Empty,
             parseResult.GetValue(packageNameOption) ?? string.Empty,
             parseResult.GetValue(packageVersionOption) ?? string.Empty,
-            parseResult.GetValue(apiHashOption) ?? string.Empty,
             parseResult.GetValue(repoOwnerOption) ?? string.Empty,
+            parseResult.GetValue(apiHashOption) ?? string.Empty,
             ct);
 
         if (string.Equals(parseResult.GetValue(SharedOptions.Format), "json", StringComparison.OrdinalIgnoreCase))

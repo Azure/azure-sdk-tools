@@ -129,7 +129,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             // Services that need to be scoped so we can track/update state across services per request
             services.AddScoped<TokenUsageHelper>();
             services.AddScoped<IOutputHelper>(_ => new OutputHelper(outputMode));
-            services.AddScoped<ConversationLogger>();
+            services.AddSingleton<ConversationLogger>();
             // Services depending on other scoped services
             services.AddScoped<ICommonValidationHelpers, CommonValidationHelpers>();
             services.AddScoped<IVerifySetupService, VerifySetupService>();

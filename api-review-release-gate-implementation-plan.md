@@ -12,6 +12,8 @@ The current release pipeline depends heavily on `Create-APIReview.ps1`. This scr
 
 The script is invoked through `eng/common/pipelines/templates/steps/create-apireview.yml` in both Build and release flows. 
 
+PR pipelines separately invoke `eng/common/scripts/Detect-Api-Changes.ps1` through `eng/common/pipelines/templates/steps/detect-api-changes.yml`. Despite its name, this script does not compare API surfaces locally. It identifies changed Track 2 packages, locates their API artifacts, and calls APIView's `CreateAPIRevisionIfAPIHasChanges` endpoint. APIView performs the comparison, creates or updates a PR-scoped revision when needed, associates it with the PR and commit, and later cleans it up after the PR closes. The script has no ARH or release-gate responsibility.
+
 The problem is that this script is confusingly overloaded. There is no logical situation where you would ever be invoking more than one "mode" of this script at a time, and yet running the script *always* requires creating an APIView revision. Any tooling that subverts that will break all three use cases.
 
 ## Planned State
@@ -25,6 +27,8 @@ Each break-glass variable must use the same authorized-requester pattern as `Ski
 
 `eng/common/scripts/Create-APIReview.ps1` will not be changed or removed. Pipeline owners will wire the new scripts into the appropriate jobs.
 `eng/common/pipelines/templates/steps/create-apireview.yml` will not be changed or removed. Pipeline owners will wire the new step templates into the appropriate jobs.
+
+`Detect-Api-Changes.ps1` and `detect-api-changes.yml` are also unchanged by this proposal. They remain the PR-only APIView revision path during the transition. Once ARH owns PR revision creation and APIView is retired, they can be retired alongside `Create-APIReview.ps1` and `create-apireview.yml`.
 
 **NOTE:** This proposal does not change `eng/common/pipelines/templates/steps/validate-all-packages.yml`, `Validate-All-Packages.ps1`, or the Azure DevOps Package work-item update flow. Those pipelines may continue recording their existing APIView-derived validation fields independently; the unified release gate introduced here does not depend on or replace that behavior. Any changes to `validate-all-packages.yml`, `Validate-All-Packages.ps1`, or their Package work-item behavior must be coordinated with Praveen, who owns that pipeline area.
 

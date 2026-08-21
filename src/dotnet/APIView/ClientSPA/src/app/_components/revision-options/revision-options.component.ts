@@ -56,8 +56,6 @@ export class RevisionOptionsComponent implements OnChanges {
 
   activeApiRevisionsFilterValue: string | undefined = '';
   diffApiRevisionsFilterValue: string | undefined = '';
-  private queriedRevisionFilters = new Set<string>();
-  private queriedReviewId: string | undefined;
 
   filterOptions: any[] = [
     { label: 'Approved', value: 'approved' },
@@ -72,10 +70,9 @@ export class RevisionOptionsComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges) {
     if (changes['apiRevisions'] || changes['activeApiRevisionId'] || changes['diffApiRevisionId']) {
       if (this.apiRevisions.length > 0) {
-        const mappedApiRevisions = this.mapRevisionToMenu(this.apiRevisions);
-        this.mappedApiRevisions = Array.from(new Map(
-          [...this.mappedApiRevisions, ...mappedApiRevisions].map(apiRevision => [apiRevision.id, apiRevision])
-        ).values());
+        const reviewId = this.apiRevisions[0].reviewId;
+        this.apiRevisionsService.cacheAPIRevisionOptions(reviewId, this.apiRevisions);
+        this.mappedApiRevisions = this.mapRevisionToMenu(this.apiRevisionsService.getCachedAPIRevisionOptions(reviewId));
         this.tagSpecialRevisions(this.mappedApiRevisions);
 
         this.activeApiRevisionsMenu = this.mappedApiRevisions.filter((apiRevision: any) => apiRevision.id !== this.diffApiRevisionId);
@@ -154,6 +151,7 @@ export class RevisionOptionsComponent implements OnChanges {
     if ((searchValue || filterValue) &&
         (dropDownMenu === this.ACTIVE_API_REVISION_SELECT || dropDownMenu === this.DIFF_API_REVISION_SELECT)) {
       this.queryFilteredAPIRevisions(searchValue, filterValue);
+      return;
     }
 
     this.applyDropdownFilter(searchValue, filterValue, dropDownMenu);
@@ -173,26 +171,13 @@ export class RevisionOptionsComponent implements OnChanges {
       return;
     }
 
-    if (this.queriedReviewId !== reviewId) {
-      this.queriedRevisionFilters.clear();
-      this.queriedReviewId = reviewId;
-    }
     const normalizedSearchValue = searchValue.trim();
     const queryKey = `${normalizedSearchValue}\u0000${filterValue || ''}`;
-    if (this.queriedRevisionFilters.has(queryKey)) {
-      return;
-    }
-    this.queriedRevisionFilters.add(queryKey);
-
-    this.apiRevisionsService.getAPIRevisions(
-      0, 100, reviewId, normalizedSearchValue || undefined, undefined, details, 'createdOn', 1, false, false, true
+    this.apiRevisionsService.getFilteredAPIRevisionOptions(
+      reviewId, details
     ).subscribe({
-      next: (response) => {
-        const results = Array.isArray(response.result) ? response.result : [];
-        const mappedResults = this.mapRevisionToMenu(results);
-        this.mappedApiRevisions = Array.from(new Map(
-          [...this.mappedApiRevisions, ...mappedResults].map(apiRevision => [apiRevision.id, apiRevision])
-        ).values());
+      next: () => {
+        this.mappedApiRevisions = this.mapRevisionToMenu(this.apiRevisionsService.getCachedAPIRevisionOptions(reviewId));
         this.tagSpecialRevisions(this.mappedApiRevisions);
         const dropdownStates = [
           [this.activeApiRevisionsSearchValue, this.activeApiRevisionsFilterValue, this.ACTIVE_API_REVISION_SELECT],
@@ -204,8 +189,7 @@ export class RevisionOptionsComponent implements OnChanges {
             this.applyDropdownFilter(currentSearchValue, currentFilterValue, currentDropDownMenu);
           }
         }
-      },
-      error: () => this.queriedRevisionFilters.delete(queryKey)
+      }
     });
   }
 

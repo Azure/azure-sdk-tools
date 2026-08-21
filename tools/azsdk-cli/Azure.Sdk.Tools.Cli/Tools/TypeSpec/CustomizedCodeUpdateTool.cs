@@ -203,35 +203,33 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         if (!Directory.Exists(packagePath))
         {
             logger.LogError("Package path does not exist: {PackagePath}", packagePath);
-            validSdkRepoPackagePath = false;
+            if (customCodeInScope)
+            {
+                return new CustomizedCodeUpdateResponse
+                {
+                    Success = false,
+                    ResponseError = $"Package path does not exist: {packagePath}",
+                    Message = $"Package path does not exist: {packagePath}",
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+                    BuildResult = $"Package path does not exist: {packagePath}"
+                };
+            }
         }
-
-        // Discover the Git repository root for the package path, and validate that the package path is within a Git repository, if not, it is not a valid package path.
-        try
+        else
         {
-            repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Failed to discover Git repository root for package path: {PackagePath}", packagePath);
-            validSdkRepoPackagePath = false;
+            // Discover the Git repository root for the package path, and validate that the package path is within a Git repository, if not, it is not a valid package path.
+            try
+            {
+                repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to discover Git repository root for package path: {PackagePath}", packagePath);
+                validSdkRepoPackagePath = false;
+            }
         }
 
         // Validate input
-        if (string.IsNullOrWhiteSpace(packagePath))
-        {
-            string packagePathMessage = "A package path is required when custom code is in scope " +
-           "(editScope includes CustomCode/All), because the tool must edit SDK source code locally. " +
-           "Provide --package-path, or use editScope specInputs to repair typespec only.";
-            return new CustomizedCodeUpdateResponse
-            {
-                Success = false,
-                ResponseError = packagePathMessage,
-                Message = packagePathMessage,
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
-                BuildResult = packagePathMessage
-            };
-        }
         if (customCodeInScope && !validSdkRepoPackagePath)
         {
             const string packagePathMessage = "A valid package path which is a local cloned SDK repo is required when custom code is in scope " +

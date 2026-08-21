@@ -56,8 +56,6 @@ parameters:
     default: true
 
 variables:
-  # Provides azuresdk-copilot-github-pat (GitHub token for the evaluator's Octokit client).
-  - group: 'AzSDK_Eval_Variable_group'
   # Root of the tree uploaded to the container; its layout IS the blob key layout.
   - name: EvalArtifactDir
     value: $(Build.ArtifactStagingDirectory)/pipeline-fix-eval
@@ -105,6 +103,13 @@ jobs:
         displayName: 'Install Copilot CLI'
         retryCountOnTaskFailure: 2
 
+      # Mint a short-lived GitHub App installation token just before evaluation instead of
+      # relying on a manually rotated PAT from a variable group.
+      - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+        parameters:
+          TokenOwners:
+            - ${{ parameters.owner }}
+
       - task: AzureCLI@2
         displayName: 'Evaluate each repository'
         inputs:
@@ -124,7 +129,10 @@ jobs:
             -AzSdkPath "$(AZSDK)"
         env:
           REPOSITORIES_JSON: ${{ convertToJson(parameters.repos) }}
-          GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+          GITHUB_TOKEN: $(GH_TOKEN)
+          # Installation tokens must reach the Copilot runtime through its server-to-server
+          # environment variable, not CopilotClientOptions.GitHubToken.
+          COPILOT_GITHUB_TOKEN: $(GH_TOKEN)
 
       - task: AzureCLI@2
         displayName: 'Publish results to Azure Blob Storage'
@@ -133,7 +141,7 @@ jobs:
         inputs:
           # The service connection's identity needs 'Storage Blob Data Contributor' on the
           # account; --auth-mode login uses it instead of an account key.
-          azureSubscription: 'Azure SDK Engineering System'
+          azureSubscription: 'Azure SDK Artifacts'
           scriptType: pscore
           scriptLocation: inlineScript
           inlineScript: |
@@ -152,7 +160,8 @@ jobs:
             # --overwrite lets a re-run correct the same day's report in place.
             az storage blob upload-batch `
                 --account-name '$(MetricsStorageAccount)' `
-                --destination '$(MetricsContainer)/pipeline-evaluation' `
+                --destination '$(MetricsContainer)' `
+                --destination-path '$(MetricsPrefix)' `
                 --source '$(EvalArtifactDir)/$(MetricsPrefix)' `
                 --pattern '*.json' `
                 --content-type 'application/json' `

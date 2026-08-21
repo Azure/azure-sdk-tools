@@ -49,6 +49,33 @@ param(
 Set-StrictMode -Version 4
 $ErrorActionPreference = 'Stop'
 
+$githubToken = $env:GITHUB_TOKEN
+if ([string]::IsNullOrWhiteSpace($githubToken)) {
+    throw "GITHUB_TOKEN is not set. Ensure the 'Login to GitHub' pipeline step completed and exported GH_TOKEN."
+}
+
+$copilotToken = $env:COPILOT_GITHUB_TOKEN
+if ([string]::IsNullOrWhiteSpace($copilotToken)) {
+    throw "COPILOT_GITHUB_TOKEN is not set. Map the GitHub App installation token to the Copilot runtime."
+}
+
+$env:GITHUB_TOKEN = $githubToken.Trim()
+$env:COPILOT_GITHUB_TOKEN = $copilotToken.Trim()
+try {
+    Invoke-RestMethod `
+        -Uri 'https://api.github.com/installation/repositories?per_page=1' `
+        -Headers @{
+            Authorization = "Bearer $env:GITHUB_TOKEN"
+            Accept = 'application/vnd.github+json'
+            'User-Agent' = 'azure-sdk-pipeline-fix-evaluator'
+            'X-GitHub-Api-Version' = '2022-11-28'
+        } `
+        -Method Get | Out-Null
+}
+catch {
+    throw "GITHUB_TOKEN was rejected by GitHub. Check the Azure SDK Automation App installation and repository permissions, then rerun the pipeline. $($_.Exception.Message)"
+}
+
 $reportDate = (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd')
 $repositories = @($RepositoriesJson | ConvertFrom-Json)
 

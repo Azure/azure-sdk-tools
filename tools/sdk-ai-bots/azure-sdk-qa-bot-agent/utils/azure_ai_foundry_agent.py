@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from json import JSONDecodeError
 from typing import Any
 
 from openai import (
@@ -214,9 +215,8 @@ class HostedAgentClient:
                     self._max_retries,
                     agent_conversation_id,
                 )
-            except (EmptyAgentResponseError, RuntimeError) as ex:
-                # ``RuntimeError`` = stream ended without a completed event;
-                # both are transient and retryable.
+            except (EmptyAgentResponseError, RuntimeError, JSONDecodeError) as ex:
+                # Stream framing and completion failures are transient and retryable.
                 last_error = ex
                 await self.close_stream(stream)
                 logger.warning(

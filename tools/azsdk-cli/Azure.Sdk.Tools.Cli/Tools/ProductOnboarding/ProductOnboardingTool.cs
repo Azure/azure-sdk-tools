@@ -145,6 +145,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ProductOnboarding
             }
         }
 
+        [McpServerTool(Name = SyncProductOnboardingToolName), Description("Create or update a product onboarding work item.")]
         public async Task<ProductOnboardingResponse> SyncProductOnboarding(
             Guid productId,
             string productName,

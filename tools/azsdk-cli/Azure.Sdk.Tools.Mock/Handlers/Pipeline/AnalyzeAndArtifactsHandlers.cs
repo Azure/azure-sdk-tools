@@ -33,12 +33,17 @@ public class AnalyzePipelineHandler : IMockToolHandler
                 new AzurePipelineAnalysis
                 {
                     PipelineBuild = new AzurePipelineBuild(buildIdValue, "internal", pipelineUrl, "completed", "failed"),
-                    FailedPipelineTests = new Dictionary<string, List<string>>
+                    FailedPipelineTests = new List<FailedTestArtifact>
                     {
-                        ["Ubuntu2404_NET80_PackageRef_Debug"] =
-                        [
-                            "WidgetClientLiveTests.GetWidget"
-                        ]
+                        new FailedTestArtifact
+                        {
+                            ArtifactFilePath = $"/tmp/{buildId}/Ubuntu2404_NET80_PackageRef_Debug/test-results.trx",
+                            Platform = "Ubuntu2404_NET80_PackageRef_Debug",
+                            FailedTestTitles =
+                            [
+                                "WidgetClientLiveTests.GetWidget"
+                            ]
+                        }
                     },
                     FailedPipelineTasks = new LogAnalysisResponse
                     {

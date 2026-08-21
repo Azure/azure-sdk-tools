@@ -21,6 +21,7 @@ import { CodeLineRowNavigationDirection, FULL_DIFF_STYLE, getTypeClass, TREE_DIF
 import { DIFF_API_REVISION_ID_QUERY_PARAM, DIFF_STYLE_QUERY_PARAM, getQueryParams } from 'src/app/_helpers/router-helpers';
 import { AzureEngSemanticVersion } from 'src/app/_models/azureEngSemanticVersion';
 import { LastUpdatedOnPipe } from 'src/app/_pipes/last-updated-on.pipe';
+import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
 
 @Component({
   selector: 'app-review-toolbar',
@@ -76,6 +77,8 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
   selectedDiffAPIRevision: any = null;
   diffApiRevisionsSearchValue: string = '';
   diffApiRevisionsFilterValue: string | undefined = '';
+  private queriedRevisionFilters = new Set<string>();
+  private queriedReviewId: string | undefined;
 
   DIFF_API_REVISION_SELECT: string = 'diff-api';
 
@@ -119,7 +122,7 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
   totalMatchCountValue: number = 0;
   showSearchControls: boolean = false;
 
-  constructor(private route: ActivatedRoute, private router: Router) {}
+  constructor(private route: ActivatedRoute, private router: Router, private apiRevisionsService: APIRevisionsService) {}
 
   ngOnInit() {
     // Initialize settings from user profile
@@ -169,7 +172,10 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
 
     if (changes['apiRevisions'] || changes['activeApiRevisionId'] || changes['diffApiRevisionId']) {
       if (this.apiRevisions.length > 0) {
-        this.mappedApiRevisions = this.mapRevisionToMenu(this.apiRevisions);
+        const mappedApiRevisions = this.mapRevisionToMenu(this.apiRevisions);
+        this.mappedApiRevisions = Array.from(new Map(
+          [...this.mappedApiRevisions, ...mappedApiRevisions].map(apiRevision => [apiRevision.id, apiRevision])
+        ).values());
         this.tagSpecialRevisions(this.mappedApiRevisions);
 
         this.diffApiRevisionsMenu = this.mappedApiRevisions.filter((apiRevision: any) => apiRevision.id !== this.activeApiRevisionId);
@@ -221,6 +227,57 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
   }
 
   searchAndFilterDropdown(searchValue: string, filterValue: string | undefined) {
+    if (searchValue || filterValue) {
+      this.queryFilteredAPIRevisions(searchValue, filterValue);
+    }
+
+    this.applyDropdownFilter(searchValue, filterValue);
+  }
+
+  private queryFilteredAPIRevisions(searchValue: string, filterValue: string | undefined) {
+    const detailsByFilter: Record<string, string> = {
+      approved: 'Approved',
+      released: 'Released',
+      automatic: 'Automatic',
+      pullRequest: 'PullRequest',
+      manual: 'Manual'
+    };
+    const details = filterValue && detailsByFilter[filterValue] ? [detailsByFilter[filterValue]] : [];
+    const reviewId = this.apiRevisions[0]?.reviewId;
+    if (!reviewId) {
+      return;
+    }
+
+    if (this.queriedReviewId !== reviewId) {
+      this.queriedRevisionFilters.clear();
+      this.queriedReviewId = reviewId;
+    }
+    const normalizedSearchValue = searchValue.trim();
+    const queryKey = `${normalizedSearchValue}\u0000${filterValue || ''}`;
+    if (this.queriedRevisionFilters.has(queryKey)) {
+      return;
+    }
+    this.queriedRevisionFilters.add(queryKey);
+
+    this.apiRevisionsService.getAPIRevisions(
+      0, 100, reviewId, normalizedSearchValue || undefined, undefined, details, 'createdOn', 1, false, false, true
+    ).subscribe({
+      next: (response) => {
+        const mappedResults = this.mapRevisionToMenu(response.result ?? []);
+        this.mappedApiRevisions = Array.from(new Map(
+          [...this.mappedApiRevisions, ...mappedResults].map(apiRevision => [apiRevision.id, apiRevision])
+        ).values());
+        this.tagSpecialRevisions(this.mappedApiRevisions);
+        const currentQueryKey = `${this.diffApiRevisionsSearchValue.trim()}\u0000${this.diffApiRevisionsFilterValue || ''}`;
+        if (currentQueryKey === queryKey) {
+          this.applyDropdownFilter(this.diffApiRevisionsSearchValue, this.diffApiRevisionsFilterValue);
+        }
+      },
+      error: () => this.queriedRevisionFilters.delete(queryKey)
+    });
+  }
+
+  private applyDropdownFilter(searchValue: string, filterValue: string | undefined) {
     let filtered = this.mappedApiRevisions.filter((apiRevision: APIRevision) => {
       switch (filterValue) {
         case 'pullRequest':

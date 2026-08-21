@@ -65,8 +65,10 @@ vi.mock('ngx-simplemde', () => {
 
 // All imports AFTER vi.mock() calls
 import { NotificationsService } from 'src/app/_services/notifications/notifications.service';
+import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 import { WorkerService } from 'src/app/_services/worker/worker.service';
+import { APIRevision } from 'src/app/_models/revision';
 import { createMockSignalRService, createMockNotificationsService, createMockWorkerService } from 'src/test-helpers/mock-services';
 import { RevisionOptionsComponent } from './revision-options.component';
 
@@ -110,6 +112,37 @@ describe('ApiRevisionOptionsComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should query and cache released revisions when the Released filter is selected', () => {
+    const initialRevision = {
+      id: 'initial',
+      reviewId: 'review-id',
+      resolvedLabel: 'Initial revision',
+      isReleased: false
+    } as APIRevision;
+    const releasedRevision = {
+      id: 'released',
+      reviewId: 'review-id',
+      resolvedLabel: 'Older released revision',
+      isReleased: true
+    } as APIRevision;
+    component.apiRevisions = [initialRevision];
+    component.mappedApiRevisions = component.mapRevisionToMenu([initialRevision]);
+    const apiRevisionsService = TestBed.inject(APIRevisionsService);
+    const getAPIRevisionsSpy = vi.spyOn(apiRevisionsService, 'getAPIRevisions').mockReturnValue(of({
+      result: [releasedRevision]
+    }));
+
+    component.activeApiRevisionFilterFunction({ value: 'released' });
+    component.activeApiRevisionFilterFunction({ value: 'released' });
+
+    expect(getAPIRevisionsSpy).toHaveBeenCalledOnce();
+    expect(getAPIRevisionsSpy).toHaveBeenCalledWith(
+      0, 100, 'review-id', undefined, undefined, ['Released'], 'createdOn', 1, false, false, true
+    );
+    expect(component.mappedApiRevisions.some(revision => revision.id === releasedRevision.id)).toBeTruthy();
+    expect(component.activeApiRevisionsMenu.some(revision => revision.id === releasedRevision.id)).toBeTruthy();
   });
 
   describe('Tag APIRevision appropriately based on date and/or status', () => {

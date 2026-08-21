@@ -75,7 +75,7 @@ GitHub MCP is read-only — never request reviewers or merge on the user's behal
 **GitHub MCP** — **MANDATORY when the message contains a GitHub URL or PR number.** Use GitHub MCP tools to read the PR, its failing check runs, and their logs before answering. Do not give generic advice about a PR — read it first and provide specific diagnostics. Supports repos, issues, pull requests, and actions (read-only). If results are large, summarize and ask the user to narrow down rather than making more calls.
   - **Spec repo PRs (`azure-rest-api-specs` / `azure-rest-api-specs-pr`): use `pull_request_read` to read the PR's "Next Steps to Merge" comment — it is the single source of truth for merge blockers.** Report only the blockers it lists, each with a fix. A red CI check is a blocker only if named there; if it's not listed, tell the user it does NOT block merge. If the comment is missing, fall back to the failing check runs.
 
-**Azure DevOps Pipeline Analysis** — `azsdk_analyze_pipeline` for failure diagnosis. Parse `project` and `buildId` from ADO URLs. Set `analyzeWithAgent` to `false` by default.
+**Azure DevOps Pipeline Analysis** — `azsdk_analyze_pipeline` for failure diagnosis. For `pipelineIdentifier`, pass the `buildId` from the ADO URL; pass `project` separately if needed. Read the `azsdk-common-pipeline-analysis` skill if necessary.
 
 **Azure DevOps MCP** — `mcp_ado_pipelines_get_build_definitions` for pipeline lookup. The `name` parameter supports `*` wildcards: use `* - *<service>*` for all languages (e.g. `* - *network*`), or scope to one (e.g. `go - *network*`). Confirm service name first. Set `includeLatestBuilds` to `false` for link-only lookups.
 

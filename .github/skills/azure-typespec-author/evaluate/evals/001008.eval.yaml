@@ -125,21 +125,29 @@ stimuli:
         config:
           command: "tsp compile ."
           expected_exit_code: 0
-      - type: "file-exists"
+      - &file_exists
+        type: "file-exists"
         config:
           path: "examples/2024-10-01/Employees_Get_MaximumSet_Gen.json"
-      - type: "file-exists"
+      - &file_exists_example
+        type: "file-exists"
+        name: "file-exists-example"
         config:
           path: "examples/2025-01-01/Employees_Get_MaximumSet_Gen.json"
-      - type: "file-matches"
+      - &file_matches
+        type: "file-matches"
         config:
           pattern: "2021-10-01"
           path: "main.tsp"
-      - type: "file-matches"
+      - &file_matches_old_version
+        type: "file-matches"
+        name: "file-matches-old-version"
         config:
           pattern: "2024-10-01"
           path: "main.tsp"
-      - type: "file-matches"
+      - &file_matches_new_version
+        type: "file-matches"
+        name: "file-matches-new-version"
         config:
           pattern: "2025-01-01"
           path: "main.tsp"
@@ -157,24 +165,11 @@ stimuli:
         config:
           required:
             - "^(edit|apply_patch|bash|powershell)$"
-      - type: "file-exists"
-        config:
-          path: "examples/2024-10-01/Employees_Get_MaximumSet_Gen.json"
-      - type: "file-exists"
-        config:
-          path: "examples/2025-01-01/Employees_Get_MaximumSet_Gen.json"
-      - type: "file-matches"
-        config:
-          path: "main.tsp"
-          pattern: "2021-10-01"
-      - type: "file-matches"
-        config:
-          path: "main.tsp"
-          pattern: "2024-10-01"
-      - type: "file-matches"
-        config:
-          path: "main.tsp"
-          pattern: "2025-01-01"
+      - *file_exists
+      - *file_exists_example
+      - *file_matches
+      - *file_matches_old_version
+      - *file_matches_new_version
       - type: "prompt"
         config:
           prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."

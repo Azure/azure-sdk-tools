@@ -103,55 +103,79 @@ stimuli:
         config:
           command: "tsp compile ."
           expected_exit_code: 0
-      - type: "file-not-matches"
+      - &file_not_matches
+        type: "file-not-matches"
         config:
           pattern: '@operationId\('
           path: "BgpConnection.tsp"
-      - type: "file-not-matches"
+      - &file_not_matches_network_interface_operation_id
+        type: "file-not-matches"
+        name: "file-not-matches-network-interface-operation-id"
         config:
           pattern: '@operationId\('
           path: "NetworkInterface.tsp"
-      - type: "file-not-matches"
+      - &file_not_matches_express_route_gateway_operation_id
+        type: "file-not-matches"
+        name: "file-not-matches-express-route-gateway-operation-id"
         config:
           pattern: '@operationId\('
           path: "ExpressRouteGateway.tsp"
-      - type: "file-not-matches"
+      - &file_not_matches_express_route_port_operation_id
+        type: "file-not-matches"
+        name: "file-not-matches-express-route-port-operation-id"
         config:
           pattern: '@operationId\('
           path: "ExpressRoutePort.tsp"
-      - type: "file-not-matches"
+      - &file_not_matches_network_interface_operation_id_check
+        type: "file-not-matches"
+        name: "file-not-matches-network-interface-operation-id-check"
         config:
           pattern: '@operationId\('
           path: "NetworkInterface.tsp"
-      - type: "file-not-matches"
+      - &file_not_matches_p2s_vpn_gateway_operation_id
+        type: "file-not-matches"
+        name: "file-not-matches-p2s-vpn-gateway-operation-id"
         config:
           pattern: '@operationId\('
           path: "P2SVpnGateway.tsp"
-      - type: "file-not-matches"
+      - &file_not_matches_policy_group_operation_id
+        type: "file-not-matches"
+        name: "file-not-matches-policy-group-operation-id"
         config:
           pattern: '@operationId\('
           path: "VpnServerConfigurationPolicyGroup.tsp"
-      - type: "file-not-matches"
+      - &file_not_matches_site_link_operation_id
+        type: "file-not-matches"
+        name: "file-not-matches-site-link-operation-id"
         config:
           pattern: '@operationId\('
           path: "VpnSiteLinkConnection.tsp"
-      - type: "file-matches"
+      - &file_matches
+        type: "file-matches"
         config:
           pattern: '@operationId\("PutBastionShareableLink"\)'
           path: "BastionHost.tsp"
-      - type: "file-matches"
+      - &file_matches_active_sessions_operation_id
+        type: "file-matches"
+        name: "file-matches-active-sessions-operation-id"
         config:
           pattern: '@operationId\("GetActiveSessions"\)'
           path: "BastionHost.tsp"
-      - type: "file-matches"
+      - &file_matches_provider_port_operation_id
+        type: "file-matches"
+        name: "file-matches-provider-port-operation-id"
         config:
           pattern: '@operationId\("ExpressRouteProviderPort"\)'
           path: "ExpressRouteProviderPort.tsp"
-      - type: "file-matches"
+      - &file_matches_suppress
+        type: "file-matches"
+        name: "file-matches-suppress"
         config:
           pattern: "#suppress.*no-openapi|#suppress.*operationId"
           path: "BastionHost.tsp"
-      - type: "file-not-matches"
+      - &file_not_matches_location_list_operation_id
+        type: "file-not-matches"
+        name: "file-not-matches-location-list-operation-id"
         config:
           pattern: '@operationId\("ExpressRouteProviderPortsLocation_List"\)'
           path: "ExpressRouteProviderPort.tsp"
@@ -165,58 +189,19 @@ stimuli:
     prompt: "Remove @operationId and its associated #suppress for no-openapi from all operations. Then restore those operationIds that do not contain underscores or begin with a lowercase letter."
     environment: *shared_environment
     graders:
-      - type: "file-not-matches"
-        config:
-          path: "BgpConnection.tsp"
-          pattern: '@operationId\('
-      - type: "file-not-matches"
-        config:
-          path: "NetworkInterface.tsp"
-          pattern: '@operationId\('
-      - type: "file-not-matches"
-        config:
-          path: "ExpressRouteGateway.tsp"
-          pattern: '@operationId\('
-      - type: "file-not-matches"
-        config:
-          path: "ExpressRoutePort.tsp"
-          pattern: '@operationId\('
-      - type: "file-not-matches"
-        config:
-          path: "NetworkInterface.tsp"
-          pattern: '@operationId\('
-      - type: "file-not-matches"
-        config:
-          path: "P2SVpnGateway.tsp"
-          pattern: '@operationId\('
-      - type: "file-not-matches"
-        config:
-          path: "VpnServerConfigurationPolicyGroup.tsp"
-          pattern: '@operationId\('
-      - type: "file-not-matches"
-        config:
-          path: "VpnSiteLinkConnection.tsp"
-          pattern: '@operationId\('
-      - type: "file-matches"
-        config:
-          path: "BastionHost.tsp"
-          pattern: '@operationId\("PutBastionShareableLink"\)'
-      - type: "file-matches"
-        config:
-          path: "BastionHost.tsp"
-          pattern: '@operationId\("GetActiveSessions"\)'
-      - type: "file-matches"
-        config:
-          path: "ExpressRouteProviderPort.tsp"
-          pattern: '@operationId\("ExpressRouteProviderPort"\)'
-      - type: "file-matches"
-        config:
-          path: "BastionHost.tsp"
-          pattern: "#suppress.*no-openapi|#suppress.*operationId"
-      - type: "file-not-matches"
-        config:
-          path: "ExpressRouteProviderPort.tsp"
-          pattern: '@operationId\("ExpressRouteProviderPortsLocation_List"\)'
+      - *file_not_matches
+      - *file_not_matches_network_interface_operation_id
+      - *file_not_matches_express_route_gateway_operation_id
+      - *file_not_matches_express_route_port_operation_id
+      - *file_not_matches_network_interface_operation_id_check
+      - *file_not_matches_p2s_vpn_gateway_operation_id
+      - *file_not_matches_policy_group_operation_id
+      - *file_not_matches_site_link_operation_id
+      - *file_matches
+      - *file_matches_active_sessions_operation_id
+      - *file_matches_provider_port_operation_id
+      - *file_matches_suppress
+      - *file_not_matches_location_list_operation_id
     constraints:
       max_turns: 10
       max_tokens: 100000

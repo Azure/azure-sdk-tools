@@ -81,19 +81,26 @@ stimuli:
         config:
           command: "tsp compile ."
           expected_exit_code: 0
-      - type: "file-matches"
+      - &file_matches
+        type: "file-matches"
         config:
           pattern: "model BadgeAssignment is ExtensionResource<BadgeAssignmentProperties>"
           path: "badgeAssignment.tsp"
-      - type: "file-matches"
+      - &file_matches_visibility
+        type: "file-matches"
+        name: "file-matches-visibility"
         config:
           pattern: '@visibility\(Lifecycle\.Read\)'
           path: "badgeAssignment.tsp"
-      - type: "file-matches"
+      - &file_matches_resource_operations
+        type: "file-matches"
+        name: "file-matches-resource-operations"
         config:
           pattern: 'Extension\.Read<|Extension\.CreateOrReplaceAsync<|Extension\.CustomPatch(Sync|Async)<|Extension\.DeleteWithoutOkAsync<'
           path: "badgeAssignment.tsp"
-      - type: "file-matches"
+      - &file_matches_list_operation
+        type: "file-matches"
+        name: "file-matches-list-operation"
         config:
           pattern: 'Extension\.ListByTarget<'
           path: "badgeAssignment.tsp"
@@ -111,22 +118,10 @@ stimuli:
         config:
           required:
             - "^(edit|apply_patch|bash|powershell)$"
-      - type: "file-matches"
-        config:
-          path: "badgeAssignment.tsp"
-          pattern: "model BadgeAssignment is ExtensionResource<BadgeAssignmentProperties>"
-      - type: "file-matches"
-        config:
-          path: "badgeAssignment.tsp"
-          pattern: '@visibility\(Lifecycle\.Read\)'
-      - type: "file-matches"
-        config:
-          path: "badgeAssignment.tsp"
-          pattern: 'Extension\.Read<|Extension\.CreateOrReplaceAsync<|Extension\.CustomPatch(Sync|Async)<|Extension\.DeleteWithoutOkAsync<'
-      - type: "file-matches"
-        config:
-          path: "badgeAssignment.tsp"
-          pattern: 'Extension\.ListByTarget<'
+      - *file_matches
+      - *file_matches_visibility
+      - *file_matches_resource_operations
+      - *file_matches_list_operation
       - type: "prompt"
         config:
           prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."

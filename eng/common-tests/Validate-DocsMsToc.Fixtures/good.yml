@@ -1,0 +1,35 @@
+- name: Reference
+  landingPageType: Root
+  expanded: false
+  items:
+  - name: Storage
+    href: ~/docs-ref-services/{moniker}/storage.md
+    landingPageType: Service
+    items:
+    - name: Azure.Storage.Blobs
+      children:
+      - Azure.Storage.Blobs
+      - Azure.Storage.Blobs.Models
+    - name: Management
+      items:
+      - name: Azure.ResourceManager.Storage
+        children:
+        - Azure.ResourceManager.Storage
+        - Azure.ResourceManager.Storage.Models
+  - name: Identity
+    href: ~/docs-ref-services/{moniker}/identity.md
+    landingPageType: Service
+    items:
+    - name: Azure.Identity
+      children:
+      - Azure.Identity
+  - name: Other
+    landingPageType: Service
+    items:
+    - name: Azure.Core
+      children:
+      - Azure.Core
+    - name: Uncategorized Packages
+      landingPageType: Service
+      children:
+      - '**'

@@ -41,7 +41,7 @@ _WIKI_ONLY_SOURCES = (SRC_WIKI_ENTITY, SRC_WIKI_CONCEPT)
 # Wiki pages kept as full evidence, and the next-ranked pages surfaced as
 # titles only so the agent can see the neighbourhood it just missed.
 _WIKI_TOP = 6
-_WIKI_NEIGHBORS = 8
+_WIKI_NEIGHBORS = 0
 # Source chunks each kept page is routed back to, for grounded detail.
 _WIKI_ROUTE_PER_PAGE = 8
 _WIKI_ROUTE_MAX_REFS = 48

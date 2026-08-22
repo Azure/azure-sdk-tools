@@ -1,11 +1,17 @@
 name: azsdk-mcp-tool-scenarios
 description: |
-  Output-quality eval for the azsdk-common-pipeline-fixer skill. Given the
-  analyzed pipeline failure (the canonical fixture — the Storage
+  Output-quality eval for the azsdk-common-pipeline-fixer skill, given a
+  diagnosis that came from OUTSIDE this session (e.g. a teammate relayed it,
+  or it's from an earlier conversation) — a distinct, legitimate real-world
+  case from the in-session diagnose-then-fix flow covered by
+  workflows/mock/multi-turn-pipeline-workflows.eval.yaml. Reworded to read as
+  an authentic human message rather than a synthetic tool-output block (the
+  pre-multi-turn-support workaround this file used to lean on, see
+  microsoft/vally#481) — the fixer must still apply the correct code fix to
+  the real overlaid source (the canonical fixture: the Storage
   QueueClientOptions TryGetServiceVersion parser missing the two newest
-  service-version cases, "2026-10-06" and "2026-12-06"), the agent must apply
-  the correct code fix to the real overlaid source and verify it through the
-  Azure SDK package MCP tools. Because TryGetServiceVersion_ParsesAllServiceVersions
+  service-version cases, "2026-10-06" and "2026-12-06") and verify it through
+  the Azure SDK package MCP tools. Because TryGetServiceVersion_ParsesAllServiceVersions
   iterates every enum value, a complete fix has to add BOTH cases — a literal
   one-case fix leaves the test red, so both `file-matches` graders (2026-10-06
   and 2026-12-06) must pass.
@@ -36,37 +42,27 @@ stimuli:
       commands:
         - git init -q && git add -A && git -c user.email=vally@local -c user.name=vally commit -qm "seed real pre-fix source"
     prompt: |
-      My PR's pipeline failed and I need it fixed. Can you help?
+      My PR's pipeline (Azure DevOps build 6455504) failed and I need it
+      fixed. A teammate already dug into it and posted this in our channel:
 
-      "azsdk-analyze-pipeline" Analyzed Output:
+      "Found it — TryGetServiceVersion in QueueClientOptions and
+      ShareClientOptions doesn't know about the two newest service versions,
+      2026-10-06 and 2026-12-06. The enum values V2026_10_06 and V2026_12_06
+      exist, but the switch statement never maps the version strings to
+      them, so TryGetServiceVersion_ParsesAllServiceVersions fails (it
+      iterates every enum value, so both cases have to be added or it stays
+      red). Same story in
+      sdk/storage/Azure.Storage.Files.Shares/tests/ShareClientOptionsTests.cs:24
+      for ShareClientOptions. Fix is to add
+      case "2026-10-06": serviceVersion = ServiceVersion.V2026_10_06; return true;
+      and
+      case "2026-12-06": serviceVersion = ServiceVersion.V2026_12_06; return true;
+      to the TryGetServiceVersion switch in
+      sdk/storage/Azure.Storage.Queues/src/QueueClientOptions.cs, then verify
+      with `dotnet test --filter "TryGetServiceVersion_ParsesAllServiceVersions"`.
+      Not an infra issue — it's a real code bug."
 
-      ## Pipeline Analysis: 6455504
-
-      ### Root Cause
-      The TryGetServiceVersion method in QueueClientOptions and ShareClientOptions does not recognize the two newest service version strings, "2026-10-06" and "2026-12-06", because both are missing from the switch statement. The enum values V2026_10_06 and V2026_12_06 exist, but the parser cannot map "2026-10-06" or "2026-12-06" to them, so TryGetServiceVersion_ParsesAllServiceVersions — which iterates every enum value — fails. Both cases must be added; adding only one leaves the test red.
-
-      ### Failures
-
-      #### 1. TryGetServiceVersion Missing 2026-10-06 and 2026-12-06 Cases (QueueClientOptions)
-      - **Category:** code bug
-      - **File:** `sdk/storage/Azure.Storage.Queues/src/QueueClientOptions.cs`
-      - **Error:** TryGetServiceVersion failed to parse "2026-10-06" for V2026_10_06 (expected: true but was: false); "2026-12-06" (V2026_12_06) is missing the same way
-      - **Fix:** Add both `case "2026-10-06": serviceVersion = ServiceVersion.V2026_10_06; return true;` and `case "2026-12-06": serviceVersion = ServiceVersion.V2026_12_06; return true;` to the TryGetServiceVersion switch statement
-      - **Verify:** `dotnet test --filter "TryGetServiceVersion_ParsesAllServiceVersions"`
-
-      #### 2. TryGetServiceVersion Missing 2026-10-06 and 2026-12-06 Cases (ShareClientOptions)
-      - **Category:** code bug
-      - **File:** `sdk/storage/Azure.Storage.Files.Shares/tests/ShareClientOptionsTests.cs:24`
-      - **Error:** TryGetServiceVersion failed to parse "2026-10-06" for V2026_10_06; "2026-12-06" (V2026_12_06) fails the same way
-      - **Fix:** Same as above - add the missing 2026-10-06 and 2026-12-06 case statements to the switch
-      - **Verify:** `dotnet test --filter "TryGetServiceVersion_ParsesAllServiceVersions"`
-
-      ### Summary
-      - 1 fixable code failure with two missing service version cases (add both to the TryGetServiceVersion switch)
-      - 0 infrastructure issues
-      - **Recommended Action:** Add case "2026-10-06": and "2026-12-06": entries to TryGetServiceVersion method in QueueClientOptions.cs
-
-      Package path: sdk/storage/Azure.Storage.Queues
+      Can you apply that fix?
     constraints:
       max_turns: 15
       max_tokens: 16000

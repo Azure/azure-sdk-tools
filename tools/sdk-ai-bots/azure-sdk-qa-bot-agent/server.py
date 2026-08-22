@@ -11,22 +11,32 @@ import sys
 import time
 from contextvars import ContextVar
 from contextlib import asynccontextmanager
+from datetime import datetime
+from pathlib import Path
 from uuid import uuid4
 from dotenv import load_dotenv
 
 load_dotenv(override=False)
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.responses import FileResponse
 from models.chat import ChatRequest, ChatResponse
 from models.conversation import ConversationMessage, SaveConversationMessageResponse
 from models.feedback import FeedbackRequest, FeedbackResponse
 from models.intention import IntentionRequest, IntentionResponse
 from models.knowledge_retrieve import KnowledgeRetrieveResponse, KnowledgeRetrieveRequest
+from models.qa_dashboard import (
+    FeedbackStatusFilter,
+    QADashboardDetail,
+    QARecordPage,
+)
+from models.qa_record import QAStatus
 from services.chat_service import ChatService
 from services.conversation_service import ConversationService
 from services.feedback_service import FeedbackService
 from services.intention_service import IntentionService
 from services.knowledge_service import KnowledgeService
+from services.qa_dashboard_service import QADashboardService
 from services.thread_memory_service import ThreadMemoryService
 from utils.azure_ai_foundry import close_clients
 from utils.azure_cosmosdb import close_cosmos_client
@@ -136,7 +146,57 @@ _conversation_service = ConversationService()
 _feedback_service = FeedbackService()
 _intention_service = IntentionService()
 _knowledge_service = KnowledgeService()
+_qa_dashboard_service = QADashboardService()
 _thread_memory_service = ThreadMemoryService()
+_QA_DASHBOARD_PATH = Path(__file__).parent / "static" / "qa_records_dashboard.html"
+
+
+@app.get("/dashboard/qa-records", response_class=FileResponse)
+async def qa_records_dashboard() -> FileResponse:
+    """Serve the read-only QA record dashboard."""
+    return FileResponse(_QA_DASHBOARD_PATH)
+
+
+@app.get("/api/dashboard/qa-records", response_model=QARecordPage)
+async def list_dashboard_qa_records(
+    page: int = Query(default=1, ge=1),
+    tenant_id: str | None = Query(default=None, max_length=200),
+    channel_id: str | None = Query(default=None, max_length=200),
+    qa_status: QAStatus | None = None,
+    feedback_status: FeedbackStatusFilter | None = None,
+    updated_from: datetime | None = None,
+    updated_to: datetime | None = None,
+    conversation_id: str | None = Query(default=None, max_length=500),
+) -> QARecordPage:
+    """Return one filtered, server-paginated page of QA records."""
+    try:
+        return await _qa_dashboard_service.list_records(
+            page=page,
+            tenant_id=tenant_id,
+            channel_id=channel_id,
+            qa_status=qa_status,
+            feedback_status=feedback_status,
+            updated_from=updated_from,
+            updated_to=updated_to,
+            conversation_id=conversation_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@app.get("/api/dashboard/qa-record-details", response_model=QADashboardDetail)
+async def get_dashboard_qa_record_details(
+    record_id: str = Query(min_length=1, max_length=1000),
+    tenant_id: str = Query(min_length=1, max_length=200),
+) -> QADashboardDetail:
+    """Return the complete conversation and evolution timeline."""
+    detail = await _qa_dashboard_service.get_record_detail(
+        record_id=record_id,
+        tenant_id=tenant_id,
+    )
+    if detail is None:
+        raise HTTPException(status_code=404, detail="QA record not found")
+    return detail
 
 
 @app.post(

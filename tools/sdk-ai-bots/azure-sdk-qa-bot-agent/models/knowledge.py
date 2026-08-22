@@ -84,7 +84,13 @@ class KnowledgeChunk(BaseModel):
     header1: str = Field(default="", validation_alias="header_1")
     header2: str = Field(default="", validation_alias="header_2")
     header3: str = Field(default="", validation_alias="header_3")
+    page_type: str = ""
     rerank_score: float = Field(default=0.0, validation_alias="@search.reranker_score")
+
+    @field_validator("page_type", mode="before")
+    @classmethod
+    def _coerce_page_type(cls, v: object) -> str:
+        return str(v) if v else ""
 
     @field_validator("rerank_score", mode="before")
     @classmethod
@@ -110,6 +116,7 @@ class Reference(BaseModel):
 
     title: str
     source: str
+    blob_path: str = ""
     link: str
     content: str = ""
     score: float = 0.0

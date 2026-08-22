@@ -35,6 +35,7 @@ class TenantID(str, Enum):
     AZURE_SDK_ONBOARDING = "azure_sdk_onboarding"
     AZURE_TYPESPEC_AUTHORING = "azure_typespec_authoring"
     API_SPEC_REVIEW_BOT = "api_spec_review_bot"
+    AZURE_MCP_SERVER = "azure_mcp_server"
     AZURE_SDK_QA_BOT = "azure_sdk_qa_bot"
 
 
@@ -83,6 +84,9 @@ SRC_AZURE_SDK_INTERNAL_WIKI = "azure-sdk-internal-wiki"
 
 # -- SDK tools --
 SRC_AZURE_SDK_TOOLS_DOCS = "azure_sdk_tools_docs"
+
+# -- Azure MCP Server --
+SRC_AZURE_MCP_SERVER_DOCS = "azure_mcp_server_docs"
 
 # -- General Azure & review resources --
 SRC_STATIC_AZURE_DOCS = "static_azure_docs"
@@ -303,6 +307,12 @@ _register(
         description="Azure SDK tools documentation covering js-sdk-release-tools and related JavaScript SDK tooling.",
         base_url="https://github.com/Azure/azure-sdk-tools/blob/main/",
     ),
+    # -- Azure MCP Server --
+    KnowledgeSource(
+        name=SRC_AZURE_MCP_SERVER_DOCS,
+        description="Curated Azure MCP Server documentation and team Q&A covering setup, authentication, onboarding and merge practices, support history, troubleshooting, and release changes.",
+        base_url="https://github.com/microsoft/mcp/blob/main/",
+    ),
 )
 
 
@@ -314,6 +324,15 @@ def get_knowledge_source(name: str) -> KnowledgeSource | None:
 # ---------------------------------------------------------------------------
 # Tenant config data class
 # ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class AgentConfig:
+    """Hosted agent assignment for a tenant."""
+
+    name: str = "azure-sdk-chat-agent"
+    name_config_key: str = "AI_FOUNDRY_AGENT_NAME"
+    version_config_key: str = "AI_FOUNDRY_AGENT_VERSION"
 
 
 @dataclass(frozen=True)
@@ -338,6 +357,7 @@ class TenantConfig:
     source_filter: dict[str, str] = field(default_factory=dict)
     qa_guideline_file: str = ""
     enable_routing: bool = False
+    agent: AgentConfig = field(default_factory=AgentConfig)
 
 
 # ---------------------------------------------------------------------------
@@ -620,6 +640,26 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         },
         qa_guideline_file="tenants/api_spec_review.md",
         enable_routing=True,
+    ),
+    TenantID.AZURE_MCP_SERVER: TenantConfig(
+        display_name="Azure MCP Server",
+        skill_name="azure-mcp-server",
+        scope="Azure MCP Server setup, usage, service onboarding, authentication, remote hosting, troubleshooting, support, and contribution workflows.",
+        topics=[
+            "Azure MCP Server installation, configuration, commands, and troubleshooting",
+            "Authentication for local, remote, OBO, user, and service-principal scenarios",
+            "Service onboarding, tool design, pull requests, and integration testing",
+            "Remote or managed hosting options and production integration",
+            "Azure MCP Server telemetry, support, known issues, and release changes",
+            "Azure Skills and Azure MCP Server capability boundaries",
+        ],
+        sources=_sources(SRC_AZURE_MCP_SERVER_DOCS),
+        enable_routing=False,
+        agent=AgentConfig(
+            name="azure-mcp-server-agent",
+            name_config_key="AZURE_MCP_SERVER_AGENT_NAME",
+            version_config_key="AZURE_MCP_SERVER_AGENT_VERSION",
+        ),
     ),
     TenantID.GENERAL_QA_BOT: TenantConfig(
         display_name="General",

@@ -108,7 +108,9 @@ Use this to develop and test the AI agent itself (prompt tuning, tool integratio
 1. Install the [AI Toolkit](https://marketplace.visualstudio.com/items?itemName=ms-windows-ai-studio.windows-ai-studio) extension for VS Code.
 2. Use this instruction to let your copilot set up local debugging with the AI Toolkit: `Help me configure the azure-sdk-qa-bot-agent/agents to work with AI Toolkit Agent Inspector. 1) Ensure the agent is serverized as an HTTP server. 2) Install 'agent-dev-cli' and use 'agentdev' to launch the agent. 3) Add VS Code configuration (tasks.json and launch.json) for debugging.`
 3. Copilot will automatically generate the debug configuration (`.vscode/launch.json` and `.vscode/tasks.json`) for the project.
-4. Press **F5** to start debugging.
+4. Press **F5** and select the agent to debug:
+   - **Debug Chat Agent HTTP Server** launches `agents/chat_agent/init.py`.
+   - **Debug Azure MCP Server Agent HTTP Server** launches `agents/azure_mcp_server_agent/init.py`.
 
 This launches the agent via `agentdev run` on `http://localhost:8088/` with `debugpy` attached, and opens the AI Toolkit Agent Inspector for interactive testing.
 
@@ -178,9 +180,9 @@ Builds the agent container image, pushes to ACR, and deploys a new hosted agent 
 - **Deploy script**: [scripts/deploy_hosted_agent.py](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/scripts/deploy_hosted_agent.py)
 - **Parameters**: `environment` (dev/prod), `agentName` (chat_agent)
 - **What it does**:
-  1. Builds the Docker image from `agents/chat_agent/Dockerfile`
-  2. Pushes to `azuresdkqabotcontainer.azurecr.io`
-  3. Runs `deploy_hosted_agent.py` to create a new agent version via Foundry API
+   1. Builds the Docker image from `agents/chat_agent/Dockerfile`
+   2. Pushes to `azuresdkqabotcontainer.azurecr.io`
+   3. Runs `deploy_hosted_agent.py` to create a new agent version via Foundry API
 
 **Manual deploy** (from project root):
 
@@ -206,8 +208,8 @@ Deploys the Logic App ARM template for Teams channel message mirroring.
 - **Pipeline**: [logicapp-cd.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/logicapp-cd.yml) | [Run in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8177)
 - **Parameters**: `environment` (dev/test/prod)
 - **What it does**:
-  1. Runs `az deployment group create` with environment-specific ARM template parameters
-  2. Idempotent — safe to re-run
+   1. Runs `az deployment group create` with environment-specific ARM template parameters
+   2. Idempotent — safe to re-run
 
 ### CI Pipeline
 

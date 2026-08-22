@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import sys
+from json import JSONDecodeError
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
@@ -151,6 +152,27 @@ async def test_invoke_retries_when_stream_ends_without_completion() -> None:
 
     good = _FakeResponse(output_text="answer", status="completed", id="r2")
     client = _mock_client([_incomplete_stream(), _completed_stream(good)])
+
+    _, out = await HostedAgentClient(client, retry_delay=0).invoke(
+        conversation_items=[],
+        agent_ref={},
+    )
+
+    assert out is good
+    assert client.responses.create.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_invoke_retries_when_stream_event_contains_malformed_json() -> None:
+    """A malformed SSE event is abandoned and retried with a fresh stream."""
+
+    async def _malformed_stream():
+        raise JSONDecodeError("Extra data", "{}\n{}", 3)
+        yield
+
+    good = _FakeResponse(output_text="answer", status="completed", id="r2")
+    malformed = _malformed_stream()
+    client = _mock_client([malformed, _completed_stream(good)])
 
     _, out = await HostedAgentClient(client, retry_delay=0).invoke(
         conversation_items=[],

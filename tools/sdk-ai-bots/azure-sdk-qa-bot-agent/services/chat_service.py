@@ -11,6 +11,8 @@ from urllib.parse import urlparse
 
 from config.app_config import get as cfg
 from config.tenant_config import (
+    TenantConfig,
+    get_tenant_config,
     get_tenant_scope_description,
 )
 from models.chat import (
@@ -79,9 +81,10 @@ class ChatService:
     async def chat(self, req: ChatRequest) -> ChatResponse:
         """Process one chat turn and return API response shape."""
         project_client = get_project_client()
-
-        agent = await self._get_agent(project_client)
-        openai_client = get_openai_client()
+        tenant_config = get_tenant_config(req.tenant_id)
+        agent_name, agent_version = self._resolve_agent_configuration(tenant_config)
+        agent = await self._get_agent(project_client, agent_name, agent_version)
+        openai_client = get_openai_client(agent_name)
 
         # Stateless calls (no customer conversation_id) skip conversation
         # threading and reuse a warm sandbox; threaded calls resolve history.
@@ -243,10 +246,29 @@ class ChatService:
                 exc_info=True,
             )
 
-    async def _get_agent(self, project_client: AIProjectClient) -> AgentVersionDetails:
+    @staticmethod
+    def _resolve_agent_configuration(
+        tenant_config: TenantConfig | None,
+    ) -> tuple[str, str | None]:
+        """Resolve the hosted agent assigned to a tenant."""
+        if tenant_config is not None:
+            agent_config = tenant_config.agent
+            return (
+                cfg(agent_config.name_config_key, agent_config.name),
+                cfg(agent_config.version_config_key),
+            )
+        return (
+            cfg("AI_FOUNDRY_AGENT_NAME", "azure-sdk-chat-agent"),
+            cfg("AI_FOUNDRY_AGENT_VERSION"),
+        )
+
+    async def _get_agent(
+        self,
+        project_client: AIProjectClient,
+        agent_name: str,
+        agent_version: str | None,
+    ) -> AgentVersionDetails:
         """Load hosted-agent version definition from Foundry."""
-        agent_name = cfg("AI_FOUNDRY_AGENT_NAME", "azure-sdk-chat-agent")
-        agent_version = cfg("AI_FOUNDRY_AGENT_VERSION")
         if agent_version:
             agent = await project_client.agents.get_version(agent_name, agent_version)
         else:

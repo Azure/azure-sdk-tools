@@ -6,6 +6,7 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion;
 using Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.TypeSpec;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using ModelContextProtocol.Server;
 
@@ -21,12 +22,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec];
 
         private readonly IAzureSdkKnowledgeBaseService _azureSdkKnowledgeBaseService;
+        private readonly ITypeSpecSdkBreakingChangeDetectionService _detectionService;
         private readonly ILogger<TypeSpecAuthoringTool> _logger;
         private readonly ITypeSpecHelper _typeSpecHelper;
+        private readonly IGitHelper _gitHelper;
         /* the maximum number of characters allowed in a reference snippet */
         private const int MaxReferenceContentLength = 500;
         private const string TypeSpecAuthoringToolCommandName = "generate-authoring-plan";
-
+        private const string BreakingPatternsFileName = "sdk-breaking-patterns.md";
         private readonly Option<string> _requestOption = new("--request")
         {
             Description = "The TypeSpec‑related task or user request sent to an AI agent to produce a proposed solution or execution plan with references.",
@@ -47,12 +50,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
         public TypeSpecAuthoringTool(
             IAzureSdkKnowledgeBaseService azureSdkKnowledgeBaseService,
+            ITypeSpecSdkBreakingChangeDetectionService detectionService,
             ILogger<TypeSpecAuthoringTool> logger,
-            ITypeSpecHelper typeSpecHelper)
+            ITypeSpecHelper typeSpecHelper,
+            IGitHelper gitHelper)
         {
             _azureSdkKnowledgeBaseService = azureSdkKnowledgeBaseService ?? throw new ArgumentNullException(nameof(azureSdkKnowledgeBaseService));
+            _detectionService = detectionService ?? throw new ArgumentNullException(nameof(detectionService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _typeSpecHelper = typeSpecHelper ?? throw new ArgumentNullException(nameof(typeSpecHelper));
+            _gitHelper = gitHelper ?? throw new ArgumentNullException(nameof(gitHelper));
         }
 
         protected override Command GetCommand()
@@ -181,6 +188,9 @@ Returns an answer with supporting references and documentation links
                         ResponseError = "Did not receive a result from knowledge base service."
                     };
                 }
+                // detect breaking changes from the response.
+                var breakingPatternsContent = await TryLoadBreakingPatternsAsync(typeSpecProjectRootPath, ct);
+                var result = await _detectionService.DetectBreakingChangesAsync(response.Answer, breakingPatternsContent, ct);
                 return new TypeSpecAuthoringResponse
                 {
                     TypeSpecProject = typespecProject,
@@ -189,6 +199,7 @@ Returns an answer with supporting references and documentation links
                     FullContext = response.FullContext,
                     Reasoning = response.Reasoning,
                     QueryIntention = response.Intention,
+                    SdkBreakingChanges = result?.HasBreakingChanges == true ? result.BreakingChanges.ToList() : null,
                 };
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
@@ -211,6 +222,39 @@ Returns an answer with supporting references and documentation links
             }
         }
 
+        /// <summary>
+        /// Attempts to load the SDK breaking change patterns reference document from
+        /// eng/common/knowledge/ under the repository root.
+        /// </summary>
+        /// <returns>The file content, or null if not found.</returns>
+        private async Task<string?> TryLoadBreakingPatternsAsync(string? typeSpecProjectRootPath, CancellationToken ct)
+        {
+            try
+            {
+                var pathForDiscovery = typeSpecProjectRootPath ?? Directory.GetCurrentDirectory();
+                var repoRoot = await _gitHelper.DiscoverRepoRootAsync(pathForDiscovery, ct);
+                if (string.IsNullOrEmpty(repoRoot))
+                {
+                    _logger.LogDebug("Could not determine repository root for breaking patterns lookup.");
+                    return null;
+                }
+
+                var candidate = Path.Combine(repoRoot, "eng", "common", "knowledge", BreakingPatternsFileName);
+                if (File.Exists(candidate))
+                {
+                    _logger.LogInformation("Loaded SDK breaking change patterns from {Path}", candidate);
+                    return await File.ReadAllTextAsync(candidate, ct);
+                }
+
+                _logger.LogDebug("SDK breaking change patterns file not found at {Path}", candidate);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to load SDK breaking change patterns.");
+                return null;
+            }
+        }
         private List<DocumentReference> MapReferences(List<Reference>? references)
         {
             if (references == null)

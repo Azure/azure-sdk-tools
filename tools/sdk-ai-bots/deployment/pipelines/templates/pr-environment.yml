@@ -1,0 +1,80 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Pipeline template — create or delete an Azure Deployment Environments (ADE)
+# environment via the `az devcenter dev` data-plane CLI.
+#
+# This is the "pool claim / release" primitive: each PR gets one ADE
+# environment named `pr-<number>` in the `pr-sandbox` environment type. The
+# environment type is mapped (in the Dev Center) to an isolated sandbox
+# subscription, so PR churn never touches dev/preview/prod.
+#
+# On `create`, exposes an output variable `adeResourceGroup` (the RG ADE
+# provisioned) so a downstream `azd deploy` stage can target it.
+#
+# Prereqs:
+#   - Service connection identity has role "Deployment Environments User" on
+#     the ADE project (see docs/manual-setup.md).
+#   - `az devcenter` extension (auto-installed below).
+#
+# Required pipeline variables:
+#   SERVICE_CONNECTION   — Azure DevOps service connection (federated).
+#   DEVCENTER_NAME       — Dev Center name (e.g. sdk-ai-bots-dc).
+#   DEVCENTER_PROJECT    — ADE project name (e.g. sdk-ai-bots).
+#   ADE_CATALOG_NAME     — catalog name (e.g. sdkaibots-catalog).
+#   ADE_ENV_DEFINITION   — environment definition name (e.g. sdk-ai-bots).
+# ─────────────────────────────────────────────────────────────────────────────
+
+parameters:
+    - name: action
+      type: string
+      values: [create, delete]
+    - name: environmentName
+      type: string # e.g. pr-1234
+    - name: environmentType
+      type: string
+      default: pr-sandbox
+    - name: parametersJson
+      type: string
+      default: '{}' # JSON object of environment-definition parameters (create only)
+
+steps:
+    - task: AzureCLI@2
+      displayName: 'ADE ${{ parameters.action }} — ${{ parameters.environmentName }}'
+      name: ade
+      inputs:
+          azureSubscription: $(SERVICE_CONNECTION)
+          scriptType: bash
+          scriptLocation: inlineScript
+          inlineScript: |
+              set -euo pipefail
+              az extension add --name devcenter --upgrade --only-show-errors
+
+              DC="$(DEVCENTER_NAME)"
+              PROJ="$(DEVCENTER_PROJECT)"
+              ENV="${{ parameters.environmentName }}"
+
+              if [ "${{ parameters.action }}" = "create" ]; then
+                echo "Creating ADE environment '$ENV' (type=${{ parameters.environmentType }})"
+                az devcenter dev environment create \
+                  --dev-center-name "$DC" \
+                  --project-name "$PROJ" \
+                  --environment-name "$ENV" \
+                  --environment-type "${{ parameters.environmentType }}" \
+                  --catalog-name "$(ADE_CATALOG_NAME)" \
+                  --environment-definition-name "$(ADE_ENV_DEFINITION)" \
+                  --parameters '${{ parameters.parametersJson }}' \
+                  --only-show-errors
+
+                RG=$(az devcenter dev environment show \
+                       --dev-center-name "$DC" --project-name "$PROJ" \
+                       --environment-name "$ENV" \
+                       --query resourceGroupId -o tsv)
+                RG_NAME="${RG##*/}"
+                echo "ADE provisioned resource group: $RG_NAME"
+                echo "##vso[task.setvariable variable=adeResourceGroup;isOutput=true]$RG_NAME"
+              else
+                echo "Deleting ADE environment '$ENV'"
+                az devcenter dev environment delete \
+                  --dev-center-name "$DC" --project-name "$PROJ" \
+                  --environment-name "$ENV" --yes --only-show-errors
+                echo "Deleted."
+              fi

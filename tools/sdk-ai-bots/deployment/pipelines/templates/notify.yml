@@ -1,0 +1,40 @@
+# Pipeline template — notify Teams / email on success or failure.
+#
+# Required pipeline variables: SERVICE_CONNECTION (for Key Vault webhook fetch).
+
+parameters:
+    - name: component
+      type: string
+    - name: environment
+      type: string
+    - name: status
+      type: string # success | failure
+    - name: details
+      type: string
+      default: ''
+
+steps:
+    - task: AzureCLI@2
+      displayName: 'Notify Teams (${{ parameters.status }})'
+      condition: always()
+      inputs:
+          azureSubscription: $(SERVICE_CONNECTION)
+          scriptType: bash
+          scriptLocation: inlineScript
+          inlineScript: |
+              set -euo pipefail
+              WEBHOOK=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name TeamsWebhookUrl --query value -o tsv 2>/dev/null || echo "")
+              if [ -z "$WEBHOOK" ]; then
+                echo "TeamsWebhookUrl not in Key Vault — skipping notification."
+                exit 0
+              fi
+              COLOR=$([ "${{ parameters.status }}" = "success" ] && echo "00ff00" || echo "ff0000")
+              TITLE="${{ parameters.component }} → ${{ parameters.environment }}: ${{ parameters.status }}"
+              DETAILS=$(printf '%s' "${{ parameters.details }}" | sed 's/"/\\"/g')
+              PAYLOAD=$(cat <<EOF
+              { "@type": "MessageCard", "themeColor": "$COLOR",
+                "title": "$TITLE",
+                "text": "$DETAILS\\n\\nBuild: $(Build.BuildId) / $(Build.SourceVersion)" }
+              EOF
+              )
+              curl -sS -H 'Content-Type: application/json' -d "$PAYLOAD" "$WEBHOOK"

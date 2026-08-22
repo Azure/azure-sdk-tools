@@ -1,0 +1,89 @@
+# CD pipeline — agent-server (FastAPI server in the production App Service).
+# Image-only deploy. Infrastructure is provisioned separately by the
+# provision-all-<env> pipeline.
+
+name: tools - sdk-ai-bots-agent-server - cd
+
+trigger: none
+pr: none
+
+parameters:
+    - name: environment
+      type: string
+      default: dev
+      values: [dev, preview, prod]
+    - name: imageTag
+      type: string
+    - name: rollbackOnFailure
+      type: boolean
+      default: true
+
+variables:
+    - template: /eng/pipelines/templates/variables/globals.yml
+    - template: /eng/pipelines/templates/variables/image.yml
+    # AGENT_SERVER_SITE_NAME is exported by load-environment-suite.yml.
+    - name: imageName
+      value: 'azure-sdk-qa-bot-agent-server'
+
+extends:
+    template: /eng/pipelines/templates/stages/1es-redirect.yml
+    parameters:
+        Use1ESOfficial: true
+        stages:
+            - stage: DeployAgentServer
+              displayName: 'Deploy agent-server → ${{ parameters.environment }}'
+              jobs:
+                  - deployment: Deploy
+                    environment: 'sdk-ai-bots-${{ parameters.environment }}'
+                    pool:
+                        name: $(LINUXPOOL)
+                        image: $(LINUXVMIMAGE)
+                        os: linux
+                    strategy:
+                        runOnce:
+                            deploy:
+                                steps:
+                                    - checkout: self
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+                                      parameters:
+                                          environment: '${{ parameters.environment }}'
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-deploy.yml
+                                      parameters:
+                                          service: agent-server
+                                          imageTag: '${{ parameters.imageTag }}'
+
+                                    - task: AzureCLI@2
+                                      displayName: 'Record LastKnownGoodTag'
+                                      inputs:
+                                          azureSubscription: $(SERVICE_CONNECTION)
+                                          scriptType: bash
+                                          scriptLocation: inlineScript
+                                          inlineScript: |
+                                              az appconfig kv set --name "$APP_CONFIG_NAME" \
+                                                --key "Deployment:agent-server:LastKnownGoodTag" \
+                                                --value "${{ parameters.imageTag }}" --yes
+
+                                    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/notify.yml
+                                      parameters:
+                                          component: agent-server
+                                          environment: '${{ parameters.environment }}'
+                                          status: success
+                                          details: 'tag=${{ parameters.imageTag }}'
+
+                            on:
+                                failure:
+                                    steps:
+                                        - ${{ if eq(parameters.rollbackOnFailure, true) }}:
+                                              - template: /tools/sdk-ai-bots/deployment/pipelines/templates/rollback.yml
+                                                parameters:
+                                                    component: agent-server
+                                                    appName: $(AGENT_SERVER_SITE_NAME)
+                                                    imageName: $(imageName)
+                                        - template: /tools/sdk-ai-bots/deployment/pipelines/templates/notify.yml
+                                          parameters:
+                                              component: agent-server
+                                              environment: '${{ parameters.environment }}'
+                                              status: failure
+                                              details: 'failed deploying tag=${{ parameters.imageTag }}'

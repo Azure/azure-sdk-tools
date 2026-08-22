@@ -1,0 +1,83 @@
+# Pipeline template — build + push a container image to ACR (CI step).
+#
+# Build-once / promote-many: this template is the ONLY place where Docker
+# build runs in the SDLC. CD pipelines must consume the image tag this
+# template publishes and never rebuild.
+#
+# Required pipeline variables: SERVICE_CONNECTION, ACR_NAME.
+# Outputs the resolved image tag as pipeline variable `imageTag`.
+
+parameters:
+    - name: imageName
+      type: string
+    - name: dockerContext
+      type: string
+    - name: dockerfile
+      type: string
+    - name: buildMode
+      type: string
+      default: 'acr-build' # acr-build | docker
+      values: ['acr-build', 'docker']
+    - name: tagStrategy
+      type: string
+      default: 'commit-sha' # commit-sha | semver | env
+      values: ['commit-sha', 'semver', 'env']
+    - name: semverFile
+      type: string
+      default: '' # required when tagStrategy == 'semver'
+
+steps:
+    - bash: |
+          set -euo pipefail
+          case "${{ parameters.tagStrategy }}" in
+            commit-sha)
+              IMAGE_TAG=$(git -C "$(System.DefaultWorkingDirectory)" rev-parse --short HEAD)
+              ;;
+            semver)
+              SEMVER_FILE="${{ parameters.semverFile }}"
+              [ -f "$SEMVER_FILE" ] || { echo "##[error]semverFile $SEMVER_FILE not found"; exit 1; }
+              if [[ "$SEMVER_FILE" == *.py ]]; then
+                VER=$(python3 -c "exec(open('$SEMVER_FILE').read()); print(VERSION)")
+              elif [[ "$SEMVER_FILE" == *.go ]]; then
+                VER=$(grep -m1 moduleVersion "$SEMVER_FILE" | sed -n 's/.*moduleVersion.*"\(.*\)".*/\1/p')
+              elif [[ "$SEMVER_FILE" == *package.json ]]; then
+                VER=$(jq -r .version "$SEMVER_FILE")
+              else
+                VER=$(head -n1 "$SEMVER_FILE")
+              fi
+              SHA=$(git -C "$(System.DefaultWorkingDirectory)" rev-parse --short HEAD)
+              IMAGE_TAG="${VER}_${SHA}"
+              ;;
+            env)
+              IMAGE_TAG="$AZURE_ENV_NAME"
+              ;;
+          esac
+          echo "##vso[task.setvariable variable=imageTag;isOutput=true]$IMAGE_TAG"
+          echo "##vso[task.setvariable variable=imageTag]$IMAGE_TAG"
+          echo "Resolved image tag: $IMAGE_TAG"
+      name: tagging
+      displayName: 'Resolve image tag (${{ parameters.tagStrategy }})'
+
+    - task: AzureCLI@2
+      displayName: 'Build & push (${{ parameters.buildMode }})'
+      inputs:
+          azureSubscription: $(SERVICE_CONNECTION)
+          scriptType: bash
+          scriptLocation: inlineScript
+          inlineScript: |
+              set -euo pipefail
+              IMAGE_NAME="${{ parameters.imageName }}"
+              if [ "${{ parameters.buildMode }}" = "acr-build" ]; then
+                az acr build \
+                  --registry "$ACR_NAME" \
+                  --image "${IMAGE_NAME}:$(imageTag)" \
+                  --file "${{ parameters.dockerfile }}" \
+                  "${{ parameters.dockerContext }}"
+              else
+                ACR_LOGIN_SERVER=$(az acr show --name "$ACR_NAME" --query loginServer -o tsv)
+                az acr login --name "$ACR_NAME"
+                docker build -t "${IMAGE_NAME}:$(imageTag)" -f "${{ parameters.dockerfile }}" "${{ parameters.dockerContext }}"
+                docker tag "${IMAGE_NAME}:$(imageTag)" "${ACR_LOGIN_SERVER}/${IMAGE_NAME}:$(imageTag)"
+                docker push "${ACR_LOGIN_SERVER}/${IMAGE_NAME}:$(imageTag)"
+              fi
+              echo "✓ pushed ${IMAGE_NAME}:$(imageTag)"

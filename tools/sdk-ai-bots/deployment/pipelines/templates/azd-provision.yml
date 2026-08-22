@@ -1,0 +1,71 @@
+# Pipeline template — `azd provision` for preview or apply.
+#
+# Required pipeline variables: SERVICE_CONNECTION, AZURE_ENV_NAME,
+# AZURE_LOCATION, AZURE_SUBSCRIPTION_ID, AZURE_TENANT_ID,
+# AZURE_FEDERATED_TOKEN_FILE.
+#
+# Apply runs azd lifecycle hooks normally. Preview skips hooks upstream, so this
+# template explicitly runs preprovision first to resolve the same dynamic
+# environment values consumed by main.bicepparam.
+
+parameters:
+    - name: operation
+      type: string
+      default: apply
+      values: [apply, preview]
+    - name: failOnDeleteOrModify
+      type: boolean
+      default: true
+    - name: workingDirectory
+      type: string
+      default: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment'
+
+steps:
+    - task: AzureCLI@2
+      displayName: 'azd provision (${{ parameters.operation }})'
+      inputs:
+          azureSubscription: $(SERVICE_CONNECTION)
+          scriptType: bash
+          scriptLocation: inlineScript
+          workingDirectory: '${{ parameters.workingDirectory }}'
+          inlineScript: |
+              set -euo pipefail
+              export AZD_AUTH_USE_FEDERATED_TOKEN=true
+              npm ci
+              if ! azd env select "$AZURE_ENV_NAME" --no-prompt >/dev/null 2>&1; then
+                azd env new "$AZURE_ENV_NAME" \
+                  --location "$AZURE_LOCATION" \
+                  --subscription "$AZURE_SUBSCRIPTION_ID" \
+                  --no-prompt
+              fi
+              azd env select "$AZURE_ENV_NAME" --no-prompt
+
+              if [ "${{ parameters.operation }}" = "apply" ]; then
+                azd provision --environment "$AZURE_ENV_NAME" --no-prompt
+                exit 0
+              fi
+
+              # azd preview does not run lifecycle hooks. Run the configured
+              # preprovision hook so dynamic flags and IDs match apply.
+              export AZD_PROVISION_PREVIEW=true
+              azd hooks run preprovision --environment "$AZURE_ENV_NAME" --no-prompt
+
+              PREVIEW_OUTPUT="$(Agent.TempDirectory)/azd-preview.json"
+              azd provision \
+                --preview \
+                --environment "$AZURE_ENV_NAME" \
+                --no-prompt \
+                --output json > "$PREVIEW_OUTPUT"
+              cat "$PREVIEW_OUTPUT"
+
+              if [ "${{ parameters.failOnDeleteOrModify }}" = "True" ]; then
+                RISKY_OPERATIONS=$(node scripts/list-risky-preview-operations.mjs "$PREVIEW_OUTPUT")
+                if [ -n "$RISKY_OPERATIONS" ]; then
+                  echo "##[warning]azd preview reports Delete or Modify operations:"
+                  echo "$RISKY_OPERATIONS"
+                  if [ "${APPROVAL_REQUIRED:-false}" = "true" ]; then
+                    echo "##[error]Refusing to proceed without manual approval on Delete/Modify."
+                    exit 1
+                  fi
+                fi
+              fi

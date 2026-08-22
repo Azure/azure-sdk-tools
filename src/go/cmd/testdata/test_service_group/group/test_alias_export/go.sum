@@ -1,0 +1,2 @@
+github.com/Azure/azure-sdk-tools/src/go/cmd/testdata/test_service_group/group/internal v0.0.0-20260814223732-72e8dfd883a3 h1:ywLFjG/L5OFgrMOm0RpNWxkZWHdKfGfv95RKyTQbSF0=
+github.com/Azure/azure-sdk-tools/src/go/cmd/testdata/test_service_group/group/internal v0.0.0-20260814223732-72e8dfd883a3/go.mod h1:iSrKJNEzaabU2gTijPUWLprgUbOVGRhzN0ekUzeVvyE=

@@ -109,11 +109,13 @@ class HostedAgentClient:
         max_retries: int = STREAM_CREATE_MAX_RETRIES,
         retry_delay: float = STREAM_CREATE_RETRY_DELAY_SECS,
         stream_timeout: float = STREAM_COMPLETE_TIMEOUT_SECS,
+        stream: bool = True,
     ) -> None:
         self._client = openai_client
         self._max_retries = max_retries
         self._retry_delay = retry_delay
         self._stream_timeout = stream_timeout
+        self._stream = stream
 
     async def invoke(
         self,
@@ -138,20 +140,37 @@ class HostedAgentClient:
                 kwargs["conversation"] = agent_conversation_id
             if agent_session_id:
                 extra_body["agent_session_id"] = agent_session_id
-            stream = None
+            created = None
             try:
-                stream = await self._client.responses.create(
-                    input=conversation_items,
-                    store=True,
-                    stream=True,
-                    extra_body=extra_body,
-                    **kwargs,
-                )
-                # Bound the wait for the stream to complete.
-                response = await asyncio.wait_for(
-                    self._consume_stream(stream, agent_conversation_id),
-                    timeout=self._stream_timeout,
-                )
+                if self._stream:
+                    created = await asyncio.wait_for(
+                        self._client.responses.create(
+                            input=conversation_items,
+                            store=True,
+                            stream=True,
+                            extra_body=extra_body,
+                            **kwargs,
+                        ),
+                        timeout=self._stream_timeout,
+                    )
+                    response = await asyncio.wait_for(
+                        self._consume_stream(created, agent_conversation_id),
+                        timeout=self._stream_timeout,
+                    )
+                    trace_id = self._extract_trace_id(created)
+                else:
+                    response = await asyncio.wait_for(
+                        self._client.responses.create(
+                            input=conversation_items,
+                            store=True,
+                            stream=False,
+                            extra_body=extra_body,
+                            **kwargs,
+                        ),
+                        timeout=self._stream_timeout,
+                    )
+                    created = response
+                    trace_id = getattr(response, "_request_id", None)
                 # Poll if completed with empty text (Foundry persistence delay).
                 if response.status == "completed" and not response.output_text:
                     response = await self._poll_response(response)
@@ -160,12 +179,11 @@ class HostedAgentClient:
                         "Agent returned empty output_text "
                         f"(id={response.id}, status={response.status})"
                     )
-                trace_id = self._extract_trace_id(stream)
-                await self.close_stream(stream)
+                await self.close_stream(created)
                 return trace_id, response
             except (NotFoundError, BadRequestError) as ex:
                 last_error = ex
-                await self.close_stream(stream)
+                await self.close_stream(created)
                 # Content-safety blocks are deterministic; retrying will not
                 # help, so return a synthetic response with a safe message.
                 if isinstance(ex, BadRequestError) and _is_content_filter_error(ex):
@@ -193,7 +211,7 @@ class HostedAgentClient:
                 )
             except (APIConnectionError, APITimeoutError, APIStatusError) as ex:
                 last_error = ex
-                await self.close_stream(stream)
+                await self.close_stream(created)
                 logger.warning(
                     "Failed to create agent stream (attempt %d/%d): "
                     "conversation=%s, error=%s",
@@ -205,7 +223,7 @@ class HostedAgentClient:
                 )
             except asyncio.TimeoutError as ex:
                 last_error = ex
-                await self.close_stream(stream)
+                await self.close_stream(created)
                 logger.warning(
                     "Agent stream did not complete within %.0fs "
                     "(attempt %d/%d): conversation=%s",
@@ -218,7 +236,7 @@ class HostedAgentClient:
                 # ``RuntimeError`` = stream ended without a completed event;
                 # both are transient and retryable.
                 last_error = ex
-                await self.close_stream(stream)
+                await self.close_stream(created)
                 logger.warning(
                     "Agent returned no usable response (attempt %d/%d): "
                     "conversation=%s, error=%s",

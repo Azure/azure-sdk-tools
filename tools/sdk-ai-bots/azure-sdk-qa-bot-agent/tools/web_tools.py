@@ -30,6 +30,63 @@ _MIN_ALLOWED_CHARS = 1000
 _MAX_REDIRECTS = 5
 
 
+class _PublicIPTransport(httpx.AsyncBaseTransport):
+    """Resolve and pin requests to public IP addresses."""
+
+    def __init__(self, transport: httpx.AsyncBaseTransport | None = None) -> None:
+        self._transport = transport or httpx.AsyncHTTPTransport(
+            http2=True,
+            trust_env=False,
+            limits=httpx.Limits(max_keepalive_connections=0),
+        )
+
+    async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
+        hostname = request.url.host
+        try:
+            addrinfos = socket.getaddrinfo(
+                hostname, request.url.port, type=socket.SOCK_STREAM
+            )
+        except socket.gaierror as e:
+            raise httpx.ConnectError(
+                f"Could not resolve host {hostname}.", request=request
+            ) from e
+
+        resolved_ips = [
+            ipaddress.ip_address(sockaddr[0])
+            for family, _, _, _, sockaddr in addrinfos
+            if family in {socket.AF_INET, socket.AF_INET6}
+        ]
+        if not resolved_ips or any(not ip.is_global for ip in resolved_ips):
+            raise httpx.ConnectError(
+                f"Host {hostname} resolved to a non-public IP address.",
+                request=request,
+            )
+
+        extensions = dict(request.extensions)
+        if request.url.scheme == "https":
+            extensions["sni_hostname"] = hostname
+
+        last_error: httpx.ConnectError | httpx.ConnectTimeout | None = None
+        for resolved_ip in resolved_ips:
+            pinned_request = httpx.Request(
+                method=request.method,
+                url=request.url.copy_with(host=str(resolved_ip)),
+                headers=request.headers,
+                stream=request.stream,
+                extensions=extensions,
+            )
+            try:
+                return await self._transport.handle_async_request(pinned_request)
+            except (httpx.ConnectError, httpx.ConnectTimeout) as e:
+                last_error = e
+
+        assert last_error is not None
+        raise last_error
+
+    async def aclose(self) -> None:
+        await self._transport.aclose()
+
+
 class _HtmlOutlineParser(HTMLParser):
     """Collect title and h1-h3 headings from HTML content."""
 
@@ -188,7 +245,8 @@ async def _fetch_async(url: str, max_chars: int) -> FetchWebpageResult:
             headers=headers,
             follow_redirects=False,
             timeout=httpx.Timeout(_DEFAULT_TIMEOUT_SECONDS),
-            http2=True,
+            transport=_PublicIPTransport(),
+            trust_env=False,
         ) as client:
             current_url = url
             redirects = 0

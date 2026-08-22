@@ -101,26 +101,24 @@ Two properties of this design are easy to trip over:
 
 ## Evaluation
 
-227-case perf set (7 scenarios), memory off, and GPT-5.6 Sol for answering, wiki construction, and grading. The three configurations ran against the same rebuilt index and shared code base. A case passes only when all six core metrics score ≥ 4. The KB-only arm filters wiki pages out of retrieval, so it measures the existing knowledge-base path alone.
+227-case perf set (7 scenarios), memory off, GPT-5.6 Sol for answering and wiki construction, and gpt-5.4 for grading. The three configurations ran against the same rebuilt index. A case passes only when all six core metrics score ≥ 4. The baseline is current `main` with wiki pages filtered out of retrieval, so it measures the knowledge base alone.
 
 | | TOTAL | typespec | apispec | python | authoring | general | onboarding | release support |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | N | 227 | 125 | 26 | 24 | 26 | 20 | 3 | 3 |
-| KB-only baseline (`main`, memory off) | 54.2 % | 60.8 | 42.3 | **54.2** | 50.0 | **40.0** | **33.3** | 33.3 |
-| Wiki without source backfill | 52.9 % | 60.8 | **50.0** | 33.3 | 50.0 | **40.0** | 0.0 | **66.7** |
-| Wiki two-track | **56.4 %** | **64.8** | 46.2 | 45.8 | **53.8** | 35.0 | **33.3** | **66.7** |
+| KB-only baseline (`main`, memory off) | 67.8 % | 71.2 | 65.4 | 58.3 | 80.8 | 45.0 | 33.3 | 100.0 |
+| Wiki without source backfill | 72.2 % | 75.2 | 65.4 | 58.3 | **88.5** | 55.0 | **100.0** | 66.7 |
+| Wiki two-track | **73.6 %** | **80.0** | **73.1** | 54.2 | 76.9 | **55.0** | 66.7 | 66.7 |
 
-Wiki two-track is **+2.2 pp** overall over the KB-only baseline, net **+5** cases (22 fixed, 17 regressed). The largest and most reliable scenario, `typespec`, improves **+4.0 pp**. `similarity` pass rate moves 70.5 → 74.4 % and `response_completeness` 59.0 → 62.1 %, while groundedness and coherence remain 100 %, relevance remains about 95 %, and fluency remains 100 %. Median answer length decreases from 121 to 118 words.
+The main conclusion reproduces: Wiki two-track is **+5.8 pp** overall over the current Main baseline, net **+13** cases (26 fixed, 13 regressed). The largest and most reliable scenario, `typespec`, improves **+8.8 pp**. `similarity` moves 79.7 → 84.1 % and `response_completeness` 68.3 → 76.2 %, while groundedness / relevance / coherence / fluency remain 99–100 %. Median answer length decreases from 123 to 117 words.
 
-Source backfill adds **+3.5 pp** over Wiki without backfill, net **+8** cases (22 fixed, 14 regressed). Its strongest signals are `typespec` (net +5 cases) and `python` (net +3), while `apispec` and `general` each lose one net case. The paired churn remains substantial, but the positive effect is stronger than in the GPT-5.4 grader run and supports retaining query-ranked source evidence for provenance and detail.
-
-These are new baselines rather than a continuation of the GPT-5.4 score series: changing the grader and regenerating answers makes the absolute pass rates non-comparable with the earlier 67.8/72.2/73.6 % results.
+Source backfill adds **+1.4 pp** over Wiki without backfill, net **+3** cases (17 fixed, 14 regressed). Its strongest signal is `typespec` (+6 cases), but `authoring` loses 3 cases and the paired churn is larger than the net gain. This supports retaining query-ranked source evidence for provenance and detail, but the evaluation does not establish its independent score contribution as strongly as the earlier ablation did.
 
 One intermediate streaming run was excluded: 101 cases returned HTTP 500 after the SSE client received an oversized multi-tool completion event. The backend now uses the non-streaming Responses API, which matches its buffered HTTP contract. All three reported runs have zero synthetic/corrupt rows.
 
 The final online tool set is `search_knowledge_base` and `wiki_search`. Exact terms remain verbatim in the first `search_knowledge_base` query, whose fused retrieval already includes BM25. `wiki_search` is self-contained because it returns bounded page content and source backfill, so separate keyword, page, and source-document read tools are unnecessary.
 
-Reading the numbers: same-config reruns have previously churned ~16 % of cases and moved the total by up to ±5 pp, so paired case changes matter alongside the aggregate score. `typespec` (N = 125) is the only single scenario large enough to trust on its own; `onboarding` and `releasesupport` (N = 3) swing 33 pp on one case and are reported for completeness only.
+Reading the numbers: same-config reruns have previously churned ~16 % of cases and moved the total by up to ±5 pp, so the +1.4 pp backfill delta is directional rather than conclusive. `typespec` (N = 125) is the only single scenario large enough to trust on its own; `onboarding` and `releasesupport` (N = 3) swing 33 pp on one case and are reported for completeness only.
 
 Earlier targeted ablations, run under a different model/index state, established the design choices that were held constant here:
 

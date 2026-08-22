@@ -36,7 +36,7 @@ jobs:
             eng/common-tests/tsp-client
 
       - name: Setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           # default node-version on agent should be sufficient for this test
           cache: "npm"

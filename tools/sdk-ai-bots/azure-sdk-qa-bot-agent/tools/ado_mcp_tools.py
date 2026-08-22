@@ -1,8 +1,10 @@
 """Azure DevOps pipeline tools for the Azure SDK QA Bot Agent.
 
 Provides an MCP-based tool that connects to the Azure DevOps MCP server
-via stdio (``npx @azure-devops/mcp``).  Exposes pipeline definition
-lookup so the agent can help users find release / CI pipeline links.
+via stdio (``npx @azure-devops/mcp``).  Exposes read-only pipeline
+definition lookup and work-item reads so the agent can help users find
+release / CI pipeline links and inspect release plans (work items in the
+``release`` project).
 
 Authentication: Azure DevOps does not accept Foundry agent identities
 as organization members, so the hosted agent cannot mint an ADO token
@@ -32,6 +34,8 @@ _ADO_TOKEN_ENV = "ADO_MCP_AUTH_TOKEN"
 # so `npx` resolves from cache instead of hitting the registry on cold start.
 _ADO_MCP_PACKAGE = os.environ.get("ADO_MCP_PACKAGE", "@azure-devops/mcp@2.7.0")
 
+# Client-side read-only allow-list: the work-items domain also exposes write
+# tools (wit_update_work_item, pipelines_run_pipeline, ...); restrict to reads.
 _ADO_ALLOWED_TOOLS: list[str] = [
     # core (read-only)
     "core_list_projects",
@@ -49,13 +53,19 @@ _ADO_ALLOWED_TOOLS: list[str] = [
     "pipelines_list_runs",
     "pipelines_list_artifacts",
     "pipelines_download_artifact",
+    # work items (read-only) — release plan lookup
+    "wit_query_by_wiql",
+    "wit_get_work_item",
+    "wit_get_work_items_batch_by_ids",
+    "wit_list_work_item_comments",
+    "wit_get_work_item_type",
 ]
 
 
 async def create_ado_mcp_tool() -> MCPStdioTool:
     """Create an MCPStdioTool that launches the Azure DevOps MCP server.
 
-    Only exposes pipeline definition lookup tools to the agent.
+    Read-only: pipeline lookup and work-item/release-plan reads.
     """
     org = cfg("ADO_ORG", _DEFAULT_ADO_ORG) or _DEFAULT_ADO_ORG
     env = {**os.environ}
@@ -84,6 +94,7 @@ async def create_ado_mcp_tool() -> MCPStdioTool:
             "-d",
             "core",
             "pipelines",
+            "work-items",
             "-a",
             "envvar",
         ],
@@ -93,9 +104,10 @@ async def create_ado_mcp_tool() -> MCPStdioTool:
         approval_mode="never_require",
         parse_tool_results=truncating_mcp_parser,
         description=(
-            "Azure DevOps stdio MCP server tools for pipeline lookup. "
-            "Use this tool to find release and CI pipeline definitions "
-            "by name (e.g. 'go - armtestbase', 'python - azure-mgmt-testbase') "
-            "and get pipeline links for users."
+            "Read-only Azure DevOps MCP tools. Use to (1) find release/CI "
+            "pipeline definitions by name and get their links, and (2) read "
+            "release plans — work items in the 'release' project: resolve a "
+            "dashboard release-plan id via WIQL on [Custom.ReleasePlanID], "
+            "then read the work item and its API Spec / Package children."
         ),
     )

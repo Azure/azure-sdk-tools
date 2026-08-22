@@ -29,9 +29,9 @@ extends:
     settings:
       skipBuildTagsForGitHubPullRequests: true
       ${{ if eq(variables['Build.DefinitionName'], 'net - partner-release') }}:
-        networkIsolationPolicy: Permissive
+        networkIsolationPolicy: Permissive, CFSClean2
       ${{ else }}:
-        networkIsolationPolicy: Permissive, CFSClean
+        networkIsolationPolicy: Permissive, CFSClean, CFSClean2
     sdl:
       # Turn off the build warnings caused by disabling some sdl checks
       createAdoIssuesForJustificationsForDisablement: false

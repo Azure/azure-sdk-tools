@@ -487,6 +487,23 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         }
 
         [Test]
+        public async Task GetReleasePlansForPackageAsync_GoQueryIncludesPackageNameAliases()
+        {
+            // Arrange
+            const string packageName = "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/cosmos/armcosmos/v4";
+
+            // Act
+            await _devOpsService.GetReleasePlansForPackageAsync(packageName, "go", false, CancellationToken.None);
+
+            // Assert
+            var capturedQuery = _connection.LastCapturedQuery;
+            Assert.That(capturedQuery, Does.Contain($"[Custom.GoPackageName] = '{packageName}'"));
+            Assert.That(capturedQuery, Does.Contain("[Custom.GoPackageName] = 'sdk/resourcemanager/cosmos/armcosmos/v4'"));
+            Assert.That(capturedQuery, Does.Contain("[Custom.GoPackageName] = 'sdk/resourcemanager/cosmos/armcosmos'"));
+            Assert.That(capturedQuery, Does.Contain("[Custom.GoPackageName] = 'armcosmos'"));
+        }
+
+        [Test]
         public async Task GetReleasePlansForPackageAsync_QueryIncludesInProgressStateFilter()
         {
             // Arrange

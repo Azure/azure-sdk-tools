@@ -361,10 +361,11 @@ namespace Azure.Sdk.Tools.Cli.Services
             try
             {
                 var languageId = MapLanguageToId(language);
-                var escapedPackageName = packageName?.Replace("'", "''");
+                var packageNameConditions = GetPackageNameSearchValues(packageName, language)
+                    .Select(name => $"[Custom.{languageId}PackageName] = '{name.Replace("'", "''")}'");
                 var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
                 query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
-                query += $" AND [Custom.{languageId}PackageName] = '{escapedPackageName}'";
+                query += $" AND ({string.Join(" OR ", packageNameConditions)})";
                 query += $" AND [Custom.ReleaseStatusFor{languageId}] <> 'Released'";
                 query += " AND [System.WorkItemType] = 'Release Plan'";
                 query += " AND [System.State] = 'In Progress'";
@@ -389,6 +390,39 @@ namespace Azure.Sdk.Tools.Cli.Services
                 logger.LogError(ex, "Failed to get release plans for package {packageName} in {language}", packageName, language);
                 throw new Exception($"Failed to get release plans for package {packageName} in {language}. Error: {ex.Message}", ex);
             }
+        }
+
+        private static IReadOnlyCollection<string> GetPackageNameSearchValues(string packageName, string language)
+        {
+            var packageNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { packageName };
+            if (!string.Equals(language, "go", StringComparison.OrdinalIgnoreCase))
+            {
+                return packageNames;
+            }
+
+            const string goModulePrefix = "github.com/Azure/azure-sdk-for-go/";
+            var repositoryPath = packageName.Replace('\\', '/').Trim('/');
+            if (repositoryPath.StartsWith(goModulePrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                repositoryPath = repositoryPath[goModulePrefix.Length..];
+                packageNames.Add(repositoryPath);
+            }
+
+            var lastSeparator = repositoryPath.LastIndexOf('/');
+            var lastSegment = repositoryPath[(lastSeparator + 1)..];
+            if (lastSeparator >= 0
+                && lastSegment.Length > 1
+                && (lastSegment[0] == 'v' || lastSegment[0] == 'V')
+                && int.TryParse(lastSegment[1..], out var majorVersion)
+                && majorVersion >= 2)
+            {
+                repositoryPath = repositoryPath[..lastSeparator];
+                packageNames.Add(repositoryPath);
+            }
+
+            lastSeparator = repositoryPath.LastIndexOf('/');
+            packageNames.Add(repositoryPath[(lastSeparator + 1)..]);
+            return packageNames;
         }
 
         private async Task<ReleasePlanWorkItem> MapWorkItemToReleasePlanAsync(WorkItem workItem, CancellationToken ct)

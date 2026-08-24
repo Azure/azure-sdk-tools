@@ -9,8 +9,8 @@ trigger: none
 pr: none
 
 schedules:
-  - cron: '0 2 * * *'
-    displayName: 'Daily (02:00 UTC)'
+  - cron: '0 0 * * *'
+    displayName: 'Daily (00:00 UTC)'
     branches:
       include:
         - main

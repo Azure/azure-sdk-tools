@@ -133,30 +133,42 @@ Name (MCP): `azsdk_package_customize_code`
 
 The existing CustomizedCodeUpdateTool will be enhanced to implement a two-phase customization workflow that accepts requests from multiple [entry points](#entry-points) and automatically routes to the appropriate fix strategy.
 
-**Two-Phase Workflow:**
+**Edit-Scoped Workflow:**
+
+`--edit-scope` defines which source categories the tool is permitted to modify. The tool supports three modes:
+
+| Edit scope | Permitted edits | Required path | Workflow behavior |
+| ---------- | --------------- | ------------- | ----------------- |
+| `SpecInputs` | TypeSpec inputs only, including `client.tsp`. SDK code and customization files are not modified. | `typespecProjectPath` | Run Phase A only. Apply TypeSpec customizations and return the changes without regenerating or building an SDK. |
+| `CustomCode` | Existing SDK customization files only. TypeSpec inputs and generated SDK files are not modified. | `packagePath` | Skip Phase A and enter Phase B directly. Analyze the request and available build errors, apply eligible mechanical repairs, and validate the SDK build. |
+| `All` (default) | TypeSpec inputs and existing SDK customization files. Generated SDK files may also change as a result of regeneration. | `typespecProjectPath` and `packagePath` | Run the complete spec-first workflow: Phase A applies TypeSpec changes and regenerates/builds the SDK; Phase B may repair customization files when the resulting build fails. |
+
+The edit scope is a hard permission boundary. If the requested fix requires a source category outside the selected scope, the tool must not modify that category and must return guidance identifying the required scope. Validation commands may read files outside the selected scope but must not introduce out-of-scope edits.
 
 1. **Context Classifier**
-   Analyzes requests and routes to: Phase A (TypeSpec can help), Success (done), or Failure (too complex/stalled). Phase B is not a classifier decision—it activates automatically on Phase A build failures when customization files exist.
+  Analyzes the request within the selected edit scope and routes to an allowed phase, Success (done), or Failure (too complex, stalled, or out of scope). With `All`, Phase B activates automatically after a Phase A build failure when customization files exist. With `CustomCode`, the classifier routes directly to Phase B because TypeSpec edits are not permitted.
 
-1. **Phase A – [TypeSpec Customizations](#typespec-customizations):**
-   Apply `client.tsp` decorators, regenerate SDK, validate build, return to classifier
+2. **Phase A – [TypeSpec Customizations](#typespec-customizations):**
+  Allowed when `SpecInputs` is in scope (`SpecInputs` or `All`).
+  Apply `client.tsp` decorators and return to the classifier. In `All` mode, also regenerate the SDK and validate its build. In `SpecInputs` mode, stop after the TypeSpec edits because no SDK package is available or permitted to change.
 
-1. **Phase B – [Code Customizations](#code-customizations):**
+3. **Phase B – [Code Customizations](#code-customizations):**
+  Allowed when `CustomCode` is in scope (`CustomCode` or `All`).
 
-   - **Activation**: Phase A build fails AND customization files exist (Java: `/customization/` or `*Customization.java`, Python: `*_patch.py`, .NET: partial classes)
+   - **Activation**: Entered directly for `CustomCode`; for `All`, activated when the Phase A build fails and customization files exist (Java: `/customization/` or `*Customization.java`, Python: `*_patch.py`, .NET: partial classes).
 
    - **Design Rationale**: Phase B operates under three principles:
-     1. **Spec-First Always**: Only activates after Phase A build failures when customization files exist
+     1. **Spec-First When Permitted**: In `All`, Phase B activates only after Phase A build failures when customization files exist. In `CustomCode`, TypeSpec is explicitly out of scope, so Phase B starts directly.
      2. **Narrow Scope**: Mechanical transformations only; uncertain/complex cases get manual guidance. v2 may add pattern-based features while keeping error-driven activation
      3. **Safety Net**: Handles ~10% (build errors TypeSpec cannot solve); Phase A solves ~80%, remaining ~10% get manual guidance
 
    - **Scope** (<20 lines, <5 files, deterministic only):
-     - ✅ **In**: Remove duplicates, update references, add imports, rename keywords, update type annotations
-     - ❌ **Out**: Convenience methods, architecture changes, visibility (use `@access`), error handling, complex logic
+       - ✅ **In**: Remove duplicates, update references, add imports, rename keywords, update type annotations
+       - ❌ **Out**: Convenience methods, architecture changes, visibility (use `@access`), error handling, complex logic
 
    - **Workflow**: Analyze errors → Assess feasibility → Apply patches (if deterministic) OR return manual guidance → Validate → Iterate (max 2 attempts)
 
-1. **Summary Response:**
+4. **Summary Response:**
    - Present summary of changes made to local repository files (TypeSpec and SDK code)
    - User reviews uncommitted changes and decides to commit or discard
    - Maximum 2 attempts per phase (4 total iterations)
@@ -164,50 +176,61 @@ The existing CustomizedCodeUpdateTool will be enhanced to implement a two-phase 
 
 #### New inputs
 
-- `--package-path`/`packagePath`: The path to the package (SDK) directory to check. Lives in one of the `azure-sdk-for-*` repos.
+- [conditional] `--package-path`/`packagePath`: The path to the package (SDK) directory to check. Lives in one of the `azure-sdk-for-*` repos. Required for `CustomCode` and `All`; not required for `SpecInputs`.
 - `--customization-request`/`customizationRequest`: A text blob containing the customization request. This supports multiple [entry points](#entry-points):
   - **Build failures**: Compilation errors, linting violations, typing check failures
   - **User prompts**: Natural language requests like "rename the FooClient to BarClient for .NET"
   - **API review feedback**: Feedback from API View or PR comments
   - **Breaking changes**: Output from breaking changes analysis tools
-- [optional] `--typespec-project-path`/`typespecProjectPath`: The path to the TypeSpec project directory containing `tspconfig.yaml`. Used when operating from the azure-rest-api-specs repository to specify which TypeSpec project to work with.
+- `--edit-scope`/`editScope`: The source categories the tool may edit. Accepted values are `All`, `CustomCode`, and `SpecInputs`; the default is `All`.
+- [conditional] `--typespec-project-path`/`typespecProjectPath`: The path to the TypeSpec project directory containing `tspconfig.yaml`. Required for `SpecInputs` and `All`; not required for `CustomCode`.
 
 #### Workflow
 
 ```mermaid
 flowchart TD
-    Entry[<b>Entry Point</b><br/>Customization request from any source]
-    Entry --> Classify
 
-    Classify[<b>Classifier</b><br/>Analyze request & route to next action<br/>]
-    Classify -->|TypeSpec can help| PhaseA
-    Classify -->|Stalled/complex| Failure
-    Classify -->|Complete| Success
+Entry["Entry Point<br/>Customize Request"] --> Classify["Classifier<br/>Analyze request &<br/>route to next action"]
 
-    PhaseA[<b>Phase A: TypeSpec</b><br/>Apply client.tsp decorators<br/><i>Max 2 iterations</i>]
-    PhaseA --> Regen[Regenerate SDK]
+Classify -- Stalled/complex --> Failure
+Classify -- TypeApplicable Request --> SpecInputInScope{SpecInput in Scope?}
+Classify -- CodeCustomization Request --> CustomCodeInSope
+CustomCodeInSope --Yes --> CodeCustomization["Code Repair<br/>Apply Code Customization</br>Max 2 Ierations"]
+CustomCodeInSope --No --> Failure
 
-    Regen --> RegenOK{Generation<br/>Success?}
-    RegenOK -->|No| Classify
-    RegenOK -->|Yes| Build[Build SDK]
+CodeCustomization --> Build
+SpecInputInScope -- No --> AppendSpecInputOutofScope["SpecInput out-of-scope to Customization Request"]
+AppendSpecInputOutofScope --> M
+SpecInputInScope -- Yes --> ApplyTypespecCustomization["Apply TypeSpec<br/>Customization"]
+ApplyTypespecCustomization --> CustomCodeInSopeForSpec
+CustomCodeInSopeForSpec -- No --> Success
+CustomCodeInSopeForSpec -- Yes --> Regen[Regen SDK]
+Regen --> RegenOK{Regen Successfully?}
+RegenOK -- Yes --> Build[Build SDK]
+RegenOK -- No --> AppendRegenFailure["Append Regen Failure<br/>to Customization Request"]
+AppendRegenFailure --> M{has more customization request?}
+Build --> BuildOK{Build Successful}
+BuildOK -- No --> AppendBuildFailure["Append Build Failure<br/>to Customization Request"]
+AppendBuildFailure --> M
+BuildOK -- Yes --> M
+M -- No --> Success
+M -- Yes --> Classify
 
-    Build --> BuildOK{Build<br/>Success?}
-    BuildOK -->|Yes| Classify
-    BuildOK -->|No + has files| PhaseB[<b>Phase B: Code Repair</b><br/>Patch customization files<br/><i>Max 2 iterations</i>]
-    BuildOK -->|No, no files| Classify
-    PhaseB --> Regen
 
-    Success[<b>Success</b><br/>Return change summary]
-    Failure[<b>Failure</b><br/>Return manual guidance]
+Success[<b>Success</b><br/>Return change summary]
+Failure[<b>Failure</b><br/>Return manual guidance]
+CustomCodeInSope{CustomCode<br/>in Scope?}
+CustomCodeInSopeForSpec{CustomCode<br/>in Scope?}
 
-    style Entry fill:#fff9c4
-    style Classify fill:#e1f5fe
-    style PhaseA fill:#bbdefb
-    style PhaseB fill:#ffccbc
-    style Success fill:#c8e6c9
-    style Failure fill:#ffcdd2
-    style Regen fill:#ffe082
-    style Build fill:#ffe082
+style Entry fill:#fff9c4
+style Classify fill:#e1f5fe
+style Success fill:#c8e6c9
+style Failure fill:#ffcdd2
+style CodeCustomization fill:#ffccbc
+style ApplyTypespecCustomization fill:#ffccbc
+style Regen fill:#ffe082
+style Build fill:#ffe082
+
 ```
 
 **Benefits:**

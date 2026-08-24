@@ -12,6 +12,7 @@ paths:
     - eval-authoring-tool/evals/
     - eval-authoring-workflow/evals/
     - azsdk-common-sdk-breaking-change/evals/
+    - code-review/evals/
   results: results/
   evalFilenames: ["eval.yaml", "*.eval.yaml"]
 

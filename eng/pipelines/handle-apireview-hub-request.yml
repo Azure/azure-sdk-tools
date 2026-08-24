@@ -48,8 +48,12 @@ resources:
       ref: main
 
 variables:
-  callbackTokenAudience: 'api://apireviewhub'
-  completionCallbackUrl: 'https://api-review-hub.azurewebsites.net/api/operations/'
+  - name: callbackTokenAudience
+    value: 'api://apireviewhub'
+    readonly: true
+  - name: completionCallbackUrl
+    value: 'https://api-review-hub.azurewebsites.net/api/operations/'
+    readonly: true
 
 parameters:
   - name: requestMode
@@ -95,172 +99,204 @@ parameters:
     type: string
     default: 'apireview-target'
 
-jobs:
-# The language value is validated above. Each supported language must provide:
-# - /eng/pipelines/templates/jobs/apireview-hub-job-{language}.yml
-# - /eng/pipelines/templates/steps/create-apireview-hub-artifacts-{language}.yml
-- template: ${{ format('/eng/pipelines/templates/jobs/apireview-hub-job-{0}.yml@{0}-repo', parameters.language) }}
-  parameters:
-    repositoryOwner: ${{ parameters.owner }}
-    steps:
-      - pwsh: |
-          $ErrorActionPreference = 'Stop'
+stages:
+- stage: Generate
+  displayName: 'Generate API review artifacts'
+  jobs:
+  # The language value is validated above. Each supported language must provide:
+  # - /eng/pipelines/templates/jobs/apireview-hub-job-{language}.yml
+  # - /eng/pipelines/templates/steps/create-apireview-hub-artifacts-{language}.yml
+  - template: ${{ format('/eng/pipelines/templates/jobs/apireview-hub-job-{0}.yml@{0}-repo', parameters.language) }}
+    parameters:
+      repositoryOwner: ${{ parameters.owner }}
+      steps:
+        - pwsh: |
+            $ErrorActionPreference = 'Stop'
 
-          $ingressCallbackProofToken = '${{ parameters.callbackProofToken }}'
-          if ([string]::IsNullOrWhiteSpace($ingressCallbackProofToken)) {
-            throw 'callbackProofToken is required.'
-          }
-          Write-Host "##vso[task.setvariable variable=ARH_CALLBACK_PROOF_TOKEN;issecret=true]$ingressCallbackProofToken"
+            if ([string]::IsNullOrWhiteSpace($env:ARH_OPERATION_ID)) {
+              throw 'operationId is required.'
+            }
+            if ([string]::IsNullOrWhiteSpace($env:ARH_PACKAGE_NAME)) {
+              throw 'packageName is required.'
+            }
+            if ([string]::IsNullOrWhiteSpace($env:ARH_TARGET_REF)) {
+              throw 'targetRef is required.'
+            }
 
-          if ([string]::IsNullOrWhiteSpace('${{ parameters.operationId }}')) {
-            throw 'operationId is required.'
-          }
-          if ([string]::IsNullOrWhiteSpace('${{ parameters.packageName }}')) {
-            throw 'packageName is required.'
-          }
-          if ([string]::IsNullOrWhiteSpace('${{ parameters.targetRef }}')) {
-            throw 'targetRef is required.'
-          }
+            New-Item -ItemType Directory -Force -Path '$(Build.ArtifactStagingDirectory)/base' | Out-Null
+            New-Item -ItemType Directory -Force -Path '$(Build.ArtifactStagingDirectory)/target' | Out-Null
+            New-Item -ItemType Directory -Force -Path '$(Build.ArtifactStagingDirectory)/result' | Out-Null
+          displayName: 'Validate request parameters'
+          env:
+            ARH_OPERATION_ID: ${{ parameters.operationId }}
+            ARH_PACKAGE_NAME: ${{ parameters.packageName }}
+            ARH_TARGET_REF: ${{ parameters.targetRef }}
 
-          New-Item -ItemType Directory -Force -Path '$(Build.ArtifactStagingDirectory)/base' | Out-Null
-          New-Item -ItemType Directory -Force -Path '$(Build.ArtifactStagingDirectory)/target' | Out-Null
-          New-Item -ItemType Directory -Force -Path '$(Build.ArtifactStagingDirectory)/result' | Out-Null
-        displayName: 'Validate request parameters'
+        # Create and update requests with a baseline generate it with the same
+        # pipeline and tooling inputs as the target. Either mode may omit baseRef
+        # to intentionally generate a target-only review.
+        - ${{ if ne(trim(parameters.baseRef), '') }}:
+          - template: ${{ format('/eng/pipelines/templates/steps/create-apireview-hub-artifacts-{0}.yml@{0}-repo', parameters.language) }}
+            parameters:
+              requestMode: ${{ parameters.requestMode }}
+              operationId: ${{ parameters.operationId }}
+              packageName: ${{ parameters.packageName }}
+              ref: ${{ parameters.baseRef }}
+              kind: base
+              outputDir: $(Build.ArtifactStagingDirectory)/base
+              workingDir: $(Pipeline.Workspace)/apireview/base
 
-      # Create and update requests with a baseline generate it with the same
-      # pipeline and tooling inputs as the target. Either mode may omit baseRef
-      # to intentionally generate a target-only review.
-      - ${{ if ne(trim(parameters.baseRef), '') }}:
+        # Always generate the target bundle after any requested baseline bundle.
         - template: ${{ format('/eng/pipelines/templates/steps/create-apireview-hub-artifacts-{0}.yml@{0}-repo', parameters.language) }}
           parameters:
             requestMode: ${{ parameters.requestMode }}
             operationId: ${{ parameters.operationId }}
             packageName: ${{ parameters.packageName }}
-            ref: ${{ parameters.baseRef }}
-            kind: base
-            outputDir: $(Build.ArtifactStagingDirectory)/base
-            workingDir: $(Pipeline.Workspace)/apireview/base
+            ref: ${{ parameters.targetRef }}
+            kind: target
+            outputDir: $(Build.ArtifactStagingDirectory)/target
+            workingDir: $(Pipeline.Workspace)/apireview/target
 
-      # Always generate the target bundle after any requested baseline bundle.
-      - template: ${{ format('/eng/pipelines/templates/steps/create-apireview-hub-artifacts-{0}.yml@{0}-repo', parameters.language) }}
-        parameters:
-          requestMode: ${{ parameters.requestMode }}
-          operationId: ${{ parameters.operationId }}
-          packageName: ${{ parameters.packageName }}
-          ref: ${{ parameters.targetRef }}
-          kind: target
-          outputDir: $(Build.ArtifactStagingDirectory)/target
-          workingDir: $(Pipeline.Workspace)/apireview/target
+            # The web service reads this summary to decide whether the operation
+            # succeeded, whether a create request changed API shape, and which build
+            # artifacts to download.
+        - pwsh: |
+            $ErrorActionPreference = 'Stop'
 
-          # The web service reads this summary to decide whether the operation
-          # succeeded, whether a create request changed API shape, and which build
-          # artifacts to download.
-      - pwsh: |
-          $ErrorActionPreference = 'Stop'
-
-          $targetMetadataPath = '$(Build.ArtifactStagingDirectory)/target/artifact-metadata.json'
-          $targetMetadata = Get-Content -Raw -Path $targetMetadataPath | ConvertFrom-Json
-          $artifacts = [ordered]@{
-            target = '${{ parameters.targetArtifactName }}'
-            result = '${{ parameters.resultArtifactName }}'
-          }
-
-          $baseRef = '${{ parameters.baseRef }}'
-          if ([string]::IsNullOrWhiteSpace($baseRef)) {
-            $baseRef = ''
-          }
-
-          $hasBaseline = -not [string]::IsNullOrWhiteSpace($baseRef)
-          $baseVersion = ''
-          $changed = $null
-          if ($hasBaseline) {
-            $baseMetadataPath = '$(Build.ArtifactStagingDirectory)/base/artifact-metadata.json'
-            $baseMetadata = Get-Content -Raw -Path $baseMetadataPath | ConvertFrom-Json
-            $baseVersion = $baseMetadata.version
-            $artifacts.base = '${{ parameters.baseArtifactName }}'
-
-            $baseHash = (Get-FileHash -Algorithm SHA256 -Path '$(Build.ArtifactStagingDirectory)/base/api.md').Hash
-            $targetHash = (Get-FileHash -Algorithm SHA256 -Path '$(Build.ArtifactStagingDirectory)/target/api.md').Hash
-            $changed = $baseHash -ne $targetHash
-          }
-
-          $summary = [ordered]@{
-            operationId = '${{ parameters.operationId }}'
-            mode = '${{ parameters.requestMode }}'
-            language = '${{ parameters.language }}'
-            repositoryFullName = $targetMetadata.repositoryFullName
-            packageName = '${{ parameters.packageName }}'
-            baseRef = $baseRef
-            targetRef = '${{ parameters.targetRef }}'
-            status = 'succeeded'
-            changed = $changed
-            baseVersion = $baseVersion
-            targetVersion = $targetMetadata.version
-            packageRelativePath = $targetMetadata.packageRelativePath
-            artifacts = $artifacts
-          }
-
-          $summary | ConvertTo-Json -Depth 10 | Set-Content -Path '$(Build.ArtifactStagingDirectory)/result/result-summary.json' -Encoding utf8
-          Get-Content -Path '$(Build.ArtifactStagingDirectory)/result/result-summary.json'
-        displayName: 'Compare and write result summary'
-
-      # Ensure failed runs still publish an operation result artifact that the
-      # web service can surface to callers.
-      - pwsh: |
-          $ErrorActionPreference = 'Stop'
-
-          New-Item -ItemType Directory -Force -Path '$(Build.ArtifactStagingDirectory)/result' | Out-Null
-          $baseRef = '${{ parameters.baseRef }}'
-          if ([string]::IsNullOrWhiteSpace($baseRef)) {
-            $baseRef = ''
-          }
-
-          $summary = [ordered]@{
-            operationId = '${{ parameters.operationId }}'
-            mode = '${{ parameters.requestMode }}'
-            language = '${{ parameters.language }}'
-            packageName = '${{ parameters.packageName }}'
-            baseRef = $baseRef
-            targetRef = '${{ parameters.targetRef }}'
-            status = 'failed'
-            artifacts = [ordered]@{
-              result = '${{ parameters.resultArtifactName }}'
+            $targetMetadataPath = '$(Build.ArtifactStagingDirectory)/target/artifact-metadata.json'
+            $targetMetadata = Get-Content -Raw -Path $targetMetadataPath | ConvertFrom-Json
+            $artifacts = [ordered]@{
+              target = $env:ARH_TARGET_ARTIFACT_NAME
+              result = $env:ARH_RESULT_ARTIFACT_NAME
             }
-          }
 
-          $summary | ConvertTo-Json -Depth 10 | Set-Content -Path '$(Build.ArtifactStagingDirectory)/result/result-summary.json' -Encoding utf8
-          Get-Content -Path '$(Build.ArtifactStagingDirectory)/result/result-summary.json'
-        displayName: 'Write failure result summary'
-        condition: failed()
+            $baseRef = $env:ARH_BASE_REF
+            if ([string]::IsNullOrWhiteSpace($baseRef)) {
+              $baseRef = ''
+            }
 
-      - ${{ if ne(trim(parameters.baseRef), '') }}:
+            $hasBaseline = -not [string]::IsNullOrWhiteSpace($baseRef)
+            $baseVersion = ''
+            $changed = $null
+            if ($hasBaseline) {
+              $baseMetadataPath = '$(Build.ArtifactStagingDirectory)/base/artifact-metadata.json'
+              $baseMetadata = Get-Content -Raw -Path $baseMetadataPath | ConvertFrom-Json
+              $baseVersion = $baseMetadata.version
+              $artifacts.base = $env:ARH_BASE_ARTIFACT_NAME
+
+              $baseHash = (Get-FileHash -Algorithm SHA256 -Path '$(Build.ArtifactStagingDirectory)/base/api.md').Hash
+              $targetHash = (Get-FileHash -Algorithm SHA256 -Path '$(Build.ArtifactStagingDirectory)/target/api.md').Hash
+              $changed = $baseHash -ne $targetHash
+            }
+
+            $summary = [ordered]@{
+              operationId = $env:ARH_OPERATION_ID
+              mode = $env:ARH_REQUEST_MODE
+              language = $env:ARH_LANGUAGE
+              repositoryFullName = $targetMetadata.repositoryFullName
+              packageName = $env:ARH_PACKAGE_NAME
+              baseRef = $baseRef
+              targetRef = $env:ARH_TARGET_REF
+              status = 'succeeded'
+              changed = $changed
+              baseVersion = $baseVersion
+              targetVersion = $targetMetadata.version
+              packageRelativePath = $targetMetadata.packageRelativePath
+              artifacts = $artifacts
+            }
+
+            $summary | ConvertTo-Json -Depth 10 | Set-Content -Path '$(Build.ArtifactStagingDirectory)/result/result-summary.json' -Encoding utf8
+            Get-Content -Path '$(Build.ArtifactStagingDirectory)/result/result-summary.json'
+          displayName: 'Compare and write result summary'
+          env:
+            ARH_BASE_ARTIFACT_NAME: ${{ parameters.baseArtifactName }}
+            ARH_BASE_REF: ${{ parameters.baseRef }}
+            ARH_LANGUAGE: ${{ parameters.language }}
+            ARH_OPERATION_ID: ${{ parameters.operationId }}
+            ARH_PACKAGE_NAME: ${{ parameters.packageName }}
+            ARH_REQUEST_MODE: ${{ parameters.requestMode }}
+            ARH_RESULT_ARTIFACT_NAME: ${{ parameters.resultArtifactName }}
+            ARH_TARGET_ARTIFACT_NAME: ${{ parameters.targetArtifactName }}
+            ARH_TARGET_REF: ${{ parameters.targetRef }}
+
+        # Ensure failed runs still publish an operation result artifact that the
+        # web service can surface to callers.
+        - pwsh: |
+            $ErrorActionPreference = 'Stop'
+
+            New-Item -ItemType Directory -Force -Path '$(Build.ArtifactStagingDirectory)/result' | Out-Null
+            $baseRef = $env:ARH_BASE_REF
+            if ([string]::IsNullOrWhiteSpace($baseRef)) {
+              $baseRef = ''
+            }
+
+            $summary = [ordered]@{
+              operationId = $env:ARH_OPERATION_ID
+              mode = $env:ARH_REQUEST_MODE
+              language = $env:ARH_LANGUAGE
+              packageName = $env:ARH_PACKAGE_NAME
+              baseRef = $baseRef
+              targetRef = $env:ARH_TARGET_REF
+              status = 'failed'
+              artifacts = [ordered]@{
+                result = $env:ARH_RESULT_ARTIFACT_NAME
+              }
+            }
+
+            $summary | ConvertTo-Json -Depth 10 | Set-Content -Path '$(Build.ArtifactStagingDirectory)/result/result-summary.json' -Encoding utf8
+            Get-Content -Path '$(Build.ArtifactStagingDirectory)/result/result-summary.json'
+          displayName: 'Write failure result summary'
+          condition: failed()
+          env:
+            ARH_BASE_REF: ${{ parameters.baseRef }}
+            ARH_LANGUAGE: ${{ parameters.language }}
+            ARH_OPERATION_ID: ${{ parameters.operationId }}
+            ARH_PACKAGE_NAME: ${{ parameters.packageName }}
+            ARH_REQUEST_MODE: ${{ parameters.requestMode }}
+            ARH_RESULT_ARTIFACT_NAME: ${{ parameters.resultArtifactName }}
+            ARH_TARGET_REF: ${{ parameters.targetRef }}
+
+        - ${{ if ne(trim(parameters.baseRef), '') }}:
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish base API review bundle'
+            condition: succeeded()
+            inputs:
+              pathtoPublish: '$(Build.ArtifactStagingDirectory)/base'
+              artifactName: '${{ parameters.baseArtifactName }}'
+
         - task: PublishBuildArtifacts@1
-          displayName: 'Publish base API review bundle'
+          displayName: 'Publish target API review bundle'
           condition: succeeded()
           inputs:
-            pathtoPublish: '$(Build.ArtifactStagingDirectory)/base'
-            artifactName: '${{ parameters.baseArtifactName }}'
+            pathtoPublish: '$(Build.ArtifactStagingDirectory)/target'
+            artifactName: '${{ parameters.targetArtifactName }}'
 
-      - task: PublishBuildArtifacts@1
-        displayName: 'Publish target API review bundle'
-        condition: succeeded()
-        inputs:
-          pathtoPublish: '$(Build.ArtifactStagingDirectory)/target'
-          artifactName: '${{ parameters.targetArtifactName }}'
+        - task: PublishBuildArtifacts@1
+          displayName: 'Publish API review result summary'
+          condition: succeededOrFailed()
+          inputs:
+            pathtoPublish: '$(Build.ArtifactStagingDirectory)/result'
+            artifactName: '${{ parameters.resultArtifactName }}'
 
-      - task: PublishBuildArtifacts@1
-        displayName: 'Publish API review result summary'
-        condition: succeededOrFailed()
-        inputs:
-          pathtoPublish: '$(Build.ArtifactStagingDirectory)/result'
-          artifactName: '${{ parameters.resultArtifactName }}'
+- stage: Notify
+  displayName: 'Notify API Review Hub'
+  dependsOn: Generate
+  condition: always()
+  variables:
+    generationResult: $[ dependencies.Generate.result ]
+  jobs:
+  - job: NotifyApiReviewHub
+    displayName: 'Notify API Review Hub of artifact completion'
+    pool:
+      name: azsdk-pool
+      demands: ImageOverride -equals ubuntu-24.04
+    steps:
+      - checkout: none
 
-      # Completion notification is intentionally sent after artifacts are
-      # published. API Review Hub treats this as a signal, then verifies the
-      # operation/run identity and downloads artifacts from ADO itself.
+      # API Review Hub treats this as a signal, then verifies the operation/run
+      # identity and downloads artifacts from ADO itself.
       - task: AzurePowerShell@5
         displayName: 'Notify API Review Hub of artifact completion'
-        condition: succeededOrFailed()
         inputs:
           azureSubscription: 'ADO to ARH Service Connection'
           azurePowerShellVersion: latestVersion
@@ -269,20 +305,20 @@ jobs:
           Inline: |
             $ErrorActionPreference = 'Stop'
 
-            if ([string]::IsNullOrWhiteSpace('$(completionCallbackUrl)')) {
+            if ([string]::IsNullOrWhiteSpace($env:ARH_COMPLETION_CALLBACK_URL)) {
               throw 'completionCallbackUrl is required.'
             }
 
             try {
-              $tokenResponse = Get-AzAccessToken -ResourceUrl '$(callbackTokenAudience)' -AsSecureString -ErrorAction Stop
+              $tokenResponse = Get-AzAccessToken -ResourceUrl $env:ARH_CALLBACK_TOKEN_AUDIENCE -AsSecureString -ErrorAction Stop
             }
             catch {
-              throw "Failed to acquire access token for API Review Hub callback audience '$(callbackTokenAudience)': $($_.Exception.Message)"
+              throw "Failed to acquire access token for API Review Hub callback audience '$($env:ARH_CALLBACK_TOKEN_AUDIENCE)': $($_.Exception.Message)"
             }
 
             $secureToken = $tokenResponse.Token
             if (-not $secureToken) {
-              throw "Failed to acquire access token for API Review Hub callback audience '$(callbackTokenAudience)'"
+              throw "Failed to acquire access token for API Review Hub callback audience '$($env:ARH_CALLBACK_TOKEN_AUDIENCE)'"
             }
 
             $token = [System.Net.NetworkCredential]::new('', $secureToken).Password
@@ -296,30 +332,30 @@ jobs:
             }
 
             $body = [ordered]@{
-              operationId = '${{ parameters.operationId }}'
-              mode = '${{ parameters.requestMode }}'
-              language = '${{ parameters.language }}'
-              buildId = '$(Build.BuildId)'
-              project = '$(System.TeamProject)'
-              result = '$(Agent.JobStatus)'
+              operationId = $env:ARH_OPERATION_ID
+              mode = $env:ARH_REQUEST_MODE
+              language = $env:ARH_LANGUAGE
+              buildId = $env:ARH_BUILD_ID
+              project = $env:ARH_PROJECT
+              result = $env:ARH_GENERATION_RESULT
               artifacts = [ordered]@{
-                result = '${{ parameters.resultArtifactName }}'
+                result = $env:ARH_RESULT_ARTIFACT_NAME
               }
             }
 
-            if ('$(Agent.JobStatus)' -eq 'Succeeded' -or '$(Agent.JobStatus)' -eq 'SucceededWithIssues') {
-              $body.artifacts.target = '${{ parameters.targetArtifactName }}'
+            if ($env:ARH_GENERATION_RESULT -eq 'Succeeded' -or $env:ARH_GENERATION_RESULT -eq 'SucceededWithIssues') {
+              $body.artifacts.target = $env:ARH_TARGET_ARTIFACT_NAME
             }
 
-            $baseRef = '${{ parameters.baseRef }}'
+            $baseRef = $env:ARH_BASE_REF
             $hasBaseline = -not [string]::IsNullOrWhiteSpace($baseRef)
-            if ($hasBaseline -and ('$(Agent.JobStatus)' -eq 'Succeeded' -or '$(Agent.JobStatus)' -eq 'SucceededWithIssues')) {
-              $body.artifacts.base = '${{ parameters.baseArtifactName }}'
+            if ($hasBaseline -and ($env:ARH_GENERATION_RESULT -eq 'Succeeded' -or $env:ARH_GENERATION_RESULT -eq 'SucceededWithIssues')) {
+              $body.artifacts.base = $env:ARH_BASE_ARTIFACT_NAME
             }
 
-            $completionCallbackUrl = '$(completionCallbackUrl)'
+            $completionCallbackUrl = $env:ARH_COMPLETION_CALLBACK_URL
             if ($completionCallbackUrl.EndsWith('/')) {
-              $completionCallbackUrl = "${completionCallbackUrl}${{ parameters.operationId }}"
+              $completionCallbackUrl = "${completionCallbackUrl}$($env:ARH_OPERATION_ID)"
             }
 
             $completionCallbackUri = $null
@@ -342,4 +378,16 @@ jobs:
             Write-Host "Completion callback body: $jsonBody"
             Invoke-WebRequest -Method POST -Uri $completionCallbackUri -Headers $headers -Body $jsonBody -MaximumRetryCount 3 | Out-Null
         env:
-          ARH_CALLBACK_PROOF_TOKEN: $(ARH_CALLBACK_PROOF_TOKEN)
+          ARH_BASE_ARTIFACT_NAME: ${{ parameters.baseArtifactName }}
+          ARH_BASE_REF: ${{ parameters.baseRef }}
+          ARH_BUILD_ID: $(Build.BuildId)
+          ARH_CALLBACK_PROOF_TOKEN: ${{ parameters.callbackProofToken }}
+          ARH_CALLBACK_TOKEN_AUDIENCE: $(callbackTokenAudience)
+          ARH_COMPLETION_CALLBACK_URL: $(completionCallbackUrl)
+          ARH_GENERATION_RESULT: $(generationResult)
+          ARH_LANGUAGE: ${{ parameters.language }}
+          ARH_OPERATION_ID: ${{ parameters.operationId }}
+          ARH_PROJECT: $(System.TeamProject)
+          ARH_REQUEST_MODE: ${{ parameters.requestMode }}
+          ARH_RESULT_ARTIFACT_NAME: ${{ parameters.resultArtifactName }}
+          ARH_TARGET_ARTIFACT_NAME: ${{ parameters.targetArtifactName }}

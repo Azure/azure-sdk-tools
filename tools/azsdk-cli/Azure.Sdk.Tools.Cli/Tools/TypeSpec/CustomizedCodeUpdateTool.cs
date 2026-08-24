@@ -203,6 +203,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         if (!Directory.Exists(packagePath))
         {
             logger.LogError("Package path does not exist: {PackagePath}", packagePath);
+            validSdkRepoPackagePath = false;
             if (customCodeInScope)
             {
                 return new CustomizedCodeUpdateResponse
@@ -298,17 +299,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         string? apiViewUrl = IsApiViewUrl(customizationRequest) ? customizationRequest : null;
 
         var languageService = await ResolveLanguageServiceAsync(packagePath, apiViewUrl, ct);
-        if (languageService == null)
-        {
-            return new CustomizedCodeUpdateResponse
-            {
-                Success = false,
-                ResponseError = $"No language service available for package path: {packagePath}",
-                Message = $"No language service available for package path: {packagePath}",
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.NoLanguageService,
-                BuildResult = $"No language service available for package path: {packagePath}"
-            };
-        }
         PackageInfo? packageInfo = null;
 
         try
@@ -549,40 +539,57 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 Message = "No changes needed — the requested customizations are already in place."
             });
         }
-        // CustomCode out of scope and some items require a custom-code change (CODE_CUSTOMIZATION) or TSP_APPLICABLE items failed to apply. Report as out of scope.
-        if (!customCodeInScope && (tspFixFailed > 0 || customCodeChangeRequired.Count > 0))
+        
+        //CustomCode out of scope, there is no futher code customization to apply, exit the tool with response
+        if (!customCodeInScope)
         {
-            var message = "Out of scope:";
-            if (tspFixFailed > 0)
+            var message = "";
+            if (tspFixFailed > 0 || customCodeChangeRequired.Count > 0)
             {
-                message += $" Some TSP_APPLICABLE items failed to apply and cannot be fixed in this scope.";
+                //CustomCode out of scope and some items require a custom-code change (CODE_CUSTOMIZATION) or TSP_APPLICABLE items failed to apply. Report as out of scope.
+                message = "Out of scope:";
+                if (tspFixFailed > 0)
+                {
+                    message += $" Some TSP_APPLICABLE items failed to apply and cannot be fixed in the current scope.";
+                }
+                if (customCodeChangeRequired.Count > 0)
+                {
+                    message += $" One or more items require a custom-code change, which is not allowed in the current edit scope.";
+                }
+                return CreateResponse(new CustomizedCodeUpdateResponse
+                {
+                    Success = false,
+                    Message = message,
+                    CustomCodeChangeRequired = customCodeChangeRequired,
+                    NextSteps = manualInterventions.Count > 0 ? manualInterventions : null,
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.CustomCodeChangeRequired
+                });
             }
-            if (customCodeChangeRequired.Count > 0)
+            else
             {
-                message += $" One or more items require a custom-code change, which is not allowed in the current edit scope.";
+                //CustomCode out of scope and there is no more feedback in SpecInput scope to process, return success
+                return CreateResponse(new CustomizedCodeUpdateResponse
+                {
+                    Success = true,
+                    Message = "No additional changes are required for the specInput-only scope; however, custom code modifications may still be necessary."
+                });
             }
-            return CreateResponse(new CustomizedCodeUpdateResponse
+        }
+
+        // If custom code is in scope, a language service must be available for the package path to apply custom code changes.
+        if (languageService == null)
+        {
+            return new CustomizedCodeUpdateResponse
             {
                 Success = false,
-                Message = message,
-                CustomCodeChangeRequired = customCodeChangeRequired,
-                NextSteps = manualInterventions.Count > 0 ? manualInterventions : null,
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.CustomCodeChangeRequired
-            });
+                ResponseError = $"No language service available for package path: {packagePath}",
+                Message = $"No language service available for package path: {packagePath}. CustomCode is in scope, language service must be available for the package path to apply custom code changes.",
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.NoLanguageService,
+                BuildResult = $"No language service available for package path: {packagePath}"
+            };
         }
-
-        //CustomCode out of scope and there is no more feedback in SpecInput scope to process, return success
-        if (!customCodeInScope && tspFixFailed == 0)
-        {
-            return CreateResponse(new CustomizedCodeUpdateResponse
-            {
-                Success = true,
-                Message = "No changes needed — the requested customizations are already in place for the current edit scope."
-            });
-        }
-
-        // ── Regen + Build if TSP fixes were applied and custom code is in scope ──
-        if (tspFixSucceeded > 0 && customCodeInScope)
+        // ── Regen + Build if TSP fixes were applied and custom code is in scope and packagePath is valid sdk repo path ──
+        if (tspFixSucceeded > 0 && customCodeInScope && validSdkRepoPackagePath)
         {
             logger.LogDebug("Regenerating {packagePath}", packagePath);
 

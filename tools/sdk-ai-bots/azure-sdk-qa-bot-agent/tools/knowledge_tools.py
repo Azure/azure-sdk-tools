@@ -29,9 +29,7 @@ logger = logging.getLogger(__name__)
 
 # Expanded content beyond this limit is truncated to control context size.
 _MAX_CONTENT_CHARS_PER_RESULT = 3000
-# Wiki search returns more references than raw search. Keep its serialized tool
-# result below the hosted-agent streaming limit while retaining every ranked
-# page and routed source.
+# Bound the larger wiki result while retaining every ranked page and source.
 _WIKI_PAGE_CONTENT_CHARS = 1800
 _WIKI_SOURCE_CONTENT_CHARS = 1100
 

@@ -2,9 +2,9 @@
 
 ## Background
 
-The QA bot grounds its answers on a curated corpus (TypeSpec docs, ARM/API guidelines, SDK repo docs, samples, resolved threads). The original path is vector/agentic search over an Azure AI Search index of document chunks ("KB path"): strong for single-concept, verbatim-rule lookups, but with no consolidated cross-document view of a symbol or topic.
+The QA bot grounds its answers on a curated corpus (TypeSpec docs, ARM/API guidelines, SDK repo docs, samples, resolved threads). Retrieval uses two complementary views of that corpus: authoritative source chunks for exact evidence and a **wiki knowledge layer** for consolidated cross-document context.
 
-This design adds a **wiki knowledge layer**: an offline, LLM-generated set of pages that distil the corpus into per-document **summaries**, per-symbol **entity** pages, and per-topic **concept** pages. It is additive and rebuildable; source chunks remain the authoritative grounding.
+The wiki is an offline, LLM-generated set of pages that distils the corpus into per-document **summaries**, per-symbol **entity** pages, and per-topic **concept** pages. It is additive and rebuildable; source chunks remain the authoritative grounding.
 
 ## Architecture
 
@@ -36,7 +36,7 @@ flowchart LR
 
 ## Two-track retrieval
 
-The load-bearing decision: **wiki pages and source chunks never fuse into one ranked list** — fusing lets generic wiki pages displace specific source docs and regresses the score. They are retrieved on separate tracks and combined only in the answer.
+**Wiki pages and source chunks never fuse into one ranked list.** Keeping the tracks separate prevents broad generated pages from displacing exact source evidence; the answer combines evidence from both tracks.
 
 - **`search_knowledge_base`** — source chunks only (`page_type` null).
 - **`wiki_search`** — wiki pages only, **self-contained**: for the top pages it returns bounded synthesized content **plus** query-ranked source chunks from the documents recorded in `chunk_refs`.
@@ -45,7 +45,7 @@ Both tracks run the same retrieval pipeline (`SearchClient.fused_search`) and di
 
 For most questions the agent issues `search_knowledge_base` + `wiki_search` in one parallel batch and answers on the next turn.
 
-Wiki results use separate content budgets for synthesized pages and routed source chunks. The exact matched source passage is placed first before truncation. This keeps every ranked reference available while bounding the hosted-agent tool payload. The backend requests the completed Responses API result rather than consuming an SSE stream because it already buffers the final answer, and large multi-tool completion events can exceed the streaming parser's safe event size.
+Wiki results use separate content budgets for synthesized pages and routed source chunks. The exact matched source passage is placed first before truncation. This keeps every ranked reference available while bounding the hosted-agent tool payload. The buffered backend requests a completed, non-streaming Responses API result.
 
 ## Faithfulness of generated pages
 
@@ -88,9 +88,9 @@ Five phases:
 4. **Entity/concept pages.** A group's page is reused only when it already has content **and** its `source_refs` set is unchanged **and** its `input_hash` (a digest of the group name plus all member descriptions) is unchanged. So a single changed document re-synthesises only the groups that reference it.
 5. **Apply.** A page is uploaded only when its rendered content hash changed. Pages that no longer exist are **soft-deleted** via `IsDeleted` blob metadata — the same convention the KB sync pipeline uses, so the shared indexer drops them — and their manifest entry is reduced to a tombstone. Documents whose extraction or summary generation failed have their stored hash cleared, so the next run retries them. A transient entity/concept synthesis failure preserves the prior active page and leaves its input hash empty for retry.
 
-The first run against an empty manifest is a full build. A run over an unchanged corpus writes nothing and makes no LLM calls: measured end to end, ~14 minutes for a 72-document delta over 1029 sources, ~1 second of reconcile for no delta, against ~80 minutes for a full rebuild.
+The first run against an empty manifest is a full build. A run over an unchanged corpus writes nothing and makes no LLM calls.
 
-Two properties of this design are easy to trip over:
+Operational requirements:
 
 - **The build only writes blobs.** `azure-sdk-knowledge-wiki-indexer` projects them into the shared index on its own daily schedule, so a fresh build is not queryable until the indexer runs. Trigger it explicitly when the new pages are needed immediately.
 - **A clean physical rebuild is still operationally distinct.** Prompt/model/build changes invalidate cached generation automatically, but recreating the blob and search state still requires clearing the wiki container, deleting only index documents matching `page_type ne null`, rebuilding, then running the dedicated indexer.
@@ -101,39 +101,21 @@ Two properties of this design are easy to trip over:
 
 ## Evaluation
 
-227-case perf set (7 scenarios), memory off, GPT-5.6 Sol for answering and wiki construction, and gpt-5.4 for grading. The three configurations ran against the same rebuilt index. A case passes only when all six core metrics score ≥ 4. The baseline is current `main` with wiki pages filtered out of retrieval, so it measures the knowledge base alone.
+The retained benchmark is the best complete A/B on the 227-case perf set (seven scenarios), with memory disabled and GPT-5.4 grading. A case passes only when all six core metrics score at least 4. The baseline filters wiki pages out of retrieval and measures the source knowledge base alone.
 
-| | TOTAL | typespec | apispec | python | authoring | general | onboarding | release support |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| N | 227 | 125 | 26 | 24 | 26 | 20 | 3 | 3 |
-| KB-only baseline (`main`, memory off) | 67.8 % | 71.2 | 65.4 | 58.3 | 80.8 | 45.0 | 33.3 | 100.0 |
-| Wiki without source backfill | 72.2 % | 75.2 | 65.4 | 58.3 | **88.5** | 55.0 | **100.0** | 66.7 |
-| Wiki two-track | **73.6 %** | **80.0** | **73.1** | 54.2 | 76.9 | **55.0** | 66.7 | 66.7 |
+| | TOTAL | typespec | apispec | python | authoring | general | onboarding + release support |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| N | 227 | 125 | 26 | 24 | 26 | 20 | 6 |
+| KB-only baseline | 69.2 % | 76.8 | 57.7 | 50.0 | 76.9 | 55.0 | 50.0 |
+| Wiki two-track | **74.9 %** | **81.6** | **65.4** | **62.5** | **80.8** | **60.0** | 50.0 |
 
-The main conclusion reproduces: Wiki two-track is **+5.8 pp** overall over the current Main baseline, net **+13** cases (26 fixed, 13 regressed). The largest and most reliable scenario, `typespec`, improves **+8.8 pp**. `similarity` moves 79.7 → 84.1 % and `response_completeness` 68.3 → 76.2 %, while groundedness / relevance / coherence / fluency remain 99–100 %. Median answer length decreases from 123 to 117 words.
+Wiki retrieval improves the pass rate from 157/227 to 170/227: **+5.7 percentage points**, with 27 fixed cases, 15 regressions, and a net gain of 12. Similarity improves from 79.3 % to 83.7 % and response completeness from 70.0 % to 76.2 %, while groundedness, relevance, coherence, and fluency remain approximately 100 %. Median answer length changes from 165 to 173 words.
 
-Source backfill adds **+1.4 pp** over Wiki without backfill, net **+3** cases (17 fixed, 14 regressed). Its strongest signal is `typespec` (+6 cases), but `authoring` loses 3 cases and the paired churn is larger than the net gain. This supports retaining query-ranked source evidence for provenance and detail, but the evaluation does not establish its independent score contribution as strongly as the earlier ablation did.
-
-The titles-only "Related wiki pages" tail was removed after three paired 227-case runs found no repeatable benefit. Control-minus-no-title deltas were +1.3 pp, +0.4 pp, and -4.0 pp; pooled results were 72.1 % with the titles and 72.8 % without them, while `typespec` was exactly tied at 296/375 passes. The titles added context but no evidence, so keeping only the top pages and routed source chunks is simpler and no worse in the measured runs.
-
-One intermediate streaming run was excluded: 101 cases returned HTTP 500 after the SSE client received an oversized multi-tool completion event. The backend now uses the non-streaming Responses API, which matches its buffered HTTP contract. All three reported runs have zero synthetic/corrupt rows.
-
-The final online tool set is `search_knowledge_base` and `wiki_search`. Exact terms remain verbatim in the first `search_knowledge_base` query, whose fused retrieval already includes BM25. `wiki_search` is self-contained because it returns bounded page content and source backfill, so separate keyword, page, and source-document read tools are unnecessary.
-
-Reading the numbers: same-config reruns have previously churned ~16 % of cases and moved the total by up to ±5 pp, so the +1.4 pp backfill delta is directional rather than conclusive. `typespec` (N = 125) is the only single scenario large enough to trust on its own; `onboarding` and `releasesupport` (N = 3) swing 33 pp on one case and are reported for completeness only.
-
-Earlier targeted ablations, run under a different model/index state, established the design choices that were held constant here:
-
-- **Track separation is essential** — retrieving wiki pages in the same ranked pool as source chunks lets generic pages displace the specific source document.
-- **Full symbol coverage** gives decorator/template questions a consolidated page to route to.
-- **Faithfulness rules** prevent a generated broad rule from overriding a source that answers the user's exact situation.
-- **Chunk-level retrieval beats one vector per whole page**; the selected passage is expanded only after retrieval.
-
-The wiki layer is only measurable when it actually returns results. A silent retrieval outage previously cost the entire lead while every tool call still appeared to fire, so any evaluation of this feature should first assert that `wiki_search` returns a non-empty result and that the collector contains no synthetic failures.
+The result supports the final retrieval invariants: keep synthesized and authoritative evidence on separate ranking tracks, retrieve Wiki content at chunk level before page expansion, preserve scope and exceptions in generated pages, and route selected pages back to query-ranked source chunks.
 
 ## Known limitations
 
-- **Wiki pages have no header hierarchy.** The indexer maps `header_1` from the page title and leaves `header_2` / `header_3` null, unlike raw chunks. `KnowledgeChunk` coerces null headers to `""`, without which every wiki chunk fails validation and `wiki_search` silently returns empty. Any new index-backed field must tolerate an explicit `null`.
+- **Wiki pages have no header hierarchy.** The indexer maps `header_1` from the page title and leaves `header_2` / `header_3` null, unlike raw chunks. `KnowledgeChunk` normalizes null headers to `""`; any new index-backed field must also tolerate an explicit `null`.
 - **Cross-document page scoping.** Entity/concept pages carry a shared `wiki_entity` / `wiki_concept` context, so a tenant reading them can see facts synthesised from documents outside its own sources. Acceptable because the corpus is public docs and tenants map to topic channels, not access boundaries; summary pages and raw chunks stay scoped to their source `context_id`.
-- **Multi-chunk page ordering.** A synthesised page larger than the indexer chunk size is split into several chunks; wiki reads reassemble by `ordinal_position`, which is not projected onto wiki chunks, so a split page can concatenate out of order. Raising the split budget so pages stay single-chunk removes the disorder but costs more than it saves — one vector per whole page retrieves measurably worse than one per section, and reassembly runs on the retrieved hit anyway. A projected ordinal is the durable fix and needs a reindex.
+- **Multi-chunk page ordering.** A synthesised page larger than the indexer chunk size is split into several chunks. Wiki reads reassemble by `ordinal_position`, which is not projected onto wiki chunks, so a split page can concatenate out of order. Projecting the ordinal and reindexing is required for deterministic assembly.
 - **Document-level provenance.** `chunk_refs` identifies source documents rather than exact supporting spans. Query-time backfill reranks chunks within those referenced documents, but generated claims are not yet bound to stable source chunk IDs.

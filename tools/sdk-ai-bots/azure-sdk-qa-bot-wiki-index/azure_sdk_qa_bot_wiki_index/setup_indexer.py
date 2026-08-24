@@ -69,10 +69,8 @@ def skillset_body() -> dict:
                 "context": "/document",
                 "defaultLanguageCode": "en",
                 "textSplitMode": "pages",
-                # Small chunks are what the vector search matches on; wiki reads
-                # then expand the hit back to the whole page.  Raising this to
-                # keep pages single-chunk was measured to cost 5.6pp on the
-                # largest evaluation scenario.
+                # Search matches focused overlapping chunks, then wiki reads
+                # expand the selected hit to the complete page.
                 "maximumPageLength": 2000,
                 "pageOverlapLength": 500,
                 "inputs": [{"name": "text", "source": "/document/content"}],

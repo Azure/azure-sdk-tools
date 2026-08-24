@@ -200,21 +200,7 @@ class KnowledgeTools:
 
         # Log final search results.
         logger.info("=========Final Search Result=========")
-        refs = [
-            Reference(
-                title=_build_reference_title(
-                    expanded[i].title,
-                    expanded[i].header1,
-                    expanded[i].header2,
-                    expanded[i].header3,
-                ),
-                source=expanded[i].source,
-                link=expanded[i].link,
-                content=_truncate_content(expanded[i].content),
-                score=unique_chunks[i].rerank_score,
-            )
-            for i in range(len(expanded))
-        ]
+        refs = _refs_from_expanded(expanded, unique_chunks)
         for i, ref in enumerate(refs):
             logger.info(
                 "Result [%d] score=%.2f, source=%s, title=%s, link=%s, content_len=%d",
@@ -422,8 +408,8 @@ def _build_reference_title(
 
 
 def _refs_from_expanded(
-    expanded: list,
-    scored: list,
+    expanded: list[KnowledgeChunk],
+    scored: list[KnowledgeChunk],
     *,
     max_content_chars: int = _MAX_CONTENT_CHARS_PER_RESULT,
 ) -> list[Reference]:

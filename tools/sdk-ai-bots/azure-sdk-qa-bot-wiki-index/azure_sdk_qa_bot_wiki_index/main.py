@@ -10,7 +10,9 @@ from __future__ import annotations
 import argparse
 import asyncio
 import logging
+from contextlib import suppress
 
+from azure.core.exceptions import ResourceExistsError
 from azure.identity.aio import DefaultAzureCredential as AsyncDefaultAzureCredential
 from azure.storage.blob.aio import BlobServiceClient
 
@@ -23,7 +25,10 @@ logger = logging.getLogger(__name__)
 
 
 def _make_blob_service_client(credential) -> BlobServiceClient:
-    return BlobServiceClient(account_url=cfg("STORAGE_BLOB_ENDPOINT") or cfg("STORAGE_BASE_URL"), credential=credential)
+    return BlobServiceClient(
+        account_url=cfg("STORAGE_BLOB_ENDPOINT") or cfg("STORAGE_BASE_URL"),
+        credential=credential,
+    )
 
 
 async def _read_corpus(credential) -> list[tuple[str, str]]:
@@ -50,10 +55,8 @@ async def _run(args: argparse.Namespace) -> int:
         blob_service = _make_blob_service_client(credential)
         async with blob_service:
             cc = blob_service.get_container_client(wiki_container)
-            try:
+            with suppress(ResourceExistsError):
                 await cc.create_container()
-            except Exception:
-                pass  # already exists
             stats = await reconcile(cc, corpus, llm, min_docs=args.min_docs)
         logger.info(
             "done: %d pages written, %d soft-deleted (container %r)",
@@ -64,7 +67,12 @@ async def _run(args: argparse.Namespace) -> int:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build the wiki page set.")
-    parser.add_argument("--min-docs", type=int, default=2, help="min source docs for an entity/concept page")
+    parser.add_argument(
+        "--min-docs",
+        type=int,
+        default=2,
+        help="min source docs for an entity/concept page",
+    )
     parser.add_argument("--log-level", default="INFO")
     args = parser.parse_args()
 

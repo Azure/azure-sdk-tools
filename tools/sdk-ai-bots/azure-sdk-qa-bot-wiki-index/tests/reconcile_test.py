@@ -8,7 +8,6 @@ import json
 from azure_sdk_qa_bot_wiki_index.reconcile import (
     _extraction_from_json,
     _extraction_to_json,
-    _page_from_manifest,
     reconcile,
 )
 from azure_sdk_qa_bot_wiki_index.wiki_extract import DocExtraction, ExtractedItem
@@ -83,22 +82,29 @@ _EXTRACTION = {
 
 
 def test_extraction_roundtrip():
-    ext = DocExtraction("a.md", [ExtractedItem("entity", "@added", "decorator", "d", "a.md")],
-                        [ExtractedItem("concept", "versioning", "", "d2", "a.md")])
+    ext = DocExtraction(
+        "a.md",
+        [
+            ExtractedItem(
+                name="@added",
+                type="decorator",
+                description="d",
+                source_ref="a.md",
+            )
+        ],
+        [
+            ExtractedItem(
+                name="versioning",
+                description="d2",
+                source_ref="a.md",
+            )
+        ],
+    )
     j = _extraction_to_json(ext)
     back = _extraction_from_json("a.md", j)
     assert back.entities[0].name == "@added"
     assert back.concepts[0].name == "versioning"
     assert back.entities[0].source_ref == "a.md"
-
-
-def test_page_from_manifest():
-    # Old manifests may still contain the removed static cross-link field.
-    entry = {"slug": "entity/added", "page_type": "entity", "title": "@added",
-             "content": "b", "context_id": "wiki_entity", "source_refs": ["a.md"],
-             "out_links": ["concept/v"], "orig_title": ""}
-    p = _page_from_manifest(entry)
-    assert p.slug == "entity/added" and p.source_refs == ["a.md"]
 
 
 def test_first_run_full_build_then_noop():
@@ -316,17 +322,3 @@ def test_deleted_page_is_resynthesized_when_its_sources_return():
     assert s.total_pages == 4
     assert all(e.get("is_deleted") != "true" for e in man["pages"].values())
     assert all(e.get("content") for e in man["pages"].values())
-
-
-def test_large_deletion_is_applied():
-    cc = _FakeContainer()
-    llm = _FakeLLM(_EXTRACTION)
-    corpus = [(f"typespec_docs/{i}.md", f"text {i} @added versioning") for i in range(10)]
-    asyncio.run(reconcile(cc, corpus, llm, min_docs=2))
-
-    s = asyncio.run(reconcile(cc, corpus[:2], llm, min_docs=2))
-    man = json.loads(cc.store["_manifest.json"]["data"].decode("utf-8"))
-    tombstones = [e for e in man["pages"].values() if e.get("is_deleted") == "true"]
-    assert s.deleted_docs == 8
-    assert s.pages_deleted == 8
-    assert len(tombstones) == 8

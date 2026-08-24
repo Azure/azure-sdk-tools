@@ -19,9 +19,24 @@ from azure_sdk_qa_bot_wiki_index.wiki_reduce import (
 def _ext(ref, entities=(), concepts=()):
     d = DocExtraction(ref)
     for name, aliases in entities:
-        d.entities.append(ExtractedItem("entity", name, "type", "desc of " + name, ref, list(aliases)))
+        d.entities.append(
+            ExtractedItem(
+                name=name,
+                type="type",
+                description="desc of " + name,
+                source_ref=ref,
+                aliases=list(aliases),
+            )
+        )
     for name, aliases in concepts:
-        d.concepts.append(ExtractedItem("concept", name, "", "desc of " + name, ref, list(aliases)))
+        d.concepts.append(
+            ExtractedItem(
+                name=name,
+                description="desc of " + name,
+                source_ref=ref,
+                aliases=list(aliases),
+            )
+        )
     return d
 
 
@@ -38,16 +53,22 @@ def test_alias_merges_surface_forms_across_docs():
         _ext("d1", concepts=[("pagination", ["paging"])]),
         _ext("d2", concepts=[("paging", ["pagination"])]),
     ]
-    cgroups = [g for g in aggregate_groups(concept_exts, min_docs=2, fuzzy=False)
-               if g.page_type == PAGE_CONCEPT]
+    cgroups = [
+        g
+        for g in aggregate_groups(concept_exts, min_docs=2, fuzzy=False)
+        if g.page_type == PAGE_CONCEPT
+    ]
     assert len(cgroups) == 1 and set(cgroups[0].source_refs) == {"d1", "d2"}
     # entity @-insensitivity via alias
     entity_exts = [
         _ext("d1", entities=[("@added", [])]),
         _ext("d2", entities=[("added", ["@added"])]),
     ]
-    egroups = [g for g in aggregate_groups(entity_exts, min_docs=2, fuzzy=False)
-               if g.page_type == PAGE_ENTITY]
+    egroups = [
+        g
+        for g in aggregate_groups(entity_exts, min_docs=2, fuzzy=False)
+        if g.page_type == PAGE_ENTITY
+    ]
     assert len(egroups) == 1 and set(egroups[0].source_refs) == {"d1", "d2"}
 
 
@@ -63,6 +84,14 @@ def test_fuzzy_merges_near_identical_concepts():
         _ext("d2", concepts=[("api versionings", [])]),
         _ext("d3", concepts=[("api versioning", [])]),
     ]
-    no_fuzzy = [g for g in aggregate_groups(exts, min_docs=1, fuzzy=False) if g.page_type == PAGE_CONCEPT]
-    with_fuzzy = [g for g in aggregate_groups(exts, min_docs=1, fuzzy=True) if g.page_type == PAGE_CONCEPT]
+    no_fuzzy = [
+        g
+        for g in aggregate_groups(exts, min_docs=1, fuzzy=False)
+        if g.page_type == PAGE_CONCEPT
+    ]
+    with_fuzzy = [
+        g
+        for g in aggregate_groups(exts, min_docs=1, fuzzy=True)
+        if g.page_type == PAGE_CONCEPT
+    ]
     assert len(with_fuzzy) < len(no_fuzzy)

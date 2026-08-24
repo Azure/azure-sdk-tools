@@ -45,8 +45,3 @@ class WikiPage:
     context_id: str
     source_refs: list[str] = field(default_factory=list)
     orig_title: str = ""  # summary pages: the source rel path (drives get_link)
-
-    def key_hash(self) -> str:
-        """Stable content-address of the source set (for change detection)."""
-        joined = "\u0000".join(sorted(self.source_refs))
-        return hashlib.sha1(joined.encode("utf-8")).hexdigest()[:16]

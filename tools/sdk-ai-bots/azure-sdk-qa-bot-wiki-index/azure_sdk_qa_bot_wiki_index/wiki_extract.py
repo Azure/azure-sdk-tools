@@ -5,6 +5,8 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 
+from openai import OpenAIError
+
 from .llm import ChatLLM, load_prompt
 
 logger = logging.getLogger(__name__)
@@ -17,7 +19,6 @@ _MAX_EXTRACT_CHARS = 12000
 class ExtractedItem:
     """One entity or concept mention from a single document."""
 
-    kind: str  # "entity" | "concept"
     name: str
     type: str = ""
     description: str = ""
@@ -60,7 +61,7 @@ def extract_doc(llm: ChatLLM, source_ref: str, text: str) -> DocExtraction:
     user = f"Document: {source_ref}\n\n{text[:_MAX_EXTRACT_CHARS]}"
     try:
         parsed = llm.complete_json(load_prompt("extract"), user, max_tokens=1200)
-    except Exception:
+    except OpenAIError:
         logger.warning("extract_doc failed for %s", source_ref, exc_info=True)
         out.failed = True
         return out
@@ -72,7 +73,6 @@ def extract_doc(llm: ChatLLM, source_ref: str, text: str) -> DocExtraction:
         if isinstance(e, dict) and _norm(e.get("name")):
             out.entities.append(
                 ExtractedItem(
-                    kind="entity",
                     name=_norm(e.get("name")),
                     type=_norm(e.get("type")),
                     description=_norm(e.get("description")),
@@ -85,7 +85,6 @@ def extract_doc(llm: ChatLLM, source_ref: str, text: str) -> DocExtraction:
         if isinstance(c, dict) and _norm(c.get("name")):
             out.concepts.append(
                 ExtractedItem(
-                    kind="concept",
                     name=_norm(c.get("name")),
                     description=_norm(c.get("description")),
                     source_ref=source_ref,

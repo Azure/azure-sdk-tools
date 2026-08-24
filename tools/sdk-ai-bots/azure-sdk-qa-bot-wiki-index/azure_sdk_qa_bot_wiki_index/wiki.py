@@ -2,16 +2,12 @@
 
 from __future__ import annotations
 
-import logging
-
 from .llm import ChatLLM, load_prompt
-
-logger = logging.getLogger(__name__)
 
 _MAX_PAGE_CHARS = 5000
 
 
-def _doc_title(rel: str) -> str:
+def doc_title(rel: str) -> str:
     """Human-ish title from a rel path: last ``#`` segment, extension stripped."""
     last = rel.split("#")[-1]
     for ext in (".md", ".mdx"):
@@ -31,6 +27,3 @@ def synthesize_summary(llm: ChatLLM, doc_title: str, full_text: str) -> str:
     if not out:
         out = llm.complete(system, user, max_tokens=1800)
     return (out or "")[:_MAX_PAGE_CHARS]
-
-
-

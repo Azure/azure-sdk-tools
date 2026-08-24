@@ -9,12 +9,14 @@ from __future__ import annotations
 
 import asyncio
 
+from azure_sdk_qa_bot_wiki_index.pages import PAGE_ENTITY, PAGE_SUMMARY, WikiPage
 from azure_sdk_qa_bot_wiki_index.reader import (
     read_blob_container,
     rel_title,
     source_folder,
 )
-from azure_sdk_qa_bot_wiki_index.wiki import _doc_title
+from azure_sdk_qa_bot_wiki_index.storage import _ascii, index_title
+from azure_sdk_qa_bot_wiki_index.wiki import doc_title
 
 
 class _FakeBlobItem:
@@ -83,5 +85,23 @@ def test_source_folder_and_rel_title():
 
 
 def test_doc_title():
-    assert _doc_title("getting-started#basics#06-versioning.mdx") == "06-versioning"
-    assert _doc_title("readme.md") == "readme"
+    assert doc_title("getting-started#basics#06-versioning.mdx") == "06-versioning"
+    assert doc_title("readme.md") == "readme"
+
+
+def test_blob_metadata_helpers():
+    assert _ascii("caf\u00e9 @added") == "caf @added"
+
+    summary = WikiPage(
+        "summary/x",
+        PAGE_SUMMARY,
+        "Foo (knowledge)",
+        "body",
+        "typespec_docs",
+        source_refs=["a#b.md"],
+        orig_title="a#b.md",
+    )
+    entity = WikiPage("entity/added", PAGE_ENTITY, "@added", "body", "wiki_entity")
+
+    assert index_title(summary) == "a#b.md"
+    assert index_title(entity) == "@added"

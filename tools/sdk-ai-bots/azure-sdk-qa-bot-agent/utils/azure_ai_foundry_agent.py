@@ -1,10 +1,9 @@
-"""Streaming invocation lifecycle for Azure AI Foundry hosted agents.
+"""Invocation lifecycle for Azure AI Foundry hosted agents.
 
 ``HostedAgentClient`` encapsulates the low-level I/O of driving a hosted
-agent through the OpenAI Responses API: creating a responses stream,
-consuming it to the ``response.completed`` event, polling for late-arriving
-text, retrying transient failures with bounded backoff, and best-effort
-stream cleanup.
+agent through the OpenAI Responses API: requesting a completed response,
+polling for late-arriving text, and retrying transient failures with bounded
+backoff.
 """
 
 from __future__ import annotations
@@ -30,19 +29,13 @@ from utils.azure_ai_foundry import set_stateless_session_id
 logger = logging.getLogger(__name__)
 
 # -- Retry / timeout tuning ------------------------------------------------
-STREAM_CREATE_MAX_RETRIES = 3
-STREAM_CREATE_RETRY_DELAY_SECS = 1.5
-# Max time to wait for a stream to reach ``response.completed``.
-STREAM_COMPLETE_TIMEOUT_SECS = 180.0
+AGENT_REQUEST_MAX_RETRIES = 3
+AGENT_REQUEST_RETRY_DELAY_SECS = 1.5
+AGENT_REQUEST_TIMEOUT_SECS = 180.0
 
 # -- Polling for late-arriving output_text ---------------------------------
 POLL_MAX_RETRIES = 5
 POLL_RETRY_DELAY_SECS = 3.0
-
-# -- Stream event types ----------------------------------------------------
-STREAM_EVENT_RESPONSE_COMPLETED = "response.completed"
-STREAM_EVENT_RESPONSE_FAILED = "response.failed"
-STREAM_EVENT_RESPONSE_INCOMPLETE = "response.incomplete"
 
 # -- Content safety --------------------------------------------------------
 CONTENT_SAFETY_MESSAGE = (
@@ -106,16 +99,14 @@ class HostedAgentClient:
         self,
         openai_client: AsyncOpenAI,
         *,
-        max_retries: int = STREAM_CREATE_MAX_RETRIES,
-        retry_delay: float = STREAM_CREATE_RETRY_DELAY_SECS,
-        stream_timeout: float = STREAM_COMPLETE_TIMEOUT_SECS,
-        stream: bool = True,
+        max_retries: int = AGENT_REQUEST_MAX_RETRIES,
+        retry_delay: float = AGENT_REQUEST_RETRY_DELAY_SECS,
+        request_timeout: float = AGENT_REQUEST_TIMEOUT_SECS,
     ) -> None:
         self._client = openai_client
         self._max_retries = max_retries
         self._retry_delay = retry_delay
-        self._stream_timeout = stream_timeout
-        self._stream = stream
+        self._request_timeout = request_timeout
 
     async def invoke(
         self,
@@ -140,37 +131,17 @@ class HostedAgentClient:
                 kwargs["conversation"] = agent_conversation_id
             if agent_session_id:
                 extra_body["agent_session_id"] = agent_session_id
-            created = None
             try:
-                if self._stream:
-                    created = await asyncio.wait_for(
-                        self._client.responses.create(
-                            input=conversation_items,
-                            store=True,
-                            stream=True,
-                            extra_body=extra_body,
-                            **kwargs,
-                        ),
-                        timeout=self._stream_timeout,
-                    )
-                    response = await asyncio.wait_for(
-                        self._consume_stream(created, agent_conversation_id),
-                        timeout=self._stream_timeout,
-                    )
-                    trace_id = self._extract_trace_id(created)
-                else:
-                    response = await asyncio.wait_for(
-                        self._client.responses.create(
-                            input=conversation_items,
-                            store=True,
-                            stream=False,
-                            extra_body=extra_body,
-                            **kwargs,
-                        ),
-                        timeout=self._stream_timeout,
-                    )
-                    created = response
-                    trace_id = getattr(response, "_request_id", None)
+                response = await asyncio.wait_for(
+                    self._client.responses.create(
+                        input=conversation_items,
+                        store=True,
+                        stream=False,
+                        extra_body=extra_body,
+                        **kwargs,
+                    ),
+                    timeout=self._request_timeout,
+                )
                 # Poll if completed with empty text (Foundry persistence delay).
                 if response.status == "completed" and not response.output_text:
                     response = await self._poll_response(response)
@@ -179,11 +150,9 @@ class HostedAgentClient:
                         "Agent returned empty output_text "
                         f"(id={response.id}, status={response.status})"
                     )
-                await self.close_stream(created)
-                return trace_id, response
+                return getattr(response, "_request_id", None), response
             except (NotFoundError, BadRequestError) as ex:
                 last_error = ex
-                await self.close_stream(created)
                 # Content-safety blocks are deterministic; retrying will not
                 # help, so return a synthetic response with a safe message.
                 if isinstance(ex, BadRequestError) and _is_content_filter_error(ex):
@@ -201,7 +170,7 @@ class HostedAgentClient:
                     agent_session_id = None
                     continue
                 logger.warning(
-                    "Failed to create agent stream (attempt %d/%d): "
+                    "Agent request rejected (attempt %d/%d): "
                     "conversation=%s, error=%s",
                     attempt,
                     self._max_retries,
@@ -211,9 +180,8 @@ class HostedAgentClient:
                 )
             except (APIConnectionError, APITimeoutError, APIStatusError) as ex:
                 last_error = ex
-                await self.close_stream(created)
                 logger.warning(
-                    "Failed to create agent stream (attempt %d/%d): "
+                    "Agent request failed (attempt %d/%d): "
                     "conversation=%s, error=%s",
                     attempt,
                     self._max_retries,
@@ -223,20 +191,16 @@ class HostedAgentClient:
                 )
             except asyncio.TimeoutError as ex:
                 last_error = ex
-                await self.close_stream(created)
                 logger.warning(
-                    "Agent stream did not complete within %.0fs "
+                    "Agent request did not complete within %.0fs "
                     "(attempt %d/%d): conversation=%s",
-                    self._stream_timeout,
+                    self._request_timeout,
                     attempt,
                     self._max_retries,
                     agent_conversation_id,
                 )
-            except (EmptyAgentResponseError, RuntimeError) as ex:
-                # ``RuntimeError`` = stream ended without a completed event;
-                # both are transient and retryable.
+            except EmptyAgentResponseError as ex:
                 last_error = ex
-                await self.close_stream(created)
                 logger.warning(
                     "Agent returned no usable response (attempt %d/%d): "
                     "conversation=%s, error=%s",
@@ -254,69 +218,6 @@ class HostedAgentClient:
             f"Failed to obtain a non-empty agent response after "
             f"{self._max_retries} attempts (conversation={agent_conversation_id})"
         ) from last_error
-
-    async def close_stream(self, stream) -> None:
-        """Best-effort close of a responses stream; errors are swallowed."""
-        if stream is None:
-            return
-        close = getattr(stream, "close", None)
-        if close is None:
-            return
-        try:
-            result = close()
-            if asyncio.iscoroutine(result):
-                await result
-        except Exception:
-            logger.debug("Failed to close agent stream", exc_info=True)
-
-    @staticmethod
-    def _extract_trace_id(stream) -> str | None:
-        """Read the AI Foundry trace id from the stream's ``x-request-id`` header.
-
-        The header may contain duplicated values separated by comma; the first
-        one is returned. Returns ``None`` when the header is absent.
-        """
-        response = getattr(stream, "response", None)
-        if response is None:
-            return None
-        x_request_id = response.headers.get("x-request-id", "")
-        return x_request_id.split(",")[0].strip() if x_request_id else None
-
-    async def _consume_stream(
-        self,
-        stream,
-        agent_conversation_id: str | None,
-    ) -> OpenAIResponse:
-        """Consume a responses stream until the ``response.completed`` event."""
-        response: OpenAIResponse | None = None
-        last_event_type: str | None = None
-        async for event in stream:
-            logger.debug("Stream event: type=%s, content=%s", event.type, event)
-            last_event_type = event.type
-            if event.type == STREAM_EVENT_RESPONSE_COMPLETED:
-                response = event.response
-                break
-            if event.type in (
-                STREAM_EVENT_RESPONSE_FAILED,
-                STREAM_EVENT_RESPONSE_INCOMPLETE,
-            ):
-                failed = getattr(event, "response", None)
-                logger.error(
-                    "Agent stream %s: error=%s, incomplete_details=%s, status=%s, "
-                    "conversation=%s",
-                    event.type,
-                    getattr(failed, "error", None),
-                    getattr(failed, "incomplete_details", None),
-                    getattr(failed, "status", None),
-                    agent_conversation_id,
-                )
-
-        if response is None:
-            raise RuntimeError(
-                "Agent stream ended without a response.completed event "
-                f"(last_event={last_event_type})"
-            )
-        return response
 
     async def _poll_response(
         self,
@@ -345,7 +246,7 @@ class HostedAgentClient:
                     max_retries,
                     response.id,
                 )
-            except Exception:
+            except (APIConnectionError, APITimeoutError, APIStatusError):
                 logger.warning(
                     "Poll attempt %d/%d failed: response=%s",
                     attempt,

@@ -7,6 +7,8 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 
+from openai import OpenAIError
+
 from .llm import ChatLLM, load_prompt
 from .pages import PAGE_SUMMARY, WikiPage, make_slug
 from .reader import rel_title, source_folder
@@ -21,7 +23,7 @@ from .storage import (
     upload_page,
     write_manifest,
 )
-from .wiki import _doc_title, synthesize_summary
+from .wiki import doc_title, synthesize_summary
 from .wiki_extract import DocExtraction, ExtractedItem, extract_doc
 from .wiki_reduce import (
     Group,
@@ -72,7 +74,7 @@ def _extraction_from_json(source_ref: str, data: dict) -> DocExtraction:
     for e in data.get("entities", []) or []:
         ext.entities.append(
             ExtractedItem(
-                kind="entity", name=e.get("name", ""), type=e.get("type", ""),
+                name=e.get("name", ""), type=e.get("type", ""),
                 description=e.get("description", ""), source_ref=source_ref,
                 aliases=list(e.get("aliases", []) or []), details=e.get("details", ""),
             )
@@ -80,7 +82,7 @@ def _extraction_from_json(source_ref: str, data: dict) -> DocExtraction:
     for c in data.get("concepts", []) or []:
         ext.concepts.append(
             ExtractedItem(
-                kind="concept", name=c.get("name", ""), description=c.get("description", ""),
+                name=c.get("name", ""), description=c.get("description", ""),
                 source_ref=source_ref, aliases=list(c.get("aliases", []) or []),
                 details=c.get("details", ""),
             )
@@ -198,10 +200,10 @@ async def reconcile(
         sp, text = item
         folder = source_folder(sp)
         rel = rel_title(sp)
-        title = _doc_title(rel)
+        title = doc_title(rel)
         try:
             body = synthesize_summary(llm, title, text)
-        except Exception:
+        except OpenAIError:
             logger.warning("summary failed for %s", sp, exc_info=True)
             return sp, None, True
         if not body:
@@ -311,7 +313,6 @@ async def reconcile(
         # Drop the body: a tombstone only needs enough to detect resurrection,
         # and retaining it would grow the manifest without bound.
         entry.pop("content", None)
-        entry.pop("out_links", None)
         entry["is_deleted"] = "true"
         entry["updated_at"] = ts
         new_pages_manifest[slug] = entry

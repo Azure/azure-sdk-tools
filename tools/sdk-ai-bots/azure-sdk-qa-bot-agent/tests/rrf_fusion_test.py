@@ -3,13 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-import sys
 from dataclasses import dataclass, field
-from pathlib import Path
-
-_PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
-if _PROJECT_ROOT not in sys.path:
-    sys.path.insert(0, _PROJECT_ROOT)
 
 from models.knowledge import KnowledgeChunk
 from utils.azure_ai_search import SearchClient, fuse_with_rrf

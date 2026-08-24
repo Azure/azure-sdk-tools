@@ -155,8 +155,7 @@ class ChatService:
             "type": AgentReferenceType.agent_reference.value,
         }
 
-        # The HTTP API returns a completed answer, so request it directly.
-        agent_client = HostedAgentClient(openai_client, stream=False)
+        agent_client = HostedAgentClient(openai_client)
         trace_id, response = await agent_client.invoke(
             conversation_items=conversation_items,
             agent_conversation_id=agent_conversation_id,

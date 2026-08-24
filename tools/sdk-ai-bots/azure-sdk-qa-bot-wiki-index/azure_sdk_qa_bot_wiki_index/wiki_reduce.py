@@ -8,6 +8,8 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from difflib import SequenceMatcher
 
+from openai import OpenAIError
+
 from .llm import ChatLLM, load_prompt
 from .pages import (
     CONTEXT_BY_TYPE,
@@ -206,7 +208,7 @@ def synthesize_group(llm: ChatLLM, group: Group) -> str:
     try:
         out = llm.complete(system, user, max_tokens=1000)
         return (out or "")[:_MAX_PAGE_CHARS]
-    except Exception:
+    except OpenAIError:
         logger.warning("synthesize_group failed for %s", group.name, exc_info=True)
         return ""
 

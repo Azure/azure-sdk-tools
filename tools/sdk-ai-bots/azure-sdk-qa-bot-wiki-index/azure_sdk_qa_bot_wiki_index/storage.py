@@ -7,6 +7,8 @@ import json
 import logging
 from datetime import datetime, timezone
 
+from azure.core.exceptions import ResourceNotFoundError
+
 from .pages import WikiPage
 
 logger = logging.getLogger(__name__)
@@ -79,7 +81,7 @@ async def soft_delete_blob(container_client, path: str) -> bool:
     blob = container_client.get_blob_client(path)
     try:
         props = await blob.get_blob_properties()
-    except Exception:
+    except ResourceNotFoundError:
         return False
     metadata = dict(props.metadata or {})
     if metadata.get("IsDeleted") == "true":
@@ -93,19 +95,14 @@ async def soft_delete_blob(container_client, path: str) -> bool:
 async def read_manifest(container_client) -> dict:
     """Load the manifest, or an empty skeleton if none exists yet."""
     blob = container_client.get_blob_client(MANIFEST_BLOB)
-    try:
-        exists = await blob.exists()
-    except Exception:
-        exists = False
-    if not exists:
+    if not await blob.exists():
         return {"version": MANIFEST_VERSION, "updated_at": "", "sources": {}, "pages": {}}
     downloader = await blob.download_blob()
     data = await downloader.readall()
     try:
         m = json.loads(data.decode("utf-8"))
-    except (json.JSONDecodeError, UnicodeDecodeError):
-        logger.warning("manifest corrupt; treating as empty")
-        return {"version": MANIFEST_VERSION, "updated_at": "", "sources": {}, "pages": {}}
+    except (json.JSONDecodeError, UnicodeDecodeError) as ex:
+        raise RuntimeError(f"{MANIFEST_BLOB} is not valid UTF-8 JSON") from ex
     m.setdefault("sources", {})
     m.setdefault("pages", {})
     return m

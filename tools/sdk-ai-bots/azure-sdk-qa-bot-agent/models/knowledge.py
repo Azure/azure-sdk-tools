@@ -112,7 +112,7 @@ class KnowledgeChunk(BaseModel):
 
     @field_validator("chunk_refs", mode="before")
     @classmethod
-    def _coerce_chunk_refs(cls, v: object) -> list:
+    def _coerce_chunk_refs(cls, v: object) -> list[str]:
         """Parse source refs from null, list, or JSON-string index values.
 
         Wiki refs use scalar ``chunk_refs_str`` because index projections cannot
@@ -123,9 +123,9 @@ class KnowledgeChunk(BaseModel):
         if isinstance(v, str):
             try:
                 parsed = json.loads(v)
-                return parsed if isinstance(parsed, list) else [v]
+                return parsed if isinstance(parsed, list) else []
             except (ValueError, TypeError):
-                return [v]
+                return []
         if isinstance(v, list):
             return v
         return []
@@ -159,7 +159,7 @@ class Reference(BaseModel):
 class SearchKnowledgeBaseResult(BaseModel):
     """Output of the search_knowledge_base tool call."""
 
-    results: list[Reference] = []
+    results: list[Reference] = Field(default_factory=list)
 
 
 class DocumentContext(BaseModel):

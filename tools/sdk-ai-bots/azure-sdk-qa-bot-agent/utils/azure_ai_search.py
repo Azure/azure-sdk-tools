@@ -78,6 +78,14 @@ def _and_extra(combined_filter: str, extra_filter: str | None) -> str:
     return f"({combined_filter}) and {extra_filter}"
 
 
+def _combine_source_filters(
+    source_filters: dict[str, str],
+    extra_filter: str | None = None,
+) -> str:
+    combined = " or ".join(f"({value})" for value in source_filters.values() if value)
+    return _and_extra(combined, extra_filter)
+
+
 def split_source_ref(source_path: str) -> tuple[str, str]:
     """Split a source path into ``(context_id, title)`` matching raw chunks.
 
@@ -99,7 +107,7 @@ def _title_context_clause(title: str, context_id: str) -> str:
     return f"({t} and (context_id eq null or context_id eq ''))"
 
 
-def _chunk_key(chunk: "KnowledgeChunk") -> str:
+def _chunk_key(chunk: KnowledgeChunk) -> str:
     """Stable identity for a chunk: its id, or a header-path fallback."""
     if chunk.chunk_id:
         return chunk.chunk_id
@@ -107,9 +115,9 @@ def _chunk_key(chunk: "KnowledgeChunk") -> str:
 
 
 def fuse_with_rrf(
-    ranked_lists: "list[list[KnowledgeChunk]]",
+    ranked_lists: list[list[KnowledgeChunk]],
     k: int = _RRF_K,
-) -> "list[KnowledgeChunk]":
+) -> list[KnowledgeChunk]:
     """Fuse ranked retriever lists using Reciprocal Rank Fusion."""
     info: dict[str, KnowledgeChunk] = {}
     rank_maps: list[dict[str, int]] = []
@@ -184,8 +192,7 @@ class SearchClient:
         """
         # Combine per-source filters into a single filter_add_on with OR so the
         # KB retrieval client executes one sub-search instead of N.
-        combined_filter = " or ".join(f"({f})" for f in source_filters.values() if f)
-        combined_filter = _and_extra(combined_filter, extra_filter)
+        combined_filter = _combine_source_filters(source_filters, extra_filter)
 
         kb_params: list[KnowledgeSourceParams] = [
             SearchIndexKnowledgeSourceParams(
@@ -236,18 +243,14 @@ class SearchClient:
             fields="text_vector",
         )
 
-        select_fields = _RETRIEVER_SELECT_FIELDS
-
-        # Combine per-source filters into a single OData expression with OR
-        combined_filter = " or ".join(f"({f})" for f in source_filters.values() if f)
-        combined_filter = _and_extra(combined_filter, extra_filter)
+        combined_filter = _combine_source_filters(source_filters, extra_filter)
 
         results = await self._search_client.search(
             search_text=query,
             filter=combined_filter or None,
             query_type=QueryType.SEMANTIC,
             top=k,
-            select=select_fields,
+            select=_RETRIEVER_SELECT_FIELDS,
             vector_queries=[vector_query],
         )
 
@@ -271,16 +274,14 @@ class SearchClient:
     ) -> list[KnowledgeChunk]:
         """Run sparse full-text keyword search and return BM25-ranked chunks."""
         k = top_k or self._top_k
-        select_fields = _RETRIEVER_SELECT_FIELDS
-        combined_filter = " or ".join(f"({f})" for f in source_filters.values() if f)
-        combined_filter = _and_extra(combined_filter, extra_filter)
+        combined_filter = _combine_source_filters(source_filters, extra_filter)
 
         results = await self._search_client.search(
             search_text=query,
             filter=combined_filter or None,
             query_type=QueryType.SIMPLE,
             top=k,
-            select=select_fields,
+            select=_RETRIEVER_SELECT_FIELDS,
         )
 
         chunks: list[KnowledgeChunk] = []
@@ -295,7 +296,6 @@ class SearchClient:
         *,
         extra_filter: str | None = None,
         use_agentic: bool = False,
-        max_queries: int = 3,
     ) -> list[KnowledgeChunk]:
         """Run every enabled retriever for each query and fuse them with RRF.
 
@@ -336,6 +336,8 @@ class SearchClient:
             ranked_lists: list[list[KnowledgeChunk]] = []
             for res in results:
                 if isinstance(res, BaseException):
+                    if isinstance(res, asyncio.CancelledError):
+                        raise res
                     logger.warning("Retriever failed for query=%r: %s", query, res)
                     continue
                 if res:
@@ -343,9 +345,7 @@ class SearchClient:
 
             return ranked_lists
 
-        per_query = await asyncio.gather(
-            *[_ranked_for_query(q) for q in queries[:max_queries]]
-        )
+        per_query = await asyncio.gather(*[_ranked_for_query(q) for q in queries[:3]])
         ranked_lists = [
             ranked
             for query_lists in per_query
@@ -486,13 +486,13 @@ class SearchClient:
 
     async def backfill_wiki_sources(
         self,
-        chunks: "list[KnowledgeChunk]",
+        chunks: list[KnowledgeChunk],
         queries: list[str] | None = None,
         per_page: int = 8,
         max_refs: int = 48,
         max_total: int = 12,
         source_filter: str | None = None,
-    ) -> "list[KnowledgeChunk]":
+    ) -> list[KnowledgeChunk]:
         """Fetch raw source chunks referenced by retrieved wiki pages.
 
         *source_filter* (the tenant's combined ``context_id`` OR clause) scopes

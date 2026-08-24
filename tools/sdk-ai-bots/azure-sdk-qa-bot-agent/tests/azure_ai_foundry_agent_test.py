@@ -1,7 +1,7 @@
-"""Unit tests for HostedAgentClient invocation and retry behavior.
+"""Unit tests for HostedAgentClient invocation, retry, and stream handling.
 
-Hermetic: the OpenAI client and responses are stubbed, so no real Azure AI
-Foundry, network, or LLM access is required.
+Hermetic: the OpenAI client and its response streams are stubbed, so no real
+Azure AI Foundry, network, or LLM access is required.
 """
 
 from __future__ import annotations
@@ -27,16 +27,53 @@ class _FakeResponse:
     """Minimal stand-in for an OpenAI ``Response`` object."""
 
     def __init__(
-        self,
-        output_text: str = "",
-        status: str = "completed",
-        id: str = "resp",
-        request_id: str | None = None,
+        self, output_text: str = "", status: str = "completed", id: str = "resp"
     ):
         self.output_text = output_text
         self.status = status
         self.id = id
-        self._request_id = request_id
+
+
+class _FakeEvent:
+    """Minimal stand-in for a streaming response event."""
+
+    def __init__(self, type: str, response: _FakeResponse | None = None):
+        self.type = type
+        self.response = response
+
+
+async def _make_stream(events, item_delay: float = 0.0):
+    """Return an async generator yielding the given events."""
+    for event in events:
+        if item_delay:
+            await asyncio.sleep(item_delay)
+        yield event
+
+
+def _completed_stream(response: _FakeResponse):
+    """A stream that emits a single ``response.completed`` event."""
+    return _make_stream([_FakeEvent("response.completed", response)])
+
+
+class _StreamWithHeaders:
+    """Async-iterable stream stub exposing ``.response.headers`` and ``.close``."""
+
+    def __init__(self, response: _FakeResponse, x_request_id: str = ""):
+        self._events = [_FakeEvent("response.completed", response)]
+        self.response = type(
+            "_Resp", (), {"headers": {"x-request-id": x_request_id}}
+        )()
+        self.closed = False
+
+    def __aiter__(self):
+        return self._iter()
+
+    async def _iter(self):
+        for event in self._events:
+            yield event
+
+    async def close(self) -> None:
+        self.closed = True
 
 
 def _mock_client(create_side_effect):
@@ -47,14 +84,11 @@ def _mock_client(create_side_effect):
 
 
 @pytest.mark.asyncio
-async def test_invoke_returns_completed_response_and_trace_id() -> None:
-    resp = _FakeResponse(
-        output_text="hello",
-        status="completed",
-        id="r1",
-        request_id="trace-123",
-    )
-    client = _mock_client([resp])
+async def test_invoke_returns_trace_id_and_closes_stream_on_success() -> None:
+    """A completed response yields its trace id and the stream is closed."""
+    resp = _FakeResponse(output_text="hello", status="completed", id="r1")
+    stream = _StreamWithHeaders(resp, x_request_id="trace-123, trace-123")
+    client = _mock_client([stream])
 
     trace_id, out = await HostedAgentClient(client, retry_delay=0).invoke(
         conversation_items=[],
@@ -63,8 +97,8 @@ async def test_invoke_returns_completed_response_and_trace_id() -> None:
 
     assert out is resp
     assert trace_id == "trace-123"
+    assert stream.closed is True
     assert client.responses.create.await_count == 1
-    assert client.responses.create.await_args.kwargs["stream"] is False
 
 
 @pytest.mark.asyncio
@@ -72,7 +106,7 @@ async def test_invoke_retries_on_empty_response_then_succeeds() -> None:
     """An empty ``output_text`` is retried and a later non-empty response wins."""
     empty = _FakeResponse(output_text="", status="completed", id="r1")
     good = _FakeResponse(output_text="answer", status="completed", id="r2")
-    client = _mock_client([empty, good])
+    client = _mock_client([_completed_stream(empty), _completed_stream(good)])
 
     # Keep the empty-text poll fast: return the response unchanged.
     with patch.object(
@@ -90,7 +124,9 @@ async def test_invoke_retries_on_empty_response_then_succeeds() -> None:
 @pytest.mark.asyncio
 async def test_invoke_raises_after_empty_responses_exhaust_retries() -> None:
     """When every attempt is empty, retries exhaust and a RuntimeError is raised."""
-    client = _mock_client(lambda *a, **k: _FakeResponse(output_text=""))
+    client = _mock_client(
+        lambda *a, **k: _completed_stream(_FakeResponse(output_text=""))
+    )
 
     with patch.object(
         HostedAgentClient, "_poll_response", AsyncMock(side_effect=lambda r: r)
@@ -105,21 +141,39 @@ async def test_invoke_raises_after_empty_responses_exhaust_retries() -> None:
 
 
 @pytest.mark.asyncio
-async def test_invoke_retries_on_request_timeout() -> None:
+async def test_invoke_retries_when_stream_ends_without_completion() -> None:
+    """A stream ending without ``response.completed`` is retryable, not fatal."""
+
+    def _incomplete_stream(*_a, **_k):
+        return _make_stream(
+            [_FakeEvent("response.created"), _FakeEvent("response.in_progress")]
+        )
+
     good = _FakeResponse(output_text="answer", status="completed", id="r2")
-    attempts = 0
+    client = _mock_client([_incomplete_stream(), _completed_stream(good)])
 
-    async def _create(*_args, **_kwargs):
-        nonlocal attempts
-        attempts += 1
-        if attempts == 1:
-            await asyncio.sleep(1)
-        return good
+    _, out = await HostedAgentClient(client, retry_delay=0).invoke(
+        conversation_items=[],
+        agent_ref={},
+    )
 
-    client = _mock_client(_create)
+    assert out is good
+    assert client.responses.create.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_invoke_retries_on_stream_completion_timeout() -> None:
+    """A stream that stalls past ``stream_timeout`` is abandoned and retried."""
+    good = _FakeResponse(output_text="answer", status="completed", id="r2")
+
+    async def _stalled_stream():
+        await asyncio.sleep(5)  # far longer than the tiny timeout below
+        yield _FakeEvent("response.completed", good)
+
+    client = _mock_client([_stalled_stream(), _completed_stream(good)])
 
     _, out = await HostedAgentClient(
-        client, retry_delay=0, request_timeout=0.01
+        client, retry_delay=0, stream_timeout=0.05
     ).invoke(
         conversation_items=[],
         agent_ref={},
@@ -127,6 +181,26 @@ async def test_invoke_retries_on_request_timeout() -> None:
 
     assert out is good
     assert client.responses.create.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_consume_stream_returns_completed_response() -> None:
+    """``_consume_stream`` returns the response carried by ``response.completed``."""
+    resp = _FakeResponse(output_text="x")
+    out = await HostedAgentClient(AsyncMock())._consume_stream(
+        _completed_stream(resp), "conv"
+    )
+    assert out is resp
+
+
+@pytest.mark.asyncio
+async def test_consume_stream_raises_without_completed_event() -> None:
+    """A stream that never completes raises a RuntimeError."""
+    stream = _make_stream(
+        [_FakeEvent("response.created"), _FakeEvent("response.in_progress")]
+    )
+    with pytest.raises(RuntimeError):
+        await HostedAgentClient(AsyncMock())._consume_stream(stream, "conv")
 
 
 def _api_error(error_cls, status_code: int):
@@ -152,7 +226,7 @@ async def test_invoke_drops_rejected_session_and_retries_without_it(
         captured_extra_bodies.append(kwargs.get("extra_body", {}))
         if len(captured_extra_bodies) == 1:
             raise _api_error(error_cls, status_code)
-        return good
+        return _completed_stream(good)
 
     client = _mock_client(_create)
 
@@ -204,3 +278,5 @@ async def test_invoke_returns_content_safety_response_without_retry() -> None:
     assert out.output_text == CONTENT_SAFETY_MESSAGE
     # No retry: the deterministic content-safety block fails fast.
     assert client.responses.create.await_count == 1
+
+

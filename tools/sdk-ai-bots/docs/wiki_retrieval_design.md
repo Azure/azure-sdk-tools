@@ -45,7 +45,7 @@ Both tracks run the same retrieval pipeline (`SearchClient.fused_search`) and di
 
 For most questions the agent issues `search_knowledge_base` + `wiki_search` in one parallel batch and answers on the next turn.
 
-Wiki results use separate content budgets for synthesized pages and routed source chunks. The exact matched source passage is placed first before truncation. This keeps every ranked reference available while bounding the hosted-agent tool payload. The buffered backend requests a completed, non-streaming Responses API result.
+Wiki results use separate content budgets for synthesized pages and routed source chunks. The exact matched source passage is placed first before truncation. This keeps every ranked reference available while bounding the hosted-agent tool payload.
 
 ## Faithfulness of generated pages
 

@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, map, take } from 'rxjs';
+import { Observable, catchError, map, shareReplay, take, tap, throwError } from 'rxjs';
 
 import { PaginatedResult } from 'src/app/_models/pagination';
 import { APIRevision, APIRevisionGroupedByLanguage } from 'src/app/_models/revision';
@@ -15,6 +15,8 @@ import { INDEX_PAGE_NAME } from 'src/app/_helpers/router-helpers';
 export class APIRevisionsService {
   baseUrl : string = this.configService.apiUrl + "APIRevisions";
   paginatedResult: PaginatedResult<APIRevision[]> = new PaginatedResult<APIRevision[]>
+  private revisionOptionsCache = new Map<string, Map<string, APIRevision>>();
+  private revisionOptionsQueryCache = new Map<string, Observable<APIRevision[]>>();
 
   constructor(private http: HttpClient, private configService: ConfigService) { }
 
@@ -71,6 +73,40 @@ export class APIRevisionsService {
           }
         )
     );
+  }
+
+  cacheAPIRevisionOptions(reviewId: string, apiRevisions: APIRevision[]): void {
+    const cachedRevisions = this.revisionOptionsCache.get(reviewId) ?? new Map<string, APIRevision>();
+    for (const apiRevision of apiRevisions) {
+      cachedRevisions.set(apiRevision.id, apiRevision);
+    }
+    this.revisionOptionsCache.set(reviewId, cachedRevisions);
+  }
+
+  getCachedAPIRevisionOptions(reviewId: string): APIRevision[] {
+    return Array.from(this.revisionOptionsCache.get(reviewId)?.values() ?? []);
+  }
+
+  getFilteredAPIRevisionOptions(reviewId: string, details: string[]): Observable<APIRevision[]> {
+    const queryKey = JSON.stringify([reviewId, details]);
+    const cachedQuery = this.revisionOptionsQueryCache.get(queryKey);
+    if (cachedQuery) {
+      return cachedQuery;
+    }
+
+    const query = this.getAPIRevisions(
+      0, 100, reviewId, undefined, undefined, details, 'createdOn', 1, false, false, true
+    ).pipe(
+      map(response => Array.isArray(response.result) ? response.result : []),
+      tap(apiRevisions => this.cacheAPIRevisionOptions(reviewId, apiRevisions)),
+      catchError(error => {
+        this.revisionOptionsQueryCache.delete(queryKey);
+        return throwError(() => error);
+      }),
+      shareReplay({ bufferSize: 1, refCount: false })
+    );
+    this.revisionOptionsQueryCache.set(queryKey, query);
+    return query;
   }
 
   deleteAPIRevisions(reviewId: string, revisionIds: string[]): Observable<any> {

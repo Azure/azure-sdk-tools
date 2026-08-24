@@ -104,10 +104,11 @@ public class PackageMarkReleasedToolTests
 
         var response = await MarkReleasedAsync();
 
-        Assert.That(response.ExitCode, Is.EqualTo(1));
+        Assert.That(response.ExitCode, Is.Zero);
         Assert.That(response.ApiReviewHubSucceeded, Is.False);
         Assert.That(response.ApiReviewHub, Is.Null);
         Assert.That(response.ApiViewSucceeded, Is.True);
+        Assert.That(response.ResponseErrors, Is.Empty);
         Assert.That(response.ToString(), Does.Contain("API Review Hub: FAILED - ARH failed"));
         Assert.That(response.ToString(), Does.Contain("APIView: SUCCEEDED - Release request resolved revision revision456 (review review123); revision is not released."));
         apiViewService.Verify(x => x.MarkPackageReleasedAsync(
@@ -124,10 +125,11 @@ public class PackageMarkReleasedToolTests
 
         var response = await MarkReleasedAsync();
 
-        Assert.That(response.ExitCode, Is.EqualTo(1));
+        Assert.That(response.ExitCode, Is.Zero);
         Assert.That(response.ApiReviewHubSucceeded, Is.True);
         Assert.That(response.ApiViewSucceeded, Is.False);
         Assert.That(response.ApiView, Is.Null);
+        Assert.That(response.ResponseErrors, Is.Empty);
         apiReviewHubService.Verify(x => x.MarkPackageReleasedAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), false), Times.Once);
     }
@@ -150,7 +152,7 @@ public class PackageMarkReleasedToolTests
     }
 
     [Test]
-    public async Task MarkReleasedAsync_WhenAPIViewReturnsServerError_Fails()
+    public async Task MarkReleasedAsync_WhenAPIViewReturnsServerError_ReviewHubSuccessPreventsFailure()
     {
         apiViewService
             .Setup(x => x.MarkPackageReleasedAsync(
@@ -159,9 +161,33 @@ public class PackageMarkReleasedToolTests
 
         var response = await MarkReleasedAsync();
 
-        Assert.That(response.ExitCode, Is.EqualTo(1));
+        Assert.That(response.ExitCode, Is.Zero);
         Assert.That(response.ApiViewSucceeded, Is.False);
-        Assert.That(response.ResponseErrors, Has.One.EqualTo("APIView: APIView server error"));
+        Assert.That(response.ResponseErrors, Is.Empty);
+    }
+
+    [Test]
+    public async Task MarkReleasedAsync_WhenBothBackendsFail_Fails()
+    {
+        apiReviewHubService
+            .Setup(x => x.MarkPackageReleasedAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<bool>()))
+            .ThrowsAsync(new InvalidOperationException("ARH failed"));
+        apiViewService
+            .Setup(x => x.MarkPackageReleasedAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<bool>()))
+            .ThrowsAsync(new HttpRequestException("APIView failed"));
+
+        var response = await MarkReleasedAsync();
+
+        Assert.That(response.ExitCode, Is.EqualTo(1));
+        Assert.That(response.ApiReviewHubSucceeded, Is.False);
+        Assert.That(response.ApiViewSucceeded, Is.False);
+        Assert.That(response.ResponseErrors, Is.EquivalentTo(new[]
+        {
+            "API Review Hub: ARH failed",
+            "APIView: APIView failed"
+        }));
     }
 
     [Test]
@@ -183,6 +209,58 @@ public class PackageMarkReleasedToolTests
     }
 
     [Test]
+    public async Task MarkReleasedAsync_WithoutApiHash_SkipsReviewHubWithoutFailing()
+    {
+        var response = await tool.MarkReleasedAsync(
+            "python",
+            "azure-test",
+            "1.0.0",
+            string.Empty,
+            "tjprescott");
+        var output = new OutputHelper(OutputHelper.OutputModes.Json).Format(response);
+
+        using var document = System.Text.Json.JsonDocument.Parse(output);
+        var reviewHub = document.RootElement.GetProperty("api_review_hub");
+
+        Assert.That(response.ExitCode, Is.Zero);
+        Assert.That(response.ApiReviewHubSucceeded, Is.False);
+        Assert.That(response.ApiReviewHubSkipped, Is.True);
+        Assert.That(response.ResponseErrors, Is.Empty);
+        Assert.That(response.ToString(), Does.Contain("API Review Hub: SKIPPED - Skipped because apiHash is required."));
+        Assert.That(reviewHub.GetProperty("skipped").GetBoolean(), Is.True);
+        Assert.That(reviewHub.GetProperty("message").GetString(), Is.EqualTo("Skipped because apiHash is required."));
+        Assert.That(document.RootElement.GetProperty("operation_status").GetString(), Is.EqualTo("Succeeded"));
+        Assert.That(document.RootElement.GetProperty("response_errors").GetArrayLength(), Is.Zero);
+        apiReviewHubService.Verify(x => x.MarkPackageReleasedAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<bool>()), Times.Never);
+        apiViewService.Verify(x => x.MarkPackageReleasedAsync(
+            "azure-test", "python", "1.0.0", It.IsAny<CancellationToken>(), false), Times.Once);
+    }
+
+    [Test]
+    public async Task MarkReleasedAsync_WithoutApiHash_WhenAPIViewReturnsNotFound_Fails()
+    {
+        apiViewService
+            .Setup(x => x.MarkPackageReleasedAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<bool>()))
+            .ThrowsAsync(new HttpRequestException("APIView revision not found", null, HttpStatusCode.NotFound));
+
+        var response = await tool.MarkReleasedAsync(
+            "python",
+            "azure-test",
+            "1.0.0",
+            string.Empty,
+            "tjprescott");
+
+        Assert.That(response.ExitCode, Is.EqualTo(1));
+        Assert.That(response.ApiReviewHubSkipped, Is.True);
+        Assert.That(response.ApiViewSucceeded, Is.False);
+        Assert.That(response.ResponseErrors, Has.One.EqualTo("APIView: APIView revision not found"));
+        apiReviewHubService.Verify(x => x.MarkPackageReleasedAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<bool>()), Times.Never);
+    }
+
+    [Test]
     public void Command_AcceptsRepoOwner()
     {
         var command = tool.GetCommandInstances().Single();
@@ -196,14 +274,14 @@ public class PackageMarkReleasedToolTests
     public async Task Command_DryRun_PassesTrueToBothBackends()
     {
         var command = tool.GetCommandInstances().Single();
-        var parseResult = command.Parse("--language python --package-name azure-test --package-version 1.0.0 --dry-run");
+        var parseResult = command.Parse("--language python --package-name azure-test --package-version 1.0.0 --api-hash hash --dry-run");
 
         var response = await tool.HandleCommand(parseResult, CancellationToken.None);
 
         Assert.That(response.ToString(), Does.Contain("API Review Hub: SUCCEEDED - Dry run resolved package version"));
         Assert.That(response.ToString(), Does.Contain("APIView: SUCCEEDED - Dry run resolved revision revision456"));
         apiReviewHubService.Verify(x => x.MarkPackageReleasedAsync(
-            "python", "azure-test", "1.0.0", string.Empty, string.Empty, It.IsAny<CancellationToken>(), true), Times.Once);
+            "python", "azure-test", "1.0.0", "hash", string.Empty, It.IsAny<CancellationToken>(), true), Times.Once);
         apiViewService.Verify(x => x.MarkPackageReleasedAsync(
             "azure-test", "python", "1.0.0", It.IsAny<CancellationToken>(), true), Times.Once);
     }

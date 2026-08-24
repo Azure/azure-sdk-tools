@@ -5,12 +5,12 @@ from __future__ import annotations
 import asyncio
 import json
 
-from azure_sdk_qa_bot_wiki_index.reconcile import (
+from wiki_index.reconcile import (
     _extraction_from_json,
     _extraction_to_json,
     reconcile,
 )
-from azure_sdk_qa_bot_wiki_index.wiki_extract import DocExtraction, ExtractedItem
+from wiki_index.wiki_extract import DocExtraction, ExtractedItem
 
 
 # --------------------------------------------------------------------------- #

@@ -88,7 +88,7 @@ extends:
                     python -m pip config set global.index-url "$PIP_INDEX_URL"
                     pip install -r requirements.txt --retries 5 --timeout 60
 
-                    python -m azure_sdk_qa_bot_wiki_index.main \
+                    python -m wiki_index.main \
                       --min-docs ${{ parameters.minDocs }}
                 env:
                   AZURE_CORE_WELCOME_MESSAGE: 'false'

@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from azure_sdk_qa_bot_wiki_index.pages import (
+from wiki_index.pages import (
     PAGE_CONCEPT,
     PAGE_ENTITY,
     make_slug,
     slugify,
 )
-from azure_sdk_qa_bot_wiki_index.wiki_extract import DocExtraction, ExtractedItem
-from azure_sdk_qa_bot_wiki_index.wiki_reduce import (
+from wiki_index.wiki_extract import DocExtraction, ExtractedItem
+from wiki_index.wiki_reduce import (
     _concept_key,
     _entity_key,
     aggregate_groups,

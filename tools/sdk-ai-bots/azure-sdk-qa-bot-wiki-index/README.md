@@ -16,7 +16,7 @@ The pipeline creates these generated page types:
 
 The full build extracts entities and concepts per document, aggregates recurring items, synthesizes generated pages, and writes the manifest.
 
-Every LLM system prompt lives in `azure_sdk_qa_bot_wiki_index/prompts/` as markdown (`extract.md` for the map phase, `summary.md` for per-document summary pages, `compile.md` for entity/concept pages) and is loaded by `llm.load_prompt`, so prompts can be tuned without touching code.
+Every LLM system prompt lives in `wiki_index/prompts/` as markdown (`extract.md` for the map phase, `summary.md` for per-document summary pages, `compile.md` for entity/concept pages) and is loaded by `llm.load_prompt`, so prompts can be tuned without touching code.
 
 ## Usage
 
@@ -24,7 +24,7 @@ Every LLM system prompt lives in `azure_sdk_qa_bot_wiki_index/prompts/` as markd
 pip install -r requirements.txt
 
 # generate and persist wiki pages for the whole knowledge corpus
-python -m azure_sdk_qa_bot_wiki_index.main
+python -m wiki_index.main
 ```
 
 `build_wiki.yml` runs this daily at 04:00 UTC, two hours after the knowledge sync that produces its input.

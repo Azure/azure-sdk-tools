@@ -2,7 +2,7 @@
 
 Usage::
 
-    python -m azure_sdk_qa_bot_wiki_index.main
+    python -m wiki_index.main
 """
 
 from __future__ import annotations

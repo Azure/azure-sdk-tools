@@ -9,14 +9,14 @@ from __future__ import annotations
 
 import asyncio
 
-from azure_sdk_qa_bot_wiki_index.pages import PAGE_ENTITY, PAGE_SUMMARY, WikiPage
-from azure_sdk_qa_bot_wiki_index.reader import (
+from wiki_index.pages import PAGE_ENTITY, PAGE_SUMMARY, WikiPage
+from wiki_index.reader import (
     read_blob_container,
     rel_title,
     source_folder,
 )
-from azure_sdk_qa_bot_wiki_index.storage import _ascii, index_title
-from azure_sdk_qa_bot_wiki_index.wiki import doc_title
+from wiki_index.storage import _ascii, index_title
+from wiki_index.wiki import doc_title
 
 
 class _FakeBlobItem:

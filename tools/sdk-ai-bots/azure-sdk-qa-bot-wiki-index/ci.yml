@@ -71,7 +71,7 @@ extends:
               - bash: |
                   set -euo pipefail
                   echo "Running pyright type check..."
-                  pyright --pythonversion $(pythonVersion) azure_sdk_qa_bot_wiki_index/
+                  pyright --pythonversion $(pythonVersion) wiki_index/
                 displayName: 'Type Check (pyright)'
                 workingDirectory: $(workingDirectory)
 
@@ -79,7 +79,7 @@ extends:
                   set -euo pipefail
                   echo "Running unit tests..."
                   python -m pytest tests/ \
-                    --cov=azure_sdk_qa_bot_wiki_index \
+                    --cov=wiki_index \
                     --cov-report=term-missing \
                     --cov-report=xml:$(workingDirectory)/coverage.xml \
                     -v \

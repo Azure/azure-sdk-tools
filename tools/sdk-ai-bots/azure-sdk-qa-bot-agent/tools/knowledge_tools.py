@@ -15,6 +15,7 @@ from utils.azure_ai_search import (
     NON_WIKI_FILTER,
     WIKI_FILTER,
     _escape_odata,
+    combine_source_filters,
     get_search_client,
 )
 
@@ -169,14 +170,8 @@ class KnowledgeTools:
             len(raw_chunks),
         )
 
-        # Deduplicate across all search results
         unique_chunks = search_client.deduplicate_chunks(raw_chunks)
 
-        # This tool returns raw source chunks only; wiki pages are retrieved separately.
-        unique_chunks = [c for c in unique_chunks if not c.page_type]
-
-        # Reorder by rerank_score, then select the final top_k.
-        unique_chunks.sort(key=lambda c: c.rerank_score, reverse=True)
         top_k = search_client.top_k
         if len(unique_chunks) > top_k:
             logger.info("Capping results from %d to %d (top_k)", len(unique_chunks), top_k)
@@ -247,13 +242,14 @@ class KnowledgeTools:
             extra_filter=WIKI_FILTER,
             use_agentic=search_mode == SearchMode.deep.value,
         )
-        unique = [
-            c for c in search_client.deduplicate_chunks(raw)
-            if c.page_type in ("summary", "entity", "concept")
-        ]
-        page_hits = _deduplicate_wiki_pages(unique)
-        page_hits.sort(key=lambda c: c.rerank_score, reverse=True)
-        wiki_pages = page_hits[:_WIKI_TOP]
+        page_hits = _deduplicate_wiki_pages(search_client.deduplicate_chunks(raw))
+        wiki_pages = sorted(
+            page_hits, key=lambda c: c.rerank_score, reverse=True
+        )[:_WIKI_TOP]
+        if not wiki_pages:
+            logger.info("wiki_search: no wiki pages for queries=%s", capped_queries)
+            return SearchKnowledgeBaseResult(results=[])
+
         # Route each page to the SOURCE chunks it was built from (grounded detail).
         routed = await search_client.backfill_wiki_sources(
             wiki_pages,
@@ -261,12 +257,9 @@ class KnowledgeTools:
             per_page=_WIKI_ROUTE_PER_PAGE,
             max_refs=_WIKI_ROUTE_MAX_REFS,
             max_total=_WIKI_ROUTE_MAX_TOTAL,
-            source_filter=_combined_source_filter(source_filters),
+            source_filter=combine_source_filters(source_filters) or None,
         )
         combined = wiki_pages + routed
-        if not combined:
-            logger.info("wiki_search: no wiki pages for queries=%s", capped_queries)
-            return SearchKnowledgeBaseResult(results=[])
         expanded = await asyncio.gather(
             *[search_client.expand_by_hierarchy(c) for c in combined]
         )
@@ -290,15 +283,10 @@ class KnowledgeTools:
         return SearchKnowledgeBaseResult(results=results)
 
 
-def _tenant_source_names(tenant_id: str) -> list[str]:
-    """All source names the tenant is configured for."""
-    config = get_tenant_config(TenantID(tenant_id))
-    return [src.name for src in config.sources] if config else []
-
-
 def _source_names(tenant_id: str, sources: list[str] | None) -> list[str]:
     """Resolve model-selectable source names for either retrieval track."""
-    tenant_sources = _tenant_source_names(tenant_id)
+    config = get_tenant_config(TenantID(tenant_id))
+    tenant_sources = [src.name for src in config.sources] if config else []
     names = list(sources) if sources else tenant_sources
     ignored = [n for n in names if n in _WIKI_CROSS_DOCUMENT_CONTEXTS]
     if ignored:
@@ -375,14 +363,6 @@ def _resolve_source_filters(
     return source_filters
 
 
-def _combined_source_filter(source_filters: dict[str, str]) -> str | None:
-    """Combine per-source filters into one parenthesized OR clause (or None)."""
-    clauses = [f"({f})" for f in source_filters.values() if f]
-    if not clauses:
-        return None
-    return "(" + " or ".join(clauses) + ")"
-
-
 def _truncate_content(
     content: str | None,
     max_chars: int = _MAX_CONTENT_CHARS_PER_RESULT,
@@ -427,18 +407,18 @@ def _refs_from_expanded(
     return [
         Reference(
             title=_build_reference_title(
-                expanded[i].title,
-                expanded[i].header1,
-                expanded[i].header2,
-                expanded[i].header3,
+                item.title,
+                item.header1,
+                item.header2,
+                item.header3,
             ),
-            source=expanded[i].source,
-            link=expanded[i].link,
+            source=item.source,
+            link=item.link,
             content=_truncate_content(
-                expanded[i].content,
+                item.content,
                 max_chars=max_content_chars,
             ),
-            score=scored[i].rerank_score,
+            score=score.rerank_score,
         )
-        for i in range(len(expanded))
+        for item, score in zip(expanded, scored, strict=True)
     ]

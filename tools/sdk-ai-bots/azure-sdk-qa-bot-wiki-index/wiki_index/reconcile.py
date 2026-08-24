@@ -182,21 +182,18 @@ async def reconcile(
     for sp, (_text, h) in current.items():
         if sp in fresh and not fresh[sp].failed:
             extn = fresh[sp]
-            stored_hash = h
         elif sp in fresh:
             failed_docs.add(sp)
             extn = _extraction_from_json(sp, prior_sources.get(sp, {}))
-            stored_hash = h
         else:
             extn = _extraction_from_json(sp, prior_sources.get(sp, {}))
-            stored_hash = h
         extractions.append(extn)
-        new_sources[sp] = {"hash": stored_hash, **_extraction_to_json(extn)}
+        new_sources[sp] = {"hash": h, **_extraction_to_json(extn)}
 
     # --- 3. summary pages ---
     summary_pages: dict[str, WikiPage] = {}
 
-    def _summary(item: tuple[str, str]) -> tuple[str, WikiPage | None, bool]:
+    def _summary(item: tuple[str, str]) -> tuple[str, WikiPage | None]:
         sp, text = item
         folder = source_folder(sp)
         rel = rel_title(sp)
@@ -205,12 +202,10 @@ async def reconcile(
             body = synthesize_summary(llm, title, text)
         except OpenAIError:
             logger.warning("summary failed for %s", sp, exc_info=True)
-            return sp, None, True
+            return sp, None
         if not body:
-            # An empty body is a generation failure, not a valid empty summary:
-            # report it so the source hash stays unadvanced and the next run retries.
             logger.warning("summary empty for %s", sp)
-            return sp, None, True
+            return sp, None
         return sp, WikiPage(
             slug=make_slug(PAGE_SUMMARY, sp),
             page_type=PAGE_SUMMARY,
@@ -219,17 +214,17 @@ async def reconcile(
             context_id=folder,
             source_refs=[sp],
             orig_title=rel,
-        ), False
+        )
 
     changed_summary_items = [(sp, current[sp][0]) for sp in changed]
     if changed_summary_items:
         with ThreadPoolExecutor(max_workers=MAX_SUMMARY_WORKERS) as ex:
-            for sp, p, failed in ex.map(_summary, changed_summary_items):
-                if failed:
+            for sp, p in ex.map(_summary, changed_summary_items):
+                if p is None:
                     failed_docs.add(sp)
-                if p is not None:
-                    summary_pages[p.slug] = p
-                    stats.summaries_regenerated += 1
+                    continue
+                summary_pages[p.slug] = p
+                stats.summaries_regenerated += 1
     # reuse unchanged summaries from the manifest
     for sp in current:
         slug = make_slug(PAGE_SUMMARY, sp)

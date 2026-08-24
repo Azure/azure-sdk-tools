@@ -75,14 +75,16 @@ def _and_extra(combined_filter: str, extra_filter: str | None) -> str:
         return combined_filter
     if not combined_filter:
         return extra_filter
-    return f"({combined_filter}) and {extra_filter}"
+    return f"{combined_filter} and {extra_filter}"
 
 
-def _combine_source_filters(
+def combine_source_filters(
     source_filters: dict[str, str],
     extra_filter: str | None = None,
 ) -> str:
-    combined = " or ".join(f"({value})" for value in source_filters.values() if value)
+    """Combine source filters with an optional additional clause."""
+    clauses = [f"({value})" for value in source_filters.values() if value]
+    combined = f"({' or '.join(clauses)})" if clauses else ""
     return _and_extra(combined, extra_filter)
 
 
@@ -192,7 +194,7 @@ class SearchClient:
         """
         # Combine per-source filters into a single filter_add_on with OR so the
         # KB retrieval client executes one sub-search instead of N.
-        combined_filter = _combine_source_filters(source_filters, extra_filter)
+        combined_filter = combine_source_filters(source_filters, extra_filter)
 
         kb_params: list[KnowledgeSourceParams] = [
             SearchIndexKnowledgeSourceParams(
@@ -243,7 +245,7 @@ class SearchClient:
             fields="text_vector",
         )
 
-        combined_filter = _combine_source_filters(source_filters, extra_filter)
+        combined_filter = combine_source_filters(source_filters, extra_filter)
 
         results = await self._search_client.search(
             search_text=query,
@@ -274,7 +276,7 @@ class SearchClient:
     ) -> list[KnowledgeChunk]:
         """Run sparse full-text keyword search and return BM25-ranked chunks."""
         k = top_k or self._top_k
-        combined_filter = _combine_source_filters(source_filters, extra_filter)
+        combined_filter = combine_source_filters(source_filters, extra_filter)
 
         results = await self._search_client.search(
             search_text=query,

@@ -16,6 +16,7 @@ from tools.knowledge_tools import (
     _source_names,
     _wiki_page_filters,
 )
+from utils.azure_ai_search import NON_WIKI_FILTER, combine_source_filters
 
 _TENANT = TenantID.TYPESPEC_CHANNEL_QA_BOT.value
 _WIKI_ENTITY = "wiki_entity"
@@ -101,3 +102,16 @@ def test_unknown_source_still_produces_a_filter():
     # Dropping it would leave the caller with an empty, i.e. unscoped, filter.
     got = _resolve_source_filters(["not_a_registered_source"], _TENANT)
     assert got == {"not_a_registered_source": "context_id eq 'not_a_registered_source'"}
+
+
+def test_combined_source_filters_keep_or_clauses_grouped():
+    got = combine_source_filters(
+        {
+            "a": "context_id eq 'a'",
+            "b": "context_id eq 'b'",
+        },
+        NON_WIKI_FILTER,
+    )
+    assert got == (
+        f"((context_id eq 'a') or (context_id eq 'b')) and {NON_WIKI_FILTER}"
+    )

@@ -101,15 +101,15 @@ Operational requirements:
 
 ## Evaluation
 
-The retained benchmark is the best complete A/B on the 227-case perf set (seven scenarios), with memory disabled and GPT-5.4 grading. A case passes only when all six core metrics score at least 4. The baseline filters wiki pages out of retrieval and measures the source knowledge base alone.
+The retained benchmark is the best complete A/B on the 226-case perf set (seven scenarios), with memory disabled and GPT-5.4 grading. A case passes only when all six core metrics score at least 4. The baseline filters wiki pages out of retrieval and measures the source knowledge base alone.
 
 | | TOTAL | typespec | apispec | python | authoring | general | onboarding + release support |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| N | 227 | 125 | 26 | 24 | 26 | 20 | 6 |
-| KB-only baseline | 69.2 % | 76.8 | 57.7 | 50.0 | 76.9 | 55.0 | 50.0 |
-| Wiki two-track | **74.9 %** | **81.6** | **65.4** | **62.5** | **80.8** | **60.0** | 50.0 |
+| N | 226 | 125 | 25 | 24 | 26 | 20 | 6 |
+| KB-only baseline | 69.5 % | 76.8 | 60.0 | 50.0 | 76.9 | 55.0 | 50.0 |
+| Wiki two-track | **75.2 %** | **81.6** | **68.0** | **62.5** | **80.8** | **60.0** | 50.0 |
 
-Wiki retrieval improves the pass rate from 157/227 to 170/227: **+5.7 percentage points**, with 27 fixed cases, 15 regressions, and a net gain of 12. Similarity improves from 79.3 % to 83.7 % and response completeness from 70.0 % to 76.2 %, while groundedness, relevance, coherence, and fluency remain approximately 100 %. Median answer length changes from 165 to 173 words.
+Wiki retrieval improves the pass rate from 157/226 to 170/226: **+5.8 percentage points**, with 27 fixed cases, 15 regressions, and a net gain of 12. Similarity improves from 79.2 % to 83.6 % and response completeness from 70.4 % to 76.5 %, while groundedness, relevance, coherence, and fluency remain approximately 100 %. Median answer length changes from 165 to 173 words.
 
 The result supports the final retrieval invariants: keep synthesized and authoritative evidence on separate ranking tracks, retrieve Wiki content at chunk level before page expansion, preserve scope and exceptions in generated pages, and route selected pages back to query-ranked source chunks.
 

@@ -30,5 +30,13 @@
     "target": "basic",
     "uploaded_at": "2026-06-22T09:06:16.298721+00:00",
     "version": "typespec-2026-06-22"
+  },
+  "qa-bot-perf-apispec": {
+    "cases": 25,
+    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-perf-apispec/versions/apispec-2026-08-24",
+    "scenario": "apispec",
+    "target": "perf",
+    "uploaded_at": "2026-08-24T02:58:09.309600+00:00",
+    "version": "apispec-2026-08-24"
   }
 }

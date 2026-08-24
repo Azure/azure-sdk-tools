@@ -39,7 +39,7 @@ flowchart LR
 The load-bearing decision: **wiki pages and source chunks never fuse into one ranked list** — fusing lets generic wiki pages displace specific source docs and regresses the score. They are retrieved on separate tracks and combined only in the answer.
 
 - **`search_knowledge_base`** — source chunks only (`page_type` null).
-- **`wiki_search`** — wiki pages only, **self-contained**: for the top pages it returns bounded synthesized content **plus** query-ranked source chunks from the documents recorded in `chunk_refs`. The next-ranked pages that did not make the cut are appended as a titles-only "Related wiki pages" reference for orientation; those titles are not answer evidence.
+- **`wiki_search`** — wiki pages only, **self-contained**: for the top pages it returns bounded synthesized content **plus** query-ranked source chunks from the documents recorded in `chunk_refs`.
 
 Both tracks run the same retrieval pipeline (`SearchClient.fused_search`) and differ only by page-type filter: dense + BM25 (+ agentic in `deep` mode) run in parallel for every query, all query/retriever rankings are fused together with RRF, then the caller dedupes and caps. Retrieval uses a wider candidate pool than the final answer budget.
 
@@ -113,6 +113,8 @@ Two properties of this design are easy to trip over:
 The main conclusion reproduces: Wiki two-track is **+5.8 pp** overall over the current Main baseline, net **+13** cases (26 fixed, 13 regressed). The largest and most reliable scenario, `typespec`, improves **+8.8 pp**. `similarity` moves 79.7 → 84.1 % and `response_completeness` 68.3 → 76.2 %, while groundedness / relevance / coherence / fluency remain 99–100 %. Median answer length decreases from 123 to 117 words.
 
 Source backfill adds **+1.4 pp** over Wiki without backfill, net **+3** cases (17 fixed, 14 regressed). Its strongest signal is `typespec` (+6 cases), but `authoring` loses 3 cases and the paired churn is larger than the net gain. This supports retaining query-ranked source evidence for provenance and detail, but the evaluation does not establish its independent score contribution as strongly as the earlier ablation did.
+
+The titles-only "Related wiki pages" tail was removed after three paired 227-case runs found no repeatable benefit. Control-minus-no-title deltas were +1.3 pp, +0.4 pp, and -4.0 pp; pooled results were 72.1 % with the titles and 72.8 % without them, while `typespec` was exactly tied at 296/375 passes. The titles added context but no evidence, so keeping only the top pages and routed source chunks is simpler and no worse in the measured runs.
 
 One intermediate streaming run was excluded: 101 cases returned HTTP 500 after the SSE client received an oversized multi-tool completion event. The backend now uses the non-streaming Responses API, which matches its buffered HTTP contract. All three reported runs have zero synthetic/corrupt rows.
 

@@ -38,10 +38,8 @@ _WIKI_SOURCE_CONTENT_CHARS = 1100
 # Cross-document wiki pages; reachable only through wiki_search.
 _WIKI_ONLY_SOURCES = (SRC_WIKI_ENTITY, SRC_WIKI_CONCEPT)
 
-# Wiki pages kept as full evidence, and the next-ranked pages surfaced as
-# titles only so the agent can see the neighbourhood it just missed.
+# Wiki pages kept as full evidence.
 _WIKI_TOP = 6
-_WIKI_NEIGHBORS = 8
 # Source chunks each kept page is routed back to, for grounded detail.
 _WIKI_ROUTE_PER_PAGE = 8
 _WIKI_ROUTE_MAX_REFS = 48
@@ -257,7 +255,7 @@ class KnowledgeTools:
         ] = None,
         search_mode: Annotated[str, _SEARCH_MODE_DESC] = "quick",
     ) -> SearchKnowledgeBaseResult:
-        """Search wiki pages, their routed source chunks, and adjacent page titles."""
+        """Search wiki pages and their routed source chunks."""
         sources = _wiki_source_names(tenant_id, sources)
         search_client = get_search_client()
         source_filters = _resolve_source_filters(sources, tenant_id, None)
@@ -276,7 +274,6 @@ class KnowledgeTools:
         page_hits = _deduplicate_wiki_pages(unique)
         page_hits.sort(key=lambda c: c.rerank_score, reverse=True)
         wiki_pages = page_hits[:_WIKI_TOP]
-        neighbors = page_hits[_WIKI_TOP : _WIKI_TOP + _WIKI_NEIGHBORS]
         # Route each page to the SOURCE chunks it was built from (grounded detail).
         routed = await search_client.backfill_wiki_sources(
             wiki_pages,
@@ -306,13 +303,9 @@ class KnowledgeTools:
                 max_content_chars=_WIKI_SOURCE_CONTENT_CHARS,
             )
         )
-        neighbor_ref = _neighbor_reference(neighbors)
-        if neighbor_ref:
-            results.append(neighbor_ref)
         logger.info(
-            "wiki_search: mode=%s, %d page(s) + %d routed source(s) + %d neighbor(s) "
-            "for queries=%s",
-            search_mode, len(wiki_pages), len(routed), len(neighbors), capped_queries,
+            "wiki_search: mode=%s, %d page(s) + %d routed source(s) for queries=%s",
+            search_mode, len(wiki_pages), len(routed), capped_queries,
         )
         return SearchKnowledgeBaseResult(results=results)
 
@@ -428,28 +421,6 @@ def _build_reference_title(
     """Build a reference title from the deepest available header path."""
     parts = [part for part in (header1, header2, header3) if part]
     return " | ".join(parts) if parts else document_title
-
-
-def _neighbor_reference(neighbors: list) -> Reference | None:
-    """List adjacent wiki page titles for orientation."""
-    seen: list[str] = []
-    for c in neighbors:
-        label = f"{c.title} ({c.page_type})"
-        if c.title and label not in seen:
-            seen.append(label)
-    if not seen:
-        return None
-    return Reference(
-        title="Related wiki pages",
-        source="wiki",
-        link="",
-        content=(
-            "Adjacent page titles for orientation only; their content was not "
-            "returned and must not be treated as evidence.\n"
-            + "\n".join(f"- {s}" for s in seen)
-        ),
-        score=0.0,
-    )
 
 
 def _refs_from_expanded(

@@ -114,18 +114,28 @@ class KnowledgeTools:
     async def _download_blob(
         self, container: str, blob_path: str
     ) -> BlobContent | None:
-        options = {"include_metadata": True}
         if self._blob_client is not None:
-            options["client"] = self._blob_client
-        return await download_blob(container, blob_path, **options)
+            return await download_blob(
+                container,
+                blob_path,
+                include_metadata=True,
+                client=self._blob_client,
+            )
+        return await download_blob(container, blob_path, include_metadata=True)
 
     async def _upload_blob(
         self, container: str, blob_path: str, data: bytes, etag: str
     ) -> None:
-        options = {"etag": etag}
         if self._blob_client is not None:
-            options["client"] = self._blob_client
-        await upload_blob(container, blob_path, data, **options)
+            await upload_blob(
+                container,
+                blob_path,
+                data,
+                etag=etag,
+                client=self._blob_client,
+            )
+        else:
+            await upload_blob(container, blob_path, data, etag=etag)
 
     @tool
     async def search_knowledge_base(

@@ -47,13 +47,21 @@ def _get_blob_service_client() -> BlobServiceClient:
 
 @overload
 async def download_blob(
-    container: str, blob_name: str, *, include_metadata: Literal[False] = False
+    container: str,
+    blob_name: str,
+    *,
+    include_metadata: Literal[False] = False,
+    client: BlobServiceClient | None = None,
 ) -> bytes | None: ...
 
 
 @overload
 async def download_blob(
-    container: str, blob_name: str, *, include_metadata: Literal[True]
+    container: str,
+    blob_name: str,
+    *,
+    include_metadata: Literal[True],
+    client: BlobServiceClient | None = None,
 ) -> BlobContent | None: ...
 
 
@@ -89,13 +97,15 @@ async def upload_blob(
     """Upload a blob, optionally only when its ETag is unchanged."""
     client = client or _get_blob_service_client()
     blob_client = client.get_blob_client(container=container, blob=blob_name)
-    upload_options = {"overwrite": True}
     if etag is not None:
-        upload_options.update(
+        await blob_client.upload_blob(
+            data,
+            overwrite=True,
             etag=etag,
             match_condition=MatchConditions.IfNotModified,
         )
-    await blob_client.upload_blob(data, **upload_options)
+    else:
+        await blob_client.upload_blob(data, overwrite=True)
 
 
 async def close_storage_client() -> None:

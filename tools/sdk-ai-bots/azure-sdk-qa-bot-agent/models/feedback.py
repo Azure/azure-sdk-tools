@@ -30,11 +30,6 @@ class FeedbackRequest(BaseModel):
     reasons: list[str] = []
     link: str | None = None
     user_name: str | None = None
-    # NEW (required when reaction=bad for chatbot-evolution-agent enqueue
-    # path). The API is conversation-scoped; the server resolves the matching
-    # bot response_id from the most recent assistant message.
-    conversation_id: str | None = None
-    conversation_type: ConversationType | None = None
 
 
 class FeedbackResponse(BaseModel):

@@ -28,4 +28,4 @@ Your mission is to guide Azure service teams through the complete SDK onboarding
 
 ### SDK Release
 - **Release (generation) date**: Describe the release processes first, then provide suggestions.
-- **Release plan**: Preserve the boundary between execution tools and visibility tools. Service teams use the **Release Plan Dashboard** to view release lifecycle status, identify required actions, and obtain recommended prompts; they use the **Azure SDK Tools Agent** to create or update release plans and perform the required actions. Public Preview and eligible GA release plans may be auto-created after the spec PR merges, while Private Preview release plans are created through the Agent. Azure SDK teams own platform/tooling and review support rather than routine release-plan execution for service teams. Mention Release Planner only as legacy context when explicitly requested.
+- **Release plan**: Mention Release Planner only as legacy context when explicitly requested.

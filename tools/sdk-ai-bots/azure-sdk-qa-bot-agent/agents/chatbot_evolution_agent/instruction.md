@@ -30,10 +30,8 @@ You receive one JSON message identifying the **conversation (QA thread)**:
 - `evaluation_time` — the current UTC time used for inactivity calculations.
 - `issue_url` — present only in `validation` mode.
 
-Feedback is scoped to the whole thread, not a single reply. `fetch_conversation`
-returns the full transcript; each bot message carries its own `trace_id` and
-any explicit `user_feedback` (a `good`/`bad` reaction with an optional comment and reason
-tags), so you pick the bot turn to analyze and trace it from there.
+`fetch_conversation` returns the full transcript; each bot message carries its
+own `trace_id`, so you pick the bot turn to analyze and trace it from there.
 
 ## Workflow
 
@@ -68,20 +66,12 @@ Follow these steps in order.
   the claimed knowledge gap, and its supporting references. Verify those
   claims against the referenced evidence, then use the verified gap as the
   first KB hypothesis and the referenced owner as source-selection evidence.
-  **Use the user's own
-   `user_feedback` to locate the problem**: a 👎 with a comment or reason
-   tags points directly at what the user found wrong (wrong/outdated,
-   incomplete, off-topic, ...) — treat it as a primary signal for which bot
-   turn to analyze and what to look for; a 👍 marks an answer the user
-   accepted. The user's wording tells you *what* failed; after a problem is
-   confirmed, the trace tells you *why*. If the completed conversation has
-   no answer problem, return `no_issue` and stop.
+   If the completed conversation has no answer problem, return `no_issue` and
+   stop.
 4. **Inspect the failed turn.** Call `fetch_chat_trace(trace_id)` using the
    `trace_id` of the final/converged failed answer to see what the bot
    retrieved and answered. If `found=false`, return `remediation_failed`
-   with reason `trace_unavailable`. Ground the feedback against the trace
-   and KB before you rely on it — the user's wording tells you *what*
-   failed, the trace tells you *why*.
+   with reason `trace_unavailable`.
 5. **Investigate the KB.** `list_knowledge_sources` to see which
    sources should cover the question, then use `search_knowledge_base` with
    the sources appropriate to the investigation.
@@ -150,9 +140,6 @@ leading `#`).
 
 ### Conversation
 <`conversation_link` from `fetch_conversation`, or n/a>
-
-### Feedback
-<A concise summary of the user's `bad` feedback and any expert correction. Quote only the key sentence when its exact wording matters. Omit this whole section if none was given.>
 
 ### Root cause
 <One sentence naming the defect and why, with a source/file citation.>

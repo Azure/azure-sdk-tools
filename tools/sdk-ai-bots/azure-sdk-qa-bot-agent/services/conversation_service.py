@@ -16,7 +16,6 @@ logger = logging.getLogger(__name__)
 
 from models.conversation import (
     ConversationDocumentType,
-    ConversationFeedbackItem,
     ConversationMappingItem,
     ConversationMessage,
     ConversationMessageItem,
@@ -336,40 +335,6 @@ class ConversationService:
 
         return items
 
-    async def get_feedback_by_conversation_id(
-        self,
-        conversation_id: str,
-        conversation_type: ConversationType,
-    ) -> list[ConversationFeedbackItem]:
-        """Retrieve all user-feedback documents for a conversation.
-
-        Read-only companion to :meth:`get_messages_by_conversation_id`: returns
-        the ``conversation_feedback`` documents stored in the same partition,
-        ordered by feedback ``created_at``.
-        """
-        container = await get_conversation_message_container()
-        partition_key = f"{conversation_type.value}:{conversation_id}"
-
-        query = (
-            "SELECT * FROM c "
-            "WHERE c.conversation_partition = @pk "
-            "AND c.document_type = @dtype "
-            "ORDER BY c.feedback.created_at ASC"
-        )
-        parameters: list[dict[str, object]] = [
-            {"name": "@pk", "value": partition_key},
-            {"name": "@dtype", "value": ConversationDocumentType.feedback.value},
-        ]
-
-        feedbacks: list[ConversationFeedbackItem] = []
-        async for raw in container.query_items(
-            query=query,
-            parameters=parameters,
-            partition_key=partition_key,
-        ):
-            feedbacks.append(ConversationFeedbackItem.model_validate(raw))
-
-        return feedbacks
 
     async def get_messages_in_period(
         self,

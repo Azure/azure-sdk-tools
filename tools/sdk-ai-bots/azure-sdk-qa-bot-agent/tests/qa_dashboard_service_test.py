@@ -11,11 +11,9 @@ import httpx
 import pytest
 
 from models.conversation import (
-    ConversationFeedbackItem,
     ConversationMessageItem,
     ConversationType,
     Role,
-    UserFeedback,
 )
 from models.qa_dashboard import (
     DashboardChannel,
@@ -243,30 +241,8 @@ async def test_get_record_detail_builds_timeline() -> None:
             minute=1,
         ),
     ]
-    feedbacks = [
-        ConversationFeedbackItem(
-            id="feedback-1",
-            conversation_id="conversation-1",
-            conversation_type=ConversationType.teams_channel,
-            conversation_partition="teams_channel:conversation-1",
-            target_message_id="bot-1",
-            feedback=UserFeedback(
-                reaction="bad",
-                comment="This is outdated.",
-                created_at=datetime(
-                    2026,
-                    8,
-                    7,
-                    10,
-                    2,
-                    tzinfo=timezone.utc,
-                ),
-            ),
-        )
-    ]
     conversation_service = SimpleNamespace(
         get_messages_by_conversation_id=AsyncMock(return_value=messages),
-        get_feedback_by_conversation_id=AsyncMock(return_value=feedbacks),
     )
     with (
         patch(
@@ -288,7 +264,6 @@ async def test_get_record_detail_builds_timeline() -> None:
     assert detail is not None
     assert detail.record.conversation_title == "How do I fix this?"
     assert detail.record.channel_name == "Channel A"
-    assert detail.messages[1].user_feedback[0].comment == "This is outdated."
     assert detail.record.feedback is not None
     assert (
         detail.record.feedback.issue_url

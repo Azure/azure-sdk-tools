@@ -34,15 +34,6 @@ class QADashboardRecord(QARecord):
     channel_name: str
 
 
-class DashboardUserFeedback(BaseModel):
-    """Explicit feedback attached to a conversation message."""
-
-    reaction: str
-    comment: str | None = None
-    reasons: list[str] = Field(default_factory=list)
-    user_name: str | None = None
-
-
 class DashboardConversationMessage(BaseModel):
     """One message shown in the conversation timeline."""
 
@@ -53,7 +44,6 @@ class DashboardConversationMessage(BaseModel):
     created_at: datetime
     message_link: str | None = None
     trace_id: str | None = None
-    user_feedback: list[DashboardUserFeedback] = Field(default_factory=list)
 
 
 class QADashboardDetail(BaseModel):
@@ -76,7 +66,6 @@ class QARecordPage(BaseModel):
 __all__ = [
     "DashboardChannel",
     "DashboardConversationMessage",
-    "DashboardUserFeedback",
     "FeedbackStatusFilter",
     "QADashboardDetail",
     "QADashboardRecord",

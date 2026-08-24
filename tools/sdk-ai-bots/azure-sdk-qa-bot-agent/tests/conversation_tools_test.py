@@ -34,7 +34,6 @@ async def test_fetch_conversation_preserves_complete_message_content():
     )
     conversation_service = SimpleNamespace(
         get_messages_by_conversation_id=AsyncMock(return_value=[message]),
-        get_feedback_by_conversation_id=AsyncMock(return_value=[]),
     )
 
     result = await ConversationTools(

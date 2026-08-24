@@ -11,14 +11,12 @@ import yaml
 from config import app_config
 from models.conversation import (
     ConversationDocumentType,
-    ConversationFeedbackItem,
     ConversationMessageItem,
     Role,
 )
 from models.qa_dashboard import (
     DashboardChannel,
     DashboardConversationMessage,
-    DashboardUserFeedback,
     FeedbackStatusFilter,
     QADashboardDetail,
     QADashboardRecord,
@@ -171,12 +169,8 @@ class QADashboardService:
             return None
         record = QARecord.from_cosmos(document)
 
-        messages, feedbacks, channel_names = await asyncio.gather(
+        messages, channel_names = await asyncio.gather(
             self._conversations.get_messages_by_conversation_id(
-                record.conversation_id,
-                record.conversation_type,
-            ),
-            self._conversations.get_feedback_by_conversation_id(
                 record.conversation_id,
                 record.conversation_type,
             ),
@@ -190,7 +184,7 @@ class QADashboardService:
 
         return QADashboardDetail(
             record=dashboard_record,
-            messages=_dashboard_messages(messages, feedbacks),
+            messages=_dashboard_messages(messages),
         )
 
     @staticmethod
@@ -349,9 +343,7 @@ def _conversation_title(content: str) -> str:
 
 def _dashboard_messages(
     messages: list[ConversationMessageItem],
-    feedbacks: list[ConversationFeedbackItem],
 ) -> list[DashboardConversationMessage]:
-    feedback_by_message = _feedback_by_message(messages, feedbacks)
     return [
         DashboardConversationMessage(
             id=message.id,
@@ -363,52 +355,9 @@ def _dashboard_messages(
                 message.extra_info.message_link if message.extra_info else None
             ),
             trace_id=message.trace_id,
-            user_feedback=feedback_by_message.get(message.id, []),
         )
         for message in messages
     ]
-
-
-def _feedback_by_message(
-    messages: list[ConversationMessageItem],
-    feedbacks: list[ConversationFeedbackItem],
-) -> dict[str, list[DashboardUserFeedback]]:
-    by_id = {message.id: message for message in messages}
-    bot_messages = [
-        message
-        for message in messages
-        if message.sender_role in (Role.System, Role.Assistant)
-    ]
-    result: dict[str, list[DashboardUserFeedback]] = {}
-    for item in feedbacks:
-        target = (
-            by_id.get(item.target_message_id)
-            if item.target_message_id
-            else None
-        )
-        if target is None and bot_messages:
-            created_at = item.feedback.created_at
-            candidates = (
-                [
-                    message
-                    for message in bot_messages
-                    if created_at is not None and message.created_at <= created_at
-                ]
-                if created_at is not None
-                else []
-            )
-            target = candidates[-1] if candidates else bot_messages[-1]
-        if target is None:
-            continue
-        result.setdefault(target.id, []).append(
-            DashboardUserFeedback(
-                reaction=item.feedback.reaction,
-                comment=item.feedback.comment,
-                reasons=item.feedback.reasons,
-                user_name=item.feedback.user_name,
-            )
-        )
-    return result
 
 
 def _as_utc_iso(value: datetime) -> str:

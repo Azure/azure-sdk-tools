@@ -803,12 +803,6 @@
         if (message.trace_id) {
           bubble.append(node("div", "muted small mono", `Trace: ${message.trace_id}`));
         }
-        for (const feedback of message.user_feedback) {
-          const parts = [label(feedback.reaction)];
-          if (feedback.reasons.length) parts.push(feedback.reasons.join(", "));
-          if (feedback.comment) parts.push(feedback.comment);
-          bubble.append(node("div", "feedback-note", parts.join(" · ")));
-        }
         messageList.append(bubble);
       }
       step.append(messageList);

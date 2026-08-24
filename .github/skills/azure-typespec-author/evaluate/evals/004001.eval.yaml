@@ -2,7 +2,7 @@ name: azure-typespec-author-eval
 description: Evaluation suite for azure-typespec-author.
 version: "1.0"
 type: capability # capability | regression
-area: "decorators"
+
 # Root-level environment
 environment: azsdk-mcp
 
@@ -10,7 +10,7 @@ environment: azsdk-mcp
 config:
   runs: 1 # Trials per stimulus
   timeout: "660s" # Seconds per trial
-  model: gpt-5.6-sol # Model for agent execution
+  model: claude-opus-4.6 #gpt-4o #claude-sonnet-4.6 # Model for agent execution
   executor: copilot-sdk # Which executor to use
 
 # Test cases
@@ -49,7 +49,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "^(edit|apply_patch|bash|powershell)$"
+            - "edit"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "skill-invocation"
         config:
@@ -69,7 +69,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "^(edit|apply_patch|bash|powershell)$"
+            - "edit"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "run-command"
         config:
@@ -90,7 +90,7 @@ stimuli:
       - type: "prompt"
         config:
           threshold: 0.88
-          model: "gpt-5.6-sol"
+          model: "claude-opus-4.6"
           scoring: "scale_1_10"
           prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."
     constraints:
@@ -106,7 +106,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "^(edit|apply_patch|bash|powershell)$"
+            - "edit"
       - type: "file-matches"
         config:
           path: "*.tsp"
@@ -114,7 +114,7 @@ stimuli:
       - type: "prompt"
         config:
           prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."
-          model: "gpt-5.6-sol"
+          model: "claude-opus-4.6"
           scoring: "scale_1_10"
           threshold: 0.88
     constraints:
@@ -123,9 +123,8 @@ stimuli:
 
 scoring:
   weights:
-    tool-calls: 0.15
-    prompt: 0.15
-    run-command: 0.15
-    skill-invocation: 0.15
-    file-matches: 0.4
-  threshold: 0.96
+    prompt: 1
+    run-command: 1
+    skill-invocation: 1
+    file-matches: 2
+  threshold: 0.93

@@ -2,7 +2,7 @@ name: azure-typespec-author-eval
 description: Evaluation suite for azure-typespec-author.
 version: "1.0"
 type: capability # capability | regression
-area: "versioning"
+
 # Root-level environment
 environment: azsdk-mcp
 
@@ -10,7 +10,7 @@ environment: azsdk-mcp
 config:
   runs: 1 # Trials per stimulus
   timeout: "660s" # Seconds per trial
-  model: gpt-5.6-sol # Model for agent execution
+  model: claude-opus-4.6 #gpt-4o #claude-sonnet-4.6 # Model for agent execution
   executor: copilot-sdk # Which executor to use
 
 # Test cases
@@ -28,11 +28,9 @@ stimuli:
         - src: ../fixtures/001-share-version-new-feature/main.tsp
           dest: Microsoft.Widget/Widget/main.tsp
         - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-          dest: package-lock.json
+          dest: Microsoft.Widget/Widget/package-lock.json
         - src: ../fixtures/Microsoft.Widget/Widget/package.json
-          dest: package.json
-        - src: ../fixtures/Microsoft.Widget/Widget/node_modules
-          dest: node_modules
+          dest: Microsoft.Widget/Widget/package.json
         - src: ../scripts/check-node-dependencies.js
           dest: check-node-dependencies.js
         - src: ../fixtures/001-share-version-new-feature/readme.md
@@ -41,11 +39,13 @@ stimuli:
           dest: Microsoft.Widget/Widget/shared.tsp
         - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
           dest: Microsoft.Widget/Widget/tspconfig.yaml
+      commands:
+        - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
     graders:
       - type: "tool-calls"
         config:
           required:
-            - "^(edit|apply_patch|bash|powershell)$"
+            - "edit"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "skill-invocation"
         config:
@@ -65,7 +65,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "^(edit|apply_patch|bash|powershell)$"
+            - "edit"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "run-command"
         config:
@@ -95,7 +95,7 @@ stimuli:
       - type: "prompt"
         config:
           threshold: 0.88
-          model: "gpt-5.6-sol"
+          model: "claude-opus-4.6"
           scoring: "scale_1_10"
           prompt: "Verify change scope and quality. Preview-after-preview convention requires renaming the old preview to the new one. Only penalize truly unrelated edits."
     constraints:
@@ -111,7 +111,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "^(edit|apply_patch|bash|powershell)$"
+            - "edit"
       - type: "file-matches"
         config:
           path: "Microsoft.Widget/Widget/main.tsp"
@@ -127,7 +127,7 @@ stimuli:
       - type: "prompt"
         config:
           prompt: "Verify change scope and quality. Preview-after-preview convention requires renaming the old preview to the new one. Only penalize truly unrelated edits."
-          model: "gpt-5.6-sol"
+          model: "claude-opus-4.6"
           scoring: "scale_1_10"
           threshold: 0.88
     constraints:
@@ -136,9 +136,8 @@ stimuli:
 
 scoring:
   weights:
-    tool-calls: 0.125
-    prompt: 0.125
-    run-command: 0.125
-    skill-invocation: 0.125
-    file-matches: 0.5
+    prompt: 1
+    run-command: 1
+    skill-invocation: 1
+    file-matches: 3
   threshold: 0.97

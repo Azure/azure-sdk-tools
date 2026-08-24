@@ -2,19 +2,18 @@ name: azure-typespec-author-eval
 description: Evaluation suite for azure-typespec-author.
 version: '1.0'
 type: capability
-area: "dataplane"
 environment: azsdk-mcp
 config:
   runs: 1
   timeout: 660s
-  model: gpt-5.6-sol
+  model: claude-opus-4.6
   executor: copilot-sdk
 stimuli:
 - name: 006006-dp-version-add-stable-trigger
   tags:
     suite: dataplane
     mode: trigger
-  prompt: Add a new stable version `2023-06-01` to the Versions enum and carry over all features from the latest preview version `2022-11-01-preview` into the new stable version.
+  prompt: Add a new stable version `2023-06-01` to the Versions enum.
   environment: &id001
     files:
     - src: ../fixtures/006006-dp-version-add-stable/main.tsp
@@ -34,7 +33,7 @@ stimuli:
     type: tool-calls
     config:
       required:
-      - "^(edit|apply_patch|bash|powershell)$"
+      - edit
       - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: skill-invocation
     config:
@@ -47,7 +46,7 @@ stimuli:
   tags:
     suite: dataplane
     mode: forced
-  prompt: '@azure-typespec-author Add a new stable version `2023-06-01` to the Versions enum and carry over all features from the latest preview version `2022-11-01-preview` into the new stable version.'
+  prompt: '@azure-typespec-author Add a new stable version `2023-06-01` to the Versions enum.'
   environment: *id001
   graders:
   - *id002
@@ -77,13 +76,13 @@ stimuli:
   tags:
     suite: dataplane
     mode: no-skill
-  prompt: Add a new stable version `2023-06-01` to the Versions enum and carry over all features from the latest preview version `2022-11-01-preview` into the new stable version.
+  prompt: Add a new stable version `2023-06-01` to the Versions enum.
   environment: *id001
   graders:
   - type: tool-calls
     config:
       required:
-      - "^(edit|apply_patch|bash|powershell)$"
+      - edit
   - *id003
   - *id004
   - *id005
@@ -92,9 +91,9 @@ stimuli:
     max_tokens: 100000
 scoring:
   weights:
-    tool-calls: 0.125
-    skill-invocation: 0.125
-    run-command: 0.125
-    file-matches: 0.375
-    file-not-matches: 0.25
+    tool-calls: 1
+    skill-invocation: 1
+    run-command: 1
+    file-matches: 3
+    file-not-matches: 2
   threshold: 0.95

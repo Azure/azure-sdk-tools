@@ -2,15 +2,15 @@ name: azure-typespec-author-eval
 description: Evaluation suite for azure-typespec-author.
 version: "1.0"
 type: capability # capability | regression
-area: "versioning"
+
 # Root-level environment
 environment: azsdk-mcp
 
 # Execution configuration
-defaults:
+config:
   runs: 1 # Trials per stimulus
   timeout: "660s" # Seconds per trial
-  model: gpt-5.6-sol # Model for agent execution
+  model: claude-opus-4.6 #gpt-4o #claude-sonnet-4.6 # Model for agent execution
   executor: copilot-sdk # Which executor to use
 
 # Test cases
@@ -85,7 +85,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "^(edit|apply_patch|bash|powershell)$"
+            - "edit"
             - "web_fetch"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
           disallowed:
@@ -108,7 +108,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "^(edit|apply_patch|bash|powershell)$"
+            - "edit"
             - "web_fetch"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
           disallowed:
@@ -125,45 +125,33 @@ stimuli:
         config:
           command: "tsp compile ."
           expected_exit_code: 0
-      - &file_exists
-        type: "file-exists"
+      - type: "file-exists"
         config:
           path: "examples/2025-01-01/Employees_Get_MaximumSet_Gen.json"
-      - &file_not_exists
-        type: "file-not-exists"
+      - type: "file-not-exists"
         config:
           path: "examples/2024-10-01-preview/Employees_Get_MaximumSet_Gen.json"
-      - &file_matches
-        type: "file-matches"
+      - type: "file-matches"
         config:
           pattern: "2025-01-01"
           path: "main.tsp"
-      - &file_not_matches
-        type: "file-not-matches"
+      - type: "file-not-matches"
         config:
           pattern: "2024-10-01-preview"
           path: "main.tsp"
-      - &file_not_matches_removed_property
-        type: "file-not-matches"
-        name: "file-not-matches-removed-property"
+      - type: "file-not-matches"
         config:
           pattern: 'workLocation\?: WorkLocation;'
           path: "employee.tsp"
-      - &file_matches_renamed_property
-        type: "file-matches"
-        name: "file-matches-renamed-property"
+      - type: "file-matches"
         config:
           pattern: '@removed\((?:Microsoft\.Widget\.)?Versions\.v2025_01_01\)\s*@renamedFrom\((?:Microsoft\.Widget\.)?Versions\.v2025_01_01, "age"\)\s*oldAge\?: int32;'
           path: "employee.tsp"
-      - &file_matches_added_property
-        type: "file-matches"
-        name: "file-matches-added-property"
+      - type: "file-matches"
         config:
           pattern: '@added\((?:Microsoft\.Widget\.)?Versions\.v2025_01_01\)\s*age\?: int32 = 21;'
           path: "employee.tsp"
-      - &file_not_matches_old_version
-        type: "file-not-matches"
-        name: "file-not-matches-old-version"
+      - type: "file-not-matches"
         config:
           pattern: "v2024_10_01_preview"
           path: "employee.tsp"
@@ -180,26 +168,47 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "^(edit|apply_patch|bash|powershell)$"
-      - *file_exists
-      - *file_not_exists
-      - *file_matches
-      - *file_not_matches
-      - *file_not_matches_removed_property
-      - *file_matches_renamed_property
-      - *file_matches_added_property
-      - *file_not_matches_old_version
+            - "edit"
+      - type: "file-exists"
+        config:
+          path: "examples/2025-01-01/Employees_Get_MaximumSet_Gen.json"
+      - type: "file-not-exists"
+        config:
+          path: "examples/2024-10-01-preview/Employees_Get_MaximumSet_Gen.json"
+      - type: "file-matches"
+        config:
+          path: "main.tsp"
+          pattern: "2025-01-01"
+      - type: "file-not-matches"
+        config:
+          path: "main.tsp"
+          pattern: "2024-10-01-preview"
+      - type: "file-not-matches"
+        config:
+          path: "employee.tsp"
+          pattern: 'workLocation\?: WorkLocation;'
+      - type: "file-matches"
+        config:
+          path: "employee.tsp"
+          pattern: '@removed\((?:Microsoft\.Widget\.)?Versions\.v2025_01_01\)\s*@renamedFrom\((?:Microsoft\.Widget\.)?Versions\.v2025_01_01, "age"\)\s*oldAge\?: int32;'
+      - type: "file-matches"
+        config:
+          path: "employee.tsp"
+          pattern: '@added\((?:Microsoft\.Widget\.)?Versions\.v2025_01_01\)\s*age\?: int32 = 21;'
+      - type: "file-not-matches"
+        config:
+          path: "employee.tsp"
+          pattern: "v2024_10_01_preview"
     constraints:
       max_turns: 6
       max_tokens: 100000
 
 scoring:
   weights:
-    tool-calls: 0.1
-    file-not-matches: 0.3
-    skill-invocation: 0.1
-    file-exists: 0.1
-    file-matches: 0.2
-    run-command: 0.1
-    file-not-exists: 0.1
+    file-not-matches: 3
+    skill-invocation: 1
+    file-exists: 1
+    file-matches: 2
+    run-command: 1
+    file-not-exists: 1
   threshold: 1

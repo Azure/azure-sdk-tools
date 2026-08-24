@@ -2,15 +2,15 @@ name: azure-typespec-author-eval
 description: Evaluation suite for azure-typespec-author.
 version: "1.0"
 type: capability # capability | regression
-area: "decorators"
+
 # Root-level environment
 environment: azsdk-mcp
 
 # Execution configuration
-defaults:
+config:
   runs: 1 # Trials per stimulus
   timeout: "660s" # Seconds per trial
-  model: gpt-5.6-sol # Model for agent execution
+  model: claude-opus-4.6 #gpt-4o #claude-sonnet-4.6 # Model for agent execution
   executor: copilot-sdk # Which executor to use
 
 # Test cases
@@ -49,7 +49,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "^(edit|apply_patch|bash|powershell)$"
+            - "edit"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "skill-invocation"
         config:
@@ -65,15 +65,11 @@ stimuli:
     prompt: |
       @azure-typespec-author add minLength decorator to set the minLength 1 for resource name parameter of Employee resource
     environment: *shared_environment
-    rubric: &shared_rubric
-      - The Employee resource name parameter has a minLength constraint of 1.
-      - The constraint is applied to Employee.name using a valid TypeSpec decorator pattern.
-      - Changes are limited to the requested constraint and contain no unrelated edits.
     graders:
       - type: "tool-calls"
         config:
           required:
-            - "^(edit|apply_patch|bash|powershell)$"
+            - "edit"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "run-command"
         config:
@@ -87,16 +83,14 @@ stimuli:
         config:
           command: "tsp compile ."
           expected_exit_code: 0
-      - &file_matches
-        type: "file-matches"
+      - type: "file-matches"
         config:
           pattern: '@@minLength\(Employee\.name,\s*1\)'
           path: "*.tsp"
-      - &prompt
-        type: "prompt"
+      - type: "prompt"
         config:
           threshold: 0.88
-          model: "gpt-5.6-sol"
+          model: "claude-opus-4.6"
           scoring: "scale_1_10"
           prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."
     constraints:
@@ -108,23 +102,29 @@ stimuli:
       mode: "no-skill"
     prompt: "add minLength decorator to set the minLength 1 for resource name parameter of Employee resource"
     environment: *shared_environment
-    rubric: *shared_rubric
     graders:
       - type: "tool-calls"
         config:
           required:
-            - "^(edit|apply_patch|bash|powershell)$"
-      - *file_matches
-      - *prompt
+            - "edit"
+      - type: "file-matches"
+        config:
+          path: "*.tsp"
+          pattern: '@@minLength\(Employee\.name,\s*1\)'
+      - type: "prompt"
+        config:
+          prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."
+          model: "claude-opus-4.6"
+          scoring: "scale_1_10"
+          threshold: 0.88
     constraints:
       max_turns: 10
       max_tokens: 100000
 
 scoring:
   weights:
-    tool-calls: 0.15
-    prompt: 0.15
-    run-command: 0.15
-    skill-invocation: 0.15
-    file-matches: 0.4
-  threshold: 0.96
+    prompt: 1
+    run-command: 1
+    skill-invocation: 1
+    file-matches: 2
+  threshold: 0.93

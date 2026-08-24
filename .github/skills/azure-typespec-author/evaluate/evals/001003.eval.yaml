@@ -2,15 +2,15 @@ name: azure-typespec-author-eval
 description: Evaluation suite for azure-typespec-author.
 version: "1.0"
 type: capability # capability | regression
-area: "versioning"
+
 # Root-level environment
 environment: azsdk-mcp
 
 # Execution configuration
-defaults:
+config:
   runs: 1 # Trials per stimulus
   timeout: "660s" # Seconds per trial
-  model: gpt-5.6-sol # Model for agent execution
+  model: claude-opus-4.6 #gpt-4o #claude-sonnet-4.6 # Model for agent execution
   executor: copilot-sdk # Which executor to use
 
 # Test cases
@@ -45,7 +45,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "^(edit|apply_patch|bash|powershell)$"
+            - "edit"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "skill-invocation"
         config:
@@ -65,7 +65,7 @@ stimuli:
       - type: "tool-calls"
         config:
           required:
-            - "^(edit|apply_patch|bash|powershell)$"
+            - "edit"
             - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "run-command"
         config:
@@ -79,20 +79,15 @@ stimuli:
         config:
           command: "tsp compile ."
           expected_exit_code: 0
-      - &file_matches
-        type: "file-matches"
+      - type: "file-matches"
         config:
           pattern: "2025-05-04-preview"
           path: "main.tsp"
-      - &file_matches_optional_property
-        type: "file-matches"
-        name: "file-matches-optional-property"
+      - type: "file-matches"
         config:
           pattern: "@madeOptional"
           path: "employee.tsp"
-      - &file_matches_api_version
-        type: "file-matches"
-        name: "file-matches-api-version"
+      - type: "file-matches"
         config:
           pattern: "2025-05-04-preview|v2025_05_04_preview"
           path: "employee.tsp"
@@ -105,22 +100,27 @@ stimuli:
       mode: "no-skill"
     prompt: "change the property age of EmployeeProperties from required to optional only for api version 2025-05-04-preview"
     environment: *shared_environment
-    rubric:
-      - EmployeeProperties.age becomes optional starting in API version 2025-05-04-preview using valid TypeSpec versioning.
-      - The property remains required in earlier API versions.
-      - Changes are limited to the requested optionality change and contain no unrelated edits.
     graders:
       - type: "tool-calls"
         config:
           required:
-            - "^(edit|apply_patch|bash|powershell)$"
-      - *file_matches
-      - *file_matches_optional_property
-      - *file_matches_api_version
+            - "edit"
+      - type: "file-matches"
+        config:
+          path: "main.tsp"
+          pattern: "2025-05-04-preview"
+      - type: "file-matches"
+        config:
+          path: "employee.tsp"
+          pattern: "@madeOptional"
+      - type: "file-matches"
+        config:
+          path: "employee.tsp"
+          pattern: "2025-05-04-preview|v2025_05_04_preview"
       - type: "prompt"
         config:
           prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."
-          model: "gpt-5.6-sol"
+          model: "claude-opus-4.6"
           scoring: "scale_1_10"
           threshold: 0.88
     constraints:
@@ -129,9 +129,8 @@ stimuli:
 
 scoring:
   weights:
-    tool-calls: 0.15
-    prompt: 0.15
-    run-command: 0.15
-    skill-invocation: 0.15
-    file-matches: 0.4
+    prompt: 1
+    run-command: 1
+    skill-invocation: 1
+    file-matches: 2
   threshold: 0.96

@@ -7,14 +7,13 @@ the process.
 import asyncio
 import logging
 import re
-from typing import Callable
 
 from agent_framework import TruncationStrategy
 from agent_framework.foundry import FoundryChatClient
 from azure.ai.projects.aio import AIProjectClient
 from openai import AsyncAzureOpenAI, AsyncOpenAI
 
-from config.app_config import get as cfg
+from config.app_config import Settings, get as cfg
 from utils.azure_credential import get_credential
 
 logger = logging.getLogger(__name__)
@@ -30,7 +29,7 @@ _embedding_client: AsyncAzureOpenAI | None = None
 
 
 def create_project_client(
-    settings: Callable[[str, str | None], str | None],
+    settings: Settings,
 ) -> AIProjectClient:
     """Create a project client from an explicit configuration scope."""
     endpoint = settings("AI_FOUNDRY_PROJECT_ENDPOINT", None)
@@ -47,7 +46,7 @@ def create_project_client(
 
 def create_openai_client(
     project_client: AIProjectClient,
-    settings: Callable[[str, str | None], str | None],
+    settings: Settings,
 ) -> AsyncOpenAI:
     """Create a hosted-agent OpenAI client from an explicit config scope."""
     agent_name = settings("AI_FOUNDRY_AGENT_NAME", "azure-sdk-chat-agent")

@@ -15,7 +15,7 @@ from __future__ import annotations
 import logging
 import os
 from dataclasses import dataclass
-from typing import overload
+from typing import overload, Protocol
 
 from azure.appconfiguration.aio import AzureAppConfigurationClient
 
@@ -24,6 +24,16 @@ from utils.azure_credential import get_credential
 _logger = logging.getLogger(__name__)
 
 _settings: dict[str, str] | None = None
+
+
+class Settings(Protocol):
+    """Callable configuration lookup preserving default-value narrowing."""
+
+    @overload
+    def __call__(self, key: str, default: str) -> str: ...
+
+    @overload
+    def __call__(self, key: str, default: None = None) -> str | None: ...
 
 
 @dataclass(frozen=True)

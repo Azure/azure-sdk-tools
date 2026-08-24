@@ -49,6 +49,7 @@ from utils.azure_monitor import (
     record_chat_duration,
 )
 from utils.background_tasks import BackgroundTaskTracker
+from utils.dashboard_identity import DashboardIdentity, get_dashboard_identity
 import config.app_config as app_config
 from config.tenant_config import TenantID
 import uvicorn
@@ -155,6 +156,12 @@ _QA_DASHBOARD_PATH = Path(__file__).parent / "static" / "qa_records_dashboard.ht
 async def qa_records_dashboard() -> FileResponse:
     """Serve the read-only QA record dashboard."""
     return FileResponse(_QA_DASHBOARD_PATH)
+
+
+@app.get("/api/dashboard/me", response_model=DashboardIdentity)
+async def get_dashboard_user(request: Request) -> DashboardIdentity:
+    """Return display identity supplied by EasyAuth, if present."""
+    return get_dashboard_identity(request.headers.get("x-ms-client-principal"))
 
 
 @app.get("/api/dashboard/qa-records", response_model=QARecordPage)

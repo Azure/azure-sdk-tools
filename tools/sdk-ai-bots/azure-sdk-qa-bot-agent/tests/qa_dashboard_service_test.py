@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import base64
+import json
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
@@ -24,6 +26,7 @@ from models.qa_dashboard import (
 )
 from models.qa_record import FeedbackState, FeedbackStatus, QARecord, QAStatus
 from services.qa_dashboard_service import QADashboardService
+from utils.dashboard_identity import get_dashboard_identity
 
 
 class _FakeContainer:
@@ -94,6 +97,46 @@ def _message(
         conversation_type=ConversationType.teams_channel,
         conversation_partition="teams_channel:conversation-1",
     )
+
+
+def _client_principal(*claims: tuple[str, str]) -> str:
+    principal = {
+        "auth_typ": "aad",
+        "claims": [
+            {"typ": claim_type, "val": claim_value}
+            for claim_type, claim_value in claims
+        ],
+    }
+    return base64.b64encode(json.dumps(principal).encode()).decode()
+
+
+def test_dashboard_identity_uses_easyauth_display_name() -> None:
+    identity = get_dashboard_identity(
+        _client_principal(("name", "Ada Lovelace"))
+    )
+
+    assert identity == {
+        "authenticated": True,
+        "display_name": "Ada Lovelace",
+    }
+
+
+@pytest.mark.parametrize(
+    "client_principal",
+    [
+        None,
+        "not base64",
+        base64.b64encode(b"[]").decode(),
+        base64.b64encode(b'{"claims": null}').decode(),
+    ],
+)
+def test_dashboard_identity_falls_back_to_local_development(
+    client_principal: str | None,
+) -> None:
+    assert get_dashboard_identity(client_principal) == {
+        "authenticated": False,
+        "display_name": "Local development",
+    }
 
 
 @pytest.mark.asyncio
@@ -323,12 +366,29 @@ async def test_dashboard_routes() -> None:
                     "tenant_id": "tenant-a",
                 },
             )
+            local_user_response = await client.get("/api/dashboard/me")
+            authenticated_user_response = await client.get(
+                "/api/dashboard/me",
+                headers={
+                    "x-ms-client-principal": _client_principal(
+                        ("name", "Ada Lovelace")
+                    )
+                },
+            )
             page_response = await client.get("/dashboard/qa-records")
 
     assert api_response.status_code == 200
     assert api_response.json()["total"] == 1
     assert detail_response.status_code == 200
     assert detail_response.json()["record"]["channel_name"] == "Channel A"
+    assert local_user_response.json() == {
+        "authenticated": False,
+        "display_name": "Local development",
+    }
+    assert authenticated_user_response.json() == {
+        "authenticated": True,
+        "display_name": "Ada Lovelace",
+    }
     assert page_response.status_code == 200
     assert "Chatbot Evolution Dashboard" in page_response.text
     service.list_records.assert_awaited_once()
@@ -372,3 +432,6 @@ def test_dashboard_html_uses_text_content_for_record_data() -> None:
     assert "Open remediation issue" in html
     assert "Issue details are temporarily unavailable." not in html
     assert "detail.issue" not in html
+    assert 'fetch("/api/dashboard/me", {cache: "no-store"})' in html
+    assert 'href="/.auth/logout"' in html
+    assert "Local development" not in html

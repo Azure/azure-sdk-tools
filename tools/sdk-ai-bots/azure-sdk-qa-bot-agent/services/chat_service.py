@@ -8,9 +8,8 @@ import json
 import logging
 import re
 from urllib.parse import urlparse
-from typing import Callable
 
-from config.app_config import get as cfg
+from config.app_config import Settings, get as cfg
 from config.tenant_config import (
     get_tenant_scope_description,
 )
@@ -77,7 +76,7 @@ class ChatService:
     def __init__(
         self,
         *,
-        settings: Callable[[str, str | None], str | None] | None = None,
+        settings: Settings | None = None,
         project_client: AIProjectClient | None = None,
         openai_client: AsyncOpenAI | None = None,
     ) -> None:

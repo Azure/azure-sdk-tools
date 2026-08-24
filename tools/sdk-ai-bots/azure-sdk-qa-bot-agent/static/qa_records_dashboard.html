@@ -21,12 +21,23 @@
     * { box-sizing: border-box; }
     body { margin: 0; }
     header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 24px;
       padding: 22px 28px;
       color: white;
       background: linear-gradient(120deg, #182b49, #124e78);
     }
     header h1 { margin: 0; font-size: 24px; }
     header p { margin: 6px 0 0; color: #d9e4f5; }
+    .account {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      white-space: nowrap;
+    }
+    .account a { color: white; font-weight: 600; }
     main { padding: 20px 28px 32px; }
     .filters {
       display: grid;
@@ -399,7 +410,12 @@
     }
     @media (max-width: 700px) {
       main { padding: 14px; }
-      header { padding: 18px 14px; }
+      header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+        padding: 18px 14px;
+      }
       .filters, .meta-grid { grid-template-columns: 1fr; }
       .detail-content { padding: 16px 12px 24px; }
       .timeline { padding-left: 24px; }
@@ -409,8 +425,14 @@
 </head>
 <body>
   <header>
-    <h1>Chatbot Evolution Dashboard</h1>
-    <p>Conversation assessment, diagnosis, remediation, and validation</p>
+    <div>
+      <h1>Chatbot Evolution Dashboard</h1>
+      <p>Conversation assessment, diagnosis, remediation, and validation</p>
+    </div>
+    <div class="account">
+      <span id="user-name">Loading identity...</span>
+      <a id="sign-out" href="/.auth/logout" hidden>Sign out</a>
+    </div>
   </header>
   <main>
     <form id="filters" class="filters">
@@ -538,7 +560,9 @@
       details: document.querySelector("#details"),
       detailsTitle: document.querySelector("#details-title"),
       detailsSubtitle: document.querySelector("#details-subtitle"),
-      detailsContent: document.querySelector("#details-content")
+      detailsContent: document.querySelector("#details-content"),
+      userName: document.querySelector("#user-name"),
+      signOut: document.querySelector("#sign-out")
     };
 
     function node(tag, className = "", text = "") {
@@ -1036,6 +1060,19 @@
       }
     }
 
+    async function loadIdentity() {
+      try {
+        const response = await fetch("/api/dashboard/me", {cache: "no-store"});
+        if (!response.ok) throw new Error(`Request failed (${response.status})`);
+        const identity = await response.json();
+        elements.userName.textContent = identity.display_name;
+        elements.signOut.hidden = !identity.authenticated;
+      } catch {
+        elements.userName.textContent = "Identity unavailable";
+        elements.signOut.hidden = true;
+      }
+    }
+
     elements.form.addEventListener("submit", event => {
       event.preventDefault();
       page = 1;
@@ -1064,6 +1101,7 @@
       elements.details.close();
     });
 
+    loadIdentity();
     loadRecords();
   </script>
 </body>

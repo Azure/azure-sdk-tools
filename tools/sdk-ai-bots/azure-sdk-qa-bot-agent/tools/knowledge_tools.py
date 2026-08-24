@@ -7,13 +7,7 @@ import logging
 from enum import Enum
 from typing import Annotated
 
-from config.tenant_config import (
-    SRC_WIKI_CONCEPT,
-    SRC_WIKI_ENTITY,
-    TenantID,
-    get_knowledge_source,
-    get_tenant_config,
-)
+from config.tenant_config import TenantID, get_knowledge_source, get_tenant_config
 from config.app_config import get as cfg
 from models.knowledge import KnowledgeChunk, Reference, SearchKnowledgeBaseResult
 from tools import tool
@@ -33,8 +27,9 @@ _MAX_CONTENT_CHARS_PER_RESULT = 3000
 _WIKI_PAGE_CONTENT_CHARS = 1800
 _WIKI_SOURCE_CONTENT_CHARS = 1100
 
-# Cross-document wiki pages; reachable only through wiki_search.
-_WIKI_ONLY_SOURCES = (SRC_WIKI_ENTITY, SRC_WIKI_CONCEPT)
+# Internal index contexts for cross-document Wiki pages. They are not
+# model-selectable knowledge sources.
+_WIKI_CROSS_DOCUMENT_CONTEXTS = ("wiki_entity", "wiki_concept")
 
 # Wiki pages kept as full evidence.
 _WIKI_TOP = 6
@@ -150,7 +145,7 @@ class KnowledgeTools:
         the original question, related concepts, and potential solutions.
         """
         # Fall back to tenant-configured sources when none are specified
-        sources = _raw_source_names(tenant_id, sources)
+        sources = _source_names(tenant_id, sources)
 
         search_client = get_search_client()
 
@@ -240,14 +235,15 @@ class KnowledgeTools:
         search_mode: Annotated[str, _SEARCH_MODE_DESC] = "quick",
     ) -> SearchKnowledgeBaseResult:
         """Search wiki pages and their routed source chunks."""
-        sources = _wiki_source_names(tenant_id, sources)
+        sources = _source_names(tenant_id, sources)
         search_client = get_search_client()
         source_filters = _resolve_source_filters(sources, tenant_id, None)
+        wiki_page_filters = _wiki_page_filters(tenant_id, source_filters)
         capped_queries = queries[:3]
 
         raw = await search_client.fused_search(
             capped_queries,
-            source_filters,
+            wiki_page_filters,
             extra_filter=WIKI_FILTER,
             use_agentic=search_mode == SearchMode.deep.value,
         )
@@ -300,32 +296,46 @@ def _tenant_source_names(tenant_id: str) -> list[str]:
     return [src.name for src in config.sources] if config else []
 
 
-def _raw_source_names(tenant_id: str, sources: list[str] | None) -> list[str]:
-    """Source names for raw-chunk search.
+def _source_names(tenant_id: str, sources: list[str] | None) -> list[str]:
+    """Resolve model-selectable source names for either retrieval track."""
+    tenant_sources = _tenant_source_names(tenant_id)
+    names = list(sources) if sources else tenant_sources
+    ignored = [n for n in names if n in _WIKI_CROSS_DOCUMENT_CONTEXTS]
+    if ignored:
+        logger.warning("Ignoring internal Wiki contexts requested as sources: %s", ignored)
+    kept = [n for n in names if n not in _WIKI_CROSS_DOCUMENT_CONTEXTS]
+    if kept:
+        return kept
+    return tenant_sources
 
-    Wiki page sources carry their own ``context_id`` and never match a raw
-    chunk, so they are dropped — unless that would empty the list, which would
-    leave the search unfiltered.
-    """
-    names = sources or _tenant_source_names(tenant_id)
-    kept = [n for n in names if n not in _WIKI_ONLY_SOURCES]
-    return kept or names
 
+def _wiki_page_filters(
+    tenant_id: str,
+    source_filters: dict[str, str],
+) -> dict[str, str]:
+    """Add internal Wiki page contexts when enabled for the tenant."""
+    tenant_config = get_tenant_config(TenantID(tenant_id))
+    enabled = bool(
+        tenant_config and tenant_config.enable_wiki_cross_document_pages
+    )
+    if not source_filters:
+        if enabled:
+            return {}
+        exclusions = " and ".join(
+            f"context_id ne '{context}'"
+            for context in _WIKI_CROSS_DOCUMENT_CONTEXTS
+        )
+        return {"wiki_summaries": exclusions}
 
-def _wiki_source_names(tenant_id: str, sources: list[str] | None) -> list[str]:
-    """Source names for ``wiki_search``.
-
-    Topical scoping from the caller must not drop the tenant's cross-document
-    wiki sources, which is what reduces wiki retrieval to summary pages only.
-    """
-    if not sources:
-        return _tenant_source_names(tenant_id)
-    extra = [
-        n
-        for n in _tenant_source_names(tenant_id)
-        if n in _WIKI_ONLY_SOURCES and n not in sources
-    ]
-    return list(sources) + extra
+    page_filters = dict(source_filters)
+    if enabled:
+        page_filters.update(
+            {
+                context: f"context_id eq '{context}'"
+                for context in _WIKI_CROSS_DOCUMENT_CONTEXTS
+            }
+        )
+    return page_filters
 
 
 def _resolve_source_filters(

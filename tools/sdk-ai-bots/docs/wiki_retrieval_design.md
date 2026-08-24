@@ -67,9 +67,9 @@ Wiki pages join this scheme through the `context_id` written at build time:
 | `entity` | `wiki_entity` | fixed, `wiki_reduce.CONTEXT_BY_TYPE` |
 | `concept` | `wiki_concept` | fixed |
 
-Summary pages therefore inherit their source document's tenant scope automatically and need no configuration. Cross-document entity/concept pages cannot — they are synthesised from many documents — so they carry two dedicated contexts that a tenant opts into by listing `SRC_WIKI_ENTITY` / `SRC_WIKI_CONCEPT` among its sources.
+Summary pages therefore inherit their source document's tenant scope automatically and need no configuration. Cross-document entity/concept pages cannot — they are synthesised from many documents — so they carry two internal contexts. These contexts are not registered knowledge sources; `wiki_search` adds their filters by default, and a tenant can opt out with `enable_wiki_cross_document_pages=False`.
 
-The consequence is the cross-document scoping limitation below: a tenant reading `wiki_entity` can see facts synthesised from documents outside its own source list.
+The consequence is the cross-document scoping limitation below: a tenant with cross-document Wiki pages enabled can see facts synthesised from documents outside its own source list.
 
 ## Update model
 

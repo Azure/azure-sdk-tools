@@ -64,11 +64,11 @@ clean state:
 The agent scopes retrieval with an OData filter on `context_id`, using the source names each tenant is configured with. Pages join that scheme through the `context_id` written at build time:
 
 * `summary` pages take the **first path segment of their source blob** (`typespec_docs/x.md` → `typespec_docs`), so they inherit their source document's tenant scope with no configuration.
-* `entity` / `concept` pages are synthesized from many documents and cannot inherit one scope, so they carry the fixed `wiki_entity` / `wiki_concept` contexts. A tenant opts into them by listing those sources in its config.
+* `entity` / `concept` pages are synthesized from many documents and cannot inherit one scope, so they carry the fixed `wiki_entity` / `wiki_concept` contexts. These are internal index contexts, not knowledge sources; `enable_wiki_cross_document_pages` controls them per tenant and defaults to enabled.
 
 Because the cross-document contexts are shared, a tenant reading them can see facts synthesized from documents outside its own source list. This is accepted: the corpus is public documentation and tenants map to topic channels, not access boundaries.
 
-The agent keeps the two scopes from leaking into each other: raw-chunk search drops `wiki_entity` / `wiki_concept` from its source list, since those contexts never match a raw chunk, and `wiki_search` adds the tenant's wiki sources back even when the caller scopes the search to a topical source.
+`wiki_search` adds the internal entity/concept context filters unless a tenant explicitly disables them. Its source backfill remains scoped to the tenant's ordinary knowledge sources, so the internal Wiki contexts never enter raw retrieval or the model-selectable source list.
 
 ## Configuration
 

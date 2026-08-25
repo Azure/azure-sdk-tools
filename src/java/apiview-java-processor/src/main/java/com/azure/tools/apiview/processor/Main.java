@@ -33,45 +33,27 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 public class Main {
-    private static final String RENDERER_OPTION_PREFIX = "--renderer=";
-
     // expected argument order:
     // [--renderer=json|markdown] [inputFiles] <outputDirectory>
     public static void main(String[] args) {
-        if (args.length != 2 && args.length != 3) {
+        final CommandLineOptions options;
+        try {
+            options = CommandLineOptions.parse(args);
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
             printUsage();
             System.exit(-1);
-        }
-
-        final boolean hasRendererOption = args.length == 3 && args[0].startsWith(RENDERER_OPTION_PREFIX);
-        if (args.length == 3 && !hasRendererOption) {
-            printUsage();
-            System.exit(-1);
+            return;
         }
 
         long startMillis = System.currentTimeMillis();
-        Renderer selectedRenderer = Renderer.JSON;
-        if (hasRendererOption) {
-            try {
-                selectedRenderer = Renderer.fromValue(args[0].substring(RENDERER_OPTION_PREFIX.length()));
-            } catch (IllegalArgumentException e) {
-                System.out.println(e.getMessage());
-                printUsage();
-                System.exit(-1);
-            }
-        }
-        final Renderer renderer = selectedRenderer;
-        final int positionalArgumentOffset = hasRendererOption ? 1 : 0;
-        final String jarFiles = args[positionalArgumentOffset];
-        final String[] jarFilesArray = jarFiles.split(",");
-
-        final File outputDir = new File(args[positionalArgumentOffset + 1]);
 
         System.out.println("Running with following configuration:");
-        System.out.printf("  Output directory: '%s'%n", outputDir);
-        System.out.printf("  Renderer: %s%n", renderer.value);
+        System.out.printf("  Output directory: '%s'%n", options.getOutputDirectory());
+        System.out.printf("  Renderer: %s%n", options.getRenderer().getValue());
 
-        Arrays.stream(jarFilesArray).forEach(jarFile -> run(new File(jarFile), outputDir, renderer));
+        Arrays.stream(options.getJarFiles())
+            .forEach(jarFile -> run(new File(jarFile), options.getOutputDirectory(), options.getRenderer()));
         System.out.println("Finished processing in " + (System.currentTimeMillis() - startMillis) + "ms");
     }
 
@@ -86,10 +68,10 @@ public class Main {
      * gzipped file.
      */
     public static File[] run(File jarFile, File outputDir) {
-        return run(jarFile, outputDir, Renderer.JSON);
+        return run(jarFile, outputDir, OutputRenderer.JSON);
     }
 
-    private static File[] run(File jarFile, File outputDir, Renderer renderer) {
+    private static File[] run(File jarFile, File outputDir, OutputRenderer renderer) {
         System.out.printf("  Processing input .jar file: '%s'%n", jarFile);
 
         if (!jarFile.exists()) {
@@ -104,15 +86,15 @@ public class Main {
             }
         }
 
-        final String outputFileName = jarFile.getName().substring(0, jarFile.getName().length() - 4);
+        final String outputFileNameBase = jarFile.getName().substring(0, jarFile.getName().length() - 4);
         final Optional<APIListing> apiListing = processFile(jarFile);
 
         if (apiListing.isPresent()) {
             switch (renderer) {
                 case JSON:
-                    return renderJson(apiListing.get(), outputDir, outputFileName);
+                    return renderJson(apiListing.get(), outputDir, outputFileNameBase);
                 case MARKDOWN:
-                    return renderMarkdown(apiListing.get(), outputDir, outputFileName);
+                    return renderMarkdown(apiListing.get(), outputDir, outputFileNameBase);
                 default:
                     throw new IllegalStateException("Unsupported renderer: " + renderer);
             }
@@ -121,9 +103,9 @@ public class Main {
         return new File[] { };
     }
 
-    private static File[] renderJson(APIListing apiListing, File outputDir, String outputFileName) {
+    private static File[] renderJson(APIListing apiListing, File outputDir, String outputFileNameBase) {
         File[] files = new File[Constants.GZIP_OUTPUT ? 2 : 1];
-        files[0] = new File(outputDir, outputFileName + ".json");
+        files[0] = new File(outputDir, outputFileNameBase + ".json");
         apiListing.toFile(files[0], false);
         System.out.println("  Output written to file: " + files[0]);
 
@@ -165,7 +147,7 @@ public class Main {
         }
 
         if (Constants.GZIP_OUTPUT) {
-            files[1] = new File(outputDir, outputFileName + ".json.tgz");
+            files[1] = new File(outputDir, outputFileNameBase + ".json.tgz");
             apiListing.toFile(files[1], true);
             System.out.println("  Output written to file: " + files[1]);
         }
@@ -173,33 +155,11 @@ public class Main {
         return files;
     }
 
-    private static File[] renderMarkdown(APIListing apiListing, File outputDir, String outputFileName) {
-        File outputFile = new File(outputDir, outputFileName + ".md");
+    private static File[] renderMarkdown(APIListing apiListing, File outputDir, String outputFileNameBase) {
+        File outputFile = new File(outputDir, outputFileNameBase + ".md");
         MarkdownRenderer.write(apiListing, outputFile);
         System.out.println("  Output written to file: " + outputFile);
         return new File[] { outputFile };
-    }
-
-    private enum Renderer {
-        JSON("json"),
-        MARKDOWN("markdown");
-
-        private final String value;
-
-        Renderer(String value) {
-            this.value = value;
-        }
-
-        private static Renderer fromValue(String value) {
-            switch (value) {
-                case "json":
-                    return JSON;
-                case "markdown":
-                    return MARKDOWN;
-                default:
-                    throw new IllegalArgumentException("Unsupported renderer '" + value + "'. Expected json or markdown.");
-            }
-        }
     }
 
     private static Optional<APIListing> processFile(final File inputFile) {

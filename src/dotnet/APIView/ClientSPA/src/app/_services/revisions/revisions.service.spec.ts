@@ -6,6 +6,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { APIRevisionsService } from './revisions.service';
 import { ConfigService } from '../config/config.service';
 import { of } from 'rxjs';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { APIRevision } from 'src/app/_models/revision';
 
 describe('RevisionsService', () => {
   let service: APIRevisionsService;
@@ -33,5 +35,21 @@ describe('RevisionsService', () => {
 
   it('should be created', () => {
     expect(service).toBeTruthy();
+  });
+
+  it('should share fixed-filter revision queries and cache their results', () => {
+    const releasedRevision = { id: 'released', reviewId: 'review-id' } as APIRevision;
+    const getAPIRevisionsSpy = vi.spyOn(service, 'getAPIRevisions').mockReturnValue(of({
+      result: [releasedRevision]
+    }));
+
+    service.getFilteredAPIRevisionOptions('review-id', ['Released']).subscribe();
+    service.getFilteredAPIRevisionOptions('review-id', ['Released']).subscribe();
+
+    expect(getAPIRevisionsSpy).toHaveBeenCalledOnce();
+    expect(getAPIRevisionsSpy).toHaveBeenCalledWith(
+      0, 100, 'review-id', undefined, undefined, ['Released'], 'createdOn', 1, false, false, true
+    );
+    expect(service.getCachedAPIRevisionOptions('review-id')).toEqual([releasedRevision]);
   });
 });

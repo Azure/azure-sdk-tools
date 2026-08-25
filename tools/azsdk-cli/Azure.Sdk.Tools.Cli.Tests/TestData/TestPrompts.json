@@ -35,6 +35,10 @@
     { "toolName": "azsdk_engsys_codeowner_update_cache", "prompt": "Run the codeowner cache update pipeline to unblock releases", "category": "all" },
     { "toolName": "azsdk_engsys_codeowner_update_cache", "prompt": "Update the owners cache", "category": "all" },
 
+    { "toolName": "azsdk_sync_product_onboarding", "prompt": "Sync the product onboarding status for my service", "category": "all" },
+    { "toolName": "azsdk_sync_product_onboarding", "prompt": "Create a product onboarding work item for this service", "category": "all" },
+    { "toolName": "azsdk_sync_product_onboarding", "prompt": "Update the existing product onboarding details", "category": "all" },
+
     { "toolName": "azsdk_analyze_log_file", "prompt": "Analyze this log file for errors", "category": "all" },
     { "toolName": "azsdk_analyze_log_file", "prompt": "What errors are in this build log?", "category": "all" },
     { "toolName": "azsdk_cleanup_ai_agents", "prompt": "Clean up AI agents in my project", "category": "all" },

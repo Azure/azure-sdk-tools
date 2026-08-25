@@ -22,6 +22,9 @@ public class PackageMarkReleasedResponse : CommandResponse
     public bool ApiReviewHubSucceeded { get; set; }
 
     [JsonIgnore]
+    public bool ApiReviewHubSkipped { get; set; }
+
+    [JsonIgnore]
     public string ApiReviewHubMessage { get; set; } = string.Empty;
 
     [JsonIgnore]
@@ -34,7 +37,8 @@ public class PackageMarkReleasedResponse : CommandResponse
     {
         StringBuilder output = new();
         output.AppendLine($"Package: {PackageName} {Version}");
-        output.AppendLine($"API Review Hub: {(ApiReviewHubSucceeded ? "SUCCEEDED" : "FAILED")} - {ApiReviewHubMessage}");
+        string apiReviewHubStatus = ApiReviewHubSkipped ? "SKIPPED" : ApiReviewHubSucceeded ? "SUCCEEDED" : "FAILED";
+        output.AppendLine($"API Review Hub: {apiReviewHubStatus} - {ApiReviewHubMessage}");
         output.AppendLine($"APIView: {(ApiViewSucceeded ? "SUCCEEDED" : "FAILED")} - {ApiViewMessage}");
         return output.ToString();
     }

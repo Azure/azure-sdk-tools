@@ -9,9 +9,9 @@ import test from "node:test";
 import {
   correctHistoricalSemanticChains,
   normalizeAssessmentSourceLinks,
-} from "./finalize-rerun-assessments.mjs";
-import { buildCompliance } from "./generate-document-compliance-evidence.mjs";
-import { deriveOperationChanges } from "./operation-changes.mjs";
+} from "../test-evidence/scripts/finalize-rerun-assessments.mjs";
+import { buildCompliance } from "../test-evidence/scripts/generate-document-compliance-evidence.mjs";
+import { deriveOperationChanges } from "../test-evidence/scripts/operation-changes.mjs";
 import { renderAssessmentHtml } from "./render-assessment-html.mjs";
 import { deriveCodeSafety, renderAssessment } from "./render-assessment.mjs";
 import { validateAssessment } from "./validate-assessment.mjs";
@@ -393,6 +393,7 @@ test("HTML report prioritizes semantic changes and linked impacts", () => {
     evidence: ["Artifact diff"],
     sourceReferences: [sourceReference],
   });
+
   document.dimensions.semanticUnderstanding.items[0].changes[0].linkedFindingIds =
     ["html-impact"];
   const html = renderAssessmentHtml(document);
@@ -583,6 +584,28 @@ test("HTML report prioritizes semantic changes and linked impacts", () => {
     metadataHtml,
     /HTTP signature and represented payload contract unchanged/,
   );
+});
+
+test("HTML downstream findings include their linked TypeSpec source diff", () => {
+  const document = validDocument();
+  document.dimensions.restCompatibleDownstreamBreakingChanges.findings.push({
+    id: "downstream-source-diff",
+    title: "Generated client shape changes",
+    severity: "high",
+    confidence: "high",
+    summary: "The generated client surface changes.",
+    evidence: ["The TypeSpec declaration changed."],
+    sourceReferences: [sourceReference],
+  });
+  document.dimensions.semanticUnderstanding.items[0].changes[0].linkedFindingIds =
+    ["downstream-source-diff"];
+  const html = renderAssessmentHtml(document);
+  assert.match(html, /class="finding-source-diff"/);
+  assert.match(
+    html,
+    /TypeSpec source change <span>expand to inspect why this breaks clients/,
+  );
+  assert.match(html, /class="add"[^>]*>\+\s+name: string/);
 });
 
 test("HTML shows up to ten collapsed intents and sorts impacted intents first", () => {
@@ -1254,7 +1277,12 @@ test("generated fixture reports are reproducible in a clean checkout", () => {
     const result = spawnSync(
       process.execPath,
       [
-        fileURLToPath(new URL("./generate-test-evidence.mjs", import.meta.url)),
+        fileURLToPath(
+          new URL(
+            "../test-evidence/scripts/generate-test-evidence.mjs",
+            import.meta.url,
+          ),
+        ),
         output,
       ],
       { encoding: "utf8" },
@@ -1302,7 +1330,10 @@ test("generated fixture reports are reproducible in a clean checkout", () => {
 test("PR 44988 compliance fixture retains both documented mismatches", () => {
   const fixture = JSON.parse(
     readFileSync(
-      new URL("./fixtures/recent-pr-compliance.json", import.meta.url),
+      new URL(
+        "../test-evidence/fixtures/recent-pr-compliance.json",
+        import.meta.url,
+      ),
       "utf8",
     ),
   )["44988"];
@@ -1362,7 +1393,10 @@ test("PR 44988 classifies versioned service gateway LRO changes as downstream br
 test("PR 44200 compliance findings retain finding-specific code evidence", () => {
   const fixture = JSON.parse(
     readFileSync(
-      new URL("./fixtures/recent-pr-compliance.json", import.meta.url),
+      new URL(
+        "../test-evidence/fixtures/recent-pr-compliance.json",
+        import.meta.url,
+      ),
       "utf8",
     ),
   )["44200"];
@@ -1394,7 +1428,10 @@ test("PR 44200 compliance findings retain finding-specific code evidence", () =>
 test("compliance fixtures select exact source evidence", () => {
   const fixture = JSON.parse(
     readFileSync(
-      new URL("./fixtures/recent-pr-compliance.json", import.meta.url),
+      new URL(
+        "../test-evidence/fixtures/recent-pr-compliance.json",
+        import.meta.url,
+      ),
       "utf8",
     ),
   );

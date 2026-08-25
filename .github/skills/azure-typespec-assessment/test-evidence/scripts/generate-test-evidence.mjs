@@ -4,27 +4,38 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { renderAssessment } from "./render-assessment.mjs";
-import { renderAssessmentHtml } from "./render-assessment-html.mjs";
+import { renderAssessment } from "../../scripts/render-assessment.mjs";
+import { renderAssessmentHtml } from "../../scripts/render-assessment-html.mjs";
 import { deriveOperationChanges } from "./operation-changes.mjs";
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
-const skillRoot = resolve(scriptDirectory, "..");
 const evidenceRoot = process.argv[2]
   ? resolve(process.argv[2])
-  : resolve(skillRoot, "test-evidence");
+  : resolve(scriptDirectory, "..");
 const assessmentRoot = resolve(evidenceRoot, "assessments");
 const cases = JSON.parse(
-  readFileSync(resolve(scriptDirectory, "fixtures", "recent-pr-cases.json")),
+  readFileSync(
+    resolve(scriptDirectory, "..", "fixtures", "recent-pr-cases.json"),
+  ),
 );
 const operationsByPr = JSON.parse(
   readFileSync(
-    resolve(scriptDirectory, "fixtures", "recent-pr-operations.json"),
+    resolve(
+      scriptDirectory,
+      "..",
+      "fixtures",
+      "recent-pr-operations.json",
+    ),
   ),
 );
 const typeSpecDiffsByPr = JSON.parse(
   readFileSync(
-    resolve(scriptDirectory, "fixtures", "recent-pr-typespec-diffs.json"),
+    resolve(
+      scriptDirectory,
+      "..",
+      "fixtures",
+      "recent-pr-typespec-diffs.json",
+    ),
   ),
 );
 const historicalChangeOverrides = {

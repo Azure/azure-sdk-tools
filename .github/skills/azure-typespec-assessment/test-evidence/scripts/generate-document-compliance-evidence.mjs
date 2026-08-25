@@ -4,13 +4,13 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { renderAssessment } from "./render-assessment.mjs";
-import { renderAssessmentHtml } from "./render-assessment-html.mjs";
+import { renderAssessment } from "../../scripts/render-assessment.mjs";
+import { renderAssessmentHtml } from "../../scripts/render-assessment-html.mjs";
 import { linkImpactFindings } from "./operation-changes.mjs";
 
 const fixture = JSON.parse(
   readFileSync(
-    new URL("./fixtures/recent-pr-compliance.json", import.meta.url),
+    new URL("../fixtures/recent-pr-compliance.json", import.meta.url),
     "utf8",
   ),
 );
